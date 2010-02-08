@@ -1081,7 +1081,8 @@ public:
                                             OverloadCandidateSet& CandidateSet,
                                             bool PartialOverloading = false);
   bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
-                                 const OverloadCandidate& Cand2);
+                                 const OverloadCandidate& Cand2,
+                                 SourceLocation Loc);
   OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
                                        SourceLocation Loc,
                                        OverloadCandidateSet::iterator& Best);
@@ -2824,15 +2825,26 @@ public:
     ///
     TemplateArgumentList *Deduced;
 
+    /// \brief The source location at which template argument
+    /// deduction is occurring.
+    SourceLocation Loc;
+
     // do not implement these
     TemplateDeductionInfo(const TemplateDeductionInfo&);
     TemplateDeductionInfo &operator=(const TemplateDeductionInfo&);
 
   public:
-    TemplateDeductionInfo(ASTContext &Context) : Context(Context), Deduced(0) { }
+    TemplateDeductionInfo(ASTContext &Context, SourceLocation Loc)
+      : Context(Context), Deduced(0), Loc(Loc) { }
 
     ~TemplateDeductionInfo() {
       // FIXME: if (Deduced) Deduced->Destroy(Context);
+    }
+
+    /// \brief Returns the location at which template argument is
+    /// occuring.
+    SourceLocation getLocation() const {
+      return Loc;
     }
 
     /// \brief Take ownership of the deduced template argument list.
@@ -2932,6 +2944,7 @@ public:
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
+                                                   SourceLocation Loc,
                                            TemplatePartialOrderingContext TPOC);
   UnresolvedSetIterator getMostSpecialized(UnresolvedSetIterator SBegin,
                                            UnresolvedSetIterator SEnd,
@@ -2944,7 +2957,8 @@ public:
   ClassTemplatePartialSpecializationDecl *
   getMoreSpecializedPartialSpecialization(
                                   ClassTemplatePartialSpecializationDecl *PS1,
-                                  ClassTemplatePartialSpecializationDecl *PS2);
+                                  ClassTemplatePartialSpecializationDecl *PS2,
+                                  SourceLocation Loc);
   
   void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                   bool OnlyDeduced,

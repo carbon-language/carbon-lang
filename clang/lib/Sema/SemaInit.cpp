@@ -2829,7 +2829,8 @@ InitializationSequence::InitializationSequence(Sema &S,
                                                const InitializedEntity &Entity,
                                                const InitializationKind &Kind,
                                                Expr **Args,
-                                               unsigned NumArgs) {
+                                               unsigned NumArgs)
+    : FailedCandidateSet(Kind.getLocation()) {
   ASTContext &Context = S.Context;
   
   // C++0x [dcl.init]p16:
@@ -3084,7 +3085,7 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     = S.Context.DeclarationNames.getCXXConstructorName(
                   S.Context.getCanonicalType(S.Context.getTypeDeclType(Class)));
   DeclContext::lookup_iterator Con, ConEnd;
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(Loc);
   for (llvm::tie(Con, ConEnd) = Class->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
     // Find the constructor (which may be a template).

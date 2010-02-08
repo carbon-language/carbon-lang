@@ -447,16 +447,24 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool InOverloadResolution,
                             bool UserCast) {
   ImplicitConversionSequence ICS;
-  OverloadCandidateSet Conversions;
-  OverloadingResult UserDefResult = OR_Success;
-  if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard))
+  if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard)) {
     ICS.setStandard();
-  else if (getLangOptions().CPlusPlus &&
-           (UserDefResult = IsUserDefinedConversion(From, ToType, 
-                                   ICS.UserDefined,
-                                   Conversions,
-                                   !SuppressUserConversions, AllowExplicit,
-				   ForceRValue, UserCast)) == OR_Success) {
+    return ICS;
+  }
+
+  if (!getLangOptions().CPlusPlus) {
+    ICS.setBad();
+    ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
+    return ICS;
+  }
+
+  OverloadCandidateSet Conversions(From->getExprLoc());
+  OverloadingResult UserDefResult
+    = IsUserDefinedConversion(From, ToType, ICS.UserDefined, Conversions,
+                              !SuppressUserConversions, AllowExplicit,
+                              ForceRValue, UserCast);
+
+  if (UserDefResult == OR_Success) {
     ICS.setUserDefined();
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -1654,7 +1662,7 @@ OverloadingResult Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
 bool
 Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   ImplicitConversionSequence ICS;
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(From->getExprLoc());
   OverloadingResult OvResult = 
     IsUserDefinedConversion(From, ToType, ICS.UserDefined,
                             CandidateSet, true, false, false);
@@ -2694,7 +2702,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
   //   functions. In such a case, the candidate functions generated from each
   //   function template are combined with the set of non-template candidate
   //   functions.
-  TemplateDeductionInfo Info(Context);
+  TemplateDeductionInfo Info(Context, CandidateSet.getLocation());
   FunctionDecl *Specialization = 0;
   if (TemplateDeductionResult Result
       = DeduceTemplateArguments(MethodTmpl, ExplicitTemplateArgs,
@@ -2738,7 +2746,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
   //   functions. In such a case, the candidate functions generated from each
   //   function template are combined with the set of non-template candidate
   //   functions.
-  TemplateDeductionInfo Info(Context);
+  TemplateDeductionInfo Info(Context, CandidateSet.getLocation());
   FunctionDecl *Specialization = 0;
   if (TemplateDeductionResult Result
         = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
@@ -2887,7 +2895,7 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
   if (!CandidateSet.isNewCandidate(FunctionTemplate))
     return;
 
-  TemplateDeductionInfo Info(Context);
+  TemplateDeductionInfo Info(Context, CandidateSet.getLocation());
   CXXConversionDecl *Specialization = 0;
   if (TemplateDeductionResult Result
         = DeduceTemplateArguments(FunctionTemplate, ToType,
@@ -4204,7 +4212,8 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
 /// candidate is a better candidate than the second (C++ 13.3.3p1).
 bool
 Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
-                                const OverloadCandidate& Cand2) {
+                                const OverloadCandidate& Cand2,
+                                SourceLocation Loc) {
   // Define viable functions to be better candidates than non-viable
   // functions.
   if (!Cand2.Viable)
@@ -4267,6 +4276,7 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
     if (FunctionTemplateDecl *BetterTemplate
           = getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
                                        Cand2.Function->getPrimaryTemplate(),
+                                       Loc,
                        isa<CXXConversionDecl>(Cand1.Function)? TPOC_Conversion 
                                                              : TPOC_Call))
       return BetterTemplate == Cand1.Function->getPrimaryTemplate();
@@ -4319,7 +4329,8 @@ OverloadingResult Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
        Cand != CandidateSet.end(); ++Cand) {
     if (Cand->Viable) {
-      if (Best == CandidateSet.end() || isBetterOverloadCandidate(*Cand, *Best))
+      if (Best == CandidateSet.end() ||
+          isBetterOverloadCandidate(*Cand, *Best, Loc))
         Best = Cand;
     }
   }
@@ -4334,7 +4345,7 @@ OverloadingResult Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
        Cand != CandidateSet.end(); ++Cand) {
     if (Cand->Viable &&
         Cand != Best &&
-        !isBetterOverloadCandidate(*Best, *Cand)) {
+        !isBetterOverloadCandidate(*Best, *Cand, Loc)) {
       Best = CandidateSet.end();
       return OR_Ambiguous;
     }
@@ -4759,8 +4770,8 @@ struct CompareOverloadCandidatesForDisplay {
       // TODO: introduce a tri-valued comparison for overload
       // candidates.  Would be more worthwhile if we had a sort
       // that could exploit it.
-      if (S.isBetterOverloadCandidate(*L, *R)) return true;
-      if (S.isBetterOverloadCandidate(*R, *L)) return false;
+      if (S.isBetterOverloadCandidate(*L, *R, SourceLocation())) return true;
+      if (S.isBetterOverloadCandidate(*R, *L, SourceLocation())) return false;
     } else if (R->Viable)
       return false;
 
@@ -5045,7 +5056,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       //   overloaded functions considered.
       // FIXME: We don't really want to build the specialization here, do we?
       FunctionDecl *Specialization = 0;
-      TemplateDeductionInfo Info(Context);
+      TemplateDeductionInfo Info(Context, OvlExpr->getNameLoc());
       if (TemplateDeductionResult Result
             = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
                                       FunctionType, Specialization, Info)) {
@@ -5205,7 +5216,7 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From) {
     //   function template specialization, which is added to the set of
     //   overloaded functions considered.
     FunctionDecl *Specialization = 0;
-    TemplateDeductionInfo Info(Context);
+    TemplateDeductionInfo Info(Context, OvlExpr->getNameLoc());
     if (TemplateDeductionResult Result
           = DeduceTemplateArguments(FunctionTemplate, &ExplicitTemplateArgs,
                                     Specialization, Info)) {
@@ -5405,7 +5416,7 @@ Sema::BuildOverloadedCallExpr(Expr *Fn, UnresolvedLookupExpr *ULE,
   }
 #endif
 
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(Fn->getExprLoc());
 
   // Add the functions denoted by the callee to the set of candidate
   // functions, including those from argument-dependent lookup.
@@ -5518,7 +5529,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   }
 
   // Build an empty overload set.
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(OpLoc);
 
   // Add the candidates from the given function set.
   AddFunctionCandidates(Fns, &Args[0], NumArgs, CandidateSet, false);
@@ -5701,7 +5712,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // Build an empty overload set.
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(OpLoc);
 
   // Add the candidates from the given function set.
   AddFunctionCandidates(Fns, Args, 2, CandidateSet, false);
@@ -5884,7 +5895,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
   }
 
   // Build an empty overload set.
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(LLoc);
 
   // Subscript can only be overloaded as a member function.
 
@@ -6023,7 +6034,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     QualType ObjectType = UnresExpr->getBaseType();
 
     // Add overload candidates
-    OverloadCandidateSet CandidateSet;
+    OverloadCandidateSet CandidateSet(UnresExpr->getMemberLoc());
 
     // FIXME: avoid copy.
     TemplateArgumentListInfo TemplateArgsBuffer, *TemplateArgs = 0;
@@ -6154,7 +6165,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //  operators of T. The function call operators of T are obtained by
   //  ordinary lookup of the name operator() in the context of
   //  (E).operator().
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(LParenLoc);
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
 
   if (RequireCompleteType(LParenLoc, Object->getType(), 
@@ -6397,6 +6408,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   Expr *Base = static_cast<Expr *>(BaseIn.get());
   assert(Base->getType()->isRecordType() && "left-hand side must have class type");
 
+  SourceLocation Loc = Base->getExprLoc();
+
   // C++ [over.ref]p1:
   //
   //   [...] An expression x->m is interpreted as (x.operator->())->m
@@ -6404,10 +6417,10 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   //   the operator is selected as the best match function by the
   //   overload resolution mechanism (13.3).
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(Loc);
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
 
-  if (RequireCompleteType(Base->getLocStart(), Base->getType(),
+  if (RequireCompleteType(Loc, Base->getType(),
                           PDiag(diag::err_typecheck_incomplete_tag)
                             << Base->getSourceRange()))
     return ExprError();

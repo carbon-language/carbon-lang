@@ -1186,7 +1186,7 @@ Sema::InstantiateClassTemplateSpecialization(
          PartialEnd = Template->getPartialSpecializations().end();
        Partial != PartialEnd;
        ++Partial) {
-    TemplateDeductionInfo Info(Context);
+    TemplateDeductionInfo Info(Context, PointOfInstantiation);
     if (TemplateDeductionResult Result
           = DeduceTemplateArguments(&*Partial,
                                     ClassTemplateSpec->getTemplateArgs(),
@@ -1216,7 +1216,8 @@ Sema::InstantiateClassTemplateSpecialization(
       for (llvm::SmallVector<MatchResult, 4>::iterator P = Best + 1,
                                                     PEnd = Matched.end();
            P != PEnd; ++P) {
-        if (getMoreSpecializedPartialSpecialization(P->first, Best->first) 
+        if (getMoreSpecializedPartialSpecialization(P->first, Best->first,
+                                                    PointOfInstantiation) 
               == P->first)
           Best = P;
       }
@@ -1228,7 +1229,8 @@ Sema::InstantiateClassTemplateSpecialization(
                                                     PEnd = Matched.end();
            P != PEnd; ++P) {
         if (P != Best &&
-            getMoreSpecializedPartialSpecialization(P->first, Best->first)
+            getMoreSpecializedPartialSpecialization(P->first, Best->first,
+                                                    PointOfInstantiation)
               != Best->first) {
           Ambiguous = true;
           break;

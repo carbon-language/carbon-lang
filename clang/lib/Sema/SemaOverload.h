@@ -501,8 +501,13 @@ namespace clang {
   class OverloadCandidateSet : public llvm::SmallVector<OverloadCandidate, 16> {
     typedef llvm::SmallVector<OverloadCandidate, 16> inherited;
     llvm::SmallPtrSet<Decl *, 16> Functions;
-    
+
+    SourceLocation Loc;    
   public:
+    OverloadCandidateSet(SourceLocation Loc) : Loc(Loc) {}
+
+    SourceLocation getLocation() const { return Loc; }
+
     /// \brief Determine when this overload candidate will be new to the
     /// overload set.
     bool isNewCandidate(Decl *F) { 

@@ -3854,7 +3854,7 @@ Sema::getAssignOperatorMethod(SourceLocation CurrentLocation,
                                                            RHSType,
                                                            CurrentLocation));
   Expr *Args[2] = { &*LHS, &*RHS };
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(CurrentLocation);
   AddMemberOperatorCandidates(clang::OO_Equal, SourceLocation(), Args, 2,
                               CandidateSet);
   OverloadCandidateSet::iterator Best;
@@ -4186,7 +4186,7 @@ Sema::TryInitializationByConstructor(QualType ClassType,
                                      SourceLocation Loc,
                                      InitializationKind Kind) {
   // Build the overload candidate set
-  OverloadCandidateSet CandidateSet;
+  OverloadCandidateSet CandidateSet(Loc);
   AddConstructorInitializationCandidates(*this, ClassType, Args, NumArgs, Kind,
                                          CandidateSet);
   
@@ -4443,7 +4443,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     CXXRecordDecl *T2RecordDecl
       = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
-    OverloadCandidateSet CandidateSet;
+    OverloadCandidateSet CandidateSet(DeclLoc);
     const UnresolvedSetImpl *Conversions
       = T2RecordDecl->getVisibleConversionFunctions();
     for (UnresolvedSetImpl::iterator I = Conversions->begin(),

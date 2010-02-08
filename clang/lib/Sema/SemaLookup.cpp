@@ -493,7 +493,7 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
     // result), perform template argument deduction and place the 
     // specialization into the result set. We do this to avoid forcing all
     // callers to perform special deduction for conversion functions.
-    Sema::TemplateDeductionInfo Info(R.getSema().Context);
+    Sema::TemplateDeductionInfo Info(R.getSema().Context, R.getNameLoc());
     FunctionDecl *Specialization = 0;
     
     const FunctionProtoType *ConvProto        

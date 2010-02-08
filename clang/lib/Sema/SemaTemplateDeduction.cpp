@@ -653,9 +653,7 @@ DeduceTemplateArguments(Sema &S,
           // We cannot inspect base classes as part of deduction when the type
           // is incomplete, so either instantiate any templates necessary to
           // complete the type, or skip over it if it cannot be completed.
-          // FIXME: The location given becomes the PoI, so we should thread
-          // a better location through the TemplateDeductionInfo.
-          if (S.RequireCompleteType(RecordT->getDecl()->getLocStart(), Arg, 0))
+          if (S.RequireCompleteType(Info.getLocation(), Arg, 0))
             return Result;
 
           // Use data recursion to crawl through the list of base classes.
@@ -1384,7 +1382,7 @@ ResolveOverloadForDeduction(Sema &S, TemplateParameterList *TemplateParams,
     //   the deduced template argument values are then combined.
     // So we do not reject deductions which were made elsewhere.
     llvm::SmallVector<TemplateArgument, 8> Deduced(TemplateParams->size());
-    Sema::TemplateDeductionInfo Info(S.Context);
+    Sema::TemplateDeductionInfo Info(S.Context, Ovl->getNameLoc());
     unsigned TDF = 0;
 
     Sema::TemplateDeductionResult Result
@@ -1858,6 +1856,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
 /// \brief Determine whether the function template \p FT1 is at least as
 /// specialized as \p FT2.
 static bool isAtLeastAsSpecializedAs(Sema &S,
+                                     SourceLocation Loc,
                                      FunctionTemplateDecl *FT1,
                                      FunctionTemplateDecl *FT2,
                                      TemplatePartialOrderingContext TPOC,
@@ -1875,7 +1874,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   // C++0x [temp.deduct.partial]p3:
   //   The types used to determine the ordering depend on the context in which
   //   the partial ordering is done:
-  Sema::TemplateDeductionInfo Info(S.Context);
+  Sema::TemplateDeductionInfo Info(S.Context, Loc);
   switch (TPOC) {
   case TPOC_Call: {
     //   - In the context of a function call, the function parameter types are
@@ -1989,10 +1988,11 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
 FunctionTemplateDecl *
 Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                  FunctionTemplateDecl *FT2,
+                                 SourceLocation Loc,
                                  TemplatePartialOrderingContext TPOC) {
   llvm::SmallVector<DeductionQualifierComparison, 4> QualifierComparisons;
-  bool Better1 = isAtLeastAsSpecializedAs(*this, FT1, FT2, TPOC, 0);
-  bool Better2 = isAtLeastAsSpecializedAs(*this, FT2, FT1, TPOC, 
+  bool Better1 = isAtLeastAsSpecializedAs(*this, Loc, FT1, FT2, TPOC, 0);
+  bool Better2 = isAtLeastAsSpecializedAs(*this, Loc, FT2, FT1, TPOC, 
                                           &QualifierComparisons);
   
   if (Better1 != Better2) // We have a clear winner
@@ -2119,7 +2119,7 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     assert(Challenger && "Not a function template specialization?");
     if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger,
-                                                  TPOC),
+                                                  Loc, TPOC),
                        Challenger)) {
       Best = I;
       BestTemplate = Challenger;
@@ -2134,7 +2134,7 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
       = cast<FunctionDecl>(*I)->getPrimaryTemplate();
     if (I != Best &&
         !isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger, 
-                                                  TPOC),
+                                                   Loc, TPOC),
                         BestTemplate)) {
       Ambiguous = true;
       break;
@@ -2172,7 +2172,8 @@ Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
 ClassTemplatePartialSpecializationDecl *
 Sema::getMoreSpecializedPartialSpecialization(
                                   ClassTemplatePartialSpecializationDecl *PS1,
-                                  ClassTemplatePartialSpecializationDecl *PS2) {
+                                  ClassTemplatePartialSpecializationDecl *PS2,
+                                              SourceLocation Loc) {
   // C++ [temp.class.order]p1:
   //   For two class template partial specializations, the first is at least as
   //   specialized as the second if, given the following rewrite to two 
@@ -2195,7 +2196,7 @@ Sema::getMoreSpecializedPartialSpecialization(
   // template partial ordering, because class template partial specializations
   // are more constrained. We know that every template parameter is deduc
   llvm::SmallVector<TemplateArgument, 4> Deduced;
-  Sema::TemplateDeductionInfo Info(Context);
+  Sema::TemplateDeductionInfo Info(Context, Loc);
   
   // Determine whether PS1 is at least as specialized as PS2
   Deduced.resize(PS2->getTemplateParameters()->size());
