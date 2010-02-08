@@ -712,10 +712,10 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
 /// using the specified TargetData.  If successful, the constant result is
 /// result is returned, if not, null is returned.
-Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
+Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
                                                const TargetData *TD) {
   SmallVector<Constant*, 8> Ops;
-  for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i) {
+  for (User::const_op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i) {
     Constant *NewC = cast<Constant>(*i);
     // Recursively fold the ConstantExpr's operands.
     if (ConstantExpr *NewCE = dyn_cast<ConstantExpr>(NewC))

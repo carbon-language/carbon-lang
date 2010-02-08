@@ -37,7 +37,7 @@ Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0);
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
 /// using the specified TargetData.  If successful, the constant result is
 /// result is returned, if not, null is returned.
-Constant *ConstantFoldConstantExpression(ConstantExpr *CE,
+Constant *ConstantFoldConstantExpression(const ConstantExpr *CE,
                                          const TargetData *TD = 0);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
