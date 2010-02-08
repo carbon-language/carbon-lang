@@ -71,26 +71,6 @@ were disabled due to badness with the ARM carry flag on subtracts.
 
 //===---------------------------------------------------------------------===//
 
-We currently compile abs:
-int foo(int p) { return p < 0 ? -p : p; }
-
-into:
-
-_foo:
-        rsb r1, r0, #0
-        cmn r0, #1
-        movgt r1, r0
-        mov r0, r1
-        bx lr
-
-This is very, uh, literal.  This could be a 3 operation sequence:
-  t = (p sra 31); 
-  res = (p xor t)-t
-
-Which would be better.  This occurs in png decode.
-
-//===---------------------------------------------------------------------===//
-
 More load / store optimizations:
 1) Better representation for block transfer? This is from Olden/power:
 
