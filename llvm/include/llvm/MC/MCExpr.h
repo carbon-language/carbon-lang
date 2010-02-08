@@ -29,7 +29,8 @@ public:
     Binary,    ///< Binary expressions.
     Constant,  ///< Constant expressions.
     SymbolRef, ///< References to labels and assigned expressions.
-    Unary      ///< Unary expressions.
+    Unary,     ///< Unary expressions.
+    Target     ///< Target specific expression.
   };
 
 private:
@@ -324,6 +325,28 @@ public:
     return E->getKind() == MCExpr::Binary;
   }
   static bool classof(const MCBinaryExpr *) { return true; }
+};
+
+/// MCTargetExpr - This is an extension point for target-specific MCExpr
+/// subclasses to implement.
+///
+/// NOTE: All subclasses are required to have trivial destructors because
+/// MCExprs are bump pointer allocated and not destructed.
+class MCTargetExpr : public MCExpr {
+  virtual ~MCTargetExpr(); // Not accessible.
+protected:
+  MCTargetExpr() : MCExpr(Target) {}
+  
+public:
+  
+  virtual void PrintImpl(raw_ostream &OS) const = 0;
+  virtual bool EvaluateAsRelocatableImpl(MCValue &Res) const = 0;
+
+  
+  static bool classof(const MCExpr *E) {
+    return E->getKind() == MCExpr::Target;
+  }
+  static bool classof(const MCTargetExpr *) { return true; }
 };
 
 } // end namespace llvm

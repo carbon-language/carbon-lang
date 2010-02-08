@@ -87,6 +87,7 @@ public:
 
   const MCExpr *AddValueSymbols(const MCExpr *Value) {
     switch (Value->getKind()) {
+    case MCExpr::Target: assert(0 && "Can't handle target exprs yet!");
     case MCExpr::Constant:
       break;
 
