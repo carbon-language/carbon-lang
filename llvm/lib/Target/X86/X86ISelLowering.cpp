@@ -16,6 +16,7 @@
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
+#include "X86MCTargetExpr.h"
 #include "X86TargetMachine.h"
 #include "X86TargetObjectFile.h"
 #include "llvm/CallingConv.h"
@@ -36,7 +37,6 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
@@ -1130,10 +1130,8 @@ X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
          Subtarget->isPICStyleGOT());
   // In 32-bit ELF systems, our jump table entries are formed with @GOTOFF
   // entries.
-
-  // FIXME: @GOTOFF should be a property of MCSymbolRefExpr not in the MCSymbol.
-  std::string Name = MBB->getSymbol(Ctx)->getName() + "@GOTOFF";
-  return MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(StringRef(Name)), Ctx);
+  return X86MCTargetExpr::Create(MBB->getSymbol(Ctx),
+                                 X86MCTargetExpr::GOTOFF, Ctx);
 }
 
 /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC

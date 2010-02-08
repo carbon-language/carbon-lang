@@ -18,9 +18,11 @@ namespace llvm {
 class X86MCTargetExpr : public MCTargetExpr {
 public:
   enum VariantKind {
+    Invalid,
     GOT,
     PLT,
-    GOTPCREL
+    GOTPCREL,
+    GOTOFF
   };
 private:
   /// Sym - The symbol being referenced.

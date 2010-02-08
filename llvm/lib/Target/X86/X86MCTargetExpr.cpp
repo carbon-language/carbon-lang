@@ -23,9 +23,11 @@ void X86MCTargetExpr::PrintImpl(raw_ostream &OS) const {
   OS << *Sym;
   
   switch (Kind) {
-  case GOT: OS << "@GOT"; break;
-  case PLT: OS << "@PLT"; break;
+  case Invalid:  OS << "@<invalid>"; break;
+  case GOT:      OS << "@GOT"; break;
+  case PLT:      OS << "@PLT"; break;
   case GOTPCREL: OS << "@GOTPCREL"; break;
+  case GOTOFF:   OS << "@GOTOFF"; break;
   }
 }
 
@@ -39,5 +41,3 @@ bool X86MCTargetExpr::EvaluateAsRelocatableImpl(MCValue &Res) const {
   Res = MCValue::get(Sym, 0, 0);
   return true;
 }
-
-X86MCTargetExpr *foo(MCExpr *A) { return (X86MCTargetExpr*)A; }

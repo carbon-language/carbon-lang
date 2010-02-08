@@ -14,8 +14,9 @@
 
 #include "X86MCInstLower.h"
 #include "X86AsmPrinter.h"
-#include "X86MCAsmInfo.h"
 #include "X86COFFMachineModuleInfo.h"
+#include "X86MCAsmInfo.h"
+#include "X86MCTargetExpr.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
@@ -67,6 +68,8 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     COFFMMI.DecorateCygMingName(Name, GV, *AsmPrinter.TM.getTargetData());
   }
   
+  //X86MCTargetExpr::VariantKind Kind = X86MCTargetExpr::Invalid;
+  
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:                // No flag.
@@ -115,7 +118,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
   case X86II::MO_PLT:       Name += "@PLT";       break;
   }
-  
+
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 

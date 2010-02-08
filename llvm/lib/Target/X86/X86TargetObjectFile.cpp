@@ -55,6 +55,7 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
   IsIndirect = true;
   IsPCRel    = true;
   
+  // FIXME: Use GetSymbolWithGlobalValueBase.
   SmallString<128> Name;
   Mang->getNameWithPrefix(Name, GV, false);
   const MCSymbol *Sym = getContext().CreateSymbol(Name);
