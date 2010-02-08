@@ -42,7 +42,6 @@ public:
     return 0;
   }
 
-  SVal getLValueElement(QualType elementType, SVal offset, SVal Base);
   SVal ArrayToPointer(Loc Array);
   Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
@@ -124,11 +123,6 @@ Store FlatStoreManager::BindCompoundLiteral(Store store,
                                             const LocationContext *LC,
                                             SVal v) {
   return store;
-}
-
-SVal FlatStoreManager::getLValueElement(QualType elementType, SVal offset, 
-                                        SVal Base) {
-  return UnknownVal();
 }
 
 SVal FlatStoreManager::ArrayToPointer(Loc Array) {

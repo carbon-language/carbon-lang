@@ -270,3 +270,58 @@ SVal StoreManager::getLValueFieldOrIvar(const Decl* D, SVal Base) {
 
   return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
 }
+
+SVal StoreManager::getLValueElement(QualType elementType, SVal Offset, 
+                                    SVal Base) {
+
+  // If the base is an unknown or undefined value, just return it back.
+  // FIXME: For absolute pointer addresses, we just return that value back as
+  //  well, although in reality we should return the offset added to that
+  //  value.
+  if (Base.isUnknownOrUndef() || isa<loc::ConcreteInt>(Base))
+    return Base;
+
+  // Only handle integer offsets... for now.
+  if (!isa<nonloc::ConcreteInt>(Offset))
+    return UnknownVal();
+
+  const MemRegion* BaseRegion = cast<loc::MemRegionVal>(Base).getRegion();
+
+  // Pointer of any type can be cast and used as array base.
+  const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
+
+  // Convert the offset to the appropriate size and signedness.
+  Offset = ValMgr.convertToArrayIndex(Offset);
+
+  if (!ElemR) {
+    //
+    // If the base region is not an ElementRegion, create one.
+    // This can happen in the following example:
+    //
+    //   char *p = __builtin_alloc(10);
+    //   p[1] = 8;
+    //
+    //  Observe that 'p' binds to an AllocaRegion.
+    //
+    return loc::MemRegionVal(MRMgr.getElementRegion(elementType, Offset,
+                                                    BaseRegion, Ctx));
+  }
+
+  SVal BaseIdx = ElemR->getIndex();
+
+  if (!isa<nonloc::ConcreteInt>(BaseIdx))
+    return UnknownVal();
+
+  const llvm::APSInt& BaseIdxI = cast<nonloc::ConcreteInt>(BaseIdx).getValue();
+  const llvm::APSInt& OffI = cast<nonloc::ConcreteInt>(Offset).getValue();
+  assert(BaseIdxI.isSigned());
+
+  // Compute the new index.
+  SVal NewIdx = nonloc::ConcreteInt(
+                      ValMgr.getBasicValueFactory().getValue(BaseIdxI + OffI));
+
+  // Construct the new ElementRegion.
+  const MemRegion *ArrayR = ElemR->getSuperRegion();
+  return loc::MemRegionVal(MRMgr.getElementRegion(elementType, NewIdx, ArrayR,
+                                                  Ctx));
+}

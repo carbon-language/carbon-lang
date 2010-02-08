@@ -110,7 +110,7 @@ public:
     return getLValueFieldOrIvar(D, Base);
   }
 
-  virtual SVal getLValueElement(QualType elementType, SVal offset, SVal Base)=0;
+  virtual SVal getLValueElement(QualType elementType, SVal offset, SVal Base);
 
   // FIXME: Make out-of-line.
   virtual DefinedOrUnknownSVal getSizeInElements(const GRState *state, 

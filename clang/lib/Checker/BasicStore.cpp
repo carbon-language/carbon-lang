@@ -70,8 +70,6 @@ public:
     return store;
   }
 
-  SVal getLValueElement(QualType elementType, SVal Offset, SVal Base);
-
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
   SVal ArrayToPointer(Loc Array) { return Array; }
@@ -109,59 +107,6 @@ private:
 
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
-}
-
-SVal BasicStoreManager::getLValueElement(QualType elementType,
-                                         SVal Offset, SVal Base) {
-
-  if (Base.isUnknownOrUndef())
-    return Base;
-
-  Loc BaseL = cast<Loc>(Base);
-  const MemRegion* BaseR = 0;
-
-  switch(BaseL.getSubKind()) {
-    case loc::GotoLabelKind:
-      // Technically we can get here if people do funny things with casts.
-      return UndefinedVal();
-
-    case loc::MemRegionKind: {
-      const MemRegion *R = cast<loc::MemRegionVal>(BaseL).getRegion();
-
-      if (isa<ElementRegion>(R)) {
-        // int x;
-        // char* y = (char*) &x;
-        // 'y' => ElementRegion(0, VarRegion('x'))
-        // y[0] = 'a';
-        return Base;
-      }
-
-      if (isa<TypedRegion>(R) || isa<SymbolicRegion>(R)) {
-        BaseR = R;
-        break;
-      }
-
-      break;
-    }
-
-    case loc::ConcreteIntKind:
-      // While these seem funny, this can happen through casts.
-      // FIXME: What we should return is the field offset.  For example,
-      //  add the field offset to the integer value.  That way funny things
-      //  like this work properly:  &(((struct foo *) 0xa)->f)
-      return Base;
-
-    default:
-      assert ("Unhandled Base.");
-      return Base;
-  }
-
-  if (BaseR) {
-    return ValMgr.makeLoc(MRMgr.getElementRegion(elementType, UnknownVal(),
-                                                 BaseR, getContext()));
-  }
-  else
-    return UnknownVal();
 }
 
 static bool isHigherOrderRawPtr(QualType T, ASTContext &C) {
