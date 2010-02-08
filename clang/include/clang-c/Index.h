@@ -171,6 +171,13 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  * (which gives the indexer the same performance benefit as the compiler).
  */
 CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH);
+  
+/**
+ * \brief Destroy the given index.
+ *
+ * The index must not be destroyed until all of the translation units created
+ * within that index have been destroyed.
+ */
 CINDEX_LINKAGE void clang_disposeIndex(CXIndex index);
 
 /**
