@@ -2559,12 +2559,12 @@ public:
 class ObjCInterfaceType : public Type, public llvm::FoldingSetNode {
   ObjCInterfaceDecl *Decl;
 
-  // List of protocols for this protocol conforming object type
-  // List is sorted on protocol name. No protocol is enterred more than once.
-  ObjCProtocolDecl **Protocols;
+  /// \brief The number of protocols stored after the ObjCInterfaceType node.
+  /// The list of protocols is sorted on protocol name. No protocol is enterred 
+  /// more than once.
   unsigned NumProtocols;
 
-  ObjCInterfaceType(ASTContext &Ctx, QualType Canonical, ObjCInterfaceDecl *D,
+  ObjCInterfaceType(QualType Canonical, ObjCInterfaceDecl *D,
                     ObjCProtocolDecl **Protos, unsigned NumP);
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -2580,10 +2580,10 @@ public:
   /// list of protocols qualifying this interface.
   typedef ObjCProtocolDecl*  const * qual_iterator;
   qual_iterator qual_begin() const {
-    return Protocols;
+    return reinterpret_cast<qual_iterator>(this + 1);
   }
   qual_iterator qual_end() const   {
-    return Protocols ? Protocols + NumProtocols : 0;
+    return qual_begin() + NumProtocols;
   }
   bool qual_empty() const { return NumProtocols == 0; }
 
@@ -2593,7 +2593,8 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID,
                       const ObjCInterfaceDecl *Decl,
-                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
+                      ObjCProtocolDecl * const *protocols, 
+                      unsigned NumProtocols);
 
   virtual Linkage getLinkage() const;
 
@@ -2611,12 +2612,14 @@ public:
 class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType; // A builtin or interface type.
 
-  // List of protocols for this protocol conforming object type
-  // List is sorted on protocol name. No protocol is entered more than once.
-  ObjCProtocolDecl **Protocols;
+  /// \brief The number of protocols stored after the ObjCObjectPointerType 
+  /// node.
+  ///
+  /// The list of protocols is sorted on protocol name. No protocol is enterred 
+  /// more than once.
   unsigned NumProtocols;
 
-  ObjCObjectPointerType(ASTContext &Ctx, QualType Canonical, QualType T,
+  ObjCObjectPointerType(QualType Canonical, QualType T,
                         ObjCProtocolDecl **Protos, unsigned NumP);
   friend class ASTContext;  // ASTContext creates these.
 
@@ -2663,10 +2666,10 @@ public:
   typedef ObjCProtocolDecl*  const * qual_iterator;
 
   qual_iterator qual_begin() const {
-    return Protocols;
+    return reinterpret_cast<qual_iterator> (this + 1);
   }
   qual_iterator qual_end() const   {
-    return Protocols ? Protocols + NumProtocols : NULL;
+    return qual_begin() + NumProtocols;
   }
   bool qual_empty() const { return NumProtocols == 0; }
 
@@ -2681,7 +2684,8 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
-                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
+                      ObjCProtocolDecl *const *protocols, 
+                      unsigned NumProtocols);
   static bool classof(const Type *T) {
     return T->getTypeClass() == ObjCObjectPointer;
   }

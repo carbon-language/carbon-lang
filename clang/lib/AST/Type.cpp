@@ -339,21 +339,18 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
-ObjCInterfaceType::ObjCInterfaceType(ASTContext &Ctx, QualType Canonical,
+ObjCInterfaceType::ObjCInterfaceType(QualType Canonical,
                                      ObjCInterfaceDecl *D,
                                      ObjCProtocolDecl **Protos, unsigned NumP) :
   Type(ObjCInterface, Canonical, /*Dependent=*/false),
-  Decl(D), Protocols(0), NumProtocols(NumP)
+  Decl(D), NumProtocols(NumP)
 {
-  if (NumProtocols) {
-    Protocols = new (Ctx) ObjCProtocolDecl*[NumProtocols];
-    memcpy(Protocols, Protos, NumProtocols * sizeof(*Protocols));
-  }
+  if (NumProtocols)
+    memcpy(reinterpret_cast<ObjCProtocolDecl**>(this + 1), Protos, 
+           NumProtocols * sizeof(*Protos));
 }
 
 void ObjCInterfaceType::Destroy(ASTContext& C) {
-  if (Protocols)
-    C.Deallocate(Protocols);
   this->~ObjCInterfaceType();
   C.Deallocate(this);
 }
@@ -372,22 +369,18 @@ bool Type::isObjCQualifiedInterfaceType() const {
   return getAsObjCQualifiedInterfaceType() != 0;
 }
 
-ObjCObjectPointerType::ObjCObjectPointerType(ASTContext &Ctx,
-                                             QualType Canonical, QualType T,
+ObjCObjectPointerType::ObjCObjectPointerType(QualType Canonical, QualType T,
                                              ObjCProtocolDecl **Protos,
                                              unsigned NumP) :
   Type(ObjCObjectPointer, Canonical, /*Dependent=*/false),
-  PointeeType(T), Protocols(NULL), NumProtocols(NumP)
+  PointeeType(T), NumProtocols(NumP)
 {
-  if (NumProtocols) {
-    Protocols = new (Ctx) ObjCProtocolDecl*[NumProtocols];
-    memcpy(Protocols, Protos, NumProtocols * sizeof(*Protocols));
-  }
+  if (NumProtocols)
+    memcpy(reinterpret_cast<ObjCProtocolDecl **>(this + 1), Protos, 
+           NumProtocols * sizeof(*Protos));
 }
 
 void ObjCObjectPointerType::Destroy(ASTContext& C) {
-  if (Protocols)
-    C.Deallocate(Protocols);
   this->~ObjCObjectPointerType();
   C.Deallocate(this);
 }
@@ -851,7 +844,8 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
 }
 
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,
-                                    QualType OIT, ObjCProtocolDecl **protocols,
+                                    QualType OIT, 
+                                    ObjCProtocolDecl * const *protocols,
                                     unsigned NumProtocols) {
   ID.AddPointer(OIT.getAsOpaquePtr());
   for (unsigned i = 0; i != NumProtocols; i++)
@@ -859,10 +853,7 @@ void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,
 }
 
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID) {
-  if (getNumProtocols())
-    Profile(ID, getPointeeType(), &Protocols[0], getNumProtocols());
-  else
-    Profile(ID, getPointeeType(), 0, 0);
+  Profile(ID, getPointeeType(), qual_begin(), getNumProtocols());
 }
 
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
@@ -1050,7 +1041,7 @@ QualType QualifierCollector::apply(const Type *T) const {
 
 void ObjCInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
                                          const ObjCInterfaceDecl *Decl,
-                                         ObjCProtocolDecl **protocols,
+                                         ObjCProtocolDecl * const *protocols,
                                          unsigned NumProtocols) {
   ID.AddPointer(Decl);
   for (unsigned i = 0; i != NumProtocols; i++)
@@ -1058,10 +1049,7 @@ void ObjCInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
 }
 
 void ObjCInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
-  if (getNumProtocols())
-    Profile(ID, getDecl(), &Protocols[0], getNumProtocols());
-  else
-    Profile(ID, getDecl(), 0, 0);
+  Profile(ID, getDecl(), qual_begin(), getNumProtocols());
 }
 
 Linkage Type::getLinkage() const { 

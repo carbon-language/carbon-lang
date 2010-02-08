@@ -2163,10 +2163,14 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
     ObjCObjectPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
   }
 
-  // No Match;
-  ObjCObjectPointerType *QType = new (*this, TypeAlignment)
-    ObjCObjectPointerType(*this, Canonical, InterfaceT, Protocols,
-                          NumProtocols);
+  // No match.
+  unsigned Size = sizeof(ObjCObjectPointerType) 
+                + NumProtocols * sizeof(ObjCProtocolDecl *);
+  void *Mem = Allocate(Size, TypeAlignment);
+  ObjCObjectPointerType *QType = new (Mem) ObjCObjectPointerType(Canonical, 
+                                                                 InterfaceT, 
+                                                                 Protocols,
+                                                                 NumProtocols);
 
   Types.push_back(QType);
   ObjCObjectPointerTypes.InsertNode(QType, InsertPos);
@@ -2199,9 +2203,13 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
     ObjCInterfaceTypes.FindNodeOrInsertPos(ID, InsertPos);
   }
 
-  ObjCInterfaceType *QType = new (*this, TypeAlignment)
-    ObjCInterfaceType(*this, Canonical, const_cast<ObjCInterfaceDecl*>(Decl),
-                      Protocols, NumProtocols);
+  unsigned Size = sizeof(ObjCInterfaceType) 
+    + NumProtocols * sizeof(ObjCProtocolDecl *);
+  void *Mem = Allocate(Size, TypeAlignment);
+  ObjCInterfaceType *QType = new (Mem) ObjCInterfaceType(Canonical, 
+                                        const_cast<ObjCInterfaceDecl*>(Decl),
+                                                         Protocols, 
+                                                         NumProtocols);
 
   Types.push_back(QType);
   ObjCInterfaceTypes.InsertNode(QType, InsertPos);
