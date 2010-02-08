@@ -220,3 +220,12 @@ namespace test2 {
 
   int *ns::count_ptr = &count;
 }
+
+// PR6259, invalid case
+namespace test3 {
+  // FIXME: this should really only trigger once
+  class A; // expected-note 2 {{forward declaration}}
+  void foo(const char *path) {
+    A::execute(path); // expected-error 2 {{incomplete type 'class test3::A' named in nested name specifier}}
+  }
+}

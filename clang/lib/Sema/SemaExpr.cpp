@@ -700,7 +700,13 @@ static void DecomposeTemplateName(LookupResult &R, const UnqualifiedId &Id) {
   R.resolveKind();
 }
 
+/// Determines whether the given record is "fully-formed" at the given
+/// location, i.e. whether a qualified lookup into it is assured of
+/// getting consistent results already.
 static bool IsFullyFormedScope(Sema &SemaRef, CXXRecordDecl *Record) {
+  if (!Record->hasDefinition())
+    return false;
+
   for (CXXRecordDecl::base_class_iterator I = Record->bases_begin(),
          E = Record->bases_end(); I != E; ++I) {
     CanQualType BaseT = SemaRef.Context.getCanonicalType((*I).getType());
@@ -708,7 +714,7 @@ static bool IsFullyFormedScope(Sema &SemaRef, CXXRecordDecl *Record) {
     if (!BaseRT) return false;
 
     CXXRecordDecl *BaseRecord = cast<CXXRecordDecl>(BaseRT->getDecl());
-    if (!BaseRecord->isDefinition() ||
+    if (!BaseRecord->hasDefinition() ||
         !IsFullyFormedScope(SemaRef, BaseRecord))
       return false;
   }
