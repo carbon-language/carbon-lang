@@ -354,8 +354,7 @@ public: // Part of public interface to class.
   Store CopyLazyBindings(nonloc::LazyCompoundVal V, Store store,
                          const TypedRegion *R);
 
-  const ElementRegion *GetElementZeroRegion(const SymbolicRegion *SR,
-                                            QualType T);
+  const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
 
   //===------------------------------------------------------------------===//
   // State pruning.
@@ -927,11 +926,11 @@ static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
 }
 
 const ElementRegion *
-RegionStoreManager::GetElementZeroRegion(const SymbolicRegion *SR, QualType T) {
+RegionStoreManager::GetElementZeroRegion(const MemRegion *R, QualType T) {
   ASTContext &Ctx = getContext();
   SVal idx = ValMgr.makeZeroArrayIndex();
   assert(!T.isNull());
-  return MRMgr.getElementRegion(T, idx, SR, Ctx);
+  return MRMgr.getElementRegion(T, idx, R, Ctx);
 }
 
 SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
@@ -945,17 +944,8 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
-  // FIXME: return symbolic value for these cases.
-  // Example:
-  // void f(int* p) { int x = *p; }
-  // char* p = alloca();
-  // read(p);
-  // c = *p;
-  if (isa<AllocaRegion>(MR))
-    return UnknownVal();
-
-  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
-    MR = GetElementZeroRegion(SR, T);
+  if (isa<AllocaRegion>(MR) || isa<SymbolicRegion>(MR))
+    MR = GetElementZeroRegion(MR, T);
 
   if (isa<CodeTextRegion>(MR))
     return UnknownVal();
