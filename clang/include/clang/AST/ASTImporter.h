@@ -44,11 +44,15 @@ namespace clang {
     /// to the corresponding types in the "to" context.
     llvm::DenseMap<Type *, Type *> ImportedTypes;
     
+    /// \brief Mapping from the already-imported declarations in the "from"
+    /// context to the corresponding declarations in the "to" context.
+    llvm::DenseMap<Decl *, Decl *> ImportedDecls;
+    
   public:
     ASTImporter(ASTContext &ToContext, Diagnostic &ToDiags,
                 ASTContext &FromContext, Diagnostic &FromDiags);
     
-    ~ASTImporter();
+    virtual ~ASTImporter();
     
     /// \brief Import the given type from the "from" context into the "to"
     /// context.
@@ -126,6 +130,38 @@ namespace clang {
     /// \returns the equivalent identifier in the "to" context.
     IdentifierInfo *Import(IdentifierInfo *FromId);
 
+    /// \brief Cope with a name conflict when importing a declaration into the
+    /// given context.
+    ///
+    /// This routine is invoked whenever there is a name conflict while 
+    /// importing a declaration. The returned name will become the name of the
+    /// imported declaration. By default, the returned name is the same as the
+    /// original name, leaving the conflict unresolve such that name lookup
+    /// for this name is likely to find an ambiguity later.
+    ///
+    /// Subclasses may override this routine to resolve the conflict, e.g., by
+    /// renaming the declaration being imported.
+    ///
+    /// \param Name the name of the declaration being imported, which conflicts
+    /// with other declarations.
+    ///
+    /// \param DC the declaration context (in the "to" AST context) in which 
+    /// the name is being imported.
+    ///
+    /// \param IDNS the identifier namespace in which the name will be found.
+    ///
+    /// \param Decls the set of declarations with the same name as the
+    /// declaration being imported.
+    ///
+    /// \param NumDecls the number of conflicting declarations in \p Decls.
+    ///
+    /// \returns the name that the newly-imported declaration should have.
+    virtual DeclarationName HandleNameConflict(DeclarationName Name,
+                                               DeclContext *DC,
+                                               unsigned IDNS,
+                                               NamedDecl **Decls,
+                                               unsigned NumDecls);
+    
     /// \brief Retrieve the context that AST nodes are being imported into.
     ASTContext &getToContext() const { return ToContext; }
     
@@ -139,6 +175,16 @@ namespace clang {
     /// \brief Retrieve the diagnostics object to use to report errors within
     /// the context we're importing from.
     Diagnostic &getFromDiags() const { return FromDiags; }
+    
+    /// \brief Retrieve the mapping from declarations in the "from" context
+    /// to the already-imported declarations in the "to" context.
+    llvm::DenseMap<Decl *, Decl *> &getImportedDecls() { return ImportedDecls; }
+    
+    /// \brief Report a diagnostic in the "to" context.
+    DiagnosticBuilder ToDiag(SourceLocation Loc, unsigned DiagID);
+    
+    /// \brief Report a diagnostic in the "from" context.
+    DiagnosticBuilder FromDiag(SourceLocation Loc, unsigned DiagID);
   };
 }
 

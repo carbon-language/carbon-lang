@@ -15,12 +15,15 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeVisitor.h"
+#include "clang/AST/ASTDiagnostic.h"
 
 using namespace clang;
 
 namespace {
-  class ASTNodeImporter : public TypeVisitor<ASTNodeImporter, QualType> {
+  class ASTNodeImporter : public TypeVisitor<ASTNodeImporter, QualType>,
+                          public DeclVisitor<ASTNodeImporter, Decl *> {
     ASTImporter &Importer;
     
   public:
@@ -62,6 +65,9 @@ namespace {
     // FIXME: TypenameType
     QualType VisitObjCInterfaceType(ObjCInterfaceType *T);
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
+                            
+    // Importing declarations
+    Decl *VisitVarDecl(VarDecl *D);
   };
 }
 
@@ -425,6 +431,114 @@ QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
                                                           Protocols.size());
 }
 
+//----------------------------------------------------------------------------
+// Import Declarations
+//----------------------------------------------------------------------------
+Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
+  // Import the context of this declaration.
+  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+  if (!DC)
+    return 0;
+    
+  // Import the name of this declaration.
+  DeclarationName Name = Importer.Import(D->getDeclName());
+  if (D->getDeclName() && !Name)
+    return 0;
+  
+  // Import the type of this declaration.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+  
+  // Try to find a variable in our own ("to") context with the same name and
+  // in the same context as the variable we're importing.
+  if (!D->isFileVarDecl()) {
+    VarDecl *MergeWithVar = 0;
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    unsigned IDNS = Decl::IDNS_Ordinary;
+    for (DeclContext::lookup_result Lookup = DC->lookup(D->getDeclName());
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
+      
+      if (VarDecl *FoundVar = dyn_cast<VarDecl>(*Lookup.first)) {
+        // We have found a variable that we may need to merge with. Check it.
+        if (isExternalLinkage(FoundVar->getLinkage()) &&
+            isExternalLinkage(D->getLinkage())) {
+          if (Importer.getToContext().typesAreCompatible(T, 
+                                                         FoundVar->getType())) {
+            MergeWithVar = FoundVar;
+            break;
+          }
+
+          Importer.ToDiag(Loc, diag::err_odr_variable_type_inconsistent)
+            << Name << T << FoundVar->getType();
+          Importer.ToDiag(FoundVar->getLocation(), diag::note_odr_value_here)
+            << FoundVar->getType();
+        }
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+
+    if (MergeWithVar) {
+      // An equivalent variable with external linkage has been found. Link 
+      // the two declarations, then merge them.
+      Importer.getImportedDecls()[D] = MergeWithVar;
+      
+      if (VarDecl *DDef = D->getDefinition()) {
+        if (VarDecl *ExistingDef = MergeWithVar->getDefinition()) {
+          Importer.ToDiag(ExistingDef->getLocation(), 
+                          diag::err_odr_variable_multiple_def)
+            << Name;
+          Importer.FromDiag(DDef->getLocation(), diag::note_odr_defined_here);
+        } else {
+          Expr *Init = Importer.Import(DDef->getInit());
+          MergeWithVar->setInit(Importer.getToContext(), Init);
+        }
+      }
+      
+      return MergeWithVar;
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+      if (!Name)
+        return 0;
+    }
+  }
+  
+  TypeSourceInfo *TInfo = 0;
+  if (TypeSourceInfo *FromTInfo = D->getTypeSourceInfo()) {
+    TInfo = Importer.Import(FromTInfo);
+    if (!TInfo)
+      return 0;
+  }
+  
+  // Create the imported variable.
+  VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
+                                   Name.getAsIdentifierInfo(), T, TInfo,
+                                   D->getStorageClass());
+  Importer.getImportedDecls()[D] = ToVar;
+  
+  // Merge the initializer.
+  // FIXME: Can we really import any initializer? Alternatively, we could force
+  // ourselves to import every declaration of a variable and then only use
+  // getInit() here.
+  ToVar->setInit(Importer.getToContext(),
+                 Importer.Import(const_cast<Expr *>(D->getAnyInitializer())));
+
+  // FIXME: Other bits to merge?
+  
+  return ToVar;
+}
+
 ASTImporter::ASTImporter(ASTContext &ToContext, Diagnostic &ToDiags,
                          ASTContext &FromContext, Diagnostic &FromDiags)
   : ToContext(ToContext), FromContext(FromContext),
@@ -514,4 +628,22 @@ IdentifierInfo *ASTImporter::Import(IdentifierInfo *FromId) {
     return 0;
 
   return &ToContext.Idents.get(FromId->getName());
+}
+
+DeclarationName ASTImporter::HandleNameConflict(DeclarationName Name,
+                                                DeclContext *DC,
+                                                unsigned IDNS,
+                                                NamedDecl **Decls,
+                                                unsigned NumDecls) {
+  return Name;
+}
+
+DiagnosticBuilder ASTImporter::ToDiag(SourceLocation Loc, unsigned DiagID) {
+  return ToDiags.Report(FullSourceLoc(Loc, ToContext.getSourceManager()), 
+                        DiagID);
+}
+
+DiagnosticBuilder ASTImporter::FromDiag(SourceLocation Loc, unsigned DiagID) {
+  return FromDiags.Report(FullSourceLoc(Loc, FromContext.getSourceManager()), 
+                          DiagID);
 }

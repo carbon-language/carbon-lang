@@ -26,4 +26,12 @@ def err_asm_empty_symbolic_operand_name : Error<
 def err_asm_invalid_operand_number : Error<
   "invalid operand number in inline asm string">;
 
+// Importing ASTs
+def err_odr_variable_type_inconsistent : Error<
+  "external variable %0 declared with incompatible types in different "
+  "translation units (%1 vs. %2)">;
+def err_odr_variable_multiple_def : Error<
+  "external variable %0 defined in multiple translation units">;
+def note_odr_value_here : Note<"declared here with type %0">;
+def note_odr_defined_here : Note<"also defined here">;
 }

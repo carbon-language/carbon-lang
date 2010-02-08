@@ -167,7 +167,7 @@ public:
 };
 
 /// ASTFrontendAction - Abstract base class to use for AST consumer based
-/// frontend actios.
+/// frontend actions.
 class ASTFrontendAction : public FrontendAction {
   /// ExecuteAction - Implement the ExecuteAction interface by running Sema on
   /// the already initialized AST consumer.

@@ -2724,6 +2724,7 @@ def err_undeclared_protocol_suggest : Error<
   "cannot find protocol declaration for %0; did you mean %1?">;
 def note_base_class_specified_here : Note<
   "base class %0 specified here">;
+
 }
 
 
