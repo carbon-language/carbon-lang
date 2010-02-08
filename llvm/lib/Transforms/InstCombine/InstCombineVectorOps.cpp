@@ -162,7 +162,8 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // property.
     if (EI.getOperand(0)->hasOneUse() && VectorWidth != 1) {
       APInt UndefElts(VectorWidth, 0);
-      APInt DemandedMask(VectorWidth, 1 << IndexVal);
+      APInt DemandedMask(VectorWidth, 0);
+      DemandedMask.set(IndexVal);
       if (Value *V = SimplifyDemandedVectorElts(EI.getOperand(0),
                                                 DemandedMask, UndefElts)) {
         EI.setOperand(0, V);

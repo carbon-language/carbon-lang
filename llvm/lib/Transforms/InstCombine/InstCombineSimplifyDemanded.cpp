@@ -767,7 +767,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 /// operation, the operation is simplified, then the resultant value is
 /// returned.  This returns null if no change was made.
 Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
-                                                APInt& UndefElts,
+                                                APInt &UndefElts,
                                                 unsigned Depth) {
   unsigned VWidth = cast<VectorType>(V->getType())->getNumElements();
   APInt EltMask(APInt::getAllOnesValue(VWidth));
@@ -777,13 +777,15 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     // If the entire vector is undefined, just return this info.
     UndefElts = EltMask;
     return 0;
-  } else if (DemandedElts == 0) { // If nothing is demanded, provide undef.
+  }
+  
+  if (DemandedElts == 0) { // If nothing is demanded, provide undef.
     UndefElts = EltMask;
     return UndefValue::get(V->getType());
   }
 
   UndefElts = 0;
-  if (ConstantVector *CP = dyn_cast<ConstantVector>(V)) {
+  if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
     const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Undef = UndefValue::get(EltTy);
 
@@ -792,23 +794,25 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       if (!DemandedElts[i]) {   // If not demanded, set to undef.
         Elts.push_back(Undef);
         UndefElts.set(i);
-      } else if (isa<UndefValue>(CP->getOperand(i))) {   // Already undef.
+      } else if (isa<UndefValue>(CV->getOperand(i))) {   // Already undef.
         Elts.push_back(Undef);
         UndefElts.set(i);
       } else {                               // Otherwise, defined.
-        Elts.push_back(CP->getOperand(i));
+        Elts.push_back(CV->getOperand(i));
       }
 
     // If we changed the constant, return it.
     Constant *NewCP = ConstantVector::get(Elts);
-    return NewCP != CP ? NewCP : 0;
-  } else if (isa<ConstantAggregateZero>(V)) {
+    return NewCP != CV ? NewCP : 0;
+  }
+  
+  if (isa<ConstantAggregateZero>(V)) {
     // Simplify the CAZ to a ConstantVector where the non-demanded elements are
     // set to undef.
     
     // Check if this is identity. If so, return 0 since we are not simplifying
     // anything.
-    if (DemandedElts == ((1ULL << VWidth) -1))
+    if (DemandedElts.isAllOnesValue())
       return 0;
     
     const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
