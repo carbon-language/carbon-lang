@@ -24,6 +24,11 @@
 <!--      <a href="/false_positives.html">False&nbsp;Positives</a> -->
       <a href="/annotations.html">Source-level Annotations</a>
   </div>
+  
+  <div class="submenu">
+    <label>Development</label>
+      <a href="/dev_cxx.html">Analysis support for C++</a>
+  </div>
 
   <div class="submenu">
     <label>Clang Mailing Lists</label>
