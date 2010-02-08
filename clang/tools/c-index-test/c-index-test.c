@@ -196,20 +196,20 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
   clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
                                  &file, &line, &column, 0);
   if (file) {
-    CXSourceRange *ranges = 0;
-    unsigned num_ranges;
-    unsigned i;
+    unsigned i, n;
     unsigned printed_any_ranges = 0;
     
     fprintf(out, "%s:%d:%d:", clang_getFileName(file), line, column);
   
-    clang_getDiagnosticRanges(Diagnostic, &ranges, &num_ranges);
-    for (i = 0; i != num_ranges; ++i) {
+    n = clang_getDiagnosticNumRanges(Diagnostic);
+    for (i = 0; i != n; ++i) {
       CXFile start_file, end_file;
+      CXSourceRange range = clang_getDiagnosticRange(Diagnostic, i);
+      
       unsigned start_line, start_column, end_line, end_column;
-      clang_getInstantiationLocation(clang_getRangeStart(ranges[i]),
+      clang_getInstantiationLocation(clang_getRangeStart(range),
                                      &start_file, &start_line, &start_column,0);
-      clang_getInstantiationLocation(clang_getRangeEnd(ranges[i]),
+      clang_getInstantiationLocation(clang_getRangeEnd(range),
                                      &end_file, &end_line, &end_column, 0);
       
       if (start_file != end_file || start_file != file)
@@ -219,7 +219,6 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
               end_column+1);
       printed_any_ranges = 1;
     }
-    clang_disposeDiagnosticRanges(ranges, num_ranges);
     if (printed_any_ranges)
       fprintf(out, ":");
     

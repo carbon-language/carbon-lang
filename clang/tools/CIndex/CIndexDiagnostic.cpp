@@ -106,33 +106,23 @@ CXString clang_getDiagnosticSpelling(CXDiagnostic Diag) {
   return CIndexer::createCXString(Spelling.str(), true);
 }
 
-void clang_getDiagnosticRanges(CXDiagnostic Diag, 
-                               CXSourceRange **Ranges, 
-                               unsigned *NumRanges) {
-  if (Ranges) 
-    *Ranges = 0;
-  if (NumRanges)
-    *NumRanges = 0;
-  
+unsigned clang_getDiagnosticNumRanges(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || !Ranges || !NumRanges || 
-      !StoredDiag->Info.getNumRanges() || 
-      StoredDiag->Info.getLocation().isInvalid())
-    return;
+  if (!StoredDiag || StoredDiag->Info.getLocation().isInvalid())
+    return 0;
   
-  unsigned N = StoredDiag->Info.getNumRanges();
-  *Ranges = (CXSourceRange *)malloc(sizeof(CXSourceRange) * N);
-  *NumRanges = N;
-  for (unsigned I = 0; I != N; ++I)
-    (*Ranges)[I] = translateSourceRange(
-                                    StoredDiag->Info.getLocation().getManager(),
-                                        *StoredDiag->LangOptsPtr,
-                                        StoredDiag->Info.getRange(I));
+  return StoredDiag->Info.getNumRanges();
 }
-
-void clang_disposeDiagnosticRanges(CXSourceRange *Ranges, 
-                                   unsigned NumRanges) {
-  free(Ranges);
+  
+CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diag, unsigned Range) {
+  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
+  if (!StoredDiag || Range >= StoredDiag->Info.getNumRanges() || 
+      StoredDiag->Info.getLocation().isInvalid())
+    return clang_getNullRange();
+  
+  return translateSourceRange(StoredDiag->Info.getLocation().getManager(),
+                              *StoredDiag->LangOptsPtr,
+                              StoredDiag->Info.getRange(Range));
 }
 
 unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diag) {

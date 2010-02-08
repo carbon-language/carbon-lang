@@ -446,32 +446,28 @@ CINDEX_LINKAGE CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic);
  * \brief Retrieve the text of the given diagnostic.
  */
 CINDEX_LINKAGE CXString clang_getDiagnosticSpelling(CXDiagnostic);
+
+/**
+ * \brief Determine the number of source ranges associated with the given
+ * diagnostic.
+ */
+CINDEX_LINKAGE unsigned clang_getDiagnosticNumRanges(CXDiagnostic);
   
 /**
- * \brief Retrieve the source ranges associated with the diagnostic.
+ * \brief Retrieve a source range associated with the diagnostic.
  *
- * These source ranges highlight important elements in the source
+ * A diagnostic's source ranges highlight important elements in the source
  * code. On the command line, Clang displays source ranges by
  * underlining them with '~' characters. 
  *
- * \param Diagnostic the diagnostic whose ranges are being extracted.
+ * \param Diagnostic the diagnostic whose range is being extracted.
  *
- * \param Ranges [out] will be set to a newly-allocated array
- * containing the source ranges of this diagnostic. These ranges must
- * be freed with \c clang_disposeDiagnosticRanges().
+ * \param Range the zero-based index specifying which range to 
  *
- * \param NumRanges [out] will be set to the number of source ranges
- * in the \p Ranges array.
+ * \returns the requested source range.
  */
-CINDEX_LINKAGE void clang_getDiagnosticRanges(CXDiagnostic Diagnostic, 
-                                              CXSourceRange **Ranges, 
-                                              unsigned *NumRanges);
-
-/**
- * \brief Free the source ranges returned by \c clang_getDiagnosticRanges().
- */
-CINDEX_LINKAGE void clang_disposeDiagnosticRanges(CXSourceRange *Ranges, 
-                                                  unsigned NumRanges);
+CINDEX_LINKAGE CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diagnostic, 
+                                                      unsigned Range);
 
 /**
  * \brief Determine the number of fix-it hints associated with the
