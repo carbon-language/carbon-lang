@@ -3760,6 +3760,8 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     MDNode *Variable = DI.getVariable();
     Value *Address = DI.getAddress();
+    if (!Address)
+      return 0;
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
       Address = BCI->getOperand(0);
     AllocaInst *AI = dyn_cast<AllocaInst>(Address);
