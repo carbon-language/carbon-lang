@@ -434,12 +434,20 @@ QualType ASTImporter::Import(QualType FromT) {
   if (FromT.isNull())
     return QualType();
   
-  // FIXME: Cache type mappings?
+  // Check whether we've already imported this type.  
+  llvm::DenseMap<Type *, Type *>::iterator Pos
+    = ImportedTypes.find(FromT.getTypePtr());
+  if (Pos != ImportedTypes.end())
+    return ToContext.getQualifiedType(Pos->second, FromT.getQualifiers());
   
+  // Import the type
   ASTNodeImporter Importer(*this);
   QualType ToT = Importer.Visit(FromT.getTypePtr());
   if (ToT.isNull())
     return ToT;
+  
+  // Record the imported type.
+  ImportedTypes[FromT.getTypePtr()] = ToT.getTypePtr();
   
   return ToContext.getQualifiedType(ToT, FromT.getQualifiers());
 }

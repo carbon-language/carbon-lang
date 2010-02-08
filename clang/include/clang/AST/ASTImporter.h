@@ -17,6 +17,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
   class ASTContext;
@@ -38,7 +39,11 @@ namespace clang {
     /// \brief The diagnostics object that we should use to emit diagnostics
     /// within the context we're importing to and from.
     Diagnostic &ToDiags, &FromDiags;
-          
+    
+    /// \brief Mapping from the already-imported types in the "from" context
+    /// to the corresponding types in the "to" context.
+    llvm::DenseMap<Type *, Type *> ImportedTypes;
+    
   public:
     ASTImporter(ASTContext &ToContext, Diagnostic &ToDiags,
                 ASTContext &FromContext, Diagnostic &FromDiags);
