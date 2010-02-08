@@ -46,42 +46,40 @@ MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
     getPICBaseSymbol(AsmPrinter.MF, Ctx);
 }
 
-/// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an
-/// MCOperand.
+/// GetSymbolFromOperand - Lower an MO_GlobalAddress or MO_ExternalSymbol
+/// operand to an MCSymbol.
 MCSymbol *X86MCInstLower::
-GetGlobalAddressSymbol(const MachineOperand &MO) const {
-  const GlobalValue *GV = MO.getGlobal();
-  
-  bool isImplicitlyPrivate = false;
-  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
-      MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
-      MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
-      MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-    isImplicitlyPrivate = true;
-  
+GetSymbolFromOperand(const MachineOperand &MO) const {
+  assert((MO.isGlobal() || MO.isSymbol()) && "Isn't a symbol reference");
+
   SmallString<128> Name;
-  Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   
-  if (getSubtarget().isTargetCygMing()) {
-    X86COFFMachineModuleInfo &COFFMMI = 
-      AsmPrinter.MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-    COFFMMI.DecorateCygMingName(Name, GV, *AsmPrinter.TM.getTargetData());
+  if (MO.isGlobal()) {
+    bool isImplicitlyPrivate = false;
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
+        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
+        MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+      isImplicitlyPrivate = true;
+    
+    const GlobalValue *GV = MO.getGlobal();
+    Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+  
+    if (getSubtarget().isTargetCygMing()) {
+      X86COFFMachineModuleInfo &COFFMMI = 
+        AsmPrinter.MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+      COFFMMI.DecorateCygMingName(Name, GV, *AsmPrinter.TM.getTargetData());
+    }
+  } else {
+    assert(MO.isSymbol());
+    Name += AsmPrinter.MAI->getGlobalPrefix();
+    Name += MO.getSymbolName();
   }
-  
+
+  // If the target flags on the operand changes the name of the symbol, do that
+  // before we return the symbol.
   switch (MO.getTargetFlags()) {
-  default: llvm_unreachable("Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:                // These don't modify the symbol name.
-  case X86II::MO_PIC_BASE_OFFSET:
-  case X86II::MO_TLSGD:
-  case X86II::MO_GOTTPOFF:
-  case X86II::MO_INDNTPOFF:
-  case X86II::MO_TPOFF:
-  case X86II::MO_NTPOFF:
-  case X86II::MO_GOTPCREL:
-  case X86II::MO_GOT:
-  case X86II::MO_GOTOFF:
-  case X86II::MO_PLT:
-    break;
+  default: break;
   case X86II::MO_DLLIMPORT: {
     // Handle dllimport linkage.
     const char *Prefix = "__imp_";
@@ -94,71 +92,39 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
 
     MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
-    if (StubSym == 0)
-      StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
+    if (StubSym == 0) {
+      assert(MO.isGlobal() && "Extern symbol not handled yet");
+      StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
+    }
     return Sym;
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
-    if (StubSym == 0)
-      StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
-    return Sym;
-  }
-  case X86II::MO_DARWIN_STUB: {
-    Name += "$stub";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
-    if (StubSym == 0)
-      StubSym = AsmPrinter.GetGlobalValueSymbol(GV);
-    return Sym;
-  }
-  }
-
-  return Ctx.GetOrCreateSymbol(Name.str());
-}
-
-MCSymbol *X86MCInstLower::
-GetExternalSymbolSymbol(const MachineOperand &MO) const {
-  SmallString<128> Name;
-  Name += AsmPrinter.MAI->getGlobalPrefix();
-  Name += MO.getSymbolName();
-  
-  switch (MO.getTargetFlags()) {
-  default: llvm_unreachable("Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:                // These don't modify the symbol name.
-  case X86II::MO_GOT_ABSOLUTE_ADDRESS:   // Doesn't modify symbol name.
-  case X86II::MO_PIC_BASE_OFFSET:
-  case X86II::MO_TLSGD:
-  case X86II::MO_GOTTPOFF:
-  case X86II::MO_INDNTPOFF:
-  case X86II::MO_TPOFF:
-  case X86II::MO_NTPOFF:
-  case X86II::MO_GOTPCREL:
-  case X86II::MO_GOT:
-  case X86II::MO_GOTOFF:
-  case X86II::MO_PLT:
-    break;
-  case X86II::MO_DLLIMPORT: {
-    // Handle dllimport linkage.
-    const char *Prefix = "__imp_";
-    Name.insert(Name.begin(), Prefix, Prefix+strlen(Prefix));
-    break;
-  }
-  case X86II::MO_DARWIN_STUB: {
-    Name += "$stub";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
-
     if (StubSym == 0) {
+      assert(MO.isGlobal() && "Extern symbol not handled yet");
+      StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
+    }
+    return Sym;
+  }
+  case X86II::MO_DARWIN_STUB: {
+    Name += "$stub";
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
+    if (StubSym)
+      return Sym;
+    
+    if (MO.isGlobal()) {
+      StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
+    } else {
       Name.erase(Name.end()-5, Name.end());
       StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
   }
   }
-  
+
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
@@ -270,10 +236,10 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
                        MO.getMBB()->getSymbol(Ctx), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
+      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
       break;
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
+      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
       break;
     case MachineOperand::MO_JumpTableIndex:
       MCOp = LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
@@ -432,7 +398,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitLabel(DotSym);
     
     // Now that we have emitted the label, lower the complex operand expression.
-    MCSymbol *OpSym = MCInstLowering.GetExternalSymbolSymbol(MI->getOperand(2));
+    MCSymbol *OpSym = MCInstLowering.GetSymbolFromOperand(MI->getOperand(2));
     
     const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
     const MCExpr *PICBase =
