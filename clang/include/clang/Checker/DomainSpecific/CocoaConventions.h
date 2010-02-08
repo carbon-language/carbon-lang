@@ -28,8 +28,8 @@ namespace cocoa {
     return deriveNamingConvention(S) == CreateRule;
   }
   
-  bool isRefType(QualType RetTy, const char* prefix,
-                 const char* name = 0);
+  bool isRefType(QualType RetTy, llvm::StringRef Prefix,
+                 llvm::StringRef Name = llvm::StringRef());
   
   bool isCFObjectRef(QualType T);
   
