@@ -25,6 +25,11 @@ _EDLiteralTokenAbsoluteValue
 _EDRegisterTokenValue
 _EDNumOperands
 _EDGetOperand
+_EDOperandIsRegister
+_EDOperandIsImmediate
+_EDOperandIsMemory
+_EDRegisterOperandValue
+_EDImmediateOperandValue
 _EDEvaluateOperand
 _EDBlockCreateInsts
 _EDBlockEvaluateOperand

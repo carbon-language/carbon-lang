@@ -368,10 +368,55 @@ int EDNumOperands(EDInstRef inst);
 int EDGetOperand(EDOperandRef *operand,
                  EDInstRef inst,
                  int index);
+  
+/*!
+ @function EDOperandIsRegister
+ @param operand The operand to be queried.
+ @result 1 if the operand names a register; 0 if not; -1 on error.
+ */
+int EDOperandIsRegister(EDOperandRef operand);
+
+/*!
+ @function EDOperandIsImmediate
+ @param operand The operand to be queried.
+ @result 1 if the operand specifies an immediate value; 0 if not; -1 on error.
+ */
+int EDOperandIsImmediate(EDOperandRef operand);
+
+/*!
+ @function EDOperandIsMemory
+ @param operand The operand to be queried.
+ @result 1 if the operand specifies a location in memory; 0 if not; -1 on error.
+ */
+int EDOperandIsMemory(EDOperandRef operand);
+
+/*!
+ @function EDRegisterOperandValue
+ @param value A pointer whose target will be filled in with the LLVM register ID
+   of the register named by the operand.  
+ @param operand The operand to be queried.
+ @result 0 on success; -1 otherwise.
+ */
+int EDRegisterOperandValue(unsigned *value,
+                           EDOperandRef operand);
+  
+/*!
+ @function EDImmediateOperandValue
+ @param value A pointer whose target will be filled in with the value of the
+   immediate.
+ @param operand The operand to be queried.
+ @result 0 on success; -1 otherwise.
+ */
+int EDImmediateOperandValue(uint64_t *value,
+                            EDOperandRef operand);
 
 /*!
  @function EDEvaluateOperand
- Evaluates an operand using a client-supplied register state accessor.
+ Evaluates an operand using a client-supplied register state accessor.  Register
+ operands are evaluated by reading the value of the register; immediate operands
+ are evaluated by reporting the immediate value; memory operands are evaluated
+ by computing the target address (with only those relocations applied that were
+ already applied to the original bytes).
  @param result A pointer whose target is to be filled with the result of
    evaluating the operand.
  @param operand The operand to be evaluated.

@@ -221,7 +221,7 @@ int EDRegisterOperandValue(unsigned *value,
   return 0;
 }
 
-int EDImmedateOperandValue(uint64_t *value,
+int EDImmediateOperandValue(uint64_t *value,
                            EDOperandRef operand) {
   if(!operand->isImmediate())
     return -1;
