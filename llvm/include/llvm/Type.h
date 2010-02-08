@@ -233,7 +233,27 @@ public:
   /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
   ///
   bool isFPOrFPVector() const;
-  
+ 
+  /// isFunction - True if this is an instance of FunctionType.
+  ///
+  bool isFunction() const { return ID == FunctionTyID; }
+
+  /// isStruct - True if this is an instance of StructType.
+  ///
+  bool isStruct() const { return ID == StructTyID; }
+
+  /// isArray - True if this is an instance of ArrayType.
+  ///
+  bool isArray() const { return ID == ArrayTyID; }
+
+  /// isPointer - True if this is an instance of PointerType.
+  ///
+  bool isPointer() const { return ID == PointerTyID; }
+
+  /// isVector - True if this is an instance of VectorType.
+  ///
+  bool isVector() const { return ID == VectorTyID; }
+
   /// isAbstract - True if the type is either an Opaque type, or is a derived
   /// type that includes an opaque type somewhere in it.
   ///
