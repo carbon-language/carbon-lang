@@ -89,6 +89,22 @@ namespace reference_parameters {
     S3<vi> s3v;
     S3<cvi> s3cv;
   }
+  
+  namespace PR6250 {
+    template <typename T, const T &ref> void inc() {
+      ref++; // expected-error{{read-only variable is not assignable}}
+    }
+  
+    template<typename T, const T &ref> void bind() {
+      T &ref2 = ref; // expected-error{{drops qualifiers}}
+    }
+    
+    int counter;
+    void test() {
+      inc<int, counter>(); // expected-note{{instantiation of}}
+      bind<int, counter>(); // expected-note{{instantiation of}}
+    }
+  }
 }
 
 //     -- For a non-type template-parameter of type pointer to function, the

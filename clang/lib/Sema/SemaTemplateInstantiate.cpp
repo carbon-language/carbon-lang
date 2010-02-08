@@ -701,7 +701,7 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
 
 Sema::OwningExprResult
 TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
-                                                   NonTypeTemplateParmDecl *NTTP) {
+                                               NonTypeTemplateParmDecl *NTTP) {
   // If the corresponding template argument is NULL or non-existent, it's
   // because we are performing instantiation from explicitly-specified
   // template arguments in a function template, but there were some
@@ -731,7 +731,8 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
     // Derive the type we want the substituted decl to have.  This had
     // better be non-dependent, or these checks will have serious problems.
     QualType TargetType = SemaRef.SubstType(NTTP->getType(), TemplateArgs,
-                                            E->getLocation(), DeclarationName());
+                                            E->getLocation(), 
+                                            DeclarationName());
     assert(!TargetType.isNull() && "type substitution failed for param type");
     assert(!TargetType->isDependentType() && "param type still dependent");
 
@@ -769,6 +770,8 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
       }
     }
 
+    QualType T = VD->getType().getNonReferenceType();
+
     if (TargetType->isPointerType()) {
       // C++03 [temp.arg.nontype]p5:
       //  - For a non-type template-parameter of type pointer to
@@ -779,8 +782,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
       //    applied.
 
       OwningExprResult RefExpr
-        = SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
-                                   E->getLocation());
+        = SemaRef.BuildDeclRefExpr(VD, T, E->getLocation());
       if (RefExpr.isInvalid())
         return SemaRef.ExprError();
 
@@ -799,10 +801,14 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
       return SemaRef.Owned(RefE);
     }
 
-    // FIXME: template parameters can add qualifiers to a reference.
-
-    return SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
-                                    E->getLocation());
+    // If the non-type template parameter has reference type, qualify the
+    // resulting declaration reference with the extra qualifiers on the
+    // type that the reference refers to.
+    if (const ReferenceType *TargetRef = TargetType->getAs<ReferenceType>())
+      T = SemaRef.Context.getQualifiedType(T, 
+                                  TargetRef->getPointeeType().getQualifiers());
+    
+    return SemaRef.BuildDeclRefExpr(VD, T, E->getLocation());
   }
 
   assert(Arg.getKind() == TemplateArgument::Integral);
