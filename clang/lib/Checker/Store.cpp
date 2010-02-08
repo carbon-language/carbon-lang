@@ -19,7 +19,7 @@ using namespace clang;
 
 StoreManager::StoreManager(GRStateManager &stateMgr)
   : ValMgr(stateMgr.getValueManager()), StateMgr(stateMgr),
-    MRMgr(ValMgr.getRegionManager()) {}
+    MRMgr(ValMgr.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
 const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
                                               QualType EleTy, uint64_t index) {

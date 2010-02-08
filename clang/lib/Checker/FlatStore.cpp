@@ -179,8 +179,8 @@ void FlatStoreManager::iterBindings(Store store, BindingsHandler& f) {
 Interval FlatStoreManager::RegionToInterval(const MemRegion *R) { 
   switch (R->getKind()) {
   case MemRegion::VarRegionKind: {
-    QualType T = cast<VarRegion>(R)->getValueType(StateMgr.getContext());
-    uint64_t Size = StateMgr.getContext().getTypeSize(T);
+    QualType T = cast<VarRegion>(R)->getValueType(Ctx);
+    uint64_t Size = Ctx.getTypeSize(T);
     return Interval(0, Size-1);
   }
   default:

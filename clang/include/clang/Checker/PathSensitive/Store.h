@@ -41,6 +41,7 @@ protected:
 
   /// MRMgr - Manages region objects associated with this StoreManager.
   MemRegionManager &MRMgr;
+  ASTContext &Ctx;
 
   StoreManager(GRStateManager &stateMgr);
 
