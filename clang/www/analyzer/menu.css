@@ -5,6 +5,7 @@ body {
 #nav {
   font-weight: bold;
   color: #2d58b7;
+  width:100%;
 }
 #nav a {
   text-decoration: none;
