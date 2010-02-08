@@ -1,34 +1,37 @@
-<div id="menu">
-  <div>
-    <a href="http://llvm.org/">LLVM Home</a>
-    <a href="http://clang.llvm.org/">Clang Home</a>    
-  </div>
-
-  <div class="submenu">
-    <label>Quick Links</label>
-    <a href="/index.html">About the Analyzer</a>
-    <a href="/filing_bugs.html">Filing Bugs</a>    
-  </div>
-    
-  <div class="submenu">
-    <label>User Manual</label>
-<!--      <a href="/design_philosphy.html">Design&nbsp;Philosophy</a> -->
-      <a href="/installation.html">Obtaining&nbsp;the&nbsp;Analyzer</a>
-      <a href="/scan-build.html">Running&nbsp;the&nbsp;Analyzer</tt></a>
-      <a href="/available_checks.html">Available&nbsp;Checks</a>
-<!--      <a href="/false_positives.html">False&nbsp;Positives</a> -->
-      <a href="/annotations.html">Source-level Annotations</a>
-  </div>
-  
-  <div class="submenu">
-    <label>Development</label>
-      <a href="/dev_cxx.html">Analysis support for C++</a>
-  </div>
-
-  <div class="submenu">
-    <label>Clang Mailing Lists</label>
-    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
-    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>
-  </div>
-  
+<div id="nav">
+  <ul class="menubar">
+    <li>
+      <a href="/index.html">About</a>
+      <ul>
+        <li><a href="/index.html">About the Analyzer</a></li>
+        <li><a href="http://llvm.org/">LLVM Project</a></li>
+        <li><a href="http://clang.llvm.org/">Clang Project</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="/filing_bugs.html">Filing Bugs</a>
+    </li>
+    <li>
+      User Manual
+      <ul>
+        <li><a href="/installation.html">Obtaining the Analyzer</a></li>
+        <li><a href="/scan-build.html">Running the Analyzer</tt></a></li>
+        <li><a href="/available_checks.html">Available Checks</a></li>
+        <li><a href="/annotations.html">Source-level Annotations</a></li>
+      </ul>
+    </li>
+    <li>
+      Development
+      <ul>
+        <li><a href="/dev_cxx.html">Analysis support for C++</a></li>
+      </ul>
+    </li>
+    <li>
+      Mailing Lists
+      <ul>
+        <li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a></li>
+        <li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a></li>
+      </ul>
+    </li>
+  </ul>
 </div>
