@@ -406,7 +406,7 @@ PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
 static bool needsFP(const MachineFunction &MF) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return NoFramePointerElim || MFI->hasVarSizedObjects() ||
-    (PerformTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
+    (GuaranteedTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
 }
 
 static bool spillsCR(const MachineFunction &MF) {
@@ -486,7 +486,7 @@ static bool MustSaveLR(const MachineFunction &MF, unsigned LR) {
 void PPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (PerformTailCallOpt && I->getOpcode() == PPC::ADJCALLSTACKUP) {
+  if (GuaranteedTailCallOpt && I->getOpcode() == PPC::ADJCALLSTACKUP) {
     // Add (actually subtract) back the amount the callee popped on return.
     if (int CalleeAmt =  I->getOperand(1).getImm()) {
       bool is64Bit = Subtarget.isPPC64();
@@ -1050,7 +1050,7 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Reserve stack space to move the linkage area to in case of a tail call.
   int TCSPDelta = 0;
-  if (PerformTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
+  if (GuaranteedTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
     MF.getFrameInfo()->CreateFixedObject(-1 * TCSPDelta, TCSPDelta,
                                          true, false);
   }
@@ -1160,7 +1160,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
 
   // Take into account stack space reserved for tail calls.
   int TCSPDelta = 0;
-  if (PerformTailCallOpt && (TCSPDelta = PFI->getTailCallSPDelta()) < 0) {
+  if (GuaranteedTailCallOpt && (TCSPDelta = PFI->getTailCallSPDelta()) < 0) {
     LowerBound = TCSPDelta;
   }
 
@@ -1575,7 +1575,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     // The loaded (or persistent) stack pointer value is offset by the 'stwu'
     // on entry to the function.  Add this offset back now.
     if (!isPPC64) {
-      // If this function contained a fastcc call and PerformTailCallOpt is
+      // If this function contained a fastcc call and GuaranteedTailCallOpt is
       // enabled (=> hasFastCall()==true) the fastcc call might contain a tail
       // call which invalidates the stack pointer value in SP(0). So we use the
       // value of R31 in this case.
@@ -1654,7 +1654,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
 
   // Callee pop calling convention. Pop parameter/linkage area. Used for tail
   // call optimization
-  if (PerformTailCallOpt && RetOpcode == PPC::BLR &&
+  if (GuaranteedTailCallOpt && RetOpcode == PPC::BLR &&
       MF.getFunction()->getCallingConv() == CallingConv::Fast) {
      PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
      unsigned CallerAllocatedAmt = FI->getMinReservedArea();

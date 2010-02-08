@@ -1247,7 +1247,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
   // tail call optimization. Fastisel doesn't know how to do that.
-  if (CC == CallingConv::Fast && PerformTailCallOpt)
+  if (CC == CallingConv::Fast && GuaranteedTailCallOpt)
     return false;
 
   // Let SDISel handle vararg functions.

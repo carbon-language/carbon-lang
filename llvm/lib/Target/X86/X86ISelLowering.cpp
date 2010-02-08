@@ -1391,7 +1391,7 @@ bool X86TargetLowering::IsCalleePop(bool IsVarArg, CallingConv::ID CallingConv){
   case CallingConv::X86_FastCall:
     return !Subtarget->is64Bit();
   case CallingConv::Fast:
-    return PerformTailCallOpt;
+    return GuaranteedTailCallOpt;
   }
 }
 
@@ -1441,7 +1441,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
 /// FuncIsMadeTailCallSafe - Return true if the function is being made into
 /// a tailcall target by changing its ABI.
 static bool FuncIsMadeTailCallSafe(CallingConv::ID CC) {
-  return PerformTailCallOpt && CC == CallingConv::Fast;
+  return GuaranteedTailCallOpt && CC == CallingConv::Fast;
 }
 
 SDValue
@@ -1797,7 +1797,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     // Sibcalls are automatically detected tailcalls which do not require
     // ABI changes.
-    if (!PerformTailCallOpt && isTailCall)
+    if (!GuaranteedTailCallOpt && isTailCall)
       IsSibcall = true;
 
     if (isTailCall)
@@ -1819,7 +1819,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // This is a sibcall. The memory operands are available in caller's
     // own caller's stack.
     NumBytes = 0;
-  else if (PerformTailCallOpt && CallConv == CallingConv::Fast)
+  else if (GuaranteedTailCallOpt && CallConv == CallingConv::Fast)
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
@@ -1986,7 +1986,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     int FI = 0;
     // Do not flag preceeding copytoreg stuff together with the following stuff.
     InFlag = SDValue();
-    if (PerformTailCallOpt) {
+    if (GuaranteedTailCallOpt) {
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
         if (VA.isRegLoc())
@@ -2311,7 +2311,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 
   // If -tailcallopt is specified, make fastcc functions tail-callable.
   const Function *CallerF = DAG.getMachineFunction().getFunction();
-  if (PerformTailCallOpt) {
+  if (GuaranteedTailCallOpt) {
     if (CalleeCC == CallingConv::Fast &&
         CallerF->getCallingConv() == CalleeCC)
       return true;

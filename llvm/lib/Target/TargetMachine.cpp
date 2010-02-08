@@ -40,7 +40,7 @@ namespace llvm {
   bool UnwindTablesMandatory;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
-  bool PerformTailCallOpt;
+  bool GuaranteedTailCallOpt;
   unsigned StackAlignment;
   bool RealignStack;
   bool DisableJumpTables;
@@ -173,9 +173,9 @@ DefCodeModel("code-model",
                "Large code model"),
     clEnumValEnd));
 static cl::opt<bool, true>
-EnablePerformTailCallOpt("tailcallopt",
+EnableGuaranteedTailCallOpt("tailcallopt",
   cl::desc("Turn fastcc calls into tail calls by (potentially) changing ABI."),
-  cl::location(PerformTailCallOpt),
+  cl::location(GuaranteedTailCallOpt),
   cl::init(false));
 static cl::opt<unsigned, true>
 OverrideStackAlignment("stack-alignment",
