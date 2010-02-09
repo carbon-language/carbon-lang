@@ -121,10 +121,10 @@ private:
   llvm::Constant *ExportUniqueString(const std::string &Str, const std::string
           prefix);
   llvm::Constant *MakeGlobal(const llvm::StructType *Ty,
-    std::vector<llvm::Constant*> &V, const std::string &Name="",
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
     llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
   llvm::Constant *MakeGlobal(const llvm::ArrayType *Ty,
-    std::vector<llvm::Constant*> &V, const std::string &Name="",
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
     llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
   llvm::GlobalVariable *ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
       const ObjCIvarDecl *Ivar);
@@ -393,7 +393,7 @@ llvm::Constant *CGObjCGNU::ExportUniqueString(const std::string &Str,
 }
 
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
-    std::vector<llvm::Constant*> &V, const std::string &Name,
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name,
     llvm::GlobalValue::LinkageTypes linkage) {
   llvm::Constant *C = llvm::ConstantStruct::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
@@ -401,7 +401,7 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
 }
 
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
-    std::vector<llvm::Constant*> &V, const std::string &Name,
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name,
     llvm::GlobalValue::LinkageTypes linkage) {
   llvm::Constant *C = llvm::ConstantArray::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
@@ -1595,7 +1595,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
   }
   // sizeof(ModuleTy)
-  llvm::TargetData td = llvm::TargetData::TargetData(&TheModule);
+  llvm::TargetData td(&TheModule);
   Elements.push_back(llvm::ConstantInt::get(LongTy,
                      td.getTypeSizeInBits(ModuleTy)/8));
   //FIXME: Should be the path to the file where this module was declared
@@ -1747,7 +1747,6 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   CGF.EmitBlock(TryHandler);
 
   // Get the correct versions of the exception handling intrinsics
-  llvm::TargetData td = llvm::TargetData::TargetData(&TheModule);
   llvm::Value *llvm_eh_exception =
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
   llvm::Value *llvm_eh_selector =
