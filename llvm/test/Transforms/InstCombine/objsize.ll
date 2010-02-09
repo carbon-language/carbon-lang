@@ -1,5 +1,6 @@
 ; Test a pile of objectsize bounds checking.
-; RUN: opt < %s -objsize-lower -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
+; XFAIL: *
 ; We need target data to get the sizes of the arrays and structures.
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
@@ -18,8 +19,8 @@ define i8* @bar() nounwind {
 entry:
   %retval = alloca i8*
   %0 = call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([60 x i8]* @a, i32 0, i32 0), i1 false)
-; CHECK: %cmp = icmp ne i32 60, -1  
   %cmp = icmp ne i32 %0, -1
+; CHECK: br i1 true
   br i1 %cmp, label %cond.true, label %cond.false
 
 cond.true:
@@ -31,10 +32,9 @@ cond.false:
   ret i8* %2;
 }
 
-; FIXME: This should return 0.
 define i32 @f() nounwind {
 ; CHECK: @f
-; CHECK-NEXT: ret i32 -1
+; CHECK-NEXT: ret i32 0
   %1 = call i32 @llvm.objectsize.i32(i8* getelementptr ([60 x i8]* @a, i32 1, i32 0), i1 false)
   ret i32 %1
 }
@@ -43,7 +43,7 @@ define i32 @f() nounwind {
 
 define i1 @baz() nounwind {
 ; CHECK: @baz
-; CHECK-NEXT: icmp eq i32 -1, -1
+; CHECK-NEXT: llvm.objectsize.i32
   %1 = tail call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([0 x i8]* @window, i32 0, i32 0), i1 false)
   %2 = icmp eq i32 %1, -1
   ret i1 %2
