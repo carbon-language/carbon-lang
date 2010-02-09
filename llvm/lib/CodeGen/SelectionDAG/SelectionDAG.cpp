@@ -5224,11 +5224,12 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
       }
     }
     if (I == SortedPos) {
-      allnodes_iterator J = I;
-      SDNode *S = ++J;
-      dbgs() << "Offending node:\n";
+#ifndef NDEBUG
+      SDNode *S = ++I;
+      dbgs() << "Overran sorted position:\n";
       S->dumprFull();
-      assert(0 && "Overran sorted position");
+#endif
+      llvm_unreachable(0);
     }
   }
 
