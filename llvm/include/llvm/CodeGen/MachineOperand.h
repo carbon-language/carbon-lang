@@ -246,11 +246,13 @@ public:
   
   void setIsUse(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand accessor");
+    assert((Val || !isDebug()) && "Marking a debug operation as def");
     IsDef = !Val;
   }
   
   void setIsDef(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand accessor");
+    assert((!Val || !isDebug()) && "Marking a debug operation as def");
     IsDef = Val;
   }
 
@@ -261,6 +263,7 @@ public:
 
   void setIsKill(bool Val = true) {
     assert(isReg() && !IsDef && "Wrong MachineOperand accessor");
+    assert((!Val || !isDebug()) && "Marking a debug operation as kill");
     IsKill = Val;
   }
   
