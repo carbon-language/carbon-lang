@@ -546,7 +546,10 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   ASTContext &Context = CGM.getContext();
   QualType ThisPtr = 
     Context.getPointerType(Context.getTagDeclType(Method->getParent()));
-  Elts.push_back(getOrCreateType(ThisPtr, Unit));
+  llvm::DIType ThisPtrType = 
+    DebugFactory.CreateArtificialType(getOrCreateType(ThisPtr, Unit));
+  TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType.getNode();  
+  Elts.push_back(ThisPtrType);
 
   // Copy rest of the arguments.
   for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
