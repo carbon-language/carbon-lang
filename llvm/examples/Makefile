@@ -10,7 +10,8 @@ LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-PARALLEL_DIRS:= BrainF Fibonacci HowToUseJIT Kaleidoscope ModuleMaker
+PARALLEL_DIRS:= BrainF Fibonacci HowToUseJIT Kaleidoscope ModuleMaker \
+		ExceptionDemo
 
 ifeq ($(HAVE_PTHREAD),1)
 PARALLEL_DIRS += ParallelJIT 
