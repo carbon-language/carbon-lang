@@ -25,5 +25,5 @@ int main() {
         A& ra = f(); // expected-error {{non-const lvalue reference to type 'struct A' cannot bind to a temporary of type 'class B'}}
 }
 
-struct PR6177 { A (&x)[1]; };
-PR6177 x = {{A()}}; // expected-error{{non-const lvalue reference to type 'struct A [1]' cannot bind to a temporary of type 'struct A'}}
+struct PR6139 { A (&x)[1]; };
+PR6139 x = {{A()}}; // expected-error{{non-const lvalue reference to type 'struct A [1]' cannot bind to a temporary of type 'struct A'}}
