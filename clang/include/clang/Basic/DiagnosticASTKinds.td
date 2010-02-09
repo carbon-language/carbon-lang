@@ -34,4 +34,5 @@ def err_odr_variable_multiple_def : Error<
   "external variable %0 defined in multiple translation units">;
 def note_odr_value_here : Note<"declared here with type %0">;
 def note_odr_defined_here : Note<"also defined here">;
+def err_unsupported_ast_node: Error<"cannot import unsupported AST node %0">;
 }

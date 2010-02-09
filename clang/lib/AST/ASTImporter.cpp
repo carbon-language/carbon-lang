@@ -33,6 +33,7 @@ namespace {
     using DeclVisitor<ASTNodeImporter, Decl *>::Visit;
 
     // Importing types
+    QualType VisitType(Type *T);
     QualType VisitBuiltinType(BuiltinType *T);
     QualType VisitComplexType(ComplexType *T);
     QualType VisitPointerType(PointerType *T);
@@ -68,6 +69,7 @@ namespace {
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
                             
     // Importing declarations
+    Decl *VisitDecl(Decl *D);
     Decl *VisitVarDecl(VarDecl *D);
   };
 }
@@ -75,6 +77,12 @@ namespace {
 //----------------------------------------------------------------------------
 // Import Types
 //----------------------------------------------------------------------------
+
+QualType ASTNodeImporter::VisitType(Type *T) {
+  Importer.FromDiag(SourceLocation(), diag::err_unsupported_ast_node)
+    << T->getTypeClassName();
+  return QualType();
+}
 
 QualType ASTNodeImporter::VisitBuiltinType(BuiltinType *T) {
   switch (T->getKind()) {
@@ -435,6 +443,12 @@ QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
 //----------------------------------------------------------------------------
 // Import Declarations
 //----------------------------------------------------------------------------
+Decl *ASTNodeImporter::VisitDecl(Decl *D) {
+  Importer.FromDiag(SourceLocation(), diag::err_unsupported_ast_node)
+    << D->getDeclKindName();
+  return 0;
+}
+
 Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   // Import the context of this declaration.
   DeclContext *DC = Importer.ImportContext(D->getDeclContext());
