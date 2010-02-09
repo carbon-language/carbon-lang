@@ -641,7 +641,7 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DICompileUnit Unit,
         E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *Method = *I;
     
-    if (Method->isImplicit())
+    if (Method->isImplicit() && !Method->isUsed())
       continue;
 
     EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
@@ -666,7 +666,9 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DICompileUnit Unit,
       cast<CXXRecordDecl>(BI->getType()->getAs<RecordType>()->getDecl());
     
     if (BI->isVirtual()) {
-      BaseOffset = RL.getVBaseClassOffset(Base);
+      // virtual base offset index is -ve. The code generator emits dwarf
+      // expression where it expects +ve number.
+      BaseOffset = 0 - CGM.getVtableInfo().getVirtualBaseOffsetIndex(RD, Base);
       BFlags = llvm::DIType::FlagVirtual;
     } else
       BaseOffset = RL.getBaseClassOffset(Base);
