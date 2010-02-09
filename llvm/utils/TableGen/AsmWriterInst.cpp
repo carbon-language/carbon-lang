@@ -46,12 +46,11 @@ std::string AsmWriterOperand::getCode() const {
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
+                             unsigned Variant,
+                             int FirstOperandColumn,
+                             int OperandSpacing) {
   this->CGI = &CGI;
-  
-  unsigned Variant       = AsmWriter->getValueAsInt("Variant");
-  int FirstOperandColumn = AsmWriter->getValueAsInt("FirstOperandColumn");
-  int OperandSpacing     = AsmWriter->getValueAsInt("OperandSpacing");
   
   unsigned CurVariant = ~0U;  // ~0 if we are outside a {.|.|.} region, other #.
   
@@ -88,9 +87,10 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
                 unsigned DestColumn = FirstOperandColumn + 
                 CurColumn++ * OperandSpacing;
                 Operands.push_back(
-                                   AsmWriterOperand("O.PadToColumn(" +
-                                                    utostr(DestColumn) + ");\n",
-                                                    AsmWriterOperand::isLiteralStatementOperand));
+                  AsmWriterOperand(
+                    "O.PadToColumn(" +
+                    utostr(DestColumn) + ");\n",
+                    AsmWriterOperand::isLiteralStatementOperand));
               }
               break;
             case '"':
@@ -123,8 +123,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
           unsigned DestColumn = FirstOperandColumn + 
           CurColumn++ * OperandSpacing;
           Operands.push_back(
-                             AsmWriterOperand("O.PadToColumn(" + utostr(DestColumn) + ");\n",
-                                              AsmWriterOperand::isLiteralStatementOperand));
+            AsmWriterOperand("O.PadToColumn(" + utostr(DestColumn) + ");\n",
+                             AsmWriterOperand::isLiteralStatementOperand));
           break;
         } else if (std::string("${|}\\").find(AsmString[DollarPos+1]) 
                    != std::string::npos) {
@@ -236,7 +236,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
   }
   
   Operands.push_back(AsmWriterOperand("return;",
-                                      AsmWriterOperand::isLiteralStatementOperand));
+    AsmWriterOperand::isLiteralStatementOperand));
 }
 
 /// MatchesAllButOneOp - If this instruction is exactly identical to the

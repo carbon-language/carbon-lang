@@ -15,6 +15,7 @@
 
 #include "EDEmitter.h"
 
+#include "AsmWriterInst.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
 

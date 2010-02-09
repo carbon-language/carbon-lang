@@ -256,7 +256,11 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
          E = Target.inst_end(); I != E; ++I)
     if (!I->second.AsmString.empty() &&
         I->second.TheDef->getName() != "PHI")
-      Instructions.push_back(AsmWriterInst(I->second, AsmWriter));
+      Instructions.push_back(
+        AsmWriterInst(I->second, 
+                      AsmWriter->getValueAsInt("Variant"),
+                      AsmWriter->getValueAsInt("FirstOperandColumn"),
+                      AsmWriter->getValueAsInt("OperandSpacing")));
 
   // Get the instruction numbering.
   Target.getInstructionsByEnumValue(NumberedInstructions);
