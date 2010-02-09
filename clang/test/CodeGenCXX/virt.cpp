@@ -718,10 +718,10 @@ void test12_foo() {
 // CHECK-LPLL64}
 
 // CHECK-LPLL64:define weak %class.test8_D* @_ZTch0_v16_n32_N8test16_D4foo1Ev(%{{class.test8_D|.*}}*)
-// CHECK-LPLL64:  %{{retval|2}} = alloca %class.test8_D*
-// CHECK-LPLL64:  %.addr = alloca %class.test8_D*
-// CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %.addr
-// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %.addr
+// CHECK-LPLL64:  %{{retval|1}} = alloca %class.test8_D*
+// CHECK-LPLL64:  %{{.addr|2}} = alloca %class.test8_D*
+// CHECK-LPLL64:  store %class.test8_D* %0, %class.test8_D** %{{.addr|2}}
+// CHECK-LPLL64:  %{{this|3}} = load %class.test8_D** %{{.addr|2}}
 // CHECK-LPLL64:  %{{call|4}} = call %class.test8_D* @_ZN8test16_D4foo1Ev(%class.test8_D* %{{this|3}})
 // CHECK-LPLL64:  %{{1|5}} = icmp ne %class.test8_D* %{{call|4}}, null
 // CHECK-LPLL64:  br i1 %{{1|5}}, label %{{2|6}}, label %{{12|17}}
