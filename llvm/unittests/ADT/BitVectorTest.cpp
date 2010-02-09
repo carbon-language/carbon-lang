@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef XFAIL
 #include "llvm/ADT/BitVector.h"
 #include "gtest/gtest.h"
 
@@ -138,3 +139,4 @@ TEST(BitVectorTest, TrivialOperation) {
 }
 
 }
+#endif

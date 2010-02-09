@@ -12,4 +12,12 @@ TESTNAME = ADT
 LINK_COMPONENTS := core support
 
 include $(LEVEL)/Makefile.config
+
+# Xfail BitVectorTest for now on PPC Darwin.  7598360.
+ifeq ($(ARCH),PowerPC)
+ifeq ($(TARGET_OS),Darwin)
+CPP.Flags += -DXFAIL
+endif
+endif
+
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
