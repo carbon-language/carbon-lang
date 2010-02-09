@@ -106,10 +106,27 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
   
   bool readOpcode = false;
   
+  const char *wsPointer = asmTokens.begin()->getLoc().getPointer();
+  
   for (tokenIterator = asmTokens.begin();
        tokenIterator != asmTokens.end();
        ++tokenIterator) {
     SMLoc tokenLoc = tokenIterator->getLoc();
+    
+    const char *tokenPointer = tokenLoc.getPointer();
+    
+    if(tokenPointer > wsPointer) {
+      unsigned long wsLength = tokenPointer - wsPointer;
+      
+      EDToken *whitespaceToken = new EDToken(StringRef(wsPointer, wsLength),
+                                             EDToken::kTokenWhitespace,
+                                             0,
+                                             disassembler);
+      
+      tokens.push_back(whitespaceToken);
+    }
+    
+    wsPointer = tokenPointer + tokenIterator->getString().size();
     
     while (operandIterator != parsedOperands.end() &&
            tokenLoc.getPointer() > 
