@@ -40,6 +40,7 @@ public:
   unsigned ObjC1             : 1;  // Objective-C 1 support enabled.
   unsigned ObjC2             : 1;  // Objective-C 2 support enabled.
   unsigned ObjCNonFragileABI : 1;  // Objective-C modern abi enabled
+  unsigned ObjCNonFragileABI2 : 1;  // Objective-C enhanced modern abi enabled
 
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned WritableStrings   : 1;  // Allow writable strings
@@ -124,7 +125,7 @@ public:
     Trigraphs = BCPLComment = Bool = DollarIdents = AsmPreprocessor = 0;
     GNUMode = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
-    GC = ObjC1 = ObjC2 = ObjCNonFragileABI = 0;
+    GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = 0;
     Exceptions = Freestanding = NoBuiltin = 0;

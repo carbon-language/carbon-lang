@@ -459,6 +459,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fms-extensions");
   if (Opts.ObjCNonFragileABI)
     Res.push_back("-fobjc-nonfragile-abi");
+  if (Opts.ObjCNonFragileABI2)
+    Res.push_back("-fobjc-nonfragile-abi2");
   // NoInline is implicit.
   if (!Opts.CXXOperatorNames)
     Res.push_back("-fno-operator-names");
@@ -1181,6 +1183,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.ObjCConstantStringClass = getLastArgValue(Args,
                                                  OPT_fconstant_string_class);
   Opts.ObjCNonFragileABI = Args.hasArg(OPT_fobjc_nonfragile_abi);
+  Opts.ObjCNonFragileABI2 = Args.hasArg(OPT_fobjc_nonfragile_abi2);
+  if (Opts.ObjCNonFragileABI2)
+    Opts.ObjCNonFragileABI = true;
   Opts.CatchUndefined = Args.hasArg(OPT_fcatch_undefined_behavior);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);

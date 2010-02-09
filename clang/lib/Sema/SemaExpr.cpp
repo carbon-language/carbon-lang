@@ -1271,9 +1271,9 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
   else
     LookForIvars = (Lookup.isSingleResult() &&
                     Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod());
-
+  ObjCInterfaceDecl *IFace = 0;
   if (LookForIvars) {
-    ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
+    IFace = getCurMethodDecl()->getClassInterface();
     ObjCInterfaceDecl *ClassDeclared;
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(II, ClassDeclared)) {
       // Diagnose using an ivar in a class method.
@@ -1340,6 +1340,24 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
                                            Lookup.getNameLoc());
         if (D) Lookup.addDecl(D);
       }
+    }
+  }
+  if (LangOpts.ObjCNonFragileABI2 && LookForIvars && Lookup.empty()) {
+    // Find property name matching variable name.
+    ObjCPropertyDecl *Prop = LookupPropertyDecl(IFace, II);
+    if (Prop && !Prop->isInvalidDecl()) {
+      DeclContext *EnclosingContext = cast_or_null<DeclContext>(IFace);
+      QualType PropType = Context.getCanonicalType(Prop->getType());
+      assert(EnclosingContext &&
+             "null DeclContext for synthesized ivar - LookupInObjCMethod");
+      ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, 
+                                                Prop->getLocation(),
+                                                II, PropType, /*Dinfo=*/0,
+                                                ObjCIvarDecl::Public,
+                                                (Expr *)0);
+      Ivar->setLexicalDeclContext(IFace);
+      IFace->addDecl(Ivar);
+      return LookupInObjCMethod(Lookup, S, II, AllowBuiltinCreation);
     }
   }
   // Sentinel value saying that we didn't do anything special.

@@ -1127,6 +1127,46 @@ void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
   }
 }
 
+/// LookupPropertyDecl - Looks up a property in the current class and all
+/// its protocols.
+ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl, 
+                                     IdentifierInfo *II) {
+  if (const ObjCInterfaceDecl *IDecl = 
+        dyn_cast<ObjCInterfaceDecl>(CDecl)) {
+    for (ObjCContainerDecl::prop_iterator P = IDecl->prop_begin(),
+         E = IDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      if (Prop->getIdentifier() == II)
+        return Prop;
+    }
+    // scan through class's protocols.
+    for (ObjCInterfaceDecl::protocol_iterator PI = IDecl->protocol_begin(),
+         E = IDecl->protocol_end(); PI != E; ++PI) {
+      ObjCPropertyDecl *Prop = LookupPropertyDecl((*PI), II);
+      if (Prop)
+        return Prop;
+    }
+  }
+  else if (const ObjCProtocolDecl *PDecl = 
+            dyn_cast<ObjCProtocolDecl>(CDecl)) {
+    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+         E = PDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Prop = (*P);
+      if (Prop->getIdentifier() == II)
+        return Prop;
+    }
+    // scan through protocol's protocols.
+    for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+         E = PDecl->protocol_end(); PI != E; ++PI) {
+      ObjCPropertyDecl *Prop = LookupPropertyDecl((*PI), II);
+      if (Prop)
+        return Prop;
+    }
+  }
+  return 0;
+}
+
+
 void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
                                       const llvm::DenseSet<Selector>& InsMap) {
@@ -1149,7 +1189,14 @@ void Sema::DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
         Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional ||
         PropImplMap.count(Prop))
       continue;
-  
+    if (LangOpts.ObjCNonFragileABI2) {
+      ActOnPropertyImplDecl(IMPDecl->getLocation(),
+                            SourceLocation(),
+                            true, DeclPtrTy::make(IMPDecl), 
+                            Prop->getIdentifier(),
+                            Prop->getIdentifier());
+      continue;
+    }
     if (!InsMap.count(Prop->getGetterName())) {
       Diag(Prop->getLocation(),
            isa<ObjCCategoryDecl>(CDecl) ? 

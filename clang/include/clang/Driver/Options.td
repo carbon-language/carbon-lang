@@ -323,6 +323,7 @@ def fobjc_gc : Flag<"-fobjc-gc">, Group<f_Group>;
 def fobjc_legacy_dispatch : Flag<"-fobjc-legacy-dispatch">, Group<f_Group>;
 def fobjc_new_property : Flag<"-fobjc-new-property">, Group<clang_ignored_f_Group>;
 def fobjc_nonfragile_abi : Flag<"-fobjc-nonfragile-abi">, Group<f_Group>;
+def fobjc_nonfragile_abi2 : Flag<"-fobjc-nonfragile-abi2">, Group<f_Group>;
 def fobjc_sender_dependent_dispatch : Flag<"-fobjc-sender-dependent-dispatch">, Group<f_Group>;
 def fobjc : Flag<"-fobjc">, Group<f_Group>;
 def fomit_frame_pointer : Flag<"-fomit-frame-pointer">, Group<f_Group>;

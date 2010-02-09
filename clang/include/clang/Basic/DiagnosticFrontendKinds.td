@@ -109,6 +109,10 @@ def warn_pch_objective_c2 : Error<
 def warn_pch_nonfragile_abi : Error<
     "PCH file was compiled with the %select{32-bit|non-fragile}0 Objective-C "
     "ABI but the %select{32-bit|non-fragile}1 Objective-C ABI is selected">;
+def warn_pch_nonfragile_abi2 : Error<
+    "PCH file was compiled with the %select{32-bit|enhanced non-fragile}0 "
+    "Objective-C ABI but the %select{32-bit|enhanced non-fragile}1 "
+    "Objective-C ABI is selected">;
 def warn_pch_extensions : Error<
     "extensions were %select{enabled|disabled}0 in PCH file but are "
     "currently %select{enabled|disabled}1">;

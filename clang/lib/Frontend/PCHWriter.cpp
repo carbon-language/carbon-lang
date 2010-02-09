@@ -748,7 +748,10 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
 
   Record.push_back(LangOpts.ObjC1);  // Objective-C 1 support enabled.
   Record.push_back(LangOpts.ObjC2);  // Objective-C 2 support enabled.
-  Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C modern abi enabled
+  Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C 
+                                                 // modern abi enabled.
+  Record.push_back(LangOpts.ObjCNonFragileABI2); // Objective-C enhanced 
+                                                 // modern abi enabled.
 
   Record.push_back(LangOpts.PascalStrings);  // Allow Pascal strings
   Record.push_back(LangOpts.WritableStrings);  // Allow writable strings

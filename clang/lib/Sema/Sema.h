@@ -1358,6 +1358,11 @@ public:
   void CollectImmediateProperties(ObjCContainerDecl *CDecl,
                   llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap);
   
+  /// LookupPropertyDecl - Looks up a property in the current class and all
+  /// its protocols.
+  ObjCPropertyDecl *LookupPropertyDecl(const ObjCContainerDecl *CDecl, 
+                                       IdentifierInfo *II);
+  
   /// AtomicPropertySetterGetterRules - This routine enforces the rule (via
   /// warning) when atomic property has one but not the other user-declared
   /// setter or getter.
