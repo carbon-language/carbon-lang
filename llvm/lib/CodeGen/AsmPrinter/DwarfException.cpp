@@ -34,6 +34,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Twine.h"
 using namespace llvm;
 
 DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
@@ -868,13 +869,14 @@ void DwarfException::EmitExceptionTable() {
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
-      if (!S.PadLabel)
+      if (!S.PadLabel) {
+        Asm->OutStreamer.AddComment("Landing pad");
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
-      else
+      } else {
         EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
                           true, true);
-
-      EOL("Landing pad");
+        EOL("Landing pad");
+      }
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
@@ -884,35 +886,40 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Action Table.
+  EOL("Action Record Table:");
+  unsigned Iter = 1;
   for (SmallVectorImpl<ActionEntry>::const_iterator
          I = Actions.begin(), E = Actions.end(); I != E; ++I) {
     const ActionEntry &Action = *I;
+    EOL(Twine("Action Record ") + Twine(Iter++));
 
     // Type Filter
     //
     //   Used by the runtime to match the type of the thrown exception to the
     //   type of the catch clauses or the types in the exception specification.
-    EmitSLEB128(Action.ValueForTypeID, "TypeInfo index");
+    EmitSLEB128(Action.ValueForTypeID, "  TypeInfo index");
 
     // Action Record
     //
     //   Self-relative signed displacement in bytes of the next action record,
     //   or 0 if there is no next action record.
-    EmitSLEB128(Action.NextAction, "Next action");
+    EmitSLEB128(Action.NextAction, "  Next action");
   }
 
   // Emit the Catch TypeInfos.
+  Iter = TypeInfos.size();
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
     PrintRelDirective();
 
-    if (GV)
+    if (GV) {
       O << *Asm->GetGlobalValueSymbol(GV);
-    else
+      EOL(Twine("TypeInfo ") + Twine(Iter--));
+    } else {
       O << "0x0";
-
-    EOL("TypeInfo");
+      EOL("");
+    }
   }
 
   // Emit the Exception Specifications.
