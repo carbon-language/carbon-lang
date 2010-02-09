@@ -1147,19 +1147,15 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
     return 0;
 
   // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
-  if (match(D, m_Not(m_SExt(m_Specific(Cond)))) &&
-      Cond->getType()->isInteger(1))
+  if (match(D, m_Not(m_SExt(m_Specific(Cond)))))
     return SelectInst::Create(Cond, C, B);
-  if (match(D, m_SExt(m_Not(m_Specific(Cond)))) &&
-      Cond->getType()->isInteger(1))
+  if (match(D, m_SExt(m_Not(m_Specific(Cond)))))
     return SelectInst::Create(Cond, C, B);
   
   // ((cond?-1:0)&C) | ((cond?0:-1)&D) -> cond ? C : D.
-  if (match(B, m_Not(m_SExt(m_Specific(Cond)))) &&
-      Cond->getType()->isInteger(1))
+  if (match(B, m_Not(m_SExt(m_Specific(Cond)))))
     return SelectInst::Create(Cond, C, D);
-  if (match(B, m_SExt(m_Not(m_Specific(Cond)))) &&
-      Cond->getType()->isInteger(1))
+  if (match(B, m_SExt(m_Not(m_Specific(Cond)))))
     return SelectInst::Create(Cond, C, D);
   return 0;
 }
