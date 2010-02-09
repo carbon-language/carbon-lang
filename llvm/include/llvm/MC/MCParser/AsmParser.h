@@ -61,8 +61,8 @@ private:
   /// in the directive name and the location of the directive keyword.
   StringMap<bool(AsmParser::*)(StringRef, SMLoc)> DirectiveMap;
 public:
-  AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
-            const MCAsmInfo &_MAI);
+  AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
+            const MCAsmInfo &MAI);
   ~AsmParser();
 
   bool Run();
