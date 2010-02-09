@@ -72,3 +72,23 @@ carry:
 
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32)
 declare {i32, i1} @llvm.uadd.with.overflow.i32(i32, i32)
+
+
+define i64 @test6(i64 %A, i32 %B) nounwind {
+        %tmp12 = zext i32 %B to i64             ; <i64> [#uses=1]
+        %tmp3 = shl i64 %tmp12, 32              ; <i64> [#uses=1]
+        %tmp5 = add i64 %tmp3, %A               ; <i64> [#uses=1]
+        ret i64 %tmp5
+
+; X32: test6:
+; X32:	    movl 12(%esp), %edx
+; X32-NEXT: addl 8(%esp), %edx
+; X32-NEXT: movl 4(%esp), %eax
+; X32-NEXT: ret
+        
+; X64: test6:
+; X64:	shlq	$32, %rsi
+; X64:	leaq	(%rsi,%rdi), %rax
+; X64:	ret
+}
+
