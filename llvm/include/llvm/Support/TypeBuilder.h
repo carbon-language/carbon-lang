@@ -231,6 +231,12 @@ public:
 /// we special case it.
 template<> class TypeBuilder<void*, false>
   : public TypeBuilder<types::i<8>*, false> {};
+template<> class TypeBuilder<const void*, false>
+  : public TypeBuilder<types::i<8>*, false> {};
+template<> class TypeBuilder<volatile void*, false>
+  : public TypeBuilder<types::i<8>*, false> {};
+template<> class TypeBuilder<const volatile void*, false>
+  : public TypeBuilder<types::i<8>*, false> {};
 
 template<typename R, bool cross> class TypeBuilder<R(), cross> {
 public:

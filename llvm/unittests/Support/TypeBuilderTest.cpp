@@ -19,9 +19,16 @@ namespace {
 TEST(TypeBuilderTest, Void) {
   EXPECT_EQ(Type::getVoidTy(getGlobalContext()), (TypeBuilder<void, true>::get(getGlobalContext())));
   EXPECT_EQ(Type::getVoidTy(getGlobalContext()), (TypeBuilder<void, false>::get(getGlobalContext())));
-  // Special case for C compatibility:
+  // Special cases for C compatibility:
   EXPECT_EQ(Type::getInt8PtrTy(getGlobalContext()),
             (TypeBuilder<void*, false>::get(getGlobalContext())));
+  EXPECT_EQ(Type::getInt8PtrTy(getGlobalContext()),
+            (TypeBuilder<const void*, false>::get(getGlobalContext())));
+  EXPECT_EQ(Type::getInt8PtrTy(getGlobalContext()),
+            (TypeBuilder<volatile void*, false>::get(getGlobalContext())));
+  EXPECT_EQ(Type::getInt8PtrTy(getGlobalContext()),
+            (TypeBuilder<const volatile void*, false>::get(
+              getGlobalContext())));
 }
 
 TEST(TypeBuilderTest, HostIntegers) {
