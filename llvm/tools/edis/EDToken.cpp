@@ -94,7 +94,8 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
   SmallVector<MCParsedAsmOperand*, 5> parsedOperands;
   SmallVector<AsmToken, 10> asmTokens;
   
-  disassembler.parseInst(parsedOperands, asmTokens, str);
+  if(disassembler.parseInst(parsedOperands, asmTokens, str))
+    return -1;
   
   SmallVectorImpl<MCParsedAsmOperand*>::iterator operandIterator;
   unsigned int operandIndex;
@@ -167,7 +168,12 @@ int EDToken::tokenize(std::vector<EDToken*> &tokens,
     if(operandIterator != parsedOperands.end() &&
        tokenLoc.getPointer() >= 
        (*operandIterator)->getStartLoc().getPointer()) {
-      token->setOperandID(operandOrder[operandIndex]);
+      /// operandIndex == 0 means the operand is the instruction (which the
+      /// AsmParser treats as an operand but edis does not).  We therefore skip
+      /// operandIndex == 0 and subtract 1 from all other operand indices.
+      
+      if(operandIndex > 0)
+        token->setOperandID(operandOrder[operandIndex - 1]);
     }
     
     tokens.push_back(token);
