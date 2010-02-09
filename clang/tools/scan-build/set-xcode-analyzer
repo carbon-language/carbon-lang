@@ -28,14 +28,14 @@ def ModifySpec(path, pathToChecker):
           line = "".join([m.group(0), pathToChecker, '";\n'])
       t.write(line)
   t.close()
-  print "(+)", path
+  print "(+) processing:", path
   try:
     shutil.copy(t.name, path)
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
   except IOError, why:
-    print "\n    Cannot update file:", why, "\n"
+    print "    (-) Cannot update file:", why, "\n"
   except OSError, why:
-    print "\n    Cannot update file:", why, "\n"
+    print "    (-) Cannot update file:", why, "\n"
   os.unlink(t.name)
 
 def main():
@@ -54,21 +54,20 @@ def main():
   # determine if Xcode is running
   for x in NSWorkspace.sharedWorkspace().runningApplications():
     if x.localizedName().find("Xcode") >= 0:
-      print "You must quit Xcode first before modifying its configuration files."
+      print "(-) You must quit Xcode first before modifying its configuration files."
       return
 
   if options.path:
     # Expand tildes.
     path = os.path.expanduser(options.path)
     if not path.endswith("clang"):
-      print "Using Clang bundled with checker build:", path
+      print "(+) Using Clang bundled with checker build:", path
       path = os.path.join(path, "bin", "clang");
     else:
-      print "Using Clang located at:", path
+      print "(+) Using Clang located at:", path
   else:
-    print "Using the Clang bundled with Xcode"
+    print "(+) Using the Clang bundled with Xcode"
     path = options.default
-  print ""
   
   for x in FindClangSpecs('/Developer'):
     ModifySpec(x, path)
