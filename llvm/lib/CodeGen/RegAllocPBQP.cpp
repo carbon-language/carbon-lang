@@ -411,16 +411,16 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
       // We also need any physical regs to be allocable, coalescing with
       // a non-allocable register is invalid.
       if (srcRegIsPhysical) {
-        if (std::find(srcRegClass->allocation_order_begin(*mf),
-                      srcRegClass->allocation_order_end(*mf), srcReg) ==
-            srcRegClass->allocation_order_end(*mf))
+        if (std::find(dstRegClass->allocation_order_begin(*mf),
+                      dstRegClass->allocation_order_end(*mf), srcReg) ==
+            dstRegClass->allocation_order_end(*mf))
           continue;
       }
 
       if (dstRegIsPhysical) {
-        if (std::find(dstRegClass->allocation_order_begin(*mf),
-                      dstRegClass->allocation_order_end(*mf), dstReg) ==
-            dstRegClass->allocation_order_end(*mf))
+        if (std::find(srcRegClass->allocation_order_begin(*mf),
+                      srcRegClass->allocation_order_end(*mf), dstReg) ==
+            srcRegClass->allocation_order_end(*mf))
           continue;
       }
 
@@ -442,6 +442,12 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
                vniItr = srcLI->vni_begin(), vniEnd = srcLI->vni_end();
                vniItr != vniEnd; ++vniItr) {
 
+          // If we find a poorly defined def we err on the side of caution.
+          if (!(*vniItr)->def.isValid()) {
+            badDef = true;
+            break;
+          }
+
           // If we find a def that kills the coalescing opportunity then
           // record it and break from the loop.
           if (dstLI->liveAt((*vniItr)->def)) {
@@ -462,6 +468,11 @@ PBQPRegAlloc::CoalesceMap PBQPRegAlloc::findCoalesces() {
           // We want to make sure we skip the copy instruction itself.
           if ((*vniItr)->getCopy() == instr)
             continue;
+
+          if (!(*vniItr)->def.isValid()) {
+            badDef = true;
+            break;
+          }
 
           if (srcLI->liveAt((*vniItr)->def)) {
             badDef = true;
