@@ -1720,6 +1720,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
                    Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
     addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
+    addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
     ModuleCU->addDie(VariableSpecDIE);
   } else {
     DIEBlock *Block = new DIEBlock();
