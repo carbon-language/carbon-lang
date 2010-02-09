@@ -10,6 +10,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/ASTImporter.h"
 
 using namespace clang;
@@ -31,15 +32,20 @@ bool ASTMergeAction::BeginSourceFileAction(CompilerInstance &CI,
 
 void ASTMergeAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
-
+  CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
+                                       &CI.getASTContext());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
-    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], CI.getDiagnostics(),
+    Diagnostic ASTDiags(CI.getDiagnostics().getClient());
+    
+    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], ASTDiags,
                                              false, true);
     if (!Unit)
       continue;
 
+    ASTDiags.SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
+                              &Unit->getASTContext());
     ASTImporter Importer(CI.getASTContext(), CI.getDiagnostics(),
-                         Unit->getASTContext(), CI.getDiagnostics());
+                         Unit->getASTContext(), ASTDiags);
 
     TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
     for (DeclContext::decl_iterator D = TU->decls_begin(), 
@@ -51,8 +57,7 @@ void ASTMergeAction::ExecuteAction() {
         if (VD->getIdentifier() && 
             *VD->getIdentifier()->getNameStart() == 'x') {
           Decl *Merged = Importer.Import(VD);
-          if (Merged)
-            Merged->dump();
+          (void)Merged;
         }
     }
 
