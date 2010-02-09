@@ -39,6 +39,7 @@ IMG.img_slide {
   clear: left;
   padding: 1em 2em 0 2em;
   background-color: #ffffff;
+  height: 100%;
 }
 
 .itemTitle { color:#2d58b7 }
