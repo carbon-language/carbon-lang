@@ -2293,6 +2293,28 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   return DeclPtrTy::make(PDecl);
 }
 
+ObjCIvarDecl* 
+Sema::SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
+                                IdentifierInfo *NameII) {
+  ObjCIvarDecl *Ivar = 0;
+  ObjCPropertyDecl *Prop = LookupPropertyDecl(IDecl, NameII);
+  if (Prop && !Prop->isInvalidDecl()) {
+    DeclContext *EnclosingContext = cast_or_null<DeclContext>(IDecl);
+    QualType PropType = Context.getCanonicalType(Prop->getType());
+    assert(EnclosingContext &&
+           "null DeclContext for synthesized ivar - SynthesizeNewPropertyIvar");
+    Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, 
+                                              Prop->getLocation(),
+                                              NameII, PropType, /*Dinfo=*/0,
+                                              ObjCIvarDecl::Public,
+                                              (Expr *)0);
+    Ivar->setLexicalDeclContext(IDecl);
+    IDecl->addDecl(Ivar);
+    Prop->setPropertyIvarDecl(Ivar);
+  }
+  return Ivar;
+}
+
 /// ActOnPropertyImplDecl - This routine performs semantic checks and
 /// builds the AST node for a property implementation declaration; declared
 /// as @synthesize or @dynamic.

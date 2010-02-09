@@ -1363,6 +1363,9 @@ public:
   ObjCPropertyDecl *LookupPropertyDecl(const ObjCContainerDecl *CDecl, 
                                        IdentifierInfo *II);
   
+  ObjCIvarDecl *SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
+                                          IdentifierInfo *NameII);
+  
   /// AtomicPropertySetterGetterRules - This routine enforces the rule (via
   /// warning) when atomic property has one but not the other user-declared
   /// setter or getter.

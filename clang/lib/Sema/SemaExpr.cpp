@@ -1343,22 +1343,9 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
     }
   }
   if (LangOpts.ObjCNonFragileABI2 && LookForIvars && Lookup.empty()) {
-    // Find property name matching variable name.
-    ObjCPropertyDecl *Prop = LookupPropertyDecl(IFace, II);
-    if (Prop && !Prop->isInvalidDecl()) {
-      DeclContext *EnclosingContext = cast_or_null<DeclContext>(IFace);
-      QualType PropType = Context.getCanonicalType(Prop->getType());
-      assert(EnclosingContext &&
-             "null DeclContext for synthesized ivar - LookupInObjCMethod");
-      ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, 
-                                                Prop->getLocation(),
-                                                II, PropType, /*Dinfo=*/0,
-                                                ObjCIvarDecl::Public,
-                                                (Expr *)0);
-      Ivar->setLexicalDeclContext(IFace);
-      IFace->addDecl(Ivar);
+    ObjCIvarDecl *Ivar = SynthesizeNewPropertyIvar(IFace, II);
+    if (Ivar)
       return LookupInObjCMethod(Lookup, S, II, AllowBuiltinCreation);
-    }
   }
   // Sentinel value saying that we didn't do anything special.
   return Owned((Expr*) 0);
