@@ -225,6 +225,24 @@ def VCVTSD : VFPAI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
   let Inst{4}     = 0;
 }
 
+// Between half-precision and single-precision.  For disassembly only.
+
+def VCVTBSH : ASuI<0b11101, 0b11, 0b0010, 0b01, 0, (outs SPR:$dst), (ins SPR:$a),
+                 /* FIXME */ IIC_fpCVTDS, "vcvtb", ".f32.f16\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]>;
+
+def VCVTBHS : ASuI<0b11101, 0b11, 0b0011, 0b01, 0, (outs SPR:$dst), (ins SPR:$a),
+                 /* FIXME */ IIC_fpCVTDS, "vcvtb", ".f16.f32\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]>;
+
+def VCVTTSH : ASuI<0b11101, 0b11, 0b0010, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
+                 /* FIXME */ IIC_fpCVTDS, "vcvtt", ".f32.f16\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]>;
+
+def VCVTTHS : ASuI<0b11101, 0b11, 0b0011, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
+                 /* FIXME */ IIC_fpCVTDS, "vcvtt", ".f16.f32\t$dst, $a",
+                 [/* For disassembly only; pattern left blank */]>;
+
 let neverHasSideEffects = 1 in {
 def VMOVD: ADuI<0b11101, 0b11, 0b0000, 0b01, 0, (outs DPR:$dst), (ins DPR:$a),
                  IIC_fpUNA64, "vmov", ".f64\t$dst, $a", []>;
