@@ -532,14 +532,6 @@ void MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
-  // Show the MCInst if enabled.
-  if (ShowInst) {
-    raw_ostream &OS = GetCommentOS();
-    OS << "inst: ";
-    Inst.print(OS, &MAI);
-    OS << "\n";
-  }
-
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter) {
     SmallString<256> Code;
@@ -557,6 +549,18 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     OS << "]\n";
   }
 
+  // Show the MCInst if enabled.
+  if (ShowInst) {
+    raw_ostream &OS = GetCommentOS();
+    OS << "<MCInst #" << Inst.getOpcode();
+    
+    for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
+      OS << "\n  ";
+      Inst.getOperand(i).print(OS, &MAI);
+    }
+    OS << ">\n";
+  }
+  
   // If we have an AsmPrinter, use that to print, otherwise dump the MCInst.
   if (InstPrinter)
     InstPrinter->printInst(&Inst);
