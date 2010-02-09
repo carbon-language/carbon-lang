@@ -336,6 +336,12 @@ FunctionPass *createSCCVNPass();
 //
 FunctionPass *createABCDPass();
 
+//===----------------------------------------------------------------------===//
+//
+// ObjSizeLowering - Lower Intrinsic::objsize
+//
+FunctionPass *createObjectSizeLoweringPass();
+
 } // End llvm namespace
 
 #endif

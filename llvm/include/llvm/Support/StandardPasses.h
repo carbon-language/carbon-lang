@@ -118,8 +118,6 @@ namespace llvm {
     // Start of function pass.
     
     PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
-    if (SimplifyLibCalls)
-      PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
@@ -128,6 +126,9 @@ namespace llvm {
     PM->add(createTailCallEliminationPass());   // Eliminate tail calls
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
     PM->add(createReassociatePass());           // Reassociate expressions
+    PM->add(createObjectSizeLoweringPass());    // Lower Intrinsic::objsize
+    if (SimplifyLibCalls)
+      PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createLoopRotatePass());            // Rotate Loop
     PM->add(createLICMPass());                  // Hoist loop invariants
     PM->add(createLoopUnswitchPass(OptimizeSize || OptimizationLevel < 3));
