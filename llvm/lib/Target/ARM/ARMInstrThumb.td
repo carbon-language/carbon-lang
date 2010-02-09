@@ -775,7 +775,7 @@ def tMOVCCr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iCMOVr,
                     "mov", "\t$dst, $rhs", []>,
               T1Special<{1,0,?,?}>;
 
-def tMOVCCi : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
+def tMOVCCi : T1pIt<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs), IIC_iCMOVi,
                     "mov", "\t$dst, $rhs", []>,
               T1General<{1,0,0,?,?}>;
 
