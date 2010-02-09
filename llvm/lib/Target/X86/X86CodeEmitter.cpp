@@ -647,6 +647,12 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
       break;
     }
+
+    // FIXME: Only used by hackish MCCodeEmitter, remove when dead.
+    if (MO.isJTI()) {
+      emitJumpTableAddress(MO.getIndex(), X86::reloc_pcrel_word);
+      break;
+    }
     
     assert(MO.isImm() && "Unknown RawFrm operand!");
     if (Opcode == X86::CALLpcrel32 || Opcode == X86::CALL64pcrel32) {
@@ -872,11 +878,13 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
 namespace {
 class MCSingleInstructionCodeEmitter : public MachineCodeEmitter {
   uint8_t Data[256];
+  SmallVectorImpl<MCFixup> *FixupList;
 
 public:
-  MCSingleInstructionCodeEmitter() { reset(); }
+  MCSingleInstructionCodeEmitter() { reset(0); }
 
-  void reset() { 
+  void reset(SmallVectorImpl<MCFixup> *Fixups) {
+    FixupList = Fixups;
     BufferBegin = Data;
     BufferEnd = array_endof(Data);
     CurBufferPtr = Data;
@@ -889,23 +897,50 @@ public:
 
   virtual void startFunction(MachineFunction &F) {}
   virtual bool finishFunction(MachineFunction &F) { return false; }
-  virtual void emitLabel(uint64_t LabelID) {}
   virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {}
   virtual bool earlyResolveAddresses() const { return false; }
-  virtual void addRelocation(const MachineRelocation &MR) { }
+  virtual void addRelocation(const MachineRelocation &MR) {
+    unsigned Offset = 0, OpIndex = 0, Kind = MR.getRelocationType();
+
+    // This form is only used in one case, for branches.
+    if (MR.isBasicBlock()) {
+      Offset = unsigned(MR.getMachineCodeOffset());
+      OpIndex = 0;
+    } else {
+      assert(MR.isJumpTableIndex() && "Unexpected relocation!");
+
+      Offset = unsigned(MR.getMachineCodeOffset());
+
+      // The operand index is encoded as the first byte of the fake operand.
+      OpIndex = MR.getJumpTableIndex();
+    }
+
+    FixupList->push_back(MCFixup::Create(Offset, OpIndex,
+                                     MCFixupKind(FirstTargetFixupKind + Kind)));
+  }
+  virtual void setModuleInfo(MachineModuleInfo* Info) {}
+
+  // Interface functions which should never get called in our usage.
+
+  virtual void emitLabel(uint64_t LabelID) {
+    assert(0 && "Unexpected code emitter call!");
+  }
   virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {
+    assert(0 && "Unexpected code emitter call!");
     return 0;
   }
   virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const {
+    assert(0 && "Unexpected code emitter call!");
     return 0;
   }
   virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
+    assert(0 && "Unexpected code emitter call!");
     return 0;
   }
   virtual uintptr_t getLabelAddress(uint64_t LabelID) const {
+    assert(0 && "Unexpected code emitter call!");
     return 0;
   }
-  virtual void setModuleInfo(MachineModuleInfo* Info) {}
 };
 
 class X86MCCodeEmitter : public MCCodeEmitter {
@@ -993,8 +1028,9 @@ public:
       return true;
     }
 
-    // FIXME: Relocation / fixup.
-    Instr->addOperand(MachineOperand::CreateImm(0));
+    // Fake this as an external symbol to the code emitter to add a relcoation
+    // entry we will recognize.
+    Instr->addOperand(MachineOperand::CreateJTI(Start, 0));
     return true;
   }
 
@@ -1127,7 +1163,7 @@ public:
       Instr->dump();
     }
 
-    InstrEmitter->reset();
+    InstrEmitter->reset(&Fixups);
     if (OK)
       Emit->emitInstruction(*Instr, &Desc);
     OS << InstrEmitter->str();
