@@ -2192,9 +2192,27 @@ def  VBSLq    : N3VX<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
 
 //   VBIF     : Vector Bitwise Insert if False
 //              like VBSL but with: "vbif $dst, $src3, $src1", "$src2 = $dst",
+def  VBIFd    : N3VX<1, 0, 0b11, 0b0001, 0, 1,
+                     (outs DPR:$dst), (ins DPR:$src1, DPR:$src2, DPR:$src3),
+                     IIC_VBINiD, "vbif", "$dst, $src2, $src3", "$src1 = $dst",
+                     [/* For disassembly only; pattern left blank */]>;
+def  VBIFq    : N3VX<1, 0, 0b11, 0b0001, 1, 1,
+                     (outs QPR:$dst), (ins QPR:$src1, QPR:$src2, QPR:$src3),
+                     IIC_VBINiQ, "vbif", "$dst, $src2, $src3", "$src1 = $dst",
+                     [/* For disassembly only; pattern left blank */]>;
+
 //   VBIT     : Vector Bitwise Insert if True
 //              like VBSL but with: "vbit $dst, $src2, $src1", "$src3 = $dst",
-// These are not yet implemented.  The TwoAddress pass will not go looking
+def  VBITd    : N3VX<1, 0, 0b10, 0b0001, 0, 1,
+                     (outs DPR:$dst), (ins DPR:$src1, DPR:$src2, DPR:$src3),
+                     IIC_VBINiD, "vbit", "$dst, $src2, $src3", "$src1 = $dst",
+                     [/* For disassembly only; pattern left blank */]>;
+def  VBITq    : N3VX<1, 0, 0b10, 0b0001, 1, 1,
+                     (outs QPR:$dst), (ins QPR:$src1, QPR:$src2, QPR:$src3),
+                     IIC_VBINiQ, "vbit", "$dst, $src2, $src3", "$src1 = $dst",
+                     [/* For disassembly only; pattern left blank */]>;
+
+// VBIT/VBIF are not yet implemented.  The TwoAddress pass will not go looking
 // for equivalent operations with different register constraints; it just
 // inserts copies.
 
