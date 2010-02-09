@@ -1,6 +1,7 @@
 add_executable(tblgen
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
+  AsmWriterInst.cpp
   CallingConvEmitter.cpp
   ClangDiagnosticsEmitter.cpp
   CodeEmitterGen.cpp
