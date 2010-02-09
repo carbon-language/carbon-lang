@@ -136,3 +136,10 @@
 // CHECK: movb 0(%eax), %al
         gs;movb 0(%eax), %al
 
+// CHECK: fadd %st(0)
+// CHECK: fadd %st(1)
+// CHECK: fadd %st(7)
+
+fadd %st(0)
+fadd %st(1)
+fadd %st(7)

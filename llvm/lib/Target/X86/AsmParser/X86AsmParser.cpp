@@ -292,6 +292,41 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // validation later, so maybe there is no need for this here.
   RegNo = MatchRegisterName(Tok.getString());
   
+  // Parse %st(1) and "%st" as "%st(0)"
+  if (RegNo == 0 && Tok.getString() == "st") {
+    RegNo = X86::ST0;
+    EndLoc = Tok.getLoc();
+    Parser.Lex(); // Eat 'st'
+    
+    // Check to see if we have '(4)' after %st.
+    if (getLexer().isNot(AsmToken::LParen))
+      return false;
+    // Lex the paren.
+    getParser().Lex();
+
+    const AsmToken &IntTok = Parser.getTok();
+    if (IntTok.isNot(AsmToken::Integer))
+      return Error(IntTok.getLoc(), "expected stack index");
+    switch (IntTok.getIntVal()) {
+    case 0: RegNo = X86::ST0; break;
+    case 1: RegNo = X86::ST1; break;
+    case 2: RegNo = X86::ST2; break;
+    case 3: RegNo = X86::ST3; break;
+    case 4: RegNo = X86::ST4; break;
+    case 5: RegNo = X86::ST5; break;
+    case 6: RegNo = X86::ST6; break;
+    case 7: RegNo = X86::ST7; break;
+    default: return Error(IntTok.getLoc(), "invalid stack index");
+    }
+    
+    if (getParser().Lex().isNot(AsmToken::RParen))
+      return Error(Parser.getTok().getLoc(), "expected ')'");
+    
+    EndLoc = Tok.getLoc();
+    Parser.Lex(); // Eat ')'
+    return false;
+  }
+  
   if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
