@@ -516,6 +516,31 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
   let Inst{4}     = 1;
 }
 
+// FPSCR <-> GPR (for disassembly only)
+
+let Uses = [FPSCR] in {
+def VMRS : VFPAI<(outs GPR:$dst), (ins), VFPMiscFrm, IIC_fpSTAT, "vmrs",
+                 "\t$dst, fpscr",
+             [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-20} = 0b11101111;
+  let Inst{19-16} = 0b0001;
+  let Inst{11-8}  = 0b1010;
+  let Inst{7}     = 0;
+  let Inst{4}     = 1;
+}
+}
+
+let Defs = [FPSCR] in {
+def VMSR : VFPAI<(outs), (ins GPR:$src), VFPMiscFrm, IIC_fpSTAT, "vmsr",
+                 "\tfpscr, $src",
+             [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-20} = 0b11101110;
+  let Inst{19-16} = 0b0001;
+  let Inst{11-8}  = 0b1010;
+  let Inst{7}     = 0;
+  let Inst{4}     = 1;
+}
+}
 
 // Materialize FP immediates. VFP3 only.
 let isReMaterializable = 1 in {
