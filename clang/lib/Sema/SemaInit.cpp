@@ -510,8 +510,8 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
   StructuredList->setSyntacticForm(IList);
   CheckListElementTypes(Entity, IList, T, /*SubobjectIsDesignatorContext=*/true, 
                         Index, StructuredList, StructuredIndex, TopLevelObject);
-  IList->setType(T);
-  StructuredList->setType(T);
+  IList->setType(T.getNonReferenceType());
+  StructuredList->setType(T.getNonReferenceType());
   if (hadError)
     return;
 
@@ -1672,7 +1672,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     = new (SemaRef.Context) InitListExpr(InitRange.getBegin(), 0, 0,
                                          InitRange.getEnd());
 
-  Result->setType(CurrentObjectType);
+  Result->setType(CurrentObjectType.getNonReferenceType());
 
   // Pre-allocate storage for the structured initializer list.
   unsigned NumElements = 0;

@@ -24,3 +24,6 @@ int main() {
         const A& rca = f(); // expected-error {{reference initialization of type 'struct A const &' with initializer of type 'class B' is ambiguous}}
         A& ra = f(); // expected-error {{non-const lvalue reference to type 'struct A' cannot bind to a temporary of type 'class B'}}
 }
+
+struct PR6177 { A (&x)[1]; };
+PR6177 x = {{A()}}; // expected-error{{non-const lvalue reference to type 'struct A [1]' cannot bind to a temporary of type 'struct A'}}
