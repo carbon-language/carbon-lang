@@ -72,10 +72,13 @@ namespace llvm {
       }
     }
 
+    bool isValid() const {
+      return (index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX);
+    }
+
     MachineInstr* getInstr() const { return mi; }
     void setInstr(MachineInstr *mi) {
-      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
-             "Attempt to modify reserved index.");
+      assert(isValid() && "Attempt to modify reserved index.");
       this->mi = mi;
     }
 
@@ -83,25 +86,21 @@ namespace llvm {
     void setIndex(unsigned index) {
       assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
              "Attempt to set index to invalid value.");
-      assert(this->index != EMPTY_KEY_INDEX &&
-             this->index != TOMBSTONE_KEY_INDEX &&
-             "Attempt to reset reserved index value.");
+      assert(isValid() && "Attempt to reset reserved index value.");
       this->index = index;
     }
     
     IndexListEntry* getNext() { return next; }
     const IndexListEntry* getNext() const { return next; }
     void setNext(IndexListEntry *next) {
-      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
-             "Attempt to modify reserved index.");
+      assert(isValid() && "Attempt to modify reserved index.");
       this->next = next;
     }
 
     IndexListEntry* getPrev() { return prev; }
     const IndexListEntry* getPrev() const { return prev; }
     void setPrev(IndexListEntry *prev) {
-      assert(index != EMPTY_KEY_INDEX && index != TOMBSTONE_KEY_INDEX &&
-             "Attempt to modify reserved index.");
+      assert(isValid() && "Attempt to modify reserved index.");
       this->prev = prev;
     }
 
@@ -192,7 +191,8 @@ namespace llvm {
     /// Returns true if this is a valid index. Invalid indicies do
     /// not point into an index table, and cannot be compared.
     bool isValid() const {
-      return (lie.getPointer() != 0) && (lie.getPointer()->getIndex() != 0);
+      IndexListEntry *entry = lie.getPointer();
+      return ((entry!= 0) && (entry->isValid()));
     }
 
     /// Print this index to the given raw_ostream.
