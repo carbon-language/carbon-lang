@@ -1794,3 +1794,28 @@ declare void @bar() nounwind
 The shift should be eliminated.  Testcase derived from gcc.
 
 //===---------------------------------------------------------------------===//
+
+These compile into different code, one gets recognized as a switch and the
+other doesn't due to phase ordering issues (PR6212):
+
+int test1(int mainType, int subType) {
+  if (mainType == 7)
+    subType = 4;
+  else if (mainType == 9)
+    subType = 6;
+  else if (mainType == 11)
+    subType = 9;
+  return subType;
+}
+
+int test2(int mainType, int subType) {
+  if (mainType == 7)
+    subType = 4;
+  if (mainType == 9)
+    subType = 6;
+  if (mainType == 11)
+    subType = 9;
+  return subType;
+}
+
+//===---------------------------------------------------------------------===//
