@@ -18,6 +18,7 @@ add_llvm_library(LLVMScalarOpts
   LoopUnrollPass.cpp
   LoopUnswitch.cpp
   MemCpyOptimizer.cpp
+  ObjectSizeLowering.cpp
   Reassociate.cpp
   Reg2Mem.cpp
   SCCP.cpp
