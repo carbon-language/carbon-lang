@@ -14,21 +14,20 @@
 <div id="content">
 
 <style>  
-  thead {
-    background-color:#eee; color:#666666;
-    font-weight: bold; cursor: default;
-    text-align:center;
-    border-top: 2px solid #cccccc;
-    border-bottom: 2px solid #cccccc;
-    font-weight: bold; font-family: Verdana
-  } 
-  table { border: 1px #cccccc solid }
-  table { border-collapse: collapse; border-spacing: 0px }
-  table { margin-left:0px; margin-top:20px; margin-bottom:20px }
-  td { border-bottom: 1px #cccccc dotted }
-  td { padding:5px; padding-left:8px; padding-right:8px }
-  td { text-align:left; font-size:9pt }
-  td.View   { padding-left: 10px }  
+table.options thead {
+  background-color:#eee; color:#666666;
+  font-weight: bold; cursor: default;
+  text-align:left;
+  border-top: 2px solid #cccccc;
+  border-bottom: 2px solid #cccccc;
+  font-weight: bold; font-family: Verdana
+} 
+table.options { border: 1px #cccccc solid }
+table.options { border-collapse: collapse; border-spacing: 0px }
+table.options { margin-left:0px; margin-top:20px; margin-bottom:20px }
+table.options td { border-bottom: 1px #cccccc dotted }
+table.options td { padding:5px; padding-left:8px; padding-right:8px }
+table.options td { text-align:left; font-size:9pt }
 </style>
 
 <h1>Running the Analyzer</h1>
@@ -118,7 +117,7 @@ options prefix the build command. For example:</p>
 
 <p>Here is a subset of useful options:</p>
 
-<table>
+<table class="options">
 <thead><tr><td>Option</td><td>Description</td></tr></thead>
 
 <tr><td><b>-o</b></td><td>Target directory for HTML report files. Subdirectories
