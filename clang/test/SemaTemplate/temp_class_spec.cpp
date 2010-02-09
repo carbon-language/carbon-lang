@@ -348,3 +348,16 @@ namespace PR6025 {
   {
   };
 }
+
+namespace PR6181 {
+  template <class T>
+  class a;
+  
+  class s;
+  
+  template <class U>
+  class a<s> // expected-error{{partial specialization of 'a' does not use any of its template parameters}}
+  {
+  };
+  
+}

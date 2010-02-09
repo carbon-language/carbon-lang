@@ -3400,12 +3400,23 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
     // FIXME: Diagnose friend partial specializations
 
-    // FIXME: Template parameter list matters, too
-    ClassTemplatePartialSpecializationDecl::Profile(ID,
-                                                   Converted.getFlatArguments(),
-                                                   Converted.flatSize(),
-                                                    Context);
-  } else
+    if (!Name.isDependent() && 
+        !TemplateSpecializationType::anyDependentTemplateArguments(
+                                             TemplateArgs.getArgumentArray(), 
+                                                         TemplateArgs.size())) {
+      Diag(TemplateNameLoc, diag::err_partial_spec_fully_specialized)
+        << ClassTemplate->getDeclName();
+      isPartialSpecialization = false;
+    } else {
+      // FIXME: Template parameter list matters, too
+      ClassTemplatePartialSpecializationDecl::Profile(ID,
+                                                  Converted.getFlatArguments(),
+                                                      Converted.flatSize(),
+                                                      Context);
+    }
+  }
+  
+  if (!isPartialSpecialization)
     ClassTemplateSpecializationDecl::Profile(ID,
                                              Converted.getFlatArguments(),
                                              Converted.flatSize(),
@@ -3435,7 +3446,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   QualType CanonType;
   if (PrevDecl && 
       (PrevDecl->getSpecializationKind() == TSK_Undeclared ||
-       TUK == TUK_Friend)) {
+               TUK == TUK_Friend)) {
     // Since the only prior class template specialization with these
     // arguments was referenced but not declared, or we're only
     // referencing this specialization as a friend, reuse that
@@ -3448,8 +3459,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   } else if (isPartialSpecialization) {
     // Build the canonical type that describes the converted template
     // arguments of the class template partial specialization.
-    CanonType = Context.getTemplateSpecializationType(
-                                                  TemplateName(ClassTemplate),
+    TemplateName CanonTemplate = Context.getCanonicalTemplateName(Name);
+    CanonType = Context.getTemplateSpecializationType(CanonTemplate,
                                                   Converted.getFlatArguments(),
                                                   Converted.flatSize());
 

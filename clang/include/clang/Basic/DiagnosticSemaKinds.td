@@ -1271,6 +1271,8 @@ def err_partial_spec_redeclared : Error<
   "class template partial specialization %0 cannot be redeclared">;
 def note_prev_partial_spec_here : Note<
   "previous declaration of class template partial specialization %0 is here">;
+def err_partial_spec_fully_specialized : Error<
+  "partial specialization of %0 does not use any of its template parameters">;
   
 // C++ Function template specializations
 def err_function_template_spec_no_match : Error<
