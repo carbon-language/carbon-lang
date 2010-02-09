@@ -11,5 +11,5 @@ struct HasUserDefault { HasUserDefault(); };
 void test_const_default_init() {
   const NoUserDefault x1; // expected-error{{default initialization of an object of const type 'struct NoUserDefault const' requires a user-provided default constructor}}
   const HasUserDefault x2;
-  const int x3; // FIXME: xpected-error{{default initialization of an object of const type 'struct NoUserDefault const' requires a user-provided default constructor}}
+  const int x3; // expected-error{{default initialization of an object of const type 'int const'}}
 }

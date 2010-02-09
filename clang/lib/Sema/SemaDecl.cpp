@@ -3658,24 +3658,6 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
   if (VarDecl *Var = dyn_cast<VarDecl>(RealDecl)) {
     QualType Type = Var->getType();
 
-    // Record tentative definitions.
-    if (Var->isTentativeDefinitionNow())
-      TentativeDefinitions.push_back(Var);
-
-    // C++ [dcl.init.ref]p3:
-    //   The initializer can be omitted for a reference only in a
-    //   parameter declaration (8.3.5), in the declaration of a
-    //   function return type, in the declaration of a class member
-    //   within its class declaration (9.2), and where the extern
-    //   specifier is explicitly used.
-    if (Type->isReferenceType() && !Var->hasExternalStorage()) {
-      Diag(Var->getLocation(), diag::err_reference_var_requires_init)
-        << Var->getDeclName()
-        << SourceRange(Var->getLocation(), Var->getLocation());
-      Var->setInvalidDecl();
-      return;
-    }
-
     // C++0x [dcl.spec.auto]p3
     if (TypeContainsUndeducedAuto) {
       Diag(Var->getLocation(), diag::err_auto_var_requires_init)
@@ -3684,99 +3666,133 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       return;
     }
 
-    // An array without size is an incomplete type, and there are no special
-    // rules in C++ to make such a definition acceptable.
-    if (getLangOptions().CPlusPlus && Type->isIncompleteArrayType() &&
-        !Var->hasExternalStorage()) {
+    switch (Var->isThisDeclarationADefinition()) {
+    case VarDecl::Definition:
+      if (!Var->isStaticDataMember() || !Var->getAnyInitializer())
+        break;
+
+      // We have an out-of-line definition of a static data member
+      // that has an in-class initializer, so we type-check this like
+      // a declaration. 
+      //
+      // Fall through
+      
+    case VarDecl::DeclarationOnly:
+      // It's only a declaration. 
+
+      // Block scope. C99 6.7p7: If an identifier for an object is
+      // declared with no linkage (C99 6.2.2p6), the type for the
+      // object shall be complete.
+      if (!Type->isDependentType() && Var->isBlockVarDecl() && 
+          !Var->getLinkage() && !Var->isInvalidDecl() &&
+          RequireCompleteType(Var->getLocation(), Type,
+                              diag::err_typecheck_decl_incomplete_type))
+        Var->setInvalidDecl();
+
+      // Make sure that the type is not abstract.
+      if (!Type->isDependentType() && !Var->isInvalidDecl() &&
+          RequireNonAbstractType(Var->getLocation(), Type,
+                                 diag::err_abstract_type_in_decl,
+                                 AbstractVariableType))
+        Var->setInvalidDecl();
+      return;
+
+    case VarDecl::TentativeDefinition:
+      // File scope. C99 6.9.2p2: A declaration of an identifier for an
+      // object that has file scope without an initializer, and without a
+      // storage-class specifier or with the storage-class specifier "static",
+      // constitutes a tentative definition. Note: A tentative definition with
+      // external linkage is valid (C99 6.2.2p5).
+      if (!Var->isInvalidDecl()) {
+        if (const IncompleteArrayType *ArrayT
+                                    = Context.getAsIncompleteArrayType(Type)) {
+          if (RequireCompleteType(Var->getLocation(),
+                                  ArrayT->getElementType(),
+                                  diag::err_illegal_decl_array_incomplete_type))
+            Var->setInvalidDecl();
+        } else if (Var->getStorageClass() == VarDecl::Static) {
+          // C99 6.9.2p3: If the declaration of an identifier for an object is
+          // a tentative definition and has internal linkage (C99 6.2.2p3), the
+          // declared type shall not be an incomplete type.
+          // NOTE: code such as the following
+          //     static struct s;
+          //     struct s { int a; };
+          // is accepted by gcc. Hence here we issue a warning instead of
+          // an error and we do not invalidate the static declaration.
+          // NOTE: to avoid multiple warnings, only check the first declaration.
+          if (Var->getPreviousDeclaration() == 0)
+            RequireCompleteType(Var->getLocation(), Type,
+                                diag::ext_typecheck_decl_incomplete_type);
+        }
+      }
+
+      // Record the tentative definition; we're done.
+      if (!Var->isInvalidDecl())
+        TentativeDefinitions.push_back(Var);
+      return;
+    }
+
+    // Provide a specific diagnostic for uninitialized variable
+    // definitions with incomplete array type.
+    if (Type->isIncompleteArrayType()) {
       Diag(Var->getLocation(),
            diag::err_typecheck_incomplete_array_needs_initializer);
       Var->setInvalidDecl();
       return;
     }
 
-    // C++ [temp.expl.spec]p15:
-    //   An explicit specialization of a static data member of a template is a
-    //   definition if the declaration includes an initializer; otherwise, it 
-    //   is a declaration.
-    if (Var->isStaticDataMember() &&
-        Var->getInstantiatedFromStaticDataMember() &&
-        Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+   // Provide a specific diagnostic for uninitialized variable
+   // definitions with reference type.
+   if (Type->isReferenceType()) {
+     Diag(Var->getLocation(), diag::err_reference_var_requires_init)
+       << Var->getDeclName()
+       << SourceRange(Var->getLocation(), Var->getLocation());
+     Var->setInvalidDecl();
+     return;
+   }
+
+    // Do not attempt to type-check the default initializer for a
+    // variable with dependent type.
+    if (Type->isDependentType())
       return;
-    
-    // C++ [dcl.init]p9:
-    //   If no initializer is specified for an object, and the object
-    //   is of (possibly cv-qualified) non-POD class type (or array
-    //   thereof), the object shall be default-initialized; if the
-    //   object is of const-qualified type, the underlying class type
-    //   shall have a user-declared default constructor.
-    //
-    // FIXME: Diagnose the "user-declared default constructor" bit.
-    if (getLangOptions().CPlusPlus) {
-      QualType InitType = Type;
-      if (const ArrayType *Array = Context.getAsArrayType(Type))
-        InitType = Context.getBaseElementType(Array);
-      if ((!Var->hasExternalStorage() && !Var->isExternC()) &&
-          InitType->isRecordType() && !InitType->isDependentType()) {
-        if (!RequireCompleteType(Var->getLocation(), InitType,
-                                 diag::err_invalid_incomplete_type_use)) {
-          InitializedEntity Entity
-            = InitializedEntity::InitializeVariable(Var);
-          InitializationKind Kind
-            = InitializationKind::CreateDefault(Var->getLocation());
 
-          InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
-          OwningExprResult Init = InitSeq.Perform(*this, Entity, Kind,
-                                                  MultiExprArg(*this, 0, 0));
-          if (Init.isInvalid())
-            Var->setInvalidDecl();
-          else {
-            if (Init.get())
-              Var->setInit(Context, 
-                       MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
-            FinalizeVarWithDestructor(Var, InitType->getAs<RecordType>());
-          }
-        } else {
-          Var->setInvalidDecl();
-        }
-      }
+    if (Var->isInvalidDecl())
+      return;
 
-      // The variable can not have an abstract class type.
-      if (RequireNonAbstractType(Var->getLocation(), Type,
-                                 diag::err_abstract_type_in_decl,
-                                 AbstractVariableType))
-        Var->setInvalidDecl();
+    if (RequireCompleteType(Var->getLocation(), 
+                            Context.getBaseElementType(Type),
+                            diag::err_typecheck_decl_incomplete_type)) {
+      Var->setInvalidDecl();
+      return;
     }
 
-#if 0
-    // FIXME: Temporarily disabled because we are not properly parsing
-    // linkage specifications on declarations, e.g.,
-    //
-    //   extern "C" const CGPoint CGPointerZero;
-    //
-    // C++ [dcl.init]p9:
-    //
-    //     If no initializer is specified for an object, and the
-    //     object is of (possibly cv-qualified) non-POD class type (or
-    //     array thereof), the object shall be default-initialized; if
-    //     the object is of const-qualified type, the underlying class
-    //     type shall have a user-declared default
-    //     constructor. Otherwise, if no initializer is specified for
-    //     an object, the object and its subobjects, if any, have an
-    //     indeterminate initial value; if the object or any of its
-    //     subobjects are of const-qualified type, the program is
-    //     ill-formed.
-    //
-    // This isn't technically an error in C, so we don't diagnose it.
-    //
-    // FIXME: Actually perform the POD/user-defined default
-    // constructor check.
-    if (getLangOptions().CPlusPlus &&
-        Context.getCanonicalType(Type).isConstQualified() &&
-        !Var->hasExternalStorage())
-      Diag(Var->getLocation(),  diag::err_const_var_requires_init)
-        << Var->getName()
-        << SourceRange(Var->getLocation(), Var->getLocation());
-#endif
+    // The variable can not have an abstract class type.
+    if (RequireNonAbstractType(Var->getLocation(), Type,
+                               diag::err_abstract_type_in_decl,
+                               AbstractVariableType)) {
+      Var->setInvalidDecl();
+      return;
+    }
+
+    InitializedEntity Entity = InitializedEntity::InitializeVariable(Var);
+    InitializationKind Kind
+      = InitializationKind::CreateDefault(Var->getLocation());
+    
+    InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
+    OwningExprResult Init = InitSeq.Perform(*this, Entity, Kind,
+                                            MultiExprArg(*this, 0, 0));
+    if (Init.isInvalid())
+      Var->setInvalidDecl();
+    else {
+      if (Init.get())
+        Var->setInit(Context, 
+                     MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
+
+      if (getLangOptions().CPlusPlus)
+        if (const RecordType *Record
+                        = Context.getBaseElementType(Type)->getAs<RecordType>())
+          FinalizeVarWithDestructor(Var, Record);
+    }
   }
 }
 
@@ -3792,78 +3808,6 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     if (Decl *D = Group[i].getAs<Decl>())
       Decls.push_back(D);
 
-  // Perform semantic analysis that depends on having fully processed both
-  // the declarator and initializer.
-  for (unsigned i = 0, e = Decls.size(); i != e; ++i) {
-    VarDecl *IDecl = dyn_cast<VarDecl>(Decls[i]);
-    if (!IDecl)
-      continue;
-    QualType T = IDecl->getType();
-
-    // Block scope. C99 6.7p7: If an identifier for an object is declared with
-    // no linkage (C99 6.2.2p6), the type for the object shall be complete...
-    if (IDecl->isBlockVarDecl() && !IDecl->hasExternalStorage()) {
-      if (T->isDependentType()) {
-        // If T is dependent, we should not require a complete type.
-        // (RequireCompleteType shouldn't be called with dependent types.)
-        // But we still can at least check if we've got an array of unspecified
-        // size without an initializer.
-        if (!IDecl->isInvalidDecl() && T->isIncompleteArrayType() &&
-            !IDecl->getInit()) {
-          Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)
-            << T;
-          IDecl->setInvalidDecl();
-        }
-      } else if (!IDecl->isInvalidDecl()) {
-        // If T is an incomplete array type with an initializer list that is
-        // dependent on something, its size has not been fixed. We could attempt
-        // to fix the size for such arrays, but we would still have to check
-        // here for initializers containing a C++0x vararg expansion, e.g.
-        // template <typename... Args> void f(Args... args) {
-        //   int vals[] = { args };
-        // }
-        const IncompleteArrayType *IAT = Context.getAsIncompleteArrayType(T);
-        Expr *Init = IDecl->getInit();
-        if (IAT && Init &&
-            (Init->isTypeDependent() || Init->isValueDependent())) {
-          // Check that the member type of the array is complete, at least.
-          if (RequireCompleteType(IDecl->getLocation(), IAT->getElementType(),
-                                  diag::err_typecheck_decl_incomplete_type))
-            IDecl->setInvalidDecl();
-        } else if (RequireCompleteType(IDecl->getLocation(), T,
-                                      diag::err_typecheck_decl_incomplete_type))
-          IDecl->setInvalidDecl();
-      }
-    }
-    // File scope. C99 6.9.2p2: A declaration of an identifier for an
-    // object that has file scope without an initializer, and without a
-    // storage-class specifier or with the storage-class specifier "static",
-    // constitutes a tentative definition. Note: A tentative definition with
-    // external linkage is valid (C99 6.2.2p5).
-    if (IDecl->isThisDeclarationADefinition() == VarDecl::TentativeDefinition &&
-        !IDecl->isInvalidDecl()) {
-      if (const IncompleteArrayType *ArrayT
-          = Context.getAsIncompleteArrayType(T)) {
-        if (RequireCompleteType(IDecl->getLocation(),
-                                ArrayT->getElementType(),
-                                diag::err_illegal_decl_array_incomplete_type))
-          IDecl->setInvalidDecl();
-      } else if (IDecl->getStorageClass() == VarDecl::Static) {
-        // C99 6.9.2p3: If the declaration of an identifier for an object is
-        // a tentative definition and has internal linkage (C99 6.2.2p3), the
-        // declared type shall not be an incomplete type.
-        // NOTE: code such as the following
-        //     static struct s;
-        //     struct s { int a; };
-        // is accepted by gcc. Hence here we issue a warning instead of
-        // an error and we do not invalidate the static declaration.
-        // NOTE: to avoid multiple warnings, only check the first declaration.
-        if (IDecl->getPreviousDeclaration() == 0)
-          RequireCompleteType(IDecl->getLocation(), T,
-                              diag::ext_typecheck_decl_incomplete_type);
-      }
-    }
-  }
   return DeclGroupPtrTy::make(DeclGroupRef::Create(Context,
                                                    Decls.data(), Decls.size()));
 }

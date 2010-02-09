@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 int a0;
-const volatile int a1;
+const volatile int a1 = 2;
 int a2[16];
 int a3();
 

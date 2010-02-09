@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-
 template<int i> struct x {
   static const int j = i;
   x<j>* y;
@@ -9,7 +8,6 @@ template<int i>
 const int x<i>::j;
 
 int array0[x<2>::j];
-
 
 template<typename T>
 struct X0 {

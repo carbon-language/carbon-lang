@@ -217,6 +217,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // FIXME: having to fake up a LookupResult is dumb.
   LookupResult Previous(SemaRef, Var->getDeclName(), Var->getLocation(),
                         Sema::LookupOrdinaryName);
+  if (D->isStaticDataMember())
+    SemaRef.LookupQualifiedName(Previous, Owner, false);
   SemaRef.CheckVariableDeclaration(Var, Previous, Redeclaration);
 
   if (D->isOutOfLine()) {
@@ -232,7 +234,9 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     SemaRef.Context.setInstantiatedFromStaticDataMember(Var, D, 
                                                      TSK_ImplicitInstantiation);
   
-  if (D->getInit()) {
+  if (Var->getAnyInitializer()) {
+    // We already have an initializer in the class.
+  } else if (D->getInit()) {
     if (Var->isStaticDataMember() && !D->isOutOfLine())
       SemaRef.PushExpressionEvaluationContext(Sema::Unevaluated);
     else
@@ -1821,7 +1825,6 @@ void Sema::InstantiateStaticDataMemberDefinition(
   CurContext = PreviousContext;
 
   if (Var) {
-    Var->setPreviousDeclaration(OldVar);
     MemberSpecializationInfo *MSInfo = OldVar->getMemberSpecializationInfo();
     assert(MSInfo && "Missing member specialization information?");
     Var->setTemplateSpecializationKind(MSInfo->getTemplateSpecializationKind(),

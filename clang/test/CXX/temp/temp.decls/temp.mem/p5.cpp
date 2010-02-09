@@ -55,7 +55,7 @@ template double Foo::As2();
 // Partial ordering with conversion function templates.
 struct X0 {
   template<typename T> operator T*() {
-    T x;
+    T x = 1;
     x = 17; // expected-error{{read-only variable is not assignable}}
   }
   

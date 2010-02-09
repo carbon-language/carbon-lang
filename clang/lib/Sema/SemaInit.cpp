@@ -2650,7 +2650,7 @@ static void TryDefaultInitialization(Sema &S,
   //     - if T is a (possibly cv-qualified) class type (Clause 9), the default
   //       constructor for T is called (and the initialization is ill-formed if
   //       T has no accessible default constructor);
-  if (DestType->isRecordType()) {
+  if (DestType->isRecordType() && S.getLangOptions().CPlusPlus) {
     return TryConstructorInitialization(S, Entity, Kind, 0, 0, DestType,
                                         Sequence);
   }
@@ -2661,7 +2661,7 @@ static void TryDefaultInitialization(Sema &S,
   //   If a program calls for the default initialization of an object of
   //   a const-qualified type T, T shall be a class type with a user-provided 
   //   default constructor.
-  if (DestType.isConstQualified())
+  if (DestType.isConstQualified() && S.getLangOptions().CPlusPlus)
     Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
 }
 

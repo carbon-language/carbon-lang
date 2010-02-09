@@ -12,8 +12,8 @@ void foo(double a)
 { 
   S w(int(a)); // expected-warning{{disambiguated}}
   w(17);
-  S x(int()); // expected-warning{{disambiguated}}
-  x(&returns_an_int);
+  S x1(int()); // expected-warning{{disambiguated}}
+  x1(&returns_an_int);
   S y((int)a); 
   y.bar();
   S z = int(a);
