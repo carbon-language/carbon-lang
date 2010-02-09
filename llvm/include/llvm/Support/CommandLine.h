@@ -1168,7 +1168,7 @@ class bits_storage<DataType, bool> {
 
   template<class T>
   static unsigned Bit(const T &V) {
-    unsigned BitPos = reinterpret_cast<unsigned>(V);
+    unsigned BitPos = (unsigned)V;
     assert(BitPos < sizeof(unsigned) * CHAR_BIT &&
           "enum exceeds width of bit vector!");
     return 1 << BitPos;
