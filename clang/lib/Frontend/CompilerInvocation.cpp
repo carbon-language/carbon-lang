@@ -367,6 +367,10 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-load");
     Res.push_back(Opts.Plugins[i]);
   }
+  for (unsigned i = 0, e = Opts.ASTMergeFiles.size(); i != e; ++i) {
+    Res.push_back("-ast-merge");
+    Res.push_back(Opts.ASTMergeFiles[i]);
+  }
 }
 
 static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
@@ -929,6 +933,7 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   Opts.ShowTimers = Args.hasArg(OPT_ftime_report);
   Opts.ShowVersion = Args.hasArg(OPT_version);
   Opts.ViewClassInheritance = getLastArgValue(Args, OPT_cxx_inheritance_view);
+  Opts.ASTMergeFiles = getAllArgValues(Args, OPT_ast_merge);
 
   FrontendOptions::InputKind DashX = FrontendOptions::IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {

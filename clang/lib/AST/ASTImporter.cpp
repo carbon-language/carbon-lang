@@ -30,6 +30,7 @@ namespace {
     explicit ASTNodeImporter(ASTImporter &Importer) : Importer(Importer) { }
     
     using TypeVisitor<ASTNodeImporter, QualType>::Visit;
+    using DeclVisitor<ASTNodeImporter, Decl *>::Visit;
 
     // Importing types
     QualType VisitBuiltinType(BuiltinType *T);
@@ -440,6 +441,13 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   if (!DC)
     return 0;
     
+  DeclContext *LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return 0;
+  }
+
   // Import the name of this declaration.
   DeclarationName Name = Importer.Import(D->getDeclName());
   if (D->getDeclName() && !Name)
@@ -455,11 +463,11 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   
   // Try to find a variable in our own ("to") context with the same name and
   // in the same context as the variable we're importing.
-  if (!D->isFileVarDecl()) {
+  if (D->isFileVarDecl()) {
     VarDecl *MergeWithVar = 0;
     llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
     unsigned IDNS = Decl::IDNS_Ordinary;
-    for (DeclContext::lookup_result Lookup = DC->lookup(D->getDeclName());
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
          Lookup.first != Lookup.second; 
          ++Lookup.first) {
       if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
@@ -517,16 +525,22 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   TypeSourceInfo *TInfo = 0;
   if (TypeSourceInfo *FromTInfo = D->getTypeSourceInfo()) {
     TInfo = Importer.Import(FromTInfo);
+#if 0
+    // FIXME: Tolerate failures in translation type source
+    // information, at least until it is implemented.
     if (!TInfo)
       return 0;
+#endif
   }
   
   // Create the imported variable.
   VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
                                    Name.getAsIdentifierInfo(), T, TInfo,
                                    D->getStorageClass());
+  ToVar->setLexicalDeclContext(LexicalDC);
   Importer.getImportedDecls()[D] = ToVar;
-  
+  LexicalDC->addDecl(ToVar);
+
   // Merge the initializer.
   // FIXME: Can we really import any initializer? Alternatively, we could force
   // ourselves to import every declaration of a variable and then only use
@@ -542,7 +556,12 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
 ASTImporter::ASTImporter(ASTContext &ToContext, Diagnostic &ToDiags,
                          ASTContext &FromContext, Diagnostic &FromDiags)
   : ToContext(ToContext), FromContext(FromContext),
-    ToDiags(ToDiags), FromDiags(FromDiags) { }
+    ToDiags(ToDiags), FromDiags(FromDiags) { 
+  ImportedDecls[FromContext.getTranslationUnitDecl()]
+    = ToContext.getTranslationUnitDecl();
+}
+
+ASTImporter::~ASTImporter() { }
 
 QualType ASTImporter::Import(QualType FromT) {
   if (FromT.isNull())
@@ -564,6 +583,73 @@ QualType ASTImporter::Import(QualType FromT) {
   ImportedTypes[FromT.getTypePtr()] = ToT.getTypePtr();
   
   return ToContext.getQualifiedType(ToT, FromT.getQualifiers());
+}
+
+TypeSourceInfo *ASTImporter::Import(TypeSourceInfo *FromTSI) {
+  // FIXME: Implement!
+  return 0;
+}
+
+Decl *ASTImporter::Import(Decl *FromD) {
+  if (!FromD)
+    return 0;
+
+  // Check whether we've already imported this declaration.  
+  llvm::DenseMap<Decl *, Decl *>::iterator Pos = ImportedDecls.find(FromD);
+  if (Pos != ImportedDecls.end())
+    return Pos->second;
+  
+  // Import the type
+  ASTNodeImporter Importer(*this);
+  Decl *ToD = Importer.Visit(FromD);
+  if (!ToD)
+    return 0;
+  
+  // Record the imported declaration.
+  ImportedDecls[FromD] = ToD;
+  return ToD;
+}
+
+DeclContext *ASTImporter::ImportContext(DeclContext *FromDC) {
+  if (!FromDC)
+    return FromDC;
+
+  return cast_or_null<DeclContext>(Import(cast<Decl>(FromDC)));
+}
+
+Expr *ASTImporter::Import(Expr *FromE) {
+  if (!FromE)
+    return 0;
+
+  return cast_or_null<Expr>(Import(cast<Stmt>(FromE)));
+}
+
+Stmt *ASTImporter::Import(Stmt *FromS) {
+  if (!FromS)
+    return 0;
+
+  // FIXME: Implement!
+  return 0;
+}
+
+NestedNameSpecifier *ASTImporter::Import(NestedNameSpecifier *FromNNS) {
+  if (!FromNNS)
+    return 0;
+
+  // FIXME: Implement!
+  return 0;
+}
+
+SourceLocation ASTImporter::Import(SourceLocation FromLoc) {
+  if (FromLoc.isInvalid())
+    return SourceLocation();
+
+  // FIXME: Implement!
+  return SourceLocation();
+}
+
+SourceRange ASTImporter::Import(SourceRange FromRange) {
+  return SourceRange(Import(FromRange.getBegin()), Import(FromRange.getEnd()));
 }
 
 DeclarationName ASTImporter::Import(DeclarationName FromName) {

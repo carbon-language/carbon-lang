@@ -51,7 +51,7 @@ void LLVMErrorHandler(void *UserData, const std::string &Message) {
   exit(1);
 }
 
-static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
+static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   using namespace clang::frontend;
 
   switch (CI.getFrontendOpts().ProgramAction) {
@@ -110,6 +110,21 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   case RunAnalysis:            return new AnalysisAction();
   case RunPreprocessorOnly:    return new PreprocessOnlyAction();
   }
+}
+
+static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
+  // Create the underlying action.
+  FrontendAction *Act = CreateFrontendBaseAction(CI);
+  if (!Act)
+    return 0;
+
+  // If there are any AST files to merge, create a frontend action
+  // adaptor to perform the merge.
+  if (!CI.getFrontendOpts().ASTMergeFiles.empty())
+    Act = new ASTMergeAction(Act, &CI.getFrontendOpts().ASTMergeFiles[0],
+                             CI.getFrontendOpts().ASTMergeFiles.size());
+
+  return Act;
 }
 
 // FIXME: Define the need for this testing away.

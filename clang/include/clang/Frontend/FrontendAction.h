@@ -18,6 +18,7 @@ namespace clang {
 class ASTUnit;
 class ASTConsumer;
 class CompilerInstance;
+class ASTMergeAction;
 
 /// FrontendAction - Abstract base class for actions which can be performed by
 /// the frontend.
@@ -25,6 +26,7 @@ class FrontendAction {
   std::string CurrentFile;
   llvm::OwningPtr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
+  friend class ASTMergeAction;
 
 protected:
   /// @name Implementation Action Interface
@@ -102,6 +104,10 @@ public:
   ASTUnit &getCurrentASTUnit() const {
     assert(!CurrentASTUnit && "No current AST unit!");
     return *CurrentASTUnit;
+  }
+
+  ASTUnit *takeCurrentASTUnit() {
+    return CurrentASTUnit.take();
   }
 
   void setCurrentFile(llvm::StringRef Value, ASTUnit *AST = 0);

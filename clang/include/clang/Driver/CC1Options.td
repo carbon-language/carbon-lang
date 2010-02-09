@@ -200,6 +200,9 @@ def verify : Flag<"-verify">,
 // CompilerInvocation out of a driver-derived argument vector.
 def cc1 : Flag<"-cc1">;
 
+def ast_merge : Separate<"-ast-merge">,
+  MetaVarName<"<ast file>">,
+  HelpText<"Merge the given AST file into the translation unit being compiled.">;
 def code_completion_at : Separate<"-code-completion-at">,
   MetaVarName<"<file>:<line>:<column>">,
   HelpText<"Dump code-completion information at a location">;

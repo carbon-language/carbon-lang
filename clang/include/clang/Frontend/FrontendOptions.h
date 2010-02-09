@@ -110,6 +110,9 @@ public:
   /// The list of plugins to load.
   std::vector<std::string> Plugins;
 
+  /// \brief The list of AST files to merge.
+  std::vector<std::string> ASTMergeFiles;
+
 public:
   FrontendOptions() {
     DebugCodeCompletionPrinter = 1;
