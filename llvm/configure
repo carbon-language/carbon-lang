@@ -1410,7 +1410,7 @@ Optional Features:
                           %a (default is YES)
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
-  --enable-libffi         Check for the presence of libffi (default is YES)
+  --enable-libffi         Check for the presence of libffi (default is NO)
   --enable-llvmc-dynamic  Link LLVMC dynamically (default is NO, unless on
                           Win32)
   --enable-llvmc-dynamic-plugins
@@ -5203,18 +5203,17 @@ fi
 
 # Check whether --enable-libffi was given.
 if test "${enable_libffi+set}" = set; then
-  enableval=$enable_libffi;
-else
-  enableval=yes
-fi
-
-case "$enableval" in
-  yes) llvm_cv_enable_libffi="yes" ;;
-  no)  llvm_cv_enable_libffi="no"  ;;
-  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libffi. Use \"yes\" or \"no\"" >&5
+  enableval=$enable_libffi; case "$enableval" in
+    yes) llvm_cv_enable_libffi="yes" ;;
+    no)  llvm_cv_enable_libffi="no"  ;;
+    *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-libffi. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-libffi. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
-esac
+  esac
+else
+  llvm_cv_enable_libffi=no
+fi
+
 
 if test "$llvm_cv_os_type" = "Win32" ; then
    llvmc_dynamic="yes"
@@ -11036,7 +11035,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11039 "configure"
+#line 11038 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13371,8 +13370,9 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 else
-  { echo "$as_me:$LINENO: WARNING: libffi not found - disabling external calls from interpreter" >&5
-echo "$as_me: WARNING: libffi not found - disabling external calls from interpreter" >&2;}
+  { { echo "$as_me:$LINENO: error: libffi not found - configure without --enable-libffi to compile without it" >&5
+echo "$as_me: error: libffi not found - configure without --enable-libffi to compile without it" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
 fi

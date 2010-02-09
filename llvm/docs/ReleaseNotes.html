@@ -604,7 +604,11 @@ on LLVM 2.6, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
-<li>...</li>
+<li>The LLVM interpreter now defaults to <em>not</em> using <tt>libffi</tt> even
+if you have it installed.  This makes it more likely that an LLVM built on one
+system will work when copied to a similar system.  To use <tt>libffi</tt>,
+configure with <tt>--enable-libffi</tt>.
+</li>
 </ul>
 
 
