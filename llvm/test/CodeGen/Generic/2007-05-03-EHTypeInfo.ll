@@ -1,4 +1,4 @@
-; RUN: llc < %s -enable-eh -march=x86
+; RUN: llc < %s -enable-eh
 
 	%struct.exception = type { i8, i8, i32, i8*, i8*, i32, i8* }
 @program_error = external global %struct.exception		; <%struct.exception*> [#uses=1]
