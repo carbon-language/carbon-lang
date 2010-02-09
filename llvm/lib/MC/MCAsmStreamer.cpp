@@ -535,8 +535,9 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter) {
     SmallString<256> Code;
+    SmallVector<MCFixup, 4> Fixups;
     raw_svector_ostream VecOS(Code);
-    Emitter->EncodeInstruction(Inst, VecOS);
+    Emitter->EncodeInstruction(Inst, VecOS, Fixups);
     VecOS.flush();
 
     raw_ostream &OS = GetCommentOS();

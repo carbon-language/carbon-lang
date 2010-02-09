@@ -944,6 +944,24 @@ public:
     delete DummyF;
   }
 
+  unsigned getNumFixupKinds() const {
+    return 5;
+  }
+
+  MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    static MCFixupKindInfo Infos[] = {
+      { "reloc_pcrel_word", 0, 4 * 8 },
+      { "reloc_picrel_word", 0, 4 * 8 },
+      { "reloc_absolute_word", 0, 4 * 8 },
+      { "reloc_absolute_word_sext", 0, 4 * 8 },
+      { "reloc_absolute_dword", 0, 8 * 8 }
+    };
+
+    assert(Kind >= FirstTargetFixupKind && Kind < MaxTargetFixupKind &&
+           "Invalid kind!");
+    return Infos[Kind - FirstTargetFixupKind];
+  }
+
   bool AddRegToInstr(const MCInst &MI, MachineInstr *Instr,
                      unsigned Start) const {
     if (Start + 1 > MI.getNumOperands())
@@ -997,7 +1015,8 @@ public:
             AddRegToInstr(MI, Instr, Start + 4));
   }
 
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
+  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+                         SmallVectorImpl<MCFixup> &Fixups) const {
     // Don't look yet!
 
     // Convert the MCInst to a MachineInstr so we can (ab)use the regular

@@ -33,6 +33,24 @@ public:
   }
 
   ~X86MCCodeEmitter() {}
+
+  unsigned getNumFixupKinds() const {
+    return 5;
+  }
+
+  MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    static MCFixupKindInfo Infos[] = {
+      { "reloc_pcrel_word", 0, 4 * 8 },
+      { "reloc_picrel_word", 0, 4 * 8 },
+      { "reloc_absolute_word", 0, 4 * 8 },
+      { "reloc_absolute_word_sext", 0, 4 * 8 },
+      { "reloc_absolute_dword", 0, 8 * 8 }
+    };
+
+    assert(Kind >= FirstTargetFixupKind && Kind < MaxTargetFixupKind &&
+           "Invalid kind!");
+    return Infos[Kind - FirstTargetFixupKind];
+  }
   
   static unsigned GetX86RegNum(const MCOperand &MO) {
     return X86RegisterInfo::getX86RegNum(MO.getReg());
@@ -75,7 +93,8 @@ public:
                         unsigned RegOpcodeField, intptr_t PCAdj,
                         raw_ostream &OS) const;
   
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS) const;
+  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+                         SmallVectorImpl<MCFixup> &Fixups) const;
   
 };
 
@@ -379,7 +398,8 @@ static unsigned DetermineREXPrefix(const MCInst &MI, unsigned TSFlags,
 }
 
 void X86MCCodeEmitter::
-EncodeInstruction(const MCInst &MI, raw_ostream &OS) const {
+EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+                  SmallVectorImpl<MCFixup> &Fixups) const {
   unsigned Opcode = MI.getOpcode();
   const TargetInstrDesc &Desc = TII.get(Opcode);
   unsigned TSFlags = Desc.TSFlags;

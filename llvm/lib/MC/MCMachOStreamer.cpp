@@ -366,9 +366,10 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   CurSectionData->setHasInstructions(true);
 
   // FIXME: Relocations!
+  SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  Emitter->EncodeInstruction(Inst, VecOS);
+  Emitter->EncodeInstruction(Inst, VecOS, Fixups);
   EmitBytes(VecOS.str(), 0);
 }
 
