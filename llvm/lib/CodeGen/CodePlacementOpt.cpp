@@ -106,7 +106,7 @@ bool CodePlacementOpt::HasAnalyzableTerminator(MachineBasicBlock *MBB) {
   // At the time of this writing, there are blocks which AnalyzeBranch
   // thinks end in single uncoditional branches, yet which have two CFG
   // successors. Code in this file is not prepared to reason about such things.
-  if (!MBB->empty() && MBB->back().getOpcode() == TargetInstrInfo::EH_LABEL)
+  if (!MBB->empty() && MBB->back().isEHLabel())
     return false;
 
   // Aggressively handle return blocks and similar constructs.

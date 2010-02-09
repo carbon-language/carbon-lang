@@ -235,7 +235,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     unsigned Flags = MI->getDesc().TSFlags;
     
     unsigned FPInstClass = Flags & X86II::FPTypeMask;
-    if (MI->getOpcode() == TargetInstrInfo::INLINEASM)
+    if (MI->isInlineAsm())
       FPInstClass = X86II::SpecialFP;
     
     if (FPInstClass == X86II::NotFP)
@@ -1083,7 +1083,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     }
     }
     break;
-  case TargetInstrInfo::INLINEASM: {
+  case TargetOpcode::INLINEASM: {
     // The inline asm MachineInstr currently only *uses* FP registers for the
     // 'f' constraint.  These should be turned into the current ST(x) register
     // in the machine instr.  Also, any kills should be explicitly popped after

@@ -175,7 +175,7 @@ void BlackfinDAGToDAGISel::FixRegisterClasses(SelectionDAG &DAG) {
       // We cannot copy CC <-> !(CC/D)
       if ((isCC(DefRC) && !isDCC(UseRC)) || (isCC(UseRC) && !isDCC(DefRC))) {
         SDNode *Copy =
-          DAG.getMachineNode(TargetInstrInfo::COPY_TO_REGCLASS,
+          DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS,
                              NI->getDebugLoc(),
                              MVT::i32,
                              UI.getUse().get(),

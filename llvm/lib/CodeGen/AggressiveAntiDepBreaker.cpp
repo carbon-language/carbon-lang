@@ -425,8 +425,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
     // Ignore KILLs and passthru registers for liveness...
-    if ((MI->getOpcode() == TargetInstrInfo::KILL) ||
-        (PassthruRegs.count(Reg) != 0))
+    if (MI->isKill() || (PassthruRegs.count(Reg) != 0))
       continue;
 
     // Update def for Reg and aliases.
@@ -481,7 +480,7 @@ void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
 
   // Form a group of all defs and uses of a KILL instruction to ensure
   // that all registers are renamed as a group.
-  if (MI->getOpcode() == TargetInstrInfo::KILL) {
+  if (MI->isKill()) {
     DEBUG(dbgs() << "\tKill Group:");
 
     unsigned FirstReg = 0;
@@ -792,7 +791,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
 
     // Ignore KILL instructions (they form a group in ScanInstruction
     // but don't cause any anti-dependence breaking themselves)
-    if (MI->getOpcode() != TargetInstrInfo::KILL) {
+    if (!MI->isKill()) {
       // Attempt to break each anti-dependency...
       for (unsigned i = 0, e = Edges.size(); i != e; ++i) {
         SDep *Edge = Edges[i];

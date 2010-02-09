@@ -14,10 +14,11 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 namespace llvm {
-
+  class LiveVariables;
+  
   /// Lower PHI instructions to copies.  
   class PHIElimination : public MachineFunctionPass {
     MachineRegisterInfo  *MRI; // Machine register information
@@ -112,8 +113,7 @@ namespace llvm {
                                                 MachineBasicBlock::iterator I) {
       // Rather than assuming that EH labels come before other kinds of labels,
       // just skip all labels.
-      while (I != MBB.end() &&
-             (I->getOpcode() == TargetInstrInfo::PHI || I->isLabel()))
+      while (I != MBB.end() && (I->isPHI() || I->isLabel()))
         ++I;
       return I;
     }

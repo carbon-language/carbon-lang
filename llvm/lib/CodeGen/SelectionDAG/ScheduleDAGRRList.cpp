@@ -1042,9 +1042,9 @@ namespace {
         // CopyToReg should be close to its uses to facilitate coalescing and
         // avoid spilling.
         return 0;
-      if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
-          Opc == TargetInstrInfo::SUBREG_TO_REG ||
-          Opc == TargetInstrInfo::INSERT_SUBREG)
+      if (Opc == TargetOpcode::EXTRACT_SUBREG ||
+          Opc == TargetOpcode::SUBREG_TO_REG ||
+          Opc == TargetOpcode::INSERT_SUBREG)
         // EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG nodes should be
         // close to their uses to facilitate coalescing.
         return 0;
@@ -1445,7 +1445,7 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         while (SuccSU->Succs.size() == 1 &&
                SuccSU->getNode()->isMachineOpcode() &&
                SuccSU->getNode()->getMachineOpcode() ==
-                 TargetInstrInfo::COPY_TO_REGCLASS)
+                 TargetOpcode::COPY_TO_REGCLASS)
           SuccSU = SuccSU->Succs.front().getSUnit();
         // Don't constrain non-instruction nodes.
         if (!SuccSU->getNode() || !SuccSU->getNode()->isMachineOpcode())
@@ -1459,9 +1459,9 @@ void RegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         // Don't constrain EXTRACT_SUBREG, INSERT_SUBREG, and SUBREG_TO_REG;
         // these may be coalesced away. We want them close to their uses.
         unsigned SuccOpc = SuccSU->getNode()->getMachineOpcode();
-        if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
-            SuccOpc == TargetInstrInfo::INSERT_SUBREG ||
-            SuccOpc == TargetInstrInfo::SUBREG_TO_REG)
+        if (SuccOpc == TargetOpcode::EXTRACT_SUBREG ||
+            SuccOpc == TargetOpcode::INSERT_SUBREG ||
+            SuccOpc == TargetOpcode::SUBREG_TO_REG)
           continue;
         if ((!canClobber(SuccSU, DUSU) ||
              (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||

@@ -110,7 +110,7 @@ bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       MachineInstr *UseMI = &*UI;
       if (UseMI == MI)
         continue;
-      if (UseMI->getOpcode() == TargetInstrInfo::PHI) {
+      if (UseMI->isPHI()) {
         ExtendLife = false;
         continue;
       }
@@ -150,7 +150,7 @@ bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       UI = MRI->use_begin(DstReg);
       for (MachineRegisterInfo::use_iterator UE = MRI->use_end(); UI != UE;
            ++UI)
-        if (UI->getOpcode() == TargetInstrInfo::PHI)
+        if (UI->isPHI())
           PHIBBs.insert(UI->getParent());
 
       const TargetRegisterClass *RC = MRI->getRegClass(SrcReg);
@@ -162,7 +162,7 @@ bool OptimizeExts::OptimizeInstr(MachineInstr *MI, MachineBasicBlock *MBB,
           continue;
         unsigned NewVR = MRI->createVirtualRegister(RC);
         BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
-                TII->get(TargetInstrInfo::EXTRACT_SUBREG), NewVR)
+                TII->get(TargetOpcode::EXTRACT_SUBREG), NewVR)
           .addReg(DstReg).addImm(SubIdx);
         UseMO->setReg(NewVR);
         ++NumReuse;

@@ -335,7 +335,7 @@ unsigned MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB,
   unsigned Label = MMI->NextLabelID();
   
   BuildMI(MBB, MI, DL,
-          TII->get(TargetInstrInfo::GC_LABEL)).addImm(Label);
+          TII->get(TargetOpcode::GC_LABEL)).addImm(Label);
   
   return Label;
 }

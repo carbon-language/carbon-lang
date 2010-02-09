@@ -302,7 +302,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(OutContext, Mang, *this);
   switch (MI->getOpcode()) {
-  case TargetInstrInfo::DEBUG_VALUE: {
+  case TargetOpcode::DBG_VALUE: {
     // FIXME: if this is implemented for another target before it goes
     // away completely, the common part should be moved into AsmPrinter.
     if (!VerboseAsm)

@@ -111,7 +111,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
          MIE = MBB->rend(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
 
-      if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE) {
+      if (MI->isDebugValue()) {
         // Don't delete the DEBUG_VALUE itself, but if its Value operand is
         // a vreg and this is the only use, substitute an undef operand;
         // the former operand will then be deleted normally.

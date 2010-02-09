@@ -178,7 +178,7 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                        const TargetInstrDesc &II,
                                        bool IsClone, bool IsCloned,
                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
-  assert(Node->getMachineOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
+  assert(Node->getMachineOpcode() != TargetOpcode::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
 
   for (unsigned i = 0; i < II.getNumDefs(); ++i) {
@@ -236,7 +236,7 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 unsigned InstrEmitter::getVR(SDValue Op,
                              DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode() &&
-      Op.getMachineOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+      Op.getMachineOpcode() == TargetOpcode::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
     unsigned VReg = getDstOfOnlyCopyToRegUse(Op.getNode(), Op.getResNo());
     // IMPLICIT_DEF can produce any type of result so its TargetInstrDesc
@@ -246,7 +246,7 @@ unsigned InstrEmitter::getVR(SDValue Op,
       VReg = MRI->createVirtualRegister(RC);
     }
     BuildMI(MBB, Op.getDebugLoc(),
-            TII->get(TargetInstrInfo::IMPLICIT_DEF), VReg);
+            TII->get(TargetOpcode::IMPLICIT_DEF), VReg);
     return VReg;
   }
 
@@ -396,12 +396,12 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     }
   }
   
-  if (Opc == TargetInstrInfo::EXTRACT_SUBREG) {
+  if (Opc == TargetOpcode::EXTRACT_SUBREG) {
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
 
     // Create the extract_subreg machine instruction.
     MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
-                               TII->get(TargetInstrInfo::EXTRACT_SUBREG));
+                               TII->get(TargetOpcode::EXTRACT_SUBREG));
 
     // Figure out the register class to create for the destreg.
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
@@ -424,8 +424,8 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
     MBB->insert(InsertPos, MI);
-  } else if (Opc == TargetInstrInfo::INSERT_SUBREG ||
-             Opc == TargetInstrInfo::SUBREG_TO_REG) {
+  } else if (Opc == TargetOpcode::INSERT_SUBREG ||
+             Opc == TargetOpcode::SUBREG_TO_REG) {
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
     SDValue N2 = Node->getOperand(2);
@@ -452,7 +452,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     
     // If creating a subreg_to_reg, then the first input operand
     // is an implicit value immediate, otherwise it's a register
-    if (Opc == TargetInstrInfo::SUBREG_TO_REG) {
+    if (Opc == TargetOpcode::SUBREG_TO_REG) {
       const ConstantSDNode *SD = cast<ConstantSDNode>(N0);
       MI->addOperand(MachineOperand::CreateImm(SD->getZExtValue()));
     } else
@@ -507,20 +507,20 @@ void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     unsigned Opc = Node->getMachineOpcode();
     
     // Handle subreg insert/extract specially
-    if (Opc == TargetInstrInfo::EXTRACT_SUBREG || 
-        Opc == TargetInstrInfo::INSERT_SUBREG ||
-        Opc == TargetInstrInfo::SUBREG_TO_REG) {
+    if (Opc == TargetOpcode::EXTRACT_SUBREG || 
+        Opc == TargetOpcode::INSERT_SUBREG ||
+        Opc == TargetOpcode::SUBREG_TO_REG) {
       EmitSubregNode(Node, VRBaseMap);
       return;
     }
 
     // Handle COPY_TO_REGCLASS specially.
-    if (Opc == TargetInstrInfo::COPY_TO_REGCLASS) {
+    if (Opc == TargetOpcode::COPY_TO_REGCLASS) {
       EmitCopyToRegClassNode(Node, VRBaseMap);
       return;
     }
 
-    if (Opc == TargetInstrInfo::IMPLICIT_DEF)
+    if (Opc == TargetOpcode::IMPLICIT_DEF)
       // We want a unique VR for each IMPLICIT_DEF use.
       return;
     
@@ -640,7 +640,7 @@ void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       
     // Create the inline asm machine instruction.
     MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
-                               TII->get(TargetInstrInfo::INLINEASM));
+                               TII->get(TargetOpcode::INLINEASM));
 
     // Add the asm string as an external symbol operand.
     const char *AsmStr =

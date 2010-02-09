@@ -35,7 +35,7 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
         R->getName() == "IMPLICIT_DEF" ||
         R->getName() == "SUBREG_TO_REG" ||
         R->getName() == "COPY_TO_REGCLASS" ||
-        R->getName() == "DEBUG_VALUE") continue;
+        R->getName() == "DBG_VALUE") continue;
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
 
@@ -113,7 +113,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
         R->getName() == "IMPLICIT_DEF" ||
         R->getName() == "SUBREG_TO_REG" ||
         R->getName() == "COPY_TO_REGCLASS" ||
-        R->getName() == "DEBUG_VALUE") {
+        R->getName() == "DBG_VALUE") {
       o << "    0U,\n";
       continue;
     }
@@ -152,7 +152,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
         InstName == "IMPLICIT_DEF" ||
         InstName == "SUBREG_TO_REG" ||
         InstName == "COPY_TO_REGCLASS" ||
-        InstName == "DEBUG_VALUE") continue;
+        InstName == "DBG_VALUE") continue;
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
     const std::vector<RecordVal> &Vals = R->getValues();

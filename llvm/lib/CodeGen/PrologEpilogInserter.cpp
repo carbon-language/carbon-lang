@@ -161,7 +161,7 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
         if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
         HasCalls = true;
         FrameSDOps.push_back(I);
-      } else if (I->getOpcode() == TargetInstrInfo::INLINEASM) {
+      } else if (I->isInlineAsm()) {
         // An InlineAsm might be a call; assume it is to get the stack frame
         // aligned correctly for calls.
         HasCalls = true;

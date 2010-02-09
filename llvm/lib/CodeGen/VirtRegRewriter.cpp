@@ -1866,7 +1866,7 @@ private:
           if (VRM.isImplicitlyDefined(VirtReg))
             // FIXME: Is this needed?
             BuildMI(MBB, &MI, MI.getDebugLoc(),
-                    TII->get(TargetInstrInfo::IMPLICIT_DEF), Phys);
+                    TII->get(TargetOpcode::IMPLICIT_DEF), Phys);
           continue;
         }
 
@@ -1902,8 +1902,7 @@ private:
         //       = EXTRACT_SUBREG fi#1
         // fi#1 is available in EDI, but it cannot be reused because it's not in
         // the right register file.
-        if (PhysReg && !AvoidReload &&
-            (SubIdx || MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)) {
+        if (PhysReg && !AvoidReload && (SubIdx || MI.isExtractSubreg())) {
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
           if (!RC->contains(PhysReg))
             PhysReg = 0;

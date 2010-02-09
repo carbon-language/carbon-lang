@@ -4872,23 +4872,23 @@ SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
 }
 
 /// getTargetExtractSubreg - A convenience function for creating
-/// TargetInstrInfo::EXTRACT_SUBREG nodes.
+/// TargetOpcode::EXTRACT_SUBREG nodes.
 SDValue
 SelectionDAG::getTargetExtractSubreg(int SRIdx, DebugLoc DL, EVT VT,
                                      SDValue Operand) {
   SDValue SRIdxVal = getTargetConstant(SRIdx, MVT::i32);
-  SDNode *Subreg = getMachineNode(TargetInstrInfo::EXTRACT_SUBREG, DL,
+  SDNode *Subreg = getMachineNode(TargetOpcode::EXTRACT_SUBREG, DL,
                                   VT, Operand, SRIdxVal);
   return SDValue(Subreg, 0);
 }
 
 /// getTargetInsertSubreg - A convenience function for creating
-/// TargetInstrInfo::INSERT_SUBREG nodes.
+/// TargetOpcode::INSERT_SUBREG nodes.
 SDValue
 SelectionDAG::getTargetInsertSubreg(int SRIdx, DebugLoc DL, EVT VT,
                                     SDValue Operand, SDValue Subreg) {
   SDValue SRIdxVal = getTargetConstant(SRIdx, MVT::i32);
-  SDNode *Result = getMachineNode(TargetInstrInfo::INSERT_SUBREG, DL,
+  SDNode *Result = getMachineNode(TargetOpcode::INSERT_SUBREG, DL,
                                   VT, Operand, Subreg, SRIdxVal);
   return SDValue(Result, 0);
 }

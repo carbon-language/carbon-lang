@@ -348,18 +348,18 @@ void AsmPrinter::EmitFunctionBody() {
       processDebugLoc(II, true);
       
       switch (II->getOpcode()) {
-      case TargetInstrInfo::DBG_LABEL:
-      case TargetInstrInfo::EH_LABEL:
-      case TargetInstrInfo::GC_LABEL:
+      case TargetOpcode::DBG_LABEL:
+      case TargetOpcode::EH_LABEL:
+      case TargetOpcode::GC_LABEL:
         printLabelInst(II);
         break;
-      case TargetInstrInfo::INLINEASM:
+      case TargetOpcode::INLINEASM:
         printInlineAsm(II);
         break;
-      case TargetInstrInfo::IMPLICIT_DEF:
+      case TargetOpcode::IMPLICIT_DEF:
         printImplicitDef(II);
         break;
-      case TargetInstrInfo::KILL:
+      case TargetOpcode::KILL:
         printKill(II);
         break;
       default:

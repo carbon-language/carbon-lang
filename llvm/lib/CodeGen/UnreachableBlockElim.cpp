@@ -148,8 +148,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
         MachineBasicBlock* succ = *BB->succ_begin();
 
         MachineBasicBlock::iterator start = succ->begin();
-        while (start != succ->end() &&
-               start->getOpcode() == TargetInstrInfo::PHI) {
+        while (start != succ->end() && start->isPHI()) {
           for (unsigned i = start->getNumOperands() - 1; i >= 2; i-=2)
             if (start->getOperand(i).isMBB() &&
                 start->getOperand(i).getMBB() == BB) {
@@ -188,8 +187,7 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
     SmallPtrSet<MachineBasicBlock*, 8> preds(BB->pred_begin(),
                                              BB->pred_end());
     MachineBasicBlock::iterator phi = BB->begin();
-    while (phi != BB->end() &&
-           phi->getOpcode() == TargetInstrInfo::PHI) {
+    while (phi != BB->end() && phi->isPHI()) {
       for (unsigned i = phi->getNumOperands() - 1; i >= 2; i-=2)
         if (!preds.count(phi->getOperand(i).getMBB())) {
           phi->RemoveOperand(i);

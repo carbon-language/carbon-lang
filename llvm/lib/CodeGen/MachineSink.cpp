@@ -77,7 +77,7 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
     // Determine the block of the use.
     MachineInstr *UseInst = &*I;
     MachineBasicBlock *UseBlock = UseInst->getParent();
-    if (UseInst->getOpcode() == TargetInstrInfo::PHI) {
+    if (UseInst->isPHI()) {
       // PHI nodes use the operand in the predecessor block, not the block with
       // the PHI.
       UseBlock = UseInst->getOperand(I.getOperandNo()+1).getMBB();
@@ -269,8 +269,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   
   // Determine where to insert into.  Skip phi nodes.
   MachineBasicBlock::iterator InsertPos = SuccToSinkTo->begin();
-  while (InsertPos != SuccToSinkTo->end() && 
-         InsertPos->getOpcode() == TargetInstrInfo::PHI)
+  while (InsertPos != SuccToSinkTo->end() && InsertPos->isPHI())
     ++InsertPos;
   
   // Move the instruction.

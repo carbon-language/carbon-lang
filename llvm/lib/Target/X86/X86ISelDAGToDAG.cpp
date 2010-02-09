@@ -1606,7 +1606,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   }
 
   DebugLoc dl = Node->getDebugLoc();
-  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
+  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                  dl, NVT), 0);
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
   MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();

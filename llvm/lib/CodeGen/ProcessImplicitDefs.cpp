@@ -49,9 +49,9 @@ bool ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
       Reg == SrcReg)
     return true;
 
-  if (OpIdx == 2 && MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
+  if (OpIdx == 2 && MI->isSubregToReg())
     return true;
-  if (OpIdx == 1 && MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
+  if (OpIdx == 1 && MI->isExtractSubreg())
     return true;
   return false;
 }
@@ -88,7 +88,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
          I != E; ) {
       MachineInstr *MI = &*I;
       ++I;
-      if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+      if (MI->isImplicitDef()) {
         unsigned Reg = MI->getOperand(0).getReg();
         ImpDefRegs.insert(Reg);
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
@@ -99,7 +99,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         continue;
       }
 
-      if (MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+      if (MI->isInsertSubreg()) {
         MachineOperand &MO = MI->getOperand(2);
         if (ImpDefRegs.count(MO.getReg())) {
           // %reg1032<def> = INSERT_SUBREG %reg1032, undef, 2
@@ -127,7 +127,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         // Use is a copy, just turn it into an implicit_def.
         if (CanTurnIntoImplicitDef(MI, Reg, i, tii_)) {
           bool isKill = MO.isKill();
-          MI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
+          MI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
           for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
             MI->RemoveOperand(j);
           if (isKill) {
@@ -187,7 +187,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       for (MachineRegisterInfo::def_iterator DI = mri_->def_begin(Reg),
              DE = mri_->def_end(); DI != DE; ++DI) {
         MachineInstr *DeadImpDef = &*DI;
-        if (DeadImpDef->getOpcode() != TargetInstrInfo::IMPLICIT_DEF) {
+        if (!DeadImpDef->isImplicitDef()) {
           Skip = true;
           break;
         }
@@ -220,7 +220,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
         if (tii_->isMoveInstr(*RMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
             Reg == SrcReg) {
-          RMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
+          RMI->setDesc(tii_->get(TargetOpcode::IMPLICIT_DEF));
 
           bool isKill = false;
           SmallVector<unsigned, 4> Ops;

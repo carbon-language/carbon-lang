@@ -3372,18 +3372,18 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     switch (Opcode) {
     default: 
       break;
-    case TargetInstrInfo::INLINEASM: {
+    case TargetOpcode::INLINEASM: {
       const MachineFunction *MF = MI.getParent()->getParent();
       const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
       FinalSize += TII.getInlineAsmLength(MI.getOperand(0).getSymbolName(),
                                           *MF->getTarget().getMCAsmInfo());
       break;
     }
-    case TargetInstrInfo::DBG_LABEL:
-    case TargetInstrInfo::EH_LABEL:
+    case TargetOpcode::DBG_LABEL:
+    case TargetOpcode::EH_LABEL:
       break;
-    case TargetInstrInfo::IMPLICIT_DEF:
-    case TargetInstrInfo::KILL:
+    case TargetOpcode::IMPLICIT_DEF:
+    case TargetOpcode::KILL:
     case X86::FP_REG_KILL:
       break;
     case X86::MOVPC32r: {

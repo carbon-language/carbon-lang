@@ -399,19 +399,19 @@ def PHI : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops variable_ops);
   let AsmString = "PHINODE";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
 }
 def INLINEASM : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops variable_ops);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
 }
 def DBG_LABEL : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops i32imm:$id);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let hasCtrlDep = 1;
   let isNotDuplicable = 1;
 }
@@ -419,7 +419,7 @@ def EH_LABEL : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops i32imm:$id);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let hasCtrlDep = 1;
   let isNotDuplicable = 1;
 }
@@ -427,7 +427,7 @@ def GC_LABEL : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops i32imm:$id);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let hasCtrlDep = 1;
   let isNotDuplicable = 1;
 }
@@ -435,21 +435,21 @@ def KILL : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops variable_ops);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let neverHasSideEffects = 1;
 }
 def EXTRACT_SUBREG : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops unknown:$supersrc, i32imm:$subidx);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let neverHasSideEffects = 1;
 }
 def INSERT_SUBREG : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops unknown:$supersrc, unknown:$subsrc, i32imm:$subidx);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let neverHasSideEffects = 1;
   let Constraints = "$supersrc = $dst";
 }
@@ -457,7 +457,7 @@ def IMPLICIT_DEF : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let neverHasSideEffects = 1;
   let isReMaterializable = 1;
   let isAsCheapAsAMove = 1;
@@ -466,22 +466,22 @@ def SUBREG_TO_REG : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops unknown:$implsrc, unknown:$subsrc, i32imm:$subidx);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let neverHasSideEffects = 1;
 }
 def COPY_TO_REGCLASS : Instruction {
   let OutOperandList = (ops unknown:$dst);
   let InOperandList = (ops unknown:$src, i32imm:$regclass);
   let AsmString = "";
-  let Namespace = "TargetInstrInfo";
+  let Namespace = "TargetOpcode";
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;
 }
-def DEBUG_VALUE : Instruction {
+def DBG_VALUE : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops variable_ops);
-  let AsmString = "DEBUG_VALUE";
-  let Namespace = "TargetInstrInfo";
+  let AsmString = "DBG_VALUE";
+  let Namespace = "TargetOpcode";
   let isAsCheapAsAMove = 1;
 }
 }

@@ -140,7 +140,7 @@ void LiveIntervals::printInstrs(raw_ostream &OS) const {
        << ":\t\t# derived from " << mbbi->getName() << "\n";
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
-      if (mii->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+      if (mii->isDebugValue())
         OS << SlotIndex::getEmptyKey() << '\t' << *mii;
       else
         OS << getInstructionIndex(mii) << '\t' << *mii;
@@ -288,9 +288,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     VNInfo *ValNo;
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-        mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-        mi->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
+    if (mi->isExtractSubreg() || mi->isInsertSubreg() || mi->isSubregToReg() ||
         tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
       CopyMI = mi;
     // Earlyclobbers move back one.
@@ -460,9 +458,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-      if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-          mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-          mi->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
+      if (mi->isExtractSubreg() || mi->isInsertSubreg() || mi->isSubregToReg()||
           tii_->isMoveInstr(*mi, SrcReg, DstReg, SrcSubReg, DstSubReg))
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, true, VNInfoAllocator);
@@ -577,9 +573,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   else if (allocatableRegs_[MO.getReg()]) {
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
-    if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-        MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-        MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
+    if (MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg() ||
         tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
       CopyMI = MI;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
@@ -696,7 +690,7 @@ void LiveIntervals::computeIntervals() {
     for (MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
          MI != miEnd; ++MI) {
       DEBUG(dbgs() << MIIndex << "\t" << *MI);
-      if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+      if (MI->isDebugValue())
         continue;
 
       // Handle defs.
@@ -745,7 +739,7 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
   if (!VNI->getCopy())
     return 0;
 
-  if (VNI->getCopy()->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+  if (VNI->getCopy()->isExtractSubreg()) {
     // If it's extracting out of a physical register, return the sub-register.
     unsigned Reg = VNI->getCopy()->getOperand(1).getReg();
     if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
@@ -759,8 +753,8 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
       Reg = tri_->getSubReg(Reg, VNI->getCopy()->getOperand(2).getImm());
     }
     return Reg;
-  } else if (VNI->getCopy()->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-             VNI->getCopy()->getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
+  } else if (VNI->getCopy()->isInsertSubreg() ||
+             VNI->getCopy()->isSubregToReg())
     return VNI->getCopy()->getOperand(2).getReg();
 
   unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
@@ -922,7 +916,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
                                          SmallVector<unsigned, 2> &Ops,
                                          bool isSS, int Slot, unsigned Reg) {
   // If it is an implicit def instruction, just delete it.
-  if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+  if (MI->isImplicitDef()) {
     RemoveMachineInstrFromMaps(MI);
     vrm.RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
@@ -1528,7 +1522,7 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
     MachineInstr *MI = &*ri;
     ++ri;
     if (O.isDef()) {
-      assert(MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF &&
+      assert(MI->isImplicitDef() &&
              "Register def was not rewritten?");
       RemoveMachineInstrFromMaps(MI);
       vrm.RemoveMachineInstrFromMaps(MI);
@@ -2059,7 +2053,7 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
         std::string msg;
         raw_string_ostream Msg(msg);
         Msg << "Ran out of registers during register allocation!";
-        if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+        if (MI->isInlineAsm()) {
           Msg << "\nPlease check your inline asm statement for invalid "
               << "constraints:\n";
           MI->print(Msg, tm_);

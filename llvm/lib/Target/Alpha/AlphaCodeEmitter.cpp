@@ -95,8 +95,8 @@ void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case Alpha::ALTENT:
     case Alpha::PCLABEL:
     case Alpha::MEMLABEL:
-    case TargetInstrInfo::IMPLICIT_DEF:
-    case TargetInstrInfo::KILL:
+    case TargetOpcode::IMPLICIT_DEF:
+    case TargetOpcode::KILL:
       break; //skip these
     }
     MCE.processDebugLoc(MI.getDebugLoc(), false);

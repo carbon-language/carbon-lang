@@ -285,7 +285,7 @@ def MOV16rm_POST : IForm16<0x0, DstReg, SrcPostInc, Size2Bytes,
 // up to 16 bits.
 def def8 : PatLeaf<(i8 GR8:$src), [{
   return N->getOpcode() != ISD::TRUNCATE &&
-         N->getOpcode() != TargetInstrInfo::EXTRACT_SUBREG &&
+         N->getOpcode() != TargetOpcode::EXTRACT_SUBREG &&
          N->getOpcode() != ISD::CopyFromReg;
 }]>;
 

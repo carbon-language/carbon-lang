@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -95,14 +96,14 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
 ///
 bool llvm::PHIElimination::EliminatePHINodes(MachineFunction &MF,
                                              MachineBasicBlock &MBB) {
-  if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI)
+  if (MBB.empty() || !MBB.front().isPHI())
     return false;   // Quick exit for basic blocks without PHIs.
 
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
   MachineBasicBlock::iterator AfterPHIsIt = SkipPHIsAndLabels(MBB, MBB.begin());
 
-  while (MBB.front().getOpcode() == TargetInstrInfo::PHI)
+  while (MBB.front().isPHI())
     LowerAtomicPHINode(MBB, AfterPHIsIt);
 
   return true;
@@ -115,7 +116,7 @@ static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
   for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2) {
     unsigned SrcReg = MPhi->getOperand(i).getReg();
     const MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
-    if (!DefMI || DefMI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
+    if (!DefMI || !DefMI->isImplicitDef())
       return false;
   }
   return true;
@@ -197,7 +198,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     // If all sources of a PHI node are implicit_def, just emit an
     // implicit_def instead of a copy.
     BuildMI(MBB, AfterPHIsIt, MPhi->getDebugLoc(),
-            TII->get(TargetInstrInfo::IMPLICIT_DEF), DestReg);
+            TII->get(TargetOpcode::IMPLICIT_DEF), DestReg);
   else {
     // Can we reuse an earlier PHI node? This only happens for critical edges,
     // typically those created by tail duplication.
@@ -281,7 +282,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     // If source is defined by an implicit def, there is no need to insert a
     // copy.
     MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
-    if (DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+    if (DefMI->isImplicitDef()) {
       ImpDefs.insert(DefMI);
       continue;
     }
@@ -375,7 +376,7 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& Fn) {
   for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
        I != E; ++I)
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
-         BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
+         BBI != BBE && BBI->isPHI(); ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
         ++VRegPHIUseCount[BBVRegPair(BBI->getOperand(i+1).getMBB()->getNumber(),
                                      BBI->getOperand(i).getReg())];
@@ -384,12 +385,11 @@ void llvm::PHIElimination::analyzePHINodes(const MachineFunction& Fn) {
 bool llvm::PHIElimination::SplitPHIEdges(MachineFunction &MF,
                                          MachineBasicBlock &MBB,
                                          LiveVariables &LV) {
-  if (MBB.empty() || MBB.front().getOpcode() != TargetInstrInfo::PHI ||
-      MBB.isLandingPad())
+  if (MBB.empty() || !MBB.front().isPHI() || MBB.isLandingPad())
     return false;   // Quick exit for basic blocks without PHIs.
 
   for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
-       BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI) {
+       BBI != BBE && BBI->isPHI(); ++BBI) {
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
       unsigned Reg = BBI->getOperand(i).getReg();
       MachineBasicBlock *PreMBB = BBI->getOperand(i+1).getMBB();
@@ -438,7 +438,7 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
 
   // Fix PHI nodes in B so they refer to NMBB instead of A
   for (MachineBasicBlock::iterator i = B->begin(), e = B->end();
-       i != e && i->getOpcode() == TargetInstrInfo::PHI; ++i)
+       i != e && i->isPHI(); ++i)
     for (unsigned ni = 1, ne = i->getNumOperands(); ni != ne; ni += 2)
       if (i->getOperand(ni+1).getMBB() == A)
         i->getOperand(ni+1).setMBB(NMBB);

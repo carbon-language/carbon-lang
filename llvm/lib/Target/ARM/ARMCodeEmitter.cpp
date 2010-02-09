@@ -553,7 +553,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   default:
     llvm_unreachable("ARMCodeEmitter::emitPseudoInstruction");
   // FIXME: Add support for MOVimm32.
-  case TargetInstrInfo::INLINEASM: {
+  case TargetOpcode::INLINEASM: {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.
     if (MI.getOperand(0).getSymbolName()[0]) {
@@ -561,12 +561,12 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     }
     break;
   }
-  case TargetInstrInfo::DBG_LABEL:
-  case TargetInstrInfo::EH_LABEL:
+  case TargetOpcode::DBG_LABEL:
+  case TargetOpcode::EH_LABEL:
     MCE.emitLabel(MI.getOperand(0).getImm());
     break;
-  case TargetInstrInfo::IMPLICIT_DEF:
-  case TargetInstrInfo::KILL:
+  case TargetOpcode::IMPLICIT_DEF:
+  case TargetOpcode::KILL:
     // Do nothing.
     break;
   case ARM::CONSTPOOL_ENTRY:

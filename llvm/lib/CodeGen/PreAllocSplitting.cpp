@@ -686,8 +686,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     SlotIndex DefIdx = LIs->getInstructionIndex(&*DI);
     DefIdx = DefIdx.getDefIndex();
     
-    assert(DI->getOpcode() != TargetInstrInfo::PHI &&
-           "PHI instr in code during pre-alloc splitting.");
+    assert(!DI->isPHI() && "PHI instr in code during pre-alloc splitting.");
     VNInfo* NewVN = LI->getNextValue(DefIdx, 0, true, Alloc);
     
     // If the def is a move, set the copy field.

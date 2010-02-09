@@ -108,12 +108,12 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     default:
       MCE.emitWordBE(getBinaryCodeForInstr(MI));
       break;
-    case TargetInstrInfo::DBG_LABEL:
-    case TargetInstrInfo::EH_LABEL:
+    case TargetOpcode::DBG_LABEL:
+    case TargetOpcode::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
-    case TargetInstrInfo::IMPLICIT_DEF:
-    case TargetInstrInfo::KILL:
+    case TargetOpcode::IMPLICIT_DEF:
+    case TargetOpcode::KILL:
       break; // pseudo opcode, no side effects
     case PPC::MovePCtoLR:
     case PPC::MovePCtoLR8:

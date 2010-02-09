@@ -58,13 +58,7 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &fn) {
     for (MachineBasicBlock::const_iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ++mii) {
       const MachineInstr *mi = mii;
-      if (tii->isIdentityCopy(*mi))
-        continue;
-
-      if (mi->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
-        continue;
-
-      if (mi->getOpcode() == TargetInstrInfo::DEBUG_VALUE)
+      if (tii->isIdentityCopy(*mi) || mi->isImplicitDef() || mi->isDebugValue())
         continue;
 
       for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {

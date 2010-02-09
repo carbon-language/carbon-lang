@@ -336,7 +336,7 @@ static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *RegInfo) {
   for (MachineRegisterInfo::use_iterator UI = RegInfo->use_begin(Reg),
          UE = RegInfo->use_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
-    if (UseMI->getOpcode() == TargetInstrInfo::PHI)
+    if (UseMI->isPHI())
       return true;
   }
   return false;
@@ -363,7 +363,7 @@ bool MachineLICM::isLoadFromConstantMemory(MachineInstr *MI) {
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
 /// the given loop invariant.
 bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
-  if (MI.getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+  if (MI.isImplicitDef())
     return false;
 
   // FIXME: For now, only hoist re-materilizable instructions. LICM will

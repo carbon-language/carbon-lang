@@ -92,13 +92,13 @@ unsigned LookForIdenticalPHI(MachineBasicBlock *BB,
     return 0;
 
   MachineBasicBlock::iterator I = BB->front();
-  if (I->getOpcode() != TargetInstrInfo::PHI)
+  if (!I->isPHI())
     return 0;
 
   AvailableValsTy AVals;
   for (unsigned i = 0, e = PredValues.size(); i != e; ++i)
     AVals[PredValues[i].first] = PredValues[i].second;
-  while (I != BB->end() && I->getOpcode() == TargetInstrInfo::PHI) {
+  while (I != BB->end() && I->isPHI()) {
     bool Same = true;
     for (unsigned i = 1, e = I->getNumOperands(); i != e; i += 2) {
       unsigned SrcReg = I->getOperand(i).getReg();
@@ -155,7 +155,7 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
   // If there are no predecessors, just return undef.
   if (BB->pred_empty()) {
     // Insert an implicit_def to represent an undef value.
-    MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
+    MachineInstr *NewDef = InsertNewDef(TargetOpcode::IMPLICIT_DEF,
                                         BB, BB->getFirstTerminator(),
                                         VRC, MRI, TII);
     return NewDef->getOperand(0).getReg();
@@ -192,7 +192,7 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
 
   // Otherwise, we do need a PHI: insert one now.
   MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
-  MachineInstr *InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB,
+  MachineInstr *InsertedPHI = InsertNewDef(TargetOpcode::PHI, BB,
                                            Loc, VRC, MRI, TII);
 
   // Fill in all the predecessors of the PHI.
@@ -231,7 +231,7 @@ MachineBasicBlock *findCorrespondingPred(const MachineInstr *MI,
 void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
   MachineInstr *UseMI = U.getParent();
   unsigned NewVR = 0;
-  if (UseMI->getOpcode() == TargetInstrInfo::PHI) {
+  if (UseMI->isPHI()) {
     MachineBasicBlock *SourceBB = findCorrespondingPred(UseMI, &U);
     NewVR = GetValueAtEndOfBlockInternal(SourceBB);
   } else {
@@ -277,7 +277,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
     // it.  When we get back to the first instance of the recursion we will fill
     // in the PHI node.
     MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
-    MachineInstr *NewPHI = InsertNewDef(TargetInstrInfo::PHI, BB, Loc,
+    MachineInstr *NewPHI = InsertNewDef(TargetOpcode::PHI, BB, Loc,
                                         VRC, MRI,TII);
     unsigned NewVR = NewPHI->getOperand(0).getReg();
     InsertRes.first->second = NewVR;
@@ -289,7 +289,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   // be invalidated.
   if (BB->pred_empty()) {
     // Insert an implicit_def to represent an undef value.
-    MachineInstr *NewDef = InsertNewDef(TargetInstrInfo::IMPLICIT_DEF,
+    MachineInstr *NewDef = InsertNewDef(TargetOpcode::IMPLICIT_DEF,
                                         BB, BB->getFirstTerminator(),
                                         VRC, MRI, TII);
     return InsertRes.first->second = NewDef->getOperand(0).getReg();
@@ -358,7 +358,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlockInternal(MachineBasicBlock *BB){
   MachineInstr *InsertedPHI;
   if (InsertedVal == 0) {
     MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
-    InsertedPHI = InsertNewDef(TargetInstrInfo::PHI, BB, Loc,
+    InsertedPHI = InsertNewDef(TargetOpcode::PHI, BB, Loc,
                                VRC, MRI, TII);
     InsertedVal = InsertedPHI->getOperand(0).getReg();
   } else {

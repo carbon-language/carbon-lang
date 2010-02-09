@@ -245,7 +245,7 @@ SDNode *MipsDAGToDAGISel::SelectLoadFp64(SDNode *N) {
   //    lwc $f1, X+4($3)
   SDNode *LD0 = CurDAG->getMachineNode(Mips::LWC1, dl, MVT::f32, 
                                     MVT::Other, Offset0, Base, Chain);
-  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
+  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                  dl, NVT), 0);
   SDValue I0 = CurDAG->getTargetInsertSubreg(Mips::SUBREG_FPEVEN, dl, 
                             MVT::f64, Undef, SDValue(LD0, 0));
@@ -464,8 +464,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl, 
                                         Mips::ZERO, MVT::i32);
         SDValue Undef = SDValue(
-          CurDAG->getMachineNode(
-            TargetInstrInfo::IMPLICIT_DEF, dl, MVT::f64), 0);
+          CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, MVT::f64), 0);
         SDNode *MTC = CurDAG->getMachineNode(Mips::MTC1, dl, MVT::f32, Zero);
         SDValue I0 = CurDAG->getTargetInsertSubreg(Mips::SUBREG_FPEVEN, dl, 
                             MVT::f64, Undef, SDValue(MTC, 0));

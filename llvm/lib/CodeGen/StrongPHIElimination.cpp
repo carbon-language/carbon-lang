@@ -419,7 +419,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   
   // Iterate over all the PHI nodes in this block
   MachineBasicBlock::iterator P = MBB->begin();
-  while (P != MBB->end() && P->getOpcode() == TargetInstrInfo::PHI) {
+  while (P != MBB->end() && P->isPHI()) {
     unsigned DestReg = P->getOperand(0).getReg();
     
     // Don't both doing PHI elimination for dead PHI's.
@@ -452,7 +452,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       
       // We don't need to insert copies for implicit_defs.
       MachineInstr* DefMI = MRI.getVRegDef(SrcReg);
-      if (DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+      if (DefMI->isImplicitDef())
         ProcessedNames.insert(SrcReg);
     
       // Check for trivial interferences via liveness information, allowing us
@@ -470,7 +470,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       if (isLiveIn(SrcReg, P->getParent(), LI) ||
           isLiveOut(P->getOperand(0).getReg(),
                     MRI.getVRegDef(SrcReg)->getParent(), LI) ||
-          ( MRI.getVRegDef(SrcReg)->getOpcode() == TargetInstrInfo::PHI &&
+          ( MRI.getVRegDef(SrcReg)->isPHI() &&
             isLiveIn(P->getOperand(0).getReg(),
                      MRI.getVRegDef(SrcReg)->getParent(), LI) ) ||
           ProcessedNames.count(SrcReg) ||
@@ -810,7 +810,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
   // Rewrite register uses from Stacks
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
       I != E; ++I) {
-    if (I->getOpcode() == TargetInstrInfo::PHI)
+    if (I->isPHI())
       continue;
     
     for (unsigned i = 0; i < I->getNumOperands(); ++i)
@@ -907,8 +907,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   
   // Determine which phi node operands need copies
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    if (!I->empty() &&
-        I->begin()->getOpcode() == TargetInstrInfo::PHI)
+    if (!I->empty() && I->begin()->isPHI())
       processBlock(I);
   
   // Break interferences where two different phis want to coalesce
@@ -996,7 +995,7 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     for (MachineBasicBlock::iterator BI = I->begin(), BE = I->end();
          BI != BE; ++BI)
-      if (BI->getOpcode() == TargetInstrInfo::PHI)
+      if (BI->isPHI())
         phis.push_back(BI);
   }
   

@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Target/TargetInstrDesc.h"
+#include "llvm/Target/TargetOpcodes.h"
 #include "llvm/Support/DebugLoc.h"
 #include <vector>
 
@@ -193,12 +194,31 @@ public:
 
   /// isLabel - Returns true if the MachineInstr represents a label.
   ///
-  bool isLabel() const;
-
-  /// isDebugLabel - Returns true if the MachineInstr represents a debug label.
-  ///
-  bool isDebugLabel() const;
-
+  bool isLabel() const {
+    return getOpcode() == TargetOpcode::DBG_LABEL ||
+           getOpcode() == TargetOpcode::EH_LABEL ||
+           getOpcode() == TargetOpcode::GC_LABEL;
+  }
+  
+  bool isDebugLabel() const { return getOpcode() == TargetOpcode::DBG_LABEL; }
+  bool isEHLabel() const { return getOpcode() == TargetOpcode::EH_LABEL; }
+  bool isGCLabel() const { return getOpcode() == TargetOpcode::GC_LABEL; }
+  bool isDebugValue() const { return getOpcode() == TargetOpcode::DBG_VALUE; }
+  
+  bool isPHI() const { return getOpcode() == TargetOpcode::PHI; }
+  bool isKill() const { return getOpcode() == TargetOpcode::KILL; }
+  bool isImplicitDef() const { return getOpcode()==TargetOpcode::IMPLICIT_DEF; }
+  bool isInlineAsm() const { return getOpcode() == TargetOpcode::INLINEASM; }
+  bool isExtractSubreg() const {
+    return getOpcode() == TargetOpcode::EXTRACT_SUBREG;
+  }
+  bool isInsertSubreg() const {
+    return getOpcode() == TargetOpcode::INSERT_SUBREG;
+  }
+  bool isSubregToReg() const {
+    return getOpcode() == TargetOpcode::SUBREG_TO_REG;
+  }
+  
   /// readsRegister - Return true if the MachineInstr reads the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there
   /// is a read of a super-register.

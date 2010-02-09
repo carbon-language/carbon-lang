@@ -133,7 +133,7 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
   SmallSet<unsigned, 4> ImpDefRegs;
   MachineBasicBlock::iterator I = MBB->begin();
   while (I != MBB->end()) {
-    if (I->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
+    if (!I->isImplicitDef())
       break;
     unsigned Reg = I->getOperand(0).getReg();
     ImpDefRegs.insert(Reg);
@@ -340,7 +340,7 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
         // relative order. This is untenable because normal compiler
         // optimizations (like this one) may reorder and/or merge these
         // directives.
-        I1->getOpcode() == TargetInstrInfo::INLINEASM) {
+        I1->isInlineAsm()) {
       ++I1; ++I2;
       break;
     }

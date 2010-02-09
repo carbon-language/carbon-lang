@@ -724,7 +724,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
   // Take into account whether it's an add or mem instruction
   unsigned OffsetOperandNo = (FIOperandNo == 2) ? 1 : 2;
-  if (MI.getOpcode() == TargetInstrInfo::INLINEASM)
+  if (MI.isInlineAsm())
     OffsetOperandNo = FIOperandNo-1;
 
   // Get the frame index.
@@ -817,7 +817,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   //   addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
   unsigned OperandBase;
 
-  if (OpC != TargetInstrInfo::INLINEASM) {
+  if (OpC != TargetOpcode::INLINEASM) {
     assert(ImmToIdxMap.count(OpC) &&
            "No indexed form of load or store available!");
     unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;

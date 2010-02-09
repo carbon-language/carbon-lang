@@ -531,7 +531,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     std::string msg;
     raw_string_ostream Msg(msg);
     Msg << "Ran out of registers during register allocation!";
-    if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+    if (MI->isInlineAsm()) {
       Msg << "\nPlease check your inline asm statement for invalid "
            << "constraints:\n";
       MI->print(Msg, TM);
@@ -544,7 +544,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
       std::string msg;
       raw_string_ostream Msg(msg);
       Msg << "Ran out of registers during register allocation!";
-      if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
+      if (MI->isInlineAsm()) {
         Msg << "\nPlease check your inline asm statement for invalid "
              << "constraints:\n";
         MI->print(Msg, TM);
@@ -796,7 +796,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // have in them, then mark them unallocatable.
     // If any virtual regs are earlyclobber, allocate them now (before
     // freeing inputs that are killed).
-    if (MI->getOpcode()==TargetInstrInfo::INLINEASM) {
+    if (MI->isInlineAsm()) {
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& MO = MI->getOperand(i);
         if (MO.isReg() && MO.isDef() && MO.isEarlyClobber() &&
@@ -845,7 +845,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // change the DEBUG_VALUE to be undef, which prevents the register
     // from being reloaded here.  Doing that would change the generated
     // code, unless another use immediately follows this instruction.
-    if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE &&
+    if (MI->isDebugValue() &&
         MI->getNumOperands()==3 && MI->getOperand(0).isReg()) {
       unsigned VirtReg = MI->getOperand(0).getReg();
       if (VirtReg && TargetRegisterInfo::isVirtualRegister(VirtReg) &&

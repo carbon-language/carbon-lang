@@ -356,12 +356,12 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     switch (Desc.getOpcode()) {
     default:
       assert(0 && "Unknown instruction size!");
-    case TargetInstrInfo::DBG_LABEL:
-    case TargetInstrInfo::EH_LABEL:
-    case TargetInstrInfo::IMPLICIT_DEF:
-    case TargetInstrInfo::KILL:
+    case TargetOpcode::DBG_LABEL:
+    case TargetOpcode::EH_LABEL:
+    case TargetOpcode::IMPLICIT_DEF:
+    case TargetOpcode::KILL:
       return 0;
-    case TargetInstrInfo::INLINEASM: {
+    case TargetOpcode::INLINEASM: {
       const MachineFunction *MF = MI->getParent()->getParent();
       const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
       return TII.getInlineAsmLength(MI->getOperand(0).getSymbolName(),

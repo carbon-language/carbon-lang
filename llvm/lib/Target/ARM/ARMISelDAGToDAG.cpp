@@ -1007,12 +1007,12 @@ SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDNode *N) {
 SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
   DebugLoc dl = V0.getNode()->getDebugLoc();
   SDValue Undef =
-    SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF, dl, VT), 0);
+    SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, VT), 0);
   SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
   SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
-  SDNode *Pair = CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl,
+  SDNode *Pair = CurDAG->getMachineNode(TargetOpcode::INSERT_SUBREG, dl,
                                         VT, Undef, V0, SubReg0);
-  return CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl,
+  return CurDAG->getMachineNode(TargetOpcode::INSERT_SUBREG, dl,
                                 VT, SDValue(Pair, 0), V1, SubReg1);
 }
 

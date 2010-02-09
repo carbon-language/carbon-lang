@@ -1012,7 +1012,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
   // of X86::CL, emit an EXTRACT_SUBREG to precisely describe what
   // we're doing here.
   if (CReg != X86::CL)
-    BuildMI(MBB, DL, TII.get(TargetInstrInfo::EXTRACT_SUBREG), X86::CL)
+    BuildMI(MBB, DL, TII.get(TargetOpcode::EXTRACT_SUBREG), X86::CL)
       .addReg(CReg).addImm(X86::SUBREG_8BIT);
 
   unsigned ResultReg = createResultReg(RC);
@@ -1159,7 +1159,7 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
     assert(DI->getAddress() && "Null address should be checked earlier!");
     if (!X86SelectAddress(DI->getAddress(), AM))
       return false;
-    const TargetInstrDesc &II = TII.get(TargetInstrInfo::DEBUG_VALUE);
+    const TargetInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     addFullAddress(BuildMI(MBB, DL, II), AM).addImm(0).
                                         addMetadata(DI->getVariable());
     return true;

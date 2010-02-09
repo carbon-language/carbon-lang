@@ -590,7 +590,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           // must be live in. PHI instructions are handled separately.
           if (MInfo.regsKilled.count(Reg))
             report("Using a killed virtual register", MO, MONum);
-          else if (MI->getOpcode() != TargetInstrInfo::PHI)
+          else if (!MI->isPHI())
             MInfo.vregsLiveIn.insert(std::make_pair(Reg, MI));
         }
       }
@@ -650,10 +650,8 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
   }
 
   case MachineOperand::MO_MachineBasicBlock:
-    if (MI->getOpcode() == TargetInstrInfo::PHI) {
-      if (!MO->getMBB()->isSuccessor(MI->getParent()))
-        report("PHI operand is not in the CFG", MO, MONum);
-    }
+    if (MI->isPHI() && !MO->getMBB()->isSuccessor(MI->getParent()))
+      report("PHI operand is not in the CFG", MO, MONum);
     break;
 
   default:
@@ -783,7 +781,7 @@ void MachineVerifier::calcRegsRequired() {
 // calcRegsPassed has been run so BBInfo::isLiveOut is valid.
 void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
   for (MachineBasicBlock::const_iterator BBI = MBB->begin(), BBE = MBB->end();
-       BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI) {
+       BBI != BBE && BBI->isPHI(); ++BBI) {
     DenseSet<const MachineBasicBlock*> seen;
 
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {

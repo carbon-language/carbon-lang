@@ -543,7 +543,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       MachineInstr *MI = I;
-      if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+      if (MI->isDebugValue())
         continue;
       DistanceMap.insert(std::make_pair(MI, Dist++));
 
@@ -552,7 +552,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
       // Unless it is a PHI node.  In this case, ONLY process the DEF, not any
       // of the uses.  They will be handled in other basic blocks.
-      if (MI->getOpcode() == TargetInstrInfo::PHI)
+      if (MI->isPHI())
         NumOperandsToProcess = 1;
 
       SmallVector<unsigned, 4> UseRegs;
@@ -694,7 +694,7 @@ void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
   for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
        I != E; ++I)
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
-         BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
+         BBI != BBE && BBI->isPHI(); ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
         PHIVarInfo[BBI->getOperand(i + 1).getMBB()->getNumber()]
           .push_back(BBI->getOperand(i).getReg());
@@ -773,8 +773,7 @@ void LiveVariables::addNewBlock(MachineBasicBlock *BB,
 
   // All registers used by PHI nodes in SuccBB must be live through BB.
   for (MachineBasicBlock::const_iterator BBI = SuccBB->begin(),
-         BBE = SuccBB->end();
-       BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
+         BBE = SuccBB->end(); BBI != BBE && BBI->isPHI(); ++BBI)
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
       if (BBI->getOperand(i+1).getMBB() == BB)
         getVarInfo(BBI->getOperand(i).getReg()).AliveBlocks.set(NumNew);

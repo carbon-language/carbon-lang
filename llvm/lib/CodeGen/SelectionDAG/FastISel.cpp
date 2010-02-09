@@ -121,7 +121,7 @@ unsigned FastISel::getRegForValue(Value *V) {
     Reg = LocalValueMap[CE];
   } else if (isa<UndefValue>(V)) {
     Reg = createResultReg(TLI.getRegClassFor(VT));
-    BuildMI(MBB, DL, TII.get(TargetInstrInfo::IMPLICIT_DEF), Reg);
+    BuildMI(MBB, DL, TII.get(TargetOpcode::IMPLICIT_DEF), Reg);
   }
   
   // If target-independent code couldn't handle the value, give target-specific
@@ -971,7 +971,7 @@ unsigned FastISel::FastEmitInst_extractsubreg(MVT RetVT,
   const TargetRegisterClass* RC = MRI.getRegClass(Op0);
   
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
-  const TargetInstrDesc &II = TII.get(TargetInstrInfo::EXTRACT_SUBREG);
+  const TargetInstrDesc &II = TII.get(TargetOpcode::EXTRACT_SUBREG);
   
   if (II.getNumDefs() >= 1)
     BuildMI(MBB, DL, II, ResultReg).addReg(Op0).addImm(Idx);

@@ -578,19 +578,19 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       llvm_unreachable("psuedo instructions should be removed before code"
                        " emission");
       break;
-    case TargetInstrInfo::INLINEASM:
+    case TargetOpcode::INLINEASM:
       // We allow inline assembler nodes with empty bodies - they can
       // implicitly define registers, which is ok for JIT.
       if (MI.getOperand(0).getSymbolName()[0])
         llvm_report_error("JIT does not support inline asm!");
       break;
-    case TargetInstrInfo::DBG_LABEL:
-    case TargetInstrInfo::EH_LABEL:
-    case TargetInstrInfo::GC_LABEL:
+    case TargetOpcode::DBG_LABEL:
+    case TargetOpcode::EH_LABEL:
+    case TargetOpcode::GC_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
-    case TargetInstrInfo::IMPLICIT_DEF:
-    case TargetInstrInfo::KILL:
+    case TargetOpcode::IMPLICIT_DEF:
+    case TargetOpcode::KILL:
     case X86::FP_REG_KILL:
       break;
     case X86::MOVPC32r: {

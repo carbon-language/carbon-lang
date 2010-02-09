@@ -129,7 +129,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
     if (MI->getOperand(1).isKill()) {
       // We must make sure the super-register gets killed. Replace the
       // instruction with KILL.
-      MI->setDesc(TII->get(TargetInstrInfo::KILL));
+      MI->setDesc(TII->get(TargetOpcode::KILL));
       MI->RemoveOperand(2);     // SubIdx
       DEBUG(dbgs() << "subreg: replace by: " << *MI);
       return true;
@@ -242,7 +242,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     // <undef>, we need to make sure it is alive by inserting a KILL
     if (MI->getOperand(1).isUndef() && !MI->getOperand(0).isDead()) {
       MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
-                                TII->get(TargetInstrInfo::KILL), DstReg);
+                                TII->get(TargetOpcode::KILL), DstReg);
       if (MI->getOperand(2).isUndef())
         MIB.addReg(InsReg, RegState::Undef);
       else
@@ -260,7 +260,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
       // If the source register being inserted is undef, then this becomes a
       // KILL.
       BuildMI(*MBB, MI, MI->getDebugLoc(),
-              TII->get(TargetInstrInfo::KILL), DstSubReg);
+              TII->get(TargetOpcode::KILL), DstSubReg);
     else {
       bool Emitted = TII->copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
       (void)Emitted;
@@ -314,11 +314,11 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
          mi != me;) {
       MachineBasicBlock::iterator nmi = llvm::next(mi);
       MachineInstr *MI = mi;
-      if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+      if (MI->isExtractSubreg()) {
         MadeChange |= LowerExtract(MI);
-      } else if (MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+      } else if (MI->isInsertSubreg()) {
         MadeChange |= LowerInsert(MI);
-      } else if (MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+      } else if (MI->isSubregToReg()) {
         MadeChange |= LowerSubregToReg(MI);
       }
       mi = nmi;

@@ -504,10 +504,8 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
 
         // Abort the use is actually a sub-register def. We don't have enough
         // information to figure out if it is really legal.
-        if (MO.getSubReg() ||
-            TID.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-            TID.getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-            TID.getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
+        if (MO.getSubReg() || MII->isExtractSubreg() ||
+            MII->isInsertSubreg() || MII->isSubregToReg())
           return false;
 
         const TargetRegisterClass *RC = TID.OpInfo[i].getRegClass(TRI);
@@ -569,8 +567,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
 
         // Abort the use is actually a sub-register use. We don't have enough
         // information to figure out if it is really legal.
-        if (MO.getSubReg() ||
-            TID.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
+        if (MO.getSubReg() || MII->isExtractSubreg())
           return false;
 
         const TargetRegisterClass *RC = TID.OpInfo[i].getRegClass(TRI);

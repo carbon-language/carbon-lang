@@ -659,7 +659,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     return false;
   if (TID.getNumDefs() != 1)
     return false;
-  if (DefMI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF) {
+  if (!DefMI->isImplicitDef()) {
     // Make sure the copy destination register class fits the instruction
     // definition register class. The mismatch can happen as a result of earlier
     // extract_subreg, insert_subreg, subreg_to_reg coalescing.
@@ -1170,7 +1170,7 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
     unsigned SubIdx = O.getSubReg();
     if (SubIdx && !tri_->getSubReg(PhysReg, SubIdx))
       return true;
-    if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+    if (MI->isExtractSubreg()) {
       SubIdx = MI->getOperand(2).getImm();
       if (O.isUse() && !tri_->getSubReg(PhysReg, SubIdx))
         return true;
@@ -1184,8 +1184,7 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
           return true;
       }
     }
-    if (MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-        MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+    if (MI->isInsertSubreg() || MI->isSubregToReg()) {
       SubIdx = MI->getOperand(3).getImm();
       if (VirtReg == MI->getOperand(0).getReg()) {
         if (!tri_->getSubReg(PhysReg, SubIdx))
@@ -1296,9 +1295,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   DEBUG(dbgs() << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI);
 
   unsigned SrcReg, DstReg, SrcSubIdx = 0, DstSubIdx = 0;
-  bool isExtSubReg = CopyMI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG;
-  bool isInsSubReg = CopyMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG;
-  bool isSubRegToReg = CopyMI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG;
+  bool isExtSubReg = CopyMI->isExtractSubreg();
+  bool isInsSubReg = CopyMI->isInsertSubreg();
+  bool isSubRegToReg = CopyMI->isSubregToReg();
   unsigned SubIdx = 0;
   if (isExtSubReg) {
     DstReg    = CopyMI->getOperand(0).getReg();
@@ -1866,11 +1865,11 @@ static bool isValNoDefMove(const MachineInstr *MI, unsigned DR, unsigned SR,
   unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
   if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
     ;
-  else if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+  else if (MI->isExtractSubreg()) {
     DstReg = MI->getOperand(0).getReg();
     SrcReg = MI->getOperand(1).getReg();
-  } else if (MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
-             MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+  } else if (MI->isSubregToReg() ||
+             MI->isInsertSubreg()) {
     DstReg = MI->getOperand(0).getReg();
     SrcReg = MI->getOperand(2).getReg();
   } else
@@ -2442,16 +2441,15 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     // If this isn't a copy nor a extract_subreg, we can't join intervals.
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     bool isInsUndef = false;
-    if (Inst->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+    if (Inst->isExtractSubreg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(1).getReg();
-    } else if (Inst->getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+    } else if (Inst->isInsertSubreg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(2).getReg();
       if (Inst->getOperand(1).isUndef())
         isInsUndef = true;
-    } else if (Inst->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-               Inst->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+    } else if (Inst->isInsertSubreg() || Inst->isSubregToReg()) {
       DstReg = Inst->getOperand(0).getReg();
       SrcReg = Inst->getOperand(2).getReg();
     } else if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
@@ -2687,10 +2685,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         // Delete all coalesced copies.
         bool DoDelete = true;
         if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-          assert((MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-                  MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-                  MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) &&
-                 "Unrecognized copy instruction");
+          assert((MI->isExtractSubreg() || MI->isInsertSubreg() ||
+                  MI->isSubregToReg()) && "Unrecognized copy instruction");
           DstReg = MI->getOperand(0).getReg();
           if (TargetRegisterInfo::isPhysicalRegister(DstReg))
             // Do not delete extract_subreg, insert_subreg of physical

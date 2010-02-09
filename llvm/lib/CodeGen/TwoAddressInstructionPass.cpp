@@ -316,9 +316,7 @@ bool TwoAddressInstructionPass::NoUseAfterLastDef(unsigned Reg,
          E = MRI->reg_end(); I != E; ++I) {
     MachineOperand &MO = I.getOperand();
     MachineInstr *MI = MO.getParent();
-    if (MI->getParent() != MBB)
-      continue;
-    if (MI->getOpcode() == TargetInstrInfo::DEBUG_VALUE)
+    if (MI->getParent() != MBB || MI->isDebugValue())
       continue;
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
     if (DI == DistanceMap.end())
@@ -341,9 +339,7 @@ MachineInstr *TwoAddressInstructionPass::FindLastUseInMBB(unsigned Reg,
          E = MRI->reg_end(); I != E; ++I) {
     MachineOperand &MO = I.getOperand();
     MachineInstr *MI = MO.getParent();
-    if (MI->getParent() != MBB)
-      continue;
-    if (MI->getOpcode() == TargetInstrInfo::DEBUG_VALUE)
+    if (MI->getParent() != MBB || MI->isDebugValue())
       continue;
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
     if (DI == DistanceMap.end())
@@ -369,13 +365,13 @@ static bool isCopyToReg(MachineInstr &MI, const TargetInstrInfo *TII,
   DstReg = 0;
   unsigned SrcSubIdx, DstSubIdx;
   if (!TII->isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-    if (MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+    if (MI.isExtractSubreg()) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(1).getReg();
-    } else if (MI.getOpcode() == TargetInstrInfo::INSERT_SUBREG) {
+    } else if (MI.isInsertSubreg()) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(2).getReg();
-    } else if (MI.getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+    } else if (MI.isSubregToReg()) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(2).getReg();
     }
@@ -433,8 +429,7 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
 /// as a two-address use. If so, return the destination register by reference.
 static bool isTwoAddrUse(MachineInstr &MI, unsigned Reg, unsigned &DstReg) {
   const TargetInstrDesc &TID = MI.getDesc();
-  unsigned NumOps = (MI.getOpcode() == TargetInstrInfo::INLINEASM)
-    ? MI.getNumOperands() : TID.getNumOperands();
+  unsigned NumOps = MI.isInlineAsm() ? MI.getNumOperands():TID.getNumOperands();
   for (unsigned i = 0; i != NumOps; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || MO.getReg() != Reg)
@@ -937,7 +932,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
       // First scan through all the tied register uses in this instruction
       // and record a list of pairs of tied operands for each register.
-      unsigned NumOps = (mi->getOpcode() == TargetInstrInfo::INLINEASM)
+      unsigned NumOps = mi->isInlineAsm()
         ? mi->getNumOperands() : TID.getNumOperands();
       for (unsigned SrcIdx = 0; SrcIdx < NumOps; ++SrcIdx) {
         unsigned DstIdx = 0;

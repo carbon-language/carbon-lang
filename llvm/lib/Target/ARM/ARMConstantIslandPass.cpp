@@ -732,7 +732,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
 
     // This pass should be run after register allocation, so there should be no
     // PHI nodes to update.
-    assert((Succ->empty() || Succ->begin()->getOpcode() != TargetInstrInfo::PHI)
+    assert((Succ->empty() || !Succ->begin()->isPHI())
            && "PHI nodes should be eliminated by now!");
   }
 
