@@ -40,7 +40,7 @@ private:
   void operator=(const MCExpr&); // DO NOT IMPLEMENT
 
 protected:
-  MCExpr(ExprKind _Kind) : Kind(_Kind) {}
+  explicit MCExpr(ExprKind _Kind) : Kind(_Kind) {}
 
 public:
   /// @name Accessors
@@ -86,7 +86,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const MCExpr &E) {
 class MCConstantExpr : public MCExpr {
   int64_t Value;
 
-  MCConstantExpr(int64_t _Value)
+  explicit MCConstantExpr(int64_t _Value)
     : MCExpr(MCExpr::Constant), Value(_Value) {}
 
 public:
@@ -118,7 +118,7 @@ public:
 class MCSymbolRefExpr : public MCExpr {
   const MCSymbol *Symbol;
 
-  MCSymbolRefExpr(const MCSymbol *_Symbol)
+  explicit MCSymbolRefExpr(const MCSymbol *_Symbol)
     : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol) {}
 
 public:
