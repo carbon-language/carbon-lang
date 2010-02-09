@@ -553,6 +553,10 @@ public:
   /// normal unsigned value, if possible. Returns 0 if the trip count is unknown
   /// of not constant. Will also return 0 if the trip count is very large
   /// (>= 2^32)
+  ///
+  /// The IndVarSimplify pass transforms loops to have a form that this
+  /// function easily understands.
+  ///
   unsigned getSmallConstantTripCount() const;
 
   /// getSmallConstantTripMultiple - Returns the largest constant divisor of the
