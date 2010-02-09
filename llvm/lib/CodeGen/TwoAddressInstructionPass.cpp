@@ -318,6 +318,8 @@ bool TwoAddressInstructionPass::NoUseAfterLastDef(unsigned Reg,
     MachineInstr *MI = MO.getParent();
     if (MI->getParent() != MBB)
       continue;
+    if (MI->getOpcode() == TargetInstrInfo::DEBUG_VALUE)
+      continue;
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
     if (DI == DistanceMap.end())
       continue;
@@ -340,6 +342,8 @@ MachineInstr *TwoAddressInstructionPass::FindLastUseInMBB(unsigned Reg,
     MachineOperand &MO = I.getOperand();
     MachineInstr *MI = MO.getParent();
     if (MI->getParent() != MBB)
+      continue;
+    if (MI->getOpcode() == TargetInstrInfo::DEBUG_VALUE)
       continue;
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
     if (DI == DistanceMap.end())

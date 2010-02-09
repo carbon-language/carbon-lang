@@ -64,6 +64,9 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &fn) {
       if (mi->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
         continue;
 
+      if (mi->getOpcode() == TargetInstrInfo::DEBUG_VALUE)
+        continue;
+
       for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
         const MachineOperand &mopi = mi->getOperand(i);
         if (!mopi.isReg() || mopi.getReg() == 0)

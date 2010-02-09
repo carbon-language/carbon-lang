@@ -543,6 +543,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       MachineInstr *MI = I;
+      if (MI->getOpcode()==TargetInstrInfo::DEBUG_VALUE)
+        continue;
       DistanceMap.insert(std::make_pair(MI, Dist++));
 
       // Process all of the operands of the instruction...
