@@ -226,3 +226,14 @@ define void @test10a() {
   ret void
 }
 
+
+; PR6193
+define i32 @test11(i32 %aMaskWidth, i8 %aStride) nounwind {
+entry:
+  %conv41 = sext i8 %aStride to i32
+  %neg = xor i32 %conv41, -1
+  %and42 = and i32 %aMaskWidth, %neg
+  %and47 = and i32 130, %conv41
+  %or = or i32 %and42, %and47
+  ret i32 %or
+}
