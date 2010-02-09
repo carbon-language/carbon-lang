@@ -1054,7 +1054,7 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
     const std::pair<Store, const MemRegion *> &X =
       GetLazyBinding(B, ER->getSuperRegion());
 
-    if (X.first)
+    if (X.second)
       return std::make_pair(X.first,
                             MRMgr.getElementRegionWithSuper(ER, X.second));
   }
@@ -1062,7 +1062,7 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
     const std::pair<Store, const MemRegion *> &X =
       GetLazyBinding(B, FR->getSuperRegion());
 
-    if (X.first)
+    if (X.second)
       return std::make_pair(X.first,
                             MRMgr.getFieldRegionWithSuper(FR, X.second));
   }
@@ -1179,13 +1179,9 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   const MemRegion *lazyBindingRegion = NULL;
   llvm::tie(lazyBindingStore, lazyBindingRegion) = GetLazyBinding(B, R);
 
-  if (lazyBindingStore) {
-    assert(lazyBindingRegion && "Lazy-binding region not set");
-
-    if (isa<ElementRegion>(R))
-      return RetrieveElement(lazyBindingStore,
-                             cast<ElementRegion>(lazyBindingRegion));
-
+  if (lazyBindingRegion) {
+    if (const ElementRegion *ER = dyn_cast<ElementRegion>(lazyBindingRegion))
+      return RetrieveElement(lazyBindingStore, ER);
     return RetrieveField(lazyBindingStore,
                          cast<FieldRegion>(lazyBindingRegion));
   }

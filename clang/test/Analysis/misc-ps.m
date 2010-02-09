@@ -915,3 +915,21 @@ void rdar7582031_test_static_init_zero_b() {
   int *p = 0;
   *p = 0xDEADBEEF;
 }
+
+//===----------------------------------------------------------------------===//
+// Test handling of parameters that are structs that contain floats and       //
+// nested fields.                                                             //
+//===----------------------------------------------------------------------===//
+
+struct s_rev95547_nested { float x, y; };
+struct s_rev95547 {
+  struct s_rev95547_nested z1;
+  struct s_rev95547_nested z2;
+};
+float foo_rev95547(struct s_rev95547 w) {
+  return w.z1.x + 20.0; // no-warning
+}
+void foo_rev95547_b(struct s_rev95547 w) {
+  struct s_rev95547 w2 = w;
+  w2.z1.x += 20.0; // no-warning
+}
