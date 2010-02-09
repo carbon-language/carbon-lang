@@ -1,7 +1,7 @@
 <table width="100%" id="nav" cellspacing=0 cellpadding=0>
 <tr><td>
 <ul style="margin:0; padding:0" class="menubar">
-<li style="padding-left:10px">
+<li style="padding-left:5em">
   <a href="/index.html">About</a>
   <ul class="menubar">
     <li><a href="/index.html">About the Analyzer</a></li>
