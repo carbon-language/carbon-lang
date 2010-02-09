@@ -180,33 +180,47 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 
   // FIXME: Eliminate!
   bool IsPCRel = false;
-
-  // Is a SIB byte needed?
+    
+  // Determine whether a SIB byte is needed.
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
   // 2-7) and absolute references.
-  if ((!Is64BitMode || DispForReloc || BaseReg != 0) &&
+  if (// The SIB byte must be used if there is an index register.
       IndexReg.getReg() == 0 && 
-      (BaseReg == X86::RIP || (BaseReg != 0 && BaseReg != X86::ESP))) {
-    if (BaseReg == 0 || BaseReg == X86::RIP) {  // Just a displacement?
-      // Emit special case [disp32] encoding
+      // The SIB byte must be used if the base is ESP/RSP.
+      BaseReg != X86::ESP && BaseReg != X86::RSP &&
+      // If there is no base register and we're in 64-bit mode, we need a SIB
+      // byte to emit an addr that is just 'disp32' (the non-RIP relative form).
+      (!Is64BitMode || BaseReg != 0)) {
+
+    if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
+        BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), OS);
       EmitDisplacementField(DispForReloc, DispVal, PCAdj, true, OS);
-    } else {
-      unsigned BaseRegNo = GetX86RegNum(Base);
-      if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
-        // Emit simple indirect register encoding... [EAX] f.e.
-        EmitByte(ModRMByte(0, RegOpcodeField, BaseRegNo), OS);
-      } else if (!DispForReloc && isDisp8(DispVal)) {
-        // Emit the disp8 encoding... [REG+disp8]
-        EmitByte(ModRMByte(1, RegOpcodeField, BaseRegNo), OS);
-        EmitConstant(DispVal, 1, OS);
-      } else {
-        // Emit the most general non-SIB encoding: [REG+disp32]
-        EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), OS);
-        EmitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel, OS);
-      }
+      return;
     }
+    
+    unsigned BaseRegNo = GetX86RegNum(Base);
+
+    // If the base is not EBP/ESP and there is no displacement, use simple
+    // indirect register encoding, this handles addresses like [EAX].  The
+    // encoding for [EBP] with no displacement means [disp32] so we handle it
+    // by emitting a displacement of 0 below.
+    if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
+      EmitByte(ModRMByte(0, RegOpcodeField, BaseRegNo), OS);
+      return;
+    }
+    
+    // Otherwise, if the displacement fits in a byte, encode as [REG+disp8].
+    if (!DispForReloc && isDisp8(DispVal)) {
+      EmitByte(ModRMByte(1, RegOpcodeField, BaseRegNo), OS);
+      EmitConstant(DispVal, 1, OS);
+      return;
+    }
+    
+    // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
+    EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), OS);
+    EmitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel, OS);
     return;
   }
     
