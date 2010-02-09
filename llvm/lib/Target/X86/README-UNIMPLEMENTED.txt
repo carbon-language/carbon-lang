@@ -11,4 +11,4 @@ which would be great.
 2) vector comparisons
 3) vector fp<->int conversions: PR2683, PR2684, PR2685, PR2686, PR2688
 4) bitcasts from vectors to scalars: PR2804
-
+5) llvm.atomic.cmp.swap.i128.p0i128: PR3462
