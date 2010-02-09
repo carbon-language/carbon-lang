@@ -6,6 +6,7 @@ import re
 import tempfile
 import shutil
 import stat
+from AppKit import *
 
 def FindClangSpecs(path):
   for root, dirs, files in os.walk(path):
@@ -50,6 +51,12 @@ def main():
   if options.path is None and options.default is None:
     parser.error("You must specify a version of Clang to use for static analysis.  Specify '-h' for details")
 
+  # determine if Xcode is running
+  for x in NSWorkspace.sharedWorkspace().runningApplications():
+    if x.localizedName().find("Xcode") >= 0:
+      print "You must quit Xcode first before modifying its configuration files."
+      return
+
   if options.path:
     # Expand tildes.
     path = os.path.expanduser(options.path)
@@ -61,8 +68,8 @@ def main():
   else:
     print "Using the Clang bundled with Xcode"
     path = options.default
-
   print ""
+  
   for x in FindClangSpecs('/Developer'):
     ModifySpec(x, path)
 
