@@ -716,7 +716,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         // Create a temporary alloca to hold the argument; the rest of
         // codegen expects to access aggregates & complex values by
         // reference.
-        V = CreateTempAlloca(ConvertTypeForMem(Ty));
+        V = CreateMemTemp(Ty);
         Builder.CreateStore(AI, V);
       } else {
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
@@ -733,8 +733,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // If this structure was expanded into multiple arguments then
       // we need to create a temporary and reconstruct it from the
       // arguments.
-      llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(Ty),
-                                           Arg->getName() + ".addr");
+      llvm::Value *Temp = CreateMemTemp(Ty, Arg->getName() + ".addr");
       // FIXME: What are the right qualifiers here?
       llvm::Function::arg_iterator End =
         ExpandTypeFromArgs(Ty, LValue::MakeAddr(Temp, Qualifiers()), AI);
@@ -750,7 +749,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     case ABIArgInfo::Ignore:
       // Initialize the local variable appropriately.
       if (hasAggregateLLVMType(Ty)) {
-        EmitParmDecl(*Arg, CreateTempAlloca(ConvertTypeForMem(Ty)));
+        EmitParmDecl(*Arg, CreateMemTemp(Ty));
       } else {
         EmitParmDecl(*Arg, llvm::UndefValue::get(ConvertType(Arg->getType())));
       }
@@ -763,7 +762,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // FIXME: This is very wasteful; EmitParmDecl is just going to drop the
       // result in a new alloca anyway, so we could just store into that
       // directly if we broke the abstraction down more.
-      llvm::Value *V = CreateTempAlloca(ConvertTypeForMem(Ty), "coerce");
+      llvm::Value *V = CreateMemTemp(Ty, "coerce");
       CreateCoercedStore(AI, V, /*DestIsVolatile=*/false, *this);
       // Match to what EmitParmDecl is expecting for this type.
       if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
@@ -858,7 +857,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   if (CGM.ReturnTypeUsesSret(CallInfo)) {
     llvm::Value *Value = ReturnValue.getValue();
     if (!Value)
-      Value = CreateTempAlloca(ConvertTypeForMem(RetTy));
+      Value = CreateMemTemp(RetTy);
     Args.push_back(Value);
   }
 
@@ -874,7 +873,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     case ABIArgInfo::Indirect:
       if (RV.isScalar() || RV.isComplex()) {
         // Make a temporary alloca to pass the argument.
-        Args.push_back(CreateTempAlloca(ConvertTypeForMem(I->second)));
+        Args.push_back(CreateMemTemp(I->second));
         if (RV.isScalar())
           EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false, I->second);
         else
@@ -905,10 +904,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // FIXME: Avoid the conversion through memory if possible.
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
-        SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
+        SrcPtr = CreateMemTemp(I->second, "coerce");
         EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, I->second);
       } else if (RV.isComplex()) {
-        SrcPtr = CreateTempAlloca(ConvertTypeForMem(I->second), "coerce");
+        SrcPtr = CreateMemTemp(I->second, "coerce");
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
       } else
         SrcPtr = RV.getAggregateAddr();
@@ -1013,7 +1012,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       bool DestIsVolatile = ReturnValue.isVolatile();
 
       if (!DestPtr) {
-        DestPtr = CreateTempAlloca(ConvertTypeForMem(RetTy), "agg.tmp");
+        DestPtr = CreateMemTemp(RetTy, "agg.tmp");
         DestIsVolatile = false;
       }
       Builder.CreateStore(CI, DestPtr, DestIsVolatile);
@@ -1031,7 +1030,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     bool DestIsVolatile = ReturnValue.isVolatile();
     
     if (!DestPtr) {
-      DestPtr = CreateTempAlloca(ConvertTypeForMem(RetTy), "coerce");
+      DestPtr = CreateMemTemp(RetTy, "coerce");
       DestIsVolatile = false;
     }
     

@@ -657,8 +657,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
   // Unknown builtin, for now just dump it out and return undef.
   if (hasAggregateLLVMType(E->getType()))
-    return RValue::getAggregate(CreateTempAlloca(ConvertTypeForMem(
-                                                   E->getType())));
+    return RValue::getAggregate(CreateMemTemp(E->getType()));
   return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
 }
 

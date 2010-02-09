@@ -709,8 +709,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
     DeclPtr = Arg;
   } else {
     // Otherwise, create a temporary to hold the value.
-    DeclPtr = CreateTempAlloca(ConvertTypeForMem(Ty));
-    DeclPtr->setName(D.getName() + ".addr");
+    DeclPtr = CreateMemTemp(Ty, D.getName() + ".addr");
 
     // Store the initial value into the alloca.
     EmitStoreOfScalar(Arg, DeclPtr, CTy.isVolatileQualified(), Ty);

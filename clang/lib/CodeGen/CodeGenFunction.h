@@ -655,9 +655,14 @@ public:
   }
 
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
-  /// block.
+  /// block. The caller is responsible for setting an appropriate alignment on
+  /// the alloca.
   llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
                                      const llvm::Twine &Name = "tmp");
+
+  /// CreateMemTemp - Create a temporary memory object of the given type, with
+  /// appropriate alignment.
+  llvm::Value *CreateMemTemp(QualType T, const llvm::Twine &Name = "tmp");
 
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.

@@ -36,6 +36,14 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
   return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
 }
 
+llvm::Value *CodeGenFunction::CreateMemTemp(QualType Ty, const llvm::Twine &Name) {
+  llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty), Name);
+  // FIXME: Should we prefer the preferred type alignment here?
+  CharUnits Align = getContext().getTypeAlignInChars(Ty);
+  Alloc->setAlignment(Align.getQuantity());
+  return Alloc;
+}
+
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
 /// expression and compare the result against zero, returning an Int1Ty value.
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
@@ -195,8 +203,7 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     Val = RValue::get(Val.getAggregateAddr());
   } else {
     // Create a temporary variable that we can bind the reference to.
-    llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()),
-                                         "reftmp");
+    llvm::Value *Temp = CreateMemTemp(E->getType(), "reftmp");
     if (Val.isScalar())
       EmitStoreOfScalar(Val.getScalarVal(), Temp, false, E->getType());
     else
@@ -1362,8 +1369,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     llvm::Value *Vec = EmitScalarExpr(E->getBase());
     
     // Store the vector to memory (because LValue wants an address).
-    llvm::Value *VecMem = CreateTempAlloca(ConvertTypeForMem(
-                                             E->getBase()->getType()));
+    llvm::Value *VecMem = CreateMemTemp(E->getBase()->getType());
     Builder.CreateStore(Vec, VecMem);
     Base = LValue::MakeAddr(VecMem, Qualifiers());
   }
@@ -1558,6 +1564,7 @@ CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
     if (!LHS.isSimple())
       return EmitUnsupportedLValue(E, "conditional operator");
 
+    // FIXME: We shouldn't need an alloca for this.
     llvm::Value *Temp = CreateTempAlloca(LHS.getAddress()->getType(),"condtmp");
     Builder.CreateStore(LHS.getAddress(), Temp);
     EmitBranch(ContBlock);
@@ -1667,12 +1674,9 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 LValue CodeGenFunction::EmitNullInitializationLValue(
                                               const CXXZeroInitValueExpr *E) {
   QualType Ty = E->getType();
-  llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty));
-  CharUnits Align = getContext().getTypeAlignInChars(Ty);
-  Alloc->setAlignment(Align.getQuantity());
-  LValue lvalue = LValue::MakeAddr(Alloc, Qualifiers());
-  EmitMemSetToZero(lvalue.getAddress(), Ty);
-  return lvalue;
+  LValue LV = LValue::MakeAddr(CreateMemTemp(Ty), MakeQualifiers(Ty));
+  EmitMemSetToZero(LV.getAddress(), Ty);
+  return LV;
 }
 
 //===--------------------------------------------------------------------===//
@@ -1767,7 +1771,7 @@ LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
 }
 
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
-  llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), "tmp");
+  llvm::Value *Temp = CreateMemTemp(E->getType(), "tmp");
   EmitCXXConstructExpr(Temp, E);
   return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
 }

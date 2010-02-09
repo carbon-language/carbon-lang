@@ -164,8 +164,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
   // Get the member function pointer.
-  llvm::Value *MemFnPtr = 
-    CreateTempAlloca(ConvertTypeForMem(MemFnExpr->getType()), "mem.fn");
+  llvm::Value *MemFnPtr = CreateMemTemp(MemFnExpr->getType(), "mem.fn");
   EmitAggExpr(MemFnExpr, MemFnPtr, /*VolatileDest=*/false);
 
   // Emit the 'this' pointer.

@@ -147,7 +147,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
       return;
     // If the source is volatile, we must read from it; to do that, we need
     // some place to put it.
-    DestPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()), "agg.tmp");
+    DestPtr = CGF.CreateMemTemp(E->getType(), "agg.tmp");
   }
 
   if (RequiresGCollection) {
@@ -228,8 +228,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   case CastExpr::CK_BaseToDerivedMemberPointer: {
     QualType SrcType = E->getSubExpr()->getType();
     
-    llvm::Value *Src = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(SrcType), 
-                                            "tmp");
+    llvm::Value *Src = CGF.CreateMemTemp(SrcType, "tmp");
     CGF.EmitAggExpr(E->getSubExpr(), Src, SrcType.isVolatileQualified());
     
     llvm::Value *SrcPtr = Builder.CreateStructGEP(Src, 0, "src.ptr");
@@ -380,14 +379,14 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   if (LHS.isPropertyRef()) {
     llvm::Value *AggLoc = DestPtr;
     if (!AggLoc)
-      AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
+      AggLoc = CGF.CreateMemTemp(E->getRHS()->getType());
     CGF.EmitAggExpr(E->getRHS(), AggLoc, VolatileDest);
     CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(),
                             RValue::getAggregate(AggLoc, VolatileDest));
   } else if (LHS.isKVCRef()) {
     llvm::Value *AggLoc = DestPtr;
     if (!AggLoc)
-      AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
+      AggLoc = CGF.CreateMemTemp(E->getRHS()->getType());
     CGF.EmitAggExpr(E->getRHS(), AggLoc, VolatileDest);
     CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(),
                             RValue::getAggregate(AggLoc, VolatileDest));
@@ -458,7 +457,7 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
 
   if (!Val) {
     // Create a temporary variable.
-    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+    Val = CGF.CreateMemTemp(E->getType(), "tmp");
 
     // FIXME: volatile
     CGF.EmitAggExpr(E->getSubExpr(), Val, false);
@@ -476,7 +475,7 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 
   if (!Val) {
     // Create a temporary variable.
-    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+    Val = CGF.CreateMemTemp(E->getType(), "tmp");
   }
 
   if (E->requiresZeroInitialization())
@@ -493,7 +492,7 @@ void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
 
   if (!Val) {
     // Create a temporary variable.
-    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+    Val = CGF.CreateMemTemp(E->getType(), "tmp");
   }
   CGF.EmitCXXExprWithTemporaries(E, Val, VolatileDest, IsInitializer);
 }
@@ -503,7 +502,7 @@ void AggExprEmitter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
 
   if (!Val) {
     // Create a temporary variable.
-    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+    Val = CGF.CreateMemTemp(E->getType(), "tmp");
   }
   LValue LV = LValue::MakeAddr(Val, Qualifiers());
   EmitNullInitializationToLValue(LV, E->getType());
@@ -514,7 +513,7 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 
   if (!Val) {
     // Create a temporary variable.
-    Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
+    Val = CGF.CreateMemTemp(E->getType(), "tmp");
   }
   LValue LV = LValue::MakeAddr(Val, Qualifiers());
   EmitNullInitializationToLValue(LV, E->getType());
@@ -708,7 +707,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
   assert(hasAggregateLLVMType(E->getType()) && "Invalid argument!");
   Qualifiers Q = MakeQualifiers(E->getType());
-  llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()));
+  llvm::Value *Temp = CreateMemTemp(E->getType());
   EmitAggExpr(E, Temp, Q.hasVolatile());
   return LValue::MakeAddr(Temp, Q);
 }

@@ -452,9 +452,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Fast enumeration state.
   QualType StateTy = getContext().getObjCFastEnumerationStateType();
-  llvm::AllocaInst *StatePtr = CreateTempAlloca(ConvertTypeForMem(
-                                                  StateTy), "state.ptr");
-  StatePtr->setAlignment(getContext().getTypeAlign(StateTy) >> 3);
+  llvm::Value *StatePtr = CreateMemTemp(StateTy, "state.ptr");
   EmitMemSetToZero(StatePtr, StateTy);
 
   // Number of elements in the items array.
@@ -472,8 +470,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     getContext().getConstantArrayType(getContext().getObjCIdType(),
                                       llvm::APInt(32, NumItems),
                                       ArrayType::Normal, 0);
-  llvm::Value *ItemsPtr = CreateTempAlloca(ConvertTypeForMem(
-                                             ItemsTy), "items.ptr");
+  llvm::Value *ItemsPtr = CreateMemTemp(ItemsTy, "items.ptr");
 
   llvm::Value *Collection = EmitScalarExpr(S.getCollection());
 
@@ -495,7 +492,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                                              FastEnumSel,
                                              Collection, false, Args);
 
-  llvm::Value *LimitPtr = CreateTempAlloca(UnsignedLongLTy, "limit.ptr");
+  llvm::Value *LimitPtr = CreateMemTemp(getContext().UnsignedLongTy,
+                                        "limit.ptr");
   Builder.CreateStore(CountRV.getScalarVal(), LimitPtr);
 
   llvm::BasicBlock *NoElements = createBasicBlock("noelements");
@@ -509,8 +507,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   EmitBlock(SetStartMutations);
 
-  llvm::Value *StartMutationsPtr =
-    CreateTempAlloca(UnsignedLongLTy);
+  llvm::Value *StartMutationsPtr = CreateMemTemp(getContext().UnsignedLongTy);
 
   llvm::Value *StateMutationsPtrPtr =
     Builder.CreateStructGEP(StatePtr, 2, "mutationsptr.ptr");
@@ -525,7 +522,8 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::BasicBlock *LoopStart = createBasicBlock("loopstart");
   EmitBlock(LoopStart);
 
-  llvm::Value *CounterPtr = CreateTempAlloca(UnsignedLongLTy, "counter.ptr");
+  llvm::Value *CounterPtr = CreateMemTemp(getContext().UnsignedLongTy,
+                                       "counter.ptr");
   Builder.CreateStore(Zero, CounterPtr);
 
   llvm::BasicBlock *LoopBody = createBasicBlock("loopbody");
