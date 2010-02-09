@@ -22,7 +22,7 @@
 .menubar li {
   margin: 0;
   padding: 5px;  
-  text-align: center;
+  text-align: left;
   text-indent: 0px;
   list-style-position: inside;
   list-style:none;
