@@ -171,6 +171,16 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   CurFn = Fn;
   assert(CurFn->isDeclaration() && "Function already has body?");
 
+  // Pass inline keyword to optimizer if it appears explicitly on any
+  // declaration.
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
+    for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
+           RE = FD->redecls_end(); RI != RE; ++RI)
+      if (RI->isInlineSpecified()) {
+        Fn->addFnAttr(llvm::Attribute::InlineHint);
+        break;
+      }
+
   llvm::BasicBlock *EntryBB = createBasicBlock("entry", CurFn);
 
   // Create a marker to make it easy to insert allocas into the entryblock
