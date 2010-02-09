@@ -1755,6 +1755,23 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   UpdateRegDefsUses(SrcReg, DstReg, SubIdx);
 
+  // If we have extended the live range of a physical register, make sure we
+  // update live-in lists as well.
+  if (TargetRegisterInfo::isPhysicalRegister(DstReg)) {
+    const LiveInterval &VRegInterval = li_->getInterval(SrcReg);
+    SmallVector<MachineBasicBlock*, 16> BlockSeq;
+    for (LiveInterval::const_iterator I = VRegInterval.begin(),
+           E = VRegInterval.end(); I != E; ++I ) {
+      li_->findLiveInMBBs(I->start, I->end, BlockSeq);
+      for (unsigned idx = 0, size = BlockSeq.size(); idx != size; ++idx) {
+        MachineBasicBlock &block = *BlockSeq[idx];
+        if (!block.isLiveIn(DstReg))
+          block.addLiveIn(DstReg);
+      }
+      BlockSeq.clear();
+    }
+  }
+
   // SrcReg is guarateed to be the register whose live interval that is
   // being merged.
   li_->removeInterval(SrcReg);
