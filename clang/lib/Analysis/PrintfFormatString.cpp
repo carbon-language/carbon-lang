@@ -196,11 +196,11 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
-	
+
   if (*I == '\0') {
-	// Detect spurious null characters, which are likely errors.
-	H.HandleNullChar(I);
-	return true;
+    // Detect spurious null characters, which are likely errors.
+    H.HandleNullChar(I);
+    return true;
   }
   
   // Finally, look for the conversion specifier.
@@ -231,7 +231,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     case '%': k = ConversionSpecifier::PercentArg;   break;      
     // Objective-C.
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
-	// Glibc specific.
+    // Glibc specific.
     case 'm': k = ConversionSpecifier::PrintErrno; break;
   }
   FS.setConversionSpecifier(ConversionSpecifier(conversionPosition, k));
