@@ -389,8 +389,8 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // 2-7) and absolute references.
   if ((!Is64BitMode || DispForReloc || BaseReg != 0) &&
       IndexReg.getReg() == 0 && 
-      ((BaseReg == 0 && IsPCRel) || BaseReg == X86::RIP || 
-       (BaseReg != 0 && BaseReg != X86::ESP))) {
+      ((BaseReg == 0 && MCE.earlyResolveAddresses()) || BaseReg == X86::RIP || 
+       (BaseReg != 0 && getX86RegNum(BaseReg) != N86::ESP))) {
     if (BaseReg == 0 || BaseReg == X86::RIP) {  // Just a displacement?
       // Emit special case [disp32] encoding
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
