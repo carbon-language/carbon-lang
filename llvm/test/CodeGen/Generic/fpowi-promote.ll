@@ -1,5 +1,4 @@
 ; RUN: llc < %s
-; RUN: llc < %s -march=x86 -mcpu=i386
 
 ; PR1239
 
