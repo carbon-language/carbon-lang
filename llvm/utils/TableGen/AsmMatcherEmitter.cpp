@@ -140,7 +140,7 @@ static std::string FlattenVariants(const std::string &AsmString,
 }
 
 /// TokenizeAsmString - Tokenize a simplified assembly string.
-static void TokenizeAsmString(const StringRef &AsmString, 
+static void TokenizeAsmString(StringRef AsmString, 
                               SmallVectorImpl<StringRef> &Tokens) {
   unsigned Prev = 0;
   bool InTok = true;
@@ -207,7 +207,7 @@ static void TokenizeAsmString(const StringRef &AsmString,
     Tokens.push_back(AsmString.substr(Prev));
 }
 
-static bool IsAssemblerInstruction(const StringRef &Name,
+static bool IsAssemblerInstruction(StringRef Name,
                                    const CodeGenInstruction &CGI, 
                                    const SmallVectorImpl<StringRef> &Tokens) {
   // Ignore "codegen only" instructions.
@@ -528,10 +528,10 @@ private:
 
 private:
   /// getTokenClass - Lookup or create the class for the given token.
-  ClassInfo *getTokenClass(const StringRef &Token);
+  ClassInfo *getTokenClass(StringRef Token);
 
   /// getOperandClass - Lookup or create the class for the given operand.
-  ClassInfo *getOperandClass(const StringRef &Token,
+  ClassInfo *getOperandClass(StringRef Token,
                              const CodeGenInstruction::OperandInfo &OI);
 
   /// BuildRegisterClasses - Build the ClassInfo* instances for register
@@ -581,7 +581,7 @@ void InstructionInfo::dump() {
   }
 }
 
-static std::string getEnumNameForToken(const StringRef &Str) {
+static std::string getEnumNameForToken(StringRef Str) {
   std::string Res;
   
   for (StringRef::iterator it = Str.begin(), ie = Str.end(); it != ie; ++it) {
@@ -603,7 +603,7 @@ static std::string getEnumNameForToken(const StringRef &Str) {
 }
 
 /// getRegisterRecord - Get the register record for \arg name, or 0.
-static Record *getRegisterRecord(CodeGenTarget &Target, const StringRef &Name) {
+static Record *getRegisterRecord(CodeGenTarget &Target, StringRef Name) {
   for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
     const CodeGenRegister &Reg = Target.getRegisters()[i];
     if (Name == Reg.TheDef->getValueAsString("AsmName"))
@@ -613,7 +613,7 @@ static Record *getRegisterRecord(CodeGenTarget &Target, const StringRef &Name) {
   return 0;
 }
 
-ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
+ClassInfo *AsmMatcherInfo::getTokenClass(StringRef Token) {
   ClassInfo *&Entry = TokenClasses[Token];
   
   if (!Entry) {
@@ -631,7 +631,7 @@ ClassInfo *AsmMatcherInfo::getTokenClass(const StringRef &Token) {
 }
 
 ClassInfo *
-AsmMatcherInfo::getOperandClass(const StringRef &Token,
+AsmMatcherInfo::getOperandClass(StringRef Token,
                                 const CodeGenInstruction::OperandInfo &OI) {
   if (OI.Rec->isSubClassOf("RegisterClass")) {
     ClassInfo *CI = RegisterClassClasses[OI.Rec];
@@ -1373,7 +1373,7 @@ static void EmitMatchTokenString(CodeGenTarget &Target,
       Matches.push_back(StringPair(CI.ValueName, "return " + CI.Name + ";"));
   }
 
-  OS << "static MatchClassKind MatchTokenString(const StringRef &Name) {\n";
+  OS << "static MatchClassKind MatchTokenString(StringRef Name) {\n";
 
   EmitStringMatcher("Name", Matches, OS);
 
@@ -1396,7 +1396,7 @@ static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
                                  "return " + utostr(i + 1) + ";"));
   }
   
-  OS << "static unsigned MatchRegisterName(const StringRef &Name) {\n";
+  OS << "static unsigned MatchRegisterName(StringRef Name) {\n";
 
   EmitStringMatcher("Name", Matches, OS);
   

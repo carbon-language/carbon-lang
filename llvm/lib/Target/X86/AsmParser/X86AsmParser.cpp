@@ -67,7 +67,7 @@ public:
 /// @name Auto-generated Match Functions
 /// {  
 
-static unsigned MatchRegisterName(const StringRef &Name);
+static unsigned MatchRegisterName(StringRef Name);
 
 /// }
 
@@ -291,6 +291,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
   RegNo = MatchRegisterName(Tok.getString());
+  
   if (RegNo == 0)
     return Error(Tok.getLoc(), "invalid register name");
 
