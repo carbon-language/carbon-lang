@@ -387,86 +387,98 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
   // 2-7) and absolute references.
-  if ((!Is64BitMode || DispForReloc || BaseReg != 0) &&
+  if (// The SIB byte must be used if there is an index register.
       IndexReg.getReg() == 0 && 
-      ((BaseReg == 0 && MCE.earlyResolveAddresses()) || BaseReg == X86::RIP || 
-       (BaseReg != 0 && getX86RegNum(BaseReg) != N86::ESP))) {
-    if (BaseReg == 0 || BaseReg == X86::RIP) {  // Just a displacement?
-      // Emit special case [disp32] encoding
+      // The SIB byte must be used if the base is ESP/RSP.
+      BaseReg != X86::ESP && BaseReg != X86::RSP &&
+      // If there is no base register and we're in 64-bit mode, we need a SIB
+      // byte to emit an addr that is just 'disp32' (the non-RIP relative form).
+      (!Is64BitMode || BaseReg != 0)) {
+    if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
+        BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       MCE.emitByte(ModRMByte(0, RegOpcodeField, 5));
       emitDisplacementField(DispForReloc, DispVal, PCAdj, true);
-    } else {
-      unsigned BaseRegNo = getX86RegNum(BaseReg);
-      if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
-        // Emit simple indirect register encoding... [EAX] f.e.
-        MCE.emitByte(ModRMByte(0, RegOpcodeField, BaseRegNo));
-      } else if (!DispForReloc && isDisp8(DispVal)) {
-        // Emit the disp8 encoding... [REG+disp8]
-        MCE.emitByte(ModRMByte(1, RegOpcodeField, BaseRegNo));
-        emitConstant(DispVal, 1);
-      } else {
-        // Emit the most general non-SIB encoding: [REG+disp32]
-        MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
-        emitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel);
-      }
+      return;
     }
-
-  } else {  // We need a SIB byte, so start by outputting the ModR/M byte first
-    assert(IndexReg.getReg() != X86::ESP &&
-           IndexReg.getReg() != X86::RSP && "Cannot use ESP as index reg!");
-
-    bool ForceDisp32 = false;
-    bool ForceDisp8  = false;
-    if (BaseReg == 0) {
-      // If there is no base register, we emit the special case SIB byte with
-      // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
-      MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
-      ForceDisp32 = true;
-    } else if (DispForReloc) {
-      // Emit the normal disp32 encoding.
-      MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
-      ForceDisp32 = true;
-    } else if (DispVal == 0 && getX86RegNum(BaseReg) != N86::EBP) {
-      // Emit no displacement ModR/M byte
-      MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
-    } else if (isDisp8(DispVal)) {
-      // Emit the disp8 encoding...
-      MCE.emitByte(ModRMByte(1, RegOpcodeField, 4));
-      ForceDisp8 = true;           // Make sure to force 8 bit disp if Base=EBP
-    } else {
-      // Emit the normal disp32 encoding...
-      MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
+    
+    unsigned BaseRegNo = getX86RegNum(BaseReg);
+    // If the base is not EBP/ESP and there is no displacement, use simple
+    // indirect register encoding, this handles addresses like [EAX].  The
+    // encoding for [EBP] with no displacement means [disp32] so we handle it
+    // by emitting a displacement of 0 below.
+    if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
+      MCE.emitByte(ModRMByte(0, RegOpcodeField, BaseRegNo));
+      return;
     }
-
-    // Calculate what the SS field value should be...
-    static const unsigned SSTable[] = { ~0, 0, 1, ~0, 2, ~0, ~0, ~0, 3 };
-    unsigned SS = SSTable[Scale.getImm()];
-
-    if (BaseReg == 0) {
-      // Handle the SIB byte for the case where there is no base, see Intel 
-      // Manual 2A, table 2-7. The displacement has already been output.
-      unsigned IndexRegNo;
-      if (IndexReg.getReg())
-        IndexRegNo = getX86RegNum(IndexReg.getReg());
-      else // Examples: [ESP+1*<noreg>+4] or [scaled idx]+disp32 (MOD=0,BASE=5)
-        IndexRegNo = 4;
-      emitSIBByte(SS, IndexRegNo, 5);
-    } else {
-      unsigned BaseRegNo = getX86RegNum(BaseReg);
-      unsigned IndexRegNo;
-      if (IndexReg.getReg())
-        IndexRegNo = getX86RegNum(IndexReg.getReg());
-      else
-        IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
-      emitSIBByte(SS, IndexRegNo, BaseRegNo);
-    }
-
-    // Do we need to output a displacement?
-    if (ForceDisp8) {
+    
+    // Otherwise, if the displacement fits in a byte, encode as [REG+disp8].
+    if (!DispForReloc && isDisp8(DispVal)) {
+      MCE.emitByte(ModRMByte(1, RegOpcodeField, BaseRegNo));
       emitConstant(DispVal, 1);
-    } else if (DispVal != 0 || ForceDisp32) {
-      emitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel);
+      return;
     }
+    
+    // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
+    MCE.emitByte(ModRMByte(2, RegOpcodeField, BaseRegNo));
+    emitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel);
+    return;
+  }
+  
+  // Otherwise we need a SIB byte, so start by outputting the ModR/M byte first.
+  assert(IndexReg.getReg() != X86::ESP &&
+         IndexReg.getReg() != X86::RSP && "Cannot use ESP as index reg!");
+
+  bool ForceDisp32 = false;
+  bool ForceDisp8  = false;
+  if (BaseReg == 0) {
+    // If there is no base register, we emit the special case SIB byte with
+    // MOD=0, BASE=4, to JUST get the index, scale, and displacement.
+    MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
+    ForceDisp32 = true;
+  } else if (DispForReloc) {
+    // Emit the normal disp32 encoding.
+    MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
+    ForceDisp32 = true;
+  } else if (DispVal == 0 && getX86RegNum(BaseReg) != N86::EBP) {
+    // Emit no displacement ModR/M byte
+    MCE.emitByte(ModRMByte(0, RegOpcodeField, 4));
+  } else if (isDisp8(DispVal)) {
+    // Emit the disp8 encoding...
+    MCE.emitByte(ModRMByte(1, RegOpcodeField, 4));
+    ForceDisp8 = true;           // Make sure to force 8 bit disp if Base=EBP
+  } else {
+    // Emit the normal disp32 encoding...
+    MCE.emitByte(ModRMByte(2, RegOpcodeField, 4));
+  }
+
+  // Calculate what the SS field value should be...
+  static const unsigned SSTable[] = { ~0, 0, 1, ~0, 2, ~0, ~0, ~0, 3 };
+  unsigned SS = SSTable[Scale.getImm()];
+
+  if (BaseReg == 0) {
+    // Handle the SIB byte for the case where there is no base, see Intel 
+    // Manual 2A, table 2-7. The displacement has already been output.
+    unsigned IndexRegNo;
+    if (IndexReg.getReg())
+      IndexRegNo = getX86RegNum(IndexReg.getReg());
+    else // Examples: [ESP+1*<noreg>+4] or [scaled idx]+disp32 (MOD=0,BASE=5)
+      IndexRegNo = 4;
+    emitSIBByte(SS, IndexRegNo, 5);
+  } else {
+    unsigned BaseRegNo = getX86RegNum(BaseReg);
+    unsigned IndexRegNo;
+    if (IndexReg.getReg())
+      IndexRegNo = getX86RegNum(IndexReg.getReg());
+    else
+      IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
+    emitSIBByte(SS, IndexRegNo, BaseRegNo);
+  }
+
+  // Do we need to output a displacement?
+  if (ForceDisp8) {
+    emitConstant(DispVal, 1);
+  } else if (DispVal != 0 || ForceDisp32) {
+    emitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel);
   }
 }
 
