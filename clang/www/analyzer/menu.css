@@ -1,10 +1,14 @@
 /* From 'A list apart', 'dropdowns' */
-body {
-  background-color: #EBF0FA;
-}
+
 #nav {
+  clear: left;
+  margin:0;
+  padding:0;
   font-weight: bold;
-  color: #2d58b7;
+  width:100%;
+  background-color: #EBF0FA;
+  border-bottom: 1px solid;
+  font-size: 80%;
 }
 #nav a {
   text-decoration: none;
@@ -12,42 +16,37 @@ body {
 #nav a:hover {
   text-decoration: underline;
 }
-.menubar {
-  font-size: 80%;
-}
 .menubar ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
+  list-style: none inside;
 }
 .menubar li {
+  margin: 0;
+  padding: 5px;  
   text-align: center;
-  padding: 5px;
-  list-style: none;
+  text-indent: 0px;
+  list-style-position: inside;
+  list-style:none;
   float: left;
   position: relative;
-  width: 11em;
+  width: 13em;
   cursor: default;
   background-color: #EBF0FA;
 }
 .menubar li ul /* second level lists */ {
   display: none;
   position: absolute; 
-  top: 1em;
   left: 0;
 }
 .menubar li>ul {
+  border-left: 1px solid;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
   padding: 0;
-  margin: 0;
-  top:auto;
+  margin: 5px 0;
   left:auto;
   font-weight: normal;
 }
 .menubar li:hover ul, li.over ul { /* lists nested under hovered list items */
   display: block;
 }
-#content {
-  clear: left;
-  padding-top: 10px;
-  background-color: #ffffff;
-}
+

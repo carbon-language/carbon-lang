@@ -9,14 +9,19 @@
 </head>
 <body>
 
+<div id="page">
 <!--#include virtual="menu.html.incl"-->
 
 <div id="content">
-<table style="margin-top:0px" border="0" cellpadding="0" cellspacing="0">
-<tr><td>
+
 <h1>Clang Static Analyzer</h1>  
+
+<table style="margin-top:0px" width="100%" border="0" cellpadding="0px" cellspacing="0">
+<tr><td>
 <p>The Clang Static Analyzer consists of both a source code analysis framework
-and a standalone tool that finds bugs in C and Objective-C programs. The
+and a standalone tool that finds bugs in C and Objective-C programs.</p>
+
+<p>The
 standalone tool is invoked from the command-line, and is intended to run in
 tandem with a build of a project or code base.</p>
 
@@ -76,7 +81,7 @@ href="http://clang.llvm.org">Clang</a> project.</p>
   #wrappedcontent { padding:15px;}
 </style>
 
-<div style="margin-left:25px; margin-right:25px; padding:0px; font-size: 80%">
+<div style="padding:0px; font-size: 90%">
  <b class="spiffy">
  <b class="spiffy1"><b></b></b>
  <b class="spiffy2"><b></b></b>
@@ -108,6 +113,13 @@ href="http://clang.llvm.org">Clang</a> project.</p>
  <b class="spiffy1"><b></b></b></b>
 </div>
 
+</td><td style="padding-left:10px">
+<a href="images/analyzer_xcode.png"><img src="images/analyzer_xcode.png" width="450x"></a>
+<center><b>Viewing static analyzer results in Xcode 3.2</b></center>
+<a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450px"></a>
+<center><b>Viewing static analyzer results in a web browser</b></center>
+</td></tr></table>
+
 <h2 id="StaticAnalysis">What is Static Analysis?</h2>
 
 <p>The term &quot;static analysis&quot; is conflated, but here we use it to mean
@@ -123,16 +135,6 @@ the semantics of code. The goal of the Clang Static Analyzer is to provide a
 industrial-quality static analysis framework for analyzing C and Objective-C
 programs that is freely available, extensible, and has a high quality of
 implementation.</p>
-
-
-
-
-</td><td>
-<a href="images/analyzer_xcode.png"><img src="images/analyzer_xcode.png" width="450x"></a>
-<center><b>Viewing static analyzer results in Xcode 3.2</b></center>
-<a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450px"></a>
-<center><b>Viewing static analyzer results in a web browser</b></center>
-</td></tr></table>
 
 <h3 id="Clang">Part of Clang and LLVM</h3>
 
@@ -192,6 +194,7 @@ you would like the Clang Static Analyzer to find, please feel free to
 file <a href="filing_bugs.html">feature requests</a> or contribute your own
 patches.</p>
 
+</div>
 </div>
 </body>
 </html>
