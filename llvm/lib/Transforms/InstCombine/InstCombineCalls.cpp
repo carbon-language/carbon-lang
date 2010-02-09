@@ -230,7 +230,6 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   return 0;
 }
 
-
 /// visitCallInst - CallInst simplification.  This mostly only handles folding 
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
 /// the heavy lifting.
@@ -304,6 +303,25 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   
   switch (II->getIntrinsicID()) {
   default: break;
+  case Intrinsic::objectsize: {
+    const Type *ReturnTy = CI.getType();
+    Value *Op1 = II->getOperand(1);
+    bool Min = (cast<ConstantInt>(II->getOperand(2))->getZExtValue() == 1);
+    
+    if (!TD) break;
+    Op1 = Op1->stripPointerCasts();
+    
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1)) {
+      if (GV->hasDefinitiveInitializer()) {
+        Constant *C = GV->getInitializer();
+        size_t globalSize = TD->getTypeAllocSize(C->getType());
+        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, globalSize));
+      } else {
+        Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);
+        return ReplaceInstUsesWith(CI, RetVal);
+      }
+    }
+  }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x
     if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(II->getOperand(1)))
