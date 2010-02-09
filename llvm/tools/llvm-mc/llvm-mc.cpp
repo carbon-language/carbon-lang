@@ -47,6 +47,9 @@ static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
 static cl::opt<bool>
+ShowFixups("show-fixups", cl::desc("Show fixups inside encodings"));
+
+static cl::opt<bool>
 ShowInst("show-inst", cl::desc("Show internal instruction representation"));
 
 static cl::opt<unsigned>
@@ -270,7 +273,7 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createAsmStreamer(Ctx, *Out, *MAI,
                                 TM->getTargetData()->isLittleEndian(),
                                 /*asmverbose*/true, IP.get(), CE.get(),
-                                ShowInst));
+                                ShowInst, ShowFixups));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM));

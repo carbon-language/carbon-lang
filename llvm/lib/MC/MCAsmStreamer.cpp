@@ -37,21 +37,22 @@ class MCAsmStreamer : public MCStreamer {
 
   unsigned IsLittleEndian : 1;
   unsigned IsVerboseAsm : 1;
+  unsigned ShowFixups : 1;
   unsigned ShowInst : 1;
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 const MCAsmInfo &mai,
                 bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
-                MCCodeEmitter *emitter, bool showInst)
+                MCCodeEmitter *emitter, bool showInst, bool showFixups)
     : MCStreamer(Context), OS(os), MAI(mai), InstPrinter(printer),
       Emitter(emitter), CommentStream(CommentToEmit),
       IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
-      ShowInst(showInst) {}
+      ShowFixups(showFixups), ShowInst(showInst) {}
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
-  
+
   inline void EmitEOL() {
     // If we don't have any comments, just emit a \n.
     if (!IsVerboseAsm) {
@@ -65,13 +66,16 @@ public:
   /// isVerboseAsm - Return true if this streamer supports verbose assembly at
   /// all.
   virtual bool isVerboseAsm() const { return IsVerboseAsm; }
-  
+
   /// AddComment - Add a comment that can be emitted to the generated .s
   /// file if applicable as a QoI issue to make the output of the compiler
   /// more readable.  This only affects the MCAsmStreamer, and only when
   /// verbose assembly output is enabled.
   virtual void AddComment(const Twine &T);
-  
+
+  /// AddEncodingComment - Add a comment showing the encoding of an instruction.
+  virtual void AddEncodingComment(const MCInst &Inst);
+
   /// GetCommentOS - Return a raw_ostream that comments can be written to.
   /// Unlike AddComment, you are required to terminate comments with \n if you
   /// use this method.
@@ -80,12 +84,12 @@ public:
       return nulls();  // Discard comments unless in verbose asm mode.
     return CommentStream;
   }
-  
+
   /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
   virtual void AddBlankLine() {
     EmitEOL();
   }
-  
+
   /// @name MCStreamer Interface
   /// @{
 
@@ -528,19 +532,16 @@ void MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
   EmitEOL();
 }
 
+void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
+  raw_ostream &OS = GetCommentOS();
+  SmallString<256> Code;
+  SmallVector<MCFixup, 4> Fixups;
+  raw_svector_ostream VecOS(Code);
+  Emitter->EncodeInstruction(Inst, VecOS, Fixups);
+  VecOS.flush();
 
-void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
-  assert(CurSection && "Cannot emit contents before setting section!");
-
-  // Show the encoding in a comment if we have a code emitter.
-  if (Emitter) {
-    SmallString<256> Code;
-    SmallVector<MCFixup, 4> Fixups;
-    raw_svector_ostream VecOS(Code);
-    Emitter->EncodeInstruction(Inst, VecOS, Fixups);
-    VecOS.flush();
-
-    raw_ostream &OS = GetCommentOS();
+  // If we aren't showing fixups, just show the bytes.
+  if (!ShowFixups) {
     OS << "encoding: [";
     for (unsigned i = 0, e = Code.size(); i != e; ++i) {
       if (i)
@@ -549,6 +550,75 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     }
     OS << "]\n";
   }
+
+  // If we are showing fixups, create symbolic markers in the encoded
+  // representation. We do this by making a per-bit map to the fixup item index,
+  // then trying to display it as nicely as possible.
+  uint8_t *FixupMap = new uint8_t[Code.size() * 8];
+  for (unsigned i = 0, e = Code.size() * 8; i != e; ++i)
+    FixupMap[i] = 0;
+
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    MCFixup &F = Fixups[i];
+    MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
+    for (unsigned j = 0; j != Info.TargetSize; ++j) {
+      unsigned Index = F.getOffset() * 8 + Info.TargetOffset + j;
+      assert(Index < Code.size() * 8 && "Invalid offset in fixup!");
+      FixupMap[Index] = 1 + i;
+    }
+  }
+
+  OS << "encoding: [";
+  for (unsigned i = 0, e = Code.size(); i != e; ++i) {
+    if (i)
+      OS << ',';
+
+    // See if all bits are the same map entry.
+    uint8_t MapEntry = FixupMap[i * 8 + 0];
+    for (unsigned j = 1; j != 8; ++j) {
+      if (FixupMap[i * 8 + j] == MapEntry)
+        continue;
+
+      MapEntry = uint8_t(~0U);
+      break;
+    }
+
+    if (MapEntry != uint8_t(~0U)) {
+      if (MapEntry == 0) {
+        OS << format("0x%02x", uint8_t(Code[i]));
+      } else {
+        assert(Code[i] == 0 && "Encoder wrote into fixed up bit!");
+        OS << char('A' + MapEntry - 1);
+      }
+    } else {
+      // Otherwise, write out in binary.
+      OS << "0b";
+      for (unsigned j = 8; j--;) {
+        unsigned Bit = (Code[i] >> j) & 1;
+        if (uint8_t MapEntry = FixupMap[i * 8 + j]) {
+          assert(Bit == 0 && "Encoder wrote into fixed up bit!");
+          OS << char('A' + MapEntry - 1);
+        } else
+          OS << Bit;
+      }
+    }
+  }
+  OS << "]\n";
+
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    MCFixup &F = Fixups[i];
+    MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
+    OS << "  fixup " << char('A' + i) << " - " << "offset: " << F.getOffset()
+       << ", op: " << F.getOpIndex() << ", kind: " << Info.Name << "\n";
+  }
+}
+
+void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
+  assert(CurSection && "Cannot emit contents before setting section!");
+
+  // Show the encoding in a comment if we have a code emitter.
+  if (Emitter)
+    AddEncodingComment(Inst);
 
   // Show the MCInst if enabled.
   if (ShowInst) {
@@ -578,7 +648,8 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     const MCAsmInfo &MAI, bool isLittleEndian,
                                     bool isVerboseAsm, MCInstPrinter *IP,
-                                    MCCodeEmitter *CE, bool ShowInst) {
+                                    MCCodeEmitter *CE, bool ShowInst,
+                                    bool ShowFixups) {
   return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, isVerboseAsm,
-                           IP, CE, ShowInst);
+                           IP, CE, ShowInst, ShowFixups);
 }

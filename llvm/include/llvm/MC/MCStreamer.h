@@ -278,12 +278,15 @@ namespace llvm {
   ///
   /// \param ShowInst - Whether to show the MCInst representation inline with
   /// the assembly.
+  ///
+  /// \param ShowFixups - Whether to show the fixups in an encoded instruction.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 const MCAsmInfo &MAI, bool isLittleEndian,
                                 bool isVerboseAsm,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
-                                bool ShowInst = false);
+                                bool ShowInst = false,
+                                bool ShowFixups = false);
 
   // FIXME: These two may end up getting rolled into a single
   // createObjectStreamer interface, which implements the assembler backend, and

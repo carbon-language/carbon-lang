@@ -746,7 +746,7 @@ public:
                                      SD.getAddress() + SD.getFileSize());
     }
 
-    // The section data is passed to 4 bytes.
+    // The section data is padded to 4 bytes.
     //
     // FIXME: Is this machine dependent?
     unsigned SectionDataPadding = OffsetToAlignment(SectionDataFileSize, 4);
@@ -761,9 +761,9 @@ public:
     // ... and then the section headers.
     //
     // We also compute the section relocations while we do this. Note that
-    // compute relocation info will also update the fixup to have the correct
-    // value; this will be overwrite the appropriate data in the fragment when
-    // it is written.
+    // computing relocation info will also update the fixup to have the correct
+    // value; this will overwrite the appropriate data in the fragment when it
+    // is written.
     std::vector<MachRelocationEntry> RelocInfos;
     uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
     for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie;
