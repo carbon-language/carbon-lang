@@ -107,8 +107,11 @@ namespace PBQP {
     Solution s;
     std::vector<Graph::NodeItr> stack;
 
-    std::vector<NodeData> nodeData;
-    std::vector<EdgeData> edgeData;
+    typedef std::list<NodeData> NodeDataList;
+    NodeDataList nodeDataList;
+
+    typedef std::list<EdgeData> EdgeDataList;
+    EdgeDataList edgeDataList;
 
   public:
 
@@ -364,8 +367,8 @@ namespace PBQP {
       } else if (addedEdge) {
         // If the edge was added, and non-null, finish setting it up, add it to
         // the solver & notify heuristic.
-        edgeData.push_back(EdgeData());
-        g.setEdgeData(yzeItr, &edgeData.back());
+        edgeDataList.push_back(EdgeData());
+        g.setEdgeData(yzeItr, &edgeDataList.back());
         addSolverEdge(yzeItr);
         h.handleAddEdge(yzeItr);
       }
@@ -402,22 +405,18 @@ namespace PBQP {
         simplify();
       }
 
-      // Reserve space for the node and edge data.
-      nodeData.resize(g.getNumNodes());
-      edgeData.resize(g.getNumEdges());
-
       // Create node data objects.
-      unsigned ndIndex = 0;     
       for (Graph::NodeItr nItr = g.nodesBegin(), nEnd = g.nodesEnd();
-	       nItr != nEnd; ++nItr, ++ndIndex) {
-        g.setNodeData(nItr, &nodeData[ndIndex]);
+	       nItr != nEnd; ++nItr) {
+        nodeDataList.push_back(NodeData());
+        g.setNodeData(nItr, &nodeDataList.back());
       }
 
       // Create edge data objects.
-      unsigned edIndex = 0;
       for (Graph::EdgeItr eItr = g.edgesBegin(), eEnd = g.edgesEnd();
-           eItr != eEnd; ++eItr, ++edIndex) {
-        g.setEdgeData(eItr, &edgeData[edIndex]);
+           eItr != eEnd; ++eItr) {
+        edgeDataList.push_back(EdgeData());
+        g.setEdgeData(eItr, &edgeDataList.back());
         addSolverEdge(eItr);
       }
     }
@@ -563,8 +562,8 @@ namespace PBQP {
 
     void cleanup() {
       h.cleanup();
-      nodeData.clear();
-      edgeData.clear();
+      nodeDataList.clear();
+      edgeDataList.clear();
     }
   };
 

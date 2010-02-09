@@ -19,6 +19,7 @@
 
 #include <list>
 #include <vector>
+#include <map>
 
 namespace PBQP {
 
@@ -37,7 +38,10 @@ namespace PBQP {
   public:
 
     typedef NodeList::iterator NodeItr;
+    typedef NodeList::const_iterator ConstNodeItr;
+
     typedef EdgeList::iterator EdgeItr;
+    typedef EdgeList::const_iterator ConstEdgeItr;
 
   private:
 
@@ -58,6 +62,7 @@ namespace PBQP {
     public:
       NodeEntry(const Vector &costs) : costs(costs), degree(0) {}
       Vector& getCosts() { return costs; }
+      const Vector& getCosts() const { return costs; }
       unsigned getDegree() const { return degree; }
       AdjEdgeItr edgesBegin() { return adjEdges.begin(); }
       AdjEdgeItr edgesEnd() { return adjEdges.end(); }
@@ -85,6 +90,7 @@ namespace PBQP {
       NodeItr getNode1() const { return node1; }
       NodeItr getNode2() const { return node2; }
       Matrix& getCosts() { return costs; }
+      const Matrix& getCosts() const { return costs; }
       void setNode1AEItr(AdjEdgeItr ae) { node1AEItr = ae; }
       AdjEdgeItr getNode1AEItr() { return node1AEItr; }
       void setNode2AEItr(AdjEdgeItr ae) { node2AEItr = ae; }
@@ -104,9 +110,10 @@ namespace PBQP {
     // ----- INTERNAL METHODS -----
 
     NodeEntry& getNode(NodeItr nItr) { return *nItr; }
-    const NodeEntry& getNode(NodeItr nItr) const { return *nItr; }
+    const NodeEntry& getNode(ConstNodeItr nItr) const { return *nItr; }
+
     EdgeEntry& getEdge(EdgeItr eItr) { return *eItr; }
-    const EdgeEntry& getEdge(EdgeItr eItr) const { return *eItr; }
+    const EdgeEntry& getEdge(ConstEdgeItr eItr) const { return *eItr; }
 
     NodeItr addConstructedNode(const NodeEntry &n) {
       ++numNodes;
@@ -130,9 +137,31 @@ namespace PBQP {
       return edgeItr;
     }
 
+    inline void copyFrom(const Graph &other);
   public:
 
+    /// \brief Construct an empty PBQP graph.
     Graph() : numNodes(0), numEdges(0) {}
+
+    /// \brief Copy construct this graph from "other". Note: Does not copy node
+    ///        and edge data, only graph structure and costs.
+    /// @param other Source graph to copy from.
+    Graph(const Graph &other) : numNodes(0), numEdges(0) {
+      copyFrom(other);
+    }
+
+    /// \brief Make this graph a copy of "other". Note: Does not copy node and
+    ///        edge data, only graph structure and costs.
+    /// @param other The graph to copy from.
+    /// @return A reference to this graph.
+    ///
+    /// This will clear the current graph, erasing any nodes and edges added,
+    /// before copying from other.
+    Graph& operator=(const Graph &other) {
+      clear();      
+      copyFrom(other);
+      return *this;
+    }
 
     /// \brief Add a node with the given costs.
     /// @param costs Cost vector for the new node.
@@ -166,6 +195,13 @@ namespace PBQP {
     /// @return Node cost vector.
     Vector& getNodeCosts(NodeItr nItr) { return getNode(nItr).getCosts(); }
 
+    /// \brief Get a node's cost vector (const version).
+    /// @param nItr Node iterator.
+    /// @return Node cost vector.
+    const Vector& getNodeCosts(ConstNodeItr nItr) const {
+      return getNode(nItr).getCosts();
+    }
+
     /// \brief Set a node's data pointer.
     /// @param nItr Node iterator.
     /// @param data Pointer to node data.
@@ -182,6 +218,13 @@ namespace PBQP {
     /// @param eItr Edge iterator.
     /// @return Edge cost matrix.
     Matrix& getEdgeCosts(EdgeItr eItr) { return getEdge(eItr).getCosts(); }
+
+    /// \brief Get an edge's cost matrix (const version).
+    /// @param eItr Edge iterator.
+    /// @return Edge cost matrix.
+    const Matrix& getEdgeCosts(ConstEdgeItr eItr) const {
+      return getEdge(eItr).getCosts();
+    }
 
     /// \brief Set an edge's data pointer.
     /// @param eItr Edge iterator.
@@ -205,8 +248,14 @@ namespace PBQP {
     /// \brief Begin iterator for node set.
     NodeItr nodesBegin() { return nodes.begin(); }
 
+    /// \brief Begin const iterator for node set.
+    ConstNodeItr nodesBegin() const { return nodes.begin(); }
+
     /// \brief End iterator for node set.
     NodeItr nodesEnd() { return nodes.end(); }
+
+    /// \brief End const iterator for node set.
+    ConstNodeItr nodesEnd() const { return nodes.end(); }
 
     /// \brief Begin iterator for edge set.
     EdgeItr edgesBegin() { return edges.begin(); }
@@ -342,6 +391,10 @@ namespace PBQP {
     bool operator()(Graph::NodeItr n1, Graph::NodeItr n2) const {
       return &*n1 < &*n2;
     }
+
+    bool operator()(Graph::ConstNodeItr n1, Graph::ConstNodeItr n2) const {
+      return &*n1 < &*n2;
+    }
   };
 
   class EdgeItrCompartor {
@@ -349,8 +402,23 @@ namespace PBQP {
     bool operator()(Graph::EdgeItr e1, Graph::EdgeItr e2) const {
       return &*e1 < &*e2;
     }
+
+    bool operator()(Graph::ConstEdgeItr e1, Graph::ConstEdgeItr e2) const {
+      return &*e1 < &*e2;
+    }
   };
 
+  void Graph::copyFrom(const Graph &other) {
+    std::map<Graph::ConstNodeItr, Graph::NodeItr,
+             NodeItrComparator> nodeMap;
+
+     for (Graph::ConstNodeItr nItr = other.nodesBegin(),
+                             nEnd = other.nodesEnd();
+         nItr != nEnd; ++nItr) {
+      nodeMap[nItr] = addNode(other.getNodeCosts(nItr));
+    }
+      
+  }
 
 }
 
