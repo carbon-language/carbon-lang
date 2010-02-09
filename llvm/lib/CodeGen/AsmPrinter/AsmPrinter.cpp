@@ -963,8 +963,14 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
     return MCBinaryExpr::CreateAnd(OpExpr, MaskExpr, Ctx);
   }
       
+  // The MC library also has a right-shift operator, but it isn't consistently
+  // signed or unsigned between different targets.
   case Instruction::Add:
   case Instruction::Sub:
+  case Instruction::Mul:
+  case Instruction::SDiv:
+  case Instruction::SRem:
+  case Instruction::Shl:
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor: {
@@ -974,6 +980,10 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
     default: llvm_unreachable("Unknown binary operator constant cast expr");
     case Instruction::Add: return MCBinaryExpr::CreateAdd(LHS, RHS, Ctx);
     case Instruction::Sub: return MCBinaryExpr::CreateSub(LHS, RHS, Ctx);
+    case Instruction::Mul: return MCBinaryExpr::CreateMul(LHS, RHS, Ctx);
+    case Instruction::SDiv: return MCBinaryExpr::CreateDiv(LHS, RHS, Ctx);
+    case Instruction::SRem: return MCBinaryExpr::CreateMod(LHS, RHS, Ctx);
+    case Instruction::Shl: return MCBinaryExpr::CreateShl(LHS, RHS, Ctx);
     case Instruction::And: return MCBinaryExpr::CreateAnd(LHS, RHS, Ctx);
     case Instruction::Or:  return MCBinaryExpr::CreateOr (LHS, RHS, Ctx);
     case Instruction::Xor: return MCBinaryExpr::CreateXor(LHS, RHS, Ctx);
