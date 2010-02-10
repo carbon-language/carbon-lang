@@ -10,8 +10,8 @@ extern id p1;
 extern id CFRunLoopGetMain();
 extern __strong id CFRunLoopGetMain();
 
-extern __weak id WLoopGetMain(); 
-extern id WLoopGetMain();	
+extern __weak id WLoopGetMain(); // expected-note {{previous declaration is here}}
+extern id WLoopGetMain();	// expected-error {{conflicting types for 'WLoopGetMain'}}
 
 extern id p3;	// expected-note {{previous definition is here}}
 extern __weak id p3;	// expected-error {{redefinition of 'p3' with a different type}}

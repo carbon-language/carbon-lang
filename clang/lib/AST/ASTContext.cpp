@@ -4311,24 +4311,11 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   bool allRTypes = true;
 
   // Check return type
-  QualType LRES = lbase->getResultType();
-  QualType RRES = rbase->getResultType();
-  Qualifiers::GC GC_L = LRES.getObjCGCAttr();
-  Qualifiers::GC GC_R = RRES.getObjCGCAttr();
-  // __weak/__strong attribute on one function/block return type but
-  // not the other is OK.
-  if (GC_L != GC_R) {
-    if (GC_R == Qualifiers::GCNone)
-      RRES = getObjCGCQualType(RRES, GC_L);
-    else if (GC_L == Qualifiers::GCNone)
-      LRES = getObjCGCQualType(LRES, GC_R);
-  }
-  
-  QualType retType = mergeTypes(LRES, RRES);
+  QualType retType = mergeTypes(lbase->getResultType(), rbase->getResultType());
   if (retType.isNull()) return QualType();
-  if (getCanonicalType(retType) != getCanonicalType(LRES))
+  if (getCanonicalType(retType) != getCanonicalType(lbase->getResultType()))
     allLTypes = false;
-  if (getCanonicalType(retType) != getCanonicalType(RRES))
+  if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
     allRTypes = false;
   // FIXME: double check this
   bool NoReturn = lbase->getNoReturnAttr() || rbase->getNoReturnAttr();
