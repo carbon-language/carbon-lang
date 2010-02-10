@@ -402,13 +402,10 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
   
   for (operandIndex = 0; operandIndex < numOperands; ++operandIndex) {
     if (OperandList[operandIndex].Constraints.size()) {
-      const std::string &constraint = OperandList[operandIndex].Constraints[0];
-      std::string::size_type tiedToPos;
-
-      if ((tiedToPos = constraint.find(" << 16) | (1 << TOI::TIED_TO))")) !=
-         constraint.npos) {
-        tiedToPos--;
-        operandMapping[operandIndex] = constraint[tiedToPos] - '0';
+      const CodeGenInstruction::ConstraintInfo &Constraint =
+        OperandList[operandIndex].Constraints[0];
+      if (Constraint.isTied()) {
+        operandMapping[operandIndex] = Constraint.getTiedOperand();
       } else {
         ++numPhysicalOperands;
         operandMapping[operandIndex] = operandIndex;

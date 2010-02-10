@@ -118,7 +118,20 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         Res += "|(1<<TOI::OptionalDef)";
 
       // Fill in constraint info.
-      Res += ", " + Inst.OperandList[i].Constraints[j];
+      Res += ", ";
+      
+      const CodeGenInstruction::ConstraintInfo &Constraint =
+        Inst.OperandList[i].Constraints[j];
+      if (Constraint.isNone())
+        Res += "0";
+      else if (Constraint.isEarlyClobber())
+        Res += "(1 << TOI::EARLY_CLOBBER)";
+      else {
+        assert(Constraint.isTied());
+        Res += "((" + utostr(Constraint.getTiedOperand()) +
+                    " << 16) | (1 << TOI::TIED_TO))";
+      }
+        
       Result.push_back(Res);
     }
   }

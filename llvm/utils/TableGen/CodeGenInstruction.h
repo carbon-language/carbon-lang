@@ -32,6 +32,35 @@ namespace llvm {
     /// instruction.
     std::string AsmString;
     
+    class ConstraintInfo {
+      enum { None, EarlyClobber, Tied } Kind;
+      unsigned OtherTiedOperand;
+    public:
+      ConstraintInfo() : Kind(None) {}
+
+      static ConstraintInfo getEarlyClobber() {
+        ConstraintInfo I;
+        I.Kind = EarlyClobber;
+        return I;
+      }
+      
+      static ConstraintInfo getTied(unsigned Op) {
+        ConstraintInfo I;
+        I.Kind = Tied;
+        I.OtherTiedOperand = Op;
+        return I;
+      }
+      
+      bool isNone() const { return Kind == None; }
+      bool isEarlyClobber() const { return Kind == EarlyClobber; }
+      bool isTied() const { return Kind == Tied; }
+      
+      unsigned getTiedOperand() const {
+        assert(isTied());
+        return OtherTiedOperand;
+      }
+    };
+    
     /// OperandInfo - The information we keep track of for each operand in the
     /// operand list for a tablegen instruction.
     struct OperandInfo {
@@ -67,7 +96,7 @@ namespace llvm {
       
       /// Constraint info for this operand.  This operand can have pieces, so we
       /// track constraint info for each.
-      std::vector<std::string> Constraints;
+      std::vector<ConstraintInfo> Constraints;
 
       OperandInfo(Record *R, const std::string &N, const std::string &PMN, 
                   unsigned MION, unsigned MINO, DagInit *MIOI)
