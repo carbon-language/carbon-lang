@@ -219,7 +219,10 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
       
       if (VarName.empty()) {
         // Just a modifier, pass this into PrintSpecial.
-        Operands.push_back(AsmWriterOperand("PrintSpecial", ~0U, Modifier));
+        Operands.push_back(AsmWriterOperand("PrintSpecial", 
+                                            ~0U, 
+                                            ~0U, 
+                                            Modifier));
       } else {
         // Otherwise, normal operand.
         unsigned OpNo = CGI.getOperandNamed(VarName);
@@ -227,7 +230,9 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI,
         
         if (CurVariant == Variant || CurVariant == ~0U) {
           unsigned MIOp = OpInfo.MIOperandNo;
-          Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp,
+          Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, 
+                                              OpNo,
+                                              MIOp,
                                               Modifier));
         }
       }

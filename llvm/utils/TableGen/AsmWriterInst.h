@@ -41,6 +41,10 @@ namespace llvm {
     /// into the asm writer.
     std::string Str;
     
+    /// CGIOpNo - For isMachineInstrOperand, this is the index of the operand in
+    /// the CodeGenInstruction.
+    unsigned CGIOpNo;
+    
     /// MiOpNo - For isMachineInstrOperand, this is the operand number of the
     /// machine instruction.
     unsigned MIOpNo;
@@ -56,10 +60,12 @@ namespace llvm {
                      OpType op = isLiteralTextOperand)
     : OperandType(op), Str(LitStr) {}
     
-    AsmWriterOperand(const std::string &Printer, unsigned OpNo, 
+    AsmWriterOperand(const std::string &Printer,
+                     unsigned _CGIOpNo,
+                     unsigned _MIOpNo,
                      const std::string &Modifier,
                      OpType op = isMachineInstrOperand) 
-    : OperandType(op), Str(Printer), MIOpNo(OpNo),
+    : OperandType(op), Str(Printer), CGIOpNo(_CGIOpNo), MIOpNo(_MIOpNo),
     MiModifier(Modifier) {}
     
     bool operator!=(const AsmWriterOperand &Other) const {
