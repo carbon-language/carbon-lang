@@ -407,20 +407,22 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
 
     if (NumShared < TypeIds.size()) {
       unsigned SizeAction = 0;
-      ActionEntry *PrevAction = 0;
+      unsigned PrevAction = (unsigned)-1;
 
       if (NumShared) {
         const unsigned SizePrevIds = PrevLPI->TypeIds.size();
         assert(Actions.size());
-        PrevAction = &Actions.back();
-        SizeAction = MCAsmInfo::getSLEB128Size(PrevAction->NextAction) +
-          MCAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
+        PrevAction = Actions.size() - 1;
+        SizeAction =
+          MCAsmInfo::getSLEB128Size(Actions[PrevAction].NextAction) +
+          MCAsmInfo::getSLEB128Size(Actions[PrevAction].ValueForTypeID);
 
         for (unsigned j = NumShared; j != SizePrevIds; ++j) {
+          assert(PrevAction != (unsigned)-1 && "PrevAction is invalid!");
           SizeAction -=
-            MCAsmInfo::getSLEB128Size(PrevAction->ValueForTypeID);
-          SizeAction += -PrevAction->NextAction;
-          PrevAction = PrevAction->Previous;
+            MCAsmInfo::getSLEB128Size(Actions[PrevAction].ValueForTypeID);
+          SizeAction += -Actions[PrevAction].NextAction;
+          PrevAction = Actions[PrevAction].Previous;
         }
       }
 
@@ -437,7 +439,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
 
         ActionEntry Action = { ValueForTypeID, NextAction, PrevAction };
         Actions.push_back(Action);
-        PrevAction = &Actions.back();
+        PrevAction = Actions.size() - 1;
       }
 
       // Record the first action of the landing pad site.
@@ -447,7 +449,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
     // Information used when created the call-site table. The action record
     // field of the call site record is the offset of the first associated
     // action record, relative to the start of the actions table. This value is
-    // biased by 1 (1 in dicating the start of the actions table), and 0
+    // biased by 1 (1 indicating the start of the actions table), and 0
     // indicates that there are no actions.
     FirstActions.push_back(FirstAction);
 
@@ -648,8 +650,7 @@ void DwarfException::EmitExceptionTable() {
   // landing pad site.
   SmallVector<ActionEntry, 32> Actions;
   SmallVector<unsigned, 64> FirstActions;
-  unsigned SizeActions = ComputeActionsTable(LandingPads, Actions,
-                                             FirstActions);
+  unsigned SizeActions=ComputeActionsTable(LandingPads, Actions, FirstActions);
 
   // Invokes and nounwind calls have entries in PadMap (due to being bracketed
   // by try-range labels when lowered).  Ordinary calls do not, so appropriate

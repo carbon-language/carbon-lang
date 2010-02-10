@@ -135,7 +135,7 @@ class DwarfException : public DwarfPrinter {
   struct ActionEntry {
     int ValueForTypeID; // The value to write - may not be equal to the type id.
     int NextAction;
-    struct ActionEntry *Previous;
+    unsigned Previous;
   };
 
   /// CallSiteEntry - Structure describing an entry in the call-site table.
