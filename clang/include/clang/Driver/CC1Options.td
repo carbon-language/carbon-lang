@@ -327,6 +327,8 @@ def fblocks : Flag<"-fblocks">,
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;  
 def fexceptions : Flag<"-fexceptions">,
   HelpText<"Enable support for exception handling">;
+def fsjlj_exceptions : Flag<"-fsjlj-exceptions">,
+  HelpText<"Use SjLj style exceptions">;
 def ffreestanding : Flag<"-ffreestanding">,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_runtime : Flag<"-fgnu-runtime">,

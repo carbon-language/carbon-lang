@@ -476,6 +476,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-faltivec");
   if (Opts.Exceptions)
     Res.push_back("-fexceptions");
+  if (Opts.SjLjExceptions)
+    Res.push_back("-fsjlj-exceptions");
   if (!Opts.RTTI)
     Res.push_back("-fno-rtti");
   if (!Opts.NeXTRuntime)
@@ -1189,6 +1191,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.CatchUndefined = Args.hasArg(OPT_fcatch_undefined_behavior);
   Opts.EmitAllDecls = Args.hasArg(OPT_femit_all_decls);
   Opts.PICLevel = getLastArgIntValue(Args, OPT_pic_level, 0, Diags);
+  Opts.SjLjExceptions = Args.hasArg(OPT_fsjlj_exceptions);
   Opts.Static = Args.hasArg(OPT_static_define);
   Opts.OptimizeSize = 0;
 
