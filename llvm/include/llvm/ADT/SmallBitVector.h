@@ -310,11 +310,47 @@ public:
   }
 
   // Intersection, union, disjoint union.
-  BitVector &operator&=(const SmallBitVector &RHS); // TODO: implement
+  SmallBitVector &operator&=(const SmallBitVector &RHS) {
+    resize(std::max(size(), RHS.size()));
+    if (isSmall())
+      setSmallBits(getSmallBits() & RHS.getSmallBits());
+    else if (!RHS.isSmall())
+      X.getPointer()->operator&=(*RHS.X.getPointer());
+    else {
+      SmallBitVector Copy = RHS;
+      Copy.resize(size());
+      X.getPointer()->operator&=(*Copy.X.getPointer());
+    }
+    return *this;
+  }
 
-  BitVector &operator|=(const SmallBitVector &RHS); // TODO: implement
+  SmallBitVector &operator|=(const SmallBitVector &RHS) {
+    resize(std::max(size(), RHS.size()));
+    if (isSmall())
+      setSmallBits(getSmallBits() | RHS.getSmallBits());
+    else if (!RHS.isSmall())
+      X.getPointer()->operator|=(*RHS.X.getPointer());
+    else {
+      SmallBitVector Copy = RHS;
+      Copy.resize(size());
+      X.getPointer()->operator|=(*Copy.X.getPointer());
+    }
+    return *this;
+  }
 
-  BitVector &operator^=(const SmallBitVector &RHS); // TODO: implement
+  SmallBitVector &operator^=(const SmallBitVector &RHS) {
+    resize(std::max(size(), RHS.size()));
+    if (isSmall())
+      setSmallBits(getSmallBits() ^ RHS.getSmallBits());
+    else if (!RHS.isSmall())
+      X.getPointer()->operator^=(*RHS.X.getPointer());
+    else {
+      SmallBitVector Copy = RHS;
+      Copy.resize(size());
+      X.getPointer()->operator^=(*Copy.X.getPointer());
+    }
+    return *this;
+  }
 
   // Assignment operator.
   const SmallBitVector &operator=(const SmallBitVector &RHS) {

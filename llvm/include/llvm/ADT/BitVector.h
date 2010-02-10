@@ -307,15 +307,17 @@ public:
   }
 
   BitVector &operator|=(const BitVector &RHS) {
-    assert(Size == RHS.Size && "Illegal operation!");
-    for (unsigned i = 0; i < NumBitWords(size()); ++i)
+    if (size() < RHS.size())
+      resize(RHS.size());
+    for (size_t i = 0, e = NumBitWords(RHS.size()); i != e; ++i)
       Bits[i] |= RHS.Bits[i];
     return *this;
   }
 
   BitVector &operator^=(const BitVector &RHS) {
-    assert(Size == RHS.Size && "Illegal operation!");
-    for (unsigned i = 0; i < NumBitWords(size()); ++i)
+    if (size() < RHS.size())
+      resize(RHS.size());
+    for (size_t i = 0, e = NumBitWords(RHS.size()); i != e; ++i)
       Bits[i] ^= RHS.Bits[i];
     return *this;
   }
