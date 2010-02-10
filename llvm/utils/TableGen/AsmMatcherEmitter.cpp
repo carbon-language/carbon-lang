@@ -944,10 +944,29 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
                           OperandName.str() + "'");
       }
 
-      const CodeGenInstruction::OperandInfo &OI = II->Instr->OperandList[Idx];
+      // FIXME: This is annoying, the named operand may be tied (e.g.,
+      // XCHG8rm). What we want is the untied operand, which we now have to
+      // grovel for. Only worry about this for single entry operands, we have to
+      // clean this up anyway.
+      const CodeGenInstruction::OperandInfo *OI = &II->Instr->OperandList[Idx];
+      if (OI->Constraints[0].isTied()) {
+        unsigned TiedOp = OI->Constraints[0].getTiedOperand();
+
+        // The tied operand index is an MIOperand index, find the operand that
+        // contains it.
+        for (unsigned i = 0, e = II->Instr->OperandList.size(); i != e; ++i) {
+          if (II->Instr->OperandList[i].MIOperandNo == TiedOp) {
+            OI = &II->Instr->OperandList[i];
+            break;
+          }
+        }
+
+        assert(OI && "Unable to find tied operand target!");
+      }
+
       InstructionInfo::Operand Op;
-      Op.Class = getOperandClass(Token, OI);
-      Op.OperandInfo = &OI;
+      Op.Class = getOperandClass(Token, *OI);
+      Op.OperandInfo = OI;
       II->Operands.push_back(Op);
     }
   }
@@ -996,6 +1015,19 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       if (Op.OperandInfo)
         MIOperandList.push_back(std::make_pair(Op.OperandInfo->MIOperandNo, i));
     }
+
+    // Find any tied operands.
+    SmallVector<std::pair<unsigned, unsigned>, 4> TiedOperands;
+    for (unsigned i = 0, e = II.Instr->OperandList.size(); i != e; ++i) {
+      const CodeGenInstruction::OperandInfo &OpInfo = II.Instr->OperandList[i];
+      for (unsigned j = 0, e = OpInfo.Constraints.size(); j != e; ++j) {
+        const CodeGenInstruction::ConstraintInfo &CI = OpInfo.Constraints[j];
+        if (CI.isTied())
+          TiedOperands.push_back(std::make_pair(OpInfo.MIOperandNo + j,
+                                                CI.getTiedOperand()));
+      }
+    }
+
     std::sort(MIOperandList.begin(), MIOperandList.end());
 
     // Compute the total number of operands.
@@ -1014,14 +1046,23 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       assert(CurIndex <= Op.OperandInfo->MIOperandNo &&
              "Duplicate match for instruction operand!");
       
-      Signature += "_";
-
       // Skip operands which weren't matched by anything, this occurs when the
       // .td file encodes "implicit" operands as explicit ones.
       //
       // FIXME: This should be removed from the MCInst structure.
-      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
-        Signature += "Imp";
+      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
+        // See if this is a tied operand.
+        unsigned i, e = TiedOperands.size();
+        for (i = 0; i != e; ++i)
+          if (CurIndex == TiedOperands[i].first)
+            break;
+        if (i == e)
+          Signature += "__Imp";
+        else
+          Signature += "__Tie" + utostr(TiedOperands[i].second);
+      }
+
+      Signature += "__";
 
       // Registers are always converted the same, don't duplicate the conversion
       // function based on them.
@@ -1060,8 +1101,25 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       InstructionInfo::Operand &Op = II.Operands[MIOperandList[i].second];
 
       // Add the implicit operands.
-      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex)
-        CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+      for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
+        // See if this is a tied operand.
+        unsigned i, e = TiedOperands.size();
+        for (i = 0; i != e; ++i)
+          if (CurIndex == TiedOperands[i].first)
+            break;
+
+        if (i == e) {
+          // If not, this is some implicit operand. Just assume it is a register
+          // for now.
+          CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+        } else {
+          // Copy the tied operand.
+          assert(TiedOperands[i].first > TiedOperands[i].second &&
+                 "Tied operand preceeds its target!");
+          CvtOS << "    Inst.addOperand(Inst.getOperand("
+                << TiedOperands[i].second << "));\n";
+        }
+      }
 
       CvtOS << "    ((" << TargetOperandClass << "*)Operands["
          << MIOperandList[i].second 
