@@ -887,7 +887,6 @@ void DwarfException::EmitExceptionTable() {
 
   // Emit the Action Table.
   if (Actions.size() != 0) EOL("-- Action Record Table --");
-  unsigned Iter = 1;
   for (SmallVectorImpl<ActionEntry>::const_iterator
          I = Actions.begin(), E = Actions.end(); I != E; ++I) {
     const ActionEntry &Action = *I;
@@ -907,7 +906,7 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Catch TypeInfos.
-  Iter = TypeInfos.size();
+  if (TypeInfos.size() != 0) EOL("-- Catch TypeInfos --");
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
@@ -915,7 +914,7 @@ void DwarfException::EmitExceptionTable() {
 
     if (GV) {
       O << *Asm->GetGlobalValueSymbol(GV);
-      EOL(Twine("TypeInfo ") + Twine(Iter--));
+      EOL("TypeInfo");
     } else {
       O << "0x0";
       EOL("");
@@ -923,6 +922,7 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Exception Specifications.
+  if (FilterIds.size() != 0) EOL("-- Filter IDs --");
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;
