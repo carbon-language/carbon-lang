@@ -17,7 +17,7 @@ namespace llvm {
 // Private constants, do not use.
 //
 // This is currently laid out so that the MCFixup fields can be efficiently
-// accessed, while keeping the offset field large enought that the assembler
+// accessed, while keeping the offset field large enough that the assembler
 // backend can reasonably use the MCFixup representation for an entire fragment
 // (splitting any overly large fragments).
 //
