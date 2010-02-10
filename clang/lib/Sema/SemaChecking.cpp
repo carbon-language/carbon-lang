@@ -1074,12 +1074,12 @@ public:
 private:
   SourceRange getFormatStringRange();
   SourceRange getFormatSpecifierRange(const char *startSpecifier,
-									  unsigned specifierLen);
+                                      unsigned specifierLen);
   SourceLocation getLocationOfByte(const char *x);
   
   bool HandleAmount(const analyze_printf::OptionalAmount &Amt,
                     unsigned MissingArgDiag, unsigned BadTypeDiag,
-					const char *startSpecifier, unsigned specifierLen);
+          const char *startSpecifier, unsigned specifierLen);
   
   bool MatchType(QualType A, QualType B, bool ignoreSign);
   
@@ -1094,7 +1094,7 @@ SourceRange CheckPrintfHandler::getFormatStringRange() {
 SourceRange CheckPrintfHandler::
 getFormatSpecifierRange(const char *startSpecifier, unsigned specifierLen) {
   return SourceRange(getLocationOfByte(startSpecifier),
-					 getLocationOfByte(startSpecifier+specifierLen-1));
+                     getLocationOfByte(startSpecifier+specifierLen-1));
 }
 
 SourceLocation CheckPrintfHandler::getLocationOfByte(const char *x) {
@@ -1179,8 +1179,8 @@ bool
 CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
                                  unsigned MissingArgDiag,
                                  unsigned BadTypeDiag,
-								 const char *startSpecifier,
-								 unsigned specifierLen) {
+                                 const char *startSpecifier,
+                                 unsigned specifierLen) {
 
   if (Amt.hasDataArgument()) {
     ++NumConversions;
@@ -1226,14 +1226,14 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
   if (!HandleAmount(FS.getFieldWidth(),
                     diag::warn_printf_asterisk_width_missing_arg,
                     diag::warn_printf_asterisk_width_wrong_type,
-					startSpecifier, specifierLen)) {
+          startSpecifier, specifierLen)) {
     return false;
   }
     
   if (!HandleAmount(FS.getPrecision(),
                     diag::warn_printf_asterisk_precision_missing_arg,
                     diag::warn_printf_asterisk_precision_wrong_type,
-					startSpecifier, specifierLen)) {
+          startSpecifier, specifierLen)) {
     return false;
   }
 
@@ -1249,7 +1249,7 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
   if (!CS.consumesDataArgument()) {
     // FIXME: Technically specifying a precision or field width here
     // makes no sense.  Worth issuing a warning at some point.
-	return true;
+    return true;
   }
   
   ++NumConversions;  
@@ -1313,10 +1313,10 @@ void CheckPrintfHandler::DoneProcessing() {
 }
 
 void Sema::CheckPrintfString(const StringLiteral *FExpr,
-							 const Expr *OrigFormatExpr,
-							 const CallExpr *TheCall, bool HasVAListArg,
-							 unsigned format_idx, unsigned firstDataArg) {
-  
+                             const Expr *OrigFormatExpr,
+                             const CallExpr *TheCall, bool HasVAListArg,
+                             unsigned format_idx, unsigned firstDataArg) {
+
   // CHECK: is the format string a wide literal?
   if (FExpr->isWide()) {
     Diag(FExpr->getLocStart(),
