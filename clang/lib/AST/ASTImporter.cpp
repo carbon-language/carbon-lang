@@ -500,6 +500,33 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
             break;
           }
 
+          if (const IncompleteArrayType *FoundArray
+                = Importer.getToContext().getAsIncompleteArrayType(
+                                                        FoundVar->getType())) {
+            if (const ConstantArrayType *TArray
+                  = Importer.getToContext().getAsConstantArrayType(T)) {
+              if (Importer.getToContext().typesAreCompatible(
+                                               TArray->getElementType(), 
+                                               FoundArray->getElementType())) {
+                FoundVar->setType(T);
+                MergeWithVar = FoundVar;
+                break;
+              }
+            }
+          } else if (const IncompleteArrayType *TArray
+                        = Importer.getToContext().getAsIncompleteArrayType(T)) {
+            if (const ConstantArrayType *FoundArray
+                   = Importer.getToContext().getAsConstantArrayType(
+                                                         FoundVar->getType())) {
+              if (Importer.getToContext().typesAreCompatible(
+                                               TArray->getElementType(), 
+                                               FoundArray->getElementType())) {
+                MergeWithVar = FoundVar;
+                break;
+              }
+            }
+          }
+
           Importer.ToDiag(Loc, diag::err_odr_variable_type_inconsistent)
             << Name << T << FoundVar->getType();
           Importer.ToDiag(FoundVar->getLocation(), diag::note_odr_value_here)

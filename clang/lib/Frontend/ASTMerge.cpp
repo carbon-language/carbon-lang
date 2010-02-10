@@ -32,6 +32,8 @@ bool ASTMergeAction::BeginSourceFileAction(CompilerInstance &CI,
 
 void ASTMergeAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
+  CI.getDiagnostics().getClient()->BeginSourceFile(
+                                         CI.getASTContext().getLangOptions());
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
@@ -68,8 +70,8 @@ void ASTMergeAction::ExecuteAction() {
     delete Unit;
   }
 
-
-  return AdaptedAction->ExecuteAction();
+  AdaptedAction->ExecuteAction();
+  CI.getDiagnostics().getClient()->EndSourceFile();
 }
 
 void ASTMergeAction::EndSourceFileAction() {
