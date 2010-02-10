@@ -611,23 +611,26 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 
   MachineBasicBlock::iterator E = MBB->end();  
   while (mi != E) {
-    if (!mi->isDebugValue()) {
-      if (mi->killsRegister(interval.reg, tri_)) {
-        DEBUG(dbgs() << " killed");
-        end = baseIndex.getDefIndex();
-        SeenDefUse = true;
-        break;
-      } else if (mi->modifiesRegister(interval.reg, tri_)) {
-        // Another instruction redefines the register before it is ever read.
-        // Then the register is essentially dead at the instruction that defines
-        // it. Hence its interval is:
-        // [defSlot(def), defSlot(def)+1)
-        DEBUG(dbgs() << " dead");
-        end = start.getStoreIndex();
-        SeenDefUse = true;
-        break;
-      }
+    if (mi->isDebugValue()) {
+      ++mi;
+      continue;
     }
+    if (mi->killsRegister(interval.reg, tri_)) {
+      DEBUG(dbgs() << " killed");
+      end = baseIndex.getDefIndex();
+      SeenDefUse = true;
+      break;
+    } else if (mi->modifiesRegister(interval.reg, tri_)) {
+      // Another instruction redefines the register before it is ever read.
+      // Then the register is essentially dead at the instruction that defines
+      // it. Hence its interval is:
+      // [defSlot(def), defSlot(def)+1)
+      DEBUG(dbgs() << " dead");
+      end = start.getStoreIndex();
+      SeenDefUse = true;
+      break;
+    }
+
     ++mi;
     if (mi != E && !mi->isDebugValue()) {
       baseIndex = indexes_->getNextNonNullIndex(baseIndex);
