@@ -37,18 +37,17 @@ class MCAsmStreamer : public MCStreamer {
 
   unsigned IsLittleEndian : 1;
   unsigned IsVerboseAsm : 1;
-  unsigned ShowFixups : 1;
   unsigned ShowInst : 1;
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 const MCAsmInfo &mai,
                 bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
-                MCCodeEmitter *emitter, bool showInst, bool showFixups)
+                MCCodeEmitter *emitter, bool showInst)
     : MCStreamer(Context), OS(os), MAI(mai), InstPrinter(printer),
       Emitter(emitter), CommentStream(CommentToEmit),
       IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
-      ShowFixups(showFixups), ShowInst(showInst) {
+      ShowInst(showInst) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
@@ -543,22 +542,11 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
   Emitter->EncodeInstruction(Inst, VecOS, Fixups);
   VecOS.flush();
 
-  // If we aren't showing fixups, just show the bytes.
-  if (!ShowFixups) {
-    OS << "encoding: [";
-    for (unsigned i = 0, e = Code.size(); i != e; ++i) {
-      if (i)
-        OS << ',';
-      OS << format("0x%02x", uint8_t(Code[i]));
-    }
-    OS << "]\n";
-    return;
-  }
-
   // If we are showing fixups, create symbolic markers in the encoded
   // representation. We do this by making a per-bit map to the fixup item index,
   // then trying to display it as nicely as possible.
-  uint8_t *FixupMap = new uint8_t[Code.size() * 8];
+  SmallVector<uint8_t, 64> FixupMap;
+  FixupMap.resize(Code.size() * 8);
   for (unsigned i = 0, e = Code.size() * 8; i != e; ++i)
     FixupMap[i] = 0;
 
@@ -652,8 +640,7 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     const MCAsmInfo &MAI, bool isLittleEndian,
                                     bool isVerboseAsm, MCInstPrinter *IP,
-                                    MCCodeEmitter *CE, bool ShowInst,
-                                    bool ShowFixups) {
+                                    MCCodeEmitter *CE, bool ShowInst) {
   return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, isVerboseAsm,
-                           IP, CE, ShowInst, ShowFixups);
+                           IP, CE, ShowInst);
 }
