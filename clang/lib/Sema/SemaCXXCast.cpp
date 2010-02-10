@@ -778,9 +778,10 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
     return TC_Failed;
   }
 
-  if (!CStyle && Self.CheckBaseClassAccess(DestType, SrcType,
-                          diag::err_downcast_from_inaccessible_base, Paths,
-                          OpRange.getBegin(), DeclarationName())) {
+  if (!CStyle && Self.CheckBaseClassAccess(OpRange.getBegin(),
+                                           /*IsBaseToDerived*/ true,
+                                           SrcType, DestType,
+                                           Paths.front())) {
     msg = 0;
     return TC_Failed;
   }
@@ -844,9 +845,10 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
     return TC_Failed;
   }
 
-  if (!CStyle && Self.CheckBaseClassAccess(DestType, SrcType,
-                          diag::err_downcast_from_inaccessible_base, Paths,
-                          OpRange.getBegin(), DeclarationName())) {
+  if (!CStyle && Self.CheckBaseClassAccess(OpRange.getBegin(),
+                                           /*IsBaseToDerived*/ false,
+                                           DestType, SrcType,
+                                           Paths.front())) {
     msg = 0;
     return TC_Failed;
   }

@@ -404,7 +404,7 @@ void LookupResult::resolveKind() {
 }
 
 void LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
-  CXXBasePaths::paths_iterator I, E;
+  CXXBasePaths::const_paths_iterator I, E;
   DeclContext::lookup_iterator DI, DE;
   for (I = P.begin(), E = P.end(); I != E; ++I)
     for (llvm::tie(DI,DE) = I->Decls; DI != DE; ++DI)

@@ -23,7 +23,7 @@ namespace test0 {
     type foo();
   };
 
-  A::type foo() { } // expected-error {{access to private member}}
+  A::type foo() { } // expected-error {{'type' is a private member}}
   A::type A::foo() { }
 }
 
@@ -45,10 +45,10 @@ namespace test1 {
   void test() {
     A a;
     Public pub = a;
-    Protected prot = a; // expected-error {{access to protected member}}
-    Private priv = a; // expected-error {{access to private member}}
+    Protected prot = a; // expected-error {{'operator Protected' is a protected member}}
+    Private priv = a; // expected-error {{'operator Private' is a private member}}
     A apub = pub;
-    A aprot = prot; // expected-error {{access to protected member}}
-    A apriv = priv; // expected-error {{access to private member}}
+    A aprot = prot; // expected-error {{protected constructor}}
+    A apriv = priv; // expected-error {{private constructor}}
   }
 }

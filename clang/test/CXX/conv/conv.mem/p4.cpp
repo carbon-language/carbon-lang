@@ -15,12 +15,12 @@ namespace test0 {
   }
 }
 
-// FIXME: can't be inaccessible.
+// Can't be inaccessible.
 namespace test1 {
-  struct Derived : private Base {};
+  struct Derived : private Base {}; // expected-note 2 {{declared private here}}
   void test() {
-    int (Derived::*d) = data_ptr; // error
-    int (Derived::*m)() = method_ptr; // error
+    int (Derived::*d) = data_ptr; // expected-error {{cannot cast private base class 'struct Base' to 'struct test1::Derived'}}
+    int (Derived::*m)() = method_ptr; // expected-error {{cannot cast private base class 'struct Base' to 'struct test1::Derived'}}
   }
 };
 

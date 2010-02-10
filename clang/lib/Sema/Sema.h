@@ -96,6 +96,7 @@ namespace clang {
   class ObjCPropertyDecl;
   class ObjCContainerDecl;
   class FunctionProtoType;
+  class CXXBasePath;
   class CXXBasePaths;
   class CXXTemporary;
   class LookupResult;
@@ -275,6 +276,77 @@ public:
   /// \brief All the tentative definitions encountered in the TU.
   std::vector<VarDecl *> TentativeDefinitions;
 
+  /// An enum describing the kind of diagnostics to use when checking
+  /// access.
+  enum AccessDiagnosticsKind {
+    /// Suppress diagnostics.
+    ADK_quiet,
+
+    /// Use the normal diagnostics.
+    ADK_normal,
+
+    /// Use the diagnostics appropriate for checking a covariant
+    /// return type.
+    ADK_covariance
+  };
+
+  class AccessedEntity {
+  public:
+    enum Kind {
+      /// A member declaration found through lookup.  The target is the
+      /// member.
+      Member,
+
+      /// A base-to-derived conversion.  The target is the base class.
+      BaseToDerivedConversion,
+
+      /// A derived-to-base conversion.  The target is the base class.
+      DerivedToBaseConversion
+    };
+
+    bool isMemberAccess() const { return K == Member; }
+
+    static AccessedEntity makeMember(CXXRecordDecl *NamingClass,
+                                     AccessSpecifier Access,
+                                     NamedDecl *Target) {
+      AccessedEntity E;
+      E.K = Member;
+      E.Access = Access;
+      E.Target = Target;
+      E.NamingClass = NamingClass;
+      return E;
+    }
+
+    static AccessedEntity makeBaseClass(bool BaseToDerived,
+                                        CXXRecordDecl *BaseClass,
+                                        CXXRecordDecl *DerivedClass,
+                                        AccessSpecifier Access) {
+      AccessedEntity E;
+      E.K = BaseToDerived ? BaseToDerivedConversion : DerivedToBaseConversion;
+      E.Access = Access;
+      E.Target = BaseClass;
+      E.NamingClass = DerivedClass;
+      return E;
+    }
+
+    Kind getKind() const { return Kind(K); }
+    AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
+
+    // These apply to member decls...
+    NamedDecl *getTargetDecl() const { return Target; }
+    CXXRecordDecl *getNamingClass() const { return NamingClass; }
+
+    // ...and these apply to hierarchy conversions.
+    CXXRecordDecl *getBaseClass() const { return cast<CXXRecordDecl>(Target); }
+    CXXRecordDecl *getDerivedClass() const { return NamingClass; }
+
+  private:
+    unsigned K : 2;
+    unsigned Access : 2;
+    NamedDecl *Target;
+    CXXRecordDecl *NamingClass;    
+  };
+
   struct DelayedDiagnostic {
     enum DDKind { Deprecation, Access };
 
@@ -288,11 +360,7 @@ public:
       struct { NamedDecl *Decl; } DeprecationData;
 
       /// Access control.
-      struct {
-        NamedDecl *Decl;
-        AccessSpecifier Access; 
-        CXXRecordDecl *NamingClass;
-      } AccessData;
+      AccessedEntity AccessData;
     };
 
     static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
@@ -306,16 +374,12 @@ public:
     }
 
     static DelayedDiagnostic makeAccess(SourceLocation Loc,
-                                        NamedDecl *Decl,
-                                        AccessSpecifier AS,
-                                        CXXRecordDecl *NamingClass) {
+                                        const AccessedEntity &Entity) {
       DelayedDiagnostic DD;
       DD.Kind = Access;
       DD.Triggered = false;
       DD.Loc = Loc;
-      DD.AccessData.Decl = Decl;
-      DD.AccessData.Access = AS;
-      DD.AccessData.NamingClass = NamingClass;
+      DD.AccessData = Entity;
       return DD;
     }
 
@@ -2385,7 +2449,7 @@ public:
                                     SourceLocation Loc, SourceRange Range,
                                     bool IgnoreAccess = false);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
-                                    unsigned InaccessibleBaseID,
+                                    AccessDiagnosticsKind ADK,
                                     unsigned AmbigiousBaseConvID,
                                     SourceLocation Loc, SourceRange Range,
                                     DeclarationName Name);
@@ -2412,38 +2476,43 @@ public:
   // C++ Access Control
   //
 
+  enum AccessResult {
+    AR_accessible,
+    AR_inaccessible,
+    AR_dependent,
+    AR_delayed
+  };
+
   bool SetMemberAccessSpecifier(NamedDecl *MemberDecl,
                                 NamedDecl *PrevMemberDecl,
                                 AccessSpecifier LexicalAS);
 
-  const CXXBaseSpecifier *FindInaccessibleBase(QualType Derived, QualType Base,
-                                               CXXBasePaths &Paths,
-                                               bool NoPrivileges = false);
-
-  bool CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
-                                   NamedDecl *D,
-                                   AccessSpecifier Access);
-  bool CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
-                                   NamedDecl *D,
-                                   AccessSpecifier Access);
-  bool CheckConstructorAccess(SourceLocation Loc, CXXConstructorDecl *D,
-                              AccessSpecifier Access);
-  bool CheckDestructorAccess(SourceLocation Loc, const RecordType *Record);
-  bool CheckMemberOperatorAccess(SourceLocation Loc, Expr *ObjectExpr,
-                                 NamedDecl *D, AccessSpecifier Access);
-  bool CheckAccess(const LookupResult &R, NamedDecl *D, AccessSpecifier Access);
-  void CheckAccess(const LookupResult &R);
+  AccessResult CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
+                                           NamedDecl *D,
+                                           AccessSpecifier Access);
+  AccessResult CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
+                                           NamedDecl *D,
+                                           AccessSpecifier Access);
+  AccessResult CheckConstructorAccess(SourceLocation Loc,
+                                      CXXConstructorDecl *D,
+                                      AccessSpecifier Access);
+  AccessResult CheckDestructorAccess(SourceLocation Loc,
+                                     const RecordType *Record);
+  AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
+                                         Expr *ObjectExpr,
+                                         NamedDecl *D,
+                                         AccessSpecifier Access);
+  AccessResult CheckBaseClassAccess(SourceLocation AccessLoc,
+                                    bool IsBaseToDerived,
+                                    QualType Base, QualType Derived,
+                                    const CXXBasePath &Path,
+                                    bool ForceCheck = false,
+                                    bool ForceUnprivileged = false,
+                                    AccessDiagnosticsKind ADK = ADK_normal);
+                            
+  void CheckLookupAccess(const LookupResult &R);
 
   void HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx);
-  bool CheckEffectiveAccess(DeclContext *EffectiveContext,
-                            const LookupResult &R, NamedDecl *D,
-                            AccessSpecifier Access);
-
-  bool CheckBaseClassAccess(QualType Derived, QualType Base,
-                            unsigned InaccessibleBaseID,
-                            CXXBasePaths& Paths, SourceLocation AccessLoc,
-                            DeclarationName Name);
-
 
   enum AbstractDiagSelID {
     AbstractNone = -1,

@@ -1355,14 +1355,13 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
   
 /// CheckMemberPointerConversion - Check the member pointer conversion from the
 /// expression From to the type ToType. This routine checks for ambiguous or
-/// virtual (FIXME: or inaccessible) base-to-derived member pointer conversions
+/// virtual or inaccessible base-to-derived member pointer conversions
 /// for which IsMemberPointerConversion has already returned true. It returns
 /// true and produces a diagnostic if there was an error, or returns false
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
                                         CastExpr::CastKind &Kind,
                                         bool IgnoreBaseAccess) {
-  (void)IgnoreBaseAccess;
   QualType FromType = From->getType();
   const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
   if (!FromPtrType) {
@@ -1385,7 +1384,7 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   assert(FromClass->isRecordType() && "Pointer into non-class.");
   assert(ToClass->isRecordType() && "Pointer into non-class.");
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/ true,
                      /*DetectVirtual=*/true);
   bool DerivationOkay = IsDerivedFrom(ToClass, FromClass, Paths);
   assert(DerivationOkay &&
@@ -1394,13 +1393,6 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
 
   if (Paths.isAmbiguous(Context.getCanonicalType(FromClass).
                                   getUnqualifiedType())) {
-    // Derivation is ambiguous. Redo the check to find the exact paths.
-    Paths.clear();
-    Paths.setRecordingPaths(true);
-    bool StillOkay = IsDerivedFrom(ToClass, FromClass, Paths);
-    assert(StillOkay && "Derivation changed due to quantum fluctuation.");
-    (void)StillOkay;
-
     std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
     Diag(From->getExprLoc(), diag::err_ambiguous_memptr_conv)
       << 0 << FromClass << ToClass << PathDisplayStr << From->getSourceRange();
@@ -1413,6 +1405,10 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
       << From->getSourceRange();
     return true;
   }
+
+  if (!IgnoreBaseAccess)
+    CheckBaseClassAccess(From->getExprLoc(), /*BaseToDerived*/ true,
+                         FromClass, ToClass, Paths.front());
 
   // Must be a base to derived member conversion.
   Kind = CastExpr::CK_BaseToDerivedMemberPointer;

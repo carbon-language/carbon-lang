@@ -417,17 +417,20 @@ def err_deep_exception_specs_differ : Error<
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
   "%0 redeclared with '%1' access">;
+def err_access_private : Error<"%0 is a private member of %1">;
+def err_access_ctor_private : Error<"calling a private constructor of %0">;
+// Say something about the context for these?
+def err_access_protected : Error<"%0 is a protected member of %1">;
+def err_access_ctor_protected : Error<"calling a protected constructor of %0">;
 def note_previous_access_declaration : Note<
   "previously declared '%1' here">;
 def err_access_outside_class : Error<
   "access to %select{private|protected}0 member outside any class context">;
-def note_access_natural : Note<"declared %select{private|protected}0 here">;
+def note_access_natural : Note<
+  "%select{|implicitly }1declared %select{private|protected}0 here">;
 def note_access_constrained_by_path : Note<
-  "access to decl constrained by %select{private|protected}0 inheritance">;
-def err_access_protected : Error<
-  "access to protected member of %0 from %1, which is not a subclass">;
-def err_access_private : Error<
-  "access to private member of %0 from %1">;
+  "constrained by %select{|implicitly }1%select{private|protected}0"
+  " inheritance here">;
   
 // C++ name lookup
 def err_incomplete_nested_name_spec : Error<
@@ -509,9 +512,8 @@ def note_overridden_virtual_function : Note<
   "overridden virtual function is here">;
 
 def err_covariant_return_inaccessible_base : Error<
-  "return type of virtual function %2 is not covariant with the return type "
-  "of the function it overrides "
-  "(conversion from %0 to inaccessible base class %1)">, NoSFINAE;
+  "invalid covariant return for virtual function: %1 is a "
+  "%select{private|protected}2 base class of %0">, NoSFINAE;
 def err_covariant_return_ambiguous_derived_to_base_conv : Error<
   "return type of virtual function %3 is not covariant with the return type of "
   "the function it overrides (ambiguous conversion from derived class "
@@ -1958,7 +1960,9 @@ def err_ambiguous_base_to_derived_cast : Error<
 def err_static_downcast_via_virtual : Error<
   "cannot cast %0 to %1 via virtual base %2">;
 def err_downcast_from_inaccessible_base : Error<
-  "cannot cast %1 to %0 due to inaccessible conversion path">;
+  "cannot cast %select{private|protected}2 base class %1 to %0">;
+def err_upcast_to_inaccessible_base : Error<
+  "cannot cast %0 to its %select{private|protected}2 base class %1">;
 def err_bad_dynamic_cast_not_ref_or_ptr : Error<
   "%0 is not a reference or pointer">;
 def err_bad_dynamic_cast_not_class : Error<"%0 is not a class">;

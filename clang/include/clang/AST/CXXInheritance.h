@@ -161,7 +161,8 @@ class CXXBasePaths {
   void ComputeDeclsFound();
   
 public:
-  typedef std::list<CXXBasePath>::const_iterator paths_iterator;
+  typedef std::list<CXXBasePath>::iterator paths_iterator;
+  typedef std::list<CXXBasePath>::const_iterator const_paths_iterator;
   typedef NamedDecl **decl_iterator;
   
   /// BasePaths - Construct a new BasePaths structure to record the
@@ -175,8 +176,10 @@ public:
   
   ~CXXBasePaths() { delete [] DeclsFound; }
   
-  paths_iterator begin() const { return Paths.begin(); }
-  paths_iterator end()   const { return Paths.end(); }
+  paths_iterator begin() { return Paths.begin(); }
+  paths_iterator end()   { return Paths.end(); }
+  const_paths_iterator begin() const { return Paths.begin(); }
+  const_paths_iterator end()   const { return Paths.end(); }
   
   CXXBasePath&       front()       { return Paths.front(); }
   const CXXBasePath& front() const { return Paths.front(); }
@@ -206,7 +209,7 @@ public:
   const RecordType* getDetectedVirtual() const {
     return DetectedVirtual;
   }
-  
+
   /// \brief Retrieve the type from which this base-paths search
   /// began
   CXXRecordDecl *getOrigin() const { return Origin; }

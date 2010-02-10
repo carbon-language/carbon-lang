@@ -503,7 +503,7 @@ private:
     if (isAmbiguous())
       SemaRef.DiagnoseAmbiguousLookup(*this);
     else if (isClassLookup() && SemaRef.getLangOptions().AccessControl)
-      SemaRef.CheckAccess(*this);
+      SemaRef.CheckLookupAccess(*this);
   }
 
   void setAmbiguous(AmbiguityKind AK) {

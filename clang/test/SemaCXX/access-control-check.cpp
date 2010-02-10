@@ -11,5 +11,5 @@ class P {
 
 class N : M,P {
   N() {}
-  int PR() { return iP + PPR(); } // expected-error 2 {{access to private member of 'class P'}}
+  int PR() { return iP + PPR(); } // expected-error 2 {{private member of 'class P'}}
 };

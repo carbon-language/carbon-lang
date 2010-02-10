@@ -4,7 +4,7 @@ struct B : public A {};             // Single public base.
 struct C1 : public virtual B {};    // Single virtual base.
 struct C2 : public virtual B {};
 struct D : public C1, public C2 {}; // Diamond
-struct E : private A {};            // Single private base. expected-note 3 {{'private' inheritance specifier here}}
+struct E : private A {};            // Single private base. expected-note 3 {{declared private here}}
 struct F : public C1 {};            // Single path to B with virtual.
 struct G1 : public B {};
 struct G2 : public B {};
@@ -56,7 +56,7 @@ void t_529_2()
   // Bad code below
 
   (void)static_cast<void*>((const int*)0); // expected-error {{static_cast from 'int const *' to 'void *' is not allowed}}
-  (void)static_cast<A*>((E*)0); // expected-error {{inaccessible base class 'struct A'}}
+  (void)static_cast<A*>((E*)0); // expected-error {{private base class 'struct A'}}
   (void)static_cast<A*>((H*)0); // expected-error {{ambiguous conversion}}
   (void)static_cast<int>((int*)0); // expected-error {{static_cast from 'int *' to 'int' is not allowed}}
   (void)static_cast<A**>((B**)0); // expected-error {{static_cast from 'struct B **' to 'struct A **' is not allowed}}
@@ -86,8 +86,8 @@ void t_529_5_8()
   (void)static_cast<D&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct D &' via virtual base 'struct B'}}
   (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'struct A const *' to 'struct B *' casts away constness}}
   (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'struct A const' to 'struct B &' casts away constness}}
-  (void)static_cast<E*>((A*)0); // expected-error {{cannot cast 'struct A' to 'struct E' due to inaccessible}}
-  (void)static_cast<E&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct E' due to inaccessible}}
+  (void)static_cast<E*>((A*)0); // expected-error {{cannot cast private base class 'struct A' to 'struct E'}}
+  (void)static_cast<E&>(*((A*)0)); // expected-error {{cannot cast private base class 'struct A' to 'struct E'}}
   (void)static_cast<H*>((A*)0); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
   (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
   (void)static_cast<E*>((B*)0); // expected-error {{static_cast from 'struct B *' to 'struct E *' is not allowed}}

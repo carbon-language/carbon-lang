@@ -2,10 +2,10 @@
 namespace T1 {
   
 class A { };
-class B : private A { }; // expected-note {{'private' inheritance specifier here}}
+class B : private A { }; // expected-note {{declared private here}}
 
 void f(B* b) {
-  A *a = b; // expected-error{{conversion from 'class T1::B' to inaccessible base class 'class T1::A'}}
+  A *a = b; // expected-error{{cannot cast 'class T1::B' to its private base class 'class T1::A'}}
 }
 
 }
@@ -13,10 +13,10 @@ void f(B* b) {
 namespace T2 { 
 
 class A { };
-class B : A { }; // expected-note {{inheritance is implicitly 'private'}}
+class B : A { }; // expected-note {{implicitly declared private here}}
 
 void f(B* b) {
-  A *a = b; // expected-error {{conversion from 'class T2::B' to inaccessible base class 'class T2::A'}}
+  A *a = b; // expected-error {{cannot cast 'class T2::B' to its private base class 'class T2::A'}}
 }
 
 }
@@ -63,13 +63,13 @@ namespace T6 {
   
   class A {};
   
-  class B : private A { // expected-note {{'private' inheritance specifier here}}
+  class B : private A { // expected-note {{declared private here}}
     void f(C* c);
   };
   
   class C : public B { 
     void f(C *c) {
-      A* a = c; // expected-error {{conversion from 'class T6::C' to inaccessible base class 'class T6::A'}}
+      A* a = c; // expected-error {{cannot cast 'class T6::C' to its private base class 'class T6::A'}}
     }
   };
   
@@ -77,3 +77,14 @@ namespace T6 {
     A *a = c;
   }
 }
+
+namespace T7 {
+  class A {};
+  class B : public A {};
+  class C : private B { 
+    void f(C *c) {
+      A* a = c; // okay
+    }
+  };
+}
+

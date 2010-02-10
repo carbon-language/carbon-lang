@@ -23,12 +23,12 @@ namespace test0 {
 
   void test(A *op) {
     op->foo(PublicInst);
-    op->foo(ProtectedInst); // expected-error {{access to protected member outside any class}}
-    op->foo(PrivateInst); // expected-error {{access to private member outside any class}}
+    op->foo(ProtectedInst); // expected-error {{'foo' is a protected member}}
+    op->foo(PrivateInst); // expected-error {{'foo' is a private member}}
 
     void (A::*a)(Public&) = &A::foo;
-    void (A::*b)(Protected&) = &A::foo; // expected-error {{access to protected member outside any class}}
-    void (A::*c)(Private&) = &A::foo; // expected-error {{access to private member outside any class}}
+    void (A::*b)(Protected&) = &A::foo; // expected-error {{'foo' is a protected member}}
+    void (A::*c)(Private&) = &A::foo; // expected-error {{'foo' is a private member}}
   }
 }
 
@@ -62,15 +62,15 @@ namespace test1 {
 
   void test(A &a, Public &pub, Protected &prot, Private &priv) {
     a + pub;
-    a + prot; // expected-error {{access to protected member}}
-    a + priv; // expected-error {{access to private member}}
+    a + prot; // expected-error {{'operator+' is a protected member}}
+    a + priv; // expected-error {{'operator+' is a private member}}
     a[pub];
-    a[prot]; // expected-error {{access to protected member}}
-    a[priv]; // expected-error {{access to private member}}
+    a[prot]; // expected-error {{'operator[]' is a protected member}}
+    a[priv]; // expected-error {{'operator[]' is a private member}}
     a(pub);
-    a(prot); // expected-error {{access to protected member}}
-    a(priv); // expected-error {{access to private member}}
-    -a;       // expected-error {{access to private member}}
+    a(prot); // expected-error {{'operator()' is a protected member}}
+    a(priv); // expected-error {{'operator()' is a private member}}
+    -a;       // expected-error {{'operator-' is a private member}}
 
     const A &ca = a;
     ca + pub;
@@ -79,8 +79,8 @@ namespace test1 {
     -ca;
     // These are all surrogate calls
     ca(pub);
-    ca(prot); // expected-error {{access to protected member}}
-    ca(priv); // expected-error {{access to private member}}
+    ca(prot); // expected-error {{'operator void (*)(class Protected &)' is a protected member}}
+    ca(priv); // expected-error {{'operator void (*)(class Private &)' is a private member}}
   }
 }
 
@@ -93,7 +93,7 @@ namespace test2 {
     static A foo;
   };
 
-  A a; // expected-error {{access to private member}}
+  A a; // expected-error {{calling a private constructor}}
   A A::foo; // okay
 }
 
@@ -105,10 +105,10 @@ namespace test3 {
     static A foo;
   };
 
-  A a; // expected-error {{access to private member}}
+  A a; // expected-error {{'~A' is a private member}}
   A A::foo;
 
-  void foo(A param) { // expected-error {{access to private member}}
-    A local; // expected-error {{access to private member}}
+  void foo(A param) { // expected-error {{'~A' is a private member}}
+    A local; // expected-error {{'~A' is a private member}}
   }
 }

@@ -232,8 +232,22 @@ bool Sema::CheckExceptionSpecSubset(
       if (Paths.isAmbiguous(CanonicalSuperT))
         continue;
 
-      if (FindInaccessibleBase(CanonicalSubT, CanonicalSuperT, Paths, true))
-        continue;
+      // Do this check from a context without privileges.
+      switch (CheckBaseClassAccess(SourceLocation(), false,
+                                   CanonicalSuperT, CanonicalSubT,
+                                   Paths.front(),
+                                   /*ForceCheck*/ true,
+                                   /*ForceUnprivileged*/ true,
+                                   ADK_quiet)) {
+      case AR_accessible: break;
+      case AR_inaccessible: continue;
+      case AR_dependent:
+        llvm_unreachable("access check dependent for unprivileged context");
+        break;
+      case AR_delayed:
+        llvm_unreachable("access check delayed in non-declaration");
+        break;
+      }
 
       Contained = true;
       break;

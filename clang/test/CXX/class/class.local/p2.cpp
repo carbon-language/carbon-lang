@@ -3,9 +3,9 @@
 struct A { };
 
 void f() {
-  struct B : private A {}; // expected-note{{'private' inheritance specifier here}}
+  struct B : private A {}; // expected-note{{declared private here}}
   
   B b;
   
-  A *a = &b; // expected-error{{conversion from 'struct B' to inaccessible base class 'struct A'}}
+  A *a = &b; // expected-error{{cannot cast 'struct B' to its private base class 'struct A'}}
 }

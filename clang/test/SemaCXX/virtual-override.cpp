@@ -29,14 +29,14 @@ class B : A {
 namespace T3 {
 
 struct a { };
-struct b : private a { }; // expected-note{{'private' inheritance specifier here}}
+struct b : private a { }; // expected-note{{declared private here}}
   
 class A {
   virtual a* f(); // expected-note{{overridden virtual function is here}}
 };
 
 class B : A {
-  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrides (conversion from 'struct T3::b' to inaccessible base class 'struct T3::a')}}
+  virtual b* f(); // expected-error{{invalid covariant return for virtual function: 'struct T3::a' is a private base class of 'struct T3::b'}}
 };
 
 }
