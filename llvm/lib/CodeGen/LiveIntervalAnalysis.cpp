@@ -613,6 +613,9 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   while (mi != E) {
     if (mi->isDebugValue()) {
       ++mi;
+      if (mi != E && !mi->isDebugValue()) {
+        baseIndex = indexes_->getNextNonNullIndex(baseIndex);
+      }
       continue;
     }
     if (mi->killsRegister(interval.reg, tri_)) {
