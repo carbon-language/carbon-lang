@@ -153,8 +153,8 @@ TEST(SmallBitVectorTest, CompoundAssignment) {
   EXPECT_TRUE(A.test(5));
   EXPECT_TRUE(A.test(7));
   EXPECT_TRUE(A.test(18));
-  EXPECT_EQ(A.count(), 4);
-  EXPECT_EQ(A.size(), 50);
+  EXPECT_EQ(4U, A.count());
+  EXPECT_EQ(50U, A.size());
 
   B.resize(10);
   B.set();
@@ -163,8 +163,8 @@ TEST(SmallBitVectorTest, CompoundAssignment) {
   A &= B;
   EXPECT_FALSE(A.test(2));
   EXPECT_FALSE(A.test(7));
-  EXPECT_EQ(A.size(), 50);
-  EXPECT_EQ(A.count(), 2);
+  EXPECT_EQ(2U, A.count());
+  EXPECT_EQ(50U, A.size());
 
   B.resize(100);
   B.set();
@@ -172,8 +172,8 @@ TEST(SmallBitVectorTest, CompoundAssignment) {
   A ^= B;
   EXPECT_TRUE(A.test(2));
   EXPECT_TRUE(A.test(7));
-  EXPECT_EQ(A.size(), 100);
-  EXPECT_EQ(A.count(), 98);
+  EXPECT_EQ(98U, A.count());
+  EXPECT_EQ(100U, A.size());
 }
 
 }
