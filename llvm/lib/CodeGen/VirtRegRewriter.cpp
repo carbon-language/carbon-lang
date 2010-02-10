@@ -10,6 +10,7 @@
 #define DEBUG_TYPE "virtregrewriter"
 #include "VirtRegRewriter.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/AsmPrinter.h"  // FIXME: Layering!
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"

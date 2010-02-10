@@ -21,7 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 char CalculateSpillWeights::ID = 0;
