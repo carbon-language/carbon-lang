@@ -412,8 +412,7 @@ namespace llvm {
     }
 
     virtual bool hasComputableLoopEvolution(const Loop *QL) const {
-      if (L == QL) return true;
-      return false;
+      return L == QL;
     }
 
     virtual bool isLoopInvariant(const Loop *QueryLoop) const;
