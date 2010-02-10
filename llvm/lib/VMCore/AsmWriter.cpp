@@ -1252,14 +1252,13 @@ public:
   void printArgument(const Argument *FA, Attributes Attrs);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
-private:
 
+private:
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
   void printInfoComment(const Value &V);
 };
 }  // end of anonymous namespace
-
 
 void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
   if (Operand == 0) {
@@ -1688,7 +1687,6 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 
   if (AnnotationWriter) AnnotationWriter->emitBasicBlockEndAnnot(BB, Out);
 }
-
 
 /// printInfoComment - Print a little comment after the instruction indicating
 /// which slot it occupies.
