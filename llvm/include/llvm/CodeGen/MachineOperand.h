@@ -220,7 +220,6 @@ public:
 
   bool isDebug() const {
     assert(isReg() && "Wrong MachineOperand accessor");
-    assert(!isDef() && "Wrong MachineOperand accessor");
     return IsDebug;
   }
 
