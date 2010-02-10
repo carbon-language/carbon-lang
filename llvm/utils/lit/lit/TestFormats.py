@@ -87,6 +87,10 @@ class FileBasedTest(object):
                             litConfig, localConfig):
         source_path = testSuite.getSourcePath(path_in_suite)
         for filename in os.listdir(source_path):
+            # Ignore dot files.
+            if filename.startswith('.'):
+                continue
+
             filepath = os.path.join(source_path, filename)
             if not os.path.isdir(filepath):
                 base,ext = os.path.splitext(filename)
@@ -137,7 +141,8 @@ class OneCommandPerFileTest:
                               d not in localConfig.excludes)]
 
             for filename in filenames:
-                if (not self.pattern.match(filename) or
+                if (filename.startswith('.') or
+                    not self.pattern.match(filename) or
                     filename in localConfig.excludes):
                     continue
 
