@@ -762,7 +762,7 @@ void DwarfException::EmitExceptionTable() {
   // does, instead output it before the table.
   unsigned SizeTypes = TypeInfos.size() * TypeFormatSize;
   unsigned TyOffset = sizeof(int8_t) +          // Call site format
-    MCAsmInfo::getULEB128Size(SizeSites) +      // Call-site table length
+    MCAsmInfo::getULEB128Size(SizeSites) +      // Call site table length
     SizeSites + SizeActions + SizeTypes;
   unsigned TotalSize = sizeof(int8_t) +         // LPStart format
                        sizeof(int8_t) +         // TType format
@@ -836,7 +836,7 @@ void DwarfException::EmitExceptionTable() {
 
     // Emit the landing pad call site table.
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
-    EmitULEB128(SizeSites, "Call site table size");
+    EmitULEB128(SizeSites, "Call site table length");
 
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
@@ -886,12 +886,12 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Action Table.
-  EOL("Action Record Table:");
+  if (Actions.size() != 0) EOL("-- Action Record Table --");
   unsigned Iter = 1;
   for (SmallVectorImpl<ActionEntry>::const_iterator
          I = Actions.begin(), E = Actions.end(); I != E; ++I) {
     const ActionEntry &Action = *I;
-    EOL(Twine("Action Record ") + Twine(Iter++));
+    EOL("Action Record:");
 
     // Type Filter
     //
