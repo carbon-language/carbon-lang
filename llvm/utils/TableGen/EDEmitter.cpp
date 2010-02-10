@@ -199,221 +199,38 @@ namespace {
 EDEmitter::EDEmitter(RecordKeeper &R) : Records(R) {
 }
 
-//////////////////////////////////////////////
-// Support functions for parsing AsmStrings //
-//////////////////////////////////////////////
-
-/// parseError - A better error reporter for use in AsmString parsers
-///
-/// @arg asmString  - The original assembly string, for use in the error report
-/// @arg index      - The character where the error occurred
-/// @arg err        - The text of the error itself
-static void parseError(const std::string& asmString, 
-                       unsigned int index, 
-                       const char* err) {
-  errs() << "In: " << asmString.c_str() << "\n";
-  errs() << "Error at " << format("%d", index) << ": " << err << "\n";
-  llvm_unreachable("Parse error");
-}
-
-/// resolveBraces - Interprets the brace syntax in an AsmString in favor of just
-///   one syntax, and returns the result.  "{A}" is resolved to "A" for syntax 0
-///   and "" for all others; "{A|B}" is resolved to "A" for syntax 0, "B" for 
-///   syntax 1, and "" for all others; and so on.
-///
-/// @arg asmString    - The original string, as loaded from the .td file
-/// @arg syntaxIndex  - The index to use
-static std::string resolveBraces(const std::string &asmString, 
-                                 unsigned int syntaxIndex) {
-  std::string ret;
-  
-  unsigned int index;
-  unsigned int numChars = asmString.length();
-  
-  // Brace parsing countable-state transducer
-  //
-  // STATES       - -1, 0, 1, ..., error
-  // SYMBOLS      - '{', '|', '}', ?, EOF
-  // START STATE  - -1
-  //
-  // state  input   ->  state output
-  // -1     '{'     ->  0
-  // -1     '|'     ->  error
-  // -1     '}'     ->  error
-  // -1     ?       ->  -1    ?
-  // -1     EOF     ->  -1
-  // n      '{'     ->  error
-  // n      '|'     ->  n+1
-  // n      '}'     ->  -1
-  // n      ?       ->  n     ? if n == syntaxIndex
-  //                            if not
-  // n      EOF     ->  error
-  
-  int state = -1;
-  
-  for (index = 0; index < numChars; ++index) {
-    char input = asmString[index];
-        
-    switch (state) {
-    default:
-      switch (input) {
-      default:
-        if (state == (int)syntaxIndex)
-          ret.push_back(input);
-        break;
-      case '{':
-        parseError(asmString, index, "Nested { in AsmString");
-        break;
-      case '|':
-        state++;
-        break;
-      case '}':
-        state = -1;
-        break;
-      }
-      break;
-    case -1:
-      switch (input) {
-      default:
-        ret.push_back(input);
-        break;
-      case '{':
-        state = 0;
-        break;
-      case '|':
-        parseError(asmString, index, "| outside braces in AsmString");
-        break;
-      case '}':
-        parseError(asmString, index, "Unmatched } in AsmString");
-        break;
-      }
-      break;
-    }
-  }
-  
-  if (state != -1)
-    parseError(asmString, index, "Unmatched { in AsmString");
-  
-  return ret;
-}
-
-/// getOperandIndex - looks up a named operand in an instruction and determines
-///   its index in the operand descriptor array, returning the index or -1 if it
-///   is not present.
-///
-/// @arg asmString  - The assembly string for the instruction, for errors only
-/// @arg operand    - The operand's name
-/// @arg inst       - The instruction to use when looking up the operand
-static int8_t getOperandIndex(const std::string &asmString,
-                              const std::string &operand,
-                              const CodeGenInstruction &inst) {
-  int8_t operandIndex;
-  
-  if(operand.length() == 0) {
-    errs() << "In: " << asmString << "\n";
-    errs() << "Operand: " << operand << "\n";
-    llvm_unreachable("Empty operand");
-  }
-  
-  try {
-    operandIndex = inst.getOperandNamed(operand);
-  }
-  catch (...) {
-    return -1;
-  }
-  
-  return operandIndex;
-}
-
-/// isAlphanumeric - returns true if a character is a valid alphanumeric
-///   character, and false otherwise
-///
-/// input - The character to query
-static inline bool isAlphanumeric(char input) {
-  if((input >= 'a' && input <= 'z') ||
-     (input >= 'A' && input <= 'Z') ||
-     (input >= '0' && input <= '9') ||
-     (input == '_'))
-    return true;
-  else
-    return false;
-}
-
-/// populateOperandOrder - reads a resolved AsmString (see resolveBraces) and
-///   records the index into the operand descriptor array for each operand in
-///   that string, in the order of appearance.
+/// populateOperandOrder - Accepts a CodeGenInstruction and generates its
+///   AsmWriterInst for the desired assembly syntax, giving an ordered list of
+///   operands in the order they appear in the printed instruction.  Then, for
+///   each entry in that list, determines the index of the same operand in the
+///   CodeGenInstruction, and emits the resulting mapping into an array, filling
+///   in unused slots with -1.
 ///
 /// @arg operandOrder - The array that will be populated with the operand
 ///                     mapping.  Each entry will contain -1 (invalid index
 ///                     into the operands present in the AsmString) or a number
 ///                     representing an index in the operand descriptor array.
-/// @arg asmString    - The operand's name
-/// @arg inst         - The instruction to use when looking up the operand
+/// @arg inst         - The instruction to use when looking up the operands
+/// @arg syntax       - The syntax to use, according to LLVM's enumeration
 void populateOperandOrder(CompoundConstantEmitter *operandOrder,
-                          const std::string &asmString,
-                          const CodeGenInstruction &inst) {
-  std::string aux;
-  
-  unsigned int index;
-  unsigned int numChars = asmString.length();
+                          const CodeGenInstruction &inst,
+                          unsigned syntax) {
   unsigned int numArgs = 0;
   
-  // Argument processing finite-state transducer
-  //
-  // STATES       - 0, 1, error
-  // SYMBOLS      - A(lphanumeric), '$', ?, EOF
-  // START STATE  - 0
-  //
-  // state  input   ->  state aux
-  // 0      A       ->  0
-  // 0      '$'     ->  1
-  // 0      ?       ->  0
-  // 0      EOF     ->  0
-  // 1      A       ->  1     A
-  // 1      '$'     ->  error
-  // 1      ?       ->  0     clear
-  // 1      EOF     ->  0     clear
+  AsmWriterInst awInst(inst, syntax, -1, -1);
   
-  unsigned int state = 0;
+  std::vector<AsmWriterOperand>::iterator operandIterator;
   
-  for (index = 0; index < numChars; ++index) {
-    char input = asmString[index];
-    
-    switch (state) {
-      default:
-        parseError(asmString, index, "Parser in unreachable state");
-      case 0:
-        if (input == '$') {
-          state = 1;
-        }
-        break;
-      case 1:
-        if (isAlphanumeric(input)) {
-          aux.push_back(input);
-        }
-        else if (input == '$') {
-          parseError(asmString, index, "$ found in argument name");
-        }
-        else {
-          int8_t operandIndex = getOperandIndex(asmString, aux, inst);
-          char buf[3];
-          snprintf(buf, sizeof(buf), "%d", operandIndex);
-          operandOrder->addEntry(new LiteralConstantEmitter(buf));
-          aux.clear();
-          state = 0;
-          numArgs++;
-        }
-        break;
+  for (operandIterator = awInst.Operands.begin();
+       operandIterator != awInst.Operands.end();
+       ++operandIterator) {
+    if (operandIterator->OperandType == 
+        AsmWriterOperand::isMachineInstrOperand) {
+      char buf[2];
+      snprintf(buf, sizeof(buf), "%u", operandIterator->CGIOpNo);
+      operandOrder->addEntry(new LiteralConstantEmitter(buf));
+      numArgs++;
     }
-  }
-  
-  if (state == 1) {
-    int8_t operandIndex = getOperandIndex(asmString, aux, inst);
-    char buf[2];
-    snprintf(buf, 2, "%d", operandIndex);
-    operandOrder->addEntry(new LiteralConstantEmitter(buf));
-    aux.clear();
-    numArgs++;
   }
   
   for(; numArgs < MAX_OPERANDS; numArgs++) {
@@ -780,9 +597,7 @@ static void populateInstInfo(CompoundConstantEmitter &infoArray,
       operandOrderArray->addEntry(operandOrder);
       
       if (syntaxIndex < numSyntaxes) {
-        std::string asmString = inst.AsmString;
-        asmString = resolveBraces(asmString, syntaxIndex);
-        populateOperandOrder(operandOrder, asmString, inst);
+        populateOperandOrder(operandOrder, inst, syntaxIndex);
       }
       else {
         for (unsigned operandIndex = 0; 
