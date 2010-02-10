@@ -361,6 +361,15 @@ static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
       }
     }
 
+  // Pointer size doesn't depend on the pointee type, so canonicalize them
+  // to an arbitrary pointee.
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
+    if (!PTy->getElementType()->isInteger(1))
+      return
+        getFoldedSizeOf(PointerType::get(IntegerType::get(PTy->getContext(), 1),
+                                         PTy->getAddressSpace()),
+                        DestTy, true);
+
   // If there's no interesting folding happening, bail so that we don't create
   // a constant that looks like it needs folding but really doesn't.
   if (!Folded)
@@ -416,6 +425,16 @@ static Constant *getFoldedAlignOf(const Type *Ty, const Type *DestTy,
     if (AllSame)
       return MemberAlign;
   }
+
+  // Pointer alignment doesn't depend on the pointee type, so canonicalize them
+  // to an arbitrary pointee.
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
+    if (!PTy->getElementType()->isInteger(1))
+      return
+        getFoldedAlignOf(PointerType::get(IntegerType::get(PTy->getContext(),
+                                                           1),
+                                          PTy->getAddressSpace()),
+                         DestTy, true);
 
   // If there's no interesting folding happening, bail so that we don't create
   // a constant that looks like it needs folding but really doesn't.

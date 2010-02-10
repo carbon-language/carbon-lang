@@ -19,10 +19,12 @@
 
 ; PLAIN: %0 = type { i1, double }
 ; PLAIN: %1 = type { double, float, double, double }
-; PLAIN: %2 = type { i64, i64 }
+; PLAIN: %2 = type { i1, i1* }
+; PLAIN: %3 = type { i64, i64 }
 ; OPT: %0 = type { i1, double }
 ; OPT: %1 = type { double, float, double, double }
-; OPT: %2 = type { i64, i64 }
+; OPT: %2 = type { i1, i1* }
+; OPT: %3 = type { i64, i64 }
 
 ; The automatic constant folder in opt does not have targetdata access, so
 ; it can't fold gep arithmetic, in general. However, the constant folder run
@@ -65,6 +67,8 @@
 ; PLAIN: @e = constant i64 ptrtoint (double* getelementptr (%1* null, i64 0, i32 2) to i64)
 ; PLAIN: @f = constant i64 1
 ; PLAIN: @g = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; PLAIN: @h = constant i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; PLAIN: @i = constant i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
 ; OPT: @a = constant i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2310)
 ; OPT: @b = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; OPT: @c = constant i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2)
@@ -72,6 +76,8 @@
 ; OPT: @e = constant i64 ptrtoint (double* getelementptr (%1* null, i64 0, i32 2) to i64)
 ; OPT: @f = constant i64 1
 ; OPT: @g = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; OPT: @h = constant i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; OPT: @i = constant i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
 ; TO: @a = constant i64 18480
 ; TO: @b = constant i64 8
 ; TO: @c = constant i64 16
@@ -79,6 +85,8 @@
 ; TO: @e = constant i64 16
 ; TO: @f = constant i64 1
 ; TO: @g = constant i64 8
+; TO: @h = constant i64 8
+; TO: @i = constant i64 8
 
 @a = constant i64 mul (i64 3, i64 mul (i64 ptrtoint ({[7 x double], [7 x double]}* getelementptr ({[7 x double], [7 x double]}* null, i64 11) to i64), i64 5))
 @b = constant i64 ptrtoint ([13 x double]* getelementptr ({i1, [13 x double]}* null, i64 0, i32 1) to i64)
@@ -87,14 +95,16 @@
 @e = constant i64 ptrtoint (double* getelementptr ({double, float, double, double}* null, i64 0, i32 2) to i64)
 @f = constant i64 ptrtoint (<{ i16, i128 }>* getelementptr ({i1, <{ i16, i128 }>}* null, i64 0, i32 1) to i64)
 @g = constant i64 ptrtoint ({double, double}* getelementptr ({i1, {double, double}}* null, i64 0, i32 1) to i64)
+@h = constant i64 ptrtoint (double** getelementptr (double** null, i64 1) to i64)
+@i = constant i64 ptrtoint (double** getelementptr ({i1, double*}* null, i64 0, i32 1) to i64)
 
 ; The target-dependent folder should cast GEP indices to integer-sized pointers.
 
 ; PLAIN: @M = constant i64* getelementptr (i64* null, i32 1)
-; PLAIN: @N = constant i64* getelementptr (%2* null, i32 0, i32 1)
+; PLAIN: @N = constant i64* getelementptr (%3* null, i32 0, i32 1)
 ; PLAIN: @O = constant i64* getelementptr ([2 x i64]* null, i32 0, i32 1)
 ; OPT: @M = constant i64* getelementptr (i64* null, i32 1)
-; OPT: @N = constant i64* getelementptr (%2* null, i32 0, i32 1)
+; OPT: @N = constant i64* getelementptr (%3* null, i32 0, i32 1)
 ; OPT: @O = constant i64* getelementptr ([2 x i64]* null, i32 0, i32 1)
 ; TO: @M = constant i64* inttoptr (i64 8 to i64*)
 ; TO: @N = constant i64* inttoptr (i64 8 to i64*)
@@ -237,6 +247,14 @@ define i1* @hoo1() nounwind {
 ; PLAIN:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; PLAIN:   ret i64 %t
 ; PLAIN: }
+; PLAIN: define i64 @fh() nounwind {
+; PLAIN:   %t = bitcast i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; PLAIN:   ret i64 %t
+; PLAIN: }
+; PLAIN: define i64 @fi() nounwind {
+; PLAIN:   %t = bitcast i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; PLAIN:   ret i64 %t
+; PLAIN: }
 ; OPT: define i64 @fa() nounwind {
 ; OPT:   ret i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2310)
 ; OPT: }
@@ -258,6 +276,12 @@ define i1* @hoo1() nounwind {
 ; OPT: define i64 @fg() nounwind {
 ; OPT:   ret i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; OPT: }
+; OPT: define i64 @fh() nounwind {
+; OPT:   ret i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; OPT: }
+; OPT: define i64 @fi() nounwind {
+; OPT:   ret i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; OPT: }
 ; TO: define i64 @fa() nounwind {
 ; TO:   ret i64 18480
 ; TO: }
@@ -277,6 +301,12 @@ define i1* @hoo1() nounwind {
 ; TO:   ret i64 1
 ; TO: }
 ; TO: define i64 @fg() nounwind {
+; TO:   ret i64 8
+; TO: }
+; TO: define i64 @fh() nounwind {
+; TO:   ret i64 8
+; TO: }
+; TO: define i64 @fi() nounwind {
 ; TO:   ret i64 8
 ; TO: }
 ; SCEV: Classifying expressions for: @fa
@@ -300,6 +330,12 @@ define i1* @hoo1() nounwind {
 ; SCEV: Classifying expressions for: @fg
 ; SCEV:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; SCEV:   -->  alignof(double)
+; SCEV: Classifying expressions for: @fh
+; SCEV:   %t = bitcast i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; SCEV:   -->  sizeof(i1*)
+; SCEV: Classifying expressions for: @fi
+; SCEV:   %t = bitcast i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; SCEV:   -->  alignof(i1*)
 
 define i64 @fa() nounwind {
   %t = bitcast i64 mul (i64 3, i64 mul (i64 ptrtoint ({[7 x double], [7 x double]}* getelementptr ({[7 x double], [7 x double]}* null, i64 11) to i64), i64 5)) to i64
@@ -329,13 +365,21 @@ define i64 @fg() nounwind {
   %t = bitcast i64 ptrtoint ({double, double}* getelementptr ({i1, {double, double}}* null, i64 0, i32 1) to i64) to i64
   ret i64 %t
 }
+define i64 @fh() nounwind {
+  %t = bitcast i64 ptrtoint (double** getelementptr (double** null, i32 1) to i64) to i64
+  ret i64 %t
+}
+define i64 @fi() nounwind {
+  %t = bitcast i64 ptrtoint (double** getelementptr ({i1, double*}* null, i64 0, i32 1) to i64) to i64
+  ret i64 %t
+}
 
 ; PLAIN: define i64* @fM() nounwind {
 ; PLAIN:   %t = bitcast i64* getelementptr (i64* null, i32 1) to i64*
 ; PLAIN:   ret i64* %t
 ; PLAIN: }
 ; PLAIN: define i64* @fN() nounwind {
-; PLAIN:   %t = bitcast i64* getelementptr (%2* null, i32 0, i32 1) to i64*
+; PLAIN:   %t = bitcast i64* getelementptr (%3* null, i32 0, i32 1) to i64*
 ; PLAIN:   ret i64* %t
 ; PLAIN: }
 ; PLAIN: define i64* @fO() nounwind {
@@ -346,7 +390,7 @@ define i64 @fg() nounwind {
 ; OPT:   ret i64* getelementptr (i64* null, i32 1)
 ; OPT: }
 ; OPT: define i64* @fN() nounwind {
-; OPT:   ret i64* getelementptr (%2* null, i32 0, i32 1)
+; OPT:   ret i64* getelementptr (%3* null, i32 0, i32 1)
 ; OPT: }
 ; OPT: define i64* @fO() nounwind {
 ; OPT:   ret i64* getelementptr ([2 x i64]* null, i32 0, i32 1)
@@ -364,7 +408,7 @@ define i64 @fg() nounwind {
 ; SCEV:   %t = bitcast i64* getelementptr (i64* null, i32 1) to i64* 
 ; SCEV:   -->  sizeof(i64)
 ; SCEV: Classifying expressions for: @fN
-; SCEV:   %t = bitcast i64* getelementptr (%2* null, i32 0, i32 1) to i64* 
+; SCEV:   %t = bitcast i64* getelementptr (%3* null, i32 0, i32 1) to i64* 
 ; SCEV:   -->  sizeof(i64)
 ; SCEV: Classifying expressions for: @fO
 ; SCEV:   %t = bitcast i64* getelementptr ([2 x i64]* null, i32 0, i32 1) to i64* 
