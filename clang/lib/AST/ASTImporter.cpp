@@ -73,8 +73,17 @@ namespace {
     QualType VisitObjCObjectPointerType(ObjCObjectPointerType *T);
                             
     // Importing declarations
+    bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
+                         DeclContext *&LexicalDC, DeclarationName &Name, 
+                         SourceLocation &Loc);                            
+    bool ImportDeclParts(DeclaratorDecl *D, 
+                         DeclContext *&DC, DeclContext *&LexicalDC,
+                         DeclarationName &Name, SourceLocation &Loc, 
+                         QualType &T);
     Decl *VisitDecl(Decl *D);
+    Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
+    Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
   };
 }
@@ -448,37 +457,156 @@ QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
 //----------------------------------------------------------------------------
 // Import Declarations
 //----------------------------------------------------------------------------
+bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
+                                      DeclContext *&LexicalDC, 
+                                      DeclarationName &Name, 
+                                      SourceLocation &Loc) {
+  // Import the context of this declaration.
+  DC = Importer.ImportContext(D->getDeclContext());
+  if (!DC)
+    return true;
+  
+  LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return true;
+  }
+  
+  // Import the name of this declaration.
+  Name = Importer.Import(D->getDeclName());
+  if (D->getDeclName() && !Name)
+    return true;
+  
+  // Import the location of this declaration.
+  Loc = Importer.Import(D->getLocation());
+  return false;
+}
+
+bool ASTNodeImporter::ImportDeclParts(DeclaratorDecl *D, 
+                                      DeclContext *&DC, 
+                                      DeclContext *&LexicalDC,
+                                      DeclarationName &Name, 
+                                      SourceLocation &Loc,
+                                      QualType &T) {
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return true;
+  
+  // Import the type of this declaration.
+  T = Importer.Import(D->getType());
+  if (T.isNull())
+    return true;
+  
+  return false;
+}
+
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
   Importer.FromDiag(D->getLocation(), diag::err_unsupported_ast_node)
     << D->getDeclKindName();
   return 0;
 }
 
-Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
-  // Import the context of this declaration.
-  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
-  if (!DC)
+Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
+  // Import the major distinguishing characteristics of this function.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  QualType T;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
     return 0;
+  
+  // Try to find a function in our own ("to") context with the same name, same
+  // type, and in the same context as the function we're importing.
+  if (!LexicalDC->isFunctionOrMethod()) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    unsigned IDNS = Decl::IDNS_Ordinary;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
     
-  DeclContext *LexicalDC = DC;
-  if (D->getDeclContext() != D->getLexicalDeclContext()) {
-    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
-    if (!LexicalDC)
-      return 0;
+      if (FunctionDecl *FoundFunction = dyn_cast<FunctionDecl>(*Lookup.first)) {
+        if (isExternalLinkage(FoundFunction->getLinkage()) &&
+            isExternalLinkage(D->getLinkage())) {
+          if (Importer.getToContext().typesAreCompatible(T, 
+                                                    FoundFunction->getType())) {
+            // FIXME: Actually try to merge the body and other attributes.
+            Importer.getImportedDecls()[D] = FoundFunction;
+            return FoundFunction;
+          }
+        
+          // FIXME: Check for overloading more carefully, e.g., by boosting
+          // Sema::IsOverload out to the AST library.
+          
+          // Function overloading is okay in C++.
+          if (Importer.getToContext().getLangOptions().CPlusPlus)
+            continue;
+          
+          // Complain about inconsistent function types.
+          Importer.ToDiag(Loc, diag::err_odr_function_type_inconsistent)
+            << Name << T << FoundFunction->getType();
+          Importer.ToDiag(FoundFunction->getLocation(), 
+                          diag::note_odr_value_here)
+            << FoundFunction->getType();
+        }
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+      if (!Name)
+        return 0;
+    }    
   }
+  
+  // Import the function parameters.
+  llvm::SmallVector<ParmVarDecl *, 8> Parameters;
+  for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
+       P != PEnd; ++P) {
+    ParmVarDecl *ToP = cast_or_null<ParmVarDecl>(Importer.Import(*P));
+    if (!ToP)
+      return 0;
+    
+    Parameters.push_back(ToP);
+  }
+  
+  // Create the imported function.
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  FunctionDecl *ToFunction
+    = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
+                           Name, T, TInfo, D->getStorageClass(), 
+                           D->isInlineSpecified(),
+                           D->hasWrittenPrototype());
+  ToFunction->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToFunction;
+  LexicalDC->addDecl(ToFunction);
 
-  // Import the name of this declaration.
-  DeclarationName Name = Importer.Import(D->getDeclName());
-  if (D->getDeclName() && !Name)
-    return 0;
+  // Set the parameters.
+  for (unsigned I = 0, N = Parameters.size(); I != N; ++I) {
+    Parameters[I]->setOwningFunction(ToFunction);
+    ToFunction->addDecl(Parameters[I]);
+  }
+  ToFunction->setParams(Importer.getToContext(), 
+                        Parameters.data(), Parameters.size());
+
+  // FIXME: Other bits to merge?
   
-  // Import the type of this declaration.
-  QualType T = Importer.Import(D->getType());
-  if (T.isNull())
+  return ToFunction;
+}
+
+Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
+  // Import the major distinguishing characteristics of a variable.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  QualType T;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
     return 0;
-  
-  // Import the location of this declaration.
-  SourceLocation Loc = Importer.Import(D->getLocation());
   
   // Try to find a variable in our own ("to") context with the same name and
   // in the same context as the variable we're importing.
@@ -589,32 +717,47 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   return ToVar;
 }
 
-Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
-  // Import the context of this declaration.
-  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
-  if (!DC)
-    return 0;
-    
-  DeclContext *LexicalDC = DC;
-  if (D->getDeclContext() != D->getLexicalDeclContext()) {
-    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
-    if (!LexicalDC)
-      return 0;
-  }
-
+Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
+  // Parameters are created in the translation unit's context, then moved
+  // into the function declaration's context afterward.
+  DeclContext *DC = Importer.getToContext().getTranslationUnitDecl();
+  
   // Import the name of this declaration.
   DeclarationName Name = Importer.Import(D->getDeclName());
   if (D->getDeclName() && !Name)
     return 0;
   
-  // Import the type of this declaration.
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+  
+  // Import the parameter's type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+  
+  // Create the imported parameter.
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  ParmVarDecl *ToParm = ParmVarDecl::Create(Importer.getToContext(), DC,
+                                            Loc, Name.getAsIdentifierInfo(),
+                                            T, TInfo, D->getStorageClass(),
+                                            /*FIXME: Default argument*/ 0);
+  Importer.getImportedDecls()[D] = ToParm;
+  return ToParm;
+}
+
+Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
+  // Import the major distinguishing characteristics of this typedef.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  // Import the underlying type of this typedef;
   QualType T = Importer.Import(D->getUnderlyingType());
   if (T.isNull())
     return 0;
   
-  // Import the location of this declaration.
-  SourceLocation Loc = Importer.Import(D->getLocation());
-
   // If this typedef is not in block scope, determine whether we've
   // seen a typedef with the same name (that we can merge with) or any
   // other entity by that name (which name lookup could conflict with).

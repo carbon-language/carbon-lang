@@ -57,14 +57,21 @@ void ASTMergeAction::ExecuteAction() {
     for (DeclContext::decl_iterator D = TU->decls_begin(), 
                                  DEnd = TU->decls_end();
          D != DEnd; ++D) {
-      // FIXME: We only merge variables whose names start with x. Why
-      // would anyone want anything else?
-      if (VarDecl *VD = dyn_cast<VarDecl>(*D))
+      // FIXME: We only merge variables whose names start with x and functions
+      // whose names start with 'f'. Why would anyone want anything else?
+      if (VarDecl *VD = dyn_cast<VarDecl>(*D)) {
         if (VD->getIdentifier() && 
             *VD->getIdentifier()->getNameStart() == 'x') {
           Decl *Merged = Importer.Import(VD);
           (void)Merged;
         }
+      } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*D)) {
+        if (FD->getIdentifier() &&
+            *FD->getIdentifier()->getNameStart() == 'f') {
+          Decl *Merged = Importer.Import(FD);
+          (void)Merged;
+        }
+      }
     }
 
     delete Unit;
