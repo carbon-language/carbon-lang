@@ -263,6 +263,7 @@ namespace {
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteBlockLiteralFunctionDecl(FunctionDecl *FD);
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
+    void RewriteTypeOfDecl(VarDecl *VD);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
     bool needToScanForQualifiers(QualType T);
     ObjCInterfaceDecl *isSuperReceiver(Expr *recExpr);
@@ -2140,6 +2141,44 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
         startBuf++; // scan forward (from the decl location) for argument types.
       startBuf++;
     }
+  }
+}
+
+void RewriteObjC::RewriteTypeOfDecl(VarDecl *ND) {
+  QualType QT = ND->getType();
+  const Type* TypePtr = QT->getAs<Type>();
+  if (!isa<TypeOfExprType>(TypePtr))
+    return;
+  while (isa<TypeOfExprType>(TypePtr)) {
+    const TypeOfExprType *TypeOfExprTypePtr = cast<TypeOfExprType>(TypePtr);
+    QT = TypeOfExprTypePtr->getUnderlyingExpr()->getType();
+    TypePtr = QT->getAs<Type>();
+  }
+  // FIXME. This will not work for multiple declarators; as in:
+  // __typeof__(a) b,c,d;
+  std::string TypeAsString(QT.getAsString());
+  SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
+  const char *startBuf = SM->getCharacterData(DeclLoc);
+  if (ND->getInit()) {
+    std::string Name(ND->getNameAsString());
+    TypeAsString += " " + Name + " = ";
+    Expr *E = ND->getInit();
+    SourceLocation startLoc;
+    if (const CStyleCastExpr *ECE = dyn_cast<CStyleCastExpr>(E))
+      startLoc = ECE->getLParenLoc();
+    else
+      startLoc = E->getLocStart();
+    startLoc = SM->getInstantiationLoc(startLoc);
+    const char *endBuf = SM->getCharacterData(startLoc);
+    ReplaceText(DeclLoc, endBuf-startBuf-1, 
+                TypeAsString.c_str(), TypeAsString.size());
+  }
+  else {
+    SourceLocation X = ND->getLocEnd();
+    X = SM->getInstantiationLoc(X);
+    const char *endBuf = SM->getCharacterData(X);
+    ReplaceText(DeclLoc, endBuf-startBuf-1, 
+                TypeAsString.c_str(), TypeAsString.size());
   }
 }
 
@@ -5059,7 +5098,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
           RewriteBlockPointerDecl(ND);
         else if (ND->getType()->isFunctionPointerType())
           CheckFunctionPointerDecl(ND->getType(), ND);
-        if (VarDecl *VD = dyn_cast<VarDecl>(SD)) 
+        if (VarDecl *VD = dyn_cast<VarDecl>(SD)) {
           if (VD->hasAttr<BlocksAttr>()) {
             static unsigned uniqueByrefDeclCount = 0;
             assert(!BlockByRefDeclNo.count(ND) &&
@@ -5067,6 +5106,9 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
             BlockByRefDeclNo[ND] = uniqueByrefDeclCount++;
             RewriteByRefVar(VD);
           }
+          else           
+            RewriteTypeOfDecl(VD);
+        }
       }
       if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
         if (isTopLevelBlockPointerType(TD->getUnderlyingType()))

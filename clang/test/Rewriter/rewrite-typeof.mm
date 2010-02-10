@@ -21,3 +21,19 @@ int main() {
 
 // CHECK-LP: ((void (^)(void))_Block_copy((const void *)(b)))
 
+// radar 7628153
+void f() {
+	int a;	
+	__typeof__(a) aVal = a;
+	char *a1t = (char *)@encode(__typeof__(a));
+        __typeof__(aVal) bVal;
+	char *a2t = (char *)@encode(__typeof__(bVal));
+        __typeof__(bVal) cVal = bVal;
+	char *a3t = (char *)@encode(__typeof__(cVal));
+
+}
+
+
+// CHECK-LP: int aVal =  a;
+
+// CHECK-LP: int bVal;
