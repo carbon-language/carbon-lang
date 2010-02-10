@@ -68,8 +68,8 @@ public:
     }
   }
 
-  void EmitDisplacementField(const MCOperand *RelocOp, int DispVal,
-                             int64_t Adj, bool IsPCRel, raw_ostream &OS) const;
+  void EmitDisplacementField(const MCOperand &Disp, int64_t Adj, bool IsPCRel,
+                             raw_ostream &OS) const;
   
   inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
                                         unsigned RM) {
@@ -119,12 +119,12 @@ static bool isDisp8(int Value) {
 }
 
 void X86MCCodeEmitter::
-EmitDisplacementField(const MCOperand *RelocOp, int DispVal,
-                      int64_t Adj, bool IsPCRel, raw_ostream &OS) const {
+EmitDisplacementField(const MCOperand &DispOp, int64_t Adj, bool IsPCRel,
+                      raw_ostream &OS) const {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
-  if (!RelocOp) {
-    EmitConstant(DispVal, 4, OS);
+  if (DispOp.isImm()) {
+    EmitConstant(DispOp.getImm(), 4, OS);
     return;
   }
   
@@ -159,39 +159,8 @@ EmitDisplacementField(const MCOperand *RelocOp, int DispVal,
 
 void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
                                         unsigned RegOpcodeField,
-                                        intptr_t PCAdj,
-                                        raw_ostream &OS) const {
-  const MCOperand &Op3 = MI.getOperand(Op+3);
-  int DispVal = 0;
-  const MCOperand *DispForReloc = 0;
-  
-  // Figure out what sort of displacement we have to handle here.
-  if (Op3.isImm()) {
-    DispVal = Op3.getImm();
-  } else {
-    assert(0 && "relocatable operand");
-#if 0
-  if (Op3.isGlobal()) {
-    DispForReloc = &Op3;
-  } else if (Op3.isSymbol()) {
-    DispForReloc = &Op3;
-  } else if (Op3.isCPI()) {
-    if (!MCE.earlyResolveAddresses() || Is64BitMode || IsPIC) {
-      DispForReloc = &Op3;
-    } else {
-      DispVal += MCE.getConstantPoolEntryAddress(Op3.getIndex());
-      DispVal += Op3.getOffset();
-    }
-  } else {
-    assert(Op3.isJTI());
-    if (!MCE.earlyResolveAddresses() || Is64BitMode || IsPIC) {
-      DispForReloc = &Op3;
-    } else {
-      DispVal += MCE.getJumpTableEntryAddress(Op3.getIndex());
-    }
-#endif
-  }
-  
+                                        intptr_t PCAdj, raw_ostream &OS) const {
+  const MCOperand &Disp     = MI.getOperand(Op+3);
   const MCOperand &Base     = MI.getOperand(Op);
   const MCOperand &Scale    = MI.getOperand(Op+1);
   const MCOperand &IndexReg = MI.getOperand(Op+2);
@@ -215,7 +184,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
         BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), OS);
-      EmitDisplacementField(DispForReloc, DispVal, PCAdj, true, OS);
+      EmitDisplacementField(Disp, PCAdj, true, OS);
       return;
     }
     
@@ -225,21 +194,21 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // indirect register encoding, this handles addresses like [EAX].  The
     // encoding for [EBP] with no displacement means [disp32] so we handle it
     // by emitting a displacement of 0 below.
-    if (!DispForReloc && DispVal == 0 && BaseRegNo != N86::EBP) {
+    if (Disp.isImm() && Disp.getImm() == 0 && BaseRegNo != N86::EBP) {
       EmitByte(ModRMByte(0, RegOpcodeField, BaseRegNo), OS);
       return;
     }
     
     // Otherwise, if the displacement fits in a byte, encode as [REG+disp8].
-    if (!DispForReloc && isDisp8(DispVal)) {
+    if (Disp.isImm() && isDisp8(Disp.getImm())) {
       EmitByte(ModRMByte(1, RegOpcodeField, BaseRegNo), OS);
-      EmitConstant(DispVal, 1, OS);
+      EmitConstant(Disp.getImm(), 1, OS);
       return;
     }
     
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), OS);
-    EmitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel, OS);
+    EmitDisplacementField(Disp, PCAdj, IsPCRel, OS);
     return;
   }
     
@@ -254,14 +223,14 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // MOD=0, BASE=5, to JUST get the index, scale, and displacement.
     EmitByte(ModRMByte(0, RegOpcodeField, 4), OS);
     ForceDisp32 = true;
-  } else if (DispForReloc) {
+  } else if (!Disp.isImm()) {
     // Emit the normal disp32 encoding.
     EmitByte(ModRMByte(2, RegOpcodeField, 4), OS);
     ForceDisp32 = true;
-  } else if (DispVal == 0 && BaseReg != X86::EBP) {
+  } else if (Disp.getImm() == 0 && BaseReg != X86::EBP) {
     // Emit no displacement ModR/M byte
     EmitByte(ModRMByte(0, RegOpcodeField, 4), OS);
-  } else if (isDisp8(DispVal)) {
+  } else if (isDisp8(Disp.getImm())) {
     // Emit the disp8 encoding.
     EmitByte(ModRMByte(1, RegOpcodeField, 4), OS);
     ForceDisp8 = true;           // Make sure to force 8 bit disp if Base=EBP
@@ -294,9 +263,9 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   
   // Do we need to output a displacement?
   if (ForceDisp8)
-    EmitConstant(DispVal, 1, OS);
-  else if (DispVal != 0 || ForceDisp32)
-    EmitDisplacementField(DispForReloc, DispVal, PCAdj, IsPCRel, OS);
+    EmitConstant(Disp.getImm(), 1, OS);
+  else if (ForceDisp32 || Disp.getImm() != 0)
+    EmitDisplacementField(Disp, PCAdj, IsPCRel, OS);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
