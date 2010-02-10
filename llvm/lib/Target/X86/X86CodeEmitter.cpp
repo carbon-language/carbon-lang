@@ -878,12 +878,14 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
 namespace {
 class MCSingleInstructionCodeEmitter : public MachineCodeEmitter {
   uint8_t Data[256];
+  const MCInst *CurrentInst;
   SmallVectorImpl<MCFixup> *FixupList;
 
 public:
-  MCSingleInstructionCodeEmitter() { reset(0); }
+  MCSingleInstructionCodeEmitter() { reset(0, 0); }
 
-  void reset(SmallVectorImpl<MCFixup> *Fixups) {
+  void reset(const MCInst *Inst, SmallVectorImpl<MCFixup> *Fixups) {
+    CurrentInst = Inst;
     FixupList = Fixups;
     BufferBegin = Data;
     BufferEnd = array_endof(Data);
@@ -915,7 +917,9 @@ public:
       OpIndex = MR.getJumpTableIndex();
     }
 
-    FixupList->push_back(MCFixup::Create(Offset, OpIndex,
+    MCOperand Op = CurrentInst->getOperand(OpIndex);
+    assert(Op.isExpr() && "FIXME: Not yet implemented!");
+    FixupList->push_back(MCFixup::Create(Offset, Op.getExpr(),
                                      MCFixupKind(FirstTargetFixupKind + Kind)));
   }
   virtual void setModuleInfo(MachineModuleInfo* Info) {}
@@ -1163,7 +1167,7 @@ public:
       Instr->dump();
     }
 
-    InstrEmitter->reset(&Fixups);
+    InstrEmitter->reset(&MI, &Fixups);
     if (OK)
       Emit->emitInstruction(*Instr, &Desc);
     OS << InstrEmitter->str();

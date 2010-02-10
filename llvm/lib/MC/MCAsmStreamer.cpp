@@ -601,7 +601,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
     MCFixup &F = Fixups[i];
     MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
     OS << "  fixup " << char('A' + i) << " - " << "offset: " << F.getOffset()
-       << ", op: " << F.getOpIndex() << ", kind: " << Info.Name << "\n";
+       << ", value: " << *F.getValue() << ", kind: " << Info.Name << "\n";
   }
 }
 

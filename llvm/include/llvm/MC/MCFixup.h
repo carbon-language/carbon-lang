@@ -13,6 +13,7 @@
 #include <cassert>
 
 namespace llvm {
+class MCExpr;
 
 // Private constants, do not use.
 //
@@ -25,10 +26,8 @@ namespace llvm {
 // end up needing more bits for target dependent kinds.
 enum {
   MCFIXUP_NUM_GENERIC_KINDS = 128,
-  MCFIXUP_NUM_KIND_BITS = 8,
-  MCFIXUP_NUM_OPINDEX_BITS = 8,
-  MCFIXUP_NUM_OFFSET_BITS = (32 - MCFIXUP_NUM_OPINDEX_BITS -
-                             MCFIXUP_NUM_OPINDEX_BITS)
+  MCFIXUP_NUM_KIND_BITS = 16,
+  MCFIXUP_NUM_OFFSET_BITS = (32 - MCFIXUP_NUM_KIND_BITS)
 };
 
 /// MCFixupKind - Extensible enumeration to represent the type of a fixup.
@@ -60,34 +59,36 @@ enum MCFixupKind {
 class MCFixup {
   static const unsigned MaxOffset = 1 << MCFIXUP_NUM_KIND_BITS;
 
+  /// The value to put into the fixup location. The exact interpretation of the
+  /// expression is target dependent, usually it will one of the operands to an
+  /// instruction or an assembler directive.
+  const MCExpr *Value;
+
   /// The byte index of start of the relocation inside the encoded instruction.
   unsigned Offset : MCFIXUP_NUM_OFFSET_BITS;
-
-  /// The index of the operand to encode into the instruction.
-  unsigned OpIndex : MCFIXUP_NUM_OPINDEX_BITS;
 
   /// The target dependent kind of fixup item this is. The kind is used to
   /// determine how the operand value should be encoded into the instruction.
   unsigned Kind : MCFIXUP_NUM_KIND_BITS;
 
 public:
-  static MCFixup Create(unsigned Offset, unsigned OpIndex, MCFixupKind Kind) {
+  static MCFixup Create(unsigned Offset, const MCExpr *Value,
+                        MCFixupKind Kind) {
     MCFixup FI;
+    FI.Value = Value;
     FI.Offset = Offset;
-    FI.OpIndex = OpIndex;
     FI.Kind = unsigned(Kind);
 
     assert(Offset == FI.getOffset() && "Offset out of range!");
-    assert(OpIndex == FI.getOpIndex() && "Operand index out of range!");
     assert(Kind == FI.getKind() && "Kind out of range!");
     return FI;
   }
 
+  MCFixupKind getKind() const { return MCFixupKind(Kind); }
+
   unsigned getOffset() const { return Offset; }
 
-  unsigned getOpIndex() const { return OpIndex; }
-
-  MCFixupKind getKind() const { return MCFixupKind(Kind); }
+  const MCExpr *getValue() const { return Value; }
 };
 
 } // End llvm namespace
