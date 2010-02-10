@@ -1173,6 +1173,8 @@ SimpleRegisterCoalescing::HasIncompatibleSubRegDefUse(MachineInstr *CopyMI,
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(VirtReg),
          E = mri_->reg_end(); I != E; ++I) {
     MachineOperand &O = I.getOperand();
+    if (O.isDebug())
+      continue;
     MachineInstr *MI = &*I;
     if (MI == CopyMI || JoinedCopies.count(MI))
       continue;
