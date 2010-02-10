@@ -19,6 +19,19 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+// FIXME: This should move to a header.
+namespace llvm {
+namespace X86 {
+enum Fixups {
+  reloc_pcrel_word = FirstTargetFixupKind,
+  reloc_picrel_word,
+  reloc_absolute_word,
+  reloc_absolute_word_sext,
+  reloc_absolute_dword
+};
+}
+}
+
 namespace {
 class X86MCCodeEmitter : public MCCodeEmitter {
   X86MCCodeEmitter(const X86MCCodeEmitter &); // DO NOT IMPLEMENT
@@ -71,7 +84,8 @@ public:
   }
 
   void EmitDisplacementField(const MCOperand &Disp, int64_t Adj, bool IsPCRel,
-                              unsigned &CurByte, raw_ostream &OS) const;
+                             unsigned &CurByte, raw_ostream &OS,
+                             SmallVectorImpl<MCFixup> &Fixups) const;
   
   inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
                                         unsigned RM) {
@@ -93,7 +107,8 @@ public:
   
   void EmitMemModRMByte(const MCInst &MI, unsigned Op,
                         unsigned RegOpcodeField, intptr_t PCAdj,
-                        unsigned &CurByte, raw_ostream &OS) const;
+                        unsigned &CurByte, raw_ostream &OS,
+                        SmallVectorImpl<MCFixup> &Fixups) const;
   
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const;
@@ -122,45 +137,27 @@ static bool isDisp8(int Value) {
 
 void X86MCCodeEmitter::
 EmitDisplacementField(const MCOperand &DispOp, int64_t Adj, bool IsPCRel,
-                      unsigned &CurByte, raw_ostream &OS) const {
+                      unsigned &CurByte, raw_ostream &OS,
+                      SmallVectorImpl<MCFixup> &Fixups) const {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (DispOp.isImm()) {
     EmitConstant(DispOp.getImm(), 4, CurByte, OS);
-    CurByte += 4;
     return;
   }
 
-  // Emit a symbolic constant as 4 0's and a Fixup.
-  EmitConstant(0, 4, CurByte, OS);
-  CurByte += 4;
-  
-  assert(0 && "Reloc not handled yet");
 #if 0
   // Otherwise, this is something that requires a relocation.  Emit it as such
   // now.
   unsigned RelocType = Is64BitMode ?
   (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
   : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-  if (RelocOp->isGlobal()) {
-    // In 64-bit static small code model, we could potentially emit absolute.
-    // But it's probably not beneficial. If the MCE supports using RIP directly
-    // do it, otherwise fallback to absolute (this is determined by IsPCRel). 
-    //  89 05 00 00 00 00     mov    %eax,0(%rip)  # PC-relative
-    //  89 04 25 00 00 00 00  mov    %eax,0x0      # Absolute
-    bool Indirect = gvNeedsNonLazyPtr(*RelocOp, TM);
-    emitGlobalAddress(RelocOp->getGlobal(), RelocType, RelocOp->getOffset(),
-                      Adj, Indirect);
-  } else if (RelocOp->isSymbol()) {
-    emitExternalSymbolAddress(RelocOp->getSymbolName(), RelocType);
-  } else if (RelocOp->isCPI()) {
-    emitConstPoolAddress(RelocOp->getIndex(), RelocType,
-                         RelocOp->getOffset(), Adj);
-  } else {
-    assert(RelocOp->isJTI() && "Unexpected machine operand!");
-    emitJumpTableAddress(RelocOp->getIndex(), RelocType, Adj);
-  }
 #endif
+  
+  // Emit a symbolic constant as a fixup and 4 zeros.
+  Fixups.push_back(MCFixup::Create(CurByte, DispOp.getExpr(),
+                                   MCFixupKind(X86::reloc_absolute_word)));
+  EmitConstant(0, 4, CurByte, OS);
 }
 
 
@@ -168,7 +165,8 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
                                         unsigned RegOpcodeField,
                                         intptr_t PCAdj,
                                         unsigned &CurByte,
-                                        raw_ostream &OS) const {
+                                        raw_ostream &OS,
+                                        SmallVectorImpl<MCFixup> &Fixups) const{
   const MCOperand &Disp     = MI.getOperand(Op+3);
   const MCOperand &Base     = MI.getOperand(Op);
   const MCOperand &Scale    = MI.getOperand(Op+1);
@@ -193,7 +191,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
         BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
-      EmitDisplacementField(Disp, PCAdj, true, CurByte, OS);
+      EmitDisplacementField(Disp, PCAdj, true, CurByte, OS, Fixups);
       return;
     }
     
@@ -217,7 +215,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), CurByte, OS);
-    EmitDisplacementField(Disp, PCAdj, IsPCRel, CurByte, OS);
+    EmitDisplacementField(Disp, PCAdj, IsPCRel, CurByte, OS, Fixups);
     return;
   }
     
@@ -274,7 +272,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   if (ForceDisp8)
     EmitConstant(Disp.getImm(), 1, CurByte, OS);
   else if (ForceDisp32 || Disp.getImm() != 0)
-    EmitDisplacementField(Disp, PCAdj, IsPCRel, CurByte, OS);
+    EmitDisplacementField(Disp, PCAdj, IsPCRel, CurByte, OS, Fixups);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
@@ -525,7 +523,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp,
                      GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
-                     0, CurByte, OS);
+                     0, CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
@@ -558,7 +556,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
        X86II::getSizeOfImm(TSFlags) : 0;
     
     EmitMemModRMByte(MI, CurOp+1, GetX86RegNum(MI.getOperand(CurOp)),
-                     PCAdj, CurByte, OS);
+                     PCAdj, CurByte, OS, Fixups);
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
@@ -632,7 +630,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
-                     PCAdj, CurByte, OS);
+                     PCAdj, CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands;
     
     if (CurOp == NumOps)
