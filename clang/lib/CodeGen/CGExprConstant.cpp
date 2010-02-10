@@ -1027,7 +1027,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   
   // Itanium C++ ABI 2.3:
   //   A NULL pointer is represented as -1.
-  return llvm::ConstantInt::get(getTypes().ConvertTypeForMem(T), -1, 
+  return llvm::ConstantInt::get(getTypes().ConvertTypeForMem(T), -1ULL, 
                                 /*isSigned=*/true);
 }
 
