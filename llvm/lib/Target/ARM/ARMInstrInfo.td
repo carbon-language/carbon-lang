@@ -605,6 +605,20 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
 }
 
+def NOP : AI<(outs), (ins), Pseudo, NoItinerary, "nop", "",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV6T2]> {
+  let Inst{27-16} = 0b001100100000;
+  let Inst{7-0} = 0b00000000;
+}
+
+def DBG : AI<(outs), (ins i32imm:$opt), Pseudo, NoItinerary, "dbg", "\t$opt",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV7]> {
+  let Inst{27-16} = 0b001100100000;
+  let Inst{7-4} = 0b1111;
+}
+
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
@@ -825,6 +839,12 @@ let isBranch = 1, isTerminator = 1 in {
   def Bcc : ABI<0b1010, (outs), (ins brtarget:$target),
                IIC_Br, "b", "\t$target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
+}
+
+// Supervisor call (software interrupt) -- for disassembly only
+let isCall = 1 in {
+def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
+              [/* For disassembly only; pattern left blank */]>;
 }
 
 //===----------------------------------------------------------------------===//
