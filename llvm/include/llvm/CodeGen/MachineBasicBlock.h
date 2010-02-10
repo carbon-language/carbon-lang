@@ -21,6 +21,9 @@ namespace llvm {
 
 class BasicBlock;
 class MachineFunction;
+class MCContext;
+class MCSymbol;
+class StringRef;
 class raw_ostream;
 
 template <>

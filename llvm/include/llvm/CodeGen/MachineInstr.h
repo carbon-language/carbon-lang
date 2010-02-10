@@ -19,7 +19,6 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetOpcodes.h"
@@ -122,7 +121,7 @@ public:
 
   /// getAsmPrinterFlag - Return whether an AsmPrinter flag is set.
   ///
-  bool getAsmPrinterFlag(AsmPrinter::CommentFlag Flag) const {
+  bool getAsmPrinterFlag(unsigned Flag) const {
     return AsmPrinterFlags & Flag;
   }
 

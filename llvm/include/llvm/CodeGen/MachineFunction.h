@@ -33,6 +33,7 @@ class MachineRegisterInfo;
 class MachineFrameInfo;
 class MachineConstantPool;
 class MachineJumpTableInfo;
+class Pass;
 class TargetMachine;
 class TargetRegisterClass;
 
