@@ -44,8 +44,12 @@ void ASTMergeAction::ExecuteAction() {
 
     ASTDiags.SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                               &Unit->getASTContext());
-    ASTImporter Importer(CI.getASTContext(), CI.getDiagnostics(),
-                         Unit->getASTContext(), ASTDiags);
+    ASTImporter Importer(CI.getASTContext(), 
+                         CI.getFileManager(),
+                         CI.getDiagnostics(),
+                         Unit->getASTContext(), 
+                         Unit->getFileManager(),
+                         ASTDiags);
 
     TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
     for (DeclContext::decl_iterator D = TU->decls_begin(), 

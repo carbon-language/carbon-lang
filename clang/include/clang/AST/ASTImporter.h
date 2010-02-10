@@ -25,6 +25,7 @@ namespace clang {
   class DeclContext;
   class Diagnostic;
   class Expr;
+  class FileManager;
   class IdentifierInfo;
   class NestedNameSpecifier;
   class Stmt;
@@ -35,6 +36,9 @@ namespace clang {
   class ASTImporter {
     /// \brief The contexts we're importing to and from.
     ASTContext &ToContext, &FromContext;
+    
+    /// \brief The file managers we're importing to and from.
+    FileManager &ToFileManager, &FromFileManager;
     
     /// \brief The diagnostics object that we should use to emit diagnostics
     /// within the context we're importing to and from.
@@ -48,9 +52,15 @@ namespace clang {
     /// context to the corresponding declarations in the "to" context.
     llvm::DenseMap<Decl *, Decl *> ImportedDecls;
     
+    /// \brief Mapping from the already-imported FileIDs in the "from" source
+    /// manager to the corresponding FileIDs in the "to" source manager.
+    llvm::DenseMap<unsigned, FileID> ImportedFileIDs;
+    
   public:
-    ASTImporter(ASTContext &ToContext, Diagnostic &ToDiags,
-                ASTContext &FromContext, Diagnostic &FromDiags);
+    ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
+                Diagnostic &ToDiags,
+                ASTContext &FromContext, FileManager &FromFileManager,
+                Diagnostic &FromDiags);
     
     virtual ~ASTImporter();
     
@@ -102,7 +112,7 @@ namespace clang {
     /// \returns the equivalent nested-name-specifier in the "to"
     /// context, or NULL if an error occurred.
     NestedNameSpecifier *Import(NestedNameSpecifier *FromNNS);
-
+    
     /// \brief Import the given source location from the "from" context into
     /// the "to" context.
     ///
@@ -130,6 +140,13 @@ namespace clang {
     /// \returns the equivalent identifier in the "to" context.
     IdentifierInfo *Import(IdentifierInfo *FromId);
 
+    /// \brief Import the given file ID from the "from" context into the 
+    /// "to" context.
+    ///
+    /// \returns the equivalent file ID in the source manager of the "to"
+    /// context.
+    FileID Import(FileID);
+    
     /// \brief Cope with a name conflict when importing a declaration into the
     /// given context.
     ///
@@ -168,6 +185,12 @@ namespace clang {
     /// \brief Retrieve the context that AST nodes are being imported from.
     ASTContext &getFromContext() const { return FromContext; }
     
+    /// \brief Retrieve the file manager that AST nodes are being imported into.
+    FileManager &getToFileManager() const { return ToFileManager; }
+
+    /// \brief Retrieve the file manager that AST nodes are being imported from.
+    FileManager &getFromFileManager() const { return FromFileManager; }
+
     /// \brief Retrieve the diagnostics object to use to report errors within
     /// the context we're importing into.
     Diagnostic &getToDiags() const { return ToDiags; }

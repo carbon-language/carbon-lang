@@ -14,10 +14,13 @@
 #include "clang/AST/ASTImporter.h"
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeVisitor.h"
-#include "clang/AST/ASTDiagnostic.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace clang;
 
@@ -444,7 +447,7 @@ QualType ASTNodeImporter::VisitObjCObjectPointerType(ObjCObjectPointerType *T) {
 // Import Declarations
 //----------------------------------------------------------------------------
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
-  Importer.FromDiag(SourceLocation(), diag::err_unsupported_ast_node)
+  Importer.FromDiag(D->getLocation(), diag::err_unsupported_ast_node)
     << D->getDeclKindName();
   return 0;
 }
@@ -567,9 +570,12 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   return ToVar;
 }
 
-ASTImporter::ASTImporter(ASTContext &ToContext, Diagnostic &ToDiags,
-                         ASTContext &FromContext, Diagnostic &FromDiags)
+ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
+                         Diagnostic &ToDiags,
+                         ASTContext &FromContext, FileManager &FromFileManager,
+                         Diagnostic &FromDiags)
   : ToContext(ToContext), FromContext(FromContext),
+    ToFileManager(ToFileManager), FromFileManager(FromFileManager),
     ToDiags(ToDiags), FromDiags(FromDiags) { 
   ImportedDecls[FromContext.getTranslationUnitDecl()]
     = ToContext.getTranslationUnitDecl();
@@ -658,12 +664,60 @@ SourceLocation ASTImporter::Import(SourceLocation FromLoc) {
   if (FromLoc.isInvalid())
     return SourceLocation();
 
-  // FIXME: Implement!
-  return SourceLocation();
+  SourceManager &FromSM = FromContext.getSourceManager();
+  
+  // For now, map everything down to its spelling location, so that we
+  // don't have to import macro instantiations.
+  // FIXME: Import macro instantiations!
+  FromLoc = FromSM.getSpellingLoc(FromLoc);
+  std::pair<FileID, unsigned> Decomposed = FromSM.getDecomposedLoc(FromLoc);
+  SourceManager &ToSM = ToContext.getSourceManager();
+  return ToSM.getLocForStartOfFile(Import(Decomposed.first))
+             .getFileLocWithOffset(Decomposed.second);
 }
 
 SourceRange ASTImporter::Import(SourceRange FromRange) {
   return SourceRange(Import(FromRange.getBegin()), Import(FromRange.getEnd()));
+}
+
+FileID ASTImporter::Import(FileID FromID) {
+  llvm::DenseMap<unsigned, FileID>::iterator Pos
+    = ImportedFileIDs.find(FromID.getHashValue());
+  if (Pos != ImportedFileIDs.end())
+    return Pos->second;
+  
+  SourceManager &FromSM = FromContext.getSourceManager();
+  SourceManager &ToSM = ToContext.getSourceManager();
+  const SrcMgr::SLocEntry &FromSLoc = FromSM.getSLocEntry(FromID);
+  assert(FromSLoc.isFile() && "Cannot handle macro instantiations yet");
+  
+  // Include location of this file.
+  SourceLocation ToIncludeLoc = Import(FromSLoc.getFile().getIncludeLoc());
+  
+  // Map the FileID for to the "to" source manager.
+  FileID ToID;
+  const SrcMgr::ContentCache *Cache = FromSLoc.getFile().getContentCache();
+  if (Cache->Entry) {
+    // FIXME: We probably want to use getVirtualFile(), so we don't hit the
+    // disk again
+    // FIXME: We definitely want to re-use the existing MemoryBuffer, rather
+    // than mmap the files several times.
+    const FileEntry *Entry = ToFileManager.getFile(Cache->Entry->getName());
+    ToID = ToSM.createFileID(Entry, ToIncludeLoc, 
+                             FromSLoc.getFile().getFileCharacteristic());
+  } else {
+    // FIXME: We want to re-use the existing MemoryBuffer!
+    const llvm::MemoryBuffer *FromBuf = Cache->getBuffer();
+    llvm::MemoryBuffer *ToBuf
+      = llvm::MemoryBuffer::getMemBufferCopy(FromBuf->getBufferStart(),
+                                             FromBuf->getBufferEnd(),
+                                             FromBuf->getBufferIdentifier());
+    ToID = ToSM.createFileIDForMemBuffer(ToBuf);
+  }
+  
+  
+  ImportedFileIDs[FromID.getHashValue()] = ToID;
+  return ToID;
 }
 
 DeclarationName ASTImporter::Import(DeclarationName FromName) {
