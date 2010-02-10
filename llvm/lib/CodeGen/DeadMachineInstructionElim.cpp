@@ -112,7 +112,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = &*MII;
 
       if (MI->isDebugValue()) {
-        // Don't delete the DEBUG_VALUE itself, but if its Value operand is
+        // Don't delete the DBG_VALUE itself, but if its Value operand is
         // a vreg and this is the only use, substitute an undef operand;
         // the former operand will then be deleted normally.
         if (MI->getNumOperands()==3 && MI->getOperand(0).isReg()) {
@@ -120,7 +120,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
           MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg);
           assert(I != MRI->use_end());
           if (++I == MRI->use_end())
-            // only one use, which must be this DEBUG_VALUE.
+            // only one use, which must be this DBG_VALUE.
             MI->getOperand(0).setReg(0U);
         }
       }
