@@ -4158,16 +4158,23 @@ void RewriteObjC::InsertBlockLiteralsWithinFunction(FunctionDecl *FD) {
   SynthesizeBlockLiterals(FunLocStart, FuncName);
 }
 
+static void BuildUniqueMethodName(std::string &Name,
+                                  ObjCMethodDecl *MD) {
+  ObjCInterfaceDecl *IFace = MD->getClassInterface();
+  Name = IFace->getNameAsCString();
+  Name += "__" + MD->getSelector().getAsString();
+  // Convert colons to underscores.
+  std::string::size_type loc = 0;
+  while ((loc = Name.find(":", loc)) != std::string::npos)
+    Name.replace(loc, 1, "_");
+}
+
 void RewriteObjC::InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD) {
   //fprintf(stderr,"In InsertBlockLiteralsWitinMethod\n");
   //SourceLocation FunLocStart = MD->getLocStart();
   SourceLocation FunLocStart = MD->getLocStart();
-  std::string FuncName = MD->getSelector().getAsString();
-  // Convert colons to underscores.
-  std::string::size_type loc = 0;
-  while ((loc = FuncName.find(":", loc)) != std::string::npos)
-    FuncName.replace(loc, 1, "_");
-
+  std::string FuncName;
+  BuildUniqueMethodName(FuncName, MD);
   SynthesizeBlockLiterals(FunLocStart, FuncName.c_str());
 }
 
@@ -4779,13 +4786,9 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
 
   if (CurFunctionDef)
     FuncName = CurFunctionDef->getNameAsString();
-  else if (CurMethodDef) {
-    FuncName = CurMethodDef->getSelector().getAsString();
-    // Convert colons to underscores.
-    std::string::size_type loc = 0;
-    while ((loc = FuncName.find(":", loc)) != std::string::npos)
-      FuncName.replace(loc, 1, "_");
-  } else if (GlobalVarDecl)
+  else if (CurMethodDef)
+    BuildUniqueMethodName(FuncName, CurMethodDef);
+  else if (GlobalVarDecl)
     FuncName = std::string(GlobalVarDecl->getNameAsString());
 
   std::string BlockNumber = utostr(Blocks.size()-1);
