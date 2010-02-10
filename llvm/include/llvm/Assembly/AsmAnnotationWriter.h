@@ -23,6 +23,7 @@ class Function;
 class BasicBlock;
 class Instruction;
 class raw_ostream;
+class formatted_raw_ostream;
 
 class AssemblyAnnotationWriter {
 public:
@@ -46,6 +47,10 @@ public:
   /// emitInstructionAnnot - This may be implemented to emit a string right
   /// before an instruction is emitted.
   virtual void emitInstructionAnnot(const Instruction *I, raw_ostream &OS) {}
+
+  /// printInfoComment - This may be implemented to emit a comment to the
+  /// right of an instruction or global value.
+  virtual void printInfoComment(const Value &V, formatted_raw_ostream &OS) {}
 };
 
 } // End llvm namespace

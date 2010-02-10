@@ -1694,6 +1694,11 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 /// which slot it occupies.
 ///
 void AssemblyWriter::printInfoComment(const Value &V) {
+  if (AnnotationWriter) {
+    AnnotationWriter->printInfoComment(V, Out);
+    return;
+  }
+
   if (V.getType()->isVoidTy()) return;
   
   Out.PadToColumn(50);
