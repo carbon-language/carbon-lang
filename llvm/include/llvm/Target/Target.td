@@ -376,7 +376,7 @@ class OptionalDefOperand<ValueType ty, dag OpTypes, dag defaultops>
 
 
 // InstrInfo - This class should only be instantiated once to provide parameters
-// which are global to the the target machine.
+// which are global to the target machine.
 //
 class InstrInfo {
   // If the target wants to associate some target-specific information with each

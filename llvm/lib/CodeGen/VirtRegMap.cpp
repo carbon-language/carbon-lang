@@ -9,7 +9,7 @@
 //
 // This file implements the VirtRegMap class.
 //
-// It also contains implementations of the the Spiller interface, which, given a
+// It also contains implementations of the Spiller interface, which, given a
 // virtual register map and a machine function, eliminates all virtual
 // references by replacing them with physical register references - adding spill
 // code as necessary.

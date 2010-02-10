@@ -9,7 +9,7 @@
 //
 // Heuristic PBQP solver. This solver is able to perform optimal reductions for
 // nodes of degree 0, 1 or 2. For nodes of degree >2 a plugable heuristic is
-// used to to select a node for reduction. 
+// used to select a node for reduction. 
 //
 //===----------------------------------------------------------------------===//
 

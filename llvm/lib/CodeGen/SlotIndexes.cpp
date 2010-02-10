@@ -95,7 +95,7 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
 
   push_back(createEntry(0, index));
 
-  // Iterate over the the function.
+  // Iterate over the function.
   for (MachineFunction::iterator mbbItr = mf->begin(), mbbEnd = mf->end();
        mbbItr != mbbEnd; ++mbbItr) {
     MachineBasicBlock *mbb = &*mbbItr;

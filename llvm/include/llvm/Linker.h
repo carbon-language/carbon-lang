@@ -223,7 +223,7 @@ class Linker {
     /// the archive that resolve outstanding symbols will be linked in. The
     /// library is searched repeatedly until no more modules that resolve
     /// symbols can be found. If an error occurs, the error string is  set.
-    /// To speed up this function, ensure the the archive has been processed
+    /// To speed up this function, ensure the archive has been processed
     /// llvm-ranlib or the S option was given to llvm-ar when the archive was
     /// created. These tools add a symbol table to the archive which makes the
     /// search for undefined symbols much faster.

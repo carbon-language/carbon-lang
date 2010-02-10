@@ -23,7 +23,7 @@ namespace sys {
   /// might be known as shared libraries, shared objects, dynamic shared
   /// objects, or dynamic link libraries. Regardless of the terminology or the
   /// operating system interface, this class provides a portable interface that
-  /// allows dynamic libraries to be loaded and and searched for externally
+  /// allows dynamic libraries to be loaded and searched for externally
   /// defined symbols. This is typically used to provide "plug-in" support.
   /// It also allows for symbols to be defined which don't live in any library,
   /// but rather the main program itself, useful on Windows where the main

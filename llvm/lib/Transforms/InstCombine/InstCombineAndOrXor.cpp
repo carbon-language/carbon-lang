@@ -546,7 +546,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     std::swap(LHSCC, RHSCC);
   }
 
-  // At this point, we know we have have two icmp instructions
+  // At this point, we know we have two icmp instructions
   // comparing a value against two constants and and'ing the result
   // together.  Because of the above check, we know that we only have
   // icmp eq, icmp ne, icmp [su]lt, and icmp [SU]gt here. We also know 
@@ -1226,7 +1226,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     std::swap(LHSCC, RHSCC);
   }
   
-  // At this point, we know we have have two icmp instructions
+  // At this point, we know we have two icmp instructions
   // comparing a value against two constants and or'ing the result
   // together.  Because of the above check, we know that we only have
   // ICMP_EQ, ICMP_NE, ICMP_LT, and ICMP_GT here. We also know (from the

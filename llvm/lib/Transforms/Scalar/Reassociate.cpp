@@ -249,7 +249,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
 
 /// LinearizeExprTree - Given an associative binary expression tree, traverse
 /// all of the uses putting it into canonical form.  This forces a left-linear
-/// form of the the expression (((a+b)+c)+d), and collects information about the
+/// form of the expression (((a+b)+c)+d), and collects information about the
 /// rank of the non-tree operands.
 ///
 /// NOTE: These intentionally destroys the expression tree operands (turning
@@ -299,7 +299,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
     Success = false;
     MadeChange = true;
   } else if (RHSBO) {
-    // Turn (A+B)+(C+D) -> (((A+B)+C)+D).  This guarantees the the RHS is not
+    // Turn (A+B)+(C+D) -> (((A+B)+C)+D).  This guarantees the RHS is not
     // part of the expression tree.
     LinearizeExpr(I);
     LHS = LHSBO = cast<BinaryOperator>(I->getOperand(0));

@@ -1349,7 +1349,7 @@ void SelectionDAGBuilder::visitJumpTableHeader(JumpTable &JT,
                             DAG.getConstant(JTH.First, VT));
 
   // The SDNode we just created, which holds the value being switched on minus
-  // the the smallest case value, needs to be copied to a virtual register so it
+  // the smallest case value, needs to be copied to a virtual register so it
   // can be used as an index into the jump table in a subsequent basic block.
   // This value may be smaller or larger than the target's pointer type, and
   // therefore require extension or truncating.
@@ -4865,7 +4865,7 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
     EVT ThisVT = MVT::Other;
 
     const TargetRegisterClass *RC = *RCI;
-    // If none of the the value types for this register class are valid, we
+    // If none of the value types for this register class are valid, we
     // can't use it.  For example, 64-bit reg classes on 32-bit targets.
     for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
          I != E; ++I) {

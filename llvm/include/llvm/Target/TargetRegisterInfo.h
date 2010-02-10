@@ -169,7 +169,7 @@ public:
     return I;
   }
 
-  /// hasSubClass - return true if the the specified TargetRegisterClass
+  /// hasSubClass - return true if the specified TargetRegisterClass
   /// is a proper subset of this TargetRegisterClass.
   bool hasSubClass(const TargetRegisterClass *cs) const {
     for (int i = 0; SubClasses[i] != NULL; ++i)

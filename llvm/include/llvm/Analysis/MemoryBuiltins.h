@@ -72,7 +72,7 @@ Value *getMallocArraySize(CallInst *CI, const TargetData *TD,
 //  free Call Utility Functions.
 //
 
-/// isFreeCall - Returns true if the the value is a call to the builtin free()
+/// isFreeCall - Returns true if the value is a call to the builtin free()
 bool isFreeCall(const Value *I);
 
 } // End llvm namespace

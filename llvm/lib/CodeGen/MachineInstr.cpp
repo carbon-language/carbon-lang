@@ -1034,7 +1034,7 @@ bool MachineInstr::hasVolatileMemoryRef() const {
 
 /// isInvariantLoad - Return true if this instruction is loading from a
 /// location whose value is invariant across the function.  For example,
-/// loading a value from the constant pool or from from the argument area
+/// loading a value from the constant pool or from the argument area
 /// of a function if it does not change.  This should only return true of
 /// *all* loads the instruction does are invariant (if it does multiple loads).
 bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {

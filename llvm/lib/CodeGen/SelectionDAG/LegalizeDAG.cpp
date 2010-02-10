@@ -2767,7 +2767,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                             DAG.getIntPtrConstant(1));
     } else {
       // FIXME: We should be able to fall back to a libcall with an illegal
-      // type in some cases cases.
+      // type in some cases.
       // Also, we can fall back to a division in some cases, but that's a big
       // performance hit in the general case.
       llvm_unreachable("Don't know how to expand this operation yet!");

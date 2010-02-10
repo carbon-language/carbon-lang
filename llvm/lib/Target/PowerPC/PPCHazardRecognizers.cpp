@@ -118,7 +118,7 @@ isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
 }
 
 /// getHazardType - We return hazard for any non-branch instruction that would
-/// terminate terminate the dispatch group.  We turn NoopHazard for any
+/// terminate the dispatch group.  We turn NoopHazard for any
 /// instructions that wouldn't terminate the dispatch group that would cause a
 /// pipeline flush.
 ScheduleHazardRecognizer::HazardType PPCHazardRecognizer970::

@@ -39,7 +39,7 @@ class InlineAsm : public Value {
   virtual ~InlineAsm();
 public:
 
-  /// InlineAsm::get - Return the the specified uniqued inline asm string.
+  /// InlineAsm::get - Return the specified uniqued inline asm string.
   ///
   static InlineAsm *get(const FunctionType *Ty, StringRef AsmString,
                         StringRef Constraints, bool hasSideEffects,

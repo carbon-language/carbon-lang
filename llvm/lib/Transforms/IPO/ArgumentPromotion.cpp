@@ -247,7 +247,7 @@ static bool PrefixIn(const ArgPromotion::IndicesVector &Indices,
     return Low != Set.end() && IsPrefix(*Low, Indices);
 }
 
-/// Mark the given indices (ToMark) as safe in the the given set of indices
+/// Mark the given indices (ToMark) as safe in the given set of indices
 /// (Safe). Marking safe usually means adding ToMark to Safe. However, if there
 /// is already a prefix of Indices in Safe, Indices are implicitely marked safe
 /// already. Furthermore, any indices that Indices is itself a prefix of, are

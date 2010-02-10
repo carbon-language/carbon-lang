@@ -115,7 +115,7 @@ bool CodePlacementOpt::HasAnalyzableTerminator(MachineBasicBlock *MBB) {
   // Ask the target's AnalyzeBranch if it can handle this block.
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
-  // Make the the terminator is understood.
+  // Make the terminator is understood.
   if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
     return false;
   // Make sure we have the option of reversing the condition.

@@ -103,7 +103,7 @@ class DwarfDebug : public DwarfPrinter {
   ///
   SmallVector<std::pair<unsigned, unsigned>, 8> SourceIds;
 
-  /// Lines - List of of source line correspondence.
+  /// Lines - List of source line correspondence.
   std::vector<SrcLineInfo> Lines;
 
   /// DIEValues - A list of all the unique values in use.

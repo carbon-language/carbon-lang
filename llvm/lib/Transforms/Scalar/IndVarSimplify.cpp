@@ -380,7 +380,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       NeedCannIV = true;
   }
 
-  // Now that we know the largest of of the induction variable expressions
+  // Now that we know the largest of the induction variable expressions
   // in this loop, insert a canonical induction variable of the largest size.
   Value *IndVar = 0;
   if (NeedCannIV) {

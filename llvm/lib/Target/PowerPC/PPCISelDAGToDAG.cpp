@@ -199,7 +199,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(MachineFunction &Fn) {
   // Check to see if this function uses vector registers, which means we have to
   // save and restore the VRSAVE register and update it with the regs we use.  
   //
-  // In this case, there will be virtual registers of vector type type created
+  // In this case, there will be virtual registers of vector type created
   // by the scheduler.  Detect them now.
   bool HasVectorVReg = false;
   for (unsigned i = TargetRegisterInfo::FirstVirtualRegister, 

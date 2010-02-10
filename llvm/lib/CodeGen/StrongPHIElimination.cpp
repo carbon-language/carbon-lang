@@ -49,7 +49,7 @@ namespace {
     std::map<unsigned, std::vector<unsigned> > Stacks;
     
     // Registers in UsedByAnother are PHI nodes that are themselves
-    // used as operands to another another PHI node
+    // used as operands to another PHI node
     std::set<unsigned> UsedByAnother;
     
     // RenameSets are the is a map from a PHI-defined register

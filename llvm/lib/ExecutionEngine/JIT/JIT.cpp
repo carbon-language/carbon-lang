@@ -171,7 +171,7 @@ void DarwinRegisterFrame(void* FrameBegin) {
   ob->encoding.i = 0; 
   ob->encoding.b.encoding = llvm::dwarf::DW_EH_PE_omit;
   
-  // Put the info on both places, as libgcc uses the first or the the second
+  // Put the info on both places, as libgcc uses the first or the second
   // field. Note that we rely on having two pointers here. If fde_end was a
   // char, things would get complicated.
   ob->fde_end = (char*)LOI->unseenObjects;

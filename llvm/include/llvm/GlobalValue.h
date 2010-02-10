@@ -92,7 +92,7 @@ public:
   void setSection(StringRef S) { Section = S; }
   
   /// If the usage is empty (except transitively dead constants), then this
-  /// global value can can be safely deleted since the destructor will
+  /// global value can be safely deleted since the destructor will
   /// delete the dead constants as well.
   /// @brief Determine if the usage of this global value is empty except
   /// for transitively dead constants.

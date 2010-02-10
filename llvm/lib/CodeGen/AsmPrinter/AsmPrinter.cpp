@@ -302,7 +302,7 @@ void AsmPrinter::EmitFunctionHeader() {
     OutStreamer.GetCommentOS() << '\n';
   }
 
-  // Emit the CurrentFnSym.  This is is a virtual function to allow targets to
+  // Emit the CurrentFnSym.  This is a virtual function to allow targets to
   // do their wild and crazy things as required.
   EmitFunctionEntryLabel();
   

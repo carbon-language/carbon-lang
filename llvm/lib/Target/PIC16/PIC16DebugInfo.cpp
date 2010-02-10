@@ -68,7 +68,7 @@ void PIC16DbgInfo::PopulateDerivedTypeInfo (DIType Ty, unsigned short &TypeNo,
       TypeNo = TypeNo << PIC16Dbg::S_DERIVED;
   }
   
-  // We also need to encode the the information about the base type of
+  // We also need to encode the information about the base type of
   // pointer in TypeNo.
   DIType BaseType = DIDerivedType(Ty.getNode()).getTypeDerivedFrom();
   PopulateDebugInfo(BaseType, TypeNo, HasAux, Aux, TagName);

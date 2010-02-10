@@ -184,7 +184,7 @@ LiveValues::Memo &LiveValues::compute(const Value *V) {
     }
   }
 
-  // If the value was never used outside the the block in which it was
+  // If the value was never used outside the block in which it was
   // defined, it's killed in that block.
   if (!LiveOutOfDefBB)
     M.Killed.insert(DefBB);

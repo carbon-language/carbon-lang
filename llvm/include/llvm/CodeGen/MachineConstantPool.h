@@ -136,7 +136,7 @@ public:
     : TD(td), PoolAlignment(1) {}
   ~MachineConstantPool();
     
-  /// getConstantPoolAlignment - Return the the alignment required by
+  /// getConstantPoolAlignment - Return the alignment required by
   /// the whole constant pool, of which the first element must be aligned.
   unsigned getConstantPoolAlignment() const { return PoolAlignment; }
   

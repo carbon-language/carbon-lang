@@ -273,7 +273,7 @@ APInt& APInt::operator-=(const APInt& RHS) {
   return clearUnusedBits();
 }
 
-/// Multiplies an integer array, x by a a uint64_t integer and places the result
+/// Multiplies an integer array, x, by a uint64_t integer and places the result
 /// into dest.
 /// @returns the carry out of the multiplication.
 /// @brief Multiply a multi-digit APInt by a single digit (64-bit) integer.
@@ -1766,7 +1766,7 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
 
   // First, compose the values into an array of 32-bit words instead of
   // 64-bit words. This is a necessity of both the "short division" algorithm
-  // and the the Knuth "classical algorithm" which requires there to be native
+  // and the Knuth "classical algorithm" which requires there to be native
   // operations for +, -, and * on an m bit value with an m*2 bit result. We
   // can't use 64-bit operands here because we don't have native results of
   // 128-bits. Furthermore, casting the 64-bit values to 32-bit values won't

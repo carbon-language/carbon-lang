@@ -197,7 +197,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
 
   SlotIndex FillerStart = ValLR->end, FillerEnd = BLR->start;
   // We are about to delete CopyMI, so need to remove it as the 'instruction
-  // that defines this value #'. Update the the valnum with the new defining
+  // that defines this value #'. Update the valnum with the new defining
   // instruction #.
   BValNo->def  = FillerStart;
   BValNo->setCopy(0);

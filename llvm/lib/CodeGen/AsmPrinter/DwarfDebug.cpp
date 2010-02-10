@@ -618,7 +618,7 @@ void DwarfDebug::addComplexAddress(DbgVariable *&DV, DIE *Die,
 
    1).  Add the offset of the forwarding field.
 
-   2).  Follow that pointer to get the the real __Block_byref_x_VarName
+   2).  Follow that pointer to get the real __Block_byref_x_VarName
    struct to use (the real one may have been copied onto the heap).
 
    3).  Add the offset for the field VarName, to find the actual variable.

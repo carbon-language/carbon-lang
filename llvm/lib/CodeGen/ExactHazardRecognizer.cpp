@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This implements a a hazard recognizer using the instructions itineraries
+// This implements a hazard recognizer using the instructions itineraries
 // defined for the current target.
 //
 //===----------------------------------------------------------------------===//

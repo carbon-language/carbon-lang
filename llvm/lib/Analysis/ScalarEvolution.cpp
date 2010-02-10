@@ -5032,7 +5032,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     if (Step->isOne()) {
       // With unit stride, the iteration never steps past the limit value.
     } else if (isKnownPositive(Step)) {
-      // Test whether a positive iteration iteration can step past the limit
+      // Test whether a positive iteration can step past the limit
       // value and past the maximum value for its type in a single step.
       // Note that it's not sufficient to check NoWrap here, because even
       // though the value after a wrap is undefined, it's not undefined

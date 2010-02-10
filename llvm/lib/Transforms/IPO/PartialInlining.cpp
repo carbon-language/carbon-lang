@@ -117,7 +117,7 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   DominatorTree DT;
   DT.runOnFunction(*duplicateFunction);
   
-  // Extract the body of the the if.
+  // Extract the body of the if.
   Function* extractedFunction = ExtractCodeRegion(DT, toExtract);
   
   // Inline the top-level if test into all callers.

@@ -2172,7 +2172,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (IsCalleePop(isVarArg, CallConv))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
   else if (!Is64Bit && CallConv != CallingConv::Fast && IsStructRet)
-    // If this is is a call to a struct-return function, the callee
+    // If this is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
     // This is common for Darwin/X86, Linux & Mingw32 targets.
     NumBytesForCalleeToPush = 4;

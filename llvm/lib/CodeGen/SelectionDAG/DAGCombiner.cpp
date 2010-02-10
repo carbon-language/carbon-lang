@@ -2640,7 +2640,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
 
       // If the shift is not a no-op (in which case this should be just a sign
       // extend already), the truncated to type is legal, sign_extend is legal
-      // on that type, and the the truncate to that type is both legal and free,
+      // on that type, and the truncate to that type is both legal and free,
       // perform the transform.
       if ((ShiftAmt > 0) &&
           TLI.isOperationLegalOrCustom(ISD::SIGN_EXTEND, TruncVT) &&

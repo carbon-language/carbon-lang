@@ -89,7 +89,7 @@ namespace llvm {
       return !isDefined();
     }
 
-    /// isAbsolute - Check if this this is an absolute symbol.
+    /// isAbsolute - Check if this is an absolute symbol.
     bool isAbsolute() const {
       return Section == AbsolutePseudoSection;
     }

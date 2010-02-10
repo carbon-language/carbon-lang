@@ -330,7 +330,7 @@ public:
                                    bool NoImp = false);
 
   /// CloneMachineInstr - Create a new MachineInstr which is a copy of the
-  /// 'Orig' instruction, identical in all ways except the the instruction
+  /// 'Orig' instruction, identical in all ways except the instruction
   /// has no parent, prev, or next.
   ///
   /// See also TargetInstrInfo::duplicate() for target-specific fixes to cloned

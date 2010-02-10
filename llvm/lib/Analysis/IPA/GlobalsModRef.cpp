@@ -486,7 +486,7 @@ GlobalsModRef::alias(const Value *V1, unsigned V1Size,
     if (GV1 && !NonAddressTakenGlobals.count(GV1)) GV1 = 0;
     if (GV2 && !NonAddressTakenGlobals.count(GV2)) GV2 = 0;
 
-    // If the the two pointers are derived from two different non-addr-taken
+    // If the two pointers are derived from two different non-addr-taken
     // globals, or if one is and the other isn't, we know these can't alias.
     if ((GV1 || GV2) && GV1 != GV2)
       return NoAlias;

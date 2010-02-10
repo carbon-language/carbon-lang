@@ -187,7 +187,7 @@ MachineFunction::CreateMachineInstr(const TargetInstrDesc &TID,
 }
 
 /// CloneMachineInstr - Create a new MachineInstr which is a copy of the
-/// 'Orig' instruction, identical in all ways except the the instruction
+/// 'Orig' instruction, identical in all ways except the instruction
 /// has no parent, prev, or next.
 ///
 MachineInstr *

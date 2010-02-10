@@ -291,7 +291,7 @@ private:
   /// EmitRecordWithAbbrevImpl - This is the core implementation of the record
   /// emission code.  If BlobData is non-null, then it specifies an array of
   /// data that should be emitted as part of the Blob or Array operand that is
-  /// known to exist at the end of the the record.
+  /// known to exist at the end of the record.
   template<typename uintty>
   void EmitRecordWithAbbrevImpl(unsigned Abbrev, SmallVectorImpl<uintty> &Vals,
                                 StringRef Blob) {

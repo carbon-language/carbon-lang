@@ -1841,7 +1841,7 @@ static SpecialGlobalClass getGlobalVariableClass(const GlobalVariable *GV) {
       return GlobalDtors;
   }
   
-  // Otherwise, it it is other metadata, don't print it.  This catches things
+  // Otherwise, if it is other metadata, don't print it.  This catches things
   // like debug information.
   if (GV->getSection() == "llvm.metadata")
     return NotPrinted;
@@ -3113,7 +3113,7 @@ void CWriter::visitCallInst(CallInst &I) {
 }
 
 /// visitBuiltinCall - Handle the call to the specified builtin.  Returns true
-/// if the entire call is handled, return false it it wasn't handled, and
+/// if the entire call is handled, return false if it wasn't handled, and
 /// optionally set 'WroteCallee' if the callee has already been printed out.
 bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
                                bool &WroteCallee) {

@@ -28,7 +28,7 @@ namespace sys {
   /// platform independent and eliminates many of the unix-specific fields.
   /// However, to support llvm-ar, the mode, user, and group fields are
   /// retained. These pertain to unix security and may not have a meaningful
-  /// value on non-Unix platforms. However, the other fields fields should
+  /// value on non-Unix platforms. However, the other fields should
   /// always be applicable on all platforms.  The structure is filled in by
   /// the PathWithStatus class.
   /// @brief File status structure

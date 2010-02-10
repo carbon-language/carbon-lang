@@ -686,7 +686,7 @@ def LDAP_lu10_ba : _FLU10<(outs),
                           [(set R11, (pcrelwrapper tblockaddress:$addr))]>;
 
 let isCall=1,
-// All calls clobber the the link register and the non-callee-saved registers:
+// All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR] in {
 def BL_u10 : _FU10<
                   (outs),
@@ -779,7 +779,7 @@ def ECALLF_1r : _F1R<(outs), (ins GRRegs:$src),
                  []>;
 
 let isCall=1, 
-// All calls clobber the the link register and the non-callee-saved registers:
+// All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR] in {
 def BLA_1r : _F1R<(outs), (ins GRRegs:$addr, variable_ops),
                  "bla $addr",

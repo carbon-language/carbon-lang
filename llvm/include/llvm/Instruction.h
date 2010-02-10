@@ -148,7 +148,7 @@ public:
       getAllMetadataImpl(MDs);
   }
   
-  /// setMetadata - Set the metadata of of the specified kind to the specified
+  /// setMetadata - Set the metadata of the specified kind to the specified
   /// node.  This updates/replaces metadata if already present, or removes it if
   /// Node is null.
   void setMetadata(unsigned KindID, MDNode *Node);

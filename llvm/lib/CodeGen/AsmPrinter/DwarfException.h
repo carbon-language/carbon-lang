@@ -103,7 +103,7 @@ class DwarfException : public DwarfPrinter {
   ///     exception.  If it matches then the exception and type id are passed
   ///     on to the landing pad.  Otherwise the next action is looked up.  This
   ///     chain is terminated with a next action of zero.  If no type id is
-  ///     found the the frame is unwound and handling continues.
+  ///     found the frame is unwound and handling continues.
   ///  3. Type id table contains references to all the C++ typeinfo for all
   ///     catches in the function.  This tables is reversed indexed base 1.
 

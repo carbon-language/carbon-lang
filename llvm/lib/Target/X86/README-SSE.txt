@@ -376,7 +376,7 @@ ret
 ... saving two instructions.
 
 The basic idea is that a reload from a spill slot, can, if only one 4-byte 
-chunk is used, bring in 3 zeros the the one element instead of 4 elements.
+chunk is used, bring in 3 zeros the one element instead of 4 elements.
 This can be used to simplify a variety of shuffle operations, where the
 elements are fixed zeros.
 

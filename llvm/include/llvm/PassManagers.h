@@ -394,8 +394,8 @@ private:
                          const AnalysisUsage::VectorType &Set) const;
 
   // Set of available Analysis. This information is used while scheduling 
-  // pass. If a pass requires an analysis which is not not available then 
-  // equired analysis pass is scheduled to run before the pass itself is 
+  // pass. If a pass requires an analysis which is not available then 
+  // the required analysis pass is scheduled to run before the pass itself is
   // scheduled to run.
   std::map<AnalysisID, Pass*> AvailableAnalysis;
 
