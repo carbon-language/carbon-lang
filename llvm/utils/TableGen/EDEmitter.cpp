@@ -371,14 +371,7 @@ static inline void decorate1(FlagsConstantEmitter *(&operandFlags)[MAX_OPERANDS]
                              const char *opFlag) {
   unsigned opIndex;
   
-  try {
-    opIndex = inst.getOperandNamed(std::string(opName));
-  }
-  catch (...) {
-    errs() << "Instruction: " << inst.TheDef->getName().c_str() << "\n";
-    errs() << "Operand name: " << opName << "\n";
-    llvm_unreachable("Couldn't find operand");
-  }
+  opIndex = inst.getOperandNamed(std::string(opName));
   
   operandFlags[opIndex]->addEntry(opFlag);
 }
