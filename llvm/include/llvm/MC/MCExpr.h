@@ -340,7 +340,7 @@ class MCTargetExpr : public MCExpr {
   virtual void Anchor();
 protected:
   MCTargetExpr() : MCExpr(Target) {}
-  
+  virtual ~MCTargetExpr() {}
 public:
   
   virtual void PrintImpl(raw_ostream &OS) const = 0;
