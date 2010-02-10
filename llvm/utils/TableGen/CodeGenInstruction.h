@@ -41,6 +41,7 @@ namespace llvm {
       static ConstraintInfo getEarlyClobber() {
         ConstraintInfo I;
         I.Kind = EarlyClobber;
+        I.OtherTiedOperand = 0;
         return I;
       }
       
