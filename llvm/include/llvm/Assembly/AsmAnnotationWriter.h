@@ -29,22 +29,22 @@ public:
 
   virtual ~AssemblyAnnotationWriter();
 
-  // emitFunctionAnnot - This may be implemented to emit a string right before
-  // the start of a function.
+  /// emitFunctionAnnot - This may be implemented to emit a string right before
+  /// the start of a function.
   virtual void emitFunctionAnnot(const Function *F, raw_ostream &OS) {}
 
-  // emitBasicBlockStartAnnot - This may be implemented to emit a string right
-  // after the basic block label, but before the first instruction in the block.
+  /// emitBasicBlockStartAnnot - This may be implemented to emit a string right
+  /// after the basic block label, but before the first instruction in the block.
   virtual void emitBasicBlockStartAnnot(const BasicBlock *BB, raw_ostream &OS){
   }
 
-  // emitBasicBlockEndAnnot - This may be implemented to emit a string right
-  // after the basic block.
+  /// emitBasicBlockEndAnnot - This may be implemented to emit a string right
+  /// after the basic block.
   virtual void emitBasicBlockEndAnnot(const BasicBlock *BB, raw_ostream &OS){
   }
 
-  // emitInstructionAnnot - This may be implemented to emit a string right
-  // before an instruction is emitted.
+  /// emitInstructionAnnot - This may be implemented to emit a string right
+  /// before an instruction is emitted.
   virtual void emitInstructionAnnot(const Instruction *I, raw_ostream &OS) {}
 };
 
