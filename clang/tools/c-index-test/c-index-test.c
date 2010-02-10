@@ -464,6 +464,7 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
   
     /* Perform some simple filtering. */
     if (!strcmp(filter, "all") || !strcmp(filter, "local")) ck = NULL;
+    else if (!strcmp(filter, "none")) K = (enum CXCursorKind) ~0;
     else if (!strcmp(filter, "category")) K = CXCursor_ObjCCategoryDecl;
     else if (!strcmp(filter, "interface")) K = CXCursor_ObjCInterfaceDecl;
     else if (!strcmp(filter, "protocol")) K = CXCursor_ObjCProtocolDecl;
