@@ -54,7 +54,7 @@ namespace {
 
     void EmitInstruction(const MachineInstr *MI) {
       printInstruction(MI);
-      O << '\n';
+      OutStreamer.AddBlankLine();
     }
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);

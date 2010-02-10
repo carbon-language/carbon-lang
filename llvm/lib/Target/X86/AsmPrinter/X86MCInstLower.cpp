@@ -321,7 +321,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
           MI->getOperand(0).getReg()==0) {
         // Suppress offset in this case, it is not meaningful.
-        O << "undef\n";
+        O << "undef";
+        OutStreamer.AddBlankLine();
         return;
       } else if (MI->getOperand(0).getType()==MachineOperand::MO_FPImmediate) {
         // This is more naturally done in printOperand, but since the only use
@@ -350,7 +351,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     O << "+";
     printOperand(MI, NOps-2);
-    O << '\n';
+    OutStreamer.AddBlankLine();
     return;
   }
   case X86::MOVPC32r: {
@@ -420,7 +421,6 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-  
   
   OutStreamer.EmitInstruction(TmpInst);
 }

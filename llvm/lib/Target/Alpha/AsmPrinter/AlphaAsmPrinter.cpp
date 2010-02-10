@@ -47,7 +47,7 @@ namespace {
     void printInstruction(const MachineInstr *MI);
     void EmitInstruction(const MachineInstr *MI) {
       printInstruction(MI);
-      O << '\n';
+      OutStreamer.AddBlankLine();
     }
     static const char *getRegisterName(unsigned RegNo);
 

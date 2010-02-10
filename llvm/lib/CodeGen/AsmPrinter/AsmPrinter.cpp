@@ -1442,7 +1442,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd() << '\n';
+  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd();
+  OutStreamer.AddBlankLine();
 }
 
 /// printImplicitDef - This method prints the specified machine instruction
@@ -1451,7 +1452,8 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " implicit-def: "
-    << TRI->getName(MI->getOperand(0).getReg()) << '\n';
+    << TRI->getName(MI->getOperand(0).getReg());
+  OutStreamer.AddBlankLine();
 }
 
 void AsmPrinter::printKill(const MachineInstr *MI) const {
@@ -1463,14 +1465,14 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
     assert(op.isReg() && "KILL instruction must have only register operands");
     O << ' ' << TRI->getName(op.getReg()) << (op.isDef() ? "<def>" : "<kill>");
   }
-  O << '\n';
+  OutStreamer.AddBlankLine();
 }
 
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
   printLabel(MI->getOperand(0).getImm());
-  O << '\n';
+  OutStreamer.AddBlankLine();
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {

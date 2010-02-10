@@ -555,7 +555,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       O << ", ";
       printOperand(MI, 1);
       O << ", " << (unsigned int)SH;
-      O << '\n';
+      OutStreamer.AddBlankLine();
       return;
     }
   }
@@ -566,7 +566,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     printOperand(MI, 0);
     O << ", ";
     printOperand(MI, 1);
-    O << '\n';
+    OutStreamer.AddBlankLine();
     return;
   }
   
@@ -580,13 +580,13 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       O << ", ";
       printOperand(MI, 1);
       O << ", " << (unsigned int)SH;
-      O << '\n';
+      OutStreamer.AddBlankLine();
       return;
     }
   }
 
   printInstruction(MI);
-  O << '\n';
+  OutStreamer.AddBlankLine();
 }
 
 void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {

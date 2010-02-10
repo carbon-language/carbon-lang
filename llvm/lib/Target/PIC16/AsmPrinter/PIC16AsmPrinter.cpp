@@ -45,7 +45,7 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
 
 void PIC16AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   printInstruction(MI);
-  O << '\n';
+  OutStreamer.AddBlankLine();
 }
 
 static int getFunctionColor(const Function *F) {

@@ -305,11 +305,12 @@ void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   unsigned src, dst, srcSR, dstSR;
   if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst, srcSR, dstSR)) {
     O << "\tmov " << getRegisterName(dst) << ", ";
-    O << getRegisterName(src) << '\n';
+    O << getRegisterName(src);
+    OutStreamer.AddBlankLine();
     return;
   }
   printInstruction(MI);
-  O << '\n';
+  OutStreamer.AddBlankLine();
 }
 
 // Force static initialization.

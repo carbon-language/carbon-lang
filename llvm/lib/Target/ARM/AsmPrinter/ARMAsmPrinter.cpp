@@ -220,7 +220,7 @@ namespace {
            O << "-.";
          O << ')';
       }
-      O << '\n';
+      OutStreamer.AddBlankLine();
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -819,7 +819,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
   // data itself.
   if (!strcmp(Modifier, "label")) {
     unsigned ID = MI->getOperand(OpNum).getImm();
-    O << *GetCPISymbol(ID) << ":\n";
+    OutStreamer.EmitLabel(GetCPISymbol(ID));
   } else {
     assert(!strcmp(Modifier, "cpentry") && "Unknown modifier for CPE");
     unsigned CPI = MI->getOperand(OpNum).getIndex();
@@ -1030,7 +1030,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       EmitAlignment(2);
     
     printInstruction(MI);
-    O << '\n';
+    OutStreamer.AddBlankLine();
   }
 }
 

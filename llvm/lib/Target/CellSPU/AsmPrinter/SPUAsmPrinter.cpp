@@ -58,7 +58,7 @@ namespace {
 
     void EmitInstruction(const MachineInstr *MI) {
       printInstruction(MI);
-      O << '\n';
+      OutStreamer.AddBlankLine();
     }
     void printOp(const MachineOperand &MO);
 
