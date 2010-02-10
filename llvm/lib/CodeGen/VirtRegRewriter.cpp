@@ -10,7 +10,6 @@
 #define DEBUG_TYPE "virtregrewriter"
 #include "VirtRegRewriter.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/AsmPrinter.h"  // FIXME: Layering!
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -1760,7 +1759,7 @@ private:
 
             // Mark is killed.
             MachineInstr *CopyMI = prior(InsertLoc);
-            CopyMI->setAsmPrinterFlag(AsmPrinter::ReloadReuse);
+            CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
             MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
             KillOpnd->setIsKill();
             UpdateKills(*CopyMI, TRI, RegKills, KillOps);
@@ -2038,7 +2037,7 @@ private:
           TII->copyRegToReg(MBB, InsertLoc, DesignatedReg, PhysReg, RC, RC);
 
           MachineInstr *CopyMI = prior(InsertLoc);
-          CopyMI->setAsmPrinterFlag(AsmPrinter::ReloadReuse);
+          CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
           UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
           // This invalidates DesignatedReg.
@@ -2167,7 +2166,7 @@ private:
                 // virtual or needing to clobber any values if it's physical).
                 NextMII = &MI;
                 --NextMII;  // backtrack to the copy.
-                NextMII->setAsmPrinterFlag(AsmPrinter::ReloadReuse);
+                NextMII->setAsmPrinterFlag(MachineInstr::ReloadReuse);
                 // Propagate the sub-register index over.
                 if (SubIdx) {
                   DefMO = NextMII->findRegisterDefOperand(DestReg);

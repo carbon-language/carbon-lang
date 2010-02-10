@@ -375,7 +375,7 @@ static void EmitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
   if (TM.getInstrInfo()->isMoveInstr(MI, SrcReg, DstReg,
                                      SrcSubIdx, DstSubIdx)) {
-    if (MI.getAsmPrinterFlag(AsmPrinter::ReloadReuse))
+    if (MI.getAsmPrinterFlag(MachineInstr::ReloadReuse))
       CommentOS << " Reload Reuse\n";
   }
 }

@@ -41,6 +41,14 @@ class MachineInstr : public ilist_node<MachineInstr> {
 public:
   typedef MachineMemOperand **mmo_iterator;
 
+  /// Flags to specify different kinds of comments to output in
+  /// assembly code.  These flags carry semantic information not
+  /// otherwise easily derivable from the IR text.
+  ///
+  enum CommentFlag {
+    ReloadReuse = 0x1
+  };
+  
 private:
   const TargetInstrDesc *TID;           // Instruction descriptor.
   unsigned short NumImplicitOps;        // Number of implicit operands (which
@@ -121,14 +129,14 @@ public:
 
   /// getAsmPrinterFlag - Return whether an AsmPrinter flag is set.
   ///
-  bool getAsmPrinterFlag(unsigned Flag) const {
+  bool getAsmPrinterFlag(CommentFlag Flag) const {
     return AsmPrinterFlags & Flag;
   }
 
   /// setAsmPrinterFlag - Set a flag for the AsmPrinter.
   ///
-  void setAsmPrinterFlag(unsigned short Flag) {
-    AsmPrinterFlags |= Flag;
+  void setAsmPrinterFlag(CommentFlag Flag) {
+    AsmPrinterFlags |= (unsigned short)Flag;
   }
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
