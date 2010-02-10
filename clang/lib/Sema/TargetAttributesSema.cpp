@@ -83,10 +83,10 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
   // do anything, either. It doesn't matter anyway, because there's nothing
   // special about calling a force_align_arg_pointer function.
   ValueDecl* VD = dyn_cast<ValueDecl>(D);
-  if(VD->getType()->isFunctionPointerType())
+  if (VD && VD->getType()->isFunctionPointerType())
     return;
   // Attribute can only be applied to function types.
-  if(!isa<FunctionDecl>(D)) {
+  if (!isa<FunctionDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << /* function */0;
     return;
