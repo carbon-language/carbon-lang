@@ -21,6 +21,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -340,6 +341,13 @@ const SCEV *IVUsers::getCanonicalExpr(const IVStrideUse &U) const {
   return RetVal;
 }
 
+namespace {
+
+// Suppress extraneous comments.
+class IVUsersAsmAnnotator : public AssemblyAnnotationWriter {};
+
+}
+
 void IVUsers::print(raw_ostream &OS, const Module *M) const {
   OS << "IV Users for loop ";
   WriteAsOperand(OS, L->getHeader(), false);
@@ -349,6 +357,7 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
   }
   OS << ":\n";
 
+  IVUsersAsmAnnotator Annotator;
   for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e; ++Stride) {
     std::map<const SCEV *, IVUsersOfOneStride*>::const_iterator SI =
       IVUsesByStride.find(StrideOrder[Stride]);
@@ -364,7 +373,7 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
       if (UI->isUseOfPostIncrementedValue())
         OS << " (post-inc)";
       OS << " in ";
-      UI->getUser()->print(OS);
+      UI->getUser()->print(OS, &Annotator);
       OS << '\n';
     }
   }
