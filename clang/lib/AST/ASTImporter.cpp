@@ -17,6 +17,7 @@
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -74,6 +75,7 @@ namespace {
     // Importing declarations
     Decl *VisitDecl(Decl *D);
     Decl *VisitVarDecl(VarDecl *D);
+    Decl *VisitTypedefDecl(TypedefDecl *D);
   };
 }
 
@@ -565,19 +567,9 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
         return 0;
     }
   }
-  
-  TypeSourceInfo *TInfo = 0;
-  if (TypeSourceInfo *FromTInfo = D->getTypeSourceInfo()) {
-    TInfo = Importer.Import(FromTInfo);
-#if 0
-    // FIXME: Tolerate failures in translation type source
-    // information, at least until it is implemented.
-    if (!TInfo)
-      return 0;
-#endif
-  }
-  
+    
   // Create the imported variable.
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
   VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
                                    Name.getAsIdentifierInfo(), T, TInfo,
                                    D->getStorageClass());
@@ -595,6 +587,74 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   // FIXME: Other bits to merge?
   
   return ToVar;
+}
+
+Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
+  // Import the context of this declaration.
+  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+  if (!DC)
+    return 0;
+    
+  DeclContext *LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return 0;
+  }
+
+  // Import the name of this declaration.
+  DeclarationName Name = Importer.Import(D->getDeclName());
+  if (D->getDeclName() && !Name)
+    return 0;
+  
+  // Import the type of this declaration.
+  QualType T = Importer.Import(D->getUnderlyingType());
+  if (T.isNull())
+    return 0;
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+
+  // If this typedef is not in block scope, determine whether we've
+  // seen a typedef with the same name (that we can merge with) or any
+  // other entity by that name (which name lookup could conflict with).
+  if (!DC->isFunctionOrMethod()) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    unsigned IDNS = Decl::IDNS_Ordinary;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
+      if (TypedefDecl *FoundTypedef = dyn_cast<TypedefDecl>(*Lookup.first)) {
+        if (Importer.getToContext().typesAreCompatible(T, 
+                                         FoundTypedef->getUnderlyingType())) {
+          Importer.getImportedDecls()[D] = FoundTypedef;
+          return FoundTypedef;
+        }
+      }
+
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+      if (!Name)
+        return 0;
+    }
+  }
+
+  // Create the new typedef node.
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  TypedefDecl *ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
+                                               Loc, Name.getAsIdentifierInfo(),
+                                               TInfo);
+  ToTypedef->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToTypedef;
+  LexicalDC->addDecl(ToTypedef);
+  return ToTypedef;
 }
 
 ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
@@ -633,8 +693,18 @@ QualType ASTImporter::Import(QualType FromT) {
 }
 
 TypeSourceInfo *ASTImporter::Import(TypeSourceInfo *FromTSI) {
-  // FIXME: Implement!
-  return 0;
+  if (!FromTSI)
+    return FromTSI;
+
+  // FIXME: For now we just create a "trivial" type source info based
+  // on the type and a seingle location. Implement a real version of
+  // this.
+  QualType T = Import(FromTSI->getType());
+  if (T.isNull())
+    return 0;
+
+  return ToContext.getTrivialTypeSourceInfo(T, 
+                        FromTSI->getTypeLoc().getFullSourceRange().getBegin());
 }
 
 Decl *ASTImporter::Import(Decl *FromD) {
