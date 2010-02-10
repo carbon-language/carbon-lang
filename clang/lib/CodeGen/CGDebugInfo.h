@@ -175,6 +175,11 @@ private:
   void EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag, llvm::Value *AI,
                    CGBuilderTy &Builder, CodeGenFunction *CGF);
 
+  // EmitTypeForVarWithBlocksAttr - Build up structure info for the byref.  
+  // See BuildByRefType.
+  llvm::DIType EmitTypeForVarWithBlocksAttr(const ValueDecl *VD, 
+                                            uint64_t *OffSet);
+
   /// getContextDescriptor - Get context info for the decl.
   llvm::DIDescriptor getContextDescriptor(const Decl *Decl,
                                           llvm::DIDescriptor &CU);

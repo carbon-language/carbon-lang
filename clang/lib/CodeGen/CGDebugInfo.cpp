@@ -1362,6 +1362,141 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder) {
   RegionStack.pop_back();
 }
 
+// EmitTypeForVarWithBlocksAttr - Build up structure info for the byref.  
+// See BuildByRefType.
+llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
+                                                       uint64_t *XOffset) {
+
+  llvm::SmallVector<llvm::DIDescriptor, 5> EltTys;
+
+  QualType FType;
+  uint64_t FieldSize, FieldOffset;
+  unsigned FieldAlign;
+  
+  llvm::DICompileUnit Unit = getOrCreateCompileUnit(VD->getLocation());
+  QualType Type = VD->getType();  
+
+  FieldOffset = 0;
+  FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
+  llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = CGM.getContext().getTypeSize(FType);
+  FieldAlign = CGM.getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__isa", llvm::DICompileUnit(),
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+  FieldOffset += FieldSize;
+  
+  FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = CGM.getContext().getTypeSize(FType);
+  FieldAlign = CGM.getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__forwarding", llvm::DICompileUnit(),
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+  FieldOffset += FieldSize;
+  
+  FType = CGM.getContext().IntTy;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = CGM.getContext().getTypeSize(FType);
+  FieldAlign = CGM.getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__flags", llvm::DICompileUnit(),
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+  FieldOffset += FieldSize;
+  
+  FType = CGM.getContext().IntTy;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = CGM.getContext().getTypeSize(FType);
+  FieldAlign = CGM.getContext().getTypeAlign(FType);
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           "__size", llvm::DICompileUnit(),
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+  FieldOffset += FieldSize;
+  
+  bool HasCopyAndDispose = CGM.BlockRequiresCopying(Type);
+  if (HasCopyAndDispose) {
+    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = CGM.getContext().getTypeSize(FType);
+    FieldAlign = CGM.getContext().getTypeAlign(FType);
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             "__copy_helper", 
+                                             llvm::DICompileUnit(),
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+    
+    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = CGM.getContext().getTypeSize(FType);
+    FieldAlign = CGM.getContext().getTypeAlign(FType);
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             "__destroy_helper", 
+                                             llvm::DICompileUnit(),
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+  }
+  
+  CharUnits Align = CGM.getContext().getDeclAlign(VD);
+  if (Align > CharUnits::fromQuantity(
+        CGM.getContext().Target.getPointerAlign(0) / 8)) {
+    unsigned AlignedOffsetInBytes
+      = llvm::RoundUpToAlignment(FieldOffset/8, Align.getQuantity());
+    unsigned NumPaddingBytes
+      = AlignedOffsetInBytes - FieldOffset/8;
+    
+    if (NumPaddingBytes > 0) {
+      llvm::APInt pad(32, NumPaddingBytes);
+      FType = CGM.getContext().getConstantArrayType(CGM.getContext().CharTy,
+                                                    pad, ArrayType::Normal, 0);
+      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+      FieldSize = CGM.getContext().getTypeSize(FType);
+      FieldAlign = CGM.getContext().getTypeAlign(FType);
+      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member,
+                                               Unit, "", llvm::DICompileUnit(),
+                                               0, FieldSize, FieldAlign,
+                                               FieldOffset, 0, FieldTy);
+      EltTys.push_back(FieldTy);
+      FieldOffset += FieldSize;
+    }
+  }
+  
+  FType = Type;
+  FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  FieldSize = CGM.getContext().getTypeSize(FType);
+  FieldAlign = Align.getQuantity()*8;
+
+  *XOffset = FieldOffset;  
+  FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                           VD->getName(), llvm::DICompileUnit(),
+                                           0, FieldSize, FieldAlign,
+                                           FieldOffset, 0, FieldTy);
+  EltTys.push_back(FieldTy);
+  FieldOffset += FieldSize;
+  
+  llvm::DIArray Elements = 
+    DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
+  
+  unsigned Flags = llvm::DIType::FlagBlockByrefStruct;
+  
+  return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_structure_type, 
+                                          Unit, "",
+                                          llvm::DICompileUnit(),
+                                          0, FieldOffset, 0, 0, Flags,
+                                          llvm::DIType(), Elements);
+  
+}
 /// EmitDeclare - Emit local variable declaration debug info.
 void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                               llvm::Value *Storage, CGBuilderTy &Builder) {
@@ -1375,139 +1510,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     return;
 
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(VD->getLocation());
-  QualType Type = VD->getType();
-  llvm::DIType Ty = getOrCreateType(Type, Unit);
-  if (VD->hasAttr<BlocksAttr>()) {
-    llvm::DICompileUnit DefUnit;
-    unsigned Tag = llvm::dwarf::DW_TAG_structure_type;
-
-    llvm::SmallVector<llvm::DIDescriptor, 5> EltTys;
-
-    llvm::DIType FieldTy;
-
-    QualType FType;
-    uint64_t FieldSize, FieldOffset;
-    unsigned FieldAlign;
-
-    llvm::DIArray Elements;
-    llvm::DIType EltTy;
-    
-    // Build up structure for the byref.  See BuildByRefType.
-    FieldOffset = 0;
-    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__isa", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__forwarding", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    FType = CGM.getContext().IntTy;
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__flags", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    FType = CGM.getContext().IntTy;
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__size", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-    
-    bool HasCopyAndDispose = CGM.BlockRequiresCopying(Type);
-    if (HasCopyAndDispose) {
-      FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      FieldAlign = CGM.getContext().getTypeAlign(FType);
-      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                               "__copy_helper", DefUnit,
-                                               0, FieldSize, FieldAlign,
-                                               FieldOffset, 0, FieldTy);
-      EltTys.push_back(FieldTy);
-      FieldOffset += FieldSize;
-
-      FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      FieldAlign = CGM.getContext().getTypeAlign(FType);
-      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                               "__destroy_helper", DefUnit,
-                                               0, FieldSize, FieldAlign,
-                                               FieldOffset, 0, FieldTy);
-      EltTys.push_back(FieldTy);
-      FieldOffset += FieldSize;
-    }
-    
-    CharUnits Align = CGM.getContext().getDeclAlign(VD);
-    if (Align > CharUnits::fromQuantity(
-          CGM.getContext().Target.getPointerAlign(0) / 8)) {
-      unsigned AlignedOffsetInBytes
-        = llvm::RoundUpToAlignment(FieldOffset/8, Align.getQuantity());
-      unsigned NumPaddingBytes
-        = AlignedOffsetInBytes - FieldOffset/8;
-
-      if (NumPaddingBytes > 0) {
-        llvm::APInt pad(32, NumPaddingBytes);
-        FType = CGM.getContext().getConstantArrayType(CGM.getContext().CharTy,
-                                                     pad, ArrayType::Normal, 0);
-        FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-        FieldSize = CGM.getContext().getTypeSize(FType);
-        FieldAlign = CGM.getContext().getTypeAlign(FType);
-        FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member,
-                                                 Unit, "", DefUnit,
-                                                 0, FieldSize, FieldAlign,
-                                                 FieldOffset, 0, FieldTy);
-        EltTys.push_back(FieldTy);
-        FieldOffset += FieldSize;
-      }
-    }
-
-    FType = Type;
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = Align.getQuantity()*8;
-    
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             VD->getName(), DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
-
-    unsigned Flags = llvm::DIType::FlagBlockByrefStruct;
-
-    Ty = DebugFactory.CreateCompositeType(Tag, Unit, "",
-                                          llvm::DICompileUnit(),
-                                          0, FieldOffset, 0, 0, Flags,
-                                          llvm::DIType(), Elements);
-  }
+  llvm::DIType Ty;
+  uint64_t XOffset = 0;
+  if (VD->hasAttr<BlocksAttr>())
+    Ty = EmitTypeForVarWithBlocksAttr(VD, &XOffset);
+  else 
+    Ty = getOrCreateType(VD->getType(), Unit);
 
   // Get location information.
   SourceManager &SM = CGM.getContext().getSourceManager();
@@ -1556,140 +1564,11 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
 
   uint64_t XOffset = 0;
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(VD->getLocation());
-  QualType Type = VD->getType();
-  llvm::DIType Ty = getOrCreateType(Type, Unit);
-  if (VD->hasAttr<BlocksAttr>()) {
-    llvm::DICompileUnit DefUnit;
-    unsigned Tag = llvm::dwarf::DW_TAG_structure_type;
-
-    llvm::SmallVector<llvm::DIDescriptor, 5> EltTys;
-
-    llvm::DIType FieldTy;
-
-    QualType FType;
-    uint64_t FieldSize, FieldOffset;
-    unsigned FieldAlign;
-
-    llvm::DIArray Elements;
-    llvm::DIType EltTy;
-    
-    // Build up structure for the byref.  See BuildByRefType.
-    FieldOffset = 0;
-    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__isa", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__forwarding", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    FType = CGM.getContext().IntTy;
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__flags", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    FType = CGM.getContext().IntTy;
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = CGM.getContext().getTypeAlign(FType);
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             "__size", DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-    
-    bool HasCopyAndDispose = CGM.BlockRequiresCopying(Type);
-    if (HasCopyAndDispose) {
-      FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      FieldAlign = CGM.getContext().getTypeAlign(FType);
-      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                               "__copy_helper", DefUnit,
-                                               0, FieldSize, FieldAlign,
-                                               FieldOffset, 0, FieldTy);
-      EltTys.push_back(FieldTy);
-      FieldOffset += FieldSize;
-
-      FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
-      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-      FieldSize = CGM.getContext().getTypeSize(FType);
-      FieldAlign = CGM.getContext().getTypeAlign(FType);
-      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                               "__destroy_helper", DefUnit,
-                                               0, FieldSize, FieldAlign,
-                                               FieldOffset, 0, FieldTy);
-      EltTys.push_back(FieldTy);
-      FieldOffset += FieldSize;
-    }
-    
-    CharUnits Align = CGM.getContext().getDeclAlign(VD);
-    if (Align > CharUnits::fromQuantity(
-          CGM.getContext().Target.getPointerAlign(0) / 8)) {
-      unsigned AlignedOffsetInBytes
-        = llvm::RoundUpToAlignment(FieldOffset/8, Align.getQuantity());
-      unsigned NumPaddingBytes
-        = AlignedOffsetInBytes - FieldOffset/8;
-
-      if (NumPaddingBytes > 0) {
-        llvm::APInt pad(32, NumPaddingBytes);
-        FType = CGM.getContext().getConstantArrayType(CGM.getContext().CharTy,
-                                                     pad, ArrayType::Normal, 0);
-        FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-        FieldSize = CGM.getContext().getTypeSize(FType);
-        FieldAlign = CGM.getContext().getTypeAlign(FType);
-        FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member,
-                                                 Unit, "", DefUnit,
-                                                 0, FieldSize, FieldAlign,
-                                                 FieldOffset, 0, FieldTy);
-        EltTys.push_back(FieldTy);
-        FieldOffset += FieldSize;
-      }
-    }
-
-    FType = Type;
-    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
-    FieldSize = CGM.getContext().getTypeSize(FType);
-    FieldAlign = Align.getQuantity()*8;
-    
-    XOffset = FieldOffset;
-    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
-                                             VD->getName(), DefUnit,
-                                             0, FieldSize, FieldAlign,
-                                             FieldOffset, 0, FieldTy);
-    EltTys.push_back(FieldTy);
-    FieldOffset += FieldSize;
-
-    Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
-
-    unsigned Flags = llvm::DIType::FlagBlockByrefStruct;
-
-    Ty = DebugFactory.CreateCompositeType(Tag, Unit, "",
-                                          llvm::DICompileUnit(),
-                                          0, FieldOffset, 0, 0, Flags,
-                                          llvm::DIType(), Elements);
-  }
+  llvm::DIType Ty;
+  if (VD->hasAttr<BlocksAttr>())
+    Ty = EmitTypeForVarWithBlocksAttr(VD, &XOffset);
+  else 
+    Ty = getOrCreateType(VD->getType(), Unit);
 
   // Get location information.
   SourceManager &SM = CGM.getContext().getSourceManager();
