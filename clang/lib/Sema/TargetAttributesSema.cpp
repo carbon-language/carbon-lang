@@ -70,6 +70,46 @@ namespace {
   };
 }
 
+static void HandleX86ForceAlignArgPointerAttr(Decl *D,
+                                              const AttributeList& Attr,
+                                              Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+
+  // If we try to apply it to a function pointer, don't warn, but don't
+  // do anything, either. It doesn't matter anyway, because there's nothing
+  // special about calling a force_align_arg_pointer function.
+  ValueDecl* VD = dyn_cast<ValueDecl>(D);
+  if(VD->getType()->isFunctionPointerType())
+    return;
+  // Attribute can only be applied to function types.
+  if(!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << /* function */0;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) X86ForceAlignArgPointerAttr());
+}
+
+namespace {
+  class X86AttributesSema : public TargetAttributesSema {
+  public:
+    X86AttributesSema() { }
+    bool ProcessDeclAttribute(Scope *scope, Decl *D,
+                              const AttributeList &Attr, Sema &S) const {
+      if (Attr.getName()->getName() == "force_align_arg_pointer") {
+        HandleX86ForceAlignArgPointerAttr(D, Attr, S);
+        return true;
+      }
+      return false;
+    }
+  };
+}
+
 const TargetAttributesSema &Sema::getTargetAttributesSema() const {
   if (TheTargetAttributesSema)
     return *TheTargetAttributesSema;
@@ -81,6 +121,8 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
 
   case llvm::Triple::msp430:
     return *(TheTargetAttributesSema = new MSP430AttributesSema);
+  case llvm::Triple::x86:
+    return *(TheTargetAttributesSema = new X86AttributesSema);
   }
 }
 

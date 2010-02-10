@@ -96,7 +96,8 @@ public:
     FIRST_TARGET_ATTRIBUTE,
     DLLExport,
     DLLImport,
-    MSP430Interrupt
+    MSP430Interrupt,
+    X86ForceAlignArgPointer
   };
 
 private:
@@ -569,6 +570,8 @@ public:
   static bool classof(const Attr *A) { return A->getKind() == MSP430Interrupt; }
   static bool classof(const MSP430InterruptAttr *A) { return true; }
 };
+
+DEF_SIMPLE_ATTR(X86ForceAlignArgPointer);
 
 #undef DEF_SIMPLE_ATTR
 

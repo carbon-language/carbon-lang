@@ -55,6 +55,7 @@ DEF_SIMPLE_ATTR_CLONE(Hiding)
 DEF_SIMPLE_ATTR_CLONE(Override)
 DEF_SIMPLE_ATTR_CLONE(DLLImport)
 DEF_SIMPLE_ATTR_CLONE(DLLExport)
+DEF_SIMPLE_ATTR_CLONE(X86ForceAlignArgPointer)
 
 Attr* PragmaPackAttr::clone(ASTContext &C) const {
   return ::new (C) PragmaPackAttr(Alignment);
