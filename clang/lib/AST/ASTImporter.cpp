@@ -81,10 +81,10 @@ namespace {
                          DeclarationName &Name, SourceLocation &Loc, 
                          QualType &T);
     Decl *VisitDecl(Decl *D);
+    Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
-    Decl *VisitTypedefDecl(TypedefDecl *D);
   };
 }
 
@@ -506,6 +506,61 @@ Decl *ASTNodeImporter::VisitDecl(Decl *D) {
   return 0;
 }
 
+Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
+  // Import the major distinguishing characteristics of this typedef.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  // Import the underlying type of this typedef;
+  QualType T = Importer.Import(D->getUnderlyingType());
+  if (T.isNull())
+    return 0;
+  
+  // If this typedef is not in block scope, determine whether we've
+  // seen a typedef with the same name (that we can merge with) or any
+  // other entity by that name (which name lookup could conflict with).
+  if (!DC->isFunctionOrMethod()) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    unsigned IDNS = Decl::IDNS_Ordinary;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
+      if (TypedefDecl *FoundTypedef = dyn_cast<TypedefDecl>(*Lookup.first)) {
+        if (Importer.getToContext().typesAreCompatible(T, 
+                                                       FoundTypedef->getUnderlyingType())) {
+          Importer.getImportedDecls()[D] = FoundTypedef;
+          return FoundTypedef;
+        }
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+      if (!Name)
+        return 0;
+    }
+  }
+  
+  // Create the new typedef node.
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  TypedefDecl *ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
+                                               Loc, Name.getAsIdentifierInfo(),
+                                               TInfo);
+  ToTypedef->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToTypedef;
+  LexicalDC->addDecl(ToTypedef);
+  return ToTypedef;
+}
+
 Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // Import the major distinguishing characteristics of this function.
   DeclContext *DC, *LexicalDC;
@@ -743,61 +798,6 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
                                             /*FIXME: Default argument*/ 0);
   Importer.getImportedDecls()[D] = ToParm;
   return ToParm;
-}
-
-Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
-  // Import the major distinguishing characteristics of this typedef.
-  DeclContext *DC, *LexicalDC;
-  DeclarationName Name;
-  SourceLocation Loc;
-  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
-    return 0;
-  
-  // Import the underlying type of this typedef;
-  QualType T = Importer.Import(D->getUnderlyingType());
-  if (T.isNull())
-    return 0;
-  
-  // If this typedef is not in block scope, determine whether we've
-  // seen a typedef with the same name (that we can merge with) or any
-  // other entity by that name (which name lookup could conflict with).
-  if (!DC->isFunctionOrMethod()) {
-    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
-    unsigned IDNS = Decl::IDNS_Ordinary;
-    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
-         Lookup.first != Lookup.second; 
-         ++Lookup.first) {
-      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
-        continue;
-      if (TypedefDecl *FoundTypedef = dyn_cast<TypedefDecl>(*Lookup.first)) {
-        if (Importer.getToContext().typesAreCompatible(T, 
-                                         FoundTypedef->getUnderlyingType())) {
-          Importer.getImportedDecls()[D] = FoundTypedef;
-          return FoundTypedef;
-        }
-      }
-
-      ConflictingDecls.push_back(*Lookup.first);
-    }
-
-    if (!ConflictingDecls.empty()) {
-      Name = Importer.HandleNameConflict(Name, DC, IDNS,
-                                         ConflictingDecls.data(), 
-                                         ConflictingDecls.size());
-      if (!Name)
-        return 0;
-    }
-  }
-
-  // Create the new typedef node.
-  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
-  TypedefDecl *ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
-                                               Loc, Name.getAsIdentifierInfo(),
-                                               TInfo);
-  ToTypedef->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToTypedef;
-  LexicalDC->addDecl(ToTypedef);
-  return ToTypedef;
 }
 
 ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
