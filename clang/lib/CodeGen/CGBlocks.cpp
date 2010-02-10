@@ -13,6 +13,7 @@
 
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
+#include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Module.h"
@@ -355,7 +356,21 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
   }
 
   QualType BPT = BE->getType();
-  return Builder.CreateBitCast(V, ConvertType(BPT));
+  V = Builder.CreateBitCast(V, ConvertType(BPT));
+  // See if this is a __weak block variable and the must call objc_read_weak
+  // on it.
+  const FunctionType *ftype = BPT->getPointeeType()->getAs<FunctionType>();
+  QualType RES = ftype->getResultType();
+  if (RES.isObjCGCWeak()) {
+    // Must cast argument to id*
+    const llvm::Type *ObjectPtrTy = 
+      ConvertType(CGM.getContext().getObjCIdType());
+    const llvm::Type *PtrObjectPtrTy = 
+      llvm::PointerType::getUnqual(ObjectPtrTy);
+    V = Builder.CreateBitCast(V, PtrObjectPtrTy);
+    V =  CGM.getObjCRuntime().EmitObjCWeakRead(*this, V);
+  }
+  return V;
 }
 
 
