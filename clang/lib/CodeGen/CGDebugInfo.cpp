@@ -91,16 +91,15 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
   // Get source file information.
   const char *FileName =  "<unknown>";
   SourceManager &SM = CGM.getContext().getSourceManager();
-  unsigned FID = 0;
   if (Loc.isValid()) {
     PresumedLoc PLoc = SM.getPresumedLoc(Loc);
     FileName = PLoc.getFilename();
-    FID = PLoc.getIncludeLoc().getRawEncoding();
-  }
+    unsigned FID = PLoc.getIncludeLoc().getRawEncoding();
 
-  // See if this compile unit has been used before.
-  llvm::DICompileUnit &Unit = CompileUnitCache[FID];
-  if (!Unit.isNull()) return Unit;
+    // See if this compile unit has been used before for this valid location.
+    llvm::DICompileUnit &Unit = CompileUnitCache[FID];
+    if (!Unit.isNull()) return Unit;
+  }
 
   // Get absolute path name.
   llvm::sys::Path AbsFileName(FileName);
@@ -150,7 +149,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     RuntimeVers = LO.ObjCNonFragileABI ? 2 : 1;
 
   // Create new compile unit.
-  return Unit = DebugFactory.CreateCompileUnit(
+  return DebugFactory.CreateCompileUnit(
     LangTag, AbsFileName.getLast(), AbsFileName.getDirname(), Producer, isMain,
     LO.Optimize, CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
 }
@@ -1515,9 +1514,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   PresumedLoc PLoc = SM.getPresumedLoc(VD->getLocation());
   unsigned Line = 0;
   unsigned Column = 0;
-  if (!PLoc.isInvalid()) {
+  if (PLoc.isInvalid())
+    PLoc = SM.getPresumedLoc(CurLoc);
+  if (PLoc.isValid()) {
     Line = PLoc.getLine();
     Column = PLoc.getColumn();
+    Unit = getOrCreateCompileUnit(CurLoc);
   } else {
     Unit = llvm::DICompileUnit();
   }
