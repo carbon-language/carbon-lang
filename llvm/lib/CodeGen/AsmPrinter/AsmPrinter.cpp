@@ -324,6 +324,64 @@ void AsmPrinter::EmitFunctionEntryLabel() {
 }
 
 
+/// EmitComments - Pretty-print comments for instructions.
+static void EmitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
+  const MachineFunction *MF = MI.getParent()->getParent();
+  const TargetMachine &TM = MF->getTarget();
+  
+  if (!MI.getDebugLoc().isUnknown()) {
+    DILocation DLT = MF->getDILocation(MI.getDebugLoc());
+    
+    // Print source line info.
+    DIScope Scope = DLT.getScope();
+    // Omit the directory, because it's likely to be long and uninteresting.
+    if (!Scope.isNull())
+      CommentOS << Scope.getFilename();
+    else
+      CommentOS << "<unknown>";
+    CommentOS << ':' << DLT.getLineNumber();
+    if (DLT.getColumnNumber() != 0)
+      CommentOS << ':' << DLT.getColumnNumber();
+    CommentOS << '\n';
+  }
+  
+  // Check for spills and reloads
+  int FI;
+  
+  const MachineFrameInfo *FrameInfo = MF->getFrameInfo();
+  
+  // We assume a single instruction only has a spill or reload, not
+  // both.
+  const MachineMemOperand *MMO;
+  if (TM.getInstrInfo()->isLoadFromStackSlotPostFE(&MI, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      MMO = *MI.memoperands_begin();
+      CommentOS << MMO->getSize() << "-byte Reload\n";
+    }
+  } else if (TM.getInstrInfo()->hasLoadFromStackSlot(&MI, MMO, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI))
+      CommentOS << MMO->getSize() << "-byte Folded Reload\n";
+  } else if (TM.getInstrInfo()->isStoreToStackSlotPostFE(&MI, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
+      MMO = *MI.memoperands_begin();
+      CommentOS << MMO->getSize() << "-byte Spill\n";
+    }
+  } else if (TM.getInstrInfo()->hasStoreToStackSlot(&MI, MMO, FI)) {
+    if (FrameInfo->isSpillSlotObjectIndex(FI))
+      CommentOS << MMO->getSize() << "-byte Folded Spill\n";
+  }
+  
+  // Check for spill-induced copies
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  if (TM.getInstrInfo()->isMoveInstr(MI, SrcReg, DstReg,
+                                     SrcSubIdx, DstSubIdx)) {
+    if (MI.getAsmPrinterFlag(AsmPrinter::ReloadReuse))
+      CommentOS << " Reload Reuse\n";
+  }
+}
+
+
+
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
 void AsmPrinter::EmitFunctionBody() {
@@ -347,6 +405,9 @@ void AsmPrinter::EmitFunctionBody() {
       // FIXME: Clean up processDebugLoc.
       processDebugLoc(II, true);
       
+      if (VerboseAsm)
+        EmitComments(*II, OutStreamer.GetCommentOS());
+
       switch (II->getOpcode()) {
       case TargetOpcode::DBG_LABEL:
       case TargetOpcode::EH_LABEL:
@@ -366,8 +427,6 @@ void AsmPrinter::EmitFunctionBody() {
         EmitInstruction(II);
         break;
       }
-      if (VerboseAsm)
-        EmitComments(*II);
       
       // FIXME: Clean up processDebugLoc.
       processDebugLoc(II, false);
@@ -1727,77 +1786,5 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
   
   llvm_report_error("no GCMetadataPrinter registered for GC: " + Twine(Name));
   return 0;
-}
-
-/// EmitComments - Pretty-print comments for instructions
-void AsmPrinter::EmitComments(const MachineInstr &MI) const {
-  if (!VerboseAsm)
-    return;
-
-  if (!MI.getDebugLoc().isUnknown()) {
-    DILocation DLT = MF->getDILocation(MI.getDebugLoc());
-
-    // Print source line info.
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << ' ';
-    DIScope Scope = DLT.getScope();
-    // Omit the directory, because it's likely to be long and uninteresting.
-    if (!Scope.isNull())
-      O << Scope.getFilename();
-    else
-      O << "<unknown>";
-    O << ':' << DLT.getLineNumber();
-    if (DLT.getColumnNumber() != 0)
-      O << ':' << DLT.getColumnNumber();
-    O << '\n';
-  }
-
-  // Check for spills and reloads
-  int FI;
-
-  const MachineFrameInfo *FrameInfo =
-    MI.getParent()->getParent()->getFrameInfo();
-
-  // We assume a single instruction only has a spill or reload, not
-  // both.
-  const MachineMemOperand *MMO;
-  if (TM.getInstrInfo()->isLoadFromStackSlotPostFE(&MI, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
-      MMO = *MI.memoperands_begin();
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Reload\n";
-    }
-  }
-  else if (TM.getInstrInfo()->hasLoadFromStackSlot(&MI, MMO, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' '
-        << MMO->getSize() << "-byte Folded Reload\n";
-    }
-  }
-  else if (TM.getInstrInfo()->isStoreToStackSlotPostFE(&MI, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
-      MMO = *MI.memoperands_begin();
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' ' << MMO->getSize() << "-byte Spill\n";
-    }
-  }
-  else if (TM.getInstrInfo()->hasStoreToStackSlot(&MI, MMO, FI)) {
-    if (FrameInfo->isSpillSlotObjectIndex(FI)) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << ' '
-        << MMO->getSize() << "-byte Folded Spill\n";
-    }
-  }
-
-  // Check for spill-induced copies
-  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-  if (TM.getInstrInfo()->isMoveInstr(MI, SrcReg, DstReg,
-                                      SrcSubIdx, DstSubIdx)) {
-    if (MI.getAsmPrinterFlag(ReloadReuse)) {
-      O.PadToColumn(MAI->getCommentColumn());
-      O << MAI->getCommentString() << " Reload Reuse\n";
-    }
-  }
 }
 

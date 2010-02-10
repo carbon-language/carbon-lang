@@ -313,9 +313,6 @@ namespace llvm {
     /// debug tables.
     void printDeclare(const MachineInstr *MI) const;
 
-    /// EmitComments - Pretty-print comments for instructions
-    void EmitComments(const MachineInstr &MI) const;
-
     /// GetGlobalValueSymbol - Return the MCSymbol for the specified global
     /// value.
     MCSymbol *GetGlobalValueSymbol(const GlobalValue *GV) const;
