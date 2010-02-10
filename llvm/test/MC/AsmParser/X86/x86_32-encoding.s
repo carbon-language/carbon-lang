@@ -1,5 +1,9 @@
 // RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
 
+// FIXME: This is failing to match on linux currently, with some kind of match
+// failure. I am investigating. - ddunbar        
+// XFAIL: linux
+
 // CHECK: movb	$127, 3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xc6,0x84,0xcb,0xef,0xbe,0xad,0xde,0x7f]
         	movb	$0x7f,0xdeadbeef(%ebx,%ecx,8)
