@@ -214,6 +214,15 @@ static bool StripDebugInfo(Module &M) {
     Changed = true;
   }
 
+  if (Function *DbgVal = M.getFunction("llvm.dbg.value")) {
+    while (!DbgVal->use_empty()) {
+      CallInst *CI = cast<CallInst>(DbgVal->use_back());
+      CI->eraseFromParent();
+    }
+    DbgVal->eraseFromParent();
+    Changed = true;
+  }
+
   NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
   if (NMD) {
     Changed = true;
