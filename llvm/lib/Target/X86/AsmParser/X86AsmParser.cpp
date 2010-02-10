@@ -10,6 +10,7 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "X86.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
@@ -492,24 +493,20 @@ X86Operand *X86ATTAsmParser::ParseMemOperand() {
 bool X86ATTAsmParser::
 ParseInstruction(const StringRef &Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // FIXME: Hack to recognize "sal..." for now. We need a way to represent
-  // alternative syntaxes in the .td file, without requiring instruction
-  // duplication.
-  if (Name.startswith("sal")) {
-    std::string Tmp = "shl" + Name.substr(3).str();
-    Operands.push_back(X86Operand::CreateToken(Tmp, NameLoc));
-  } else {
-    // FIXME: This is a hack.  We eventually want to add a general pattern
-    // mechanism to be used in the table gen file for these assembly names that
-    // use the same opcodes.  Also we should only allow the "alternate names"
-    // for rep and repne with the instructions they can only appear with.
-    StringRef PatchedName = Name;
-    if (Name == "repe" || Name == "repz")
-      PatchedName = "rep";
-    else if (Name == "repnz")
-      PatchedName = "repne";
-    Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
-  }
+  // FIXME: Hack to recognize "sal..." and "rep..." for now. We need a way to
+  // represent alternative syntaxes in the .td file, without requiring
+  // instruction duplication.
+  StringRef PatchedName = StringSwitch<StringRef>(Name)
+    .Case("sal", "shl")
+    .Case("salb", "shlb")
+    .Case("sall", "shll")
+    .Case("salq", "shlq")
+    .Case("salw", "shlw")
+    .Case("repe", "rep")
+    .Case("repz", "rep")
+    .Case("repnz", "repne")
+    .Default(Name);
+  Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
 
