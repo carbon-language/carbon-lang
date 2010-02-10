@@ -48,7 +48,10 @@ public:
     : MCStreamer(Context), OS(os), MAI(mai), InstPrinter(printer),
       Emitter(emitter), CommentStream(CommentToEmit),
       IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
-      ShowFixups(showFixups), ShowInst(showInst) {}
+      ShowFixups(showFixups), ShowInst(showInst) {
+    if (InstPrinter && IsVerboseAsm)
+      InstPrinter->setCommentStream(CommentStream);
+  }
   ~MCAsmStreamer() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }

@@ -18,6 +18,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
 #include "X86GenInstrNames.inc"
 using namespace llvm;
@@ -65,6 +66,10 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo) {
     O << '%' << getRegisterName(Op.getReg());
   } else if (Op.isImm()) {
     O << '$' << Op.getImm();
+    
+    if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
+      *CommentStream << format("imm = 0x%X\n", Op.getImm());
+    
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << '$' << *Op.getExpr();

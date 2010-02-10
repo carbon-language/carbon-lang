@@ -20,12 +20,22 @@ class MCAsmInfo;
 /// that converts an MCInst to valid target assembly syntax.
 class MCInstPrinter {
 protected:
+  /// O - The main stream to emit instruction text to.
   raw_ostream &O;
+  
+  /// CommentStream - a stream that comments can be emitted to if desired.
+  /// Each comment must end with a newline.  This will be null if verbose
+  /// assembly emission is disable.
+  raw_ostream *CommentStream;
   const MCAsmInfo &MAI;
 public:
-  MCInstPrinter(raw_ostream &o, const MCAsmInfo &mai) : O(o), MAI(mai) {}
+  MCInstPrinter(raw_ostream &o, const MCAsmInfo &mai)
+    : O(o), CommentStream(0), MAI(mai) {}
   
   virtual ~MCInstPrinter();
+
+  /// setCommentStream - Specify a stream to emit comments to.
+  void setCommentStream(raw_ostream &OS) { CommentStream = &OS; }
   
   /// printInst - Print the specified MCInst to the current raw_ostream.
   ///
