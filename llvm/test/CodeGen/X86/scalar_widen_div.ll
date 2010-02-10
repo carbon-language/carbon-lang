@@ -152,3 +152,32 @@ define <5 x i64> @test_ulong_rem(<5 x i64> %num, <5 x i64> %rem) {
   %rem.r = urem <5 x i64> %num, %rem
   ret <5 x i64>  %rem.r
 }
+
+define void @test_int_div(<3 x i32>* %dest, <3 x i32>* %old, i32 %n) {
+; CHECK: idivl
+; CHECK: idivl
+; CHECK: idivl
+; CHECK-NOT: idivl
+; CHECK: ret
+entry:
+  %cmp13 = icmp sgt i32 %n, 0
+  br i1 %cmp13, label %bb.nph, label %for.end
+
+bb.nph:  
+  br label %for.body
+
+for.body:
+  %i.014 = phi i32 [ 0, %bb.nph ], [ %inc, %for.body ] 
+  %arrayidx11 = getelementptr <3 x i32>* %dest, i32 %i.014
+  %tmp4 = load <3 x i32>* %arrayidx11 ; <<3 x i32>> [#uses=1]
+  %arrayidx7 = getelementptr inbounds <3 x i32>* %old, i32 %i.014
+  %tmp8 = load <3 x i32>* %arrayidx7 ; <<3 x i32>> [#uses=1]
+  %div = sdiv <3 x i32> %tmp4, %tmp8
+  store <3 x i32> %div, <3 x i32>* %arrayidx11
+  %inc = add nsw i32 %i.014, 1
+  %exitcond = icmp eq i32 %inc, %n 
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}

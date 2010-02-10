@@ -1001,19 +1001,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   computeRegisterProperties();
 
-  // Divide and reminder operations have no vector equivalent and can
-  // trap. Do a custom widening for these operations in which we never
-  // generate more divides/remainder than the original vector width.
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-       VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
-    if (!isTypeLegal((MVT::SimpleValueType)VT)) {
-      setOperationAction(ISD::SDIV, (MVT::SimpleValueType) VT, Custom);
-      setOperationAction(ISD::UDIV, (MVT::SimpleValueType) VT, Custom);
-      setOperationAction(ISD::SREM, (MVT::SimpleValueType) VT, Custom);
-      setOperationAction(ISD::UREM, (MVT::SimpleValueType) VT, Custom);
-    }
-  }
-
   // FIXME: These should be based on subtarget info. Plus, the values should
   // be smaller when we are in optimizing for size mode.
   maxStoresPerMemset = 16; // For @llvm.memset -> sequence of stores
@@ -7570,14 +7557,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue Ops[] = { eax, edx };
     Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Ops, 2));
     Results.push_back(edx.getValue(1));
-    return;
-  }
-  case ISD::SDIV:
-  case ISD::UDIV:
-  case ISD::SREM:
-  case ISD::UREM: {
-    EVT WidenVT = getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
-    Results.push_back(DAG.UnrollVectorOp(N, WidenVT.getVectorNumElements()));
     return;
   }
   case ISD::ATOMIC_CMP_SWAP: {

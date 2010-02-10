@@ -1242,10 +1242,96 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
 
 SDValue DAGTypeLegalizer::WidenVecRes_Binary(SDNode *N) {
   // Binary op widening.
+  unsigned Opcode = N->getOpcode();
+  DebugLoc dl = N->getDebugLoc();
   EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
-  SDValue InOp1 = GetWidenedVector(N->getOperand(0));
-  SDValue InOp2 = GetWidenedVector(N->getOperand(1));
-  return DAG.getNode(N->getOpcode(), N->getDebugLoc(), WidenVT, InOp1, InOp2);
+  EVT WidenEltVT = WidenVT.getVectorElementType();
+  EVT VT = WidenVT;
+  unsigned NumElts =  VT.getVectorNumElements();
+  while (!TLI.isTypeLegal(VT) && NumElts != 1) {
+     NumElts = NumElts / 2;
+     VT = EVT::getVectorVT(*DAG.getContext(), WidenEltVT, NumElts);
+  }
+
+  if (NumElts != 1 && !TLI.canOpTrap(N->getOpcode(), VT)) {
+    // Operation doesn't trap so just widen as normal.
+    SDValue InOp1 = GetWidenedVector(N->getOperand(0));
+    SDValue InOp2 = GetWidenedVector(N->getOperand(1));
+    return DAG.getNode(N->getOpcode(), dl, WidenVT, InOp1, InOp2);
+  } else if (NumElts == 1) {
+    // No legal vector version so unroll the vector operation and then widen.
+    return DAG.UnrollVectorOp(N, WidenVT.getVectorNumElements());
+  } else {
+    // Since the operation can trap, apply operation on the original vector.
+    SDValue InOp1 = GetWidenedVector(N->getOperand(0));
+    SDValue InOp2 = GetWidenedVector(N->getOperand(1));
+    unsigned CurNumElts = N->getValueType(0).getVectorNumElements();
+
+    SmallVector<SDValue, 16> ConcatOps(CurNumElts);
+    unsigned ConcatEnd = 0;  // Current ConcatOps index.
+    unsigned Idx = 0;        // Current Idx into input vectors.
+    while (CurNumElts != 0) {
+      while (CurNumElts >= NumElts) {
+        SDValue EOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, InOp1,
+                                   DAG.getIntPtrConstant(Idx));
+        SDValue EOp2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, InOp2,
+                                   DAG.getIntPtrConstant(Idx));
+        ConcatOps[ConcatEnd++] = DAG.getNode(Opcode, dl, VT, EOp1, EOp2);
+        Idx += NumElts;
+        CurNumElts -= NumElts;
+      }
+      EVT PrevVecVT = VT;
+      do {
+        NumElts = NumElts / 2;
+        VT = EVT::getVectorVT(*DAG.getContext(), WidenEltVT, NumElts);
+      } while (!TLI.isTypeLegal(VT) && NumElts != 1);
+
+      if (NumElts == 1) {
+        // Since we are using concat vector, build a vector from the scalar ops.
+        SDValue VecOp = DAG.getUNDEF(PrevVecVT);
+        for (unsigned i = 0; i != CurNumElts; ++i, ++Idx) {
+          SDValue EOp1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, WidenEltVT, 
+                                     InOp1, DAG.getIntPtrConstant(Idx));
+          SDValue EOp2 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, WidenEltVT, 
+                                     InOp2, DAG.getIntPtrConstant(Idx));
+          VecOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, PrevVecVT, VecOp,
+                              DAG.getNode(Opcode, dl, WidenEltVT, EOp1, EOp2),
+                              DAG.getIntPtrConstant(i));
+        }
+        CurNumElts = 0;
+        ConcatOps[ConcatEnd++] = VecOp;
+      }
+    }
+
+    // Check to see if we have a single operation with the widen type.
+    if (ConcatEnd == 1) {
+      VT = ConcatOps[0].getValueType();
+      if (VT == WidenVT)
+        return ConcatOps[0];
+    }
+
+    // Rebuild vector to one with the widen type
+    Idx = ConcatEnd - 1;
+    while (Idx != 0) {
+      VT = ConcatOps[Idx--].getValueType();
+      while (Idx != 0 && ConcatOps[Idx].getValueType() == VT)
+        --Idx;
+      if (Idx != 0) {
+        VT = ConcatOps[Idx].getValueType();
+        ConcatOps[Idx+1] = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
+                                     &ConcatOps[Idx+1], ConcatEnd - Idx - 1);
+        ConcatEnd = Idx + 2;
+      }
+    }
+    
+    unsigned NumOps = WidenVT.getVectorNumElements()/VT.getVectorNumElements();
+    if (NumOps != ConcatEnd ) {
+      SDValue UndefVal = DAG.getUNDEF(VT);
+      for (unsigned j = ConcatEnd; j < NumOps; ++j)
+        ConcatOps[j] = UndefVal;
+    }
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, WidenVT, &ConcatOps[0], NumOps);
+  }
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {

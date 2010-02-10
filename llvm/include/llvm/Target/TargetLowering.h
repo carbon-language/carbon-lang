@@ -346,6 +346,11 @@ public:
     return true;
   }
 
+  /// canOpTrap - Returns true if the operation can trap for the value type.
+  /// VT must be a legal type. By default, we optimistically assume most
+  /// operations don't trap except for divide and remainder.
+  virtual bool canOpTrap(unsigned Op, EVT VT) const;
+
   /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
   /// used by Targets can use this to indicate if there is a suitable
   /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant

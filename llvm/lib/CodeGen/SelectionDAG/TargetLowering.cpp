@@ -540,6 +540,24 @@ TargetLowering::~TargetLowering() {
   delete &TLOF;
 }
 
+/// canOpTrap - Returns true if the operation can trap for the value type.
+/// VT must be a legal type.
+bool TargetLowering::canOpTrap(unsigned Op, EVT VT) const {
+  assert(isTypeLegal(VT));
+  switch (Op) {
+  default:
+    return false;
+  case ISD::FDIV:
+  case ISD::FREM:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM:
+    return true;
+  }
+}
+
+
 static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
                                        unsigned &NumIntermediates,
                                        EVT &RegisterVT,
