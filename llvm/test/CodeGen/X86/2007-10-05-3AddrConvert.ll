@@ -36,7 +36,9 @@ bb.i6.i:		; preds = %bb.i6.i, %stepsystem.exit.i
 
 bb107.i.i:		; preds = %bb107.i.i, %bb.i6.i
 	%q_addr.0.i.i.in = phi %struct.bnode** [ null, %bb107.i.i ], [ %4, %bb.i6.i ]		; <%struct.bnode**> [#uses=1]
-	%q_addr.0.i.i = load %struct.bnode** %q_addr.0.i.i.in		; <%struct.bnode*> [#uses=0]
+	%q_addr.0.i.i = load %struct.bnode** %q_addr.0.i.i.in		; <%struct.bnode*> [#uses=1]
+	%q_addr.1 = getelementptr %struct.anon* %0, i32 0, i32 4, i32 1
+	store %struct.bnode* %q_addr.0.i.i, %struct.bnode** %q_addr.1, align 4
 	br label %bb107.i.i
 
 bb47.loopexit.i:		; preds = %bb32.i

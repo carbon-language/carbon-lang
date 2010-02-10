@@ -32,16 +32,16 @@ bb.i35:                                           ; preds = %bb142
   br label %phi1.exit
 
 phi1.exit:                                        ; preds = %bb.i35, %bb142
-  %.pn = phi double [ %6, %bb.i35 ], [ 0.000000e+00, %bb142 ] ; <double> [#uses=0]
+  %.pn = phi double [ %6, %bb.i35 ], [ 0.000000e+00, %bb142 ] ; <double> [#uses=1]
   %9 = phi double [ %8, %bb.i35 ], [ 0.000000e+00, %bb142 ] ; <double> [#uses=1]
-  %10 = fmul double undef, %9                     ; <double> [#uses=0]
+  %10 = fmul double %.pn, %9                      ; <double> [#uses=1]
   br i1 %14, label %phi0.exit, label %bb.i
 
 bb.i:                                             ; preds = %phi1.exit
   unreachable
 
 phi0.exit:                                        ; preds = %phi1.exit
-  %11 = fsub double %4, undef                     ; <double> [#uses=1]
+  %11 = fsub double %4, %10                       ; <double> [#uses=1]
   %12 = fadd double 0.000000e+00, %11             ; <double> [#uses=1]
   store double %12, double* undef, align 4
   br label %bb142
