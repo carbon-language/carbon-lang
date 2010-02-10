@@ -552,6 +552,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
       OS << format("0x%02x", uint8_t(Code[i]));
     }
     OS << "]\n";
+    return;
   }
 
   // If we are showing fixups, create symbolic markers in the encoded
