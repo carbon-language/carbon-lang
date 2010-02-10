@@ -738,7 +738,8 @@ public:
     return CGM.CreateRuntimeFunction(
       llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                               Params, false),
-      "_Unwind_Resume_or_Rethrow");
+      (CGM.getLangOptions().SjLjExceptions ? "_Unwind_SjLj_Resume" :
+       "_Unwind_Resume_or_Rethrow"));
   }
 
   llvm::Constant *getObjCEndCatchFn() {

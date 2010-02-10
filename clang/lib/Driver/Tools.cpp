@@ -1004,6 +1004,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (needsExceptions(Args, InputType, getToolChain().getTriple()))
     CmdArgs.push_back("-fexceptions");
 
+  if (getToolChain().UseSjLjExceptions())
+    CmdArgs.push_back("-fsjlj-exceptions");
+
   // -frtti is default.
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");

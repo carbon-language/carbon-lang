@@ -176,6 +176,8 @@ public:
 
   virtual bool UseDwarfDebugFlags() const;
 
+  virtual bool UseSjLjExceptions() const;
+
   /// }
 };
 

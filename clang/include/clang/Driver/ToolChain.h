@@ -123,6 +123,9 @@ public:
   /// UseDwarfDebugFlags - Embed the compile options to clang into the Dwarf
   /// compile unit information.
   virtual bool UseDwarfDebugFlags() const { return false; }
+
+  /// UseSjLjExceptions - Does this tool chain use SjLj exceptions.
+  virtual bool UseSjLjExceptions() const { return false; };
 };
 
 } // end namespace driver

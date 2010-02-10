@@ -640,6 +640,12 @@ bool Darwin::UseDwarfDebugFlags() const {
   return false;
 }
 
+bool Darwin::UseSjLjExceptions() const {
+  // Darwin uses SjLj exceptions on ARM.
+  return (getTriple().getArch() == llvm::Triple::arm ||
+          getTriple().getArch() == llvm::Triple::thumb);
+}
+
 const char *Darwin::GetDefaultRelocationModel() const {
   return "pic";
 }

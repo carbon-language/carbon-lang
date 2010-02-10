@@ -1385,9 +1385,6 @@ public:
     // when Neon instructions are actually available.
     if (FPU == NeonFPU && !SoftFloat && IsThumb2)
       Builder.defineMacro("__ARM_NEON__");
-
-    if (getTriple().getOS() == llvm::Triple::Darwin)
-      Builder.defineMacro("__USING_SJLJ_EXCEPTIONS__");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {

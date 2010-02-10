@@ -100,10 +100,6 @@ static llvm::Constant *getUnexpectedFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_call_unexpected");
 }
 
-// FIXME: Eventually this will all go into the backend.  Set from the target for
-// now.
-static int using_sjlj_exceptions = 0;
-
 static llvm::Constant *getUnwindResumeOrRethrowFn(CodeGenFunction &CGF) {
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   std::vector<const llvm::Type*> Args(1, Int8PtrTy);
@@ -112,7 +108,7 @@ static llvm::Constant *getUnwindResumeOrRethrowFn(CodeGenFunction &CGF) {
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), Args,
                             false);
 
-  if (using_sjlj_exceptions)
+  if (CGF.CGM.getLangOptions().SjLjExceptions)
     return CGF.CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
   return CGF.CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume_or_Rethrow");
 }

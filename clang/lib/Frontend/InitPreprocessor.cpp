@@ -279,6 +279,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   if (LangOpts.Exceptions)
     Builder.defineMacro("__EXCEPTIONS");
+  if (LangOpts.SjLjExceptions)
+    Builder.defineMacro("__USING_SJLJ_EXCEPTIONS__");
 
   if (LangOpts.CPlusPlus) {
     Builder.defineMacro("__DEPRECATED");
