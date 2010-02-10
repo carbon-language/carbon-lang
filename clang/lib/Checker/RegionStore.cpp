@@ -1066,7 +1066,8 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
       return std::make_pair(X.first,
                             MRMgr.getFieldRegionWithSuper(FR, X.second));
   }
-
+  // The NULL MemRegion indicates an non-existent lazy binding. A NULL Store is 
+  // possible for a valid lazy binding.
   return std::make_pair((Store) 0, (const MemRegion *) 0);
 }
 
