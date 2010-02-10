@@ -512,6 +512,8 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   baseIndex = baseIndex.getNextIndex();
   while (++mi != MBB->end()) {
 
+    if (mi->isDebugValue())
+      continue;
     if (getInstructionFromIndex(baseIndex) == 0)
       baseIndex = indexes_->getNextNonNullIndex(baseIndex);
 
@@ -527,8 +529,8 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
           end = baseIndex.getDefIndex();
         } else {
           // Another instruction redefines the register before it is ever read.
-          // Then the register is essentially dead at the instruction that defines
-          // it. Hence its interval is:
+          // Then the register is essentially dead at the instruction that
+          // defines it. Hence its interval is:
           // [defSlot(def), defSlot(def)+1)
           DEBUG(dbgs() << " dead");
           end = start.getStoreIndex();
@@ -606,26 +608,28 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 
   SlotIndex end = baseIndex;
   bool SeenDefUse = false;
-  
-  while (mi != MBB->end()) {
-    if (mi->killsRegister(interval.reg, tri_)) {
-      DEBUG(dbgs() << " killed");
-      end = baseIndex.getDefIndex();
-      SeenDefUse = true;
-      break;
-    } else if (mi->modifiesRegister(interval.reg, tri_)) {
-      // Another instruction redefines the register before it is ever read.
-      // Then the register is essentially dead at the instruction that defines
-      // it. Hence its interval is:
-      // [defSlot(def), defSlot(def)+1)
-      DEBUG(dbgs() << " dead");
-      end = start.getStoreIndex();
-      SeenDefUse = true;
-      break;
-    }
 
+  MachineBasicBlock::iterator E = MBB->end();  
+  while (mi != E) {
+    if (!mi->isDebugValue()) {
+      if (mi->killsRegister(interval.reg, tri_)) {
+        DEBUG(dbgs() << " killed");
+        end = baseIndex.getDefIndex();
+        SeenDefUse = true;
+        break;
+      } else if (mi->modifiesRegister(interval.reg, tri_)) {
+        // Another instruction redefines the register before it is ever read.
+        // Then the register is essentially dead at the instruction that defines
+        // it. Hence its interval is:
+        // [defSlot(def), defSlot(def)+1)
+        DEBUG(dbgs() << " dead");
+        end = start.getStoreIndex();
+        SeenDefUse = true;
+        break;
+      }
+    }
     ++mi;
-    if (mi != MBB->end()) {
+    if (mi != E && !mi->isDebugValue()) {
       baseIndex = indexes_->getNextNonNullIndex(baseIndex);
     }
   }
@@ -1056,7 +1060,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       // If this is the rematerializable definition MI itself and
       // all of its uses are rematerialized, simply delete it.
       if (MI == ReMatOrigDefMI && CanDelete) {
-        DEBUG(dbgs() << "\t\t\t\tErasing re-materlizable def: "
+        DEBUG(dbgs() << "\t\t\t\tErasing re-materializable def: "
                      << MI << '\n');
         RemoveMachineInstrFromMaps(MI);
         vrm.RemoveMachineInstrFromMaps(MI);
@@ -1299,6 +1303,12 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     MachineInstr *MI = &*ri;
     MachineOperand &O = ri.getOperand();
     ++ri;
+    if (MI->isDebugValue()) {
+      // Remove debug info for now.
+      O.setReg(0U);
+      DEBUG(dbgs() << "Removing debug info due to spill:" << "\t" << *MI);
+      continue;
+    }
     assert(!O.isImplicit() && "Spilling register that's used as implicit use?");
     SlotIndex index = getInstructionIndex(MI);
     if (index < start || index >= end)

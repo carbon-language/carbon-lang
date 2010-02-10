@@ -375,8 +375,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
   // It's not possible to determine whether it's safe to perform the coalescing.
-  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(IntA.reg),
-         UE = mri_->use_end(); UI != UE; ++UI) {
+  for (MachineRegisterInfo::use_nodbg_iterator UI = 
+         mri_->use_nodbg_begin(IntA.reg), 
+       UE = mri_->use_nodbg_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
     SlotIndex UseIdx = li_->getInstructionIndex(UseMI);
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
@@ -430,6 +431,12 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     ++UI;
     if (JoinedCopies.count(UseMI))
       continue;
+    if (UseMI->isDebugValue()) {
+      // FIXME These don't have an instruction index.  Not clear we have enough
+      // info to decide whether to do this replacement or not.  For now do it.
+      UseMO.setReg(NewReg);
+      continue;
+    }
     SlotIndex UseIdx = li_->getInstructionIndex(UseMI).getUseIndex();
     LiveInterval::iterator ULR = IntA.FindLiveRangeContaining(UseIdx);
     if (ULR == IntA.end() || ULR->valno != AValNo)
@@ -1029,8 +1036,9 @@ SimpleRegisterCoalescing::isWinToJoinVRWithSrcPhysReg(MachineInstr *CopyMI,
   unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
   unsigned Length = li_->getApproximateInstructionCount(DstInt);
   if (Length > Threshold &&
-      (((float)std::distance(mri_->use_begin(DstInt.reg),
-                             mri_->use_end()) / Length) < (1.0 / Threshold)))
+      (((float)std::distance(mri_->use_nodbg_begin(DstInt.reg),
+                             mri_->use_nodbg_end()) / Length) < 
+        (1.0 / Threshold)))
     return false;
 
   // If the virtual register live interval extends into a loop, turn down
@@ -1079,15 +1087,16 @@ SimpleRegisterCoalescing::isWinToJoinVRWithDstPhysReg(MachineInstr *CopyMI,
                                                      MachineBasicBlock *CopyMBB,
                                                      LiveInterval &DstInt,
                                                      LiveInterval &SrcInt) {
-  // If the virtual register live interval is long but it has low use desity,
+  // If the virtual register live interval is long but it has low use density,
   // do not join them, instead mark the physical register as its allocation
   // preference.
   const TargetRegisterClass *RC = mri_->getRegClass(SrcInt.reg);
   unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
   unsigned Length = li_->getApproximateInstructionCount(SrcInt);
   if (Length > Threshold &&
-      (((float)std::distance(mri_->use_begin(SrcInt.reg),
-                             mri_->use_end()) / Length) < (1.0 / Threshold)))
+      (((float)std::distance(mri_->use_nodbg_begin(SrcInt.reg),
+                             mri_->use_nodbg_end()) / Length) < 
+          (1.0 / Threshold)))
     return false;
 
   if (SrcInt.empty())
@@ -1140,10 +1149,10 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned LargeReg,
   unsigned LargeSize = li_->getApproximateInstructionCount(LargeInt);
   unsigned SmallSize = li_->getApproximateInstructionCount(SmallInt);
   if (SmallSize > Threshold || LargeSize > Threshold)
-    if ((float)std::distance(mri_->use_begin(SmallReg),
-                             mri_->use_end()) / SmallSize <
-        (float)std::distance(mri_->use_begin(LargeReg),
-                             mri_->use_end()) / LargeSize)
+    if ((float)std::distance(mri_->use_nodbg_begin(SmallReg),
+                             mri_->use_nodbg_end()) / SmallSize <
+        (float)std::distance(mri_->use_nodbg_begin(LargeReg),
+                             mri_->use_nodbg_end()) / LargeSize)
       return false;
   return true;
 }
@@ -1630,8 +1639,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
         float Ratio = 1.0 / Threshold;
         if (Length > Threshold &&
-            (((float)std::distance(mri_->use_begin(JoinVReg),
-                                   mri_->use_end()) / Length) < Ratio)) {
+            (((float)std::distance(mri_->use_nodbg_begin(JoinVReg),
+                                   mri_->use_nodbg_end()) / Length) < Ratio)) {
           mri_->setRegAllocationHint(JoinVInt.reg, 0, JoinPReg);
           ++numAborts;
           DEBUG(dbgs() << "\tMay tie down a physical register, abort!\n");
@@ -2564,8 +2573,8 @@ SimpleRegisterCoalescing::differingRegisterClasses(unsigned RegA,
   return !RegClassA->contains(RegB);
 }
 
-/// lastRegisterUse - Returns the last use of the specific register between
-/// cycles Start and End or NULL if there are no uses.
+/// lastRegisterUse - Returns the last (non-debug) use of the specific register
+/// between cycles Start and End or NULL if there are no uses.
 MachineOperand *
 SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
                                           SlotIndex End,
@@ -2574,8 +2583,8 @@ SimpleRegisterCoalescing::lastRegisterUse(SlotIndex Start,
   UseIdx = SlotIndex();
   if (TargetRegisterInfo::isVirtualRegister(Reg)) {
     MachineOperand *LastUse = NULL;
-    for (MachineRegisterInfo::use_iterator I = mri_->use_begin(Reg),
-           E = mri_->use_end(); I != E; ++I) {
+    for (MachineRegisterInfo::use_nodbg_iterator I = mri_->use_nodbg_begin(Reg),
+           E = mri_->use_nodbg_end(); I != E; ++I) {
       MachineOperand &Use = I.getOperand();
       MachineInstr *UseMI = Use.getParent();
       unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
