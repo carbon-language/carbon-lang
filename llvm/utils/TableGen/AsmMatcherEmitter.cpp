@@ -1081,7 +1081,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
     // Add any trailing implicit operands.
     for (; CurIndex != NumMIOperands; ++CurIndex)
-      Signature += "Imp";
+      Signature += "__Imp";
 
     II.ConversionFnKind = Signature;
 
