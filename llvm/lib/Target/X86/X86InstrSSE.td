@@ -3747,7 +3747,8 @@ def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
 
 def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movntdqa\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>;
+                       [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>,
+                       OpSize;
 
 
 //===----------------------------------------------------------------------===//
