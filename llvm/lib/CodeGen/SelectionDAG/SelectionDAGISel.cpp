@@ -457,6 +457,21 @@ public:
 };
 }
 
+/// TrivialTruncElim - Eliminate some trivial nops that can result from
+/// ShrinkDemandedOps: (trunc (ext n)) -> n.
+static bool TrivialTruncElim(SDValue Op,
+                             TargetLowering::TargetLoweringOpt &TLO) {
+  SDValue N0 = Op.getOperand(0);
+  EVT VT = Op.getValueType();
+  if ((N0.getOpcode() == ISD::ZERO_EXTEND ||
+       N0.getOpcode() == ISD::SIGN_EXTEND ||
+       N0.getOpcode() == ISD::ANY_EXTEND) &&
+      N0.getOperand(0).getValueType() == VT) {
+    return TLO.CombineTo(Op, N0.getOperand(0));
+  }
+  return false;
+}
+
 /// ShrinkDemandedOps - A late transformation pass that shrink expressions
 /// using TargetLowering::TargetLoweringOpt::ShrinkDemandedOp. It converts
 /// x+y to (VT)((SmallVT)x+(SmallVT)y) if the casts are free.
@@ -489,7 +504,9 @@ void SelectionDAGISel::ShrinkDemandedOps() {
       APInt Demanded = APInt::getAllOnesValue(BitWidth);
       APInt KnownZero, KnownOne;
       if (TLI.SimplifyDemandedBits(SDValue(N, 0), Demanded,
-                                   KnownZero, KnownOne, TLO)) {
+                                   KnownZero, KnownOne, TLO) ||
+          (N->getOpcode() == ISD::TRUNCATE &&
+           TrivialTruncElim(SDValue(N, 0), TLO))) {
         // Revisit the node.
         Worklist.erase(std::remove(Worklist.begin(), Worklist.end(), N),
                        Worklist.end());
