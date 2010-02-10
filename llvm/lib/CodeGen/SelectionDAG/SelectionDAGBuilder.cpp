@@ -131,6 +131,17 @@ namespace {
       }
     }
 
+    /// areValueTypesLegal - Return true if types of all the values are legal.
+    bool areValueTypesLegal() {
+      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
+        EVT RegisterVT = RegVTs[Value];
+        if (!TLI->isTypeLegal(RegisterVT))
+          return false;
+      }
+      return true;
+    }
+
+
     /// append - Add the specified values to this one.
     void append(const RegsForValue &RHS) {
       TLI = RHS.TLI;
@@ -5515,7 +5526,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
              "Don't know how to handle indirect register inputs yet!");
 
       // Copy the input into the appropriate registers.
-      if (OpInfo.AssignedRegs.Regs.empty()) {
+      if (OpInfo.AssignedRegs.Regs.empty() ||
+          !OpInfo.AssignedRegs.areValueTypesLegal()) {
         llvm_report_error("Couldn't allocate input reg for"
                           " constraint '"+ OpInfo.ConstraintCode +"'!");
       }
