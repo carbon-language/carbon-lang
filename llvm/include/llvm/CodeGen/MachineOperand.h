@@ -379,7 +379,7 @@ public:
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg, bool isDef, bool isImp = false,
                         bool isKill = false, bool isDead = false,
-                        bool isUndef = false);
+                        bool isUndef = false, bool isDebug = false);
   
   //===--------------------------------------------------------------------===//
   // Construction methods.
