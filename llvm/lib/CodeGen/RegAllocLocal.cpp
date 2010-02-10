@@ -841,8 +841,8 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       }
     }
 
-    // If a DEBUG_VALUE says something is located in a spilled register,
-    // change the DEBUG_VALUE to be undef, which prevents the register
+    // If a DBG_VALUE says something is located in a spilled register,
+    // change the DBG_VALUE to be undef, which prevents the register
     // from being reloaded here.  Doing that would change the generated
     // code, unless another use immediately follows this instruction.
     if (MI->isDebugValue() &&
