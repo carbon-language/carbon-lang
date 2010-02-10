@@ -68,7 +68,7 @@ static unsigned getSubElementHash(const Type *Ty) {
 class IntegerValType {
   uint32_t bits;
 public:
-  IntegerValType(uint16_t numbits) : bits(numbits) {}
+  IntegerValType(uint32_t numbits) : bits(numbits) {}
 
   static IntegerValType get(const IntegerType *Ty) {
     return IntegerValType(Ty->getBitWidth());
