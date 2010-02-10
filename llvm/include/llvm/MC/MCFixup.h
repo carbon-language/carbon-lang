@@ -77,9 +77,9 @@ public:
     FI.OpIndex = OpIndex;
     FI.Kind = unsigned(Kind);
 
-    assert(Offset == FI.Offset && "Offset out of range!");
-    assert(OpIndex == FI.OpIndex && "Operand index out of range!");
-    assert(Kind == FI.Kind && "Kind out of range!");
+    assert(Offset == FI.getOffset() && "Offset out of range!");
+    assert(OpIndex == FI.getOpIndex() && "Operand index out of range!");
+    assert(Kind == FI.getKind() && "Kind out of range!");
     return FI;
   }
 
