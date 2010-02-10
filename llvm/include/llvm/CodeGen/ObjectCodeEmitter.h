@@ -81,7 +81,7 @@ public:
   /// written to the data stream in big-endian format.
   void emitDWordBE(uint64_t W);
 
-  /// emitAlignment - Move the CurBufferPtr pointer up the specified
+  /// emitAlignment - Move the CurBufferPtr pointer up to the specified
   /// alignment (saturated to BufferEnd of course).
   void emitAlignment(unsigned Alignment = 0, uint8_t fill = 0);
 
