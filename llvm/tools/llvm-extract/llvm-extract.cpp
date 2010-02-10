@@ -49,15 +49,15 @@ static cl::opt<bool>
 Relink("relink",
        cl::desc("Turn external linkage for callees of function to delete"));
 
-// ExtractFunc - The function to extract from the module... 
-static cl::opt<std::string>
-ExtractFunc("func", cl::desc("Specify function to extract"), cl::init(""),
-            cl::value_desc("function"));
+// ExtractFuncs - The functions to extract from the module... 
+static cl::list<std::string>
+ExtractFuncs("func", cl::desc("Specify function to extract"),
+             cl::ZeroOrMore, cl::value_desc("function"));
 
-// ExtractGlobal - The global to extract from the module...
-static cl::opt<std::string>
-ExtractGlobal("glob", cl::desc("Specify global to extract"), cl::init(""),
-              cl::value_desc("global"));
+// ExtractGlobals - The globals to extract from the module...
+static cl::list<std::string>
+ExtractGlobals("glob", cl::desc("Specify global to extract"),
+               cl::ZeroOrMore, cl::value_desc("global"));
 
 static cl::opt<bool>
 OutputAssembly("S",
@@ -81,28 +81,34 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // Figure out which function we should extract
-  GlobalVariable *G = !ExtractGlobal.empty() ?
-    M.get()->getNamedGlobal(ExtractGlobal) : 0;
+  std::vector<GlobalValue *> GVs;
 
-  // Figure out which function we should extract
-  if (ExtractFunc.empty() && ExtractGlobal.empty()) ExtractFunc = "main";
-  Function *F = M.get()->getFunction(ExtractFunc);
+  // Figure out which globals we should extract.
+  for (size_t i = 0, e = ExtractGlobals.size(); i != e; ++i) {
+    GlobalValue *GV = M.get()->getNamedGlobal(ExtractGlobals[i]);
+    if (!GV) {
+      errs() << argv[0] << ": program doesn't contain global named '"
+             << ExtractGlobals[i] << "'!\n";
+      return 1;
+    }
+    GVs.push_back(GV);
+  }
 
-  if (F == 0 && G == 0) {
-    errs() << argv[0] << ": program doesn't contain function named '"
-           << ExtractFunc << "' or a global named '" << ExtractGlobal << "'!\n";
-    return 1;
+  // Figure out which functions we should extract.
+  for (size_t i = 0, e = ExtractFuncs.size(); i != e; ++i) {
+    GlobalValue *GV = M.get()->getFunction(ExtractFuncs[i]);
+    if (!GV) {
+      errs() << argv[0] << ": program doesn't contain function named '"
+             << ExtractFuncs[i] << "'!\n";
+      return 1;
+    }
+    GVs.push_back(GV);
   }
 
   // In addition to deleting all other functions, we also want to spiff it
   // up a little bit.  Do this now.
   PassManager Passes;
   Passes.add(new TargetData(M.get())); // Use correct TargetData
-  // Either isolate the function or delete it from the Module
-  std::vector<GlobalValue*> GVs;
-  if (F) GVs.push_back(F);
-  if (G) GVs.push_back(G);
 
   Passes.add(createGVExtractionPass(GVs, DeleteFn, Relink));
   if (!DeleteFn)
