@@ -18,3 +18,17 @@ void foo() {
         f.size.width = 2.2; // expected-error {{cannot assign to a sub-structure of an ivar using property assignment syntax}}
 	f.size.inner.dim = 200; // expected-error {{cannot assign to a sub-structure of an ivar using property assignment syntax}}
 }
+
+// radar 7628953
+
+@interface Gorf  {
+}
+- (NSSize)size;
+@end
+
+@implementation Gorf
+- (void)MyView_sharedInit {
+    self.size.width = 2.2; // expected-error {{cannot assign to a sub-structure returned via a getter using property assignment syntax}}
+}
+- (NSSize)size {}
+@end

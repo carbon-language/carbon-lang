@@ -1068,8 +1068,11 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
         if (m->isArrow())
           return LV_Valid;
         Expr *BaseExp = m->getBase();
-        return (BaseExp->getStmtClass() == ObjCPropertyRefExprClass) ?
-                 LV_SubObjCPropertySetting : BaseExp->isLvalue(Ctx);        
+        if (BaseExp->getStmtClass() == ObjCPropertyRefExprClass)
+          return LV_SubObjCPropertySetting;
+        return 
+          (BaseExp->getStmtClass() == ObjCImplicitSetterGetterRefExprClass) ?
+           LV_SubObjCPropertyGetterSetting : BaseExp->isLvalue(Ctx);        
       }
 
       //   -- If it refers to a static member function [...], then
@@ -1092,8 +1095,11 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     if (m->isArrow())
       return LV_Valid;
     Expr *BaseExp = m->getBase();
-    return (BaseExp->getStmtClass() == ObjCPropertyRefExprClass) ?
-             LV_SubObjCPropertySetting : BaseExp->isLvalue(Ctx);
+    if (BaseExp->getStmtClass() == ObjCPropertyRefExprClass)
+          return LV_SubObjCPropertySetting;
+    return 
+      (BaseExp->getStmtClass() == ObjCImplicitSetterGetterRefExprClass) ?
+       LV_SubObjCPropertyGetterSetting : BaseExp->isLvalue(Ctx);        
   }
   case UnaryOperatorClass:
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
@@ -1283,7 +1289,9 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
     }
     return MLV_InvalidExpression;
   case LV_MemberFunction: return MLV_MemberFunction;
-    case LV_SubObjCPropertySetting: return MLV_SubObjCPropertySetting;
+  case LV_SubObjCPropertySetting: return MLV_SubObjCPropertySetting;
+  case LV_SubObjCPropertyGetterSetting: 
+    return MLV_SubObjCPropertyGetterSetting;
   }
 
   // The following is illegal:

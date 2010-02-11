@@ -5734,6 +5734,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_SubObjCPropertySetting:
     Diag = diag::error_no_subobject_property_setting;
     break;
+  case Expr::MLV_SubObjCPropertyGetterSetting:
+    Diag = diag::error_no_subobject_property_getter_setting;
+    break;
   }
 
   SourceRange Assign;
