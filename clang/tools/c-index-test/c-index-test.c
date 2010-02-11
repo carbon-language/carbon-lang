@@ -493,13 +493,18 @@ int perform_test_load_tu(const char *file, const char *filter,
                          PostVisitTU PV) {
   CXIndex Idx;
   CXTranslationUnit TU;
+  int result;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */ 
                           !strcmp(filter, "local") ? 1 : 0);
   
-  if (!CreateTranslationUnit(Idx, file, &TU))
+  if (!CreateTranslationUnit(Idx, file, &TU)) {
+    clang_disposeIndex(Idx);
     return 1;
+  }
 
-  return perform_test_load(Idx, TU, filter, prefix, Visitor, PV);
+  result = perform_test_load(Idx, TU, filter, prefix, Visitor, PV);
+  clang_disposeIndex(Idx);
+  return result;
 }
 
 int perform_test_load_source(int argc, const char **argv,
@@ -519,8 +524,10 @@ int perform_test_load_source(int argc, const char **argv,
   if (UseExternalASTs && strlen(UseExternalASTs))
     clang_setUseExternalASTGeneration(Idx, 1);
 
-  if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files))
+  if (parse_remapped_files(argc, argv, 0, &unsaved_files, &num_unsaved_files)) {
+    clang_disposeIndex(Idx);
     return -1;
+  }
 
   TU = clang_createTranslationUnitFromSourceFile(Idx, 0, 
                                                  argc - num_unsaved_files, 
@@ -531,11 +538,13 @@ int perform_test_load_source(int argc, const char **argv,
                                                  stderr);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
+    clang_disposeIndex(Idx);
     return 1;
   }
 
   result = perform_test_load(Idx, TU, filter, NULL, Visitor, PV);
   free_remapped_files(unsaved_files, num_unsaved_files);
+  clang_disposeIndex(Idx);
   return result;
 }
 
