@@ -403,25 +403,44 @@ TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
             II->RemoveOperand(i);
           }
         }
-        II->RemoveOperand(Idx+1);
-        II->RemoveOperand(Idx);
-      }
+      } else
+        Idx = 0;
+
+      // If Idx is set, the operands at Idx and Idx+1 must be removed.
+      // We reuse the location to avoid expensive RemoveOperand calls.
+
       DenseMap<unsigned,AvailableValsTy>::iterator LI=SSAUpdateVals.find(Reg);
       if (LI != SSAUpdateVals.end()) {
         // This register is defined in the tail block.
         for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
           MachineBasicBlock *SrcBB = LI->second[j].first;
           unsigned SrcReg = LI->second[j].second;
-          II->addOperand(MachineOperand::CreateReg(SrcReg, false));
-          II->addOperand(MachineOperand::CreateMBB(SrcBB));
+          if (Idx != 0) {
+            II->getOperand(Idx).setReg(SrcReg);
+            II->getOperand(Idx+1).setMBB(SrcBB);
+            Idx = 0;
+          } else {
+            II->addOperand(MachineOperand::CreateReg(SrcReg, false));
+            II->addOperand(MachineOperand::CreateMBB(SrcBB));
+          }
         }
       } else {
         // Live in tail block, must also be live in predecessors.
         for (unsigned j = 0, ee = TDBBs.size(); j != ee; ++j) {
           MachineBasicBlock *SrcBB = TDBBs[j];
-          II->addOperand(MachineOperand::CreateReg(Reg, false));
-          II->addOperand(MachineOperand::CreateMBB(SrcBB));
+          if (Idx != 0) {
+            II->getOperand(Idx).setReg(Reg);
+            II->getOperand(Idx+1).setMBB(SrcBB);
+            Idx = 0;
+          } else {
+            II->addOperand(MachineOperand::CreateReg(Reg, false));
+            II->addOperand(MachineOperand::CreateMBB(SrcBB));
+          }
         }
+      }
+      if (Idx != 0) {
+        II->RemoveOperand(Idx+1);
+        II->RemoveOperand(Idx);
       }
     }
   }
