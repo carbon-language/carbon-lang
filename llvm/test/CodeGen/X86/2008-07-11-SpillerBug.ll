@@ -1,9 +1,7 @@
 ; RUN: llc < %s -march=x86 -relocation-model=static -disable-fp-elim -post-RA-scheduler=false -asm-verbose=0 | FileCheck %s
 ; PR2536
 
-
-; CHECK: movw %cx
-; CHECK-NEXT: andl    $65534, %
+; CHECK: andl    $65534, %
 ; CHECK-NEXT: movl %
 ; CHECK-NEXT: movl $17
 

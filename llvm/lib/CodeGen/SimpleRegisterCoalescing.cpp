@@ -1148,7 +1148,7 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned LargeReg,
   LiveInterval &SmallInt = li_->getInterval(SmallReg);
   unsigned LargeSize = li_->getApproximateInstructionCount(LargeInt);
   unsigned SmallSize = li_->getApproximateInstructionCount(SmallInt);
-  if (SmallSize > Threshold || LargeSize > Threshold) {
+  if (LargeSize > Threshold) {
     unsigned SmallUses = std::distance(mri_->use_nodbg_begin(SmallReg),
                                        mri_->use_nodbg_end());
     unsigned LargeUses = std::distance(mri_->use_nodbg_begin(LargeReg),

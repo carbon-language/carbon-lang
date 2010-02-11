@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -stats |& grep {Number of loads added} | grep 2
 ; RUN: llc < %s -march=x86 -stats |& grep {Number of register spills} | grep 1
-; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 38
+; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 37
 ; PR3495
 ; The loop reversal kicks in once here, resulting in one fewer instruction.
 
