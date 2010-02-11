@@ -308,9 +308,14 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     Value *Op1 = II->getOperand(1);
     bool Min = (cast<ConstantInt>(II->getOperand(2))->getZExtValue() == 1);
     
+    // We need target data for just about everything so depend on it.
     if (!TD) break;
+    
+    // Get to the real allocated thing and offset as fast as possible.
     Op1 = Op1->stripPointerCasts();
     
+    // If we've stripped down to a single global variable that we
+    // can know the size of then just return that.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1)) {
       if (GV->hasDefinitiveInitializer()) {
         Constant *C = GV->getInitializer();
@@ -320,7 +325,27 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);
         return ReplaceInstUsesWith(CI, RetVal);
       }
-    }
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {
+      
+      // Only handle constant GEPs here.
+      if (CE->getOpcode() != Instruction::GetElementPtr) break;
+      GEPOperator *GEP = cast<GEPOperator>(CE);
+      
+      // Get what we're pointing to and its size.
+      const PointerType *PT = 
+        cast<PointerType>(GEP->getPointerOperand()->getType());
+      size_t Size = TD->getTypeAllocSize(PT->getElementType());
+      
+      // Get the current byte offset into the thing.
+      SmallVector<Value*, 8> Ops(CE->op_begin()+1, CE->op_end());
+      size_t Offset = TD->getIndexedOffset(PT, &Ops[0], Ops.size());
+
+      assert(Size >= Offset);
+      
+      Constant *RetVal = ConstantInt::get(ReturnTy, Size-Offset);
+      return ReplaceInstUsesWith(CI, RetVal);
+      
+    } 
   }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x

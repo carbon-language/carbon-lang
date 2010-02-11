@@ -31,10 +31,9 @@ cond.false:
   ret i8* %2;
 }
 
-; FIXME: Should be ret i32 0
 define i32 @f() nounwind {
 ; CHECK: @f
-; CHECK-NEXT: llvm.objectsize.i32
+; CHECK-NEXT: ret i32 0
   %1 = call i32 @llvm.objectsize.i32(i8* getelementptr ([60 x i8]* @a, i32 1, i32 0), i1 false)
   ret i32 %1
 }
