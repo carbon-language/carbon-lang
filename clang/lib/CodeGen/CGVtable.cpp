@@ -75,12 +75,12 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
     return false;
   }
   
-  if (const ReferenceType *RT = dyn_cast<ReferenceType>(CanDerivedType)) {
+  if (const ReferenceType *RT = CanDerivedType->getAs<ReferenceType>()) {
     CanDerivedType = RT->getPointeeType();
-    CanBaseType = cast<ReferenceType>(CanBaseType)->getPointeeType();
-  } else if (const PointerType *PT = dyn_cast<PointerType>(CanDerivedType)) {
+    CanBaseType = CanBaseType->getAs<ReferenceType>()->getPointeeType();
+  } else if (const PointerType *PT = CanDerivedType->getAs<PointerType>()) {
     CanDerivedType = PT->getPointeeType();
-    CanBaseType = cast<PointerType>(CanBaseType)->getPointeeType();
+    CanBaseType = CanBaseType->getAs<PointerType>()->getPointeeType();
   } else {
     assert(false && "Unexpected return type!");
   }
@@ -91,10 +91,10 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
   }
   
   const CXXRecordDecl *DerivedDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
+    cast<CXXRecordDecl>(CanDerivedType->getAs<RecordType>()->getDecl());
   
   const CXXRecordDecl *BaseDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
+    cast<CXXRecordDecl>(CanBaseType->getAs<RecordType>()->getDecl());
   
   return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }
