@@ -15,6 +15,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeLoc.h"
@@ -80,9 +81,12 @@ namespace {
                          DeclContext *&DC, DeclContext *&LexicalDC,
                          DeclarationName &Name, SourceLocation &Loc, 
                          QualType &T);
+    bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
     Decl *VisitDecl(Decl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
+    Decl *VisitRecordDecl(RecordDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
+    Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
   };
@@ -500,6 +504,89 @@ bool ASTNodeImporter::ImportDeclParts(DeclaratorDecl *D,
   return false;
 }
 
+bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
+                                        RecordDecl *ToRecord) {  
+  // FIXME: If we know that the two records are the same according to the ODR,
+  // we could diagnose structural mismatches here. However, we don't really 
+  // have that information.
+  if (FromRecord->isUnion() != ToRecord->isUnion())
+    return false;
+  
+  if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(FromRecord)) {
+    if (CXXRecordDecl *ToCXX = dyn_cast<CXXRecordDecl>(ToRecord)) {
+      if (FromCXX->getNumBases() != ToCXX->getNumBases())
+        return false;
+      
+      // Check the base classes. 
+      for (CXXRecordDecl::base_class_iterator FromBase = FromCXX->bases_begin(), 
+                                           FromBaseEnd = FromCXX->bases_end(),
+                                                ToBase = ToCXX->bases_begin();
+          FromBase != FromBaseEnd;
+          ++FromBase, ++ToBase) {
+        // Check virtual vs. non-virtual inheritance mismatch.
+        if (FromBase->isVirtual() != ToBase->isVirtual())
+          return false;
+        
+        // Check the type we're inheriting from.
+        QualType FromBaseT = Importer.Import(FromBase->getType());
+        if (FromBaseT.isNull())
+          return false;
+        
+        if (!Importer.getToContext().typesAreCompatible(FromBaseT, 
+                                                        ToBase->getType()))
+          return false;
+      }
+    } else if (FromCXX->getNumBases() > 0) {
+      return false;
+    }
+  }
+  
+  // Check the fields for consistency.
+  CXXRecordDecl::field_iterator ToField = ToRecord->field_begin(),
+                             ToFieldEnd = ToRecord->field_end();
+  for (CXXRecordDecl::field_iterator FromField = FromRecord->field_begin(),
+                                  FromFieldEnd = FromRecord->field_end();
+       FromField != FromFieldEnd;
+       ++FromField, ++ToField) {
+    if (ToField == ToFieldEnd)
+      return false;
+    
+    QualType FromT = Importer.Import(FromField->getType());
+    if (FromT.isNull())
+      return false;
+  
+    if (FromField->isBitField() != ToField->isBitField())
+      return false;
+
+    if (!Importer.getToContext().typesAreCompatible(FromT, ToField->getType()))
+      return false;
+    
+    if (FromField->isBitField()) {
+      // Make sure that the bit-fields are the same length.
+      llvm::APSInt FromBits, ToBits;
+      if (!FromField->getBitWidth()->isIntegerConstantExpr(FromBits,
+                                                    Importer.getFromContext()))
+        return false;
+      if (!ToField->getBitWidth()->isIntegerConstantExpr(ToBits,
+                                                      Importer.getToContext()))
+        return false;
+      
+      if (FromBits.getBitWidth() > ToBits.getBitWidth())
+        ToBits.extend(FromBits.getBitWidth());
+      else if (ToBits.getBitWidth() > FromBits.getBitWidth())
+        FromBits.extend(ToBits.getBitWidth());
+      
+      FromBits.setIsUnsigned(true);
+      ToBits.setIsUnsigned(true);
+      
+      if (FromBits != ToBits)
+        return false;
+    }
+  }
+  
+  return ToField == ToFieldEnd;
+}
+
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
   Importer.FromDiag(D->getLocation(), diag::err_unsupported_ast_node)
     << D->getDeclKindName();
@@ -560,6 +647,124 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
   LexicalDC->addDecl(ToTypedef);
   return ToTypedef;
 }
+
+Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
+  // If this record has a definition in the translation unit we're coming from,
+  // but this particular declaration is not that definition, import the
+  // definition and map to that.
+  TagDecl *Definition = D->getDefinition(Importer.getFromContext());
+  if (Definition && Definition != D) {
+    Decl *ImportedDef = Importer.Import(Definition);
+    Importer.getImportedDecls()[D] = ImportedDef;
+    return ImportedDef;
+  }
+  
+  // Import the major distinguishing characteristics of this record.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+      
+  // Figure out what structure name we're looking for.
+  unsigned IDNS = Decl::IDNS_Tag;
+  DeclarationName SearchName = Name;
+  if (!SearchName && D->getTypedefForAnonDecl()) {
+    SearchName = Importer.Import(D->getTypedefForAnonDecl()->getDeclName());
+    IDNS = Decl::IDNS_Ordinary;
+  } else if (Importer.getToContext().getLangOptions().CPlusPlus)
+    IDNS |= Decl::IDNS_Ordinary;
+
+  // We may already have a record of the same name; try to find and match it.
+  if (!DC->isFunctionOrMethod() && SearchName) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
+      
+      Decl *Found = *Lookup.first;
+      if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Found)) {
+        if (const TagType *Tag = Typedef->getUnderlyingType()->getAs<TagType>())
+          Found = Tag->getDecl();
+      }
+      
+      if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
+        if (IsStructuralMatch(D, FoundRecord)) {
+          // The record types structurally match.
+          // FIXME: For C++, we should also merge methods here.
+          Importer.getImportedDecls()[D] = FoundRecord;
+          return FoundRecord;
+        }
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+    }
+  }
+  
+  // Create the record declaration.
+  RecordDecl *ToRecord = 0;
+  if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(D)) {
+    CXXRecordDecl *ToCXX = CXXRecordDecl::Create(Importer.getToContext(), 
+                                                 D->getTagKind(),
+                                                 DC, Loc,
+                                                 Name.getAsIdentifierInfo(), 
+                                        Importer.Import(D->getTagKeywordLoc()));
+    ToRecord = ToCXX;
+    
+    if (D->isDefinition()) {
+      // Add base classes.
+      llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
+      for (CXXRecordDecl::base_class_iterator FromBase = FromCXX->bases_begin(),
+                                           FromBaseEnd = FromCXX->bases_end();
+           FromBase != FromBaseEnd;
+           ++FromBase) {
+        QualType T = Importer.Import(FromBase->getType());
+        if (T.isNull())
+          return 0;
+        
+        Bases.push_back(
+          new (Importer.getToContext()) 
+                  CXXBaseSpecifier(Importer.Import(FromBase->getSourceRange()),
+                                   FromBase->isVirtual(),
+                                   FromBase->isBaseOfClass(),
+                                   FromBase->getAccessSpecifierAsWritten(),
+                                   T));
+      }
+      if (!Bases.empty())
+        ToCXX->setBases(Importer.getToContext(), Bases.data(), Bases.size());
+    }
+  } else {
+    ToRecord = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
+                                  DC, Loc,
+                                  Name.getAsIdentifierInfo(), 
+                                  Importer.Import(D->getTagKeywordLoc()));
+  }
+  ToRecord->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToRecord;
+  LexicalDC->addDecl(ToRecord);
+  
+  if (D->isDefinition()) {
+    ToRecord->startDefinition();
+    for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
+                                 FromMemEnd = D->decls_end();
+         FromMem != FromMemEnd;
+         ++FromMem)
+      Importer.Import(*FromMem);
+    
+    ToRecord->completeDefinition(Importer.getToContext());
+  }
+  
+  return ToRecord;
+}
+
 
 Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // Import the major distinguishing characteristics of this function.
@@ -652,6 +857,29 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // FIXME: Other bits to merge?
   
   return ToFunction;
+}
+
+Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
+  // Import the major distinguishing characteristics of a variable.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  QualType T;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
+    return 0;
+  
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  Expr *BitWidth = Importer.Import(D->getBitWidth());
+  if (!BitWidth && D->getBitWidth())
+    return 0;
+  
+  FieldDecl *ToField = FieldDecl::Create(Importer.getToContext(), DC, 
+                                         Loc, Name.getAsIdentifierInfo(),
+                                         T, TInfo, BitWidth, D->isMutable());
+  ToField->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToField;
+  LexicalDC->addDecl(ToField);
+  return ToField;
 }
 
 Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {

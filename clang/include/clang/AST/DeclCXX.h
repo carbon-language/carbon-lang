@@ -145,6 +145,10 @@ public:
   /// class (or not).
   bool isVirtual() const { return Virtual; }
 
+  /// \brief Determine whether this base class if a base of a class declared
+  /// with the 'class' keyword (vs. one declared with the 'struct' keyword).
+  bool isBaseOfClass() const { return BaseOfClass; }
+  
   /// getAccessSpecifier - Returns the access specifier for this base
   /// specifier. This is the actual base specifier as used for
   /// semantic analysis, so the result can never be AS_none. To
