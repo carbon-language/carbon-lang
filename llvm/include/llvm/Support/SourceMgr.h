@@ -132,7 +132,7 @@ class SMDiagnostic {
   unsigned ShowLine : 1;
 
 public:
-  SMDiagnostic() : LineNo(0), ColumnNo(0) {}
+  SMDiagnostic() : LineNo(0), ColumnNo(0), ShowLine(0) {}
   SMDiagnostic(const std::string &FN, int Line, int Col,
                const std::string &Msg, const std::string &LineStr,
                bool showline = true)

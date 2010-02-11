@@ -18,14 +18,16 @@ namespace {
 
 TEST(OpaqueTypeTest, RegisterWithContext) {
   LLVMContext C;
-  LLVMContextImpl *pImpl = C.pImpl;  
+  LLVMContextImpl *pImpl = C.pImpl;
 
-  EXPECT_EQ(0u, pImpl->OpaqueTypes.size());
+  // 1 refers to the AlwaysOpaqueTy allocated in the Context's constructor and
+  // destroyed in the destructor.
+  EXPECT_EQ(1u, pImpl->OpaqueTypes.size());
   {
     PATypeHolder Type = OpaqueType::get(C);
-    EXPECT_EQ(1u, pImpl->OpaqueTypes.size());
+    EXPECT_EQ(2u, pImpl->OpaqueTypes.size());
   }
-  EXPECT_EQ(0u, pImpl->OpaqueTypes.size());
+  EXPECT_EQ(1u, pImpl->OpaqueTypes.size());
 }
 
 }  // namespace

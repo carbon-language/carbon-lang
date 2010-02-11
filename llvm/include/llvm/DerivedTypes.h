@@ -496,6 +496,7 @@ public:
 /// OpaqueType - Class to represent abstract types
 ///
 class OpaqueType : public DerivedType {
+  friend class LLVMContextImpl;
   OpaqueType(const OpaqueType &);                   // DO NOT IMPLEMENT
   const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
   OpaqueType(LLVMContext &C);

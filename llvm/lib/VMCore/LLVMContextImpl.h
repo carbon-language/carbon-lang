@@ -164,7 +164,10 @@ public:
   // Opaque types are not structurally uniqued, so don't use TypeMap.
   typedef SmallPtrSet<const OpaqueType*, 8> OpaqueTypesTy;
   OpaqueTypesTy OpaqueTypes;
-  
+
+  /// Used as an abstract type that will never be resolved.
+  OpaqueType *const AlwaysOpaqueTy;
+
 
   /// ValueHandles - This map keeps track of all of the value handles that are
   /// watching a Value*.  The Value::HasValueHandle bit is used to know
@@ -196,7 +199,12 @@ public:
     Int8Ty(C, 8),
     Int16Ty(C, 16),
     Int32Ty(C, 32),
-    Int64Ty(C, 64) { }
+    Int64Ty(C, 64),
+    AlwaysOpaqueTy(new OpaqueType(C)) {
+    // Make sure the AlwaysOpaqueTy stays alive as long as the Context.
+    AlwaysOpaqueTy->addRef();
+    OpaqueTypes.insert(AlwaysOpaqueTy);
+  }
 
   ~LLVMContextImpl() {
     ExprConstants.freeConstants();
@@ -217,6 +225,7 @@ public:
         delete I->second;
     }
     MDNodeSet.clear();
+    AlwaysOpaqueTy->dropRef();
     for (OpaqueTypesTy::iterator I = OpaqueTypes.begin(), E = OpaqueTypes.end();
         I != E; ++I) {
       (*I)->AbstractTypeUsers.clear();
