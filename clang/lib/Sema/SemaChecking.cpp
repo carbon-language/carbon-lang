@@ -1325,9 +1325,9 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
 
       S.Diag(getLocationOfByte(CS.getStart()),
              diag::warn_printf_conversion_argument_type_mismatch)
-      << *T << Ex->getType();
-//        << getFormatSpecifierRange(startSpecifier, specifierLen)
-//        << Ex->getSourceRange();
+      << *T << Ex->getType()
+      << getFormatSpecifierRange(startSpecifier, specifierLen)
+      << Ex->getSourceRange();
     }
     return true;
   }
