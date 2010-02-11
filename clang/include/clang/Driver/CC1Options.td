@@ -117,6 +117,8 @@ def fno_merge_all_constants : Flag<"-fno-merge-all-constants">,
   HelpText<"Disallow merging of constants.">;
 def fno_threadsafe_statics : Flag<"-fno-threadsafe-statics">,
   HelpText<"Do not emit code to make initialization of local statics thread safe">;
+def fdump_vtable_layouts : Flag<"-fdump-vtable-layouts">,
+  HelpText<"Dump the layouts of all vtables that will be emitted in a translation unit">;
 def masm_verbose : Flag<"-masm-verbose">,
   HelpText<"Generate verbose assembly output">;
 def mcode_model : Separate<"-mcode-model">,

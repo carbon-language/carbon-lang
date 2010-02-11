@@ -16,13 +16,207 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/Support/Format.h"
 #include <cstdio>
 
 using namespace clang;
 using namespace CodeGen;
 
 namespace {
+
+/// VtableComponent - Represents a single component in a vtable.
+class VtableComponent {
+public:
+  enum Kind {
+    CK_VCallOffset,
+    CK_VBaseOffset,
+    CK_OffsetToTop,
+    CK_RTTI,
+    CK_VFunctionPointer
+  };
+
+  /// dump - Dump the contents of this component to the given stream.
+  void dump(llvm::raw_ostream &Out);
+
+  static VtableComponent MakeOffsetToTop(int64_t Offset) {
+    return VtableComponent(CK_OffsetToTop, Offset);
+  }
+  
+  static VtableComponent MakeRTTI(const CXXRecordDecl *RD) {
+    return VtableComponent(CK_RTTI, reinterpret_cast<uintptr_t>(RD));
+  }
+
+  static VtableComponent MakeFunction(const CXXMethodDecl *MD) {
+    assert(!isa<CXXDestructorDecl>(MD) && 
+           "Don't know how to handle dtors yet!");
+
+    return VtableComponent(CK_VFunctionPointer, 
+                           reinterpret_cast<uintptr_t>(MD));
+  }
+  
+  /// getKind - Get the kind of this vtable component.
+  Kind getKind() const {
+    return (Kind)(Value & 0x7);
+  }
+
+  int64_t getOffsetToTop() const {
+    assert(getKind() == CK_OffsetToTop && "Invalid component kind!");
+    
+    return getOffset();
+  }
+  
+  const CXXRecordDecl *getRTTIDecl() const {
+    assert(getKind() == CK_RTTI && "Invalid component kind!");
+    
+    return reinterpret_cast<CXXRecordDecl *>(getPointer());
+  }
+  
+  const CXXMethodDecl *getFunctionDecl() const {
+    assert(getKind() == CK_VFunctionPointer);
+    
+    return reinterpret_cast<CXXMethodDecl *>(getPointer());
+  }
+  
+private:
+  VtableComponent(Kind ComponentKind, int64_t Offset) {
+    assert((ComponentKind == CK_VCallOffset || 
+            ComponentKind == CK_VBaseOffset ||
+            ComponentKind == CK_OffsetToTop) && "Invalid component kind!");
+    assert(Offset <= ((1LL << 56) - 1) && "Offset is too big!");
+    
+    Value = ((Offset << 3) | ComponentKind);
+  }
+
+  VtableComponent(Kind ComponentKind, uintptr_t Ptr) {
+    assert((ComponentKind == CK_RTTI || 
+            ComponentKind == CK_VFunctionPointer) &&
+            "Invalid component kind!");
+    
+    assert((Ptr & 7) == 0 && "Pointer not sufficiently aligned!");
+    
+    Value = Ptr | ComponentKind;
+  }
+  
+  int64_t getOffset() const {
+    assert((getKind() == CK_VCallOffset || getKind() == CK_VBaseOffset ||
+            getKind() == CK_OffsetToTop) && "Invalid component kind!");
+    
+    return Value >> 3;
+  }
+
+  uintptr_t getPointer() const {
+    assert((getKind() == CK_RTTI || getKind() == CK_VFunctionPointer) &&
+           "Invalid component kind!");
+  
+    
+    return static_cast<uintptr_t>(Value & ~7ULL);
+  }
+  
+  /// The kind is stored in the lower 3 bits of the value. For offsets, we
+  /// make use of the facts that classes can't be larger than 2^55 bytes,
+  /// so we store the offset in the lower part of the 61 bytes that remain.
+  /// (The reason that we're not simply using a PointerIntPair here is that we
+  /// need the offsets to be 64-bit, even when on a 32-bit machine).
+  int64_t Value;
+};
+
+/// VtableBuilder - Class for building vtable layout information.
 class VtableBuilder {
+  /// MostDerivedClass - The most derived class for which we're building this
+  /// vtable.
+  const CXXRecordDecl *MostDerivedClass;
+
+  /// Context - The ASTContext which we will use for layout information.
+  const ASTContext &Context;
+  
+  /// Components - The components of the vtable being built.
+  llvm::SmallVector<VtableComponent, 64> Components;
+
+  /// layoutSimpleVtable - A test function that will layout very simple vtables
+  /// without any bases. Just used for testing for now.
+  void layoutSimpleVtable(const CXXRecordDecl *RD);
+  
+public:
+  VtableBuilder(const CXXRecordDecl *MostDerivedClass)
+    : MostDerivedClass(MostDerivedClass), 
+    Context(MostDerivedClass->getASTContext()) { 
+
+    layoutSimpleVtable(MostDerivedClass);      
+  }
+
+  /// dumpLayout - Dump the vtable layout.
+  void dumpLayout(llvm::raw_ostream&);
+  
+};
+
+void VtableBuilder::layoutSimpleVtable(const CXXRecordDecl *RD) {
+  assert(!RD->getNumBases() && 
+         "We don't support layout for vtables with bases right now!");
+  
+  // First, add the offset to top.
+  Components.push_back(VtableComponent::MakeOffsetToTop(0));
+  
+  // Next, add the RTTI.
+  Components.push_back(VtableComponent::MakeRTTI(RD));
+  
+  // Now go through all virtual member functions and add them.
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
+       E = RD->method_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+    
+    if (!MD->isVirtual())
+      continue;
+    
+    // Add the function.
+    Components.push_back(VtableComponent::MakeFunction(MD));
+  }
+}
+
+/// dumpLayout - Dump the vtable layout.
+void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
+  
+  Out << "Vtable for '" << MostDerivedClass->getQualifiedNameAsString();
+  Out << "' (" << Components.size() << " entries).\n";
+
+  for (unsigned I = 0, E = Components.size(); I != E; ++I) {
+    Out << llvm::format("%4d | ", I);
+    
+    const VtableComponent &Component = Components[I];
+
+    // Dump the component.
+    switch (Component.getKind()) {
+    // FIXME: Remove this default case.
+    default:
+      assert(false && "Unhandled component kind!");
+      break;
+      
+    case VtableComponent::CK_OffsetToTop:
+      Out << "offset_to_top (" << Component.getOffsetToTop() << ")";
+      break;
+    
+    case VtableComponent::CK_RTTI:
+      Out << Component.getRTTIDecl()->getQualifiedNameAsString() << " RTTI";
+      break;
+    
+    case VtableComponent::CK_VFunctionPointer: {
+      const CXXMethodDecl *MD = Component.getFunctionDecl();
+
+      Out << MD->getQualifiedNameAsString();
+
+      break;
+    }
+
+    }
+    
+    Out << '\n';
+  }
+  
+}
+  
+}
+
+namespace {
+class OldVtableBuilder {
 public:
   /// Index_t - Vtable index type.
   typedef uint64_t Index_t;
@@ -383,7 +577,7 @@ private:
   }
   
 public:
-  VtableBuilder(const CXXRecordDecl *MostDerivedClass,
+  OldVtableBuilder(const CXXRecordDecl *MostDerivedClass,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm,
                 bool build, CGVtableInfo::AddressPointsMapTy& AddressPoints)
     : BuildVtable(build), MostDerivedClass(MostDerivedClass), LayoutClass(l),
@@ -978,7 +1172,7 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
   return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }
 
-bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
+bool OldVtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
                                    Index_t OverrideOffset, Index_t Offset,
                                    int64_t CurrentVBaseOffset) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
@@ -1105,7 +1299,7 @@ bool VtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
   return false;
 }
 
-void VtableBuilder::AppendMethodsToVtable() {
+void OldVtableBuilder::AppendMethodsToVtable() {
   if (!BuildVtable) {
     VtableComponents.insert(VtableComponents.end(), Methods.size(), 
                             (llvm::Constant *)0);
@@ -1332,12 +1526,12 @@ CGVtableInfo::getAdjustments(GlobalDecl GD) {
     return 0;
 
   AddressPointsMapTy AddressPoints;
-  VtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
+  OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
 
-  for (VtableBuilder::SavedAdjustmentsVectorTy::iterator
+  for (OldVtableBuilder::SavedAdjustmentsVectorTy::iterator
        i = b.getSavedAdjustments().begin(),
        e = b.getSavedAdjustments().end(); i != e; i++)
     SavedAdjustments[i->first].push_back(i->second);
@@ -1361,7 +1555,7 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   // FIXME: This seems expensive.  Can we do a partial job to get
   // just this data.
   AddressPointsMapTy AddressPoints;
-  VtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
+  OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
   D1(printf("vtable %s\n", RD->getNameAsCString()));
   b.GenerateVtableForBase(RD);
   b.GenerateVtableForVBases(RD);
@@ -1404,8 +1598,8 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
   if (GV == 0 || CGM.getVtableInfo().AddressPoints[LayoutClass] == 0 || 
       GV->isDeclaration()) {
-    VtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition,
-                    AddressPoints);
+    OldVtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition,
+                       AddressPoints);
 
     D1(printf("vtable %s\n", RD->getNameAsCString()));
     // First comes the vtables for all the non-virtual bases...
@@ -1436,6 +1630,12 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
+  }
+  
+  if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts) {
+    VtableBuilder Builder(RD);
+    
+    Builder.dumpLayout(llvm::errs());
   }
   
   return GV;
