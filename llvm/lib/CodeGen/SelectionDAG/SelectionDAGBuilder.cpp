@@ -2062,9 +2062,15 @@ void SelectionDAGBuilder::visitSwitch(SwitchInst &SI) {
 }
 
 void SelectionDAGBuilder::visitIndirectBr(IndirectBrInst &I) {
-  // Update machine-CFG edges.
+  // Update machine-CFG edges with unique successors.
+  std::vector<BasicBlock*> succs;
+  succs.reserve(I.getNumSuccessors());
   for (unsigned i = 0, e = I.getNumSuccessors(); i != e; ++i)
-    CurMBB->addSuccessor(FuncInfo.MBBMap[I.getSuccessor(i)]);
+    succs.push_back(I.getSuccessor(i));
+  std::sort(succs.begin(), succs.end());
+  succs.erase(std::unique(succs.begin(), succs.end()), succs.end());
+  for (unsigned i = 0, e = succs.size(); i != e; ++i)
+    CurMBB->addSuccessor(FuncInfo.MBBMap[succs[i]]);
 
   DAG.setRoot(DAG.getNode(ISD::BRIND, getCurDebugLoc(),
                           MVT::Other, getControlRoot(),
