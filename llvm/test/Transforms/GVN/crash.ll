@@ -5,7 +5,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.0"
 
-define i32* @peel_to_type(i8* %name, i32 %namelen, i32* %o, i32 %expected_type) nounwind ssp {
+define i32* @test1(i8* %name, i32 %namelen, i32* %o, i32 %expected_type) nounwind ssp {
 entry:
   br i1 undef, label %if.end13, label %while.body.preheader
 
@@ -69,7 +69,7 @@ declare i32* @parse_object(i8*)
 
 @attribute_tables = external global [4 x %struct.attribute_spec*] ; <[4 x %struct.attribute_spec*]*> [#uses=2]
 
-define void @decl_attributes() nounwind {
+define void @test2() nounwind {
 entry:
   br label %bb69.i
 
@@ -99,7 +99,7 @@ bb66.i:                                           ; Unreachable
 
 @g = external global i64, align 8
 
-define i32* @foo() {
+define i32* @test3() {
 do.end17.i:
   %tmp18.i = load i7** undef
   %tmp1 = bitcast i7* %tmp18.i to i8*
@@ -135,3 +135,19 @@ do.body57.i:
 
 declare i32 @foo2()
 
+
+
+define i32 @test4() {
+entry:
+  ret i32 0
+  
+dead:
+  %P2 = getelementptr i32 *%P2, i32 52
+  %Q2 = getelementptr i32 *%Q2, i32 52
+  store i32 4, i32* %P2
+  %A = load i32* %Q2
+  br i1 true, label %dead, label %dead2
+  
+dead2:
+  ret i32 %A
+}
