@@ -313,6 +313,7 @@ void DIESectionOffset::EmitValue(DwarfPrinter *D, unsigned Form) const {
   D->EmitSectionOffset(Label.getTag(), Section.getTag(),
                        Label.getNumber(), Section.getNumber(),
                        IsSmall, IsEH, UseSet);
+  EOL(""); // FIXME: Necesssary?
 }
 
 /// SizeOf - Determine size of delta value in bytes.
