@@ -41,3 +41,17 @@ bb14:                                             ; preds = %bb4
 }
 
 declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
+
+
+; rdar://7635088
+define i32 @test3() {
+entry:
+  ret i32 0
+  
+dead:
+  %P2 = getelementptr i32 *%P2, i32 52
+  %Q2 = getelementptr i32 *%Q2, i32 52
+  store i32 4, i32* %P2
+  store i32 4, i32* %Q2
+  br label %dead
+}

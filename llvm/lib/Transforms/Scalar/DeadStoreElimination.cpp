@@ -44,8 +44,14 @@ namespace {
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;
+      
+      DominatorTree &DT = getAnalysis<DominatorTree>();
+      
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-        Changed |= runOnBasicBlock(*I);
+        // Only check non-dead blocks.  Dead blocks may have strange pointer
+        // cycles that will confuse alias analysis.
+        if (DT.isReachableFromEntry(I))
+          Changed |= runOnBasicBlock(*I);
       return Changed;
     }
     
