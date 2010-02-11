@@ -1316,7 +1316,7 @@
 // CHECK: 	jmp	-77129852792157442
         	jmp	0xfeedfacebabecafe
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
+// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	jmp	32493
@@ -1328,10 +1328,10 @@
 // CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374  # TAILCALL
+// CHECK: 	jmp	*3135175374
         	jmp	*0xbadeface
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
+// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	jmp	32493
@@ -1343,7 +1343,7 @@
 // CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374  # TAILCALL
+// CHECK: 	jmp	*3135175374
         	jmp	*0xbadeface
 
 // CHECK: 	ljmpl	*3735928559(%ebx,%ecx,8)
