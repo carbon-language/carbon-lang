@@ -606,7 +606,7 @@ Store InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
     
     // Invalidate the binding.      
     if (const RecordType *RT = T->getAsStructureType()) {
-      const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);      
+      const RecordDecl *RD = RT->getDecl()->getDefinition();      
       // No record definition.  There is nothing we can do.
       if (!RD) {
         B = RM.Remove(B, baseR);

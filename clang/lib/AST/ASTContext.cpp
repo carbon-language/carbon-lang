@@ -1097,7 +1097,7 @@ ASTContext::getASTObjCImplementationLayout(const ObjCImplementationDecl *D) {
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
 const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
-  D = D->getDefinition(*this);
+  D = D->getDefinition();
   assert(D && "Cannot get layout of forward declarations!");
 
   // Look up this layout, if already laid out, return what we have.
@@ -1114,7 +1114,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 }
 
 const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
-  RD = cast<CXXRecordDecl>(RD->getDefinition(*this));
+  RD = cast<CXXRecordDecl>(RD->getDefinition());
   assert(RD && "Cannot get key function for forward declarations!");
   
   const CXXMethodDecl *&Entry = KeyFunctions[RD];

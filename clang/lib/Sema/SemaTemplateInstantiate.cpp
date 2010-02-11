@@ -1054,7 +1054,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   bool Invalid = false;
 
   CXXRecordDecl *PatternDef
-    = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
+    = cast_or_null<CXXRecordDecl>(Pattern->getDefinition());
   if (!PatternDef) {
     if (!Complain) {
       // Say nothing
@@ -1397,8 +1397,8 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       CXXRecordDecl *Pattern = Record->getInstantiatedFromMemberClass();
       assert(Pattern && "Missing instantiated-from-template information");
       
-      if (!Record->getDefinition(Context)) {
-        if (!Pattern->getDefinition(Context)) {
+      if (!Record->getDefinition()) {
+        if (!Pattern->getDefinition()) {
           // C++0x [temp.explicit]p8:
           //   An explicit instantiation definition that names a class template
           //   specialization explicitly instantiates the class template 
@@ -1418,7 +1418,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                          TSK);
       }
       
-      Pattern = cast_or_null<CXXRecordDecl>(Record->getDefinition(Context));
+      Pattern = cast_or_null<CXXRecordDecl>(Record->getDefinition());
       if (Pattern)
         InstantiateClassMembers(PointOfInstantiation, Pattern, TemplateArgs, 
                                 TSK);

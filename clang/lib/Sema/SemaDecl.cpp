@@ -4633,7 +4633,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
           // Diagnose attempts to redefine a tag.
           if (TUK == TUK_Definition) {
-            if (TagDecl *Def = PrevTagDecl->getDefinition(Context)) {
+            if (TagDecl *Def = PrevTagDecl->getDefinition()) {
               // If we're defining a specialization and the previous definition
               // is from an implicit instantiation, don't emit an error
               // here; we'll catch this in the general case below.

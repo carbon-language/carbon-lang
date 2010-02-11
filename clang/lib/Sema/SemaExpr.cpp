@@ -747,7 +747,7 @@ static bool IsProvablyNotDerivedFrom(Sema &SemaRef,
   if (Bases.count(Record->getCanonicalDecl()))
     return false;
 
-  RecordDecl *RD = Record->getDefinition(SemaRef.Context);
+  RecordDecl *RD = Record->getDefinition();
   if (!RD) return false;
   Record = cast<CXXRecordDecl>(RD);
 

@@ -1719,7 +1719,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::CXXRecord:
   case Decl::ClassTemplateSpecialization:
   case Decl::ClassTemplatePartialSpecialization:
-    if (TagDecl *Def = cast<TagDecl>(D)->getDefinition(D->getASTContext()))
+    if (TagDecl *Def = cast<TagDecl>(D)->getDefinition())
       return MakeCXCursor(Def, CXXUnit);
     return clang_getNullCursor();
 
@@ -1750,7 +1750,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
    
   case Decl::ClassTemplate: {
     if (RecordDecl *Def = cast<ClassTemplateDecl>(D)->getTemplatedDecl()
-                                          ->getDefinition(D->getASTContext()))
+                                                            ->getDefinition())
       return MakeCXCursor(
                          cast<CXXRecordDecl>(Def)->getDescribedClassTemplate(), 
                           CXXUnit);

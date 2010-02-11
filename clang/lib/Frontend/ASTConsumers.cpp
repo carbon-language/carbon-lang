@@ -564,7 +564,7 @@ public:
       if (RD->isInvalidDecl())
         continue;
       
-      if (!RD->getDefinition(C))
+      if (!RD->getDefinition())
         continue;
       
       // FIXME: Do we really need to hard code this?

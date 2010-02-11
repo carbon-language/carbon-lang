@@ -799,7 +799,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
                                      llvm::DIType(), llvm::DIArray());
 
   // If this is just a forward declaration, return it.
-  if (!RD->getDefinition(CGM.getContext()))
+  if (!RD->getDefinition())
     return FwdDecl;
 
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();

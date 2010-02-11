@@ -652,7 +652,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   // If this record has a definition in the translation unit we're coming from,
   // but this particular declaration is not that definition, import the
   // definition and map to that.
-  TagDecl *Definition = D->getDefinition(Importer.getFromContext());
+  TagDecl *Definition = D->getDefinition();
   if (Definition && Definition != D) {
     Decl *ImportedDef = Importer.Import(Definition);
     Importer.getImportedDecls()[D] = ImportedDef;

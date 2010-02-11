@@ -102,7 +102,6 @@ bool CXXRecordDecl::isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const {
 bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
                                 void *OpaqueData,
                                 bool AllowShortCircuit) const {
-  ASTContext &Context = getASTContext();
   llvm::SmallVector<const CXXRecordDecl*, 8> Queue;
 
   const CXXRecordDecl *Record = this;
@@ -118,7 +117,7 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
       }
 
       CXXRecordDecl *Base = 
-            cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition(Context));
+            cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition());
       if (!Base) {
         if (AllowShortCircuit) return false;
         AllMatches = false;

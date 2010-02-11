@@ -1595,7 +1595,7 @@ public:
   ///  specific TagDecl is defining declaration, not whether or not the
   ///  struct/union/class/enum type is defined.  This method returns NULL if
   ///  there is no TagDecl that defines the struct/union/class/enum.
-  TagDecl* getDefinition(ASTContext& C) const;
+  TagDecl* getDefinition() const;
 
   void setDefinition(bool V) { IsDefinition = V; }
 
@@ -1801,8 +1801,8 @@ public:
   ///  RecordDecl is defining declaration, not whether or not the record
   ///  type is defined.  This method returns NULL if there is no RecordDecl
   ///  that defines the struct/union/tag.
-  RecordDecl* getDefinition(ASTContext& C) const {
-    return cast_or_null<RecordDecl>(TagDecl::getDefinition(C));
+  RecordDecl* getDefinition() const {
+    return cast_or_null<RecordDecl>(TagDecl::getDefinition());
   }
 
   // Iterator access to field members. The field iterator only visits

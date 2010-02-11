@@ -681,7 +681,7 @@ const MemRegion *MemRegion::StripCasts() const {
 static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
     const RecordDecl *D = RT->getDecl();
-    if (!D->getDefinition(Ctx))
+    if (!D->getDefinition())
       return false;
   }
 

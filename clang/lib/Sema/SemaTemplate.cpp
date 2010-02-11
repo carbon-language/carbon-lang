@@ -823,7 +823,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
     // Check for redefinition of this class template.
     if (TUK == TUK_Definition) {
-      if (TagDecl *Def = PrevRecordDecl->getDefinition(Context)) {
+      if (TagDecl *Def = PrevRecordDecl->getDefinition()) {
         Diag(NameLoc, diag::err_redefinition) << Name;
         Diag(Def->getLocation(), diag::note_previous_definition);
         // FIXME: Would it make sense to try to "forget" the previous
@@ -3568,7 +3568,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Check that this isn't a redefinition of this specialization.
   if (TUK == TUK_Definition) {
-    if (RecordDecl *Def = Specialization->getDefinition(Context)) {
+    if (RecordDecl *Def = Specialization->getDefinition()) {
       SourceRange Range(TemplateNameLoc, RAngleLoc);
       Diag(TemplateNameLoc, diag::err_redefinition)
         << Context.getTypeDeclType(Specialization) << Range;
@@ -4325,13 +4325,13 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // instantiation.
   ClassTemplateSpecializationDecl *Def
     = cast_or_null<ClassTemplateSpecializationDecl>(
-                                        Specialization->getDefinition(Context));
+                                              Specialization->getDefinition());
   if (!Def)
     InstantiateClassTemplateSpecialization(TemplateNameLoc, Specialization, TSK);
   
   // Instantiate the members of this class template specialization.
   Def = cast_or_null<ClassTemplateSpecializationDecl>(
-                                       Specialization->getDefinition(Context));
+                                       Specialization->getDefinition());
   if (Def)
     InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
 
@@ -4408,7 +4408,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // Verify that it is okay to explicitly instantiate here.
   CXXRecordDecl *PrevDecl 
     = cast_or_null<CXXRecordDecl>(Record->getPreviousDeclaration());
-  if (!PrevDecl && Record->getDefinition(Context))
+  if (!PrevDecl && Record->getDefinition())
     PrevDecl = Record;
   if (PrevDecl) {
     MemberSpecializationInfo *MSInfo = PrevDecl->getMemberSpecializationInfo();
@@ -4425,13 +4425,13 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   }
   
   CXXRecordDecl *RecordDef
-    = cast_or_null<CXXRecordDecl>(Record->getDefinition(Context));
+    = cast_or_null<CXXRecordDecl>(Record->getDefinition());
   if (!RecordDef) {
     // C++ [temp.explicit]p3:
     //   A definition of a member class of a class template shall be in scope 
     //   at the point of an explicit instantiation of the member class.
     CXXRecordDecl *Def 
-      = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
+      = cast_or_null<CXXRecordDecl>(Pattern->getDefinition());
     if (!Def) {
       Diag(TemplateLoc, diag::err_explicit_instantiation_undefined_member)
         << 0 << Record->getDeclName() << Record->getDeclContext();
@@ -4444,7 +4444,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                            TSK))
         return true;
 
-      RecordDef = cast_or_null<CXXRecordDecl>(Record->getDefinition(Context));
+      RecordDef = cast_or_null<CXXRecordDecl>(Record->getDefinition());
       if (!RecordDef)
         return true;
     }

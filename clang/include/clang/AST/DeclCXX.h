@@ -362,7 +362,7 @@ public:
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
 
-  CXXRecordDecl *getDefinition(ASTContext& C) const {
+  CXXRecordDecl *getDefinition() const {
     if (!DefinitionData) return 0;
     return data().Definition;
   }

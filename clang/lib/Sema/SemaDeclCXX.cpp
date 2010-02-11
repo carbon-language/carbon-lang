@@ -486,7 +486,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   // If the base class is polymorphic or isn't empty, the new one is/isn't, too.
   RecordDecl *BaseDecl = BaseType->getAs<RecordType>()->getDecl();
   assert(BaseDecl && "Record type has no declaration");
-  BaseDecl = BaseDecl->getDefinition(Context);
+  BaseDecl = BaseDecl->getDefinition();
   assert(BaseDecl && "Base type is not incomplete, but has no definition");
   CXXRecordDecl * CXXBaseDecl = cast<CXXRecordDecl>(BaseDecl);
   assert(CXXBaseDecl && "Base type is not a C++ type");
@@ -2013,7 +2013,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
     return false;
 
   // FIXME: is this reasonable?  It matches current behavior, but....
-  if (!RD->getDefinition(Context))
+  if (!RD->getDefinition())
     return false;
 
   if (!RD->isAbstract())

@@ -1398,7 +1398,7 @@ void TagDecl::completeDefinition() {
   }
 }
 
-TagDecl* TagDecl::getDefinition(ASTContext& C) const {
+TagDecl* TagDecl::getDefinition() const {
   if (isDefinition())
     return const_cast<TagDecl *>(this);
 

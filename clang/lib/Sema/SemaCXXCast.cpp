@@ -391,7 +391,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   }
 
   // C++ 5.2.7p6: Otherwise, v shall be [polymorphic].
-  const RecordDecl *SrcDecl = SrcRecord->getDecl()->getDefinition(Self.Context);
+  const RecordDecl *SrcDecl = SrcRecord->getDecl()->getDefinition();
   assert(SrcDecl && "Definition missing");
   if (!cast<CXXRecordDecl>(SrcDecl)->isPolymorphic()) {
     Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_polymorphic)
