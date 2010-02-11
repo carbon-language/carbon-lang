@@ -175,8 +175,10 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   const MCOperand &Scale    = MI.getOperand(Op+1);
   const MCOperand &IndexReg = MI.getOperand(Op+2);
   unsigned BaseReg = Base.getReg();
-  unsigned BaseRegNo = BaseReg != 0 ? GetX86RegNum(Base) : -1U;
-
+  unsigned BaseRegNo = -1U;
+  if (BaseReg != 0 && BaseReg != X86::RIP)
+    BaseRegNo = GetX86RegNum(Base);
+  
   // Determine whether a SIB byte is needed.
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table

@@ -387,7 +387,9 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
   // 2-7) and absolute references.
-  unsigned BaseRegNo = BaseReg != 0 ? getX86RegNum(BaseReg) : -1U;
+  unsigned BaseRegNo = -1U;
+  if (BaseReg != 0 && BaseReg != X86::RIP)
+    BaseRegNo = getX86RegNum(BaseReg);
 
   if (// The SIB byte must be used if there is an index register.
       IndexReg.getReg() == 0 && 
