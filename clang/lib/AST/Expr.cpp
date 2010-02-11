@@ -2057,14 +2057,15 @@ void ExtVectorElementExpr::getEncodedElementAccess(
 }
 
 // constructor for instance messages.
-ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
-                QualType retType, ObjCMethodDecl *mproto,
-                SourceLocation LBrac, SourceLocation RBrac,
-                Expr **ArgExprs, unsigned nargs)
+ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, Expr *receiver,
+                                 Selector selInfo,
+                                 QualType retType, ObjCMethodDecl *mproto,
+                                 SourceLocation LBrac, SourceLocation RBrac,
+                                 Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
     MethodProto(mproto) {
   NumArgs = nargs;
-  SubExprs = new Stmt*[NumArgs+1];
+  SubExprs = new (C) Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = receiver;
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -2076,14 +2077,15 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
 
 // constructor for class messages.
 // FIXME: clsName should be typed to ObjCInterfaceType
-ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
-                QualType retType, ObjCMethodDecl *mproto,
-                SourceLocation LBrac, SourceLocation RBrac,
-                Expr **ArgExprs, unsigned nargs)
+ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName,
+                                 Selector selInfo, QualType retType,
+                                 ObjCMethodDecl *mproto,
+                                 SourceLocation LBrac, SourceLocation RBrac,
+                                 Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
     MethodProto(mproto) {
   NumArgs = nargs;
-  SubExprs = new Stmt*[NumArgs+1];
+  SubExprs = new (C) Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | IsClsMethDeclUnknown);
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -2094,14 +2096,15 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
 }
 
 // constructor for class messages.
-ObjCMessageExpr::ObjCMessageExpr(ObjCInterfaceDecl *cls, Selector selInfo,
-                                 QualType retType, ObjCMethodDecl *mproto,
-                                 SourceLocation LBrac, SourceLocation RBrac,
-                                 Expr **ArgExprs, unsigned nargs)
+ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, ObjCInterfaceDecl *cls,
+                                 Selector selInfo, QualType retType,
+                                 ObjCMethodDecl *mproto, SourceLocation LBrac,
+                                 SourceLocation RBrac, Expr **ArgExprs,
+                                 unsigned nargs)
 : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
 MethodProto(mproto) {
   NumArgs = nargs;
-  SubExprs = new Stmt*[NumArgs+1];
+  SubExprs = new (C) Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = (Expr*) ((uintptr_t) cls | IsClsMethDeclKnown);
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -2136,6 +2139,13 @@ void ObjCMessageExpr::setClassInfo(const ObjCMessageExpr::ClassInfo &CI) {
     SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.first | IsClsMethDeclKnown);
 }
 
+void ObjCMessageExpr::DoDestroy(ASTContext &C) {
+  DestroyChildren(C);
+  if (SubExprs)
+    C.Deallocate(SubExprs);
+  this->~ObjCMessageExpr();
+  C.Deallocate((void*) this);
+}
 
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   return getCond()->EvaluateAsInt(C) != 0;

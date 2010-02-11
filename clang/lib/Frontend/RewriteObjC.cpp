@@ -1159,7 +1159,7 @@ Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
     // This allows us to handle chain/nested property getters.
     Receiver = PropGetters[PRE];
   }
-  MsgExpr = new (Context) ObjCMessageExpr(dyn_cast<Expr>(Receiver),
+  MsgExpr = new (Context) ObjCMessageExpr(*Context, dyn_cast<Expr>(Receiver),
                                 PDecl->getSetterName(), PDecl->getType(),
                                 PDecl->getSetterMethodDecl(),
                                 SourceLocation(), SourceLocation(),
@@ -1188,7 +1188,7 @@ Stmt *RewriteObjC::RewritePropertyGetter(ObjCPropertyRefExpr *PropRefExpr) {
     // This allows us to handle chain/nested property getters.
     Receiver = PropGetters[PRE];
   }
-  MsgExpr = new (Context) ObjCMessageExpr(dyn_cast<Expr>(Receiver),
+  MsgExpr = new (Context) ObjCMessageExpr(*Context, dyn_cast<Expr>(Receiver),
                                 PDecl->getGetterName(), PDecl->getType(),
                                 PDecl->getGetterMethodDecl(),
                                 SourceLocation(), SourceLocation(),

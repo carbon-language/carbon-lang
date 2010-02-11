@@ -367,7 +367,7 @@ class ObjCMessageExpr : public Expr {
 public:
   /// This constructor is used to represent class messages where the
   /// ObjCInterfaceDecl* of the receiver is not known.
-  ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
+  ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
@@ -375,13 +375,13 @@ public:
   /// This constructor is used to represent class messages where the
   /// ObjCInterfaceDecl* of the receiver is known.
   // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(ObjCInterfaceDecl *cls, Selector selInfo,
+  ObjCMessageExpr(ASTContext &C, ObjCInterfaceDecl *cls, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
 
   // constructor for instance messages.
-  ObjCMessageExpr(Expr *receiver, Selector selInfo,
+  ObjCMessageExpr(ASTContext &C, Expr *receiver, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
@@ -389,9 +389,7 @@ public:
   explicit ObjCMessageExpr(EmptyShell Empty)
     : Expr(ObjCMessageExprClass, Empty), SubExprs(0), NumArgs(0) {}
 
-  ~ObjCMessageExpr() {
-    delete [] SubExprs;
-  }
+  virtual void DoDestroy(ASTContext &C);
 
   /// getReceiver - Returns the receiver of the message expression.
   ///  This can be NULL if the message is for class methods.  For

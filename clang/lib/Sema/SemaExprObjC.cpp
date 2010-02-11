@@ -470,11 +470,13 @@ Sema::ExprResult Sema::ActOnClassMessage(
   // now, we simply pass the "super" identifier through (which isn't consistent
   // with instance methods.
   if (isSuper)
-    return new (Context) ObjCMessageExpr(receiverName, Sel, returnType, Method,
-                                         lbrac, rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(Context, receiverName, Sel, returnType,
+                                         Method, lbrac, rbrac, ArgExprs,
+                                         NumArgs);
   else
-    return new (Context) ObjCMessageExpr(ClassDecl, Sel, returnType, Method,
-                                         lbrac, rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(Context, ClassDecl, Sel, returnType,
+                                         Method, lbrac, rbrac, ArgExprs,
+                                         NumArgs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -521,8 +523,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       return true;
 
     returnType = returnType.getNonReferenceType();
-    return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
-                                         rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType,
+                                         Method, lbrac, rbrac,
+                                         ArgExprs, NumArgs);
   }
 
   // Handle messages to id.
@@ -536,8 +539,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                   lbrac, rbrac, returnType))
       return true;
     returnType = returnType.getNonReferenceType();
-    return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
-                                         rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType,
+                                         Method, lbrac, rbrac,
+                                         ArgExprs, NumArgs);
   }
 
   // Handle messages to Class.
@@ -582,8 +586,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                   lbrac, rbrac, returnType))
       return true;
     returnType = returnType.getNonReferenceType();
-    return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
-                                         rbrac, ArgExprs, NumArgs);
+    return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType,
+                                         Method, lbrac, rbrac,
+                                         ArgExprs, NumArgs);
   }
 
   ObjCMethodDecl *Method = 0;
@@ -665,7 +670,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                 lbrac, rbrac, returnType))
     return true;
   returnType = returnType.getNonReferenceType();
-  return new (Context) ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac,
-                                       rbrac, ArgExprs, NumArgs);
+  return new (Context) ObjCMessageExpr(Context, RExpr, Sel, returnType, Method,
+                                       lbrac, rbrac, ArgExprs, NumArgs);
 }
 

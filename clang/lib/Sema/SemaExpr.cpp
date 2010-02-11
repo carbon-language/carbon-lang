@@ -3043,7 +3043,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
         if (DiagnoseUseOfDecl(OMD, MemberLoc))
           return ExprError();
 
-        return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel,
+        return Owned(new (Context) ObjCMessageExpr(Context, BaseExpr, Sel,
                                                    OMD->getResultType(),
                                                    OMD, OpLoc, MemberLoc,
                                                    NULL, 0));
