@@ -612,6 +612,15 @@ def NOP : AI<(outs), (ins), Pseudo, NoItinerary, "nop", "",
   let Inst{7-0} = 0b00000000;
 }
 
+// The i32imm operand $val can be used by a debugger to store more information
+// about the breakpoint.
+def BKPT : AI<(outs), (ins i32imm:$val), Pseudo, NoItinerary, "bkpt", "\t$val",
+              [/* For disassembly only; pattern left blank */]>,
+           Requires<[IsARM]> {
+  let Inst{27-20} = 0b00010010;
+  let Inst{7-4} = 0b0111;
+}
+
 def DBG : AI<(outs), (ins i32imm:$opt), Pseudo, NoItinerary, "dbg", "\t$opt",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV7]> {

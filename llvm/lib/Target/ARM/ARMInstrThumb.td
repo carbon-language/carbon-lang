@@ -132,6 +132,14 @@ PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
            [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb1Only]>;
 }
 
+// The i32imm operand $val can be used by a debugger to store more information
+// about the breakpoint.
+def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
+                [/* For disassembly only; pattern left blank */]>,
+            T1Encoding<0b101111> {
+  let Inst{9-8} = 0b10;
+}
+
 // For both thumb1 and thumb2.
 let isNotDuplicable = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr,
