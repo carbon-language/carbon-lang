@@ -31,9 +31,6 @@ class MCSymbol;
 /// which needs to be rewritten. This region will either be rewritten by the
 /// assembler or cause a relocation entry to be generated.
 struct MCAsmFixup {
-  /// Fragment - The fragment containing the fixup.
-  MCFragment *Fragment;
-  
   /// Offset - The offset inside the fragment which needs to be rewritten.
   uint64_t Offset;
 
@@ -49,15 +46,17 @@ struct MCAsmFixup {
   uint64_t FixedValue;
 
 public:
-  MCAsmFixup(MCFragment &_Fragment, uint64_t _Offset, const MCExpr &_Value,
-             unsigned _Size) 
-    : Fragment(&_Fragment), Offset(_Offset), Value(&_Value), Size(_Size),
-      FixedValue(0) {}
+  MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, unsigned _Size) 
+    : Offset(_Offset), Value(&_Value), Size(_Size), FixedValue(0) {}
 };
 
 class MCFragment : public ilist_node<MCFragment> {
   MCFragment(const MCFragment&);     // DO NOT IMPLEMENT
   void operator=(const MCFragment&); // DO NOT IMPLEMENT
+
+public:
+  typedef std::vector<MCAsmFixup>::const_iterator const_fixup_iterator;
+  typedef std::vector<MCAsmFixup>::iterator fixup_iterator;
 
 public:
   enum FragmentType {
@@ -86,6 +85,11 @@ private:
   /// FileSize - The file size of this section. This is ~0 until initialized.
   uint64_t FileSize;
 
+  /// Fixups - The list of fixups in this fragment.
+  //
+  // FIXME: This should be sunk into MCDataFragment.
+  std::vector<MCAsmFixup> Fixups;
+
   /// @}
 
 protected:
@@ -106,6 +110,39 @@ public:
     assert(0 && "Invalid getMaxFileSize call!");
     return 0;
   }
+
+  /// @name Fixup Access
+  /// @{
+
+  /// LookupFixup - Look up the fixup for the given \arg Fragment and \arg
+  /// Offset.
+  ///
+  /// If multiple fixups exist for the same fragment and offset it is undefined
+  /// which one is returned.
+  //
+  // FIXME: This isn't horribly slow in practice, but there are much nicer
+  // solutions to applying the fixups. This will be fixed by sinking fixups into
+  // data fragments exclusively.
+  const MCAsmFixup *LookupFixup(uint64_t Offset) const {
+    for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
+      if (Fixups[i].Offset == Offset)
+        return &Fixups[i];
+    return 0;
+  }
+
+  std::vector<MCAsmFixup> &getFixups() {
+    return Fixups;
+  }
+
+  fixup_iterator fixup_begin() {
+    return Fixups.begin();
+  }
+
+  fixup_iterator fixup_end() {
+    return Fixups.end();
+  }
+
+  size_t fixup_size() const { return Fixups.size(); }
 
   /// @name Assembler Backend Support
   /// @{
@@ -313,14 +350,13 @@ class MCSectionData : public ilist_node<MCSectionData> {
   void operator=(const MCSectionData&); // DO NOT IMPLEMENT
 
 public:
-
   typedef iplist<MCFragment> FragmentListType;
 
   typedef FragmentListType::const_iterator const_iterator;
   typedef FragmentListType::iterator iterator;
 
-  typedef std::vector<MCAsmFixup>::const_iterator const_fixup_iterator;
-  typedef std::vector<MCAsmFixup>::iterator fixup_iterator;
+  typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
+  typedef FragmentListType::reverse_iterator reverse_iterator;
 
 private:
   iplist<MCFragment> Fragments;
@@ -344,12 +380,6 @@ private:
   /// FileSize - The size of this section in the object file. This is ~0 until
   /// initialized.
   uint64_t FileSize;
-
-  /// LastFixupLookup - Cache for the last looked up fixup.
-  mutable unsigned LastFixupLookup;
-
-  /// Fixups - The list of fixups in this section.
-  std::vector<MCAsmFixup> Fixups;
 
   /// HasInstructions - Whether this section has had instructions emitted into
   /// it.
@@ -379,44 +409,21 @@ public:
   iterator end() { return Fragments.end(); }
   const_iterator end() const { return Fragments.end(); }
 
+  reverse_iterator rbegin() { return Fragments.rbegin(); }
+  const_reverse_iterator rbegin() const { return Fragments.rbegin(); }
+
+  reverse_iterator rend() { return Fragments.rend(); }
+  const_reverse_iterator rend() const { return Fragments.rend(); }
+
   size_t size() const { return Fragments.size(); }
 
   bool empty() const { return Fragments.empty(); }
-
-  /// @}
-  /// @name Fixup Access
-  /// @{
-
-  std::vector<MCAsmFixup> &getFixups() {
-    return Fixups;
-  }
-
-  fixup_iterator fixup_begin() {
-    return Fixups.begin();
-  }
-
-  fixup_iterator fixup_end() {
-    return Fixups.end();
-  }
-
-  size_t fixup_size() const { return Fixups.size(); }
 
   /// @}
   /// @name Assembler Backend Support
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
-
-  /// LookupFixup - Look up the fixup for the given \arg Fragment and \arg
-  /// Offset.
-  ///
-  /// If multiple fixups exist for the same fragment and offset it is undefined
-  /// which one is returned.
-  //
-  // FIXME: This isn't horribly slow in practice, but there are much nicer
-  // solutions to applying the fixups.
-  const MCAsmFixup *LookupFixup(const MCFragment *Fragment,
-                                uint64_t Offset) const;
 
   uint64_t getAddress() const { 
     assert(Address != ~UINT64_C(0) && "Address not set!");

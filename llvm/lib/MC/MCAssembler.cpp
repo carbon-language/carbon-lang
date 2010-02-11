@@ -402,12 +402,12 @@ public:
     uint32_t Word0;
     uint32_t Word1;
   };
-  void ComputeScatteredRelocationInfo(MCAssembler &Asm,
+  void ComputeScatteredRelocationInfo(MCAssembler &Asm, MCFragment &Fragment,
                                       MCAsmFixup &Fixup,
                                       const MCValue &Target,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                                      std::vector<MachRelocationEntry> &Relocs) {
-    uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
+    uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     unsigned IsPCRel = 0;
     unsigned Type = RIT_Vanilla;
 
@@ -453,7 +453,7 @@ public:
     }
   }
 
-  void ComputeRelocationInfo(MCAssembler &Asm,
+  void ComputeRelocationInfo(MCAssembler &Asm, MCFragment &Fragment,
                              MCAsmFixup &Fixup,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                              std::vector<MachRelocationEntry> &Relocs) {
@@ -466,11 +466,11 @@ public:
     if (Target.getSymB() ||
         (Target.getSymA() && !Target.getSymA()->isUndefined() &&
          Target.getConstant()))
-      return ComputeScatteredRelocationInfo(Asm, Fixup, Target,
+      return ComputeScatteredRelocationInfo(Asm, Fragment, Fixup, Target,
                                             SymbolMap, Relocs);
 
     // See <reloc.h>.
-    uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
+    uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsPCRel = 0;
@@ -766,17 +766,19 @@ public:
     // is written.
     std::vector<MachRelocationEntry> RelocInfos;
     uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
-    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie;
-         ++it) {
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it) {
       MCSectionData &SD = *it;
 
       // The assembler writes relocations in the reverse order they were seen.
       //
       // FIXME: It is probably more complicated than this.
       unsigned NumRelocsStart = RelocInfos.size();
-      for (unsigned i = 0, e = SD.fixup_size(); i != e; ++i)
-        ComputeRelocationInfo(Asm, SD.getFixups()[e - i - 1], SymbolMap,
-                              RelocInfos);
+      for (MCSectionData::reverse_iterator it2 = SD.rbegin(),
+             ie2 = SD.rend(); it2 != ie2; ++it2)
+        for (unsigned i = 0, e = it2->fixup_size(); i != e; ++i)
+          ComputeRelocationInfo(Asm, *it2, it2->getFixups()[e - i - 1],
+                                SymbolMap, RelocInfos);
 
       unsigned NumRelocs = RelocInfos.size() - NumRelocsStart;
       uint64_t SectionStart = SectionDataStart + SD.getAddress();
@@ -905,33 +907,10 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
     Address(~UINT64_C(0)),
     Size(~UINT64_C(0)),
     FileSize(~UINT64_C(0)),
-    LastFixupLookup(~0),
     HasInstructions(false)
 {
   if (A)
     A->getSectionList().push_back(this);
-}
-
-const MCAsmFixup *MCSectionData::LookupFixup(const MCFragment *Fragment,
-                                             uint64_t Offset) const {
-  // Use a one level cache to turn the common case of accessing the fixups in
-  // order into O(1) instead of O(N).
-  unsigned i = LastFixupLookup, Count = Fixups.size(), End = Fixups.size();
-  if (i >= End)
-    i = 0;
-  while (Count--) {
-    const MCAsmFixup &F = Fixups[i];
-    if (F.Fragment == Fragment && F.Offset == Offset) {
-      LastFixupLookup = i;
-      return &F;
-    }
-
-    ++i;
-    if (i == End)
-      i = 0;
-  }
-
-  return 0;
 }
 
 /* *** */
@@ -997,10 +976,13 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
         break;
 
       // Otherwise, add fixups for the values.
-      for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
-        MCAsmFixup Fix(F, i*FF.getValueSize(), FF.getValue(),FF.getValueSize());
-        SD.getFixups().push_back(Fix);
-      }
+      //
+      // FIXME: What we want to do here is lower this to a data fragment once we
+      // realize it will need relocations. This means that the only place we
+      // need to worry about relocations and fixing is on data fragments.
+      for (uint64_t i = 0, e = FF.getCount(); i != e; ++i)
+        FF.getFixups().push_back(MCAsmFixup(i*FF.getValueSize(), FF.getValue(),
+                                            FF.getValueSize()));
       break;
     }
 
@@ -1105,9 +1087,9 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
       if (!Target.isAbsolute()) {
         // Find the fixup.
         //
-        // FIXME: Find a better way to write in the fixes.
-        const MCAsmFixup *Fixup =
-          F.getParent()->LookupFixup(&F, i * FF.getValueSize());
+        // FIXME: Find a better way to write in the fixes (move to
+        // MCDataFragment).
+        const MCAsmFixup *Fixup = FF.LookupFixup(i * FF.getValueSize());
         assert(Fixup && "Missing fixup for fill value!");
         Value = Fixup->FixedValue;
       }
