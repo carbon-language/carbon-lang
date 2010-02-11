@@ -436,7 +436,9 @@ public:
         continue;
       }
 
-      Prev->Next = new ObjCMethodList(Method, 0);
+      ObjCMethodList *Mem =
+        Reader.getSema()->BumpAlloc.Allocate<ObjCMethodList>();
+      Prev->Next = new (Mem) ObjCMethodList(Method, 0);
       Prev = Prev->Next;
     }
 
@@ -452,7 +454,9 @@ public:
         continue;
       }
 
-      Prev->Next = new ObjCMethodList(Method, 0);
+      ObjCMethodList *Mem =
+        Reader.getSema()->BumpAlloc.Allocate<ObjCMethodList>();
+      Prev->Next = new (Mem) ObjCMethodList(Method, 0);
       Prev = Prev->Next;
     }
 

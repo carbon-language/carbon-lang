@@ -1490,7 +1490,8 @@ void Sema::AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method) {
 
   // We have a new signature for an existing method - add it.
   // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-  Entry.Next = new ObjCMethodList(Method, Entry.Next);
+  ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
+  Entry.Next = new (Mem) ObjCMethodList(Method, Entry.Next);
 }
 
 // FIXME: Finish implementing -Wno-strict-selector-match.
@@ -1553,7 +1554,8 @@ void Sema::AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method) {
     if (!match) {
       // We have a new signature for an existing method - add it.
       // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-      struct ObjCMethodList *OMI = new ObjCMethodList(Method, FirstMethod.Next);
+      ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
+      ObjCMethodList *OMI = new (Mem) ObjCMethodList(Method, FirstMethod.Next);
       FirstMethod.Next = OMI;
     }
   }
