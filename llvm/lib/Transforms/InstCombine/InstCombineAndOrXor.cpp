@@ -932,24 +932,49 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0))
       if (Instruction *Res = FoldAndOfICmps(I, LHS, RHS))
         return Res;
-
+  
+  // If and'ing two fcmp, try combine them into one.
+  if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0)))
+    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
+      if (Instruction *Res = FoldAndOfFCmps(I, LHS, RHS))
+        return Res;
+  
+  
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0))
-    if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
-      if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind ?
-        const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() &&
-            SrcTy->isIntOrIntVector() &&
-            // Only do this if the casts both really cause code to be generated.
-            ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0),
-                              I.getType()) &&
-            ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
-                              I.getType())) {
-          Value *NewOp = Builder->CreateAnd(Op0C->getOperand(0),
-                                            Op1C->getOperand(0), I.getName());
+    if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
+      const Type *SrcTy = Op0C->getOperand(0)->getType();
+      if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
+          SrcTy == Op1C->getOperand(0)->getType() &&
+          SrcTy->isIntOrIntVector()) {
+        Value *Op0COp = Op0C->getOperand(0), *Op1COp = Op1C->getOperand(0);
+        
+        // Only do this if the casts both really cause code to be generated.
+        if (ShouldOptimizeCast(Op0C->getOpcode(), Op0COp, I.getType()) &&
+            ShouldOptimizeCast(Op1C->getOpcode(), Op1COp, I.getType())) {
+          Value *NewOp = Builder->CreateAnd(Op0COp, Op1COp, I.getName());
           return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
         }
+        
+        // If this is and(cast(icmp), cast(icmp)), try to fold this even if the
+        // cast is otherwise not optimizable.  This happens for vector sexts.
+        if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
+          if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
+            if (Instruction *Res = FoldAndOfICmps(I, LHS, RHS)) {
+              InsertNewInstBefore(Res, I);
+              return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+            }
+        
+        // If this is and(cast(fcmp), cast(fcmp)), try to fold this even if the
+        // cast is otherwise not optimizable.  This happens for vector sexts.
+        if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
+          if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
+            if (Instruction *Res = FoldAndOfFCmps(I, LHS, RHS)) {
+              InsertNewInstBefore(Res, I);
+              return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+            }
       }
+    }
     
   // (X >> Z) & (Y >> Z)  -> (X&Y) >> Z  for all shifts.
   if (BinaryOperator *SI1 = dyn_cast<BinaryOperator>(Op1)) {
@@ -963,13 +988,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         return BinaryOperator::Create(SI1->getOpcode(), NewOp, 
                                       SI1->getOperand(1));
       }
-  }
-
-  // If and'ing two fcmp, try combine them into one.
-  if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
-    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
-      if (Instruction *Res = FoldAndOfFCmps(I, LHS, RHS))
-        return Res;
   }
 
   return Changed ? &I : 0;
@@ -1669,37 +1687,51 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (Instruction *Res = FoldOrOfICmps(I, LHS, RHS))
         return Res;
     
+  // (fcmp uno x, c) | (fcmp uno y, c)  -> (fcmp uno x, y)
+  if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0)))
+    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
+      if (Instruction *Res = FoldOrOfFCmps(I, LHS, RHS))
+        return Res;
+  
   // fold (or (cast A), (cast B)) -> (cast (or A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
-        if (!isa<ICmpInst>(Op0C->getOperand(0)) ||
-            !isa<ICmpInst>(Op1C->getOperand(0))) {
-          const Type *SrcTy = Op0C->getOperand(0)->getType();
-          if (SrcTy == Op1C->getOperand(0)->getType() &&
-              SrcTy->isIntOrIntVector() &&
+        const Type *SrcTy = Op0C->getOperand(0)->getType();
+        if (SrcTy == Op1C->getOperand(0)->getType() &&
+            SrcTy->isIntOrIntVector()) {
+          Value *Op0COp = Op0C->getOperand(0), *Op1COp = Op1C->getOperand(0);
+
+          if ((!isa<ICmpInst>(Op0COp) || !isa<ICmpInst>(Op1COp)) &&
               // Only do this if the casts both really cause code to be
               // generated.
-              ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
-                                I.getType()) &&
-              ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
-                                I.getType())) {
-            Value *NewOp = Builder->CreateOr(Op0C->getOperand(0),
-                                             Op1C->getOperand(0), I.getName());
+              ShouldOptimizeCast(Op0C->getOpcode(), Op0COp, I.getType()) &&
+              ShouldOptimizeCast(Op1C->getOpcode(), Op1COp, I.getType())) {
+            Value *NewOp = Builder->CreateOr(Op0COp, Op1COp, I.getName());
             return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
           }
+          
+          // If this is or(cast(icmp), cast(icmp)), try to fold this even if the
+          // cast is otherwise not optimizable.  This happens for vector sexts.
+          if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
+            if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
+              if (Instruction *Res = FoldOrOfICmps(I, LHS, RHS)) {
+                InsertNewInstBefore(Res, I);
+                return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+              }
+          
+          // If this is or(cast(fcmp), cast(fcmp)), try to fold this even if the
+          // cast is otherwise not optimizable.  This happens for vector sexts.
+          if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
+            if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
+              if (Instruction *Res = FoldOrOfFCmps(I, LHS, RHS)) {
+                InsertNewInstBefore(Res, I);
+                return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
+              }
         }
       }
   }
   
-    
-  // (fcmp uno x, c) | (fcmp uno y, c)  -> (fcmp uno x, y)
-  if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
-    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
-      if (Instruction *Res = FoldOrOfFCmps(I, LHS, RHS))
-        return Res;
-  }
-
   return Changed ? &I : 0;
 }
 
@@ -1986,10 +2018,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         const Type *SrcTy = Op0C->getOperand(0)->getType();
         if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
             // Only do this if the casts both really cause code to be generated.
-            ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
-                              I.getType()) &&
-            ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
-                              I.getType())) {
+            ShouldOptimizeCast(Op0C->getOpcode(), Op0C->getOperand(0), 
+                               I.getType()) &&
+            ShouldOptimizeCast(Op1C->getOpcode(), Op1C->getOperand(0), 
+                               I.getType())) {
           Value *NewOp = Builder->CreateXor(Op0C->getOperand(0),
                                             Op1C->getOperand(0), I.getName());
           return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());

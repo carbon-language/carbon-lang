@@ -199,11 +199,12 @@ private:
                                   SmallVectorImpl<Value*> &NewIndices);
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
                                  
-  /// ValueRequiresCast - Return true if the cast from "V to Ty" actually
-  /// results in any code being generated.  It does not require codegen if V is
-  /// simple enough or if the cast can be folded into other casts.
-  bool ValueRequiresCast(Instruction::CastOps opcode,const Value *V,
-                         const Type *Ty);
+  /// ShouldOptimizeCast - Return true if the cast from "V to Ty" actually
+  /// results in any code being generated and is interesting to optimize out. If
+  /// the cast can be eliminated by some other simple transformation, we prefer
+  /// to do the simplification first.
+  bool ShouldOptimizeCast(Instruction::CastOps opcode,const Value *V,
+                          const Type *Ty);
 
   Instruction *visitCallSite(CallSite CS);
   bool transformConstExprCastCall(CallSite CS);

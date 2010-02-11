@@ -255,17 +255,26 @@ isEliminableCastPair(
   return Instruction::CastOps(Res);
 }
 
-/// ValueRequiresCast - Return true if the cast from "V to Ty" actually results
-/// in any code being generated.  It does not require codegen if V is simple
-/// enough or if the cast can be folded into other casts.
-bool InstCombiner::ValueRequiresCast(Instruction::CastOps opcode,const Value *V,
-                                     const Type *Ty) {
+/// ShouldOptimizeCast - Return true if the cast from "V to Ty" actually
+/// results in any code being generated and is interesting to optimize out. If
+/// the cast can be eliminated by some other simple transformation, we prefer
+/// to do the simplification first.
+bool InstCombiner::ShouldOptimizeCast(Instruction::CastOps opc, const Value *V,
+                                      const Type *Ty) {
+  // Noop casts and casts of constants should be eliminated trivially.
   if (V->getType() == Ty || isa<Constant>(V)) return false;
   
-  // If this is another cast that can be eliminated, it isn't codegen either.
+  // If this is another cast that can be eliminated, we prefer to have it
+  // eliminated.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastPair(CI, opcode, Ty, TD))
+    if (isEliminableCastPair(CI, opc, Ty, TD))
       return false;
+  
+  // If this is a vector sext from a compare, then we don't want to break the
+  // idiom where each element of the extended vector is either zero or all ones.
+  if (opc == Instruction::SExt && isa<CmpInst>(V) && isa<VectorType>(Ty))
+    return false;
+  
   return true;
 }
 
