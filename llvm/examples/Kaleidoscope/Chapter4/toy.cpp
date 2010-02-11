@@ -1,6 +1,5 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -573,7 +572,12 @@ int main() {
   TheModule = new Module("my cool jit", Context);
 
   // Create the JIT.  This takes ownership of the module.
-  TheExecutionEngine = EngineBuilder(TheModule).create();
+  std::string ErrStr;
+  TheExecutionEngine = EngineBuilder(TheModule).setErrorStr(&ErrStr).create();
+  if (!TheExecutionEngine) {
+    fprintf(stderr, "Could not create ExecutionEngine: %s\n", ErrStr.c_str());
+    exit(1);
+  }
 
   FunctionPassManager OurFPM(TheModule);
 

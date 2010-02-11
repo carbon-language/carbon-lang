@@ -11,6 +11,6 @@ TOOLNAME = Kaleidoscope-Ch7
 EXAMPLE_TOOL = 1
 REQUIRES_RTTI := 1
 
-LINK_COMPONENTS := core jit interpreter native
+LINK_COMPONENTS := core jit native
 
 include $(LEVEL)/Makefile.common
