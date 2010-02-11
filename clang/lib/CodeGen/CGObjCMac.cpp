@@ -3631,7 +3631,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
                                 Ctx.getObjCIdType(), 0, 0, false));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
                                 Ctx.getObjCClassType(), 0, 0, false));
-  RD->completeDefinition(Ctx);
+  RD->completeDefinition();
 
   SuperCTy = Ctx.getTagDeclType(RD);
   SuperPtrCTy = Ctx.getPointerType(SuperCTy);
@@ -4092,7 +4092,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                 Ctx.VoidPtrTy, 0, 0, false));
   RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
                                 Ctx.getObjCSelType(), 0, 0, false));
-  RD->completeDefinition(Ctx);
+  RD->completeDefinition();
 
   MessageRefCTy = Ctx.getTagDeclType(RD);
   MessageRefCPtrTy = Ctx.getPointerType(MessageRefCTy);

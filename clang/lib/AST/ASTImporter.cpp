@@ -759,7 +759,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
          ++FromMem)
       Importer.Import(*FromMem);
     
-    ToRecord->completeDefinition(Importer.getToContext());
+    ToRecord->completeDefinition();
   }
   
   return ToRecord;
@@ -851,8 +851,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
     Parameters[I]->setOwningFunction(ToFunction);
     ToFunction->addDecl(Parameters[I]);
   }
-  ToFunction->setParams(Importer.getToContext(), 
-                        Parameters.data(), Parameters.size());
+  ToFunction->setParams(Parameters.data(), Parameters.size());
 
   // FIXME: Other bits to merge?
   
@@ -963,7 +962,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
           Importer.FromDiag(DDef->getLocation(), diag::note_odr_defined_here);
         } else {
           Expr *Init = Importer.Import(DDef->getInit());
-          MergeWithVar->setInit(Importer.getToContext(), Init);
+          MergeWithVar->setInit(Init);
         }
       }
       
@@ -992,8 +991,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   // FIXME: Can we really import any initializer? Alternatively, we could force
   // ourselves to import every declaration of a variable and then only use
   // getInit() here.
-  ToVar->setInit(Importer.getToContext(),
-                 Importer.Import(const_cast<Expr *>(D->getAnyInitializer())));
+  ToVar->setInit(Importer.Import(const_cast<Expr *>(D->getAnyInitializer())));
 
   // FIXME: Other bits to merge?
   

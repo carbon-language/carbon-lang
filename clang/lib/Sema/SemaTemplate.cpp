@@ -3941,8 +3941,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   // Turn the given function declaration into a function template
   // specialization, with the template arguments from the previous
   // specialization.
-  FD->setFunctionTemplateSpecialization(Context, 
-                                        Specialization->getPrimaryTemplate(),
+  FD->setFunctionTemplateSpecialization(Specialization->getPrimaryTemplate(),
                          new (Context) TemplateArgumentList(
                              *Specialization->getTemplateSpecializationArgs()), 
                                         /*InsertPos=*/0, 

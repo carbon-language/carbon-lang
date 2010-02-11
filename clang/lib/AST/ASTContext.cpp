@@ -2927,7 +2927,7 @@ QualType ASTContext::getCFConstantStringType() {
       CFConstantStringTypeDecl->addDecl(Field);
     }
 
-    CFConstantStringTypeDecl->completeDefinition(*this);
+    CFConstantStringTypeDecl->completeDefinition();
   }
 
   return getTagDeclType(CFConstantStringTypeDecl);
@@ -2964,7 +2964,7 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
 
-    ObjCFastEnumerationStateTypeDecl->completeDefinition(*this);
+    ObjCFastEnumerationStateTypeDecl->completeDefinition();
   }
 
   return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
@@ -3001,7 +3001,7 @@ QualType ASTContext::getBlockDescriptorType() {
     T->addDecl(Field);
   }
 
-  T->completeDefinition(*this);
+  T->completeDefinition();
 
   BlockDescriptorType = T;
 
@@ -3049,7 +3049,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() {
     T->addDecl(Field);
   }
 
-  T->completeDefinition(*this);
+  T->completeDefinition();
 
   BlockDescriptorExtendedType = T;
 
@@ -3126,7 +3126,7 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
     T->addDecl(Field);
   }
 
-  T->completeDefinition(*this);
+  T->completeDefinition();
 
   return getPointerType(getTagDeclType(T));
 }
@@ -3190,7 +3190,7 @@ QualType ASTContext::getBlockParmType(
     T->addDecl(Field);
   }
 
-  T->completeDefinition(*this);
+  T->completeDefinition();
 
   return getPointerType(getTagDeclType(T));
 }

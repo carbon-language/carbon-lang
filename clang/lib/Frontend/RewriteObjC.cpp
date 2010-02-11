@@ -2460,7 +2460,7 @@ QualType RewriteObjC::getSuperStructType() {
                                                  /*Mutable=*/false));
     }
 
-    SuperStructDecl->completeDefinition(*Context);
+    SuperStructDecl->completeDefinition();
   }
   return Context->getTagDeclType(SuperStructDecl);
 }
@@ -2491,7 +2491,7 @@ QualType RewriteObjC::getConstantStringStructType() {
                                                     /*Mutable=*/true));
     }
 
-    ConstantStringDecl->completeDefinition(*Context);
+    ConstantStringDecl->completeDefinition();
   }
   return Context->getTagDeclType(ConstantStringDecl);
 }

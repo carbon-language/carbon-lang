@@ -717,10 +717,10 @@ VarDecl *VarDecl::getOutOfLineDefinition() {
   return 0;
 }
 
-void VarDecl::setInit(ASTContext &C, Expr *I) {
+void VarDecl::setInit(Expr *I) {
   if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
     Eval->~EvaluatedStmt();
-    C.Deallocate(Eval);
+    getASTContext().Deallocate(Eval);
   }
 
   Init = I;
@@ -984,14 +984,13 @@ unsigned FunctionDecl::getNumParams() const {
 
 }
 
-void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
-                             unsigned NumParams) {
+void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
   assert(NumParams == getNumParams() && "Parameter count mismatch!");
 
   // Zero params -> null pointer.
   if (NumParams) {
-    void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
+    void *Mem = getASTContext().Allocate(sizeof(ParmVarDecl*)*NumParams);
     ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
 
@@ -1228,8 +1227,7 @@ FunctionDecl::getTemplateSpecializationArgs() const {
 }
 
 void
-FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
-                                                FunctionTemplateDecl *Template,
+FunctionDecl::setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                      const TemplateArgumentList *TemplateArgs,
                                                 void *InsertPos,
                                               TemplateSpecializationKind TSK) {
@@ -1238,7 +1236,7 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
   FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (!Info)
-    Info = new (Context) FunctionTemplateSpecializationInfo;
+    Info = new (getASTContext()) FunctionTemplateSpecializationInfo;
 
   Info->Function = this;
   Info->Template.setPointer(Template);
@@ -1436,8 +1434,7 @@ void EnumDecl::Destroy(ASTContext& C) {
   Decl::Destroy(C);
 }
 
-void EnumDecl::completeDefinition(ASTContext &C,
-                                  QualType NewType,
+void EnumDecl::completeDefinition(QualType NewType,
                                   QualType NewPromotionType) {
   assert(!isDefinition() && "Cannot redefine enums!");
   IntegerType = NewType;
@@ -1482,7 +1479,7 @@ bool RecordDecl::isInjectedClassName() const {
 
 /// completeDefinition - Notes that the definition of this type is now
 /// complete.
-void RecordDecl::completeDefinition(ASTContext& C) {
+void RecordDecl::completeDefinition() {
   assert(!isDefinition() && "Cannot redefine record!");
   TagDecl::completeDefinition();
 }
@@ -1505,14 +1502,14 @@ void BlockDecl::Destroy(ASTContext& C) {
   Decl::Destroy(C);
 }
 
-void BlockDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
+void BlockDecl::setParams(ParmVarDecl **NewParamInfo,
                           unsigned NParms) {
   assert(ParamInfo == 0 && "Already has param info!");
 
   // Zero params -> null pointer.
   if (NParms) {
     NumParams = NParms;
-    void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
+    void *Mem = getASTContext().Allocate(sizeof(ParmVarDecl*)*NumParams);
     ParamInfo = new (Mem) ParmVarDecl*[NumParams];
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
   }

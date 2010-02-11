@@ -698,7 +698,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
                                            FT->getArgType(i), /*TInfo=*/0,
                                            VarDecl::None, 0));
-    New->setParams(Context, Params.data(), Params.size());
+    New->setParams(Params.data(), Params.size());
   }
 
   AddKnownFunctionAttributes(New);
@@ -1107,7 +1107,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
         Params.push_back(Param);
       }
 
-      New->setParams(Context, Params.data(), Params.size());
+      New->setParams(Params.data(), Params.size());
     }
 
     return MergeCompatibleFunctionDecls(New, Old);
@@ -2970,7 +2970,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
            "Should not need args for typedef of non-prototype fn");
   }
   // Finally, we know we have the right number of parameters, install them.
-  NewFD->setParams(Context, Params.data(), Params.size());
+  NewFD->setParams(Params.data(), Params.size());
 
   // If the declarator is a template-id, translate the parser's template 
   // argument list into our AST format.
@@ -3561,7 +3561,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
     // };
 
     // Attach the initializer
-    VDecl->setInit(Context, Init);
+    VDecl->setInit(Init);
 
     // C++ [class.mem]p4:
     //   A member-declarator can contain a constant-initializer only
@@ -3633,7 +3633,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
 
   Init = MaybeCreateCXXExprWithTemporaries(Init);
   // Attach the initializer to the decl.
-  VDecl->setInit(Context, Init);
+  VDecl->setInit(Init);
 
   if (getLangOptions().CPlusPlus) {
     // Make sure we mark the destructor as used if necessary.
@@ -3785,8 +3785,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       Var->setInvalidDecl();
     else {
       if (Init.get())
-        Var->setInit(Context, 
-                     MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
+        Var->setInit(MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
 
       if (getLangOptions().CPlusPlus)
         if (const RecordType *Record
@@ -5611,7 +5610,7 @@ void Sema::ActOnFields(Scope* S,
 
   // Okay, we successfully defined 'Record'.
   if (Record) {
-    Record->completeDefinition(Context);
+    Record->completeDefinition();
   } else {
     ObjCIvarDecl **ClsFields =
       reinterpret_cast<ObjCIvarDecl**>(RecFields.data());
@@ -5897,7 +5896,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       ECD->setType(EnumType);
     }
 
-    Enum->completeDefinition(Context, Context.DependentTy, Context.DependentTy);
+    Enum->completeDefinition(Context.DependentTy, Context.DependentTy);
     return;
   }
 
@@ -6077,7 +6076,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
       ECD->setType(NewTy);
   }
 
-  Enum->completeDefinition(Context, BestType, BestPromotionType);
+  Enum->completeDefinition(BestType, BestPromotionType);
 }
 
 Sema::DeclPtrTy Sema::ActOnFileScopeAsmDecl(SourceLocation Loc,

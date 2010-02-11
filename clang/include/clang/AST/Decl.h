@@ -634,7 +634,7 @@ public:
     return StmtPtr;
   }
 
-  void setInit(ASTContext &C, Expr *I);
+  void setInit(Expr *I);
 
   EvaluatedStmt *EnsureEvaluatedStmt() const {
     EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
@@ -1137,7 +1137,7 @@ public:
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(ASTContext& C, ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   /// getMinRequiredArguments - Returns the minimum number of arguments
   /// needed to call this function. This may be fewer than the number of
@@ -1282,8 +1282,7 @@ public:
   /// be inserted.
   ///
   /// \param TSK the kind of template specialization this is.
-  void setFunctionTemplateSpecialization(ASTContext &Context,
-                                         FunctionTemplateDecl *Template,
+  void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
                                       const TemplateArgumentList *TemplateArgs,
                                          void *InsertPos,
                     TemplateSpecializationKind TSK = TSK_ImplicitInstantiation);
@@ -1678,7 +1677,7 @@ public:
   /// declaration as being defined; it's enumerators have already been
   /// added (via DeclContext::addDecl). NewType is the new underlying
   /// type of the enumeration type.
-  void completeDefinition(ASTContext &C, QualType NewType,
+  void completeDefinition(QualType NewType,
                           QualType PromotionType);
 
   // enumerator_iterator - Iterates through the enumerators of this
@@ -1825,7 +1824,7 @@ public:
 
   /// completeDefinition - Notes that the definition of this type is
   /// now complete.
-  void completeDefinition(ASTContext& C);
+  void completeDefinition();
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RecordDecl *D) { return true; }
@@ -1907,7 +1906,7 @@ public:
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(ASTContext& C, ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

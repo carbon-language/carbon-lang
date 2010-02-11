@@ -6835,7 +6835,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
       CurBlock->Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
     CurBlock->isVariadic = FTI.isVariadic;
   }
-  CurBlock->TheDecl->setParams(Context, CurBlock->Params.data(),
+  CurBlock->TheDecl->setParams(CurBlock->Params.data(),
                                CurBlock->Params.size());
   CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);

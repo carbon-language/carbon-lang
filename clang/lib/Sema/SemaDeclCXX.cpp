@@ -2263,7 +2263,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, /*TInfo=*/0,
                                                  VarDecl::None, 0);
-    CopyConstructor->setParams(Context, &FromParam, 1);
+    CopyConstructor->setParams(&FromParam, 1);
     ClassDecl->addDecl(CopyConstructor);
   }
 
@@ -2347,7 +2347,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                  /*IdentifierInfo=*/0,
                                                  ArgType, /*TInfo=*/0,
                                                  VarDecl::None, 0);
-    CopyAssignment->setParams(Context, &FromParam, 1);
+    CopyAssignment->setParams(&FromParam, 1);
 
     // Don't call addedAssignmentOperator. There is no way to distinguish an
     // implicit from an explicit assignment operator.
@@ -3991,7 +3991,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
   Expr *Temp = TempResult.takeAs<Expr>();
   MarkDeclarationReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateCXXExprWithTemporaries(Temp);
-  VD->setInit(Context, Temp);
+  VD->setInit(Temp);
 
   return false;
 }
@@ -4048,8 +4048,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
 
     // Store the initialization expressions as a ParenListExpr.
     unsigned NumExprs = Exprs.size();
-    VDecl->setInit(Context,
-                   new (Context) ParenListExpr(Context, LParenLoc,
+    VDecl->setInit(new (Context) ParenListExpr(Context, LParenLoc,
                                                (Expr **)Exprs.release(),
                                                NumExprs, RParenLoc));
     return;
@@ -4103,7 +4102,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   }
   
   Result = MaybeCreateCXXExprWithTemporaries(move(Result));
-  VDecl->setInit(Context, Result.takeAs<Expr>());
+  VDecl->setInit(Result.takeAs<Expr>());
   VDecl->setCXXDirectInitializer(true);
 
   if (const RecordType *Record = VDecl->getType()->getAs<RecordType>())
