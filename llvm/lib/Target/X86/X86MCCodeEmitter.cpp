@@ -83,7 +83,7 @@ public:
     }
   }
 
-  void EmitDisplacementField(const MCOperand &Disp, int64_t Adj, bool IsPCRel,
+  void EmitDisplacementField(const MCOperand &Disp, bool IsPCRel,
                              unsigned &CurByte, raw_ostream &OS,
                              SmallVectorImpl<MCFixup> &Fixups) const;
   
@@ -106,7 +106,7 @@ public:
   
   
   void EmitMemModRMByte(const MCInst &MI, unsigned Op,
-                        unsigned RegOpcodeField, intptr_t PCAdj,
+                        unsigned RegOpcodeField, 
                         unsigned &CurByte, raw_ostream &OS,
                         SmallVectorImpl<MCFixup> &Fixups) const;
   
@@ -136,7 +136,7 @@ static bool isDisp8(int Value) {
 }
 
 void X86MCCodeEmitter::
-EmitDisplacementField(const MCOperand &DispOp, int64_t Adj, bool IsPCRel,
+EmitDisplacementField(const MCOperand &DispOp, bool IsPCRel,
                       unsigned &CurByte, raw_ostream &OS,
                       SmallVectorImpl<MCFixup> &Fixups) const {
   // If this is a simple integer displacement that doesn't require a relocation,
@@ -163,7 +163,6 @@ EmitDisplacementField(const MCOperand &DispOp, int64_t Adj, bool IsPCRel,
 
 void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
                                         unsigned RegOpcodeField,
-                                        intptr_t PCAdj,
                                         unsigned &CurByte,
                                         raw_ostream &OS,
                                         SmallVectorImpl<MCFixup> &Fixups) const{
@@ -191,7 +190,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
         BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
-      EmitDisplacementField(Disp, PCAdj, true, CurByte, OS, Fixups);
+      EmitDisplacementField(Disp, true, CurByte, OS, Fixups);
       return;
     }
     
@@ -215,7 +214,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), CurByte, OS);
-    EmitDisplacementField(Disp, PCAdj, IsPCRel, CurByte, OS, Fixups);
+    EmitDisplacementField(Disp, IsPCRel, CurByte, OS, Fixups);
     return;
   }
     
@@ -272,7 +271,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   if (ForceDisp8)
     EmitConstant(Disp.getImm(), 1, CurByte, OS);
   else if (ForceDisp32 || Disp.getImm() != 0)
-    EmitDisplacementField(Disp, PCAdj, IsPCRel, CurByte, OS, Fixups);
+    EmitDisplacementField(Disp, IsPCRel, CurByte, OS, Fixups);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
@@ -523,7 +522,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp,
                      GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
-                     0, CurByte, OS, Fixups);
+                     CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
@@ -551,12 +550,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     else
       AddrOperands = X86AddrNumOperands;
     
-    // FIXME: What is this actually doing?
-    intptr_t PCAdj = (CurOp + AddrOperands + 1 != NumOps) ?
-       X86II::getSizeOfImm(TSFlags) : 0;
-    
     EmitMemModRMByte(MI, CurOp+1, GetX86RegNum(MI.getOperand(CurOp)),
-                     PCAdj, CurByte, OS, Fixups);
+                     CurByte, OS, Fixups);
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps)
       EmitConstant(MI.getOperand(CurOp++).getImm(),
@@ -620,17 +615,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
-    intptr_t PCAdj = 0;
-    if (CurOp + X86AddrNumOperands != NumOps) {
-      if (MI.getOperand(CurOp+X86AddrNumOperands).isImm())
-        PCAdj = X86II::getSizeOfImm(TSFlags);
-      else
-        PCAdj = 4;
-    }
-
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
-                     PCAdj, CurByte, OS, Fixups);
+                     CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands;
     
     if (CurOp == NumOps)
