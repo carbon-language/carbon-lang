@@ -71,9 +71,10 @@ void CXXRecordDecl::Destroy(ASTContext &C) {
 }
 
 void
-CXXRecordDecl::setBases(ASTContext &C,
-                        CXXBaseSpecifier const * const *Bases,
+CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
                         unsigned NumBases) {
+  ASTContext &C = getASTContext();
+  
   // C++ [dcl.init.aggr]p1:
   //   An aggregate is an array or a class (clause 9) with [...]
   //   no base classes [...].

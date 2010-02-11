@@ -739,7 +739,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                    T));
       }
       if (!Bases.empty())
-        ToCXX->setBases(Importer.getToContext(), Bases.data(), Bases.size());
+        ToCXX->setBases(Bases.data(), Bases.size());
     }
   } else {
     ToRecord = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
