@@ -117,10 +117,10 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
         // the former operand will then be deleted normally.
         if (MI->getNumOperands()==3 && MI->getOperand(0).isReg()) {
           unsigned Reg = MI->getOperand(0).getReg();
-          MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg);
-          assert(I != MRI->use_end());
-          if (++I == MRI->use_end())
-            // only one use, which must be this DBG_VALUE.
+          MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg);
+          if (I == MRI->use_nodbg_end())
+            // All uses are DBG_VALUEs.  Nullify this one; if we find
+            // others later we will nullify them then.
             MI->getOperand(0).setReg(0U);
         }
       }
