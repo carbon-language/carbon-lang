@@ -224,7 +224,10 @@ public:
       if (I->second->use_empty())
         delete I->second;
     }
-    MDNodeSet.clear();
+    while (!MDNodeSet.empty()) {
+      MDNode *N = &(*MDNodeSet.begin());
+      N->destroy();
+    }
     AlwaysOpaqueTy->dropRef();
     for (OpaqueTypesTy::iterator I = OpaqueTypes.begin(), E = OpaqueTypes.end();
         I != E; ++I) {
