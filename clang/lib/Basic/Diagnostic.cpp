@@ -629,7 +629,7 @@ bool Diagnostic::ProcessDiag() {
   // it.
   if (SuppressSystemWarnings && !ShouldEmitInSystemHeader &&
       Info.getLocation().isValid() &&
-      Info.getLocation().getSpellingLoc().isInSystemHeader() &&
+      Info.getLocation().getInstantiationLoc().isInSystemHeader() &&
       (DiagLevel != Diagnostic::Note || LastDiagLevel == Diagnostic::Ignored)) {
     LastDiagLevel = Diagnostic::Ignored;
     return false;
