@@ -171,6 +171,18 @@ void test10(int x, float f, int i, long long lli) {
   printf("%f\n", (long double) 1.0); // expected-warning{{conversion specifies type 'double' but the argument has type 'long double'}}
 } 
 
+void test11(void *p, char *s) {
+  printf("%p", p); // no-warning
+  printf("%.4p", p); // expected-warning{{precision used in 'p' conversion specifier (where it has no meaning)}}
+  printf("%+p", p); // expected-warning{{flag '+' results in undefined behavior in 'p' conversion specifier}}
+  printf("% p", p); // expected-warning{{flag ' ' results in undefined behavior in 'p' conversion specifier}}
+  printf("%0p", p); // expected-warning{{flag '0' results in undefined behavior in 'p' conversion specifier}}
+  printf("%s", s); // no-warning
+  printf("%+s", p); // expected-warning{{flag '+' results in undefined behavior in 's' conversion specifier}}
+  printf("% s", p); // expected-warning{{flag ' ' results in undefined behavior in 's' conversion specifier}}
+  printf("%0s", p); // expected-warning{{flag '0' results in undefined behavior in 's' conversion specifier}}
+}
+
 typedef struct __aslclient *aslclient;
 typedef struct __aslmsg *aslmsg;
 int asl_log(aslclient asl, aslmsg msg, int level, const char *format, ...) __attribute__((__format__ (__printf__, 4, 5)));

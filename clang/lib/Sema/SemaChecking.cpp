@@ -1080,6 +1080,9 @@ private:
   bool HandleAmount(const analyze_printf::OptionalAmount &Amt,
                     unsigned MissingArgDiag, unsigned BadTypeDiag,
           const char *startSpecifier, unsigned specifierLen);
+  void HandleFlags(const analyze_printf::FormatSpecifier &FS,
+                   llvm::StringRef flag, llvm::StringRef cspec,
+                   const char *startSpecifier, unsigned specifierLen);
   
   bool MatchType(QualType A, QualType B, bool ignoreSign);
   
@@ -1175,6 +1178,16 @@ bool CheckPrintfHandler::MatchType(QualType A, QualType B, bool ignoreSign) {
   return false;  
 }
 
+void CheckPrintfHandler::HandleFlags(const analyze_printf::FormatSpecifier &FS,
+                                     llvm::StringRef flag,
+                                     llvm::StringRef cspec,
+                                     const char *startSpecifier,
+                                     unsigned specifierLen) {
+  const analyze_printf::ConversionSpecifier &CS = FS.getConversionSpecifier();
+  S.Diag(getLocationOfByte(CS.getStart()), diag::warn_printf_nonsensical_flag)
+    << flag << cspec << getFormatSpecifierRange(startSpecifier, specifierLen);
+}
+
 bool
 CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
                                  unsigned MissingArgDiag,
@@ -1214,7 +1227,8 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
 }
 
 bool
-CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
+CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
+                                            &FS,
                                           const char *startSpecifier,
                                           unsigned specifierLen) {
 
@@ -1262,7 +1276,25 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier 
     // Continue checking the other format specifiers.
     return true;
   }
-  
+
+  if (CS.getKind() == ConversionSpecifier::VoidPtrArg) {
+    if (FS.getPrecision().getHowSpecified() != OptionalAmount::NotSpecified)
+      S.Diag(getLocationOfByte(CS.getStart()), 
+             diag::warn_printf_nonsensical_precision)
+        << CS.getCharacters()
+        << getFormatSpecifierRange(startSpecifier, specifierLen);
+  }
+  if (CS.getKind() == ConversionSpecifier::VoidPtrArg || 
+      CS.getKind() == ConversionSpecifier::CStrArg) {    
+    // FIXME: Instead of using "0", "+", etc., eventually get them from
+    // the FormatSpecifier.
+    if (FS.hasLeadingZeros())
+      HandleFlags(FS, "0", CS.getCharacters(), startSpecifier, specifierLen);
+    if (FS.hasPlusPrefix())
+      HandleFlags(FS, "+", CS.getCharacters(), startSpecifier, specifierLen);
+    if (FS.hasSpacePrefix())
+      HandleFlags(FS, " ", CS.getCharacters(), startSpecifier, specifierLen);
+  }  
   
   // The remaining checks depend on the data arguments.
   if (HasVAListArg)

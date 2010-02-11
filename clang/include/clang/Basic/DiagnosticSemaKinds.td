@@ -2514,7 +2514,13 @@ def warn_printf_asterisk_width_wrong_type : Warning<
 def warn_printf_asterisk_precision_wrong_type : Warning<
   "field precision should have type %0, but argument has type %1">,
   InGroup<Format>;
-
+def warn_printf_nonsensical_precision: Warning<
+  "precision used in '%0' conversion specifier (where it has no meaning)">,
+  InGroup<Format>;
+def warn_printf_nonsensical_flag: Warning<
+  "flag '%0' results in undefined behavior in '%1' conversion specifier">,
+  InGroup<Format>;
+  
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr : Warning<
   "address of stack memory associated with local variable %0 returned">;

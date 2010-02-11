@@ -73,6 +73,10 @@ public:
   const char *getStart() const {
     return Position;
   }
+  
+  llvm::StringRef getCharacters() const {
+    return llvm::StringRef(getStart(), getLength());
+  }
 	
   bool consumesDataArgument() const {
     switch (kind) {
@@ -232,6 +236,7 @@ public:
   bool hasPlusPrefix() const { return (bool) HasPlusPrefix; }
   bool hasAlternativeForm() const { return (bool) HasAlternativeForm; }
   bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }  
+  bool hasSpacePrefix() const { return (bool) HasSpacePrefix; }
 };
 
 class FormatStringHandler {
