@@ -191,6 +191,7 @@ TEST_F(StringMapTest, StringMapEntryTest) {
           testKeyFirst, testKeyFirst + testKeyLength, 1u);
   EXPECT_STREQ(testKey, entry->first());
   EXPECT_EQ(1u, entry->second);
+  free(entry);
 }
 
 // Test insert() method.
