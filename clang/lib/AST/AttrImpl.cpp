@@ -40,7 +40,7 @@ void AttrWithString::Destroy(ASTContext &C) {
 void AttrWithString::ReplaceString(ASTContext &C, llvm::StringRef newS) {
   if (newS.size() > StrLen) {
     C.Deallocate(const_cast<char*>(Str));
-    Str = new char[newS.size()];
+    Str = new (C) char[newS.size()];
   }
   StrLen = newS.size();
   memcpy(const_cast<char*>(Str), newS.data(), StrLen);
