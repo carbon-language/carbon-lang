@@ -622,6 +622,7 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
 
     // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
   } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
+             (FinalPhaseArg = Args.getLastArg(options::OPT_rewrite_objc)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT__analyze,
                                               options::OPT__analyze_auto)) ||
              (FinalPhaseArg = Args.getLastArg(options::OPT_emit_ast)) ||
@@ -742,6 +743,8 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
 
     if (Args.hasArg(options::OPT_fsyntax_only)) {
       return new CompileJobAction(Input, types::TY_Nothing);
+    } else if (Args.hasArg(options::OPT_rewrite_objc)) {
+      return new CompileJobAction(Input, types::TY_RewrittenObjC);
     } else if (Args.hasArg(options::OPT__analyze, options::OPT__analyze_auto)) {
       return new AnalyzeJobAction(Input, types::TY_Plist);
     } else if (Args.hasArg(options::OPT_emit_ast)) {
@@ -1171,8 +1174,10 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
     return false;
   }
 
-  // Always use clang for precompiling and AST generation, regardless of archs.
-  if (isa<PrecompileJobAction>(JA) || JA.getType() == types::TY_AST)
+  // Always use clang for precompiling, AST generation, and rewriting,
+  // regardless of archs.
+  if (isa<PrecompileJobAction>(JA) || JA.getType() == types::TY_AST ||
+      JA.getType() == types::TY_RewrittenObjC)
     return true;
 
   // Finally, don't use clang if this isn't one of the user specified archs to

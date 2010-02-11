@@ -676,6 +676,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-S");
     } else if (JA.getType() == types::TY_AST) {
       CmdArgs.push_back("-emit-pch");
+    } else if (JA.getType() == types::TY_RewrittenObjC) {
+      CmdArgs.push_back("-rewrite-objc");
+    } else {
+      assert(JA.getType() == types::TY_PP_Asm &&
+             "Unexpected output type!");
     }
   }
 
@@ -1325,11 +1330,18 @@ void gcc::Precompile::RenderExtraToolArgs(const JobAction &JA,
 
 void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
                                        ArgStringList &CmdArgs) const {
+  const Driver &D = getToolChain().getDriver();
+
   // If -flto, etc. are present then make sure not to force assembly output.
   if (JA.getType() == types::TY_LLVMBC)
     CmdArgs.push_back("-c");
-  else
+  else {
+    if (JA.getType() != types::TY_PP_Asm)
+      D.Diag(clang::diag::err_drv_invalid_gcc_output_type)
+        << getTypeName(JA.getType());
+      
     CmdArgs.push_back("-S");
+  }
 }
 
 void gcc::Assemble::RenderExtraToolArgs(const JobAction &JA,
@@ -1734,6 +1746,9 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
   else if (Output.getType() == types::TY_AST)
     D.Diag(clang::diag::err_drv_no_ast_support)
       << getToolChain().getTripleString();
+  else if (JA.getType() != types::TY_PP_Asm)
+    D.Diag(clang::diag::err_drv_invalid_gcc_output_type)
+      << getTypeName(JA.getType());
 
   ArgStringList OutputArgs;
   if (Output.getType() != types::TY_PCH) {
