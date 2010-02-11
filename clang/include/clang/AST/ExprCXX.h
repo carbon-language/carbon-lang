@@ -862,15 +862,14 @@ class CXXNewExpr : public Expr {
   SourceLocation EndLoc;
 
 public:
-  CXXNewExpr(bool globalNew, FunctionDecl *operatorNew, Expr **placementArgs,
-             unsigned numPlaceArgs, bool ParenTypeId, Expr *arraySize,
-             CXXConstructorDecl *constructor, bool initializer,
+  CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
+             Expr **placementArgs, unsigned numPlaceArgs, bool ParenTypeId,
+             Expr *arraySize, CXXConstructorDecl *constructor, bool initializer,
              Expr **constructorArgs, unsigned numConsArgs,
              FunctionDecl *operatorDelete, QualType ty,
              SourceLocation startLoc, SourceLocation endLoc);
-  ~CXXNewExpr() {
-    delete[] SubExprs;
-  }
+  
+  virtual void DoDestroy(ASTContext &C);
 
   QualType getAllocatedType() const {
     assert(getType()->isPointerType());

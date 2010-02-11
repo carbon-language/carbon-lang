@@ -520,10 +520,13 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   PlacementArgs.release();
   ConstructorArgs.release();
   ArraySizeE.release();
-  return Owned(new (Context) CXXNewExpr(UseGlobal, OperatorNew, PlaceArgs,
-                        NumPlaceArgs, ParenTypeId, ArraySize, Constructor, Init,
-                        ConsArgs, NumConsArgs, OperatorDelete, ResultType,
-                        StartLoc, Init ? ConstructorRParen : SourceLocation()));
+  return Owned(new (Context) CXXNewExpr(Context, UseGlobal, OperatorNew,
+                                        PlaceArgs, NumPlaceArgs, ParenTypeId,
+                                        ArraySize, Constructor, Init,
+                                        ConsArgs, NumConsArgs, OperatorDelete,
+                                        ResultType, StartLoc,
+                                        Init ? ConstructorRParen :
+                                               SourceLocation()));
 }
 
 /// CheckAllocatedType - Checks that a type is suitable as the allocated type

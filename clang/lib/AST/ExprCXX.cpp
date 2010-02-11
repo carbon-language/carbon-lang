@@ -73,7 +73,7 @@ Stmt::child_iterator CXXZeroInitValueExpr::child_end() {
 }
 
 // CXXNewExpr
-CXXNewExpr::CXXNewExpr(bool globalNew, FunctionDecl *operatorNew,
+CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
                        Expr **placementArgs, unsigned numPlaceArgs,
                        bool parenTypeId, Expr *arraySize,
                        CXXConstructorDecl *constructor, bool initializer,
@@ -87,7 +87,7 @@ CXXNewExpr::CXXNewExpr(bool globalNew, FunctionDecl *operatorNew,
     OperatorDelete(operatorDelete), Constructor(constructor),
     StartLoc(startLoc), EndLoc(endLoc) {
   unsigned TotalSize = Array + NumPlacementArgs + NumConstructorArgs;
-  SubExprs = new Stmt*[TotalSize];
+  SubExprs = new (C) Stmt*[TotalSize];
   unsigned i = 0;
   if (Array)
     SubExprs[i++] = arraySize;
@@ -96,6 +96,14 @@ CXXNewExpr::CXXNewExpr(bool globalNew, FunctionDecl *operatorNew,
   for (unsigned j = 0; j < NumConstructorArgs; ++j)
     SubExprs[i++] = constructorArgs[j];
   assert(i == TotalSize);
+}
+
+void CXXNewExpr::DoDestroy(ASTContext &C) {
+  DestroyChildren(C);
+  if (SubExprs)
+    C.Deallocate(SubExprs);
+  this->~CXXNewExpr();
+  C.Deallocate((void*)this);
 }
 
 Stmt::child_iterator CXXNewExpr::child_begin() { return &SubExprs[0]; }
