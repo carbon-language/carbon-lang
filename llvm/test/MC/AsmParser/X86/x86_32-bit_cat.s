@@ -1,7 +1,7 @@
 // This is the current set of tests that can pass though llvm-mc as it were a
 // logical cat(1) and then reassemble to the same instruction.  All of these
 // will not yet encode correctly.  The subset that will encode correctly are in
-// the file x86_32-bit.s .
+// the file x86_32-encoding.s (and other tests that encode are in x86_32-bit.s).
 
 // RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
@@ -1104,6 +1104,48 @@
         	rcrb	$0x7f,0x12345678
 
 // CHECK: 	shll	$0, 3735928559(%ebx,%ecx,8)
+        	sall	$0,0xdeadbeef(%ebx,%ecx,8)
+
+// CHECK: 	shll	$0, 69
+        	sall	$0,0x45
+
+// CHECK: 	shll	$0, 32493
+        	sall	$0,0x7eed
+
+// CHECK: 	shll	$0, 3133065982
+        	sall	$0,0xbabecafe
+
+// CHECK: 	shll	$0, 305419896
+        	sall	$0,0x12345678
+
+// CHECK: 	shlb	$127, 3735928559(%ebx,%ecx,8)
+        	salb	$0x7f,0xdeadbeef(%ebx,%ecx,8)
+
+// CHECK: 	shlb	$127, 69
+        	salb	$0x7f,0x45
+
+// CHECK: 	shlb	$127, 32493
+        	salb	$0x7f,0x7eed
+
+// CHECK: 	shlb	$127, 3133065982
+        	salb	$0x7f,0xbabecafe
+
+// CHECK: 	shlb	$127, 305419896
+        	salb	$0x7f,0x12345678
+
+// CHECK: 	shll	3735928559(%ebx,%ecx,8)
+        	sall	0xdeadbeef(%ebx,%ecx,8)
+
+// CHECK: 	shlw	32493
+        	salw	0x7eed
+
+// CHECK: 	shll	3133065982
+        	sall	0xbabecafe
+
+// CHECK: 	shll	305419896
+        	sall	0x12345678
+
+// CHECK: 	shll	$0, 3735928559(%ebx,%ecx,8)
         	shll	$0,0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	shll	$0, 69
@@ -1274,7 +1316,7 @@
 // CHECK: 	jmp	-77129852792157442
         	jmp	0xfeedfacebabecafe
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
+// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	jmp	32493
@@ -1286,10 +1328,10 @@
 // CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374
+// CHECK: 	jmp	*3135175374  # TAILCALL
         	jmp	*0xbadeface
 
-// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)
+// CHECK: 	jmp	*3735928559(%ebx,%ecx,8)  # TAILCALL
         	jmp	*0xdeadbeef(%ebx,%ecx,8)
 
 // CHECK: 	jmp	32493
@@ -1301,7 +1343,7 @@
 // CHECK: 	jmp	305419896
         	jmp	0x12345678
 
-// CHECK: 	jmp	*3135175374
+// CHECK: 	jmp	*3135175374  # TAILCALL
         	jmp	*0xbadeface
 
 // CHECK: 	ljmpl	*3735928559(%ebx,%ecx,8)
@@ -1826,6 +1868,9 @@
 // CHECK: 	verw	305419896
         	verw	0x12345678
 
+// CHECK: 	fld	%st(2)
+        	fld	%st(2)
+
 // CHECK: 	fldl	3735928559(%ebx,%ecx,8)
         	fldl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -1834,6 +1879,9 @@
 
 // CHECK: 	fldl	305419896
         	fldl	0x12345678
+
+// CHECK: 	fld	%st(2)
+        	fld	%st(2)
 
 // CHECK: 	fildl	3735928559(%ebx,%ecx,8)
         	fildl	0xdeadbeef(%ebx,%ecx,8)
@@ -1880,6 +1928,9 @@
 // CHECK: 	fbld	305419896
         	fbld	0x12345678
 
+// CHECK: 	fst	%st(2)
+        	fst	%st(2)
+
 // CHECK: 	fstl	3735928559(%ebx,%ecx,8)
         	fstl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -1888,6 +1939,9 @@
 
 // CHECK: 	fstl	305419896
         	fstl	0x12345678
+
+// CHECK: 	fst	%st(2)
+        	fst	%st(2)
 
 // CHECK: 	fistl	3735928559(%ebx,%ecx,8)
         	fistl	0xdeadbeef(%ebx,%ecx,8)
@@ -1898,6 +1952,9 @@
 // CHECK: 	fistl	305419896
         	fistl	0x12345678
 
+// CHECK: 	fstp	%st(2)
+        	fstp	%st(2)
+
 // CHECK: 	fstpl	3735928559(%ebx,%ecx,8)
         	fstpl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -1906,6 +1963,9 @@
 
 // CHECK: 	fstpl	305419896
         	fstpl	0x12345678
+
+// CHECK: 	fstp	%st(2)
+        	fstp	%st(2)
 
 // CHECK: 	fistpl	3735928559(%ebx,%ecx,8)
         	fistpl	0xdeadbeef(%ebx,%ecx,8)
@@ -1952,6 +2012,12 @@
 // CHECK: 	fbstp	305419896
         	fbstp	0x12345678
 
+// CHECK: 	fxch	%st(2)
+        	fxch	%st(2)
+
+// CHECK: 	fcom	%st(2)
+        	fcom	%st(2)
+
 // CHECK: 	fcoml	3735928559(%ebx,%ecx,8)
         	fcoml	0xdeadbeef(%ebx,%ecx,8)
 
@@ -1960,6 +2026,9 @@
 
 // CHECK: 	fcoml	305419896
         	fcoml	0x12345678
+
+// CHECK: 	fcom	%st(2)
+        	fcom	%st(2)
 
 // CHECK: 	ficoml	3735928559(%ebx,%ecx,8)
         	ficoml	0xdeadbeef(%ebx,%ecx,8)
@@ -1970,6 +2039,9 @@
 // CHECK: 	ficoml	305419896
         	ficoml	0x12345678
 
+// CHECK: 	fcomp	%st(2)
+        	fcomp	%st(2)
+
 // CHECK: 	fcompl	3735928559(%ebx,%ecx,8)
         	fcompl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -1978,6 +2050,9 @@
 
 // CHECK: 	fcompl	305419896
         	fcompl	0x12345678
+
+// CHECK: 	fcomp	%st(2)
+        	fcomp	%st(2)
 
 // CHECK: 	ficompl	3735928559(%ebx,%ecx,8)
         	ficompl	0xdeadbeef(%ebx,%ecx,8)
@@ -1990,6 +2065,12 @@
 
 // CHECK: 	fcompp
         	fcompp
+
+// CHECK: 	fucom	%st(2)
+        	fucom	%st(2)
+
+// CHECK: 	fucomp	%st(2)
+        	fucomp	%st(2)
 
 // CHECK: 	fucompp
         	fucompp
@@ -2021,6 +2102,9 @@
 // CHECK: 	fldz
         	fldz
 
+// CHECK: 	fadd	%st(2)
+        	fadd	%st(2)
+
 // CHECK: 	faddl	3735928559(%ebx,%ecx,8)
         	faddl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -2038,6 +2122,12 @@
 
 // CHECK: 	fiaddl	305419896
         	fiaddl	0x12345678
+
+// CHECK: 	faddp	%st(2)
+        	faddp	%st(2)
+
+// CHECK: 	fsub	%st(2)
+        	fsub	%st(2)
 
 // CHECK: 	fsubl	3735928559(%ebx,%ecx,8)
         	fsubl	0xdeadbeef(%ebx,%ecx,8)
@@ -2057,6 +2147,12 @@
 // CHECK: 	fisubl	305419896
         	fisubl	0x12345678
 
+// CHECK: 	fsubp	%st(2)
+        	fsubp	%st(2)
+
+// CHECK: 	fsubr	%st(2)
+        	fsubr	%st(2)
+
 // CHECK: 	fsubrl	3735928559(%ebx,%ecx,8)
         	fsubrl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -2074,6 +2170,12 @@
 
 // CHECK: 	fisubrl	305419896
         	fisubrl	0x12345678
+
+// CHECK: 	fsubrp	%st(2)
+        	fsubrp	%st(2)
+
+// CHECK: 	fmul	%st(2)
+        	fmul	%st(2)
 
 // CHECK: 	fmull	3735928559(%ebx,%ecx,8)
         	fmull	0xdeadbeef(%ebx,%ecx,8)
@@ -2093,6 +2195,12 @@
 // CHECK: 	fimull	305419896
         	fimull	0x12345678
 
+// CHECK: 	fmulp	%st(2)
+        	fmulp	%st(2)
+
+// CHECK: 	fdiv	%st(2)
+        	fdiv	%st(2)
+
 // CHECK: 	fdivl	3735928559(%ebx,%ecx,8)
         	fdivl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -2111,6 +2219,12 @@
 // CHECK: 	fidivl	305419896
         	fidivl	0x12345678
 
+// CHECK: 	fdivp	%st(2)
+        	fdivp	%st(2)
+
+// CHECK: 	fdivr	%st(2)
+        	fdivr	%st(2)
+
 // CHECK: 	fdivrl	3735928559(%ebx,%ecx,8)
         	fdivrl	0xdeadbeef(%ebx,%ecx,8)
 
@@ -2128,6 +2242,9 @@
 
 // CHECK: 	fidivrl	305419896
         	fidivrl	0x12345678
+
+// CHECK: 	fdivrp	%st(2)
+        	fdivrp	%st(2)
 
 // CHECK: 	f2xm1
         	f2xm1
@@ -2228,6 +2345,9 @@
 // CHECK: 	frstor	32493
         	frstor	0x7eed
 
+// CHECK: 	ffree	%st(2)
+        	ffree	%st(2)
+
 // CHECK: 	fnop
         	fnop
 
@@ -2296,6 +2416,42 @@
 
 // CHECK: 	ud2
         	ud2
+
+// CHECK: 	fcmovb	%st(2), %st(0)
+        	fcmovb	%st(2),%st
+
+// CHECK: 	fcmove	%st(2), %st(0)
+        	fcmove	%st(2),%st
+
+// CHECK: 	fcmovbe	%st(2), %st(0)
+        	fcmovbe	%st(2),%st
+
+// CHECK: 	fcmovu	 %st(2), %st(0)
+        	fcmovu	%st(2),%st
+
+// CHECK: 	fcmovnb	%st(2), %st(0)
+        	fcmovnb	%st(2),%st
+
+// CHECK: 	fcmovne	%st(2), %st(0)
+        	fcmovne	%st(2),%st
+
+// CHECK: 	fcmovnbe	%st(2), %st(0)
+        	fcmovnbe	%st(2),%st
+
+// CHECK: 	fcmovnu	%st(2), %st(0)
+        	fcmovnu	%st(2),%st
+
+// CHECK: 	fcomi	%st(2), %st(0)
+        	fcomi	%st(2),%st
+
+// CHECK: 	fucomi	%st(2), %st(0)
+        	fucomi	%st(2),%st
+
+// CHECK: 	fcomip	%st(2), %st(0)
+        	fcomip	%st(2),%st
+
+// CHECK: 	fucomip	%st(2), %st(0)
+        	fucomip	%st(2),%st
 
 // CHECK: 	movnti	%ecx, 3735928559(%ebx,%ecx,8)
         	movnti	%ecx,0xdeadbeef(%ebx,%ecx,8)
