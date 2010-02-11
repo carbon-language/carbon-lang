@@ -467,6 +467,10 @@ href="http://llvm.org/viewvc/llvm-project?view=rev&revision=85295">defaults
 to compiling eagerly</a> to avoid a race condition in the lazy JIT.
 Clients that still want the lazy JIT can switch it on by calling
 <tt>ExecutionEngine::DisableLazyCompilation(false)</tt>.</li>
+<li>It is now possible to create more than one JIT instance in the same process.
+These JITs can generate machine code in parallel,
+although <a href="http://llvm.org/docs/ProgrammersManual.html#jitthreading">you
+still have to obey the other threading restrictions</a>.</li>
 </ul>
 
 </div>

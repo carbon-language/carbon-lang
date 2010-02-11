@@ -37,6 +37,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
@@ -57,7 +58,6 @@ using namespace llvm;
 STATISTIC(NumBytes, "Number of bytes of machine code compiled");
 STATISTIC(NumRelos, "Number of relocations applied");
 STATISTIC(NumRetries, "Number of retries with more memory");
-static JIT *TheJIT = 0;
 
 
 // A declaration may stop being a declaration once it's fully read from bitcode.
@@ -109,9 +109,13 @@ namespace {
     /// particular GlobalVariable so that we can reuse them if necessary.
     GlobalToIndirectSymMapTy GlobalToIndirectSymMap;
 
+    /// Instance of the JIT this ResolverState serves.
+    JIT *TheJIT;
+
   public:
-    JITResolverState() : FunctionToLazyStubMap(this),
-                         FunctionToCallSitesMap(this) {}
+    JITResolverState(JIT *jit) : FunctionToLazyStubMap(this),
+                                 FunctionToCallSitesMap(this),
+                                 TheJIT(jit) {}
 
     FunctionToLazyStubMapTy& getFunctionToLazyStubMap(
       const MutexGuard& locked) {
@@ -227,18 +231,13 @@ namespace {
 
     JITEmitter &JE;
 
-    static JITResolver *TheJITResolver;
+    /// Instance of JIT corresponding to this Resolver.
+    JIT *TheJIT;
+
   public:
-    explicit JITResolver(JIT &jit, JITEmitter &je) : nextGOTIndex(0), JE(je) {
-      TheJIT = &jit;
-
+    explicit JITResolver(JIT &jit, JITEmitter &je)
+      : state(&jit), nextGOTIndex(0), JE(je), TheJIT(&jit) {
       LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);
-      assert(TheJITResolver == 0 && "Multiple JIT resolvers?");
-      TheJITResolver = this;
-    }
-
-    ~JITResolver() {
-      TheJITResolver = 0;
     }
 
     /// getLazyFunctionStubIfAvailable - This returns a pointer to a function's
@@ -272,6 +271,44 @@ namespace {
     /// been compiled, this function compiles it first.
     static void *JITCompilerFn(void *Stub);
   };
+
+  class StubToResolverMapTy {
+    /// Map a stub address to a specific instance of a JITResolver so that
+    /// lazily-compiled functions can find the right resolver to use.
+    ///
+    /// Guarded by Lock.
+    std::map<void*, JITResolver*> Map;
+
+    /// Guards Map from concurrent accesses.
+    mutable sys::Mutex Lock;
+
+  public:
+    /// Registers a Stub to be resolved by Resolver.
+    void RegisterStubResolver(void *Stub, JITResolver *Resolver) {
+      MutexGuard guard(Lock);
+      Map.insert(std::make_pair(Stub, Resolver));
+    }
+    /// Unregisters the Stub when it's invalidated.
+    void UnregisterStubResolver(void *Stub) {
+      MutexGuard guard(Lock);
+      Map.erase(Stub);
+    }
+    /// Returns the JITResolver instance that owns the Stub.
+    JITResolver *getResolverFromStub(void *Stub) const {
+      MutexGuard guard(Lock);
+      // The address given to us for the stub may not be exactly right, it might
+      // be a little bit after the stub.  As such, use upper_bound to find it.
+      // This is the same trick as in LookupFunctionFromCallSite from
+      // JITResolverState.
+      std::map<void*, JITResolver*>::const_iterator I = Map.upper_bound(Stub);
+      assert(I != Map.begin() && "This is not a known stub!");
+      --I;
+      return I->second;
+    }
+  };
+  /// This needs to be static so that a lazy call stub can access it with no
+  /// context except the address of the stub.
+  ManagedStatic<StubToResolverMapTy> StubToResolverMap;
 
   /// JITEmitter - The JIT implementation of the MachineCodeEmitter, which is
   /// used to output functions to memory for execution.
@@ -371,10 +408,13 @@ namespace {
 
     DILocation PrevDLT;
 
+    /// Instance of the JIT
+    JIT *TheJIT;
+
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
       : SizeEstimate(0), Resolver(jit, *this), MMI(0), CurFn(0),
-        EmittedFunctions(this), PrevDLT(NULL) {
+        EmittedFunctions(this), PrevDLT(NULL), TheJIT(&jit) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -495,8 +535,6 @@ namespace {
   };
 }
 
-JITResolver *JITResolver::TheJITResolver = 0;
-
 void CallSiteValueMapConfig::onDelete(JITResolverState *JRS, Function *F) {
   JRS->EraseAllCallSitesPrelocked(F);
 }
@@ -550,6 +588,10 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
 
   DEBUG(dbgs() << "JIT: Lazy stub emitted at [" << Stub << "] for function '"
         << F->getName() << "'\n");
+
+  // Register this JITResolver as the one corresponding to this call site so
+  // JITCompilerFn will be able to find it.
+  StubToResolverMap->RegisterStubResolver(Stub, this);
 
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
@@ -637,6 +679,9 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
 GlobalValue *JITResolver::invalidateStub(void *Stub) {
   MutexGuard locked(TheJIT->lock);
 
+  // Remove the stub from the StubToResolverMap.
+  StubToResolverMap->UnregisterStubResolver(Stub);
+
   GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
 
   // Look up the cheap way first, to see if it's a function stub we are
@@ -671,7 +716,8 @@ GlobalValue *JITResolver::invalidateStub(void *Stub) {
 /// been entered.  It looks up which function this stub corresponds to, compiles
 /// it if necessary, then returns the resultant function pointer.
 void *JITResolver::JITCompilerFn(void *Stub) {
-  JITResolver &JR = *TheJITResolver;
+  JITResolver *JR = StubToResolverMap->getResolverFromStub(Stub);
+  assert(JR && "Unable to find the corresponding JITResolver to the call site");
 
   Function* F = 0;
   void* ActualPtr = 0;
@@ -680,24 +726,24 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     // Only lock for getting the Function. The call getPointerToFunction made
     // in this function might trigger function materializing, which requires
     // JIT lock to be unlocked.
-    MutexGuard locked(TheJIT->lock);
+    MutexGuard locked(JR->TheJIT->lock);
 
     // The address given to us for the stub may not be exactly right, it might
     // be a little bit after the stub.  As such, use upper_bound to find it.
     pair<void*, Function*> I =
-      JR.state.LookupFunctionFromCallSite(locked, Stub);
+      JR->state.LookupFunctionFromCallSite(locked, Stub);
     F = I.second;
     ActualPtr = I.first;
   }
 
   // If we have already code generated the function, just return the address.
-  void *Result = TheJIT->getPointerToGlobalIfAvailable(F);
+  void *Result = JR->TheJIT->getPointerToGlobalIfAvailable(F);
 
   if (!Result) {
     // Otherwise we don't have it, do lazy compilation now.
 
     // If lazy compilation is disabled, emit a useful error message and abort.
-    if (!TheJIT->isCompilingLazily()) {
+    if (!JR->TheJIT->isCompilingLazily()) {
       llvm_report_error("LLVM JIT requested to do lazy compilation of function '"
                         + F->getName() + "' when lazy compiles are disabled!");
     }
@@ -706,11 +752,11 @@ void *JITResolver::JITCompilerFn(void *Stub) {
           << "' In stub ptr = " << Stub << " actual ptr = "
           << ActualPtr << "\n");
 
-    Result = TheJIT->getPointerToFunction(F);
+    Result = JR->TheJIT->getPointerToFunction(F);
   }
 
   // Reacquire the lock to update the GOT map.
-  MutexGuard locked(TheJIT->lock);
+  MutexGuard locked(JR->TheJIT->lock);
 
   // We might like to remove the call site from the CallSiteToFunction map, but
   // we can't do that! Multiple threads could be stuck, waiting to acquire the
@@ -725,8 +771,8 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   // if they see it still using the stub address.
   // Note: this is done so the Resolver doesn't have to manage GOT memory
   // Do this without allocating map space if the target isn't using a GOT
-  if(JR.revGOTMap.find(Stub) != JR.revGOTMap.end())
-    JR.revGOTMap[Result] = JR.revGOTMap[Stub];
+  if(JR->revGOTMap.find(Stub) != JR->revGOTMap.end())
+    JR->revGOTMap[Result] = JR->revGOTMap[Stub];
 
   return Result;
 }
@@ -839,7 +885,7 @@ static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
   return Size;
 }
 
-static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI) {
+static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI, JIT *jit) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return 0;
 
@@ -847,7 +893,7 @@ static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI) {
   for (unsigned i = 0, e = JT.size(); i != e; ++i)
     NumEntries += JT[i].MBBs.size();
 
-  return NumEntries * MJTI->getEntrySize(*TheJIT->getTargetData());
+  return NumEntries * MJTI->getEntrySize(*jit->getTargetData());
 }
 
 static uintptr_t RoundUpToAlign(uintptr_t Size, unsigned Alignment) {
@@ -1032,7 +1078,7 @@ void JITEmitter::startFunction(MachineFunction &F) {
                              MJTI->getEntryAlignment(*TheJIT->getTargetData()));
 
       // Add the jump table size
-      ActualSize += GetJumpTableSizeInBytes(MJTI);
+      ActualSize += GetJumpTableSizeInBytes(MJTI, TheJIT);
     }
 
     // Add the alignment for the function
@@ -1550,19 +1596,6 @@ void JITEmitter::EmittedFunctionConfig::onRAUW(
 JITCodeEmitter *JIT::createEmitter(JIT &jit, JITMemoryManager *JMM,
                                    TargetMachine &tm) {
   return new JITEmitter(jit, JMM, tm);
-}
-
-// getPointerToNamedFunction - This function is used as a global wrapper to
-// JIT::getPointerToNamedFunction for the purpose of resolving symbols when
-// bugpoint is debugging the JIT. In that scenario, we are loading an .so and
-// need to resolve function(s) that are being mis-codegenerated, so we need to
-// resolve their addresses at runtime, and this is the way to do it.
-extern "C" {
-  void *getPointerToNamedFunction(const char *Name) {
-    if (Function *F = TheJIT->FindFunctionNamed(Name))
-      return TheJIT->getPointerToFunction(F);
-    return TheJIT->getPointerToNamedFunction(Name);
-  }
 }
 
 // getPointerToFunctionOrStub - If the specified function has been

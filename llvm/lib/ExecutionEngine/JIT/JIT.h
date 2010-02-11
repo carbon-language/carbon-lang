@@ -61,6 +61,10 @@ class JIT : public ExecutionEngine {
   /// should be set to true.  Doing so breaks freeMachineCodeForFunction.
   bool AllocateGVsWithCode;
 
+  /// True while the JIT is generating code.  Used to assert against recursive
+  /// entry.
+  bool isAlreadyCodeGenerating;
+
   JITState *jitstate;
 
   JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
