@@ -336,13 +336,18 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
       else
         InterestingVal = ConstantInt::getFalse(I->getContext());
       
-      // Scan for the sentinel.
+      // Scan for the sentinel.  If we find an undef, force it to the
+      // interesting value: x|undef -> true and x&undef -> false.
       for (unsigned i = 0, e = LHSVals.size(); i != e; ++i)
-        if (LHSVals[i].first == InterestingVal || LHSVals[i].first == 0)
+        if (LHSVals[i].first == InterestingVal || LHSVals[i].first == 0) {
           Result.push_back(LHSVals[i]);
+          Result.back().first = InterestingVal;
+        }
       for (unsigned i = 0, e = RHSVals.size(); i != e; ++i)
-        if (RHSVals[i].first == InterestingVal || RHSVals[i].first == 0)
+        if (RHSVals[i].first == InterestingVal || RHSVals[i].first == 0) {
           Result.push_back(RHSVals[i]);
+          Result.back().first = InterestingVal;
+        }
       return !Result.empty();
     }
     
