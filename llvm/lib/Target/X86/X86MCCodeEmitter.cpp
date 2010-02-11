@@ -83,9 +83,9 @@ public:
     }
   }
 
-  void EmitDisplacementField(const MCOperand &Disp, unsigned &CurByte,
-                             raw_ostream &OS,
-                             SmallVectorImpl<MCFixup> &Fixups) const;
+  void EmitImmediate(const MCOperand &Disp, unsigned ImmSize,
+                     unsigned &CurByte, raw_ostream &OS,
+                     SmallVectorImpl<MCFixup> &Fixups) const;
   
   inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
                                         unsigned RM) {
@@ -136,19 +136,18 @@ static bool isDisp8(int Value) {
 }
 
 void X86MCCodeEmitter::
-EmitDisplacementField(const MCOperand &DispOp,
-                      unsigned &CurByte, raw_ostream &OS,
-                      SmallVectorImpl<MCFixup> &Fixups) const {
+EmitImmediate(const MCOperand &DispOp, unsigned Size,
+              unsigned &CurByte, raw_ostream &OS,
+              SmallVectorImpl<MCFixup> &Fixups) const {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (DispOp.isImm()) {
-    EmitConstant(DispOp.getImm(), 4, CurByte, OS);
+    EmitConstant(DispOp.getImm(), Size, CurByte, OS);
     return;
   }
 
+  // FIXME: Pass in the relocation type.
 #if 0
-  // Otherwise, this is something that requires a relocation.  Emit it as such
-  // now.
   unsigned RelocType = Is64BitMode ?
   (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
   : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
@@ -157,7 +156,7 @@ EmitDisplacementField(const MCOperand &DispOp,
   // Emit a symbolic constant as a fixup and 4 zeros.
   Fixups.push_back(MCFixup::Create(CurByte, DispOp.getExpr(),
                                    MCFixupKind(X86::reloc_absolute_word)));
-  EmitConstant(0, 4, CurByte, OS);
+  EmitConstant(0, Size, CurByte, OS);
 }
 
 
@@ -187,7 +186,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
         BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
-      EmitDisplacementField(Disp, CurByte, OS, Fixups);
+      EmitImmediate(Disp, 4, CurByte, OS, Fixups);
       return;
     }
     
@@ -211,7 +210,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), CurByte, OS);
-    EmitDisplacementField(Disp, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 4, CurByte, OS, Fixups);
     return;
   }
     
@@ -266,9 +265,9 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   
   // Do we need to output a displacement?
   if (ForceDisp8)
-    EmitConstant(Disp.getImm(), 1, CurByte, OS);
+    EmitImmediate(Disp, 1, CurByte, OS, Fixups);
   else if (ForceDisp32 || Disp.getImm() != 0)
-    EmitDisplacementField(Disp, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 4, CurByte, OS, Fixups);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
