@@ -403,7 +403,7 @@ public:
     uint32_t Word1;
   };
   void ComputeScatteredRelocationInfo(MCAssembler &Asm,
-                                      MCSectionData::Fixup &Fixup,
+                                      MCAsmFixup &Fixup,
                                       const MCValue &Target,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                                      std::vector<MachRelocationEntry> &Relocs) {
@@ -454,7 +454,7 @@ public:
   }
 
   void ComputeRelocationInfo(MCAssembler &Asm,
-                             MCSectionData::Fixup &Fixup,
+                             MCAsmFixup &Fixup,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                              std::vector<MachRelocationEntry> &Relocs) {
     MCValue Target;
@@ -912,15 +912,15 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
     A->getSectionList().push_back(this);
 }
 
-const MCSectionData::Fixup *
-MCSectionData::LookupFixup(const MCFragment *Fragment, uint64_t Offset) const {
+const MCAsmFixup *MCSectionData::LookupFixup(const MCFragment *Fragment,
+                                             uint64_t Offset) const {
   // Use a one level cache to turn the common case of accessing the fixups in
   // order into O(1) instead of O(N).
   unsigned i = LastFixupLookup, Count = Fixups.size(), End = Fixups.size();
   if (i >= End)
     i = 0;
   while (Count--) {
-    const Fixup &F = Fixups[i];
+    const MCAsmFixup &F = Fixups[i];
     if (F.Fragment == Fragment && F.Offset == Offset) {
       LastFixupLookup = i;
       return &F;
@@ -998,8 +998,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 
       // Otherwise, add fixups for the values.
       for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
-        MCSectionData::Fixup Fix(F, i * FF.getValueSize(),
-                                 FF.getValue(),FF.getValueSize());
+        MCAsmFixup Fix(F, i*FF.getValueSize(), FF.getValue(),FF.getValueSize());
         SD.getFixups().push_back(Fix);
       }
       break;
@@ -1107,7 +1106,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
         // Find the fixup.
         //
         // FIXME: Find a better way to write in the fixes.
-        const MCSectionData::Fixup *Fixup =
+        const MCAsmFixup *Fixup =
           F.getParent()->LookupFixup(&F, i * FF.getValueSize());
         assert(Fixup && "Missing fixup for fill value!");
         Value = Fixup->FixedValue;

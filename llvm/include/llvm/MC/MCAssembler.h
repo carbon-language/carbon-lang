@@ -22,9 +22,38 @@ class raw_ostream;
 class MCAssembler;
 class MCContext;
 class MCExpr;
+class MCFragment;
 class MCSection;
 class MCSectionData;
 class MCSymbol;
+
+/// MCAsmFixup - Represent a fixed size region of bytes inside some fragment
+/// which needs to be rewritten. This region will either be rewritten by the
+/// assembler or cause a relocation entry to be generated.
+struct MCAsmFixup {
+  /// Fragment - The fragment containing the fixup.
+  MCFragment *Fragment;
+  
+  /// Offset - The offset inside the fragment which needs to be rewritten.
+  uint64_t Offset;
+
+  /// Value - The expression to eventually write into the fragment.
+  const MCExpr *Value;
+
+  /// Size - The fixup size.
+  unsigned Size;
+
+  /// FixedValue - The value to replace the fix up by.
+  //
+  // FIXME: This should not be here.
+  uint64_t FixedValue;
+
+public:
+  MCAsmFixup(MCFragment &_Fragment, uint64_t _Offset, const MCExpr &_Value,
+             unsigned _Size) 
+    : Fragment(&_Fragment), Offset(_Offset), Value(&_Value), Size(_Size),
+      FixedValue(0) {}
+};
 
 class MCFragment : public ilist_node<MCFragment> {
   MCFragment(const MCFragment&);     // DO NOT IMPLEMENT
@@ -284,41 +313,14 @@ class MCSectionData : public ilist_node<MCSectionData> {
   void operator=(const MCSectionData&); // DO NOT IMPLEMENT
 
 public:
-  /// Fixup - Represent a fixed size region of bytes inside some fragment which
-  /// needs to be rewritten. This region will either be rewritten by the
-  /// assembler or cause a relocation entry to be generated.
-  struct Fixup {
-    /// Fragment - The fragment containing the fixup.
-    MCFragment *Fragment;
-    
-    /// Offset - The offset inside the fragment which needs to be rewritten.
-    uint64_t Offset;
-
-    /// Value - The expression to eventually write into the fragment.
-    const MCExpr *Value;
-
-    /// Size - The fixup size.
-    unsigned Size;
-
-    /// FixedValue - The value to replace the fix up by.
-    //
-    // FIXME: This should not be here.
-    uint64_t FixedValue;
-
-  public:
-    Fixup(MCFragment &_Fragment, uint64_t _Offset, const MCExpr &_Value,
-          unsigned _Size) 
-      : Fragment(&_Fragment), Offset(_Offset), Value(&_Value), Size(_Size),
-        FixedValue(0) {}
-  };
 
   typedef iplist<MCFragment> FragmentListType;
 
   typedef FragmentListType::const_iterator const_iterator;
   typedef FragmentListType::iterator iterator;
 
-  typedef std::vector<Fixup>::const_iterator const_fixup_iterator;
-  typedef std::vector<Fixup>::iterator fixup_iterator;
+  typedef std::vector<MCAsmFixup>::const_iterator const_fixup_iterator;
+  typedef std::vector<MCAsmFixup>::iterator fixup_iterator;
 
 private:
   iplist<MCFragment> Fragments;
@@ -347,7 +349,7 @@ private:
   mutable unsigned LastFixupLookup;
 
   /// Fixups - The list of fixups in this section.
-  std::vector<Fixup> Fixups;
+  std::vector<MCAsmFixup> Fixups;
 
   /// HasInstructions - Whether this section has had instructions emitted into
   /// it.
@@ -385,7 +387,7 @@ public:
   /// @name Fixup Access
   /// @{
 
-  std::vector<Fixup> &getFixups() {
+  std::vector<MCAsmFixup> &getFixups() {
     return Fixups;
   }
 
@@ -413,7 +415,8 @@ public:
   //
   // FIXME: This isn't horribly slow in practice, but there are much nicer
   // solutions to applying the fixups.
-  const Fixup *LookupFixup(const MCFragment *Fragment, uint64_t Offset) const;
+  const MCAsmFixup *LookupFixup(const MCFragment *Fragment,
+                                uint64_t Offset) const;
 
   uint64_t getAddress() const { 
     assert(Address != ~UINT64_C(0) && "Address not set!");
