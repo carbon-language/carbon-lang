@@ -948,6 +948,20 @@ def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
                    "ldrsb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 }
 
+// LDRT and LDRBT are for disassembly only.
+
+def LDRT : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
+                   (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoadru,
+                   "ldrt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+  let Inst{21} = 1; // overwrite
+}
+
+def LDRBT : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
+                   (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoadru,
+                   "ldrb", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+  let Inst{21} = 1; // overwrite
+}
+
 // Store
 def STR  : AI2stw<(outs), (ins GPR:$src, addrmode2:$addr), StFrm, IIC_iStorer,
                "str", "\t$src, $addr",
@@ -1010,6 +1024,24 @@ def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
                      "strb", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
+
+// STRT and STRBT are for disassembly only.
+
+def STRT : AI2stwpo<(outs GPR:$base_wb),
+                    (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                    StFrm, IIC_iStoreru,
+                    "strt", "\t$src, [$base], $offset", "$base = $base_wb",
+                    [/* For disassembly only; pattern left blank */]> {
+  let Inst{21} = 1; // overwrite
+}
+
+def STRBT : AI2stbpo<(outs GPR:$base_wb),
+                     (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                     StFrm, IIC_iStoreru,
+                     "strbt", "\t$src, [$base], $offset", "$base = $base_wb",
+                     [/* For disassembly only; pattern left blank */]> {
+  let Inst{21} = 1; // overwrite
+}
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
