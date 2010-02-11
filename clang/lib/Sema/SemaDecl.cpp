@@ -2387,7 +2387,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getString()));
+    NewVD->addAttr(::new (Context) AsmLabelAttr(Context, SE->getString()));
   }
 
   // Don't consider existing declarations that are in a different
@@ -2910,7 +2910,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (Expr *E = (Expr*) D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    NewFD->addAttr(::new (Context) AsmLabelAttr(SE->getString()));
+    NewFD->addAttr(::new (Context) AsmLabelAttr(Context, SE->getString()));
   }
 
   // Copy the parameter declarations from the declarator D to the function
@@ -4315,8 +4315,8 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     bool HasVAListArg;
     if (Context.BuiltinInfo.isPrintfLike(BuiltinID, FormatIdx, HasVAListArg)) {
       if (!FD->getAttr<FormatAttr>())
-        FD->addAttr(::new (Context) FormatAttr("printf", FormatIdx + 1,
-                                             HasVAListArg ? 0 : FormatIdx + 2));
+        FD->addAttr(::new (Context) FormatAttr(Context, "printf", FormatIdx+1,
+                                               HasVAListArg ? 0 : FormatIdx+2));
     }
 
     // Mark const if we don't care about errno and that is the only
@@ -4353,15 +4353,15 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     // FIXME: NSLog and NSLogv should be target specific
     if (const FormatAttr *Format = FD->getAttr<FormatAttr>()) {
       // FIXME: We known better than our headers.
-      const_cast<FormatAttr *>(Format)->setType("printf");
+      const_cast<FormatAttr *>(Format)->setType(Context, "printf");
     } else
-      FD->addAttr(::new (Context) FormatAttr("printf", 1,
+      FD->addAttr(::new (Context) FormatAttr(Context, "printf", 1,
                                              Name->isStr("NSLogv") ? 0 : 2));
   } else if (Name->isStr("asprintf") || Name->isStr("vasprintf")) {
     // FIXME: asprintf and vasprintf aren't C99 functions. Should they be
     // target-specific builtins, perhaps?
     if (!FD->getAttr<FormatAttr>())
-      FD->addAttr(::new (Context) FormatAttr("printf", 2,
+      FD->addAttr(::new (Context) FormatAttr(Context, "printf", 2,
                                              Name->isStr("vasprintf") ? 0 : 3));
   }
 }

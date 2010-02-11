@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <cstring>
-#include <string>
 #include <algorithm>
 using llvm::dyn_cast;
 
@@ -120,8 +119,7 @@ protected:
     assert(Next == 0 && "Destroy didn't work");
   }
 public:
-
-  void Destroy(ASTContext &C);
+  virtual void Destroy(ASTContext &C);
 
   /// \brief Whether this attribute should be merged to new
   /// declarations.
@@ -156,6 +154,18 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Attr *) { return true; }
+};
+  
+class AttrWithString : public Attr {
+private:
+  const char *Str;
+  unsigned StrLen;
+protected:
+  AttrWithString(Attr::Kind AK, ASTContext &C, llvm::StringRef s);
+  llvm::StringRef getString() const { return llvm::StringRef(Str, StrLen); }
+  void ReplaceString(ASTContext &C, llvm::StringRef newS);
+public:
+  virtual void Destroy(ASTContext &C);
 };
 
 #define DEF_SIMPLE_ATTR(ATTR)                                           \
@@ -214,12 +224,12 @@ public:
   static bool classof(const AlignedAttr *A) { return true; }
 };
 
-class AnnotateAttr : public Attr {
-  std::string Annotation;
+class AnnotateAttr : public AttrWithString {
 public:
-  AnnotateAttr(llvm::StringRef ann) : Attr(Annotate), Annotation(ann) {}
+  AnnotateAttr(ASTContext &C, llvm::StringRef ann)
+    : AttrWithString(Annotate, C, ann) {}
 
-  const std::string& getAnnotation() const { return Annotation; }
+  llvm::StringRef getAnnotation() const { return getString(); }
 
   virtual Attr* clone(ASTContext &C) const;
 
@@ -230,12 +240,12 @@ public:
   static bool classof(const AnnotateAttr *A) { return true; }
 };
 
-class AsmLabelAttr : public Attr {
-  std::string Label;
+class AsmLabelAttr : public AttrWithString {
 public:
-  AsmLabelAttr(llvm::StringRef L) : Attr(AsmLabel), Label(L) {}
+  AsmLabelAttr(ASTContext &C, llvm::StringRef L)
+    : AttrWithString(AsmLabel, C, L) {}
 
-  const std::string& getLabel() const { return Label; }
+  llvm::StringRef getLabel() const { return getString(); }
 
   virtual Attr* clone(ASTContext &C) const;
 
@@ -248,12 +258,12 @@ public:
 
 DEF_SIMPLE_ATTR(AlwaysInline);
 
-class AliasAttr : public Attr {
-  std::string Aliasee;
+class AliasAttr : public AttrWithString {
 public:
-  AliasAttr(llvm::StringRef aliasee) : Attr(Alias), Aliasee(aliasee) {}
+  AliasAttr(ASTContext &C, llvm::StringRef aliasee)
+    : AttrWithString(Alias, C, aliasee) {}
 
-  const std::string& getAliasee() const { return Aliasee; }
+  llvm::StringRef getAliasee() const { return getString(); }
 
   virtual Attr *clone(ASTContext &C) const;
 
@@ -322,12 +332,12 @@ DEF_SIMPLE_ATTR(AnalyzerNoReturn);
 DEF_SIMPLE_ATTR(Deprecated);
 DEF_SIMPLE_ATTR(Final);
 
-class SectionAttr : public Attr {
-  std::string Name;
+class SectionAttr : public AttrWithString {
 public:
-  SectionAttr(llvm::StringRef N) : Attr(Section), Name(N) {}
+  SectionAttr(ASTContext &C, llvm::StringRef N)
+    : AttrWithString(Section, C, N) {}
 
-  const std::string& getName() const { return Name; }
+  llvm::StringRef getName() const { return getString(); }
 
   virtual Attr *clone(ASTContext &C) const;
 
@@ -380,15 +390,14 @@ public:
   static bool classof(const NonNullAttr *A) { return true; }
 };
 
-class FormatAttr : public Attr {
-  std::string Type;
+class FormatAttr : public AttrWithString {
   int formatIdx, firstArg;
 public:
-  FormatAttr(llvm::StringRef type, int idx, int first) : Attr(Format),
-             Type(type), formatIdx(idx), firstArg(first) {}
+  FormatAttr(ASTContext &C, llvm::StringRef type, int idx, int first)
+    : AttrWithString(Format, C, type), formatIdx(idx), firstArg(first) {}
 
-  const std::string& getType() const { return Type; }
-  void setType(llvm::StringRef type) { Type = type; }
+  llvm::StringRef getType() const { return getString(); }
+  void setType(ASTContext &C, llvm::StringRef type);
   int getFormatIdx() const { return formatIdx; }
   int getFirstArg() const { return firstArg; }
 

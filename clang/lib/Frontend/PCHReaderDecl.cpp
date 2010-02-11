@@ -446,7 +446,7 @@ Attr *PCHReader::ReadAttributes() {
 
 #define STRING_ATTR(Name)                                       \
  case Attr::Name:                                               \
-   New = ::new (*Context) Name##Attr(ReadString(Record, Idx));  \
+   New = ::new (*Context) Name##Attr(*Context, ReadString(Record, Idx));  \
    break
 
 #define UNSIGNED_ATTR(Name)                             \
@@ -497,7 +497,7 @@ Attr *PCHReader::ReadAttributes() {
       std::string Type = ReadString(Record, Idx);
       unsigned FormatIdx = Record[Idx++];
       unsigned FirstArg = Record[Idx++];
-      New = ::new (*Context) FormatAttr(Type, FormatIdx, FirstArg);
+      New = ::new (*Context) FormatAttr(*Context, Type, FormatIdx, FirstArg);
       break;
     }
 

@@ -329,7 +329,7 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // FIXME: check if target symbol exists in current file
 
-  d->addAttr(::new (S.Context) AliasAttr(Str->getString()));
+  d->addAttr(::new (S.Context) AliasAttr(S.Context, Str->getString()));
 }
 
 static void HandleAlwaysInlineAttr(Decl *d, const AttributeList &Attr,
@@ -942,7 +942,7 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
   
-  D->addAttr(::new (S.Context) SectionAttr(SE->getString()));
+  D->addAttr(::new (S.Context) SectionAttr(S.Context, SE->getString()));
 }
 
 
@@ -1257,7 +1257,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) FormatAttr(Format, Idx.getZExtValue(),
+  d->addAttr(::new (S.Context) FormatAttr(S.Context, Format, Idx.getZExtValue(),
                                           FirstArg.getZExtValue()));
 }
 
@@ -1343,7 +1343,7 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) <<"annotate";
     return;
   }
-  d->addAttr(::new (S.Context) AnnotateAttr(SE->getString()));
+  d->addAttr(::new (S.Context) AnnotateAttr(S.Context, SE->getString()));
 }
 
 static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1924,7 +1924,7 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
   if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
     IdentifierInfo *NDId = ND->getIdentifier();
     NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias());
-    NewD->addAttr(::new (Context) AliasAttr(NDId->getName()));
+    NewD->addAttr(::new (Context) AliasAttr(Context, NDId->getName()));
     NewD->addAttr(::new (Context) WeakAttr());
     WeakTopLevelDecl.push_back(NewD);
     // FIXME: "hideous" code from Sema::LazilyCreateBuiltin

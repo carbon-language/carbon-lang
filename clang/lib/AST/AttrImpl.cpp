@@ -11,10 +11,44 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "clang/AST/Attr.h"
 #include "clang/AST/ASTContext.h"
 using namespace clang;
+
+void Attr::Destroy(ASTContext &C) {
+  if (Next) {
+    Next->Destroy(C);
+    Next = 0;
+  }
+  this->~Attr();
+  C.Deallocate((void*)this);
+}
+
+AttrWithString::AttrWithString(Attr::Kind AK, ASTContext &C, llvm::StringRef s)
+  : Attr(AK) {
+  assert(!s.empty());
+  StrLen = s.size();
+  Str = new (C) char[StrLen];
+  memcpy(const_cast<char*>(Str), s.data(), StrLen);
+}
+
+void AttrWithString::Destroy(ASTContext &C) {
+  C.Deallocate(const_cast<char*>(Str));  
+  Attr::Destroy(C);
+}
+
+void AttrWithString::ReplaceString(ASTContext &C, llvm::StringRef newS) {
+  if (newS.size() > StrLen) {
+    C.Deallocate(const_cast<char*>(Str));
+    Str = new char[newS.size()];
+  }
+  StrLen = newS.size();
+  memcpy(const_cast<char*>(Str), newS.data(), StrLen);
+}
+
+void FormatAttr::setType(ASTContext &C, llvm::StringRef type) {
+  ReplaceString(C, type);
+}
 
 #define DEF_SIMPLE_ATTR_CLONE(ATTR)                                     \
   Attr *ATTR##Attr::clone(ASTContext &C) const {                        \
@@ -66,15 +100,15 @@ Attr* AlignedAttr::clone(ASTContext &C) const {
 }
 
 Attr* AnnotateAttr::clone(ASTContext &C) const {
-  return ::new (C) AnnotateAttr(Annotation);
+  return ::new (C) AnnotateAttr(C, getAnnotation());
 }
 
 Attr *AsmLabelAttr::clone(ASTContext &C) const {
-  return ::new (C) AsmLabelAttr(Label);
+  return ::new (C) AsmLabelAttr(C, getLabel());
 }
 
 Attr *AliasAttr::clone(ASTContext &C) const {
-  return ::new (C) AliasAttr(Aliasee);
+  return ::new (C) AliasAttr(C, getAliasee());
 }
 
 Attr *ConstructorAttr::clone(ASTContext &C) const {
@@ -94,7 +128,7 @@ Attr *GNUInlineAttr::clone(ASTContext &C) const {
 }
 
 Attr *SectionAttr::clone(ASTContext &C) const {
-  return ::new (C) SectionAttr(Name);
+  return ::new (C) SectionAttr(C, getName());
 }
 
 Attr *NonNullAttr::clone(ASTContext &C) const {
@@ -102,7 +136,7 @@ Attr *NonNullAttr::clone(ASTContext &C) const {
 }
 
 Attr *FormatAttr::clone(ASTContext &C) const {
-  return ::new (C) FormatAttr(Type, formatIdx, firstArg);
+  return ::new (C) FormatAttr(C, getType(), formatIdx, firstArg);
 }
 
 Attr *FormatArgAttr::clone(ASTContext &C) const {

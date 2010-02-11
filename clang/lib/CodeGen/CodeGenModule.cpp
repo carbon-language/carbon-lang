@@ -1283,8 +1283,8 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
   const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
 
   // Unique the name through the identifier table.
-  const char *AliaseeName = AA->getAliasee().c_str();
-  AliaseeName = getContext().Idents.get(AliaseeName).getNameStart();
+  const char *AliaseeName =
+    getContext().Idents.get(AA->getAliasee()).getNameStart();
 
   // Create a reference to the named value.  This ensures that it is emitted
   // if a deferred decl.

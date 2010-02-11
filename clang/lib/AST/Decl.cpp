@@ -29,15 +29,6 @@
 
 using namespace clang;
 
-void Attr::Destroy(ASTContext &C) {
-  if (Next) {
-    Next->Destroy(C);
-    Next = 0;
-  }
-  this->~Attr();
-  C.Deallocate((void*)this);
-}
-
 /// \brief Return the TypeLoc wrapper for the type source info.
 TypeLoc TypeSourceInfo::getTypeLoc() const {
   return TypeLoc(Ty, (void*)(this + 1));
