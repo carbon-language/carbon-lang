@@ -101,6 +101,130 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
 
 namespace {
 
+/// FinalOverriders - Contains the final overrider member functions for all
+/// member functions in the base subobjects of a class.
+class FinalOverriders {
+  /// MostDerivedClass - The most derived class for which the final overriders
+  /// are stored.
+  const CXXRecordDecl *MostDerivedClass;
+  
+  ASTContext &Context;
+  
+  /// MostDerivedClassLayout - the AST record layout of the most derived class.
+  const ASTRecordLayout &MostDerivedClassLayout;
+
+  typedef llvm::DenseMap<std::pair<BaseSubobject, const CXXMethodDecl *>,
+                         const CXXMethodDecl *> OverridersMapTy;
+  
+  /// OverridersMap - The final overriders for all virtual member functions of 
+  /// all the base subobjects of the most derived class.
+  OverridersMapTy OverridersMap;
+  
+  /// ComputeFinalOverriders - Compute the final overriders for a given base
+  /// subobject (and all its direct and indirect bases).
+  void ComputeFinalOverriders(BaseSubobject Base);
+  
+  /// AddOverriders - Add the final overriders for this base subobject to the
+  /// map of final overriders.  
+  void AddOverriders(BaseSubobject Base);
+  
+public:
+  explicit FinalOverriders(const CXXRecordDecl *MostDerivedClass);
+  
+  /// getOverrider - Get the final overrider for the given method declaration in
+  /// the given base subobject.
+  const CXXMethodDecl *getOverrider(BaseSubobject Base,
+                                    const CXXMethodDecl *MD) const {
+    assert(OverridersMap.count(std::make_pair(Base, MD)) && 
+           "Did not find overrider!");
+    
+    return OverridersMap.lookup(std::make_pair(Base, MD));
+  }
+  
+  /// dump - dump the final overriders.
+  void dump() const { 
+      dump(llvm::errs(), BaseSubobject(MostDerivedClass, 0)); 
+  }
+  
+  /// dump - dump the final overriders for a base subobject, and all its direct
+  /// and indirect base subobjects.
+  void dump(llvm::raw_ostream &Out, BaseSubobject Base) const;
+};
+  
+FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
+  : MostDerivedClass(MostDerivedClass), 
+  Context(MostDerivedClass->getASTContext()),
+  MostDerivedClassLayout(Context.getASTRecordLayout(MostDerivedClass)) {
+    
+  // Compute the final overriders.
+  ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0));
+    
+  // And dump them (for now).
+  dump();
+}
+
+void FinalOverriders::AddOverriders(BaseSubobject Base) {
+  const CXXRecordDecl *RD = Base.getBase();
+
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
+       E = RD->method_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+    
+    if (!MD->isVirtual())
+      continue;
+
+    // Add the overrider.
+    const CXXMethodDecl *&Overrider = OverridersMap[std::make_pair(Base, MD)];
+    assert(!Overrider && "Overrider should not exist yet!");
+
+    Overrider = MD;
+  }
+}
+
+void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base) {
+  const CXXRecordDecl *RD = Base.getBase();
+  if (RD->getNumBases())
+    assert(false && "FIXME: Handle bases!");
+  
+  AddOverriders(Base);
+}
+
+void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
+  
+  const CXXRecordDecl *RD = Base.getBase();
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    assert(!I->isVirtual() && "FIXME: Handle virtual bases!");
+    
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl) + 
+      Base.getBaseOffset();
+    
+    dump(Out, BaseSubobject(BaseDecl, BaseOffset));
+  }
+
+  Out << "Final overriders for (" << RD->getQualifiedNameAsString() << ", ";
+  Out << Base.getBaseOffset() << ")\n";
+
+  // Now dump the overriders for this base subobject.
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
+       E = RD->method_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+
+    if (!MD->isVirtual())
+      continue;
+  
+    const CXXMethodDecl *Overrider = getOverrider(Base, MD);
+
+    Out << "  " << MD->getQualifiedNameAsString() << " - ";
+    Out << Overrider->getQualifiedNameAsString() << "\n";
+  }  
+}
+
 /// VtableComponent - Represents a single component in a vtable.
 class VtableComponent {
 public:
@@ -233,6 +357,9 @@ class VtableBuilder {
   /// Context - The ASTContext which we will use for layout information.
   const ASTContext &Context;
   
+  /// FinalOverriders - The final overriders of the most derived class.
+  FinalOverriders Overriders;
+
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
 
@@ -246,7 +373,7 @@ class VtableBuilder {
 public:
   VtableBuilder(const CXXRecordDecl *MostDerivedClass)
     : MostDerivedClass(MostDerivedClass), 
-    Context(MostDerivedClass->getASTContext()) { 
+    Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
 
     layoutSimpleVtable(MostDerivedClass);      
   }
