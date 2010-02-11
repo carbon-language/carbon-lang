@@ -158,10 +158,8 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
         llvm::Triple::ArchType Arch =
           llvm::Triple(Split.first, "", "").getArch();
 
-        if (Arch == llvm::Triple::UnknownArch) {
-          Diag(clang::diag::err_drv_invalid_arch_name) << Arch;
-          continue;
-        }
+        if (Arch == llvm::Triple::UnknownArch)
+          Diag(clang::diag::err_drv_invalid_arch_name) << Split.first;
 
         CCCClangArchs.insert(Arch);
       }
