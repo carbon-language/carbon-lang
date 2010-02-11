@@ -18,6 +18,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeVisitor.h"
 #include "clang/Basic/FileManager.h"
@@ -28,7 +29,8 @@ using namespace clang;
 
 namespace {
   class ASTNodeImporter : public TypeVisitor<ASTNodeImporter, QualType>,
-                          public DeclVisitor<ASTNodeImporter, Decl *> {
+                          public DeclVisitor<ASTNodeImporter, Decl *>,
+                          public StmtVisitor<ASTNodeImporter, Stmt *> {
     ASTImporter &Importer;
     
   public:
@@ -36,6 +38,7 @@ namespace {
     
     using TypeVisitor<ASTNodeImporter, QualType>::Visit;
     using DeclVisitor<ASTNodeImporter, Decl *>::Visit;
+    using StmtVisitor<ASTNodeImporter, Stmt *>::Visit;
 
     // Importing types
     QualType VisitType(Type *T);
@@ -89,6 +92,13 @@ namespace {
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
+
+    // Importing statements
+    Stmt *VisitStmt(Stmt *S);
+
+    // Importing expressions
+    Expr *VisitExpr(Expr *E);
+    Expr *VisitIntegerLiteral(IntegerLiteral *E);
   };
 }
 
@@ -506,37 +516,81 @@ bool ASTNodeImporter::ImportDeclParts(DeclaratorDecl *D,
 
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
                                         RecordDecl *ToRecord) {  
-  // FIXME: If we know that the two records are the same according to the ODR,
-  // we could diagnose structural mismatches here. However, we don't really 
-  // have that information.
-  if (FromRecord->isUnion() != ToRecord->isUnion())
+  if (FromRecord->isUnion() != ToRecord->isUnion()) {
+    Importer.ToDiag(ToRecord->getLocation(), 
+                    diag::warn_odr_class_type_inconsistent)
+      << Importer.getToContext().getTypeDeclType(ToRecord);
+    Importer.FromDiag(FromRecord->getLocation(), diag::note_odr_tag_kind_here)
+      << FromRecord->getDeclName() << (unsigned)FromRecord->getTagKind();
     return false;
-  
+  }
+
   if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(FromRecord)) {
     if (CXXRecordDecl *ToCXX = dyn_cast<CXXRecordDecl>(ToRecord)) {
-      if (FromCXX->getNumBases() != ToCXX->getNumBases())
+      if (FromCXX->getNumBases() != ToCXX->getNumBases()) {
+        Importer.ToDiag(ToRecord->getLocation(), 
+                        diag::warn_odr_class_type_inconsistent)
+          << Importer.getToContext().getTypeDeclType(ToRecord);
+        Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_number_of_bases)
+          << ToCXX->getNumBases();
+        Importer.FromDiag(FromRecord->getLocation(), 
+                          diag::note_odr_number_of_bases)
+          << FromCXX->getNumBases();
         return false;
-      
+      }
+
       // Check the base classes. 
       for (CXXRecordDecl::base_class_iterator FromBase = FromCXX->bases_begin(), 
                                            FromBaseEnd = FromCXX->bases_end(),
                                                 ToBase = ToCXX->bases_begin();
           FromBase != FromBaseEnd;
-          ++FromBase, ++ToBase) {
-        // Check virtual vs. non-virtual inheritance mismatch.
-        if (FromBase->isVirtual() != ToBase->isVirtual())
-          return false;
-        
+          ++FromBase, ++ToBase) {        
         // Check the type we're inheriting from.
         QualType FromBaseT = Importer.Import(FromBase->getType());
         if (FromBaseT.isNull())
           return false;
         
         if (!Importer.getToContext().typesAreCompatible(FromBaseT, 
-                                                        ToBase->getType()))
+                                                        ToBase->getType())) {
+          Importer.ToDiag(ToRecord->getLocation(), 
+                          diag::warn_odr_class_type_inconsistent)
+            << Importer.getToContext().getTypeDeclType(ToRecord);
+          Importer.ToDiag(ToBase->getSourceRange().getBegin(),
+                          diag::note_odr_base)
+            << ToBase->getType()
+            << ToBase->getSourceRange();
+          Importer.FromDiag(FromBase->getSourceRange().getBegin(),
+                            diag::note_odr_base)
+            << FromBase->getType()
+            << FromBase->getSourceRange();
           return false;
+        }
+
+        // Check virtual vs. non-virtual inheritance mismatch.
+        if (FromBase->isVirtual() != ToBase->isVirtual()) {
+          Importer.ToDiag(ToRecord->getLocation(), 
+                          diag::warn_odr_class_type_inconsistent)
+            << Importer.getToContext().getTypeDeclType(ToRecord);
+          Importer.ToDiag(ToBase->getSourceRange().getBegin(),
+                          diag::note_odr_virtual_base)
+            << ToBase->isVirtual() << ToBase->getSourceRange();
+          Importer.FromDiag(FromBase->getSourceRange().getBegin(),
+                            diag::note_odr_base)
+            << FromBase->isVirtual()
+            << FromBase->getSourceRange();
+          return false;
+        }
       }
     } else if (FromCXX->getNumBases() > 0) {
+      Importer.ToDiag(ToRecord->getLocation(), 
+                      diag::warn_odr_class_type_inconsistent)
+        << Importer.getToContext().getTypeDeclType(ToRecord);
+      const CXXBaseSpecifier *FromBase = FromCXX->bases_begin();
+      Importer.FromDiag(FromBase->getSourceRange().getBegin(),
+                        diag::note_odr_base)
+        << FromBase->getType()
+        << FromBase->getSourceRange();
+      Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_missing_base);
       return false;
     }
   }
@@ -548,19 +602,58 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
                                   FromFieldEnd = FromRecord->field_end();
        FromField != FromFieldEnd;
        ++FromField, ++ToField) {
-    if (ToField == ToFieldEnd)
+    if (ToField == ToFieldEnd) {
+      Importer.ToDiag(ToRecord->getLocation(), 
+                      diag::warn_odr_class_type_inconsistent)
+        << Importer.getToContext().getTypeDeclType(ToRecord);
+      Importer.FromDiag(FromField->getLocation(), diag::note_odr_field)
+        << FromField->getDeclName() << FromField->getType();
+      Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_missing_field);
       return false;
-    
+    }
+
     QualType FromT = Importer.Import(FromField->getType());
     if (FromT.isNull())
       return false;
   
-    if (FromField->isBitField() != ToField->isBitField())
+    if (!Importer.getToContext().typesAreCompatible(FromT, ToField->getType())){
+      Importer.ToDiag(ToRecord->getLocation(), 
+                      diag::warn_odr_class_type_inconsistent)
+        << Importer.getToContext().getTypeDeclType(ToRecord);
+      Importer.ToDiag(ToField->getLocation(), diag::note_odr_field)
+        << ToField->getDeclName() << ToField->getType();
+      Importer.FromDiag(FromField->getLocation(), diag::note_odr_field)
+        << FromField->getDeclName() << FromField->getType();
       return false;
+    }
 
-    if (!Importer.getToContext().typesAreCompatible(FromT, ToField->getType()))
+    if (FromField->isBitField() != ToField->isBitField()) {
+      Importer.ToDiag(ToRecord->getLocation(), 
+                      diag::warn_odr_class_type_inconsistent)
+        << Importer.getToContext().getTypeDeclType(ToRecord);
+      if (FromField->isBitField()) {
+        llvm::APSInt Bits;
+        FromField->getBitWidth()->isIntegerConstantExpr(Bits,
+                                                   Importer.getFromContext());
+        Importer.FromDiag(FromField->getLocation(), diag::note_odr_bit_field)
+          << FromField->getDeclName() << FromField->getType()
+          << Bits.toString(10, false);
+        Importer.ToDiag(ToField->getLocation(), diag::note_odr_not_bit_field)
+          << ToField->getDeclName();
+      } else {
+        llvm::APSInt Bits;
+        ToField->getBitWidth()->isIntegerConstantExpr(Bits,
+                                                   Importer.getToContext());
+        Importer.ToDiag(ToField->getLocation(), diag::note_odr_bit_field)
+          << ToField->getDeclName() << ToField->getType()
+          << Bits.toString(10, false);
+        Importer.FromDiag(FromField->getLocation(), 
+                          diag::note_odr_not_bit_field)
+          << FromField->getDeclName();
+      }
       return false;
-    
+    }
+
     if (FromField->isBitField()) {
       // Make sure that the bit-fields are the same length.
       llvm::APSInt FromBits, ToBits;
@@ -579,12 +672,32 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
       FromBits.setIsUnsigned(true);
       ToBits.setIsUnsigned(true);
       
-      if (FromBits != ToBits)
+      if (FromBits != ToBits) {
+        Importer.ToDiag(ToRecord->getLocation(), 
+                        diag::warn_odr_class_type_inconsistent)
+          << Importer.getToContext().getTypeDeclType(ToRecord);
+        Importer.ToDiag(ToField->getLocation(), diag::note_odr_bit_field)
+          << ToField->getDeclName() << ToField->getType()
+          << ToBits.toString(10, false);
+        Importer.FromDiag(FromField->getLocation(), diag::note_odr_bit_field)
+          << FromField->getDeclName() << FromField->getType()
+          << FromBits.toString(10, false);
         return false;
+      }
     }
   }
   
-  return ToField == ToFieldEnd;
+  if (ToField != ToFieldEnd) {
+    Importer.ToDiag(ToRecord->getLocation(), 
+                    diag::warn_odr_class_type_inconsistent)
+      << Importer.getToContext().getTypeDeclType(ToRecord);
+    Importer.ToDiag(ToField->getLocation(), diag::note_odr_field)
+      << ToField->getDeclName() << ToField->getType();
+    Importer.FromDiag(FromRecord->getLocation(), diag::note_odr_missing_field);
+    return false;
+  }
+
+  return true;
 }
 
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
@@ -691,11 +804,14 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
       }
       
       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
-        if (IsStructuralMatch(D, FoundRecord)) {
+        RecordDecl *FoundDef = FoundRecord->getDefinition();
+        // FIXME: If we found something but there is no definition,
+        // assume the types are the same and fill in the gaps.
+        if (FoundDef && IsStructuralMatch(D, FoundDef)) {
           // The record types structurally match.
           // FIXME: For C++, we should also merge methods here.
-          Importer.getImportedDecls()[D] = FoundRecord;
-          return FoundRecord;
+          Importer.getImportedDecls()[D] = FoundDef;
+          return FoundDef;
         }
       }
       
@@ -1026,13 +1142,40 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
   return ToParm;
 }
 
-ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                         Diagnostic &ToDiags,
-                         ASTContext &FromContext, FileManager &FromFileManager,
-                         Diagnostic &FromDiags)
+//----------------------------------------------------------------------------
+// Import Statements
+//----------------------------------------------------------------------------
+
+Stmt *ASTNodeImporter::VisitStmt(Stmt *S) {
+  Importer.FromDiag(S->getLocStart(), diag::err_unsupported_ast_node)
+    << S->getStmtClassName();
+  return 0;
+}
+
+//----------------------------------------------------------------------------
+// Import Expressions
+//----------------------------------------------------------------------------
+Expr *ASTNodeImporter::VisitExpr(Expr *E) {
+  Importer.FromDiag(E->getLocStart(), diag::err_unsupported_ast_node)
+    << E->getStmtClassName();
+  return 0;
+}
+
+Expr *ASTNodeImporter::VisitIntegerLiteral(IntegerLiteral *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+
+  return new (Importer.getToContext()) 
+    IntegerLiteral(E->getValue(), T, Importer.Import(E->getLocation()));
+}
+
+ASTImporter::ASTImporter(Diagnostic &Diags,
+                         ASTContext &ToContext, FileManager &ToFileManager,
+                         ASTContext &FromContext, FileManager &FromFileManager)
   : ToContext(ToContext), FromContext(FromContext),
     ToFileManager(ToFileManager), FromFileManager(FromFileManager),
-    ToDiags(ToDiags), FromDiags(FromDiags) { 
+    Diags(Diags) {
   ImportedDecls[FromContext.getTranslationUnitDecl()]
     = ToContext.getTranslationUnitDecl();
 }
@@ -1114,8 +1257,20 @@ Stmt *ASTImporter::Import(Stmt *FromS) {
   if (!FromS)
     return 0;
 
-  // FIXME: Implement!
-  return 0;
+  // Check whether we've already imported this declaration.  
+  llvm::DenseMap<Stmt *, Stmt *>::iterator Pos = ImportedStmts.find(FromS);
+  if (Pos != ImportedStmts.end())
+    return Pos->second;
+  
+  // Import the type
+  ASTNodeImporter Importer(*this);
+  Stmt *ToS = Importer.Visit(FromS);
+  if (!ToS)
+    return 0;
+  
+  // Record the imported declaration.
+  ImportedStmts[FromS] = ToS;
+  return ToS;
 }
 
 NestedNameSpecifier *ASTImporter::Import(NestedNameSpecifier *FromNNS) {
@@ -1259,11 +1414,11 @@ DeclarationName ASTImporter::HandleNameConflict(DeclarationName Name,
 }
 
 DiagnosticBuilder ASTImporter::ToDiag(SourceLocation Loc, unsigned DiagID) {
-  return ToDiags.Report(FullSourceLoc(Loc, ToContext.getSourceManager()), 
-                        DiagID);
+  return Diags.Report(FullSourceLoc(Loc, ToContext.getSourceManager()), 
+                      DiagID);
 }
 
 DiagnosticBuilder ASTImporter::FromDiag(SourceLocation Loc, unsigned DiagID) {
-  return FromDiags.Report(FullSourceLoc(Loc, FromContext.getSourceManager()), 
-                          DiagID);
+  return Diags.Report(FullSourceLoc(Loc, FromContext.getSourceManager()), 
+                      DiagID);
 }

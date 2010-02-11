@@ -37,21 +37,16 @@ void ASTMergeAction::ExecuteAction() {
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
-    Diagnostic ASTDiags(CI.getDiagnostics().getClient());
-    
-    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], ASTDiags,
+    ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], CI.getDiagnostics(),
                                              false, true);
     if (!Unit)
       continue;
 
-    ASTDiags.SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
-                              &Unit->getASTContext());
-    ASTImporter Importer(CI.getASTContext(), 
+    ASTImporter Importer(CI.getDiagnostics(),
+                         CI.getASTContext(), 
                          CI.getFileManager(),
-                         CI.getDiagnostics(),
                          Unit->getASTContext(), 
-                         Unit->getFileManager(),
-                         ASTDiags);
+                         Unit->getFileManager());
 
     TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
     for (DeclContext::decl_iterator D = TU->decls_begin(), 

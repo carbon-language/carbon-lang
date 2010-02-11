@@ -1,6 +1,7 @@
 typedef int Int;
 typedef float Float;
 
+// Matches
 struct S0 {
   Int field1;
   Float field2;
@@ -8,9 +9,28 @@ struct S0 {
 
 struct S0 x0;
 
+// Mismatch in field type
 struct S1 {
   Int field1;
   int field2;
 };
 
 struct S1 x1;
+
+// Mismatch in tag kind.
+struct S2 { int i; float f; } x2;
+
+// Missing fields
+struct S3 { int i; float f; double d; } x3;
+
+// Extra fields
+struct S4 { int i; } x4;
+
+// Bit-field matches
+struct S5 { int i : 8; unsigned j : 8; } x5;
+
+// Bit-field mismatch
+struct S6 { int i : 8; unsigned j : 8; } x6;
+
+// Bit-field mismatch
+struct S7 { int i : 8; unsigned j : 8; } x7;

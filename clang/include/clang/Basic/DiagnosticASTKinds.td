@@ -37,5 +37,19 @@ def note_odr_defined_here : Note<"also defined here">;
 def err_odr_function_type_inconsistent : Error<
   "external function %0 declared with incompatible types in different "
   "translation units (%1 vs. %2)">;
+def warn_odr_class_type_inconsistent : Warning<
+  "type %0 has incompatible definitions in different translation units">;
+def note_odr_tag_kind_here: Note<
+  "%0 is a %select{struct|union|class|enum}1 here">;
+def note_odr_field : Note<"field %0 has type %1 here">;
+def note_odr_missing_field : Note<"no corresponding field here">;
+def note_odr_bit_field : Note<"bit-field %0 with type %1 and length %2 here">;
+def note_odr_not_bit_field : Note<"field %0 is not a bit-field">;
+def note_odr_base : Note<"class has base type %0">;
+def note_odr_virtual_base : Note<
+  "%select{non-virtual|virtual}0 derivation here">;
+def note_odr_missing_base : Note<"no corresponding base class here">;
+def note_odr_number_of_bases : Note<
+  "class has %0 base %plural{1:class|:classes}0">;
 def err_unsupported_ast_node: Error<"cannot import unsupported AST node %0">;
 }

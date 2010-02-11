@@ -40,9 +40,8 @@ namespace clang {
     /// \brief The file managers we're importing to and from.
     FileManager &ToFileManager, &FromFileManager;
     
-    /// \brief The diagnostics object that we should use to emit diagnostics
-    /// within the context we're importing to and from.
-    Diagnostic &ToDiags, &FromDiags;
+    /// \brief The diagnostics object that we should use to emit diagnostics.
+    Diagnostic &Diags;
     
     /// \brief Mapping from the already-imported types in the "from" context
     /// to the corresponding types in the "to" context.
@@ -51,16 +50,19 @@ namespace clang {
     /// \brief Mapping from the already-imported declarations in the "from"
     /// context to the corresponding declarations in the "to" context.
     llvm::DenseMap<Decl *, Decl *> ImportedDecls;
-    
+
+    /// \brief Mapping from the already-imported statements in the "from"
+    /// context to the corresponding statements in the "to" context.
+    llvm::DenseMap<Stmt *, Stmt *> ImportedStmts;
+
     /// \brief Mapping from the already-imported FileIDs in the "from" source
     /// manager to the corresponding FileIDs in the "to" source manager.
     llvm::DenseMap<unsigned, FileID> ImportedFileIDs;
     
   public:
-    ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
-                Diagnostic &ToDiags,
-                ASTContext &FromContext, FileManager &FromFileManager,
-                Diagnostic &FromDiags);
+    ASTImporter(Diagnostic &Diags,
+                ASTContext &ToContext, FileManager &ToFileManager,
+                ASTContext &FromContext, FileManager &FromFileManager);
     
     virtual ~ASTImporter();
     
@@ -191,14 +193,6 @@ namespace clang {
     /// \brief Retrieve the file manager that AST nodes are being imported from.
     FileManager &getFromFileManager() const { return FromFileManager; }
 
-    /// \brief Retrieve the diagnostics object to use to report errors within
-    /// the context we're importing into.
-    Diagnostic &getToDiags() const { return ToDiags; }
-
-    /// \brief Retrieve the diagnostics object to use to report errors within
-    /// the context we're importing from.
-    Diagnostic &getFromDiags() const { return FromDiags; }
-    
     /// \brief Retrieve the mapping from declarations in the "from" context
     /// to the already-imported declarations in the "to" context.
     llvm::DenseMap<Decl *, Decl *> &getImportedDecls() { return ImportedDecls; }
