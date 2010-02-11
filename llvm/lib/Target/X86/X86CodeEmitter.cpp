@@ -387,10 +387,14 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
   // 2-7) and absolute references.
+  unsigned BaseRegNo = BaseReg != 0 ? getX86RegNum(BaseReg) : -1U;
+
   if (// The SIB byte must be used if there is an index register.
       IndexReg.getReg() == 0 && 
-      // The SIB byte must be used if the base is ESP/RSP.
-      BaseReg != X86::ESP && BaseReg != X86::RSP &&
+      // The SIB byte must be used if the base is ESP/RSP/R12, all of which
+      // encode to an R/M value of 4, which indicates that a SIB byte is
+      // present.
+      BaseRegNo != N86::ESP &&
       // If there is no base register and we're in 64-bit mode, we need a SIB
       // byte to emit an addr that is just 'disp32' (the non-RIP relative form).
       (!Is64BitMode || BaseReg != 0)) {
@@ -401,7 +405,6 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
       return;
     }
     
-    unsigned BaseRegNo = getX86RegNum(BaseReg);
     // If the base is not EBP/ESP and there is no displacement, use simple
     // indirect register encoding, this handles addresses like [EAX].  The
     // encoding for [EBP] with no displacement means [disp32] so we handle it
