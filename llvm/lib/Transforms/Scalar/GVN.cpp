@@ -1891,6 +1891,10 @@ Value *GVN::lookupNumber(BasicBlock *BB, uint32_t num) {
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction *I,
                              SmallVectorImpl<Instruction*> &toErase) {
+  // Ignore dbg info intrinsics.
+  if (isa<DbgInfoIntrinsic>(I))
+    return false;
+
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     bool Changed = processLoad(LI, toErase);
 
