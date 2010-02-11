@@ -1148,12 +1148,14 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned LargeReg,
   LiveInterval &SmallInt = li_->getInterval(SmallReg);
   unsigned LargeSize = li_->getApproximateInstructionCount(LargeInt);
   unsigned SmallSize = li_->getApproximateInstructionCount(SmallInt);
-  if (SmallSize > Threshold || LargeSize > Threshold)
-    if ((float)std::distance(mri_->use_nodbg_begin(SmallReg),
-                             mri_->use_nodbg_end()) / SmallSize <
-        (float)std::distance(mri_->use_nodbg_begin(LargeReg),
-                             mri_->use_nodbg_end()) / LargeSize)
+  if (LargeSize > Threshold) {
+    unsigned SmallUses = std::distance(mri_->use_nodbg_begin(SmallReg),
+                                       mri_->use_nodbg_end());
+    unsigned LargeUses = std::distance(mri_->use_nodbg_begin(LargeReg),
+                                       mri_->use_nodbg_end());
+    if (SmallUses*LargeSize < LargeUses*SmallSize)
       return false;
+  }
   return true;
 }
 
@@ -1561,7 +1563,10 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         (isExtSubReg || DstRC->isASubClass()) &&
         !isWinToJoinCrossClass(LargeReg, SmallReg,
                                allocatableRCRegs_[NewRC].count())) {
-      DEBUG(dbgs() << "\tSrc/Dest are different register classes.\n");
+      DEBUG(dbgs() << "\tSrc/Dest are different register classes: "
+                   << SrcRC->getName() << "/"
+                   << DstRC->getName() << " -> "
+                   << NewRC->getName() << ".\n");
       // Allow the coalescer to try again in case either side gets coalesced to
       // a physical register that's compatible with the other side. e.g.
       // r1024 = MOV32to32_ r1025
