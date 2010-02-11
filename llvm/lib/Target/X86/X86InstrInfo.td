@@ -635,7 +635,7 @@ let isBranch = 1, isTerminator = 1, Uses = [EFLAGS] in {
 }
 
 defm JO  : ICBr<0x70, 0x80, "jo\t$dst" , X86_COND_O>;
-defm JNO : ICBr<0x71, 0x81, "jo\t$dst" , X86_COND_NO>;
+defm JNO : ICBr<0x71, 0x81, "jno\t$dst" , X86_COND_NO>;
 defm JB  : ICBr<0x72, 0x82, "jb\t$dst" , X86_COND_B>;
 defm JAE : ICBr<0x73, 0x83, "jae\t$dst", X86_COND_AE>;
 defm JE  : ICBr<0x74, 0x84, "je\t$dst" , X86_COND_E>;
