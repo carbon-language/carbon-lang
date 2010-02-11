@@ -4038,23 +4038,6 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   // exactly form was it (like the CodeGen) can handle both cases without
   // special case code.
 
-  // If either the declaration has a dependent type or if any of the expressions
-  // is type-dependent, we represent the initialization via a ParenListExpr for
-  // later use during template instantiation.
-  if (VDecl->getType()->isDependentType() ||
-      Expr::hasAnyTypeDependentArguments((Expr **)Exprs.get(), Exprs.size())) {
-    // Let clients know that initialization was done with a direct initializer.
-    VDecl->setCXXDirectInitializer(true);
-
-    // Store the initialization expressions as a ParenListExpr.
-    unsigned NumExprs = Exprs.size();
-    VDecl->setInit(new (Context) ParenListExpr(Context, LParenLoc,
-                                               (Expr **)Exprs.release(),
-                                               NumExprs, RParenLoc));
-    return;
-  }
-
-
   // C++ 8.5p11:
   // The form of initialization (using parentheses or '=') is generally
   // insignificant, but does matter when the entity being initialized has a
@@ -4063,7 +4046,8 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   if (const ArrayType *Array = Context.getAsArrayType(DeclInitType))
     DeclInitType = Context.getBaseElementType(Array);
 
-  if (RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
+  if (!VDecl->getType()->isDependentType() &&
+      RequireCompleteType(VDecl->getLocation(), VDecl->getType(),
                           diag::err_typecheck_decl_incomplete_type)) {
     VDecl->setInvalidDecl();
     return;
@@ -4081,6 +4065,22 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
     << VDecl->getDeclName();
     Diag(Def->getLocation(), diag::note_previous_definition);
     VDecl->setInvalidDecl();
+    return;
+  }
+
+  // If either the declaration has a dependent type or if any of the
+  // expressions is type-dependent, we represent the initialization
+  // via a ParenListExpr for later use during template instantiation.
+  if (VDecl->getType()->isDependentType() ||
+      Expr::hasAnyTypeDependentArguments((Expr **)Exprs.get(), Exprs.size())) {
+    // Let clients know that initialization was done with a direct initializer.
+    VDecl->setCXXDirectInitializer(true);
+
+    // Store the initialization expressions as a ParenListExpr.
+    unsigned NumExprs = Exprs.size();
+    VDecl->setInit(new (Context) ParenListExpr(Context, LParenLoc,
+                                               (Expr **)Exprs.release(),
+                                               NumExprs, RParenLoc));
     return;
   }
   

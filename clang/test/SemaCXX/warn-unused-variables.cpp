@@ -1,8 +1,7 @@
-// RUN: %clang -fsyntax-only -Wunused-variable -verify %s
-
+// RUN: %clang_cc1 -fsyntax-only -Wunused-variable -verify %s
 template<typename T> void f() {
-	T t;
-	t = 17;
+  T t;
+  t = 17;
 }
 
 // PR5407
@@ -27,7 +26,7 @@ namespace PR5531 {
   };
 
   void test() {
-    A();
+    A(); // expected-warning{{expression result unused}}
     B(17);
     C();
   }
@@ -42,4 +41,13 @@ void bah() {
   X x, *x2;
   x.foo(); // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
   x2->foo(); // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
+}
+
+template<typename T>
+struct X0 { };
+
+template<typename T>
+void test_dependent_init(T *p) {
+  X0<int> i(p);
+  (void)i;
 }

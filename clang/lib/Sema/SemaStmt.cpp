@@ -93,6 +93,15 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (isa<ObjCImplicitSetterGetterRefExpr>(E))
     DiagID = diag::warn_unused_property_expr;
   
+  if (const CXXExprWithTemporaries *Temps = dyn_cast<CXXExprWithTemporaries>(E))
+    E = Temps->getSubExpr();
+  if (const CXXZeroInitValueExpr *Zero = dyn_cast<CXXZeroInitValueExpr>(E)) {
+    if (const RecordType *RecordT = Zero->getType()->getAs<RecordType>())
+      if (CXXRecordDecl *RecordD = dyn_cast<CXXRecordDecl>(RecordT->getDecl()))
+        if (!RecordD->hasTrivialDestructor())
+          return;
+  }
+      
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
     // If the callee has attribute pure, const, or warn_unused_result, warn with
     // a more specific message to make it clear what is happening.
