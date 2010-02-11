@@ -1807,15 +1807,15 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  AttributeList *AttrList = 0;
+  llvm::OwningPtr<AttributeList> AttrList;
   // If attributes exist after struct contents, parse them.
   if (Tok.is(tok::kw___attribute))
-    AttrList = ParseGNUAttributes();
+    AttrList.reset(ParseGNUAttributes());
 
   Actions.ActOnFields(CurScope,
                       RecordLoc, TagDecl, FieldDecls.data(), FieldDecls.size(),
                       LBraceLoc, RBraceLoc,
-                      AttrList);
+                      AttrList.get());
   StructScope.Exit();
   Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
 }
@@ -1842,10 +1842,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     ConsumeToken();
   }
   
-  AttributeList *Attr = 0;
+  llvm::OwningPtr<AttributeList> Attr;
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))
-    Attr = ParseGNUAttributes();
+    Attr.reset(ParseGNUAttributes());
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus && ParseOptionalCXXScopeSpecifier(SS, 0, false)) {
@@ -1895,7 +1895,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   bool Owned = false;
   bool IsDependent = false;
   DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TUK,
-                                       StartLoc, SS, Name, NameLoc, Attr, AS,
+                                       StartLoc, SS, Name, NameLoc, Attr.get(),
+                                       AS,
                                        Action::MultiTemplateParamsArg(Actions),
                                        Owned, IsDependent);
   assert(!IsDependent && "didn't expect dependent enum");
@@ -1975,14 +1976,14 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   // Eat the }.
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  AttributeList *Attr = 0;
+  llvm::OwningPtr<AttributeList> Attr;
   // If attributes exist after the identifier list, parse them.
   if (Tok.is(tok::kw___attribute))
-    Attr = ParseGNUAttributes(); // FIXME: where do they do?
+    Attr.reset(ParseGNUAttributes()); // FIXME: where do they do?
 
   Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
                         EnumConstantDecls.data(), EnumConstantDecls.size(),
-                        CurScope, Attr);
+                        CurScope, Attr.get());
 
   EnumScope.Exit();
   Actions.ActOnTagFinishDefinition(CurScope, EnumDecl, RBraceLoc);
@@ -2642,10 +2643,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // In either case, we need to eat any attributes to be able to determine what
   // sort of paren this is.
   //
-  AttributeList *AttrList = 0;
+  llvm::OwningPtr<AttributeList> AttrList;
   bool RequiresArg = false;
   if (Tok.is(tok::kw___attribute)) {
-    AttrList = ParseGNUAttributes();
+    AttrList.reset(ParseGNUAttributes());
 
     // We require that the argument list (if this is a non-grouping paren) be
     // present even if the attribute list was empty.
@@ -2655,7 +2656,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   if  (Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
        Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___w64) ||
        Tok.is(tok::kw___ptr64)) {
-    AttrList = ParseMicrosoftTypeAttributes(AttrList);
+    AttrList.reset(ParseMicrosoftTypeAttributes(AttrList.take()));
   }
 
   // If we haven't past the identifier yet (or where the identifier would be
@@ -2686,7 +2687,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     bool hadGroupingParens = D.hasGroupingParens();
     D.setGroupingParens(true);
     if (AttrList)
-      D.AddAttributes(AttrList, SourceLocation());
+      D.AddAttributes(AttrList.take(), SourceLocation());
 
     ParseDeclaratorInternal(D, &Parser::ParseDirectDeclarator);
     // Match the ')'.
@@ -2703,7 +2704,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // ParseFunctionDeclarator to handle of argument list.
   D.SetIdentifier(0, Tok.getLocation());
 
-  ParseFunctionDeclarator(StartLoc, D, AttrList, RequiresArg);
+  ParseFunctionDeclarator(StartLoc, D, AttrList.take(), RequiresArg);
 }
 
 /// ParseFunctionDeclarator - We are after the identifier and have parsed the

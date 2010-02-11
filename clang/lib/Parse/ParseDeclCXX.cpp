@@ -64,12 +64,12 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   }
 
   // Read label attributes, if present.
-  AttributeList *AttrList = 0;
+  llvm::OwningPtr<AttributeList> AttrList;
   if (Tok.is(tok::kw___attribute)) {
     attrTok = Tok;
 
     // FIXME: save these somewhere.
-    AttrList = ParseGNUAttributes();
+    AttrList.reset(ParseGNUAttributes());
   }
 
   if (Tok.is(tok::equal)) {
@@ -91,7 +91,8 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   ParseScope NamespaceScope(this, Scope::DeclScope);
 
   DeclPtrTy NamespcDecl =
-    Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace, AttrList);
+    Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace,
+                                   AttrList.get());
 
   PrettyStackTraceActionsDecl CrashInfo(NamespcDecl, NamespaceLoc, Actions,
                                         PP.getSourceManager(),
@@ -327,8 +328,6 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   // Parse nested-name-specifier.
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
-  AttributeList *AttrList = 0;
-
   // Check nested-name specifier.
   if (SS.isInvalid()) {
     SkipUntil(tok::semi);
@@ -350,8 +349,9 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
   }
   
   // Parse (optional) attributes (most likely GNU strong-using extension).
+  llvm::OwningPtr<AttributeList> AttrList;
   if (Tok.is(tok::kw___attribute))
-    AttrList = ParseGNUAttributes();
+    AttrList.reset(ParseGNUAttributes());
 
   // Eat ';'.
   DeclEnd = Tok.getLocation();
@@ -360,7 +360,7 @@ Parser::DeclPtrTy Parser::ParseUsingDeclaration(unsigned Context,
                    tok::semi);
 
   return Actions.ActOnUsingDeclaration(CurScope, AS, true, UsingLoc, SS, Name,
-                                       AttrList, IsTypeName, TypenameLoc);
+                                       AttrList.get(), IsTypeName, TypenameLoc);
 }
 
 /// ParseStaticAssertDeclaration - Parse C++0x static_assert-declaratoion.
@@ -1549,10 +1549,10 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  AttributeList *AttrList = 0;
   // If attributes exist after class contents, parse them.
+  llvm::OwningPtr<AttributeList> AttrList;
   if (Tok.is(tok::kw___attribute))
-    AttrList = ParseGNUAttributes(); // FIXME: where should I put them?
+    AttrList.reset(ParseGNUAttributes()); // FIXME: where should I put them?
 
   Actions.ActOnFinishCXXMemberSpecification(CurScope, RecordLoc, TagDecl,
                                             LBraceLoc, RBraceLoc);
