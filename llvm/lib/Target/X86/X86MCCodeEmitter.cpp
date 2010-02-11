@@ -83,8 +83,8 @@ public:
     }
   }
 
-  void EmitDisplacementField(const MCOperand &Disp, bool IsPCRel,
-                             unsigned &CurByte, raw_ostream &OS,
+  void EmitDisplacementField(const MCOperand &Disp, unsigned &CurByte,
+                             raw_ostream &OS,
                              SmallVectorImpl<MCFixup> &Fixups) const;
   
   inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
@@ -136,7 +136,7 @@ static bool isDisp8(int Value) {
 }
 
 void X86MCCodeEmitter::
-EmitDisplacementField(const MCOperand &DispOp, bool IsPCRel,
+EmitDisplacementField(const MCOperand &DispOp,
                       unsigned &CurByte, raw_ostream &OS,
                       SmallVectorImpl<MCFixup> &Fixups) const {
   // If this is a simple integer displacement that doesn't require a relocation,
@@ -172,9 +172,6 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   const MCOperand &IndexReg = MI.getOperand(Op+2);
   unsigned BaseReg = Base.getReg();
 
-  // FIXME: Eliminate!
-  bool IsPCRel = false;
-    
   // Determine whether a SIB byte is needed.
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
   // resolve addresses on-the-fly, otherwise use SIB (Intel Manual 2A, table
@@ -190,7 +187,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
         BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
-      EmitDisplacementField(Disp, true, CurByte, OS, Fixups);
+      EmitDisplacementField(Disp, CurByte, OS, Fixups);
       return;
     }
     
@@ -214,7 +211,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), CurByte, OS);
-    EmitDisplacementField(Disp, IsPCRel, CurByte, OS, Fixups);
+    EmitDisplacementField(Disp, CurByte, OS, Fixups);
     return;
   }
     
@@ -271,7 +268,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   if (ForceDisp8)
     EmitConstant(Disp.getImm(), 1, CurByte, OS);
   else if (ForceDisp32 || Disp.getImm() != 0)
-    EmitDisplacementField(Disp, IsPCRel, CurByte, OS, Fixups);
+    EmitDisplacementField(Disp, CurByte, OS, Fixups);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
