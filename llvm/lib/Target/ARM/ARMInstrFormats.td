@@ -1324,6 +1324,15 @@ class AVConv1I<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<4> opcod4,
   let Inst{4}     = 0;
 }
 
+// VFP conversion between floating-point and fixed-point
+class AVConv1XI<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4, bit op5,
+               dag oops, dag iops, InstrItinClass itin, string opc, string asm,
+               list<dag> pattern>
+  : AVConv1I<op1, op2, op3, op4, oops, iops, itin, opc, asm, pattern> {
+  // size (fixed-point number): sx == 0 ? 16 : 32
+  let Inst{7} = op5; // sx
+}
+
 // VFP conversion instructions, if no NEON
 class AVConv1In<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<4> opcod4,
                 dag oops, dag iops, InstrItinClass itin,
