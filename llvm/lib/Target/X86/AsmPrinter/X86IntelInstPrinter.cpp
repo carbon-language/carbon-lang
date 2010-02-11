@@ -24,10 +24,14 @@ using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
 #define MachineInstr MCInst
+#define GET_INSTRUCTION_NAME
 #include "X86GenAsmWriter1.inc"
 #undef MachineInstr
 
 void X86IntelInstPrinter::printInst(const MCInst *MI) { printInstruction(MI); }
+StringRef X86IntelInstPrinter::getOpcodeName(unsigned Opcode) const {
+  return getInstructionName(Opcode);
+}
 
 void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   switch (MI->getOperand(Op).getImm()) {

@@ -37,6 +37,7 @@ namespace llvm {
 private:
     void EmitPrintInstruction(raw_ostream &o);
     void EmitGetRegisterName(raw_ostream &o);
+    void EmitGetInstructionName(raw_ostream &o);
     
     AsmWriterInst *getAsmWriterInstByID(unsigned ID) const {
       assert(ID < NumberedInstructions.size());
