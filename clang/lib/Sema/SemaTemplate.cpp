@@ -3655,6 +3655,16 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
   return DeclPtrTy();
 }
 
+/// \brief Strips various properties off an implicit instantiation
+/// that has just been explicitly specialized.
+static void StripImplicitInstantiation(NamedDecl *D) {
+  D->invalidateAttrs();
+
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    FD->setInlineSpecified(false);
+  }
+}
+
 /// \brief Diagnose cases where we have an explicit template specialization 
 /// before/after an explicit template instantiation, producing diagnostics
 /// for those cases where they are required and determining whether the 
@@ -3705,6 +3715,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       if (PrevPointOfInstantiation.isInvalid()) {
         // The declaration itself has not actually been instantiated, so it is
         // still okay to specialize it.
+        StripImplicitInstantiation(PrevDecl);
         return false;
       }
       // Fall through
@@ -3924,15 +3935,15 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   FunctionTemplateSpecializationInfo *SpecInfo
     = Specialization->getTemplateSpecializationInfo();
   assert(SpecInfo && "Function template specialization info missing?");
-  if (SpecInfo->getPointOfInstantiation().isValid()) {
-    Diag(FD->getLocation(), diag::err_specialization_after_instantiation)
-      << FD;
-    Diag(SpecInfo->getPointOfInstantiation(), 
-         diag::note_instantiation_required_here)
-      << (Specialization->getTemplateSpecializationKind() 
-                                                != TSK_ImplicitInstantiation);
+
+  bool SuppressNew = false;
+  if (CheckSpecializationInstantiationRedecl(FD->getLocation(),
+                                             TSK_ExplicitSpecialization,
+                                             Specialization,
+                                   SpecInfo->getTemplateSpecializationKind(),
+                                         SpecInfo->getPointOfInstantiation(),
+                                             SuppressNew))
     return true;
-  }
   
   // Mark the prior declaration as an explicit specialization, so that later
   // clients know that this is an explicit specialization.
@@ -4033,14 +4044,15 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, LookupResult &Previous) {
   //   instantiation to take place, in every translation unit in which such a 
   //   use occurs; no diagnostic is required.
   assert(MSInfo && "Member specialization info missing?");
-  if (MSInfo->getPointOfInstantiation().isValid()) {
-    Diag(Member->getLocation(), diag::err_specialization_after_instantiation)
-      << Member;
-    Diag(MSInfo->getPointOfInstantiation(), 
-         diag::note_instantiation_required_here)
-      << (MSInfo->getTemplateSpecializationKind() != TSK_ImplicitInstantiation);
+
+  bool SuppressNew = false;
+  if (CheckSpecializationInstantiationRedecl(Member->getLocation(),
+                                             TSK_ExplicitSpecialization,
+                                             Instantiation,
+                                     MSInfo->getTemplateSpecializationKind(),
+                                           MSInfo->getPointOfInstantiation(),
+                                             SuppressNew))
     return true;
-  }
   
   // Check the scope of this explicit specialization.
   if (CheckTemplateSpecializationScope(*this, 
