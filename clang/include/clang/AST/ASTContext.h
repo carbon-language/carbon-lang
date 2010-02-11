@@ -46,6 +46,7 @@ namespace clang {
   class SourceManager;
   class TargetInfo;
   // Decls
+  class DeclContext;
   class CXXMethodDecl;
   class CXXRecordDecl;
   class Decl;
@@ -1212,6 +1213,15 @@ private:
 
   const ASTRecordLayout &getObjCLayout(const ObjCInterfaceDecl *D,
                                        const ObjCImplementationDecl *Impl);
+  
+private:
+  // FIXME: This currently contains the set of StoredDeclMaps used
+  // by DeclContext objects.  This probably should not be in ASTContext,
+  // but we include it here so that ASTContext can quickly deallocate them.
+  std::vector<void*> SDMs; 
+  friend class DeclContext;
+  void *CreateStoredDeclsMap();
+  void ReleaseDeclContextMaps();
 };
   
 /// @brief Utility function for constructing a nullary selector.

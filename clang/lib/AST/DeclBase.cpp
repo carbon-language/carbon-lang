@@ -448,7 +448,10 @@ bool DeclContext::classof(const Decl *D) {
 }
 
 DeclContext::~DeclContext() {
-  delete static_cast<StoredDeclsMap*>(LookupPtr);
+  // FIXME: Currently ~ASTContext will delete the StoredDeclsMaps because
+  // ~DeclContext() is not guaranteed to be called when ASTContext uses
+  // a BumpPtrAllocator.
+  // delete static_cast<StoredDeclsMap*>(LookupPtr);
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
@@ -622,7 +625,8 @@ DeclContext::LoadVisibleDeclsFromExternalStorage() const {
   // Load the declaration IDs for all of the names visible in this
   // context.
   assert(!LookupPtr && "Have a lookup map before de-serialization?");
-  StoredDeclsMap *Map = new StoredDeclsMap;
+  StoredDeclsMap *Map =
+    (StoredDeclsMap*) getParentASTContext().CreateStoredDeclsMap();
   LookupPtr = Map;
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
     (*Map)[Decls[I].Name].setFromDeclIDs(Decls[I].Declarations);
@@ -830,8 +834,11 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   if (isa<ClassTemplateSpecializationDecl>(D))
     return;
 
-  if (!LookupPtr)
-    LookupPtr = new StoredDeclsMap;
+  ASTContext *C = 0;
+  if (!LookupPtr) {
+    C = &getParentASTContext();
+    LookupPtr = (StoredDeclsMap*) C->CreateStoredDeclsMap();
+  }
 
   // Insert this declaration into the map.
   StoredDeclsMap &Map = *static_cast<StoredDeclsMap*>(LookupPtr);
@@ -844,7 +851,10 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   // If it is possible that this is a redeclaration, check to see if there is
   // already a decl for which declarationReplaces returns true.  If there is
   // one, just replace it and return.
-  if (DeclNameEntries.HandleRedeclaration(getParentASTContext(), D))
+  if (!C)
+    C = &getParentASTContext();
+  
+  if (DeclNameEntries.HandleRedeclaration(*C, D))
     return;
 
   // Put this declaration into the appropriate slot.
@@ -895,4 +905,19 @@ void StoredDeclsList::materializeDecls(ASTContext &Context) {
     break;
   }
   }
+}
+
+//===----------------------------------------------------------------------===//
+// Creation and Destruction of StoredDeclsMaps.                               //
+//===----------------------------------------------------------------------===//
+
+void *ASTContext::CreateStoredDeclsMap() {
+  StoredDeclsMap *M = new StoredDeclsMap();
+  SDMs.push_back(M);
+  return M;
+}
+
+void ASTContext::ReleaseDeclContextMaps() {
+  for (std::vector<void*>::iterator I = SDMs.begin(), E = SDMs.end(); I!=E; ++I)
+    delete (StoredDeclsMap*) *I;
 }

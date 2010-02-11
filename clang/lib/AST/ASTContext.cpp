@@ -56,6 +56,10 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
 }
 
 ASTContext::~ASTContext() {
+  // Release the DenseMaps associated with DeclContext objects.
+  // FIXME: Is this the ideal solution?
+  ReleaseDeclContextMaps();
+  
   if (FreeMemory) {
     // Deallocate all the types.
     while (!Types.empty()) {
