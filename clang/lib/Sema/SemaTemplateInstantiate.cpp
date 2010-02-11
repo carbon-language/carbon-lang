@@ -687,8 +687,7 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
 
   PredefinedExpr::IdentType IT = E->getIdentType();
 
-  unsigned Length =
-    PredefinedExpr::ComputeName(getSema().Context, IT, currentDecl).length();
+  unsigned Length = PredefinedExpr::ComputeName(IT, currentDecl).length();
 
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = getSema().Context.CharTy.withConst();

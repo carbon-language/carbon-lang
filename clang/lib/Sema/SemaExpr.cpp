@@ -1653,8 +1653,7 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
   if (cast<DeclContext>(currentDecl)->isDependentContext()) {
     ResTy = Context.DependentTy;
   } else {
-    unsigned Length =
-      PredefinedExpr::ComputeName(Context, IT, currentDecl).length();
+    unsigned Length = PredefinedExpr::ComputeName(IT, currentDecl).length();
 
     llvm::APInt LengthI(32, Length + 1);
     ResTy = Context.CharTy.withConst();

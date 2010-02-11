@@ -32,7 +32,13 @@ public:
     CK_VBaseOffset,
     CK_OffsetToTop,
     CK_RTTI,
-    CK_VFunctionPointer
+    CK_FunctionPointer,
+    
+    /// CK_CompleteDtorPointer - A pointer to the complete destructor.
+    CK_CompleteDtorPointer,
+    
+    /// CK_DeletingDtorPointer - A pointer to the deleting destructor.
+    CK_DeletingDtorPointer
   };
 
   /// dump - Dump the contents of this component to the given stream.
@@ -48,12 +54,22 @@ public:
 
   static VtableComponent MakeFunction(const CXXMethodDecl *MD) {
     assert(!isa<CXXDestructorDecl>(MD) && 
-           "Don't know how to handle dtors yet!");
+           "Don't use MakeFunction with destructors!");
 
-    return VtableComponent(CK_VFunctionPointer, 
+    return VtableComponent(CK_FunctionPointer, 
                            reinterpret_cast<uintptr_t>(MD));
   }
   
+  static VtableComponent MakeCompleteDtor(const CXXDestructorDecl *DD) {
+    return VtableComponent(CK_CompleteDtorPointer,
+                           reinterpret_cast<uintptr_t>(DD));
+  }
+
+  static VtableComponent MakeDeletingDtor(const CXXDestructorDecl *DD) {
+    return VtableComponent(CK_DeletingDtorPointer, 
+                           reinterpret_cast<uintptr_t>(DD));
+  }
+
   /// getKind - Get the kind of this vtable component.
   Kind getKind() const {
     return (Kind)(Value & 0x7);
@@ -72,11 +88,18 @@ public:
   }
   
   const CXXMethodDecl *getFunctionDecl() const {
-    assert(getKind() == CK_VFunctionPointer);
+    assert(getKind() == CK_FunctionPointer);
     
     return reinterpret_cast<CXXMethodDecl *>(getPointer());
   }
-  
+
+  const CXXDestructorDecl *getDestructorDecl() const {
+    assert((getKind() == CK_CompleteDtorPointer ||
+            getKind() == CK_DeletingDtorPointer) && "Invalid component kind!");
+    
+    return reinterpret_cast<CXXDestructorDecl *>(getPointer());
+  }
+
 private:
   VtableComponent(Kind ComponentKind, int64_t Offset) {
     assert((ComponentKind == CK_VCallOffset || 
@@ -89,7 +112,9 @@ private:
 
   VtableComponent(Kind ComponentKind, uintptr_t Ptr) {
     assert((ComponentKind == CK_RTTI || 
-            ComponentKind == CK_VFunctionPointer) &&
+            ComponentKind == CK_FunctionPointer ||
+            ComponentKind == CK_CompleteDtorPointer ||
+            ComponentKind == CK_DeletingDtorPointer) &&
             "Invalid component kind!");
     
     assert((Ptr & 7) == 0 && "Pointer not sufficiently aligned!");
@@ -105,9 +130,11 @@ private:
   }
 
   uintptr_t getPointer() const {
-    assert((getKind() == CK_RTTI || getKind() == CK_VFunctionPointer) &&
+    assert((getKind() == CK_RTTI || 
+            getKind() == CK_FunctionPointer ||
+            getKind() == CK_CompleteDtorPointer ||
+            getKind() == CK_DeletingDtorPointer) &&
            "Invalid component kind!");
-  
     
     return static_cast<uintptr_t>(Value & ~7ULL);
   }
@@ -173,8 +200,14 @@ void VtableBuilder::layoutSimpleVtable(const CXXRecordDecl *RD) {
     if (!MD->isVirtual())
       continue;
     
-    // Add the function.
-    Components.push_back(VtableComponent::MakeFunction(MD));
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+      // Add both the complete destructor and the deleting destructor.
+      Components.push_back(VtableComponent::MakeCompleteDtor(DD));
+      Components.push_back(VtableComponent::MakeDeletingDtor(DD));
+    } else {
+      // Add the function.
+      Components.push_back(VtableComponent::MakeFunction(MD));
+    }
   }
 }
 
@@ -229,11 +262,27 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       Out << Component.getRTTIDecl()->getQualifiedNameAsString() << " RTTI";
       break;
     
-    case VtableComponent::CK_VFunctionPointer: {
+    case VtableComponent::CK_FunctionPointer: {
       const CXXMethodDecl *MD = Component.getFunctionDecl();
 
-      Out << MD->getQualifiedNameAsString();
+      std::string Str = 
+        PredefinedExpr::ComputeName(PredefinedExpr::PrettyFunctionNoVirtual, 
+                                    MD);
+      Out << Str;
+      break;
+    }
 
+    case VtableComponent::CK_CompleteDtorPointer: {
+      const CXXDestructorDecl *DD = Component.getDestructorDecl();
+      
+      Out << DD->getQualifiedNameAsString() << "() [complete]";
+      break;
+    }
+
+    case VtableComponent::CK_DeletingDtorPointer: {
+      const CXXDestructorDecl *DD = Component.getDestructorDecl();
+      
+      Out << DD->getQualifiedNameAsString() << "() [deleting]";
       break;
     }
 

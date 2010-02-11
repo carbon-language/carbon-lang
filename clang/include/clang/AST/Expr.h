@@ -568,7 +568,10 @@ public:
   enum IdentType {
     Func,
     Function,
-    PrettyFunction
+    PrettyFunction,
+    /// PrettyFunctionNoVirtual - The same as PrettyFunction, except that the
+    /// 'virtual' keyword is omitted for virtual member functions.
+    PrettyFunctionNoVirtual
   };
 
 private:
@@ -589,8 +592,7 @@ public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 
-  static std::string ComputeName(ASTContext &Context, IdentType IT,
-                                 const Decl *CurrentDecl);
+  static std::string ComputeName(IdentType IT, const Decl *CurrentDecl);
 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 

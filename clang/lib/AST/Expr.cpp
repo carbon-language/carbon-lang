@@ -163,17 +163,18 @@ SourceRange DeclRefExpr::getSourceRange() const {
 
 // FIXME: Maybe this should use DeclPrinter with a special "print predefined
 // expr" policy instead.
-std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
-                                        const Decl *CurrentDecl) {
+std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
+  ASTContext &Context = CurrentDecl->getASTContext();
+
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurrentDecl)) {
-    if (IT != PrettyFunction)
+    if (IT != PrettyFunction && IT != PrettyFunctionNoVirtual)
       return FD->getNameAsString();
 
     llvm::SmallString<256> Name;
     llvm::raw_svector_ostream Out(Name);
 
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      if (MD->isVirtual())
+      if (MD->isVirtual() && IT != PrettyFunctionNoVirtual)
         Out << "virtual ";
       if (MD->isStatic())
         Out << "static ";
