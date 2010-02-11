@@ -50,6 +50,22 @@ void FormatAttr::setType(ASTContext &C, llvm::StringRef type) {
   ReplaceString(C, type);
 }
 
+NonNullAttr::NonNullAttr(ASTContext &C, unsigned* arg_nums, unsigned size)
+  : Attr(NonNull), ArgNums(0), Size(0) {  
+  if (size == 0)
+    return;
+  assert(arg_nums);
+  ArgNums = new (C) unsigned[size];
+  Size = size;
+  memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
+}
+
+void NonNullAttr::Destroy(ASTContext &C) {
+  if (ArgNums)
+    C.Deallocate(ArgNums);
+  Attr::Destroy(C);
+}
+
 #define DEF_SIMPLE_ATTR_CLONE(ATTR)                                     \
   Attr *ATTR##Attr::clone(ASTContext &C) const {                        \
     return ::new (C) ATTR##Attr;                                        \
@@ -132,7 +148,7 @@ Attr *SectionAttr::clone(ASTContext &C) const {
 }
 
 Attr *NonNullAttr::clone(ASTContext &C) const {
-  return ::new (C) NonNullAttr(ArgNums, Size);
+  return ::new (C) NonNullAttr(C, ArgNums, Size);
 }
 
 Attr *FormatAttr::clone(ASTContext &C) const {

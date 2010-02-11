@@ -532,7 +532,7 @@ Attr *PCHReader::ReadAttributes() {
       llvm::SmallVector<unsigned, 16> ArgNums;
       ArgNums.insert(ArgNums.end(), &Record[Idx], &Record[Idx] + Size);
       Idx += Size;
-      New = ::new (*Context) NonNullAttr(ArgNums.data(), Size);
+      New = ::new (*Context) NonNullAttr(*Context, ArgNums.data(), Size);
       break;
     }
 

@@ -361,19 +361,9 @@ class NonNullAttr : public Attr {
   unsigned* ArgNums;
   unsigned Size;
 public:
-  NonNullAttr(unsigned* arg_nums = 0, unsigned size = 0) : Attr(NonNull),
-    ArgNums(0), Size(0) {
+  NonNullAttr(ASTContext &C, unsigned* arg_nums = 0, unsigned size = 0);
 
-    if (size == 0) return;
-    assert(arg_nums);
-    ArgNums = new unsigned[size];
-    Size = size;
-    memcpy(ArgNums, arg_nums, sizeof(*ArgNums)*size);
-  }
-
-  virtual ~NonNullAttr() {
-    delete [] ArgNums;
-  }
+  virtual void Destroy(ASTContext &C);
 
   typedef const unsigned *iterator;
   iterator begin() const { return ArgNums; }

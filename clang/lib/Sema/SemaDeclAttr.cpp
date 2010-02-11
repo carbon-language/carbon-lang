@@ -307,7 +307,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned* start = &NonNullArgs[0];
   unsigned size = NonNullArgs.size();
   std::sort(start, start + size);
-  d->addAttr(::new (S.Context) NonNullAttr(start, size));
+  d->addAttr(::new (S.Context) NonNullAttr(S.Context, start, size));
 }
 
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
