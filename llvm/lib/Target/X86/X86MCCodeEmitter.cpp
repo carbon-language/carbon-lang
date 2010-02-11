@@ -23,11 +23,11 @@ using namespace llvm;
 namespace llvm {
 namespace X86 {
 enum Fixups {
-  reloc_pcrel_word = FirstTargetFixupKind,
-  reloc_picrel_word,
-  reloc_absolute_word,
-  reloc_absolute_word_sext,
-  reloc_absolute_dword
+  // FIXME: This is just a stub.
+  fixup_1byte_imm = FirstTargetFixupKind,
+  fixup_2byte_imm,
+  fixup_4byte_imm,
+  fixup_8byte_imm
 };
 }
 }
@@ -48,16 +48,15 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 5;
+    return 4;
   }
 
   MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     static MCFixupKindInfo Infos[] = {
-      { "reloc_pcrel_word", 0, 4 * 8 },
-      { "reloc_picrel_word", 0, 4 * 8 },
-      { "reloc_absolute_word", 0, 4 * 8 },
-      { "reloc_absolute_word_sext", 0, 4 * 8 },
-      { "reloc_absolute_dword", 0, 8 * 8 }
+      { "fixup_1byte_imm", 0, 1 * 8 },
+      { "fixup_2byte_imm", 0, 2 * 8 },
+      { "fixup_4byte_imm", 0, 4 * 8 },
+      { "fixup_8byte_imm", 0, 8 * 8 }
     };
 
     assert(Kind >= FirstTargetFixupKind && Kind < MaxTargetFixupKind &&
@@ -146,16 +145,22 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size,
     return;
   }
 
-  // FIXME: Pass in the relocation type.
-#if 0
-  unsigned RelocType = Is64BitMode ?
-  (IsPCRel ? X86::reloc_pcrel_word : X86::reloc_absolute_word_sext)
-  : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-#endif
+  // FIXME: Pass in the relocation type, this is just a hack..
+  unsigned FixupKind;
+  if (Size == 1)
+    FixupKind = X86::fixup_1byte_imm;
+  else if (Size == 2)
+    FixupKind = X86::fixup_2byte_imm;
+  else if (Size == 4)
+    FixupKind = X86::fixup_4byte_imm;
+  else {
+    assert(Size == 8 && "Unknown immediate size");
+    FixupKind = X86::fixup_8byte_imm;
+  }
   
   // Emit a symbolic constant as a fixup and 4 zeros.
   Fixups.push_back(MCFixup::Create(CurByte, DispOp.getExpr(),
-                                   MCFixupKind(X86::reloc_absolute_word)));
+                                   MCFixupKind(FixupKind)));
   EmitConstant(0, Size, CurByte, OS);
 }
 
@@ -204,7 +209,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // Otherwise, if the displacement fits in a byte, encode as [REG+disp8].
     if (Disp.isImm() && isDisp8(Disp.getImm())) {
       EmitByte(ModRMByte(1, RegOpcodeField, BaseRegNo), CurByte, OS);
-      EmitConstant(Disp.getImm(), 1, CurByte, OS);
+      EmitImmediate(Disp, 1, CurByte, OS, Fixups);
       return;
     }
     
@@ -477,41 +482,20 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRMInitReg:
     assert(0 && "FIXME: Remove this form when the JIT moves to MCCodeEmitter!");
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
-      assert(0 && "Unknown FormMask value in X86MCCodeEmitter!");
-  case X86II::RawFrm: {
+    assert(0 && "Unknown FormMask value in X86MCCodeEmitter!");
+  case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
-    
-    if (CurOp == NumOps)
-      break;
-    
-    assert(0 && "Unimpl RawFrm expr");
     break;
-  }
       
-  case X86II::AddRegFrm: {
+  case X86II::AddRegFrm:
     EmitByte(BaseOpcode + GetX86RegNum(MI.getOperand(CurOp++)), CurByte, OS);
-    if (CurOp == NumOps)
-      break;
-
-    const MCOperand &MO1 = MI.getOperand(CurOp++);
-    if (MO1.isImm()) {
-      unsigned Size = X86II::getSizeOfImm(TSFlags);
-      EmitConstant(MO1.getImm(), Size, CurByte, OS);
-      break;
-    }
-
-    assert(0 && "Unimpl AddRegFrm expr");
     break;
-  }
       
   case X86II::MRMDestReg:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitRegModRMByte(MI.getOperand(CurOp),
                      GetX86RegNum(MI.getOperand(CurOp+1)), CurByte, OS);
     CurOp += 2;
-    if (CurOp != NumOps)
-      EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86II::getSizeOfImm(TSFlags), CurByte, OS);
     break;
   
   case X86II::MRMDestMem:
@@ -520,9 +504,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                      GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
                      CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands + 1;
-    if (CurOp != NumOps)
-      EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86II::getSizeOfImm(TSFlags), CurByte, OS);
     break;
       
   case X86II::MRMSrcReg:
@@ -530,9 +511,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitRegModRMByte(MI.getOperand(CurOp+1), GetX86RegNum(MI.getOperand(CurOp)),
                      CurByte, OS);
     CurOp += 2;
-    if (CurOp != NumOps)
-      EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86II::getSizeOfImm(TSFlags), CurByte, OS);
     break;
     
   case X86II::MRMSrcMem: {
@@ -549,16 +527,13 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitMemModRMByte(MI, CurOp+1, GetX86RegNum(MI.getOperand(CurOp)),
                      CurByte, OS, Fixups);
     CurOp += AddrOperands + 1;
-    if (CurOp != NumOps)
-      EmitConstant(MI.getOperand(CurOp++).getImm(),
-                   X86II::getSizeOfImm(TSFlags), CurByte, OS);
     break;
   }
 
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
   case X86II::MRM4r: case X86II::MRM5r:
-  case X86II::MRM6r: case X86II::MRM7r: {
+  case X86II::MRM6r: case X86II::MRM7r:
     EmitByte(BaseOpcode, CurByte, OS);
 
     // Special handling of lfence, mfence, monitor, and mwait.
@@ -578,73 +553,23 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                        (TSFlags & X86II::FormMask)-X86II::MRM0r,
                        CurByte, OS);
     }
-
-    if (CurOp == NumOps)
-      break;
-    
-    const MCOperand &MO1 = MI.getOperand(CurOp++);
-    if (MO1.isImm()) {
-      EmitConstant(MO1.getImm(), X86II::getSizeOfImm(TSFlags), CurByte, OS);
-      break;
-    }
-
-    assert(0 && "relo unimpl");
-#if 0
-    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
-      : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-    if (Opcode == X86::MOV64ri32)
-      rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
-    if (MO1.isGlobal()) {
-      bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
-      emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
-                        Indirect);
-    } else if (MO1.isSymbol())
-      emitExternalSymbolAddress(MO1.getSymbolName(), rt);
-    else if (MO1.isCPI())
-      emitConstPoolAddress(MO1.getIndex(), rt);
-    else if (MO1.isJTI())
-      emitJumpTableAddress(MO1.getIndex(), rt);
     break;
-#endif
-  }
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
-  case X86II::MRM6m: case X86II::MRM7m: {
+  case X86II::MRM6m: case X86II::MRM7m:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
                      CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands;
-    
-    if (CurOp == NumOps)
-      break;
-    
-    const MCOperand &MO = MI.getOperand(CurOp++);
-    if (MO.isImm()) {
-      EmitConstant(MO.getImm(), X86II::getSizeOfImm(TSFlags), CurByte, OS);
-      break;
-    }
-    
-    assert(0 && "relo not handled");
-#if 0
-    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
-    : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
-    if (Opcode == X86::MOV64mi32)
-      rt = X86::reloc_absolute_word_sext;  // FIXME: add X86II flag?
-    if (MO.isGlobal()) {
-      bool Indirect = gvNeedsNonLazyPtr(MO, TM);
-      emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
-                        Indirect);
-    } else if (MO.isSymbol())
-      emitExternalSymbolAddress(MO.getSymbolName(), rt);
-    else if (MO.isCPI())
-      emitConstPoolAddress(MO.getIndex(), rt);
-    else if (MO.isJTI())
-      emitJumpTableAddress(MO.getIndex(), rt);
-#endif
     break;
   }
-  }
+  
+  // If there is a remaining operand, it must be a trailing immediate.  Emit it
+  // according to the right size for the instruction.
+  if (CurOp != NumOps)
+    EmitImmediate(MI.getOperand(CurOp++), X86II::getSizeOfImm(TSFlags),
+                  CurByte, OS, Fixups);
   
 #ifndef NDEBUG
   // FIXME: Verify.
