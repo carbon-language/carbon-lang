@@ -14,5 +14,5 @@ void d(void);
 void __attribute__((force_align_arg_pointer)) d(void) {}
 
 // Attribute is ignored on function pointer types.
-void (__attribute__((force_align_arg_pointer)) *p)();
+void (__attribute__((force_align_arg_pointer)) *p)(); //expected-warning{{force_align_arg_pointer used on function pointer; attribute ignored}}
 

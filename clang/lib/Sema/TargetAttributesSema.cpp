@@ -79,12 +79,14 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
     return;
   }
 
-  // If we try to apply it to a function pointer, don't warn, but don't
-  // do anything, either. It doesn't matter anyway, because there's nothing
-  // special about calling a force_align_arg_pointer function.
+  // If we try to apply it to a function pointer, warn. This is a special
+  // instance of the warn_attribute_ignored warning that can be turned
+  // off with -Wno-force-align-arg-pointer.
   ValueDecl* VD = dyn_cast<ValueDecl>(D);
-  if (VD && VD->getType()->isFunctionPointerType())
+  if (VD && VD->getType()->isFunctionPointerType()) {
+    S.Diag(Attr.getLoc(), diag::warn_faap_attribute_ignored);
     return;
+  }
   // Attribute can only be applied to function types.
   if (!isa<FunctionDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)

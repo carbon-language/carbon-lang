@@ -722,6 +722,9 @@ def err_attribute_aligned_not_power_of_two : Error<
 def warn_redeclaration_without_attribute_prev_attribute_ignored : Warning<
   "'%0' redeclared without %1 attribute: previous %1 ignored">;
 def warn_attribute_ignored : Warning<"%0 attribute ignored">;
+def warn_faap_attribute_ignored : Warning<
+  "force_align_arg_pointer used on function pointer; attribute ignored">,
+  InGroup<ForceAlignArgPointer>;
 def warn_attribute_precede_definition : Warning<
   "attribute declaration must precede definition">;
 def warn_attribute_void_function : Warning<
