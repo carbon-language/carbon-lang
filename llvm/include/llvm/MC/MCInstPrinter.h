@@ -14,8 +14,8 @@ namespace llvm {
 class MCInst;
 class raw_ostream;
 class MCAsmInfo;
+class StringRef;
 
-  
 /// MCInstPrinter - This is an instance of a target assembly language printer
 /// that converts an MCInst to valid target assembly syntax.
 class MCInstPrinter {
@@ -40,6 +40,10 @@ public:
   /// printInst - Print the specified MCInst to the current raw_ostream.
   ///
   virtual void printInst(const MCInst *MI) = 0;
+  
+  /// getOpcodeName - Return the name of the specified opcode enum (e.g.
+  /// "MOV32ri") or empty if we can't resolve it.
+  virtual StringRef getOpcodeName(unsigned Opcode) const;
 };
   
 } // namespace llvm

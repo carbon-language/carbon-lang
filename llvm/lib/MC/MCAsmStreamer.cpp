@@ -617,6 +617,12 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     raw_ostream &OS = GetCommentOS();
     OS << "<MCInst #" << Inst.getOpcode();
     
+    StringRef InstName;
+    if (InstPrinter)
+      InstName = InstPrinter->getOpcodeName(Inst.getOpcode());
+    if (!InstName.empty())
+      OS << ' ' << InstName;
+    
     for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
       OS << "\n  ";
       Inst.getOperand(i).print(OS, &MAI);

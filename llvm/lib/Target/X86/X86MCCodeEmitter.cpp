@@ -282,11 +282,11 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 /// size, and 3) use of X86-64 extended registers.
 static unsigned DetermineREXPrefix(const MCInst &MI, unsigned TSFlags,
                                    const TargetInstrDesc &Desc) {
-  unsigned REX = 0;
+  // Pseudo instructions shouldn't get here.
+  assert((TSFlags & X86II::FormMask) != X86II::Pseudo &&
+         "Can't encode pseudo instrs");
   
-  // Pseudo instructions do not need REX prefix byte.
-  if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
-    return 0;
+  unsigned REX = 0;
   if (TSFlags & X86II::REX_W)
     REX |= 1 << 3;
   
