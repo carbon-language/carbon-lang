@@ -312,6 +312,14 @@ BUILTIN(__builtin_unwind_init, "v", "")
 BUILTIN(__builtin_eh_return_data_regno, "ii", "nc")
 BUILTIN(__builtin_vsnprintf, "ic*zcC*a", "nFP:2:")
 
+// GCC exception builtins
+BUILTIN(__builtin_eh_return, "vzv*", "") // FIXME: Takes intptr_t, not size_t!
+BUILTIN(__builtin_frob_return_addr, "v*v*", "n")
+BUILTIN(__builtin_dwarf_cfa, "v*", "n")
+BUILTIN(__builtin_init_dwarf_reg_size_table, "vv*", "n")
+BUILTIN(__builtin_dwarf_sp_column, "Ui", "n")
+BUILTIN(__builtin_extend_pointer, "iv*", "n")
+
 // GCC Object size checking builtins
 BUILTIN(__builtin_object_size, "zv*i", "n")
 BUILTIN(__builtin___memcpy_chk, "v*v*vC*zz", "nF")
