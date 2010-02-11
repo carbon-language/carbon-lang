@@ -48,4 +48,19 @@ define i1 @baz() nounwind {
   ret i1 %2
 }
 
+define void @test1(i8* %q, i32 %x) nounwind noinline {
+; CHECK: @test1
+; CHECK: objectsize.i32
+entry:
+  %0 = call i32 @llvm.objectsize.i32(i8* getelementptr inbounds ([0 x i8]* @window, i32 0, i32 10), i1 false) ; <i64> [#uses=1]
+  %1 = icmp eq i32 %0, -1                         ; <i1> [#uses=1]
+  br i1 %1, label %"47", label %"46"
+
+"46":                                             ; preds = %entry
+  unreachable
+
+"47":                                             ; preds = %entry
+  unreachable
+}
+
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly

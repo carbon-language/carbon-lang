@@ -331,9 +331,15 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (CE->getOpcode() != Instruction::GetElementPtr) break;
       GEPOperator *GEP = cast<GEPOperator>(CE);
       
+      // Make sure we're not a constant offset from an external
+      // global.
+      Value *Operand = GEP->getPointerOperand();
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Operand))
+        if (!GV->hasDefinitiveInitializer()) break;
+      
       // Get what we're pointing to and its size.
       const PointerType *PT = 
-        cast<PointerType>(GEP->getPointerOperand()->getType());
+        cast<PointerType>(Operand->getType());
       size_t Size = TD->getTypeAllocSize(PT->getElementType());
       
       // Get the current byte offset into the thing.
@@ -345,7 +351,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       Constant *RetVal = ConstantInt::get(ReturnTy, Size-Offset);
       return ReplaceInstUsesWith(CI, RetVal);
       
-    } 
+    }
   }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x
