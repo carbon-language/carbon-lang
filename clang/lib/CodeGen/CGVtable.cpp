@@ -132,6 +132,9 @@ class VtableBuilder {
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
 
+  /// AddressPoints - Address points for the vtable being built.
+  CGVtableInfo::AddressPointsMapTy AddressPoints;
+
   /// layoutSimpleVtable - A test function that will layout very simple vtables
   /// without any bases. Just used for testing for now.
   void layoutSimpleVtable(const CXXRecordDecl *RD);
@@ -159,6 +162,9 @@ void VtableBuilder::layoutSimpleVtable(const CXXRecordDecl *RD) {
   // Next, add the RTTI.
   Components.push_back(VtableComponent::MakeRTTI(RD));
   
+  // Record the address point.
+  AddressPoints.insert(std::make_pair(BaseSubobject(RD, 0), Components.size()));
+
   // Now go through all virtual member functions and add them.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
        E = RD->method_end(); I != E; ++I) {
@@ -178,9 +184,34 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   Out << "Vtable for '" << MostDerivedClass->getQualifiedNameAsString();
   Out << "' (" << Components.size() << " entries).\n";
 
-  for (unsigned I = 0, E = Components.size(); I != E; ++I) {
-    Out << llvm::format("%4d | ", I);
+  // Iterate through the address points and insert them into a new map where
+  // they are keyed by the index and not the base object.
+  // Since an address point can be shared by multiple subobjects, we use an
+  // STL multimap.
+  std::multimap<uint64_t, BaseSubobject> AddressPointsByIndex;
+  for (CGVtableInfo::AddressPointsMapTy::const_iterator I = 
+       AddressPoints.begin(), E = AddressPoints.end(); I != E; ++I) {
+    const BaseSubobject& Base = I->first;
+    uint64_t Index = I->second;
     
+    AddressPointsByIndex.insert(std::make_pair(Index, Base));
+  }
+  
+  for (unsigned I = 0, E = Components.size(); I != E; ++I) {
+    if (AddressPointsByIndex.count(I)) {
+      assert(AddressPointsByIndex.count(I) == 1 &&
+             "FIXME: Handle dumping multiple base subobjects for a single "
+             "address point!");
+      
+      const BaseSubobject &Base = AddressPointsByIndex.find(I)->second;
+      Out << "       -- (" << Base.getBase()->getQualifiedNameAsString();
+      
+      // FIXME: Instead of dividing by 8, we should be using CharUnits.
+      Out << ", " << Base.getBaseOffset() / 8 << ") vtable address --\n";
+    }
+
+    Out << llvm::format("%4d | ", I);
+
     const VtableComponent &Component = Components[I];
 
     // Dump the component.
@@ -207,7 +238,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     }
 
     }
-    
+
     Out << '\n';
   }
   

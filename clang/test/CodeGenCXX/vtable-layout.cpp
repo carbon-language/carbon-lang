@@ -4,6 +4,7 @@ namespace Test1 {
 // CHECK:      Vtable for 'Test1::A' (3 entries).
 // CHECK-NEXT:   0 | offset_to_top (0)
 // CHECK-NEXT:   1 | Test1::A RTTI
+// CHECK-NEXT:       -- (Test1::A, 0) vtable address --
 // CHECK-NEXT:   2 | Test1::A::f
 struct A {
   virtual void f();
