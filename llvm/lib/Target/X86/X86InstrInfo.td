@@ -614,23 +614,20 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
                     "lret\t$amt", []>;
 }
 
-// All branches are RawFrm, Void, Branch, and Terminators
 // Unconditional branches.
-let isBranch = 1, isTerminator = 1 in
-  class IBr<bits<8> opcode, dag ins, string asm, list<dag> pattern> :
-        I<opcode, RawFrm, (outs), ins, asm, pattern>;
-
-let isBarrier = 1 in {
-  def JMP_4 : IBr<0xE9, (ins brtarget:$dst), "jmp\t$dst", [(br bb:$dst)]>;
-  def JMP_1 : IBr<0xEB, (ins brtarget8:$dst), "jmp\t$dst", []>;
+let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
+  def JMP_4 : Ii32<0xE9, RawFrm, (outs), (ins brtarget:$dst),
+                   "jmp\t$dst", [(br bb:$dst)]>;
+  def JMP_1 : Ii8 <0xEB, RawFrm, (outs), (ins brtarget8:$dst),
+                   "jmp\t$dst", []>;
 }
 
 // Conditional Branches.
 let isBranch = 1, isTerminator = 1, Uses = [EFLAGS] in {
   multiclass ICBr<bits<8> opc1, bits<8> opc4, string asm, PatFrag Cond> {
-    def _1 : I<opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, []>;
-    def _4 : I<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
-               [(X86brcond bb:$dst, Cond, EFLAGS)]>, TB;
+    def _1 : Ii8 <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, []>;
+    def _4 : Ii32<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
+                  [(X86brcond bb:$dst, Cond, EFLAGS)]>, TB;
   }
 }
 
@@ -652,8 +649,8 @@ defm JLE : ICBr<0x7E, 0x8E, "jle\t$dst", X86_COND_LE>;
 defm JG  : ICBr<0x7F, 0x8F, "jg\t$dst" , X86_COND_G>;
 
 // FIXME: What about the CX/RCX versions of this instruction?
-let Uses = [ECX] in
-  def JCXZ8 : IBr<0xE3, (ins brtarget8:$dst), "jcxz\t$dst", []>;
+let Uses = [ECX], isBranch = 1, isTerminator = 1 in
+  def JCXZ8 : Ii8<0xE3, RawFrm, (outs), (ins brtarget8:$dst), "jcxz\t$dst", []>;
 
 
 // Indirect branches
@@ -736,8 +733,10 @@ def TCRETURNri : I<0, Pseudo, (outs),
                  "#TC_RETURN $dst $offset",
                  []>;
 
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPd : IBr<0xE9, (ins i32imm_pcrel:$dst, variable_ops),
+// FIXME: The should be pseudo instructions that are lowered when going to
+// mcinst.
+let isCall = 1, isBranch = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+  def TAILJMPd : Ii32<0xE9, RawFrm, (outs),(ins i32imm_pcrel:$dst,variable_ops),
                  "jmp\t$dst  # TAILCALL",
                  []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
