@@ -23,11 +23,8 @@ using namespace llvm;
 namespace llvm {
 namespace X86 {
 enum Fixups {
-  // FIXME: This is just a stub.
-  fixup_1byte_imm = FirstTargetFixupKind,
-  fixup_2byte_imm,
-  fixup_4byte_imm,
-  fixup_8byte_imm
+  reloc_pcrel_4byte = FirstTargetFixupKind,  // 32-bit pcrel, e.g. a branch.
+  reloc_pcrel_1byte                          // 8-bit pcrel, e.g. branch_1
 };
 }
 }
@@ -48,15 +45,13 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 4;
+    return 1;
   }
 
   MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     static MCFixupKindInfo Infos[] = {
-      { "fixup_1byte_imm", 0, 1 * 8 },
-      { "fixup_2byte_imm", 0, 2 * 8 },
-      { "fixup_4byte_imm", 0, 4 * 8 },
-      { "fixup_8byte_imm", 0, 8 * 8 }
+      { "reloc_pcrel_4byte", 0, 4 * 8 },
+      { "reloc_pcrel_1byte", 0, 1 * 8 }
     };
 
     assert(Kind >= FirstTargetFixupKind && Kind < MaxTargetFixupKind &&
@@ -148,14 +143,14 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size,
   // FIXME: Pass in the relocation type, this is just a hack..
   unsigned FixupKind;
   if (Size == 1)
-    FixupKind = X86::fixup_1byte_imm;
+    FixupKind = FK_Data_1;
   else if (Size == 2)
-    FixupKind = X86::fixup_2byte_imm;
+    FixupKind = FK_Data_2;
   else if (Size == 4)
-    FixupKind = X86::fixup_4byte_imm;
+    FixupKind = FK_Data_4;
   else {
     assert(Size == 8 && "Unknown immediate size");
-    FixupKind = X86::fixup_8byte_imm;
+    FixupKind = FK_Data_8;
   }
   
   // Emit a symbolic constant as a fixup and 4 zeros.
