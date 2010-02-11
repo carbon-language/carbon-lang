@@ -56,7 +56,7 @@ public:
   virtual unsigned getNumFixupKinds() const = 0;
 
   /// getFixupKindInfo - Get information on a fixup kind.
-  virtual MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const = 0;
+  virtual const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
 
   /// @}
 

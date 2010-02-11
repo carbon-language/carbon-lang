@@ -552,7 +552,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
 
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
-    MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
+    const MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
     for (unsigned j = 0; j != Info.TargetSize; ++j) {
       unsigned Index = F.getOffset() * 8 + Info.TargetOffset + j;
       assert(Index < Code.size() * 8 && "Invalid offset in fixup!");
@@ -599,7 +599,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
 
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
-    MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
+    const MCFixupKindInfo &Info = Emitter->getFixupKindInfo(F.getKind());
     OS << "  fixup " << char('A' + i) << " - " << "offset: " << F.getOffset()
        << ", value: " << *F.getValue() << ", kind: " << Info.Name << "\n";
   }

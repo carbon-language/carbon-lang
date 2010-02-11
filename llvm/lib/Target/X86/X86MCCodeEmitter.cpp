@@ -45,16 +45,19 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 1;
+    return 2;
   }
 
-  MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
-    static MCFixupKindInfo Infos[] = {
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+    const static MCFixupKindInfo Infos[] = {
       { "reloc_pcrel_4byte", 0, 4 * 8 },
       { "reloc_pcrel_1byte", 0, 1 * 8 }
     };
+    
+    if (Kind < FirstTargetFixupKind)
+      return MCCodeEmitter::getFixupKindInfo(Kind);
 
-    assert(Kind >= FirstTargetFixupKind && Kind < MaxTargetFixupKind &&
+    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
            "Invalid kind!");
     return Infos[Kind - FirstTargetFixupKind];
   }
