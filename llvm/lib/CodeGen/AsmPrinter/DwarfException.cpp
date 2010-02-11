@@ -907,7 +907,7 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Catch TypeInfos.
-  if (TypeInfos.size() != 0) EOL("-- Catch TypeInfos --");
+  if (!TypeInfos.empty()) EOL("-- Catch TypeInfos --");
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
@@ -923,7 +923,7 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Exception Specifications.
-  if (FilterIds.size() != 0) EOL("-- Filter IDs --");
+  if (!FilterIds.empty()) EOL("-- Filter IDs --");
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;
