@@ -1746,7 +1746,8 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
   else if (Output.getType() == types::TY_AST)
     D.Diag(clang::diag::err_drv_no_ast_support)
       << getToolChain().getTripleString();
-  else if (JA.getType() != types::TY_PP_Asm)
+  else if (JA.getType() != types::TY_PP_Asm &&
+           JA.getType() != types::TY_PCH)
     D.Diag(clang::diag::err_drv_invalid_gcc_output_type)
       << getTypeName(JA.getType());
 
