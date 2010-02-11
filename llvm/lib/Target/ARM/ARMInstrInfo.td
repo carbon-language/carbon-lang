@@ -619,6 +619,16 @@ def DBG : AI<(outs), (ins i32imm:$opt), Pseudo, NoItinerary, "dbg", "\t$opt",
   let Inst{7-4} = 0b1111;
 }
 
+// A5.4 Permanently UNDEFINED instructions.
+def TRAP : AI<(outs), (ins), Pseudo, NoItinerary, "trap", "",
+              [/* For disassembly only; pattern left blank */]>,
+           Requires<[IsARM]> {
+  let Inst{27-25} = 0b011;
+  let Inst{24-20} = 0b11111;
+  let Inst{7-5} = 0b111;
+  let Inst{4} = 0b1;
+}
+
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD : AXI1<0b0100, (outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
