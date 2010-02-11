@@ -7934,7 +7934,7 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   MIB.addReg(EAXreg);
 
   // insert branch
-  BuildMI(newMBB, dl, TII->get(X86::JNE)).addMBB(newMBB);
+  BuildMI(newMBB, dl, TII->get(X86::JNE_4)).addMBB(newMBB);
 
   F->DeleteMachineInstr(bInstr);   // The pseudo instruction is gone now.
   return nextMBB;
@@ -8091,7 +8091,7 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
   MIB.addReg(X86::EDX);
 
   // insert branch
-  BuildMI(newMBB, dl, TII->get(X86::JNE)).addMBB(newMBB);
+  BuildMI(newMBB, dl, TII->get(X86::JNE_4)).addMBB(newMBB);
 
   F->DeleteMachineInstr(bInstr);   // The pseudo instruction is gone now.
   return nextMBB;
@@ -8194,7 +8194,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   MIB.addReg(X86::EAX);
 
   // insert branch
-  BuildMI(newMBB, dl, TII->get(X86::JNE)).addMBB(newMBB);
+  BuildMI(newMBB, dl, TII->get(X86::JNE_4)).addMBB(newMBB);
 
   F->DeleteMachineInstr(mInstr);   // The pseudo instruction is gone now.
   return nextMBB;
@@ -8276,7 +8276,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   if (!Subtarget->isTargetWin64()) {
     // If %al is 0, branch around the XMM save block.
     BuildMI(MBB, DL, TII->get(X86::TEST8rr)).addReg(CountReg).addReg(CountReg);
-    BuildMI(MBB, DL, TII->get(X86::JE)).addMBB(EndMBB);
+    BuildMI(MBB, DL, TII->get(X86::JE_4)).addMBB(EndMBB);
     MBB->addSuccessor(EndMBB);
   }
 

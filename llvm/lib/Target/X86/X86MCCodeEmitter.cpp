@@ -571,6 +571,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   
   // If there is a remaining operand, it must be a trailing immediate.  Emit it
   // according to the right size for the instruction.
+  // FIXME: This should pass in whether the value is pc relative or not.  This
+  // information should be aquired from TSFlags as well.
   if (CurOp != NumOps)
     EmitImmediate(MI.getOperand(CurOp++), X86II::getSizeOfImm(TSFlags),
                   CurByte, OS, Fixups);

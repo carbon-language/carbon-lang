@@ -596,7 +596,7 @@ let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
                       "", []>;
 
 //===----------------------------------------------------------------------===//
-//  Control Flow Instructions...
+//  Control Flow Instructions.
 //
 
 // Return instructions.
@@ -615,14 +615,46 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
 }
 
 // All branches are RawFrm, Void, Branch, and Terminators
+// Unconditional branches.
 let isBranch = 1, isTerminator = 1 in
   class IBr<bits<8> opcode, dag ins, string asm, list<dag> pattern> :
         I<opcode, RawFrm, (outs), ins, asm, pattern>;
 
-let isBranch = 1, isBarrier = 1 in {
-  def JMP : IBr<0xE9, (ins brtarget:$dst), "jmp\t$dst", [(br bb:$dst)]>;
-  def JMP8 : IBr<0xEB, (ins brtarget8:$dst), "jmp\t$dst", []>;
+let isBarrier = 1 in {
+  def JMP_4 : IBr<0xE9, (ins brtarget:$dst), "jmp\t$dst", [(br bb:$dst)]>;
+  def JMP_1 : IBr<0xEB, (ins brtarget8:$dst), "jmp\t$dst", []>;
 }
+
+// Conditional Branches.
+let isBranch = 1, isTerminator = 1, Uses = [EFLAGS] in {
+  multiclass ICBr<bits<8> opc1, bits<8> opc4, string asm, PatFrag Cond> {
+    def _1 : I<opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, []>;
+    def _4 : I<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
+               [(X86brcond bb:$dst, Cond, EFLAGS)]>, TB;
+  }
+}
+
+defm JO  : ICBr<0x70, 0x80, "jo\t$dst" , X86_COND_O>;
+defm JNO : ICBr<0x71, 0x81, "jo\t$dst" , X86_COND_NO>;
+defm JB  : ICBr<0x72, 0x82, "jb\t$dst" , X86_COND_B>;
+defm JAE : ICBr<0x73, 0x83, "jae\t$dst", X86_COND_AE>;
+defm JE  : ICBr<0x74, 0x84, "je\t$dst" , X86_COND_E>;
+defm JNE : ICBr<0x75, 0x85, "jne\t$dst", X86_COND_NE>;
+defm JBE : ICBr<0x76, 0x86, "jbe\t$dst", X86_COND_BE>;
+defm JA  : ICBr<0x77, 0x87, "ja\t$dst" , X86_COND_A>;
+defm JS  : ICBr<0x78, 0x88, "js\t$dst" , X86_COND_S>;
+defm JNS : ICBr<0x79, 0x89, "jns\t$dst", X86_COND_NS>;
+defm JP  : ICBr<0x7A, 0x8A, "jp\t$dst" , X86_COND_P>;
+defm JNP : ICBr<0x7B, 0x8B, "jnp\t$dst", X86_COND_NP>;
+defm JL  : ICBr<0x7C, 0x8C, "jl\t$dst" , X86_COND_L>;
+defm JGE : ICBr<0x7D, 0x8D, "jge\t$dst", X86_COND_GE>;
+defm JLE : ICBr<0x7E, 0x8E, "jle\t$dst", X86_COND_LE>;
+defm JG  : ICBr<0x7F, 0x8F, "jg\t$dst" , X86_COND_G>;
+
+// FIXME: What about the CX/RCX versions of this instruction?
+let Uses = [ECX] in
+  def JCXZ8 : IBr<0xE3, (ins brtarget8:$dst), "jcxz\t$dst", []>;
+
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
@@ -644,63 +676,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                      "ljmp{l}\t{*}$dst", []>;
 }
 
-// Conditional branches
-let Uses = [EFLAGS] in {
-// Short conditional jumps
-def JO8   : IBr<0x70, (ins brtarget8:$dst), "jo\t$dst", []>;
-def JNO8  : IBr<0x71, (ins brtarget8:$dst), "jno\t$dst", []>;
-def JB8   : IBr<0x72, (ins brtarget8:$dst), "jb\t$dst", []>;
-def JAE8  : IBr<0x73, (ins brtarget8:$dst), "jae\t$dst", []>;
-def JE8   : IBr<0x74, (ins brtarget8:$dst), "je\t$dst", []>;
-def JNE8  : IBr<0x75, (ins brtarget8:$dst), "jne\t$dst", []>;
-def JBE8  : IBr<0x76, (ins brtarget8:$dst), "jbe\t$dst", []>;
-def JA8   : IBr<0x77, (ins brtarget8:$dst), "ja\t$dst", []>;
-def JS8   : IBr<0x78, (ins brtarget8:$dst), "js\t$dst", []>;
-def JNS8  : IBr<0x79, (ins brtarget8:$dst), "jns\t$dst", []>;
-def JP8   : IBr<0x7A, (ins brtarget8:$dst), "jp\t$dst", []>;
-def JNP8  : IBr<0x7B, (ins brtarget8:$dst), "jnp\t$dst", []>;
-def JL8   : IBr<0x7C, (ins brtarget8:$dst), "jl\t$dst", []>;
-def JGE8  : IBr<0x7D, (ins brtarget8:$dst), "jge\t$dst", []>;
-def JLE8  : IBr<0x7E, (ins brtarget8:$dst), "jle\t$dst", []>;
-def JG8   : IBr<0x7F, (ins brtarget8:$dst), "jg\t$dst", []>;
-
-def JCXZ8 : IBr<0xE3, (ins brtarget8:$dst), "jcxz\t$dst", []>;
-
-def JE  : IBr<0x84, (ins brtarget:$dst), "je\t$dst",
-              [(X86brcond bb:$dst, X86_COND_E, EFLAGS)]>, TB;
-def JNE : IBr<0x85, (ins brtarget:$dst), "jne\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NE, EFLAGS)]>, TB;
-def JL  : IBr<0x8C, (ins brtarget:$dst), "jl\t$dst",
-              [(X86brcond bb:$dst, X86_COND_L, EFLAGS)]>, TB;
-def JLE : IBr<0x8E, (ins brtarget:$dst), "jle\t$dst",
-              [(X86brcond bb:$dst, X86_COND_LE, EFLAGS)]>, TB;
-def JG  : IBr<0x8F, (ins brtarget:$dst), "jg\t$dst",
-              [(X86brcond bb:$dst, X86_COND_G, EFLAGS)]>, TB;
-def JGE : IBr<0x8D, (ins brtarget:$dst), "jge\t$dst",
-              [(X86brcond bb:$dst, X86_COND_GE, EFLAGS)]>, TB;
-
-def JB  : IBr<0x82, (ins brtarget:$dst), "jb\t$dst",
-              [(X86brcond bb:$dst, X86_COND_B, EFLAGS)]>, TB;
-def JBE : IBr<0x86, (ins brtarget:$dst), "jbe\t$dst",
-              [(X86brcond bb:$dst, X86_COND_BE, EFLAGS)]>, TB;
-def JA  : IBr<0x87, (ins brtarget:$dst), "ja\t$dst",
-              [(X86brcond bb:$dst, X86_COND_A, EFLAGS)]>, TB;
-def JAE : IBr<0x83, (ins brtarget:$dst), "jae\t$dst",
-              [(X86brcond bb:$dst, X86_COND_AE, EFLAGS)]>, TB;
-
-def JS  : IBr<0x88, (ins brtarget:$dst), "js\t$dst",
-              [(X86brcond bb:$dst, X86_COND_S, EFLAGS)]>, TB;
-def JNS : IBr<0x89, (ins brtarget:$dst), "jns\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NS, EFLAGS)]>, TB;
-def JP  : IBr<0x8A, (ins brtarget:$dst), "jp\t$dst",
-              [(X86brcond bb:$dst, X86_COND_P, EFLAGS)]>, TB;
-def JNP : IBr<0x8B, (ins brtarget:$dst), "jnp\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NP, EFLAGS)]>, TB;
-def JO  : IBr<0x80, (ins brtarget:$dst), "jo\t$dst",
-              [(X86brcond bb:$dst, X86_COND_O, EFLAGS)]>, TB;
-def JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NO, EFLAGS)]>, TB;
-} // Uses = [EFLAGS]
 
 // Loop instructions
 

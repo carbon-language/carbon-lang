@@ -828,30 +828,30 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
         std::swap(TrueMBB, FalseMBB);
         Predicate = CmpInst::FCMP_UNE;
         // FALL THROUGH
-      case CmpInst::FCMP_UNE: SwapArgs = false; BranchOpc = X86::JNE; break;
-      case CmpInst::FCMP_OGT: SwapArgs = false; BranchOpc = X86::JA;  break;
-      case CmpInst::FCMP_OGE: SwapArgs = false; BranchOpc = X86::JAE; break;
-      case CmpInst::FCMP_OLT: SwapArgs = true;  BranchOpc = X86::JA;  break;
-      case CmpInst::FCMP_OLE: SwapArgs = true;  BranchOpc = X86::JAE; break;
-      case CmpInst::FCMP_ONE: SwapArgs = false; BranchOpc = X86::JNE; break;
-      case CmpInst::FCMP_ORD: SwapArgs = false; BranchOpc = X86::JNP; break;
-      case CmpInst::FCMP_UNO: SwapArgs = false; BranchOpc = X86::JP;  break;
-      case CmpInst::FCMP_UEQ: SwapArgs = false; BranchOpc = X86::JE;  break;
-      case CmpInst::FCMP_UGT: SwapArgs = true;  BranchOpc = X86::JB;  break;
-      case CmpInst::FCMP_UGE: SwapArgs = true;  BranchOpc = X86::JBE; break;
-      case CmpInst::FCMP_ULT: SwapArgs = false; BranchOpc = X86::JB;  break;
-      case CmpInst::FCMP_ULE: SwapArgs = false; BranchOpc = X86::JBE; break;
+      case CmpInst::FCMP_UNE: SwapArgs = false; BranchOpc = X86::JNE_4; break;
+      case CmpInst::FCMP_OGT: SwapArgs = false; BranchOpc = X86::JA_4;  break;
+      case CmpInst::FCMP_OGE: SwapArgs = false; BranchOpc = X86::JAE_4; break;
+      case CmpInst::FCMP_OLT: SwapArgs = true;  BranchOpc = X86::JA_4;  break;
+      case CmpInst::FCMP_OLE: SwapArgs = true;  BranchOpc = X86::JAE_4; break;
+      case CmpInst::FCMP_ONE: SwapArgs = false; BranchOpc = X86::JNE_4; break;
+      case CmpInst::FCMP_ORD: SwapArgs = false; BranchOpc = X86::JNP_4; break;
+      case CmpInst::FCMP_UNO: SwapArgs = false; BranchOpc = X86::JP_4;  break;
+      case CmpInst::FCMP_UEQ: SwapArgs = false; BranchOpc = X86::JE_4;  break;
+      case CmpInst::FCMP_UGT: SwapArgs = true;  BranchOpc = X86::JB_4;  break;
+      case CmpInst::FCMP_UGE: SwapArgs = true;  BranchOpc = X86::JBE_4; break;
+      case CmpInst::FCMP_ULT: SwapArgs = false; BranchOpc = X86::JB_4;  break;
+      case CmpInst::FCMP_ULE: SwapArgs = false; BranchOpc = X86::JBE_4; break;
           
-      case CmpInst::ICMP_EQ:  SwapArgs = false; BranchOpc = X86::JE;  break;
-      case CmpInst::ICMP_NE:  SwapArgs = false; BranchOpc = X86::JNE; break;
-      case CmpInst::ICMP_UGT: SwapArgs = false; BranchOpc = X86::JA;  break;
-      case CmpInst::ICMP_UGE: SwapArgs = false; BranchOpc = X86::JAE; break;
-      case CmpInst::ICMP_ULT: SwapArgs = false; BranchOpc = X86::JB;  break;
-      case CmpInst::ICMP_ULE: SwapArgs = false; BranchOpc = X86::JBE; break;
-      case CmpInst::ICMP_SGT: SwapArgs = false; BranchOpc = X86::JG;  break;
-      case CmpInst::ICMP_SGE: SwapArgs = false; BranchOpc = X86::JGE; break;
-      case CmpInst::ICMP_SLT: SwapArgs = false; BranchOpc = X86::JL;  break;
-      case CmpInst::ICMP_SLE: SwapArgs = false; BranchOpc = X86::JLE; break;
+      case CmpInst::ICMP_EQ:  SwapArgs = false; BranchOpc = X86::JE_4;  break;
+      case CmpInst::ICMP_NE:  SwapArgs = false; BranchOpc = X86::JNE_4; break;
+      case CmpInst::ICMP_UGT: SwapArgs = false; BranchOpc = X86::JA_4;  break;
+      case CmpInst::ICMP_UGE: SwapArgs = false; BranchOpc = X86::JAE_4; break;
+      case CmpInst::ICMP_ULT: SwapArgs = false; BranchOpc = X86::JB_4;  break;
+      case CmpInst::ICMP_ULE: SwapArgs = false; BranchOpc = X86::JBE_4; break;
+      case CmpInst::ICMP_SGT: SwapArgs = false; BranchOpc = X86::JG_4;  break;
+      case CmpInst::ICMP_SGE: SwapArgs = false; BranchOpc = X86::JGE_4; break;
+      case CmpInst::ICMP_SLT: SwapArgs = false; BranchOpc = X86::JL_4;  break;
+      case CmpInst::ICMP_SLE: SwapArgs = false; BranchOpc = X86::JLE_4; break;
       default:
         return false;
       }
@@ -869,7 +869,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
       if (Predicate == CmpInst::FCMP_UNE) {
         // X86 requires a second branch to handle UNE (and OEQ,
         // which is mapped to UNE above).
-        BuildMI(MBB, DL, TII.get(X86::JP)).addMBB(TrueMBB);
+        BuildMI(MBB, DL, TII.get(X86::JP_4)).addMBB(TrueMBB);
       }
 
       FastEmitBranch(FalseMBB);
@@ -923,7 +923,8 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
           unsigned OpCode = SetMI->getOpcode();
 
           if (OpCode == X86::SETOr || OpCode == X86::SETBr) {
-            BuildMI(MBB, DL, TII.get(OpCode == X86::SETOr ? X86::JO : X86::JB))
+            BuildMI(MBB, DL, TII.get(OpCode == X86::SETOr ?
+                                        X86::JO_4 : X86::JB_4))
               .addMBB(TrueMBB);
             FastEmitBranch(FalseMBB);
             MBB->addSuccessor(TrueMBB);
@@ -939,7 +940,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
   if (OpReg == 0) return false;
 
   BuildMI(MBB, DL, TII.get(X86::TEST8rr)).addReg(OpReg).addReg(OpReg);
-  BuildMI(MBB, DL, TII.get(X86::JNE)).addMBB(TrueMBB);
+  BuildMI(MBB, DL, TII.get(X86::JNE_4)).addMBB(TrueMBB);
   FastEmitBranch(FalseMBB);
   MBB->addSuccessor(TrueMBB);
   return true;

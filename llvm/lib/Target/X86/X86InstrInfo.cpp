@@ -1587,44 +1587,44 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 static X86::CondCode GetCondFromBranchOpc(unsigned BrOpc) {
   switch (BrOpc) {
   default: return X86::COND_INVALID;
-  case X86::JE:  return X86::COND_E;
-  case X86::JNE: return X86::COND_NE;
-  case X86::JL:  return X86::COND_L;
-  case X86::JLE: return X86::COND_LE;
-  case X86::JG:  return X86::COND_G;
-  case X86::JGE: return X86::COND_GE;
-  case X86::JB:  return X86::COND_B;
-  case X86::JBE: return X86::COND_BE;
-  case X86::JA:  return X86::COND_A;
-  case X86::JAE: return X86::COND_AE;
-  case X86::JS:  return X86::COND_S;
-  case X86::JNS: return X86::COND_NS;
-  case X86::JP:  return X86::COND_P;
-  case X86::JNP: return X86::COND_NP;
-  case X86::JO:  return X86::COND_O;
-  case X86::JNO: return X86::COND_NO;
+  case X86::JE_4:  return X86::COND_E;
+  case X86::JNE_4: return X86::COND_NE;
+  case X86::JL_4:  return X86::COND_L;
+  case X86::JLE_4: return X86::COND_LE;
+  case X86::JG_4:  return X86::COND_G;
+  case X86::JGE_4: return X86::COND_GE;
+  case X86::JB_4:  return X86::COND_B;
+  case X86::JBE_4: return X86::COND_BE;
+  case X86::JA_4:  return X86::COND_A;
+  case X86::JAE_4: return X86::COND_AE;
+  case X86::JS_4:  return X86::COND_S;
+  case X86::JNS_4: return X86::COND_NS;
+  case X86::JP_4:  return X86::COND_P;
+  case X86::JNP_4: return X86::COND_NP;
+  case X86::JO_4:  return X86::COND_O;
+  case X86::JNO_4: return X86::COND_NO;
   }
 }
 
 unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
   switch (CC) {
   default: llvm_unreachable("Illegal condition code!");
-  case X86::COND_E:  return X86::JE;
-  case X86::COND_NE: return X86::JNE;
-  case X86::COND_L:  return X86::JL;
-  case X86::COND_LE: return X86::JLE;
-  case X86::COND_G:  return X86::JG;
-  case X86::COND_GE: return X86::JGE;
-  case X86::COND_B:  return X86::JB;
-  case X86::COND_BE: return X86::JBE;
-  case X86::COND_A:  return X86::JA;
-  case X86::COND_AE: return X86::JAE;
-  case X86::COND_S:  return X86::JS;
-  case X86::COND_NS: return X86::JNS;
-  case X86::COND_P:  return X86::JP;
-  case X86::COND_NP: return X86::JNP;
-  case X86::COND_O:  return X86::JO;
-  case X86::COND_NO: return X86::JNO;
+  case X86::COND_E:  return X86::JE_4;
+  case X86::COND_NE: return X86::JNE_4;
+  case X86::COND_L:  return X86::JL_4;
+  case X86::COND_LE: return X86::JLE_4;
+  case X86::COND_G:  return X86::JG_4;
+  case X86::COND_GE: return X86::JGE_4;
+  case X86::COND_B:  return X86::JB_4;
+  case X86::COND_BE: return X86::JBE_4;
+  case X86::COND_A:  return X86::JA_4;
+  case X86::COND_AE: return X86::JAE_4;
+  case X86::COND_S:  return X86::JS_4;
+  case X86::COND_NS: return X86::JNS_4;
+  case X86::COND_P:  return X86::JP_4;
+  case X86::COND_NP: return X86::JNP_4;
+  case X86::COND_O:  return X86::JO_4;
+  case X86::COND_NO: return X86::JNO_4;
   }
 }
 
@@ -1694,7 +1694,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return true;
 
     // Handle unconditional branches.
-    if (I->getOpcode() == X86::JMP) {
+    if (I->getOpcode() == X86::JMP_4) {
       if (!AllowModify) {
         TBB = I->getOperand(0).getMBB();
         continue;
@@ -1778,7 +1778,7 @@ unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   while (I != MBB.begin()) {
     --I;
-    if (I->getOpcode() != X86::JMP &&
+    if (I->getOpcode() != X86::JMP_4 &&
         GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
       break;
     // Remove the branch.
@@ -1804,7 +1804,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   if (Cond.empty()) {
     // Unconditional branch?
     assert(!FBB && "Unconditional branch with multiple successors!");
-    BuildMI(&MBB, dl, get(X86::JMP)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JMP_4)).addMBB(TBB);
     return 1;
   }
 
@@ -1814,16 +1814,16 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   switch (CC) {
   case X86::COND_NP_OR_E:
     // Synthesize NP_OR_E with two branches.
-    BuildMI(&MBB, dl, get(X86::JNP)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JNP_4)).addMBB(TBB);
     ++Count;
-    BuildMI(&MBB, dl, get(X86::JE)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JE_4)).addMBB(TBB);
     ++Count;
     break;
   case X86::COND_NE_OR_P:
     // Synthesize NE_OR_P with two branches.
-    BuildMI(&MBB, dl, get(X86::JNE)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JNE_4)).addMBB(TBB);
     ++Count;
-    BuildMI(&MBB, dl, get(X86::JP)).addMBB(TBB);
+    BuildMI(&MBB, dl, get(X86::JP_4)).addMBB(TBB);
     ++Count;
     break;
   default: {
@@ -1834,7 +1834,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   }
   if (FBB) {
     // Two-way Conditional branch. Insert the second branch.
-    BuildMI(&MBB, dl, get(X86::JMP)).addMBB(FBB);
+    BuildMI(&MBB, dl, get(X86::JMP_4)).addMBB(FBB);
     ++Count;
   }
   return Count;
