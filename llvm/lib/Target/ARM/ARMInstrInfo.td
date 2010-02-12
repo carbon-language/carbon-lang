@@ -1532,7 +1532,39 @@ multiclass AI_smla<string opc, PatFrag opnode> {
 defm SMUL : AI_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 
-// TODO: Halfword multiple accumulate long: SMLAL<x><y>
+// Halfword multiply accumulate long: SMLAL<x><y> -- for disassembly only
+def SMLALBB : AMulxyI<0b0001010,(outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
+                      IIC_iMAC64, "smlalbb", "\t$ldst, $hdst, $a, $b",
+                      [/* For disassembly only; pattern left blank */]>,
+              Requires<[IsARM, HasV5TE]> {
+  let Inst{5} = 0;
+  let Inst{6} = 0;
+}
+
+def SMLALBT : AMulxyI<0b0001010,(outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
+                      IIC_iMAC64, "smlalbt", "\t$ldst, $hdst, $a, $b",
+                      [/* For disassembly only; pattern left blank */]>,
+              Requires<[IsARM, HasV5TE]> {
+  let Inst{5} = 0;
+  let Inst{6} = 1;
+}
+
+def SMLALTB : AMulxyI<0b0001010,(outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
+                      IIC_iMAC64, "smlaltb", "\t$ldst, $hdst, $a, $b",
+                      [/* For disassembly only; pattern left blank */]>,
+              Requires<[IsARM, HasV5TE]> {
+  let Inst{5} = 1;
+  let Inst{6} = 0;
+}
+
+def SMLALTT : AMulxyI<0b0001010,(outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
+                      IIC_iMAC64, "smlaltt", "\t$ldst, $hdst, $a, $b",
+                      [/* For disassembly only; pattern left blank */]>,
+              Requires<[IsARM, HasV5TE]> {
+  let Inst{5} = 1;
+  let Inst{6} = 1;
+}
+
 // TODO: Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
 
 //===----------------------------------------------------------------------===//
