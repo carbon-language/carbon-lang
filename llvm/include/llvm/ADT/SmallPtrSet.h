@@ -225,7 +225,7 @@ struct NextPowerOfTwo {
 };
   
 
-/// SmallPtrSet - This class implements a set which is optimizer for holding
+/// SmallPtrSet - This class implements a set which is optimized for holding
 /// SmallSize or less elements.  This internally rounds up SmallSize to the next
 /// power of two if it is not already a power of two.  See the comments above
 /// SmallPtrSetImpl for details of the algorithm.
