@@ -120,14 +120,49 @@ class FinalOverriders {
   /// all the base subobjects of the most derived class.
   OverridersMapTy OverridersMap;
   
+  typedef llvm::SmallVector<uint64_t, 1> OffsetVectorTy;
+  
+  /// SubobjectOffsetsMapTy - This map is used for keeping track of all the
+  /// base subobject offsets that a single class declaration might refer to.
+  ///
+  /// For example, in:
+  ///
+  /// struct A { virtual void f(); };
+  /// struct B1 : A { };
+  /// struct B2 : A { };
+  /// struct C : B1, B2 { virtual void f(); };
+  ///
+  /// when we determine that C::f() overrides A::f(), we need to update the
+  /// overriders map for both A-in-B1 and A-in-B2 and the subobject offsets map
+  /// will have the subobject offsets for both A copies.
+  typedef llvm::DenseMap<const CXXRecordDecl *, OffsetVectorTy>
+    SubobjectOffsetsMapTy;
+  
   /// ComputeFinalOverriders - Compute the final overriders for a given base
   /// subobject (and all its direct and indirect bases).
-  void ComputeFinalOverriders(BaseSubobject Base);
+  void ComputeFinalOverriders(BaseSubobject Base,
+                              SubobjectOffsetsMapTy &Offsets);
   
   /// AddOverriders - Add the final overriders for this base subobject to the
   /// map of final overriders.  
-  void AddOverriders(BaseSubobject Base);
+  void AddOverriders(BaseSubobject Base, SubobjectOffsetsMapTy &Offsets);
+
+  /// PropagateOverrider - Propagate the NewMD overrider to all the functions 
+  /// that OldMD overrides. For example, if we have:
+  ///
+  /// struct A { virtual void f(); };
+  /// struct B : A { virtual void f(); };
+  /// struct C : B { virtual void f(); };
+  ///
+  /// and we want to override B::f with C::f, we also need to override A::f with
+  /// C::f.
+  void PropagateOverrider(const CXXMethodDecl *OldMD,
+                          const CXXMethodDecl *NewMD,
+                          SubobjectOffsetsMapTy &Offsets);
   
+  static void MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
+                                    SubobjectOffsetsMapTy &Offsets);
+
 public:
   explicit FinalOverriders(const CXXRecordDecl *MostDerivedClass);
   
@@ -157,13 +192,15 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
   MostDerivedClassLayout(Context.getASTRecordLayout(MostDerivedClass)) {
     
   // Compute the final overriders.
-  ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0));
+  SubobjectOffsetsMapTy Offsets;
+  ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0), Offsets);
     
   // And dump them (for now).
   dump();
 }
 
-void FinalOverriders::AddOverriders(BaseSubobject Base) {
+void FinalOverriders::AddOverriders(BaseSubobject Base,
+                                    SubobjectOffsetsMapTy &Offsets) {
   const CXXRecordDecl *RD = Base.getBase();
 
   for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
@@ -173,7 +210,10 @@ void FinalOverriders::AddOverriders(BaseSubobject Base) {
     if (!MD->isVirtual())
       continue;
 
-    // Add the overrider.
+    // First, propagate the overrider.
+    PropagateOverrider(MD, MD, Offsets);
+
+    // Add the overrider as the final overrider of itself.
     const CXXMethodDecl *&Overrider = OverridersMap[std::make_pair(Base, MD)];
     assert(!Overrider && "Overrider should not exist yet!");
 
@@ -181,12 +221,92 @@ void FinalOverriders::AddOverriders(BaseSubobject Base) {
   }
 }
 
-void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base) {
+void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
+                                         const CXXMethodDecl *NewMD,
+                                         SubobjectOffsetsMapTy &Offsets) {
+  for (CXXMethodDecl::method_iterator I = OldMD->begin_overridden_methods(),
+       E = OldMD->end_overridden_methods(); I != E; ++I) {
+    const CXXMethodDecl *OverriddenMD = *I;
+    const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
+
+    // We want to override OverriddenMD in all subobjects, for example:
+    //
+    /// struct A { virtual void f(); };
+    /// struct B1 : A { };
+    /// struct B2 : A { };
+    /// struct C : B1, B2 { virtual void f(); };
+    ///
+    /// When overriding A::f with C::f we need to do so in both A subobjects.
+    const OffsetVectorTy &OffsetVector = Offsets[OverriddenRD];
+    
+    // Go through all the subobjects.
+    for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
+      uint64_t Offset = OffsetVector[I];
+
+      const CXXMethodDecl *&Overrider = 
+          OverridersMap[std::make_pair(BaseSubobject(OverriddenRD, Offset),
+                                       OverriddenMD)];
+      assert(Overrider && "Did not find existing overrider!");
+
+      // Set the new overrider.
+      Overrider = NewMD;
+      
+      // And propagate it further.
+      PropagateOverrider(OverriddenMD, NewMD, Offsets);
+    }
+  }
+}
+
+void 
+FinalOverriders::MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
+                                       SubobjectOffsetsMapTy &Offsets) {
+  // Iterate over the new offsets.
+  for (SubobjectOffsetsMapTy::const_iterator I = NewOffsets.begin(),
+       E = NewOffsets.end(); I != E; ++I) {
+    const CXXRecordDecl *NewRD = I->first;
+    const OffsetVectorTy& NewOffsetsVector = I->second;
+    
+    OffsetVectorTy &OffsetsVector = Offsets[NewRD];
+    if (OffsetsVector.empty()) {
+      // There were no previous offsets in this vector, just insert all entries
+      // from the new offsets vector.
+      OffsetsVector.append(NewOffsetsVector.begin(), NewOffsetsVector.end());
+      continue;
+    }
+    
+    assert(false && "FIXME: Handle merging the subobject offsets!");
+  }
+}
+
+void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
+                                             SubobjectOffsetsMapTy &Offsets) {
   const CXXRecordDecl *RD = Base.getBase();
-  if (RD->getNumBases())
-    assert(false && "FIXME: Handle bases!");
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   
-  AddOverriders(Base);
+  SubobjectOffsetsMapTy NewOffsets;
+  
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    assert(!I->isVirtual() && "FIXME: Handle virtual bases!");
+
+    uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl) + 
+      Base.getBaseOffset();
+
+    // Compute the final overriders for this base.
+    ComputeFinalOverriders(BaseSubobject(BaseDecl, BaseOffset), NewOffsets);
+  }
+
+  /// Now add the overriders for this particular subobject.
+  AddOverriders(Base, NewOffsets);
+  
+  // And merge the newly discovered subobject offsets.
+  MergeSubobjectOffsets(NewOffsets, Offsets);
+
+  /// Finally, add the offset for our own subobject.
+  Offsets[RD].push_back(Base.getBaseOffset());
 }
 
 void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
