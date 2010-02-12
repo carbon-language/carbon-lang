@@ -119,6 +119,16 @@ namespace {
 /// FinalOverriders - Contains the final overrider member functions for all
 /// member functions in the base subobjects of a class.
 class FinalOverriders {
+public:
+  /// OverriderInfo - Information about a final overrider.
+  struct OverriderInfo {
+    /// Method - The method decl of the overrider.
+    const CXXMethodDecl *Method;
+    
+    OverriderInfo() : Method(0) { }
+  };
+
+private:
   /// MostDerivedClass - The most derived class for which the final overriders
   /// are stored.
   const CXXRecordDecl *MostDerivedClass;
@@ -129,7 +139,7 @@ class FinalOverriders {
   const ASTRecordLayout &MostDerivedClassLayout;
 
   typedef llvm::DenseMap<std::pair<BaseSubobject, const CXXMethodDecl *>,
-                         const CXXMethodDecl *> OverridersMapTy;
+                         OverriderInfo> OverridersMapTy;
   
   /// OverridersMap - The final overriders for all virtual member functions of 
   /// all the base subobjects of the most derived class.
@@ -183,8 +193,8 @@ public:
   
   /// getOverrider - Get the final overrider for the given method declaration in
   /// the given base subobject.
-  const CXXMethodDecl *getOverrider(BaseSubobject Base,
-                                    const CXXMethodDecl *MD) const {
+  const OverriderInfo getOverrider(BaseSubobject Base,
+                                   const CXXMethodDecl *MD) const {
     assert(OverridersMap.count(std::make_pair(Base, MD)) && 
            "Did not find overrider!");
     
@@ -229,10 +239,10 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
     PropagateOverrider(MD, MD, Offsets);
 
     // Add the overrider as the final overrider of itself.
-    const CXXMethodDecl *&Overrider = OverridersMap[std::make_pair(Base, MD)];
-    assert(!Overrider && "Overrider should not exist yet!");
+    OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
+    assert(!Overrider.Method && "Overrider should not exist yet!");
 
-    Overrider = MD;
+    Overrider.Method = MD;
   }
 }
 
@@ -258,16 +268,16 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
     for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
       uint64_t Offset = OffsetVector[I];
 
-      const CXXMethodDecl *&Overrider = 
+      OverriderInfo &Overrider = 
           OverridersMap[std::make_pair(BaseSubobject(OverriddenRD, Offset),
                                        OverriddenMD)];
-      assert(Overrider && "Did not find existing overrider!");
+      assert(Overrider.Method && "Did not find existing overrider!");
 
       assert(!ReturnTypeConversionRequiresAdjustment(Context, NewMD, 
                                                      OverriddenMD) &&
              "FIXME: Covariant return types not handled yet!");
       // Set the new overrider.
-      Overrider = NewMD;
+      Overrider.Method = NewMD;
       
       // And propagate it further.
       PropagateOverrider(OverriddenMD, NewMD, Offsets);
@@ -356,10 +366,10 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
     if (!MD->isVirtual())
       continue;
   
-    const CXXMethodDecl *Overrider = getOverrider(Base, MD);
+    OverriderInfo Overrider = getOverrider(Base, MD);
 
     Out << "  " << MD->getQualifiedNameAsString() << " - ";
-    Out << Overrider->getQualifiedNameAsString() << "\n";
+    Out << Overrider.Method->getQualifiedNameAsString() << "\n";
   }  
 }
 
@@ -577,13 +587,15 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
       continue;
 
     // Get the final overrider.
-    const CXXMethodDecl *Overrider = Overriders.getOverrider(Base, MD);
+    FinalOverriders::OverriderInfo Overrider = 
+      Overriders.getOverrider(Base, MD);
 
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
     if (OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
-      assert(!ReturnTypeConversionRequiresAdjustment(Context, Overrider, MD) &&
+      assert(!ReturnTypeConversionRequiresAdjustment(Context, Overrider.Method, 
+                                                     MD) &&
              "FIXME: Handle covariant thunks!");
       
       continue;
