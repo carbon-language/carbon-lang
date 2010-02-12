@@ -1332,6 +1332,14 @@ PCHReader::ReadPCHBlock() {
       TentativeDefinitions.swap(Record);
       break;
 
+    case pch::UNUSED_STATIC_FUNCS:
+      if (!UnusedStaticFuncs.empty()) {
+        Error("duplicate UNUSED_STATIC_FUNCS record in PCH file");
+        return Failure;
+      }
+      UnusedStaticFuncs.swap(Record);
+      break;
+        
     case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
       if (!LocallyScopedExternalDecls.empty()) {
         Error("duplicate LOCALLY_SCOPED_EXTERNAL_DECLS record in PCH file");
@@ -2478,6 +2486,13 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = TentativeDefinitions.size(); I != N; ++I) {
     VarDecl *Var = cast<VarDecl>(GetDecl(TentativeDefinitions[I]));
     SemaObj->TentativeDefinitions.push_back(Var);
+  }
+  
+  // If there were any unused static functions, deserialize them and add to
+  // Sema's list of unused static functions.
+  for (unsigned I = 0, N = UnusedStaticFuncs.size(); I != N; ++I) {
+    FunctionDecl *FD = cast<FunctionDecl>(GetDecl(UnusedStaticFuncs[I]));
+    SemaObj->UnusedStaticFuncs.push_back(FD);
   }
 
   // If there were any locally-scoped external declarations,

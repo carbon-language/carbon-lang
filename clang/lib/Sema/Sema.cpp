@@ -185,6 +185,12 @@ void Sema::DeleteStmt(StmtTy *S) {
 /// popped.
 void Sema::ActOnEndOfTranslationUnit() {
   
+  // Remove functions that turned out to be used.
+  UnusedStaticFuncs.erase(std::remove_if(UnusedStaticFuncs.begin(), 
+                                         UnusedStaticFuncs.end(), 
+                                         std::mem_fun(&FunctionDecl::isUsed)), 
+                          UnusedStaticFuncs.end());
+  
   while (1) {
     // C++: Perform implicit template instantiations.
     //
@@ -265,6 +271,15 @@ void Sema::ActOnEndOfTranslationUnit() {
       Consumer.CompleteTentativeDefinition(VD);
 
   }
+  
+  // Output warning for unused functions.
+  for (std::vector<FunctionDecl*>::iterator
+       F = UnusedStaticFuncs.begin(),
+       FEnd = UnusedStaticFuncs.end();
+       F != FEnd;
+       ++F)
+    Diag((*F)->getLocation(), diag::warn_unused_function) << (*F)->getDeclName();
+  
 }
 
 

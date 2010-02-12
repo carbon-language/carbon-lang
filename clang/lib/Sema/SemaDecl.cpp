@@ -3129,6 +3129,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (FunctionTemplate)
     return FunctionTemplate;
 
+  
+  // Keep track of static, non-inlined function definitions that
+  // have not been used. We will warn later.
+  // FIXME: Also include static functions declared but not defined.
+  if (!NewFD->isInvalidDecl() && IsFunctionDefinition 
+      && !NewFD->isInlined() && NewFD->getLinkage() == InternalLinkage
+      && !NewFD->isUsed())
+    UnusedStaticFuncs.push_back(NewFD);
+  
   return NewFD;
 }
 

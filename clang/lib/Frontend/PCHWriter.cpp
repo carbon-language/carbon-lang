@@ -545,6 +545,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SPECIAL_TYPES);
   RECORD(STATISTICS);
   RECORD(TENTATIVE_DEFINITIONS);
+  RECORD(UNUSED_STATIC_FUNCS);
   RECORD(LOCALLY_SCOPED_EXTERNAL_DECLS);
   RECORD(SELECTOR_OFFSETS);
   RECORD(METHOD_POOL);
@@ -1982,6 +1983,11 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.TentativeDefinitions[i], TentativeDefinitions);
   }
 
+  // Build a record containing all of the static unused functions in this file.
+  RecordData UnusedStaticFuncs;
+  for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i) 
+    AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
+              
   // Build a record containing all of the locally-scoped external
   // declarations in this header file. Generally, this record will be
   // empty.
@@ -2083,6 +2089,10 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!TentativeDefinitions.empty())
     Stream.EmitRecord(pch::TENTATIVE_DEFINITIONS, TentativeDefinitions);
 
+  // Write the record containing unused static functions.
+  if (!UnusedStaticFuncs.empty())
+    Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
+  
   // Write the record containing locally-scoped external definitions.
   if (!LocallyScopedExternalDecls.empty())
     Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS,

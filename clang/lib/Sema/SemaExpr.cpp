@@ -7293,6 +7293,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     
     // FIXME: keep track of references to static functions
     Function->setUsed(true);
+   
     return;
   }
 

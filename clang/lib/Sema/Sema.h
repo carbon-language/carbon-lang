@@ -276,6 +276,9 @@ public:
   /// \brief All the tentative definitions encountered in the TU.
   std::vector<VarDecl *> TentativeDefinitions;
 
+  /// \brief The set of static functions seen so far that have not been used.
+  std::vector<FunctionDecl*> UnusedStaticFuncs;
+  
   /// An enum describing the kind of diagnostics to use when checking
   /// access.
   enum AccessDiagnosticsKind {

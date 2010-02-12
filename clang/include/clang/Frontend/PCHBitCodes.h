@@ -221,7 +221,11 @@ namespace clang {
       
       /// \brief Record code for the version control branch and revision
       /// information of the compiler used to build this PCH file.
-      VERSION_CONTROL_BRANCH_REVISION = 21
+      VERSION_CONTROL_BRANCH_REVISION = 21,
+      
+      /// \brief Record code for the array of unused static functions.
+      UNUSED_STATIC_FUNCS = 22
+      
     };
 
     /// \brief Record types used within a source manager block.
