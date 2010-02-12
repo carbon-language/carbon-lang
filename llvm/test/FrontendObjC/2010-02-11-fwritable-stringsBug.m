@@ -1,7 +1,6 @@
 // RUN: %llvmgcc -x objective-c -fwritable-strings -S %s -o - | FileCheck %s
 // CHECK: @.str = private constant
-// CHECK: @.str1 = private global
-// .str1 should have linker_private linkage. It will be fixed next.
+// CHECK: @.str1 = internal global
 
 // rdar://7634471
 
