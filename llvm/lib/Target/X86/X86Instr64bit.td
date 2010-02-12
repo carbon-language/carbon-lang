@@ -893,35 +893,38 @@ def SAR64m1 : RI<0xD1, MRM7m, (outs), (ins i64mem:$dst),
 let isTwoAddress = 1 in {
 def RCL64r1 : RI<0xD1, MRM2r, (outs GR64:$dst), (ins GR64:$src),
                  "rcl{q}\t{1, $dst|$dst, 1}", []>;
-def RCL64m1 : RI<0xD1, MRM2m, (outs i64mem:$dst), (ins i64mem:$src),
-                 "rcl{q}\t{1, $dst|$dst, 1}", []>;
-let Uses = [CL] in {
-def RCL64rCL : RI<0xD3, MRM2r, (outs GR64:$dst), (ins GR64:$src),
-                  "rcl{q}\t{%cl, $dst|$dst, CL}", []>;
-def RCL64mCL : RI<0xD3, MRM2m, (outs i64mem:$dst), (ins i64mem:$src),
-                  "rcl{q}\t{%cl, $dst|$dst, CL}", []>;
-}
 def RCL64ri : RIi8<0xC1, MRM2r, (outs GR64:$dst), (ins GR64:$src, i8imm:$cnt),
-                   "rcl{q}\t{$cnt, $dst|$dst, $cnt}", []>;
-def RCL64mi : RIi8<0xC1, MRM2m, (outs i64mem:$dst), 
-                   (ins i64mem:$src, i8imm:$cnt),
                    "rcl{q}\t{$cnt, $dst|$dst, $cnt}", []>;
 
 def RCR64r1 : RI<0xD1, MRM3r, (outs GR64:$dst), (ins GR64:$src),
                  "rcr{q}\t{1, $dst|$dst, 1}", []>;
-def RCR64m1 : RI<0xD1, MRM3m, (outs i64mem:$dst), (ins i64mem:$src),
-                 "rcr{q}\t{1, $dst|$dst, 1}", []>;
-let Uses = [CL] in {
-def RCR64rCL : RI<0xD3, MRM3r, (outs GR64:$dst), (ins GR64:$src),
-                  "rcr{q}\t{%cl, $dst|$dst, CL}", []>;
-def RCR64mCL : RI<0xD3, MRM3m, (outs i64mem:$dst), (ins i64mem:$src),
-                  "rcr{q}\t{%cl, $dst|$dst, CL}", []>;
-}
 def RCR64ri : RIi8<0xC1, MRM3r, (outs GR64:$dst), (ins GR64:$src, i8imm:$cnt),
                    "rcr{q}\t{$cnt, $dst|$dst, $cnt}", []>;
-def RCR64mi : RIi8<0xC1, MRM3m, (outs i64mem:$dst), 
-                   (ins i64mem:$src, i8imm:$cnt),
+
+let Uses = [CL] in {
+def RCL64rCL : RI<0xD3, MRM2r, (outs GR64:$dst), (ins GR64:$src),
+                  "rcl{q}\t{%cl, $dst|$dst, CL}", []>;
+def RCR64rCL : RI<0xD3, MRM3r, (outs GR64:$dst), (ins GR64:$src),
+                  "rcr{q}\t{%cl, $dst|$dst, CL}", []>;
+}
+}
+
+let isTwoAddress = 0 in {
+def RCL64m1 : RI<0xD1, MRM2m, (outs), (ins i64mem:$dst),
+                 "rcl{q}\t{1, $dst|$dst, 1}", []>;
+def RCL64mi : RIi8<0xC1, MRM2m, (outs), (ins i64mem:$dst, i8imm:$cnt),
+                   "rcl{q}\t{$cnt, $dst|$dst, $cnt}", []>;
+def RCR64m1 : RI<0xD1, MRM3m, (outs), (ins i64mem:$dst),
+                 "rcr{q}\t{1, $dst|$dst, 1}", []>;
+def RCR64mi : RIi8<0xC1, MRM3m, (outs), (ins i64mem:$dst, i8imm:$cnt),
                    "rcr{q}\t{$cnt, $dst|$dst, $cnt}", []>;
+
+let Uses = [CL] in {
+def RCL64mCL : RI<0xD3, MRM2m, (outs), (ins i64mem:$dst),
+                  "rcl{q}\t{%cl, $dst|$dst, CL}", []>;
+def RCR64mCL : RI<0xD3, MRM3m, (outs), (ins i64mem:$dst),
+                  "rcr{q}\t{%cl, $dst|$dst, CL}", []>;
+}
 }
 
 let isTwoAddress = 1 in {
