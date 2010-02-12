@@ -1993,8 +1993,12 @@ public:
   static bool classof(const TypeOfExprType *) { return true; }
 };
 
-/// Subclass of TypeOfExprType that is used for canonical, dependent
+/// \brief Internal representation of canonical, dependent
 /// typeof(expr) types.
+///
+/// This class is used internally by the ASTContext to manage
+/// canonical, dependent types, only. Clients will only see instances
+/// of this class via TypeOfExprType nodes.
 class DependentTypeOfExprType
   : public TypeOfExprType, public llvm::FoldingSetNode {
   ASTContext &Context;
@@ -2061,8 +2065,12 @@ public:
   static bool classof(const DecltypeType *) { return true; }
 };
 
-/// Subclass of DecltypeType that is used for canonical, dependent
-/// C++0x decltype types.
+/// \brief Internal representation of canonical, dependent
+/// decltype(expr) types.
+///
+/// This class is used internally by the ASTContext to manage
+/// canonical, dependent types, only. Clients will only see instances
+/// of this class via DecltypeType nodes.
 class DependentDecltypeType : public DecltypeType, public llvm::FoldingSetNode {
   ASTContext &Context;
 
