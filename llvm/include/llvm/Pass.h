@@ -56,11 +56,11 @@ typedef const PassInfo* AnalysisID;
 /// Ordering of pass manager types is important here.
 enum PassManagerType {
   PMT_Unknown = 0,
-  PMT_ModulePassManager = 1, /// MPPassManager 
-  PMT_CallGraphPassManager,  /// CGPassManager
-  PMT_FunctionPassManager,   /// FPPassManager
-  PMT_LoopPassManager,       /// LPPassManager
-  PMT_BasicBlockPassManager, /// BBPassManager
+  PMT_ModulePassManager = 1, ///< MPPassManager 
+  PMT_CallGraphPassManager,  ///< CGPassManager
+  PMT_FunctionPassManager,   ///< FPPassManager
+  PMT_LoopPassManager,       ///< LPPassManager
+  PMT_BasicBlockPassManager, ///< BBPassManager
   PMT_Last
 };
 
