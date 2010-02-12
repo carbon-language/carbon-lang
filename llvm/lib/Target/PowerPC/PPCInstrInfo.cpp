@@ -421,22 +421,30 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                          FrameIdx));
       return true;
     } else {
-      // FIXME: We use R0 here, because it isn't available for RA.  We need to
-      // store the CR in the low 4-bits of the saved value.  First, issue a MFCR
-      // to save all of the CRBits.
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFCR), PPC::R0));
+      // FIXME: We need a scatch reg here.  The trouble with using R0 is that
+      // it's possible for the stack frame to be so big the save location is
+      // out of range of immediate offsets, necessitating another register.
+      // We hack this on Darwin by reserving R2.  It's probably broken on Linux
+      // at the moment.
+
+      // We need to store the CR in the low 4-bits of the saved value.  First,
+      // issue a MFCR to save all of the CRBits.
+      unsigned ScratchReg = TM.getSubtargetImpl()->isDarwinABI() ? 
+                                                           PPC::R2 : PPC::R0;
+      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFCR), ScratchReg));
     
       // If the saved register wasn't CR0, shift the bits left so that they are
       // in CR0's slot.
       if (SrcReg != PPC::CR0) {
         unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(SrcReg)*4;
-        // rlwinm r0, r0, ShiftBits, 0, 31.
-        NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), PPC::R0)
-                       .addReg(PPC::R0).addImm(ShiftBits).addImm(0).addImm(31));
+        // rlwinm scratch, scratch, ShiftBits, 0, 31.
+        NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), ScratchReg)
+                       .addReg(ScratchReg).addImm(ShiftBits)
+                       .addImm(0).addImm(31));
       }
     
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
-                                         .addReg(PPC::R0,
+                                         .addReg(ScratchReg,
                                                  getKillRegState(isKill)),
                                          FrameIdx));
     }
@@ -540,20 +548,28 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LFS), DestReg),
                                        FrameIdx));
   } else if (RC == PPC::CRRCRegisterClass) {
-    // FIXME: We use R0 here, because it isn't available for RA.
-    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ), PPC::R0),
-                                       FrameIdx));
+    // FIXME: We need a scatch reg here.  The trouble with using R0 is that
+    // it's possible for the stack frame to be so big the save location is
+    // out of range of immediate offsets, necessitating another register.
+    // We hack this on Darwin by reserving R2.  It's probably broken on Linux
+    // at the moment.
+    unsigned ScratchReg = TM.getSubtargetImpl()->isDarwinABI() ?
+                                                          PPC::R2 : PPC::R0;
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ), 
+                                       ScratchReg), FrameIdx));
     
     // If the reloaded register isn't CR0, shift the bits right so that they are
     // in the right CR's slot.
     if (DestReg != PPC::CR0) {
       unsigned ShiftBits = PPCRegisterInfo::getRegisterNumbering(DestReg)*4;
       // rlwinm r11, r11, 32-ShiftBits, 0, 31.
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), PPC::R0)
-                    .addReg(PPC::R0).addImm(32-ShiftBits).addImm(0).addImm(31));
+      NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), ScratchReg)
+                    .addReg(ScratchReg).addImm(32-ShiftBits).addImm(0)
+                    .addImm(31));
     }
     
-    NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTCRF), DestReg).addReg(PPC::R0));
+    NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTCRF), DestReg)
+                     .addReg(ScratchReg));
   } else if (RC == PPC::CRBITRCRegisterClass) {
    
     unsigned Reg = 0;
