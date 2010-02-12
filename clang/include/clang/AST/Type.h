@@ -751,24 +751,22 @@ class Type {
 public:
   enum TypeClass {
 #define TYPE(Class, Base) Class,
+#define LAST_TYPE(Class) TypeLast = Class,
 #define ABSTRACT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
     TagFirst = Record, TagLast = Enum
   };
 
-protected:
-  enum { TypeClassBitSize = 6 };
-
 private:
   QualType CanonicalType;
 
-  /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
-  bool Dependent : 1;
-
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
+  unsigned TC : 8;
+
+  /// Dependent - Whether this type is a dependent type (C++ [temp.dep.type]).
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
-  unsigned TC : TypeClassBitSize;
+  bool Dependent : 1;
 
   Type(const Type&);           // DO NOT IMPLEMENT.
   void operator=(const Type&); // DO NOT IMPLEMENT.
@@ -777,7 +775,7 @@ protected:
   Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical, bool dependent)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
-      Dependent(dependent), TC(tc) {}
+      TC(tc), Dependent(dependent) {}
   virtual ~Type() {}
   virtual void Destroy(ASTContext& C);
   friend class ASTContext;

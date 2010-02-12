@@ -153,7 +153,7 @@ class LocInfoType : public Type {
   enum {
     // The last number that can fit in Type's TC.
     // Avoids conflict with an existing Type class.
-    LocInfo = (1 << TypeClassBitSize) - 1
+    LocInfo = Type::TypeLast + 1
   };
 
   TypeSourceInfo *DeclInfo;

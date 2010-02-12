@@ -87,6 +87,11 @@ DEPENDENT_TYPE(Typename, Type)
 TYPE(ObjCInterface, Type)
 TYPE(ObjCObjectPointer, Type)
 
+#ifdef LAST_TYPE
+LAST_TYPE(ObjCObjectPointer)
+#undef LAST_TYPE
+#endif
+
 // These types are always leaves in the type hierarchy.
 #ifdef LEAF_TYPE
 LEAF_TYPE(Enum)
