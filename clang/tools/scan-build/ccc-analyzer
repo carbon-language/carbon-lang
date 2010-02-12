@@ -597,9 +597,12 @@ if ($Action eq 'compile' or $Action eq 'link') {
       }
     }
     
+    # FileLang still not defined?  Skip the file.
     next if (!defined $FileLang);
+
+    # Language not accepted?
     next if (!defined $LangsAccepted{$FileLang});
-    
+
     my @CmdArgs;
     my @AnalyzeArgs;    
     
