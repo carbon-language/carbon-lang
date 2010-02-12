@@ -88,7 +88,11 @@ if (!defined $ClangSB || ! -x $ClangSB) {
 my $Clang;
 if (!defined $ClangSB || ! -x $ClangSB) {
   # Default to looking for 'clang' in the path.
-  $Clang = "clang";
+  $Clang = `which clang`;
+  chomp $Clang;
+  if ($Clang eq "") {
+    DieDiag("No 'clang' executable found in path.");
+  }
 }
 else {
   $Clang = $ClangSB;
@@ -842,10 +846,6 @@ sub RunBuildCommand {
     # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
     # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
     # when linking such files.
-    if (!defined $ENV{'CCC_CXX'}) {
-      $ENV{'CCC_CXX'} = 'g++';      
-    }
-    $ENV{'LDPLUSPLUS'} = $ENV{'CCC_CXX'};
   }
   
   return (system(@$Args) >> 8);
@@ -1192,7 +1192,7 @@ if (!defined $CmdCXX || ! -x $CmdCXX) {
 
 if (!defined $ClangSB || ! -x $ClangSB) {
   Diag("'clang' executable not found in '$RealBin/bin'.\n");
-  Diag("Using 'clang' from path.\n");
+  Diag("Using 'clang' from path: $Clang\n");
 }
 
 $ENV{'CC'} = $Cmd;
