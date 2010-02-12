@@ -797,10 +797,8 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
         continue;
       if (TypedefDecl *FoundTypedef = dyn_cast<TypedefDecl>(*Lookup.first)) {
         if (Importer.getToContext().typesAreCompatible(T, 
-                                                       FoundTypedef->getUnderlyingType())) {
-          Importer.getImportedDecls()[D] = FoundTypedef;
-          return FoundTypedef;
-        }
+                                          FoundTypedef->getUnderlyingType()))
+          return Importer.Imported(D, FoundTypedef);
       }
       
       ConflictingDecls.push_back(*Lookup.first);
@@ -821,7 +819,7 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
                                                Loc, Name.getAsIdentifierInfo(),
                                                TInfo);
   ToTypedef->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToTypedef;
+  Importer.Imported(D, ToTypedef);
   LexicalDC->addDecl(ToTypedef);
   return ToTypedef;
 }
@@ -859,11 +857,8 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
       }
       
       if (EnumDecl *FoundEnum = dyn_cast<EnumDecl>(Found)) {
-        if (IsStructuralMatch(D, FoundEnum)) {
-          // The enum types structurally match.
-          Importer.getImportedDecls()[D] = FoundEnum;
-          return FoundEnum;
-        }
+        if (IsStructuralMatch(D, FoundEnum))
+          return Importer.Imported(D, FoundEnum);
       }
       
       ConflictingDecls.push_back(*Lookup.first);
@@ -882,7 +877,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
                                       Importer.Import(D->getTagKeywordLoc()),
                                       0);
   ToEnum->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToEnum;
+  Importer.Imported(D, ToEnum);
   LexicalDC->addDecl(ToEnum);
 
   // Import the integer type.
@@ -921,8 +916,10 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   TagDecl *Definition = D->getDefinition();
   if (Definition && Definition != D) {
     Decl *ImportedDef = Importer.Import(Definition);
-    Importer.getImportedDecls()[D] = ImportedDef;
-    return ImportedDef;
+    if (!ImportedDef)
+      return 0;
+    
+    return Importer.Imported(D, ImportedDef);
   }
   
   // Import the major distinguishing characteristics of this record.
@@ -964,8 +961,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
             // unit only had a forward declaration anyway; call it the same
             // function.
             // FIXME: For C++, we should also merge methods here.
-            Importer.getImportedDecls()[D] = FoundDef;
-            return FoundDef;
+            return Importer.Imported(D, FoundDef);
           }
         } else {
           // We have a forward declaration of this type, so adopt that forward
@@ -1028,7 +1024,8 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
     ToRecord->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDecl(ToRecord);
   }
-  Importer.getImportedDecls()[D] = ToRecord;
+  
+  Importer.Imported(D, ToRecord);
 
   if (D->isDefinition()) {
     ToRecord->startDefinition();
@@ -1085,7 +1082,7 @@ Decl *ASTNodeImporter::VisitEnumConstantDecl(EnumConstantDecl *D) {
                                Name.getAsIdentifierInfo(), T, 
                                Init, D->getInitVal());
   ToEnumerator->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToEnumerator;
+  Importer.Imported(D, ToEnumerator);
   LexicalDC->addDecl(ToEnumerator);
   return ToEnumerator;
 }
@@ -1116,8 +1113,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
           if (Importer.getToContext().typesAreCompatible(T, 
                                                     FoundFunction->getType())) {
             // FIXME: Actually try to merge the body and other attributes.
-            Importer.getImportedDecls()[D] = FoundFunction;
-            return FoundFunction;
+            return Importer.Imported(D, FoundFunction);
           }
         
           // FIXME: Check for overloading more carefully, e.g., by boosting
@@ -1167,7 +1163,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                            D->isInlineSpecified(),
                            D->hasWrittenPrototype());
   ToEnumerator->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToEnumerator;
+  Importer.Imported(D, ToEnumerator);
   LexicalDC->addDecl(ToEnumerator);
 
   // Set the parameters.
@@ -1200,7 +1196,7 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
                                          Loc, Name.getAsIdentifierInfo(),
                                          T, TInfo, BitWidth, D->isMutable());
   ToField->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToField;
+  Importer.Imported(D, ToField);
   LexicalDC->addDecl(ToField);
   return ToField;
 }
@@ -1266,7 +1262,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
     if (MergeWithVar) {
       // An equivalent variable with external linkage has been found. Link 
       // the two declarations, then merge them.
-      Importer.getImportedDecls()[D] = MergeWithVar;
+      Importer.Imported(D, MergeWithVar);
       
       if (VarDecl *DDef = D->getDefinition()) {
         if (VarDecl *ExistingDef = MergeWithVar->getDefinition()) {
@@ -1298,7 +1294,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
                                    Name.getAsIdentifierInfo(), T, TInfo,
                                    D->getStorageClass());
   ToVar->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToVar;
+  Importer.Imported(D, ToVar);
   LexicalDC->addDecl(ToVar);
 
   // Merge the initializer.
@@ -1336,8 +1332,7 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
                                             Loc, Name.getAsIdentifierInfo(),
                                             T, TInfo, D->getStorageClass(),
                                             /*FIXME: Default argument*/ 0);
-  Importer.getImportedDecls()[D] = ToParm;
-  return ToParm;
+  return Importer.Imported(D, ToParm);
 }
 
 //----------------------------------------------------------------------------
@@ -1633,4 +1628,9 @@ DiagnosticBuilder ASTImporter::ToDiag(SourceLocation Loc, unsigned DiagID) {
 DiagnosticBuilder ASTImporter::FromDiag(SourceLocation Loc, unsigned DiagID) {
   return Diags.Report(FullSourceLoc(Loc, FromContext.getSourceManager()), 
                       DiagID);
+}
+
+Decl *ASTImporter::Imported(Decl *From, Decl *To) {
+  ImportedDecls[From] = To;
+  return To;
 }

@@ -40,3 +40,9 @@ struct S9 *x9;
 
 // Incomplete type
 struct S10 *x10;
+
+// Matches
+struct ListNode {
+  int value;
+  struct ListNode *Next;
+} xList;

@@ -193,15 +193,17 @@ namespace clang {
     /// \brief Retrieve the file manager that AST nodes are being imported from.
     FileManager &getFromFileManager() const { return FromFileManager; }
 
-    /// \brief Retrieve the mapping from declarations in the "from" context
-    /// to the already-imported declarations in the "to" context.
-    llvm::DenseMap<Decl *, Decl *> &getImportedDecls() { return ImportedDecls; }
-    
     /// \brief Report a diagnostic in the "to" context.
     DiagnosticBuilder ToDiag(SourceLocation Loc, unsigned DiagID);
     
     /// \brief Report a diagnostic in the "from" context.
     DiagnosticBuilder FromDiag(SourceLocation Loc, unsigned DiagID);
+    
+    /// \brief Note that we have imported the "from" declaration by mapping it
+    /// to the (potentially-newly-created) "to" declaration.
+    ///
+    /// \returns \p To
+    Decl *Imported(Decl *From, Decl *To);
   };
 }
 
