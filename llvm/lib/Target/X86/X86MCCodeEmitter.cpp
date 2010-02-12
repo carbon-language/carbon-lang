@@ -139,7 +139,6 @@ static MCFixupKind getImmFixupKind(unsigned TSFlags) {
   unsigned Size = X86II::getSizeOfImm(TSFlags);
   bool isPCRel = X86II::isImmPCRel(TSFlags);
   
-  // FIXME: Pass in the relocation type, this is just a hack..
   switch (Size) {
   default: assert(0 && "Unknown immediate size");
   case 1: return isPCRel ? MCFixupKind(X86::reloc_pcrel_1byte) : FK_Data_1;
