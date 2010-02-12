@@ -12,10 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang {
@@ -92,6 +93,52 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
   return FnT->hasExceptionSpec();
 }
 
+bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
+  bool MissingEmptyExceptionSpecification = false;
+  if (!CheckEquivalentExceptionSpec(diag::err_mismatched_exception_spec,
+                                    diag::note_previous_declaration,
+                                    Old->getType()->getAs<FunctionProtoType>(),
+                                    Old->getLocation(),
+                                    New->getType()->getAs<FunctionProtoType>(),
+                                    New->getLocation(),
+                                    &MissingEmptyExceptionSpecification))
+    return false;
+
+  // The failure was something other than an empty exception
+  // specification; return an error.
+  if (!MissingEmptyExceptionSpecification)
+    return true;
+
+  // The new function declaration is only missing an empty exception
+  // specification "throw()". If the throw() specification came from a
+  // function in a system header that has C linkage, just add an empty
+  // exception specification to the "new" declaration. This is an
+  // egregious workaround for glibc, which adds throw() specifications
+  // to many libc functions as an optimization. Unfortunately, that
+  // optimization isn't permitted by the C++ standard, so we're forced
+  // to work around it here.
+  if (isa<FunctionProtoType>(New->getType()) &&
+      Context.getSourceManager().isInSystemHeader(Old->getLocation()) &&
+      Old->isExternC()) {
+    const FunctionProtoType *NewProto 
+      = cast<FunctionProtoType>(New->getType());
+    QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+                                               NewProto->arg_type_begin(),
+                                               NewProto->getNumArgs(),
+                                               NewProto->isVariadic(),
+                                               NewProto->getTypeQuals(),
+                                               true, false, 0, 0,
+                                               NewProto->getNoReturnAttr(),
+                                               NewProto->getCallConv());
+    New->setType(NewType);
+    return false;
+  }
+
+  Diag(New->getLocation(), diag::err_mismatched_exception_spec);
+  Diag(Old->getLocation(), diag::note_previous_declaration);
+  return true;
+}
+
 /// CheckEquivalentExceptionSpec - Check if the two types have equivalent
 /// exception specifications. Exception specifications are equivalent if
 /// they allow exactly the same set of exception types. It does not matter how
@@ -111,12 +158,26 @@ bool Sema::CheckEquivalentExceptionSpec(
 bool Sema::CheckEquivalentExceptionSpec(
     const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
     const FunctionProtoType *Old, SourceLocation OldLoc,
-    const FunctionProtoType *New, SourceLocation NewLoc) {
+    const FunctionProtoType *New, SourceLocation NewLoc,
+    bool *MissingEmptyExceptionSpecification) {
+  if (MissingEmptyExceptionSpecification)
+    *MissingEmptyExceptionSpecification = false;
+
   bool OldAny = !Old->hasExceptionSpec() || Old->hasAnyExceptionSpec();
   bool NewAny = !New->hasExceptionSpec() || New->hasAnyExceptionSpec();
   if (OldAny && NewAny)
     return false;
   if (OldAny || NewAny) {
+    if (MissingEmptyExceptionSpecification && Old->hasExceptionSpec() && 
+        !Old->hasAnyExceptionSpec() && Old->getNumExceptions() == 0 && 
+        !New->hasExceptionSpec()) {
+      // The old type has a throw() exception specification and the
+      // new type has no exception specification, and the caller asked
+      // to handle this itself.
+      *MissingEmptyExceptionSpecification = true;
+      return true;
+    }
+
     Diag(NewLoc, DiagID);
     if (NoteID.getDiagID() != 0)
       Diag(OldLoc, NoteID);

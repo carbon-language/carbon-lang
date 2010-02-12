@@ -356,9 +356,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     }
   }
 
-  if (CheckEquivalentExceptionSpec(
-          Old->getType()->getAs<FunctionProtoType>(), Old->getLocation(),
-          New->getType()->getAs<FunctionProtoType>(), New->getLocation()))
+  if (CheckEquivalentExceptionSpec(Old, New))
     Invalid = true;
 
   return Invalid;
