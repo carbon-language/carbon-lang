@@ -2208,6 +2208,19 @@ void RewriteObjC::RewriteFunctionDecl(FunctionDecl *FD) {
   RewriteObjCQualifiedInterfaceTypes(FD);
 }
 
+static void RewriteBlockPointerType(std::string& Str, QualType Type) {
+  std::string TypeString(Type.getAsString());
+  const char *argPtr = TypeString.c_str();
+  if (!strchr(argPtr, '^')) {
+    Str += TypeString;
+    return;
+  }
+  while (*argPtr) {
+    Str += (*argPtr == '^' ? '*' : *argPtr);
+    argPtr++;
+  }
+}
+
 void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
   const FunctionType *funcType = FD->getType()->getAs<FunctionType>();
@@ -2222,8 +2235,7 @@ void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   unsigned numArgs = proto->getNumArgs();
   for (unsigned i = 0; i < numArgs; i++) {
     QualType ArgType = proto->getArgType(i);
-    FdStr += ArgType.getAsString();
-    
+    RewriteBlockPointerType(FdStr, ArgType);
     if (i+1 < numArgs)
       FdStr += ", ";
   }
