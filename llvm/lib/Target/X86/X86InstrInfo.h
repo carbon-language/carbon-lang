@@ -291,7 +291,7 @@ namespace X86II {
     // set, there is no prefix byte for obtaining a multibyte opcode.
     //
     Op0Shift    = 8,
-    Op0Mask     = 0x1F << Op0Shift,
+    Op0Mask     = 0xF << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
@@ -324,13 +324,13 @@ namespace X86II {
     // etc. We only cares about REX.W and REX.R bits and only the former is
     // statically determined.
     //
-    REXShift    = 13,
+    REXShift    = 12,
     REX_W       = 1 << REXShift,
 
     //===------------------------------------------------------------------===//
     // This three-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    ImmShift = 14,
+    ImmShift = 13,
     ImmMask  = 7 << ImmShift,
     Imm8     = 1 << ImmShift,
     Imm16    = 2 << ImmShift,
@@ -341,7 +341,7 @@ namespace X86II {
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = 17,
+    FPTypeShift = 16,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -374,17 +374,17 @@ namespace X86II {
     SpecialFP  = 7 << FPTypeShift,
 
     // Lock prefix
-    LOCKShift = 20,
+    LOCKShift = 19,
     LOCK = 1 << LOCKShift,
 
     // Segment override prefixes. Currently we just need ability to address
     // stuff in gs and fs segments.
-    SegOvrShift = 21,
+    SegOvrShift = 20,
     SegOvrMask  = 3 << SegOvrShift,
     FS          = 1 << SegOvrShift,
     GS          = 2 << SegOvrShift,
 
-    // Bit 23 is unused.
+    // Bits 22 -> 23 are unused
     OpcodeShift   = 24,
     OpcodeMask    = 0xFF << OpcodeShift
   };
