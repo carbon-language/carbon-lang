@@ -792,6 +792,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
 
   // Re-apply any non-loop-dominating scale.
   if (PostLoopScale) {
+    Result = InsertNoopCastOfTo(Result, IntTy);
     Result = Builder.CreateMul(Result,
                                expandCodeFor(PostLoopScale, IntTy));
     rememberInstruction(Result);
@@ -803,6 +804,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
       const SCEV *const OffsetArray[1] = { PostLoopOffset };
       Result = expandAddToGEP(OffsetArray, OffsetArray+1, PTy, IntTy, Result);
     } else {
+      Result = InsertNoopCastOfTo(Result, IntTy);
       Result = Builder.CreateAdd(Result,
                                  expandCodeFor(PostLoopOffset, IntTy));
       rememberInstruction(Result);
