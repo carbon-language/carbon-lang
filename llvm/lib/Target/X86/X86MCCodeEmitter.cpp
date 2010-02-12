@@ -542,14 +542,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     // FIXME: This is terrible, they should get proper encoding bits in TSFlags.
     if (Opcode == X86::LFENCE || Opcode == X86::MFENCE ||
         Opcode == X86::MONITOR || Opcode == X86::MWAIT) {
-      EmitByte(ModRMByte(3, (TSFlags & X86II::FormMask)-X86II::MRM0r, 0),
+      EmitByte(ModRMByte(3, (TSFlags & X86II::FormMask)-X86II::MRM0r,
+                         Opcode == X86::MWAIT),
                CurByte, OS);
-
-      switch (Opcode) {
-      default: break;
-      case X86::MONITOR: EmitByte(0xC8, CurByte, OS); break;
-      case X86::MWAIT:   EmitByte(0xC9, CurByte, OS); break;
-      }
     } else {
       EmitRegModRMByte(MI.getOperand(CurOp++),
                        (TSFlags & X86II::FormMask)-X86II::MRM0r,
