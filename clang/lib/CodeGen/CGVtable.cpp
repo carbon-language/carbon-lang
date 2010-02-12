@@ -104,9 +104,10 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
 }
 
 static bool
-ReturnTypeConversionRequiresAdjustment(ASTContext &Context,
-                                       const CXXMethodDecl *DerivedMD,
+ReturnTypeConversionRequiresAdjustment(const CXXMethodDecl *DerivedMD,
                                        const CXXMethodDecl *BaseMD) {
+  ASTContext &Context = DerivedMD->getASTContext();
+
   const FunctionType *BaseFT = BaseMD->getType()->getAs<FunctionType>();
   const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
 
@@ -290,8 +291,7 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
       /// need to have their return types adjusted.
       if (!Overrider.NeedsReturnAdjustment) {
         Overrider.NeedsReturnAdjustment = 
-          ReturnTypeConversionRequiresAdjustment(Context, NewMD, 
-                                                 OverriddenMD);
+          ReturnTypeConversionRequiresAdjustment(NewMD, OverriddenMD);
       }
 
       // Set the new overrider.
@@ -540,6 +540,17 @@ private:
   /// AddressPoints - Address points for the vtable being built.
   CGVtableInfo::AddressPointsMapTy AddressPoints;
 
+  /// ReturnAdjustment - A return adjustment thunk.
+  struct ReturnAdjustment {
+    /// NonVirtual - The non-virtual adjustment from the derived object to its
+    /// nearest virtual base.
+    int64_t NonVirtual;
+    
+    /// VBaseOffsetIndex - The index relative to the address point of the
+    /// virtual base class offset.
+    int64_t VBaseOffsetIndex;
+  };
+    
   void layoutVirtualMemberFunctions(BaseSubobject Base,
                                     PrimaryBasesSetTy &PrimaryBases);
   
@@ -614,10 +625,10 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
-    if (OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
-      assert(!ReturnTypeConversionRequiresAdjustment(Context, Overrider.Method, 
-                                                     MD) &&
-             "FIXME: Handle covariant thunks!");
+    if (const CXXMethodDecl *OverriddenMD = 
+          OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
+      assert(!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD) 
+             && "FIXME: Handle covariant thunks!");
       
       continue;
     }
@@ -1920,8 +1931,7 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
       // Check if converting from the return type of the method to the 
       // return type of the overridden method requires conversion.
-      if (!ReturnTypeConversionRequiresAdjustment(CGM.getContext(), 
-                                                  MD, OverriddenMD)) {
+      if (!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD)) {
         // This index is shared between the index in the vtable of the primary
         // base class.
         if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
