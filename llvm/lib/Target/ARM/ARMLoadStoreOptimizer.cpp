@@ -350,7 +350,8 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
       : ARMRegisterInfo::getRegisterNumbering(Reg);
     // AM4 - register numbers in ascending order.
     // AM5 - consecutive register numbers in ascending order.
-    if (NewOffset == Offset + (int)Size &&
+    if (Reg != ARM::SP &&
+        NewOffset == Offset + (int)Size &&
         ((isAM4 && RegNum > PRegNum) || RegNum == PRegNum+1)) {
       Offset += Size;
       PRegNum = RegNum;
