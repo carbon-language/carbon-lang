@@ -99,6 +99,17 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
   return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }
 
+static bool
+ReturnTypeConversionRequiresAdjustment(ASTContext &Context,
+                                       const CXXMethodDecl *DerivedMD,
+                                       const CXXMethodDecl *BaseMD) {
+  const FunctionType *BaseFT = BaseMD->getType()->getAs<FunctionType>();
+  const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
+
+  return TypeConversionRequiresAdjustment(Context, DerivedFT->getResultType(), 
+                                          BaseFT->getResultType());
+}
+
 namespace {
 
 /// FinalOverriders - Contains the final overrider member functions for all
@@ -248,6 +259,9 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
                                        OverriddenMD)];
       assert(Overrider && "Did not find existing overrider!");
 
+      assert(!ReturnTypeConversionRequiresAdjustment(Context, NewMD, 
+                                                     OverriddenMD) &&
+             "FIXME: Covariant return types not handled yet!");
       // Set the new overrider.
       Overrider = NewMD;
       
@@ -470,12 +484,17 @@ private:
 
 /// VtableBuilder - Class for building vtable layout information.
 class VtableBuilder {
+public:
+  /// PrimaryBasesSetTy - A set of direct and indirect primary bases.
+  typedef llvm::SmallPtrSet<const CXXRecordDecl *, 8> PrimaryBasesSetTy;
+
+private:
   /// MostDerivedClass - The most derived class for which we're building this
   /// vtable.
   const CXXRecordDecl *MostDerivedClass;
 
   /// Context - The ASTContext which we will use for layout information.
-  const ASTContext &Context;
+  ASTContext &Context;
   
   /// FinalOverriders - The final overriders of the most derived class.
   FinalOverriders Overriders;
@@ -486,42 +505,85 @@ class VtableBuilder {
   /// AddressPoints - Address points for the vtable being built.
   CGVtableInfo::AddressPointsMapTy AddressPoints;
 
+  void layoutVirtualMemberFunctions(BaseSubobject Base,
+                                    PrimaryBasesSetTy &PrimaryBases);
+  
   /// layoutSimpleVtable - A test function that will layout very simple vtables
   /// without any bases. Just used for testing for now.
-  void layoutSimpleVtable(const CXXRecordDecl *RD);
+  void layoutSimpleVtable(BaseSubobject Base);
   
 public:
   VtableBuilder(const CXXRecordDecl *MostDerivedClass)
     : MostDerivedClass(MostDerivedClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
 
-    layoutSimpleVtable(MostDerivedClass);      
+    layoutSimpleVtable(BaseSubobject(MostDerivedClass, 0));
   }
 
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
 };
 
-void VtableBuilder::layoutSimpleVtable(const CXXRecordDecl *RD) {
-  assert(!RD->getNumBases() && 
-         "We don't support layout for vtables with bases right now!");
-  
-  // First, add the offset to top.
-  Components.push_back(VtableComponent::MakeOffsetToTop(0));
-  
-  // Next, add the RTTI.
-  Components.push_back(VtableComponent::MakeRTTI(RD));
-  
-  // Record the address point.
-  AddressPoints.insert(std::make_pair(BaseSubobject(RD, 0), Components.size()));
+/// OverridesMethodInPrimaryBase - Checks whether whether this virtual member 
+/// function overrides a member function in a direct or indirect primary base.
+/// Returns the overridden member function, or null if none was found.
+static const CXXMethodDecl * 
+OverridesMethodInPrimaryBase(const CXXMethodDecl *MD,
+                             VtableBuilder::PrimaryBasesSetTy &PrimaryBases) {
+  for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+       E = MD->end_overridden_methods(); I != E; ++I) {
+    const CXXMethodDecl *OverriddenMD = *I;
+    const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
+    assert(OverriddenMD->isCanonicalDecl() &&
+           "Should have the canonical decl of the overridden RD!");
+    
+    if (PrimaryBases.count(OverriddenRD))
+      return OverriddenMD;
+  }
+      
+  return 0;
+}
+
+void 
+VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
+                                            PrimaryBasesSetTy &PrimaryBases) {
+  const CXXRecordDecl *RD = Base.getBase();
+
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
+    if (Layout.getPrimaryBaseWasVirtual())
+      assert(false && "FIXME: Handle vbases here.");
+    else
+      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+             "Primary base should have a zero offset!");
+    
+    layoutVirtualMemberFunctions(BaseSubobject(PrimaryBase, 0), PrimaryBases);
+    
+    if (!PrimaryBases.insert(PrimaryBase))
+      assert(false && "Found a duplicate primary base!");
+  }
 
   // Now go through all virtual member functions and add them.
   for (CXXRecordDecl::method_iterator I = RD->method_begin(),
        E = RD->method_end(); I != E; ++I) {
     const CXXMethodDecl *MD = *I;
-    
+  
     if (!MD->isVirtual())
       continue;
+
+    // Get the final overrider.
+    const CXXMethodDecl *Overrider = Overriders.getOverrider(Base, MD);
+
+    // Check if this virtual member function overrides a method in a primary
+    // base. If this is the case, and the return type doesn't require adjustment
+    // then we can just use the member function from the primary base.
+    if (OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
+      assert(!ReturnTypeConversionRequiresAdjustment(Context, Overrider, MD) &&
+             "FIXME: Handle covariant thunks!");
+      
+      continue;
+    }
     
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
       // Add both the complete destructor and the deleting destructor.
@@ -531,6 +593,42 @@ void VtableBuilder::layoutSimpleVtable(const CXXRecordDecl *RD) {
       // Add the function.
       Components.push_back(VtableComponent::MakeFunction(MD));
     }
+  }
+}
+
+void VtableBuilder::layoutSimpleVtable(BaseSubobject Base) {
+  const CXXRecordDecl *RD = Base.getBase();
+  
+  // First, add the offset to top.
+  Components.push_back(VtableComponent::MakeOffsetToTop(0));
+  
+  // Next, add the RTTI.
+  Components.push_back(VtableComponent::MakeRTTI(RD));
+  
+  // Record the address point.
+  // FIXME: Record the address point for all primary bases.
+  AddressPoints.insert(std::make_pair(Base, Components.size()));
+
+  // Now go through all virtual member functions and add them.
+  PrimaryBasesSetTy PrimaryBases;
+  layoutVirtualMemberFunctions(Base, PrimaryBases);
+
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+
+  // Traverse bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    // Ignore the primary base.
+    if (BaseDecl == PrimaryBase)
+      continue;
+    
+    assert(!I->isVirtual() && "FIXME: Handle virtual bases");
+    
+    assert(false && "FIXME: Handle secondary virtual tables!");
   }
 }
 
@@ -1726,7 +1824,7 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
 
   // Collect all the primary bases, so we can check whether methods override
   // a method from the base.
-  llvm::SmallPtrSet<const CXXRecordDecl *, 5> PrimaryBases;
+  VtableBuilder::PrimaryBasesSetTy PrimaryBases;
   for (ASTRecordLayout::primary_base_info_iterator
        I = Layout.primary_base_begin(), E = Layout.primary_base_end();
        I != E; ++I)
@@ -1745,42 +1843,30 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
     bool ShouldAddEntryForMethod = true;
     
     // Check if this method overrides a method in the primary base.
-    for (CXXMethodDecl::method_iterator i = MD->begin_overridden_methods(),
-         e = MD->end_overridden_methods(); i != e; ++i) {
-      const CXXMethodDecl *OverriddenMD = *i;
-      const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
-      assert(OverriddenMD->isCanonicalDecl() &&
-             "Should have the canonical decl of the overridden RD!");
-      
-      if (PrimaryBases.count(OverriddenRD)) {
-        // Check if converting from the return type of the method to the 
-        // return type of the overridden method requires conversion.
-        QualType ReturnType = 
-          MD->getType()->getAs<FunctionType>()->getResultType();
-        QualType OverriddenReturnType =
-          OverriddenMD->getType()->getAs<FunctionType>()->getResultType();
-        
-        if (!TypeConversionRequiresAdjustment(CGM.getContext(), 
-                                            ReturnType, OverriddenReturnType)) {
-          // This index is shared between the index in the vtable of the primary
-          // base class.
-          if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-            const CXXDestructorDecl *OverriddenDD = 
-              cast<CXXDestructorDecl>(OverriddenMD);
-            
-            // Add both the complete and deleting entries.
-            MethodVtableIndices[GlobalDecl(DD, Dtor_Complete)] = 
-              getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
-            MethodVtableIndices[GlobalDecl(DD, Dtor_Deleting)] = 
-              getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
-          } else {
-            MethodVtableIndices[MD] = getMethodVtableIndex(OverriddenMD);
-          }
+    if (const CXXMethodDecl *OverriddenMD = 
+          OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
+      // Check if converting from the return type of the method to the 
+      // return type of the overridden method requires conversion.
+      if (!ReturnTypeConversionRequiresAdjustment(CGM.getContext(), 
+                                                  MD, OverriddenMD)) {
+        // This index is shared between the index in the vtable of the primary
+        // base class.
+        if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+          const CXXDestructorDecl *OverriddenDD = 
+            cast<CXXDestructorDecl>(OverriddenMD);
           
-          // We don't need to add an entry for this method.
-          ShouldAddEntryForMethod = false;
-          break;
-        }        
+          // Add both the complete and deleting entries.
+          MethodVtableIndices[GlobalDecl(DD, Dtor_Complete)] = 
+            getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Complete));
+          MethodVtableIndices[GlobalDecl(DD, Dtor_Deleting)] = 
+            getMethodVtableIndex(GlobalDecl(OverriddenDD, Dtor_Deleting));
+        } else {
+          MethodVtableIndices[MD] = getMethodVtableIndex(OverriddenMD);
+        }
+        
+        // We don't need to add an entry for this method.
+        ShouldAddEntryForMethod = false;
+        break;
       }
     }
     
