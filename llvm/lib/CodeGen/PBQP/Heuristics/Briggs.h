@@ -128,14 +128,7 @@ namespace PBQP {
       /// selected for heuristic reduction instead.
       bool shouldOptimallyReduce(Graph::NodeItr nItr) {
         if (getSolver().getSolverDegree(nItr) < 3) {
-          if (getGraph().getNodeCosts(nItr)[0] !=
-                std::numeric_limits<PBQPNum>::infinity()) {
-            return true;
-          }
-          // Otherwise we have an infinite spill cost node.
-          initializeNode(nItr);
-          NodeData &nd = getHeuristicNodeData(nItr);
-          return nd.isAllocable;
+          return true;
         }
         // else
         return false;

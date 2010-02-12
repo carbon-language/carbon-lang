@@ -18,7 +18,6 @@
 
 #include "Graph.h"
 #include "Solution.h"
-#include "llvm/Support/raw_ostream.h"
 #include <vector>
 #include <limits>
 
@@ -494,14 +493,23 @@ namespace PBQP {
 
     bool tryNormaliseEdgeMatrix(Graph::EdgeItr &eItr) {
 
+      const PBQPNum infinity = std::numeric_limits<PBQPNum>::infinity();
+
       Matrix &edgeCosts = g.getEdgeCosts(eItr);
       Vector &uCosts = g.getNodeCosts(g.getEdgeNode1(eItr)),
              &vCosts = g.getNodeCosts(g.getEdgeNode2(eItr));
 
       for (unsigned r = 0; r < edgeCosts.getRows(); ++r) {
-        PBQPNum rowMin = edgeCosts.getRowMin(r);
+        PBQPNum rowMin = infinity;
+
+        for (unsigned c = 0; c < edgeCosts.getCols(); ++c) {
+          if (vCosts[c] != infinity && edgeCosts[r][c] < rowMin)
+            rowMin = edgeCosts[r][c];
+        }
+
         uCosts[r] += rowMin;
-        if (rowMin != std::numeric_limits<PBQPNum>::infinity()) {
+
+        if (rowMin != infinity) {
           edgeCosts.subFromRow(r, rowMin);
         }
         else {
@@ -510,9 +518,16 @@ namespace PBQP {
       }
 
       for (unsigned c = 0; c < edgeCosts.getCols(); ++c) {
-        PBQPNum colMin = edgeCosts.getColMin(c);
+        PBQPNum colMin = infinity;
+
+        for (unsigned r = 0; r < edgeCosts.getRows(); ++r) {
+          if (uCosts[r] != infinity && edgeCosts[r][c] < colMin)
+            colMin = edgeCosts[r][c];
+        }
+
         vCosts[c] += colMin;
-        if (colMin != std::numeric_limits<PBQPNum>::infinity()) {
+
+        if (colMin != infinity) {
           edgeCosts.subFromCol(c, colMin);
         }
         else {
