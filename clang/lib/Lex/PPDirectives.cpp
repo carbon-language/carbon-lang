@@ -1514,17 +1514,20 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   // Check to see if this is the last token on the #if[n]def line.
   CheckEndOfDirective(isIfndef ? "ifndef" : "ifdef");
 
+  IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
+  MacroInfo *MI = getMacroInfo(MII);
+  
   if (CurPPLexer->getConditionalStackDepth() == 0) {
-    // If the start of a top-level #ifdef, inform MIOpt.
-    if (!ReadAnyTokensBeforeDirective) {
+    // If the start of a top-level #ifdef and if the macro is not defined,
+    // inform MIOpt that this might be the start of a proper include guard.
+    // Otherwise it is some other form of unknown conditional which we can't
+    // handle.
+    if (!ReadAnyTokensBeforeDirective && MI == 0) {
       assert(isIfndef && "#ifdef shouldn't reach here");
-      CurPPLexer->MIOpt.EnterTopLevelIFNDEF(MacroNameTok.getIdentifierInfo());
+      CurPPLexer->MIOpt.EnterTopLevelIFNDEF(MII);
     } else
       CurPPLexer->MIOpt.EnterTopLevelConditional();
   }
-
-  IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
-  MacroInfo *MI = getMacroInfo(MII);
 
   // If there is a macro, process it.
   if (MI)  // Mark it used.
@@ -1558,7 +1561,7 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
   // If this condition is equivalent to #ifndef X, and if this is the first
   // directive seen, handle it for the multiple-include optimization.
   if (CurPPLexer->getConditionalStackDepth() == 0) {
-    if (!ReadAnyTokensBeforeDirective && IfNDefMacro)
+    if (!ReadAnyTokensBeforeDirective && IfNDefMacro && ConditionalTrue)
       CurPPLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
     else
       CurPPLexer->MIOpt.EnterTopLevelConditional();
