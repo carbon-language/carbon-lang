@@ -24,7 +24,8 @@ namespace llvm {
 namespace X86 {
 enum Fixups {
   reloc_pcrel_4byte = FirstTargetFixupKind,  // 32-bit pcrel, e.g. a branch.
-  reloc_pcrel_1byte                          // 8-bit pcrel, e.g. branch_1
+  reloc_pcrel_1byte,                         // 8-bit pcrel, e.g. branch_1
+  reloc_riprel_4byte                         // 32-bit rip-relative   
 };
 }
 }
@@ -45,13 +46,14 @@ public:
   ~X86MCCodeEmitter() {}
 
   unsigned getNumFixupKinds() const {
-    return 2;
+    return 3;
   }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
       { "reloc_pcrel_4byte", 0, 4 * 8 },
-      { "reloc_pcrel_1byte", 0, 1 * 8 }
+      { "reloc_pcrel_1byte", 0, 1 * 8 },
+      { "reloc_riprel_4byte", 0, 4 * 8 }
     };
     
     if (Kind < FirstTargetFixupKind)
@@ -83,7 +85,8 @@ public:
   void EmitImmediate(const MCOperand &Disp, 
                      unsigned ImmSize, MCFixupKind FixupKind,
                      unsigned &CurByte, raw_ostream &OS,
-                     SmallVectorImpl<MCFixup> &Fixups) const;
+                     SmallVectorImpl<MCFixup> &Fixups,
+                     int ImmOffset = 0) const;
   
   inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
                                         unsigned RM) {
@@ -105,7 +108,7 @@ public:
   
   void EmitMemModRMByte(const MCInst &MI, unsigned Op,
                         unsigned RegOpcodeField, 
-                        unsigned &CurByte, raw_ostream &OS,
+                        unsigned TSFlags, unsigned &CurByte, raw_ostream &OS,
                         SmallVectorImpl<MCFixup> &Fixups) const;
   
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
@@ -152,23 +155,27 @@ static MCFixupKind getImmFixupKind(unsigned TSFlags) {
 void X86MCCodeEmitter::
 EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
               unsigned &CurByte, raw_ostream &OS,
-              SmallVectorImpl<MCFixup> &Fixups) const {
+              SmallVectorImpl<MCFixup> &Fixups, int ImmOffset) const {
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (DispOp.isImm()) {
-    EmitConstant(DispOp.getImm(), Size, CurByte, OS);
+    EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
     return;
   }
 
+  // If we have an immoffset, add it to the expression.
+  const MCExpr *Expr = DispOp.getExpr();
+  // FIXME: NO CONTEXT.
+  
   // Emit a symbolic constant as a fixup and 4 zeros.
-  Fixups.push_back(MCFixup::Create(CurByte, DispOp.getExpr(), FixupKind));
+  Fixups.push_back(MCFixup::Create(CurByte, Expr, FixupKind));
   EmitConstant(0, Size, CurByte, OS);
 }
 
 
 void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
                                         unsigned RegOpcodeField,
-                                        unsigned &CurByte,
+                                        unsigned TSFlags, unsigned &CurByte,
                                         raw_ostream &OS,
                                         SmallVectorImpl<MCFixup> &Fixups) const{
   const MCOperand &Disp     = MI.getOperand(Op+3);
@@ -182,7 +189,15 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     assert(IndexReg.getReg() == 0 && Is64BitMode &&
            "Invalid rip-relative address");
     EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
-    EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
+    
+    // rip-relative addressing is actually relative to the *next* instruction.
+    // Since an immediate can follow the mod/rm byte for an instruction, this
+    // means that we need to bias the immediate field of the instruction with
+    // the size of the immediate field.  If we have this case, add it into the
+    // expression to emit.
+    int ImmSize = X86II::hasImm(TSFlags) ? X86II::getSizeOfImm(TSFlags) : 0;
+    EmitImmediate(Disp, 4, MCFixupKind(X86::reloc_riprel_4byte),
+                  CurByte, OS, Fixups, -ImmSize);
     return;
   }
   
@@ -514,7 +529,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp,
                      GetX86RegNum(MI.getOperand(CurOp + X86AddrNumOperands)),
-                     CurByte, OS, Fixups);
+                     TSFlags, CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands + 1;
     break;
       
@@ -537,7 +552,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       AddrOperands = X86AddrNumOperands;
     
     EmitMemModRMByte(MI, CurOp+1, GetX86RegNum(MI.getOperand(CurOp)),
-                     CurByte, OS, Fixups);
+                     TSFlags, CurByte, OS, Fixups);
     CurOp += AddrOperands + 1;
     break;
   }
@@ -567,7 +582,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM6m: case X86II::MRM7m:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitMemModRMByte(MI, CurOp, (TSFlags & X86II::FormMask)-X86II::MRM0m,
-                     CurByte, OS, Fixups);
+                     TSFlags, CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands;
     break;
   case X86II::MRM_C1:

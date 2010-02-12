@@ -405,6 +405,10 @@ namespace X86II {
     return TSFlags >> X86II::OpcodeShift;
   }
   
+  static inline bool hasImm(unsigned TSFlags) {
+    return (TSFlags & X86II::ImmMask) != 0;
+  }
+  
   /// getSizeOfImm - Decode the "size of immediate" field from the TSFlags field
   /// of the specified instruction.
   static inline unsigned getSizeOfImm(unsigned TSFlags) {
