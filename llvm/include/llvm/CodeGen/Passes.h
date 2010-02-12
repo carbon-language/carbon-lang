@@ -174,6 +174,10 @@ namespace llvm {
   /// optimization by increasing uses of extended values.
   FunctionPass *createOptimizeExtsPass();
 
+  /// createOptimizePHIsPass - This pass optimizes machine instruction PHIs
+  /// to take advantage of opportunities created during DAG legalization.
+  FunctionPass *createOptimizePHIsPass();
+
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
   FunctionPass *createStackSlotColoringPass(bool);
 

@@ -299,6 +299,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createOptimizeExtsPass());
+    PM.add(createOptimizePHIsPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
     if (!DisableMachineSink)

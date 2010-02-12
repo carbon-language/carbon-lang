@@ -39,6 +39,7 @@ add_llvm_library(LLVMCodeGen
   ObjectCodeEmitter.cpp
   OcamlGC.cpp
   OptimizeExts.cpp
+  OptimizePHIs.cpp
   PHIElimination.cpp
   Passes.cpp
   PostRASchedulerList.cpp
