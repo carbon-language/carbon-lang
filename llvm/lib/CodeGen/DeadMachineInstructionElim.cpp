@@ -64,8 +64,8 @@ bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
     if (MO.isReg() && MO.isDef()) {
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isPhysicalRegister(Reg) ?
-          LivePhysRegs[Reg] : !MRI->use_empty(Reg)) {
-        // This def has a use. Don't delete the instruction!
+          LivePhysRegs[Reg] : !MRI->use_nodbg_empty(Reg)) {
+        // This def has a non-debug use. Don't delete the instruction!
         return false;
       }
     }
@@ -111,23 +111,31 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
          MIE = MBB->rend(); MII != MIE; ) {
       MachineInstr *MI = &*MII;
 
-      if (MI->isDebugValue()) {
-        // Don't delete the DBG_VALUE itself, but if its Value operand is
-        // a vreg and this is the only use, substitute an undef operand;
-        // the former operand will then be deleted normally.
-        if (MI->getNumOperands()==3 && MI->getOperand(0).isReg()) {
-          unsigned Reg = MI->getOperand(0).getReg();
-          MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg);
-          if (I == MRI->use_nodbg_end())
-            // All uses are DBG_VALUEs.  Nullify this one; if we find
-            // others later we will nullify them then.
-            MI->getOperand(0).setReg(0U);
-        }
-      }
-
       // If the instruction is dead, delete it!
       if (isDead(MI)) {
         DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << *MI);
+        // It is possible that some DBG_VALUE instructions refer to this
+        // instruction.  Examine each def operand for such references;
+        // if found, mark the DBG_VALUE as undef (but don't delete it).
+        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+          const MachineOperand &MO = MI->getOperand(i);
+          if (!MO.isReg() || !MO.isDef())
+            continue;
+          unsigned Reg = MO.getReg();
+          if (!TargetRegisterInfo::isVirtualRegister(Reg))
+            continue;
+          MachineRegisterInfo::use_iterator nextI;
+          for (MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg),
+               E = MRI->use_end(); I!=E; I=nextI) {
+            nextI = llvm::next(I);  // I is invalidated by the setReg
+            MachineOperand& Use = I.getOperand();
+            MachineInstr *UseMI = Use.getParent();
+            if (UseMI==MI)
+              continue;
+            assert(Use.isDebug());
+            UseMI->getOperand(0).setReg(0U);
+          }
+        }
         AnyChanges = true;
         MI->eraseFromParent();
         ++NumDeletes;
