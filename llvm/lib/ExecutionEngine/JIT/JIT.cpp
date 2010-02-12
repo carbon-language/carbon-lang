@@ -553,8 +553,12 @@ GenericValue JIT::runFunction(Function *F,
   else
     ReturnInst::Create(F->getContext(), StubBB);           // Just return void.
 
-  // Finally, return the value returned by our nullary stub function.
-  return runFunction(Stub, std::vector<GenericValue>());
+  // Finally, call our nullary stub function.
+  GenericValue Result = runFunction(Stub, std::vector<GenericValue>());
+  // Erase it, since no other function can have a reference to it.
+  Stub->eraseFromParent();
+  // And return the result.
+  return Result;
 }
 
 void JIT::RegisterJITEventListener(JITEventListener *L) {
