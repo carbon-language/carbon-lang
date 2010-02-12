@@ -176,9 +176,17 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   const MCOperand &Scale    = MI.getOperand(Op+1);
   const MCOperand &IndexReg = MI.getOperand(Op+2);
   unsigned BaseReg = Base.getReg();
-  unsigned BaseRegNo = -1U;
-  if (BaseReg != 0 && BaseReg != X86::RIP)
-    BaseRegNo = GetX86RegNum(Base);
+  
+  // Handle %rip relative addressing.
+  if (BaseReg == X86::RIP) {    // [disp32+RIP] in X86-64 mode
+    assert(IndexReg.getReg() == 0 && Is64BitMode &&
+           "Invalid rip-relative address");
+    EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
+    EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
+    return;
+  }
+  
+  unsigned BaseRegNo = BaseReg ? GetX86RegNum(Base) : -1U;
   
   // Determine whether a SIB byte is needed.
   // If no BaseReg, issue a RIP relative instruction only if the MCE can 
@@ -195,8 +203,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
       // byte to emit an addr that is just 'disp32' (the non-RIP relative form).
       (!Is64BitMode || BaseReg != 0)) {
 
-    if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
-        BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
+    if (BaseReg == 0) {          // [disp32]     in X86-32 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
       EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
       return;
