@@ -27,3 +27,9 @@ int main(int argc, char** argv) {
     argCount = 3;
   }(argc);
 }
+
+// radar 7528255
+void f0() {
+  ^(int, double d, char) {}(1, 1.34, 'a'); // expected-error {{parameter name omitted}} \
+				 	   // expected-error {{parameter name omitted}}
+}

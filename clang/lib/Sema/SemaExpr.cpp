@@ -6830,8 +6830,15 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     // empty arg list, don't push any params.
     CurBlock->isVariadic = false;
   } else if (FTI.hasPrototype) {
-    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-      CurBlock->Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
+    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+      ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+      if (Param->getIdentifier() == 0 &&
+          !Param->isImplicit() &&
+          !Param->isInvalidDecl() &&
+          !getLangOptions().CPlusPlus)
+        Diag(Param->getLocation(), diag::err_parameter_name_omitted);
+      CurBlock->Params.push_back(Param);
+    }
     CurBlock->isVariadic = FTI.isVariadic;
   }
   CurBlock->TheDecl->setParams(CurBlock->Params.data(),

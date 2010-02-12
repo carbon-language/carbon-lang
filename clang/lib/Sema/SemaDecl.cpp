@@ -3875,6 +3875,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
         // Recover by removing the name
         II = 0;
         D.SetIdentifier(0, D.getIdentifierLoc());
+        D.setInvalidType(true);
       }
     }
   }
