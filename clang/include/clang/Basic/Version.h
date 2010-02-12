@@ -56,16 +56,16 @@ namespace clang {
   
   /// \brief Retrieves the repository revision number (or identifer) from which
   ///  this Clang was built.
-  llvm::StringRef getClangRevision();
+  std::string getClangRevision();
   
   /// \brief Retrieves the full repository version that is an amalgamation of
   ///  the information in getClangRepositoryPath() and getClangRevision().
-  llvm::StringRef getClangFullRepositoryVersion();
+  std::string getClangFullRepositoryVersion();
   
   /// \brief Retrieves a string representing the complete clang version,
   ///   which includes the clang version number, the repository version, 
   ///   and the vendor tag.
-  const char *getClangFullVersion();
+  std::string getClangFullVersion();
 }
 
 #endif // LLVM_CLANG_BASIC_VERSION_H

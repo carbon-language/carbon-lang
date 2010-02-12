@@ -39,44 +39,37 @@ llvm::StringRef getClangRepositoryPath() {
   return llvm::StringRef(URL, URLEnd - URL);
 }
 
-
-llvm::StringRef getClangRevision() {
+std::string getClangRevision() {
 #ifndef SVN_REVISION
   // Subversion was not available at build time?
-  return llvm::StringRef();
+  return "";
 #else
-  static std::string revision;
-  if (revision.empty()) {
-    llvm::raw_string_ostream OS(revision);
-    OS << strtol(SVN_REVISION, 0, 10);
-  }
+  std::string revision;
+  llvm::raw_string_ostream OS(revision);
+  OS << strtol(SVN_REVISION, 0, 10);
   return revision;
 #endif
 }
 
-llvm::StringRef getClangFullRepositoryVersion() {
-  static std::string buf;
-  if (buf.empty()) {
-    llvm::raw_string_ostream OS(buf);
-    OS << getClangRepositoryPath();
-    llvm::StringRef Revision = getClangRevision();
-    if (!Revision.empty())
-      OS << ' ' << Revision;
-  }
+std::string getClangFullRepositoryVersion() {
+  std::string buf;
+  llvm::raw_string_ostream OS(buf);
+  OS << getClangRepositoryPath();
+  llvm::StringRef Revision = getClangRevision();
+  if (!Revision.empty())
+    OS << ' ' << Revision;
   return buf;
 }
   
-const char *getClangFullVersion() {
-  static std::string buf;
-  if (buf.empty()) {
-    llvm::raw_string_ostream OS(buf);
+std::string getClangFullVersion() {
+  std::string buf;
+  llvm::raw_string_ostream OS(buf);
 #ifdef CLANG_VENDOR
-    OS << CLANG_VENDOR;
+  OS << CLANG_VENDOR;
 #endif
-    OS << "clang version " CLANG_VERSION_STRING " ("
-       << getClangFullRepositoryVersion() << ')';
-  }
-  return buf.c_str();
+  OS << "clang version " CLANG_VERSION_STRING " ("
+     << getClangFullRepositoryVersion() << ')';
+  return buf;
 }
-  
+
 } // end namespace clang

@@ -2169,8 +2169,8 @@ void clang_disposeString(CXString string) {
   
 extern "C" {
 
-const char *clang_getClangVersion() {
-  return getClangFullVersion();
+CXString clang_getClangVersion() {
+  return CIndexer::createCXString(getClangFullVersion(), true);
 }
 
 } // end: extern "C"
