@@ -484,8 +484,8 @@ CollectRecordFields(const RecordDecl *RD, llvm::DICompileUnit Unit,
 
     llvm::StringRef FieldName = Field->getName();
 
-    // Ignore unnamed fields.
-    if (FieldName.empty())
+    // Ignore unnamed fields. Do not ignore unnamed records.
+    if (FieldName.empty() && !isa<RecordType>(Field->getType()))
       continue;
 
     // Get the location for the field.
