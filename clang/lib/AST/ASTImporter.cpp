@@ -1038,30 +1038,20 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
             break;
           }
 
-          if (const IncompleteArrayType *FoundArray
-                = Importer.getToContext().getAsIncompleteArrayType(
-                                                        FoundVar->getType())) {
-            if (const ConstantArrayType *TArray
-                  = Importer.getToContext().getAsConstantArrayType(T)) {
-              if (Importer.getToContext().typesAreCompatible(
-                                               TArray->getElementType(), 
-                                               FoundArray->getElementType())) {
-                FoundVar->setType(T);
-                MergeWithVar = FoundVar;
-                break;
-              }
-            }
-          } else if (const IncompleteArrayType *TArray
-                        = Importer.getToContext().getAsIncompleteArrayType(T)) {
-            if (const ConstantArrayType *FoundArray
-                   = Importer.getToContext().getAsConstantArrayType(
-                                                         FoundVar->getType())) {
-              if (Importer.getToContext().typesAreCompatible(
-                                               TArray->getElementType(), 
-                                               FoundArray->getElementType())) {
-                MergeWithVar = FoundVar;
-                break;
-              }
+          const ArrayType *FoundArray
+            = Importer.getToContext().getAsArrayType(FoundVar->getType());
+          const ArrayType *TArray
+            = Importer.getToContext().getAsArrayType(T);
+          if (FoundArray && TArray) {
+            if (isa<IncompleteArrayType>(FoundArray) &&
+                isa<ConstantArrayType>(TArray)) {
+              FoundVar->setType(T);
+              MergeWithVar = FoundVar;
+              break;
+            } else if (isa<IncompleteArrayType>(TArray) &&
+                       isa<ConstantArrayType>(FoundArray)) {
+              MergeWithVar = FoundVar;
+              break;
             }
           }
 
