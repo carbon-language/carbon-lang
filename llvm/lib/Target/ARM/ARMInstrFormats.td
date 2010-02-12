@@ -56,6 +56,9 @@ def NEONGetLnFrm  : Format<25>;
 def NEONSetLnFrm  : Format<26>;
 def NEONDupFrm    : Format<27>;
 
+def MiscFrm       : Format<29>;
+def ThumbMiscFrm  : Format<30>;
+
 // Misc flags.
 
 // the instruction has a Rn register operand.

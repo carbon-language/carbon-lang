@@ -605,16 +605,44 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
 }
 
-def NOP : AI<(outs), (ins), Pseudo, NoItinerary, "nop", "",
+def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{7-0} = 0b00000000;
 }
 
+def YIELD : AI<(outs), (ins), MiscFrm, NoItinerary, "yield", "",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV6T2]> {
+  let Inst{27-16} = 0b001100100000;
+  let Inst{7-0} = 0b00000001;
+}
+
+def WFE : AI<(outs), (ins), MiscFrm, NoItinerary, "wfe", "",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV6T2]> {
+  let Inst{27-16} = 0b001100100000;
+  let Inst{7-0} = 0b00000010;
+}
+
+def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV6T2]> {
+  let Inst{27-16} = 0b001100100000;
+  let Inst{7-0} = 0b00000011;
+}
+
+def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV6T2]> {
+  let Inst{27-16} = 0b001100100000;
+  let Inst{7-0} = 0b00000100;
+}
+
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
-def BKPT : AI<(outs), (ins i32imm:$val), Pseudo, NoItinerary, "bkpt", "\t$val",
+def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
               [/* For disassembly only; pattern left blank */]>,
            Requires<[IsARM]> {
   let Inst{27-20} = 0b00010010;
@@ -627,7 +655,7 @@ def BKPT : AI<(outs), (ins i32imm:$val), Pseudo, NoItinerary, "bkpt", "\t$val",
 // opt{5} = changemode from Inst{17}
 // opt{8-6} = AIF from Inst{8-6}
 // opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
-def CPS : AXI<(outs),(ins i32imm:$opt), Pseudo, NoItinerary, "cps${opt:cps}",
+def CPS : AXI<(outs),(ins i32imm:$opt), MiscFrm, NoItinerary, "cps${opt:cps}",
               [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM]> {
   let Inst{31-28} = 0b1111;
@@ -636,7 +664,7 @@ def CPS : AXI<(outs),(ins i32imm:$opt), Pseudo, NoItinerary, "cps${opt:cps}",
   let Inst{5} = 0;
 }
 
-def DBG : AI<(outs), (ins i32imm:$opt), Pseudo, NoItinerary, "dbg", "\t$opt",
+def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV7]> {
   let Inst{27-16} = 0b001100100000;
@@ -644,7 +672,7 @@ def DBG : AI<(outs), (ins i32imm:$opt), Pseudo, NoItinerary, "dbg", "\t$opt",
 }
 
 // A5.4 Permanently UNDEFINED instructions.
-def TRAP : AI<(outs), (ins), Pseudo, NoItinerary, "trap", "",
+def TRAP : AI<(outs), (ins), MiscFrm, NoItinerary, "trap", "",
               [/* For disassembly only; pattern left blank */]>,
            Requires<[IsARM]> {
   let Inst{27-25} = 0b011;
