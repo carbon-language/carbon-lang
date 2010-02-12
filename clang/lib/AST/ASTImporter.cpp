@@ -80,14 +80,17 @@ namespace {
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
                          SourceLocation &Loc);                            
-    bool ImportDeclParts(DeclaratorDecl *D, 
+    bool ImportDeclParts(ValueDecl *D, 
                          DeclContext *&DC, DeclContext *&LexicalDC,
                          DeclarationName &Name, SourceLocation &Loc, 
                          QualType &T);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
+    bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum);
     Decl *VisitDecl(Decl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
+    Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitRecordDecl(RecordDecl *D);
+    Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
@@ -99,6 +102,7 @@ namespace {
     // Importing expressions
     Expr *VisitExpr(Expr *E);
     Expr *VisitIntegerLiteral(IntegerLiteral *E);
+    Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
 }
 
@@ -497,7 +501,7 @@ bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC,
   return false;
 }
 
-bool ASTNodeImporter::ImportDeclParts(DeclaratorDecl *D, 
+bool ASTNodeImporter::ImportDeclParts(ValueDecl *D, 
                                       DeclContext *&DC, 
                                       DeclContext *&LexicalDC,
                                       DeclarationName &Name, 
@@ -518,7 +522,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
                                         RecordDecl *ToRecord) {  
   if (FromRecord->isUnion() != ToRecord->isUnion()) {
     Importer.ToDiag(ToRecord->getLocation(), 
-                    diag::warn_odr_class_type_inconsistent)
+                    diag::warn_odr_tag_type_inconsistent)
       << Importer.getToContext().getTypeDeclType(ToRecord);
     Importer.FromDiag(FromRecord->getLocation(), diag::note_odr_tag_kind_here)
       << FromRecord->getDeclName() << (unsigned)FromRecord->getTagKind();
@@ -529,7 +533,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
     if (CXXRecordDecl *ToCXX = dyn_cast<CXXRecordDecl>(ToRecord)) {
       if (FromCXX->getNumBases() != ToCXX->getNumBases()) {
         Importer.ToDiag(ToRecord->getLocation(), 
-                        diag::warn_odr_class_type_inconsistent)
+                        diag::warn_odr_tag_type_inconsistent)
           << Importer.getToContext().getTypeDeclType(ToRecord);
         Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_number_of_bases)
           << ToCXX->getNumBases();
@@ -553,7 +557,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
         if (!Importer.getToContext().typesAreCompatible(FromBaseT, 
                                                         ToBase->getType())) {
           Importer.ToDiag(ToRecord->getLocation(), 
-                          diag::warn_odr_class_type_inconsistent)
+                          diag::warn_odr_tag_type_inconsistent)
             << Importer.getToContext().getTypeDeclType(ToRecord);
           Importer.ToDiag(ToBase->getSourceRange().getBegin(),
                           diag::note_odr_base)
@@ -569,7 +573,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
         // Check virtual vs. non-virtual inheritance mismatch.
         if (FromBase->isVirtual() != ToBase->isVirtual()) {
           Importer.ToDiag(ToRecord->getLocation(), 
-                          diag::warn_odr_class_type_inconsistent)
+                          diag::warn_odr_tag_type_inconsistent)
             << Importer.getToContext().getTypeDeclType(ToRecord);
           Importer.ToDiag(ToBase->getSourceRange().getBegin(),
                           diag::note_odr_virtual_base)
@@ -583,7 +587,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
       }
     } else if (FromCXX->getNumBases() > 0) {
       Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_class_type_inconsistent)
+                      diag::warn_odr_tag_type_inconsistent)
         << Importer.getToContext().getTypeDeclType(ToRecord);
       const CXXBaseSpecifier *FromBase = FromCXX->bases_begin();
       Importer.FromDiag(FromBase->getSourceRange().getBegin(),
@@ -604,7 +608,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
        ++FromField, ++ToField) {
     if (ToField == ToFieldEnd) {
       Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_class_type_inconsistent)
+                      diag::warn_odr_tag_type_inconsistent)
         << Importer.getToContext().getTypeDeclType(ToRecord);
       Importer.FromDiag(FromField->getLocation(), diag::note_odr_field)
         << FromField->getDeclName() << FromField->getType();
@@ -618,7 +622,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
   
     if (!Importer.getToContext().typesAreCompatible(FromT, ToField->getType())){
       Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_class_type_inconsistent)
+                      diag::warn_odr_tag_type_inconsistent)
         << Importer.getToContext().getTypeDeclType(ToRecord);
       Importer.ToDiag(ToField->getLocation(), diag::note_odr_field)
         << ToField->getDeclName() << ToField->getType();
@@ -629,7 +633,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
 
     if (FromField->isBitField() != ToField->isBitField()) {
       Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_class_type_inconsistent)
+                      diag::warn_odr_tag_type_inconsistent)
         << Importer.getToContext().getTypeDeclType(ToRecord);
       if (FromField->isBitField()) {
         llvm::APSInt Bits;
@@ -674,7 +678,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
       
       if (FromBits != ToBits) {
         Importer.ToDiag(ToRecord->getLocation(), 
-                        diag::warn_odr_class_type_inconsistent)
+                        diag::warn_odr_tag_type_inconsistent)
           << Importer.getToContext().getTypeDeclType(ToRecord);
         Importer.ToDiag(ToField->getLocation(), diag::note_odr_bit_field)
           << ToField->getDeclName() << ToField->getType()
@@ -689,7 +693,7 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
   
   if (ToField != ToFieldEnd) {
     Importer.ToDiag(ToRecord->getLocation(), 
-                    diag::warn_odr_class_type_inconsistent)
+                    diag::warn_odr_tag_type_inconsistent)
       << Importer.getToContext().getTypeDeclType(ToRecord);
     Importer.ToDiag(ToField->getLocation(), diag::note_odr_field)
       << ToField->getDeclName() << ToField->getType();
@@ -697,6 +701,67 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
     return false;
   }
 
+  return true;
+}
+
+bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
+  EnumDecl::enumerator_iterator ToEC = ToEnum->enumerator_begin(),
+                               ToEnd = ToEnum->enumerator_end();
+  for (EnumDecl::enumerator_iterator FromEC = FromEnum->enumerator_begin(),
+                                    FromEnd = FromEnum->enumerator_end();
+       FromEC != FromEnd; ++FromEC, ++ToEC) {
+    if (ToEC == ToEnd) {
+      Importer.ToDiag(ToEnum->getLocation(), 
+                      diag::warn_odr_tag_type_inconsistent)
+        << Importer.getToContext().getTypeDeclType(ToEnum);
+      Importer.FromDiag(FromEC->getLocation(), diag::note_odr_enumerator)
+        << FromEC->getDeclName() 
+        << FromEC->getInitVal().toString(10);
+      Importer.ToDiag(ToEnum->getLocation(),
+                      diag::note_odr_missing_enumerator);
+      return false;
+    }
+
+    llvm::APSInt FromVal = FromEC->getInitVal();
+    llvm::APSInt ToVal = ToEC->getInitVal();
+    if (FromVal.getBitWidth() > ToVal.getBitWidth())
+      ToVal.extend(FromVal.getBitWidth());
+    else if (ToVal.getBitWidth() > FromVal.getBitWidth())
+      FromVal.extend(ToVal.getBitWidth());
+    if (FromVal.isSigned() != ToVal.isSigned()) {
+      if (FromVal.isSigned())
+        ToVal.setIsSigned(true);
+      else
+        FromVal.setIsSigned(true);
+    }
+    
+    if (FromVal != ToVal || 
+        ToEC->getDeclName() != Importer.Import(FromEC->getDeclName())) {
+      Importer.ToDiag(ToEnum->getLocation(), 
+                      diag::warn_odr_tag_type_inconsistent)
+        << Importer.getToContext().getTypeDeclType(ToEnum);
+      Importer.ToDiag(ToEC->getLocation(), diag::note_odr_enumerator)
+        << ToEC->getDeclName() 
+        << ToEC->getInitVal().toString(10);
+      Importer.FromDiag(FromEC->getLocation(), diag::note_odr_enumerator)
+        << FromEC->getDeclName() 
+        << FromEC->getInitVal().toString(10);
+      return false;
+    }
+  }
+  
+  if (ToEC != ToEnd) {
+    Importer.ToDiag(ToEnum->getLocation(), 
+                    diag::warn_odr_tag_type_inconsistent)
+      << Importer.getToContext().getTypeDeclType(ToEnum);
+    Importer.ToDiag(ToEC->getLocation(), diag::note_odr_enumerator)
+      << ToEC->getDeclName() 
+      << ToEC->getInitVal().toString(10);
+    Importer.FromDiag(FromEnum->getLocation(),
+                      diag::note_odr_missing_enumerator);
+    return false;
+  }
+  
   return true;
 }
 
@@ -759,6 +824,94 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
   Importer.getImportedDecls()[D] = ToTypedef;
   LexicalDC->addDecl(ToTypedef);
   return ToTypedef;
+}
+
+Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
+  // Import the major distinguishing characteristics of this enum.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  // Figure out what enum name we're looking for.
+  unsigned IDNS = Decl::IDNS_Tag;
+  DeclarationName SearchName = Name;
+  if (!SearchName && D->getTypedefForAnonDecl()) {
+    SearchName = Importer.Import(D->getTypedefForAnonDecl()->getDeclName());
+    IDNS = Decl::IDNS_Ordinary;
+  } else if (Importer.getToContext().getLangOptions().CPlusPlus)
+    IDNS |= Decl::IDNS_Ordinary;
+  
+  // We may already have an enum of the same name; try to find and match it.
+  if (!DC->isFunctionOrMethod() && SearchName) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
+      
+      Decl *Found = *Lookup.first;
+      if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Found)) {
+        if (const TagType *Tag = Typedef->getUnderlyingType()->getAs<TagType>())
+          Found = Tag->getDecl();
+      }
+      
+      if (EnumDecl *FoundEnum = dyn_cast<EnumDecl>(Found)) {
+        if (IsStructuralMatch(D, FoundEnum)) {
+          // The enum types structurally match.
+          Importer.getImportedDecls()[D] = FoundEnum;
+          return FoundEnum;
+        }
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+    }
+  }
+  
+  // Create the enum declaration.
+  EnumDecl *ToEnum = EnumDecl::Create(Importer.getToContext(), DC, Loc,
+                                      Name.getAsIdentifierInfo(),
+                                      Importer.Import(D->getTagKeywordLoc()),
+                                      0);
+  ToEnum->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToEnum;
+  LexicalDC->addDecl(ToEnum);
+
+  // Import the integer type.
+  QualType ToIntegerType = Importer.Import(D->getIntegerType());
+  if (ToIntegerType.isNull())
+    return 0;
+  ToEnum->setIntegerType(ToIntegerType);
+  
+  // Import the definition
+  if (D->isDefinition()) {
+    QualType T = Importer.Import(Importer.getFromContext().getTypeDeclType(D));
+    if (T.isNull())
+      return 0;
+
+    QualType ToPromotionType = Importer.Import(D->getPromotionType());
+    if (ToPromotionType.isNull())
+      return 0;
+    
+    ToEnum->startDefinition();
+    for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
+         FromMemEnd = D->decls_end();
+         FromMem != FromMemEnd;
+         ++FromMem)
+      Importer.Import(*FromMem);
+    
+    ToEnum->completeDefinition(T, ToPromotionType);
+  }
+  
+  return ToEnum;
 }
 
 Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
@@ -891,6 +1044,51 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   return ToRecord;
 }
 
+Decl *ASTNodeImporter::VisitEnumConstantDecl(EnumConstantDecl *D) {
+  // Import the major distinguishing characteristics of this enumerator.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  QualType T;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
+    return 0;
+  
+  // Determine whether there are any other declarations with the same name and 
+  // in the same context.
+  if (!LexicalDC->isFunctionOrMethod()) {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    unsigned IDNS = Decl::IDNS_Ordinary;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
+        continue;
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, IDNS,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+      if (!Name)
+        return 0;
+    }
+  }
+  
+  Expr *Init = Importer.Import(D->getInitExpr());
+  if (D->getInitExpr() && !Init)
+    return 0;
+  
+  EnumConstantDecl *ToEnumerator
+    = EnumConstantDecl::Create(Importer.getToContext(), cast<EnumDecl>(DC), Loc, 
+                               Name.getAsIdentifierInfo(), T, 
+                               Init, D->getInitVal());
+  ToEnumerator->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToEnumerator;
+  LexicalDC->addDecl(ToEnumerator);
+  return ToEnumerator;
+}
 
 Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // Import the major distinguishing characteristics of this function.
@@ -963,25 +1161,25 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   
   // Create the imported function.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
-  FunctionDecl *ToFunction
+  FunctionDecl *ToEnumerator
     = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
                            Name, T, TInfo, D->getStorageClass(), 
                            D->isInlineSpecified(),
                            D->hasWrittenPrototype());
-  ToFunction->setLexicalDeclContext(LexicalDC);
-  Importer.getImportedDecls()[D] = ToFunction;
-  LexicalDC->addDecl(ToFunction);
+  ToEnumerator->setLexicalDeclContext(LexicalDC);
+  Importer.getImportedDecls()[D] = ToEnumerator;
+  LexicalDC->addDecl(ToEnumerator);
 
   // Set the parameters.
   for (unsigned I = 0, N = Parameters.size(); I != N; ++I) {
-    Parameters[I]->setOwningFunction(ToFunction);
-    ToFunction->addDecl(Parameters[I]);
+    Parameters[I]->setOwningFunction(ToEnumerator);
+    ToEnumerator->addDecl(Parameters[I]);
   }
-  ToFunction->setParams(Parameters.data(), Parameters.size());
+  ToEnumerator->setParams(Parameters.data(), Parameters.size());
 
   // FIXME: Other bits to merge?
   
-  return ToFunction;
+  return ToEnumerator;
 }
 
 Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
@@ -1168,6 +1366,20 @@ Expr *ASTNodeImporter::VisitIntegerLiteral(IntegerLiteral *E) {
 
   return new (Importer.getToContext()) 
     IntegerLiteral(E->getValue(), T, Importer.Import(E->getLocation()));
+}
+
+Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+
+  Expr *SubExpr = Importer.Import(E->getSubExpr());
+  if (!SubExpr)
+    return 0;
+  
+  return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
+                                                        SubExpr, 
+                                                        E->isLvalueCast());
 }
 
 ASTImporter::ASTImporter(Diagnostic &Diags,
