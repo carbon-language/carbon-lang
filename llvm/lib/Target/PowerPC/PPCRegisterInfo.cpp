@@ -427,6 +427,12 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(PPC::R2);  // System-reserved register
     Reserved.set(PPC::R13); // Small Data Area pointer register
   }
+  // Reserve R2 on Darwin to hack around the problem of save/restore of CR
+  // when the stack frame is too big to address directly; we need two regs.
+  // This is a hack.
+  if (Subtarget.isDarwinABI()) {
+    Reserved.set(PPC::R2);
+  }
   
   // On PPC64, r13 is the thread pointer. Never allocate this register.
   // Note that this is over conservative, as it also prevents allocation of R31
@@ -445,6 +451,12 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
     // The 64-bit SVR4 ABI reserves r2 for the TOC pointer.
     if (Subtarget.isSVR4ABI()) {
+      Reserved.set(PPC::X2);
+    }
+    // Reserve R2 on Darwin to hack around the problem of save/restore of CR
+    // when the stack frame is too big to address directly; we need two regs.
+    // This is a hack.
+    if (Subtarget.isDarwinABI()) {
       Reserved.set(PPC::X2);
     }
   }
