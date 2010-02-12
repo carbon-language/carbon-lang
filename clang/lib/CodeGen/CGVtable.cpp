@@ -125,7 +125,11 @@ public:
     /// Method - The method decl of the overrider.
     const CXXMethodDecl *Method;
     
-    OverriderInfo() : Method(0) { }
+    /// NeedsReturnAdjustment - Whether this overrider needs to adjust its
+    /// return type.
+    bool NeedsReturnAdjustment;
+    
+    OverriderInfo() : Method(0), NeedsReturnAdjustment(false) { }
   };
 
 private:
@@ -273,9 +277,23 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
                                        OverriddenMD)];
       assert(Overrider.Method && "Did not find existing overrider!");
 
-      assert(!ReturnTypeConversionRequiresAdjustment(Context, NewMD, 
-                                                     OverriddenMD) &&
-             "FIXME: Covariant return types not handled yet!");
+      /// We only need to do the return type check if the overrider doesn't
+      /// already need a return adjustment. Consider:
+      ///
+      /// struct A { virtual V1 *f(); }
+      /// struct B : A { virtual V2 *f(); }
+      /// struct C : B { virtual V2 *f(); }
+      ///
+      /// If we assume that that V2->V1 needs an adjustment, then when we
+      /// know that since A::f -> B::f needs an adjustment, then all classes
+      /// that eventually override B::f (and by transitivity A::f) are going to
+      /// need to have their return types adjusted.
+      if (!Overrider.NeedsReturnAdjustment) {
+        Overrider.NeedsReturnAdjustment = 
+          ReturnTypeConversionRequiresAdjustment(Context, NewMD, 
+                                                 OverriddenMD);
+      }
+
       // Set the new overrider.
       Overrider.Method = NewMD;
       
@@ -369,7 +387,10 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
     OverriderInfo Overrider = getOverrider(Base, MD);
 
     Out << "  " << MD->getQualifiedNameAsString() << " - ";
-    Out << Overrider.Method->getQualifiedNameAsString() << "\n";
+    Out << Overrider.Method->getQualifiedNameAsString();
+    if (Overrider.NeedsReturnAdjustment)
+      Out << " [ret-adj]";
+    Out << "\n";
   }  
 }
 
