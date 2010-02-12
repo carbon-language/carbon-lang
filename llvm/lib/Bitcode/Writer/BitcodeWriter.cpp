@@ -1511,7 +1511,7 @@ enum {
 };
 
 /// isARMTriplet - Return true if the triplet looks like:
-/// arm-*, thumb-*, armv[0-9]-*, thumbv[0-9]-*
+/// arm-*, thumb-*, armv[0-9]-*, thumbv[0-9]-*, armv5te-*, or armv6t2-*.
 static bool isARMTriplet(const std::string &TT) {
   size_t Pos = 0;
   size_t Size = TT.size();
@@ -1526,7 +1526,14 @@ static bool isARMTriplet(const std::string &TT) {
 
   if (TT[Pos] == '-')
     return true;
-  else if (TT[Pos] != 'v')
+  else if (TT[Pos] == 'v') {
+    if (Size >= Pos+4 &&
+        TT[Pos+1] == '6' && TT[Pos+2] == 't' && TT[Pos+3] == '2')
+      return true;
+    else if (Size >= Pos+4 &&
+             TT[Pos+1] == '5' && TT[Pos+2] == 't' && TT[Pos+3] == 'e')
+      return true;
+  } else
     return false;
   while (++Pos < Size && TT[Pos] != '-') {
     if (!isdigit(TT[Pos]))
@@ -1540,9 +1547,9 @@ static void EmitDarwinBCHeader(BitstreamWriter &Stream,
   unsigned CPUType = ~0U;
 
   // Match x86_64-*, i[3-9]86-*, powerpc-*, powerpc64-*, arm-*, thumb-*,
-  // armv[0-9]-*, thumbv[0-9]-*. The CPUType is a magic number from
-  // /usr/include/mach/machine.h.  It is ok to reproduce the specific constants
-  // here because they are implicitly part of the Darwin ABI.
+  // armv[0-9]-*, thumbv[0-9]-*, armv5te-*, or armv6t2-*. The CPUType is a magic
+  // number from /usr/include/mach/machine.h.  It is ok to reproduce the
+  // specific constants here because they are implicitly part of the Darwin ABI.
   enum {
     DARWIN_CPU_ARCH_ABI64      = 0x01000000,
     DARWIN_CPU_TYPE_X86        = 7,
