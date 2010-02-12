@@ -1863,6 +1863,27 @@ def STREXD : AIstrex<0b01, (outs GPR:$success),
                     []>;
 }
 
+// SWP/SWPB are deprecated in V6/V7 and for disassembly only.
+let mayLoad = 1 in {
+def SWP : AI<(outs GPR:$dst), (ins GPR:$src, GPR:$ptr), LdStExFrm, NoItinerary,
+             "swp", "\t$dst, $src, [$ptr]",
+             [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-23} = 0b00010;
+  let Inst{22} = 0; // B = 0
+  let Inst{21-20} = 0b00;
+  let Inst{7-4} = 0b1001;
+}
+
+def SWPB : AI<(outs GPR:$dst), (ins GPR:$src, GPR:$ptr), LdStExFrm, NoItinerary,
+             "swpb", "\t$dst, $src, [$ptr]",
+             [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-23} = 0b00010;
+  let Inst{22} = 1; // B = 1
+  let Inst{21-20} = 0b00;
+  let Inst{7-4} = 0b1001;
+}
+}
+
 //===----------------------------------------------------------------------===//
 // TLS Instructions
 //
