@@ -1924,8 +1924,6 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
     if (!MD->isVirtual())
       continue;
 
-    bool ShouldAddEntryForMethod = true;
-    
     // Check if this method overrides a method in the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
@@ -1948,13 +1946,9 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
         }
         
         // We don't need to add an entry for this method.
-        ShouldAddEntryForMethod = false;
-        break;
+        continue;
       }
     }
-    
-    if (!ShouldAddEntryForMethod)
-      continue;
     
     if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
       if (MD->isImplicit()) {
