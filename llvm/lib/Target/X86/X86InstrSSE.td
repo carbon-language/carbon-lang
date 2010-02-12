@@ -2315,9 +2315,9 @@ def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
               TB, Requires<[HasSSE2]>;
 
 // Load, store, and memory fence
-def LFENCE : I<0xAE, MRM5r, (outs), (ins),
+def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
                "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
-def MFENCE : I<0xAE, MRM6r, (outs), (ins),
+def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
                "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
 
 //TODO: custom lower this so as to never even generate the noop
@@ -2616,9 +2616,9 @@ let Constraints = "$src1 = $dst" in {
 }
 
 // Thread synchronization
-def MONITOR : I<0x01, MRM1r, (outs), (ins), "monitor",
+def MONITOR : I<0x01, MRM_C8, (outs), (ins), "monitor",
                 [(int_x86_sse3_monitor EAX, ECX, EDX)]>,TB, Requires<[HasSSE3]>;
-def MWAIT   : I<0x01, MRM1r, (outs), (ins), "mwait",
+def MWAIT   : I<0x01, MRM_C9, (outs), (ins), "mwait",
                 [(int_x86_sse3_mwait ECX, EAX)]>, TB, Requires<[HasSSE3]>;
 
 // vector_shuffle v1, <undef> <1, 1, 3, 3>

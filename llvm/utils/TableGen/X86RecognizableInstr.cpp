@@ -591,12 +591,9 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     return;                                       \
   }
 
-  EXACTCASE(TWOBYTE, "MONITOR",  0xc8)
-  EXACTCASE(TWOBYTE, "MWAIT",    0xc9)
   EXACTCASE(TWOBYTE, "SWPGS",    0xf8)
   EXACTCASE(TWOBYTE, "INVEPT",   0x80)
   EXACTCASE(TWOBYTE, "INVVPID",  0x81)
-  //EXACTCASE(TWOBYTE, "VMCALL",   0xc1) - Handled by MRM_ form; safe to remove
   EXACTCASE(TWOBYTE, "VMLAUNCH", 0xc2)
   EXACTCASE(TWOBYTE, "VMRESUME", 0xc3)
   EXACTCASE(TWOBYTE, "VMXOFF",   0xc4)

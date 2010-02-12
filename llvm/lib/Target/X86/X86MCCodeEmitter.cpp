@@ -568,19 +568,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM4r: case X86II::MRM5r:
   case X86II::MRM6r: case X86II::MRM7r:
     EmitByte(BaseOpcode, CurByte, OS);
-
-    // Special handling of lfence, mfence, monitor, and mwait.
-    // FIXME: This is terrible, they should get proper encoding bits in TSFlags.
-    if (Opcode == X86::LFENCE || Opcode == X86::MFENCE ||
-        Opcode == X86::MONITOR || Opcode == X86::MWAIT) {
-      EmitByte(ModRMByte(3, (TSFlags & X86II::FormMask)-X86II::MRM0r,
-                         Opcode == X86::MWAIT),
-               CurByte, OS);
-    } else {
-      EmitRegModRMByte(MI.getOperand(CurOp++),
-                       (TSFlags & X86II::FormMask)-X86II::MRM0r,
-                       CurByte, OS);
-    }
+    EmitRegModRMByte(MI.getOperand(CurOp++),
+                     (TSFlags & X86II::FormMask)-X86II::MRM0r,
+                     CurByte, OS);
     break;
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
