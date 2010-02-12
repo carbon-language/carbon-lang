@@ -80,7 +80,8 @@ public:
     }
   }
 
-  void EmitImmediate(const MCOperand &Disp, unsigned ImmSize,
+  void EmitImmediate(const MCOperand &Disp, 
+                     unsigned ImmSize, MCFixupKind FixupKind,
                      unsigned &CurByte, raw_ostream &OS,
                      SmallVectorImpl<MCFixup> &Fixups) const;
   
@@ -132,8 +133,25 @@ static bool isDisp8(int Value) {
   return Value == (signed char)Value;
 }
 
+/// getImmFixupKind - Return the appropriate fixup kind to use for an immediate
+/// in an instruction with the specified TSFlags.
+static MCFixupKind getImmFixupKind(unsigned TSFlags) {
+  unsigned Size = X86II::getSizeOfImm(TSFlags);
+  bool isPCRel = X86II::isImmPCRel(TSFlags);
+  
+  // FIXME: Pass in the relocation type, this is just a hack..
+  switch (Size) {
+  default: assert(0 && "Unknown immediate size");
+  case 1: return isPCRel ? MCFixupKind(X86::reloc_pcrel_1byte) : FK_Data_1;
+  case 4: return isPCRel ? MCFixupKind(X86::reloc_pcrel_4byte) : FK_Data_4;
+  case 2: assert(!isPCRel); return FK_Data_2;
+  case 8: assert(!isPCRel); return FK_Data_8;
+  }
+}
+
+
 void X86MCCodeEmitter::
-EmitImmediate(const MCOperand &DispOp, unsigned Size,
+EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
               unsigned &CurByte, raw_ostream &OS,
               SmallVectorImpl<MCFixup> &Fixups) const {
   // If this is a simple integer displacement that doesn't require a relocation,
@@ -143,22 +161,8 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size,
     return;
   }
 
-  // FIXME: Pass in the relocation type, this is just a hack..
-  unsigned FixupKind;
-  if (Size == 1)
-    FixupKind = FK_Data_1;
-  else if (Size == 2)
-    FixupKind = FK_Data_2;
-  else if (Size == 4)
-    FixupKind = FK_Data_4;
-  else {
-    assert(Size == 8 && "Unknown immediate size");
-    FixupKind = FK_Data_8;
-  }
-  
   // Emit a symbolic constant as a fixup and 4 zeros.
-  Fixups.push_back(MCFixup::Create(CurByte, DispOp.getExpr(),
-                                   MCFixupKind(FixupKind)));
+  Fixups.push_back(MCFixup::Create(CurByte, DispOp.getExpr(), FixupKind));
   EmitConstant(0, Size, CurByte, OS);
 }
 
@@ -195,7 +199,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     if (BaseReg == 0 ||          // [disp32]     in X86-32 mode
         BaseReg == X86::RIP) {   // [disp32+RIP] in X86-64 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
-      EmitImmediate(Disp, 4, CurByte, OS, Fixups);
+      EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
       return;
     }
     
@@ -211,13 +215,13 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // Otherwise, if the displacement fits in a byte, encode as [REG+disp8].
     if (Disp.isImm() && isDisp8(Disp.getImm())) {
       EmitByte(ModRMByte(1, RegOpcodeField, BaseRegNo), CurByte, OS);
-      EmitImmediate(Disp, 1, CurByte, OS, Fixups);
+      EmitImmediate(Disp, 1, FK_Data_1, CurByte, OS, Fixups);
       return;
     }
     
     // Otherwise, emit the most general non-SIB encoding: [REG+disp32]
     EmitByte(ModRMByte(2, RegOpcodeField, BaseRegNo), CurByte, OS);
-    EmitImmediate(Disp, 4, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
     return;
   }
     
@@ -272,9 +276,9 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   
   // Do we need to output a displacement?
   if (ForceDisp8)
-    EmitImmediate(Disp, 1, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 1, FK_Data_1, CurByte, OS, Fixups);
   else if (ForceDisp32 || Disp.getImm() != 0)
-    EmitImmediate(Disp, 4, CurByte, OS, Fixups);
+    EmitImmediate(Disp, 4, FK_Data_4, CurByte, OS, Fixups);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
@@ -587,7 +591,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // FIXME: This should pass in whether the value is pc relative or not.  This
   // information should be aquired from TSFlags as well.
   if (CurOp != NumOps)
-    EmitImmediate(MI.getOperand(CurOp++), X86II::getSizeOfImm(TSFlags),
+    EmitImmediate(MI.getOperand(CurOp++),
+                  X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
                   CurByte, OS, Fixups);
   
 #ifndef NDEBUG
