@@ -42,11 +42,13 @@ def MRM_F0 : Format<37>;
 class ImmType<bits<3> val> {
   bits<3> Value = val;
 }
-def NoImm  : ImmType<0>;
-def Imm8   : ImmType<1>;
-def Imm16  : ImmType<2>;
-def Imm32  : ImmType<3>;
-def Imm64  : ImmType<4>;
+def NoImm      : ImmType<0>;
+def Imm8       : ImmType<1>;
+def Imm8PCRel  : ImmType<2>;
+def Imm16      : ImmType<3>;
+def Imm32      : ImmType<4>;
+def Imm32PCRel : ImmType<5>;
+def Imm64      : ImmType<6>;
 
 // FPFormat - This specifies what form this FP instruction has.  This is used by
 // the Floating-Point stackifier pass.
@@ -126,6 +128,12 @@ class Ii8 <bits<8> o, Format f, dag outs, dag ins, string asm,
   let Pattern = pattern;
   let CodeSize = 3;
 }
+class Ii8PCRel<bits<8> o, Format f, dag outs, dag ins, string asm, 
+               list<dag> pattern>
+  : X86Inst<o, f, Imm8PCRel, outs, ins, asm> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
 class Ii16<bits<8> o, Format f, dag outs, dag ins, string asm, 
            list<dag> pattern>
   : X86Inst<o, f, Imm16, outs, ins, asm> {
@@ -135,6 +143,13 @@ class Ii16<bits<8> o, Format f, dag outs, dag ins, string asm,
 class Ii32<bits<8> o, Format f, dag outs, dag ins, string asm, 
            list<dag> pattern>
   : X86Inst<o, f, Imm32, outs, ins, asm> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
+
+class Ii32PCRel<bits<8> o, Format f, dag outs, dag ins, string asm, 
+           list<dag> pattern>
+  : X86Inst<o, f, Imm32PCRel, outs, ins, asm> {
   let Pattern = pattern;
   let CodeSize = 3;
 }

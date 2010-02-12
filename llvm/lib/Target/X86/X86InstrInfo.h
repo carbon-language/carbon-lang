@@ -338,11 +338,13 @@ namespace X86II {
     // This three-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
     ImmShift = 13,
-    ImmMask  = 7 << ImmShift,
-    Imm8     = 1 << ImmShift,
-    Imm16    = 2 << ImmShift,
-    Imm32    = 3 << ImmShift,
-    Imm64    = 4 << ImmShift,
+    ImmMask    = 7 << ImmShift,
+    Imm8       = 1 << ImmShift,
+    Imm8PCRel  = 2 << ImmShift,
+    Imm16      = 3 << ImmShift,
+    Imm32      = 4 << ImmShift,
+    Imm32PCRel = 5 << ImmShift,
+    Imm64      = 6 << ImmShift,
 
     //===------------------------------------------------------------------===//
     // FP Instruction Classification...  Zero is non-fp instruction.
@@ -408,10 +410,28 @@ namespace X86II {
   static inline unsigned getSizeOfImm(unsigned TSFlags) {
     switch (TSFlags & X86II::ImmMask) {
     default: assert(0 && "Unknown immediate size");
-    case X86II::Imm8:   return 1;
-    case X86II::Imm16:  return 2;
-    case X86II::Imm32:  return 4;
-    case X86II::Imm64:  return 8;
+    case X86II::Imm8:
+    case X86II::Imm8PCRel:  return 1;
+    case X86II::Imm16:      return 2;
+    case X86II::Imm32:
+    case X86II::Imm32PCRel: return 4;
+    case X86II::Imm64:      return 8;
+    }
+  }
+  
+  /// isImmPCRel - Return true if the immediate of the specified instruction's
+  /// TSFlags indicates that it is pc relative.
+  static inline unsigned isImmPCRel(unsigned TSFlags) {
+    switch (TSFlags & X86II::ImmMask) {
+      default: assert(0 && "Unknown immediate size");
+      case X86II::Imm8PCRel:
+      case X86II::Imm32PCRel:
+        return true;
+      case X86II::Imm8:
+      case X86II::Imm16:
+      case X86II::Imm32:
+      case X86II::Imm64:
+        return false;
     }
   }    
 }
