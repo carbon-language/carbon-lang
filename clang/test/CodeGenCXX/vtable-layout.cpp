@@ -39,4 +39,22 @@ struct A {
 
 void A::f() { }
 
+// Another simple vtable dumper test.
+// CHECK:     Vtable for 'Test2::B' (6 entries).
+// CHECK-NEXT:  0 | offset_to_top (0)
+// CHECK-NEXT:  1 | Test2::B RTTI
+// CHECK-NEXT:    -- (Test2::B, 0) vtable address --
+// CHECK-NEXT:  2 | void Test2::B::f()
+// CHECK-NEXT:  3 | void Test2::B::g() [pure]
+// CHECK-NEXT:  4 | Test2::B::~B() [complete] [pure]
+// CHECK-NEXT:  5 | Test2::B::~B() [deleting] [pure]
+
+struct B {
+  virtual void f();
+  virtual void g() = 0;
+  virtual ~B() = 0;
+};
+
+void B::f() { }
+
 }

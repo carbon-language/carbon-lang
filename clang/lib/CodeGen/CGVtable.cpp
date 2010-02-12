@@ -500,7 +500,6 @@ public:
 
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
-  
 };
 
 void VtableBuilder::layoutSimpleVtable(const CXXRecordDecl *RD) {
@@ -593,6 +592,9 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         PredefinedExpr::ComputeName(PredefinedExpr::PrettyFunctionNoVirtual, 
                                     MD);
       Out << Str;
+      if (MD->isPure())
+        Out << " [pure]";
+
       break;
     }
 
@@ -600,6 +602,9 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       const CXXDestructorDecl *DD = Component.getDestructorDecl();
       
       Out << DD->getQualifiedNameAsString() << "() [complete]";
+      if (DD->isPure())
+        Out << " [pure]";
+
       break;
     }
 
@@ -607,6 +612,9 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       const CXXDestructorDecl *DD = Component.getDestructorDecl();
       
       Out << DD->getQualifiedNameAsString() << "() [deleting]";
+      if (DD->isPure())
+        Out << " [pure]";
+
       break;
     }
 
