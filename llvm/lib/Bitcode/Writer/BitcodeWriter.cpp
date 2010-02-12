@@ -1510,16 +1510,43 @@ enum {
   DarwinBCHeaderSize = 5*4
 };
 
+/// isARMTriplet - Return true if the triplet looks like:
+/// arm-*, thumb-*, armv[0-9]-*, thumbv[0-9]-*
+static bool isARMTriplet(const std::string &TT) {
+  size_t Pos = 0;
+  size_t Size = TT.size();
+  if (Size >= 6 &&
+      TT[0] == 't' && TT[1] == 'h' && TT[2] == 'u' &&
+      TT[3] == 'm' && TT[4] == 'b')
+    Pos = 5;
+  else if (Size >= 4 && TT[0] == 'a' && TT[1] == 'r' && TT[2] == 'm')
+    Pos = 3;
+  else
+    return false;
+
+  if (TT[Pos] == '-')
+    return true;
+  else if (TT[Pos] != 'v')
+    return false;
+  while (++Pos < Size && TT[Pos] != '-') {
+    if (!isdigit(TT[Pos]))
+      return false;
+  }
+  return true;
+}
+
 static void EmitDarwinBCHeader(BitstreamWriter &Stream,
                                const std::string &TT) {
   unsigned CPUType = ~0U;
 
-  // Match x86_64-*, i[3-9]86-*, powerpc-*, powerpc64-*.  The CPUType is a
-  // magic number from /usr/include/mach/machine.h.  It is ok to reproduce the
-  // specific constants here because they are implicitly part of the Darwin ABI.
+  // Match x86_64-*, i[3-9]86-*, powerpc-*, powerpc64-*, arm-*, thumb-*,
+  // armv[0-9]-*, thumbv[0-9]-*. The CPUType is a magic number from
+  // /usr/include/mach/machine.h.  It is ok to reproduce the specific constants
+  // here because they are implicitly part of the Darwin ABI.
   enum {
     DARWIN_CPU_ARCH_ABI64      = 0x01000000,
     DARWIN_CPU_TYPE_X86        = 7,
+    DARWIN_CPU_TYPE_ARM        = 12,
     DARWIN_CPU_TYPE_POWERPC    = 18
   };
 
@@ -1532,6 +1559,8 @@ static void EmitDarwinBCHeader(BitstreamWriter &Stream,
     CPUType = DARWIN_CPU_TYPE_POWERPC;
   else if (TT.find("powerpc64-") == 0)
     CPUType = DARWIN_CPU_TYPE_POWERPC | DARWIN_CPU_ARCH_ABI64;
+  else if (isARMTriplet(TT))
+    CPUType = DARWIN_CPU_TYPE_ARM;
 
   // Traditional Bitcode starts after header.
   unsigned BCOffset = DarwinBCHeaderSize;
