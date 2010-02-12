@@ -560,10 +560,14 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
 SourceLocation SourceManager::
 getInstantiationLocSlowCase(SourceLocation Loc) const {
   do {
-    std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-    Loc = getSLocEntry(LocInfo.first).getInstantiation()
+    // Note: If Loc indicates an offset into a token that came from a macro
+    // expansion (e.g. the 5th character of the token) we do not want to add
+    // this offset when going to the instantiation location.  The instatiation
+    // location is the macro invocation, which the offset has nothing to do
+    // with.  This is unlike when we get the spelling loc, because the offset
+    // directly correspond to the token whose spelling we're inspecting.
+    Loc = getSLocEntry(getFileID(Loc)).getInstantiation()
                    .getInstantiationLocStart();
-    Loc = Loc.getFileLocWithOffset(LocInfo.second);
   } while (!Loc.isFileID());
 
   return Loc;

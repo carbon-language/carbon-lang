@@ -24,3 +24,12 @@ void bar() {
   C;
 }
 
+
+// rdar://7597492
+#define sprintf(str, A, B) \
+__builtin___sprintf_chk (str, 0, 42, A, B)
+
+void baz(char *Msg) {
+  sprintf(Msg,  "  sizeof FoooLib            : =%3u\n",   12LL);
+}
+
