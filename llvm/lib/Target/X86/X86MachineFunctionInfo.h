@@ -18,12 +18,6 @@
 
 namespace llvm {
 
-enum NameDecorationStyle {
-  None,
-  StdCall,
-  FastCall
-};
-  
 /// X86MachineFunctionInfo - This class is derived from MachineFunction and
 /// contains private X86 target-specific information for each MachineFunction.
 class X86MachineFunctionInfo : public MachineFunctionInfo {
@@ -40,10 +34,6 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// BytesToPopOnReturn - Number of bytes function pops on return.
   /// Used on windows platform for stdcall & fastcall name decoration
   unsigned BytesToPopOnReturn;
-
-  /// DecorationStyle - If the function requires additional name decoration,
-  /// DecorationStyle holds the right way to do so.
-  NameDecorationStyle DecorationStyle;
 
   /// ReturnAddrIndex - FrameIndex for return slot.
   int ReturnAddrIndex;
@@ -66,7 +56,6 @@ public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
                              CalleeSavedFrameSize(0),
                              BytesToPopOnReturn(0),
-                             DecorationStyle(None),
                              ReturnAddrIndex(0),
                              TailCallReturnAddrDelta(0),
                              SRetReturnReg(0),
@@ -76,7 +65,6 @@ public:
     : ForceFramePointer(false),
       CalleeSavedFrameSize(0),
       BytesToPopOnReturn(0),
-      DecorationStyle(None),
       ReturnAddrIndex(0),
       TailCallReturnAddrDelta(0),
       SRetReturnReg(0),
@@ -90,9 +78,6 @@ public:
 
   unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
   void setBytesToPopOnReturn (unsigned bytes) { BytesToPopOnReturn = bytes;}
-
-  NameDecorationStyle getDecorationStyle() const { return DecorationStyle; }
-  void setDecorationStyle(NameDecorationStyle style) { DecorationStyle = style;}
 
   int getRAIndex() const { return ReturnAddrIndex; }
   void setRAIndex(int Index) { ReturnAddrIndex = Index; }

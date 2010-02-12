@@ -639,7 +639,6 @@ namespace llvm {
                                 int FPDiff, DebugLoc dl);
 
     CCAssignFn *CCAssignFnForNode(CallingConv::ID CallConv) const;
-    NameDecorationStyle NameDecorationForCallConv(CallingConv::ID CallConv);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
 
     std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,

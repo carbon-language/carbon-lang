@@ -61,8 +61,7 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   virtual void EmitInstruction(const MachineInstr *MI);
   
   void printSymbolOperand(const MachineOperand &MO);
-  
-  
+  virtual MCSymbol *GetGlobalValueSymbol(const GlobalValue *GV) const;
 
   // These methods are used by the tablegen'erated instruction printer.
   void printOperand(const MachineInstr *MI, unsigned OpNo,

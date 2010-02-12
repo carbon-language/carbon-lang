@@ -1398,18 +1398,6 @@ CCAssignFn *X86TargetLowering::CCAssignFnForNode(CallingConv::ID CC) const {
     return CC_X86_32_C;
 }
 
-/// NameDecorationForCallConv - Selects the appropriate decoration to
-/// apply to a MachineFunction containing a given calling convention.
-NameDecorationStyle
-X86TargetLowering::NameDecorationForCallConv(CallingConv::ID CallConv) {
-  if (CallConv == CallingConv::X86_FastCall)
-    return FastCall;
-  else if (CallConv == CallingConv::X86_StdCall)
-    return StdCall;
-  return None;
-}
-
-
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
 /// by "Src" to address "Dst" with size and alignment information specified by
 /// the specific parameter attribute. The copy will be passed as a byval
@@ -1484,9 +1472,6 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       Subtarget->isTargetCygMing() &&
       Fn->getName() == "main")
     FuncInfo->setForceFramePointer(true);
-
-  // Decorate the function name.
-  FuncInfo->setDecorationStyle(NameDecorationForCallConv(CallConv));
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool Is64Bit = Subtarget->is64Bit();
