@@ -23,6 +23,7 @@ class X86TargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
 class MCCodeEmitter;
+class MCContext;
 class JITCodeEmitter;
 class Target;
 class formatted_raw_ostream;
@@ -49,9 +50,12 @@ FunctionPass *createX87FPRegKillInserterPass();
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
 
-MCCodeEmitter *createHeinousX86MCCodeEmitter(const Target &, TargetMachine &TM);
-MCCodeEmitter *createX86_32MCCodeEmitter(const Target &, TargetMachine &TM);
-MCCodeEmitter *createX86_64MCCodeEmitter(const Target &, TargetMachine &TM);
+MCCodeEmitter *createHeinousX86MCCodeEmitter(const Target &, TargetMachine &TM,
+                                             MCContext &Ctx);
+MCCodeEmitter *createX86_32MCCodeEmitter(const Target &, TargetMachine &TM,
+                                         MCContext &Ctx);
+MCCodeEmitter *createX86_64MCCodeEmitter(const Target &, TargetMachine &TM,
+                                         MCContext &Ctx);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

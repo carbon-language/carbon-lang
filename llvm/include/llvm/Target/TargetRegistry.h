@@ -72,7 +72,8 @@ namespace llvm {
                                                   const MCAsmInfo &MAI,
                                                   raw_ostream &O);
     typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const Target &T,
-                                                TargetMachine &TM);
+                                                TargetMachine &TM,
+                                                MCContext &Ctx);
 
   private:
     /// Next - The next registered target in the linked list, maintained by the
@@ -236,10 +237,10 @@ namespace llvm {
     
     
     /// createCodeEmitter - Create a target specific code emitter.
-    MCCodeEmitter *createCodeEmitter(TargetMachine &TM) const {
+    MCCodeEmitter *createCodeEmitter(TargetMachine &TM, MCContext &Ctx) const {
       if (!CodeEmitterCtorFn)
         return 0;
-      return CodeEmitterCtorFn(*this, TM);
+      return CodeEmitterCtorFn(*this, TM, Ctx);
     }
 
     /// @}
@@ -613,8 +614,9 @@ namespace llvm {
     }
 
   private:
-    static MCCodeEmitter *Allocator(const Target &T, TargetMachine &TM) {
-      return new CodeEmitterImpl(T, TM);
+    static MCCodeEmitter *Allocator(const Target &T, TargetMachine &TM,
+                                    MCContext &Ctx) {
+      return new CodeEmitterImpl(T, TM, Ctx);
     }
   };
 

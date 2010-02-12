@@ -120,12 +120,14 @@ public:
 
 
 MCCodeEmitter *llvm::createX86_32MCCodeEmitter(const Target &,
-                                               TargetMachine &TM) {
+                                               TargetMachine &TM,
+                                               MCContext &Ctx) {
   return new X86MCCodeEmitter(TM, false);
 }
 
 MCCodeEmitter *llvm::createX86_64MCCodeEmitter(const Target &,
-                                               TargetMachine &TM) {
+                                               TargetMachine &TM,
+                                               MCContext &Ctx) {
   return new X86MCCodeEmitter(TM, true);
 }
 

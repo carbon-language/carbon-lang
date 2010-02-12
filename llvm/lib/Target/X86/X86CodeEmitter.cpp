@@ -1211,13 +1211,14 @@ static cl::opt<bool> EnableNewEncoder("enable-new-x86-encoder",
 
 // Ok, now you can look.
 MCCodeEmitter *llvm::createHeinousX86MCCodeEmitter(const Target &T,
-                                                   TargetMachine &TM) {
+                                                   TargetMachine &TM,
+                                                   MCContext &Ctx) {
   
   // FIXME: Remove the heinous one when the new one works.
   if (EnableNewEncoder) {
     if (TM.getTargetData()->getPointerSize() == 4)
-      return createX86_32MCCodeEmitter(T, TM);
-    return createX86_64MCCodeEmitter(T, TM);
+      return createX86_32MCCodeEmitter(T, TM, Ctx);
+    return createX86_64MCCodeEmitter(T, TM, Ctx);
   }
 
   return new X86MCCodeEmitter(static_cast<X86TargetMachine&>(TM));

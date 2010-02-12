@@ -266,14 +266,14 @@ static int AssembleInput(const char *ProgName) {
   if (FileType == OFT_AssemblyFile) {
     IP.reset(TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out));
     if (ShowEncoding)
-      CE.reset(TheTarget->createCodeEmitter(*TM));
+      CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     Str.reset(createAsmStreamer(Ctx, *Out, *MAI,
                                 TM->getTargetData()->isLittleEndian(),
                                 /*asmverbose*/true, IP.get(), CE.get(),
                                 ShowInst));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
-    CE.reset(TheTarget->createCodeEmitter(*TM));
+    CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     Str.reset(createMachOStreamer(Ctx, *Out, CE.get()));
   }
 

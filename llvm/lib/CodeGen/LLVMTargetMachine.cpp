@@ -141,7 +141,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
-    MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this);
+    MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this, *Context);
     if (MCE == 0)
       return true;
     
