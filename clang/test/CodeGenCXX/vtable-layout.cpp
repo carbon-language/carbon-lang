@@ -113,3 +113,13 @@ struct D : B {
 
 void D::f() { } 
 }
+
+// For now, just verify this doesn't crash.
+namespace test0 {
+  struct Obj {};
+
+  struct Base {           virtual const Obj *foo() = 0; };
+  struct Derived : Base { virtual       Obj *foo() { return new Obj(); } };
+
+  void test(Derived *D) { D->foo(); }
+}

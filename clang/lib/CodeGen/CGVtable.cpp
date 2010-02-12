@@ -64,8 +64,8 @@ static bool
 TypeConversionRequiresAdjustment(ASTContext &Ctx,
                                  QualType DerivedType, QualType BaseType) {
   // Canonicalize the types.
-  QualType CanDerivedType = Ctx.getCanonicalType(DerivedType);
-  QualType CanBaseType = Ctx.getCanonicalType(BaseType);
+  CanQualType CanDerivedType = Ctx.getCanonicalType(DerivedType);
+  CanQualType CanBaseType = Ctx.getCanonicalType(BaseType);
   
   assert(CanDerivedType->getTypeClass() == CanBaseType->getTypeClass() && 
          "Types must have same type class!");
@@ -75,26 +75,29 @@ TypeConversionRequiresAdjustment(ASTContext &Ctx,
     return false;
   }
   
-  if (const ReferenceType *RT = CanDerivedType->getAs<ReferenceType>()) {
-    CanDerivedType = RT->getPointeeType();
+  if (isa<ReferenceType>(CanDerivedType)) {
+    CanDerivedType = CanDerivedType->getAs<ReferenceType>()->getPointeeType();
     CanBaseType = CanBaseType->getAs<ReferenceType>()->getPointeeType();
-  } else if (const PointerType *PT = CanDerivedType->getAs<PointerType>()) {
-    CanDerivedType = PT->getPointeeType();
+  } else if (isa<PointerType>(CanDerivedType)) {
+    CanDerivedType = CanDerivedType->getAs<PointerType>()->getPointeeType();
     CanBaseType = CanBaseType->getAs<PointerType>()->getPointeeType();
   } else {
     assert(false && "Unexpected return type!");
   }
   
-  if (CanDerivedType == CanBaseType) {
+  // We need to compare unqualified types here; consider
+  //   const T *Base::foo();
+  //   T *Derived::foo();
+  if (CanDerivedType.getUnqualifiedType() == CanBaseType.getUnqualifiedType()) {
     // No adjustment needed.
     return false;
   }
   
   const CXXRecordDecl *DerivedDecl = 
-    cast<CXXRecordDecl>(CanDerivedType->getAs<RecordType>()->getDecl());
+    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
   
   const CXXRecordDecl *BaseDecl = 
-    cast<CXXRecordDecl>(CanBaseType->getAs<RecordType>()->getDecl());
+    cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
   
   return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
 }
