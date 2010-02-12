@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -stats -realign-stack=0 |&\
-; RUN:     grep {asm-printer} | grep 31
+; RUN:     grep {asm-printer} | grep 34
 
 target datalayout = "e-p:32:32"
 define void @foo(i32* %mc, i32* %bp, i32* %ms, i32* %xmb, i32* %mpp, i32* %tpmm, i32* %ip, i32* %tpim, i32* %dpp, i32* %tpdm, i32* %bpi, i32 %M) nounwind {
@@ -40,7 +40,7 @@ cond_true:		; preds = %cond_true, %entry
 	%tmp137.upgrd.7 = bitcast i32* %tmp137 to <2 x i64>*		; <<2 x i64>*> [#uses=1]
 	store <2 x i64> %tmp131, <2 x i64>* %tmp137.upgrd.7
 	%tmp147 = add nsw i32 %tmp.10, 8		; <i32> [#uses=1]
-	%tmp.upgrd.8 = icmp slt i32 %tmp147, %M		; <i1> [#uses=1]
+	%tmp.upgrd.8 = icmp ne i32 %tmp147, %M		; <i1> [#uses=1]
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
 	br i1 %tmp.upgrd.8, label %cond_true, label %return
 

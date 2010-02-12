@@ -1,4 +1,10 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin | grep leal | not grep 16
+; RUN: llc < %s -mtriple=i386-apple-darwin | FileCheck %s
+
+; CHECK: leal 16(%eax), %edx
+; CHECK: align
+; CHECK: addl    $4, %edx
+; CHECK: decl    %ecx
+; CHECK: jne     LBB1_2
 
 	%struct.CUMULATIVE_ARGS = type { i32, i32, i32, i32, i32, i32, i32 }
 	%struct.bitmap_element = type { %struct.bitmap_element*, %struct.bitmap_element*, i32, [2 x i64] }

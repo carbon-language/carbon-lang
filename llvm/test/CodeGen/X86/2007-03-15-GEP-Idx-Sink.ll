@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 -mtriple=i686-darwin | \
 ; RUN:   grep push | count 3
 
-define void @foo(i8** %buf, i32 %size, i32 %col, i8* %p) {
+define void @foo(i8** %buf, i32 %size, i32 %col, i8* %p) nounwind {
 entry:
 	icmp sgt i32 %size, 0		; <i1>:0 [#uses=1]
 	br i1 %0, label %bb.preheader, label %return

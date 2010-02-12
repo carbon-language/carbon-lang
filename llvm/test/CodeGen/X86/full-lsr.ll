@@ -1,12 +1,7 @@
 ; RUN: llc < %s -march=x86 >%t
 
-; TODO: Enhance full lsr mode to get this:
-; RUNX: grep {addl	\\\$4,} %t | count 3
-; RUNX: not grep {,%} %t
-
-; For now, it should find this, which is still pretty good:
-; RUN: not grep {addl	\\\$4,} %t
-; RUN: grep {,%} %t | count 6
+; RUN: grep {addl	\\\$4,} %t | count 3
+; RUN: not grep {,%} %t
 
 define void @foo(float* nocapture %A, float* nocapture %B, float* nocapture %C, i32 %N) nounwind {
 entry:

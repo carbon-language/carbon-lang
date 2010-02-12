@@ -1,8 +1,7 @@
 ; RUN: llc < %s -march=x86 -stats |& grep {Number of loads added} | grep 2
 ; RUN: llc < %s -march=x86 -stats |& grep {Number of register spills} | grep 1
-; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 37
+; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 34
 ; PR3495
-; The loop reversal kicks in once here, resulting in one fewer instruction.
 
 target triple = "i386-pc-linux-gnu"
 @x = external global [8 x i32], align 32		; <[8 x i32]*> [#uses=1]

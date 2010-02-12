@@ -1,8 +1,11 @@
-; RUN: llc < %s -march=x86 -relocation-model=static | \
-; RUN:   grep {A+} | count 2
-;
-; Make sure the common loop invariant A is not hoisted up to preheader,
-; since it can be subsumed into the addressing mode in all uses.
+; RUN: llc < %s -march=x86 -relocation-model=static | FileCheck %s
+
+; CHECK: align
+; CHECK: movl  $4, -4(%ecx)
+; CHECK: movl  $5, (%ecx)
+; CHECK: addl  $4, %ecx
+; CHECK: decl  %eax
+; CHECK: jne
 
 @A = internal global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
 

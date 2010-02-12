@@ -1,5 +1,5 @@
 ; RUN: opt < %s -loop-reduce -S | \
-; RUN:   grep {add i32 %lsr.iv.next, 1}
+; RUN:   grep {add i32 %indvar630.ui, 1}
 ;
 ; Make sure that the use of the IV outside of the loop (the store) uses the 
 ; post incremented value of the IV, not the preincremented value.  This 

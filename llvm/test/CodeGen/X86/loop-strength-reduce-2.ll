@@ -1,10 +1,23 @@
-; RUN: llc < %s -march=x86 -relocation-model=pic | \
-; RUN:   grep {, 4} | count 1
-; RUN: llc < %s -march=x86 | not grep lea
+; RUN: llc < %s -march=x86 -relocation-model=pic | FileCheck %s -check-prefix=PIC
+; RUN: llc < %s -march=x86 -relocation-model=static | FileCheck %s -check-prefix=STATIC
 ;
 ; Make sure the common loop invariant A is hoisted up to preheader,
 ; since too many registers are needed to subsume it into the addressing modes.
 ; It's safe to sink A in when it's not pic.
+
+; PIC:  align
+; PIC:  movl  $4, -4([[REG:%e[a-z]+]])
+; PIC:  movl  $5, ([[REG]])
+; PIC:  addl  $4, [[REG]]
+; PIC:  decl  {{%e[[a-z]+}}
+; PIC:  jne
+
+; STATIC: align
+; STATIC: movl  $4, -4(%ecx)
+; STATIC: movl  $5, (%ecx)
+; STATIC: addl  $4, %ecx
+; STATIC: decl  %eax
+; STATIC: jne
 
 @A = global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
 

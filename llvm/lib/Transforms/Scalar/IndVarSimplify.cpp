@@ -364,20 +364,14 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     if (ExitingBlock)
       NeedCannIV = true;
   }
-  for (unsigned i = 0, e = IU->StrideOrder.size(); i != e; ++i) {
-    const SCEV *Stride = IU->StrideOrder[i];
-    const Type *Ty = SE->getEffectiveSCEVType(Stride->getType());
+  for (IVUsers::const_iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
+    const Type *Ty =
+      SE->getEffectiveSCEVType(I->getOperandValToReplace()->getType());
     if (!LargestType ||
         SE->getTypeSizeInBits(Ty) >
           SE->getTypeSizeInBits(LargestType))
       LargestType = Ty;
-
-    std::map<const SCEV *, IVUsersOfOneStride *>::iterator SI =
-      IU->IVUsesByStride.find(IU->StrideOrder[i]);
-    assert(SI != IU->IVUsesByStride.end() && "Stride doesn't exist!");
-
-    if (!SI->second->Users.empty())
-      NeedCannIV = true;
+    NeedCannIV = true;
   }
 
   // Now that we know the largest of the induction variable expressions
@@ -455,72 +449,64 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
   // add the offsets to the primary induction variable and cast, avoiding
   // the need for the code evaluation methods to insert induction variables
   // of different sizes.
-  for (unsigned i = 0, e = IU->StrideOrder.size(); i != e; ++i) {
-    const SCEV *Stride = IU->StrideOrder[i];
+  for (IVUsers::iterator UI = IU->begin(), E = IU->end(); UI != E; ++UI) {
+    const SCEV *Stride = UI->getStride();
+    Value *Op = UI->getOperandValToReplace();
+    const Type *UseTy = Op->getType();
+    Instruction *User = UI->getUser();
 
-    std::map<const SCEV *, IVUsersOfOneStride *>::iterator SI =
-      IU->IVUsesByStride.find(IU->StrideOrder[i]);
-    assert(SI != IU->IVUsesByStride.end() && "Stride doesn't exist!");
-    ilist<IVStrideUse> &List = SI->second->Users;
-    for (ilist<IVStrideUse>::iterator UI = List.begin(),
-         E = List.end(); UI != E; ++UI) {
-      Value *Op = UI->getOperandValToReplace();
-      const Type *UseTy = Op->getType();
-      Instruction *User = UI->getUser();
+    // Compute the final addrec to expand into code.
+    const SCEV *AR = IU->getReplacementExpr(*UI);
 
-      // Compute the final addrec to expand into code.
-      const SCEV *AR = IU->getReplacementExpr(*UI);
-
-      // Evaluate the expression out of the loop, if possible.
-      if (!L->contains(UI->getUser())) {
-        const SCEV *ExitVal = SE->getSCEVAtScope(AR, L->getParentLoop());
-        if (ExitVal->isLoopInvariant(L))
-          AR = ExitVal;
-      }
-
-      // FIXME: It is an extremely bad idea to indvar substitute anything more
-      // complex than affine induction variables.  Doing so will put expensive
-      // polynomial evaluations inside of the loop, and the str reduction pass
-      // currently can only reduce affine polynomials.  For now just disable
-      // indvar subst on anything more complex than an affine addrec, unless
-      // it can be expanded to a trivial value.
-      if (!AR->isLoopInvariant(L) && !Stride->isLoopInvariant(L))
-        continue;
-
-      // Determine the insertion point for this user. By default, insert
-      // immediately before the user. The SCEVExpander class will automatically
-      // hoist loop invariants out of the loop. For PHI nodes, there may be
-      // multiple uses, so compute the nearest common dominator for the
-      // incoming blocks.
-      Instruction *InsertPt = User;
-      if (PHINode *PHI = dyn_cast<PHINode>(InsertPt))
-        for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i)
-          if (PHI->getIncomingValue(i) == Op) {
-            if (InsertPt == User)
-              InsertPt = PHI->getIncomingBlock(i)->getTerminator();
-            else
-              InsertPt =
-                DT->findNearestCommonDominator(InsertPt->getParent(),
-                                               PHI->getIncomingBlock(i))
-                      ->getTerminator();
-          }
-
-      // Now expand it into actual Instructions and patch it into place.
-      Value *NewVal = Rewriter.expandCodeFor(AR, UseTy, InsertPt);
-
-      // Patch the new value into place.
-      if (Op->hasName())
-        NewVal->takeName(Op);
-      User->replaceUsesOfWith(Op, NewVal);
-      UI->setOperandValToReplace(NewVal);
-      DEBUG(dbgs() << "INDVARS: Rewrote IV '" << *AR << "' " << *Op << '\n'
-                   << "   into = " << *NewVal << "\n");
-      ++NumRemoved;
-      Changed = true;
-
-      // The old value may be dead now.
-      DeadInsts.push_back(Op);
+    // Evaluate the expression out of the loop, if possible.
+    if (!L->contains(UI->getUser())) {
+      const SCEV *ExitVal = SE->getSCEVAtScope(AR, L->getParentLoop());
+      if (ExitVal->isLoopInvariant(L))
+        AR = ExitVal;
     }
+
+    // FIXME: It is an extremely bad idea to indvar substitute anything more
+    // complex than affine induction variables.  Doing so will put expensive
+    // polynomial evaluations inside of the loop, and the str reduction pass
+    // currently can only reduce affine polynomials.  For now just disable
+    // indvar subst on anything more complex than an affine addrec, unless
+    // it can be expanded to a trivial value.
+    if (!AR->isLoopInvariant(L) && !Stride->isLoopInvariant(L))
+      continue;
+
+    // Determine the insertion point for this user. By default, insert
+    // immediately before the user. The SCEVExpander class will automatically
+    // hoist loop invariants out of the loop. For PHI nodes, there may be
+    // multiple uses, so compute the nearest common dominator for the
+    // incoming blocks.
+    Instruction *InsertPt = User;
+    if (PHINode *PHI = dyn_cast<PHINode>(InsertPt))
+      for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i)
+        if (PHI->getIncomingValue(i) == Op) {
+          if (InsertPt == User)
+            InsertPt = PHI->getIncomingBlock(i)->getTerminator();
+          else
+            InsertPt =
+              DT->findNearestCommonDominator(InsertPt->getParent(),
+                                             PHI->getIncomingBlock(i))
+                    ->getTerminator();
+        }
+
+    // Now expand it into actual Instructions and patch it into place.
+    Value *NewVal = Rewriter.expandCodeFor(AR, UseTy, InsertPt);
+
+    // Patch the new value into place.
+    if (Op->hasName())
+      NewVal->takeName(Op);
+    User->replaceUsesOfWith(Op, NewVal);
+    UI->setOperandValToReplace(NewVal);
+    DEBUG(dbgs() << "INDVARS: Rewrote IV '" << *AR << "' " << *Op << '\n'
+                 << "   into = " << *NewVal << "\n");
+    ++NumRemoved;
+    Changed = true;
+
+    // The old value may be dead now.
+    DeadInsts.push_back(Op);
   }
 
   // Clear the rewriter cache, because values that are in the rewriter's cache

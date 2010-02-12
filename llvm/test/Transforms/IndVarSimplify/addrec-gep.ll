@@ -25,7 +25,7 @@ bb1:		; preds = %bb2, %bb.nph
 	%j.01 = phi i64 [ %tmp9, %bb2 ], [ 0, %bb.nph ]		; <i64> [#uses=3]
 	%tmp3 = add i64 %j.01, %tmp1		; <i64> [#uses=1]
 	%tmp4 = add i64 %j.01, %tmp2		; <i64> [#uses=1]
-        %z0 = add i64 %tmp4, 5203
+        %z0 = add i64 %tmp3, 5203
 	%tmp5 = getelementptr double* %p, i64 %z0		; <double*> [#uses=1]
 	%tmp6 = load double* %tmp5, align 8		; <double> [#uses=1]
 	%tmp7 = fdiv double %tmp6, 2.100000e+00		; <double> [#uses=1]

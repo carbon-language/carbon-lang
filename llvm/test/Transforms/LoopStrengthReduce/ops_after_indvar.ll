@@ -1,7 +1,7 @@
 ; Check that this test makes INDVAR and related stuff dead, because P[indvar]
 ; gets reduced, making INDVAR dead.
 
-; RUN: opt < %s -loop-reduce -S | not grep INDVAR
+; RUN: opt < %s -loop-reduce -S -default-data-layout="e-p:32:32:32" | not grep INDVAR
 
 declare i1 @pred()
 

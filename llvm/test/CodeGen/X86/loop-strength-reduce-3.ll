@@ -1,8 +1,11 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=dynamic-no-pic | \
-; RUN:   grep {A+} | count 2
-;
-; Make sure the common loop invariant A is not hoisted up to preheader,
-; since it can be subsumed it into the addressing modes.
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=dynamic-no-pic | FileCheck %s
+
+; CHECK: align
+; CHECK: movl  $4, -4(%ecx)
+; CHECK: movl  $5, (%ecx)
+; CHECK: addl  $4, %ecx
+; CHECK: decl  %eax
+; CHECK: jne
 
 @A = global [16 x [16 x i32]] zeroinitializer, align 32		; <[16 x [16 x i32]]*> [#uses=2]
 

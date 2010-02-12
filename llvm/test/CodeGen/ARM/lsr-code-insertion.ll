@@ -1,5 +1,5 @@
-; RUN: llc < %s -stats |& grep {40.*Number of machine instrs printed}
-; RUN: llc < %s -stats |& grep {.*Number of re-materialization}
+; RUN: llc < %s -stats |& grep {39.*Number of machine instrs printed}
+; RUN: llc < %s -stats |& not grep {.*Number of re-materialization}
 ; This test really wants to check that the resultant "cond_true" block only 
 ; has a single store in it, and that cond_true55 only has code to materialize 
 ; the constant and do a store.  We do *not* want something like this:

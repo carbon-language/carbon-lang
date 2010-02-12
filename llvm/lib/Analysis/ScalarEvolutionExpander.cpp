@@ -641,8 +641,24 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   // Reuse a previously-inserted PHI, if present.
   for (BasicBlock::iterator I = L->getHeader()->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I)
-    if (isInsertedInstruction(PN) && SE.getSCEV(PN) == Normalized)
-      return PN;
+    if (SE.isSCEVable(PN->getType()) &&
+        (SE.getEffectiveSCEVType(PN->getType()) ==
+         SE.getEffectiveSCEVType(Normalized->getType())) &&
+        SE.getSCEV(PN) == Normalized)
+      if (BasicBlock *LatchBlock = L->getLoopLatch()) {
+        // Remember this PHI, even in post-inc mode.
+        InsertedValues.insert(PN);
+        // Remember the increment.
+        Instruction *IncV =
+          cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock)
+                                  ->stripPointerCasts());
+        rememberInstruction(IncV);
+        // Make sure the increment is where we want it. But don't move it
+        // down past a potential existing post-inc user.
+        if (L == IVIncInsertLoop && !SE.DT->dominates(IncV, IVIncInsertPos))
+          IncV->moveBefore(IVIncInsertPos);
+        return PN;
+      }
 
   // Save the original insertion point so we can restore it when we're done.
   BasicBlock *SaveInsertBB = Builder.GetInsertBlock();

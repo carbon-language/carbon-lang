@@ -27,10 +27,7 @@ namespace llvm {
   /// and destroy it when finished to allow the release of the associated
   /// memory.
   class SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
-  public:
     ScalarEvolution &SE;
-
-  private:
     std::map<std::pair<const SCEV *, Instruction *>, AssertingVH<Value> >
       InsertedExpressions;
     std::set<Value*> InsertedValues;
