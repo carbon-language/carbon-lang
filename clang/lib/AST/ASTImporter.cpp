@@ -789,6 +789,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
     IDNS |= Decl::IDNS_Ordinary;
 
   // We may already have a record of the same name; try to find and match it.
+  RecordDecl *AdoptDecl = 0;
   if (!DC->isFunctionOrMethod() && SearchName) {
     llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
     for (DeclContext::lookup_result Lookup = DC->lookup(Name);
@@ -804,15 +805,21 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
       }
       
       if (RecordDecl *FoundRecord = dyn_cast<RecordDecl>(Found)) {
-        RecordDecl *FoundDef = FoundRecord->getDefinition();
-        // FIXME: If we found something but there is no definition,
-        // assume the types are the same and fill in the gaps.
-        if (FoundDef && IsStructuralMatch(D, FoundDef)) {
-          // The record types structurally match.
-          // FIXME: For C++, we should also merge methods here.
-          Importer.getImportedDecls()[D] = FoundDef;
-          return FoundDef;
-        }
+        if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
+          if (!D->isDefinition() || IsStructuralMatch(D, FoundDef)) {
+            // The record types structurally match, or the "from" translation
+            // unit only had a forward declaration anyway; call it the same
+            // function.
+            // FIXME: For C++, we should also merge methods here.
+            Importer.getImportedDecls()[D] = FoundDef;
+            return FoundDef;
+          }
+        } else {
+          // We have a forward declaration of this type, so adopt that forward
+          // declaration rather than building a new one.
+          AdoptDecl = FoundRecord;
+          continue;
+        }          
       }
       
       ConflictingDecls.push_back(*Lookup.first);
@@ -826,47 +833,50 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   }
   
   // Create the record declaration.
-  RecordDecl *ToRecord = 0;
-  if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(D)) {
-    CXXRecordDecl *ToCXX = CXXRecordDecl::Create(Importer.getToContext(), 
-                                                 D->getTagKind(),
-                                                 DC, Loc,
-                                                 Name.getAsIdentifierInfo(), 
+  RecordDecl *ToRecord = AdoptDecl;
+  if (!ToRecord) {
+    if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(D)) {
+      CXXRecordDecl *ToCXX = CXXRecordDecl::Create(Importer.getToContext(), 
+                                                   D->getTagKind(),
+                                                   DC, Loc,
+                                                   Name.getAsIdentifierInfo(), 
                                         Importer.Import(D->getTagKeywordLoc()));
-    ToRecord = ToCXX;
-    
-    if (D->isDefinition()) {
-      // Add base classes.
-      llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
-      for (CXXRecordDecl::base_class_iterator FromBase = FromCXX->bases_begin(),
-                                           FromBaseEnd = FromCXX->bases_end();
-           FromBase != FromBaseEnd;
-           ++FromBase) {
-        QualType T = Importer.Import(FromBase->getType());
-        if (T.isNull())
-          return 0;
-        
-        Bases.push_back(
-          new (Importer.getToContext()) 
+      ToRecord = ToCXX;
+      
+      if (D->isDefinition()) {
+        // Add base classes.
+        llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
+        for (CXXRecordDecl::base_class_iterator 
+                  FromBase = FromCXX->bases_begin(),
+               FromBaseEnd = FromCXX->bases_end();
+             FromBase != FromBaseEnd;
+             ++FromBase) {
+          QualType T = Importer.Import(FromBase->getType());
+          if (T.isNull())
+            return 0;
+          
+          Bases.push_back(
+            new (Importer.getToContext()) 
                   CXXBaseSpecifier(Importer.Import(FromBase->getSourceRange()),
                                    FromBase->isVirtual(),
                                    FromBase->isBaseOfClass(),
                                    FromBase->getAccessSpecifierAsWritten(),
                                    T));
+        }
+        if (!Bases.empty())
+          ToCXX->setBases(Bases.data(), Bases.size());
       }
-      if (!Bases.empty())
-        ToCXX->setBases(Bases.data(), Bases.size());
+    } else {
+      ToRecord = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
+                                    DC, Loc,
+                                    Name.getAsIdentifierInfo(), 
+                                    Importer.Import(D->getTagKeywordLoc()));
     }
-  } else {
-    ToRecord = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
-                                  DC, Loc,
-                                  Name.getAsIdentifierInfo(), 
-                                  Importer.Import(D->getTagKeywordLoc()));
+    ToRecord->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDecl(ToRecord);
   }
-  ToRecord->setLexicalDeclContext(LexicalDC);
   Importer.getImportedDecls()[D] = ToRecord;
-  LexicalDC->addDecl(ToRecord);
-  
+
   if (D->isDefinition()) {
     ToRecord->startDefinition();
     for (DeclContext::decl_iterator FromMem = D->decls_begin(), 

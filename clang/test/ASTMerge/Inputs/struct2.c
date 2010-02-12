@@ -31,3 +31,12 @@ struct S6 { int i : 8; unsigned j; } x6;
 
 // Bit-field mismatch
 struct S7 { int i : 8; unsigned j : 16; } x7;
+
+// Incomplete type
+struct S8 { int i; float f; } *x8;
+
+// Incomplete type
+struct S9 *x9;
+
+// Incomplete type
+struct S10 *x10;
