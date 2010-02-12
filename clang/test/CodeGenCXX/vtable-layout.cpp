@@ -76,6 +76,7 @@ void A::f() { }
 // CHECK:     Vtable for 'Test3::B' (4 entries).
 // CHECK-NEXT:  0 | offset_to_top (0)
 // CHECK-NEXT:  1 | Test3::B RTTI
+// CHECK-NEXT:      -- (Test3::A, 0) vtable address --
 // CHECK-NEXT:      -- (Test3::B, 0) vtable address --
 // CHECK-NEXT:  2 | void Test3::A::f()
 // CHECK-NEXT:  3 | void Test3::B::g()
@@ -88,6 +89,7 @@ void B::f() { }
 // CHECK:     Vtable for 'Test3::C' (5 entries).
 // CHECK-NEXT:  0 | offset_to_top (0)
 // CHECK-NEXT:  1 | Test3::C RTTI
+// CHECK-NEXT:     -- (Test3::A, 0) vtable address --
 // CHECK-NEXT:     -- (Test3::C, 0) vtable address --
 // CHECK-NEXT:  2 | void Test3::A::f()
 // CHECK-NEXT:  3 | void Test3::C::g()
@@ -101,6 +103,8 @@ void C::g() { }
 // CHECK:     Vtable for 'Test3::D' (5 entries).
 // CHECK-NEXT:  0 | offset_to_top (0)
 // CHECK-NEXT:  1 | Test3::D RTTI
+// CHECK-NEXT:     -- (Test3::A, 0) vtable address --
+// CHECK-NEXT:     -- (Test3::B, 0) vtable address --
 // CHECK-NEXT:     -- (Test3::D, 0) vtable address --
 // CHECK-NEXT:  2 | void Test3::A::f()
 // CHECK-NEXT:  3 | void Test3::B::g()

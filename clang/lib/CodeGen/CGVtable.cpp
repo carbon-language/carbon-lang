@@ -16,6 +16,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Format.h"
 #include <cstdio>
 
@@ -608,13 +609,25 @@ void VtableBuilder::layoutSimpleVtable(BaseSubobject Base) {
   // Next, add the RTTI.
   Components.push_back(VtableComponent::MakeRTTI(RD));
   
-  // Record the address point.
-  // FIXME: Record the address point for all primary bases.
-  AddressPoints.insert(std::make_pair(Base, Components.size()));
+  uint64_t AddressPoint = Components.size();
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetTy PrimaryBases;
   layoutVirtualMemberFunctions(Base, PrimaryBases);
+
+  // Record the address point.
+  AddressPoints.insert(std::make_pair(Base, AddressPoint));
+  
+  // Record the address points for all primary bases.
+  for (PrimaryBasesSetTy::const_iterator I = PrimaryBases.begin(),
+       E = PrimaryBases.end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = *I;
+    
+    // We know that all the primary bases have the same offset as the base
+    // subobject.
+    BaseSubobject PrimaryBase(BaseDecl, Base.getBaseOffset());
+    AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
+  }
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
@@ -655,16 +668,40 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   }
   
   for (unsigned I = 0, E = Components.size(); I != E; ++I) {
+    uint64_t Index = I;
+    
     if (AddressPointsByIndex.count(I)) {
-      assert(AddressPointsByIndex.count(I) == 1 &&
-             "FIXME: Handle dumping multiple base subobjects for a single "
-             "address point!");
+      std::string Str;
+
       
-      const BaseSubobject &Base = AddressPointsByIndex.find(I)->second;
-      Out << "       -- (" << Base.getBase()->getQualifiedNameAsString();
-      
-      // FIXME: Instead of dividing by 8, we should be using CharUnits.
-      Out << ", " << Base.getBaseOffset() / 8 << ") vtable address --\n";
+      if (AddressPointsByIndex.count(Index) == 1) {
+        const BaseSubobject &Base = AddressPointsByIndex.find(Index)->second;
+        
+        // FIXME: Instead of dividing by 8, we should be using CharUnits.
+        Out << "       -- (" << Base.getBase()->getQualifiedNameAsString();
+        Out << ", " << Base.getBaseOffset() / 8 << ") vtable address --\n";
+      } else {
+        uint64_t BaseOffset = 
+          AddressPointsByIndex.lower_bound(Index)->second.getBaseOffset();
+        
+        // We store the class names in a set to get a stable order.
+        std::set<std::string> ClassNames;
+        for (std::multimap<uint64_t, BaseSubobject>::const_iterator I =
+             AddressPointsByIndex.lower_bound(Index), E =
+             AddressPointsByIndex.upper_bound(Index); I != E; ++I) {
+          assert(I->second.getBaseOffset() == BaseOffset &&
+                 "Invalid base offset!");
+          const CXXRecordDecl *RD = I->second.getBase();
+          ClassNames.insert(RD->getQualifiedNameAsString());
+        }
+        
+        for (std::set<std::string>::const_iterator I = ClassNames.begin(),
+             E = ClassNames.end(); I != E; ++I) {
+          // FIXME: Instead of dividing by 8, we should be using CharUnits.
+          Out << "       -- (" << *I;
+          Out << ", " << BaseOffset / 8 << ") vtable address --\n";
+        }
+      }
     }
 
     Out << llvm::format("%4d | ", I);
