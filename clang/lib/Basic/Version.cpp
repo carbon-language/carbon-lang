@@ -55,7 +55,7 @@ std::string getClangFullRepositoryVersion() {
   std::string buf;
   llvm::raw_string_ostream OS(buf);
   OS << getClangRepositoryPath();
-  llvm::StringRef Revision = getClangRevision();
+  const std::string &Revision = getClangRevision();
   if (!Revision.empty())
     OS << ' ' << Revision;
   return buf;
