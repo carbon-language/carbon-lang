@@ -1068,12 +1068,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
       if (isa<FieldDecl>(Member)) {
         if (m->isArrow())
           return LV_Valid;
-        Expr *BaseExp = m->getBase();
-        if (BaseExp->getStmtClass() == ObjCPropertyRefExprClass)
-          return LV_SubObjCPropertySetting;
-        return 
-          (BaseExp->getStmtClass() == ObjCImplicitSetterGetterRefExprClass) ?
-           LV_SubObjCPropertyGetterSetting : BaseExp->isLvalue(Ctx);        
+        return m->getBase()->isLvalue(Ctx);
       }
 
       //   -- If it refers to a static member function [...], then
