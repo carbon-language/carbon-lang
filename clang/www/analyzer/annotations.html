@@ -5,7 +5,8 @@
   <title>Source Annotations</title>
   <link type="text/css" rel="stylesheet" href="menu.css" />
   <link type="text/css" rel="stylesheet" href="content.css" />
-  <link type="text/javascript" rel="javascript" href="menu.js"/>
+  <script type="text/javascript" src="scripts/menu.js"></script>
+  <script type="text/javascript" src="scripts/dbtree.js"></script>
 </head>
 <body>
 
@@ -35,30 +36,34 @@ attributes</a>.</p>
 recognized by GCC. Their use can be conditioned using preprocessor macros
 (examples included on this page).</p>
 
-<ul>
-<li><a href="#generic">Annotations to Enhance Generic Checks</a></li>
+<h4>Specific Topics</h4>
+
+<ul id="collapsetree" class="dbtree onclick multiple">
+<li><a href="#generic">Annotations to Enhance Generic Checks</a>
   <ul>
-    <li><a href="#null_checking">Null Pointer Checking</a></li>
+    <li><a href="#null_checking"><span>Null Pointer Checking</span></a>
     <ul>
-      <li><a href="#attr_nonnull">Attribute 'nonnull'</a></li>
+      <li><a href="#attr_nonnull"><span>Attribute 'nonnull'</span></a></li>
     </ul>
+    </li>
   </ul>
-<li><a href="#macosx">Mac OS X API Annotations</a></li>
+</li>
+<li><a href="#macosx">Mac OS X API Annotations</a>
   <ul>
-    <li><a href="#cocoa_mem">Cocoa &amp; Core Foundation Memory Management
-      Annotations</a></li>
+    <li><a href="#cocoa_mem">Cocoa &amp; Core Foundation Memory Management Annotations</a>
     <ul>
-    <li><a href="#attr_ns_returns_retained">Attribute
-    'ns_returns_retained'</a></li>
-    <li><a href="#attr_cf_returns_retained">Attribute
-    'cf_returns_retained'</a></li>
+      <li><a href="#attr_ns_returns_retained">Attribute 'ns_returns_retained'</a></li>
+      <li><a href="#attr_cf_returns_retained">Attribute 'cf_returns_retained'</a></li>
+    </ul>
+    </li>
   </ul>
-  </ul>
-<li><a href="#custom_assertions">Custom Assertion Handlers</a></li>
+</li>
+<li><a href="#custom_assertions">Custom Assertion Handlers</a>
   <ul>
     <li><a href="#attr_noreturn">Attribute 'noreturn'</a></li>
     <li><a href="#attr_analyzer_noreturn">Attribute 'analyzer_noreturn'</a></li>
   </ul>
+  </li>
 </ul>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
