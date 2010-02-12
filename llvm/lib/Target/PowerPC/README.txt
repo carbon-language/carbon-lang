@@ -895,3 +895,20 @@ define double @test_FNEG_sel(double %A, double %B, double %C) {
         ret double %E
 }
 
+//===----------------------------------------------------------------------===//
+The save/restore sequence for CR in prolog/epilog is terrible:
+- Each CR subreg is saved individually, rather than doing one save as a unit.
+- On Darwin, the save is done after the decrement of SP, which means the offset
+from SP of the save slot can be too big for a store instruction, which means we
+need an additional register (currently hacked in 96015+96020; the solution there
+is correct, but poor).
+- On SVR4 the same thing can happen, and I don't think saving before the SP
+decrement is safe on that target, as there is no red zone.  This is currently
+broken AFAIK, although it's not a target I can exercise.
+The following demonstrates the problem:
+extern void bar(char *p);
+void foo() {
+  char x[100000];
+  bar(x);
+  __asm__("" ::: "cr2");
+}
