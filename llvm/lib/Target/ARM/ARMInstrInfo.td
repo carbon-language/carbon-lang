@@ -621,6 +621,21 @@ def BKPT : AI<(outs), (ins i32imm:$val), Pseudo, NoItinerary, "bkpt", "\t$val",
   let Inst{7-4} = 0b0111;
 }
 
+// Change Processor State is a system instruction -- for disassembly only.
+// The singleton $opt operand contains the following information:
+// opt{4-0} = mode from Inst{4-0}
+// opt{5} = changemode from Inst{17}
+// opt{8-6} = AIF from Inst{8-6}
+// opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
+def CPS : AXI<(outs),(ins i32imm:$opt), Pseudo, NoItinerary, "cps${opt:cps}",
+              [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{27-20} = 0b00010000;
+  let Inst{16} = 0;
+  let Inst{5} = 0;
+}
+
 def DBG : AI<(outs), (ins i32imm:$opt), Pseudo, NoItinerary, "dbg", "\t$opt",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV7]> {
@@ -2114,3 +2129,32 @@ def MRRC2 : ABXI<0b1100, (outs), (ins nohash_imm:$cop, i32imm:$opc,
   let Inst{23-20} = 0b0101;
 }
 
+//===----------------------------------------------------------------------===//
+// Move between special register and ARM core register -- for disassembly only
+//
+
+def MRS : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary, "mrs", "\t$dst, cpsr",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0000;
+  let Inst{7-4} = 0b0000;
+}
+
+def MRSsys : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary,"mrs","\t$dst, spsr",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0100;
+  let Inst{7-4} = 0b0000;
+}
+
+// FIXME: mask is ignored for the time being.
+def MSR : ABI<0b0001,(outs),(ins GPR:$src), NoItinerary, "mrs", "\tcpsr, $src",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0010;
+  let Inst{7-4} = 0b0000;
+}
+
+// FIXME: mask is ignored for the time being.
+def MSRsys : ABI<0b0001,(outs),(ins GPR:$src),NoItinerary,"mrs","\tspsr, $src",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0110;
+  let Inst{7-4} = 0b0000;
+}
