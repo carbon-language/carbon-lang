@@ -585,6 +585,27 @@ Constant* ConstantStruct::get(LLVMContext &Context,
   return get(Context, std::vector<Constant*>(Vals, Vals+NumVals), Packed);
 }
 
+ConstantUnion::ConstantUnion(const UnionType *T, Constant* V)
+  : Constant(T, ConstantUnionVal,
+             OperandTraits<ConstantUnion>::op_end(this) - 1, 1) {
+  Use *OL = OperandList;
+  assert(T->getElementTypeIndex(V->getType()) >= 0 &&
+      "Initializer for union element isn't a member of union type!");
+  *OL = V;
+}
+
+// ConstantUnion accessors.
+Constant* ConstantUnion::get(const UnionType* T, Constant* V) {
+  LLVMContextImpl* pImpl = T->getContext().pImpl;
+  
+  // Create a ConstantAggregateZero value if all elements are zeros...
+  if (!V->isNullValue())
+    return pImpl->UnionConstants.getOrCreate(T, V);
+
+  return ConstantAggregateZero::get(T);
+}
+
+
 ConstantVector::ConstantVector(const VectorType *T,
                                const std::vector<Constant*> &V)
   : Constant(T, ConstantVectorVal,
@@ -1005,6 +1026,13 @@ namespace llvm {
 //
 void ConstantStruct::destroyConstant() {
   getType()->getContext().pImpl->StructConstants.remove(this);
+  destroyConstantImpl();
+}
+
+// destroyConstant - Remove the constant from the constant table...
+//
+void ConstantUnion::destroyConstant() {
+  getType()->getContext().pImpl->UnionConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -2081,6 +2109,11 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   // Delete the old constant!
   destroyConstant();
+}
+
+void ConstantUnion::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                 Use *U) {
+  assert(false && "Implement replaceUsesOfWithOnConstant for unions");
 }
 
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,

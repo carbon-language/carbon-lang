@@ -4242,7 +4242,7 @@ def INVEPT : I<0x38, RawFrm, (outs), (ins), "invept", []>, OpSize, TB;
 // 66 0F 38 81
 def INVVPID : I<0x38, RawFrm, (outs), (ins), "invvpid", []>, OpSize, TB;
 // 0F 01 C1
-def VMCALL : I<0x01, RawFrm, (outs), (ins), "vmcall", []>, TB;
+def VMCALL : I<0x01, MRM_C1, (outs), (ins), "vmcall", []>, TB;
 def VMCLEARm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),
   "vmclear\t$vmcs", []>, OpSize, TB;
 // 0F 01 C2

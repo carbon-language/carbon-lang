@@ -341,6 +341,13 @@ struct ConstantTraits< std::vector<T, Alloc> > {
   }
 };
 
+template<>
+struct ConstantTraits<Constant *> {
+  static unsigned uses(Constant * const & v) {
+    return 1;
+  }
+};
+
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator {
   static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
@@ -467,6 +474,14 @@ struct ConstantKeyData<ConstantStruct> {
     for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
       Elements.push_back(cast<Constant>(CS->getOperand(i)));
     return Elements;
+  }
+};
+
+template<>
+struct ConstantKeyData<ConstantUnion> {
+  typedef Constant* ValType;
+  static ValType getValType(ConstantUnion *CU) {
+    return cast<Constant>(CU->getOperand(0));
   }
 };
 

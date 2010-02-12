@@ -239,6 +239,19 @@ void TypePrinting::CalcTypeName(const Type *Ty,
       OS << '>';
     break;
   }
+  case Type::UnionTyID: {
+    const UnionType *UTy = cast<UnionType>(Ty);
+    OS << "union { ";
+    for (StructType::element_iterator I = UTy->element_begin(),
+         E = UTy->element_end(); I != E; ++I) {
+      CalcTypeName(*I, TypeStack, OS);
+      if (next(I) != UTy->element_end())
+        OS << ',';
+      OS << ' ';
+    }
+    OS << '}';
+    break;
+  }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
     CalcTypeName(PTy->getElementType(), TypeStack, OS);

@@ -885,6 +885,8 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     unsigned numOps;
     if (const ArrayType *AR = dyn_cast<ArrayType>(AggTy))
       numOps = AR->getNumElements();
+    else if (isa<UnionType>(AggTy))
+      numOps = 1;
     else
       numOps = cast<StructType>(AggTy)->getNumElements();
     
@@ -901,6 +903,10 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     
     if (const StructType* ST = dyn_cast<StructType>(AggTy))
       return ConstantStruct::get(ST->getContext(), Ops, ST->isPacked());
+    if (const UnionType* UT = dyn_cast<UnionType>(AggTy)) {
+      assert(Ops.size() == 1 && "Union can only contain a single value!");
+      return ConstantUnion::get(UT, Ops[0]);
+    }
     return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
   

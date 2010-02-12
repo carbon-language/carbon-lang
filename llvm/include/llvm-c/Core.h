@@ -193,7 +193,8 @@ typedef enum {
   LLVMPointerTypeKind,     /**< Pointers */
   LLVMOpaqueTypeKind,      /**< Opaque: type with unknown structure */
   LLVMVectorTypeKind,      /**< SIMD 'packed' format, or other vector type */
-  LLVMMetadataTypeKind     /**< Metadata */
+  LLVMMetadataTypeKind,    /**< Metadata */
+  LLVMUnionTypeKind        /**< Unions */
 } LLVMTypeKind;
 
 typedef enum {
@@ -371,6 +372,13 @@ LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes, unsigned ElementCount,
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy);
 void LLVMGetStructElementTypes(LLVMTypeRef StructTy, LLVMTypeRef *Dest);
 LLVMBool LLVMIsPackedStruct(LLVMTypeRef StructTy);
+
+/* Operations on union types */
+LLVMTypeRef LLVMUnionTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
+                                   unsigned ElementCount);
+LLVMTypeRef LLVMUnionType(LLVMTypeRef *ElementTypes, unsigned ElementCount);
+unsigned LLVMCountUnionElementTypes(LLVMTypeRef UnionTy);
+void LLVMGetUnionElementTypes(LLVMTypeRef UnionTy, LLVMTypeRef *Dest);
 
 /* Operations on array, pointer, and vector types (sequence types) */
 LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount);

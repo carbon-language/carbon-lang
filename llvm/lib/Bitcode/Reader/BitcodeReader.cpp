@@ -585,6 +585,13 @@ bool BitcodeReader::ParseTypeTable() {
       ResultTy = StructType::get(Context, EltTys, Record[0]);
       break;
     }
+    case bitc::TYPE_CODE_UNION: {  // UNION: [eltty x N]
+      SmallVector<const Type*, 8> EltTys;
+      for (unsigned i = 0, e = Record.size(); i != e; ++i)
+        EltTys.push_back(getTypeByID(Record[i], true));
+      ResultTy = UnionType::get(&EltTys[0], EltTys.size());
+      break;
+    }
     case bitc::TYPE_CODE_ARRAY:     // ARRAY: [numelts, eltty]
       if (Record.size() < 2)
         return Error("Invalid ARRAY type record");

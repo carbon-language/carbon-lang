@@ -141,6 +141,8 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
     return LLVMFunctionTypeKind;
   case Type::StructTyID:
     return LLVMStructTypeKind;
+  case Type::UnionTyID:
+    return LLVMUnionTypeKind;
   case Type::ArrayTyID:
     return LLVMArrayTypeKind;
   case Type::PointerTyID:
@@ -297,6 +299,35 @@ void LLVMGetStructElementTypes(LLVMTypeRef StructTy, LLVMTypeRef *Dest) {
 
 LLVMBool LLVMIsPackedStruct(LLVMTypeRef StructTy) {
   return unwrap<StructType>(StructTy)->isPacked();
+}
+
+/*--.. Operations on union types ..........................................--*/
+
+LLVMTypeRef LLVMUnionTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
+                                   unsigned ElementCount) {
+  SmallVector<const Type*, 8> Tys;
+  for (LLVMTypeRef *I = ElementTypes,
+                   *E = ElementTypes + ElementCount; I != E; ++I)
+    Tys.push_back(unwrap(*I));
+  
+  return wrap(UnionType::get(&Tys[0], Tys.size()));
+}
+
+LLVMTypeRef LLVMUnionType(LLVMTypeRef *ElementTypes,
+                           unsigned ElementCount, int Packed) {
+  return LLVMUnionTypeInContext(LLVMGetGlobalContext(), ElementTypes,
+                                ElementCount);
+}
+
+unsigned LLVMCountUnionElementTypes(LLVMTypeRef UnionTy) {
+  return unwrap<UnionType>(UnionTy)->getNumElements();
+}
+
+void LLVMGetUnionElementTypes(LLVMTypeRef UnionTy, LLVMTypeRef *Dest) {
+  UnionType *Ty = unwrap<UnionType>(UnionTy);
+  for (FunctionType::param_iterator I = Ty->element_begin(),
+                                    E = Ty->element_end(); I != E; ++I)
+    *Dest++ = wrap(*I);
 }
 
 /*--.. Operations on array, pointer, and vector types (sequence types) .....--*/

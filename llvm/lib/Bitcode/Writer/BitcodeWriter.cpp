@@ -181,6 +181,14 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                             Log2_32_Ceil(VE.getTypes().size()+1)));
   unsigned StructAbbrev = Stream.EmitAbbrev(Abbv);
 
+  // Abbrev for TYPE_CODE_UNION.
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_UNION));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  unsigned UnionAbbrev = Stream.EmitAbbrev(Abbv);
+
   // Abbrev for TYPE_CODE_ARRAY.
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_ARRAY));
@@ -248,6 +256,17 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
       AbbrevToUse = StructAbbrev;
+      break;
+    }
+    case Type::UnionTyID: {
+      const UnionType *UT = cast<UnionType>(T);
+      // UNION: [eltty x N]
+      Code = bitc::TYPE_CODE_UNION;
+      // Output all of the element types.
+      for (UnionType::element_iterator I = UT->element_begin(),
+           E = UT->element_end(); I != E; ++I)
+        TypeVals.push_back(VE.getTypeID(*I));
+      AbbrevToUse = UnionAbbrev;
       break;
     }
     case Type::ArrayTyID: {
@@ -789,7 +808,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       else if (isCStr7)
         AbbrevToUse = CString7Abbrev;
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
-               isa<ConstantVector>(V)) {
+               isa<ConstantUnion>(C) || isa<ConstantVector>(V)) {
       Code = bitc::CST_CODE_AGGREGATE;
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));

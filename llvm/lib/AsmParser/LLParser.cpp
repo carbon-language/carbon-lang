@@ -1295,6 +1295,11 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     if (ParseStructType(Result, false))
       return true;
     break;
+  case lltok::kw_union:
+    // TypeRec ::= 'union' '{' ... '}'
+    if (ParseUnionType(Result))
+      return true;
+    break;
   case lltok::lsquare:
     // TypeRec ::= '[' ... ']'
     Lex.Lex(); // eat the lsquare.
@@ -1601,6 +1606,38 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   for (unsigned i = 0, e = ParamsList.size(); i != e; ++i)
     ParamsListTy.push_back(ParamsList[i].get());
   Result = HandleUpRefs(StructType::get(Context, ParamsListTy, Packed));
+  return false;
+}
+
+/// ParseUnionType
+///   TypeRec
+///     ::= 'union' '{' TypeRec (',' TypeRec)* '}'
+bool LLParser::ParseUnionType(PATypeHolder &Result) {
+  assert(Lex.getKind() == lltok::kw_union);
+  Lex.Lex(); // Consume the 'union'
+
+  if (ParseToken(lltok::lbrace, "'{' expected after 'union'")) return true;
+
+  SmallVector<PATypeHolder, 8> ParamsList;
+  do {
+    LocTy EltTyLoc = Lex.getLoc();
+    if (ParseTypeRec(Result)) return true;
+    ParamsList.push_back(Result);
+
+    if (Result->isVoidTy())
+      return Error(EltTyLoc, "union element can not have void type");
+    if (!UnionType::isValidElementType(Result))
+      return Error(EltTyLoc, "invalid element type for union");
+
+  } while (EatIfPresent(lltok::comma)) ;
+
+  if (ParseToken(lltok::rbrace, "expected '}' at end of union"))
+    return true;
+
+  SmallVector<const Type*, 8> ParamsListTy;
+  for (unsigned i = 0, e = ParamsList.size(); i != e; ++i)
+    ParamsListTy.push_back(ParamsList[i].get());
+  Result = HandleUpRefs(UnionType::get(&ParamsListTy[0], ParamsListTy.size()));
   return false;
 }
 
@@ -2163,8 +2200,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         ParseToken(lltok::rparen, "expected ')' in extractvalue constantexpr"))
       return true;
 
-    if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
-      return Error(ID.Loc, "extractvalue operand must be array or struct");
+    if (!Val->getType()->isAggregateType())
+      return Error(ID.Loc, "extractvalue operand must be aggregate type");
     if (!ExtractValueInst::getIndexedType(Val->getType(), Indices.begin(),
                                           Indices.end()))
       return Error(ID.Loc, "invalid indices for extractvalue");
@@ -2184,8 +2221,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         ParseIndexList(Indices) ||
         ParseToken(lltok::rparen, "expected ')' in insertvalue constantexpr"))
       return true;
-    if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
-      return Error(ID.Loc, "extractvalue operand must be array or struct");
+    if (!Val0->getType()->isAggregateType())
+      return Error(ID.Loc, "insertvalue operand must be aggregate type");
     if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
                                           Indices.end()))
       return Error(ID.Loc, "invalid indices for insertvalue");
@@ -2521,8 +2558,17 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     V = Constant::getNullValue(Ty);
     return false;
   case ValID::t_Constant:
-    if (ID.ConstantVal->getType() != Ty)
+    if (ID.ConstantVal->getType() != Ty) {
+      // Allow a constant struct with a single member to be converted
+      // to a union, if the union has a member which is the same type
+      // as the struct member.
+      if (const UnionType* utype = dyn_cast<UnionType>(Ty)) {
+        return ParseUnionValue(utype, ID, V);
+      }
+
       return Error(ID.Loc, "constant expression type mismatch");
+    }
+
     V = ID.ConstantVal;
     return false;
   }
@@ -2550,6 +2596,22 @@ bool LLParser::ParseTypeAndBasicBlock(BasicBlock *&BB, LocTy &Loc,
     return Error(Loc, "expected a basic block");
   BB = cast<BasicBlock>(V);
   return false;
+}
+
+bool LLParser::ParseUnionValue(const UnionType* utype, ValID &ID, Value *&V) {
+  if (const StructType* stype = dyn_cast<StructType>(ID.ConstantVal->getType())) {
+    if (stype->getNumContainedTypes() != 1)
+      return Error(ID.Loc, "constant expression type mismatch");
+    int index = utype->getElementTypeIndex(stype->getContainedType(0));
+    if (index < 0)
+      return Error(ID.Loc, "initializer type is not a member of the union");
+
+    V = ConstantUnion::get(
+        utype, cast<Constant>(ID.ConstantVal->getOperand(0)));
+    return false;
+  }
+
+  return Error(ID.Loc, "constant expression type mismatch");
 }
 
 
@@ -3811,8 +3873,8 @@ int LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
       ParseIndexList(Indices, AteExtraComma))
     return true;
 
-  if (!isa<StructType>(Val->getType()) && !isa<ArrayType>(Val->getType()))
-    return Error(Loc, "extractvalue operand must be array or struct");
+  if (!Val->getType()->isAggregateType())
+    return Error(Loc, "extractvalue operand must be aggregate type");
 
   if (!ExtractValueInst::getIndexedType(Val->getType(), Indices.begin(),
                                         Indices.end()))
@@ -3833,8 +3895,8 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
       ParseIndexList(Indices, AteExtraComma))
     return true;
   
-  if (!isa<StructType>(Val0->getType()) && !isa<ArrayType>(Val0->getType()))
-    return Error(Loc0, "extractvalue operand must be array or struct");
+  if (!Val0->getType()->isAggregateType())
+    return Error(Loc0, "insertvalue operand must be aggregate type");
 
   if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
                                         Indices.end()))
