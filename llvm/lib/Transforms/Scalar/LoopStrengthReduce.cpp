@@ -1902,10 +1902,10 @@ static void CollectSubexprs(const SCEV *S, const SCEVConstant *C,
   } else if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // Split a non-zero base out of an addrec.
     if (!AR->getStart()->isZero()) {
-      CollectSubexprs(AR->getStart(), C, Ops, SE);
       CollectSubexprs(SE.getAddRecExpr(SE.getIntegerSCEV(0, AR->getType()),
                                        AR->getStepRecurrence(SE),
                                        AR->getLoop()), C, Ops, SE);
+      CollectSubexprs(AR->getStart(), C, Ops, SE);
       return;
     }
   } else if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
