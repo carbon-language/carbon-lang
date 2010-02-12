@@ -917,12 +917,12 @@ void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
 /// CollectInheritedProtocols - Collect all protocols in current class and
 /// those inherited by it.
 void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
-                          llvm::SmallVectorImpl<ObjCProtocolDecl*> &Protocols) {
+                          llvm::SmallPtrSet<ObjCProtocolDecl*, 8> &Protocols) {
   if (const ObjCInterfaceDecl *OI = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
     for (ObjCInterfaceDecl::protocol_iterator P = OI->protocol_begin(),
          PE = OI->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
-      Protocols.push_back(Proto);
+      Protocols.insert(Proto);
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P)
         CollectInheritedProtocols(*P, Protocols);
@@ -943,7 +943,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     for (ObjCInterfaceDecl::protocol_iterator P = OC->protocol_begin(),
          PE = OC->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
-      Protocols.push_back(Proto);
+      Protocols.insert(Proto);
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P)
         CollectInheritedProtocols(*P, Protocols);
@@ -954,7 +954,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     for (ObjCProtocolDecl::protocol_iterator P = OP->protocol_begin(),
          PE = OP->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
-      Protocols.push_back(Proto);
+      Protocols.insert(Proto);
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P)
         CollectInheritedProtocols(*P, Protocols);
@@ -4188,8 +4188,8 @@ void getIntersectionOfProtocols(ASTContext &Context,
   if (LHSNumProtocols > 0)
     InheritedProtocolSet.insert(LHS->qual_begin(), LHS->qual_end());
   else {
-    llvm::SmallVector<ObjCProtocolDecl *, 8> LHSInheritedProtocols;
-     Context.CollectInheritedProtocols(LHS->getDecl(), LHSInheritedProtocols);
+    llvm::SmallPtrSet<ObjCProtocolDecl *, 8> LHSInheritedProtocols;
+    Context.CollectInheritedProtocols(LHS->getDecl(), LHSInheritedProtocols);
     InheritedProtocolSet.insert(LHSInheritedProtocols.begin(), 
                                 LHSInheritedProtocols.end());
   }
@@ -4202,13 +4202,13 @@ void getIntersectionOfProtocols(ASTContext &Context,
         IntersectionOfProtocols.push_back(RHSProtocols[i]);
   }
   else {
-    llvm::SmallVector<ObjCProtocolDecl *, 8> RHSInheritedProtocols;
+    llvm::SmallPtrSet<ObjCProtocolDecl *, 8> RHSInheritedProtocols;
     Context.CollectInheritedProtocols(RHS->getDecl(), RHSInheritedProtocols);
-    // FIXME. This may cause duplication of protocols in the list, but should
-    // be harmless.
-    for (unsigned i = 0, len = RHSInheritedProtocols.size(); i < len; ++i)
-      if (InheritedProtocolSet.count(RHSInheritedProtocols[i]))
-        IntersectionOfProtocols.push_back(RHSInheritedProtocols[i]);
+    for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator I = 
+         RHSInheritedProtocols.begin(),
+         E = RHSInheritedProtocols.end(); I != E; ++I) 
+      if (InheritedProtocolSet.count((*I)))
+        IntersectionOfProtocols.push_back((*I));
   }
 }
 
