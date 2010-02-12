@@ -102,6 +102,8 @@ def analyzer_viz_egraph_ubigraph : Flag<"-analyzer-viz-egraph-ubigraph">,
 
 def disable_llvm_optzns : Flag<"-disable-llvm-optzns">,
   HelpText<"Don't run LLVM optimization passes">;
+def disable_llvm_verifier : Flag<"-disable-llvm-verifier">,
+  HelpText<"Don't run the LLVM IR verifier pass">;
 def disable_red_zone : Flag<"-disable-red-zone">,
   HelpText<"Do not emit code that uses the red zone.">;
 def dwarf_debug_flags : Separate<"-dwarf-debug-flags">,

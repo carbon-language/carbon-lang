@@ -794,7 +794,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
 #ifdef NDEBUG
   Opts.VerifyModule = 0;
 #else
-  Opts.VerifyModule = 1;
+  Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
 #endif
 }
 
