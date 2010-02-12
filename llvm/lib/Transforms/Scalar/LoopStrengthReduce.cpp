@@ -2271,6 +2271,10 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
     const SCEV *Reg = *I;
     const ImmMapTy &Imms = Map.find(Reg)->second;
 
+    // It's not worthwhile looking for reuse if there's only one offset.
+    if (Imms.size() == 1)
+      continue;
+
     DEBUG(dbgs() << "Generating cross-use offsets for " << *Reg << ':';
           for (ImmMapTy::const_iterator J = Imms.begin(), JE = Imms.end();
                J != JE; ++J)
@@ -2299,7 +2303,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
       };
       for (size_t i = 0, e = array_lengthof(OtherImms); i != e; ++i) {
         ImmMapTy::const_iterator M = OtherImms[i];
-        if (M == J) continue;
+        if (M == J || M == JE) continue;
 
         // Compute the difference between the two.
         int64_t Imm = (uint64_t)JImm - M->first;
