@@ -149,9 +149,16 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
     RuntimeVers = LO.ObjCNonFragileABI ? 2 : 1;
 
   // Create new compile unit.
-  return DebugFactory.CreateCompileUnit(
+  llvm::DICompileUnit Unit = DebugFactory.CreateCompileUnit(
     LangTag, AbsFileName.getLast(), AbsFileName.getDirname(), Producer, isMain,
     LO.Optimize, CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
+
+  if (Loc.isValid()) {
+    PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+    unsigned FID = PLoc.getIncludeLoc().getRawEncoding();
+    CompileUnitCache[FID] = Unit;
+  }
+  return Unit;
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
