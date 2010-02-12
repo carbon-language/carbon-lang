@@ -104,11 +104,6 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
-  // Pick the first non-whitespace column.
-  while (StartColNo < SourceLine.size() &&
-         (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
-    ++StartColNo;
-
   // Compute the column number of the end.
   unsigned EndColNo = CaretLine.size();
   if (EndLineNo == LineNo) {
@@ -123,16 +118,25 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     }
   }
 
+  assert(StartColNo <= EndColNo && "Invalid range!");
+  
+  // Pick the first non-whitespace column.
+  while (StartColNo < SourceLine.size() &&
+         (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
+    ++StartColNo;
+  
   // Pick the last non-whitespace column.
-  if (EndColNo <= SourceLine.size())
-    while (EndColNo-1 &&
-           (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
-      --EndColNo;
-  else
+  if (EndColNo > SourceLine.size())
     EndColNo = SourceLine.size();
+  while (EndColNo-1 &&
+         (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
+    --EndColNo;
+  
+  // If the start/end passed each other, then we are trying to highlight a range
+  // that just exists in whitespace, which must be some sort of other bug.
+  assert(StartColNo <= EndColNo && "Trying to highlight whitespace??");
 
   // Fill the range with ~'s.
-  assert(StartColNo <= EndColNo && "Invalid range!");
   for (unsigned i = StartColNo; i < EndColNo; ++i)
     CaretLine[i] = '~';
 }
