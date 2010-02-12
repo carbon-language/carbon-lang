@@ -975,6 +975,16 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   std::sort(Classes.begin(), Classes.end(), less_ptr<ClassInfo>());
 }
 
+static std::pair<unsigned, unsigned> *
+GetTiedOperandAtIndex(SmallVectorImpl<std::pair<unsigned, unsigned> > &List,
+                      unsigned Index) {
+  for (unsigned i = 0, e = List.size(); i != e; ++i)
+    if (Index == List[i].first)
+      return &List[i];
+
+  return 0;
+}
+
 static void EmitConvertToMCInst(CodeGenTarget &Target,
                                 std::vector<InstructionInfo*> &Infos,
                                 raw_ostream &OS) {
@@ -1051,15 +1061,12 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       //
       // FIXME: This should be removed from the MCInst structure.
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
-        // See if this is a tied operand.
-        unsigned i, e = TiedOperands.size();
-        for (i = 0; i != e; ++i)
-          if (CurIndex == TiedOperands[i].first)
-            break;
-        if (i == e)
+        std::pair<unsigned, unsigned> *Tie = GetTiedOperandAtIndex(TiedOperands,
+                                                                   CurIndex);
+        if (!Tie)
           Signature += "__Imp";
         else
-          Signature += "__Tie" + utostr(TiedOperands[i].second);
+          Signature += "__Tie" + utostr(Tie->second);
       }
 
       Signature += "__";
@@ -1080,8 +1087,14 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     }
 
     // Add any trailing implicit operands.
-    for (; CurIndex != NumMIOperands; ++CurIndex)
-      Signature += "__Imp";
+    for (; CurIndex != NumMIOperands; ++CurIndex) {
+      std::pair<unsigned, unsigned> *Tie = GetTiedOperandAtIndex(TiedOperands,
+                                                                 CurIndex);
+      if (!Tie)
+        Signature += "__Imp";
+      else
+        Signature += "__Tie" + utostr(Tie->second);
+    }
 
     II.ConversionFnKind = Signature;
 
@@ -1103,21 +1116,18 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       // Add the implicit operands.
       for (; CurIndex != Op.OperandInfo->MIOperandNo; ++CurIndex) {
         // See if this is a tied operand.
-        unsigned i, e = TiedOperands.size();
-        for (i = 0; i != e; ++i)
-          if (CurIndex == TiedOperands[i].first)
-            break;
+        std::pair<unsigned, unsigned> *Tie = GetTiedOperandAtIndex(TiedOperands,
+                                                                   CurIndex);
 
-        if (i == e) {
+        if (!Tie) {
           // If not, this is some implicit operand. Just assume it is a register
           // for now.
           CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
         } else {
           // Copy the tied operand.
-          assert(TiedOperands[i].first > TiedOperands[i].second &&
-                 "Tied operand preceeds its target!");
+          assert(Tie->first>Tie->second && "Tied operand preceeds its target!");
           CvtOS << "    Inst.addOperand(Inst.getOperand("
-                << TiedOperands[i].second << "));\n";
+                << Tie->second << "));\n";
         }
       }
 
@@ -1129,8 +1139,22 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
     }
     
     // And add trailing implicit operands.
-    for (; CurIndex != NumMIOperands; ++CurIndex)
-      CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+    for (; CurIndex != NumMIOperands; ++CurIndex) {
+      std::pair<unsigned, unsigned> *Tie = GetTiedOperandAtIndex(TiedOperands,
+                                                                 CurIndex);
+
+      if (!Tie) {
+        // If not, this is some implicit operand. Just assume it is a register
+        // for now.
+        CvtOS << "    Inst.addOperand(MCOperand::CreateReg(0));\n";
+      } else {
+        // Copy the tied operand.
+        assert(Tie->first>Tie->second && "Tied operand preceeds its target!");
+        CvtOS << "    Inst.addOperand(Inst.getOperand("
+              << Tie->second << "));\n";
+      }
+    }
+
     CvtOS << "    break;\n";
   }
 
