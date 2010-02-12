@@ -3556,6 +3556,14 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       }
     }
     break;
+    
+  case X86II::MRM_C1:
+  case X86II::MRM_C8:
+  case X86II::MRM_C9:
+  case X86II::MRM_E8:
+  case X86II::MRM_F0:
+    FinalSize += 2;
+    break;
   }
 
   case X86II::MRMInitReg:

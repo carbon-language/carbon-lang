@@ -560,6 +560,26 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                      CurByte, OS, Fixups);
     CurOp += X86AddrNumOperands;
     break;
+  case X86II::MRM_C1:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xC1, CurByte, OS);
+    break;
+  case X86II::MRM_C8:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xC8, CurByte, OS);
+    break;
+  case X86II::MRM_C9:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xC9, CurByte, OS);
+    break;
+  case X86II::MRM_E8:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xE8, CurByte, OS);
+    break;
+  case X86II::MRM_F0:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xF0, CurByte, OS);
+    break;
   }
   
   // If there is a remaining operand, it must be a trailing immediate.  Emit it

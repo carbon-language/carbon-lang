@@ -268,6 +268,13 @@ namespace X86II {
     // MRMInitReg - This form is used for instructions whose source and
     // destinations are the same register.
     MRMInitReg = 32,
+    
+    //// MRM_C1 - A mod/rm byte of exactly 0xC1.
+    MRM_C1 = 33,
+    MRM_C8 = 34,
+    MRM_C9 = 35,
+    MRM_E8 = 36,
+    MRM_F0 = 37,
 
     FormMask       = 63,
 

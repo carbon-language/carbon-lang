@@ -858,6 +858,27 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
                      getX86RegNum(MI.getOperand(CurOp).getReg()));
     ++CurOp;
     break;
+      
+  case X86II::MRM_C1:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xC1);
+    break;
+  case X86II::MRM_C8:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xC8);
+    break;
+  case X86II::MRM_C9:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xC9);
+    break;
+  case X86II::MRM_E8:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xE8);
+    break;
+  case X86II::MRM_F0:
+    MCE.emitByte(BaseOpcode);
+    MCE.emitByte(0xF0);
+    break;
   }
 
   if (!Desc->isVariadic() && CurOp != NumOps) {

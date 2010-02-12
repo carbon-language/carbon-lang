@@ -29,6 +29,11 @@ def MRM0m  : Format<24>; def MRM1m  : Format<25>; def MRM2m  : Format<26>;
 def MRM3m  : Format<27>; def MRM4m  : Format<28>; def MRM5m  : Format<29>;
 def MRM6m  : Format<30>; def MRM7m  : Format<31>;
 def MRMInitReg : Format<32>;
+def MRM_C1 : Format<33>;
+def MRM_C8 : Format<34>;
+def MRM_C9 : Format<35>;
+def MRM_E8 : Format<36>;
+def MRM_F0 : Format<37>;
 
 
 // ImmType - This specifies the immediate type used by an instruction. This is
