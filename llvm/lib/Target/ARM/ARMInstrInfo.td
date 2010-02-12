@@ -2030,3 +2030,87 @@ include "ARMInstrVFP.td"
 //
 
 include "ARMInstrNEON.td"
+
+//===----------------------------------------------------------------------===//
+// Coprocessor Instructions.  For disassembly only.
+//
+
+def CDP : ABI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
+            nohash_imm:$CRd, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
+            NoItinerary, "cdp", "\tp$cop, $opc1, cr$CRd, cr$CRn, cr$CRm, $opc2",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{4} = 0;
+}
+
+def CDP2 : ABXI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
+               nohash_imm:$CRd, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
+               NoItinerary, "cdp2\tp$cop, $opc1, cr$CRd, cr$CRn, cr$CRm, $opc2",
+               [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{4} = 0;
+}
+
+def MCR : ABI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
+              GPR:$Rt, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
+              NoItinerary, "mcr", "\tp$cop, $opc1, $Rt, cr$CRn, cr$CRm, $opc2",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{20} = 0;
+  let Inst{4} = 1;
+}
+
+def MCR2 : ABXI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
+                GPR:$Rt, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
+                NoItinerary, "mcr2\tp$cop, $opc1, $Rt, cr$CRn, cr$CRm, $opc2",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{20} = 0;
+  let Inst{4} = 1;
+}
+
+def MRC : ABI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
+              GPR:$Rt, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
+              NoItinerary, "mrc", "\tp$cop, $opc1, $Rt, cr$CRn, cr$CRm, $opc2",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{20} = 1;
+  let Inst{4} = 1;
+}
+
+def MRC2 : ABXI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
+                GPR:$Rt, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
+                NoItinerary, "mrc2\tp$cop, $opc1, $Rt, cr$CRn, cr$CRm, $opc2",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{20} = 1;
+  let Inst{4} = 1;
+}
+
+def MCRR : ABI<0b1100, (outs), (ins nohash_imm:$cop, i32imm:$opc,
+               GPR:$Rt, GPR:$Rt2, nohash_imm:$CRm),
+               NoItinerary, "mcrr", "\tp$cop, $opc, $Rt, $Rt2, cr$CRm",
+               [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0100;
+}
+
+def MCRR2 : ABXI<0b1100, (outs), (ins nohash_imm:$cop, i32imm:$opc,
+                 GPR:$Rt, GPR:$Rt2, nohash_imm:$CRm),
+                 NoItinerary, "mcrr2\tp$cop, $opc, $Rt, $Rt2, cr$CRm",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{23-20} = 0b0100;
+}
+
+def MRRC : ABI<0b1100, (outs), (ins nohash_imm:$cop, i32imm:$opc,
+               GPR:$Rt, GPR:$Rt2, nohash_imm:$CRm),
+               NoItinerary, "mrrc", "\tp$cop, $opc, $Rt, $Rt2, cr$CRm",
+               [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0101;
+}
+
+def MRRC2 : ABXI<0b1100, (outs), (ins nohash_imm:$cop, i32imm:$opc,
+                 GPR:$Rt, GPR:$Rt2, nohash_imm:$CRm),
+                 NoItinerary, "mrrc2\tp$cop, $opc, $Rt, $Rt2, cr$CRm",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{23-20} = 0b0101;
+}
+
