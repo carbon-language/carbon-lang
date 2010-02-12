@@ -19,3 +19,7 @@ define i32* @test2() {
         ret i32* %X
 }
 
+define void @test3() alignstack(16) {
+        ret void
+}
+

@@ -1078,6 +1078,11 @@ define void @f() optsize { ... }
 </div>
 
 <dl>
+  <dt><tt><b>alignstack(&lt;<em>n</em>&gt;)</b></tt></dt>
+  <dd>This attribute indicates that, when emitting the prologue and epilogue,
+      the backend should forcibly align the stack pointer. Specify the
+      desired alignment, which must be a power of two, in parentheses.
+
   <dt><tt><b>alwaysinline</b></tt></dt>
   <dd>This attribute indicates that the inliner should attempt to inline this
       function into callers whenever possible, ignoring any active inlining size

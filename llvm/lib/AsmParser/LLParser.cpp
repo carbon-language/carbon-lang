@@ -956,6 +956,14 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
     case lltok::kw_noimplicitfloat: Attrs |= Attribute::NoImplicitFloat; break;
     case lltok::kw_naked:           Attrs |= Attribute::Naked; break;
 
+    case lltok::kw_alignstack: {
+      unsigned Alignment;
+      if (ParseOptionalStackAlignment(Alignment))
+        return true;
+      Attrs |= Attribute::constructStackAlignmentFromInt(Alignment);
+      continue;
+    }
+
     case lltok::kw_align: {
       unsigned Alignment;
       if (ParseOptionalAlignment(Alignment))
@@ -963,6 +971,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
       Attrs |= Attribute::constructAlignmentFromInt(Alignment);
       continue;
     }
+
     }
     Lex.Lex();
   }
@@ -1131,6 +1140,25 @@ bool LLParser::ParseOptionalCommaAlign(unsigned &Alignment,
   return false;
 }
 
+/// ParseOptionalStackAlignment
+///   ::= /* empty */
+///   ::= 'alignstack' '(' 4 ')'
+bool LLParser::ParseOptionalStackAlignment(unsigned &Alignment) {
+  Alignment = 0;
+  if (!EatIfPresent(lltok::kw_alignstack))
+    return false;
+  LocTy ParenLoc = Lex.getLoc();
+  if (!EatIfPresent(lltok::lparen))
+    return Error(ParenLoc, "expected '('");
+  LocTy AlignLoc = Lex.getLoc();
+  if (ParseUInt32(Alignment)) return true;
+  ParenLoc = Lex.getLoc();
+  if (!EatIfPresent(lltok::rparen))
+    return Error(ParenLoc, "expected ')'");
+  if (!isPowerOf2_32(Alignment))
+    return Error(AlignLoc, "stack alignment is not a power of two");
+  return false;
+}
 
 /// ParseIndexList - This parses the index list for an insert/extractvalue
 /// instruction.  This sets AteExtraComma in the case where we eat an extra

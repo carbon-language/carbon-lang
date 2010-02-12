@@ -169,6 +169,7 @@ namespace llvm {
     bool ParseOptionalVisibility(unsigned &Visibility);
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
+    bool ParseOptionalStackAlignment(unsigned &Alignment);
     bool ParseInstructionMetadata(SmallVectorImpl<std::pair<unsigned,
                                                             MDNode *> > &);
     bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
