@@ -15,6 +15,7 @@
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -36,10 +37,11 @@ class X86MCCodeEmitter : public MCCodeEmitter {
   void operator=(const X86MCCodeEmitter &); // DO NOT IMPLEMENT
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
+  MCContext &Ctx;
   bool Is64BitMode;
 public:
-  X86MCCodeEmitter(TargetMachine &tm, bool is64Bit) 
-    : TM(tm), TII(*TM.getInstrInfo()) {
+  X86MCCodeEmitter(TargetMachine &tm, MCContext &ctx, bool is64Bit) 
+    : TM(tm), TII(*TM.getInstrInfo()), Ctx(ctx) {
     Is64BitMode = is64Bit;
   }
 
@@ -122,13 +124,13 @@ public:
 MCCodeEmitter *llvm::createX86_32MCCodeEmitter(const Target &,
                                                TargetMachine &TM,
                                                MCContext &Ctx) {
-  return new X86MCCodeEmitter(TM, false);
+  return new X86MCCodeEmitter(TM, Ctx, false);
 }
 
 MCCodeEmitter *llvm::createX86_64MCCodeEmitter(const Target &,
                                                TargetMachine &TM,
                                                MCContext &Ctx) {
-  return new X86MCCodeEmitter(TM, true);
+  return new X86MCCodeEmitter(TM, Ctx, true);
 }
 
 
@@ -167,7 +169,9 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 
   // If we have an immoffset, add it to the expression.
   const MCExpr *Expr = DispOp.getExpr();
-  // FIXME: NO CONTEXT.
+  if (ImmOffset)
+    Expr = MCBinaryExpr::CreateAdd(Expr,MCConstantExpr::Create(ImmOffset, Ctx),
+                                   Ctx);
   
   // Emit a symbolic constant as a fixup and 4 zeros.
   Fixups.push_back(MCFixup::Create(CurByte, Expr, FixupKind));
