@@ -930,7 +930,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     
     if (!D.isInvalidType() && D.getDeclSpec().isTypeSpecOwned()) {
       TagDecl* Owned = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
-      Owned->setDefinedInDeclarator(Owned->isDefinition());
+      // Owned is embedded if it was defined here, or if it is the
+      // very first (i.e., canonical) declaration of this tag type.
+      Owned->setEmbeddedInDeclarator(Owned->isDefinition() ||
+                                     Owned->isCanonicalDecl());
       if (OwnedDecl) *OwnedDecl = Owned;
     }
     break;
