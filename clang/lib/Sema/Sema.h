@@ -1340,7 +1340,6 @@ public:
   bool LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
                         bool AllowBuiltinCreation = false,
                         bool EnteringContext = false);
-
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,

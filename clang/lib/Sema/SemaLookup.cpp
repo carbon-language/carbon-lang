@@ -438,9 +438,42 @@ void LookupResult::print(llvm::raw_ostream &Out) {
   }
 }
 
+/// \brief Lookup a builtin function, when name lookup would otherwise
+/// fail.
+static bool LookupBuiltin(Sema &S, LookupResult &R) {
+  Sema::LookupNameKind NameKind = R.getLookupKind();
+
+  // If we didn't find a use of this identifier, and if the identifier
+  // corresponds to a compiler builtin, create the decl object for the builtin
+  // now, injecting it into translation unit scope, and return it.
+  if (NameKind == Sema::LookupOrdinaryName ||
+      NameKind == Sema::LookupRedeclarationWithLinkage) {
+    IdentifierInfo *II = R.getLookupName().getAsIdentifierInfo();
+    if (II) {
+      // If this is a builtin on this (or all) targets, create the decl.
+      if (unsigned BuiltinID = II->getBuiltinID()) {
+        // In C++, we don't have any predefined library functions like
+        // 'malloc'. Instead, we'll just error.
+        if (S.getLangOptions().CPlusPlus &&
+            S.Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
+          return false;
+
+        NamedDecl *D = S.LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
+                                             S.TUScope, R.isForRedeclaration(),
+                                             R.getNameLoc());
+        if (D) 
+          R.addDecl(D);
+        return (D != NULL);
+      }
+    }
+  }
+
+  return false;
+}
+
 // Adds all qualifying matches for a name within a decl context to the
 // given lookup result.  Returns true if any matches were found.
-static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
+static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
   bool Found = false;
 
   DeclContext::lookup_const_iterator I, E;
@@ -451,6 +484,9 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
       Found = true;
     }
   }
+
+  if (!Found && DC->isTranslationUnit() && LookupBuiltin(S, R))
+    return true;
 
   if (R.getLookupName().getNameKind()
         != DeclarationName::CXXConversionFunctionName ||
@@ -525,13 +561,13 @@ static bool LookupDirect(LookupResult &R, const DeclContext *DC) {
 
 // Performs C++ unqualified lookup into the given file context.
 static bool
-CppNamespaceLookup(LookupResult &R, ASTContext &Context, DeclContext *NS,
-                   UnqualUsingDirectiveSet &UDirs) {
+CppNamespaceLookup(Sema &S, LookupResult &R, ASTContext &Context, 
+                   DeclContext *NS, UnqualUsingDirectiveSet &UDirs) {
 
   assert(NS && NS->isFileContext() && "CppNamespaceLookup() requires namespace!");
 
   // Perform direct name lookup into the LookupCtx.
-  bool Found = LookupDirect(R, NS);
+  bool Found = LookupDirect(S, R, NS);
 
   // Perform direct name lookup into the namespaces nominated by the
   // using directives whose common ancestor is this namespace.
@@ -539,7 +575,7 @@ CppNamespaceLookup(LookupResult &R, ASTContext &Context, DeclContext *NS,
   llvm::tie(UI, UEnd) = UDirs.getNamespacesFor(NS);
 
   for (; UI != UEnd; ++UI)
-    if (LookupDirect(R, UI->getNominatedNamespace()))
+    if (LookupDirect(S, R, UI->getNominatedNamespace()))
       Found = true;
 
   R.resolveKind();
@@ -670,7 +706,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
              "We should have been looking only at file context here already.");
 
       // Look into context considering using-directives.
-      if (CppNamespaceLookup(R, Context, Ctx, UDirs))
+      if (CppNamespaceLookup(*this, R, Context, Ctx, UDirs))
         Found = true;
     }
 
@@ -794,26 +830,9 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
-  if (NameKind == LookupOrdinaryName ||
-      NameKind == LookupRedeclarationWithLinkage) {
-    IdentifierInfo *II = Name.getAsIdentifierInfo();
-    if (II && AllowBuiltinCreation) {
-      // If this is a builtin on this (or all) targets, create the decl.
-      if (unsigned BuiltinID = II->getBuiltinID()) {
-        // In C++, we don't have any predefined library functions like
-        // 'malloc'. Instead, we'll just error.
-        if (getLangOptions().CPlusPlus &&
-            Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-          return false;
+  if (AllowBuiltinCreation)
+    return LookupBuiltin(*this, R);
 
-        NamedDecl *D = LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
-                                           S, R.isForRedeclaration(),
-                                           R.getNameLoc());
-        if (D) R.addDecl(D);
-        return (D != NULL);
-      }
-    }
-  }
   return false;
 }
 
@@ -843,7 +862,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 ///   class or enumeration name if and only if the declarations are
 ///   from the same namespace; otherwise (the declarations are from
 ///   different namespaces), the program is ill-formed.
-static bool LookupQualifiedNameInUsingDirectives(LookupResult &R,
+static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
                                                  DeclContext *StartDC) {
   assert(StartDC->isFileContext() && "start context is not a file context");
 
@@ -886,7 +905,7 @@ static bool LookupQualifiedNameInUsingDirectives(LookupResult &R,
     // between LookupResults.
     bool UseLocal = !R.empty();
     LookupResult &DirectR = UseLocal ? LocalR : R;
-    bool FoundDirect = LookupDirect(DirectR, ND);
+    bool FoundDirect = LookupDirect(S, DirectR, ND);
 
     if (FoundDirect) {
       // First do any local hiding.
@@ -966,7 +985,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
          "Declaration context must already be complete!");
 
   // Perform qualified name lookup into the LookupCtx.
-  if (LookupDirect(R, LookupCtx)) {
+  if (LookupDirect(*this, R, LookupCtx)) {
     R.resolveKind();
     if (isa<CXXRecordDecl>(LookupCtx))
       R.setNamingClass(cast<CXXRecordDecl>(LookupCtx));
@@ -987,7 +1006,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
 
   // If this is a namespace, look it up in the implied namespaces.
   if (LookupCtx->isFileContext())
-    return LookupQualifiedNameInUsingDirectives(R, LookupCtx);
+    return LookupQualifiedNameInUsingDirectives(*this, R, LookupCtx);
 
   // If this isn't a C++ class, we aren't allowed to look into base
   // classes, we're done.

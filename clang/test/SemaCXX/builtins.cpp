@@ -5,3 +5,5 @@ typedef const struct __CFString * CFStringRef;
 void f() {
   (void)CFStringRef(CFSTR("Hello"));
 }
+
+void a() { __builtin_va_list x, y; ::__builtin_va_copy(x, y); }
