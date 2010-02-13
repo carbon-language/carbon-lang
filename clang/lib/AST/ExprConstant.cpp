@@ -812,7 +812,7 @@ public:
     return false;
   }
 
-  bool VisitCallExpr(const CallExpr *E);
+  bool VisitCallExpr(CallExpr *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
   bool VisitConditionalOperator(const ConditionalOperator *E);
@@ -967,7 +967,7 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
   return -1;
 }
 
-bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
+bool IntExprEvaluator::VisitCallExpr(CallExpr *E) {
   switch (E->isBuiltinCall(Info.Ctx)) {
   default:
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
@@ -1022,6 +1022,9 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     Operand = Info.Ctx.Target.getEHDataRegisterNumber(Operand);
     return Success(Operand, E);
   }
+
+  case Builtin::BI__builtin_expect:
+    return Visit(E->getArg(0));
   }
 }
 
