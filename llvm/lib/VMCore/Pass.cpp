@@ -194,6 +194,9 @@ PassManagerType BasicBlockPass::getPotentialPassManagerType() const {
 //
 namespace {
 class PassRegistrar {
+  /// Guards the contents of this class.
+  mutable sys::SmartMutex<true> Lock;
+
   /// PassInfoMap - Keep track of the passinfo object for each registered llvm
   /// pass.
   typedef std::map<intptr_t, const PassInfo*> MapType;
@@ -213,16 +216,19 @@ class PassRegistrar {
 public:
   
   const PassInfo *GetPassInfo(intptr_t TI) const {
+    sys::SmartScopedLock<true> Guard(Lock);
     MapType::const_iterator I = PassInfoMap.find(TI);
     return I != PassInfoMap.end() ? I->second : 0;
   }
   
   const PassInfo *GetPassInfo(StringRef Arg) const {
+    sys::SmartScopedLock<true> Guard(Lock);
     StringMapType::const_iterator I = PassInfoStringMap.find(Arg);
     return I != PassInfoStringMap.end() ? I->second : 0;
   }
   
   void RegisterPass(const PassInfo &PI) {
+    sys::SmartScopedLock<true> Guard(Lock);
     bool Inserted =
       PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
     assert(Inserted && "Pass registered multiple times!"); Inserted=Inserted;
@@ -230,6 +236,7 @@ public:
   }
   
   void UnregisterPass(const PassInfo &PI) {
+    sys::SmartScopedLock<true> Guard(Lock);
     MapType::iterator I = PassInfoMap.find(PI.getTypeInfo());
     assert(I != PassInfoMap.end() && "Pass registered but not in map!");
     
@@ -239,6 +246,7 @@ public:
   }
   
   void EnumerateWith(PassRegistrationListener *L) {
+    sys::SmartScopedLock<true> Guard(Lock);
     for (MapType::const_iterator I = PassInfoMap.begin(),
          E = PassInfoMap.end(); I != E; ++I)
       L->passEnumerate(I->second);
@@ -249,6 +257,7 @@ public:
   void RegisterAnalysisGroup(PassInfo *InterfaceInfo,
                              const PassInfo *ImplementationInfo,
                              bool isDefault) {
+    sys::SmartScopedLock<true> Guard(Lock);
     AnalysisGroupInfo &AGI = AnalysisGroupInfoMap[InterfaceInfo];
     assert(AGI.Implementations.count(ImplementationInfo) == 0 &&
            "Cannot add a pass to the same analysis group more than once!");
