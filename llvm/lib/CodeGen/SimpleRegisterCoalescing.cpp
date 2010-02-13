@@ -771,11 +771,16 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     SubIdx = 0;
   }
 
+  // Copy the register use-list before traversing it. We may be adding operands
+  // and invalidating pointers.
+  SmallVector<std::pair<MachineInstr*, unsigned>, 32> reglist;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
-         E = mri_->reg_end(); I != E; ) {
-    MachineOperand &O = I.getOperand();
-    MachineInstr *UseMI = &*I;
-    ++I;
+         E = mri_->reg_end(); I != E; ++I)
+    reglist.push_back(std::make_pair(&*I, I.getOperandNo()));
+
+  for (unsigned N=0; N != reglist.size(); ++N) {
+    MachineInstr *UseMI = reglist[N].first;
+    MachineOperand &O = UseMI->getOperand(reglist[N].second);
     unsigned OldSubIdx = O.getSubReg();
     if (DstIsPhys) {
       unsigned UseDstReg = DstReg;
@@ -796,6 +801,19 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
 
       O.setReg(UseDstReg);
       O.setSubReg(0);
+      if (OldSubIdx) {
+        // Def and kill of subregister of a virtual register actually defs and
+        // kills the whole register. Add imp-defs and imp-kills as needed.
+        if (O.isDef()) {
+          if(O.isDead())
+            UseMI->addRegisterDead(DstReg, tri_, true);
+          else
+            UseMI->addRegisterDefined(DstReg, tri_);
+        } else if (!O.isUndef() &&
+                   (O.isKill() ||
+                    UseMI->isRegTiedToDefOperand(&O-&UseMI->getOperand(0))))
+          UseMI->addRegisterKilled(DstReg, tri_, true);
+      }
       continue;
     }
 
