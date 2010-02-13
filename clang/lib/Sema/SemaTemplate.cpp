@@ -1235,18 +1235,14 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
     //   such a member, the member declaration shall be preceded by a
     //   template<> for each enclosing class template that is
     //   explicitly specialized.
-    // We interpret this as forbidding typedefs of template
-    // specializations in the scope specifiers of out-of-line decls.
-    if (const TypedefType *TT = dyn_cast<TypedefType>(T)) {
-      const Type *UnderlyingT = TT->LookThroughTypedefs().getTypePtr();
-      if (isa<TemplateSpecializationType>(UnderlyingT))
-        // FIXME: better source location information.
-        Diag(DeclStartLoc, diag::err_typedef_in_def_scope) << QualType(T,0);
-      T = UnderlyingT;
-    }
+    //
+    // Following the existing practice of GNU and EDG, we allow a typedef of a
+    // template specialization type.
+    if (const TypedefType *TT = dyn_cast<TypedefType>(T))
+      T = TT->LookThroughTypedefs().getTypePtr();
 
     if (const TemplateSpecializationType *SpecType
-          = dyn_cast<TemplateSpecializationType>(T)) {
+                                  = dyn_cast<TemplateSpecializationType>(T)) {
       TemplateDecl *Template = SpecType->getTemplateName().getAsTemplateDecl();
       if (!Template)
         continue; // FIXME: should this be an error? probably...

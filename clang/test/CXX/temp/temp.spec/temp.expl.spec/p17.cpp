@@ -18,7 +18,18 @@ namespace test1 {
   };
   typedef A<int> AA;
   
-  template <> int AA::foo = 0; // expected-error {{cannot use typedef}}
-  int AA::bar = 1; // expected-error {{cannot use typedef}} expected-error {{template specialization requires 'template<>'}}
+  template <> int AA::foo = 0; 
+  int AA::bar = 1; // expected-error {{template specialization requires 'template<>'}}
   int A<float>::bar = 2; // expected-error {{template specialization requires 'template<>'}}
+
+  template <> class A<double> { 
+  public:
+    static int foo; // expected-note{{attempt to specialize}}
+    static int bar;    
+  };
+
+  typedef A<double> AB;
+  template <> int AB::foo = 0; // expected-error{{extraneous 'template<>'}} \
+                               // expected-error{{does not specialize}}
+  int AB::bar = 1;
 }
