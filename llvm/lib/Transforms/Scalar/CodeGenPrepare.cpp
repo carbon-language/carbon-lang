@@ -32,16 +32,12 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
-
-static cl::opt<bool> FactorCommonPreds("split-critical-paths-tweak",
-                                       cl::init(false), cl::Hidden);
 
 namespace {
   class CodeGenPrepare : public FunctionPass {
@@ -392,51 +388,16 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
   if (BackEdges.count(std::make_pair(TIBB, Dest)))
     return;
 
-  if (!FactorCommonPreds) {
-    if (BasicBlock *ReuseBB = FindReusablePredBB(DestPHI, TIBB)) {
-      ProfileInfo *PFI = P->getAnalysisIfAvailable<ProfileInfo>();
-      if (PFI)
-        PFI->splitEdge(TIBB, Dest, ReuseBB);
-      Dest->removePredecessor(TIBB);
-      TI->setSuccessor(SuccNum, ReuseBB);
-      return;
-    }
- 
-    SplitCriticalEdge(TI, SuccNum, P, true);
+  if (BasicBlock *ReuseBB = FindReusablePredBB(DestPHI, TIBB)) {
+    ProfileInfo *PFI = P->getAnalysisIfAvailable<ProfileInfo>();
+    if (PFI)
+      PFI->splitEdge(TIBB, Dest, ReuseBB);
+    Dest->removePredecessor(TIBB);
+    TI->setSuccessor(SuccNum, ReuseBB);
     return;
   }
 
-  PHINode *PN;
-  SmallVector<Value*, 8> TIPHIValues;
-  for (BasicBlock::iterator I = Dest->begin();
-       (PN = dyn_cast<PHINode>(I)); ++I)
-    TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
-
-  SmallVector<BasicBlock*, 8> IdenticalPreds;
-  
-  for (unsigned pi = 0, e = DestPHI->getNumIncomingValues(); pi != e; ++pi) {
-    BasicBlock *Pred = DestPHI->getIncomingBlock(pi);
-    if (BackEdges.count(std::make_pair(Pred, Dest)))
-      continue;
-    if (Pred == TIBB) {
-      IdenticalPreds.push_back(Pred);
-      continue;
-    }
-    bool Identical = true;
-    unsigned PHINo = 0;
-    for (BasicBlock::iterator I = Dest->begin();
-         (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo)
-      if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
-        Identical = false;
-        break;
-      }
-    if (Identical)
-      IdenticalPreds.push_back(Pred);
-  }
-
-  assert(!IdenticalPreds.empty());
-  SplitBlockPredecessors(Dest, &IdenticalPreds[0], IdenticalPreds.size(),
-                         ".critedge", P);
+  SplitCriticalEdge(TI, SuccNum, P, true);
 }
 
 
