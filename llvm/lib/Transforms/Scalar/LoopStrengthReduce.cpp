@@ -1535,10 +1535,10 @@ LSRInstance::OptimizeLoopTermCond() {
             const Type *AccessTy = getAccessType(UI->getUser());
             TargetLowering::AddrMode AM;
             AM.Scale = D->getValue()->getSExtValue();
-            if (TLI->isLegalAddressingMode(AM, AccessTy))
+            if (TLI && TLI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
             AM.Scale = -AM.Scale;
-            if (TLI->isLegalAddressingMode(AM, AccessTy))
+            if (TLI && TLI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
           }
         }
