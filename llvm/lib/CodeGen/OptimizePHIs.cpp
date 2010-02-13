@@ -19,11 +19,12 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Function.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(NumPHICycles, "Number of PHI cycles replaced");
+STATISTIC(NumDeadPHICycles, "Number of dead PHI cycles");
 
 namespace {
   class OptimizePHIs : public MachineFunctionPass {
@@ -42,9 +43,13 @@ namespace {
     }
 
   private:
-    bool IsSingleValuePHICycle(const MachineInstr *MI, unsigned &SingleValReg,
-                               SmallSet<unsigned, 16> &RegsInCycle);
-    bool ReplacePHICycles(MachineBasicBlock &MBB);
+    typedef SmallPtrSet<MachineInstr*, 16> InstrSet;
+    typedef SmallPtrSetIterator<MachineInstr*> InstrSetIterator;
+
+    bool IsSingleValuePHICycle(MachineInstr *MI, unsigned &SingleValReg,
+                               InstrSet &PHIsInCycle);
+    bool IsDeadPHICycle(MachineInstr *MI, InstrSet &PHIsInCycle);
+    bool OptimizeBB(MachineBasicBlock &MBB);
   };
 }
 
@@ -58,12 +63,13 @@ bool OptimizePHIs::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &Fn.getRegInfo();
   TII = Fn.getTarget().getInstrInfo();
 
-  // Find PHI cycles that can be replaced by a single value.  InstCombine
-  // does this, but DAG legalization may introduce new opportunities, e.g.,
-  // when i64 values are split up for 32-bit targets.
+  // Find dead PHI cycles and PHI cycles that can be replaced by a single
+  // value.  InstCombine does these optimizations, but DAG legalization may
+  // introduce new opportunities, e.g., when i64 values are split up for
+  // 32-bit targets.
   bool Changed = false;
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    Changed |= ReplacePHICycles(*I);
+    Changed |= OptimizeBB(*I);
 
   return Changed;
 }
@@ -71,20 +77,20 @@ bool OptimizePHIs::runOnMachineFunction(MachineFunction &Fn) {
 /// IsSingleValuePHICycle - Check if MI is a PHI where all the source operands
 /// are copies of SingleValReg, possibly via copies through other PHIs.  If
 /// SingleValReg is zero on entry, it is set to the register with the single
-/// non-copy value.  RegsInCycle is a set used to keep track of the PHIs that
+/// non-copy value.  PHIsInCycle is a set used to keep track of the PHIs that
 /// have been scanned.
-bool OptimizePHIs::IsSingleValuePHICycle(const MachineInstr *MI,
+bool OptimizePHIs::IsSingleValuePHICycle(MachineInstr *MI,
                                          unsigned &SingleValReg,
-                                         SmallSet<unsigned, 16> &RegsInCycle) {
+                                         InstrSet &PHIsInCycle) {
   assert(MI->isPHI() && "IsSingleValuePHICycle expects a PHI instruction");
   unsigned DstReg = MI->getOperand(0).getReg();
 
   // See if we already saw this register.
-  if (!RegsInCycle.insert(DstReg))
+  if (!PHIsInCycle.insert(MI))
     return true;
 
   // Don't scan crazily complex things.
-  if (RegsInCycle.size() == 16)
+  if (PHIsInCycle.size() == 16)
     return false;
 
   // Scan the PHI operands.
@@ -92,7 +98,7 @@ bool OptimizePHIs::IsSingleValuePHICycle(const MachineInstr *MI,
     unsigned SrcReg = MI->getOperand(i).getReg();
     if (SrcReg == DstReg)
       continue;
-    const MachineInstr *SrcMI = MRI->getVRegDef(SrcReg);
+    MachineInstr *SrcMI = MRI->getVRegDef(SrcReg);
 
     // Skip over register-to-register moves.
     unsigned MvSrcReg, MvDstReg, SrcSubIdx, DstSubIdx;
@@ -105,7 +111,7 @@ bool OptimizePHIs::IsSingleValuePHICycle(const MachineInstr *MI,
       return false;
 
     if (SrcMI->isPHI()) {
-      if (!IsSingleValuePHICycle(SrcMI, SingleValReg, RegsInCycle))
+      if (!IsSingleValuePHICycle(SrcMI, SingleValReg, PHIsInCycle))
         return false;
     } else {
       // Fail if there is more than one non-phi/non-move register.
@@ -117,9 +123,35 @@ bool OptimizePHIs::IsSingleValuePHICycle(const MachineInstr *MI,
   return true;
 }
 
-/// ReplacePHICycles - Find PHI cycles that can be replaced by a single
-/// value and remove them.
-bool OptimizePHIs::ReplacePHICycles(MachineBasicBlock &MBB) {
+/// IsDeadPHICycle - Check if the register defined by a PHI is only used by
+/// other PHIs in a cycle.
+bool OptimizePHIs::IsDeadPHICycle(MachineInstr *MI, InstrSet &PHIsInCycle) {
+  assert(MI->isPHI() && "IsDeadPHICycle expects a PHI instruction");
+  unsigned DstReg = MI->getOperand(0).getReg();
+  assert(TargetRegisterInfo::isVirtualRegister(DstReg) &&
+         "PHI destination is not a virtual register");
+
+  // See if we already saw this register.
+  if (!PHIsInCycle.insert(MI))
+    return true;
+
+  // Don't scan crazily complex things.
+  if (PHIsInCycle.size() == 16)
+    return false;
+
+  for (MachineRegisterInfo::use_iterator I = MRI->use_begin(DstReg),
+         E = MRI->use_end(); I != E; ++I) {
+    MachineInstr *UseMI = &*I;
+    if (!UseMI->isPHI() || !IsDeadPHICycle(UseMI, PHIsInCycle))
+      return false;
+  }
+
+  return true;
+}
+
+/// OptimizeBB - Remove dead PHI cycles and PHI cycles that can be replaced by
+/// a single value.
+bool OptimizePHIs::OptimizeBB(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator
          MII = MBB.begin(), E = MBB.end(); MII != E; ) {
@@ -127,13 +159,29 @@ bool OptimizePHIs::ReplacePHICycles(MachineBasicBlock &MBB) {
     if (!MI->isPHI())
       break;
 
+    // Check for single-value PHI cycles.
     unsigned SingleValReg = 0;
-    SmallSet<unsigned, 16> RegsInCycle;
-    if (IsSingleValuePHICycle(MI, SingleValReg, RegsInCycle) &&
+    InstrSet PHIsInCycle;
+    if (IsSingleValuePHICycle(MI, SingleValReg, PHIsInCycle) &&
         SingleValReg != 0) {
       MRI->replaceRegWith(MI->getOperand(0).getReg(), SingleValReg);
       MI->eraseFromParent();
       ++NumPHICycles;
+      Changed = true;
+      continue;
+    }
+
+    // Check for dead PHI cycles.
+    PHIsInCycle.clear();
+    if (IsDeadPHICycle(MI, PHIsInCycle)) {
+      for (InstrSetIterator PI = PHIsInCycle.begin(), PE = PHIsInCycle.end();
+           PI != PE; ++PI) {
+        MachineInstr *PhiMI = *PI;
+        if (&*MII == PhiMI)
+          ++MII;
+        PhiMI->eraseFromParent();
+      }
+      ++NumDeadPHICycles;
       Changed = true;
     }
   }
