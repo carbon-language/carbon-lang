@@ -26,10 +26,14 @@ using namespace llvm;
 
 #define MRM_MAPPING     \
   MAP(C1, 33)           \
-  MAP(C8, 34)           \
-  MAP(C9, 35)           \
-  MAP(E8, 36)           \
-  MAP(F0, 37)
+  MAP(C2, 34)           \
+  MAP(C3, 35)           \
+  MAP(C4, 36)           \
+  MAP(C8, 37)           \
+  MAP(C9, 38)           \
+  MAP(E8, 39)           \
+  MAP(F0, 40)           \
+  MAP(F8, 41)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
@@ -591,12 +595,8 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     return;                                       \
   }
 
-  EXACTCASE(TWOBYTE, "SWPGS",    0xf8)
   EXACTCASE(TWOBYTE, "INVEPT",   0x80)
   EXACTCASE(TWOBYTE, "INVVPID",  0x81)
-  EXACTCASE(TWOBYTE, "VMLAUNCH", 0xc2)
-  EXACTCASE(TWOBYTE, "VMRESUME", 0xc3)
-  EXACTCASE(TWOBYTE, "VMXOFF",   0xc4)
 
   if (Name == "INVLPG") {
     tables.setTableFields(TWOBYTE,

@@ -1774,7 +1774,7 @@ def LSL64rm : RI<0x03, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
 def LSL64rr : RI<0x03, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                  "lsl{q}\t{$src, $dst|$dst, $src}", []>, TB;
 
-def SWPGS : I<0x01, RawFrm, (outs), (ins), "swpgs", []>, TB;
+def SWAPGS : I<0x01, MRM_F8, (outs), (ins), "swapgs", []>, TB;
 
 def PUSHFS64 : I<0xa0, RawFrm, (outs), (ins),
                  "push{q}\t%fs", []>, TB;

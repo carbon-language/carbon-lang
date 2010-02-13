@@ -585,6 +585,18 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     EmitByte(0xC1, CurByte, OS);
     break;
+  case X86II::MRM_C2:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xC2, CurByte, OS);
+    break;
+  case X86II::MRM_C3:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xC3, CurByte, OS);
+    break;
+  case X86II::MRM_C4:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xC4, CurByte, OS);
+    break;
   case X86II::MRM_C8:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitByte(0xC8, CurByte, OS);
@@ -600,6 +612,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM_F0:
     EmitByte(BaseOpcode, CurByte, OS);
     EmitByte(0xF0, CurByte, OS);
+    break;
+  case X86II::MRM_F8:
+    EmitByte(BaseOpcode, CurByte, OS);
+    EmitByte(0xF8, CurByte, OS);
     break;
   }
   

@@ -4247,9 +4247,9 @@ def VMCALL : I<0x01, MRM_C1, (outs), (ins), "vmcall", []>, TB;
 def VMCLEARm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),
   "vmclear\t$vmcs", []>, OpSize, TB;
 // 0F 01 C2
-def VMLAUNCH : I<0x01, RawFrm, (outs), (ins), "vmlaunch", []>, TB;
+def VMLAUNCH : I<0x01, MRM_C2, (outs), (ins), "vmlaunch", []>, TB;
 // 0F 01 C3
-def VMRESUME : I<0x01, RawFrm, (outs), (ins), "vmresume", []>, TB;
+def VMRESUME : I<0x01, MRM_C3, (outs), (ins), "vmresume", []>, TB;
 def VMPTRLDm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),
   "vmptrld\t$vmcs", []>, TB;
 def VMPTRSTm : I<0xC7, MRM7m, (outs i64mem:$vmcs), (ins),
@@ -4271,7 +4271,7 @@ def VMWRITE32rm : I<0x79, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
 def VMWRITE32rr : I<0x79, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
   "vmwrite{l}\t{$src, $dst|$dst, $src}", []>, TB;
 // 0F 01 C4
-def VMXOFF : I<0x01, RawFrm, (outs), (ins), "vmxoff", []>, OpSize;
+def VMXOFF : I<0x01, MRM_C4, (outs), (ins), "vmxoff", []>, TB;
 def VMXON : I<0xC7, MRM6m, (outs), (ins i64mem:$vmxon),
   "vmxon\t{$vmxon}", []>, XD;
 

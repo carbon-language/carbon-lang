@@ -12,3 +12,19 @@
 	mwait
 // CHECK: mwait
 // CHECK: encoding: [0x0f,0x01,0xc9]
+
+	vmcall
+// CHECK: vmcall
+// CHECK: encoding: [0x0f,0x01,0xc1]
+	vmlaunch
+// CHECK: vmlaunch
+// CHECK: encoding: [0x0f,0x01,0xc2]
+	vmresume
+// CHECK: vmresume
+// CHECK: encoding: [0x0f,0x01,0xc3]
+	vmxoff
+// CHECK: vmxoff
+// CHECK: encoding: [0x0f,0x01,0xc4]
+	swapgs
+// CHECK: swapgs
+// CHECK: encoding: [0x0f,0x01,0xf8]
