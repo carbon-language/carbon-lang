@@ -41,12 +41,9 @@ static cl::opt<int>
 InlineLimit("inline-threshold", cl::Hidden, cl::init(225), cl::ZeroOrMore,
         cl::desc("Control the amount of inlining to perform (default = 225)"));
 
-static cl::opt<bool>
-RespectHint("respect-inlinehint", cl::Hidden,
-            cl::desc("Respect the inlinehint attribute"));
-
-// Threshold to use when inlinehint is given.
-const int HintThreshold = 300;
+static cl::opt<int>
+HintThreshold("inlinehint-threshold", cl::Hidden, cl::init(325),
+              cl::desc("Threshold for inlining functions with inline hint"));
 
 // Threshold to use when optsize is specified (and there is no -inline-limit).
 const int OptSizeThreshold = 75;
@@ -183,20 +180,22 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
 }
 
 unsigned Inliner::getInlineThreshold(CallSite CS) const {
-  // Listen to inlinehint when -respect-inlinehint is given.
-  Function *Callee = CS.getCalledFunction();
-  if (RespectHint && Callee && !Callee->isDeclaration() &&
-      Callee->hasFnAttr(Attribute::InlineHint))
-    return HintThreshold;
+  int thres = InlineThreshold;
 
   // Listen to optsize when -inline-limit is not given.
   Function *Caller = CS.getCaller();
   if (Caller && !Caller->isDeclaration() &&
       Caller->hasFnAttr(Attribute::OptimizeForSize) &&
       InlineLimit.getNumOccurrences() == 0)
-      return OptSizeThreshold;
+    thres = OptSizeThreshold;
 
-  return InlineThreshold;
+  // Listen to inlinehint when it would increase the threshold.
+  Function *Callee = CS.getCalledFunction();
+  if (HintThreshold > thres && Callee && !Callee->isDeclaration() &&
+      Callee->hasFnAttr(Attribute::InlineHint))
+    thres = HintThreshold;
+
+  return thres;
 }
 
 /// shouldInline - Return true if the inliner should attempt to inline
