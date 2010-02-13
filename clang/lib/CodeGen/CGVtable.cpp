@@ -16,6 +16,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
 #include <cstdio>
 
@@ -745,7 +746,7 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
-    if (const CXXMethodDecl *OverriddenMD = 
+    if (const CXXMethodDecl ATTRIBUTE_UNUSED *OverriddenMD = 
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
       assert(!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD)
              && "FIXME: Handle covariant thunks!");
