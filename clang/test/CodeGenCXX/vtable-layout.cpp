@@ -196,9 +196,48 @@ struct F : A {
   virtual void g();
   virtual R3 *f() = 0;
 };
-
 void F::g() { }
 
+}
+
+namespace Test5 {
+
+// Simple secondary vtables without this-adjustments.
+struct A {
+  virtual void f();
+  virtual void g();
+  int a;
+};
+
+struct B1 : A {
+  virtual void f();
+  int b1;
+};
+
+struct B2 : A {
+  virtual void g();
+  int b2;
+};
+
+// CHECK:     Vtable for 'Test5::C' (9 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test5::C RTTI
+// CHECK-NEXT:       -- (Test5::A, 0) vtable address --
+// CHECK-NEXT:       -- (Test5::B1, 0) vtable address --
+// CHECK-NEXT:       -- (Test5::C, 0) vtable address --
+// CHECK-NEXT:   2 | void Test5::B1::f()
+// CHECK-NEXT:   3 | void Test5::A::g()
+// CHECK-NEXT:   4 | void Test5::C::h()
+// CHECK-NEXT:   5 | offset_to_top (-16)
+// CHECK-NEXT:   6 | Test5::C RTTI
+// CHECK-NEXT:       -- (Test5::A, 16) vtable address --
+// CHECK-NEXT:       -- (Test5::B2, 16) vtable address --
+// CHECK-NEXT:   7 | void Test5::A::f()
+// CHECK-NEXT:   8 | void Test5::B2::g()
+struct C : B1, B2 {
+  virtual void h();
+};
+void C::h() { }  
 }
 
 // For now, just verify this doesn't crash.

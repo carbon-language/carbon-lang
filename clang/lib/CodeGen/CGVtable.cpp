@@ -758,16 +758,15 @@ private:
   /// primary bases to the vtable components vector.
   void AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases);
   
-  /// layoutSimpleVtable - A test function that will layout very simple vtables
-  /// without any bases. Just used for testing for now.
-  void layoutSimpleVtable(BaseSubobject Base);
+  /// layoutVtable - Layout a vtable and all its secondary vtables.
+  void layoutVtable(BaseSubobject Base);
   
 public:
   VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass)
     : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
 
-    layoutSimpleVtable(BaseSubobject(MostDerivedClass, 0));
+    layoutVtable(BaseSubobject(MostDerivedClass, 0));
   }
 
   /// dumpLayout - Dump the vtable layout.
@@ -849,7 +848,7 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
       assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
     
-    AddMethods(BaseSubobject(PrimaryBase, 0), PrimaryBases);
+    AddMethods(BaseSubobject(PrimaryBase, Base.getBaseOffset()), PrimaryBases);
     
     if (!PrimaryBases.insert(PrimaryBase))
       assert(false && "Found a duplicate primary base!");
@@ -887,14 +886,17 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
   }
 }
 
-void VtableBuilder::layoutSimpleVtable(BaseSubobject Base) {
+void VtableBuilder::layoutVtable(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
   
   // First, add the offset to top.
-  Components.push_back(VtableComponent::MakeOffsetToTop(0));
+  // FIXME: This is not going to be right for construction vtables.
+  // FIXME: We should not use -8 here.
+  int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
+  Components.push_back(VtableComponent::MakeOffsetToTop(OffsetToTop));
   
   // Next, add the RTTI.
-  Components.push_back(VtableComponent::MakeRTTI(RD));
+  Components.push_back(VtableComponent::MakeRTTI(MostDerivedClass));
   
   uint64_t AddressPoint = Components.size();
 
@@ -919,7 +921,7 @@ void VtableBuilder::layoutSimpleVtable(BaseSubobject Base) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
-  // Traverse bases.
+  // Layout secondary vtables.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
        E = RD->bases_end(); I != E; ++I) {
     const CXXRecordDecl *BaseDecl = 
@@ -931,7 +933,12 @@ void VtableBuilder::layoutSimpleVtable(BaseSubobject Base) {
     
     assert(!I->isVirtual() && "FIXME: Handle virtual bases");
     
-    assert(false && "FIXME: Handle secondary virtual tables!");
+    // Get the base offset of this base.
+    uint64_t BaseOffset = Base.getBaseOffset() + 
+      Layout.getBaseClassOffset(BaseDecl);
+
+    // Layout this secondary vtable.
+    layoutVtable(BaseSubobject(BaseDecl, BaseOffset));
   }
 }
 
