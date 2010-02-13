@@ -109,31 +109,31 @@
         repne;scasb
 
 // CHECK: lock
-// CHECK: cmpxchgb %al, 0(%ebx)
+// CHECK: cmpxchgb %al, (%ebx)
         lock;cmpxchgb %al, 0(%ebx)
 
 // CHECK: cs
-// CHECK: movb 0(%eax), %al
+// CHECK: movb (%eax), %al
         cs;movb 0(%eax), %al
 
 // CHECK: ss
-// CHECK: movb 0(%eax), %al
+// CHECK: movb (%eax), %al
         ss;movb 0(%eax), %al
 
 // CHECK: ds
-// CHECK: movb 0(%eax), %al
+// CHECK: movb (%eax), %al
         ds;movb 0(%eax), %al
 
 // CHECK: es
-// CHECK: movb 0(%eax), %al
+// CHECK: movb (%eax), %al
         es;movb 0(%eax), %al
 
 // CHECK: fs
-// CHECK: movb 0(%eax), %al
+// CHECK: movb (%eax), %al
         fs;movb 0(%eax), %al
 
 // CHECK: gs
-// CHECK: movb 0(%eax), %al
+// CHECK: movb (%eax), %al
         gs;movb 0(%eax), %al
 
 // CHECK: fadd %st(0)

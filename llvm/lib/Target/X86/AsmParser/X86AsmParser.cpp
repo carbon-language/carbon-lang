@@ -184,6 +184,14 @@ struct X86Operand : public MCParsedAsmOperand {
 
   bool isReg() const { return Kind == Register; }
 
+  void addExpr(MCInst &Inst, const MCExpr *Expr) const {
+    // Add as immediates when possible.
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+    else
+      Inst.addOperand(MCOperand::CreateExpr(Expr));
+  }
+
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getReg()));
@@ -191,13 +199,13 @@ struct X86Operand : public MCParsedAsmOperand {
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateExpr(getImm()));
+    addExpr(Inst, getImm());
   }
 
   void addImmSExt8Operands(MCInst &Inst, unsigned N) const {
     // FIXME: Support user customization of the render method.
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateExpr(getImm()));
+    addExpr(Inst, getImm());
   }
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
@@ -205,7 +213,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateImm(getMemScale()));
     Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
-    Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+    addExpr(Inst, getMemDisp());
     Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
   }
 
@@ -219,7 +227,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
     Inst.addOperand(MCOperand::CreateImm(getMemScale()));
     Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
-    Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+    addExpr(Inst, getMemDisp());
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {

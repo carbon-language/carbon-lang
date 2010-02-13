@@ -24,7 +24,7 @@
         addl $1, (4+4)(%eax)
 # CHECK: addl $1, 8(%eax)
         addl $1, 8(%eax)
-# CHECK: addl $1, 0(%eax)
+# CHECK: addl $1, (%eax)
         addl $1, (%eax)
 # CHECK: addl $1, 4+4(,%eax)
         addl $1, (4+4)(,%eax)
