@@ -455,7 +455,7 @@ public:
     }
   }
 
-  void ComputeRelocationInfo(MCAssembler &Asm, MCFragment &Fragment,
+  void ComputeRelocationInfo(MCAssembler &Asm, MCDataFragment &Fragment,
                              MCAsmFixup &Fixup,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                              std::vector<MachRelocationEntry> &Relocs) {
@@ -780,9 +780,10 @@ public:
       unsigned NumRelocsStart = RelocInfos.size();
       for (MCSectionData::reverse_iterator it2 = SD.rbegin(),
              ie2 = SD.rend(); it2 != ie2; ++it2)
-        for (unsigned i = 0, e = it2->fixup_size(); i != e; ++i)
-          ComputeRelocationInfo(Asm, *it2, it2->getFixups()[e - i - 1],
-                                SymbolMap, RelocInfos);
+        if (MCDataFragment *DF = dyn_cast<MCDataFragment>(&*it2))
+          for (unsigned i = 0, e = DF->fixup_size(); i != e; ++i)
+            ComputeRelocationInfo(Asm, *DF, DF->getFixups()[e - i - 1],
+                                  SymbolMap, RelocInfos);
 
       unsigned NumRelocs = RelocInfos.size() - NumRelocsStart;
       uint64_t SectionStart = SectionDataStart + SD.getAddress();
@@ -1198,16 +1199,6 @@ void MCFragment::dump() {
   OS << "<MCFragment " << (void*) this << " Offset:" << Offset
      << " FileSize:" << FileSize;
 
-  if (!Fixups.empty()) {
-    OS << "\n";
-    OS << "          Fixups:[";
-    for (fixup_iterator it = fixup_begin(), ie = fixup_end(); it != ie; ++it) {
-      if (it != fixup_begin()) OS << ",\n            ";
-      OS << *it;
-    }
-    OS << "]";
-  }
-
   OS << ">";
 }
 
@@ -1233,7 +1224,19 @@ void MCDataFragment::dump() {
     if (i) OS << ",";
     OS << hexdigit((Contents[i] >> 4) & 0xF) << hexdigit(Contents[i] & 0xF);
   }
-  OS << "]>";
+  OS << "]";
+
+  if (!getFixups().empty()) {
+    OS << ",\n       ";
+    OS << " Fixups:[";
+    for (fixup_iterator it = fixup_begin(), ie = fixup_end(); it != ie; ++it) {
+      if (it != fixup_begin()) OS << ",\n            ";
+      OS << *it;
+    }
+    OS << "]";
+  }
+
+  OS << ">";
 }
 
 void MCFillFragment::dump() {

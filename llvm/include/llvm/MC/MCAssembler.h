@@ -55,10 +55,6 @@ class MCFragment : public ilist_node<MCFragment> {
   void operator=(const MCFragment&); // DO NOT IMPLEMENT
 
 public:
-  typedef std::vector<MCAsmFixup>::const_iterator const_fixup_iterator;
-  typedef std::vector<MCAsmFixup>::iterator fixup_iterator;
-
-public:
   enum FragmentType {
     FT_Data,
     FT_Align,
@@ -85,11 +81,6 @@ private:
   /// FileSize - The file size of this section. This is ~0 until initialized.
   uint64_t FileSize;
 
-  /// Fixups - The list of fixups in this fragment.
-  //
-  // FIXME: This should be sunk into MCDataFragment.
-  std::vector<MCAsmFixup> Fixups;
-
   /// @}
 
 protected:
@@ -110,36 +101,6 @@ public:
     assert(0 && "Invalid getMaxFileSize call!");
     return 0;
   }
-
-  /// @name Fixup Access
-  /// @{
-
-  /// LookupFixup - Look up the fixup for the given \arg Fragment and \arg
-  /// Offset.
-  ///
-  /// If multiple fixups exist for the same fragment and offset it is undefined
-  /// which one is returned.
-  //
-  // FIXME: This isn't horribly slow in practice, but there are much nicer
-  // solutions to applying the fixups. This will be fixed by sinking fixups into
-  // data fragments exclusively.
-  const MCAsmFixup *LookupFixup(uint64_t Offset) const {
-    for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
-      if (Fixups[i].Offset == Offset)
-        return &Fixups[i];
-    return 0;
-  }
-
-  std::vector<MCAsmFixup> &getFixups() { return Fixups; }
-  const std::vector<MCAsmFixup> &getFixups() const { return Fixups; }
-
-  fixup_iterator fixup_begin() { return Fixups.begin(); }
-  const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
-
-  fixup_iterator fixup_end() {return Fixups.end();}
-  const_fixup_iterator fixup_end() const {return Fixups.end();}
-
-  size_t fixup_size() const { return Fixups.size(); }
 
   /// @name Assembler Backend Support
   /// @{
@@ -173,6 +134,13 @@ public:
 class MCDataFragment : public MCFragment {
   SmallString<32> Contents;
 
+  /// Fixups - The list of fixups in this fragment.
+  std::vector<MCAsmFixup> Fixups;
+
+public:
+  typedef std::vector<MCAsmFixup>::const_iterator const_fixup_iterator;
+  typedef std::vector<MCAsmFixup>::iterator fixup_iterator;
+
 public:
   MCDataFragment(MCSectionData *SD = 0) : MCFragment(FT_Data, SD) {}
 
@@ -185,6 +153,22 @@ public:
 
   SmallString<32> &getContents() { return Contents; }
   const SmallString<32> &getContents() const { return Contents; }
+
+  /// @}
+
+  /// @name Fixup Access
+  /// @{
+
+  std::vector<MCAsmFixup> &getFixups() { return Fixups; }
+  const std::vector<MCAsmFixup> &getFixups() const { return Fixups; }
+
+  fixup_iterator fixup_begin() { return Fixups.begin(); }
+  const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
+
+  fixup_iterator fixup_end() {return Fixups.end();}
+  const_fixup_iterator fixup_end() const {return Fixups.end();}
+
+  size_t fixup_size() const { return Fixups.size(); }
 
   /// @}
 
