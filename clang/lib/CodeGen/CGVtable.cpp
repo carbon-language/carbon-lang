@@ -219,6 +219,7 @@ private:
   /// and we want to override B::f with C::f, we also need to override A::f with
   /// C::f.
   void PropagateOverrider(const CXXMethodDecl *OldMD,
+                          BaseSubobject NewBase,
                           const CXXMethodDecl *NewMD,
                           SubobjectOffsetsMapTy &Offsets);
   
@@ -290,7 +291,7 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
       continue;
 
     // First, propagate the overrider.
-    PropagateOverrider(MD, MD, Offsets);
+    PropagateOverrider(MD, Base, MD, Offsets);
 
     // Add the overrider as the final overrider of itself.
     OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
@@ -409,6 +410,7 @@ ComputeReturnTypeBaseOffset(ASTContext &Context,
 }
 
 void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
+                                         BaseSubobject NewBase,
                                          const CXXMethodDecl *NewMD,
                                          SubobjectOffsetsMapTy &Offsets) {
   for (CXXMethodDecl::method_iterator I = OldMD->begin_overridden_methods(),
@@ -446,13 +448,18 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
           // Store the return adjustment base offset.
           ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
         }
+        
+        // Check if we need a 'this' adjustment base offset as well.
+        if (Offset != NewBase.getBaseOffset()) {
+          assert(false && "FIXME: Handle 'this' adjustments!");
+        }
       }
 
       // Set the new overrider.
       Overrider.Method = NewMD;
       
       // And propagate it further.
-      PropagateOverrider(OverriddenMD, NewMD, Offsets);
+      PropagateOverrider(OverriddenMD, NewBase, NewMD, Offsets);
     }
   }
 }
