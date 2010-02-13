@@ -81,3 +81,11 @@ void f14(int a) {
 // CHECK: {
 void f15(void) {
 }
+
+// PR5254
+// CHECK: define void @f16
+// CHECK: alignstack(16)
+// CHECK: {
+void __attribute__((force_align_arg_pointer)) f16(void) {
+}
+

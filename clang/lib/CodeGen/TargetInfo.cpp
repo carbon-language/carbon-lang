@@ -325,6 +325,9 @@ class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_32TargetCodeGenInfo(ASTContext &Context, bool d, bool p)
     :TargetCodeGenInfo(new X86_32ABIInfo(Context, d, p)) {}
+
+  void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &CGM) const;
 };
 
 }
@@ -549,6 +552,20 @@ llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 
   return AddrTyped;
+}
+
+void X86_32TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
+                                                  llvm::GlobalValue *GV,
+                                            CodeGen::CodeGenModule &CGM) const {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->hasAttr<X86ForceAlignArgPointerAttr>()) {
+      // Get the LLVM function.
+      llvm::Function *Fn = cast<llvm::Function>(GV);
+
+      // Now add the 'alignstack' attribute with a value of 16.
+      Fn->addFnAttr(llvm::Attribute::constructStackAlignmentFromInt(16));
+    }
+  }
 }
 
 namespace {
