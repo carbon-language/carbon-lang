@@ -50,8 +50,6 @@ FunctionPass *createX87FPRegKillInserterPass();
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
 
-MCCodeEmitter *createHeinousX86MCCodeEmitter(const Target &, TargetMachine &TM,
-                                             MCContext &Ctx);
 MCCodeEmitter *createX86_32MCCodeEmitter(const Target &, TargetMachine &TM,
                                          MCContext &Ctx);
 MCCodeEmitter *createX86_64MCCodeEmitter(const Target &, TargetMachine &TM,

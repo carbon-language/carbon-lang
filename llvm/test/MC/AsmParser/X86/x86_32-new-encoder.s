@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i386-unknown-unknown --show-encoding --enable-new-x86-encoder %s | FileCheck %s
+// RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
 
 	lfence
 // CHECK: lfence

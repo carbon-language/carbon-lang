@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-unknown-unknown --show-encoding --enable-new-x86-encoder %s | FileCheck %s
+// RUN: llvm-mc -triple x86_64-unknown-unknown --show-encoding %s | FileCheck %s
 
 movl	foo(%rip), %eax
 // CHECK: movl	foo(%rip), %eax
