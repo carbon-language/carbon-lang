@@ -502,10 +502,10 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
     Out << "  " << MD->getQualifiedNameAsString() << " - ";
     Out << Overrider.Method->getQualifiedNameAsString();
     
-    AdjustmentOffsetsMapTy::const_iterator I = 
+    AdjustmentOffsetsMapTy::const_iterator AI =
       ReturnAdjustments.find(std::make_pair(Base, MD));
-    if (I != ReturnAdjustments.end()) {
-      const BaseOffset &Offset = I->second;
+    if (AI != ReturnAdjustments.end()) {
+      const BaseOffset &Offset = AI->second;
       
       assert(!Offset.VirtualBase && "FIXME: Handle vbases!");
              
