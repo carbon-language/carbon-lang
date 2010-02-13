@@ -229,9 +229,18 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   // loop header) then NewBB dominates DestBB.
   SmallVector<BasicBlock*, 8> OtherPreds;
 
-  for (pred_iterator I = pred_begin(DestBB), E = pred_end(DestBB); I != E; ++I)
-    if (*I != NewBB)
-      OtherPreds.push_back(*I);
+  // If there is a PHI in the block, loop over predecessors with it, which is
+  // faster than iterating pred_begin/end.
+  if (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (PN->getIncomingBlock(i) != NewBB)
+        OtherPreds.push_back(PN->getIncomingBlock(i));
+  } else {
+    for (pred_iterator I = pred_begin(DestBB), E = pred_end(DestBB);
+         I != E; ++I)
+      if (*I != NewBB)
+        OtherPreds.push_back(*I);
+  }
   
   bool NewBBDominatesDestBB = true;
   
@@ -382,9 +391,8 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   }
 
   // Update ProfileInfo if it is around.
-  if (ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>()) {
-    PI->splitEdge(TIBB,DestBB,NewBB,MergeIdenticalEdges);
-  }
+  if (ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>())
+    PI->splitEdge(TIBB, DestBB, NewBB, MergeIdenticalEdges);
 
   return NewBB;
 }
