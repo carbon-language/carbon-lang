@@ -46,7 +46,7 @@ struct MCAsmFixup {
   uint64_t FixedValue;
 
 public:
-  MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, unsigned _Size) 
+  MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, unsigned _Size)
     : Offset(_Offset), Value(&_Value), Size(_Size), FixedValue(0) {}
 };
 
@@ -151,7 +151,7 @@ public:
 
   uint64_t getAddress() const;
 
-  uint64_t getFileSize() const { 
+  uint64_t getFileSize() const {
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
     return FileSize;
   }
@@ -169,6 +169,8 @@ public:
   /// @}
 
   static bool classof(const MCFragment *O) { return true; }
+
+  virtual void dump();
 };
 
 class MCDataFragment : public MCFragment {
@@ -189,10 +191,12 @@ public:
 
   /// @}
 
-  static bool classof(const MCFragment *F) { 
-    return F->getKind() == MCFragment::FT_Data; 
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_Data;
   }
   static bool classof(const MCDataFragment *) { return true; }
+
+  virtual void dump();
 };
 
 class MCAlignFragment : public MCFragment {
@@ -224,7 +228,7 @@ public:
   }
 
   unsigned getAlignment() const { return Alignment; }
-  
+
   int64_t getValue() const { return Value; }
 
   unsigned getValueSize() const { return ValueSize; }
@@ -233,10 +237,12 @@ public:
 
   /// @}
 
-  static bool classof(const MCFragment *F) { 
-    return F->getKind() == MCFragment::FT_Align; 
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_Align;
   }
   static bool classof(const MCAlignFragment *) { return true; }
+
+  virtual void dump();
 };
 
 class MCFillFragment : public MCFragment {
@@ -251,7 +257,7 @@ class MCFillFragment : public MCFragment {
 
 public:
   MCFillFragment(const MCExpr &_Value, unsigned _ValueSize, uint64_t _Count,
-                 MCSectionData *SD = 0) 
+                 MCSectionData *SD = 0)
     : MCFragment(FT_Fill, SD),
       Value(&_Value), ValueSize(_ValueSize), Count(_Count) {}
 
@@ -263,24 +269,26 @@ public:
   }
 
   const MCExpr &getValue() const { return *Value; }
-  
+
   unsigned getValueSize() const { return ValueSize; }
 
   uint64_t getCount() const { return Count; }
 
   /// @}
 
-  static bool classof(const MCFragment *F) { 
-    return F->getKind() == MCFragment::FT_Fill; 
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_Fill;
   }
   static bool classof(const MCFillFragment *) { return true; }
+
+  virtual void dump();
 };
 
 class MCOrgFragment : public MCFragment {
   /// Offset - The offset this fragment should start at.
   const MCExpr *Offset;
 
-  /// Value - Value to use for filling bytes.  
+  /// Value - Value to use for filling bytes.
   int8_t Value;
 
 public:
@@ -297,15 +305,17 @@ public:
   }
 
   const MCExpr &getOffset() const { return *Offset; }
-  
+
   uint8_t getValue() const { return Value; }
 
   /// @}
 
-  static bool classof(const MCFragment *F) { 
-    return F->getKind() == MCFragment::FT_Org; 
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_Org;
   }
   static bool classof(const MCOrgFragment *) { return true; }
+
+  virtual void dump();
 };
 
 /// MCZeroFillFragment - Represent data which has a fixed size and alignment,
@@ -331,15 +341,17 @@ public:
   }
 
   uint64_t getSize() const { return Size; }
-  
+
   unsigned getAlignment() const { return Alignment; }
 
   /// @}
 
-  static bool classof(const MCFragment *F) { 
-    return F->getKind() == MCFragment::FT_ZeroFill; 
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_ZeroFill;
   }
   static bool classof(const MCZeroFillFragment *) { return true; }
+
+  virtual void dump();
 };
 
 // FIXME: Should this be a separate class, or just merged into MCSection? Since
@@ -387,7 +399,7 @@ private:
 
   /// @}
 
-public:    
+public:
   // Only for use as sentinel.
   MCSectionData();
   MCSectionData(const MCSection &Section, MCAssembler *A = 0);
@@ -425,28 +437,30 @@ public:
   //
   // FIXME: This could all be kept private to the assembler implementation.
 
-  uint64_t getAddress() const { 
+  uint64_t getAddress() const {
     assert(Address != ~UINT64_C(0) && "Address not set!");
     return Address;
   }
   void setAddress(uint64_t Value) { Address = Value; }
 
-  uint64_t getSize() const { 
+  uint64_t getSize() const {
     assert(Size != ~UINT64_C(0) && "File size not set!");
     return Size;
   }
   void setSize(uint64_t Value) { Size = Value; }
 
-  uint64_t getFileSize() const { 
+  uint64_t getFileSize() const {
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
     return FileSize;
   }
-  void setFileSize(uint64_t Value) { FileSize = Value; }  
+  void setFileSize(uint64_t Value) { FileSize = Value; }
 
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
 
   /// @}
+
+  void dump();
 };
 
 // FIXME: Same concerns as with SectionData.
@@ -460,7 +474,7 @@ public:
   /// Offset - The offset to apply to the fragment address to form this symbol's
   /// value.
   uint64_t Offset;
-    
+
   /// IsExternal - True if this symbol is visible outside this translation
   /// unit.
   unsigned IsExternal : 1;
@@ -506,10 +520,10 @@ public:
   /// @}
   /// @name Symbol Attributes
   /// @{
-  
+
   bool isExternal() const { return IsExternal; }
   void setExternal(bool Value) { IsExternal = Value; }
-  
+
   bool isPrivateExtern() const { return IsPrivateExtern; }
   void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
 
@@ -542,14 +556,16 @@ public:
 
   /// setFlags - Set the (implementation defined) symbol flags.
   void setFlags(uint32_t Value) { Flags = Value; }
-  
+
   /// getIndex - Get the (implementation defined) index.
   uint64_t getIndex() const { return Index; }
 
   /// setIndex - Set the (implementation defined) index.
   void setIndex(uint64_t Value) { Index = Value; }
-  
-  /// @}  
+
+  /// @}
+
+  void dump();
 };
 
 // FIXME: This really doesn't belong here. See comments below.
@@ -578,7 +594,7 @@ private:
   MCContext &Context;
 
   raw_ostream &OS;
-  
+
   iplist<MCSectionData> Sections;
 
   iplist<MCSymbolData> Symbols;
@@ -622,7 +638,7 @@ public:
   /// @{
 
   const SectionDataListType &getSectionList() const { return Sections; }
-  SectionDataListType &getSectionList() { return Sections; }  
+  SectionDataListType &getSectionList() { return Sections; }
 
   iterator begin() { return Sections.begin(); }
   const_iterator begin() const { return Sections.begin(); }
@@ -669,6 +685,8 @@ public:
   size_t indirect_symbol_size() const { return IndirectSymbols.size(); }
 
   /// @}
+
+  void dump();
 };
 
 } // end namespace llvm

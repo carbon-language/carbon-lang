@@ -16,11 +16,13 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Debug.h"
 #include <vector>
 using namespace llvm;
 
@@ -1148,6 +1150,10 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 }
 
 void MCAssembler::Finish() {
+  DEBUG_WITH_TYPE("mc-dump", {
+      llvm::errs() << "assembler backend - pre-layout\n--\n";
+      dump(); });
+
   // Layout the concrete sections and fragments.
   uint64_t Address = 0;
   MCSectionData *Prev = 0;
@@ -1186,9 +1192,147 @@ void MCAssembler::Finish() {
     Address += SD.getSize();
   }
 
+  DEBUG_WITH_TYPE("mc-dump", {
+      llvm::errs() << "assembler backend - post-layout\n--\n";
+      dump(); });
+
   // Write the object file.
   MachObjectWriter MOW(OS);
   MOW.WriteObject(*this);
 
   OS.flush();
+}
+
+
+// Debugging methods
+
+namespace llvm {
+
+raw_ostream &operator<<(raw_ostream &OS, const MCAsmFixup &AF) {
+  OS << "<MCAsmFixup" << " Offset:" << AF.Offset << " Value:" << AF.Value
+     << " Size:" << AF.Size << ">";
+  return OS;
+}
+
+}
+
+void MCFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCFragment " << (void*) this << " Offset:" << Offset
+     << " FileSize:" << FileSize;
+
+  if (!Fixups.empty()) {
+    OS << "\n";
+    OS << "          Fixups:[";
+    for (fixup_iterator it = fixup_begin(), ie = fixup_end(); it != ie; ++it) {
+      if (it != fixup_begin()) OS << ",\n            ";
+      OS << *it;
+    }
+    OS << "]";
+  }
+
+  OS << ">";
+}
+
+void MCAlignFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCAlignFragment ";
+  this->MCFragment::dump();
+  OS << "\n       ";
+  OS << " Alignment:" << getAlignment()
+     << " Value:" << getValue() << " ValueSize:" << getValueSize()
+     << " MaxBytesToEmit:" << getMaxBytesToEmit() << ">";
+}
+
+void MCDataFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCDataFragment ";
+  this->MCFragment::dump();
+  OS << "\n       ";
+  OS << " Contents:[";
+  for (unsigned i = 0, e = getContents().size(); i != e; ++i) {
+    if (i) OS << ",";
+    OS << hexdigit((Contents[i] >> 4) & 0xF) << hexdigit(Contents[i] & 0xF);
+  }
+  OS << "]>";
+}
+
+void MCFillFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCFillFragment ";
+  this->MCFragment::dump();
+  OS << "\n       ";
+  OS << " Value:" << getValue() << " ValueSize:" << getValueSize()
+     << " Count:" << getCount() << ">";
+}
+
+void MCOrgFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCOrgFragment ";
+  this->MCFragment::dump();
+  OS << "\n       ";
+  OS << " Offset:" << getOffset() << " Value:" << getValue() << ">";
+}
+
+void MCZeroFillFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCZeroFillFragment ";
+  this->MCFragment::dump();
+  OS << "\n       ";
+  OS << " Size:" << getSize() << " Alignment:" << getAlignment() << ">";
+}
+
+void MCSectionData::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCSectionData";
+  OS << " Alignment:" << getAlignment() << " Address:" << Address
+     << " Size:" << Size << " FileSize:" << FileSize
+     << " Fragments:[";
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    if (it != begin()) OS << ",\n      ";
+    it->dump();
+  }
+  OS << "]>";
+}
+
+void MCSymbolData::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCSymbolData Symbol:" << getSymbol()
+     << " Fragment:" << getFragment() << " Offset:" << getOffset()
+     << " Flags:" << getFlags() << " Index:" << getIndex();
+  if (isCommon())
+    OS << " (common, size:" << getCommonSize()
+       << " align: " << getCommonAlignment() << ")";
+  if (isExternal())
+    OS << " (external)";
+  if (isPrivateExtern())
+    OS << " (private extern)";
+  OS << ">";
+}
+
+void MCAssembler::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCAssembler\n";
+  OS << "  Sections:[";
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    if (it != begin()) OS << ",\n    ";
+    it->dump();
+  }
+  OS << "],\n";
+  OS << "  Symbols:[";
+
+  for (symbol_iterator it = symbol_begin(), ie = symbol_end(); it != ie; ++it) {
+    if (it != symbol_begin()) OS << ",\n    ";
+    it->dump();
+  }
+  OS << "]>\n";
 }
