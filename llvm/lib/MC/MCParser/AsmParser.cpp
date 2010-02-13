@@ -325,9 +325,17 @@ bool AsmParser::ParseExpression(const MCExpr *&Res) {
 ///  expr ::= primaryexpr
 ///
 bool AsmParser::ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
+  // Parse the expression.
   Res = 0;
-  return ParsePrimaryExpr(Res, EndLoc) ||
-         ParseBinOpRHS(1, Res, EndLoc);
+  if (ParsePrimaryExpr(Res, EndLoc) || ParseBinOpRHS(1, Res, EndLoc))
+    return true;
+
+  // Try to constant fold it up front, if possible.
+  int64_t Value;
+  if (Res->EvaluateAsAbsolute(Value))
+    Res = MCConstantExpr::Create(Value, getContext());
+
+  return false;
 }
 
 bool AsmParser::ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) {
