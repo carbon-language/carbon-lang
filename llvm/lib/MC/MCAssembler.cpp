@@ -64,6 +64,17 @@ static unsigned getFixupKindLog2Size(MCFixupKind Kind) {
   }
 }
 
+static bool isFixupKindPCRel(MCFixupKind Kind) {
+  switch (Kind) {
+  default:
+    return false;
+  case X86::reloc_pcrel_1byte:
+  case X86::reloc_pcrel_4byte:
+  case X86::reloc_riprel_4byte:
+    return true;
+  }
+}
+
 class MachObjectWriter {
   // See <mach-o/loader.h>.
   enum {
@@ -447,6 +458,10 @@ public:
 
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value - Value2 + Target.getConstant();
+    if (isFixupKindPCRel(Fixup.Kind)) {
+      Fixup.FixedValue -= Address + (1 << Log2Size);
+      IsPCRel = 1;
+    }
 
     MachRelocationEntry MRE;
     MRE.Word0 = ((Address   <<  0) |
@@ -515,10 +530,11 @@ public:
         //
         // FIXME: O(N)
         Index = 1;
-        for (MCAssembler::iterator it = Asm.begin(),
-               ie = Asm.end(); it != ie; ++it, ++Index)
+        MCAssembler::iterator it = Asm.begin(), ie = Asm.end();
+        for (; it != ie; ++it, ++Index)
           if (&*it == SD->getFragment()->getParent())
             break;
+        assert(it != ie && "Unable to find section index!");
         Value = SD->getFragment()->getAddress() + SD->getOffset();
       }
 
@@ -529,6 +545,11 @@ public:
     Fixup.FixedValue = Value + Target.getConstant();
 
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
+
+    if (isFixupKindPCRel(Fixup.Kind)) {
+      Fixup.FixedValue -= Address + (1<<Log2Size);
+      IsPCRel = 1;
+    }
 
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
