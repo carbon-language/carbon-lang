@@ -2323,6 +2323,24 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
     VarDecl *Var = cast<VarDecl>(Inst.first);
     assert(Var->isStaticDataMember() && "Not a static data member?");
 
+    // Don't try to instantiate declarations if the most recent redeclaration
+    // is invalid.
+    if (Var->getMostRecentDeclaration()->isInvalidDecl())
+      continue;
+
+    // Check if the most recent declaration has changed the specialization kind
+    // and removed the need for implicit instantiation.
+    switch (Var->getMostRecentDeclaration()->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+      assert(false && "Cannot instantitiate an undeclared specialization.");
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+    case TSK_ExplicitSpecialization:
+      continue;  // No longer need implicit instantiation.
+    case TSK_ImplicitInstantiation:
+      break;
+    }
+
     PrettyStackTraceActionsDecl CrashInfo(DeclPtrTy::make(Var),
                                           Var->getLocation(), *this,
                                           Context.getSourceManager(),
