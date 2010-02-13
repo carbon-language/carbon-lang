@@ -264,6 +264,18 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
     
   // And dump them (for now).
   dump();
+    
+  // Also dump the base offsets (for now).
+  for (SubobjectOffsetsMapTy::const_iterator I = Offsets.begin(),
+       E = Offsets.end(); I != E; ++I) {
+    const OffsetVectorTy& OffsetVector = I->second;
+
+    llvm::errs() << "Base offsets for ";
+    llvm::errs() << I->first->getQualifiedNameAsString() << '\n';
+
+    for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I)
+      llvm::errs() << "  " << I << " - " << OffsetVector[I] << '\n';
+  }
 }
 
 void FinalOverriders::AddOverriders(BaseSubobject Base,
@@ -452,17 +464,41 @@ FinalOverriders::MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
   for (SubobjectOffsetsMapTy::const_iterator I = NewOffsets.begin(),
        E = NewOffsets.end(); I != E; ++I) {
     const CXXRecordDecl *NewRD = I->first;
-    const OffsetVectorTy& NewOffsetsVector = I->second;
+    const OffsetVectorTy& NewOffsetVector = I->second;
     
-    OffsetVectorTy &OffsetsVector = Offsets[NewRD];
-    if (OffsetsVector.empty()) {
+    OffsetVectorTy &OffsetVector = Offsets[NewRD];
+    if (OffsetVector.empty()) {
       // There were no previous offsets in this vector, just insert all entries
-      // from the new offsets vector.
-      OffsetsVector.append(NewOffsetsVector.begin(), NewOffsetsVector.end());
+      // from the new offset vector.
+      OffsetVector.append(NewOffsetVector.begin(), NewOffsetVector.end());
       continue;
     }
     
-    assert(false && "FIXME: Handle merging the subobject offsets!");
+    // We need to merge the new offsets vector into the old, but we don't want
+    // to have duplicate entries. Do this by inserting the old offsets in a set
+    // so they'll be unique. After this, we iterate over the new offset vector
+    // and only append elements that aren't in the set.
+    
+    // First, add the existing offsets to the set.
+    llvm::SmallSet<uint64_t, 4> OffsetSet;
+    for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
+      bool Inserted = OffsetSet.insert(OffsetVector[I]);
+      if (!Inserted)
+        assert(false && "Set of offsets should be unique!");
+    }
+    
+    // Next, only add the new offsets if they are not already in the set.
+    for (unsigned I = 0, E = NewOffsetVector.size(); I != E; ++I) {
+      uint64_t Offset = NewOffsetVector[I];
+
+      if (OffsetSet.count(Offset)) {
+        // Ignore the offset.
+        continue;
+      }
+      
+      // Otherwise, add it to the offsets vector.
+      OffsetVector.push_back(Offset);
+    }
   }
 }
 
