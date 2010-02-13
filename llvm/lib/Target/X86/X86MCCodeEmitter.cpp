@@ -303,9 +303,9 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 /// size, and 3) use of X86-64 extended registers.
 static unsigned DetermineREXPrefix(const MCInst &MI, unsigned TSFlags,
                                    const TargetInstrDesc &Desc) {
-  // Pseudo instructions shouldn't get here.
-  assert((TSFlags & X86II::FormMask) != X86II::Pseudo &&
-         "Can't encode pseudo instrs");
+  // Pseudo instructions never have a rex byte.
+  if ((TSFlags & X86II::FormMask) == X86II::Pseudo)
+    return 0;
   
   unsigned REX = 0;
   if (TSFlags & X86II::REX_W)
@@ -506,6 +506,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     assert(0 && "FIXME: Remove this form when the JIT moves to MCCodeEmitter!");
   default: errs() << "FORM: " << (TSFlags & X86II::FormMask) << "\n";
     assert(0 && "Unknown FormMask value in X86MCCodeEmitter!");
+  case X86II::Pseudo: return; // Pseudo instructions encode to nothing.
   case X86II::RawFrm:
     EmitByte(BaseOpcode, CurByte, OS);
     break;
