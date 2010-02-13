@@ -426,11 +426,14 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
       assert(Overrider.Method && "Did not find existing overrider!");
 
       // Get the return adjustment base offset.
-      BaseOffset ReturnBaseOffset =
-        ComputeReturnTypeBaseOffset(Context, NewMD, OverriddenMD);
-      if (!ReturnBaseOffset.isEmpty()) {
-        // Store the return adjustment base offset.
-        ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
+      // (We don't want to do this for pure virtual member functions).
+      if (!NewMD->isPure()) {
+        BaseOffset ReturnBaseOffset =
+          ComputeReturnTypeBaseOffset(Context, NewMD, OverriddenMD);
+        if (!ReturnBaseOffset.isEmpty()) {
+          // Store the return adjustment base offset.
+          ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
+        }
       }
 
       // Set the new overrider.

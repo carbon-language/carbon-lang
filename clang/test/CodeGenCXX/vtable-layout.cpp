@@ -182,6 +182,23 @@ struct E : A {
 };
 V3 *E::f() { return 0;}
 
+// Test that a pure virtual member doesn't get a thunk.
+
+// CHECK:     Vtable for 'Test4::F' (5 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test4::F RTTI
+// CHECK-NEXT:       -- (Test4::A, 0) vtable address --
+// CHECK-NEXT:       -- (Test4::F, 0) vtable address --
+// CHECK-NEXT:   2 | Test4::R3 *Test4::F::f() [pure]
+// CHECK-NEXT:   3 | void Test4::F::g()
+// CHECK-NEXT:   4 | Test4::R3 *Test4::F::f() [pure]
+struct F : A {
+  virtual void g();
+  virtual R3 *f() = 0;
+};
+
+void F::g() { }
+
 }
 
 // For now, just verify this doesn't crash.
