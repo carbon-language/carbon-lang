@@ -555,15 +555,13 @@ _clang_getDiagnosticSpelling.argtypes = [c_object_p]
 _clang_getDiagnosticSpelling.restype = _CXString
 _clang_getDiagnosticSpelling.errcheck = _CXString.from_result
 
-_clang_getDiagnosticRanges = lib.clang_getDiagnosticRanges
-_clang_getDiagnosticRanges.argtypes = [c_object_p,
-                                       POINTER(POINTER(SourceRange)),
-                                       POINTER(c_uint)]
-_clang_getDiagnosticRanges.restype = None
+_clang_getDiagnosticNumRanges = lib.clang_getDiagnosticNumRanges
+_clang_getDiagnosticNumRanges.argtypes = [c_object_p]
+_clang_getDiagnosticNumRanges.restype = c_uint
 
-_clang_disposeDiagnosticRanges = lib.clang_disposeDiagnosticRanges
-_clang_disposeDiagnosticRanges.argtypes = [POINTER(SourceRange), c_uint]
-_clang_disposeDiagnosticRanges.restype = None
+_clang_getDiagnosticRange = lib.clang_getDiagnosticRange
+_clang_getDiagnosticRange.argtypes = [c_object_p, c_uint]
+_clang_getDiagnosticRange.restype = SourceRange
 
 _clang_getDiagnosticNumFixIts = lib.clang_getDiagnosticNumFixIts
 _clang_getDiagnosticNumFixIts.argtypes = [c_object_p]
@@ -622,16 +620,9 @@ def _convert_diag(diag_ptr, diag_list):
     spelling = _clang_getDiagnosticSpelling(diag_ptr)
 
     # Diagnostic ranges.
-    #
-    # FIXME: Use getNum... based API?
-    num_ranges = c_uint()
-    ranges_array = POINTER(SourceRange)()
-    _clang_getDiagnosticRanges(diag_ptr, byref(ranges_array), byref(num_ranges))
-
-    # Copy the ranges array so we can dispose the original.
-    ranges = [SourceRange.from_buffer_copy(ranges_array[i])
-              for i in range(num_ranges.value)]
-    _clang_disposeDiagnosticRanges(ranges_array, num_ranges)
+    num_ranges = _clang_getDiagnosticNumRanges(diag_ptr)
+    ranges = [_clang_getDiagnosticRange(diag_ptr, i)
+              for i in range(num_ranges)]
 
     fixits = [_convert_fixit(diag_ptr, i)
               for i in range(_clang_getDiagnosticNumFixIts(diag_ptr))]
