@@ -121,16 +121,31 @@ namespace {
 /// member functions in the base subobjects of a class.
 class FinalOverriders {
 public:
+  /// BaseOffset - Represents an offset from a derived class to a direct or
+  /// indirect base class.
+  struct BaseOffset {
+    /// VirtualBase - If the path from the derived class to the base class
+    /// involves a virtual base class, this holds its declaration.
+    const CXXRecordDecl *VirtualBase;
+
+    /// NonVirtualOffset - The offset from the derived class to the base class.
+    /// Or the offset from the virtual base class to the base class, if the path
+    /// from the derived class to the base class involves a virtual base class.
+    uint64_t NonVirtualOffset;
+    
+    BaseOffset() : VirtualBase(0), NonVirtualOffset(0) { }
+    BaseOffset(const CXXRecordDecl *VirtualBase, uint64_t NonVirtualOffset)
+      : VirtualBase(VirtualBase), NonVirtualOffset(NonVirtualOffset) { }
+
+    bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; };
+  };
+  
   /// OverriderInfo - Information about a final overrider.
   struct OverriderInfo {
     /// Method - The method decl of the overrider.
     const CXXMethodDecl *Method;
     
-    /// NeedsReturnAdjustment - Whether this overrider needs to adjust its
-    /// return type.
-    bool NeedsReturnAdjustment;
-    
-    OverriderInfo() : Method(0), NeedsReturnAdjustment(false) { }
+    OverriderInfo() : Method(0) { }
   };
 
 private:
@@ -143,12 +158,24 @@ private:
   /// MostDerivedClassLayout - the AST record layout of the most derived class.
   const ASTRecordLayout &MostDerivedClassLayout;
 
-  typedef llvm::DenseMap<std::pair<BaseSubobject, const CXXMethodDecl *>,
+  /// BaseSubobjectMethodPairTy - Uniquely identifies a member function
+  /// in a base subobject.
+  typedef std::pair<BaseSubobject, const CXXMethodDecl *>
+    BaseSubobjectMethodPairTy;
+  
+  typedef llvm::DenseMap<BaseSubobjectMethodPairTy,
                          OverriderInfo> OverridersMapTy;
   
   /// OverridersMap - The final overriders for all virtual member functions of 
   /// all the base subobjects of the most derived class.
   OverridersMapTy OverridersMap;
+  
+  typedef llvm::DenseMap<BaseSubobjectMethodPairTy, BaseOffset>
+    AdjustmentOffsetsMapTy;
+
+  /// ReturnAdjustments - Holds return adjustments for all the overriders that 
+  /// need to perform return value adjustments.
+  AdjustmentOffsetsMapTy ReturnAdjustments;
   
   typedef llvm::SmallVector<uint64_t, 1> OffsetVectorTy;
   
@@ -215,7 +242,7 @@ public:
   /// and indirect base subobjects.
   void dump(llvm::raw_ostream &Out, BaseSubobject Base) const;
 };
-  
+
 FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
   : MostDerivedClass(MostDerivedClass), 
   Context(MostDerivedClass->getASTContext()),
@@ -251,6 +278,98 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
   }
 }
 
+static FinalOverriders::BaseOffset 
+ComputeBaseOffset(ASTContext &Context,
+                  const CXXRecordDecl *DerivedRD,
+                  const CXXRecordDecl *BaseRD) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+  
+  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
+      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return FinalOverriders::BaseOffset();
+  }
+
+  assert(!Paths.getDetectedVirtual() && 
+         "FIXME: Handle virtual bases!");
+
+  uint64_t NonVirtualOffset = 0;
+
+  const CXXBasePath &Path = Paths.front();
+  
+  for (size_t Start = 0, End = Path.size(); Start != End; ++Start) {
+    const CXXBasePathElement &Element = Path[Start];
+    
+    // Check the base class offset.
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(Element.Class);
+    
+    const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
+    const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
+    
+    NonVirtualOffset += Layout.getBaseClassOffset(Base);
+  }
+  
+  // FIXME: This should probably use CharUnits or something. Maybe we should
+  // even change the base offsets in ASTRecordLayout to be specified in 
+  // CharUnits.
+  return FinalOverriders::BaseOffset(0, NonVirtualOffset / 8);
+}
+
+static FinalOverriders::BaseOffset
+ComputeReturnTypeBaseOffset(ASTContext &Context, 
+                            const CXXMethodDecl *DerivedMD,
+                            const CXXMethodDecl *BaseMD) {
+  const FunctionType *BaseFT = BaseMD->getType()->getAs<FunctionType>();
+  const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
+  
+  // Canonicalize the return types.
+  CanQualType CanDerivedReturnType = 
+    Context.getCanonicalType(DerivedFT->getResultType());
+  CanQualType CanBaseReturnType = 
+    Context.getCanonicalType(BaseFT->getResultType());
+  
+  assert(CanDerivedReturnType->getTypeClass() == 
+         CanBaseReturnType->getTypeClass() && 
+         "Types must have same type class!");
+  
+  if (CanDerivedReturnType == CanBaseReturnType) {
+    // No adjustment needed.
+    return FinalOverriders::BaseOffset();
+  }
+  
+  if (isa<ReferenceType>(CanDerivedReturnType)) {
+    CanDerivedReturnType = 
+      CanDerivedReturnType->getAs<ReferenceType>()->getPointeeType();
+    CanBaseReturnType = 
+      CanBaseReturnType->getAs<ReferenceType>()->getPointeeType();
+  } else if (isa<PointerType>(CanDerivedReturnType)) {
+    CanDerivedReturnType = 
+      CanDerivedReturnType->getAs<PointerType>()->getPointeeType();
+    CanBaseReturnType = 
+      CanBaseReturnType->getAs<PointerType>()->getPointeeType();
+  } else {
+    assert(false && "Unexpected return type!");
+  }
+  
+  // We need to compare unqualified types here; consider
+  //   const T *Base::foo();
+  //   T *Derived::foo();
+  if (CanDerivedReturnType.getUnqualifiedType() == 
+      CanBaseReturnType.getUnqualifiedType()) {
+    // No adjustment needed.
+    return FinalOverriders::BaseOffset();
+  }
+  
+  const CXXRecordDecl *DerivedRD = 
+    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedReturnType)->getDecl());
+  
+  const CXXRecordDecl *BaseRD = 
+    cast<CXXRecordDecl>(cast<RecordType>(CanBaseReturnType)->getDecl());
+
+  return ComputeBaseOffset(Context, DerivedRD, BaseRD);
+}
+
 void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
                                          const CXXMethodDecl *NewMD,
                                          SubobjectOffsetsMapTy &Offsets) {
@@ -273,25 +392,19 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
     for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
       uint64_t Offset = OffsetVector[I];
 
-      OverriderInfo &Overrider = 
-          OverridersMap[std::make_pair(BaseSubobject(OverriddenRD, Offset),
-                                       OverriddenMD)];
+      BaseSubobjectMethodPairTy SubobjectAndMethod =
+        std::make_pair(BaseSubobject(OverriddenRD, Offset), OverriddenMD);
+      
+      OverriderInfo &Overrider = OverridersMap[SubobjectAndMethod];
+
       assert(Overrider.Method && "Did not find existing overrider!");
 
-      /// We only need to do the return type check if the overrider doesn't
-      /// already need a return adjustment. Consider:
-      ///
-      /// struct A { virtual V1 *f(); }
-      /// struct B : A { virtual V2 *f(); }
-      /// struct C : B { virtual V2 *f(); }
-      ///
-      /// If we assume that that V2->V1 needs an adjustment, then when we
-      /// know that since A::f -> B::f needs an adjustment, then all classes
-      /// that eventually override B::f (and by transitivity A::f) are going to
-      /// need to have their return types adjusted.
-      if (!Overrider.NeedsReturnAdjustment) {
-        Overrider.NeedsReturnAdjustment = 
-          ReturnTypeConversionRequiresAdjustment(NewMD, OverriddenMD);
+      // Get the return adjustment base offset.
+      BaseOffset ReturnBaseOffset =
+        ComputeReturnTypeBaseOffset(Context, NewMD, OverriddenMD);
+      if (!ReturnBaseOffset.isEmpty()) {
+        // Store the return adjustment base offset.
+        ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
       }
 
       // Set the new overrider.
@@ -388,8 +501,16 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
 
     Out << "  " << MD->getQualifiedNameAsString() << " - ";
     Out << Overrider.Method->getQualifiedNameAsString();
-    if (Overrider.NeedsReturnAdjustment)
-      Out << " [ret-adj]";
+    
+    AdjustmentOffsetsMapTy::const_iterator I = 
+      ReturnAdjustments.find(std::make_pair(Base, MD));
+    if (I != ReturnAdjustments.end()) {
+      const BaseOffset &Offset = I->second;
+      
+      assert(!Offset.VirtualBase && "FIXME: Handle vbases!");
+             
+      Out << " [ret-adj: " << Offset.NonVirtualOffset << " nv]";
+    }
     Out << "\n";
   }  
 }
@@ -627,9 +748,9 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
     // then we can just use the member function from the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
-      assert(!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD) 
+      assert(!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD)
              && "FIXME: Handle covariant thunks!");
-      
+
       continue;
     }
     
@@ -2086,6 +2207,12 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset,
                              AddressPointsMapTy& AddressPoints) {
+  if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts) {
+    VtableBuilder Builder(RD);
+    
+    Builder.dumpLayout(llvm::errs());
+  }
+
   llvm::SmallString<256> OutName;
   if (LayoutClass != RD)
     CGM.getMangleContext().mangleCXXCtorVtable(LayoutClass, Offset / 8, 
@@ -2129,12 +2256,6 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
       OGV->replaceAllUsesWith(NewPtr);
       OGV->eraseFromParent();
     }
-  }
-  
-  if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts) {
-    VtableBuilder Builder(RD);
-    
-    Builder.dumpLayout(llvm::errs());
   }
   
   return GV;
