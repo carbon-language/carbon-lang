@@ -156,11 +156,22 @@ public:
     return OverridersMap.lookup(std::make_pair(Base, MD));
   }
   
+  /// getReturnAdjustmentOffset - Get the return adjustment offset for the
+  /// method decl in the given base subobject. Returns an empty base offset if
+  /// no adjustment is needed.
   BaseOffset getReturnAdjustmentOffset(BaseSubobject Base,
                                        const CXXMethodDecl *MD) const {
     return ReturnAdjustments.lookup(std::make_pair(Base, MD));
   }
 
+  /// getThisAdjustmentOffset - Get the 'this' pointer adjustment offset for the
+  /// method decl in the given base subobject. Returns an empty base offset if
+  /// no adjustment is needed.
+  BaseOffset getThisAdjustmentOffset(BaseSubobject Base,
+                                     const CXXMethodDecl *MD) const {
+    return ThisAdjustments.lookup(std::make_pair(Base, MD));
+  }
+  
   /// dump - dump the final overriders.
   void dump() const { 
       dump(llvm::errs(), BaseSubobject(MostDerivedClass, 0)); 
@@ -691,7 +702,7 @@ private:
   /// AddressPoints - Address points for the vtable being built.
   CGVtableInfo::AddressPointsMapTy AddressPoints;
 
-  /// ReturnAdjustment - A return adjustment thunk.
+  /// ReturnAdjustment - A return adjustment.
   struct ReturnAdjustment {
     /// NonVirtual - The non-virtual adjustment from the derived object to its
     /// nearest virtual base.
@@ -710,13 +721,35 @@ private:
   llvm::SmallVector<std::pair<uint64_t, ReturnAdjustment>, 16> 
     ReturnAdjustments;
 
+  /// ThisAdjustment - A 'this' pointer adjustment thunk.
+  struct ThisAdjustment {
+    /// NonVirtual - The non-virtual adjustment from the derived object to its
+    /// nearest virtual base.
+    int64_t NonVirtual;
+
+    /// FIXME: Add VCallOffsetOffset here.
+    
+    ThisAdjustment() : NonVirtual(0) { }
+
+    bool isEmpty() const { return !NonVirtual; }
+  };
+  
+  /// ThisAdjustments - The 'this' pointer adjustments needed in this vtable.
+  llvm::SmallVector<std::pair<uint64_t, ThisAdjustment>, 16> 
+    ThisAdjustments;
+  
   /// ComputeReturnAdjustment - Compute the return adjustment given a return
   /// adjustment base offset.
   ReturnAdjustment ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset);
   
+  /// ComputeThisAdjustment - Compute the 'this' pointer  adjustment given a 
+  /// 'this' pointer adjustment base offset.
+  ThisAdjustment ComputeThisAdjustment(FinalOverriders::BaseOffset Offset);
+  
   /// AddMethod - Add a single virtual member function to the vtable
   /// components vector.
-  void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment);
+  void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment,
+                 ThisAdjustment ThisAdjustment);
 
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
@@ -779,12 +812,33 @@ VtableBuilder::ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset) {
   return Adjustment;
 }
 
+VtableBuilder::ThisAdjustment
+VtableBuilder::ComputeThisAdjustment(FinalOverriders::BaseOffset Offset) {
+  ThisAdjustment Adjustment;
+  
+  if (!Offset.isEmpty()) {
+    assert(!Offset.VirtualBase && "FIXME: Handle virtual bases!");
+    Adjustment.NonVirtual = Offset.NonVirtualOffset;
+  }
+  
+  return Adjustment;
+}
+
 void 
 VtableBuilder::AddMethod(const CXXMethodDecl *MD,
-                         ReturnAdjustment ReturnAdjustment) {
+                         ReturnAdjustment ReturnAdjustment,
+                         ThisAdjustment ThisAdjustment) {
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
     assert(ReturnAdjustment.isEmpty() && 
            "Destructor can't have return adjustment!");
+    // Add the 'this' pointer adjustments if necessary.
+    if (!ThisAdjustment.isEmpty()) {
+      ThisAdjustments.push_back(std::make_pair(Components.size(),
+                                               ThisAdjustment));
+      ThisAdjustments.push_back(std::make_pair(Components.size() + 1,
+                                               ThisAdjustment));
+    }
+
     // Add both the complete destructor and the deleting destructor.
     Components.push_back(VtableComponent::MakeCompleteDtor(DD));
     Components.push_back(VtableComponent::MakeDeletingDtor(DD));
@@ -793,6 +847,11 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
     if (!ReturnAdjustment.isEmpty())
       ReturnAdjustments.push_back(std::make_pair(Components.size(),
                                                  ReturnAdjustment));
+
+    // Add the 'this' pointer adjustment if necessary.
+    if (!ThisAdjustment.isEmpty())
+      ThisAdjustments.push_back(std::make_pair(Components.size(),
+                                               ThisAdjustment));
 
     // Add the function.
     Components.push_back(VtableComponent::MakeFunction(MD));
@@ -847,7 +906,13 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
     ReturnAdjustment ReturnAdjustment = 
       ComputeReturnAdjustment(ReturnAdjustmentOffset);
     
-    AddMethod(Overrider.Method, ReturnAdjustment);
+    // Check if this overrider needs a 'this' pointer adjustment.
+    FinalOverriders::BaseOffset ThisAdjustmentOffset =
+      Overriders.getThisAdjustmentOffset(Base, MD);
+    
+    ThisAdjustment ThisAdjustment = ComputeThisAdjustment(ThisAdjustmentOffset);
+    
+    AddMethod(Overrider.Method, ReturnAdjustment, ThisAdjustment);
   }
 }
 
@@ -927,6 +992,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   }
   
   unsigned NextReturnAdjustmentIndex = 0;
+  unsigned NextThisAdjustmentIndex = 0;
   for (unsigned I = 0, E = Components.size(); I != E; ++I) {
     uint64_t Index = I;
     
@@ -990,7 +1056,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       if (MD->isPure())
         Out << " [pure]";
 
-      // If this function pointer has a return adjustment thunk, dump it.
+      // If this function pointer has a return adjustment, dump it.
       if (NextReturnAdjustmentIndex < ReturnAdjustments.size() && 
           ReturnAdjustments[NextReturnAdjustmentIndex].first == I) {
         const ReturnAdjustment Adjustment = 
@@ -1004,6 +1070,20 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         Out << ']';
 
         NextReturnAdjustmentIndex++;
+      }
+      
+      // If this function pointer has a 'this' pointer adjustment, dump it.
+      if (NextThisAdjustmentIndex < ThisAdjustments.size() && 
+          ThisAdjustments[NextThisAdjustmentIndex].first == I) {
+        const ThisAdjustment Adjustment = 
+          ThisAdjustments[NextThisAdjustmentIndex].second;
+        
+        Out << "\n       [this adjustment: ";
+        Out << Adjustment.NonVirtual << " non-virtual";
+        
+        Out << ']';
+        
+        NextThisAdjustmentIndex++;
       }
 
       break;

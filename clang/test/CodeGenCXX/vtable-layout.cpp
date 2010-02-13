@@ -1,6 +1,16 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm-only -fdump-vtable-layouts 2>&1 | FileCheck %s
-namespace Test1 {
 
+// For now, just verify this doesn't crash.
+namespace test0 {
+  struct Obj {};
+
+  struct Base {           virtual const Obj *foo() = 0; };
+  struct Derived : Base { virtual       Obj *foo() { return new Obj(); } };
+
+  void test(Derived *D) { D->foo(); }
+}
+
+namespace Test1 {
 // CHECK:      Vtable for 'Test1::A' (3 entries).
 // CHECK-NEXT:   0 | offset_to_top (0)
 // CHECK-NEXT:   1 | Test1::A RTTI
@@ -202,7 +212,7 @@ void F::g() { }
 
 namespace Test5 {
 
-// Simple secondary vtables without this-adjustments.
+// Simple secondary vtables without 'this' pointer adjustments.
 struct A {
   virtual void f();
   virtual void g();
@@ -240,12 +250,33 @@ struct C : B1, B2 {
 void C::h() { }  
 }
 
-// For now, just verify this doesn't crash.
-namespace test0 {
-  struct Obj {};
+namespace Test6 {
 
-  struct Base {           virtual const Obj *foo() = 0; };
-  struct Derived : Base { virtual       Obj *foo() { return new Obj(); } };
+// Simple non-virtual 'this' pointer adjustments.
+struct A1 {
+  virtual void f();
+  int a;
+};
 
-  void test(Derived *D) { D->foo(); }
+struct A2 {
+  virtual void f();
+  int a;
+};
+
+// CHECK:     Vtable for 'Test6::C' (6 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test6::C RTTI
+// CHECK-NEXT:       -- (Test6::A1, 0) vtable address --
+// CHECK-NEXT:       -- (Test6::C, 0) vtable address --
+// CHECK-NEXT:   2 | void Test6::C::f()
+// CHECK-NEXT:   3 | offset_to_top (-16)
+// CHECK-NEXT:   4 | Test6::C RTTI
+// CHECK-NEXT:       -- (Test6::A2, 16) vtable address --
+// CHECK-NEXT:   5 | void Test6::C::f()
+// CHECK-NEXT:       [this adjustment: -16 non-virtual]
+struct C : A1, A2 {
+  virtual void f();
+};
+void C::f() { }
+
 }
