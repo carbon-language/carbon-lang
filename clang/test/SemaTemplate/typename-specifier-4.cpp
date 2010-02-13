@@ -80,3 +80,22 @@ namespace PR6236 {
     }
   };
 }
+
+namespace PR6268 {
+  template <typename T>
+  struct Outer {
+    template <typename U>
+    struct Inner {};
+
+    template <typename U>
+    typename Outer<T>::template Inner<U>
+    foo(typename Outer<T>::template Inner<U>);
+  };
+
+  template <typename T>
+  template <typename U>
+  typename Outer<T>::template Inner<U>
+  Outer<T>::foo(typename Outer<T>::template Inner<U>) {
+    return Inner<U>();
+  }
+}

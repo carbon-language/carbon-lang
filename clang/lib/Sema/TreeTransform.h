@@ -525,9 +525,13 @@ public:
   /// and the given type. Subclasses may override this routine to provide
   /// different behavior.
   QualType RebuildTypenameType(NestedNameSpecifier *NNS, QualType T) {
-    if (NNS->isDependent())
-      return SemaRef.Context.getTypenameType(NNS,
+    if (NNS->isDependent()) {
+      CXXScopeSpec SS;
+      SS.setScopeRep(NNS);
+      if (!SemaRef.computeDeclContext(SS))
+        return SemaRef.Context.getTypenameType(NNS,
                                           cast<TemplateSpecializationType>(T));
+    }
 
     return SemaRef.Context.getQualifiedNameType(NNS, T);
   }
