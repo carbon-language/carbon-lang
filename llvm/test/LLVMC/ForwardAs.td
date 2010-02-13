@@ -13,7 +13,7 @@ def dummy_tool : Tool<[
 (in_language "dummy"),
 (out_language "dummy"),
 (actions (case
-         // CHECK: vec.push_back("unique_name")
+         // CHECK: vec.push_back("unique_name
          (not_empty "dummy"), (forward_as "dummy", "unique_name")))
 ]>;
 
