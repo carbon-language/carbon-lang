@@ -746,7 +746,7 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
-    if (const CXXMethodDecl ATTRIBUTE_UNUSED *OverriddenMD = 
+    if (const CXXMethodDecl *OverriddenMD ATTRIBUTE_UNUSED = 
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
       assert(!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD)
              && "FIXME: Handle covariant thunks!");
