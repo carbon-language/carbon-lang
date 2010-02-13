@@ -29,6 +29,11 @@
 // CHECK: swapgs
 // CHECK: encoding: [0x0f,0x01,0xf8]
 
+rdtscp
+// CHECK: rdtscp
+// CHECK:  encoding: [0x0f,0x01,0xf9]
+
+
 // CHECK: movl	%eax, 16(%ebp)          # encoding: [0x89,0x45,0x10]
 	movl	%eax, 16(%ebp)
 // CHECK: movl	%eax, -16(%ebp)          # encoding: [0x89,0x45,0xf0]

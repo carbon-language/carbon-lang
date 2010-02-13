@@ -279,6 +279,7 @@ namespace X86II {
     MRM_E8 = 39,
     MRM_F0 = 40,
     MRM_F8 = 41,
+    MRM_F9 = 42,
 
     FormMask       = 63,
 
