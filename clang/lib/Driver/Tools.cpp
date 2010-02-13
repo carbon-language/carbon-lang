@@ -687,6 +687,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // The make clang go fast button.
   CmdArgs.push_back("-disable-free");
 
+  // Disable the verification pass in -asserts builds.
+#ifdef NDEBUG
+  CmdArgs.push_back("-disable-llvm-verifier");
+#endif
+
   // Set the main file name, so that debug info works even with
   // -save-temps.
   CmdArgs.push_back("-main-file-name");

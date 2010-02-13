@@ -180,6 +180,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-mrelocation-model");
     Res.push_back(Opts.RelocationModel);
   }
+  if (!Opts.VerifyModule)
+    Res.push_back("-disable-llvm-verifier");
 }
 
 static void DependencyOutputOptsToArgs(const DependencyOutputOptions &Opts,
@@ -789,13 +791,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");
 
   Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
-
-  // FIXME: Put elsewhere?
-#ifdef NDEBUG
-  Opts.VerifyModule = 0;
-#else
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
-#endif
 }
 
 static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
