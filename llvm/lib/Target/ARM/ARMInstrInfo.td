@@ -664,6 +664,26 @@ def CPS : AXI<(outs),(ins i32imm:$opt), MiscFrm, NoItinerary, "cps${opt:cps}",
   let Inst{5} = 0;
 }
 
+def SETENDBE : AXI<(outs),(ins), MiscFrm, NoItinerary, "setend\tbe",
+                   [/* For disassembly only; pattern left blank */]>,
+               Requires<[IsARM]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{27-20} = 0b00010000;
+  let Inst{16} = 1;
+  let Inst{9} = 1;
+  let Inst{7-4} = 0b0000;
+}
+
+def SETENDLE : AXI<(outs),(ins), MiscFrm, NoItinerary, "setend\tle",
+                   [/* For disassembly only; pattern left blank */]>,
+               Requires<[IsARM]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{27-20} = 0b00010000;
+  let Inst{16} = 1;
+  let Inst{9} = 0;
+  let Inst{7-4} = 0b0000;
+}
+
 def DBG : AI<(outs), (ins i32imm:$opt), MiscFrm, NoItinerary, "dbg", "\t$opt",
              [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM, HasV7]> {
@@ -901,6 +921,14 @@ let isBranch = 1, isTerminator = 1 in {
   def Bcc : ABI<0b1010, (outs), (ins brtarget:$target),
                IIC_Br, "b", "\t$target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
+}
+
+// Branch and Exchange Jazelle -- for disassembly only
+def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0010;
+  //let Inst{19-8} = 0xfff;
+  let Inst{7-4} = 0b0010;
 }
 
 // Supervisor call (software interrupt) -- for disassembly only
