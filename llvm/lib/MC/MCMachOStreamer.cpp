@@ -347,7 +347,8 @@ void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
       DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
   } else {
     DF->getFixups().push_back(MCAsmFixup(DF->getContents().size(),
-                                         *AddValueSymbols(Value), Size));
+                                         *AddValueSymbols(Value),
+                                         MCFixup::getKindForSize(Size)));
     DF->getContents().resize(DF->getContents().size() + Size, 0);
   }
 }

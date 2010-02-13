@@ -47,6 +47,16 @@ static bool isVirtualSection(const MCSection &Section) {
   return (Type == MCSectionMachO::S_ZEROFILL);
 }
 
+static unsigned getFixupKindLog2Size(MCFixupKind Kind) {
+  switch (Kind) {
+  default: llvm_unreachable("invalid fixup kind!");
+  case FK_Data_1: return 0;
+  case FK_Data_2: return 1;
+  case FK_Data_4: return 2;
+  case FK_Data_8: return 3;
+  }
+}
+
 class MachObjectWriter {
   // See <mach-o/loader.h>.
   enum {
@@ -426,8 +436,7 @@ public:
       Value2 = SD->getFragment()->getAddress() + SD->getOffset();
     }
 
-    unsigned Log2Size = Log2_32(Fixup.Size);
-    assert((1U << Log2Size) == Fixup.Size && "Invalid fixup size!");
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value - Value2 + Target.getConstant();
@@ -512,8 +521,7 @@ public:
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value + Target.getConstant();
 
-    unsigned Log2Size = Log2_32(Fixup.Size);
-    assert((1U << Log2Size) == Fixup.Size && "Invalid fixup size!");
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
@@ -880,8 +888,12 @@ public:
   }
 
   void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF) {
+    unsigned Size = 1 << getFixupKindLog2Size(Fixup.Kind);
+
     // FIXME: Endianness assumption.
-    for (unsigned i = 0; i != Fixup.Size; ++i)
+    assert(Fixup.Offset + Size <= DF.getContents().size() &&
+           "Invalid fixup offset!");
+    for (unsigned i = 0; i != Size; ++i)
       DF.getContents()[Fixup.Offset + i] = uint8_t(Fixup.FixedValue >> (i * 8));
   }
 };
@@ -1186,8 +1198,8 @@ void MCAssembler::Finish() {
 namespace llvm {
 
 raw_ostream &operator<<(raw_ostream &OS, const MCAsmFixup &AF) {
-  OS << "<MCAsmFixup" << " Offset:" << AF.Offset << " Value:" << AF.Value
-     << " Size:" << AF.Size << ">";
+  OS << "<MCAsmFixup" << " Offset:" << AF.Offset << " Value:" << *AF.Value
+     << " Kind:" << AF.Kind << ">";
   return OS;
 }
 
@@ -1224,7 +1236,7 @@ void MCDataFragment::dump() {
     if (i) OS << ",";
     OS << hexdigit((Contents[i] >> 4) & 0xF) << hexdigit(Contents[i] & 0xF);
   }
-  OS << "]";
+  OS << "] (" << getContents().size() << " bytes)";
 
   if (!getFixups().empty()) {
     OS << ",\n       ";

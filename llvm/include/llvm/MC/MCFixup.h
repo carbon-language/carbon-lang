@@ -89,6 +89,18 @@ public:
   unsigned getOffset() const { return Offset; }
 
   const MCExpr *getValue() const { return Value; }
+
+  /// getKindForSize - Return the generic fixup kind for a value with the given
+  /// size. It is an error to pass an unsupported size.
+  static MCFixupKind getKindForSize(unsigned Size) {
+    switch (Size) {
+    default: assert(0 && "Invalid generic fixup size!");
+    case 1: return FK_Data_1;
+    case 2: return FK_Data_2;
+    case 4: return FK_Data_4;
+    case 8: return FK_Data_8;
+    }
+  }
 };
 
 } // End llvm namespace

@@ -14,6 +14,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/MC/MCFixup.h"
 #include "llvm/System/DataTypes.h"
 #include <vector> // FIXME: Shouldn't be needed.
 
@@ -37,8 +38,8 @@ struct MCAsmFixup {
   /// Value - The expression to eventually write into the fragment.
   const MCExpr *Value;
 
-  /// Size - The fixup size.
-  unsigned Size;
+  /// Kind - The fixup kind.
+  MCFixupKind Kind;
 
   /// FixedValue - The value to replace the fix up by.
   //
@@ -46,8 +47,8 @@ struct MCAsmFixup {
   uint64_t FixedValue;
 
 public:
-  MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, unsigned _Size)
-    : Offset(_Offset), Value(&_Value), Size(_Size), FixedValue(0) {}
+  MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, MCFixupKind _Kind)
+    : Offset(_Offset), Value(&_Value), Kind(_Kind), FixedValue(0) {}
 };
 
 class MCFragment : public ilist_node<MCFragment> {
