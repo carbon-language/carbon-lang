@@ -33,7 +33,8 @@ using namespace llvm;
   MAP(C9, 38)           \
   MAP(E8, 39)           \
   MAP(F0, 40)           \
-  MAP(F8, 41)
+  MAP(F8, 41)		\
+  MAP(F9, 42)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {

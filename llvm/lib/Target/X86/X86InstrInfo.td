@@ -904,6 +904,9 @@ let Defs = [RAX, RDX] in
 def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>,
             TB;
 
+let Defs = [RAX, RCX, RDX] in
+def RDTSCP : I<0x01, MRM_F9, (outs), (ins), "rdtscp", []>, TB;
+
 let isBarrier = 1, hasCtrlDep = 1 in {
 def TRAP    : I<0x0B, RawFrm, (outs), (ins), "ud2", [(trap)]>, TB;
 }
