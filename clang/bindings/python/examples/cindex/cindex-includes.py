@@ -18,8 +18,6 @@ def main():
     import sys
     from clang.cindex import Index
 
-    # FIXME: Allow the user to pass command line options to clang so that
-    # we can use -D and -U.
     from optparse import OptionParser, OptionGroup
 
     parser = OptionParser("usage: %prog [options] {filename} [clang-args*]")
@@ -31,17 +29,15 @@ def main():
     # FIXME: Add an output file option
     out = sys.stdout
 
-    input_path = args.pop(0)
-
-
     index = Index.create()
-    tu = index.parse(input_path, args)
+    tu = index.parse(None, args)
     if not tu:
         parser.error("unable to load input")
 
     # A helper function for generating the node name.
     def name(f):
-        return "\"" + f.name + "\""
+        if f:
+            return "\"" + f.name + "\""
 
     # Generate the include graph
     out.write("digraph G {\n")
@@ -52,7 +48,7 @@ def main():
             # actually include anything. This would generate a 1 node graph.
             line += name(i.include)
         else:
-            line += name(i.source) + "->" + name(i.include)
+            line += '%s->%s' % (name(i.source), name(i.include))
         line += "\n";
         out.write(line)
     out.write("}\n")

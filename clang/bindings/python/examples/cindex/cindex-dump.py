@@ -74,10 +74,8 @@ def main():
     if len(args) == 0:
         parser.error('invalid number arguments')
 
-    input_path = args.pop(0)
-
     index = Index.create()
-    tu = index.parse(input_path, args)
+    tu = index.parse(None, args)
     if not tu:
         parser.error("unable to load input")
 
