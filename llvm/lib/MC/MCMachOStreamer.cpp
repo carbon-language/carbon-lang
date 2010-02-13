@@ -382,12 +382,23 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   CurSectionData->setHasInstructions(true);
 
-  // FIXME: Relocations!
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
   Emitter->EncodeInstruction(Inst, VecOS, Fixups);
-  EmitBytes(VecOS.str(), 0);
+  VecOS.flush();
+
+  // Add the fixups and data.
+  MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
+  if (!DF)
+    DF = new MCDataFragment(CurSectionData);
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    MCFixup &F = Fixups[i];
+    DF->getFixups().push_back(MCAsmFixup(DF->getContents().size()+F.getOffset(),
+                                         *F.getValue(),
+                                         F.getKind()));
+  }
+  DF->getContents().append(Code.begin(), Code.end());
 }
 
 void MCMachOStreamer::Finish() {

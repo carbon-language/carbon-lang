@@ -23,6 +23,10 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+
+// FIXME: Gross.
+#include "../Target/X86/X86FixupKinds.h"
+
 #include <vector>
 using namespace llvm;
 
@@ -50,8 +54,11 @@ static bool isVirtualSection(const MCSection &Section) {
 static unsigned getFixupKindLog2Size(MCFixupKind Kind) {
   switch (Kind) {
   default: llvm_unreachable("invalid fixup kind!");
+  case X86::reloc_pcrel_1byte:
   case FK_Data_1: return 0;
   case FK_Data_2: return 1;
+  case X86::reloc_pcrel_4byte:
+  case X86::reloc_riprel_4byte:
   case FK_Data_4: return 2;
   case FK_Data_8: return 3;
   }
