@@ -476,8 +476,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
-  unsigned MaxAlign = 1;
-
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
   // of stack growth -- so it's always nonnegative.
@@ -517,9 +515,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       Offset += FFI->getObjectSize(i);
 
       unsigned Align = FFI->getObjectAlignment(i);
-      // If the alignment of this object is greater than that of the stack,
-      // then increase the stack alignment to match.
-      MaxAlign = std::max(MaxAlign, Align);
       // Adjust to alignment boundary
       Offset = (Offset+Align-1)/Align*Align;
 
@@ -529,9 +524,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     int MaxCSFI = MaxCSFrameIndex, MinCSFI = MinCSFrameIndex;
     for (int i = MaxCSFI; i >= MinCSFI ; --i) {
       unsigned Align = FFI->getObjectAlignment(i);
-      // If the alignment of this object is greater than that of the stack,
-      // then increase the stack alignment to match.
-      MaxAlign = std::max(MaxAlign, Align);
       // Adjust to alignment boundary
       Offset = (Offset+Align-1)/Align*Align;
 
@@ -539,6 +531,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       Offset += FFI->getObjectSize(i);
     }
   }
+
+  unsigned MaxAlign = FFI->getMaxAlignment();
 
   // Make sure the special register scavenging spill slot is closest to the
   // frame pointer if a frame pointer is required.
@@ -605,11 +599,6 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Update frame info to pretend that this is part of the stack...
   FFI->setStackSize(Offset - LocalAreaOffset);
-
-  // Remember the required stack alignment in case targets need it to perform
-  // dynamic stack alignment.
-  if (MaxAlign > FFI->getMaxAlignment())
-    FFI->setMaxAlignment(MaxAlign);
 }
 
 

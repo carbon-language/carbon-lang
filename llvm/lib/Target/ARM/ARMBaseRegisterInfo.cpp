@@ -583,14 +583,6 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   SmallVector<unsigned, 4> UnspilledCS2GPRs;
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
-
-  // Calculate and set max stack object alignment early, so we can decide
-  // whether we will need stack realignment (and thus FP).
-  if (RealignStack) {
-    MachineFrameInfo *MFI = MF.getFrameInfo();
-    MFI->calculateMaxStackAlignment();
-  }
-
   // Spill R4 if Thumb2 function requires stack realignment - it will be used as
   // scratch register.
   // FIXME: It will be better just to find spare register here.

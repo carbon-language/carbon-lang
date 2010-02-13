@@ -276,6 +276,7 @@ public:
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     Objects[ObjectIdx+NumFixedObjects].Alignment = Align;
+    MaxAlignment = std::max(MaxAlignment, Align);
   }
 
   /// getObjectOffset - Return the assigned stack offset of the specified object
@@ -327,19 +328,6 @@ public:
   /// setMaxAlignment - Set the preferred alignment.
   ///
   void setMaxAlignment(unsigned Align) { MaxAlignment = Align; }
-
-  /// calculateMaxStackAlignment() - If there is a local object which requires
-  /// greater alignment than the current max alignment, adjust accordingly.
-  void calculateMaxStackAlignment() {
-    for (int i = getObjectIndexBegin(),
-         e = getObjectIndexEnd(); i != e; ++i) {
-      if (isDeadObjectIndex(i))
-        continue;
-
-      unsigned Align = getObjectAlignment(i);
-      MaxAlignment = std::max(MaxAlignment, Align);
-    }
-  }
 
   /// hasCalls - Return true if the current function has no function calls.
   /// This is only valid during or after prolog/epilog code emission.
@@ -402,6 +390,7 @@ public:
     Objects.push_back(StackObject(Size, Alignment, 0, false, isSS));
     int Index = (int)Objects.size()-NumFixedObjects-1;
     assert(Index >= 0 && "Bad frame index!");
+    MaxAlignment = std::max(MaxAlignment, Alignment);
     return Index;
   }
 
@@ -412,6 +401,7 @@ public:
   int CreateSpillStackObject(uint64_t Size, unsigned Alignment) {
     CreateStackObject(Size, Alignment, true);
     int Index = (int)Objects.size()-NumFixedObjects-1;
+    MaxAlignment = std::max(MaxAlignment, Alignment);
     return Index;
   }
 

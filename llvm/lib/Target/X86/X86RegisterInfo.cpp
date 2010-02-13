@@ -485,7 +485,7 @@ X86RegisterInfo::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
       Offset += SlotSize;
     } else {
       unsigned Align = MFI->getObjectAlignment(FI);
-      assert( (-(Offset + StackSize)) % Align == 0);
+      assert((-(Offset + StackSize)) % Align == 0);
       Align = 0;
       return Offset + StackSize;
     }
@@ -626,10 +626,6 @@ void
 X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                       RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
-
-  // Calculate and set max stack object alignment early, so we can decide
-  // whether we will need stack realignment (and thus FP).
-  MFI->calculateMaxStackAlignment();
 
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
