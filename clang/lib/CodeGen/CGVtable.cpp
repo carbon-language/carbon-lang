@@ -23,98 +23,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-/// TypeConversionRequiresAdjustment - Returns whether conversion from a 
-/// derived type to a base type requires adjustment.
-static bool
-TypeConversionRequiresAdjustment(ASTContext &Ctx,
-                                 const CXXRecordDecl *DerivedDecl,
-                                 const CXXRecordDecl *BaseDecl) {
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
-  if (!const_cast<CXXRecordDecl *>(DerivedDecl)->
-      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseDecl), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return false;
-  }
-  
-  // If we found a virtual base we always want to require adjustment.
-  if (Paths.getDetectedVirtual())
-    return true;
-  
-  const CXXBasePath &Path = Paths.front();
-  
-  for (size_t Start = 0, End = Path.size(); Start != End; ++Start) {
-    const CXXBasePathElement &Element = Path[Start];
-    
-    // Check the base class offset.
-    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Element.Class);
-    
-    const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
-    const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
-    
-    if (Layout.getBaseClassOffset(Base) != 0) {
-      // This requires an adjustment.
-      return true;
-    }
-  }
-  
-  return false;
-}
-
-static bool 
-TypeConversionRequiresAdjustment(ASTContext &Ctx,
-                                 QualType DerivedType, QualType BaseType) {
-  // Canonicalize the types.
-  CanQualType CanDerivedType = Ctx.getCanonicalType(DerivedType);
-  CanQualType CanBaseType = Ctx.getCanonicalType(BaseType);
-  
-  assert(CanDerivedType->getTypeClass() == CanBaseType->getTypeClass() && 
-         "Types must have same type class!");
-  
-  if (CanDerivedType == CanBaseType) {
-    // No adjustment needed.
-    return false;
-  }
-  
-  if (isa<ReferenceType>(CanDerivedType)) {
-    CanDerivedType = CanDerivedType->getAs<ReferenceType>()->getPointeeType();
-    CanBaseType = CanBaseType->getAs<ReferenceType>()->getPointeeType();
-  } else if (isa<PointerType>(CanDerivedType)) {
-    CanDerivedType = CanDerivedType->getAs<PointerType>()->getPointeeType();
-    CanBaseType = CanBaseType->getAs<PointerType>()->getPointeeType();
-  } else {
-    assert(false && "Unexpected return type!");
-  }
-  
-  // We need to compare unqualified types here; consider
-  //   const T *Base::foo();
-  //   T *Derived::foo();
-  if (CanDerivedType.getUnqualifiedType() == CanBaseType.getUnqualifiedType()) {
-    // No adjustment needed.
-    return false;
-  }
-  
-  const CXXRecordDecl *DerivedDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanDerivedType)->getDecl());
-  
-  const CXXRecordDecl *BaseDecl = 
-    cast<CXXRecordDecl>(cast<RecordType>(CanBaseType)->getDecl());
-  
-  return TypeConversionRequiresAdjustment(Ctx, DerivedDecl, BaseDecl);
-}
-
-static bool
-ReturnTypeConversionRequiresAdjustment(const CXXMethodDecl *DerivedMD,
-                                       const CXXMethodDecl *BaseMD) {
-  ASTContext &Context = DerivedMD->getASTContext();
-
-  const FunctionType *BaseFT = BaseMD->getType()->getAs<FunctionType>();
-  const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
-
-  return TypeConversionRequiresAdjustment(Context, DerivedFT->getResultType(), 
-                                          BaseFT->getResultType());
-}
-
 namespace {
 
 /// FinalOverriders - Contains the final overrider member functions for all
@@ -878,7 +786,7 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
     // then we can just use the member function from the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
         OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
-      if (!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD))
+      if (ComputeReturnTypeBaseOffset(Context, MD, OverriddenMD).isEmpty())
         continue;
     }
 
@@ -2000,8 +1908,7 @@ bool OldVtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       OMD->getType()->getAs<FunctionType>()->getResultType();
     
     // Check if we need a return type adjustment.
-    if (TypeConversionRequiresAdjustment(CGM.getContext(), ReturnType, 
-                                          OverriddenReturnType)) {
+    if (!ComputeReturnTypeBaseOffset(CGM.getContext(), MD, OMD).isEmpty()) {
       CanQualType &BaseReturnType = BaseReturnTypes[Index];
 
       // Insert the base return type.
@@ -2201,7 +2108,8 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
       // Check if converting from the return type of the method to the 
       // return type of the overridden method requires conversion.
-      if (!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD)) {
+      if (ComputeReturnTypeBaseOffset(CGM.getContext(), MD, 
+                                      OverriddenMD).isEmpty()) {
         // This index is shared between the index in the vtable of the primary
         // base class.
         if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
