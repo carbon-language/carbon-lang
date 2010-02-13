@@ -836,3 +836,34 @@ int PR4172B_f1(void) {
     return x; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
+// Test invalidation of values in struct literals.
+//===----------------------------------------------------------------------===//
+
+struct s_rev96062 { int *x; int *y; };
+struct s_rev96062_nested { struct s_rev96062 z; };
+
+void test_a_rev96062_aux(struct s_rev96062 *s);
+void test_a_rev96062_aux2(struct s_rev96062_nested *s);
+
+int test_a_rev96062() {
+  int a, b;
+  struct s_rev96062 x = { &a, &b };
+  test_a_rev96062_aux(&x);
+  return a + b; // no-warning
+}
+int test_b_rev96062() {
+  int a, b;
+  struct s_rev96062 x = { &a, &b };
+  struct s_rev96062 z = x;
+  test_a_rev96062_aux(&z);
+  return a + b; // no-warning
+}
+int test_c_rev96062() {
+  int a, b;
+  struct s_rev96062 x = { &a, &b };
+  struct s_rev96062_nested w = { x };
+  struct s_rev96062_nested z = w;
+  test_a_rev96062_aux2(&z);
+  return a + b; // no-warning
+}

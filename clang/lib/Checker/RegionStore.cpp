@@ -475,17 +475,19 @@ class InvalidateRegionsWorker {
   ClusterMap ClusterM;
   WorkList WL;
   
+  RegionStoreManager &RM;
   StoreManager::InvalidatedSymbols *IS;
   ASTContext &Ctx;
   ValueManager &ValMgr;
   
 public:
-  InvalidateRegionsWorker(StoreManager::InvalidatedSymbols *is,
+  InvalidateRegionsWorker(RegionStoreManager &rm,
+                          StoreManager::InvalidatedSymbols *is,
                           ASTContext &ctx, ValueManager &valMgr)
-    : IS(is), Ctx(ctx), ValMgr(valMgr) {}
+    : RM(rm), IS(is), Ctx(ctx), ValMgr(valMgr) {}
   
-  Store InvalidateRegions(RegionStoreManager &RM, Store store,
-                          const MemRegion * const *I,const MemRegion * const *E,
+  Store InvalidateRegions(Store store, const MemRegion * const *I,
+                          const MemRegion * const *E,
                           const Expr *Ex, unsigned Count);
   
 private:
@@ -529,17 +531,34 @@ InvalidateRegionsWorker::getCluster(const MemRegion *R) {
 }
 
 void InvalidateRegionsWorker::VisitBinding(SVal V) {
-  if (const MemRegion *R = V.getAsRegion())
-    AddToWorkList(R);
-  
   // A symbol?  Mark it touched by the invalidation.
   if (IS)
     if (SymbolRef Sym = V.getAsSymbol())
       IS->insert(Sym);
-}
   
-Store InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
-                                                 Store store,
+  if (const MemRegion *R = V.getAsRegion()) {
+    AddToWorkList(R);
+    return;
+  }
+
+  // Is it a LazyCompoundVal?  All references get invalidated as well.
+  if (const nonloc::LazyCompoundVal *LCS =
+        dyn_cast<nonloc::LazyCompoundVal>(&V)) {
+
+    const MemRegion *LazyR = LCS->getRegion();
+    RegionBindings B = RegionStoreManager::GetRegionBindings(LCS->getStore());
+
+    for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI){
+      const MemRegion *baseR = RI.getKey().getRegion();
+      if (cast<SubRegion>(baseR)->isSubRegionOf(LazyR))
+        VisitBinding(RI.getData());
+    }
+
+    return;
+  }
+}
+
+Store InvalidateRegionsWorker::InvalidateRegions(Store store,
                                                  const MemRegion * const *I,
                                                  const MemRegion * const *E,
                                                  const Expr *Ex, unsigned Count)
@@ -652,8 +671,9 @@ Store RegionStoreManager::InvalidateRegions(Store store,
                                             const MemRegion * const *E,
                                             const Expr *Ex, unsigned Count,
                                             InvalidatedSymbols *IS) {
-  InvalidateRegionsWorker W(IS, getContext(), StateMgr.getValueManager());
-  return W.InvalidateRegions(*this, store, I, E, Ex, Count);
+  InvalidateRegionsWorker W(*this, IS, getContext(),
+                            StateMgr.getValueManager());
+  return W.InvalidateRegions(store, I, E, Ex, Count);
 }
   
 //===----------------------------------------------------------------------===//
