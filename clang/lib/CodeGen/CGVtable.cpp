@@ -124,6 +124,9 @@ public:
   /// BaseOffset - Represents an offset from a derived class to a direct or
   /// indirect base class.
   struct BaseOffset {
+    /// DerivedClass - The derived class.
+    const CXXRecordDecl *DerivedClass;
+    
     /// VirtualBase - If the path from the derived class to the base class
     /// involves a virtual base class, this holds its declaration.
     const CXXRecordDecl *VirtualBase;
@@ -133,9 +136,11 @@ public:
     /// from the derived class to the base class involves a virtual base class.
     uint64_t NonVirtualOffset;
     
-    BaseOffset() : VirtualBase(0), NonVirtualOffset(0) { }
-    BaseOffset(const CXXRecordDecl *VirtualBase, uint64_t NonVirtualOffset)
-      : VirtualBase(VirtualBase), NonVirtualOffset(NonVirtualOffset) { }
+    BaseOffset() : DerivedClass(0), VirtualBase(0), NonVirtualOffset(0) { }
+    BaseOffset(const CXXRecordDecl *DerivedClass,
+               const CXXRecordDecl *VirtualBase, uint64_t NonVirtualOffset)
+      : DerivedClass(DerivedClass), VirtualBase(VirtualBase), 
+      NonVirtualOffset(NonVirtualOffset) { }
 
     bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; }
   };
@@ -333,7 +338,8 @@ ComputeBaseOffset(ASTContext &Context,
   // FIXME: This should probably use CharUnits or something. Maybe we should
   // even change the base offsets in ASTRecordLayout to be specified in 
   // CharUnits.
-  return FinalOverriders::BaseOffset(VirtualBase, NonVirtualOffset / 8);
+  return FinalOverriders::BaseOffset(DerivedRD, VirtualBase, 
+                                     NonVirtualOffset / 8);
 }
 
 static FinalOverriders::BaseOffset
@@ -663,6 +669,9 @@ public:
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 8> PrimaryBasesSetTy;
 
 private:
+  /// VtableInfo - Global vtable information.
+  CGVtableInfo &VtableInfo;
+  
   /// MostDerivedClass - The most derived class for which we're building this
   /// vtable.
   const CXXRecordDecl *MostDerivedClass;
@@ -685,20 +694,20 @@ private:
     /// nearest virtual base.
     int64_t NonVirtual;
     
-    /// VBaseOffsetIndex - The index relative to the address point of the
-    /// virtual base class offset.
-    int64_t VBaseOffsetIndex;
+    /// VBaseOffsetOffset - The offset, in bytes, relative to the address point 
+    /// of the virtual base class offset.
+    int64_t VBaseOffsetOffset;
     
-    ReturnAdjustment() : NonVirtual(0), VBaseOffsetIndex(0) { }
+    ReturnAdjustment() : NonVirtual(0), VBaseOffsetOffset(0) { }
     
-    bool isEmpty() const { return !NonVirtual && !VBaseOffsetIndex; }
+    bool isEmpty() const { return !NonVirtual && !VBaseOffsetOffset; }
   };
   
   /// ReturnAdjustments - The return adjustments needed in this vtable.
   llvm::SmallVector<std::pair<uint64_t, ReturnAdjustment>, 16> 
     ReturnAdjustments;
 
-  /// ComputeReturnAdjustment - Compute the return adjustment given return
+  /// ComputeReturnAdjustment - Compute the return adjustment given a return
   /// adjustment base offset.
   ReturnAdjustment ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset);
   
@@ -715,8 +724,8 @@ private:
   void layoutSimpleVtable(BaseSubobject Base);
   
 public:
-  VtableBuilder(const CXXRecordDecl *MostDerivedClass)
-    : MostDerivedClass(MostDerivedClass), 
+  VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass)
+    : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
 
     layoutSimpleVtable(BaseSubobject(MostDerivedClass, 0));
@@ -751,7 +760,16 @@ VtableBuilder::ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset) {
   ReturnAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
-    assert(!Offset.VirtualBase && "FIXME: Handle virtual bases!");
+    if (Offset.VirtualBase) {
+      // Get the virtual base offset offset.
+      Adjustment.VBaseOffsetOffset = 
+        VtableInfo.getVirtualBaseOffsetIndex(Offset.DerivedClass,
+                                             Offset.VirtualBase);
+      // FIXME: Once the assert in getVirtualBaseOffsetIndex is back again,
+      // we can get rid of this assert.
+      assert(Adjustment.VBaseOffsetOffset != 0 && 
+             "Invalid base offset offset!");
+    }
 
     Adjustment.NonVirtual = Offset.NonVirtualOffset;
   }
@@ -967,10 +985,12 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         const ReturnAdjustment Adjustment = 
           ReturnAdjustments[NextReturnAdjustmentIndex].second;
         
-        assert(!Adjustment.VBaseOffsetIndex && "FIXME: Handle virtual bases!");
-        
         Out << "\n       [return adjustment: ";
-        Out << Adjustment.NonVirtual << " non-virtual]";
+        Out << Adjustment.NonVirtual << " non-virtual";
+        
+        if (Adjustment.VBaseOffsetOffset)
+          Out << ", " << Adjustment.VBaseOffsetOffset << " vbase offset offset";
+        Out << ']';
 
         NextReturnAdjustmentIndex++;
       }
@@ -2291,7 +2311,7 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              const CXXRecordDecl *RD, uint64_t Offset,
                              AddressPointsMapTy& AddressPoints) {
   if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts) {
-    VtableBuilder Builder(RD);
+    VtableBuilder Builder(*this, RD);
     
     Builder.dumpLayout(llvm::errs());
   }

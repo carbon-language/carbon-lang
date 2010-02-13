@@ -120,7 +120,7 @@ void D::f() { }
 
 namespace Test4 {
 
-// Test simple non-virtual result adjustments.
+// Test non-virtual result adjustments.
 
 struct R1 { int r1; };
 struct R2 { int r2; };
@@ -142,9 +142,46 @@ struct A {
 struct B : A {
   virtual R3 *f();
 };
-
 R3 *B::f() { return 0; }
-  
+
+// Test virtual result adjustments.
+struct V1 { int v1; };
+struct V2 : virtual V1 { int v1; };
+
+struct C {
+  virtual V1 *f(); 
+};
+
+// CHECK:     Vtable for 'Test4::D' (4 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test4::D RTTI
+// CHECK-NEXT:       -- (Test4::C, 0) vtable address --
+// CHECK-NEXT:       -- (Test4::D, 0) vtable address --
+// CHECK-NEXT:   2 | Test4::V2 *Test4::D::f()
+// CHECK-NEXT:       [return adjustment: 0 non-virtual, -24 vbase offset offset]
+// CHECK-NEXT:   3 | Test4::V2 *Test4::D::f()
+struct D : C {
+  virtual V2 *f();
+};
+V2 *D::f() { return 0; };
+
+// Virtual result adjustments with an additional non-virtual adjustment.
+struct V3 : virtual R3 { int r3; };
+
+// CHECK:     Vtable for 'Test4::E' (4 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test4::E RTTI
+// CHECK-NEXT:       -- (Test4::A, 0) vtable address --
+// CHECK-NEXT:       -- (Test4::E, 0) vtable address --
+// CHECK-NEXT:   2 | Test4::V3 *Test4::E::f()
+// CHECK-NEXT:       [return adjustment: 4 non-virtual, -24 vbase offset offset]
+// CHECK-NEXT:   3 | Test4::V3 *Test4::E::f()
+
+struct E : A {
+  virtual V3 *f();
+};
+V3 *E::f() { return 0;}
+
 }
 
 // For now, just verify this doesn't crash.
