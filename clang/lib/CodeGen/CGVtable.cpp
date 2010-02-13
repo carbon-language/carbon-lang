@@ -16,7 +16,6 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Format.h"
 #include <cstdio>
 
@@ -137,7 +136,7 @@ public:
     BaseOffset(const CXXRecordDecl *VirtualBase, uint64_t NonVirtualOffset)
       : VirtualBase(VirtualBase), NonVirtualOffset(NonVirtualOffset) { }
 
-    bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; };
+    bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; }
   };
   
   /// OverriderInfo - Information about a final overrider.
@@ -836,9 +835,6 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     uint64_t Index = I;
     
     if (AddressPointsByIndex.count(I)) {
-      std::string Str;
-
-      
       if (AddressPointsByIndex.count(Index) == 1) {
         const BaseSubobject &Base = AddressPointsByIndex.find(Index)->second;
         
