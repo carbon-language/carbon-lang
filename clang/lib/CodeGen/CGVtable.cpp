@@ -225,14 +225,19 @@ public:
   
   /// getOverrider - Get the final overrider for the given method declaration in
   /// the given base subobject.
-  const OverriderInfo getOverrider(BaseSubobject Base,
-                                   const CXXMethodDecl *MD) const {
+  OverriderInfo getOverrider(BaseSubobject Base,
+                             const CXXMethodDecl *MD) const {
     assert(OverridersMap.count(std::make_pair(Base, MD)) && 
            "Did not find overrider!");
     
     return OverridersMap.lookup(std::make_pair(Base, MD));
   }
   
+  BaseOffset getReturnAdjustmentOffset(BaseSubobject Base,
+                                       const CXXMethodDecl *MD) const {
+    return ReturnAdjustments.lookup(std::make_pair(Base, MD));
+  }
+
   /// dump - dump the final overriders.
   void dump() const { 
       dump(llvm::errs(), BaseSubobject(MostDerivedClass, 0)); 
@@ -469,7 +474,6 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
 }
 
 void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
-  
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
@@ -531,9 +535,6 @@ public:
     /// CK_DeletingDtorPointer - A pointer to the deleting destructor.
     CK_DeletingDtorPointer
   };
-
-  /// dump - Dump the contents of this component to the given stream.
-  void dump(llvm::raw_ostream &Out);
 
   static VtableComponent MakeOffsetToTop(int64_t Offset) {
     return VtableComponent(CK_OffsetToTop, Offset);
@@ -670,10 +671,27 @@ private:
     /// VBaseOffsetIndex - The index relative to the address point of the
     /// virtual base class offset.
     int64_t VBaseOffsetIndex;
-  };
     
-  void layoutVirtualMemberFunctions(BaseSubobject Base,
-                                    PrimaryBasesSetTy &PrimaryBases);
+    ReturnAdjustment() : NonVirtual(0), VBaseOffsetIndex(0) { }
+    
+    bool isEmpty() const { return !NonVirtual && !VBaseOffsetIndex; }
+  };
+  
+  /// ReturnAdjustments - The return adjustments needed in this vtable.
+  llvm::SmallVector<std::pair<uint64_t, ReturnAdjustment>, 16> 
+    ReturnAdjustments;
+
+  /// ComputeReturnAdjustment - Compute the return adjustment given return
+  /// adjustment base offset.
+  ReturnAdjustment ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset);
+  
+  /// AddMethod - Add a single virtual member function to the vtable
+  /// components vector.
+  void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment);
+
+  /// AddMethods - Add the methods of this base subobject and all its
+  /// primary bases to the vtable components vector.
+  void AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases);
   
   /// layoutSimpleVtable - A test function that will layout very simple vtables
   /// without any bases. Just used for testing for now.
@@ -711,9 +729,41 @@ OverridesMethodInPrimaryBase(const CXXMethodDecl *MD,
   return 0;
 }
 
+VtableBuilder::ReturnAdjustment 
+VtableBuilder::ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset) {
+  ReturnAdjustment Adjustment;
+  
+  if (!Offset.isEmpty()) {
+    assert(!Offset.VirtualBase && "FIXME: Handle virtual bases!");
+
+    Adjustment.NonVirtual = Offset.NonVirtualOffset;
+  }
+  
+  return Adjustment;
+}
+
 void 
-VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
-                                            PrimaryBasesSetTy &PrimaryBases) {
+VtableBuilder::AddMethod(const CXXMethodDecl *MD,
+                         ReturnAdjustment ReturnAdjustment) {
+  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+    assert(ReturnAdjustment.isEmpty() && 
+           "Destructor can't have return adjustment!");
+    // Add both the complete destructor and the deleting destructor.
+    Components.push_back(VtableComponent::MakeCompleteDtor(DD));
+    Components.push_back(VtableComponent::MakeDeletingDtor(DD));
+  } else {
+    // Add the return adjustment if necessary.
+    if (!ReturnAdjustment.isEmpty())
+      ReturnAdjustments.push_back(std::make_pair(Components.size(),
+                                                 ReturnAdjustment));
+
+    // Add the function.
+    Components.push_back(VtableComponent::MakeFunction(MD));
+  }
+}
+
+void 
+VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
   const CXXRecordDecl *RD = Base.getBase();
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -725,7 +775,7 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
       assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
     
-    layoutVirtualMemberFunctions(BaseSubobject(PrimaryBase, 0), PrimaryBases);
+    AddMethods(BaseSubobject(PrimaryBase, 0), PrimaryBases);
     
     if (!PrimaryBases.insert(PrimaryBase))
       assert(false && "Found a duplicate primary base!");
@@ -746,22 +796,20 @@ VtableBuilder::layoutVirtualMemberFunctions(BaseSubobject Base,
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
-    if (const CXXMethodDecl *OverriddenMD ATTRIBUTE_UNUSED = 
-          OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
-      assert(!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD)
-             && "FIXME: Handle covariant thunks!");
+    if (const CXXMethodDecl *OverriddenMD = 
+        OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
+      if (!ReturnTypeConversionRequiresAdjustment(MD, OverriddenMD))
+        continue;
+    }
 
-      continue;
-    }
+    // Check if this overrider needs a return adjustment.
+    FinalOverriders::BaseOffset ReturnAdjustmentOffset = 
+      Overriders.getReturnAdjustmentOffset(Base, MD);
+
+    ReturnAdjustment ReturnAdjustment = 
+      ComputeReturnAdjustment(ReturnAdjustmentOffset);
     
-    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-      // Add both the complete destructor and the deleting destructor.
-      Components.push_back(VtableComponent::MakeCompleteDtor(DD));
-      Components.push_back(VtableComponent::MakeDeletingDtor(DD));
-    } else {
-      // Add the function.
-      Components.push_back(VtableComponent::MakeFunction(MD));
-    }
+    AddMethod(Overrider.Method, ReturnAdjustment);
   }
 }
 
@@ -778,7 +826,7 @@ void VtableBuilder::layoutSimpleVtable(BaseSubobject Base) {
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetTy PrimaryBases;
-  layoutVirtualMemberFunctions(Base, PrimaryBases);
+  AddMethods(Base, PrimaryBases);
 
   // Record the address point.
   AddressPoints.insert(std::make_pair(Base, AddressPoint));
@@ -832,6 +880,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     AddressPointsByIndex.insert(std::make_pair(Index, Base));
   }
   
+  unsigned NextReturnAdjustmentIndex = 0;
   for (unsigned I = 0, E = Components.size(); I != E; ++I) {
     uint64_t Index = I;
     
@@ -894,6 +943,20 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       Out << Str;
       if (MD->isPure())
         Out << " [pure]";
+
+      // If this function pointer has a return adjustment thunk, dump it.
+      if (NextReturnAdjustmentIndex < ReturnAdjustments.size() && 
+          ReturnAdjustments[NextReturnAdjustmentIndex].first == I) {
+        const ReturnAdjustment Adjustment = 
+          ReturnAdjustments[NextReturnAdjustmentIndex].second;
+        
+        assert(!Adjustment.VBaseOffsetIndex && "FIXME: Handle virtual bases!");
+        
+        Out << "\n       [return adjustment: ";
+        Out << Adjustment.NonVirtual << " non-virtual]";
+
+        NextReturnAdjustmentIndex++;
+      }
 
       break;
     }
@@ -2186,6 +2249,12 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
   }
   
   I = VirtualBaseClassIndicies.find(ClassPair);
+  // FIXME: The assertion below assertion currently fails with the old vtable 
+  /// layout code if there is a non-virtual thunk adjustment in a vtable.
+  // Once the new layout is in place, this return should be removed.
+  if (I == VirtualBaseClassIndicies.end())
+    return 0;
+  
   assert(I != VirtualBaseClassIndicies.end() && "Did not find index!");
   
   return I->second;
