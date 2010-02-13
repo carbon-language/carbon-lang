@@ -312,6 +312,21 @@ bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   return true;
 }
 
+bool
+SCEVAddRecExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
+  return DT->dominates(L->getHeader(), BB) &&
+         SCEVNAryExpr::dominates(BB, DT);
+}
+
+bool
+SCEVAddRecExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
+  // This uses a "dominates" query instead of "properly dominates" query because
+  // the instruction which produces the addrec's value is a PHI, and a PHI
+  // effectively properly dominates its entire containing block.
+  return DT->dominates(L->getHeader(), BB) &&
+         SCEVNAryExpr::properlyDominates(BB, DT);
+}
+
 void SCEVAddRecExpr::print(raw_ostream &OS) const {
   OS << "{" << *Operands[0];
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)

@@ -417,6 +417,10 @@ namespace llvm {
 
     virtual bool isLoopInvariant(const Loop *QueryLoop) const;
 
+    bool dominates(BasicBlock *BB, DominatorTree *DT) const;
+
+    bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const;
+
     /// isAffine - Return true if this is an affine AddRec (i.e., it represents
     /// an expressions A+B*x where A and B are loop invariant values.
     bool isAffine() const {
