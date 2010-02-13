@@ -1129,7 +1129,7 @@ private:
       A_t::iterator J = I;
       while (++J != E  && DclCmp(*I, *J) == 0)
         if (DclIsSame(*I, *J)) {
-          printf("connecting %s\n", (*I)->getNameAsCString());
+          if (0) printf("connecting %s\n", (*I)->getNameAsCString());
           ForwardUnique[*J] = *I;
         }
     }
