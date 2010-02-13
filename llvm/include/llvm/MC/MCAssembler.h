@@ -130,17 +130,14 @@ public:
     return 0;
   }
 
-  std::vector<MCAsmFixup> &getFixups() {
-    return Fixups;
-  }
+  std::vector<MCAsmFixup> &getFixups() { return Fixups; }
+  const std::vector<MCAsmFixup> &getFixups() const { return Fixups; }
 
-  fixup_iterator fixup_begin() {
-    return Fixups.begin();
-  }
+  fixup_iterator fixup_begin() { return Fixups.begin(); }
+  const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
 
-  fixup_iterator fixup_end() {
-    return Fixups.end();
-  }
+  fixup_iterator fixup_end() {return Fixups.end();}
+  const_fixup_iterator fixup_end() const {return Fixups.end();}
 
   size_t fixup_size() const { return Fixups.size(); }
 

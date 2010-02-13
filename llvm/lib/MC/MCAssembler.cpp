@@ -481,6 +481,8 @@ public:
 
     if (Target.isAbsolute()) { // constant
       // SymbolNum of 0 indicates the absolute section.
+      //
+      // FIXME: When is this generated?
       Type = RIT_Vanilla;
       Value = 0;
       llvm_unreachable("FIXME: Not yet implemented!");
@@ -875,6 +877,12 @@ public:
       OS << StringTable.str();
     }
   }
+
+  void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF) {
+    // FIXME: Endianness assumption.
+    for (unsigned i = 0; i != Fixup.Size; ++i)
+      DF.getContents()[Fixup.Offset + i] = uint8_t(Fixup.FixedValue >> (i * 8));
+  }
 };
 
 /* *** */
@@ -1070,9 +1078,19 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     break;
   }
 
-  case MCFragment::FT_Data:
+  case MCFragment::FT_Data: {
+    MCDataFragment &DF = cast<MCDataFragment>(F);
+
+    // Apply the fixups.
+    //
+    // FIXME: Move elsewhere.
+    for (MCDataFragment::const_fixup_iterator it = DF.fixup_begin(),
+           ie = DF.fixup_end(); it != ie; ++it)
+      MOW.ApplyFixup(*it, DF);
+
     OS << cast<MCDataFragment>(F).getContents().str();
     break;
+  }
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
