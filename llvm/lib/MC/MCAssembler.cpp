@@ -969,32 +969,9 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
     }
 
     case MCFragment::FT_Data:
+    case MCFragment::FT_Fill:
       F.setFileSize(F.getMaxFileSize());
       break;
-
-    case MCFragment::FT_Fill: {
-      MCFillFragment &FF = cast<MCFillFragment>(F);
-
-      F.setFileSize(F.getMaxFileSize());
-
-      MCValue Target;
-      if (!FF.getValue().EvaluateAsRelocatable(Target))
-        llvm_report_error("expected relocatable expression");
-
-      // If the fill value is constant, thats it.
-      if (Target.isAbsolute())
-        break;
-
-      // Otherwise, add fixups for the values.
-      //
-      // FIXME: What we want to do here is lower this to a data fragment once we
-      // realize it will need relocations. This means that the only place we
-      // need to worry about relocations and fixing is on data fragments.
-      for (uint64_t i = 0, e = FF.getCount(); i != e; ++i)
-        FF.getFixups().push_back(MCAsmFixup(i*FF.getValueSize(), FF.getValue(),
-                                            FF.getValueSize()));
-      break;
-    }
 
     case MCFragment::FT_Org: {
       MCOrgFragment &OF = cast<MCOrgFragment>(F);
@@ -1094,33 +1071,14 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
-
-    int64_t Value = 0;
-
-    MCValue Target;
-    if (!FF.getValue().EvaluateAsRelocatable(Target))
-      llvm_report_error("expected relocatable expression");
-
-    if (Target.isAbsolute())
-      Value = Target.getConstant();
     for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
-      if (!Target.isAbsolute()) {
-        // Find the fixup.
-        //
-        // FIXME: Find a better way to write in the fixes (move to
-        // MCDataFragment).
-        const MCAsmFixup *Fixup = FF.LookupFixup(i * FF.getValueSize());
-        assert(Fixup && "Missing fixup for fill value!");
-        Value = Fixup->FixedValue;
-      }
-
       switch (FF.getValueSize()) {
       default:
         assert(0 && "Invalid size!");
-      case 1: MOW.Write8 (uint8_t (Value)); break;
-      case 2: MOW.Write16(uint16_t(Value)); break;
-      case 4: MOW.Write32(uint32_t(Value)); break;
-      case 8: MOW.Write64(uint64_t(Value)); break;
+      case 1: MOW.Write8 (uint8_t (FF.getValue())); break;
+      case 2: MOW.Write16(uint16_t(FF.getValue())); break;
+      case 4: MOW.Write32(uint32_t(FF.getValue())); break;
+      case 8: MOW.Write64(uint64_t(FF.getValue())); break;
       }
     }
     break;

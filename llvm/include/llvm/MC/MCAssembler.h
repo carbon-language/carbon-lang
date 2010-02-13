@@ -244,7 +244,7 @@ public:
 
 class MCFillFragment : public MCFragment {
   /// Value - Value to use for filling bytes.
-  const MCExpr *Value;
+  int64_t Value;
 
   /// ValueSize - The size (in bytes) of \arg Value to use when filling.
   unsigned ValueSize;
@@ -253,10 +253,10 @@ class MCFillFragment : public MCFragment {
   uint64_t Count;
 
 public:
-  MCFillFragment(const MCExpr &_Value, unsigned _ValueSize, uint64_t _Count,
+  MCFillFragment(int64_t _Value, unsigned _ValueSize, uint64_t _Count,
                  MCSectionData *SD = 0)
     : MCFragment(FT_Fill, SD),
-      Value(&_Value), ValueSize(_ValueSize), Count(_Count) {}
+      Value(_Value), ValueSize(_ValueSize), Count(_Count) {}
 
   /// @name Accessors
   /// @{
@@ -265,7 +265,7 @@ public:
     return ValueSize * Count;
   }
 
-  const MCExpr &getValue() const { return *Value; }
+  int64_t getValue() const { return Value; }
 
   unsigned getValueSize() const { return ValueSize; }
 
