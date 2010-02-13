@@ -14,22 +14,12 @@
 #define DEBUG_TYPE "x86-emitter"
 #include "X86.h"
 #include "X86InstrInfo.h"
+#include "X86FixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
-
-// FIXME: This should move to a header.
-namespace llvm {
-namespace X86 {
-enum Fixups {
-  reloc_pcrel_4byte = FirstTargetFixupKind,  // 32-bit pcrel, e.g. a branch.
-  reloc_pcrel_1byte,                         // 8-bit pcrel, e.g. branch_1
-  reloc_riprel_4byte                         // 32-bit rip-relative   
-};
-}
-}
 
 namespace {
 class X86MCCodeEmitter : public MCCodeEmitter {
