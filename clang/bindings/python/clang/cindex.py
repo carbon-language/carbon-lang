@@ -719,6 +719,25 @@ class TranslationUnit(ClangObject):
         """Get the original translation unit source file name."""
         return TranslationUnit_spelling(self)
 
+    def get_includes(self):
+        """
+        Return an iterable sequence of FileInclusion objects that describe the
+        sequence of inclusions in a translation unit. The first object in
+        this sequence is always the input file. Note that this method will not
+        recursively iterate over header files included through precompiled
+        headers.
+        """
+        def visitor(fobj, lptr, depth, includes):
+            loc = lptr.contents
+            includes.append(FileInclusion(loc.file, File(fobj), loc, depth))
+
+        # Automatically adapt CIndex/ctype pointers to python objects
+        includes = []
+        TranslationUnit_includes(self,
+                                 TranslationUnit_includes_callback(visitor),
+                                 includes)
+        return iter(includes)
+
 class File(ClangObject):
     """
     The File class represents a particular source file that is part of a
@@ -734,6 +753,26 @@ class File(ClangObject):
     def time(self):
         """Return the last modification time of the file."""
         return File_time(self)
+
+class FileInclusion(object):
+    """
+    The FileInclusion class represents the inclusion of one source file by
+    another via a '#include' directive or as the input file for the translation
+    unit. This class provides information about the included file, the including
+    file, the location of the '#include' directive and the depth of the included
+    file in the stack. Note that the input file has depth 0.
+    """
+
+    def __init__(self, src, tgt, loc, depth):
+        self.source = src
+        self.include = tgt
+        self.location = loc
+        self.depth = depth
+
+    @property
+    def is_input_file(self):
+        """True if the included file is the input file."""
+        return self.depth == 0
 
 # Additional Functions and Types
 
@@ -869,6 +908,15 @@ TranslationUnit_spelling.errcheck = _CXString.from_result
 
 TranslationUnit_dispose = lib.clang_disposeTranslationUnit
 TranslationUnit_dispose.argtypes = [TranslationUnit]
+
+TranslationUnit_includes_callback = CFUNCTYPE(None,
+                                              c_object_p,
+                                              POINTER(SourceLocation),
+                                              c_uint, py_object)
+TranslationUnit_includes = lib.clang_getInclusions
+TranslationUnit_includes.argtypes = [TranslationUnit,
+                                     TranslationUnit_includes_callback,
+                                     py_object]
 
 # File Functions
 File_name = lib.clang_getFileName
