@@ -4077,7 +4077,7 @@ def LSL32rm : I<0x03, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
 def LSL32rr : I<0x03, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                 "lsl{l}\t{$src, $dst|$dst, $src}", []>, TB;
                 
-def INVLPG : I<0x01, RawFrm, (outs), (ins), "invlpg", []>, TB;
+def INVLPG : I<0x01, MRM7m, (outs), (ins i8mem:$addr), "invlpg\t$addr", []>, TB;
 
 def STRr : I<0x00, MRM1r, (outs GR16:$dst), (ins),
              "str{w}\t{$dst}", []>, TB;
@@ -4239,9 +4239,9 @@ def WBINVD : I<0x09, RawFrm, (outs), (ins), "wbinvd", []>, TB;
 // VMX instructions
 
 // 66 0F 38 80
-def INVEPT : I<0x38, RawFrm, (outs), (ins), "invept", []>, OpSize, TB;
+def INVEPT : I<0x80, RawFrm, (outs), (ins), "invept", []>, OpSize, T8;
 // 66 0F 38 81
-def INVVPID : I<0x38, RawFrm, (outs), (ins), "invvpid", []>, OpSize, TB;
+def INVVPID : I<0x81, RawFrm, (outs), (ins), "invvpid", []>, OpSize, T8;
 // 0F 01 C1
 def VMCALL : I<0x01, MRM_C1, (outs), (ins), "vmcall", []>, TB;
 def VMCLEARm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),

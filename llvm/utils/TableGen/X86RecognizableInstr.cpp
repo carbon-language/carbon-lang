@@ -583,30 +583,6 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::MRM_##from:              \
     filter = new ExactFilter(0x##from);   \
     break;
-  
-#define EXACTCASE(class, name, lastbyte)          \
-  if (Name == name) {                             \
-    tables.setTableFields(class,                  \
-                          insnContext(),          \
-                          Opcode,                 \
-                          ExactFilter(lastbyte),  \
-                          UID);                   \
-    Spec->modifierBase = Opcode;                  \
-    return;                                       \
-  }
-
-  EXACTCASE(TWOBYTE, "INVEPT",   0x80)
-  EXACTCASE(TWOBYTE, "INVVPID",  0x81)
-
-  if (Name == "INVLPG") {
-    tables.setTableFields(TWOBYTE,
-                          insnContext(),
-                          Opcode,
-                          ExtendedFilter(false, 7),
-                          UID);
-    Spec->modifierBase = Opcode;
-    return;
-  }
 
   OpcodeType    opcodeType  = (OpcodeType)-1;
   
@@ -621,6 +597,12 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     opcodeType = TWOBYTE;
 
     switch (Opcode) {
+    default:
+      if (needsModRMForDecode(Form))
+        filter = new ModFilter(isRegFormat(Form));
+      else
+        filter = new DumbFilter();
+      break;
 #define EXTENSION_TABLE(n) case 0x##n:
     TWO_BYTE_EXTENSION_TABLES
 #undef EXTENSION_TABLE
@@ -650,14 +632,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       MRM_MAPPING
       } // switch (Form)
       break;
-    default:
-      if (needsModRMForDecode(Form))
-        filter = new ModFilter(isRegFormat(Form));
-      else
-        filter = new DumbFilter();
-        
-      break;
-    } // switch (opcode)
+    } // switch (Opcode)
     opcodeToSet = Opcode;
     break;
   case X86Local::T8:
