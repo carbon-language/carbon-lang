@@ -42,11 +42,11 @@ public:
     /// NonVirtualOffset - The offset from the derived class to the base class.
     /// Or the offset from the virtual base class to the base class, if the path
     /// from the derived class to the base class involves a virtual base class.
-    uint64_t NonVirtualOffset;
+    int64_t NonVirtualOffset;
     
     BaseOffset() : DerivedClass(0), VirtualBase(0), NonVirtualOffset(0) { }
     BaseOffset(const CXXRecordDecl *DerivedClass,
-               const CXXRecordDecl *VirtualBase, uint64_t NonVirtualOffset)
+               const CXXRecordDecl *VirtualBase, int64_t NonVirtualOffset)
       : DerivedClass(DerivedClass), VirtualBase(VirtualBase), 
       NonVirtualOffset(NonVirtualOffset) { }
 
@@ -90,6 +90,10 @@ private:
   /// need to perform return value adjustments.
   AdjustmentOffsetsMapTy ReturnAdjustments;
   
+  /// ThisAdjustments - Holds 'this' adjustments for all the overriders that
+  /// need them.
+  AdjustmentOffsetsMapTy ThisAdjustments;
+
   typedef llvm::SmallVector<uint64_t, 1> OffsetVectorTy;
   
   /// SubobjectOffsetsMapTy - This map is used for keeping track of all the
@@ -131,6 +135,11 @@ private:
                           const CXXMethodDecl *NewMD,
                           SubobjectOffsetsMapTy &Offsets);
   
+  /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
+  /// the 'this' pointer from BaseRD to DerivedRD.
+  BaseOffset ComputeThisAdjustmentBaseOffset(const CXXRecordDecl *BaseRD,
+                                             const CXXRecordDecl *DerivedRD);
+                                             
   static void MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
                                     SubobjectOffsetsMapTy &Offsets);
 
@@ -210,9 +219,8 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
 }
 
 static FinalOverriders::BaseOffset 
-ComputeBaseOffset(ASTContext &Context,
-                  const CXXRecordDecl *DerivedRD,
-                  const CXXRecordDecl *BaseRD) {
+ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *BaseRD,
+                  const CXXRecordDecl *DerivedRD) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
                      /*RecordPaths=*/true, /*DetectVirtual=*/false);
   
@@ -222,7 +230,7 @@ ComputeBaseOffset(ASTContext &Context,
     return FinalOverriders::BaseOffset();
   }
 
-  uint64_t NonVirtualOffset = 0;
+  int64_t NonVirtualOffset = 0;
 
   const CXXBasePath &Path = Paths.front();
   
@@ -264,9 +272,9 @@ ComputeBaseOffset(ASTContext &Context,
 }
 
 static FinalOverriders::BaseOffset
-ComputeReturnTypeBaseOffset(ASTContext &Context, 
-                            const CXXMethodDecl *DerivedMD,
-                            const CXXMethodDecl *BaseMD) {
+ComputeReturnAdjustmentBaseOffset(ASTContext &Context, 
+                                  const CXXMethodDecl *DerivedMD,
+                                  const CXXMethodDecl *BaseMD) {
   const FunctionType *BaseFT = BaseMD->getType()->getAs<FunctionType>();
   const FunctionType *DerivedFT = DerivedMD->getType()->getAs<FunctionType>();
   
@@ -314,9 +322,30 @@ ComputeReturnTypeBaseOffset(ASTContext &Context,
   const CXXRecordDecl *BaseRD = 
     cast<CXXRecordDecl>(cast<RecordType>(CanBaseReturnType)->getDecl());
 
-  return ComputeBaseOffset(Context, DerivedRD, BaseRD);
+  return ComputeBaseOffset(Context, BaseRD, DerivedRD);
 }
 
+FinalOverriders::BaseOffset
+FinalOverriders::ComputeThisAdjustmentBaseOffset(const CXXRecordDecl *BaseRD,
+                                               const CXXRecordDecl *DerivedRD) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+
+  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
+      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return FinalOverriders::BaseOffset();
+  }
+
+  assert(!Paths.getDetectedVirtual() && "FIXME: Handle virtual bases!");
+
+  // FIXME: We need to go through all paths here, just not the first one.
+  BaseOffset Offset = ComputeBaseOffset(Context, BaseRD, DerivedRD);
+
+  Offset.NonVirtualOffset = -Offset.NonVirtualOffset;
+  return Offset;
+}
+  
 void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
                                          BaseSubobject NewBase,
                                          const CXXMethodDecl *NewMD,
@@ -347,11 +376,13 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
 
       assert(Overrider.Method && "Did not find existing overrider!");
 
-      // Get the return adjustment base offset.
+      // Check if we need return adjustments or base adjustments.
       // (We don't want to do this for pure virtual member functions).
       if (!NewMD->isPure()) {
+        // Get the return adjustment base offset.
         BaseOffset ReturnBaseOffset =
-          ComputeReturnTypeBaseOffset(Context, NewMD, OverriddenMD);
+          ComputeReturnAdjustmentBaseOffset(Context, NewMD, OverriddenMD);
+
         if (!ReturnBaseOffset.isEmpty()) {
           // Store the return adjustment base offset.
           ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
@@ -359,7 +390,13 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
         
         // Check if we need a 'this' adjustment base offset as well.
         if (Offset != NewBase.getBaseOffset()) {
-          assert(false && "FIXME: Handle 'this' adjustments!");
+          BaseOffset ThisBaseOffset =
+            ComputeThisAdjustmentBaseOffset(OverriddenMD->getParent(),
+                                            NewMD->getParent());
+          assert(!ThisBaseOffset.isEmpty() && 
+                 "Should not get an empty 'this' adjustment!");
+          
+          ThisAdjustments[SubobjectAndMethod] = ThisBaseOffset;
         }
       }
 
@@ -492,6 +529,18 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
              
       Out << Offset.NonVirtualOffset << " nv]";
     }
+    
+    AI = ThisAdjustments.find(std::make_pair(Base, MD));
+    if (AI != ThisAdjustments.end()) {
+      const BaseOffset &Offset = AI->second;
+      
+      Out << " [this-adj: ";
+      if (Offset.VirtualBase)
+        Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
+      
+      Out << Offset.NonVirtualOffset << " nv]";
+    }
+    
     Out << "\n";
   }  
 }
@@ -786,7 +835,8 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
     // then we can just use the member function from the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
         OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
-      if (ComputeReturnTypeBaseOffset(Context, MD, OverriddenMD).isEmpty())
+      if (ComputeReturnAdjustmentBaseOffset(Context, MD, 
+                                            OverriddenMD).isEmpty())
         continue;
     }
 
@@ -1908,7 +1958,8 @@ bool OldVtableBuilder::OverrideMethod(GlobalDecl GD, bool MorallyVirtual,
       OMD->getType()->getAs<FunctionType>()->getResultType();
     
     // Check if we need a return type adjustment.
-    if (!ComputeReturnTypeBaseOffset(CGM.getContext(), MD, OMD).isEmpty()) {
+    if (!ComputeReturnAdjustmentBaseOffset(CGM.getContext(), MD, 
+                                           OMD).isEmpty()) {
       CanQualType &BaseReturnType = BaseReturnTypes[Index];
 
       // Insert the base return type.
@@ -2108,8 +2159,8 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
           OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
       // Check if converting from the return type of the method to the 
       // return type of the overridden method requires conversion.
-      if (ComputeReturnTypeBaseOffset(CGM.getContext(), MD, 
-                                      OverriddenMD).isEmpty()) {
+      if (ComputeReturnAdjustmentBaseOffset(CGM.getContext(), MD, 
+                                            OverriddenMD).isEmpty()) {
         // This index is shared between the index in the vtable of the primary
         // base class.
         if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
