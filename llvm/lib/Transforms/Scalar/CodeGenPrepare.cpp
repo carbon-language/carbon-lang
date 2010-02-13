@@ -315,13 +315,12 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
   BasicBlock *Dest = TI->getSuccessor(SuccNum);
   assert(isa<PHINode>(Dest->begin()) &&
          "This should only be called if Dest has a PHI!");
+  PHINode *DestPHI = cast<PHINode>(Dest->begin());
 
   // Do not split edges to EH landing pads.
-  if (InvokeInst *Invoke = dyn_cast<InvokeInst>(TI)) {
+  if (InvokeInst *Invoke = dyn_cast<InvokeInst>(TI))
     if (Invoke->getSuccessor(1) == Dest)
       return;
-  }
-  
 
   // As a hack, never split backedges of loops.  Even though the copy for any
   // PHIs inserted on the backedge would be dead for exits from the loop, we
@@ -333,11 +332,11 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
     /// TIPHIValues - This array is lazily computed to determine the values of
     /// PHIs in Dest that TI would provide.
     SmallVector<Value*, 32> TIPHIValues;
-
+    
     // Check to see if Dest has any blocks that can be used as a split edge for
     // this terminator.
-    for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
-      BasicBlock *Pred = *PI;
+    for (unsigned pi = 0, e = DestPHI->getNumIncomingValues(); pi != e; ++pi) {
+      BasicBlock *Pred = DestPHI->getIncomingBlock(pi);
       // To be usable, the pred has to end with an uncond branch to the dest.
       BranchInst *PredBr = dyn_cast<BranchInst>(Pred->getTerminator());
       if (!PredBr || !PredBr->isUnconditional())
@@ -346,10 +345,10 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
       BasicBlock::iterator I = Pred->begin();
       while (isa<DbgInfoIntrinsic>(I))
         I++;
-      if (dyn_cast<Instruction>(I) != PredBr)
+      if (&*I != PredBr)
         continue;
       // Cannot be the entry block; its label does not get emitted.
-      if (Pred == &(Dest->getParent()->getEntryBlock()))
+      if (Pred == &Dest->getParent()->getEntryBlock())
         continue;
 
       // Finally, since we know that Dest has phi nodes in it, we have to make
@@ -392,24 +391,25 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum,
     TIPHIValues.push_back(PN->getIncomingValueForBlock(TIBB));
 
   SmallVector<BasicBlock*, 8> IdenticalPreds;
-  for (pred_iterator PI = pred_begin(Dest), E = pred_end(Dest); PI != E; ++PI) {
-    BasicBlock *Pred = *PI;
+  
+  for (unsigned pi = 0, e = DestPHI->getNumIncomingValues(); pi != e; ++pi) {
+    BasicBlock *Pred = DestPHI->getIncomingBlock(pi);
     if (BackEdges.count(std::make_pair(Pred, Dest)))
       continue;
-    if (PI == TIBB)
+    if (Pred == TIBB) {
       IdenticalPreds.push_back(Pred);
-    else {
-      bool Identical = true;
-      unsigned PHINo = 0;
-      for (BasicBlock::iterator I = Dest->begin();
-           (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo)
-        if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
-          Identical = false;
-          break;
-        }
-      if (Identical)
-        IdenticalPreds.push_back(Pred);
+      continue;
     }
+    bool Identical = true;
+    unsigned PHINo = 0;
+    for (BasicBlock::iterator I = Dest->begin();
+         (PN = dyn_cast<PHINode>(I)); ++I, ++PHINo)
+      if (TIPHIValues[PHINo] != PN->getIncomingValueForBlock(Pred)) {
+        Identical = false;
+        break;
+      }
+    if (Identical)
+      IdenticalPreds.push_back(Pred);
   }
 
   assert(!IdenticalPreds.empty());
