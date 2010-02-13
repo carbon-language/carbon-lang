@@ -334,17 +334,21 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Make sure we're not a constant offset from an external
       // global.
       Value *Operand = GEP->getPointerOperand();
+      Operand = Operand->stripPointerCasts();
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Operand))
         if (!GV->hasDefinitiveInitializer()) break;
       
-      // Get what we're pointing to and its size.
-      const PointerType *PT = 
+      // Get what we're pointing to and its size. 
+      const PointerType *BaseType = 
         cast<PointerType>(Operand->getType());
-      size_t Size = TD->getTypeAllocSize(PT->getElementType());
+      size_t Size = TD->getTypeAllocSize(BaseType->getElementType());
       
-      // Get the current byte offset into the thing.
+      // Get the current byte offset into the thing. Use the original
+      // operand in case we're looking through a bitcast.
       SmallVector<Value*, 8> Ops(CE->op_begin()+1, CE->op_end());
-      size_t Offset = TD->getIndexedOffset(PT, &Ops[0], Ops.size());
+      const PointerType *OffsetType =
+        cast<PointerType>(GEP->getPointerOperand()->getType());
+      size_t Offset = TD->getIndexedOffset(OffsetType, &Ops[0], Ops.size());
 
       assert(Size >= Offset);
       

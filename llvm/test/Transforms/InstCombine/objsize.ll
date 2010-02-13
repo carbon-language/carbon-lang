@@ -63,4 +63,13 @@ entry:
   unreachable
 }
 
+@.str5 = private constant [9 x i32] [i32 97, i32 98, i32 99, i32 100, i32 0, i32
+ 101, i32 102, i32 103, i32 0], align 4 ;
+define i32 @test2() nounwind {
+; CHECK: @test2
+; CHECK-NEXT: ret i32 34
+  %1 = call i32 @llvm.objectsize.i32(i8* getelementptr (i8* bitcast ([9 x i32]* @.str5 to i8*), i32 2), i1 false)
+  ret i32 %1
+}
+
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
