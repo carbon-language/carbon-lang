@@ -463,902 +463,18 @@ public:
   /// matches, and the SDNode for the result has the RootName specified name.
   void EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
                      const std::string &RootName, const std::string &ChainSuffix,
-                     bool &FoundChain) {
-
-    // Save loads/stores matched by a pattern.
-    if (!N->isLeaf() && N->getName().empty()) {
-      if (NodeHasProperty(N, SDNPMemOperand, CGP))
-        LSI.push_back(getNodeName(RootName));
-    }
-
-    bool isRoot = (P == NULL);
-    // Emit instruction predicates. Each predicate is just a string for now.
-    if (isRoot) {
-      // Record input varargs info.
-      NumInputRootOps = N->getNumChildren();
-
-      if (DisablePatternForFastISel(N, CGP))
-        emitCheck("OptLevel != CodeGenOpt::None");
-
-      emitCheck(PredicateCheck);
-    }
-
-    if (N->isLeaf()) {
-      if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
-        emitCheck("cast<ConstantSDNode>(" + getNodeName(RootName) +
-                  ")->getSExtValue() == INT64_C(" +
-                  itostr(II->getValue()) + ")");
-        return;
-      } else if (!NodeIsComplexPattern(N)) {
-        assert(0 && "Cannot match this as a leaf value!");
-        abort();
-      }
-    }
-  
-    // If this node has a name associated with it, capture it in VariableMap. If
-    // we already saw this in the pattern, emit code to verify dagness.
-    if (!N->getName().empty()) {
-      std::string &VarMapEntry = VariableMap[N->getName()];
-      if (VarMapEntry.empty()) {
-        VarMapEntry = RootName;
-      } else {
-        // If we get here, this is a second reference to a specific name.  Since
-        // we already have checked that the first reference is valid, we don't
-        // have to recursively match it, just check that it's the same as the
-        // previously named thing.
-        emitCheck(VarMapEntry + " == " + RootName);
-        return;
-      }
-
-      if (!N->isLeaf())
-        OperatorMap[N->getName()] = N->getOperator();
-    }
-
-
-    // Emit code to load the child nodes and match their contents recursively.
-    unsigned OpNo = 0;
-    bool NodeHasChain = NodeHasProperty   (N, SDNPHasChain, CGP);
-    bool HasChain     = PatternHasProperty(N, SDNPHasChain, CGP);
-    bool EmittedUseCheck = false;
-    if (HasChain) {
-      if (NodeHasChain)
-        OpNo = 1;
-      if (!isRoot) {
-        // Multiple uses of actual result?
-        emitCheck(getValueName(RootName) + ".hasOneUse()");
-        EmittedUseCheck = true;
-        if (NodeHasChain) {
-          // If the immediate use can somehow reach this node through another
-          // path, then can't fold it either or it will create a cycle.
-          // e.g. In the following diagram, XX can reach ld through YY. If
-          // ld is folded into XX, then YY is both a predecessor and a successor
-          // of XX.
-          //
-          //         [ld]
-          //         ^  ^
-          //         |  |
-          //        /   \---
-          //      /        [YY]
-          //      |         ^
-          //     [XX]-------|
-          bool NeedCheck = P != Pattern;
-          if (!NeedCheck) {
-            const SDNodeInfo &PInfo = CGP.getSDNodeInfo(P->getOperator());
-            NeedCheck =
-              P->getOperator() == CGP.get_intrinsic_void_sdnode() ||
-              P->getOperator() == CGP.get_intrinsic_w_chain_sdnode() ||
-              P->getOperator() == CGP.get_intrinsic_wo_chain_sdnode() ||
-              PInfo.getNumOperands() > 1 ||
-              PInfo.hasProperty(SDNPHasChain) ||
-              PInfo.hasProperty(SDNPInFlag) ||
-              PInfo.hasProperty(SDNPOptInFlag);
-          }
-
-          if (NeedCheck) {
-            std::string ParentName(RootName.begin(), RootName.end()-1);
-            emitCheck("IsLegalAndProfitableToFold(" + getNodeName(RootName) +
-                      ", " + getNodeName(ParentName) + ", N)");
-          }
-        }
-      }
-
-      if (NodeHasChain) {
-        if (FoundChain) {
-          emitCheck("(" + ChainName + ".getNode() == " +
-                    getNodeName(RootName) + " || "
-                    "IsChainCompatible(" + ChainName + ".getNode(), " +
-                    getNodeName(RootName) + "))");
-          OrigChains.push_back(std::make_pair(ChainName,
-                                              getValueName(RootName)));
-        } else
-          FoundChain = true;
-        ChainName = "Chain" + ChainSuffix;
-        emitInit("SDValue " + ChainName + " = " + getNodeName(RootName) +
-                 "->getOperand(0);");
-      }
-    }
-
-    // Don't fold any node which reads or writes a flag and has multiple uses.
-    // FIXME: We really need to separate the concepts of flag and "glue". Those
-    // real flag results, e.g. X86CMP output, can have multiple uses.
-    // FIXME: If the optional incoming flag does not exist. Then it is ok to
-    // fold it.
-    if (!isRoot &&
-        (PatternHasProperty(N, SDNPInFlag, CGP) ||
-         PatternHasProperty(N, SDNPOptInFlag, CGP) ||
-         PatternHasProperty(N, SDNPOutFlag, CGP))) {
-      if (!EmittedUseCheck) {
-        // Multiple uses of actual result?
-        emitCheck(getValueName(RootName) + ".hasOneUse()");
-      }
-    }
-
-    // If there are node predicates for this, emit the calls.
-    for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
-      emitCheck(N->getPredicateFns()[i] + "(" + getNodeName(RootName) + ")");
-
-    // If this is an 'and R, 1234' where the operation is AND/OR and the RHS is
-    // a constant without a predicate fn that has more that one bit set, handle
-    // this as a special case.  This is usually for targets that have special
-    // handling of certain large constants (e.g. alpha with it's 8/16/32-bit
-    // handling stuff).  Using these instructions is often far more efficient
-    // than materializing the constant.  Unfortunately, both the instcombiner
-    // and the dag combiner can often infer that bits are dead, and thus drop
-    // them from the mask in the dag.  For example, it might turn 'AND X, 255'
-    // into 'AND X, 254' if it knows the low bit is set.  Emit code that checks
-    // to handle this.
-    if (!N->isLeaf() && 
-        (N->getOperator()->getName() == "and" || 
-         N->getOperator()->getName() == "or") &&
-        N->getChild(1)->isLeaf() &&
-        N->getChild(1)->getPredicateFns().empty()) {
-      if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
-        if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
-          emitInit("SDValue " + RootName + "0" + " = " +
-                   getNodeName(RootName) + "->getOperand(" + utostr(0) + ");");
-          emitInit("SDValue " + RootName + "1" + " = " +
-                   getNodeName(RootName) + "->getOperand(" + utostr(1) + ");");
-
-          unsigned NTmp = TmpNo++;
-          emitCode("ConstantSDNode *Tmp" + utostr(NTmp) +
-                   " = dyn_cast<ConstantSDNode>(" +
-                   getNodeName(RootName + "1") + ");");
-          emitCheck("Tmp" + utostr(NTmp));
-          const char *MaskPredicate = N->getOperator()->getName() == "or"
-            ? "CheckOrMask(" : "CheckAndMask(";
-          emitCheck(MaskPredicate + getValueName(RootName + "0") +
-                    ", Tmp" + utostr(NTmp) +
-                    ", INT64_C(" + itostr(II->getValue()) + "))");
-          
-          EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0),
-                             ChainSuffix + utostr(0), FoundChain);
-          return;
-        }
-      }
-    }
-    
-    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
-      emitInit("SDValue " + getValueName(RootName + utostr(OpNo)) + " = " +
-               getNodeName(RootName) + "->getOperand(" + utostr(OpNo) + ");");
-
-      EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo),
-                         ChainSuffix + utostr(OpNo), FoundChain);
-    }
-
-    // Handle cases when root is a complex pattern.
-    const ComplexPattern *CP;
-    if (isRoot && N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
-      std::string Fn = CP->getSelectFunc();
-      unsigned NumOps = CP->getNumOperands();
-      for (unsigned i = 0; i < NumOps; ++i) {
-        emitDecl("CPTmp" + RootName + "_" + utostr(i));
-        emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
-      }
-      if (CP->hasProperty(SDNPHasChain)) {
-        emitDecl("CPInChain");
-        emitDecl("Chain" + ChainSuffix);
-        emitCode("SDValue CPInChain;");
-        emitCode("SDValue Chain" + ChainSuffix + ";");
-      }
-
-      std::string Code = Fn + "(" +
-                         getNodeName(RootName) + ", " +
-                         getValueName(RootName);
-      for (unsigned i = 0; i < NumOps; i++)
-        Code += ", CPTmp" + RootName + "_" + utostr(i);
-      if (CP->hasProperty(SDNPHasChain)) {
-        ChainName = "Chain" + ChainSuffix;
-        Code += ", CPInChain, Chain" + ChainSuffix;
-      }
-      emitCheck(Code + ")");
-    }
-  }
+                     bool &FoundChain);
 
   void EmitChildMatchCode(TreePatternNode *Child, TreePatternNode *Parent,
                           const std::string &RootName, 
-                          const std::string &ChainSuffix, bool &FoundChain) {
-    if (!Child->isLeaf()) {
-      // If it's not a leaf, recursively match.
-      const SDNodeInfo &CInfo = CGP.getSDNodeInfo(Child->getOperator());
-      emitCheck(getNodeName(RootName) + "->getOpcode() == " +
-                CInfo.getEnumName());
-      EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
-      bool HasChain = false;
-      if (NodeHasProperty(Child, SDNPHasChain, CGP)) {
-        HasChain = true;
-        FoldedChains.push_back(std::make_pair(getValueName(RootName),
-                                              CInfo.getNumResults()));
-      }
-      if (NodeHasProperty(Child, SDNPOutFlag, CGP)) {
-        assert(FoldedFlag.first == "" && FoldedFlag.second == 0 &&
-               "Pattern folded multiple nodes which produce flags?");
-        FoldedFlag = std::make_pair(getValueName(RootName),
-                                    CInfo.getNumResults() + (unsigned)HasChain);
-      }
-    } else {
-      // If this child has a name associated with it, capture it in VarMap. If
-      // we already saw this in the pattern, emit code to verify dagness.
-      if (!Child->getName().empty()) {
-        std::string &VarMapEntry = VariableMap[Child->getName()];
-        if (VarMapEntry.empty()) {
-          VarMapEntry = getValueName(RootName);
-        } else {
-          // If we get here, this is a second reference to a specific name.
-          // Since we already have checked that the first reference is valid,
-          // we don't have to recursively match it, just check that it's the
-          // same as the previously named thing.
-          emitCheck(VarMapEntry + " == " + getValueName(RootName));
-          Duplicates.insert(getValueName(RootName));
-          return;
-        }
-      }
-      
-      // Handle leaves of various types.
-      if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
-        Record *LeafRec = DI->getDef();
-        if (LeafRec->isSubClassOf("RegisterClass") || 
-            LeafRec->isSubClassOf("PointerLikeRegClass")) {
-          // Handle register references.  Nothing to do here.
-        } else if (LeafRec->isSubClassOf("Register")) {
-          // Handle register references.
-        } else if (LeafRec->isSubClassOf("ComplexPattern")) {
-          // Handle complex pattern.
-          const ComplexPattern *CP = NodeGetComplexPattern(Child, CGP);
-          std::string Fn = CP->getSelectFunc();
-          unsigned NumOps = CP->getNumOperands();
-          for (unsigned i = 0; i < NumOps; ++i) {
-            emitDecl("CPTmp" + RootName + "_" + utostr(i));
-            emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
-          }
-          if (CP->hasProperty(SDNPHasChain)) {
-            const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Parent->getOperator());
-            FoldedChains.push_back(std::make_pair("CPInChain",
-                                                  PInfo.getNumResults()));
-            ChainName = "Chain" + ChainSuffix;
-            emitDecl("CPInChain");
-            emitDecl(ChainName);
-            emitCode("SDValue CPInChain;");
-            emitCode("SDValue " + ChainName + ";");
-          }
-          
-          std::string Code = Fn + "(N, ";
-          if (CP->hasProperty(SDNPHasChain)) {
-            std::string ParentName(RootName.begin(), RootName.end()-1);
-            Code += getValueName(ParentName) + ", ";
-          }
-          Code += getValueName(RootName);
-          for (unsigned i = 0; i < NumOps; i++)
-            Code += ", CPTmp" + RootName + "_" + utostr(i);
-          if (CP->hasProperty(SDNPHasChain))
-            Code += ", CPInChain, Chain" + ChainSuffix;
-          emitCheck(Code + ")");
-        } else if (LeafRec->getName() == "srcvalue") {
-          // Place holder for SRCVALUE nodes. Nothing to do here.
-        } else if (LeafRec->isSubClassOf("ValueType")) {
-          // Make sure this is the specified value type.
-          emitCheck("cast<VTSDNode>(" + getNodeName(RootName) +
-                    ")->getVT() == MVT::" + LeafRec->getName());
-        } else if (LeafRec->isSubClassOf("CondCode")) {
-          // Make sure this is the specified cond code.
-          emitCheck("cast<CondCodeSDNode>(" + getNodeName(RootName) +
-                    ")->get() == ISD::" + LeafRec->getName());
-        } else {
-#ifndef NDEBUG
-          Child->dump();
-          errs() << " ";
-#endif
-          assert(0 && "Unknown leaf type!");
-        }
-        
-        // If there are node predicates for this, emit the calls.
-        for (unsigned i = 0, e = Child->getPredicateFns().size(); i != e; ++i)
-          emitCheck(Child->getPredicateFns()[i] + "(" + getNodeName(RootName) +
-                    ")");
-      } else if (IntInit *II =
-                 dynamic_cast<IntInit*>(Child->getLeafValue())) {
-        unsigned NTmp = TmpNo++;
-        emitCode("ConstantSDNode *Tmp"+ utostr(NTmp) +
-                 " = dyn_cast<ConstantSDNode>("+
-                 getNodeName(RootName) + ");");
-        emitCheck("Tmp" + utostr(NTmp));
-        unsigned CTmp = TmpNo++;
-        emitCode("int64_t CN"+ utostr(CTmp) +
-                 " = Tmp" + utostr(NTmp) + "->getSExtValue();");
-        emitCheck("CN" + utostr(CTmp) + " == "
-                  "INT64_C(" +itostr(II->getValue()) + ")");
-      } else {
-#ifndef NDEBUG
-        Child->dump();
-#endif
-        assert(0 && "Unknown leaf type!");
-      }
-    }
-  }
+                          const std::string &ChainSuffix, bool &FoundChain);
 
   /// EmitResultCode - Emit the action for a pattern.  Now that it has matched
   /// we actually have to build a DAG!
   std::vector<std::string>
   EmitResultCode(TreePatternNode *N, std::vector<Record*> DstRegs,
                  bool InFlagDecled, bool ResNodeDecled,
-                 bool LikeLeaf = false, bool isRoot = false) {
-    // List of arguments of getMachineNode() or SelectNodeTo().
-    std::vector<std::string> NodeOps;
-    // This is something selected from the pattern we matched.
-    if (!N->getName().empty()) {
-      const std::string &VarName = N->getName();
-      std::string Val = VariableMap[VarName];
-      bool ModifiedVal = false;
-      if (Val.empty()) {
-        errs() << "Variable '" << VarName << " referenced but not defined "
-             << "and not caught earlier!\n";
-        abort();
-      }
-      if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
-        // Already selected this operand, just return the tmpval.
-        NodeOps.push_back(getValueName(Val));
-        return NodeOps;
-      }
-
-      const ComplexPattern *CP;
-      unsigned ResNo = TmpNo++;
-      if (!N->isLeaf() && N->getOperator()->getName() == "imm") {
-        assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        std::string CastType;
-        std::string TmpVar =  "Tmp" + utostr(ResNo);
-        switch (N->getTypeNum(0)) {
-        default:
-          errs() << "Cannot handle " << getEnumName(N->getTypeNum(0))
-               << " type as an immediate constant. Aborting\n";
-          abort();
-        case MVT::i1:  CastType = "bool"; break;
-        case MVT::i8:  CastType = "unsigned char"; break;
-        case MVT::i16: CastType = "unsigned short"; break;
-        case MVT::i32: CastType = "unsigned"; break;
-        case MVT::i64: CastType = "uint64_t"; break;
-        }
-        emitCode("SDValue " + TmpVar + 
-                 " = CurDAG->getTargetConstant(((" + CastType +
-                 ") cast<ConstantSDNode>(" + Val + ")->getZExtValue()), " +
-                 getEnumName(N->getTypeNum(0)) + ");");
-        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-        // value if used multiple times by this pattern result.
-        Val = TmpVar;
-        ModifiedVal = true;
-        NodeOps.push_back(getValueName(Val));
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "fpimm") {
-        assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        std::string TmpVar =  "Tmp" + utostr(ResNo);
-        emitCode("SDValue " + TmpVar + 
-                 " = CurDAG->getTargetConstantFP(*cast<ConstantFPSDNode>(" + 
-                 Val + ")->getConstantFPValue(), cast<ConstantFPSDNode>(" +
-                 Val + ")->getValueType(0));");
-        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-        // value if used multiple times by this pattern result.
-        Val = TmpVar;
-        ModifiedVal = true;
-        NodeOps.push_back(getValueName(Val));
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
-        Record *Op = OperatorMap[N->getName()];
-        // Transform ExternalSymbol to TargetExternalSymbol
-        if (Op && Op->getName() == "externalsym") {
-          std::string TmpVar = "Tmp"+utostr(ResNo);
-          emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
-                   "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
-                   Val + ")->getSymbol(), " +
-                   getEnumName(N->getTypeNum(0)) + ");");
-          // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
-          // this value if used multiple times by this pattern result.
-          Val = TmpVar;
-          ModifiedVal = true;
-        }
-        NodeOps.push_back(getValueName(Val));
-      } else if (!N->isLeaf() && (N->getOperator()->getName() == "tglobaladdr"
-                 || N->getOperator()->getName() == "tglobaltlsaddr")) {
-        Record *Op = OperatorMap[N->getName()];
-        // Transform GlobalAddress to TargetGlobalAddress
-        if (Op && (Op->getName() == "globaladdr" ||
-                   Op->getName() == "globaltlsaddr")) {
-          std::string TmpVar = "Tmp" + utostr(ResNo);
-          emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
-                   "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
-                   ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
-                   ");");
-          // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
-          // this value if used multiple times by this pattern result.
-          Val = TmpVar;
-          ModifiedVal = true;
-        }
-        NodeOps.push_back(getValueName(Val));
-      } else if (!N->isLeaf()
-                 && (N->getOperator()->getName() == "texternalsym"
-                      || N->getOperator()->getName() == "tconstpool")) {
-        // Do not rewrite the variable name, since we don't generate a new
-        // temporary.
-        NodeOps.push_back(getValueName(Val));
-      } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
-        for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
-          NodeOps.push_back(getValueName("CPTmp" + Val + "_" + utostr(i)));
-        }
-      } else {
-        // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
-        // node even if it isn't one. Don't select it.
-        if (!LikeLeaf) {
-          if (isRoot && N->isLeaf()) {
-            emitCode("ReplaceUses(SDValue(N, 0), " + Val + ");");
-            emitCode("return NULL;");
-          }
-        }
-        NodeOps.push_back(getValueName(Val));
-      }
-
-      if (ModifiedVal) {
-        VariableMap[VarName] = Val;
-      }
-      return NodeOps;
-    }
-    if (N->isLeaf()) {
-      // If this is an explicit register reference, handle it.
-      if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
-        unsigned ResNo = TmpNo++;
-        if (DI->getDef()->isSubClassOf("Register")) {
-          emitCode("SDValue Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
-                   getQualifiedName(DI->getDef()) + ", " +
-                   getEnumName(N->getTypeNum(0)) + ");");
-          NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
-          return NodeOps;
-        } else if (DI->getDef()->getName() == "zero_reg") {
-          emitCode("SDValue Tmp" + utostr(ResNo) +
-                   " = CurDAG->getRegister(0, " +
-                   getEnumName(N->getTypeNum(0)) + ");");
-          NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
-          return NodeOps;
-        } else if (DI->getDef()->isSubClassOf("RegisterClass")) {
-          // Handle a reference to a register class. This is used
-          // in COPY_TO_SUBREG instructions.
-          emitCode("SDValue Tmp" + utostr(ResNo) +
-                   " = CurDAG->getTargetConstant(" +
-                   getQualifiedName(DI->getDef()) + "RegClassID, " +
-                   "MVT::i32);");
-          NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
-          return NodeOps;
-        }
-      } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
-        unsigned ResNo = TmpNo++;
-        assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        emitCode("SDValue Tmp" + utostr(ResNo) + 
-                 " = CurDAG->getTargetConstant(0x" + 
-                 utohexstr((uint64_t) II->getValue()) +
-                 "ULL, " + getEnumName(N->getTypeNum(0)) + ");");
-        NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
-        return NodeOps;
-      }
-    
-#ifndef NDEBUG
-      N->dump();
-#endif
-      assert(0 && "Unknown leaf type!");
-      return NodeOps;
-    }
-
-    Record *Op = N->getOperator();
-    if (Op->isSubClassOf("Instruction")) {
-      const CodeGenTarget &CGT = CGP.getTargetInfo();
-      CodeGenInstruction &II = CGT.getInstruction(Op->getName());
-      const DAGInstruction &Inst = CGP.getInstruction(Op);
-      const TreePattern *InstPat = Inst.getPattern();
-      // FIXME: Assume actual pattern comes before "implicit".
-      TreePatternNode *InstPatNode =
-        isRoot ? (InstPat ? InstPat->getTree(0) : Pattern)
-               : (InstPat ? InstPat->getTree(0) : NULL);
-      if (InstPatNode && !InstPatNode->isLeaf() &&
-          InstPatNode->getOperator()->getName() == "set") {
-        InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
-      }
-      bool IsVariadic = isRoot && II.isVariadic;
-      // FIXME: fix how we deal with physical register operands.
-      bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
-      bool HasImpResults = isRoot && DstRegs.size() > 0;
-      bool NodeHasOptInFlag = isRoot &&
-        PatternHasProperty(Pattern, SDNPOptInFlag, CGP);
-      bool NodeHasInFlag  = isRoot &&
-        PatternHasProperty(Pattern, SDNPInFlag, CGP);
-      bool NodeHasOutFlag = isRoot &&
-        PatternHasProperty(Pattern, SDNPOutFlag, CGP);
-      bool NodeHasChain = InstPatNode &&
-        PatternHasProperty(InstPatNode, SDNPHasChain, CGP);
-      bool InputHasChain = isRoot &&
-        NodeHasProperty(Pattern, SDNPHasChain, CGP);
-      unsigned NumResults = Inst.getNumResults();    
-      unsigned NumDstRegs = HasImpResults ? DstRegs.size() : 0;
-
-      // Record output varargs info.
-      OutputIsVariadic = IsVariadic;
-
-      if (NodeHasOptInFlag) {
-        emitCode("bool HasInFlag = "
-                   "(N->getOperand(N->getNumOperands()-1).getValueType() == "
-                   "MVT::Flag);");
-      }
-      if (IsVariadic)
-        emitCode("SmallVector<SDValue, 8> Ops" + utostr(OpcNo) + ";");
-
-      // How many results is this pattern expected to produce?
-      unsigned NumPatResults = 0;
-      for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {
-        MVT::SimpleValueType VT = Pattern->getTypeNum(i);
-        if (VT != MVT::isVoid && VT != MVT::Flag)
-          NumPatResults++;
-      }
-
-      if (OrigChains.size() > 0) {
-        // The original input chain is being ignored. If it is not just
-        // pointing to the op that's being folded, we should create a
-        // TokenFactor with it and the chain of the folded op as the new chain.
-        // We could potentially be doing multiple levels of folding, in that
-        // case, the TokenFactor can have more operands.
-        emitCode("SmallVector<SDValue, 8> InChains;");
-        for (unsigned i = 0, e = OrigChains.size(); i < e; ++i) {
-          emitCode("if (" + OrigChains[i].first + ".getNode() != " +
-                   OrigChains[i].second + ".getNode()) {");
-          emitCode("  InChains.push_back(" + OrigChains[i].first + ");");
-          emitCode("}");
-        }
-        emitCode("InChains.push_back(" + ChainName + ");");
-        emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, "
-                 "N->getDebugLoc(), MVT::Other, "
-                 "&InChains[0], InChains.size());");
-        if (GenDebug) {
-          emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"yellow\");");
-          emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"black\");");
-        }
-      }
-
-      // Loop over all of the operands of the instruction pattern, emitting code
-      // to fill them all in.  The node 'N' usually has number children equal to
-      // the number of input operands of the instruction.  However, in cases
-      // where there are predicate operands for an instruction, we need to fill
-      // in the 'execute always' values.  Match up the node operands to the
-      // instruction operands to do this.
-      std::vector<std::string> AllOps;
-      for (unsigned ChildNo = 0, InstOpNo = NumResults;
-           InstOpNo != II.OperandList.size(); ++InstOpNo) {
-        std::vector<std::string> Ops;
-        
-        // Determine what to emit for this operand.
-        Record *OperandNode = II.OperandList[InstOpNo].Rec;
-        if ((OperandNode->isSubClassOf("PredicateOperand") ||
-             OperandNode->isSubClassOf("OptionalDefOperand")) &&
-            !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
-          // This is a predicate or optional def operand; emit the
-          // 'default ops' operands.
-          const DAGDefaultOperand &DefaultOp =
-            CGP.getDefaultOperand(II.OperandList[InstOpNo].Rec);
-          for (unsigned i = 0, e = DefaultOp.DefaultOps.size(); i != e; ++i) {
-            Ops = EmitResultCode(DefaultOp.DefaultOps[i], DstRegs,
-                                 InFlagDecled, ResNodeDecled);
-            AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
-          }
-        } else {
-          // Otherwise this is a normal operand or a predicate operand without
-          // 'execute always'; emit it.
-          Ops = EmitResultCode(N->getChild(ChildNo), DstRegs,
-                               InFlagDecled, ResNodeDecled);
-          AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
-          ++ChildNo;
-        }
-      }
-
-      // Emit all the chain and CopyToReg stuff.
-      bool ChainEmitted = NodeHasChain;
-      if (NodeHasInFlag || HasImpInputs)
-        EmitInFlagSelectCode(Pattern, "N", ChainEmitted,
-                             InFlagDecled, ResNodeDecled, true);
-      if (NodeHasOptInFlag || NodeHasInFlag || HasImpInputs) {
-        if (!InFlagDecled) {
-          emitCode("SDValue InFlag(0, 0);");
-          InFlagDecled = true;
-        }
-        if (NodeHasOptInFlag) {
-          emitCode("if (HasInFlag) {");
-          emitCode("  InFlag = N->getOperand(N->getNumOperands()-1);");
-          emitCode("}");
-        }
-      }
-
-      unsigned ResNo = TmpNo++;
-
-      unsigned OpsNo = OpcNo;
-      std::string CodePrefix;
-      bool ChainAssignmentNeeded = NodeHasChain && !isRoot;
-      std::deque<std::string> After;
-      std::string NodeName;
-      if (!isRoot) {
-        NodeName = "Tmp" + utostr(ResNo);
-        CodePrefix = "SDValue " + NodeName + "(";
-      } else {
-        NodeName = "ResNode";
-        if (!ResNodeDecled) {
-          CodePrefix = "SDNode *" + NodeName + " = ";
-          ResNodeDecled = true;
-        } else
-          CodePrefix = NodeName + " = ";
-      }
-
-      std::string Code = "Opc" + utostr(OpcNo);
-
-      if (!isRoot || (InputHasChain && !NodeHasChain))
-        // For call to "getMachineNode()".
-        Code += ", N->getDebugLoc()";
-
-      emitOpcode(II.Namespace + "::" + II.TheDef->getName());
-
-      // Output order: results, chain, flags
-      // Result types.
-      if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
-        Code += ", VT" + utostr(VTNo);
-        emitVT(getEnumName(N->getTypeNum(0)));
-      }
-      // Add types for implicit results in physical registers, scheduler will
-      // care of adding copyfromreg nodes.
-      for (unsigned i = 0; i < NumDstRegs; i++) {
-        Record *RR = DstRegs[i];
-        if (RR->isSubClassOf("Register")) {
-          MVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
-          Code += ", " + getEnumName(RVT);
-        }
-      }
-      if (NodeHasChain)
-        Code += ", MVT::Other";
-      if (NodeHasOutFlag)
-        Code += ", MVT::Flag";
-
-      // Inputs.
-      if (IsVariadic) {
-        for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
-          emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
-        AllOps.clear();
-
-        // Figure out whether any operands at the end of the op list are not
-        // part of the variable section.
-        std::string EndAdjust;
-        if (NodeHasInFlag || HasImpInputs)
-          EndAdjust = "-1";  // Always has one flag.
-        else if (NodeHasOptInFlag)
-          EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
-
-        emitCode("for (unsigned i = NumInputRootOps + " + utostr(NodeHasChain) +
-                 ", e = N->getNumOperands()" + EndAdjust + "; i != e; ++i) {");
-
-        emitCode("  Ops" + utostr(OpsNo) + ".push_back(N->getOperand(i));");
-        emitCode("}");
-      }
-
-      // Populate MemRefs with entries for each memory accesses covered by 
-      // this pattern.
-      if (isRoot && !LSI.empty()) {
-        std::string MemRefs = "MemRefs" + utostr(OpsNo);
-        emitCode("MachineSDNode::mmo_iterator " + MemRefs + " = "
-                 "MF->allocateMemRefsArray(" + utostr(LSI.size()) + ");");
-        for (unsigned i = 0, e = LSI.size(); i != e; ++i)
-          emitCode(MemRefs + "[" + utostr(i) + "] = "
-                   "cast<MemSDNode>(" + LSI[i] + ")->getMemOperand();");
-        After.push_back("cast<MachineSDNode>(ResNode)->setMemRefs(" +
-                        MemRefs + ", " + MemRefs + " + " + utostr(LSI.size()) +
-                        ");");
-      }
-
-      if (NodeHasChain) {
-        if (IsVariadic)
-          emitCode("Ops" + utostr(OpsNo) + ".push_back(" + ChainName + ");");
-        else
-          AllOps.push_back(ChainName);
-      }
-
-      if (IsVariadic) {
-        if (NodeHasInFlag || HasImpInputs)
-          emitCode("Ops" + utostr(OpsNo) + ".push_back(InFlag);");
-        else if (NodeHasOptInFlag) {
-          emitCode("if (HasInFlag)");
-          emitCode("  Ops" + utostr(OpsNo) + ".push_back(InFlag);");
-        }
-        Code += ", &Ops" + utostr(OpsNo) + "[0], Ops" + utostr(OpsNo) +
-          ".size()";
-      } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
-        AllOps.push_back("InFlag");
-
-      unsigned NumOps = AllOps.size();
-      if (NumOps) {
-        if (!NodeHasOptInFlag && NumOps < 4) {
-          for (unsigned i = 0; i != NumOps; ++i)
-            Code += ", " + AllOps[i];
-        } else {
-          std::string OpsCode = "SDValue Ops" + utostr(OpsNo) + "[] = { ";
-          for (unsigned i = 0; i != NumOps; ++i) {
-            OpsCode += AllOps[i];
-            if (i != NumOps-1)
-              OpsCode += ", ";
-          }
-          emitCode(OpsCode + " };");
-          Code += ", Ops" + utostr(OpsNo) + ", ";
-          if (NodeHasOptInFlag) {
-            Code += "HasInFlag ? ";
-            Code += utostr(NumOps) + " : " + utostr(NumOps-1);
-          } else
-            Code += utostr(NumOps);
-        }
-      }
-          
-      if (!isRoot)
-        Code += "), 0";
-
-      std::vector<std::string> ReplaceFroms;
-      std::vector<std::string> ReplaceTos;
-      if (!isRoot) {
-        NodeOps.push_back("Tmp" + utostr(ResNo));
-      } else {
-
-      if (NodeHasOutFlag) {
-        if (!InFlagDecled) {
-          After.push_back("SDValue InFlag(ResNode, " + 
-                          utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
-                          ");");
-          InFlagDecled = true;
-        } else
-          After.push_back("InFlag = SDValue(ResNode, " + 
-                          utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
-                          ");");
-      }
-
-      for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
-        ReplaceFroms.push_back("SDValue(" +
-                               FoldedChains[j].first + ".getNode(), " +
-                               utostr(FoldedChains[j].second) +
-                               ")");
-        ReplaceTos.push_back("SDValue(ResNode, " +
-                             utostr(NumResults+NumDstRegs) + ")");
-      }
-
-      if (NodeHasOutFlag) {
-        if (FoldedFlag.first != "") {
-          ReplaceFroms.push_back("SDValue(" + FoldedFlag.first + ".getNode(), " +
-                                 utostr(FoldedFlag.second) + ")");
-          ReplaceTos.push_back("InFlag");
-        } else {
-          assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
-          ReplaceFroms.push_back("SDValue(N, " +
-                                 utostr(NumPatResults + (unsigned)InputHasChain)
-                                 + ")");
-          ReplaceTos.push_back("InFlag");
-        }
-      }
-
-      if (!ReplaceFroms.empty() && InputHasChain) {
-        ReplaceFroms.push_back("SDValue(N, " +
-                               utostr(NumPatResults) + ")");
-        ReplaceTos.push_back("SDValue(" + ChainName + ".getNode(), " +
-                             ChainName + ".getResNo()" + ")");
-        ChainAssignmentNeeded |= NodeHasChain;
-      }
-
-      // User does not expect the instruction would produce a chain!
-      if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
-        ;
-      } else if (InputHasChain && !NodeHasChain) {
-        // One of the inner node produces a chain.
-        assert(!NodeHasOutFlag && "Node has flag but not chain!");
-        ReplaceFroms.push_back("SDValue(N, " +
-                               utostr(NumPatResults) + ")");
-        ReplaceTos.push_back(ChainName);
-      }
-      }
-
-      if (ChainAssignmentNeeded) {
-        // Remember which op produces the chain.
-        std::string ChainAssign;
-        if (!isRoot)
-          ChainAssign = ChainName + " = SDValue(" + NodeName +
-                        ".getNode(), " + utostr(NumResults+NumDstRegs) + ");";
-        else
-          ChainAssign = ChainName + " = SDValue(" + NodeName +
-                        ", " + utostr(NumResults+NumDstRegs) + ");";
-
-        After.push_front(ChainAssign);
-      }
-
-      if (ReplaceFroms.size() == 1) {
-        After.push_back("ReplaceUses(" + ReplaceFroms[0] + ", " +
-                        ReplaceTos[0] + ");");
-      } else if (!ReplaceFroms.empty()) {
-        After.push_back("const SDValue Froms[] = {");
-        for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
-          After.push_back("  " + ReplaceFroms[i] + (i + 1 != e ? "," : ""));
-        After.push_back("};");
-        After.push_back("const SDValue Tos[] = {");
-        for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
-          After.push_back("  " + ReplaceTos[i] + (i + 1 != e ? "," : ""));
-        After.push_back("};");
-        After.push_back("ReplaceUses(Froms, Tos, " +
-                        itostr(ReplaceFroms.size()) + ");");
-      }
-
-      // We prefer to use SelectNodeTo since it avoids allocation when
-      // possible and it avoids CSE map recalculation for the node's
-      // users, however it's tricky to use in a non-root context.
-      //
-      // We also don't use SelectNodeTo if the pattern replacement is being
-      // used to jettison a chain result, since morphing the node in place
-      // would leave users of the chain dangling.
-      //
-      if (!isRoot || (InputHasChain && !NodeHasChain)) {
-        Code = "CurDAG->getMachineNode(" + Code;
-      } else {
-        Code = "CurDAG->SelectNodeTo(N, " + Code;
-      }
-      if (isRoot) {
-        if (After.empty())
-          CodePrefix = "return ";
-        else
-          After.push_back("return ResNode;");
-      }
-
-      emitCode(CodePrefix + Code + ");");
-
-      if (GenDebug) {
-        if (!isRoot) {
-          emitCode("CurDAG->setSubgraphColor(" + NodeName +".getNode(), \"yellow\");");
-          emitCode("CurDAG->setSubgraphColor(" + NodeName +".getNode(), \"black\");");
-        }
-        else {
-          emitCode("CurDAG->setSubgraphColor(" + NodeName +", \"yellow\");");
-          emitCode("CurDAG->setSubgraphColor(" + NodeName +", \"black\");");
-        }
-      }
-
-      for (unsigned i = 0, e = After.size(); i != e; ++i)
-        emitCode(After[i]);
-
-      return NodeOps;
-    }
-    if (Op->isSubClassOf("SDNodeXForm")) {
-      assert(N->getNumChildren() == 1 && "node xform should have one child!");
-      // PatLeaf node - the operand may or may not be a leaf node. But it should
-      // behave like one.
-      std::vector<std::string> Ops =
-        EmitResultCode(N->getChild(0), DstRegs, InFlagDecled,
-                       ResNodeDecled, true);
-      unsigned ResNo = TmpNo++;
-      emitCode("SDValue Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
-               + "(" + Ops.back() + ".getNode());");
-      NodeOps.push_back("Tmp" + utostr(ResNo));
-      if (isRoot)
-        emitCode("return Tmp" + utostr(ResNo) + ".getNode();");
-      return NodeOps;
-    }
-
-    N->dump();
-    errs() << "\n";
-    throw std::string("Unknown node in result pattern!");
-  }
+                 bool LikeLeaf = false, bool isRoot = false);
 
   /// InsertOneTypeCheck - Insert a type-check for an unresolved type in 'Pat'
   /// and add it to the tree. 'Pat' and 'Other' are isomorphic trees except that 
@@ -1457,6 +573,915 @@ private:
     }
   }
 };
+
+
+/// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
+/// if the match fails. At this point, we already know that the opcode for N
+/// matches, and the SDNode for the result has the RootName specified name.
+void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
+                                       const std::string &RootName,
+                                       const std::string &ChainSuffix,
+                                       bool &FoundChain) {
+  
+  // Save loads/stores matched by a pattern.
+  if (!N->isLeaf() && N->getName().empty()) {
+    if (NodeHasProperty(N, SDNPMemOperand, CGP))
+      LSI.push_back(getNodeName(RootName));
+  }
+  
+  bool isRoot = (P == NULL);
+  // Emit instruction predicates. Each predicate is just a string for now.
+  if (isRoot) {
+    // Record input varargs info.
+    NumInputRootOps = N->getNumChildren();
+    
+    if (DisablePatternForFastISel(N, CGP))
+      emitCheck("OptLevel != CodeGenOpt::None");
+    
+    emitCheck(PredicateCheck);
+  }
+  
+  if (N->isLeaf()) {
+    if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
+      emitCheck("cast<ConstantSDNode>(" + getNodeName(RootName) +
+                ")->getSExtValue() == INT64_C(" +
+                itostr(II->getValue()) + ")");
+      return;
+    } else if (!NodeIsComplexPattern(N)) {
+      assert(0 && "Cannot match this as a leaf value!");
+      abort();
+    }
+  }
+  
+  // If this node has a name associated with it, capture it in VariableMap. If
+  // we already saw this in the pattern, emit code to verify dagness.
+  if (!N->getName().empty()) {
+    std::string &VarMapEntry = VariableMap[N->getName()];
+    if (VarMapEntry.empty()) {
+      VarMapEntry = RootName;
+    } else {
+      // If we get here, this is a second reference to a specific name.  Since
+      // we already have checked that the first reference is valid, we don't
+      // have to recursively match it, just check that it's the same as the
+      // previously named thing.
+      emitCheck(VarMapEntry + " == " + RootName);
+      return;
+    }
+    
+    if (!N->isLeaf())
+      OperatorMap[N->getName()] = N->getOperator();
+  }
+  
+  
+  // Emit code to load the child nodes and match their contents recursively.
+  unsigned OpNo = 0;
+  bool NodeHasChain = NodeHasProperty   (N, SDNPHasChain, CGP);
+  bool HasChain     = PatternHasProperty(N, SDNPHasChain, CGP);
+  bool EmittedUseCheck = false;
+  if (HasChain) {
+    if (NodeHasChain)
+      OpNo = 1;
+    if (!isRoot) {
+      // Multiple uses of actual result?
+      emitCheck(getValueName(RootName) + ".hasOneUse()");
+      EmittedUseCheck = true;
+      if (NodeHasChain) {
+        // If the immediate use can somehow reach this node through another
+        // path, then can't fold it either or it will create a cycle.
+        // e.g. In the following diagram, XX can reach ld through YY. If
+        // ld is folded into XX, then YY is both a predecessor and a successor
+        // of XX.
+        //
+        //         [ld]
+        //         ^  ^
+        //         |  |
+        //        /   \---
+        //      /        [YY]
+        //      |         ^
+        //     [XX]-------|
+        bool NeedCheck = P != Pattern;
+        if (!NeedCheck) {
+          const SDNodeInfo &PInfo = CGP.getSDNodeInfo(P->getOperator());
+          NeedCheck =
+          P->getOperator() == CGP.get_intrinsic_void_sdnode() ||
+          P->getOperator() == CGP.get_intrinsic_w_chain_sdnode() ||
+          P->getOperator() == CGP.get_intrinsic_wo_chain_sdnode() ||
+          PInfo.getNumOperands() > 1 ||
+          PInfo.hasProperty(SDNPHasChain) ||
+          PInfo.hasProperty(SDNPInFlag) ||
+          PInfo.hasProperty(SDNPOptInFlag);
+        }
+        
+        if (NeedCheck) {
+          std::string ParentName(RootName.begin(), RootName.end()-1);
+          emitCheck("IsLegalAndProfitableToFold(" + getNodeName(RootName) +
+                    ", " + getNodeName(ParentName) + ", N)");
+        }
+      }
+    }
+    
+    if (NodeHasChain) {
+      if (FoundChain) {
+        emitCheck("(" + ChainName + ".getNode() == " +
+                  getNodeName(RootName) + " || "
+                  "IsChainCompatible(" + ChainName + ".getNode(), " +
+                  getNodeName(RootName) + "))");
+        OrigChains.push_back(std::make_pair(ChainName,
+                                            getValueName(RootName)));
+      } else
+        FoundChain = true;
+      ChainName = "Chain" + ChainSuffix;
+      emitInit("SDValue " + ChainName + " = " + getNodeName(RootName) +
+               "->getOperand(0);");
+    }
+  }
+  
+  // Don't fold any node which reads or writes a flag and has multiple uses.
+  // FIXME: We really need to separate the concepts of flag and "glue". Those
+  // real flag results, e.g. X86CMP output, can have multiple uses.
+  // FIXME: If the optional incoming flag does not exist. Then it is ok to
+  // fold it.
+  if (!isRoot &&
+      (PatternHasProperty(N, SDNPInFlag, CGP) ||
+       PatternHasProperty(N, SDNPOptInFlag, CGP) ||
+       PatternHasProperty(N, SDNPOutFlag, CGP))) {
+        if (!EmittedUseCheck) {
+          // Multiple uses of actual result?
+          emitCheck(getValueName(RootName) + ".hasOneUse()");
+        }
+      }
+  
+  // If there are node predicates for this, emit the calls.
+  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
+    emitCheck(N->getPredicateFns()[i] + "(" + getNodeName(RootName) + ")");
+  
+  // If this is an 'and R, 1234' where the operation is AND/OR and the RHS is
+  // a constant without a predicate fn that has more that one bit set, handle
+  // this as a special case.  This is usually for targets that have special
+  // handling of certain large constants (e.g. alpha with it's 8/16/32-bit
+  // handling stuff).  Using these instructions is often far more efficient
+  // than materializing the constant.  Unfortunately, both the instcombiner
+  // and the dag combiner can often infer that bits are dead, and thus drop
+  // them from the mask in the dag.  For example, it might turn 'AND X, 255'
+  // into 'AND X, 254' if it knows the low bit is set.  Emit code that checks
+  // to handle this.
+  if (!N->isLeaf() && 
+      (N->getOperator()->getName() == "and" || 
+       N->getOperator()->getName() == "or") &&
+      N->getChild(1)->isLeaf() &&
+      N->getChild(1)->getPredicateFns().empty()) {
+    if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
+      if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
+        emitInit("SDValue " + RootName + "0" + " = " +
+                 getNodeName(RootName) + "->getOperand(" + utostr(0) + ");");
+        emitInit("SDValue " + RootName + "1" + " = " +
+                 getNodeName(RootName) + "->getOperand(" + utostr(1) + ");");
+        
+        unsigned NTmp = TmpNo++;
+        emitCode("ConstantSDNode *Tmp" + utostr(NTmp) +
+                 " = dyn_cast<ConstantSDNode>(" +
+                 getNodeName(RootName + "1") + ");");
+        emitCheck("Tmp" + utostr(NTmp));
+        const char *MaskPredicate = N->getOperator()->getName() == "or"
+        ? "CheckOrMask(" : "CheckAndMask(";
+        emitCheck(MaskPredicate + getValueName(RootName + "0") +
+                  ", Tmp" + utostr(NTmp) +
+                  ", INT64_C(" + itostr(II->getValue()) + "))");
+        
+        EmitChildMatchCode(N->getChild(0), N, RootName + utostr(0),
+                           ChainSuffix + utostr(0), FoundChain);
+        return;
+      }
+    }
+  }
+  
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
+    emitInit("SDValue " + getValueName(RootName + utostr(OpNo)) + " = " +
+             getNodeName(RootName) + "->getOperand(" + utostr(OpNo) + ");");
+    
+    EmitChildMatchCode(N->getChild(i), N, RootName + utostr(OpNo),
+                       ChainSuffix + utostr(OpNo), FoundChain);
+  }
+  
+  // Handle cases when root is a complex pattern.
+  const ComplexPattern *CP;
+  if (isRoot && N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
+    std::string Fn = CP->getSelectFunc();
+    unsigned NumOps = CP->getNumOperands();
+    for (unsigned i = 0; i < NumOps; ++i) {
+      emitDecl("CPTmp" + RootName + "_" + utostr(i));
+      emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
+    }
+    if (CP->hasProperty(SDNPHasChain)) {
+      emitDecl("CPInChain");
+      emitDecl("Chain" + ChainSuffix);
+      emitCode("SDValue CPInChain;");
+      emitCode("SDValue Chain" + ChainSuffix + ";");
+    }
+    
+    std::string Code = Fn + "(" +
+    getNodeName(RootName) + ", " +
+    getValueName(RootName);
+    for (unsigned i = 0; i < NumOps; i++)
+      Code += ", CPTmp" + RootName + "_" + utostr(i);
+    if (CP->hasProperty(SDNPHasChain)) {
+      ChainName = "Chain" + ChainSuffix;
+      Code += ", CPInChain, Chain" + ChainSuffix;
+    }
+    emitCheck(Code + ")");
+  }
+}
+
+void PatternCodeEmitter::EmitChildMatchCode(TreePatternNode *Child,
+                                            TreePatternNode *Parent,
+                                            const std::string &RootName, 
+                                            const std::string &ChainSuffix,
+                                            bool &FoundChain) {
+  if (!Child->isLeaf()) {
+    // If it's not a leaf, recursively match.
+    const SDNodeInfo &CInfo = CGP.getSDNodeInfo(Child->getOperator());
+    emitCheck(getNodeName(RootName) + "->getOpcode() == " +
+              CInfo.getEnumName());
+    EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
+    bool HasChain = false;
+    if (NodeHasProperty(Child, SDNPHasChain, CGP)) {
+      HasChain = true;
+      FoldedChains.push_back(std::make_pair(getValueName(RootName),
+                                            CInfo.getNumResults()));
+    }
+    if (NodeHasProperty(Child, SDNPOutFlag, CGP)) {
+      assert(FoldedFlag.first == "" && FoldedFlag.second == 0 &&
+             "Pattern folded multiple nodes which produce flags?");
+      FoldedFlag = std::make_pair(getValueName(RootName),
+                                  CInfo.getNumResults() + (unsigned)HasChain);
+    }
+  } else {
+    // If this child has a name associated with it, capture it in VarMap. If
+    // we already saw this in the pattern, emit code to verify dagness.
+    if (!Child->getName().empty()) {
+      std::string &VarMapEntry = VariableMap[Child->getName()];
+      if (VarMapEntry.empty()) {
+        VarMapEntry = getValueName(RootName);
+      } else {
+        // If we get here, this is a second reference to a specific name.
+        // Since we already have checked that the first reference is valid,
+        // we don't have to recursively match it, just check that it's the
+        // same as the previously named thing.
+        emitCheck(VarMapEntry + " == " + getValueName(RootName));
+        Duplicates.insert(getValueName(RootName));
+        return;
+      }
+    }
+    
+    // Handle leaves of various types.
+    if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
+      Record *LeafRec = DI->getDef();
+      if (LeafRec->isSubClassOf("RegisterClass") || 
+          LeafRec->isSubClassOf("PointerLikeRegClass")) {
+        // Handle register references.  Nothing to do here.
+      } else if (LeafRec->isSubClassOf("Register")) {
+        // Handle register references.
+      } else if (LeafRec->isSubClassOf("ComplexPattern")) {
+        // Handle complex pattern.
+        const ComplexPattern *CP = NodeGetComplexPattern(Child, CGP);
+        std::string Fn = CP->getSelectFunc();
+        unsigned NumOps = CP->getNumOperands();
+        for (unsigned i = 0; i < NumOps; ++i) {
+          emitDecl("CPTmp" + RootName + "_" + utostr(i));
+          emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
+        }
+        if (CP->hasProperty(SDNPHasChain)) {
+          const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Parent->getOperator());
+          FoldedChains.push_back(std::make_pair("CPInChain",
+                                                PInfo.getNumResults()));
+          ChainName = "Chain" + ChainSuffix;
+          emitDecl("CPInChain");
+          emitDecl(ChainName);
+          emitCode("SDValue CPInChain;");
+          emitCode("SDValue " + ChainName + ";");
+        }
+        
+        std::string Code = Fn + "(N, ";
+        if (CP->hasProperty(SDNPHasChain)) {
+          std::string ParentName(RootName.begin(), RootName.end()-1);
+          Code += getValueName(ParentName) + ", ";
+        }
+        Code += getValueName(RootName);
+        for (unsigned i = 0; i < NumOps; i++)
+          Code += ", CPTmp" + RootName + "_" + utostr(i);
+        if (CP->hasProperty(SDNPHasChain))
+          Code += ", CPInChain, Chain" + ChainSuffix;
+        emitCheck(Code + ")");
+      } else if (LeafRec->getName() == "srcvalue") {
+        // Place holder for SRCVALUE nodes. Nothing to do here.
+      } else if (LeafRec->isSubClassOf("ValueType")) {
+        // Make sure this is the specified value type.
+        emitCheck("cast<VTSDNode>(" + getNodeName(RootName) +
+                  ")->getVT() == MVT::" + LeafRec->getName());
+      } else if (LeafRec->isSubClassOf("CondCode")) {
+        // Make sure this is the specified cond code.
+        emitCheck("cast<CondCodeSDNode>(" + getNodeName(RootName) +
+                  ")->get() == ISD::" + LeafRec->getName());
+      } else {
+#ifndef NDEBUG
+        Child->dump();
+        errs() << " ";
+#endif
+        assert(0 && "Unknown leaf type!");
+      }
+      
+      // If there are node predicates for this, emit the calls.
+      for (unsigned i = 0, e = Child->getPredicateFns().size(); i != e; ++i)
+        emitCheck(Child->getPredicateFns()[i] + "(" + getNodeName(RootName) +
+                  ")");
+    } else if (IntInit *II =
+               dynamic_cast<IntInit*>(Child->getLeafValue())) {
+      unsigned NTmp = TmpNo++;
+      emitCode("ConstantSDNode *Tmp"+ utostr(NTmp) +
+               " = dyn_cast<ConstantSDNode>("+
+               getNodeName(RootName) + ");");
+      emitCheck("Tmp" + utostr(NTmp));
+      unsigned CTmp = TmpNo++;
+      emitCode("int64_t CN"+ utostr(CTmp) +
+               " = Tmp" + utostr(NTmp) + "->getSExtValue();");
+      emitCheck("CN" + utostr(CTmp) + " == "
+                "INT64_C(" +itostr(II->getValue()) + ")");
+    } else {
+#ifndef NDEBUG
+      Child->dump();
+#endif
+      assert(0 && "Unknown leaf type!");
+    }
+  }
+}
+
+/// EmitResultCode - Emit the action for a pattern.  Now that it has matched
+/// we actually have to build a DAG!
+std::vector<std::string>
+PatternCodeEmitter::EmitResultCode(TreePatternNode *N, 
+                                   std::vector<Record*> DstRegs,
+                                   bool InFlagDecled, bool ResNodeDecled,
+                                   bool LikeLeaf, bool isRoot) {
+  // List of arguments of getMachineNode() or SelectNodeTo().
+  std::vector<std::string> NodeOps;
+  // This is something selected from the pattern we matched.
+  if (!N->getName().empty()) {
+    const std::string &VarName = N->getName();
+    std::string Val = VariableMap[VarName];
+    bool ModifiedVal = false;
+    if (Val.empty()) {
+      errs() << "Variable '" << VarName << " referenced but not defined "
+      << "and not caught earlier!\n";
+      abort();
+    }
+    if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
+      // Already selected this operand, just return the tmpval.
+      NodeOps.push_back(getValueName(Val));
+      return NodeOps;
+    }
+    
+    const ComplexPattern *CP;
+    unsigned ResNo = TmpNo++;
+    if (!N->isLeaf() && N->getOperator()->getName() == "imm") {
+      assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
+      std::string CastType;
+      std::string TmpVar =  "Tmp" + utostr(ResNo);
+      switch (N->getTypeNum(0)) {
+        default:
+          errs() << "Cannot handle " << getEnumName(N->getTypeNum(0))
+          << " type as an immediate constant. Aborting\n";
+          abort();
+        case MVT::i1:  CastType = "bool"; break;
+        case MVT::i8:  CastType = "unsigned char"; break;
+        case MVT::i16: CastType = "unsigned short"; break;
+        case MVT::i32: CastType = "unsigned"; break;
+        case MVT::i64: CastType = "uint64_t"; break;
+      }
+      emitCode("SDValue " + TmpVar + 
+               " = CurDAG->getTargetConstant(((" + CastType +
+               ") cast<ConstantSDNode>(" + Val + ")->getZExtValue()), " +
+               getEnumName(N->getTypeNum(0)) + ");");
+      // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
+      // value if used multiple times by this pattern result.
+      Val = TmpVar;
+      ModifiedVal = true;
+      NodeOps.push_back(getValueName(Val));
+    } else if (!N->isLeaf() && N->getOperator()->getName() == "fpimm") {
+      assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
+      std::string TmpVar =  "Tmp" + utostr(ResNo);
+      emitCode("SDValue " + TmpVar + 
+               " = CurDAG->getTargetConstantFP(*cast<ConstantFPSDNode>(" + 
+               Val + ")->getConstantFPValue(), cast<ConstantFPSDNode>(" +
+               Val + ")->getValueType(0));");
+      // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
+      // value if used multiple times by this pattern result.
+      Val = TmpVar;
+      ModifiedVal = true;
+      NodeOps.push_back(getValueName(Val));
+    } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
+      Record *Op = OperatorMap[N->getName()];
+      // Transform ExternalSymbol to TargetExternalSymbol
+      if (Op && Op->getName() == "externalsym") {
+        std::string TmpVar = "Tmp"+utostr(ResNo);
+        emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
+                 "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
+                 Val + ")->getSymbol(), " +
+                 getEnumName(N->getTypeNum(0)) + ");");
+        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
+        // this value if used multiple times by this pattern result.
+        Val = TmpVar;
+        ModifiedVal = true;
+      }
+      NodeOps.push_back(getValueName(Val));
+    } else if (!N->isLeaf() && (N->getOperator()->getName() == "tglobaladdr"
+                                || N->getOperator()->getName() == "tglobaltlsaddr")) {
+      Record *Op = OperatorMap[N->getName()];
+      // Transform GlobalAddress to TargetGlobalAddress
+      if (Op && (Op->getName() == "globaladdr" ||
+                 Op->getName() == "globaltlsaddr")) {
+        std::string TmpVar = "Tmp" + utostr(ResNo);
+        emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
+                 "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
+                 ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
+                 ");");
+        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
+        // this value if used multiple times by this pattern result.
+        Val = TmpVar;
+        ModifiedVal = true;
+      }
+      NodeOps.push_back(getValueName(Val));
+    } else if (!N->isLeaf()
+               && (N->getOperator()->getName() == "texternalsym"
+                   || N->getOperator()->getName() == "tconstpool")) {
+                 // Do not rewrite the variable name, since we don't generate a new
+                 // temporary.
+                 NodeOps.push_back(getValueName(Val));
+               } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
+                 for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
+                   NodeOps.push_back(getValueName("CPTmp" + Val + "_" + utostr(i)));
+                 }
+               } else {
+                 // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
+                 // node even if it isn't one. Don't select it.
+                 if (!LikeLeaf) {
+                   if (isRoot && N->isLeaf()) {
+                     emitCode("ReplaceUses(SDValue(N, 0), " + Val + ");");
+                     emitCode("return NULL;");
+                   }
+                 }
+                 NodeOps.push_back(getValueName(Val));
+               }
+    
+    if (ModifiedVal) {
+      VariableMap[VarName] = Val;
+    }
+    return NodeOps;
+  }
+  if (N->isLeaf()) {
+    // If this is an explicit register reference, handle it.
+    if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+      unsigned ResNo = TmpNo++;
+      if (DI->getDef()->isSubClassOf("Register")) {
+        emitCode("SDValue Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
+                 getQualifiedName(DI->getDef()) + ", " +
+                 getEnumName(N->getTypeNum(0)) + ");");
+        NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
+        return NodeOps;
+      } else if (DI->getDef()->getName() == "zero_reg") {
+        emitCode("SDValue Tmp" + utostr(ResNo) +
+                 " = CurDAG->getRegister(0, " +
+                 getEnumName(N->getTypeNum(0)) + ");");
+        NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
+        return NodeOps;
+      } else if (DI->getDef()->isSubClassOf("RegisterClass")) {
+        // Handle a reference to a register class. This is used
+        // in COPY_TO_SUBREG instructions.
+        emitCode("SDValue Tmp" + utostr(ResNo) +
+                 " = CurDAG->getTargetConstant(" +
+                 getQualifiedName(DI->getDef()) + "RegClassID, " +
+                 "MVT::i32);");
+        NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
+        return NodeOps;
+      }
+    } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
+      unsigned ResNo = TmpNo++;
+      assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
+      emitCode("SDValue Tmp" + utostr(ResNo) + 
+               " = CurDAG->getTargetConstant(0x" + 
+               utohexstr((uint64_t) II->getValue()) +
+               "ULL, " + getEnumName(N->getTypeNum(0)) + ");");
+      NodeOps.push_back(getValueName("Tmp" + utostr(ResNo)));
+      return NodeOps;
+    }
+    
+#ifndef NDEBUG
+    N->dump();
+#endif
+    assert(0 && "Unknown leaf type!");
+    return NodeOps;
+  }
+  
+  Record *Op = N->getOperator();
+  if (Op->isSubClassOf("Instruction")) {
+    const CodeGenTarget &CGT = CGP.getTargetInfo();
+    CodeGenInstruction &II = CGT.getInstruction(Op->getName());
+    const DAGInstruction &Inst = CGP.getInstruction(Op);
+    const TreePattern *InstPat = Inst.getPattern();
+    // FIXME: Assume actual pattern comes before "implicit".
+    TreePatternNode *InstPatNode =
+    isRoot ? (InstPat ? InstPat->getTree(0) : Pattern)
+    : (InstPat ? InstPat->getTree(0) : NULL);
+    if (InstPatNode && !InstPatNode->isLeaf() &&
+        InstPatNode->getOperator()->getName() == "set") {
+      InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
+    }
+    bool IsVariadic = isRoot && II.isVariadic;
+    // FIXME: fix how we deal with physical register operands.
+    bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
+    bool HasImpResults = isRoot && DstRegs.size() > 0;
+    bool NodeHasOptInFlag = isRoot &&
+    PatternHasProperty(Pattern, SDNPOptInFlag, CGP);
+    bool NodeHasInFlag  = isRoot &&
+    PatternHasProperty(Pattern, SDNPInFlag, CGP);
+    bool NodeHasOutFlag = isRoot &&
+    PatternHasProperty(Pattern, SDNPOutFlag, CGP);
+    bool NodeHasChain = InstPatNode &&
+    PatternHasProperty(InstPatNode, SDNPHasChain, CGP);
+    bool InputHasChain = isRoot &&
+    NodeHasProperty(Pattern, SDNPHasChain, CGP);
+    unsigned NumResults = Inst.getNumResults();    
+    unsigned NumDstRegs = HasImpResults ? DstRegs.size() : 0;
+    
+    // Record output varargs info.
+    OutputIsVariadic = IsVariadic;
+    
+    if (NodeHasOptInFlag) {
+      emitCode("bool HasInFlag = "
+               "(N->getOperand(N->getNumOperands()-1).getValueType() == "
+               "MVT::Flag);");
+    }
+    if (IsVariadic)
+      emitCode("SmallVector<SDValue, 8> Ops" + utostr(OpcNo) + ";");
+    
+    // How many results is this pattern expected to produce?
+    unsigned NumPatResults = 0;
+    for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {
+      MVT::SimpleValueType VT = Pattern->getTypeNum(i);
+      if (VT != MVT::isVoid && VT != MVT::Flag)
+        NumPatResults++;
+    }
+    
+    if (OrigChains.size() > 0) {
+      // The original input chain is being ignored. If it is not just
+      // pointing to the op that's being folded, we should create a
+      // TokenFactor with it and the chain of the folded op as the new chain.
+      // We could potentially be doing multiple levels of folding, in that
+      // case, the TokenFactor can have more operands.
+      emitCode("SmallVector<SDValue, 8> InChains;");
+      for (unsigned i = 0, e = OrigChains.size(); i < e; ++i) {
+        emitCode("if (" + OrigChains[i].first + ".getNode() != " +
+                 OrigChains[i].second + ".getNode()) {");
+        emitCode("  InChains.push_back(" + OrigChains[i].first + ");");
+        emitCode("}");
+      }
+      emitCode("InChains.push_back(" + ChainName + ");");
+      emitCode(ChainName + " = CurDAG->getNode(ISD::TokenFactor, "
+               "N->getDebugLoc(), MVT::Other, "
+               "&InChains[0], InChains.size());");
+      if (GenDebug) {
+        emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"yellow\");");
+        emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"black\");");
+      }
+    }
+    
+    // Loop over all of the operands of the instruction pattern, emitting code
+    // to fill them all in.  The node 'N' usually has number children equal to
+    // the number of input operands of the instruction.  However, in cases
+    // where there are predicate operands for an instruction, we need to fill
+    // in the 'execute always' values.  Match up the node operands to the
+    // instruction operands to do this.
+    std::vector<std::string> AllOps;
+    for (unsigned ChildNo = 0, InstOpNo = NumResults;
+         InstOpNo != II.OperandList.size(); ++InstOpNo) {
+      std::vector<std::string> Ops;
+      
+      // Determine what to emit for this operand.
+      Record *OperandNode = II.OperandList[InstOpNo].Rec;
+      if ((OperandNode->isSubClassOf("PredicateOperand") ||
+           OperandNode->isSubClassOf("OptionalDefOperand")) &&
+          !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
+        // This is a predicate or optional def operand; emit the
+        // 'default ops' operands.
+        const DAGDefaultOperand &DefaultOp =
+        CGP.getDefaultOperand(II.OperandList[InstOpNo].Rec);
+        for (unsigned i = 0, e = DefaultOp.DefaultOps.size(); i != e; ++i) {
+          Ops = EmitResultCode(DefaultOp.DefaultOps[i], DstRegs,
+                               InFlagDecled, ResNodeDecled);
+          AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+        }
+      } else {
+        // Otherwise this is a normal operand or a predicate operand without
+        // 'execute always'; emit it.
+        Ops = EmitResultCode(N->getChild(ChildNo), DstRegs,
+                             InFlagDecled, ResNodeDecled);
+        AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+        ++ChildNo;
+      }
+    }
+    
+    // Emit all the chain and CopyToReg stuff.
+    bool ChainEmitted = NodeHasChain;
+    if (NodeHasInFlag || HasImpInputs)
+      EmitInFlagSelectCode(Pattern, "N", ChainEmitted,
+                           InFlagDecled, ResNodeDecled, true);
+    if (NodeHasOptInFlag || NodeHasInFlag || HasImpInputs) {
+      if (!InFlagDecled) {
+        emitCode("SDValue InFlag(0, 0);");
+        InFlagDecled = true;
+      }
+      if (NodeHasOptInFlag) {
+        emitCode("if (HasInFlag) {");
+        emitCode("  InFlag = N->getOperand(N->getNumOperands()-1);");
+        emitCode("}");
+      }
+    }
+    
+    unsigned ResNo = TmpNo++;
+    
+    unsigned OpsNo = OpcNo;
+    std::string CodePrefix;
+    bool ChainAssignmentNeeded = NodeHasChain && !isRoot;
+    std::deque<std::string> After;
+    std::string NodeName;
+    if (!isRoot) {
+      NodeName = "Tmp" + utostr(ResNo);
+      CodePrefix = "SDValue " + NodeName + "(";
+    } else {
+      NodeName = "ResNode";
+      if (!ResNodeDecled) {
+        CodePrefix = "SDNode *" + NodeName + " = ";
+        ResNodeDecled = true;
+      } else
+        CodePrefix = NodeName + " = ";
+    }
+    
+    std::string Code = "Opc" + utostr(OpcNo);
+    
+    if (!isRoot || (InputHasChain && !NodeHasChain))
+      // For call to "getMachineNode()".
+      Code += ", N->getDebugLoc()";
+    
+    emitOpcode(II.Namespace + "::" + II.TheDef->getName());
+    
+    // Output order: results, chain, flags
+    // Result types.
+    if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
+      Code += ", VT" + utostr(VTNo);
+      emitVT(getEnumName(N->getTypeNum(0)));
+    }
+    // Add types for implicit results in physical registers, scheduler will
+    // care of adding copyfromreg nodes.
+    for (unsigned i = 0; i < NumDstRegs; i++) {
+      Record *RR = DstRegs[i];
+      if (RR->isSubClassOf("Register")) {
+        MVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
+        Code += ", " + getEnumName(RVT);
+      }
+    }
+    if (NodeHasChain)
+      Code += ", MVT::Other";
+    if (NodeHasOutFlag)
+      Code += ", MVT::Flag";
+    
+    // Inputs.
+    if (IsVariadic) {
+      for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
+        emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
+      AllOps.clear();
+      
+      // Figure out whether any operands at the end of the op list are not
+      // part of the variable section.
+      std::string EndAdjust;
+      if (NodeHasInFlag || HasImpInputs)
+        EndAdjust = "-1";  // Always has one flag.
+      else if (NodeHasOptInFlag)
+        EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
+      
+      emitCode("for (unsigned i = NumInputRootOps + " + utostr(NodeHasChain) +
+               ", e = N->getNumOperands()" + EndAdjust + "; i != e; ++i) {");
+      
+      emitCode("  Ops" + utostr(OpsNo) + ".push_back(N->getOperand(i));");
+      emitCode("}");
+    }
+    
+    // Populate MemRefs with entries for each memory accesses covered by 
+    // this pattern.
+    if (isRoot && !LSI.empty()) {
+      std::string MemRefs = "MemRefs" + utostr(OpsNo);
+      emitCode("MachineSDNode::mmo_iterator " + MemRefs + " = "
+               "MF->allocateMemRefsArray(" + utostr(LSI.size()) + ");");
+      for (unsigned i = 0, e = LSI.size(); i != e; ++i)
+        emitCode(MemRefs + "[" + utostr(i) + "] = "
+                 "cast<MemSDNode>(" + LSI[i] + ")->getMemOperand();");
+      After.push_back("cast<MachineSDNode>(ResNode)->setMemRefs(" +
+                      MemRefs + ", " + MemRefs + " + " + utostr(LSI.size()) +
+                      ");");
+    }
+    
+    if (NodeHasChain) {
+      if (IsVariadic)
+        emitCode("Ops" + utostr(OpsNo) + ".push_back(" + ChainName + ");");
+      else
+        AllOps.push_back(ChainName);
+    }
+    
+    if (IsVariadic) {
+      if (NodeHasInFlag || HasImpInputs)
+        emitCode("Ops" + utostr(OpsNo) + ".push_back(InFlag);");
+      else if (NodeHasOptInFlag) {
+        emitCode("if (HasInFlag)");
+        emitCode("  Ops" + utostr(OpsNo) + ".push_back(InFlag);");
+      }
+      Code += ", &Ops" + utostr(OpsNo) + "[0], Ops" + utostr(OpsNo) +
+      ".size()";
+    } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
+      AllOps.push_back("InFlag");
+    
+    unsigned NumOps = AllOps.size();
+    if (NumOps) {
+      if (!NodeHasOptInFlag && NumOps < 4) {
+        for (unsigned i = 0; i != NumOps; ++i)
+          Code += ", " + AllOps[i];
+      } else {
+        std::string OpsCode = "SDValue Ops" + utostr(OpsNo) + "[] = { ";
+        for (unsigned i = 0; i != NumOps; ++i) {
+          OpsCode += AllOps[i];
+          if (i != NumOps-1)
+            OpsCode += ", ";
+        }
+        emitCode(OpsCode + " };");
+        Code += ", Ops" + utostr(OpsNo) + ", ";
+        if (NodeHasOptInFlag) {
+          Code += "HasInFlag ? ";
+          Code += utostr(NumOps) + " : " + utostr(NumOps-1);
+        } else
+          Code += utostr(NumOps);
+      }
+    }
+    
+    if (!isRoot)
+      Code += "), 0";
+    
+    std::vector<std::string> ReplaceFroms;
+    std::vector<std::string> ReplaceTos;
+    if (!isRoot) {
+      NodeOps.push_back("Tmp" + utostr(ResNo));
+    } else {
+      
+      if (NodeHasOutFlag) {
+        if (!InFlagDecled) {
+          After.push_back("SDValue InFlag(ResNode, " + 
+                          utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
+                          ");");
+          InFlagDecled = true;
+        } else
+          After.push_back("InFlag = SDValue(ResNode, " + 
+                          utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
+                          ");");
+      }
+      
+      for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
+        ReplaceFroms.push_back("SDValue(" +
+                               FoldedChains[j].first + ".getNode(), " +
+                               utostr(FoldedChains[j].second) +
+                               ")");
+        ReplaceTos.push_back("SDValue(ResNode, " +
+                             utostr(NumResults+NumDstRegs) + ")");
+      }
+      
+      if (NodeHasOutFlag) {
+        if (FoldedFlag.first != "") {
+          ReplaceFroms.push_back("SDValue(" + FoldedFlag.first + ".getNode(), " +
+                                 utostr(FoldedFlag.second) + ")");
+          ReplaceTos.push_back("InFlag");
+        } else {
+          assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
+          ReplaceFroms.push_back("SDValue(N, " +
+                                 utostr(NumPatResults + (unsigned)InputHasChain)
+                                 + ")");
+          ReplaceTos.push_back("InFlag");
+        }
+      }
+      
+      if (!ReplaceFroms.empty() && InputHasChain) {
+        ReplaceFroms.push_back("SDValue(N, " +
+                               utostr(NumPatResults) + ")");
+        ReplaceTos.push_back("SDValue(" + ChainName + ".getNode(), " +
+                             ChainName + ".getResNo()" + ")");
+        ChainAssignmentNeeded |= NodeHasChain;
+      }
+      
+      // User does not expect the instruction would produce a chain!
+      if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
+        ;
+      } else if (InputHasChain && !NodeHasChain) {
+        // One of the inner node produces a chain.
+        assert(!NodeHasOutFlag && "Node has flag but not chain!");
+        ReplaceFroms.push_back("SDValue(N, " +
+                               utostr(NumPatResults) + ")");
+        ReplaceTos.push_back(ChainName);
+      }
+    }
+    
+    if (ChainAssignmentNeeded) {
+      // Remember which op produces the chain.
+      std::string ChainAssign;
+      if (!isRoot)
+        ChainAssign = ChainName + " = SDValue(" + NodeName +
+        ".getNode(), " + utostr(NumResults+NumDstRegs) + ");";
+      else
+        ChainAssign = ChainName + " = SDValue(" + NodeName +
+        ", " + utostr(NumResults+NumDstRegs) + ");";
+      
+      After.push_front(ChainAssign);
+    }
+    
+    if (ReplaceFroms.size() == 1) {
+      After.push_back("ReplaceUses(" + ReplaceFroms[0] + ", " +
+                      ReplaceTos[0] + ");");
+    } else if (!ReplaceFroms.empty()) {
+      After.push_back("const SDValue Froms[] = {");
+      for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
+        After.push_back("  " + ReplaceFroms[i] + (i + 1 != e ? "," : ""));
+      After.push_back("};");
+      After.push_back("const SDValue Tos[] = {");
+      for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
+        After.push_back("  " + ReplaceTos[i] + (i + 1 != e ? "," : ""));
+      After.push_back("};");
+      After.push_back("ReplaceUses(Froms, Tos, " +
+                      itostr(ReplaceFroms.size()) + ");");
+    }
+    
+    // We prefer to use SelectNodeTo since it avoids allocation when
+    // possible and it avoids CSE map recalculation for the node's
+    // users, however it's tricky to use in a non-root context.
+    //
+    // We also don't use SelectNodeTo if the pattern replacement is being
+    // used to jettison a chain result, since morphing the node in place
+    // would leave users of the chain dangling.
+    //
+    if (!isRoot || (InputHasChain && !NodeHasChain)) {
+      Code = "CurDAG->getMachineNode(" + Code;
+    } else {
+      Code = "CurDAG->SelectNodeTo(N, " + Code;
+    }
+    if (isRoot) {
+      if (After.empty())
+        CodePrefix = "return ";
+      else
+        After.push_back("return ResNode;");
+    }
+    
+    emitCode(CodePrefix + Code + ");");
+    
+    if (GenDebug) {
+      if (!isRoot) {
+        emitCode("CurDAG->setSubgraphColor(" +
+                 NodeName +".getNode(), \"yellow\");");
+        emitCode("CurDAG->setSubgraphColor(" +
+                 NodeName +".getNode(), \"black\");");
+      } else {
+        emitCode("CurDAG->setSubgraphColor(" + NodeName +", \"yellow\");");
+        emitCode("CurDAG->setSubgraphColor(" + NodeName +", \"black\");");
+      }
+    }
+    
+    for (unsigned i = 0, e = After.size(); i != e; ++i)
+      emitCode(After[i]);
+    
+    return NodeOps;
+  }
+  if (Op->isSubClassOf("SDNodeXForm")) {
+    assert(N->getNumChildren() == 1 && "node xform should have one child!");
+    // PatLeaf node - the operand may or may not be a leaf node. But it should
+    // behave like one.
+    std::vector<std::string> Ops =
+    EmitResultCode(N->getChild(0), DstRegs, InFlagDecled,
+                   ResNodeDecled, true);
+    unsigned ResNo = TmpNo++;
+    emitCode("SDValue Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
+             + "(" + Ops.back() + ".getNode());");
+    NodeOps.push_back("Tmp" + utostr(ResNo));
+    if (isRoot)
+      emitCode("return Tmp" + utostr(ResNo) + ".getNode();");
+    return NodeOps;
+  }
+  
+  N->dump();
+  errs() << "\n";
+  throw std::string("Unknown node in result pattern!");
+}
+
 
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
@@ -1831,9 +1856,8 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
 
         // Replace the emission code within selection routines with calls to the
         // emission functions.
-        if (GenDebug) {
+        if (GenDebug)
           GeneratedCode.push_back(std::make_pair(0, "CurDAG->setSubgraphColor(N, \"red\");"));
-        }
         CallerCode = "SDNode *Result = Emit_" + utostr(EmitFuncNum) + CallerCode;
         GeneratedCode.push_back(std::make_pair(3, CallerCode));
         if (GenDebug) {
