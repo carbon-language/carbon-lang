@@ -1330,6 +1330,78 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 // (mul X, 2^n+1) -> (add (X << n), X)
 // (mul X, 2^n-1) -> (rsb X, (X << n))
 
+// Saturating adds/subtracts -- for disassembly only
+
+class AQI<bits<8> op27_20, bits<4> op7_4, dag oops, dag iops, Format f,
+          InstrItinClass itin, string opc, string asm, list<dag> pattern>
+  : AI<oops, iops, f, itin, opc, asm, pattern> {
+  let Inst{27-20} = op27_20;
+  let Inst{7-4} = op7_4;
+}
+
+def QADD : AQI<0b00010000, 0b0101, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qadd", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QADD16 : AQI<0b01100010, 0b0001,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qadd16", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QADD8 : AQI<0b01100010, 0b1001, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qadd8", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QASX : AQI<0b01100010, 0b0011, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qasx", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QDADD : AQI<0b00010100, 0b0101,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qdadd", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QDSUB : AQI<0b00010110, 0b0101,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qdsub", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QSAX : AQI<0b01100010, 0b0101, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qsax", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QSUB : AQI<0b00010010, 0b0101, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qsub", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QSUB16 : AQI<0b01100010, 0b0111,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qsub16", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def QSUB8 : AQI<0b01100010, 0b1111,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "qsub8", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def UQADD16 : AQI<0b01100110, 0b0001,(outs GPR:$dst),(ins GPR:$a, GPR:$b),DPFrm,
+               IIC_iALUr, "uqadd16", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def UQADD8 : AQI<0b01100110, 0b1001,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "uqadd8", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def UQASX : AQI<0b01100110, 0b0011, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "uqasx", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def UQSAX : AQI<0b01100110, 0b0101, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "uqsax", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def UQSUB16 : AQI<0b01100110, 0b0111,(outs GPR:$dst),(ins GPR:$a, GPR:$b),DPFrm,
+               IIC_iALUr, "uqsub16", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
+
+def UQSUB8 : AQI<0b01100110, 0b1111,(outs GPR:$dst),(ins GPR:$a, GPR:$b), DPFrm,
+               IIC_iALUr, "uqsub8", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>;
 
 //===----------------------------------------------------------------------===//
 //  Bitwise Instructions.
