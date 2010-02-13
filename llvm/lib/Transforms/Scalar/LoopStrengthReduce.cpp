@@ -579,6 +579,10 @@ private:
                     SmallPtrSet<const SCEV *, 16> &Regs,
                     const Loop *L,
                     ScalarEvolution &SE, DominatorTree &DT);
+  void RatePrimaryRegister(const SCEV *Reg,
+                           SmallPtrSet<const SCEV *, 16> &Regs,
+                           const Loop *L,
+                           ScalarEvolution &SE, DominatorTree &DT);
 };
 
 }
@@ -588,49 +592,59 @@ void Cost::RateRegister(const SCEV *Reg,
                         SmallPtrSet<const SCEV *, 16> &Regs,
                         const Loop *L,
                         ScalarEvolution &SE, DominatorTree &DT) {
-  if (Regs.insert(Reg)) {
-    if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg)) {
-      if (AR->getLoop() == L)
-        AddRecCost += 1; /// TODO: This should be a function of the stride.
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg)) {
+    if (AR->getLoop() == L)
+      AddRecCost += 1; /// TODO: This should be a function of the stride.
 
-      // If this is an addrec for a loop that's already been visited by LSR,
-      // don't second-guess its addrec phi nodes. LSR isn't currently smart
-      // enough to reason about more than one loop at a time. Consider these
-      // registers free and leave them alone.
-      else if (L->contains(AR->getLoop()) ||
-               (!AR->getLoop()->contains(L) &&
-                DT.dominates(L->getHeader(), AR->getLoop()->getHeader()))) {
-        for (BasicBlock::iterator I = AR->getLoop()->getHeader()->begin();
-             PHINode *PN = dyn_cast<PHINode>(I); ++I)
-          if (SE.isSCEVable(PN->getType()) &&
-              (SE.getEffectiveSCEVType(PN->getType()) ==
-               SE.getEffectiveSCEVType(AR->getType())) &&
-              SE.getSCEV(PN) == AR)
-            goto no_cost;
+    // If this is an addrec for a loop that's already been visited by LSR,
+    // don't second-guess its addrec phi nodes. LSR isn't currently smart
+    // enough to reason about more than one loop at a time. Consider these
+    // registers free and leave them alone.
+    else if (L->contains(AR->getLoop()) ||
+             (!AR->getLoop()->contains(L) &&
+              DT.dominates(L->getHeader(), AR->getLoop()->getHeader()))) {
+      for (BasicBlock::iterator I = AR->getLoop()->getHeader()->begin();
+           PHINode *PN = dyn_cast<PHINode>(I); ++I)
+        if (SE.isSCEVable(PN->getType()) &&
+            (SE.getEffectiveSCEVType(PN->getType()) ==
+             SE.getEffectiveSCEVType(AR->getType())) &&
+            SE.getSCEV(PN) == AR)
+          return;
 
-        // If this isn't one of the addrecs that the loop already has, it
-        // would require a costly new phi and add.
-        ++NumBaseAdds;
+      // If this isn't one of the addrecs that the loop already has, it
+      // would require a costly new phi and add. TODO: This isn't
+      // precisely modeled right now.
+      ++NumBaseAdds;
+      if (!Regs.count(AR->getStart()))
         RateRegister(AR->getStart(), Regs, L, SE, DT);
-      }
-
-      // Add the step value register, if it needs one.
-      // TODO: The non-affine case isn't precisely modeled here.
-      if (!AR->isAffine() || !isa<SCEVConstant>(AR->getOperand(1)))
-        RateRegister(AR->getOperand(1), Regs, L, SE, DT);
     }
-    ++NumRegs;
 
-    // Rough heuristic; favor registers which don't require extra setup
-    // instructions in the preheader.
-    if (!isa<SCEVUnknown>(Reg) &&
-        !isa<SCEVConstant>(Reg) &&
-        !(isa<SCEVAddRecExpr>(Reg) &&
-          (isa<SCEVUnknown>(cast<SCEVAddRecExpr>(Reg)->getStart()) ||
-           isa<SCEVConstant>(cast<SCEVAddRecExpr>(Reg)->getStart()))))
-      ++SetupCost;
-  no_cost:;
+    // Add the step value register, if it needs one.
+    // TODO: The non-affine case isn't precisely modeled here.
+    if (!AR->isAffine() || !isa<SCEVConstant>(AR->getOperand(1)))
+      if (!Regs.count(AR->getStart()))
+        RateRegister(AR->getOperand(1), Regs, L, SE, DT);
   }
+  ++NumRegs;
+
+  // Rough heuristic; favor registers which don't require extra setup
+  // instructions in the preheader.
+  if (!isa<SCEVUnknown>(Reg) &&
+      !isa<SCEVConstant>(Reg) &&
+      !(isa<SCEVAddRecExpr>(Reg) &&
+        (isa<SCEVUnknown>(cast<SCEVAddRecExpr>(Reg)->getStart()) ||
+         isa<SCEVConstant>(cast<SCEVAddRecExpr>(Reg)->getStart()))))
+    ++SetupCost;
+}
+
+/// RatePrimaryRegister - Record this register in the set. If we haven't seen it
+/// before, rate it.
+void Cost::RatePrimaryRegister(const SCEV *Reg,
+                         SmallPtrSet<const SCEV *, 16> &Regs,
+                         const Loop *L,
+                         ScalarEvolution &SE, DominatorTree &DT) {
+  if (Regs.insert(Reg))
+    RateRegister(Reg, Regs, L, SE, DT);
 }
 
 void Cost::RateFormula(const Formula &F,
@@ -645,7 +659,7 @@ void Cost::RateFormula(const Formula &F,
       Loose();
       return;
     }
-    RateRegister(ScaledReg, Regs, L, SE, DT);
+    RatePrimaryRegister(ScaledReg, Regs, L, SE, DT);
   }
   for (SmallVectorImpl<const SCEV *>::const_iterator I = F.BaseRegs.begin(),
        E = F.BaseRegs.end(); I != E; ++I) {
@@ -654,7 +668,7 @@ void Cost::RateFormula(const Formula &F,
       Loose();
       return;
     }
-    RateRegister(BaseReg, Regs, L, SE, DT);
+    RatePrimaryRegister(BaseReg, Regs, L, SE, DT);
 
     NumIVMuls += isa<SCEVMulExpr>(BaseReg) &&
                  BaseReg->hasComputableLoopEvolution(L);
@@ -2493,7 +2507,8 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
   }
 
   DEBUG(if (Changed) {
-          dbgs() << "After filtering out undesirable candidates:\n";
+          dbgs() << "\n"
+                    "After filtering out undesirable candidates:\n";
           print_uses(dbgs());
         });
 }
@@ -2610,13 +2625,13 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
   SmallSetVector<const SCEV *, 4> ReqRegs;
   for (SmallPtrSet<const SCEV *, 16>::const_iterator I = CurRegs.begin(),
        E = CurRegs.end(); I != E; ++I)
-    if (LU.Regs.count(*I)) {
+    if (LU.Regs.count(*I))
       ReqRegs.insert(*I);
-      break;
-    }
 
+  bool AnySatisfiedReqRegs = false;
   SmallPtrSet<const SCEV *, 16> NewRegs;
   Cost NewCost;
+retry:
   for (SmallVectorImpl<Formula>::const_iterator I = LU.Formulae.begin(),
        E = LU.Formulae.end(); I != E; ++I) {
     const Formula &F = *I;
@@ -2630,6 +2645,7 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
           F.BaseRegs.end())
         goto skip;
     }
+    AnySatisfiedReqRegs = true;
 
     // Evaluate the cost of the current formula. If it's already worse than
     // the current best, prune the search at that point.
@@ -2657,6 +2673,13 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
       Workspace.pop_back();
     }
   skip:;
+  }
+
+  // If none of the formulae had all of the required registers, relax the
+  // constraint so that we don't exclude all formulae.
+  if (!AnySatisfiedReqRegs) {
+    ReqRegs.clear();
+    goto retry;
   }
 }
 
