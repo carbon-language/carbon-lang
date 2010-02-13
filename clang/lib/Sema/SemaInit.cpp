@@ -744,7 +744,7 @@ void InitListChecker::CheckScalarType(const InitializedEntity &Entity,
       SemaRef.PerformCopyInitialization(Entity, expr->getLocStart(),
                                         SemaRef.Owned(expr));
 
-    Expr *ResultExpr;
+    Expr *ResultExpr = 0;
 
     if (Result.isInvalid())
       hadError = true; // types weren't compatible.
