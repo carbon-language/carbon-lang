@@ -1109,9 +1109,10 @@ private:
   }
 
   static int DclCmp(const void *p1, const void *p2) {
-    const CXXMethodDecl *MD1 = (const CXXMethodDecl *)p1;
-    const CXXMethodDecl *MD2 = (const CXXMethodDecl *)p2;
-    return (MD1->getIdentifier() - MD2->getIdentifier());
+    const CXXMethodDecl *MD1 = *(const CXXMethodDecl *const *)p1;
+    const CXXMethodDecl *MD2 = *(const CXXMethodDecl *const *)p2;
+
+    return (DeclarationName::compare(MD1->getDeclName(), MD2->getDeclName()));
   }
   
   void MergeForwarding() {
@@ -1127,7 +1128,7 @@ private:
     for (A_t::iterator I = A.begin(),
            E = A.end(); I != E; ++I) {
       A_t::iterator J = I;
-      while (++J != E  && DclCmp(*I, *J) == 0)
+      while (++J != E  && DclCmp(I, J) == 0)
         if (DclIsSame(*I, *J)) {
           if (0) printf("connecting %s\n", (*I)->getNameAsCString());
           ForwardUnique[*J] = *I;

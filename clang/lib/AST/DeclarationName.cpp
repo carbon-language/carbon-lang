@@ -66,27 +66,33 @@ public:
   }
 };
 
-bool operator<(DeclarationName LHS, DeclarationName RHS) {
+static int compareInt(unsigned A, unsigned B) {
+  return (A < B ? -1 : (A > B ? 1 : 0));
+}
+
+int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
   if (LHS.getNameKind() != RHS.getNameKind())
-    return LHS.getNameKind() < RHS.getNameKind();
+    return (LHS.getNameKind() < RHS.getNameKind() ? -1 : 1);
   
   switch (LHS.getNameKind()) {
-  case DeclarationName::Identifier:
-    return LHS.getAsIdentifierInfo()->getName() < 
-                                         RHS.getAsIdentifierInfo()->getName();
+  case DeclarationName::Identifier: {
+    IdentifierInfo *LII = LHS.getAsIdentifierInfo();
+    IdentifierInfo *RII = RHS.getAsIdentifierInfo();
+    if (!LII) return RII ? -1 : 0;
+    if (!RII) return 1;
+    
+    return LII->getName().compare(RII->getName());
+  }
 
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector: {
     Selector LHSSelector = LHS.getObjCSelector();
     Selector RHSSelector = RHS.getObjCSelector();
-    for (unsigned I = 0, 
-               N = std::min(LHSSelector.getNumArgs(), RHSSelector.getNumArgs());
-         I != N; ++I) {
+    unsigned LN = LHSSelector.getNumArgs(), RN = RHSSelector.getNumArgs();
+    for (unsigned I = 0, N = std::min(LN, RN); I != N; ++I) {
       IdentifierInfo *LHSId = LHSSelector.getIdentifierInfoForSlot(I);
       IdentifierInfo *RHSId = RHSSelector.getIdentifierInfoForSlot(I);
-      if (!LHSId || !RHSId)
-        return LHSId && !RHSId;
         
       switch (LHSId->getName().compare(RHSId->getName())) {
       case -1: return true;
@@ -94,27 +100,32 @@ bool operator<(DeclarationName LHS, DeclarationName RHS) {
       default: break;
       }
     }
-    
-    return LHSSelector.getNumArgs() < RHSSelector.getNumArgs();
+
+    return compareInt(LN, RN);
   }
   
   case DeclarationName::CXXConstructorName:
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName:
-    return QualTypeOrdering()(LHS.getCXXNameType(), RHS.getCXXNameType());
+    if (QualTypeOrdering()(LHS.getCXXNameType(), RHS.getCXXNameType()))
+      return -1;
+    if (QualTypeOrdering()(RHS.getCXXNameType(), LHS.getCXXNameType()))
+      return 1;
+    return 0;
               
   case DeclarationName::CXXOperatorName:
-    return LHS.getCXXOverloadedOperator() < RHS.getCXXOverloadedOperator();
+    return compareInt(LHS.getCXXOverloadedOperator(),
+                      RHS.getCXXOverloadedOperator());
 
   case DeclarationName::CXXLiteralOperatorName:
-    return LHS.getCXXLiteralIdentifier()->getName() <
-                                       RHS.getCXXLiteralIdentifier()->getName();
+    return LHS.getCXXLiteralIdentifier()->getName().compare(
+                                   RHS.getCXXLiteralIdentifier()->getName());
               
   case DeclarationName::CXXUsingDirective:
-    return false;
+    return 0;
   }
               
-  return false;
+  return 0;
 }
 
 } // end namespace clang

@@ -274,30 +274,34 @@ public:
   static DeclarationName getTombstoneMarker() {
     return DeclarationName(uintptr_t(-2));
   }
+
+  static int compare(DeclarationName LHS, DeclarationName RHS);
   
   void dump() const;
 };
 
 /// Ordering on two declaration names. If both names are identifiers,
 /// this provides a lexicographical ordering.
-bool operator<(DeclarationName LHS, DeclarationName RHS);
+inline bool operator<(DeclarationName LHS, DeclarationName RHS) {
+  return DeclarationName::compare(LHS, RHS) < 0;
+}
 
 /// Ordering on two declaration names. If both names are identifiers,
 /// this provides a lexicographical ordering.
 inline bool operator>(DeclarationName LHS, DeclarationName RHS) {
-  return RHS < LHS;
+  return DeclarationName::compare(LHS, RHS) > 0;
 }
 
 /// Ordering on two declaration names. If both names are identifiers,
 /// this provides a lexicographical ordering.
 inline bool operator<=(DeclarationName LHS, DeclarationName RHS) {
-  return !(RHS < LHS);
+  return DeclarationName::compare(LHS, RHS) <= 0;
 }
 
 /// Ordering on two declaration names. If both names are identifiers,
 /// this provides a lexicographical ordering.
 inline bool operator>=(DeclarationName LHS, DeclarationName RHS) {
-  return !(LHS < RHS);
+  return DeclarationName::compare(LHS, RHS) >= 0;
 }
 
 /// DeclarationNameTable - Used to store and retrieve DeclarationName
