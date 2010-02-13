@@ -473,19 +473,27 @@ class InvalidateRegionsWorker {
 
   BumpVectorContext BVC;
   ClusterMap ClusterM;
-  WorkList WL;  
+  WorkList WL;
+  
+  StoreManager::InvalidatedSymbols *IS;
+  ASTContext &Ctx;
+  ValueManager &ValMgr;
+  
 public:
+  InvalidateRegionsWorker(StoreManager::InvalidatedSymbols *is,
+                          ASTContext &ctx, ValueManager &valMgr)
+    : IS(is), Ctx(ctx), ValMgr(valMgr) {}
+  
   Store InvalidateRegions(RegionStoreManager &RM, Store store,
                           const MemRegion * const *I,const MemRegion * const *E,
-                          const Expr *Ex, unsigned Count,
-                          StoreManager::InvalidatedSymbols *IS,
-                          ASTContext &Ctx, ValueManager &ValMgr);
+                          const Expr *Ex, unsigned Count);
   
 private:
   void AddToWorkList(BindingKey K);
   void AddToWorkList(const MemRegion *R);
   void AddToCluster(BindingKey K);
   RegionCluster **getCluster(const MemRegion *R);
+  void VisitBinding(SVal V);
 };  
 }
 
@@ -520,14 +528,22 @@ InvalidateRegionsWorker::getCluster(const MemRegion *R) {
   return &CRef;
 }
 
+void InvalidateRegionsWorker::VisitBinding(SVal V) {
+  if (const MemRegion *R = V.getAsRegion())
+    AddToWorkList(R);
+  
+  // A symbol?  Mark it touched by the invalidation.
+  if (IS)
+    if (SymbolRef Sym = V.getAsSymbol())
+      IS->insert(Sym);
+}
+  
 Store InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
                                                  Store store,
                                                  const MemRegion * const *I,
                                                  const MemRegion * const *E,
-                                                 const Expr *Ex, unsigned Count,
-                                           StoreManager::InvalidatedSymbols *IS,
-                                                 ASTContext &Ctx,
-                                                 ValueManager &ValMgr) {
+                                                 const Expr *Ex, unsigned Count)
+{
   RegionBindings B = RegionStoreManager::GetRegionBindings(store);
 
   // Scan the entire store and make the region clusters.
@@ -554,15 +570,8 @@ Store InvalidateRegionsWorker::InvalidateRegions(RegionStoreManager &RM,
       BindingKey K = *I;
       
       // Get the old binding.  Is it a region?  If so, add it to the worklist.
-      if (const SVal *V = RM.Lookup(B, K)) {
-        if (const MemRegion *R = V->getAsRegion())
-          AddToWorkList(R);
-    
-        // A symbol?  Mark it touched by the invalidation.
-        if (IS)
-          if (SymbolRef Sym = V->getAsSymbol())
-            IS->insert(Sym);
-      }
+      if (const SVal *V = RM.Lookup(B, K))
+        VisitBinding(*V);
 
       B = RM.Remove(B, K);
     }
@@ -643,9 +652,8 @@ Store RegionStoreManager::InvalidateRegions(Store store,
                                             const MemRegion * const *E,
                                             const Expr *Ex, unsigned Count,
                                             InvalidatedSymbols *IS) {
-  InvalidateRegionsWorker W;
-  return W.InvalidateRegions(*this, store, I, E, Ex, Count, IS, getContext(),
-                             StateMgr.getValueManager());
+  InvalidateRegionsWorker W(IS, getContext(), StateMgr.getValueManager());
+  return W.InvalidateRegions(*this, store, I, E, Ex, Count);
 }
   
 //===----------------------------------------------------------------------===//
