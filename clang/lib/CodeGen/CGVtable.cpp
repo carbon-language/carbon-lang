@@ -288,7 +288,7 @@ ComputeBaseOffset(ASTContext &Context,
                   const CXXRecordDecl *DerivedRD,
                   const CXXRecordDecl *BaseRD) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
   
   if (!const_cast<CXXRecordDecl *>(DerivedRD)->
       isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
@@ -296,15 +296,30 @@ ComputeBaseOffset(ASTContext &Context,
     return FinalOverriders::BaseOffset();
   }
 
-  assert(!Paths.getDetectedVirtual() && 
-         "FIXME: Handle virtual bases!");
-
   uint64_t NonVirtualOffset = 0;
 
   const CXXBasePath &Path = Paths.front();
   
-  for (size_t Start = 0, End = Path.size(); Start != End; ++Start) {
-    const CXXBasePathElement &Element = Path[Start];
+  unsigned NonVirtualStart = 0;
+  const CXXRecordDecl *VirtualBase = 0;
+  
+  // First, look for the virtual base class.
+  for (unsigned I = 0, E = Path.size(); I != E; ++I) {
+    const CXXBasePathElement &Element = Path[I];
+    
+    if (Element.Base->isVirtual()) {
+      // FIXME: Can we break when we find the first virtual base?
+      // (If we can't, can't we just iterate over the path in reverse order?)
+      NonVirtualStart = I + 1;
+      QualType VBaseType = Element.Base->getType();
+      VirtualBase = 
+        cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
+    }
+  }
+  
+  // Now compute the non-virtual offset.
+  for (unsigned I = NonVirtualStart, E = Path.size(); I != E; ++I) {
+    const CXXBasePathElement &Element = Path[I];
     
     // Check the base class offset.
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(Element.Class);
@@ -318,7 +333,7 @@ ComputeBaseOffset(ASTContext &Context,
   // FIXME: This should probably use CharUnits or something. Maybe we should
   // even change the base offsets in ASTRecordLayout to be specified in 
   // CharUnits.
-  return FinalOverriders::BaseOffset(0, NonVirtualOffset / 8);
+  return FinalOverriders::BaseOffset(VirtualBase, NonVirtualOffset / 8);
 }
 
 static FinalOverriders::BaseOffset
@@ -510,10 +525,12 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
       ReturnAdjustments.find(std::make_pair(Base, MD));
     if (AI != ReturnAdjustments.end()) {
       const BaseOffset &Offset = AI->second;
-      
-      assert(!Offset.VirtualBase && "FIXME: Handle vbases!");
+
+      Out << " [ret-adj: ";
+      if (Offset.VirtualBase)
+        Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
              
-      Out << " [ret-adj: " << Offset.NonVirtualOffset << " nv]";
+      Out << Offset.NonVirtualOffset << " nv]";
     }
     Out << "\n";
   }  
