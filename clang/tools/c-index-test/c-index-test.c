@@ -34,8 +34,9 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
 
 static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
                         unsigned end_line, unsigned end_column) {
+  /* FIXME: Remove this + 1. */
   fprintf(out, "[%d:%d - %d:%d]", begin_line, begin_column,
-          end_line, end_column);
+          end_line, end_column + 1);
 }
 
 static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
@@ -222,7 +223,7 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
       if (start_file != end_file || start_file != file)
         continue;
 
-      PrintExtent(out, start_line, start_column, end_line, end_column+1);
+      PrintExtent(out, start_line, start_column, end_line, end_column);
       printed_any_ranges = 1;
     }
     if (printed_any_ranges)
@@ -277,7 +278,7 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
                                        &end_file, &end_line, &end_column, 0);
         if (start_file == file && end_file == file) {
           fprintf(out, "FIX-IT: Remove ");
-          PrintExtent(out, start_line, start_column, end_line, end_column+1);
+          PrintExtent(out, start_line, start_column, end_line, end_column);
           fprintf(out, "\n");
         }
         break;
@@ -295,7 +296,7 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
                                        &end_file, &end_line, &end_column, 0);
         if (start_file == end_file) {
           fprintf(out, "FIX-IT: Replace ");
-          PrintExtent(out, start_line, start_column, end_line, end_column+1);
+          PrintExtent(out, start_line, start_column, end_line, end_column);
           fprintf(out, " with \"%s\"\n", clang_getCString(text));
         }
         clang_disposeString(text);
@@ -582,7 +583,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   CXCursor prevCursor = clang_getNullCursor();
   CXFile file;
   unsigned line = 1, col = 1;
-  unsigned start_line = 1, start_col = 1, prev_line = 0, prev_col = 0;
+  unsigned start_line = 1, start_col = 1;
   
   if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1))) {
     fprintf(stderr, "Could not create Index\n");
@@ -615,7 +616,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
     if ((c == EOF || !clang_equalCursors(cursor, prevCursor)) &&
         prevCursor.kind != CXCursor_InvalidFile) {
       print_cursor_file_scan(prevCursor, start_line, start_col,
-                             prev_line, prev_col, prefix);
+                             line, col - 1, prefix);
       start_line = line;
       start_col = col;
     }
@@ -623,8 +624,6 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
       break;
 
     prevCursor = cursor;
-    prev_line = line;
-    prev_col = col;
   }
   
   fclose(fp);

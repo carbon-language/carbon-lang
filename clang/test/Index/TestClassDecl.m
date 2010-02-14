@@ -15,19 +15,19 @@ void function(Foo * arg)
     // nothing here.
 }
 
-// CHECK-scan: [1:1 - 7:1] Invalid Cursor => NoDeclFound
-// CHECK-scan: [8:1 - 8:7] UnexposedDecl=:8:1
-// CHECK-scan: [8:8 - 8:10] ObjCClassRef=Foo:10:12
-// CHECK-scan: [8:11 - 9:1] Invalid Cursor => NoDeclFound
-// CHECK-scan: [10:1 - 11:4] ObjCInterfaceDecl=Foo:10:12
-// CHECK-scan: [11:5 - 13:5] Invalid Cursor => NoDeclFound
-// CHECK-scan: [13:6 - 13:14] FunctionDecl=function:13:6 (Definition)
-// CHECK-scan: [13:15 - 13:17] ObjCClassRef=Foo:10:12
-// CHECK-scan: [13:18 - 13:23] ParmDecl=arg:13:21 (Definition)
-// CHECK-scan: [13:24 - 13:25] FunctionDecl=function:13:6 (Definition)
-// CHECK-scan: [14:1 - 16:1] UnexposedStmt=
+// CHECK-scan: [1:1 - 8:1] Invalid Cursor => NoDeclFound
+// CHECK-scan: [8:1 - 8:8] UnexposedDecl=:8:1
+// CHECK-scan: [8:8 - 8:11] ObjCClassRef=Foo:10:12
+// CHECK-scan: [8:11 - 10:1] Invalid Cursor => NoDeclFound
+// CHECK-scan: [10:1 - 11:5] ObjCInterfaceDecl=Foo:10:12
+// CHECK-scan: [11:5 - 13:6] Invalid Cursor => NoDeclFound
+// CHECK-scan: [13:6 - 13:15] FunctionDecl=function:13:6 (Definition)
+// CHECK-scan: [13:15 - 13:18] ObjCClassRef=Foo:10:12
+// CHECK-scan: [13:18 - 13:24] ParmDecl=arg:13:21 (Definition)
+// CHECK-scan: [13:24 - 14:1] FunctionDecl=function:13:6 (Definition)
+// CHECK-scan: [14:1 - 16:2] UnexposedStmt=
 
-// CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 Extent=[10:1 - 11:4]
-// CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) Extent=[13:6 - 16:1]
-// CHECK-load: TestClassDecl.m:13:21: ParmDecl=arg:13:21 (Definition) Extent=[13:15 - 13:23]
+// CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 Extent=[10:1 - 11:5]
+// CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) Extent=[13:6 - 16:2]
+// CHECK-load: TestClassDecl.m:13:21: ParmDecl=arg:13:21 (Definition) Extent=[13:15 - 13:24]
 
