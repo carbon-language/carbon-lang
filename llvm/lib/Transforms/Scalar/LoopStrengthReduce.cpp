@@ -2012,8 +2012,14 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
       F.BaseRegs.push_back(BaseReg);
   }
   if (Ops.size() > 1) {
-    F.BaseRegs.push_back(SE.getAddExpr(Ops));
-    (void)InsertFormula(LU, LUIdx, F);
+    const SCEV *Sum = SE.getAddExpr(Ops);
+    // TODO: If Sum is zero, it probably means ScalarEvolution missed an
+    // opportunity to fold something. For now, just ignore such cases
+    // rather than procede with zero in a register.
+    if (!Sum->isZero()) {
+      F.BaseRegs.push_back(Sum);
+      (void)InsertFormula(LU, LUIdx, F);
+    }
   }
 }
 
