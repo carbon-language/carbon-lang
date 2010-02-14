@@ -22,8 +22,41 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
-// Check if an llvm::StringRef is bound to temporary std::string whose lifetime
-// is shorter than the StringRef's.
+// Generic type checking routines.
+//===----------------------------------------------------------------------===//
+
+static bool IsStringRef(QualType T) {
+  const RecordType *RT = T->getAs<RecordType>();
+  if (!RT)
+    return false;
+
+  return llvm::StringRef(QualType(RT, 0).getAsString()) ==
+  "class llvm::StringRef";
+}
+
+static bool IsStdString(QualType T) {
+  if (const QualifiedNameType *QT = T->getAs<QualifiedNameType>())
+    T = QT->getNamedType();
+
+  const TypedefType *TT = T->getAs<TypedefType>();
+  if (!TT)
+    return false;
+
+  const TypedefDecl *TD = TT->getDecl();    
+  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(TD->getDeclContext());
+  if (!ND)
+    return false;
+  const IdentifierInfo *II = ND->getIdentifier();
+  if (!II || II->getName() != "std")
+    return false;
+
+  DeclarationName N = TD->getDeclName();
+  return llvm::StringRef(N.getAsString()) == "string";
+}
+
+//===----------------------------------------------------------------------===//
+// CHECK: a llvm::StringRef should not be bound to a temporary std::string whose
+// lifetime is shorter than the StringRef's.
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -55,40 +88,11 @@ void StringRefCheckerVisitor::VisitDeclStmt(DeclStmt *S) {
       VisitVarDecl(VD);
 }
 
-static bool IsStringRef(QualType T) {
-  const RecordType *RT = T->getAs<RecordType>();
-  if (!RT)
-    return false;
-  
-  return llvm::StringRef(QualType(RT, 0).getAsString()) ==
-         "class llvm::StringRef";
-}
-
-static bool IsStdString(QualType T) {
-  if (const QualifiedNameType *QT = T->getAs<QualifiedNameType>())
-    T = QT->getNamedType();
-  
-  const TypedefType *TT = T->getAs<TypedefType>();
-  if (!TT)
-    return false;
-    
-  const TypedefDecl *TD = TT->getDecl();    
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(TD->getDeclContext());
-  if (!ND)
-    return false;
-  const IdentifierInfo *II = ND->getIdentifier();
-  if (!II || II->getName() != "std")
-    return false;
-
-  DeclarationName N = TD->getDeclName();
-  return llvm::StringRef(N.getAsString()) == "string";
-}
-
 void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
   Expr *Init = VD->getInit();
   if (!Init)
     return; 
-    
+
   // Pattern match for:
   // llvm::StringRef x = call() (where call returns std::string)
   if (!IsStringRef(VD->getType()))
@@ -111,7 +115,7 @@ void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
   CXXBindTemporaryExpr *Ex6 = dyn_cast<CXXBindTemporaryExpr>(Ex5->getSubExpr());
   if (!Ex6 || !IsStdString(Ex6->getType()))
     return;
-  
+
   // Okay, badness!  Report an error.
   BR.EmitBasicReport("StringRef should not be bound to temporary "
                      "std::string that it outlives", "LLVM Conventions",
