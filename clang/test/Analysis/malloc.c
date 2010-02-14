@@ -57,3 +57,7 @@ void pr6069() {
   char *buf = doit2();
   free(buf);
 }
+
+void pr6293() {
+  free(0);
+}

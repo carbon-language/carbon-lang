@@ -172,6 +172,11 @@ void MallocChecker::FreeMem(CheckerContext &C, const CallExpr *CE) {
 const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
                                          const GRState *state) {
   SVal ArgVal = state->getSVal(CE->getArg(0));
+
+  // If ptr is NULL, no operation is preformed.
+  if (ArgVal.isZeroConstant())
+    return state;
+
   SymbolRef Sym = ArgVal.getAsLocSymbol();
   assert(Sym);
 
