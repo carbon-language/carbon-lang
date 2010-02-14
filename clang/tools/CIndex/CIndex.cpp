@@ -1468,8 +1468,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
-    SourceRange RegionOfInterest(SLoc, 
-                       CXXUnit->getPreprocessor().getLocForEndOfToken(SLoc, 1));
+    SourceRange RegionOfInterest(SLoc, SLoc);
     
     // FIXME: Would be great to have a "hint" cursor, then walk from that
     // hint cursor upward until we find a cursor whose source range encloses
