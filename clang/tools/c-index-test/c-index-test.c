@@ -31,6 +31,13 @@ extern char *basename(const char *);
 static void PrintDiagnosticCallback(CXDiagnostic Diagnostic, 
                                     CXClientData ClientData);
 
+
+static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
+                        unsigned end_line, unsigned end_column) {
+  fprintf(out, "[%d:%d - %d:%d]", begin_line, begin_column,
+          end_line, end_column);
+}
+
 static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
                                       CXTranslationUnit *TU) {
   
@@ -214,9 +221,8 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
       
       if (start_file != end_file || start_file != file)
         continue;
-      
-      fprintf(out, "{%d:%d-%d:%d}", start_line, start_column, end_line, 
-              end_column+1);
+
+      PrintExtent(out, start_line, start_column, end_line, end_column+1);
       printed_any_ranges = 1;
     }
     if (printed_any_ranges)
@@ -269,9 +275,11 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
                                        0);
         clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
                                        &end_file, &end_line, &end_column, 0);
-        if (start_file == file && end_file == file)
-          fprintf(out, "FIX-IT: Remove %d:%d-%d:%d\n",
-                  start_line, start_column, end_line, end_column+1);
+        if (start_file == file && end_file == file) {
+          fprintf(out, "FIX-IT: Remove ");
+          PrintExtent(out, start_line, start_column, end_line, end_column+1);
+          fprintf(out, "\n");
+        }
         break;
       }
           
@@ -285,10 +293,11 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
                                        0);
         clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
                                        &end_file, &end_line, &end_column, 0);
-        if (start_file == end_file)
-          fprintf(out, "FIX-IT: Replace %d:%d-%d:%d with \"%s\"\n",
-                  start_line, start_column, end_line, end_column+1,
-                  clang_getCString(text));
+        if (start_file == end_file) {
+          fprintf(out, "FIX-IT: Replace ");
+          PrintExtent(out, start_line, start_column, end_line, end_column+1);
+          fprintf(out, " with \"%s\"\n", clang_getCString(text));
+        }
         clang_disposeString(text);
         break;
       }
@@ -315,8 +324,8 @@ static void PrintCursorExtent(CXCursor C) {
   if (!begin_file || !end_file)
     return;
 
-  printf(" [Extent=%d:%d:%d:%d]", begin_line, begin_column,
-         end_line, end_column);
+  printf(" Extent=");
+  PrintExtent(stdout, begin_line, begin_column, end_line, end_column);
 }
 
 /* Data used by all of the visitors. */
@@ -559,8 +568,8 @@ static void print_cursor_file_scan(CXCursor cursor,
   printf("// %s: ", FileCheckPrefix);
   if (prefix)
     printf("-%s", prefix);
-  printf("{start_line=%d start_col=%d end_line=%d end_col=%d} ",
-          start_line, start_col, end_line, end_col);
+  PrintExtent(stdout, start_line, start_col, end_line, end_col);
+  printf(" ");
   PrintCursor(cursor);
   printf("\n");
 }
@@ -968,8 +977,8 @@ int perform_token_annotation(int argc, const char **argv) {
                                    0, &start_line, &start_column, 0);
     clang_getInstantiationLocation(clang_getRangeEnd(extent),
                                    0, &end_line, &end_column, 0);
-    printf("%s: \"%s\" [%d:%d - %d:%d]", kind, clang_getCString(spelling),
-           start_line, start_column, end_line, end_column);
+    printf("%s: \"%s\" ", kind, clang_getCString(spelling));
+    PrintExtent(stdout, start_line, start_column, end_line, end_column);
     if (!clang_isInvalid(cursors[i].kind)) {
       printf(" ");
       PrintCursor(cursors[i]);

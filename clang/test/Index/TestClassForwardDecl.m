@@ -12,15 +12,15 @@ void function(Foo * arg)
     // nothing here.
 }
 
-// CHECK-scan: {start_line=1 start_col=1 end_line=7 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=8 start_col=1 end_line=8 end_col=7} UnexposedDecl=:8:1
-// CHECK-scan: {start_line=8 start_col=8 end_line=8 end_col=10} ObjCClassRef=Foo:8:8
-// CHECK-scan: {start_line=8 start_col=11 end_line=10 end_col=5} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=10 start_col=6 end_line=10 end_col=14} FunctionDecl=function:10:6 (Definition)
-// CHECK-scan: {start_line=10 start_col=15 end_line=10 end_col=17} ObjCClassRef=Foo:8:8
-// CHECK-scan: {start_line=10 start_col=18 end_line=10 end_col=23} ParmDecl=arg:10:21 (Definition)
-// CHECK-scan: {start_line=10 start_col=24 end_line=10 end_col=25} FunctionDecl=function:10:6 (Definition)
-// CHECK-scan: {start_line=11 start_col=1 end_line=13 end_col=1} UnexposedStmt=
+// CHECK-scan: [1:1 - 7:1] Invalid Cursor => NoDeclFound
+// CHECK-scan: [8:1 - 8:7] UnexposedDecl=:8:1
+// CHECK-scan: [8:8 - 8:10] ObjCClassRef=Foo:8:8
+// CHECK-scan: [8:11 - 10:5] Invalid Cursor => NoDeclFound
+// CHECK-scan: [10:6 - 10:14] FunctionDecl=function:10:6 (Definition)
+// CHECK-scan: [10:15 - 10:17] ObjCClassRef=Foo:8:8
+// CHECK-scan: [10:18 - 10:23] ParmDecl=arg:10:21 (Definition)
+// CHECK-scan: [10:24 - 10:25] FunctionDecl=function:10:6 (Definition)
+// CHECK-scan: [11:1 - 13:1] UnexposedStmt=
 
 
 

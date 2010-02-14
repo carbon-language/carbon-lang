@@ -15,19 +15,19 @@ void function(Foo * arg)
     // nothing here.
 }
 
-// CHECK-scan: {start_line=1 start_col=1 end_line=7 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=8 start_col=1 end_line=8 end_col=7} UnexposedDecl=:8:1
-// CHECK-scan: {start_line=8 start_col=8 end_line=8 end_col=10} ObjCClassRef=Foo:10:12
-// CHECK-scan: {start_line=8 start_col=11 end_line=9 end_col=1} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=10 start_col=1 end_line=11 end_col=4} ObjCInterfaceDecl=Foo:10:12
-// CHECK-scan: {start_line=11 start_col=5 end_line=13 end_col=5} Invalid Cursor => NoDeclFound
-// CHECK-scan: {start_line=13 start_col=6 end_line=13 end_col=14} FunctionDecl=function:13:6 (Definition)
-// CHECK-scan: {start_line=13 start_col=15 end_line=13 end_col=17} ObjCClassRef=Foo:10:12
-// CHECK-scan: {start_line=13 start_col=18 end_line=13 end_col=23} ParmDecl=arg:13:21 (Definition)
-// CHECK-scan: {start_line=13 start_col=24 end_line=13 end_col=25} FunctionDecl=function:13:6 (Definition)
-// CHECK-scan: {start_line=14 start_col=1 end_line=16 end_col=1} UnexposedStmt=
+// CHECK-scan: [1:1 - 7:1] Invalid Cursor => NoDeclFound
+// CHECK-scan: [8:1 - 8:7] UnexposedDecl=:8:1
+// CHECK-scan: [8:8 - 8:10] ObjCClassRef=Foo:10:12
+// CHECK-scan: [8:11 - 9:1] Invalid Cursor => NoDeclFound
+// CHECK-scan: [10:1 - 11:4] ObjCInterfaceDecl=Foo:10:12
+// CHECK-scan: [11:5 - 13:5] Invalid Cursor => NoDeclFound
+// CHECK-scan: [13:6 - 13:14] FunctionDecl=function:13:6 (Definition)
+// CHECK-scan: [13:15 - 13:17] ObjCClassRef=Foo:10:12
+// CHECK-scan: [13:18 - 13:23] ParmDecl=arg:13:21 (Definition)
+// CHECK-scan: [13:24 - 13:25] FunctionDecl=function:13:6 (Definition)
+// CHECK-scan: [14:1 - 16:1] UnexposedStmt=
 
-// CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 [Extent=10:1:11:4]
-// CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) [Extent=13:6:16:1]
-// CHECK-load: TestClassDecl.m:13:21: ParmDecl=arg:13:21 (Definition) [Extent=13:15:13:23]
+// CHECK-load: TestClassDecl.m:10:12: ObjCInterfaceDecl=Foo:10:12 Extent=[10:1 - 11:4]
+// CHECK-load: TestClassDecl.m:13:6: FunctionDecl=function:13:6 (Definition) Extent=[13:6 - 16:1]
+// CHECK-load: TestClassDecl.m:13:21: ParmDecl=arg:13:21 (Definition) Extent=[13:15 - 13:23]
 
