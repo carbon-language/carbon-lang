@@ -848,7 +848,7 @@ TreePatternNode::getComplexPatternInfo(const CodeGenDAGPatterns &CGP) const {
 
 /// NodeHasProperty - Return true if this node has the specified property.
 bool TreePatternNode::NodeHasProperty(SDNP Property,
-                                      CodeGenDAGPatterns &CGP) const {
+                                      const CodeGenDAGPatterns &CGP) const {
   if (isLeaf()) {
     if (const ComplexPattern *CP = getComplexPatternInfo(CGP))
       return CP->hasProperty(Property);
@@ -867,7 +867,7 @@ bool TreePatternNode::NodeHasProperty(SDNP Property,
 /// TreeHasProperty - Return true if any node in this tree has the specified
 /// property.
 bool TreePatternNode::TreeHasProperty(SDNP Property,
-                                      CodeGenDAGPatterns &CGP) const {
+                                      const CodeGenDAGPatterns &CGP) const {
   if (NodeHasProperty(Property, CGP))
     return true;
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i)

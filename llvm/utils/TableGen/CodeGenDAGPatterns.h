@@ -243,11 +243,11 @@ public:
   getComplexPatternInfo(const CodeGenDAGPatterns &CGP) const;
 
   /// NodeHasProperty - Return true if this node has the specified property.
-  bool NodeHasProperty(SDNP Property, CodeGenDAGPatterns &CGP) const;
+  bool NodeHasProperty(SDNP Property, const CodeGenDAGPatterns &CGP) const;
   
   /// TreeHasProperty - Return true if any node in this tree has the specified
   /// property.
-  bool TreeHasProperty(SDNP Property, CodeGenDAGPatterns &CGP) const;
+  bool TreeHasProperty(SDNP Property, const CodeGenDAGPatterns &CGP) const;
   
   /// isCommutativeIntrinsic - Return true if the node is an intrinsic which is
   /// marked isCommutative.
