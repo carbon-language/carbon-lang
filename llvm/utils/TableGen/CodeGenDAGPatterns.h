@@ -217,7 +217,7 @@ public:
     Children[i] = N;
   }
 
-  const std::vector<std::string> &getPredicateFns() const { return PredicateFns; }
+  const std::vector<std::string> &getPredicateFns() const {return PredicateFns;}
   void clearPredicateFns() { PredicateFns.clear(); }
   void setPredicateFns(const std::vector<std::string> &Fns) {
     assert(PredicateFns.empty() && "Overwriting non-empty predicate list!");
@@ -237,6 +237,18 @@ public:
   /// CodeGenIntrinsic information for it, otherwise return a null pointer.
   const CodeGenIntrinsic *getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const;
 
+  /// getComplexPatternInfo - If this node corresponds to a ComplexPattern,
+  /// return the ComplexPattern information, otherwise return null.
+  const ComplexPattern *
+  getComplexPatternInfo(const CodeGenDAGPatterns &CGP) const;
+
+  /// NodeHasProperty - Return true if this node has the specified property.
+  bool NodeHasProperty(SDNP Property, CodeGenDAGPatterns &CGP) const;
+  
+  /// TreeHasProperty - Return true if any node in this tree has the specified
+  /// property.
+  bool TreeHasProperty(SDNP Property, CodeGenDAGPatterns &CGP) const;
+  
   /// isCommutativeIntrinsic - Return true if the node is an intrinsic which is
   /// marked isCommutative.
   bool isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const;
@@ -249,6 +261,9 @@ public:   // Higher level manipulation routines.
   /// clone - Return a new copy of this tree.
   ///
   TreePatternNode *clone() const;
+
+  /// RemoveAllTypes - Recursively strip all the types of this tree.
+  void RemoveAllTypes();
   
   /// isIsomorphicTo - Return true if this node is recursively isomorphic to
   /// the specified node.  For this comparison, all of the state of the node

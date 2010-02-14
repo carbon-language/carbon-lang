@@ -55,19 +55,6 @@ static bool NodeIsComplexPattern(TreePatternNode *N) {
           isSubClassOf("ComplexPattern"));
 }
 
-/// NodeGetComplexPattern - return the pointer to the ComplexPattern if N
-/// is a leaf node and a subclass of ComplexPattern, else it returns NULL.
-static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
-                                                   CodeGenDAGPatterns &CGP) {
-  if (N->isLeaf() &&
-      dynamic_cast<DefInit*>(N->getLeafValue()) &&
-      static_cast<DefInit*>(N->getLeafValue())->getDef()->
-      isSubClassOf("ComplexPattern")) {
-    return &CGP.getComplexPattern(static_cast<DefInit*>(N->getLeafValue())
-                                       ->getDef());
-  }
-  return NULL;
-}
 
 /// getPatternSize - Return the 'size' of this pattern.  We want to match large
 /// patterns before small ones.  This is used to determine the size of a
@@ -91,7 +78,7 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
   // Later we can allow complexity / cost for each pattern to be (optionally)
   // specified. To get best possible pattern match we'll need to dynamically
   // calculate the complexity of all patterns a dag can potentially map to.
-  const ComplexPattern *AM = NodeGetComplexPattern(P, CGP);
+  const ComplexPattern *AM = P->getComplexPatternInfo(CGP);
   if (AM)
     Size += AM->getNumOperands() * 3;
 
@@ -215,46 +202,6 @@ static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget 
     }
   }
   return VT;
-}
-
-
-/// RemoveAllTypes - A quick recursive walk over a pattern which removes all
-/// type information from it.
-static void RemoveAllTypes(TreePatternNode *N) {
-  N->removeTypes();
-  if (!N->isLeaf())
-    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
-      RemoveAllTypes(N->getChild(i));
-}
-
-/// NodeHasProperty - return true if TreePatternNode has the specified
-/// property.
-static bool NodeHasProperty(TreePatternNode *N, SDNP Property,
-                            CodeGenDAGPatterns &CGP) {
-  if (N->isLeaf()) {
-    const ComplexPattern *CP = NodeGetComplexPattern(N, CGP);
-    if (CP)
-      return CP->hasProperty(Property);
-    return false;
-  }
-  Record *Operator = N->getOperator();
-  if (!Operator->isSubClassOf("SDNode")) return false;
-
-  return CGP.getSDNodeInfo(Operator).hasProperty(Property);
-}
-
-static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
-                               CodeGenDAGPatterns &CGP) {
-  if (NodeHasProperty(N, Property, CGP))
-    return true;
-
-  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-    TreePatternNode *Child = N->getChild(i);
-    if (PatternHasProperty(Child, Property, CGP))
-      return true;
-  }
-
-  return false;
 }
 
 static std::string getOpcodeName(Record *Op, CodeGenDAGPatterns &CGP) {
@@ -475,8 +422,7 @@ public:
       return true;
     }
   
-    unsigned OpNo =
-      (unsigned) NodeHasProperty(Pat, SDNPHasChain, CGP);
+    unsigned OpNo = (unsigned)Pat->NodeHasProperty(SDNPHasChain, CGP);
     for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i, ++OpNo)
       if (InsertOneTypeCheck(Pat->getChild(i), Other->getChild(i),
                              Prefix + utostr(OpNo)))
@@ -491,9 +437,8 @@ private:
                             bool &ChainEmitted, bool &InFlagDecled,
                             bool &ResNodeDecled, bool isRoot = false) {
     const CodeGenTarget &T = CGP.getTargetInfo();
-    unsigned OpNo =
-      (unsigned) NodeHasProperty(N, SDNPHasChain, CGP);
-    bool HasInFlag = NodeHasProperty(N, SDNPInFlag, CGP);
+    unsigned OpNo = (unsigned)N->NodeHasProperty(SDNPHasChain, CGP);
+    bool HasInFlag = N->NodeHasProperty(SDNPInFlag, CGP);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
@@ -567,7 +512,7 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   
   // Save loads/stores matched by a pattern.
   if (!N->isLeaf() && N->getName().empty()) {
-    if (NodeHasProperty(N, SDNPMemOperand, CGP))
+    if (N->NodeHasProperty(SDNPMemOperand, CGP))
       LSI.push_back(getNodeName(RootName));
   }
   
@@ -613,8 +558,8 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   
   // Emit code to load the child nodes and match their contents recursively.
   unsigned OpNo = 0;
-  bool NodeHasChain = NodeHasProperty   (N, SDNPHasChain, CGP);
-  bool HasChain     = PatternHasProperty(N, SDNPHasChain, CGP);
+  bool NodeHasChain = N->NodeHasProperty(SDNPHasChain, CGP);
+  bool HasChain     = N->TreeHasProperty(SDNPHasChain, CGP);
   bool EmittedUseCheck = false;
   if (HasChain) {
     if (NodeHasChain)
@@ -680,9 +625,9 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   // FIXME: If the optional incoming flag does not exist. Then it is ok to
   // fold it.
   if (!isRoot &&
-      (PatternHasProperty(N, SDNPInFlag, CGP) ||
-       PatternHasProperty(N, SDNPOptInFlag, CGP) ||
-       PatternHasProperty(N, SDNPOutFlag, CGP))) {
+      (N->TreeHasProperty(SDNPInFlag, CGP) ||
+       N->TreeHasProperty(SDNPOptInFlag, CGP) ||
+       N->TreeHasProperty(SDNPOutFlag, CGP))) {
         if (!EmittedUseCheck) {
           // Multiple uses of actual result?
           emitCheck(getValueName(RootName) + ".hasOneUse()");
@@ -743,7 +688,7 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   
   // Handle cases when root is a complex pattern.
   const ComplexPattern *CP;
-  if (isRoot && N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
+  if (isRoot && N->isLeaf() && (CP = N->getComplexPatternInfo(CGP))) {
     std::string Fn = CP->getSelectFunc();
     unsigned NumOps = CP->getNumOperands();
     for (unsigned i = 0; i < NumOps; ++i) {
@@ -782,12 +727,12 @@ void PatternCodeEmitter::EmitChildMatchCode(TreePatternNode *Child,
               CInfo.getEnumName());
     EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
     bool HasChain = false;
-    if (NodeHasProperty(Child, SDNPHasChain, CGP)) {
+    if (Child->NodeHasProperty(SDNPHasChain, CGP)) {
       HasChain = true;
       FoldedChains.push_back(std::make_pair(getValueName(RootName),
                                             CInfo.getNumResults()));
     }
-    if (NodeHasProperty(Child, SDNPOutFlag, CGP)) {
+    if (Child->NodeHasProperty(SDNPOutFlag, CGP)) {
       assert(FoldedFlag.first == "" && FoldedFlag.second == 0 &&
              "Pattern folded multiple nodes which produce flags?");
       FoldedFlag = std::make_pair(getValueName(RootName),
@@ -821,7 +766,7 @@ void PatternCodeEmitter::EmitChildMatchCode(TreePatternNode *Child,
         // Handle register references.
       } else if (LeafRec->isSubClassOf("ComplexPattern")) {
         // Handle complex pattern.
-        const ComplexPattern *CP = NodeGetComplexPattern(Child, CGP);
+        const ComplexPattern *CP = Child->getComplexPatternInfo(CGP);
         std::string Fn = CP->getSelectFunc();
         unsigned NumOps = CP->getNumOperands();
         for (unsigned i = 0; i < NumOps; ++i) {
@@ -989,30 +934,29 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
       }
       NodeOps.push_back(getValueName(Val));
     } else if (!N->isLeaf()
-               && (N->getOperator()->getName() == "texternalsym"
-                   || N->getOperator()->getName() == "tconstpool")) {
-                 // Do not rewrite the variable name, since we don't generate a new
-                 // temporary.
-                 NodeOps.push_back(getValueName(Val));
-               } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, CGP))) {
-                 for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
-                   NodeOps.push_back(getValueName("CPTmp" + Val + "_" + utostr(i)));
-                 }
-               } else {
-                 // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
-                 // node even if it isn't one. Don't select it.
-                 if (!LikeLeaf) {
-                   if (isRoot && N->isLeaf()) {
-                     emitCode("ReplaceUses(SDValue(N, 0), " + Val + ");");
-                     emitCode("return NULL;");
-                   }
-                 }
-                 NodeOps.push_back(getValueName(Val));
-               }
-    
-    if (ModifiedVal) {
-      VariableMap[VarName] = Val;
+               && (N->getOperator()->getName() == "texternalsym" ||
+                   N->getOperator()->getName() == "tconstpool")) {
+      // Do not rewrite the variable name, since we don't generate a new
+      // temporary.
+      NodeOps.push_back(getValueName(Val));
+    } else if (N->isLeaf() && (CP = N->getComplexPatternInfo(CGP))) {
+      for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
+        NodeOps.push_back(getValueName("CPTmp" + Val + "_" + utostr(i)));
+      }
+    } else {
+      // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
+      // node even if it isn't one. Don't select it.
+      if (!LikeLeaf) {
+        if (isRoot && N->isLeaf()) {
+          emitCode("ReplaceUses(SDValue(N, 0), " + Val + ");");
+          emitCode("return NULL;");
+        }
+      }
+      NodeOps.push_back(getValueName(Val));
     }
+    
+    if (ModifiedVal)
+      VariableMap[VarName] = Val;
     return NodeOps;
   }
   if (N->isLeaf()) {
@@ -1078,15 +1022,14 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
     bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
     bool HasImpResults = isRoot && DstRegs.size() > 0;
     bool NodeHasOptInFlag = isRoot &&
-    PatternHasProperty(Pattern, SDNPOptInFlag, CGP);
+      Pattern->TreeHasProperty(SDNPOptInFlag, CGP);
     bool NodeHasInFlag  = isRoot &&
-    PatternHasProperty(Pattern, SDNPInFlag, CGP);
+      Pattern->TreeHasProperty(SDNPInFlag, CGP);
     bool NodeHasOutFlag = isRoot &&
-    PatternHasProperty(Pattern, SDNPOutFlag, CGP);
+      Pattern->TreeHasProperty(SDNPOutFlag, CGP);
     bool NodeHasChain = InstPatNode &&
-    PatternHasProperty(InstPatNode, SDNPHasChain, CGP);
-    bool InputHasChain = isRoot &&
-    NodeHasProperty(Pattern, SDNPHasChain, CGP);
+      InstPatNode->TreeHasProperty(SDNPHasChain, CGP);
+    bool InputHasChain = isRoot && Pattern->NodeHasProperty(SDNPHasChain, CGP);
     unsigned NumResults = Inst.getNumResults();    
     unsigned NumDstRegs = HasImpResults ? DstRegs.size() : 0;
     
@@ -1343,7 +1286,7 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
                                  utostr(FoldedFlag.second) + ")");
           ReplaceTos.push_back("InFlag");
         } else {
-          assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
+          assert(Pattern->NodeHasProperty(SDNPOutFlag, CGP));
           ReplaceFroms.push_back("SDValue(N, " +
                                  utostr(NumPatResults + (unsigned)InputHasChain)
                                  + ")");
@@ -1501,7 +1444,7 @@ void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
   // types are resolved.
   //
   TreePatternNode *Pat = Pattern.getSrcPattern()->clone();
-  RemoveAllTypes(Pat);
+  Pat->RemoveAllTypes();
   
   do {
     // Resolve/propagate as many types as possible.
@@ -1688,7 +1631,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
       if (dynamic_cast<IntInit*>(Node->getLeafValue())) {
         PatternsByOpcode[getOpcodeName(CGP.getSDNodeNamed("imm"), CGP)].
           push_back(&Pattern);
-      } else if ((CP = NodeGetComplexPattern(Node, CGP))) {
+      } else if ((CP = Node->getComplexPatternInfo(CGP))) {
         std::vector<Record*> OpNodes = CP->getRootNodes();
         for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
           PatternsByOpcode[getOpcodeName(OpNodes[j], CGP)]
