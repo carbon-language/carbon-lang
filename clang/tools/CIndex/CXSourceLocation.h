@@ -1,4 +1,4 @@
-//===- CXSourceLocation.h - Routines for manipulating CXSourceLocations ---===//
+//===- CXSourceLocation.h - CXSourceLocations Utilities ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -49,14 +49,14 @@ static inline CXSourceLocation translateSourceLocation(ASTContext &Context,
 }
 
 /// \brief Translate a Clang source range into a CIndex source range.
-static inline CXSourceRange translateSourceRange(const SourceManager &SM, 
-                                                 const LangOptions &LangOpts,
-                                                 SourceRange R) {
-  CXSourceRange Result = { { (void *)&SM, (void *)&LangOpts },
-                           R.getBegin().getRawEncoding(),
-                           R.getEnd().getRawEncoding() };
-  return Result;
-}
+///
+/// Clang internally represents ranges where the end location points to the
+/// start of the token at the end. However, for external clients it is more
+/// useful to have a CXSourceRange be a proper half-open interval. This routine
+/// does the appropriate translation.
+CXSourceRange translateSourceRange(const SourceManager &SM, 
+                                   const LangOptions &LangOpts,
+                                   SourceRange R);
   
 /// \brief Translate a Clang source range into a CIndex source range.
 static inline CXSourceRange translateSourceRange(ASTContext &Context,

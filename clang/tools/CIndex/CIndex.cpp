@@ -146,6 +146,51 @@ static RangeComparisonResult RangeCompare(SourceManager &SM,
   return RangeOverlap;
 }
 
+/// \brief Translate a Clang source range into a CIndex source range.
+///
+/// Clang internally represents ranges where the end location points to the
+/// start of the token at the end. However, for external clients it is more
+/// useful to have a CXSourceRange be a proper half-open interval. This routine
+/// does the appropriate translation.
+CXSourceRange cxloc::translateSourceRange(const SourceManager &SM, 
+                                          const LangOptions &LangOpts,
+                                          SourceRange R) {
+  // FIXME: This is largely copy-paste from
+  // TextDiagnosticPrinter::HighlightRange.  When it is clear that this is what
+  // we want the two routines should be refactored.
+
+  // We want the last character in this location, so we will adjust the
+  // instantiation location accordingly.
+
+  // If the location is from a macro instantiation, get the end of the
+  // instantiation range.
+  SourceLocation EndLoc = R.getEnd();
+  SourceLocation InstLoc = SM.getInstantiationLoc(EndLoc);
+  if (EndLoc.isMacroID())
+    InstLoc = SM.getInstantiationRange(EndLoc).second;
+
+  // Measure the length token we're pointing at, so we can adjust the physical
+  // location in the file to point at the last character.
+  //
+  // FIXME: This won't cope with trigraphs or escaped newlines well. For that,
+  // we actually need a preprocessor, which isn't currently available
+  // here. Eventually, we'll switch the pointer data of
+  // CXSourceLocation/CXSourceRange to a translation unit (CXXUnit), so that the
+  // preprocessor will be available here. At that point, we can use
+  // Preprocessor::getLocForEndOfToken().
+  if (InstLoc.isValid()) {
+    unsigned Length = Lexer::MeasureTokenLength(InstLoc, SM, LangOpts);
+    // FIXME: Temporarily represent as closed range to preserve API
+    // compatibility.
+    if (Length) --Length;
+    EndLoc = EndLoc.getFileLocWithOffset(Length);
+  }
+
+  CXSourceRange Result = { { (void *)&SM, (void *)&LangOpts },
+                           R.getBegin().getRawEncoding(),
+                           EndLoc.getRawEncoding() };
+  return Result;
+}
 
 //===----------------------------------------------------------------------===//
 // Cursor visitor.
@@ -1195,35 +1240,8 @@ void clang_getInstantiationLocation(CXSourceLocation location,
     return;
   }
 
-  // FIXME: This is largely copy-paste from
-  ///TextDiagnosticPrinter::HighlightRange.  When it is clear that this is
-  // what we want the two routines should be refactored.  
   const SourceManager &SM = *Ptr.getPointer();
   SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
-  
-  if (Ptr.getInt()) {
-    // We want the last character in this location, so we will adjust
-    // the instantiation location accordingly.
-
-    // If the location is from a macro instantiation, get the end of
-    // the instantiation range.
-    if (Loc.isMacroID())
-      InstLoc = SM.getInstantiationRange(Loc).second;
-
-    // Measure the length token we're pointing at, so we can adjust
-    // the physical location in the file to point at the last
-    // character.
-    // FIXME: This won't cope with trigraphs or escaped newlines
-    // well. For that, we actually need a preprocessor, which isn't
-    // currently available here. Eventually, we'll switch the pointer
-    // data of CXSourceLocation/CXSourceRange to a translation unit
-    // (CXXUnit), so that the preprocessor will be available here. At
-    // that point, we can use Preprocessor::getLocForEndOfToken().
-    unsigned Length = Lexer::MeasureTokenLength(InstLoc, SM, 
-                             *static_cast<LangOptions *>(location.ptr_data[1]));
-    if (Length > 0)
-      InstLoc = InstLoc.getFileLocWithOffset(Length - 1);
-  }
 
   if (file)
     *file = (void *)SM.getFileEntryForID(SM.getFileID(InstLoc));
