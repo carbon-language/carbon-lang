@@ -95,26 +95,3 @@ X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 }
-
-
-X86WinMCAsmInfo::X86WinMCAsmInfo(const Triple &Triple) {
-  AsmTransCBE = x86_asm_table;
-  AssemblerDialect = AsmWriterFlavor;
-
-  GlobalPrefix = "_";
-  CommentString = ";";
-
-  PrivateGlobalPrefix = "$";
-  AlignDirective = "\tALIGN\t";
-  ZeroDirective = "\tdb\t";
-  AsciiDirective = "\tdb\t";
-  AscizDirective = 0;
-  Data8bitsDirective = "\tdb\t";
-  Data16bitsDirective = "\tdw\t";
-  Data32bitsDirective = "\tdd\t";
-  Data64bitsDirective = "\tdq\t";
-  HasDotTypeDotSizeDirective = false;
-  HasSingleParameterDotFile = false;
-
-  AlignmentIsInBytes = true;
-}

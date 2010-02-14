@@ -30,9 +30,8 @@ static const MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   case Triple::MinGW32:
   case Triple::MinGW64:
   case Triple::Cygwin:
-    return new X86MCAsmInfoCOFF(TheTriple);
   case Triple::Win32:
-    return new X86WinMCAsmInfo(TheTriple);
+    return new X86MCAsmInfoCOFF(TheTriple);
   default:
     return new X86ELFMCAsmInfo(TheTriple);
   }
