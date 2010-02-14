@@ -141,7 +141,7 @@ private:
   
   /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
   /// the 'this' pointer from the base subobject to the derived subobject.
-  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject BaseSubobject,
+  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
                                              BaseSubobject Derived);
                                              
   static void MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
