@@ -25,27 +25,22 @@ namespace clang {
 class ASTContext;
 
 namespace cxloc {
-  
-typedef llvm::PointerIntPair<const SourceManager *, 1, bool> 
-  CXSourceLocationPtr;
 
 /// \brief Translate a Clang source location into a CIndex source location.
 static inline CXSourceLocation 
 translateSourceLocation(const SourceManager &SM, const LangOptions &LangOpts,
-                        SourceLocation Loc, bool AtEnd = false) {
-  CXSourceLocationPtr Ptr(&SM, AtEnd);
-  CXSourceLocation Result = { { Ptr.getOpaqueValue(), (void *)&LangOpts, },
+                        SourceLocation Loc) {
+  CXSourceLocation Result = { { (void*) &SM, (void*) &LangOpts, },
                               Loc.getRawEncoding() };
   return Result;
 }
   
 /// \brief Translate a Clang source location into a CIndex source location.
 static inline CXSourceLocation translateSourceLocation(ASTContext &Context,
-                                                       SourceLocation Loc,
-                                                       bool AtEnd = false) {
-  return translateSourceLocation(Context.getSourceManager(), 
+                                                       SourceLocation Loc) {
+  return translateSourceLocation(Context.getSourceManager(),
                                  Context.getLangOptions(),
-                                 Loc, AtEnd);
+                                 Loc);
 }
 
 /// \brief Translate a Clang source range into a CIndex source range.

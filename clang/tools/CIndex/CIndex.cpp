@@ -1201,7 +1201,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
                                         static_cast<const FileEntry *>(file), 
                                               line, column);
   
-  return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc, false);
+  return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
 }
 
 CXSourceRange clang_getNullRange() {
@@ -1224,11 +1224,9 @@ void clang_getInstantiationLocation(CXSourceLocation location,
                                     unsigned *line,
                                     unsigned *column,
                                     unsigned *offset) {
-  cxloc::CXSourceLocationPtr Ptr
-    = cxloc::CXSourceLocationPtr::getFromOpaqueValue(location.ptr_data[0]);
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
-  if (!Ptr.getPointer() || Loc.isInvalid()) {
+  if (!location.ptr_data[0] || Loc.isInvalid()) {
     if (file)
       *file = 0;
     if (line)
@@ -1240,7 +1238,8 @@ void clang_getInstantiationLocation(CXSourceLocation location,
     return;
   }
 
-  const SourceManager &SM = *Ptr.getPointer();
+  const SourceManager &SM =
+    *static_cast<const SourceManager*>(location.ptr_data[0]);
   SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
 
   if (file)
@@ -1260,10 +1259,7 @@ CXSourceLocation clang_getRangeStart(CXSourceRange range) {
 }
 
 CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
-  cxloc::CXSourceLocationPtr Ptr;
-  Ptr.setPointer(static_cast<SourceManager *>(range.ptr_data[0]));
-  Ptr.setInt(true);
-  CXSourceLocation Result = { { Ptr.getOpaqueValue(), range.ptr_data[1] },
+  CXSourceLocation Result = { { range.ptr_data[0], range.ptr_data[1] },
                               range.end_int_data };
   return Result;
 }
