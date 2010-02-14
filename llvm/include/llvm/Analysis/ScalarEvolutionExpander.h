@@ -168,9 +168,7 @@ namespace llvm {
       return S->getValue();
     }
 
-    void rememberInstruction(Value *I) {
-      if (!PostIncLoop) InsertedValues.insert(I);
-    }
+    void rememberInstruction(Value *I);
 
     Value *expandAddRecExprLiterally(const SCEVAddRecExpr *);
     PHINode *getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,

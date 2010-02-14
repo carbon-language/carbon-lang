@@ -1075,6 +1075,20 @@ Value *SCEVExpander::expand(const SCEV *S) {
   return V;
 }
 
+void SCEVExpander::rememberInstruction(Value *I) {
+  if (!PostIncLoop)
+    InsertedValues.insert(I);
+
+  // If we just claimed an existing instruction and that instruction had
+  // been the insert point, adjust the insert point forward so that 
+  // subsequently inserted code will be dominated.
+  if (Builder.GetInsertPoint() == I) {
+    BasicBlock::iterator It = cast<Instruction>(I);
+    do { ++It; } while (isInsertedInstruction(It));
+    Builder.SetInsertPoint(Builder.GetInsertBlock(), It);
+  }
+}
+
 /// getOrInsertCanonicalInductionVariable - This method returns the
 /// canonical induction variable of the specified type for the specified
 /// loop (inserting one if there is none).  A canonical induction variable
