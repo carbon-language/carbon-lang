@@ -98,6 +98,10 @@ static bool IsClangStmt(const RecordDecl *RD) {
   return RD->getName() == "Stmt" && InClangNamespace(RD);
 }
 
+static bool isClangAttr(const RecordDecl *RD) {
+  return RD->getName() == "Attr" && InClangNamespace(RD);
+}
+
 static bool IsStdVector(QualType T) {
   const TemplateSpecializationType *TS = T->getAs<TemplateSpecializationType>();
   if (!TS)
@@ -210,7 +214,7 @@ static bool AllocatesMemory(QualType T) {
 
 // This type checking could be sped up via dynamic programming.
 static bool IsPartOfAST(const CXXRecordDecl *R) {
-  if (IsClangStmt(R) || IsClangType(R) || IsClangDecl(R))
+  if (IsClangStmt(R) || IsClangType(R) || IsClangDecl(R) || isClangAttr(R))
     return true;
 
   for (CXXRecordDecl::base_class_const_iterator I = R->bases_begin(),
