@@ -579,12 +579,10 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   CXIndex Idx;
   CXTranslationUnit TU;
   FILE *fp;
-  unsigned line;
-  CXCursor prevCursor;
+  CXCursor prevCursor = clang_getNullCursor();
   CXFile file;
-  unsigned printed;
-  unsigned start_line, start_col, last_line, last_col;
-  size_t i;
+  unsigned line = 1, col = 1;
+  unsigned start_line = 1, start_col = 1, prev_line = 0, prev_col = 0;
   
   if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1))) {
     fprintf(stderr, "Could not create Index\n");
@@ -599,51 +597,35 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
     return 1;
   }
   
-  line = 0;
-  prevCursor = clang_getNullCursor();
-  printed = 0;
-  start_line = last_line = 1;
-  start_col = last_col = 1;
-  
   file = clang_getFile(TU, source_file);
-  while (!feof(fp)) {
-    size_t len = 0;
-    int c;
+  for (;;) {
+    CXCursor cursor;
+    int c = fgetc(fp);
 
-    while ((c = fgetc(fp)) != EOF) {
-      len++;
-      if (c == '\n')
-        break;
+    if (c == '\n') {
+      ++line;
+      col = 1;
+    } else
+      ++col;
+
+    /* Check the cursor at this position, and dump the previous one if we have
+     * found something new.
+     */
+    cursor = clang_getCursor(TU, clang_getLocation(TU, file, line, col));
+    if ((c == EOF || !clang_equalCursors(cursor, prevCursor)) &&
+        prevCursor.kind != CXCursor_InvalidFile) {
+      print_cursor_file_scan(prevCursor, start_line, start_col,
+                             prev_line, prev_col, prefix);
+      start_line = line;
+      start_col = col;
     }
+    if (c == EOF)
+      break;
 
-    ++line;
-    
-    for (i = 0; i < len ; ++i) {
-      CXCursor cursor;
-      cursor = clang_getCursor(TU, clang_getLocation(TU, file, line, i+1));
-
-      if (!clang_equalCursors(cursor, prevCursor) &&
-          prevCursor.kind != CXCursor_InvalidFile) {
-        print_cursor_file_scan(prevCursor, start_line, start_col,
-                               last_line, last_col, prefix);
-        printed = 1;
-        start_line = line;
-        start_col = (unsigned) i+1;
-      }
-      else {
-        printed = 0;
-      }
-      
-      prevCursor = cursor;
-      last_line = line;
-      last_col = (unsigned) i+1;
-    }    
+    prevCursor = cursor;
+    prev_line = line;
+    prev_col = col;
   }
-  
-  if (!printed && prevCursor.kind != CXCursor_InvalidFile) {
-    print_cursor_file_scan(prevCursor, start_line, start_col,
-                           last_line, last_col, prefix);
-  }  
   
   fclose(fp);
   return 0;
