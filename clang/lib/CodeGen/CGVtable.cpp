@@ -83,6 +83,10 @@ private:
   /// all the base subobjects of the most derived class.
   OverridersMapTy OverridersMap;
   
+  /// VisitedVirtualBases - A set of all the visited virtual bases, used to
+  /// avoid visiting virtual bases more than once.
+  llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
+
   typedef llvm::DenseMap<BaseSubobjectMethodPairTy, BaseOffset>
     AdjustmentOffsetsMapTy;
 
@@ -173,13 +177,16 @@ public:
   }
   
   /// dump - dump the final overriders.
-  void dump() const { 
-      dump(llvm::errs(), BaseSubobject(MostDerivedClass, 0)); 
+  void dump() {
+    assert(VisitedVirtualBases.empty() &&
+           "Visited virtual bases aren't empty!");
+    dump(llvm::errs(), BaseSubobject(MostDerivedClass, 0)); 
+    VisitedVirtualBases.clear();
   }
   
   /// dump - dump the final overriders for a base subobject, and all its direct
   /// and indirect base subobjects.
-  void dump(llvm::raw_ostream &Out, BaseSubobject Base) const;
+  void dump(llvm::raw_ostream &Out, BaseSubobject Base);
 };
 
 FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
@@ -491,11 +498,13 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
     
-    assert(!I->isVirtual() && "FIXME: Handle virtual bases!");
-
-    uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl) + 
-      Base.getBaseOffset();
-
+    uint64_t BaseOffset;
+    if (I->isVirtual()) {
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+    } else {
+      BaseOffset = Layout.getBaseClassOffset(BaseDecl) + Base.getBaseOffset();
+    }
+    
     // Compute the final overriders for this base.
     ComputeFinalOverriders(BaseSubobject(BaseDecl, BaseOffset), NewOffsets);
   }
@@ -510,20 +519,28 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
   Offsets[RD].push_back(Base.getBaseOffset());
 }
 
-void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) const {
+void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
        E = RD->bases_end(); I != E; ++I) {
-    assert(!I->isVirtual() && "FIXME: Handle virtual bases!");
-    
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
     
-    uint64_t BaseOffset = Layout.getBaseClassOffset(BaseDecl) + 
-      Base.getBaseOffset();
-    
+    uint64_t BaseOffset;
+    if (I->isVirtual()) {
+      if (!VisitedVirtualBases.insert(BaseDecl)) {
+        // We've visited this base before.
+        continue;
+      }
+      
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+    } else {
+      BaseOffset = Layout.getBaseClassOffset(BaseDecl) + 
+        Base.getBaseOffset();
+    }
+
     dump(Out, BaseSubobject(BaseDecl, BaseOffset));
   }
 
