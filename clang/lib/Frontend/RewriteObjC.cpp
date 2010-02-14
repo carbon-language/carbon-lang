@@ -214,11 +214,10 @@ namespace {
                    << Old->getSourceRange();
     }
 
-    void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen,
+    void InsertText(SourceLocation Loc, llvm::StringRef Str,
                     bool InsertAfter = true) {
       // If insertion succeeded or warning disabled return with no warning.
-      if (!Rewrite.InsertText(Loc, llvm::StringRef(StrData, StrLen),
-                              InsertAfter) ||
+      if (!Rewrite.InsertText(Loc, Str, InsertAfter) ||
           SilenceRewriteMacroWarning)
         return;
 
@@ -234,10 +233,9 @@ namespace {
     }
 
     void ReplaceText(SourceLocation Start, unsigned OrigLength,
-                     const char *NewStr, unsigned NewLength) {
+                     llvm::StringRef Str) {
       // If removal succeeded or warning disabled return with no warning.
-      if (!Rewrite.ReplaceText(Start, OrigLength,
-                               llvm::StringRef(NewStr, NewLength)) ||
+      if (!Rewrite.ReplaceText(Start, OrigLength, Str) ||
           SilenceRewriteMacroWarning)
         return;
 
@@ -689,7 +687,6 @@ void RewriteObjC::RewriteInclude() {
   const char *MainBufStart = MainBuf.first;
   const char *MainBufEnd = MainBuf.second;
   size_t ImportLen = strlen("import");
-  size_t IncludeLen = strlen("include");
 
   // Loop over the whole file, looking for includes.
   for (const char *BufPtr = MainBufStart; BufPtr < MainBufEnd; ++BufPtr) {
@@ -703,7 +700,7 @@ void RewriteObjC::RewriteInclude() {
         // replace import with include
         SourceLocation ImportLoc =
           LocStart.getFileLocWithOffset(BufPtr-MainBufStart);
-        ReplaceText(ImportLoc, ImportLen, "include", IncludeLen);
+        ReplaceText(ImportLoc, ImportLen, "include");
         BufPtr += ImportLen;
       }
     }
@@ -736,7 +733,7 @@ void RewriteObjC::RewriteTabs() {
     TabLoc = TabLoc.getFileLocWithOffset(BufPtr-MainBufStart);
 
     // Rewrite the single tab character into a sequence of spaces.
-    ReplaceText(TabLoc, 1, "        ", Spaces);
+    ReplaceText(TabLoc, 1, llvm::StringRef("        ", Spaces));
   }
 }
 
@@ -754,7 +751,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
                                           ObjCImplementationDecl *IMD,
                                           ObjCCategoryImplDecl *CID) {
   SourceLocation startLoc = PID->getLocStart();
-  InsertText(startLoc, "// ", 3);
+  InsertText(startLoc, "// ");
   const char *startBuf = SM->getCharacterData(startLoc);
   assert((*startBuf == '@') && "bogus @synthesize location");
   const char *semiBuf = strchr(startBuf, ';');
@@ -782,7 +779,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   // See objc-act.c:objc_synthesize_new_getter() for details.
   Getr += "return " + getIvarAccessString(ClassDecl, OID);
   Getr += "; }";
-  InsertText(onePastSemiLoc, Getr.c_str(), Getr.size());
+  InsertText(onePastSemiLoc, Getr);
   if (PD->isReadOnly())
     return;
 
@@ -797,7 +794,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   Setr += getIvarAccessString(ClassDecl, OID) + " = ";
   Setr += PD->getNameAsCString();
   Setr += "; }";
-  InsertText(onePastSemiLoc, Setr.c_str(), Setr.size());
+  InsertText(onePastSemiLoc, Setr);
 }
 
 void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
@@ -836,8 +833,7 @@ void RewriteObjC::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   }
 
   // Replace the @class with typedefs corresponding to the classes.
-  ReplaceText(startLoc, semiPtr-startBuf+1,
-              typedefString.c_str(), typedefString.size());
+  ReplaceText(startLoc, semiPtr-startBuf+1, typedefString);
 }
 
 void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
@@ -850,17 +846,17 @@ void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
 
   if (SM->getInstantiationLineNumber(LocEnd) >
       SM->getInstantiationLineNumber(LocStart)) {
-    InsertText(LocStart, "#if 0\n", 6);
-    ReplaceText(LocEnd, 1, ";\n#endif\n", 9);
+    InsertText(LocStart, "#if 0\n");
+    ReplaceText(LocEnd, 1, ";\n#endif\n");
   } else {
-    InsertText(LocStart, "// ", 3);
+    InsertText(LocStart, "// ");
   }
 }
 
 void RewriteObjC::RewriteProperty(ObjCPropertyDecl *prop) {
   SourceLocation Loc = prop->getAtLoc();
 
-  ReplaceText(Loc, 0, "// ", 3);
+  ReplaceText(Loc, 0, "// ");
   // FIXME: handle properties that are declared across multiple lines.
 }
 
@@ -868,7 +864,7 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   SourceLocation LocStart = CatDecl->getLocStart();
 
   // FIXME: handle category headers that are declared across multiple lines.
-  ReplaceText(LocStart, 0, "// ", 3);
+  ReplaceText(LocStart, 0, "// ");
 
   for (ObjCCategoryDecl::prop_iterator I = CatDecl->prop_begin(),
        E = CatDecl->prop_end(); I != E; ++I)
@@ -884,7 +880,7 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  ReplaceText(CatDecl->getAtEndRange().getBegin(), 0, "// ", 3);
+  ReplaceText(CatDecl->getAtEndRange().getBegin(), 0, "// ");
 }
 
 void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
@@ -893,7 +889,7 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
   SourceLocation LocStart = PDecl->getLocStart();
 
   // FIXME: handle protocol headers that are declared across multiple lines.
-  ReplaceText(LocStart, 0, "// ", 3);
+  ReplaceText(LocStart, 0, "// ");
 
   for (ObjCProtocolDecl::instmeth_iterator
          I = PDecl->instmeth_begin(), E = PDecl->instmeth_end();
@@ -906,24 +902,20 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndRange().getBegin();
-  ReplaceText(LocEnd, 0, "// ", 3);
+  ReplaceText(LocEnd, 0, "// ");
 
   // Must comment out @optional/@required
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
   for (const char *p = startBuf; p < endBuf; p++) {
     if (*p == '@' && !strncmp(p+1, "optional", strlen("optional"))) {
-      std::string CommentedOptional = "/* @optional */";
       SourceLocation OptionalLoc = LocStart.getFileLocWithOffset(p-startBuf);
-      ReplaceText(OptionalLoc, strlen("@optional"),
-                  CommentedOptional.c_str(), CommentedOptional.size());
+      ReplaceText(OptionalLoc, strlen("@optional"), "/* @optional */");
 
     }
     else if (*p == '@' && !strncmp(p+1, "required", strlen("required"))) {
-      std::string CommentedRequired = "/* @required */";
       SourceLocation OptionalLoc = LocStart.getFileLocWithOffset(p-startBuf);
-      ReplaceText(OptionalLoc, strlen("@required"),
-                  CommentedRequired.c_str(), CommentedRequired.size());
+      ReplaceText(OptionalLoc, strlen("@required"), "/* @required */");
 
     }
   }
@@ -934,7 +926,7 @@ void RewriteObjC::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
   if (LocStart.isInvalid())
     assert(false && "Invalid SourceLocation");
   // FIXME: handle forward protocol that are declared across multiple lines.
-  ReplaceText(LocStart, 0, "// ", 3);
+  ReplaceText(LocStart, 0, "// ");
 }
 
 void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
@@ -1062,10 +1054,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
   ObjCImplementationDecl *IMD = dyn_cast<ObjCImplementationDecl>(OID);
   ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(OID);
 
-  if (IMD)
-    InsertText(IMD->getLocStart(), "// ", 3);
-  else
-    InsertText(CID->getLocStart(), "// ", 3);
+  InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
 
   for (ObjCCategoryImplDecl::instmeth_iterator
        I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
@@ -1079,8 +1068,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
 
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
-    ReplaceText(LocStart, endBuf-startBuf,
-                ResultStr.c_str(), ResultStr.size());
+    ReplaceText(LocStart, endBuf-startBuf, ResultStr);
   }
 
   for (ObjCCategoryImplDecl::classmeth_iterator
@@ -1095,8 +1083,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
 
     const char *startBuf = SM->getCharacterData(LocStart);
     const char *endBuf = SM->getCharacterData(LocEnd);
-    ReplaceText(LocStart, endBuf-startBuf,
-                ResultStr.c_str(), ResultStr.size());
+    ReplaceText(LocStart, endBuf-startBuf, ResultStr);
   }
   for (ObjCCategoryImplDecl::propimpl_iterator
        I = IMD ? IMD->propimpl_begin() : CID->propimpl_begin(),
@@ -1105,10 +1092,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     RewritePropertyImplDecl(*I, IMD, CID);
   }
 
-  if (IMD)
-    InsertText(IMD->getLocEnd(), "// ", 3);
-  else
-   InsertText(CID->getLocEnd(), "// ", 3);
+  InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
 }
 
 void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
@@ -1142,7 +1126,7 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     RewriteMethodDeclaration(*I);
 
   // Lastly, comment out the @end.
-  ReplaceText(ClassDecl->getAtEndRange().getBegin(), 0, "// ", 3);
+  ReplaceText(ClassDecl->getAtEndRange().getBegin(), 0, "// ");
 }
 
 Stmt *RewriteObjC::RewritePropertySetter(BinaryOperator *BinOp, Expr *newStmt,
@@ -1239,7 +1223,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       // Synthesize an explicit cast to gain access to the ivar.
       std::string RecName = clsDeclared->getIdentifier()->getName();
       RecName += "_IMPL";
-      IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
+      IdentifierInfo *II = &Context->Idents.get(RecName);
       RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
@@ -1284,7 +1268,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       // Synthesize an explicit cast to gain access to the ivar.
       std::string RecName = clsDeclared->getIdentifier()->getName();
       RecName += "_IMPL";
-      IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
+      IdentifierInfo *II = &Context->Idents.get(RecName);
       RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                           SourceLocation(), II);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
@@ -1360,7 +1344,7 @@ Stmt *RewriteObjC::RewriteBreakStmt(BreakStmt *S) {
   SourceLocation startLoc = S->getLocStart();
   buf = "goto __break_label_";
   buf += utostr(ObjCBcLabelNo.back());
-  ReplaceText(startLoc, strlen("break"), buf.c_str(), buf.size());
+  ReplaceText(startLoc, strlen("break"), buf);
 
   return 0;
 }
@@ -1377,7 +1361,7 @@ Stmt *RewriteObjC::RewriteContinueStmt(ContinueStmt *S) {
   SourceLocation startLoc = S->getLocStart();
   buf = "goto __continue_label_";
   buf += utostr(ObjCBcLabelNo.back());
-  ReplaceText(startLoc, strlen("continue"), buf.c_str(), buf.size());
+  ReplaceText(startLoc, strlen("continue"), buf);
 
   return 0;
 }
@@ -1476,8 +1460,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   startCollectionBuf += 3;
 
   // Replace: "for (type element in" with string constructed thus far.
-  ReplaceText(startLoc, startCollectionBuf - startBuf,
-              buf.c_str(), buf.size());
+  ReplaceText(startLoc, startCollectionBuf - startBuf, buf);
   // Replace ')' in for '(' type elem in collection ')' with ';'
   SourceLocation rightParenLoc = S->getRParenLoc();
   const char *rparenBuf = SM->getCharacterData(rightParenLoc);
@@ -1518,7 +1501,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf += elementTypeAsString;
   buf += ")enumState.itemsPtr[counter++];";
   // Replace ')' in for '(' type elem in collection ')' with all of these.
-  ReplaceText(lparenLoc, 1, buf.c_str(), buf.size());
+  ReplaceText(lparenLoc, 1, buf);
 
   ///            __continue_label: ;
   ///        } while (counter < limit);
@@ -1559,7 +1542,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   // FIXME: If this should support Obj-C++, support CXXTryStmt
   if (isa<CompoundStmt>(S->getBody())) {
     SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(1);
-    InsertText(endBodyLoc, buf.c_str(), buf.size());
+    InsertText(endBodyLoc, buf);
   } else {
     /* Need to treat single statements specially. For example:
      *
@@ -1572,7 +1555,7 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
     const char *semiBuf = strchr(stmtBuf, ';');
     assert(semiBuf && "Can't find ';'");
     SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(semiBuf-stmtBuf+1);
-    InsertText(endBodyLoc, buf.c_str(), buf.size());
+    InsertText(endBodyLoc, buf);
   }
   Stmts.pop_back();
   ObjCBcLabelNo.pop_back();
@@ -1596,7 +1579,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf = "objc_sync_enter((id)";
   const char *lparenBuf = startBuf;
   while (*lparenBuf != '(') lparenBuf++;
-  ReplaceText(startLoc, lparenBuf-startBuf+1, buf.c_str(), buf.size());
+  ReplaceText(startLoc, lparenBuf-startBuf+1, buf);
   // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since
   // the sync expression is typically a message expression that's already
   // been rewritten! (which implies the SourceLocation's are invalid).
@@ -1612,7 +1595,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "id volatile _rethrow = 0;\n";
   buf += "objc_exception_try_enter(&_stack);\n";
   buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
-  ReplaceText(rparenLoc, 1, buf.c_str(), buf.size());
+  ReplaceText(rparenLoc, 1, buf);
   startLoc = S->getSynchBody()->getLocEnd();
   startBuf = SM->getCharacterData(startLoc);
 
@@ -1641,7 +1624,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "}\n";
   buf += "}";
 
-  ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
+  ReplaceText(lastCurlyLoc, 1, buf);
 
   bool hasReturns = false;
   HasReturnStmts(S->getSynchBody(), hasReturns);
@@ -1697,8 +1680,8 @@ void RewriteObjC::RewriteTryReturnStmts(Stmt *S) {
    std::string buf;
    buf = "{ objc_exception_try_exit(&_stack); return";
    
-   ReplaceText(startLoc, 6, buf.c_str(), buf.size());
-   InsertText(onePastSemiLoc, "}", 1);
+   ReplaceText(startLoc, 6, buf);
+   InsertText(onePastSemiLoc, "}");
  }
  return;
 }
@@ -1723,8 +1706,8 @@ void RewriteObjC::RewriteSyncReturnStmts(Stmt *S, std::string syncExitBuf) {
     buf += syncExitBuf;
     buf += " return";
     
-    ReplaceText(startLoc, 6, buf.c_str(), buf.size());
-    InsertText(onePastSemiLoc, "}", 1);
+    ReplaceText(startLoc, 6, buf);
+    InsertText(onePastSemiLoc, "}");
   }
   return;
 }
@@ -1745,7 +1728,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   buf += "objc_exception_try_enter(&_stack);\n";
   buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
 
-  ReplaceText(startLoc, 4, buf.c_str(), buf.size());
+  ReplaceText(startLoc, 4, buf);
 
   startLoc = S->getTryBody()->getLocEnd();
   startBuf = SM->getCharacterData(startLoc);
@@ -1763,12 +1746,12 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     buf += "   _rethrow = objc_exception_extract(&_stack);\n";
     buf += " else { /* @catch continue */";
 
-    InsertText(startLoc, buf.c_str(), buf.size());
+    InsertText(startLoc, buf);
   } else { /* no catch list */
     buf = "}\nelse {\n";
     buf += "  _rethrow = objc_exception_extract(&_stack);\n";
     buf += "}";
-    ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
+    ReplaceText(lastCurlyLoc, 1, buf);
   }
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
@@ -1801,7 +1784,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       QualType t = catchDecl->getType();
       if (t == Context->getObjCIdType()) {
         buf += "1) { ";
-        ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
+        ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
         sawIdTypedCatch = true;
       } else if (t->isObjCObjectPointerType()) {
         QualType InterfaceTy = t->getPointeeType();
@@ -1811,7 +1794,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
           buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
           buf += cls->getDecl()->getNameAsString();
           buf += "\"), (struct objc_object *)_caught)) { ";
-          ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
+          ReplaceText(startLoc, lParenLoc-startBuf+1, buf);
         }
       }
       // Now rewrite the body...
@@ -1823,10 +1806,9 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
       assert((*rParenBuf == ')') && "bogus @catch paren location");
       assert((*bodyBuf == '{') && "bogus @catch body location");
 
-      buf = " = _caught;";
       // Here we replace ") {" with "= _caught;" (which initializes and
       // declares the @catch parameter).
-      ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, buf.c_str(), buf.size());
+      ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, " = _caught;");
     } else {
       assert(false && "@catch rewrite bug");
     }
@@ -1848,7 +1830,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     buf += "} } /* @catch end */\n";
     if (!S->getFinallyStmt())
       buf += "}\n";
-    InsertText(bodyLoc, buf.c_str(), buf.size());
+    InsertText(bodyLoc, buf);
 
     // Set lastCurlyLoc
     lastCurlyLoc = lastCatchBody->getLocEnd();
@@ -1858,8 +1840,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     startBuf = SM->getCharacterData(startLoc);
     assert((*startBuf == '@') && "bogus @finally start");
 
-    buf = "/* @finally */";
-    ReplaceText(startLoc, 8, buf.c_str(), buf.size());
+    ReplaceText(startLoc, 8, "/* @finally */");
 
     Stmt *body = finalStmt->getFinallyBody();
     SourceLocation startLoc = body->getLocStart();
@@ -1870,11 +1851,9 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
            "bogus @finally body location");
 
     startLoc = startLoc.getFileLocWithOffset(1);
-    buf = " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
-    InsertText(startLoc, buf.c_str(), buf.size());
+    InsertText(startLoc, " if (!_rethrow) objc_exception_try_exit(&_stack);\n");
     endLoc = endLoc.getFileLocWithOffset(-1);
-    buf = " if (_rethrow) objc_exception_throw(_rethrow);\n";
-    InsertText(endLoc, buf.c_str(), buf.size());
+    InsertText(endLoc, " if (_rethrow) objc_exception_throw(_rethrow);\n");
 
     // Set lastCurlyLoc
     lastCurlyLoc = body->getLocEnd();
@@ -1886,7 +1865,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     buf += " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
     buf += " if (_rethrow) objc_exception_throw(_rethrow);\n";
     buf += "}";
-    ReplaceText(lastCurlyLoc, 1, buf.c_str(), buf.size());
+    ReplaceText(lastCurlyLoc, 1, buf);
     
     // Now check for any return/continue/go statements within the @try.
     // The implicit finally clause won't called if the @try contains any
@@ -1898,8 +1877,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   }
   // Now emit the final closing curly brace...
   lastCurlyLoc = lastCurlyLoc.getFileLocWithOffset(1);
-  buf = " } /* @try scope end */\n";
-  InsertText(lastCurlyLoc, buf.c_str(), buf.size());
+  InsertText(lastCurlyLoc, " } /* @try scope end */\n");
   return 0;
 }
 
@@ -1931,13 +1909,12 @@ Stmt *RewriteObjC::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
   // handle "@  throw" correctly.
   const char *wBuf = strchr(startBuf, 'w');
   assert((*wBuf == 'w') && "@throw: can't find 'w'");
-  ReplaceText(startLoc, wBuf-startBuf+1, buf.c_str(), buf.size());
+  ReplaceText(startLoc, wBuf-startBuf+1, buf);
 
   const char *semiBuf = strchr(startBuf, ';');
   assert((*semiBuf == ';') && "@throw: can't find ';'");
   SourceLocation semiLoc = startLoc.getFileLocWithOffset(semiBuf-startBuf);
-  buf = ");";
-  ReplaceText(semiLoc, 1, buf.c_str(), buf.size());
+  ReplaceText(semiLoc, 1, ");");
   return 0;
 }
 
@@ -2062,8 +2039,8 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {
       SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startBuf);
       SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startBuf+1);
       // Comment out the protocol references.
-      InsertText(LessLoc, "/*", 2);
-      InsertText(GreaterLoc, "*/", 2);
+      InsertText(LessLoc, "/*");
+      InsertText(GreaterLoc, "*/");
     }
   }
 }
@@ -2107,8 +2084,8 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
       SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-endBuf);
       SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-endBuf+1);
       // Comment out the protocol references.
-      InsertText(LessLoc, "/*", 2);
-      InsertText(GreaterLoc, "*/", 2);
+      InsertText(LessLoc, "/*");
+      InsertText(GreaterLoc, "*/");
     }
   }
   if (!proto)
@@ -2131,8 +2108,8 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
         SourceLocation GreaterLoc =
           Loc.getFileLocWithOffset(endRef-startFuncBuf+1);
         // Comment out the protocol references.
-        InsertText(LessLoc, "/*", 2);
-        InsertText(GreaterLoc, "*/", 2);
+        InsertText(LessLoc, "/*");
+        InsertText(GreaterLoc, "*/");
       }
       startBuf = ++endBuf;
     }
@@ -2172,15 +2149,13 @@ void RewriteObjC::RewriteTypeOfDecl(VarDecl *ND) {
       startLoc = E->getLocStart();
     startLoc = SM->getInstantiationLoc(startLoc);
     const char *endBuf = SM->getCharacterData(startLoc);
-    ReplaceText(DeclLoc, endBuf-startBuf-1, 
-                TypeAsString.c_str(), TypeAsString.size());
+    ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
   }
   else {
     SourceLocation X = ND->getLocEnd();
     X = SM->getInstantiationLoc(X);
     const char *endBuf = SM->getCharacterData(X);
-    ReplaceText(DeclLoc, endBuf-startBuf-1, 
-                TypeAsString.c_str(), TypeAsString.size());
+    ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
   }
 }
 
@@ -2240,7 +2215,7 @@ void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
       FdStr += ", ";
   }
   FdStr +=  ");\n";
-  InsertText(FunLocStart, FdStr.c_str(), FdStr.size());
+  InsertText(FunLocStart, FdStr);
   CurFunctionDeclToDeclareForBlock = 0;
 }
 
@@ -2424,7 +2399,7 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   Preamble += utostr(Exp->getString()->getByteLength()) + "};\n";
 
   VarDecl *NewVD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
-                                    &Context->Idents.get(S.c_str()), strType, 0,
+                                    &Context->Idents.get(S), strType, 0,
                                     VarDecl::Static);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(NewVD, strType, SourceLocation());
   Expr *Unop = new (Context) UnaryOperator(DRE, UnaryOperator::AddrOf,
@@ -2965,7 +2940,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   if ((CDecl->isForwardDecl() || NumIvars == 0) &&
       (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
-    ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
+    ReplaceText(LocStart, endBuf-startBuf, Result);
     return;
   }
 
@@ -3007,10 +2982,10 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
         endHeader++;
       }
       // rewrite the original header
-      ReplaceText(LocStart, endHeader-startBuf, Result.c_str(), Result.size());
+      ReplaceText(LocStart, endHeader-startBuf, Result);
     } else {
       // rewrite the original header *without* disturbing the '{'
-      ReplaceText(LocStart, cursor-startBuf, Result.c_str(), Result.size());
+      ReplaceText(LocStart, cursor-startBuf, Result);
     }
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
@@ -3022,7 +2997,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       // insert the super class structure definition.
       SourceLocation OnePastCurly =
         LocStart.getFileLocWithOffset(cursor-startBuf+1);
-      InsertText(OnePastCurly, Result.c_str(), Result.size());
+      InsertText(OnePastCurly, Result);
     }
     cursor++; // past '{'
 
@@ -3040,26 +3015,26 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
             !strncmp(cursor, "private", strlen("private")) ||
             !strncmp(cursor, "package", strlen("package")) ||
             !strncmp(cursor, "protected", strlen("protected")))
-          InsertText(atLoc, "// ", 3);
+          InsertText(atLoc, "// ");
       }
       // FIXME: If there are cases where '<' is used in ivar declaration part
       // of user code, then scan the ivar list and use needToScanForQualifiers
       // for type checking.
       else if (*cursor == '<') {
         SourceLocation atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
-        InsertText(atLoc, "/* ", 3);
+        InsertText(atLoc, "/* ");
         cursor = strchr(cursor, '>');
         cursor++;
         atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
-        InsertText(atLoc, " */", 3);
+        InsertText(atLoc, " */");
       } else if (*cursor == '^') { // rewrite block specifier.
         SourceLocation caretLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
-        ReplaceText(caretLoc, 1, "*", 1);
+        ReplaceText(caretLoc, 1, "*");
       }
       cursor++;
     }
     // Don't forget to add a ';'!!
-    InsertText(LocEnd.getFileLocWithOffset(1), ";", 1);
+    InsertText(LocEnd.getFileLocWithOffset(1), ";");
   } else { // we don't have any instance variables - insert super struct.
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
     Result += " {\n    struct ";
@@ -3067,7 +3042,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     Result += "_IMPL ";
     Result += RCDecl->getNameAsString();
     Result += "_IVARS;\n};\n";
-    ReplaceText(LocStart, endBuf-startBuf, Result.c_str(), Result.size());
+    ReplaceText(LocStart, endBuf-startBuf, Result);
   }
   // Mark this struct as having been generated.
   if (!ObjCSynthesizedStructs.insert(CDecl))
@@ -4141,19 +4116,19 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
 
     std::string CI = SynthesizeBlockImpl(Blocks[i], ImplTag, DescTag);
 
-    InsertText(FunLocStart, CI.c_str(), CI.size());
+    InsertText(FunLocStart, CI);
 
     std::string CF = SynthesizeBlockFunc(Blocks[i], i, FunName, ImplTag);
 
-    InsertText(FunLocStart, CF.c_str(), CF.size());
+    InsertText(FunLocStart, CF);
 
     if (ImportedBlockDecls.size()) {
       std::string HF = SynthesizeBlockHelperFuncs(Blocks[i], i, FunName, ImplTag);
-      InsertText(FunLocStart, HF.c_str(), HF.size());
+      InsertText(FunLocStart, HF);
     }
     std::string BD = SynthesizeBlockDescriptor(DescTag, ImplTag, i, FunName,
                                                ImportedBlockDecls.size() > 0);
-    InsertText(FunLocStart, BD.c_str(), BD.size());    
+    InsertText(FunLocStart, BD);
 
     BlockDeclRefs.clear();
     BlockByRefDecls.clear();
@@ -4406,8 +4381,7 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
     std::string TypeAsString = "(";
     TypeAsString += QT.getAsString();
     TypeAsString += ")";
-    ReplaceText(LocStart, endBuf-startBuf+1, 
-                TypeAsString.c_str(), TypeAsString.size());
+    ReplaceText(LocStart, endBuf-startBuf+1, TypeAsString);
     return;
   }
   // advance the location to startArgList.
@@ -4418,7 +4392,7 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
     case '^':
       // Replace the '^' with '*'.
       LocStart = LocStart.getFileLocWithOffset(argPtr-startBuf);
-      ReplaceText(LocStart, 1, "*", 1);
+      ReplaceText(LocStart, 1, "*");
       break;
     }
   }
@@ -4447,7 +4421,7 @@ void RewriteObjC::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
     case '^':
       // Replace the '^' with '*'.
       DeclLoc = DeclLoc.getFileLocWithOffset(argPtr-startArgList);
-      ReplaceText(DeclLoc, 1, "*", 1);
+      ReplaceText(DeclLoc, 1, "*");
       break;
     case '(':
       parenCount++;
@@ -4528,7 +4502,7 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   if (*startBuf == '^') {
     // Replace the '^' with '*', computing a negative offset.
     DeclLoc = DeclLoc.getFileLocWithOffset(startBuf-endBuf);
-    ReplaceText(DeclLoc, 1, "*", 1);
+    ReplaceText(DeclLoc, 1, "*");
   }
   if (PointerTypeTakesAnyBlockArguments(DeclT)) {
     // Replace the '^' with '*' for arguments.
@@ -4539,7 +4513,7 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
     while (argListBegin < argListEnd) {
       if (*argListBegin == '^') {
         SourceLocation CaretLoc = DeclLoc.getFileLocWithOffset(argListBegin-startBuf);
-        ReplaceText(CaretLoc, 1, "*", 1);
+        ReplaceText(CaretLoc, 1, "*");
       }
       argListBegin++;
     }
@@ -4664,7 +4638,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     assert(CurMethodDef && "RewriteByRefVar - CurMethodDef is null");
     FunLocStart = CurMethodDef->getLocStart();
   }
-  InsertText(FunLocStart, ByrefType.c_str(), ByrefType.size());
+  InsertText(FunLocStart, ByrefType);
   if (Ty.isObjCGCWeak()) {
     flag |= BLOCK_FIELD_IS_WEAK;
     isa = 1;
@@ -4680,7 +4654,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       flag |= BLOCK_FIELD_IS_OBJECT;
     std::string HF = SynthesizeByrefCopyDestroyHelper(ND, flag);
     if (!HF.empty())
-      InsertText(FunLocStart, HF.c_str(), HF.size());
+      InsertText(FunLocStart, HF);
   }
   
   // struct __Block_byref_ND ND = 
@@ -4711,8 +4685,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       ByrefType += utostr(flag);
     }
     ByrefType += "};\n";
-    ReplaceText(DeclLoc, endBuf-startBuf+Name.size(), 
-                ByrefType.c_str(), ByrefType.size());
+    ReplaceText(DeclLoc, endBuf-startBuf+Name.size(), ByrefType);
   }
   else {
     SourceLocation startLoc;
@@ -4740,8 +4713,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       ByrefType += utostr(flag);
       ByrefType += ", ";
     }
-    ReplaceText(DeclLoc, endBuf-startBuf, 
-                ByrefType.c_str(), ByrefType.size());
+    ReplaceText(DeclLoc, endBuf-startBuf, ByrefType);
     
     // Complete the newly synthesized compound expression by inserting a right
     // curly brace before the end of the declaration.
@@ -4757,7 +4729,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     SourceLocation semiLoc =
       startLoc.getFileLocWithOffset(semiBuf-startBuf);
 
-    InsertText(semiLoc, "}", 1);
+    InsertText(semiLoc, "}");
   }
   return;
 }
@@ -5336,8 +5308,7 @@ void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
        E = ProtocolExprDecls.end(); I != E; ++I)
     RewriteObjCProtocolMetaData(*I, "", "", Preamble);
 
-  InsertText(SM->getLocForStartOfFile(MainFileID),
-             Preamble.c_str(), Preamble.size(), false);
+  InsertText(SM->getLocForStartOfFile(MainFileID), Preamble, false);
   if (ClassImplementation.size() || CategoryImplementation.size())
     RewriteImplementations();
 
@@ -5348,7 +5319,7 @@ void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
     //printf("Changed:\n");
     *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
   } else {
-    fprintf(stderr, "No changes\n");
+    llvm::errs() << "No changes\n";
   }
 
   if (ClassImplementation.size() || CategoryImplementation.size() ||
