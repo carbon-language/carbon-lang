@@ -54,11 +54,11 @@ namespace llvm {
     /// in a more literal form.
     bool CanonicalMode;
 
-  protected:
     typedef IRBuilder<true, TargetFolder> BuilderType;
     BuilderType Builder;
 
     friend struct SCEVVisitor<SCEVExpander, Value*>;
+
   public:
     /// SCEVExpander - Construct a SCEVExpander in "canonical" mode.
     explicit SCEVExpander(ScalarEvolution &se)
