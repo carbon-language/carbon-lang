@@ -28,6 +28,10 @@ ANALYSIS(SecuritySyntacticChecks, "analyzer-check-security-syntactic",
          "Perform quick security checks that require no data flow",
          Code)
 
+ANALYSIS(LLVMConventionChecker, "analyzer-check-llvm-conventions",
+  "Check code for LLVM codebase conventions (domain-specific)",
+  Code)
+
 ANALYSIS(WarnDeadStores, "analyzer-check-dead-stores",
          "Warn about stores to dead variables", Code)
 

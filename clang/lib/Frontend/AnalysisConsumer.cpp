@@ -446,6 +446,14 @@ static void ActionSecuritySyntacticChecks(AnalysisConsumer &C,
   CheckSecuritySyntaxOnly(D, BR);
 }
 
+static void ActionLLVMConventionChecker(AnalysisConsumer &C,
+                                        AnalysisManager &mgr,
+                                        Decl *D) {
+  C.DisplayFunction(D);
+  BugReporter BR(mgr);
+  CheckLLVMConventions(D, BR);
+}
+
 static void ActionWarnObjCDealloc(AnalysisConsumer &C, AnalysisManager& mgr,
                                   Decl *D) {
   if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)

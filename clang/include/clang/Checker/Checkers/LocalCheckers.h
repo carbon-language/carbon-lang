@@ -50,8 +50,8 @@ void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
 void RegisterExperimentalChecks(GRExprEngine &Eng);
 void RegisterExperimentalInternalChecks(GRExprEngine &Eng);
 
+void CheckLLVMConventions(const Decl *D, BugReporter &BR);
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
-
 void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 
 void RegisterCallInliner(GRExprEngine &Eng);

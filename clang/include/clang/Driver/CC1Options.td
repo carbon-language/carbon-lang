@@ -38,6 +38,8 @@ def analysis_CFGView : Flag<"-cfg-view">,
   HelpText<"View Control-Flow Graphs using GraphViz">;
 def analysis_DisplayLiveVariables : Flag<"-dump-live-variables">,
   HelpText<"Print results of live variable analysis">;
+def analysis_LLVMConventionChecker : Flag<"-analyzer-check-llvm-conventions">,
+  HelpText<"Check code for LLVM codebase conventions (domain-specific)">;
 def analysis_SecuritySyntacticChecks : Flag<"-analyzer-check-security-syntactic">,
   HelpText<"Perform quick security checks that require no data flow">;
 def analysis_WarnDeadStores : Flag<"-analyzer-check-dead-stores">,
