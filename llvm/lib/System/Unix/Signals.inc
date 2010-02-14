@@ -59,7 +59,7 @@ static const int KillSigs[] = {
 #ifdef SIGXCPU
   , SIGXCPU
 #endif
-#ifdef SIGEMT
+#ifdef SIGXFSZ
   , SIGXFSZ
 #endif
 #ifdef SIGEMT
