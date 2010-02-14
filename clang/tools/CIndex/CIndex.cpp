@@ -319,10 +319,6 @@ public:
 } // end anonymous namespace
 
 RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
-  assert(RegionOfInterest.isValid() && "RangeCompare called with invalid range");
-  if (R.isInvalid())
-    return RangeOverlap;
-
   // Move the end of the input range to the end of the last token in that
   // range.
   SourceLocation NewEnd
