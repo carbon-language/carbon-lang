@@ -498,6 +498,10 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
     
+    // Ignore bases that don't have any virtual member functions.
+    if (!BaseDecl->isPolymorphic())
+      continue;
+    
     uint64_t BaseOffset;
     if (I->isVirtual()) {
       BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
@@ -528,6 +532,10 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
     
+    // Ignore bases that don't have any virtual member functions.
+    if (!BaseDecl->isPolymorphic())
+      continue;
+
     uint64_t BaseOffset;
     if (I->isVirtual()) {
       if (!VisitedVirtualBases.insert(BaseDecl)) {
@@ -949,7 +957,9 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
 
 void VtableBuilder::layoutVtable(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
-  
+
+  assert(RD->isDynamicClass() && "class does not have a vtable!");
+
   // First, add the offset to top.
   // FIXME: This is not going to be right for construction vtables.
   // FIXME: We should not use / 8 here.
@@ -987,11 +997,15 @@ void VtableBuilder::layoutVtable(BaseSubobject Base) {
        E = RD->bases_end(); I != E; ++I) {
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-    
+
     // Ignore the primary base.
     if (BaseDecl == PrimaryBase)
       continue;
-    
+
+    // Ignore bases that don't have a vtable.
+    if (!BaseDecl->isDynamicClass())
+      continue;
+
     assert(!I->isVirtual() && "FIXME: Handle virtual bases");
     
     // Get the base offset of this base.

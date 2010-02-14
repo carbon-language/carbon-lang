@@ -321,3 +321,22 @@ struct D : C, B1, B2 {
 void D::f() { }
 
 }
+
+namespace Test8 {
+
+// Test that we don't try to layout vtables for classes that don't have
+// virtual bases or virtual member functions.
+
+struct A { };
+
+// CHECK:     Vtable for 'Test8::B' (3 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test8::B RTTI
+// CHECK-NEXT:       -- (Test8::B, 0) vtable address --
+// CHECK-NEXT:   2 | void Test8::B::f()
+struct B : A { 
+  virtual void f();
+};
+void B::f() { }
+
+}
