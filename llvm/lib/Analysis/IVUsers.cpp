@@ -322,13 +322,6 @@ const SCEV *IVUsers::getCanonicalExpr(const IVStrideUse &U) const {
   return RetVal;
 }
 
-namespace {
-
-// Suppress extraneous comments.
-class IVUsersAsmAnnotator : public AssemblyAnnotationWriter {};
-
-}
-
 void IVUsers::print(raw_ostream &OS, const Module *M) const {
   OS << "IV Users for loop ";
   WriteAsOperand(OS, L->getHeader(), false);
@@ -338,7 +331,9 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
   }
   OS << ":\n";
 
-  IVUsersAsmAnnotator Annotator;
+  // Use a defualt AssemblyAnnotationWriter to suppress the default info
+  // comments, which aren't relevant here.
+  AssemblyAnnotationWriter Annotator;
   for (ilist<IVStrideUse>::const_iterator UI = IVUses.begin(),
        E = IVUses.end(); UI != E; ++UI) {
     OS << "  ";
