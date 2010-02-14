@@ -120,7 +120,7 @@ def immZExt5 : PatLeaf<(imm), [{
 
 // Mips Address Mode! SDNode frameindex could possibily be a match
 // since load and store instructions from stack used it.
-def addr : ComplexPattern<i32, 2, "SelectAddr", [frameindex], []>;
+def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], []>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format
