@@ -136,9 +136,9 @@ private:
                           SubobjectOffsetsMapTy &Offsets);
   
   /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
-  /// the 'this' pointer from BaseRD to DerivedRD.
-  BaseOffset ComputeThisAdjustmentBaseOffset(const CXXRecordDecl *BaseRD,
-                                             const CXXRecordDecl *DerivedRD);
+  /// the 'this' pointer from the base subobject to the derived subobject.
+  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject BaseSubobject,
+                                             BaseSubobject Derived);
                                              
   static void MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
                                     SubobjectOffsetsMapTy &Offsets);
@@ -229,22 +229,11 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
   }
 }
 
-static FinalOverriders::BaseOffset 
-ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *BaseRD,
-                  const CXXRecordDecl *DerivedRD) {
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
-  
-  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
-      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return FinalOverriders::BaseOffset();
-  }
-
+static FinalOverriders::BaseOffset
+ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *DerivedRD,
+                  const CXXBasePath &Path) {
   int64_t NonVirtualOffset = 0;
 
-  const CXXBasePath &Path = Paths.front();
-  
   unsigned NonVirtualStart = 0;
   const CXXRecordDecl *VirtualBase = 0;
   
@@ -280,6 +269,22 @@ ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *BaseRD,
   // CharUnits.
   return FinalOverriders::BaseOffset(DerivedRD, VirtualBase, 
                                      NonVirtualOffset / 8);
+  
+}
+
+static FinalOverriders::BaseOffset 
+ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *BaseRD,
+                  const CXXRecordDecl *DerivedRD) {
+  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/false);
+  
+  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
+      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return FinalOverriders::BaseOffset();
+  }
+
+  return ComputeBaseOffset(Context, DerivedRD, Paths.front());
 }
 
 static FinalOverriders::BaseOffset
@@ -337,9 +342,12 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
 }
 
 FinalOverriders::BaseOffset
-FinalOverriders::ComputeThisAdjustmentBaseOffset(const CXXRecordDecl *BaseRD,
-                                               const CXXRecordDecl *DerivedRD) {
-  CXXBasePaths Paths(/*FindAmbiguities=*/false,
+FinalOverriders::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
+                                                 BaseSubobject Derived) {
+  const CXXRecordDecl *BaseRD = Base.getBase();
+  const CXXRecordDecl *DerivedRD = Derived.getBase();
+  
+  CXXBasePaths Paths(/*FindAmbiguities=*/true,
                      /*RecordPaths=*/true, /*DetectVirtual=*/true);
 
   if (!const_cast<CXXRecordDecl *>(DerivedRD)->
@@ -350,10 +358,15 @@ FinalOverriders::ComputeThisAdjustmentBaseOffset(const CXXRecordDecl *BaseRD,
 
   assert(!Paths.getDetectedVirtual() && "FIXME: Handle virtual bases!");
 
-  // FIXME: We need to go through all paths here, just not the first one.
-  BaseOffset Offset = ComputeBaseOffset(Context, BaseRD, DerivedRD);
+  BaseOffset Offset;
+  
+  // FIXME: This is not going to be enough with virtual bases.
+  // FIXME: We should not use / 8 here.
+  int64_t DerivedToBaseOffset = 
+    (Base.getBaseOffset() - Derived.getBaseOffset()) / 8;
+  
+  Offset.NonVirtualOffset = -DerivedToBaseOffset;
 
-  Offset.NonVirtualOffset = -Offset.NonVirtualOffset;
   return Offset;
 }
   
@@ -380,8 +393,9 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
     for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
       uint64_t Offset = OffsetVector[I];
 
+      BaseSubobject OverriddenSubobject = BaseSubobject(OverriddenRD, Offset);
       BaseSubobjectMethodPairTy SubobjectAndMethod =
-        std::make_pair(BaseSubobject(OverriddenRD, Offset), OverriddenMD);
+        std::make_pair(OverriddenSubobject, OverriddenMD);
       
       OverriderInfo &Overrider = OverridersMap[SubobjectAndMethod];
 
@@ -402,8 +416,8 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
         // Check if we need a 'this' adjustment base offset as well.
         if (Offset != NewBase.getBaseOffset()) {
           BaseOffset ThisBaseOffset =
-            ComputeThisAdjustmentBaseOffset(OverriddenMD->getParent(),
-                                            NewMD->getParent());
+            ComputeThisAdjustmentBaseOffset(OverriddenSubobject,
+                                            NewBase);
           assert(!ThisBaseOffset.isEmpty() && 
                  "Should not get an empty 'this' adjustment!");
           
@@ -921,7 +935,7 @@ void VtableBuilder::layoutVtable(BaseSubobject Base) {
   
   // First, add the offset to top.
   // FIXME: This is not going to be right for construction vtables.
-  // FIXME: We should not use -8 here.
+  // FIXME: We should not use / 8 here.
   int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
   Components.push_back(VtableComponent::MakeOffsetToTop(OffsetToTop));
   

@@ -280,3 +280,44 @@ struct C : A1, A2 {
 void C::f() { }
 
 }
+
+namespace Test7 {
+
+// Test that the D::f overrider for A::f have different 'this' pointer
+// adjustments in the two A base subobjects.
+
+struct A {
+  virtual void f();
+  int a;
+};
+
+struct B1 : A { };
+struct B2 : A { };
+
+struct C { virtual void c(); };
+
+// CHECK:     Vtable for 'Test7::D' (10 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test7::D RTTI
+// CHECK-NEXT:       -- (Test7::C, 0) vtable address --
+// CHECK-NEXT:       -- (Test7::D, 0) vtable address --
+// CHECK-NEXT:   2 | void Test7::C::c()
+// CHECK-NEXT:   3 | void Test7::D::f()
+// CHECK-NEXT:   4 | offset_to_top (-8)
+// CHECK-NEXT:   5 | Test7::D RTTI
+// CHECK-NEXT:       -- (Test7::A, 8) vtable address --
+// CHECK-NEXT:       -- (Test7::B1, 8) vtable address --
+// CHECK-NEXT:   6 | void Test7::D::f()
+// CHECK-NEXT:       [this adjustment: -8 non-virtual]
+// CHECK-NEXT:   7 | offset_to_top (-24)
+// CHECK-NEXT:   8 | Test7::D RTTI
+// CHECK-NEXT:       -- (Test7::A, 24) vtable address --
+// CHECK-NEXT:       -- (Test7::B2, 24) vtable address --
+// CHECK-NEXT:   9 | void Test7::D::f()
+// CHECK-NEXT:       [this adjustment: -24 non-virtual]
+struct D : C, B1, B2 {
+  virtual void f();
+};
+void D::f() { }
+
+}
