@@ -298,6 +298,11 @@ public:   // Higher level manipulation routines.
   bool canPatternMatch(std::string &Reason, const CodeGenDAGPatterns &CDP);
 };
 
+inline raw_ostream &operator<<(raw_ostream &OS, const TreePatternNode &TPN) {
+  TPN.print(OS);
+  return OS;
+}
+  
 
 /// TreePattern - Represent a pattern, used for instructions, pattern
 /// fragments, etc.
