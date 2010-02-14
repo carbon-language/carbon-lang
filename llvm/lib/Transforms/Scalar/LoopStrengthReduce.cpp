@@ -1503,7 +1503,11 @@ LSRInstance::OptimizeLoopTermCond() {
 
     // Conservatively avoid trying to use the post-inc value in non-latch
     // exits if there may be pre-inc users in intervening blocks.
-    if (LatchBlock != ExitingBlock)
+    if (LatchBlock != ExitingBlock) {
+      // Without target lowering, we won't be able to query about valid reuse.
+      if (!TLI)
+        continue;
+
       for (IVUsers::const_iterator UI = IU.begin(), E = IU.end(); UI != E; ++UI)
         // Test if the use is reachable from the exiting block. This dominator
         // query is a conservative approximation of reachability.
@@ -1535,13 +1539,14 @@ LSRInstance::OptimizeLoopTermCond() {
             const Type *AccessTy = getAccessType(UI->getUser());
             TargetLowering::AddrMode AM;
             AM.Scale = D->getValue()->getSExtValue();
-            if (TLI && TLI->isLegalAddressingMode(AM, AccessTy))
+            if (TLI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
             AM.Scale = -AM.Scale;
-            if (TLI && TLI->isLegalAddressingMode(AM, AccessTy))
+            if (TLI->isLegalAddressingMode(AM, AccessTy))
               goto decline_post_inc;
           }
         }
+    }
 
     DEBUG(dbgs() << "  Change loop exiting icmp to use postinc iv: "
                  << *Cond << '\n');
