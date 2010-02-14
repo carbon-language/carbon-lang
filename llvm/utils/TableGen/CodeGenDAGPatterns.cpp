@@ -768,7 +768,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 /// references from the register file information, for example.
 ///
 static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
-                                      TreePattern &TP) {
+                                                  TreePattern &TP) {
   // Some common return values
   std::vector<unsigned char> Unknown(1, EEVT::isUnknown);
   std::vector<unsigned char> Other(1, MVT::Other);
@@ -845,7 +845,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
       // If it's a regclass or something else known, include the type.
       return UpdateNodeType(getImplicitType(DI->getDef(), NotRegisters, TP),TP);
-    } else if (IntInit *II = dynamic_cast<IntInit*>(getLeafValue())) {
+    }
+    
+    if (IntInit *II = dynamic_cast<IntInit*>(getLeafValue())) {
       // Int inits are always integers. :)
       bool MadeChange = UpdateNodeType(MVT::iAny, TP);
       
