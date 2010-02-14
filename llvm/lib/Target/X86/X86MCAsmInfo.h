@@ -33,11 +33,6 @@ namespace llvm {
   struct X86MCAsmInfoCOFF : public MCAsmInfoCOFF {
     explicit X86MCAsmInfoCOFF(const Triple &Triple);
   };
-
-  struct X86WinMCAsmInfo : public MCAsmInfo {
-    explicit X86WinMCAsmInfo(const Triple &Triple);
-  };
-
 } // namespace llvm
 
 #endif
