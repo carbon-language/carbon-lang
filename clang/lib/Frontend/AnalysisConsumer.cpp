@@ -205,42 +205,30 @@ namespace llvm {
 
 void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
   switch (D->getKind()) {
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion:
+  case Decl::CXXMethod:
   case Decl::Function: {
     FunctionDecl* FD = cast<FunctionDecl>(D);
-
     if (!Opts.AnalyzeSpecificFunction.empty() &&
-        Opts.AnalyzeSpecificFunction != FD->getIdentifier()->getName())
-      break;
+        FD->getDeclName().getAsString() != Opts.AnalyzeSpecificFunction)
+        break;
 
-    Stmt* Body = FD->getBody();
-    if (Body) HandleCode(FD, Body, FunctionActions);
+    if (Stmt *Body = FD->getBody())
+      HandleCode(FD, Body, FunctionActions);
     break;
   }
 
   case Decl::ObjCMethod: {
     ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
 
-    if (Opts.AnalyzeSpecificFunction.size() > 0 &&
+    if (!Opts.AnalyzeSpecificFunction.empty() &&
         Opts.AnalyzeSpecificFunction != MD->getSelector().getAsString())
       return;
 
-    Stmt* Body = MD->getBody();
-    if (Body) HandleCode(MD, Body, ObjCMethodActions);
-    break;
-  }
-
-  case Decl::CXXConstructor:
-  case Decl::CXXDestructor:
-  case Decl::CXXConversion:
-  case Decl::CXXMethod: {
-    CXXMethodDecl *CXXMD = cast<CXXMethodDecl>(D);
-
-    if (Opts.AnalyzeSpecificFunction.size() > 0 &&
-        Opts.AnalyzeSpecificFunction != CXXMD->getName())
-      return;
-
-    Stmt *Body = CXXMD->getBody();
-    if (Body) HandleCode(CXXMD, Body, FunctionActions);
+    if (Stmt* Body = MD->getBody())
+      HandleCode(MD, Body, ObjCMethodActions);
     break;
   }
 
