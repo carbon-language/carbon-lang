@@ -238,12 +238,6 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// \param R a source range retrieved from the abstract syntax tree.
   RangeComparisonResult CompareRegionOfInterest(SourceRange R); 
   
-  /// \brief Determine whether this particular source range comes before, comes 
-  /// after, or overlaps the region of interest. 
-  ///
-  /// \param CXR a source range retrieved from a cursor.
-  RangeComparisonResult CompareRegionOfInterest(CXSourceRange CXR); 
-  
 public:
   CursorVisitor(ASTUnit *TU, CXCursorVisitor Visitor, CXClientData ClientData, 
                 unsigned MaxPCHLevel, 
@@ -338,10 +332,6 @@ RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
   return RangeCompare(TU->getSourceManager(), R, RegionOfInterest);
 }
 
-RangeComparisonResult CursorVisitor::CompareRegionOfInterest(CXSourceRange CXR) {
-  return CompareRegionOfInterest(cxloc::translateCXSourceRange(CXR));
-}
-
 /// \brief Visit the given cursor and, if requested by the visitor,
 /// its children.
 ///
@@ -369,9 +359,9 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   // If we have a range of interest, and this cursor doesn't intersect with it,
   // we're done.
   if (RegionOfInterest.isValid() && !CheckedRegionOfInterest) {
-    CXSourceRange Range = clang_getCursorExtent(Cursor);
-    if (cxloc::translateCXSourceRange(Range).isInvalid() || 
-        CompareRegionOfInterest(Range))
+    SourceRange Range =
+      cxloc::translateCXSourceRange(clang_getCursorExtent(Cursor));
+    if (Range.isInvalid() || CompareRegionOfInterest(Range))
       return false;
   }
   
