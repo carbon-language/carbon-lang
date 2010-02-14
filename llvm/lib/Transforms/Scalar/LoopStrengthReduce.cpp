@@ -2238,7 +2238,7 @@ void LSRInstance::GenerateTruncates(LSRUse &LU, unsigned LUIdx,
 
 namespace {
 
-/// WorkItem - Helper class for GenerateConstantOffsetReuse. It's used to
+/// WorkItem - Helper class for GenerateCrossUseConstantOffsets. It's used to
 /// defer modifications so that the search phase doesn't have to worry about
 /// the data structures moving underneath it.
 struct WorkItem {
