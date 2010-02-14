@@ -65,7 +65,7 @@ static inline SourceLocation translateSourceLocation(CXSourceLocation L) {
   return SourceLocation::getFromRawEncoding(L.int_data);
 }
 
-static inline SourceRange translateSourceRange(CXSourceRange R) {
+static inline SourceRange translateCXSourceRange(CXSourceRange R) {
   return SourceRange(SourceLocation::getFromRawEncoding(R.begin_int_data),
                      SourceLocation::getFromRawEncoding(R.end_int_data));
 }

@@ -339,7 +339,7 @@ RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
 }
 
 RangeComparisonResult CursorVisitor::CompareRegionOfInterest(CXSourceRange CXR) {
-  return CompareRegionOfInterest(cxloc::translateSourceRange(CXR));
+  return CompareRegionOfInterest(cxloc::translateCXSourceRange(CXR));
 }
 
 /// \brief Visit the given cursor and, if requested by the visitor,
@@ -370,7 +370,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   // we're done.
   if (RegionOfInterest.isValid() && !CheckedRegionOfInterest) {
     CXSourceRange Range = clang_getCursorExtent(Cursor);
-    if (cxloc::translateSourceRange(Range).isInvalid() || 
+    if (cxloc::translateCXSourceRange(Range).isInvalid() || 
         CompareRegionOfInterest(Range))
       return false;
   }
@@ -2003,7 +2003,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   if (!CXXUnit || !Tokens || !NumTokens)
     return;
   
-  SourceRange R = cxloc::translateSourceRange(Range);
+  SourceRange R = cxloc::translateCXSourceRange(Range);
   if (R.isInvalid())
     return;
   
