@@ -2416,7 +2416,8 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset,
                              AddressPointsMapTy& AddressPoints) {
-  if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts) {
+  if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts && 
+      LayoutClass == RD) {
     VtableBuilder Builder(*this, RD);
     
     Builder.dumpLayout(llvm::errs());
