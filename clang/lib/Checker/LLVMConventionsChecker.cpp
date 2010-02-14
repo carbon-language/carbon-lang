@@ -42,7 +42,7 @@ static bool IsStdString(QualType T) {
   if (!TT)
     return false;
 
-  const TypedefDecl *TD = TT->getDecl();    
+  const TypedefDecl *TD = TT->getDecl();
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(TD->getDeclContext());
   if (!ND)
     return false;
@@ -94,7 +94,7 @@ void StringRefCheckerVisitor::VisitDeclStmt(DeclStmt *S) {
 void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
   Expr *Init = VD->getInit();
   if (!Init)
-    return; 
+    return;
 
   // Pattern match for:
   // llvm::StringRef x = call() (where call returns std::string)
@@ -129,6 +129,22 @@ void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
 // Entry point for all checks.
 //===----------------------------------------------------------------------===//
 
-void clang::CheckLLVMConventions(const Decl *D, BugReporter &BR) {
-  CheckStringRefAssignedTemporary(D, BR);
+static void ScanCodeDecls(DeclContext *DC, BugReporter &BR) {
+  for (DeclContext::decl_iterator I=DC->decls_begin(), E=DC->decls_end();
+       I!=E ; ++I) {
+
+    Decl *D = *I;
+    if (D->getBody()) {
+      CheckStringRefAssignedTemporary(D, BR);
+    }
+
+    if (DeclContext *DC_child = dyn_cast<DeclContext>(D))
+      ScanCodeDecls(DC_child, BR);
+  }
 }
+
+void clang::CheckLLVMConventions(TranslationUnitDecl &TU,
+                                 BugReporter &BR) {
+  ScanCodeDecls(&TU, BR);
+}
+

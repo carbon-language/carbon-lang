@@ -30,7 +30,7 @@ ANALYSIS(SecuritySyntacticChecks, "analyzer-check-security-syntactic",
 
 ANALYSIS(LLVMConventionChecker, "analyzer-check-llvm-conventions",
   "Check code for LLVM codebase conventions (domain-specific)",
-  Code)
+  TranslationUnit)
 
 ANALYSIS(WarnDeadStores, "analyzer-check-dead-stores",
          "Warn about stores to dead variables", Code)

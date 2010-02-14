@@ -434,10 +434,9 @@ static void ActionSecuritySyntacticChecks(AnalysisConsumer &C,
 
 static void ActionLLVMConventionChecker(AnalysisConsumer &C,
                                         AnalysisManager &mgr,
-                                        Decl *D) {
-  C.DisplayFunction(D);
+                                        TranslationUnitDecl &TU) {
   BugReporter BR(mgr);
-  CheckLLVMConventions(D, BR);
+  CheckLLVMConventions(TU, BR);
 }
 
 static void ActionWarnObjCDealloc(AnalysisConsumer &C, AnalysisManager& mgr,

@@ -31,6 +31,7 @@ class BugReporter;
 class ObjCImplementationDecl;
 class LangOptions;
 class GRExprEngine;
+class TranslationUnitDecl;
 
 void CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &map, 
                      BugReporter& BR);
@@ -50,7 +51,7 @@ void RegisterAppleChecks(GRExprEngine& Eng, const Decl &D);
 void RegisterExperimentalChecks(GRExprEngine &Eng);
 void RegisterExperimentalInternalChecks(GRExprEngine &Eng);
 
-void CheckLLVMConventions(const Decl *D, BugReporter &BR);
+void CheckLLVMConventions(TranslationUnitDecl &TU, BugReporter &BR);
 void CheckSecuritySyntaxOnly(const Decl *D, BugReporter &BR);
 void CheckSizeofPointer(const Decl *D, BugReporter &BR);
 
