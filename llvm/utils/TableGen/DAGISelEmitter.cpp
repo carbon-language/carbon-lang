@@ -261,24 +261,6 @@ static std::string getOpcodeName(Record *Op, CodeGenDAGPatterns &CGP) {
   return CGP.getSDNodeInfo(Op).getEnumName();
 }
 
-static
-bool DisablePatternForFastISel(TreePatternNode *N, CodeGenDAGPatterns &CGP) {
-  bool isStore = !N->isLeaf() &&
-    getOpcodeName(N->getOperator(), CGP) == "ISD::STORE";
-  if (!isStore && NodeHasProperty(N, SDNPHasChain, CGP))
-    return false;
-
-  bool HasChain = false;
-  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-    TreePatternNode *Child = N->getChild(i);
-    if (PatternHasProperty(Child, SDNPHasChain, CGP)) {
-      HasChain = true;
-      break;
-    }
-  }
-  return HasChain;
-}
-
 //===----------------------------------------------------------------------===//
 // Node Transformation emitter implementation.
 //
@@ -594,10 +576,6 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   if (isRoot) {
     // Record input varargs info.
     NumInputRootOps = N->getNumChildren();
-    
-    if (DisablePatternForFastISel(N, CGP))
-      emitCheck("OptLevel != CodeGenOpt::None");
-    
     emitCheck(PredicateCheck);
   }
   
@@ -1506,7 +1484,8 @@ void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
   bool FoundChain = false;
   Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", FoundChain);
 
-  // TP - Get *SOME* tree pattern, we don't care which.
+  // TP - Get *SOME* tree pattern, we don't care which.  It is only used for
+  // diagnostics, which we know are impossible at this point.
   TreePattern &TP = *CGP.pf_begin()->second;
   
   // At this point, we know that we structurally match the pattern, but the
@@ -1699,7 +1678,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
        E = CGP.ptm_end(); I != E; ++I) {
     const PatternToMatch &Pattern = *I;
-
+    
     TreePatternNode *Node = Pattern.getSrcPattern();
     if (!Node->isLeaf()) {
       PatternsByOpcode[getOpcodeName(Node->getOperator(), CGP)].
