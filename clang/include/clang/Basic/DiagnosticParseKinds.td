@@ -173,7 +173,7 @@ def err_friend_invalid_in_context : Error<
 def err_unknown_typename : Error<
   "unknown type name %0">;
 def err_use_of_tag_name_without_tag : Error<
-  "use of tagged type %0 without '%1' tag">;
+  "must use '%1' tag to refer to type %0%select{| in this scope}2">;
 def err_expected_ident_in_using : Error<
   "expected an identifier in using directive">;
 def err_unexected_colon_in_nested_name_spec : Error<

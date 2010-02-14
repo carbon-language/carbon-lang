@@ -733,7 +733,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
     if (TagName) {
       Diag(Loc, diag::err_use_of_tag_name_without_tag)
-        << Tok.getIdentifierInfo() << TagName
+        << Tok.getIdentifierInfo() << TagName << getLang().CPlusPlus
         << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
 
       // Parse this as a tag as if the missing tag were present.

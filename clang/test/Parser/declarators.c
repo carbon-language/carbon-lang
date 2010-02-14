@@ -47,8 +47,8 @@ int test6() { return a; }  // a should be declared.
 // Use of tagged type without tag. rdar://6783347
 struct xyz { int y; };
 enum myenum { ASDFAS };
-xyz b;         // expected-error {{use of tagged type 'xyz' without 'struct' tag}}
-myenum c;      // expected-error {{use of tagged type 'myenum' without 'enum' tag}}
+xyz b;         // expected-error {{must use 'struct' tag to refer to type 'xyz'}}
+myenum c;      // expected-error {{must use 'enum' tag to refer to type 'myenum'}}
 
 float *test7() {
   // We should recover 'b' by parsing it with a valid type of "struct xyz", which
