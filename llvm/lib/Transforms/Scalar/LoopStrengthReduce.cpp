@@ -1995,7 +1995,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 /// GenerateCombinations - Generate a formula consisting of all of the
 /// loop-dominating registers added into a single register.
 void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
-                                           Formula Base) {
+                                       Formula Base) {
   // This method is only intersting on a plurality of registers.
   if (Base.BaseRegs.size() <= 1) return;
 
