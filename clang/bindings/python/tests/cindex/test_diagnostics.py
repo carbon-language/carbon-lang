@@ -44,5 +44,5 @@ def test_diagnostic_fixit():
     assert tu.diagnostics[0].fixits[0].range.start.line == 1
     assert tu.diagnostics[0].fixits[0].range.start.column == 26
     assert tu.diagnostics[0].fixits[0].range.end.line == 1
-    assert tu.diagnostics[0].fixits[0].range.end.column == 29
+    assert tu.diagnostics[0].fixits[0].range.end.column == 30
     assert tu.diagnostics[0].fixits[0].value == '.f0 = '

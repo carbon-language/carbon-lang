@@ -139,9 +139,11 @@ static RangeComparisonResult RangeCompare(SourceManager &SM,
                                           SourceRange R2) {
   assert(R1.isValid() && "First range is invalid?");
   assert(R2.isValid() && "Second range is invalid?");
-  if (SM.isBeforeInTranslationUnit(R1.getEnd(), R2.getBegin()))
+  if (R1.getEnd() == R2.getBegin() ||
+      SM.isBeforeInTranslationUnit(R1.getEnd(), R2.getBegin()))
     return RangeBefore;
-  if (SM.isBeforeInTranslationUnit(R2.getEnd(), R1.getBegin()))
+  if (R2.getEnd() == R1.getBegin() ||
+      SM.isBeforeInTranslationUnit(R2.getEnd(), R1.getBegin()))
     return RangeAfter;
   return RangeOverlap;
 }
@@ -180,9 +182,6 @@ CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
   // Preprocessor::getLocForEndOfToken().
   if (InstLoc.isValid()) {
     unsigned Length = Lexer::MeasureTokenLength(InstLoc, SM, LangOpts);
-    // FIXME: Temporarily represent as closed range to preserve API
-    // compatibility.
-    if (Length) --Length;
     EndLoc = EndLoc.getFileLocWithOffset(Length);
   }
 
@@ -235,7 +234,7 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   /// \brief Determine whether this particular source range comes before, comes 
   /// after, or overlaps the region of interest. 
   ///
-  /// \param R a source range retrieved from the abstract syntax tree.
+  /// \param R a half-open source range retrieved from the abstract syntax tree.
   RangeComparisonResult CompareRegionOfInterest(SourceRange R); 
   
 public:
@@ -319,12 +318,6 @@ public:
 } // end anonymous namespace
 
 RangeComparisonResult CursorVisitor::CompareRegionOfInterest(SourceRange R) {
-  // Move the end of the input range to the end of the last token in that
-  // range.
-  SourceLocation NewEnd
-    = TU->getPreprocessor().getLocForEndOfToken(R.getEnd(), 1);
-  if (NewEnd.isValid())
-    R.setEnd(NewEnd);
   return RangeCompare(TU->getSourceManager(), R, RegionOfInterest);
 }
 
@@ -444,12 +437,15 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
+    CXCursor Cursor = MakeCXCursor(*I, TU);
+
     if (RegionOfInterest.isValid()) {
-      SourceRange R = (*I)->getSourceRange();
-      if (R.isInvalid())
+      SourceRange Range =
+        cxloc::translateCXSourceRange(clang_getCursorExtent(Cursor));
+      if (Range.isInvalid())
         continue;
-      
-      switch (CompareRegionOfInterest(R)) {
+
+      switch (CompareRegionOfInterest(Range)) {
       case RangeBefore:
         // This declaration comes before the region of interest; skip it.
         continue;
@@ -464,7 +460,7 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
       }      
     }
     
-    if (Visit(MakeCXCursor(*I, TU), true))
+    if (Visit(Cursor, true))
       return true;
   }
   
@@ -1194,7 +1190,7 @@ CXSourceRange clang_getNullRange() {
   CXSourceRange Result = { { 0, 0 }, 0, 0 };
   return Result;
 }
-  
+
 CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
   if (begin.ptr_data[0] != end.ptr_data[0] ||
       begin.ptr_data[1] != end.ptr_data[1])
@@ -1468,7 +1464,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
-    SourceRange RegionOfInterest(SLoc, SLoc);
+    SourceRange RegionOfInterest(SLoc, SLoc.getFileLocWithOffset(1));
     
     // FIXME: Would be great to have a "hint" cursor, then walk from that
     // hint cursor upward until we find a cursor whose source range encloses
@@ -2118,8 +2114,7 @@ void clang_annotateTokens(CXTranslationUnit TU,
   SourceLocation End
     = cxloc::translateSourceLocation(clang_getTokenLocation(TU, 
                                                      Tokens[NumTokens - 1]));
-  RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End, 
-                                                                         1));
+  RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
   // FIXME: Would be great to have a "hint" cursor, then walk from that
   // hint cursor upward until we find a cursor whose source range encloses
   // the region of interest, rather than starting from the translation unit.

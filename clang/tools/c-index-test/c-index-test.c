@@ -34,9 +34,8 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
 
 static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
                         unsigned end_line, unsigned end_column) {
-  /* FIXME: Remove this + 1. */
   fprintf(out, "[%d:%d - %d:%d]", begin_line, begin_column,
-          end_line, end_column + 1);
+          end_line, end_column);
 }
 
 static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
@@ -616,7 +615,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
     if ((c == EOF || !clang_equalCursors(cursor, prevCursor)) &&
         prevCursor.kind != CXCursor_InvalidFile) {
       print_cursor_file_scan(prevCursor, start_line, start_col,
-                             line, col - 1, prefix);
+                             line, col, prefix);
       start_line = line;
       start_col = col;
     }

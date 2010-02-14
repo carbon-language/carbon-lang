@@ -257,7 +257,7 @@ typedef struct {
 } CXSourceLocation;
 
 /**
- * \brief Identifies a range of source locations in the source code.
+ * \brief Identifies a half-open character range in the source code.
  *
  * Use clang_getRangeStart() and clang_getRangeEnd() to retrieve the
  * starting and end locations from a source range, respectively.
