@@ -44,10 +44,10 @@ static bool removeDeadUsersOfConstant(const Constant *C) {
 }
 
 bool GlobalValue::isMaterializable() const {
-  return getParent()->isMaterializable(this);
+  return getParent() && getParent()->isMaterializable(this);
 }
 bool GlobalValue::isDematerializable() const {
-  return getParent()->isDematerializable(this);
+  return getParent() && getParent()->isDematerializable(this);
 }
 bool GlobalValue::Materialize(std::string *ErrInfo) {
   return getParent()->Materialize(this, ErrInfo);
