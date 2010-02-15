@@ -305,7 +305,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
 MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
                                      int64_t o, uint64_t s, unsigned int a)
   : Offset(o), Size(s), V(v),
-    Flags((f & 7) | ((Log2_32(a) + 1) << 3)) {
+    Flags((f & ((1 << MOMaxBits) - 1)) | ((Log2_32(a) + 1) << MOMaxBits)) {
   assert(getBaseAlignment() == a && "Alignment is not a power of 2!");
   assert((isLoad() || isStore()) && "Not a load/store!");
 }
@@ -327,7 +327,8 @@ void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
 
   if (MMO->getBaseAlignment() >= getBaseAlignment()) {
     // Update the alignment value.
-    Flags = (Flags & 7) | ((Log2_32(MMO->getBaseAlignment()) + 1) << 3);
+    Flags = (Flags & ((1 << MOMaxBits) - 1)) |
+      ((Log2_32(MMO->getBaseAlignment()) + 1) << MOMaxBits);
     // Also update the base and offset, because the new alignment may
     // not be applicable with the old ones.
     V = MMO->getValue();

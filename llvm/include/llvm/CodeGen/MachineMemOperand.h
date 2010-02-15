@@ -46,7 +46,11 @@ public:
     /// The memory access writes data.
     MOStore = 2,
     /// The memory access is volatile.
-    MOVolatile = 4
+    MOVolatile = 4,
+    /// The memory access is non-temporal.
+    MONonTemporal = 8,
+    // This is the number of bits we need to represent flags.
+    MOMaxBits = 4
   };
 
   /// MachineMemOperand - Construct an MachineMemOperand object with the
@@ -64,7 +68,7 @@ public:
   const Value *getValue() const { return V; }
 
   /// getFlags - Return the raw flags of the source value, \see MemOperandFlags.
-  unsigned int getFlags() const { return Flags & 7; }
+  unsigned int getFlags() const { return Flags & ((1 << MOMaxBits) - 1); }
 
   /// getOffset - For normal values, this is a byte offset added to the base
   /// address. For PseudoSourceValue::FPRel values, this is the FrameIndex
@@ -80,11 +84,12 @@ public:
 
   /// getBaseAlignment - Return the minimum known alignment in bytes of the
   /// base address, without the offset.
-  uint64_t getBaseAlignment() const { return (1u << (Flags >> 3)) >> 1; }
+  uint64_t getBaseAlignment() const { return (1u << (Flags >> MOMaxBits)) >> 1; }
 
   bool isLoad() const { return Flags & MOLoad; }
   bool isStore() const { return Flags & MOStore; }
   bool isVolatile() const { return Flags & MOVolatile; }
+  bool isNonTemporal() const { return Flags & MONonTemporal; }
 
   /// refineAlignment - Update this MachineMemOperand to reflect the alignment
   /// of MMO, if it has a greater alignment. This must only be used when the
