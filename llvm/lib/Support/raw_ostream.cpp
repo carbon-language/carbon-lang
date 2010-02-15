@@ -574,12 +574,18 @@ void raw_svector_ostream::resync() {
 }
 
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
-  assert(Ptr == OS.end() && OS.size() + Size <= OS.capacity() &&
-         "Invalid write_impl() call!");
-
-  // We don't need to copy the bytes, just commit the bytes to the
-  // SmallVector.
-  OS.set_size(OS.size() + Size);
+  // If we're writing bytes from the end of the buffer into the smallvector, we
+  // don't need to copy the bytes, just commit the bytes because they are
+  // already in the right place.
+  if (Ptr == OS.end()) {
+    assert(OS.size() + Size <= OS.capacity() && "Invalid write_impl() call!");
+    OS.set_size(OS.size() + Size);
+  } else {
+    assert(GetNumBytesInBuffer() == 0 &&
+           "Should be writing from buffer if some bytes in it");
+    // Otherwise, do copy the bytes.
+    OS.append(Ptr, Ptr+Size);
+  }
 
   // Grow the vector if necessary.
   if (OS.capacity() - OS.size() < 64)
