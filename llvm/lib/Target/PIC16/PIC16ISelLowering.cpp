@@ -622,12 +622,12 @@ SDValue PIC16TargetLowering::ExpandStore(SDNode *N, SelectionDAG &DAG) {
       ChainHi = Chain.getOperand(1);
     }
     SDValue Store1 = DAG.getStore(ChainLo, dl, SrcLo, Ptr, NULL,
-                                  0 + StoreOffset);
+                                  0 + StoreOffset, false, false, 0);
 
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                       DAG.getConstant(4, Ptr.getValueType()));
     SDValue Store2 = DAG.getStore(ChainHi, dl, SrcHi, Ptr, NULL,
-                                  1 + StoreOffset);
+                                  1 + StoreOffset, false, false, 0);
 
     return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Store1,
                        Store2);
