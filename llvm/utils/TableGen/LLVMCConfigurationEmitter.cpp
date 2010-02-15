@@ -1792,8 +1792,8 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
     O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\");\n";
     break;
   case OptionType::Parameter:
-    O.indent(IndentLevel) << "vec.push_back(\"" << Name << "=\" + "
-                          << D.GenVariableName() << ");\n";
+    O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\");\n";
+    O.indent(IndentLevel) << "vec.push_back(" << D.GenVariableName() << ");\n";
     break;
   case OptionType::Prefix:
     O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\" + "
