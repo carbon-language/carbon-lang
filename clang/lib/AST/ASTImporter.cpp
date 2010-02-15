@@ -81,10 +81,6 @@ namespace {
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
                          SourceLocation &Loc);                            
-    bool ImportDeclParts(ValueDecl *D, 
-                         DeclContext *&DC, DeclContext *&LexicalDC,
-                         DeclarationName &Name, SourceLocation &Loc, 
-                         QualType &T);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
     Decl *VisitDecl(Decl *D);
@@ -128,14 +124,20 @@ namespace {
     /// with a declaration in the second context still needs to be verified.
     std::deque<Decl *> DeclsToCheck;
     
+    /// \brief Declaration (from, to) pairs that are known not to be equivalent
+    /// (which we have already complained about).
+    llvm::DenseSet<std::pair<Decl *, Decl *> > &NonEquivalentDecls;
+    
     /// \brief Whether we're being strict about the spelling of types when 
     /// unifying two types.
     bool StrictTypeSpelling;
     
     StructuralEquivalenceContext(ASTContext &C1, ASTContext &C2,
                                  Diagnostic &Diags,
+               llvm::DenseSet<std::pair<Decl *, Decl *> > &NonEquivalentDecls,
                                  bool StrictTypeSpelling = false)
-      : C1(C1), C2(C2), Diags(Diags), StrictTypeSpelling(StrictTypeSpelling) { }
+      : C1(C1), C2(C2), Diags(Diags), NonEquivalentDecls(NonEquivalentDecls),
+        StrictTypeSpelling(StrictTypeSpelling) { }
 
     /// \brief Determine whether the two declarations are structurally
     /// equivalent.
@@ -273,11 +275,23 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   if (T1.getQualifiers() != T2.getQualifiers())
     return false;
   
-  if (T1->getTypeClass() != T2->getTypeClass())
-    return false;
+  Type::TypeClass TC = T1->getTypeClass();
   
-  switch (T1->getTypeClass()) {
-    case Type::Builtin:
+  if (T1->getTypeClass() != T2->getTypeClass()) {
+    // Compare function types with prototypes vs. without prototypes as if
+    // both did not have prototypes.
+    if (T1->getTypeClass() == Type::FunctionProto &&
+        T2->getTypeClass() == Type::FunctionNoProto)
+      TC = Type::FunctionNoProto;
+    else if (T1->getTypeClass() == Type::FunctionNoProto &&
+             T2->getTypeClass() == Type::FunctionProto)
+      TC = Type::FunctionNoProto;
+    else
+      return false;
+  }
+  
+  switch (TC) {
+  case Type::Builtin:
     // FIXME: Deal with Char_S/Char_U. 
     if (cast<BuiltinType>(T1)->getKind() != cast<BuiltinType>(T2)->getKind())
       return false;
@@ -641,6 +655,13 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     return false;
   }
   
+  // Compare the definitions of these two records. If either or both are
+  // incomplete, we assume that they are equivalent.
+  D1 = D1->getDefinition();
+  D2 = D2->getDefinition();
+  if (!D1 || !D2)
+    return true;
+  
   if (CXXRecordDecl *D1CXX = dyn_cast<CXXRecordDecl>(D1)) {
     if (CXXRecordDecl *D2CXX = dyn_cast<CXXRecordDecl>(D2)) {
       if (D1CXX->getNumBases() != D2CXX->getNumBases()) {
@@ -834,6 +855,12 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      Decl *D1, Decl *D2) {
   // FIXME: Check for known structural equivalences via a callback of some sort.
   
+  // Check whether we already know that these two declarations are not
+  // structurally equivalent.
+  if (Context.NonEquivalentDecls.count(std::make_pair(D1->getCanonicalDecl(),
+                                                      D2->getCanonicalDecl())))
+    return false;
+  
   // Determine whether we've already produced a tentative equivalence for D1.
   Decl *&EquivToD1 = Context.TentativeEquivalences[D1->getCanonicalDecl()];
   if (EquivToD1)
@@ -870,6 +897,8 @@ bool StructuralEquivalenceContext::Finish() {
     Decl *D2 = TentativeEquivalences[D1];
     assert(D2 && "Unrecorded tentative equivalence?");
     
+    bool Equivalent = true;
+    
     // FIXME: Switch on all declaration kinds. For now, we're just going to
     // check the obvious ones.
     if (RecordDecl *Record1 = dyn_cast<RecordDecl>(D1)) {
@@ -881,20 +910,14 @@ bool StructuralEquivalenceContext::Finish() {
         IdentifierInfo *Name2 = Record2->getIdentifier();
         if (!Name2 && Record2->getTypedefForAnonDecl())
           Name2 = Record2->getTypedefForAnonDecl()->getIdentifier();
-        if (!::IsStructurallyEquivalent(Name1, Name2))
-          return true;
-        
-        if (!::IsStructurallyEquivalent(*this, Record1, Record2))
-          return true;
+        if (!::IsStructurallyEquivalent(Name1, Name2) ||
+            !::IsStructurallyEquivalent(*this, Record1, Record2))
+          Equivalent = false;
       } else {
         // Record/non-record mismatch.
-        return true;
+        Equivalent = false;
       }
-      
-      continue;
-    } 
-    
-    if (EnumDecl *Enum1 = dyn_cast<EnumDecl>(D1)) {
+    } else if (EnumDecl *Enum1 = dyn_cast<EnumDecl>(D1)) {
       if (EnumDecl *Enum2 = dyn_cast<EnumDecl>(D2)) {
         // Check for equivalent enum names.
         IdentifierInfo *Name1 = Enum1->getIdentifier();
@@ -903,37 +926,34 @@ bool StructuralEquivalenceContext::Finish() {
         IdentifierInfo *Name2 = Enum2->getIdentifier();
         if (!Name2 && Enum2->getTypedefForAnonDecl())
           Name2 = Enum2->getTypedefForAnonDecl()->getIdentifier();
-        if (!::IsStructurallyEquivalent(Name1, Name2))
-          return true;
-        
-        if (!::IsStructurallyEquivalent(*this, Enum1, Enum2))
-          return true;
+        if (!::IsStructurallyEquivalent(Name1, Name2) ||
+            !::IsStructurallyEquivalent(*this, Enum1, Enum2))
+          Equivalent = false;
       } else {
         // Enum/non-enum mismatch
-        return true;
+        Equivalent = false;
       }
-      
-      continue;
-    } 
-    
-    if (TypedefDecl *Typedef1 = dyn_cast<TypedefDecl>(D1)) {
+    } else if (TypedefDecl *Typedef1 = dyn_cast<TypedefDecl>(D1)) {
       if (TypedefDecl *Typedef2 = dyn_cast<TypedefDecl>(D2)) {
         if (!::IsStructurallyEquivalent(Typedef1->getIdentifier(),
-                                        Typedef2->getIdentifier()))
-          return true;
-        
-        if (!::IsStructurallyEquivalent(*this,
+                                        Typedef2->getIdentifier()) ||
+            !::IsStructurallyEquivalent(*this,
                                         Typedef1->getUnderlyingType(),
                                         Typedef2->getUnderlyingType()))
-          return true;
+          Equivalent = false;
       } else {
         // Typedef/non-typedef mismatch.
-        return true;
+        Equivalent = false;
       }
-      
-      continue;
     } 
-      
+
+    if (!Equivalent) {
+      // Note that these two declarations are not equivalent (and we already
+      // know about it).
+      NonEquivalentDecls.insert(std::make_pair(D1->getCanonicalDecl(),
+                                               D2->getCanonicalDecl()));
+      return true;
+    }
     // FIXME: Check other declaration kinds!
   }
   
@@ -1335,35 +1355,20 @@ bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC,
   return false;
 }
 
-bool ASTNodeImporter::ImportDeclParts(ValueDecl *D, 
-                                      DeclContext *&DC, 
-                                      DeclContext *&LexicalDC,
-                                      DeclarationName &Name, 
-                                      SourceLocation &Loc,
-                                      QualType &T) {
-  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
-    return true;
-  
-  // Import the type of this declaration.
-  T = Importer.Import(D->getType());
-  if (T.isNull())
-    return true;
-  
-  return false;
-}
-
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
                                         RecordDecl *ToRecord) {
   StructuralEquivalenceContext SEC(Importer.getFromContext(),
                                    Importer.getToContext(),
-                                   Importer.getDiags());
+                                   Importer.getDiags(),
+                                   Importer.getNonEquivalentDecls());
   return SEC.IsStructurallyEquivalent(FromRecord, ToRecord);
 }
 
 bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
   StructuralEquivalenceContext SEC(Importer.getFromContext(),
                                    Importer.getToContext(),
-                                   Importer.getDiags());
+                                   Importer.getDiags(),
+                                   Importer.getNonEquivalentDecls());
   return SEC.IsStructurallyEquivalent(FromEnum, ToEnum);
 }
 
@@ -1381,11 +1386,6 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
   if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
   
-  // Import the underlying type of this typedef;
-  QualType T = Importer.Import(D->getUnderlyingType());
-  if (T.isNull())
-    return 0;
-  
   // If this typedef is not in block scope, determine whether we've
   // seen a typedef with the same name (that we can merge with) or any
   // other entity by that name (which name lookup could conflict with).
@@ -1398,8 +1398,8 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
       if (!(*Lookup.first)->isInIdentifierNamespace(IDNS))
         continue;
       if (TypedefDecl *FoundTypedef = dyn_cast<TypedefDecl>(*Lookup.first)) {
-        if (Importer.getToContext().typesAreCompatible(T, 
-                                          FoundTypedef->getUnderlyingType()))
+        if (Importer.IsStructurallyEquivalent(D->getUnderlyingType(),
+                                            FoundTypedef->getUnderlyingType()))
           return Importer.Imported(D, FoundTypedef);
       }
       
@@ -1415,6 +1415,11 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
     }
   }
   
+  // Import the underlying type of this typedef;
+  QualType T = Importer.Import(D->getUnderlyingType());
+  if (T.isNull())
+    return 0;
+  
   // Create the new typedef node.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
   TypedefDecl *ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
@@ -1423,6 +1428,7 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
   ToTypedef->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToTypedef);
   LexicalDC->addDecl(ToTypedef);
+  
   return ToTypedef;
 }
 
@@ -1648,10 +1654,13 @@ Decl *ASTNodeImporter::VisitEnumConstantDecl(EnumConstantDecl *D) {
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
   SourceLocation Loc;
-  QualType T;
-  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
-  
+
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+
   // Determine whether there are any other declarations with the same name and 
   // in the same context.
   if (!LexicalDC->isFunctionOrMethod()) {
@@ -1693,9 +1702,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // Import the major distinguishing characteristics of this function.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
-  QualType T;
   SourceLocation Loc;
-  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
   
   // Try to find a function in our own ("to") context with the same name, same
@@ -1712,8 +1720,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
       if (FunctionDecl *FoundFunction = dyn_cast<FunctionDecl>(*Lookup.first)) {
         if (isExternalLinkage(FoundFunction->getLinkage()) &&
             isExternalLinkage(D->getLinkage())) {
-          if (Importer.getToContext().typesAreCompatible(T, 
-                                                    FoundFunction->getType())) {
+          if (Importer.IsStructurallyEquivalent(D->getType(), 
+                                                FoundFunction->getType())) {
             // FIXME: Actually try to merge the body and other attributes.
             return Importer.Imported(D, FoundFunction);
           }
@@ -1727,7 +1735,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
           
           // Complain about inconsistent function types.
           Importer.ToDiag(Loc, diag::err_odr_function_type_inconsistent)
-            << Name << T << FoundFunction->getType();
+            << Name << D->getType() << FoundFunction->getType();
           Importer.ToDiag(FoundFunction->getLocation(), 
                           diag::note_odr_value_here)
             << FoundFunction->getType();
@@ -1745,6 +1753,11 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
         return 0;
     }    
   }
+
+  // Import the type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
   
   // Import the function parameters.
   llvm::SmallVector<ParmVarDecl *, 8> Parameters;
@@ -1784,9 +1797,13 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   // Import the major distinguishing characteristics of a variable.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
-  QualType T;
   SourceLocation Loc;
-  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  // Import the type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
     return 0;
   
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
@@ -1807,9 +1824,8 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   // Import the major distinguishing characteristics of a variable.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
-  QualType T;
   SourceLocation Loc;
-  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc, T))
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
   
   // Try to find a variable in our own ("to") context with the same name and
@@ -1828,8 +1844,8 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
         // We have found a variable that we may need to merge with. Check it.
         if (isExternalLinkage(FoundVar->getLinkage()) &&
             isExternalLinkage(D->getLinkage())) {
-          if (Importer.getToContext().typesAreCompatible(T, 
-                                                         FoundVar->getType())) {
+          if (Importer.IsStructurallyEquivalent(D->getType(), 
+                                                FoundVar->getType())) {
             MergeWithVar = FoundVar;
             break;
           }
@@ -1837,10 +1853,15 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
           const ArrayType *FoundArray
             = Importer.getToContext().getAsArrayType(FoundVar->getType());
           const ArrayType *TArray
-            = Importer.getToContext().getAsArrayType(T);
+            = Importer.getToContext().getAsArrayType(D->getType());
           if (FoundArray && TArray) {
             if (isa<IncompleteArrayType>(FoundArray) &&
                 isa<ConstantArrayType>(TArray)) {
+              // Import the type.
+              QualType T = Importer.Import(D->getType());
+              if (T.isNull())
+                return 0;
+              
               FoundVar->setType(T);
               MergeWithVar = FoundVar;
               break;
@@ -1852,7 +1873,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
           }
 
           Importer.ToDiag(Loc, diag::err_odr_variable_type_inconsistent)
-            << Name << T << FoundVar->getType();
+            << Name << D->getType() << FoundVar->getType();
           Importer.ToDiag(FoundVar->getLocation(), diag::note_odr_value_here)
             << FoundVar->getType();
         }
@@ -1890,6 +1911,11 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
     }
   }
     
+  // Import the type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+  
   // Create the imported variable.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
   VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
@@ -2045,6 +2071,29 @@ Decl *ASTImporter::Import(Decl *FromD) {
   
   // Record the imported declaration.
   ImportedDecls[FromD] = ToD;
+  
+  if (TagDecl *FromTag = dyn_cast<TagDecl>(FromD)) {
+    // Keep track of anonymous tags that have an associated typedef.
+    if (FromTag->getTypedefForAnonDecl())
+      AnonTagsWithPendingTypedefs.push_back(FromTag);
+  } else if (TypedefDecl *FromTypedef = dyn_cast<TypedefDecl>(FromD)) {
+    // When we've finished transforming a typedef, see whether it was the
+    // typedef for an anonymous tag.
+    for (llvm::SmallVector<TagDecl *, 4>::iterator
+               FromTag = AnonTagsWithPendingTypedefs.begin(), 
+            FromTagEnd = AnonTagsWithPendingTypedefs.end();
+         FromTag != FromTagEnd; ++FromTag) {
+      if ((*FromTag)->getTypedefForAnonDecl() == FromTypedef) {
+        if (TagDecl *ToTag = cast_or_null<TagDecl>(Import(*FromTag))) {
+          // We found the typedef for an anonymous tag; link them.
+          ToTag->setTypedefForAnonDecl(cast<TypedefDecl>(ToD));
+          AnonTagsWithPendingTypedefs.erase(FromTag);
+          break;
+        }
+      }
+    }
+  }
+  
   return ToD;
 }
 
@@ -2235,4 +2284,15 @@ DiagnosticBuilder ASTImporter::FromDiag(SourceLocation Loc, unsigned DiagID) {
 Decl *ASTImporter::Imported(Decl *From, Decl *To) {
   ImportedDecls[From] = To;
   return To;
+}
+
+bool ASTImporter::IsStructurallyEquivalent(QualType From, QualType To) {
+  llvm::DenseMap<Type *, Type *>::iterator Pos
+   = ImportedTypes.find(From.getTypePtr());
+  if (Pos != ImportedTypes.end() && ToContext.hasSameType(Import(From), To))
+    return true;
+      
+  StructuralEquivalenceContext SEC(FromContext, ToContext, Diags, 
+                                   NonEquivalentDecls);
+  return SEC.IsStructurallyEquivalent(From, To);
 }

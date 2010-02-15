@@ -52,3 +52,9 @@ struct DeepError {
   int value;
   struct DeeperError { int i; float f; } *Deeper;
 } xDeep;
+
+// Matches
+struct {
+  int i;
+  float f;
+} x11;

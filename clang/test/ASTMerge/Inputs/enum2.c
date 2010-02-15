@@ -33,3 +33,10 @@ enum E5 {
   E5Enumerator4
 } x5;
 
+// Matching, with typedef
+typedef enum {
+  E6Enumerator1,
+  E6Enumerator2
+} E6;
+
+E6 x6;

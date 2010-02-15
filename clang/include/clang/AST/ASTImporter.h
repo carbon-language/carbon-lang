@@ -18,6 +18,8 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
   class ASTContext;
@@ -34,6 +36,10 @@ namespace clang {
   /// \brief Imports selected nodes from one AST context into another context,
   /// merging AST nodes where appropriate.
   class ASTImporter {
+  public:
+    typedef llvm::DenseSet<std::pair<Decl *, Decl *> > NonEquivalentDeclSet;
+    
+  private:
     /// \brief The contexts we're importing to and from.
     ASTContext &ToContext, &FromContext;
     
@@ -58,6 +64,14 @@ namespace clang {
     /// \brief Mapping from the already-imported FileIDs in the "from" source
     /// manager to the corresponding FileIDs in the "to" source manager.
     llvm::DenseMap<unsigned, FileID> ImportedFileIDs;
+    
+    /// \brief Imported, anonymous tag declarations that are missing their 
+    /// corresponding typedefs.
+    llvm::SmallVector<TagDecl *, 4> AnonTagsWithPendingTypedefs;
+    
+    /// \brief Declaration (from, to) pairs that are known not to be equivalent
+    /// (which we have already complained about).
+    NonEquivalentDeclSet NonEquivalentDecls;
     
   public:
     ASTImporter(Diagnostic &Diags,
@@ -202,11 +216,18 @@ namespace clang {
     /// \brief Report a diagnostic in the "from" context.
     DiagnosticBuilder FromDiag(SourceLocation Loc, unsigned DiagID);
     
+    /// \brief Return the set of declarations that we know are not equivalent.
+    NonEquivalentDeclSet &getNonEquivalentDecls() { return NonEquivalentDecls; }
+    
     /// \brief Note that we have imported the "from" declaration by mapping it
     /// to the (potentially-newly-created) "to" declaration.
     ///
     /// \returns \p To
     Decl *Imported(Decl *From, Decl *To);
+    
+    /// \brief Determine whether the given types are structurally
+    /// equivalent.
+    bool IsStructurallyEquivalent(QualType From, QualType To);
   };
 }
 

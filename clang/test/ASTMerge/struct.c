@@ -34,6 +34,9 @@
 // CHECK: struct1.c:56:10: warning: type 'struct DeeperError' has incompatible definitions in different translation units
 // CHECK: struct1.c:56:35: note: field 'f' has type 'int' here
 // CHECK: struct2.c:53:37: note: field 'f' has type 'float' here
+// CHECK: struct1.c:54:8: warning: type 'struct DeepError' has incompatible definitions in different translation units
+// CHECK: struct1.c:56:41: note: field 'Deeper' has type 'struct DeeperError *' here
+// CHECK: struct2.c:53:43: note: field 'Deeper' has type 'struct DeeperError *' here
 // CHECK: struct2.c:54:3: error: external variable 'xDeep' declared with incompatible types in different translation units ('struct DeepError' vs. 'struct DeepError')
 // CHECK: struct1.c:57:3: note: declared here with type 'struct DeepError'
 // CHECK: 37 diagnostics
