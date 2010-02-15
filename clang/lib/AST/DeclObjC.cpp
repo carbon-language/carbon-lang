@@ -111,8 +111,9 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
     // Look through categories.
     for (ObjCCategoryDecl *Category = OID->getCategoryList();
          Category; Category = Category->getNextClassCategory()) {
-      if (ObjCPropertyDecl *P = Category->FindPropertyDeclaration(PropertyId))
-        return P;
+      if (!Category->IsClassExtension())
+        if (ObjCPropertyDecl *P = Category->FindPropertyDeclaration(PropertyId))
+          return P;
     }
     // Look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = OID->protocol_begin(),
@@ -124,10 +125,11 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
       return OID->getSuperClass()->FindPropertyDeclaration(PropertyId);
   } else if (const ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(this)) {
     // Look through protocols.
-    for (ObjCInterfaceDecl::protocol_iterator I = OCD->protocol_begin(),
-         E = OCD->protocol_end(); I != E; ++I) {
-      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
-        return P;
+    if (!OCD->IsClassExtension())
+      for (ObjCInterfaceDecl::protocol_iterator I = OCD->protocol_begin(),
+           E = OCD->protocol_end(); I != E; ++I) {
+        if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
+          return P;
     }
   }
   return 0;

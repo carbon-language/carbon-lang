@@ -949,6 +949,8 @@ public:
     ClassInterface->setCategoryList(this);
   }
 
+  bool IsClassExtension() const { return getIdentifier() == 0; }
+  
   SourceLocation getAtLoc() const { return AtLoc; }
   void setAtLoc(SourceLocation At) { AtLoc = At; }
 
