@@ -31,6 +31,9 @@ def note_also_found : Note<"also found">;
 
 // Parse && Lex
 def err_expected_colon : Error<"expected ':'">;
+def err_expected_colon_after_setter_name : Error<
+  "method name referenced in property setter attribute "
+  "must end with ':'">;
 
 // Parse && Sema
 def err_no_declarators : Error<"declaration does not declare anything">;

@@ -515,7 +515,8 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, DeclPtrTy ClassDecl,
         DS.setSetterName(Tok.getIdentifierInfo());
         ConsumeToken();  // consume method name
 
-        if (ExpectAndConsume(tok::colon, diag::err_expected_colon, "",
+        if (ExpectAndConsume(tok::colon, 
+                             diag::err_expected_colon_after_setter_name, "",
                              tok::r_paren))
           return;
       } else {
