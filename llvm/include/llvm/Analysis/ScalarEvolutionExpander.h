@@ -170,6 +170,8 @@ namespace llvm {
 
     void rememberInstruction(Value *I);
 
+    void restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I);
+
     Value *expandAddRecExprLiterally(const SCEVAddRecExpr *);
     PHINode *getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
                                        const Loop *L,

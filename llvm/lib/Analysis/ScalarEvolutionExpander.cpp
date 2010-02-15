@@ -729,7 +729,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
 
   // Restore the original insert point.
   if (SaveInsertBB)
-    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
+    restoreInsertPoint(SaveInsertBB, SaveInsertPt);
 
   // Remember this PHI, even in post-inc mode.
   InsertedValues.insert(PN);
@@ -845,7 +845,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     while (isa<PHINode>(NewInsertPt)) ++NewInsertPt;
     V = expandCodeFor(SE.getTruncateExpr(SE.getUnknown(V), Ty), 0,
                       NewInsertPt);
-    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
+    restoreInsertPoint(SaveInsertBB, SaveInsertPt);
     return V;
   }
 
@@ -1071,7 +1071,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
   if (!PostIncLoop)
     InsertedExpressions[std::make_pair(S, InsertPt)] = V;
 
-  Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
+  restoreInsertPoint(SaveInsertBB, SaveInsertPt);
   return V;
 }
 
@@ -1089,6 +1089,14 @@ void SCEVExpander::rememberInstruction(Value *I) {
   }
 }
 
+void SCEVExpander::restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I) {
+  // If we aquired more instructions since the old insert point was saved,
+  // advance past them.
+  while (isInsertedInstruction(I)) ++I;
+
+  Builder.SetInsertPoint(BB, I);
+}
+
 /// getOrInsertCanonicalInductionVariable - This method returns the
 /// canonical induction variable of the specified type for the specified
 /// loop (inserting one if there is none).  A canonical induction variable
@@ -1103,6 +1111,6 @@ SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
   BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
   Value *V = expandCodeFor(H, 0, L->getHeader()->begin());
   if (SaveInsertBB)
-    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
+    restoreInsertPoint(SaveInsertBB, SaveInsertPt);
   return V;
 }
