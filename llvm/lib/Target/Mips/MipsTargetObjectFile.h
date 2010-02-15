@@ -10,7 +10,7 @@
 #ifndef LLVM_TARGET_MIPS_TARGETOBJECTFILE_H
 #define LLVM_TARGET_MIPS_TARGETOBJECTFILE_H
 
-#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 namespace llvm {
 

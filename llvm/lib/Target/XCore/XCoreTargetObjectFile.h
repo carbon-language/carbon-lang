@@ -10,13 +10,12 @@
 #ifndef LLVM_TARGET_XCORE_TARGETOBJECTFILE_H
 #define LLVM_TARGET_XCORE_TARGETOBJECTFILE_H
 
-#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
 namespace llvm {
 
   class XCoreTargetObjectFile : public TargetLoweringObjectFileELF {
   public:
-    
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
     // TODO: Classify globals as xcore wishes.

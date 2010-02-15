@@ -10,7 +10,7 @@
 #ifndef LLVM_TARGET_ARM_TARGETOBJECTFILE_H
 #define LLVM_TARGET_ARM_TARGETOBJECTFILE_H
 
-#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCSectionELF.h"
 
 namespace llvm {
@@ -24,7 +24,7 @@ namespace llvm {
 
       if (TM.getSubtarget<ARMSubtarget>().isAAPCS_ABI()) {
         StaticCtorSection =
-          getELFSection(".init_array", MCSectionELF::SHT_INIT_ARRAY, 
+          getELFSection(".init_array", MCSectionELF::SHT_INIT_ARRAY,
                         MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
                         SectionKind::getDataRel());
         StaticDtorSection =
