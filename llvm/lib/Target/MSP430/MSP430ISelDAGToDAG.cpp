@@ -133,8 +133,7 @@ namespace {
     bool MatchWrapper(SDValue N, MSP430ISelAddressMode &AM);
     bool MatchAddressBase(SDValue N, MSP430ISelAddressMode &AM);
 
-    bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
-                                    SDNode *Root) const;
+    bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root) const;
 
     virtual bool
     SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
@@ -336,8 +335,8 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   return false;
 }
 
-bool MSP430DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
-                                                    SDNode *Root) const {
+bool MSP430DAGToDAGISel::IsLegalToFold(SDValue N, SDNode *U,
+                                       SDNode *Root) const {
   if (OptLevel == CodeGenOpt::None) return false;
 
   /// RMW preprocessing creates the following code:
@@ -364,11 +363,11 @@ bool MSP430DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   /// during preprocessing) to determine whether it's legal to introduce such
   /// "cycle" for a moment.
   DenseMap<SDNode*, SDNode*>::const_iterator I = RMWStores.find(Root);
-  if (I != RMWStores.end() && I->second == N)
+  if (I != RMWStores.end() && I->second == N.getNode())
     return true;
 
   // Proceed to 'generic' cycle finder code
-  return SelectionDAGISel::IsLegalAndProfitableToFold(N, U, Root);
+  return SelectionDAGISel::IsLegalToFold(N, U, Root);
 }
 
 
@@ -656,7 +655,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedBinOp(SDNode *Op,
                                                unsigned Opc8, unsigned Opc16) {
   if (N1.getOpcode() == ISD::LOAD &&
       N1.hasOneUse() &&
-      IsLegalAndProfitableToFold(N1.getNode(), Op, Op)) {
+      IsLegalToFold(N1, Op, Op)) {
     LoadSDNode *LD = cast<LoadSDNode>(N1);
     if (!isValidIndexedLoad(LD))
       return NULL;

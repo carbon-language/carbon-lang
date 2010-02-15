@@ -58,6 +58,8 @@ public:
     return "ARM Instruction Selection";
   }
 
+  virtual void InstructionSelect();
+
   /// getI32Imm - Return a target constant of type i32 with the specified
   /// value.
   inline SDValue getI32Imm(unsigned Imm) {
@@ -65,7 +67,7 @@ public:
   }
 
   SDNode *Select(SDNode *N);
-  virtual void InstructionSelect();
+
   bool SelectShifterOperandReg(SDNode *Op, SDValue N, SDValue &A,
                                SDValue &B, SDValue &C);
   bool SelectAddrMode2(SDNode *Op, SDValue N, SDValue &Base,

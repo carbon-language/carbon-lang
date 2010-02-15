@@ -1341,8 +1341,7 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
 /// isNonImmUse - Start searching from Root up the DAG to check is Def can
 /// be reached. Return true if that's the case. However, ignore direct uses
 /// by ImmedUse (which would be U in the example illustrated in
-/// IsLegalAndProfitableToFold) and by Root (which can happen in the store
-/// case).
+/// IsLegalToFold) and by Root (which can happen in the store case).
 /// FIXME: to be really generic, we should allow direct use by any node
 /// that is being folded. But realisticly since we only fold loads which
 /// have one non-chain use, we only need to watch out for load/op/store
@@ -1353,11 +1352,17 @@ static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
   return findNonImmUse(Root, Def, ImmedUse, Root, Visited);
 }
 
-/// IsLegalAndProfitableToFold - Returns true if the specific operand node N of
-/// U can be folded during instruction selection that starts at Root and
-/// folding N is profitable.
-bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
-                                                  SDNode *Root) const {
+/// IsProfitableToFold - Returns true if it's profitable to fold the specific
+/// operand node N of U during instruction selection that starts at Root.
+bool SelectionDAGISel::IsProfitableToFold(SDValue N, SDNode *U,
+                                          SDNode *Root) const {
+  if (OptLevel == CodeGenOpt::None) return false;
+  return N.hasOneUse();
+}
+
+/// IsLegalToFold - Returns true if the specific operand node N of
+/// U can be folded during instruction selection that starts at Root.
+bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root) const {
   if (OptLevel == CodeGenOpt::None) return false;
 
   // If Root use can somehow reach N through a path that that doesn't contain
@@ -1411,7 +1416,7 @@ bool SelectionDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
     VT = Root->getValueType(Root->getNumValues()-1);
   }
 
-  return !isNonImmUse(Root, N, U);
+  return !isNonImmUse(Root, N.getNode(), U);
 }
 
 SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {

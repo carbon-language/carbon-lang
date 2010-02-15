@@ -1513,8 +1513,7 @@ bool PIC16TargetLowering::NeedToConvertToMemOp(SDValue Op, unsigned &MemOp,
       // Direct load operands are folded in binary operations. But before folding
       // verify if this folding is legal. Fold only if it is legal otherwise
       // convert this direct load to a separate memory operation.
-      if(ISel->IsLegalAndProfitableToFold(Op.getOperand(0).getNode(), 
-                                         Op.getNode(), Op.getNode()))
+      if(ISel->IsLegalToFold(Op.getOperand(0), Op.getNode(), Op.getNode()))
         return false;
       else 
         MemOp = 0;

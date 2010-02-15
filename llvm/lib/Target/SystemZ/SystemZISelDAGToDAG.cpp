@@ -594,8 +594,7 @@ bool SystemZDAGToDAGISel::SelectLAAddr(SDNode *Op, SDValue Addr,
 bool SystemZDAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
                                  SDValue &Base, SDValue &Disp, SDValue &Index) {
   if (ISD::isNON_EXTLoad(N.getNode()) &&
-      N.hasOneUse() &&
-      IsLegalAndProfitableToFold(N.getNode(), P, P))
+      IsLegalToFold(N, P, P))
     return SelectAddrRRI20(P, N.getOperand(1), Base, Disp, Index);
   return false;
 }

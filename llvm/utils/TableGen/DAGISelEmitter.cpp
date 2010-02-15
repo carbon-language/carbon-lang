@@ -566,8 +566,11 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
     if (NodeHasChain)
       OpNo = 1;
     if (!isRoot) {
-      // Multiple uses of actual result?
-      emitCheck(getValueName(RootName) + ".hasOneUse()");
+      // Check if it's profitable to fold the node. e.g. Check for multiple uses
+      // of actual result?
+      std::string ParentName(RootName.begin(), RootName.end()-1);
+      emitCheck("IsProfitableToFold(" + getValueName(RootName) +
+                ", " + getNodeName(ParentName) + ", N)");
       EmittedUseCheck = true;
       if (NodeHasChain) {
         // If the immediate use can somehow reach this node through another
@@ -597,8 +600,7 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
         }
         
         if (NeedCheck) {
-          std::string ParentName(RootName.begin(), RootName.end()-1);
-          emitCheck("IsLegalAndProfitableToFold(" + getNodeName(RootName) +
+          emitCheck("IsLegalToFold(" + getValueName(RootName) +
                     ", " + getNodeName(ParentName) + ", N)");
         }
       }

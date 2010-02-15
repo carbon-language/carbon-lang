@@ -85,11 +85,13 @@ public:
     return true;
   }
 
-  /// IsLegalAndProfitableToFold - Returns true if the specific operand node N of
-  /// U can be folded during instruction selection that starts at Root and
-  /// folding N is profitable.
-  virtual
-  bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U, SDNode *Root) const;
+  /// IsProfitableToFold - Returns true if it's profitable to fold the specific
+  /// operand node N of U during instruction selection that starts at Root.
+  virtual bool IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const;
+
+  /// IsLegalToFold - Returns true if the specific operand node N of
+  /// U can be folded during instruction selection that starts at Root.
+  virtual bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root) const;
 
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
