@@ -821,6 +821,8 @@ public:
   /// set the SDNode
   void setNode(SDNode *N) { Node = N; }
 
+  inline SDNode *operator->() const { return Node; }
+  
   bool operator==(const SDValue &O) const {
     return Node == O.Node && ResNo == O.ResNo;
   }
