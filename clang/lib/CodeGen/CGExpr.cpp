@@ -95,7 +95,7 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
 
   if (hasAggregateLLVMType(E->getType()) &&
       !E->getType()->isAnyComplexType())
-    AggLoc = CreateTempAlloca(ConvertTypeForMem(E->getType()), "agg.tmp");
+    AggLoc = CreateMemTemp(E->getType(), "agg.tmp");
   return EmitAnyExpr(E, AggLoc, IsAggLocVolatile, /*IgnoreResult=*/false,
                      IsInitializer);
 }
