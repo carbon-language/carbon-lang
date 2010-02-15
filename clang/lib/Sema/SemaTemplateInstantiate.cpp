@@ -1130,9 +1130,18 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   // If this is a polymorphic C++ class without a key function, we'll
   // have to mark all of the virtual members to allow emission of a vtable
   // in this translation unit.
-  if (Instantiation->isDynamicClass() && !Context.getKeyFunction(Instantiation))
+  if (Instantiation->isDynamicClass() &&
+      !Context.getKeyFunction(Instantiation)) {
+    // Local classes need to have their methods instantiated immediately in
+    // order to have the correct instantiation scope.
+    if (Instantiation->isLocalClass()) {
+      MarkVirtualMembersReferenced(PointOfInstantiation,
+                                   Instantiation);
+    } else {
       ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(Instantiation,
                                                        PointOfInstantiation));
+    }
+  }
 
   if (!Invalid)
     Consumer.HandleTagDeclDefinition(Instantiation);
