@@ -492,7 +492,8 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
     MarkPhysRegRecentlyUsed(PR);       // Already have this value available!
     MI->getOperand(OpNum).setReg(PR);  // Assign the input register
-    getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
+    if (!MI->isDebugValue())
+      getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
     return MI;
   }
 
@@ -609,6 +610,8 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   DenseMap<unsigned, std::pair<MachineInstr*, unsigned> > LastUseDef;
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I) {
+    if (I->isDebugValue())
+      continue;
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = I->getOperand(i);
       // Uses don't trigger any flags, but we need to save
