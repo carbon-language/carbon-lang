@@ -122,7 +122,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
        E = OMD->param_end(); PI != E; ++PI)
     Args.push_back(std::make_pair(*PI, (*PI)->getType()));
 
-  StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocEnd());
+  StartFunction(OMD, OMD->getResultType(), Fn, Args, OMD->getLocStart());
 }
 
 /// Generate an Objective-C method.  An Objective-C method is a C function with
