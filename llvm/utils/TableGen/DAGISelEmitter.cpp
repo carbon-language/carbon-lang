@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DAGISelEmitter.h"
+#include "DAGISelMatcher.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -1609,7 +1610,7 @@ static std::string getLegalCName(std::string OpName) {
 
 void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   const CodeGenTarget &Target = CGP.getTargetInfo();
-  
+
   // Get the namespace to insert instructions into.
   std::string InstNS = Target.getInstNamespace();
   if (!InstNS.empty()) InstNS += "::";
@@ -1621,7 +1622,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
        E = CGP.ptm_end(); I != E; ++I) {
     const PatternToMatch &Pattern = *I;
-    
     TreePatternNode *Node = Pattern.getSrcPattern();
     if (!Node->isLeaf()) {
       PatternsByOpcode[getOpcodeName(Node->getOperator(), CGP)].
@@ -2011,4 +2011,26 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   // definitions.  Emit the resultant instruction selector.
   EmitInstructionSelector(OS);  
   
+#if 0
+  MatcherNode *Matcher = 0;
+  // Walk the patterns backwards, building a matcher for each and adding it to
+  // the matcher for the whole target.
+  for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
+       E = CGP.ptm_end(); I != E;) {
+    const PatternToMatch &Pattern = *--E;
+    MatcherNode *N = ConvertPatternToMatcher(Pattern, CGP);
+    
+    if (Matcher == 0)
+      Matcher = N;
+    else
+      Matcher = new PushMatcherNode(N, Matcher);
+  }
+  
+  
+  EmitMatcherTable(Matcher, OS);
+  
+  
+  //Matcher->dump();
+  delete Matcher;
+#endif
 }

@@ -132,4 +132,268 @@ void SelectRoot(SelectionDAG &DAG) {
   CurDAG->setRoot(Dummy.getValue());
 }
 
+
+/// CheckInteger - Return true if the specified node is not a ConstantSDNode or
+/// if it doesn't have the specified value.
+static bool CheckInteger(SDValue V, int64_t Val) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
+  return C == 0 || C->getSExtValue() != Val;
+}
+
+/// CheckAndImmediate - Check to see if the specified node is an and with an
+/// immediate returning true on failure.
+///
+/// FIXME: Inline this gunk into CheckAndMask.
+bool CheckAndImmediate(SDValue V, int64_t Val) {
+  if (V->getOpcode() == ISD::AND)
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(V->getOperand(1)))
+      if (CheckAndMask(V.getOperand(0), C, Val))
+        return false;
+  return true;
+}
+
+/// CheckOrImmediate - Check to see if the specified node is an or with an
+/// immediate returning true on failure.
+///
+/// FIXME: Inline this gunk into CheckOrMask.
+bool CheckOrImmediate(SDValue V, int64_t Val) {
+  if (V->getOpcode() == ISD::OR)
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(V->getOperand(1)))
+      if (CheckOrMask(V.getOperand(0), C, Val))
+        return false;
+  return true;
+}
+
+static int8_t GetInt1(const unsigned char *MatcherTable, unsigned &Idx) {
+  return MatcherTable[Idx++];
+}
+
+static int16_t GetInt2(const unsigned char *MatcherTable, unsigned &Idx) {
+  int16_t Val = GetInt1(MatcherTable, Idx);
+  Val |= int16_t(GetInt1(MatcherTable, Idx)) << 8;
+  return Val;
+}
+
+static int32_t GetInt4(const unsigned char *MatcherTable, unsigned &Idx) {
+  int32_t Val = GetInt2(MatcherTable, Idx);
+  Val |= int32_t(GetInt2(MatcherTable, Idx)) << 16;
+  return Val;
+}
+
+static int64_t GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
+  int64_t Val = GetInt4(MatcherTable, Idx);
+  Val |= int64_t(GetInt4(MatcherTable, Idx)) << 32;
+  return Val;
+}
+
+enum BuiltinOpcodes {
+  OPC_Emit,
+  OPC_Push,
+  OPC_Record,
+  OPC_MoveChild,
+  OPC_MoveParent,
+  OPC_CheckSame,
+  OPC_CheckPatternPredicate,
+  OPC_CheckPredicate,
+  OPC_CheckOpcode,
+  OPC_CheckType,
+  OPC_CheckInteger1, OPC_CheckInteger2, OPC_CheckInteger4, OPC_CheckInteger8,
+  OPC_CheckCondCode,
+  OPC_CheckValueType,
+  OPC_CheckComplexPat,
+  OPC_CheckAndImm1, OPC_CheckAndImm2, OPC_CheckAndImm4, OPC_CheckAndImm8,
+  OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8
+};
+
+struct MatchScope {
+  /// FailIndex - If this match fails, this is the index to continue with.
+  unsigned FailIndex;
+  
+  /// NodeStackSize - The size of the node stack when the scope was formed.
+  unsigned NodeStackSize;
+  
+  /// NumRecordedNodes - The number of recorded nodes when the scope was formed.
+  unsigned NumRecordedNodes;
+};
+
+SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
+                         unsigned TableSize) {
+  switch (NodeToMatch->getOpcode()) {
+  default:
+    break;
+  case ISD::EntryToken:       // These nodes remain the same.
+  case ISD::BasicBlock:
+  case ISD::Register:
+  case ISD::HANDLENODE:
+  case ISD::TargetConstant:
+  case ISD::TargetConstantFP:
+  case ISD::TargetConstantPool:
+  case ISD::TargetFrameIndex:
+  case ISD::TargetExternalSymbol:
+  case ISD::TargetBlockAddress:
+  case ISD::TargetJumpTable:
+  case ISD::TargetGlobalTLSAddress:
+  case ISD::TargetGlobalAddress:
+  case ISD::TokenFactor:
+  case ISD::CopyFromReg:
+  case ISD::CopyToReg:
+    return 0;
+  case ISD::AssertSext:
+  case ISD::AssertZext:
+    ReplaceUses(SDValue(NodeToMatch, 0), NodeToMatch->getOperand(0));
+    return 0;
+  case ISD::INLINEASM: return Select_INLINEASM(NodeToMatch);
+  case ISD::EH_LABEL:  return Select_EH_LABEL(NodeToMatch);
+  case ISD::UNDEF:     return Select_UNDEF(NodeToMatch);
+  }
+  
+  assert(!NodeToMatch->isMachineOpcode() && "Node already selected!");
+  
+  SmallVector<MatchScope, 8> MatchScopes;
+  
+  // RecordedNodes - This is the set of nodes that have been recorded by the
+  // state machine.
+  SmallVector<SDValue, 8> RecordedNodes;
+  
+  // Set up the node stack with NodeToMatch as the only node on the stack.
+  SmallVector<SDValue, 8> NodeStack;
+  SDValue N = SDValue(NodeToMatch, 0);
+  NodeStack.push_back(N);
+  
+  // Interpreter starts at opcode #0.
+  unsigned MatcherIndex = 0;
+  while (1) {
+    assert(MatcherIndex < TableSize && "Invalid index");
+    switch ((BuiltinOpcodes)MatcherTable[MatcherIndex++]) {
+    case OPC_Emit: {
+      errs() << "EMIT NODE\n";
+      return 0;
+    }
+    case OPC_Push: {
+      unsigned NumToSkip = MatcherTable[MatcherIndex++];
+      MatchScope NewEntry;
+      NewEntry.FailIndex = MatcherIndex+NumToSkip;
+      NewEntry.NodeStackSize = NodeStack.size();
+      NewEntry.NumRecordedNodes = RecordedNodes.size();
+      MatchScopes.push_back(NewEntry);
+      continue;
+    }
+    case OPC_Record:
+      // Remember this node, it may end up being an operand in the pattern.
+      RecordedNodes.push_back(N);
+      continue;
+        
+    case OPC_MoveChild: {
+      unsigned Child = MatcherTable[MatcherIndex++];
+      if (Child >= N.getNumOperands())
+        break;  // Match fails if out of range child #.
+      N = N.getOperand(Child);
+      NodeStack.push_back(N);
+      continue;
+    }
+        
+    case OPC_MoveParent:
+      // Pop the current node off the NodeStack.
+      NodeStack.pop_back();
+      assert(!NodeStack.empty() && "Node stack imbalance!");
+      N = NodeStack.back();  
+      continue;
+     
+    case OPC_CheckSame: {
+      // Accept if it is exactly the same as a previously recorded node.
+      unsigned RecNo = MatcherTable[MatcherIndex++];
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+      if (N != RecordedNodes[RecNo]) break;
+      continue;
+    }
+    case OPC_CheckPatternPredicate: {
+      unsigned PredNo = MatcherTable[MatcherIndex++];
+      (void)PredNo;
+      // FIXME: CHECK IT.
+      continue;
+    }
+    case OPC_CheckPredicate: {
+      unsigned PredNo = MatcherTable[MatcherIndex++];
+      (void)PredNo;
+      // FIXME: CHECK IT.
+      continue;
+    }
+    case OPC_CheckComplexPat: {
+      unsigned PatNo = MatcherTable[MatcherIndex++];
+      (void)PatNo;
+      // FIXME: CHECK IT.
+      continue;
+    }
+        
+    case OPC_CheckOpcode:
+      if (N->getOpcode() != MatcherTable[MatcherIndex++]) break;
+      continue;
+    case OPC_CheckType:
+      if (N.getValueType() !=
+          (MVT::SimpleValueType)MatcherTable[MatcherIndex++]) break;
+      continue;
+    case OPC_CheckCondCode:
+      if (cast<CondCodeSDNode>(N)->get() !=
+          (ISD::CondCode)MatcherTable[MatcherIndex++]) break;
+      continue;
+    case OPC_CheckValueType:
+      if (cast<VTSDNode>(N)->getVT() !=
+          (MVT::SimpleValueType)MatcherTable[MatcherIndex++]) break;
+      continue;
+
+    case OPC_CheckInteger1:
+      if (CheckInteger(N, GetInt1(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckInteger2:
+      if (CheckInteger(N, GetInt2(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckInteger4:
+      if (CheckInteger(N, GetInt4(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckInteger8:
+      if (CheckInteger(N, GetInt8(MatcherTable, MatcherIndex))) break;
+      continue;
+        
+    case OPC_CheckAndImm1:
+      if (CheckAndImmediate(N, GetInt1(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckAndImm2:
+      if (CheckAndImmediate(N, GetInt2(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckAndImm4:
+      if (CheckAndImmediate(N, GetInt4(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckAndImm8:
+      if (CheckAndImmediate(N, GetInt8(MatcherTable, MatcherIndex))) break;
+      continue;
+
+    case OPC_CheckOrImm1:
+      if (CheckOrImmediate(N, GetInt1(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckOrImm2:
+      if (CheckOrImmediate(N, GetInt2(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckOrImm4:
+      if (CheckOrImmediate(N, GetInt4(MatcherTable, MatcherIndex))) break;
+      continue;
+    case OPC_CheckOrImm8:
+      if (CheckOrImmediate(N, GetInt8(MatcherTable, MatcherIndex))) break;
+      continue;
+    }
+    
+    // If the code reached this point, then the match failed pop out to the next
+    // match scope.
+    if (MatchScopes.empty()) {
+      CannotYetSelect(NodeToMatch);
+      return 0;
+    }
+    
+    RecordedNodes.resize(MatchScopes.back().NumRecordedNodes);
+    NodeStack.resize(MatchScopes.back().NodeStackSize);
+    MatcherIndex = MatchScopes.back().FailIndex;
+    MatchScopes.pop_back();
+  }
+}
+    
+
 #endif /* LLVM_CODEGEN_DAGISEL_HEADER_H */
