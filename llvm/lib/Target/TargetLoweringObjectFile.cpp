@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -26,6 +27,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
@@ -289,32 +291,56 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 }
 
 /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a
-/// pc-relative reference to the specified global variable from exception
-/// handling information.  In addition to the symbol, this returns
-/// by-reference:
-///
-/// IsIndirect - True if the returned symbol is actually a stub that contains
-///    the address of the symbol, false if the symbol is the global itself.
-///
-/// IsPCRel - True if the symbol reference is already pc-relative, false if
-///    the caller needs to subtract off the address of the reference from the
-///    symbol.
-///
+/// reference to the specified global variable from exception
+/// handling information.
 const MCExpr *TargetLoweringObjectFile::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                 MachineModuleInfo *MMI,
-                                 bool &IsIndirect, bool &IsPCRel) const {
-  // The generic implementation of this just returns a direct reference to the
-  // symbol.
-  IsIndirect = false;
-  IsPCRel    = false;
-  
+                             MachineModuleInfo *MMI, unsigned Encoding) const {
   // FIXME: Use GetGlobalValueSymbol.
   SmallString<128> Name;
   Mang->getNameWithPrefix(Name, GV, false);
-  return MCSymbolRefExpr::Create(Name.str(), getContext());
+  const MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
+
+  return getSymbolForDwarfReference(Sym, MMI, Encoding);
 }
 
+const MCExpr *TargetLoweringObjectFile::
+getSymbolForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
+                           unsigned Encoding) const {
+  const MCExpr *Res = MCSymbolRefExpr::Create(Sym, getContext());
+
+  switch (Encoding & 0xF0) {
+  default:
+    llvm_report_error("Do not support this DWARF encoding yet!");
+    break;
+  case dwarf::DW_EH_PE_absptr:
+    // Do nothing special
+    break;
+  case dwarf::DW_EH_PE_pcrel:
+    // FIXME: PCSymbol
+    const MCExpr *PC = MCSymbolRefExpr::Create(".", getContext());
+    Res = MCBinaryExpr::CreateSub(Res, PC, getContext());
+    break;
+  }
+
+  return Res;
+}
+
+unsigned TargetLoweringObjectFile::getPersonalityEncoding() const {
+  return dwarf::DW_EH_PE_absptr;
+}
+
+unsigned TargetLoweringObjectFile::getLSDAEncoding() const {
+  return dwarf::DW_EH_PE_absptr;
+}
+
+unsigned TargetLoweringObjectFile::getFDEEncoding() const {
+  return dwarf::DW_EH_PE_absptr;
+}
+
+unsigned TargetLoweringObjectFile::getTTypeEncoding() const {
+  return dwarf::DW_EH_PE_absptr;
+}
 
 //===----------------------------------------------------------------------===//
 //                                  ELF
@@ -671,6 +697,35 @@ getSectionForConstant(SectionKind Kind) const {
   return DataRelROSection;
 }
 
+const MCExpr *TargetLoweringObjectFileELF::
+getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                             MachineModuleInfo *MMI, unsigned Encoding) const {
+
+  if (Encoding & dwarf::DW_EH_PE_indirect) {
+    MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
+
+    SmallString<128> Name;
+    Mang->getNameWithPrefix(Name, GV, true);
+
+    // Add information about the stub reference to ELFMMI so that the stub
+    // gets emitted by the asmprinter.
+    MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = ELFMMI.getGVStubEntry(Sym);
+    if (StubSym == 0) {
+      Name.clear();
+      Mang->getNameWithPrefix(Name, GV, false);
+      StubSym = getContext().GetOrCreateSymbol(Name.str());
+    }
+
+    return TargetLoweringObjectFile::
+      getSymbolForDwarfReference(Sym, MMI,
+                                 Encoding & ~dwarf::DW_EH_PE_indirect);
+  }
+
+  return TargetLoweringObjectFile::
+    getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
+}
+
 //===----------------------------------------------------------------------===//
 //                                 MachO
 //===----------------------------------------------------------------------===//
@@ -987,16 +1042,22 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 
 const MCExpr *TargetLoweringObjectFileMachO::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                 MachineModuleInfo *MMI,
-                                 bool &IsIndirect, bool &IsPCRel) const {
+                             MachineModuleInfo *MMI, unsigned Encoding) const {
   // The mach-o version of this method defaults to returning a stub reference.
-  IsIndirect = true;
-  IsPCRel    = false;
-  
-  SmallString<128> Name;
-  Mang->getNameWithPrefix(Name, GV, true);
-  Name += "$non_lazy_ptr";
-  return MCSymbolRefExpr::Create(Name.str(), getContext());
+
+  if (Encoding & dwarf::DW_EH_PE_indirect) {
+    SmallString<128> Name;
+    Mang->getNameWithPrefix(Name, GV, true);
+    Name += "$non_lazy_ptr";
+    MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
+
+    return TargetLoweringObjectFile::
+      getSymbolForDwarfReference(Sym, MMI,
+                                 Encoding & ~dwarf::DW_EH_PE_indirect);
+  }
+
+  return TargetLoweringObjectFile::
+    getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
 }
 
 

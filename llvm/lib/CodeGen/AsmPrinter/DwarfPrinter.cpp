@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Emit general DWARF directives.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "DwarfPrinter.h"
@@ -18,13 +18,17 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
 DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
@@ -33,6 +37,26 @@ DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
   SubprogramCount(0), Flavor(flavor), SetCounter(1) {}
 
+/// SizeOfEncodedValue - Return the size of the encoding in bytes.
+unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
+  if (Encoding == dwarf::DW_EH_PE_omit)
+    return 0;
+
+  switch (Encoding & 0x07) {
+  case dwarf::DW_EH_PE_absptr:
+    return TD->getPointerSize();
+  case dwarf::DW_EH_PE_udata2:
+    return 2;
+  case dwarf::DW_EH_PE_udata4:
+    return 4;
+  case dwarf::DW_EH_PE_udata8:
+    return 8;
+  }
+
+  assert(0 && "Invalid encoded value.");
+  return 0;
+}
+
 void DwarfPrinter::PrintRelDirective(bool Force32Bit, bool isInSection) const {
   if (isInSection && MAI->getDwarfSectionOffsetDirective())
     O << MAI->getDwarfSectionOffsetDirective();
@@ -40,6 +64,14 @@ void DwarfPrinter::PrintRelDirective(bool Force32Bit, bool isInSection) const {
     O << MAI->getData32bitsDirective();
   else
     O << MAI->getData64bitsDirective();
+}
+
+void DwarfPrinter::PrintRelDirective(unsigned Encoding) const {
+  unsigned Size = SizeOfEncodedValue(Encoding);
+  assert((Size == 4 || Size == 8) && "Do not support other types or rels!");
+
+  O << (Size == 4 ?
+        MAI->getData32bitsDirective() : MAI->getData64bitsDirective());
 }
 
 /// EOL - Print a newline character to asm stream.  If a comment is present
@@ -193,6 +225,31 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
   PrintRelDirective(Force32Bit);
   O << *Sym;
   if (IsPCRelative) O << "-" << MAI->getPCSymbol();
+}
+
+void DwarfPrinter::EmitReference(const char *Tag, unsigned Number,
+                                 unsigned Encoding) const {
+  SmallString<64> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
+                            << Tag << Number;
+
+  MCSymbol *Sym = Asm->OutContext.GetOrCreateSymbol(Name.str());
+  EmitReference(Sym, Encoding);
+}
+
+void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+
+  PrintRelDirective(Encoding);
+  O << *TLOF.getSymbolForDwarfReference(Sym, Asm->MMI, Encoding);;
+}
+
+void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const {
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+
+  PrintRelDirective(Encoding);
+  O << *TLOF.getSymbolForDwarfGlobalReference(GV, Asm->Mang,
+                                              Asm->MMI, Encoding);;
 }
 
 /// EmitDifference - Emit the difference between two labels.  If this assembler

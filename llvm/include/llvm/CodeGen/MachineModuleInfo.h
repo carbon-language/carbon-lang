@@ -50,6 +50,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 // Forward declarations.
 class Constant;
+class MCSymbol;
 class MDNode;
 class GlobalVariable;
 class MachineBasicBlock;
@@ -66,6 +67,12 @@ class StructType;
 class MachineModuleInfoImpl {
 public:
   virtual ~MachineModuleInfoImpl();
+
+  typedef std::vector<std::pair<MCSymbol*, MCSymbol*> >
+      SymbolListTy;
+protected:
+    static SymbolListTy
+    GetSortedStubs(const DenseMap<MCSymbol*, MCSymbol*> &Map);
 };
   
   

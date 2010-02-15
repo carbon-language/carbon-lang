@@ -580,7 +580,6 @@ const char *MacinfoString(unsigned Encoding);
 /// CallFrameString - Return the string for the specified call frame instruction
 /// encodings.
 const char *CallFrameString(unsigned Encoding);
-
 } // End of namespace dwarf
 
 } // End of namespace llvm

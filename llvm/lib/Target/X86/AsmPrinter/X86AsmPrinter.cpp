@@ -603,6 +603,28 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       }
     }
   }
+
+  if (Subtarget->isTargetELF()) {
+    TargetLoweringObjectFileELF &TLOFELF =
+      static_cast<TargetLoweringObjectFileELF &>(getObjFileLowering());
+
+    MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
+
+    // Output stubs for external and common global variables.
+    MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
+    if (!Stubs.empty()) {
+      OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
+      const TargetData *TD = TM.getTargetData();
+
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i)
+        O << *Stubs[i].first << ":\n"
+          << (TD->getPointerSize() == 8 ?
+              MAI->getData64bitsDirective() : MAI->getData32bitsDirective())
+          << *Stubs[i].second << '\n';
+
+      Stubs.clear();
+    }
+  }
 }
 
 

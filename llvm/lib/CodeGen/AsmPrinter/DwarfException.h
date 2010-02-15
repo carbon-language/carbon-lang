@@ -76,9 +76,6 @@ class DwarfException : public DwarfPrinter {
   /// ExceptionTimer - Timer for the Dwarf exception writer.
   Timer *ExceptionTimer;
 
-  /// SizeOfEncodedValue - Return the size of the encoding in bytes.
-  unsigned SizeOfEncodedValue(unsigned Encoding);
-
   /// EmitCIE - Emit a Common Information Entry (CIE). This holds information
   /// that is shared among many Frame Description Entries.  There is at least
   /// one CIE in every non-empty .debug_frame section.

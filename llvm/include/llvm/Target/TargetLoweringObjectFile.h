@@ -25,6 +25,7 @@ namespace llvm {
   class MCExpr;
   class MCSection;
   class MCSectionMachO;
+  class MCSymbol;
   class MCContext;
   class GlobalValue;
   class TargetMachine;
@@ -175,23 +176,22 @@ public:
     return 0;
   }
   
-  /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a
-  /// pc-relative reference to the specified global variable from exception
-  /// handling information.  In addition to the symbol, this returns
-  /// by-reference:
-  ///
-  /// IsIndirect - True if the returned symbol is actually a stub that contains
-  ///    the address of the symbol, false if the symbol is the global itself.
-  ///
-  /// IsPCRel - True if the symbol reference is already pc-relative, false if
-  ///    the caller needs to subtract off the address of the reference from the
-  ///    symbol.
+  /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a reference
+  /// to the specified global variable from exception handling information.
   ///
   virtual const MCExpr *
   getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                   MachineModuleInfo *MMI,
-                                   bool &IsIndirect, bool &IsPCRel) const;
-  
+                              MachineModuleInfo *MMI, unsigned Encoding) const;
+
+  virtual const MCExpr *
+  getSymbolForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
+                             unsigned Encoding) const;
+
+  virtual unsigned getPersonalityEncoding() const;
+  virtual unsigned getLSDAEncoding() const;
+  virtual unsigned getFDEEncoding() const;
+  virtual unsigned getTTypeEncoding() const;
+
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -231,7 +231,9 @@ public:
   ~TargetLoweringObjectFileELF();
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
-  
+
+  const MCSection *getDataRelSection() const { return DataRelSection; }
+
   /// getSectionForConstant - Given a constant with the SectionKind, return a
   /// section that it should be placed in.
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
@@ -244,6 +246,13 @@ public:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
+
+  /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a reference
+  /// to the specified global variable from exception handling information.
+  ///
+  virtual const MCExpr *
+  getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                              MachineModuleInfo *MMI, unsigned Encoding) const;
 };
 
   
@@ -330,8 +339,7 @@ public:
   /// defaults to returning a stub reference.
   virtual const MCExpr *
   getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                                   MachineModuleInfo *MMI,
-                                   bool &IsIndirect, bool &IsPCRel) const;
+                              MachineModuleInfo *MMI, unsigned Encoding) const;
 };
 
 

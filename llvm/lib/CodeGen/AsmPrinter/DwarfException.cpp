@@ -50,26 +50,6 @@ DwarfException::~DwarfException() {
   delete ExceptionTimer;
 }
 
-/// SizeOfEncodedValue - Return the size of the encoding in bytes.
-unsigned DwarfException::SizeOfEncodedValue(unsigned Encoding) {
-  if (Encoding == dwarf::DW_EH_PE_omit)
-    return 0;
-
-  switch (Encoding & 0x07) {
-  case dwarf::DW_EH_PE_absptr:
-    return TD->getPointerSize();
-  case dwarf::DW_EH_PE_udata2:
-    return 2;
-  case dwarf::DW_EH_PE_udata4:
-    return 4;
-  case dwarf::DW_EH_PE_udata8:
-    return 8;
-  }
-
-  assert(0 && "Invalid encoded value.");
-  return 0;
-}
-
 /// CreateLabelDiff - Emit a label and subtract it from the expression we
 /// already have.  This is equivalent to emitting "foo - .", but we have to emit
 /// the label for "." directly.
@@ -100,7 +80,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     TD->getPointerSize() : -TD->getPointerSize();
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-  
+
   // Begin eh frame section.
   Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
@@ -128,30 +108,16 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // The personality presence indicates that language specific information will
   // show up in the eh frame.  Find out how we are supposed to lower the
   // personality function reference:
-  const MCExpr *PersonalityRef = 0;
-  bool IsPersonalityIndirect = false, IsPersonalityPCRel = false;
-  if (PersonalityFn) {
-    // FIXME: HANDLE STATIC CODEGEN MODEL HERE.
-    
-    // In non-static mode, ask the object file how to represent this reference.
-    PersonalityRef =
-      TLOF.getSymbolForDwarfGlobalReference(PersonalityFn, Asm->Mang,
-                                            Asm->MMI,
-                                            IsPersonalityIndirect,
-                                            IsPersonalityPCRel);
-  }
-  
-  unsigned PerEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-  if (IsPersonalityIndirect)
-    PerEncoding |= dwarf::DW_EH_PE_indirect;
-  unsigned LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-  unsigned FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+
+  unsigned LSDAEncoding = TLOF.getLSDAEncoding();
+  unsigned FDEEncoding = TLOF.getFDEEncoding();
+  unsigned PerEncoding = TLOF.getPersonalityEncoding();
 
   char Augmentation[6] = { 0 };
   unsigned AugmentationSize = 0;
   char *APtr = Augmentation + 1;
 
-  if (PersonalityRef) {
+  if (PersonalityFn) {
     // There is a personality function.
     *APtr++ = 'P';
     AugmentationSize += 1 + SizeOfEncodedValue(PerEncoding);
@@ -182,19 +148,16 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   EOL("CIE Return Address Column");
 
   EmitULEB128(AugmentationSize, "Augmentation Size");
-  EmitEncodingByte(PerEncoding, "Personality");
 
   // If there is a personality, we need to indicate the function's location.
-  if (PersonalityRef) {
-    if (!IsPersonalityPCRel)
-      PersonalityRef = CreateLabelDiff(PersonalityRef, "personalityref_addr",
-                                       Index);
-
-    O << MAI->getData32bitsDirective() << *PersonalityRef;
+  if (PersonalityFn) {
+    EmitEncodingByte(PerEncoding, "Personality");
+    EmitReference(PersonalityFn, PerEncoding);
     EOL("Personality");
-
-    EmitEncodingByte(LSDAEncoding, "LSDA");
-    EmitEncodingByte(FDEEncoding, "FDE");
+    if (UsesLSDA[Index])
+      EmitEncodingByte(LSDAEncoding, "LSDA");
+    if (FDEEncoding != dwarf::DW_EH_PE_absptr)
+      EmitEncodingByte(FDEEncoding, "FDE");
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -216,8 +179,12 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
          "Should not emit 'available externally' functions at all");
 
   const Function *TheFunc = EHFrameInfo.function;
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
-  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
+  unsigned LSDAEncoding = TLOF.getLSDAEncoding();
+  unsigned FDEEncoding = TLOF.getFDEEncoding();
+
+  Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
@@ -255,7 +222,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     // EH frame header.
     EmitDifference("eh_frame_end", EHFrameInfo.Number,
-                   "eh_frame_begin", EHFrameInfo.Number, true);
+                   "eh_frame_begin", EHFrameInfo.Number,
+                   true);
     EOL("Length of Frame Information Entry");
 
     EmitLabel("eh_frame_begin", EHFrameInfo.Number);
@@ -266,33 +234,23 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     EOL("FDE CIE offset");
 
-    EmitReference("eh_func_begin", EHFrameInfo.Number, true, true);
+    EmitReference("eh_func_begin", EHFrameInfo.Number, FDEEncoding);
     EOL("FDE initial location");
     EmitDifference("eh_func_end", EHFrameInfo.Number,
-                   "eh_func_begin", EHFrameInfo.Number, true);
+                   "eh_func_begin", EHFrameInfo.Number,
+                   SizeOfEncodedValue(FDEEncoding) == 4);
     EOL("FDE address range");
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
     if (MMI->getPersonalities()[0] != NULL) {
+      unsigned Size = SizeOfEncodedValue(LSDAEncoding);
 
-      if (Asm->TM.getLSDAEncoding() != DwarfLSDAEncoding::EightByte) {
-        EmitULEB128(4, "Augmentation size");
-
-        if (EHFrameInfo.hasLandingPads)
-          EmitReference("exception", EHFrameInfo.Number, true, true);
-        else
-          Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
-      } else {
-        EmitULEB128(TD->getPointerSize(), "Augmentation size");
-
-        if (EHFrameInfo.hasLandingPads) {
-          EmitReference("exception", EHFrameInfo.Number, true, false);
-        } else {
-          Asm->OutStreamer.EmitIntValue(0, TD->getPointerSize(),
-                                        0/*addrspace*/);
-        }
-      }
+      EmitULEB128(Size, "Augmentation size");
+      if (EHFrameInfo.hasLandingPads)
+        EmitReference("exception", EHFrameInfo.Number, LSDAEncoding);
+      else
+        Asm->OutStreamer.EmitIntValue(0, Size/*size*/, 0/*addrspace*/);
 
       EOL("Language Specific Data Area");
     } else {
@@ -694,13 +652,13 @@ void DwarfException::EmitExceptionTable() {
 
   // Type infos.
   const MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
-  unsigned TTypeFormat;
+  unsigned TTypeEncoding;
   unsigned TypeFormatSize;
 
   if (!HaveTTData) {
     // For SjLj exceptions, if there is no TypeInfo, then we just explicitly say
     // that we're omitting that bit.
-    TTypeFormat = dwarf::DW_EH_PE_omit;
+    TTypeEncoding = dwarf::DW_EH_PE_omit;
     TypeFormatSize = SizeOfEncodedValue(dwarf::DW_EH_PE_absptr);
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
@@ -730,14 +688,8 @@ void DwarfException::EmitExceptionTable() {
     // somewhere.  This predicate should be moved to a shared location that is
     // in target-independent code.
     //
-    if (LSDASection->getKind().isWriteable() ||
-        Asm->TM.getRelocationModel() == Reloc::Static)
-      TTypeFormat = dwarf::DW_EH_PE_absptr;
-    else
-      TTypeFormat = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
-        dwarf::DW_EH_PE_sdata4;
-
-    TypeFormatSize = SizeOfEncodedValue(TTypeFormat);
+    TTypeEncoding = Asm->getObjFileLowering().getTTypeEncoding();
+    TypeFormatSize = SizeOfEncodedValue(TTypeEncoding);
   }
 
   // Begin the exception table.
@@ -788,7 +740,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Emit the header.
   EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
-  EmitEncodingByte(TTypeFormat, "@TType");
+  EmitEncodingByte(TTypeEncoding, "@TType");
 
   if (HaveTTData)
     EmitULEB128(TyOffset, "@TType base offset");
@@ -911,12 +863,12 @@ void DwarfException::EmitExceptionTable() {
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
-    PrintRelDirective();
 
     if (GV) {
-      O << *Asm->GetGlobalValueSymbol(GV);
+      EmitReference(GV, TTypeEncoding);
       EOL("TypeInfo");
     } else {
+      PrintRelDirective();
       O << "0x0";
       EOL("");
     }

@@ -22,7 +22,7 @@ using namespace llvm;
 
 // Out of line virtual method.
 void MachineModuleInfoMachO::Anchor() {}
-
+void MachineModuleInfoELF::Anchor() {}
 
 static int SortSymbolPair(const void *LHS, const void *RHS) {
   const MCSymbol *LHSS =
@@ -34,10 +34,11 @@ static int SortSymbolPair(const void *LHS, const void *RHS) {
 
 /// GetSortedStubs - Return the entries from a DenseMap in a deterministic
 /// sorted orer.
-MachineModuleInfoMachO::SymbolListTy
-MachineModuleInfoMachO::GetSortedStubs(const DenseMap<MCSymbol*, 
-                                                      MCSymbol*> &Map) {
-  MachineModuleInfoMachO::SymbolListTy List(Map.begin(), Map.end());
+MachineModuleInfoImpl::SymbolListTy
+MachineModuleInfoImpl::GetSortedStubs(const DenseMap<MCSymbol*,
+                                                     MCSymbol*> &Map) {
+  MachineModuleInfoImpl::SymbolListTy List(Map.begin(), Map.end());
+
   if (!List.empty())
     qsort(&List[0], List.size(), sizeof(List[0]), SortSymbolPair);
   return List;

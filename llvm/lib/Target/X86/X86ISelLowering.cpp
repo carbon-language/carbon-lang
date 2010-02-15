@@ -75,13 +75,14 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
       return new X8664_MachoTargetObjectFile();
     return new X8632_MachoTargetObjectFile();
   case X86Subtarget::isELF:
-    return new TargetLoweringObjectFileELF();
+   if (TM.getSubtarget<X86Subtarget>().is64Bit())
+     return new X8664_ELFTargetObjectFile(TM);
+    return new X8632_ELFTargetObjectFile(TM);
   case X86Subtarget::isMingw:
   case X86Subtarget::isCygwin:
   case X86Subtarget::isWindows:
     return new TargetLoweringObjectFileCOFF();
   }
-
 }
 
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
