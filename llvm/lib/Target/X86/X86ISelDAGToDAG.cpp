@@ -652,9 +652,10 @@ void X86DAGToDAGISel::PreprocessForFPConvert() {
     // FIXME: optimize the case where the src/dest is a load or store?
     SDValue Store = CurDAG->getTruncStore(CurDAG->getEntryNode(), dl,
                                           N->getOperand(0),
-                                          MemTmp, NULL, 0, MemVT);
+                                          MemTmp, NULL, 0, MemVT,
+                                          false, false, 0);
     SDValue Result = CurDAG->getExtLoad(ISD::EXTLOAD, dl, DstVT, Store, MemTmp,
-                                        NULL, 0, MemVT);
+                                        NULL, 0, MemVT, false, false, 0);
 
     // We're about to replace all uses of the FP_ROUND/FP_EXTEND with the
     // extload we created.  This will cause general havok on the dag because
