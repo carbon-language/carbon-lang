@@ -147,13 +147,15 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
   EOL("CIE Return Address Column");
 
-  EmitULEB128(AugmentationSize, "Augmentation Size");
+  if (Augmentation[0]) {
+    EmitULEB128(AugmentationSize, "Augmentation Size");
 
-  // If there is a personality, we need to indicate the function's location.
-  if (PersonalityFn) {
-    EmitEncodingByte(PerEncoding, "Personality");
-    EmitReference(PersonalityFn, PerEncoding);
-    EOL("Personality");
+    // If there is a personality, we need to indicate the function's location.
+    if (PersonalityFn) {
+      EmitEncodingByte(PerEncoding, "Personality");
+      EmitReference(PersonalityFn, PerEncoding);
+      EOL("Personality");
+    }
     if (UsesLSDA[Index])
       EmitEncodingByte(LSDAEncoding, "LSDA");
     if (FDEEncoding != dwarf::DW_EH_PE_absptr)
