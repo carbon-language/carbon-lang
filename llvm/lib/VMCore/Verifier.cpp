@@ -317,6 +317,7 @@ namespace {
     void visitStoreInst(StoreInst &SI);
     void visitInstruction(Instruction &I);
     void visitTerminatorInst(TerminatorInst &I);
+    void visitBranchInst(BranchInst &BI);
     void visitReturnInst(ReturnInst &RI);
     void visitSwitchInst(SwitchInst &SI);
     void visitSelectInst(SelectInst &SI);
@@ -747,6 +748,14 @@ void Verifier::visitTerminatorInst(TerminatorInst &I) {
   Assert1(&I == I.getParent()->getTerminator(),
           "Terminator found in the middle of a basic block!", I.getParent());
   visitInstruction(I);
+}
+
+void Verifier::visitBranchInst(BranchInst &BI) {
+  if (BI.isConditional()) {
+    Assert2(BI.getCondition()->getType()->isIntegerTy(1),
+            "Branch condition is not 'i1' type!", &BI, BI.getCondition());
+  }
+  visitTerminatorInst(BI);
 }
 
 void Verifier::visitReturnInst(ReturnInst &RI) {
