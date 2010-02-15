@@ -366,7 +366,7 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   ComplexPairTy Op = Visit(E->getSubExpr());
 
   llvm::Value *ResR, *ResI;
-  if (Op.first->getType()->isFloatingPoint()) {
+  if (Op.first->getType()->isFloatingPointTy()) {
     ResR = Builder.CreateFNeg(Op.first,  "neg.r");
     ResI = Builder.CreateFNeg(Op.second, "neg.i");
   } else {
@@ -384,7 +384,7 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
   // ~(a+ib) = a + i*-b
   ComplexPairTy Op = Visit(E->getSubExpr());
   llvm::Value *ResI;
-  if (Op.second->getType()->isFloatingPoint())
+  if (Op.second->getType()->isFloatingPointTy())
     ResI = Builder.CreateFNeg(Op.second, "conj.i");
   else
     ResI = Builder.CreateNeg(Op.second, "conj.i");
@@ -395,7 +395,7 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
 ComplexPairTy ComplexExprEmitter::EmitBinAdd(const BinOpInfo &Op) {
   llvm::Value *ResR, *ResI;
 
-  if (Op.LHS.first->getType()->isFloatingPoint()) {
+  if (Op.LHS.first->getType()->isFloatingPointTy()) {
     ResR = Builder.CreateFAdd(Op.LHS.first,  Op.RHS.first,  "add.r");
     ResI = Builder.CreateFAdd(Op.LHS.second, Op.RHS.second, "add.i");
   } else {
@@ -407,7 +407,7 @@ ComplexPairTy ComplexExprEmitter::EmitBinAdd(const BinOpInfo &Op) {
 
 ComplexPairTy ComplexExprEmitter::EmitBinSub(const BinOpInfo &Op) {
   llvm::Value *ResR, *ResI;
-  if (Op.LHS.first->getType()->isFloatingPoint()) {
+  if (Op.LHS.first->getType()->isFloatingPointTy()) {
     ResR = Builder.CreateFSub(Op.LHS.first,  Op.RHS.first,  "sub.r");
     ResI = Builder.CreateFSub(Op.LHS.second, Op.RHS.second, "sub.i");
   } else {
@@ -422,7 +422,7 @@ ComplexPairTy ComplexExprEmitter::EmitBinMul(const BinOpInfo &Op) {
   using llvm::Value;
   Value *ResR, *ResI;
 
-  if (Op.LHS.first->getType()->isFloatingPoint()) {
+  if (Op.LHS.first->getType()->isFloatingPointTy()) {
     Value *ResRl = Builder.CreateFMul(Op.LHS.first, Op.RHS.first, "mul.rl");
     Value *ResRr = Builder.CreateFMul(Op.LHS.second, Op.RHS.second,"mul.rr");
     ResR  = Builder.CreateFSub(ResRl, ResRr, "mul.r");
@@ -448,7 +448,7 @@ ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
 
 
   llvm::Value *DSTr, *DSTi;
-  if (Op.LHS.first->getType()->isFloatingPoint()) {
+  if (Op.LHS.first->getType()->isFloatingPointTy()) {
     // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
     llvm::Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr, "tmp"); // a*c
     llvm::Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi, "tmp"); // b*d

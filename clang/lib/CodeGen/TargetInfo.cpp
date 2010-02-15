@@ -1365,14 +1365,14 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     assert(ST->getNumElements() == 2 && "Unexpected ABI info for mixed regs");
     const llvm::Type *TyLo = ST->getElementType(0);
     const llvm::Type *TyHi = ST->getElementType(1);
-    assert((TyLo->isFloatingPoint() ^ TyHi->isFloatingPoint()) &&
+    assert((TyLo->isFloatingPointTy() ^ TyHi->isFloatingPointTy()) &&
            "Unexpected ABI info for mixed regs");
     const llvm::Type *PTyLo = llvm::PointerType::getUnqual(TyLo);
     const llvm::Type *PTyHi = llvm::PointerType::getUnqual(TyHi);
     llvm::Value *GPAddr = CGF.Builder.CreateGEP(RegAddr, gp_offset);
     llvm::Value *FPAddr = CGF.Builder.CreateGEP(RegAddr, fp_offset);
-    llvm::Value *RegLoAddr = TyLo->isFloatingPoint() ? FPAddr : GPAddr;
-    llvm::Value *RegHiAddr = TyLo->isFloatingPoint() ? GPAddr : FPAddr;
+    llvm::Value *RegLoAddr = TyLo->isFloatingPointTy() ? FPAddr : GPAddr;
+    llvm::Value *RegHiAddr = TyLo->isFloatingPointTy() ? GPAddr : FPAddr;
     llvm::Value *V =
       CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegLoAddr, PTyLo));
     CGF.Builder.CreateStore(V, CGF.Builder.CreateStructGEP(Tmp, 0));

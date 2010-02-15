@@ -290,7 +290,7 @@ public:
     if (CGF.getContext().getLangOptions().OverflowChecking
         && Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
-    if (Ops.LHS->getType()->isFPOrFPVector())
+    if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFMul(Ops.LHS, Ops.RHS, "mul");
     return Builder.CreateMul(Ops.LHS, Ops.RHS, "mul");
   }
@@ -505,7 +505,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
       return Builder.CreateUIToFP(Src, DstTy, "conv");
   }
 
-  assert(Src->getType()->isFloatingPoint() && "Unknown real conversion");
+  assert(Src->getType()->isFloatingPointTy() && "Unknown real conversion");
   if (isa<llvm::IntegerType>(DstTy)) {
     if (DstType->isSignedIntegerType())
       return Builder.CreateFPToSI(Src, DstTy, "conv");
@@ -513,7 +513,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
       return Builder.CreateFPToUI(Src, DstTy, "conv");
   }
 
-  assert(DstTy->isFloatingPoint() && "Unknown real conversion");
+  assert(DstTy->isFloatingPointTy() && "Unknown real conversion");
   if (DstTy->getTypeID() < Src->getType()->getTypeID())
     return Builder.CreateFPTrunc(Src, DstTy, "conv");
   else
@@ -1007,7 +1007,7 @@ Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
 Value *ScalarExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   TestAndClearIgnoreResultAssign();
   Value *Op = Visit(E->getSubExpr());
-  if (Op->getType()->isFPOrFPVector())
+  if (Op->getType()->isFPOrFPVectorTy())
     return Builder.CreateFNeg(Op, "neg");
   return Builder.CreateNeg(Op, "neg");
 }
@@ -1152,7 +1152,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
-  if (Ops.LHS->getType()->isFPOrFPVector())
+  if (Ops.LHS->getType()->isFPOrFPVectorTy())
     return Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
   else if (Ops.Ty->isUnsignedIntegerType())
     return Builder.CreateUDiv(Ops.LHS, Ops.RHS, "div");
@@ -1259,7 +1259,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
         Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
 
-    if (Ops.LHS->getType()->isFPOrFPVector())
+    if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFAdd(Ops.LHS, Ops.RHS, "add");
 
     // Signed integer overflow is undefined behavior.
@@ -1335,7 +1335,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
         && Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
 
-    if (Ops.LHS->getType()->isFPOrFPVector())
+    if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFSub(Ops.LHS, Ops.RHS, "sub");
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }
@@ -1503,7 +1503,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
 
-    if (LHS->getType()->isFPOrFPVector()) {
+    if (LHS->getType()->isFPOrFPVectorTy()) {
       Result = Builder.CreateFCmp((llvm::CmpInst::Predicate)FCmpOpc,
                                   LHS, RHS, "cmp");
     } else if (LHSTy->isSignedIntegerType()) {

@@ -84,7 +84,7 @@ const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
 
 const llvm::Type *CodeGenTypes::ConvertTypeForMemRecursive(QualType T) {
   const llvm::Type *ResultType = ConvertTypeRecursive(T);
-  if (ResultType->isInteger(1))
+  if (ResultType->isIntegerTy(1))
     return llvm::IntegerType::get(getLLVMContext(),
                                   (unsigned)Context.getTypeSize(T));
   // FIXME: Should assert that the llvm type and AST type has the same size.
@@ -99,7 +99,7 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
   const llvm::Type *R = ConvertType(T);
 
   // If this is a non-bool type, don't map it.
-  if (!R->isInteger(1))
+  if (!R->isIntegerTy(1))
     return R;
 
   // Otherwise, return an integer of the target-specified size.
