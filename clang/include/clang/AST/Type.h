@@ -1193,7 +1193,8 @@ protected:
   }
 public:
   bool isSpelledAsLValue() const { return SpelledAsLValue; }
-
+  bool isInnerRef() const { return InnerRef; }
+  
   QualType getPointeeTypeAsWritten() const { return PointeeType; }
   QualType getPointeeType() const {
     // FIXME: this might strip inner qualifiers; okay?
@@ -2582,6 +2583,12 @@ public:
   /// interface type, or 0 if there are none.
   unsigned getNumProtocols() const { return NumProtocols; }
 
+  /// \brief Retrieve the Ith protocol.
+  ObjCProtocolDecl *getProtocol(unsigned I) const {
+    assert(I < getNumProtocols() && "Out-of-range protocol access");
+    return qual_begin()[I];
+  }
+  
   /// qual_iterator and friends: this provides access to the (potentially empty)
   /// list of protocols qualifying this interface.
   typedef ObjCProtocolDecl*  const * qual_iterator;
@@ -2683,6 +2690,12 @@ public:
   /// interface type, or 0 if there are none.
   unsigned getNumProtocols() const { return NumProtocols; }
 
+  /// \brief Retrieve the Ith protocol.
+  ObjCProtocolDecl *getProtocol(unsigned I) const {
+    assert(I < getNumProtocols() && "Out-of-range protocol access");
+    return qual_begin()[I];
+  }
+  
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 

@@ -24,6 +24,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <deque>
 
 using namespace clang;
 
@@ -85,7 +86,7 @@ namespace {
                          DeclarationName &Name, SourceLocation &Loc, 
                          QualType &T);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
-    bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum);
+    bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
     Decl *VisitDecl(Decl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
@@ -104,6 +105,839 @@ namespace {
     Expr *VisitIntegerLiteral(IntegerLiteral *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
+}
+
+//----------------------------------------------------------------------------
+// Structural Equivalence
+//----------------------------------------------------------------------------
+
+namespace {
+  struct StructuralEquivalenceContext {
+    /// \brief AST contexts for which we are checking structural equivalence.
+    ASTContext &C1, &C2;
+    
+    /// \brief Diagnostic object used to emit diagnostics.
+    Diagnostic &Diags;
+    
+    /// \brief The set of "tentative" equivalences between two canonical 
+    /// declarations, mapping from a declaration in the first context to the
+    /// declaration in the second context that we believe to be equivalent.
+    llvm::DenseMap<Decl *, Decl *> TentativeEquivalences;
+    
+    /// \brief Queue of declarations in the first context whose equivalence
+    /// with a declaration in the second context still needs to be verified.
+    std::deque<Decl *> DeclsToCheck;
+    
+    /// \brief Whether we're being strict about the spelling of types when 
+    /// unifying two types.
+    bool StrictTypeSpelling;
+    
+    StructuralEquivalenceContext(ASTContext &C1, ASTContext &C2,
+                                 Diagnostic &Diags,
+                                 bool StrictTypeSpelling = false)
+      : C1(C1), C2(C2), Diags(Diags), StrictTypeSpelling(StrictTypeSpelling) { }
+
+    /// \brief Determine whether the two declarations are structurally
+    /// equivalent.
+    bool IsStructurallyEquivalent(Decl *D1, Decl *D2);
+    
+    /// \brief Determine whether the two types are structurally equivalent.
+    bool IsStructurallyEquivalent(QualType T1, QualType T2);
+
+  private:
+    /// \brief Finish checking all of the structural equivalences.
+    ///
+    /// \returns true if an error occurred, false otherwise.
+    bool Finish();
+    
+  public:
+    DiagnosticBuilder Diag1(SourceLocation Loc, unsigned DiagID) {
+      return Diags.Report(FullSourceLoc(Loc, C1.getSourceManager()), DiagID);
+    }
+
+    DiagnosticBuilder Diag2(SourceLocation Loc, unsigned DiagID) {
+      return Diags.Report(FullSourceLoc(Loc, C2.getSourceManager()), DiagID);
+    }
+  };
+}
+
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     QualType T1, QualType T2);
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     Decl *D1, Decl *D2);
+
+/// \brief Determine if two APInts have the same value, after zero-extending
+/// one of them (if needed!) to ensure that the bit-widths match.
+static bool IsSameValue(const llvm::APInt &I1, const llvm::APInt &I2) {
+  if (I1.getBitWidth() == I2.getBitWidth())
+    return I1 == I2;
+  
+  if (I1.getBitWidth() > I2.getBitWidth())
+    return I1 == llvm::APInt(I2).zext(I1.getBitWidth());
+  
+  return llvm::APInt(I1).zext(I2.getBitWidth()) == I2;
+}
+
+/// \brief Determine if two APSInts have the same value, zero- or sign-extending
+/// as needed.
+static bool IsSameValue(const llvm::APSInt &I1, const llvm::APSInt &I2) {
+  if (I1.getBitWidth() == I2.getBitWidth() && I1.isSigned() == I2.isSigned())
+    return I1 == I2;
+  
+  // Check for a bit-width mismatch.
+  if (I1.getBitWidth() > I2.getBitWidth())
+    return IsSameValue(I1, llvm::APSInt(I2).extend(I1.getBitWidth()));
+  else if (I2.getBitWidth() > I1.getBitWidth())
+    return IsSameValue(llvm::APSInt(I1).extend(I2.getBitWidth()), I2);
+  
+  // We have a signedness mismatch. Turn the signed value into an unsigned 
+  // value.
+  if (I1.isSigned()) {
+    if (I1.isNegative())
+      return false;
+    
+    return llvm::APSInt(I1, true) == I2;
+  }
+ 
+  if (I2.isNegative())
+    return false;
+  
+  return I1 == llvm::APSInt(I2, true);
+}
+
+/// \brief Determine structural equivalence of two expressions.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     Expr *E1, Expr *E2) {
+  if (!E1 || !E2)
+    return E1 == E2;
+  
+  // FIXME: Actually perform a structural comparison!
+  return true;
+}
+
+/// \brief Determine whether two identifiers are equivalent.
+static bool IsStructurallyEquivalent(const IdentifierInfo *Name1,
+                                     const IdentifierInfo *Name2) {
+  if (!Name1 || !Name2)
+    return Name1 == Name2;
+  
+  return Name1->getName() == Name2->getName();
+}
+
+/// \brief Determine whether two nested-name-specifiers are equivalent.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     NestedNameSpecifier *NNS1,
+                                     NestedNameSpecifier *NNS2) {
+  // FIXME: Implement!
+  return true;
+}
+
+/// \brief Determine whether two template arguments are equivalent.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     const TemplateArgument &Arg1,
+                                     const TemplateArgument &Arg2) {
+  // FIXME: Implement!
+  return true;
+}
+
+/// \brief Determine structural equivalence for the common part of array 
+/// types.
+static bool IsArrayStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                          const ArrayType *Array1, 
+                                          const ArrayType *Array2) {
+  if (!IsStructurallyEquivalent(Context, 
+                                Array1->getElementType(), 
+                                Array2->getElementType()))
+    return false;
+  if (Array1->getSizeModifier() != Array2->getSizeModifier())
+    return false;
+  if (Array1->getIndexTypeQualifiers() != Array2->getIndexTypeQualifiers())
+    return false;
+  
+  return true;
+}
+
+/// \brief Determine structural equivalence of two types.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     QualType T1, QualType T2) {
+  if (T1.isNull() || T2.isNull())
+    return T1.isNull() && T2.isNull();
+  
+  if (!Context.StrictTypeSpelling) {
+    // We aren't being strict about token-to-token equivalence of types,
+    // so map down to the canonical type.
+    T1 = Context.C1.getCanonicalType(T1);
+    T2 = Context.C2.getCanonicalType(T2);
+  }
+  
+  if (T1.getQualifiers() != T2.getQualifiers())
+    return false;
+  
+  if (T1->getTypeClass() != T2->getTypeClass())
+    return false;
+  
+  switch (T1->getTypeClass()) {
+    case Type::Builtin:
+    // FIXME: Deal with Char_S/Char_U. 
+    if (cast<BuiltinType>(T1)->getKind() != cast<BuiltinType>(T2)->getKind())
+      return false;
+    break;
+  
+  case Type::Complex:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<ComplexType>(T1)->getElementType(),
+                                  cast<ComplexType>(T2)->getElementType()))
+      return false;
+    break;
+  
+  case Type::Pointer:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<PointerType>(T1)->getPointeeType(),
+                                  cast<PointerType>(T2)->getPointeeType()))
+      return false;
+    break;
+
+  case Type::BlockPointer:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<BlockPointerType>(T1)->getPointeeType(),
+                                  cast<BlockPointerType>(T2)->getPointeeType()))
+      return false;
+    break;
+
+  case Type::LValueReference:
+  case Type::RValueReference: {
+    const ReferenceType *Ref1 = cast<ReferenceType>(T1);
+    const ReferenceType *Ref2 = cast<ReferenceType>(T2);
+    if (Ref1->isSpelledAsLValue() != Ref2->isSpelledAsLValue())
+      return false;
+    if (Ref1->isInnerRef() != Ref2->isInnerRef())
+      return false;
+    if (!IsStructurallyEquivalent(Context,
+                                  Ref1->getPointeeTypeAsWritten(),
+                                  Ref2->getPointeeTypeAsWritten()))
+      return false;
+    break;
+  }
+      
+  case Type::MemberPointer: {
+    const MemberPointerType *MemPtr1 = cast<MemberPointerType>(T1);
+    const MemberPointerType *MemPtr2 = cast<MemberPointerType>(T2);
+    if (!IsStructurallyEquivalent(Context,
+                                  MemPtr1->getPointeeType(),
+                                  MemPtr2->getPointeeType()))
+      return false;
+    if (!IsStructurallyEquivalent(Context,
+                                  QualType(MemPtr1->getClass(), 0),
+                                  QualType(MemPtr2->getClass(), 0)))
+      return false;
+    break;
+  }
+      
+  case Type::ConstantArray: {
+    const ConstantArrayType *Array1 = cast<ConstantArrayType>(T1);
+    const ConstantArrayType *Array2 = cast<ConstantArrayType>(T2);
+    if (!IsSameValue(Array1->getSize(), Array2->getSize()))
+      return false;
+    
+    if (!IsArrayStructurallyEquivalent(Context, Array1, Array2))
+      return false;
+    break;
+  }
+
+  case Type::IncompleteArray:
+    if (!IsArrayStructurallyEquivalent(Context, 
+                                       cast<ArrayType>(T1), 
+                                       cast<ArrayType>(T2)))
+      return false;
+    break;
+      
+  case Type::VariableArray: {
+    const VariableArrayType *Array1 = cast<VariableArrayType>(T1);
+    const VariableArrayType *Array2 = cast<VariableArrayType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Array1->getSizeExpr(), Array2->getSizeExpr()))
+      return false;
+    
+    if (!IsArrayStructurallyEquivalent(Context, Array1, Array2))
+      return false;
+    
+    break;
+  }
+  
+  case Type::DependentSizedArray: {
+    const DependentSizedArrayType *Array1 = cast<DependentSizedArrayType>(T1);
+    const DependentSizedArrayType *Array2 = cast<DependentSizedArrayType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Array1->getSizeExpr(), Array2->getSizeExpr()))
+      return false;
+    
+    if (!IsArrayStructurallyEquivalent(Context, Array1, Array2))
+      return false;
+    
+    break;
+  }
+      
+  case Type::DependentSizedExtVector: {
+    const DependentSizedExtVectorType *Vec1
+      = cast<DependentSizedExtVectorType>(T1);
+    const DependentSizedExtVectorType *Vec2
+      = cast<DependentSizedExtVectorType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Vec1->getSizeExpr(), Vec2->getSizeExpr()))
+      return false;
+    if (!IsStructurallyEquivalent(Context, 
+                                  Vec1->getElementType(), 
+                                  Vec2->getElementType()))
+      return false;
+    break;
+  }
+   
+  case Type::Vector: 
+  case Type::ExtVector: {
+    const VectorType *Vec1 = cast<VectorType>(T1);
+    const VectorType *Vec2 = cast<VectorType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Vec1->getElementType(),
+                                  Vec2->getElementType()))
+      return false;
+    if (Vec1->getNumElements() != Vec2->getNumElements())
+      return false;
+    if (Vec1->isAltiVec() != Vec2->isAltiVec())
+      return false;
+    if (Vec1->isPixel() != Vec2->isPixel())
+      return false;
+  }
+
+  case Type::FunctionProto: {
+    const FunctionProtoType *Proto1 = cast<FunctionProtoType>(T1);
+    const FunctionProtoType *Proto2 = cast<FunctionProtoType>(T2);
+    if (Proto1->getNumArgs() != Proto2->getNumArgs())
+      return false;
+    for (unsigned I = 0, N = Proto1->getNumArgs(); I != N; ++I) {
+      if (!IsStructurallyEquivalent(Context, 
+                                    Proto1->getArgType(I),
+                                    Proto2->getArgType(I)))
+        return false;
+    }
+    if (Proto1->isVariadic() != Proto2->isVariadic())
+      return false;
+    if (Proto1->hasExceptionSpec() != Proto2->hasExceptionSpec())
+      return false;
+    if (Proto1->hasAnyExceptionSpec() != Proto2->hasAnyExceptionSpec())
+      return false;
+    if (Proto1->getNumExceptions() != Proto2->getNumExceptions())
+      return false;
+    for (unsigned I = 0, N = Proto1->getNumExceptions(); I != N; ++I) {
+      if (!IsStructurallyEquivalent(Context,
+                                    Proto1->getExceptionType(I),
+                                    Proto2->getExceptionType(I)))
+        return false;
+    }
+    if (Proto1->getTypeQuals() != Proto2->getTypeQuals())
+      return false;
+    
+    // Fall through to check the bits common with FunctionNoProtoType.
+  }
+      
+  case Type::FunctionNoProto: {
+    const FunctionType *Function1 = cast<FunctionType>(T1);
+    const FunctionType *Function2 = cast<FunctionType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Function1->getResultType(),
+                                  Function2->getResultType()))
+      return false;
+    if (Function1->getNoReturnAttr() != Function2->getNoReturnAttr())
+      return false;
+    if (Function1->getCallConv() != Function2->getCallConv())
+      return false;
+    break;
+  }
+   
+  case Type::UnresolvedUsing:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<UnresolvedUsingType>(T1)->getDecl(),
+                                  cast<UnresolvedUsingType>(T2)->getDecl()))
+      return false;
+      
+    break;
+      
+  case Type::Typedef:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<TypedefType>(T1)->getDecl(),
+                                  cast<TypedefType>(T2)->getDecl()))
+      return false;
+    break;
+      
+  case Type::TypeOfExpr:
+    if (!IsStructurallyEquivalent(Context,
+                                cast<TypeOfExprType>(T1)->getUnderlyingExpr(),
+                                cast<TypeOfExprType>(T2)->getUnderlyingExpr()))
+      return false;
+    break;
+      
+  case Type::TypeOf:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<TypeOfType>(T1)->getUnderlyingType(),
+                                  cast<TypeOfType>(T2)->getUnderlyingType()))
+      return false;
+    break;
+      
+  case Type::Decltype:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<DecltypeType>(T1)->getUnderlyingExpr(),
+                                  cast<DecltypeType>(T2)->getUnderlyingExpr()))
+      return false;
+    break;
+
+  case Type::Record:
+  case Type::Enum:
+    if (!IsStructurallyEquivalent(Context,
+                                  cast<TagType>(T1)->getDecl(),
+                                  cast<TagType>(T2)->getDecl()))
+      return false;
+    break;
+      
+  case Type::Elaborated: {
+    const ElaboratedType *Elab1 = cast<ElaboratedType>(T1);
+    const ElaboratedType *Elab2 = cast<ElaboratedType>(T2);
+    if (Elab1->getTagKind() != Elab2->getTagKind())
+      return false;
+    if (!IsStructurallyEquivalent(Context, 
+                                  Elab1->getUnderlyingType(),
+                                  Elab2->getUnderlyingType()))
+      return false;
+    break;
+  }
+   
+  case Type::TemplateTypeParm: {
+    const TemplateTypeParmType *Parm1 = cast<TemplateTypeParmType>(T1);
+    const TemplateTypeParmType *Parm2 = cast<TemplateTypeParmType>(T2);
+    if (Parm1->getDepth() != Parm2->getDepth())
+      return false;
+    if (Parm1->getIndex() != Parm2->getIndex())
+      return false;
+    if (Parm1->isParameterPack() != Parm2->isParameterPack())
+      return false;
+    
+    // Names of template type parameters are never significant.
+    break;
+  }
+      
+  case Type::SubstTemplateTypeParm: {
+    const SubstTemplateTypeParmType *Subst1
+      = cast<SubstTemplateTypeParmType>(T1);
+    const SubstTemplateTypeParmType *Subst2
+      = cast<SubstTemplateTypeParmType>(T2);
+    if (!IsStructurallyEquivalent(Context,
+                                  QualType(Subst1->getReplacedParameter(), 0),
+                                  QualType(Subst2->getReplacedParameter(), 0)))
+      return false;
+    if (!IsStructurallyEquivalent(Context, 
+                                  Subst1->getReplacementType(),
+                                  Subst2->getReplacementType()))
+      return false;
+    break;
+  }
+
+  case Type::TemplateSpecialization: {
+    const TemplateSpecializationType *Spec1
+      = cast<TemplateSpecializationType>(T1);
+    const TemplateSpecializationType *Spec2
+      = cast<TemplateSpecializationType>(T2);
+    if (!IsStructurallyEquivalent(Context,
+                                  Spec1->getTemplateName(),
+                                  Spec2->getTemplateName()))
+      return false;
+    if (Spec1->getNumArgs() != Spec2->getNumArgs())
+      return false;
+    for (unsigned I = 0, N = Spec1->getNumArgs(); I != N; ++I) {
+      if (!IsStructurallyEquivalent(Context, 
+                                    Spec1->getArg(I), Spec2->getArg(I)))
+        return false;
+    }
+    break;
+  }
+      
+  case Type::QualifiedName: {
+    const QualifiedNameType *Qual1 = cast<QualifiedNameType>(T1);
+    const QualifiedNameType *Qual2 = cast<QualifiedNameType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Qual1->getQualifier(), 
+                                  Qual2->getQualifier()))
+      return false;
+    if (!IsStructurallyEquivalent(Context,
+                                  Qual1->getNamedType(),
+                                  Qual2->getNamedType()))
+      return false;
+    break;
+  }
+
+  case Type::Typename: {
+    const TypenameType *Typename1 = cast<TypenameType>(T1);
+    const TypenameType *Typename2 = cast<TypenameType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Typename1->getQualifier(),
+                                  Typename2->getQualifier()))
+      return false;
+    if (!IsStructurallyEquivalent(Typename1->getIdentifier(),
+                                  Typename2->getIdentifier()))
+      return false;
+    if (!IsStructurallyEquivalent(Context,
+                                  QualType(Typename1->getTemplateId(), 0),
+                                  QualType(Typename2->getTemplateId(), 0)))
+      return false;
+    
+    break;
+  }
+  
+  case Type::ObjCInterface: {
+    const ObjCInterfaceType *Iface1 = cast<ObjCInterfaceType>(T1);
+    const ObjCInterfaceType *Iface2 = cast<ObjCInterfaceType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Iface1->getDecl(), Iface2->getDecl()))
+      return false;
+    if (Iface1->getNumProtocols() != Iface2->getNumProtocols())
+      return false;
+    for (unsigned I = 0, N = Iface1->getNumProtocols(); I != N; ++I) {
+      if (!IsStructurallyEquivalent(Context,
+                                    Iface1->getProtocol(I),
+                                    Iface2->getProtocol(I)))
+        return false;
+    }
+    break;
+  }
+
+  case Type::ObjCObjectPointer: {
+    const ObjCObjectPointerType *Ptr1 = cast<ObjCObjectPointerType>(T1);
+    const ObjCObjectPointerType *Ptr2 = cast<ObjCObjectPointerType>(T2);
+    if (!IsStructurallyEquivalent(Context, 
+                                  Ptr1->getPointeeType(),
+                                  Ptr2->getPointeeType()))
+      return false;
+    if (Ptr1->getNumProtocols() != Ptr2->getNumProtocols())
+      return false;
+    for (unsigned I = 0, N = Ptr1->getNumProtocols(); I != N; ++I) {
+      if (!IsStructurallyEquivalent(Context,
+                                    Ptr1->getProtocol(I),
+                                    Ptr2->getProtocol(I)))
+        return false;
+    }
+    break;
+  }
+      
+  } // end switch
+
+  return true;
+}
+
+/// \brief Determine structural equivalence of two records.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     RecordDecl *D1, RecordDecl *D2) {
+  if (D1->isUnion() != D2->isUnion()) {
+    Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+      << Context.C2.getTypeDeclType(D2);
+    Context.Diag1(D1->getLocation(), diag::note_odr_tag_kind_here)
+      << D1->getDeclName() << (unsigned)D1->getTagKind();
+    return false;
+  }
+  
+  if (CXXRecordDecl *D1CXX = dyn_cast<CXXRecordDecl>(D1)) {
+    if (CXXRecordDecl *D2CXX = dyn_cast<CXXRecordDecl>(D2)) {
+      if (D1CXX->getNumBases() != D2CXX->getNumBases()) {
+        Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+        Context.Diag2(D2->getLocation(), diag::note_odr_number_of_bases)
+        << D2CXX->getNumBases();
+        Context.Diag1(D1->getLocation(), diag::note_odr_number_of_bases)
+        << D1CXX->getNumBases();
+        return false;
+      }
+      
+      // Check the base classes. 
+      for (CXXRecordDecl::base_class_iterator Base1 = D1CXX->bases_begin(), 
+                                           BaseEnd1 = D1CXX->bases_end(),
+                                                Base2 = D2CXX->bases_begin();
+           Base1 != BaseEnd1;
+           ++Base1, ++Base2) {        
+        if (!IsStructurallyEquivalent(Context, 
+                                      Base1->getType(), Base2->getType())) {
+          Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+            << Context.C2.getTypeDeclType(D2);
+          Context.Diag2(Base2->getSourceRange().getBegin(), diag::note_odr_base)
+            << Base2->getType()
+            << Base2->getSourceRange();
+          Context.Diag1(Base1->getSourceRange().getBegin(), diag::note_odr_base)
+            << Base1->getType()
+            << Base1->getSourceRange();
+          return false;
+        }
+        
+        // Check virtual vs. non-virtual inheritance mismatch.
+        if (Base1->isVirtual() != Base2->isVirtual()) {
+          Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+            << Context.C2.getTypeDeclType(D2);
+          Context.Diag2(Base2->getSourceRange().getBegin(),
+                        diag::note_odr_virtual_base)
+            << Base2->isVirtual() << Base2->getSourceRange();
+          Context.Diag1(Base1->getSourceRange().getBegin(), diag::note_odr_base)
+            << Base1->isVirtual()
+            << Base1->getSourceRange();
+          return false;
+        }
+      }
+    } else if (D1CXX->getNumBases() > 0) {
+      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+      const CXXBaseSpecifier *Base1 = D1CXX->bases_begin();
+      Context.Diag1(Base1->getSourceRange().getBegin(), diag::note_odr_base)
+        << Base1->getType()
+        << Base1->getSourceRange();
+      Context.Diag2(D2->getLocation(), diag::note_odr_missing_base);
+      return false;
+    }
+  }
+  
+  // Check the fields for consistency.
+  CXXRecordDecl::field_iterator Field2 = D2->field_begin(),
+                             Field2End = D2->field_end();
+  for (CXXRecordDecl::field_iterator Field1 = D1->field_begin(),
+                                  Field1End = D1->field_end();
+       Field1 != Field1End;
+       ++Field1, ++Field2) {
+    if (Field2 == Field2End) {
+      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+      Context.Diag1(Field1->getLocation(), diag::note_odr_field)
+        << Field1->getDeclName() << Field1->getType();
+      Context.Diag2(D2->getLocation(), diag::note_odr_missing_field);
+      return false;
+    }
+    
+    if (!IsStructurallyEquivalent(Context, 
+                                  Field1->getType(), Field2->getType())) {
+      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+      Context.Diag2(Field2->getLocation(), diag::note_odr_field)
+        << Field2->getDeclName() << Field2->getType();
+      Context.Diag1(Field1->getLocation(), diag::note_odr_field)
+        << Field1->getDeclName() << Field1->getType();
+      return false;
+    }
+    
+    if (Field1->isBitField() != Field2->isBitField()) {
+      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+      if (Field1->isBitField()) {
+        llvm::APSInt Bits;
+        Field1->getBitWidth()->isIntegerConstantExpr(Bits, Context.C1);
+        Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
+          << Field1->getDeclName() << Field1->getType()
+          << Bits.toString(10, false);
+        Context.Diag2(Field2->getLocation(), diag::note_odr_not_bit_field)
+          << Field2->getDeclName();
+      } else {
+        llvm::APSInt Bits;
+        Field2->getBitWidth()->isIntegerConstantExpr(Bits, Context.C2);
+        Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
+          << Field2->getDeclName() << Field2->getType()
+          << Bits.toString(10, false);
+        Context.Diag1(Field1->getLocation(), 
+                          diag::note_odr_not_bit_field)
+        << Field1->getDeclName();
+      }
+      return false;
+    }
+    
+    if (Field1->isBitField()) {
+      // Make sure that the bit-fields are the same length.
+      llvm::APSInt Bits1, Bits2;
+      if (!Field1->getBitWidth()->isIntegerConstantExpr(Bits1, Context.C1))
+        return false;
+      if (!Field2->getBitWidth()->isIntegerConstantExpr(Bits2, Context.C2))
+        return false;
+      
+      if (!IsSameValue(Bits1, Bits2)) {
+        Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+          << Context.C2.getTypeDeclType(D2);
+        Context.Diag2(Field2->getLocation(), diag::note_odr_bit_field)
+          << Field2->getDeclName() << Field2->getType()
+          << Bits2.toString(10, false);
+        Context.Diag1(Field1->getLocation(), diag::note_odr_bit_field)
+          << Field1->getDeclName() << Field1->getType()
+          << Bits1.toString(10, false);
+        return false;
+      }
+    }
+  }
+  
+  if (Field2 != Field2End) {
+    Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+      << Context.C2.getTypeDeclType(D2);
+    Context.Diag2(Field2->getLocation(), diag::note_odr_field)
+      << Field2->getDeclName() << Field2->getType();
+    Context.Diag1(D1->getLocation(), diag::note_odr_missing_field);
+    return false;
+  }
+  
+  return true;
+}
+     
+/// \brief Determine structural equivalence of two enums.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     EnumDecl *D1, EnumDecl *D2) {
+  EnumDecl::enumerator_iterator EC2 = D2->enumerator_begin(),
+                             EC2End = D2->enumerator_end();
+  for (EnumDecl::enumerator_iterator EC1 = D1->enumerator_begin(),
+                                  EC1End = D1->enumerator_end();
+       EC1 != EC1End; ++EC1, ++EC2) {
+    if (EC2 == EC2End) {
+      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+      Context.Diag1(EC1->getLocation(), diag::note_odr_enumerator)
+        << EC1->getDeclName() 
+        << EC1->getInitVal().toString(10);
+      Context.Diag2(D2->getLocation(), diag::note_odr_missing_enumerator);
+      return false;
+    }
+    
+    llvm::APSInt Val1 = EC1->getInitVal();
+    llvm::APSInt Val2 = EC2->getInitVal();
+    if (!IsSameValue(Val1, Val2) || 
+        !IsStructurallyEquivalent(EC1->getIdentifier(), EC2->getIdentifier())) {
+      Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+        << Context.C2.getTypeDeclType(D2);
+      Context.Diag2(EC2->getLocation(), diag::note_odr_enumerator)
+        << EC2->getDeclName() 
+        << EC2->getInitVal().toString(10);
+      Context.Diag1(EC1->getLocation(), diag::note_odr_enumerator)
+        << EC1->getDeclName() 
+        << EC1->getInitVal().toString(10);
+      return false;
+    }
+  }
+  
+  if (EC2 != EC2End) {
+    Context.Diag2(D2->getLocation(), diag::warn_odr_tag_type_inconsistent)
+      << Context.C2.getTypeDeclType(D2);
+    Context.Diag2(EC2->getLocation(), diag::note_odr_enumerator)
+      << EC2->getDeclName() 
+      << EC2->getInitVal().toString(10);
+    Context.Diag1(D1->getLocation(), diag::note_odr_missing_enumerator);
+    return false;
+  }
+  
+  return true;
+}
+  
+/// \brief Determine structural equivalence of two declarations.
+static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
+                                     Decl *D1, Decl *D2) {
+  // FIXME: Check for known structural equivalences via a callback of some sort.
+  
+  // Determine whether we've already produced a tentative equivalence for D1.
+  Decl *&EquivToD1 = Context.TentativeEquivalences[D1->getCanonicalDecl()];
+  if (EquivToD1)
+    return EquivToD1 == D2->getCanonicalDecl();
+  
+  // Produce a tentative equivalence D1 <-> D2, which will be checked later.
+  EquivToD1 = D2->getCanonicalDecl();
+  Context.DeclsToCheck.push_back(D1->getCanonicalDecl());
+  return true;
+}
+
+bool StructuralEquivalenceContext::IsStructurallyEquivalent(Decl *D1, 
+                                                            Decl *D2) {
+  if (!::IsStructurallyEquivalent(*this, D1, D2))
+    return false;
+  
+  return !Finish();
+}
+
+bool StructuralEquivalenceContext::IsStructurallyEquivalent(QualType T1, 
+                                                            QualType T2) {
+  if (!::IsStructurallyEquivalent(*this, T1, T2))
+    return false;
+  
+  return !Finish();
+}
+
+bool StructuralEquivalenceContext::Finish() {
+  while (!DeclsToCheck.empty()) {
+    // Check the next declaration.
+    Decl *D1 = DeclsToCheck.front();
+    DeclsToCheck.pop_front();
+    
+    Decl *D2 = TentativeEquivalences[D1];
+    assert(D2 && "Unrecorded tentative equivalence?");
+    
+    // FIXME: Switch on all declaration kinds. For now, we're just going to
+    // check the obvious ones.
+    if (RecordDecl *Record1 = dyn_cast<RecordDecl>(D1)) {
+      if (RecordDecl *Record2 = dyn_cast<RecordDecl>(D2)) {
+        // Check for equivalent structure names.
+        IdentifierInfo *Name1 = Record1->getIdentifier();
+        if (!Name1 && Record1->getTypedefForAnonDecl())
+          Name1 = Record1->getTypedefForAnonDecl()->getIdentifier();
+        IdentifierInfo *Name2 = Record2->getIdentifier();
+        if (!Name2 && Record2->getTypedefForAnonDecl())
+          Name2 = Record2->getTypedefForAnonDecl()->getIdentifier();
+        if (!::IsStructurallyEquivalent(Name1, Name2))
+          return true;
+        
+        if (!::IsStructurallyEquivalent(*this, Record1, Record2))
+          return true;
+      } else {
+        // Record/non-record mismatch.
+        return true;
+      }
+      
+      continue;
+    } 
+    
+    if (EnumDecl *Enum1 = dyn_cast<EnumDecl>(D1)) {
+      if (EnumDecl *Enum2 = dyn_cast<EnumDecl>(D2)) {
+        // Check for equivalent enum names.
+        IdentifierInfo *Name1 = Enum1->getIdentifier();
+        if (!Name1 && Enum1->getTypedefForAnonDecl())
+          Name1 = Enum1->getTypedefForAnonDecl()->getIdentifier();
+        IdentifierInfo *Name2 = Enum2->getIdentifier();
+        if (!Name2 && Enum2->getTypedefForAnonDecl())
+          Name2 = Enum2->getTypedefForAnonDecl()->getIdentifier();
+        if (!::IsStructurallyEquivalent(Name1, Name2))
+          return true;
+        
+        if (!::IsStructurallyEquivalent(*this, Enum1, Enum2))
+          return true;
+      } else {
+        // Enum/non-enum mismatch
+        return true;
+      }
+      
+      continue;
+    } 
+    
+    if (TypedefDecl *Typedef1 = dyn_cast<TypedefDecl>(D1)) {
+      if (TypedefDecl *Typedef2 = dyn_cast<TypedefDecl>(D2)) {
+        if (!::IsStructurallyEquivalent(Typedef1->getIdentifier(),
+                                        Typedef2->getIdentifier()))
+          return true;
+        
+        if (!::IsStructurallyEquivalent(*this,
+                                        Typedef1->getUnderlyingType(),
+                                        Typedef2->getUnderlyingType()))
+          return true;
+      } else {
+        // Typedef/non-typedef mismatch.
+        return true;
+      }
+      
+      continue;
+    } 
+      
+    // FIXME: Check other declaration kinds!
+  }
+  
+  return false;
 }
 
 //----------------------------------------------------------------------------
@@ -519,250 +1353,18 @@ bool ASTNodeImporter::ImportDeclParts(ValueDecl *D,
 }
 
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
-                                        RecordDecl *ToRecord) {  
-  if (FromRecord->isUnion() != ToRecord->isUnion()) {
-    Importer.ToDiag(ToRecord->getLocation(), 
-                    diag::warn_odr_tag_type_inconsistent)
-      << Importer.getToContext().getTypeDeclType(ToRecord);
-    Importer.FromDiag(FromRecord->getLocation(), diag::note_odr_tag_kind_here)
-      << FromRecord->getDeclName() << (unsigned)FromRecord->getTagKind();
-    return false;
-  }
-
-  if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(FromRecord)) {
-    if (CXXRecordDecl *ToCXX = dyn_cast<CXXRecordDecl>(ToRecord)) {
-      if (FromCXX->getNumBases() != ToCXX->getNumBases()) {
-        Importer.ToDiag(ToRecord->getLocation(), 
-                        diag::warn_odr_tag_type_inconsistent)
-          << Importer.getToContext().getTypeDeclType(ToRecord);
-        Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_number_of_bases)
-          << ToCXX->getNumBases();
-        Importer.FromDiag(FromRecord->getLocation(), 
-                          diag::note_odr_number_of_bases)
-          << FromCXX->getNumBases();
-        return false;
-      }
-
-      // Check the base classes. 
-      for (CXXRecordDecl::base_class_iterator FromBase = FromCXX->bases_begin(), 
-                                           FromBaseEnd = FromCXX->bases_end(),
-                                                ToBase = ToCXX->bases_begin();
-          FromBase != FromBaseEnd;
-          ++FromBase, ++ToBase) {        
-        // Check the type we're inheriting from.
-        QualType FromBaseT = Importer.Import(FromBase->getType());
-        if (FromBaseT.isNull())
-          return false;
-        
-        if (!Importer.getToContext().typesAreCompatible(FromBaseT, 
-                                                        ToBase->getType())) {
-          Importer.ToDiag(ToRecord->getLocation(), 
-                          diag::warn_odr_tag_type_inconsistent)
-            << Importer.getToContext().getTypeDeclType(ToRecord);
-          Importer.ToDiag(ToBase->getSourceRange().getBegin(),
-                          diag::note_odr_base)
-            << ToBase->getType()
-            << ToBase->getSourceRange();
-          Importer.FromDiag(FromBase->getSourceRange().getBegin(),
-                            diag::note_odr_base)
-            << FromBase->getType()
-            << FromBase->getSourceRange();
-          return false;
-        }
-
-        // Check virtual vs. non-virtual inheritance mismatch.
-        if (FromBase->isVirtual() != ToBase->isVirtual()) {
-          Importer.ToDiag(ToRecord->getLocation(), 
-                          diag::warn_odr_tag_type_inconsistent)
-            << Importer.getToContext().getTypeDeclType(ToRecord);
-          Importer.ToDiag(ToBase->getSourceRange().getBegin(),
-                          diag::note_odr_virtual_base)
-            << ToBase->isVirtual() << ToBase->getSourceRange();
-          Importer.FromDiag(FromBase->getSourceRange().getBegin(),
-                            diag::note_odr_base)
-            << FromBase->isVirtual()
-            << FromBase->getSourceRange();
-          return false;
-        }
-      }
-    } else if (FromCXX->getNumBases() > 0) {
-      Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_tag_type_inconsistent)
-        << Importer.getToContext().getTypeDeclType(ToRecord);
-      const CXXBaseSpecifier *FromBase = FromCXX->bases_begin();
-      Importer.FromDiag(FromBase->getSourceRange().getBegin(),
-                        diag::note_odr_base)
-        << FromBase->getType()
-        << FromBase->getSourceRange();
-      Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_missing_base);
-      return false;
-    }
-  }
-  
-  // Check the fields for consistency.
-  CXXRecordDecl::field_iterator ToField = ToRecord->field_begin(),
-                             ToFieldEnd = ToRecord->field_end();
-  for (CXXRecordDecl::field_iterator FromField = FromRecord->field_begin(),
-                                  FromFieldEnd = FromRecord->field_end();
-       FromField != FromFieldEnd;
-       ++FromField, ++ToField) {
-    if (ToField == ToFieldEnd) {
-      Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_tag_type_inconsistent)
-        << Importer.getToContext().getTypeDeclType(ToRecord);
-      Importer.FromDiag(FromField->getLocation(), diag::note_odr_field)
-        << FromField->getDeclName() << FromField->getType();
-      Importer.ToDiag(ToRecord->getLocation(), diag::note_odr_missing_field);
-      return false;
-    }
-
-    QualType FromT = Importer.Import(FromField->getType());
-    if (FromT.isNull())
-      return false;
-  
-    if (!Importer.getToContext().typesAreCompatible(FromT, ToField->getType())){
-      Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_tag_type_inconsistent)
-        << Importer.getToContext().getTypeDeclType(ToRecord);
-      Importer.ToDiag(ToField->getLocation(), diag::note_odr_field)
-        << ToField->getDeclName() << ToField->getType();
-      Importer.FromDiag(FromField->getLocation(), diag::note_odr_field)
-        << FromField->getDeclName() << FromField->getType();
-      return false;
-    }
-
-    if (FromField->isBitField() != ToField->isBitField()) {
-      Importer.ToDiag(ToRecord->getLocation(), 
-                      diag::warn_odr_tag_type_inconsistent)
-        << Importer.getToContext().getTypeDeclType(ToRecord);
-      if (FromField->isBitField()) {
-        llvm::APSInt Bits;
-        FromField->getBitWidth()->isIntegerConstantExpr(Bits,
-                                                   Importer.getFromContext());
-        Importer.FromDiag(FromField->getLocation(), diag::note_odr_bit_field)
-          << FromField->getDeclName() << FromField->getType()
-          << Bits.toString(10, false);
-        Importer.ToDiag(ToField->getLocation(), diag::note_odr_not_bit_field)
-          << ToField->getDeclName();
-      } else {
-        llvm::APSInt Bits;
-        ToField->getBitWidth()->isIntegerConstantExpr(Bits,
-                                                   Importer.getToContext());
-        Importer.ToDiag(ToField->getLocation(), diag::note_odr_bit_field)
-          << ToField->getDeclName() << ToField->getType()
-          << Bits.toString(10, false);
-        Importer.FromDiag(FromField->getLocation(), 
-                          diag::note_odr_not_bit_field)
-          << FromField->getDeclName();
-      }
-      return false;
-    }
-
-    if (FromField->isBitField()) {
-      // Make sure that the bit-fields are the same length.
-      llvm::APSInt FromBits, ToBits;
-      if (!FromField->getBitWidth()->isIntegerConstantExpr(FromBits,
-                                                    Importer.getFromContext()))
-        return false;
-      if (!ToField->getBitWidth()->isIntegerConstantExpr(ToBits,
-                                                      Importer.getToContext()))
-        return false;
-      
-      if (FromBits.getBitWidth() > ToBits.getBitWidth())
-        ToBits.extend(FromBits.getBitWidth());
-      else if (ToBits.getBitWidth() > FromBits.getBitWidth())
-        FromBits.extend(ToBits.getBitWidth());
-      
-      FromBits.setIsUnsigned(true);
-      ToBits.setIsUnsigned(true);
-      
-      if (FromBits != ToBits) {
-        Importer.ToDiag(ToRecord->getLocation(), 
-                        diag::warn_odr_tag_type_inconsistent)
-          << Importer.getToContext().getTypeDeclType(ToRecord);
-        Importer.ToDiag(ToField->getLocation(), diag::note_odr_bit_field)
-          << ToField->getDeclName() << ToField->getType()
-          << ToBits.toString(10, false);
-        Importer.FromDiag(FromField->getLocation(), diag::note_odr_bit_field)
-          << FromField->getDeclName() << FromField->getType()
-          << FromBits.toString(10, false);
-        return false;
-      }
-    }
-  }
-  
-  if (ToField != ToFieldEnd) {
-    Importer.ToDiag(ToRecord->getLocation(), 
-                    diag::warn_odr_tag_type_inconsistent)
-      << Importer.getToContext().getTypeDeclType(ToRecord);
-    Importer.ToDiag(ToField->getLocation(), diag::note_odr_field)
-      << ToField->getDeclName() << ToField->getType();
-    Importer.FromDiag(FromRecord->getLocation(), diag::note_odr_missing_field);
-    return false;
-  }
-
-  return true;
+                                        RecordDecl *ToRecord) {
+  StructuralEquivalenceContext SEC(Importer.getFromContext(),
+                                   Importer.getToContext(),
+                                   Importer.getDiags());
+  return SEC.IsStructurallyEquivalent(FromRecord, ToRecord);
 }
 
 bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
-  EnumDecl::enumerator_iterator ToEC = ToEnum->enumerator_begin(),
-                               ToEnd = ToEnum->enumerator_end();
-  for (EnumDecl::enumerator_iterator FromEC = FromEnum->enumerator_begin(),
-                                    FromEnd = FromEnum->enumerator_end();
-       FromEC != FromEnd; ++FromEC, ++ToEC) {
-    if (ToEC == ToEnd) {
-      Importer.ToDiag(ToEnum->getLocation(), 
-                      diag::warn_odr_tag_type_inconsistent)
-        << Importer.getToContext().getTypeDeclType(ToEnum);
-      Importer.FromDiag(FromEC->getLocation(), diag::note_odr_enumerator)
-        << FromEC->getDeclName() 
-        << FromEC->getInitVal().toString(10);
-      Importer.ToDiag(ToEnum->getLocation(),
-                      diag::note_odr_missing_enumerator);
-      return false;
-    }
-
-    llvm::APSInt FromVal = FromEC->getInitVal();
-    llvm::APSInt ToVal = ToEC->getInitVal();
-    if (FromVal.getBitWidth() > ToVal.getBitWidth())
-      ToVal.extend(FromVal.getBitWidth());
-    else if (ToVal.getBitWidth() > FromVal.getBitWidth())
-      FromVal.extend(ToVal.getBitWidth());
-    if (FromVal.isSigned() != ToVal.isSigned()) {
-      if (FromVal.isSigned())
-        ToVal.setIsSigned(true);
-      else
-        FromVal.setIsSigned(true);
-    }
-    
-    if (FromVal != ToVal || 
-        ToEC->getDeclName() != Importer.Import(FromEC->getDeclName())) {
-      Importer.ToDiag(ToEnum->getLocation(), 
-                      diag::warn_odr_tag_type_inconsistent)
-        << Importer.getToContext().getTypeDeclType(ToEnum);
-      Importer.ToDiag(ToEC->getLocation(), diag::note_odr_enumerator)
-        << ToEC->getDeclName() 
-        << ToEC->getInitVal().toString(10);
-      Importer.FromDiag(FromEC->getLocation(), diag::note_odr_enumerator)
-        << FromEC->getDeclName() 
-        << FromEC->getInitVal().toString(10);
-      return false;
-    }
-  }
-  
-  if (ToEC != ToEnd) {
-    Importer.ToDiag(ToEnum->getLocation(), 
-                    diag::warn_odr_tag_type_inconsistent)
-      << Importer.getToContext().getTypeDeclType(ToEnum);
-    Importer.ToDiag(ToEC->getLocation(), diag::note_odr_enumerator)
-      << ToEC->getDeclName() 
-      << ToEC->getInitVal().toString(10);
-    Importer.FromDiag(FromEnum->getLocation(),
-                      diag::note_odr_missing_enumerator);
-    return false;
-  }
-  
-  return true;
+  StructuralEquivalenceContext SEC(Importer.getFromContext(),
+                                   Importer.getToContext(),
+                                   Importer.getDiags());
+  return SEC.IsStructurallyEquivalent(FromEnum, ToEnum);
 }
 
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
@@ -872,19 +1474,19 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   }
   
   // Create the enum declaration.
-  EnumDecl *ToEnum = EnumDecl::Create(Importer.getToContext(), DC, Loc,
+  EnumDecl *D2 = EnumDecl::Create(Importer.getToContext(), DC, Loc,
                                       Name.getAsIdentifierInfo(),
                                       Importer.Import(D->getTagKeywordLoc()),
                                       0);
-  ToEnum->setLexicalDeclContext(LexicalDC);
-  Importer.Imported(D, ToEnum);
-  LexicalDC->addDecl(ToEnum);
+  D2->setLexicalDeclContext(LexicalDC);
+  Importer.Imported(D, D2);
+  LexicalDC->addDecl(D2);
 
   // Import the integer type.
   QualType ToIntegerType = Importer.Import(D->getIntegerType());
   if (ToIntegerType.isNull())
     return 0;
-  ToEnum->setIntegerType(ToIntegerType);
+  D2->setIntegerType(ToIntegerType);
   
   // Import the definition
   if (D->isDefinition()) {
@@ -896,17 +1498,17 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
     if (ToPromotionType.isNull())
       return 0;
     
-    ToEnum->startDefinition();
+    D2->startDefinition();
     for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
          FromMemEnd = D->decls_end();
          FromMem != FromMemEnd;
          ++FromMem)
       Importer.Import(*FromMem);
     
-    ToEnum->completeDefinition(T, ToPromotionType);
+    D2->completeDefinition(T, ToPromotionType);
   }
   
-  return ToEnum;
+  return D2;
 }
 
 Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
@@ -982,63 +1584,63 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   }
   
   // Create the record declaration.
-  RecordDecl *ToRecord = AdoptDecl;
-  if (!ToRecord) {
-    if (CXXRecordDecl *FromCXX = dyn_cast<CXXRecordDecl>(D)) {
-      CXXRecordDecl *ToCXX = CXXRecordDecl::Create(Importer.getToContext(), 
+  RecordDecl *D2 = AdoptDecl;
+  if (!D2) {
+    if (CXXRecordDecl *D1CXX = dyn_cast<CXXRecordDecl>(D)) {
+      CXXRecordDecl *D2CXX = CXXRecordDecl::Create(Importer.getToContext(), 
                                                    D->getTagKind(),
                                                    DC, Loc,
                                                    Name.getAsIdentifierInfo(), 
                                         Importer.Import(D->getTagKeywordLoc()));
-      ToRecord = ToCXX;
+      D2 = D2CXX;
       
       if (D->isDefinition()) {
         // Add base classes.
         llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
         for (CXXRecordDecl::base_class_iterator 
-                  FromBase = FromCXX->bases_begin(),
-               FromBaseEnd = FromCXX->bases_end();
-             FromBase != FromBaseEnd;
-             ++FromBase) {
-          QualType T = Importer.Import(FromBase->getType());
+                  Base1 = D1CXX->bases_begin(),
+               FromBaseEnd = D1CXX->bases_end();
+             Base1 != FromBaseEnd;
+             ++Base1) {
+          QualType T = Importer.Import(Base1->getType());
           if (T.isNull())
             return 0;
           
           Bases.push_back(
             new (Importer.getToContext()) 
-                  CXXBaseSpecifier(Importer.Import(FromBase->getSourceRange()),
-                                   FromBase->isVirtual(),
-                                   FromBase->isBaseOfClass(),
-                                   FromBase->getAccessSpecifierAsWritten(),
+                  CXXBaseSpecifier(Importer.Import(Base1->getSourceRange()),
+                                   Base1->isVirtual(),
+                                   Base1->isBaseOfClass(),
+                                   Base1->getAccessSpecifierAsWritten(),
                                    T));
         }
         if (!Bases.empty())
-          ToCXX->setBases(Bases.data(), Bases.size());
+          D2CXX->setBases(Bases.data(), Bases.size());
       }
     } else {
-      ToRecord = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
+      D2 = RecordDecl::Create(Importer.getToContext(), D->getTagKind(),
                                     DC, Loc,
                                     Name.getAsIdentifierInfo(), 
                                     Importer.Import(D->getTagKeywordLoc()));
     }
-    ToRecord->setLexicalDeclContext(LexicalDC);
-    LexicalDC->addDecl(ToRecord);
+    D2->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDecl(D2);
   }
   
-  Importer.Imported(D, ToRecord);
+  Importer.Imported(D, D2);
 
   if (D->isDefinition()) {
-    ToRecord->startDefinition();
+    D2->startDefinition();
     for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
                                  FromMemEnd = D->decls_end();
          FromMem != FromMemEnd;
          ++FromMem)
       Importer.Import(*FromMem);
     
-    ToRecord->completeDefinition();
+    D2->completeDefinition();
   }
   
-  return ToRecord;
+  return D2;
 }
 
 Decl *ASTNodeImporter::VisitEnumConstantDecl(EnumConstantDecl *D) {

@@ -193,6 +193,9 @@ namespace clang {
     /// \brief Retrieve the file manager that AST nodes are being imported from.
     FileManager &getFromFileManager() const { return FromFileManager; }
 
+    /// \brief Retrieve the diagnostic formatter.
+    Diagnostic &getDiags() const { return Diags; }
+    
     /// \brief Report a diagnostic in the "to" context.
     DiagnosticBuilder ToDiag(SourceLocation Loc, unsigned DiagID);
     

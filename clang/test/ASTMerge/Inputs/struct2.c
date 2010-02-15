@@ -46,3 +46,9 @@ struct ListNode {
   int value;
   struct ListNode *Next;
 } xList;
+
+// Mismatch due to struct used internally
+struct DeepError {
+  int value;
+  struct DeeperError { int i; float f; } *Deeper;
+} xDeep;

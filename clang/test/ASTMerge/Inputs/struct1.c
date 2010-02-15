@@ -44,10 +44,14 @@ struct S9 { int i; float f; } *x9;
 // Incomplete type
 struct S10 *x10;
 
-// FIXME: Matches, but crashes the importer
-#if 0
+// Matches
 struct ListNode {
   int value;
   struct ListNode *Next;
 } xList;
-#endif
+
+// Mismatch due to struct used internally
+struct DeepError {
+  int value;
+  struct DeeperError { int i; int f; } *Deeper;
+} xDeep;

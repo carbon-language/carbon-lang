@@ -31,4 +31,9 @@
 // CHECK: struct2.c:33:33: note: bit-field 'j' with type 'unsigned int' and length 16 here
 // CHECK: struct2.c:33:43: error: external variable 'x7' declared with incompatible types in different translation units ('struct S7' vs. 'struct S7')
 // CHECK: struct1.c:36:42: note: declared here with type 'struct S7'
-// CHECK: 29 diagnostics
+// CHECK: struct1.c:56:10: warning: type 'struct DeeperError' has incompatible definitions in different translation units
+// CHECK: struct1.c:56:35: note: field 'f' has type 'int' here
+// CHECK: struct2.c:53:37: note: field 'f' has type 'float' here
+// CHECK: struct2.c:54:3: error: external variable 'xDeep' declared with incompatible types in different translation units ('struct DeepError' vs. 'struct DeepError')
+// CHECK: struct1.c:57:3: note: declared here with type 'struct DeepError'
+// CHECK: 37 diagnostics
