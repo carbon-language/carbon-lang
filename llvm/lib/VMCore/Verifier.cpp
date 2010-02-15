@@ -161,7 +161,8 @@ namespace {
     VerifierFailureAction action;
                           // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
-    DominatorTree *DT; // Dominator Tree, caution can be null!
+    LLVMContext *Context; // Context within which we are verifying
+    DominatorTree *DT;    // Dominator Tree, caution can be null!
 
     std::string Messages;
     raw_string_ostream MessagesStr;
@@ -178,24 +179,25 @@ namespace {
     Verifier()
       : FunctionPass(&ID), 
       Broken(false), RealPass(true), action(AbortProcessAction),
-      DT(0), MessagesStr(Messages) {}
+      Mod(0), Context(0), DT(0), MessagesStr(Messages) {}
     explicit Verifier(VerifierFailureAction ctn)
       : FunctionPass(&ID), 
-      Broken(false), RealPass(true), action(ctn), DT(0),
+      Broken(false), RealPass(true), action(ctn), Mod(0), Context(0), DT(0),
       MessagesStr(Messages) {}
     explicit Verifier(bool AB)
       : FunctionPass(&ID), 
       Broken(false), RealPass(true),
-      action( AB ? AbortProcessAction : PrintMessageAction), DT(0),
-      MessagesStr(Messages) {}
+      action( AB ? AbortProcessAction : PrintMessageAction), Mod(0),
+      Context(0), DT(0), MessagesStr(Messages) {}
     explicit Verifier(DominatorTree &dt)
       : FunctionPass(&ID), 
-      Broken(false), RealPass(false), action(PrintMessageAction),
-      DT(&dt), MessagesStr(Messages) {}
+      Broken(false), RealPass(false), action(PrintMessageAction), Mod(0),
+      Context(0), DT(&dt), MessagesStr(Messages) {}
 
 
     bool doInitialization(Module &M) {
       Mod = &M;
+      Context = &M.getContext();
       verifyTypeSymbolTable(M.getTypeSymbolTable());
 
       // If this is a real pass, in a pass manager, we must abort before
@@ -211,6 +213,7 @@ namespace {
       if (RealPass) DT = &getAnalysis<DominatorTree>();
 
       Mod = F.getParent();
+      if (!Context) Context = &F.getContext();
 
       visit(F);
       InstsInThisBlock.clear();
@@ -595,6 +598,9 @@ void Verifier::visitFunction(Function &F) {
   // Check function arguments.
   const FunctionType *FT = F.getFunctionType();
   unsigned NumArgs = F.arg_size();
+
+  Assert1(Context == &F.getContext(),
+          "Function context does not match Module context!", &F);
 
   Assert1(!F.hasCommonLinkage(), "Functions may not have common linkage", &F);
   Assert2(FT->getNumParams() == NumArgs,
@@ -1482,7 +1488,7 @@ void Verifier::visitInstruction(Instruction &I) {
 void Verifier::VerifyType(const Type *Ty) {
   if (!Types.insert(Ty)) return;
 
-  Assert1(&Mod->getContext() == &Ty->getContext(),
+  Assert1(Context == &Ty->getContext(),
           "Type context does not match Module context!", Ty);
 
   switch (Ty->getTypeID()) {
