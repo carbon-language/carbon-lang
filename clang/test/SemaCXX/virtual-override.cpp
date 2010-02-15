@@ -215,6 +215,29 @@ namespace PR6110 {
   Y1<Derived*, Base*> y;
 }
 
+// Defer checking for covariance if either return type is dependent.
+namespace type_dependent_covariance {
+  struct B {};
+  template <int N> struct TD : public B {};
+  template <> struct TD<1> {};
+
+  template <int N> struct TB {};
+  struct D : public TB<0> {};
+
+  template <int N> struct X {
+    virtual B* f1(); // expected-note{{overridden virtual function is here}}
+    virtual TB<N>* f2(); // expected-note{{overridden virtual function is here}}
+  };
+  template <int N, int M> struct X1 : X<N> {
+    virtual TD<M>* f1(); // expected-error{{return type of virtual function 'f1' is not covariant with the return type of the function it overrides ('TD<1> *'}}
+    virtual D* f2(); // expected-error{{return type of virtual function 'f2' is not covariant with the return type of the function it overrides ('struct type_dependent_covariance::D *' is not derived from 'TB<1> *')}}
+  };
+
+  X1<0, 0> good;
+  X1<0, 1> bad_derived; // expected-note{{instantiation}}
+  X1<1, 0> bad_base; // expected-note{{instantiation}}
+}
+
 namespace T10 {
   struct A { };
   struct B : A { };

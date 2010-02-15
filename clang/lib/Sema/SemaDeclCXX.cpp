@@ -5577,7 +5577,8 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   QualType NewTy = New->getType()->getAs<FunctionType>()->getResultType();
   QualType OldTy = Old->getType()->getAs<FunctionType>()->getResultType();
 
-  if (Context.hasSameType(NewTy, OldTy))
+  if (Context.hasSameType(NewTy, OldTy) ||
+      NewTy->isDependentType() || OldTy->isDependentType())
     return false;
 
   // Check if the return types are covariant
