@@ -669,7 +669,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // Re-emit as a v16i8 vector load
     result = DAG.getLoad(MVT::v16i8, dl, the_chain, basePtr,
                          LN->getSrcValue(), LN->getSrcValueOffset(),
-                         LN->isVolatile(), 16);
+                         LN->isVolatile(), LN->isNonTemporal(), 16);
 
     // Update the chain
     the_chain = result.getValue(1);
@@ -820,7 +820,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // Re-emit as a v16i8 vector load
     alignLoadVec = DAG.getLoad(MVT::v16i8, dl, the_chain, basePtr,
                                SN->getSrcValue(), SN->getSrcValueOffset(),
-                               SN->isVolatile(), 16);
+                               SN->isVolatile(), SN->isNonTemporal(), 16);
 
     // Update the chain
     the_chain = alignLoadVec.getValue(1);
@@ -861,7 +861,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     result = DAG.getStore(the_chain, dl, result, basePtr,
                           LN->getSrcValue(), LN->getSrcValueOffset(),
-                          LN->isVolatile(), LN->getAlignment());
+                          LN->isVolatile(), LN->isNonTemporal(),
+                          LN->getAlignment());
 
 #if 0 && !defined(NDEBUG)
     if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) {
@@ -1086,7 +1087,7 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
       // or we're forced to do vararg
       int FI = MFI->CreateFixedObject(ObjSize, ArgOffset, true, false);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
-      ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0);
+      ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0, false, false, 0);
       ArgOffset += StackSlotSize;
     }
 
@@ -1108,7 +1109,8 @@ SPUTargetLowering::LowerFormalArguments(SDValue Chain,
                                                  true, false);
       SDValue FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
       SDValue ArgVal = DAG.getRegister(ArgRegs[ArgRegIdx], MVT::v16i8);
-      SDValue Store = DAG.getStore(Chain, dl, ArgVal, FIN, NULL, 0);
+      SDValue Store = DAG.getStore(Chain, dl, ArgVal, FIN, NULL, 0,
+                                   false, false, 0);
       Chain = Store.getOperand(0);
       MemOps.push_back(Store);
 
@@ -1190,7 +1192,8 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
+                                           false, false, 0));
         ArgOffset += StackSlotSize;
       }
       break;
@@ -1199,7 +1202,8 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
+                                           false, false, 0));
         ArgOffset += StackSlotSize;
       }
       break;
@@ -1212,7 +1216,8 @@ SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       if (ArgRegIdx != NumArgRegs) {
         RegsToPass.push_back(std::make_pair(ArgRegs[ArgRegIdx++], Arg));
       } else {
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0));
+        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, NULL, 0,
+                                           false, false, 0));
         ArgOffset += StackSlotSize;
       }
       break;

@@ -314,7 +314,7 @@ namespace {
       return SelectCode(CurDAG->getLoad(vecVT, dl,
                                         CurDAG->getEntryNode(), CGPoolOffset,
                                         PseudoSourceValue::getConstantPool(), 0,
-                                        false, Alignment).getNode());
+                                        false, false, Alignment).getNode());
     }
 
     /// Select - Convert the specified operand from a target-independent to a
