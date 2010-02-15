@@ -1361,60 +1361,30 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 // Saturating adds/subtracts -- for disassembly only
 
 // GPR:$dst = GPR:$a op GPR:$b
-class AQI<bits<8> op27_20, bits<4> op7_4, string opc, list<dag> pattern>
+class AQI<bits<8> op27_20, bits<4> op7_4, string opc>
   : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, IIC_iALUr,
-       opc, "\t$dst, $a, $b", pattern> {
+       opc, "\t$dst, $a, $b",
+       [/* For disassembly only; pattern left blank */]> {
   let Inst{27-20} = op27_20;
   let Inst{7-4} = op7_4;
 }
 
-def QADD    : AQI<0b00010000, 0b0101, "qadd",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QADD16  : AQI<0b01100010, 0b0001, "qadd16",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QADD8   : AQI<0b01100010, 0b1001, "qadd8",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QASX    : AQI<0b01100010, 0b0011, "qasx",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QDADD   : AQI<0b00010100, 0b0101, "qdadd",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QDSUB   : AQI<0b00010110, 0b0101, "qdsub",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QSAX    : AQI<0b01100010, 0b0101, "qsax",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QSUB    : AQI<0b00010010, 0b0101, "qsub",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QSUB16  : AQI<0b01100010, 0b0111, "qsub16",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def QSUB8   : AQI<0b01100010, 0b1111, "qsub8",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def UQADD16 : AQI<0b01100110, 0b0001, "uqadd16",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def UQADD8  : AQI<0b01100110, 0b1001, "uqadd8",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def UQASX   : AQI<0b01100110, 0b0011, "uqasx",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def UQSAX   : AQI<0b01100110, 0b0101, "uqsax",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def UQSUB16 : AQI<0b01100110, 0b0111, "uqsub16",
-                  [/* For disassembly only; pattern left blank */]>;
-
-def UQSUB8  : AQI<0b01100110, 0b1111, "uqsub8",
-                  [/* For disassembly only; pattern left blank */]>;
+def QADD    : AQI<0b00010000, 0b0101, "qadd">;
+def QADD16  : AQI<0b01100010, 0b0001, "qadd16">;
+def QADD8   : AQI<0b01100010, 0b1001, "qadd8">;
+def QASX    : AQI<0b01100010, 0b0011, "qasx">;
+def QDADD   : AQI<0b00010100, 0b0101, "qdadd">;
+def QDSUB   : AQI<0b00010110, 0b0101, "qdsub">;
+def QSAX    : AQI<0b01100010, 0b0101, "qsax">;
+def QSUB    : AQI<0b00010010, 0b0101, "qsub">;
+def QSUB16  : AQI<0b01100010, 0b0111, "qsub16">;
+def QSUB8   : AQI<0b01100010, 0b1111, "qsub8">;
+def UQADD16 : AQI<0b01100110, 0b0001, "uqadd16">;
+def UQADD8  : AQI<0b01100110, 0b1001, "uqadd8">;
+def UQASX   : AQI<0b01100110, 0b0011, "uqasx">;
+def UQSAX   : AQI<0b01100110, 0b0101, "uqsax">;
+def UQSUB16 : AQI<0b01100110, 0b0111, "uqsub16">;
+def UQSUB8  : AQI<0b01100110, 0b1111, "uqsub8">;
 
 //===----------------------------------------------------------------------===//
 //  Bitwise Instructions.
