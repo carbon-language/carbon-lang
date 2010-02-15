@@ -9,4 +9,8 @@ void a() {
   check(__builtin_isfinite(1)); // expected-error{{requires argument of floating point type}}
   check(__builtin_isinf()); // expected-error{{too few arguments}}
   check(__builtin_isnan(1,2)); // expected-error{{too many arguments}}
+  check(__builtin_fpclassify(0, 0, 0, 0, 0, 1.0));
+  check(__builtin_fpclassify(0, 0, 0, 0, 0, 1)); // expected-error{{requires argument of floating point type}}
+  check(__builtin_fpclassify(0, 0, 0, 0, 1)); // expected-error{{too few arguments}}
+  check(__builtin_fpclassify(0, 0, 0, 0, 0, 1, 0)); // expected-error{{too many arguments}}
 }

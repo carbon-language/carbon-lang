@@ -233,13 +233,12 @@ BUILTIN(__builtin_islessgreater , "i.", "nc")
 BUILTIN(__builtin_isunordered   , "i.", "nc")
 
 // Unary FP classification
-// BUILTIN(__builtin_fpclassify, "iiiii.", "nc")
+BUILTIN(__builtin_fpclassify, "iiiii.", "nc")
 BUILTIN(__builtin_isfinite,   "i.", "nc")
 BUILTIN(__builtin_isinf,      "i.", "nc")
 BUILTIN(__builtin_isinf_sign, "i.", "nc")
 BUILTIN(__builtin_isnan,      "i.", "nc")
 BUILTIN(__builtin_isnormal,   "i.", "nc")
-BUILTIN(__builtin_fpclassify, "iiiiii.", "nc")
 
 // Builtins for arithmetic.
 BUILTIN(__builtin_clz  , "iUi"  , "nc")

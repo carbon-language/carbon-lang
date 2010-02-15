@@ -141,12 +141,16 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     if (SemaBuiltinUnorderedCompare(TheCall))
       return ExprError();
     break;
+  case Builtin::BI__builtin_fpclassify:
+    if (SemaBuiltinFPClassification(TheCall, 6))
+      return ExprError();
+    break;
   case Builtin::BI__builtin_isfinite:
   case Builtin::BI__builtin_isinf:
   case Builtin::BI__builtin_isinf_sign:
   case Builtin::BI__builtin_isnan:
   case Builtin::BI__builtin_isnormal:
-    if (SemaBuiltinUnaryFP(TheCall))
+    if (SemaBuiltinFPClassification(TheCall))
       return ExprError();
     break;
   case Builtin::BI__builtin_return_address:
@@ -584,20 +588,21 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   return false;
 }
 
-/// SemaBuiltinUnorderedCompare - Handle functions like __builtin_isnan and
-/// friends.  This is declared to take (...), so we have to check everything.
-bool Sema::SemaBuiltinUnaryFP(CallExpr *TheCall) {
-  if (TheCall->getNumArgs() < 1)
+/// SemaBuiltinSemaBuiltinFPClassification - Handle functions like
+/// __builtin_isnan and friends.  This is declared to take (...), so we have
+/// to check everything.
+bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned LastArg) {
+  if (TheCall->getNumArgs() < LastArg)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
       << 0 /*function call*/;
-  if (TheCall->getNumArgs() > 1)
-    return Diag(TheCall->getArg(1)->getLocStart(),
+  if (TheCall->getNumArgs() > LastArg)
+    return Diag(TheCall->getArg(LastArg)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
       << 0 /*function call*/
-      << SourceRange(TheCall->getArg(1)->getLocStart(),
+      << SourceRange(TheCall->getArg(LastArg)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
 
-  Expr *OrigArg = TheCall->getArg(0);
+  Expr *OrigArg = TheCall->getArg(LastArg-1);
 
   if (OrigArg->isTypeDependent())
     return false;

@@ -4129,7 +4129,7 @@ private:
                                                     CallExpr *TheCall);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
-  bool SemaBuiltinUnaryFP(CallExpr *TheCall);
+  bool SemaBuiltinFPClassification(CallExpr *TheCall, unsigned LastArg=1);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
 
 public:
