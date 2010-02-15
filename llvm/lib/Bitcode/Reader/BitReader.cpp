@@ -21,17 +21,8 @@ using namespace llvm;
    Optionally returns a human-readable error message via OutMessage. */
 LLVMBool LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
                           LLVMModuleRef *OutModule, char **OutMessage) {
-  std::string Message;
-  
-  *OutModule = wrap(ParseBitcodeFile(unwrap(MemBuf), getGlobalContext(),  
-                                     &Message));
-  if (!*OutModule) {
-    if (OutMessage)
-      *OutMessage = strdup(Message.c_str());
-    return 1;
-  }
-  
-  return 0;
+  return LLVMParseBitcodeInContext(wrap(&getGlobalContext()), MemBuf, OutModule,
+                                   OutMessage);
 }
 
 LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
@@ -57,18 +48,8 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
 LLVMBool LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
                                       LLVMModuleProviderRef *OutMP,
                                       char **OutMessage) {
-  std::string Message;
-
-  *OutMP = reinterpret_cast<LLVMModuleProviderRef>(
-    getLazyBitcodeModule(unwrap(MemBuf), getGlobalContext(), &Message));
-                                         
-  if (!*OutMP) {
-    if (OutMessage)
-      *OutMessage = strdup(Message.c_str());
-      return 1;
-  }
-
-  return 0;
+  return LLVMGetBitcodeModuleProviderInContext(wrap(&getGlobalContext()),
+                                               MemBuf, OutMP, OutMessage);
 }
 
 LLVMBool LLVMGetBitcodeModuleProviderInContext(LLVMContextRef ContextRef,
