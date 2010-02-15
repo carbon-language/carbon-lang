@@ -58,6 +58,10 @@ bb1:                                              ; preds = %bb
   br label %bb2
 
 bb2:                                              ; preds = %bb1, %bb
+; also check for duplicate induction variables (radar 7645034)
+; CHECK: subs r{{.*}}, #1
+; CHECK-NOT: subs r{{.*}}, #1
+; CHECK: pop
   %u.0 = phi i64 [ %ins, %bb1 ], [ %u.17, %bb ]   ; <i64> [#uses=2]
   %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=2]
   %exitcond = icmp eq i32 %indvar.next, %tmp      ; <i1> [#uses=1]
