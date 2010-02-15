@@ -4631,7 +4631,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
       StringRef Name = F->getName();
       if (Name == "copysign" || Name == "copysignf") {
         if (I.getNumOperands() == 3 &&   // Basic sanity checks.
-            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getOperand(1)->getType()->isFloatingPointTy() &&
             I.getType() == I.getOperand(1)->getType() &&
             I.getType() == I.getOperand(2)->getType()) {
           SDValue LHS = getValue(I.getOperand(1));
@@ -4642,7 +4642,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
         }
       } else if (Name == "fabs" || Name == "fabsf" || Name == "fabsl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getOperand(1)->getType()->isFloatingPointTy() &&
             I.getType() == I.getOperand(1)->getType()) {
           SDValue Tmp = getValue(I.getOperand(1));
           setValue(&I, DAG.getNode(ISD::FABS, getCurDebugLoc(),
@@ -4651,7 +4651,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
         }
       } else if (Name == "sin" || Name == "sinf" || Name == "sinl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getOperand(1)->getType()->isFloatingPointTy() &&
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
@@ -4661,7 +4661,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
         }
       } else if (Name == "cos" || Name == "cosf" || Name == "cosl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getOperand(1)->getType()->isFloatingPointTy() &&
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));
@@ -4671,7 +4671,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
         }
       } else if (Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getOperand(1)->getType()->isFloatingPointTy() &&
             I.getType() == I.getOperand(1)->getType() &&
             I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getOperand(1));

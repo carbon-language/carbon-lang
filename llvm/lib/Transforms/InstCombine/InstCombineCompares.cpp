@@ -1606,7 +1606,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   const Type *Ty = Op0->getType();
 
   // icmp's with boolean values can always be turned into bitwise operations
-  if (Ty->isInteger(1)) {
+  if (Ty->isIntegerTy(1)) {
     switch (I.getPredicate()) {
     default: llvm_unreachable("Invalid icmp instruction!");
     case ICmpInst::ICMP_EQ: {               // icmp eq i1 A, B -> ~(A^B)
@@ -1650,7 +1650,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   unsigned BitWidth = 0;
   if (TD)
     BitWidth = TD->getTypeSizeInBits(Ty->getScalarType());
-  else if (Ty->isIntOrIntVector())
+  else if (Ty->isIntOrIntVectorTy())
     BitWidth = Ty->getScalarSizeInBits();
 
   bool isSignBit = false;

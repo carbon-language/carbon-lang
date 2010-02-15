@@ -49,11 +49,11 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
   unsigned BitWidth = Mask.getBitWidth();
-  assert((V->getType()->isIntOrIntVector() || isa<PointerType>(V->getType())) &&
-         "Not integer or pointer type!");
+  assert((V->getType()->isIntOrIntVectorTy() || isa<PointerType>(V->getType()))
+         && "Not integer or pointer type!");
   assert((!TD ||
           TD->getTypeSizeInBits(V->getType()->getScalarType()) == BitWidth) &&
-         (!V->getType()->isIntOrIntVector() ||
+         (!V->getType()->isIntOrIntVectorTy() ||
           V->getType()->getScalarSizeInBits() == BitWidth) &&
          KnownZero.getBitWidth() == BitWidth && 
          KnownOne.getBitWidth() == BitWidth &&
@@ -269,7 +269,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   case Instruction::BitCast: {
     const Type *SrcTy = I->getOperand(0)->getType();
-    if ((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+    if ((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
         // TODO: For now, not handling conversions like:
         // (bitcast i64 %x to <2 x i32>)
         !isa<VectorType>(I->getType())) {
@@ -649,7 +649,7 @@ bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
 ///
 unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
                                   unsigned Depth) {
-  assert((TD || V->getType()->isIntOrIntVector()) &&
+  assert((TD || V->getType()->isIntOrIntVectorTy()) &&
          "ComputeNumSignBits requires a TargetData object to operate "
          "on non-integer values!");
   const Type *Ty = V->getType();
@@ -823,7 +823,7 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
 
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
-  assert(V->getType()->isInteger() && "Not integer or pointer type!");
+  assert(V->getType()->isIntegerTy() && "Not integer or pointer type!");
 
   const Type *T = V->getType();
 
@@ -1372,7 +1372,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
     // Make sure the index-ee is a pointer to array of i8.
     const PointerType *PT = cast<PointerType>(GEP->getOperand(0)->getType());
     const ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType());
-    if (AT == 0 || !AT->getElementType()->isInteger(8))
+    if (AT == 0 || !AT->getElementType()->isIntegerTy(8))
       return false;
     
     // Check to make sure that the first operand of the GEP is an integer and
@@ -1411,7 +1411,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
   
   // Must be a Constant Array
   ConstantArray *Array = dyn_cast<ConstantArray>(GlobalInit);
-  if (Array == 0 || !Array->getType()->getElementType()->isInteger(8))
+  if (Array == 0 || !Array->getType()->getElementType()->isIntegerTy(8))
     return false;
   
   // Get the number of elements in the array

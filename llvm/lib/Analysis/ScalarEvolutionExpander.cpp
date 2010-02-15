@@ -1104,7 +1104,7 @@ void SCEVExpander::restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I) {
 Value *
 SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
                                                     const Type *Ty) {
-  assert(Ty->isInteger() && "Can only insert integer induction variables!");
+  assert(Ty->isIntegerTy() && "Can only insert integer induction variables!");
   const SCEV *H = SE.getAddRecExpr(SE.getIntegerSCEV(0, Ty),
                                    SE.getIntegerSCEV(1, Ty), L);
   BasicBlock *SaveInsertBB = Builder.GetInsertBlock();

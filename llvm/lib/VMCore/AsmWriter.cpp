@@ -431,13 +431,13 @@ static void AddModuleTypesToPrinter(TypePrinting &TP,
     // they are used too often to have a single useful name.
     if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
       const Type *PETy = PTy->getElementType();
-      if ((PETy->isPrimitiveType() || PETy->isInteger()) &&
+      if ((PETy->isPrimitiveType() || PETy->isIntegerTy()) &&
           !isa<OpaqueType>(PETy))
         continue;
     }
 
     // Likewise don't insert primitives either.
-    if (Ty->isInteger() || Ty->isPrimitiveType())
+    if (Ty->isIntegerTy() || Ty->isPrimitiveType())
       continue;
 
     // Get the name as a string and insert it into TypeNames.
@@ -849,7 +849,7 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
 static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
                              TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
-    if (CI->getType()->isInteger(1)) {
+    if (CI->getType()->isIntegerTy(1)) {
       Out << (CI->getZExtValue() ? "true" : "false");
       return;
     }

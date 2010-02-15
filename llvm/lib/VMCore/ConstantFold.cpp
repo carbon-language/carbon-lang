@@ -155,12 +155,12 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
 
   // Handle integral constant input.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-    if (DestTy->isInteger())
+    if (DestTy->isIntegerTy())
       // Integral -> Integral. This is a no-op because the bit widths must
       // be the same. Consequently, we just fold to V.
       return V;
 
-    if (DestTy->isFloatingPoint())
+    if (DestTy->isFloatingPointTy())
       return ConstantFP::get(DestTy->getContext(),
                              APFloat(CI->getValue(),
                                      !DestTy->isPPC_FP128Ty()));
@@ -364,7 +364,7 @@ static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
   // Pointer size doesn't depend on the pointee type, so canonicalize them
   // to an arbitrary pointee.
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
-    if (!PTy->getElementType()->isInteger(1))
+    if (!PTy->getElementType()->isIntegerTy(1))
       return
         getFoldedSizeOf(PointerType::get(IntegerType::get(PTy->getContext(), 1),
                                          PTy->getAddressSpace()),
@@ -429,7 +429,7 @@ static Constant *getFoldedAlignOf(const Type *Ty, const Type *DestTy,
   // Pointer alignment doesn't depend on the pointee type, so canonicalize them
   // to an arbitrary pointee.
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
-    if (!PTy->getElementType()->isInteger(1))
+    if (!PTy->getElementType()->isIntegerTy(1))
       return
         getFoldedAlignOf(PointerType::get(IntegerType::get(PTy->getContext(),
                                                            1),
@@ -629,7 +629,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
               ConstantInt *CI = cast<ConstantInt>(CE->getOperand(2));
               if (CI->isOne() &&
                   STy->getNumElements() == 2 &&
-                  STy->getElementType(0)->isInteger(1)) {
+                  STy->getElementType(0)->isIntegerTy(1)) {
                 return getFoldedAlignOf(STy->getElementType(1), DestTy, false);
               }
             }
@@ -1392,7 +1392,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   }
 
   // i1 can be simplified in many cases.
-  if (C1->getType()->isInteger(1)) {
+  if (C1->getType()->isIntegerTy(1)) {
     switch (Opcode) {
     case Instruction::Add:
     case Instruction::Sub:
@@ -1458,10 +1458,10 @@ static int IdxCompare(Constant *C1, Constant *C2,  const Type *ElTy) {
 
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
-  if (!C1->getType()->isInteger(64))
+  if (!C1->getType()->isIntegerTy(64))
     C1 = ConstantExpr::getSExt(C1, Type::getInt64Ty(C1->getContext()));
 
-  if (!C2->getType()->isInteger(64))
+  if (!C2->getType()->isIntegerTy(64))
     C2 = ConstantExpr::getSExt(C2, Type::getInt64Ty(C1->getContext()));
 
   if (C1 == C2) return 0;  // They are equal
@@ -1667,7 +1667,7 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
-          (isa<PointerType>(CE1->getType()) || CE1->getType()->isInteger())) {
+          (isa<PointerType>(CE1->getType()) || CE1->getType()->isIntegerTy())) {
         if (CE1->getOpcode() == Instruction::ZExt) isSigned = false;
         if (CE1->getOpcode() == Instruction::SExt) isSigned = true;
         return evaluateICmpRelation(CE1Op0,
@@ -1842,7 +1842,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   }
 
   // If the comparison is a comparison between two i1's, simplify it.
-  if (C1->getType()->isInteger(1)) {
+  if (C1->getType()->isIntegerTy(1)) {
     switch(pred) {
     case ICmpInst::ICMP_EQ:
       if (isa<ConstantInt>(C2))
@@ -1931,7 +1931,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     return ConstantVector::get(&ResElts[0], ResElts.size());
   }
 
-  if (C1->getType()->isFloatingPoint()) {
+  if (C1->getType()->isFloatingPointTy()) {
     int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateFCmpRelation(C1, C2)) {
     default: llvm_unreachable("Unknown relation!");
@@ -2266,10 +2266,10 @@ Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
 
             // Before adding, extend both operands to i64 to avoid
             // overflow trouble.
-            if (!PrevIdx->getType()->isInteger(64))
+            if (!PrevIdx->getType()->isIntegerTy(64))
               PrevIdx = ConstantExpr::getSExt(PrevIdx,
                                            Type::getInt64Ty(Div->getContext()));
-            if (!Div->getType()->isInteger(64))
+            if (!Div->getType()->isIntegerTy(64))
               Div = ConstantExpr::getSExt(Div,
                                           Type::getInt64Ty(Div->getContext()));
 

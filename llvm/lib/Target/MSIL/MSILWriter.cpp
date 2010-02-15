@@ -187,7 +187,7 @@ void MSILWriter::printModuleStartup() {
     break;
   case 1:
     Arg1 = F->arg_begin();
-    if (Arg1->getType()->isInteger()) {
+    if (Arg1->getType()->isIntegerTy()) {
       Out << "\tldloc\targc\n";
       Args = getTypeName(Arg1->getType());
       BadSig = false;
@@ -195,7 +195,7 @@ void MSILWriter::printModuleStartup() {
     break;
   case 2:
     Arg1 = Arg2 = F->arg_begin(); ++Arg2;
-    if (Arg1->getType()->isInteger() && 
+    if (Arg1->getType()->isIntegerTy() && 
         Arg2->getType()->getTypeID() == Type::PointerTyID) {
       Out << "\tldloc\targc\n\tldloc\targv\n";
       Args = getTypeName(Arg1->getType())+","+getTypeName(Arg2->getType());
@@ -207,7 +207,7 @@ void MSILWriter::printModuleStartup() {
   }
 
   bool RetVoid = (F->getReturnType()->getTypeID() == Type::VoidTyID);
-  if (BadSig || (!F->getReturnType()->isInteger() && !RetVoid)) {
+  if (BadSig || (!F->getReturnType()->isIntegerTy() && !RetVoid)) {
     Out << "\tldc.i4.0\n";
   } else {
     Out << "\tcall\t" << getTypeName(F->getReturnType()) <<
@@ -334,7 +334,7 @@ std::string MSILWriter::getPrimitiveTypeName(const Type* Ty, bool isSigned) {
 
 std::string MSILWriter::getTypeName(const Type* Ty, bool isSigned,
                                     bool isNested) {
-  if (Ty->isPrimitiveType() || Ty->isInteger())
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy())
     return getPrimitiveTypeName(Ty,isSigned);
   // FIXME: "OpaqueType" support
   switch (Ty->getTypeID()) {

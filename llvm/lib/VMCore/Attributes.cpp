@@ -89,7 +89,7 @@ std::string Attribute::getAsString(Attributes Attrs) {
 Attributes Attribute::typeIncompatible(const Type *Ty) {
   Attributes Incompatible = None;
   
-  if (!Ty->isInteger())
+  if (!Ty->isIntegerTy())
     // Attributes that only apply to integers.
     Incompatible |= SExt | ZExt;
   

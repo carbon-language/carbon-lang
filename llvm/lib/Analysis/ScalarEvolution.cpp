@@ -214,8 +214,8 @@ bool SCEVCastExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
 SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeID &ID,
                                    const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scTruncate, op, ty) {
-  assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((Op->getType()->isIntegerTy() || isa<PointerType>(Op->getType())) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot truncate non-integer value!");
 }
 
@@ -226,8 +226,8 @@ void SCEVTruncateExpr::print(raw_ostream &OS) const {
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const FoldingSetNodeID &ID,
                                        const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scZeroExtend, op, ty) {
-  assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((Op->getType()->isIntegerTy() || isa<PointerType>(Op->getType())) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot zero extend non-integer value!");
 }
 
@@ -238,8 +238,8 @@ void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
 SCEVSignExtendExpr::SCEVSignExtendExpr(const FoldingSetNodeID &ID,
                                        const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scSignExtend, op, ty) {
-  assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((Op->getType()->isIntegerTy() || isa<PointerType>(Op->getType())) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot sign extend non-integer value!");
 }
 
@@ -394,7 +394,7 @@ bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
               if (ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(2)))
                 if (CI->isOne() &&
                     STy->getNumElements() == 2 &&
-                    STy->getElementType(0)->isInteger(1)) {
+                    STy->getElementType(0)->isIntegerTy(1)) {
                   AllocTy = STy->getElementType(1);
                   return true;
                 }
@@ -2308,7 +2308,7 @@ const SCEV *ScalarEvolution::getUnknown(Value *V) {
 /// has access to target-specific information.
 bool ScalarEvolution::isSCEVable(const Type *Ty) const {
   // Integers and pointers are always SCEVable.
-  return Ty->isInteger() || isa<PointerType>(Ty);
+  return Ty->isIntegerTy() || isa<PointerType>(Ty);
 }
 
 /// getTypeSizeInBits - Return the size in bits of the specified type,
@@ -2321,7 +2321,7 @@ uint64_t ScalarEvolution::getTypeSizeInBits(const Type *Ty) const {
     return TD->getTypeSizeInBits(Ty);
 
   // Integer types have fixed sizes.
-  if (Ty->isInteger())
+  if (Ty->isIntegerTy())
     return Ty->getPrimitiveSizeInBits();
 
   // The only other support type is pointer. Without TargetData, conservatively
@@ -2337,7 +2337,7 @@ uint64_t ScalarEvolution::getTypeSizeInBits(const Type *Ty) const {
 const Type *ScalarEvolution::getEffectiveSCEVType(const Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
 
-  if (Ty->isInteger())
+  if (Ty->isIntegerTy())
     return Ty;
 
   // The only other support type is pointer.
@@ -2412,8 +2412,8 @@ const SCEV *
 ScalarEvolution::getTruncateOrZeroExtend(const SCEV *V,
                                          const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot truncate or zero extend with non-integer arguments!");
   if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
@@ -2429,8 +2429,8 @@ const SCEV *
 ScalarEvolution::getTruncateOrSignExtend(const SCEV *V,
                                          const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot truncate or zero extend with non-integer arguments!");
   if (getTypeSizeInBits(SrcTy) == getTypeSizeInBits(Ty))
     return V;  // No conversion
@@ -2445,8 +2445,8 @@ ScalarEvolution::getTruncateOrSignExtend(const SCEV *V,
 const SCEV *
 ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot noop or zero extend with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
          "getNoopOrZeroExtend cannot truncate!");
@@ -2461,8 +2461,8 @@ ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, const Type *Ty) {
 const SCEV *
 ScalarEvolution::getNoopOrSignExtend(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot noop or sign extend with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
          "getNoopOrSignExtend cannot truncate!");
@@ -2478,8 +2478,8 @@ ScalarEvolution::getNoopOrSignExtend(const SCEV *V, const Type *Ty) {
 const SCEV *
 ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot noop or any extend with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) <= getTypeSizeInBits(Ty) &&
          "getNoopOrAnyExtend cannot truncate!");
@@ -2493,8 +2493,8 @@ ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, const Type *Ty) {
 const SCEV *
 ScalarEvolution::getTruncateOrNoop(const SCEV *V, const Type *Ty) {
   const Type *SrcTy = V->getType();
-  assert((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
-         (Ty->isInteger() || isa<PointerType>(Ty)) &&
+  assert((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+         (Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
          "Cannot truncate or noop with non-integer arguments!");
   assert(getTypeSizeInBits(SrcTy) >= getTypeSizeInBits(Ty) &&
          "getTruncateOrNoop cannot extend!");
@@ -3068,7 +3068,7 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
-    if (!U->getValue()->getType()->isInteger() && !TD)
+    if (!U->getValue()->getType()->isIntegerTy() && !TD)
       return ConservativeResult;
     unsigned NS = ComputeNumSignBits(U->getValue(), TD);
     if (NS == 1)
@@ -4450,7 +4450,7 @@ const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
                                             -StartC->getValue()->getValue(),
                                             *this);
     }
-  } else if (AddRec->isQuadratic() && AddRec->getType()->isInteger()) {
+  } else if (AddRec->isQuadratic() && AddRec->getType()->isIntegerTy()) {
     // If this is a quadratic (3-term) AddRec {L,+,M,+,N}, find the roots of
     // the quadratic equation to solve it.
     std::pair<const SCEV *,const SCEV *> Roots = SolveQuadraticEquation(AddRec,

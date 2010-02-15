@@ -493,7 +493,7 @@ raw_ostream &
 CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
                          bool isSigned,
                          const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) && 
+  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void " << NameSoFar;
@@ -540,7 +540,7 @@ CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
 std::ostream &
 CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
                          const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) && 
+  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void " << NameSoFar;
@@ -591,7 +591,7 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
                                 const Type *Ty,
                                 bool isSigned, const std::string &NameSoFar,
                                 bool IgnoreName, const AttrListPtr &PAL) {
-  if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -694,7 +694,7 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName, const AttrListPtr &PAL) {
-  if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -1396,7 +1396,7 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE, bool Static) {
   }
   if (NeedsExplicitCast) {
     Out << "((";
-    if (Ty->isInteger() && Ty != Type::getInt1Ty(Ty->getContext()))
+    if (Ty->isIntegerTy() && Ty != Type::getInt1Ty(Ty->getContext()))
       printSimpleType(Out, Ty, TypeIsSigned);
     else
       printType(Out, Ty); // not integer, sign doesn't matter
@@ -1497,7 +1497,7 @@ void CWriter::writeInstComputationInline(Instruction &I) {
   // We can't currently support integer types other than 1, 8, 16, 32, 64.
   // Validate this.
   const Type *Ty = I.getType();
-  if (Ty->isInteger() && (Ty!=Type::getInt1Ty(I.getContext()) &&
+  if (Ty->isIntegerTy() && (Ty!=Type::getInt1Ty(I.getContext()) &&
         Ty!=Type::getInt8Ty(I.getContext()) && 
         Ty!=Type::getInt16Ty(I.getContext()) &&
         Ty!=Type::getInt32Ty(I.getContext()) &&
@@ -2287,7 +2287,8 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const Type*> &StructPrinted) {
   // Don't walk through pointers.
-  if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isInteger()) return;
+  if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy())
+    return;
   
   // Print all contained types first.
   for (Type::subtype_iterator I = Ty->subtype_begin(),
@@ -2423,8 +2424,8 @@ static inline bool isFPIntBitCast(const Instruction &I) {
     return false;
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DstTy = I.getType();
-  return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
-         (DstTy->isFloatingPoint() && SrcTy->isInteger());
+  return (SrcTy->isFloatingPointTy() && DstTy->isIntegerTy()) ||
+         (DstTy->isFloatingPointTy() && SrcTy->isIntegerTy());
 }
 
 void CWriter::printFunction(Function &F) {

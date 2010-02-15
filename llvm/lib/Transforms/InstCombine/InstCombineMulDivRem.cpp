@@ -157,7 +157,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   }
 
   /// i1 mul -> i1 and.
-  if (I.getType()->isInteger(1))
+  if (I.getType()->isIntegerTy(1))
     return BinaryOperator::CreateAnd(Op0, Op1);
 
   // X*(1 << Y) --> X << Y
@@ -314,7 +314,7 @@ Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
   // undef / X -> 0        for integer.
   // undef / X -> undef    for FP (the undef could be a snan).
   if (isa<UndefValue>(Op0)) {
-    if (Op0->getType()->isFPOrFPVector())
+    if (Op0->getType()->isFPOrFPVectorTy())
       return ReplaceInstUsesWith(I, Op0);
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
@@ -386,7 +386,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // It can't be division by zero, hence it must be division by one.
-  if (I.getType()->isInteger(1))
+  if (I.getType()->isIntegerTy(1))
     return ReplaceInstUsesWith(I, Op0);
 
   if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
@@ -493,7 +493,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a udiv.
-  if (I.getType()->isInteger()) {
+  if (I.getType()->isIntegerTy()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op0, Mask)) {
       if (MaskedValueIsZero(Op1, Mask)) {
@@ -527,7 +527,7 @@ Instruction *InstCombiner::commonRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (isa<UndefValue>(Op0)) {             // undef % X -> 0
-    if (I.getType()->isFPOrFPVector())
+    if (I.getType()->isFPOrFPVectorTy())
       return ReplaceInstUsesWith(I, Op0);  // X % undef -> undef (could be SNaN)
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
@@ -648,7 +648,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a urem.
-  if (I.getType()->isInteger()) {
+  if (I.getType()->isIntegerTy()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       // X srem Y -> X urem Y, iff X and Y don't have sign bit set

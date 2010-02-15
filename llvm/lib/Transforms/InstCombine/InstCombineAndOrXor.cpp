@@ -946,7 +946,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       const Type *SrcTy = Op0C->getOperand(0)->getType();
       if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
           SrcTy == Op1C->getOperand(0)->getType() &&
-          SrcTy->isIntOrIntVector()) {
+          SrcTy->isIntOrIntVectorTy()) {
         Value *Op0COp = Op0C->getOperand(0), *Op1COp = Op1C->getOperand(0);
         
         // Only do this if the casts both really cause code to be generated.
@@ -1161,7 +1161,7 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   // If A is not a select of -1/0, this cannot match.
   Value *Cond = 0;
   if (!match(A, m_SExt(m_Value(Cond))) ||
-      !Cond->getType()->isInteger(1))
+      !Cond->getType()->isIntegerTy(1))
     return 0;
 
   // ((cond?-1:0)&C) | (B&(cond?0:-1)) -> cond ? C : B.
@@ -1699,7 +1699,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
         if (SrcTy == Op1C->getOperand(0)->getType() &&
-            SrcTy->isIntOrIntVector()) {
+            SrcTy->isIntOrIntVectorTy()) {
           Value *Op0COp = Op0C->getOperand(0), *Op1COp = Op1C->getOperand(0);
 
           if ((!isa<ICmpInst>(Op0COp) || !isa<ICmpInst>(Op1COp)) &&
@@ -2016,7 +2016,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
+        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegerTy() &&
             // Only do this if the casts both really cause code to be generated.
             ShouldOptimizeCast(Op0C->getOpcode(), Op0C->getOperand(0), 
                                I.getType()) &&

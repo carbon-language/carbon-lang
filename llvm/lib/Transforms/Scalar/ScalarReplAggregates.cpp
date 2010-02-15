@@ -835,7 +835,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
           StoreVal = ConstantInt::get(Context, TotalVal);
           if (isa<PointerType>(ValTy))
             StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
-          else if (ValTy->isFloatingPoint())
+          else if (ValTy->isFloatingPointTy())
             StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
           assert(StoreVal->getType() == ValTy && "Type mismatch!");
           
@@ -939,7 +939,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       Value *DestField = NewElts[i];
       if (EltVal->getType() == FieldTy) {
         // Storing to an integer field of this size, just do it.
-      } else if (FieldTy->isFloatingPoint() || isa<VectorType>(FieldTy)) {
+      } else if (FieldTy->isFloatingPointTy() || isa<VectorType>(FieldTy)) {
         // Bitcast to the right element type (for fp/vector values).
         EltVal = new BitCastInst(EltVal, FieldTy, "", SI);
       } else {
@@ -983,7 +983,8 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       Value *DestField = NewElts[i];
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
-      } else if (ArrayEltTy->isFloatingPoint() || isa<VectorType>(ArrayEltTy)) {
+      } else if (ArrayEltTy->isFloatingPointTy() ||
+                 isa<VectorType>(ArrayEltTy)) {
         // Bitcast to the right element type (for fp/vector values).
         EltVal = new BitCastInst(EltVal, ArrayEltTy, "", SI);
       } else {
@@ -1043,7 +1044,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
     
     const IntegerType *FieldIntTy = IntegerType::get(LI->getContext(), 
                                                      FieldSizeBits);
-    if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPoint() &&
+    if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPointTy() &&
         !isa<VectorType>(FieldTy))
       SrcField = new BitCastInst(SrcField,
                                  PointerType::getUnqual(FieldIntTy),
@@ -1522,7 +1523,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(ToType)) {
     // Should be done.
-  } else if (ToType->isFloatingPoint() || isa<VectorType>(ToType)) {
+  } else if (ToType->isFloatingPointTy() || isa<VectorType>(ToType)) {
     // Just do a bitcast, we know the sizes match up.
     FromVal = Builder.CreateBitCast(FromVal, ToType, "tmp");
   } else {
@@ -1600,7 +1601,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   unsigned DestWidth = TD->getTypeSizeInBits(AllocaType);
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
-  if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
+  if (SV->getType()->isFloatingPointTy() || isa<VectorType>(SV->getType()))
     SV = Builder.CreateBitCast(SV,
                             IntegerType::get(SV->getContext(),SrcWidth), "tmp");
   else if (isa<PointerType>(SV->getType()))

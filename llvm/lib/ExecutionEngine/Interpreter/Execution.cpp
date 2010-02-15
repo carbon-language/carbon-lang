@@ -591,7 +591,7 @@ void Interpreter::popStackAndReturnValueToCaller(const Type *RetTy,
   ECStack.pop_back();
 
   if (ECStack.empty()) {  // Finished main.  Put result into exit code...
-    if (RetTy && RetTy->isInteger()) {          // Nonvoid return type?
+    if (RetTy && RetTy->isIntegerTy()) {          // Nonvoid return type?
       ExitValue = Result;   // Capture the exit value of the program
     } else {
       memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
@@ -979,7 +979,7 @@ GenericValue Interpreter::executeFPToUIInst(Value *SrcVal, const Type *DstTy,
   const Type *SrcTy = SrcVal->getType();
   uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcTy->isFloatingPoint() && "Invalid FPToUI instruction");
+  assert(SrcTy->isFloatingPointTy() && "Invalid FPToUI instruction");
 
   if (SrcTy->getTypeID() == Type::FloatTyID)
     Dest.IntVal = APIntOps::RoundFloatToAPInt(Src.FloatVal, DBitWidth);
@@ -993,7 +993,7 @@ GenericValue Interpreter::executeFPToSIInst(Value *SrcVal, const Type *DstTy,
   const Type *SrcTy = SrcVal->getType();
   uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcTy->isFloatingPoint() && "Invalid FPToSI instruction");
+  assert(SrcTy->isFloatingPointTy() && "Invalid FPToSI instruction");
 
   if (SrcTy->getTypeID() == Type::FloatTyID)
     Dest.IntVal = APIntOps::RoundFloatToAPInt(Src.FloatVal, DBitWidth);
@@ -1005,7 +1005,7 @@ GenericValue Interpreter::executeFPToSIInst(Value *SrcVal, const Type *DstTy,
 GenericValue Interpreter::executeUIToFPInst(Value *SrcVal, const Type *DstTy,
                                             ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(DstTy->isFloatingPoint() && "Invalid UIToFP instruction");
+  assert(DstTy->isFloatingPointTy() && "Invalid UIToFP instruction");
 
   if (DstTy->getTypeID() == Type::FloatTyID)
     Dest.FloatVal = APIntOps::RoundAPIntToFloat(Src.IntVal);
@@ -1017,7 +1017,7 @@ GenericValue Interpreter::executeUIToFPInst(Value *SrcVal, const Type *DstTy,
 GenericValue Interpreter::executeSIToFPInst(Value *SrcVal, const Type *DstTy,
                                             ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(DstTy->isFloatingPoint() && "Invalid SIToFP instruction");
+  assert(DstTy->isFloatingPointTy() && "Invalid SIToFP instruction");
 
   if (DstTy->getTypeID() == Type::FloatTyID)
     Dest.FloatVal = APIntOps::RoundSignedAPIntToFloat(Src.IntVal);
@@ -1058,24 +1058,24 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
   if (isa<PointerType>(DstTy)) {
     assert(isa<PointerType>(SrcTy) && "Invalid BitCast");
     Dest.PointerVal = Src.PointerVal;
-  } else if (DstTy->isInteger()) {
+  } else if (DstTy->isIntegerTy()) {
     if (SrcTy->isFloatTy()) {
       Dest.IntVal.zext(sizeof(Src.FloatVal) * CHAR_BIT);
       Dest.IntVal.floatToBits(Src.FloatVal);
     } else if (SrcTy->isDoubleTy()) {
       Dest.IntVal.zext(sizeof(Src.DoubleVal) * CHAR_BIT);
       Dest.IntVal.doubleToBits(Src.DoubleVal);
-    } else if (SrcTy->isInteger()) {
+    } else if (SrcTy->isIntegerTy()) {
       Dest.IntVal = Src.IntVal;
     } else 
       llvm_unreachable("Invalid BitCast");
   } else if (DstTy->isFloatTy()) {
-    if (SrcTy->isInteger())
+    if (SrcTy->isIntegerTy())
       Dest.FloatVal = Src.IntVal.bitsToFloat();
     else
       Dest.FloatVal = Src.FloatVal;
   } else if (DstTy->isDoubleTy()) {
-    if (SrcTy->isInteger())
+    if (SrcTy->isIntegerTy())
       Dest.DoubleVal = Src.IntVal.bitsToDouble();
     else
       Dest.DoubleVal = Src.DoubleVal;

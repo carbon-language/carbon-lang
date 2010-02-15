@@ -7742,7 +7742,7 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 
 
 bool X86TargetLowering::isTruncateFree(const Type *Ty1, const Type *Ty2) const {
-  if (!Ty1->isInteger() || !Ty2->isInteger())
+  if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
     return false;
   unsigned NumBits1 = Ty1->getPrimitiveSizeInBits();
   unsigned NumBits2 = Ty2->getPrimitiveSizeInBits();
@@ -7763,7 +7763,7 @@ bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
 
 bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
   // x86-64 implicitly zero-extends 32-bit results in 64-bit registers.
-  return Ty1->isInteger(32) && Ty2->isInteger(64) && Subtarget->is64Bit();
+  return Ty1->isIntegerTy(32) && Ty2->isIntegerTy(64) && Subtarget->is64Bit();
 }
 
 bool X86TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
@@ -9695,7 +9695,7 @@ static bool LowerToBSwap(CallInst *CI) {
   // Verify this is a simple bswap.
   if (CI->getNumOperands() != 2 ||
       CI->getType() != CI->getOperand(1)->getType() ||
-      !CI->getType()->isInteger())
+      !CI->getType()->isIntegerTy())
     return false;
 
   const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
@@ -9744,7 +9744,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
       return LowerToBSwap(CI);
     }
     // rorw $$8, ${0:w}  -->  llvm.bswap.i16
-    if (CI->getType()->isInteger(16) &&
+    if (CI->getType()->isIntegerTy(16) &&
         AsmPieces.size() == 3 &&
         AsmPieces[0] == "rorw" &&
         AsmPieces[1] == "$$8," &&
@@ -9754,7 +9754,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     }
     break;
   case 3:
-    if (CI->getType()->isInteger(64) &&
+    if (CI->getType()->isIntegerTy(64) &&
         Constraints.size() >= 2 &&
         Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
         Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {

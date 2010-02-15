@@ -23,7 +23,7 @@ using namespace PatternMatch;
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
                                         int &Offset) {
-  assert(Val->getType()->isInteger(32) && "Unexpected allocation size type!");
+  assert(Val->getType()->isIntegerTy(32) && "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
     Scale  = 0;
@@ -837,7 +837,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
 
   // zext (xor i1 X, true) to i32  --> xor (zext i1 X to i32), 1
   Value *X;
-  if (SrcI && SrcI->hasOneUse() && SrcI->getType()->isInteger(1) &&
+  if (SrcI && SrcI->hasOneUse() && SrcI->getType()->isIntegerTy(1) &&
       match(SrcI, m_Not(m_Value(X))) &&
       (!X->hasOneUse() || !isa<CmpInst>(X))) {
     Value *New = Builder->CreateZExt(X, CI.getType());

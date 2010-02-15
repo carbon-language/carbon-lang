@@ -590,7 +590,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isIntOrIntVector() ||
+    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
             isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
@@ -611,7 +611,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isIntOrIntVector() ||
+    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
             isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
@@ -630,7 +630,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((getOperand(0)->getType()->isIntOrIntVector() ||
+    assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
             isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
@@ -740,7 +740,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(getOperand(0)->getType()->isFPOrFPVector() &&
+    assert(getOperand(0)->getType()->isFPOrFPVectorTy() &&
            "Invalid operand types for FCmp instruction");
   }
   
@@ -759,7 +759,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(getOperand(0)->getType()->isFPOrFPVector() &&
+    assert(getOperand(0)->getType()->isFPOrFPVectorTy() &&
            "Invalid operand types for FCmp instruction");
   }
 
@@ -776,7 +776,7 @@ public:
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(getOperand(0)->getType()->isFPOrFPVector() &&
+    assert(getOperand(0)->getType()->isFPOrFPVectorTy() &&
            "Invalid operand types for FCmp instruction");
   }
 

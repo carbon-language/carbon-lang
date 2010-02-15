@@ -87,7 +87,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
 
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isInteger() || isa<PointerType>(DestPTy) || 
+    if (DestPTy->isIntegerTy() || isa<PointerType>(DestPTy) || 
          isa<VectorType>(DestPTy)) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
@@ -104,7 +104,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
           }
 
       if (IC.getTargetData() &&
-          (SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
+          (SrcPTy->isIntegerTy() || isa<PointerType>(SrcPTy) || 
             isa<VectorType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
@@ -243,7 +243,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   
   const Type *SrcPTy = SrcTy->getElementType();
 
-  if (!DestPTy->isInteger() && !isa<PointerType>(DestPTy))
+  if (!DestPTy->isIntegerTy() && !isa<PointerType>(DestPTy))
     return 0;
   
   /// NewGEPIndices - If SrcPTy is an aggregate type, we can emit a "noop gep"
@@ -277,7 +277,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
     SrcTy = PointerType::get(SrcPTy, SrcTy->getAddressSpace());
   }
 
-  if (!SrcPTy->isInteger() && !isa<PointerType>(SrcPTy))
+  if (!SrcPTy->isIntegerTy() && !isa<PointerType>(SrcPTy))
     return 0;
   
   // If the pointers point into different address spaces or if they point to
@@ -298,7 +298,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   const Type* CastSrcTy = SIOp0->getType();
   const Type* CastDstTy = SrcPTy;
   if (isa<PointerType>(CastDstTy)) {
-    if (CastSrcTy->isInteger())
+    if (CastSrcTy->isIntegerTy())
       opcode = Instruction::IntToPtr;
   } else if (isa<IntegerType>(CastDstTy)) {
     if (isa<PointerType>(SIOp0->getType()))

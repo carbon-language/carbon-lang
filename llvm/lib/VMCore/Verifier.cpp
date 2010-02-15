@@ -821,8 +821,8 @@ void Verifier::visitTruncInst(TruncInst &I) {
   unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
   unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
-  Assert1(SrcTy->isIntOrIntVector(), "Trunc only operates on integer", &I);
-  Assert1(DestTy->isIntOrIntVector(), "Trunc only produces integer", &I);
+  Assert1(SrcTy->isIntOrIntVectorTy(), "Trunc only operates on integer", &I);
+  Assert1(DestTy->isIntOrIntVectorTy(), "Trunc only produces integer", &I);
   Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
           "trunc source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
@@ -836,8 +836,8 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   const Type *DestTy = I.getType();
 
   // Get the size of the types in bits, we'll need this later
-  Assert1(SrcTy->isIntOrIntVector(), "ZExt only operates on integer", &I);
-  Assert1(DestTy->isIntOrIntVector(), "ZExt only produces an integer", &I);
+  Assert1(SrcTy->isIntOrIntVectorTy(), "ZExt only operates on integer", &I);
+  Assert1(DestTy->isIntOrIntVectorTy(), "ZExt only produces an integer", &I);
   Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
           "zext source and destination must both be a vector or neither", &I);
   unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
@@ -857,8 +857,8 @@ void Verifier::visitSExtInst(SExtInst &I) {
   unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
   unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
-  Assert1(SrcTy->isIntOrIntVector(), "SExt only operates on integer", &I);
-  Assert1(DestTy->isIntOrIntVector(), "SExt only produces an integer", &I);
+  Assert1(SrcTy->isIntOrIntVectorTy(), "SExt only operates on integer", &I);
+  Assert1(DestTy->isIntOrIntVectorTy(), "SExt only produces an integer", &I);
   Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
           "sext source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
@@ -874,8 +874,8 @@ void Verifier::visitFPTruncInst(FPTruncInst &I) {
   unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
   unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
-  Assert1(SrcTy->isFPOrFPVector(),"FPTrunc only operates on FP", &I);
-  Assert1(DestTy->isFPOrFPVector(),"FPTrunc only produces an FP", &I);
+  Assert1(SrcTy->isFPOrFPVectorTy(),"FPTrunc only operates on FP", &I);
+  Assert1(DestTy->isFPOrFPVectorTy(),"FPTrunc only produces an FP", &I);
   Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
           "fptrunc source and destination must both be a vector or neither",&I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for FPTrunc", &I);
@@ -892,8 +892,8 @@ void Verifier::visitFPExtInst(FPExtInst &I) {
   unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
   unsigned DestBitSize = DestTy->getScalarSizeInBits();
 
-  Assert1(SrcTy->isFPOrFPVector(),"FPExt only operates on FP", &I);
-  Assert1(DestTy->isFPOrFPVector(),"FPExt only produces an FP", &I);
+  Assert1(SrcTy->isFPOrFPVectorTy(),"FPExt only operates on FP", &I);
+  Assert1(DestTy->isFPOrFPVectorTy(),"FPExt only produces an FP", &I);
   Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
           "fpext source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize < DestBitSize,"DestTy too small for FPExt", &I);
@@ -911,9 +911,9 @@ void Verifier::visitUIToFPInst(UIToFPInst &I) {
 
   Assert1(SrcVec == DstVec,
           "UIToFP source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isIntOrIntVector(),
+  Assert1(SrcTy->isIntOrIntVectorTy(),
           "UIToFP source must be integer or integer vector", &I);
-  Assert1(DestTy->isFPOrFPVector(),
+  Assert1(DestTy->isFPOrFPVectorTy(),
           "UIToFP result must be FP or FP vector", &I);
 
   if (SrcVec && DstVec)
@@ -934,9 +934,9 @@ void Verifier::visitSIToFPInst(SIToFPInst &I) {
 
   Assert1(SrcVec == DstVec,
           "SIToFP source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isIntOrIntVector(),
+  Assert1(SrcTy->isIntOrIntVectorTy(),
           "SIToFP source must be integer or integer vector", &I);
-  Assert1(DestTy->isFPOrFPVector(),
+  Assert1(DestTy->isFPOrFPVectorTy(),
           "SIToFP result must be FP or FP vector", &I);
 
   if (SrcVec && DstVec)
@@ -957,8 +957,9 @@ void Verifier::visitFPToUIInst(FPToUIInst &I) {
 
   Assert1(SrcVec == DstVec,
           "FPToUI source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isFPOrFPVector(), "FPToUI source must be FP or FP vector", &I);
-  Assert1(DestTy->isIntOrIntVector(),
+  Assert1(SrcTy->isFPOrFPVectorTy(), "FPToUI source must be FP or FP vector",
+          &I);
+  Assert1(DestTy->isIntOrIntVectorTy(),
           "FPToUI result must be integer or integer vector", &I);
 
   if (SrcVec && DstVec)
@@ -979,9 +980,9 @@ void Verifier::visitFPToSIInst(FPToSIInst &I) {
 
   Assert1(SrcVec == DstVec,
           "FPToSI source and dest must both be vector or scalar", &I);
-  Assert1(SrcTy->isFPOrFPVector(),
+  Assert1(SrcTy->isFPOrFPVectorTy(),
           "FPToSI source must be FP or FP vector", &I);
-  Assert1(DestTy->isIntOrIntVector(),
+  Assert1(DestTy->isIntOrIntVectorTy(),
           "FPToSI result must be integer or integer vector", &I);
 
   if (SrcVec && DstVec)
@@ -998,7 +999,7 @@ void Verifier::visitPtrToIntInst(PtrToIntInst &I) {
   const Type *DestTy = I.getType();
 
   Assert1(isa<PointerType>(SrcTy), "PtrToInt source must be pointer", &I);
-  Assert1(DestTy->isInteger(), "PtrToInt result must be integral", &I);
+  Assert1(DestTy->isIntegerTy(), "PtrToInt result must be integral", &I);
 
   visitInstruction(I);
 }
@@ -1008,7 +1009,7 @@ void Verifier::visitIntToPtrInst(IntToPtrInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isInteger(), "IntToPtr source must be an integral", &I);
+  Assert1(SrcTy->isIntegerTy(), "IntToPtr source must be an integral", &I);
   Assert1(isa<PointerType>(DestTy), "IntToPtr result must be a pointer",&I);
 
   visitInstruction(I);
@@ -1151,7 +1152,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::UDiv:
   case Instruction::SRem:
   case Instruction::URem:
-    Assert1(B.getType()->isIntOrIntVector(),
+    Assert1(B.getType()->isIntOrIntVectorTy(),
             "Integer arithmetic operators only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Integer arithmetic operators must have same type "
@@ -1164,7 +1165,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::FMul:
   case Instruction::FDiv:
   case Instruction::FRem:
-    Assert1(B.getType()->isFPOrFPVector(),
+    Assert1(B.getType()->isFPOrFPVectorTy(),
             "Floating-point arithmetic operators only work with "
             "floating-point types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
@@ -1175,7 +1176,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
-    Assert1(B.getType()->isIntOrIntVector(),
+    Assert1(B.getType()->isIntOrIntVectorTy(),
             "Logical operators only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Logical operators must have same type for operands and result!",
@@ -1184,7 +1185,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    Assert1(B.getType()->isIntOrIntVector(),
+    Assert1(B.getType()->isIntOrIntVectorTy(),
             "Shifts only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Shift return type must be same as operands!", &B);
@@ -1203,7 +1204,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isIntOrIntVector() || isa<PointerType>(Op0Ty),
+  Assert1(Op0Ty->isIntOrIntVectorTy() || isa<PointerType>(Op0Ty),
           "Invalid operand types for ICmp instruction", &IC);
 
   visitInstruction(IC);
@@ -1216,7 +1217,7 @@ void Verifier::visitFCmpInst(FCmpInst& FC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to FCmp instruction are not of the same type!", &FC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isFPOrFPVector(),
+  Assert1(Op0Ty->isFPOrFPVectorTy(),
           "Invalid operand types for FCmp instruction", &FC);
   visitInstruction(FC);
 }
@@ -1302,7 +1303,7 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
           &AI);
   Assert1(PTy->getElementType()->isSized(), "Cannot allocate unsized type",
           &AI);
-  Assert1(AI.getArraySize()->getType()->isInteger(32),
+  Assert1(AI.getArraySize()->getType()->isIntegerTy(32),
           "Alloca array size must be i32", &AI);
   visitInstruction(AI);
 }
@@ -1734,7 +1735,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
       }
     }
   } else if (VT == MVT::iAny) {
-    if (!EltTy->isInteger()) {
+    if (!EltTy->isIntegerTy()) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not "
                   "an integer type.", F);
       return false;
@@ -1759,7 +1760,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
       break;
     }
   } else if (VT == MVT::fAny) {
-    if (!EltTy->isFloatingPoint()) {
+    if (!EltTy->isFloatingPointTy()) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not "
                   "a floating-point type.", F);
       return false;

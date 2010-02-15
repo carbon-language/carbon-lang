@@ -525,7 +525,7 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
 
   // Must be a Constant Array
   ConstantArray *Array = dyn_cast<ConstantArray>(GlobalInit);
-  if (!Array || !Array->getType()->getElementType()->isInteger(8))
+  if (!Array || !Array->getType()->getElementType()->isIntegerTy(8))
     return false;
 
   // Get the number of elements in the array
@@ -697,7 +697,7 @@ struct StrChrOpt : public LibCallOptimization {
       if (!TD) return 0;
 
       uint64_t Len = GetStringLength(SrcStr);
-      if (Len == 0 || !FT->getParamType(1)->isInteger(32)) // memchr needs i32.
+      if (Len == 0 || !FT->getParamType(1)->isIntegerTy(32))// memchr needs i32.
         return 0;
 
       return EmitMemChr(SrcStr, CI->getOperand(2), // include nul.
@@ -739,7 +739,7 @@ struct StrCmpOpt : public LibCallOptimization {
     // Verify the "strcmp" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
-	!FT->getReturnType()->isInteger(32) ||
+	!FT->getReturnType()->isIntegerTy(32) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context))
       return 0;
@@ -787,7 +787,7 @@ struct StrNCmpOpt : public LibCallOptimization {
     // Verify the "strncmp" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 ||
-	!FT->getReturnType()->isInteger(32) ||
+	!FT->getReturnType()->isIntegerTy(32) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
         !isa<IntegerType>(FT->getParamType(2)))
@@ -1008,7 +1008,7 @@ struct MemCmpOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || !isa<PointerType>(FT->getParamType(0)) ||
         !isa<PointerType>(FT->getParamType(1)) ||
-        !FT->getReturnType()->isInteger(32))
+        !FT->getReturnType()->isIntegerTy(32))
       return 0;
 
     Value *LHS = CI->getOperand(1), *RHS = CI->getOperand(2);
@@ -1241,7 +1241,7 @@ struct PowOpt : public LibCallOptimization {
     // result type.
     if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
         FT->getParamType(0) != FT->getParamType(1) ||
-        !FT->getParamType(0)->isFloatingPoint())
+        !FT->getParamType(0)->isFloatingPointTy())
       return 0;
 
     Value *Op1 = CI->getOperand(1), *Op2 = CI->getOperand(2);
@@ -1295,7 +1295,7 @@ struct Exp2Opt : public LibCallOptimization {
     // Just make sure this has 1 argument of FP type, which matches the
     // result type.
     if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isFloatingPoint())
+        !FT->getParamType(0)->isFloatingPointTy())
       return 0;
 
     Value *Op = CI->getOperand(1);
@@ -1375,7 +1375,7 @@ struct FFSOpt : public LibCallOptimization {
     // Just make sure this has 2 arguments of the same FP type, which match the
     // result type.
     if (FT->getNumParams() != 1 ||
-	!FT->getReturnType()->isInteger(32) ||
+	!FT->getReturnType()->isIntegerTy(32) ||
         !isa<IntegerType>(FT->getParamType(0)))
       return 0;
 
@@ -1411,7 +1411,7 @@ struct IsDigitOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
     if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
-        !FT->getParamType(0)->isInteger(32))
+        !FT->getParamType(0)->isIntegerTy(32))
       return 0;
 
     // isdigit(c) -> (c-'0') <u 10
@@ -1432,7 +1432,7 @@ struct IsAsciiOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
     if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
-        !FT->getParamType(0)->isInteger(32))
+        !FT->getParamType(0)->isIntegerTy(32))
       return 0;
 
     // isascii(c) -> c <u 128
@@ -1473,7 +1473,7 @@ struct ToAsciiOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     // We require i32(i32)
     if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isInteger(32))
+        !FT->getParamType(0)->isIntegerTy(32))
       return 0;
 
     // isascii(c) -> c & 0x7f

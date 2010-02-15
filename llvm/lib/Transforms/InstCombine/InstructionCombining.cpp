@@ -158,7 +158,7 @@ Value *InstCombiner::dyn_castNegVal(Value *V) const {
     return ConstantExpr::getNeg(C);
 
   if (ConstantVector *C = dyn_cast<ConstantVector>(V))
-    if (C->getType()->getElementType()->isInteger())
+    if (C->getType()->getElementType()->isIntegerTy())
       return ConstantExpr::getNeg(C);
 
   return 0;
@@ -177,7 +177,7 @@ Value *InstCombiner::dyn_castFNegVal(Value *V) const {
     return ConstantExpr::getFNeg(C);
 
   if (ConstantVector *C = dyn_cast<ConstantVector>(V))
-    if (C->getType()->getElementType()->isFloatingPoint())
+    if (C->getType()->getElementType()->isFloatingPointTy())
       return ConstantExpr::getFNeg(C);
 
   return 0;
@@ -226,7 +226,7 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
 
   if (isa<Constant>(TV) || isa<Constant>(FV)) {
     // Bool selects with constant operands can be folded to logical ops.
-    if (SI->getType()->isInteger(1)) return 0;
+    if (SI->getType()->isIntegerTy(1)) return 0;
 
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, this);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, this);
@@ -596,7 +596,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
       
-      if (TD && isa<ArrayType>(SrcElTy) && ResElTy->isInteger(8)) {
+      if (TD && isa<ArrayType>(SrcElTy) && ResElTy->isIntegerTy(8)) {
         uint64_t ArrayEltSize =
             TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
         

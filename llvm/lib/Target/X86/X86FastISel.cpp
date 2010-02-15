@@ -786,8 +786,8 @@ bool X86FastISel::X86SelectCmp(Instruction *I) {
 
 bool X86FastISel::X86SelectZExt(Instruction *I) {
   // Handle zero-extension from i1 to i8, which is common.
-  if (I->getType()->isInteger(8) &&
-      I->getOperand(0)->getType()->isInteger(1)) {
+  if (I->getType()->isIntegerTy(8) &&
+      I->getOperand(0)->getType()->isIntegerTy(1)) {
     unsigned ResultReg = getRegForValue(I->getOperand(0));
     if (ResultReg == 0) return false;
     // Set the high bits to zero.
@@ -949,7 +949,7 @@ bool X86FastISel::X86SelectBranch(Instruction *I) {
 bool X86FastISel::X86SelectShift(Instruction *I) {
   unsigned CReg = 0, OpReg = 0, OpImm = 0;
   const TargetRegisterClass *RC = NULL;
-  if (I->getType()->isInteger(8)) {
+  if (I->getType()->isIntegerTy(8)) {
     CReg = X86::CL;
     RC = &X86::GR8RegClass;
     switch (I->getOpcode()) {
@@ -958,7 +958,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     case Instruction::Shl:  OpReg = X86::SHL8rCL; OpImm = X86::SHL8ri; break;
     default: return false;
     }
-  } else if (I->getType()->isInteger(16)) {
+  } else if (I->getType()->isIntegerTy(16)) {
     CReg = X86::CX;
     RC = &X86::GR16RegClass;
     switch (I->getOpcode()) {
@@ -967,7 +967,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     case Instruction::Shl:  OpReg = X86::SHL16rCL; OpImm = X86::SHL16ri; break;
     default: return false;
     }
-  } else if (I->getType()->isInteger(32)) {
+  } else if (I->getType()->isIntegerTy(32)) {
     CReg = X86::ECX;
     RC = &X86::GR32RegClass;
     switch (I->getOpcode()) {
@@ -976,7 +976,7 @@ bool X86FastISel::X86SelectShift(Instruction *I) {
     case Instruction::Shl:  OpReg = X86::SHL32rCL; OpImm = X86::SHL32ri; break;
     default: return false;
     }
-  } else if (I->getType()->isInteger(64)) {
+  } else if (I->getType()->isIntegerTy(64)) {
     CReg = X86::RCX;
     RC = &X86::GR64RegClass;
     switch (I->getOpcode()) {

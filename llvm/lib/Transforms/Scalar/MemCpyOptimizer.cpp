@@ -42,7 +42,7 @@ static Value *isBytewiseValue(Value *V) {
   LLVMContext &Context = V->getContext();
   
   // All byte-wide stores are splatable, even of arbitrary variables.
-  if (V->getType()->isInteger(8)) return V;
+  if (V->getType()->isIntegerTy(8)) return V;
   
   // Constant float and double values can be handled as integer values if the
   // corresponding integer value is "byteable".  An important case is 0.0. 

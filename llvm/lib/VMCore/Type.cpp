@@ -127,32 +127,32 @@ const Type *Type::getScalarType() const {
   return this;
 }
 
-/// isInteger - Return true if this is an IntegerType of the specified width.
-bool Type::isInteger(unsigned Bitwidth) const {
-  return isInteger() && cast<IntegerType>(this)->getBitWidth() == Bitwidth;
+/// isIntegerTy - Return true if this is an IntegerType of the specified width.
+bool Type::isIntegerTy(unsigned Bitwidth) const {
+  return isIntegerTy() && cast<IntegerType>(this)->getBitWidth() == Bitwidth;
 }
 
-/// isIntOrIntVector - Return true if this is an integer type or a vector of
+/// isIntOrIntVectorTy - Return true if this is an integer type or a vector of
 /// integer types.
 ///
-bool Type::isIntOrIntVector() const {
-  if (isInteger())
+bool Type::isIntOrIntVectorTy() const {
+  if (isIntegerTy())
     return true;
   if (ID != Type::VectorTyID) return false;
   
-  return cast<VectorType>(this)->getElementType()->isInteger();
+  return cast<VectorType>(this)->getElementType()->isIntegerTy();
 }
 
-/// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
+/// isFPOrFPVectorTy - Return true if this is a FP type or a vector of FP types.
 ///
-bool Type::isFPOrFPVector() const {
+bool Type::isFPOrFPVectorTy() const {
   if (ID == Type::FloatTyID || ID == Type::DoubleTyID || 
       ID == Type::FP128TyID || ID == Type::X86_FP80TyID || 
       ID == Type::PPC_FP128TyID)
     return true;
   if (ID != Type::VectorTyID) return false;
   
-  return cast<VectorType>(this)->getElementType()->isFloatingPoint();
+  return cast<VectorType>(this)->getElementType()->isFloatingPointTy();
 }
 
 // canLosslesslyBitCastTo - Return true if this type can be converted to
@@ -207,7 +207,7 @@ unsigned Type::getScalarSizeInBits() const {
 int Type::getFPMantissaWidth() const {
   if (const VectorType *VTy = dyn_cast<VectorType>(this))
     return VTy->getElementType()->getFPMantissaWidth();
-  assert(isFloatingPoint() && "Not a floating point type!");
+  assert(isFloatingPointTy() && "Not a floating point type!");
   if (ID == FloatTyID) return 24;
   if (ID == DoubleTyID) return 53;
   if (ID == X86_FP80TyID) return 64;
@@ -288,7 +288,7 @@ std::string Type::getDescription() const {
 
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require 32-bit integer constants.
-  if (V->getType()->isInteger(32))
+  if (V->getType()->isIntegerTy(32))
     if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
       return indexValid(CU->getZExtValue());
   return false;
@@ -314,7 +314,7 @@ const Type *StructType::getTypeAtIndex(unsigned Idx) const {
 
 bool UnionType::indexValid(const Value *V) const {
   // Union indexes require 32-bit integer constants.
-  if (V->getType()->isInteger(32))
+  if (V->getType()->isIntegerTy(32))
     if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
       return indexValid(CU->getZExtValue());
   return false;
@@ -911,7 +911,7 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
 }
 
 bool VectorType::isValidElementType(const Type *ElemTy) {
-  return ElemTy->isInteger() || ElemTy->isFloatingPoint() ||
+  return ElemTy->isIntegerTy() || ElemTy->isFloatingPointTy() ||
          isa<OpaqueType>(ElemTy);
 }
 
@@ -1000,7 +1000,7 @@ UnionType *UnionType::get(const Type *type, ...) {
 
 bool UnionType::isValidElementType(const Type *ElemTy) {
   return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
-         !ElemTy->isMetadataTy() && !ElemTy->isFunction();
+         !ElemTy->isMetadataTy() && !ElemTy->isFunctionTy();
 }
 
 int UnionType::getElementTypeIndex(const Type *ElemTy) const {

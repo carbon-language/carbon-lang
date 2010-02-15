@@ -182,7 +182,7 @@ unsigned Reassociate::getRank(Value *V) {
 
   // If this is a not or neg instruction, do not count it for rank.  This
   // assures us that X and ~X will have the same rank.
-  if (!I->getType()->isInteger() ||
+  if (!I->getType()->isIntegerTy() ||
       (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(I)))
     ++Rank;
 
@@ -929,7 +929,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
       }
 
     // Reject cases where it is pointless to do this.
-    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint() || 
+    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPointTy() || 
         isa<VectorType>(BI->getType()))
       continue;  // Floating point ops are not associative.
 
@@ -939,7 +939,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // is not further optimized, it is likely to be transformed back to a
     // short-circuited form for code gen, and the source order may have been
     // optimized for the most likely conditions.
-    if (BI->getType()->isInteger(1))
+    if (BI->getType()->isIntegerTy(1))
       continue;
 
     // If this is a subtract instruction which is not already in negate form,

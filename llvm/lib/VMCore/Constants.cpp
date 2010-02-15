@@ -404,13 +404,13 @@ ConstantFP* ConstantFP::getNegativeZero(const Type* Ty) {
 
 Constant* ConstantFP::getZeroValueForNegation(const Type* Ty) {
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
-    if (PTy->getElementType()->isFloatingPoint()) {
+    if (PTy->getElementType()->isFloatingPointTy()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
                            getNegativeZero(PTy->getElementType()));
       return ConstantVector::get(PTy, zeros);
     }
 
-  if (Ty->isFloatingPoint()) 
+  if (Ty->isFloatingPointTy()) 
     return getNegativeZero(Ty);
 
   return Constant::getNullValue(Ty);
@@ -661,13 +661,13 @@ Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
 }
 
 Constant* ConstantExpr::getNSWNeg(Constant* C) {
-  assert(C->getType()->isIntOrIntVector() &&
+  assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return getNSWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
 }
 
 Constant* ConstantExpr::getNUWNeg(Constant* C) {
-  assert(C->getType()->isIntOrIntVector() &&
+  assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return getNUWSub(ConstantFP::getZeroValueForNegation(C->getType()), C);
 }
@@ -969,7 +969,7 @@ void ConstantArray::destroyConstant() {
 /// if the elements of the array are all ConstantInt's.
 bool ConstantArray::isString() const {
   // Check the element type for i8...
-  if (!getType()->getElementType()->isInteger(8))
+  if (!getType()->getElementType()->isIntegerTy(8))
     return false;
   // Check the elements to make sure they are all integers, not constant
   // expressions.
@@ -984,7 +984,7 @@ bool ConstantArray::isString() const {
 /// null bytes except its terminator.
 bool ConstantArray::isCString() const {
   // Check the element type for i8...
-  if (!getType()->getElementType()->isInteger(8))
+  if (!getType()->getElementType()->isIntegerTy(8))
     return false;
 
   // Last element must be a null.
@@ -1240,17 +1240,17 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, const Type *Ty) {
 
 Constant *ConstantExpr::getPointerCast(Constant *S, const Type *Ty) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isInteger() || isa<PointerType>(Ty)) && "Invalid cast");
+  assert((Ty->isIntegerTy() || isa<PointerType>(Ty)) && "Invalid cast");
 
-  if (Ty->isInteger())
+  if (Ty->isIntegerTy())
     return getCast(Instruction::PtrToInt, S, Ty);
   return getCast(Instruction::BitCast, S, Ty);
 }
 
 Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty, 
                                        bool isSigned) {
-  assert(C->getType()->isIntOrIntVector() &&
-         Ty->isIntOrIntVector() && "Invalid cast");
+  assert(C->getType()->isIntOrIntVectorTy() &&
+         Ty->isIntOrIntVectorTy() && "Invalid cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
   unsigned DstBits = Ty->getScalarSizeInBits();
   Instruction::CastOps opcode =
@@ -1261,7 +1261,7 @@ Constant *ConstantExpr::getIntegerCast(Constant *C, const Type *Ty,
 }
 
 Constant *ConstantExpr::getFPCast(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
+  assert(C->getType()->isFPOrFPVectorTy() && Ty->isFPOrFPVectorTy() &&
          "Invalid cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
   unsigned DstBits = Ty->getScalarSizeInBits();
@@ -1278,8 +1278,8 @@ Constant *ConstantExpr::getTrunc(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isIntOrIntVector() && "Trunc operand must be integer");
-  assert(Ty->isIntOrIntVector() && "Trunc produces only integral");
+  assert(C->getType()->isIntOrIntVectorTy() && "Trunc operand must be integer");
+  assert(Ty->isIntOrIntVectorTy() && "Trunc produces only integral");
   assert(C->getType()->getScalarSizeInBits() > Ty->getScalarSizeInBits()&&
          "SrcTy must be larger than DestTy for Trunc!");
 
@@ -1292,8 +1292,8 @@ Constant *ConstantExpr::getSExt(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isIntOrIntVector() && "SExt operand must be integral");
-  assert(Ty->isIntOrIntVector() && "SExt produces only integer");
+  assert(C->getType()->isIntOrIntVectorTy() && "SExt operand must be integral");
+  assert(Ty->isIntOrIntVectorTy() && "SExt produces only integer");
   assert(C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "SrcTy must be smaller than DestTy for SExt!");
 
@@ -1306,8 +1306,8 @@ Constant *ConstantExpr::getZExt(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isIntOrIntVector() && "ZEXt operand must be integral");
-  assert(Ty->isIntOrIntVector() && "ZExt produces only integer");
+  assert(C->getType()->isIntOrIntVectorTy() && "ZEXt operand must be integral");
+  assert(Ty->isIntOrIntVectorTy() && "ZExt produces only integer");
   assert(C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "SrcTy must be smaller than DestTy for ZExt!");
 
@@ -1320,7 +1320,7 @@ Constant *ConstantExpr::getFPTrunc(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
+  assert(C->getType()->isFPOrFPVectorTy() && Ty->isFPOrFPVectorTy() &&
          C->getType()->getScalarSizeInBits() > Ty->getScalarSizeInBits()&&
          "This is an illegal floating point truncation!");
   return getFoldedCast(Instruction::FPTrunc, C, Ty);
@@ -1332,7 +1332,7 @@ Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
+  assert(C->getType()->isFPOrFPVectorTy() && Ty->isFPOrFPVectorTy() &&
          C->getType()->getScalarSizeInBits() < Ty->getScalarSizeInBits()&&
          "This is an illegal floating point extension!");
   return getFoldedCast(Instruction::FPExt, C, Ty);
@@ -1344,7 +1344,7 @@ Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
+  assert(C->getType()->isIntOrIntVectorTy() && Ty->isFPOrFPVectorTy() &&
          "This is an illegal uint to floating point cast!");
   return getFoldedCast(Instruction::UIToFP, C, Ty);
 }
@@ -1355,7 +1355,7 @@ Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
+  assert(C->getType()->isIntOrIntVectorTy() && Ty->isFPOrFPVectorTy() &&
          "This is an illegal sint to floating point cast!");
   return getFoldedCast(Instruction::SIToFP, C, Ty);
 }
@@ -1366,7 +1366,7 @@ Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
+  assert(C->getType()->isFPOrFPVectorTy() && Ty->isIntOrIntVectorTy() &&
          "This is an illegal floating point to uint cast!");
   return getFoldedCast(Instruction::FPToUI, C, Ty);
 }
@@ -1377,19 +1377,19 @@ Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
   bool toVec = Ty->getTypeID() == Type::VectorTyID;
 #endif
   assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
-  assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
+  assert(C->getType()->isFPOrFPVectorTy() && Ty->isIntOrIntVectorTy() &&
          "This is an illegal floating point to sint cast!");
   return getFoldedCast(Instruction::FPToSI, C, Ty);
 }
 
 Constant *ConstantExpr::getPtrToInt(Constant *C, const Type *DstTy) {
   assert(isa<PointerType>(C->getType()) && "PtrToInt source must be pointer");
-  assert(DstTy->isInteger() && "PtrToInt destination must be integral");
+  assert(DstTy->isIntegerTy() && "PtrToInt destination must be integral");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy);
 }
 
 Constant *ConstantExpr::getIntToPtr(Constant *C, const Type *DstTy) {
-  assert(C->getType()->isInteger() && "IntToPtr source must be integral");
+  assert(C->getType()->isIntegerTy() && "IntToPtr source must be integral");
   assert(isa<PointerType>(DstTy) && "IntToPtr destination must be a pointer");
   return getFoldedCast(Instruction::IntToPtr, C, DstTy);
 }
@@ -1449,7 +1449,7 @@ Constant *ConstantExpr::getCompareTy(unsigned short predicate,
 Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
                             unsigned Flags) {
   // API compatibility: Adjust integer opcodes to floating-point opcodes.
-  if (C1->getType()->isFPOrFPVector()) {
+  if (C1->getType()->isFPOrFPVectorTy()) {
     if (Opcode == Instruction::Add) Opcode = Instruction::FAdd;
     else if (Opcode == Instruction::Sub) Opcode = Instruction::FSub;
     else if (Opcode == Instruction::Mul) Opcode = Instruction::FMul;
@@ -1460,51 +1460,51 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
   case Instruction::Sub:
   case Instruction::Mul:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isIntOrIntVector() &&
+    assert(C1->getType()->isIntOrIntVectorTy() &&
            "Tried to create an integer operation on a non-integer type!");
     break;
   case Instruction::FAdd:
   case Instruction::FSub:
   case Instruction::FMul:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isFPOrFPVector() &&
+    assert(C1->getType()->isFPOrFPVectorTy() &&
            "Tried to create a floating-point operation on a "
            "non-floating-point type!");
     break;
   case Instruction::UDiv: 
   case Instruction::SDiv: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isIntOrIntVector() &&
+    assert(C1->getType()->isIntOrIntVectorTy() &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FDiv:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isFPOrFPVector() &&
+    assert(C1->getType()->isFPOrFPVectorTy() &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::URem: 
   case Instruction::SRem: 
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isIntOrIntVector() &&
+    assert(C1->getType()->isIntOrIntVectorTy() &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::FRem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isFPOrFPVector() &&
+    assert(C1->getType()->isFPOrFPVectorTy() &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isIntOrIntVector() &&
+    assert(C1->getType()->isIntOrIntVectorTy() &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isIntOrIntVector() &&
+    assert(C1->getType()->isIntOrIntVectorTy() &&
            "Tried to create a shift operation on a non-integer type!");
     break;
   default:
@@ -1729,7 +1729,7 @@ Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<VectorType>(Val->getType()) &&
          "Tried to create extractelement operation on non-vector type!");
-  assert(Idx->getType()->isInteger(32) &&
+  assert(Idx->getType()->isIntegerTy(32) &&
          "Extractelement index must be i32 type!");
   return getExtractElementTy(cast<VectorType>(Val->getType())->getElementType(),
                              Val, Idx);
@@ -1755,7 +1755,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          "Tried to create insertelement operation on non-vector type!");
   assert(Elt->getType() == cast<VectorType>(Val->getType())->getElementType()
          && "Insertelement types must match!");
-  assert(Idx->getType()->isInteger(32) &&
+  assert(Idx->getType()->isIntegerTy(32) &&
          "Insertelement index must be i32 type!");
   return getInsertElementTy(Val->getType(), Val, Elt, Idx);
 }
@@ -1839,9 +1839,9 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
 
 Constant* ConstantExpr::getNeg(Constant* C) {
   // API compatibility: Adjust integer opcodes to floating-point opcodes.
-  if (C->getType()->isFPOrFPVector())
+  if (C->getType()->isFPOrFPVectorTy())
     return getFNeg(C);
-  assert(C->getType()->isIntOrIntVector() &&
+  assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NEG a nonintegral value!");
   return get(Instruction::Sub,
              ConstantFP::getZeroValueForNegation(C->getType()),
@@ -1849,7 +1849,7 @@ Constant* ConstantExpr::getNeg(Constant* C) {
 }
 
 Constant* ConstantExpr::getFNeg(Constant* C) {
-  assert(C->getType()->isFPOrFPVector() &&
+  assert(C->getType()->isFPOrFPVectorTy() &&
          "Cannot FNEG a non-floating-point value!");
   return get(Instruction::FSub,
              ConstantFP::getZeroValueForNegation(C->getType()),
@@ -1857,7 +1857,7 @@ Constant* ConstantExpr::getFNeg(Constant* C) {
 }
 
 Constant* ConstantExpr::getNot(Constant* C) {
-  assert(C->getType()->isIntOrIntVector() &&
+  assert(C->getType()->isIntOrIntVectorTy() &&
          "Cannot NOT a nonintegral value!");
   return get(Instruction::Xor, C, Constant::getAllOnesValue(C->getType()));
 }

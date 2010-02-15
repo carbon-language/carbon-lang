@@ -107,7 +107,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   assert((TD || !isa<PointerType>(VTy)) &&
          "SimplifyDemandedBits needs to know bit widths!");
   assert((!TD || TD->getTypeSizeInBits(VTy->getScalarType()) == BitWidth) &&
-         (!VTy->isIntOrIntVector() ||
+         (!VTy->isIntOrIntVectorTy() ||
           VTy->getScalarSizeInBits() == BitWidth) &&
          KnownZero.getBitWidth() == BitWidth &&
          KnownOne.getBitWidth() == BitWidth &&
@@ -401,7 +401,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     break;
   }
   case Instruction::BitCast:
-    if (!I->getOperand(0)->getType()->isIntOrIntVector())
+    if (!I->getOperand(0)->getType()->isIntOrIntVectorTy())
       return 0;  // vector->int or fp->int?
 
     if (const VectorType *DstVTy = dyn_cast<VectorType>(I->getType())) {

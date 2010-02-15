@@ -36,12 +36,12 @@ EVT EVT::getExtendedVectorVT(LLVMContext &Context, EVT VT,
 
 bool EVT::isExtendedFloatingPoint() const {
   assert(isExtended() && "Type is not extended!");
-  return LLVMTy->isFPOrFPVector();
+  return LLVMTy->isFPOrFPVectorTy();
 }
 
 bool EVT::isExtendedInteger() const {
   assert(isExtended() && "Type is not extended!");
-  return LLVMTy->isIntOrIntVector();
+  return LLVMTy->isIntOrIntVectorTy();
 }
 
 bool EVT::isExtendedVector() const {

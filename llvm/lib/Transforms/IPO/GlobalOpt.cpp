@@ -1590,7 +1590,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // simplification.  In these cases, we typically end up with "cond ? v1 : v2"
   // where v1 and v2 both require constant pool loads, a big loss.
   if (GVElType == Type::getInt1Ty(GV->getContext()) ||
-      GVElType->isFloatingPoint() ||
+      GVElType->isFloatingPointTy() ||
       isa<PointerType>(GVElType) || isa<VectorType>(GVElType))
     return false;
   
@@ -1925,7 +1925,7 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       if (!ATy) return 0;
       const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
       if (!STy || STy->getNumElements() != 2 ||
-          !STy->getElementType(0)->isInteger(32)) return 0;
+          !STy->getElementType(0)->isIntegerTy(32)) return 0;
       const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
       if (!PFTy) return 0;
       const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());

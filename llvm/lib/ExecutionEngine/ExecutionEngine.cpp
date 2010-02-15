@@ -339,7 +339,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
    }
    // FALLS THROUGH
   case 1:
-   if (!FTy->getParamType(0)->isInteger(32)) {
+   if (!FTy->getParamType(0)->isIntegerTy(32)) {
      llvm_report_error("Invalid type for first argument of main() supplied");
    }
    // FALLS THROUGH
@@ -599,18 +599,18 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       switch (Op0->getType()->getTypeID()) {
         default: llvm_unreachable("Invalid bitcast operand");
         case Type::IntegerTyID:
-          assert(DestTy->isFloatingPoint() && "invalid bitcast");
+          assert(DestTy->isFloatingPointTy() && "invalid bitcast");
           if (DestTy->isFloatTy())
             GV.FloatVal = GV.IntVal.bitsToFloat();
           else if (DestTy->isDoubleTy())
             GV.DoubleVal = GV.IntVal.bitsToDouble();
           break;
         case Type::FloatTyID: 
-          assert(DestTy->isInteger(32) && "Invalid bitcast");
+          assert(DestTy->isIntegerTy(32) && "Invalid bitcast");
           GV.IntVal.floatToBits(GV.FloatVal);
           break;
         case Type::DoubleTyID:
-          assert(DestTy->isInteger(64) && "Invalid bitcast");
+          assert(DestTy->isIntegerTy(64) && "Invalid bitcast");
           GV.IntVal.doubleToBits(GV.DoubleVal);
           break;
         case Type::PointerTyID:

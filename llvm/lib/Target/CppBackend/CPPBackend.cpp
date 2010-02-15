@@ -344,7 +344,7 @@ namespace {
 
   std::string CppWriter::getCppName(const Type* Ty) {
     // First, handle the primitive types .. easy
-    if (Ty->isPrimitiveType() || Ty->isInteger()) {
+    if (Ty->isPrimitiveType() || Ty->isIntegerTy()) {
       switch (Ty->getTypeID()) {
       case Type::VoidTyID:   return "Type::getVoidTy(getGlobalContext())";
       case Type::IntegerTyID: {
@@ -493,7 +493,7 @@ namespace {
 
   bool CppWriter::printTypeInternal(const Type* Ty) {
     // We don't print definitions for primitive types
-    if (Ty->isPrimitiveType() || Ty->isInteger())
+    if (Ty->isPrimitiveType() || Ty->isIntegerTy())
       return false;
 
     // If we already defined this type, we don't need to define it again.
@@ -686,7 +686,7 @@ namespace {
 
       // For primitive types and types already defined, just add a name
       TypeMap::const_iterator TNI = TypeNames.find(TI->second);
-      if (TI->second->isInteger() || TI->second->isPrimitiveType() ||
+      if (TI->second->isIntegerTy() || TI->second->isPrimitiveType() ||
           TNI != TypeNames.end()) {
         Out << "mod->addTypeName(\"";
         printEscapedString(TI->first);

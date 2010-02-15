@@ -411,10 +411,10 @@ GenericValue JIT::runFunction(Function *F,
 
   // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
-  if (RetTy->isInteger(32) || RetTy->isVoidTy()) {
+  if (RetTy->isIntegerTy(32) || RetTy->isVoidTy()) {
     switch (ArgValues.size()) {
     case 3:
-      if (FTy->getParamType(0)->isInteger(32) &&
+      if (FTy->getParamType(0)->isIntegerTy(32) &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
@@ -429,7 +429,7 @@ GenericValue JIT::runFunction(Function *F,
       }
       break;
     case 2:
-      if (FTy->getParamType(0)->isInteger(32) &&
+      if (FTy->getParamType(0)->isIntegerTy(32) &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
@@ -442,7 +442,7 @@ GenericValue JIT::runFunction(Function *F,
       break;
     case 1:
       if (FTy->getNumParams() == 1 &&
-          FTy->getParamType(0)->isInteger(32)) {
+          FTy->getParamType(0)->isIntegerTy(32)) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
         rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));

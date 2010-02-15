@@ -108,17 +108,17 @@ static int GetDecodedBinaryOpcode(unsigned Val, const Type *Ty) {
   switch (Val) {
   default: return -1;
   case bitc::BINOP_ADD:
-    return Ty->isFPOrFPVector() ? Instruction::FAdd : Instruction::Add;
+    return Ty->isFPOrFPVectorTy() ? Instruction::FAdd : Instruction::Add;
   case bitc::BINOP_SUB:
-    return Ty->isFPOrFPVector() ? Instruction::FSub : Instruction::Sub;
+    return Ty->isFPOrFPVectorTy() ? Instruction::FSub : Instruction::Sub;
   case bitc::BINOP_MUL:
-    return Ty->isFPOrFPVector() ? Instruction::FMul : Instruction::Mul;
+    return Ty->isFPOrFPVectorTy() ? Instruction::FMul : Instruction::Mul;
   case bitc::BINOP_UDIV: return Instruction::UDiv;
   case bitc::BINOP_SDIV:
-    return Ty->isFPOrFPVector() ? Instruction::FDiv : Instruction::SDiv;
+    return Ty->isFPOrFPVectorTy() ? Instruction::FDiv : Instruction::SDiv;
   case bitc::BINOP_UREM: return Instruction::URem;
   case bitc::BINOP_SREM:
-    return Ty->isFPOrFPVector() ? Instruction::FRem : Instruction::SRem;
+    return Ty->isFPOrFPVectorTy() ? Instruction::FRem : Instruction::SRem;
   case bitc::BINOP_SHL:  return Instruction::Shl;
   case bitc::BINOP_LSHR: return Instruction::LShr;
   case bitc::BINOP_ASHR: return Instruction::AShr;
@@ -1175,7 +1175,7 @@ bool BitcodeReader::ParseConstants() {
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
 
-      if (OpTy->isFPOrFPVector())
+      if (OpTy->isFPOrFPVectorTy())
         V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
       else
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);
@@ -1892,7 +1892,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           OpNum+1 != Record.size())
         return Error("Invalid CMP record");
 
-      if (LHS->getType()->isFPOrFPVector())
+      if (LHS->getType()->isFPOrFPVectorTy())
         I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
       else
         I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);

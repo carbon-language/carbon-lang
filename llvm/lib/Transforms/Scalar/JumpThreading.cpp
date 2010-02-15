@@ -405,7 +405,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB,PredValueInfo &Result){
     // If comparing a live-in value against a constant, see if we know the
     // live-in value on any predecessors.
     if (LVI && isa<Constant>(Cmp->getOperand(1)) &&
-        Cmp->getType()->isInteger() && // Not vector compare.
+        Cmp->getType()->isIntegerTy() && // Not vector compare.
         (!isa<Instruction>(Cmp->getOperand(0)) ||
          cast<Instruction>(Cmp->getOperand(0))->getParent() != BB)) {
       Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));

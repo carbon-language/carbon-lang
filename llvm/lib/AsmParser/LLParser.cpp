@@ -2057,8 +2057,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     if (Elts.empty())
       return Error(ID.Loc, "constant vector must not be empty");
 
-    if (!Elts[0]->getType()->isInteger() &&
-        !Elts[0]->getType()->isFloatingPoint())
+    if (!Elts[0]->getType()->isIntegerTy() &&
+        !Elts[0]->getType()->isFloatingPointTy())
       return Error(FirstEltLoc,
                    "vector elements must have integer or floating point type");
 
@@ -2250,12 +2250,12 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     CmpInst::Predicate Pred = (CmpInst::Predicate)PredVal;
 
     if (Opc == Instruction::FCmp) {
-      if (!Val0->getType()->isFPOrFPVector())
+      if (!Val0->getType()->isFPOrFPVectorTy())
         return Error(ID.Loc, "fcmp requires floating point operands");
       ID.ConstantVal = ConstantExpr::getFCmp(Pred, Val0, Val1);
     } else {
       assert(Opc == Instruction::ICmp && "Unexpected opcode for CmpInst!");
-      if (!Val0->getType()->isIntOrIntVector() &&
+      if (!Val0->getType()->isIntOrIntVectorTy() &&
           !isa<PointerType>(Val0->getType()))
         return Error(ID.Loc, "icmp requires pointer or integer operands");
       ID.ConstantVal = ConstantExpr::getICmp(Pred, Val0, Val1);
@@ -2306,7 +2306,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       return true;
     if (Val0->getType() != Val1->getType())
       return Error(ID.Loc, "operands of constexpr must have same type");
-    if (!Val0->getType()->isIntOrIntVector()) {
+    if (!Val0->getType()->isIntOrIntVectorTy()) {
       if (NUW)
         return Error(ModifierLoc, "nuw only applies to integer operations");
       if (NSW)
@@ -2314,8 +2314,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     }
     // API compatibility: Accept either integer or floating-point types with
     // add, sub, and mul.
-    if (!Val0->getType()->isIntOrIntVector() &&
-        !Val0->getType()->isFPOrFPVector())
+    if (!Val0->getType()->isIntOrIntVectorTy() &&
+        !Val0->getType()->isFPOrFPVectorTy())
       return Error(ID.Loc,"constexpr requires integer, fp, or vector operands");
     unsigned Flags = 0;
     if (NUW)   Flags |= OverflowingBinaryOperator::NoUnsignedWrap;
@@ -2345,7 +2345,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       return true;
     if (Val0->getType() != Val1->getType())
       return Error(ID.Loc, "operands of constexpr must have same type");
-    if (!Val0->getType()->isIntOrIntVector())
+    if (!Val0->getType()->isIntOrIntVectorTy())
       return Error(ID.Loc,
                    "constexpr requires integer or integer vector operands");
     ID.ConstantVal = ConstantExpr::get(Opc, Val0, Val1);
@@ -2515,7 +2515,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     V = ConstantInt::get(Context, ID.APSIntVal);
     return false;
   case ValID::t_APFloat:
-    if (!Ty->isFloatingPoint() ||
+    if (!Ty->isFloatingPointTy() ||
         !ConstantFP::isValueValidForType(Ty, ID.APFloatVal))
       return Error(ID.Loc, "floating point constant invalid for type");
 
@@ -2963,7 +2963,7 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
     // API compatibility: Accept either integer or floating-point types.
     bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 0);
     if (!Result) {
-      if (!Inst->getType()->isIntOrIntVector()) {
+      if (!Inst->getType()->isIntOrIntVectorTy()) {
         if (NUW)
           return Error(ModifierLoc, "nuw only applies to integer operations");
         if (NSW)
@@ -3382,11 +3382,11 @@ bool LLParser::ParseArithmetic(Instruction *&Inst, PerFunctionState &PFS,
   switch (OperandType) {
   default: llvm_unreachable("Unknown operand type!");
   case 0: // int or FP.
-    Valid = LHS->getType()->isIntOrIntVector() ||
-            LHS->getType()->isFPOrFPVector();
+    Valid = LHS->getType()->isIntOrIntVectorTy() ||
+            LHS->getType()->isFPOrFPVectorTy();
     break;
-  case 1: Valid = LHS->getType()->isIntOrIntVector(); break;
-  case 2: Valid = LHS->getType()->isFPOrFPVector(); break;
+  case 1: Valid = LHS->getType()->isIntOrIntVectorTy(); break;
+  case 2: Valid = LHS->getType()->isFPOrFPVectorTy(); break;
   }
 
   if (!Valid)
@@ -3406,7 +3406,7 @@ bool LLParser::ParseLogical(Instruction *&Inst, PerFunctionState &PFS,
       ParseValue(LHS->getType(), RHS, PFS))
     return true;
 
-  if (!LHS->getType()->isIntOrIntVector())
+  if (!LHS->getType()->isIntOrIntVectorTy())
     return Error(Loc,"instruction requires integer or integer vector operands");
 
   Inst = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
@@ -3430,12 +3430,12 @@ bool LLParser::ParseCompare(Instruction *&Inst, PerFunctionState &PFS,
     return true;
 
   if (Opc == Instruction::FCmp) {
-    if (!LHS->getType()->isFPOrFPVector())
+    if (!LHS->getType()->isFPOrFPVectorTy())
       return Error(Loc, "fcmp requires floating point operands");
     Inst = new FCmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   } else {
     assert(Opc == Instruction::ICmp && "Unknown opcode for CmpInst!");
-    if (!LHS->getType()->isIntOrIntVector() &&
+    if (!LHS->getType()->isIntOrIntVectorTy() &&
         !isa<PointerType>(LHS->getType()))
       return Error(Loc, "icmp requires integer operands");
     Inst = new ICmpInst(CmpInst::Predicate(Pred), LHS, RHS);
@@ -3733,7 +3733,7 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
     }
   }
 
-  if (Size && !Size->getType()->isInteger(32))
+  if (Size && !Size->getType()->isIntegerTy(32))
     return Error(SizeLoc, "element count must be i32");
 
   if (isAlloca) {

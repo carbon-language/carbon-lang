@@ -80,7 +80,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
   
   // First thing is first.  We only want to think about integer here, so if
   // we have something in FP form, recast it as integer.
-  if (DstEltTy->isFloatingPoint()) {
+  if (DstEltTy->isFloatingPointTy()) {
     // Fold to an vector of integers with same size as our FP type.
     unsigned FPWidth = DstEltTy->getPrimitiveSizeInBits();
     const Type *DestIVTy =
@@ -95,7 +95,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
   
   // Okay, we know the destination is integer, if the input is FP, convert
   // it to integer first.
-  if (SrcEltTy->isFloatingPoint()) {
+  if (SrcEltTy->isFloatingPointTy()) {
     unsigned FPWidth = SrcEltTy->getPrimitiveSizeInBits();
     const Type *SrcIVTy =
       VectorType::get(IntegerType::get(C->getContext(), FPWidth), NumSrcElt);
