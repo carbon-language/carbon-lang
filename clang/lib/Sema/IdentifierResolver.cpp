@@ -14,8 +14,6 @@
 
 #include "IdentifierResolver.h"
 #include "clang/Basic/LangOptions.h"
-#include <list>
-#include <vector>
 
 using namespace clang;
 
@@ -27,14 +25,31 @@ using namespace clang;
 /// Allocates 'pools' (vectors of IdDeclInfos) to avoid allocating each
 /// individual IdDeclInfo to heap.
 class IdentifierResolver::IdDeclInfoMap {
-  static const unsigned int VECTOR_SIZE = 512;
-  // Holds vectors of IdDeclInfos that serve as 'pools'.
-  // New vectors are added when the current one is full.
-  std::list< std::vector<IdDeclInfo> > IDIVecs;
+  static const unsigned int POOL_SIZE = 512;
+
+  /// We use our own linked-list implementation because it is sadly
+  /// impossible to add something to a pre-C++0x STL container without
+  /// a completely unnecessary copy.
+  struct IdDeclInfoPool {
+    IdDeclInfoPool(IdDeclInfoPool *Next) : Next(Next) {}
+    
+    IdDeclInfoPool *Next;
+    IdDeclInfo Pool[POOL_SIZE];
+  };
+  
+  IdDeclInfoPool *CurPool;
   unsigned int CurIndex;
 
 public:
-  IdDeclInfoMap() : CurIndex(VECTOR_SIZE) {}
+  IdDeclInfoMap() : CurPool(0), CurIndex(POOL_SIZE) {}
+
+  ~IdDeclInfoMap() {
+    IdDeclInfoPool *Cur = CurPool;
+    while (IdDeclInfoPool *P = Cur) {
+      Cur = Cur->Next;
+      delete P;
+    }
+  }
 
   /// Returns the IdDeclInfo associated to the DeclarationName.
   /// It creates a new IdDeclInfo if one was not created before for this id.
@@ -235,14 +250,11 @@ IdentifierResolver::IdDeclInfoMap::operator[](DeclarationName Name) {
 
   if (Ptr) return *toIdDeclInfo(Ptr);
 
-  if (CurIndex == VECTOR_SIZE) {
-    // Add a IdDeclInfo vector 'pool'
-    IDIVecs.push_back(std::vector<IdDeclInfo>());
-    // Fill the vector
-    IDIVecs.back().resize(VECTOR_SIZE);
+  if (CurIndex == POOL_SIZE) {
+    CurPool = new IdDeclInfoPool(CurPool);
     CurIndex = 0;
   }
-  IdDeclInfo *IDI = &IDIVecs.back()[CurIndex];
+  IdDeclInfo *IDI = &CurPool->Pool[CurIndex];
   Name.setFETokenInfo(reinterpret_cast<void*>(
                               reinterpret_cast<uintptr_t>(IDI) | 0x1)
                                                                      );
