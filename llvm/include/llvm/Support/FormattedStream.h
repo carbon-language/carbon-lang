@@ -119,7 +119,7 @@ namespace llvm
     /// space.
     ///
     /// \param NewCol - The column to move to.
-    void PadToColumn(unsigned NewCol);
+    formatted_raw_ostream &PadToColumn(unsigned NewCol);
 
   private:
     void releaseStream() {

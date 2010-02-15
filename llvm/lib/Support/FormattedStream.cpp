@@ -59,12 +59,13 @@ void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
 /// \param MinPad - The minimum space to give after the most recent
 /// I/O, even if the current column + minpad > newcol.
 ///
-void formatted_raw_ostream::PadToColumn(unsigned NewCol) { 
+formatted_raw_ostream &formatted_raw_ostream::PadToColumn(unsigned NewCol) { 
   // Figure out what's in the buffer and add it to the column count.
   ComputeColumn(getBufferStart(), GetNumBytesInBuffer());
 
   // Output spaces until we reach the desired column.
   indent(std::max(int(NewCol - ColumnScanned), 1));
+  return *this;
 }
 
 void formatted_raw_ostream::write_impl(const char *Ptr, size_t Size) {
