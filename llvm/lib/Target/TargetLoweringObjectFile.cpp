@@ -706,6 +706,7 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 
     SmallString<128> Name;
     Mang->getNameWithPrefix(Name, GV, true);
+    Name += ".DW.stub";
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
