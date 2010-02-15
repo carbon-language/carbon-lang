@@ -123,7 +123,7 @@ typedef enum {
 } LLVMAttribute;
 
 typedef enum {
-  // Terminator Instructions
+  /* Terminator Instructions */
   LLVMRet            = 1,
   LLVMBr             = 2,
   LLVMSwitch         = 3,
@@ -132,7 +132,7 @@ typedef enum {
   LLVMUnwind         = 6,
   LLVMUnreachable    = 7,
 
-  // Standard Binary Operators
+  /* Standard Binary Operators */
   LLVMAdd            = 8,
   LLVMFAdd           = 9,
   LLVMSub            = 10,
@@ -146,7 +146,7 @@ typedef enum {
   LLVMSRem           = 18,
   LLVMFRem           = 19,
 
-  // Logical Operators
+  /* Logical Operators */
   LLVMShl            = 20,
   LLVMLShr           = 21,
   LLVMAShr           = 22,
@@ -154,13 +154,13 @@ typedef enum {
   LLVMOr             = 24,
   LLVMXor            = 25,
 
-  // Memory Operators
+  /* Memory Operators */
   LLVMAlloca         = 26,
   LLVMLoad           = 27,
   LLVMStore          = 28,
   LLVMGetElementPtr  = 29,
 
-  // Cast Operators
+  /* Cast Operators */
   LLVMTrunk          = 30,
   LLVMZExt           = 31,
   LLVMSExt           = 32,
@@ -174,14 +174,14 @@ typedef enum {
   LLVMIntToPtr       = 40,
   LLVMBitCast        = 41,
 
-  // Other Operators
+  /* Other Operators */
   LLVMICmp           = 42,
   LLVMFCmp           = 43,
   LLVMPHI            = 44,
   LLVMCall           = 45,
   LLVMSelect         = 46,
-  // UserOp1
-  // UserOp2
+  /* UserOp1 */
+  /* UserOp2 */
   LLVMVAArg          = 49,
   LLVMExtractElement = 50,
   LLVMInsertElement  = 51,
