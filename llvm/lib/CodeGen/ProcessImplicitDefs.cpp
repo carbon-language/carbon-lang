@@ -205,10 +205,9 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       // Process each use instruction once.
       for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
              UE = mri_->use_end(); UI != UE; ++UI) {
-        MachineInstr *RMI = &*UI;
-        MachineBasicBlock *RMBB = RMI->getParent();
-        if (RMBB == MBB)
+        if (UI.getOperand().isUndef())
           continue;
+        MachineInstr *RMI = &*UI;
         if (ModInsts.insert(RMI))
           RUses.push_back(RMI);
       }
