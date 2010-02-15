@@ -1054,7 +1054,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
   ObjCImplementationDecl *IMD = dyn_cast<ObjCImplementationDecl>(OID);
   ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(OID);
 
-  InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
+  InsertText(IMD ? IMD->getLocStart() : CID->getLocStart(), "// ");
 
   for (ObjCCategoryImplDecl::instmeth_iterator
        I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
