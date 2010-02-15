@@ -328,17 +328,6 @@ protected:
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred, 
                             ExplodedNodeSet& Dst, bool asLValue);
 
-  void VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
-                                     ObjCMessageExpr::arg_iterator I,
-                                     ObjCMessageExpr::arg_iterator E,
-                                     ExplodedNode* Pred, ExplodedNodeSet& Dst,
-                                     bool asLValue);
-
-  void VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME, 
-                                          ExplodedNode* Pred,
-                                          ExplodedNodeSet& Dst,
-                                          bool asLValue);
-
   /// VisitReturnStmt - Transfer function logic for return statements.
   void VisitReturnStmt(ReturnStmt* R, ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
