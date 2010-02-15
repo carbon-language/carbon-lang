@@ -282,7 +282,8 @@ AlphaTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                    DAG.getIntPtrConstant(VA.getLocMemOffset()));
 
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                         PseudoSourceValue::getStack(), 0));
+                                         PseudoSourceValue::getStack(), 0,
+                                         false, false, 0));
     }
   }
 
@@ -426,7 +427,8 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i64);
-      ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0);
+      ArgVal = DAG.getLoad(ObjectVT, dl, Chain, FIN, NULL, 0,
+                           false, false, 0);
     }
     InVals.push_back(ArgVal);
   }
@@ -442,14 +444,16 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i), true, false);
       if (i == 0) VarArgsBase = FI;
       SDValue SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0));
+      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
+                                false, false, 0));
 
       if (TargetRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], &Alpha::F8RCRegClass);
       argt = DAG.getCopyFromReg(Chain, dl, args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i), true, false);
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0));
+      LS.push_back(DAG.getStore(Chain, dl, argt, SDFI, NULL, 0,
+                                false, false, 0));
     }
 
     //Set up a token factor with all the stack traffic
@@ -528,11 +532,12 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
   const Value *VAListS = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue Base = DAG.getLoad(MVT::i64, dl, Chain, VAListP, VAListS, 0);
+  SDValue Base = DAG.getLoad(MVT::i64, dl, Chain, VAListP, VAListS, 0,
+                             false, false, 0);
   SDValue Tmp = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                               DAG.getConstant(8, MVT::i64));
   SDValue Offset = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Base.getValue(1),
-                                    Tmp, NULL, 0, MVT::i32);
+                                  Tmp, NULL, 0, MVT::i32, false, false, 0);
   DataPtr = DAG.getNode(ISD::ADD, dl, MVT::i64, Base, Offset);
   if (N->getValueType(0).isFloatingPoint())
   {
@@ -547,7 +552,7 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
   SDValue NewOffset = DAG.getNode(ISD::ADD, dl, MVT::i64, Offset,
                                     DAG.getConstant(8, MVT::i64));
   Chain = DAG.getTruncStore(Offset.getValue(1), dl, NewOffset, Tmp, NULL, 0,
-                            MVT::i32);
+                            MVT::i32, false, false, 0);
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -694,9 +699,10 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue Result;
     if (Op.getValueType() == MVT::i32)
       Result = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Chain, DataPtr,
-                              NULL, 0, MVT::i32);
+                              NULL, 0, MVT::i32, false, false, 0);
     else
-      Result = DAG.getLoad(Op.getValueType(), dl, Chain, DataPtr, NULL, 0);
+      Result = DAG.getLoad(Op.getValueType(), dl, Chain, DataPtr, NULL, 0,
+                           false, false, 0);
     return Result;
   }
   case ISD::VACOPY: {
@@ -706,15 +712,18 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     const Value *DestS = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
     const Value *SrcS = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
 
-    SDValue Val = DAG.getLoad(getPointerTy(), dl, Chain, SrcP, SrcS, 0);
-    SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, DestS, 0);
+    SDValue Val = DAG.getLoad(getPointerTy(), dl, Chain, SrcP, SrcS, 0,
+                              false, false, 0);
+    SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, DestS, 0,
+                                  false, false, 0);
     SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP,
                                DAG.getConstant(8, MVT::i64));
     Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Result,
-                         NP, NULL,0, MVT::i32);
+                         NP, NULL,0, MVT::i32, false, false, 0);
     SDValue NPD = DAG.getNode(ISD::ADD, dl, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));
-    return DAG.getTruncStore(Val.getValue(1), dl, Val, NPD, NULL, 0, MVT::i32);
+    return DAG.getTruncStore(Val.getValue(1), dl, Val, NPD, NULL, 0, MVT::i32,
+                             false, false, 0);
   }
   case ISD::VASTART: {
     SDValue Chain = Op.getOperand(0);
@@ -723,11 +732,12 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDValue FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
-    SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0);
+    SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0,
+                               false, false, 0);
     SDValue SA2 = DAG.getNode(ISD::ADD, dl, MVT::i64, VAListP,
                                 DAG.getConstant(8, MVT::i64));
     return DAG.getTruncStore(S1, dl, DAG.getConstant(VarArgsOffset, MVT::i64),
-                             SA2, NULL, 0, MVT::i32);
+                             SA2, NULL, 0, MVT::i32, false, false, 0);
   }
   case ISD::RETURNADDR:
     return DAG.getNode(AlphaISD::GlobalRetAddr, DebugLoc::getUnknownLoc(),
@@ -749,7 +759,8 @@ void AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
 
   SDValue Chain, DataPtr;
   LowerVAARG(N, Chain, DataPtr, DAG);
-  SDValue Res = DAG.getLoad(N->getValueType(0), dl, Chain, DataPtr, NULL, 0);
+  SDValue Res = DAG.getLoad(N->getValueType(0), dl, Chain, DataPtr, NULL, 0,
+                            false, false, 0);
   Results.push_back(Res);
   Results.push_back(SDValue(Res.getNode(), 1));
 }
