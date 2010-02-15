@@ -870,7 +870,7 @@ void DwarfException::EmitExceptionTable() {
       EmitReference(GV, TTypeEncoding);
       EOL("TypeInfo");
     } else {
-      PrintRelDirective();
+      PrintRelDirective(TTypeEncoding);
       O << "0x0";
       EOL("");
     }
