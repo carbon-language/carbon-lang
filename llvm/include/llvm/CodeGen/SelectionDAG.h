@@ -581,18 +581,18 @@ public:
   /// determined by their operands, and they produce a value AND a token chain.
   ///
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
-                    const Value *SV, int SVOffset, bool isVolatile=false,
-                    unsigned Alignment=0);
+                  const Value *SV, int SVOffset, bool isVolatile,
+                  bool isNonTemporal, unsigned Alignment);
   SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
-                       SDValue Chain, SDValue Ptr, const Value *SV,
-                       int SVOffset, EVT MemVT, bool isVolatile=false,
-                       unsigned Alignment=0);
+                     SDValue Chain, SDValue Ptr, const Value *SV,
+                     int SVOffset, EVT MemVT, bool isVolatile,
+                     bool isNonTemporal, unsigned Alignment);
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
                   EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
                   const Value *SV, int SVOffset, EVT MemVT,
-                  bool isVolatile=false, unsigned Alignment=0);
+                  bool isVolatile, bool isNonTemporal, unsigned Alignment);
   SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
                   EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
                   EVT MemVT, MachineMemOperand *MMO);
@@ -600,13 +600,14 @@ public:
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
-                     const Value *SV, int SVOffset, bool isVolatile=false,
-                     unsigned Alignment=0);
+                   const Value *SV, int SVOffset, bool isVolatile,
+                   bool isNonTemporal, unsigned Alignment);
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                    MachineMemOperand *MMO);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
-                          const Value *SV, int SVOffset, EVT TVT,
-                          bool isVolatile=false, unsigned Alignment=0);
+                        const Value *SV, int SVOffset, EVT TVT,
+                        bool isNonTemporal, bool isVolatile,
+                        unsigned Alignment);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                         EVT TVT, MachineMemOperand *MMO);
   SDValue getIndexedStore(SDValue OrigStoe, DebugLoc dl, SDValue Base,

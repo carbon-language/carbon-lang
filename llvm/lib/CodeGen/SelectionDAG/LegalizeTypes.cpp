@@ -871,9 +871,10 @@ SDValue DAGTypeLegalizer::CreateStackStoreLoad(SDValue Op,
   // the source and destination types.
   SDValue StackPtr = DAG.CreateStackTemporary(Op.getValueType(), DestVT);
   // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op, StackPtr, NULL, 0);
+  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op, StackPtr, NULL, 0,
+                               false, false, 0);
   // Result is a load from the stack slot.
-  return DAG.getLoad(DestVT, dl, Store, StackPtr, NULL, 0);
+  return DAG.getLoad(DestVT, dl, Store, StackPtr, NULL, 0, false, false, 0);
 }
 
 /// CustomLowerNode - Replace the node's results with custom code provided

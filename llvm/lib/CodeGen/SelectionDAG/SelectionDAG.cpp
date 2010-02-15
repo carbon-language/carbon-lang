@@ -3299,7 +3299,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       Value = getMemsetStringVal(VT, dl, DAG, TLI, Str, SrcOff);
       Store = DAG.getStore(Chain, dl, Value,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
-                           DstSV, DstSVOff + DstOff, false, DstAlign);
+                           DstSV, DstSVOff + DstOff, false, false, DstAlign);
     } else {
       // The type might not be legal for the target.  This should only happen
       // if the type is smaller than a legal type, as on PPC, so the right
@@ -3310,10 +3310,11 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       assert(NVT.bitsGE(VT));
       Value = DAG.getExtLoad(ISD::EXTLOAD, dl, NVT, Chain,
                              getMemBasePlusOffset(Src, SrcOff, DAG),
-                             SrcSV, SrcSVOff + SrcOff, VT, false, Align);
+                             SrcSV, SrcSVOff + SrcOff, VT, false, false, Align);
       Store = DAG.getTruncStore(Chain, dl, Value,
-                             getMemBasePlusOffset(Dst, DstOff, DAG),
-                             DstSV, DstSVOff + DstOff, VT, false, DstAlign);
+                                getMemBasePlusOffset(Dst, DstOff, DAG),
+                                DstSV, DstSVOff + DstOff, VT, false, false,
+                                DstAlign);
     }
     OutChains.push_back(Store);
     SrcOff += VTSize;
@@ -3358,7 +3359,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
     Value = DAG.getLoad(VT, dl, Chain,
                         getMemBasePlusOffset(Src, SrcOff, DAG),
-                        SrcSV, SrcSVOff + SrcOff, false, Align);
+                        SrcSV, SrcSVOff + SrcOff, false, false, Align);
     LoadValues.push_back(Value);
     LoadChains.push_back(Value.getValue(1));
     SrcOff += VTSize;
@@ -3373,7 +3374,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
 
     Store = DAG.getStore(Chain, dl, LoadValues[i],
                          getMemBasePlusOffset(Dst, DstOff, DAG),
-                         DstSV, DstSVOff + DstOff, false, DstAlign);
+                         DstSV, DstSVOff + DstOff, false, false, DstAlign);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -3408,7 +3409,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
     SDValue Value = getMemsetValue(Src, VT, DAG, dl);
     SDValue Store = DAG.getStore(Chain, dl, Value,
                                  getMemBasePlusOffset(Dst, DstOff, DAG),
-                                 DstSV, DstSVOff + DstOff);
+                                 DstSV, DstSVOff + DstOff, false, false, 0);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -3788,7 +3789,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
                       ISD::LoadExtType ExtType, EVT VT, SDValue Chain,
                       SDValue Ptr, SDValue Offset,
                       const Value *SV, int SVOffset, EVT MemVT,
-                      bool isVolatile, unsigned Alignment) {
+                      bool isVolatile, bool isNonTemporal,
+                      unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
 
@@ -3802,6 +3804,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
   unsigned Flags = MachineMemOperand::MOLoad;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
+  if (isNonTemporal)
+    Flags |= MachineMemOperand::MONonTemporal;
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(SV, Flags, SVOffset,
                             MemVT.getStoreSize(), Alignment);
@@ -3856,20 +3860,22 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
 SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
                               SDValue Chain, SDValue Ptr,
                               const Value *SV, int SVOffset,
-                              bool isVolatile, unsigned Alignment) {
+                              bool isVolatile, bool isNonTemporal,
+                              unsigned Alignment) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
-                 SV, SVOffset, VT, isVolatile, Alignment);
+                 SV, SVOffset, VT, isVolatile, isNonTemporal, Alignment);
 }
 
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                                  SDValue Chain, SDValue Ptr,
                                  const Value *SV,
                                  int SVOffset, EVT MemVT,
-                                 bool isVolatile, unsigned Alignment) {
+                                 bool isVolatile, bool isNonTemporal,
+                                 unsigned Alignment) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ExtType, VT, Chain, Ptr, Undef,
-                 SV, SVOffset, MemVT, isVolatile, Alignment);
+                 SV, SVOffset, MemVT, isVolatile, isNonTemporal, Alignment);
 }
 
 SDValue
@@ -3881,12 +3887,13 @@ SelectionDAG::getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
   return getLoad(AM, dl, LD->getExtensionType(), OrigLoad.getValueType(),
                  LD->getChain(), Base, Offset, LD->getSrcValue(),
                  LD->getSrcValueOffset(), LD->getMemoryVT(),
-                 LD->isVolatile(), LD->getAlignment());
+                 LD->isVolatile(), LD->isNonTemporal(), LD->getAlignment());
 }
 
 SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                SDValue Ptr, const Value *SV, int SVOffset,
-                               bool isVolatile, unsigned Alignment) {
+                               bool isVolatile, bool isNonTemporal,
+                               unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(Val.getValueType());
 
@@ -3900,6 +3907,8 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   unsigned Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
+  if (isNonTemporal)
+    Flags |= MachineMemOperand::MONonTemporal;
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(SV, Flags, SVOffset,
                             Val.getValueType().getStoreSize(), Alignment);
@@ -3932,7 +3941,8 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
 SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                     SDValue Ptr, const Value *SV,
                                     int SVOffset, EVT SVT,
-                                    bool isVolatile, unsigned Alignment) {
+                                    bool isVolatile, bool isNonTemporal,
+                                    unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(SVT);
 
@@ -3946,6 +3956,8 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   unsigned Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
+  if (isNonTemporal)
+    Flags |= MachineMemOperand::MONonTemporal;
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(SV, Flags, SVOffset, SVT.getStoreSize(), Alignment);
 

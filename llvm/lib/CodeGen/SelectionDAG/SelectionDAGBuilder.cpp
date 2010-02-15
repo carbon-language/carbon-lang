@@ -844,7 +844,7 @@ void SelectionDAGBuilder::visitRet(ReturnInst &I) {
       Chains[i] =
         DAG.getStore(Chain, getCurDebugLoc(),
                      SDValue(RetOp.getNode(), RetOp.getResNo() + i),
-                     Add, NULL, Offsets[i], false, 0);
+                     Add, NULL, Offsets[i], false, false, 0);
     }
 
     Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
@@ -2705,7 +2705,9 @@ void SelectionDAGBuilder::visitLoad(LoadInst &I) {
   SDValue Ptr = getValue(SV);
 
   const Type *Ty = I.getType();
+
   bool isVolatile = I.isVolatile();
+  bool isNonTemporal = I.getMetadata("nontemporal") != 0;
   unsigned Alignment = I.getAlignment();
 
   SmallVector<EVT, 4> ValueVTs;
@@ -2737,7 +2739,8 @@ void SelectionDAGBuilder::visitLoad(LoadInst &I) {
                             PtrVT, Ptr,
                             DAG.getConstant(Offsets[i], PtrVT));
     SDValue L = DAG.getLoad(ValueVTs[i], getCurDebugLoc(), Root,
-                            A, SV, Offsets[i], isVolatile, Alignment);
+                            A, SV, Offsets[i], isVolatile, 
+                            isNonTemporal, Alignment);
 
     Values[i] = L;
     Chains[i] = L.getValue(1);
@@ -2778,6 +2781,7 @@ void SelectionDAGBuilder::visitStore(StoreInst &I) {
   SmallVector<SDValue, 4> Chains(NumValues);
   EVT PtrVT = Ptr.getValueType();
   bool isVolatile = I.isVolatile();
+  bool isNonTemporal = I.getMetadata("nontemporal") != 0;
   unsigned Alignment = I.getAlignment();
 
   for (unsigned i = 0; i != NumValues; ++i) {
@@ -2785,7 +2789,8 @@ void SelectionDAGBuilder::visitStore(StoreInst &I) {
                               DAG.getConstant(Offsets[i], PtrVT));
     Chains[i] = DAG.getStore(Root, getCurDebugLoc(),
                              SDValue(Src.getNode(), Src.getResNo() + i),
-                             Add, PtrV, Offsets[i], isVolatile, Alignment);
+                             Add, PtrV, Offsets[i], isVolatile, 
+                             isNonTemporal, Alignment);
   }
 
   DAG.setRoot(DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
@@ -4064,7 +4069,7 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     // Store the stack protector onto the stack.
     Res = DAG.getStore(getRoot(), getCurDebugLoc(), Src, FIN,
                        PseudoSourceValue::getFixedStack(FI),
-                       0, true);
+                       0, true, false, 0);
     setValue(&I, Res);
     DAG.setRoot(Res);
     return 0;
@@ -4416,7 +4421,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
                                 DemoteStackSlot,
                                 DAG.getConstant(Offsets[i], PtrVT));
       SDValue L = DAG.getLoad(OutVTs[i], getCurDebugLoc(), Result.second,
-                              Add, NULL, Offsets[i], false, 1);
+                              Add, NULL, Offsets[i], false, false, 1);
       Values[i] = L;
       Chains[i] = L.getValue(1);
     }
@@ -4518,7 +4523,8 @@ static SDValue getMemCmpLoad(Value *PtrVal, MVT LoadVT, const Type *LoadTy,
   SDValue Ptr = Builder.getValue(PtrVal);
   SDValue LoadVal = Builder.DAG.getLoad(LoadVT, Builder.getCurDebugLoc(), Root,
                                         Ptr, PtrVal /*SrcValue*/, 0/*SVOffset*/,
-                                        false /*volatile*/, 1 /* align=1 */);
+                                        false /*volatile*/,
+                                        false /*nontemporal*/, 1 /* align=1 */);
 
   if (!ConstantMemory)
     Builder.PendingLoads.push_back(LoadVal.getValue(1));
@@ -5336,7 +5342,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
         int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
         SDValue StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Chain = DAG.getStore(Chain, getCurDebugLoc(),
-                             OpInfo.CallOperand, StackSlot, NULL, 0);
+                             OpInfo.CallOperand, StackSlot, NULL, 0,
+                             false, false, 0);
         OpInfo.CallOperand = StackSlot;
       }
 
@@ -5622,7 +5629,8 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
     SDValue Val = DAG.getStore(Chain, getCurDebugLoc(),
                                StoresToEmit[i].first,
                                getValue(StoresToEmit[i].second),
-                               StoresToEmit[i].second, 0);
+                               StoresToEmit[i].second, 0,
+                               false, false, 0);
     OutChains.push_back(Val);
   }
 

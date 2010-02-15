@@ -1596,6 +1596,7 @@ public:
   }
 
   bool isVolatile() const { return (SubclassData >> 5) & 1; }
+  bool isNonTemporal() const { return MMO->isNonTemporal(); }
 
   /// Returns the SrcValue and offset that describes the location of the access
   const Value *getSrcValue() const { return MMO->getValue(); }

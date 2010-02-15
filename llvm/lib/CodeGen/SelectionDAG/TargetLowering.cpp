@@ -1716,7 +1716,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           SDValue NewLoad = DAG.getLoad(newVT, dl, Lod->getChain(), Ptr,
                                         Lod->getSrcValue(), 
                                         Lod->getSrcValueOffset() + bestOffset,
-                                        false, NewAlign);
+                                        false, false, NewAlign);
           return DAG.getSetCC(dl, VT, 
                               DAG.getNode(ISD::AND, dl, newVT, NewLoad,
                                       DAG.getConstant(bestMask.trunc(bestWidth),
