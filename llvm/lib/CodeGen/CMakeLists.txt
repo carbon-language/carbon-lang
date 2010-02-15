@@ -67,6 +67,7 @@ add_llvm_library(LLVMCodeGen
   StrongPHIElimination.cpp
   TailDuplication.cpp
   TargetInstrInfoImpl.cpp
+  TargetLoweringObjectFileImpl.cpp
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp
   VirtRegMap.cpp
