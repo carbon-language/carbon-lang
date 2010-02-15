@@ -313,3 +313,14 @@ for.cond:                                         ; preds = %for.body, %lor.end
 for.body:                                         ; preds = %for.cond
   br label %for.cond
 }
+
+
+; PR6305
+define void @test11() nounwind {
+entry:
+  br label %A
+
+A:                                             ; preds = %entry
+  call void undef(i64 ptrtoint (i8* blockaddress(@test11, %A) to i64)) nounwind
+  unreachable
+}

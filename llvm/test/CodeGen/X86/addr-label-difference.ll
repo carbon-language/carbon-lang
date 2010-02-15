@@ -9,14 +9,18 @@ target triple = "i386-apple-darwin10.0"
 
 define void @test(i32 %i) nounwind ssp {
 entry:
+  call void @test(i32 1)
   br label %foo
 
-foo:                                              ; preds = %indirectgoto, %indirectgoto, %indirectgoto, %indirectgoto, %indirectgoto
+foo:
+  call void @test(i32 1)
   br label %bar
 
-bar:                                              ; preds = %foo, %indirectgoto
+bar:
+  call void @test(i32 1)
   br label %hack
 
-hack:                                             ; preds = %bar, %indirectgoto
+hack:
+  call void @test(i32 1)
   ret void
 }

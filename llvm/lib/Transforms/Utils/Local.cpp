@@ -490,6 +490,17 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   // Splice all the instructions from PredBB to DestBB.
   PredBB->getTerminator()->eraseFromParent();
   DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
+
+  // Zap anything that took the address of DestBB.  Not doing this will give the
+  // address an invalid value.
+  if (DestBB->hasAddressTaken()) {
+    BlockAddress *BA = BlockAddress::get(DestBB);
+    Constant *Replacement =
+      ConstantInt::get(llvm::Type::getInt32Ty(BA->getContext()), 1);
+    BA->replaceAllUsesWith(ConstantExpr::getIntToPtr(Replacement,
+                                                     BA->getType()));
+    BA->destroyConstant();
+  }
   
   // Anything that branched to PredBB now branches to DestBB.
   PredBB->replaceAllUsesWith(DestBB);
