@@ -829,6 +829,7 @@ void SelectionDAG::clear() {
   EntryNode.UseList = 0;
   AllNodes.push_back(&EntryNode);
   Root = getEntryNode();
+  delete Ordering;
   Ordering = new SDNodeOrdering();
 }
 
