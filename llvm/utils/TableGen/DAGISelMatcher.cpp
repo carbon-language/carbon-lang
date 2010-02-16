@@ -106,3 +106,13 @@ void CheckOrImmMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   printChild(OS, indent);
 }
 
+void CheckProfitableToFoldMatcherNode::print(raw_ostream &OS,
+                                             unsigned indent) const {
+  OS.indent(indent) << "CheckProfitableToFold\n";
+  printChild(OS, indent);
+}
+
+void CheckLegalToFoldMatcherNode::print(raw_ostream &OS, unsigned indent) const{
+  OS.indent(indent) << "CheckLegalToFold\n";
+  printChild(OS, indent);
+}

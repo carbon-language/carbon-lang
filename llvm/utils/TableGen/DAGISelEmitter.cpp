@@ -586,6 +586,8 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
         //      /        [YY]
         //      |         ^
         //     [XX]-------|
+        
+        // We know we need the check if N's parent is not the root.
         bool NeedCheck = P != Pattern;
         if (!NeedCheck) {
           const SDNodeInfo &PInfo = CGP.getSDNodeInfo(P->getOperator());

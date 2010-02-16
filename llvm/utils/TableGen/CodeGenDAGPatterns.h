@@ -216,6 +216,13 @@ public:
   void setChild(unsigned i, TreePatternNode *N) {
     Children[i] = N;
   }
+  
+  /// hasChild - Return true if N is any of our children.
+  bool hasChild(const TreePatternNode *N) const {
+    for (unsigned i = 0, e = Children.size(); i != e; ++i)
+      if (Children[i] == N) return true;
+    return false;
+  }
 
   const std::vector<std::string> &getPredicateFns() const {return PredicateFns;}
   void clearPredicateFns() { PredicateFns.clear(); }

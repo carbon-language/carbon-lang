@@ -202,7 +202,9 @@ enum BuiltinOpcodes {
   OPC_CheckValueType,
   OPC_CheckComplexPat,
   OPC_CheckAndImm1, OPC_CheckAndImm2, OPC_CheckAndImm4, OPC_CheckAndImm8,
-  OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8
+  OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8,
+  OPC_IsProfitableToFold,
+  OPC_IsLegalToFold
 };
 
 struct MatchScope {
@@ -378,6 +380,19 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     case OPC_CheckOrImm8:
       if (CheckOrImmediate(N, GetInt8(MatcherTable, MatcherIndex))) break;
+      continue;
+        
+    case OPC_IsProfitableToFold:
+      assert(!NodeStack.size() == 1 && "No parent node");
+      if (!IsProfitableToFold(N, NodeStack[NodeStack.size()-2].getNode(),
+                              NodeToMatch))
+        break;
+      continue;
+    case OPC_IsLegalToFold:
+      assert(!NodeStack.size() == 1 && "No parent node");
+      if (!IsLegalToFold(N, NodeStack[NodeStack.size()-2].getNode(),
+                         NodeToMatch))
+        break;
       continue;
     }
     

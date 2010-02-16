@@ -151,6 +151,12 @@ static unsigned EmitMatcher(const MatcherNode *N, formatted_raw_ostream &OS,
     OS << "OPC_CheckOrImm" << ClassifyInt(Val) << ", ";
     return EmitInt(Val, OS)+1;
   }
+  case MatcherNode::CheckProfitableToFold:
+    OS << "OPC_IsProfitableToFold,\n";
+    return 1;
+  case MatcherNode::CheckLegalToFold:
+    OS << "OPC_IsLegalToFold,\n";
+    return 1;
   }
   assert(0 && "Unreachable");
   return 0;

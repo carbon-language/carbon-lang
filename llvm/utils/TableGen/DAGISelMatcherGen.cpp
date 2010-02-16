@@ -189,18 +189,61 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   if (N->NodeHasProperty(SDNPHasChain, CGP))
     OpNo = 1;
 
-  if (N->TreeHasProperty(SDNPHasChain, CGP)) {
-    // FIXME: Handle Chains with multiple uses etc.
-    //         [ld]
-    //         ^  ^
-    //         |  |
-    //        /   \---
-    //      /        [YY]
-    //      |         ^
-    //     [XX]-------|
+  // If this node is not the root and the subtree underneath it produces a
+  // chain, then the result of matching the node is also produce a chain.
+  // Beyond that, this means that we're also folding (at least) the root node
+  // into the node that produce the chain (for example, matching
+  // "(add reg, (load ptr))" as a add_with_memory on X86).  This is problematic,
+  // if the 'reg' node also uses the load (say, its chain).  Graphically:
+  //
+  //         [LD]
+  //         ^  ^
+  //         |  \                              DAG's like cheese.
+  //        /    |
+  //       /    [YY]
+  //       |     ^
+  //      [XX]--/
+  //
+  // It would be invalid to fold XX and LD.  In this case, folding the two
+  // nodes together would induce a cycle in the DAG, making it a cyclic DAG (!).
+  // To prevent this, we emit a dynamic check for legality before allowing this
+  // to be folded.
+  //
+  const TreePatternNode *Root = Pattern.getSrcPattern();
+  if (N != Root &&                             // Not the root of the pattern.
+      N->TreeHasProperty(SDNPHasChain, CGP)) { // Has a chain somewhere in tree.
+    
+    AddMatcherNode(new CheckProfitableToFoldMatcherNode());
+    
+    // If this non-root node produces a chain, we may need to emit a validity
+    // check.
+    if (OpNo != 0) {
+      // If there is a node between the root and this node, then we definitely
+      // need to emit the check.
+      bool NeedCheck = !Root->hasChild(N);
+      
+      // If it *is* an immediate child of the root, we can still need a check if
+      // the root SDNode has multiple inputs.  For us, this means that it is an
+      // intrinsic, has multiple operands, or has other inputs like chain or
+      // flag).
+      if (!NeedCheck) {
+        const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Root->getOperator());
+        NeedCheck =
+          Root->getOperator() == CGP.get_intrinsic_void_sdnode() ||
+          Root->getOperator() == CGP.get_intrinsic_w_chain_sdnode() ||
+          Root->getOperator() == CGP.get_intrinsic_wo_chain_sdnode() ||
+          PInfo.getNumOperands() > 1 ||
+          PInfo.hasProperty(SDNPHasChain) ||
+          PInfo.hasProperty(SDNPInFlag) ||
+          PInfo.hasProperty(SDNPOptInFlag);
+      }
+      
+      if (NeedCheck)
+        AddMatcherNode(new CheckLegalToFoldMatcherNode());
+    }
   }
       
-  // FIXME: Handle Flags & .hasOneUse()
+  // FIXME: Handle EmittedUseCheck & Flags & .hasOneUse()
   
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check

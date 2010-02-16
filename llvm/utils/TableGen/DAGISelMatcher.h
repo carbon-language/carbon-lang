@@ -48,7 +48,9 @@ public:
     CheckValueType,
     CheckComplexPat,
     CheckAndImm,
-    CheckOrImm
+    CheckOrImm,
+    CheckProfitableToFold,
+    CheckLegalToFold
   };
   const KindTy Kind;
   
@@ -355,8 +357,34 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+
+/// CheckProfitableToFoldMatcherNode - This checks to see if the current node is
+/// worthwhile to try to fold into a large pattern.
+class CheckProfitableToFoldMatcherNode : public MatcherNodeWithChild {
+public:
+  CheckProfitableToFoldMatcherNode()
+  : MatcherNodeWithChild(CheckProfitableToFold) {}
   
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == CheckProfitableToFold;
+  }
   
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+
+/// CheckLegalToFoldMatcherNode - This checks to see if the current node is
+/// legal to try to fold into a large pattern.
+class CheckLegalToFoldMatcherNode : public MatcherNodeWithChild {
+public:
+  CheckLegalToFoldMatcherNode()
+  : MatcherNodeWithChild(CheckLegalToFold) {}
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == CheckLegalToFold;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
 } // end namespace llvm
 
 #endif
