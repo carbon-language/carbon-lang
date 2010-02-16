@@ -160,6 +160,32 @@ def memopv4i16 : PatFrag<(ops node:$ptr), (v4i16 (memop64 node:$ptr))>;
 def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop64 node:$ptr))>;
 def memopv2i32 : PatFrag<(ops node:$ptr), (v2i32 (memop64 node:$ptr))>;
 
+// MOVNT Support
+// Like 'store', but requires the non-temporal bit to be set
+def nontemporalstore : PatFrag<(ops node:$val, node:$ptr),
+                           (st node:$val, node:$ptr), [{
+  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
+    return ST->isNonTemporal();
+  return false;
+}]>;
+
+def alignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
+			           (st node:$val, node:$ptr), [{
+  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
+    return ST->isNonTemporal() && !ST->isTruncatingStore() &&
+           ST->getAddressingMode() == ISD::UNINDEXED &&
+           ST->getAlignment() >= 16;
+  return false;
+}]>;
+
+def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
+			           (st node:$val, node:$ptr), [{
+  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
+    return ST->isNonTemporal() &&
+           ST->getAlignment() < 16;
+  return false;
+}]>;
+
 def bc_v4f32 : PatFrag<(ops node:$in), (v4f32 (bitconvert node:$in))>;
 def bc_v2f64 : PatFrag<(ops node:$in), (v2f64 (bitconvert node:$in))>;
 def bc_v16i8 : PatFrag<(ops node:$in), (v16i8 (bitconvert node:$in))>;
@@ -1013,9 +1039,32 @@ def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
     "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0))]>;
 
 // Non-temporal stores
-def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
+def MOVNTPSmr_Int : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",
                     [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>;
+
+let AddedComplexity = 400 in { // Prefer non-temporal versions
+def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                    "movntps\t{$src, $dst|$dst, $src}",
+                    [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
+
+def MOVNTDQ_64mr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                    "movntdq\t{$src, $dst|$dst, $src}",
+                    [(alignednontemporalstore (v2f64 VR128:$src), addr:$dst)]>;
+
+def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
+          (MOVNTDQ_64mr VR128:$src, addr:$dst)>;
+
+def MOVNTImr : I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
+                 "movnti\t{$src, $dst|$dst, $src}",
+                 [(nontemporalstore (i32 GR32:$src), addr:$dst)]>,
+               TB, Requires<[HasSSE2]>;
+
+def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
+                     "movnti\t{$src, $dst|$dst, $src}",
+                     [(nontemporalstore (i64 GR64:$src), addr:$dst)]>,
+                  TB, Requires<[HasSSE2]>;
+}
 
 // Load, store, and memory fence
 def SFENCE : PSI<0xAE, MRM7r, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>;
@@ -2298,16 +2347,29 @@ def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
                      [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>;
 
 // Non-temporal stores
-def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                    "movntpd\t{$src, $dst|$dst, $src}",
-                    [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
-def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                    "movntdq\t{$src, $dst|$dst, $src}",
-                    [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
-def MOVNTImr  :   I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
+def MOVNTPDmr_Int : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
+                        "movntpd\t{$src, $dst|$dst, $src}",
+                        [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
+def MOVNTDQmr_Int : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                        "movntdq\t{$src, $dst|$dst, $src}",
+                        [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
+def MOVNTImr_Int  :   I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                     "movnti\t{$src, $dst|$dst, $src}",
                     [(int_x86_sse2_movnt_i addr:$dst, GR32:$src)]>,
                   TB, Requires<[HasSSE2]>;
+
+let AddedComplexity = 400 in { // Prefer non-temporal versions
+def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                    "movntpd\t{$src, $dst|$dst, $src}",
+                    [(alignednontemporalstore(v2f64 VR128:$src), addr:$dst)]>;
+
+def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
+                    "movntdq\t{$src, $dst|$dst, $src}",
+                    [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
+
+def : Pat<(alignednontemporalstore (v4i32 VR128:$src), addr:$dst),
+          (MOVNTDQmr VR128:$src, addr:$dst)>;
+}
 
 // Flush cache
 def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),

@@ -4074,8 +4074,9 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]
-  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]
+  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !<index>]
+  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !<index>]
+  !<index> = !{ i32 1 }
 </pre>
 
 <h5>Overview:</h5>
@@ -4088,7 +4089,7 @@ Instruction</a> </div>
    marked as <tt>volatile</tt>, then the optimizer is not allowed to modify the
    number or order of execution of this <tt>load</tt> with other
    volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
-   instructions. </p>
+   instructions.</p>
 
 <p>The optional constant "align" argument specifies the alignment of the
    operation (that is, the alignment of the memory address). A value of 0 or an
@@ -4097,6 +4098,14 @@ Instruction</a> </div>
    ensure that the alignment information is correct. Overestimating the
    alignment results in an undefined behavior. Underestimating the alignment may
    produce less efficient code. An alignment of 1 is always safe.</p>
+
+<p>The optional !nontemporal metadata must reference a single metatadata
+   name <index> corresponding to a metadata node with one i32 entry of
+   value 1.  The existance of the !nontemporal metatadata on the
+   instruction tells the optimizer and code generator that this load is
+   not expected to be reused in the cache.  The code generator may
+   select special instructions to save cache bandwidth, such as the
+   MOVNT intruction on x86.</p>
 
 <h5>Semantics:</h5>
 <p>The location of memory pointed to is loaded.  If the value being loaded is of
@@ -4124,8 +4133,8 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]                   <i>; yields {void}</i>
-  volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;]          <i>; yields {void}</i>
+  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !<index>]                   <i>; yields {void}</i>
+  volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !<index>]          <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4149,6 +4158,15 @@ Instruction</a> </div>
    ensure that the alignment information is correct. Overestimating the
    alignment results in an undefined behavior. Underestimating the alignment may
    produce less efficient code. An alignment of 1 is always safe.</p>
+
+<p>The optional !nontemporal metadata must reference a single metatadata
+   name <index> corresponding to a metadata node with one i32 entry of
+   value 1.  The existance of the !nontemporal metatadata on the
+   instruction tells the optimizer and code generator that this load is
+   not expected to be reused in the cache.  The code generator may
+   select special instructions to save cache bandwidth, such as the
+   MOVNT intruction on x86.</p>
+
 
 <h5>Semantics:</h5>
 <p>The contents of memory are updated to contain '<tt>&lt;value&gt;</tt>' at the
