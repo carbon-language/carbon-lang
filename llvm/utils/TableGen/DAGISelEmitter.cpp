@@ -510,7 +510,6 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
                                        const std::string &RootName,
                                        const std::string &ChainSuffix,
                                        bool &FoundChain) {
-  
   // Save loads/stores matched by a pattern.
   if (!N->isLeaf() && N->getName().empty()) {
     if (N->NodeHasProperty(SDNPMemOperand, CGP))
@@ -573,7 +572,7 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
         // use.  If the node has multiple uses and the pattern has a load as
         // an operand, then we can't fold the load.
         emitCheck(getValueName(RootName) + ".hasOneUse()");
-      } else {
+      } else if (!N->isLeaf()) { // ComplexPatterns do their own legality check.
         // If the immediate use can somehow reach this node through another
         // path, then can't fold it either or it will create a cycle.
         // e.g. In the following diagram, XX can reach ld through YY. If
@@ -627,8 +626,11 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
       } else
         FoundChain = true;
       ChainName = "Chain" + ChainSuffix;
-      emitInit("SDValue " + ChainName + " = " + getNodeName(RootName) +
-               "->getOperand(0);");
+      
+      if (!N->getComplexPatternInfo(CGP) ||
+          isRoot)
+        emitInit("SDValue " + ChainName + " = " + getNodeName(RootName) +
+                 "->getOperand(0);");
     }
   }
   
@@ -686,7 +688,7 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   
   // Handle cases when root is a complex pattern.
   const ComplexPattern *CP;
-  if (isRoot && N->isLeaf() && (CP = N->getComplexPatternInfo(CGP))) {
+  if (N->isLeaf() && (CP = N->getComplexPatternInfo(CGP))) {
     std::string Fn = CP->getSelectFunc();
     unsigned NumOps = CP->getNumOperands();
     for (unsigned i = 0; i < NumOps; ++i) {
@@ -700,9 +702,8 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
       emitCode("SDValue Chain" + ChainSuffix + ";");
     }
     
-    std::string Code = Fn + "(" +
-    getNodeName(RootName) + ", " +
-    getValueName(RootName);
+    std::string Code = Fn + "(N, ";  // always pass in the root.
+    Code += getValueName(RootName);
     for (unsigned i = 0; i < NumOps; i++)
       Code += ", CPTmp" + RootName + "_" + utostr(i);
     if (CP->hasProperty(SDNPHasChain)) {
@@ -736,6 +737,24 @@ void PatternCodeEmitter::EmitChildMatchCode(TreePatternNode *Child,
       FoldedFlag = std::make_pair(getValueName(RootName),
                                   CInfo.getNumResults() + (unsigned)HasChain);
     }
+  } else if (const ComplexPattern *CP = Child->getComplexPatternInfo(CGP)) {
+    if (CP->getSelectFunc() == "SelectScalarSSELoad")
+      errs() << "FOUND IT\n";
+    EmitMatchCode(Child, Parent, RootName, ChainSuffix, FoundChain);
+    bool HasChain = false;
+
+    if (Child->NodeHasProperty(SDNPHasChain, CGP)) {
+      HasChain = true;
+      const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Parent->getOperator());
+      FoldedChains.push_back(std::make_pair("CPInChain",
+                                            PInfo.getNumResults()));
+    }
+    if (Child->NodeHasProperty(SDNPOutFlag, CGP)) {
+      assert(FoldedFlag.first == "" && FoldedFlag.second == 0 &&
+             "Pattern folded multiple nodes which produce flags?");
+      FoldedFlag = std::make_pair(getValueName(RootName),
+                                  CP->getNumOperands() + (unsigned)HasChain);
+    }
   } else {
     // If this child has a name associated with it, capture it in VarMap. If
     // we already saw this in the pattern, emit code to verify dagness.
@@ -762,37 +781,6 @@ void PatternCodeEmitter::EmitChildMatchCode(TreePatternNode *Child,
         // Handle register references.  Nothing to do here.
       } else if (LeafRec->isSubClassOf("Register")) {
         // Handle register references.
-      } else if (LeafRec->isSubClassOf("ComplexPattern")) {
-        // Handle complex pattern.
-        const ComplexPattern *CP = Child->getComplexPatternInfo(CGP);
-        std::string Fn = CP->getSelectFunc();
-        unsigned NumOps = CP->getNumOperands();
-        for (unsigned i = 0; i < NumOps; ++i) {
-          emitDecl("CPTmp" + RootName + "_" + utostr(i));
-          emitCode("SDValue CPTmp" + RootName + "_" + utostr(i) + ";");
-        }
-        if (CP->hasProperty(SDNPHasChain)) {
-          const SDNodeInfo &PInfo = CGP.getSDNodeInfo(Parent->getOperator());
-          FoldedChains.push_back(std::make_pair("CPInChain",
-                                                PInfo.getNumResults()));
-          ChainName = "Chain" + ChainSuffix;
-          emitDecl("CPInChain");
-          emitDecl(ChainName);
-          emitCode("SDValue CPInChain;");
-          emitCode("SDValue " + ChainName + ";");
-        }
-        
-        std::string Code = Fn + "(N, ";
-        if (CP->hasProperty(SDNPHasChain)) {
-          std::string ParentName(RootName.begin(), RootName.end()-1);
-          Code += getValueName(ParentName) + ", ";
-        }
-        Code += getValueName(RootName);
-        for (unsigned i = 0; i < NumOps; i++)
-          Code += ", CPTmp" + RootName + "_" + utostr(i);
-        if (CP->hasProperty(SDNPHasChain))
-          Code += ", CPInChain, Chain" + ChainSuffix;
-        emitCheck(Code + ")");
       } else if (LeafRec->getName() == "srcvalue") {
         // Place holder for SRCVALUE nodes. Nothing to do here.
       } else if (LeafRec->isSubClassOf("ValueType")) {

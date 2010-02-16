@@ -209,8 +209,8 @@ namespace {
                        SDValue &Scale, SDValue &Index, SDValue &Disp);
     bool SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp);
-    bool SelectScalarSSELoad(SDNode *Op, SDValue Pred,
-                             SDValue N, SDValue &Base, SDValue &Scale,
+    bool SelectScalarSSELoad(SDNode *Root, SDValue N,
+                             SDValue &Base, SDValue &Scale,
                              SDValue &Index, SDValue &Disp,
                              SDValue &Segment,
                              SDValue &InChain, SDValue &OutChain);
@@ -1317,7 +1317,7 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N, SDValue &Base,
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
-bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Op, SDValue Pred,
+bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
                                           SDValue N, SDValue &Base,
                                           SDValue &Scale, SDValue &Index,
                                           SDValue &Disp, SDValue &Segment,
@@ -1327,10 +1327,10 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Op, SDValue Pred,
     InChain = N.getOperand(0).getValue(1);
     if (ISD::isNON_EXTLoad(InChain.getNode()) &&
         InChain.getValue(0).hasOneUse() &&
-        IsProfitableToFold(N, Pred.getNode(), Op) &&
-        IsLegalToFold(N, Pred.getNode(), Op)) {
+        IsProfitableToFold(N.getOperand(0), InChain.getNode(), Root) &&
+        IsLegalToFold(N.getOperand(0), N.getNode(), Root)) {
       LoadSDNode *LD = cast<LoadSDNode>(InChain);
-      if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
+      if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
         return false;
       OutChain = LD->getChain();
       return true;
@@ -1344,10 +1344,12 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Op, SDValue Pred,
       N.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR && 
       N.getOperand(0).getNode()->hasOneUse() &&
       ISD::isNON_EXTLoad(N.getOperand(0).getOperand(0).getNode()) &&
-      N.getOperand(0).getOperand(0).hasOneUse()) {
+      N.getOperand(0).getOperand(0).hasOneUse() &&
+      IsProfitableToFold(N.getOperand(0), N.getNode(), Root) &&
+      IsLegalToFold(N.getOperand(0), N.getNode(), Root)) {
     // Okay, this is a zero extending load.  Fold it.
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
-    if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
+    if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
       return false;
     OutChain = LD->getChain();
     InChain = SDValue(LD, 1);
@@ -1424,7 +1426,6 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDNode *Op, SDValue N,
 bool X86DAGToDAGISel::SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
                                         SDValue &Scale, SDValue &Index,
                                         SDValue &Disp) {
-  assert(Op->getOpcode() == X86ISD::TLSADDR);
   assert(N.getOpcode() == ISD::TargetGlobalTLSAddress);
   const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(N);
   

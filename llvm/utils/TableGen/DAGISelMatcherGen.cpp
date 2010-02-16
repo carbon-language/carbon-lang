@@ -212,7 +212,6 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
     //
     const TreePatternNode *Root = Pattern.getSrcPattern();
     if (N != Root) {                             // Not the root of the pattern.
-
       // If there is a node between the root and this node, then we definitely
       // need to emit the check.
       bool NeedCheck = !Root->hasChild(N);
