@@ -186,7 +186,7 @@ void test11(void *p, char *s) {
 void test12() {
   unsigned char buf[4];
   printf ("%.4s\n", buf); // no-warning
-  printf ("%.4s\n", &buf); // expected-result{{conversion specifies type 'char *' but the argument has type 'unsigned char (*)[4]'}}
+  printf ("%.4s\n", &buf); // expected-warning{{conversion specifies type 'char *' but the argument has type 'unsigned char (*)[4]'}}
 }
 
 typedef struct __aslclient *aslclient;
