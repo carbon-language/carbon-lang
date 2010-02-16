@@ -944,6 +944,13 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{7-4} = 0b0010;
 }
 
+// Secure Monitor Call is a system instruction -- for disassembly only
+def SMC : ABI<0b0001, (outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0110;
+  let Inst{7-4} = 0b0111;
+}
+
 // Supervisor Call (Software Interrupt) -- for disassembly only
 let isCall = 1 in {
 def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
@@ -951,8 +958,8 @@ def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
 }
 
 // Store Return State -- for disassembly only
-def SRSW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$opt),
-                NoItinerary, "srs${addr:submode}\tsp!, $opt",
+def SRSW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
+                NoItinerary, "srs${addr:submode}\tsp!, $mode",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b110; // W = 1
