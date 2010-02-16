@@ -3918,7 +3918,6 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
   for (llvm::SmallVector<ValueDecl*,8>::iterator I = BlockByCopyDecls.begin(),
        E = BlockByCopyDecls.end(); I != E; ++I) {
     S += "  ";
-    std::string Name = (*I)->getNameAsString();
     // Handle nested closure invocation. For example:
     //
     //   void (^myImportedClosure)(void);
@@ -3937,6 +3936,7 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
       S += "__cself->" + (*I)->getNameAsString() + "; // bound by copy\n";
     }
     else {
+      std::string Name = (*I)->getNameAsString();
       (*I)->getType().getAsStringInternal(Name, Context->PrintingPolicy);
       S += Name + " = __cself->" + 
                               (*I)->getNameAsString() + "; // bound by copy\n";
