@@ -822,6 +822,10 @@ private:
   /// LayoutVtable - Layout a vtable and all its secondary vtables.
   void LayoutVtable(BaseSubobject Base);
   
+  /// LayoutSecondaryVtables - Layout the secondary vtables for the given base
+  /// subobject.
+  void LayoutSecondaryVtables(BaseSubobject Base);
+  
 public:
   VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass)
     : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass), 
@@ -1070,36 +1074,49 @@ void VtableBuilder::LayoutVtable(BaseSubobject Base) {
     AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
   }
 
+  // Layout secondary vtables.
+  LayoutSecondaryVtables(Base);
+  
+  // FIXME: Emit vtables for virtual bases here.
+}
+
+void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
+  // Itanium C++ ABI 2.5.2:
+  //   Following the primary virtual table of a derived class are secondary 
+  //   virtual tables for each of its proper base classes, except any primary
+  //   base(s) with which it shares its primary virtual table.
+
+  const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-
-  // Layout secondary vtables.
+  
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
        E = RD->bases_end(); I != E; ++I) {
+    // Ignore virtual bases, we'll emit them later.
+    if (I->isVirtual())
+      continue;
+    
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     // Ignore bases that don't have a vtable.
     if (!BaseDecl->isDynamicClass())
       continue;
-    
-    // Ignore the primary base.
-    if (BaseDecl == PrimaryBase)
-      continue;
 
-    // Ignore virtual bases, we'll emit them later.
-    if (I->isVirtual())
-      continue;
-    
     // Get the base offset of this base.
     uint64_t BaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(BaseDecl);
+    
+    // Don't emit a secondary vtable for a primary base. We might however want 
+    // to emit secondary vtables for other bases of this base.
+    if (BaseDecl == PrimaryBase) {
+      LayoutSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset));
+      continue;
+    }
 
     // Layout this secondary vtable.
     LayoutVtable(BaseSubobject(BaseDecl, BaseOffset));
   }
-  
-  // FIXME: Emit vtables for virtual bases here.
 }
 
 /// dumpLayout - Dump the vtable layout.

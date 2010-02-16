@@ -365,3 +365,33 @@ struct B : virtual A1, virtual A2 {
 void B::f() { }
 
 }
+
+namespace Test10 {
+
+// Test for a bug where we would not emit secondary vtables for bases
+// of a primary base.
+struct A1 { virtual void a1(); };
+struct A2 { virtual void a2(); };
+
+// CHECK:     Vtable for 'Test10::C' (7 entries).
+// CHECK-NEXT:   0 | offset_to_top (0)
+// CHECK-NEXT:   1 | Test10::C RTTI
+// CHECK-NEXT:       -- (Test10::A1, 0) vtable address --
+// CHECK-NEXT:       -- (Test10::B, 0) vtable address --
+// CHECK-NEXT:       -- (Test10::C, 0) vtable address --
+// CHECK-NEXT:   2 | void Test10::A1::a1()
+// CHECK-NEXT:   3 | void Test10::C::f()
+// CHECK-NEXT:   4 | offset_to_top (-8)
+// CHECK-NEXT:   5 | Test10::C RTTI
+// CHECK-NEXT:       -- (Test10::A2, 8) vtable address --
+// CHECK-NEXT:   6 | void Test10::A2::a2()
+struct B : A1, A2 {
+  int b;
+};
+
+struct C : B {
+  virtual void f();
+};
+void C::f() { }
+
+}
