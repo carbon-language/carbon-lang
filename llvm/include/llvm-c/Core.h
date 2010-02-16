@@ -161,7 +161,7 @@ typedef enum {
   LLVMGetElementPtr  = 29,
 
   /* Cast Operators */
-  LLVMTrunk          = 30,
+  LLVMTrunc          = 30,
   LLVMZExt           = 31,
   LLVMSExt           = 32,
   LLVMFPToUI         = 33,
