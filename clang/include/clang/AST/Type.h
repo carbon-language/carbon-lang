@@ -1922,8 +1922,9 @@ public:
 class UnresolvedUsingType : public Type {
   UnresolvedUsingTypenameDecl *Decl;
 
-  UnresolvedUsingType(UnresolvedUsingTypenameDecl *D)
-    : Type(UnresolvedUsing, QualType(), true), Decl(D) {}
+  UnresolvedUsingType(const UnresolvedUsingTypenameDecl *D)
+    : Type(UnresolvedUsing, QualType(), true),
+      Decl(const_cast<UnresolvedUsingTypenameDecl*>(D)) {}
   friend class ASTContext; // ASTContext creates these.
 public:
 
@@ -1950,8 +1951,9 @@ public:
 class TypedefType : public Type {
   TypedefDecl *Decl;
 protected:
-  TypedefType(TypeClass tc, TypedefDecl *D, QualType can)
-    : Type(tc, can, can->isDependentType()), Decl(D) {
+  TypedefType(TypeClass tc, const TypedefDecl *D, QualType can)
+    : Type(tc, can, can->isDependentType()),
+      Decl(const_cast<TypedefDecl*>(D)) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -2100,7 +2102,7 @@ class TagType : public Type {
   friend class TagDecl;
 
 protected:
-  TagType(TypeClass TC, TagDecl *D, QualType can);
+  TagType(TypeClass TC, const TagDecl *D, QualType can);
 
 public:
   TagDecl *getDecl() const { return decl.getPointer(); }
@@ -2124,10 +2126,10 @@ public:
 /// to detect TagType objects of structs/unions/classes.
 class RecordType : public TagType {
 protected:
-  explicit RecordType(RecordDecl *D)
-    : TagType(Record, reinterpret_cast<TagDecl*>(D), QualType()) { }
+  explicit RecordType(const RecordDecl *D)
+    : TagType(Record, reinterpret_cast<const TagDecl*>(D), QualType()) { }
   explicit RecordType(TypeClass TC, RecordDecl *D)
-    : TagType(TC, reinterpret_cast<TagDecl*>(D), QualType()) { }
+    : TagType(TC, reinterpret_cast<const TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
 
@@ -2157,8 +2159,8 @@ public:
 /// EnumType - This is a helper class that allows the use of isa/cast/dyncast
 /// to detect TagType objects of enums.
 class EnumType : public TagType {
-  explicit EnumType(EnumDecl *D)
-    : TagType(Enum, reinterpret_cast<TagDecl*>(D), QualType()) { }
+  explicit EnumType(const EnumDecl *D)
+    : TagType(Enum, reinterpret_cast<const TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
 

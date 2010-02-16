@@ -537,11 +537,11 @@ public:
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.
-  QualType getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl=0);
+  QualType getTypeDeclType(const TypeDecl *Decl, const TypeDecl* PrevDecl=0);
 
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
-  QualType getTypedefType(TypedefDecl *Decl);
+  QualType getTypedefType(const TypedefDecl *Decl);
 
   QualType getSubstTemplateTypeParmType(const TemplateTypeParmType *Replaced,
                                         QualType Replacement);

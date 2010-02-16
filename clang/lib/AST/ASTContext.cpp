@@ -1817,29 +1817,30 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
 
 /// getTypeDeclType - Return the unique reference to the type for the
 /// specified type declaration.
-QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
+QualType ASTContext::getTypeDeclType(const TypeDecl *Decl,
+                                     const TypeDecl* PrevDecl) {
   assert(Decl && "Passed null for Decl param");
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
-  if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
+  if (const TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
     return getTypedefType(Typedef);
   else if (isa<TemplateTypeParmDecl>(Decl)) {
     assert(false && "Template type parameter types are always available.");
-  } else if (ObjCInterfaceDecl *ObjCInterface
+  } else if (const ObjCInterfaceDecl *ObjCInterface
                = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
-  if (RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
+  if (const RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
     if (PrevDecl)
       Decl->TypeForDecl = PrevDecl->TypeForDecl;
     else
       Decl->TypeForDecl = new (*this, TypeAlignment) RecordType(Record);
-  } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
+  } else if (const EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
     if (PrevDecl)
       Decl->TypeForDecl = PrevDecl->TypeForDecl;
     else
       Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Enum);
-  } else if (UnresolvedUsingTypenameDecl *Using =
+  } else if (const UnresolvedUsingTypenameDecl *Using =
                dyn_cast<UnresolvedUsingTypenameDecl>(Decl)) {
     Decl->TypeForDecl = new (*this, TypeAlignment) UnresolvedUsingType(Using);
   } else
@@ -1851,7 +1852,7 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
 
 /// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
-QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
+QualType ASTContext::getTypedefType(const TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
   QualType Canonical = getCanonicalType(Decl->getUnderlyingType());

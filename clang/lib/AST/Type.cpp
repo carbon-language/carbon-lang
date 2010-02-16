@@ -912,8 +912,9 @@ void DependentDecltypeType::Profile(llvm::FoldingSetNodeID &ID,
   E->Profile(ID, Context, true);
 }
 
-TagType::TagType(TypeClass TC, TagDecl *D, QualType can)
-  : Type(TC, can, D->isDependentType()), decl(D, 0) {}
+TagType::TagType(TypeClass TC, const TagDecl *D, QualType can)
+  : Type(TC, can, D->isDependentType()),
+    decl(const_cast<TagDecl*>(D), 0) {}
 
 bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());
