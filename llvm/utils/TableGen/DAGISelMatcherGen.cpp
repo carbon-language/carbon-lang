@@ -186,36 +186,33 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   // If this node has a chain, then the chain is operand #0 is the SDNode, and
   // the child numbers of the node are all offset by one.
   unsigned OpNo = 0;
-  if (N->NodeHasProperty(SDNPHasChain, CGP))
+  if (N->NodeHasProperty(SDNPHasChain, CGP)) {
     OpNo = 1;
 
-  // If this node is not the root and the subtree underneath it produces a
-  // chain, then the result of matching the node is also produce a chain.
-  // Beyond that, this means that we're also folding (at least) the root node
-  // into the node that produce the chain (for example, matching
-  // "(add reg, (load ptr))" as a add_with_memory on X86).  This is problematic,
-  // if the 'reg' node also uses the load (say, its chain).  Graphically:
-  //
-  //         [LD]
-  //         ^  ^
-  //         |  \                              DAG's like cheese.
-  //        /    |
-  //       /    [YY]
-  //       |     ^
-  //      [XX]--/
-  //
-  // It would be invalid to fold XX and LD.  In this case, folding the two
-  // nodes together would induce a cycle in the DAG, making it a cyclic DAG (!).
-  // To prevent this, we emit a dynamic check for legality before allowing this
-  // to be folded.
-  //
-  const TreePatternNode *Root = Pattern.getSrcPattern();
-  if (N != Root &&                             // Not the root of the pattern.
-      N->TreeHasProperty(SDNPHasChain, CGP)) { // Has a chain somewhere in tree.
+    // If this node is not the root and the subtree underneath it produces a
+    // chain, then the result of matching the node is also produce a chain.
+    // Beyond that, this means that we're also folding (at least) the root node
+    // into the node that produce the chain (for example, matching
+    // "(add reg, (load ptr))" as a add_with_memory on X86).  This is
+    // problematic, if the 'reg' node also uses the load (say, its chain).
+    // Graphically:
+    //
+    //         [LD]
+    //         ^  ^
+    //         |  \                              DAG's like cheese.
+    //        /    |
+    //       /    [YY]
+    //       |     ^
+    //      [XX]--/
+    //
+    // It would be invalid to fold XX and LD.  In this case, folding the two
+    // nodes together would induce a cycle in the DAG, making it a 'cyclic DAG'
+    // To prevent this, we emit a dynamic check for legality before allowing
+    // this to be folded.
+    //
+    const TreePatternNode *Root = Pattern.getSrcPattern();
+    if (N != Root) {                             // Not the root of the pattern.
 
-    // If this non-root node produces a chain, we may need to emit a validity
-    // check.
-    if (OpNo != 0) {
       // If there is a node between the root and this node, then we definitely
       // need to emit the check.
       bool NeedCheck = !Root->hasChild(N);
