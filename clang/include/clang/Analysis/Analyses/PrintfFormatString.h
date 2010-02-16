@@ -18,10 +18,38 @@
 #include "clang/AST/CanonicalType.h"
 
 namespace clang {
-    
+
 class ASTContext;
-  
+
 namespace analyze_printf {
+
+class ArgTypeResult {
+public:
+  enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CStrTy,
+              WCStrTy };
+private:
+  const Kind K;
+  QualType T;
+  ArgTypeResult(bool) : K(InvalidTy) {}
+public:
+  ArgTypeResult(Kind k = UnknownTy) : K(k) {}
+  ArgTypeResult(QualType t) : K(SpecificTy), T(t) {}
+  ArgTypeResult(CanQualType t) : K(SpecificTy), T(t) {}
+
+  static ArgTypeResult Invalid() { return ArgTypeResult(true); }
+
+  bool isValid() const { return K != InvalidTy; }
+
+  const QualType *getSpecificType() const {
+    return K == SpecificTy ? &T : 0;
+  }
+
+  bool matchesType(ASTContext &C, QualType argTy) const;
+
+  bool matchesAnyObjCObjectRef() const { return K == ObjCPointerTy; }
+
+  QualType getRepresentativeType(ASTContext &C) const;
+};
 
 class ConversionSpecifier {
 public:
@@ -73,11 +101,11 @@ public:
   const char *getStart() const {
     return Position;
   }
-  
+
   llvm::StringRef getCharacters() const {
     return llvm::StringRef(getStart(), getLength());
   }
-	
+
   bool consumesDataArgument() const {
     switch (kind) {
   	  case PercentArg:
@@ -87,7 +115,7 @@ public:
 		return true;
 	}
   }
-  
+
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
   bool isIntArg() const { return kind >= dArg && kind <= iArg; }
   bool isUIntArg() const { return kind >= oArg && kind <= XArg; }
@@ -98,7 +126,7 @@ public:
     // single characters, but we be flexible.
     return 1;
   }
-  
+
 private:
   const char *Position;
   Kind kind;
@@ -121,19 +149,19 @@ class OptionalAmount {
 public:
   enum HowSpecified { NotSpecified, Constant, Arg };
 
-  OptionalAmount(HowSpecified h, const char *st) 
+  OptionalAmount(HowSpecified h, const char *st)
     : start(st), hs(h), amt(0) {}
 
   OptionalAmount()
     : start(0), hs(NotSpecified), amt(0) {}
-  
-  OptionalAmount(unsigned i, const char *st) 
+
+  OptionalAmount(unsigned i, const char *st)
     : start(st), hs(Constant), amt(i) {}
 
   HowSpecified getHowSpecified() const { return hs; }
   bool hasDataArgument() const { return hs == Arg; }
 
-  unsigned getConstantAmount() const { 
+  unsigned getConstantAmount() const {
     assert(hs == Constant);
     return amt;
   }
@@ -141,33 +169,14 @@ public:
   const char *getStart() const {
     return start;
   }
-  
+
+  ArgTypeResult getArgType(ASTContext &Ctx) const;
+
 private:
   const char *start;
   HowSpecified hs;
   unsigned amt;
 };
-  
-class ArgTypeResult {
-  enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy };
-  const Kind K;
-  QualType T;
-  ArgTypeResult(bool) : K(InvalidTy) {}  
-public:
-  ArgTypeResult() : K(UnknownTy) {}
-  ArgTypeResult(QualType t) : K(SpecificTy), T(t) {}
-  ArgTypeResult(CanQualType t) : K(SpecificTy), T(t) {}
-  
-  static ArgTypeResult Invalid() { return ArgTypeResult(true); }
-  
-  bool isValid() const { return K != InvalidTy; }
-  
-  const QualType *getSpecificType() const { 
-    return K == SpecificTy ? &T : 0;
-  }
-    
-  bool matchesAnyObjCObjectRef() const { return K == ObjCPointerTy; }
-};    
 
 class FormatSpecifier {
   LengthModifier LM;
@@ -184,7 +193,7 @@ public:
   FormatSpecifier() : LM(None),
     IsLeftJustified(0), HasPlusPrefix(0), HasSpacePrefix(0),
     HasAlternativeForm(0), HasLeadingZeroes(0) {}
-  
+
   static FormatSpecifier Parse(const char *beg, const char *end);
 
   // Methods for incrementally constructing the FormatSpecifier.
@@ -209,23 +218,23 @@ public:
   LengthModifier getLengthModifier() const {
     return LM;
   }
-  
+
   const OptionalAmount &getFieldWidth() const {
     return FieldWidth;
   }
-  
+
   void setFieldWidth(const OptionalAmount &Amt) {
     FieldWidth = Amt;
   }
-  
+
   void setPrecision(const OptionalAmount &Amt) {
     Precision = Amt;
   }
-  
+
   const OptionalAmount &getPrecision() const {
     return Precision;
   }
-	
+
   /// \brief Returns the builtin type that a data argument
   /// paired with this format specifier should have.  This method
   /// will return null if the format specifier does not have
@@ -236,7 +245,7 @@ public:
   bool isLeftJustified() const { return (bool) IsLeftJustified; }
   bool hasPlusPrefix() const { return (bool) HasPlusPrefix; }
   bool hasAlternativeForm() const { return (bool) HasAlternativeForm; }
-  bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }  
+  bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }
   bool hasSpacePrefix() const { return (bool) HasSpacePrefix; }
 };
 
@@ -244,24 +253,24 @@ class FormatStringHandler {
 public:
   FormatStringHandler() {}
   virtual ~FormatStringHandler();
-  
+
   virtual void HandleIncompleteFormatSpecifier(const char *startSpecifier,
                                                unsigned specifierLen) {}
 
   virtual void HandleNullChar(const char *nullCharacter) {}
-    
-  virtual void 
+
+  virtual void
     HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
                                      const char *startSpecifier,
                                      unsigned specifierLen) {}
-  
+
   virtual bool HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
                                      const char *startSpecifier,
                                      unsigned specifierLen) {
     return true;
   }
 };
-  
+
 bool ParseFormatString(FormatStringHandler &H,
                        const char *beg, const char *end);
 

@@ -33,7 +33,7 @@ public:
                         const FormatSpecifier &fs)
     : FS(fs), Start(start), Stop(false) {}
 
-  
+
   const char *getStart() const { return Start; }
   bool shouldStop() const { return Stop; }
   bool hasValue() const { return Start != 0; }
@@ -52,16 +52,20 @@ class UpdateOnReturn {
 public:
   UpdateOnReturn(T &valueToUpdate, const T &valueToCopy)
     : ValueToUpdate(valueToUpdate), ValueToCopy(valueToCopy) {}
-  
+
   ~UpdateOnReturn() {
     ValueToUpdate = ValueToCopy;
   }
-};  
+};
+
+//===----------------------------------------------------------------------===//
+// Methods for parsing format strings.
+//===----------------------------------------------------------------------===//
 
 static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
   const char *I = Beg;
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
-  
+
   bool foundDigits = false;
   unsigned accumulator = 0;
 
@@ -75,24 +79,24 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
 
     if (foundDigits)
       return OptionalAmount(accumulator, Beg);
-    
+
     if (c == '*') {
       ++I;
       return OptionalAmount(OptionalAmount::Arg, Beg);
     }
-    
+
     break;
   }
-  
-  return OptionalAmount();  
+
+  return OptionalAmount();
 }
 
 static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
                                                   const char *&Beg,
                                                   const char *E) {
-  
+
   using namespace clang::analyze_printf;
-  
+
   const char *I = Beg;
   const char *Start = 0;
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
@@ -110,19 +114,19 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
       break;
     }
   }
-  
+
   // No format specifier found?
   if (!Start)
     return false;
-  
+
   if (I == E) {
     // No more characters left?
     H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
-      
+
   FormatSpecifier FS;
-  
+
   // Look for flags (if any).
   bool hasMore = true;
   for ( ; I != E; ++I) {
@@ -136,31 +140,31 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     }
     if (!hasMore)
       break;
-  }      
+  }
 
   if (I == E) {
     // No more characters left?
     H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
   }
-  
+
   // Look for the field width (if any).
   FS.setFieldWidth(ParseAmount(I, E));
-      
+
   if (I == E) {
     // No more characters left?
     H.HandleIncompleteFormatSpecifier(Start, E - Start);
     return true;
-  }  
-  
-  // Look for the precision (if any).  
+  }
+
+  // Look for the precision (if any).
   if (*I == '.') {
     ++I;
     if (I == E) {
       H.HandleIncompleteFormatSpecifier(Start, E - Start);
       return true;
     }
-    
+
     FS.setPrecision(ParseAmount(I, E));
 
     if (I == E) {
@@ -177,7 +181,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
       break;
     case 'h':
       ++I;
-      lm = (I != E && *I == 'h') ? ++I, AsChar : AsShort;      
+      lm = (I != E && *I == 'h') ? ++I, AsChar : AsShort;
       break;
     case 'l':
       ++I;
@@ -190,7 +194,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     case 'q': lm = AsLongLong;   ++I; break;
   }
   FS.setLengthModifier(lm);
-  
+
   if (I == E) {
     // No more characters left?
     H.HandleIncompleteFormatSpecifier(Start, E - Start);
@@ -202,7 +206,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     H.HandleNullChar(I);
     return true;
   }
-  
+
   // Finally, look for the conversion specifier.
   const char *conversionPosition = I++;
   ConversionSpecifier::Kind k = ConversionSpecifier::InvalidSpecifier;
@@ -228,7 +232,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     case 's': k = ConversionSpecifier::CStrArg;      break;
     case 'p': k = ConversionSpecifier::VoidPtrArg;   break;
     case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
-    case '%': k = ConversionSpecifier::PercentArg;   break;      
+    case '%': k = ConversionSpecifier::PercentArg;   break;
     // Objective-C.
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
     // Glibc specific.
@@ -260,12 +264,115 @@ bool clang::analyze_printf::ParseFormatString(FormatStringHandler &H,
     if (!H.HandleFormatSpecifier(FSR.getValue(), FSR.getStart(),
                                  I - FSR.getStart()))
       return true;
-  }  
-  assert(I == E && "Format string not exhausted");      
+  }
+  assert(I == E && "Format string not exhausted");
   return false;
 }
 
 FormatStringHandler::~FormatStringHandler() {}
+
+//===----------------------------------------------------------------------===//
+// Methods on ArgTypeResult.
+//===----------------------------------------------------------------------===//
+
+bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
+  assert(isValid());
+
+  if (K == UnknownTy)
+    return true;
+
+  if (K == SpecificTy) {
+    argTy = C.getCanonicalType(argTy).getUnqualifiedType();
+
+    if (T == argTy)
+      return true;
+
+    if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
+      switch (BT->getKind()) {
+        default:
+          break;
+        case BuiltinType::Char_S:
+        case BuiltinType::SChar:
+          return T == C.UnsignedCharTy;
+        case BuiltinType::Char_U:
+        case BuiltinType::UChar:
+          return T == C.SignedCharTy;
+        case BuiltinType::Short:
+          return T == C.UnsignedShortTy;
+        case BuiltinType::UShort:
+          return T == C.ShortTy;
+        case BuiltinType::Int:
+          return T == C.UnsignedIntTy;
+        case BuiltinType::UInt:
+          return T == C.IntTy;
+        case BuiltinType::Long:
+          return T == C.UnsignedLongTy;
+        case BuiltinType::ULong:
+          return T == C.LongTy;
+        case BuiltinType::LongLong:
+          return T == C.UnsignedLongLongTy;
+        case BuiltinType::ULongLong:
+          return T == C.LongLongTy;
+      }
+
+    return false;
+  }
+
+  if (K == CStrTy) {
+    const PointerType *PT = argTy->getAs<PointerType>();
+    if (!PT)
+      return false;
+
+    QualType pointeeTy = PT->getPointeeType();
+
+    if (const BuiltinType *BT = pointeeTy->getAs<BuiltinType>())
+      switch (BT->getKind()) {
+        case BuiltinType::Void:
+        case BuiltinType::Char_U:
+        case BuiltinType::UChar:
+        case BuiltinType::Char_S:
+        case BuiltinType::SChar:
+          return true;
+        default:
+          break;
+      }
+
+    return false;
+  }
+
+  if (K == WCStrTy) {
+    const PointerType *PT = argTy->getAs<PointerType>();
+    if (!PT)
+      return false;
+
+    QualType pointeeTy = PT->getPointeeType();
+    return pointeeTy == C.WCharTy;
+  }
+
+  return false;
+}
+
+QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
+  assert(isValid());
+  if (K == SpecificTy)
+    return T;
+  if (K == CStrTy)
+    return C.getPointerType(C.CharTy);
+  if (K == WCStrTy)
+    return C.getPointerType(C.WCharTy);
+  if (K == ObjCPointerTy)
+    return C.ObjCBuiltinIdTy;
+
+  return QualType();
+}
+
+//===----------------------------------------------------------------------===//
+// Methods on OptionalAmount.
+//===----------------------------------------------------------------------===//
+
+ArgTypeResult OptionalAmount::getArgType(ASTContext &Ctx) const {
+  return Ctx.IntTy;
+}
 
 //===----------------------------------------------------------------------===//
 // Methods on FormatSpecifier.
@@ -274,10 +381,10 @@ FormatStringHandler::~FormatStringHandler() {}
 ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
   if (!CS.consumesDataArgument())
     return ArgTypeResult::Invalid();
-  
+
   if (CS.isIntArg())
     switch (LM) {
-      case AsLongDouble: 
+      case AsLongDouble:
         return ArgTypeResult::Invalid();
       case None: return Ctx.IntTy;
       case AsChar: return Ctx.SignedCharTy;
@@ -293,7 +400,7 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
 
   if (CS.isUIntArg())
     switch (LM) {
-      case AsLongDouble: 
+      case AsLongDouble:
         return ArgTypeResult::Invalid();
       case None: return Ctx.UnsignedIntTy;
       case AsChar: return Ctx.UnsignedCharTy;
@@ -303,7 +410,7 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
       case AsIntMax:
         // FIXME: Return unknown for now.
         return ArgTypeResult();
-      case AsSizeT: 
+      case AsSizeT:
         // FIXME: How to get the corresponding unsigned
         // version of size_t?
         return ArgTypeResult();
@@ -312,12 +419,16 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
         // version of ptrdiff_t?
         return ArgTypeResult();
     }
-  
+
   if (CS.isDoubleArg()) {
     if (LM == AsLongDouble)
       return Ctx.LongDoubleTy;
     return Ctx.DoubleTy;
   }
+
+  if (CS.getKind() == ConversionSpecifier::CStrArg)
+    return ArgTypeResult(LM == AsWideChar ? ArgTypeResult::WCStrTy
+                                          : ArgTypeResult::CStrTy);
 
   // FIXME: Handle other cases.
   return ArgTypeResult();

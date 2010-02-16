@@ -183,6 +183,12 @@ void test11(void *p, char *s) {
   printf("%0s", p); // expected-warning{{flag '0' results in undefined behavior in 's' conversion specifier}}
 }
 
+void test12() {
+  unsigned char buf[4];
+  printf ("%.4s\n", buf); // no-warning
+  printf ("%.4s\n", &buf); // expected-result{{conversion specifies type 'char *' but the argument has type 'unsigned char (*)[4]'}}
+}
+
 typedef struct __aslclient *aslclient;
 typedef struct __aslmsg *aslmsg;
 int asl_log(aslclient asl, aslmsg msg, int level, const char *format, ...) __attribute__((__format__ (__printf__, 4, 5)));
