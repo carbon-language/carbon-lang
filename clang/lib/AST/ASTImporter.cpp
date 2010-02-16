@@ -92,7 +92,8 @@ namespace {
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
-
+    Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+                            
     // Importing statements
     Stmt *VisitStmt(Stmt *S);
 
@@ -1961,6 +1962,101 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
                                             T, TInfo, D->getStorageClass(),
                                             /*FIXME: Default argument*/ 0);
   return Importer.Imported(D, ToParm);
+}
+
+Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+  // Import the major distinguishing characteristics of an @interface.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+
+  ObjCInterfaceDecl *MergeWithIface = 0;
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (!(*Lookup.first)->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+      continue;
+    
+    if ((MergeWithIface = dyn_cast<ObjCInterfaceDecl>(*Lookup.first)))
+      break;
+  }
+  
+  ObjCInterfaceDecl *ToIface = MergeWithIface;
+  if (!ToIface || ToIface->isForwardDecl()) {
+    if (!ToIface) {
+      ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(),
+                                          DC, Loc,
+                                          Name.getAsIdentifierInfo(),
+                                          Importer.Import(D->getClassLoc()),
+                                          D->isForwardDecl(),
+                                          D->isImplicitInterfaceDecl());
+      ToIface->setLexicalDeclContext(LexicalDC);
+      LexicalDC->addDecl(ToIface);
+    }
+    Importer.Imported(D, ToIface);
+
+    // Import superclass
+    // FIXME: If we're merging, make sure that both decls have the same 
+    // superclass.
+    if (D->getSuperClass()) {
+      ObjCInterfaceDecl *Super
+        = cast_or_null<ObjCInterfaceDecl>(Importer.Import(D->getSuperClass()));
+      if (!Super)
+        return 0;
+      
+      ToIface->setSuperClass(Super);
+      ToIface->setSuperClassLoc(Importer.Import(D->getSuperClassLoc()));
+    }
+    
+    // Import protocols
+    llvm::SmallVector<ObjCProtocolDecl *, 4> Protocols;
+    llvm::SmallVector<SourceLocation, 4> ProtocolLocs;
+    ObjCInterfaceDecl::protocol_loc_iterator 
+      FromProtoLoc = D->protocol_loc_begin();
+    for (ObjCInterfaceDecl::protocol_iterator FromProto = D->protocol_begin(),
+                                           FromProtoEnd = D->protocol_end();
+       FromProto != FromProtoEnd;
+       ++FromProto, ++FromProtoLoc) {
+      ObjCProtocolDecl *ToProto
+        = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
+      if (!ToProto)
+        return 0;
+      Protocols.push_back(ToProto);
+      ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
+    }
+    
+    // FIXME: If we're merging, make sure that the protocol list is the same.
+    ToIface->setProtocolList(Protocols.data(), Protocols.size(),
+                             ProtocolLocs.data(), Importer.getToContext());
+    
+    // FIXME: Import categories
+    
+    // Import @end range
+    ToIface->setAtEndRange(Importer.Import(D->getAtEndRange()));
+  } else {
+    Importer.Imported(D, ToIface);
+  }
+  
+  // Import all of the members of this class.
+  for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
+                               FromMemEnd = D->decls_end();
+       FromMem != FromMemEnd;
+       ++FromMem)
+    Importer.Import(*FromMem);
+  
+  // If we have an @implementation, import it as well.
+  if (D->getImplementation()) {
+    ObjCImplementationDecl *Impl
+      = cast<ObjCImplementationDecl>(Importer.Import(D->getImplementation()));
+    if (!Impl)
+      return 0;
+    
+    ToIface->setImplementation(Impl);
+  }
+  
+  return 0;
 }
 
 //----------------------------------------------------------------------------
