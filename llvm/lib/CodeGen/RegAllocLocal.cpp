@@ -490,12 +490,10 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   // If the virtual register is already available, just update the instruction
   // and return.
   if (unsigned PR = getVirt2PhysRegMapSlot(VirtReg)) {
+    MarkPhysRegRecentlyUsed(PR);       // Already have this value available!
     MI->getOperand(OpNum).setReg(PR);  // Assign the input register
-    if (!MI->isDebugValue()) {
-      // Do not do these for DBG_VALUE as they can affect codegen.
-      MarkPhysRegRecentlyUsed(PR);       // Already have this value available!
+    if (!MI->isDebugValue())
       getVirtRegLastUse(VirtReg) = std::make_pair(MI, OpNum);
-    }
     return MI;
   }
 
@@ -696,13 +694,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
     bool usedOutsideBlock = isPhysReg ? false :   
           UsedInMultipleBlocks.test(MO.getReg() -  
                                     TargetRegisterInfo::FirstVirtualRegister);
-    if (!isPhysReg && !usedOutsideBlock) {
-      // DBG_VALUE complicates this:  if the only refs of a register outside
-      // this block are DBG_VALUE, we can't keep the reg live just for that,
-      // as it will cause the reg to be spilled at the end of this block when
-      // it wouldn't have been otherwise.  Nullify the DBG_VALUEs when that
-      // happens.
-      bool UsedByDebugValueOnly = false;
+    if (!isPhysReg && !usedOutsideBlock)
       for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
            UE = MRI.reg_end(); UI != UE; ++UI)
         // Two cases:
@@ -710,26 +702,12 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
         // - used in the same block before it is defined (loop)
         if (UI->getParent() != &MBB ||
             (MO.isDef() && UI.getOperand().isUse() && precedes(&*UI, MI))) {
-          if (UI->isDebugValue()) {
-            UsedByDebugValueOnly = true;
-            continue;
-          }
-          // A non-DBG_VALUE use means we can leave DBG_VALUE uses alone.
           UsedInMultipleBlocks.set(MO.getReg() - 
                                    TargetRegisterInfo::FirstVirtualRegister);
           usedOutsideBlock = true;
-          UsedByDebugValueOnly = false;
           break;
         }
-      if (UsedByDebugValueOnly)
-        for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
-             UE = MRI.reg_end(); UI != UE; ++UI)
-          if (UI->isDebugValue() &&
-              (UI->getParent() != &MBB ||
-               (MO.isDef() && precedes(&*UI, MI))))
-            UI.getOperand().setReg(0U);
-    }
-  
+    
     // Physical registers and those that are not live-out of the block
     // are killed/dead at their last use/def within this block.
     if (isPhysReg || !usedOutsideBlock) {
