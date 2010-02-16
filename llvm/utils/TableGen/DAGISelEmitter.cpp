@@ -270,14 +270,14 @@ void DAGISelEmitter::EmitPredicateFunctions(raw_ostream &OS) {
     
     if (P->getOnlyTree()->isLeaf())
       OS << "inline bool Predicate_" << PatFragRecord->getName()
-      << "(SDNode *N) {\n";
+      << "(SDNode *N) const {\n";
     else {
       std::string ClassName =
         CGP.getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
       OS << "inline bool Predicate_" << PatFragRecord->getName()
-         << "(SDNode *" << C2 << ") {\n";
+         << "(SDNode *" << C2 << ") const {\n";
       if (ClassName != "SDNode")
         OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
     }
