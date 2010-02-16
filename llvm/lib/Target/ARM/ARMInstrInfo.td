@@ -236,6 +236,21 @@ def imm0_65535 : PatLeaf<(i32 imm), [{
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
 class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
 
+/// adde and sube predicates - True based on whether the carry flag output
+/// will be needed or not.
+def adde_dead_carry :
+  PatFrag<(ops node:$LHS, node:$RHS), (adde node:$LHS, node:$RHS),
+  [{return !N->hasAnyUseOfValue(1);}]>;
+def sube_dead_carry :
+  PatFrag<(ops node:$LHS, node:$RHS), (sube node:$LHS, node:$RHS),
+  [{return !N->hasAnyUseOfValue(1);}]>;
+def adde_live_carry :
+  PatFrag<(ops node:$LHS, node:$RHS), (adde node:$LHS, node:$RHS),
+  [{return N->hasAnyUseOfValue(1);}]>;
+def sube_live_carry :
+  PatFrag<(ops node:$LHS, node:$RHS), (sube node:$LHS, node:$RHS),
+  [{return N->hasAnyUseOfValue(1);}]>;
+
 //===----------------------------------------------------------------------===//
 // Operand Definitions.
 //
@@ -524,13 +539,13 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                 DPFrm, IIC_iALUi, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
-               Requires<[IsARM, CarryDefIsUnused]> {
+               Requires<[IsARM]> {
     let Inst{25} = 1;
   }
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, IIC_iALUr, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
-               Requires<[IsARM, CarryDefIsUnused]> {
+               Requires<[IsARM]> {
     let isCommutable = Commutable;
     let Inst{11-4} = 0b00000000;
     let Inst{25} = 0;
@@ -538,7 +553,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, IIC_iALUsr, opc, "\t$dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
-               Requires<[IsARM, CarryDefIsUnused]> {
+               Requires<[IsARM]> {
     let Inst{25} = 0;
   }
 }
@@ -549,7 +564,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
   def Sri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                 DPFrm, IIC_iALUi, !strconcat(opc, "\t$dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
-               Requires<[IsARM, CarryDefIsUsed]> {
+               Requires<[IsARM]> {
     let Defs = [CPSR];
     let Inst{20} = 1;
     let Inst{25} = 1;
@@ -557,7 +572,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
   def Srr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, IIC_iALUr, !strconcat(opc, "\t$dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
-               Requires<[IsARM, CarryDefIsUsed]> {
+               Requires<[IsARM]> {
     let Defs = [CPSR];
     let Inst{11-4} = 0b00000000;
     let Inst{20} = 1;
@@ -566,7 +581,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
   def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, IIC_iALUsr, !strconcat(opc, "\t$dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
-               Requires<[IsARM, CarryDefIsUsed]> {
+               Requires<[IsARM]> {
     let Defs = [CPSR];
     let Inst{20} = 1;
     let Inst{25} = 0;
@@ -1290,13 +1305,13 @@ defm SUBS : AI1_bin_s_irs<0b0010, "subs",
                           BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 defm ADC : AI1_adde_sube_irs<0b0101, "adc",
-                             BinOpFrag<(adde node:$LHS, node:$RHS)>, 1>;
+                          BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
 defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
-                             BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
 defm ADCS : AI1_adde_sube_s_irs<0b0101, "adcs",
-                             BinOpFrag<(adde node:$LHS, node:$RHS)>, 1>;
+                          BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
 defm SBCS : AI1_adde_sube_s_irs<0b0110, "sbcs",
-                             BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(sube_live_carry node:$LHS, node:$RHS) >>;
 
 // These don't define reg/reg forms, because they are handled above.
 def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
@@ -1330,14 +1345,14 @@ def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
 let Uses = [CPSR] in {
 def RSCri : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                  DPFrm, IIC_iALUi, "rsc", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>,
-                 Requires<[IsARM, CarryDefIsUnused]> {
+                 [(set GPR:$dst, (sube_dead_carry so_imm:$b, GPR:$a))]>,
+                 Requires<[IsARM]> {
     let Inst{25} = 1;
 }
 def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                  DPSoRegFrm, IIC_iALUsr, "rsc", "\t$dst, $a, $b",
-                 [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>,
-                 Requires<[IsARM, CarryDefIsUnused]> {
+                 [(set GPR:$dst, (sube_dead_carry so_reg:$b, GPR:$a))]>,
+                 Requires<[IsARM]> {
     let Inst{25} = 0;
 }
 }
@@ -1346,15 +1361,15 @@ def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
 let Defs = [CPSR], Uses = [CPSR] in {
 def RSCSri : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                   DPFrm, IIC_iALUi, "rscs\t$dst, $a, $b",
-                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>,
-                  Requires<[IsARM, CarryDefIsUnused]> {
+                  [(set GPR:$dst, (sube_dead_carry so_imm:$b, GPR:$a))]>,
+                  Requires<[IsARM]> {
     let Inst{20} = 1;
     let Inst{25} = 1;
 }
 def RSCSrs : AXI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                   DPSoRegFrm, IIC_iALUsr, "rscs\t$dst, $a, $b",
-                  [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>,
-                  Requires<[IsARM, CarryDefIsUnused]> {
+                  [(set GPR:$dst, (sube_dead_carry so_reg:$b, GPR:$a))]>,
+                  Requires<[IsARM]> {
     let Inst{20} = 1;
     let Inst{25} = 0;
 }
