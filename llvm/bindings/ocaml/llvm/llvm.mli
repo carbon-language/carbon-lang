@@ -1420,13 +1420,13 @@ external build_aggregate_ret : llvalue array -> llbuilder -> llvalue
                              = "llvm_build_aggregate_ret"
 
 (** [build_br bb b] creates a
-    [b %bb]
+    [br %bb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateBr]. *)
 external build_br : llbasicblock -> llbuilder -> llvalue = "llvm_build_br"
 
 (** [build_cond_br cond tbb fbb b] creates a
-    [b %cond, %tbb, %fbb]
+    [br %cond, %tbb, %fbb]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateCondBr]. *)
 external build_cond_br : llvalue -> llbasicblock -> llbasicblock -> llbuilder ->
@@ -1476,7 +1476,7 @@ external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
 external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_add"
 
-(** [build_nswadd x y name b] creates a
+(** [build_nsw_add x y name b] creates a
     [%name = nsw add %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateNSWAdd]. *)
