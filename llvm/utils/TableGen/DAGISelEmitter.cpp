@@ -568,9 +568,12 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
       // Check if it's profitable to fold the node. e.g. Check for multiple uses
       // of actual result?
       std::string ParentName(RootName.begin(), RootName.end()-1);
-      emitCheck("IsProfitableToFold(" + getValueName(RootName) +
-                ", " + getNodeName(ParentName) + ", N)");
-      if (NodeHasChain) {
+      if (!NodeHasChain) {
+        // If this is just an interior node, check to see if it has a single
+        // use.  If the node has multiple uses and the pattern has a load as
+        // an operand, then we can't fold the load.
+        emitCheck(getValueName(RootName) + ".hasOneUse()");
+      } else {
         // If the immediate use can somehow reach this node through another
         // path, then can't fold it either or it will create a cycle.
         // e.g. In the following diagram, XX can reach ld through YY. If
@@ -588,6 +591,8 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
         // We know we need the check if N's parent is not the root.
         bool NeedCheck = P != Pattern;
         if (!NeedCheck) {
+          // If the parent is the root and the node has more than one operand,
+          // we need to check.
           const SDNodeInfo &PInfo = CGP.getSDNodeInfo(P->getOperator());
           NeedCheck =
           P->getOperator() == CGP.get_intrinsic_void_sdnode() ||
@@ -600,8 +605,13 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
         }
         
         if (NeedCheck) {
+          emitCheck("IsProfitableToFold(" + getValueName(RootName) +
+                    ", " + getNodeName(ParentName) + ", N)");
           emitCheck("IsLegalToFold(" + getValueName(RootName) +
                     ", " + getNodeName(ParentName) + ", N)");
+        } else {
+          // Otherwise, just verify that the node only has a single use.
+          emitCheck(getValueName(RootName) + ".hasOneUse()");
         }
       }
     }
