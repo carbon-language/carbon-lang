@@ -1,6 +1,6 @@
 ; RUN: llc < %s | grep {subfc r3,r5,r4}
-; RUN: llc < %s | grep {subfze r4,r2}
-; RUN: llc < %s -regalloc=local | grep {subfc r2,r5,r4}
+; RUN: llc < %s | grep {subfze r4,r6}
+; RUN: llc < %s -regalloc=local | grep {subfc r6,r5,r4}
 ; RUN: llc < %s -regalloc=local | grep {subfze r3,r3}
 ; The first argument of subfc must not be the same as any other register.
 
