@@ -522,7 +522,11 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
       JCE->emitInt64(((intptr_t)Jit.getPointerToGlobal(Personality)));
     }
 
-    JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    // LSDA encoding: This must match the encoding used in EmitEHFrame ()
+    if (PointerSize == 4)
+      JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    else
+      JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata8);
     JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
   } else {
     JCE->emitULEB128Bytes(1);
