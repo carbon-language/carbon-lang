@@ -41,7 +41,7 @@ static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
 static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
                                       CXTranslationUnit *TU) {
   
-  *TU = clang_createTranslationUnit(Idx, file, PrintDiagnosticCallback, 0);
+  *TU = clang_createTranslationUnit(Idx, file, PrintDiagnosticCallback, stderr);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
     return 0;
