@@ -382,11 +382,13 @@ private:
   /// CXXThisDecl - When generating code for a C++ member function,
   /// this will hold the implicit 'this' declaration.
   ImplicitParamDecl *CXXThisDecl;
+  llvm::Value *CXXThisValue;
 
   /// CXXVTTDecl - When generating code for a base object constructor or
   /// base object destructor with virtual bases, this will hold the implicit
   /// VTT parameter.
   ImplicitParamDecl *CXXVTTDecl;
+  llvm::Value *CXXVTTValue;
   
   /// CXXLiveTemporaryInfo - Holds information about a live C++ temporary.
   struct CXXLiveTemporaryInfo {
@@ -745,11 +747,17 @@ public:
 
   /// LoadCXXThis - Load the value of 'this'. This function is only valid while
   /// generating code for an C++ member function.
-  llvm::Value *LoadCXXThis();
+  llvm::Value *LoadCXXThis() {
+    assert(CXXThisValue && "no 'this' value for this function");
+    return CXXThisValue;
+  }
 
   /// LoadCXXVTT - Load the VTT parameter to base constructors/destructors have
   /// virtual bases.
-  llvm::Value *LoadCXXVTT();
+  llvm::Value *LoadCXXVTT() {
+    assert(CXXVTTValue && "no VTT value for this function");
+    return CXXVTTValue;
+  }
 
   /// GetAddressOfBaseOfCompleteClass - Convert the given pointer to a
   /// complete class down to one of its virtual bases.

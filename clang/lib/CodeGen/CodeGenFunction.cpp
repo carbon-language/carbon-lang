@@ -30,7 +30,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
     Builder(cgm.getModule().getContext()),
     DebugInfo(0), IndirectBranch(0),
     SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0),
-    CXXThisDecl(0), CXXVTTDecl(0),
+    CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
     ConditionalBranchLevel(0), TerminateHandler(0), TrapBB(0),
     UniqueAggrDestructorCount(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);
@@ -225,6 +225,11 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   EmitStartEHSpec(CurCodeDecl);
   EmitFunctionProlog(*CurFnInfo, CurFn, Args);
 
+  if (CXXThisDecl)
+    CXXThisValue = Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
+  if (CXXVTTDecl)
+    CXXVTTValue = Builder.CreateLoad(LocalDeclMap[CXXVTTDecl], "vtt");
+
   // If any of the arguments have a variably modified type, make sure to
   // emit the type size.
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
@@ -252,7 +257,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
       // Create the implicit 'this' decl.
       // FIXME: I'm not entirely sure I like using a fake decl just for code
       // generation. Maybe we can come up with a better way?
-      CXXThisDecl = ImplicitParamDecl::Create(getContext(), 0, SourceLocation(),
+      CXXThisDecl = ImplicitParamDecl::Create(getContext(), 0,
+                                              FD->getLocation(),
                                               &getContext().Idents.get("this"),
                                               MD->getThisType(getContext()));
       Args.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
@@ -262,7 +268,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
         // FIXME: The comment about using a fake decl above applies here too.
         QualType T = getContext().getPointerType(getContext().VoidPtrTy);
         CXXVTTDecl = 
-          ImplicitParamDecl::Create(getContext(), 0, SourceLocation(),
+          ImplicitParamDecl::Create(getContext(), 0, FD->getLocation(),
                                     &getContext().Idents.get("vtt"), T);
         Args.push_back(std::make_pair(CXXVTTDecl, CXXVTTDecl->getType()));
       }

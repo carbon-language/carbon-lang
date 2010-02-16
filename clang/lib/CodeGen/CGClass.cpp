@@ -1405,11 +1405,3 @@ void CodeGenFunction::InitializeVtablePtrsRecursive(
   // Store address point
   Builder.CreateStore(VtableAddressPoint, VtableField);
 }
-
-llvm::Value *CodeGenFunction::LoadCXXVTT() {
-  assert((isa<CXXConstructorDecl>(CurFuncDecl) ||
-          isa<CXXDestructorDecl>(CurFuncDecl)) &&
-         "Must be in a C++ ctor or dtor to load the vtt parameter");
-
-  return Builder.CreateLoad(LocalDeclMap[CXXVTTDecl], "vtt");
-}

@@ -28,18 +28,6 @@ using namespace CodeGen;
 
 
 
-llvm::Value *CodeGenFunction::LoadCXXThis() {
-  assert(isa<CXXMethodDecl>(CurFuncDecl) &&
-         "Must be in a C++ member function decl to load 'this'");
-  assert(cast<CXXMethodDecl>(CurFuncDecl)->isInstance() &&
-         "Must be in a C++ member function decl to load 'this'");
-
-  // FIXME: What if we're inside a block?
-  // ans: See how CodeGenFunction::LoadObjCSelf() uses
-  // CodeGenFunction::BlockForwardSelf() for how to do this.
-  return Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
-}
-
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
   EmitGlobal(GlobalDecl(D, Ctor_Complete));
   EmitGlobal(GlobalDecl(D, Ctor_Base));
