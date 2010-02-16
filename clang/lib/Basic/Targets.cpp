@@ -436,11 +436,13 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   // Target identification.
   Builder.defineMacro("__ppc__");
   Builder.defineMacro("_ARCH_PPC");
+  Builder.defineMacro("__powerpc__");
   Builder.defineMacro("__POWERPC__");
   if (PointerWidth == 64) {
     Builder.defineMacro("_ARCH_PPC64");
     Builder.defineMacro("_LP64");
     Builder.defineMacro("__LP64__");
+    Builder.defineMacro("__powerpc64__");
     Builder.defineMacro("__ppc64__");
   } else {
     Builder.defineMacro("__ppc__");
@@ -571,9 +573,12 @@ void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 namespace {
 class PPC32TargetInfo : public PPCTargetInfo {
 public:
-  PPC32TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {
+  PPC32TargetInfo(const std::string &triple) : PPCTargetInfo(triple) {
     DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32";
+
+    if (getTriple().getOS() == llvm::Triple::FreeBSD)
+        this->SizeType = TargetInfo::UnsignedInt;
   }
 };
 } // end anonymous namespace.
@@ -2096,6 +2101,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
   case llvm::Triple::ppc:
     if (os == llvm::Triple::Darwin)
       return new DarwinTargetInfo<PPCTargetInfo>(T);
+    else if (os == llvm::Triple::FreeBSD)
+      return new FreeBSDTargetInfo<PPC32TargetInfo>(T);
     return new PPC32TargetInfo(T);
 
   case llvm::Triple::ppc64:
@@ -2103,6 +2110,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new DarwinTargetInfo<PPC64TargetInfo>(T);
     else if (os == llvm::Triple::Lv2)
       return new PS3PPUTargetInfo<PPC64TargetInfo>(T);
+    else if (os == llvm::Triple::FreeBSD)
+      return new FreeBSDTargetInfo<PPC64TargetInfo>(T);
     return new PPC64TargetInfo(T);
 
   case llvm::Triple::sparc:
