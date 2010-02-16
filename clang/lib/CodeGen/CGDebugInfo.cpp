@@ -1351,10 +1351,13 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start.".
 void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
+  SourceManager &SM = CGM.getContext().getSourceManager();
+  PresumedLoc PLoc = SM.getPresumedLoc(CurLoc);
   llvm::DIDescriptor D =
     DebugFactory.CreateLexicalBlock(RegionStack.empty() ? 
                                     llvm::DIDescriptor() : 
-                                    llvm::DIDescriptor(RegionStack.back()));
+                                    llvm::DIDescriptor(RegionStack.back()),
+                                    PLoc.getLine(), PLoc.getColumn());
   RegionStack.push_back(D.getNode());
 }
 
