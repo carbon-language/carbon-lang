@@ -523,7 +523,8 @@ multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                Requires<[IsARM, HasV6]> {
     let Inst{11-10} = 0b00;
   }
-  def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS, i32imm:$rot),
+  def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS,
+                                              i32imm:$rot),
                   IIC_iALUsi, opc, "\t$dst, $LHS, $RHS, ror $rot",
                   [(set GPR:$dst, (opnode GPR:$LHS,
                                           (rotr GPR:$RHS, rot_imm:$rot)))]>,
@@ -771,7 +772,7 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
                          "(${label}_${id}-(",
                                   "${:private}PCRELL${:uid}+8))\n"),
                        !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                  "add$p\t$dst, pc, #${:private}PCRELV${:uid}")),
+                                 "add$p\t$dst, pc, #${:private}PCRELV${:uid}")),
                    []> {
     let Inst{25} = 1;
 }
@@ -1066,8 +1067,8 @@ def STR  : AI2stw<(outs), (ins GPR:$src, addrmode2:$addr), StFrm, IIC_iStorer,
                [(store GPR:$src, addrmode2:$addr)]>;
 
 // Stores with truncate
-def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm, IIC_iStorer,
-               "strh", "\t$src, $addr",
+def STRH : AI3sth<(outs), (ins GPR:$src, addrmode3:$addr), StMiscFrm,
+               IIC_iStorer, "strh", "\t$src, $addr",
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
 def STRB : AI2stb<(outs), (ins GPR:$src, addrmode2:$addr), StFrm, IIC_iStorer,
@@ -1596,7 +1597,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
   def BT : AMulxyI<0b0001000, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
               IIC_iMAC16, !strconcat(opc, "bt"), "\t$dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
-                                                     (sra GPR:$b, (i32 16)))))]>,
+                                                    (sra GPR:$b, (i32 16)))))]>,
            Requires<[IsARM, HasV5TE]> {
              let Inst{5} = 0;
              let Inst{6} = 1;
@@ -2101,7 +2102,7 @@ def : ARMPat<(add GPR:$LHS, so_neg_imm2part:$RHS),
 // FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
 def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVi,
-                    "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
+                   "movw", "\t$dst, ${src:lo16}\n\tmovt${p}\t$dst, ${src:hi16}",
                      [(set GPR:$dst, (i32 imm:$src))]>,
                Requires<[IsARM, HasV6T2]>;
 

@@ -371,7 +371,8 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
 /// for a binary operation that produces a value and use the carry
 /// bit. It's not predicable.
 let Uses = [CPSR] in {
-multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode, bit Commutable = 0> {
+multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
+                             bit Commutable = 0> {
    // shifted imm
    def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
                  opc, "\t$dst, $lhs, $rhs",
@@ -411,7 +412,8 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode, bit Comm
 
 // Carry setting variants
 let Defs = [CPSR] in {
-multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode, bit Commutable = 0> {
+multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
+                               bit Commutable = 0> {
    // shifted imm
    def Sri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
                   opc, "\t$dst, $lhs, $rhs",
@@ -928,9 +930,9 @@ def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$dst, GPR:$base_wb),
 }
 
 // Store
-defm t2STR   : T2I_st<0b10, "str",  BinOpFrag<(store node:$LHS, node:$RHS)>>;
-defm t2STRB  : T2I_st<0b00, "strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
-defm t2STRH  : T2I_st<0b01, "strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+defm t2STR :T2I_st<0b10,"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
+defm t2STRB:T2I_st<0b00,"strb",BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
+defm t2STRH:T2I_st<0b01,"strh",BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
 let mayLoad = 1, hasExtraSrcRegAllocReq = 1 in
@@ -991,7 +993,7 @@ def t2STRB_POST : T2Iidxldst<0, 0b00, 0, 0, (outs GPR:$base_wb),
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 def t2LDM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-              IIC_iLoadm, "ldm${addr:submode}${p}${addr:wide}\t$addr, $wb", []> {
+             IIC_iLoadm, "ldm${addr:submode}${p}${addr:wide}\t$addr, $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
@@ -1003,7 +1005,7 @@ def t2LDM : T2XI<(outs),
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 def t2STM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-             IIC_iStorem, "stm${addr:submode}${p}${addr:wide}\t$addr, $wb", []> {
+            IIC_iStorem, "stm${addr:submode}${p}${addr:wide}\t$addr, $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
@@ -1472,7 +1474,7 @@ multiclass T2I_smla<string opc, PatFrag opnode> {
   def BT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC16,
              !strconcat(opc, "bt"), "\t$dst, $a, $b, $acc",
              [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
-                                                    (sra GPR:$b, (i32 16)))))]> {
+                                                   (sra GPR:$b, (i32 16)))))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0110;
     let Inst{22-20} = 0b001;
@@ -1496,7 +1498,7 @@ multiclass T2I_smla<string opc, PatFrag opnode> {
   def TT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC16,
               !strconcat(opc, "tt"), "\t$dst, $a, $b, $acc",
              [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, (i32 16)),
-                                                    (sra GPR:$b, (i32 16)))))]> {
+                                                   (sra GPR:$b, (i32 16)))))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0110;
     let Inst{22-20} = 0b001;
@@ -1508,7 +1510,7 @@ multiclass T2I_smla<string opc, PatFrag opnode> {
   def WB : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC16,
               !strconcat(opc, "wb"), "\t$dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                       (sext_inreg GPR:$b, i16)), (i32 16))))]> {
+                                      (sext_inreg GPR:$b, i16)), (i32 16))))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0110;
     let Inst{22-20} = 0b011;
@@ -1520,7 +1522,7 @@ multiclass T2I_smla<string opc, PatFrag opnode> {
   def WT : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC16,
               !strconcat(opc, "wt"), "\t$dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
-                                         (sra GPR:$b, (i32 16))), (i32 16))))]> {
+                                        (sra GPR:$b, (i32 16))), (i32 16))))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0110;
     let Inst{22-20} = 0b011;
@@ -1541,8 +1543,8 @@ defm t2SMLA : T2I_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 //  Misc. Arithmetic Instructions.
 //
 
-class T2I_misc<bits<2> op1, bits<2> op2, dag oops, dag iops, InstrItinClass itin,
-              string opc, string asm, list<dag> pattern>
+class T2I_misc<bits<2> op1, bits<2> op2, dag oops, dag iops,
+      InstrItinClass itin, string opc, string asm, list<dag> pattern>
   : T2I<oops, iops, itin, opc, asm, pattern> {
   let Inst{31-27} = 0b11111;
   let Inst{26-22} = 0b01010;

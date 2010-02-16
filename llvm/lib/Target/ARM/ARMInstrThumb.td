@@ -208,7 +208,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
     let Inst{6-3} = 0b1110; // Rm = lr
   }
   // Alternative return instruction used by vararg functions.
-  def tBX_RET_vararg : TI<(outs), (ins tGPR:$target), IIC_Br, "bx\t$target", []>,
+  def tBX_RET_vararg : TI<(outs), (ins tGPR:$target), IIC_Br, "bx\t$target",[]>,
                        T1Special<{1,1,0,?}>; // A6.2.3 & A8.6.25
 }
 
@@ -769,7 +769,7 @@ def tUXTH  : T1pI<(outs tGPR:$dst), (ins tGPR:$src), IIC_iUNAr,
              T1Misc<{0,0,1,0,1,0,?}>;
 
 
-// Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC DAG operation.
+// Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC operation.
 // Expanded after instruction selection into a branch sequence.
 let usesCustomInserter = 1 in  // Expanded after instruction selection.
   def tMOVCCr_pseudo :
