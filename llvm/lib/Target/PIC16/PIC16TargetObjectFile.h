@@ -137,7 +137,8 @@ namespace llvm {
 
 
     /// Return a code section for a function.
-    const PIC16Section *SectionForCode (const std::string &FnName) const;
+    const PIC16Section *SectionForCode (const std::string &FnName,
+                                        bool isISR) const;
 
     /// Return a frame section for a function.
     const PIC16Section *SectionForFrame (const std::string &FnName) const;

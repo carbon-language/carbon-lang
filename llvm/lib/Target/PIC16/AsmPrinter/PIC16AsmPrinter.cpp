@@ -106,8 +106,9 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DbgInfo.BeginFunction(MF);
 
   // Now emit the instructions of function in its code section.
-  const MCSection *fCodeSection 
-    = getObjFileLowering().SectionForCode(CurrentFnSym->getName());
+  const MCSection *fCodeSection = 
+    getObjFileLowering().SectionForCode(CurrentFnSym->getName(), 
+                                        PAN::isISR(F->getSection()));
 
   // Start the Code Section.
   O <<  "\n";

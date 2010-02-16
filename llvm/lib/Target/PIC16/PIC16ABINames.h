@@ -325,6 +325,19 @@ namespace llvm {
 
       return o.str();
     } 
+
+    // Return true if the current function is an ISR
+    inline static bool isISR(const std::string SectName) {
+       if (SectName.find("interrupt") != std::string::npos)
+         return true;
+
+       return false;
+    }
+
+    // Return the address for ISR starts in rom.
+    inline static std::string getISRAddr(void) {
+      return "0x4";
+    }
   }; // class PAN.
 } // end namespace llvm;
 

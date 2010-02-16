@@ -315,8 +315,12 @@ PIC16TargetObjectFile::allocateSHARED(const GlobalVariable *GV,
 
 // Interface used by AsmPrinter to get a code section for a function.
 const PIC16Section *
-PIC16TargetObjectFile::SectionForCode(const std::string &FnName) const {
+PIC16TargetObjectFile::SectionForCode(const std::string &FnName,
+                                      bool isISR) const {
   const std::string &sec_name = PAN::getCodeSectionName(FnName);
+  // If it is ISR, its code section starts at a specific address.
+  if (isISR)
+    return getPIC16Section(sec_name, CODE, PAN::getISRAddr());
   return getPIC16Section(sec_name, CODE);
 }
 
