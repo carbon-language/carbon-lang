@@ -459,9 +459,11 @@ namespace llvm {
       if (DbgNode && !isLexicalBlock())
         DbgNode = 0;
     }
-    DIScope getContext() const       { return getFieldAs<DIScope>(1); }
-    StringRef getDirectory() const { return getContext().getDirectory(); }
-    StringRef getFilename() const  { return getContext().getFilename(); }
+    DIScope getContext() const       { return getFieldAs<DIScope>(1);      }
+    StringRef getDirectory() const   { return getContext().getDirectory(); }
+    StringRef getFilename() const    { return getContext().getFilename();  }
+    unsigned getLineNumber() const   { return getUnsignedField(2);         }
+    unsigned getColumnNumber() const { return getUnsignedField(3);         }
   };
 
   /// DINameSpace - A wrapper for a C++ style name space.
@@ -636,7 +638,8 @@ namespace llvm {
 
     /// CreateLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
-    DILexicalBlock CreateLexicalBlock(DIDescriptor Context);
+    DILexicalBlock CreateLexicalBlock(DIDescriptor Context, unsigned Line = 0,
+                                      unsigned Col = 0);
 
     /// CreateNameSpace - This creates new descriptor for a namespace
     /// with the specified parent context.
