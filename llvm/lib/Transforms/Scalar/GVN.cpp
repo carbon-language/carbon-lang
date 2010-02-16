@@ -2141,14 +2141,7 @@ bool GVN::performPRE(Function &F) {
       // We can't do PRE safely on a critical edge, so instead we schedule
       // the edge to be split and perform the PRE the next time we iterate
       // on the function.
-      unsigned SuccNum = 0;
-      for (unsigned i = 0, e = PREPred->getTerminator()->getNumSuccessors();
-           i != e; ++i)
-        if (PREPred->getTerminator()->getSuccessor(i) == CurrentBlock) {
-          SuccNum = i;
-          break;
-        }
-
+      unsigned SuccNum = SuccessorNumber(PREPred, CurrentBlock);
       if (isCriticalEdge(PREPred->getTerminator(), SuccNum)) {
         toSplit.push_back(std::make_pair(PREPred->getTerminator(), SuccNum));
         continue;

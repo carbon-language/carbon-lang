@@ -274,24 +274,30 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
     ReplaceInstWithInst(TI, NewTI);
 }
 
-/// SplitEdge -  Split the edge connecting specified block. Pass P must 
-/// not be NULL. 
-BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
-  TerminatorInst *LatchTerm = BB->getTerminator();
-  unsigned SuccNum = 0;
+/// SuccessorNumber - Search for the specified successor of basic block BB and
+/// return its position in the terminator instruction's list of successors.
+/// It is an error to call this with a block that is not a successor.
+unsigned llvm::SuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
+  TerminatorInst *Term = BB->getTerminator();
 #ifndef NDEBUG
-  unsigned e = LatchTerm->getNumSuccessors();
+  unsigned e = Term->getNumSuccessors();
 #endif
   for (unsigned i = 0; ; ++i) {
     assert(i != e && "Didn't find edge?");
-    if (LatchTerm->getSuccessor(i) == Succ) {
-      SuccNum = i;
-      break;
-    }
+    if (Term->getSuccessor(i) == Succ)
+      return i;
   }
+  return 0;
+}
+
+/// SplitEdge -  Split the edge connecting specified block. Pass P must 
+/// not be NULL. 
+BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
+  unsigned SuccNum = SuccessorNumber(BB, Succ);
   
   // If this is a critical edge, let SplitCriticalEdge do it.
-  if (SplitCriticalEdge(BB->getTerminator(), SuccNum, P))
+  TerminatorInst *LatchTerm = BB->getTerminator();
+  if (SplitCriticalEdge(LatchTerm, SuccNum, P))
     return LatchTerm->getSuccessor(SuccNum);
 
   // If the edge isn't critical, then BB has a single successor or Succ has a
