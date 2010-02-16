@@ -10,9 +10,10 @@
 #ifndef TBLGEN_DAGISELMATCHER_H
 #define TBLGEN_DAGISELMATCHER_H
 
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Support/Casting.h"
 
 namespace llvm {
   class CodeGenDAGPatterns;

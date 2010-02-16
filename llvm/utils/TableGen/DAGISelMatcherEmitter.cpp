@@ -14,7 +14,7 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Casting.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
@@ -66,12 +66,35 @@ static unsigned EmitInt(int64_t Val, formatted_raw_ostream &OS) {
 namespace {
 class MatcherTableEmitter {
   formatted_raw_ostream &OS;
+  
+  StringMap<unsigned> NodePredicateMap, PatternPredicateMap;
+  std::vector<std::string> NodePredicates, PatternPredicates;
+  
 public:
   MatcherTableEmitter(formatted_raw_ostream &os) : OS(os) {}
 
   unsigned EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent);
+  
+  void EmitPredicateFunctions();
 private:
   unsigned EmitMatcher(const MatcherNode *N, unsigned Indent);
+  
+  unsigned getNodePredicate(StringRef PredName) {
+    unsigned &Entry = NodePredicateMap[PredName];
+    if (Entry == 0) {
+      NodePredicates.push_back(PredName.str());
+      Entry = NodePredicates.size();
+    }
+    return Entry-1;
+  }
+  unsigned getPatternPredicate(StringRef PredName) {
+    unsigned &Entry = PatternPredicateMap[PredName];
+    if (Entry == 0) {
+      PatternPredicates.push_back(PredName.str());
+      Entry = PatternPredicates.size();
+    }
+    return Entry-1;
+  }
 };
 } // end anonymous namespace.
 
@@ -107,18 +130,19 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
        << cast<CheckSameMatcherNode>(N)->getMatchNumber() << ",\n";
     return 2;
 
-  case MatcherNode::CheckPatternPredicate:
-    OS << "OPC_CheckPatternPredicate, /*XXX*/0,";
-    OS.PadToColumn(CommentIndent) << "// "
-      << cast<CheckPatternPredicateMatcherNode>(N)->getPredicate() << '\n';
+  case MatcherNode::CheckPatternPredicate: {
+    StringRef Pred = cast<CheckPatternPredicateMatcherNode>(N)->getPredicate();
+    OS << "OPC_CheckPatternPredicate, " << getPatternPredicate(Pred) << ',';
+    OS.PadToColumn(CommentIndent) << "// " << Pred << '\n';
     return 2;
-    
-  case MatcherNode::CheckPredicate:
-    OS << "OPC_CheckPredicate, /*XXX*/0,";
-    OS.PadToColumn(CommentIndent) << "// "
-      << cast<CheckPredicateMatcherNode>(N)->getPredicateName() << '\n';
+  }
+  case MatcherNode::CheckPredicate: {
+    StringRef Pred = cast<CheckPredicateMatcherNode>(N)->getPredicateName();
+    OS << "OPC_CheckPredicate, " << getNodePredicate(Pred) << ',';
+    OS.PadToColumn(CommentIndent) << "// " << Pred << '\n';
     return 2;
-      
+  }
+
   case MatcherNode::CheckOpcode:
     OS << "OPC_CheckOpcode, "
        << cast<CheckOpcodeMatcherNode>(N)->getOpcodeName() << ",\n";
@@ -216,6 +240,25 @@ EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
   }
 }
 
+void MatcherTableEmitter::EmitPredicateFunctions() {
+  OS << "bool CheckPatternPredicate(unsigned PredNo) const {\n";
+  OS << "  switch (PredNo) {\n";
+  OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
+  for (unsigned i = 0, e = PatternPredicates.size(); i != e; ++i)
+    OS << "  case " << i << ": return "  << PatternPredicates[i] << ";\n";
+  OS << "  }\n";
+  OS << "}\n\n";
+
+  OS << "bool CheckNodePredicate(SDNode *N, unsigned PredNo) const {\n";
+  OS << "  switch (PredNo) {\n";
+  OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
+  for (unsigned i = 0, e = NodePredicates.size(); i != e; ++i)
+    OS << "  case " << i << ": return "  << NodePredicates[i] << "(N);\n";
+  OS << "  }\n";
+  OS << "}\n\n";
+}
+
+
 void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   formatted_raw_ostream OS(O);
   
@@ -228,4 +271,8 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   unsigned TotalSize = MatcherEmitter.EmitMatcherAndChildren(Matcher, 2);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
+  OS << "\n";
+  
+  // Next up, emit the function for node and pattern predicates:
+  MatcherEmitter.EmitPredicateFunctions();
 }

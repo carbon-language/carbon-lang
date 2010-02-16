@@ -164,23 +164,29 @@ bool CheckOrImmediate(SDValue V, int64_t Val) {
   return true;
 }
 
-static int8_t GetInt1(const unsigned char *MatcherTable, unsigned &Idx) {
+// These functions are marked always inline so that Idx doesn't get pinned to
+// the stack.
+ALWAYS_INLINE static int8_t
+GetInt1(const unsigned char *MatcherTable, unsigned &Idx) {
   return MatcherTable[Idx++];
 }
 
-static int16_t GetInt2(const unsigned char *MatcherTable, unsigned &Idx) {
+ALWAYS_INLINE static int16_t
+GetInt2(const unsigned char *MatcherTable, unsigned &Idx) {
   int16_t Val = GetInt1(MatcherTable, Idx);
   Val |= int16_t(GetInt1(MatcherTable, Idx)) << 8;
   return Val;
 }
 
-static int32_t GetInt4(const unsigned char *MatcherTable, unsigned &Idx) {
+ALWAYS_INLINE static int32_t
+GetInt4(const unsigned char *MatcherTable, unsigned &Idx) {
   int32_t Val = GetInt2(MatcherTable, Idx);
   Val |= int32_t(GetInt2(MatcherTable, Idx)) << 16;
   return Val;
 }
 
-static int64_t GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
+ALWAYS_INLINE static int64_t
+GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
   int64_t Val = GetInt4(MatcherTable, Idx);
   Val |= int64_t(GetInt4(MatcherTable, Idx)) << 32;
   return Val;
@@ -308,18 +314,12 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (N != RecordedNodes[RecNo]) break;
       continue;
     }
-    case OPC_CheckPatternPredicate: {
-      unsigned PredNo = MatcherTable[MatcherIndex++];
-      (void)PredNo;
-      // FIXME: CHECK IT.
+    case OPC_CheckPatternPredicate:
+      if (!CheckPatternPredicate(MatcherTable[MatcherIndex++])) break;
       continue;
-    }
-    case OPC_CheckPredicate: {
-      unsigned PredNo = MatcherTable[MatcherIndex++];
-      (void)PredNo;
-      // FIXME: CHECK IT.
+    case OPC_CheckPredicate:
+      if (!CheckNodePredicate(N.getNode(), MatcherTable[MatcherIndex++])) break;
       continue;
-    }
     case OPC_CheckComplexPat: {
       unsigned PatNo = MatcherTable[MatcherIndex++];
       (void)PatNo;
