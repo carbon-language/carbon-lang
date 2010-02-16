@@ -45,11 +45,11 @@ Value::Value(const Type *ty, unsigned scid)
     UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
     assert((VTy->isFirstClassType() || VTy->isVoidTy() ||
-            isa<OpaqueType>(ty) || VTy->isStructTy()) &&
+            ty->isOpaqueTy() || VTy->isStructTy()) &&
            "invalid CallInst  type!");
   else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
     assert((VTy->isFirstClassType() || VTy->isVoidTy() ||
-            isa<OpaqueType>(ty)) &&
+            ty->isOpaqueTy()) &&
            "Cannot create non-first-class values except for constants!");
 }
 

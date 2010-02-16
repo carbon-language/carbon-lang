@@ -159,7 +159,7 @@ static bool RecursiveResolveTypesI(const Type *DstTy, const Type *SrcTy,
   if (DstTy == SrcTy) return false;       // If already equal, noop
 
   // If we found our opaque type, resolve it now!
-  if (isa<OpaqueType>(DstTy) || isa<OpaqueType>(SrcTy))
+  if (DstTy->isOpaqueTy() || SrcTy->isOpaqueTy())
     return ResolveTypes(DstTy, SrcTy);
 
   // Two types cannot be resolved together if they are of different primitive

@@ -791,7 +791,7 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
   GlobalValue *FwdVal;
   if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType())) {
     // Function types can return opaque but functions can't.
-    if (isa<OpaqueType>(FT->getReturnType())) {
+    if (FT->getReturnType()->isOpaqueTy()) {
       Error(Loc, "function may not return opaque type");
       return 0;
     }
@@ -836,7 +836,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
   GlobalValue *FwdVal;
   if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType())) {
     // Function types can return opaque but functions can't.
-    if (isa<OpaqueType>(FT->getReturnType())) {
+    if (FT->getReturnType()->isOpaqueTy()) {
       Error(Loc, "function may not return opaque type");
       return 0;
     }
@@ -1515,7 +1515,7 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
         Name = "";
       }
 
-      if (!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy))
+      if (!ArgTy->isFirstClassType() && !ArgTy->isOpaqueTy())
         return Error(TypeLoc, "invalid type for function argument");
 
       ArgList.push_back(ArgInfo(TypeLoc, ArgTy, Attrs, Name));
@@ -1785,7 +1785,7 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
   }
 
   // Don't make placeholders with invalid type.
-  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) && !Ty->isLabelTy()) {
+  if (!Ty->isFirstClassType() && !Ty->isOpaqueTy() && !Ty->isLabelTy()) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return 0;
   }
@@ -1826,7 +1826,7 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
     return 0;
   }
 
-  if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty) && !Ty->isLabelTy()) {
+  if (!Ty->isFirstClassType() && !Ty->isOpaqueTy() && !Ty->isLabelTy()) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return 0;
   }
@@ -2542,7 +2542,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
   case ValID::t_Undef:
     // FIXME: LabelTy should not be a first-class type.
     if ((!Ty->isFirstClassType() || Ty->isLabelTy()) &&
-        !isa<OpaqueType>(Ty))
+        !Ty->isOpaqueTy())
       return Error(ID.Loc, "invalid type for undef constant");
     V = UndefValue::get(Ty);
     return false;
@@ -2662,7 +2662,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   }
 
   if (!FunctionType::isValidReturnType(RetType) ||
-      isa<OpaqueType>(RetType))
+      RetType->isOpaqueTy())
     return Error(RetTypeLoc, "invalid function return type");
 
   LocTy NameLoc = Lex.getLoc();

@@ -385,7 +385,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
     
     // If this isn't a struct or array type, remove it from our set of types
     // to name. This simplifies emission later.
-    if (!I->second->isStructTy() && !isa<OpaqueType>(I->second) &&
+    if (!I->second->isStructTy() && !I->second->isOpaqueTy() &&
         !I->second->isArrayTy()) {
       TST.remove(I);
     } else {
@@ -597,7 +597,7 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
   }
 
   // Check to see if the type is named.
-  if (!IgnoreName || isa<OpaqueType>(Ty)) {
+  if (!IgnoreName || Ty->isOpaqueTy()) {
     std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
     if (I != TypeNames.end()) return Out << I->second << ' ' << NameSoFar;
   }
@@ -700,7 +700,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   }
 
   // Check to see if the type is named.
-  if (!IgnoreName || isa<OpaqueType>(Ty)) {
+  if (!IgnoreName || Ty->isOpaqueTy()) {
     std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
     if (I != TypeNames.end()) return Out << I->second << ' ' << NameSoFar;
   }

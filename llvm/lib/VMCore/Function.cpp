@@ -155,7 +155,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   : GlobalValue(PointerType::getUnqual(Ty), 
                 Value::FunctionVal, 0, 0, Linkage, name) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
-         !isa<OpaqueType>(getReturnType()) && "invalid return type");
+         !getReturnType()->isOpaqueTy() && "invalid return type");
   SymTab = new ValueSymbolTable();
 
   // If the function has arguments, mark them as lazily built.

@@ -377,7 +377,7 @@ namespace {
 
       // If this is a structure or opaque type, add a name for the type.
       if (((Ty->isStructTy() && cast<StructType>(Ty)->getNumElements())
-            || isa<OpaqueType>(Ty)) && !TP.hasTypeName(Ty)) {
+            || Ty->isOpaqueTy()) && !TP.hasTypeName(Ty)) {
         TP.addTypeName(Ty, "%"+utostr(unsigned(NumberedTypes.size())));
         NumberedTypes.push_back(Ty);
       }
@@ -432,7 +432,7 @@ static void AddModuleTypesToPrinter(TypePrinting &TP,
     if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
       const Type *PETy = PTy->getElementType();
       if ((PETy->isPrimitiveType() || PETy->isIntegerTy()) &&
-          !isa<OpaqueType>(PETy))
+          !PETy->isOpaqueTy())
         continue;
     }
 

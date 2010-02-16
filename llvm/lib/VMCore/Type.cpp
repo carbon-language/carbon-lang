@@ -447,7 +447,7 @@ bool FunctionType::isValidReturnType(const Type *RetTy) {
 /// isValidArgumentType - Return true if the specified type is valid as an
 /// argument type.
 bool FunctionType::isValidArgumentType(const Type *ArgTy) {
-  return ArgTy->isFirstClassType() || isa<OpaqueType>(ArgTy);
+  return ArgTy->isFirstClassType() || ArgTy->isOpaqueTy();
 }
 
 FunctionType::FunctionType(const Type *Result,
@@ -613,7 +613,7 @@ void Type::PromoteAbstractToConcrete() {
     // Concrete types are leaves in the tree.  Since an SCC will either be all
     // abstract or all concrete, we only need to check one type.
     if (SCC[0]->isAbstract()) {
-      if (isa<OpaqueType>(SCC[0]))
+      if (SCC[0]->isOpaqueTy())
         return;     // Not going to be concrete, sorry.
 
       // If all of the children of all of the types in this SCC are concrete,
@@ -660,7 +660,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
                        std::map<const Type *, const Type *> &EqTypes) {
   if (Ty == Ty2) return true;
   if (Ty->getTypeID() != Ty2->getTypeID()) return false;
-  if (isa<OpaqueType>(Ty))
+  if (Ty->isOpaqueTy())
     return false;  // Two unequal opaque types are never equal
 
   std::map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
@@ -912,7 +912,7 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
 
 bool VectorType::isValidElementType(const Type *ElemTy) {
   return ElemTy->isIntegerTy() || ElemTy->isFloatingPointTy() ||
-         isa<OpaqueType>(ElemTy);
+         ElemTy->isOpaqueTy();
 }
 
 //===----------------------------------------------------------------------===//

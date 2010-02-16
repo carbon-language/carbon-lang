@@ -57,7 +57,7 @@ bool MSILModule::runOnModule(Module &M) {
   TypeSymbolTable& Table = M.getTypeSymbolTable();
   std::set<const Type *> Types = getAnalysis<FindUsedTypes>().getTypes();
   for (TypeSymbolTable::iterator I = Table.begin(), E = Table.end(); I!=E; ) {
-    if (!I->second->isStructTy() && !isa<OpaqueType>(I->second))
+    if (!I->second->isStructTy() && !I->second->isOpaqueTy())
       Table.remove(I++);
     else {
       std::set<const Type *>::iterator T = Types.find(I->second);
