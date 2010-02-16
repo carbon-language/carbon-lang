@@ -362,3 +362,30 @@ bb:
 return:
   ret void
 }
+
+; Test critical edge splitting.
+define i32 @test11(i32* %p, i1 %C, i32 %N) {
+; CHECK: @test11
+block1:
+        br i1 %C, label %block2, label %block3
+
+block2:
+ %cond = icmp sgt i32 %N, 1
+ br i1 %cond, label %block4, label %block5
+; CHECK: load i32* %p
+; CHECK-NEXT: br label %block4
+
+block3:
+  store i32 0, i32* %p
+  br label %block4
+
+block4:
+  %PRE = load i32* %p
+  br label %block5
+
+block5:
+  %ret = phi i32 [ 0, %block2 ], [ %PRE, %block4 ]
+  ret i32 %ret
+; CHECK: block4:
+; CHECK-NEXT: phi i32
+}
