@@ -66,28 +66,13 @@ def CC_PPC : CallingConv<[
 // PowerPC System V Release 4 ABI
 //===----------------------------------------------------------------------===//
 
-// _Complex arguments are never split, thus their two scalars are either
-// passed both in argument registers or both on the stack. Also _Complex
-// arguments are always passed in general purpose registers, never in
-// Floating-point registers or vector registers. Arguments which should go
-// on the stack are marked with the inreg parameter attribute.
-// Giving inreg this target-dependent (and counter-intuitive) meaning
-// simplifies things, because functions calls are not always coming from the
-// frontend but are also created implicitly e.g. for libcalls. If inreg would
-// actually mean that the argument is passed in a register, then all places
-// which create function calls/function definitions implicitly would need to
-// be aware of this fact and would need to mark arguments accordingly. With
-// inreg meaning that the argument is passed on the stack, this is not an
-// issue, except for calls which involve _Complex types.
-
 def CC_PPC_SVR4_Common : CallingConv<[
   // The ABI requires i64 to be passed in two adjacent registers with the first
   // register having an odd register number.
   CCIfType<[i32], CCIfSplit<CCCustom<"CC_PPC_SVR4_Custom_AlignArgRegs">>>,
 
   // The first 8 integer arguments are passed in integer registers.
-  CCIfType<[i32], CCIf<"!ArgFlags.isInReg()",
-    CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>>,
+  CCIfType<[i32], CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>,
 
   // Make sure the i64 words from a long double are either both passed in
   // registers or both passed on the stack.
