@@ -137,6 +137,11 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     return AddMatcherNode(new CheckCondCodeMatcherNode(LeafRec->getName()));
   
   if (LeafRec->isSubClassOf("ComplexPattern")) {
+    if (!N->getName().empty()) {
+      errs() << "We expect complex pattern uses to have names: " << *N << "\n";
+      exit(1);
+    }
+    
     // Handle complex pattern.
     const ComplexPattern &CP = CGP.getComplexPattern(LeafRec);
     return AddMatcherNode(new CheckComplexPatMatcherNode(CP));
@@ -236,6 +241,8 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
         AddMatcherNode(new CheckFoldableChainNodeMatcherNode());
     }
   }
+  
+  // FIXME: Need to generate IsChainCompatible checks.
       
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check
@@ -265,7 +272,19 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
     unsigned &VarMapEntry = VariableMap[N->getName()];
     if (VarMapEntry == 0) {
       VarMapEntry = ++NextRecordedOperandNo;
-      AddMatcherNode(new RecordMatcherNode());
+      
+      // If this is a complex pattern, the match operation for it will
+      // implicitly record all of the outputs of it (which may be more than
+      // one).
+      if (const ComplexPattern *AM = N->getComplexPatternInfo(CGP)) {
+        // Record the right number of operands.
+        // FIXME: Does this include chain?
+        VarMapEntry += AM->getNumOperands()-1;
+      } else {
+        // If it is a normal named node, we must emit a 'Record' opcode.
+        AddMatcherNode(new RecordMatcherNode());
+      }
+      
     } else {
       // If we get here, this is a second reference to a specific name.  Since
       // we already have checked that the first reference is valid, we don't
