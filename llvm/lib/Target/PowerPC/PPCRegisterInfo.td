@@ -287,10 +287,8 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
     GPRCClass::allocation_order_begin(const MachineFunction &MF) const {
       // 32-bit SVR4 ABI: r2 is reserved for the OS.
       // 64-bit SVR4 ABI: r2 is reserved for the TOC pointer.
-      if (!MF.getTarget().getSubtarget<PPCSubtarget>().isDarwin())
-        return begin()+1;
-
-      return begin();
+      // Darwin: R2 is reserved for CR save/restore sequence.
+      return begin()+1;
     }
     GPRCClass::iterator
     GPRCClass::allocation_order_end(const MachineFunction &MF) const {
@@ -325,10 +323,8 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
     G8RCClass::iterator
     G8RCClass::allocation_order_begin(const MachineFunction &MF) const {
       // 64-bit SVR4 ABI: r2 is reserved for the TOC pointer.
-      if (!MF.getTarget().getSubtarget<PPCSubtarget>().isDarwin())
-        return begin()+1;
-
-      return begin();
+      // Darwin: r2 is reserved for CR save/restore sequence.
+      return begin()+1;
     }
     G8RCClass::iterator
     G8RCClass::allocation_order_end(const MachineFunction &MF) const {
