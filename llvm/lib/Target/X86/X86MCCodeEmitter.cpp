@@ -153,14 +153,25 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
   // If this is a simple integer displacement that doesn't require a relocation,
   // emit it now.
   if (DispOp.isImm()) {
+    // FIXME: is this right for pc-rel encoding??  Probably need to emit this as
+    // a fixup if so.
     EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
     return;
   }
 
   // If we have an immoffset, add it to the expression.
   const MCExpr *Expr = DispOp.getExpr();
+  
+  // If the fixup is pc-relative, we need to bias the value to be relative to
+  // the start of the field, not the end of the field.
+  if (FixupKind == MCFixupKind(X86::reloc_pcrel_4byte) ||
+      FixupKind == MCFixupKind(X86::reloc_riprel_4byte))
+    ImmOffset -= 4;
+  if (FixupKind == MCFixupKind(X86::reloc_pcrel_1byte))
+    ImmOffset -= 1;
+  
   if (ImmOffset)
-    Expr = MCBinaryExpr::CreateAdd(Expr,MCConstantExpr::Create(ImmOffset, Ctx),
+    Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(ImmOffset, Ctx),
                                    Ctx);
   
   // Emit a symbolic constant as a fixup and 4 zeros.
@@ -192,6 +203,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // the size of the immediate field.  If we have this case, add it into the
     // expression to emit.
     int ImmSize = X86II::hasImm(TSFlags) ? X86II::getSizeOfImm(TSFlags) : 0;
+    
     EmitImmediate(Disp, 4, MCFixupKind(X86::reloc_riprel_4byte),
                   CurByte, OS, Fixups, -ImmSize);
     return;
@@ -616,8 +628,6 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   
   // If there is a remaining operand, it must be a trailing immediate.  Emit it
   // according to the right size for the instruction.
-  // FIXME: This should pass in whether the value is pc relative or not.  This
-  // information should be aquired from TSFlags as well.
   if (CurOp != NumOps)
     EmitImmediate(MI.getOperand(CurOp++),
                   X86II::getSizeOfImm(TSFlags), getImmFixupKind(TSFlags),
