@@ -52,6 +52,12 @@ void ASTMergeAction::ExecuteAction() {
     for (DeclContext::decl_iterator D = TU->decls_begin(), 
                                  DEnd = TU->decls_end();
          D != DEnd; ++D) {
+      // Don't re-import __va_list_tag, __builtin_va_list.
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
+        if (IdentifierInfo *II = ND->getIdentifier())
+          if (II->isStr("__va_list_tag") || II->isStr("__builtin_va_list"))
+            continue;
+      
       Importer.Import(*D);
     }
 
