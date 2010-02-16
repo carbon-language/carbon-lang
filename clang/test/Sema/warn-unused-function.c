@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -Wunused-function -verify %s
+// XFAIL: *
 
 void foo() {}
 static void f2() {} 

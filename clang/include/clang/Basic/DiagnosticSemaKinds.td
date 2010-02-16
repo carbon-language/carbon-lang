@@ -88,8 +88,10 @@ def warn_decl_in_param_list : Warning<
 def err_array_star_in_function_definition : Error<
   "variable length array must be bound in function definition">;
 def warn_unused_function : Warning<"unused function %0">,
-  InGroup<UnusedFunction>, DefaultIgnore;
-  
+// FIXME: Temporarily disabled pending PR6321.
+//  InGroup<UnusedFunction>, DefaultIgnore;
+  DefaultIgnore;
+
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultIgnore;
