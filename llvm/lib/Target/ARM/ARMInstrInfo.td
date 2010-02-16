@@ -565,7 +565,6 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                 DPFrm, IIC_iALUi, !strconcat(opc, "\t$dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
                Requires<[IsARM]> {
-    let Defs = [CPSR];
     let Inst{20} = 1;
     let Inst{25} = 1;
   }
@@ -573,7 +572,6 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                 DPFrm, IIC_iALUr, !strconcat(opc, "\t$dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
                Requires<[IsARM]> {
-    let Defs = [CPSR];
     let Inst{11-4} = 0b00000000;
     let Inst{20} = 1;
     let Inst{25} = 0;
@@ -582,7 +580,6 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                 DPSoRegFrm, IIC_iALUsr, !strconcat(opc, "\t$dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
                Requires<[IsARM]> {
-    let Defs = [CPSR];
     let Inst{20} = 1;
     let Inst{25} = 0;
   }
