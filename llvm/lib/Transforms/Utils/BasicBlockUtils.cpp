@@ -274,10 +274,11 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
     ReplaceInstWithInst(TI, NewTI);
 }
 
-/// SuccessorNumber - Search for the specified successor of basic block BB and
-/// return its position in the terminator instruction's list of successors.
-/// It is an error to call this with a block that is not a successor.
-unsigned llvm::SuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
+/// GetSuccessorNumber - Search for the specified successor of basic block BB
+/// and return its position in the terminator instruction's list of
+/// successors.  It is an error to call this with a block that is not a
+/// successor.
+unsigned llvm::GetSuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
   TerminatorInst *Term = BB->getTerminator();
 #ifndef NDEBUG
   unsigned e = Term->getNumSuccessors();
@@ -293,7 +294,7 @@ unsigned llvm::SuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
 /// SplitEdge -  Split the edge connecting specified block. Pass P must 
 /// not be NULL. 
 BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
-  unsigned SuccNum = SuccessorNumber(BB, Succ);
+  unsigned SuccNum = GetSuccessorNumber(BB, Succ);
   
   // If this is a critical edge, let SplitCriticalEdge do it.
   TerminatorInst *LatchTerm = BB->getTerminator();

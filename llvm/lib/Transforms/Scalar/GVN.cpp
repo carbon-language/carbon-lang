@@ -1594,7 +1594,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
               << Pred->getName() << "': " << *LI << '\n');
         return false;
       }
-      unsigned SuccNum = SuccessorNumber(Pred, LoadBB);
+      unsigned SuccNum = GetSuccessorNumber(Pred, LoadBB);
       toSplit.push_back(std::make_pair(Pred->getTerminator(), SuccNum));
       return false;
     }
@@ -2151,7 +2151,7 @@ bool GVN::performPRE(Function &F) {
       // We can't do PRE safely on a critical edge, so instead we schedule
       // the edge to be split and perform the PRE the next time we iterate
       // on the function.
-      unsigned SuccNum = SuccessorNumber(PREPred, CurrentBlock);
+      unsigned SuccNum = GetSuccessorNumber(PREPred, CurrentBlock);
       if (isCriticalEdge(PREPred->getTerminator(), SuccNum)) {
         toSplit.push_back(std::make_pair(PREPred->getTerminator(), SuccNum));
         continue;
