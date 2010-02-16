@@ -1619,23 +1619,25 @@ namespace {
     virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
       Builder.defineMacro("__pic16");
+      Builder.defineMacro("__PIC16");
       Builder.defineMacro("rom", "__attribute__((address_space(1)))");
       Builder.defineMacro("ram", "__attribute__((address_space(0)))");
-      Builder.defineMacro("_section(SectName)",
+      Builder.defineMacro("__section(SectName)",
              "__attribute__((section(SectName)))");
       Builder.defineMacro("near",
              "__attribute__((section(\"Address=NEAR\")))");
-      Builder.defineMacro("_address(Addr)",
+      Builder.defineMacro("__address(Addr)",
              "__attribute__((section(\"Address=\"#Addr)))");
-      Builder.defineMacro("_CONFIG(conf)", "asm(\"CONFIG \"#conf)");
-      Builder.defineMacro("_interrupt",
+      Builder.defineMacro("__config(conf)", "asm(\"CONFIG \"#conf)");
+      Builder.defineMacro("__idlocs(value)", "asm(\"__IDLOCS \"#value)");
+      Builder.defineMacro("interrupt",
              "__attribute__((section(\"interrupt=0x4\"))) \
              __attribute__((used))");
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                    unsigned &NumRecords) const {}
     virtual const char *getVAListDeclaration() const {
-      return "";
+      return "typedef char* __builtin_va_list;";
     }
     virtual const char *getClobbers() const {
       return "";

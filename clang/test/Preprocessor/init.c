@@ -443,7 +443,6 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=pic16-none-none < /dev/null | FileCheck -check-prefix PIC16 %s
 //
-// PIC16:#define _CONFIG(conf) asm("CONFIG "#conf)
 // PIC16:#define __CHAR_BIT__ 8
 // PIC16:#define __DBL_DENORM_MIN__ 1.40129846e-45F
 // PIC16:#define __DBL_DIG__ 6
@@ -500,6 +499,7 @@
 // PIC16:#define __LONG_LONG_MAX__ 2147483647LL
 // PIC16:#define __LONG_MAX__ 2147483647L
 // PIC16:#define __NO_INLINE__ 1
+// PIC16:#define __PIC16 1
 // PIC16:#define __POINTER_WIDTH__ 16
 // PIC16:#define __PTRDIFF_TYPE__ int
 // PIC16:#define __PTRDIFF_WIDTH__ 16
@@ -515,12 +515,15 @@
 // PIC16:#define __WCHAR_WIDTH__ 16
 // PIC16:#define __WINT_TYPE__ int
 // PIC16:#define __WINT_WIDTH__ 16
+// PIC16:#define __address(Addr) __attribute__((section("Address="#Addr)))
 // PIC16:#define __clang__ 1
+// PIC16:#define __config(conf) asm("CONFIG "#conf)
+// PIC16:#define __idlocs(value) asm("__IDLOCS "#value)
 // PIC16:#define __llvm__ 1
 // PIC16:#define __pic16 1
-// PIC16:#define _address(Addr) __attribute__((section("Address="#Addr)))
-// PIC16:#define _interrupt __attribute__((section("interrupt=0x4"))) __attribute__((used))
-// PIC16:#define _section(SectName) __attribute__((section(SectName)))
+// PIC16:#define __section(SectName) __attribute__((section(SectName)))
+// PIC16:#define interrupt __attribute__((section("interrupt=0x4"))) __attribute__((used))
+// PIC16:#define near __attribute__((section("Address=NEAR")))
 // PIC16:#define ram __attribute__((address_space(0)))
 // PIC16:#define rom __attribute__((address_space(1)))
 //
