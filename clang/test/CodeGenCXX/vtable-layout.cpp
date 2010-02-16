@@ -395,3 +395,30 @@ struct C : B {
 void C::f() { }
 
 }
+
+namespace Test11 {
+
+// Very simple test of vtables for virtual bases.
+struct A1 { int a; };
+struct A2 { int b; };
+
+struct B : A1, virtual A2 {
+  int b;
+};
+
+// CHECK:     Vtable for 'Test11::C' (8 entries).
+// CHECK-NEXT:   0 | vbase_offset (24)
+// CHECK-NEXT:   1 | vbase_offset (8)
+// CHECK-NEXT:   2 | offset_to_top (0)
+// CHECK-NEXT:   3 | Test11::C RTTI
+// CHECK-NEXT:       -- (Test11::C, 0) vtable address --
+// CHECK-NEXT:   4 | void Test11::C::f()
+// CHECK-NEXT:   5 | vbase_offset (16)
+// CHECK-NEXT:   6 | offset_to_top (-8)
+// CHECK-NEXT:   7 | Test11::C RTTI
+struct C : virtual B {
+  virtual void f();
+};
+void C::f() { }
+
+}
