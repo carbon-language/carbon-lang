@@ -813,82 +813,6 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   D->addAttr(::new (S.Context) WeakImportAttr());
 }
 
-static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  // Attribute can be applied only to functions or variables.
-  if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLImportAttr());
-    return;
-  }
-
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 2 /*variable and function*/;
-    return;
-  }
-
-  // Currently, the dllimport attribute is ignored for inlined functions.
-  // Warning is emitted.
-  if (FD->isInlineSpecified()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
-    return;
-  }
-
-  // The attribute is also overridden by a subsequent declaration as dllexport.
-  // Warning is emitted.
-  for (AttributeList *nextAttr = Attr.getNext(); nextAttr;
-       nextAttr = nextAttr->getNext()) {
-    if (nextAttr->getKind() == AttributeList::AT_dllexport) {
-      S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
-      return;
-    }
-  }
-
-  if (D->getAttr<DLLExportAttr>()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
-    return;
-  }
-
-  D->addAttr(::new (S.Context) DLLImportAttr());
-}
-
-static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
-    return;
-  }
-
-  // Attribute can be applied only to functions or variables.
-  if (isa<VarDecl>(D)) {
-    D->addAttr(::new (S.Context) DLLExportAttr());
-    return;
-  }
-
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
-  if (!FD) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 2 /*variable and function*/;
-    return;
-  }
-
-  // Currently, the dllexport attribute is ignored for inlined functions, unless
-  // the -fkeep-inline-functions flag has been used. Warning is emitted;
-  if (FD->isInlineSpecified()) {
-    // FIXME: ... unless the -fkeep-inline-functions flag has been used.
-    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllexport";
-    return;
-  }
-
-  D->addAttr(::new (S.Context) DLLExportAttr());
-}
-
 static void HandleReqdWorkGroupSize(Decl *D, const AttributeList &Attr,
                                     Sema &S) {
   // Attribute has 3 arguments.
@@ -1786,6 +1710,11 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
   };
 }
 
+static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
+  return Attr.getKind() == AttributeList::AT_dllimport ||
+         Attr.getKind() == AttributeList::AT_dllexport;
+}
+
 //===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
@@ -1796,8 +1725,8 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
 /// the wrong thing is illegal (C++0x [dcl.attr.grammar]/4).
 static void ProcessDeclAttribute(Scope *scope, Decl *D,
                                  const AttributeList &Attr, Sema &S) {
-  if (Attr.isDeclspecAttribute())
-    // FIXME: Try to deal with __declspec attributes!
+  if (Attr.isDeclspecAttribute() && !isKnownDeclSpecAttr(Attr))
+    // FIXME: Try to deal with other __declspec attributes!
     return;
   switch (Attr.getKind()) {
   case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
@@ -1820,8 +1749,6 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_constructor: HandleConstructorAttr (D, Attr, S); break;
   case AttributeList::AT_deprecated:  HandleDeprecatedAttr  (D, Attr, S); break;
   case AttributeList::AT_destructor:  HandleDestructorAttr  (D, Attr, S); break;
-  case AttributeList::AT_dllexport:   HandleDLLExportAttr   (D, Attr, S); break;
-  case AttributeList::AT_dllimport:   HandleDLLImportAttr   (D, Attr, S); break;
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttr(scope, D, Attr, S);
     break;
