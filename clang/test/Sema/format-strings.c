@@ -183,10 +183,13 @@ void test11(void *p, char *s) {
   printf("%0s", p); // expected-warning{{flag '0' results in undefined behavior in 's' conversion specifier}}
 }
 
-void test12() {
+void test12(char *b) {
   unsigned char buf[4];
   printf ("%.4s\n", buf); // no-warning
   printf ("%.4s\n", &buf); // expected-warning{{conversion specifies type 'char *' but the argument has type 'unsigned char (*)[4]'}}
+  
+  // Verify that we are checking asprintf
+  asprintf(&b, "%d", "asprintf"); // expected-warning{{conversion specifies type 'int' but the argument has type 'char *'}}
 }
 
 typedef struct __aslclient *aslclient;
