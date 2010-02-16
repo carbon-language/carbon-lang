@@ -561,7 +561,6 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
   unsigned OpNo = 0;
   bool NodeHasChain = N->NodeHasProperty(SDNPHasChain, CGP);
   bool HasChain     = N->TreeHasProperty(SDNPHasChain, CGP);
-  bool EmittedUseCheck = false;
   if (HasChain) {
     if (NodeHasChain)
       OpNo = 1;
@@ -571,7 +570,6 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
       std::string ParentName(RootName.begin(), RootName.end()-1);
       emitCheck("IsProfitableToFold(" + getValueName(RootName) +
                 ", " + getNodeName(ParentName) + ", N)");
-      EmittedUseCheck = true;
       if (NodeHasChain) {
         // If the immediate use can somehow reach this node through another
         // path, then can't fold it either or it will create a cycle.

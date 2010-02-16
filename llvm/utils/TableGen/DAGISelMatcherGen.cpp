@@ -243,8 +243,6 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
     }
   }
       
-  // FIXME: Handle EmittedUseCheck & Flags & .hasOneUse()
-  
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check
     // it then move back to the parent.
