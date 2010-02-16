@@ -175,7 +175,7 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
             for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
                  CI != CE; ++CI) {
               Value *Arg = *CI;
-              if (isa<PointerType>(Arg->getType()) && !PointsToLocalMemory(Arg))
+              if (Arg->getType()->isPointerTy() && !PointsToLocalMemory(Arg))
                 // Writes memory.  Just give up.
                 return false;
             }
@@ -257,7 +257,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const std::vector<CallGraphNode *> &SCC) {
       continue;
 
     for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A!=E; ++A)
-      if (isa<PointerType>(A->getType()) && !A->hasNoCaptureAttr() &&
+      if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr() &&
           !PointerMayBeCaptured(A, true, /*StoreCaptures=*/false)) {
         A->addAttr(Attribute::NoCapture);
         ++NumNoCapture;
@@ -362,7 +362,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC) {
 
     // We annotate noalias return values, which are only applicable to 
     // pointer types.
-    if (!isa<PointerType>(F->getReturnType()))
+    if (!F->getReturnType()->isPointerTy())
       continue;
 
     if (!IsFunctionMallocLike(F, SCCNodes))
@@ -372,7 +372,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const std::vector<CallGraphNode *> &SCC) {
   bool MadeChange = false;
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
-    if (F->doesNotAlias(0) || !isa<PointerType>(F->getReturnType()))
+    if (F->doesNotAlias(0) || !F->getReturnType()->isPointerTy())
       continue;
 
     F->setDoesNotAlias(0);

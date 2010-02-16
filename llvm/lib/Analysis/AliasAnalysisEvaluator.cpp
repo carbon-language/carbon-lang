@@ -115,11 +115,11 @@ bool AAEval::runOnFunction(Function &F) {
   SetVector<CallSite> CallSites;
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
-    if (isa<PointerType>(I->getType()))    // Add all pointer arguments
+    if (I->getType()->isPointerTy())    // Add all pointer arguments
       Pointers.insert(I);
 
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-    if (isa<PointerType>(I->getType())) // Add all pointer instructions
+    if (I->getType()->isPointerTy()) // Add all pointer instructions
       Pointers.insert(&*I);
     Instruction &Inst = *I;
     User::op_iterator OI = Inst.op_begin();
@@ -128,7 +128,7 @@ bool AAEval::runOnFunction(Function &F) {
         isa<Function>(CS.getCalledValue()))
       ++OI;  // Skip actual functions for direct function calls.
     for (; OI != Inst.op_end(); ++OI)
-      if (isa<PointerType>((*OI)->getType()) && !isa<ConstantPointerNull>(*OI))
+      if ((*OI)->getType()->isPointerTy() && !isa<ConstantPointerNull>(*OI))
         Pointers.insert(*OI);
 
     if (CS.getInstruction()) CallSites.insert(CS);

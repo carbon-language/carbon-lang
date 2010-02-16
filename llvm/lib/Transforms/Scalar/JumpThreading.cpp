@@ -201,7 +201,7 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
     if (isa<DbgInfoIntrinsic>(I)) continue;
     
     // If this is a pointer->pointer bitcast, it is free.
-    if (isa<BitCastInst>(I) && isa<PointerType>(I->getType()))
+    if (isa<BitCastInst>(I) && I->getType()->isPointerTy())
       continue;
     
     // All other instructions count for at least one unit.
@@ -214,7 +214,7 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
     if (const CallInst *CI = dyn_cast<CallInst>(I)) {
       if (!isa<IntrinsicInst>(CI))
         Size += 3;
-      else if (!isa<VectorType>(CI->getType()))
+      else if (!CI->getType()->isVectorTy())
         Size += 1;
     }
   }

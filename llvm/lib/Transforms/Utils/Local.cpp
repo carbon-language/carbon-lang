@@ -46,7 +46,7 @@ using namespace llvm;
 static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
                                             uint64_t &ByteOffset,
                                             unsigned MaxLookup = 6) {
-  if (!isa<PointerType>(V->getType()))
+  if (!V->getType()->isPointerTy())
     return V;
   for (unsigned Count = 0; MaxLookup == 0 || Count < MaxLookup; ++Count) {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
@@ -65,7 +65,7 @@ static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
     } else {
       return V;
     }
-    assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
+    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   }
   return V;
 }

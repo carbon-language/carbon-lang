@@ -344,7 +344,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
    }
    // FALLS THROUGH
   case 0:
-   if (!isa<IntegerType>(FTy->getReturnType()) &&
+   if (!FTy->getReturnType()->isIntegerTy() &&
        !FTy->getReturnType()->isVoidTy()) {
      llvm_report_error("Invalid return type of main() supplied");
    }
@@ -614,7 +614,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
           GV.IntVal.doubleToBits(GV.DoubleVal);
           break;
         case Type::PointerTyID:
-          assert(isa<PointerType>(DestTy) && "Invalid bitcast");
+          assert(DestTy->isPointerTy() && "Invalid bitcast");
           break; // getConstantValue(Op0)  above already converted it
       }
       return GV;

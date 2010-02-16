@@ -536,7 +536,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   // pointer type, if there is one, or the last operand otherwise.
   int PIdx = 0;
   for (; PIdx != NumOperands - 1; ++PIdx)
-    if (isa<PointerType>(S->getOperand(PIdx)->getType())) break;
+    if (S->getOperand(PIdx)->getType()->isPointerTy()) break;
 
   // Expand code for the operand that we chose.
   Value *V = expand(S->getOperand(PIdx));
@@ -702,7 +702,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   // negative, insert a sub instead of an add for the increment (unless it's a
   // constant, because subtracts of constants are canonicalized to adds).
   const SCEV *Step = Normalized->getStepRecurrence(SE);
-  bool isPointer = isa<PointerType>(ExpandTy);
+  bool isPointer = ExpandTy->isPointerTy();
   bool isNegative = !isPointer && isNonConstantNegative(Step);
   if (isNegative)
     Step = SE.getNegativeSCEV(Step);
@@ -852,7 +852,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   PHINode *CanonicalIV = 0;
   if (PHINode *PN = L->getCanonicalInductionVariable())
     if (SE.isSCEVable(PN->getType()) &&
-        isa<IntegerType>(SE.getEffectiveSCEVType(PN->getType())) &&
+        SE.getEffectiveSCEVType(PN->getType())->isIntegerTy() &&
         SE.getTypeSizeInBits(PN->getType()) >= SE.getTypeSizeInBits(Ty))
       CanonicalIV = PN;
 

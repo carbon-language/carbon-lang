@@ -761,7 +761,7 @@ void Interpreter::visitAllocaInst(AllocaInst &I) {
 GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
                                               gep_type_iterator E,
                                               ExecutionContext &SF) {
-  assert(isa<PointerType>(Ptr->getType()) &&
+  assert(Ptr->getType()->isPointerTy() &&
          "Cannot getElementOffset of a nonpointer type!");
 
   uint64_t Total = 0;
@@ -1031,7 +1031,7 @@ GenericValue Interpreter::executePtrToIntInst(Value *SrcVal, const Type *DstTy,
                                               ExecutionContext &SF) {
   uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(isa<PointerType>(SrcVal->getType()) && "Invalid PtrToInt instruction");
+  assert(SrcVal->getType()->isPointerTy() && "Invalid PtrToInt instruction");
 
   Dest.IntVal = APInt(DBitWidth, (intptr_t) Src.PointerVal);
   return Dest;
@@ -1040,7 +1040,7 @@ GenericValue Interpreter::executePtrToIntInst(Value *SrcVal, const Type *DstTy,
 GenericValue Interpreter::executeIntToPtrInst(Value *SrcVal, const Type *DstTy,
                                               ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(isa<PointerType>(DstTy) && "Invalid PtrToInt instruction");
+  assert(DstTy->isPointerTy() && "Invalid PtrToInt instruction");
 
   uint32_t PtrSize = TD.getPointerSizeInBits();
   if (PtrSize != Src.IntVal.getBitWidth())
@@ -1055,8 +1055,8 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
   
   const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  if (isa<PointerType>(DstTy)) {
-    assert(isa<PointerType>(SrcTy) && "Invalid BitCast");
+  if (DstTy->isPointerTy()) {
+    assert(SrcTy->isPointerTy() && "Invalid BitCast");
     Dest.PointerVal = Src.PointerVal;
   } else if (DstTy->isIntegerTy()) {
     if (SrcTy->isFloatTy()) {

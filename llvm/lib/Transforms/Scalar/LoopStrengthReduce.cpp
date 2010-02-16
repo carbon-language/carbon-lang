@@ -925,7 +925,7 @@ void LSRUse::print(raw_ostream &OS) const {
   case ICmpZero: OS << "ICmpZero"; break;
   case Address:
     OS << "Address of ";
-    if (isa<PointerType>(AccessTy))
+    if (AccessTy->isPointerTy())
       OS << "pointer"; // the full pointer type could be really verbose
     else
       OS << *AccessTy;

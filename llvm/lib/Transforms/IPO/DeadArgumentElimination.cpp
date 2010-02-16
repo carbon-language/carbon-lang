@@ -796,7 +796,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       } else {
-        assert(isa<StructType>(RetTy) &&
+        assert(RetTy->isStructTy() &&
                "Return type changed, but not into a void. The old return type"
                " must have been a struct!");
         Instruction *InsertPt = Call;
@@ -870,7 +870,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         if (NFTy->getReturnType() == Type::getVoidTy(F->getContext())) {
           RetVal = 0;
         } else {
-          assert (isa<StructType>(RetTy));
+          assert (RetTy->isStructTy());
           // The original return value was a struct, insert
           // extractvalue/insertvalue chains to extract only the values we need
           // to return and insert them into our new result.

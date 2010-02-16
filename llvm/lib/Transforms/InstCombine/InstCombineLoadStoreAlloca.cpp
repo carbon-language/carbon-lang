@@ -87,8 +87,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
 
     const Type *SrcPTy = SrcTy->getElementType();
 
-    if (DestPTy->isIntegerTy() || isa<PointerType>(DestPTy) || 
-         isa<VectorType>(DestPTy)) {
+    if (DestPTy->isIntegerTy() || DestPTy->isPointerTy() || 
+         DestPTy->isVectorTy()) {
       // If the source is an array, the code below will not succeed.  Check to
       // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
       // constants.
@@ -104,11 +104,11 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
           }
 
       if (IC.getTargetData() &&
-          (SrcPTy->isIntegerTy() || isa<PointerType>(SrcPTy) || 
-            isa<VectorType>(SrcPTy)) &&
+          (SrcPTy->isIntegerTy() || SrcPTy->isPointerTy() || 
+            SrcPTy->isVectorTy()) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
-          (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
+          (SrcPTy->isPointerTy() == LI.getType()->isPointerTy()) &&
           IC.getTargetData()->getTypeSizeInBits(SrcPTy) ==
                IC.getTargetData()->getTypeSizeInBits(DestPTy)) {
 
@@ -243,7 +243,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   
   const Type *SrcPTy = SrcTy->getElementType();
 
-  if (!DestPTy->isIntegerTy() && !isa<PointerType>(DestPTy))
+  if (!DestPTy->isIntegerTy() && !DestPTy->isPointerTy())
     return 0;
   
   /// NewGEPIndices - If SrcPTy is an aggregate type, we can emit a "noop gep"
@@ -255,7 +255,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // If the source is an array, the code below will not succeed.  Check to
   // see if a trivial 'gep P, 0, 0' will help matters.  Only do this for
   // constants.
-  if (isa<ArrayType>(SrcPTy) || isa<StructType>(SrcPTy)) {
+  if (SrcPTy->isArrayTy() || SrcPTy->isStructTy()) {
     // Index through pointer.
     Constant *Zero = Constant::getNullValue(Type::getInt32Ty(SI.getContext()));
     NewGEPIndices.push_back(Zero);
@@ -277,7 +277,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
     SrcTy = PointerType::get(SrcPTy, SrcTy->getAddressSpace());
   }
 
-  if (!SrcPTy->isIntegerTy() && !isa<PointerType>(SrcPTy))
+  if (!SrcPTy->isIntegerTy() && !SrcPTy->isPointerTy())
     return 0;
   
   // If the pointers point into different address spaces or if they point to
@@ -297,11 +297,11 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   Instruction::CastOps opcode = Instruction::BitCast;
   const Type* CastSrcTy = SIOp0->getType();
   const Type* CastDstTy = SrcPTy;
-  if (isa<PointerType>(CastDstTy)) {
+  if (CastDstTy->isPointerTy()) {
     if (CastSrcTy->isIntegerTy())
       opcode = Instruction::IntToPtr;
-  } else if (isa<IntegerType>(CastDstTy)) {
-    if (isa<PointerType>(SIOp0->getType()))
+  } else if (CastDstTy->isIntegerTy()) {
+    if (SIOp0->getType()->isPointerTy())
       opcode = Instruction::PtrToInt;
   }
   
@@ -413,7 +413,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     // Don't count debug info directives, lest they affect codegen,
     // and we skip pointer-to-pointer bitcasts, which are NOPs.
     if (isa<DbgInfoIntrinsic>(BBI) ||
-        (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
+        (isa<BitCastInst>(BBI) && BBI->getType()->isPointerTy())) {
       ScanInsts++;
       continue;
     }    
@@ -483,7 +483,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   do {
     ++BBI;
   } while (isa<DbgInfoIntrinsic>(BBI) ||
-           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType())));
+           (isa<BitCastInst>(BBI) && BBI->getType()->isPointerTy()));
   if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
     if (BI->isUnconditional())
       if (SimplifyStoreAtEndOfBlock(SI))
@@ -544,7 +544,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
     --BBI;
     // Skip over debugging info.
     while (isa<DbgInfoIntrinsic>(BBI) ||
-           (isa<BitCastInst>(BBI) && isa<PointerType>(BBI->getType()))) {
+           (isa<BitCastInst>(BBI) && BBI->getType()->isPointerTy())) {
       if (BBI==OtherBB->begin())
         return false;
       --BBI;

@@ -76,7 +76,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         return BinaryOperator::CreateShl(Op0,
                  ConstantInt::get(Op0->getType(), Val.logBase2()));
       }
-    } else if (isa<VectorType>(Op1C->getType())) {
+    } else if (Op1C->getType()->isVectorTy()) {
       if (Op1C->isNullValue())
         return ReplaceInstUsesWith(I, Op1C);
 
@@ -173,7 +173,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // If one of the operands of the multiply is a cast from a boolean value, then
   // we know the bool is either zero or one, so this is a 'masking' multiply.
   //   X * Y (where Y is 0 or 1) -> X & (0-Y)
-  if (!isa<VectorType>(I.getType())) {
+  if (!I.getType()->isVectorTy()) {
     // -2 is "-1 << 1" so it is all bits set except the low one.
     APInt Negative2(I.getType()->getPrimitiveSizeInBits(), (uint64_t)-2, true);
     
@@ -204,7 +204,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
       if (Op1F->isExactlyValue(1.0))
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
-    } else if (isa<VectorType>(Op1C->getType())) {
+    } else if (Op1C->getType()->isVectorTy()) {
       if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1C)) {
         // As above, vector X*splat(1.0) -> X in all defined cases.
         if (Constant *Splat = Op1V->getSplatValue()) {

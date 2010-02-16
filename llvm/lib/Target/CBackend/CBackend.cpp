@@ -385,8 +385,8 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
     
     // If this isn't a struct or array type, remove it from our set of types
     // to name. This simplifies emission later.
-    if (!isa<StructType>(I->second) && !isa<OpaqueType>(I->second) &&
-        !isa<ArrayType>(I->second)) {
+    if (!I->second->isStructTy() && !isa<OpaqueType>(I->second) &&
+        !I->second->isArrayTy()) {
       TST.remove(I);
     } else {
       // If this is not used, remove it from the symbol table.
@@ -405,7 +405,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   unsigned RenameCounter = 0;
   for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
        I != E; ++I)
-    if (isa<StructType>(*I) || isa<ArrayType>(*I)) {
+    if ((*I)->isStructTy() || (*I)->isArrayTy()) {
       while (M.addTypeName("unnamed"+utostr(RenameCounter), *I))
         ++RenameCounter;
       Changed = true;
@@ -470,7 +470,7 @@ void CWriter::printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
       FunctionInnards << ", ";
     const Type *ArgTy = *I;
     if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-      assert(isa<PointerType>(ArgTy));
+      assert(ArgTy->isPointerTy());
       ArgTy = cast<PointerType>(ArgTy)->getElementType();
     }
     printType(FunctionInnards, ArgTy,
@@ -493,7 +493,7 @@ raw_ostream &
 CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
                          bool isSigned,
                          const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) && 
+  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void " << NameSoFar;
@@ -540,7 +540,7 @@ CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
 std::ostream &
 CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
                          const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) && 
+  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) && 
          "Invalid type for printSimpleType");
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:   return Out << "void " << NameSoFar;
@@ -591,7 +591,7 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
                                 const Type *Ty,
                                 bool isSigned, const std::string &NameSoFar,
                                 bool IgnoreName, const AttrListPtr &PAL) {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) {
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -612,7 +612,7 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
            E = FTy->param_end(); I != E; ++I) {
       const Type *ArgTy = *I;
       if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-        assert(isa<PointerType>(ArgTy));
+        assert(ArgTy->isPointerTy());
         ArgTy = cast<PointerType>(ArgTy)->getElementType();
       }
       if (I != FTy->param_begin())
@@ -653,8 +653,8 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
     const PointerType *PTy = cast<PointerType>(Ty);
     std::string ptrName = "*" + NameSoFar;
 
-    if (isa<ArrayType>(PTy->getElementType()) ||
-        isa<VectorType>(PTy->getElementType()))
+    if (PTy->getElementType()->isArrayTy() ||
+        PTy->getElementType()->isVectorTy())
       ptrName = "(" + ptrName + ")";
 
     if (!PAL.isEmpty())
@@ -694,7 +694,7 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
 std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
                                  bool isSigned, const std::string &NameSoFar,
                                  bool IgnoreName, const AttrListPtr &PAL) {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa<VectorType>(Ty)) {
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -715,7 +715,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
            E = FTy->param_end(); I != E; ++I) {
       const Type *ArgTy = *I;
       if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-        assert(isa<PointerType>(ArgTy));
+        assert(ArgTy->isPointerTy());
         ArgTy = cast<PointerType>(ArgTy)->getElementType();
       }
       if (I != FTy->param_begin())
@@ -756,8 +756,8 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const PointerType *PTy = cast<PointerType>(Ty);
     std::string ptrName = "*" + NameSoFar;
 
-    if (isa<ArrayType>(PTy->getElementType()) ||
-        isa<VectorType>(PTy->getElementType()))
+    if (PTy->getElementType()->isArrayTy() ||
+        PTy->getElementType()->isVectorTy())
       ptrName = "(" + ptrName + ")";
 
     if (!PAL.isEmpty())
@@ -1144,7 +1144,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     Out << "((";
     printType(Out, CPV->getType()); // sign doesn't matter
     Out << ")/*UNDEF*/";
-    if (!isa<VectorType>(CPV->getType())) {
+    if (!CPV->getType()->isVectorTy()) {
       Out << "0)";
     } else {
       Out << "{})";
@@ -1660,7 +1660,7 @@ void CWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
 
   // If the operand was a pointer, convert to a large integer type.
   const Type* OpTy = Operand->getType();
-  if (isa<PointerType>(OpTy))
+  if (OpTy->isPointerTy())
     OpTy = TD->getIntPtrType(Operand->getContext());
   
   Out << "((";
@@ -2102,10 +2102,10 @@ bool CWriter::doInitialization(Module &M) {
           // complete.  If the value is an aggregate, print out { 0 }, and let
           // the compiler figure out the rest of the zeros.
           Out << " = " ;
-          if (isa<StructType>(I->getInitializer()->getType()) ||
-              isa<VectorType>(I->getInitializer()->getType())) {
+          if (I->getInitializer()->getType()->isStructTy() ||
+              I->getInitializer()->getType()->isVectorTy()) {
             Out << "{ 0 }";
-          } else if (isa<ArrayType>(I->getInitializer()->getType())) {
+          } else if (I->getInitializer()->getType()->isArrayTy()) {
             // As with structs and vectors, but with an extra set of braces
             // because arrays are wrapped in structs.
             Out << "{ { 0 } }";
@@ -2274,7 +2274,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   //
   Out << "/* Structure contents */\n";
   for (I = TST.begin(); I != End; ++I)
-    if (isa<StructType>(I->second) || isa<ArrayType>(I->second))
+    if (I->second->isStructTy() || I->second->isArrayTy())
       // Only print out used types!
       printContainedStructs(I->second, StructPrinted);
 }
@@ -2287,7 +2287,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const Type*> &StructPrinted) {
   // Don't walk through pointers.
-  if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy())
+  if (Ty->isPointerTy() || Ty->isPrimitiveType() || Ty->isIntegerTy())
     return;
   
   // Print all contained types first.
@@ -2295,7 +2295,7 @@ void CWriter::printContainedStructs(const Type *Ty,
        E = Ty->subtype_end(); I != E; ++I)
     printContainedStructs(*I, StructPrinted);
   
-  if (isa<StructType>(Ty) || isa<ArrayType>(Ty)) {
+  if (Ty->isStructTy() || Ty->isArrayTy()) {
     // Check to see if we have already printed this struct.
     if (StructPrinted.insert(Ty).second) {
       // Print structure type out.
@@ -2383,7 +2383,7 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
       if (PrintedArg) FunctionInnards << ", ";
       const Type *ArgTy = *I;
       if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-        assert(isa<PointerType>(ArgTy));
+        assert(ArgTy->isPointerTy());
         ArgTy = cast<PointerType>(ArgTy)->getElementType();
       }
       printType(FunctionInnards, ArgTy,
@@ -2714,7 +2714,7 @@ void CWriter::visitPHINode(PHINode &I) {
 
 void CWriter::visitBinaryOperator(Instruction &I) {
   // binary instructions, shift instructions, setCond instructions.
-  assert(!isa<PointerType>(I.getType()));
+  assert(!I.getType()->isPointerTy());
 
   // We must cast the results of binary operations which might be promoted.
   bool needsCast = false;
@@ -3490,7 +3490,7 @@ void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
     // exposed, like a global, avoid emitting (&foo)[0], just emit foo instead.
     if (isAddressExposed(Ptr)) {
       writeOperandInternal(Ptr, Static);
-    } else if (I != E && isa<StructType>(*I)) {
+    } else if (I != E && (*I)->isStructTy()) {
       // If we didn't already emit the first operand, see if we can print it as
       // P->f instead of "P[0].f"
       writeOperand(Ptr);
@@ -3505,13 +3505,13 @@ void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
   }
 
   for (; I != E; ++I) {
-    if (isa<StructType>(*I)) {
+    if ((*I)->isStructTy()) {
       Out << ".field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
-    } else if (isa<ArrayType>(*I)) {
+    } else if ((*I)->isArrayTy()) {
       Out << ".array[";
       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
       Out << ']';
-    } else if (!isa<VectorType>(*I)) {
+    } else if (!(*I)->isVectorTy()) {
       Out << '[';
       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
       Out << ']';
@@ -3669,7 +3669,7 @@ void CWriter::visitInsertValueInst(InsertValueInst &IVI) {
        i != e; ++i) {
     const Type *IndexedTy =
       ExtractValueInst::getIndexedType(IVI.getOperand(0)->getType(), b, i+1);
-    if (isa<ArrayType>(IndexedTy))
+    if (IndexedTy->isArrayTy())
       Out << ".array[" << *i << "]";
     else
       Out << ".field" << *i;
@@ -3690,7 +3690,7 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
          i != e; ++i) {
       const Type *IndexedTy =
         ExtractValueInst::getIndexedType(EVI.getOperand(0)->getType(), b, i+1);
-      if (isa<ArrayType>(IndexedTy))
+      if (IndexedTy->isArrayTy())
         Out << ".array[" << *i << "]";
       else
         Out << ".field" << *i;

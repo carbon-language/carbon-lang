@@ -112,7 +112,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
             IdxList.push_back(Zero);
           } else if (const SequentialType *STy = 
                      dyn_cast<SequentialType>(ElTy)) {
-            if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
+            if (ElTy->isPointerTy()) break;  // Can't index into pointers!
             ElTy = STy->getElementType();
             IdxList.push_back(Zero);
           } else {
@@ -189,7 +189,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
 /// 
 static Constant *ExtractConstantBytes(Constant *C, unsigned ByteStart,
                                       unsigned ByteSize) {
-  assert(isa<IntegerType>(C->getType()) &&
+  assert(C->getType()->isIntegerTy() &&
          (cast<IntegerType>(C->getType())->getBitWidth() & 7) == 0 &&
          "Non-byte sized integer input");
   unsigned CSize = cast<IntegerType>(C->getType())->getBitWidth()/8;
@@ -551,7 +551,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   // operating on each element. In the cast of bitcasts, the element
   // count may be mismatched; don't attempt to handle that here.
   if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
-    if (isa<VectorType>(DestTy) &&
+    if (DestTy->isVectorTy() &&
         cast<VectorType>(DestTy)->getNumElements() ==
         CV->getType()->getNumElements()) {
       std::vector<Constant*> res;
@@ -634,7 +634,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
               }
             }
           // Handle an offsetof-like expression.
-          if (isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)){
+          if (Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()){
             if (Constant *C = getFoldedOffsetOf(Ty, CE->getOperand(2),
                                                 DestTy, false))
               return C;
@@ -885,7 +885,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     unsigned numOps;
     if (const ArrayType *AR = dyn_cast<ArrayType>(AggTy))
       numOps = AR->getNumElements();
-    else if (isa<UnionType>(AggTy))
+    else if (AggTy->isUnionTy())
       numOps = 1;
     else
       numOps = cast<StructType>(AggTy)->getNumElements();
@@ -1667,7 +1667,7 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
-          (isa<PointerType>(CE1->getType()) || CE1->getType()->isIntegerTy())) {
+          (CE1->getType()->isPointerTy() || CE1->getType()->isIntegerTy())) {
         if (CE1->getOpcode() == Instruction::ZExt) isSigned = false;
         if (CE1->getOpcode() == Instruction::SExt) isSigned = true;
         return evaluateICmpRelation(CE1Op0,
@@ -1914,7 +1914,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
       return ConstantInt::get(ResultTy, R==APFloat::cmpGreaterThan ||
                                         R==APFloat::cmpEqual);
     }
-  } else if (isa<VectorType>(C1->getType())) {
+  } else if (C1->getType()->isVectorTy()) {
     SmallVector<Constant*, 16> C1Elts, C2Elts;
     C1->getVectorElements(C1Elts);
     C2->getVectorElements(C2Elts);
@@ -2065,7 +2065,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(C2)) {
       Constant *CE2Op0 = CE2->getOperand(0);
       if (CE2->getOpcode() == Instruction::BitCast &&
-          isa<VectorType>(CE2->getType())==isa<VectorType>(CE2Op0->getType())) {
+          CE2->getType()->isVectorTy()==CE2Op0->getType()->isVectorTy()) {
         Constant *Inverse = ConstantExpr::getBitCast(C1, CE2Op0->getType());
         return ConstantExpr::getICmp(pred, Inverse, CE2Op0);
       }
@@ -2184,7 +2184,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
            I != E; ++I)
         LastTy = *I;
 
-      if ((LastTy && isa<ArrayType>(LastTy)) || Idx0->isNullValue()) {
+      if ((LastTy && LastTy->isArrayTy()) || Idx0->isNullValue()) {
         SmallVector<Value*, 16> NewIndices;
         NewIndices.reserve(NumIdx + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)

@@ -124,7 +124,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   unsigned ArgNo = 0;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
        I != E; ++I, ++ArgNo)
-    if (isa<PointerType>(I->getType()))
+    if (I->getType()->isPointerTy())
       PointerArgs.push_back(std::pair<Argument*, unsigned>(I, ArgNo));
   if (PointerArgs.empty()) return 0;
 
@@ -673,7 +673,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
                  IE = SI->end(); II != IE; ++II) {
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
-              const Type *IdxTy = (isa<StructType>(ElTy) ?
+              const Type *IdxTy = (ElTy->isStructTy() ?
                     Type::getInt32Ty(F->getContext()) : 
                     Type::getInt64Ty(F->getContext()));
               Ops.push_back(ConstantInt::get(IdxTy, *II));

@@ -73,7 +73,7 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
 /// from 'From' to 'To'.  We don't want to convert from a legal to an illegal
 /// type for example, or from a smaller to a larger illegal type.
 bool InstCombiner::ShouldChangeType(const Type *From, const Type *To) const {
-  assert(isa<IntegerType>(From) && isa<IntegerType>(To));
+  assert(From->isIntegerTy() && To->isIntegerTy());
   
   // If we don't have TD, we don't know if the source/dest are legal.
   if (!TD) return false;
@@ -478,7 +478,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     bool EndsWithSequential = false;
     for (gep_type_iterator I = gep_type_begin(*Src), E = gep_type_end(*Src);
          I != E; ++I)
-      EndsWithSequential = !isa<StructType>(*I);
+      EndsWithSequential = !(*I)->isStructTy();
 
     // Can we combine the two pointer arithmetics offsets?
     if (EndsWithSequential) {
@@ -578,7 +578,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // into:  %t1 = getelementptr [2 x i32]* %str, i32 0, i32 %V; bitcast
       const Type *SrcElTy = StrippedPtrTy->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
-      if (TD && isa<ArrayType>(SrcElTy) &&
+      if (TD && SrcElTy->isArrayTy() &&
           TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
         Value *Idx[2];
@@ -596,7 +596,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
       
-      if (TD && isa<ArrayType>(SrcElTy) && ResElTy->isIntegerTy(8)) {
+      if (TD && SrcElTy->isArrayTy() && ResElTy->isIntegerTy(8)) {
         uint64_t ArrayEltSize =
             TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
         

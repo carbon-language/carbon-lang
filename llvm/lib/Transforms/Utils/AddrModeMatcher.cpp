@@ -125,7 +125,7 @@ static bool MightBeFoldableInst(Instruction *I) {
     // Don't touch identity bitcasts.
     if (I->getType() == I->getOperand(0)->getType())
       return false;
-    return isa<PointerType>(I->getType()) || isa<IntegerType>(I->getType());
+    return I->getType()->isPointerTy() || I->getType()->isIntegerTy();
   case Instruction::PtrToInt:
     // PtrToInt is always a noop, as we know that the int type is pointer sized.
     return true;
@@ -167,8 +167,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
   case Instruction::BitCast:
     // BitCast is always a noop, and we can handle it as long as it is
     // int->int or pointer->pointer (we don't want int<->fp or something).
-    if ((isa<PointerType>(AddrInst->getOperand(0)->getType()) ||
-         isa<IntegerType>(AddrInst->getOperand(0)->getType())) &&
+    if ((AddrInst->getOperand(0)->getType()->isPointerTy() ||
+         AddrInst->getOperand(0)->getType()->isIntegerTy()) &&
         // Don't touch identity bitcasts.  These were probably put here by LSR,
         // and we don't want to mess around with them.  Assume it knows what it
         // is doing.
@@ -569,7 +569,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     // Get the access type of this use.  If the use isn't a pointer, we don't
     // know what it accesses.
     Value *Address = User->getOperand(OpNo);
-    if (!isa<PointerType>(Address->getType()))
+    if (!Address->getType()->isPointerTy())
       return false;
     const Type *AddressAccessTy =
       cast<PointerType>(Address->getType())->getElementType();

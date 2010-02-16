@@ -73,35 +73,35 @@ unsigned Argument::getArgNo() const {
 /// hasByValAttr - Return true if this argument has the byval attribute on it
 /// in its containing function.
 bool Argument::hasByValAttr() const {
-  if (!isa<PointerType>(getType())) return false;
+  if (!getType()->isPointerTy()) return false;
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::ByVal);
 }
 
 /// hasNestAttr - Return true if this argument has the nest attribute on
 /// it in its containing function.
 bool Argument::hasNestAttr() const {
-  if (!isa<PointerType>(getType())) return false;
+  if (!getType()->isPointerTy()) return false;
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::Nest);
 }
 
 /// hasNoAliasAttr - Return true if this argument has the noalias attribute on
 /// it in its containing function.
 bool Argument::hasNoAliasAttr() const {
-  if (!isa<PointerType>(getType())) return false;
+  if (!getType()->isPointerTy()) return false;
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoAlias);
 }
 
 /// hasNoCaptureAttr - Return true if this argument has the nocapture attribute
 /// on it in its containing function.
 bool Argument::hasNoCaptureAttr() const {
-  if (!isa<PointerType>(getType())) return false;
+  if (!getType()->isPointerTy()) return false;
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::NoCapture);
 }
 
 /// hasSRetAttr - Return true if this argument has the sret attribute on
 /// it in its containing function.
 bool Argument::hasStructRetAttr() const {
-  if (!isa<PointerType>(getType())) return false;
+  if (!getType()->isPointerTy()) return false;
   if (this != getParent()->arg_begin())
     return false; // StructRet param must be first param
   return getParent()->paramHasAttr(1, Attribute::StructRet);

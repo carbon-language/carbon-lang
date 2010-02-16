@@ -1988,7 +1988,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   // values.  If the ptr->ptr cast can be stripped off both arguments, we do so
   // now.
   if (BitCastInst *CI = dyn_cast<BitCastInst>(Op0)) {
-    if (isa<PointerType>(Op0->getType()) && 
+    if (Op0->getType()->isPointerTy() && 
         (isa<Constant>(Op1) || isa<BitCastInst>(Op1))) { 
       // We keep moving the cast from the left operand over to the right
       // operand, where it can often be eliminated completely.

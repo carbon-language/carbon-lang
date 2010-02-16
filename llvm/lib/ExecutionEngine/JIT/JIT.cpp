@@ -415,8 +415,8 @@ GenericValue JIT::runFunction(Function *F,
     switch (ArgValues.size()) {
     case 3:
       if (FTy->getParamType(0)->isIntegerTy(32) &&
-          isa<PointerType>(FTy->getParamType(1)) &&
-          isa<PointerType>(FTy->getParamType(2))) {
+          FTy->getParamType(1)->isPointerTy() &&
+          FTy->getParamType(2)->isPointerTy()) {
         int (*PF)(int, char **, const char **) =
           (int(*)(int, char **, const char **))(intptr_t)FPtr;
 
@@ -430,7 +430,7 @@ GenericValue JIT::runFunction(Function *F,
       break;
     case 2:
       if (FTy->getParamType(0)->isIntegerTy(32) &&
-          isa<PointerType>(FTy->getParamType(1))) {
+          FTy->getParamType(1)->isPointerTy()) {
         int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
         // Call the function.

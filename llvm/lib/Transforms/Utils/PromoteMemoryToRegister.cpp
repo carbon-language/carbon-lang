@@ -518,7 +518,7 @@ void PromoteMem2Reg::run() {
       
       // If this PHI node merges one value and/or undefs, get the value.
       if (Value *V = PN->hasConstantValue(&DT)) {
-        if (AST && isa<PointerType>(PN->getType()))
+        if (AST && PN->getType()->isPointerTy())
           AST->deleteValue(PN);
         PN->replaceAllUsesWith(V);
         PN->eraseFromParent();
@@ -780,7 +780,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
     if (ReplVal == LI)
       ReplVal = UndefValue::get(LI->getType());
     LI->replaceAllUsesWith(ReplVal);
-    if (AST && isa<PointerType>(LI->getType()))
+    if (AST && LI->getType()->isPointerTy())
       AST->deleteValue(LI);
     LI->eraseFromParent();
     LBI.deleteValue(LI);
@@ -838,7 +838,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
     for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) 
       if (LoadInst *LI = dyn_cast<LoadInst>(*UI++)) {
         LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
-        if (AST && isa<PointerType>(LI->getType()))
+        if (AST && LI->getType()->isPointerTy())
           AST->deleteValue(LI);
         LBI.deleteValue(LI);
         LI->eraseFromParent();
@@ -874,7 +874,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
     // Otherwise, there was a store before this load, the load takes its value.
     --I;
     LI->replaceAllUsesWith(I->second->getOperand(0));
-    if (AST && isa<PointerType>(LI->getType()))
+    if (AST && LI->getType()->isPointerTy())
       AST->deleteValue(LI);
     LI->eraseFromParent();
     LBI.deleteValue(LI);
@@ -922,7 +922,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   
   InsertedPHINodes.insert(PN);
 
-  if (AST && isa<PointerType>(PN->getType()))
+  if (AST && PN->getType()->isPointerTy())
     AST->copyValue(PointerAllocaValues[AllocaNo], PN);
 
   return true;
@@ -996,7 +996,7 @@ NextIteration:
 
       // Anything using the load now uses the current value.
       LI->replaceAllUsesWith(V);
-      if (AST && isa<PointerType>(LI->getType()))
+      if (AST && LI->getType()->isPointerTy())
         AST->deleteValue(LI);
       BB->getInstList().erase(LI);
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {

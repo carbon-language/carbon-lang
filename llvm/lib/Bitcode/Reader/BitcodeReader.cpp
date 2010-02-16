@@ -963,12 +963,12 @@ bool BitcodeReader::ParseConstants() {
       V = Constant::getNullValue(CurTy);
       break;
     case bitc::CST_CODE_INTEGER:   // INTEGER: [intval]
-      if (!isa<IntegerType>(CurTy) || Record.empty())
+      if (!CurTy->isIntegerTy() || Record.empty())
         return Error("Invalid CST_INTEGER record");
       V = ConstantInt::get(CurTy, DecodeSignRotatedValue(Record[0]));
       break;
     case bitc::CST_CODE_WIDE_INTEGER: {// WIDE_INTEGER: [n x intval]
-      if (!isa<IntegerType>(CurTy) || Record.empty())
+      if (!CurTy->isIntegerTy() || Record.empty())
         return Error("Invalid WIDE_INTEGER record");
 
       unsigned NumWords = Record.size();
@@ -1407,7 +1407,7 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() < 6)
         return Error("Invalid MODULE_CODE_GLOBALVAR record");
       const Type *Ty = getTypeByID(Record[0]);
-      if (!isa<PointerType>(Ty))
+      if (!Ty->isPointerTy())
         return Error("Global not a pointer type!");
       unsigned AddressSpace = cast<PointerType>(Ty)->getAddressSpace();
       Ty = cast<PointerType>(Ty)->getElementType();
@@ -1450,7 +1450,7 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() < 8)
         return Error("Invalid MODULE_CODE_FUNCTION record");
       const Type *Ty = getTypeByID(Record[0]);
-      if (!isa<PointerType>(Ty))
+      if (!Ty->isPointerTy())
         return Error("Function not a pointer type!");
       const FunctionType *FTy =
         dyn_cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
@@ -1491,7 +1491,7 @@ bool BitcodeReader::ParseModule() {
       if (Record.size() < 3)
         return Error("Invalid MODULE_ALIAS record");
       const Type *Ty = getTypeByID(Record[0]);
-      if (!isa<PointerType>(Ty))
+      if (!Ty->isPointerTy())
         return Error("Function not a pointer type!");
 
       GlobalAlias *NewGA = new GlobalAlias(Ty, GetDecodedLinkage(Record[2]),
@@ -1932,7 +1932,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
         const Type *ReturnType = F->getReturnType();
         if (Vs.size() > 1 ||
-            (isa<StructType>(ReturnType) &&
+            (ReturnType->isStructTy() &&
              (Vs.empty() || Vs[0]->getType() != ReturnType))) {
           Value *RV = UndefValue::get(ReturnType);
           for (unsigned i = 0, e = Vs.size(); i != e; ++i) {

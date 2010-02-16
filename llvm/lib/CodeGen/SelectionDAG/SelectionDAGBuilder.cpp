@@ -680,7 +680,7 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
                                 getCurDebugLoc());
     }
 
-    if (isa<StructType>(C->getType()) || isa<ArrayType>(C->getType())) {
+    if (C->getType()->isStructTy() || C->getType()->isArrayTy()) {
       assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
              "Unknown struct or array constant!");
 
@@ -2080,7 +2080,7 @@ void SelectionDAGBuilder::visitIndirectBr(IndirectBrInst &I) {
 void SelectionDAGBuilder::visitFSub(User &I) {
   // -0.0 - X --> fneg
   const Type *Ty = I.getType();
-  if (isa<VectorType>(Ty)) {
+  if (Ty->isVectorTy()) {
     if (ConstantVector *CV = dyn_cast<ConstantVector>(I.getOperand(0))) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
       const Type *ElTy = DestTy->getElementType();
@@ -2117,7 +2117,7 @@ void SelectionDAGBuilder::visitBinary(User &I, unsigned OpCode) {
 void SelectionDAGBuilder::visitShift(User &I, unsigned Opcode) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
-  if (!isa<VectorType>(I.getType()) &&
+  if (!I.getType()->isVectorTy() &&
       Op2.getValueType() != TLI.getShiftAmountTy()) {
     // If the operand is smaller than the shift count type, promote it.
     EVT PTy = TLI.getPointerTy();
@@ -4287,8 +4287,8 @@ isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
     // Check for a truly no-op bitcast.
     if (isa<BitCastInst>(U) &&
         (U->getOperand(0)->getType() == U->getType() ||
-         (isa<PointerType>(U->getOperand(0)->getType()) &&
-          isa<PointerType>(U->getType()))))
+         (U->getOperand(0)->getType()->isPointerTy() &&
+          U->getType()->isPointerTy())))
       continue;
     // Otherwise it's not a true no-op.
     return false;
@@ -4541,9 +4541,9 @@ bool SelectionDAGBuilder::visitMemCmpCall(CallInst &I) {
     return false;
 
   Value *LHS = I.getOperand(1), *RHS = I.getOperand(2);
-  if (!isa<PointerType>(LHS->getType()) || !isa<PointerType>(RHS->getType()) ||
-      !isa<IntegerType>(I.getOperand(3)->getType()) ||
-      !isa<IntegerType>(I.getType()))
+  if (!LHS->getType()->isPointerTy() || !RHS->getType()->isPointerTy() ||
+      !I.getOperand(3)->getType()->isIntegerTy() ||
+      !I.getType()->isIntegerTy())
     return false;
 
   ConstantInt *Size = dyn_cast<ConstantInt>(I.getOperand(3));

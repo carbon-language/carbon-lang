@@ -49,7 +49,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   assert(V && "No Value?");
   assert(Depth <= MaxDepth && "Limit Search Depth");
   unsigned BitWidth = Mask.getBitWidth();
-  assert((V->getType()->isIntOrIntVectorTy() || isa<PointerType>(V->getType()))
+  assert((V->getType()->isIntOrIntVectorTy() || V->getType()->isPointerTy())
          && "Not integer or pointer type!");
   assert((!TD ||
           TD->getTypeSizeInBits(V->getType()->getScalarType()) == BitWidth) &&
@@ -249,7 +249,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     unsigned SrcBitWidth;
     // Note that we handle pointer operands here because of inttoptr/ptrtoint
     // which fall through here.
-    if (isa<PointerType>(SrcTy))
+    if (SrcTy->isPointerTy())
       SrcBitWidth = TD->getTypeSizeInBits(SrcTy);
     else
       SrcBitWidth = SrcTy->getScalarSizeInBits();
@@ -269,10 +269,10 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   case Instruction::BitCast: {
     const Type *SrcTy = I->getOperand(0)->getType();
-    if ((SrcTy->isIntegerTy() || isa<PointerType>(SrcTy)) &&
+    if ((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
         // TODO: For now, not handling conversions like:
         // (bitcast i64 %x to <2 x i32>)
-        !isa<VectorType>(I->getType())) {
+        !I->getType()->isVectorTy()) {
       ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, TD,
                         Depth+1);
       return;
@@ -980,7 +980,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 /// may not be represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
                                   const TargetData *TD, unsigned Depth) {
-  assert(isa<IntegerType>(V->getType()) && "Not an integer value");
+  assert(V->getType()->isIntegerTy() && "Not an integer value");
 
   // Limit our recursion depth.
   if (Depth == 6) {
@@ -1253,7 +1253,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   if (idx_begin == idx_end)
     return V;
   // We have indices, so V should have an indexable type
-  assert((isa<StructType>(V->getType()) || isa<ArrayType>(V->getType()))
+  assert((V->getType()->isStructTy() || V->getType()->isArrayTy())
          && "Not looking at a struct or array?");
   assert(ExtractValueInst::getIndexedType(V->getType(), idx_begin, idx_end)
          && "Invalid indices for type?");

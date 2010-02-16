@@ -72,7 +72,7 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
     } else {
       return V;
     }
-    assert(isa<IntegerType>(V->getType()) && "Unexpected operand type!");
+    assert(V->getType()->isIntegerTy() && "Unexpected operand type!");
   } while (1);
 }
 
@@ -87,7 +87,7 @@ static const Value *getUnderlyingObject(const Value *V) {
       break;
     const Value *O = getUnderlyingObjectFromInt(cast<User>(V)->getOperand(0));
     // If that succeeded in finding a pointer, continue the search.
-    if (!isa<PointerType>(O->getType()))
+    if (!O->getType()->isPointerTy())
       break;
     V = O;
   } while (1);

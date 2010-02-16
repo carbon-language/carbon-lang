@@ -591,7 +591,7 @@ public:
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
     assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
-            isa<PointerType>(getOperand(0)->getType())) &&
+            getOperand(0)->getType()->isPointerTy()) &&
            "Invalid operand types for ICmp instruction");
   }
 
@@ -612,7 +612,7 @@ public:
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
     assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
-            isa<PointerType>(getOperand(0)->getType())) &&
+            getOperand(0)->getType()->isPointerTy()) &&
            "Invalid operand types for ICmp instruction");
   }
 
@@ -631,7 +631,7 @@ public:
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
     assert((getOperand(0)->getType()->isIntOrIntVectorTy() ||
-            isa<PointerType>(getOperand(0)->getType())) &&
+            getOperand(0)->getType()->isPointerTy()) &&
            "Invalid operand types for ICmp instruction");
   }
 

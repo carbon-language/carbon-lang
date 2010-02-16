@@ -612,7 +612,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // we'd end up sinking both muls.
     if (AddrMode.BaseReg) {
       Value *V = AddrMode.BaseReg;
-      if (isa<PointerType>(V->getType()))
+      if (V->getType()->isPointerTy())
         V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
       if (V->getType() != IntPtrTy)
         V = CastInst::CreateIntegerCast(V, IntPtrTy, /*isSigned=*/true,
@@ -625,7 +625,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
       Value *V = AddrMode.ScaledReg;
       if (V->getType() == IntPtrTy) {
         // done.
-      } else if (isa<PointerType>(V->getType())) {
+      } else if (V->getType()->isPointerTy()) {
         V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
       } else if (cast<IntegerType>(IntPtrTy)->getBitWidth() <
                  cast<IntegerType>(V->getType())->getBitWidth()) {

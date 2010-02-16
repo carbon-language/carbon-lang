@@ -357,7 +357,7 @@ void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   Constant *F;
-  if (isa<PointerType>(File->getType()))
+  if (File->getType()->isPointerTy())
     F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI, 2),
                                Type::getInt32Ty(*Context),
                                Type::getInt32Ty(*Context), File->getType(),
@@ -384,7 +384,7 @@ void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
   AWI[1] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   Constant *F;
-  if (isa<PointerType>(File->getType()))
+  if (File->getType()->isPointerTy())
     F = M->getOrInsertFunction("fputs", AttrListPtr::get(AWI, 3),
                                Type::getInt32Ty(*Context),
                                Type::getInt8PtrTy(*Context),
@@ -409,7 +409,7 @@ void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
   AWI[1] = AttributeWithIndex::get(4, Attribute::NoCapture);
   AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   Constant *F;
-  if (isa<PointerType>(File->getType()))
+  if (File->getType()->isPointerTy())
     F = M->getOrInsertFunction("fwrite", AttrListPtr::get(AWI, 3),
                                TD->getIntPtrType(*Context),
                                Type::getInt8PtrTy(*Context),
@@ -548,7 +548,7 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
 /// GetStringLength - If we can compute the length of the string pointed to by
 /// the specified pointer, return 'len+1'.  If we can't, return 0.
 static uint64_t GetStringLength(Value *V) {
-  if (!isa<PointerType>(V->getType())) return 0;
+  if (!V->getType()->isPointerTy()) return 0;
 
   SmallPtrSet<PHINode*, 32> PHIs;
   uint64_t Len = GetStringLengthH(V, PHIs);
@@ -638,7 +638,7 @@ struct StrNCatOpt : public StrCatOpt {
         FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
         FT->getParamType(0) != FT->getReturnType() ||
         FT->getParamType(1) != FT->getReturnType() ||
-        !isa<IntegerType>(FT->getParamType(2)))
+        !FT->getParamType(2)->isIntegerTy())
       return 0;
 
     // Extract some information from the instruction
@@ -790,7 +790,7 @@ struct StrNCmpOpt : public LibCallOptimization {
 	!FT->getReturnType()->isIntegerTy(32) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
-        !isa<IntegerType>(FT->getParamType(2)))
+        !FT->getParamType(2)->isIntegerTy())
       return 0;
 
     Value *Str1P = CI->getOperand(1), *Str2P = CI->getOperand(2);
@@ -866,7 +866,7 @@ struct StrNCpyOpt : public LibCallOptimization {
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         FT->getParamType(0) != FT->getParamType(1) ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
-        !isa<IntegerType>(FT->getParamType(2)))
+        !FT->getParamType(2)->isIntegerTy())
       return 0;
 
     Value *Dst = CI->getOperand(1);
@@ -915,7 +915,7 @@ struct StrLenOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 ||
         FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
-        !isa<IntegerType>(FT->getReturnType()))
+        !FT->getReturnType()->isIntegerTy())
       return 0;
 
     Value *Src = CI->getOperand(1);
@@ -939,8 +939,8 @@ struct StrToOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if ((FT->getNumParams() != 2 && FT->getNumParams() != 3) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)))
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy())
       return 0;
 
     Value *EndPtr = CI->getOperand(2);
@@ -960,9 +960,9 @@ struct StrStrOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
-        !isa<PointerType>(FT->getReturnType()))
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isPointerTy())
       return 0;
 
     // fold strstr(x, x) -> x.
@@ -1006,8 +1006,8 @@ struct StrStrOpt : public LibCallOptimization {
 struct MemCmpOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 3 || !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
+    if (FT->getNumParams() != 3 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
         !FT->getReturnType()->isIntegerTy(32))
       return 0;
 
@@ -1055,8 +1055,8 @@ struct MemCpyOpt : public LibCallOptimization {
 
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1076,8 +1076,8 @@ struct MemMoveOpt : public LibCallOptimization {
 
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1097,8 +1097,8 @@ struct MemSetOpt : public LibCallOptimization {
 
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<IntegerType>(FT->getParamType(1)) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isIntegerTy() ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1124,9 +1124,9 @@ struct MemCpyChkOpt : public LibCallOptimization {
 
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getParamType(3)) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getParamType(3)->isIntegerTy() ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1152,9 +1152,9 @@ struct MemSetChkOpt : public LibCallOptimization {
 
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<IntegerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getParamType(3)) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isIntegerTy() ||
+        !FT->getParamType(3)->isIntegerTy() ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1182,9 +1182,9 @@ struct MemMoveChkOpt : public LibCallOptimization {
 
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getParamType(3)) ||
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getParamType(3)->isIntegerTy() ||
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
@@ -1205,8 +1205,8 @@ struct StrCpyChkOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)))
+        !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy())
       return 0;
 
     ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
@@ -1376,7 +1376,7 @@ struct FFSOpt : public LibCallOptimization {
     // result type.
     if (FT->getNumParams() != 1 ||
 	!FT->getReturnType()->isIntegerTy(32) ||
-        !isa<IntegerType>(FT->getParamType(0)))
+        !FT->getParamType(0)->isIntegerTy())
       return 0;
 
     Value *Op = CI->getOperand(1);
@@ -1410,7 +1410,7 @@ struct IsDigitOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
-    if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
+    if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
         !FT->getParamType(0)->isIntegerTy(32))
       return 0;
 
@@ -1431,7 +1431,7 @@ struct IsAsciiOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
-    if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
+    if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
         !FT->getParamType(0)->isIntegerTy(32))
       return 0;
 
@@ -1450,7 +1450,7 @@ struct AbsOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     // We require integer(integer) where the types agree.
-    if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
+    if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
         FT->getParamType(0) != FT->getReturnType())
       return 0;
 
@@ -1493,8 +1493,8 @@ struct PrintFOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require one fixed pointer argument and an integer/void result.
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() < 1 || !isa<PointerType>(FT->getParamType(0)) ||
-        !(isa<IntegerType>(FT->getReturnType()) ||
+    if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
+        !(FT->getReturnType()->isIntegerTy() ||
           FT->getReturnType()->isVoidTy()))
       return 0;
 
@@ -1534,7 +1534,7 @@ struct PrintFOpt : public LibCallOptimization {
     // Optimize specific format strings.
     // printf("%c", chr) --> putchar(*(i8*)dst)
     if (FormatStr == "%c" && CI->getNumOperands() > 2 &&
-        isa<IntegerType>(CI->getOperand(2)->getType())) {
+        CI->getOperand(2)->getType()->isIntegerTy()) {
       Value *Res = EmitPutChar(CI->getOperand(2), B);
 
       if (CI->use_empty()) return CI;
@@ -1543,7 +1543,7 @@ struct PrintFOpt : public LibCallOptimization {
 
     // printf("%s\n", str) --> puts(str)
     if (FormatStr == "%s\n" && CI->getNumOperands() > 2 &&
-        isa<PointerType>(CI->getOperand(2)->getType()) &&
+        CI->getOperand(2)->getType()->isPointerTy() &&
         CI->use_empty()) {
       EmitPutS(CI->getOperand(2), B);
       return CI;
@@ -1559,9 +1559,9 @@ struct SPrintFOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require two fixed pointer arguments and an integer result.
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getReturnType()))
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
       return 0;
 
     // Check for a fixed format string.
@@ -1595,7 +1595,7 @@ struct SPrintFOpt : public LibCallOptimization {
     // Decode the second character of the format string.
     if (FormatStr[1] == 'c') {
       // sprintf(dst, "%c", chr) --> *(i8*)dst = chr; *((i8*)dst+1) = 0
-      if (!isa<IntegerType>(CI->getOperand(3)->getType())) return 0;
+      if (!CI->getOperand(3)->getType()->isIntegerTy()) return 0;
       Value *V = B.CreateTrunc(CI->getOperand(3),
 			       Type::getInt8Ty(*Context), "char");
       Value *Ptr = CastToCStr(CI->getOperand(1), B);
@@ -1612,7 +1612,7 @@ struct SPrintFOpt : public LibCallOptimization {
       if (!TD) return 0;
 
       // sprintf(dest, "%s", str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
-      if (!isa<PointerType>(CI->getOperand(3)->getType())) return 0;
+      if (!CI->getOperand(3)->getType()->isPointerTy()) return 0;
 
       Value *Len = EmitStrLen(CI->getOperand(3), B);
       Value *IncLen = B.CreateAdd(Len,
@@ -1634,11 +1634,11 @@ struct FWriteOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require a pointer, an integer, an integer, a pointer, returning integer.
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 4 || !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<IntegerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getParamType(2)) ||
-        !isa<PointerType>(FT->getParamType(3)) ||
-        !isa<IntegerType>(FT->getReturnType()))
+    if (FT->getNumParams() != 4 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isIntegerTy() ||
+        !FT->getParamType(2)->isIntegerTy() ||
+        !FT->getParamType(3)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
       return 0;
 
     // Get the element size and count.
@@ -1672,8 +1672,8 @@ struct FPutsOpt : public LibCallOptimization {
 
     // Require two pointers.  Also, we can't optimize if return value is used.
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
         !CI->use_empty())
       return 0;
 
@@ -1694,9 +1694,9 @@ struct FPrintFOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Require two fixed paramters as pointers and integer result.
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 2 || !isa<PointerType>(FT->getParamType(0)) ||
-        !isa<PointerType>(FT->getParamType(1)) ||
-        !isa<IntegerType>(FT->getReturnType()))
+    if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() ||
+        !FT->getReturnType()->isIntegerTy())
       return 0;
 
     // All the optimizations depend on the format string.
@@ -1728,14 +1728,14 @@ struct FPrintFOpt : public LibCallOptimization {
     // Decode the second character of the format string.
     if (FormatStr[1] == 'c') {
       // fprintf(F, "%c", chr) --> *(i8*)dst = chr
-      if (!isa<IntegerType>(CI->getOperand(3)->getType())) return 0;
+      if (!CI->getOperand(3)->getType()->isIntegerTy()) return 0;
       EmitFPutC(CI->getOperand(3), CI->getOperand(1), B);
       return ConstantInt::get(CI->getType(), 1);
     }
 
     if (FormatStr[1] == 's') {
       // fprintf(F, "%s", str) -> fputs(str, F)
-      if (!isa<PointerType>(CI->getOperand(3)->getType()) || !CI->use_empty())
+      if (!CI->getOperand(3)->getType()->isPointerTy() || !CI->use_empty())
         return 0;
       EmitFPutS(CI->getOperand(3), CI->getOperand(1), B);
       return CI;
@@ -2000,7 +2000,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 's':
         if (Name == "strlen") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
@@ -2018,14 +2018,14 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "strncpy" ||
                    Name == "strtoull") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
         } else if (Name == "strxfrm") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2038,8 +2038,8 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "strcasecmp" ||
                    Name == "strncasecmp") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
@@ -2048,7 +2048,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         } else if (Name == "strstr" ||
                    Name == "strpbrk") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
@@ -2056,7 +2056,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         } else if (Name == "strtok" ||
                    Name == "strtok_r") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
@@ -2064,15 +2064,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "setbuf" ||
                    Name == "setvbuf") {
           if (FTy->getNumParams() < 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "strdup" ||
                    Name == "strndup") {
           if (FTy->getNumParams() < 1 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2082,31 +2082,31 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "sprintf" ||
                    Name == "statvfs") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
         } else if (Name == "snprintf") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(2)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(2)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 3);
         } else if (Name == "setitimer") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(1)) ||
-              !isa<PointerType>(FTy->getParamType(2)))
+              !FTy->getParamType(1)->isPointerTy() ||
+              !FTy->getParamType(2)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
           setDoesNotCapture(F, 3);
         } else if (Name == "system") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           // May throw; "system" is a valid pthread cancellation point.
           setDoesNotCapture(F, 1);
@@ -2115,14 +2115,14 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'm':
         if (Name == "malloc") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getReturnType()))
+              !FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
         } else if (Name == "memcmp") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
@@ -2141,18 +2141,18 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "memccpy" ||
                    Name == "memmove") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
         } else if (Name == "memalign") {
-          if (!isa<PointerType>(FTy->getReturnType()))
+          if (!FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotAlias(F, 0);
         } else if (Name == "mkdir" ||
                    Name == "mktime") {
           if (FTy->getNumParams() == 0 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2161,15 +2161,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'r':
         if (Name == "realloc") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getReturnType()))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
         } else if (Name == "read") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           // May throw; "read" is a valid pthread cancellation point.
           setDoesNotCapture(F, 2);
@@ -2178,15 +2178,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "remove" ||
                    Name == "realpath") {
           if (FTy->getNumParams() < 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "rename" ||
                    Name == "readlink") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2196,7 +2196,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'w':
         if (Name == "write") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           // May throw; "write" is a valid pthread cancellation point.
           setDoesNotCapture(F, 2);
@@ -2205,16 +2205,16 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'b':
         if (Name == "bcopy") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
         } else if (Name == "bcmp") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setOnlyReadsMemory(F);
@@ -2222,7 +2222,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotCapture(F, 2);
         } else if (Name == "bzero") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2231,7 +2231,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'c':
         if (Name == "calloc") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getReturnType()))
+              !FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2241,7 +2241,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "clearerr" ||
                    Name == "closedir") {
           if (FTy->getNumParams() == 0 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2253,14 +2253,14 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
             Name == "atof" ||
             Name == "atoll") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setOnlyReadsMemory(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "access") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2269,9 +2269,9 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'f':
         if (Name == "fopen") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2279,8 +2279,8 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotCapture(F, 2);
         } else if (Name == "fdopen") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2300,13 +2300,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "funlockfile" ||
                    Name == "ftrylockfile") {
           if (FTy->getNumParams() == 0 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "ferror") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2318,22 +2318,22 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "frexpl" ||
                    Name == "fstatvfs") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
         } else if (Name == "fgets") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(2)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(2)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 3);
         } else if (Name == "fread" ||
                    Name == "fwrite") {
           if (FTy->getNumParams() != 4 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(3)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(3)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2343,8 +2343,8 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "fprintf" ||
                    Name == "fgetpos") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2356,13 +2356,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
             Name == "getlogin_r" ||
             Name == "getc_unlocked") {
           if (FTy->getNumParams() == 0 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "getenv") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setOnlyReadsMemory(F);
@@ -2372,13 +2372,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
         } else if (Name == "getitimer") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
         } else if (Name == "getpwnam") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2387,7 +2387,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'u':
         if (Name == "ungetc") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
@@ -2395,15 +2395,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "unlink" ||
                    Name == "unsetenv") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "utime" ||
                    Name == "utimes") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2413,7 +2413,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'p':
         if (Name == "putc") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
@@ -2421,14 +2421,14 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "printf" ||
                    Name == "perror") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "pread" ||
                    Name == "pwrite") {
           if (FTy->getNumParams() != 4 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           // May throw; these are valid pthread cancellation points.
           setDoesNotCapture(F, 2);
@@ -2436,9 +2436,9 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
         } else if (Name == "popen") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2446,7 +2446,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotCapture(F, 2);
         } else if (Name == "pclose") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2455,43 +2455,43 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'v':
         if (Name == "vscanf") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "vsscanf" ||
                    Name == "vfscanf") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(1)) ||
-              !isa<PointerType>(FTy->getParamType(2)))
+              !FTy->getParamType(1)->isPointerTy() ||
+              !FTy->getParamType(2)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
         } else if (Name == "valloc") {
-          if (!isa<PointerType>(FTy->getReturnType()))
+          if (!FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
         } else if (Name == "vprintf") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "vfprintf" ||
                    Name == "vsprintf") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
         } else if (Name == "vsnprintf") {
           if (FTy->getNumParams() != 4 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(2)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(2)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2501,14 +2501,14 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'o':
         if (Name == "open") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           // May throw; "open" is a valid pthread cancellation point.
           setDoesNotCapture(F, 1);
         } else if (Name == "opendir") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2517,13 +2517,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         break;
       case 't':
         if (Name == "tmpfile") {
-          if (!isa<PointerType>(FTy->getReturnType()))
+          if (!FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
         } else if (Name == "times") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2546,15 +2546,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'l':
         if (Name == "lstat") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
         } else if (Name == "lchown") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2563,7 +2563,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 'q':
         if (Name == "qsort") {
           if (FTy->getNumParams() != 4 ||
-              !isa<PointerType>(FTy->getParamType(3)))
+              !FTy->getParamType(3)->isPointerTy())
             continue;
           // May throw; places call through function pointer.
           setDoesNotCapture(F, 4);
@@ -2573,27 +2573,27 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         if (Name == "__strdup" ||
             Name == "__strndup") {
           if (FTy->getNumParams() < 1 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
         } else if (Name == "__strtok_r") {
           if (FTy->getNumParams() != 3 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
         } else if (Name == "_IO_getc") {
           if (FTy->getNumParams() != 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "_IO_putc") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
@@ -2602,7 +2602,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
       case 1:
         if (Name == "\1__isoc99_scanf") {
           if (FTy->getNumParams() < 1 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
@@ -2611,17 +2611,17 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
                    Name == "\1statvfs64" ||
                    Name == "\1__isoc99_sscanf") {
           if (FTy->getNumParams() < 1 ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
         } else if (Name == "\1fopen64") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getReturnType()) ||
-              !isa<PointerType>(FTy->getParamType(0)) ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getReturnType()->isPointerTy() ||
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
@@ -2630,25 +2630,25 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         } else if (Name == "\1fseeko64" ||
                    Name == "\1ftello64") {
           if (FTy->getNumParams() == 0 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
         } else if (Name == "\1tmpfile64") {
-          if (!isa<PointerType>(FTy->getReturnType()))
+          if (!FTy->getReturnType()->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
         } else if (Name == "\1fstat64" ||
                    Name == "\1fstatvfs64") {
           if (FTy->getNumParams() != 2 ||
-              !isa<PointerType>(FTy->getParamType(1)))
+              !FTy->getParamType(1)->isPointerTy())
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
         } else if (Name == "\1open64") {
           if (FTy->getNumParams() < 2 ||
-              !isa<PointerType>(FTy->getParamType(0)))
+              !FTy->getParamType(0)->isPointerTy())
             continue;
           // May throw; "open" is a valid pthread cancellation point.
           setDoesNotCapture(F, 1);

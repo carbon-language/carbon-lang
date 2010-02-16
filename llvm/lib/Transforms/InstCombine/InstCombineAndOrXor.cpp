@@ -1618,7 +1618,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     // (A & (C0?-1:0)) | (B & ~(C0?-1:0)) ->  C0 ? A : B, and commuted variants.
     // Don't do this for vector select idioms, the code generator doesn't handle
     // them well yet.
-    if (!isa<VectorType>(I.getType())) {
+    if (!I.getType()->isVectorTy()) {
       if (Instruction *Match = MatchSelectFromAndOr(A, B, C, D))
         return Match;
       if (Instruction *Match = MatchSelectFromAndOr(B, A, D, C))
@@ -1755,7 +1755,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   // purpose is to compute bits we don't care about.
   if (SimplifyDemandedInstructionBits(I))
     return &I;
-  if (isa<VectorType>(I.getType()))
+  if (I.getType()->isVectorTy())
     if (isa<ConstantAggregateZero>(Op1))
       return ReplaceInstUsesWith(I, Op0);  // X ^ <0,0> -> X
 

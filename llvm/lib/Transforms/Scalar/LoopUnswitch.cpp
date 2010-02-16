@@ -170,7 +170,7 @@ Pass *llvm::createLoopUnswitchPass(bool Os) {
 /// Otherwise, return null.
 static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
   // We can never unswitch on vector conditions.
-  if (isa<VectorType>(Cond->getType()))
+  if (Cond->getType()->isVectorTy())
     return 0;
 
   // Constants should be folded, not unswitched on!

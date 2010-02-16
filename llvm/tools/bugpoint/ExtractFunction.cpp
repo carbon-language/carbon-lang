@@ -73,7 +73,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   Instruction *TheInst = RI;              // Got the corresponding instruction!
 
   // If this instruction produces a value, replace any users with null values
-  if (isa<StructType>(TheInst->getType()))
+  if (TheInst->getType()->isStructTy())
     TheInst->replaceAllUsesWith(UndefValue::get(TheInst->getType()));
   else if (TheInst->getType() != Type::getVoidTy(I->getContext()))
     TheInst->replaceAllUsesWith(Constant::getNullValue(TheInst->getType()));

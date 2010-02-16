@@ -45,7 +45,7 @@ Value::Value(const Type *ty, unsigned scid)
     UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
     assert((VTy->isFirstClassType() || VTy->isVoidTy() ||
-            isa<OpaqueType>(ty) || VTy->getTypeID() == Type::StructTyID) &&
+            isa<OpaqueType>(ty) || VTy->isStructTy()) &&
            "invalid CallInst  type!");
   else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
     assert((VTy->isFirstClassType() || VTy->isVoidTy() ||
@@ -320,7 +320,7 @@ void Value::replaceAllUsesWith(Value *New) {
 }
 
 Value *Value::stripPointerCasts() {
-  if (!isa<PointerType>(getType()))
+  if (!getType()->isPointerTy())
     return this;
   Value *V = this;
   do {
@@ -337,12 +337,12 @@ Value *Value::stripPointerCasts() {
     } else {
       return V;
     }
-    assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
+    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   } while (1);
 }
 
 Value *Value::getUnderlyingObject(unsigned MaxLookup) {
-  if (!isa<PointerType>(getType()))
+  if (!getType()->isPointerTy())
     return this;
   Value *V = this;
   for (unsigned Count = 0; MaxLookup == 0 || Count < MaxLookup; ++Count) {
@@ -357,7 +357,7 @@ Value *Value::getUnderlyingObject(unsigned MaxLookup) {
     } else {
       return V;
     }
-    assert(isa<PointerType>(V->getType()) && "Unexpected operand type!");
+    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
   }
   return V;
 }

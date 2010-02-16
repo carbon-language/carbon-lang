@@ -290,7 +290,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
          CI != CE; ++CI, ++ArgNo) {
       // Only look at the no-capture pointer arguments.
-      if (!isa<PointerType>((*CI)->getType()) ||
+      if (!(*CI)->getType()->isPointerTy() ||
           !CS.paramHasAttr(ArgNo+1, Attribute::NoCapture))
         continue;
       
@@ -662,7 +662,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
   // Are we checking for alias of the same value?
   if (V1 == V2) return MustAlias;
 
-  if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
+  if (!V1->getType()->isPointerTy() || !V2->getType()->isPointerTy())
     return NoAlias;  // Scalars cannot alias each other
 
   // Figure out what objects these things are pointing to if we can.

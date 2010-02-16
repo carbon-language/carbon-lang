@@ -562,7 +562,7 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
                                BasicBlock *InsertAtEnd) {
   assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
          "createFree needs either InsertBefore or InsertAtEnd");
-  assert(isa<PointerType>(Source->getType()) &&
+  assert(Source->getType()->isPointerTy() &&
          "Can not free something of nonpointer type!");
 
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
@@ -989,7 +989,7 @@ bool AllocaInst::isStaticAlloca() const {
 //===----------------------------------------------------------------------===//
 
 void LoadInst::AssertOK() {
-  assert(isa<PointerType>(getOperand(0)->getType()) &&
+  assert(getOperand(0)->getType()->isPointerTy() &&
          "Ptr must have pointer type.");
 }
 
@@ -1103,7 +1103,7 @@ void LoadInst::setAlignment(unsigned Align) {
 
 void StoreInst::AssertOK() {
   assert(getOperand(0) && getOperand(1) && "Both operands must be non-null!");
-  assert(isa<PointerType>(getOperand(1)->getType()) &&
+  assert(getOperand(1)->getType()->isPointerTy() &&
          "Ptr must have pointer type!");
   assert(getOperand(0)->getType() ==
                  cast<PointerType>(getOperand(1)->getType())->getElementType()
@@ -1285,7 +1285,7 @@ static const Type* getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
   unsigned CurIdx = 1;
   for (; CurIdx != NumIdx; ++CurIdx) {
     const CompositeType *CT = dyn_cast<CompositeType>(Agg);
-    if (!CT || isa<PointerType>(CT)) return 0;
+    if (!CT || CT->isPointerTy()) return 0;
     IndexTy Index = Idxs[CurIdx];
     if (!CT->indexValid(Index)) return 0;
     Agg = CT->getTypeAtIndex(Index);
@@ -1391,7 +1391,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 
 
 bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
-  if (!isa<VectorType>(Val->getType()) || !Index->getType()->isIntegerTy(32))
+  if (!Val->getType()->isVectorTy() || !Index->getType()->isIntegerTy(32))
     return false;
   return true;
 }
@@ -1432,7 +1432,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
 
 bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt, 
                                         const Value *Index) {
-  if (!isa<VectorType>(Vec->getType()))
+  if (!Vec->getType()->isVectorTy())
     return false;   // First operand of insertelement must be vector type.
   
   if (Elt->getType() != cast<VectorType>(Vec->getType())->getElementType())
@@ -1485,7 +1485,7 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
 
 bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
                                         const Value *Mask) {
-  if (!isa<VectorType>(V1->getType()) || V1->getType() != V2->getType())
+  if (!V1->getType()->isVectorTy() || V1->getType() != V2->getType())
     return false;
   
   const VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
@@ -1602,7 +1602,7 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
   unsigned CurIdx = 0;
   for (; CurIdx != NumIdx; ++CurIdx) {
     const CompositeType *CT = dyn_cast<CompositeType>(Agg);
-    if (!CT || isa<PointerType>(CT) || isa<VectorType>(CT)) return 0;
+    if (!CT || CT->isPointerTy() || CT->isVectorTy()) return 0;
     unsigned Index = Idxs[CurIdx];
     if (!CT->indexValid(Index)) return 0;
     Agg = CT->getTypeAtIndex(Index);
@@ -1693,7 +1693,7 @@ void BinaryOperator::init(BinaryOps iType) {
   case SDiv: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isIntegerTy() || (isa<VectorType>(getType()) && 
+    assert((getType()->isIntegerTy() || (getType()->isVectorTy() && 
             cast<VectorType>(getType())->getElementType()->isIntegerTy())) &&
            "Incorrect operand type (not integer) for S/UDIV");
     break;
@@ -1707,7 +1707,7 @@ void BinaryOperator::init(BinaryOps iType) {
   case SRem: 
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isIntegerTy() || (isa<VectorType>(getType()) && 
+    assert((getType()->isIntegerTy() || (getType()->isVectorTy() && 
             cast<VectorType>(getType())->getElementType()->isIntegerTy())) &&
            "Incorrect operand type (not integer) for S/UREM");
     break;
@@ -1723,7 +1723,7 @@ void BinaryOperator::init(BinaryOps iType) {
     assert(getType() == LHS->getType() &&
            "Shift operation should return same type as operands!");
     assert((getType()->isIntegerTy() ||
-            (isa<VectorType>(getType()) && 
+            (getType()->isVectorTy() && 
              cast<VectorType>(getType())->getElementType()->isIntegerTy())) &&
            "Tried to create a shift operation on a non-integral type!");
     break;
@@ -1732,7 +1732,7 @@ void BinaryOperator::init(BinaryOps iType) {
     assert(getType() == LHS->getType() &&
            "Logical operation should return same type as operands!");
     assert((getType()->isIntegerTy() ||
-            (isa<VectorType>(getType()) && 
+            (getType()->isVectorTy() && 
              cast<VectorType>(getType())->getElementType()->isIntegerTy())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
@@ -1977,8 +1977,8 @@ bool CastInst::isLosslessCast() const {
     return true;
   
   // Pointer to pointer is always lossless.
-  if (isa<PointerType>(SrcTy))
-    return isa<PointerType>(DstTy);
+  if (SrcTy->isPointerTy())
+    return DstTy->isPointerTy();
   return false;  // Other types have no identity values
 }
 
@@ -2094,7 +2094,7 @@ unsigned CastInst::isEliminableCastPair(
       // no-op cast in second op implies firstOp as long as the DestTy 
       // is integer and we are not converting between a vector and a
       // non vector type.
-      if (!isa<VectorType>(SrcTy) && DstTy->isIntegerTy())
+      if (!SrcTy->isVectorTy() && DstTy->isIntegerTy())
         return firstOp;
       return 0;
     case 4:
@@ -2148,12 +2148,12 @@ unsigned CastInst::isEliminableCastPair(
     case 11:
       // bitcast followed by ptrtoint is allowed as long as the bitcast
       // is a pointer to pointer cast.
-      if (isa<PointerType>(SrcTy) && isa<PointerType>(MidTy))
+      if (SrcTy->isPointerTy() && MidTy->isPointerTy())
         return secondOp;
       return 0;
     case 12:
       // inttoptr, bitcast -> intptr  if bitcast is a ptr to ptr cast
-      if (isa<PointerType>(MidTy) && isa<PointerType>(DstTy))
+      if (MidTy->isPointerTy() && DstTy->isPointerTy())
         return firstOp;
       return 0;
     case 13: {
@@ -2274,8 +2274,8 @@ CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
 CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
                                       const Twine &Name,
                                       BasicBlock *InsertAtEnd) {
-  assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
+  assert(S->getType()->isPointerTy() && "Invalid cast");
+  assert((Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Invalid cast");
 
   if (Ty->isIntegerTy())
@@ -2287,8 +2287,8 @@ CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
 CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty, 
                                       const Twine &Name, 
                                       Instruction *InsertBefore) {
-  assert(isa<PointerType>(S->getType()) && "Invalid cast");
-  assert((Ty->isIntegerTy() || isa<PointerType>(Ty)) &&
+  assert(S->getType()->isPointerTy() && "Invalid cast");
+  assert((Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Invalid cast");
 
   if (Ty->isIntegerTy())
@@ -2373,7 +2373,7 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
                                                // Casting from vector
       return DestBits == PTy->getBitWidth();
     } else {                                   // Casting from something else
-      return isa<PointerType>(SrcTy);
+      return SrcTy->isPointerTy();
     }
   } else if (DestTy->isFloatingPointTy()) {      // Casting to floating pt
     if (SrcTy->isIntegerTy()) {                  // Casting from integral
@@ -2394,8 +2394,8 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
     } else {                                    // Casting from something else
       return DestPTy->getBitWidth() == SrcBits;
     }
-  } else if (isa<PointerType>(DestTy)) {        // Casting to pointer
-    if (isa<PointerType>(SrcTy)) {              // Casting from pointer
+  } else if (DestTy->isPointerTy()) {        // Casting to pointer
+    if (SrcTy->isPointerTy()) {              // Casting from pointer
       return true;
     } else if (SrcTy->isIntegerTy()) {            // Casting from integral
       return true;
@@ -2449,7 +2449,7 @@ CastInst::getCastOpcode(
       PTy = NULL;
       return BitCast;                             // Same size, no-op cast
     } else {
-      assert(isa<PointerType>(SrcTy) &&
+      assert(SrcTy->isPointerTy() &&
              "Casting from a value that is not first-class type");
       return PtrToInt;                              // ptr -> int
     }
@@ -2486,8 +2486,8 @@ CastInst::getCastOpcode(
     } else {
       assert(!"Illegal cast to vector (wrong type or size)");
     }
-  } else if (isa<PointerType>(DestTy)) {
-    if (isa<PointerType>(SrcTy)) {
+  } else if (DestTy->isPointerTy()) {
+    if (SrcTy->isPointerTy()) {
       return BitCast;                               // ptr -> ptr
     } else if (SrcTy->isIntegerTy()) {
       return IntToPtr;                              // int -> ptr
@@ -2566,13 +2566,13 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
     }
     return SrcTy->isFPOrFPVectorTy() && DstTy->isIntOrIntVectorTy();
   case Instruction::PtrToInt:
-    return isa<PointerType>(SrcTy) && DstTy->isIntegerTy();
+    return SrcTy->isPointerTy() && DstTy->isIntegerTy();
   case Instruction::IntToPtr:
-    return SrcTy->isIntegerTy() && isa<PointerType>(DstTy);
+    return SrcTy->isIntegerTy() && DstTy->isPointerTy();
   case Instruction::BitCast:
     // BitCast implies a no-op cast of type only. No bits change.
     // However, you can't cast pointers to anything but pointers.
-    if (isa<PointerType>(SrcTy) != isa<PointerType>(DstTy))
+    if (SrcTy->isPointerTy() != DstTy->isPointerTy())
       return false;
 
     // Now we know we're not dealing with a pointer/non-pointer mismatch. In all
@@ -3150,7 +3150,7 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 //===----------------------------------------------------------------------===//
 
 void IndirectBrInst::init(Value *Address, unsigned NumDests) {
-  assert(Address && isa<PointerType>(Address->getType()) &&
+  assert(Address && Address->getType()->isPointerTy() &&
          "Address of indirectbr must be a pointer");
   ReservedSpace = 1+NumDests;
   NumOperands = 1;

@@ -303,7 +303,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit);
       } else if (CE->getOpcode() == Instruction::BitCast && 
-                 isa<PointerType>(CE->getType())) {
+                 CE->getType()->isPointerTy()) {
         // Pointer cast, delete any stores and memsets to the global.
         Changed |= CleanupConstantGlobalUsers(CE, 0);
       }
@@ -431,7 +431,7 @@ static bool IsUserOfGlobalSafeForSRA(User *U, GlobalValue *GV) {
       else if (const VectorType *SubVectorTy = dyn_cast<VectorType>(*GEPI))
         NumElements = SubVectorTy->getNumElements();
       else {
-        assert(isa<StructType>(*GEPI) &&
+        assert((*GEPI)->isStructTy() &&
                "Indexed GEP type is not array, vector, or struct!");
         continue;
       }
@@ -1556,7 +1556,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
   // only has one (non-null) value stored into it, then we can optimize any
   // users of the loaded value (often calls and loads) that would trap if the
   // value was null.
-  if (isa<PointerType>(GV->getInitializer()->getType()) &&
+  if (GV->getInitializer()->getType()->isPointerTy() &&
       GV->getInitializer()->isNullValue()) {
     if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal)) {
       if (GV->getInitializer()->getType() != SOVC->getType())
@@ -1591,7 +1591,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // where v1 and v2 both require constant pool loads, a big loss.
   if (GVElType == Type::getInt1Ty(GV->getContext()) ||
       GVElType->isFloatingPointTy() ||
-      isa<PointerType>(GVElType) || isa<VectorType>(GVElType))
+      GVElType->isPointerTy() || GVElType->isVectorTy())
     return false;
   
   // Walk the use list of the global seeing if all the uses are load or store.
@@ -2148,7 +2148,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     Elts[CI->getZExtValue()] =
       EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1);
     
-    if (isa<ArrayType>(Init->getType()))
+    if (Init->getType()->isArrayTy())
       return ConstantArray::get(cast<ArrayType>(InitTy), Elts);
     else
       return ConstantVector::get(&Elts[0], Elts.size());

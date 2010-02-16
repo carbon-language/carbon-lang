@@ -78,7 +78,7 @@ static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
 /// value is already around as a register, for example if it were inserted then
 /// extracted from the vector.
 static Value *FindScalarElement(Value *V, unsigned EltNo) {
-  assert(isa<VectorType>(V->getType()) && "Not looking at a vector?");
+  assert(V->getType()->isVectorTy() && "Not looking at a vector?");
   const VectorType *PTy = cast<VectorType>(V->getType());
   unsigned Width = PTy->getNumElements();
   if (EltNo >= Width)  // Out of range access.
@@ -322,7 +322,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
 /// that computes V and the LHS value of the shuffle.
 static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
                                      Value *&RHS) {
-  assert(isa<VectorType>(V->getType()) && 
+  assert(V->getType()->isVectorTy() && 
          (RHS == 0 || V->getType() == RHS->getType()) &&
          "Invalid shuffle!");
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();

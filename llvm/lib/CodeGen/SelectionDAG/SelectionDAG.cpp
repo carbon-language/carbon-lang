@@ -1345,7 +1345,7 @@ SDValue SelectionDAG::getBlockAddress(BlockAddress *BA, EVT VT,
 }
 
 SDValue SelectionDAG::getSrcValue(const Value *V) {
-  assert((!V || isa<PointerType>(V->getType())) &&
+  assert((!V || V->getType()->isPointerTy()) &&
          "SrcValue is not a pointer?");
 
   FoldingSetNodeID ID;

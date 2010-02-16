@@ -231,7 +231,7 @@ void PointerTracking::print(raw_ostream &OS, const Module* M) const {
   // this should be safe for the same reason its safe for SCEV.
   PointerTracking &PT = *const_cast<PointerTracking*>(this);
   for (inst_iterator I=inst_begin(*FF), E=inst_end(*FF); I != E; ++I) {
-    if (!isa<PointerType>(I->getType()))
+    if (!I->getType()->isPointerTy())
       continue;
     Value *Base;
     const SCEV *Limit, *Offset;

@@ -27,7 +27,7 @@ static bool isSingleValueType(const std::pair<const llvm::Type*,
 }
 
 static bool isIntegerValue(const std::pair<const Value*, unsigned> &V) {
-  return isa<IntegerType>(V.first->getType());
+  return V.first->getType()->isIntegerTy();
 }
 
 static bool CompareByFrequency(const std::pair<const llvm::Type*,

@@ -213,7 +213,7 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
         ++NumNonAddrTakenGlobalVars;
 
         // If this global holds a pointer type, see if it is an indirect global.
-        if (isa<PointerType>(I->getType()->getElementType()) &&
+        if (I->getType()->getElementType()->isPointerTy() &&
             AnalyzeIndirectGlobalMemory(I))
           ++NumIndirectGlobalVars;
       }
@@ -231,7 +231,7 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
                                          std::vector<Function*> &Readers,
                                          std::vector<Function*> &Writers,
                                          GlobalValue *OkayStoreDest) {
-  if (!isa<PointerType>(V->getType())) return true;
+  if (!V->getType()->isPointerTy()) return true;
 
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {

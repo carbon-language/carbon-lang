@@ -302,7 +302,7 @@ bool SROA::performScalarRepl(Function &F) {
       // random stuff that doesn't use vectors (e.g. <9 x double>) because then
       // we just get a lot of insert/extracts.  If at least one vector is
       // involved, then we probably really do have a union of vector/array.
-      if (VectorTy && isa<VectorType>(VectorTy) && HadAVector) {
+      if (VectorTy && VectorTy->isVectorTy() && HadAVector) {
         DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
                      << *VectorTy << '\n');
         
@@ -449,7 +449,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI, AllocaInst *AI,
   // into.
   for (; GEPIt != E; ++GEPIt) {
     // Ignore struct elements, no extra checking needed for these.
-    if (isa<StructType>(*GEPIt))
+    if ((*GEPIt)->isStructTy())
       continue;
 
     ConstantInt *IdxVal = dyn_cast<ConstantInt>(GEPIt.getOperand());
@@ -480,7 +480,7 @@ void SROA::isSafeMemAccess(AllocaInst *AI, uint64_t Offset, uint64_t MemSize,
     // (which are essentially the same as the MemIntrinsics, especially with
     // regard to copying padding between elements), or references using the
     // aggregate type of the alloca.
-    if (!MemOpType || isa<IntegerType>(MemOpType) || UsesAggregateType) {
+    if (!MemOpType || MemOpType->isIntegerTy() || UsesAggregateType) {
       if (!UsesAggregateType) {
         if (isStore)
           Info.isMemCpyDst = true;
@@ -565,7 +565,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
         }
         LI->replaceAllUsesWith(Insert);
         DeadInsts.push_back(LI);
-      } else if (isa<IntegerType>(LIType) &&
+      } else if (LIType->isIntegerTy() &&
                  TD->getTypeAllocSize(LIType) ==
                  TD->getTypeAllocSize(AI->getAllocatedType())) {
         // If this is a load of the entire alloca to an integer, rewrite it.
@@ -588,7 +588,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
           new StoreInst(Extract, NewElts[i], SI);
         }
         DeadInsts.push_back(SI);
-      } else if (isa<IntegerType>(SIType) &&
+      } else if (SIType->isIntegerTy() &&
                  TD->getTypeAllocSize(SIType) ==
                  TD->getTypeAllocSize(AI->getAllocatedType())) {
         // If this is a store of the entire alloca from an integer, rewrite it.
@@ -833,7 +833,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
           
           // Convert the integer value to the appropriate type.
           StoreVal = ConstantInt::get(Context, TotalVal);
-          if (isa<PointerType>(ValTy))
+          if (ValTy->isPointerTy())
             StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
           else if (ValTy->isFloatingPointTy())
             StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
@@ -939,7 +939,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       Value *DestField = NewElts[i];
       if (EltVal->getType() == FieldTy) {
         // Storing to an integer field of this size, just do it.
-      } else if (FieldTy->isFloatingPointTy() || isa<VectorType>(FieldTy)) {
+      } else if (FieldTy->isFloatingPointTy() || FieldTy->isVectorTy()) {
         // Bitcast to the right element type (for fp/vector values).
         EltVal = new BitCastInst(EltVal, FieldTy, "", SI);
       } else {
@@ -984,7 +984,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
       } else if (ArrayEltTy->isFloatingPointTy() ||
-                 isa<VectorType>(ArrayEltTy)) {
+                 ArrayEltTy->isVectorTy()) {
         // Bitcast to the right element type (for fp/vector values).
         EltVal = new BitCastInst(EltVal, ArrayEltTy, "", SI);
       } else {
@@ -1044,8 +1044,8 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
     
     const IntegerType *FieldIntTy = IntegerType::get(LI->getContext(), 
                                                      FieldSizeBits);
-    if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPointTy() &&
-        !isa<VectorType>(FieldTy))
+    if (!FieldTy->isIntegerTy() && !FieldTy->isFloatingPointTy() &&
+        !FieldTy->isVectorTy())
       SrcField = new BitCastInst(SrcField,
                                  PointerType::getUnqual(FieldIntTy),
                                  "", LI);
@@ -1183,7 +1183,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
         return;
       }
     } else if (In->isFloatTy() || In->isDoubleTy() ||
-               (isa<IntegerType>(In) && In->getPrimitiveSizeInBits() >= 8 &&
+               (In->isIntegerTy() && In->getPrimitiveSizeInBits() >= 8 &&
                 isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
       // If we're accessing something that could be an element of a vector, see
       // if the implied vector agrees with what we already have and if Offset is
@@ -1227,7 +1227,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
         return false;
       MergeInType(LI->getType(), Offset, VecTy,
                   AllocaSize, *TD, V->getContext());
-      SawVec |= isa<VectorType>(LI->getType());
+      SawVec |= LI->getType()->isVectorTy();
       continue;
     }
     
@@ -1236,7 +1236,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       if (SI->getOperand(0) == V || SI->isVolatile()) return 0;
       MergeInType(SI->getOperand(0)->getType(), Offset,
                   VecTy, AllocaSize, *TD, V->getContext());
-      SawVec |= isa<VectorType>(SI->getOperand(0)->getType());
+      SawVec |= SI->getOperand(0)->getType()->isVectorTy();
       continue;
     }
     
@@ -1438,7 +1438,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
-    if (isa<VectorType>(ToType))
+    if (ToType->isVectorTy())
       return Builder.CreateBitCast(FromVal, ToType, "tmp");
 
     // Otherwise it must be an element access.
@@ -1521,9 +1521,9 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
                                                     LIBitWidth), "tmp");
 
   // If the result is an integer, this is a trunc or bitcast.
-  if (isa<IntegerType>(ToType)) {
+  if (ToType->isIntegerTy()) {
     // Should be done.
-  } else if (ToType->isFloatingPointTy() || isa<VectorType>(ToType)) {
+  } else if (ToType->isFloatingPointTy() || ToType->isVectorTy()) {
     // Just do a bitcast, we know the sizes match up.
     FromVal = Builder.CreateBitCast(FromVal, ToType, "tmp");
   } else {
@@ -1601,10 +1601,10 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   unsigned DestWidth = TD->getTypeSizeInBits(AllocaType);
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
-  if (SV->getType()->isFloatingPointTy() || isa<VectorType>(SV->getType()))
+  if (SV->getType()->isFloatingPointTy() || SV->getType()->isVectorTy())
     SV = Builder.CreateBitCast(SV,
                             IntegerType::get(SV->getContext(),SrcWidth), "tmp");
-  else if (isa<PointerType>(SV->getType()))
+  else if (SV->getType()->isPointerTy())
     SV = Builder.CreatePtrToInt(SV, TD->getIntPtrType(SV->getContext()), "tmp");
 
   // Zero extend or truncate the value if needed.

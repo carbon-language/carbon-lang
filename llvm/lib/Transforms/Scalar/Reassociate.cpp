@@ -930,7 +930,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
 
     // Reject cases where it is pointless to do this.
     if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPointTy() || 
-        isa<VectorType>(BI->getType()))
+        BI->getType()->isVectorTy())
       continue;  // Floating point ops are not associative.
 
     // Do not reassociate boolean (i1) expressions.  We want to preserve the

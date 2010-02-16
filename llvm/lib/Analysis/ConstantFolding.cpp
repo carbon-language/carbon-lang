@@ -359,7 +359,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
       MapTy = Type::getInt32PtrTy(C->getContext());
     else if (LoadTy->isDoubleTy())
       MapTy = Type::getInt64PtrTy(C->getContext());
-    else if (isa<VectorType>(LoadTy)) {
+    else if (LoadTy->isVectorTy()) {
       MapTy = IntegerType::get(C->getContext(),
                                TD.getTypeAllocSizeInBits(LoadTy));
       MapTy = PointerType::getUnqual(MapTy);
@@ -605,7 +605,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   SmallVector<Constant*, 32> NewIdxs;
   do {
     if (const SequentialType *ATy = dyn_cast<SequentialType>(Ty)) {
-      if (isa<PointerType>(ATy)) {
+      if (ATy->isPointerTy()) {
         // The only pointer indexing we'll do is on the first index of the GEP.
         if (!NewIdxs.empty())
           break;

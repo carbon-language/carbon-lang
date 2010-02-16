@@ -84,7 +84,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
 //
 unsigned InlineCostAnalyzer::FunctionInfo::
          CountCodeReductionForAlloca(Value *V) {
-  if (!isa<PointerType>(V->getType())) return 0;  // Not a pointer
+  if (!V->getType()->isPointerTy()) return 0;  // Not a pointer
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI){
     Instruction *I = cast<Instruction>(*UI);
@@ -175,7 +175,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
         this->usesDynamicAlloca = true;
     }
 
-    if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
+    if (isa<ExtractElementInst>(II) || II->getType()->isVectorTy())
       ++NumVectorInsts; 
     
     if (const CastInst *CI = dyn_cast<CastInst>(II)) {

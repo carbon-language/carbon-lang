@@ -580,7 +580,7 @@ const IntegerType *TargetData::getIntPtrType(LLVMContext &C) const {
 uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
                                       unsigned NumIndices) const {
   const Type *Ty = ptrTy;
-  assert(isa<PointerType>(Ty) && "Illegal argument for getIndexedOffset()");
+  assert(Ty->isPointerTy() && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
 
   generic_gep_type_iterator<Value* const*>

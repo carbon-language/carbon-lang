@@ -433,7 +433,7 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
 
   if (GV.hasAppendingLinkage()) {
     GlobalVariable *GVar = dyn_cast<GlobalVariable>(&GV);
-    Assert1(GVar && isa<ArrayType>(GVar->getType()->getElementType()),
+    Assert1(GVar && GVar->getType()->getElementType()->isArrayTy(),
             "Only global arrays can have appending linkage!", GVar);
   }
 }
@@ -609,7 +609,7 @@ void Verifier::visitFunction(Function &F) {
           &F, FT);
   Assert1(F.getReturnType()->isFirstClassType() ||
           F.getReturnType()->isVoidTy() || 
-          isa<StructType>(F.getReturnType()),
+          F.getReturnType()->isStructTy(),
           "Functions cannot return aggregate values!", &F);
 
   Assert1(!F.hasStructRetAttr() || F.getReturnType()->isVoidTy(),
@@ -838,7 +838,7 @@ void Verifier::visitTruncInst(TruncInst &I) {
 
   Assert1(SrcTy->isIntOrIntVectorTy(), "Trunc only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVectorTy(), "Trunc only produces integer", &I);
-  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+  Assert1(SrcTy->isVectorTy() == DestTy->isVectorTy(),
           "trunc source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for Trunc", &I);
 
@@ -853,7 +853,7 @@ void Verifier::visitZExtInst(ZExtInst &I) {
   // Get the size of the types in bits, we'll need this later
   Assert1(SrcTy->isIntOrIntVectorTy(), "ZExt only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVectorTy(), "ZExt only produces an integer", &I);
-  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+  Assert1(SrcTy->isVectorTy() == DestTy->isVectorTy(),
           "zext source and destination must both be a vector or neither", &I);
   unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
   unsigned DestBitSize = DestTy->getScalarSizeInBits();
@@ -874,7 +874,7 @@ void Verifier::visitSExtInst(SExtInst &I) {
 
   Assert1(SrcTy->isIntOrIntVectorTy(), "SExt only operates on integer", &I);
   Assert1(DestTy->isIntOrIntVectorTy(), "SExt only produces an integer", &I);
-  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+  Assert1(SrcTy->isVectorTy() == DestTy->isVectorTy(),
           "sext source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize < DestBitSize,"Type too small for SExt", &I);
 
@@ -891,7 +891,7 @@ void Verifier::visitFPTruncInst(FPTruncInst &I) {
 
   Assert1(SrcTy->isFPOrFPVectorTy(),"FPTrunc only operates on FP", &I);
   Assert1(DestTy->isFPOrFPVectorTy(),"FPTrunc only produces an FP", &I);
-  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+  Assert1(SrcTy->isVectorTy() == DestTy->isVectorTy(),
           "fptrunc source and destination must both be a vector or neither",&I);
   Assert1(SrcBitSize > DestBitSize,"DestTy too big for FPTrunc", &I);
 
@@ -909,7 +909,7 @@ void Verifier::visitFPExtInst(FPExtInst &I) {
 
   Assert1(SrcTy->isFPOrFPVectorTy(),"FPExt only operates on FP", &I);
   Assert1(DestTy->isFPOrFPVectorTy(),"FPExt only produces an FP", &I);
-  Assert1(isa<VectorType>(SrcTy) == isa<VectorType>(DestTy),
+  Assert1(SrcTy->isVectorTy() == DestTy->isVectorTy(),
           "fpext source and destination must both be a vector or neither", &I);
   Assert1(SrcBitSize < DestBitSize,"DestTy too small for FPExt", &I);
 
@@ -921,8 +921,8 @@ void Verifier::visitUIToFPInst(UIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = isa<VectorType>(SrcTy);
-  bool DstVec = isa<VectorType>(DestTy);
+  bool SrcVec = SrcTy->isVectorTy();
+  bool DstVec = DestTy->isVectorTy();
 
   Assert1(SrcVec == DstVec,
           "UIToFP source and dest must both be vector or scalar", &I);
@@ -944,8 +944,8 @@ void Verifier::visitSIToFPInst(SIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = isa<VectorType>(SrcTy);
-  bool DstVec = isa<VectorType>(DestTy);
+  bool SrcVec = SrcTy->isVectorTy();
+  bool DstVec = DestTy->isVectorTy();
 
   Assert1(SrcVec == DstVec,
           "SIToFP source and dest must both be vector or scalar", &I);
@@ -967,8 +967,8 @@ void Verifier::visitFPToUIInst(FPToUIInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = isa<VectorType>(SrcTy);
-  bool DstVec = isa<VectorType>(DestTy);
+  bool SrcVec = SrcTy->isVectorTy();
+  bool DstVec = DestTy->isVectorTy();
 
   Assert1(SrcVec == DstVec,
           "FPToUI source and dest must both be vector or scalar", &I);
@@ -990,8 +990,8 @@ void Verifier::visitFPToSIInst(FPToSIInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  bool SrcVec = isa<VectorType>(SrcTy);
-  bool DstVec = isa<VectorType>(DestTy);
+  bool SrcVec = SrcTy->isVectorTy();
+  bool DstVec = DestTy->isVectorTy();
 
   Assert1(SrcVec == DstVec,
           "FPToSI source and dest must both be vector or scalar", &I);
@@ -1013,7 +1013,7 @@ void Verifier::visitPtrToIntInst(PtrToIntInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(isa<PointerType>(SrcTy), "PtrToInt source must be pointer", &I);
+  Assert1(SrcTy->isPointerTy(), "PtrToInt source must be pointer", &I);
   Assert1(DestTy->isIntegerTy(), "PtrToInt result must be integral", &I);
 
   visitInstruction(I);
@@ -1025,7 +1025,7 @@ void Verifier::visitIntToPtrInst(IntToPtrInst &I) {
   const Type *DestTy = I.getType();
 
   Assert1(SrcTy->isIntegerTy(), "IntToPtr source must be an integral", &I);
-  Assert1(isa<PointerType>(DestTy), "IntToPtr result must be a pointer",&I);
+  Assert1(DestTy->isPointerTy(), "IntToPtr result must be a pointer",&I);
 
   visitInstruction(I);
 }
@@ -1041,7 +1041,7 @@ void Verifier::visitBitCastInst(BitCastInst &I) {
 
   // BitCast implies a no-op cast of type only. No bits change.
   // However, you can't cast pointers to anything but pointers.
-  Assert1(isa<PointerType>(DestTy) == isa<PointerType>(DestTy),
+  Assert1(DestTy->isPointerTy() == DestTy->isPointerTy(),
           "Bitcast requires both operands to be pointer or neither", &I);
   Assert1(SrcBitSize == DestBitSize, "Bitcast requires types of same width",&I);
 
@@ -1084,11 +1084,11 @@ void Verifier::visitPHINode(PHINode &PN) {
 void Verifier::VerifyCallSite(CallSite CS) {
   Instruction *I = CS.getInstruction();
 
-  Assert1(isa<PointerType>(CS.getCalledValue()->getType()),
+  Assert1(CS.getCalledValue()->getType()->isPointerTy(),
           "Called function must be a pointer!", I);
   const PointerType *FPTy = cast<PointerType>(CS.getCalledValue()->getType());
 
-  Assert1(isa<FunctionType>(FPTy->getElementType()),
+  Assert1(FPTy->getElementType()->isFunctionTy(),
           "Called function is not pointer to function type!", I);
   const FunctionType *FTy = cast<FunctionType>(FPTy->getElementType());
 
@@ -1219,7 +1219,7 @@ void Verifier::visitICmpInst(ICmpInst& IC) {
   Assert1(Op0Ty == Op1Ty,
           "Both operands to ICmp instruction are not of the same type!", &IC);
   // Check that the operands are the right type
-  Assert1(Op0Ty->isIntOrIntVectorTy() || isa<PointerType>(Op0Ty),
+  Assert1(Op0Ty->isIntOrIntVectorTy() || Op0Ty->isPointerTy(),
           "Invalid operand types for ICmp instruction", &IC);
 
   visitInstruction(IC);
@@ -1286,7 +1286,7 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     GetElementPtrInst::getIndexedType(GEP.getOperand(0)->getType(),
                                       Idxs.begin(), Idxs.end());
   Assert1(ElTy, "Invalid indices for GEP pointer type!", &GEP);
-  Assert2(isa<PointerType>(GEP.getType()) &&
+  Assert2(GEP.getType()->isPointerTy() &&
           cast<PointerType>(GEP.getType())->getElementType() == ElTy,
           "GEP is not of right type for indices!", &GEP, ElTy);
   visitInstruction(GEP);
@@ -1632,7 +1632,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     if (ID == Intrinsic::gcroot) {
       AllocaInst *AI =
         dyn_cast<AllocaInst>(CI.getOperand(1)->stripPointerCasts());
-      Assert1(AI && isa<PointerType>(AI->getType()->getElementType()),
+      Assert1(AI && AI->getType()->getElementType()->isPointerTy(),
               "llvm.gcroot parameter #1 must be a pointer alloca.", &CI);
       Assert1(isa<Constant>(CI.getOperand(2)),
               "llvm.gcroot parameter #2 must be a constant.", &CI);
@@ -1794,7 +1794,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
     }
     Suffix += ".v" + utostr(NumElts) + EVT::getEVT(EltTy).getEVTString();
   } else if (VT == MVT::iPTR) {
-    if (!isa<PointerType>(Ty)) {
+    if (!Ty->isPointerTy()) {
       CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is not a "
                   "pointer and a pointer is required.", F);
       return false;

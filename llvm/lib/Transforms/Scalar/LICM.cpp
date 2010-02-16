@@ -678,7 +678,7 @@ void LICM::PromoteValuesInLoop() {
     // If we are promoting a pointer value, update alias information for the
     // inserted load.
     Value *LoadValue = 0;
-    if (isa<PointerType>(cast<PointerType>(Ptr->getType())->getElementType())) {
+    if (cast<PointerType>(Ptr->getType())->getElementType()->isPointerTy()) {
       // Locate a load or store through the pointer, and assign the same value
       // to LI as we are loading or storing.  Since we know that the value is
       // stored in this loop, this will always succeed.
@@ -751,7 +751,7 @@ void LICM::PromoteValuesInLoop() {
       LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
 
       // If this is a pointer type, update alias info appropriately.
-      if (isa<PointerType>(LI->getType()))
+      if (LI->getType()->isPointerTy())
         CurAST->copyValue(PointerValueNumbers[PVN++], LI);
 
       // Store into the memory we promoted.

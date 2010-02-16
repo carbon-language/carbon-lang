@@ -376,7 +376,7 @@ namespace {
         return;
 
       // If this is a structure or opaque type, add a name for the type.
-      if (((isa<StructType>(Ty) && cast<StructType>(Ty)->getNumElements())
+      if (((Ty->isStructTy() && cast<StructType>(Ty)->getNumElements())
             || isa<OpaqueType>(Ty)) && !TP.hasTypeName(Ty)) {
         TP.addTypeName(Ty, "%"+utostr(unsigned(NumberedTypes.size())));
         NumberedTypes.push_back(Ty);
@@ -1850,8 +1850,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     //
     Out << ' ';
     if (!FTy->isVarArg() &&
-        (!isa<PointerType>(RetTy) ||
-         !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
+        (!RetTy->isPointerTy() ||
+         !cast<PointerType>(RetTy)->getElementType()->isFunctionTy())) {
       TypePrinter.print(RetTy, Out);
       Out << ' ';
       writeOperand(Operand, false);
@@ -1896,8 +1896,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     //
     Out << ' ';
     if (!FTy->isVarArg() &&
-        (!isa<PointerType>(RetTy) ||
-         !isa<FunctionType>(cast<PointerType>(RetTy)->getElementType()))) {
+        (!RetTy->isPointerTy() ||
+         !cast<PointerType>(RetTy)->getElementType()->isFunctionTy())) {
       TypePrinter.print(RetTy, Out);
       Out << ' ';
       writeOperand(Operand, false);

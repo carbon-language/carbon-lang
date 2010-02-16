@@ -104,7 +104,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   assert(Depth <= 6 && "Limit Search Depth");
   uint32_t BitWidth = DemandedMask.getBitWidth();
   const Type *VTy = V->getType();
-  assert((TD || !isa<PointerType>(VTy)) &&
+  assert((TD || !VTy->isPointerTy()) &&
          "SimplifyDemandedBits needs to know bit widths!");
   assert((!TD || TD->getTypeSizeInBits(VTy->getScalarType()) == BitWidth) &&
          (!VTy->isIntOrIntVectorTy() ||
@@ -413,7 +413,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       } else
         // Don't touch a scalar-to-vector bitcast.
         return 0;
-    } else if (isa<VectorType>(I->getOperand(0)->getType()))
+    } else if (I->getOperand(0)->getType()->isVectorTy())
       // Don't touch a vector-to-scalar bitcast.
       return 0;
 

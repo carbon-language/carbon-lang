@@ -243,6 +243,10 @@ public:
   ///
   bool isStructTy() const { return ID == StructTyID; }
 
+  /// isUnionTy - True if this is an instance of UnionType.
+  ///
+  bool isUnionTy() const { return ID == UnionTyID; }
+
   /// isArrayTy - True if this is an instance of ArrayType.
   ///
   bool isArrayTy() const { return ID == ArrayTyID; }

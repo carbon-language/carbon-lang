@@ -93,7 +93,7 @@ Attributes Attribute::typeIncompatible(const Type *Ty) {
     // Attributes that only apply to integers.
     Incompatible |= SExt | ZExt;
   
-  if (!isa<PointerType>(Ty))
+  if (!Ty->isPointerTy())
     // Attributes that only apply to pointers.
     Incompatible |= ByVal | Nest | NoAlias | StructRet | NoCapture;
   

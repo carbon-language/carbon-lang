@@ -220,7 +220,7 @@ bool InlineAsm::Verify(const FunctionType *Ty, StringRef ConstStr) {
     if (!Ty->getReturnType()->isVoidTy()) return false;
     break;
   case 1:
-    if (isa<StructType>(Ty->getReturnType())) return false;
+    if (Ty->getReturnType()->isStructTy()) return false;
     break;
   default:
     const StructType *STy = dyn_cast<StructType>(Ty->getReturnType());

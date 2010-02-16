@@ -831,7 +831,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   const Type *OldRetTy = Caller->getType();
   const Type *NewRetTy = FT->getReturnType();
 
-  if (isa<StructType>(NewRetTy))
+  if (NewRetTy->isStructTy())
     return false; // TODO: Handle multiple return values.
 
   // Check to see if we are changing the return type...
@@ -839,9 +839,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (Callee->isDeclaration() &&
         // Conversion is ok if changing from one pointer type to another or from
         // a pointer to an integer of the same size.
-        !((isa<PointerType>(OldRetTy) || !TD ||
+        !((OldRetTy->isPointerTy() || !TD ||
            OldRetTy == TD->getIntPtrType(Caller->getContext())) &&
-          (isa<PointerType>(NewRetTy) || !TD ||
+          (NewRetTy->isPointerTy() || !TD ||
            NewRetTy == TD->getIntPtrType(Caller->getContext()))))
       return false;   // Cannot transform this return value.
 
@@ -888,9 +888,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // Converting from one pointer type to another or between a pointer and an
     // integer of the same size is safe even if we do not have a body.
     bool isConvertible = ActTy == ParamTy ||
-      (TD && ((isa<PointerType>(ParamTy) ||
+      (TD && ((ParamTy->isPointerTy() ||
       ParamTy == TD->getIntPtrType(Caller->getContext())) &&
-              (isa<PointerType>(ActTy) ||
+              (ActTy->isPointerTy() ||
               ActTy == TD->getIntPtrType(Caller->getContext()))));
     if (Callee->isDeclaration() && !isConvertible) return false;
   }

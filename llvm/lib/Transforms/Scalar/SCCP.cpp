@@ -295,7 +295,7 @@ public:
   }
 
   void markOverdefined(Value *V) {
-    assert(!isa<StructType>(V->getType()) && "Should use other method");
+    assert(!V->getType()->isStructTy() && "Should use other method");
     markOverdefined(ValueState[V], V);
   }
 
@@ -321,12 +321,12 @@ private:
   }
   
   void markConstant(Value *V, Constant *C) {
-    assert(!isa<StructType>(V->getType()) && "Should use other method");
+    assert(!V->getType()->isStructTy() && "Should use other method");
     markConstant(ValueState[V], V, C);
   }
 
   void markForcedConstant(Value *V, Constant *C) {
-    assert(!isa<StructType>(V->getType()) && "Should use other method");
+    assert(!V->getType()->isStructTy() && "Should use other method");
     ValueState[V].markForcedConstant(C);
     DEBUG(dbgs() << "markForcedConstant: " << *C << ": " << *V << '\n');
     InstWorkList.push_back(V);
@@ -360,7 +360,7 @@ private:
   }
   
   void mergeInValue(Value *V, LatticeVal MergeWithV) {
-    assert(!isa<StructType>(V->getType()) && "Should use other method");
+    assert(!V->getType()->isStructTy() && "Should use other method");
     mergeInValue(ValueState[V], V, MergeWithV);
   }
 
@@ -369,7 +369,7 @@ private:
   /// value.  This function handles the case when the value hasn't been seen yet
   /// by properly seeding constants etc.
   LatticeVal &getValueState(Value *V) {
-    assert(!isa<StructType>(V->getType()) && "Should use getStructValueState");
+    assert(!V->getType()->isStructTy() && "Should use getStructValueState");
 
     std::pair<DenseMap<Value*, LatticeVal>::iterator, bool> I =
       ValueState.insert(std::make_pair(V, LatticeVal()));
@@ -392,7 +392,7 @@ private:
   /// value/field pair.  This function handles the case when the value hasn't
   /// been seen yet by properly seeding constants etc.
   LatticeVal &getStructValueState(Value *V, unsigned i) {
-    assert(isa<StructType>(V->getType()) && "Should use getValueState");
+    assert(V->getType()->isStructTy() && "Should use getValueState");
     assert(i < cast<StructType>(V->getType())->getNumElements() &&
            "Invalid element #");
 
@@ -666,7 +666,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 void SCCPSolver::visitPHINode(PHINode &PN) {
   // If this PN returns a struct, just mark the result overdefined.
   // TODO: We could do a lot better than this if code actually uses this.
-  if (isa<StructType>(PN.getType()))
+  if (PN.getType()->isStructTy())
     return markAnythingOverdefined(&PN);
   
   if (getValueState(&PN).isOverdefined()) {
@@ -742,7 +742,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
   Value *ResultOp = I.getOperand(0);
   
   // If we are tracking the return value of this function, merge it in.
-  if (!TrackedRetVals.empty() && !isa<StructType>(ResultOp->getType())) {
+  if (!TrackedRetVals.empty() && !ResultOp->getType()->isStructTy()) {
     DenseMap<Function*, LatticeVal>::iterator TFRVI =
       TrackedRetVals.find(F);
     if (TFRVI != TrackedRetVals.end()) {
@@ -787,7 +787,7 @@ void SCCPSolver::visitCastInst(CastInst &I) {
 void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
   // If this returns a struct, mark all elements over defined, we don't track
   // structs in structs.
-  if (isa<StructType>(EVI.getType()))
+  if (EVI.getType()->isStructTy())
     return markAnythingOverdefined(&EVI);
     
   // If this is extracting from more than one level of struct, we don't know.
@@ -795,7 +795,7 @@ void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
     return markOverdefined(&EVI);
 
   Value *AggVal = EVI.getAggregateOperand();
-  if (isa<StructType>(AggVal->getType())) {
+  if (AggVal->getType()->isStructTy()) {
     unsigned i = *EVI.idx_begin();
     LatticeVal EltVal = getStructValueState(AggVal, i);
     mergeInValue(getValueState(&EVI), &EVI, EltVal);
@@ -828,7 +828,7 @@ void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
     }
     
     Value *Val = IVI.getInsertedValueOperand();
-    if (isa<StructType>(Val->getType()))
+    if (Val->getType()->isStructTy())
       // We don't track structs in structs.
       markOverdefined(getStructValueState(&IVI, i), &IVI);
     else {
@@ -841,7 +841,7 @@ void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
 void SCCPSolver::visitSelectInst(SelectInst &I) {
   // If this select returns a struct, just mark the result overdefined.
   // TODO: We could do a lot better than this if code actually uses this.
-  if (isa<StructType>(I.getType()))
+  if (I.getType()->isStructTy())
     return markAnythingOverdefined(&I);
   
   LatticeVal CondValue = getValueState(I.getCondition());
@@ -1166,7 +1166,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
 
 void SCCPSolver::visitStoreInst(StoreInst &SI) {
   // If this store is of a struct, ignore it.
-  if (isa<StructType>(SI.getOperand(0)->getType()))
+  if (SI.getOperand(0)->getType()->isStructTy())
     return;
   
   if (TrackedGlobals.empty() || !isa<GlobalVariable>(SI.getOperand(1)))
@@ -1187,7 +1187,7 @@ void SCCPSolver::visitStoreInst(StoreInst &SI) {
 // global, we can replace the load with the loaded constant value!
 void SCCPSolver::visitLoadInst(LoadInst &I) {
   // If this load is of a struct, just mark the result overdefined.
-  if (isa<StructType>(I.getType()))
+  if (I.getType()->isStructTy())
     return markAnythingOverdefined(&I);
   
   LatticeVal PtrVal = getValueState(I.getOperand(0));
@@ -1241,7 +1241,7 @@ CallOverdefined:
     
     // Otherwise, if we have a single return value case, and if the function is
     // a declaration, maybe we can constant fold it.
-    if (F && F->isDeclaration() && !isa<StructType>(I->getType()) &&
+    if (F && F->isDeclaration() && !I->getType()->isStructTy() &&
         canConstantFoldCallTo(F)) {
       
       SmallVector<Constant*, 8> Operands;
@@ -1352,7 +1352,7 @@ void SCCPSolver::Solve() {
       // since all of its users will have already been marked as overdefined.
       // Update all of the users of this instruction's value.
       //
-      if (isa<StructType>(I->getType()) || !getValueState(I).isOverdefined())
+      if (I->getType()->isStructTy() || !getValueState(I).isOverdefined())
         for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
              UI != E; ++UI)
           if (Instruction *I = dyn_cast<Instruction>(*UI))
@@ -1418,7 +1418,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       if (!LV.isUndefined()) continue;
 
       // No instructions using structs need disambiguation.
-      if (isa<StructType>(I->getOperand(0)->getType()))
+      if (I->getOperand(0)->getType()->isStructTy())
         continue;
 
       // Get the lattice values of the first two operands for use below.
@@ -1426,7 +1426,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       LatticeVal Op1LV;
       if (I->getNumOperands() == 2) {
         // No instructions using structs need disambiguation.
-        if (isa<StructType>(I->getOperand(1)->getType()))
+        if (I->getOperand(1)->getType()->isStructTy())
           continue;
         
         // If this is a two-operand instruction, and if both operands are
@@ -1656,7 +1656,7 @@ bool SCCP::runOnFunction(Function &F) {
         continue;
       
       // TODO: Reconstruct structs from their elements.
-      if (isa<StructType>(Inst->getType()))
+      if (Inst->getType()->isStructTy())
         continue;
       
       LatticeVal IV = Solver.getLatticeValueFor(Inst);
@@ -1792,7 +1792,7 @@ bool IPSCCP::runOnModule(Module &M) {
     if (Solver.isBlockExecutable(F->begin())) {
       for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
            AI != E; ++AI) {
-        if (AI->use_empty() || isa<StructType>(AI->getType())) continue;
+        if (AI->use_empty() || AI->getType()->isStructTy()) continue;
         
         // TODO: Could use getStructLatticeValueFor to find out if the entire
         // result is a constant and replace it entirely if so.
@@ -1835,7 +1835,7 @@ bool IPSCCP::runOnModule(Module &M) {
       
       for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
         Instruction *Inst = BI++;
-        if (Inst->getType()->isVoidTy() || isa<StructType>(Inst->getType()))
+        if (Inst->getType()->isVoidTy() || Inst->getType()->isStructTy())
           continue;
         
         // TODO: Could use getStructLatticeValueFor to find out if the entire

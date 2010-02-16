@@ -248,8 +248,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         Value *InVal = PN->getIncomingValue(i);
         if (!isa<Instruction>(InVal) ||
             // SCEV only supports integer expressions for now.
-            (!isa<IntegerType>(InVal->getType()) &&
-             !isa<PointerType>(InVal->getType())))
+            (!InVal->getType()->isIntegerTy() &&
+             !InVal->getType()->isPointerTy()))
           continue;
 
         // If this pred is for a subloop, not L itself, skip it.
