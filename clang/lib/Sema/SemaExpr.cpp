@@ -5697,7 +5697,6 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   unsigned Diag = 0;
   bool NeedType = false;
   switch (IsLV) { // C99 6.5.16p2
-  default: assert(0 && "Unknown result from isModifiableLvalue!");
   case Expr::MLV_ConstQualified: Diag = diag::err_typecheck_assign_const; break;
   case Expr::MLV_ArrayType:
     Diag = diag::err_typecheck_array_not_modifiable_lvalue;
@@ -5710,7 +5709,11 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_LValueCast:
     Diag = diag::err_typecheck_lvalue_casts_not_supported;
     break;
+  case Expr::MLV_Valid:
+    llvm_unreachable("did not take early return for MLV_Valid");
   case Expr::MLV_InvalidExpression:
+  case Expr::MLV_MemberFunction:
+  case Expr::MLV_ClassTemporary:
     Diag = diag::err_typecheck_expression_not_modifiable_lvalue;
     break;
   case Expr::MLV_IncompleteType:
@@ -5995,6 +5998,12 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     return Context.getMemberPointerType(op->getType(),
                 Context.getTypeDeclType(cast<RecordDecl>(dcl->getDeclContext()))
                        .getTypePtr());
+  } else if (lval == Expr::LV_ClassTemporary) {
+    Diag(OpLoc, isSFINAEContext()? diag::err_typecheck_addrof_class_temporary
+                                 : diag::ext_typecheck_addrof_class_temporary)
+      << op->getType() << op->getSourceRange();
+    if (isSFINAEContext())
+      return QualType();
   } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator

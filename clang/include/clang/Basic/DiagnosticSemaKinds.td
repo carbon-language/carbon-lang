@@ -1783,6 +1783,11 @@ def err_unqualified_pointer_member_function : Error<
   "must explicitly qualify member function %0 when taking its address">;
 def err_typecheck_invalid_lvalue_addrof : Error<
   "address expression must be an lvalue or a function designator">;
+def ext_typecheck_addrof_class_temporary : ExtWarn<
+  "taking the address of a temporary object of type %0">, 
+  InGroup<DiagGroup<"address-of-temporary">>, DefaultError;
+def err_typecheck_addrof_class_temporary : Error<
+  "taking the address of a temporary object of type %0">;
 def err_typecheck_unary_expr : Error<
   "invalid argument type %0 to unary expression">;
 def err_typecheck_indirection_requires_pointer : Error<

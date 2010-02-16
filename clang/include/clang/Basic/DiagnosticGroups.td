@@ -18,8 +18,9 @@ def Implicit : DiagGroup<"implicit", [
     
 
 
-// Empty DiagGroups: these are recognized by clang but ignored.
+// Empty DiagGroups are recognized by clang but ignored.
 def : DiagGroup<"address">;
+def AddressOfTemporary : DiagGroup<"address-of-temporary">;
 def : DiagGroup<"aggregate-return">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
