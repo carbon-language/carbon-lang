@@ -35,16 +35,15 @@
 #include "llvm/System/Program.h"
 using namespace clang;
 
-CompilerInstance::CompilerInstance(llvm::LLVMContext *_LLVMContext,
-                                   bool _OwnsLLVMContext)
-  : LLVMContext(_LLVMContext),
-    OwnsLLVMContext(_OwnsLLVMContext),
-    Invocation(new CompilerInvocation) {
+CompilerInstance::CompilerInstance()
+  : Invocation(new CompilerInvocation()) {
 }
 
 CompilerInstance::~CompilerInstance() {
-  if (OwnsLLVMContext)
-    delete LLVMContext;
+}
+
+void CompilerInstance::setLLVMContext(llvm::LLVMContext *Value) {
+  LLVMContext.reset(Value);
 }
 
 void CompilerInstance::setInvocation(CompilerInvocation *Value) {

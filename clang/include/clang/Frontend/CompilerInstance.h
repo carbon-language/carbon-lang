@@ -58,8 +58,7 @@ class TargetInfo;
 /// and a long form that takes explicit instances of any required objects.
 class CompilerInstance {
   /// The LLVM context used for this instance.
-  llvm::LLVMContext *LLVMContext;
-  bool OwnsLLVMContext;
+  llvm::OwningPtr<llvm::LLVMContext> LLVMContext;
 
   /// The options used in this compiler instance.
   llvm::OwningPtr<CompilerInvocation> Invocation;
@@ -97,11 +96,10 @@ class CompilerInstance {
   /// The list of active output files.
   std::list< std::pair<std::string, llvm::raw_ostream*> > OutputFiles;
 
+  void operator=(const CompilerInstance &);  // DO NOT IMPLEMENT
+  CompilerInstance(const CompilerInstance&); // DO NOT IMPLEMENT
 public:
-  /// Create a new compiler instance with the given LLVM context, optionally
-  /// taking ownership of it.
-  CompilerInstance(llvm::LLVMContext *_LLVMContext = 0,
-                   bool _OwnsLLVMContext = true);
+  CompilerInstance();
   ~CompilerInstance();
 
   /// @name High-Level Operations
@@ -150,12 +148,11 @@ public:
     return *LLVMContext;
   }
 
+  llvm::LLVMContext *takeLLVMContext() { return LLVMContext.take(); }
+
   /// setLLVMContext - Replace the current LLVM context and take ownership of
   /// \arg Value.
-  void setLLVMContext(llvm::LLVMContext *Value, bool TakeOwnership = true) {
-    LLVMContext = Value;
-    OwnsLLVMContext = TakeOwnership;
-  }
+  void setLLVMContext(llvm::LLVMContext *Value);
 
   /// }
   /// @name Compiler Invocation and Options
