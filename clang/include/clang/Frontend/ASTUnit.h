@@ -135,7 +135,6 @@ public:
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   bool OnlyLocalDecls = false,
-                                  bool UseBumpAllocator = false,
                                   RemappedFile *RemappedFiles = 0,
                                   unsigned NumRemappedFiles = 0);
 
@@ -173,7 +172,6 @@ public:
                                       Diagnostic &Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
-                                      bool UseBumpAllocator = false,
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0);
 };

@@ -38,7 +38,7 @@ void ASTMergeAction::ExecuteAction() {
                                        &CI.getASTContext());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
     ASTUnit *Unit = ASTUnit::LoadFromPCHFile(ASTFiles[I], CI.getDiagnostics(),
-                                             false, true);
+                                             false);
     if (!Unit)
       continue;
 

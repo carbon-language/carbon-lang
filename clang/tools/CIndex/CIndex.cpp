@@ -961,8 +961,7 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
   Diags->setClient(&DiagClient);
   
   return ASTUnit::LoadFromPCHFile(ast_filename, *Diags,
-                                  CXXIdx->getOnlyLocalDecls(),
-                                  /* UseBumpAllocator = */ true);
+                                  CXXIdx->getOnlyLocalDecls());
 }
 
 CXTranslationUnit
@@ -1018,7 +1017,6 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    *Diags, 
                                    CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
-                                   /* UseBumpAllocator = */ true,
                                    RemappedFiles.data(),
                                    RemappedFiles.size()));
     
@@ -1115,7 +1113,6 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
   ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,
                                           CXXIdx->getOnlyLocalDecls(),
-                                          /* UseBumpAllocator = */ true,
                                           RemappedFiles.data(),
                                           RemappedFiles.size());
   if (ATU)

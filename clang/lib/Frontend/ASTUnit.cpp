@@ -104,7 +104,6 @@ const std::string &ASTUnit::getPCHFileName() {
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   bool OnlyLocalDecls,
-                                  bool UseBumpAllocator,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
@@ -184,7 +183,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                 PP.getIdentifierTable(),
                                 PP.getSelectorTable(),
                                 PP.getBuiltinInfo(),
-                                /* FreeMemory = */ !UseBumpAllocator,
+                                /* FreeMemory = */ false,
                                 /* size_reserve = */0));
   ASTContext &Context = *AST->Ctx.get();
 
@@ -312,7 +311,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       Diagnostic &Diags,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
-                                      bool UseBumpAllocator,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles) {
   llvm::SmallVector<const char *, 16> Args;
@@ -359,11 +357,11 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   // Override any files that need remapping
   for (unsigned I = 0; I != NumRemappedFiles; ++I)
     CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                             RemappedFiles[I].second);
+                                              RemappedFiles[I].second);
   
   // Override the resources path.
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
-  CI->getFrontendOpts().DisableFree = UseBumpAllocator;
+  CI->getFrontendOpts().DisableFree = true;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls);
 }
