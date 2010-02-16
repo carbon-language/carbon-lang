@@ -1520,9 +1520,7 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value* BaseValue,
 }
 
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
-  llvm::Value *DeclPtr = CreateTempAlloca(ConvertTypeForMem(E->getType()),
-                                          ".compoundliteral");
-
+  llvm::Value *DeclPtr = CreateMemTemp(E->getType(), ".compoundliteral");
   const Expr* InitExpr = E->getInitializer();
   LValue Result = LValue::MakeAddr(DeclPtr, MakeQualifiers(E->getType()));
 
