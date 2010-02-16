@@ -1,8 +1,9 @@
 // RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: FileCheck -check-prefix LP --input-file=%t-rw.cpp %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 7638400
 
-// FIXME. Arrange this test's rewritten source to compile with clang
+typedef void * id;
+
 @interface X
 @end
 
@@ -13,8 +14,6 @@ static void enumerateIt(void (^block)(id, id, char *)) {
       foo(^(int idx) { });
 }
 @end
-
-// CHECK-LP: static void enumerateIt(void (*)(id, id, char *));
 
 // radar 7651312
 void apply(void (^block)(int));
