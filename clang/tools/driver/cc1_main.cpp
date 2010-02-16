@@ -195,7 +195,7 @@ static int cc1_test(Diagnostic &Diags,
 
 int cc1_main(const char **ArgBegin, const char **ArgEnd,
              const char *Argv0, void *MainAddr) {
-  CompilerInstance Clang(&llvm::getGlobalContext(), false);
+  CompilerInstance Clang(new llvm::LLVMContext, true);
 
   // Run clang -cc1 test.
   if (ArgBegin != ArgEnd && llvm::StringRef(ArgBegin[0]) == "-cc1test") {
