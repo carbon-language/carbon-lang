@@ -83,3 +83,8 @@ void test2_b() {
   // 'x' is bound at block creation.
   ^{ y = x + 1; }(); // no-warning
 }
+
+void test2_c() {
+  typedef void (^myblock)(void);
+  myblock f = ^() { f(); }; // expected-warning{{Variable 'f' is captured by block with a garbage value}}
+}
