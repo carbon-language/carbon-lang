@@ -2427,7 +2427,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
 /// GenerateAllReuseFormulae - Generate formulae for each use.
 void
 LSRInstance::GenerateAllReuseFormulae() {
-  // This is split into two loops so that hasRegsUsedByUsesOtherThan
+  // This is split into multiple loops so that hasRegsUsedByUsesOtherThan
   // queries are more precise.
   for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
     LSRUse &LU = Uses[LUIdx];
@@ -2446,6 +2446,9 @@ LSRInstance::GenerateAllReuseFormulae() {
       GenerateICmpZeroScales(LU, LUIdx, LU.Formulae[i]);
     for (size_t i = 0, f = LU.Formulae.size(); i != f; ++i)
       GenerateScales(LU, LUIdx, LU.Formulae[i]);
+  }
+  for (size_t LUIdx = 0, NumUses = Uses.size(); LUIdx != NumUses; ++LUIdx) {
+    LSRUse &LU = Uses[LUIdx];
     for (size_t i = 0, f = LU.Formulae.size(); i != f; ++i)
       GenerateTruncates(LU, LUIdx, LU.Formulae[i]);
   }
