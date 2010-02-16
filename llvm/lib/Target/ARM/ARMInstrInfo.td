@@ -828,9 +828,10 @@ let isCall = 1,
   }
 
   // ARMv4T
-  def BX : ABXIx2<(outs), (ins GPR:$func, variable_ops),
+  // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
+  def BX : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
-                  [(ARMcall_nolink GPR:$func)]>,
+                  [(ARMcall_nolink tGPR:$func)]>,
            Requires<[IsARM, IsNotDarwin]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
@@ -865,9 +866,10 @@ let isCall = 1,
   }
 
   // ARMv4T
-  def BXr9 : ABXIx2<(outs), (ins GPR:$func, variable_ops),
+  // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
+  def BXr9 : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
-                  [(ARMcall_nolink GPR:$func)]>, Requires<[IsARM, IsDarwin]> {
+                  [(ARMcall_nolink tGPR:$func)]>, Requires<[IsARM, IsDarwin]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;

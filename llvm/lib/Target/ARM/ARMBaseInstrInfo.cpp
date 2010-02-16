@@ -643,6 +643,13 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
+  // tGPR is used sometimes in ARM instructions that need to avoid using
+  // certain registers.  Just treat it as GPR here.
+  if (DestRC == ARM::tGPRRegisterClass)
+    DestRC = ARM::GPRRegisterClass;
+  if (SrcRC == ARM::tGPRRegisterClass)
+    SrcRC = ARM::GPRRegisterClass;
+
   if (DestRC != SrcRC) {
     if (DestRC->getSize() != SrcRC->getSize())
       return false;
