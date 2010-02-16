@@ -624,21 +624,6 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
     }
   }
   
-  // Don't fold any node which reads or writes a flag and has multiple uses.
-  // FIXME: We really need to separate the concepts of flag and "glue". Those
-  // real flag results, e.g. X86CMP output, can have multiple uses.
-  // FIXME: If the optional incoming flag does not exist. Then it is ok to
-  // fold it.
-  if (!isRoot &&
-      (N->TreeHasProperty(SDNPInFlag, CGP) ||
-       N->TreeHasProperty(SDNPOptInFlag, CGP) ||
-       N->TreeHasProperty(SDNPOutFlag, CGP))) {
-        if (!EmittedUseCheck) {
-          // Multiple uses of actual result?
-          emitCheck(getValueName(RootName) + ".hasOneUse()");
-        }
-      }
-  
   // If there are node predicates for this, emit the calls.
   for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
     emitCheck(N->getPredicateFns()[i] + "(" + getNodeName(RootName) + ")");
