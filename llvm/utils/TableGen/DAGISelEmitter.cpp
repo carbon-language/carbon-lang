@@ -47,16 +47,6 @@ static std::string getValueName(const std::string &S) {
   return S;
 }
 
-/// NodeIsComplexPattern - return true if N is a leaf node and a subclass of
-/// ComplexPattern.
-static bool NodeIsComplexPattern(TreePatternNode *N) {
-  return (N->isLeaf() &&
-          dynamic_cast<DefInit*>(N->getLeafValue()) &&
-          static_cast<DefInit*>(N->getLeafValue())->getDef()->
-          isSubClassOf("ComplexPattern"));
-}
-
-
 /// getPatternSize - Return the 'size' of this pattern.  We want to match large
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
@@ -96,7 +86,7 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
     else if (Child->isLeaf()) {
       if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
         Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
-      else if (NodeIsComplexPattern(Child))
+      else if (Child->getComplexPatternInfo(CGP))
         Size += getPatternSize(Child, CGP);
       else if (!Child->getPredicateFns().empty())
         ++Size;
@@ -530,10 +520,9 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
                 ")->getSExtValue() == INT64_C(" +
                 itostr(II->getValue()) + ")");
       return;
-    } else if (!NodeIsComplexPattern(N)) {
-      assert(0 && "Cannot match this as a leaf value!");
-      abort();
     }
+    assert(N->getComplexPatternInfo(CGP) != 0 &&
+           "Cannot match this as a leaf value!");
   }
   
   // If this node has a name associated with it, capture it in VariableMap. If
@@ -2014,11 +2003,9 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     else
       Matcher = new PushMatcherNode(N, Matcher);
   }
-  
-  
+
+  // OptimizeMatcher(Matcher);
   EmitMatcherTable(Matcher, OS);
-  
-  
   //Matcher->dump();
   delete Matcher;
 #endif
