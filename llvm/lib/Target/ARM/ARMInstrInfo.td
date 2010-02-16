@@ -933,10 +933,25 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{7-4} = 0b0010;
 }
 
-// Supervisor call (software interrupt) -- for disassembly only
+// Supervisor Call (Software Interrupt) -- for disassembly only
 let isCall = 1 in {
 def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
               [/* For disassembly only; pattern left blank */]>;
+}
+
+// Store Return State -- for disassembly only
+def SRSW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$opt),
+                NoItinerary, "srs${addr:submode}\tsp!, $opt",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{22-20} = 0b110; // W = 1
+}
+
+def SRS  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
+                NoItinerary, "srs${addr:submode}\tsp, $mode",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{22-20} = 0b100; // W = 0
 }
 
 //===----------------------------------------------------------------------===//
@@ -2203,6 +2218,102 @@ def CDP2 : ABXI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
   let Inst{4} = 0;
 }
 
+class ACI<dag oops, dag iops, string opc, string asm>
+  : I<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, BrFrm, NoItinerary,
+      opc, asm, "", [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-25} = 0b110;
+}
+
+multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
+
+  def _OFFSET : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "\tp$cop, cr$CRd, $addr"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+  }
+
+  def _PRE : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "\tp$cop, cr$CRd, $addr!"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+  }
+
+  def _POST : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, am2offset:$offset),
+      opc, "\tp$cop, cr$CRd, [$base], $offset"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+  }
+
+  def _OPTION : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, i32imm:$option),
+      opc, "\tp$cop, cr$CRd, [$base], $option"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{23} = 1; // U = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 0; // D = 0
+    let Inst{20} = load;
+  }
+
+  def L_OFFSET : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "l\tp$cop, cr$CRd, $addr"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+  }
+
+  def L_PRE : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
+      opc, "l\tp$cop, cr$CRd, $addr!"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 1; // P = 1
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+  }
+
+  def L_POST : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, am2offset:$offset),
+      opc, "l\tp$cop, cr$CRd, [$base], $offset"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{21} = 1; // W = 1
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+  }
+
+  def L_OPTION : ACI<(outs),
+      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, nohash_imm:$option),
+      opc, "l\tp$cop, cr$CRd, [$base], $option"> {
+    let Inst{31-28} = op31_28;
+    let Inst{24} = 0; // P = 0
+    let Inst{23} = 1; // U = 1
+    let Inst{21} = 0; // W = 0
+    let Inst{22} = 1; // D = 1
+    let Inst{20} = load;
+  }
+}
+
+defm LDC  : LdStCop<{?,?,?,?}, 1, "ldc">;
+defm LDC2 : LdStCop<0b1111,    1, "ldc2">;
+defm STC  : LdStCop<{?,?,?,?}, 0, "stc">;
+defm STC2 : LdStCop<0b1111,    0, "stc2">;
+
 def MCR : ABI<0b1110, (outs), (ins nohash_imm:$cop, i32imm:$opc1,
               GPR:$Rt, nohash_imm:$CRn, nohash_imm:$CRm, i32imm:$opc2),
               NoItinerary, "mcr", "\tp$cop, $opc1, $Rt, cr$CRn, cr$CRm, $opc2",
@@ -2284,14 +2395,28 @@ def MRSsys : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary,"mrs","\t$dst, spsr",
 }
 
 // FIXME: mask is ignored for the time being.
-def MSR : ABI<0b0001,(outs),(ins GPR:$src), NoItinerary, "mrs", "\tcpsr, $src",
+def MSR : ABI<0b0001,(outs),(ins GPR:$src), NoItinerary, "msr", "\tcpsr, $src",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0010;
   let Inst{7-4} = 0b0000;
 }
 
 // FIXME: mask is ignored for the time being.
-def MSRsys : ABI<0b0001,(outs),(ins GPR:$src),NoItinerary,"mrs","\tspsr, $src",
+def MSRi : ABI<0b0011,(outs),(ins so_imm:$a), NoItinerary, "msr", "\tcpsr, $a",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0010;
+  let Inst{7-4} = 0b0000;
+}
+
+// FIXME: mask is ignored for the time being.
+def MSRsys : ABI<0b0001,(outs),(ins GPR:$src),NoItinerary,"msr","\tspsr, $src",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{23-20} = 0b0110;
+  let Inst{7-4} = 0b0000;
+}
+
+// FIXME: mask is ignored for the time being.
+def MSRsysi : ABI<0b0011,(outs),(ins so_imm:$a),NoItinerary,"msr","\tspsr, $a",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0110;
   let Inst{7-4} = 0b0000;
