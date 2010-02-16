@@ -49,7 +49,7 @@ namespace llvm {
     const X86TargetMachine &TM;
   public:
     X8632_ELFTargetObjectFile(const X86TargetMachine &tm)
-      :TM(tm) { };
+      :TM(tm) { }
     virtual unsigned getPersonalityEncoding() const;
     virtual unsigned getLSDAEncoding() const;
     virtual unsigned getFDEEncoding() const;
@@ -60,7 +60,7 @@ namespace llvm {
     const X86TargetMachine &TM;
   public:
     X8664_ELFTargetObjectFile(const X86TargetMachine &tm)
-      :TM(tm) { };
+      :TM(tm) { }
     virtual unsigned getPersonalityEncoding() const;
     virtual unsigned getLSDAEncoding() const;
     virtual unsigned getFDEEncoding() const;
