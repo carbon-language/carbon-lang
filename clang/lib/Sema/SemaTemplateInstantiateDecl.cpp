@@ -43,6 +43,7 @@ namespace {
     // clang/AST/DeclNodes.def.
     Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
+    Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
@@ -124,6 +125,21 @@ Decl *
 TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
   assert(false && "Namespaces cannot be instantiated");
   return D;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
+  NamespaceAliasDecl *Inst
+    = NamespaceAliasDecl::Create(SemaRef.Context, Owner,
+                                 D->getNamespaceLoc(),
+                                 D->getAliasLoc(),
+                                 D->getNamespace()->getIdentifier(),
+                                 D->getQualifierRange(),
+                                 D->getQualifier(),
+                                 D->getTargetNameLoc(),
+                                 D->getNamespace());
+  Owner->addDecl(Inst);
+  return Inst;
 }
 
 Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {

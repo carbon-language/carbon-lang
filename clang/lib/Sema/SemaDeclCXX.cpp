@@ -3691,7 +3691,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
                                (NestedNameSpecifier *)SS.getScopeRep(),
                                IdentLoc, R.getFoundDecl());
 
-  CurContext->addDecl(AliasDecl);
+  PushOnScopeChains(AliasDecl, S);
   return DeclPtrTy::make(AliasDecl);
 }
 

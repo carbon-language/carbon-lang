@@ -1628,6 +1628,16 @@ public:
     return const_cast<NamespaceAliasDecl*>(this)->getNamespace();
   }
 
+  /// Returns the location of the alias name, i.e. 'foo' in
+  /// "namespace foo = ns::bar;".
+  SourceLocation getAliasLoc() const { return AliasLoc; }
+
+  /// Returns the location of the 'namespace' keyword.
+  SourceLocation getNamespaceLoc() const { return getLocation(); }
+
+  /// Returns the location of the identifier in the named namespace.
+  SourceLocation getTargetNameLoc() const { return IdentLoc; }
+
   /// \brief Retrieve the namespace that this alias refers to, which
   /// may either be a NamespaceDecl or a NamespaceAliasDecl.
   NamedDecl *getAliasedNamespace() const { return Namespace; }

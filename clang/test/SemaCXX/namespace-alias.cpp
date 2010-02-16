@@ -62,3 +62,24 @@ namespace J {
     func();
   }
 }
+
+namespace K {
+  namespace KA { void func(); }
+
+  void f() {
+    namespace KB = KA;
+    KB::func();
+  }
+
+  template <class T> void g() {
+    namespace KC = KA;
+    KC::func();
+  }
+  template void g<int>();
+  template void g<long>();
+
+  void h() {
+    KB::func(); // expected-error {{undeclared identifier 'KB'}}
+    KC::func(); // expected-error {{undeclared identifier 'KC'}}
+  }
+}
