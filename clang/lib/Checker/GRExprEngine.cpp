@@ -311,6 +311,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterUndefinedArraySubscriptChecker(Eng);
   RegisterUndefinedAssignmentChecker(Eng);
   RegisterUndefBranchChecker(Eng);
+  RegisterUndefCapturedBlockVarChecker(Eng);
   RegisterUndefResultChecker(Eng);
 
   // This is not a checker yet.

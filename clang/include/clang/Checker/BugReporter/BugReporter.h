@@ -202,7 +202,7 @@ public:
   ~RangedBugReport();
 
   // FIXME: Move this out of line.
-  void addRange(SourceRange R) { 
+  void addRange(SourceRange R) {
     assert(R.isValid());
     Ranges.push_back(R);
   }
@@ -463,6 +463,10 @@ const Stmt *GetRetValExpr(const ExplodedNode *N);
 
 void registerTrackNullOrUndefValue(BugReporterContext& BRC, const void *stmt,
                                    const ExplodedNode* N);
+
+void registerFindLastStore(BugReporterContext& BRC, const void *memregion,
+                           const ExplodedNode *N);
+
 
 } // end namespace clang::bugreporter
 

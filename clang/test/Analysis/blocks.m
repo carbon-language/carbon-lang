@@ -67,3 +67,19 @@ void test1(NSString *format, ...) {
 
   __builtin_va_end(args);
 }
+
+// test2 - Test that captured variables that are uninitialized are flagged
+// as such.
+void test2() {
+  static int y = 0;
+  int x;
+  ^{ y = x + 1; }();  // expected-warning{{Variable 'x' is captured by block with a garbage value}}
+}
+
+void test2_b() {
+  static int y = 0;
+  __block int x;
+  // This is also a bug, but should be found not by checking the value
+  // 'x' is bound at block creation.
+  ^{ y = x + 1; }(); // no-warning
+}

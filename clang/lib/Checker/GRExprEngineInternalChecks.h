@@ -36,8 +36,8 @@ void RegisterArrayBoundChecker(GRExprEngine &Eng);
 void RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng);
 void RegisterUndefinedAssignmentChecker(GRExprEngine &Eng);
 void RegisterUndefBranchChecker(GRExprEngine &Eng);
+void RegisterUndefCapturedBlockVarChecker(GRExprEngine &Eng);
 void RegisterUndefResultChecker(GRExprEngine &Eng);
-
 void RegisterNoReturnFunctionChecker(GRExprEngine &Eng);
 void RegisterBuiltinFunctionChecker(GRExprEngine &Eng);
 void RegisterOSAtomicChecker(GRExprEngine &Eng);

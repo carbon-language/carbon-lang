@@ -323,7 +323,7 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
 
       if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)
           || V.isUndef()) {
-        registerFindLastStore(BRC, R, V);
+        ::registerFindLastStore(BRC, R, V);
       }
     }
   }
@@ -346,4 +346,22 @@ void clang::bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
       registerTrackConstraint(BRC, loc::MemRegionVal(R), false);
     }
   }
+}
+
+void clang::bugreporter::registerFindLastStore(BugReporterContext& BRC,
+                                               const void *data,
+                                               const ExplodedNode* N) {
+
+  const MemRegion *R = static_cast<const MemRegion*>(data);
+
+  if (!R)
+    return;
+
+  const GRState *state = N->getState();
+  SVal V = state->getSVal(R);
+
+  if (V.isUnknown())
+    return;
+
+  BRC.addVisitor(new FindLastStoreBRVisitor(V, R));
 }
