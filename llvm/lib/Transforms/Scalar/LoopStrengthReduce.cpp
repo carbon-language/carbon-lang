@@ -640,9 +640,9 @@ void Cost::RateRegister(const SCEV *Reg,
 /// RatePrimaryRegister - Record this register in the set. If we haven't seen it
 /// before, rate it.
 void Cost::RatePrimaryRegister(const SCEV *Reg,
-                         SmallPtrSet<const SCEV *, 16> &Regs,
-                         const Loop *L,
-                         ScalarEvolution &SE, DominatorTree &DT) {
+                               SmallPtrSet<const SCEV *, 16> &Regs,
+                               const Loop *L,
+                               ScalarEvolution &SE, DominatorTree &DT) {
   if (Regs.insert(Reg))
     RateRegister(Reg, Regs, L, SE, DT);
 }
