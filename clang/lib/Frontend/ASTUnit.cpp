@@ -230,7 +230,7 @@ public:
 
 }
 
-ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
+ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
                                              bool OnlyLocalDecls) {
   // Create the compiler instance to use for building the AST.
@@ -238,7 +238,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   llvm::OwningPtr<ASTUnit> AST;
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
 
-  Clang.setInvocation(const_cast<CompilerInvocation*>(&CI));
+  Clang.setInvocation(CI);
 
   Clang.setDiagnostics(&Diags);
   Clang.setDiagnosticClient(Diags.getClient());
@@ -296,6 +296,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(const CompilerInvocation &CI,
   Clang.takeDiagnostics();
   Clang.takeInvocation();
 
+  AST->Invocation.reset(Clang.takeInvocation());
   return AST.take();
 
 error:
@@ -364,9 +365,5 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
   CI->getFrontendOpts().DisableFree = UseBumpAllocator;
-  ASTUnit *Unit = LoadFromCompilerInvocation(*CI, Diags, OnlyLocalDecls);
-  if (Unit)
-    Unit->Invocation.reset(CI.take());
-
-  return Unit;
+  return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls);
 }

@@ -143,15 +143,14 @@ public:
   /// CompilerInvocation object.
   ///
   /// \param CI - The compiler invocation to use; it must have exactly one input
-  /// source file. The caller is responsible for ensuring the lifetime of the
-  /// invocation extends past that of the returned ASTUnit.
+  /// source file. The ASTUnit takes ownership of the CompilerInvocation object.
   ///
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
   //
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
-  static ASTUnit *LoadFromCompilerInvocation(const CompilerInvocation &CI,
+  static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
                                              bool OnlyLocalDecls = false);
 
