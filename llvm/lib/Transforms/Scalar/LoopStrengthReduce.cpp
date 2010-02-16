@@ -1188,6 +1188,13 @@ public:
                 SCEVExpander &Rewriter,
                 SmallVectorImpl<WeakVH> &DeadInsts,
                 ScalarEvolution &SE, DominatorTree &DT) const;
+  void RewriteForPHI(PHINode *PN, const LSRFixup &LF,
+                     const Formula &F,
+                     Loop *L, Instruction *IVIncInsertPos,
+                     SCEVExpander &Rewriter,
+                     SmallVectorImpl<WeakVH> &DeadInsts,
+                     ScalarEvolution &SE, DominatorTree &DT,
+                     Pass *P) const;
   void Rewrite(const LSRFixup &LF,
                const Formula &F,
                Loop *L, Instruction *IVIncInsertPos,
@@ -2921,6 +2928,67 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
   return FullV;
 }
 
+/// RewriteForPHI - Helper for Rewrite. PHI nodes are special because the use
+/// of their operands effectively happens in their predecessor blocks, so the
+/// expression may need to be expanded in multiple places.
+void LSRInstance::RewriteForPHI(PHINode *PN,
+                                const LSRFixup &LF,
+                                const Formula &F,
+                                Loop *L, Instruction *IVIncInsertPos,
+                                SCEVExpander &Rewriter,
+                                SmallVectorImpl<WeakVH> &DeadInsts,
+                                ScalarEvolution &SE, DominatorTree &DT,
+                                Pass *P) const {
+  DenseMap<BasicBlock *, Value *> Inserted;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) == LF.OperandValToReplace) {
+      BasicBlock *BB = PN->getIncomingBlock(i);
+
+      // If this is a critical edge, split the edge so that we do not insert
+      // the code on all predecessor/successor paths.  We do this unless this
+      // is the canonical backedge for this loop, which complicates post-inc
+      // users.
+      if (e != 1 && BB->getTerminator()->getNumSuccessors() > 1 &&
+          !isa<IndirectBrInst>(BB->getTerminator()) &&
+          (PN->getParent() != L->getHeader() || !L->contains(BB))) {
+        // Split the critical edge.
+        BasicBlock *NewBB = SplitCriticalEdge(BB, PN->getParent(), P);
+
+        // If PN is outside of the loop and BB is in the loop, we want to
+        // move the block to be immediately before the PHI block, not
+        // immediately after BB.
+        if (L->contains(BB) && !L->contains(PN))
+          NewBB->moveBefore(PN->getParent());
+
+        // Splitting the edge can reduce the number of PHI entries we have.
+        e = PN->getNumIncomingValues();
+        BB = NewBB;
+        i = PN->getBasicBlockIndex(BB);
+      }
+
+      std::pair<DenseMap<BasicBlock *, Value *>::iterator, bool> Pair =
+        Inserted.insert(std::make_pair(BB, static_cast<Value *>(0)));
+      if (!Pair.second)
+        PN->setIncomingValue(i, Pair.first->second);
+      else {
+        Value *FullV = Expand(LF, F, BB->getTerminator(), L, IVIncInsertPos,
+                              Rewriter, DeadInsts, SE, DT);
+
+        // If this is reuse-by-noop-cast, insert the noop cast.
+        const Type *OpTy = LF.OperandValToReplace->getType();
+        if (FullV->getType() != OpTy)
+          FullV =
+            CastInst::Create(CastInst::getCastOpcode(FullV, false,
+                                                     OpTy, false),
+                             FullV, LF.OperandValToReplace->getType(),
+                             "tmp", BB->getTerminator());
+
+        PN->setIncomingValue(i, FullV);
+        Pair.first->second = FullV;
+      }
+    }
+}
+
 /// Rewrite - Emit instructions for the leading candidate expression for this
 /// LSRUse (this is called "expanding"), and update the UserInst to reference
 /// the newly expanded value.
@@ -2931,63 +2999,16 @@ void LSRInstance::Rewrite(const LSRFixup &LF,
                           SmallVectorImpl<WeakVH> &DeadInsts,
                           ScalarEvolution &SE, DominatorTree &DT,
                           Pass *P) const {
-  const Type *OpTy = LF.OperandValToReplace->getType();
-
   // First, find an insertion point that dominates UserInst. For PHI nodes,
   // find the nearest block which dominates all the relevant uses.
   if (PHINode *PN = dyn_cast<PHINode>(LF.UserInst)) {
-    DenseMap<BasicBlock *, Value *> Inserted;
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (PN->getIncomingValue(i) == LF.OperandValToReplace) {
-        BasicBlock *BB = PN->getIncomingBlock(i);
-
-        // If this is a critical edge, split the edge so that we do not insert
-        // the code on all predecessor/successor paths.  We do this unless this
-        // is the canonical backedge for this loop, which complicates post-inc
-        // users.
-        if (e != 1 && BB->getTerminator()->getNumSuccessors() > 1 &&
-            !isa<IndirectBrInst>(BB->getTerminator()) &&
-            (PN->getParent() != L->getHeader() || !L->contains(BB))) {
-          // Split the critical edge.
-          BasicBlock *NewBB = SplitCriticalEdge(BB, PN->getParent(), P);
-
-          // If PN is outside of the loop and BB is in the loop, we want to
-          // move the block to be immediately before the PHI block, not
-          // immediately after BB.
-          if (L->contains(BB) && !L->contains(PN))
-            NewBB->moveBefore(PN->getParent());
-
-          // Splitting the edge can reduce the number of PHI entries we have.
-          e = PN->getNumIncomingValues();
-          BB = NewBB;
-          i = PN->getBasicBlockIndex(BB);
-        }
-
-        std::pair<DenseMap<BasicBlock *, Value *>::iterator, bool> Pair =
-          Inserted.insert(std::make_pair(BB, static_cast<Value *>(0)));
-        if (!Pair.second)
-          PN->setIncomingValue(i, Pair.first->second);
-        else {
-          Value *FullV = Expand(LF, F, BB->getTerminator(), L, IVIncInsertPos,
-                                Rewriter, DeadInsts, SE, DT);
-
-          // If this is reuse-by-noop-cast, insert the noop cast.
-          if (FullV->getType() != OpTy)
-            FullV =
-              CastInst::Create(CastInst::getCastOpcode(FullV, false,
-                                                       OpTy, false),
-                               FullV, LF.OperandValToReplace->getType(),
-                               "tmp", BB->getTerminator());
-
-          PN->setIncomingValue(i, FullV);
-          Pair.first->second = FullV;
-        }
-      }
+    RewriteForPHI(PN, LF, F, L, IVIncInsertPos, Rewriter, DeadInsts, SE, DT, P);
   } else {
     Value *FullV = Expand(LF, F, LF.UserInst, L, IVIncInsertPos,
                           Rewriter, DeadInsts, SE, DT);
 
     // If this is reuse-by-noop-cast, insert the noop cast.
+    const Type *OpTy = LF.OperandValToReplace->getType();
     if (FullV->getType() != OpTy) {
       Instruction *Cast =
         CastInst::Create(CastInst::getCastOpcode(FullV, false, OpTy, false),
