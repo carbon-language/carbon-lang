@@ -1304,6 +1304,9 @@ Decl * TemplateDeclInstantiator
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
                       const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateDeclInstantiator Instantiator(*this, Owner, TemplateArgs);
+  if (D->isInvalidDecl())
+    return 0;
+
   return Instantiator.Visit(D);
 }
 

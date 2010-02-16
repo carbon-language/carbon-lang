@@ -159,12 +159,10 @@ void loadEngineFor() {
 }
 
 template <class T> struct TBase {
-  void* operator new(T size, int); // expected-error {{'operator new' cannot take a dependent type as first parameter; use size_t}}\
-                                   // expected-error {{'operator new' takes type size_t}}
+  void* operator new(T size, int); // expected-error {{'operator new' cannot take a dependent type as first parameter; use size_t}}
 };
 
-// FIXME: We should not try to instantiate operator new, since it is invalid.
-TBase<int> t1; // expected-note {{in instantiation of template class 'struct TBase<int>' requested here}}
+TBase<int> t1;
 
 class X6 {
 public:
