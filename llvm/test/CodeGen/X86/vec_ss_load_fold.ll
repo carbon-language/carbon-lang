@@ -1,6 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse,+sse2 -o %t
-; RUN: grep minss %t | grep CPI | count 2
-; RUN: grep CPI   %t | not grep movss
+; RUN: llc < %s -march=x86 -mattr=+sse,+sse2 | FileCheck %s
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"
@@ -17,6 +15,10 @@ define i16 @test1(float %f) nounwind {
 	%tmp.upgrd.1 = tail call i32 @llvm.x86.sse.cvttss2si( <4 x float> %tmp59 )		; <i32> [#uses=1]
 	%tmp69 = trunc i32 %tmp.upgrd.1 to i16		; <i16> [#uses=1]
 	ret i16 %tmp69
+; CHECK: test1:
+; CHECK: subss	LCPI1_
+; CHECK: mulss	LCPI1_
+; CHECK: minss	LCPI1_
 }
 
 define i16 @test2(float %f) nounwind {
@@ -28,6 +30,10 @@ define i16 @test2(float %f) nounwind {
 	%tmp = tail call i32 @llvm.x86.sse.cvttss2si( <4 x float> %tmp59 )		; <i32> [#uses=1]
 	%tmp69 = trunc i32 %tmp to i16		; <i16> [#uses=1]
 	ret i16 %tmp69
+; CHECK: test2:
+; CHECK: addss	LCPI2_
+; CHECK: mulss	LCPI2_
+; CHECK: minss	LCPI2_
 }
 
 declare <4 x float> @llvm.x86.sse.sub.ss(<4 x float>, <4 x float>)
