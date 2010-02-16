@@ -646,18 +646,46 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
          SE.getEffectiveSCEVType(Normalized->getType())) &&
         SE.getSCEV(PN) == Normalized)
       if (BasicBlock *LatchBlock = L->getLoopLatch()) {
-        // Remember this PHI, even in post-inc mode.
-        InsertedValues.insert(PN);
-        // Remember the increment.
         Instruction *IncV =
-          cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock)
-                                  ->stripPointerCasts());
-        rememberInstruction(IncV);
-        // Make sure the increment is where we want it. But don't move it
-        // down past a potential existing post-inc user.
-        if (L == IVIncInsertLoop && !SE.DT->dominates(IncV, IVIncInsertPos))
-          IncV->moveBefore(IVIncInsertPos);
-        return PN;
+          cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock));
+
+        // Determine if this is a well-behaved chain of instructions leading
+        // back to the PHI. It probably will be, if we're scanning an inner
+        // loop already visited by LSR for example, but it wouldn't have
+        // to be.
+        do {
+          if (IncV->getNumOperands() == 0 || isa<PHINode>(IncV)) {
+            IncV = 0;
+            break;
+          }
+          IncV = dyn_cast<Instruction>(IncV->getOperand(0));
+          if (!IncV)
+            break;
+          if (IncV->mayHaveSideEffects()) {
+            IncV = 0;
+            break;
+          }
+        } while (IncV != PN);
+
+        if (IncV) {
+          // Ok, the add recurrence looks usable.
+          // Remember this PHI, even in post-inc mode.
+          InsertedValues.insert(PN);
+          // Remember the increment.
+          IncV = cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock));
+          rememberInstruction(IncV);
+          if (L == IVIncInsertLoop)
+            do {
+              if (SE.DT->dominates(IncV, IVIncInsertPos))
+                break;
+              // Make sure the increment is where we want it. But don't move it
+              // down past a potential existing post-inc user.
+              IncV->moveBefore(IVIncInsertPos);
+              IVIncInsertPos = IncV;
+              IncV = cast<Instruction>(IncV->getOperand(0));
+            } while (IncV != PN);
+          return PN;
+        }
       }
 
   // Save the original insertion point so we can restore it when we're done.
