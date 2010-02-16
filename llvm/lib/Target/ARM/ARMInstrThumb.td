@@ -236,20 +236,20 @@ let isCall = 1,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins i32imm:$func, variable_ops), IIC_Br, 
+                  (outs), (ins i32imm:$func, variable_ops), IIC_Br,
                   "bl\t${func:call}",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb, IsNotDarwin]>;
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
-                   (outs), (ins i32imm:$func, variable_ops), IIC_Br, 
+                   (outs), (ins i32imm:$func, variable_ops), IIC_Br,
                    "blx\t${func:call}",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]>;
 
   // Also used for Thumb2
-  def tBLXr : TI<(outs), (ins GPR:$func, variable_ops), IIC_Br, 
+  def tBLXr : TI<(outs), (ins GPR:$func, variable_ops), IIC_Br,
                   "blx\t$func",
                   [(ARMtcall GPR:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]>,
@@ -257,7 +257,7 @@ let isCall = 1,
 
   // ARMv4T
   def tBX : TIx2<{?,?,?,?,?}, {?,?}, ?,
-                  (outs), (ins tGPR:$func, variable_ops), IIC_Br, 
+                  (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                   "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
             Requires<[IsThumb1Only, IsNotDarwin]>;
@@ -271,20 +271,20 @@ let isCall = 1,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
-                   (outs), (ins i32imm:$func, variable_ops), IIC_Br, 
+                   (outs), (ins i32imm:$func, variable_ops), IIC_Br,
                    "bl\t${func:call}",
                    [(ARMtcall tglobaladdr:$func)]>,
               Requires<[IsThumb, IsDarwin]>;
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
-                      (outs), (ins i32imm:$func, variable_ops), IIC_Br, 
+                      (outs), (ins i32imm:$func, variable_ops), IIC_Br,
                       "blx\t${func:call}",
                       [(ARMcall tglobaladdr:$func)]>,
                  Requires<[IsThumb, HasV5T, IsDarwin]>;
 
   // Also used for Thumb2
-  def tBLXr_r9 : TI<(outs), (ins GPR:$func, variable_ops), IIC_Br, 
+  def tBLXr_r9 : TI<(outs), (ins GPR:$func, variable_ops), IIC_Br,
                     "blx\t$func",
                     [(ARMtcall GPR:$func)]>,
                  Requires<[IsThumb, HasV5T, IsDarwin]>,
@@ -292,7 +292,7 @@ let isCall = 1,
 
   // ARMv4T
   def tBXr9 : TIx2<{?,?,?,?,?}, {?,?}, ?,
-                   (outs), (ins tGPR:$func, variable_ops), IIC_Br, 
+                   (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                    "mov\tlr, pc\n\tbx\t$func",
                    [(ARMcall_nolink tGPR:$func)]>,
               Requires<[IsThumb1Only, IsDarwin]>;
@@ -307,7 +307,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   // Far jump
   let Defs = [LR] in
-  def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br, 
+  def tBfar : TIx2<0b11110, 0b11, 1, (outs), (ins brtarget:$target), IIC_Br,
                     "bl\t$target\t@ far jump",[]>;
 
   def tBR_JTr : T1JTI<(outs),
@@ -345,11 +345,11 @@ let isBranch = 1, isTerminator = 1 in {
 //
 
 let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
-def tLDR : T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr, 
+def tLDR : T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr,
                "ldr", "\t$dst, $addr",
                [(set tGPR:$dst, (load t_addrmode_s4:$addr))]>,
            T1LdSt<0b100>;
-def tLDRi: T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr, 
+def tLDRi: T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr,
                "ldr", "\t$dst, $addr",
                []>,
            T1LdSt4Imm<{1,?,?}>;
@@ -399,7 +399,7 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoadi,
 
 // Load tconstpool
 // FIXME: Use ldr.n to work around a Darwin assembler bug.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1  in 
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1  in
 def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
                   "ldr", ".n\t$dst, $addr",
                   [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>,

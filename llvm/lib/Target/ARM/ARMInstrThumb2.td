@@ -53,10 +53,10 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // bits [bits 0-7], the 4-bit shift/splat amount is the next 4 bits [bits 8-11].
 def t2_so_imm : Operand<i32>,
                 PatLeaf<(imm), [{
-  return ARM_AM::getT2SOImmVal((uint32_t)N->getZExtValue()) != -1; 
+  return ARM_AM::getT2SOImmVal((uint32_t)N->getZExtValue()) != -1;
 }]>;
 
-// t2_so_imm_not - Match an immediate that is a complement 
+// t2_so_imm_not - Match an immediate that is a complement
 // of a t2_so_imm.
 def t2_so_imm_not : Operand<i32>,
                     PatLeaf<(imm), [{
@@ -114,13 +114,13 @@ def imm0_4095 : Operand<i32>,
   return (uint32_t)N->getZExtValue() < 4096;
 }]>;
 
-def imm0_4095_neg : PatLeaf<(i32 imm), [{ 
- return (uint32_t)(-N->getZExtValue()) < 4096; 
-}], imm_neg_XFORM>; 
+def imm0_4095_neg : PatLeaf<(i32 imm), [{
+ return (uint32_t)(-N->getZExtValue()) < 4096;
+}], imm_neg_XFORM>;
 
 def imm0_255_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)(-N->getZExtValue()) < 255;
-}], imm_neg_XFORM>; 
+}], imm_neg_XFORM>;
 
 // Define Thumb2 specific addressing modes.
 
@@ -208,7 +208,7 @@ multiclass T2I_un_irs<bits<4> opcod, string opc, PatFrag opnode,
 /// T2I_bin_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
 //  binary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
-multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode, 
+multiclass T2I_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
                        bit Commutable = 0, string wide =""> {
    // shifted imm
    def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
@@ -736,7 +736,7 @@ def t2ADDrSPi   : T2sI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
   let Inst{19-16} = 0b1101; // Rn = sp
   let Inst{15} = 0;
 }
-def t2ADDrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm), 
+def t2ADDrSPi12 : T2I<(outs GPR:$dst), (ins GPR:$sp, imm0_4095:$imm),
                        IIC_iALUi, "addw", "\t$dst, $sp, $imm", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
@@ -805,7 +805,7 @@ def t2SUBrSPs_   : PseudoInst<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
 //
 
 // Load
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1  in 
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1  in
 defm t2LDR   : T2I_ld<0, 0b10, "ldr",  UnOpFrag<(load node:$Src)>>;
 
 // Loads with zero extension
@@ -1649,7 +1649,7 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
-// a two-value operand where a dag node expects two operands. :( 
+// a two-value operand where a dag node expects two operands. :(
 def t2MOVCCr : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true), IIC_iCMOVr,
                    "mov", ".w\t$dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -1976,7 +1976,7 @@ def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // Pseudo instruction that combines ldr from constpool and add pc. This should
 // be expanded into two instructions late to allow if-conversion and
 // scheduling.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in 
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
                    NoItinerary, "@ ldr.w\t$dst, $addr\n$cp:\n\tadd\t$dst, pc",
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),

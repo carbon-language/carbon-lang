@@ -174,7 +174,7 @@ def imm16_31 : PatLeaf<(i32 imm), [{
   return (int32_t)N->getZExtValue() >= 16 && (int32_t)N->getZExtValue() < 32;
 }]>;
 
-def so_imm_neg : 
+def so_imm_neg :
   PatLeaf<(imm), [{
     return ARM_AM::getSOImmVal(-(int)N->getZExtValue()) != -1;
   }], so_imm_neg_XFORM>;
@@ -192,7 +192,7 @@ def sext_16_node : PatLeaf<(i32 GPR:$a), [{
 /// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
 /// e.g., 0xf000ffff
 def bf_inv_mask_imm : Operand<i32>,
-                      PatLeaf<(imm), [{ 
+                      PatLeaf<(imm), [{
   uint32_t v = (uint32_t)N->getZExtValue();
   if (v == 0xffffffff)
     return 0;
@@ -225,7 +225,7 @@ def lo16AllZero : PatLeaf<(i32 imm), [{
   return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
 }], hi16>;
 
-/// imm0_65535 predicate - True if the 32-bit immediate is in the range 
+/// imm0_65535 predicate - True if the 32-bit immediate is in the range
 /// [0.65535].
 def imm0_65535 : PatLeaf<(i32 imm), [{
   return (uint32_t)N->getZExtValue() < 65536;
@@ -609,7 +609,7 @@ PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p), NoItinerary,
            "@ ADJCALLSTACKUP $amt1",
            [(ARMcallseq_end timm:$amt1, timm:$amt2)]>;
 
-def ADJCALLSTACKDOWN : 
+def ADJCALLSTACKDOWN :
 PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            "@ ADJCALLSTACKDOWN $amt",
            [(ARMcallseq_start timm:$amt)]>;
@@ -781,7 +781,7 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
 //
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in
-  def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
+  def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br,
                   "bx", "\tlr", [(ARMretflag)]> {
   let Inst{3-0}   = 0b1110;
   let Inst{7-4}   = 0b0001;
@@ -929,7 +929,7 @@ let isBranch = 1, isTerminator = 1 in {
   } // isBarrier = 1
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
-  // a two-value operand where a dag node expects two operands. :( 
+  // a two-value operand where a dag node expects two operands. :(
   def Bcc : ABI<0b1010, (outs), (ins brtarget:$target),
                IIC_Br, "b", "\t$target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
@@ -969,7 +969,7 @@ def SRS  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
 //
 
 // Load
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in 
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoadr,
                "ldr", "\t$dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
@@ -985,7 +985,7 @@ def LDRH  : AI3ldh<(outs GPR:$dst), (ins addrmode3:$addr), LdMiscFrm,
                   IIC_iLoadr, "ldrh", "\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
-def LDRB  : AI2ldb<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, 
+def LDRB  : AI2ldb<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm,
                   IIC_iLoadr, "ldrb", "\t$dst, $addr",
                   [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
@@ -1082,42 +1082,42 @@ def STRD : AI3std<(outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
 
 // Indexed stores
 def STR_PRE  : AI2stwpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base, am2offset:$offset), 
+                     (ins GPR:$src, GPR:$base, am2offset:$offset),
                      StFrm, IIC_iStoreru,
                     "str", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STR_POST : AI2stwpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                     (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStoreru,
                     "str", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (post_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STRH_PRE : AI3sthpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset), 
+                     (ins GPR:$src, GPR:$base,am3offset:$offset),
                      StMiscFrm, IIC_iStoreru,
                      "strh", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
 
 def STRH_POST: AI3sthpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am3offset:$offset), 
+                     (ins GPR:$src, GPR:$base,am3offset:$offset),
                      StMiscFrm, IIC_iStoreru,
                      "strh", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
 
 def STRB_PRE : AI2stbpr<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                     (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStoreru,
                      "strb", "\t$src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb, (pre_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
 
 def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                     (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStoreru,
                      "strb", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
@@ -1126,7 +1126,7 @@ def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
 // STRT and STRBT are for disassembly only.
 
 def STRT : AI2stwpo<(outs GPR:$base_wb),
-                    (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                    (ins GPR:$src, GPR:$base,am2offset:$offset),
                     StFrm, IIC_iStoreru,
                     "strt", "\t$src, [$base], $offset", "$base = $base_wb",
                     [/* For disassembly only; pattern left blank */]> {
@@ -1134,7 +1134,7 @@ def STRT : AI2stwpo<(outs GPR:$base_wb),
 }
 
 def STRBT : AI2stbpo<(outs GPR:$base_wb),
-                     (ins GPR:$src, GPR:$base,am2offset:$offset), 
+                     (ins GPR:$src, GPR:$base,am2offset:$offset),
                      StFrm, IIC_iStoreru,
                      "strbt", "\t$src, [$base], $offset", "$base = $base_wb",
                      [/* For disassembly only; pattern left blank */]> {
@@ -1168,7 +1168,7 @@ def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
   let Inst{25} = 0;
 }
 
-def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), 
+def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src),
                 DPSoRegFrm, IIC_iMOVsr,
                 "mov", "\t$dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP {
   let Inst{25} = 0;
@@ -1181,7 +1181,7 @@ def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm, IIC_iMOVi,
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src), 
+def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$dst, $src",
                  [(set GPR:$dst, imm0_65535:$src)]>,
@@ -1195,7 +1195,7 @@ def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", "\t$dst, $imm",
                   [(set GPR:$dst,
-                        (or (and GPR:$src, 0xffff), 
+                        (or (and GPR:$src, 0xffff),
                             lo16AllZero:$imm))]>, UnaryDP,
                   Requires<[IsARM, HasV6T2]> {
   let Inst{20} = 0;
@@ -1214,7 +1214,7 @@ def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo, IIC_iMOVsi,
 // due to flag operands.
 
 let Defs = [CPSR] in {
-def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo, 
+def MOVsrl_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
                       IIC_iMOVsi, "movs", "\t$dst, $src, lsr #1",
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, UnaryDP;
 def MOVsra_flag : AI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo,
@@ -1447,7 +1447,7 @@ def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
   let Inst{25} = 0;
 }
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
-def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm, 
+def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm,
                   IIC_iMOVi, "mvn", "\t$dst, $imm",
                   [(set GPR:$dst, so_imm_not:$imm)]>,UnaryDP {
     let Inst{25} = 1;
@@ -1796,7 +1796,7 @@ def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
 
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
-// a two-value operand where a dag node expects two operands. :( 
+// a two-value operand where a dag node expects two operands. :(
 def MOVCCr : AI1<0b1101, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
                 IIC_iCMOVr, "mov", "\t$dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
@@ -2076,7 +2076,7 @@ let Defs =
 
 // Two piece so_imms.
 let isReMaterializable = 1 in
-def MOVi2pieces : AI1x2<(outs GPR:$dst), (ins so_imm2part:$src), 
+def MOVi2pieces : AI1x2<(outs GPR:$dst), (ins so_imm2part:$src),
                          Pseudo, IIC_iMOVi,
                          "mov", "\t$dst, $src",
                          [(set GPR:$dst, so_imm2part:$src)]>,
