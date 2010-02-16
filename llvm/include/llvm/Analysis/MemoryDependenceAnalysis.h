@@ -249,7 +249,7 @@ namespace llvm {
                      SmallPtrSet<Instruction*, 4> > ReverseDepMapType;
     ReverseDepMapType ReverseLocalDeps;
     
-    // A reverse mapping form dependencies to the non-local dependees.
+    // A reverse mapping from dependencies to the non-local dependees.
     ReverseDepMapType ReverseNonLocalDeps;
     
     /// Current AA implementation, just a cache.
@@ -312,6 +312,11 @@ namespace llvm {
     /// value and replaces the other value with ptr. This can make Ptr available
     /// in more places that cached info does not necessarily keep.
     void invalidateCachedPointerInfo(Value *Ptr);
+
+    /// invalidateCachedPredecessors - Clear the PredIteratorCache info.
+    /// This needs to be done when the CFG changes, e.g., due to splitting
+    /// critical edges.
+    void invalidateCachedPredecessors();
     
   private:
     MemDepResult getPointerDependencyFrom(Value *Pointer, uint64_t MemSize,

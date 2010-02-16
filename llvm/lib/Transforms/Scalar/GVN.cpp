@@ -674,6 +674,9 @@ namespace {
     ValueTable VN;
     DenseMap<BasicBlock*, ValueNumberScope*> localAvail;
 
+    // List of critical edges to be split between iterations.
+    SmallVector<std::pair<TerminatorInst*, unsigned>, 4> toSplit;
+
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
@@ -701,6 +704,7 @@ namespace {
     Value *lookupNumber(BasicBlock *BB, uint32_t num);
     void cleanupGlobalSets();
     void verifyRemoved(const Instruction *I) const;
+    bool splitCriticalEdges();
   };
 
   char GVN::ID = 0;
@@ -1583,10 +1587,15 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       continue;
     }
     PredLoads[Pred] = 0;
-    // We don't currently handle critical edges :(
+
     if (Pred->getTerminator()->getNumSuccessors() != 1) {
-      DEBUG(dbgs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
-            << Pred->getName() << "': " << *LI << '\n');
+      if (isa<IndirectBrInst>(Pred->getTerminator())) {
+        DEBUG(dbgs() << "COULD NOT PRE LOAD BECAUSE OF INDBR CRITICAL EDGE '"
+              << Pred->getName() << "': " << *LI << '\n');
+        return false;
+      }
+      unsigned SuccNum = SuccessorNumber(Pred, LoadBB);
+      toSplit.push_back(std::make_pair(Pred->getTerminator(), SuccNum));
       return false;
     }
   }
@@ -2004,6 +2013,8 @@ bool GVN::runOnFunction(Function& F) {
   while (ShouldContinue) {
     DEBUG(dbgs() << "GVN iteration: " << Iteration << "\n");
     ShouldContinue = iterateOnFunction(F);
+    if (splitCriticalEdges())
+      ShouldContinue = true;
     Changed |= ShouldContinue;
     ++Iteration;
   }
@@ -2070,7 +2081,6 @@ bool GVN::processBlock(BasicBlock *BB) {
 /// control flow patterns and attempts to perform simple PRE at the join point.
 bool GVN::performPRE(Function &F) {
   bool Changed = false;
-  SmallVector<std::pair<TerminatorInst*, unsigned>, 4> toSplit;
   DenseMap<BasicBlock*, Value*> predMap;
   for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
        DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
@@ -2209,11 +2219,23 @@ bool GVN::performPRE(Function &F) {
     }
   }
 
-  for (SmallVector<std::pair<TerminatorInst*, unsigned>, 4>::iterator
-       I = toSplit.begin(), E = toSplit.end(); I != E; ++I)
-    SplitCriticalEdge(I->first, I->second, this);
+  if (splitCriticalEdges())
+    Changed = true;
 
-  return Changed || toSplit.size();
+  return Changed;
+}
+
+/// splitCriticalEdges - Split critical edges found during the previous
+/// iteration that may enable further optimization.
+bool GVN::splitCriticalEdges() {
+  if (toSplit.empty())
+    return false;
+  do {
+    std::pair<TerminatorInst*, unsigned> Edge = toSplit.pop_back_val();
+    SplitCriticalEdge(Edge.first, Edge.second, this);
+  } while (!toSplit.empty());
+  MD->invalidateCachedPredecessors();
+  return true;
 }
 
 /// iterateOnFunction - Executes one iteration of GVN

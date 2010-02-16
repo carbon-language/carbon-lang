@@ -1016,6 +1016,13 @@ void MemoryDependenceAnalysis::invalidateCachedPointerInfo(Value *Ptr) {
   RemoveCachedNonLocalPointerDependencies(ValueIsLoadPair(Ptr, true));
 }
 
+/// invalidateCachedPredecessors - Clear the PredIteratorCache info.
+/// This needs to be done when the CFG changes, e.g., due to splitting
+/// critical edges.
+void MemoryDependenceAnalysis::invalidateCachedPredecessors() {
+  PredCache->clear();
+}
+
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
 /// This method attempts to keep the cache coherent using the reverse map.
