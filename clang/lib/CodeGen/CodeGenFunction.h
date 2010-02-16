@@ -663,6 +663,13 @@ public:
   llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
                                      const llvm::Twine &Name = "tmp");
 
+  /// CreateIRTemp - Create a temporary IR object of the given type, with
+  /// appropriate alignment. This routine should only be used when an temporary
+  /// value needs to be stored into an alloca (for example, to avoid explicit
+  /// PHI construction), but the type is the IR type, not the type appropriate
+  /// for storing in memory.
+  llvm::Value *CreateIRTemp(QualType T, const llvm::Twine &Name = "tmp");
+
   /// CreateMemTemp - Create a temporary memory object of the given type, with
   /// appropriate alignment.
   llvm::Value *CreateMemTemp(QualType T, const llvm::Twine &Name = "tmp");
