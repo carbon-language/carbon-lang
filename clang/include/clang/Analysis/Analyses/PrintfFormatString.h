@@ -113,7 +113,8 @@ enum LengthModifier {
  AsIntMax,    // 'j'
  AsSizeT,     // 'z'
  AsPtrDiff,   // 't'
- AsLongDouble // 'L'
+ AsLongDouble, // 'L'
+ AsWideChar = AsLong // for '%ls'
 };
 
 class OptionalAmount {
