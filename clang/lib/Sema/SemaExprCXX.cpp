@@ -24,6 +24,232 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
+Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
+                                        IdentifierInfo &II, 
+                                        SourceLocation NameLoc,
+                                        Scope *S, const CXXScopeSpec &SS,
+                                        TypeTy *ObjectTypePtr,
+                                        bool EnteringContext) {
+  // Determine where to perform name lookup.
+
+  // FIXME: This area of the standard is very messy, and the current
+  // wording is rather unclear about which scopes we search for the
+  // destructor name; see core issues 399 and 555. Issue 399 in
+  // particular shows where the current description of destructor name
+  // lookup is completely out of line with existing practice, e.g.,
+  // this appears to be ill-formed:
+  //
+  //   namespace N {
+  //     template <typename T> struct S {
+  //       ~S();
+  //     };
+  //   }
+  //
+  //   void f(N::S<int>* s) {
+  //     s->N::S<int>::~S();
+  //   }
+  //
+  // 
+  QualType SearchType;
+  DeclContext *LookupCtx = 0;
+  bool isDependent = false;
+  bool LookInScope = false;
+
+  // If we have an object type, it's because we are in a
+  // pseudo-destructor-expression or a member access expression, and
+  // we know what type we're looking for.
+  if (ObjectTypePtr)
+    SearchType = GetTypeFromParser(ObjectTypePtr);
+
+  if (SS.isSet()) {
+    // C++ [basic.lookup.qual]p6:
+    //   If a pseudo-destructor-name (5.2.4) contains a
+    //   nested-name-specifier, the type-names are looked up as types
+    //   in the scope designated by the nested-name-specifier. Similarly, in 
+    //   a qualified-id of theform:
+    //
+    //     :: [opt] nested-name-specifier[opt] class-name :: ~class-name 
+    //
+    //   the second class-name is looked up in the same scope as the first.
+    //
+    // To implement this, we look at the prefix of the
+    // nested-name-specifier we were given, and determine the lookup
+    // context from that.
+    NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
+    if (NestedNameSpecifier *Prefix = NNS->getPrefix()) {
+      CXXScopeSpec PrefixSS;
+      PrefixSS.setScopeRep(Prefix);
+      LookupCtx = computeDeclContext(PrefixSS, EnteringContext);
+      isDependent = isDependentScopeSpecifier(PrefixSS);
+    } else if (ObjectTypePtr) {
+      LookupCtx = computeDeclContext(SearchType);
+      isDependent = SearchType->isDependentType();
+    } else {
+      LookupCtx = computeDeclContext(SS, EnteringContext);
+      if (LookupCtx && !LookupCtx->isTranslationUnit()) {
+        LookupCtx = LookupCtx->getParent();
+        isDependent = LookupCtx->isDependentContext();
+      } else {
+        isDependent = false;
+      }
+    }
+
+    LookInScope = false;
+  } else if (ObjectTypePtr) {
+    // C++ [basic.lookup.classref]p3:
+    //   If the unqualified-id is ~type-name, the type-name is looked up
+    //   in the context of the entire postfix-expression. If the type T
+    //   of the object expression is of a class type C, the type-name is
+    //   also looked up in the scope of class C. At least one of the
+    //   lookups shall find a name that refers to (possibly
+    //   cv-qualified) T.
+    LookupCtx = computeDeclContext(SearchType);
+    isDependent = SearchType->isDependentType();
+    assert((isDependent || !SearchType->isIncompleteType()) && 
+           "Caller should have completed object type");
+
+    LookInScope = true;
+  } else {
+    // Perform lookup into the current scope (only).
+    LookInScope = true;
+  }
+
+  LookupResult Found(*this, &II, NameLoc, LookupOrdinaryName);
+  for (unsigned Step = 0; Step != 2; ++Step) {
+    // Look for the name first in the computed lookup context (if we
+    // have one) and, if that fails to find a match, in the sope (if
+    // we're allowed to look there).
+    Found.clear();
+    if (Step == 0 && LookupCtx)
+      LookupQualifiedName(Found, LookupCtx);
+    else if (Step == 1 && LookInScope)
+      LookupName(Found, S);
+    else
+      continue;
+
+    // FIXME: Should we be suppressing ambiguities here?
+    if (Found.isAmbiguous())
+      return 0;
+
+    if (TypeDecl *Type = Found.getAsSingle<TypeDecl>()) {
+      QualType T = Context.getTypeDeclType(Type);
+      // If we found the injected-class-name of a class template, retrieve the
+      // type of that template.
+      // FIXME: We really shouldn't need to do this.
+      if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Type))
+        if (Record->isInjectedClassName())
+          if (Record->getDescribedClassTemplate())
+            T = Record->getDescribedClassTemplate()
+                                           ->getInjectedClassNameType(Context);
+
+      if (SearchType.isNull() || SearchType->isDependentType() ||
+          Context.hasSameUnqualifiedType(T, SearchType)) {
+        // We found our type!
+
+        return T.getAsOpaquePtr();
+      }
+    }
+
+    // If the name that we found is a class template name, and it is
+    // the same name as the template name in the last part of the
+    // nested-name-specifier (if present) or the object type, then
+    // this is the destructor for that class.
+    // FIXME: This is a workaround until we get real drafting for core
+    // issue 399, for which there isn't even an obvious direction. 
+    if (ClassTemplateDecl *Template = Found.getAsSingle<ClassTemplateDecl>()) {
+      QualType MemberOfType;
+      if (SS.isSet()) {
+        if (DeclContext *Ctx = computeDeclContext(SS, EnteringContext)) {
+          // Figure out the type of the context, if it has one.
+          if (ClassTemplateSpecializationDecl *Spec
+                          = dyn_cast<ClassTemplateSpecializationDecl>(Ctx))
+            MemberOfType = Context.getTypeDeclType(Spec);
+          else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
+            if (Record->getDescribedClassTemplate())
+              MemberOfType = Record->getDescribedClassTemplate()
+                                          ->getInjectedClassNameType(Context);
+            else
+              MemberOfType = Context.getTypeDeclType(Record);
+          }
+        }
+      }
+      if (MemberOfType.isNull())
+        MemberOfType = SearchType;
+      
+      if (MemberOfType.isNull())
+        continue;
+
+      // We're referring into a class template specialization. If the
+      // class template we found is the same as the template being
+      // specialized, we found what we are looking for.
+      if (const RecordType *Record = MemberOfType->getAs<RecordType>()) {
+        if (ClassTemplateSpecializationDecl *Spec
+              = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
+          if (Spec->getSpecializedTemplate()->getCanonicalDecl() ==
+                Template->getCanonicalDecl())
+            return MemberOfType.getAsOpaquePtr();
+        }
+
+        continue;
+      }
+      
+      // We're referring to an unresolved class template
+      // specialization. Determine whether we class template we found
+      // is the same as the template being specialized or, if we don't
+      // know which template is being specialized, that it at least
+      // has the same name.
+      if (const TemplateSpecializationType *SpecType
+            = MemberOfType->getAs<TemplateSpecializationType>()) {
+        TemplateName SpecName = SpecType->getTemplateName();
+
+        // The class template we found is the same template being
+        // specialized.
+        if (TemplateDecl *SpecTemplate = SpecName.getAsTemplateDecl()) {
+          if (SpecTemplate->getCanonicalDecl() == Template->getCanonicalDecl())
+            return MemberOfType.getAsOpaquePtr();
+
+          continue;
+        }
+
+        // The class template we found has the same name as the
+        // (dependent) template name being specialized.
+        if (DependentTemplateName *DepTemplate 
+                                    = SpecName.getAsDependentTemplateName()) {
+          if (DepTemplate->isIdentifier() &&
+              DepTemplate->getIdentifier() == Template->getIdentifier())
+            return MemberOfType.getAsOpaquePtr();
+
+          continue;
+        }
+      }
+    }
+  }
+
+  if (isDependent) {
+    // We didn't find our type, but that's okay: it's dependent
+    // anyway.
+    NestedNameSpecifier *NNS = 0;
+    SourceRange Range;
+    if (SS.isSet()) {
+      NNS = (NestedNameSpecifier *)SS.getScopeRep();
+      Range = SourceRange(SS.getRange().getBegin(), NameLoc);
+    } else {
+      NNS = NestedNameSpecifier::Create(Context, &II);
+      Range = SourceRange(NameLoc);
+    }
+
+    return CheckTypenameType(NNS, II, Range).getAsOpaquePtr();
+  }
+
+  if (ObjectTypePtr)
+    Diag(NameLoc, diag::err_ident_in_pseudo_dtor_not_a_type)
+      << &II;        
+  else
+    Diag(NameLoc, diag::err_destructor_class_name);
+
+  return 0;
+}
+
 /// ActOnCXXTypeidOfType - Parse typeid( type-id ).
 Action::OwningExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,

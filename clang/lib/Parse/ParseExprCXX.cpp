@@ -846,13 +846,8 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
                                    EnteringContext, Template);
       
       if (TNK == TNK_Non_template && Id.DestructorName == 0) {
-        // The identifier following the destructor did not refer to a template
-        // or to a type. Complain.
-        if (ObjectType)
-          Diag(NameLoc, diag::err_ident_in_pseudo_dtor_not_a_type)
-            << Name;        
-        else
-          Diag(NameLoc, diag::err_destructor_class_name);
+        Diag(NameLoc, diag::err_destructor_template_id)
+          << Name << SS.getRange();
         return true;        
       }
     }
@@ -1258,7 +1253,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     
     // Parse the class-name.
     if (Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_destructor_class_name);
+      Diag(Tok, diag::err_destructor_tilde_identifier);
       return true;
     }
 
@@ -1273,17 +1268,13 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     }
     
     // Note that this is a destructor name.
-    Action::TypeTy *Ty = Actions.getTypeName(*ClassName, ClassNameLoc,
-                                             CurScope, &SS, false, ObjectType);
-    if (!Ty) {
-      if (ObjectType)
-        Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type)
-          << ClassName;        
-      else
-        Diag(ClassNameLoc, diag::err_destructor_class_name);
+    Action::TypeTy *Ty = Actions.getDestructorName(TildeLoc, *ClassName, 
+                                                   ClassNameLoc, CurScope,
+                                                   SS, ObjectType,
+                                                   EnteringContext);
+    if (!Ty)
       return true;
-    }
-    
+
     Result.setDestructorName(TildeLoc, Ty, ClassNameLoc);
     return false;
   }

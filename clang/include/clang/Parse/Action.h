@@ -1075,7 +1075,7 @@ public:
                                                    SourceLocation RLoc) {
     return ExprEmpty();
   }
-  
+
   /// \brief Parsed a member access expresion (C99 6.5.2.3, C++ [expr.ref])
   /// of the form \c x.m or \c p->m.
   ///
@@ -1472,6 +1472,18 @@ public:
   }
 
   //===------------------------- C++ Expressions --------------------------===//
+
+  /// \brief Parsed a destructor name or pseudo-destructor name. 
+  ///
+  /// \returns the type being destructed.
+  virtual TypeTy *getDestructorName(SourceLocation TildeLoc,
+                                    IdentifierInfo &II, SourceLocation NameLoc,
+                                    Scope *S, const CXXScopeSpec &SS,
+                                    TypeTy *ObjectType,
+                                    bool EnteringContext) {
+    return getTypeName(II, NameLoc, S, &SS, false, ObjectType);
+  }
+
 
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,

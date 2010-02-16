@@ -464,8 +464,7 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
 ///         simple-template-id
 ///
 Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
-                                          const CXXScopeSpec *SS,
-                                          bool DestrExpected) {
+                                          const CXXScopeSpec *SS) {
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
     TemplateIdAnnotation *TemplateId
@@ -536,8 +535,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
   // We have an identifier; check whether it is actually a type.
   TypeTy *Type = Actions.getTypeName(*Id, IdLoc, CurScope, SS, true);
   if (!Type) {    
-    Diag(IdLoc, DestrExpected ? diag::err_destructor_class_name
-                            : diag::err_expected_class_name);
+    Diag(IdLoc, diag::err_expected_class_name);
     return true;
   }
 

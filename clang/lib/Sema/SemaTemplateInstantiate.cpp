@@ -570,7 +570,8 @@ namespace {
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
-                                           TemplateTypeParmTypeLoc TL);
+                                           TemplateTypeParmTypeLoc TL,
+                                           QualType ObjectType);
   };
 }
 
@@ -859,7 +860,8 @@ Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
 
 QualType
 TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
-                                                TemplateTypeParmTypeLoc TL) {
+                                                TemplateTypeParmTypeLoc TL, 
+                                                    QualType ObjectType) {
   TemplateTypeParmType *T = TL.getTypePtr();
   if (T->getDepth() < TemplateArgs.getNumLevels()) {
     // Replace the template type parameter with its corresponding

@@ -557,6 +557,10 @@ def err_destructor_typedef_name : Error<
   "destructor cannot be declared using a typedef %0 of the class name">;
 def err_destructor_name : Error<
   "expected the class name after '~' to name the enclosing class">;
+def err_destructor_class_name : Error<
+  "expected the class name after '~' to name a destructor">;
+def err_ident_in_pseudo_dtor_not_a_type : Error<
+  "identifier %0 in pseudo-destructor expression does not name a type">;
 
 // C++ initialization
 def err_init_conversion_failed : Error<

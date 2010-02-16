@@ -18,8 +18,8 @@ void f(A* a, Foo *f, int *i) {
   
   a->~foo(); // expected-error{{identifier 'foo' in pseudo-destructor expression does not name a type}}
   
-  // FIXME: the type printed below isn't wonderful
-  a->~Bar(); // expected-error{{no member named}}
+  // FIXME: the diagnostic below isn't wonderful
+  a->~Bar(); // expected-error{{does not name a type}}
   
   f->~Bar();
   f->~Foo();
@@ -28,7 +28,7 @@ void f(A* a, Foo *f, int *i) {
   g().~Bar(); // expected-error{{non-scalar}}
   
   f->::~Bar();
-  f->N::~Wibble();
+  f->N::~Wibble(); // expected-error{{expected the class name after '~' to name a destructor}}
   
   f->::~Bar(17, 42); // expected-error{{cannot have any arguments}}
 }

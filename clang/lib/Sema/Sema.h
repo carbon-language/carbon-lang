@@ -2056,6 +2056,12 @@ public:
                                SourceLocation Loc,                                    
                       ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs);
     
+  virtual TypeTy *getDestructorName(SourceLocation TildeLoc,
+                                    IdentifierInfo &II, SourceLocation NameLoc,
+                                    Scope *S, const CXXScopeSpec &SS,
+                                    TypeTy *ObjectType,
+                                    bool EnteringContext);
+
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
                                              tok::TokenKind Kind,

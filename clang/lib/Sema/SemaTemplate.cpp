@@ -4911,18 +4911,21 @@ namespace {
     /// \brief Transforms a typename type by determining whether the type now
     /// refers to a member of the current instantiation, and then
     /// type-checking and building a QualifiedNameType (when possible).
-    QualType TransformTypenameType(TypeLocBuilder &TLB, TypenameTypeLoc TL);
+    QualType TransformTypenameType(TypeLocBuilder &TLB, TypenameTypeLoc TL, 
+                                   QualType ObjectType);
   };
 }
 
 QualType
 CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
-                                                     TypenameTypeLoc TL) {
+                                                     TypenameTypeLoc TL, 
+                                                     QualType ObjectType) {
   TypenameType *T = TL.getTypePtr();
 
   NestedNameSpecifier *NNS
     = TransformNestedNameSpecifier(T->getQualifier(),
-                              /*FIXME:*/SourceRange(getBaseLocation()));
+                                   /*FIXME:*/SourceRange(getBaseLocation()),
+                                   ObjectType);
   if (!NNS)
     return QualType();
 
