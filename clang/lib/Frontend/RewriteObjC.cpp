@@ -2196,6 +2196,36 @@ static void RewriteBlockPointerType(std::string& Str, QualType Type) {
   }
 }
 
+// FIXME. Consolidate this routine with RewriteBlockPointerType.
+static void RewriteBlockPointerTypeVariable(std::string& Str, ValueDecl *VD) {
+  QualType Type = VD->getType();
+  std::string TypeString(Type.getAsString());
+  const char *argPtr = TypeString.c_str();
+  int paren = 0;
+  while (*argPtr) {
+    switch (*argPtr) {
+      case '(':
+        Str += *argPtr;
+        paren++;
+        break;
+      case ')':
+        Str += *argPtr;
+        paren--;
+        break;
+      case '^':
+        Str += '*';
+        if (paren == 1)
+          Str += VD->getNameAsString();
+        break;
+      default:
+        Str += *argPtr;
+        break;
+    }
+    argPtr++;
+  }
+}
+
+
 void RewriteObjC::RewriteBlockLiteralFunctionDecl(FunctionDecl *FD) {
   SourceLocation FunLocStart = FD->getTypeSpecStartLoc();
   const FunctionType *funcType = FD->getType()->getAs<FunctionType>();
@@ -3899,11 +3929,18 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
     //     myImportedClosure(); // import and invoke the closure
     //   };
     //
-    if (isTopLevelBlockPointerType((*I)->getType()))
-      S += "struct __block_impl *";
-    else
+    if (isTopLevelBlockPointerType((*I)->getType())) {
+      RewriteBlockPointerTypeVariable(S, (*I));
+      S += " = (";
+      RewriteBlockPointerType(S, (*I)->getType());
+      S += ")";
+      S += "__cself->" + (*I)->getNameAsString() + "; // bound by copy\n";
+    }
+    else {
       (*I)->getType().getAsStringInternal(Name, Context->PrintingPolicy);
-    S += Name + " = __cself->" + (*I)->getNameAsString() + "; // bound by copy\n";
+      S += Name + " = __cself->" + 
+                              (*I)->getNameAsString() + "; // bound by copy\n";
+    }
   }
   std::string RewrittenStr = RewrittenBlockExprs[CE];
   const char *cstr = RewrittenStr.c_str();
