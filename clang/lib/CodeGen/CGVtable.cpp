@@ -912,6 +912,27 @@ VtableBuilder::AddVCallAndVBaseOffsets(const CXXRecordDecl *RD,
 void VtableBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
                                     int64_t OffsetToTop,
                                     VisitedVirtualBasesSetTy &VBases) {
+  const ASTRecordLayout &MostDerivedClassLayout = 
+    Context.getASTRecordLayout(MostDerivedClass);
+
+  // Add vbase offsets.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // Check if this is a virtual base that we haven't visited before.
+    if (I->isVirtual() && VBases.insert(BaseDecl)) {
+      // FIXME: We shouldn't use / 8 here.
+      uint64_t Offset = 
+        OffsetToTop + MostDerivedClassLayout.getVBaseClassOffset(BaseDecl) / 8;
+    
+      VCallAndVBaseOffsets.push_back(VtableComponent::MakeVBaseOffset(Offset));
+    }
+    
+    // Check the base class looking for more vbase offsets.
+    AddVBaseOffsets(BaseDecl, OffsetToTop, VBases);
+  }
 }
 
 void 
@@ -1008,13 +1029,22 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
 
 void VtableBuilder::LayoutVtable(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
-
   assert(RD->isDynamicClass() && "class does not have a vtable!");
 
-  // First, add the offset to top.
+  int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
+
+  // Add vcall and vbase offsets for this vtable.
+  VisitedVirtualBasesSetTy VBases;
+  AddVCallAndVBaseOffsets(RD, OffsetToTop, VBases);
+
+  // Reverse them and add them to the vtable components.
+  std::reverse(VCallAndVBaseOffsets.begin(), VCallAndVBaseOffsets.end());
+  Components.append(VCallAndVBaseOffsets.begin(), VCallAndVBaseOffsets.end());
+  VCallAndVBaseOffsets.clear();
+  
+  // Add the offset to top.
   // FIXME: This is not going to be right for construction vtables.
   // FIXME: We should not use / 8 here.
-  int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
   Components.push_back(VtableComponent::MakeOffsetToTop(OffsetToTop));
   
   // Next, add the RTTI.
@@ -1137,7 +1167,11 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     default:
       assert(false && "Unhandled component kind!");
       break;
-      
+
+    case VtableComponent::CK_VBaseOffset:
+      Out << "vbase_offset (" << Component.getVBaseOffset() << ")";
+      break;
+
     case VtableComponent::CK_OffsetToTop:
       Out << "offset_to_top (" << Component.getOffsetToTop() << ")";
       break;

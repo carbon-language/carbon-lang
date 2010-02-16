@@ -340,3 +340,28 @@ struct B : A {
 void B::f() { }
 
 }
+
+namespace Test9 {
+
+// Simple test of vbase offsets.
+
+struct A1 { int a1; };
+struct A2 { int a2; };
+
+// CHECK:     Vtable for 'Test9::B' (5 entries).
+// CHECK-NEXT:   0 | vbase_offset (16)
+// CHECK-NEXT:   1 | vbase_offset (12)
+// CHECK-NEXT:   2 | offset_to_top (0)
+// CHECK-NEXT:   3 | Test9::B RTTI
+// CHECK-NEXT:       -- (Test9::B, 0) vtable address --
+// CHECK-NEXT:   4 | void Test9::B::f()
+struct B : virtual A1, virtual A2 {
+  int b;
+
+  virtual void f();
+};
+
+
+void B::f() { }
+
+}
