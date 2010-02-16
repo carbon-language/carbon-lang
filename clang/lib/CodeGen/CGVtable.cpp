@@ -818,9 +818,14 @@ private:
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
   void AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases);
-  
-  /// LayoutVtable - Layout a vtable and all its secondary vtables.
-  void LayoutVtable(BaseSubobject Base);
+
+  // LayoutVtable - Layout the vtable for the most derived class, including its
+  // secondary vtables and any vtables for virtual bases.
+  void LayoutVtable();
+
+  /// LayoutPrimaryAndAndSecondaryVtables - Layout the primary vtable for the
+  /// given base subobject, as well as all its secondary vtables.
+  void LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base);
   
   /// LayoutSecondaryVtables - Layout the secondary vtables for the given base
   /// subobject.
@@ -831,7 +836,7 @@ public:
     : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
 
-    LayoutVtable(BaseSubobject(MostDerivedClass, 0));
+    LayoutVtable();
   }
 
   /// dumpLayout - Dump the vtable layout.
@@ -1031,7 +1036,13 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
   }
 }
 
-void VtableBuilder::LayoutVtable(BaseSubobject Base) {
+void VtableBuilder::LayoutVtable() {
+  LayoutPrimaryAndAndSecondaryVtables(BaseSubobject(MostDerivedClass, 0));
+  
+  // FIXME: Emit vtables for virtual bases here.
+}
+  
+void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
   assert(RD->isDynamicClass() && "class does not have a vtable!");
 
@@ -1076,8 +1087,6 @@ void VtableBuilder::LayoutVtable(BaseSubobject Base) {
 
   // Layout secondary vtables.
   LayoutSecondaryVtables(Base);
-  
-  // FIXME: Emit vtables for virtual bases here.
 }
 
 void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
@@ -1114,8 +1123,8 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
       continue;
     }
 
-    // Layout this secondary vtable.
-    LayoutVtable(BaseSubobject(BaseDecl, BaseOffset));
+    // Layout the primary vtable (and any secondary vtables) for this base.
+    LayoutPrimaryAndAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset));
   }
 }
 
