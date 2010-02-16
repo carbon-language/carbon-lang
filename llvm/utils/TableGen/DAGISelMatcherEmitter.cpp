@@ -24,10 +24,6 @@ enum {
 };
 }
 
-static unsigned EmitMatcherAndChildren(const MatcherNode *N,
-                                       formatted_raw_ostream &FOS,
-                                       unsigned Indent);
-
 /// ClassifyInt - Classify an integer by size, return '1','2','4','8' if this
 /// fits in 1, 2, 4, or 8 sign extended bytes.
 static char ClassifyInt(int64_t Val) {
@@ -67,10 +63,22 @@ static unsigned EmitInt(int64_t Val, formatted_raw_ostream &OS) {
   return BytesEmitted;
 }
 
+namespace {
+class MatcherTableEmitter {
+  formatted_raw_ostream &OS;
+public:
+  MatcherTableEmitter(formatted_raw_ostream &os) : OS(os) {}
+
+  unsigned EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent);
+private:
+  unsigned EmitMatcher(const MatcherNode *N, unsigned Indent);
+};
+} // end anonymous namespace.
+
 /// EmitMatcherOpcodes - Emit bytes for the specified matcher and return
 /// the number of bytes emitted.
-static unsigned EmitMatcher(const MatcherNode *N, formatted_raw_ostream &OS,
-                            unsigned Indent) {
+unsigned MatcherTableEmitter::
+EmitMatcher(const MatcherNode *N, unsigned Indent) {
   OS.PadToColumn(Indent*2);
   
   switch (N->getKind()) {
@@ -163,9 +171,8 @@ static unsigned EmitMatcher(const MatcherNode *N, formatted_raw_ostream &OS,
 }
 
 /// EmitMatcherAndChildren - Emit the bytes for the specified matcher subtree.
-static unsigned EmitMatcherAndChildren(const MatcherNode *N,
-                                       formatted_raw_ostream &OS,
-                                       unsigned Indent) {
+unsigned MatcherTableEmitter::
+EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
   unsigned Size = 0;
   while (1) {
     // Push is a special case since it is binary.
@@ -179,8 +186,7 @@ static unsigned EmitMatcherAndChildren(const MatcherNode *N,
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
         ChildSize = 
-          EmitMatcherAndChildren(cast<PushMatcherNode>(N)->getChild(), FOS,
-                                 Indent+1);
+          EmitMatcherAndChildren(cast<PushMatcherNode>(N)->getChild(),Indent+1);
       }
       
       if (ChildSize > 255) {
@@ -199,7 +205,7 @@ static unsigned EmitMatcherAndChildren(const MatcherNode *N,
       continue;
     }
   
-    Size += EmitMatcher(N, OS, Indent);
+    Size += EmitMatcher(N, Indent);
     
     // If there are children of this node, iterate to them, otherwise we're
     // done.
@@ -216,8 +222,10 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   OS << "// The main instruction selector code.\n";
   OS << "SDNode *SelectCode2(SDNode *N) {\n";
 
+  MatcherTableEmitter MatcherEmitter(OS);
+
   OS << "  static const unsigned char MatcherTable[] = {\n";
-  unsigned TotalSize = EmitMatcherAndChildren(Matcher, OS, 2);
+  unsigned TotalSize = MatcherEmitter.EmitMatcherAndChildren(Matcher, 2);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
- OS << "  return SelectCodeCommon(N, MatcherTable, sizeof(MatcherTable));\n}\n";
+  OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
 }
