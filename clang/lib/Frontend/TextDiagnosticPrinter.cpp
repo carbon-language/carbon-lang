@@ -786,12 +786,15 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
-  if (DiagOpts->ShowOptionNames)
+  if (DiagOpts->ShowOptionNames) {
     if (const char *Opt = Diagnostic::getWarningOptionForDiag(Info.getID())) {
       OutStr += " [-W";
       OutStr += Opt;
       OutStr += ']';
+    } else if (Diagnostic::isBuiltinExtensionDiag(Info.getID())) {
+      OutStr += " [-pedantic]";
     }
+  }
 
   if (DiagOpts->ShowColors) {
     // Print warnings, errors and fatal errors in bold, no color
