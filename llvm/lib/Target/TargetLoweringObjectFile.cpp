@@ -307,7 +307,7 @@ getSymbolForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
 
   switch (Encoding & 0xF0) {
   default:
-    llvm_report_error("Do not support this DWARF encoding yet!");
+    llvm_report_error("We do not support this DWARF encoding yet!");
     break;
   case dwarf::DW_EH_PE_absptr:
     // Do nothing special
