@@ -19,11 +19,11 @@ using namespace clang;
 using namespace CodeGen;
 
 static uint64_t 
-ComputeNonVirtualBaseClassOffset(ASTContext &Context, CXXBasePaths &Paths,
+ComputeNonVirtualBaseClassOffset(ASTContext &Context,
+                                 const CXXBasePath &Path,
                                  unsigned Start) {
   uint64_t Offset = 0;
 
-  const CXXBasePath &Path = Paths.front();
   for (unsigned i = Start, e = Path.size(); i != e; ++i) {
     const CXXBasePathElement& Element = Path[i];
 
@@ -57,7 +57,8 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *Class,
     return 0;
   }
 
-  uint64_t Offset = ComputeNonVirtualBaseClassOffset(getContext(), Paths, 0);
+  uint64_t Offset = ComputeNonVirtualBaseClassOffset(getContext(),
+                                                     Paths.front(), 0);
   if (!Offset)
     return 0;
 
@@ -99,9 +100,45 @@ CodeGenModule::ComputeThunkAdjustment(const CXXRecordDecl *ClassDecl,
       getVtableInfo().getVirtualBaseOffsetIndex(ClassDecl, BaseClassDecl);
   
   uint64_t Offset = 
-    ComputeNonVirtualBaseClassOffset(getContext(), Paths, Start);
+    ComputeNonVirtualBaseClassOffset(getContext(), Paths.front(), Start);
   return ThunkAdjustment(Offset, VirtualOffset);
 }
+
+/// Gets the address of a virtual base class within a complete object.
+/// This should only be used for (1) non-virtual bases or (2) virtual bases
+/// when the type is known to be complete (e.g. in complete destructors).
+///
+/// The object pointed to by 'This' is assumed to be non-null.
+llvm::Value *
+CodeGenFunction::GetAddressOfBaseOfCompleteClass(llvm::Value *This,
+                                                 bool isBaseVirtual,
+                                                 const CXXRecordDecl *Derived,
+                                                 const CXXRecordDecl *Base) {
+  // 'this' must be a pointer (in some address space) to Derived.
+  assert(This->getType()->isPointerTy() &&
+         cast<llvm::PointerType>(This->getType())->getElementType()
+           == ConvertType(Derived));
+
+  // Compute the offset of the virtual base.
+  uint64_t Offset;
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Derived);
+  if (isBaseVirtual)
+    Offset = Layout.getVBaseClassOffset(Base);
+  else
+    Offset = Layout.getBaseClassOffset(Base);
+
+  // Shift and cast down to the base type.
+  // TODO: for complete types, this should be possible with a GEP.
+  llvm::Value *V = This;
+  if (Offset) {
+    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
+    V = Builder.CreateBitCast(V, Int8PtrTy);
+    V = Builder.CreateConstInBoundsGEP1_64(V, Offset / 8);
+  }
+  V = Builder.CreateBitCast(V, ConvertType(Base)->getPointerTo());
+
+  return V;
+}                                      
 
 llvm::Value *
 CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
@@ -110,7 +147,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
                                        bool NullCheckValue) {
   QualType BTy =
     getContext().getCanonicalType(
-      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClass)));
+      getContext().getTypeDeclType(BaseClass));
   const llvm::Type *BasePtrTy = llvm::PointerType::getUnqual(ConvertType(BTy));
 
   if (Class == BaseClass) {
@@ -141,7 +178,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   }
 
   uint64_t Offset = 
-    ComputeNonVirtualBaseClassOffset(getContext(), Paths, Start);
+    ComputeNonVirtualBaseClassOffset(getContext(), Paths.front(), Start);
   
   if (!Offset && !VBase) {
     // Just cast back.
@@ -790,35 +827,18 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
   if (CtorType == Ctor_Base && isBaseVirtual)
     return;
 
-  // Compute the offset to the base; we do this directly instead of using
-  // GetAddressOfBaseClass because the class doesn't have a vtable pointer
-  // at this point.
-  // FIXME: This could be refactored back into GetAddressOfBaseClass if it took
-  // an extra parameter for whether the derived class is the complete object
-  // class.
-  const ASTRecordLayout &Layout =
-      CGF.getContext().getASTRecordLayout(ClassDecl);
-  uint64_t Offset;
-  if (isBaseVirtual)
-    Offset = Layout.getVBaseClassOffset(BaseClassDecl);
-  else
-    Offset = Layout.getBaseClassOffset(BaseClassDecl);
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  const llvm::Type *BaseClassType = CGF.ConvertType(QualType(BaseType, 0));
-  llvm::Value *V = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
-  V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset/8);
-  V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
+  // We can pretend to be a complete class because it only matters for
+  // virtual bases, and we only do virtual bases for complete ctors.
+  llvm::Value *V = ThisPtr;
+  V = CGF.GetAddressOfBaseOfCompleteClass(V, isBaseVirtual,
+                                          ClassDecl, BaseClassDecl);
+
   CGF.EmitAggExpr(BaseInit->getInit(), V, false, false, true);
   
   if (CGF.Exceptions && !BaseClassDecl->hasTrivialDestructor()) {
     // FIXME: Is this OK for C++0x delegating constructors?
     CodeGenFunction::EHCleanupBlock Cleanup(CGF);
 
-    llvm::Value *ThisPtr = CGF.LoadCXXThis();
-    llvm::Value *V = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
-    V = CGF.Builder.CreateConstInBoundsGEP1_64(V, Offset / 8);
-    V = CGF.Builder.CreateBitCast(V, BaseClassType->getPointerTo());
-    
     CXXDestructorDecl *DD = BaseClassDecl->getDestructor(CGF.getContext());
     CGF.EmitCXXDestructorCall(DD, Dtor_Base, V);
   }
@@ -886,7 +906,6 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
-/// FIXME: This needs to take a CXXCtorType.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
                                        CXXCtorType CtorType) {
   const CXXRecordDecl *ClassDecl = CD->getParent();
@@ -1013,15 +1032,16 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
        ClassDecl->vbases_rbegin(), E = ClassDecl->vbases_rend(); I != E; ++I) {
     const CXXBaseSpecifier &Base = *I;
     CXXRecordDecl *BaseClassDecl
-    = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
+      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
     
     // Ignore trivial destructors.
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
     const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
-    llvm::Value *V = GetAddressOfBaseClass(LoadCXXThis(),
-                                           ClassDecl, BaseClassDecl, 
-                                           /*NullCheckValue=*/false);
+    llvm::Value *V = GetAddressOfBaseOfCompleteClass(LoadCXXThis(),
+                                                     true,
+                                                     ClassDecl,
+                                                     BaseClassDecl);
     EmitCXXDestructorCall(D, Dtor_Base, V);
   }
     

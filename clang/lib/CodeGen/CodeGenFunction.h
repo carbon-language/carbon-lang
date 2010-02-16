@@ -572,6 +572,9 @@ public:
 
   const llvm::Type *ConvertTypeForMem(QualType T);
   const llvm::Type *ConvertType(QualType T);
+  const llvm::Type *ConvertType(const TypeDecl *T) {
+    return ConvertType(getContext().getTypeDeclType(T));
+  }
 
   /// LoadObjCSelf - Load the value of self. This function is only valid while
   /// generating code for an Objective-C method.
@@ -740,11 +743,16 @@ public:
   /// LoadCXXVTT - Load the VTT parameter to base constructors/destructors have
   /// virtual bases.
   llvm::Value *LoadCXXVTT();
+
+  /// GetAddressOfBaseOfCompleteClass - Convert the given pointer to a
+  /// complete class down to one of its virtual bases.
+  llvm::Value *GetAddressOfBaseOfCompleteClass(llvm::Value *Value,
+                                               bool IsVirtual,
+                                               const CXXRecordDecl *Derived,
+                                               const CXXRecordDecl *Base);
   
   /// GetAddressOfBaseClass - This function will add the necessary delta to the
   /// load of 'this' and returns address of the base class.
-  // FIXME. This currently only does a derived to non-virtual base conversion.
-  // Other kinds of conversions will come later.
   llvm::Value *GetAddressOfBaseClass(llvm::Value *Value,
                                      const CXXRecordDecl *ClassDecl,
                                      const CXXRecordDecl *BaseClassDecl,
