@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: FileCheck -check-prefix LP --input-file=%t-rw.cpp %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 7630551
 
 void f(void (^b)(char c));
@@ -23,9 +23,3 @@ void f(void (^b)(char c));
     f(^(char x) { });
 }
 @end
-
-// CHECK-LP: struct __a__processStuff_block_impl_0
-// CHECK-LP: static void __a__processStuff_block_func_0
-
-// CHECK-LP: struct __b__processStuff_block_impl_0
-// CHECK-LP: static void __b__processStuff_block_func_0

@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: %clang_cc1 -DSEL="void *" -S %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 7649577
 
 @interface a
