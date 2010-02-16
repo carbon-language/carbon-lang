@@ -612,6 +612,10 @@ public:
     CK_DeletingDtorPointer
   };
 
+  static VtableComponent MakeVBaseOffset(int64_t Offset) {
+    return VtableComponent(CK_VBaseOffset, Offset);
+  }
+
   static VtableComponent MakeOffsetToTop(int64_t Offset) {
     return VtableComponent(CK_OffsetToTop, Offset);
   }
@@ -641,6 +645,12 @@ public:
   /// getKind - Get the kind of this vtable component.
   Kind getKind() const {
     return (Kind)(Value & 0x7);
+  }
+
+  int64_t getVBaseOffset() const {
+    assert(getKind() == CK_VBaseOffset && "Invalid component kind!");
+    
+    return getOffset();
   }
 
   int64_t getOffsetToTop() const {
@@ -735,6 +745,10 @@ private:
   /// FinalOverriders - The final overriders of the most derived class.
   FinalOverriders Overriders;
 
+  /// VCallAndVBaseOffsets - The vcall and vbase offset, of the vtable we're
+  // building (in reverse order).
+  llvm::SmallVector<VtableComponent, 64> VCallAndVBaseOffsets;
+
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
 
@@ -777,6 +791,17 @@ private:
   llvm::SmallVector<std::pair<uint64_t, ThisAdjustment>, 16> 
     ThisAdjustments;
   
+  typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
+
+  /// AddVCallAndVBaseOffsets - Add vcall offsets and vbase offsets for the
+  /// given class.
+  void AddVCallAndVBaseOffsets(const CXXRecordDecl *RD, int64_t OffsetToTop,
+                               VisitedVirtualBasesSetTy &VBases);
+
+  /// AddVBaseOffsets - Add vbase offsets for the given class.
+  void AddVBaseOffsets(const CXXRecordDecl *RD, int64_t OffsetToTop,
+                       VisitedVirtualBasesSetTy &VBases);
+
   /// ComputeReturnAdjustment - Compute the return adjustment given a return
   /// adjustment base offset.
   ReturnAdjustment ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset);
@@ -794,15 +819,15 @@ private:
   /// primary bases to the vtable components vector.
   void AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases);
   
-  /// layoutVtable - Layout a vtable and all its secondary vtables.
-  void layoutVtable(BaseSubobject Base);
+  /// LayoutVtable - Layout a vtable and all its secondary vtables.
+  void LayoutVtable(BaseSubobject Base);
   
 public:
   VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass)
     : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
 
-    layoutVtable(BaseSubobject(MostDerivedClass, 0));
+    LayoutVtable(BaseSubobject(MostDerivedClass, 0));
   }
 
   /// dumpLayout - Dump the vtable layout.
@@ -861,6 +886,32 @@ VtableBuilder::ComputeThisAdjustment(FinalOverriders::BaseOffset Offset) {
   }
   
   return Adjustment;
+}
+
+void 
+VtableBuilder::AddVCallAndVBaseOffsets(const CXXRecordDecl *RD,
+                                       int64_t OffsetToTop,
+                                       VisitedVirtualBasesSetTy &VBases) {
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  
+  // Itanium C++ ABI 2.5.2:
+  //   ..in classes sharing a virtual table with a primary base class, the vcall
+  //   and vbase offsets added by the derived class all come before the vcall
+  //   and vbase offsets required by the base class, so that the latter may be
+  //   laid out as required by the base class without regard to additions from
+  //   the derived class(es).
+
+  // (Since we're emitting the vcall and vbase offsets in reverse order, we'll
+  // emit them for the primary base first).
+  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase())
+    AddVCallAndVBaseOffsets(PrimaryBase, OffsetToTop, VBases);
+
+  AddVBaseOffsets(RD, OffsetToTop, VBases);
+}
+
+void VtableBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
+                                    int64_t OffsetToTop,
+                                    VisitedVirtualBasesSetTy &VBases) {
 }
 
 void 
@@ -955,7 +1006,7 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
   }
 }
 
-void VtableBuilder::layoutVtable(BaseSubobject Base) {
+void VtableBuilder::LayoutVtable(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
 
   assert(RD->isDynamicClass() && "class does not have a vtable!");
@@ -998,23 +1049,27 @@ void VtableBuilder::layoutVtable(BaseSubobject Base) {
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
+    // Ignore bases that don't have a vtable.
+    if (!BaseDecl->isDynamicClass())
+      continue;
+    
     // Ignore the primary base.
     if (BaseDecl == PrimaryBase)
       continue;
 
-    // Ignore bases that don't have a vtable.
-    if (!BaseDecl->isDynamicClass())
+    // Ignore virtual bases, we'll emit them later.
+    if (I->isVirtual())
       continue;
-
-    assert(!I->isVirtual() && "FIXME: Handle virtual bases");
     
     // Get the base offset of this base.
     uint64_t BaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(BaseDecl);
 
     // Layout this secondary vtable.
-    layoutVtable(BaseSubobject(BaseDecl, BaseOffset));
+    LayoutVtable(BaseSubobject(BaseDecl, BaseOffset));
   }
+  
+  // FIXME: Emit vtables for virtual bases here.
 }
 
 /// dumpLayout - Dump the vtable layout.
@@ -2327,8 +2382,8 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
 
   if (ImplicitVirtualDtor) {
     // Itanium C++ ABI 2.5.2:
-    // If a class has an implicitly-defined virtual destructor, 
-    // its entries come after the declared virtual function pointers.
+    //   If a class has an implicitly-defined virtual destructor, 
+    //   its entries come after the declared virtual function pointers.
 
     // Add the complete dtor.
     MethodVtableIndices[GlobalDecl(ImplicitVirtualDtor, Dtor_Complete)] = 
