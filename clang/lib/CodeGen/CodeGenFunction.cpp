@@ -216,10 +216,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   } else if (CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
              hasAggregateLLVMType(CurFnInfo->getReturnType())) {
     // Indirect aggregate return; emit returned value directly into sret slot.
-    // This reduces code size, and is also affects correctness in C++.
+    // This reduces code size, and affects correctness in C++.
     ReturnValue = CurFn->arg_begin();
   } else {
-    ReturnValue = CreateTempAlloca(ConvertType(RetTy), "retval");
+    ReturnValue = CreateIRTemp(RetTy, "retval");
   }
 
   EmitStartEHSpec(CurCodeDecl);
