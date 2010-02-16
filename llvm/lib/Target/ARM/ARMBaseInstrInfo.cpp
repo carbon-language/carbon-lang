@@ -704,6 +704,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                             MFI.getObjectSize(FI),
                             Align);
 
+  // tGPR is used sometimes in ARM instructions that need to avoid using
+  // certain registers.  Just treat it as GPR here.
+  if (RC == ARM::tGPRRegisterClass)
+    RC = ARM::GPRRegisterClass;
+
   if (RC == ARM::GPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STR))
                    .addReg(SrcReg, getKillRegState(isKill))
@@ -751,6 +756,11 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                             MachineMemOperand::MOLoad, 0,
                             MFI.getObjectSize(FI),
                             Align);
+
+  // tGPR is used sometimes in ARM instructions that need to avoid using
+  // certain registers.  Just treat it as GPR here.
+  if (RC == ARM::tGPRRegisterClass)
+    RC = ARM::GPRRegisterClass;
 
   if (RC == ARM::GPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDR), DestReg)
