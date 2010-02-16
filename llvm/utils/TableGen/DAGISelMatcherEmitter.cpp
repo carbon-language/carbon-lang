@@ -183,11 +183,8 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
     OS << "OPC_CheckOrImm" << ClassifyInt(Val) << ", ";
     return EmitInt(Val, OS)+1;
   }
-  case MatcherNode::CheckProfitableToFold:
-    OS << "OPC_IsProfitableToFold,\n";
-    return 1;
-  case MatcherNode::CheckLegalToFold:
-    OS << "OPC_IsLegalToFold,\n";
+  case MatcherNode::CheckFoldableChainNode:
+    OS << "OPC_CheckFoldableChainNode,\n";
     return 1;
   }
   assert(0 && "Unreachable");

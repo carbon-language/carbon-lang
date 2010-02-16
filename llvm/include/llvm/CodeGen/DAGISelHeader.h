@@ -209,8 +209,7 @@ enum BuiltinOpcodes {
   OPC_CheckComplexPat,
   OPC_CheckAndImm1, OPC_CheckAndImm2, OPC_CheckAndImm4, OPC_CheckAndImm8,
   OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8,
-  OPC_IsProfitableToFold,
-  OPC_IsLegalToFold
+  OPC_CheckFoldableChainNode
 };
 
 struct MatchScope {
@@ -382,18 +381,28 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (CheckOrImmediate(N, GetInt8(MatcherTable, MatcherIndex))) break;
       continue;
         
-    case OPC_IsProfitableToFold:
+    case OPC_CheckFoldableChainNode: {
       assert(!NodeStack.size() == 1 && "No parent node");
+      // Verify that all intermediate nodes between the root and this one have
+      // a single use.
+      bool HasMultipleUses = false;
+      for (unsigned i = 1, e = NodeStack.size()-1; i != e; ++i)
+        if (!NodeStack[i].hasOneUse()) {
+          HasMultipleUses = true;
+          break;
+        }
+      if (HasMultipleUses) break;
+
+      // Check to see that the target thinks this is profitable to fold and that
+      // we can fold it without inducing cycles in the graph.
       if (!IsProfitableToFold(N, NodeStack[NodeStack.size()-2].getNode(),
-                              NodeToMatch))
-        break;
-      continue;
-    case OPC_IsLegalToFold:
-      assert(!NodeStack.size() == 1 && "No parent node");
-      if (!IsLegalToFold(N, NodeStack[NodeStack.size()-2].getNode(),
+                              NodeToMatch) ||
+          !IsLegalToFold(N, NodeStack[NodeStack.size()-2].getNode(),
                          NodeToMatch))
         break;
+      
       continue;
+    }
     }
     
     // If the code reached this point, then the match failed pop out to the next

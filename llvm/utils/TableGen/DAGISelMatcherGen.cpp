@@ -212,9 +212,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   const TreePatternNode *Root = Pattern.getSrcPattern();
   if (N != Root &&                             // Not the root of the pattern.
       N->TreeHasProperty(SDNPHasChain, CGP)) { // Has a chain somewhere in tree.
-    
-    AddMatcherNode(new CheckProfitableToFoldMatcherNode());
-    
+
     // If this non-root node produces a chain, we may need to emit a validity
     // check.
     if (OpNo != 0) {
@@ -239,7 +237,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
       }
       
       if (NeedCheck)
-        AddMatcherNode(new CheckLegalToFoldMatcherNode());
+        AddMatcherNode(new CheckFoldableChainNodeMatcherNode());
     }
   }
       

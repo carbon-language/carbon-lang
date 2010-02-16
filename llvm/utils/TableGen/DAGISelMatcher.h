@@ -50,8 +50,7 @@ public:
     CheckComplexPat,
     CheckAndImm,
     CheckOrImm,
-    CheckProfitableToFold,
-    CheckLegalToFold
+    CheckFoldableChainNode
   };
   const KindTy Kind;
   
@@ -359,33 +358,20 @@ public:
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CheckProfitableToFoldMatcherNode - This checks to see if the current node is
-/// worthwhile to try to fold into a large pattern.
-class CheckProfitableToFoldMatcherNode : public MatcherNodeWithChild {
+/// CheckFoldableChainNodeMatcherNode - This checks to see if the current node
+/// (which defines a chain operand) is safe to fold into a larger pattern.
+class CheckFoldableChainNodeMatcherNode : public MatcherNodeWithChild {
 public:
-  CheckProfitableToFoldMatcherNode()
-  : MatcherNodeWithChild(CheckProfitableToFold) {}
+  CheckFoldableChainNodeMatcherNode()
+    : MatcherNodeWithChild(CheckFoldableChainNode) {}
   
   static inline bool classof(const MatcherNode *N) {
-    return N->getKind() == CheckProfitableToFold;
+    return N->getKind() == CheckFoldableChainNode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CheckLegalToFoldMatcherNode - This checks to see if the current node is
-/// legal to try to fold into a large pattern.
-class CheckLegalToFoldMatcherNode : public MatcherNodeWithChild {
-public:
-  CheckLegalToFoldMatcherNode()
-  : MatcherNodeWithChild(CheckLegalToFold) {}
-  
-  static inline bool classof(const MatcherNode *N) {
-    return N->getKind() == CheckLegalToFold;
-  }
-  
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
-};
 } // end namespace llvm
 
 #endif
