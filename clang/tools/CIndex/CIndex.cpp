@@ -41,12 +41,11 @@ using namespace idx;
 //===----------------------------------------------------------------------===//
 
 #ifdef __APPLE__
-#ifndef NDEBUG
 #define USE_CRASHTRACER
 #include "clang/Analysis/Support/SaveAndRestore.h"
 // Integrate with crash reporter.
 extern "C" const char *__crashreporter_info__;
-#define NUM_CRASH_STRINGS 16
+#define NUM_CRASH_STRINGS 32
 static unsigned crashtracer_counter = 0;
 static unsigned crashtracer_counter_id[NUM_CRASH_STRINGS] = { 0 };
 static const char *crashtracer_strings[NUM_CRASH_STRINGS] = { 0 };
@@ -118,7 +117,6 @@ public:
   }
 };
 }
-#endif
 #endif
 
 /// \brief The result of comparing two source ranges.
