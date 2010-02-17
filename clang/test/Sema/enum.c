@@ -9,7 +9,8 @@ enum g {  // too negative
    c = -2147483649,         // expected-warning {{ISO C restricts enumerator values to range of 'int'}}
    d = 2147483647 };
 enum h { e = -2147483648, // too pos
-   f = 2147483648           // expected-warning {{ISO C restricts enumerator values to range of 'int'}}
+   f = 2147483648,           // expected-warning {{ISO C restricts enumerator values to range of 'int'}}
+  i = 0xFFFF0000 // expected-warning {{too large}}
 }; 
 
 // minll maxull

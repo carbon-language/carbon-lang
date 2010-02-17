@@ -5732,7 +5732,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           if (!isRepresentableIntegerValue(Context, EnumVal, Context.IntTy))
             Diag(IdLoc, diag::ext_enum_value_not_int)
               << EnumVal.toString(10) << Val->getSourceRange()
-              << EnumVal.isNonNegative();
+              << (EnumVal.isUnsigned() || EnumVal.isNonNegative());
           else if (!Context.hasSameType(Val->getType(), Context.IntTy)) {
             // Force the type of the expression to 'int'.
             ImpCastExprToType(Val, Context.IntTy, CastExpr::CK_IntegralCast);
