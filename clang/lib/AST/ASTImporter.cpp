@@ -92,6 +92,7 @@ namespace {
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitObjCIvarDecl(ObjCIvarDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
+    Decl *VisitImplicitParamDecl(ImplicitParamDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitObjCMethodDecl(ObjCMethodDecl *D);
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
@@ -1987,6 +1988,32 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   // FIXME: Other bits to merge?
   
   return ToVar;
+}
+
+Decl *ASTNodeImporter::VisitImplicitParamDecl(ImplicitParamDecl *D) {
+  // Parameters are created in the translation unit's context, then moved
+  // into the function declaration's context afterward.
+  DeclContext *DC = Importer.getToContext().getTranslationUnitDecl();
+  
+  // Import the name of this declaration.
+  DeclarationName Name = Importer.Import(D->getDeclName());
+  if (D->getDeclName() && !Name)
+    return 0;
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+  
+  // Import the parameter's type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+  
+  // Create the imported parameter.
+  ImplicitParamDecl *ToParm
+    = ImplicitParamDecl::Create(Importer.getToContext(), DC,
+                                Loc, Name.getAsIdentifierInfo(),
+                                T);
+  return Importer.Imported(D, ToParm);
 }
 
 Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
