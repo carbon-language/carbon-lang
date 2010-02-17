@@ -586,14 +586,7 @@ class N2VQ<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$src), IIC_VUNAQ, OpcodeStr, Dt, "$dst, $src", "",
         [(set QPR:$dst, (ResTy (OpNode (OpTy QPR:$src))))]>;
 
-// Basic 2-register intrinsics: single-, double- and quad-register.
-class N2VSInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
-              bits<2> op17_16, bits<5> op11_7, bit op4, 
-              InstrItinClass itin, string OpcodeStr, string Dt,
-              ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
-  : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4,
-        (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), itin,
-        OpcodeStr, Dt, "$dst, $src", "", []>;
+// Basic 2-register intrinsics, both double- and quad-register.
 class N2VDInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
               bits<2> op17_16, bits<5> op11_7, bit op4, 
               InstrItinClass itin, string OpcodeStr, string Dt,
@@ -3018,8 +3011,9 @@ def : N3VSPat<fmul, VMULfd_sfp>;
 
 // Vector Absolute used for single-precision FP
 let neverHasSideEffects = 1 in
-def  VABSfd_sfp : N2VSInt<0b11, 0b11, 0b10, 0b01, 0b01110, 0, IIC_VUNAD,
-                           "vabs", "f32", v2f32, v2f32, int_arm_neon_vabs>;
+def  VABSfd_sfp : N2V<0b11, 0b11, 0b10, 0b01, 0b01110, 0, 0,
+                      (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), IIC_VUNAD,
+                      "vabs", "f32", "$dst, $src", "", []>;
 def : N2VSPat<fabs, f32, v2f32, VABSfd_sfp>;
 
 // Vector Negate used for single-precision FP
