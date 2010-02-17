@@ -40,8 +40,9 @@ public:
     const CXXRecordDecl *VirtualBase;
 
     /// NonVirtualOffset - The offset from the derived class to the base class.
-    /// Or the offset from the virtual base class to the base class, if the path
-    /// from the derived class to the base class involves a virtual base class.
+    /// (Or the offset from the virtual base class to the base class, if the 
+    /// path from the derived class to the base class involves a virtual base
+    /// class.
     int64_t NonVirtualOffset;
     
     BaseOffset() : DerivedClass(0), VirtualBase(0), NonVirtualOffset(0) { }
@@ -360,9 +361,45 @@ FinalOverriders::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   if (!const_cast<CXXRecordDecl *>(DerivedRD)->
       isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
     assert(false && "Class must be derived from the passed in base class!");
-    return FinalOverriders::BaseOffset();
+    return BaseOffset();
   }
 
+  // We have to go through all the paths, and see which one leads us to the
+  // right base subobject.
+  for (CXXBasePaths::const_paths_iterator I = Paths.begin(), E = Paths.end();
+       I != E; ++I) {
+    BaseOffset Offset = ComputeBaseOffset(Context, DerivedRD, *I);
+    
+    // FIXME: Should not use * 8 here.
+    uint64_t OffsetToBaseSubobject = Offset.NonVirtualOffset * 8;
+    
+    if (Offset.VirtualBase) {
+      // If we have a virtual base class, the non-virtual offset is relative
+      // to the virtual base class offset.
+      const ASTRecordLayout &MostDerivedClassLayout = 
+        Context.getASTRecordLayout(MostDerivedClass);
+      
+      /// Get the virtual base offset, relative to the most derived class 
+      /// layout.
+      OffsetToBaseSubobject += 
+        MostDerivedClassLayout.getVBaseClassOffset(Offset.VirtualBase);
+    } else {
+      // Otherwise, the non-virtual offset is relative to the derived class 
+      // offset.
+      OffsetToBaseSubobject += Derived.getBaseOffset();
+    }
+    
+    // Check if this path gives us the right base subobject.
+    if (OffsetToBaseSubobject == Base.getBaseOffset()) {
+      // Since we're going from the base class _to_ the derived class, we'll
+      // invert the non-virtual offset here.
+      Offset.NonVirtualOffset = -Offset.NonVirtualOffset;
+      return Offset;
+    }      
+  }
+  
+  return BaseOffset();
+    
   assert(!Paths.getDetectedVirtual() && "FIXME: Handle virtual bases!");
 
   BaseOffset Offset;
