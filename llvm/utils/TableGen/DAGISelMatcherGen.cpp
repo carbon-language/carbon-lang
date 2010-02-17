@@ -10,6 +10,7 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "Record.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
@@ -29,7 +30,15 @@ namespace {
     StringMap<unsigned> VariableMap;
     unsigned NextRecordedOperandNo;
     
+    /// InputChains - This maintains the position in the recorded nodes array of
+    /// all of the recorded input chains.
+    SmallVector<unsigned, 2> InputChains;
+    
+    /// Matcher - This is the top level of the generated matcher, the result.
     MatcherNodeWithChild *Matcher;
+    
+    /// CurPredicate - As we emit matcher nodes, this points to the latest check
+    /// which should have future checks stuck into its child position.
     MatcherNodeWithChild *CurPredicate;
   public:
     MatcherGen(const PatternToMatch &pattern, const CodeGenDAGPatterns &cgp);
@@ -194,13 +203,30 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   // the child numbers of the node are all offset by one.
   unsigned OpNo = 0;
   if (N->NodeHasProperty(SDNPHasChain, CGP)) {
+    // FIXME: Not correct for complex patterns, they need to push their own
+    // *matched* input chain.
+    
     // Record the input chain, which is always input #0 of the SDNode.
     AddMatcherNode(new MoveChildMatcherNode(0));
-    ++NextRecordedOperandNo;
     AddMatcherNode(new RecordMatcherNode("'" + N->getOperator()->getName() +
                                          "' input chain"));
+    
+    // Remember all of the input chains our pattern will match.
+    InputChains.push_back(NextRecordedOperandNo);
+    ++NextRecordedOperandNo;
     AddMatcherNode(new MoveParentMatcherNode());
-
+    
+    // If this is the second (e.g. indbr(load) or store(add(load))) or third
+    // input chain (e.g. (store (add (load, load))) from msp430) we need to make
+    // sure that folding the chain won't induce cycles in the DAG.  This could
+    // happen if there were an intermediate node between the indbr and load, for
+    // example.
+    
+    // FIXME: Emit "lastchain.getNode() == CurrentNode ||
+    //               IsChainCompatible(lastchain.getNode(), CurrentNode)".
+    // Rename IsChainCompatible -> IsChainUnreachable, add comment about
+    // complexity.
+    
     // Don't look at the input chain when matching the tree pattern to the
     // SDNode.
     OpNo = 1;
@@ -252,8 +278,6 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
         AddMatcherNode(new CheckFoldableChainNodeMatcherNode());
     }
   }
-  
-  // FIXME: Need to generate IsChainCompatible checks.
       
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check
