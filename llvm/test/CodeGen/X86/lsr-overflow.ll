@@ -3,7 +3,7 @@
 ; The comparison uses the pre-inc value, which could lead LSR to
 ; try to compute -INT64_MIN.
 
-; CHECK: movabsq $-9223372036854775808, %rax ## imm = 0x8000000000000000
+; CHECK: movabsq $-9223372036854775808, %rax
 ; CHECK: cmpq  %rax, %rbx
 ; CHECK: sete  %al
 
