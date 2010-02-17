@@ -51,7 +51,8 @@ public:
                 AttributeList *Next, bool declspec = false, bool cxx0x = false);
   ~AttributeList();
 
-  enum Kind {              // Please keep this list alphabetized.
+  enum Kind {             // Please keep this list alphabetized.
+    AT_IBAction,          // Clang-specific.
     AT_IBOutlet,          // Clang-specific.
     AT_address_space,
     AT_alias,

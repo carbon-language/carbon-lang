@@ -82,6 +82,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("stdcall", AT_stdcall)
     .Case("annotate", AT_annotate)
     .Case("fastcall", AT_fastcall)
+    .Case("ibaction", AT_IBAction)
     .Case("iboutlet", AT_IBOutlet)
     .Case("noreturn", AT_noreturn)
     .Case("noinline", AT_noinline)

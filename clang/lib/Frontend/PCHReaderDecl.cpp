@@ -517,6 +517,10 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(GNUInline);
     SIMPLE_ATTR(Hiding);
 
+    case Attr::IBActionKind:
+      New = ::new (*Context) IBActionAttr();
+      break;
+
     case Attr::IBOutletKind:
       New = ::new (*Context) IBOutletAttr();
       break;

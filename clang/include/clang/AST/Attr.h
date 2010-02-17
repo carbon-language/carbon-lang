@@ -62,7 +62,8 @@ public:
     FormatArg,
     GNUInline,
     Hiding,
-    IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
+    IBOutletKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
+    IBActionKind, // Clang-specific. Use "Kind" suffix to not conflict w/ macro.
     Malloc,
     NoDebug,
     NoInline,
@@ -324,6 +325,19 @@ public:
     return A->getKind() == IBOutletKind;
   }
   static bool classof(const IBOutletAttr *A) { return true; }
+};
+
+class IBActionAttr : public Attr {
+public:
+  IBActionAttr() : Attr(IBActionKind) {}
+
+  virtual Attr *clone(ASTContext &C) const;
+
+    // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == IBActionKind;
+  }
+  static bool classof(const IBActionAttr *A) { return true; }
 };
 
 DEF_SIMPLE_ATTR(Malloc);

@@ -225,19 +225,29 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }
 
-static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+static void HandleIBAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
 
-  // The IBOutlet attribute only applies to instance variables of Objective-C
-  // classes.
-  if (isa<ObjCIvarDecl>(d) || isa<ObjCPropertyDecl>(d))
-    d->addAttr(::new (S.Context) IBOutletAttr());
+  // The IBOutlet/IBAction attributes only apply to instance variables of
+  // Objective-C classes.
+  if (isa<ObjCIvarDecl>(d) || isa<ObjCPropertyDecl>(d)) {
+    switch (Attr.getKind()) {
+      case AttributeList::AT_IBAction:
+        d->addAttr(::new (S.Context) IBActionAttr());
+        break;
+      case AttributeList::AT_IBOutlet:
+        d->addAttr(::new (S.Context) IBOutletAttr());
+        break;
+      default:
+        llvm_unreachable("Invalid IB attribute");
+    }
+  }
   else
-    S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet);
+    S.Diag(Attr.getLoc(), diag::err_attribute_ib) << Attr.getName();
 }
 
 static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1729,7 +1739,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
     // FIXME: Try to deal with other __declspec attributes!
     return;
   switch (Attr.getKind()) {
-  case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
+  case AttributeList::AT_IBAction:
+  case AttributeList::AT_IBOutlet:    HandleIBAttr          (D, Attr, S); break;
   case AttributeList::AT_address_space:
   case AttributeList::AT_objc_gc:
   case AttributeList::AT_vector_size:

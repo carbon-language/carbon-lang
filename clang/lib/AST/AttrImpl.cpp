@@ -139,6 +139,10 @@ Attr *IBOutletAttr::clone(ASTContext &C) const {
   return ::new (C) IBOutletAttr;
 }
 
+Attr *IBActionAttr::clone(ASTContext &C) const {
+  return ::new (C) IBActionAttr;
+}
+
 Attr *GNUInlineAttr::clone(ASTContext &C) const {
   return ::new (C) GNUInlineAttr;
 }
