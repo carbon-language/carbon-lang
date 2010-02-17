@@ -194,6 +194,15 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   // the child numbers of the node are all offset by one.
   unsigned OpNo = 0;
   if (N->NodeHasProperty(SDNPHasChain, CGP)) {
+    // Record the input chain, which is always input #0 of the SDNode.
+    AddMatcherNode(new MoveChildMatcherNode(0));
+    ++NextRecordedOperandNo;
+    AddMatcherNode(new RecordMatcherNode("'" + N->getOperator()->getName() +
+                                         "' input chain"));
+    AddMatcherNode(new MoveParentMatcherNode());
+
+    // Don't look at the input chain when matching the tree pattern to the
+    // SDNode.
     OpNo = 1;
 
     // If this node is not the root and the subtree underneath it produces a
