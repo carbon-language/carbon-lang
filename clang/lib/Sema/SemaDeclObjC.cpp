@@ -825,8 +825,8 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     IDecl->setLocEnd(RBrace);
     // Add ivar's to class's DeclContext.
     for (unsigned i = 0, e = numIvars; i != e; ++i) {
-      ivars[i]->setLexicalDeclContext(IDecl);
-      IDecl->addDecl(ivars[i]);
+      ivars[i]->setLexicalDeclContext(ImpDecl);
+      IDecl->makeDeclVisibleInContext(ivars[i], false);
     }
     
     return;
