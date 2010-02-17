@@ -2115,7 +2115,7 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     if (F.AM.BaseOffs == INT64_MIN && Factor == -1)
       continue;
     F.AM.BaseOffs = (uint64_t)Base.AM.BaseOffs * Factor;
-    if ((int64_t)F.AM.BaseOffs / Factor != Base.AM.BaseOffs)
+    if (F.AM.BaseOffs / Factor != Base.AM.BaseOffs)
       continue;
 
     // Check that multiplying with the use offset doesn't overflow.
@@ -2123,7 +2123,7 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     if (Offset == INT64_MIN && Factor == -1)
       continue;
     Offset = (uint64_t)Offset * Factor;
-    if ((int64_t)Offset / Factor != LU.MinOffset)
+    if (Offset / Factor != LU.MinOffset)
       continue;
 
     // Check that this scale is legal.
