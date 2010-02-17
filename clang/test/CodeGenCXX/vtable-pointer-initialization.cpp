@@ -19,14 +19,14 @@ struct A : Base {
   Field field;
 };
 
-// CHECK: define void @_ZN1AC1Ev(
+// CHECK: define void @_ZN1AC2Ev(
 // CHECK: call void @_ZN4BaseC2Ev(
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1A, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldC1Ev(
 // CHECK: ret void
 A::A() { }
 
-// CHECK: define void @_ZN1AD1Ev(
+// CHECK: define void @_ZN1AD2Ev(
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1A, i64 0, i64 2)
 // CHECK: call void @_ZN5FieldD1Ev(
 // CHECK: call void @_ZN4BaseD2Ev(

@@ -26,6 +26,8 @@ struct B {
  B(const A1& = A1(), const A2& = A2());
 };
 
+// CHECK: @_ZN1CC1Ev = alias {{.*}} @_ZN1CC2Ev
+
 // CHECK: define void @_Z2f1v()
 void f1() {
 
@@ -41,13 +43,6 @@ struct C {
  B bs[2];
  C();
 };
-
-// CHECK: define void @_ZN1CC1Ev(
-// CHECK: call void @_ZN2A1C1Ev(
-// CHECK: call void @_ZN2A2C1Ev(
-// CHECK: call void @_ZN1BC1ERK2A1RK2A2(
-// CHECK: call void @_ZN2A2D1Ev
-// CHECK: call void @_ZN2A1D1Ev
 
 // CHECK: define void @_ZN1CC2Ev(
 // CHECK: call void @_ZN2A1C1Ev(

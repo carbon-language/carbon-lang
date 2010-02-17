@@ -11,6 +11,8 @@ struct Y { };
 //CHECK: @pr5966_i = external global
 //CHECK: @_ZL8pr5966_i = internal global
 
+// CHECK: @_ZN2S7C1Ev = alias {{.*}} @_ZN2S7C2Ev
+
 // CHECK: define zeroext i1 @_ZplRK1YRA100_P1X
 bool operator+(const Y&, X* (&xs)[100]) { return false; }
 
@@ -219,7 +221,6 @@ struct S7 {
 };
 
 // PR5139
-// CHECK: @_ZN2S7C1Ev
 // CHECK: @_ZN2S7C2Ev
 // CHECK: @"_ZN2S73$_0C1Ev"
 S7::S7() {}
