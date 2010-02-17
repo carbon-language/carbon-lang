@@ -957,7 +957,7 @@ def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
               [/* For disassembly only; pattern left blank */]>;
 }
 
-// Store Return State -- for disassembly only
+// Store Return State is a system instruction -- for disassembly only
 def SRSW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
                 NoItinerary, "srs${addr:submode}\tsp!, $mode",
                 [/* For disassembly only; pattern left blank */]> {
@@ -970,6 +970,21 @@ def SRS  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, i32imm:$mode),
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b100; // W = 0
+}
+
+// Return From Exception is a system instruction -- for disassembly only
+def RFEW : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
+                NoItinerary, "rfe${addr:submode}\t$base!",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{22-20} = 0b011; // W = 1
+}
+
+def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
+                NoItinerary, "rfe${addr:submode}\t$base",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-28} = 0b1111;
+  let Inst{22-20} = 0b001; // W = 0
 }
 
 //===----------------------------------------------------------------------===//
