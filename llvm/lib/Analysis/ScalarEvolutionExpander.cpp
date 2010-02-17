@@ -658,6 +658,19 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
             IncV = 0;
             break;
           }
+          // If any of the operands don't dominate the insert position, bail.
+          // Addrec operands are always loop-invariant, so this can only happen
+          // if there are instructions which haven't been hoisted.
+          for (User::op_iterator OI = IncV->op_begin()+1,
+               OE = IncV->op_end(); OI != OE; ++OI)
+            if (Instruction *OInst = dyn_cast<Instruction>(OI))
+              if (!SE.DT->dominates(OInst, IVIncInsertPos)) {
+                IncV = 0;
+                break;
+              }
+          if (!IncV)
+            break;
+          // Advance to the next instruction.
           IncV = dyn_cast<Instruction>(IncV->getOperand(0));
           if (!IncV)
             break;
