@@ -189,7 +189,7 @@ public:
   /// is not supported, or false on success.
   virtual bool addPassesToEmitFile(PassManagerBase &,
                                    formatted_raw_ostream &,
-                                   CodeGenFileType Filetype,
+                                   CodeGenFileType,
                                    CodeGenOpt::Level) {
     return true;
   }

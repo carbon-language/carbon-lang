@@ -223,7 +223,7 @@ namespace llvm {
     void EmitFunctionBody();
 
     /// EmitInstruction - Targets should implement this to emit instructions.
-    virtual void EmitInstruction(const MachineInstr *MI) {
+    virtual void EmitInstruction(const MachineInstr *) {
       assert(0 && "EmitInstruction not implemented");
     }
     
