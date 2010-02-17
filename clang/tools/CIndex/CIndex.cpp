@@ -33,6 +33,7 @@
 
 using namespace clang;
 using namespace clang::cxcursor;
+using namespace clang::cxstring;
 using namespace idx;
 
 //===----------------------------------------------------------------------===//
@@ -897,33 +898,6 @@ bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   return VisitExpr(E);
 }
 
-CXString CIndexer::createCXString(const char *String, bool DupString){
-  CXString Str;
-  if (DupString) {
-    Str.Spelling = strdup(String);
-    Str.MustFreeString = 1;
-  } else {
-    Str.Spelling = String;
-    Str.MustFreeString = 0;
-  }
-  return Str;
-}
-
-CXString CIndexer::createCXString(llvm::StringRef String, bool DupString) {
-  CXString Result;
-  if (DupString || (!String.empty() && String.data()[String.size()] != 0)) {
-    char *Spelling = (char *)malloc(String.size() + 1);
-    memmove(Spelling, String.data(), String.size());
-    Spelling[String.size()] = 0;
-    Result.Spelling = Spelling;
-    Result.MustFreeString = 1;
-  } else {
-    Result.Spelling = String.data();
-    Result.MustFreeString = 0;
-  }
-  return Result;
-}
-
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH) {
   CIndexer *CIdxr = new CIndexer();
@@ -1137,11 +1111,10 @@ void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
 
 CXString clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit) {
   if (!CTUnit)
-    return CIndexer::createCXString("");
+    return createCXString("");
   
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  return CIndexer::createCXString(CXXUnit->getOriginalSourceFileName().c_str(),
-                                  true);
+  return createCXString(CXXUnit->getOriginalSourceFileName(), true);
 }
 
 CXCursor clang_getTranslationUnitCursor(CXTranslationUnit TU) {
@@ -1338,22 +1311,21 @@ unsigned clang_visitChildren(CXCursor parent,
 static CXString getDeclSpelling(Decl *D) {
   NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D);
   if (!ND)
-    return CIndexer::createCXString("");
+    return createCXString("");
   
   if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
-    return CIndexer::createCXString(OMD->getSelector().getAsString().c_str(),
-                                    true);
+    return createCXString(OMD->getSelector().getAsString());
   
   if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
     // and returns different names. NamedDecl returns the class name and
     // ObjCCategoryImplDecl returns the category name.
-    return CIndexer::createCXString(CIMP->getIdentifier()->getNameStart());
+    return createCXString(CIMP->getIdentifier()->getNameStart());
   
   if (ND->getIdentifier())
-    return CIndexer::createCXString(ND->getIdentifier()->getNameStart());
+    return createCXString(ND->getIdentifier()->getNameStart());
   
-  return CIndexer::createCXString("");
+  return createCXString("");
 }
     
 CXString clang_getCursorSpelling(CXCursor C) {
@@ -1364,28 +1336,27 @@ CXString clang_getCursorSpelling(CXCursor C) {
     switch (C.kind) {
     case CXCursor_ObjCSuperClassRef: {
       ObjCInterfaceDecl *Super = getCursorObjCSuperClassRef(C).first;
-      return CIndexer::createCXString(Super->getIdentifier()->getNameStart());
+      return createCXString(Super->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCClassRef: {
       ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
-      return CIndexer::createCXString(Class->getIdentifier()->getNameStart());
+      return createCXString(Class->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCProtocolRef: {
       ObjCProtocolDecl *OID = getCursorObjCProtocolRef(C).first;
       assert(OID && "getCursorSpelling(): Missing protocol decl");
-      return CIndexer::createCXString(OID->getIdentifier()->getNameStart());
+      return createCXString(OID->getIdentifier()->getNameStart());
     }
     case CXCursor_TypeRef: {
       TypeDecl *Type = getCursorTypeRef(C).first;
       assert(Type && "Missing type decl");
 
-      return CIndexer::createCXString(
-               getCursorContext(C).getTypeDeclType(Type).getAsString().c_str(),
-                                      true);
+      return createCXString(getCursorContext(C).getTypeDeclType(Type).
+                              getAsString());
     }
 
     default:
-      return CIndexer::createCXString("<not implemented>");
+      return createCXString("<not implemented>");
     }
   }
 
@@ -1393,13 +1364,13 @@ CXString clang_getCursorSpelling(CXCursor C) {
     Decl *D = getDeclFromExpr(getCursorExpr(C));
     if (D)
       return getDeclSpelling(D);
-    return CIndexer::createCXString("");
+    return createCXString("");
   }
 
   if (clang_isDeclaration(C.kind))
     return getDeclSpelling(getCursorDecl(C));
   
-  return CIndexer::createCXString("");
+  return createCXString("");
 }
 
 const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
@@ -1920,14 +1891,13 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   case CXToken_Identifier:
   case CXToken_Keyword:
     // We know we have an IdentifierInfo*, so use that.
-    return CIndexer::createCXString(
-              static_cast<IdentifierInfo *>(CXTok.ptr_data)->getNameStart());
+    return createCXString(static_cast<IdentifierInfo *>(CXTok.ptr_data)
+                            ->getNameStart());
 
   case CXToken_Literal: {
     // We have stashed the starting pointer in the ptr_data field. Use it.
     const char *Text = static_cast<const char *>(CXTok.ptr_data);
-    return CIndexer::createCXString(llvm::StringRef(Text, CXTok.int_data[2]), 
-                                    true);
+    return createCXString(llvm::StringRef(Text, CXTok.int_data[2]));
   }
       
   case CXToken_Punctuation:
@@ -1939,7 +1909,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   // deconstructing the source location.
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
   if (!CXXUnit)
-    return CIndexer::createCXString("");
+    return createCXString("");
   
   SourceLocation Loc = SourceLocation::getFromRawEncoding(CXTok.int_data[1]);
   std::pair<FileID, unsigned> LocInfo
@@ -1947,9 +1917,8 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   std::pair<const char *,const char *> Buffer
     = CXXUnit->getSourceManager().getBufferData(LocInfo.first);
 
-  return CIndexer::createCXString(llvm::StringRef(Buffer.first+LocInfo.second,
-                                                  CXTok.int_data[2]), 
-                                  true);
+  return createCXString(llvm::StringRef(Buffer.first+LocInfo.second,
+                                        CXTok.int_data[2]));
 }
  
 CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
@@ -2154,6 +2123,35 @@ void clang_disposeString(CXString string) {
 
 } // end: extern "C"
 
+namespace clang { namespace cxstring {
+CXString createCXString(const char *String, bool DupString){
+  CXString Str;
+  if (DupString) {
+    Str.Spelling = strdup(String);
+    Str.MustFreeString = 1;
+  } else {
+    Str.Spelling = String;
+    Str.MustFreeString = 0;
+  }
+  return Str;
+}
+
+CXString createCXString(llvm::StringRef String, bool DupString) {
+  CXString Result;
+  if (DupString || (!String.empty() && String.data()[String.size()] != 0)) {
+    char *Spelling = (char *)malloc(String.size() + 1);
+    memmove(Spelling, String.data(), String.size());
+    Spelling[String.size()] = 0;
+    Result.Spelling = Spelling;
+    Result.MustFreeString = 1;
+  } else {
+    Result.Spelling = String.data();
+    Result.MustFreeString = 0;
+  }
+  return Result;
+}
+}}
+
 //===----------------------------------------------------------------------===//
 // Misc. utility functions.
 //===----------------------------------------------------------------------===//
@@ -2161,8 +2159,7 @@ void clang_disposeString(CXString string) {
 extern "C" {
 
 CXString clang_getClangVersion() {
-  return CIndexer::createCXString(getClangFullVersion(), true);
+  return createCXString(getClangFullVersion());
 }
 
 } // end: extern "C"
-

@@ -19,26 +19,27 @@
 
 using namespace clang;
 using namespace clang::cxloc;
+using namespace clang::cxstring;
 
 //-----------------------------------------------------------------------------
-// Opaque data structures                        
+// Opaque data structures
 //-----------------------------------------------------------------------------
 namespace {
   /// \brief The storage behind a CXDiagnostic
   struct CXStoredDiagnostic {
     /// \brief The translation unit this diagnostic came from.
     const LangOptions *LangOptsPtr;
-    
+
     /// \brief The severity level of this diagnostic.
     Diagnostic::Level Level;
-    
+
     /// \brief A reference to the diagnostic information.
     const DiagnosticInfo &Info;
   };
 }
 
 //-----------------------------------------------------------------------------
-// CIndex Diagnostic Client                        
+// CIndex Diagnostic Client
 //-----------------------------------------------------------------------------
 CIndexDiagnosticClient::~CIndexDiagnosticClient() { }
 
@@ -65,15 +66,15 @@ void CIndexDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
 }
 
 //-----------------------------------------------------------------------------
-// C Interface Routines                        
+// C Interface Routines
 //-----------------------------------------------------------------------------
 extern "C" {
-  
+
 enum CXDiagnosticSeverity clang_getDiagnosticSeverity(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag)
     return CXDiagnostic_Ignored;
-  
+
   switch (StoredDiag->Level) {
   case Diagnostic::Ignored: return CXDiagnostic_Ignored;
   case Diagnostic::Note:    return CXDiagnostic_Note;
@@ -81,16 +82,16 @@ enum CXDiagnosticSeverity clang_getDiagnosticSeverity(CXDiagnostic Diag) {
   case Diagnostic::Error:   return CXDiagnostic_Error;
   case Diagnostic::Fatal:   return CXDiagnostic_Fatal;
   }
- 
+
   llvm_unreachable("Invalid diagnostic level");
   return CXDiagnostic_Ignored;
 }
-  
+
 CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || StoredDiag->Info.getLocation().isInvalid())
     return clang_getNullLocation();
-  
+
   return translateSourceLocation(StoredDiag->Info.getLocation().getManager(),
                                  *StoredDiag->LangOptsPtr,
                                  StoredDiag->Info.getLocation());
@@ -99,27 +100,27 @@ CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic Diag) {
 CXString clang_getDiagnosticSpelling(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag)
-    return CIndexer::createCXString("");
-  
+    return createCXString("");
+
   llvm::SmallString<64> Spelling;
   StoredDiag->Info.FormatDiagnostic(Spelling);
-  return CIndexer::createCXString(Spelling.str(), true);
+  return createCXString(Spelling.str(), true);
 }
 
 unsigned clang_getDiagnosticNumRanges(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || StoredDiag->Info.getLocation().isInvalid())
     return 0;
-  
+
   return StoredDiag->Info.getNumRanges();
 }
-  
+
 CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diag, unsigned Range) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || Range >= StoredDiag->Info.getNumRanges() || 
+  if (!StoredDiag || Range >= StoredDiag->Info.getNumRanges() ||
       StoredDiag->Info.getLocation().isInvalid())
     return clang_getNullRange();
-  
+
   return translateSourceRange(StoredDiag->Info.getLocation().getManager(),
                               *StoredDiag->LangOptsPtr,
                               StoredDiag->Info.getRange(Range));
@@ -129,27 +130,27 @@ unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag)
     return 0;
-  
+
   return StoredDiag->Info.getNumCodeModificationHints();
 }
 
-enum CXFixItKind clang_getDiagnosticFixItKind(CXDiagnostic Diag, 
+enum CXFixItKind clang_getDiagnosticFixItKind(CXDiagnostic Diag,
                                               unsigned FixIt) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints())
     return CXFixIt_Insertion;
-  
+
   const CodeModificationHint &Hint
     = StoredDiag->Info.getCodeModificationHint(FixIt);
   if (Hint.RemoveRange.isInvalid())
     return CXFixIt_Insertion;
   if (Hint.InsertionLoc.isInvalid())
     return CXFixIt_Removal;
-  
-  return CXFixIt_Replacement;  
+
+  return CXFixIt_Replacement;
 }
 
-CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag, 
+CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
                                            unsigned FixIt,
                                            CXSourceLocation *Location) {
   if (Location)
@@ -157,8 +158,8 @@ CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
 
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints())
-    return CIndexer::createCXString("");
-  
+    return createCXString("");
+
   const CodeModificationHint &Hint
     = StoredDiag->Info.getCodeModificationHint(FixIt);
 
@@ -167,16 +168,16 @@ CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
                                     StoredDiag->Info.getLocation().getManager(),
                                         *StoredDiag->LangOptsPtr,
                                         Hint.InsertionLoc);
-  return CIndexer::createCXString(Hint.CodeToInsert);
+  return createCXString(Hint.CodeToInsert);
 }
 
-CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag, 
+CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag,
                                               unsigned FixIt) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints() ||
       StoredDiag->Info.getLocation().isInvalid())
     return clang_getNullRange();
-  
+
   const CodeModificationHint &Hint
     = StoredDiag->Info.getCodeModificationHint(FixIt);
   return translateSourceRange(StoredDiag->Info.getLocation().getManager(),
@@ -184,7 +185,7 @@ CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag,
                               Hint.RemoveRange);
 }
 
-CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag, 
+CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
                                              unsigned FixIt,
                                              CXSourceRange *Range) {
   if (Range)
@@ -195,19 +196,19 @@ CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
       StoredDiag->Info.getLocation().isInvalid()) {
     if (Range)
       *Range = clang_getNullRange();
-    
-    return CIndexer::createCXString("");
+
+    return createCXString("");
   }
-  
+
   const CodeModificationHint &Hint
     = StoredDiag->Info.getCodeModificationHint(FixIt);
   if (Range)
     *Range = translateSourceRange(StoredDiag->Info.getLocation().getManager(),
                                   *StoredDiag->LangOptsPtr,
                                   Hint.RemoveRange);
-  return CIndexer::createCXString(Hint.CodeToInsert);  
+  return createCXString(Hint.CodeToInsert);
 }
-  
+
 } // end extern "C"
 
 void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
@@ -250,7 +251,7 @@ void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
   StringRef Buffer = F->getBuffer();
   const char *Memory = Buffer.data(), *MemoryEnd = Memory + Buffer.size();
   while (Memory != MemoryEnd) {
-    DiagnosticBuilder DB = Diags.Deserialize(FileMgr, SourceMgr, 
+    DiagnosticBuilder DB = Diags.Deserialize(FileMgr, SourceMgr,
                                              Memory, MemoryEnd);
     if (!DB.isActive())
       return;

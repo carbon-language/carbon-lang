@@ -24,6 +24,13 @@
 
 using namespace clang;
 
+namespace clang {
+namespace cxstring {
+  CXString createCXString(const char *String, bool DupString = false);
+  CXString createCXString(llvm::StringRef String, bool DupString = true);  
+}
+}
+
 class CIndexer {
   bool UseExternalASTGeneration;
   bool OnlyLocalDecls;
@@ -49,10 +56,6 @@ public:
   
   /// \brief Get the path of the clang resource files.
   std::string getClangResourcesPath();
-
-  static CXString createCXString(const char *String, bool DupString = false);
-  static CXString createCXString(llvm::StringRef String, 
-                                 bool DupString = false);
 };
 
 namespace clang {

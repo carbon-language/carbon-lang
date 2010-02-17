@@ -17,6 +17,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace clang::cxstring;
+
 //===----------------------------------------------------------------------===//
 // USR generation.
 //===----------------------------------------------------------------------===//
@@ -156,14 +158,14 @@ static CXString ConstructUSR(Decl *D) {
     USRGenerator UG(Out);
     UG.Visit(static_cast<Decl*>(D));
     if (UG.ignoreResults())
-      return CIndexer::createCXString(NULL);
+      return createCXString(NULL);
   }
   
   if (StrBuf.empty())
-    return CIndexer::createCXString(NULL);
+    return createCXString(NULL);
   
   // Return a copy of the string that must be disposed by the caller.
-  return CIndexer::createCXString(StrBuf.c_str(), true);
+  return createCXString(StrBuf.str(), true);
 }  
 
 
@@ -173,7 +175,7 @@ CXString clang_getCursorUSR(CXCursor C) {
   if (Decl *D = cxcursor::getCursorDecl(C))
     return ConstructUSR(D);  
   
-  return CIndexer::createCXString(NULL);
+  return createCXString(NULL);
 }
 
 } // end extern "C"
