@@ -288,7 +288,7 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
           NumRecorded += 2; // Input and output chains.
       } else {
         // If it is a normal named node, we must emit a 'Record' opcode.
-        AddMatcherNode(new RecordMatcherNode());
+        AddMatcherNode(new RecordMatcherNode(N->getName()));
         NumRecorded = 1;
       }
       NextRecordedOperandNo += NumRecorded;

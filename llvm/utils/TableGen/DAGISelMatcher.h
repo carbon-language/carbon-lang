@@ -127,8 +127,14 @@ public:
 
 /// RecordMatcherNode - Save the current node in the operand list.
 class RecordMatcherNode : public MatcherNodeWithChild {
+  /// WhatFor - This is a string indicating why we're recording this.  This
+  /// should only be used for comment generation not anything semantic.
+  std::string WhatFor;
 public:
-  RecordMatcherNode() : MatcherNodeWithChild(Record) {}
+  RecordMatcherNode(StringRef whatfor)
+    : MatcherNodeWithChild(Record), WhatFor(whatfor) {}
+  
+  StringRef getWhatFor() const { return WhatFor; }
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == Record;

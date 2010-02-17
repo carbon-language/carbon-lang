@@ -126,7 +126,9 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
     OS.PadToColumn(Indent*2) << "OPC_Emit, /*XXX*/\n\n";
     return 1;
   case MatcherNode::Record:
-    OS << "OPC_Record,\n";
+    OS << "OPC_Record,";
+    OS.PadToColumn(CommentIndent) << "// "
+       << cast<RecordMatcherNode>(N)->getWhatFor() << '\n';
     return 1;
   case MatcherNode::MoveChild:
     OS << "OPC_MoveChild, "
