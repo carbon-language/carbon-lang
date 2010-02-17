@@ -21,6 +21,7 @@
 #include "llvm/System/Program.h"
 
 using namespace clang;
+using namespace clang::cxstring;
 
 extern "C" {
 
@@ -80,11 +81,11 @@ clang_getCompletionChunkKind(CXCompletionString completion_string,
   return CXCompletionChunk_Text;
 }
 
-const char *clang_getCompletionChunkText(CXCompletionString completion_string,
-                                         unsigned chunk_number) {
+CXString clang_getCompletionChunkText(CXCompletionString completion_string,
+                                      unsigned chunk_number) {
   CodeCompletionString *CCStr = (CodeCompletionString *)completion_string;
   if (!CCStr || chunk_number >= CCStr->size())
-    return 0;
+    return createCXString(0);
 
   switch ((*CCStr)[chunk_number].Kind) {
   case CodeCompletionString::CK_TypedText:
@@ -107,16 +108,17 @@ const char *clang_getCompletionChunkText(CXCompletionString completion_string,
   case CodeCompletionString::CK_Equal:
   case CodeCompletionString::CK_HorizontalSpace:
   case CodeCompletionString::CK_VerticalSpace:
-    return (*CCStr)[chunk_number].Text;
+    return createCXString((*CCStr)[chunk_number].Text, false);
 
   case CodeCompletionString::CK_Optional:
     // Note: treated as an empty text block.
-    return "";
+    return createCXString("");
   }
 
   // Should be unreachable, but let's be careful.
-  return 0;
+  return createCXString(0);
 }
+
 
 CXCompletionString
 clang_getCompletionChunkCompletionString(CXCompletionString completion_string,

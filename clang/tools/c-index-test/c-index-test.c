@@ -755,7 +755,8 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
 
   N = clang_getNumCompletionChunks(completion_string);
   for (I = 0; I != N; ++I) {
-    const char *text = 0;
+    CXString text;
+    const char *cstr;
     enum CXCompletionChunkKind Kind
       = clang_getCompletionChunkKind(completion_string, I);
 
@@ -769,10 +770,13 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
     }
 
     text = clang_getCompletionChunkText(completion_string, I);
+    cstr = clang_getCString(text);
     fprintf(file, "{%s %s}",
             clang_getCompletionChunkKindSpelling(Kind),
-            text? text : "");
+            cstr ? cstr : "");
+    clang_disposeString(text);
   }
+
 }
 
 void print_completion_result(CXCompletionResult *completion_result,

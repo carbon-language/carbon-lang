@@ -1478,7 +1478,7 @@ clang_getCompletionChunkKind(CXCompletionString completion_string,
  *
  * \returns the text associated with the chunk at index \c chunk_number.
  */
-CINDEX_LINKAGE const char *
+CINDEX_LINKAGE CXString
 clang_getCompletionChunkText(CXCompletionString completion_string,
                              unsigned chunk_number);
 
