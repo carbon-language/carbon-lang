@@ -1841,13 +1841,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
       // catch the case where nothing handles a pattern.
       if (mightNotMatch) {
         OS << "\n";
-        if (OpName != "ISD::INTRINSIC_W_CHAIN" &&
-            OpName != "ISD::INTRINSIC_WO_CHAIN" &&
-            OpName != "ISD::INTRINSIC_VOID")
-          OS << "  CannotYetSelect(N);\n";
-        else
-          OS << "  CannotYetSelectIntrinsic(N);\n";
-
+        OS << "  CannotYetSelect(N);\n";
         OS << "  return NULL;\n";
       }
       OS << "}\n\n";
@@ -1948,13 +1942,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   }
 
   OS << "  } // end of big switch.\n\n"
-     << "  if (N->getOpcode() != ISD::INTRINSIC_W_CHAIN &&\n"
-     << "      N->getOpcode() != ISD::INTRINSIC_WO_CHAIN &&\n"
-     << "      N->getOpcode() != ISD::INTRINSIC_VOID) {\n"
-     << "    CannotYetSelect(N);\n"
-     << "  } else {\n"
-     << "    CannotYetSelectIntrinsic(N);\n"
-     << "  }\n"
+     << "  CannotYetSelect(N);\n"
      << "  return NULL;\n"
      << "}\n\n";
 }

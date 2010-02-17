@@ -1444,6 +1444,11 @@ SDNode *SelectionDAGISel::Select_EH_LABEL(SDNode *N) {
 }
 
 void SelectionDAGISel::CannotYetSelect(SDNode *N) {
+  if (N->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+      N->getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
+      N->getOpcode() == ISD::INTRINSIC_VOID)
+    return CannotYetSelectIntrinsic(N);
+  
   std::string msg;
   raw_string_ostream Msg(msg);
   Msg << "Cannot yet select: ";
