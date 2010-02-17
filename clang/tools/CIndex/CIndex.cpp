@@ -1369,80 +1369,114 @@ CXString clang_getCursorSpelling(CXCursor C) {
 
   if (clang_isDeclaration(C.kind))
     return getDeclSpelling(getCursorDecl(C));
-  
+
   return createCXString("");
 }
 
-const char *clang_getCursorKindSpelling(enum CXCursorKind Kind) {
+CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   switch (Kind) {
-  case CXCursor_FunctionDecl: return "FunctionDecl";
-  case CXCursor_TypedefDecl: return "TypedefDecl";
-  case CXCursor_EnumDecl: return "EnumDecl";
-  case CXCursor_EnumConstantDecl: return "EnumConstantDecl";
-  case CXCursor_StructDecl: return "StructDecl";
-  case CXCursor_UnionDecl: return "UnionDecl";
-  case CXCursor_ClassDecl: return "ClassDecl";
-  case CXCursor_FieldDecl: return "FieldDecl";
-  case CXCursor_VarDecl: return "VarDecl";
-  case CXCursor_ParmDecl: return "ParmDecl";
-  case CXCursor_ObjCInterfaceDecl: return "ObjCInterfaceDecl";
-  case CXCursor_ObjCCategoryDecl: return "ObjCCategoryDecl";
-  case CXCursor_ObjCProtocolDecl: return "ObjCProtocolDecl";
-  case CXCursor_ObjCPropertyDecl: return "ObjCPropertyDecl";
-  case CXCursor_ObjCIvarDecl: return "ObjCIvarDecl";
-  case CXCursor_ObjCInstanceMethodDecl: return "ObjCInstanceMethodDecl";
-  case CXCursor_ObjCClassMethodDecl: return "ObjCClassMethodDecl";
-  case CXCursor_ObjCImplementationDecl: return "ObjCImplementationDecl";
-  case CXCursor_ObjCCategoryImplDecl: return "ObjCCategoryImplDecl";
-  case CXCursor_UnexposedDecl: return "UnexposedDecl";
-  case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
-  case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
-  case CXCursor_ObjCClassRef: return "ObjCClassRef";
-  case CXCursor_TypeRef: return "TypeRef";
-  case CXCursor_UnexposedExpr: return "UnexposedExpr";
-  case CXCursor_DeclRefExpr: return "DeclRefExpr";
-  case CXCursor_MemberRefExpr: return "MemberRefExpr";
-  case CXCursor_CallExpr: return "CallExpr";
-  case CXCursor_ObjCMessageExpr: return "ObjCMessageExpr";
-  case CXCursor_UnexposedStmt: return "UnexposedStmt";
-  case CXCursor_InvalidFile: return "InvalidFile";
-  case CXCursor_NoDeclFound: return "NoDeclFound";
-  case CXCursor_NotImplemented: return "NotImplemented";
-  case CXCursor_TranslationUnit: return "TranslationUnit";
+  case CXCursor_FunctionDecl:
+      return createCXString("FunctionDecl");
+  case CXCursor_TypedefDecl:
+      return createCXString("TypedefDecl");
+  case CXCursor_EnumDecl:
+      return createCXString("EnumDecl");
+  case CXCursor_EnumConstantDecl:
+      return createCXString("EnumConstantDecl");
+  case CXCursor_StructDecl:
+      return createCXString("StructDecl");
+  case CXCursor_UnionDecl:
+      return createCXString("UnionDecl");
+  case CXCursor_ClassDecl:
+      return createCXString("ClassDecl");
+  case CXCursor_FieldDecl:
+      return createCXString("FieldDecl");
+  case CXCursor_VarDecl:
+      return createCXString("VarDecl");
+  case CXCursor_ParmDecl:
+      return createCXString("ParmDecl");
+  case CXCursor_ObjCInterfaceDecl:
+      return createCXString("ObjCInterfaceDecl");
+  case CXCursor_ObjCCategoryDecl:
+      return createCXString("ObjCCategoryDecl");
+  case CXCursor_ObjCProtocolDecl:
+      return createCXString("ObjCProtocolDecl");
+  case CXCursor_ObjCPropertyDecl:
+      return createCXString("ObjCPropertyDecl");
+  case CXCursor_ObjCIvarDecl:
+      return createCXString("ObjCIvarDecl");
+  case CXCursor_ObjCInstanceMethodDecl:
+      return createCXString("ObjCInstanceMethodDecl");
+  case CXCursor_ObjCClassMethodDecl:
+      return createCXString("ObjCClassMethodDecl");
+  case CXCursor_ObjCImplementationDecl:
+      return createCXString("ObjCImplementationDecl");
+  case CXCursor_ObjCCategoryImplDecl:
+      return createCXString("ObjCCategoryImplDecl");
+  case CXCursor_UnexposedDecl:
+      return createCXString("UnexposedDecl");
+  case CXCursor_ObjCSuperClassRef:
+      return createCXString("ObjCSuperClassRef");
+  case CXCursor_ObjCProtocolRef:
+      return createCXString("ObjCProtocolRef");
+  case CXCursor_ObjCClassRef:
+      return createCXString("ObjCClassRef");
+  case CXCursor_TypeRef:
+      return createCXString("TypeRef");
+  case CXCursor_UnexposedExpr:
+      return createCXString("UnexposedExpr");
+  case CXCursor_DeclRefExpr:
+      return createCXString("DeclRefExpr");
+  case CXCursor_MemberRefExpr:
+      return createCXString("MemberRefExpr");
+  case CXCursor_CallExpr:
+      return createCXString("CallExpr");
+  case CXCursor_ObjCMessageExpr:
+      return createCXString("ObjCMessageExpr");
+  case CXCursor_UnexposedStmt:
+      return createCXString("UnexposedStmt");
+  case CXCursor_InvalidFile:
+      return createCXString("InvalidFile");
+  case CXCursor_NoDeclFound:
+      return createCXString("NoDeclFound");
+  case CXCursor_NotImplemented:
+      return createCXString("NotImplemented");
+  case CXCursor_TranslationUnit:
+      return createCXString("TranslationUnit");
   }
-  
+
   llvm_unreachable("Unhandled CXCursorKind");
-  return NULL;
+  return createCXString(NULL);
 }
 
-enum CXChildVisitResult GetCursorVisitor(CXCursor cursor, 
-                                         CXCursor parent, 
+enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
+                                         CXCursor parent,
                                          CXClientData client_data) {
   CXCursor *BestCursor = static_cast<CXCursor *>(client_data);
   *BestCursor = cursor;
   return CXChildVisit_Recurse;
 }
-  
+
 CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   if (!TU)
     return clang_getNullCursor();
-  
+
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
 
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
     SourceRange RegionOfInterest(SLoc, SLoc.getFileLocWithOffset(1));
-    
+
     // FIXME: Would be great to have a "hint" cursor, then walk from that
     // hint cursor upward until we find a cursor whose source range encloses
     // the region of interest, rather than starting from the translation unit.
     CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
-    CursorVisitor CursorVis(CXXUnit, GetCursorVisitor, &Result, 
+    CursorVisitor CursorVis(CXXUnit, GetCursorVisitor, &Result,
                             Decl::MaxPCHLevel, RegionOfInterest);
     CursorVis.VisitChildren(Parent);
   }
-  return Result;  
+  return Result;
 }
 
 CXCursor clang_getNullCursor(void) {

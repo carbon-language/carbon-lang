@@ -1221,7 +1221,7 @@ CINDEX_LINKAGE void clang_disposeTokens(CXTranslationUnit TU,
  */
 
 /* for debug/testing */
-CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind);
+CINDEX_LINKAGE CXString clang_getCursorKindSpelling(enum CXCursorKind Kind);
 CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
                                           const char **startBuf,
                                           const char **endBuf,
