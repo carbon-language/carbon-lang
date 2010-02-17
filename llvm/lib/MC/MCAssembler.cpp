@@ -439,6 +439,7 @@ public:
                                      std::vector<MachRelocationEntry> &Relocs) {
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     unsigned IsPCRel = 0;
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned Type = RIT_Vanilla;
 
     // See <reloc.h>.
@@ -454,12 +455,10 @@ public:
       Value2 = SD->getFragment()->getAddress() + SD->getOffset();
     }
 
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
-
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value - Value2 + Target.getConstant();
     if (isFixupKindPCRel(Fixup.Kind)) {
-      Fixup.FixedValue -= Address + (1 << Log2Size);
+      Fixup.FixedValue -= Address;
       IsPCRel = 1;
     }
 
@@ -507,6 +506,7 @@ public:
     uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsPCRel = 0;
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned IsExtern = 0;
     unsigned Type = 0;
 
@@ -544,10 +544,8 @@ public:
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value + Target.getConstant();
 
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
-
     if (isFixupKindPCRel(Fixup.Kind)) {
-      Fixup.FixedValue -= Address + (1<<Log2Size);
+      Fixup.FixedValue -= Address;
       IsPCRel = 1;
     }
 
