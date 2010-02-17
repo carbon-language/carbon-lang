@@ -172,13 +172,19 @@ static void PrintCursor(CXCursor Cursor) {
 
 static const char* GetCursorSource(CXCursor Cursor) {  
   CXSourceLocation Loc = clang_getCursorLocation(Cursor);
-  const char *source;
+  CXString source;
   CXFile file;
   clang_getInstantiationLocation(Loc, &file, 0, 0, 0);
   source = clang_getFileName(file);
-  if (!source)
-    return "<invalid loc>";  
-  return basename(source);
+  if (!source.Spelling) {
+    clang_disposeString(source);
+    return "<invalid loc>";
+  }
+  else {
+    const char *b = basename(source.Spelling);
+    clang_disposeString(source);
+    return b;
+  }
 }
 
 /******************************************************************************/
@@ -205,8 +211,11 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
   if (file) {
     unsigned i, n;
     unsigned printed_any_ranges = 0;
+    CXString fname;
     
-    fprintf(out, "%s:%d:%d:", clang_getFileName(file), line, column);
+    fname = clang_getFileName(file);
+    fprintf(out, "%s:%d:%d:", fname.Spelling, line, column);
+    clang_disposeString(fname);
   
     n = clang_getDiagnosticNumRanges(Diagnostic);
     for (i = 0; i != n; ++i) {
@@ -376,7 +385,7 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
   while (startBuf < endBuf) {
     CXSourceLocation Loc;
     CXFile file;
-    const char *source = 0;
+    CXString source;
     
     if (*startBuf == '\n') {
       startBuf++;
@@ -387,8 +396,9 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
           
     Loc = clang_getCursorLocation(Cursor);
     clang_getInstantiationLocation(Loc, &file, 0, 0, 0);
+    
     source = clang_getFileName(file);
-    if (source) {
+    if (source.Spelling) {
       CXSourceLocation RefLoc
         = clang_getLocation(Data->TU, file, curLine, curColumn);
       Ref = clang_getCursor(Data->TU, RefLoc);
@@ -401,6 +411,7 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
         printf("\n");
       }
     }
+    clang_disposeString(source);
     startBuf++;
   }
   
@@ -439,13 +450,20 @@ void InclusionVisitor(CXFile includedFile, CXSourceLocation *includeStack,
                       unsigned includeStackLen, CXClientData data) {
   
   unsigned i;
-  printf("file: %s\nincluded by:\n", clang_getFileName(includedFile));
+  CXString fname;
+
+  fname = clang_getFileName(includedFile);
+  printf("file: %s\nincluded by:\n", fname.Spelling);
+  clang_disposeString(fname);
+  
   for (i = 0; i < includeStackLen; ++i) {
     CXFile includingFile;
     unsigned line, column;
     clang_getInstantiationLocation(includeStack[i], &includingFile, &line,
                                    &column, 0);
-    printf("  %s:%d:%d\n", clang_getFileName(includingFile), line, column);
+    fname = clang_getFileName(includingFile);
+    printf("  %s:%d:%d\n", fname.Spelling, line, column);
+    clang_disposeString(fname);
   }
   printf("\n");
 }

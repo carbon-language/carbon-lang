@@ -207,7 +207,7 @@ typedef void *CXFile;
 /**
  * \brief Retrieve the complete file and path name of the given file.
  */
-CINDEX_LINKAGE const char *clang_getFileName(CXFile SFile);
+CINDEX_LINKAGE CXString clang_getFileName(CXFile SFile);
 
 /**
  * \brief Retrieve the last modification time of the given file.

@@ -1223,12 +1223,12 @@ CXSourceLocation clang_getRangeEnd(CXSourceRange range) {
 //===----------------------------------------------------------------------===//
 
 extern "C" {
-const char *clang_getFileName(CXFile SFile) {
+CXString clang_getFileName(CXFile SFile) {
   if (!SFile)
-    return 0;
+    return createCXString(NULL);
   
   FileEntry *FEnt = static_cast<FileEntry *>(SFile);
-  return FEnt->getName();
+  return createCXString(FEnt->getName());
 }
 
 time_t clang_getFileTime(CXFile SFile) {
