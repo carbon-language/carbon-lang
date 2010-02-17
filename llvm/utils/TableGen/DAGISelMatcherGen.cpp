@@ -155,7 +155,18 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     
     // Handle complex pattern.
     const ComplexPattern &CP = CGP.getComplexPattern(LeafRec);
-    return AddMatcherNode(new CheckComplexPatMatcherNode(CP));
+    AddMatcherNode(new CheckComplexPatMatcherNode(CP));
+    
+    // If the complex pattern has a chain, then we need to keep track of the
+    // fact that we just recorded a chain input.  The chain input will be
+    // matched as the last operand of the predicate if it was successful.
+    if (CP.hasProperty(SDNPHasChain)) {
+      // It is the last operand recorded.
+      assert(NextRecordedOperandNo > 1 &&
+             "Should have recorded input/result chains at least!");
+      InputChains.push_back(NextRecordedOperandNo-1);
+    }
+    return;
   }
   
   errs() << "Unknown leaf kind: " << *N << "\n";
@@ -203,9 +214,6 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   // the child numbers of the node are all offset by one.
   unsigned OpNo = 0;
   if (N->NodeHasProperty(SDNPHasChain, CGP)) {
-    // FIXME: Not correct for complex patterns, they need to push their own
-    // *matched* input chain.
-    
     // Record the input chain, which is always input #0 of the SDNode.
     AddMatcherNode(new MoveChildMatcherNode(0));
     AddMatcherNode(new RecordMatcherNode("'" + N->getOperator()->getName() +
@@ -222,8 +230,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
     // happen if there were an intermediate node between the indbr and load, for
     // example.
     
-    // FIXME: Emit "lastchain.getNode() == CurrentNode ||
-    //               IsChainCompatible(lastchain.getNode(), CurrentNode)".
+    // FIXME: Emit "IsChainCompatible(lastchain.getNode(), CurrentNode)".
     // Rename IsChainCompatible -> IsChainUnreachable, add comment about
     // complexity.
     
