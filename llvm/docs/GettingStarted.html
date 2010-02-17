@@ -1193,9 +1193,15 @@ $ ./hello.bc
 </div>
 
 <p>
-This allows you to execute LLVM bitcode files directly.  Thanks to Jack
-Cummings for pointing this out!
+This allows you to execute LLVM bitcode files directly.  On Debian, you 
+can also use this command instead of the 'echo' command above:</p>
 </p>
+
+<div class="doc_code">
+<pre>
+$ sudo update-binfmts --install llvm /path/to/lli --magic 'BC'
+</pre>
+</div>
 
 </div>
 
