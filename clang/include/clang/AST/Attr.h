@@ -301,19 +301,6 @@ public:
   static bool classof(const DestructorAttr *A) { return true; }
 };
 
-class GNUInlineAttr : public Attr {
-public:
-  GNUInlineAttr() : Attr(GNUInline) {}
-
-  virtual Attr *clone(ASTContext &C) const;
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Attr *A) {
-    return A->getKind() == GNUInline;
-  }
-  static bool classof(const GNUInlineAttr *A) { return true; }
-};
-
 class IBOutletAttr : public Attr {
 public:
   IBOutletAttr() : Attr(IBOutletKind) {}
@@ -340,11 +327,12 @@ public:
   static bool classof(const IBActionAttr *A) { return true; }
 };
 
-DEF_SIMPLE_ATTR(Malloc);
-DEF_SIMPLE_ATTR(NoReturn);
 DEF_SIMPLE_ATTR(AnalyzerNoReturn);
 DEF_SIMPLE_ATTR(Deprecated);
 DEF_SIMPLE_ATTR(Final);
+DEF_SIMPLE_ATTR(GNUInline);
+DEF_SIMPLE_ATTR(Malloc);
+DEF_SIMPLE_ATTR(NoReturn);
 
 class SectionAttr : public AttrWithString {
 public:
