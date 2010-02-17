@@ -21,6 +21,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -71,7 +72,7 @@ llvm::sys::Path GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
 }
 
 static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
-                                   const std::string &S) {
+                                   llvm::StringRef S) {
   return SavedStrings.insert(S).first->c_str();
 }
 
@@ -87,8 +88,8 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 ///
 ///  '+': Add FOO as a new argument at the end of the command line.
 ///
-///  's/XXX/YYY/': Replace the literal argument XXX by YYY in the
-///  command line.
+///  's/XXX/YYY/': Substitute the regular expression XXX with YYY in the command
+///  line.
 ///
 ///  'xOPTION': Removes all instances of the literal argument OPTION.
 ///
@@ -104,20 +105,34 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 /// \param SavedStrings - Set to use for storing string representations.
 void ApplyOneQAOverride(llvm::raw_ostream &OS,
                         std::vector<const char*> &Args,
-                        const std::string &Edit,
+                        llvm::StringRef Edit,
                         std::set<std::string> &SavedStrings) {
   // This does not need to be efficient.
 
   if (Edit[0] == '^') {
     const char *Str =
-      SaveStringInSet(SavedStrings, Edit.substr(1, std::string::npos));
+      SaveStringInSet(SavedStrings, Edit.substr(1));
     OS << "### Adding argument " << Str << " at beginning\n";
     Args.insert(Args.begin() + 1, Str);
   } else if (Edit[0] == '+') {
     const char *Str =
-      SaveStringInSet(SavedStrings, Edit.substr(1, std::string::npos));
+      SaveStringInSet(SavedStrings, Edit.substr(1));
     OS << "### Adding argument " << Str << " at end\n";
     Args.push_back(Str);
+  } else if (Edit[0] == 's' && Edit[1] == '/' && Edit.endswith("/") &&
+             Edit.slice(2, Edit.size()-1).find('/') != llvm::StringRef::npos) {
+    llvm::StringRef MatchPattern = Edit.substr(2).split('/').first;
+    llvm::StringRef ReplPattern = Edit.substr(2).split('/').second;
+    ReplPattern = ReplPattern.slice(0, ReplPattern.size()-1);
+
+    for (unsigned i = 1, e = Args.size(); i != e; ++i) {
+      std::string Repl = llvm::Regex(MatchPattern).sub(ReplPattern, Args[i]);
+
+      if (Repl != Args[i]) {
+        OS << "### Replacing '" << Args[i] << "' with '" << Repl << "'\n";
+        Args[i] = SaveStringInSet(SavedStrings, Repl);
+      }
+    }
   } else if (Edit[0] == 'x' || Edit[0] == 'X') {
     std::string Option = Edit.substr(1, std::string::npos);
     for (unsigned i = 1; i < Args.size();) {
@@ -147,7 +162,7 @@ void ApplyOneQAOverride(llvm::raw_ostream &OS,
         ++i;
     }
     OS << "### Adding argument " << Edit << " at end\n";
-    Args.push_back(SaveStringInSet(SavedStrings, '-' + Edit));
+    Args.push_back(SaveStringInSet(SavedStrings, '-' + Edit.str()));
   } else {
     OS << "### Unrecognized edit: " << Edit << "\n";
   }
