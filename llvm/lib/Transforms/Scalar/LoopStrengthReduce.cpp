@@ -2112,12 +2112,16 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     Formula F = Base;
 
     // Check that the multiplication doesn't overflow.
+    if (F.AM.BaseOffs == INT64_MIN && Factor == -1)
+      continue;
     F.AM.BaseOffs = (uint64_t)Base.AM.BaseOffs * Factor;
     if ((int64_t)F.AM.BaseOffs / Factor != Base.AM.BaseOffs)
       continue;
 
     // Check that multiplying with the use offset doesn't overflow.
     int64_t Offset = LU.MinOffset;
+    if (Offset == INT64_MIN && Factor == -1)
+      continue;
     Offset = (uint64_t)Offset * Factor;
     if ((int64_t)Offset / Factor != LU.MinOffset)
       continue;
