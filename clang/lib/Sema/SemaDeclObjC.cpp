@@ -823,6 +823,12 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
   if (IDecl->isImplicitInterfaceDecl()) {
     IDecl->setIVarList(ivars, numIvars, Context);
     IDecl->setLocEnd(RBrace);
+    // Add ivar's to class's DeclContext.
+    for (unsigned i = 0, e = numIvars; i != e; ++i) {
+      ivars[i]->setLexicalDeclContext(IDecl);
+      IDecl->addDecl(ivars[i]);
+    }
+    
     return;
   }
   // If implementation has empty ivar list, just return.
