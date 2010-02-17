@@ -51,7 +51,7 @@ static bool isVirtualSection(const MCSection &Section) {
   return (Type == MCSectionMachO::S_ZEROFILL);
 }
 
-static unsigned getFixupKindLog2Size(MCFixupKind Kind) {
+static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
   default: llvm_unreachable("invalid fixup kind!");
   case X86::reloc_pcrel_1byte:
@@ -64,7 +64,7 @@ static unsigned getFixupKindLog2Size(MCFixupKind Kind) {
   }
 }
 
-static bool isFixupKindPCRel(MCFixupKind Kind) {
+static bool isFixupKindPCRel(unsigned Kind) {
   switch (Kind) {
   default:
     return false;
