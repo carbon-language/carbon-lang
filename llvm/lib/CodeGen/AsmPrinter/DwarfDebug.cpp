@@ -238,7 +238,18 @@ public:
         LIndex = DSI;
       }
     }
-    setLastInsn(LastInsn);
+
+    unsigned CurrentLastInsnIndex = 0;
+    if (const MachineInstr *CL = getLastInsn()) 
+      CurrentLastInsnIndex = MIIndexMap[CL];
+    unsigned FIndex = MIIndexMap[getFirstInsn()];
+
+    // Set LastInsn as the last instruction for this scope only if
+    // it follows 
+    //  1) this scope's first instruction and
+    //  2) current last instruction for this scope, if any.
+    if (LIndex >= CurrentLastInsnIndex && LIndex >= FIndex)
+      setLastInsn(LastInsn);
   }
 
 #ifndef NDEBUG
