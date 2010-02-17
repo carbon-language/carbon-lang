@@ -52,7 +52,7 @@ private:
   /// \return - The test result.
   bool GetTestResult(const changeset_ty &Changes);
 
-  /// Split - Partition a set of changes \arg Sinto one or two subsets.
+  /// Split - Partition a set of changes \arg S into one or two subsets.
   void Split(const changeset_ty &S, changesetlist_ty &Res);
 
   /// Delta - Minimize a set of \arg Changes which has been partioned into
