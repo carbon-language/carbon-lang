@@ -120,6 +120,7 @@ private:
   /// ComputeFinalOverriders - Compute the final overriders for a given base
   /// subobject (and all its direct and indirect bases).
   void ComputeFinalOverriders(BaseSubobject Base,
+                              bool BaseSubobjectIsVisitedVBase,
                               SubobjectOffsetsMapTy &Offsets);
   
   /// AddOverriders - Add the final overriders for this base subobject to the
@@ -197,7 +198,9 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
     
   // Compute the final overriders.
   SubobjectOffsetsMapTy Offsets;
-  ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0), Offsets);
+  ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0), 
+                         /*BaseSubobjectIsVisitedVBase=*/false, Offsets);
+  VisitedVirtualBases.clear();
     
   // And dump them (for now).
   dump();
@@ -524,6 +527,7 @@ FinalOverriders::MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
 }
 
 void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
+                                             bool BaseSubobjectIsVisitedVBase,
                                              SubobjectOffsetsMapTy &Offsets) {
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -539,19 +543,45 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
     if (!BaseDecl->isPolymorphic())
       continue;
     
+    bool IsVisitedVirtualBase = false;
     uint64_t BaseOffset;
     if (I->isVirtual()) {
+      if (!VisitedVirtualBases.insert(BaseDecl))
+        IsVisitedVirtualBase = true;
       BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
     } else {
       BaseOffset = Layout.getBaseClassOffset(BaseDecl) + Base.getBaseOffset();
     }
     
     // Compute the final overriders for this base.
-    ComputeFinalOverriders(BaseSubobject(BaseDecl, BaseOffset), NewOffsets);
+    // We always want to compute the final overriders, even if the base is a
+    // visited virtual base. Consider:
+    //
+    // struct A {
+    //   virtual void f();
+    //   virtual void g();
+    // };
+    //  
+    // struct B : virtual A {
+    //   void f();
+    // };
+    //
+    // struct C : virtual A {
+    //   void g ();
+    // };
+    //
+    // struct D : B, C { };
+    //
+    // Here, we still want to compute the overriders for A as a base of C, 
+    // because otherwise we'll miss that C::g overrides A::f.
+    ComputeFinalOverriders(BaseSubobject(BaseDecl, BaseOffset), 
+                           IsVisitedVirtualBase, NewOffsets);                           
   }
 
   /// Now add the overriders for this particular subobject.
-  AddOverriders(Base, NewOffsets);
+  /// (We don't want to do this more than once for a virtual base).
+  if (!BaseSubobjectIsVisitedVBase)
+    AddOverriders(Base, NewOffsets);
   
   // And merge the newly discovered subobject offsets.
   MergeSubobjectOffsets(NewOffsets, Offsets);
