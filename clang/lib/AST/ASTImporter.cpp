@@ -94,6 +94,7 @@ namespace {
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitObjCMethodDecl(ObjCMethodDecl *D);
+    Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
                             
     // Importing statements
@@ -2130,6 +2131,70 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   return ToMethod;
 }
 
+Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
+  // Import the major distinguishing characteristics of an @protocol.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+
+  ObjCProtocolDecl *MergeWithProtocol = 0;
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (!(*Lookup.first)->isInIdentifierNamespace(Decl::IDNS_ObjCProtocol))
+      continue;
+    
+    if ((MergeWithProtocol = dyn_cast<ObjCProtocolDecl>(*Lookup.first)))
+      break;
+  }
+  
+  ObjCProtocolDecl *ToProto = MergeWithProtocol;
+  if (!ToProto || ToProto->isForwardDecl()) {
+    if (!ToProto) {
+      ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC, Loc,
+                                         Name.getAsIdentifierInfo());
+      ToProto->setForwardDecl(D->isForwardDecl());
+      ToProto->setLexicalDeclContext(LexicalDC);
+      LexicalDC->addDecl(ToProto);
+    }
+    Importer.Imported(D, ToProto);
+
+    // Import protocols
+    llvm::SmallVector<ObjCProtocolDecl *, 4> Protocols;
+    llvm::SmallVector<SourceLocation, 4> ProtocolLocs;
+    ObjCProtocolDecl::protocol_loc_iterator 
+      FromProtoLoc = D->protocol_loc_begin();
+    for (ObjCProtocolDecl::protocol_iterator FromProto = D->protocol_begin(),
+                                          FromProtoEnd = D->protocol_end();
+       FromProto != FromProtoEnd;
+       ++FromProto, ++FromProtoLoc) {
+      ObjCProtocolDecl *ToProto
+        = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
+      if (!ToProto)
+        return 0;
+      Protocols.push_back(ToProto);
+      ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
+    }
+    
+    // FIXME: If we're merging, make sure that the protocol list is the same.
+    ToProto->setProtocolList(Protocols.data(), Protocols.size(),
+                             ProtocolLocs.data(), Importer.getToContext());
+  } else {
+    Importer.Imported(D, ToProto);
+  }
+
+  // Import all of the members of this class.
+  for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
+                               FromMemEnd = D->decls_end();
+       FromMem != FromMemEnd;
+       ++FromMem)
+    Importer.Import(*FromMem);
+
+  return ToProto;
+}
+
 Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   // Import the major distinguishing characteristics of an @interface.
   DeclContext *DC, *LexicalDC;
@@ -2158,6 +2223,7 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
                                           Importer.Import(D->getClassLoc()),
                                           D->isForwardDecl(),
                                           D->isImplicitInterfaceDecl());
+      ToIface->setForwardDecl(D->isForwardDecl());
       ToIface->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDecl(ToIface);
     }
@@ -2246,7 +2312,7 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     ToIface->setImplementation(Impl);
   }
   
-  return 0;
+  return ToIface;
 }
 
 //----------------------------------------------------------------------------

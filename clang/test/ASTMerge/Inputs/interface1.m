@@ -45,3 +45,26 @@
 - (int)foo;
 + (int)bar:(float)x;
 @end
+
+// Matching protocol
+@protocol P0
++ (int)foo;
+- (int)bar:(float)x;
+@end
+
+// Protocol with mismatching method
+@protocol P1
++ (int)foo;
+- (int)bar:(float)x;
+@end
+
+// Interface with protocol
+@interface I9 <P0>
++ (int)foo;
+- (int)bar:(float)x;
+@end
+
+// Protocol with protocol
+@protocol P2 <P0>
+- (float)wibble:(int)a1 second:(int)a2;
+@end

@@ -13,5 +13,7 @@
 // CHECK: interface1.m:40:17: note: declared here with type 'int'
 // CHECK: interface2.m:45:1: error: class method 'bar:' is variadic in one translation unit and not variadic in another
 // CHECK: interface1.m:46:1: note: class method 'bar:' also declared here
-// CHECK: 11 diagnostics generated
+// CHECK: interface2.m:57:20: error: instance method 'bar:' has a parameter with a different types in different translation units ('double' vs. 'float')
+// CHECK: interface1.m:58:19: note: declared here with type 'float'
+// CHECK: 13 diagnostics generated
 
