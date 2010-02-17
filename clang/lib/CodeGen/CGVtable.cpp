@@ -649,6 +649,10 @@ public:
     CK_DeletingDtorPointer
   };
 
+  static VtableComponent MakeVCallOffset(int64_t Offset) {
+    return VtableComponent(CK_VCallOffset, Offset);
+  }
+
   static VtableComponent MakeVBaseOffset(int64_t Offset) {
     return VtableComponent(CK_VBaseOffset, Offset);
   }
@@ -682,6 +686,12 @@ public:
   /// getKind - Get the kind of this vtable component.
   Kind getKind() const {
     return (Kind)(Value & 0x7);
+  }
+
+  int64_t getVCallOffset() const {
+    assert(getKind() == CK_VCallOffset && "Invalid component kind!");
+    
+    return getOffset();
   }
 
   int64_t getVBaseOffset() const {
@@ -835,6 +845,9 @@ private:
   void AddVCallAndVBaseOffsets(BaseSubobject Base, bool BaseIsVirtual,
                                VisitedVirtualBasesSetTy &VBases);
 
+  /// AddVCallOffsets - Add vcall offsets for the given base subobject.
+  void AddVCallOffsets(BaseSubobject Base);
+
   /// AddVBaseOffsets - Add vbase offsets for the given class.
   void AddVBaseOffsets(const CXXRecordDecl *Base, int64_t OffsetToTop,
                        VisitedVirtualBasesSetTy &VBases);
@@ -964,6 +977,67 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
   // FIXME: Don't use /8 here.
   int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
   AddVBaseOffsets(Base.getBase(), OffsetToTop, VBases);
+
+  // We only want to add vcall offsets for virtual bases in secondary vtables.
+  if (BaseIsVirtual && OffsetToTop != 0)
+    AddVCallOffsets(Base);
+}
+
+void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
+  const CXXRecordDecl *RD = Base.getBase();
+  
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+  assert(!PrimaryBase && "FIXME: Handle the primary base!");
+
+  // Add the vcall offsets.
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
+       E = RD->method_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+    
+    if (!MD->isVirtual())
+      continue;
+
+    // FIXME: Check if we already have a vcall offset for this member function
+    // signature.
+    
+    // Get the 'this' pointer adjustment offset.
+    FinalOverriders::BaseOffset ThisAdjustmentOffset =
+      Overriders.getThisAdjustmentOffset(Base, MD);
+    
+    int64_t Offset = 0;
+    if (const CXXRecordDecl *VBaseDecl = ThisAdjustmentOffset.VirtualBase) {
+      const ASTRecordLayout &MostDerivedClassLayout =
+        Context.getASTRecordLayout(MostDerivedClass);
+      
+      // FIXME: We should not use / 8 here.
+      Offset = 
+        -(int64_t)MostDerivedClassLayout.getVBaseClassOffset(VBaseDecl) / 8;
+    }
+
+    VCallAndVBaseOffsets.push_back(VtableComponent::MakeVCallOffset(Offset));
+  }
+
+  // And iterate over all non-virtual bases (ignoring the primary base).
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+  
+    if (I->isVirtual())
+      continue;
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // Ignore the primary base.
+    if (BaseDecl == PrimaryBase)
+      continue;
+    
+    // Get the base offset of this base.
+    uint64_t BaseOffset = Base.getBaseOffset() + 
+      Layout.getBaseClassOffset(BaseDecl);
+    
+    AddVCallOffsets(BaseSubobject(BaseDecl, BaseOffset));
+  }
 }
 
 void VtableBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
@@ -1275,9 +1349,9 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
     // Dump the component.
     switch (Component.getKind()) {
-    // FIXME: Remove this default case.
-    default:
-      assert(false && "Unhandled component kind!");
+
+    case VtableComponent::CK_VCallOffset:
+      Out << "vcall_offset (" << Component.getVCallOffset() << ")";
       break;
 
     case VtableComponent::CK_VBaseOffset:
