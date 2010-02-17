@@ -10,6 +10,8 @@ Reimplement 'select' in terms of 'SEL'.
 * Implement pre/post increment support.  (e.g. PR935)
 * Implement smarter constant generation for binops with large immediates.
 
+A few ARMv6T2 ops should be pattern matched: BFI, SBFX, and UBFX
+
 //===---------------------------------------------------------------------===//
 
 Crazy idea:  Consider code that uses lots of 8-bit or 16-bit values.  By the
