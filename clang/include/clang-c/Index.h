@@ -1313,13 +1313,13 @@ enum CXCompletionChunkKind {
    *   - a Placeholder chunk for "int x"
    *   - an Optional chunk containing the remaining defaulted arguments, e.g.,
    *       - a Comma chunk for ","
-   *       - a Placeholder chunk for "float x"
+   *       - a Placeholder chunk for "float y"
    *       - an Optional chunk containing the last defaulted argument:
    *           - a Comma chunk for ","
    *           - a Placeholder chunk for "double z"
    *   - a RightParen chunk for ")"
    *
-   * There are many ways two handle Optional chunks. Two simple approaches are:
+   * There are many ways to handle Optional chunks. Two simple approaches are:
    *   - Completely ignore optional chunks, in which case the template for the
    *     function "f" would only include the first parameter ("int x").
    *   - Fully expand all optional chunks, in which case the template for the
