@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fblocks -triple i386-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
 // radar 7581175
 
 extern void dispatch_async (void (^)(void));
