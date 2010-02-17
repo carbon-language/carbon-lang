@@ -53,6 +53,13 @@ def note_odr_number_of_bases : Note<
   "class has %0 base %plural{1:class|:classes}0">;
 def note_odr_enumerator : Note<"enumerator %0 with value %1 here">;
 def note_odr_missing_enumerator : Note<"no corresponding enumerator here">;
-  
+def err_odr_ivar_type_inconsistent : Error<
+  "instance variable %0 declared with incompatible types in different "
+  "translation units (%1 vs. %2)">;
+def err_odr_objc_superclass_inconsistent : Error<
+  "class %0 has incompatible superclasses">;
+def note_odr_objc_superclass : Note<"inherits from superclass %0 here">;
+def note_odr_objc_missing_superclass : Note<"no corresponding superclass here">;
+
 def err_unsupported_ast_node: Error<"cannot import unsupported AST node %0">;
 }

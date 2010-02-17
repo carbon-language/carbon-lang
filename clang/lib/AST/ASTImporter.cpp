@@ -90,6 +90,7 @@ namespace {
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
+    Decl *VisitObjCIvarDecl(ObjCIvarDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
@@ -1821,6 +1822,54 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   return ToField;
 }
 
+Decl *ASTNodeImporter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
+  // Import the major distinguishing characteristics of an ivar.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  // Determine whether we've already imported this ivar 
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (ObjCIvarDecl *FoundIvar = dyn_cast<ObjCIvarDecl>(*Lookup.first)) {
+      if (Importer.IsStructurallyEquivalent(D->getType(), 
+                                            FoundIvar->getType())) {
+        Importer.Imported(D, FoundIvar);
+        return FoundIvar;
+      }
+
+      Importer.ToDiag(Loc, diag::err_odr_ivar_type_inconsistent)
+        << Name << D->getType() << FoundIvar->getType();
+      Importer.ToDiag(FoundIvar->getLocation(), diag::note_odr_value_here)
+        << FoundIvar->getType();
+      return 0;
+    }
+  }
+
+  // Import the type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+  
+  TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+  Expr *BitWidth = Importer.Import(D->getBitWidth());
+  if (!BitWidth && D->getBitWidth())
+    return 0;
+  
+  ObjCIvarDecl *ToIvar = ObjCIvarDecl::Create(Importer.getToContext(), DC, 
+                                              Loc, Name.getAsIdentifierInfo(),
+                                              T, TInfo, D->getAccessControl(),
+                                              BitWidth);
+  ToIvar->setLexicalDeclContext(LexicalDC);
+  Importer.Imported(D, ToIvar);
+  LexicalDC->addDecl(ToIvar);
+  return ToIvar;
+  
+}
+
 Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   // Import the major distinguishing characteristics of a variable.
   DeclContext *DC, *LexicalDC;
@@ -1997,9 +2046,6 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     }
     Importer.Imported(D, ToIface);
 
-    // Import superclass
-    // FIXME: If we're merging, make sure that both decls have the same 
-    // superclass.
     if (D->getSuperClass()) {
       ObjCInterfaceDecl *Super
         = cast_or_null<ObjCInterfaceDecl>(Importer.Import(D->getSuperClass()));
@@ -2037,6 +2083,33 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     ToIface->setAtEndRange(Importer.Import(D->getAtEndRange()));
   } else {
     Importer.Imported(D, ToIface);
+
+    // Check for consistency of superclasses.
+    DeclarationName FromSuperName, ToSuperName;
+    if (D->getSuperClass())
+      FromSuperName = Importer.Import(D->getSuperClass()->getDeclName());
+    if (ToIface->getSuperClass())
+      ToSuperName = ToIface->getSuperClass()->getDeclName();
+    if (FromSuperName != ToSuperName) {
+      Importer.ToDiag(ToIface->getLocation(), 
+                      diag::err_odr_objc_superclass_inconsistent)
+        << ToIface->getDeclName();
+      if (ToIface->getSuperClass())
+        Importer.ToDiag(ToIface->getSuperClassLoc(), 
+                        diag::note_odr_objc_superclass)
+          << ToIface->getSuperClass()->getDeclName();
+      else
+        Importer.ToDiag(ToIface->getLocation(), 
+                        diag::note_odr_objc_missing_superclass);
+      if (D->getSuperClass())
+        Importer.FromDiag(D->getSuperClassLoc(), 
+                          diag::note_odr_objc_superclass)
+          << D->getSuperClass()->getDeclName();
+      else
+        Importer.FromDiag(D->getLocation(), 
+                          diag::note_odr_objc_missing_superclass);
+      return 0;
+    }
   }
   
   // Import all of the members of this class.
