@@ -204,6 +204,10 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
   case MatcherNode::CheckFoldableChainNode:
     OS << "OPC_CheckFoldableChainNode,\n";
     return 1;
+  case MatcherNode::CheckChainCompatible:
+    OS << "OPC_CheckChainCompatible, "
+       << cast<CheckChainCompatibleMatcherNode>(N)->getPreviousOp() << ",\n";
+    return 2;
   }
   assert(0 && "Unreachable");
   return 0;

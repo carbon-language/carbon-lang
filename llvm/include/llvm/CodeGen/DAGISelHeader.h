@@ -217,7 +217,8 @@ enum BuiltinOpcodes {
   OPC_CheckComplexPat,
   OPC_CheckAndImm1, OPC_CheckAndImm2, OPC_CheckAndImm4, OPC_CheckAndImm8,
   OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8,
-  OPC_CheckFoldableChainNode
+  OPC_CheckFoldableChainNode,
+  OPC_CheckChainCompatible
 };
 
 struct MatchScope {
@@ -407,6 +408,13 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                          NodeToMatch))
         break;
       
+      continue;
+    }
+    case OPC_CheckChainCompatible: {
+      unsigned PrevNode = MatcherTable[MatcherIndex++];
+      assert(PrevNode < RecordedNodes.size() && "Invalid CheckChainCompatible");
+      if (!IsChainCompatible(RecordedNodes[PrevNode].getNode(), N.getNode()))
+        break;
       continue;
     }
     }

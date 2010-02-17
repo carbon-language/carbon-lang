@@ -50,7 +50,8 @@ public:
     CheckComplexPat,
     CheckAndImm,
     CheckOrImm,
-    CheckFoldableChainNode
+    CheckFoldableChainNode,
+    CheckChainCompatible
   };
   const KindTy Kind;
   
@@ -379,6 +380,25 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+
+/// CheckChainCompatibleMatcherNode - Verify that the current node's chain
+/// operand is 'compatible' with the specified recorded node's.
+class CheckChainCompatibleMatcherNode : public MatcherNodeWithChild {
+  unsigned PreviousOp;
+public:
+  CheckChainCompatibleMatcherNode(unsigned previousop)
+    : MatcherNodeWithChild(CheckChainCompatible), PreviousOp(previousop) {}
+  
+  unsigned getPreviousOp() const { return PreviousOp; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == CheckChainCompatible;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+  
 
 } // end namespace llvm
 

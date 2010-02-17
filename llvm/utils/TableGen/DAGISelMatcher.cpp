@@ -111,3 +111,9 @@ void CheckFoldableChainNodeMatcherNode::print(raw_ostream &OS,
   OS.indent(indent) << "CheckFoldableChainNode\n";
   printChild(OS, indent);
 }
+
+void CheckChainCompatibleMatcherNode::print(raw_ostream &OS,
+                                              unsigned indent) const {
+  OS.indent(indent) << "CheckChainCompatibleMatcherNode " << PreviousOp << "\n";
+  printChild(OS, indent);
+}

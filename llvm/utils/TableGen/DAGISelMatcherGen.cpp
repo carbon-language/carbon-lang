@@ -165,6 +165,16 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
       assert(NextRecordedOperandNo > 1 &&
              "Should have recorded input/result chains at least!");
       InputChains.push_back(NextRecordedOperandNo-1);
+
+      // IF we need to check chains, do so, see comment for
+      // "NodeHasProperty(SDNPHasChain" below.
+      if (InputChains.size() > 1) {
+        // FIXME: This is broken, we should eliminate this nonsense completely,
+        // but we want to produce the same selections that the old matcher does
+        // for now.
+        unsigned PrevOp = InputChains[InputChains.size()-2];
+        AddMatcherNode(new CheckChainCompatibleMatcherNode(PrevOp));
+      }
     }
     return;
   }
@@ -229,10 +239,13 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
     // sure that folding the chain won't induce cycles in the DAG.  This could
     // happen if there were an intermediate node between the indbr and load, for
     // example.
-    
-    // FIXME: Emit "IsChainCompatible(lastchain.getNode(), CurrentNode)".
-    // Rename IsChainCompatible -> IsChainUnreachable, add comment about
-    // complexity.
+    if (InputChains.size() > 1) {
+      // FIXME: This is broken, we should eliminate this nonsense completely,
+      // but we want to produce the same selections that the old matcher does
+      // for now.
+      unsigned PrevOp = InputChains[InputChains.size()-2];
+      AddMatcherNode(new CheckChainCompatibleMatcherNode(PrevOp));
+    }
     
     // Don't look at the input chain when matching the tree pattern to the
     // SDNode.
