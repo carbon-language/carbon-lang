@@ -185,7 +185,9 @@ public:
       return C; // avoid calling Fold
     return Fold(ConstantExpr::getIntegerCast(C, DestTy, isSigned));
   }
-
+  Constant *CreatePointerCast(Constant *C, const Type *DestTy) const {
+    return ConstantExpr::getPointerCast(C, DestTy);
+  }
   Constant *CreateBitCast(Constant *C, const Type *DestTy) const {
     return CreateCast(Instruction::BitCast, C, DestTy);
   }
