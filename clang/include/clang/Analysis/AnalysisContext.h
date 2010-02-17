@@ -110,6 +110,8 @@ public:
 
   const LocationContext *getParent() const { return Parent; }
 
+  bool isParentOf(const LocationContext *LC) const;
+
   const Decl *getDecl() const { return getAnalysisContext()->getDecl(); }
 
   CFG *getCFG() const { return getAnalysisContext()->getCFG(); }

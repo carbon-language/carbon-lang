@@ -186,6 +186,18 @@ LocationContext::getStackFrameForDeclContext(const DeclContext *DC) const {
   return NULL;
 }
 
+bool LocationContext::isParentOf(const LocationContext *LC) const {
+  do {
+    const LocationContext *Parent = LC->getParent();
+    if (Parent == this)
+      return true;
+    else
+      LC = Parent;
+  } while (LC);
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Lazily generated map to query the external variables referenced by a Block.
 //===----------------------------------------------------------------------===//
