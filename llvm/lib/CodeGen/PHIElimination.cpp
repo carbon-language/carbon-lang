@@ -56,7 +56,6 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &Fn.getRegInfo();
 
   PHIDefs.clear();
-  PHIKills.clear();
   bool Changed = false;
 
   // Split critical edges to help the coalescer
@@ -275,9 +274,6 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     // Get the MachineBasicBlock equivalent of the BasicBlock that is the source
     // path the PHI.
     MachineBasicBlock &opBlock = *MPhi->getOperand(i*2+2).getMBB();
-
-    // Record the kill.
-    PHIKills[SrcReg].insert(&opBlock);
 
     // If source is defined by an implicit def, there is no need to insert a
     // copy.

@@ -22,16 +22,9 @@ namespace llvm {
   /// Lower PHI instructions to copies.  
   class PHIElimination : public MachineFunctionPass {
     MachineRegisterInfo  *MRI; // Machine register information
-  private:
-
-    typedef SmallSet<MachineBasicBlock*, 4> PHIKillList;
-    typedef DenseMap<unsigned, PHIKillList> PHIKillMap;
     typedef DenseMap<unsigned, MachineBasicBlock*> PHIDefMap;
 
   public:
-
-    typedef PHIKillList::iterator phi_kill_iterator;
-    typedef PHIKillList::const_iterator const_phi_kill_iterator;
 
     static char ID; // Pass identification, replacement for typeid
     PHIElimination() : MachineFunctionPass(&ID) {}
@@ -44,32 +37,6 @@ namespace llvm {
     /// lowering.
     bool hasPHIDef(unsigned vreg) const {
       return PHIDefs.count(vreg);
-    }
-
-    /// Returns the block in which the PHI instruction which defined the
-    /// given vreg used to reside. 
-    MachineBasicBlock* getPHIDefBlock(unsigned vreg) {
-      PHIDefMap::iterator phiDefItr = PHIDefs.find(vreg);
-      assert(phiDefItr != PHIDefs.end() && "vreg has no phi-def.");
-      return phiDefItr->second;
-    }
-
-    /// Returns true if the given vreg was killed by a PHI instr.
-    bool hasPHIKills(unsigned vreg) const {
-      return PHIKills.count(vreg);
-    }
-
-    /// Returns an iterator over the BasicBlocks which contained PHI
-    /// kills of this register prior to lowering.
-    phi_kill_iterator phiKillsBegin(unsigned vreg) {
-      PHIKillMap::iterator phiKillItr = PHIKills.find(vreg);
-      assert(phiKillItr != PHIKills.end() && "vreg has no phi-kills.");
-      return phiKillItr->second.begin();
-    } 
-    phi_kill_iterator phiKillsEnd(unsigned vreg) {
-      PHIKillMap::iterator phiKillItr = PHIKills.find(vreg);
-      assert(phiKillItr != PHIKills.end() && "vreg has no phi-kills.");
-      return phiKillItr->second.end();
     }
 
   private:
@@ -140,7 +107,6 @@ namespace llvm {
 
     VRegPHIUse VRegPHIUseCount;
     PHIDefMap PHIDefs;
-    PHIKillMap PHIKills;
 
     // Defs of PHI sources which are implicit_def.
     SmallPtrSet<MachineInstr*, 4> ImpDefs;
