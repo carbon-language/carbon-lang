@@ -16,25 +16,24 @@
 
 // FIXME: Reduce the number of includes.
 
-#include "clang/Checker/PathSensitive/Environment.h"
-#include "clang/Checker/PathSensitive/Store.h"
-#include "clang/Checker/PathSensitive/ConstraintManager.h"
-#include "clang/Checker/PathSensitive/ValueManager.h"
-#include "clang/Checker/PathSensitive/GRCoreEngine.h"
-#include "clang/AST/Expr.h"
-#include "clang/AST/Decl.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/System/DataTypes.h"
+#include "clang/Checker/PathSensitive/ConstraintManager.h"
+#include "clang/Checker/PathSensitive/Environment.h"
+#include "clang/Checker/PathSensitive/GRCoreEngine.h"
+#include "clang/Checker/PathSensitive/Store.h"
+#include "clang/Checker/PathSensitive/ValueManager.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "llvm/System/DataTypes.h"
 #include <functional>
 
 namespace clang {
