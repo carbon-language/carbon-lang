@@ -56,6 +56,19 @@ namespace llvm {
     ///
     /// This returns true on a successful match.
     bool match(const StringRef &String, SmallVectorImpl<StringRef> *Matches=0);
+
+    /// sub - Return the result of replacing the first match of the regex in
+    /// \arg String with the \arg Repl string. Backreferences like "\0" in the
+    /// replacement string are replaced with the appropriate match substring.
+    ///
+    /// Note that the replacement string has backslash escaping performed on
+    /// it. Invalid backreferences are ignored (replaced by empty strings).
+    ///
+    /// \param Error If non-null, any errors in the substitution (invalid
+    /// backreferences, trailing backslashes) will be recorded as a non-empty
+    /// string.
+    std::string sub(StringRef Repl, StringRef String, std::string *Error = 0);
+
   private:
     struct llvm_regex *preg;
     int error;

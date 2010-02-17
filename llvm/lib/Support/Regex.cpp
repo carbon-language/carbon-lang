@@ -90,3 +90,79 @@ bool Regex::match(const StringRef &String, SmallVectorImpl<StringRef> *Matches){
 
   return true;
 }
+
+std::string Regex::sub(StringRef Repl, StringRef String,
+                       std::string *Error) {
+  SmallVector<StringRef, 8> Matches;
+
+  // Reset error, if given.
+  if (Error && !Error->empty()) *Error = "";
+
+  // Return the input if there was no match.
+  if (!match(String, &Matches))
+    return String;
+
+  // Otherwise splice in the replacement string, starting with the prefix before
+  // the match.
+  std::string Res(String.begin(), Matches[0].begin());
+
+  // Then the replacement string, honoring possible substitutions.
+  while (!Repl.empty()) {
+    // Skip to the next escape.
+    std::pair<StringRef, StringRef> Split = Repl.split('\\');
+
+    // Add the skipped substring.
+    Res += Split.first;
+
+    // Check for terminimation and trailing backslash.
+    if (Split.second.empty()) {
+      if (Repl.size() != Split.first.size() &&
+          Error && Error->empty())
+        *Error = "replacement string contained trailing backslash";
+      break;
+    }
+
+    // Otherwise update the replacement string and interpret escapes.
+    Repl = Split.second;
+
+    // FIXME: We should have a StringExtras function for mapping C99 escapes.
+    switch (Repl[0]) {
+      // Treat all unrecognized characters as self-quoting.
+    default:
+      Res += Repl[0];
+      Repl = Repl.substr(1);
+      break;
+
+      // Single character escapes.
+    case 't':
+      Res += '\t';
+      Repl = Repl.substr(1);
+      break;
+    case 'n':
+      Res += '\n';
+      Repl = Repl.substr(1);
+      break;
+
+      // Decimal escapes are backreferences.
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9': {
+      // Extract the backreference number.
+      StringRef Ref = Repl.slice(0, Repl.find_first_not_of("0123456789"));
+      Repl = Repl.substr(Ref.size());
+
+      unsigned RefValue;
+      if (!Ref.getAsInteger(10, RefValue) &&
+          RefValue < Matches.size())
+        Res += Matches[RefValue];
+      else if (Error && Error->empty())
+        *Error = "invalid backreference string '" + Ref.str() + "'";
+      break;
+    }
+    }
+  }
+
+  // And finally the suffix.
+  Res += StringRef(Matches[0].end(), String.end() - Matches[0].end());
+
+  return Res;
+}

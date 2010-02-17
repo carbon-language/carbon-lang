@@ -62,4 +62,33 @@ TEST_F(RegexTest, Basics) {
   EXPECT_TRUE(r5.match(String));
 }
 
+TEST_F(RegexTest, Substitution) {
+  std::string Error;
+
+  EXPECT_EQ("aNUMber", Regex("[0-9]+").sub("NUM", "a1234ber"));
+
+  // Standard Escapes
+  EXPECT_EQ("a\\ber", Regex("[0-9]+").sub("\\\\", "a1234ber", &Error));
+  EXPECT_EQ(Error, "");
+  EXPECT_EQ("a\nber", Regex("[0-9]+").sub("\\n", "a1234ber", &Error));
+  EXPECT_EQ(Error, "");
+  EXPECT_EQ("a\tber", Regex("[0-9]+").sub("\\t", "a1234ber", &Error));
+  EXPECT_EQ(Error, "");
+  EXPECT_EQ("ajber", Regex("[0-9]+").sub("\\j", "a1234ber", &Error));
+  EXPECT_EQ(Error, "");
+
+  EXPECT_EQ("aber", Regex("[0-9]+").sub("\\", "a1234ber", &Error));
+  EXPECT_EQ(Error, "replacement string contained trailing backslash");
+  
+  // Backreferences
+  EXPECT_EQ("aa1234bber", Regex("a[0-9]+b").sub("a\\0b", "a1234ber", &Error));
+  EXPECT_EQ(Error, "");
+
+  EXPECT_EQ("a1234ber", Regex("a([0-9]+)b").sub("a\\1b", "a1234ber", &Error));
+  EXPECT_EQ(Error, "");
+
+  EXPECT_EQ("aber", Regex("a[0-9]+b").sub("a\\100b", "a1234ber", &Error));
+  EXPECT_EQ(Error, "invalid backreference string '100'");
+}
+
 }
