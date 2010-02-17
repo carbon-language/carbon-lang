@@ -124,7 +124,37 @@ bool PIC16Cloner::runOnModule(Module &M) {
 // Cloning the code of function itself.
 //
 void PIC16Cloner::CloneAutos(Function *F) {
-  // Not implemented yet.
+  // We'll need to update module's globals list as well. So keep a reference
+  // handy.
+  Module *M = F->getParent();
+  Module::GlobalListType &Globals = M->getGlobalList();
+
+  // Clear the leftovers in ValueMap by any previous cloning.
+  ValueMap.clear();
+
+  // Find the auto globls for this function and clone them, and put them
+  // in ValueMap.
+  std::string FnName = F->getName().str();
+  std::string VarName, ClonedVarName;
+  for (Module::global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I) {
+    VarName = I->getName().str();
+    if (PAN::isLocalToFunc(FnName, VarName)) {
+      // Auto variable for current function found. Clone it.
+      GlobalVariable *GV = I;
+
+      const Type *InitTy = GV->getInitializer()->getType();
+      GlobalVariable *ClonedGV = 
+        new GlobalVariable(InitTy, false, GV->getLinkage(), 
+                           GV->getInitializer());
+      ClonedGV->setName(PAN::getCloneVarName(FnName, VarName));
+      // Add these new globals to module's globals list.
+      Globals.push_back(ClonedGV);
+ 
+      // Update ValueMap.
+      ValueMap[GV] = ClonedGV;
+     }
+  }
 }
 
 

@@ -338,6 +338,22 @@ namespace llvm {
     inline static std::string getISRAddr(void) {
       return "0x4";
     }
+
+    // Returns the name of clone of a function.
+    static std::string getCloneFnName(const std::string &Func) {
+       return (Func + ".IL");
+    }
+
+    // Returns the name of clone of a variable.
+    static std::string getCloneVarName(const std::string &Fn, 
+                                       const std::string &Var) {
+      std::string cloneVarName = Var;
+      // These vars are named like fun.auto.var.
+      // Just replace the function name, with clone function name.
+      std::string cloneFnName = getCloneFnName(Fn);
+      cloneVarName.replace(cloneVarName.find(Fn), Fn.length(), cloneFnName);
+      return cloneVarName;
+    }
   }; // class PAN.
 } // end namespace llvm;
 
