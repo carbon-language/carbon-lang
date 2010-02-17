@@ -1168,7 +1168,7 @@ void VtableBuilder::LayoutVtable() {
   
 void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
                                                         bool BaseIsVirtual) {
-  const CXXRecordDecl *RD = Base.getBase();
+  const CXXRecordDecl *RD ATTRIBUTE_UNUSED = Base.getBase();
   assert(RD->isDynamicClass() && "class does not have a vtable!");
 
   // Add vcall and vbase offsets for this vtable.
