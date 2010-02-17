@@ -120,7 +120,6 @@ def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
 def CharSubscript : DiagGroup<"char-subscripts">;
-def ForceAlignArgPointer : DiagGroup<"force-align-arg-pointer">;
 
 // Aggregation warning settings.
 
@@ -181,4 +180,4 @@ def : DiagGroup<"comments", [Comment]>;         // -Wcomments = -Wcomment
 // A warning group for warnings that we want to have on by default in clang,
 // but which aren't on by default in GCC.
 def NonGCC : DiagGroup<"non-gcc",
-    [SignCompare, Conversion, ForceAlignArgPointer]>;
+    [SignCompare, Conversion]>;
