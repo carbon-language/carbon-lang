@@ -324,20 +324,18 @@
 <div class="doc_text">
    <p>The design of GEP has the following goals, in rough unofficial
       order of priority:</p>
-   <p>
-     <ol>
-       <li>Support C, C-like languages, and languages which can be
-           conceptually lowered into C (this covers a lot).</li>
-       <li>Support optimizations such as those that are common in
-           C compilers.</li>
-       <li>Provide a consistent method for computing addresses so that
-           address computations don't need to be a part of load and
-           store instructions in the IR.</li>
-       <li>Support non-C-like languages, to the extent that it doesn't
-           interfere with other goals.</li>
-       <li>Minimize target-specific information in the IR.</li>
-     </ol>
-   </p>
+   <ol>
+     <li>Support C, C-like languages, and languages which can be
+         conceptually lowered into C (this covers a lot).</li>
+     <li>Support optimizations such as those that are common in
+         C compilers.</li>
+     <li>Provide a consistent method for computing addresses so that
+         address computations don't need to be a part of load and
+         store instructions in the IR.</li>
+     <li>Support non-C-like languages, to the extent that it doesn't
+         interfere with other goals.</li>
+     <li>Minimize target-specific information in the IR.</li>
+   </ol>
 </div>
 
 <!-- *********************************************************************** -->
