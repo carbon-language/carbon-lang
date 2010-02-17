@@ -156,6 +156,12 @@ namespace clang {
     /// \returns the equivalent identifier in the "to" context.
     IdentifierInfo *Import(IdentifierInfo *FromId);
 
+    /// \brief Import the given Objective-C selector from the "from"
+    /// context into the "to" context.
+    ///
+    /// \returns the equivalent selector in the "to" context.
+    Selector Import(Selector FromSel);
+
     /// \brief Import the given file ID from the "from" context into the 
     /// "to" context.
     ///

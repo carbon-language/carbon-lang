@@ -93,6 +93,7 @@ namespace {
     Decl *VisitObjCIvarDecl(ObjCIvarDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
+    Decl *VisitObjCMethodDecl(ObjCMethodDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
                             
     // Importing statements
@@ -1774,25 +1775,25 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   
   // Create the imported function.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
-  FunctionDecl *ToEnumerator
+  FunctionDecl *ToFunction
     = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
                            Name, T, TInfo, D->getStorageClass(), 
                            D->isInlineSpecified(),
                            D->hasWrittenPrototype());
-  ToEnumerator->setLexicalDeclContext(LexicalDC);
-  Importer.Imported(D, ToEnumerator);
-  LexicalDC->addDecl(ToEnumerator);
+  ToFunction->setLexicalDeclContext(LexicalDC);
+  Importer.Imported(D, ToFunction);
+  LexicalDC->addDecl(ToFunction);
 
   // Set the parameters.
   for (unsigned I = 0, N = Parameters.size(); I != N; ++I) {
-    Parameters[I]->setOwningFunction(ToEnumerator);
-    ToEnumerator->addDecl(Parameters[I]);
+    Parameters[I]->setOwningFunction(ToFunction);
+    ToFunction->addDecl(Parameters[I]);
   }
-  ToEnumerator->setParams(Parameters.data(), Parameters.size());
+  ToFunction->setParams(Parameters.data(), Parameters.size());
 
   // FIXME: Other bits to merge?
   
-  return ToEnumerator;
+  return ToFunction;
 }
 
 Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
@@ -2011,6 +2012,122 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
                                             T, TInfo, D->getStorageClass(),
                                             /*FIXME: Default argument*/ 0);
   return Importer.Imported(D, ToParm);
+}
+
+Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
+  // Import the major distinguishing characteristics of a method.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (ObjCMethodDecl *FoundMethod = dyn_cast<ObjCMethodDecl>(*Lookup.first)) {
+      if (FoundMethod->isInstanceMethod() != D->isInstanceMethod())
+        continue;
+
+      // Check return types.
+      if (!Importer.IsStructurallyEquivalent(D->getResultType(),
+                                             FoundMethod->getResultType())) {
+        Importer.ToDiag(Loc, diag::err_odr_objc_method_result_type_inconsistent)
+          << D->isInstanceMethod() << Name
+          << D->getResultType() << FoundMethod->getResultType();
+        Importer.ToDiag(FoundMethod->getLocation(), 
+                        diag::note_odr_objc_method_here)
+          << D->isInstanceMethod() << Name;
+        return 0;
+      }
+
+      // Check the number of parameters.
+      if (D->param_size() != FoundMethod->param_size()) {
+        Importer.ToDiag(Loc, diag::err_odr_objc_method_num_params_inconsistent)
+          << D->isInstanceMethod() << Name
+          << D->param_size() << FoundMethod->param_size();
+        Importer.ToDiag(FoundMethod->getLocation(), 
+                        diag::note_odr_objc_method_here)
+          << D->isInstanceMethod() << Name;
+        return 0;
+      }
+
+      // Check parameter types.
+      for (ObjCMethodDecl::param_iterator P = D->param_begin(), 
+             PEnd = D->param_end(), FoundP = FoundMethod->param_begin();
+           P != PEnd; ++P, ++FoundP) {
+        if (!Importer.IsStructurallyEquivalent((*P)->getType(), 
+                                               (*FoundP)->getType())) {
+          Importer.FromDiag((*P)->getLocation(), 
+                            diag::err_odr_objc_method_param_type_inconsistent)
+            << D->isInstanceMethod() << Name
+            << (*P)->getType() << (*FoundP)->getType();
+          Importer.ToDiag((*FoundP)->getLocation(), diag::note_odr_value_here)
+            << (*FoundP)->getType();
+          return 0;
+        }
+      }
+
+      // Check variadic/non-variadic.
+      // Check the number of parameters.
+      if (D->isVariadic() != FoundMethod->isVariadic()) {
+        Importer.ToDiag(Loc, diag::err_odr_objc_method_variadic_inconsistent)
+          << D->isInstanceMethod() << Name;
+        Importer.ToDiag(FoundMethod->getLocation(), 
+                        diag::note_odr_objc_method_here)
+          << D->isInstanceMethod() << Name;
+        return 0;
+      }
+
+      // FIXME: Any other bits we need to merge?
+      return Importer.Imported(D, FoundMethod);
+    }
+  }
+
+  // Import the result type.
+  QualType ResultTy = Importer.Import(D->getResultType());
+  if (ResultTy.isNull())
+    return 0;
+
+  ObjCMethodDecl *ToMethod
+    = ObjCMethodDecl::Create(Importer.getToContext(),
+                             Loc,
+                             Importer.Import(D->getLocEnd()),
+                             Name.getObjCSelector(),
+                             ResultTy, DC,
+                             D->isInstanceMethod(),
+                             D->isVariadic(),
+                             D->isSynthesized(),
+                             D->getImplementationControl());
+
+  // FIXME: When we decide to merge method definitions, we'll need to
+  // deal with implicit parameters.
+
+  // Import the parameters
+  llvm::SmallVector<ParmVarDecl *, 5> ToParams;
+  for (ObjCMethodDecl::param_iterator FromP = D->param_begin(),
+                                   FromPEnd = D->param_end();
+       FromP != FromPEnd; 
+       ++FromP) {
+    ParmVarDecl *ToP = cast_or_null<ParmVarDecl>(Importer.Import(*FromP));
+    if (!ToP)
+      return 0;
+    
+    ToParams.push_back(ToP);
+  }
+  
+  // Set the parameters.
+  for (unsigned I = 0, N = ToParams.size(); I != N; ++I) {
+    ToParams[I]->setOwningFunction(ToMethod);
+    ToMethod->addDecl(ToParams[I]);
+  }
+  ToMethod->setMethodParams(Importer.getToContext(), 
+                            ToParams.data(), ToParams.size());
+
+  ToMethod->setLexicalDeclContext(LexicalDC);
+  Importer.Imported(D, ToMethod);
+  LexicalDC->addDecl(ToMethod);
+  return ToMethod;
 }
 
 Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
@@ -2430,6 +2547,17 @@ IdentifierInfo *ASTImporter::Import(IdentifierInfo *FromId) {
     return 0;
 
   return &ToContext.Idents.get(FromId->getName());
+}
+
+Selector ASTImporter::Import(Selector FromSel) {
+  if (FromSel.isNull())
+    return Selector();
+
+  llvm::SmallVector<IdentifierInfo *, 4> Idents;
+  Idents.push_back(Import(FromSel.getIdentifierInfoForSlot(0)));
+  for (unsigned I = 1, N = FromSel.getNumArgs(); I < N; ++I)
+    Idents.push_back(Import(FromSel.getIdentifierInfoForSlot(I)));
+  return ToContext.Selectors.getSelector(FromSel.getNumArgs(), Idents.data());
 }
 
 DeclarationName ASTImporter::HandleNameConflict(DeclarationName Name,

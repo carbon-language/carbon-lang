@@ -60,6 +60,19 @@ def err_odr_objc_superclass_inconsistent : Error<
   "class %0 has incompatible superclasses">;
 def note_odr_objc_superclass : Note<"inherits from superclass %0 here">;
 def note_odr_objc_missing_superclass : Note<"no corresponding superclass here">;
-
+def err_odr_objc_method_result_type_inconsistent : Error<
+  "%select{class|instance}0 method %1 has incompatible result types in "
+  "different translation units (%2 vs. %3)">;
+def err_odr_objc_method_num_params_inconsistent : Error<
+  "%select{class|instance}0 method %1 has a different number of parameters in "
+  "different translation units (%2 vs. %3)">;
+def err_odr_objc_method_param_type_inconsistent : Error<
+  "%select{class|instance}0 method %1 has a parameter with a different types "
+  "in different translation units (%2 vs. %3)">;
+def err_odr_objc_method_variadic_inconsistent : Error<
+  "%select{class|instance}0 method %1 is variadic in one translation unit "
+  "and not variadic in another">;
+def note_odr_objc_method_here : Note<
+  "%select{class|instance}0 method %1 also declared here">;
 def err_unsupported_ast_node: Error<"cannot import unsupported AST node %0">;
 }

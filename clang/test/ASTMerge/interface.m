@@ -7,5 +7,11 @@
 // CHECK: interface1.m:21:1: error: class 'I4' has incompatible superclasses
 // CHECK: interface1.m:21:17: note: inherits from superclass 'I2' here
 // CHECK: interface2.m:21:17: note: inherits from superclass 'I1' here
-// CHECK: 5 diagnostics generated
+// CHECK: interface2.m:33:1: error: class method 'foo' has incompatible result types in different translation units ('float' vs. 'int')
+// CHECK: interface1.m:34:1: note: class method 'foo' also declared here
+// CHECK: interface2.m:39:19: error: class method 'bar:' has a parameter with a different types in different translation units ('float' vs. 'int')
+// CHECK: interface1.m:40:17: note: declared here with type 'int'
+// CHECK: interface2.m:45:1: error: class method 'bar:' is variadic in one translation unit and not variadic in another
+// CHECK: interface1.m:46:1: note: class method 'bar:' also declared here
+// CHECK: 11 diagnostics generated
 

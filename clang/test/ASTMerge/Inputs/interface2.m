@@ -21,3 +21,26 @@
 @interface I4 : I1 {
 }
 @end
+
+// Methods match
+@interface I5
++ (float)bar;
+- (int)foo;
+@end
+
+// Method mismatch
+@interface I6
++ (float)foo;
+@end
+
+// Method mismatch
+@interface I7
+- (int)foo;
++ (int)bar:(float)x;
+@end
+
+// Method mismatch
+@interface I8
+- (int)foo;
++ (int)bar:(float)x, ...;
+@end
