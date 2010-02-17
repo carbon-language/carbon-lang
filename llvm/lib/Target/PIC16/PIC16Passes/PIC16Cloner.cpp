@@ -212,3 +212,41 @@ void PIC16Cloner::markCallGraph(CallGraphNode *CGN, string StringMark) {
   } // end of loop of all called functions.
 }
 
+// Clone the given function and return it.
+// Note: it uses the ValueMap member of the class, which is already populated
+// by cloneAutos by the time we reach here. 
+// FIXME: Should we just pass ValueMap's ref as a parameter here? rather
+// than keeping the ValueMap as a member.
+Function *
+PIC16Cloner::cloneFunction(Function *OrgF) {
+   Function *ClonedF;
+
+   // See if we already cloned it. Return that. 
+   cloned_map_iterator cm_it = ClonedFunctionMap.find(OrgF);
+   if(cm_it != ClonedFunctionMap.end()) {
+     ClonedF = cm_it->second;
+     return ClonedF;
+   }
+
+   // Clone does not exist. 
+   // First clone the autos, and populate ValueMap.
+   CloneAutos(OrgF);
+
+   // Now create the clone.
+   ClonedF = CloneFunction(OrgF, ValueMap);
+
+   // The new function should be for interrupt line. Therefore should have 
+   // the name suffixed with IL and section attribute marked with IL. 
+   ClonedF->setName(PAN::getCloneFnName(OrgF->getName()));
+   ClonedF->setSection("IL");
+
+   // Add the newly created function to the module.
+   OrgF->getParent()->getFunctionList().push_back(ClonedF);
+
+   // Update the ClonedFunctionMap to record this cloning activity.
+   ClonedFunctionMap[OrgF] = ClonedF;
+
+   return ClonedF;
+}
+
+

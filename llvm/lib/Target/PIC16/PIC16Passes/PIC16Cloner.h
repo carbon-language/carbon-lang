@@ -48,6 +48,9 @@ namespace llvm {
 
     // Clone auto variables of function specified.
     void CloneAutos(Function *F);
+   
+    // Clone the body of a function.
+    Function *cloneFunction(Function *F);
 
     // Error reporting for PIC16Pass
     void reportError(string ErrorString, vector<string> &Values);
@@ -64,6 +67,10 @@ namespace llvm {
     // This value map is passed during the function cloning so that all the
     // uses of auto variables be updated properly. 
     DenseMap<const Value*, Value*> ValueMap;
+
+    // Map of a already cloned functions. 
+    map<Function *, Function *> ClonedFunctionMap;
+    typedef map<Function *, Function *>::iterator cloned_map_iterator;
   };
 }  // End of anonymous namespace
 
