@@ -752,7 +752,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 
     // Check to see if switch is over an Enum and handles all of its 
     // values  
-    const EnumType* ET = dyn_cast<EnumType>(CondTypeBeforePromotion);
+    const EnumType* ET = CondTypeBeforePromotion->getAs<EnumType>();
     // If switch has default case, then ignore it.
     if (!CaseListIsErroneous && !TheDefaultStmt && ET) {
       const EnumDecl *ED = ET->getDecl();

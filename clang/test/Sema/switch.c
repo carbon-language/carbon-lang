@@ -223,3 +223,20 @@ void test12() {
       break;
   }
 }
+
+// <rdar://problem/7643909>
+typedef enum {
+    val1,
+    val2,
+    val3
+} my_type_t;
+
+int test13(my_type_t t) {
+  switch(t) { // expected-warning{{enumeration value 'val3' not handled in switch}}
+  case val1:
+    return 1;
+  case val2:
+    return 2;
+  }
+  return -1;
+}
