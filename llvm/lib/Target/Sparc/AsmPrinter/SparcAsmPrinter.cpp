@@ -143,18 +143,19 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum) {
     break;
   }
 
+  unsigned mfNum = MI->getParent()->getParent()->getFunctionNumber();
   unsigned bbNum = MI->getParent()->getNumber();
 
-  O << '\n' << ".LLGETPCH" << bbNum << ":\n";
-  O << "\tcall\t.LLGETPC" << bbNum << '\n' ;
+  O << '\n' << ".LLGETPCH" << mfNum << '_' << bbNum << ":\n";
+  O << "\tcall\t.LLGETPC" << mfNum << '_' << bbNum << '\n' ;
 
   O << "\t  sethi\t"
-    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << bbNum << ")), "  
+    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum << ")), "  
     << operand << '\n' ;
 
-  O << ".LLGETPC" << bbNum << ":\n" ;
+  O << ".LLGETPC" << mfNum << '_' << bbNum << ":\n" ;
   O << "\tor\t" << operand  
-    << ", %lo(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << bbNum << ")), "
+    << ", %lo(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << mfNum << '_' << bbNum << ")), "
     << operand << '\n';
   O << "\tadd\t" << operand << ", %o7, " << operand << '\n'; 
   
