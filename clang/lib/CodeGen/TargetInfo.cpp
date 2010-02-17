@@ -1497,8 +1497,28 @@ ABIArgInfo PIC16ABIInfo::classifyArgumentType(QualType Ty,
 
 llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                        CodeGenFunction &CGF) const {
-  return 0;
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
+  const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
+
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP,
+                                                       "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  llvm::Type *PTy =
+    llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
+
+  uint64_t Offset = CGF.getContext().getTypeSize(Ty) / 8;
+
+  llvm::Value *NextAddr =
+    Builder.CreateGEP(Addr, llvm::ConstantInt::get(
+                          llvm::Type::getInt32Ty(CGF.getLLVMContext()), Offset),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  return AddrTyped;
 }
+
 
 // ARM ABI Implementation
 
