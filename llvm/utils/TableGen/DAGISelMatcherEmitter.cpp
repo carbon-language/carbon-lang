@@ -186,7 +186,11 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
     const ComplexPattern &Pattern =
       cast<CheckComplexPatMatcherNode>(N)->getPattern();
     OS << "OPC_CheckComplexPat, " << getComplexPat(Pattern) << ',';
-    OS.PadToColumn(CommentIndent) << "// " << Pattern.getSelectFunc() << '\n';
+    OS.PadToColumn(CommentIndent) << "// " << Pattern.getSelectFunc();
+    OS << ": " << Pattern.getNumOperands() << " operands";
+    if (Pattern.hasProperty(SDNPHasChain))
+      OS << " + chain result and input";
+    OS << '\n';
     return 2;
   }
       
