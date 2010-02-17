@@ -606,10 +606,8 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
     
     if (NodeHasChain) {
       if (FoundChain) {
-        emitCheck("(" + ChainName + ".getNode() == " +
-                  getNodeName(RootName) + " || "
-                  "IsChainCompatible(" + ChainName + ".getNode(), " +
-                  getNodeName(RootName) + "))");
+        emitCheck("IsChainCompatible(" + ChainName + ".getNode(), " +
+                  getNodeName(RootName) + ")");
         OrigChains.push_back(std::make_pair(ChainName,
                                             getValueName(RootName)));
       } else

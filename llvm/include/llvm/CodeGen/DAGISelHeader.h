@@ -26,9 +26,8 @@
 /// node list.
 SelectionDAG::allnodes_iterator ISelPosition;
 
-/// IsChainCompatible - Returns true if Chain is Op or Chain does
-/// not reach Op.
-static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
+/// ChainNotReachable - Returns true if Chain does not reach Op.
+static bool ChainNotReachable(SDNode *Chain, SDNode *Op) {
   if (Chain->getOpcode() == ISD::EntryToken)
     return true;
   if (Chain->getOpcode() == ISD::TokenFactor)
@@ -36,10 +35,19 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
   if (Chain->getNumOperands() > 0) {
     SDValue C0 = Chain->getOperand(0);
     if (C0.getValueType() == MVT::Other)
-      return C0.getNode() != Op && IsChainCompatible(C0.getNode(), Op);
+      return C0.getNode() != Op && ChainNotReachable(C0.getNode(), Op);
   }
   return true;
 }
+
+/// IsChainCompatible - Returns true if Chain is Op or Chain does not reach Op.
+/// This is used to ensure that there are no nodes trapped between Chain, which
+/// is the first chain node discovered in a pattern and Op, a later node, that
+/// will not be selected into the pattern.
+static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
+  return Chain == Op || ChainNotReachable(Chain, Op);
+}
+
 
 /// ISelUpdater - helper class to handle updates of the 
 /// instruciton selection graph.
