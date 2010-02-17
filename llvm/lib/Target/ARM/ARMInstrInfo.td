@@ -2039,6 +2039,14 @@ def STREXD : AIstrex<0b01, (outs GPR:$success),
                     []>;
 }
 
+// Clear-Exclusive is for disassembly only.
+def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
+                [/* For disassembly only; pattern left blank */]>,
+            Requires<[IsARM, HasV7]>  {
+  let Inst{31-20} = 0xf57;
+  let Inst{7-4} = 0b0001;
+}
+
 // SWP/SWPB are deprecated in V6/V7 and for disassembly only.
 let mayLoad = 1 in {
 def SWP : AI<(outs GPR:$dst), (ins GPR:$src, GPR:$ptr), LdStExFrm, NoItinerary,
