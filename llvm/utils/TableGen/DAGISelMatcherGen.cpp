@@ -273,19 +273,25 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   if (!N->getName().empty()) {
     unsigned &VarMapEntry = VariableMap[N->getName()];
     if (VarMapEntry == 0) {
-      VarMapEntry = ++NextRecordedOperandNo;
+      VarMapEntry = NextRecordedOperandNo+1;
+      
+      unsigned NumRecorded;
       
       // If this is a complex pattern, the match operation for it will
       // implicitly record all of the outputs of it (which may be more than
       // one).
       if (const ComplexPattern *AM = N->getComplexPatternInfo(CGP)) {
         // Record the right number of operands.
-        // FIXME: Does this include chain?
-        VarMapEntry += AM->getNumOperands()-1;
+        NumRecorded = AM->getNumOperands()-1;
+        
+        if (AM->hasProperty(SDNPHasChain))
+          NumRecorded += 2; // Input and output chains.
       } else {
         // If it is a normal named node, we must emit a 'Record' opcode.
         AddMatcherNode(new RecordMatcherNode());
+        NumRecorded = 1;
       }
+      NextRecordedOperandNo += NumRecorded;
       
     } else {
       // If we get here, this is a second reference to a specific name.  Since

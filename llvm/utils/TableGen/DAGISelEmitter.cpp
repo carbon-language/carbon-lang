@@ -697,7 +697,7 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
       Code += ", CPTmp" + RootName + "_" + utostr(i);
     if (CP->hasProperty(SDNPHasChain)) {
       ChainName = "Chain" + ChainSuffix;
-      Code += ", CPInChain, Chain" + ChainSuffix;
+      Code += ", CPInChain, " + ChainName;
     }
     emitCheck(Code + ")");
   }

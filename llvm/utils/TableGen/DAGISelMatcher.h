@@ -317,6 +317,8 @@ public:
   CheckComplexPatMatcherNode(const ComplexPattern &pattern)
   : MatcherNodeWithChild(CheckComplexPat), Pattern(pattern) {}
   
+  const ComplexPattern &getPattern() const { return Pattern; }
+  
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == CheckComplexPat;
   }

@@ -13,6 +13,7 @@
 
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FormattedStream.h"
@@ -69,7 +70,9 @@ class MatcherTableEmitter {
   
   StringMap<unsigned> NodePredicateMap, PatternPredicateMap;
   std::vector<std::string> NodePredicates, PatternPredicates;
-  
+
+  DenseMap<const ComplexPattern*, unsigned> ComplexPatternMap;
+  std::vector<const ComplexPattern*> ComplexPatterns;
 public:
   MatcherTableEmitter(formatted_raw_ostream &os) : OS(os) {}
 
@@ -92,6 +95,15 @@ private:
     if (Entry == 0) {
       PatternPredicates.push_back(PredName.str());
       Entry = PatternPredicates.size();
+    }
+    return Entry-1;
+  }
+  
+  unsigned getComplexPat(const ComplexPattern &P) {
+    unsigned &Entry = ComplexPatternMap[&P];
+    if (Entry == 0) {
+      ComplexPatterns.push_back(&P);
+      Entry = ComplexPatterns.size();
     }
     return Entry-1;
   }
@@ -169,7 +181,9 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
     return 2;
 
   case MatcherNode::CheckComplexPat:
-    OS << "OPC_CheckComplexPat, 0/*XXX*/,\n";
+    OS << "OPC_CheckComplexPat, "
+       << getComplexPat(cast<CheckComplexPatMatcherNode>(N)->getPattern())
+       << ",\n";
     return 2;
       
   case MatcherNode::CheckAndImm: {
@@ -238,6 +252,7 @@ EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
 }
 
 void MatcherTableEmitter::EmitPredicateFunctions() {
+  // Emit pattern predicates.
   OS << "bool CheckPatternPredicate(unsigned PredNo) const {\n";
   OS << "  switch (PredNo) {\n";
   OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
@@ -246,6 +261,7 @@ void MatcherTableEmitter::EmitPredicateFunctions() {
   OS << "  }\n";
   OS << "}\n\n";
 
+  // Emit Node predicates.
   OS << "bool CheckNodePredicate(SDNode *N, unsigned PredNo) const {\n";
   OS << "  switch (PredNo) {\n";
   OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
@@ -253,6 +269,28 @@ void MatcherTableEmitter::EmitPredicateFunctions() {
     OS << "  case " << i << ": return "  << NodePredicates[i] << "(N);\n";
   OS << "  }\n";
   OS << "}\n\n";
+  
+  // Emit CompletePattern matchers.
+  
+  OS << "bool CheckComplexPattern(SDNode *Root, SDValue N,\n";
+  OS << "      unsigned PatternNo, SmallVectorImpl<SDValue> &Result) {\n";
+  OS << "  switch (PatternNo) {\n";
+  OS << "  default: assert(0 && \"Invalid pattern # in table?\");\n";
+  for (unsigned i = 0, e = ComplexPatterns.size(); i != e; ++i) {
+    const ComplexPattern &P = *ComplexPatterns[i];
+    unsigned NumOps = P.getNumOperands();
+    if (P.hasProperty(SDNPHasChain))
+      NumOps += 2; // Input and output chains.
+    OS << "  case " << i << ":\n";
+    OS << "    Result.resize(Result.size()+" << NumOps << ");\n";
+    OS << "    return "  << P.getSelectFunc() << "(Root, N";
+    for (unsigned i = 0; i != NumOps; ++i)
+      OS << ", Result[Result.size()-" << (NumOps-i) << ']';
+    OS << ");\n";
+  }
+  OS << "  }\n";
+  OS << "}\n\n";
+  
 }
 
 
