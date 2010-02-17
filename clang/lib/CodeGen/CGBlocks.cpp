@@ -110,7 +110,6 @@ static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info) {
 /// invoke function.
 static void AllocateAllBlockDeclRefs(const CodeGenFunction::BlockInfo &Info,
                                      CodeGenFunction *CGF) {
-#if 0
   // Always allocate self, as it is often handy in the debugger, even if there
   // is no codegen in the block that uses it.  This is also useful to always do
   // this as if we didn't, we'd have to figure out all code that uses a self
@@ -123,7 +122,6 @@ static void AllocateAllBlockDeclRefs(const CodeGenFunction::BlockInfo &Info,
                        SelfDecl->getType(), SourceLocation(), false);
     CGF->AllocateBlockDecl(BDRE);
   }
-#endif
 
   // FIXME: Also always forward the this pointer in C++ as well.
 
