@@ -154,11 +154,11 @@ unsigned X8632_MachoTargetObjectFile::getPersonalityEncoding() const {
 }
 
 unsigned X8632_MachoTargetObjectFile::getLSDAEncoding() const {
-  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  return DW_EH_PE_pcrel;
 }
 
 unsigned X8632_MachoTargetObjectFile::getFDEEncoding() const {
-  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  return DW_EH_PE_pcrel;
 }
 
 unsigned X8632_MachoTargetObjectFile::getTTypeEncoding() const {
@@ -170,11 +170,11 @@ unsigned X8664_MachoTargetObjectFile::getPersonalityEncoding() const {
 }
 
 unsigned X8664_MachoTargetObjectFile::getLSDAEncoding() const {
-  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  return DW_EH_PE_pcrel;
 }
 
 unsigned X8664_MachoTargetObjectFile::getFDEEncoding() const {
-  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  return DW_EH_PE_pcrel;
 }
 
 unsigned X8664_MachoTargetObjectFile::getTTypeEncoding() const {
