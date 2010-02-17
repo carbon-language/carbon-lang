@@ -356,6 +356,11 @@ namespace llvm {
     /// printOffset - This is just convenient handler for printing offsets.
     void printOffset(int64_t Offset) const;
 
+    /// isBlockOnlyReachableByFallthough - Return true if the basic block has
+    /// exactly one predecessor and the control transfer mechanism between
+    /// the predecessor and this block is a fall-through.
+    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
+
   private:
 
     /// processDebugLoc - Processes the debug information of each machine

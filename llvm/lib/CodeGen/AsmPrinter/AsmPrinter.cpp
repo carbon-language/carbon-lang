@@ -1717,7 +1717,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   }
 
   // Print the main label for the block.
-  if (MBB->pred_empty() || MBB->isOnlyReachableByFallthrough()) {
+  if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
     if (VerboseAsm) {
       // NOTE: Want this comment at start of line.
       O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
@@ -1763,6 +1763,39 @@ void AsmPrinter::printOffset(int64_t Offset) const {
   else if (Offset < 0)
     O << Offset;
 }
+
+/// isBlockOnlyReachableByFallthough - Return true if the basic block has
+/// exactly one predecessor and the control transfer mechanism between
+/// the predecessor and this block is a fall-through.
+bool AsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) 
+    const {
+  // If this is a landing pad, it isn't a fall through.  If it has no preds,
+  // then nothing falls through to it.
+  if (MBB->isLandingPad() || MBB->pred_empty())
+    return false;
+  
+  // If there isn't exactly one predecessor, it can't be a fall through.
+  MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
+  ++PI2;
+  if (PI2 != MBB->pred_end())
+    return false;
+  
+  // The predecessor has to be immediately before this block.
+  const MachineBasicBlock *Pred = *PI;
+  
+  if (!Pred->isLayoutSuccessor(MBB))
+    return false;
+  
+  // If the block is completely empty, then it definitely does fall through.
+  if (Pred->empty())
+    return true;
+  
+  // Otherwise, check the last instruction.
+  const MachineInstr &LastInst = Pred->back();
+  return !LastInst.getDesc().isBarrier();
+}
+
+
 
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
   if (!S->usesMetadata())

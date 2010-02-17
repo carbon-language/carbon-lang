@@ -285,11 +285,6 @@ public:
   /// it returns end()
   iterator getFirstTerminator();
 
-  /// isOnlyReachableViaFallthough - Return true if this basic block has
-  /// exactly one predecessor and the control transfer mechanism between
-  /// the predecessor and this block is a fall-through.
-  bool isOnlyReachableByFallthrough() const;
-
   void pop_front() { Insts.pop_front(); }
   void pop_back() { Insts.pop_back(); }
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
