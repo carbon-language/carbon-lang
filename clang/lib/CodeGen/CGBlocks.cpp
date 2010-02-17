@@ -110,19 +110,6 @@ static bool CanBlockBeGlobal(const CodeGenFunction::BlockInfo &Info) {
 /// invoke function.
 static void AllocateAllBlockDeclRefs(const CodeGenFunction::BlockInfo &Info,
                                      CodeGenFunction *CGF) {
-  // Always allocate self, as it is often handy in the debugger, even if there
-  // is no codegen in the block that uses it.  This is also useful to always do
-  // this as if we didn't, we'd have to figure out all code that uses a self
-  // pointer, including implicit uses.
-  if (const ObjCMethodDecl *OMD
-      = dyn_cast_or_null<ObjCMethodDecl>(CGF->CurFuncDecl)) {
-    ImplicitParamDecl *SelfDecl = OMD->getSelfDecl();
-    BlockDeclRefExpr *BDRE = new (CGF->getContext())
-      BlockDeclRefExpr(SelfDecl,
-                       SelfDecl->getType(), SourceLocation(), false);
-    CGF->AllocateBlockDecl(BDRE);
-  }
-
   // FIXME: Also always forward the this pointer in C++ as well.
 
   for (size_t i = 0; i < Info.DeclRefs.size(); ++i)
