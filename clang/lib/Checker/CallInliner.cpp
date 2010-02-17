@@ -65,6 +65,7 @@ bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   BlockEdge Loc(Entry, SuccB, LocCtx);
 
   state = C.getStoreManager().EnterStackFrame(state, LocCtx);
+
   // This is a hack. We really should not use the GRStmtNodeBuilder.
   bool isNew;
   GRExprEngine &Eng = C.getEngine();
@@ -86,15 +87,25 @@ bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
 void CallInliner::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
                               GRExprEngine &Eng) {
   const GRState *state = B.getState();
+
   ExplodedNode *Pred = B.getPredecessor();
+
   const StackFrameContext *LocCtx = 
                          cast<StackFrameContext>(Pred->getLocationContext());
-
-  const Stmt *CE = LocCtx->getCallSite();
-
   // Check if this is the top level stack frame.
   if (!LocCtx->getParent())
     return;
+
+  const StackFrameContext *ParentSF = 
+                                   cast<StackFrameContext>(LocCtx->getParent());
+
+  SymbolReaper SymReaper(*ParentSF->getLiveVariables(), Eng.getSymbolManager(), 
+                         ParentSF);
+  const Stmt *CE = LocCtx->getCallSite();
+
+  state = Eng.getStateManager().RemoveDeadBindings(state, const_cast<Stmt*>(CE),
+                                                   SymReaper);
+
 
   PostStmt NodeLoc(CE, LocCtx->getParent());
 

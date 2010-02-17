@@ -14,6 +14,7 @@
 
 #include "clang/Checker/PathSensitive/SymbolManager.h"
 #include "clang/Checker/PathSensitive/MemRegion.h"
+#include "clang/Analysis/AnalysisContext.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -222,7 +223,11 @@ bool SymbolReaper::isLive(SymbolRef sym) {
 
 bool SymbolReaper::isLive(const Stmt *Loc, const VarRegion *VR) const {
   const StackFrameContext *SFC = VR->getStackFrame();
-  return SFC == CurrentStackFrame ? Liveness.isLive(Loc, VR->getDecl()) : true;
+
+  if (SFC == CurrentStackFrame)
+    return Liveness.isLive(Loc, VR->getDecl());
+  else
+    return SFC->isParentOf(CurrentStackFrame);
 }
 
 SymbolVisitor::~SymbolVisitor() {}
