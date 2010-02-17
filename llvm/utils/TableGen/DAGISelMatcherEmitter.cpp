@@ -21,7 +21,7 @@ using namespace llvm;
 
 namespace {
 enum {
-  CommentIndent = 25
+  CommentIndent = 30
 };
 }
 
@@ -119,11 +119,11 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
   switch (N->getKind()) {
   case MatcherNode::Push: assert(0 && "Should be handled by caller");
   case MatcherNode::EmitNode:
-    OS << "OPC_Emit, /*XXX*/";
-    OS.PadToColumn(CommentIndent) << "// Src: "
-      << *cast<EmitNodeMatcherNode>(N)->getPattern().getSrcPattern() << '\n';
-    OS.PadToColumn(CommentIndent) << "// Dst: "
-      << *cast<EmitNodeMatcherNode>(N)->getPattern().getDstPattern() << '\n';
+    OS << "// Src: "
+       << *cast<EmitNodeMatcherNode>(N)->getPattern().getSrcPattern() << '\n';
+    OS.PadToColumn(Indent*2) << "// Dst: "
+       << *cast<EmitNodeMatcherNode>(N)->getPattern().getDstPattern() << "\n";
+    OS.PadToColumn(Indent*2) << "OPC_Emit, /*XXX*/\n\n";
     return 1;
   case MatcherNode::Record:
     OS << "OPC_Record,\n";
@@ -180,11 +180,13 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
        << cast<CheckValueTypeMatcherNode>(N)->getTypeName() << ",\n";
     return 2;
 
-  case MatcherNode::CheckComplexPat:
-    OS << "OPC_CheckComplexPat, "
-       << getComplexPat(cast<CheckComplexPatMatcherNode>(N)->getPattern())
-       << ",\n";
+  case MatcherNode::CheckComplexPat: {
+    const ComplexPattern &Pattern =
+      cast<CheckComplexPatMatcherNode>(N)->getPattern();
+    OS << "OPC_CheckComplexPat, " << getComplexPat(Pattern) << ',';
+    OS.PadToColumn(CommentIndent) << "// " << Pattern.getSelectFunc() << '\n';
     return 2;
+  }
       
   case MatcherNode::CheckAndImm: {
     int64_t Val = cast<CheckAndImmMatcherNode>(N)->getValue();
@@ -271,7 +273,6 @@ void MatcherTableEmitter::EmitPredicateFunctions() {
   OS << "}\n\n";
   
   // Emit CompletePattern matchers.
-  
   OS << "bool CheckComplexPattern(SDNode *Root, SDValue N,\n";
   OS << "      unsigned PatternNo, SmallVectorImpl<SDValue> &Result) {\n";
   OS << "  switch (PatternNo) {\n";
@@ -290,7 +291,6 @@ void MatcherTableEmitter::EmitPredicateFunctions() {
   }
   OS << "  }\n";
   OS << "}\n\n";
-  
 }
 
 
