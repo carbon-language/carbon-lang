@@ -131,10 +131,10 @@ class RecordMatcherNode : public MatcherNodeWithChild {
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
 public:
-  RecordMatcherNode(StringRef whatfor)
+  RecordMatcherNode(const std::string &whatfor)
     : MatcherNodeWithChild(Record), WhatFor(whatfor) {}
   
-  StringRef getWhatFor() const { return WhatFor; }
+  const std::string &getWhatFor() const { return WhatFor; }
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == Record;

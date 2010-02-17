@@ -249,7 +249,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check
     // it then move back to the parent.
-    AddMatcherNode(new MoveChildMatcherNode(i));
+    AddMatcherNode(new MoveChildMatcherNode(OpNo));
     EmitMatchCode(N->getChild(i), NodeNoTypes->getChild(i));
     AddMatcherNode(new MoveParentMatcherNode());
   }
@@ -266,7 +266,6 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
     NodeNoTypes->setTypes(N->getExtTypes());
     InferPossibleTypes();
   }
-  
   
   // If this node has a name associated with it, capture it in VariableMap. If
   // we already saw this in the pattern, emit code to verify dagness.
@@ -288,7 +287,7 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
           NumRecorded += 2; // Input and output chains.
       } else {
         // If it is a normal named node, we must emit a 'Record' opcode.
-        AddMatcherNode(new RecordMatcherNode(N->getName()));
+        AddMatcherNode(new RecordMatcherNode("$" + N->getName()));
         NumRecorded = 1;
       }
       NextRecordedOperandNo += NumRecorded;
