@@ -1443,6 +1443,17 @@ def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
   let Inst{6-0}   = 0b0011111;
 }
 
+// A8.6.18  BFI - Bitfield insert (Encoding A1)
+// Added for disassembler with the pattern field purposely left blank.
+def BFI    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               "bfi", "\t$dst, $src, $imm", "",
+               [/* For disassembly only; pattern left blank */]>,
+               Requires<[IsARM, HasV6T2]> {
+  let Inst{27-21} = 0b0111110;
+  let Inst{6-4}   = 0b001; // Rn: Inst{3-0} != 15
+}
+
 def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
                   "mvn", "\t$dst, $src",
                   [(set GPR:$dst, (not GPR:$src))]>, UnaryDP {
