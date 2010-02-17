@@ -137,7 +137,9 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     return AddMatcherNode(new CheckCondCodeMatcherNode(LeafRec->getName()));
   
   if (LeafRec->isSubClassOf("ComplexPattern")) {
-    if (!N->getName().empty()) {
+    // We can't model ComplexPattern uses that don't have their name taken yet.
+    // The OPC_CheckComplexPattern operation implicitly records the results.
+    if (N->getName().empty()) {
       errs() << "We expect complex pattern uses to have names: " << *N << "\n";
       exit(1);
     }
