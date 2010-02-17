@@ -1179,6 +1179,12 @@ llvm::ConstantFoldCall(Function *F,
       return 0;
     }
     
+    if (isa<UndefValue>(Operands[0])) {
+      if (Name.startswith("llvm.bswap"))
+        return Operands[0];
+      return 0;
+    }
+
     return 0;
   }
   

@@ -67,3 +67,9 @@ define i16 @test8(i64 %A) {
   %D = tail call i16 @llvm.bswap.i16(i16 %C) nounwind
   ret i16 %D
 }
+
+; Misc: Fold bswap(undef) to undef.
+define i64 @foo() {
+  %a = call i64 @llvm.bswap.i64(i64 undef)
+  ret i64 %a
+}
