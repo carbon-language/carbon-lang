@@ -80,6 +80,10 @@ namespace types {
   /// getCompilationPhase - Return the \args N th compilation phase to
   /// be done for this type.
   phases::ID getCompilationPhase(ID Id, unsigned N);
+  
+  /// lookupCXXTypeForCType - Lookup CXX input type that corresponds to given
+  /// C type (used for clang++ emulation of g++ behaviour)
+  ID lookupCXXTypeForCType(ID Id);
 
 } // end namespace types
 } // end namespace driver

@@ -213,3 +213,19 @@ phases::ID types::getCompilationPhase(ID Id, unsigned N) {
 
   return phases::Link;
 }
+
+ID types::lookupCXXTypeForCType(ID Id) {
+  switch (Id) {
+  default:
+    return Id;
+    
+  case types::TY_C:
+    return types::TY_CXX;
+  case types::TY_PP_C:
+    return types::TY_PP_CXX;
+  case types::TY_CHeader:
+    return types::TY_CXXHeader;
+  case types::TY_PP_CHeader:
+    return types::TY_PP_CXXHeader;
+  }
+}

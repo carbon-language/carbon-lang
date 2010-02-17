@@ -88,6 +88,8 @@ def warn_ignoring_ftabstop_value : Warning<
 def warn_drv_missing_resource_library : Warning<
   "missing resource library '%0', link may fail">;
 def warn_drv_conflicting_deployment_targets : Warning<
-    "conflicting deployment targets, both MACOSX_DEPLOYMENT_TARGET '%0' and IPHONEOS_DEPLOYMENT_TARGET '%1' are present in environment">;
+  "conflicting deployment targets, both MACOSX_DEPLOYMENT_TARGET '%0' and IPHONEOS_DEPLOYMENT_TARGET '%1' are present in environment">;
+def warn_drv_treating_input_as_cxx : Warning<
+  "treating '%0' input as '%1' when in C++ mode, this behavior is deprecated">;
 
 }

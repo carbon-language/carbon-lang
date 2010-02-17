@@ -558,6 +558,17 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
 
           if (Ty == types::TY_INVALID)
             Ty = types::TY_Object;
+
+          // If the driver is invoked as C++ compiler (like clang++ or c++) it
+          // should autodetect some input files as C++ for g++ compatibility.
+          if (CCCIsCXX) {
+            types::ID OldTy = Ty;
+            Ty = types::lookupCXXTypeForCType(Ty);
+
+            if (Ty != OldTy)
+              Diag(clang::diag::warn_drv_treating_input_as_cxx)
+                << getTypeName(OldTy) << getTypeName(Ty);
+          }
         }
 
         // -ObjC and -ObjC++ override the default language, but only for "source
