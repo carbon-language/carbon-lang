@@ -2577,7 +2577,8 @@ def err_case_not_in_switch : Error<"'case' statement not in switch statement">;
 def warn_bool_switch_condition : Warning<
   "switch condition is a bool">;
 def warn_case_value_overflow : Warning<
-  "overflow converting case value to switch condition type (%0 to %1)">;
+  "overflow converting case value to switch condition type (%0 to %1)">,
+  InGroup<DiagGroup<"switch">>;
 def err_duplicate_case : Error<"duplicate case value '%0'">;
 def warn_case_empty_range : Warning<"empty case range specified">;
 def warn_missing_cases : Warning<"enumeration value %0 not handled in switch">,
