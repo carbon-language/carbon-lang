@@ -535,8 +535,7 @@ ready> <b>4+5</b>;
 Read top-level expression:
 define double @""() {
 entry:
-        %addtmp = add double 4.000000e+00, 5.000000e+00
-        ret double %addtmp
+        ret double 9.000000e+00
 }
 </pre>
 </div>
@@ -544,7 +543,8 @@ entry:
 <p>Note how the parser turns the top-level expression into anonymous functions
 for us.  This will be handy when we add <a href="LangImpl4.html#jit">JIT 
 support</a> in the next chapter.  Also note that the code is very literally
-transcribed, no optimizations are being performed.  We will 
+transcribed, no optimizations are being performed except simple constant
+folding done by IRBuilder.  We will 
 <a href="LangImpl4.html#trivialconstfold">add optimizations</a> explicitly in
 the next chapter.</p>
 
