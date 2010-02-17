@@ -213,7 +213,8 @@ namespace {
                              SDValue &Base, SDValue &Scale,
                              SDValue &Index, SDValue &Disp,
                              SDValue &Segment,
-                             SDValue &InChain, SDValue &OutChain);
+                             SDValue &PatternChainResult,
+                             SDValue &PatternInputChain);
     bool TryFoldLoad(SDNode *P, SDValue N,
                      SDValue &Base, SDValue &Scale,
                      SDValue &Index, SDValue &Disp,
@@ -1317,22 +1318,28 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N, SDValue &Base,
 /// SelectScalarSSELoad - Match a scalar SSE load.  In particular, we want to
 /// match a load whose top elements are either undef or zeros.  The load flavor
 /// is derived from the type of N, which is either v4f32 or v2f64.
+///
+/// We also return:
+///  PatternInputChain: this is the chain node input to the pattern that the
+///    newly selected instruction should use.
+///  PatternChainResult: this is chain result matched by the pattern which
+///    should be replaced with the chain result of the matched node.
 bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
                                           SDValue N, SDValue &Base,
                                           SDValue &Scale, SDValue &Index,
                                           SDValue &Disp, SDValue &Segment,
-                                          SDValue &InChain,
-                                          SDValue &OutChain) {
+                                          SDValue &PatternChainResult,
+                                          SDValue &PatternInputChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    InChain = N.getOperand(0).getValue(1);
-    if (ISD::isNON_EXTLoad(InChain.getNode()) &&
-        InChain.getValue(0).hasOneUse() &&
-        IsProfitableToFold(N.getOperand(0), InChain.getNode(), Root) &&
+    PatternChainResult = N.getOperand(0).getValue(1);
+    if (ISD::isNON_EXTLoad(PatternChainResult.getNode()) &&
+        PatternChainResult.getValue(0).hasOneUse() &&
+        IsProfitableToFold(N.getOperand(0),PatternChainResult.getNode(),Root) &&
         IsLegalToFold(N.getOperand(0), N.getNode(), Root)) {
-      LoadSDNode *LD = cast<LoadSDNode>(InChain);
+      LoadSDNode *LD = cast<LoadSDNode>(PatternChainResult);
       if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
         return false;
-      OutChain = LD->getChain();
+      PatternInputChain = LD->getChain();
       return true;
     }
   }
@@ -1351,8 +1358,8 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
     if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
       return false;
-    OutChain = LD->getChain();
-    InChain = SDValue(LD, 1);
+    PatternInputChain = LD->getChain();
+    PatternChainResult = SDValue(LD, 1);
     return true;
   }
   return false;
