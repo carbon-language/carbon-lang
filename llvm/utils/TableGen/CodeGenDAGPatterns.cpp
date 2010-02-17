@@ -1648,7 +1648,9 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
     return;
-  } else if (Pat->getOperator()->getName() == "implicit") {
+  }
+  
+  if (Pat->getOperator()->getName() == "implicit") {
     for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i) {
       TreePatternNode *Dest = Pat->getChild(i);
       if (!Dest->isLeaf())
@@ -1660,7 +1662,9 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       InstImpResults.push_back(Val->getDef());
     }
     return;
-  } else if (Pat->getOperator()->getName() != "set") {
+  }
+  
+  if (Pat->getOperator()->getName() != "set") {
     // If this is not a set, verify that the children nodes are not void typed,
     // and recurse.
     for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i) {
@@ -1677,7 +1681,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
     return;
-  } 
+  }
   
   // Otherwise, this is a set, validate and collect instruction results.
   if (Pat->getNumChildren() == 0)
