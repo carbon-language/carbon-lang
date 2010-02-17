@@ -1,4 +1,4 @@
-//===-- PIC16FrameOverlay.h - Interface for PIC16 Frame Overlay -*- C++ -*-===//
+//===-- PIC16Overlay.h - Interface for PIC16 Frame Overlay -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,30 +14,35 @@
 #ifndef PIC16FRAMEOVERLAY_H
 #define PIC16FRAMEOVERLAY_H
  
-#include "llvm/Analysis/CallGraph.h"
-#include "llvm/Pass.h"
-#include "llvm/CallGraphSCCPass.h"
 
 using std::string;
 using namespace llvm;
 
 namespace  llvm {
-  namespace PIC16Overlay {
+  // Forward declarations.
+  class Function;
+  class Module;
+  class ModulePass;
+  class AnalysisUsage;
+  class CallGraphNode;
+  class CallGraph;
+
+  namespace PIC16OVERLAY {
     enum OverlayConsts {
       StartInterruptColor = 200,
       StartIndirectCallColor = 300
     }; 
   }
-  class PIC16FrameOverlay : public ModulePass {
+  class PIC16Overlay : public ModulePass {
     std::string OverlayStr;
     unsigned InterruptDepth;
     unsigned IndirectCallColor;
   public:
     static char ID; // Class identification 
-    PIC16FrameOverlay() : ModulePass(&ID) {
+    PIC16Overlay() : ModulePass(&ID) {
       OverlayStr = "Overlay=";
-      InterruptDepth = PIC16Overlay::StartInterruptColor;
-      IndirectCallColor = PIC16Overlay::StartIndirectCallColor;
+      InterruptDepth = PIC16OVERLAY::StartInterruptColor;
+      IndirectCallColor = PIC16OVERLAY::StartIndirectCallColor;
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const; 

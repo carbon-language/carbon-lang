@@ -24,27 +24,27 @@
 using namespace llvm;
 
 namespace llvm {
-  char PIC16FrameOverlay::ID = 0;
-  ModulePass *createPIC16OverlayPass() { return new PIC16FrameOverlay(); }
+  char PIC16Overlay::ID = 0;
+  ModulePass *createPIC16OverlayPass() { return new PIC16Overlay(); }
 }
 
-void PIC16FrameOverlay::getAnalysisUsage(AnalysisUsage &AU) const {
+void PIC16Overlay::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<CallGraph>();
 }
 
-void PIC16FrameOverlay::DFSTraverse(CallGraphNode *CGN, unsigned Depth) {
+void PIC16Overlay::DFSTraverse(CallGraphNode *CGN, unsigned Depth) {
   // Do not set any color for external calling node.
   if (Depth != 0 && CGN->getFunction()) {
     unsigned Color = getColor(CGN->getFunction());
 
     // Handle indirectly called functions
-    if (Color >= PIC16Overlay::StartIndirectCallColor || 
-        Depth >= PIC16Overlay::StartIndirectCallColor) {
+    if (Color >= PIC16OVERLAY::StartIndirectCallColor || 
+        Depth >= PIC16OVERLAY::StartIndirectCallColor) {
       // All functions called from an indirectly called function are given
       // an unique color.
-      if (Color < PIC16Overlay::StartIndirectCallColor &&
-          Depth >= PIC16Overlay::StartIndirectCallColor)
+      if (Color < PIC16OVERLAY::StartIndirectCallColor &&
+          Depth >= PIC16OVERLAY::StartIndirectCallColor)
         setColor(CGN->getFunction(), Depth);
 
       for (unsigned int i = 0; i < CGN->size(); i++)
@@ -65,7 +65,7 @@ void PIC16FrameOverlay::DFSTraverse(CallGraphNode *CGN, unsigned Depth) {
     DFSTraverse((*CGN)[i], Depth+1);
 }
 
-unsigned PIC16FrameOverlay::ModifyDepthForInterrupt(CallGraphNode *CGN,
+unsigned PIC16Overlay::ModifyDepthForInterrupt(CallGraphNode *CGN,
                                                     unsigned Depth) {
   Function *Fn = CGN->getFunction();
 
@@ -81,7 +81,7 @@ unsigned PIC16FrameOverlay::ModifyDepthForInterrupt(CallGraphNode *CGN,
   return Depth;
 }
 
-void PIC16FrameOverlay::setColor(Function *Fn, unsigned Color) {
+void PIC16Overlay::setColor(Function *Fn, unsigned Color) {
   std::string Section = "";
   if (Fn->hasSection())
     Section = Fn->getSection();
@@ -119,7 +119,7 @@ void PIC16FrameOverlay::setColor(Function *Fn, unsigned Color) {
   Fn->setSection(Section);
 }
 
-unsigned PIC16FrameOverlay::getColor(Function *Fn) {
+unsigned PIC16Overlay::getColor(Function *Fn) {
   int Color = 0;
   if (!Fn->hasSection())
     return 0;
@@ -150,7 +150,7 @@ unsigned PIC16FrameOverlay::getColor(Function *Fn) {
   return Color;    
 }
 
-bool PIC16FrameOverlay::runOnModule(Module &M) {
+bool PIC16Overlay::runOnModule(Module &M) {
   CallGraph &CG = getAnalysis<CallGraph>();
   CallGraphNode *ECN = CG.getExternalCallingNode();
 
@@ -164,7 +164,7 @@ bool PIC16FrameOverlay::runOnModule(Module &M) {
   return false;
 }
 
-void PIC16FrameOverlay::MarkIndirectlyCalledFunctions(Module &M) {
+void PIC16Overlay::MarkIndirectlyCalledFunctions(Module &M) {
   // If the use of a function is not a call instruction then this
   // function might be called indirectly. In that case give it
   // an unique color.
