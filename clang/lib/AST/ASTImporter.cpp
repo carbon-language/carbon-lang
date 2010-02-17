@@ -96,7 +96,8 @@ namespace {
     Decl *VisitObjCMethodDecl(ObjCMethodDecl *D);
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
-                            
+    Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+
     // Importing statements
     Stmt *VisitStmt(Stmt *S);
 
@@ -2313,6 +2314,66 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   }
   
   return ToIface;
+}
+
+Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+  // Import the major distinguishing characteristics of an @property.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+
+  // Check whether we have already imported this property.
+  for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+       Lookup.first != Lookup.second; 
+       ++Lookup.first) {
+    if (ObjCPropertyDecl *FoundProp
+                                = dyn_cast<ObjCPropertyDecl>(*Lookup.first)) {
+      // Check property types.
+      if (!Importer.IsStructurallyEquivalent(D->getType(), 
+                                             FoundProp->getType())) {
+        Importer.ToDiag(Loc, diag::err_odr_objc_property_type_inconsistent)
+          << Name << D->getType() << FoundProp->getType();
+        Importer.ToDiag(FoundProp->getLocation(), diag::note_odr_value_here)
+          << FoundProp->getType();
+        return 0;
+      }
+
+      // FIXME: Check property attributes, getters, setters, etc.?
+
+      // Consider these properties to be equivalent.
+      Importer.Imported(D, FoundProp);
+      return FoundProp;
+    }
+  }
+
+  // Import the type.
+  QualType T = Importer.Import(D->getType());
+  if (T.isNull())
+    return 0;
+
+  // Create the new property.
+  ObjCPropertyDecl *ToProperty
+    = ObjCPropertyDecl::Create(Importer.getToContext(), DC, Loc,
+                               Name.getAsIdentifierInfo(), 
+                               Importer.Import(D->getAtLoc()),
+                               T,
+                               D->getPropertyImplementation());
+  Importer.Imported(D, ToProperty);
+  ToProperty->setLexicalDeclContext(LexicalDC);
+  LexicalDC->addDecl(ToProperty);
+
+  ToProperty->setPropertyAttributes(D->getPropertyAttributes());
+  ToProperty->setGetterName(Importer.Import(D->getGetterName()));
+  ToProperty->setSetterName(Importer.Import(D->getSetterName()));
+  ToProperty->setGetterMethodDecl(
+     cast_or_null<ObjCMethodDecl>(Importer.Import(D->getGetterMethodDecl())));
+  ToProperty->setSetterMethodDecl(
+     cast_or_null<ObjCMethodDecl>(Importer.Import(D->getSetterMethodDecl())));
+  ToProperty->setPropertyIvarDecl(
+       cast_or_null<ObjCIvarDecl>(Importer.Import(D->getPropertyIvarDecl())));
+  return ToProperty;
 }
 
 //----------------------------------------------------------------------------

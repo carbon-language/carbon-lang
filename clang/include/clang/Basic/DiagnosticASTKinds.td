@@ -74,5 +74,8 @@ def err_odr_objc_method_variadic_inconsistent : Error<
   "and not variadic in another">;
 def note_odr_objc_method_here : Note<
   "%select{class|instance}0 method %1 also declared here">;
+def err_odr_objc_property_type_inconsistent : Error<
+  "property %0 declared with incompatible types in different "
+  "translation units (%1 vs. %2)">;
 def err_unsupported_ast_node: Error<"cannot import unsupported AST node %0">;
 }
