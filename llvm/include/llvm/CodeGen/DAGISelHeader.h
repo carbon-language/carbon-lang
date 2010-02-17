@@ -319,13 +319,11 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckPredicate:
       if (!CheckNodePredicate(N.getNode(), MatcherTable[MatcherIndex++])) break;
       continue;
-    case OPC_CheckComplexPat: {
-      unsigned PatNo = MatcherTable[MatcherIndex++];
-      (void)PatNo;
-      // FIXME: CHECK IT.
+    case OPC_CheckComplexPat:
+      if (!CheckComplexPattern(NodeToMatch, N, 
+                               MatcherTable[MatcherIndex++], RecordedNodes))
+        break;
       continue;
-    }
-        
     case OPC_CheckOpcode:
       if (N->getOpcode() != MatcherTable[MatcherIndex++]) break;
       continue;
