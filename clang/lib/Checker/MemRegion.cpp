@@ -419,20 +419,27 @@ const REG *MemRegionManager::LazyAllocate(REG*& region, ARG a) {
 const StackLocalsSpaceRegion*
 MemRegionManager::getStackLocalsRegion(const StackFrameContext *STC) {
   assert(STC);
-  if (STC == cachedStackLocalsFrame)
-    return cachedStackLocalsRegion;
-  cachedStackLocalsFrame = STC;
-  return LazyAllocate(cachedStackLocalsRegion, STC);
+  StackLocalsSpaceRegion *&R = StackLocalsSpaceRegions[STC];
+
+  if (R)
+    return R;
+
+  R = A.Allocate<StackLocalsSpaceRegion>();
+  new (R) StackLocalsSpaceRegion(this, STC);
+  return R;
 }
 
 const StackArgumentsSpaceRegion *
 MemRegionManager::getStackArgumentsRegion(const StackFrameContext *STC) {
   assert(STC);
-  if (STC == cachedStackArgumentsFrame)
-    return cachedStackArgumentsRegion;
-  
-  cachedStackArgumentsFrame = STC;
-  return LazyAllocate(cachedStackArgumentsRegion, STC);
+  StackArgumentsSpaceRegion *&R = StackArgumentsSpaceRegions[STC];
+
+  if (R)
+    return R;
+
+  R = A.Allocate<StackArgumentsSpaceRegion>();
+  new (R) StackArgumentsSpaceRegion(this, STC);
+  return R;
 }
 
 const GlobalsSpaceRegion *MemRegionManager::getGlobalsRegion() {
