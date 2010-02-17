@@ -24,3 +24,7 @@ static void f7(void);
 void f8(void(*a0)(void));
 void f9(void) { f8(f7); }
 static void f7(void) {}
+
+__attribute__((unused)) static void bar(void);
+void bar(void) { }
+

@@ -3135,7 +3135,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // FIXME: Also include static functions declared but not defined.
   if (!NewFD->isInvalidDecl() && IsFunctionDefinition 
       && !NewFD->isInlined() && NewFD->getLinkage() == InternalLinkage
-      && !NewFD->isUsed())
+      && !NewFD->isUsed() && !NewFD->hasAttr<UnusedAttr>())
     UnusedStaticFuncs.push_back(NewFD);
   
   return NewFD;
