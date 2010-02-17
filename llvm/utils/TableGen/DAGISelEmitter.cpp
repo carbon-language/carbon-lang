@@ -1975,7 +1975,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   // definitions.  Emit the resultant instruction selector.
   EmitInstructionSelector(OS);  
   
-#if 1
+#if 0
   MatcherNode *Matcher = 0;
   // Walk the patterns backwards, building a matcher for each and adding it to
   // the matcher for the whole target.
