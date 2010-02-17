@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse,+sse2 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse,+sse2,+sse41 | FileCheck %s
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"
