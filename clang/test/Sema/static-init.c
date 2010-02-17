@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -triple i386-pc-linux-gnu -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
-#include <stdint.h>
+typedef __typeof((int*) 0 - (int*) 0) intptr_t;
 
 static int f = 10;
 static int b = f; // expected-error {{initializer element is not a compile-time constant}}
