@@ -2221,7 +2221,9 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
     QualType Ty = CE->getCallee()->getType();
     if (const PointerType *PT = Ty->getAs<PointerType>())
       Ty = PT->getPointeeType();
-    
+    else if (const BlockPointerType *BPT = Ty->getAs<BlockPointerType>())
+      Ty = BPT->getPointeeType();
+
     const FunctionType *FTy = Ty->getAs<FunctionType>();
     if (FTy->getResultType()->isReferenceType())
       return Owned(E);
