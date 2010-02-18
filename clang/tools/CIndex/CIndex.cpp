@@ -966,9 +966,9 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     const llvm::MemoryBuffer *Buffer
-    = llvm::MemoryBuffer::getMemBuffer(unsaved_files[I].Contents,
-                                       unsaved_files[I].Contents + unsaved_files[I].Length,
-                                       unsaved_files[I].Filename);
+      = llvm::MemoryBuffer::getMemBuffer(unsaved_files[I].Contents,
+                          unsaved_files[I].Contents + unsaved_files[I].Length,
+                                         unsaved_files[I].Filename);
     RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
                                            Buffer));
   }
@@ -1129,12 +1129,19 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     }
   }
 
-  if (ATU)
-    ATU->unlinkTemporaryFile();
-
-  for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
-    TemporaryFiles[i].eraseFromDisk();
-
+  if (ATU) {
+    // Make the translation unit responsible for destroying all temporary files.
+    for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
+      ATU->addTemporaryFile(TemporaryFiles[i]);
+    ATU->addTemporaryFile(llvm::sys::Path(ATU->getPCHFileName()));
+  } else {
+    // Destroy all of the temporary files now; they can't be referenced any
+    // longer.
+    llvm::sys::Path(astTmpFile).eraseFromDisk();
+    for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
+      TemporaryFiles[i].eraseFromDisk();
+  }
+  
   return ATU;
 }
 

@@ -36,11 +36,11 @@
 using namespace clang;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : tempFile(false), MainFileIsAST(_MainFileIsAST) {
+  : MainFileIsAST(_MainFileIsAST) {
 }
 ASTUnit::~ASTUnit() {
-  if (tempFile)
-    llvm::sys::Path(getPCHFileName()).eraseFromDisk();
+  for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
+    TemporaryFiles[I].eraseFromDisk();
 }
 
 namespace {

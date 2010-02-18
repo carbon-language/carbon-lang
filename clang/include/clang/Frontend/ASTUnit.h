@@ -19,6 +19,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Index/ASTLocation.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/System/Path.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -52,7 +53,6 @@ class ASTUnit {
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
-  bool                              tempFile;
 
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
@@ -85,6 +85,10 @@ class ASTUnit {
   /// translation unit.
   llvm::SmallVector<StoredDiagnostic, 4> Diagnostics;
 
+  /// \brief Temporary files that should be removed when the ASTUnit is 
+  /// destroyed.
+  llvm::SmallVector<llvm::sys::Path, 4> TemporaryFiles;
+  
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
 
@@ -109,8 +113,13 @@ public:
   const std::string &getOriginalSourceFileName();
   const std::string &getPCHFileName();
 
-  void unlinkTemporaryFile() { tempFile = true; }
-
+  /// \brief Add a temporary file that the ASTUnit depends on.
+  ///
+  /// This file will be erased when the ASTUnit is destroyed.
+  void addTemporaryFile(const llvm::sys::Path &TempFile) {
+    TemporaryFiles.push_back(TempFile);
+  }
+                        
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
 
   void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }

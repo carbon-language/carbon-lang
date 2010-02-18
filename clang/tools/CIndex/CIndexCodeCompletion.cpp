@@ -195,6 +195,10 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief File manager, used for diagnostics.
   FileManager FileMgr;
+  
+  /// \brief Temporary files that should be removed once we have finished
+  /// with the code-completion results.
+  std::vector<llvm::sys::Path> TemporaryFiles;
 };
 
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
@@ -205,6 +209,9 @@ AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
     delete (CodeCompletionString *)Results[I].CompletionString;
   delete [] Results;
   delete Buffer;
+  
+  for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
+    TemporaryFiles[I].eraseFromDisk();
 }
   
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
@@ -369,8 +376,9 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                             Results->FileMgr, Results->SourceMgr, 
                             Results->Diagnostics);
 
-  for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
-    TemporaryFiles[i].eraseFromDisk();
+  // Make sure we delete temporary files when the code-completion results are
+  // destroyed.
+  Results->TemporaryFiles.swap(TemporaryFiles);
 
   return Results;
 }
