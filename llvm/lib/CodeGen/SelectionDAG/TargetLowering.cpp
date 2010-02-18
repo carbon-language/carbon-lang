@@ -1775,7 +1775,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         break;   // todo, be more careful with signed comparisons
       }
     } else if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-                (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+               (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
       EVT ExtSrcTy = cast<VTSDNode>(N0.getOperand(1))->getVT();
       unsigned ExtSrcTyBits = ExtSrcTy.getSizeInBits();
       EVT ExtDstTy = N0.getValueType();
@@ -1809,7 +1809,6 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                           Cond);
     } else if ((N1C->isNullValue() || N1C->getAPIntValue() == 1) &&
                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
-      
       // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
       if (N0.getOpcode() == ISD::SETCC) {
         bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getAPIntValue() != 1);
@@ -1822,9 +1821,9 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                                   N0.getOperand(0).getValueType().isInteger());
         return DAG.getSetCC(dl, VT, N0.getOperand(0), N0.getOperand(1), CC);
       }
-      
+
       if ((N0.getOpcode() == ISD::XOR ||
-            (N0.getOpcode() == ISD::AND && 
+           (N0.getOpcode() == ISD::AND && 
             N0.getOperand(0).getOpcode() == ISD::XOR &&
             N0.getOperand(1) == N0.getOperand(0).getOperand(1))) &&
           isa<ConstantSDNode>(N0.getOperand(1)) &&
@@ -1847,7 +1846,24 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                               N0.getOperand(0).getOperand(0),
                               N0.getOperand(1));
           }
+
           return DAG.getSetCC(dl, VT, Val, N1,
+                              Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
+        }
+      } else if (N1C->getAPIntValue() == 1) {
+        // If this is (X&1) == / != 1, normalize it to (X&1) != / == 0.
+        SDValue Op0 = N0;
+        if (Op0.getOpcode() == ISD::TRUNCATE)
+          Op0 = Op0.getOperand(0);
+        if (Op0.getOpcode() == ISD::AND &&
+            isa<ConstantSDNode>(Op0.getOperand(1)) &&
+            cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
+          if (Op0.getValueType() != VT)
+            Op0 = DAG.getNode(ISD::AND, dl, VT,
+                          DAG.getNode(ISD::TRUNCATE, dl, VT, Op0.getOperand(0)),
+                          DAG.getConstant(1, VT));
+          return DAG.getSetCC(dl, VT, Op0,
+                              DAG.getConstant(0, Op0.getValueType()),
                               Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
         }
       }
