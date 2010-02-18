@@ -3462,7 +3462,7 @@ let Constraints = "$src1 = $dst" in {
                    (ins VR128:$src1, i128mem:$src2),
                    !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
                    [(set VR128:$dst,
-                     (OpNode VR128:$src1, (memop addr:$src2)))]>, OpSize;
+                     (OpVT (OpNode VR128:$src1, (memop addr:$src2))))]>, OpSize;
     def rm_int : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
                        (ins VR128:$src1, i128mem:$src2),
                        !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
