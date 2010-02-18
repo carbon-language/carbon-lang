@@ -200,9 +200,9 @@
                      to null?</b></a>
 </div>
 <div class="doc_text">
-  <p>You can compute an address that way, but you can't use that pointer to
-     actually access the object if you do, unless the object is managed
-     outside of LLVM.</p>
+  <p>You can compute an address that way, but if you use GEP to do the add,
+     you can't use that pointer to actually access the object, unless the
+     object is managed outside of LLVM.</p>
 
   <p>The underlying integer computation is sufficiently defined; null has a
      defined value -- zero -- and you can add whatever value you want to it.</p>
@@ -210,6 +210,11 @@
   <p>However, it's invalid to access (load from or store to) an LLVM-aware
      object with such a pointer. This includes GlobalVariables, Allocas, and
      objects pointed to by noalias pointers.</p>
+
+  <p>If you really need this functionality, you can do the arithmetic with
+     explicit integer instructions, and use inttoptr to convert the result to
+     an address. Most of GEP's special aliasing rules do not apply to pointers
+     computed from ptrtoint, arithmetic, and inttoptr sequences.</p>
 
 </div>
 
@@ -219,9 +224,12 @@
                      that value to one address to compute the other address?</b></a>
 </div>
 <div class="doc_text">
-  <p>As with arithmetic on null, You can compute an address that way, but
-     you can't use that pointer to actually access the object if you do,
-     unless the object is managed outside of LLVM.</p>
+  <p>As with arithmetic on null, You can use GEP to compute an address that
+     way, but you can't use that pointer to actually access the object if you
+     do, unless the object is managed outside of LLVM.</p>
+
+  <p>Also as above, ptrtoint and inttoptr provide an alternative way to do this
+     which do not have this restriction.</p>
 
 </div>
 
