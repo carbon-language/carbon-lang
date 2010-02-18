@@ -494,6 +494,8 @@ public:
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
 
+  void GenerateBody(GlobalDecl GD, llvm::Function *Fn,  FunctionArgList &Args);
+
   /// EmitReturnBlock - Emit the unified return block, trying to avoid its
   /// emission when possible.
   void EmitReturnBlock();
@@ -536,15 +538,9 @@ public:
                                    llvm::Function *Fn,
                                    const FunctionArgList &Args);
 
-  void SynthesizeDefaultConstructor(const CXXConstructorDecl *Ctor,
-                                    CXXCtorType Type,
-                                    llvm::Function *Fn,
-                                    const FunctionArgList &Args);
-
-  void SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
-                                   CXXDtorType Type,
-                                   llvm::Function *Fn,
-                                   const FunctionArgList &Args);
+  void SynthesizeImplicitFunctionBody(GlobalDecl GD,
+                                      llvm::Function *Fn,
+                                      const FunctionArgList &Args);
 
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes in

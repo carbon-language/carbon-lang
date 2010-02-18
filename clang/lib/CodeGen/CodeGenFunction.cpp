@@ -241,6 +241,53 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   }
 }
 
+void CodeGenFunction::GenerateBody(GlobalDecl GD, llvm::Function *Fn, 
+                                   FunctionArgList &Args) {
+  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+
+  Stmt *Body = FD->getBody();
+  assert((Body || FD->isImplicit()) && "non-implicit function def has no body");
+
+  // Emit special ctor/dtor prologues.
+  llvm::BasicBlock *DtorEpilogue = 0;
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+    EmitCtorPrologue(CD, GD.getCtorType());
+  } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
+    DtorEpilogue = createBasicBlock("dtor.epilogue");
+    PushCleanupBlock(DtorEpilogue);
+
+    InitializeVtablePtrs(DD->getParent());
+  }
+
+  // Emit the body of the function.
+  if (!Body)
+    SynthesizeImplicitFunctionBody(GD, Fn, Args);
+  else {
+    if (isa<CXXTryStmt>(Body))
+      OuterTryBlock = cast<CXXTryStmt>(Body);
+
+    EmitStmt(Body);
+  }
+
+  // Emit special ctor/ctor epilogues.
+  if (isa<CXXConstructorDecl>(FD)) {
+    // If any of the member initializers are temporaries bound to references
+    // make sure to emit their destructors.
+    EmitCleanupBlocks(0);
+  } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
+    CleanupBlockInfo Info = PopCleanupBlock();
+    assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
+
+    EmitBlock(DtorEpilogue);
+    EmitDtorEpilogue(DD, GD.getDtorType());
+      
+    if (Info.SwitchBlock)
+      EmitBlock(Info.SwitchBlock);
+    if (Info.EndBlock)
+      EmitBlock(Info.EndBlock);
+  }
+}
+
 void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
   
@@ -284,80 +331,17 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
                                     FProto->getArgType(i)));
   }
 
-  if (const CompoundStmt *S = FD->getCompoundBody()) {
-    StartFunction(GD, FD->getResultType(), Fn, Args, S->getLBracLoc());
+  SourceRange BodyRange;
+  if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();
 
-    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      EmitCtorPrologue(CD, GD.getCtorType());
-      EmitStmt(S);
-      
-      // If any of the member initializers are temporaries bound to references
-      // make sure to emit their destructors.
-      EmitCleanupBlocks(0);
-      
-    } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-      llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
-      PushCleanupBlock(DtorEpilogue);
+  // Emit the standard function prologue.
+  StartFunction(GD, FD->getResultType(), Fn, Args, BodyRange.getBegin());
 
-      InitializeVtablePtrs(DD->getParent());
+  // Generate the body of the function.
+  GenerateBody(GD, Fn, Args);
 
-      EmitStmt(S);
-      
-      CleanupBlockInfo Info = PopCleanupBlock();
-
-      assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
-      EmitBlock(DtorEpilogue);
-      EmitDtorEpilogue(DD, GD.getDtorType());
-      
-      if (Info.SwitchBlock)
-        EmitBlock(Info.SwitchBlock);
-      if (Info.EndBlock)
-        EmitBlock(Info.EndBlock);
-    } else {
-      // Just a regular function, emit its body.
-      EmitStmt(S);
-    }
-    
-    FinishFunction(S->getRBracLoc());
-  } else if (FD->isImplicit()) {
-    const CXXRecordDecl *ClassDecl =
-      cast<CXXRecordDecl>(FD->getDeclContext());
-    (void) ClassDecl;
-    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      // FIXME: For C++0x, we want to look for implicit *definitions* of
-      // these special member functions, rather than implicit *declarations*.
-      if (CD->isCopyConstructor()) {
-        assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
-               "Cannot synthesize a non-implicit copy constructor");
-        SynthesizeCXXCopyConstructor(CD, GD.getCtorType(), Fn, Args);
-      } else if (CD->isDefaultConstructor()) {
-        assert(!ClassDecl->hasUserDeclaredConstructor() &&
-               "Cannot synthesize a non-implicit default constructor.");
-        SynthesizeDefaultConstructor(CD, GD.getCtorType(), Fn, Args);
-      } else {
-        assert(false && "Implicit constructor cannot be synthesized");
-      }
-    } else if (const CXXDestructorDecl *CD = dyn_cast<CXXDestructorDecl>(FD)) {
-      assert(!ClassDecl->hasUserDeclaredDestructor() &&
-             "Cannot synthesize a non-implicit destructor");
-      SynthesizeDefaultDestructor(CD, GD.getDtorType(), Fn, Args);
-    } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      assert(MD->isCopyAssignment() && 
-             !ClassDecl->hasUserDeclaredCopyAssignment() &&
-             "Cannot synthesize a method that is not an implicit-defined "
-             "copy constructor");
-      SynthesizeCXXCopyAssignment(MD, Fn, Args);
-    } else {
-      assert(false && "Cannot synthesize unknown implicit function");
-    }
-  } else if (const Stmt *S = FD->getBody()) {
-    if (const CXXTryStmt *TS = dyn_cast<CXXTryStmt>(S)) {
-      OuterTryBlock = TS;
-      StartFunction(GD, FD->getResultType(), Fn, Args, TS->getTryLoc());
-      EmitStmt(TS);
-      FinishFunction(TS->getEndLoc());
-    }
-  }
+  // Emit the standard function epilogue.
+  FinishFunction(BodyRange.getEnd());
 
   // Destroy the 'this' declaration.
   if (CXXThisDecl)

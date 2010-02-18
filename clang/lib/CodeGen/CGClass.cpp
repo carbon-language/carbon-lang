@@ -590,17 +590,44 @@ void CodeGenFunction::EmitClassCopyAssignment(
            Callee, ReturnValueSlot(), CallArgs, MD);
 }
 
-/// SynthesizeDefaultConstructor - synthesize a default constructor
-void
-CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *Ctor,
-                                              CXXCtorType Type,
-                                              llvm::Function *Fn,
-                                              const FunctionArgList &Args) {
-  assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
-  StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
-                SourceLocation());
-  EmitCtorPrologue(Ctor, Type);
-  FinishFunction();
+/// Synthesizes an implicit function body.  Since these only arise in
+/// C++, we only do them in C++.
+void CodeGenFunction::SynthesizeImplicitFunctionBody(GlobalDecl GD,
+                                                     llvm::Function *Fn,
+                                               const FunctionArgList &Args) {
+  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+
+  // FIXME: this should become isImplicitlyDefined() once we properly
+  // support that for C++0x.
+  assert(FD->isImplicit() && "Cannot synthesize a non-implicit function");
+
+  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+    assert(!CD->isTrivial() && "shouldn't need to synthesize a trivial ctor");
+
+    if (CD->isDefaultConstructor()) {
+      // Sema generates base and member initializers as for this, so
+      // the ctor prologue is good enough here.
+      return;
+    } else {
+      assert(CD->isCopyConstructor());
+      return SynthesizeCXXCopyConstructor(CD, GD.getCtorType(), Fn, Args);
+    }
+  }
+
+  if (isa<CXXDestructorDecl>(FD)) {
+    // The dtor epilogue does everything we'd need to do here.
+    return;
+  }
+
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(FD);
+
+  // FIXME: in C++0x we might have user-declared copy assignment operators
+  // coexisting with implicitly-defined ones.
+  assert(MD->isCopyAssignment() &&
+         !MD->getParent()->hasUserDeclaredCopyAssignment() &&
+         "Cannot synthesize a method that is not an implicitly-defined "
+         "copy constructor");
+  SynthesizeCXXCopyAssignment(MD, Fn, Args);
 }
 
 /// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a
@@ -627,8 +654,6 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
       "SynthesizeCXXCopyConstructor - copy constructor has definition already");
   assert(!Ctor->isTrivial() && "shouldn't need to generate trivial ctor");
-  StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
-                SourceLocation());
 
   FunctionArgList::const_iterator i = Args.begin();
   const VarDecl *ThisArg = i->first;
@@ -698,7 +723,6 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
   }
 
   InitializeVtablePtrs(ClassDecl);
-  FinishFunction();
 }
 
 /// SynthesizeCXXCopyAssignment - Implicitly define copy assignment operator.
@@ -728,7 +752,6 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
          "SynthesizeCXXCopyAssignment - copy assignment has user declaration");
-  StartFunction(CD, CD->getResultType(), Fn, Args, SourceLocation());
 
   FunctionArgList::const_iterator i = Args.begin();
   const VarDecl *ThisArg = i->first;
@@ -796,8 +819,6 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
 
   // return *this;
   Builder.CreateStore(LoadOfThis, ReturnValue);
-
-  FinishFunction();
 }
 
 static void EmitBaseInitializer(CodeGenFunction &CGF, 
@@ -1052,20 +1073,6 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
     EmitDeleteCall(DD->getOperatorDelete(), LoadCXXThis(),
                    getContext().getTagDeclType(ClassDecl));
   }
-}
-
-void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
-                                                  CXXDtorType DtorType,
-                                                  llvm::Function *Fn,
-                                                  const FunctionArgList &Args) {
-  assert(!Dtor->getParent()->hasUserDeclaredDestructor() &&
-         "SynthesizeDefaultDestructor - destructor has user declaration");
-
-  StartFunction(GlobalDecl(Dtor, DtorType), Dtor->getResultType(), Fn, Args, 
-                SourceLocation());
-  InitializeVtablePtrs(Dtor->getParent());
-  EmitDtorEpilogue(Dtor, DtorType);
-  FinishFunction();
 }
 
 /// EmitCXXAggrConstructorCall - This routine essentially creates a (nested)
