@@ -1069,7 +1069,7 @@ def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
                    "ldrsb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
 }
 
-// LDRT and LDRBT are for disassembly only.
+// LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
 
 def LDRT : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
                    (ins GPR:$base, am2offset:$offset), LdFrm, IIC_iLoadru,
@@ -1078,8 +1078,26 @@ def LDRT : AI2ldwpo<(outs GPR:$dst, GPR:$base_wb),
 }
 
 def LDRBT : AI2ldbpo<(outs GPR:$dst, GPR:$base_wb),
-                   (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoadru,
-                   "ldrb", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+                  (ins GPR:$base,am2offset:$offset), LdFrm, IIC_iLoadru,
+                  "ldrbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+  let Inst{21} = 1; // overwrite
+}
+
+def LDRSBT : AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
+                 (ins GPR:$base,am2offset:$offset), LdMiscFrm, IIC_iLoadru,
+                 "ldrsbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+  let Inst{21} = 1; // overwrite
+}
+
+def LDRHT : AI3ldhpo<(outs GPR:$dst, GPR:$base_wb),
+                  (ins GPR:$base, am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                  "ldrht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+  let Inst{21} = 1; // overwrite
+}
+
+def LDRSHT : AI3ldshpo<(outs GPR:$dst, GPR:$base_wb),
+                 (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
+                 "ldrsht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 

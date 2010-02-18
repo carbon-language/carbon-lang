@@ -734,7 +734,7 @@ class AI3ldhpo<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{6}     = 0; // S bit
   let Inst{7}     = 1;
   let Inst{20}    = 1; // L bit
-  let Inst{21}    = 1; // W bit
+  let Inst{21}    = 0; // W bit
   let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }
@@ -747,7 +747,7 @@ class AI3ldshpo<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{6}     = 1; // S bit
   let Inst{7}     = 1;
   let Inst{20}    = 1; // L bit
-  let Inst{21}    = 1; // W bit
+  let Inst{21}    = 0; // W bit
   let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }
@@ -760,7 +760,7 @@ class AI3ldsbpo<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{6}     = 1; // S bit
   let Inst{7}     = 1;
   let Inst{20}    = 1; // L bit
-  let Inst{21}    = 1; // W bit
+  let Inst{21}    = 0; // W bit
   let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }
