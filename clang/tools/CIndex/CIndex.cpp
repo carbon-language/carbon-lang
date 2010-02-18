@@ -644,42 +644,46 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   // "Class") have associated declarations. Create cursors for those.
   QualType VisitType;
   switch (TL.getType()->getAs<BuiltinType>()->getKind()) {
+  case BuiltinType::Void:
   case BuiltinType::Bool:
+  case BuiltinType::Char_U:
+  case BuiltinType::UChar:
   case BuiltinType::Char16:
   case BuiltinType::Char32:
-  case BuiltinType::Char_S:
-  case BuiltinType::Char_U:
-  case BuiltinType::Dependent:
-  case BuiltinType::Double:
-  case BuiltinType::Float:
-  case BuiltinType::Int128:
-  case BuiltinType::Int:
-  case BuiltinType::Long:
-  case BuiltinType::LongDouble:
-  case BuiltinType::LongLong:
-  case BuiltinType::NullPtr:
-  case BuiltinType::Overload:
-  case BuiltinType::SChar:
-  case BuiltinType::Short:
-  case BuiltinType::UChar:
-  case BuiltinType::UInt128:
+  case BuiltinType::UShort:
   case BuiltinType::UInt:
   case BuiltinType::ULong:
   case BuiltinType::ULongLong:
-  case BuiltinType::UShort:
-  case BuiltinType::Void:
+  case BuiltinType::UInt128:
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
   case BuiltinType::WChar:
+  case BuiltinType::Short:
+  case BuiltinType::Int:
+  case BuiltinType::Long:
+  case BuiltinType::LongLong:
+  case BuiltinType::Int128:
+  case BuiltinType::Float:
+  case BuiltinType::Double:
+  case BuiltinType::LongDouble:
+  case BuiltinType::NullPtr:
+  case BuiltinType::Overload:
+  case BuiltinType::Dependent:
     break;
-  case BuiltinType::ObjCClass:
-    VisitType = Context.getObjCClassType();
+
+  case BuiltinType::UndeducedAuto: // FIXME: Deserves a cursor?
     break;
+
   case BuiltinType::ObjCId:
     VisitType = Context.getObjCIdType();
     break;
+
+  case BuiltinType::ObjCClass:
+    VisitType = Context.getObjCClassType();
+    break;
+
   case BuiltinType::ObjCSel:
     VisitType = Context.getObjCSelType();
-    break;
-  case BuiltinType::UndeducedAuto: // FIXME: Deserves a cursor?
     break;
   }
 
