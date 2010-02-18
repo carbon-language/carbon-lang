@@ -1067,6 +1067,19 @@ def LDRSB_PRE : AI3ldsbpr<(outs GPR:$dst, GPR:$base_wb),
 def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
                       (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadru,
                    "ldrsb", "\t$dst, [$base], $offset", "$base = $base_wb", []>;
+
+// For disassembly only
+def LDRD_PRE : AI3lddpr<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
+                        (ins addrmode3:$addr), LdMiscFrm, IIC_iLoadr,
+                 "ldrd", "\t$dst1, $dst2, $addr!", "$addr.base = $base_wb", []>,
+                Requires<[IsARM, HasV5TE]>;
+
+// For disassembly only
+def LDRD_POST : AI3lddpo<(outs GPR:$dst1, GPR:$dst2, GPR:$base_wb),
+                       (ins GPR:$base,am3offset:$offset), LdMiscFrm, IIC_iLoadr,
+            "ldrd", "\t$dst1, $dst2, [$base], $offset", "$base = $base_wb", []>,
+                Requires<[IsARM, HasV5TE]>;
+
 }
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
@@ -1163,6 +1176,20 @@ def STRB_POST: AI2stbpo<(outs GPR:$base_wb),
                      "strb", "\t$src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
+
+// For disassembly only
+def STRD_PRE : AI3stdpr<(outs GPR:$base_wb),
+                     (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
+                     StMiscFrm, IIC_iStoreru,
+                     "strd", "\t$src1, $src2, [$base, $offset]!",
+                     "$base = $base_wb", []>;
+
+// For disassembly only
+def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
+                     (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
+                     StMiscFrm, IIC_iStoreru,
+                     "strd", "\t$src1, $src2, [$base], $offset",
+                     "$base = $base_wb", []>;
 
 // STRT and STRBT are for disassembly only.
 

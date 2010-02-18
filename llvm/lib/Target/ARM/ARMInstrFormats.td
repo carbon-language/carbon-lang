@@ -708,6 +708,20 @@ class AI3ldsbpr<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{24}    = 1; // P bit
   let Inst{27-25} = 0b000;
 }
+class AI3lddpr<dag oops, dag iops, Format f, InstrItinClass itin,
+             string opc, string asm, string cstr, list<dag> pattern>
+  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePre, f, itin,
+      opc, asm, cstr, pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 0; // H bit
+  let Inst{6}     = 1; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 1; // W bit
+  let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
+}
+
 
 // Pre-indexed stores
 class AI3sthpr<dag oops, dag iops, Format f, InstrItinClass itin,
@@ -717,6 +731,19 @@ class AI3sthpr<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{4}     = 1;
   let Inst{5}     = 1; // H bit
   let Inst{6}     = 0; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 1; // W bit
+  let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
+}
+class AI3stdpr<dag oops, dag iops, Format f, InstrItinClass itin,
+             string opc, string asm, string cstr, list<dag> pattern>
+  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePre, f, itin,
+      opc, asm, cstr, pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 1; // H bit
+  let Inst{6}     = 1; // S bit
   let Inst{7}     = 1;
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 1; // W bit
@@ -764,6 +791,19 @@ class AI3ldsbpo<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }
+class AI3lddpo<dag oops, dag iops, Format f, InstrItinClass itin,
+             string opc, string asm, string cstr, list<dag> pattern>
+  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
+      opc, asm, cstr, pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 0; // H bit
+  let Inst{6}     = 1; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 0; // W bit
+  let Inst{24}    = 0; // P bit
+  let Inst{27-25} = 0b000;
+}
 
 // Post-indexed stores
 class AI3sthpo<dag oops, dag iops, Format f, InstrItinClass itin,
@@ -776,6 +816,19 @@ class AI3sthpo<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{7}     = 1;
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 1; // W bit
+  let Inst{24}    = 0; // P bit
+  let Inst{27-25} = 0b000;
+}
+class AI3stdpo<dag oops, dag iops, Format f, InstrItinClass itin,
+             string opc, string asm, string cstr, list<dag> pattern>
+  : I<oops, iops, AddrMode3, Size4Bytes, IndexModePost, f, itin,
+      opc, asm, cstr, pattern> {
+  let Inst{4}     = 1;
+  let Inst{5}     = 1; // H bit
+  let Inst{6}     = 1; // S bit
+  let Inst{7}     = 1;
+  let Inst{20}    = 0; // L bit
+  let Inst{21}    = 0; // W bit
   let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }
