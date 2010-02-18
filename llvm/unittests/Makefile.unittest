@@ -28,6 +28,10 @@ CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/
 CPP.Flags += $(NO_VARIADIC_MACROS)
 TESTLIBS = -lGoogleTest -lUnitTestMain
 
+ifeq ($(ENABLE_SHARED), 1)
+Run.Shared := $(SHLIBPATH_VAR)="$(LibDir)$${$(SHLIBPATH_VAR):+:}$$$(SHLIBPATH_VAR)"
+endif
+
 $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) unit test $(TESTNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
@@ -38,6 +42,6 @@ $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 all:: $(LLVMUnitTestExe)
 
 unitcheck:: $(LLVMUnitTestExe)
-	$(LLVMUnitTestExe)
+	$(Run.Shared) $(LLVMUnitTestExe)
 
 endif
