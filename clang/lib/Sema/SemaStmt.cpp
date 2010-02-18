@@ -340,11 +340,11 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
   } else if (NewSign != Val.isSigned()) {
     // Convert the sign to match the sign of the condition.  This can cause
     // overflow as well: unsigned(INTMIN)
+    // We don't diagnose this overflow, because it is implementation-defined 
+    // behavior.
+    // FIXME: Introduce a second, default-ignored warning for this case?
     llvm::APSInt OldVal(Val);
     Val.setIsSigned(NewSign);
-
-    if (Val.isNegative())  // Sign bit changes meaning.
-      Diag(Loc, DiagID) << OldVal.toString(10) << Val.toString(10);
   }
 }
 
