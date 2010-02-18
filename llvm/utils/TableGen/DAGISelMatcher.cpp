@@ -22,7 +22,7 @@ void EmitNodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "EmitNode: Dst = " << *Pattern.getDstPattern() << "\n";
 }
 
-void MatcherNodeWithChild::printChild(raw_ostream &OS, unsigned indent) const {
+void MatcherNode::printChild(raw_ostream &OS, unsigned indent) const {
   if (Child)
     return Child->print(OS, indent);
   OS.indent(indent) << "<null child>\n";

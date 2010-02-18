@@ -221,7 +221,7 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
 unsigned MatcherTableEmitter::
 EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
   unsigned Size = 0;
-  while (1) {
+  while (N) {
     // Push is a special case since it is binary.
     if (const PushMatcherNode *PMN = dyn_cast<PushMatcherNode>(N)) {
       // We need to encode the child and the offset of the failure code before
@@ -256,11 +256,9 @@ EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
     
     // If there are children of this node, iterate to them, otherwise we're
     // done.
-    if (const MatcherNodeWithChild *MNWC = dyn_cast<MatcherNodeWithChild>(N))
-      N = MNWC->getChild();
-    else
-      return Size;
+    N = N->getChild();
   }
+  return Size;
 }
 
 void MatcherTableEmitter::EmitPredicateFunctions() {

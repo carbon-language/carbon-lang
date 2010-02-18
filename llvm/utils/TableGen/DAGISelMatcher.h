@@ -31,6 +31,7 @@ void EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &OS);
 /// MatcherNode - Base class for all the the DAG ISel Matcher representation
 /// nodes.
 class MatcherNode {
+  OwningPtr<MatcherNode> Child;
 public:
   enum KindTy {
     EmitNode,
@@ -54,19 +55,24 @@ public:
     CheckChainCompatible
   };
   const KindTy Kind;
-  
+
 protected:
   MatcherNode(KindTy K) : Kind(K) {}
 public:
   virtual ~MatcherNode() {}
   
   KindTy getKind() const { return Kind; }
-  
+
+  MatcherNode *getChild() { return Child.get(); }
+  const MatcherNode *getChild() const { return Child.get(); }
+  void setChild(MatcherNode *C) { Child.reset(C); }
   
   static inline bool classof(const MatcherNode *) { return true; }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const = 0;
   void dump() const;
+protected:
+  void printChild(raw_ostream &OS, unsigned indent) const;
 };
   
 /// EmitNodeMatcherNode - This signals a successful match and generates a node.
@@ -85,33 +91,15 @@ public:
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// MatcherNodeWithChild - Every node accept the final accept state has a child
-/// that is executed after the node runs.  This class captures this commonality.
-class MatcherNodeWithChild : public MatcherNode {
-  OwningPtr<MatcherNode> Child;
-public:
-  MatcherNodeWithChild(KindTy K) : MatcherNode(K) {}
-  
-  MatcherNode *getChild() { return Child.get(); }
-  const MatcherNode *getChild() const { return Child.get(); }
-  void setChild(MatcherNode *C) { Child.reset(C); }
-  
-  static inline bool classof(const MatcherNode *N) {
-    return N->getKind() != EmitNode;
-  }
-  
-protected:
-  void printChild(raw_ostream &OS, unsigned indent) const;
-};
 
 /// PushMatcherNode - This pushes a failure scope on the stack and evaluates
 /// 'child'.  If 'child' fails to match, it pops its scope and attempts to
 /// match 'Failure'.
-class PushMatcherNode : public MatcherNodeWithChild {
+class PushMatcherNode : public MatcherNode {
   OwningPtr<MatcherNode> Failure;
 public:
   PushMatcherNode(MatcherNode *child = 0, MatcherNode *failure = 0)
-    : MatcherNodeWithChild(Push), Failure(failure) {
+    : MatcherNode(Push), Failure(failure) {
     setChild(child);
   }
   
@@ -127,13 +115,13 @@ public:
 };
 
 /// RecordMatcherNode - Save the current node in the operand list.
-class RecordMatcherNode : public MatcherNodeWithChild {
+class RecordMatcherNode : public MatcherNode {
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
 public:
   RecordMatcherNode(const std::string &whatfor)
-    : MatcherNodeWithChild(Record), WhatFor(whatfor) {}
+    : MatcherNode(Record), WhatFor(whatfor) {}
   
   const std::string &getWhatFor() const { return WhatFor; }
   
@@ -146,11 +134,11 @@ public:
   
 /// MoveChildMatcherNode - This tells the interpreter to move into the
 /// specified child node.
-class MoveChildMatcherNode : public MatcherNodeWithChild {
+class MoveChildMatcherNode : public MatcherNode {
   unsigned ChildNo;
 public:
   MoveChildMatcherNode(unsigned childNo)
-  : MatcherNodeWithChild(MoveChild), ChildNo(childNo) {}
+  : MatcherNode(MoveChild), ChildNo(childNo) {}
   
   unsigned getChildNo() const { return ChildNo; }
   
@@ -163,10 +151,10 @@ public:
   
 /// MoveParentMatcherNode - This tells the interpreter to move to the parent
 /// of the current node.
-class MoveParentMatcherNode : public MatcherNodeWithChild {
+class MoveParentMatcherNode : public MatcherNode {
 public:
   MoveParentMatcherNode()
-  : MatcherNodeWithChild(MoveParent) {}
+  : MatcherNode(MoveParent) {}
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == MoveParent;
@@ -178,11 +166,11 @@ public:
 /// CheckSameMatcherNode - This checks to see if this node is exactly the same
 /// node as the specified match that was recorded with 'Record'.  This is used
 /// when patterns have the same name in them, like '(mul GPR:$in, GPR:$in)'.
-class CheckSameMatcherNode : public MatcherNodeWithChild {
+class CheckSameMatcherNode : public MatcherNode {
   unsigned MatchNumber;
 public:
   CheckSameMatcherNode(unsigned matchnumber)
-  : MatcherNodeWithChild(CheckSame), MatchNumber(matchnumber) {}
+  : MatcherNode(CheckSame), MatchNumber(matchnumber) {}
   
   unsigned getMatchNumber() const { return MatchNumber; }
   
@@ -196,11 +184,11 @@ public:
 /// CheckPatternPredicateMatcherNode - This checks the target-specific predicate
 /// to see if the entire pattern is capable of matching.  This predicate does
 /// not take a node as input.  This is used for subtarget feature checks etc.
-class CheckPatternPredicateMatcherNode : public MatcherNodeWithChild {
+class CheckPatternPredicateMatcherNode : public MatcherNode {
   std::string Predicate;
 public:
   CheckPatternPredicateMatcherNode(StringRef predicate)
-  : MatcherNodeWithChild(CheckPatternPredicate), Predicate(predicate) {}
+  : MatcherNode(CheckPatternPredicate), Predicate(predicate) {}
   
   StringRef getPredicate() const { return Predicate; }
   
@@ -213,11 +201,11 @@ public:
   
 /// CheckPredicateMatcherNode - This checks the target-specific predicate to
 /// see if the node is acceptable.
-class CheckPredicateMatcherNode : public MatcherNodeWithChild {
+class CheckPredicateMatcherNode : public MatcherNode {
   StringRef PredName;
 public:
   CheckPredicateMatcherNode(StringRef predname)
-    : MatcherNodeWithChild(CheckPredicate), PredName(predname) {}
+    : MatcherNode(CheckPredicate), PredName(predname) {}
   
   StringRef getPredicateName() const { return PredName; }
 
@@ -231,11 +219,11 @@ public:
   
 /// CheckOpcodeMatcherNode - This checks to see if the current node has the
 /// specified opcode, if not it fails to match.
-class CheckOpcodeMatcherNode : public MatcherNodeWithChild {
+class CheckOpcodeMatcherNode : public MatcherNode {
   StringRef OpcodeName;
 public:
   CheckOpcodeMatcherNode(StringRef opcodename)
-    : MatcherNodeWithChild(CheckOpcode), OpcodeName(opcodename) {}
+    : MatcherNode(CheckOpcode), OpcodeName(opcodename) {}
   
   StringRef getOpcodeName() const { return OpcodeName; }
   
@@ -248,11 +236,11 @@ public:
   
 /// CheckTypeMatcherNode - This checks to see if the current node has the
 /// specified type, if not it fails to match.
-class CheckTypeMatcherNode : public MatcherNodeWithChild {
+class CheckTypeMatcherNode : public MatcherNode {
   MVT::SimpleValueType Type;
 public:
   CheckTypeMatcherNode(MVT::SimpleValueType type)
-    : MatcherNodeWithChild(CheckType), Type(type) {}
+    : MatcherNode(CheckType), Type(type) {}
   
   MVT::SimpleValueType getType() const { return Type; }
   
@@ -265,11 +253,11 @@ public:
 
 /// CheckIntegerMatcherNode - This checks to see if the current node is a
 /// ConstantSDNode with the specified integer value, if not it fails to match.
-class CheckIntegerMatcherNode : public MatcherNodeWithChild {
+class CheckIntegerMatcherNode : public MatcherNode {
   int64_t Value;
 public:
   CheckIntegerMatcherNode(int64_t value)
-    : MatcherNodeWithChild(CheckInteger), Value(value) {}
+    : MatcherNode(CheckInteger), Value(value) {}
   
   int64_t getValue() const { return Value; }
   
@@ -282,11 +270,11 @@ public:
   
 /// CheckCondCodeMatcherNode - This checks to see if the current node is a
 /// CondCodeSDNode with the specified condition, if not it fails to match.
-class CheckCondCodeMatcherNode : public MatcherNodeWithChild {
+class CheckCondCodeMatcherNode : public MatcherNode {
   StringRef CondCodeName;
 public:
   CheckCondCodeMatcherNode(StringRef condcodename)
-  : MatcherNodeWithChild(CheckCondCode), CondCodeName(condcodename) {}
+  : MatcherNode(CheckCondCode), CondCodeName(condcodename) {}
   
   StringRef getCondCodeName() const { return CondCodeName; }
   
@@ -299,11 +287,11 @@ public:
   
 /// CheckValueTypeMatcherNode - This checks to see if the current node is a
 /// VTSDNode with the specified type, if not it fails to match.
-class CheckValueTypeMatcherNode : public MatcherNodeWithChild {
+class CheckValueTypeMatcherNode : public MatcherNode {
   StringRef TypeName;
 public:
   CheckValueTypeMatcherNode(StringRef type_name)
-  : MatcherNodeWithChild(CheckValueType), TypeName(type_name) {}
+  : MatcherNode(CheckValueType), TypeName(type_name) {}
   
   StringRef getTypeName() const { return TypeName; }
 
@@ -318,11 +306,11 @@ public:
   
 /// CheckComplexPatMatcherNode - This node runs the specified ComplexPattern on
 /// the current node.
-class CheckComplexPatMatcherNode : public MatcherNodeWithChild {
+class CheckComplexPatMatcherNode : public MatcherNode {
   const ComplexPattern &Pattern;
 public:
   CheckComplexPatMatcherNode(const ComplexPattern &pattern)
-  : MatcherNodeWithChild(CheckComplexPat), Pattern(pattern) {}
+  : MatcherNode(CheckComplexPat), Pattern(pattern) {}
   
   const ComplexPattern &getPattern() const { return Pattern; }
   
@@ -335,11 +323,11 @@ public:
   
 /// CheckAndImmMatcherNode - This checks to see if the current node is an 'and'
 /// with something equivalent to the specified immediate.
-class CheckAndImmMatcherNode : public MatcherNodeWithChild {
+class CheckAndImmMatcherNode : public MatcherNode {
   int64_t Value;
 public:
   CheckAndImmMatcherNode(int64_t value)
-  : MatcherNodeWithChild(CheckAndImm), Value(value) {}
+  : MatcherNode(CheckAndImm), Value(value) {}
   
   int64_t getValue() const { return Value; }
   
@@ -352,11 +340,11 @@ public:
 
 /// CheckOrImmMatcherNode - This checks to see if the current node is an 'and'
 /// with something equivalent to the specified immediate.
-class CheckOrImmMatcherNode : public MatcherNodeWithChild {
+class CheckOrImmMatcherNode : public MatcherNode {
   int64_t Value;
 public:
   CheckOrImmMatcherNode(int64_t value)
-    : MatcherNodeWithChild(CheckOrImm), Value(value) {}
+    : MatcherNode(CheckOrImm), Value(value) {}
   
   int64_t getValue() const { return Value; }
 
@@ -369,10 +357,10 @@ public:
 
 /// CheckFoldableChainNodeMatcherNode - This checks to see if the current node
 /// (which defines a chain operand) is safe to fold into a larger pattern.
-class CheckFoldableChainNodeMatcherNode : public MatcherNodeWithChild {
+class CheckFoldableChainNodeMatcherNode : public MatcherNode {
 public:
   CheckFoldableChainNodeMatcherNode()
-    : MatcherNodeWithChild(CheckFoldableChainNode) {}
+    : MatcherNode(CheckFoldableChainNode) {}
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == CheckFoldableChainNode;
@@ -383,11 +371,11 @@ public:
 
 /// CheckChainCompatibleMatcherNode - Verify that the current node's chain
 /// operand is 'compatible' with the specified recorded node's.
-class CheckChainCompatibleMatcherNode : public MatcherNodeWithChild {
+class CheckChainCompatibleMatcherNode : public MatcherNode {
   unsigned PreviousOp;
 public:
   CheckChainCompatibleMatcherNode(unsigned previousop)
-    : MatcherNodeWithChild(CheckChainCompatible), PreviousOp(previousop) {}
+    : MatcherNode(CheckChainCompatible), PreviousOp(previousop) {}
   
   unsigned getPreviousOp() const { return PreviousOp; }
   

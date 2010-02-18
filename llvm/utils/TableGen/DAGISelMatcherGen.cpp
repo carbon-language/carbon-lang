@@ -35,11 +35,11 @@ namespace {
     SmallVector<unsigned, 2> InputChains;
     
     /// Matcher - This is the top level of the generated matcher, the result.
-    MatcherNodeWithChild *Matcher;
+    MatcherNode *Matcher;
     
     /// CurPredicate - As we emit matcher nodes, this points to the latest check
     /// which should have future checks stuck into its child position.
-    MatcherNodeWithChild *CurPredicate;
+    MatcherNode *CurPredicate;
   public:
     MatcherGen(const PatternToMatch &pattern, const CodeGenDAGPatterns &cgp);
     
@@ -49,10 +49,10 @@ namespace {
     
     void EmitMatcherCode();
     
-    MatcherNodeWithChild *GetMatcher() const { return Matcher; }
-    MatcherNodeWithChild *GetCurPredicate() const { return CurPredicate; }
+    MatcherNode *GetMatcher() const { return Matcher; }
+    MatcherNode *GetCurPredicate() const { return CurPredicate; }
   private:
-    void AddMatcherNode(MatcherNodeWithChild *NewNode);
+    void AddMatcherNode(MatcherNode *NewNode);
     void InferPossibleTypes();
     void EmitMatchCode(const TreePatternNode *N, TreePatternNode *NodeNoTypes);
     void EmitLeafMatchCode(const TreePatternNode *N);
@@ -107,7 +107,7 @@ void MatcherGen::InferPossibleTypes() {
 
 
 /// AddMatcherNode - Add a matcher node to the current graph we're building. 
-void MatcherGen::AddMatcherNode(MatcherNodeWithChild *NewNode) {
+void MatcherGen::AddMatcherNode(MatcherNode *NewNode) {
   if (CurPredicate != 0)
     CurPredicate->setChild(NewNode);
   else
@@ -388,7 +388,7 @@ MatcherNode *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
   EmitNodeMatcherNode *Result = new EmitNodeMatcherNode(Pattern);
   
   // Link it into the pattern.
-  if (MatcherNodeWithChild *Pred = Gen.GetCurPredicate()) {
+  if (MatcherNode *Pred = Gen.GetCurPredicate()) {
     Pred->setChild(Result);
     return Gen.GetMatcher();
   }
