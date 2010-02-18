@@ -466,7 +466,8 @@ public:
   
 /// PatternToMatch - Used by CodeGenDAGPatterns to keep tab of patterns
 /// processed to produce isel.
-struct PatternToMatch {
+class PatternToMatch {
+public:
   PatternToMatch(ListInit *preds,
                  TreePatternNode *src, TreePatternNode *dst,
                  const std::vector<Record*> &dstregs,
@@ -574,7 +575,7 @@ public:
     abort();
   }
   
-  const DAGDefaultOperand &getDefaultOperand(Record *R) {
+  const DAGDefaultOperand &getDefaultOperand(Record *R) const {
     assert(DefaultOperands.count(R) &&"Isn't an analyzed default operand!");
     return DefaultOperands.find(R)->second;
   }

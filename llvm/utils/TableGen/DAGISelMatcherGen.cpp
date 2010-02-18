@@ -48,16 +48,27 @@ namespace {
     }
     
     void EmitMatcherCode();
+    void EmitResultCode();
     
     MatcherNode *GetMatcher() const { return Matcher; }
     MatcherNode *GetCurPredicate() const { return CurPredicate; }
   private:
     void AddMatcherNode(MatcherNode *NewNode);
     void InferPossibleTypes();
+    
+    // Matcher Generation.
     void EmitMatchCode(const TreePatternNode *N, TreePatternNode *NodeNoTypes);
     void EmitLeafMatchCode(const TreePatternNode *N);
     void EmitOperatorMatchCode(const TreePatternNode *N,
                                TreePatternNode *NodeNoTypes);
+    
+    // Result Code Generation.
+    void EmitResultOperand(const TreePatternNode *N,
+                           SmallVectorImpl<unsigned> &ResultOps);
+    void EmitResultLeafAsOperand(const TreePatternNode *N,
+                                 SmallVectorImpl<unsigned> &ResultOps);
+    void EmitResultInstructionAsOperand(const TreePatternNode *N,
+                                        SmallVectorImpl<unsigned> &ResultOps);
   };
   
 } // end anon namespace.
@@ -116,6 +127,9 @@ void MatcherGen::AddMatcherNode(MatcherNode *NewNode) {
 }
 
 
+//===----------------------------------------------------------------------===//
+// Pattern Match Generation
+//===----------------------------------------------------------------------===//
 
 /// EmitLeafMatchCode - Generate matching code for leaf nodes.
 void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
@@ -377,6 +391,103 @@ void MatcherGen::EmitMatcherCode() {
 }
 
 
+//===----------------------------------------------------------------------===//
+// Node Result Generation
+//===----------------------------------------------------------------------===//
+
+void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
+                                         SmallVectorImpl<unsigned> &ResultOps) {
+  errs() << "unhandled leaf node: \n";
+  N->dump();
+}
+
+void MatcherGen::EmitResultInstructionAsOperand(const TreePatternNode *N,
+                                         SmallVectorImpl<unsigned> &ResultOps) {
+  Record *Op = N->getOperator();
+  const CodeGenTarget &CGT = CGP.getTargetInfo();
+  CodeGenInstruction &II = CGT.getInstruction(Op->getName());
+  const DAGInstruction &Inst = CGP.getInstruction(Op);
+  
+  // FIXME: Handle (set x, (foo))
+  
+  if (II.isVariadic) // FIXME: Handle variadic instructions.
+    return AddMatcherNode(new EmitNodeMatcherNode(Pattern));
+    
+  // FIXME: Handle OptInFlag, HasInFlag, HasOutFlag
+  // FIXME: Handle Chains.
+  unsigned NumResults = Inst.getNumResults();    
+
+  
+  // Loop over all of the operands of the instruction pattern, emitting code
+  // to fill them all in.  The node 'N' usually has number children equal to
+  // the number of input operands of the instruction.  However, in cases
+  // where there are predicate operands for an instruction, we need to fill
+  // in the 'execute always' values.  Match up the node operands to the
+  // instruction operands to do this.
+  SmallVector<unsigned, 8> Ops;
+  for (unsigned ChildNo = 0, InstOpNo = NumResults, e = II.OperandList.size();
+       InstOpNo != e; ++InstOpNo) {
+    
+    // Determine what to emit for this operand.
+    Record *OperandNode = II.OperandList[InstOpNo].Rec;
+    if ((OperandNode->isSubClassOf("PredicateOperand") ||
+         OperandNode->isSubClassOf("OptionalDefOperand")) &&
+        !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
+      // This is a predicate or optional def operand; emit the
+      // 'default ops' operands.
+      const DAGDefaultOperand &DefaultOp =
+        CGP.getDefaultOperand(II.OperandList[InstOpNo].Rec);
+      for (unsigned i = 0, e = DefaultOp.DefaultOps.size(); i != e; ++i)
+        EmitResultOperand(DefaultOp.DefaultOps[i], Ops);
+      continue;
+    }
+    
+    // Otherwise this is a normal operand or a predicate operand without
+    // 'execute always'; emit it.
+    EmitResultOperand(N->getChild(ChildNo), Ops);
+    ++ChildNo;
+  }
+  
+  // FIXME: Chain.
+  // FIXME: Flag
+  
+  
+  
+  return;
+}
+
+void MatcherGen::EmitResultOperand(const TreePatternNode *N,
+                                   SmallVectorImpl<unsigned> &ResultOps) {
+  // This is something selected from the pattern we matched.
+  if (!N->getName().empty()) {
+    //errs() << "unhandled named node: \n";
+    //N->dump();
+    return;
+  }
+
+  if (N->isLeaf())
+    return EmitResultLeafAsOperand(N, ResultOps);
+
+  Record *OpRec = N->getOperator();
+  if (OpRec->isSubClassOf("Instruction"))
+    return EmitResultInstructionAsOperand(N, ResultOps);
+  if (OpRec->isSubClassOf("SDNodeXForm"))
+    // FIXME: implement.
+    return;
+  errs() << "Unknown result node to emit code for: " << *N << '\n';
+  throw std::string("Unknown node in result pattern!");
+}
+
+void MatcherGen::EmitResultCode() {
+  // FIXME: Handle Ops.
+  // FIXME: Ops should be vector of "ResultValue> which is either an index into
+  // the results vector is is a temp result.
+  SmallVector<unsigned, 8> Ops;
+  EmitResultOperand(Pattern.getDstPattern(), Ops);
+  //AddMatcherNode(new EmitNodeMatcherNode(Pattern));
+}
+
+
 MatcherNode *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                            const CodeGenDAGPatterns &CGP) {
   MatcherGen Gen(Pattern, CGP);
@@ -385,16 +496,10 @@ MatcherNode *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
   Gen.EmitMatcherCode();
   
   // If the match succeeds, then we generate Pattern.
-  EmitNodeMatcherNode *Result = new EmitNodeMatcherNode(Pattern);
-  
-  // Link it into the pattern.
-  if (MatcherNode *Pred = Gen.GetCurPredicate()) {
-    Pred->setNext(Result);
-    return Gen.GetMatcher();
-  }
+  Gen.EmitResultCode();
 
   // Unconditional match.
-  return Result;
+  return Gen.GetMatcher();
 }
 
 

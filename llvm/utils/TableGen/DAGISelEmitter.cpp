@@ -1020,7 +1020,7 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
     }
     if (IsVariadic)
       emitCode("SmallVector<SDValue, 8> Ops" + utostr(OpcNo) + ";");
-    
+
     // How many results is this pattern expected to produce?
     unsigned NumPatResults = 0;
     for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {

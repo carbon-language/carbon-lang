@@ -262,6 +262,9 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent) {
 }
 
 void MatcherTableEmitter::EmitPredicateFunctions() {
+  // FIXME: Don't build off the DAGISelEmitter's predicates, emit them directly
+  // here into the case stmts.
+  
   // Emit pattern predicates.
   OS << "bool CheckPatternPredicate(unsigned PredNo) const {\n";
   OS << "  switch (PredNo) {\n";
