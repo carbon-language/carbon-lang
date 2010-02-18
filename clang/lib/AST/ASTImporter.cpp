@@ -1367,19 +1367,19 @@ bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC,
 
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
                                         RecordDecl *ToRecord) {
-  StructuralEquivalenceContext SEC(Importer.getFromContext(),
+  StructuralEquivalenceContext Ctx(Importer.getFromContext(),
                                    Importer.getToContext(),
                                    Importer.getDiags(),
                                    Importer.getNonEquivalentDecls());
-  return SEC.IsStructurallyEquivalent(FromRecord, ToRecord);
+  return Ctx.IsStructurallyEquivalent(FromRecord, ToRecord);
 }
 
 bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
-  StructuralEquivalenceContext SEC(Importer.getFromContext(),
+  StructuralEquivalenceContext Ctx(Importer.getFromContext(),
                                    Importer.getToContext(),
                                    Importer.getDiags(),
                                    Importer.getNonEquivalentDecls());
-  return SEC.IsStructurallyEquivalent(FromEnum, ToEnum);
+  return Ctx.IsStructurallyEquivalent(FromEnum, ToEnum);
 }
 
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
@@ -2921,7 +2921,7 @@ bool ASTImporter::IsStructurallyEquivalent(QualType From, QualType To) {
   if (Pos != ImportedTypes.end() && ToContext.hasSameType(Import(From), To))
     return true;
       
-  StructuralEquivalenceContext SEC(FromContext, ToContext, Diags, 
+  StructuralEquivalenceContext Ctx(FromContext, ToContext, Diags, 
                                    NonEquivalentDecls);
-  return SEC.IsStructurallyEquivalent(From, To);
+  return Ctx.IsStructurallyEquivalent(From, To);
 }
