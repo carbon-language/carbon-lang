@@ -241,15 +241,17 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
     while ((PN = dyn_cast<PHINode>(BBI++))) {
       if (PN->use_empty())
         continue; // dead use, don't replace it
+
+      // SCEV only supports integer expressions for now.
+      if (!PN->getType()->isIntegerTy() && !PN->getType()->isPointerTy())
+        continue;
+
       // Iterate over all of the values in all the PHI nodes.
       for (unsigned i = 0; i != NumPreds; ++i) {
         // If the value being merged in is not integer or is not defined
         // in the loop, skip it.
         Value *InVal = PN->getIncomingValue(i);
-        if (!isa<Instruction>(InVal) ||
-            // SCEV only supports integer expressions for now.
-            (!InVal->getType()->isIntegerTy() &&
-             !InVal->getType()->isPointerTy()))
+        if (!isa<Instruction>(InVal))
           continue;
 
         // If this pred is for a subloop, not L itself, skip it.
