@@ -87,7 +87,8 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
     return;
   // Also don't warn on function pointer typedefs.
   TypedefDecl *TD = dyn_cast<TypedefDecl>(D);
-  if (TD && TD->getUnderlyingType()->isFunctionPointerType())
+  if (TD && (TD->getUnderlyingType()->isFunctionPointerType() ||
+             TD->getUnderlyingType()->isFunctionType()))
     return;
   // Attribute can only be applied to function types.
   if (!isa<FunctionDecl>(D)) {
