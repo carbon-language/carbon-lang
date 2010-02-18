@@ -248,39 +248,69 @@ void CodeGenFunction::GenerateBody(GlobalDecl GD, llvm::Function *Fn,
   Stmt *Body = FD->getBody();
   assert((Body || FD->isImplicit()) && "non-implicit function def has no body");
 
+  bool SkipBody = false; // should get jump-threaded
+
   // Emit special ctor/dtor prologues.
-  llvm::BasicBlock *DtorEpilogue = 0;
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+    // Emit the constructor prologue, i.e. the base and member initializers.
     EmitCtorPrologue(CD, GD.getCtorType());
+
+    // TODO: for complete, non-varargs variants, we can get away with
+    // just emitting the vbase initializers, then calling the base
+    // constructor.
+
   } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-    DtorEpilogue = createBasicBlock("dtor.epilogue");
+    // In all cases, if there's an exception in the body (or delegate)
+    // we'll still need to run the epilogue.
+    llvm::BasicBlock *DtorEpilogue = createBasicBlock("dtor.epilogue");
     PushCleanupBlock(DtorEpilogue);
 
-    InitializeVtablePtrs(DD->getParent());
+    // If this is the deleting variant, invoke the complete variant;
+    // the epilogue will call the appropriate operator delete().
+    if (GD.getDtorType() == Dtor_Deleting) {
+      EmitCXXDestructorCall(DD, Dtor_Complete, LoadCXXThis());
+      SkipBody = true;
+
+    // If this is the complete variant, just invoke the base variant;
+    // the epilogue will destruct the virtual bases.
+    } else if (GD.getDtorType() == Dtor_Complete) {
+      EmitCXXDestructorCall(DD, Dtor_Base, LoadCXXThis());
+      SkipBody = true;
+
+    // Otherwise, we're in the base variant, so we need to ensure the
+    // vtable ptrs are right before emitting the body.
+    } else {
+      InitializeVtablePtrs(DD->getParent());
+    }
   }
 
   // Emit the body of the function.
-  if (!Body)
+  if (SkipBody) {
+    // skipped
+  } else if (!Body) {
     SynthesizeImplicitFunctionBody(GD, Fn, Args);
-  else {
+  } else {
     if (isa<CXXTryStmt>(Body))
       OuterTryBlock = cast<CXXTryStmt>(Body);
-
     EmitStmt(Body);
   }
 
-  // Emit special ctor/ctor epilogues.
+  // Emit special ctor/dtor epilogues.
   if (isa<CXXConstructorDecl>(FD)) {
-    // If any of the member initializers are temporaries bound to references
-    // make sure to emit their destructors.
+    // Be sure to emit any cleanup blocks associated with the member
+    // or base initializers, which includes (along the exceptional
+    // path) the destructors for those members and bases that were
+    // fully constructed.
     EmitCleanupBlocks(0);
-  } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-    CleanupBlockInfo Info = PopCleanupBlock();
-    assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
 
-    EmitBlock(DtorEpilogue);
+  } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
+    // Funnel the previously-pushed cleanup block into the epilogue.
+    CleanupBlockInfo Info = PopCleanupBlock();
+    EmitBlock(Info.CleanupBlock);
+
     EmitDtorEpilogue(DD, GD.getDtorType());
-      
+
+    // Go ahead and link in the switch and end blocks.
     if (Info.SwitchBlock)
       EmitBlock(Info.SwitchBlock);
     if (Info.EndBlock)

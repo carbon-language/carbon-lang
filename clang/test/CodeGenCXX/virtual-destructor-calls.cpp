@@ -8,15 +8,15 @@ struct B : A {
   virtual ~B();
 };
 
-// Complete dtor.
+// Complete dtor: just an alias because there are no virtual bases.
 // CHECK: @_ZN1BD1Ev = alias {{.*}} @_ZN1BD2Ev
 
-// Deleting dtor.
+// Deleting dtor: defers to the complete dtor.
 // CHECK: define void @_ZN1BD0Ev
-// CHECK: call void @_ZN1AD2Ev
-// check: call void @_ZdlPv
+// CHECK: call void @_ZN1BD1Ev
+// CHECK: call void @_ZdlPv
 
-// Base dtor.
+// Base dtor: actually calls A's base dtor.
 // CHECK: define void @_ZN1BD2Ev
 // CHECK: call void @_ZN1AD2Ev
 

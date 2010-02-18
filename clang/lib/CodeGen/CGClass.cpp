@@ -477,12 +477,21 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
   
   const CXXRecordDecl *RD = cast<CXXMethodDecl>(CGF.CurFuncDecl)->getParent();
   const CXXRecordDecl *Base = cast<CXXMethodDecl>(GD.getDecl())->getParent();
-  
+
   llvm::Value *VTT;
 
-  uint64_t SubVTTIndex = 
-    CGF.CGM.getVtableInfo().getSubVTTIndex(RD, Base);
-  assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
+  uint64_t SubVTTIndex;
+
+  // If the record matches the base, this is the complete ctor/dtor
+  // variant calling the base variant in a class with virtual bases.
+  if (RD == Base) {
+    assert(!CGVtableInfo::needsVTTParameter(CGF.CurGD) &&
+           "doing no-op VTT offset in base dtor/ctor?");
+    SubVTTIndex = 0;
+  } else {
+    SubVTTIndex = CGF.CGM.getVtableInfo().getSubVTTIndex(RD, Base);
+    assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
+  }
   
   if (CGVtableInfo::needsVTTParameter(CGF.CurGD)) {
     // A VTT parameter was passed to the constructor, use it.
@@ -962,13 +971,50 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's
 /// destructor. This is to call destructors on members and base classes
 /// in reverse order of their construction.
-/// FIXME: This needs to take a CXXDtorType.
 void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
                                        CXXDtorType DtorType) {
   assert(!DD->isTrivial() &&
          "Should not emit dtor epilogue for trivial dtor!");
 
   const CXXRecordDecl *ClassDecl = DD->getParent();
+
+  // In a deleting destructor, we've already called the complete
+  // destructor as a subroutine, so we just have to delete the
+  // appropriate value.
+  if (DtorType == Dtor_Deleting) {
+    assert(DD->getOperatorDelete() && 
+           "operator delete missing - EmitDtorEpilogue");
+    EmitDeleteCall(DD->getOperatorDelete(), LoadCXXThis(),
+                   getContext().getTagDeclType(ClassDecl));
+    return;
+  }
+
+  // For complete destructors, we've already called the base
+  // destructor (in GenerateBody), so we just need to destruct all the
+  // virtual bases.
+  if (DtorType == Dtor_Complete) {
+    // Handle virtual bases.
+    for (CXXRecordDecl::reverse_base_class_const_iterator I = 
+           ClassDecl->vbases_rbegin(), E = ClassDecl->vbases_rend();
+              I != E; ++I) {
+      const CXXBaseSpecifier &Base = *I;
+      CXXRecordDecl *BaseClassDecl
+        = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
+    
+      // Ignore trivial destructors.
+      if (BaseClassDecl->hasTrivialDestructor())
+        continue;
+      const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
+      llvm::Value *V = GetAddressOfBaseOfCompleteClass(LoadCXXThis(),
+                                                       true,
+                                                       ClassDecl,
+                                                       BaseClassDecl);
+      EmitCXXDestructorCall(D, Dtor_Base, V);
+    }
+    return;
+  }
+
+  assert(DtorType == Dtor_Base);
 
   // Collect the fields.
   llvm::SmallVector<const FieldDecl *, 16> FieldDecls;
@@ -1041,37 +1087,6 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
                                            ClassDecl, BaseClassDecl, 
                                            /*NullCheckValue=*/false);
     EmitCXXDestructorCall(D, Dtor_Base, V);
-  }
-
-  // If we're emitting a base destructor, we don't want to emit calls to the
-  // virtual bases.
-  if (DtorType == Dtor_Base)
-    return;
-  
-  // Handle virtual bases.
-  for (CXXRecordDecl::reverse_base_class_const_iterator I = 
-       ClassDecl->vbases_rbegin(), E = ClassDecl->vbases_rend(); I != E; ++I) {
-    const CXXBaseSpecifier &Base = *I;
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
-    
-    // Ignore trivial destructors.
-    if (BaseClassDecl->hasTrivialDestructor())
-      continue;
-    const CXXDestructorDecl *D = BaseClassDecl->getDestructor(getContext());
-    llvm::Value *V = GetAddressOfBaseOfCompleteClass(LoadCXXThis(),
-                                                     true,
-                                                     ClassDecl,
-                                                     BaseClassDecl);
-    EmitCXXDestructorCall(D, Dtor_Base, V);
-  }
-    
-  // If we have a deleting destructor, emit a call to the delete operator.
-  if (DtorType == Dtor_Deleting) {
-    assert(DD->getOperatorDelete() && 
-           "operator delete missing - EmitDtorEpilogue");
-    EmitDeleteCall(DD->getOperatorDelete(), LoadCXXThis(),
-                   getContext().getTagDeclType(ClassDecl));
   }
 }
 
