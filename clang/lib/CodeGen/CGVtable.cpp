@@ -803,6 +803,11 @@ struct VCallOffsetMap {
   // FIXME: This should be a real map and not a vector.
   llvm::SmallVector<MethodAndOffsetPairTy, 16> Offsets;
 
+  /// MethodsCanShareVCallOffset - Returns whether two virtual member functions
+  /// can share the same vcall offset.
+  static bool MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
+                                         const CXXMethodDecl *RHS);
+
 public:
   /// AddVCallOffset - Adds a vcall offset to the map. Returns true if the
   /// add was successful, or false if there was already a member function with
@@ -817,14 +822,50 @@ public:
   void clear() { Offsets.clear(); }
 };
 
+bool VCallOffsetMap::MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
+                                                const CXXMethodDecl *RHS) {
+  assert(LHS->isVirtual() && "LHS must be virtual!");
+  assert(RHS->isVirtual() && "LHS must be virtual!");
+  
+  // FIXME: We need to check more things here.
+  
+  DeclarationName LHSName = LHS->getDeclName();
+  DeclarationName RHSName = RHS->getDeclName();
+  if (LHSName.getNameKind() != LHSName.getNameKind())
+    return false;
+  
+  switch (LHSName.getNameKind()) {
+  default:
+    assert(false && "Unhandled name kind!");
+  case DeclarationName::Identifier:
+    if (LHSName.getAsIdentifierInfo() != RHSName.getAsIdentifierInfo())
+      return false;
+  }
+  
+  return true;
+}
+
 bool VCallOffsetMap::AddVCallOffset(const CXXMethodDecl *MD, 
                                     int64_t OffsetOffset) {
-  /// FIXME: Implement this.
+  // Check if we can reuse an offset.
+  for (unsigned I = 0, E = Offsets.size(); I != E; ++I) {
+    if (MethodsCanShareVCallOffset(Offsets[I].first, MD))
+      return false;
+  }
+  
+  // Add the offset.
+  Offsets.push_back(MethodAndOffsetPairTy(MD, OffsetOffset));
   return true;
 }
 
 int64_t VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
-  // FIXME: Implement this.
+  // Look for an offset.
+  for (unsigned I = 0, E = Offsets.size(); I != E; ++I) {
+    if (MethodsCanShareVCallOffset(Offsets[I].first, MD))
+      return Offsets[I].second;
+  }
+  
+  assert(false && "Should always find a vcall offset offset!");
   return 0;
 }
 
@@ -1010,7 +1051,11 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
   ThisAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
-    assert(!Offset.VirtualBase && "FIXME: Handle virtual bases!");
+    if (Offset.VirtualBase) {
+      // Get the vcall offset offset.
+      Adjustment.VCallOffsetOffset = VCallOffsets.getVCallOffsetOffset(MD);
+    }
+
     Adjustment.NonVirtual = Offset.NonVirtualOffset;
   }
   
@@ -1069,8 +1114,20 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
     if (!MD->isVirtual())
       continue;
 
-    // FIXME: Check if we already have a vcall offset for this member function
+    // OffsetIndex is the index of this vcall offset, relative to the vtable
+    // address point. (We subtract 3 to account for the information just
+    // above the address point, the RTTI info, the offset to top, and the
+    // vcall offset itself).
+    int64_t OffsetIndex = -(3 + VCallAndVBaseOffsets.size());
+    
+    // FIXME: We shouldn't use / 8 here.
+    int64_t OffsetOffset = OffsetIndex * 
+      (int64_t)Context.Target.getPointerWidth(0) / 8;
+    
+    // Don't add a vcall offset if we already have one for this member function
     // signature.
+    if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset))
+      continue;
     
     // Get the 'this' pointer adjustment offset.
     FinalOverriders::BaseOffset ThisAdjustmentOffset =
