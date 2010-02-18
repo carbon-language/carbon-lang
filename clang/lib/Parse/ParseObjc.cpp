@@ -772,6 +772,12 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName(DSRet);
 
+  // If attributes exist before the method, parse them.
+  llvm::OwningPtr<AttributeList> MethodAttrs;
+  if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
+    MethodAttrs.reset(ParseGNUAttributes());
+
+  // Now parse the selector.
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(selLoc);
 
@@ -787,9 +793,9 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   llvm::SmallVector<Declarator, 8> CargNames;
   if (Tok.isNot(tok::colon)) {
     // If attributes exist after the method, parse them.
-    llvm::OwningPtr<AttributeList> MethodAttrs;
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-      MethodAttrs.reset(ParseGNUAttributes());
+      MethodAttrs.reset(addAttributeLists(MethodAttrs.take(),
+                                          ParseGNUAttributes()));
 
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     DeclPtrTy Result
@@ -863,9 +869,9 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   // FIXME: Add support for optional parmameter list...
   // If attributes exist after the method, parse them.
-  llvm::OwningPtr<AttributeList> MethodAttrs;
   if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
-    MethodAttrs.reset(ParseGNUAttributes());
+    MethodAttrs.reset(addAttributeLists(MethodAttrs.take(),
+                                        ParseGNUAttributes()));
 
   if (KeyIdents.size() == 0)
     return DeclPtrTy();
