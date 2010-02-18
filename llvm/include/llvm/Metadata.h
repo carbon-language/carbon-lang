@@ -75,6 +75,7 @@ class MDNode : public Value, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
   void operator=(const MDNode &);        // DO NOT IMPLEMENT
   friend class MDNodeOperand;
+  friend class LLVMContextImpl;
 
   /// NumOperands - This many 'MDNodeOperand' items are co-allocated onto the
   /// end of this MDNode.
@@ -106,6 +107,9 @@ class MDNode : public Value, public FoldingSetNode {
   // Replace each instance of F from the operand list of this node with T.
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
+    // replaceAllOperandsWithNull - This is used while destroying llvm context to 
+  // gracefully delete all nodes. This method replaces all operands with null.
+  void replaceAllOperandsWithNull();
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,

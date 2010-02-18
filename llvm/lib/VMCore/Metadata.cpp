@@ -257,6 +257,13 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(getOperand(i));
 }
 
+// replaceAllOperandsWithNull - This is used while destroying llvm context to 
+// gracefully delete all nodes. This method replaces all operands with null.
+void MDNode::replaceAllOperandsWithNull() {
+  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
+       Op != E; ++Op)
+    replaceOperand(Op, 0);
+}
 
 // Replace value from this node's operand list.
 void MDNode::replaceOperand(MDNodeOperand *Op, Value *To) {
