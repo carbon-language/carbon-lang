@@ -22,6 +22,7 @@ namespace clang {
 
 class ASTContext;
 class ASTUnit;
+class Attr;
 class Decl;
 class Expr;
 class NamedDecl;
@@ -32,9 +33,10 @@ class TypeDecl;
 
 namespace cxcursor {
   
-CXCursor MakeCXCursorInvalid(CXCursorKind K);
-CXCursor MakeCXCursor(clang::Stmt *S, clang::Decl *Parent, ASTUnit *TU);
+CXCursor MakeCXCursor(const clang::Attr *A, clang::Decl *Parent, ASTUnit *TU);
 CXCursor MakeCXCursor(clang::Decl *D, ASTUnit *TU);
+CXCursor MakeCXCursor(clang::Stmt *S, clang::Decl *Parent, ASTUnit *TU);
+CXCursor MakeCXCursorInvalid(CXCursorKind K);
 
 /// \brief Create an Objective-C superclass reference at the given location.
 CXCursor MakeCursorObjCSuperClassRef(ObjCInterfaceDecl *Super, 

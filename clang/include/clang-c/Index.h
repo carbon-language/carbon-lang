@@ -764,7 +764,19 @@ enum CXCursorKind {
    * The translation unit cursor exists primarily to act as the root
    * cursor for traversing the contents of a translation unit.
    */
-  CXCursor_TranslationUnit               = 300
+  CXCursor_TranslationUnit               = 300,
+
+  /* Attributes */
+  CXCursor_FirstAttr                     = 400,
+  /**
+   * \brief An attribute whose specific kind is not exposed via this
+   * interface.
+   */
+  CXCursor_UnexposedAttr                 = 400,
+
+  CXCursor_IBActionAttr                  = 401,
+  CXCursor_IBOutletAttr                  = 402,
+  CXCursor_LastAttr                      = CXCursor_IBOutletAttr
 };
 
 /**

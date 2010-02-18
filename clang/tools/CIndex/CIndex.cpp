@@ -1441,6 +1441,12 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("NotImplemented");
   case CXCursor_TranslationUnit:
       return createCXString("TranslationUnit");
+  case CXCursor_UnexposedAttr:
+      return createCXString("UnexposedAttr");
+  case CXCursor_IBActionAttr:
+      return createCXString("attribute(ibaction)");
+    case CXCursor_IBOutletAttr:
+      return createCXString("attribute(iboutlet)");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

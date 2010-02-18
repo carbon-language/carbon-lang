@@ -72,6 +72,23 @@ static CXCursorKind GetCursorKind(Decl *D) {
   return CXCursor_NotImplemented;  
 }
 
+static CXCursorKind GetCursorKind(const Attr *A) {
+  assert(A && "Invalid arguments!");
+  switch (A->getKind()) {
+    default: break;
+    case Attr::IBActionKind: return CXCursor_IBActionAttr;
+    case Attr::IBOutletKind: return CXCursor_IBOutletAttr;
+  }
+
+  return CXCursor_UnexposedAttr;
+}
+
+CXCursor cxcursor::MakeCXCursor(const Attr *A, Decl *Parent, ASTUnit *TU) {
+  assert(A && Parent && TU && "Invalid arguments!");
+  CXCursor C = { GetCursorKind(A), { Parent, (void*)A, TU } };
+  return C;
+}
+
 CXCursor cxcursor::MakeCXCursor(Decl *D, ASTUnit *TU) {
   assert(D && TU && "Invalid arguments!");
   CXCursor C = { GetCursorKind(D), { D, 0, TU } };
