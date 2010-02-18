@@ -203,7 +203,7 @@ GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
 enum BuiltinOpcodes {
   OPC_Emit,
   OPC_Push,
-  OPC_Record,
+  OPC_RecordNode,
   OPC_MoveChild,
   OPC_MoveParent,
   OPC_CheckSame,
@@ -294,7 +294,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       MatchScopes.push_back(NewEntry);
       continue;
     }
-    case OPC_Record:
+    case OPC_RecordNode:
       // Remember this node, it may end up being an operand in the pattern.
       RecordedNodes.push_back(N);
       continue;

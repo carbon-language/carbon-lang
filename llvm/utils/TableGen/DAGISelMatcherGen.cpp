@@ -397,6 +397,38 @@ void MatcherGen::EmitMatcherCode() {
 
 void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
                                          SmallVectorImpl<unsigned> &ResultOps) {
+  assert(N->isLeaf() && "Must be a leaf");
+  
+  if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
+    AddMatcherNode(new EmitIntegerMatcherNode(II->getValue(),N->getTypeNum(0)));
+    //ResultOps.push_back(TmpNode(TmpNo++));
+    return;
+  }
+  
+  // If this is an explicit register reference, handle it.
+  if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+    if (DI->getDef()->isSubClassOf("Register")) {
+      AddMatcherNode(new EmitRegisterMatcherNode(DI->getDef(),
+                                                 N->getTypeNum(0)));
+      //ResultOps.push_back(TmpNode(TmpNo++));
+      return;
+    }
+    
+    if (DI->getDef()->getName() == "zero_reg") {
+      AddMatcherNode(new EmitRegisterMatcherNode(0, N->getTypeNum(0)));
+      //ResultOps.push_back(TmpNode(TmpNo++));
+      return;
+    }
+    
+#if 0
+    if (DI->getDef()->isSubClassOf("RegisterClass")) {
+      // Handle a reference to a register class. This is used
+      // in COPY_TO_SUBREG instructions.
+      // FIXME: Implement.
+    }
+#endif
+  }
+  
   errs() << "unhandled leaf node: \n";
   N->dump();
 }

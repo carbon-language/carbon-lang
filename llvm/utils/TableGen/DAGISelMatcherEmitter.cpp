@@ -125,8 +125,8 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
        << *cast<EmitNodeMatcherNode>(N)->getPattern().getDstPattern() << "\n";
     OS.PadToColumn(Indent*2) << "OPC_Emit, /*XXX*/\n\n";
     return 1;
-  case MatcherNode::Record:
-    OS << "OPC_Record,";
+  case MatcherNode::RecordNode:
+    OS << "OPC_RecordNode,";
     OS.PadToColumn(CommentIndent) << "// "
        << cast<RecordMatcherNode>(N)->getWhatFor() << '\n';
     return 1;
@@ -212,6 +212,11 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
     OS << "OPC_CheckChainCompatible, "
        << cast<CheckChainCompatibleMatcherNode>(N)->getPreviousOp() << ",\n";
     return 2;
+      
+  case MatcherNode::EmitInteger:
+  case MatcherNode::EmitRegister:
+      // FIXME: Implement.
+    return 0;
   }
   assert(0 && "Unreachable");
   return 0;

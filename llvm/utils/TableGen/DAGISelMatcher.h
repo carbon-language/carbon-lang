@@ -21,6 +21,7 @@ namespace llvm {
   class PatternToMatch;
   class raw_ostream;
   class ComplexPattern;
+  class Record;
 
 MatcherNode *ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                      const CodeGenDAGPatterns &CGP);
@@ -36,25 +37,31 @@ class MatcherNode {
   OwningPtr<MatcherNode> Next;
 public:
   enum KindTy {
-    EmitNode,
-    Push,           // [Push, Dest0, Dest1, Dest2, Dest3]
-    Record,         // [Record]
-    MoveChild,      // [MoveChild, Child#]
-    MoveParent,     // [MoveParent]
+    // Stack manipulation.
+    Push,           // Push a checking scope.
+    RecordNode,     // Record the current node.
+    MoveChild,      // Move current node to specified child.
+    MoveParent,     // Move current node to parent.
     
-    CheckSame,      // [CheckSame, N]         Fail if not same as prev match.
+    // Predicate checking.
+    CheckSame,      // Fail if not same as prev match.
     CheckPatternPredicate,
-    CheckPredicate, // [CheckPredicate, P]    Fail if predicate fails.
-    CheckOpcode,    // [CheckOpcode, Opcode]  Fail if not opcode.
-    CheckType,      // [CheckType, MVT]       Fail if not correct type.
-    CheckInteger,   // [CheckInteger, int0,int1,int2,...int7] Fail if wrong val.
-    CheckCondCode,  // [CheckCondCode, CondCode] Fail if not condcode.
+    CheckPredicate, // Fail if node predicate fails.
+    CheckOpcode,    // Fail if not opcode.
+    CheckType,      // Fail if not correct type.
+    CheckInteger,   // Fail if wrong val.
+    CheckCondCode,  // Fail if not condcode.
     CheckValueType,
     CheckComplexPat,
     CheckAndImm,
     CheckOrImm,
     CheckFoldableChainNode,
-    CheckChainCompatible
+    CheckChainCompatible,
+    
+    // Node creation/emisssion.
+    EmitInteger,   // Create a TargetConstant
+    EmitRegister,  // Create a register.
+    EmitNode
   };
   const KindTy Kind;
 
@@ -77,23 +84,6 @@ protected:
   void printNext(raw_ostream &OS, unsigned indent) const;
 };
   
-/// EmitNodeMatcherNode - This signals a successful match and generates a node.
-class EmitNodeMatcherNode : public MatcherNode {
-  const PatternToMatch &Pattern;
-public:
-  EmitNodeMatcherNode(const PatternToMatch &pattern)
-    : MatcherNode(EmitNode), Pattern(pattern) {}
-
-  const PatternToMatch &getPattern() const { return Pattern; }
-
-  static inline bool classof(const MatcherNode *N) {
-    return N->getKind() == EmitNode;
-  }
-
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
-};
-
-
 /// PushMatcherNode - This pushes a failure scope on the stack and evaluates
 /// 'Next'.  If 'Next' fails to match, it pops its scope and attempts to
 /// match 'Failure'.
@@ -123,12 +113,12 @@ class RecordMatcherNode : public MatcherNode {
   std::string WhatFor;
 public:
   RecordMatcherNode(const std::string &whatfor)
-    : MatcherNode(Record), WhatFor(whatfor) {}
+    : MatcherNode(RecordNode), WhatFor(whatfor) {}
   
   const std::string &getWhatFor() const { return WhatFor; }
   
   static inline bool classof(const MatcherNode *N) {
-    return N->getKind() == Record;
+    return N->getKind() == RecordNode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
@@ -388,8 +378,60 @@ public:
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
+/// EmitIntegerMatcherNode - This creates a new TargetConstant.
+class EmitIntegerMatcherNode : public MatcherNode {
+  int64_t Val;
+  MVT::SimpleValueType VT;
+public:
+  EmitIntegerMatcherNode(int64_t val, MVT::SimpleValueType vt)
+  : MatcherNode(EmitInteger), Val(val), VT(vt) {}
   
-
+  int64_t getVal() const { return Val; }
+  MVT::SimpleValueType getVT() const { return VT; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitInteger;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+/// EmitRegisterMatcherNode - This creates a new TargetConstant.
+class EmitRegisterMatcherNode : public MatcherNode {
+  /// Reg - The def for the register that we're emitting.  If this is null, then
+  /// this is a reference to zero_reg.
+  Record *Reg;
+  MVT::SimpleValueType VT;
+public:
+  EmitRegisterMatcherNode(Record *reg, MVT::SimpleValueType vt)
+    : MatcherNode(EmitRegister), Reg(reg), VT(vt) {}
+  
+  Record *getReg() const { return Reg; }
+  MVT::SimpleValueType getVT() const { return VT; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitRegister;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+/// EmitNodeMatcherNode - This signals a successful match and generates a node.
+class EmitNodeMatcherNode : public MatcherNode {
+  const PatternToMatch &Pattern;
+public:
+  EmitNodeMatcherNode(const PatternToMatch &pattern)
+  : MatcherNode(EmitNode), Pattern(pattern) {}
+  
+  const PatternToMatch &getPattern() const { return Pattern; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitNode;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
 } // end namespace llvm
 
 #endif

@@ -10,6 +10,7 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "CodeGenTarget.h"
+#include "Record.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -117,3 +118,19 @@ void CheckChainCompatibleMatcherNode::print(raw_ostream &OS,
   OS.indent(indent) << "CheckChainCompatibleMatcherNode " << PreviousOp << "\n";
   printNext(OS, indent);
 }
+
+void EmitIntegerMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitIntegerMatcherNode " << Val << " VT=" << VT << '\n';
+  printNext(OS, indent);
+}
+
+void EmitRegisterMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitRegisterMatcherNode ";
+  if (Reg)
+    OS << Reg->getName();
+  else
+    OS << "zero_reg";
+  OS << " VT=" << VT << '\n';
+  printNext(OS, indent);
+}
+
