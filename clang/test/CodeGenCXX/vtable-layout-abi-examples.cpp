@@ -46,5 +46,29 @@ struct B: public virtual A {
   int ib;
 };
 void B::f() {}
-  
+
+// CHECK:      Vtable for 'Test1::C' (13 entries).
+// CHECK-NEXT:    0 | vbase_offset (16)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test1::C RTTI
+// CHECK-NEXT:        -- (Test1::C, 0) vtable address --
+// CHECK-NEXT:    3 | void Test1::C::g()
+// CHECK-NEXT:    4 | void Test1::C::h()
+// CHECK-NEXT:    5 | vcall_offset (-16)
+// CHECK-NEXT:    6 | vcall_offset (-16)
+// CHECK-NEXT:    7 | vcall_offset (0)
+// CHECK-NEXT:    8 | offset_to_top (-16)
+// CHECK-NEXT:    9 | Test1::C RTTI
+// CHECK-NEXT:        -- (Test1::A, 16) vtable address --
+// CHECK-NEXT:   10 | void Test1::A::f()
+// CHECK-NEXT:   11 | void Test1::C::g()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+// CHECK-NEXT:   12 | void Test1::C::h()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -40 vcall offset offset]
+struct C: public virtual A {
+  void g ();
+  void h ();
+  int ic;
+};
+void C::g() {}
 }
