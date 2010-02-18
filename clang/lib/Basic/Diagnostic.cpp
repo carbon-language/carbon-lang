@@ -923,7 +923,7 @@ StoredDiagnostic::StoredDiagnostic() { }
 
 StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
                                    llvm::StringRef Message)
-  : Level(Level), Message(Message) { }
+  : Level(Level), Loc(), Message(Message) { }
 
 StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, 
                                    const DiagnosticInfo &Info)

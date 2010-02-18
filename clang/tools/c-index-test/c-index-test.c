@@ -198,120 +198,73 @@ typedef void (*PostVisitTU)(CXTranslationUnit);
 void PrintDiagnostic(CXDiagnostic Diagnostic) {
   FILE *out = stderr;
   CXFile file;
-  unsigned line, column;
   CXString text;
-  enum CXDiagnosticSeverity severity = clang_getDiagnosticSeverity(Diagnostic);
+  unsigned display_opts = CXDiagnostic_DisplaySourceLocation
+    | CXDiagnostic_DisplayColumn | CXDiagnostic_DisplaySourceRanges;
+  unsigned i, num_fixits;
 
-  /* Ignore diagnostics that should be ignored. */
-  if (severity == CXDiagnostic_Ignored)
+  clang_displayDiagnostic(Diagnostic, out, display_opts);
+  if (clang_getDiagnosticSeverity(Diagnostic) == CXDiagnostic_Ignored)
     return;
 
-  /* Print file:line:column. */
   clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
-                                 &file, &line, &column, 0);
-  if (file) {
-    unsigned i, n;
-    unsigned printed_any_ranges = 0;
-    CXString fname;
+                                 &file, 0, 0, 0);
+  if (!file)
+    return;
 
-    fname = clang_getFileName(file);
-    fprintf(out, "%s:%d:%d:", clang_getCString(fname), line, column);
-    clang_disposeString(fname);
-
-    n = clang_getDiagnosticNumRanges(Diagnostic);
-    for (i = 0; i != n; ++i) {
-      CXFile start_file, end_file;
-      CXSourceRange range = clang_getDiagnosticRange(Diagnostic, i);
-
-      unsigned start_line, start_column, end_line, end_column;
-      clang_getInstantiationLocation(clang_getRangeStart(range),
-                                     &start_file, &start_line, &start_column,0);
-      clang_getInstantiationLocation(clang_getRangeEnd(range),
-                                     &end_file, &end_line, &end_column, 0);
-
-      if (start_file != end_file || start_file != file)
-        continue;
-
-      PrintExtent(out, start_line, start_column, end_line, end_column);
-      printed_any_ranges = 1;
+  num_fixits = clang_getDiagnosticNumFixIts(Diagnostic);
+  for (i = 0; i != num_fixits; ++i) {
+    switch (clang_getDiagnosticFixItKind(Diagnostic, i)) {
+    case CXFixIt_Insertion: {
+      CXSourceLocation insertion_loc;
+      CXFile insertion_file;
+      unsigned insertion_line, insertion_column;
+      text = clang_getDiagnosticFixItInsertion(Diagnostic, i, &insertion_loc);
+      clang_getInstantiationLocation(insertion_loc, &insertion_file,
+                                     &insertion_line, &insertion_column, 0);
+      if (insertion_file == file)
+        fprintf(out, "FIX-IT: Insert \"%s\" at %d:%d\n",
+                clang_getCString(text), insertion_line, insertion_column);
+      clang_disposeString(text);
+      break;
     }
-    if (printed_any_ranges)
-      fprintf(out, ":");
-
-    fprintf(out, " ");
-  }
-
-  /* Print warning/error/etc. */
-  switch (severity) {
-  case CXDiagnostic_Ignored: assert(0 && "impossible"); break;
-  case CXDiagnostic_Note: fprintf(out, "note: "); break;
-  case CXDiagnostic_Warning: fprintf(out, "warning: "); break;
-  case CXDiagnostic_Error: fprintf(out, "error: "); break;
-  case CXDiagnostic_Fatal: fprintf(out, "fatal error: "); break;
-  }
-
-  text = clang_getDiagnosticSpelling(Diagnostic);
-  if (clang_getCString(text))
-    fprintf(out, "%s\n", clang_getCString(text));
-  else
-    fprintf(out, "<no diagnostic text>\n");
-  clang_disposeString(text);
-
-  if (file) {
-    unsigned i, num_fixits = clang_getDiagnosticNumFixIts(Diagnostic);
-    for (i = 0; i != num_fixits; ++i) {
-      switch (clang_getDiagnosticFixItKind(Diagnostic, i)) {
-      case CXFixIt_Insertion: {
-        CXSourceLocation insertion_loc;
-        CXFile insertion_file;
-        unsigned insertion_line, insertion_column;
-        text = clang_getDiagnosticFixItInsertion(Diagnostic, i, &insertion_loc);
-        clang_getInstantiationLocation(insertion_loc, &insertion_file,
-                                       &insertion_line, &insertion_column, 0);
-        if (insertion_file == file)
-          fprintf(out, "FIX-IT: Insert \"%s\" at %d:%d\n",
-                  clang_getCString(text), insertion_line, insertion_column);
-        clang_disposeString(text);
-        break;
+      
+    case CXFixIt_Removal: {
+      CXFile start_file, end_file;
+      unsigned start_line, start_column, end_line, end_column;
+      CXSourceRange remove_range
+        = clang_getDiagnosticFixItRemoval(Diagnostic, i);
+      clang_getInstantiationLocation(clang_getRangeStart(remove_range),
+                                     &start_file, &start_line, &start_column,
+                                     0);
+      clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
+                                     &end_file, &end_line, &end_column, 0);
+      if (start_file == file && end_file == file) {
+        fprintf(out, "FIX-IT: Remove ");
+        PrintExtent(out, start_line, start_column, end_line, end_column);
+        fprintf(out, "\n");
       }
-
-      case CXFixIt_Removal: {
-        CXFile start_file, end_file;
-        unsigned start_line, start_column, end_line, end_column;
-        CXSourceRange remove_range
-          = clang_getDiagnosticFixItRemoval(Diagnostic, i);
-        clang_getInstantiationLocation(clang_getRangeStart(remove_range),
-                                       &start_file, &start_line, &start_column,
-                                       0);
-        clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
-                                       &end_file, &end_line, &end_column, 0);
-        if (start_file == file && end_file == file) {
-          fprintf(out, "FIX-IT: Remove ");
-          PrintExtent(out, start_line, start_column, end_line, end_column);
-          fprintf(out, "\n");
-        }
-        break;
+      break;
+    }
+      
+    case CXFixIt_Replacement: {
+      CXFile start_file, end_file;
+      unsigned start_line, start_column, end_line, end_column;
+      CXSourceRange remove_range;
+      text = clang_getDiagnosticFixItReplacement(Diagnostic, i,&remove_range);
+      clang_getInstantiationLocation(clang_getRangeStart(remove_range),
+                                     &start_file, &start_line, &start_column,
+                                     0);
+      clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
+                                     &end_file, &end_line, &end_column, 0);
+      if (start_file == end_file) {
+        fprintf(out, "FIX-IT: Replace ");
+        PrintExtent(out, start_line, start_column, end_line, end_column);
+        fprintf(out, " with \"%s\"\n", clang_getCString(text));
       }
-
-      case CXFixIt_Replacement: {
-        CXFile start_file, end_file;
-        unsigned start_line, start_column, end_line, end_column;
-        CXSourceRange remove_range;
-        text = clang_getDiagnosticFixItReplacement(Diagnostic, i,&remove_range);
-        clang_getInstantiationLocation(clang_getRangeStart(remove_range),
-                                       &start_file, &start_line, &start_column,
-                                       0);
-        clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
-                                       &end_file, &end_line, &end_column, 0);
-        if (start_file == end_file) {
-          fprintf(out, "FIX-IT: Replace ");
-          PrintExtent(out, start_line, start_column, end_line, end_column);
-          fprintf(out, " with \"%s\"\n", clang_getCString(text));
-        }
-        clang_disposeString(text);
-        break;
-      }
-      }
+      clang_disposeString(text);
+      break;
+    }
     }
   }
 }
@@ -534,7 +487,8 @@ int perform_test_load_tu(const char *file, const char *filter,
   CXTranslationUnit TU;
   int result;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
-                          !strcmp(filter, "local") ? 1 : 0);
+                          !strcmp(filter, "local") ? 1 : 0,
+                          /* displayDiagnosics=*/1);
 
   if (!CreateTranslationUnit(Idx, file, &TU)) {
     clang_disposeIndex(Idx);
@@ -558,7 +512,8 @@ int perform_test_load_source(int argc, const char **argv,
   int result;
 
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
-                          !strcmp(filter, "local") ? 1 : 0);
+                          !strcmp(filter, "local") ? 1 : 0,
+                          /* displayDiagnosics=*/1);
 
   if (UseExternalASTs && strlen(UseExternalASTs))
     clang_setUseExternalASTGeneration(Idx, 1);
@@ -612,7 +567,8 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   unsigned line = 1, col = 1;
   unsigned start_line = 1, start_col = 1;
 
-  if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1))) {
+  if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1,
+                                /* displayDiagnosics=*/1))) {
     fprintf(stderr, "Could not create Index\n");
     return 1;
   }
@@ -813,7 +769,7 @@ int perform_code_completion(int argc, const char **argv) {
   if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0);
+  CIdx = clang_createIndex(0, 1);
   results = clang_codeComplete(CIdx,
                                argv[argc - 1], argc - num_unsaved_files - 3,
                                argv + num_unsaved_files + 2,
@@ -877,7 +833,7 @@ int inspect_cursor_at(int argc, const char **argv) {
                            &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0);
+  CIdx = clang_createIndex(0, 1);
   TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
                                   argc - num_unsaved_files - 2 - NumLocations,
                                    argv + num_unsaved_files + 1 + NumLocations,
@@ -935,7 +891,7 @@ int perform_token_annotation(int argc, const char **argv) {
   if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0);
+  CIdx = clang_createIndex(0, 1);
   TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
                                                  argc - num_unsaved_files - 3,
                                                  argv + num_unsaved_files + 2,
@@ -1053,6 +1009,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, const char **argv) {
+  clang_enableStackTraces();
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
     return perform_code_completion(argc, argv);
   if (argc > 2 && strstr(argv[1], "-cursor-at=") == argv[1])

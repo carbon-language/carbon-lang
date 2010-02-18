@@ -177,6 +177,9 @@ static bool ReadUnsigned(const char *&Memory, const char *MemoryEnd,
 /// \brief The CXCodeCompleteResults structure we allocate internally;
 /// the client only sees the initial CXCodeCompleteResults structure.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
+  AllocatedCXCodeCompleteResults();
+  ~AllocatedCXCodeCompleteResults();
+  
   /// \brief The memory buffer from which we parsed the results. We
   /// retain this buffer because the completion strings point into it.
   llvm::MemoryBuffer *Buffer;
@@ -194,6 +197,16 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   FileManager FileMgr;
 };
 
+AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
+  : CXCodeCompleteResults(), Buffer(0) { }
+  
+AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
+  for (unsigned I = 0, N = NumResults; I != N; ++I)
+    delete (CodeCompletionString *)Results[I].CompletionString;
+  delete [] Results;
+  delete Buffer;
+}
+  
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           const char *source_filename,
                                           int num_command_line_args,
@@ -368,15 +381,6 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *ResultsIn) {
 
   AllocatedCXCodeCompleteResults *Results
     = static_cast<AllocatedCXCodeCompleteResults*>(ResultsIn);
-
-  for (unsigned I = 0, N = Results->NumResults; I != N; ++I)
-    delete (CXCompletionString *)Results->Results[I].CompletionString;
-  delete [] Results->Results;
-
-  Results->Results = 0;
-  Results->NumResults = 0;
-  delete Results->Buffer;
-  Results->Buffer = 0;
   delete Results;
 }
 

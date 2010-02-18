@@ -27,6 +27,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
+#include "llvm/System/Signals.h"
 
 // Needed to define L_TMPNAM on some systems.
 #include <cstdio>
@@ -907,10 +908,13 @@ bool CursorVisitor::VisitAttributes(Decl *D) {
 }
 
 extern "C" {
-CXIndex clang_createIndex(int excludeDeclarationsFromPCH) {
+CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
+                          int displayDiagnostics) {
   CIndexer *CIdxr = new CIndexer();
   if (excludeDeclarationsFromPCH)
     CIdxr->setOnlyLocalDecls();
+  if (displayDiagnostics)
+    CIdxr->setDisplayDiagnostics();
   return CIdxr;
 }
 
@@ -997,8 +1001,18 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
-    if (NumErrors != Diags->getNumErrors())
+    if (NumErrors != Diags->getNumErrors()) {
+      if (CXXIdx->getDisplayDiagnostics()) {
+        for (ASTUnit::diag_iterator D = Unit->diag_begin(), 
+                                 DEnd = Unit->diag_end();
+             D != DEnd; ++D) {
+          CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOptions());
+          clang_displayDiagnostic(&Diag, stderr,
+                                  clang_defaultDiagnosticDisplayOptions());
+        }
+      }
       return 0;
+    }
 
     return Unit.take();
   }
@@ -1089,17 +1103,34 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           RemappedFiles.data(),
                                           RemappedFiles.size(),
                                           /*CaptureDiagnostics=*/true);
-  if (ATU)
-    ATU->unlinkTemporaryFile();
-
-  // FIXME: Currently we don't report diagnostics on invalid ASTs.
   if (ATU) {
     LoadSerializedDiagnostics(DiagnosticsFile, 
                               num_unsaved_files, unsaved_files,
                               ATU->getFileManager(),
                               ATU->getSourceManager(),
                               ATU->getDiagnostics());
+  } else if (CXXIdx->getDisplayDiagnostics()) {
+    // We failed to load the ASTUnit, but we can still deserialize the
+    // diagnostics and emit them.
+    FileManager FileMgr;
+    SourceManager SourceMgr;
+    // FIXME: Faked LangOpts!
+    LangOptions LangOpts;
+    llvm::SmallVector<StoredDiagnostic, 4> Diags;
+    LoadSerializedDiagnostics(DiagnosticsFile, 
+                              num_unsaved_files, unsaved_files,
+                              FileMgr, SourceMgr, Diags);
+    for (llvm::SmallVector<StoredDiagnostic, 4>::iterator D = Diags.begin(), 
+                                                       DEnd = Diags.end();
+         D != DEnd; ++D) {
+      CXStoredDiagnostic Diag(*D, LangOpts);
+      clang_displayDiagnostic(&Diag, stderr,
+                              clang_defaultDiagnosticDisplayOptions());
+    }
   }
+
+  if (ATU)
+    ATU->unlinkTemporaryFile();
 
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();
@@ -1907,6 +1938,10 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *startColumn = SM.getSpellingColumnNumber(Body->getLBracLoc());
   *endLine = SM.getSpellingLineNumber(Body->getRBracLoc());
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
+}
+
+void clang_enableStackTraces(void) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
 }
 
 } // end: extern "C"
