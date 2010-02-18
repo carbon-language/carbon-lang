@@ -22,98 +22,98 @@ void EmitNodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "EmitNode: Dst = " << *Pattern.getDstPattern() << "\n";
 }
 
-void MatcherNode::printChild(raw_ostream &OS, unsigned indent) const {
-  if (Child)
-    return Child->print(OS, indent);
-  OS.indent(indent) << "<null child>\n";
+void MatcherNode::printNext(raw_ostream &OS, unsigned indent) const {
+  if (Next)
+    return Next->print(OS, indent);
+  OS.indent(indent) << "<null next field>\n";
 }
 
 
 void PushMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Push\n";
-  printChild(OS, indent+2);
+  printNext(OS, indent+2);
   Failure->print(OS, indent);
 }
 
 void RecordMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Record\n";
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void MoveChildMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "MoveChild " << ChildNo << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void MoveParentMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "MoveParent\n";
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckSameMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckSame " << MatchNumber << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckPatternPredicateMatcherNode::
 print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckPatternPredicate " << Predicate << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckPredicateMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckPredicate " << PredName << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckOpcodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckOpcode " << OpcodeName << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckTypeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckType " << getEnumName(Type) << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckIntegerMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckInteger " << Value << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckCondCodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckCondCode ISD::" << CondCodeName << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckValueTypeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckValueType MVT::" << TypeName << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckComplexPatMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckComplexPat " << Pattern.getSelectFunc() << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckAndImmMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckAndImm " << Value << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckOrImmMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckOrImm " << Value << '\n';
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckFoldableChainNodeMatcherNode::print(raw_ostream &OS,
                                               unsigned indent) const {
   OS.indent(indent) << "CheckFoldableChainNode\n";
-  printChild(OS, indent);
+  printNext(OS, indent);
 }
 
 void CheckChainCompatibleMatcherNode::print(raw_ostream &OS,
                                               unsigned indent) const {
   OS.indent(indent) << "CheckChainCompatibleMatcherNode " << PreviousOp << "\n";
-  printChild(OS, indent);
+  printNext(OS, indent);
 }

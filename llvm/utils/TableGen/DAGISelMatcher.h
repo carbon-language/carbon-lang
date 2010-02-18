@@ -31,7 +31,9 @@ void EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &OS);
 /// MatcherNode - Base class for all the the DAG ISel Matcher representation
 /// nodes.
 class MatcherNode {
-  OwningPtr<MatcherNode> Child;
+  // The next matcher node that is executed after this one.  Null if this is the
+  // last stage of a match.
+  OwningPtr<MatcherNode> Next;
 public:
   enum KindTy {
     EmitNode,
@@ -63,16 +65,16 @@ public:
   
   KindTy getKind() const { return Kind; }
 
-  MatcherNode *getChild() { return Child.get(); }
-  const MatcherNode *getChild() const { return Child.get(); }
-  void setChild(MatcherNode *C) { Child.reset(C); }
+  MatcherNode *getNext() { return Next.get(); }
+  const MatcherNode *getNext() const { return Next.get(); }
+  void setNext(MatcherNode *C) { Next.reset(C); }
   
   static inline bool classof(const MatcherNode *) { return true; }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const = 0;
   void dump() const;
 protected:
-  void printChild(raw_ostream &OS, unsigned indent) const;
+  void printNext(raw_ostream &OS, unsigned indent) const;
 };
   
 /// EmitNodeMatcherNode - This signals a successful match and generates a node.
@@ -93,14 +95,14 @@ public:
 
 
 /// PushMatcherNode - This pushes a failure scope on the stack and evaluates
-/// 'child'.  If 'child' fails to match, it pops its scope and attempts to
+/// 'Next'.  If 'Next' fails to match, it pops its scope and attempts to
 /// match 'Failure'.
 class PushMatcherNode : public MatcherNode {
   OwningPtr<MatcherNode> Failure;
 public:
-  PushMatcherNode(MatcherNode *child = 0, MatcherNode *failure = 0)
+  PushMatcherNode(MatcherNode *next = 0, MatcherNode *failure = 0)
     : MatcherNode(Push), Failure(failure) {
-    setChild(child);
+    setNext(next);
   }
   
   MatcherNode *getFailure() { return Failure.get(); }

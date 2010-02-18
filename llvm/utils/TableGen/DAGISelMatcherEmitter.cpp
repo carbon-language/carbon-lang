@@ -76,7 +76,7 @@ class MatcherTableEmitter {
 public:
   MatcherTableEmitter(formatted_raw_ostream &os) : OS(os) {}
 
-  unsigned EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent);
+  unsigned EmitMatcherList(const MatcherNode *N, unsigned Indent);
   
   void EmitPredicateFunctions();
 private:
@@ -217,9 +217,9 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
   return 0;
 }
 
-/// EmitMatcherAndChildren - Emit the bytes for the specified matcher subtree.
+/// EmitMatcherList - Emit the bytes for the specified matcher subtree.
 unsigned MatcherTableEmitter::
-EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
+EmitMatcherList(const MatcherNode *N, unsigned Indent) {
   unsigned Size = 0;
   while (N) {
     // Push is a special case since it is binary.
@@ -228,25 +228,25 @@ EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
       // emitting either of them.  Handle this by buffering the output into a
       // string while we get the size.
       SmallString<128> TmpBuf;
-      unsigned ChildSize;
+      unsigned NextSize;
       {
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
-        ChildSize = 
-          EmitMatcherAndChildren(cast<PushMatcherNode>(N)->getChild(),Indent+1);
+        NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
+                                   Indent+1);
       }
       
-      if (ChildSize > 255) {
+      if (NextSize > 255) {
         errs() <<
           "Tblgen internal error: can't handle predicate this complex yet\n";
         exit(1);
       }
       
       OS.PadToColumn(Indent*2);
-      OS << "OPC_Push, " << ChildSize << ",\n";
+      OS << "OPC_Push, " << NextSize << ",\n";
       OS << TmpBuf.str();
       
-      Size += 2 + ChildSize;
+      Size += 2 + NextSize;
       
       N = PMN->getFailure();
       continue;
@@ -254,9 +254,9 @@ EmitMatcherAndChildren(const MatcherNode *N, unsigned Indent) {
   
     Size += EmitMatcher(N, Indent);
     
-    // If there are children of this node, iterate to them, otherwise we're
+    // If there are other nodes in this list, iterate to them, otherwise we're
     // done.
-    N = N->getChild();
+    N = N->getNext();
   }
   return Size;
 }
@@ -311,7 +311,7 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   MatcherTableEmitter MatcherEmitter(OS);
 
   OS << "  static const unsigned char MatcherTable[] = {\n";
-  unsigned TotalSize = MatcherEmitter.EmitMatcherAndChildren(Matcher, 2);
+  unsigned TotalSize = MatcherEmitter.EmitMatcherList(Matcher, 2);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
   OS << "\n";

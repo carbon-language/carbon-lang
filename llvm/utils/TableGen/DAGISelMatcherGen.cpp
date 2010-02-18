@@ -38,7 +38,7 @@ namespace {
     MatcherNode *Matcher;
     
     /// CurPredicate - As we emit matcher nodes, this points to the latest check
-    /// which should have future checks stuck into its child position.
+    /// which should have future checks stuck into its Next position.
     MatcherNode *CurPredicate;
   public:
     MatcherGen(const PatternToMatch &pattern, const CodeGenDAGPatterns &cgp);
@@ -109,7 +109,7 @@ void MatcherGen::InferPossibleTypes() {
 /// AddMatcherNode - Add a matcher node to the current graph we're building. 
 void MatcherGen::AddMatcherNode(MatcherNode *NewNode) {
   if (CurPredicate != 0)
-    CurPredicate->setChild(NewNode);
+    CurPredicate->setNext(NewNode);
   else
     Matcher = NewNode;
   CurPredicate = NewNode;
@@ -389,7 +389,7 @@ MatcherNode *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
   
   // Link it into the pattern.
   if (MatcherNode *Pred = Gen.GetCurPredicate()) {
-    Pred->setChild(Result);
+    Pred->setNext(Result);
     return Gen.GetMatcher();
   }
 
