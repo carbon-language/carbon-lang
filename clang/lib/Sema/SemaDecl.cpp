@@ -908,6 +908,16 @@ static Sema::CXXSpecialMember getSpecialMember(ASTContext &Ctx,
   return Sema::CXXCopyAssignment;
 }
 
+/// canREdefineFunction - checks if a function can be redefined. Currently,
+/// only extern inline functions can be redefined, and even then only in
+/// GNU89 mode.
+static bool canRedefineFunction(const FunctionDecl *FD,
+                                const LangOptions& LangOpts) {
+  return (LangOpts.GNUMode && !LangOpts.C99 && !LangOpts.CPlusPlus &&
+          FD->isInlineSpecified() &&
+          FD->getStorageClass() == FunctionDecl::Extern);
+}
+
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -956,9 +966,12 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   QualType OldQType = Context.getCanonicalType(Old->getType());
   QualType NewQType = Context.getCanonicalType(New->getType());
 
+  // Don't complain about this if we're in GNU89 mode and the old function
+  // is an extern inline function.
   if (!isa<CXXMethodDecl>(New) && !isa<CXXMethodDecl>(Old) &&
       New->getStorageClass() == FunctionDecl::Static &&
-      Old->getStorageClass() != FunctionDecl::Static) {
+      Old->getStorageClass() != FunctionDecl::Static &&
+      !canRedefineFunction(Old, getLangOptions())) {
     Diag(New->getLocation(), diag::err_static_non_static)
       << New;
     Diag(Old->getLocation(), PrevDiag);
@@ -4062,8 +4075,11 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   CurFunctionNeedsScopeChecking = false;
 
   // See if this is a redefinition.
+  // But don't complain if we're in GNU89 mode and the previous definition
+  // was an extern inline function.
   const FunctionDecl *Definition;
-  if (FD->getBody(Definition)) {
+  if (FD->getBody(Definition) &&
+      !canRedefineFunction(Definition, getLangOptions())) {
     Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
     Diag(Definition->getLocation(), diag::note_previous_definition);
   }
