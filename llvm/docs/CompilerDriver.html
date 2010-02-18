@@ -132,7 +132,7 @@ directory with the compilation graph description in Graphviz format (identical
 to the file used by the <tt class="docutils literal"><span class="pre">--view-graph</span></tt> option). The <tt class="docutils literal"><span class="pre">-o</span></tt> option can be
 used to set the output file name. Hidden option, useful for debugging LLVMC
 plugins.</li>
-<li><tt class="docutils literal"><span class="pre">--help</span></tt>, <tt class="docutils literal"><span class="pre">--help-hidden</span></tt>, <tt class="docutils literal"><span class="pre">--version</span></tt> - These options have
+<li><tt class="docutils literal"><span class="pre">-help</span></tt>, <tt class="docutils literal"><span class="pre">-help-hidden</span></tt>, <tt class="docutils literal"><span class="pre">--version</span></tt> - These options have
 their standard meaning.</li>
 </ul>
 </div>
@@ -325,7 +325,7 @@ aliased option name. Usage example: <tt class="docutils literal"><span class="pr
 <li><p class="first">Possible option properties:</p>
 <blockquote>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">help</span></tt> - help string associated with this option. Used for <tt class="docutils literal"><span class="pre">--help</span></tt>
+<li><tt class="docutils literal"><span class="pre">help</span></tt> - help string associated with this option. Used for <tt class="docutils literal"><span class="pre">-help</span></tt>
 output.</li>
 <li><tt class="docutils literal"><span class="pre">required</span></tt> - this option must be specified exactly once (or, in case of
 the list options without the <tt class="docutils literal"><span class="pre">multi_val</span></tt> property, at least
@@ -338,7 +338,7 @@ it is synonymous with <tt class="docutils literal"><span class="pre">required</s
 for list options in conjunction with <tt class="docutils literal"><span class="pre">multi_val</span></tt>. Incompatible with
 <tt class="docutils literal"><span class="pre">required</span></tt> and <tt class="docutils literal"><span class="pre">one_or_more</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">hidden</span></tt> - the description of this option will not appear in
-the <tt class="docutils literal"><span class="pre">--help</span></tt> output (but will appear in the <tt class="docutils literal"><span class="pre">--help-hidden</span></tt>
+the <tt class="docutils literal"><span class="pre">-help</span></tt> output (but will appear in the <tt class="docutils literal"><span class="pre">-help-hidden</span></tt>
 output).</li>
 <li><tt class="docutils literal"><span class="pre">really_hidden</span></tt> - the option will not be mentioned in any help
 output.</li>
@@ -748,7 +748,7 @@ the <tt class="docutils literal"><span class="pre">Base</span></tt> plugin behav
 <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
 <a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
 
-Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
+Last modified: $Date$
 </address></div>
 </div>
 </div>

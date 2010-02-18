@@ -30,7 +30,7 @@ To link against the JIT:
 
 Print the version number of LLVM.
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of B<llvm-config> arguments.
 

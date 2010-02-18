@@ -44,7 +44,7 @@
 
       <li><a href="#modifiers">Option Modifiers</a>
         <ul>
-        <li><a href="#hiding">Hiding an option from <tt>--help</tt>
+        <li><a href="#hiding">Hiding an option from <tt>-help</tt>
             output</a></li>
         <li><a href="#numoccurrences">Controlling the number of occurrences
                                      required and allowed</a></li>
@@ -161,7 +161,7 @@ you declare it.  <a href="#customparser">Custom parsers</a> are no problem.</li>
 
 <li>Labor Saving: The CommandLine library cuts down on the amount of grunt work
 that you, the user, have to do.  For example, it automatically provides a
-<tt>--help</tt> option that shows the available command line options for your
+<tt>-help</tt> option that shows the available command line options for your
 tool.  Additionally, it does most of the basic correctness checking for
 you.</li>
 
@@ -239,14 +239,14 @@ href="#list">"<tt>cl::list</tt> template</a>), and tell the CommandLine library
 that the data type that we are parsing is a string.</p>
 
 <p>The second and third parameters (which are optional) are used to specify what
-to output for the "<tt>--help</tt>" option.  In this case, we get a line that
+to output for the "<tt>-help</tt>" option.  In this case, we get a line that
 looks like this:</p>
 
 <div class="doc_code"><pre>
 USAGE: compiler [options]
 
 OPTIONS:
-  -help             - display available options (--help-hidden for more)
+  -help             - display available options (-help-hidden for more)
   <b>-o &lt;filename&gt;     - Specify output filename</b>
 </pre></div>
 
@@ -308,14 +308,14 @@ the CommandLine library will automatically issue an error if the argument is not
 specified, which shifts all of the command line option verification code out of
 your application into the library.  This is just one example of how using flags
 can alter the default behaviour of the library, on a per-option basis.  By
-adding one of the declarations above, the <tt>--help</tt> option synopsis is now
+adding one of the declarations above, the <tt>-help</tt> option synopsis is now
 extended to:</p>
 
 <div class="doc_code"><pre>
 USAGE: compiler [options] <b>&lt;input file&gt;</b>
 
 OPTIONS:
-  -help             - display available options (--help-hidden for more)
+  -help             - display available options (-help-hidden for more)
   -o &lt;filename&gt;     - Specify output filename
 </pre></div>
 
@@ -346,8 +346,8 @@ declaring options of boolean type like this:</p>
 ("<tt>Force</tt>", "<tt>Quiet</tt>", and "<tt>Quiet2</tt>") to recognize these
 options.  Note that the "<tt>-q</tt>" option is specified with the "<a
 href="#cl::Hidden"><tt>cl::Hidden</tt></a>" flag.  This modifier prevents it
-from being shown by the standard "<tt>--help</tt>" output (note that it is still
-shown in the "<tt>--help-hidden</tt>" output).</p>
+from being shown by the standard "<tt>-help</tt>" output (note that it is still
+shown in the "<tt>-help-hidden</tt>" output).</p>
 
 <p>The CommandLine library uses a <a href="#builtinparsers">different parser</a>
 for different data types.  For example, in the string case, the argument passed
@@ -372,7 +372,7 @@ href="#doubleparser">double</a>, and <a href="#intparser">int</a> parsers work
 like you would expect, using the '<tt>strtol</tt>' and '<tt>strtod</tt>' C
 library calls to parse the string value into the specified data type.</p>
 
-<p>With the declarations above, "<tt>compiler --help</tt>" emits this:</p>
+<p>With the declarations above, "<tt>compiler -help</tt>" emits this:</p>
 
 <div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
@@ -381,10 +381,10 @@ OPTIONS:
   <b>-f     - Enable binary output on terminals</b>
   -o     - Override output filename
   <b>-quiet - Don't print informational messages</b>
-  -help  - display available options (--help-hidden for more)
+  -help  - display available options (-help-hidden for more)
 </pre></div>
 
-<p>and "<tt>compiler --help-hidden</tt>" prints this:</p>
+<p>and "<tt>compiler -help-hidden</tt>" prints this:</p>
 
 <div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
@@ -394,7 +394,7 @@ OPTIONS:
   -o     - Override output filename
   <b>-q     - Don't print informational messages</b>
   -quiet - Don't print informational messages
-  -help  - display available options (--help-hidden for more)
+  -help  - display available options (-help-hidden for more)
 </pre></div>
 
 <p>This brief example has shown you how to use the '<tt><a
@@ -438,7 +438,7 @@ the <tt><a href="#cl::aliasopt">cl::aliasopt</a></tt> modifier) whenever it is
 specified.  Because aliases do not hold state, the only thing the program has to
 query is the <tt>Quiet</tt> variable now.  Another nice feature of aliases is
 that they automatically hide themselves from the <tt>-help</tt> output
-(although, again, they are still visible in the <tt>--help-hidden
+(although, again, they are still visible in the <tt>-help-hidden
 output</tt>).</p>
 
 <p>Now the application code can simply use:</p>
@@ -531,7 +531,7 @@ OPTIONS:
     -O2         - Enable default optimizations
     -O3         - Enable expensive optimizations</b>
   -f            - Enable binary output on terminals
-  -help         - display available options (--help-hidden for more)
+  -help         - display available options (-help-hidden for more)
   -o &lt;filename&gt; - Specify output filename
   -quiet        - Don't print informational messages
 </pre></div>
@@ -599,7 +599,7 @@ enum DebugLev {
 <p>This definition defines an enumerated command line variable of type "<tt>enum
 DebugLev</tt>", which works exactly the same way as before.  The difference here
 is just the interface exposed to the user of your program and the help output by
-the "<tt>--help</tt>" option:</p>
+the "<tt>-help</tt>" option:</p>
 
 <div class="doc_code"><pre>
 USAGE: compiler [options] &lt;input file&gt;
@@ -615,7 +615,7 @@ OPTIONS:
     =quick      - enable quick debug information
     =detailed   - enable detailed debug information</b>
   -f            - Enable binary output on terminals
-  -help         - display available options (--help-hidden for more)
+  -help         - display available options (-help-hidden for more)
   -o &lt;filename&gt; - Specify output filename
   -quiet        - Don't print informational messages
 </pre></div>
@@ -794,7 +794,7 @@ USAGE: compiler [options] &lt;input file&gt;
 
 OPTIONS:
   ...
-  -help             - display available options (--help-hidden for more)
+  -help             - display available options (-help-hidden for more)
   -o &lt;filename&gt;     - Specify output filename
 </pre></div>
 
@@ -835,14 +835,14 @@ Using the CommandLine library, this would be specified as:</p>
 <a href="#cl::opt">cl::opt</a>&lt;string&gt; Filename(<a href="#cl::Positional">cl::Positional</a>, <a href="#cl::desc">cl::desc</a>("<i>&lt;input file&gt;</i>"), <a href="#cl::init">cl::init</a>("<i>-</i>"));
 </pre></div>
 
-<p>Given these two option declarations, the <tt>--help</tt> output for our grep
+<p>Given these two option declarations, the <tt>-help</tt> output for our grep
 replacement would look like this:</p>
 
 <div class="doc_code"><pre>
 USAGE: spiffygrep [options] <b>&lt;regular expression&gt; &lt;input file&gt;</b>
 
 OPTIONS:
-  -help - display available options (--help-hidden for more)
+  -help - display available options (-help-hidden for more)
 </pre></div>
 
 <p>... and the resultant program could be used just like the standard
@@ -872,7 +872,7 @@ Note that the system <tt>grep</tt> has the same problem:</p>
 
 <div class="doc_code"><pre>
   $ spiffygrep '-foo' test.txt
-  Unknown command line argument '-foo'.  Try: spiffygrep --help'
+  Unknown command line argument '-foo'.  Try: spiffygrep -help'
 
   $ grep '-foo' test.txt
   grep: illegal option -- f
@@ -986,7 +986,7 @@ shell itself.  Using the CommandLine library, we would specify this as:</p>
 USAGE: spiffysh [options] <b>&lt;input script&gt; &lt;program arguments&gt;...</b>
 
 OPTIONS:
-  -help - display available options (--help-hidden for more)
+  -help - display available options (-help-hidden for more)
   <b>-x    - Enable trace output</b>
 </pre></div>
 
@@ -1098,11 +1098,11 @@ This option is specified in simple double quotes:
 </li>
 
 <li><a name="cl::desc">The <b><tt>cl::desc</tt></b></a> attribute specifies a
-description for the option to be shown in the <tt>--help</tt> output for the
+description for the option to be shown in the <tt>-help</tt> output for the
 program.</li>
 
 <li><a name="cl::value_desc">The <b><tt>cl::value_desc</tt></b></a> attribute
-specifies a string that can be used to fine tune the <tt>--help</tt> output for
+specifies a string that can be used to fine tune the <tt>-help</tt> output for
 a command line option.  Look <a href="#value_desc_example">here</a> for an
 example.</li>
 
@@ -1130,7 +1130,7 @@ the string-to-value mapping to be used by the generic parser.  It takes a
 <b>clEnumValEnd terminated</b> list of (option, value, description) triplets
 that
 specify the option name, the value mapped to, and the description shown in the
-<tt>--help</tt> for the tool.  Because the generic parser is used most
+<tt>-help</tt> for the tool.  Because the generic parser is used most
 frequently with enum values, two macros are often useful:
 
 <ol>
@@ -1175,13 +1175,13 @@ obviously).</li>
 <p>Option modifiers are the flags and expressions that you pass into the
 constructors for <tt><a href="#cl::opt">cl::opt</a></tt> and <tt><a
 href="#cl::list">cl::list</a></tt>.  These modifiers give you the ability to
-tweak how options are parsed and how <tt>--help</tt> output is generated to fit
+tweak how options are parsed and how <tt>-help</tt> output is generated to fit
 your application well.</p>
 
 <p>These options fall into five main categories:</p>
 
 <ol>
-<li><a href="#hiding">Hiding an option from <tt>--help</tt> output</a></li>
+<li><a href="#hiding">Hiding an option from <tt>-help</tt> output</a></li>
 <li><a href="#numoccurrences">Controlling the number of occurrences
                              required and allowed</a></li>
 <li><a href="#valrequired">Controlling whether or not a value must be
@@ -1200,14 +1200,14 @@ usually shouldn't have to worry about these.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="hiding">Hiding an option from <tt>--help</tt> output</a>
+  <a name="hiding">Hiding an option from <tt>-help</tt> output</a>
 </div>
 
 <div class="doc_text">
 
 <p>The <tt>cl::NotHidden</tt>, <tt>cl::Hidden</tt>, and
 <tt>cl::ReallyHidden</tt> modifiers are used to control whether or not an option
-appears in the <tt>--help</tt> and <tt>--help-hidden</tt> output for the
+appears in the <tt>-help</tt> and <tt>-help-hidden</tt> output for the
 compiled program:</p>
 
 <ul>
@@ -1219,8 +1219,8 @@ in both help listings.</li>
 
 <li><a name="cl::Hidden">The <b><tt>cl::Hidden</tt></b></a> modifier (which is the
 default for <tt><a href="#cl::alias">cl::alias</a></tt> options) indicates that
-the option should not appear in the <tt>--help</tt> output, but should appear in
-the <tt>--help-hidden</tt> output.</li>
+the option should not appear in the <tt>-help</tt> output, but should appear in
+the <tt>-help-hidden</tt> output.</li>
 
 <li><a name="cl::ReallyHidden">The <b><tt>cl::ReallyHidden</tt></b></a> modifier
 indicates that the option should not appear in any help output.</li>
@@ -1508,7 +1508,7 @@ available.</p>
 <p>The <tt>cl::ParseCommandLineOptions</tt> function requires two parameters
 (<tt>argc</tt> and <tt>argv</tt>), but may also take an optional third parameter
 which holds <a href="#description">additional extra text</a> to emit when the
-<tt>--help</tt> option is invoked, and a fourth boolean parameter that enables
+<tt>-help</tt> option is invoked, and a fourth boolean parameter that enables
 <a href="#response">response files</a>.</p>
 
 </div>
@@ -1535,7 +1535,7 @@ does.</p>
 not be available, it can't just look in <tt>argv[0]</tt>), the name of the
 environment variable to examine, the optional
 <a href="#description">additional extra text</a> to emit when the
-<tt>--help</tt> option is invoked, and the boolean
+<tt>-help</tt> option is invoked, and the boolean
 switch that controls whether <a href="#response">response files</a>
 should be read.</p>
 
@@ -1689,7 +1689,7 @@ the conversion from string to data.</p>
 <div class="doc_text">
 
 <p>The <tt>cl::extrahelp</tt> class is a nontemplated class that allows extra
-help text to be printed out for the <tt>--help</tt> option.</p>
+help text to be printed out for the <tt>-help</tt> option.</p>
 
 <div class="doc_code"><pre>
 <b>namespace</b> cl {
@@ -1906,7 +1906,7 @@ MFS(<i>"max-file-size"</i>, <a href="#cl::desc">cl::desc</a>(<i>"Maximum file si
 
 <div class="doc_code"><pre>
 OPTIONS:
-  -help                 - display available options (--help-hidden for more)
+  -help                 - display available options (-help-hidden for more)
   ...
   <b>-max-file-size=&lt;size&gt; - Maximum file size to accept</b>
 </pre></div>

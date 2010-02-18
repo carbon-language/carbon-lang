@@ -6,7 +6,7 @@ llvm-ranlib - Generate index for LLVM archive
 
 =head1 SYNOPSIS
 
-B<llvm-ranlib> [--version] [--help] <archive-file>
+B<llvm-ranlib> [--version] [-help] <archive-file>
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ Specifies the archive-file to which the symbol table is added or updated.
 
 Print the version of B<llvm-ranlib> and exit without building a symbol table.
 
-=item F<--help>
+=item F<-help>
 
 Print usage help for B<llvm-ranlib> and exit without building a symbol table.
 

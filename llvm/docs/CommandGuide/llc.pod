@@ -38,7 +38,7 @@ Other B<llc> options are as follows:
 
 =over
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command line options.
 
@@ -56,7 +56,7 @@ string.
 =item B<-march>=I<arch>
 
 Specify the architecture for which to generate assembly, overriding the target
-encoded in the input file.  See the output of B<llc --help> for a list of
+encoded in the input file.  See the output of B<llc -help> for a list of
 valid architectures.  By default this is inferred from the target triple or
 autodetected to the current architecture.
 

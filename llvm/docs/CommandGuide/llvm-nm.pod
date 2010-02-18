@@ -77,7 +77,7 @@ Use POSIX.2 output format. Alias for B<--format=posix>.
 
 Use BSD output format. Alias for B<--format=bsd>.
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command-line options and their meanings.
 

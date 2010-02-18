@@ -73,7 +73,7 @@ architecture which is not compatible with the current system.
 =item B<-march>=I<arch>
 
 Specify the architecture for which to generate assembly, overriding the target
-encoded in the bitcode file.  See the output of B<llc --help> for a list of
+encoded in the bitcode file.  See the output of B<llc -help> for a list of
 valid architectures.  By default this is inferred from the target triple or
 autodetected to the current architecture.
 

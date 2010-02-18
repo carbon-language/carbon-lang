@@ -25,7 +25,7 @@ match.  The file to verify is always read from standard input.
 
 =over
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command line options.
 

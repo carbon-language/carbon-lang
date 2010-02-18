@@ -51,7 +51,7 @@ Write output in LLVM intermediate language (instead of bitcode).
 If specified, B<llvm-link> prints a human-readable version of the output
 bitcode file to standard error.
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command line options.
 

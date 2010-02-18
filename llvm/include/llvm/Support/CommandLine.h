@@ -93,9 +93,9 @@ enum ValueExpected {           // Is a value required for the option?
 };
 
 enum OptionHidden {            // Control whether -help shows this option
-  NotHidden       = 0x20,      // Option included in --help & --help-hidden
-  Hidden          = 0x40,      // -help doesn't, but --help-hidden does
-  ReallyHidden    = 0x60,      // Neither --help nor --help-hidden show this arg
+  NotHidden       = 0x20,      // Option included in -help & -help-hidden
+  Hidden          = 0x40,      // -help doesn't, but -help-hidden does
+  ReallyHidden    = 0x60,      // Neither -help nor -help-hidden show this arg
   HiddenMask      = 0x60
 };
 
@@ -159,7 +159,7 @@ class Option {
   Option *NextRegistered; // Singly linked list of registered options.
 public:
   const char *ArgStr;     // The argument string itself (ex: "help", "o")
-  const char *HelpStr;    // The descriptive text message for --help
+  const char *HelpStr;    // The descriptive text message for -help
   const char *ValueStr;   // String describing what the value of this option is
 
   inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
@@ -251,14 +251,14 @@ public:
 // command line option parsers...
 //
 
-// desc - Modifier to set the description shown in the --help output...
+// desc - Modifier to set the description shown in the -help output...
 struct desc {
   const char *Desc;
   desc(const char *Str) : Desc(Str) {}
   void apply(Option &O) const { O.setDescription(Desc); }
 };
 
-// value_desc - Modifier to set the value description shown in the --help
+// value_desc - Modifier to set the value description shown in the -help
 // output...
 struct value_desc {
   const char *Desc;
@@ -437,7 +437,7 @@ protected:
 // Default parser implementation - This implementation depends on having a
 // mapping of recognized options to values of some sort.  In addition to this,
 // each entry in the mapping also tracks a help message that is printed with the
-// command line option for --help.  Because this is a simple mapping parser, the
+// command line option for -help.  Because this is a simple mapping parser, the
 // data type can be any unsupported type.
 //
 template <class DataType>
@@ -1373,7 +1373,7 @@ struct extrahelp {
 
 void PrintVersionMessage();
 // This function just prints the help message, exactly the same way as if the
-// --help option had been given on the command line.
+// -help option had been given on the command line.
 // NOTE: THIS FUNCTION TERMINATES THE PROGRAM!
 void PrintHelpMessage();
 

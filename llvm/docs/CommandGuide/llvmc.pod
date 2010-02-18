@@ -77,11 +77,11 @@ Store temporary files in the given directory. This directory is deleted on exit
 unless I<--save-temps> is specified. If I<--save-temps=obj> is also specified,
 I<--temp-dir> is given the precedence.
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command-line options and exit.
 
-=item B<--help-hidden>
+=item B<-help-hidden>
 
 Print a summary of command-line options and exit. Print help even for
 options intended for developers.

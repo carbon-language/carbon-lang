@@ -18,7 +18,7 @@ where the program hotspots are.
 This program is often used in conjunction with the F<utils/profile.pl>
 script.  This script automatically instruments a program, runs it with the JIT,
 then runs B<llvm-prof> to format a report.  To get more information about
-F<utils/profile.pl>, execute it with the B<--help> option.
+F<utils/profile.pl>, execute it with the B<-help> option.
 
 =head1 OPTIONS
 

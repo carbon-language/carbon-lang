@@ -42,7 +42,7 @@ specified multiple times to extract multiple functions at once.
 Extract the global variable named I<global-name> from the LLVM bitcode. May be
 specified multiple times to extract multiple global variables at once.
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command line options.
 

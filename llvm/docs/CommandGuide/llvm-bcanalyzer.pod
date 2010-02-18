@@ -43,7 +43,7 @@ Causes B<llvm-bcanalyzer> to verify the module produced by reading the
 bitcode. This ensures that the statistics generated are based on a consistent
 module.
 
-=item B<--help>
+=item B<-help>
 
 Print a summary of command line options.
 
