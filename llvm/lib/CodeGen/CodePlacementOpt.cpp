@@ -102,13 +102,6 @@ bool CodePlacementOpt::HasAnalyzableTerminator(MachineBasicBlock *MBB) {
   // Conservatively ignore EH landing pads.
   if (MBB->isLandingPad()) return false;
 
-  // Ignore blocks which look like they might have EH-related control flow.
-  // At the time of this writing, there are blocks which AnalyzeBranch
-  // thinks end in single uncoditional branches, yet which have two CFG
-  // successors. Code in this file is not prepared to reason about such things.
-  if (!MBB->empty() && MBB->back().isEHLabel())
-    return false;
-
   // Aggressively handle return blocks and similar constructs.
   if (MBB->succ_empty()) return true;
 
@@ -117,6 +110,14 @@ bool CodePlacementOpt::HasAnalyzableTerminator(MachineBasicBlock *MBB) {
   SmallVector<MachineOperand, 4> Cond;
   // Make sure the terminator is understood.
   if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
+    return false;
+   // Ignore blocks which look like they might have EH-related control flow.
+   // AnalyzeBranch thinks it knows how to analyze such things, but it doesn't
+   // recognize the possibility of a control transfer through an unwind.
+   // Such blocks contain EH_LABEL instructions, however they may be in the
+   // middle of the block. Instead of searching for them, just check to see
+   // if the CFG disagrees with AnalyzeBranch.
+  if (1u + !Cond.empty() != MBB->succ_size())
     return false;
   // Make sure we have the option of reversing the condition.
   if (!Cond.empty() && TII->ReverseBranchCondition(Cond))
