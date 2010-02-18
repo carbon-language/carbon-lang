@@ -170,7 +170,7 @@ Instruction schedulers available (before register allocation):
 
 =item B<-regalloc>=I<allocator>
 
-Register allocator to use: (default = linearscan)
+Register allocator to use (default=linearscan)
 
     =bigblock: Big-block register allocator 
     =linearscan: linear scan register allocator =local -   local register allocator 
@@ -186,7 +186,7 @@ Choose relocation model from:
 
 =item B<-spiller>
 
-Spiller to use: (default: local) 
+Spiller to use (default=local) 
 
     =simple: simple spiller 
     =local: local spiller 

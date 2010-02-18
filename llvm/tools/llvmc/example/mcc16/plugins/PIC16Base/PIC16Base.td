@@ -56,7 +56,7 @@ def OptionList : OptionList<[
 // (parameter_option "pre-RA-sched",
 //    (help "Example of an option that is passed to llc")),
  (parameter_option "regalloc",
-    (help "Register allocator to use.(possible values: simple, linearscan, pbqp, local. default = linearscan)")),
+    (help "Register allocator to use (possible values: simple, linearscan, pbqp, local; default=linearscan)")),
  (prefix_list_option "Wa,", (comma_separated),
     (help "Pass options to assembler (Run 'gpasm -help' for assembler options)")),
  (prefix_list_option "Wl,", (comma_separated),

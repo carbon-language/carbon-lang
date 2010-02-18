@@ -46,7 +46,7 @@ namespace {
 
 static cl::opt<RewriterName>
 RewriterOpt("rewriter",
-            cl::desc("Rewriter to use: (default: local)"),
+            cl::desc("Rewriter to use (default=local)"),
             cl::Prefix,
             cl::values(clEnumVal(local,   "local rewriter"),
                        clEnumVal(trivial, "trivial rewriter"),

@@ -34,7 +34,7 @@ static cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
                RegisterPassParser<RegisterRegAlloc> >
 RegAlloc("regalloc",
          cl::init(&createLinearScanRegisterAllocator),
-         cl::desc("Register allocator to use: (default = linearscan)")); 
+         cl::desc("Register allocator to use (default=linearscan)")); 
 
 
 //===---------------------------------------------------------------------===//
