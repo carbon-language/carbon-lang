@@ -5,8 +5,6 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvmgcc_dir = "@LLVMGCCDIR@"
 config.llvm_build_mode = "@LLVM_BUILD_MODE@"
-config.enable_shared = @ENABLE_SHARED@
-config.shlibpath_var = "@SHLIBPATH_VAR@"
 
 # Let the main config do the real work.
 lit.load_config(config, "@LLVM_SOURCE_DIR@/test/Unit/lit.cfg")
