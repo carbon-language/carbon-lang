@@ -108,6 +108,7 @@ namespace {
     // Importing expressions
     Expr *VisitExpr(Expr *E);
     Expr *VisitIntegerLiteral(IntegerLiteral *E);
+    Expr *VisitCharacterLiteral(CharacterLiteral *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
 }
@@ -2596,6 +2597,16 @@ Expr *ASTNodeImporter::VisitIntegerLiteral(IntegerLiteral *E) {
 
   return new (Importer.getToContext()) 
     IntegerLiteral(E->getValue(), T, Importer.Import(E->getLocation()));
+}
+
+Expr *ASTNodeImporter::VisitCharacterLiteral(CharacterLiteral *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+  
+  return new (Importer.getToContext()) CharacterLiteral(E->getValue(), 
+                                                        E->isWide(), T,
+                                          Importer.Import(E->getLocation()));
 }
 
 Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
