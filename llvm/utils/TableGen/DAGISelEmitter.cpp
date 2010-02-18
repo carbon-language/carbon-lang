@@ -1047,8 +1047,10 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
                "N->getDebugLoc(), MVT::Other, "
                "&InChains[0], InChains.size());");
       if (GenDebug) {
-        emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"yellow\");");
-        emitCode("CurDAG->setSubgraphColor(" + ChainName +".getNode(), \"black\");");
+        emitCode("CurDAG->setSubgraphColor(" + ChainName +
+                 ".getNode(), \"yellow\");");
+        emitCode("CurDAG->setSubgraphColor(" + ChainName +
+                 ".getNode(), \"black\");");
       }
     }
     
@@ -1755,15 +1757,17 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
         // Replace the emission code within selection routines with calls to the
         // emission functions.
         if (GenDebug)
-          GeneratedCode.push_back(std::make_pair(0, "CurDAG->setSubgraphColor(N, \"red\");"));
-        CallerCode = "SDNode *Result = Emit_" + utostr(EmitFuncNum) + CallerCode;
+          GeneratedCode.push_back(std::make_pair(0,
+                                      "CurDAG->setSubgraphColor(N, \"red\");"));
+        CallerCode = "SDNode *Result = Emit_" + utostr(EmitFuncNum) +CallerCode;
         GeneratedCode.push_back(std::make_pair(3, CallerCode));
         if (GenDebug) {
           GeneratedCode.push_back(std::make_pair(0, "if(Result) {"));
-          GeneratedCode.push_back(std::make_pair(0, "  CurDAG->setSubgraphColor(Result, \"yellow\");"));
-          GeneratedCode.push_back(std::make_pair(0, "  CurDAG->setSubgraphColor(Result, \"black\");"));
+          GeneratedCode.push_back(std::make_pair(0,
+                            "  CurDAG->setSubgraphColor(Result, \"yellow\");"));
+          GeneratedCode.push_back(std::make_pair(0,
+                             "  CurDAG->setSubgraphColor(Result, \"black\");"));
           GeneratedCode.push_back(std::make_pair(0, "}"));
-          //GeneratedCode.push_back(std::make_pair(0, "CurDAG->setSubgraphColor(N, \"black\");"));
         }
         GeneratedCode.push_back(std::make_pair(0, "return Result;"));
       }
