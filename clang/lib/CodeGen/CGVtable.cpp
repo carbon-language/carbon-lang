@@ -794,6 +794,40 @@ private:
   int64_t Value;
 };
 
+/// VCallOffsetMap - Keeps track of vcall offsets when building a vtable.
+struct VCallOffsetMap {
+  
+  typedef std::pair<const CXXMethodDecl *, int64_t> MethodAndOffsetPairTy;
+  
+  /// Offsets - Keeps track of methods and their offsets.
+  // FIXME: This should be a real map and not a vector.
+  llvm::SmallVector<MethodAndOffsetPairTy, 16> Offsets;
+
+public:
+  /// AddVCallOffset - Adds a vcall offset to the map. Returns true if the
+  /// add was successful, or false if there was already a member function with
+  /// the same signature in the map.
+  bool AddVCallOffset(const CXXMethodDecl *MD, int64_t OffsetOffset);
+  
+  /// getVCallOffsetOffset - Returns the vcall offset offset (relative to the
+  /// vtable address point) for the given virtual member function.
+  int64_t getVCallOffsetOffset(const CXXMethodDecl *MD);
+  
+  /// clear - Clear the offset map.
+  void clear() { Offsets.clear(); }
+};
+
+bool VCallOffsetMap::AddVCallOffset(const CXXMethodDecl *MD, 
+                                    int64_t OffsetOffset) {
+  /// FIXME: Implement this.
+  return true;
+}
+
+int64_t VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
+  // FIXME: Implement this.
+  return 0;
+}
+
 /// VtableBuilder - Class for building vtable layout information.
 class VtableBuilder {
 public:
@@ -818,6 +852,9 @@ private:
   // building (in reverse order).
   llvm::SmallVector<VtableComponent, 64> VCallAndVBaseOffsets;
 
+  /// VCallOffsets - Keeps track of vcall offsets for the current vtable.
+  VCallOffsetMap VCallOffsets;
+
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
 
@@ -830,7 +867,7 @@ private:
     /// nearest virtual base.
     int64_t NonVirtual;
     
-    /// VBaseOffsetOffset - The offset, in bytes, relative to the address point 
+    /// VBaseOffsetOffset - The offset (in bytes), relative to the address point 
     /// of the virtual base class offset.
     int64_t VBaseOffsetOffset;
     
@@ -849,11 +886,13 @@ private:
     /// nearest virtual base.
     int64_t NonVirtual;
 
-    /// FIXME: Add VCallOffsetOffset here.
+    /// VCallOffsetOffset - The offset (in bytes), relative to the address point
+    /// of the virtual call offset.
+    int64_t VCallOffsetOffset;
     
-    ThisAdjustment() : NonVirtual(0) { }
+    ThisAdjustment() : NonVirtual(0), VCallOffsetOffset(0) { }
 
-    bool isEmpty() const { return !NonVirtual; }
+    bool isEmpty() const { return !NonVirtual && !VCallOffsetOffset; }
   };
   
   /// ThisAdjustments - The 'this' pointer adjustments needed in this vtable.
@@ -878,9 +917,11 @@ private:
   /// adjustment base offset.
   ReturnAdjustment ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset);
   
-  /// ComputeThisAdjustment - Compute the 'this' pointer  adjustment given a 
-  /// 'this' pointer adjustment base offset.
-  ThisAdjustment ComputeThisAdjustment(FinalOverriders::BaseOffset Offset);
+  /// ComputeThisAdjustment - Compute the 'this' pointer adjustment for the
+  /// given virtual member function and the 'this' pointer adjustment base 
+  /// offset.
+  ThisAdjustment ComputeThisAdjustment(const CXXMethodDecl *MD,
+                                       FinalOverriders::BaseOffset Offset);
   
   /// AddMethod - Add a single virtual member function to the vtable
   /// components vector.
@@ -964,7 +1005,8 @@ VtableBuilder::ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset) {
 }
 
 VtableBuilder::ThisAdjustment
-VtableBuilder::ComputeThisAdjustment(FinalOverriders::BaseOffset Offset) {
+VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
+                                     FinalOverriders::BaseOffset Offset) {
   ThisAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
@@ -1181,7 +1223,8 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
     FinalOverriders::BaseOffset ThisAdjustmentOffset =
       Overriders.getThisAdjustmentOffset(Base, MD);
     
-    ThisAdjustment ThisAdjustment = ComputeThisAdjustment(ThisAdjustmentOffset);
+    ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
+                                                          ThisAdjustmentOffset);
     
     AddMethod(Overrider.Method, ReturnAdjustment, ThisAdjustment);
   }
@@ -1239,6 +1282,9 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
 
   // Layout secondary vtables.
   LayoutSecondaryVtables(Base);
+  
+  // Clear the vcall offsets.
+  VCallOffsets.clear();  
 }
 
 void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
@@ -1415,6 +1461,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         
         if (Adjustment.VBaseOffsetOffset)
           Out << ", " << Adjustment.VBaseOffsetOffset << " vbase offset offset";
+
         Out << ']';
 
         NextReturnAdjustmentIndex++;
@@ -1428,7 +1475,10 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         
         Out << "\n       [this adjustment: ";
         Out << Adjustment.NonVirtual << " non-virtual";
-        
+
+        if (Adjustment.VCallOffsetOffset)
+          Out << ", " << Adjustment.VCallOffsetOffset << " vcall offset offset";
+
         Out << ']';
         
         NextThisAdjustmentIndex++;
