@@ -95,6 +95,7 @@ namespace {
     Decl *VisitImplicitParamDecl(ImplicitParamDecl *D);
     Decl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitObjCMethodDecl(ObjCMethodDecl *D);
+    Decl *VisitObjCCategoryDecl(ObjCCategoryDecl *D);
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
@@ -2159,8 +2160,84 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   return ToMethod;
 }
 
+Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
+  // Import the major distinguishing characteristics of a category.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  ObjCInterfaceDecl *ToInterface
+    = cast_or_null<ObjCInterfaceDecl>(Importer.Import(D->getClassInterface()));
+  if (!ToInterface)
+    return 0;
+  
+  // Determine if we've already encountered this category.
+  ObjCCategoryDecl *MergeWithCategory
+    = ToInterface->FindCategoryDeclaration(Name.getAsIdentifierInfo());
+  ObjCCategoryDecl *ToCategory = MergeWithCategory;
+  if (!ToCategory) {
+    ToCategory = ObjCCategoryDecl::Create(Importer.getToContext(), DC,
+                                          Importer.Import(D->getAtLoc()),
+                                          Loc, 
+                                       Importer.Import(D->getCategoryNameLoc()), 
+                                          Name.getAsIdentifierInfo());
+    ToCategory->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDecl(ToCategory);
+    Importer.Imported(D, ToCategory);
+    
+    // Link this category into its class's category list.
+    ToCategory->setClassInterface(ToInterface);
+    ToCategory->insertNextClassCategory();
+    
+    // Import protocols
+    llvm::SmallVector<ObjCProtocolDecl *, 4> Protocols;
+    llvm::SmallVector<SourceLocation, 4> ProtocolLocs;
+    ObjCCategoryDecl::protocol_loc_iterator FromProtoLoc
+      = D->protocol_loc_begin();
+    for (ObjCCategoryDecl::protocol_iterator FromProto = D->protocol_begin(),
+                                          FromProtoEnd = D->protocol_end();
+         FromProto != FromProtoEnd;
+         ++FromProto, ++FromProtoLoc) {
+      ObjCProtocolDecl *ToProto
+        = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
+      if (!ToProto)
+        return 0;
+      Protocols.push_back(ToProto);
+      ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
+    }
+    
+    // FIXME: If we're merging, make sure that the protocol list is the same.
+    ToCategory->setProtocolList(Protocols.data(), Protocols.size(),
+                                ProtocolLocs.data(), Importer.getToContext());
+    
+  } else {
+    Importer.Imported(D, ToCategory);
+  }
+  
+  // Import all of the members of this category.
+  for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
+                              FromMemEnd = D->decls_end();
+       FromMem != FromMemEnd;
+       ++FromMem)
+    Importer.Import(*FromMem);
+ 
+  // If we have an implementation, import it as well.
+  if (D->getImplementation()) {
+    ObjCCategoryImplDecl *Impl
+      = cast<ObjCCategoryImplDecl>(Importer.Import(D->getImplementation()));
+    if (!Impl)
+      return 0;
+    
+    ToCategory->setImplementation(Impl);
+  }
+  
+  return ToCategory;
+}
+
 Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
-  // Import the major distinguishing characteristics of an @protocol.
+  // Import the major distinguishing characteristics of a protocol.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
   SourceLocation Loc;
@@ -2213,7 +2290,7 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
     Importer.Imported(D, ToProto);
   }
 
-  // Import all of the members of this class.
+  // Import all of the members of this protocol.
   for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
                                FromMemEnd = D->decls_end();
        FromMem != FromMemEnd;
@@ -2288,8 +2365,6 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     ToIface->setProtocolList(Protocols.data(), Protocols.size(),
                              ProtocolLocs.data(), Importer.getToContext());
     
-    // FIXME: Import categories
-    
     // Import @end range
     ToIface->setAtEndRange(Importer.Import(D->getAtEndRange()));
   } else {
@@ -2322,6 +2397,12 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
       return 0;
     }
   }
+  
+  // Import categories. When the categories themselves are imported, they'll
+  // hook themselves into this interface.
+  for (ObjCCategoryDecl *FromCat = D->getCategoryList(); FromCat;
+       FromCat = FromCat->getNextClassCategory())
+    Importer.Import(FromCat);
   
   // Import all of the members of this class.
   for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
