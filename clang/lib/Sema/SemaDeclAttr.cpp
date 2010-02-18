@@ -1711,6 +1711,12 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
     default:
       assert(0 && "invalid ownership attribute");
       return;
+    case AttributeList::AT_cf_returns_not_retained:
+      d->addAttr(::new (S.Context) CFReturnsNotRetainedAttr());
+      return;
+    case AttributeList::AT_ns_returns_not_retained:
+      d->addAttr(::new (S.Context) NSReturnsNotRetainedAttr());
+      return;
     case AttributeList::AT_cf_returns_retained:
       d->addAttr(::new (S.Context) CFReturnsRetainedAttr());
       return;
@@ -1776,6 +1782,8 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_override:    HandleOverrideAttr    (D, Attr, S); break;
 
   // Checker-specific.
+  case AttributeList::AT_ns_returns_not_retained:
+  case AttributeList::AT_cf_returns_not_retained:
   case AttributeList::AT_ns_returns_retained:
   case AttributeList::AT_cf_returns_retained:
     HandleNSReturnsRetainedAttr(D, Attr, S); break;

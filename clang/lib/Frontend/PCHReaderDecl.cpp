@@ -550,7 +550,9 @@ Attr *PCHReader::ReadAttributes() {
 
     SIMPLE_ATTR(ObjCException);
     SIMPLE_ATTR(ObjCNSObject);
+    SIMPLE_ATTR(CFReturnsNotRetained);
     SIMPLE_ATTR(CFReturnsRetained);
+    SIMPLE_ATTR(NSReturnsNotRetained);
     SIMPLE_ATTR(NSReturnsRetained);
     SIMPLE_ATTR(Overloadable);
     SIMPLE_ATTR(Override);

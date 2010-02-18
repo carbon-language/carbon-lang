@@ -1868,10 +1868,12 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
       break;
     }
 
+    case Attr::CFReturnsNotRetained:
+    case Attr::CFReturnsRetained:
+    case Attr::NSReturnsNotRetained:
+    case Attr::NSReturnsRetained:
     case Attr::ObjCException:
     case Attr::ObjCNSObject:
-    case Attr::CFReturnsRetained:
-    case Attr::NSReturnsRetained:
     case Attr::Overloadable:
     case Attr::Override:
       break;

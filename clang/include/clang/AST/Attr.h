@@ -73,8 +73,10 @@ public:
     ObjCException,
     ObjCNSObject,
     Override,
-    CFReturnsRetained,   // Clang/Checker-specific.
-    NSReturnsRetained,   // Clang/Checker-specific.
+    CFReturnsRetained,      // Clang/Checker-specific.
+    CFReturnsNotRetained,   // Clang/Checker-specific.
+    NSReturnsRetained,      // Clang/Checker-specific.
+    NSReturnsNotRetained,   // Clang/Checker-specific.
     Overloadable, // Clang-specific
     Packed,
     PragmaPack,
@@ -545,7 +547,9 @@ public:
 };
 
 // Checker-specific attributes.
+DEF_SIMPLE_ATTR(CFReturnsNotRetained);
 DEF_SIMPLE_ATTR(CFReturnsRetained);
+DEF_SIMPLE_ATTR(NSReturnsNotRetained);
 DEF_SIMPLE_ATTR(NSReturnsRetained);
 
 // C++0x member checking attributes.

@@ -89,8 +89,10 @@ public:
     AT_nsobject,
     AT_objc_exception,
     AT_override,
-    AT_cf_returns_retained,   // Clang-specific.
-    AT_ns_returns_retained,   // Clang-specific.
+    AT_cf_returns_not_retained, // Clang-specific.
+    AT_cf_returns_retained,     // Clang-specific.
+    AT_ns_returns_not_retained, // Clang-specific.
+    AT_ns_returns_retained,     // Clang-specific.
     AT_objc_gc,
     AT_overloadable,       // Clang-specific.
     AT_packed,
