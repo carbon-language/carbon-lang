@@ -1562,6 +1562,12 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
   }
 }
 
+void
+LiveIntervals::normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs) {
+  for (unsigned i = 0, e = NewLIs.size(); i != e; ++i)
+    normalizeSpillWeight(*NewLIs[i]);
+}
+
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpillsFast(const LiveInterval &li,
                           const MachineLoopInfo *loopInfo,
@@ -1739,6 +1745,7 @@ addIntervalsForSpills(const LiveInterval &li,
     }
 
     handleSpilledImpDefs(li, vrm, rc, NewLIs);
+    normalizeSpillWeights(NewLIs);
     return NewLIs;
   }
 
@@ -1814,6 +1821,7 @@ addIntervalsForSpills(const LiveInterval &li,
   // Insert spills / restores if we are splitting.
   if (!TrySplit) {
     handleSpilledImpDefs(li, vrm, rc, NewLIs);
+    normalizeSpillWeights(NewLIs);
     return NewLIs;
   }
 
@@ -1973,6 +1981,7 @@ addIntervalsForSpills(const LiveInterval &li,
   }
 
   handleSpilledImpDefs(li, vrm, rc, RetNewLIs);
+  normalizeSpillWeights(RetNewLIs);
   return RetNewLIs;
 }
 

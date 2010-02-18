@@ -1,4 +1,8 @@
-; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of reloads omited}
+; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of loads added} | grep 1
+; PR3495
+;
+; This test may not be testing what it was supposed to test.
+; It used to have two spills and four reloads, but not it only has one spill and one reload.
 
 target datalayout = "e-p:32:32:32"
 target triple = "i386-apple-darwin9.6"

@@ -131,10 +131,7 @@ bool CalculateSpillWeights::runOnMachineFunction(MachineFunction &fn) {
       if (Hint.first || Hint.second)
         li.weight *= 1.01F;
 
-      // Divide the weight of the interval by its size.  This encourages
-      // spilling of intervals that are large and have few uses, and
-      // discourages spilling of small intervals with many uses.
-      li.weight /= lis->getApproximateInstructionCount(li) * SlotIndex::NUM;
+      lis->normalizeSpillWeight(li);
     }
   }
   
