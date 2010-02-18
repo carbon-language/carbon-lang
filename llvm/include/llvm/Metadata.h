@@ -104,11 +104,12 @@ class MDNode : public Value, public FoldingSetNode {
     FL_Yes = 1
   };
   
-  // Replace each instance of F from the operand list of this node with T.
+  /// replaceOperand - Replace each instance of F from the operand list of this 
+  /// node with T.
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
-    // replaceAllOperandsWithNull - This is used while destroying llvm context to 
-  // gracefully delete all nodes. This method replaces all operands with null.
+  /// replaceAllOperandsWithNull - This is used while destroying llvm context to 
+  /// gracefully delete all nodes. This method replaces all operands with null.
   void replaceAllOperandsWithNull();
 
 protected:
