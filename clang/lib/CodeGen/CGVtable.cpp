@@ -1118,7 +1118,7 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
     // address point. (We subtract 3 to account for the information just
     // above the address point, the RTTI info, the offset to top, and the
     // vcall offset itself).
-    int64_t OffsetIndex = -(3 + VCallAndVBaseOffsets.size());
+    int64_t OffsetIndex = -(int64_t)(3 + VCallAndVBaseOffsets.size());
     
     // FIXME: We shouldn't use / 8 here.
     int64_t OffsetOffset = OffsetIndex * 
