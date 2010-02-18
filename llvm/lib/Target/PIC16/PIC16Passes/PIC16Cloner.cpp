@@ -68,55 +68,83 @@ reportError (string ErrorString, vector<string> &Values) {
 //
 bool PIC16Cloner::runOnModule(Module &M) {
    CallGraph &CG = getAnalysis<CallGraph>();
-   // Initially record that no interrupt has been found
-   foundISR = false;
 
-   // First mark the MainLine. 
+   // Search for the "main" and "ISR" functions.
+   CallGraphNode *mainCGN = NULL, *isrCGN = NULL;
    for (CallGraph::iterator it = CG.begin() ; it != CG.end(); it++)
    {
-     // External calling node doesn't have any function associated 
-     // with it
-     if (!it->first)
+     // External calling node doesn't have any function associated with it.
+     if (! it->first)
        continue;
      
      if (it->first->getName().str() == "main") {
-       // See if the main itself is interrupt function then report an error.
-       if (PAN::isISR(it->first->getSection()))
-          reportError("Function 'main' can't be interrupt function");
-       else  { 
-         // Function main itself is MainLine function.
-         it->second->getFunction()->setSection("ML");
-         // mark the hierarchy 
-         markCallGraph(it->second, "ML");
-         // MainLine has been marked now break ; don't search any further.
-         break;
-       }
-     } 
-   }
-
-   // When the MainLine has been marked only then mark the InterruptLine.
-   for (CallGraph::iterator it = CG.begin() ; it != CG.end(); it++)
-   {
-     // External calling node doesn't have any function associated 
-     // with it
-     if (!it->first)
-       continue;
+       mainCGN = it->second;
+     }
 
      if (PAN::isISR(it->first->getSection())) {
-
-       if (foundISR)
-         reportError("More than one interrupt functions defined in the module");
-
-       foundISR = true;
-       
-       markCallGraph(it->second, "IL");
-       // InterruptLine handled now break; don't search any further.
-       break;
+       isrCGN = it->second;
      }
-   } 
-   
-  return true;
+ 
+     // Don't search further if we've found both.
+     if (mainCGN && isrCGN)
+       break;
+   }
+       
+   // Time for some diagnostics.
+   // See if the main itself is interrupt function then report an error.
+   if (PAN::isISR(mainCGN->getFunction()->getSection())) {
+     reportError("Function 'main' can't be interrupt function");
+   }
+
+    
+   // Mark all reachable functions from main as ML.
+   markCallGraph(mainCGN, "ML");
+
+   // And then all the functions reachable from ISR will be cloned.
+   cloneSharedFunctions(isrCGN);
+
+   return true;
 }
+
+// Mark all reachable functions from the given node, with the given mark.
+//
+void PIC16Cloner::markCallGraph(CallGraphNode *CGN, string StringMark) {
+  // Mark the top node first.
+  Function *thisF = CGN->getFunction();
+
+  thisF->setSection(StringMark);
+
+  // Mark all the called functions
+  for(CallGraphNode::iterator cgn_it = CGN->begin();
+              cgn_it != CGN->end(); ++cgn_it) {
+     Function *CalledF = cgn_it->second->getFunction();
+
+     // If calling an external function then CallGraphNode
+     // will not be associated with any function.
+     if (! CalledF)
+       continue;
+  
+     // Issue diagnostic if interrupt function is being called.
+     if (PAN::isISR(CalledF->getSection())) {
+       vector<string> Values;
+       Values.push_back(CalledF->getName().str());
+       reportError("Interrupt function (%0) can't be called", Values); 
+     }
+
+     // Has already been mark 
+     if (CalledF->getSection().find(StringMark) != string::npos) {
+       // Should we do anything here?
+     } else {
+       // Mark now
+       CalledF->setSection(StringMark);
+     }
+
+     // Before going any further mark all the called function by current
+     // function.
+     markCallGraph(cgn_it->second ,StringMark);
+  } // end of loop of all called functions.
+}
+
 
 // For PIC16, automatic variables of a function are emitted as globals.
 // Clone the auto variables of a function  and put them in ValueMap, 
@@ -158,16 +186,12 @@ void PIC16Cloner::CloneAutos(Function *F) {
 }
 
 
-// Mark all reachable functions from the given node, with the given mark.
+// Clone all functions that are reachable from ISR and are already 
+// marked as ML.
 //
-void PIC16Cloner::markCallGraph(CallGraphNode *CGN, string StringMark) {
-  string AlternateMark;
-  if (StringMark == "ML")
-    AlternateMark = "IL";
-  else
-    AlternateMark = "ML";
+void PIC16Cloner::cloneSharedFunctions(CallGraphNode *CGN) {
 
-  // Mark all the called functions
+  // Check all the called functions from ISR.
   for(CallGraphNode::iterator cgn_it = CGN->begin(); 
               cgn_it != CGN->end(); ++cgn_it) {
      Function *CalledF = cgn_it->second->getFunction();
@@ -184,31 +208,27 @@ void PIC16Cloner::markCallGraph(CallGraphNode *CGN, string StringMark) {
        reportError("Interrupt function (%0) can't be called", Values); 
      }
 
-     // Has already been mark 
-     if (CalledF->getSection().find(StringMark) != string::npos) {
-        // Should we do anything here?
-     } else {
-       // Mark now
-       if (CalledF->getSection().find(AlternateMark) != string::npos) {
-         // Function is alternatively marked. It should be a shared one.
-         // Create IL copy. Passing called function as first argument
-         // and the caller as the second argument.
+     if (CalledF->getSection().find("ML") != string::npos) {
+       // Function is alternatively marked. It should be a shared one.
+       // Create IL copy. Passing called function as first argument
+       // and the caller as the second argument.
 
-         // Before making IL copy, first ensure that this function has a 
-         // body. If the function does have a body. It can't be cloned.
-         // Such a case may occur when the function has been declarated
-         // in the C source code but its body exists in assembly file.
-         if (!CalledF->isDeclaration()) {
-           // FIXME: Not implemented yet. Clone the function here.
-         }
-       } else {
-         // Function is not marked. It should be marked now.
-         CalledF->setSection(StringMark);
+       // Before making IL copy, first ensure that this function has a 
+       // body. If the function does have a body. It can't be cloned.
+       // Such a case may occur when the function has been declarated
+       // in the C source code but its body exists in assembly file.
+       if (!CalledF->isDeclaration()) {
+         cloneFunction(CalledF);
+         // FIXME: remap all the call sites here.
+       }  else {
+         // It is called only from ISR. Still mark it as we need this info
+         // in code gen while calling intrinsics.Function is not marked.
+         CalledF->setSection("IL");
        }
      }
-     // Before going any further mark all the called function by current
-     // function.
-     markCallGraph(cgn_it->second ,StringMark);
+     // Before going any further clone all the shared function reachaable 
+     // by current function.
+     cloneSharedFunctions(cgn_it->second);
   } // end of loop of all called functions.
 }
 
