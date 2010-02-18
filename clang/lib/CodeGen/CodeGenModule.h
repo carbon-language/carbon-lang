@@ -206,19 +206,6 @@ public:
   /// GlobalValue.
   void setGlobalVisibility(llvm::GlobalValue *GV, const Decl *D) const;
 
-  llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {
-    if (isa<CXXConstructorDecl>(GD.getDecl()))
-      return GetAddrOfCXXConstructor(cast<CXXConstructorDecl>(GD.getDecl()),
-                                     GD.getCtorType());
-    else if (isa<CXXDestructorDecl>(GD.getDecl()))
-      return GetAddrOfCXXDestructor(cast<CXXDestructorDecl>(GD.getDecl()),
-                                     GD.getDtorType());
-    else if (isa<FunctionDecl>(GD.getDecl()))
-      return GetAddrOfFunction(GD);
-    else
-      return GetAddrOfGlobalVar(cast<VarDecl>(GD.getDecl()));
-  }
-
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
   /// given global variable.  If Ty is non-null and if the global doesn't exist,
   /// then it will be greated with the specified type instead of whatever the
@@ -304,13 +291,13 @@ public:
 
   /// GetAddrOfCXXConstructor - Return the address of the constructor of the
   /// given type.
-  llvm::GlobalValue *GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
-                                             CXXCtorType Type);
+  llvm::Function *GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
+                                          CXXCtorType Type);
 
   /// GetAddrOfCXXDestructor - Return the address of the constructor of the
   /// given type.
-  llvm::GlobalValue *GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
-                                            CXXDtorType Type);
+  llvm::Function *GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
+                                         CXXDtorType Type);
 
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
@@ -430,9 +417,6 @@ public:
     GVA_TemplateInstantiation
   };
 
-  llvm::GlobalVariable::LinkageTypes
-  getFunctionLinkage(const FunctionDecl *FD);
-
   /// getVtableLinkage - Return the appropriate linkage for the vtable, VTT,
   /// and type information of the given class.
   static llvm::GlobalVariable::LinkageTypes 
@@ -483,8 +467,6 @@ private:
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
 
   // C++ related functions.
-
-  bool TryEmitDefinitionAsAlias(GlobalDecl Alias, GlobalDecl Target);
 
   void EmitNamespace(const NamespaceDecl *D);
   void EmitLinkageSpec(const LinkageSpecDecl *D);

@@ -316,20 +316,24 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   return CodeGenModule::GVA_CXXInline;
 }
 
-llvm::GlobalValue::LinkageTypes
-CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
+/// SetFunctionDefinitionAttributes - Set attributes for a global.
+///
+/// FIXME: This is currently only done for aliases and functions, but not for
+/// variables (these details are set in EmitGlobalVarDefinition for variables).
+void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
+                                                    llvm::GlobalValue *GV) {
   GVALinkage Linkage = GetLinkageForFunction(getContext(), D, Features);
 
   if (Linkage == GVA_Internal) {
-    return llvm::Function::InternalLinkage;
+    GV->setLinkage(llvm::Function::InternalLinkage);
   } else if (D->hasAttr<DLLExportAttr>()) {
-    return llvm::Function::DLLExportLinkage;
+    GV->setLinkage(llvm::Function::DLLExportLinkage);
   } else if (D->hasAttr<WeakAttr>()) {
-    return llvm::Function::WeakAnyLinkage;
+    GV->setLinkage(llvm::Function::WeakAnyLinkage);
   } else if (Linkage == GVA_C99Inline) {
     // In C99 mode, 'inline' functions are guaranteed to have a strong
     // definition somewhere else, so we can use available_externally linkage.
-    return llvm::Function::AvailableExternallyLinkage;
+    GV->setLinkage(llvm::Function::AvailableExternallyLinkage);
   } else if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation) {
     // In C++, the compiler has to emit a definition in every translation unit
     // that references the function.  We should use linkonce_odr because
@@ -337,22 +341,13 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
     // don't need to codegen it.  b) if the function persists, it needs to be
     // merged with other definitions. c) C++ has the ODR, so we know the
     // definition is dependable.
-    return llvm::Function::LinkOnceODRLinkage;
+    GV->setLinkage(llvm::Function::LinkOnceODRLinkage);
   } else {
     assert(Linkage == GVA_StrongExternal);
     // Otherwise, we have strong external linkage.
-    return llvm::Function::ExternalLinkage;
+    GV->setLinkage(llvm::Function::ExternalLinkage);
   }
-}
 
-
-/// SetFunctionDefinitionAttributes - Set attributes for a global.
-///
-/// FIXME: This is currently only done for aliases and functions, but not for
-/// variables (these details are set in EmitGlobalVarDefinition for variables).
-void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
-                                                    llvm::GlobalValue *GV) {
-  GV->setLinkage(getFunctionLinkage(D));
   SetCommonAttributes(D, GV);
 }
 

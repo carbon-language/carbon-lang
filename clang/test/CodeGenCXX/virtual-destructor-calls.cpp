@@ -8,8 +8,9 @@ struct B : A {
   virtual ~B();
 };
 
-// Complete dtor: just an alias because there are no virtual bases.
-// CHECK: @_ZN1BD1Ev = alias {{.*}} @_ZN1BD2Ev
+// Complete dtor: just defers to base dtor because there are no vbases.
+// CHECK: define void @_ZN1BD1Ev
+// CHECK: call void @_ZN1BD2Ev
 
 // Deleting dtor: defers to the complete dtor.
 // CHECK: define void @_ZN1BD0Ev

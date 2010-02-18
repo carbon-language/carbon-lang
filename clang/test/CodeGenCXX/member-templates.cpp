@@ -15,7 +15,7 @@ struct B {
 
 template<typename T> B::B(T) {}
 
-// CHECK: @_ZN1BC1IiEET_ = alias {{.*}} @_ZN1BC2IiEET_
+// CHECK: define void @_ZN1BC1IiEET_(%struct.B* %this, i32)
 // CHECK: define void @_ZN1BC2IiEET_(%struct.B* %this, i32)
 template B::B(int);
 

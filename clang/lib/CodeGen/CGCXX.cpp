@@ -26,88 +26,17 @@
 using namespace clang;
 using namespace CodeGen;
 
-/// Try to emit a definition as a global alias for another definition.
-bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
-                                             GlobalDecl TargetDecl) {
-  // Find the referrent.
-  llvm::GlobalValue *Ref = cast<llvm::GlobalValue>(GetAddrOfGlobal(TargetDecl));
-
-  // Look for an existing entry.
-  const char *MangledName = getMangledName(AliasDecl);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-  if (Entry) {
-    assert(Entry->isDeclaration() && "definition already exists for alias");
-    assert(Entry->getType() == Ref->getType() &&
-           "declaration exists with different type");
-  }
-
-  // The alias will use the linkage of the referrent.  If we can't
-  // support aliases with that linkage, fail.
-  llvm::GlobalValue::LinkageTypes Linkage
-    = getFunctionLinkage(cast<FunctionDecl>(AliasDecl.getDecl()));
-
-  switch (Linkage) {
-  // We can definitely emit aliases to definitions with external linkage.
-  case llvm::GlobalValue::ExternalLinkage:
-  case llvm::GlobalValue::ExternalWeakLinkage:
-    break;
-
-  // Same with local linkage.
-  case llvm::GlobalValue::InternalLinkage:
-  case llvm::GlobalValue::PrivateLinkage:
-  case llvm::GlobalValue::LinkerPrivateLinkage:
-    break;
-
-  // We should try to support linkonce linkages.
-  case llvm::GlobalValue::LinkOnceAnyLinkage:
-  case llvm::GlobalValue::LinkOnceODRLinkage:
-    return true;
-
-  // Other linkages will probably never be supported.
-  default:
-    return true;
-  }
-
-  // Create the alias with no name.
-  llvm::GlobalAlias *Alias = 
-    new llvm::GlobalAlias(Ref->getType(), Linkage, "", Ref, &getModule());
-
-  // Switch any previous uses to the alias and continue.
-  if (Entry) {
-    Entry->replaceAllUsesWith(Alias);
-    Entry->eraseFromParent();
-  }
-  Entry = Alias;
-
-  // Finally, set up the alias with its proper name and attributes.
-  Alias->setName(MangledName);
-  SetCommonAttributes(AliasDecl.getDecl(), Alias);
-
-  return false;
-}
 
 
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
-  // The constructor used for constructing this as a base class;
-  // ignores virtual bases.
-  EmitGlobal(GlobalDecl(D, Ctor_Base));
-
-  // The constructor used for constructing this as a complete class;
-  // constucts the virtual bases, then calls the base constructor.
   EmitGlobal(GlobalDecl(D, Ctor_Complete));
+  EmitGlobal(GlobalDecl(D, Ctor_Base));
 }
 
 void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
                                        CXXCtorType Type) {
-  // The complete constructor is equivalent to the base constructor
-  // for classes with no virtual bases.  Try to emit it as an alias.
-  if (Type == Ctor_Complete &&
-      !D->getParent()->getNumVBases() &&
-      !TryEmitDefinitionAsAlias(GlobalDecl(D, Ctor_Complete),
-                                GlobalDecl(D, Ctor_Base)))
-    return;
 
-  llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXConstructor(D, Type));
+  llvm::Function *Fn = GetAddrOfCXXConstructor(D, Type);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
 
@@ -115,17 +44,15 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
   SetLLVMFunctionAttributesForDefinition(D, Fn);
 }
 
-llvm::GlobalValue *
+llvm::Function *
 CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                                        CXXCtorType Type) {
-  const char *Name = getMangledCXXCtorName(D, Type);
-  if (llvm::GlobalValue *V = GlobalDeclMap[Name])
-    return V;
-
   const FunctionProtoType *FPT = D->getType()->getAs<FunctionProtoType>();
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), 
                                FPT->isVariadic());
+
+  const char *Name = getMangledCXXCtorName(D, Type);
   return cast<llvm::Function>(
                       GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
 }
@@ -140,32 +67,15 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
 }
 
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
-  // The destructor used for destructing this as a base class; ignores
-  // virtual bases.
-  EmitGlobal(GlobalDecl(D, Dtor_Base));
-
-  // The destructor used for destructing this as a most-derived class;
-  // call the base destructor and then destructs any virtual bases.
-  EmitGlobal(GlobalDecl(D, Dtor_Complete));
-
-  // The destructor in a virtual table is always a 'deleting'
-  // destructor, which calls the complete destructor and then uses the
-  // appropriate operator delete.
   if (D->isVirtual())
     EmitGlobal(GlobalDecl(D, Dtor_Deleting));
+  EmitGlobal(GlobalDecl(D, Dtor_Complete));
+  EmitGlobal(GlobalDecl(D, Dtor_Base));
 }
 
 void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
-  // The complete destructor is equivalent to the base destructor for
-  // classes with no virtual bases, so try to emit it as an alias.
-  if (Type == Dtor_Complete &&
-      !D->getParent()->getNumVBases() &&
-      !TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Complete),
-                                GlobalDecl(D, Dtor_Base)))
-    return;
-
-  llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXDestructor(D, Type));
+  llvm::Function *Fn = GetAddrOfCXXDestructor(D, Type);
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
 
@@ -173,16 +83,13 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
   SetLLVMFunctionAttributesForDefinition(D, Fn);
 }
 
-llvm::GlobalValue *
+llvm::Function *
 CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
-  const char *Name = getMangledCXXDtorName(D, Type);
-  if (llvm::GlobalValue *V = GlobalDeclMap[Name])
-    return V;
-
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(D, Type), false);
 
+  const char *Name = getMangledCXXDtorName(D, Type);
   return cast<llvm::Function>(
                       GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
 }
