@@ -1138,9 +1138,17 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       
-      // FIXME: We should not use / 8 here.
+      FinalOverriders::OverriderInfo Overrider = 
+        Overriders.getOverrider(Base, MD);
+
       Offset = 
-        -(int64_t)MostDerivedClassLayout.getVBaseClassOffset(VBaseDecl) / 8;
+        -(int64_t)MostDerivedClassLayout.getVBaseClassOffset(VBaseDecl);
+      
+      // The base offset should be relative to the final overrider.
+      Offset += Overrider.BaseOffset;
+
+      // FIXME: We should not use / 8 here.
+      Offset = Offset / 8;
     }
 
     VCallAndVBaseOffsets.push_back(VtableComponent::MakeVCallOffset(Offset));
