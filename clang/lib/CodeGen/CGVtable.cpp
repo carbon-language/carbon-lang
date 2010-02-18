@@ -402,19 +402,6 @@ FinalOverriders::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   }
   
   return BaseOffset();
-    
-  assert(!Paths.getDetectedVirtual() && "FIXME: Handle virtual bases!");
-
-  BaseOffset Offset;
-  
-  // FIXME: This is not going to be enough with virtual bases.
-  // FIXME: We should not use / 8 here.
-  int64_t DerivedToBaseOffset = 
-    (Base.getBaseOffset() - Derived.getBaseOffset()) / 8;
-  
-  Offset.NonVirtualOffset = -DerivedToBaseOffset;
-
-  return Offset;
 }
   
 void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
