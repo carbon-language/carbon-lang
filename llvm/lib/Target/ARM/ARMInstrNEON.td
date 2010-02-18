@@ -89,6 +89,11 @@ def NEONzip       : SDNode<"ARMISD::VZIP", SDTARMVSHUF2>;
 def NEONuzp       : SDNode<"ARMISD::VUZP", SDTARMVSHUF2>;
 def NEONtrn       : SDNode<"ARMISD::VTRN", SDTARMVSHUF2>;
 
+def SDTARMFMAX    : SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisSameAs<0, 1>,
+                                         SDTCisSameAs<0, 2>]>;
+def NEONfmax      : SDNode<"ARMISD::FMAX", SDTARMFMAX>;
+def NEONfmin      : SDNode<"ARMISD::FMIN", SDTARMFMAX>;
+
 //===----------------------------------------------------------------------===//
 // NEON operand definitions
 //===----------------------------------------------------------------------===//
@@ -3022,6 +3027,20 @@ def  VNEGfd_sfp : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 0, 0,
                       (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), IIC_VUNAD,
                       "vneg", "f32", "$dst, $src", "", []>;
 def : N2VSPat<fneg, f32, v2f32, VNEGfd_sfp>;
+
+// Vector Maximum used for single-precision FP
+let neverHasSideEffects = 1 in
+def VMAXfd_sfp : N3V<0, 0, 0b00, 0b1111, 0, 0, (outs DPR_VFP2:$dst),
+                     (ins DPR_VFP2:$src1, DPR_VFP2:$src2), IIC_VBIND,
+                     "vmax", "f32", "$dst, $src1, $src2", "", []>;
+def : N3VSPat<NEONfmax, VMAXfd_sfp>;
+
+// Vector Minimum used for single-precision FP
+let neverHasSideEffects = 1 in
+def VMINfd_sfp : N3V<0, 0, 0b00, 0b1111, 0, 0, (outs DPR_VFP2:$dst),
+                     (ins DPR_VFP2:$src1, DPR_VFP2:$src2), IIC_VBIND,
+                     "vmin", "f32", "$dst, $src1, $src2", "", []>;
+def : N3VSPat<NEONfmin, VMINfd_sfp>;
 
 // Vector Convert between single-precision FP and integer
 let neverHasSideEffects = 1 in

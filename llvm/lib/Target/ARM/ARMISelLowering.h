@@ -131,7 +131,11 @@ namespace llvm {
       VREV16,       // reverse elements within 16-bit halfwords
       VZIP,         // zip (interleave)
       VUZP,         // unzip (deinterleave)
-      VTRN          // transpose
+      VTRN,         // transpose
+
+      // Floating-point max and min:
+      FMAX,
+      FMIN
     };
   }
 

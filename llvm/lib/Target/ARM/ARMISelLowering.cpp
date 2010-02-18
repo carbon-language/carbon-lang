@@ -294,6 +294,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::SIGN_EXTEND);
     setTargetDAGCombine(ISD::ZERO_EXTEND);
     setTargetDAGCombine(ISD::ANY_EXTEND);
+    setTargetDAGCombine(ISD::SELECT_CC);
   }
 
   computeRegisterProperties();
@@ -544,6 +545,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VZIP:          return "ARMISD::VZIP";
   case ARMISD::VUZP:          return "ARMISD::VUZP";
   case ARMISD::VTRN:          return "ARMISD::VTRN";
+  case ARMISD::FMAX:          return "ARMISD::FMAX";
+  case ARMISD::FMIN:          return "ARMISD::FMIN";
   }
 }
 
@@ -3856,23 +3859,97 @@ static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// PerformSELECT_CCCombine - Target-specific DAG combining for ISD::SELECT_CC
+/// to match f32 max/min patterns to use NEON vmax/vmin instructions.
+static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
+                                       const ARMSubtarget *ST) {
+  // If the target supports NEON, try to use vmax/vmin instructions for f32
+  // selects like "x < y ? x : y".  Unless the FiniteOnlyFPMath option is set,
+  // be careful about NaNs:  NEON's vmax/vmin return NaN if either operand is
+  // a NaN; only do the transformation when it matches that behavior.
+
+  // For now only do this when using NEON for FP operations; if using VFP, it
+  // is not obvious that the benefit outweighs the cost of switching to the
+  // NEON pipeline.
+  if (!ST->hasNEON() || !ST->useNEONForSinglePrecisionFP() ||
+      N->getValueType(0) != MVT::f32)
+    return SDValue();
+
+  SDValue CondLHS = N->getOperand(0);
+  SDValue CondRHS = N->getOperand(1);
+  SDValue LHS = N->getOperand(2);
+  SDValue RHS = N->getOperand(3);
+  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
+
+  unsigned Opcode = 0;
+  bool IsReversed;
+  if (LHS == CondLHS && RHS == CondRHS) {
+    IsReversed = false; // x CC y ? x : y
+  } else if (LHS == CondRHS && RHS == CondLHS) {
+    IsReversed = true ; // x CC y ? y : x
+  } else {
+    return SDValue();
+  }
+
+  switch (CC) {
+  default: break;
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETLT:
+  case ISD::SETLE:
+    // This can be vmin if we can prove that the LHS is not a NaN.
+    // (If either operand is NaN, the comparison will be false and the result
+    // will be the RHS, which matches vmin if RHS is the NaN.)
+    if (DAG.isKnownNeverNaN(LHS))
+      Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
+    break;
+
+  case ISD::SETULT:
+  case ISD::SETULE:
+    // Likewise, for ULT/ULE we need to know that RHS is not a NaN.
+    if (DAG.isKnownNeverNaN(RHS))
+      Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
+    break;
+
+  case ISD::SETOGT:
+  case ISD::SETOGE:
+  case ISD::SETGT:
+  case ISD::SETGE:
+    // This can be vmax if we can prove that the LHS is not a NaN.
+    // (If either operand is NaN, the comparison will be false and the result
+    // will be the RHS, which matches vmax if RHS is the NaN.)
+    if (DAG.isKnownNeverNaN(LHS))
+      Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;
+    break;
+
+  case ISD::SETUGT:
+  case ISD::SETUGE:
+    // Likewise, for UGT/UGE we need to know that RHS is not a NaN.
+    if (DAG.isKnownNeverNaN(RHS))
+      Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;
+    break;
+  }
+
+  if (!Opcode)
+    return SDValue();
+  return DAG.getNode(Opcode, N->getDebugLoc(), N->getValueType(0), LHS, RHS);
+}
+
 SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   switch (N->getOpcode()) {
   default: break;
-  case ISD::ADD:      return PerformADDCombine(N, DCI);
-  case ISD::SUB:      return PerformSUBCombine(N, DCI);
+  case ISD::ADD:        return PerformADDCombine(N, DCI);
+  case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
-  case ISD::INTRINSIC_WO_CHAIN:
-    return PerformIntrinsicCombine(N, DCI.DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
   case ISD::SRA:
-  case ISD::SRL:
-    return PerformShiftCombine(N, DCI.DAG, Subtarget);
+  case ISD::SRL:        return PerformShiftCombine(N, DCI.DAG, Subtarget);
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
-  case ISD::ANY_EXTEND:
-    return PerformExtendCombine(N, DCI.DAG, Subtarget);
+  case ISD::ANY_EXTEND: return PerformExtendCombine(N, DCI.DAG, Subtarget);
+  case ISD::SELECT_CC:  return PerformSELECT_CCCombine(N, DCI.DAG, Subtarget);
   }
   return SDValue();
 }
