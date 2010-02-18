@@ -2113,7 +2113,52 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
 
 void ConstantUnion::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
-  assert(false && "Implement replaceUsesOfWithOnConstant for unions");
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
+
+  assert(U == OperandList && "Union constants can only have one use!");
+  assert(getNumOperands() == 1 && "Union constants can only have one use!");
+  assert(getOperand(0) == From && "ReplaceAllUsesWith broken!");
+
+  std::pair<LLVMContextImpl::UnionConstantsTy::MapKey, ConstantUnion*> Lookup;
+  Lookup.first.first = getType();
+  Lookup.second = this;
+  Lookup.first.second = ToC;
+
+  LLVMContext &Context = getType()->getContext();
+  LLVMContextImpl *pImpl = Context.pImpl;
+
+  Constant *Replacement = 0;
+  if (ToC->isNullValue()) {
+    Replacement = ConstantAggregateZero::get(getType());
+  } else {
+    // Check to see if we have this union type already.
+    bool Exists;
+    LLVMContextImpl::UnionConstantsTy::MapTy::iterator I =
+      pImpl->UnionConstants.InsertOrGetItem(Lookup, Exists);
+    
+    if (Exists) {
+      Replacement = I->second;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant union, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      pImpl->UnionConstants.MoveConstantToNewSlot(this, I);
+      
+      // Update to the new value.
+      setOperand(0, ToC);
+      return;
+    }
+  }
+  
+  assert(Replacement != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();
 }
 
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
