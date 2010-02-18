@@ -254,6 +254,7 @@ public:
   bool VisitChildren(CXCursor Parent);
 
   // Declaration visitors
+  bool VisitAttributes(Decl *D);
   bool VisitDeclContext(DeclContext *DC);
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
@@ -436,6 +437,13 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
+
+    // Attributes currently don't have source ranges.  We only report them
+    // when the client hasn't specified a region of interest.
+    if (!RegionOfInterest.isValid())
+      if (VisitAttributes(*I))
+        return true;
+
     CXCursor Cursor = MakeCXCursor(*I, TU);
 
     if (RegionOfInterest.isValid()) {
@@ -894,6 +902,14 @@ bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
       return true;
 
   return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitAttributes(Decl *D) {
+  for (const Attr *A = D->getAttrs(); A; A = A->getNext())
+    if (Visit(MakeCXCursor(A, D, TU)))
+        return true;
+
+  return false;
 }
 
 extern "C" {
