@@ -58,8 +58,11 @@ public:
   struct OverriderInfo {
     /// Method - The method decl of the overrider.
     const CXXMethodDecl *Method;
+
+    /// BaseOffset - the base offset of the overrider.
+    uint64_t BaseOffset;
     
-    OverriderInfo() : Method(0) { }
+    OverriderInfo() : Method(0), BaseOffset(0) { }
   };
 
 private:
@@ -236,6 +239,7 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
     OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
     assert(!Overrider.Method && "Overrider should not exist yet!");
 
+    Overrider.BaseOffset = Base.getBaseOffset();
     Overrider.Method = MD;
   }
 }
@@ -460,6 +464,7 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
       }
 
       // Set the new overrider.
+      Overrider.BaseOffset = NewBase.getBaseOffset();
       Overrider.Method = NewMD;
       
       // And propagate it further.
