@@ -55,8 +55,8 @@ int main (int argc, const char * argv[]) {
 }
 
 // CHECK: c-index-api-loadTU-test.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 12:5]
-// CHECK: c-index-api-loadTU-test.m:6:32: attribute(iboutlet)= Extent=[6:32 - 6:40]
 // CHECK: c-index-api-loadTU-test.m:6:32: ObjCIvarDecl=myoutlet:6:32 (Definition) Extent=[6:32 - 6:40]
+// CHECK: c-index-api-loadTU-test.m:6:32: attribute(iboutlet)= Extent=[6:32 - 6:40]
 // CHECK: c-index-api-loadTU-test.m:6:29: TypeRef=id:0:0 Extent=[6:29 - 6:31]
 // CHECK: c-index-api-loadTU-test.m:9:1: ObjCInstanceMethodDecl=foo:9:1 Extent=[9:1 - 9:7]
 // CHECK: c-index-api-loadTU-test.m:10:1: ObjCClassMethodDecl=fooC:10:1 Extent=[10:1 - 10:8]

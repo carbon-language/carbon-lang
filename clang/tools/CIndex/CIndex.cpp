@@ -404,7 +404,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
     assert(D && "Invalid declaration cursor");
-    return Visit(D);
+    return VisitAttributes(D) || Visit(D);
   }
 
   if (clang_isStatement(Cursor.kind))
@@ -437,12 +437,6 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
        I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
-
-    // Attributes currently don't have source ranges.  We only report them
-    // when the client hasn't specified a region of interest.
-    if (!RegionOfInterest.isValid())
-      if (VisitAttributes(*I))
-        return true;
 
     CXCursor Cursor = MakeCXCursor(*I, TU);
 
