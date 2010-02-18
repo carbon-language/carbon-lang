@@ -72,3 +72,9 @@
 @class I12, I10;
 @interface I11
 @end
+
+// Forward-declared protocols
+@protocol P3, P4;
+@protocol P5
+- (double)honk:(int)a;
+@end

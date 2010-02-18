@@ -99,6 +99,7 @@ namespace {
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
+    Decl *VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     Decl *VisitObjCClassDecl(ObjCClassDecl *D);
                             
     // Importing statements
@@ -2483,6 +2484,50 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   ToProperty->setPropertyIvarDecl(
        cast_or_null<ObjCIvarDecl>(Importer.Import(D->getPropertyIvarDecl())));
   return ToProperty;
+}
+
+Decl *
+ASTNodeImporter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
+  // Import the context of this declaration.
+  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+  if (!DC)
+    return 0;
+  
+  DeclContext *LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return 0;
+  }
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+  
+  llvm::SmallVector<ObjCProtocolDecl *, 4> Protocols;
+  llvm::SmallVector<SourceLocation, 4> Locations;
+  ObjCForwardProtocolDecl::protocol_loc_iterator FromProtoLoc
+    = D->protocol_loc_begin();
+  for (ObjCForwardProtocolDecl::protocol_iterator FromProto
+         = D->protocol_begin(), FromProtoEnd = D->protocol_end();
+       FromProto != FromProtoEnd; 
+       ++FromProto, ++FromProtoLoc) {
+    ObjCProtocolDecl *ToProto
+      = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
+    if (!ToProto)
+      continue;
+    
+    Protocols.push_back(ToProto);
+    Locations.push_back(Importer.Import(*FromProtoLoc));
+  }
+  
+  ObjCForwardProtocolDecl *ToForward
+    = ObjCForwardProtocolDecl::Create(Importer.getToContext(), DC, Loc, 
+                                      Protocols.data(), Protocols.size(),
+                                      Locations.data());
+  ToForward->setLexicalDeclContext(LexicalDC);
+  LexicalDC->addDecl(ToForward);
+  Importer.Imported(D, ToForward);
+  return ToForward;
 }
 
 Decl *ASTNodeImporter::VisitObjCClassDecl(ObjCClassDecl *D) {
