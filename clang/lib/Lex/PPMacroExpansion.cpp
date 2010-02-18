@@ -501,8 +501,10 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
          //.Case("cxx_variadic_templates", false)
            .Case("attribute_ext_vector_type", true)
            .Case("attribute_analyzer_noreturn", true)
-           .Case("attribute_ns_returns_retained", true)
+           .Case("attribute_cf_returns_not_retained", true)
            .Case("attribute_cf_returns_retained", true)
+           .Case("attribute_ns_returns_not_retained", true)
+           .Case("attribute_ns_returns_retained", true)
            .Default(false);
 }
 
