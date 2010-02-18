@@ -1141,8 +1141,10 @@ static void AddOrdinaryNameResults(Action::CodeCompletionContext CCC,
       isVoid = SemaRef.CurBlock->ReturnType->isVoidType();
     Pattern = new CodeCompletionString;
     Pattern->AddTypedTextChunk("return");
-    if (!isVoid)
+    if (!isVoid) {
+      Pattern->AddChunk(CodeCompletionString::CK_HorizontalSpace);
       Pattern->AddPlaceholderChunk("expression");
+    }
     Pattern->AddChunk(CodeCompletionString::CK_SemiColon);
     Results.AddResult(Result(Pattern));
 
