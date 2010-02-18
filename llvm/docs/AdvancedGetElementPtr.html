@@ -44,10 +44,10 @@
      where it doesn't do this. With GEP you can avoid this problem.
 
   <p>Also, GEP carries additional pointer aliasing rules. It's invalid to take a
-     GEP from one object and address into a different separately allocated
-     object. IR producers (front-ends) must follow this rule, and consumers
-     (optimizers, specifically alias analysis) benefit from being able to rely
-     on it.</p>
+     GEP from one object, address into a different separately allocated
+     object, and deference it. IR producers (front-ends) must follow this rule,
+     and consumers (optimizers, specifically alias analysis) benefit from being
+     able to rely on it.</p>
 
   <p>And, GEP is more concise in common cases.</p>
 
