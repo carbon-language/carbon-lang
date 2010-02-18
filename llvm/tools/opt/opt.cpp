@@ -475,10 +475,11 @@ int main(int argc, char **argv) {
       errs() << argv[0] << ": cannot create pass: "
              << PassInf->getPassName() << "\n";
     if (P) {
+      PassKind Kind = P->getPassKind();
       addPass(Passes, P);
 
       if (AnalyzeOnly) {
-        switch (P->getPassKind()) {
+        switch (Kind) {
         case PT_BasicBlock:
           Passes.add(new BasicBlockPassPrinter(PassInf));
           break;
