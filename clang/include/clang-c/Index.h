@@ -18,6 +18,7 @@
 
 #include <sys/stat.h>
 #include <time.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -437,6 +438,79 @@ CINDEX_LINKAGE CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit,
  * \brief Destroy a diagnostic.
  */
 CINDEX_LINKAGE void clang_disposeDiagnostic(CXDiagnostic Diagnostic);
+
+/**
+ * \brief Options to control the display of diagnostics.
+ *
+ * The values in this enum are meant to be combined to customize the
+ * behavior of \c clang_displayDiagnostic().
+ */
+enum CXDiagnosticDisplayOptions {
+  /**
+   * \brief Display the source-location information where the
+   * diagnostic was located.
+   *
+   * When set, diagnostics will be prefixed by the file, line, and
+   * (optionally) column to which the diagnostic refers. For example,
+   *
+   * \code
+   * test.c:28: warning: extra tokens at end of #endif directive
+   * \endcode
+   *
+   * This option corresponds to the clang flag \c -fshow-source-location.
+   */
+  CXDiagnostic_DisplaySourceLocation = 0x01,
+
+  /**
+   * \brief If displaying the source-location information of the
+   * diagnostic, also include the column number.
+   *
+   * This option corresponds to the clang flag \c -fshow-column.
+   */
+  CXDiagnostic_DisplayColumn = 0x02,
+
+  /**
+   * \brief If displaying the source-location information of the
+   * diagnostic, also include information about source ranges in a
+   * machine-parsable format.
+   *
+   * This option corresponds to the clang flag 
+   * \c -fdiagnostics-print-source-range-info.
+   */
+  CXDiagnostic_DisplaySourceRanges = 0x04
+};
+
+/**
+ * \brief Display the given diagnostic by printing it to the given file.
+ *
+ * This routine will display the given diagnostic to a file, rendering
+ * the diagnostic according to the various options given. The 
+ * \c clang_defaultDiagnosticDisplayOptions() function returns the set of 
+ * options that most closely mimics the behavior of the clang compiler.
+ *
+ * \param Diagnostic The diagnostic to print.
+ *
+ * \param File The file to print to (e.g., \c stderr).
+ *
+ * \param Options A set of options that control the diagnostic display, 
+ * created by combining \c CXDiagnosticDisplayOptions values.
+ */
+CINDEX_LINKAGE void clang_displayDiagnostic(CXDiagnostic Diagnostic,
+                                            FILE *File,
+                                            unsigned Options);
+
+/**
+ * \brief Retrieve the set of display options most similar to the
+ * default behavior of the clang compiler.
+ *
+ * \returns A set of display options suitable for use with \c
+ * clang_displayDiagnostic().
+ */
+CINDEX_LINKAGE unsigned clang_defaultDiagnosticDisplayOptions();
+
+/**
+ * \brief Print a diagnostic to the given file.
+ */
 
 /**
  * \brief Determine the severity of the given diagnostic.
