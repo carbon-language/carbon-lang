@@ -256,27 +256,27 @@ public:
   // Declaration visitors
   bool VisitAttributes(Decl *D);
   bool VisitDeclContext(DeclContext *DC);
-  bool VisitDeclaratorDecl(DeclaratorDecl *DD);
-  bool VisitEnumConstantDecl(EnumConstantDecl *D);
-  bool VisitFieldDecl(FieldDecl *D);
-  bool VisitFunctionDecl(FunctionDecl *ND);
-  bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
-  bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
-  bool VisitObjCClassDecl(ObjCClassDecl *D);
-  // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
-  bool VisitObjCContainerDecl(ObjCContainerDecl *D);
-  bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
-  bool VisitObjCImplDecl(ObjCImplDecl *D);
-  bool VisitObjCImplementationDecl(ObjCImplementationDecl *D);
-  bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
-  bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
-  // FIXME: ObjCPropertyDecl requires TypeSourceInfo, getter/setter locations,
-  // etc.
-  bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
-  bool VisitTagDecl(TagDecl *D);
   bool VisitTranslationUnitDecl(TranslationUnitDecl *D);
   bool VisitTypedefDecl(TypedefDecl *D);
+  bool VisitTagDecl(TagDecl *D);
+  bool VisitEnumConstantDecl(EnumConstantDecl *D);
+  bool VisitDeclaratorDecl(DeclaratorDecl *DD);
+  bool VisitFunctionDecl(FunctionDecl *ND);
+  bool VisitFieldDecl(FieldDecl *D);
   bool VisitVarDecl(VarDecl *);
+  bool VisitObjCMethodDecl(ObjCMethodDecl *ND);
+  bool VisitObjCContainerDecl(ObjCContainerDecl *D);
+  bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
+  bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
+  bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
+  bool VisitObjCImplDecl(ObjCImplDecl *D);
+  bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
+  bool VisitObjCImplementationDecl(ObjCImplementationDecl *D);
+  // FIXME: ObjCPropertyDecl requires TypeSourceInfo, getter/setter locations,
+  // etc.
+  // FIXME: ObjCCompatibleAliasDecl requires aliased-class locations.
+  bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
+  bool VisitObjCClassDecl(ObjCClassDecl *D);
 
   // Type visitors
   // FIXME: QualifiedTypeLoc doesn't provide any location information
