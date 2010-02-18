@@ -27,3 +27,9 @@ static void y(int (^cmp)(int, int)) {
 		x(cmp);
     });
 }
+
+// radar 7659483
+void *_Block_copy(const void *aBlock);
+void x(void (^block)(void)) {
+        block = ((__typeof(block))_Block_copy((const void *)(block)));
+}

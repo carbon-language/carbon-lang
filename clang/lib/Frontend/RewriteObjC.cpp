@@ -4416,7 +4416,7 @@ void RewriteObjC::RewriteCastExpr(CStyleCastExpr *CE) {
     const TypeOfExprType *TypeOfExprTypePtr = cast<TypeOfExprType>(TypePtr);
     QT = TypeOfExprTypePtr->getUnderlyingExpr()->getType();
     std::string TypeAsString = "(";
-    TypeAsString += QT.getAsString();
+    RewriteBlockPointerType(TypeAsString, QT);
     TypeAsString += ")";
     ReplaceText(LocStart, endBuf-startBuf+1, TypeAsString);
     return;
