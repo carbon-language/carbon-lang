@@ -16,6 +16,7 @@
 #include "clang-c/Index.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm { namespace sys {
 class Path;
@@ -26,40 +27,25 @@ namespace clang {
 class Diagnostic;
 class LangOptions;
 class Preprocessor;
-  
-/**
- * \brief Diagnostic client that translates Clang diagnostics into diagnostics
- * for the C interface to Clang.
- */
-class CIndexDiagnosticClient : public DiagnosticClient {
-  CXDiagnosticCallback Callback;
-  CXClientData ClientData;
-  const LangOptions *LangOptsPtr;
-  
-public:
-  CIndexDiagnosticClient(CXDiagnosticCallback Callback,
-                         CXClientData ClientData)
-    : Callback(Callback), ClientData(ClientData), LangOptsPtr(0) { }
-  
-  virtual ~CIndexDiagnosticClient();
-  
-  virtual void BeginSourceFile(const LangOptions &LangOpts,
-                               const Preprocessor *PP);
-  
-  virtual void EndSourceFile();
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                const DiagnosticInfo &Info);
+/// \brief The storage behind a CXDiagnostic
+struct CXStoredDiagnostic {
+  const StoredDiagnostic &Diag;
+  const LangOptions &LangOpts;
+  
+  CXStoredDiagnostic(const StoredDiagnostic &Diag,
+                     const LangOptions &LangOpts)
+    : Diag(Diag), LangOpts(LangOpts) { }
 };
-
+  
 /// \brief Given the path to a file that contains binary, serialized
-/// diagnostics produced by Clang, emit those diagnostics via the
-/// given diagnostic engine.
-void ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
-                                 Diagnostic &Diags,
-                                 unsigned num_unsaved_files,
-                                 struct CXUnsavedFile *unsaved_files,
-                                 const LangOptions &LangOpts);
+/// diagnostics produced by Clang, load those diagnostics.
+void LoadSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
+                               unsigned num_unsaved_files,
+                               struct CXUnsavedFile *unsaved_files,
+                               FileManager &FileMgr,
+                               SourceManager &SourceMgr,
+                               llvm::SmallVectorImpl<StoredDiagnostic> &Diags);
 
 } // end namespace clang
 

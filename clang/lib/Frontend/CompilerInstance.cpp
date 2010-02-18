@@ -102,7 +102,7 @@ namespace {
 
 void BinaryDiagnosticSerializer::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                                   const DiagnosticInfo &Info) {
-  Info.Serialize(DiagLevel, OS);
+  StoredDiagnostic(DiagLevel, Info).Serialize(OS);
 }
 
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,

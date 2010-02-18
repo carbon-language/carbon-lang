@@ -403,13 +403,6 @@ public:
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
 
-  /// Deserialize - Deserialize the first diagnostic within the memory
-  /// [Memory, MemoryEnd), producing a new diagnostic builder describing the
-  /// deserialized diagnostic. If the memory does not contain a
-  /// diagnostic, returns a diagnostic builder with no diagnostic ID.
-  DiagnosticBuilder Deserialize(FileManager &FM, SourceManager &SM, 
-                                const char *&Memory, const char *MemoryEnd);
-
 private:
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
@@ -799,12 +792,54 @@ public:
   /// output buffer using the arguments stored in this diagnostic.
   void FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                         llvm::SmallVectorImpl<char> &OutStr) const;
+};
+
+/**
+ * \brief Represents a diagnostic in a form that can be serialized and
+ * deserialized.
+ */
+class StoredDiagnostic {
+  Diagnostic::Level Level;
+  FullSourceLoc Loc;
+  std::string Message;
+  std::vector<SourceRange> Ranges;
+  std::vector<CodeModificationHint> FixIts;
+
+public:
+  StoredDiagnostic();
+  StoredDiagnostic(Diagnostic::Level Level, const DiagnosticInfo &Info);
+  StoredDiagnostic(Diagnostic::Level Level, llvm::StringRef Message);
+  ~StoredDiagnostic();
+
+  /// \brief Evaluates true when this object stores a diagnostic.
+  operator bool() const { return Message.size() > 0; }
+
+  Diagnostic::Level getLevel() const { return Level; }
+  const FullSourceLoc &getLocation() const { return Loc; }
+  llvm::StringRef getMessage() const { return Message; }
+  
+  typedef std::vector<SourceRange>::const_iterator range_iterator;
+  range_iterator range_begin() const { return Ranges.begin(); }
+  range_iterator range_end() const { return Ranges.end(); }
+  unsigned range_size() const { return Ranges.size(); }
+
+  typedef std::vector<CodeModificationHint>::const_iterator fixit_iterator;
+  fixit_iterator fixit_begin() const { return FixIts.begin(); }
+  fixit_iterator fixit_end() const { return FixIts.end(); }
+  unsigned fixit_size() const { return FixIts.size(); }
 
   /// Serialize - Serialize the given diagnostic (with its diagnostic
   /// level) to the given stream. Serialization is a lossy operation,
   /// since the specific diagnostic ID and any macro-instantiation
   /// information is lost.
-  void Serialize(Diagnostic::Level DiagLevel, llvm::raw_ostream &OS) const;
+  void Serialize(llvm::raw_ostream &OS) const;
+
+  /// Deserialize - Deserialize the first diagnostic within the memory
+  /// [Memory, MemoryEnd), producing a new diagnostic builder describing the
+  /// deserialized diagnostic. If the memory does not contain a
+  /// diagnostic, returns a diagnostic builder with no diagnostic ID.
+  static StoredDiagnostic Deserialize(FileManager &FM, SourceManager &SM, 
+                                   const char *&Memory, const char *MemoryEnd);
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of

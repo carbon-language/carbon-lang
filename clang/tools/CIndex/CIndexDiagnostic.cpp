@@ -1,4 +1,4 @@
-/*===-- CIndexDiagnostics.cpp - Diagnostics C Interface -----------*- C -*-===*\
+/*===-- CIndexDiagnostics.cpp - Diagnostics C Interface ---------*- C++ -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
@@ -15,67 +15,44 @@
 #include "CXSourceLocation.h"
 
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace clang;
 using namespace clang::cxloc;
 using namespace clang::cxstring;
-
-//-----------------------------------------------------------------------------
-// Opaque data structures
-//-----------------------------------------------------------------------------
-namespace {
-  /// \brief The storage behind a CXDiagnostic
-  struct CXStoredDiagnostic {
-    /// \brief The translation unit this diagnostic came from.
-    const LangOptions *LangOptsPtr;
-
-    /// \brief The severity level of this diagnostic.
-    Diagnostic::Level Level;
-
-    /// \brief A reference to the diagnostic information.
-    const DiagnosticInfo &Info;
-  };
-}
-
-//-----------------------------------------------------------------------------
-// CIndex Diagnostic Client
-//-----------------------------------------------------------------------------
-CIndexDiagnosticClient::~CIndexDiagnosticClient() { }
-
-void CIndexDiagnosticClient::BeginSourceFile(const LangOptions &LangOpts,
-                                             const Preprocessor *PP) {
-  assert(!LangOptsPtr && "Invalid state!");
-  LangOptsPtr = &LangOpts;
-}
-
-void CIndexDiagnosticClient::EndSourceFile() {
-  assert(LangOptsPtr && "Invalid state!");
-  LangOptsPtr = 0;
-}
-
-void CIndexDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                              const DiagnosticInfo &Info) {
-  if (!Callback)
-    return;
-
-  assert((LangOptsPtr || Info.getLocation().isInvalid()) &&
-         "Missing language options with located diagnostic!");
-  CXStoredDiagnostic Stored = { this->LangOptsPtr, DiagLevel, Info };
-  Callback(&Stored, ClientData);
-}
+using namespace llvm;
 
 //-----------------------------------------------------------------------------
 // C Interface Routines
 //-----------------------------------------------------------------------------
 extern "C" {
 
+unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit);
+  return CXXUnit? CXXUnit->diag_size() : 0;
+}
+
+CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(Unit);
+  if (!CXXUnit || Index >= CXXUnit->diag_size())
+    return 0;
+
+  return new CXStoredDiagnostic(CXXUnit->diag_begin()[Index],
+                                CXXUnit->getASTContext().getLangOptions());
+}
+
+void clang_disposeDiagnostic(CXDiagnostic Diagnostic) {
+  CXStoredDiagnostic *Stored = static_cast<CXStoredDiagnostic *>(Diagnostic);
+  delete Stored;
+}
+
 enum CXDiagnosticSeverity clang_getDiagnosticSeverity(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
   if (!StoredDiag)
     return CXDiagnostic_Ignored;
 
-  switch (StoredDiag->Level) {
+  switch (StoredDiag->Diag.getLevel()) {
   case Diagnostic::Ignored: return CXDiagnostic_Ignored;
   case Diagnostic::Note:    return CXDiagnostic_Note;
   case Diagnostic::Warning: return CXDiagnostic_Warning;
@@ -89,12 +66,12 @@ enum CXDiagnosticSeverity clang_getDiagnosticSeverity(CXDiagnostic Diag) {
 
 CXSourceLocation clang_getDiagnosticLocation(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || StoredDiag->Info.getLocation().isInvalid())
+  if (!StoredDiag || StoredDiag->Diag.getLocation().isInvalid())
     return clang_getNullLocation();
 
-  return translateSourceLocation(StoredDiag->Info.getLocation().getManager(),
-                                 *StoredDiag->LangOptsPtr,
-                                 StoredDiag->Info.getLocation());
+  return translateSourceLocation(StoredDiag->Diag.getLocation().getManager(),
+                                 StoredDiag->LangOpts,
+                                 StoredDiag->Diag.getLocation());
 }
 
 CXString clang_getDiagnosticSpelling(CXDiagnostic Diag) {
@@ -102,28 +79,26 @@ CXString clang_getDiagnosticSpelling(CXDiagnostic Diag) {
   if (!StoredDiag)
     return createCXString("");
 
-  llvm::SmallString<64> Spelling;
-  StoredDiag->Info.FormatDiagnostic(Spelling);
-  return createCXString(Spelling.str(), true);
+  return createCXString(StoredDiag->Diag.getMessage(), false);
 }
 
 unsigned clang_getDiagnosticNumRanges(CXDiagnostic Diag) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || StoredDiag->Info.getLocation().isInvalid())
+  if (!StoredDiag || StoredDiag->Diag.getLocation().isInvalid())
     return 0;
 
-  return StoredDiag->Info.getNumRanges();
+  return StoredDiag->Diag.range_size();
 }
 
 CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diag, unsigned Range) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || Range >= StoredDiag->Info.getNumRanges() ||
-      StoredDiag->Info.getLocation().isInvalid())
+  if (!StoredDiag || Range >= StoredDiag->Diag.range_size() ||
+      StoredDiag->Diag.getLocation().isInvalid())
     return clang_getNullRange();
 
-  return translateSourceRange(StoredDiag->Info.getLocation().getManager(),
-                              *StoredDiag->LangOptsPtr,
-                              StoredDiag->Info.getRange(Range));
+  return translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
+                              StoredDiag->LangOpts,
+                              StoredDiag->Diag.range_begin()[Range]);
 }
 
 unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diag) {
@@ -131,17 +106,16 @@ unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diag) {
   if (!StoredDiag)
     return 0;
 
-  return StoredDiag->Info.getNumCodeModificationHints();
+  return StoredDiag->Diag.fixit_size();
 }
 
 enum CXFixItKind clang_getDiagnosticFixItKind(CXDiagnostic Diag,
                                               unsigned FixIt) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints())
+  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size())
     return CXFixIt_Insertion;
 
-  const CodeModificationHint &Hint
-    = StoredDiag->Info.getCodeModificationHint(FixIt);
+  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
   if (Hint.RemoveRange.isInvalid())
     return CXFixIt_Insertion;
   if (Hint.InsertionLoc.isInvalid())
@@ -157,16 +131,15 @@ CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
     *Location = clang_getNullLocation();
 
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints())
+  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size())
     return createCXString("");
 
-  const CodeModificationHint &Hint
-    = StoredDiag->Info.getCodeModificationHint(FixIt);
+  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
 
-  if (Location && StoredDiag->Info.getLocation().isValid())
+  if (Location && StoredDiag->Diag.getLocation().isValid())
     *Location = translateSourceLocation(
-                                    StoredDiag->Info.getLocation().getManager(),
-                                        *StoredDiag->LangOptsPtr,
+                                    StoredDiag->Diag.getLocation().getManager(),
+                                        StoredDiag->LangOpts,
                                         Hint.InsertionLoc);
   return createCXString(Hint.CodeToInsert);
 }
@@ -174,14 +147,13 @@ CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
 CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag,
                                               unsigned FixIt) {
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints() ||
-      StoredDiag->Info.getLocation().isInvalid())
+  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size() ||
+      StoredDiag->Diag.getLocation().isInvalid())
     return clang_getNullRange();
 
-  const CodeModificationHint &Hint
-    = StoredDiag->Info.getCodeModificationHint(FixIt);
-  return translateSourceRange(StoredDiag->Info.getLocation().getManager(),
-                              *StoredDiag->LangOptsPtr,
+  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
+  return translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
+                              StoredDiag->LangOpts,
                               Hint.RemoveRange);
 }
 
@@ -192,30 +164,30 @@ CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
     *Range = clang_getNullRange();
 
   CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Info.getNumCodeModificationHints() ||
-      StoredDiag->Info.getLocation().isInvalid()) {
+  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size() ||
+      StoredDiag->Diag.getLocation().isInvalid()) {
     if (Range)
       *Range = clang_getNullRange();
 
     return createCXString("");
   }
 
-  const CodeModificationHint &Hint
-    = StoredDiag->Info.getCodeModificationHint(FixIt);
+  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
   if (Range)
-    *Range = translateSourceRange(StoredDiag->Info.getLocation().getManager(),
-                                  *StoredDiag->LangOptsPtr,
+    *Range = translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
+                                  StoredDiag->LangOpts,
                                   Hint.RemoveRange);
   return createCXString(Hint.CodeToInsert);
 }
 
 } // end extern "C"
 
-void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
-                                        Diagnostic &Diags,
-                                        unsigned num_unsaved_files,
-                                        struct CXUnsavedFile *unsaved_files,
-                                        const LangOptions &LangOpts) {
+void clang::LoadSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
+                                      unsigned num_unsaved_files,
+                                      struct CXUnsavedFile *unsaved_files,
+                                      FileManager &FileMgr,
+                                      SourceManager &SourceMgr,
+                                     SmallVectorImpl<StoredDiagnostic> &Diags) {
   using llvm::MemoryBuffer;
   using llvm::StringRef;
   MemoryBuffer *F = MemoryBuffer::getFile(DiagnosticsPath.c_str());
@@ -223,15 +195,15 @@ void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
     return;
 
   // Enter the unsaved files into the file manager.
-  SourceManager SourceMgr;
-  FileManager FileMgr;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     const FileEntry *File = FileMgr.getVirtualFile(unsaved_files[I].Filename,
                                                    unsaved_files[I].Length,
                                                    0);
     if (!File) {
-      Diags.Report(diag::err_fe_remap_missing_from_file)
-        << unsaved_files[I].Filename;
+      // FIXME: Hard to localize when we have no diagnostics engine!
+      Diags.push_back(StoredDiagnostic(Diagnostic::Fatal,
+                            (Twine("could not remap from missing file ") +
+                                   unsaved_files[I].Filename).str()));
       return;
     }
 
@@ -244,18 +216,16 @@ void clang::ReportSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
     SourceMgr.overrideFileContents(File, Buffer);
   }
 
-  Diags.getClient()->BeginSourceFile(LangOpts, 0);
-
   // Parse the diagnostics, emitting them one by one until we've
   // exhausted the data.
   StringRef Buffer = F->getBuffer();
   const char *Memory = Buffer.data(), *MemoryEnd = Memory + Buffer.size();
   while (Memory != MemoryEnd) {
-    DiagnosticBuilder DB = Diags.Deserialize(FileMgr, SourceMgr,
-                                             Memory, MemoryEnd);
-    if (!DB.isActive())
+    StoredDiagnostic Stored = StoredDiagnostic::Deserialize(FileMgr, SourceMgr,
+                                                            Memory, MemoryEnd);
+    if (!Stored)
       return;
-  }
 
-  Diags.getClient()->EndSourceFile();
+    Diags.push_back(Stored);
+  }
 }

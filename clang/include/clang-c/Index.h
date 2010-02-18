@@ -416,17 +416,27 @@ enum CXFixItKind {
 typedef void *CXDiagnostic;
 
 /**
- * \brief Callback function invoked for each diagnostic emitted during
- * translation.
- *
- * \param Diagnostic the diagnostic emitted during translation. This
- * diagnostic pointer is only valid during the execution of the
- * callback.
- *
- * \param ClientData the callback client data.
+ * \brief Determine the number of diagnostics produced for the given
+ * translation unit.
  */
-typedef void (*CXDiagnosticCallback)(CXDiagnostic Diagnostic,
-                                     CXClientData ClientData);
+CINDEX_LINKAGE unsigned clang_getNumDiagnostics(CXTranslationUnit Unit);
+
+/**
+ * \brief Retrieve a diagnostic associated with the given translation unit.
+ *
+ * \param Unit the translation unit to query.
+ * \param Index the zero-based diagnostic number to retrieve.
+ *
+ * \returns the requested diagnostic. This diagnostic must be freed
+ * via a call to \c clang_disposeDiagnostic().
+ */
+CINDEX_LINKAGE CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit,
+                                                unsigned Index);
+
+/**
+ * \brief Destroy a diagnostic.
+ */
+CINDEX_LINKAGE void clang_disposeDiagnostic(CXDiagnostic Diagnostic);
 
 /**
  * \brief Determine the severity of the given diagnostic.
@@ -600,17 +610,13 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                                          int num_clang_command_line_args,
                                          const char **clang_command_line_args,
                                          unsigned num_unsaved_files,
-                                         struct CXUnsavedFile *unsaved_files,
-                                         CXDiagnosticCallback diag_callback,
-                                         CXClientData diag_client_data);
+                                         struct CXUnsavedFile *unsaved_files);
  
 /**
  * \brief Create a translation unit from an AST file (-emit-ast).
  */
 CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex, 
-                                             const char *ast_filename,
-                                             CXDiagnosticCallback diag_callback,
-                                             CXClientData diag_client_data);
+                                             const char *ast_filename);
 
 /**
  * \brief Destroy the specified CXTranslationUnit object.
@@ -1625,15 +1631,33 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,
                                           unsigned complete_line,
-                                          unsigned complete_column,
-                                          CXDiagnosticCallback diag_callback,
-                                          CXClientData diag_client_data);
+                                          unsigned complete_column);
 
 /**
  * \brief Free the given set of code-completion results.
  */
 CINDEX_LINKAGE
 void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
+
+/**
+ * \brief Determine the number of diagnostics produced prior to the
+ * location where code completion was performed.
+ */
+CINDEX_LINKAGE 
+unsigned clang_codeCompleteGetNumDiagnostics(CXCodeCompleteResults *Results);
+
+/**
+ * \brief Retrieve a diagnostic associated with the given code completion.
+ *
+ * \param Result the code completion results to query.
+ * \param Index the zero-based diagnostic number to retrieve.
+ *
+ * \returns the requested diagnostic. This diagnostic must be freed
+ * via a call to \c clang_disposeDiagnostic().
+ */
+CINDEX_LINKAGE 
+CXDiagnostic clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *Results,
+                                             unsigned Index);
 
 /**
  * @}

@@ -28,10 +28,6 @@ char *basename(const char* path)
 extern char *basename(const char *);
 #endif
 
-static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
-                                    CXClientData ClientData);
-
-
 static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
                         unsigned end_line, unsigned end_column) {
   fprintf(out, "[%d:%d - %d:%d]", begin_line, begin_column,
@@ -41,7 +37,7 @@ static void PrintExtent(FILE *out, unsigned begin_line, unsigned begin_column,
 static unsigned CreateTranslationUnit(CXIndex Idx, const char *file,
                                       CXTranslationUnit *TU) {
 
-  *TU = clang_createTranslationUnit(Idx, file, PrintDiagnosticCallback, stderr);
+  *TU = clang_createTranslationUnit(Idx, file);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit from '%s'!\n", file);
     return 0;
@@ -199,9 +195,8 @@ static const char* GetCursorSource(CXCursor Cursor) {
 
 typedef void (*PostVisitTU)(CXTranslationUnit);
 
-static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
-                                    CXClientData ClientData) {
-  FILE *out = (FILE *)ClientData;
+void PrintDiagnostic(CXDiagnostic Diagnostic) {
+  FILE *out = stderr;
   CXFile file;
   unsigned line, column;
   CXString text;
@@ -318,6 +313,15 @@ static void PrintDiagnosticCallback(CXDiagnostic Diagnostic,
       }
       }
     }
+  }
+}
+
+void PrintDiagnostics(CXTranslationUnit TU) {
+  int i, n = clang_getNumDiagnostics(TU);
+  for (i = 0; i != n; ++i) {
+    CXDiagnostic Diag = clang_getDiagnostic(TU, i);
+    PrintDiagnostic(Diag);
+    clang_disposeDiagnostic(Diag);
   }
 }
 
@@ -518,6 +522,7 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
   if (PV)
     PV(TU);
 
+  PrintDiagnostics(TU);
   clang_disposeTranslationUnit(TU);
   return 0;
 }
@@ -567,9 +572,7 @@ int perform_test_load_source(int argc, const char **argv,
                                                  argc - num_unsaved_files,
                                                  argv + num_unsaved_files,
                                                  num_unsaved_files,
-                                                 unsaved_files,
-                                                 PrintDiagnosticCallback,
-                                                 stderr);
+                                                 unsaved_files);
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     clang_disposeIndex(Idx);
@@ -815,13 +818,18 @@ int perform_code_completion(int argc, const char **argv) {
                                argv[argc - 1], argc - num_unsaved_files - 3,
                                argv + num_unsaved_files + 2,
                                num_unsaved_files, unsaved_files,
-                               filename, line, column,
-                               PrintDiagnosticCallback, stderr);
+                               filename, line, column);
 
   if (results) {
     unsigned i, n = results->NumResults;
     for (i = 0; i != n; ++i)
       print_completion_result(results->Results + i, stdout);
+    n = clang_codeCompleteGetNumDiagnostics(results);
+    for (i = 0; i != n; ++i) {
+      CXDiagnostic diag = clang_codeCompleteGetDiagnostic(results, i);
+      PrintDiagnostic(diag);
+      clang_disposeDiagnostic(diag);
+    }
     clang_disposeCodeCompleteResults(results);
   }
 
@@ -874,9 +882,7 @@ int inspect_cursor_at(int argc, const char **argv) {
                                   argc - num_unsaved_files - 2 - NumLocations,
                                    argv + num_unsaved_files + 1 + NumLocations,
                                                  num_unsaved_files,
-                                                 unsaved_files,
-                                                 PrintDiagnosticCallback,
-                                                 stderr);
+                                                 unsaved_files);
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     return -1;
@@ -895,6 +901,7 @@ int inspect_cursor_at(int argc, const char **argv) {
     free(Locations[Loc].filename);
   }
 
+  PrintDiagnostics(TU);
   clang_disposeTranslationUnit(TU);
   clang_disposeIndex(CIdx);
   free(Locations);
@@ -933,9 +940,7 @@ int perform_token_annotation(int argc, const char **argv) {
                                                  argc - num_unsaved_files - 3,
                                                  argv + num_unsaved_files + 2,
                                                  num_unsaved_files,
-                                                 unsaved_files,
-                                                 PrintDiagnosticCallback,
-                                                 stderr);
+                                                 unsaved_files);
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     clang_disposeIndex(CIdx);
@@ -1000,6 +1005,7 @@ int perform_token_annotation(int argc, const char **argv) {
   free(cursors);
 
  teardown:
+  PrintDiagnostics(TU);
   clang_disposeTranslationUnit(TU);
   clang_disposeIndex(CIdx);
   free(filename);

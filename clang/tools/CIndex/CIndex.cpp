@@ -933,9 +933,7 @@ void clang_setUseExternalASTGeneration(CXIndex CIdx, int value) {
 }
 
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
-                                              const char *ast_filename,
-                                             CXDiagnosticCallback diag_callback,
-                                              CXClientData diag_client_data) {
+                                              const char *ast_filename) {
   if (!CIdx)
     return 0;
 
@@ -945,11 +943,9 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
   DiagnosticOptions DiagOpts;
   llvm::OwningPtr<Diagnostic> Diags;
   Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
-  CIndexDiagnosticClient DiagClient(diag_callback, diag_client_data);
-  Diags->setClient(&DiagClient);
-
   return ASTUnit::LoadFromPCHFile(ast_filename, *Diags,
-                                  CXXIdx->getOnlyLocalDecls());
+                                  CXXIdx->getOnlyLocalDecls(),
+                                  0, 0, true);
 }
 
 CXTranslationUnit
@@ -958,9 +954,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           int num_command_line_args,
                                           const char **command_line_args,
                                           unsigned num_unsaved_files,
-                                          struct CXUnsavedFile *unsaved_files,
-                                          CXDiagnosticCallback diag_callback,
-                                          CXClientData diag_client_data) {
+                                          struct CXUnsavedFile *unsaved_files) {
   if (!CIdx)
     return 0;
 
@@ -970,8 +964,6 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   DiagnosticOptions DiagOpts;
   llvm::OwningPtr<Diagnostic> Diags;
   Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
-  CIndexDiagnosticClient DiagClient(diag_callback, diag_client_data);
-  Diags->setClient(&DiagClient);
 
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
@@ -1006,7 +998,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    CXXIdx->getClangResourcesPath(),
                                    CXXIdx->getOnlyLocalDecls(),
                                    RemappedFiles.data(),
-                                   RemappedFiles.size()));
+                                   RemappedFiles.size(),
+                                   /*CaptureDiagnostics=*/true));
 
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
@@ -1097,20 +1090,22 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     Diags->Report(diag::err_fe_clang) << AllArgs << ErrMsg;
   }
 
-  // FIXME: Parse the (redirected) standard error to emit diagnostics.
-
   ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,
                                           CXXIdx->getOnlyLocalDecls(),
                                           RemappedFiles.data(),
-                                          RemappedFiles.size());
+                                          RemappedFiles.size(),
+                                          /*CaptureDiagnostics=*/true);
   if (ATU)
     ATU->unlinkTemporaryFile();
 
   // FIXME: Currently we don't report diagnostics on invalid ASTs.
-  if (ATU)
-    ReportSerializedDiagnostics(DiagnosticsFile, *Diags,
-                                num_unsaved_files, unsaved_files,
-                                ATU->getASTContext().getLangOptions());
+  if (ATU) {
+    LoadSerializedDiagnostics(DiagnosticsFile, 
+                              num_unsaved_files, unsaved_files,
+                              ATU->getFileManager(),
+                              ATU->getSourceManager(),
+                              ATU->getDiagnostics());
+  }
 
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();

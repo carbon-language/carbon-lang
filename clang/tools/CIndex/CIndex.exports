@@ -1,9 +1,12 @@
 _clang_annotateTokens
 _clang_codeComplete
+_clang_codeCompleteGetDiagnostic
+_clang_codeCompleteGetNumDiagnostics
 _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
 _clang_disposeCodeCompleteResults
+_clang_disposeDiagnostic
 _clang_disposeIndex
 _clang_disposeString
 _clang_disposeTokens
@@ -25,6 +28,7 @@ _clang_getCursorReferenced
 _clang_getCursorSpelling
 _clang_getCursorUSR
 _clang_getDefinitionSpellingAndExtent
+_clang_getDiagnostic
 _clang_getDiagnosticFixItInsertion
 _clang_getDiagnosticFixItKind
 _clang_getDiagnosticFixItRemoval
@@ -45,6 +49,7 @@ _clang_getNullCursor
 _clang_getNullLocation
 _clang_getNullRange
 _clang_getNumCompletionChunks
+_clang_getNumDiagnostics
 _clang_getRange
 _clang_getRangeEnd
 _clang_getRangeStart

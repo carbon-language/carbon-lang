@@ -90,7 +90,45 @@ public:
   }
 };
 
+class StoredDiagnosticClient : public DiagnosticClient {
+  llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags;
+  
+public:
+  explicit StoredDiagnosticClient(
+                          llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
+    : StoredDiags(StoredDiags) { }
+  
+  virtual void HandleDiagnostic(Diagnostic::Level Level,
+                                const DiagnosticInfo &Info);
+};
+
+/// \brief RAII object that optionally captures diagnostics, if
+/// there is no diagnostic client to capture them already.
+class CaptureDroppedDiagnostics {
+  Diagnostic &Diags;
+  StoredDiagnosticClient Client;
+  DiagnosticClient *PreviousClient;
+
+public:
+  CaptureDroppedDiagnostics(bool RequestCapture, Diagnostic &Diags, 
+                           llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
+    : Diags(Diags), Client(StoredDiags), PreviousClient(Diags.getClient()) 
+  {
+    if (RequestCapture || Diags.getClient() == 0)
+      Diags.setClient(&Client);
+  }
+
+  ~CaptureDroppedDiagnostics() {
+    Diags.setClient(PreviousClient);
+  }
+};
+
 } // anonymous namespace
+
+void StoredDiagnosticClient::HandleDiagnostic(Diagnostic::Level Level,
+                                              const DiagnosticInfo &Info) {
+  StoredDiags.push_back(StoredDiagnostic(Level, Info));
+}
 
 const std::string &ASTUnit::getOriginalSourceFileName() {
   return OriginalSourceFile;
@@ -105,10 +143,15 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   bool OnlyLocalDecls,
                                   RemappedFile *RemappedFiles,
-                                  unsigned NumRemappedFiles) {
+                                  unsigned NumRemappedFiles,
+                                  bool CaptureDiagnostics) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
+
+  // If requested, capture diagnostics in the ASTUnit.
+  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, Diags, 
+                                    AST->Diagnostics);
 
   for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     // Create the file entry for the file that we're mapping from.
@@ -231,7 +274,8 @@ public:
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
-                                             bool OnlyLocalDecls) {
+                                             bool OnlyLocalDecls,
+                                             bool CaptureDiagnostics) {
   // Create the compiler instance to use for building the AST.
   CompilerInstance Clang;
   llvm::OwningPtr<ASTUnit> AST;
@@ -245,8 +289,13 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // Create the target instance.
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
-  if (!Clang.hasTarget())
-    goto error;
+  if (!Clang.hasTarget()) {
+    Clang.takeSourceManager();
+    Clang.takeFileManager();
+    Clang.takeDiagnosticClient();
+    Clang.takeDiagnostics();
+    return 0;
+  }
 
   // Inform the target of the language options.
   //
@@ -261,9 +310,13 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
 
   // Create the AST unit.
   AST.reset(new ASTUnit(false));
-
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+
+  // Capture any diagnostics that would otherwise be dropped.
+  CaptureDroppedDiagnostics Capture(CaptureDiagnostics, 
+                                    Clang.getDiagnostics(),
+                                    AST->Diagnostics);
 
   // Create a file manager object to provide access to and cache the filesystem.
   Clang.setFileManager(&AST->getFileManager());
@@ -312,7 +365,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
                                       RemappedFile *RemappedFiles,
-                                      unsigned NumRemappedFiles) {
+                                      unsigned NumRemappedFiles,
+                                      bool CaptureDiagnostics) {
   llvm::SmallVector<const char *, 16> Args;
   Args.push_back("<clang>"); // FIXME: Remove dummy argument.
   Args.insert(Args.end(), ArgBegin, ArgEnd);
@@ -363,5 +417,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
   CI->getFrontendOpts().DisableFree = true;
-  return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls);
+  return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
+                                    CaptureDiagnostics);
 }

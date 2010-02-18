@@ -181,7 +181,17 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// retain this buffer because the completion strings point into it.
   llvm::MemoryBuffer *Buffer;
 
+  /// \brief Diagnostics produced while performing code completion.
+  llvm::SmallVector<StoredDiagnostic, 8> Diagnostics;
+
+  /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
+
+  /// \brief Source manager, used for diagnostics.
+  SourceManager SourceMgr;
+  
+  /// \brief File manager, used for diagnostics.
+  FileManager FileMgr;
 };
 
 CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
@@ -192,9 +202,7 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
                                           struct CXUnsavedFile *unsaved_files,
                                           const char *complete_filename,
                                           unsigned complete_line,
-                                          unsigned complete_column,
-                                          CXDiagnosticCallback diag_callback,
-                                          CXClientData diag_client_data) {
+                                          unsigned complete_column) {
   // The indexer, which is mainly used to determine where diagnostics go.
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
@@ -202,8 +210,6 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   DiagnosticOptions DiagOpts;
   llvm::OwningPtr<Diagnostic> Diags;
   Diags.reset(CompilerInstance::createDiagnostics(DiagOpts, 0, 0));
-  CIndexDiagnosticClient DiagClient(diag_callback, diag_client_data);
-  Diags->setClient(&DiagClient);
   
   // The set of temporary files that we've built.
   std::vector<llvm::sys::Path> TemporaryFiles;
@@ -310,7 +316,11 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   // Parse the resulting source file to find code-completion results.
   using llvm::MemoryBuffer;
   using llvm::StringRef;
-  AllocatedCXCodeCompleteResults *Results = 0;
+  AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults;
+  Results->Results = 0;
+  Results->NumResults = 0;
+  Results->Buffer = 0;
+  // FIXME: Set Results->LangOpts!
   if (MemoryBuffer *F = MemoryBuffer::getFile(ResultsFile.c_str())) {
     llvm::SmallVector<CXCompletionResult, 4> CompletionResults;
     StringRef Buffer = F->getBuffer();
@@ -335,7 +345,6 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     };
 
     // Allocate the results.
-    Results = new AllocatedCXCodeCompleteResults;
     Results->Results = new CXCompletionResult [CompletionResults.size()];
     Results->NumResults = CompletionResults.size();
     memcpy(Results->Results, CompletionResults.data(),
@@ -343,13 +352,10 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
     Results->Buffer = F;
   }
 
-  // FIXME: The LangOptions we are passing here are not at all correct. However,
-  // in the current design we must pass something in so the SourceLocations have
-  // a LangOptions object to refer to.
-  ReportSerializedDiagnostics(DiagnosticsFile, *Diags, 
-                              num_unsaved_files, unsaved_files,
-                              Results->LangOpts);
-  
+  LoadSerializedDiagnostics(DiagnosticsFile, num_unsaved_files, unsaved_files,
+                            Results->FileMgr, Results->SourceMgr, 
+                            Results->Diagnostics);
+
   for (unsigned i = 0, e = TemporaryFiles.size(); i != e; ++i)
     TemporaryFiles[i].eraseFromDisk();
 
@@ -373,5 +379,27 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *ResultsIn) {
   Results->Buffer = 0;
   delete Results;
 }
+
+unsigned 
+clang_codeCompleteGetNumDiagnostics(CXCodeCompleteResults *ResultsIn) {
+  AllocatedCXCodeCompleteResults *Results
+    = static_cast<AllocatedCXCodeCompleteResults*>(ResultsIn);
+  if (!Results)
+    return 0;
+
+  return Results->Diagnostics.size();
+}
+
+CXDiagnostic 
+clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *ResultsIn,
+                                unsigned Index) {
+  AllocatedCXCodeCompleteResults *Results
+    = static_cast<AllocatedCXCodeCompleteResults*>(ResultsIn);
+  if (!Results || Index >= Results->Diagnostics.size())
+    return 0;
+
+  return new CXStoredDiagnostic(Results->Diagnostics[Index], Results->LangOpts);
+}
+
 
 } // end extern "C"

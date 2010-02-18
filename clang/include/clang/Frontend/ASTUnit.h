@@ -18,6 +18,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Index/ASTLocation.h"
+#include "llvm/ADT/SmallVector.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -80,6 +81,10 @@ class ASTUnit {
   // Critical optimization when using clang_getCursor().
   ASTLocation LastLoc;
 
+  /// \brief The set of diagnostics produced when creating this
+  /// translation unit.
+  llvm::SmallVector<StoredDiagnostic, 4> Diagnostics;
+
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
 
@@ -120,6 +125,15 @@ public:
     return TopLevelDecls;
   }
 
+  // Retrieve the diagnostics associated with this AST
+  typedef const StoredDiagnostic * diag_iterator;
+  diag_iterator diag_begin() const { return Diagnostics.begin(); }
+  diag_iterator diag_end() const { return Diagnostics.end(); }
+  unsigned diag_size() const { return Diagnostics.size(); }
+  llvm::SmallVector<StoredDiagnostic, 4> &getDiagnostics() { 
+    return Diagnostics; 
+  }
+
   /// \brief A mapping from a file name to the memory buffer that stores the
   /// remapped contents of that file.
   typedef std::pair<std::string, const llvm::MemoryBuffer *> RemappedFile;
@@ -136,7 +150,8 @@ public:
                                   Diagnostic &Diags,
                                   bool OnlyLocalDecls = false,
                                   RemappedFile *RemappedFiles = 0,
-                                  unsigned NumRemappedFiles = 0);
+                                  unsigned NumRemappedFiles = 0,
+                                  bool CaptureDiagnostics = false);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
@@ -151,7 +166,8 @@ public:
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
-                                             bool OnlyLocalDecls = false);
+                                             bool OnlyLocalDecls = false,
+                                             bool CaptureDiagnostics = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -173,7 +189,8 @@ public:
                                       llvm::StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       RemappedFile *RemappedFiles = 0,
-                                      unsigned NumRemappedFiles = 0);
+                                      unsigned NumRemappedFiles = 0,
+                                      bool CaptureDiagnostics = false);
 };
 
 } // namespace clang
