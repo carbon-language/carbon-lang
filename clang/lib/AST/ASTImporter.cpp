@@ -99,7 +99,8 @@ namespace {
     Decl *VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     Decl *VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
-
+    Decl *VisitObjCClassDecl(ObjCClassDecl *D);
+                            
     // Importing statements
     Stmt *VisitStmt(Stmt *S);
 
@@ -2482,6 +2483,46 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   ToProperty->setPropertyIvarDecl(
        cast_or_null<ObjCIvarDecl>(Importer.Import(D->getPropertyIvarDecl())));
   return ToProperty;
+}
+
+Decl *ASTNodeImporter::VisitObjCClassDecl(ObjCClassDecl *D) {
+  // Import the context of this declaration.
+  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
+  if (!DC)
+    return 0;
+  
+  DeclContext *LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return 0;
+  }
+  
+  // Import the location of this declaration.
+  SourceLocation Loc = Importer.Import(D->getLocation());
+
+  llvm::SmallVector<ObjCInterfaceDecl *, 4> Interfaces;
+  llvm::SmallVector<SourceLocation, 4> Locations;
+  for (ObjCClassDecl::iterator From = D->begin(), FromEnd = D->end();
+       From != FromEnd; ++From) {
+    ObjCInterfaceDecl *ToIface
+      = cast_or_null<ObjCInterfaceDecl>(Importer.Import(From->getInterface()));
+    if (!ToIface)
+      continue;
+    
+    Interfaces.push_back(ToIface);
+    Locations.push_back(Importer.Import(From->getLocation()));
+  }
+  
+  ObjCClassDecl *ToClass = ObjCClassDecl::Create(Importer.getToContext(), DC,
+                                                 Loc, 
+                                                 Interfaces.data(),
+                                                 Locations.data(),
+                                                 Interfaces.size());
+  ToClass->setLexicalDeclContext(LexicalDC);
+  LexicalDC->addDecl(ToClass);
+  Importer.Imported(D, ToClass);
+  return ToClass;
 }
 
 //----------------------------------------------------------------------------

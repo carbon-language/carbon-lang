@@ -68,3 +68,8 @@
 @protocol P2 <P0>
 - (float)wibble:(int)a1 second:(int)a2;
 @end
+
+// Forward-declared interfaces
+@class I10, I11;
+@interface I12
+@end
