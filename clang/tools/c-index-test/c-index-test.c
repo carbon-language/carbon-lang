@@ -487,7 +487,8 @@ int perform_test_load_tu(const char *file, const char *filter,
   CXTranslationUnit TU;
   int result;
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
-                          !strcmp(filter, "local") ? 1 : 0);
+                          !strcmp(filter, "local") ? 1 : 0,
+                          /* displayDiagnosics=*/1);
 
   if (!CreateTranslationUnit(Idx, file, &TU)) {
     clang_disposeIndex(Idx);
@@ -511,7 +512,8 @@ int perform_test_load_source(int argc, const char **argv,
   int result;
 
   Idx = clang_createIndex(/* excludeDeclsFromPCH */
-                          !strcmp(filter, "local") ? 1 : 0);
+                          !strcmp(filter, "local") ? 1 : 0,
+                          /* displayDiagnosics=*/1);
 
   if (UseExternalASTs && strlen(UseExternalASTs))
     clang_setUseExternalASTGeneration(Idx, 1);
@@ -565,7 +567,8 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   unsigned line = 1, col = 1;
   unsigned start_line = 1, start_col = 1;
 
-  if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1))) {
+  if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1,
+                                /* displayDiagnosics=*/1))) {
     fprintf(stderr, "Could not create Index\n");
     return 1;
   }
@@ -766,7 +769,7 @@ int perform_code_completion(int argc, const char **argv) {
   if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0);
+  CIdx = clang_createIndex(0, 1);
   results = clang_codeComplete(CIdx,
                                argv[argc - 1], argc - num_unsaved_files - 3,
                                argv + num_unsaved_files + 2,
@@ -830,7 +833,7 @@ int inspect_cursor_at(int argc, const char **argv) {
                            &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0);
+  CIdx = clang_createIndex(0, 1);
   TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
                                   argc - num_unsaved_files - 2 - NumLocations,
                                    argv + num_unsaved_files + 1 + NumLocations,
@@ -888,7 +891,7 @@ int perform_token_annotation(int argc, const char **argv) {
   if (parse_remapped_files(argc, argv, 2, &unsaved_files, &num_unsaved_files))
     return -1;
 
-  CIdx = clang_createIndex(0);
+  CIdx = clang_createIndex(0, 1);
   TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
                                                  argc - num_unsaved_files - 3,
                                                  argv + num_unsaved_files + 2,

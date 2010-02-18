@@ -146,8 +146,8 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  *
  * Here is an example:
  *
- *   // excludeDeclsFromPCH = 1
- *   Idx = clang_createIndex(1);
+ *   // excludeDeclsFromPCH = 1, displayDiagnostics=1
+ *   Idx = clang_createIndex(1, 1);
  *
  *   // IndexTest.pch was produced with the following command:
  *   // "clang -x c IndexTest.h -emit-ast -o IndexTest.pch"
@@ -171,7 +171,8 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  * -include-pch) allows 'excludeDeclsFromPCH' to remove redundant callbacks
  * (which gives the indexer the same performance benefit as the compiler).
  */
-CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH);
+CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
+                                         int displayDiagnostics);
   
 /**
  * \brief Destroy the given index.
