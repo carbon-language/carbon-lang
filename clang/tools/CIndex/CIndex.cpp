@@ -27,6 +27,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
+#include "llvm/System/Signals.h"
 
 // Needed to define L_TMPNAM on some systems.
 #include <cstdio>
@@ -1933,6 +1934,10 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *startColumn = SM.getSpellingColumnNumber(Body->getLBracLoc());
   *endLine = SM.getSpellingLineNumber(Body->getRBracLoc());
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
+}
+
+void clang_enableStackTraces(void) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
 }
 
 } // end: extern "C"

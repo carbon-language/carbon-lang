@@ -1009,6 +1009,7 @@ static void print_usage(void) {
 }
 
 int main(int argc, const char **argv) {
+  clang_enableStackTraces();
   if (argc > 2 && strstr(argv[1], "-code-completion-at=") == argv[1])
     return perform_code_completion(argc, argv);
   if (argc > 2 && strstr(argv[1], "-cursor-at=") == argv[1])

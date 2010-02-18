@@ -507,7 +507,7 @@ CINDEX_LINKAGE void clang_displayDiagnostic(CXDiagnostic Diagnostic,
  * \returns A set of display options suitable for use with \c
  * clang_displayDiagnostic().
  */
-CINDEX_LINKAGE unsigned clang_defaultDiagnosticDisplayOptions();
+CINDEX_LINKAGE unsigned clang_defaultDiagnosticDisplayOptions(void);
 
 /**
  * \brief Print a diagnostic to the given file.
@@ -1322,7 +1322,7 @@ CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor,
                                           unsigned *startColumn,
                                           unsigned *endLine,
                                           unsigned *endColumn);
-
+CINDEX_LINKAGE void clang_enableStackTraces(void);
 /**
  * @}
  */
