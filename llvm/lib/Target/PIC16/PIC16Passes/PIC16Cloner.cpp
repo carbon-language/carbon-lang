@@ -270,3 +270,27 @@ PIC16Cloner::cloneFunction(Function *OrgF) {
 }
 
 
+// Remap the call sites of shared functions, that are in IL.
+// Change the IL call site of a shared function to its clone.
+//
+void PIC16Cloner::
+remapAllSites(Function *Caller, Function *OrgF, Function *Clone) {
+  // First find the caller to update. If the caller itself is cloned
+  // then use the cloned caller. Otherwise use it.
+  cloned_map_iterator cm_it = ClonedFunctionMap.find(Caller);
+  if (cm_it != ClonedFunctionMap.end())
+    Caller = cm_it->second;
+
+  // For the lack of a better call site finding mechanism, iterate over 
+  // all insns to find the uses of original fn.
+  for (Function::iterator BI = Caller->begin(); BI != Caller->end(); ++BI) {
+    BasicBlock &BB = *BI;
+    for (BasicBlock::iterator II = BB.begin(); II != BB.end(); ++II) {
+      if (II->getNumOperands() > 0 && II->getOperand(0) == OrgF)
+          II->setOperand(0, Clone);
+    }
+  }
+}
+
+
+

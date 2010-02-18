@@ -55,6 +55,9 @@ namespace llvm {
     // Clone all shared functions.
     void cloneSharedFunctions(CallGraphNode *isrCGN);
 
+    // Remap all call sites to the shared function.
+    void remapAllSites(Function *Caller, Function *OrgF, Function *Clone);
+
     // Error reporting for PIC16Pass
     void reportError(string ErrorString, vector<string> &Values);
     void reportError(string ErrorString);
