@@ -82,8 +82,12 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
   // If we try to apply it to a function pointer, don't warn, but don't
   // do anything, either. It doesn't matter anyway, because there's nothing
   // special about calling a force_align_arg_pointer function.
-  ValueDecl* VD = dyn_cast<ValueDecl>(D);
+  ValueDecl *VD = dyn_cast<ValueDecl>(D);
   if (VD && VD->getType()->isFunctionPointerType())
+    return;
+  // Also don't warn on function pointer typedefs.
+  TypedefDecl *TD = dyn_cast<TypedefDecl>(D);
+  if (TD && TD->getUnderlyingType()->isFunctionPointerType())
     return;
   // Attribute can only be applied to function types.
   if (!isa<FunctionDecl>(D)) {
@@ -189,7 +193,8 @@ namespace {
         default:                          break;
         }
       }
-      if (Attr.getName()->getName() == "force_align_arg_pointer") {
+      if (Attr.getName()->getName() == "force_align_arg_pointer" ||
+          Attr.getName()->getName() == "__force_align_arg_pointer__") {
         HandleX86ForceAlignArgPointerAttr(D, Attr, S);
         return true;
       }
