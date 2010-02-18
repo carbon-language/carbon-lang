@@ -7,6 +7,12 @@
 #if __has_feature(attribute_cf_returns_retained)
 #define CF_RETURNS_RETAINED __attribute__((cf_returns_retained))
 #endif
+#if __has_feature(attribute_ns_returns_not_retained)
+#define NS_RETURNS_NOT_RETAINED __attribute__((ns_returns_not_retained))
+#endif
+#if __has_feature(attribute_cf_returns_not_retained)
+#define CF_RETURNS_NOT_RETAINED __attribute__((cf_returns_not_retained))
+#endif
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
@@ -1188,6 +1194,8 @@ typedef NSString* MyStringTy;
 - (NSString*) returnsAnOwnedString  NS_RETURNS_RETAINED; // no-warning
 - (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
 - (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
+- (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
+- (NSString*) newStringNoAttr;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions or methods that return a pointer or Objective-C object}}
 @end
 
@@ -1201,9 +1209,16 @@ void test_attr_1b(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedCFString]; // expected-warning{{leak}}
 }
 
+void test_attr1c(TestOwnershipAttr *X) {
+  NSString *str = [X newString]; // no-warning
+  NSString *str2 = [X newStringNoAttr]; // expected-warning{{leak}}
+}
+
 @interface MyClassTestCFAttr : NSObject {}
 - (NSDate*) returnsCFRetained CF_RETURNS_RETAINED;
 - (CFDateRef) returnsCFRetainedAsCF CF_RETURNS_RETAINED;
+- (CFDateRef) newCFRetainedAsCF CF_RETURNS_NOT_RETAINED;
+- (CFDateRef) newCFRetainedAsCFNoAttr;
 - (NSDate*) alsoReturnsRetained;
 - (CFDateRef) alsoReturnsRetainedAsCF;
 - (NSDate*) returnsNSRetained NS_RETURNS_RETAINED;
@@ -1223,6 +1238,13 @@ CFDateRef returnsRetainedCFDate()  {
   return returnsRetainedCFDate(); // No leak.
 }
 
+- (CFDateRef) newCFRetainedAsCF {
+  return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease];
+}
+
+- (CFDateRef) newCFRetainedAsCFNoAttr {
+  return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease]; // expected-warning{{Object with +0 retain counts returned to caller where a +1 (owning) retain count is expected}}
+}
 
 - (NSDate*) alsoReturnsRetained {
   return (NSDate*) returnsRetainedCFDate(); // expected-warning{{leak}}

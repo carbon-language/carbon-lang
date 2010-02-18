@@ -1222,6 +1222,12 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
     else if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
+    else if (FD->getAttr<NSReturnsNotRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
+    }
+    else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+    }
   }
   else if (RetTy->getAs<PointerType>()) {
     if (FD->getAttr<CFReturnsRetainedAttr>()) {
@@ -1244,6 +1250,10 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
       Summ.setRetEffect(ObjCAllocRetE);
       return;
     }
+    if (MD->getAttr<NSReturnsNotRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
+      return;
+    }
 
     isTrackedLoc = true;
   }
@@ -1251,8 +1261,12 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   if (!isTrackedLoc)
     isTrackedLoc = MD->getResultType()->getAs<PointerType>() != NULL;
 
-  if (isTrackedLoc && MD->getAttr<CFReturnsRetainedAttr>())
-    Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+  if (isTrackedLoc) {
+    if (MD->getAttr<CFReturnsRetainedAttr>())
+      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
+    else if (MD->getAttr<CFReturnsNotRetainedAttr>())
+      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+  }
 }
 
 RetainSummary*
