@@ -1764,7 +1764,12 @@ public:
   bool isSplat() const { return isSplatMask(Mask, getValueType(0)); }
   int  getSplatIndex() const { 
     assert(isSplat() && "Cannot get splat index for non-splat!");
-    return Mask[0];
+    EVT VT = getValueType(0);
+    for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
+      if (Mask[i] != -1)
+        return Mask[i];
+    }
+    return -1;
   }
   static bool isSplatMask(const int *Mask, EVT VT);
 
