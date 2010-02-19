@@ -37,3 +37,4 @@
 // CHECK-CC5: ObjCCategoryDecl:{TypedText Cat1}
 // CHECK-CC5-NEXT: ObjCCategoryDecl:{TypedText Cat2}
 // CHECK-CC5-NEXT: ObjCCategoryDecl:{TypedText Cat3}
+// XFAIL: win32

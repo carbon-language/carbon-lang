@@ -153,3 +153,4 @@ void f(Ellipsis *e) {
 // CHECK-CCA: {TypedText super}
 // RUN: c-index-test -code-completion-at=%s:103:6 %s | FileCheck -check-prefix=CHECK-CCB %s
 // CHECK-CCB: ObjCInstanceMethodDecl:{ResultType int}{TypedText Method:}{Placeholder (int)i}{Placeholder , ...}
+// XFAIL: win32
