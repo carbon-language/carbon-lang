@@ -713,75 +713,40 @@ OverloadedOperatorKind BinaryOperator::getOverloadedOperator(Opcode Opc) {
   return OverOps[Opc];
 }
 
-InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
+InitListExpr::InitListExpr(SourceLocation lbraceloc,
                            Expr **initExprs, unsigned numInits,
                            SourceLocation rbraceloc)
   : Expr(InitListExprClass, QualType(), false, false),
-    InitExprs(0), NumInits(numInits), Capacity(numInits),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0),
-    UnionFieldInit(0), HadArrayRangeDesignator(false)
-{
-  if (NumInits == 0)
-    return;
-
-  InitExprs = new (C) Stmt*[Capacity];
-
-  for (unsigned I = 0; I != NumInits; ++I) {
-    Expr *Ex = initExprs[I];
-    if (Ex->isTypeDependent())
+    UnionFieldInit(0), HadArrayRangeDesignator(false) 
+{      
+  for (unsigned I = 0; I != numInits; ++I) {
+    if (initExprs[I]->isTypeDependent())
       TypeDependent = true;
-    if (Ex->isValueDependent())
+    if (initExprs[I]->isValueDependent())
       ValueDependent = true;
-    InitExprs[I] = Ex;
   }
+      
+  InitExprs.insert(InitExprs.end(), initExprs, initExprs+numInits);
 }
 
-void InitListExpr::DoDestroy(ASTContext &C) {
-  DestroyChildren(C);
-  if (InitExprs)
-    C.Deallocate(InitExprs);
-  this->~InitListExpr();
-  C.Deallocate((void*) this);
+void InitListExpr::reserveInits(unsigned NumInits) {
+  if (NumInits > InitExprs.size())
+    InitExprs.reserve(NumInits);
 }
 
-void InitListExpr::reserveInits(ASTContext &C, unsigned newCapacity) {
-  if (newCapacity > Capacity) {
-    if (!Capacity)
-      Capacity = newCapacity;
-    else if ((Capacity *= 2) < newCapacity)
-      Capacity = newCapacity;
-
-    Stmt **newInits = new (C) Stmt*[Capacity];
-    if (InitExprs) {
-      memcpy(newInits, InitExprs, NumInits * sizeof(*InitExprs));
-      C.Deallocate(InitExprs);
-    }
-    InitExprs = newInits;
-  }
+void InitListExpr::resizeInits(ASTContext &Context, unsigned NumInits) {
+  for (unsigned Idx = NumInits, LastIdx = InitExprs.size();
+       Idx < LastIdx; ++Idx)
+    InitExprs[Idx]->Destroy(Context);
+  InitExprs.resize(NumInits, 0);
 }
 
-void InitListExpr::resizeInits(ASTContext &C, unsigned N) {
-  // If the new number of expressions is less than the old one, destroy
-  // the expressions that are beyond the new size.
-  for (unsigned i = N, LastIdx = NumInits; i < LastIdx; ++i)
-    InitExprs[i]->Destroy(C);
-
-  // If we are expanding the number of expressions, reserve space.
-  reserveInits(C, N);
-
-  // If we are expanding the number of expressions, zero out beyond our
-  // current capacity.
-  for (unsigned i = NumInits; i < N; ++i)
-    InitExprs[i] = 0;
-
-  NumInits = N;
-}
-
-Expr *InitListExpr::updateInit(ASTContext &C, unsigned Init, Expr *expr) {
-  if (Init >= NumInits) {
-    // Resize the number of initializers.  This will adjust the amount
-    // of memory allocated as well as zero-pad the initializers.
-    resizeInits(C, Init+1);
+Expr *InitListExpr::updateInit(unsigned Init, Expr *expr) {
+  if (Init >= InitExprs.size()) {
+    InitExprs.insert(InitExprs.end(), Init - InitExprs.size() + 1, 0);
+    InitExprs.back() = expr;
+    return 0;
   }
 
   Expr *Result = cast_or_null<Expr>(InitExprs[Init]);
@@ -2621,8 +2586,12 @@ Stmt::child_iterator VAArgExpr::child_begin() { return &Val; }
 Stmt::child_iterator VAArgExpr::child_end() { return &Val+1; }
 
 // InitListExpr
-Stmt::child_iterator InitListExpr::child_begin() { return begin(); }
-Stmt::child_iterator InitListExpr::child_end() { return end(); }
+Stmt::child_iterator InitListExpr::child_begin() {
+  return InitExprs.size() ? &InitExprs[0] : 0;
+}
+Stmt::child_iterator InitListExpr::child_end() {
+  return InitExprs.size() ? &InitExprs[0] + InitExprs.size() : 0;
+}
 
 // DesignatedInitExpr
 Stmt::child_iterator DesignatedInitExpr::child_begin() {
