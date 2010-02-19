@@ -644,14 +644,37 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       DeclContext *OuterCtx = findOuterContext(S);
       for (; Ctx && Ctx->getPrimaryContext() != OuterCtx; 
            Ctx = Ctx->getLookupParent()) {
-        // We do not directly look into function or method contexts
-        // (since all local variables are found via the identifier
-        // changes) or in transparent contexts (since those entities
-        // will be found in the nearest enclosing non-transparent
-        // context).
-        if (Ctx->isFunctionOrMethod() || Ctx->isTransparentContext())
+        // We do not directly look into transparent contexts, since
+        // those entities will be found in the nearest enclosing
+        // non-transparent context.
+        if (Ctx->isTransparentContext())
           continue;
-        
+
+        // We do not look directly into function or method contexts,
+        // since all of the local variables and parameters of the
+        // function/method are present within the Scope.
+        if (Ctx->isFunctionOrMethod()) {
+          // If we have an Objective-C instance method, look for ivars
+          // in the corresponding interface.
+          if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(Ctx)) {
+            if (Method->isInstanceMethod() && Name.getAsIdentifierInfo())
+              if (ObjCInterfaceDecl *Class = Method->getClassInterface()) {
+                ObjCInterfaceDecl *ClassDeclared;
+                if (ObjCIvarDecl *Ivar = Class->lookupInstanceVariable(
+                                                 Name.getAsIdentifierInfo(), 
+                                                             ClassDeclared)) {
+                  if (R.isAcceptableDecl(Ivar)) {
+                    R.addDecl(Ivar);
+                    R.resolveKind();
+                    return true;
+                  }
+                }
+              }
+          }
+
+          continue;
+        }
+
         // Perform qualified name lookup into this context.
         // FIXME: In some cases, we know that every name that could be found by
         // this qualified name lookup will also be on the identifier chain. For
