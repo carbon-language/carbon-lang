@@ -33,7 +33,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
-using namespace dwarf;
 
 //===----------------------------------------------------------------------===//
 //                                  ELF
@@ -754,22 +753,6 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
 }
 
-
-unsigned TargetLoweringObjectFileMachO::getPersonalityEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
-
-unsigned TargetLoweringObjectFileMachO::getLSDAEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned TargetLoweringObjectFileMachO::getFDEEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned TargetLoweringObjectFileMachO::getTTypeEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
 
 //===----------------------------------------------------------------------===//
 //                                  COFF
