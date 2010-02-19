@@ -246,6 +246,13 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
       if (!PN->getType()->isIntegerTy() && !PN->getType()->isPointerTy())
         continue;
 
+      // It's necessary to tell ScalarEvolution about this explicitly so that
+      // it can walk the def-use list and forget all SCEVs, as it may not be
+      // watching the PHI itself. Once the new exit value is in place, there
+      // may not be a def-use connection between the loop and every instruction
+      // which got a SCEVAddRecExpr for that loop.
+      SE->forgetValue(PN);
+
       // Iterate over all of the values in all the PHI nodes.
       for (unsigned i = 0; i != NumPreds; ++i) {
         // If the value being merged in is not integer or is not defined

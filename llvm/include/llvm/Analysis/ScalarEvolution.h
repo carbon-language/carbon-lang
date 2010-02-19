@@ -586,6 +586,11 @@ namespace llvm {
     /// compute a trip count, or if the loop is deleted.
     void forgetLoop(const Loop *L);
 
+    /// forgetValue - This method should be called by the client when it has
+    /// changed a value in a way that may effect its value, or which may
+    /// disconnect it from a def-use chain linking it to a loop.
+    void forgetValue(Value *V);
+
     /// GetMinTrailingZeros - Determine the minimum number of zero bits that S
     /// is guaranteed to end in (at every loop iteration).  It is, at the same
     /// time, the minimum number of times S is divisible by 2.  For example,
