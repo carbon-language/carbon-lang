@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -O3 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -O3 -asm-verbose=false | FileCheck %s
 target datalayout = "e-p:64:64:64"
 target triple = "x86_64-unknown-unknown"
 
@@ -383,4 +383,60 @@ loop:
 
 return:
   ret void
+}
+
+; LSR should use only one indvar for the inner loop.
+; rdar://7657764
+
+; CHECK: asd:
+; CHECK: BB10_5:
+; CHECK-NEXT: addl  (%r{{[^,]*}},%rdi,4), %e
+; CHECK-NEXT: incq  %rdi
+; CHECK-NEXT: cmpq  %rdi, %r{{[^,]*}}
+; CHECK-NEXT: jg
+
+%struct.anon = type { i32, [4200 x i32] }
+
+@bars = common global [123123 x %struct.anon] zeroinitializer, align 32 ; <[123123 x %struct.anon]*> [#uses=2]
+
+define i32 @asd(i32 %n) nounwind readonly {
+entry:
+  %0 = icmp sgt i32 %n, 0                         ; <i1> [#uses=1]
+  br i1 %0, label %bb.nph14, label %bb5
+
+bb.nph14:                                         ; preds = %entry
+  %tmp18 = zext i32 %n to i64                     ; <i64> [#uses=1]
+  br label %bb
+
+bb:                                               ; preds = %bb3, %bb.nph14
+  %indvar16 = phi i64 [ 0, %bb.nph14 ], [ %indvar.next17, %bb3 ] ; <i64> [#uses=3]
+  %s.113 = phi i32 [ 0, %bb.nph14 ], [ %s.0.lcssa, %bb3 ] ; <i32> [#uses=2]
+  %scevgep2526 = getelementptr [123123 x %struct.anon]* @bars, i64 0, i64 %indvar16, i32 0 ; <i32*> [#uses=1]
+  %1 = load i32* %scevgep2526, align 4            ; <i32> [#uses=2]
+  %2 = icmp sgt i32 %1, 0                         ; <i1> [#uses=1]
+  br i1 %2, label %bb.nph, label %bb3
+
+bb.nph:                                           ; preds = %bb
+  %tmp23 = sext i32 %1 to i64                     ; <i64> [#uses=1]
+  br label %bb1
+
+bb1:                                              ; preds = %bb.nph, %bb1
+  %indvar = phi i64 [ 0, %bb.nph ], [ %tmp19, %bb1 ] ; <i64> [#uses=2]
+  %s.07 = phi i32 [ %s.113, %bb.nph ], [ %4, %bb1 ] ; <i32> [#uses=1]
+  %c.08 = getelementptr [123123 x %struct.anon]* @bars, i64 0, i64 %indvar16, i32 1, i64 %indvar ; <i32*> [#uses=1]
+  %3 = load i32* %c.08, align 4                   ; <i32> [#uses=1]
+  %4 = add nsw i32 %3, %s.07                      ; <i32> [#uses=2]
+  %tmp19 = add i64 %indvar, 1                     ; <i64> [#uses=2]
+  %5 = icmp sgt i64 %tmp23, %tmp19                ; <i1> [#uses=1]
+  br i1 %5, label %bb1, label %bb3
+
+bb3:                                              ; preds = %bb1, %bb
+  %s.0.lcssa = phi i32 [ %s.113, %bb ], [ %4, %bb1 ] ; <i32> [#uses=2]
+  %indvar.next17 = add i64 %indvar16, 1           ; <i64> [#uses=2]
+  %exitcond = icmp eq i64 %indvar.next17, %tmp18  ; <i1> [#uses=1]
+  br i1 %exitcond, label %bb5, label %bb
+
+bb5:                                              ; preds = %bb3, %entry
+  %s.1.lcssa = phi i32 [ 0, %entry ], [ %s.0.lcssa, %bb3 ] ; <i32> [#uses=1]
+  ret i32 %s.1.lcssa
 }

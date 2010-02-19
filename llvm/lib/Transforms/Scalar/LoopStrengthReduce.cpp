@@ -1690,21 +1690,29 @@ LSRInstance::getUse(const SCEV *&Expr,
 void LSRInstance::CollectInterestingTypesAndFactors() {
   SmallSetVector<const SCEV *, 4> Strides;
 
-  // Collect interesting types and factors.
+  // Collect interesting types and strides.
   for (IVUsers::const_iterator UI = IU.begin(), E = IU.end(); UI != E; ++UI) {
     const SCEV *Stride = UI->getStride();
 
     // Collect interesting types.
     Types.insert(SE.getEffectiveSCEVType(Stride->getType()));
 
-    // Collect interesting factors.
+    // Add the stride for this loop.
+    Strides.insert(Stride);
+
+    // Add strides for other mentioned loops.
+    for (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(UI->getOffset());
+         AR; AR = dyn_cast<SCEVAddRecExpr>(AR->getStart()))
+      Strides.insert(AR->getStepRecurrence(SE));
+  }
+
+  // Compute interesting factors from the set of interesting strides.
+  for (SmallSetVector<const SCEV *, 4>::const_iterator
+       I = Strides.begin(), E = Strides.end(); I != E; ++I)
     for (SmallSetVector<const SCEV *, 4>::const_iterator NewStrideIter =
-         Strides.begin(), SEnd = Strides.end(); NewStrideIter != SEnd;
-         ++NewStrideIter) {
-      const SCEV *OldStride = Stride;
+         next(I); NewStrideIter != E; ++NewStrideIter) {
+      const SCEV *OldStride = *I;
       const SCEV *NewStride = *NewStrideIter;
-      if (OldStride == NewStride)
-        continue;
 
       if (SE.getTypeSizeInBits(OldStride->getType()) !=
           SE.getTypeSizeInBits(NewStride->getType())) {
@@ -1726,8 +1734,6 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
           Factors.insert(Factor->getValue()->getValue().getSExtValue());
       }
     }
-    Strides.insert(Stride);
-  }
 
   // If all uses use the same type, don't bother looking for truncation-based
   // reuse.
