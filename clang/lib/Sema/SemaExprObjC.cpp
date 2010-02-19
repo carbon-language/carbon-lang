@@ -426,14 +426,14 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!ClassDecl) {
     NamedDecl *IDecl
       = LookupSingleName(TUScope, receiverName, LookupOrdinaryName);
-    if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
-      const ObjCInterfaceType *OCIT;
-      OCIT = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>();
-      if (!OCIT) {
-        Diag(receiverLoc, diag::err_invalid_receiver_to_message);
-        return true;
-      }
-      ClassDecl = OCIT->getDecl();
+    if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl))
+      if (const ObjCInterfaceType *OCIT
+                      = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>())
+        ClassDecl = OCIT->getDecl();
+
+    if (!ClassDecl) {
+      Diag(receiverLoc, diag::err_invalid_receiver_to_message);
+      return true;
     }
   }
   assert(ClassDecl && "missing interface declaration");
