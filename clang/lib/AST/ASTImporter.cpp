@@ -437,6 +437,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
       return false;
     if (Vec1->isPixel() != Vec2->isPixel())
       return false;
+    break;
   }
 
   case Type::FunctionProto: {
