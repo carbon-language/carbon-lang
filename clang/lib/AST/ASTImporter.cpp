@@ -116,6 +116,7 @@ namespace {
     Expr *VisitBinaryOperator(BinaryOperator *E);
     Expr *VisitCompoundAssignOperator(CompoundAssignOperator *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
+    Expr *VisitCStyleCastExpr(CStyleCastExpr *E);
   };
 }
 
@@ -2745,6 +2746,25 @@ Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   return new (Importer.getToContext()) ImplicitCastExpr(T, E->getCastKind(),
                                                         SubExpr, 
                                                         E->isLvalueCast());
+}
+
+Expr *ASTNodeImporter::VisitCStyleCastExpr(CStyleCastExpr *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+  
+  Expr *SubExpr = Importer.Import(E->getSubExpr());
+  if (!SubExpr)
+    return 0;
+
+  TypeSourceInfo *TInfo = Importer.Import(E->getTypeInfoAsWritten());
+  if (!TInfo && E->getTypeInfoAsWritten())
+    return 0;
+  
+  return new (Importer.getToContext()) CStyleCastExpr(T, E->getCastKind(),
+                                                      SubExpr, TInfo,
+                                            Importer.Import(E->getLParenLoc()),
+                                            Importer.Import(E->getRParenLoc()));
 }
 
 ASTImporter::ASTImporter(Diagnostic &Diags,
