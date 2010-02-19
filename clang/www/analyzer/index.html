@@ -19,15 +19,20 @@
 
 <h1>Clang Static Analyzer</h1>  
 
-<p>The Clang Static Analyzer consists of both a source code analysis framework
-and a standalone tool that finds bugs in C and Objective-C programs.</p>
+<p>The Clang Static Analyzer is source code analysis tool that find bugs in C
+and Objective-C programs.</p>
 
-<p>The
-standalone tool is invoked from the command-line, and is intended to run in
-tandem with a build of a project or code base.</p>
+<p>Currently it can be run either as a <a href="/scan-build.html">standalone
+tool</a> or <a href="/xcode.html">within Xcode</a>. The standalone tool is
+invoked from the command-line, and is intended to be run in tandem with a build
+of a codebase.</p>
 
-<p>Both are 100% open source and are part of the <a
-href="http://clang.llvm.org">Clang</a> project.</p>
+<p>The analyzer is 100% open source and are part of the <a
+href="http://clang.llvm.org">Clang</a> project. Like the rest of Clang, the
+analyzer is implemented as a C++ library that can be used by other tools and
+applications.</p>
+
+<h2>Download</h2>
 
 <!-- Generated from: http://www.spiffycorners.com/index.php -->
 
@@ -91,16 +96,35 @@ href="http://clang.llvm.org">Clang</a> project.</p>
  <b class="spiffy5"></b></b>
  <div class="spiffyfg">
   <div style="padding:15px">
-   <h2 style="padding:0px; margin:0px">Download</h2>
-   <h3 style="margin-top:5px">Mac OS X</h3>
+   <h3 style="margin:0px;padding:0px">Mac OS X</h3>
    <ul>
-    <li>Latest build (Universal binary, 10.5+):
+    <li>Latest build (Universal binary, 10.5+):<br>
      <!--#include virtual="latest_checker.html.incl"-->
     </li>
+    <li>Can be used both from the command line and within Xcode</li>
     <li><a href="/installation.html">Installation</a> and <a
     href="/scan-build.html">usage</a></li>
    </ul>
-   <h3>Other Platforms</h3>    
+  </div>
+ </div>
+ <b class="spiffy">
+ <b class="spiffy5"></b>
+ <b class="spiffy4"></b>
+ <b class="spiffy3"></b>
+ <b class="spiffy2"><b></b></b>
+ <b class="spiffy1"><b></b></b></b>
+</div>
+
+<div style="padding:0; margin-top:10px; font-size: 90%">
+ <b class="spiffy">
+ <b class="spiffy1"><b></b></b>
+ <b class="spiffy2"><b></b></b>
+ <b class="spiffy3"></b>
+ <b class="spiffy4"></b>
+ <b class="spiffy5"></b></b>
+ <div class="spiffyfg">
+  <div style="padding:15px">
+   <h3 style="margin:0px;padding:0px">Other Platforms</h3>    
    <p>For other platforms, please follow the instructions for <a
    href="/installation#OtherPlatforms">building the analyzer</a> from
    source code.<p>
@@ -113,6 +137,7 @@ href="http://clang.llvm.org">Clang</a> project.</p>
  <b class="spiffy2"><b></b></b>
  <b class="spiffy1"><b></b></b></b>
 </div>
+
 
 </td><td style="padding-left:10px">
 <a href="images/analyzer_xcode.png"><img src="images/analyzer_xcode.png" width="450x" border=0></a>
