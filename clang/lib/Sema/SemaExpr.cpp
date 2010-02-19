@@ -3763,8 +3763,8 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized.
 
-  InitListExpr *E = new (Context) InitListExpr(LBraceLoc, InitList, NumInit,
-                                               RBraceLoc);
+  InitListExpr *E = new (Context) InitListExpr(Context, LBraceLoc, InitList,
+                                               NumInit, RBraceLoc);
   E->setType(Context.VoidTy); // FIXME: just a place holder for now.
   return Owned(E);
 }
@@ -4038,7 +4038,8 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
     // FIXME: This means that pretty-printing the final AST will produce curly
     // braces instead of the original commas.
     Op.release();
-    InitListExpr *E = new (Context) InitListExpr(LParenLoc, &initExprs[0],
+    InitListExpr *E = new (Context) InitListExpr(Context, LParenLoc,
+                                                 &initExprs[0],
                                                  initExprs.size(), RParenLoc);
     E->setType(Ty);
     return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, Owned(E));
@@ -4752,8 +4753,7 @@ static void ConstructTransparentUnion(ASTContext &C, Expr *&E,
                                       QualType UnionType, FieldDecl *Field) {
   // Build an initializer list that designates the appropriate member
   // of the transparent union.
-  InitListExpr *Initializer = new (C) InitListExpr(SourceLocation(),
-                                                   &E, 1,
+  InitListExpr *Initializer = new (C) InitListExpr(C, SourceLocation(), &E, 1,
                                                    SourceLocation());
   Initializer->setType(UnionType);
   Initializer->setInitializedFieldInUnion(Field);

@@ -554,9 +554,9 @@ unsigned PCHStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
 unsigned PCHStmtReader::VisitInitListExpr(InitListExpr *E) {
   VisitExpr(E);
   unsigned NumInits = Record[Idx++];
-  E->reserveInits(NumInits);
+  E->reserveInits(*Reader.getContext(), NumInits);
   for (unsigned I = 0; I != NumInits; ++I)
-    E->updateInit(I,
+    E->updateInit(*Reader.getContext(), I,
                   cast<Expr>(StmtStack[StmtStack.size() - NumInits - 1 + I]));
   E->setSyntacticForm(cast_or_null<InitListExpr>(StmtStack.back()));
   E->setLBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

@@ -2419,8 +2419,15 @@ public:
 /// return NULL, indicating that the current initializer list also
 /// serves as its syntactic form.
 class InitListExpr : public Expr {
-  // FIXME: Eliminate this vector in favor of ASTContext allocation
-  std::vector<Stmt *> InitExprs;
+  /// The initializers.
+  // FIXME: Instead of directly maintaining the initializer array,
+  // we may wish to use a specialized vector class that uses ASTContext
+  // to allocate memory.  This will keep the implementation simpler, and
+  // we can possibly use ASTContext to recylce memory even when using
+  // a BumpPtrAllocator.
+  Stmt **InitExprs;
+  unsigned NumInits, Capacity;
+
   SourceLocation LBraceLoc, RBraceLoc;
 
   /// Contains the initializer list that describes the syntactic form
@@ -2436,13 +2443,15 @@ class InitListExpr : public Expr {
   bool HadArrayRangeDesignator;
 
 public:
-  InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
-               SourceLocation rbraceloc);
+  InitListExpr(ASTContext &C, SourceLocation lbraceloc, Expr **initexprs,
+               unsigned numinits, SourceLocation rbraceloc);
+
+  virtual void DoDestroy(ASTContext &C);
 
   /// \brief Build an empty initializer list.
   explicit InitListExpr(EmptyShell Empty) : Expr(InitListExprClass, Empty) { }
 
-  unsigned getNumInits() const { return InitExprs.size(); }
+  unsigned getNumInits() const { return NumInits; }
 
   const Expr* getInit(unsigned Init) const {
     assert(Init < getNumInits() && "Initializer access out of range!");
@@ -2460,7 +2469,7 @@ public:
   }
 
   /// \brief Reserve space for some number of initializers.
-  void reserveInits(unsigned NumInits);
+  void reserveInits(ASTContext &Context, unsigned NumInits);
 
   /// @brief Specify the number of initializers
   ///
@@ -2477,7 +2486,7 @@ public:
   /// When @p Init is out of range for this initializer list, the
   /// initializer list will be extended with NULL expressions to
   /// accomodate the new entry.
-  Expr *updateInit(unsigned Init, Expr *expr);
+  Expr *updateInit(ASTContext &Context, unsigned Init, Expr *expr);
 
   /// \brief If this initializes a union, specifies which field in the
   /// union to initialize.
@@ -2523,13 +2532,13 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-  typedef std::vector<Stmt *>::iterator iterator;
-  typedef std::vector<Stmt *>::reverse_iterator reverse_iterator;
+  typedef Stmt** iterator;
+  typedef std::reverse_iterator<iterator> reverse_iterator;
 
-  iterator begin() { return InitExprs.begin(); }
-  iterator end() { return InitExprs.end(); }
-  reverse_iterator rbegin() { return InitExprs.rbegin(); }
-  reverse_iterator rend() { return InitExprs.rend(); }
+  iterator begin() { return InitExprs ? InitExprs : 0; }
+  iterator end() { return InitExprs ? InitExprs + NumInits : 0; }
+  reverse_iterator rbegin() { return reverse_iterator(end()); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
 };
 
 /// @brief Represents a C99 designated initializer expression.
