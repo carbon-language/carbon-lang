@@ -978,6 +978,9 @@ void StoredDiagnostic::Serialize(llvm::raw_ostream &OS) const {
   if (getLocation().isValid())
     SM = &const_cast<SourceManager &>(getLocation().getManager());
 
+  // Write a short header to help identify diagnostics.
+  OS << (char)0x06 << (char)0x07;
+  
   // Write the diagnostic level and location.
   WriteUnsigned(OS, (unsigned)Level);
   WriteSourceLocation(OS, SM, getLocation());
@@ -1086,9 +1089,29 @@ static bool ReadSourceLocation(FileManager &FM, SourceManager &SM,
 StoredDiagnostic 
 StoredDiagnostic::Deserialize(FileManager &FM, SourceManager &SM, 
                               const char *&Memory, const char *MemoryEnd) {
-  if (Memory == MemoryEnd)
-    return StoredDiagnostic();
-
+  while (true) {
+    if (Memory == MemoryEnd)
+      return StoredDiagnostic();
+    
+    if (*Memory != 0x06) {
+      ++Memory;
+      continue;
+    }
+    
+    ++Memory;
+    if (Memory == MemoryEnd)
+      return StoredDiagnostic();
+  
+    if (*Memory != 0x07) {
+      ++Memory;
+      continue;
+    }
+    
+    // We found the header. We're done.
+    ++Memory;
+    break;
+  }
+  
   // Read the severity level.
   unsigned Level = 0;
   if (ReadUnsigned(Memory, MemoryEnd, Level) || Level > Diagnostic::Fatal)
