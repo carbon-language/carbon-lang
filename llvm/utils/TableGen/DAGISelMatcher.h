@@ -386,7 +386,7 @@ public:
   EmitIntegerMatcherNode(int64_t val, MVT::SimpleValueType vt)
   : MatcherNode(EmitInteger), Val(val), VT(vt) {}
   
-  int64_t getVal() const { return Val; }
+  int64_t getValue() const { return Val; }
   MVT::SimpleValueType getVT() const { return VT; }
   
   static inline bool classof(const MatcherNode *N) {

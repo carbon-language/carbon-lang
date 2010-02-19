@@ -213,10 +213,21 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
        << cast<CheckChainCompatibleMatcherNode>(N)->getPreviousOp() << ",\n";
     return 2;
       
-  case MatcherNode::EmitInteger:
+  case MatcherNode::EmitInteger: {
+    int64_t Val = cast<EmitIntegerMatcherNode>(N)->getValue();
+    OS << "OPC_EmitInteger" << ClassifyInt(Val) << ", "
+       << getEnumName(cast<EmitIntegerMatcherNode>(N)->getVT()) << ", ";
+    return EmitInt(Val, OS)+2;
+  }
+      
   case MatcherNode::EmitRegister:
-      // FIXME: Implement.
-    return 0;
+    OS << "OPC_EmitRegister, "
+       << getEnumName(cast<EmitRegisterMatcherNode>(N)->getVT()) << ", ";
+    if (Record *R = cast<EmitRegisterMatcherNode>(N)->getReg())
+      OS << getQualifiedName(R) << ",\n";
+    else
+      OS << "0 /*zero_reg*/,\n";
+    return 3;
   }
   assert(0 && "Unreachable");
   return 0;

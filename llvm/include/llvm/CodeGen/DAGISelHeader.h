@@ -172,6 +172,11 @@ bool CheckOrImmediate(SDValue V, int64_t Val) {
   return true;
 }
 
+void EmitInteger(int64_t Val, MVT::SimpleValueType VT,
+                 SmallVectorImpl<SDValue> &RecordedNodes) {
+  RecordedNodes.push_back(CurDAG->getTargetConstant(Val, VT));
+}
+
 // These functions are marked always inline so that Idx doesn't get pinned to
 // the stack.
 ALWAYS_INLINE static int8_t
@@ -218,7 +223,10 @@ enum BuiltinOpcodes {
   OPC_CheckAndImm1, OPC_CheckAndImm2, OPC_CheckAndImm4, OPC_CheckAndImm8,
   OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8,
   OPC_CheckFoldableChainNode,
-  OPC_CheckChainCompatible
+  OPC_CheckChainCompatible,
+  
+  OPC_EmitInteger1, OPC_EmitInteger2, OPC_EmitInteger4, OPC_EmitInteger8,
+  OPC_EmitRegister
 };
 
 struct MatchScope {
@@ -415,6 +423,39 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       assert(PrevNode < RecordedNodes.size() && "Invalid CheckChainCompatible");
       if (!IsChainCompatible(RecordedNodes[PrevNode].getNode(), N.getNode()))
         break;
+      continue;
+    }
+        
+    case OPC_EmitRegister: {
+      unsigned RegNo = MatcherTable[MatcherIndex++];
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      SDValue Reg = CurDAG->getRegister(RegNo, VT);
+      RecordedNodes.push_back(N);
+      continue;
+    }
+    case OPC_EmitInteger1: {
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      EmitInteger(GetInt1(MatcherTable, MatcherIndex), VT, RecordedNodes);
+      continue;
+    }
+    case OPC_EmitInteger2: {
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      EmitInteger(GetInt2(MatcherTable, MatcherIndex), VT, RecordedNodes);
+      continue;
+    }
+    case OPC_EmitInteger4: {
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      EmitInteger(GetInt4(MatcherTable, MatcherIndex), VT, RecordedNodes);
+      continue;
+    }
+    case OPC_EmitInteger8: {
+      MVT::SimpleValueType VT =
+       (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      EmitInteger(GetInt8(MatcherTable, MatcherIndex), VT, RecordedNodes);
       continue;
     }
     }
