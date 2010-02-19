@@ -1973,6 +1973,12 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
     return getAddRecExpr(Operands, L, HasNUW, HasNSW); // {X,+,0}  -->  X
   }
 
+  // It's tempting to want to call getMaxBackedgeTakenCount count here and
+  // use that information to infer NUW and NSW flags. However, computing a
+  // BE count requires calling getAddRecExpr, so we may not yet have a
+  // meaningful BE count at this point (and if we don't, we'd be stuck
+  // with a SCEVCouldNotCompute as the cached BE count).
+
   // If HasNSW is true and all the operands are non-negative, infer HasNUW.
   if (!HasNUW && HasNSW) {
     bool All = true;
