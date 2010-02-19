@@ -4655,60 +4655,12 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
             DAG.DeleteNode(Trunc);
           }
           // Replace the uses of SRL with SETCC
-          WorkListRemover DeadNodes(*this);
-          DAG.ReplaceAllUsesOfValueWith(N1, SetCC, &DeadNodes);
+          DAG.ReplaceAllUsesOfValueWith(N1, SetCC);
           removeFromWorkList(N1.getNode());
           DAG.DeleteNode(N1.getNode());
           return SDValue(N, 0);   // Return N so it doesn't get rechecked!
         }
       }
-    }
-  }
-  
-  // Transform br(xor(x, y)) -> br(x != y)
-  // Transform br(xor(xor(x,y), 1)) -> br (x == y)
-  if (N1.hasOneUse() && N1.getOpcode() == ISD::XOR) {
-    SDNode *TheXor = N1.getNode();
-    SDValue Op0 = TheXor->getOperand(0);
-    SDValue Op1 = TheXor->getOperand(1);
-    if (Op0.getOpcode() == Op1.getOpcode()) {
-      // Avoid missing important xor optimizations.
-      SDValue Tmp = visitXOR(TheXor);
-      if (Tmp.getNode()) {
-        DEBUG(dbgs() << "\nReplacing.8 ";
-              TheXor->dump(&DAG);
-              dbgs() << "\nWith: ";
-              Tmp.getNode()->dump(&DAG);
-              dbgs() << '\n');
-        WorkListRemover DeadNodes(*this);
-        DAG.ReplaceAllUsesOfValueWith(N1, Tmp, &DeadNodes);
-        removeFromWorkList(TheXor);
-        DAG.DeleteNode(TheXor);
-        return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
-                           MVT::Other, Chain, Tmp, N2);
-      }
-    }
-
-    if (Op0.getOpcode() != ISD::SETCC && Op1.getOpcode() != ISD::SETCC) {
-      bool Equal = false;
-      if (ConstantSDNode *RHSCI = dyn_cast<ConstantSDNode>(Op0))
-        if (RHSCI->getAPIntValue() == 1 && Op0.hasOneUse() &&
-            Op0.getOpcode() == ISD::XOR) {
-          TheXor = Op0.getNode();
-          Equal = true;
-        }
-    
-      SDValue SetCC = DAG.getSetCC(TheXor->getDebugLoc(),
-                                   TLI.getSetCCResultType(N1.getValueType()),
-                                   Op0, Op1,
-                                   Equal ? ISD::SETEQ : ISD::SETNE);
-      // Replace the uses of XOR with SETCC
-      WorkListRemover DeadNodes(*this);
-      DAG.ReplaceAllUsesOfValueWith(N1, SetCC, &DeadNodes);
-      removeFromWorkList(N1.getNode());
-      DAG.DeleteNode(N1.getNode());
-      return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
-                         MVT::Other, Chain, SetCC, N2);
     }
   }
 
@@ -5060,7 +5012,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
       if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
         SDValue Undef = DAG.getUNDEF(N->getValueType(0));
-        DEBUG(dbgs() << "\nReplacing.7 ";
+        DEBUG(dbgs() << "\nReplacing.6 ";
               N->dump(&DAG);
               dbgs() << "\nWith: ";
               Undef.getNode()->dump(&DAG);
