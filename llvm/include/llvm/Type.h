@@ -89,7 +89,7 @@ public:
     VectorTyID,      ///< 15: SIMD 'packed' format, or other vector type
 
     NumTypeIDs,                         // Must remain as last defined ID
-    LastPrimitiveTyID = LabelTyID,
+    LastPrimitiveTyID = MetadataTyID,
     FirstDerivedTyID = IntegerTyID
   };
 
