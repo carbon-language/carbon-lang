@@ -95,6 +95,9 @@ MachineFunction::MachineFunction(Function *F, const TargetMachine &TM,
   MFInfo = 0;
   FrameInfo = new (Allocator.Allocate<MachineFrameInfo>())
                   MachineFrameInfo(*TM.getFrameInfo());
+  if (Fn->hasFnAttr(Attribute::StackAlignment))
+    FrameInfo->setMaxAlignment(Attribute::getStackAlignmentFromAttrs(
+        Fn->getAttributes().getFnAttributes()));
   ConstantPool = new (Allocator.Allocate<MachineConstantPool>())
                      MachineConstantPool(TM.getTargetData());
   Alignment = TM.getTargetLowering()->getFunctionAlignment(F);

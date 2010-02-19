@@ -446,8 +446,10 @@ bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
 
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const Function *F = MF.getFunction();
   bool requiresRealignment =
-    RealignStack && (MFI->getMaxAlignment() > StackAlign);
+    RealignStack && ((MFI->getMaxAlignment() > StackAlign) ||
+                     F->hasFnAttr(Attribute::StackAlignment));
 
   // FIXME: Currently we don't support stack realignment for functions with
   //        variable-sized allocas.

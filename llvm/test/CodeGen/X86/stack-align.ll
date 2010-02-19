@@ -1,4 +1,4 @@
-; RUN: llc < %s -relocation-model=static -mcpu=yonah | grep {andpd.*4(%esp), %xmm}
+; RUN: llc < %s -relocation-model=static -realign-stack=1 -mcpu=yonah | FileCheck %s
 
 ; The double argument is at 4(esp) which is 16-byte aligned, allowing us to
 ; fold the load into the andpd.
@@ -12,6 +12,7 @@ entry:
 	%tmp = getelementptr { double, double }* %z, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp1 = load double* %tmp, align 8		; <double> [#uses=1]
 	%tmp2 = tail call double @fabs( double %tmp1 )		; <double> [#uses=1]
+    ; CHECK: andpd{{.*}}4(%esp), %xmm
 	%tmp3 = load double* @G, align 16		; <double> [#uses=1]
 	%tmp4 = tail call double @fabs( double %tmp3 )		; <double> [#uses=1]
 	%tmp6 = fadd double %tmp4, %tmp2		; <double> [#uses=1]
@@ -19,4 +20,20 @@ entry:
 	ret void
 }
 
+define void @test2() alignstack(16) {
+entry:
+    ; CHECK: andl{{.*}}$-16, %esp
+    ret void
+}
+
+; Use a call to force a spill.
+define <2 x double> @test3(<2 x double> %x, <2 x double> %y) alignstack(32) {
+entry:
+    ; CHECK: andl{{.*}}$-32, %esp
+    call void @test2()
+    %A = mul <2 x double> %x, %y
+    ret <2 x double> %A
+}
+
 declare double @fabs(double)
+
