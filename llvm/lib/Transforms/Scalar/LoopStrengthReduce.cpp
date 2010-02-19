@@ -337,6 +337,33 @@ void Formula::dump() const {
   print(errs()); errs() << '\n';
 }
 
+/// isAddRecSExtable - Return true if the given addrec can be sign-extended
+/// without changing its value.
+static bool isAddRecSExtable(const SCEVAddRecExpr *AR, ScalarEvolution &SE) {
+  const Type *WideTy =
+    IntegerType::get(SE.getContext(),
+                     SE.getTypeSizeInBits(AR->getType()) + 1);
+  return isa<SCEVAddRecExpr>(SE.getSignExtendExpr(AR, WideTy));
+}
+
+/// isAddSExtable - Return true if the given add can be sign-extended
+/// without changing its value.
+static bool isAddSExtable(const SCEVAddExpr *A, ScalarEvolution &SE) {
+  const Type *WideTy =
+    IntegerType::get(SE.getContext(),
+                     SE.getTypeSizeInBits(A->getType()) + 1);
+  return isa<SCEVAddExpr>(SE.getSignExtendExpr(A, WideTy));
+}
+
+/// isMulSExtable - Return true if the given add can be sign-extended
+/// without changing its value.
+static bool isMulSExtable(const SCEVMulExpr *A, ScalarEvolution &SE) {
+  const Type *WideTy =
+    IntegerType::get(SE.getContext(),
+                     SE.getTypeSizeInBits(A->getType()) + 1);
+  return isa<SCEVMulExpr>(SE.getSignExtendExpr(A, WideTy));
+}
+
 /// getSDiv - Return an expression for LHS /s RHS, if it can be determined,
 /// or null otherwise. If IgnoreSignificantBits is true, expressions like
 /// (X * Y) /s Y are simplified to Y, ignoring that the multiplication may
@@ -365,33 +392,37 @@ static const SCEV *getSDiv(const SCEV *LHS, const SCEV *RHS,
                .sdiv(RC->getValue()->getValue()));
   }
 
-  // Distribute the sdiv over addrec operands.
+  // Distribute the sdiv over addrec operands, if the addrec doesn't overflow.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS)) {
-    const SCEV *Start = getSDiv(AR->getStart(), RHS, SE,
-                                IgnoreSignificantBits);
-    if (!Start) return 0;
-    const SCEV *Step = getSDiv(AR->getStepRecurrence(SE), RHS, SE,
-                               IgnoreSignificantBits);
-    if (!Step) return 0;
-    return SE.getAddRecExpr(Start, Step, AR->getLoop());
+    if (IgnoreSignificantBits || isAddRecSExtable(AR, SE)) {
+      const SCEV *Start = getSDiv(AR->getStart(), RHS, SE,
+                                  IgnoreSignificantBits);
+      if (!Start) return 0;
+      const SCEV *Step = getSDiv(AR->getStepRecurrence(SE), RHS, SE,
+                                 IgnoreSignificantBits);
+      if (!Step) return 0;
+      return SE.getAddRecExpr(Start, Step, AR->getLoop());
+    }
   }
 
-  // Distribute the sdiv over add operands.
+  // Distribute the sdiv over add operands, if the add doesn't overflow.
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(LHS)) {
-    SmallVector<const SCEV *, 8> Ops;
-    for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
-         I != E; ++I) {
-      const SCEV *Op = getSDiv(*I, RHS, SE,
-                               IgnoreSignificantBits);
-      if (!Op) return 0;
-      Ops.push_back(Op);
+    if (IgnoreSignificantBits || isAddSExtable(Add, SE)) {
+      SmallVector<const SCEV *, 8> Ops;
+      for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
+           I != E; ++I) {
+        const SCEV *Op = getSDiv(*I, RHS, SE,
+                                 IgnoreSignificantBits);
+        if (!Op) return 0;
+        Ops.push_back(Op);
+      }
+      return SE.getAddExpr(Ops);
     }
-    return SE.getAddExpr(Ops);
   }
 
   // Check for a multiply operand that we can pull RHS out of.
   if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(LHS))
-    if (IgnoreSignificantBits || Mul->hasNoSignedWrap()) {
+    if (IgnoreSignificantBits || isMulSExtable(Mul, SE)) {
       SmallVector<const SCEV *, 4> Ops;
       bool Found = false;
       for (SCEVMulExpr::op_iterator I = Mul->op_begin(), E = Mul->op_end();
