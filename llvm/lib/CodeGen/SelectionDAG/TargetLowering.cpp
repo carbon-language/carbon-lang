@@ -1855,9 +1855,19 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         SDValue Op0 = N0;
         if (Op0.getOpcode() == ISD::TRUNCATE)
           Op0 = Op0.getOperand(0);
-        if (Op0.getOpcode() == ISD::AND &&
-            isa<ConstantSDNode>(Op0.getOperand(1)) &&
-            cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
+
+        if ((Op0.getOpcode() == ISD::XOR || Op0.getOpcode() == ISD::AND) &&
+            Op0.getOperand(0).getOpcode() == ISD::SETCC &&
+            Op0.getOperand(1).getOpcode() == ISD::SETCC) {
+          // (and (setcc), (setcc)) == / != 1 -> (setcc) == / != (setcc)
+          // (xor (setcc), (setcc)) == / != 1 -> (setcc) != / == (setcc)
+          if (Op0.getOpcode() == ISD::XOR)
+            Cond = (Cond == ISD::SETEQ) ? ISD::SETNE : ISD::SETEQ;
+          return DAG.getSetCC(dl, VT, Op0.getOperand(0), Op0.getOperand(1),
+                              Cond);
+        } else if (Op0.getOpcode() == ISD::AND &&
+                isa<ConstantSDNode>(Op0.getOperand(1)) &&
+                cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
           if (Op0.getValueType() != VT)
             Op0 = DAG.getNode(ISD::AND, dl, VT,
                           DAG.getNode(ISD::TRUNCATE, dl, VT, Op0.getOperand(0)),
