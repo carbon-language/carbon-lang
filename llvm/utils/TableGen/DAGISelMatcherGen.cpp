@@ -15,6 +15,46 @@
 using namespace llvm;
 
 namespace {
+  /// ResultVal - When generating new nodes for the result of a pattern match,
+  /// this value is used to represent an input to the node.  Result values can
+  /// either be an input that is 'recorded' in the RecordedNodes array by the
+  /// matcher or it can be a temporary value created by the emitter for things
+  /// like constants.
+  class ResultVal {
+    unsigned Number : 30;
+    enum {
+      Recorded, Temporary
+    } Kind : 2; // True if temporary, false if recorded.
+  public:
+    static ResultVal getRecorded(unsigned N) {
+      ResultVal R;
+      R.Number = N;
+      R.Kind = Recorded;
+      return R;
+    }
+    
+    static ResultVal getTemp(unsigned N) {
+      ResultVal R;
+      R.Number = N;
+      R.Kind = Temporary;
+      return R;
+    }
+
+    bool isTemp() const { return Kind == Temporary; }
+    bool isRecorded() const { return Kind == Recorded; }
+    
+    unsigned getTempNo() const {
+      assert(isTemp());
+      return Number;
+    }
+
+    unsigned getRecordedNo() const {
+      assert(isRecorded());
+      return Number;
+    }
+  };
+  
+  
   class MatcherGen {
     const PatternToMatch &Pattern;
     const CodeGenDAGPatterns &CGP;
@@ -28,7 +68,15 @@ namespace {
     /// number that they were captured as.  These are biased by 1 to make
     /// insertion easier.
     StringMap<unsigned> VariableMap;
+    
+    /// NextRecordedOperandNo - As we emit opcodes to record matched values in
+    /// the RecordedNodes array, this keeps track of which slot will be next to
+    /// record into.
     unsigned NextRecordedOperandNo;
+    
+    /// NextTemporary - As we generate code, this indicates the next temporary
+    /// ID that will be generated.
+    unsigned NextTemporary;
     
     /// InputChains - This maintains the position in the recorded nodes array of
     /// all of the recorded input chains.
@@ -64,18 +112,18 @@ namespace {
     
     // Result Code Generation.
     void EmitResultOperand(const TreePatternNode *N,
-                           SmallVectorImpl<unsigned> &ResultOps);
+                           SmallVectorImpl<ResultVal> &ResultOps);
     void EmitResultLeafAsOperand(const TreePatternNode *N,
-                                 SmallVectorImpl<unsigned> &ResultOps);
+                                 SmallVectorImpl<ResultVal> &ResultOps);
     void EmitResultInstructionAsOperand(const TreePatternNode *N,
-                                        SmallVectorImpl<unsigned> &ResultOps);
+                                        SmallVectorImpl<ResultVal> &ResultOps);
   };
   
 } // end anon namespace.
 
 MatcherGen::MatcherGen(const PatternToMatch &pattern,
                        const CodeGenDAGPatterns &cgp)
-: Pattern(pattern), CGP(cgp), NextRecordedOperandNo(0),
+: Pattern(pattern), CGP(cgp), NextRecordedOperandNo(0), NextTemporary(0),
   Matcher(0), CurPredicate(0) {
   // We need to produce the matcher tree for the patterns source pattern.  To do
   // this we need to match the structure as well as the types.  To do the type
@@ -396,12 +444,12 @@ void MatcherGen::EmitMatcherCode() {
 //===----------------------------------------------------------------------===//
 
 void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
-                                         SmallVectorImpl<unsigned> &ResultOps) {
+                                         SmallVectorImpl<ResultVal> &ResultOps){
   assert(N->isLeaf() && "Must be a leaf");
   
   if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
     AddMatcherNode(new EmitIntegerMatcherNode(II->getValue(),N->getTypeNum(0)));
-    //ResultOps.push_back(TmpNode(TmpNo++));
+    ResultOps.push_back(ResultVal::getTemp(NextTemporary++));
     return;
   }
   
@@ -410,13 +458,13 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
     if (DI->getDef()->isSubClassOf("Register")) {
       AddMatcherNode(new EmitRegisterMatcherNode(DI->getDef(),
                                                  N->getTypeNum(0)));
-      //ResultOps.push_back(TmpNode(TmpNo++));
+      ResultOps.push_back(ResultVal::getTemp(NextTemporary++));
       return;
     }
     
     if (DI->getDef()->getName() == "zero_reg") {
       AddMatcherNode(new EmitRegisterMatcherNode(0, N->getTypeNum(0)));
-      //ResultOps.push_back(TmpNode(TmpNo++));
+      ResultOps.push_back(ResultVal::getTemp(NextTemporary++));
       return;
     }
     
@@ -434,7 +482,7 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
 }
 
 void MatcherGen::EmitResultInstructionAsOperand(const TreePatternNode *N,
-                                         SmallVectorImpl<unsigned> &ResultOps) {
+                                         SmallVectorImpl<ResultVal> &ResultOps){
   Record *Op = N->getOperator();
   const CodeGenTarget &CGT = CGP.getTargetInfo();
   CodeGenInstruction &II = CGT.getInstruction(Op->getName());
@@ -456,7 +504,7 @@ void MatcherGen::EmitResultInstructionAsOperand(const TreePatternNode *N,
   // where there are predicate operands for an instruction, we need to fill
   // in the 'execute always' values.  Match up the node operands to the
   // instruction operands to do this.
-  SmallVector<unsigned, 8> Ops;
+  SmallVector<ResultVal, 8> Ops;
   for (unsigned ChildNo = 0, InstOpNo = NumResults, e = II.OperandList.size();
        InstOpNo != e; ++InstOpNo) {
     
@@ -489,7 +537,7 @@ void MatcherGen::EmitResultInstructionAsOperand(const TreePatternNode *N,
 }
 
 void MatcherGen::EmitResultOperand(const TreePatternNode *N,
-                                   SmallVectorImpl<unsigned> &ResultOps) {
+                                   SmallVectorImpl<ResultVal> &ResultOps) {
   // This is something selected from the pattern we matched.
   if (!N->getName().empty()) {
     //errs() << "unhandled named node: \n";
@@ -514,7 +562,7 @@ void MatcherGen::EmitResultCode() {
   // FIXME: Handle Ops.
   // FIXME: Ops should be vector of "ResultValue> which is either an index into
   // the results vector is is a temp result.
-  SmallVector<unsigned, 8> Ops;
+  SmallVector<ResultVal, 8> Ops;
   EmitResultOperand(Pattern.getDstPattern(), Ops);
   //AddMatcherNode(new EmitNodeMatcherNode(Pattern));
 }
