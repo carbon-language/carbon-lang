@@ -364,14 +364,15 @@ static bool isMulSExtable(const SCEVMulExpr *A, ScalarEvolution &SE) {
   return isa<SCEVMulExpr>(SE.getSignExtendExpr(A, WideTy));
 }
 
-/// getSDiv - Return an expression for LHS /s RHS, if it can be determined,
-/// or null otherwise. If IgnoreSignificantBits is true, expressions like
-/// (X * Y) /s Y are simplified to Y, ignoring that the multiplication may
-/// overflow, which is useful when the result will be used in a context where
-/// the most significant bits are ignored.
-static const SCEV *getSDiv(const SCEV *LHS, const SCEV *RHS,
-                           ScalarEvolution &SE,
-                           bool IgnoreSignificantBits = false) {
+/// getExactSDiv - Return an expression for LHS /s RHS, if it can be determined
+/// and if the remainder is known to be zero,  or null otherwise. If
+/// IgnoreSignificantBits is true, expressions like (X * Y) /s Y are simplified
+/// to Y, ignoring that the multiplication may overflow, which is useful when
+/// the result will be used in a context where the most significant bits are
+/// ignored.
+static const SCEV *getExactSDiv(const SCEV *LHS, const SCEV *RHS,
+                                ScalarEvolution &SE,
+                                bool IgnoreSignificantBits = false) {
   // Handle the trivial case, which works for any SCEV type.
   if (LHS == RHS)
     return SE.getIntegerSCEV(1, LHS->getType());
@@ -395,11 +396,11 @@ static const SCEV *getSDiv(const SCEV *LHS, const SCEV *RHS,
   // Distribute the sdiv over addrec operands, if the addrec doesn't overflow.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS)) {
     if (IgnoreSignificantBits || isAddRecSExtable(AR, SE)) {
-      const SCEV *Start = getSDiv(AR->getStart(), RHS, SE,
-                                  IgnoreSignificantBits);
+      const SCEV *Start = getExactSDiv(AR->getStart(), RHS, SE,
+                                       IgnoreSignificantBits);
       if (!Start) return 0;
-      const SCEV *Step = getSDiv(AR->getStepRecurrence(SE), RHS, SE,
-                                 IgnoreSignificantBits);
+      const SCEV *Step = getExactSDiv(AR->getStepRecurrence(SE), RHS, SE,
+                                      IgnoreSignificantBits);
       if (!Step) return 0;
       return SE.getAddRecExpr(Start, Step, AR->getLoop());
     }
@@ -411,8 +412,8 @@ static const SCEV *getSDiv(const SCEV *LHS, const SCEV *RHS,
       SmallVector<const SCEV *, 8> Ops;
       for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
            I != E; ++I) {
-        const SCEV *Op = getSDiv(*I, RHS, SE,
-                                 IgnoreSignificantBits);
+        const SCEV *Op = getExactSDiv(*I, RHS, SE,
+                                      IgnoreSignificantBits);
         if (!Op) return 0;
         Ops.push_back(Op);
       }
@@ -428,7 +429,8 @@ static const SCEV *getSDiv(const SCEV *LHS, const SCEV *RHS,
       for (SCEVMulExpr::op_iterator I = Mul->op_begin(), E = Mul->op_end();
            I != E; ++I) {
         if (!Found)
-          if (const SCEV *Q = getSDiv(*I, RHS, SE, IgnoreSignificantBits)) {
+          if (const SCEV *Q = getExactSDiv(*I, RHS, SE,
+                                           IgnoreSignificantBits)) {
             Ops.push_back(Q);
             Found = true;
             continue;
@@ -1560,7 +1562,7 @@ LSRInstance::OptimizeLoopTermCond() {
               A = SE.getSignExtendExpr(A, B->getType());
           }
           if (const SCEVConstant *D =
-                dyn_cast_or_null<SCEVConstant>(getSDiv(B, A, SE))) {
+                dyn_cast_or_null<SCEVConstant>(getExactSDiv(B, A, SE))) {
             // Stride of one or negative one can have reuse with non-addresses.
             if (D->getValue()->isOne() ||
                 D->getValue()->isAllOnesValue())
@@ -1754,13 +1756,13 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
           OldStride = SE.getSignExtendExpr(OldStride, NewStride->getType());
       }
       if (const SCEVConstant *Factor =
-            dyn_cast_or_null<SCEVConstant>(getSDiv(NewStride, OldStride,
-                                                   SE, true))) {
+            dyn_cast_or_null<SCEVConstant>(getExactSDiv(NewStride, OldStride,
+                                                        SE, true))) {
         if (Factor->getValue()->getValue().getMinSignedBits() <= 64)
           Factors.insert(Factor->getValue()->getValue().getSExtValue());
       } else if (const SCEVConstant *Factor =
-                   dyn_cast_or_null<SCEVConstant>(getSDiv(OldStride, NewStride,
-                                                          SE, true))) {
+                   dyn_cast_or_null<SCEVConstant>(getExactSDiv(OldStride, NewStride,
+                                                               SE, true))) {
         if (Factor->getValue()->getValue().getMinSignedBits() <= 64)
           Factors.insert(Factor->getValue()->getValue().getSExtValue());
       }
@@ -2175,14 +2177,14 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     // Check that multiplying with each base register doesn't overflow.
     for (size_t i = 0, e = F.BaseRegs.size(); i != e; ++i) {
       F.BaseRegs[i] = SE.getMulExpr(F.BaseRegs[i], FactorS);
-      if (getSDiv(F.BaseRegs[i], FactorS, SE) != Base.BaseRegs[i])
+      if (getExactSDiv(F.BaseRegs[i], FactorS, SE) != Base.BaseRegs[i])
         goto next;
     }
 
     // Check that multiplying with the scaled register doesn't overflow.
     if (F.ScaledReg) {
       F.ScaledReg = SE.getMulExpr(F.ScaledReg, FactorS);
-      if (getSDiv(F.ScaledReg, FactorS, SE) != Base.ScaledReg)
+      if (getExactSDiv(F.ScaledReg, FactorS, SE) != Base.ScaledReg)
         continue;
     }
 
@@ -2237,7 +2239,7 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx,
           continue;
         // Divide out the factor, ignoring high bits, since we'll be
         // scaling the value back up in the end.
-        if (const SCEV *Quotient = getSDiv(AR, FactorS, SE, true)) {
+        if (const SCEV *Quotient = getExactSDiv(AR, FactorS, SE, true)) {
           // TODO: This could be optimized to avoid all the copying.
           Formula F = Base;
           F.ScaledReg = Quotient;
