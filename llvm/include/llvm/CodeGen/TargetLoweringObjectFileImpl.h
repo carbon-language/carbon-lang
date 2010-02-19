@@ -171,6 +171,11 @@ public:
   virtual const MCExpr *
   getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                               MachineModuleInfo *MMI, unsigned Encoding) const;
+
+  virtual unsigned getPersonalityEncoding() const;
+  virtual unsigned getLSDAEncoding() const;
+  virtual unsigned getFDEEncoding() const;
+  virtual unsigned getTTypeEncoding() const;
 };
 
 
