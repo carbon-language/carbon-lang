@@ -836,7 +836,26 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
     return;
 
   assert(ivars && "missing @implementation ivars");
-
+  if (LangOpts.ObjCNonFragileABI2) {
+    if (ImpDecl->getSuperClass())
+      Diag(ImpDecl->getLocation(), diag::warn_on_superclass_use);
+    for (unsigned i = 0; i < numIvars; i++) {
+      ObjCIvarDecl* ImplIvar = ivars[i];
+      if (const ObjCIvarDecl *ClsIvar = 
+            IDecl->getIvarDecl(ImplIvar->getIdentifier())) {
+        Diag(ImplIvar->getLocation(), diag::err_duplicate_ivar_declaration); 
+        Diag(ClsIvar->getLocation(), diag::note_previous_definition);
+        continue;
+      }
+      if (ImplIvar->getAccessControl() != ObjCIvarDecl::Private)
+        Diag(ImplIvar->getLocation(), diag::err_non_private_ivar_declaration); 
+      // Instance ivar to Implementation's DeclContext.
+      ImplIvar->setLexicalDeclContext(ImpDecl);
+      IDecl->makeDeclVisibleInContext(ImplIvar, false);
+      ImpDecl->addDecl(ImplIvar);
+    }
+    return;
+  }
   // Check interface's Ivar list against those in the implementation.
   // names and types must match.
   //

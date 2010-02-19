@@ -253,6 +253,12 @@ def err_dup_implementation_category : Error<
   "reimplementation of category %1 for class %0">;
 def err_conflicting_ivar_type : Error<
   "instance variable %0 has conflicting type: %1 vs %2">;
+def err_duplicate_ivar_declaration : Error<
+  "instance variable is already declared">;
+def warn_on_superclass_use : Warning<
+  "class implementation may not have super class">;
+def err_non_private_ivar_declaration : Error<
+  "only private ivars may be declared in implementation">;
 def err_conflicting_ivar_bitwidth : Error<
   "instance variable %0 has conflicting bit-field width">;
 def err_conflicting_ivar_name : Error<
