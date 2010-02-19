@@ -2588,7 +2588,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
          "Haven't past the location of the identifier yet?");
 
   // Don't parse attributes unless we have an identifier.
-  if (D.getIdentifier() && getLang().CPlusPlus
+  if (D.getIdentifier() && getLang().CPlusPlus0x
    && isCXX0XAttributeSpecifier(true)) {
     SourceLocation AttrEndLoc;
     CXX0XAttributeList Attr = ParseCXX0XAttributes();
