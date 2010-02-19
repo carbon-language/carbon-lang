@@ -105,4 +105,53 @@ struct D: public B, public C {
 };
 void D::h() { }
 
+struct X {
+  int ix;
+  virtual void x();
+};
+
+// CHECK:      Vtable for 'Test1::E' (24 entries).
+// CHECK-NEXT:    0 | vbase_offset (56)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test1::E RTTI
+// CHECK-NEXT:        -- (Test1::E, 0) vtable address --
+// CHECK-NEXT:        -- (Test1::X, 0) vtable address --
+// CHECK-NEXT:    3 | void Test1::X::x()
+// CHECK-NEXT:    4 | void Test1::E::f()
+// CHECK-NEXT:    5 | void Test1::E::h()
+// CHECK-NEXT:    6 | vbase_offset (40)
+// CHECK-NEXT:    7 | offset_to_top (-16)
+// CHECK-NEXT:    8 | Test1::E RTTI
+// CHECK-NEXT:        -- (Test1::B, 16) vtable address --
+// CHECK-NEXT:        -- (Test1::D, 16) vtable address --
+// CHECK-NEXT:    9 | void Test1::E::f()
+// CHECK-NEXT:        [this adjustment: -16 non-virtual]
+// CHECK-NEXT:   10 | void Test1::E::h()
+// CHECK-NEXT:        [this adjustment: -16 non-virtual]
+// CHECK-NEXT:   11 | vbase_offset (24)
+// CHECK-NEXT:   12 | offset_to_top (-32)
+// CHECK-NEXT:   13 | Test1::E RTTI
+// CHECK-NEXT:        -- (Test1::C, 32) vtable address --
+// CHECK-NEXT:   14 | void Test1::C::g()
+// CHECK-NEXT:   15 | void Test1::E::h()
+// CHECK-NEXT:        [this adjustment: -32 non-virtual]
+// CHECK-NEXT:   16 | vcall_offset (-56)
+// CHECK-NEXT:   17 | vcall_offset (-24)
+// CHECK-NEXT:   18 | vcall_offset (-56)
+// CHECK-NEXT:   19 | offset_to_top (-56)
+// CHECK-NEXT:   20 | Test1::E RTTI
+// CHECK-NEXT:        -- (Test1::A, 56) vtable address --
+// CHECK-NEXT:   21 | void Test1::E::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:   22 | void Test1::C::g()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+// CHECK-NEXT:   23 | void Test1::E::h()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -40 vcall offset offset]
+struct E : X, D {
+  int ie;
+  void f();
+  void h ();
+};
+void E::f() { } 
+
 }
