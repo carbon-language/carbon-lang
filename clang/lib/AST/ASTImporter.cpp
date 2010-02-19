@@ -107,6 +107,7 @@ namespace {
 
     // Importing expressions
     Expr *VisitExpr(Expr *E);
+    Expr *VisitDeclRefExpr(DeclRefExpr *E);
     Expr *VisitIntegerLiteral(IntegerLiteral *E);
     Expr *VisitCharacterLiteral(CharacterLiteral *E);
     Expr *VisitParenExpr(ParenExpr *E);
@@ -2592,6 +2593,30 @@ Expr *ASTNodeImporter::VisitExpr(Expr *E) {
   Importer.FromDiag(E->getLocStart(), diag::err_unsupported_ast_node)
     << E->getStmtClassName();
   return 0;
+}
+
+Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
+  NestedNameSpecifier *Qualifier = 0;
+  if (E->getQualifier()) {
+    Qualifier = Importer.Import(E->getQualifier());
+    if (!E->getQualifier())
+      return 0;
+  }
+  
+  ValueDecl *ToD = cast_or_null<ValueDecl>(Importer.Import(E->getDecl()));
+  if (!ToD)
+    return 0;
+  
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+  
+  return DeclRefExpr::Create(Importer.getToContext(), Qualifier,
+                             Importer.Import(E->getQualifierRange()),
+                             ToD,
+                             Importer.Import(E->getLocation()),
+                             T,
+                             /*FIXME:TemplateArgs=*/0);
 }
 
 Expr *ASTNodeImporter::VisitIntegerLiteral(IntegerLiteral *E) {
