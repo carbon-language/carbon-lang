@@ -390,28 +390,6 @@ enum CXDiagnosticSeverity {
 };
 
 /**
- * \brief Describes the kind of fix-it hint expressed within a
- * diagnostic.
- */
-enum CXFixItKind {
-  /**
-   * \brief A fix-it hint that inserts code at a particular position.
-   */
-  CXFixIt_Insertion   = 0,
-
-  /**
-   * \brief A fix-it hint that removes code within a range.
-   */
-  CXFixIt_Removal     = 1,
-
-  /**
-   * \brief A fix-it hint that replaces the code within a range with another
-   * string.
-   */
-  CXFixIt_Replacement = 2
-};
-
-/**
  * \brief A single diagnostic, containing the diagnostic's severity,
  * location, text, source ranges, and fix-it hints.
  */
@@ -561,69 +539,33 @@ CINDEX_LINKAGE CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diagnostic,
 CINDEX_LINKAGE unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diagnostic);
 
 /**
- * \brief Retrieve the kind of the given fix-it.
+ * \brief Retrieve the replacement information for a given fix-it.
  *
- * \param Diagnostic the diagnostic whose fix-its are being queried.
+ * Fix-its are described in terms of a source range whose contents
+ * should be replaced by a string. This approach generalizes over
+ * three kinds of operations: removal of source code (the range covers
+ * the code to be removed and the replacement string is empty),
+ * replacement of source code (the range covers the code to be
+ * replaced and the replacement string provides the new code), and
+ * insertion (both the start and end of the range point at the
+ * insertion location, and the replacement string provides the text to
+ * insert).
  *
- * \param FixIt the zero-based index of the fix-it to query.
+ * \param Diagnostic The diagnostic whose fix-its are being queried.
+ *
+ * \param FixIt The zero-based index of the fix-it.
+ *
+ * \param ReplacementRange The source range whose contents will be
+ * replaced with the returned replacement string. Note that source
+ * ranges are half-open ranges [a, b), so the source code should be
+ * replaced from a and up to (but not including) b.
+ *
+ * \returns A string containing text that should be replace the source
+ * code indicated by the \c ReplacementRange.
  */
-CINDEX_LINKAGE enum CXFixItKind 
-clang_getDiagnosticFixItKind(CXDiagnostic Diagnostic, unsigned FixIt);
-
-/**
- * \brief Retrieve the insertion information for an insertion fix-it.
- *
- * For a fix-it that describes an insertion into a text buffer,
- * retrieve the source location where the text should be inserted and
- * the text to be inserted.
- *
- * \param Diagnostic the diagnostic whose fix-its are being queried.
- *
- * \param FixIt the zero-based index of the insertion fix-it.
- *
- * \param Location will be set to the location where text should be
- * inserted.
- *
- * \returns the text string to insert at the given location.
- */
-CINDEX_LINKAGE CXString
-clang_getDiagnosticFixItInsertion(CXDiagnostic Diagnostic, unsigned FixIt,
-                                  CXSourceLocation *Location);
-
-/**
- * \brief Retrieve the removal information for a removal fix-it.
- *
- * For a fix-it that describes a removal from a text buffer, retrieve
- * the source range that should be removed.
- *
- * \param Diagnostic the diagnostic whose fix-its are being queried.
- *
- * \param FixIt the zero-based index of the removal fix-it.
- *
- * \returns a source range describing the text that should be removed
- * from the buffer.
- */
-CINDEX_LINKAGE CXSourceRange
-clang_getDiagnosticFixItRemoval(CXDiagnostic Diagnostic, unsigned FixIt);
-
-/**
- * \brief Retrieve the replacement information for an replacement fix-it.
- *
- * For a fix-it that describes replacement of text in the text buffer
- * with alternative text.
- *
- * \param Diagnostic the diagnostic whose fix-its are being queried.
- *
- * \param FixIt the zero-based index of the replacement fix-it.
- *
- * \param Range will be set to the source range whose text should be
- * replaced with the returned text.
- *
- * \returns the text string to use as replacement text.
- */
-CINDEX_LINKAGE CXString
-clang_getDiagnosticFixItReplacement(CXDiagnostic Diagnostic, unsigned FixIt,
-                                    CXSourceRange *Range);
+CINDEX_LINKAGE CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic, 
+                                                 unsigned FixIt,
+                                               CXSourceRange *ReplacementRange);
 
 /**
  * @}

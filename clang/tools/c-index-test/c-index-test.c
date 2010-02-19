@@ -198,7 +198,6 @@ typedef void (*PostVisitTU)(CXTranslationUnit);
 void PrintDiagnostic(CXDiagnostic Diagnostic) {
   FILE *out = stderr;
   CXFile file;
-  CXString text;
   unsigned display_opts = CXDiagnostic_DisplaySourceLocation
     | CXDiagnostic_DisplayColumn | CXDiagnostic_DisplaySourceRanges;
   unsigned i, num_fixits;
@@ -214,58 +213,37 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
 
   num_fixits = clang_getDiagnosticNumFixIts(Diagnostic);
   for (i = 0; i != num_fixits; ++i) {
-    switch (clang_getDiagnosticFixItKind(Diagnostic, i)) {
-    case CXFixIt_Insertion: {
-      CXSourceLocation insertion_loc;
-      CXFile insertion_file;
-      unsigned insertion_line, insertion_column;
-      text = clang_getDiagnosticFixItInsertion(Diagnostic, i, &insertion_loc);
-      clang_getInstantiationLocation(insertion_loc, &insertion_file,
-                                     &insertion_line, &insertion_column, 0);
-      if (insertion_file == file)
+    CXSourceRange range;
+    CXString insertion_text = clang_getDiagnosticFixIt(Diagnostic, i, &range);
+    CXSourceLocation start = clang_getRangeStart(range);
+    CXSourceLocation end = clang_getRangeEnd(range);
+    unsigned start_line, start_column, end_line, end_column;
+    CXFile start_file, end_file;
+    clang_getInstantiationLocation(start, &start_file, &start_line, 
+                                   &start_column, 0);
+    clang_getInstantiationLocation(end, &end_file, &end_line, &end_column, 0);
+    if (clang_equalLocations(start, end)) {
+      /* Insertion. */
+      if (start_file == file)
         fprintf(out, "FIX-IT: Insert \"%s\" at %d:%d\n",
-                clang_getCString(text), insertion_line, insertion_column);
-      clang_disposeString(text);
-      break;
-    }
-      
-    case CXFixIt_Removal: {
-      CXFile start_file, end_file;
-      unsigned start_line, start_column, end_line, end_column;
-      CXSourceRange remove_range
-        = clang_getDiagnosticFixItRemoval(Diagnostic, i);
-      clang_getInstantiationLocation(clang_getRangeStart(remove_range),
-                                     &start_file, &start_line, &start_column,
-                                     0);
-      clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
-                                     &end_file, &end_line, &end_column, 0);
+                clang_getCString(insertion_text), start_line, start_column);
+    } else if (strcmp(clang_getCString(insertion_text), "") == 0) {
+      /* Removal. */
       if (start_file == file && end_file == file) {
         fprintf(out, "FIX-IT: Remove ");
         PrintExtent(out, start_line, start_column, end_line, end_column);
         fprintf(out, "\n");
       }
-      break;
-    }
-      
-    case CXFixIt_Replacement: {
-      CXFile start_file, end_file;
-      unsigned start_line, start_column, end_line, end_column;
-      CXSourceRange remove_range;
-      text = clang_getDiagnosticFixItReplacement(Diagnostic, i,&remove_range);
-      clang_getInstantiationLocation(clang_getRangeStart(remove_range),
-                                     &start_file, &start_line, &start_column,
-                                     0);
-      clang_getInstantiationLocation(clang_getRangeEnd(remove_range),
-                                     &end_file, &end_line, &end_column, 0);
+    } else {
+      /* Replacement. */
       if (start_file == end_file) {
         fprintf(out, "FIX-IT: Replace ");
         PrintExtent(out, start_line, start_column, end_line, end_column);
-        fprintf(out, " with \"%s\"\n", clang_getCString(text));
+        fprintf(out, " with \"%s\"\n", clang_getCString(insertion_text));
       }
-      clang_disposeString(text);
       break;
     }
-    }
+    clang_disposeString(insertion_text);
   }
 }
 

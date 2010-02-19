@@ -184,74 +184,42 @@ unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diag) {
   return StoredDiag->Diag.fixit_size();
 }
 
-enum CXFixItKind clang_getDiagnosticFixItKind(CXDiagnostic Diag,
-                                              unsigned FixIt) {
-  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size())
-    return CXFixIt_Insertion;
-
-  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
-  if (Hint.RemoveRange.isInvalid())
-    return CXFixIt_Insertion;
-  if (Hint.InsertionLoc.isInvalid())
-    return CXFixIt_Removal;
-
-  return CXFixIt_Replacement;
-}
-
-CXString clang_getDiagnosticFixItInsertion(CXDiagnostic Diag,
-                                           unsigned FixIt,
-                                           CXSourceLocation *Location) {
-  if (Location)
-    *Location = clang_getNullLocation();
-
-  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size())
-    return createCXString("");
-
-  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
-
-  if (Location && StoredDiag->Diag.getLocation().isValid())
-    *Location = translateSourceLocation(
-                                    StoredDiag->Diag.getLocation().getManager(),
-                                        StoredDiag->LangOpts,
-                                        Hint.InsertionLoc);
-  return createCXString(Hint.CodeToInsert);
-}
-
-CXSourceRange clang_getDiagnosticFixItRemoval(CXDiagnostic Diag,
-                                              unsigned FixIt) {
-  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
-  if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size() ||
-      StoredDiag->Diag.getLocation().isInvalid())
-    return clang_getNullRange();
-
-  const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
-  return translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
-                              StoredDiag->LangOpts,
-                              Hint.RemoveRange);
-}
-
-CXString clang_getDiagnosticFixItReplacement(CXDiagnostic Diag,
-                                             unsigned FixIt,
-                                             CXSourceRange *Range) {
-  if (Range)
-    *Range = clang_getNullRange();
-
-  CXStoredDiagnostic *StoredDiag = static_cast<CXStoredDiagnostic *>(Diag);
+CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic, unsigned FixIt,
+                                  CXSourceRange *ReplacementRange) {
+  CXStoredDiagnostic *StoredDiag
+    = static_cast<CXStoredDiagnostic *>(Diagnostic);
   if (!StoredDiag || FixIt >= StoredDiag->Diag.fixit_size() ||
       StoredDiag->Diag.getLocation().isInvalid()) {
-    if (Range)
-      *Range = clang_getNullRange();
+    if (ReplacementRange)
+      *ReplacementRange = clang_getNullRange();
 
     return createCXString("");
   }
 
   const CodeModificationHint &Hint = StoredDiag->Diag.fixit_begin()[FixIt];
-  if (Range)
-    *Range = translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
-                                  StoredDiag->LangOpts,
-                                  Hint.RemoveRange);
+  if (ReplacementRange) {
+    if (Hint.RemoveRange.isInvalid())  {
+      // Create an empty range that refers to a single source
+      // location (which is the insertion point).
+      CXSourceRange Range = { 
+        { (void *)&StoredDiag->Diag.getLocation().getManager(), 
+          (void *)&StoredDiag->LangOpts },
+        Hint.InsertionLoc.getRawEncoding(),
+        Hint.InsertionLoc.getRawEncoding() 
+      };
+
+      *ReplacementRange = Range;
+    } else {
+      // Create a range that covers the entire replacement (or
+      // removal) range, adjusting the end of the range to point to
+      // the end of the token.
+      *ReplacementRange
+          = translateSourceRange(StoredDiag->Diag.getLocation().getManager(),
+                                 StoredDiag->LangOpts,
+                                 Hint.RemoveRange);
+    }
+  }
+
   return createCXString(Hint.CodeToInsert);
 }
 
