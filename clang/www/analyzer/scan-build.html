@@ -2,7 +2,7 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <title>Running the Analyzer</title>
+  <title>scan-build: running the analyzer from the command line</title>
   <link type="text/css" rel="stylesheet" href="content.css" />
   <link type="text/css" rel="stylesheet" href="menu.css" />
   <script type="text/javascript" src="scripts/menu.js"></script>  
@@ -30,17 +30,48 @@ table.options td { padding:5px; padding-left:8px; padding-right:8px }
 table.options td { text-align:left; font-size:9pt }
 </style>
 
-<h1>Running the Analyzer</h1>
+<h1>scan-build: running the analyzer from the command line</h1>
 
-<p>While the static analyzer engine can be used as a library, many users will
-likely use the command-line interface to the analyzer to analyze projects. This
-page documents <tt>scan-build</tt>, a program that users can use from the
-command line to analyze all the source files used to build a project.</p>
+<table style="margin-top:0px" width="100%" border="0" cellpadding="0px" cellspacing="0">
+<tr><td>
 
-<h3>Contents</h3>
+<h3>What is it?</h3>
+<p><b>scan-build</b> is a command line utility that enables a user to run the
+static analyzer over their codebase as part of performing a regular build (from
+the command line).</p>
+
+<h3>How does it work?</h3>
+<p>During a project build, as source files are compiled they are also analyzed
+in tandem by the static analyzer.</p>
+
+<p>Upon completion of the build, results are then presented to the user within a
+web browser.</p>
+
+<h3>Will it work with any build system?</h3>
+<p><b>scan-build</b> has little or no knowledge about how you build your code.
+It works by overriding the <tt>CC</tt> and <tt>CXX</tt> environment variables to
+(hopefully) change your build to use a &quot;fake&quot; compiler instead of the
+one that would normally build your project. By default, this fake compiler
+executes <tt>gcc</tt> to compile your code (assuming that <tt>gcc</tt> is your
+compiler) and then executes the static analyzer to analyze your code.</p>
+
+<p>This &quot;poor man's interposition&quot; works amazingly well in many cases
+and falls down in others. Please consult the information on this page on making
+the best use of <b>scan-build</b>, which includes getting it to work when the
+aforementioned hack fails to work.</p>
+
+</td>
+<td style="padding-left:10px">
+<center>
+  <img src="images/scan_build_cmd.png" width="450px" border=0><br>
+  <a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450px" border=0></a>
+<br><b>Viewing static analyzer results in a web browser</b></center>
+</td></tr></table>
+
+<h2>Contents</h2>
 
 <ul>
-<li><a href="#scanbuild">scan-build</a></li>
+<li><a href="#scanbuild">Getting Started</a></li>
  <ul>
   <li><a href="#scanbuild_basicusage">Basic Usage</a></li>
   <li><a href="#scanbuild_otheroptions">Other Options</a></li>
@@ -54,7 +85,7 @@ command line to analyze all the source files used to build a project.</p>
  </ul>
 </ul>
 
-<h2 id="scanbuild">scan-build</h2>
+<h2 id="scanbuild">Getting Started</h2>
 
 <p>The <tt>scan-build</tt> command can be used to analyze an entire project by
 essentially interposing on a project's build process. This means that to run the
@@ -165,14 +196,14 @@ completes, pass <b>-V</b> to <tt>scan-build</tt>.
 
 <p>This section describes a few recommendations with running the analyzer.</p>
 
-<h3 id="recommended_debug">Always Analyze a Project in its &quot;Debug&quot; Configuration</h3>
+<h3 id="recommended_debug">ALWAYS analyze a project in its &quot;debug&quot; configuration</h3>
 
 <p>Most projects can be built in a &quot;debug&quot; mode that enables assertions.
 Assertions are picked up by the static analyzer to prune infeasible paths, which
 in some cases can greatly reduce the number of false positives (bogus error
 reports) emitted by the tool.</p>
 
-<h3 id="recommend_verbose">Use Verbose Output when Debugging scan-build</h3>
+<h3 id="recommend_verbose">Use verbose output when debugging scan-build</h3>
 
 <p><tt>scan-build</tt> takes a <b>-v</b> option to emit verbose output about
 what it's doing; two <b>-v</b> options emit more information. Redirecting the
