@@ -3147,9 +3147,12 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
       return LookupMemberExpr(Res, BaseExpr, IsArrow, OpLoc, SS,
                               ObjCImpDecl);
     }
-
-    return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-      << MemberName << BaseType);
+    Diag(MemberLoc, diag::err_property_not_found)
+      << MemberName << BaseType;
+    if (Setter && !Getter)
+      Diag(Setter->getLocation(), diag::note_getter_unavailable)
+        << MemberName << BaseExpr->getSourceRange();
+    return ExprError();
   }
 
   // Handle the following exceptional case (*Obj).isa.
@@ -3168,7 +3171,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     return Owned(new (Context) ExtVectorElementExpr(ret, BaseExpr, *Member,
                                                     MemberLoc));
   }
-
+  
   Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union)
     << BaseType << BaseExpr->getSourceRange();
 

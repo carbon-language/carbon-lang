@@ -70,7 +70,7 @@ static int g_val;
 {
     int setterOnly;
 }
-- (void) setSetterOnly:(int)value;
+- (void) setSetterOnly:(int)value;	// expected-note {{or because setter is declared here, but no getter method 'setterOnly' is found}}
 @end
 
 @implementation Subclass
@@ -82,7 +82,7 @@ static int g_val;
 
 @interface C {}
 // - (int)Foo;
-- (void)setFoo:(int)value;
+- (void)setFoo:(int)value;	// expected-note 2 {{or because setter is declared here, but no getter method 'Foo' is found}}
 @end
 
 void g(int);
