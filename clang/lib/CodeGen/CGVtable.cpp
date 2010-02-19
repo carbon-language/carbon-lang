@@ -668,7 +668,12 @@ public:
     CK_CompleteDtorPointer,
     
     /// CK_DeletingDtorPointer - A pointer to the deleting destructor.
-    CK_DeletingDtorPointer
+    CK_DeletingDtorPointer,
+    
+    /// CK_UnusedFunctionPointer - In some cases, a vtable function pointer
+    /// will end up never being called. Such vtable function pointers are
+    /// represented as a CK_UnusedFunctionPointer. 
+    CK_UnusedFunctionPointer
   };
 
   static VtableComponent MakeVCallOffset(int64_t Offset) {
@@ -703,6 +708,13 @@ public:
   static VtableComponent MakeDeletingDtor(const CXXDestructorDecl *DD) {
     return VtableComponent(CK_DeletingDtorPointer, 
                            reinterpret_cast<uintptr_t>(DD));
+  }
+
+  static VtableComponent MakeUnusedFunction(const CXXMethodDecl *MD) {
+    assert(!isa<CXXDestructorDecl>(MD) && 
+           "Don't use MakeUnusedFunction with destructors!");
+    return VtableComponent(CK_UnusedFunctionPointer,
+                           reinterpret_cast<uintptr_t>(MD));                           
   }
 
   /// getKind - Get the kind of this vtable component.
@@ -747,6 +759,12 @@ public:
     return reinterpret_cast<CXXDestructorDecl *>(getPointer());
   }
 
+  const CXXMethodDecl *getUnusedFunctionDecl() const {
+    assert(getKind() == CK_UnusedFunctionPointer);
+    
+    return reinterpret_cast<CXXMethodDecl *>(getPointer());
+  }
+  
 private:
   VtableComponent(Kind ComponentKind, int64_t Offset) {
     assert((ComponentKind == CK_VCallOffset || 
@@ -761,7 +779,8 @@ private:
     assert((ComponentKind == CK_RTTI || 
             ComponentKind == CK_FunctionPointer ||
             ComponentKind == CK_CompleteDtorPointer ||
-            ComponentKind == CK_DeletingDtorPointer) &&
+            ComponentKind == CK_DeletingDtorPointer ||
+            ComponentKind == CK_UnusedFunctionPointer) &&
             "Invalid component kind!");
     
     assert((Ptr & 7) == 0 && "Pointer not sufficiently aligned!");
@@ -780,7 +799,8 @@ private:
     assert((getKind() == CK_RTTI || 
             getKind() == CK_FunctionPointer ||
             getKind() == CK_CompleteDtorPointer ||
-            getKind() == CK_DeletingDtorPointer) &&
+            getKind() == CK_DeletingDtorPointer ||
+            getKind() == CK_UnusedFunctionPointer) &&
            "Invalid component kind!");
     
     return static_cast<uintptr_t>(Value & ~7ULL);
@@ -1587,6 +1607,17 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
 
       break;
+    }
+
+    case VtableComponent::CK_UnusedFunctionPointer: {
+      const CXXMethodDecl *MD = Component.getUnusedFunctionDecl();
+
+      std::string Str = 
+        PredefinedExpr::ComputeName(PredefinedExpr::PrettyFunctionNoVirtual, 
+                                    MD);
+      Out << "[unused] " << Str;
+      if (MD->isPure())
+        Out << " [pure]";
     }
 
     }
