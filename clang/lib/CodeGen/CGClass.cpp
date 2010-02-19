@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/AST/StmtCXX.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -599,46 +600,6 @@ void CodeGenFunction::EmitClassCopyAssignment(
            Callee, ReturnValueSlot(), CallArgs, MD);
 }
 
-/// Synthesizes an implicit function body.  Since these only arise in
-/// C++, we only do them in C++.
-void CodeGenFunction::SynthesizeImplicitFunctionBody(GlobalDecl GD,
-                                                     llvm::Function *Fn,
-                                               const FunctionArgList &Args) {
-  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
-
-  // FIXME: this should become isImplicitlyDefined() once we properly
-  // support that for C++0x.
-  assert(FD->isImplicit() && "Cannot synthesize a non-implicit function");
-
-  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-    assert(!CD->isTrivial() && "shouldn't need to synthesize a trivial ctor");
-
-    if (CD->isDefaultConstructor()) {
-      // Sema generates base and member initializers as for this, so
-      // the ctor prologue is good enough here.
-      return;
-    } else {
-      assert(CD->isCopyConstructor());
-      return SynthesizeCXXCopyConstructor(CD, GD.getCtorType(), Fn, Args);
-    }
-  }
-
-  if (isa<CXXDestructorDecl>(FD)) {
-    // The dtor epilogue does everything we'd need to do here.
-    return;
-  }
-
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(FD);
-
-  // FIXME: in C++0x we might have user-declared copy assignment operators
-  // coexisting with implicitly-defined ones.
-  assert(MD->isCopyAssignment() &&
-         !MD->getParent()->hasUserDeclaredCopyAssignment() &&
-         "Cannot synthesize a method that is not an implicitly-defined "
-         "copy constructor");
-  SynthesizeCXXCopyAssignment(MD, Fn, Args);
-}
-
 /// SynthesizeCXXCopyConstructor - This routine implicitly defines body of a
 /// copy constructor, in accordance with section 12.8 (p7 and p8) of C++03
 /// The implicitly-defined copy constructor for class X performs a memberwise
@@ -655,10 +616,8 @@ void CodeGenFunction::SynthesizeImplicitFunctionBody(GlobalDecl GD,
 /// implicitly-defined copy constructor
 
 void 
-CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
-                                              CXXCtorType Type,
-                                              llvm::Function *Fn,
-                                              const FunctionArgList &Args) {
+CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
+  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(CurGD.getDecl());
   const CXXRecordDecl *ClassDecl = Ctor->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
       "SynthesizeCXXCopyConstructor - copy constructor has definition already");
@@ -754,10 +713,8 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
 ///
 ///   if the subobject is of scalar type, the built-in assignment operator is
 ///   used.
-void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
-                                                  llvm::Function *Fn,
-                                                  const FunctionArgList &Args) {
-
+void CodeGenFunction::SynthesizeCXXCopyAssignment(const FunctionArgList &Args) {
+  const CXXMethodDecl *CD = cast<CXXMethodDecl>(CurGD.getDecl());
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
          "SynthesizeCXXCopyAssignment - copy assignment has user declaration");
@@ -934,6 +891,52 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   }
 }
 
+/// EmitConstructorBody - Emits the body of the current constructor.
+void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
+  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(CurGD.getDecl());
+  CXXCtorType CtorType = CurGD.getCtorType();
+
+  Stmt *Body = Ctor->getBody();
+
+  // Some of the optimizations we want to do can't be done with
+  // function try blocks.
+  CXXTryStmtInfo TryInfo;
+  bool isTryBody = (Body && isa<CXXTryStmt>(Body));
+  if (isTryBody)
+    TryInfo = EnterCXXTryStmt(*cast<CXXTryStmt>(Body));
+
+  unsigned CleanupStackSize = CleanupEntries.size();
+
+  // Emit the constructor prologue, i.e. the base and member initializers.
+
+  // TODO: for non-variadic complete-object constructors without a
+  // function try block for a body, we can get away with just emitting
+  // the vbase initializers, then calling the base constructor.
+  EmitCtorPrologue(Ctor, CtorType);
+
+  // Emit the body of the statement.
+  if (isTryBody)
+    EmitStmt(cast<CXXTryStmt>(Body)->getTryBlock());
+  else if (Body)
+    EmitStmt(Body);
+  else {
+    assert(Ctor->isImplicit() && "bodyless ctor not implicit");
+    if (!Ctor->isDefaultConstructor()) {
+      assert(Ctor->isCopyConstructor());
+      SynthesizeCXXCopyConstructor(Args);
+    }
+  }
+
+  // Emit any cleanup blocks associated with the member or base
+  // initializers, which includes (along the exceptional path) the
+  // destructors for those members and bases that were fully
+  // constructed.
+  EmitCleanupBlocks(CleanupStackSize);
+
+  if (isTryBody)
+    ExitCXXTryStmt(*cast<CXXTryStmt>(Body), TryInfo);
+}
+
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
@@ -966,6 +969,84 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     
     EmitMemberInitializer(*this, ClassDecl, MemberInitializers[I]);
   }
+}
+
+/// EmitDestructorBody - Emits the body of the current destructor.
+void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
+  const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CurGD.getDecl());
+  CXXDtorType DtorType = CurGD.getDtorType();
+
+  Stmt *Body = Dtor->getBody();
+
+  // If the body is a function-try-block, enter the try before
+  // anything else --- unless we're in a deleting destructor, in which
+  // case we're just going to call the complete destructor and then
+  // call operator delete() on the way out.
+  CXXTryStmtInfo TryInfo;
+  bool isTryBody = (DtorType != Dtor_Deleting &&
+                    Body && isa<CXXTryStmt>(Body));
+  if (isTryBody)
+    TryInfo = EnterCXXTryStmt(*cast<CXXTryStmt>(Body));
+
+  llvm::BasicBlock *DtorEpilogue = createBasicBlock("dtor.epilogue");
+  PushCleanupBlock(DtorEpilogue);
+
+  bool SkipBody = false; // should get jump-threaded
+
+  // If this is the deleting variant, just invoke the complete
+  // variant, then call the appropriate operator delete() on the way
+  // out.
+  if (DtorType == Dtor_Deleting) {
+    EmitCXXDestructorCall(Dtor, Dtor_Complete, LoadCXXThis());
+    SkipBody = true;
+
+  // If this is the complete variant, just invoke the base variant;
+  // the epilogue will destruct the virtual bases.  But we can't do
+  // this optimization if the body is a function-try-block, because
+  // we'd introduce *two* handler blocks.
+  } else if (!isTryBody && DtorType == Dtor_Complete) {
+    EmitCXXDestructorCall(Dtor, Dtor_Base, LoadCXXThis());
+    SkipBody = true;
+      
+  // Otherwise, we're in the base variant, so we need to ensure the
+  // vtable ptrs are right before emitting the body.
+  } else {
+    InitializeVtablePtrs(Dtor->getParent());
+  }
+
+  // Emit the body of the statement.
+  if (SkipBody)
+    (void) 0;
+  else if (isTryBody)
+    EmitStmt(cast<CXXTryStmt>(Body)->getTryBlock());
+  else if (Body)
+    EmitStmt(Body);
+  else {
+    assert(Dtor->isImplicit() && "bodyless dtor not implicit");
+    // nothing to do besides what's in the epilogue
+  }
+
+  // Jump to the cleanup block.
+  CleanupBlockInfo Info = PopCleanupBlock();
+  assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
+  EmitBlock(DtorEpilogue);
+
+  // Emit the destructor epilogue now.  If this is a complete
+  // destructor with a function-try-block, perform the base epilogue
+  // as well.
+  if (isTryBody && DtorType == Dtor_Complete)
+    EmitDtorEpilogue(Dtor, Dtor_Base);
+  EmitDtorEpilogue(Dtor, DtorType);
+
+  // Link up the cleanup information.
+  if (Info.SwitchBlock)
+    EmitBlock(Info.SwitchBlock);
+  if (Info.EndBlock)
+    EmitBlock(Info.EndBlock);
+
+  // Exit the try if applicable.
+  if (isTryBody)
+    ExitCXXTryStmt(*cast<CXXTryStmt>(Body), TryInfo);
 }
 
 /// EmitDtorEpilogue - Emit all code that comes at the end of class's

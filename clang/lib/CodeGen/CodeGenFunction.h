@@ -91,9 +91,6 @@ public:
 
   /// CurGD - The GlobalDecl for the current function being compiled.
   GlobalDecl CurGD;
-  /// OuterTryBlock - This is the address of the outter most try block, 0
-  /// otherwise.
-  const Stmt *OuterTryBlock;
 
   /// ReturnBlock - Unified return block.
   llvm::BasicBlock *ReturnBlock;
@@ -494,7 +491,9 @@ public:
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
 
-  void GenerateBody(GlobalDecl GD, llvm::Function *Fn,  FunctionArgList &Args);
+  void EmitConstructorBody(FunctionArgList &Args);
+  void EmitDestructorBody(FunctionArgList &Args);
+  void EmitFunctionBody(FunctionArgList &Args);
 
   /// EmitReturnBlock - Emit the unified return block, trying to avoid its
   /// emission when possible.
@@ -529,18 +528,8 @@ public:
                                      llvm::Value *ThisPtr,
                                      uint64_t Offset);
 
-  void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
-                                    CXXCtorType Type,
-                                    llvm::Function *Fn,
-                                    const FunctionArgList &Args);
-
-  void SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
-                                   llvm::Function *Fn,
-                                   const FunctionArgList &Args);
-
-  void SynthesizeImplicitFunctionBody(GlobalDecl GD,
-                                      llvm::Function *Fn,
-                                      const FunctionArgList &Args);
+  void SynthesizeCXXCopyConstructor(const FunctionArgList &Args);
+  void SynthesizeCXXCopyAssignment(const FunctionArgList &Args);
 
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes in
@@ -926,6 +915,14 @@ public:
   void EmitObjCAtTryStmt(const ObjCAtTryStmt &S);
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
+
+  struct CXXTryStmtInfo {
+    llvm::BasicBlock *SavedLandingPad;
+    llvm::BasicBlock *HandlerBlock;
+    llvm::BasicBlock *FinallyBlock;
+  };
+  CXXTryStmtInfo EnterCXXTryStmt(const CXXTryStmt &S);
+  void ExitCXXTryStmt(const CXXTryStmt &S, CXXTryStmtInfo Info);
 
   void EmitCXXTryStmt(const CXXTryStmt &S);
   

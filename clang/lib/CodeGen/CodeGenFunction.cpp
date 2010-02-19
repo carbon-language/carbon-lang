@@ -241,80 +241,16 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   }
 }
 
-void CodeGenFunction::GenerateBody(GlobalDecl GD, llvm::Function *Fn, 
-                                   FunctionArgList &Args) {
-  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args) {
+  const FunctionDecl *FD = cast<FunctionDecl>(CurGD.getDecl());
 
   Stmt *Body = FD->getBody();
-  assert((Body || FD->isImplicit()) && "non-implicit function def has no body");
-
-  bool SkipBody = false; // should get jump-threaded
-
-  // Emit special ctor/dtor prologues.
-  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-    // Emit the constructor prologue, i.e. the base and member initializers.
-    EmitCtorPrologue(CD, GD.getCtorType());
-
-    // TODO: for complete, non-varargs variants, we can get away with
-    // just emitting the vbase initializers, then calling the base
-    // constructor.
-
-  } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-    // In all cases, if there's an exception in the body (or delegate)
-    // we'll still need to run the epilogue.
-    llvm::BasicBlock *DtorEpilogue = createBasicBlock("dtor.epilogue");
-    PushCleanupBlock(DtorEpilogue);
-
-    // If this is the deleting variant, invoke the complete variant;
-    // the epilogue will call the appropriate operator delete().
-    if (GD.getDtorType() == Dtor_Deleting) {
-      EmitCXXDestructorCall(DD, Dtor_Complete, LoadCXXThis());
-      SkipBody = true;
-
-    // If this is the complete variant, just invoke the base variant;
-    // the epilogue will destruct the virtual bases.
-    } else if (GD.getDtorType() == Dtor_Complete) {
-      EmitCXXDestructorCall(DD, Dtor_Base, LoadCXXThis());
-      SkipBody = true;
-
-    // Otherwise, we're in the base variant, so we need to ensure the
-    // vtable ptrs are right before emitting the body.
-    } else {
-      InitializeVtablePtrs(DD->getParent());
-    }
-  }
-
-  // Emit the body of the function.
-  if (SkipBody) {
-    // skipped
-  } else if (!Body) {
-    SynthesizeImplicitFunctionBody(GD, Fn, Args);
-  } else {
-    if (isa<CXXTryStmt>(Body))
-      OuterTryBlock = cast<CXXTryStmt>(Body);
+  if (Body)
     EmitStmt(Body);
-  }
-
-  // Emit special ctor/dtor epilogues.
-  if (isa<CXXConstructorDecl>(FD)) {
-    // Be sure to emit any cleanup blocks associated with the member
-    // or base initializers, which includes (along the exceptional
-    // path) the destructors for those members and bases that were
-    // fully constructed.
-    EmitCleanupBlocks(0);
-
-  } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-    // Funnel the previously-pushed cleanup block into the epilogue.
-    CleanupBlockInfo Info = PopCleanupBlock();
-    EmitBlock(Info.CleanupBlock);
-
-    EmitDtorEpilogue(DD, GD.getDtorType());
-
-    // Go ahead and link in the switch and end blocks.
-    if (Info.SwitchBlock)
-      EmitBlock(Info.SwitchBlock);
-    if (Info.EndBlock)
-      EmitBlock(Info.EndBlock);
+  else {
+    assert(FD->isImplicit() && "non-implicit function def has no body");
+    assert(FD->isCopyAssignment() && "implicit function not copy assignment");
+    SynthesizeCXXCopyAssignment(Args);
   }
 }
 
@@ -328,7 +264,6 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   FunctionArgList Args;
 
   CurGD = GD;
-  OuterTryBlock = 0;
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     if (MD->isInstance()) {
       // Create the implicit 'this' decl.
@@ -368,7 +303,12 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
   StartFunction(GD, FD->getResultType(), Fn, Args, BodyRange.getBegin());
 
   // Generate the body of the function.
-  GenerateBody(GD, Fn, Args);
+  if (isa<CXXDestructorDecl>(FD))
+    EmitDestructorBody(Args);
+  else if (isa<CXXConstructorDecl>(FD))
+    EmitConstructorBody(Args);
+  else
+    EmitFunctionBody(Args);
 
   // Emit the standard function epilogue.
   FinishFunction(BodyRange.getEnd());

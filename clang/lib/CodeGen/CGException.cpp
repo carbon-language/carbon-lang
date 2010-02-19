@@ -427,6 +427,26 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
+  CXXTryStmtInfo Info = EnterCXXTryStmt(S);
+  EmitStmt(S.getTryBlock());
+  ExitCXXTryStmt(S, Info);
+}
+
+CodeGenFunction::CXXTryStmtInfo
+CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S) {
+  CXXTryStmtInfo Info;
+  Info.SavedLandingPad = getInvokeDest();
+  Info.HandlerBlock = createBasicBlock("try.handler");
+  Info.FinallyBlock = createBasicBlock("finally");
+
+  PushCleanupBlock(Info.FinallyBlock);
+  setInvokeDest(Info.HandlerBlock);
+
+  return Info;
+}
+
+void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S,
+                                     CXXTryStmtInfo TryInfo) {
   // Pointer to the personality function
   llvm::Constant *Personality =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty
@@ -439,53 +459,11 @@ void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
   llvm::Value *llvm_eh_selector =
     CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
 
-  llvm::BasicBlock *PrevLandingPad = getInvokeDest();
-  llvm::BasicBlock *TryHandler = createBasicBlock("try.handler");
-  llvm::BasicBlock *FinallyBlock = createBasicBlock("finally");
+  llvm::BasicBlock *PrevLandingPad = TryInfo.SavedLandingPad;
+  llvm::BasicBlock *TryHandler = TryInfo.HandlerBlock;
+  llvm::BasicBlock *FinallyBlock = TryInfo.FinallyBlock;
   llvm::BasicBlock *FinallyRethrow = createBasicBlock("finally.throw");
   llvm::BasicBlock *FinallyEnd = createBasicBlock("finally.end");
-
-  // Push an EH context entry, used for handling rethrows.
-  PushCleanupBlock(FinallyBlock);
-
-  // Emit the statements in the try {} block
-  setInvokeDest(TryHandler);
-
-  // FIXME: We should not have to do this here.  The AST should have the member
-  // initializers under the CXXTryStmt's TryBlock.
-  if (OuterTryBlock == &S) {
-    GlobalDecl GD = CurGD;
-    const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
-
-    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      size_t OldCleanupStackSize = CleanupEntries.size();
-      EmitCtorPrologue(CD, CurGD.getCtorType());
-      EmitStmt(S.getTryBlock());
-
-      // If any of the member initializers are temporaries bound to references
-      // make sure to emit their destructors.
-      EmitCleanupBlocks(OldCleanupStackSize);
-    } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-      llvm::BasicBlock *DtorEpilogue  = createBasicBlock("dtor.epilogue");
-      PushCleanupBlock(DtorEpilogue);
-
-      InitializeVtablePtrs(DD->getParent());
-      EmitStmt(S.getTryBlock());
-
-      CleanupBlockInfo Info = PopCleanupBlock();
-
-      assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
-      EmitBlock(DtorEpilogue);
-      EmitDtorEpilogue(DD, GD.getDtorType());
-
-      if (Info.SwitchBlock)
-        EmitBlock(Info.SwitchBlock);
-      if (Info.EndBlock)
-        EmitBlock(Info.EndBlock);
-    } else
-      EmitStmt(S.getTryBlock());
-  } else
-    EmitStmt(S.getTryBlock());
 
   // Jump to end if there is no exception
   EmitBranchThroughCleanup(FinallyEnd);
