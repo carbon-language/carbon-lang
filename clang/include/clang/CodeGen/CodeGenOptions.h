@@ -53,6 +53,8 @@ public:
   unsigned UnwindTables      : 1; /// Emit unwind tables.
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
+  unsigned CXXCtorDtorAliases: 1; /// Emit complete ctors/dtors as linker
+                                  /// aliases to base ctors when possible.
 
   /// The code model to use (-mcmodel).
   std::string CodeModel;
@@ -101,6 +103,7 @@ public:
     UnrollLoops = 0;
     UnwindTables = 0;
     VerifyModule = 1;
+    CXXCtorDtorAliases = 0;
 
     Inlining = NoInlining;
     RelocationModel = "pic";

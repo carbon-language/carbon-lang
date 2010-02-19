@@ -143,6 +143,8 @@ def mrelocation_model : Separate<"-mrelocation-model">,
   HelpText<"The relocation model to use">;
 def munwind_tables : Flag<"-munwind-tables">,
   HelpText<"Generate unwinding tables for all functions">;
+def mconstructor_aliases : Flag<"-mconstructor-aliases">,
+  HelpText<"Emit complete constructors and destructors as aliases when possible">;
 def O : Joined<"-O">, HelpText<"Optimization level">;
 def Os : Flag<"-Os">, HelpText<"Optimize for size">;
 

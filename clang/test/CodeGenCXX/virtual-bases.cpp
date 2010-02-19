@@ -1,10 +1,10 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin10 | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin10 -mconstructor-aliases | FileCheck %s
 
 struct A { 
   A();
 };
 
-// CHECK: define void @_ZN1AC1Ev(%struct.A* %this)
+// CHECK: @_ZN1AC1Ev = alias {{.*}} @_ZN1AC2Ev
 // CHECK: define void @_ZN1AC2Ev(%struct.A* %this)
 A::A() { }
 
