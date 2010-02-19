@@ -3485,35 +3485,6 @@ void ScalarEvolution::forgetLoop(const Loop *L) {
   }
 }
 
-/// forgetValue - This method should be called by the client when it has
-/// changed a value in a way that may effect its value, or which may
-/// disconnect it from a def-use chain linking it to a loop.
-void ScalarEvolution::forgetValue(Value *V) {
-  Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return;
-
-  // Drop information about expressions based on loop-header PHIs.
-  SmallVector<Instruction *, 16> Worklist;
-  Worklist.push_back(I);
-
-  SmallPtrSet<Instruction *, 8> Visited;
-  while (!Worklist.empty()) {
-    I = Worklist.pop_back_val();
-    if (!Visited.insert(I)) continue;
-
-    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
-      Scalars.find(static_cast<Value *>(I));
-    if (It != Scalars.end()) {
-      ValuesAtScopes.erase(It->second);
-      Scalars.erase(It);
-      if (PHINode *PN = dyn_cast<PHINode>(I))
-        ConstantEvolutionLoopExitValue.erase(PN);
-    }
-
-    PushDefUseChildren(I, Worklist);
-  }
-}
-
 /// ComputeBackedgeTakenCount - Compute the number of times the backedge
 /// of the specified loop will execute.
 ScalarEvolution::BackedgeTakenInfo
