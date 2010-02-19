@@ -872,14 +872,13 @@ void ASTContext::CollectObjCIvars(const ObjCInterfaceDecl *OI,
 /// Collect all ivars, including those synthesized, in the current class.
 ///
 void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
-                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars,
-                                 bool CollectSynthesized) {
+                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
   for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
          E = OI->ivar_end(); I != E; ++I) {
      Ivars.push_back(*I);
   }
-  if (CollectSynthesized)
-    CollectSynthesizedIvars(OI, Ivars);
+
+  CollectNonClassIvars(OI, Ivars);
 }
 
 void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
@@ -895,10 +894,11 @@ void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
     CollectProtocolSynthesizedIvars(*P, Ivars);
 }
 
-/// CollectSynthesizedIvars -
-/// This routine collect synthesized ivars for the designated class.
+/// CollectNonClassIvars -
+/// This routine collects all other ivars which are not declared in the class.
+/// This includes synthesized ivars and those in class's implementation.
 ///
-void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
+void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
   for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
        E = OI->prop_end(); I != E; ++I) {
@@ -911,6 +911,13 @@ void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
        PE = OI->protocol_end(); P != PE; ++P) {
     ObjCProtocolDecl *PD = (*P);
     CollectProtocolSynthesizedIvars(PD, Ivars);
+  }
+
+  // Also add any ivar defined in this class's implementation
+  if (ObjCImplementationDecl *ImplDecl = OI->getImplementation()) {
+    for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
+         E = ImplDecl->ivar_end(); I != E; ++I)
+      Ivars.push_back(*I);
   }
 }
 

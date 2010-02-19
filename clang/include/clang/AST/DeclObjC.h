@@ -494,11 +494,13 @@ public:
   }
   unsigned protocol_size() const { return ReferencedProtocols.size(); }
 
-  typedef ObjCList<ObjCIvarDecl>::iterator ivar_iterator;
-  ivar_iterator ivar_begin() const { return IVars.begin(); }
-  ivar_iterator ivar_end() const { return IVars.end(); }
-  unsigned ivar_size() const { return IVars.size(); }
-  bool ivar_empty() const { return IVars.empty(); }
+  typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
+  ivar_iterator ivar_begin() const { return  ivar_iterator(decls_begin()); }
+  ivar_iterator ivar_end() const { return ivar_iterator(decls_end()); }
+  unsigned ivar_size() const {
+    return std::distance(ivar_begin(), ivar_end());
+  }
+  bool ivar_empty() const { return ivar_begin() == ivar_end(); }
 
   /// setProtocolList - Set the list of protocols that this interface
   /// implements.
@@ -513,10 +515,6 @@ public:
                                        unsigned Num,
                                        const SourceLocation *Locs,
                                        ASTContext &C);
-
-  void setIVarList(ObjCIvarDecl * const *List, unsigned Num, ASTContext &C) {
-    IVars.set(List, Num, C);
-  }
 
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }

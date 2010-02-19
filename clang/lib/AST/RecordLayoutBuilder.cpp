@@ -487,6 +487,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   FinishLayout();
 }
 
+// FIXME. Impl is no longer needed.
 void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
                                     const ObjCImplementationDecl *Impl) {
   if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
@@ -508,10 +509,9 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getMaxAlignment());
-
   // Layout each ivar sequentially.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  Ctx.ShallowCollectObjCIvars(D, Ivars, Impl);
+  Ctx.ShallowCollectObjCIvars(D, Ivars);
   for (unsigned i = 0, e = Ivars.size(); i != e; ++i)
     LayoutField(Ivars[i]);
 

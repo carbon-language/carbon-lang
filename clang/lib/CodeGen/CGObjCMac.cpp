@@ -3293,7 +3293,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
 
   // Add this implementations synthesized ivars.
   llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  CGM.getContext().CollectSynthesizedIvars(OI, Ivars);
+  CGM.getContext().CollectNonClassIvars(OI, Ivars);
   for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
     RecFields.push_back(cast<FieldDecl>(Ivars[k]));
 

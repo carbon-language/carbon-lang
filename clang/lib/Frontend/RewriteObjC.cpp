@@ -3534,12 +3534,12 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     ObjCInterfaceDecl::ivar_iterator IVI, IVE;
     llvm::SmallVector<ObjCIvarDecl *, 8> IVars;
     if (!IDecl->ivar_empty()) {
-      for (ObjCImplementationDecl::ivar_iterator
+      for (ObjCInterfaceDecl::ivar_iterator
              IV = IDecl->ivar_begin(), IVEnd = IDecl->ivar_end();
            IV != IVEnd; ++IV)
         IVars.push_back(*IV);
-      IVI = IVars.begin();
-      IVE = IVars.end();
+      IVI = IDecl->ivar_begin();
+      IVE = IDecl->ivar_end();
     } else {
       IVI = CDecl->ivar_begin();
       IVE = CDecl->ivar_end();
