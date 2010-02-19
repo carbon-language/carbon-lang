@@ -16,11 +16,9 @@
   User Manual
   <ul>
     <li><a href="/installation.html">Obtaining the Analyzer</a></li>
-    <li>Running the Analyzer
-      <ul>
-        <li><a href="/scan-build.html">Command line usage</a></li>
-        <li><a href="/xcode.html">Within Xcode</a></li>
-      </ul>
+    <br>Running the Analyzer:
+    <li><a href="/scan-build.html">Command line usage</a></li>
+    <li><a href="/xcode.html">Within Xcode</a></li>
     </li>
     <li><a href="/available_checks.html">Available Checks</a></li>
     <li><a href="/annotations.html">Source-level Annotations</a></li>
