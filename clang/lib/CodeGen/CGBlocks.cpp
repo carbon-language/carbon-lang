@@ -426,40 +426,6 @@ const llvm::Type *BlockModule::getGenericBlockLiteralType() {
   return GenericBlockLiteralType;
 }
 
-const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
-  if (GenericExtendedBlockLiteralType)
-    return GenericExtendedBlockLiteralType;
-
-  const llvm::Type *BlockDescPtrTy =
-    llvm::PointerType::getUnqual(getBlockDescriptorType());
-
-  const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
-    getTypes().ConvertType(getContext().IntTy));
-
-  // struct __block_literal_generic {
-  //   void *__isa;
-  //   int __flags;
-  //   int __reserved;
-  //   void (*__invoke)(void *);
-  //   struct __block_descriptor *__descriptor;
-  //   void *__copy_func_helper_decl;
-  //   void *__destroy_func_decl;
-  // };
-  GenericExtendedBlockLiteralType = llvm::StructType::get(IntTy->getContext(),
-                                                          PtrToInt8Ty,
-                                                          IntTy,
-                                                          IntTy,
-                                                          PtrToInt8Ty,
-                                                          BlockDescPtrTy,
-                                                          PtrToInt8Ty,
-                                                          PtrToInt8Ty,
-                                                          NULL);
-
-  getModule().addTypeName("struct.__block_literal_extended_generic",
-                          GenericExtendedBlockLiteralType);
-
-  return GenericExtendedBlockLiteralType;
-}
 
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E, 
                                           ReturnValueSlot ReturnValue) {
