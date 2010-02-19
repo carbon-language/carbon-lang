@@ -112,6 +112,7 @@ namespace {
     Expr *VisitCharacterLiteral(CharacterLiteral *E);
     Expr *VisitParenExpr(ParenExpr *E);
     Expr *VisitUnaryOperator(UnaryOperator *E);
+    Expr *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
     Expr *VisitBinaryOperator(BinaryOperator *E);
     Expr *VisitCompoundAssignOperator(CompoundAssignOperator *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
@@ -2661,6 +2662,30 @@ Expr *ASTNodeImporter::VisitUnaryOperator(UnaryOperator *E) {
   return new (Importer.getToContext()) UnaryOperator(SubExpr, E->getOpcode(),
                                                      T,
                                          Importer.Import(E->getOperatorLoc()));                                        
+}
+
+Expr *ASTNodeImporter::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+  QualType ResultType = Importer.Import(E->getType());
+  
+  if (E->isArgumentType()) {
+    TypeSourceInfo *TInfo = Importer.Import(E->getArgumentTypeInfo());
+    if (!TInfo)
+      return 0;
+    
+    return new (Importer.getToContext()) SizeOfAlignOfExpr(E->isSizeOf(),
+                                                           TInfo, ResultType,
+                                           Importer.Import(E->getOperatorLoc()),
+                                           Importer.Import(E->getRParenLoc()));
+  }
+  
+  Expr *SubExpr = Importer.Import(E->getArgumentExpr());
+  if (!SubExpr)
+    return 0;
+  
+  return new (Importer.getToContext()) SizeOfAlignOfExpr(E->isSizeOf(),
+                                                         SubExpr, ResultType,
+                                          Importer.Import(E->getOperatorLoc()),
+                                          Importer.Import(E->getRParenLoc()));
 }
 
 Expr *ASTNodeImporter::VisitBinaryOperator(BinaryOperator *E) {
