@@ -109,6 +109,10 @@ namespace {
     Expr *VisitExpr(Expr *E);
     Expr *VisitIntegerLiteral(IntegerLiteral *E);
     Expr *VisitCharacterLiteral(CharacterLiteral *E);
+    Expr *VisitParenExpr(ParenExpr *E);
+    Expr *VisitUnaryOperator(UnaryOperator *E);
+    Expr *VisitBinaryOperator(BinaryOperator *E);
+    Expr *VisitCompoundAssignOperator(CompoundAssignOperator *E);
     Expr *VisitImplicitCastExpr(ImplicitCastExpr *E);
   };
 }
@@ -2607,6 +2611,76 @@ Expr *ASTNodeImporter::VisitCharacterLiteral(CharacterLiteral *E) {
   return new (Importer.getToContext()) CharacterLiteral(E->getValue(), 
                                                         E->isWide(), T,
                                           Importer.Import(E->getLocation()));
+}
+
+Expr *ASTNodeImporter::VisitParenExpr(ParenExpr *E) {
+  Expr *SubExpr = Importer.Import(E->getSubExpr());
+  if (!SubExpr)
+    return 0;
+  
+  return new (Importer.getToContext()) 
+                                  ParenExpr(Importer.Import(E->getLParen()),
+                                            Importer.Import(E->getRParen()),
+                                            SubExpr);
+}
+
+Expr *ASTNodeImporter::VisitUnaryOperator(UnaryOperator *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+
+  Expr *SubExpr = Importer.Import(E->getSubExpr());
+  if (!SubExpr)
+    return 0;
+  
+  return new (Importer.getToContext()) UnaryOperator(SubExpr, E->getOpcode(),
+                                                     T,
+                                         Importer.Import(E->getOperatorLoc()));                                        
+}
+
+Expr *ASTNodeImporter::VisitBinaryOperator(BinaryOperator *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+
+  Expr *LHS = Importer.Import(E->getLHS());
+  if (!LHS)
+    return 0;
+  
+  Expr *RHS = Importer.Import(E->getRHS());
+  if (!RHS)
+    return 0;
+  
+  return new (Importer.getToContext()) BinaryOperator(LHS, RHS, E->getOpcode(),
+                                                      T,
+                                          Importer.Import(E->getOperatorLoc()));
+}
+
+Expr *ASTNodeImporter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
+  QualType T = Importer.Import(E->getType());
+  if (T.isNull())
+    return 0;
+  
+  QualType CompLHSType = Importer.Import(E->getComputationLHSType());
+  if (CompLHSType.isNull())
+    return 0;
+  
+  QualType CompResultType = Importer.Import(E->getComputationResultType());
+  if (CompResultType.isNull())
+    return 0;
+  
+  Expr *LHS = Importer.Import(E->getLHS());
+  if (!LHS)
+    return 0;
+  
+  Expr *RHS = Importer.Import(E->getRHS());
+  if (!RHS)
+    return 0;
+  
+  return new (Importer.getToContext()) 
+                        CompoundAssignOperator(LHS, RHS, E->getOpcode(),
+                                               T, CompLHSType, CompResultType,
+                                          Importer.Import(E->getOperatorLoc()));
 }
 
 Expr *ASTNodeImporter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
