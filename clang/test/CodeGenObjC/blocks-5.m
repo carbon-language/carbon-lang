@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -fblocks -triple i386-apple-darwin10 -emit-llvm -o - %s | FileCheck %s
 // radar 7581175
+// XFAIL: *
 
 extern void dispatch_async (void (^)(void));
 
