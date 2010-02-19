@@ -47,6 +47,21 @@ IMG.img_slide {
 /* Tables */
 tr { vertical-align:top }
 
+table.options thead {
+  background-color:#eee; color:#666666;
+  font-weight: bold; cursor: default;
+  text-align:left;
+  border-top: 2px solid #cccccc;
+  border-bottom: 2px solid #cccccc;
+  font-weight: bold; font-family: Verdana
+}
+table.options { border: 1px #cccccc solid }
+table.options { border-collapse: collapse; border-spacing: 0px }
+table.options { margin-left:0px; margin-top:20px; margin-bottom:20px }
+table.options td { border-bottom: 1px #cccccc dotted }
+table.options td { padding:5px; padding-left:8px; padding-right:8px }
+table.options td { text-align:left; font-size:9pt }
+
 /* Collapsing Trees: http://dbtree.megalingo.com/web/demo/simple-collapsible-tree.cfm  */
 #collapsetree, #collapsetree a:link, #collapsetree li a:link, #collapsetree a:visited, #collapsetree li a:visited{color:#000;text-decoration:none}
 #collapsetree,#collapsetree ul{list-style-type:none; width:auto; margin:0; padding:0}
@@ -61,3 +76,4 @@ tr { vertical-align:top }
 #collapsetree li a.subMenu,#collapsetree ul li a.subMenu{background:url(images/tree/plus.gif) center left no-repeat}
 #collapsetree li a.click{background:url(images/tree/minus.gif) center left no-repeat}
 #collapsetree ul li a.click{background:url(images/tree/minus.gif) center left no-repeat}
+

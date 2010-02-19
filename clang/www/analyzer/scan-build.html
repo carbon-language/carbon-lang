@@ -5,30 +5,14 @@
   <title>scan-build: running the analyzer from the command line</title>
   <link type="text/css" rel="stylesheet" href="content.css" />
   <link type="text/css" rel="stylesheet" href="menu.css" />
-  <script type="text/javascript" src="scripts/menu.js"></script>  
+  <script type="text/javascript" src="scripts/menu.js"></script>
+  <script type="text/javascript" src="scripts/dbtree.js"></script>
 </head>
 <body>
 
 <div id="page">
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
-
-<style>  
-table.options thead {
-  background-color:#eee; color:#666666;
-  font-weight: bold; cursor: default;
-  text-align:left;
-  border-top: 2px solid #cccccc;
-  border-bottom: 2px solid #cccccc;
-  font-weight: bold; font-family: Verdana
-} 
-table.options { border: 1px #cccccc solid }
-table.options { border-collapse: collapse; border-spacing: 0px }
-table.options { margin-left:0px; margin-top:20px; margin-bottom:20px }
-table.options td { border-bottom: 1px #cccccc dotted }
-table.options td { padding:5px; padding-left:8px; padding-right:8px }
-table.options td { text-align:left; font-size:9pt }
-</style>
 
 <h1>scan-build: running the analyzer from the command line</h1>
 
@@ -70,19 +54,22 @@ aforementioned hack fails to work.</p>
 
 <h2>Contents</h2>
 
-<ul>
-<li><a href="#scanbuild">Getting Started</a></li>
+<ul id="collapsetree" class="dbtree onclick multiple">
+<li><a href="#scanbuild">Getting Started</a>
  <ul>
   <li><a href="#scanbuild_basicusage">Basic Usage</a></li>
   <li><a href="#scanbuild_otheroptions">Other Options</a></li>
   <li><a href="#scanbuild_output">Output of scan-build</a></li>
  </ul>
-<li><a href="#recommendedguidelines">Recommended Usage Guidelines</a></li>
+</li>
+<li><a href="#recommendedguidelines">Recommended Usage Guidelines</a>
  <ul>
   <li><a href="#recommended_debug">Always Analyze a Project in its &quot;Debug&quot; Configuration</a></li>
   <li><a href="#recommended_verbose">Use Verbose Output when Debugging scan-build</a></li>
   <li><a href="#recommended_autoconf">Run './configure' through scan-build</a></li>
  </ul>
+</li>
+<li><a href="#iphone">Analyzing iPhone Projects</a></li>
 </ul>
 
 <h2 id="scanbuild">Getting Started</h2>
@@ -275,6 +262,82 @@ calling <tt>clang</tt>). <tt>ccc-analyzer</tt> tries to correctly forward all
 the arguments over to <tt>gcc</tt>, but this may not work perfectly (please
 report bugs of this kind).
  -->
+
+<h2 id="iphone">Analyzing iPhone Projects</h2>
+
+<p>Conceptually Xcode projects for iPhone applications are nearly the same as
+their cousins for desktop applications. <b>scan-build</b> can analyze these
+projects as well, but users often encounter problems with just building their
+iPhone projects from the command line because there are a few extra preparative
+steps they need to take (e.g., setup code signing).</p>
+
+<h3>Recommendation: use &quot;Build and Analyze&quot;</h3>
+
+<p>The absolute easiest way to analyze iPhone projects is to use the <a
+href="http://developer.apple.com/mac/library/featuredarticles/StaticAnalysis/index.html"><i>Build
+and Analyze</i> feature in Xcode 3.2</a> (which is based on the Clang Static
+Analyzer). There a user can analyze their project with the click of a button
+without most of the setup described later.</p>
+
+<p><a href="scan-build.html">Instructions are available</a> on this
+website on how to use open source builds of the analyzer as a replacement for
+the one bundled with Xcode.</p>
+
+<h3>Using scan-build directly</h3>
+
+<p>If you wish to use <b>scan-build</b> with your iPhone project, keep the
+following things in mind:</p>
+
+<ul>
+ <li>Analyze your project in the <tt>Debug</tt> configuration, either by setting
+this as your configuration with Xcode or by passing <tt>-configuration
+Debug</tt> to <tt>xcodebuild</tt>.</li>
+ <li>Analyze your project using the <tt>Simulator</tt> as your base SDK. It is
+possible to analyze your code when targetting the device, but this is much
+easier to do when using Xcode's <i>Build and Analyze</i> feature.</li>
+ <li>Check that your code signing SDK is set to the simulator SDK as well, and make sure this option is set to <tt>Don't Code Sign</tt>.</li>
+</ul>
+
+<p>Note that you can most of this without actually modifying your project. For
+example, if your application targets iPhoneOS 2.2, you could run
+<b>scan-build</b> in the following manner from the command line:</p>
+
+<pre class="code_example">
+$ scan-build xcodebuild -configuration Debug -sdk iphonesimulator2.2
+</pre>
+
+Alternatively, if your application targets iPhoneOS 3.0:
+
+<pre class="code_example">
+$ scan-build xcodebuild -configuration Debug -sdk iphonesimulator3.0
+</pre>
+
+<h3>Gotcha: using the right compiler</h3>
+
+<p>Recall that <b>scan-build</b> analyzes your project by using <tt>gcc</tt> to
+compile the project and <tt>clang</tt> to analyze your project. When analyzing
+iPhone projects, <b>scan-build</b> may pick the wrong compiler than the one
+Xcode would use to build your project. This is because multiple versions of
+<tt>gcc</tt> may be installed on your system, especially if you are developing
+for the iPhone.</p>
+
+<p>Where this particularly might be a problem is if you are using Mac OS 10.5
+(Leopard) to develop for iPhone OS 3.0. The default desktop compiler on Leopard
+is gcc-4.0, while the compiler for iPhone OS 3.0 is gcc-4.2. When compiling your
+application to run on the simulator, it is important that <b>scan-build</b>
+finds the correct version of <tt>gcc</tt>. Otherwise, you may see strange build
+errors that only happen when you run <tt>scan-build</tt>.
+
+<p><b>scan-build</b> provides the <tt>--use-cc</tt> and <tt>--use-c++</tt>
+options to hardwire which compiler scan-build should use for building your code.
+Note that although you are chiefly interested in analyzing your project, keep in
+mind that running the analyzer is intimately tied to the build, and not being
+able to compile your code means it won't get fully analyzed (if at all).</p>
+
+<p>If you aren't certain which compiler Xcode uses to build your project, try
+just running <tt>xcodebuild</tt> (without <b>scan-build</b>). You should see the
+full path to the compiler that Xcode is using, and use that as an argument to
+<tt>--use-cc</tt>.</p>
 
 </div>
 </div>
