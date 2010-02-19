@@ -175,10 +175,9 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
     MachineBasicBlock::iterator I = *i;
 
     // If call frames are not being included as part of the stack frame, and
-    // the target doesn't indicate otherwise, remove the call frame pseudos
-    // here. The sub/add sp instruction pairs are still inserted, but we don't
-    // need to track the SP adjustment for frame index elimination.
-    if (RegInfo->canSimplifyCallFramePseudos(Fn))
+    // there is no dynamic allocation (therefore referencing frame slots off
+    // sp), leave the pseudo ops alone. We'll eliminate them later.
+    if (RegInfo->hasReservedCallFrame(Fn) || RegInfo->hasFP(Fn))
       RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
   }
 }

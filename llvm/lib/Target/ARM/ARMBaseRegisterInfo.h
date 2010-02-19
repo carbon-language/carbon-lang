@@ -138,7 +138,6 @@ public:
   virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
 
   virtual bool hasReservedCallFrame(MachineFunction &MF) const;
-  virtual bool canSimplifyCallFramePseudos(MachineFunction &MF) const;
 
   virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                              MachineBasicBlock &MBB,

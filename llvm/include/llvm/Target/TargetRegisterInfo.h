@@ -587,17 +587,6 @@ public:
     return !hasFP(MF);
   }
 
-  /// canSimplifyCallFramePseudos - When possible, it's best to simplify the
-  /// call frame pseudo ops before doing frame index elimination. This is
-  /// possible only when frame index references between the pseudos won't
-  /// need adjusted for the call frame adjustments. Normally, that's true
-  /// if the function has a reserved call frame or a frame pointer. Some
-  /// targets (Thumb2, for example) may have more complicated criteria,
-  /// however, and can override this behavior.
-  virtual bool canSimplifyCallFramePseudos(MachineFunction &MF) const {
-    return hasReservedCallFrame(MF) || hasFP(MF);
-  }
-
   /// hasReservedSpillSlot - Return true if target has reserved a spill slot in
   /// the stack frame of the given function for the specified register. e.g. On
   /// x86, if the frame register is required, the first fixed stack object is
