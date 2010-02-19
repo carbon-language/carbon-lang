@@ -799,6 +799,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("Arguments");
   }
 
+  // Enable -mconstructor-aliases except on darwin, where we have to
+  // work around a linker bug;  see <rdar://problem/7651567>.
+  if (getToolChain().getTriple().getOS() != llvm::Triple::Darwin)
+    CmdArgs.push_back("-mconstructor-aliases");
+
   // This is a coarse approximation of what llvm-gcc actually does, both
   // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more
   // complicated ways.
