@@ -1278,6 +1278,30 @@ def MOVrx : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), Pseudo, IIC_iMOVsi,
                  "mov", "\t$dst, $src, rrx",
                  [(set GPR:$dst, (ARMrrx GPR:$src))]>, UnaryDP;
 
+//===----------------------------------------------------------------------===//
+//  Shift Instructions.
+//
+//  These are for disassembly only.  See also MOVs above.
+
+class AShI<string opc, bits<2> type>
+  : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src, am3offset:$offset), LdMiscFrm,
+         IIC_iMOVsr, opc, "\t$dst, $src, $offset", []>, UnaryDP {
+  let Inst{6-5} = type;
+  let Inst{25} = 0;
+}
+
+def LSL : AShI<"lsl", 0b00>;
+def LSR : AShI<"lsr", 0b01>;
+def ASR : AShI<"asr", 0b10>;
+def ROR : AShI<"ror", 0b11>;
+
+def RRX : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), LdMiscFrm, IIC_iMOVsr,
+               "rrx", "\t$dst, $src", []>, UnaryDP {
+  let Inst{25} = 0;
+  let Inst{11-7} = 0b00000;
+  let Inst{6-4} = 0b110;
+}
+
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.
 
