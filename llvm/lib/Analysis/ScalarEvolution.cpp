@@ -3703,6 +3703,19 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
   if (ICmpInst *ExitCondICmp = dyn_cast<ICmpInst>(ExitCond))
     return ComputeBackedgeTakenCountFromExitCondICmp(L, ExitCondICmp, TBB, FBB);
 
+  // Check for a constant condition. These are normally stripped out by
+  // SimplifyCFG, but ScalarEvolution may be used by a pass which wishes to
+  // preserve the CFG and is temporarily leaving constant conditions
+  // in place.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(ExitCond)) {
+    if (L->contains(FBB) == !CI->getZExtValue())
+      // The backedge is always taken.
+      return getCouldNotCompute();
+    else
+      // The backedge is never taken.
+      return getIntegerSCEV(0, CI->getType());
+  }
+
   // If it's not an integer or pointer comparison then compute it the hard way.
   return ComputeBackedgeTakenCountExhaustively(L, ExitCond, !L->contains(TBB));
 }

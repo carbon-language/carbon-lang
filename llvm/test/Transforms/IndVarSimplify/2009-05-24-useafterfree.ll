@@ -12,7 +12,7 @@ bb.nph1.preheader:		; preds = %4
 	br label %bb.nph1
 
 bb.nph1:		; preds = %.outer, %bb.nph1.preheader
-	br i1 false, label %bb.nph3.preheader, label %.outer
+	br i1 undef, label %bb.nph3.preheader, label %.outer
 
 bb.nph3.preheader:		; preds = %bb.nph1
 	br label %bb.nph3
@@ -31,7 +31,7 @@ bb.nph3:		; preds = %bb.nph3, %bb.nph3.preheader
 	br label %.outer
 
 .outer:		; preds = %.outer.loopexit, %bb.nph1
-	br i1 false, label %bb.nph1, label %.outer._crit_edge.loopexit
+	br i1 undef, label %bb.nph1, label %.outer._crit_edge.loopexit
 
 .outer._crit_edge.loopexit:		; preds = %.outer
 	br label %.outer._crit_edge

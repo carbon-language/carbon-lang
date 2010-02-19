@@ -16,7 +16,7 @@ bb2:		; preds = %bb2, %entry
 	%str2Ptr_addr.1 = phi i8* [ %str2Ptr_addr.0, %entry ], [ %1, %bb2 ]		; <i8*> [#uses=1]
 	%1 = getelementptr i8* %str2Ptr_addr.1, i64 1		; <i8*> [#uses=2]
 	%2 = icmp ult i8* %1, %inLastBytePtr		; <i1> [#uses=0]
-	br i1 false, label %bb2, label %return
+	br i1 undef, label %bb2, label %return
 
 return:		; preds = %bb2
 	ret void
@@ -32,7 +32,7 @@ bb2:		; preds = %bb2, %entry
 	%str2Ptr_addr.1 = phi i8* [ %str2Ptr_addr.0, %entry ], [ %1, %bb2 ]		; <i8*> [#uses=1]
 	%1 = getelementptr i8* %str2Ptr_addr.1, i64 1		; <i8*> [#uses=2]
 	%2 = icmp slt i8* %1, %inLastBytePtr		; <i1> [#uses=0]
-	br i1 false, label %bb2, label %return
+	br i1 undef, label %bb2, label %return
 
 return:		; preds = %bb2
 	ret void
