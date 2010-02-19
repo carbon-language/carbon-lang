@@ -1552,22 +1552,39 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       break;
     }
 
-    case VtableComponent::CK_CompleteDtorPointer: {
-      const CXXDestructorDecl *DD = Component.getDestructorDecl();
-      
-      Out << DD->getQualifiedNameAsString() << "() [complete]";
-      if (DD->isPure())
-        Out << " [pure]";
-
-      break;
-    }
-
+    case VtableComponent::CK_CompleteDtorPointer: 
     case VtableComponent::CK_DeletingDtorPointer: {
+      bool IsComplete = 
+        Component.getKind() == VtableComponent::CK_CompleteDtorPointer;
+      
       const CXXDestructorDecl *DD = Component.getDestructorDecl();
       
-      Out << DD->getQualifiedNameAsString() << "() [deleting]";
+      Out << DD->getQualifiedNameAsString();
+      if (IsComplete)
+        Out << "() [complete]";
+      else
+        Out << "() [deleting]";
+
       if (DD->isPure())
         Out << " [pure]";
+
+      // If this destructor has a 'this' pointer adjustment, dump it.
+      if (NextThisAdjustmentIndex < ThisAdjustments.size() && 
+          ThisAdjustments[NextThisAdjustmentIndex].first == I) {
+        const ThisAdjustment Adjustment = 
+          ThisAdjustments[NextThisAdjustmentIndex].second;
+        
+        Out << "\n       [this adjustment: ";
+        Out << Adjustment.NonVirtual << " non-virtual";
+
+        if (Adjustment.VCallOffsetOffset)
+          Out << ", " << Adjustment.VCallOffsetOffset << " vcall offset offset";
+
+        Out << ']';
+        
+        NextThisAdjustmentIndex++;
+      }
+
 
       break;
     }
