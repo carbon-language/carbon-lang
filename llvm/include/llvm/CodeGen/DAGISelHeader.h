@@ -760,6 +760,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     const MatchScope &LastScope = MatchScopes.back();
     RecordedNodes.resize(LastScope.NumRecordedNodes);
     NodeStack.resize(LastScope.NodeStackSize);
+    N = NodeStack.back();
     
     if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
       MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
