@@ -754,7 +754,7 @@ static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) 
     return;
   }
 
-  if (!isFunctionOrMethod(D)) {
+  if (!isFunction(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
     return;
