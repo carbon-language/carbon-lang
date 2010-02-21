@@ -82,7 +82,7 @@ public:
   MatcherTableEmitter() {}
 
   unsigned EmitMatcherList(const MatcherNode *N, unsigned Indent,
-                           formatted_raw_ostream &OS);
+                           unsigned StartIdx, formatted_raw_ostream &OS);
   
   void EmitPredicateFunctions(formatted_raw_ostream &OS);
 private:
@@ -324,7 +324,7 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
 
 /// EmitMatcherList - Emit the bytes for the specified matcher subtree.
 unsigned MatcherTableEmitter::
-EmitMatcherList(const MatcherNode *N, unsigned Indent,
+EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
                 formatted_raw_ostream &OS) {
   unsigned Size = 0;
   while (N) {
@@ -339,7 +339,7 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent,
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
         NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
-                                   Indent+1, FOS);
+                                   Indent+1, CurrentIdx+2, FOS);
       }
       
       if (NextSize > 255) {
@@ -348,17 +348,21 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent,
         // FIXME: exit(1);
       }
       
+      OS << "/*" << CurrentIdx << "*/";
       OS.PadToColumn(Indent*2);
       OS << "OPC_Push, " << NextSize << ",\n";
       OS << TmpBuf.str();
       
-      Size += 2 + NextSize;
-      
+      Size += 2+NextSize;
+      CurrentIdx += 2+NextSize;
       N = PMN->getFailure();
       continue;
     }
   
-    Size += EmitMatcher(N, Indent, OS);
+    OS << "/*" << CurrentIdx << "*/";
+    unsigned MatcherSize = EmitMatcher(N, Indent, OS);
+    Size += MatcherSize;
+    CurrentIdx += MatcherSize;
     
     // If there are other nodes in this list, iterate to them, otherwise we're
     // done.
@@ -444,7 +448,7 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   OS << "  // Opcodes are emitted as 2 bytes, TARGET_OPCODE handles this.\n";
   OS << "  #define TARGET_OPCODE(X) X & 255, unsigned(X) >> 8\n";
   OS << "  static const unsigned char MatcherTable[] = {\n";
-  unsigned TotalSize = MatcherEmitter.EmitMatcherList(Matcher, 2, OS);
+  unsigned TotalSize = MatcherEmitter.EmitMatcherList(Matcher, 5, 0, OS);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
   OS << "  #undef TARGET_OPCODE\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
