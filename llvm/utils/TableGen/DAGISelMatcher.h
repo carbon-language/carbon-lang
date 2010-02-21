@@ -70,7 +70,7 @@ public:
     EmitCopyToReg,        // Emit a copytoreg into a physreg.
     EmitNode,             // Create a DAG node
     EmitNodeXForm,        // Run a SDNodeXForm
-    PatternMarker         // Comment for printing.
+    CompleteMatch         // Finish a match and update the results.
   };
   const KindTy Kind;
 
@@ -601,19 +601,25 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
-
-/// PatternMarkerMatcherNode - This prints as a comment indicating the source
-/// and dest patterns.
-class PatternMarkerMatcherNode : public MatcherNode {
+  
+/// CompleteMatchMatcherNode - Complete a match by replacing the results of the
+/// pattern with the newly generated nodes.  This also prints a comment
+/// indicating the source and dest patterns.
+class CompleteMatchMatcherNode : public MatcherNode {
+  SmallVector<unsigned, 2> Results;
   const PatternToMatch &Pattern;
 public:
-  PatternMarkerMatcherNode(const PatternToMatch &pattern)
-  : MatcherNode(PatternMarker), Pattern(pattern) {}
-  
+  CompleteMatchMatcherNode(const unsigned *results, unsigned numresults,
+                           const PatternToMatch &pattern)
+  : MatcherNode(CompleteMatch), Results(results, results+numresults),
+    Pattern(pattern) {}
+
+  unsigned getNumResults() const { return Results.size(); }
+  unsigned getResult(unsigned R) const { return Results[R]; }
   const PatternToMatch &getPattern() const { return Pattern; }
   
   static inline bool classof(const MatcherNode *N) {
-    return N->getKind() == PatternMarker;
+    return N->getKind() == CompleteMatch;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;

@@ -723,8 +723,8 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   // The newly emitted node gets recorded.
   // FIXME2: This should record all of the results except the (implicit) one.
-  OutputOps.push_back(NextRecordedOperandNo++);
-  
+  if (ResultVTs[0] != MVT::Other)
+    OutputOps.push_back(NextRecordedOperandNo++);
   
   // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
   // variants.  Call MorphNodeTo instead of SelectNodeTo.
@@ -776,11 +776,11 @@ void MatcherGen::EmitResultCode() {
   // We know that the resulting pattern has exactly one result/
   // FIXME2: why?  what about something like (set a,b,c, (complexpat))
   // FIXME2: Implicit results should be pushed here I guess?
-  assert(Ops.size() == 1);
+  assert(Ops.size() <= 1);
   // FIXME: Handle Ops.
   // FIXME: Handle (set EAX, (foo)) but not (implicit EFLAGS)
   
-  AddMatcherNode(new PatternMarkerMatcherNode(Pattern));
+  AddMatcherNode(new CompleteMatchMatcherNode(Ops.data(), Ops.size(), Pattern));
 }
 
 

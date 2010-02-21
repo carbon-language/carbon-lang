@@ -101,7 +101,8 @@ void SelectRoot(SelectionDAG &DAG) {
   // a reference to the root node, preventing it from being deleted,
   // and tracking any changes of the root.
   HandleSDNode Dummy(CurDAG->getRoot());
-  ISelPosition = llvm::next(SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode()));
+  ISelPosition = SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode());
+  ++ISelPosition;
 
   // The AllNodes list is now topological-sorted. Visit the
   // nodes by starting at the end of the list (the root of the
@@ -114,21 +115,15 @@ void SelectRoot(SelectionDAG &DAG) {
     // makes it theoretically possible to disable the DAGCombiner.
     if (Node->use_empty())
       continue;
-#if 0
-    DAG.setSubgraphColor(Node, "red");
-#endif
+
     SDNode *ResNode = Select(Node);
     // If node should not be replaced, continue with the next one.
     if (ResNode == Node)
       continue;
     // Replace node.
-    if (ResNode) {
-#if 0
-      DAG.setSubgraphColor(ResNode, "yellow");
-      DAG.setSubgraphColor(ResNode, "black");
-#endif
+    if (ResNode)
       ReplaceUses(Node, ResNode);
-    }
+
     // If after the replacement this node is not used any more,
     // remove this dead node.
     if (Node->use_empty()) { // Don't delete EntryToken, etc.
@@ -232,7 +227,8 @@ enum BuiltinOpcodes {
   OPC_EmitMergeInputChains,
   OPC_EmitCopyToReg,
   OPC_EmitNodeXForm,
-  OPC_EmitNode
+  OPC_EmitNode,
+  OPC_CompleteMatch
 };
 
 enum {
@@ -572,6 +568,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (NumChains == 1) {
         unsigned RecNo = MatcherTable[MatcherIndex++];
         assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+        ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
         InputChain = RecordedNodes[RecNo].getOperand(0);
         assert(InputChain.getValueType() == MVT::Other && "Not a chain");
         continue;
@@ -706,6 +703,49 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         Res->setMemRefs(MemRefs, MemRefs + MatchedMemRefs.size());
       }
       continue;
+    }
+      
+    case OPC_CompleteMatch: {
+      // The match has been completed, and any new nodes (if any) have been
+      // created.  Patch up references to the matched dag to use the newly
+      // created nodes.
+      unsigned NumResults = MatcherTable[MatcherIndex++];
+
+      for (unsigned i = 0; i != NumResults; ++i) {
+        unsigned ResSlot = MatcherTable[MatcherIndex++];
+        assert(ResSlot < RecordedNodes.size() && "Invalid CheckSame");
+        SDValue Res = RecordedNodes[ResSlot];
+        assert(NodeToMatch->getValueType(i) == Res.getValueType() &&
+               "invalid replacement");
+        ReplaceUses(SDValue(NodeToMatch, i), Res);
+      }
+      
+      // Now that all the normal results are replaced, we replace the chain and
+      // flag results if present.
+      if (!ChainNodesMatched.empty()) {
+        assert(InputChain.getNode() != 0 &&
+               "Matched input chains but didn't produce a chain");
+        // Loop over all of the nodes we matched that produced a chain result.
+        // Replace all the chain results with the final chain we ended up with.
+        for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
+          SDNode *ChainNode = ChainNodesMatched[i];
+          SDValue ChainVal = SDValue(ChainNode, ChainNode->getNumValues()-1);
+          if (ChainVal.getValueType() == MVT::Flag)
+            ChainVal = ChainVal.getValue(ChainVal->getNumValues()-2);
+          assert(ChainVal.getValueType() == MVT::Other && "Not a chain?");
+          ReplaceUses(ChainVal, InputChain);
+        }
+      }
+      // If the root node produces a flag, make sure to replace its flag
+      // result with the resultant flag.
+      if (NodeToMatch->getValueType(NodeToMatch->getNumValues()-1) ==
+            MVT::Flag)
+        ReplaceUses(SDValue(NodeToMatch, NodeToMatch->getNumValues()-1),
+                    InputFlag);
+      
+      // FIXME: We just return here, which interacts correctly with SelectRoot
+      // above.  We should fix this to not return an SDNode* anymore.
+      return 0;
     }
     }
     

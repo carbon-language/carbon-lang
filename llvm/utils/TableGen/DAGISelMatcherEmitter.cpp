@@ -305,12 +305,18 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
     OS << '\n';
     return 5+EN->getNumVTs()+EN->getNumOperands();
   }
-  case MatcherNode::PatternMarker:
-    OS << "// Src: "
-    << *cast<PatternMarkerMatcherNode>(N)->getPattern().getSrcPattern() << '\n';
-    OS.PadToColumn(Indent*2) << "// Dst: "
-    << *cast<PatternMarkerMatcherNode>(N)->getPattern().getDstPattern() << '\n';
+  case MatcherNode::CompleteMatch: {
+    const CompleteMatchMatcherNode *CM = cast<CompleteMatchMatcherNode>(N);
+    OS << "OPC_CompleteMatch, " << CM->getNumResults() << ", ";
+    for (unsigned i = 0, e = CM->getNumResults(); i != e; ++i)
+      OS << CM->getResult(i) << ", ";
+    OS << '\n';
+    OS.PadToColumn(Indent*2) << "// Src: "
+      << *CM->getPattern().getSrcPattern() << '\n';
+    OS.PadToColumn(Indent*2) << "// Dst: " 
+      << *CM->getPattern().getDstPattern() << '\n';
     return 0;
+  }
   }
   assert(0 && "Unreachable");
   return 0;

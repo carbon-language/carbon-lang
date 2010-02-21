@@ -180,7 +180,8 @@ void EmitNodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   printNext(OS, indent);
 }
 
-void PatternMarkerMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+void CompleteMatchMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "CompleteMatch <todo args>\n";
   OS.indent(indent) << "Src = " << *Pattern.getSrcPattern() << "\n";
   OS.indent(indent) << "Dst = " << *Pattern.getDstPattern() << "\n";
   printNext(OS, indent);
