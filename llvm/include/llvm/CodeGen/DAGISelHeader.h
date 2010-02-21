@@ -406,10 +406,16 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckOpcode:
       if (N->getOpcode() != MatcherTable[MatcherIndex++]) break;
       continue;
-    case OPC_CheckType:
-      if (N.getValueType() !=
-          (MVT::SimpleValueType)MatcherTable[MatcherIndex++]) break;
+    case OPC_CheckType: {
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      if (N.getValueType() != VT) {
+        // Handle the case when VT is iPTR.
+        if (VT != MVT::iPTR || N.getValueType() != TLI.getPointerTy())
+          break;
+      }
       continue;
+    }
     case OPC_CheckCondCode:
       if (cast<CondCodeSDNode>(N)->get() !=
           (ISD::CondCode)MatcherTable[MatcherIndex++]) break;
