@@ -49,7 +49,6 @@
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
-#include <sstream>
 using namespace llvm;
 
 extern "C" void LLVMInitializeCBackendTarget() { 
@@ -153,26 +152,16 @@ namespace {
       return false;
     }
 
-    raw_ostream &printType(formatted_raw_ostream &Out,
-                           const Type *Ty, 
+    raw_ostream &printType(raw_ostream &Out, const Type *Ty,
                            bool isSigned = false,
                            const std::string &VariableName = "",
                            bool IgnoreName = false,
                            const AttrListPtr &PAL = AttrListPtr());
-    std::ostream &printType(std::ostream &Out, const Type *Ty, 
-                           bool isSigned = false,
-                           const std::string &VariableName = "",
-                           bool IgnoreName = false,
-                           const AttrListPtr &PAL = AttrListPtr());
-    raw_ostream &printSimpleType(formatted_raw_ostream &Out,
-                                 const Type *Ty, 
-                                 bool isSigned, 
-                                 const std::string &NameSoFar = "");
-    std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
-                                 bool isSigned, 
+    raw_ostream &printSimpleType(raw_ostream &Out, const Type *Ty,
+                                 bool isSigned,
                                  const std::string &NameSoFar = "");
 
-    void printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
+    void printStructReturnPointerFunctionType(raw_ostream &Out,
                                               const AttrListPtr &PAL,
                                               const PointerType *Ty);
 
@@ -454,11 +443,12 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
 /// printStructReturnPointerFunctionType - This is like printType for a struct
 /// return type, except, instead of printing the type as void (*)(Struct*, ...)
 /// print it as "Struct (*)(...)", for struct return functions.
-void CWriter::printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
+void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
                                                    const AttrListPtr &PAL,
                                                    const PointerType *TheTy) {
   const FunctionType *FTy = cast<FunctionType>(TheTy->getElementType());
-  std::stringstream FunctionInnards;
+  std::string tstr;
+  raw_string_ostream FunctionInnards(tstr);
   FunctionInnards << " (*) (";
   bool PrintedType = false;
 
@@ -484,61 +474,12 @@ void CWriter::printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
     FunctionInnards << "void";
   }
   FunctionInnards << ')';
-  std::string tstr = FunctionInnards.str();
   printType(Out, RetTy, 
-      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), tstr);
+      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), FunctionInnards.str());
 }
 
 raw_ostream &
-CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
-                         bool isSigned,
-                         const std::string &NameSoFar) {
-  assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) && 
-         "Invalid type for printSimpleType");
-  switch (Ty->getTypeID()) {
-  case Type::VoidTyID:   return Out << "void " << NameSoFar;
-  case Type::IntegerTyID: {
-    unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth();
-    if (NumBits == 1) 
-      return Out << "bool " << NameSoFar;
-    else if (NumBits <= 8)
-      return Out << (isSigned?"signed":"unsigned") << " char " << NameSoFar;
-    else if (NumBits <= 16)
-      return Out << (isSigned?"signed":"unsigned") << " short " << NameSoFar;
-    else if (NumBits <= 32)
-      return Out << (isSigned?"signed":"unsigned") << " int " << NameSoFar;
-    else if (NumBits <= 64)
-      return Out << (isSigned?"signed":"unsigned") << " long long "<< NameSoFar;
-    else { 
-      assert(NumBits <= 128 && "Bit widths > 128 not implemented yet");
-      return Out << (isSigned?"llvmInt128":"llvmUInt128") << " " << NameSoFar;
-    }
-  }
-  case Type::FloatTyID:  return Out << "float "   << NameSoFar;
-  case Type::DoubleTyID: return Out << "double "  << NameSoFar;
-  // Lacking emulation of FP80 on PPC, etc., we assume whichever of these is
-  // present matches host 'long double'.
-  case Type::X86_FP80TyID:
-  case Type::PPC_FP128TyID:
-  case Type::FP128TyID:  return Out << "long double " << NameSoFar;
-      
-  case Type::VectorTyID: {
-    const VectorType *VTy = cast<VectorType>(Ty);
-    return printSimpleType(Out, VTy->getElementType(), isSigned,
-                     " __attribute__((vector_size(" +
-                     utostr(TD->getTypeAllocSize(VTy)) + " ))) " + NameSoFar);
-  }
-    
-  default:
-#ifndef NDEBUG
-    errs() << "Unknown primitive type: " << *Ty << "\n";
-#endif
-    llvm_unreachable(0);
-  }
-}
-
-std::ostream &
-CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
+CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
                          const std::string &NameSoFar) {
   assert((Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) && 
          "Invalid type for printSimpleType");
@@ -587,8 +528,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
-raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
-                                const Type *Ty,
+raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
                                 bool isSigned, const std::string &NameSoFar,
                                 bool IgnoreName, const AttrListPtr &PAL) {
   if (Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) {
@@ -605,7 +545,8 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
-    std::stringstream FunctionInnards;
+    std::string tstr;
+    raw_string_ostream FunctionInnards(tstr);
     FunctionInnards << " (" << NameSoFar << ") (";
     unsigned Idx = 1;
     for (FunctionType::param_iterator I = FTy->param_begin(),
@@ -628,112 +569,8 @@ raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
       FunctionInnards << "void";
     }
     FunctionInnards << ')';
-    std::string tstr = FunctionInnards.str();
     printType(Out, FTy->getReturnType(), 
-      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), tstr);
-    return Out;
-  }
-  case Type::StructTyID: {
-    const StructType *STy = cast<StructType>(Ty);
-    Out << NameSoFar + " {\n";
-    unsigned Idx = 0;
-    for (StructType::element_iterator I = STy->element_begin(),
-           E = STy->element_end(); I != E; ++I) {
-      Out << "  ";
-      printType(Out, *I, false, "field" + utostr(Idx++));
-      Out << ";\n";
-    }
-    Out << '}';
-    if (STy->isPacked())
-      Out << " __attribute__ ((packed))";
-    return Out;
-  }
-
-  case Type::PointerTyID: {
-    const PointerType *PTy = cast<PointerType>(Ty);
-    std::string ptrName = "*" + NameSoFar;
-
-    if (PTy->getElementType()->isArrayTy() ||
-        PTy->getElementType()->isVectorTy())
-      ptrName = "(" + ptrName + ")";
-
-    if (!PAL.isEmpty())
-      // Must be a function ptr cast!
-      return printType(Out, PTy->getElementType(), false, ptrName, true, PAL);
-    return printType(Out, PTy->getElementType(), false, ptrName);
-  }
-
-  case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<ArrayType>(Ty);
-    unsigned NumElements = ATy->getNumElements();
-    if (NumElements == 0) NumElements = 1;
-    // Arrays are wrapped in structs to allow them to have normal
-    // value semantics (avoiding the array "decay").
-    Out << NameSoFar << " { ";
-    printType(Out, ATy->getElementType(), false,
-              "array[" + utostr(NumElements) + "]");
-    return Out << "; }";
-  }
-
-  case Type::OpaqueTyID: {
-    std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
-    assert(TypeNames.find(Ty) == TypeNames.end());
-    TypeNames[Ty] = TyName;
-    return Out << TyName << ' ' << NameSoFar;
-  }
-  default:
-    llvm_unreachable("Unhandled case in getTypeProps!");
-  }
-
-  return Out;
-}
-
-// Pass the Type* and the variable name and this prints out the variable
-// declaration.
-//
-std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
-                                 bool isSigned, const std::string &NameSoFar,
-                                 bool IgnoreName, const AttrListPtr &PAL) {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || Ty->isVectorTy()) {
-    printSimpleType(Out, Ty, isSigned, NameSoFar);
-    return Out;
-  }
-
-  // Check to see if the type is named.
-  if (!IgnoreName || Ty->isOpaqueTy()) {
-    std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-    if (I != TypeNames.end()) return Out << I->second << ' ' << NameSoFar;
-  }
-
-  switch (Ty->getTypeID()) {
-  case Type::FunctionTyID: {
-    const FunctionType *FTy = cast<FunctionType>(Ty);
-    std::stringstream FunctionInnards;
-    FunctionInnards << " (" << NameSoFar << ") (";
-    unsigned Idx = 1;
-    for (FunctionType::param_iterator I = FTy->param_begin(),
-           E = FTy->param_end(); I != E; ++I) {
-      const Type *ArgTy = *I;
-      if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-        assert(ArgTy->isPointerTy());
-        ArgTy = cast<PointerType>(ArgTy)->getElementType();
-      }
-      if (I != FTy->param_begin())
-        FunctionInnards << ", ";
-      printType(FunctionInnards, ArgTy,
-        /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt), "");
-      ++Idx;
-    }
-    if (FTy->isVarArg()) {
-      if (FTy->getNumParams())
-        FunctionInnards << ", ...";
-    } else if (!FTy->getNumParams()) {
-      FunctionInnards << "void";
-    }
-    FunctionInnards << ')';
-    std::string tstr = FunctionInnards.str();
-    printType(Out, FTy->getReturnType(), 
-      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), tstr);
+      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt), FunctionInnards.str());
     return Out;
   }
   case Type::StructTyID: {
@@ -2328,7 +2165,8 @@ void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
   const AttrListPtr &PAL = F->getAttributes();
 
-  std::stringstream FunctionInnards;
+  std::string tstr;
+  raw_string_ostream FunctionInnards(tstr);
 
   // Print out the name...
   FunctionInnards << GetValueName(F) << '(';
