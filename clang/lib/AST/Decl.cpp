@@ -680,12 +680,12 @@ const Expr *VarDecl::getAnyInitializer(const VarDecl *&D) const {
 }
 
 bool VarDecl::isOutOfLine() const {
-  if (!isStaticDataMember())
-    return false;
-  
   if (Decl::isOutOfLine())
     return true;
-  
+
+  if (!isStaticDataMember())
+    return false;
+
   // If this static data member was instantiated from a static data member of
   // a class template, check whether that static data member was defined 
   // out-of-line.

@@ -331,7 +331,7 @@ public:
     return const_cast<Decl*>(this)->getLexicalDeclContext();
   }
 
-  bool isOutOfLine() const {
+  virtual bool isOutOfLine() const {
     return getLexicalDeclContext() != getDeclContext();
   }
 

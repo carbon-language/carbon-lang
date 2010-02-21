@@ -436,14 +436,15 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   if (AddToContext)
     CurContext->addDecl(D);
 
-  // Out-of-line function and variable definitions should not be pushed into
-  // scope.
-  if ((isa<FunctionTemplateDecl>(D) &&
-       cast<FunctionTemplateDecl>(D)->getTemplatedDecl()->isOutOfLine()) ||
-      (isa<FunctionDecl>(D) &&
-       (cast<FunctionDecl>(D)->isFunctionTemplateSpecialization() ||
-        cast<FunctionDecl>(D)->isOutOfLine())) ||
-      (isa<VarDecl>(D) && cast<VarDecl>(D)->isOutOfLine()))
+  // Out-of-line definitions shouldn't be pushed into scope in C++.
+  // Out-of-line variable and function definitions shouldn't even in C.
+  if ((getLangOptions().CPlusPlus || isa<VarDecl>(D) || isa<FunctionDecl>(D)) &&
+      D->isOutOfLine())
+    return;
+
+  // Template instantiations should also not be pushed into scope.
+  if (isa<FunctionDecl>(D) &&
+      cast<FunctionDecl>(D)->isFunctionTemplateSpecialization())
     return;
 
   // If this replaces anything in the current scope, 

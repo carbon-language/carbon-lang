@@ -561,7 +561,7 @@ public:
 
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a static data member.
-  bool isOutOfLine() const;
+  virtual bool isOutOfLine() const;
 
   /// \brief If this is a static data member, find its out-of-line definition.
   VarDecl *getOutOfLineDefinition();
@@ -1306,7 +1306,7 @@ public:
                        
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a member function.
-  bool isOutOfLine() const;
+  virtual bool isOutOfLine() const;
                        
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
