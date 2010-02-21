@@ -420,11 +420,16 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (cast<CondCodeSDNode>(N)->get() !=
           (ISD::CondCode)MatcherTable[MatcherIndex++]) break;
       continue;
-    case OPC_CheckValueType:
-      if (cast<VTSDNode>(N)->getVT() !=
-          (MVT::SimpleValueType)MatcherTable[MatcherIndex++]) break;
+    case OPC_CheckValueType: {
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      if (cast<VTSDNode>(N)->getVT() != VT) {
+        // Handle the case when VT is iPTR.
+        if (VT != MVT::iPTR || cast<VTSDNode>(N)->getVT() != TLI.getPointerTy())
+          break;
+      }
       continue;
-
+    }
     case OPC_CheckInteger1:
       if (CheckInteger(N, GetInt1(MatcherTable, MatcherIndex))) break;
       continue;
@@ -643,8 +648,12 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned NumVTs = MatcherTable[MatcherIndex++];
       assert(NumVTs != 0 && "Invalid node result");
       SmallVector<EVT, 4> VTs;
-      for (unsigned i = 0; i != NumVTs; ++i)
-        VTs.push_back((MVT::SimpleValueType)MatcherTable[MatcherIndex++]);
+      for (unsigned i = 0; i != NumVTs; ++i) {
+        MVT::SimpleValueType VT =
+          (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+        if (VT == MVT::iPTR) VT = TLI.getPointerTy().SimpleTy;
+        VTs.push_back(VT);
+      }
       
       // FIXME: Use faster version for the common 'one VT' case?
       SDVTList VTList = CurDAG->getVTList(VTs.data(), VTs.size());
