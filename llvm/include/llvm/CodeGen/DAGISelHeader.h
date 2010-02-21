@@ -525,11 +525,10 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     }
         
     case OPC_EmitRegister: {
-      unsigned RegNo = MatcherTable[MatcherIndex++];
       MVT::SimpleValueType VT =
-      (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      SDValue Reg = CurDAG->getRegister(RegNo, VT);
-      RecordedNodes.push_back(N);
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      unsigned RegNo = MatcherTable[MatcherIndex++];
+      RecordedNodes.push_back(CurDAG->getRegister(RegNo, VT));
       continue;
     }
         
@@ -640,6 +639,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       SmallVector<EVT, 4> VTs;
       for (unsigned i = 0; i != NumVTs; ++i)
         VTs.push_back((MVT::SimpleValueType)MatcherTable[MatcherIndex++]);
+      
+      // FIXME: Use faster version for the common 'one VT' case?
       SDVTList VTList = CurDAG->getVTList(VTs.data(), VTs.size());
 
       // Get the operand list.
