@@ -366,7 +366,7 @@ def ADDE8   : XOForm_1<31, 138, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                        [(set G8RC:$rT, (adde G8RC:$rA, G8RC:$rB))]>;
 def ADDME8  : XOForm_3<31, 234, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "addme $rT, $rA", IntGeneral,
-                       [(set G8RC:$rT, (adde G8RC:$rA, immAllOnes))]>;
+                       [(set G8RC:$rT, (adde G8RC:$rA, -1))]>;
 def ADDZE8  : XOForm_3<31, 202, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "addze $rT, $rA", IntGeneral,
                        [(set G8RC:$rT, (adde G8RC:$rA, 0))]>;
@@ -375,7 +375,7 @@ def SUBFE8  : XOForm_1<31, 136, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                        [(set G8RC:$rT, (sube G8RC:$rB, G8RC:$rA))]>;
 def SUBFME8 : XOForm_3<31, 232, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "subfme $rT, $rA", IntGeneral,
-                       [(set G8RC:$rT, (sube immAllOnes, G8RC:$rA))]>;
+                       [(set G8RC:$rT, (sube -1, G8RC:$rA))]>;
 def SUBFZE8 : XOForm_3<31, 200, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "subfze $rT, $rA", IntGeneral,
                        [(set G8RC:$rT, (sube 0, G8RC:$rA))]>;

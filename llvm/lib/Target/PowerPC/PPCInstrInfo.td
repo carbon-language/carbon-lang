@@ -1215,7 +1215,7 @@ def ADDE  : XOForm_1<31, 138, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                       [(set GPRC:$rT, (adde GPRC:$rA, GPRC:$rB))]>;
 def ADDME  : XOForm_3<31, 234, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "addme $rT, $rA", IntGeneral,
-                      [(set GPRC:$rT, (adde GPRC:$rA, immAllOnes))]>;
+                      [(set GPRC:$rT, (adde GPRC:$rA, -1))]>;
 def ADDZE  : XOForm_3<31, 202, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "addze $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (adde GPRC:$rA, 0))]>;
@@ -1224,7 +1224,7 @@ def SUBFE : XOForm_1<31, 136, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                       [(set GPRC:$rT, (sube GPRC:$rB, GPRC:$rA))]>;
 def SUBFME : XOForm_3<31, 232, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "subfme $rT, $rA", IntGeneral,
-                      [(set GPRC:$rT, (sube immAllOnes, GPRC:$rA))]>;
+                      [(set GPRC:$rT, (sube -1, GPRC:$rA))]>;
 def SUBFZE : XOForm_3<31, 200, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "subfze $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (sube 0, GPRC:$rA))]>;
