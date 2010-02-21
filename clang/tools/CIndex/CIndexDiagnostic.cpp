@@ -116,6 +116,13 @@ void clang_displayDiagnostic(CXDiagnostic Diagnostic, FILE *Out,
   else
     fprintf(Out, "<no diagnostic text>\n");
   clang_disposeString(Text);
+
+#ifdef LLVM_ON_WIN32
+  // On Windows, force a flush, since there may be multiple copies of
+  // stderr and stdout in the file system, all with different buffers
+  // but writing to the same device.
+  fflush(Out);
+#endif
 }
 
 unsigned clang_defaultDiagnosticDisplayOptions() {
