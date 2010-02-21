@@ -4136,7 +4136,11 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
         << "dllimport";
       FD->setInvalidDecl();
       return DeclPtrTy::make(FD);
-    } else {
+    }
+
+    // Visual C++ appears to not think this is an issue, so only issue
+    // a warning when Microsoft extensions are disabled.
+    if (!LangOpts.Microsoft) {
       // If a symbol previously declared dllimport is later defined, the
       // attribute is ignored in subsequent references, and a warning is
       // emitted.
