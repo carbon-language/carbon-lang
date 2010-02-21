@@ -496,7 +496,7 @@ def immAllZerosV_bc: PatLeaf<(bitconvert), [{
 
 
 // Other helper fragments.
-def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
+def not  : PatFrag<(ops node:$in), (xor node:$in, -1)>;
 def vnot : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV)>;
 def vnot_conv : PatFrag<(ops node:$in), (xor node:$in, immAllOnesV_bc)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
