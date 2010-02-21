@@ -141,7 +141,6 @@ struct PatternSortingPredicate {
 
   typedef std::pair<unsigned, std::string> CodeLine;
   typedef std::vector<CodeLine> CodeList;
-  typedef std::vector<std::pair<const PatternToMatch*, CodeList> > PatternList;
 
   bool operator()(const std::pair<const PatternToMatch*, CodeList> &LHSPair,
                   const std::pair<const PatternToMatch*, CodeList> &RHSPair) {
@@ -1889,6 +1888,36 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "}\n\n";
 }
 
+namespace {
+// PatternSortingPredicate - return true if we prefer to match LHS before RHS.
+// In particular, we want to match maximal patterns first and lowest cost within
+// a particular complexity first.
+struct PatternSortingPredicate2 {
+  PatternSortingPredicate2(CodeGenDAGPatterns &cgp) : CGP(cgp) {}
+  CodeGenDAGPatterns &CGP;
+  
+  bool operator()(const PatternToMatch *LHS,
+                  const PatternToMatch *RHS) {
+    unsigned LHSSize = getPatternSize(LHS->getSrcPattern(), CGP);
+    unsigned RHSSize = getPatternSize(RHS->getSrcPattern(), CGP);
+    LHSSize += LHS->getAddedComplexity();
+    RHSSize += RHS->getAddedComplexity();
+    if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
+    if (LHSSize < RHSSize) return false;
+    
+    // If the patterns have equal complexity, compare generated instruction cost
+    unsigned LHSCost = getResultPatternCost(LHS->getDstPattern(), CGP);
+    unsigned RHSCost = getResultPatternCost(RHS->getDstPattern(), CGP);
+    if (LHSCost < RHSCost) return true;
+    if (LHSCost > RHSCost) return false;
+    
+    return getResultPatternSize(LHS->getDstPattern(), CGP) <
+           getResultPatternSize(RHS->getDstPattern(), CGP);
+  }
+};
+}
+
+
 void DAGISelEmitter::run(raw_ostream &OS) {
   EmitSourceFileHeader("DAG Instruction Selector for the " +
                        CGP.getTargetInfo().getName() + " target", OS);
@@ -1919,11 +1948,27 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   
 #if 0
   MatcherNode *Matcher = 0;
-  // Walk the patterns backwards, building a matcher for each and adding it to
-  // the matcher for the whole target.
-  for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
-       E = CGP.ptm_end(); I != E;) {
-    const PatternToMatch &Pattern = *--E;
+
+  // Add all the patterns to a temporary list so we can sort them.
+  std::vector<const PatternToMatch*> Patterns;
+  for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(), E = CGP.ptm_end();
+       I != E; ++I)
+    Patterns.push_back(&*I);
+
+  // We want to process the matches in order of minimal cost.  Sort the patterns
+  // so the least cost one is at the start.
+  // FIXME: Eliminate "PatternSortingPredicate" and rename.
+  std::stable_sort(Patterns.begin(), Patterns.end(),
+                   PatternSortingPredicate2(CGP));
+  
+  
+  // Walk the patterns backwards (since we append to the front of the generated
+  // code), building a matcher for each and adding it to the matcher for the
+  // whole target.
+  while (!Patterns.empty()) {
+    const PatternToMatch &Pattern = *Patterns.back();
+    Patterns.pop_back();
+    
     MatcherNode *N = ConvertPatternToMatcher(Pattern, CGP);
     
     if (Matcher == 0)
@@ -1933,8 +1978,8 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   }
 
   // OptimizeMatcher(Matcher);
-  EmitMatcherTable(Matcher, OS);
   //Matcher->dump();
+  EmitMatcherTable(Matcher, OS);
   delete Matcher;
 #endif
 }
