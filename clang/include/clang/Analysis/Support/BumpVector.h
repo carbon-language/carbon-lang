@@ -23,6 +23,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include <algorithm>
+#include <string.h>
 
 namespace clang {
   
