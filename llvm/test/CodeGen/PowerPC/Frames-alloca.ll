@@ -24,7 +24,7 @@
 ; CHECK-PPC64-NOFP: ld r1, 0(r1)
 ; CHECK-PPC64-NOFP: ld r31, -8(r1)
 
-define i32* @f1(i32 %n) {
+define i32* @f1(i32 %n) nounwind {
 	%tmp = alloca i32, i32 %n		; <i32*> [#uses=1]
 	ret i32* %tmp
 }
