@@ -26,6 +26,7 @@
 namespace llvm {
   class AsmPrinter;
   class Module;
+  class MCAssembler;
   class MCAsmInfo;
   class MCAsmParser;
   class MCCodeEmitter;
@@ -33,6 +34,7 @@ namespace llvm {
   class MCDisassembler;
   class MCInstPrinter;
   class MCStreamer;
+  class TargetAsmBackend;
   class TargetAsmLexer;
   class TargetAsmParser;
   class TargetMachine;
@@ -63,6 +65,8 @@ namespace llvm {
                                             MCContext &Ctx,
                                             MCStreamer &Streamer,
                                             const MCAsmInfo *MAI);
+    typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
+                                                  MCAssembler &A);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCAsmInfo &MAI);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P);
@@ -98,6 +102,10 @@ namespace llvm {
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
     TargetMachineCtorTy TargetMachineCtorFn;
+
+    /// AsmBackendCtorFn - Construction function for this target's
+    /// TargetAsmBackend, if registered.
+    AsmBackendCtorTy AsmBackendCtorFn;
 
     /// AsmLexerCtorFn - Construction function for this target's TargetAsmLexer,
     /// if registered.
@@ -146,6 +154,9 @@ namespace llvm {
     /// hasTargetMachine - Check if this target supports code generation.
     bool hasTargetMachine() const { return TargetMachineCtorFn != 0; }
 
+    /// hasAsmBackend - Check if this target supports .o generation.
+    bool hasAsmBackend() const { return AsmBackendCtorFn != 0; }
+
     /// hasAsmLexer - Check if this target supports .s lexing.
     bool hasAsmLexer() const { return AsmLexerCtorFn != 0; }
 
@@ -193,6 +204,15 @@ namespace llvm {
       if (!TargetMachineCtorFn)
         return 0;
       return TargetMachineCtorFn(*this, Triple, Features);
+    }
+
+    /// createAsmBackend - Create a target specific assembly parser.
+    ///
+    /// \arg Backend - The target independent assembler object.
+    TargetAsmBackend *createAsmBackend(MCAssembler &Backend) const {
+      if (!AsmBackendCtorFn)
+        return 0;
+      return AsmBackendCtorFn(*this, Backend);
     }
 
     /// createAsmLexer - Create a target specific assembly lexer.
@@ -363,6 +383,20 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.TargetMachineCtorFn)
         T.TargetMachineCtorFn = Fn;
+    }
+
+    /// RegisterAsmBackend - Register a TargetAsmBackend implementation for the
+    /// given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an AsmBackend for the target.
+    static void RegisterAsmBackend(Target &T, Target::AsmBackendCtorTy Fn) {
+      if (!T.AsmBackendCtorFn)
+        T.AsmBackendCtorFn = Fn;
     }
 
     /// RegisterAsmLexer - Register a TargetAsmLexer implementation for the
@@ -536,6 +570,25 @@ namespace llvm {
     static TargetMachine *Allocator(const Target &T, const std::string &TT,
                                     const std::string &FS) {
       return new TargetMachineImpl(T, TT, FS);
+    }
+  };
+
+  /// RegisterAsmBackend - Helper template for registering a target specific
+  /// assembler backend. Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooAsmBackend() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterAsmBackend<FooAsmLexer> X(TheFooTarget);
+  /// }
+  template<class AsmBackendImpl>
+  struct RegisterAsmBackend {
+    RegisterAsmBackend(Target &T) {
+      TargetRegistry::RegisterAsmBackend(T, &Allocator);
+    }
+
+  private:
+    static TargetAsmBackend *Allocator(const Target &T, MCAssembler &Backend) {
+      return new AsmBackendImpl(T, Backend);
     }
   };
 
