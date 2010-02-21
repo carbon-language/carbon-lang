@@ -81,6 +81,7 @@ namespace {
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
                          SourceLocation &Loc);                            
+    void ImportDeclContext(DeclContext *FromDC);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
     Decl *VisitDecl(Decl *D);
@@ -1373,6 +1374,14 @@ bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC,
   return false;
 }
 
+void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC) {
+  for (DeclContext::decl_iterator From = FromDC->decls_begin(),
+                               FromEnd = FromDC->decls_end();
+       From != FromEnd;
+       ++From)
+    Importer.Import(*From);
+}
+
 bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord, 
                                         RecordDecl *ToRecord) {
   StructuralEquivalenceContext Ctx(Importer.getFromContext(),
@@ -1523,12 +1532,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
       return 0;
     
     D2->startDefinition();
-    for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
-         FromMemEnd = D->decls_end();
-         FromMem != FromMemEnd;
-         ++FromMem)
-      Importer.Import(*FromMem);
-    
+    ImportDeclContext(D);
     D2->completeDefinition(T, ToPromotionType);
   }
   
@@ -1655,12 +1659,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
 
   if (D->isDefinition()) {
     D2->startDefinition();
-    for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
-                                 FromMemEnd = D->decls_end();
-         FromMem != FromMemEnd;
-         ++FromMem)
-      Importer.Import(*FromMem);
-    
+    ImportDeclContext(D);
     D2->completeDefinition();
   }
   
@@ -2228,11 +2227,7 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   }
   
   // Import all of the members of this category.
-  for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
-                              FromMemEnd = D->decls_end();
-       FromMem != FromMemEnd;
-       ++FromMem)
-    Importer.Import(*FromMem);
+  ImportDeclContext(D);
  
   // If we have an implementation, import it as well.
   if (D->getImplementation()) {
@@ -2302,11 +2297,7 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   }
 
   // Import all of the members of this protocol.
-  for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
-                               FromMemEnd = D->decls_end();
-       FromMem != FromMemEnd;
-       ++FromMem)
-    Importer.Import(*FromMem);
+  ImportDeclContext(D);
 
   return ToProto;
 }
@@ -2416,11 +2407,7 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     Importer.Import(FromCat);
   
   // Import all of the members of this class.
-  for (DeclContext::decl_iterator FromMem = D->decls_begin(), 
-                               FromMemEnd = D->decls_end();
-       FromMem != FromMemEnd;
-       ++FromMem)
-    Importer.Import(*FromMem);
+  ImportDeclContext(D);
   
   // If we have an @implementation, import it as well.
   if (D->getImplementation()) {
