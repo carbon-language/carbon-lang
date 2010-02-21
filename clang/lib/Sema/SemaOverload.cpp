@@ -2439,7 +2439,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     QualType ClassType = Context.getTypeDeclType(Constructor->getParent());
     if (NumArgs == 1 && 
         Constructor->isCopyConstructorLikeSpecialization() &&
-        Context.hasSameUnqualifiedType(ClassType, Args[0]->getType()))
+        (Context.hasSameUnqualifiedType(ClassType, Args[0]->getType()) ||
+         IsDerivedFrom(Args[0]->getType(), ClassType)))
       return;
   }
   
