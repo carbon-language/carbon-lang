@@ -91,6 +91,10 @@ namespace {
     Decl *VisitRecordDecl(RecordDecl *D);
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
     Decl *VisitFunctionDecl(FunctionDecl *D);
+    Decl *VisitCXXMethodDecl(CXXMethodDecl *D);
+    Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
+    Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
+    Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
     Decl *VisitObjCIvarDecl(ObjCIvarDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
@@ -1855,11 +1859,33 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   
   // Create the imported function.
   TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
-  FunctionDecl *ToFunction
-    = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
-                           Name, T, TInfo, D->getStorageClass(), 
-                           D->isInlineSpecified(),
-                           D->hasWrittenPrototype());
+  FunctionDecl *ToFunction = 0;
+  if (CXXConstructorDecl *FromConstructor = dyn_cast<CXXConstructorDecl>(D)) {
+    ToFunction = CXXConstructorDecl::Create(Importer.getToContext(),
+                                            cast<CXXRecordDecl>(DC),
+                                            Loc, Name, T, TInfo, 
+                                            FromConstructor->isExplicit(),
+                                            D->isInlineSpecified(), 
+                                            D->isImplicit());
+  } else if (isa<CXXDestructorDecl>(D)) {
+    ToFunction = CXXDestructorDecl::Create(Importer.getToContext(),
+                                           cast<CXXRecordDecl>(DC),
+                                           Loc, Name, T, 
+                                           D->isInlineSpecified(),
+                                           D->isImplicit());
+  } else if (CXXConversionDecl *FromConversion
+                                           = dyn_cast<CXXConversionDecl>(D)) {
+    ToFunction = CXXConversionDecl::Create(Importer.getToContext(), 
+                                           cast<CXXRecordDecl>(DC),
+                                           Loc, Name, T, TInfo,
+                                           D->isInlineSpecified(),
+                                           FromConversion->isExplicit());
+  } else {
+    ToFunction = FunctionDecl::Create(Importer.getToContext(), DC, Loc, 
+                                      Name, T, TInfo, D->getStorageClass(), 
+                                      D->isInlineSpecified(),
+                                      D->hasWrittenPrototype());
+  }
   ToFunction->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToFunction);
   LexicalDC->addDecl(ToFunction);
@@ -1874,6 +1900,22 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   // FIXME: Other bits to merge?
   
   return ToFunction;
+}
+
+Decl *ASTNodeImporter::VisitCXXMethodDecl(CXXMethodDecl *D) {
+  return VisitFunctionDecl(D);
+}
+
+Decl *ASTNodeImporter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
+  return VisitCXXMethodDecl(D);
+}
+
+Decl *ASTNodeImporter::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
+  return VisitCXXMethodDecl(D);
+}
+
+Decl *ASTNodeImporter::VisitCXXConversionDecl(CXXConversionDecl *D) {
+  return VisitCXXMethodDecl(D);
 }
 
 Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
