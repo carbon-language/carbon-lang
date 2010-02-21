@@ -66,32 +66,26 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
     //   If a pseudo-destructor-name (5.2.4) contains a
     //   nested-name-specifier, the type-names are looked up as types
     //   in the scope designated by the nested-name-specifier. Similarly, in 
-    //   a qualified-id of theform:
+    //   a qualified-id of the form:
     //
     //     :: [opt] nested-name-specifier[opt] class-name :: ~class-name 
     //
     //   the second class-name is looked up in the same scope as the first.
     //
-    // To implement this, we look at the prefix of the
-    // nested-name-specifier we were given, and determine the lookup
-    // context from that.
-    NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
-    if (NestedNameSpecifier *Prefix = NNS->getPrefix()) {
-      CXXScopeSpec PrefixSS;
-      PrefixSS.setScopeRep(Prefix);
-      LookupCtx = computeDeclContext(PrefixSS, EnteringContext);
-      isDependent = isDependentScopeSpecifier(PrefixSS);
-    } else if (ObjectTypePtr) {
+    // FIXME: We don't implement this, because it breaks lots of
+    // perfectly reasonable code that no other compilers diagnose. The
+    // issue is that the first class-name is looked up as a
+    // nested-name-specifier, so we ignore value declarations, but the
+    // second lookup is presumably an ordinary name lookup. Hence, we
+    // end up finding values (say, a function) and complain. See PRs
+    // 6358 and 6359 for examples of such code. DPG to investigate
+    // further.
+    if (ObjectTypePtr) {
       LookupCtx = computeDeclContext(SearchType);
       isDependent = SearchType->isDependentType();
     } else {
       LookupCtx = computeDeclContext(SS, EnteringContext);
-      if (LookupCtx && !LookupCtx->isTranslationUnit()) {
-        LookupCtx = LookupCtx->getParent();
-        isDependent = LookupCtx->isDependentContext();
-      } else {
-        isDependent = false;
-      }
+      isDependent = LookupCtx->isDependentContext();
     }
 
     LookInScope = false;

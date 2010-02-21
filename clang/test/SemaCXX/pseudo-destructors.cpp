@@ -28,7 +28,7 @@ void f(A* a, Foo *f, int *i) {
   g().~Bar(); // expected-error{{non-scalar}}
   
   f->::~Bar();
-  f->N::~Wibble(); // expected-error{{expected the class name after '~' to name a destructor}}
+  f->N::~Wibble(); // FIXME: Cannot use typedef name in destructor id.
   
   f->::~Bar(17, 42); // expected-error{{cannot have any arguments}}
 }
