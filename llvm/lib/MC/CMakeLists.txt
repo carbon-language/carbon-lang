@@ -18,4 +18,5 @@ add_llvm_library(LLVMMC
   MCStreamer.cpp
   MCSymbol.cpp
   MCValue.cpp
+  TargetAsmBackend.cpp
   )

@@ -19,13 +19,15 @@
 
 namespace llvm {
 
-class X86TargetMachine;
 class FunctionPass;
-class MachineCodeEmitter;
+class JITCodeEmitter;
+class MCAssembler;
 class MCCodeEmitter;
 class MCContext;
-class JITCodeEmitter;
+class MachineCodeEmitter;
 class Target;
+class TargetAsmBackend;
+class X86TargetMachine;
 class formatted_raw_ostream;
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
@@ -54,6 +56,9 @@ MCCodeEmitter *createX86_32MCCodeEmitter(const Target &, TargetMachine &TM,
                                          MCContext &Ctx);
 MCCodeEmitter *createX86_64MCCodeEmitter(const Target &, TargetMachine &TM,
                                          MCContext &Ctx);
+
+TargetAsmBackend *createX86_32AsmBackend(const Target &, MCAssembler &);
+TargetAsmBackend *createX86_64AsmBackend(const Target &, MCAssembler &);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

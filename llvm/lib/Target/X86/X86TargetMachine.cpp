@@ -51,6 +51,12 @@ extern "C" void LLVMInitializeX86Target() {
                                       createX86_32MCCodeEmitter);
   TargetRegistry::RegisterCodeEmitter(TheX86_64Target,
                                       createX86_64MCCodeEmitter);
+
+  // Register the asm backend.
+  TargetRegistry::RegisterAsmBackend(TheX86_32Target,
+                                     createX86_32AsmBackend);
+  TargetRegistry::RegisterAsmBackend(TheX86_64Target,
+                                     createX86_64AsmBackend);
 }
 
 
