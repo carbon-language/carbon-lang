@@ -12,29 +12,42 @@
 #include "Record.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include <utility>
 using namespace llvm;
 
-namespace {
-  /// ResultVal - When generating new nodes for the result of a pattern match,
-  /// this value is used to represent an input to the node.  Result values can
-  /// either be an input that is 'recorded' in the RecordedNodes array by the
-  /// matcher or it can be a temporary value created by the emitter for things
-  /// like constants.
-  class ResultVal {
-    unsigned Number;
-  public:
-    static ResultVal get(unsigned N) {
-      ResultVal R;
-      R.Number = N;
-      return R;
-    }
 
-    unsigned getNumber() const {
-      return Number;
+/// getRegisterValueType - Look up and return the ValueType of the specified
+/// register. If the register is a member of multiple register classes which
+/// have different associated types, return MVT::Other.
+static MVT::SimpleValueType getRegisterValueType(Record *R,
+                                                 const CodeGenTarget &T) {
+  bool FoundRC = false;
+  MVT::SimpleValueType VT = MVT::Other;
+  const std::vector<CodeGenRegisterClass> &RCs = T.getRegisterClasses();
+  std::vector<Record*>::const_iterator Element;
+  
+  for (unsigned rc = 0, e = RCs.size(); rc != e; ++rc) {
+    const CodeGenRegisterClass &RC = RCs[rc];
+    if (!std::count(RC.Elements.begin(), RC.Elements.end(), R))
+      continue;
+    
+    if (!FoundRC) {
+      FoundRC = true;
+      VT = RC.getValueTypeNum(0);
+      continue;
     }
-  };
-  
-  
+    
+    // In multiple RC's.  If the Types of the RC's do not agree, return
+    // MVT::Other. The target is responsible for handling this.
+    if (VT != RC.getValueTypeNum(0))
+      // FIXME2: when does this happen?  Abort?
+      return MVT::Other;
+  }
+  return VT;
+}
+
+
+namespace {
   class MatcherGen {
     const PatternToMatch &Pattern;
     const CodeGenDAGPatterns &CGP;
@@ -54,9 +67,18 @@ namespace {
     /// record into.
     unsigned NextRecordedOperandNo;
     
-    /// InputChains - This maintains the position in the recorded nodes array of
-    /// all of the recorded input chains.
-    SmallVector<unsigned, 2> InputChains;
+    /// MatchedChainNodes - This maintains the position in the recorded nodes
+    /// array of all of the recorded input nodes that have chains.
+    SmallVector<unsigned, 2> MatchedChainNodes;
+    
+    /// PhysRegInputs - List list has an entry for each explicitly specified
+    /// physreg input to the pattern.  The first elt is the Register node, the
+    /// second is the recorded slot number the input pattern match saved it in.
+    SmallVector<std::pair<Record*, unsigned>, 2> PhysRegInputs;
+    
+    /// EmittedMergeInputChains - For nodes that match patterns involving
+    /// chains, is set to true if we emitted the "MergeInputChains" operation.
+    bool EmittedMergeInputChains;
     
     /// Matcher - This is the top level of the generated matcher, the result.
     MatcherNode *Matcher;
@@ -87,20 +109,35 @@ namespace {
                                TreePatternNode *NodeNoTypes);
     
     // Result Code Generation.
+    unsigned getNamedArgumentSlot(StringRef Name) {
+      unsigned VarMapEntry = VariableMap[Name];
+      assert(VarMapEntry != 0 &&
+             "Variable referenced but not defined and not caught earlier!");
+      return VarMapEntry-1;
+    }
+
+    /// GetInstPatternNode - Get the pattern for an instruction.
+    const TreePatternNode *GetInstPatternNode(const DAGInstruction &Ins,
+                                              const TreePatternNode *N);
+    
     void EmitResultOperand(const TreePatternNode *N,
-                           SmallVectorImpl<ResultVal> &ResultOps);
+                           SmallVectorImpl<unsigned> &ResultOps);
+    void EmitResultOfNamedOperand(const TreePatternNode *N,
+                                  SmallVectorImpl<unsigned> &ResultOps);
     void EmitResultLeafAsOperand(const TreePatternNode *N,
-                                 SmallVectorImpl<ResultVal> &ResultOps);
+                                 SmallVectorImpl<unsigned> &ResultOps);
     void EmitResultInstructionAsOperand(const TreePatternNode *N,
-                                        SmallVectorImpl<ResultVal> &ResultOps);
-  };
+                                        SmallVectorImpl<unsigned> &ResultOps);
+    void EmitResultSDNodeXFormAsOperand(const TreePatternNode *N,
+                                        SmallVectorImpl<unsigned> &ResultOps);
+    };
   
 } // end anon namespace.
 
 MatcherGen::MatcherGen(const PatternToMatch &pattern,
                        const CodeGenDAGPatterns &cgp)
 : Pattern(pattern), CGP(cgp), NextRecordedOperandNo(0),
-  Matcher(0), CurPredicate(0) {
+  EmittedMergeInputChains(false), Matcher(0), CurPredicate(0) {
   // We need to produce the matcher tree for the patterns source pattern.  To do
   // this we need to match the structure as well as the types.  To do the type
   // matching, we want to figure out the fewest number of type checks we need to
@@ -158,6 +195,11 @@ void MatcherGen::AddMatcherNode(MatcherNode *NewNode) {
 /// EmitLeafMatchCode - Generate matching code for leaf nodes.
 void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   assert(N->isLeaf() && "Not a leaf?");
+  
+  // If there are node predicates for this node, generate their checks.
+  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
+    AddMatcherNode(new CheckPredicateMatcherNode(N->getPredicateFns()[i]));
+  
   // Direct match against an integer constant.
   if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue()))
     return AddMatcherNode(new CheckIntegerMatcherNode(II->getValue()));
@@ -172,10 +214,17 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   if (// Handle register references.  Nothing to do here, they always match.
       LeafRec->isSubClassOf("RegisterClass") || 
       LeafRec->isSubClassOf("PointerLikeRegClass") ||
-      LeafRec->isSubClassOf("Register") ||
       // Place holder for SRCVALUE nodes. Nothing to do here.
       LeafRec->getName() == "srcvalue")
     return;
+
+  // If we have a physreg reference like (mul gpr:$src, EAX) then we need to
+  // record the register 
+  if (LeafRec->isSubClassOf("Register")) {
+    AddMatcherNode(new RecordMatcherNode("physreg input "+LeafRec->getName()));
+    PhysRegInputs.push_back(std::make_pair(LeafRec, NextRecordedOperandNo++));
+    return;
+  }
   
   if (LeafRec->isSubClassOf("ValueType"))
     return AddMatcherNode(new CheckValueTypeMatcherNode(LeafRec->getName()));
@@ -202,15 +251,15 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
       // It is the last operand recorded.
       assert(NextRecordedOperandNo > 1 &&
              "Should have recorded input/result chains at least!");
-      InputChains.push_back(NextRecordedOperandNo-1);
+      MatchedChainNodes.push_back(NextRecordedOperandNo-1);
 
-      // IF we need to check chains, do so, see comment for
+      // If we need to check chains, do so, see comment for
       // "NodeHasProperty(SDNPHasChain" below.
-      if (InputChains.size() > 1) {
-        // FIXME: This is broken, we should eliminate this nonsense completely,
+      if (MatchedChainNodes.size() > 1) {
+        // FIXME2: This is broken, we should eliminate this nonsense completely,
         // but we want to produce the same selections that the old matcher does
         // for now.
-        unsigned PrevOp = InputChains[InputChains.size()-2];
+        unsigned PrevOp = MatchedChainNodes[MatchedChainNodes.size()-2];
         AddMatcherNode(new CheckChainCompatibleMatcherNode(PrevOp));
       }
     }
@@ -238,7 +287,8 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   // to handle this.
   if ((N->getOperator()->getName() == "and" || 
        N->getOperator()->getName() == "or") &&
-      N->getChild(1)->isLeaf() && N->getChild(1)->getPredicateFns().empty()) {
+      N->getChild(1)->isLeaf() && N->getChild(1)->getPredicateFns().empty() &&
+      N->getPredicateFns().empty()) {
     if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
       if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
         if (N->getOperator()->getName() == "and")
@@ -258,30 +308,36 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   // Check that the current opcode lines up.
   AddMatcherNode(new CheckOpcodeMatcherNode(CInfo.getEnumName()));
   
+  // If there are node predicates for this node, generate their checks.
+  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
+    AddMatcherNode(new CheckPredicateMatcherNode(N->getPredicateFns()[i]));
+  
+  
+  // If this node has memory references (i.e. is a load or store), tell the
+  // interpreter to capture them in the memref array.
+  if (N->NodeHasProperty(SDNPMemOperand, CGP))
+    AddMatcherNode(new RecordMemRefMatcherNode());
+  
   // If this node has a chain, then the chain is operand #0 is the SDNode, and
   // the child numbers of the node are all offset by one.
   unsigned OpNo = 0;
   if (N->NodeHasProperty(SDNPHasChain, CGP)) {
-    // Record the input chain, which is always input #0 of the SDNode.
-    AddMatcherNode(new MoveChildMatcherNode(0));
+    // Record the node and remember it in our chained nodes list.
     AddMatcherNode(new RecordMatcherNode("'" + N->getOperator()->getName() +
-                                         "' input chain"));
-    
+                                         "' chained node"));
     // Remember all of the input chains our pattern will match.
-    InputChains.push_back(NextRecordedOperandNo);
-    ++NextRecordedOperandNo;
-    AddMatcherNode(new MoveParentMatcherNode());
+    MatchedChainNodes.push_back(NextRecordedOperandNo++);
     
     // If this is the second (e.g. indbr(load) or store(add(load))) or third
     // input chain (e.g. (store (add (load, load))) from msp430) we need to make
     // sure that folding the chain won't induce cycles in the DAG.  This could
     // happen if there were an intermediate node between the indbr and load, for
     // example.
-    if (InputChains.size() > 1) {
-      // FIXME: This is broken, we should eliminate this nonsense completely,
+    if (MatchedChainNodes.size() > 1) {
+      // FIXME2: This is broken, we should eliminate this nonsense completely,
       // but we want to produce the same selections that the old matcher does
       // for now.
-      unsigned PrevOp = InputChains[InputChains.size()-2];
+      unsigned PrevOp = MatchedChainNodes[MatchedChainNodes.size()-2];
       AddMatcherNode(new CheckChainCompatibleMatcherNode(PrevOp));
     }
     
@@ -336,6 +392,12 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
         AddMatcherNode(new CheckFoldableChainNodeMatcherNode());
     }
   }
+  
+  // If this node is known to have an input flag or if it *might* have an input
+  // flag, capture it as the flag input of the pattern.
+  if (N->NodeHasProperty(SDNPOptInFlag, CGP) ||
+      N->NodeHasProperty(SDNPInFlag, CGP))
+    AddMatcherNode(new CaptureFlagInputMatcherNode());
       
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     // Get the code suitable for matching this child.  Move to the child, check
@@ -370,12 +432,12 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
       // If this is a complex pattern, the match operation for it will
       // implicitly record all of the outputs of it (which may be more than
       // one).
-      if (const ComplexPattern *AM = N->getComplexPatternInfo(CGP)) {
+      if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
         // Record the right number of operands.
-        NumRecorded = AM->getNumOperands()-1;
+        NumRecorded = CP->getNumOperands();
         
-        if (AM->hasProperty(SDNPHasChain))
-          NumRecorded += 2; // Input and output chains.
+        if (CP->hasProperty(SDNPHasChain))
+          ++NumRecorded; // Chained node operand.
       } else {
         // If it is a normal named node, we must emit a 'Record' opcode.
         AddMatcherNode(new RecordMatcherNode("$" + N->getName()));
@@ -393,10 +455,6 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
     }
   }
   
-  // If there are node predicates for this node, generate their checks.
-  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
-    AddMatcherNode(new CheckPredicateMatcherNode(N->getPredicateFns()[i]));
-
   if (N->isLeaf())
     EmitLeafMatchCode(N);
   else
@@ -419,13 +477,42 @@ void MatcherGen::EmitMatcherCode() {
 // Node Result Generation
 //===----------------------------------------------------------------------===//
 
+void MatcherGen::EmitResultOfNamedOperand(const TreePatternNode *N,
+                                          SmallVectorImpl<unsigned> &ResultOps){
+  assert(!N->getName().empty() && "Operand not named!");
+  
+  unsigned SlotNo = getNamedArgumentSlot(N->getName());
+  
+  // A reference to a complex pattern gets all of the results of the complex
+  // pattern's match.
+  if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
+    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+      ResultOps.push_back(SlotNo+i);
+    return;
+  }
+
+  // If this is an 'imm' or 'fpimm' node, make sure to convert it to the target
+  // version of the immediate so that it doesn't get selected due to some other
+  // node use.
+  if (!N->isLeaf()) {
+    StringRef OperatorName = N->getOperator()->getName();
+    if (OperatorName == "imm" || OperatorName == "fpimm") {
+      AddMatcherNode(new EmitConvertToTargetMatcherNode(SlotNo));
+      ResultOps.push_back(NextRecordedOperandNo++);
+      return;
+    }
+  }
+  
+  ResultOps.push_back(SlotNo);
+}
+
 void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
-                                         SmallVectorImpl<ResultVal> &ResultOps){
+                                         SmallVectorImpl<unsigned> &ResultOps) {
   assert(N->isLeaf() && "Must be a leaf");
   
   if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
     AddMatcherNode(new EmitIntegerMatcherNode(II->getValue(),N->getTypeNum(0)));
-    ResultOps.push_back(ResultVal::get(NextRecordedOperandNo++));
+    ResultOps.push_back(NextRecordedOperandNo++);
     return;
   }
   
@@ -434,53 +521,97 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
     if (DI->getDef()->isSubClassOf("Register")) {
       AddMatcherNode(new EmitRegisterMatcherNode(DI->getDef(),
                                                  N->getTypeNum(0)));
-      ResultOps.push_back(ResultVal::get(NextRecordedOperandNo++));
+      ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
     
     if (DI->getDef()->getName() == "zero_reg") {
       AddMatcherNode(new EmitRegisterMatcherNode(0, N->getTypeNum(0)));
-      ResultOps.push_back(ResultVal::get(NextRecordedOperandNo++));
+      ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
     
-#if 0
+    // Handle a reference to a register class. This is used
+    // in COPY_TO_SUBREG instructions.
     if (DI->getDef()->isSubClassOf("RegisterClass")) {
-      // Handle a reference to a register class. This is used
-      // in COPY_TO_SUBREG instructions.
-      // FIXME: Implement.
+      std::string Value = getQualifiedName(DI->getDef()) + "RegClassID";
+      AddMatcherNode(new EmitStringIntegerMatcherNode(Value, N->getTypeNum(0)));
+      ResultOps.push_back(NextRecordedOperandNo++);
+      return;
     }
-#endif
   }
   
   errs() << "unhandled leaf node: \n";
   N->dump();
 }
 
-void MatcherGen::EmitResultInstructionAsOperand(const TreePatternNode *N,
-                                         SmallVectorImpl<ResultVal> &ResultOps){
+/// GetInstPatternNode - Get the pattern for an instruction.
+/// 
+const TreePatternNode *MatcherGen::
+GetInstPatternNode(const DAGInstruction &Inst, const TreePatternNode *N) {
+  const TreePattern *InstPat = Inst.getPattern();
+  
+  // FIXME2?: Assume actual pattern comes before "implicit".
+  TreePatternNode *InstPatNode;
+  if (InstPat)
+    InstPatNode = InstPat->getTree(0);
+  else if (/*isRoot*/ N == Pattern.getDstPattern())
+    InstPatNode = Pattern.getSrcPattern();
+  else
+    return 0;
+  
+  if (InstPatNode && !InstPatNode->isLeaf() &&
+      InstPatNode->getOperator()->getName() == "set")
+    InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
+  
+  return InstPatNode;
+}
+
+void MatcherGen::
+EmitResultInstructionAsOperand(const TreePatternNode *N,
+                               SmallVectorImpl<unsigned> &OutputOps) {
   Record *Op = N->getOperator();
   const CodeGenTarget &CGT = CGP.getTargetInfo();
   CodeGenInstruction &II = CGT.getInstruction(Op->getName());
   const DAGInstruction &Inst = CGP.getInstruction(Op);
   
-  // FIXME: Handle (set x, (foo))
+  // If we can, get the pattern for the instruction we're generating.  We derive
+  // a variety of information from this pattern, such as whether it has a chain.
+  //
+  // FIXME2: This is extremely dubious for several reasons, not the least of
+  // which it gives special status to instructions with patterns that Pat<>
+  // nodes can't duplicate.
+  const TreePatternNode *InstPatNode = GetInstPatternNode(Inst, N);
+
+  // NodeHasChain - Whether the instruction node we're creating takes chains.  
+  bool NodeHasChain = InstPatNode &&
+                      InstPatNode->TreeHasProperty(SDNPHasChain, CGP);
   
-  if (II.isVariadic) // FIXME: Handle variadic instructions.
-    return AddMatcherNode(new EmitNodeMatcherNode(Pattern));
-    
-  // FIXME: Handle OptInFlag, HasInFlag, HasOutFlag
-  // FIXME: Handle Chains.
+  bool isRoot = N == Pattern.getDstPattern();
+
+  // NodeHasOutFlag - True if this node has a flag.
+  bool NodeHasInFlag = false, NodeHasOutFlag = false;
+  if (isRoot) {
+    const TreePatternNode *SrcPat = Pattern.getSrcPattern();
+    NodeHasInFlag = SrcPat->TreeHasProperty(SDNPOptInFlag, CGP) ||
+                    SrcPat->TreeHasProperty(SDNPInFlag, CGP);
+  
+    // FIXME2: this is checking the entire pattern, not just the node in
+    // question, doing this just for the root seems like a total hack.
+    NodeHasOutFlag = SrcPat->TreeHasProperty(SDNPOutFlag, CGP);
+  }
+
+  // NumResults - This is the number of results produced by the instruction in
+  // the "outs" list.
   unsigned NumResults = Inst.getNumResults();    
 
-  
   // Loop over all of the operands of the instruction pattern, emitting code
   // to fill them all in.  The node 'N' usually has number children equal to
   // the number of input operands of the instruction.  However, in cases
   // where there are predicate operands for an instruction, we need to fill
   // in the 'execute always' values.  Match up the node operands to the
   // instruction operands to do this.
-  SmallVector<ResultVal, 8> Ops;
+  SmallVector<unsigned, 8> InstOps;
   for (unsigned ChildNo = 0, InstOpNo = NumResults, e = II.OperandList.size();
        InstOpNo != e; ++InstOpNo) {
     
@@ -494,32 +625,137 @@ void MatcherGen::EmitResultInstructionAsOperand(const TreePatternNode *N,
       const DAGDefaultOperand &DefaultOp =
         CGP.getDefaultOperand(II.OperandList[InstOpNo].Rec);
       for (unsigned i = 0, e = DefaultOp.DefaultOps.size(); i != e; ++i)
-        EmitResultOperand(DefaultOp.DefaultOps[i], Ops);
+        EmitResultOperand(DefaultOp.DefaultOps[i], InstOps);
       continue;
     }
     
     // Otherwise this is a normal operand or a predicate operand without
     // 'execute always'; emit it.
-    EmitResultOperand(N->getChild(ChildNo), Ops);
+    EmitResultOperand(N->getChild(ChildNo), InstOps);
     ++ChildNo;
   }
   
-  // FIXME: Chain.
-  // FIXME: Flag
+  // Nodes that match patterns with (potentially multiple) chain inputs have to
+  // merge them together into a token factor.
+  if (NodeHasChain && !EmittedMergeInputChains) {
+    // FIXME2: Move this out of emitresult to a top level place.
+    assert(!MatchedChainNodes.empty() &&
+           "How can this node have chain if no inputs do?");
+    // Otherwise, we have to emit an operation to merge the input chains and
+    // set this as the current input chain.
+    AddMatcherNode(new EmitMergeInputChainsMatcherNode
+                        (MatchedChainNodes.data(), MatchedChainNodes.size()));
+    EmittedMergeInputChains = true;
+  }
+  
+  // If this node has an input flag or explicitly specified input physregs, we
+  // need to add chained and flagged copyfromreg nodes and materialize the flag
+  // input.
+  if (isRoot && !PhysRegInputs.empty()) {
+    // Emit all of the CopyToReg nodes for the input physical registers.  These
+    // occur in patterns like (mul:i8 AL:i8, GR8:i8:$src).
+    for (unsigned i = 0, e = PhysRegInputs.size(); i != e; ++i)
+      AddMatcherNode(new EmitCopyToRegMatcherNode(PhysRegInputs[i].second,
+                                                  PhysRegInputs[i].first));
+    // Even if the node has no other flag inputs, the resultant node must be
+    // flagged to the CopyFromReg nodes we just generated.
+    NodeHasInFlag = true;
+  }
+  
+  // Result order: node results, chain, flags
+  
+  // Determine the result types.
+  SmallVector<MVT::SimpleValueType, 4> ResultVTs;
+  if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
+    // FIXME2: If the node has multiple results, we should add them.  For now,
+    // preserve existing behavior?!
+    ResultVTs.push_back(N->getTypeNum(0));
+  }
+
+  
+  // If this is the root instruction of a pattern that has physical registers in
+  // its result pattern, add output VTs for them.  For example, X86 has:
+  //   (set AL, (mul ...))
+  // This also handles implicit results like:
+  //   (implicit EFLAGS)
+  if (isRoot && Pattern.getDstRegs().size() != 0) {
+    for (unsigned i = 0; i != Pattern.getDstRegs().size(); ++i)
+      if (Pattern.getDstRegs()[i]->isSubClassOf("Register"))
+        ResultVTs.push_back(getRegisterValueType(Pattern.getDstRegs()[i], CGT));
+  }
+  if (NodeHasChain)
+    ResultVTs.push_back(MVT::Other);
+  if (NodeHasOutFlag)
+    ResultVTs.push_back(MVT::Flag);
+
+  // FIXME2: Instead of using the isVariadic flag on the instruction, we should
+  // have an SDNP that indicates variadicism.  The TargetInstrInfo isVariadic
+  // property should be inferred from this when an instruction has a pattern.
+  int NumFixedArityOperands = -1;
+  if (isRoot && II.isVariadic)
+    NumFixedArityOperands = Pattern.getSrcPattern()->getNumChildren();
+  
+  // If this is the root node and any of the nodes matched nodes in the input
+  // pattern have MemRefs in them, have the interpreter collect them and plop
+  // them onto this node.
+  //
+  // FIXME3: This is actively incorrect for result patterns where the root of
+  // the pattern is not the memory reference and is also incorrect when the
+  // result pattern has multiple memory-referencing instructions.  For example,
+  // in the X86 backend, this pattern causes the memrefs to get attached to the
+  // CVTSS2SDrr instead of the MOVSSrm:
+  //
+  //  def : Pat<(extloadf32 addr:$src),
+  //            (CVTSS2SDrr (MOVSSrm addr:$src))>;
+  //
+  bool NodeHasMemRefs =
+    isRoot && Pattern.getSrcPattern()->TreeHasProperty(SDNPMemOperand, CGP);
+
+  // FIXME: Eventually add a SelectNodeTo form.  It works if the new node has a
+  // superset of the results of the old node, in the same places.  E.g. turning
+  // (add (load)) -> add32rm is ok because result #0 is the result and result #1
+  // is new.
+  AddMatcherNode(new EmitNodeMatcherNode(II.Namespace+"::"+II.TheDef->getName(),
+                                         ResultVTs.data(), ResultVTs.size(),
+                                         InstOps.data(), InstOps.size(),
+                                         NodeHasChain, NodeHasInFlag,
+                                         NodeHasMemRefs,NumFixedArityOperands));
+  
+  // The newly emitted node gets recorded.
+  // FIXME2: This should record all of the results except the (implicit) one.
+  OutputOps.push_back(NextRecordedOperandNo++);
   
   
+  // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
+  // variants.  Call MorphNodeTo instead of SelectNodeTo.
+}
+
+void MatcherGen::
+EmitResultSDNodeXFormAsOperand(const TreePatternNode *N,
+                               SmallVectorImpl<unsigned> &ResultOps) {
+  assert(N->getOperator()->isSubClassOf("SDNodeXForm") && "Not SDNodeXForm?");
+
+  // Emit the operand.
+  SmallVector<unsigned, 8> InputOps;
   
-  return;
+  // FIXME2: Could easily generalize this to support multiple inputs and outputs
+  // to the SDNodeXForm.  For now we just support one input and one output like
+  // the old instruction selector.
+  assert(N->getNumChildren() == 1);
+  EmitResultOperand(N->getChild(0), InputOps);
+
+  // The input currently must have produced exactly one result.
+  assert(InputOps.size() == 1 && "Unexpected input to SDNodeXForm");
+
+  AddMatcherNode(new EmitNodeXFormMatcherNode(InputOps[0], N->getOperator()));
+  ResultOps.push_back(NextRecordedOperandNo++);
 }
 
 void MatcherGen::EmitResultOperand(const TreePatternNode *N,
-                                   SmallVectorImpl<ResultVal> &ResultOps) {
+                                   SmallVectorImpl<unsigned> &ResultOps) {
   // This is something selected from the pattern we matched.
-  if (!N->getName().empty()) {
-    //errs() << "unhandled named node: \n";
-    //N->dump();
-    return;
-  }
+  if (!N->getName().empty())
+    return EmitResultOfNamedOperand(N, ResultOps);
 
   if (N->isLeaf())
     return EmitResultLeafAsOperand(N, ResultOps);
@@ -528,19 +764,23 @@ void MatcherGen::EmitResultOperand(const TreePatternNode *N,
   if (OpRec->isSubClassOf("Instruction"))
     return EmitResultInstructionAsOperand(N, ResultOps);
   if (OpRec->isSubClassOf("SDNodeXForm"))
-    // FIXME: implement.
-    return;
+    return EmitResultSDNodeXFormAsOperand(N, ResultOps);
   errs() << "Unknown result node to emit code for: " << *N << '\n';
   throw std::string("Unknown node in result pattern!");
 }
 
 void MatcherGen::EmitResultCode() {
-  // FIXME: Handle Ops.
-  // FIXME: Ops should be vector of "ResultValue> which is either an index into
-  // the results vector is is a temp result.
-  SmallVector<ResultVal, 8> Ops;
+  SmallVector<unsigned, 8> Ops;
   EmitResultOperand(Pattern.getDstPattern(), Ops);
-  //AddMatcherNode(new EmitNodeMatcherNode(Pattern));
+
+  // We know that the resulting pattern has exactly one result/
+  // FIXME2: why?  what about something like (set a,b,c, (complexpat))
+  // FIXME2: Implicit results should be pushed here I guess?
+  assert(Ops.size() == 1);
+  // FIXME: Handle Ops.
+  // FIXME: Handle (set EAX, (foo)) but not (implicit EFLAGS)
+  
+  AddMatcherNode(new PatternMarkerMatcherNode(Pattern));
 }
 
 
@@ -550,6 +790,12 @@ MatcherNode *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
 
   // Generate the code for the matcher.
   Gen.EmitMatcherCode();
+  
+  
+  // FIXME2: Kill extra MoveParent commands at the end of the matcher sequence.
+  // FIXME2: Split result code out to another table, and make the matcher end
+  // with an "Emit <index>" command.  This allows result generation stuff to be
+  // shared and factored?
   
   // If the match succeeds, then we generate Pattern.
   Gen.EmitResultCode();

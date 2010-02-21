@@ -186,29 +186,30 @@ GetInt1(const unsigned char *MatcherTable, unsigned &Idx) {
 
 ALWAYS_INLINE static int16_t
 GetInt2(const unsigned char *MatcherTable, unsigned &Idx) {
-  int16_t Val = GetInt1(MatcherTable, Idx);
+  int16_t Val = (uint8_t)GetInt1(MatcherTable, Idx);
   Val |= int16_t(GetInt1(MatcherTable, Idx)) << 8;
   return Val;
 }
 
 ALWAYS_INLINE static int32_t
 GetInt4(const unsigned char *MatcherTable, unsigned &Idx) {
-  int32_t Val = GetInt2(MatcherTable, Idx);
+  int32_t Val = (uint16_t)GetInt2(MatcherTable, Idx);
   Val |= int32_t(GetInt2(MatcherTable, Idx)) << 16;
   return Val;
 }
 
 ALWAYS_INLINE static int64_t
 GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
-  int64_t Val = GetInt4(MatcherTable, Idx);
+  int64_t Val = (uint32_t)GetInt4(MatcherTable, Idx);
   Val |= int64_t(GetInt4(MatcherTable, Idx)) << 32;
   return Val;
 }
 
 enum BuiltinOpcodes {
-  OPC_Emit,
   OPC_Push,
   OPC_RecordNode,
+  OPC_RecordMemRef,
+  OPC_CaptureFlagInput,
   OPC_MoveChild,
   OPC_MoveParent,
   OPC_CheckSame,
@@ -226,8 +227,36 @@ enum BuiltinOpcodes {
   OPC_CheckChainCompatible,
   
   OPC_EmitInteger1, OPC_EmitInteger2, OPC_EmitInteger4, OPC_EmitInteger8,
-  OPC_EmitRegister
+  OPC_EmitRegister,
+  OPC_EmitConvertToTarget,
+  OPC_EmitMergeInputChains,
+  OPC_EmitCopyToReg,
+  OPC_EmitNodeXForm,
+  OPC_EmitNode
 };
+
+enum {
+  OPFL_None      = 0,     // Node has no chain or flag input and isn't variadic.
+  OPFL_Chain     = 1,     // Node has a chain input.
+  OPFL_Flag      = 2,     // Node has a flag input.
+  OPFL_MemRefs   = 4,     // Node gets accumulated MemRefs.
+  OPFL_Variadic0 = 1<<3,  // Node is variadic, root has 0 fixed inputs.
+  OPFL_Variadic1 = 2<<3,  // Node is variadic, root has 1 fixed inputs.
+  OPFL_Variadic2 = 3<<3,  // Node is variadic, root has 2 fixed inputs.
+  OPFL_Variadic3 = 4<<3,  // Node is variadic, root has 3 fixed inputs.
+  OPFL_Variadic4 = 5<<3,  // Node is variadic, root has 4 fixed inputs.
+  OPFL_Variadic5 = 6<<3,  // Node is variadic, root has 5 fixed inputs.
+  OPFL_Variadic6 = 7<<3,  // Node is variadic, root has 6 fixed inputs.
+  
+  OPFL_VariadicInfo = OPFL_Variadic6
+};
+
+/// getNumFixedFromVariadicInfo - Transform an EmitNode flags word into the
+/// number of fixed arity values that should be skipped when copying from the
+/// root.
+static inline int getNumFixedFromVariadicInfo(unsigned Flags) {
+  return ((Flags&OPFL_VariadicInfo) >> 3)-1;
+}
 
 struct MatchScope {
   /// FailIndex - If this match fails, this is the index to continue with.
@@ -238,10 +267,20 @@ struct MatchScope {
   
   /// NumRecordedNodes - The number of recorded nodes when the scope was formed.
   unsigned NumRecordedNodes;
+  
+  /// NumMatchedMemRefs - The number of matched memref entries.
+  unsigned NumMatchedMemRefs;
+  
+  /// InputChain/InputFlag - The current chain/flag 
+  SDValue InputChain, InputFlag;
+
+  /// HasChainNodesMatched - True if the ChainNodesMatched list is non-empty.
+  bool HasChainNodesMatched;
 };
 
 SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                          unsigned TableSize) {
+  // FIXME: Should these even be selected?  Handle these cases in the caller?
   switch (NodeToMatch->getOpcode()) {
   default:
     break;
@@ -272,39 +311,66 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   }
   
   assert(!NodeToMatch->isMachineOpcode() && "Node already selected!");
-  
+
+  // Set up the node stack with NodeToMatch as the only node on the stack.
+  SmallVector<SDValue, 8> NodeStack;
+  SDValue N = SDValue(NodeToMatch, 0);
+  NodeStack.push_back(N);
+
+  // MatchScopes - Scopes used when matching, if a match failure happens, this
+  // indicates where to continue checking.
   SmallVector<MatchScope, 8> MatchScopes;
   
   // RecordedNodes - This is the set of nodes that have been recorded by the
   // state machine.
   SmallVector<SDValue, 8> RecordedNodes;
   
-  // Set up the node stack with NodeToMatch as the only node on the stack.
-  SmallVector<SDValue, 8> NodeStack;
-  SDValue N = SDValue(NodeToMatch, 0);
-  NodeStack.push_back(N);
+  // MatchedMemRefs - This is the set of MemRef's we've seen in the input
+  // pattern.
+  SmallVector<MachineMemOperand*, 2> MatchedMemRefs;
+  
+  // These are the current input chain and flag for use when generating nodes.
+  // Various Emit operations change these.  For example, emitting a copytoreg
+  // uses and updates these.
+  SDValue InputChain, InputFlag;
+  
+  // ChainNodesMatched - If a pattern matches nodes that have input/output
+  // chains, the OPC_EmitMergeInputChains operation is emitted which indicates
+  // which ones they are.  The result is captured into this list so that we can
+  // update the chain results when the pattern is complete.
+  SmallVector<SDNode*, 3> ChainNodesMatched;
   
   // Interpreter starts at opcode #0.
   unsigned MatcherIndex = 0;
   while (1) {
     assert(MatcherIndex < TableSize && "Invalid index");
     switch ((BuiltinOpcodes)MatcherTable[MatcherIndex++]) {
-    case OPC_Emit: {
-      errs() << "EMIT NODE\n";
-      return 0;
-    }
     case OPC_Push: {
       unsigned NumToSkip = MatcherTable[MatcherIndex++];
       MatchScope NewEntry;
       NewEntry.FailIndex = MatcherIndex+NumToSkip;
       NewEntry.NodeStackSize = NodeStack.size();
       NewEntry.NumRecordedNodes = RecordedNodes.size();
+      NewEntry.NumMatchedMemRefs = MatchedMemRefs.size();
+      NewEntry.InputChain = InputChain;
+      NewEntry.InputFlag = InputFlag;
+      NewEntry.HasChainNodesMatched = !ChainNodesMatched.empty();
       MatchScopes.push_back(NewEntry);
       continue;
     }
     case OPC_RecordNode:
       // Remember this node, it may end up being an operand in the pattern.
       RecordedNodes.push_back(N);
+      continue;
+    case OPC_RecordMemRef:
+      MatchedMemRefs.push_back(cast<MemSDNode>(N)->getMemOperand());
+      continue;
+        
+    case OPC_CaptureFlagInput:
+      // If the current node has an input flag, capture it in InputFlag.
+      if (N->getNumOperands() != 0 &&
+          N->getOperand(N->getNumOperands()-1).getValueType() == MVT::Flag)
+        InputFlag = N->getOperand(N->getNumOperands()-1);
       continue;
         
     case OPC_MoveChild: {
@@ -421,19 +487,22 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckChainCompatible: {
       unsigned PrevNode = MatcherTable[MatcherIndex++];
       assert(PrevNode < RecordedNodes.size() && "Invalid CheckChainCompatible");
-      if (!IsChainCompatible(RecordedNodes[PrevNode].getNode(), N.getNode()))
+      SDValue PrevChainedNode = RecordedNodes[PrevNode];
+      SDValue ThisChainedNode = RecordedNodes.back();
+      
+      // We have two nodes with chains, verify that their input chains are good.
+      assert(PrevChainedNode.getOperand(0).getValueType() == MVT::Other &&
+             ThisChainedNode.getOperand(0).getValueType() == MVT::Other &&
+             "Invalid chained nodes");
+      
+      if (!IsChainCompatible(// Input chain of the previous node.
+                             PrevChainedNode.getOperand(0).getNode(),
+                             // Node with chain.
+                             ThisChainedNode.getNode()))
         break;
       continue;
     }
         
-    case OPC_EmitRegister: {
-      unsigned RegNo = MatcherTable[MatcherIndex++];
-      MVT::SimpleValueType VT =
-        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      SDValue Reg = CurDAG->getRegister(RegNo, VT);
-      RecordedNodes.push_back(N);
-      continue;
-    }
     case OPC_EmitInteger1: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
@@ -458,6 +527,186 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       EmitInteger(GetInt8(MatcherTable, MatcherIndex), VT, RecordedNodes);
       continue;
     }
+        
+    case OPC_EmitRegister: {
+      unsigned RegNo = MatcherTable[MatcherIndex++];
+      MVT::SimpleValueType VT =
+      (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      SDValue Reg = CurDAG->getRegister(RegNo, VT);
+      RecordedNodes.push_back(N);
+      continue;
+    }
+        
+    case OPC_EmitConvertToTarget:  {
+      // Convert from IMM/FPIMM to target version.
+      unsigned RecNo = MatcherTable[MatcherIndex++];
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+      SDValue Imm = RecordedNodes[RecNo];
+
+      if (Imm->getOpcode() == ISD::Constant) {
+        int64_t Val = cast<ConstantSDNode>(Imm)->getZExtValue();
+        Imm = CurDAG->getTargetConstant(Val, Imm.getValueType());
+      } else if (Imm->getOpcode() == ISD::ConstantFP) {
+        const ConstantFP *Val=cast<ConstantFPSDNode>(Imm)->getConstantFPValue();
+        Imm = CurDAG->getTargetConstantFP(*Val, Imm.getValueType());
+      }
+      
+      RecordedNodes.push_back(Imm);
+      continue;
+    }
+        
+    case OPC_EmitMergeInputChains: {
+      assert(InputChain.getNode() == 0 &&
+             "EmitMergeInputChains should be the first chain producing node");
+      // This node gets a list of nodes we matched in the input that have
+      // chains.  We want to token factor all of the input chains to these nodes
+      // together.  However, if any of the input chains is actually one of the
+      // nodes matched in this pattern, then we have an intra-match reference.
+      // Ignore these because the newly token factored chain should not refer to
+      // the old nodes.
+      unsigned NumChains = MatcherTable[MatcherIndex++];
+      assert(NumChains != 0 && "Can't TF zero chains");
+      
+      // The common case here is that we have exactly one chain, which is really
+      // cheap to handle, just do it.
+      if (NumChains == 1) {
+        unsigned RecNo = MatcherTable[MatcherIndex++];
+        assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+        InputChain = RecordedNodes[RecNo].getOperand(0);
+        assert(InputChain.getValueType() == MVT::Other && "Not a chain");
+        continue;
+      }
+      
+      // Read all of the chained nodes.
+      assert(ChainNodesMatched.empty() &&
+             "Should only have one EmitMergeInputChains per match");
+      for (unsigned i = 0; i != NumChains; ++i) {
+        unsigned RecNo = MatcherTable[MatcherIndex++];
+        assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+        ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+      }
+
+      // Walk all the chained nodes, adding the input chains if they are not in
+      // ChainedNodes (and this, not in the matched pattern).  This is an N^2
+      // algorithm, but # chains is usually 2 here, at most 3 for MSP430.
+      SmallVector<SDValue, 3> InputChains;
+      for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
+        SDValue InChain = ChainNodesMatched[i]->getOperand(0);
+        assert(InChain.getValueType() == MVT::Other && "Not a chain");
+        bool Invalid = false;
+        for (unsigned j = 0; j != e; ++j)
+          Invalid |= ChainNodesMatched[j] == InChain.getNode();
+        if (!Invalid)
+          InputChains.push_back(InChain);
+      }
+
+      SDValue Res;
+      if (InputChains.size() == 1)
+        InputChain = InputChains[0];
+      else
+        InputChain = CurDAG->getNode(ISD::TokenFactor,
+                                     NodeToMatch->getDebugLoc(), MVT::Other,
+                                     &InputChains[0], InputChains.size());
+      continue;
+    }
+        
+    case OPC_EmitCopyToReg: {
+      unsigned RecNo = MatcherTable[MatcherIndex++];
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+      unsigned DestPhysReg = MatcherTable[MatcherIndex++];
+      
+      if (InputChain.getNode() == 0)
+        InputChain = CurDAG->getEntryNode();
+      
+      InputChain = CurDAG->getCopyToReg(InputChain, NodeToMatch->getDebugLoc(),
+                                        DestPhysReg, RecordedNodes[RecNo],
+                                        InputFlag);
+      
+      InputFlag = InputChain.getValue(1);
+      continue;
+    }
+        
+    case OPC_EmitNodeXForm: {
+      unsigned XFormNo = MatcherTable[MatcherIndex++];
+      unsigned RecNo = MatcherTable[MatcherIndex++];
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+      RecordedNodes.push_back(RunSDNodeXForm(RecordedNodes[RecNo], XFormNo));
+      continue;
+    }
+        
+    case OPC_EmitNode: {
+      uint16_t TargetOpc = GetInt2(MatcherTable, MatcherIndex);
+      unsigned EmitNodeInfo = MatcherTable[MatcherIndex++];
+      // Get the result VT list.
+      unsigned NumVTs = MatcherTable[MatcherIndex++];
+      assert(NumVTs != 0 && "Invalid node result");
+      SmallVector<EVT, 4> VTs;
+      for (unsigned i = 0; i != NumVTs; ++i)
+        VTs.push_back((MVT::SimpleValueType)MatcherTable[MatcherIndex++]);
+      SDVTList VTList = CurDAG->getVTList(VTs.data(), VTs.size());
+
+      // Get the operand list.
+      unsigned NumOps = MatcherTable[MatcherIndex++];
+      SmallVector<SDValue, 8> Ops;
+      for (unsigned i = 0; i != NumOps; ++i) {
+        unsigned RecNo = MatcherTable[MatcherIndex++];
+        assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+        Ops.push_back(RecordedNodes[RecNo]);
+      }
+      
+      // If there are variadic operands to add, handle them now.
+      if (EmitNodeInfo & OPFL_VariadicInfo) {
+        // Determine the start index to copy from.
+        unsigned FirstOpToCopy = getNumFixedFromVariadicInfo(EmitNodeInfo);
+        FirstOpToCopy += (EmitNodeInfo & OPFL_Chain) ? 1 : 0;
+        assert(NodeToMatch->getNumOperands() >= FirstOpToCopy &&
+               "Invalid variadic node");
+        // Copy all of the variadic operands, not including a potential flag
+        // input.
+        for (unsigned i = FirstOpToCopy, e = NodeToMatch->getNumOperands();
+             i != e; ++i) {
+          SDValue V = NodeToMatch->getOperand(i);
+          if (V.getValueType() == MVT::Flag) break;
+          Ops.push_back(V);
+        }
+      }
+      
+      // If this has chain/flag inputs, add them.
+      if (EmitNodeInfo & OPFL_Chain)
+        Ops.push_back(InputChain);
+      if (EmitNodeInfo & OPFL_Flag)
+        Ops.push_back(InputFlag);
+      
+      // Create the node.
+      MachineSDNode *Res = CurDAG->getMachineNode(TargetOpc,
+                                                  NodeToMatch->getDebugLoc(),
+                                                  VTList,
+                                                  Ops.data(), Ops.size());
+      RecordedNodes.push_back(SDValue(Res, 0));
+      
+      // If the node had chain/flag results, update our notion of the current
+      // chain and flag.
+      if (VTs.back() == MVT::Flag) {
+        InputFlag = SDValue(Res, VTs.size()-1);
+        if (EmitNodeInfo & OPFL_Chain)
+          InputChain = SDValue(Res, VTs.size()-2);
+      } else if (EmitNodeInfo & OPFL_Chain)
+        InputChain = SDValue(Res, VTs.size()-1);
+
+      // If the OPFL_MemRefs flag is set on this node, slap all of the
+      // accumulated memrefs onto it.
+      //
+      // FIXME: This is vastly incorrect for patterns with multiple outputs
+      // instructions that access memory and for ComplexPatterns that match
+      // loads.
+      if (EmitNodeInfo & OPFL_MemRefs) {
+        MachineSDNode::mmo_iterator MemRefs =
+          MF->allocateMemRefsArray(MatchedMemRefs.size());
+        std::copy(MatchedMemRefs.begin(), MatchedMemRefs.end(), MemRefs);
+        Res->setMemRefs(MemRefs, MemRefs + MatchedMemRefs.size());
+      }
+      continue;
+    }
     }
     
     // If the code reached this point, then the match failed pop out to the next
@@ -467,9 +716,19 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       return 0;
     }
     
-    RecordedNodes.resize(MatchScopes.back().NumRecordedNodes);
-    NodeStack.resize(MatchScopes.back().NodeStackSize);
-    MatcherIndex = MatchScopes.back().FailIndex;
+    const MatchScope &LastScope = MatchScopes.back();
+    RecordedNodes.resize(LastScope.NumRecordedNodes);
+    NodeStack.resize(LastScope.NodeStackSize);
+    
+    if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
+      MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
+    MatcherIndex = LastScope.FailIndex;
+    
+    InputChain = LastScope.InputChain;
+    InputFlag = LastScope.InputFlag;
+    if (!LastScope.HasChainNodesMatched)
+      ChainNodesMatched.clear();
+    
     MatchScopes.pop_back();
   }
 }

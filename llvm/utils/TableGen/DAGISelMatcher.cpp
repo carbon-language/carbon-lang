@@ -18,15 +18,9 @@ void MatcherNode::dump() const {
   print(errs());
 }
 
-void EmitNodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "EmitNode: Src = " << *Pattern.getSrcPattern() << "\n";
-  OS.indent(indent) << "EmitNode: Dst = " << *Pattern.getDstPattern() << "\n";
-}
-
 void MatcherNode::printNext(raw_ostream &OS, unsigned indent) const {
   if (Next)
     return Next->print(OS, indent);
-  OS.indent(indent) << "<null next field>\n";
 }
 
 
@@ -38,6 +32,16 @@ void PushMatcherNode::print(raw_ostream &OS, unsigned indent) const {
 
 void RecordMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Record\n";
+  printNext(OS, indent);
+}
+
+void RecordMemRefMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "RecordMemRef\n";
+  printNext(OS, indent);
+}
+
+void CaptureFlagInputMatcherNode::print(raw_ostream &OS, unsigned indent) const{
+  OS.indent(indent) << "CaptureFlagInput\n";
   printNext(OS, indent);
 }
 
@@ -115,22 +119,70 @@ void CheckFoldableChainNodeMatcherNode::print(raw_ostream &OS,
 
 void CheckChainCompatibleMatcherNode::print(raw_ostream &OS,
                                               unsigned indent) const {
-  OS.indent(indent) << "CheckChainCompatibleMatcherNode " << PreviousOp << "\n";
+  OS.indent(indent) << "CheckChainCompatible " << PreviousOp << "\n";
   printNext(OS, indent);
 }
 
 void EmitIntegerMatcherNode::print(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "EmitIntegerMatcherNode " << Val << " VT=" << VT << '\n';
+  OS.indent(indent) << "EmitInteger " << Val << " VT=" << VT << '\n';
+  printNext(OS, indent);
+}
+
+void EmitStringIntegerMatcherNode::
+print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitStringInteger " << Val << " VT=" << VT << '\n';
   printNext(OS, indent);
 }
 
 void EmitRegisterMatcherNode::print(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "EmitRegisterMatcherNode ";
+  OS.indent(indent) << "EmitRegister ";
   if (Reg)
     OS << Reg->getName();
   else
     OS << "zero_reg";
   OS << " VT=" << VT << '\n';
+  printNext(OS, indent);
+}
+
+void EmitConvertToTargetMatcherNode::
+print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitConvertToTarget " << Slot << '\n';
+  printNext(OS, indent);
+}
+
+void EmitMergeInputChainsMatcherNode::
+print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitMergeInputChains <todo: args>\n";
+  printNext(OS, indent);
+}
+
+void EmitCopyToRegMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitCopyToReg <todo: args>\n";
+  printNext(OS, indent);
+}
+
+void EmitNodeXFormMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitNodeXForm " << NodeXForm->getName()
+     << " Slot=" << Slot << '\n';
+  printNext(OS, indent);
+}
+
+
+void EmitNodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "EmitNode: " << OpcodeName << ": <todo flags> ";
+
+  for (unsigned i = 0, e = VTs.size(); i != e; ++i)
+    OS << ' ' << getEnumName(VTs[i]);
+  OS << '(';
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    OS << Operands[i] << ' ';
+  OS << ")\n";
+  printNext(OS, indent);
+}
+
+void PatternMarkerMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "Src = " << *Pattern.getSrcPattern() << "\n";
+  OS.indent(indent) << "Dst = " << *Pattern.getDstPattern() << "\n";
   printNext(OS, indent);
 }
 

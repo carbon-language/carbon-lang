@@ -13,6 +13,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Casting.h"
 
 namespace llvm {
@@ -37,20 +38,22 @@ class MatcherNode {
   OwningPtr<MatcherNode> Next;
 public:
   enum KindTy {
-    // Stack manipulation.
-    Push,           // Push a checking scope.
-    RecordNode,     // Record the current node.
-    MoveChild,      // Move current node to specified child.
-    MoveParent,     // Move current node to parent.
+    // Matcher state manipulation.
+    Push,                 // Push a checking scope.
+    RecordNode,           // Record the current node.
+    RecordMemRef,         // Record the memref in the current node.
+    CaptureFlagInput,     // If the current node has an input flag, save it.
+    MoveChild,            // Move current node to specified child.
+    MoveParent,           // Move current node to parent.
     
     // Predicate checking.
-    CheckSame,      // Fail if not same as prev match.
+    CheckSame,            // Fail if not same as prev match.
     CheckPatternPredicate,
-    CheckPredicate, // Fail if node predicate fails.
-    CheckOpcode,    // Fail if not opcode.
-    CheckType,      // Fail if not correct type.
-    CheckInteger,   // Fail if wrong val.
-    CheckCondCode,  // Fail if not condcode.
+    CheckPredicate,       // Fail if node predicate fails.
+    CheckOpcode,          // Fail if not opcode.
+    CheckType,            // Fail if not correct type.
+    CheckInteger,         // Fail if wrong val.
+    CheckCondCode,        // Fail if not condcode.
     CheckValueType,
     CheckComplexPat,
     CheckAndImm,
@@ -59,9 +62,15 @@ public:
     CheckChainCompatible,
     
     // Node creation/emisssion.
-    EmitInteger,   // Create a TargetConstant
-    EmitRegister,  // Create a register.
-    EmitNode
+    EmitInteger,          // Create a TargetConstant
+    EmitStringInteger,    // Create a TargetConstant from a string.
+    EmitRegister,         // Create a register.
+    EmitConvertToTarget,  // Convert a imm/fpimm to target imm/fpimm
+    EmitMergeInputChains, // Merge together a chains for an input.
+    EmitCopyToReg,        // Emit a copytoreg into a physreg.
+    EmitNode,             // Create a DAG node
+    EmitNodeXForm,        // Run a SDNodeXForm
+    PatternMarker         // Comment for printing.
   };
   const KindTy Kind;
 
@@ -119,6 +128,33 @@ public:
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == RecordNode;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+/// RecordMemRefMatcherNode - Save the current node's memref.
+class RecordMemRefMatcherNode : public MatcherNode {
+public:
+  RecordMemRefMatcherNode() : MatcherNode(RecordMemRef) {}
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == RecordMemRef;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+
+  
+/// CaptureFlagInputMatcherNode - If the current record has a flag input, record
+/// it so that it is used as an input to the generated code.
+class CaptureFlagInputMatcherNode : public MatcherNode {
+public:
+  CaptureFlagInputMatcherNode()
+    : MatcherNode(CaptureFlagInput) {}
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == CaptureFlagInput;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
@@ -395,6 +431,25 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+
+/// EmitStringIntegerMatcherNode - A target constant whose value is represented
+/// by a string.
+class EmitStringIntegerMatcherNode : public MatcherNode {
+  std::string Val;
+  MVT::SimpleValueType VT;
+public:
+  EmitStringIntegerMatcherNode(const std::string &val, MVT::SimpleValueType vt)
+    : MatcherNode(EmitStringInteger), Val(val), VT(vt) {}
+  
+  const std::string &getValue() const { return Val; }
+  MVT::SimpleValueType getVT() const { return VT; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitStringInteger;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
   
 /// EmitRegisterMatcherNode - This creates a new TargetConstant.
 class EmitRegisterMatcherNode : public MatcherNode {
@@ -415,15 +470,130 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+
+/// EmitConvertToTargetMatcherNode - Emit an operation that reads a specified
+/// recorded node and converts it from being a ISD::Constant to
+/// ISD::TargetConstant, likewise for ConstantFP.
+class EmitConvertToTargetMatcherNode : public MatcherNode {
+  unsigned Slot;
+public:
+  EmitConvertToTargetMatcherNode(unsigned slot)
+    : MatcherNode(EmitConvertToTarget), Slot(slot) {}
+  
+  unsigned getSlot() const { return Slot; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitConvertToTarget;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+/// EmitMergeInputChainsMatcherNode - Emit a node that merges a list of input
+/// chains together with a token factor.  The list of nodes are the nodes in the
+/// matched pattern that have chain input/outputs.  This node adds all input
+/// chains of these nodes if they are not themselves a node in the pattern.
+class EmitMergeInputChainsMatcherNode : public MatcherNode {
+  SmallVector<unsigned, 3> ChainNodes;
+public:
+  EmitMergeInputChainsMatcherNode(const unsigned *nodes, unsigned NumNodes)
+  : MatcherNode(EmitMergeInputChains), ChainNodes(nodes, nodes+NumNodes) {}
+  
+  unsigned getNumNodes() const { return ChainNodes.size(); }
+  
+  unsigned getNode(unsigned i) const {
+    assert(i < ChainNodes.size());
+    return ChainNodes[i];
+  }  
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitMergeInputChains;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+/// EmitCopyToRegMatcherNode - Emit a CopyToReg node from a value to a physreg,
+/// pushing the chain and flag results.
+///
+class EmitCopyToRegMatcherNode : public MatcherNode {
+  unsigned SrcSlot; // Value to copy into the physreg.
+  Record *DestPhysReg;
+public:
+  EmitCopyToRegMatcherNode(unsigned srcSlot, Record *destPhysReg)
+  : MatcherNode(EmitCopyToReg), SrcSlot(srcSlot), DestPhysReg(destPhysReg) {}
+  
+  unsigned getSrcSlot() const { return SrcSlot; }
+  Record *getDestPhysReg() const { return DestPhysReg; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitCopyToReg;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+    
+  
+/// EmitNodeXFormMatcherNode - Emit an operation that runs an SDNodeXForm on a
+/// recorded node and records the result.
+class EmitNodeXFormMatcherNode : public MatcherNode {
+  unsigned Slot;
+  Record *NodeXForm;
+public:
+  EmitNodeXFormMatcherNode(unsigned slot, Record *nodeXForm)
+  : MatcherNode(EmitNodeXForm), Slot(slot), NodeXForm(nodeXForm) {}
+  
+  unsigned getSlot() const { return Slot; }
+  Record *getNodeXForm() const { return NodeXForm; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == EmitNodeXForm;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
   
 /// EmitNodeMatcherNode - This signals a successful match and generates a node.
 class EmitNodeMatcherNode : public MatcherNode {
-  const PatternToMatch &Pattern;
-public:
-  EmitNodeMatcherNode(const PatternToMatch &pattern)
-  : MatcherNode(EmitNode), Pattern(pattern) {}
+  std::string OpcodeName;
+  const SmallVector<MVT::SimpleValueType, 3> VTs;
+  const SmallVector<unsigned, 6> Operands;
+  bool HasChain, HasFlag, HasMemRefs;
   
-  const PatternToMatch &getPattern() const { return Pattern; }
+  /// NumFixedArityOperands - If this is a fixed arity node, this is set to -1.
+  /// If this is a varidic node, this is set to the number of fixed arity
+  /// operands in the root of the pattern.  The rest are appended to this node.
+  int NumFixedArityOperands;
+public:
+  EmitNodeMatcherNode(const std::string &opcodeName,
+                      const MVT::SimpleValueType *vts, unsigned numvts,
+                      const unsigned *operands, unsigned numops,
+                      bool hasChain, bool hasFlag, bool hasmemrefs,
+                      int numfixedarityoperands)
+    : MatcherNode(EmitNode), OpcodeName(opcodeName),
+      VTs(vts, vts+numvts), Operands(operands, operands+numops),
+      HasChain(hasChain), HasFlag(hasFlag), HasMemRefs(hasmemrefs),
+      NumFixedArityOperands(numfixedarityoperands) {}
+  
+  const std::string &getOpcodeName() const { return OpcodeName; }
+  
+  unsigned getNumVTs() const { return VTs.size(); }
+  MVT::SimpleValueType getVT(unsigned i) const {
+    assert(i < VTs.size());
+    return VTs[i];
+  }
+  
+  unsigned getNumOperands() const { return Operands.size(); }
+  unsigned getOperand(unsigned i) const {
+    assert(i < Operands.size());
+    return Operands[i];
+  }  
+  
+  bool hasChain() const { return HasChain; }
+  bool hasFlag() const { return HasFlag; }
+  bool hasMemRefs() const { return HasMemRefs; }
+  int getNumFixedArityOperands() const { return NumFixedArityOperands; }
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == EmitNode;
@@ -431,6 +601,24 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+
+/// PatternMarkerMatcherNode - This prints as a comment indicating the source
+/// and dest patterns.
+class PatternMarkerMatcherNode : public MatcherNode {
+  const PatternToMatch &Pattern;
+public:
+  PatternMarkerMatcherNode(const PatternToMatch &pattern)
+  : MatcherNode(PatternMarker), Pattern(pattern) {}
+  
+  const PatternToMatch &getPattern() const { return Pattern; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == PatternMarker;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+ 
   
 } // end namespace llvm
 

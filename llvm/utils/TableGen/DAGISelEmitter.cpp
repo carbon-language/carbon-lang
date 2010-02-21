@@ -169,7 +169,8 @@ struct PatternSortingPredicate {
 /// getRegisterValueType - Look up and return the ValueType of the specified
 /// register. If the register is a member of multiple register classes which
 /// have different associated types, return MVT::Other.
-static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
+static MVT::SimpleValueType getRegisterValueType(Record *R,
+                                                 const CodeGenTarget &T) {
   bool FoundRC = false;
   MVT::SimpleValueType VT = MVT::Other;
   const std::vector<CodeGenRegisterClass> &RCs = T.getRegisterClasses();
@@ -296,8 +297,6 @@ private:
   
   // Node to name mapping
   std::map<std::string, std::string> VariableMap;
-  // Node to operator mapping
-  std::map<std::string, Record*> OperatorMap;
   // Name of the folded node which produces a flag.
   std::pair<std::string, unsigned> FoldedFlag;
   // Names of all the folded nodes which produce chains.
@@ -429,7 +428,6 @@ private:
                             bool &ResNodeDecled, bool isRoot = false) {
     const CodeGenTarget &T = CGP.getTargetInfo();
     unsigned OpNo = (unsigned)N->NodeHasProperty(SDNPHasChain, CGP);
-    bool HasInFlag = N->NodeHasProperty(SDNPInFlag, CGP);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
@@ -480,12 +478,13 @@ private:
       }
     }
 
-    if (HasInFlag) {
+    if (N->NodeHasProperty(SDNPInFlag, CGP)) {
       if (!InFlagDecled) {
         emitCode("SDValue InFlag = " + getNodeName(RootName) +
                "->getOperand(" + utostr(OpNo) + ");");
         InFlagDecled = true;
       } else
+        abort();
         emitCode("InFlag = " + getNodeName(RootName) +
                "->getOperand(" + utostr(OpNo) + ");");
     }
@@ -539,9 +538,6 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
       emitCheck(VarMapEntry + " == " + RootName);
       return;
     }
-    
-    if (!N->isLeaf())
-      OperatorMap[N->getName()] = N->getOperator();
   }
   
   
@@ -673,9 +669,8 @@ void PatternCodeEmitter::EmitMatchCode(TreePatternNode *N, TreePatternNode *P,
                        ChainSuffix + utostr(OpNo), FoundChain);
   }
   
-  // Handle cases when root is a complex pattern.
-  const ComplexPattern *CP;
-  if (N->isLeaf() && (CP = N->getComplexPatternInfo(CGP))) {
+  // Handle complex patterns.
+  if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
     std::string Fn = CP->getSelectFunc();
     unsigned NumOps = CP->getNumOperands();
     for (unsigned i = 0; i < NumOps; ++i) {
@@ -828,19 +823,12 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
   if (!N->getName().empty()) {
     const std::string &VarName = N->getName();
     std::string Val = VariableMap[VarName];
-    bool ModifiedVal = false;
     if (Val.empty()) {
       errs() << "Variable '" << VarName << " referenced but not defined "
       << "and not caught earlier!\n";
       abort();
     }
-    if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
-      // Already selected this operand, just return the tmpval.
-      NodeOps.push_back(getValueName(Val));
-      return NodeOps;
-    }
     
-    const ComplexPattern *CP;
     unsigned ResNo = TmpNo++;
     if (!N->isLeaf() && N->getOperator()->getName() == "imm") {
       assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
@@ -861,11 +849,7 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
                " = CurDAG->getTargetConstant(((" + CastType +
                ") cast<ConstantSDNode>(" + Val + ")->getZExtValue()), " +
                getEnumName(N->getTypeNum(0)) + ");");
-      // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-      // value if used multiple times by this pattern result.
-      Val = TmpVar;
-      ModifiedVal = true;
-      NodeOps.push_back(getValueName(Val));
+      NodeOps.push_back(getValueName(TmpVar));
     } else if (!N->isLeaf() && N->getOperator()->getName() == "fpimm") {
       assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
       std::string TmpVar =  "Tmp" + utostr(ResNo);
@@ -873,53 +857,10 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
                " = CurDAG->getTargetConstantFP(*cast<ConstantFPSDNode>(" + 
                Val + ")->getConstantFPValue(), cast<ConstantFPSDNode>(" +
                Val + ")->getValueType(0));");
-      // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-      // value if used multiple times by this pattern result.
-      Val = TmpVar;
-      ModifiedVal = true;
-      NodeOps.push_back(getValueName(Val));
-    } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
-      Record *Op = OperatorMap[N->getName()];
-      // Transform ExternalSymbol to TargetExternalSymbol
-      if (Op && Op->getName() == "externalsym") {
-        std::string TmpVar = "Tmp"+utostr(ResNo);
-        emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
-                 "ExternalSymbol(cast<ExternalSymbolSDNode>(" +
-                 Val + ")->getSymbol(), " +
-                 getEnumName(N->getTypeNum(0)) + ");");
-        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
-        // this value if used multiple times by this pattern result.
-        Val = TmpVar;
-        ModifiedVal = true;
-      }
-      NodeOps.push_back(getValueName(Val));
-    } else if (!N->isLeaf() && (N->getOperator()->getName() == "tglobaladdr"
-                                || N->getOperator()->getName() == "tglobaltlsaddr")) {
-      Record *Op = OperatorMap[N->getName()];
-      // Transform GlobalAddress to TargetGlobalAddress
-      if (Op && (Op->getName() == "globaladdr" ||
-                 Op->getName() == "globaltlsaddr")) {
-        std::string TmpVar = "Tmp" + utostr(ResNo);
-        emitCode("SDValue " + TmpVar + " = CurDAG->getTarget"
-                 "GlobalAddress(cast<GlobalAddressSDNode>(" + Val +
-                 ")->getGlobal(), " + getEnumName(N->getTypeNum(0)) +
-                 ");");
-        // Add Tmp<ResNo> to VariableMap, so that we don't multiply select
-        // this value if used multiple times by this pattern result.
-        Val = TmpVar;
-        ModifiedVal = true;
-      }
-      NodeOps.push_back(getValueName(Val));
-    } else if (!N->isLeaf()
-               && (N->getOperator()->getName() == "texternalsym" ||
-                   N->getOperator()->getName() == "tconstpool")) {
-      // Do not rewrite the variable name, since we don't generate a new
-      // temporary.
-      NodeOps.push_back(getValueName(Val));
-    } else if (N->isLeaf() && (CP = N->getComplexPatternInfo(CGP))) {
-      for (unsigned i = 0; i < CP->getNumOperands(); ++i) {
+      NodeOps.push_back(getValueName(TmpVar));
+    } else if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
+      for (unsigned i = 0; i < CP->getNumOperands(); ++i)
         NodeOps.push_back(getValueName("CPTmp" + Val + "_" + utostr(i)));
-      }
     } else {
       // This node, probably wrapped in a SDNodeXForm, behaves like a leaf
       // node even if it isn't one. Don't select it.
@@ -931,9 +872,6 @@ PatternCodeEmitter::EmitResultCode(TreePatternNode *N,
       }
       NodeOps.push_back(getValueName(Val));
     }
-    
-    if (ModifiedVal)
-      VariableMap[VarName] = Val;
     return NodeOps;
   }
   if (N->isLeaf()) {
