@@ -524,7 +524,9 @@ namespace clang {
       /// associates a declaration name with one or more declaration
       /// IDs. This data is used when performing qualified name lookup
       /// into a DeclContext via DeclContext::lookup.
-      DECL_CONTEXT_VISIBLE
+      DECL_CONTEXT_VISIBLE,
+      /// \brief A NamespaceDecl record.
+      DECL_NAMESPACE
     };
 
     /// \brief Record codes for each kind of statement or expression.

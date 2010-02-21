@@ -42,6 +42,7 @@ namespace {
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
     void VisitNamedDecl(NamedDecl *D);
+    void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitTypeDecl(TypeDecl *D);
     void VisitTypedefDecl(TypedefDecl *D);
     void VisitTagDecl(TagDecl *D);
@@ -97,6 +98,16 @@ void PCHDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
 void PCHDeclWriter::VisitNamedDecl(NamedDecl *D) {
   VisitDecl(D);
   Writer.AddDeclarationName(D->getDeclName(), Record);
+}
+
+void PCHDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
+  VisitNamedDecl(D);
+  Writer.AddSourceLocation(D->getLBracLoc(), Record);
+  Writer.AddSourceLocation(D->getRBracLoc(), Record);
+  Writer.AddDeclRef(D->getNextNamespace(), Record);
+  Writer.AddDeclRef(D->getOriginalNamespace(), Record);
+  Writer.AddDeclRef(D->getAnonymousNamespace(), Record);
+  Code = pch::DECL_NAMESPACE;
 }
 
 void PCHDeclWriter::VisitTypeDecl(TypeDecl *D) {

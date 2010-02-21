@@ -39,6 +39,7 @@ namespace {
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
     void VisitNamedDecl(NamedDecl *ND);
+    void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitTypeDecl(TypeDecl *TD);
     void VisitTypedefDecl(TypedefDecl *TD);
     void VisitTagDecl(TagDecl *TD);
@@ -94,6 +95,18 @@ void PCHDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
 void PCHDeclReader::VisitNamedDecl(NamedDecl *ND) {
   VisitDecl(ND);
   ND->setDeclName(Reader.ReadDeclarationName(Record, Idx));
+}
+
+void PCHDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
+  VisitNamedDecl(D);
+  D->setLBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  D->setRBracLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  D->setNextNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setOriginalNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
+  D->setAnonymousNamespace(
+                    cast_or_null<NamespaceDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
@@ -742,6 +755,10 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_BLOCK:
     D = BlockDecl::Create(*Context, 0, SourceLocation());
+    break;
+      
+  case pch::DECL_NAMESPACE:
+    D = NamespaceDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   }
 

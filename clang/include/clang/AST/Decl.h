@@ -267,8 +267,8 @@ public:
   }
 
   void setAnonymousNamespace(NamespaceDecl *D) {
-    assert(D->isAnonymousNamespace());
-    assert(D->getParent() == this);
+    assert(!D || D->isAnonymousNamespace());
+    assert(!D || D->getParent() == this);
     AnonymousNamespace = D;
   }
 
