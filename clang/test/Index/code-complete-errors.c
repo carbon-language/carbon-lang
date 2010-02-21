@@ -14,4 +14,3 @@ void g() {  }
 
 // RUN: c-index-test -code-completion-at=%s:13:12 -pedantic %s 2> %t
 // RUN: FileCheck -check-prefix=CHECK %s < %t
-// XFAIL: win32

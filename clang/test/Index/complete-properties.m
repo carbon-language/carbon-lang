@@ -38,4 +38,3 @@
 // RUN: c-index-test -code-completion-at=%s:21:10 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: ObjCPropertyDecl:{ResultType int}{TypedText Prop0}
 // CHECK-CC4-NEXT: ObjCPropertyDecl:{ResultType id}{TypedText Prop4}
-// XFAIL: win32
