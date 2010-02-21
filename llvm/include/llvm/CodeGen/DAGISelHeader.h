@@ -470,7 +470,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
         
     case OPC_CheckFoldableChainNode: {
-      assert(!NodeStack.size() == 1 && "No parent node");
+      assert(NodeStack.size() != 1 && "No parent node");
       // Verify that all intermediate nodes between the root and this one have
       // a single use.
       bool HasMultipleUses = false;
