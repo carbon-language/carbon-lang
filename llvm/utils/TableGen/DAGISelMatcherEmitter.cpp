@@ -68,8 +68,6 @@ static unsigned EmitInt(int64_t Val, formatted_raw_ostream &OS) {
 
 namespace {
 class MatcherTableEmitter {
-  formatted_raw_ostream &OS;
-  
   StringMap<unsigned> NodePredicateMap, PatternPredicateMap;
   std::vector<std::string> NodePredicates, PatternPredicates;
 
@@ -81,13 +79,15 @@ class MatcherTableEmitter {
   std::vector<const Record*> NodeXForms;
 
 public:
-  MatcherTableEmitter(formatted_raw_ostream &os) : OS(os) {}
+  MatcherTableEmitter() {}
 
-  unsigned EmitMatcherList(const MatcherNode *N, unsigned Indent);
+  unsigned EmitMatcherList(const MatcherNode *N, unsigned Indent,
+                           formatted_raw_ostream &OS);
   
-  void EmitPredicateFunctions();
+  void EmitPredicateFunctions(formatted_raw_ostream &OS);
 private:
-  unsigned EmitMatcher(const MatcherNode *N, unsigned Indent);
+  unsigned EmitMatcher(const MatcherNode *N, unsigned Indent,
+                       formatted_raw_ostream &OS);
   
   unsigned getNodePredicate(StringRef PredName) {
     unsigned &Entry = NodePredicateMap[PredName];
@@ -130,7 +130,7 @@ private:
 /// EmitMatcherOpcodes - Emit bytes for the specified matcher and return
 /// the number of bytes emitted.
 unsigned MatcherTableEmitter::
-EmitMatcher(const MatcherNode *N, unsigned Indent) {
+EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
   OS.PadToColumn(Indent*2);
   
   switch (N->getKind()) {
@@ -315,7 +315,7 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
       << *CM->getPattern().getSrcPattern() << '\n';
     OS.PadToColumn(Indent*2) << "// Dst: " 
       << *CM->getPattern().getDstPattern() << '\n';
-    return 0;
+    return 2+CM->getNumResults();
   }
   }
   assert(0 && "Unreachable");
@@ -324,7 +324,8 @@ EmitMatcher(const MatcherNode *N, unsigned Indent) {
 
 /// EmitMatcherList - Emit the bytes for the specified matcher subtree.
 unsigned MatcherTableEmitter::
-EmitMatcherList(const MatcherNode *N, unsigned Indent) {
+EmitMatcherList(const MatcherNode *N, unsigned Indent,
+                formatted_raw_ostream &OS) {
   unsigned Size = 0;
   while (N) {
     // Push is a special case since it is binary.
@@ -338,7 +339,7 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent) {
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
         NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
-                                   Indent+1);
+                                   Indent+1, FOS);
       }
       
       if (NextSize > 255) {
@@ -357,7 +358,7 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent) {
       continue;
     }
   
-    Size += EmitMatcher(N, Indent);
+    Size += EmitMatcher(N, Indent, OS);
     
     // If there are other nodes in this list, iterate to them, otherwise we're
     // done.
@@ -366,7 +367,7 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent) {
   return Size;
 }
 
-void MatcherTableEmitter::EmitPredicateFunctions() {
+void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   // FIXME: Don't build off the DAGISelEmitter's predicates, emit them directly
   // here into the case stmts.
   
@@ -438,17 +439,17 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   OS << "// The main instruction selector code.\n";
   OS << "SDNode *SelectCode2(SDNode *N) {\n";
 
-  MatcherTableEmitter MatcherEmitter(OS);
+  MatcherTableEmitter MatcherEmitter;
 
   OS << "  // Opcodes are emitted as 2 bytes, TARGET_OPCODE handles this.\n";
   OS << "  #define TARGET_OPCODE(X) X & 255, unsigned(X) >> 8\n";
   OS << "  static const unsigned char MatcherTable[] = {\n";
-  unsigned TotalSize = MatcherEmitter.EmitMatcherList(Matcher, 2);
+  unsigned TotalSize = MatcherEmitter.EmitMatcherList(Matcher, 2, OS);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
   OS << "  #undef TARGET_OPCODE\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
   OS << "\n";
   
   // Next up, emit the function for node and pattern predicates:
-  MatcherEmitter.EmitPredicateFunctions();
+  MatcherEmitter.EmitPredicateFunctions(OS);
 }
