@@ -80,11 +80,12 @@ namespace {
     // Importing declarations
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
-                         SourceLocation &Loc);                            
+                         SourceLocation &Loc);
     void ImportDeclContext(DeclContext *FromDC);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord);
     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
     Decl *VisitDecl(Decl *D);
+    Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitRecordDecl(RecordDecl *D);
@@ -1403,6 +1404,71 @@ Decl *ASTNodeImporter::VisitDecl(Decl *D) {
   Importer.FromDiag(D->getLocation(), diag::err_unsupported_ast_node)
     << D->getDeclKindName();
   return 0;
+}
+
+Decl *ASTNodeImporter::VisitNamespaceDecl(NamespaceDecl *D) {
+  // Import the major distinguishing characteristics of this namespace.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+  
+  NamespaceDecl *MergeWithNamespace = 0;
+  if (!Name) {
+    // This is an anonymous namespace. Adopt an existing anonymous
+    // namespace if we can.
+    // FIXME: Not testable.
+    if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(DC))
+      MergeWithNamespace = TU->getAnonymousNamespace();
+    else
+      MergeWithNamespace = cast<NamespaceDecl>(DC)->getAnonymousNamespace();
+  } else {
+    llvm::SmallVector<NamedDecl *, 4> ConflictingDecls;
+    for (DeclContext::lookup_result Lookup = DC->lookup(Name);
+         Lookup.first != Lookup.second; 
+         ++Lookup.first) {
+      if (!(*Lookup.first)->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+        continue;
+      
+      if (NamespaceDecl *FoundNS = dyn_cast<NamespaceDecl>(*Lookup.first)) {
+        MergeWithNamespace = FoundNS;
+        ConflictingDecls.clear();
+        break;
+      }
+      
+      ConflictingDecls.push_back(*Lookup.first);
+    }
+    
+    if (!ConflictingDecls.empty()) {
+      Name = Importer.HandleNameConflict(Name, DC, Decl::IDNS_Ordinary,
+                                         ConflictingDecls.data(), 
+                                         ConflictingDecls.size());
+    }
+  }
+  
+  // Create the "to" namespace, if needed.
+  NamespaceDecl *ToNamespace = MergeWithNamespace;
+  if (!ToNamespace) {
+    ToNamespace = NamespaceDecl::Create(Importer.getToContext(), DC, Loc,
+                                        Name.getAsIdentifierInfo());
+    ToNamespace->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDecl(ToNamespace);
+    
+    // If this is an anonymous namespace, register it as the anonymous
+    // namespace within its context.
+    if (!Name) {
+      if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(DC))
+        TU->setAnonymousNamespace(ToNamespace);
+      else
+        cast<NamespaceDecl>(DC)->setAnonymousNamespace(ToNamespace);
+    }
+  }
+  Importer.Imported(D, ToNamespace);
+  
+  ImportDeclContext(D);
+  
+  return ToNamespace;
 }
 
 Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
