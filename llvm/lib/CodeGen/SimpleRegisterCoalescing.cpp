@@ -1864,7 +1864,7 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
   // If the VN has already been computed, just return it.
   if (ThisValNoAssignments[VN] >= 0)
     return ThisValNoAssignments[VN];
-//  assert(ThisValNoAssignments[VN] != -2 && "Cyclic case?");
+  assert(ThisValNoAssignments[VN] != -2 && "Cyclic value numbers");
 
   // If this val is not a copy from the other val, then it must be a new value
   // number in the destination.
