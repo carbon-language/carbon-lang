@@ -716,7 +716,9 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         unsigned ResSlot = MatcherTable[MatcherIndex++];
         assert(ResSlot < RecordedNodes.size() && "Invalid CheckSame");
         SDValue Res = RecordedNodes[ResSlot];
-        assert(NodeToMatch->getValueType(i) == Res.getValueType() &&
+        assert((NodeToMatch->getValueType(i) == Res.getValueType() ||
+                NodeToMatch->getValueType(i).getSizeInBits() ==
+                    Res.getValueType().getSizeInBits()) &&
                "invalid replacement");
         ReplaceUses(SDValue(NodeToMatch, i), Res);
       }
