@@ -209,12 +209,26 @@ namespace {
                        SDValue &Scale, SDValue &Index, SDValue &Disp);
     bool SelectTLSADDRAddr(SDNode *Op, SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp);
-    bool SelectScalarSSELoad(SDNode *Root, SDValue N,
+    bool SelectScalarSSELoadXXX(SDNode *Root, SDValue N,
                              SDValue &Base, SDValue &Scale,
                              SDValue &Index, SDValue &Disp,
                              SDValue &Segment,
+                             SDValue &NodeWithChain);
+    
+    // FIXME: Remove this hacky wrapper.
+    bool SelectScalarSSELoad(SDNode *Root, SDValue N, SDValue &Base,
+                             SDValue &Scale, SDValue &Index,
+                             SDValue &Disp, SDValue &Segment,
                              SDValue &PatternChainResult,
-                             SDValue &PatternInputChain);
+                             SDValue &PatternInputChain) {
+      SDValue Tmp;
+      if (!SelectScalarSSELoadXXX(Root, N, Base, Scale, Index, Disp, Segment,
+                                  Tmp))
+        return false;
+      PatternInputChain = Tmp.getOperand(0);
+      PatternChainResult = Tmp.getValue(1);
+      return true;
+    }
     bool TryFoldLoad(SDNode *P, SDValue N,
                      SDValue &Base, SDValue &Scale,
                      SDValue &Index, SDValue &Disp,
@@ -1320,26 +1334,23 @@ bool X86DAGToDAGISel::SelectAddr(SDNode *Op, SDValue N, SDValue &Base,
 /// is derived from the type of N, which is either v4f32 or v2f64.
 ///
 /// We also return:
-///  PatternInputChain: this is the chain node input to the pattern that the
-///    newly selected instruction should use.
-///  PatternChainResult: this is chain result matched by the pattern which
-///    should be replaced with the chain result of the matched node.
-bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
+///   PatternChainNode: this is the matched node that has a chain input and
+///   output.
+bool X86DAGToDAGISel::SelectScalarSSELoadXXX(SDNode *Root,
                                           SDValue N, SDValue &Base,
                                           SDValue &Scale, SDValue &Index,
                                           SDValue &Disp, SDValue &Segment,
-                                          SDValue &PatternChainResult,
-                                          SDValue &PatternInputChain) {
+                                          SDValue &PatternNodeWithChain) {
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    PatternChainResult = N.getOperand(0).getValue(1);
-    if (ISD::isNON_EXTLoad(PatternChainResult.getNode()) &&
-        PatternChainResult.getValue(0).hasOneUse() &&
-        IsProfitableToFold(N.getOperand(0),PatternChainResult.getNode(),Root) &&
-        IsLegalToFold(N.getOperand(0), N.getNode(), Root)) {
-      LoadSDNode *LD = cast<LoadSDNode>(PatternChainResult);
+    PatternNodeWithChain = N.getOperand(0);
+    if (ISD::isNON_EXTLoad(PatternNodeWithChain.getNode()) &&
+        PatternNodeWithChain.hasOneUse() &&
+        IsProfitableToFold(N.getOperand(0), PatternNodeWithChain.getNode(),
+                           Root) &&
+        IsLegalToFold(N.getOperand(0), PatternNodeWithChain.getNode(), Root)) {
+      LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
       if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp,Segment))
         return false;
-      PatternInputChain = LD->getChain();
       return true;
     }
   }
@@ -1358,8 +1369,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDNode *Root,
     LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
     if (!SelectAddr(Root, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
       return false;
-    PatternInputChain = LD->getChain();
-    PatternChainResult = SDValue(LD, 1);
+    PatternNodeWithChain = SDValue(LD, 0);
     return true;
   }
   return false;
