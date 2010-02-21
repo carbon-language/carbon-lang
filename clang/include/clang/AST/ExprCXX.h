@@ -1045,7 +1045,9 @@ public:
                           SourceLocation DestroyedTypeLoc)
     : Expr(CXXPseudoDestructorExprClass,
            Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
-                                                          false, 0)),
+                                                          false, 0, false, 
+                                                          false, 0, 0, false,
+                                                          CC_Default)),
            /*isTypeDependent=*/false,
            /*isValueDependent=*/Base->isValueDependent()),
       Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),

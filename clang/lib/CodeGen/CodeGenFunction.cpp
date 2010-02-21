@@ -197,7 +197,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   Builder.SetInsertPoint(EntryBB);
 
-  QualType FnType = getContext().getFunctionType(RetTy, 0, 0, false, 0);
+  QualType FnType = getContext().getFunctionType(RetTy, 0, 0, false, 0,
+                                                 false, false, 0, 0,
+                                                 /*FIXME?*/false,
+                                                 /*FIXME?*/CC_Default);
 
   // Emit subprogram debug descriptor.
   if (CGDebugInfo *DI = getDebugInfo()) {

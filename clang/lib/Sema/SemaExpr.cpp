@@ -6802,7 +6802,8 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
     // The parameter list is optional, if there was none, assume ().
     if (!T->isFunctionType())
-      T = Context.getFunctionType(T, NULL, 0, 0, 0);
+      T = Context.getFunctionType(T, 0, 0, false, 0, false, false, 0, 0, false,
+                                  CC_Default);
 
     CurBlock->hasPrototype = true;
     CurBlock->isVariadic = false;
@@ -6928,11 +6929,11 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   QualType BlockTy;
   if (!BSI->hasPrototype)
     BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0, false, false, 0, 0,
-                                      NoReturn);
+                                      NoReturn, CC_Default);
   else
     BlockTy = Context.getFunctionType(RetTy, ArgTypes.data(), ArgTypes.size(),
                                       BSI->isVariadic, 0, false, false, 0, 0,
-                                      NoReturn);
+                                      NoReturn, CC_Default);
 
   // FIXME: Check that return/parameter types are complete/non-abstract
   DiagnoseUnusedParameters(BSI->Params.begin(), BSI->Params.end());

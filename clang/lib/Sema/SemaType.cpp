@@ -797,7 +797,7 @@ QualType Sema::BuildFunctionType(QualType T,
     return QualType();
 
   return Context.getFunctionType(T, ParamTypes, NumParamTypes, Variadic,
-                                 Quals);
+                                 Quals, false, false, 0, 0, false, CC_Default);
 }
 
 /// \brief Build a member pointer type \c T Class::*.
@@ -1132,7 +1132,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, FTI.TypeQuals,
                                       FTI.hasExceptionSpec,
                                       FTI.hasAnyExceptionSpec,
-                                      Exceptions.size(), Exceptions.data());
+                                      Exceptions.size(), Exceptions.data(),
+                                      false, CC_Default);
         } else if (FTI.isVariadic) {
           // We allow a zero-parameter variadic function in C if the
           // function is marked with the "overloadable"
@@ -1148,7 +1149,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
           if (!Overloadable)
             Diag(FTI.getEllipsisLoc(), diag::err_ellipsis_first_arg);
-          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, 0);
+          T = Context.getFunctionType(T, NULL, 0, FTI.isVariadic, 0, 
+                                      false, false, 0, 0, false, CC_Default);
         } else {
           // Simple void foo(), where the incoming T is the result type.
           T = Context.getFunctionNoProtoType(T);
@@ -1223,7 +1225,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                                     FTI.isVariadic, FTI.TypeQuals,
                                     FTI.hasExceptionSpec,
                                     FTI.hasAnyExceptionSpec,
-                                    Exceptions.size(), Exceptions.data());
+                                    Exceptions.size(), Exceptions.data(),
+                                    false, CC_Default);
       }
 
       // For GCC compatibility, we allow attributes that apply only to
@@ -1320,7 +1323,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
       // Strip the cv-quals from the type.
       T = Context.getFunctionType(FnTy->getResultType(), FnTy->arg_type_begin(),
-                                  FnTy->getNumArgs(), FnTy->isVariadic(), 0);
+                                  FnTy->getNumArgs(), FnTy->isVariadic(), 0, 
+                                  false, false, 0, 0, false, CC_Default);
     }
   }
 

@@ -1023,7 +1023,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0,
                                             true, false,
                                             HasBadAllocExceptionSpec? 1 : 0,
-                                            &BadAllocType);
+                                            &BadAllocType, false, CC_Default);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
                          FnType, /*TInfo=*/0, FunctionDecl::None, false, true);

@@ -529,11 +529,11 @@ public:
   /// list.  isVariadic indicates whether the argument list includes '...'.
   QualType getFunctionType(QualType ResultTy, const QualType *ArgArray,
                            unsigned NumArgs, bool isVariadic,
-                           unsigned TypeQuals, bool hasExceptionSpec = false,
-                           bool hasAnyExceptionSpec = false,
-                           unsigned NumExs = 0, const QualType *ExArray = 0,
-                           bool NoReturn = false,
-                           CallingConv CallConv = CC_Default);
+                           unsigned TypeQuals, bool hasExceptionSpec,
+                           bool hasAnyExceptionSpec,
+                           unsigned NumExs, const QualType *ExArray,
+                           bool NoReturn,
+                           CallingConv CallConv);
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.

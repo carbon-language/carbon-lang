@@ -4408,7 +4408,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (allRTypes) return rhs;
     return getFunctionType(retType, proto->arg_type_begin(),
                            proto->getNumArgs(), proto->isVariadic(),
-                           proto->getTypeQuals(), NoReturn, lcc);
+                           proto->getTypeQuals(), 
+                           false, false, 0, 0, NoReturn, lcc);
   }
 
   if (allLTypes) return lhs;
@@ -4895,8 +4896,11 @@ QualType ASTContext::GetBuiltinType(unsigned id,
   // handle untyped/variadic arguments "T c99Style();" or "T cppStyle(...);".
   if (ArgTypes.size() == 0 && TypeStr[0] == '.')
     return getFunctionNoProtoType(ResType);
+
+  // FIXME: Should we create noreturn types?
   return getFunctionType(ResType, ArgTypes.data(), ArgTypes.size(),
-                         TypeStr[0] == '.', 0);
+                         TypeStr[0] == '.', 0, false, false, 0, 0,
+                         false, CC_Default);
 }
 
 QualType

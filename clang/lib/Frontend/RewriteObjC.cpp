@@ -2165,8 +2165,10 @@ void RewriteObjC::SynthSelGetUidFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
   QualType getFuncType = Context->getFunctionType(Context->getObjCSelType(),
-                                                   &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/, 0);
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  false /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   SelGetUidFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                            SourceLocation(),
                                            SelGetUidIdent, getFuncType, 0,
@@ -2261,7 +2263,9 @@ void RewriteObjC::SynthSuperContructorFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
-                                                  false, 0);
+                                                  false, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   SuperContructorFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
@@ -2280,7 +2284,9 @@ void RewriteObjC::SynthMsgSendFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0);
+                                                  true /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   MsgSendFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
@@ -2302,7 +2308,9 @@ void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0);
+                                                  true /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
@@ -2321,7 +2329,9 @@ void RewriteObjC::SynthMsgSendStretFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0);
+                                                  true /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                          SourceLocation(),
                                          msgSendIdent, msgSendType, 0,
@@ -2345,7 +2355,9 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0);
+                                                  true /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                        SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
@@ -2364,7 +2376,9 @@ void RewriteObjC::SynthMsgSendFpretFunctionDecl() {
   ArgTys.push_back(argT);
   QualType msgSendType = Context->getFunctionType(Context->DoubleTy,
                                                   &ArgTys[0], ArgTys.size(),
-                                                  true /*isVariadic*/, 0);
+                                                  true /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
                                               msgSendIdent, msgSendType, 0,
@@ -2378,7 +2392,9 @@ void RewriteObjC::SynthGetClassFunctionDecl() {
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/, 0);
+                                                   false /*isVariadic*/, 0,
+                                                  false, false, 0, 0, false,
+                                                  CC_Default);
   GetClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                           SourceLocation(),
                                           getClassIdent, getClassType, 0,
@@ -2392,7 +2408,9 @@ void RewriteObjC::SynthGetMetaClassFunctionDecl() {
   ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
-                                                   false /*isVariadic*/, 0);
+                                                   false /*isVariadic*/, 0,
+                                                   false, false, 0, 0, false,
+                                                   CC_Default);
   GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                               SourceLocation(),
                                               getClassIdent, getClassType, 0,
@@ -2804,7 +2822,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   QualType castType = Context->getFunctionType(returnType,
     &ArgTypes[0], ArgTypes.size(),
     // If we don't have a method decl, force a variadic cast.
-    Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true, 0);
+    Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : true, 0,
+                                               false, false, 0, 0, false,
+                                               CC_Default);
   castType = Context->getPointerType(castType);
   cast = NoTypeInfoCStyleCastExpr(Context, castType, CastExpr::CK_Unknown,
                                   cast);
@@ -2833,7 +2853,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // Now do the "normal" pointer to function cast.
     castType = Context->getFunctionType(returnType,
       &ArgTypes[0], ArgTypes.size(),
-      Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false, 0);
+      Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false, 0,
+                                        false, false, 0, 0, false,
+                                        CC_Default);
     castType = Context->getPointerType(castType);
     cast = NoTypeInfoCStyleCastExpr(Context, castType, CastExpr::CK_Unknown,
                                     cast);
@@ -4306,7 +4328,9 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp) {
   }
   // Now do the pointer to function cast.
   QualType PtrToFuncCastType = Context->getFunctionType(Exp->getType(),
-    &ArgTypes[0], ArgTypes.size(), false/*no variadic*/, 0);
+    &ArgTypes[0], ArgTypes.size(), false/*no variadic*/, 0,
+                                                        false, false, 0, 0, 
+                                                        false, CC_Default);
 
   PtrToFuncCastType = Context->getPointerType(PtrToFuncCastType);
 

@@ -2174,7 +2174,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       CXXConstructorDecl::Create(Context, ClassDecl,
                                  ClassDecl->getLocation(), Name,
                                  Context.getFunctionType(Context.VoidTy,
-                                                         0, 0, false, 0),
+                                                         0, 0, false, 0,
+                                                         /*FIXME*/false, false,
+                                                         0, 0, false,
+                                                         CC_Default),
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
@@ -2246,7 +2249,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                    ClassDecl->getLocation(), Name,
                                    Context.getFunctionType(Context.VoidTy,
                                                            &ArgType, 1,
-                                                           false, 0),
+                                                           false, 0,
+                                                           /*FIXME:*/false,
+                                                           false, 0, 0, false,
+                                                           CC_Default),
                                    /*TInfo=*/0,
                                    /*isExplicit=*/false,
                                    /*isInline=*/true,
@@ -2332,7 +2338,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     CXXMethodDecl *CopyAssignment =
       CXXMethodDecl::Create(Context, ClassDecl, ClassDecl->getLocation(), Name,
                             Context.getFunctionType(RetType, &ArgType, 1,
-                                                    false, 0),
+                                                    false, 0,
+                                                    /*FIXME:*/false,
+                                                    false, 0, 0, false,
+                                                    CC_Default),
                             /*TInfo=*/0, /*isStatic=*/false, /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
@@ -2364,7 +2373,10 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       = CXXDestructorDecl::Create(Context, ClassDecl,
                                   ClassDecl->getLocation(), Name,
                                   Context.getFunctionType(Context.VoidTy,
-                                                          0, 0, false, 0),
+                                                          0, 0, false, 0,
+                                                           /*FIXME:*/false,
+                                                           false, 0, 0, false,
+                                                           CC_Default),
                                   /*isInline=*/true,
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
@@ -2523,7 +2535,13 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
   const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
   return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
                                  Proto->getNumArgs(),
-                                 Proto->isVariadic(), 0);
+                                 Proto->isVariadic(), 0,
+                                 Proto->hasExceptionSpec(),
+                                 Proto->hasAnyExceptionSpec(),
+                                 Proto->getNumExceptions(),
+                                 Proto->exception_begin(),
+                                 Proto->getNoReturnAttr(),
+                                 Proto->getCallConv());
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -2680,7 +2698,9 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   // "void" as the return type, since destructors don't have return
   // types. We *always* have to do this, because GetTypeForDeclarator
   // will put in a result type of "int" when none was specified.
-  return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0);
+  // FIXME: Exceptions!
+  return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0,
+                                 false, false, 0, 0, false, CC_Default);
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the
@@ -2749,8 +2769,15 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // Rebuild the function type "R" without any parameters (in case any
   // of the errors above fired) and with the conversion type as the
   // return type.
+  const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
   R = Context.getFunctionType(ConvType, 0, 0, false,
-                              R->getAs<FunctionProtoType>()->getTypeQuals());
+                              Proto->getTypeQuals(),
+                              Proto->hasExceptionSpec(),
+                              Proto->hasAnyExceptionSpec(),
+                              Proto->getNumExceptions(),
+                              Proto->exception_begin(),
+                              Proto->getNoReturnAttr(),
+                              Proto->getCallConv());
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)

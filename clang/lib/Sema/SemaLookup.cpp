@@ -544,7 +544,8 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
                                             0, 0, ConvProto->isVariadic(),
                                             ConvProto->getTypeQuals(),
                                             false, false, 0, 0,
-                                            ConvProto->getNoReturnAttr());
+                                            ConvProto->getNoReturnAttr(),
+                                            CC_Default);
  
     // Perform template argument deduction against the type that we would
     // expect the function to have.
