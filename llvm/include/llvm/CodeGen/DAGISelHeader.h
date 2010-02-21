@@ -672,7 +672,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // If this has chain/flag inputs, add them.
       if (EmitNodeInfo & OPFL_Chain)
         Ops.push_back(InputChain);
-      if (EmitNodeInfo & OPFL_Flag)
+      if ((EmitNodeInfo & OPFL_Flag) && InputFlag.getNode() != 0)
         Ops.push_back(InputFlag);
       
       // Create the node.
