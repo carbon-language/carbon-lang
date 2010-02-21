@@ -60,11 +60,11 @@ const Attributes NoImplicitFloat = 1<<23; /// disable implicit floating point
 const Attributes Naked           = 1<<24; ///< Naked function
 const Attributes InlineHint      = 1<<25; ///< source said inlining was
                                           ///desirable
-const Attributes StackAlignment  = 31<<26; ///< Alignment of stack for
-                                           ///function (5 bits) stored as log2
-                                           ///of alignment with +1 bias
-                                           ///0 means unaligned (different from
-                                           ///alignstack(1))
+const Attributes StackAlignment  = 7<<26; ///< Alignment of stack for
+                                          ///function (3 bits) stored as log2
+                                          ///of alignment with +1 bias
+                                          ///0 means unaligned (different from
+                                          ///alignstack(1))
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
@@ -118,7 +118,7 @@ inline Attributes constructStackAlignmentFromInt(unsigned i) {
     return 0;
 
   assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
-  assert(i <= 0x40000000 && "Alignment too large.");
+  assert(i <= 0x100 && "Alignment too large.");
   return (Log2_32(i)+1) << 26;
 }
 
