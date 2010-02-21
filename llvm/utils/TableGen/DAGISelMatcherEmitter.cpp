@@ -303,7 +303,7 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
     for (unsigned i = 0, e = EN->getNumOperands(); i != e; ++i)
       OS << EN->getOperand(i) << ", ";
     OS << '\n';
-    return 5+EN->getNumVTs()+EN->getNumOperands();
+    return 6+EN->getNumVTs()+EN->getNumOperands();
   }
   case MatcherNode::CompleteMatch: {
     const CompleteMatchMatcherNode *CM = cast<CompleteMatchMatcherNode>(N);
