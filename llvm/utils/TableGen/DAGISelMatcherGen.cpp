@@ -535,7 +535,7 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
     // in COPY_TO_SUBREG instructions.
     if (DI->getDef()->isSubClassOf("RegisterClass")) {
       std::string Value = getQualifiedName(DI->getDef()) + "RegClassID";
-      AddMatcherNode(new EmitStringIntegerMatcherNode(Value, N->getTypeNum(0)));
+      AddMatcherNode(new EmitStringIntegerMatcherNode(Value, MVT::i32));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
