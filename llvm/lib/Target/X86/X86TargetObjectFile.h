@@ -17,20 +17,6 @@
 namespace llvm {
   class X86TargetMachine;
 
-  /// X8632_MachoTargetObjectFile - This TLOF implementation is used for
-  /// Darwin/x86-32.
-  class X8632_MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
-  public:
-
-    virtual const MCExpr *
-    getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                              MachineModuleInfo *MMI, unsigned Encoding) const;
-    virtual unsigned getPersonalityEncoding() const;
-    virtual unsigned getLSDAEncoding() const;
-    virtual unsigned getFDEEncoding() const;
-    virtual unsigned getTTypeEncoding() const;
-  };
-
   /// X8664_MachoTargetObjectFile - This TLOF implementation is used for
   /// Darwin/x86-64.
   class X8664_MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
@@ -39,10 +25,6 @@ namespace llvm {
     virtual const MCExpr *
     getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                               MachineModuleInfo *MMI, unsigned Encoding) const;
-    virtual unsigned getPersonalityEncoding() const;
-    virtual unsigned getLSDAEncoding() const;
-    virtual unsigned getFDEEncoding() const;
-    virtual unsigned getTTypeEncoding() const;
   };
 
   class X8632_ELFTargetObjectFile : public TargetLoweringObjectFileELF {

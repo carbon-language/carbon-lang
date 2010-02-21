@@ -33,6 +33,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
+using namespace dwarf;
 
 //===----------------------------------------------------------------------===//
 //                                  ELF
@@ -738,11 +739,23 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                              MachineModuleInfo *MMI, unsigned Encoding) const {
   // The mach-o version of this method defaults to returning a stub reference.
 
-  if (Encoding & dwarf::DW_EH_PE_indirect) {
+  if (Encoding & DW_EH_PE_indirect) {
+    MachineModuleInfoMachO &MachOMMI =
+      MMI->getObjFileInfo<MachineModuleInfoMachO>();
+
     SmallString<128> Name;
     Mang->getNameWithPrefix(Name, GV, true);
     Name += "$non_lazy_ptr";
+
+    // Add information about the stub reference to MachOMMI so that the stub
+    // gets emitted by the asmprinter.
     MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = MachOMMI.getGVStubEntry(Sym);
+    if (StubSym == 0) {
+      Name.clear();
+      Mang->getNameWithPrefix(Name, GV, false);
+      StubSym = getContext().GetOrCreateSymbol(Name.str());
+    }
 
     return TargetLoweringObjectFile::
       getSymbolForDwarfReference(Sym, MMI,
@@ -753,6 +766,21 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
 }
 
+unsigned TargetLoweringObjectFileMachO::getPersonalityEncoding() const {
+  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+}
+
+unsigned TargetLoweringObjectFileMachO::getLSDAEncoding() const {
+  return DW_EH_PE_pcrel;
+}
+
+unsigned TargetLoweringObjectFileMachO::getFDEEncoding() const {
+  return DW_EH_PE_pcrel;
+}
+
+unsigned TargetLoweringObjectFileMachO::getTTypeEncoding() const {
+  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+}
 
 //===----------------------------------------------------------------------===//
 //                                  COFF

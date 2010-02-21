@@ -18,38 +18,6 @@
 using namespace llvm;
 using namespace dwarf;
 
-const MCExpr *X8632_MachoTargetObjectFile::
-getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                             MachineModuleInfo *MMI, unsigned Encoding) const {
-  // The mach-o version of this method defaults to returning a stub reference.
-
-  if (Encoding & DW_EH_PE_indirect) {
-    MachineModuleInfoMachO &MachOMMI =
-      MMI->getObjFileInfo<MachineModuleInfoMachO>();
-
-    SmallString<128> Name;
-    Mang->getNameWithPrefix(Name, GV, true);
-    Name += "$non_lazy_ptr";
-
-    // Add information about the stub reference to MachOMMI so that the stub
-    // gets emitted by the asmprinter.
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = MachOMMI.getGVStubEntry(Sym);
-    if (StubSym == 0) {
-      Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = getContext().GetOrCreateSymbol(Name.str());
-    }
-
-    return TargetLoweringObjectFile::
-      getSymbolForDwarfReference(Sym, MMI,
-                                 Encoding & ~dwarf::DW_EH_PE_indirect);
-  }
-
-  return TargetLoweringObjectFileMachO::
-    getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
-}
-
 const MCExpr *X8664_MachoTargetObjectFile::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                            MachineModuleInfo *MMI, unsigned Encoding) const {
@@ -147,36 +115,4 @@ unsigned X8664_ELFTargetObjectFile::getTTypeEncoding() const {
     return DW_EH_PE_udata4;
 
   return DW_EH_PE_absptr;
-}
-
-unsigned X8632_MachoTargetObjectFile::getPersonalityEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
-
-unsigned X8632_MachoTargetObjectFile::getLSDAEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned X8632_MachoTargetObjectFile::getFDEEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned X8632_MachoTargetObjectFile::getTTypeEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
-
-unsigned X8664_MachoTargetObjectFile::getPersonalityEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
-
-unsigned X8664_MachoTargetObjectFile::getLSDAEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned X8664_MachoTargetObjectFile::getFDEEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned X8664_MachoTargetObjectFile::getTTypeEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
 }
