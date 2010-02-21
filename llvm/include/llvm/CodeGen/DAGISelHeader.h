@@ -695,7 +695,11 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                                                   NodeToMatch->getDebugLoc(),
                                                   VTList,
                                                   Ops.data(), Ops.size());
-      RecordedNodes.push_back(SDValue(Res, 0));
+      // Add all the non-flag/non-chain results to the RecordedNodes list.
+      for (unsigned i = 0, e = VTs.size(); i != e; ++i) {
+        if (VTs[i] == MVT::Other || VTs[i] == MVT::Flag) break;
+        RecordedNodes.push_back(SDValue(Res, i));
+      }
       
       // If the node had chain/flag results, update our notion of the current
       // chain and flag.
@@ -731,6 +735,13 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         unsigned ResSlot = MatcherTable[MatcherIndex++];
         assert(ResSlot < RecordedNodes.size() && "Invalid CheckSame");
         SDValue Res = RecordedNodes[ResSlot];
+        
+        // FIXME2: Eliminate this horrible hack by fixing the 'Gen' program
+        // after (parallel) on input patterns are removed.  This would also
+        // allow us to stop encoding #results in OPC_CompleteMatch's table
+        // entry.
+        if (NodeToMatch->getNumValues() <= i)
+          break;
         assert((NodeToMatch->getValueType(i) == Res.getValueType() ||
                 NodeToMatch->getValueType(i) == MVT::iPTR ||
                 Res.getValueType() == MVT::iPTR ||
@@ -763,6 +774,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         ReplaceUses(SDValue(NodeToMatch, NodeToMatch->getNumValues()-1),
                     InputFlag);
       
+      assert(NodeToMatch->use_empty() &&
+             "Didn't replace all uses of the node?");
       // FIXME: We just return here, which interacts correctly with SelectRoot
       // above.  We should fix this to not return an SDNode* anymore.
       return 0;

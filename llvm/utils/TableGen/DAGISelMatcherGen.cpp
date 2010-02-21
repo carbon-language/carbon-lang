@@ -666,7 +666,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   // Determine the result types.
   SmallVector<MVT::SimpleValueType, 4> ResultVTs;
-  if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
+  if (NumResults != 0 && N->getTypeNum(0) != MVT::isVoid) {
     // FIXME2: If the node has multiple results, we should add them.  For now,
     // preserve existing behavior?!
     ResultVTs.push_back(N->getTypeNum(0));
@@ -721,10 +721,11 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
                                          NodeHasChain, NodeHasInFlag,
                                          NodeHasMemRefs,NumFixedArityOperands));
   
-  // The newly emitted node gets recorded.
-  // FIXME2: This should record all of the results except the (implicit) one.
-  if (ResultVTs[0] != MVT::Other)
+  // The non-chain and non-flag results of the newly emitted node get recorded.
+  for (unsigned i = 0, e = ResultVTs.size(); i != e; ++i) {
+    if (ResultVTs[i] == MVT::Other || ResultVTs[i] == MVT::Flag) break;
     OutputOps.push_back(NextRecordedOperandNo++);
+  }
   
   // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
   // variants.  Call MorphNodeTo instead of SelectNodeTo.
@@ -770,16 +771,43 @@ void MatcherGen::EmitResultOperand(const TreePatternNode *N,
 }
 
 void MatcherGen::EmitResultCode() {
+  // Codegen the root of the result pattern, capturing the resulting values.
   SmallVector<unsigned, 8> Ops;
   EmitResultOperand(Pattern.getDstPattern(), Ops);
 
+  // At this point, we have however many values the result pattern produces.
+  // However, the input pattern might not need all of these.  If there are
+  // excess values at the end (such as condition codes etc) just lop them off.
+  // This doesn't need to worry about flags or chains, just explicit results.
+  //
+  // FIXME2: This doesn't work because there is currently no way to get an
+  // accurate count of the # results the source pattern sets.  This is because
+  // of the "parallel" construct in X86 land, which looks like this:
+  //
+  //def : Pat<(parallel (X86and_flag GR8:$src1, GR8:$src2),
+  //           (implicit EFLAGS)),
+  //  (AND8rr GR8:$src1, GR8:$src2)>;
+  //
+  // This idiom means to match the two-result node X86and_flag (which is
+  // declared as returning a single result, because we can't match multi-result
+  // nodes yet).  In this case, we would have to know that the input has two
+  // results.  However, mul8r is modelled exactly the same way, but without
+  // implicit defs included.  The fix is to support multiple results directly
+  // and eliminate 'parallel'.
+  //
+  // FIXME2: When this is fixed, we should revert the terrible hack in the
+  // OPC_EmitNode code in the interpreter.
+#if 0
+  const TreePatternNode *Src = Pattern.getSrcPattern();
+  unsigned NumSrcResults = Src->getTypeNum(0) != MVT::isVoid ? 1 : 0;
+  NumSrcResults += Pattern.getDstRegs().size();
+  assert(Ops.size() >= NumSrcResults && "Didn't provide enough results");
+  Ops.resize(NumSrcResults);
+#endif
+  
   // We know that the resulting pattern has exactly one result/
   // FIXME2: why?  what about something like (set a,b,c, (complexpat))
   // FIXME2: Implicit results should be pushed here I guess?
-  assert(Ops.size() <= 1);
-  // FIXME: Handle Ops.
-  // FIXME: Handle (set EAX, (foo)) but not (implicit EFLAGS)
-  
   AddMatcherNode(new CompleteMatchMatcherNode(Ops.data(), Ops.size(), Pattern));
 }
 
