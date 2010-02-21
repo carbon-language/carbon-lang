@@ -45,10 +45,14 @@ using namespace clang;
 /// \param EnteringContext whether we will be entering into the context of
 /// the nested-name-specifier after parsing it.
 ///
+/// \param InMemberAccessExpr Whether this scope specifier is within a
+/// member access expression, e.g., the \p T:: in \p p->T::m.
+///
 /// \returns true if a scope specifier was parsed.
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                             Action::TypeTy *ObjectType,
-                                            bool EnteringContext) {
+                                            bool EnteringContext,
+                                            bool InMemberAccessExpr) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
@@ -169,7 +173,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       // convert it into a type within the nested-name-specifier.
       TemplateIdAnnotation *TemplateId
         = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
-
+      bool MayBePseudoDestructor
+        = InMemberAccessExpr && GetLookAheadToken(2).is(tok::tilde);
       if (TemplateId->Kind == TNK_Type_template ||
           TemplateId->Kind == TNK_Dependent_template_name) {
         AnnotateTemplateIdTokenAsType(&SS);
@@ -191,7 +196,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
             Actions.ActOnCXXNestedNameSpecifier(CurScope, SS,
                                                 TypeToken.getAnnotationValue(),
                                                 TypeToken.getAnnotationRange(),
-                                                CCLoc));
+                                                CCLoc,
+                                                MayBePseudoDestructor));
         else
           SS.setScopeRep(0);
         SS.setEndLoc(CCLoc);
@@ -217,18 +223,23 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     
     // If we get foo:bar, this is almost certainly a typo for foo::bar.  Recover
     // and emit a fixit hint for it.
-    if (Next.is(tok::colon) && !ColonIsSacred &&
-        Actions.IsInvalidUnlessNestedName(CurScope, SS, II, ObjectType,
-                                          EnteringContext) &&
-        // If the token after the colon isn't an identifier, it's still an
-        // error, but they probably meant something else strange so don't
-        // recover like this.
-        PP.LookAhead(1).is(tok::identifier)) {
-      Diag(Next, diag::err_unexected_colon_in_nested_name_spec)
-        << CodeModificationHint::CreateReplacement(Next.getLocation(), "::");
+    if (Next.is(tok::colon) && !ColonIsSacred) {
+      bool MayBePseudoDestructor
+        = InMemberAccessExpr && GetLookAheadToken(2).is(tok::tilde);
       
-      // Recover as if the user wrote '::'.
-      Next.setKind(tok::coloncolon);
+      if (Actions.IsInvalidUnlessNestedName(CurScope, SS, II, 
+                                            MayBePseudoDestructor, ObjectType,
+                                            EnteringContext) &&
+          // If the token after the colon isn't an identifier, it's still an
+          // error, but they probably meant something else strange so don't
+          // recover like this.
+          PP.LookAhead(1).is(tok::identifier)) {
+        Diag(Next, diag::err_unexected_colon_in_nested_name_spec)
+          << CodeModificationHint::CreateReplacement(Next.getLocation(), "::");
+        
+        // Recover as if the user wrote '::'.
+        Next.setKind(tok::coloncolon);
+      }
     }
     
     if (Next.is(tok::coloncolon)) {
@@ -247,9 +258,12 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       if (SS.isInvalid())
         continue;
 
+      bool MayBePseudoDestructor = InMemberAccessExpr && Tok.is(tok::tilde);
+
       SS.setScopeRep(
         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II,
-                                            ObjectType, EnteringContext));
+                                            MayBePseudoDestructor, ObjectType,
+                                            EnteringContext));
       SS.setEndLoc(CCLoc);
       continue;
     }

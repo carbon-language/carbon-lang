@@ -1001,7 +1001,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
                                                    OpLoc, OpKind, ObjectType);
         if (LHS.isInvalid())
           break;
-        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false);
+        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false, true);
       }
 
       if (Tok.is(tok::code_completion)) {

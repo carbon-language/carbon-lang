@@ -265,6 +265,7 @@ public:
   /// alternate behavior.
   NestedNameSpecifier *TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                     SourceRange Range,
+                                                    bool MayBePseudoDestructor,
                                               QualType ObjectType = QualType(),
                                           NamedDecl *FirstQualifierInScope = 0);
 
@@ -555,6 +556,7 @@ public:
   NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                   SourceRange Range,
                                                   IdentifierInfo &II,
+                                                  bool MayBePseudoDestructor,
                                                   QualType ObjectType,
                                               NamedDecl *FirstQualifierInScope);
 
@@ -577,7 +579,8 @@ public:
   NestedNameSpecifier *RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                   SourceRange Range,
                                                   bool TemplateKW,
-                                                  QualType T);
+                                                  QualType T,
+                                                  bool MayBePseudoDestructor);
 
   /// \brief Build a new template name given a nested name specifier, a flag
   /// indicating whether the "template" keyword was provided, and the template
@@ -1725,6 +1728,7 @@ template<typename Derived>
 NestedNameSpecifier *
 TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
                                                      SourceRange Range,
+                                                     bool MayBePseudoDestructor,
                                                      QualType ObjectType,
                                              NamedDecl *FirstQualifierInScope) {
   if (!NNS)
@@ -1734,6 +1738,7 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   NestedNameSpecifier *Prefix = NNS->getPrefix();
   if (Prefix) {
     Prefix = getDerived().TransformNestedNameSpecifier(Prefix, Range,
+                                                       false,
                                                        ObjectType,
                                                        FirstQualifierInScope);
     if (!Prefix)
@@ -1755,6 +1760,7 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
 
     return getDerived().RebuildNestedNameSpecifier(Prefix, Range,
                                                    *NNS->getAsIdentifier(),
+                                                   MayBePseudoDestructor,
                                                    ObjectType,
                                                    FirstQualifierInScope);
 
@@ -1790,7 +1796,8 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
 
     return getDerived().RebuildNestedNameSpecifier(Prefix, Range,
                   NNS->getKind() == NestedNameSpecifier::TypeSpecWithTemplate,
-                                                   T);
+                                                   T,
+                                                   MayBePseudoDestructor);
   }
   }
 
@@ -1842,6 +1849,7 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
     NestedNameSpecifier *NNS
       = getDerived().TransformNestedNameSpecifier(QTN->getQualifier(),
                         /*FIXME:*/SourceRange(getDerived().getBaseLocation()),
+                                                  false,
                                                   ObjectType);
     if (!NNS)
       return TemplateName();
@@ -1869,6 +1877,7 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
     NestedNameSpecifier *NNS
       = getDerived().TransformNestedNameSpecifier(DTN->getQualifier(),
                         /*FIXME:*/SourceRange(getDerived().getBaseLocation()),
+                                                  false,
                                                   ObjectType);
     if (!NNS && DTN->getQualifier())
       return TemplateName();
@@ -2928,6 +2937,7 @@ TreeTransform<Derived>::TransformQualifiedNameType(TypeLocBuilder &TLB,
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(T->getQualifier(),
                                                 SourceRange(),
+                                                false,
                                                 ObjectType);
   if (!NNS)
     return QualType();
@@ -2962,7 +2972,7 @@ QualType TreeTransform<Derived>::TransformTypenameType(TypeLocBuilder &TLB,
 
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(T->getQualifier(), SR,
-                                                ObjectType);
+                                                false, ObjectType);
   if (!NNS)
     return QualType();
 
@@ -3598,7 +3608,8 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   NestedNameSpecifier *Qualifier = 0;
   if (E->getQualifier()) {
     Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                       E->getQualifierRange());
+                                                        E->getQualifierRange(),
+                                                          false);
     if (!Qualifier)
       return SemaRef.ExprError();
   }
@@ -3807,7 +3818,8 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   if (E->hasQualifier()) {
     Qualifier
       = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                  E->getQualifierRange());
+                                                  E->getQualifierRange(),
+                                                  false);
     if (Qualifier == 0)
       return SemaRef.ExprError();
   }
@@ -4677,7 +4689,8 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
 
   NestedNameSpecifier *Qualifier
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                E->getQualifierRange());
+                                                E->getQualifierRange(),
+                                                true);
   if (E->getQualifier() && !Qualifier)
     return SemaRef.ExprError();
 
@@ -4747,7 +4760,8 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   NestedNameSpecifier *Qualifier = 0;
   if (Old->getQualifier()) {
     Qualifier = getDerived().TransformNestedNameSpecifier(Old->getQualifier(),
-                                                    Old->getQualifierRange());
+                                                       Old->getQualifierRange(),
+                                                          false);
     if (!Qualifier)
       return SemaRef.ExprError();
     
@@ -4803,7 +4817,8 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
                                                   DependentScopeDeclRefExpr *E) {
   NestedNameSpecifier *NNS
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                E->getQualifierRange());
+                                                E->getQualifierRange(),
+                                                false);
   if (!NNS)
     return SemaRef.ExprError();
 
@@ -5050,8 +5065,11 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
 
   NestedNameSpecifier *Qualifier = 0;
   if (E->getQualifier()) {
+    bool MayBePseudoDestructor
+      = E->getMember().getNameKind() == DeclarationName::CXXDestructorName;
     Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                       E->getQualifierRange(),
+                                                          MayBePseudoDestructor,
                                                       ObjectType,
                                                       FirstQualifierInScope);
     if (!Qualifier)
@@ -5126,7 +5144,8 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
   if (Old->getQualifier()) {
     Qualifier
       = getDerived().TransformNestedNameSpecifier(Old->getQualifier(),
-                                                  Old->getQualifierRange());
+                                                  Old->getQualifierRange(),
+                                                  false);
     if (Qualifier == 0)
       return SemaRef.ExprError();
   }
@@ -5551,6 +5570,7 @@ NestedNameSpecifier *
 TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    SourceRange Range,
                                                    IdentifierInfo &II,
+                                                   bool MayBePseudoDestructor,
                                                    QualType ObjectType,
                                                    NamedDecl *FirstQualifierInScope) {
   CXXScopeSpec SS;
@@ -5560,6 +5580,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
   return static_cast<NestedNameSpecifier *>(
                     SemaRef.BuildCXXNestedNameSpecifier(0, SS, Range.getEnd(),
                                                         Range.getEnd(), II,
+                                                        MayBePseudoDestructor,
                                                         ObjectType,
                                                         FirstQualifierInScope,
                                                         false, false));
@@ -5578,8 +5599,9 @@ NestedNameSpecifier *
 TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    SourceRange Range,
                                                    bool TemplateKW,
-                                                   QualType T) {
-  if (T->isDependentType() || T->isRecordType() ||
+                                                   QualType T,
+                                                   bool MayBePseudoDestructor) {
+  if (MayBePseudoDestructor || T->isDependentType() || T->isRecordType() ||
       (SemaRef.getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
     assert(!T.hasLocalQualifiers() && "Can't get cv-qualifiers here");
     return NestedNameSpecifier::Create(SemaRef.Context, Prefix, TemplateKW,

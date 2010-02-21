@@ -85,10 +85,11 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
       isDependent = SearchType->isDependentType();
     } else {
       LookupCtx = computeDeclContext(SS, EnteringContext);
-      isDependent = LookupCtx->isDependentContext();
+      if (LookupCtx)
+        isDependent = LookupCtx->isDependentContext();
     }
 
-    LookInScope = false;
+    LookInScope = (LookupCtx == 0) && !isDependent;
   } else if (ObjectTypePtr) {
     // C++ [basic.lookup.classref]p3:
     //   If the unqualified-id is ~type-name, the type-name is looked up

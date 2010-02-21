@@ -4925,6 +4925,7 @@ CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
   NestedNameSpecifier *NNS
     = TransformNestedNameSpecifier(T->getQualifier(),
                                    /*FIXME:*/SourceRange(getBaseLocation()),
+                                   false,
                                    ObjectType);
   if (!NNS)
     return QualType();

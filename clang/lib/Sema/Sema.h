@@ -2198,7 +2198,8 @@ public:
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
                                                    SourceLocation CCLoc);
 
-  bool isAcceptableNestedNameSpecifier(NamedDecl *SD);
+  bool isAcceptableNestedNameSpecifier(NamedDecl *SD, 
+                                       bool MayBePseudoDestructor = false);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
 
 
@@ -2207,6 +2208,7 @@ public:
                                           SourceLocation IdLoc,
                                           SourceLocation CCLoc,
                                           IdentifierInfo &II,
+                                          bool MayBePseudoDestructor,
                                           QualType ObjectType,
                                           NamedDecl *ScopeLookupResult,
                                           bool EnteringContext,
@@ -2217,12 +2219,14 @@ public:
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
+                                                  bool MayBePseudoDestructor,
                                                   TypeTy *ObjectType,
                                                   bool EnteringContext);
 
   virtual bool IsInvalidUnlessNestedName(Scope *S,
                                          const CXXScopeSpec &SS,
                                          IdentifierInfo &II,
+                                         bool MayBePseudoDestructor,
                                          TypeTy *ObjectType,
                                          bool EnteringContext);
   
@@ -2238,7 +2242,8 @@ public:
                                                   const CXXScopeSpec &SS,
                                                   TypeTy *Type,
                                                   SourceRange TypeRange,
-                                                  SourceLocation CCLoc);
+                                                  SourceLocation CCLoc,
+                                                  bool MayBePseudoDestructor);
 
   virtual bool ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
 

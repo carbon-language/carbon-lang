@@ -1486,7 +1486,7 @@ Sema::SubstNestedNameSpecifier(NestedNameSpecifier *NNS,
                          const MultiLevelTemplateArgumentList &TemplateArgs) {
   TemplateInstantiator Instantiator(*this, TemplateArgs, Range.getBegin(),
                                     DeclarationName());
-  return Instantiator.TransformNestedNameSpecifier(NNS, Range);
+  return Instantiator.TransformNestedNameSpecifier(NNS, Range, false);
 }
 
 TemplateName

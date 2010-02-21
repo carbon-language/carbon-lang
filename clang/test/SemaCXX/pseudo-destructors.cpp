@@ -5,6 +5,7 @@ enum Foo { F };
 typedef Foo Bar;
 
 typedef int Integer;
+typedef double Double;
 
 void g();
 
@@ -12,7 +13,7 @@ namespace N {
   typedef Foo Wibble;
 }
 
-void f(A* a, Foo *f, int *i) {
+void f(A* a, Foo *f, int *i, double *d) {
   a->~A();
   a->A::~A();
   
@@ -31,6 +32,11 @@ void f(A* a, Foo *f, int *i) {
   f->N::~Wibble(); // FIXME: Cannot use typedef name in destructor id.
   
   f->::~Bar(17, 42); // expected-error{{cannot have any arguments}}
+
+  i->~Integer();
+  i->Integer::~Integer();
+
+  i->Integer::~Double(); // expected-error{{the type of object expression ('int') does not match the type being destroyed ('double') in pseudo-destructor expression}}
 }
 
 typedef int Integer;
