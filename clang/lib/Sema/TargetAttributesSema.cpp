@@ -115,8 +115,12 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   if (!FD) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 2 /*variable and function*/;
+    // Apparently Visual C++ thinks it is okay to not emit a warning
+    // in this case, so only emit a warning when -fms-extensions is not
+    // specified.
+    if (!S.getLangOptions().Microsoft)
+      S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+        << Attr.getName() << 2 /*variable and function*/;
     return;
   }
 
