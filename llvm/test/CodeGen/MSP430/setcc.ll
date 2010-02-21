@@ -10,9 +10,9 @@ define i16 @sccweqand(i16 %a, i16 %b) nounwind {
 }
 ; CHECK: sccweqand:
 ; CHECK:	bit.w	r14, r15
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	and.w	#1, r15
-; CHECK-NEXT:	xor.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	rra.w   r15
+; CHECK:	and.w	#1, r15
 
 define i16 @sccwneand(i16 %a, i16 %b) nounwind {
 	%t1 = and i16 %a, %b
@@ -22,8 +22,8 @@ define i16 @sccwneand(i16 %a, i16 %b) nounwind {
 }
 ; CHECK: sccwneand:
 ; CHECK: 	bit.w	r14, r15
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	and.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	and.w	#1, r15
 
 define i16 @sccwne(i16 %a, i16 %b) nounwind {
 	%t1 = icmp ne i16 %a, %b
@@ -32,9 +32,10 @@ define i16 @sccwne(i16 %a, i16 %b) nounwind {
 }
 ; CHECK:sccwne:
 ; CHECK:	cmp.w	r14, r15
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	rra.w	r15
-; CHECK-NEXT:	and.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	rra.w	r15
+; CHECK:	and.w	#1, r15
+; CHECK:	xor.w   #1, r15
 
 define i16 @sccweq(i16 %a, i16 %b) nounwind {
 	%t1 = icmp eq i16 %a, %b
@@ -43,10 +44,9 @@ define i16 @sccweq(i16 %a, i16 %b) nounwind {
 }
 ; CHECK:sccweq:
 ; CHECK:	cmp.w	r14, r15
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	rra.w	r15
-; CHECK-NEXT:	and.w	#1, r15
-; CHECK-NEXT:	xor.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	rra.w	r15
+; CHECK:	and.w	#1, r15
 
 define i16 @sccwugt(i16 %a, i16 %b) nounwind {
 	%t1 = icmp ugt i16 %a, %b
@@ -55,9 +55,9 @@ define i16 @sccwugt(i16 %a, i16 %b) nounwind {
 }
 ; CHECK:sccwugt:
 ; CHECK:	cmp.w	r15, r14
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	and.w	#1, r15
-; CHECK-NEXT:	xor.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	and.w	#1, r15
+; CHECK:	xor.w	#1, r15
 
 define i16 @sccwuge(i16 %a, i16 %b) nounwind {
 	%t1 = icmp uge i16 %a, %b
@@ -66,8 +66,8 @@ define i16 @sccwuge(i16 %a, i16 %b) nounwind {
 }
 ; CHECK:sccwuge:
 ; CHECK:	cmp.w	r14, r15
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	and.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	and.w	#1, r15
 
 define i16 @sccwult(i16 %a, i16 %b) nounwind {
 	%t1 = icmp ult i16 %a, %b
@@ -76,9 +76,9 @@ define i16 @sccwult(i16 %a, i16 %b) nounwind {
 }
 ; CHECK:sccwult:
 ; CHECK:	cmp.w	r14, r15
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	and.w	#1, r15
-; CHECK-NEXT:	xor.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	and.w	#1, r15
+; CHECK:	xor.w	#1, r15
 
 define i16 @sccwule(i16 %a, i16 %b) nounwind {
 	%t1 = icmp ule i16 %a, %b
@@ -87,8 +87,8 @@ define i16 @sccwule(i16 %a, i16 %b) nounwind {
 }
 ; CHECK:sccwule:
 ; CHECK:	cmp.w	r15, r14
-; CHECK-NEXT:	mov.w	r2, r15
-; CHECK-NEXT:	and.w	#1, r15
+; CHECK:	mov.w	r2, r15
+; CHECK:	and.w	#1, r15
 
 define i16 @sccwsgt(i16 %a, i16 %b) nounwind {
 	%t1 = icmp sgt i16 %a, %b

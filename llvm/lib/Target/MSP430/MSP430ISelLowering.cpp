@@ -795,18 +795,15 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
      if (andCC) {
        // C = ~Z, thus Res = SRW & 1, no processing is required
      } else {
-       // Res = (SRW >> 1) & 1
+       // Res = ~((SRW >> 1) & 1)
        Shift = true;
+       Invert = true;
      }
      break;
    case MSP430CC::COND_E:
-     if (andCC) {
-       // C = ~Z, thus Res = ~(SRW & 1)
-     } else {
-       // Res = ~((SRW >> 1) & 1)
-       Shift = true;
-     }
-     Invert = true;
+     Shift = true;
+     // C = ~Z for AND instruction, thus we can put Res = ~(SRW & 1), however,
+     // Res = (SRW >> 1) & 1 is 1 word shorter.
      break;
   }
   EVT VT = Op.getValueType();
