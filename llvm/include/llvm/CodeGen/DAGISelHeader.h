@@ -758,7 +758,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // allow us to stop encoding #results in OPC_CompleteMatch's table
         // entry.
         if (NodeToMatch->getNumValues() <= i ||
-            NodeToMatch->getValueType(i) == MVT::Other)
+            NodeToMatch->getValueType(i) == MVT::Other ||
+            NodeToMatch->getValueType(i) == MVT::Flag)
           break;
         assert((NodeToMatch->getValueType(i) == Res.getValueType() ||
                 NodeToMatch->getValueType(i) == MVT::iPTR ||
