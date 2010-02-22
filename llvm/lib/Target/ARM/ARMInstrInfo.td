@@ -1481,10 +1481,9 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 // (mul X, 2^n+1) -> (add (X << n), X)
 // (mul X, 2^n-1) -> (rsb X, (X << n))
 
-// Saturating adds/subtracts -- for disassembly only
-
+// ARM Arithmetic Instruction -- for disassembly only
 // GPR:$dst = GPR:$a op GPR:$b
-class AQI<bits<8> op27_20, bits<4> op7_4, string opc>
+class AAI<bits<8> op27_20, bits<4> op7_4, string opc>
   : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, IIC_iALUr,
        opc, "\t$dst, $a, $b",
        [/* For disassembly only; pattern left blank */]> {
@@ -1492,22 +1491,116 @@ class AQI<bits<8> op27_20, bits<4> op7_4, string opc>
   let Inst{7-4} = op7_4;
 }
 
-def QADD    : AQI<0b00010000, 0b0101, "qadd">;
-def QADD16  : AQI<0b01100010, 0b0001, "qadd16">;
-def QADD8   : AQI<0b01100010, 0b1001, "qadd8">;
-def QASX    : AQI<0b01100010, 0b0011, "qasx">;
-def QDADD   : AQI<0b00010100, 0b0101, "qdadd">;
-def QDSUB   : AQI<0b00010110, 0b0101, "qdsub">;
-def QSAX    : AQI<0b01100010, 0b0101, "qsax">;
-def QSUB    : AQI<0b00010010, 0b0101, "qsub">;
-def QSUB16  : AQI<0b01100010, 0b0111, "qsub16">;
-def QSUB8   : AQI<0b01100010, 0b1111, "qsub8">;
-def UQADD16 : AQI<0b01100110, 0b0001, "uqadd16">;
-def UQADD8  : AQI<0b01100110, 0b1001, "uqadd8">;
-def UQASX   : AQI<0b01100110, 0b0011, "uqasx">;
-def UQSAX   : AQI<0b01100110, 0b0101, "uqsax">;
-def UQSUB16 : AQI<0b01100110, 0b0111, "uqsub16">;
-def UQSUB8  : AQI<0b01100110, 0b1111, "uqsub8">;
+// Saturating add/subtract -- for disassembly only
+
+def QADD    : AAI<0b00010000, 0b0101, "qadd">;
+def QADD16  : AAI<0b01100010, 0b0001, "qadd16">;
+def QADD8   : AAI<0b01100010, 0b1001, "qadd8">;
+def QASX    : AAI<0b01100010, 0b0011, "qasx">;
+def QDADD   : AAI<0b00010100, 0b0101, "qdadd">;
+def QDSUB   : AAI<0b00010110, 0b0101, "qdsub">;
+def QSAX    : AAI<0b01100010, 0b0101, "qsax">;
+def QSUB    : AAI<0b00010010, 0b0101, "qsub">;
+def QSUB16  : AAI<0b01100010, 0b0111, "qsub16">;
+def QSUB8   : AAI<0b01100010, 0b1111, "qsub8">;
+def UQADD16 : AAI<0b01100110, 0b0001, "uqadd16">;
+def UQADD8  : AAI<0b01100110, 0b1001, "uqadd8">;
+def UQASX   : AAI<0b01100110, 0b0011, "uqasx">;
+def UQSAX   : AAI<0b01100110, 0b0101, "uqsax">;
+def UQSUB16 : AAI<0b01100110, 0b0111, "uqsub16">;
+def UQSUB8  : AAI<0b01100110, 0b1111, "uqsub8">;
+
+// Signed/Unsigned add/subtract -- for disassembly only
+
+def SASX   : AAI<0b01100001, 0b0011, "sasx">;
+def SADD16 : AAI<0b01100001, 0b0001, "sadd16">;
+def SADD8  : AAI<0b01100001, 0b1001, "sadd8">;
+def SSAX   : AAI<0b01100001, 0b0101, "ssax">;
+def SSUB16 : AAI<0b01100001, 0b0111, "ssub16">;
+def SSUB8  : AAI<0b01100001, 0b1111, "ssub8">;
+def UASX   : AAI<0b01100101, 0b0011, "uasx">;
+def UADD16 : AAI<0b01100101, 0b0001, "uadd16">;
+def UADD8  : AAI<0b01100101, 0b1001, "uadd8">;
+def USAX   : AAI<0b01100101, 0b0101, "usax">;
+def USUB16 : AAI<0b01100101, 0b0111, "usub16">;
+def USUB8  : AAI<0b01100101, 0b1111, "usub8">;
+
+// Signed/Unsigned halving add/subtract -- for disassembly only
+
+def SHASX   : AAI<0b01100011, 0b0011, "shasx">;
+def SHADD16 : AAI<0b01100011, 0b0001, "shadd16">;
+def SHADD8  : AAI<0b01100011, 0b1001, "shadd8">;
+def SHSAX   : AAI<0b01100011, 0b0101, "shsax">;
+def SHSUB16 : AAI<0b01100011, 0b0111, "shsub16">;
+def SHSUB8  : AAI<0b01100011, 0b1111, "shsub8">;
+def UHASX   : AAI<0b01100111, 0b0011, "uhasx">;
+def UHADD16 : AAI<0b01100111, 0b0001, "uhadd16">;
+def UHADD8  : AAI<0b01100111, 0b1001, "uhadd8">;
+def UHSAX   : AAI<0b01100111, 0b0101, "uhsax">;
+def UHSUB16 : AAI<0b01100111, 0b0111, "uhsub16">;
+def UHSUB8  : AAI<0b01100111, 0b1111, "uhsub8">;
+
+// Unsigned Sum of Absolute Difference [and Accumulate] -- for disassembly only
+
+def USAD8  : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
+                MulFrm /* for convenience */, NoItinerary, "usad8",
+                "\t$dst, $a, $b", []>,
+             Requires<[IsARM, HasV6]> {
+  let Inst{27-20} = 0b01111000;
+  let Inst{15-12} = 0b1111;
+  let Inst{7-4} = 0b0001;
+}
+def USADA8 : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
+                MulFrm /* for convenience */, NoItinerary, "usada8",
+                "\t$dst, $a, $b, $acc", []>,
+             Requires<[IsARM, HasV6]> {
+  let Inst{27-20} = 0b01111000;
+  let Inst{7-4} = 0b0001;
+}
+
+// Signed/Unsigned saturate -- for disassembly only
+
+def SSATlsl : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
+                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, LSL $shamt",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-21} = 0b0110101;
+  let Inst{6-4} = 0b001;
+}
+
+def SSATasr : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
+                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, ASR $shamt",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-21} = 0b0110101;
+  let Inst{6-4} = 0b101;
+}
+
+def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
+                NoItinerary, "ssat16", "\t$dst, $bit_pos, $a",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-20} = 0b01101010;
+  let Inst{7-4} = 0b0011;
+}
+
+def USATlsl : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
+                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, LSL $shamt",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-21} = 0b0110111;
+  let Inst{6-4} = 0b001;
+}
+
+def USATasr : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
+                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, ASR $shamt",
+                 [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-21} = 0b0110111;
+  let Inst{6-4} = 0b101;
+}
+
+def USAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
+                NoItinerary, "usat16", "\t$dst, $bit_pos, $a",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{27-20} = 0b01101110;
+  let Inst{7-4} = 0b0011;
+}
 
 //===----------------------------------------------------------------------===//
 //  Bitwise Instructions.
@@ -1782,7 +1875,40 @@ def SMLALTT : AMulxyI<0b0001010,(outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
   let Inst{6} = 1;
 }
 
+// Helper class for AI_smld -- for disassembly only
+class AMulDualI<bit long, bit sub, bit swap, dag oops, dag iops,
+                InstrItinClass itin, string opc, string asm>
+  : AI<oops, iops, MulFrm, itin, opc, asm, []>, Requires<[IsARM, HasV6]> {
+  let Inst{4}     = 1;
+  let Inst{5}     = swap;
+  let Inst{6}     = sub;
+  let Inst{7}     = 0;
+  let Inst{21-20} = 0b00;
+  let Inst{22}    = long;
+  let Inst{27-23} = 0b01110;
+}
+
+multiclass AI_smld<bit sub, string opc> {
+
+  def D : AMulDualI<0, sub, 0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
+                  NoItinerary, !strconcat(opc, "d"), "\t$dst, $a, $b, $acc">;
+
+  def DX : AMulDualI<0, sub, 1, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
+                  NoItinerary, !strconcat(opc, "dx"), "\t$dst, $a, $b, $acc">;
+
+  def LD : AMulDualI<1, sub, 0, (outs GPR:$ldst,GPR:$hdst), (ins GPR:$a,GPR:$b),
+                  NoItinerary, !strconcat(opc, "ld"), "\t$ldst, $hdst, $a, $b">;
+
+  def LDX : AMulDualI<1, sub, 1, (outs GPR:$ldst,GPR:$hdst),(ins GPR:$a,GPR:$b),
+                  NoItinerary, !strconcat(opc, "ldx"),"\t$ldst, $hdst, $a, $b">;
+
+}
+
+defm SMLA : AI_smld<0, "smla">;
+defm SMLS : AI_smld<1, "smls">;
+
 // TODO: Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
+// Note: SMLAD, SMLSD, SMLALD, SMLSLD have been defined for disassembly only.
 
 //===----------------------------------------------------------------------===//
 //  Misc. Arithmetic Instructions.
