@@ -436,7 +436,8 @@ void Decl::CheckAccessDeclContext() const {
   //    FunctionDecl)
   // 4. the context is not a record
   if (isa<TranslationUnitDecl>(this) ||
-      !isa<CXXRecordDecl>(getDeclContext()))
+      !isa<CXXRecordDecl>(getDeclContext()) ||
+      isInvalidDecl())
     return;
 
   assert(Access != AS_none &&
