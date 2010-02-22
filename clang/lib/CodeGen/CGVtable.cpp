@@ -1877,10 +1877,10 @@ private:
       // If already set, note the two sets as the same
       if (0)
         printf("%s::%s same as %s::%s\n",
-               PrevU->getParent()->getNameAsCString(),
-               PrevU->getNameAsCString(),
-               U->getParent()->getNameAsCString(),
-               U->getNameAsCString());
+               PrevU->getParent()->getNameAsString().c_str(),
+               PrevU->getNameAsString().c_str(),
+               U->getParent()->getNameAsString().c_str(),
+               U->getNameAsString().c_str());
       ForwardUnique[PrevU] = U;
       return;
     }
@@ -1888,11 +1888,11 @@ private:
     // Not set, set it now
     if (0)
       printf("marking %s::%s %p override as %s::%s\n",
-             MD->getParent()->getNameAsCString(),
-             MD->getNameAsCString(),
+             MD->getParent()->getNameAsString().c_str(),
+             MD->getNameAsString().c_str(),
              (void*)MD,
-             U->getParent()->getNameAsCString(),
-             U->getNameAsCString());
+             U->getParent()->getNameAsString().c_str(),
+             U->getNameAsString().c_str());
     UniqueOverrider[MD] = U;
 
     for (CXXMethodDecl::method_iterator mi = MD->begin_overridden_methods(),
@@ -1914,8 +1914,8 @@ private:
         BuildUniqueOverrider(MD, MD);
         if (0)
           printf("top set is %s::%s %p\n",
-                  MD->getParent()->getNameAsCString(),
-                  MD->getNameAsCString(),
+                  MD->getParent()->getNameAsString().c_str(),
+                  MD->getNameAsString().c_str(),
                   (void*)MD);
         ForwardUnique[MD] = MD;
       }
@@ -1950,7 +1950,7 @@ private:
       A_t::iterator J = I;
       while (++J != E  && DclCmp(I, J) == 0)
         if (DclIsSame(*I, *J)) {
-          if (0) printf("connecting %s\n", (*I)->getNameAsCString());
+          if (0) printf("connecting %s\n", (*I)->getNameAsString().c_str());
           ForwardUnique[*J] = *I;
         }
     }
@@ -2178,7 +2178,7 @@ public:
       return;
 
     D1(printf("  vfn for %s at %d\n",
-              dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
+              dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsString().c_str(),
               (int)Methods.size()));
 
     // We didn't find an entry in the vtable that we could use, add a new
@@ -2201,7 +2201,7 @@ public:
         idx = VCalls.size()+1;
         VCalls.push_back(Offset/8 - CurrentVBaseOffset/8);
         D1(printf("  vcall for %s at %d with delta %d\n",
-                  dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsCString(),
+                  dyn_cast<CXXMethodDecl>(GD.getDecl())->getNameAsString().c_str(),
                   (int)-VCalls.size()-3, (int)VCalls[idx-1]));
       }
     }
