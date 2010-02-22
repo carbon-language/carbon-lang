@@ -1364,31 +1364,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   } else if (isa<ConstantExpr>(C2)) {
     // If C2 is a constant expr and C1 isn't, flop them around and fold the
     // other way if possible.
-    switch (Opcode) {
-    case Instruction::Add:
-    case Instruction::FAdd:
-    case Instruction::Mul:
-    case Instruction::FMul:
-    case Instruction::And:
-    case Instruction::Or:
-    case Instruction::Xor:
-      // No change of opcode required.
+    if (Instruction::isCommutative(Opcode))
       return ConstantFoldBinaryInstruction(Opcode, C2, C1);
-
-    case Instruction::Shl:
-    case Instruction::LShr:
-    case Instruction::AShr:
-    case Instruction::Sub:
-    case Instruction::FSub:
-    case Instruction::SDiv:
-    case Instruction::UDiv:
-    case Instruction::FDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
-    case Instruction::FRem:
-    default:  // These instructions cannot be flopped around.
-      break;
-    }
   }
 
   // i1 can be simplified in many cases.
