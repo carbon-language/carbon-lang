@@ -1744,7 +1744,7 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
   // Calculate the new stack slot for the return address.
   int SlotSize = Is64Bit ? 8 : 4;
   int NewReturnAddrFI =
-    MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize, true,false);
+    MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize, false, false);
   EVT VT = Is64Bit ? MVT::i64 : MVT::i32;
   SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
   Chain = DAG.getStore(Chain, dl, RetAddrFrIdx, NewRetAddrFrIdx,
@@ -2377,7 +2377,7 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
     // Set up a frame object for the return address.
     uint64_t SlotSize = TD->getPointerSize();
     ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(SlotSize, -SlotSize,
-                                                           true, false);
+                                                           false, false);
     FuncInfo->setRAIndex(ReturnAddrIndex);
   }
 
