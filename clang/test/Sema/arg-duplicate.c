@@ -2,7 +2,8 @@
 
 int f3(y, x, 
        x)          // expected-error {{redefinition of parameter}}
-  int y, x, 
+  int y, 
+      x,           // expected-note {{previous declaration is here}}
       x;           // expected-error {{redefinition of parameter}}
 {
   return x + y; 

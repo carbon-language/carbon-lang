@@ -3878,9 +3878,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
       << Context.getTypeDeclType(OwnedDecl);
   }
 
-  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-  // Can this happen for params?  We already checked that they don't conflict
-  // among each other.  Here they can only shadow globals, which is ok.
+  // Check for redeclaration of parameters, e.g. int foo(int x, int x);
   IdentifierInfo *II = D.getIdentifier();
   if (II) {
     if (NamedDecl *PrevDecl = LookupSingleName(S, II, LookupOrdinaryName)) {
@@ -3891,6 +3889,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
         PrevDecl = 0;
       } else if (S->isDeclScope(DeclPtrTy::make(PrevDecl))) {
         Diag(D.getIdentifierLoc(), diag::err_param_redefinition) << II;
+        Diag(PrevDecl->getLocation(), diag::note_previous_declaration);
 
         // Recover by removing the name
         II = 0;

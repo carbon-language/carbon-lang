@@ -492,8 +492,7 @@ def err_implicit_object_parameter_init : Error<
 
 def note_field_decl : Note<"member is declared here">;
 def note_bitfield_decl : Note<"bit-field is declared here">;
-def note_previous_decl : Note<
-  "%0 declared here">;
+def note_previous_decl : Note<"%0 declared here">;
 def note_member_synthesized_at : Note<
   "implicit default %select{constructor|copy constructor|"
   "copy assignment operator|destructor}0 for %1 first required here">;

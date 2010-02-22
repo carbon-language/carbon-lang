@@ -6,7 +6,8 @@ void test() {
   take(^(int x){});
   take(^(int x, int y){});
   take(^(int x, int y){});
-  take(^(int x, int x){});  // expected-error {{redefinition of parameter 'x'}}
+  take(^(int x,      // expected-note {{previous declaration is here}}
+         int x){});  // expected-error {{redefinition of parameter 'x'}}
 
 
   take(^(int x) { return x+1; });

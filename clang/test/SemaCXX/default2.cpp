@@ -16,7 +16,8 @@ void i()
 }
 
 
-int f1(int i, int i, int j) { // expected-error {{redefinition of parameter 'i'}}
+int f1(int i,          // expected-note {{previous declaration is here}}
+       int i, int j) { // expected-error {{redefinition of parameter 'i'}}
   i = 17;
   return j;
 } 
