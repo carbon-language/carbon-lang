@@ -301,8 +301,12 @@ namespace {
     Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
                                        SourceLocation OrigEnd);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD,
-                                           Expr **args, unsigned nargs);
-    Stmt *SynthMessageExpr(ObjCMessageExpr *Exp);
+                                      Expr **args, unsigned nargs,
+                                      SourceLocation StartLoc=SourceLocation(),
+                                      SourceLocation EndLoc=SourceLocation());
+    Stmt *SynthMessageExpr(ObjCMessageExpr *Exp,
+                           SourceLocation StartLoc=SourceLocation(),
+                           SourceLocation EndLoc=SourceLocation());
     Stmt *RewriteBreakStmt(BreakStmt *S);
     Stmt *RewriteContinueStmt(ContinueStmt *S);
     void SynthCountByEnumWithState(std::string &buf);
@@ -1952,7 +1956,8 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
 }
 
 CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
-  FunctionDecl *FD, Expr **args, unsigned nargs) {
+  FunctionDecl *FD, Expr **args, unsigned nargs, SourceLocation StartLoc,
+                                                    SourceLocation EndLoc) {
   // Get the type, we will need to reference it in a couple spots.
   QualType msgSendType = FD->getType();
 
@@ -1968,8 +1973,10 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
-  return new (Context) CallExpr(*Context, ICE, args, nargs, FT->getResultType(),
-                                SourceLocation());
+  CallExpr *Exp =  
+    new (Context) CallExpr(*Context, ICE, args, nargs, FT->getResultType(),
+                                EndLoc);
+  return Exp;
 }
 
 static bool scanForProtocolRefs(const char *startBuf, const char *endBuf,
@@ -2533,7 +2540,9 @@ QualType RewriteObjC::getConstantStringStructType() {
   return Context->getTagDeclType(ConstantStringDecl);
 }
 
-Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
+Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
+                                    SourceLocation StartLoc,
+                                    SourceLocation EndLoc) {
   if (!SelGetUidFunctionDecl)
     SynthSelGetUidFunctionDecl();
   if (!MsgSendFunctionDecl)
@@ -2599,7 +2608,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                      false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
                                                    &ClsExprs[0],
-                                                   ClsExprs.size());
+                                                   ClsExprs.size(),
+                                                   StartLoc,
+                                                   EndLoc);
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back( // set 'super class', using objc_getClass().
                           NoTypeInfoCStyleCastExpr(Context,
@@ -2654,7 +2665,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                                SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0],
-                                                   ClsExprs.size());
+                                                   ClsExprs.size(), 
+                                                   StartLoc, EndLoc);
       MsgExprs.push_back(Cls);
     }
   } else { // instance message.
@@ -2684,7 +2696,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                      false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0],
-                                                   ClsExprs.size());
+                                                   ClsExprs.size(), 
+                                                   StartLoc, EndLoc);
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back(
         // set 'super class', using objc_getClass().
@@ -2743,7 +2756,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                        Exp->getSelector().getAsString().size(),
                                        false, argType, SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
-                                                 &SelExprs[0], SelExprs.size());
+                                                 &SelExprs[0], SelExprs.size(),
+                                                  StartLoc,
+                                                  EndLoc);
   MsgExprs.push_back(SelExp);
 
   // Now push any user supplied arguments.
@@ -2830,12 +2845,12 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                                   cast);
 
   // Don't forget the parens to enforce the proper binding.
-  ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
+  ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
   CallExpr *CE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
                                         MsgExprs.size(),
-                                        FT->getResultType(), SourceLocation());
+                                        FT->getResultType(), EndLoc);
   Stmt *ReplacingStmt = CE;
   if (MsgSendStretFlavor) {
     // We have the method which returns a struct/union. Must also generate
@@ -2898,7 +2913,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
 }
 
 Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
-  Stmt *ReplacingStmt = SynthMessageExpr(Exp);
+  Stmt *ReplacingStmt = SynthMessageExpr(Exp, Exp->getLocStart(),
+                                         Exp->getLocEnd());
 
   // Now do the actual rewrite.
   ReplaceStmt(Exp, ReplacingStmt);
