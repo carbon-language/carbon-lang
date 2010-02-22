@@ -259,7 +259,14 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
       }
     }
     
+    // Emit a CheckComplexPat operation, which does the match (aborting if it
+    // fails) and pushes the matched operands onto the recorded nodes list.
     AddMatcherNode(new CheckComplexPatMatcherNode(CP));
+    
+    // Record the right number of operands.
+    NextRecordedOperandNo += CP.getNumOperands();
+    if (CP.hasProperty(SDNPHasChain))
+      ++NextRecordedOperandNo; // Chained node operand.
     
     // If the complex pattern has a chain, then we need to keep track of the
     // fact that we just recorded a chain input.  The chain input will be
@@ -442,26 +449,9 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   if (!N->getName().empty()) {
     unsigned &VarMapEntry = VariableMap[N->getName()];
     if (VarMapEntry == 0) {
-      VarMapEntry = NextRecordedOperandNo+1;
-      
-      unsigned NumRecorded;
-      
-      // If this is a complex pattern, the match operation for it will
-      // implicitly record all of the outputs of it (which may be more than
-      // one).
-      if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
-        // Record the right number of operands.
-        NumRecorded = CP->getNumOperands();
-        
-        if (CP->hasProperty(SDNPHasChain))
-          ++NumRecorded; // Chained node operand.
-      } else {
-        // If it is a normal named node, we must emit a 'Record' opcode.
-        AddMatcherNode(new RecordMatcherNode("$" + N->getName()));
-        NumRecorded = 1;
-      }
-      NextRecordedOperandNo += NumRecorded;
-      
+      // If it is a named node, we must emit a 'Record' opcode.
+      VarMapEntry = ++NextRecordedOperandNo;
+      AddMatcherNode(new RecordMatcherNode("$" + N->getName()));
     } else {
       // If we get here, this is a second reference to a specific name.  Since
       // we already have checked that the first reference is valid, we don't
@@ -503,8 +493,10 @@ void MatcherGen::EmitResultOfNamedOperand(const TreePatternNode *N,
   // A reference to a complex pattern gets all of the results of the complex
   // pattern's match.
   if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
+    // The first slot entry is the node itself, the subsequent entries are the
+    // matched values.
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-      ResultOps.push_back(SlotNo+i);
+      ResultOps.push_back(SlotNo+i+1);
     return;
   }
 
