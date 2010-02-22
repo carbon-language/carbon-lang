@@ -514,6 +514,22 @@ multiclass AI_unary_rrot<bits<8> opcod, string opc, PatFrag opnode> {
   }
 }
 
+multiclass AI_unary_rrot_np<bits<8> opcod, string opc> {
+  def r     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src),
+                 IIC_iUNAr, opc, "\t$dst, $src",
+                 [/* For disassembly only; pattern left blank */]>,
+              Requires<[IsARM, HasV6]> {
+    let Inst{11-10} = 0b00;
+    let Inst{19-16} = 0b1111;
+  }
+  def r_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src, i32imm:$rot),
+                 IIC_iUNAsi, opc, "\t$dst, $src, ror $rot",
+                 [/* For disassembly only; pattern left blank */]>,
+              Requires<[IsARM, HasV6]> {
+    let Inst{19-16} = 0b1111;
+  }
+}
+
 /// AI_bin_rrot - A binary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
 multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
@@ -528,6 +544,21 @@ multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                   IIC_iALUsi, opc, "\t$dst, $LHS, $RHS, ror $rot",
                   [(set GPR:$dst, (opnode GPR:$LHS,
                                           (rotr GPR:$RHS, rot_imm:$rot)))]>,
+                  Requires<[IsARM, HasV6]>;
+}
+
+// For disassembly only.
+multiclass AI_bin_rrot_np<bits<8> opcod, string opc> {
+  def rr     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
+                  IIC_iALUr, opc, "\t$dst, $LHS, $RHS",
+                  [/* For disassembly only; pattern left blank */]>,
+               Requires<[IsARM, HasV6]> {
+    let Inst{11-10} = 0b00;
+  }
+  def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS,
+                                              i32imm:$rot),
+                  IIC_iALUsi, opc, "\t$dst, $LHS, $RHS, ror $rot",
+                  [/* For disassembly only; pattern left blank */]>,
                   Requires<[IsARM, HasV6]>;
 }
 
@@ -642,6 +673,14 @@ def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "",
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{7-0} = 0b00000011;
+}
+
+def SEL : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, NoItinerary, "sel",
+             "\t$dst, $a, $b",
+             [/* For disassembly only; pattern left blank */]>,
+          Requires<[IsARM, HasV6]> {
+  let Inst{27-20} = 0b01101000;
+  let Inst{7-4} = 0b1011;
 }
 
 def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
@@ -1334,7 +1373,11 @@ defm SXTAB : AI_bin_rrot<0b01101010,
 defm SXTAH : AI_bin_rrot<0b01101011,
                "sxtah", BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
 
-// TODO: SXT(A){B|H}16
+// For disassembly only
+defm SXTB16  : AI_unary_rrot_np<0b01101000, "sxtb16">;
+
+// For disassembly only
+defm SXTAB16 : AI_bin_rrot_np<0b01101000, "sxtab16">;
 
 // Zero extenders
 
@@ -1358,9 +1401,9 @@ defm UXTAH : AI_bin_rrot<0b01101111, "uxtah",
 }
 
 // This isn't safe in general, the add is two 16-bit units, not a 32-bit add.
-//defm UXTAB16 : xxx<"uxtab16", 0xff00ff>;
+// For disassembly only
+defm UXTAB16 : AI_bin_rrot_np<0b01101100, "uxtab16">;
 
-// TODO: UXT(A){B|H}16
 
 def SBFX  : I<(outs GPR:$dst),
               (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
@@ -1710,6 +1753,14 @@ def SMMUL : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
   let Inst{15-12} = 0b1111;
 }
 
+def SMMULR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+               IIC_iMUL32, "smmulr", "\t$dst, $a, $b",
+               [/* For disassembly only; pattern left blank */]>,
+            Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b0011; // R = 1
+  let Inst{15-12} = 0b1111;
+}
+
 def SMMLA : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                IIC_iMAC32, "smmla", "\t$dst, $a, $b, $c",
                [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
@@ -1717,12 +1768,25 @@ def SMMLA : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
   let Inst{7-4}   = 0b0001;
 }
 
+def SMMLAR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+               IIC_iMAC32, "smmlar", "\t$dst, $a, $b, $c",
+               [/* For disassembly only; pattern left blank */]>,
+            Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b0011; // R = 1
+}
 
 def SMMLS : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                IIC_iMAC32, "smmls", "\t$dst, $a, $b, $c",
                [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
             Requires<[IsARM, HasV6]> {
   let Inst{7-4}   = 0b1101;
+}
+
+def SMMLSR : AMul2I <0b0111010, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+               IIC_iMAC32, "smmlsr", "\t$dst, $a, $b, $c",
+               [/* For disassembly only; pattern left blank */]>,
+            Requires<[IsARM, HasV6]> {
+  let Inst{7-4}   = 0b1111; // R = 1
 }
 
 multiclass AI_smul<string opc, PatFrag opnode> {
@@ -1907,8 +1971,22 @@ multiclass AI_smld<bit sub, string opc> {
 defm SMLA : AI_smld<0, "smla">;
 defm SMLS : AI_smld<1, "smls">;
 
-// TODO: Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
-// Note: SMLAD, SMLSD, SMLALD, SMLSLD have been defined for disassembly only.
+multiclass AI_sdml<bit sub, string opc> {
+
+  def D : AMulDualI<0, sub, 0, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                    NoItinerary, !strconcat(opc, "d"), "\t$dst, $a, $b"> {
+    let Inst{15-12} = 0b1111;
+  }
+
+  def DX : AMulDualI<0, sub, 1, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                    NoItinerary, !strconcat(opc, "dx"), "\t$dst, $a, $b"> {
+    let Inst{15-12} = 0b1111;
+  }
+
+}
+
+defm SMUA : AI_sdml<0, "smua">;
+defm SMUS : AI_sdml<1, "smus">;
 
 //===----------------------------------------------------------------------===//
 //  Misc. Arithmetic Instructions.
