@@ -190,7 +190,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 
   ICmpInst *Cond = new ICmpInst(BI, Opcode, CmpIndVar, ExitCnt, "exitcond");
 
-  Instruction *OrigCond = cast<Instruction>(BI->getCondition());
+  Value *OrigCond = BI->getCondition();
   // It's tempting to use replaceAllUsesWith here to fully replace the old
   // comparison, but that's not immediately safe, since users of the old
   // comparison may not be dominated by the new comparison. Instead, just
