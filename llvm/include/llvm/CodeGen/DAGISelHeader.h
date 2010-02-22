@@ -211,6 +211,7 @@ enum BuiltinOpcodes {
   OPC_CheckPatternPredicate,
   OPC_CheckPredicate,
   OPC_CheckOpcode,
+  OPC_CheckMultiOpcode,
   OPC_CheckType,
   OPC_CheckInteger1, OPC_CheckInteger2, OPC_CheckInteger4, OPC_CheckInteger8,
   OPC_CheckCondCode,
@@ -410,6 +411,16 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckOpcode:
       if (N->getOpcode() != MatcherTable[MatcherIndex++]) break;
       continue;
+        
+    case OPC_CheckMultiOpcode: {
+      unsigned NumOps = MatcherTable[MatcherIndex++];
+      bool OpcodeEquals = false;
+      for (unsigned i = 0; i != NumOps; ++i)
+        OpcodeEquals |= N->getOpcode() == MatcherTable[MatcherIndex++];
+      if (!OpcodeEquals) break;
+      continue;
+    }
+        
     case OPC_CheckType: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];

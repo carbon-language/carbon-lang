@@ -251,9 +251,11 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
         StringRef OpName = CGP.getSDNodeInfo(OpNodes[0]).getEnumName();
         AddMatcherNode(new CheckOpcodeMatcherNode(OpName));
       } else if (!OpNodes.empty()) {
-        for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
-          // .getOpcodeName(OpNodes[j], CGP)
-        }
+        SmallVector<StringRef, 4> OpNames;
+        for (unsigned i = 0, e = OpNodes.size(); i != e; i++)
+          OpNames.push_back(CGP.getSDNodeInfo(OpNodes[i]).getEnumName());
+        AddMatcherNode(new CheckMultiOpcodeMatcherNode(OpNames.data(),
+                                                       OpNames.size()));
       }
     }
     

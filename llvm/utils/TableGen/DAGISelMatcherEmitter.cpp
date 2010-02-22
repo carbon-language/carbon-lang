@@ -181,6 +181,15 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
        << cast<CheckOpcodeMatcherNode>(N)->getOpcodeName() << ",\n";
     return 2;
       
+  case MatcherNode::CheckMultiOpcode: {
+    const CheckMultiOpcodeMatcherNode *CMO=cast<CheckMultiOpcodeMatcherNode>(N);
+    OS << "OPC_CheckMultiOpcode, " << CMO->getNumOpcodeNames() << ", ";
+    for (unsigned i = 0, e = CMO->getNumOpcodeNames(); i != e; ++i)
+      OS << CMO->getOpcodeName(i) << ", ";
+    OS << '\n';
+    return 2 + CMO->getNumOpcodeNames();
+  }
+      
   case MatcherNode::CheckType:
     OS << "OPC_CheckType, "
        << getEnumName(cast<CheckTypeMatcherNode>(N)->getType()) << ",\n";

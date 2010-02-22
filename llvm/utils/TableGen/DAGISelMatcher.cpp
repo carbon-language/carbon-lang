@@ -76,6 +76,11 @@ void CheckOpcodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   printNext(OS, indent);
 }
 
+void CheckMultiOpcodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "CheckMultiOpcode <todo args>\n";
+  printNext(OS, indent);
+}
+
 void CheckTypeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckType " << getEnumName(Type) << '\n';
   printNext(OS, indent);

@@ -51,6 +51,7 @@ public:
     CheckPatternPredicate,
     CheckPredicate,       // Fail if node predicate fails.
     CheckOpcode,          // Fail if not opcode.
+    CheckMultiOpcode,     // Fail if not in opcode list.
     CheckType,            // Fail if not correct type.
     CheckInteger,         // Fail if wrong val.
     CheckCondCode,        // Fail if not condcode.
@@ -261,6 +262,26 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+  
+/// CheckMultiOpcodeMatcherNode - This checks to see if the current node has one
+/// of the specified opcode, if not it fails to match.
+class CheckMultiOpcodeMatcherNode : public MatcherNode {
+  SmallVector<StringRef, 4> OpcodeNames;
+public:
+  CheckMultiOpcodeMatcherNode(const StringRef *opcodes, unsigned numops)
+  : MatcherNode(CheckMultiOpcode), OpcodeNames(opcodes, opcodes+numops) {}
+  
+  unsigned getNumOpcodeNames() const { return OpcodeNames.size(); }
+  StringRef getOpcodeName(unsigned i) const { return OpcodeNames[i]; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == CheckMultiOpcode;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+  
   
 /// CheckTypeMatcherNode - This checks to see if the current node has the
 /// specified type, if not it fails to match.
