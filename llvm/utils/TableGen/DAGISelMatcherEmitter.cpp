@@ -350,16 +350,29 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
         NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
                                    Indent+1, CurrentIdx+2, FOS);
       }
-      
+
+      // In the unlikely event that we have something too big to emit with a
+      // one byte offset, regenerate it with a two-byte one.
       if (NextSize > 255) {
-        errs() <<
-          "Tblgen internal error: can't handle predicate this complex yet\n";
-        // FIXME: exit(1);
+        TmpBuf.clear();
+        raw_svector_ostream OS(TmpBuf);
+        formatted_raw_ostream FOS(OS);
+        NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
+                                   Indent+1, CurrentIdx+3, FOS);
+        if (NextSize > 65535) {
+          errs() <<
+            "Tblgen internal error: can't handle pattern this complex yet\n";
+          exit(1);
+        }
       }
       
       OS << "/*" << CurrentIdx << "*/";
       OS.PadToColumn(Indent*2);
-      OS << "OPC_Push, " << NextSize << ",\n";
+      
+      if (NextSize < 256)
+        OS << "OPC_Push, " << NextSize << ",\n";
+      else
+        OS << "OPC_Push2, " << (NextSize&255) << ", " << (NextSize>>8) << ",\n";
       OS << TmpBuf.str();
       
       Size += 2+NextSize;

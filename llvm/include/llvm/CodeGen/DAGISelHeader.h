@@ -201,7 +201,7 @@ GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
 }
 
 enum BuiltinOpcodes {
-  OPC_Push,
+  OPC_Push, OPC_Push2,
   OPC_RecordNode,
   OPC_RecordMemRef,
   OPC_CaptureFlagInput,
@@ -348,6 +348,19 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     switch ((BuiltinOpcodes)MatcherTable[MatcherIndex++]) {
     case OPC_Push: {
       unsigned NumToSkip = MatcherTable[MatcherIndex++];
+      MatchScope NewEntry;
+      NewEntry.FailIndex = MatcherIndex+NumToSkip;
+      NewEntry.NodeStackSize = NodeStack.size();
+      NewEntry.NumRecordedNodes = RecordedNodes.size();
+      NewEntry.NumMatchedMemRefs = MatchedMemRefs.size();
+      NewEntry.InputChain = InputChain;
+      NewEntry.InputFlag = InputFlag;
+      NewEntry.HasChainNodesMatched = !ChainNodesMatched.empty();
+      MatchScopes.push_back(NewEntry);
+      continue;
+    }
+    case OPC_Push2: {
+      unsigned NumToSkip = GetInt2(MatcherTable, MatcherIndex);
       MatchScope NewEntry;
       NewEntry.FailIndex = MatcherIndex+NumToSkip;
       NewEntry.NodeStackSize = NodeStack.size();
