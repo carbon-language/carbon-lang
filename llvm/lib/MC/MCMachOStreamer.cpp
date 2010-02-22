@@ -333,15 +333,13 @@ void MCMachOStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
 
 void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                                 unsigned AddrSpace) {
-  // Assume the front-end will have evaluate things absolute expressions, so
-  // just create data + fixup.
   MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
   if (!DF)
     DF = new MCDataFragment(CurSectionData);
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  if (Value->EvaluateAsAbsolute(AbsValue)) {
+  if (AddValueSymbols(Value)->EvaluateAsAbsolute(AbsValue)) {
     // FIXME: Endianness assumption.
     for (unsigned i = 0; i != Size; ++i)
       DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
