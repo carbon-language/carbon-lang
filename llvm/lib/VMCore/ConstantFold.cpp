@@ -1105,6 +1105,10 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
           return ConstantExpr::getLShr(C1, C2);
       break;
     }
+  } else if (isa<ConstantInt>(C1)) {
+    // If C1 is a ConstantInt and C2 is not, swap the operands.
+    if (Instruction::isCommutative(Opcode))
+      return ConstantExpr::get(Opcode, C2, C1);
   }
 
   // At this point we know neither constant is an UndefValue.

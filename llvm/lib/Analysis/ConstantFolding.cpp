@@ -794,8 +794,8 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
         // it is casted back to a pointer, see if the expression can be
         // converted into a GEP.
         if (CE->getOpcode() == Instruction::Add)
-          if (ConstantInt *L = dyn_cast<ConstantInt>(CE->getOperand(0)))
-            if (ConstantExpr *R = dyn_cast<ConstantExpr>(CE->getOperand(1)))
+          if (ConstantInt *L = dyn_cast<ConstantInt>(CE->getOperand(1)))
+            if (ConstantExpr *R = dyn_cast<ConstantExpr>(CE->getOperand(0)))
               if (R->getOpcode() == Instruction::PtrToInt)
                 if (GlobalVariable *GV =
                       dyn_cast<GlobalVariable>(R->getOperand(0))) {
