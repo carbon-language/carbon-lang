@@ -5245,7 +5245,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
 
   SDValue AndNode = DAG.getNode(ISD::AND, dl, MVT::i8, ShAmt,
                                 DAG.getConstant(VTBits, MVT::i8));
-  SDValue Cond = DAG.getNode(X86ISD::CMP, dl, VT,
+  SDValue Cond = DAG.getNode(X86ISD::CMP, dl, MVT::i32,
                              AndNode, DAG.getConstant(0, MVT::i8));
 
   SDValue Hi, Lo;
