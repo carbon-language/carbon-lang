@@ -264,44 +264,44 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt* Statement, ASTContext* C,
   if (!B)
     B = Succ;
 
-  assert(B);
+  if (B) {
+    // Finalize the last constructed block.  This usually involves reversing the
+    // order of the statements in the block.
+    if (Block) FinishBlock(B);
 
-  // Finalize the last constructed block.  This usually involves reversing the
-  // order of the statements in the block.
-  FinishBlock(B);
-
-  // Backpatch the gotos whose label -> block mappings we didn't know when we
-  // encountered them.
-  for (BackpatchBlocksTy::iterator I = BackpatchBlocks.begin(),
+    // Backpatch the gotos whose label -> block mappings we didn't know when we
+    // encountered them.
+    for (BackpatchBlocksTy::iterator I = BackpatchBlocks.begin(),
          E = BackpatchBlocks.end(); I != E; ++I ) {
 
-    CFGBlock* B = *I;
-    GotoStmt* G = cast<GotoStmt>(B->getTerminator());
-    LabelMapTy::iterator LI = LabelMap.find(G->getLabel());
+      CFGBlock* B = *I;
+      GotoStmt* G = cast<GotoStmt>(B->getTerminator());
+      LabelMapTy::iterator LI = LabelMap.find(G->getLabel());
 
-    // If there is no target for the goto, then we are looking at an
-    // incomplete AST.  Handle this by not registering a successor.
-    if (LI == LabelMap.end()) continue;
-
-    AddSuccessor(B, LI->second);
-  }
-
-  // Add successors to the Indirect Goto Dispatch block (if we have one).
-  if (CFGBlock* B = cfg->getIndirectGotoBlock())
-    for (LabelSetTy::iterator I = AddressTakenLabels.begin(),
-           E = AddressTakenLabels.end(); I != E; ++I ) {
-
-      // Lookup the target block.
-      LabelMapTy::iterator LI = LabelMap.find(*I);
-
-      // If there is no target block that contains label, then we are looking
-      // at an incomplete AST.  Handle this by not registering a successor.
+      // If there is no target for the goto, then we are looking at an
+      // incomplete AST.  Handle this by not registering a successor.
       if (LI == LabelMap.end()) continue;
 
       AddSuccessor(B, LI->second);
     }
 
-  Succ = B;
+    // Add successors to the Indirect Goto Dispatch block (if we have one).
+    if (CFGBlock* B = cfg->getIndirectGotoBlock())
+      for (LabelSetTy::iterator I = AddressTakenLabels.begin(),
+           E = AddressTakenLabels.end(); I != E; ++I ) {
+
+        // Lookup the target block.
+        LabelMapTy::iterator LI = LabelMap.find(*I);
+
+        // If there is no target block that contains label, then we are looking
+        // at an incomplete AST.  Handle this by not registering a successor.
+        if (LI == LabelMap.end()) continue;
+
+        AddSuccessor(B, LI->second);
+      }
+
+    Succ = B;
+  }
 
   // Create an empty entry block that has no predecessors.
   cfg->setEntry(createBlock());
