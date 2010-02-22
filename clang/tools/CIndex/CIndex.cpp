@@ -1007,9 +1007,17 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                  DEnd = Unit->diag_end();
              D != DEnd; ++D) {
           CXStoredDiagnostic Diag(*D, Unit->getASTContext().getLangOptions());
-          clang_displayDiagnostic(&Diag, stderr,
-                                  clang_defaultDiagnosticDisplayOptions());
+          CXString Msg = clang_formatDiagnostic(&Diag,
+                                      clang_defaultDiagnosticDisplayOptions());
+          fprintf(stderr, "%s\n", clang_getCString(Msg));
+          clang_disposeString(Msg);
         }
+#ifdef LLVM_ON_WIN32
+        // On Windows, force a flush, since there may be multiple copies of
+        // stderr and stdout in the file system, all with different buffers
+        // but writing to the same device.
+        fflush(stderr);
+#endif        
       }
       return 0;
     }
@@ -1124,9 +1132,18 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                                        DEnd = Diags.end();
          D != DEnd; ++D) {
       CXStoredDiagnostic Diag(*D, LangOpts);
-      clang_displayDiagnostic(&Diag, stderr,
-                              clang_defaultDiagnosticDisplayOptions());
+      CXString Msg = clang_formatDiagnostic(&Diag,
+                                      clang_defaultDiagnosticDisplayOptions());
+      fprintf(stderr, "%s\n", clang_getCString(Msg));
+      clang_disposeString(Msg);
     }
+    
+#ifdef LLVM_ON_WIN32
+    // On Windows, force a flush, since there may be multiple copies of
+    // stderr and stdout in the file system, all with different buffers
+    // but writing to the same device.
+    fflush(stderr);
+#endif    
   }
 
   if (ATU) {

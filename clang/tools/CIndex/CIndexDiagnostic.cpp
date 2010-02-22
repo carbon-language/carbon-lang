@@ -15,8 +15,10 @@
 #include "CXSourceLocation.h"
 
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 using namespace clang::cxloc;
@@ -47,17 +49,19 @@ void clang_disposeDiagnostic(CXDiagnostic Diagnostic) {
   delete Stored;
 }
 
-void clang_displayDiagnostic(CXDiagnostic Diagnostic, FILE *Out, 
-                             unsigned Options) {
-  if (!Diagnostic || !Out)
-    return;
+CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
+  if (!Diagnostic)
+    return createCXString("");
 
   CXDiagnosticSeverity Severity = clang_getDiagnosticSeverity(Diagnostic);
 
   // Ignore diagnostics that should be ignored.
   if (Severity == CXDiagnostic_Ignored)
-    return;
+    return createCXString("");
 
+  llvm::SmallString<256> Str;
+  llvm::raw_svector_ostream Out(Str);
+  
   if (Options & CXDiagnostic_DisplaySourceLocation) {
     // Print source location (file:line), along with optional column
     // and source ranges.
@@ -67,10 +71,10 @@ void clang_displayDiagnostic(CXDiagnostic Diagnostic, FILE *Out,
                                    &File, &Line, &Column, 0);
     if (File) {
       CXString FName = clang_getFileName(File);
-      fprintf(Out, "%s:%d:", clang_getCString(FName), Line);
+      Out << clang_getCString(FName) << ":" << Line << ":";
       clang_disposeString(FName);
       if (Options & CXDiagnostic_DisplayColumn)
-        fprintf(Out, "%d:", Column);
+        Out << Column << ":";
 
       if (Options & CXDiagnostic_DisplaySourceRanges) {
         unsigned N = clang_getDiagnosticNumRanges(Diagnostic);
@@ -89,40 +93,34 @@ void clang_displayDiagnostic(CXDiagnostic Diagnostic, FILE *Out,
           if (StartFile != EndFile || StartFile != File)
             continue;
           
-          fprintf(Out, "{%d:%d-%d:%d}", StartLine, StartColumn, 
-                  EndLine, EndColumn);
+          Out << "{" << StartLine << ":" << StartColumn << "-"
+              << EndLine << ":" << EndColumn << "}";
           PrintedRange = true;
         }
         if (PrintedRange)
-          fprintf(Out, ":");
+          Out << ":";
       }
     }
 
-    fprintf(Out, " ");
+    Out << " ";
   }
 
   /* Print warning/error/etc. */
   switch (Severity) {
   case CXDiagnostic_Ignored: assert(0 && "impossible"); break;
-  case CXDiagnostic_Note: fprintf(Out, "note: "); break;
-  case CXDiagnostic_Warning: fprintf(Out, "warning: "); break;
-  case CXDiagnostic_Error: fprintf(Out, "error: "); break;
-  case CXDiagnostic_Fatal: fprintf(Out, "fatal error: "); break;
+  case CXDiagnostic_Note: Out << "note: "; break;
+  case CXDiagnostic_Warning: Out << "warning: "; break;
+  case CXDiagnostic_Error: Out << "error: "; break;
+  case CXDiagnostic_Fatal: Out << "fatal error: "; break;
   }
 
   CXString Text = clang_getDiagnosticSpelling(Diagnostic);
   if (clang_getCString(Text))
-    fprintf(Out, "%s\n", clang_getCString(Text));
+    Out << clang_getCString(Text);
   else
-    fprintf(Out, "<no diagnostic text>\n");
+    Out << "<no diagnostic text>";
   clang_disposeString(Text);
-
-#ifdef LLVM_ON_WIN32
-  // On Windows, force a flush, since there may be multiple copies of
-  // stderr and stdout in the file system, all with different buffers
-  // but writing to the same device.
-  fflush(Out);
-#endif
+  return createCXString(Out.str(), true);
 }
 
 unsigned clang_defaultDiagnosticDisplayOptions() {

@@ -198,14 +198,18 @@ typedef void (*PostVisitTU)(CXTranslationUnit);
 void PrintDiagnostic(CXDiagnostic Diagnostic) {
   FILE *out = stderr;
   CXFile file;
+  CXString Msg;
   unsigned display_opts = CXDiagnostic_DisplaySourceLocation
     | CXDiagnostic_DisplayColumn | CXDiagnostic_DisplaySourceRanges;
   unsigned i, num_fixits;
-
-  clang_displayDiagnostic(Diagnostic, out, display_opts);
+  
   if (clang_getDiagnosticSeverity(Diagnostic) == CXDiagnostic_Ignored)
     return;
 
+  Msg = clang_formatDiagnostic(Diagnostic, display_opts);
+  fprintf(stderr, "%s\n", clang_getCString(Msg));
+  clang_disposeString(Msg);
+  
   clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
                                  &file, 0, 0, 0);
   if (!file)

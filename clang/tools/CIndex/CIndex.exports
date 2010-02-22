@@ -6,7 +6,6 @@ _clang_createIndex
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
 _clang_defaultDiagnosticDisplayOptions
-_clang_displayDiagnostic
 _clang_disposeCodeCompleteResults
 _clang_disposeDiagnostic
 _clang_disposeIndex
@@ -16,6 +15,7 @@ _clang_disposeTranslationUnit
 _clang_enableStackTraces
 _clang_equalCursors
 _clang_equalLocations
+_clang_formatDiagnostic
 _clang_getClangVersion
 _clang_getCString
 _clang_getCompletionChunkCompletionString

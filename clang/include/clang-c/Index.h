@@ -460,23 +460,22 @@ enum CXDiagnosticDisplayOptions {
 };
 
 /**
- * \brief Display the given diagnostic by printing it to the given file.
+ * \brief Format the given diagnostic in a manner that is suitable for display.
  *
- * This routine will display the given diagnostic to a file, rendering
+ * This routine will format the given diagnostic to a string, rendering
  * the diagnostic according to the various options given. The 
  * \c clang_defaultDiagnosticDisplayOptions() function returns the set of 
  * options that most closely mimics the behavior of the clang compiler.
  *
  * \param Diagnostic The diagnostic to print.
  *
- * \param File The file to print to (e.g., \c stderr).
- *
  * \param Options A set of options that control the diagnostic display, 
  * created by combining \c CXDiagnosticDisplayOptions values.
+ *
+ * \returns A new string containing for formatted diagnostic.
  */
-CINDEX_LINKAGE void clang_displayDiagnostic(CXDiagnostic Diagnostic,
-                                            FILE *File,
-                                            unsigned Options);
+CINDEX_LINKAGE CXString clang_formatDiagnostic(CXDiagnostic Diagnostic,
+                                               unsigned Options);
 
 /**
  * \brief Retrieve the set of display options most similar to the
