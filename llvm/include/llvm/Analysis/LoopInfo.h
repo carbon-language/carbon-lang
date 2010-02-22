@@ -835,7 +835,7 @@ public:
             } else if (BlockLoop != Child) {
               LoopT *SubLoop = BlockLoop;
               // Reparent all of the blocks which used to belong to BlockLoops
-              for (unsigned j = 0, e = SubLoop->Blocks.size(); j != e; ++j)
+              for (unsigned j = 0, f = SubLoop->Blocks.size(); j != f; ++j)
                 ContainingLoops[SubLoop->Blocks[j]] = Child;
 
               // There is already a loop which contains this block, that means
