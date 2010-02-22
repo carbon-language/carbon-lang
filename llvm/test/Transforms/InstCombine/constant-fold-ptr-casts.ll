@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | grep {ret i32 2143034560}
+; RUN: opt < %s -instcombine -S | grep {ret i32 2143034560} | count 2
 
 ; Instcombine should be able to completely fold this code.
 
@@ -10,6 +10,15 @@ target triple = "i686-apple-darwin8"
 define i32 @foo() nounwind {
 entry:
 	%tmp87.2 = load i64* inttoptr (i32 add (i32 16, i32 ptrtoint ([3 x i64]* @bar to i32)) to i64*), align 8
+	%t0 = bitcast i64 %tmp87.2 to double
+	%tmp9192.2 = fptrunc double %t0 to float
+	%t1 = bitcast float %tmp9192.2 to i32
+	ret i32 %t1
+}
+
+define i32 @goo() nounwind {
+entry:
+	%tmp87.2 = load i64* inttoptr (i32 add (i32 ptrtoint ([3 x i64]* @bar to i32), i32 16) to i64*), align 8
 	%t0 = bitcast i64 %tmp87.2 to double
 	%tmp9192.2 = fptrunc double %t0 to float
 	%t1 = bitcast float %tmp9192.2 to i32
