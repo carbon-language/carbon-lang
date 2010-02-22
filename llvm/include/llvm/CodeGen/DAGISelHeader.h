@@ -740,7 +740,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // after (parallel) on input patterns are removed.  This would also
         // allow us to stop encoding #results in OPC_CompleteMatch's table
         // entry.
-        if (NodeToMatch->getNumValues() <= i)
+        if (NodeToMatch->getNumValues() <= i ||
+            NodeToMatch->getValueType(i) == MVT::Other)
           break;
         assert((NodeToMatch->getValueType(i) == Res.getValueType() ||
                 NodeToMatch->getValueType(i) == MVT::iPTR ||
