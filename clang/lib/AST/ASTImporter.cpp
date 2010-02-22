@@ -1522,6 +1522,7 @@ Decl *ASTNodeImporter::VisitTypedefDecl(TypedefDecl *D) {
   TypedefDecl *ToTypedef = TypedefDecl::Create(Importer.getToContext(), DC,
                                                Loc, Name.getAsIdentifierInfo(),
                                                TInfo);
+  ToTypedef->setAccess(D->getAccess());
   ToTypedef->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToTypedef);
   LexicalDC->addDecl(ToTypedef);
@@ -1581,6 +1582,7 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
                                       Name.getAsIdentifierInfo(),
                                       Importer.Import(D->getTagKeywordLoc()),
                                       0);
+  D2->setAccess(D->getAccess());
   D2->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, D2);
   LexicalDC->addDecl(D2);
@@ -1691,6 +1693,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                                    Name.getAsIdentifierInfo(), 
                                         Importer.Import(D->getTagKeywordLoc()));
       D2 = D2CXX;
+      D2->setAccess(D->getAccess());
       
       if (D->isDefinition()) {
         // Add base classes.
@@ -1779,6 +1782,7 @@ Decl *ASTNodeImporter::VisitEnumConstantDecl(EnumConstantDecl *D) {
     = EnumConstantDecl::Create(Importer.getToContext(), cast<EnumDecl>(DC), Loc, 
                                Name.getAsIdentifierInfo(), T, 
                                Init, D->getInitVal());
+  ToEnumerator->setAccess(D->getAccess());
   ToEnumerator->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToEnumerator);
   LexicalDC->addDecl(ToEnumerator);
@@ -1886,6 +1890,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                       D->isInlineSpecified(),
                                       D->hasWrittenPrototype());
   }
+  ToFunction->setAccess(D->getAccess());
   ToFunction->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToFunction);
   LexicalDC->addDecl(ToFunction);
@@ -1939,6 +1944,7 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   FieldDecl *ToField = FieldDecl::Create(Importer.getToContext(), DC, 
                                          Loc, Name.getAsIdentifierInfo(),
                                          T, TInfo, BitWidth, D->isMutable());
+  ToField->setAccess(D->getAccess());
   ToField->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToField);
   LexicalDC->addDecl(ToField);
@@ -2094,6 +2100,7 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
                                    Name.getAsIdentifierInfo(), T, TInfo,
                                    D->getStorageClass());
+  ToVar->setAccess(D->getAccess());
   ToVar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToVar);
   LexicalDC->addDecl(ToVar);
