@@ -1124,8 +1124,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       // Replace the pseudo instruction with a new instruction...
       unsigned Opc = Old->getOpcode();
-      ARMCC::CondCodes Pred = (ARMCC::CondCodes)Old->getOperand(1).getImm();
-      // FIXME: Thumb2 version of ADJCALLSTACKUP and ADJCALLSTACKDOWN?
+      int PIdx = Old->findFirstPredOperandIdx();
+      ARMCC::CondCodes Pred = (PIdx == -1)
+        ? ARMCC::AL : (ARMCC::CondCodes)Old->getOperand(PIdx).getImm();
       if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
         // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
         unsigned PredReg = Old->getOperand(2).getReg();
