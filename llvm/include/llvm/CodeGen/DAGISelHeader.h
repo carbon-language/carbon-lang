@@ -336,6 +336,10 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   // update the chain results when the pattern is complete.
   SmallVector<SDNode*, 3> ChainNodesMatched;
   
+  DEBUG(errs() << "ISEL: Starting pattern match on root node: ";
+        NodeToMatch->dump(CurDAG);
+        errs() << '\n');
+  
   // Interpreter starts at opcode #0.
   unsigned MatcherIndex = 0;
   while (1) {
@@ -722,6 +726,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         std::copy(MatchedMemRefs.begin(), MatchedMemRefs.end(), MemRefs);
         Res->setMemRefs(MemRefs, MemRefs + MatchedMemRefs.size());
       }
+      
+      DEBUG(errs() << "  Created node: "; Res->dump(CurDAG); errs() << "\n");
       continue;
     }
       
@@ -777,6 +783,9 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       assert(NodeToMatch->use_empty() &&
              "Didn't replace all uses of the node?");
+      
+      DEBUG(errs() << "ISEL: Match complete!\n");
+      
       // FIXME: We just return here, which interacts correctly with SelectRoot
       // above.  We should fix this to not return an SDNode* anymore.
       return 0;
@@ -794,6 +803,9 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     RecordedNodes.resize(LastScope.NumRecordedNodes);
     NodeStack.resize(LastScope.NodeStackSize);
     N = NodeStack.back();
+
+    DEBUG(errs() << "  Match failed at index " << MatcherIndex
+                 << " continuing at " << LastScope.FailIndex << "\n");
     
     if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
       MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
