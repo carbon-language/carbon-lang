@@ -283,6 +283,32 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         // True if unordered.
         return ConstantInt::getTrue(CFP->getContext());
       }
+      // Check whether the constant is an infinity.
+      if (CFP->getValueAPF().isInfinity()) {
+        if (CFP->getValueAPF().isNegative()) {
+          switch (Pred) {
+          case FCmpInst::FCMP_OLT:
+            // No value is ordered and less than negative infinity.
+            return ConstantInt::getFalse(CFP->getContext());
+          case FCmpInst::FCMP_UGE:
+            // All values are unordered with or at least negative infinity.
+            return ConstantInt::getTrue(CFP->getContext());
+          default:
+            break;
+          }
+        } else {
+          switch (Pred) {
+          case FCmpInst::FCMP_OGT:
+            // No value is ordered and greater than infinity.
+            return ConstantInt::getFalse(CFP->getContext());
+          case FCmpInst::FCMP_ULE:
+            // All values are unordered with and at most infinity.
+            return ConstantInt::getTrue(CFP->getContext());
+          default:
+            break;
+          }
+        }
+      }
     }
   }
   
