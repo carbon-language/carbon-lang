@@ -1094,6 +1094,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   // here. That is handled by CheckPointerConversion.
   if (getLangOptions().CPlusPlus &&
       FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
+      !Context.hasSameUnqualifiedType(FromPointeeType, ToPointeeType) &&
       !RequireCompleteType(From->getLocStart(), FromPointeeType, PDiag()) &&
       IsDerivedFrom(FromPointeeType, ToPointeeType)) {
     ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
