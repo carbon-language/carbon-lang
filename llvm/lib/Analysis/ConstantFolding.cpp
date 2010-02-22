@@ -814,8 +814,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                           Constant::getNullValue(CE->getType()),
                           ConstantInt::get(ElTy->getContext(), ElemIdx)
                         };
-                        return
-                        ConstantExpr::getGetElementPtr(GV, &Index[0], 2);
+                        return ConstantExpr::getGetElementPtr(GV, &Index[0], 2);
                       }
                     }
                   }
