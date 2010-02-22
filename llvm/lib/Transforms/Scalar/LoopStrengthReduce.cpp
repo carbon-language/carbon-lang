@@ -2866,8 +2866,10 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
       if (AR->getLoop() == LF.PostIncLoop) {
         Reg = SE.getAddExpr(Reg, AR->getStepRecurrence(SE));
         // If the user is inside the loop, insert the code after the increment
-        // so that it is dominated by its operand.
-        if (L->contains(LF.UserInst))
+        // so that it is dominated by its operand. If the original insert point
+        // was already dominated by the increment, keep it, because there may
+        // be loop-variant operands that need to be respected also.
+        if (L->contains(LF.UserInst) && !DT.dominates(IVIncInsertPos, IP))
           IP = IVIncInsertPos;
         break;
       }
