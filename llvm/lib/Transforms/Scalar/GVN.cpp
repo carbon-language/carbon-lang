@@ -1497,6 +1497,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       V->takeName(LI);
     if (V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
+    VN.erase(LI);
     toErase.push_back(LI);
     NumGVNLoad++;
     return true;
@@ -1716,6 +1717,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     V->takeName(LI);
   if (V->getType()->isPointerTy())
     MD->invalidateCachedPointerInfo(V);
+  VN.erase(LI);
   toErase.push_back(LI);
   NumPRELoad++;
   return true;
@@ -1776,6 +1778,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
       L->replaceAllUsesWith(AvailVal);
       if (AvailVal->getType()->isPointerTy())
         MD->invalidateCachedPointerInfo(AvailVal);
+      VN.erase(L);
       toErase.push_back(L);
       NumGVNLoad++;
       return true;
@@ -1821,6 +1824,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     L->replaceAllUsesWith(StoredVal);
     if (StoredVal->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(StoredVal);
+    VN.erase(L);
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1850,6 +1854,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     L->replaceAllUsesWith(AvailableVal);
     if (DepLI->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(DepLI);
+    VN.erase(L);
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1860,6 +1865,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   // intervening stores, for example.
   if (isa<AllocaInst>(DepInst) || isMalloc(DepInst)) {
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
+    VN.erase(L);
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1870,6 +1876,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(DepInst)) {
     if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
       L->replaceAllUsesWith(UndefValue::get(L->getType()));
+      VN.erase(L);
       toErase.push_back(L);
       NumGVNLoad++;
       return true;
