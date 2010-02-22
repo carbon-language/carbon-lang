@@ -103,11 +103,9 @@ namespace {
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
                                    SCEVExpander &Rewriter);
-    void RewriteLoopExitValues(Loop *L, const SCEV *BackedgeTakenCount,
-                               SCEVExpander &Rewriter);
+    void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
-    void RewriteIVExpressions(Loop *L, const Type *LargestType,
-                              SCEVExpander &Rewriter);
+    void RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter);
 
     void SinkUnusedInvariants(Loop *L);
 
@@ -215,7 +213,6 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 /// able to brute-force evaluate arbitrary instructions as long as they have
 /// constant operands at the beginning of the loop.
 void IndVarSimplify::RewriteLoopExitValues(Loop *L,
-                                           const SCEV *BackedgeTakenCount,
                                            SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
   assert(L->isLCSSAForm());
@@ -358,7 +355,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // the current expressions.
   //
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
-    RewriteLoopExitValues(L, BackedgeTakenCount, Rewriter);
+    RewriteLoopExitValues(L, Rewriter);
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
@@ -427,7 +424,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Rewrite IV-derived expressions. Clears the rewriter cache.
-  RewriteIVExpressions(L, LargestType, Rewriter);
+  RewriteIVExpressions(L, Rewriter);
 
   // The Rewriter may not be used from this point on.
 
@@ -447,8 +444,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   return Changed;
 }
 
-void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
-                                          SCEVExpander &Rewriter) {
+void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
   SmallVector<WeakVH, 16> DeadInsts;
 
   // Rewrite all induction variable expressions in terms of the canonical

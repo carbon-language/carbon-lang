@@ -142,8 +142,7 @@ static bool getSCEVStartAndStride(const SCEV *&SH, Loop *L, Loop *UseLoop,
 /// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
-                                       Loop *L, LoopInfo *LI, DominatorTree *DT,
-                                       Pass *P) {
+                                       Loop *L, DominatorTree *DT) {
   // If the user is in the loop, use the preinc value.
   if (L->contains(User)) return false;
 
@@ -245,7 +244,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
-      if (IVUseShouldUsePostIncValue(User, I, L, LI, DT, this)) {
+      if (IVUseShouldUsePostIncValue(User, I, L, DT)) {
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
         const SCEV *NewStart = SE->getMinusSCEV(Start, Stride);

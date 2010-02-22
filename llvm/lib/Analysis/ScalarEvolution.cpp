@@ -2564,7 +2564,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *I, const SCEV *SymName) {
   SmallPtrSet<Instruction *, 8> Visited;
   Visited.insert(I);
   while (!Worklist.empty()) {
-    Instruction *I = Worklist.pop_back_val();
+    I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
     std::map<SCEVCallbackVH, const SCEV *>::iterator It =
@@ -2942,7 +2942,6 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
-    unsigned BitWidth = getTypeSizeInBits(U->getType());
     APInt Mask = APInt::getAllOnesValue(BitWidth);
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
     ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones, TD);
@@ -5367,8 +5366,8 @@ ScalarEvolution::ScalarEvolution()
 bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   LI = &getAnalysis<LoopInfo>();
-  DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
+  DT = &getAnalysis<DominatorTree>();
   return false;
 }
 

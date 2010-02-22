@@ -912,7 +912,7 @@ public:
                                       MaxOffset(INT64_MIN),
                                       AllFixupsOutsideLoop(true) {}
 
-  bool InsertFormula(size_t LUIdx, const Formula &F);
+  bool InsertFormula(const Formula &F);
 
   void check() const;
 
@@ -922,7 +922,7 @@ public:
 
 /// InsertFormula - If the given formula has not yet been inserted, add it to
 /// the list, and return true. Return false otherwise.
-bool LSRUse::InsertFormula(size_t LUIdx, const Formula &F) {
+bool LSRUse::InsertFormula(const Formula &F) {
   SmallVector<const SCEV *, 2> Key = F.BaseRegs;
   if (F.ScaledReg) Key.push_back(F.ScaledReg);
   // Unstable sort by host order ok, because this is only used for uniquifying.
@@ -1057,8 +1057,7 @@ static bool isAlwaysFoldable(int64_t BaseOffs,
                              GlobalValue *BaseGV,
                              bool HasBaseReg,
                              LSRUse::KindType Kind, const Type *AccessTy,
-                             const TargetLowering *TLI,
-                             ScalarEvolution &SE) {
+                             const TargetLowering *TLI) {
   // Fast-path: zero is always foldable.
   if (BaseOffs == 0 && !BaseGV) return true;
 
@@ -1186,7 +1185,7 @@ class LSRInstance {
                                     const Type *AccessTy);
 
 public:
-  void InsertInitialFormula(const SCEV *S, Loop *L, LSRUse &LU, size_t LUIdx);
+  void InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx);
   void InsertSupplementalFormula(const SCEV *S, LSRUse &LU, size_t LUIdx);
   void CountRegisters(const Formula &F, size_t LUIdx);
   bool InsertFormula(LSRUse &LU, unsigned LUIdx, const Formula &F);
@@ -1217,23 +1216,18 @@ public:
 
   Value *Expand(const LSRFixup &LF,
                 const Formula &F,
-                BasicBlock::iterator IP, Loop *L, Instruction *IVIncInsertPos,
+                BasicBlock::iterator IP,
                 SCEVExpander &Rewriter,
-                SmallVectorImpl<WeakVH> &DeadInsts,
-                ScalarEvolution &SE, DominatorTree &DT) const;
+                SmallVectorImpl<WeakVH> &DeadInsts) const;
   void RewriteForPHI(PHINode *PN, const LSRFixup &LF,
                      const Formula &F,
-                     Loop *L, Instruction *IVIncInsertPos,
                      SCEVExpander &Rewriter,
                      SmallVectorImpl<WeakVH> &DeadInsts,
-                     ScalarEvolution &SE, DominatorTree &DT,
                      Pass *P) const;
   void Rewrite(const LSRFixup &LF,
                const Formula &F,
-               Loop *L, Instruction *IVIncInsertPos,
                SCEVExpander &Rewriter,
                SmallVectorImpl<WeakVH> &DeadInsts,
-               ScalarEvolution &SE, DominatorTree &DT,
                Pass *P) const;
   void ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
                          Pass *P);
@@ -1655,12 +1649,12 @@ LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
   // Conservatively assume HasBaseReg is true for now.
   if (NewOffset < LU.MinOffset) {
     if (!isAlwaysFoldable(LU.MaxOffset - NewOffset, 0, /*HasBaseReg=*/true,
-                          Kind, AccessTy, TLI, SE))
+                          Kind, AccessTy, TLI))
       return false;
     NewMinOffset = NewOffset;
   } else if (NewOffset > LU.MaxOffset) {
     if (!isAlwaysFoldable(NewOffset - LU.MinOffset, 0, /*HasBaseReg=*/true,
-                          Kind, AccessTy, TLI, SE))
+                          Kind, AccessTy, TLI))
       return false;
     NewMaxOffset = NewOffset;
   }
@@ -1687,8 +1681,7 @@ LSRInstance::getUse(const SCEV *&Expr,
   int64_t Offset = ExtractImmediate(Expr, SE);
 
   // Basic uses can't accept any offset, for example.
-  if (!isAlwaysFoldable(Offset, 0, /*HasBaseReg=*/true,
-                        Kind, AccessTy, TLI, SE)) {
+  if (!isAlwaysFoldable(Offset, 0, /*HasBaseReg=*/true, Kind, AccessTy, TLI)) {
     Expr = Copy;
     Offset = 0;
   }
@@ -1761,7 +1754,8 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
         if (Factor->getValue()->getValue().getMinSignedBits() <= 64)
           Factors.insert(Factor->getValue()->getValue().getSExtValue());
       } else if (const SCEVConstant *Factor =
-                   dyn_cast_or_null<SCEVConstant>(getExactSDiv(OldStride, NewStride,
+                   dyn_cast_or_null<SCEVConstant>(getExactSDiv(OldStride,
+                                                               NewStride,
                                                                SE, true))) {
         if (Factor->getValue()->getValue().getMinSignedBits() <= 64)
           Factors.insert(Factor->getValue()->getValue().getSExtValue());
@@ -1834,7 +1828,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
 
     // If this is the first use of this LSRUse, give it a formula.
     if (LU.Formulae.empty()) {
-      InsertInitialFormula(S, L, LU, LF.LUIdx);
+      InsertInitialFormula(S, LU, LF.LUIdx);
       CountRegisters(LU.Formulae.back(), LF.LUIdx);
     }
   }
@@ -1843,8 +1837,7 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
 }
 
 void
-LSRInstance::InsertInitialFormula(const SCEV *S, Loop *L,
-                                  LSRUse &LU, size_t LUIdx) {
+LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
   Formula F;
   F.InitialMatch(S, L, SE, DT);
   bool Inserted = InsertFormula(LU, LUIdx, F);
@@ -1874,7 +1867,7 @@ void LSRInstance::CountRegisters(const Formula &F, size_t LUIdx) {
 /// InsertFormula - If the given formula has not yet been inserted, add it to
 /// the list, and return true. Return false otherwise.
 bool LSRInstance::InsertFormula(LSRUse &LU, unsigned LUIdx, const Formula &F) {
-  if (!LU.InsertFormula(LUIdx, F))
+  if (!LU.InsertFormula(F))
     return false;
 
   CountRegisters(F, LUIdx);
@@ -2786,10 +2779,8 @@ static BasicBlock *getImmediateDominator(BasicBlock *BB, DominatorTree &DT) {
 Value *LSRInstance::Expand(const LSRFixup &LF,
                            const Formula &F,
                            BasicBlock::iterator IP,
-                           Loop *L, Instruction *IVIncInsertPos,
                            SCEVExpander &Rewriter,
-                           SmallVectorImpl<WeakVH> &DeadInsts,
-                           ScalarEvolution &SE, DominatorTree &DT) const {
+                           SmallVectorImpl<WeakVH> &DeadInsts) const {
   const LSRUse &LU = Uses[LF.LUIdx];
 
   // Then, collect some instructions which we will remain dominated by when
@@ -2979,10 +2970,8 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
 void LSRInstance::RewriteForPHI(PHINode *PN,
                                 const LSRFixup &LF,
                                 const Formula &F,
-                                Loop *L, Instruction *IVIncInsertPos,
                                 SCEVExpander &Rewriter,
                                 SmallVectorImpl<WeakVH> &DeadInsts,
-                                ScalarEvolution &SE, DominatorTree &DT,
                                 Pass *P) const {
   DenseMap<BasicBlock *, Value *> Inserted;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
@@ -3016,8 +3005,7 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
       if (!Pair.second)
         PN->setIncomingValue(i, Pair.first->second);
       else {
-        Value *FullV = Expand(LF, F, BB->getTerminator(), L, IVIncInsertPos,
-                              Rewriter, DeadInsts, SE, DT);
+        Value *FullV = Expand(LF, F, BB->getTerminator(), Rewriter, DeadInsts);
 
         // If this is reuse-by-noop-cast, insert the noop cast.
         const Type *OpTy = LF.OperandValToReplace->getType();
@@ -3039,18 +3027,15 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
 /// the newly expanded value.
 void LSRInstance::Rewrite(const LSRFixup &LF,
                           const Formula &F,
-                          Loop *L, Instruction *IVIncInsertPos,
                           SCEVExpander &Rewriter,
                           SmallVectorImpl<WeakVH> &DeadInsts,
-                          ScalarEvolution &SE, DominatorTree &DT,
                           Pass *P) const {
   // First, find an insertion point that dominates UserInst. For PHI nodes,
   // find the nearest block which dominates all the relevant uses.
   if (PHINode *PN = dyn_cast<PHINode>(LF.UserInst)) {
-    RewriteForPHI(PN, LF, F, L, IVIncInsertPos, Rewriter, DeadInsts, SE, DT, P);
+    RewriteForPHI(PN, LF, F, Rewriter, DeadInsts, P);
   } else {
-    Value *FullV = Expand(LF, F, LF.UserInst, L, IVIncInsertPos,
-                          Rewriter, DeadInsts, SE, DT);
+    Value *FullV = Expand(LF, F, LF.UserInst, Rewriter, DeadInsts);
 
     // If this is reuse-by-noop-cast, insert the noop cast.
     const Type *OpTy = LF.OperandValToReplace->getType();
@@ -3090,8 +3075,7 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   for (size_t i = 0, e = Fixups.size(); i != e; ++i) {
     size_t LUIdx = Fixups[i].LUIdx;
 
-    Rewrite(Fixups[i], *Solution[LUIdx], L, IVIncInsertPos, Rewriter,
-            DeadInsts, SE, DT, P);
+    Rewrite(Fixups[i], *Solution[LUIdx], Rewriter, DeadInsts, P);
 
     Changed = true;
   }
