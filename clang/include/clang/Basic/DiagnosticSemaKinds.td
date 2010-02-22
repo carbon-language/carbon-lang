@@ -1490,6 +1490,8 @@ def err_forward_ref_enum : Error<
   "ISO C++ forbids forward references to 'enum' types">;
 def err_redefinition_of_enumerator : Error<"redefinition of enumerator %0">;
 def err_duplicate_member : Error<"duplicate member %0">;
+def err_misplaced_ivar : Error<"ivar may be placed in a class extension "
+                               "in non-fragile-abi2 mode only">;
 def ext_enum_value_not_int : Extension<
   "ISO C restricts enumerator values to range of 'int' (%0 is too "
   "%select{small|large}1)">;

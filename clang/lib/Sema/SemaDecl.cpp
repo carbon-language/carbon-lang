@@ -5682,6 +5682,19 @@ void Sema::ActOnFields(Scope* S,
         // Only it is in implementation's lexical context.
         ClsFields[I]->setLexicalDeclContext(IMPDecl);
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
+    } else if (ObjCCategoryDecl *CDecl = 
+                dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
+      if (!LangOpts.ObjCNonFragileABI2 || !CDecl->IsClassExtension())
+        Diag(LBrac, diag::err_misplaced_ivar);
+      else {
+        // FIXME. Class extension does not have a LocEnd field.
+        // CDecl->setLocEnd(RBrac);
+        // Add ivar's to class extension's DeclContext.
+        for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
+          ClsFields[i]->setLexicalDeclContext(CDecl);
+          CDecl->addDecl(ClsFields[i]);
+        }
+      }
     }
   }
 
