@@ -72,4 +72,34 @@ define i32 @test2() nounwind {
   ret i32 %1
 }
 
+; rdar://7674946
+@array = internal global [480 x float] zeroinitializer ; <[480 x float]*> [#uses=1]
+
+declare i8* @__memcpy_chk(i8*, i8*, i32, i32) nounwind
+
+declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
+
+declare i8* @__inline_memcpy_chk(i8*, i8*, i32) nounwind inlinehint
+
+define void @test3() nounwind {
+; CHECK: @test3
+entry:
+  br i1 undef, label %bb11, label %bb12
+
+bb11:
+  %0 = getelementptr inbounds float* getelementptr inbounds ([480 x float]* @array, i32 0, i32 128), i32 -127 ; <float*> [#uses=1]
+  %1 = bitcast float* %0 to i8*                   ; <i8*> [#uses=1]
+  %2 = call i32 @llvm.objectsize.i32(i8* %1, i1 false) ; <i32> [#uses=1]
+  %3 = call i8* @__memcpy_chk(i8* undef, i8* undef, i32 512, i32 %2) nounwind ; <i8*> [#uses=0]
+; CHECK: @__memcpy_chk
+  unreachable
+
+bb12:
+  %4 = getelementptr inbounds float* getelementptr inbounds ([480 x float]* @array, i32 0, i32 128), i32 -127 ; <float*> [#uses=1]
+  %5 = bitcast float* %4 to i8*                   ; <i8*> [#uses=1]
+  %6 = call i8* @__inline_memcpy_chk(i8* %5, i8* undef, i32 512) nounwind inlinehint ; <i8*> [#uses=0]
+; CHECK: @__inline_memcpy_chk
+  unreachable
+}
+
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
