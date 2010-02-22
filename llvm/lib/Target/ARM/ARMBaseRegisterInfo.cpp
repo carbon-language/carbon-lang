@@ -1150,7 +1150,6 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
          "This eliminateFrameIndex does not support Thumb1!");
@@ -1161,12 +1160,12 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   int FrameIndex = MI.getOperand(i).getIndex();
-  int Offset = MFI->getObjectOffset(FrameIndex) + MFI->getStackSize() + SPAdj;
   unsigned FrameReg;
 
-  Offset = getFrameIndexReference(MF, FrameIndex, FrameReg);
+  int Offset = getFrameIndexReference(MF, FrameIndex, FrameReg);
   if (FrameReg != ARM::SP)
     SPAdj = 0;
+  Offset += SPAdj;
 
   // Modify MI as necessary to handle as much of 'Offset' as possible
   bool Done = false;
