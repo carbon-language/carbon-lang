@@ -245,8 +245,6 @@ public:
   Stmt* getLabel() { return Label; }
   const Stmt* getLabel() const { return Label; }
 
-  void reverseStmts();
-
   unsigned getBlockID() const { return BlockID; }
 
   void dump(const CFG *cfg, const LangOptions &LO) const;
