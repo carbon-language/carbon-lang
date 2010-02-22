@@ -635,7 +635,10 @@ PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
                     i32imm:$size), NoItinerary,
            "${instid:label} ${cpidx:cpentry}", []>;
 
-let Defs = [SP], Uses = [SP] in {
+// FIXME: Marking these as hasSideEffects is necessary to prevent machine DCE
+// from removing one half of the matched pairs. That breaks PEI, which assumes
+// these will always be in pairs, and asserts if it finds otherwise. Better way?
+let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def ADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p), NoItinerary,
            "@ ADJCALLSTACKUP $amt1",

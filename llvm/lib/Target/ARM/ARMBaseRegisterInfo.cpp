@@ -1085,6 +1085,16 @@ hasReservedCallFrame(MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
+// canSimplifyCallFramePseudos - If there is a reserved call frame, the
+// call frame pseudos can be simplified. Unlike most targets, having a FP
+// is not sufficient here since we still may reference some objects via SP
+// even when FP is available in Thumb2 mode.
+bool ARMBaseRegisterInfo::
+canSimplifyCallFramePseudos(MachineFunction &MF) const {
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  return hasReservedCallFrame(MF) || (AFI->isThumb1OnlyFunction() && hasFP(MF));
+}
+
 static void
 emitSPUpdate(bool isARM,
              MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,

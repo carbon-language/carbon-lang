@@ -120,7 +120,10 @@ def t_addrmode_sp : Operand<i32>,
 //  Miscellaneous Instructions.
 //
 
-let Defs = [SP], Uses = [SP] in {
+// FIXME: Marking these as hasSideEffects is necessary to prevent machine DCE
+// from removing one half of the matched pairs. That breaks PEI, which assumes
+// these will always be in pairs, and asserts if it finds otherwise. Better way?
+let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def tADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2), NoItinerary,
            "@ tADJCALLSTACKUP $amt1",
