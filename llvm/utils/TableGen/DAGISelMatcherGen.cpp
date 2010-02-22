@@ -239,9 +239,24 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
       errs() << "We expect complex pattern uses to have names: " << *N << "\n";
       exit(1);
     }
-    
+
     // Handle complex pattern.
     const ComplexPattern &CP = CGP.getComplexPattern(LeafRec);
+
+    // If we're at the root of the pattern, we have to check that the opcode
+    // is a one of the ones requested to be matched.
+    if (N == Pattern.getSrcPattern()) {
+      const std::vector<Record*> &OpNodes = CP.getRootNodes();
+      if (OpNodes.size() == 1) {
+        StringRef OpName = CGP.getSDNodeInfo(OpNodes[0]).getEnumName();
+        AddMatcherNode(new CheckOpcodeMatcherNode(OpName));
+      } else if (!OpNodes.empty()) {
+        for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
+          // .getOpcodeName(OpNodes[j], CGP)
+        }
+      }
+    }
+    
     AddMatcherNode(new CheckComplexPatMatcherNode(CP));
     
     // If the complex pattern has a chain, then we need to keep track of the
