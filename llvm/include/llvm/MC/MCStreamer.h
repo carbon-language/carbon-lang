@@ -92,12 +92,12 @@ namespace llvm {
     const MCSection *getCurrentSection() const { return CurSection; }
 
     /// SwitchSection - Set the current section where code is being emitted to
-    /// @param Section.  This is required to update CurSection.
+    /// @p Section.  This is required to update CurSection.
     ///
     /// This corresponds to assembler directives like .section, .text, etc.
     virtual void SwitchSection(const MCSection *Section) = 0;
     
-    /// EmitLabel - Emit a label for @param Symbol into the current section.
+    /// EmitLabel - Emit a label for @p Symbol into the current section.
     ///
     /// This corresponds to an assembler statement such as:
     ///   foo:
@@ -107,10 +107,10 @@ namespace llvm {
     /// used in an assignment.
     virtual void EmitLabel(MCSymbol *Symbol) = 0;
 
-    /// EmitAssemblerFlag - Note in the output the specified @param Flag
+    /// EmitAssemblerFlag - Note in the output the specified @p Flag
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) = 0;
 
-    /// EmitAssignment - Emit an assignment of @param Value to @param Symbol.
+    /// EmitAssignment - Emit an assignment of @p Value to @p Symbol.
     ///
     /// This corresponds to an assembler statement such as:
     ///  symbol = value
@@ -123,11 +123,11 @@ namespace llvm {
     /// @param Value - The value for the symbol.
     virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) = 0;
 
-    /// EmitSymbolAttribute - Add the given @param Attribute to @param Symbol.
+    /// EmitSymbolAttribute - Add the given @p Attribute to @p Symbol.
     virtual void EmitSymbolAttribute(MCSymbol *Symbol,
                                      MCSymbolAttr Attribute) = 0;
 
-    /// EmitSymbolDesc - Set the @param DescValue for the @param Symbol.
+    /// EmitSymbolDesc - Set the @p DescValue for the @p Symbol.
     ///
     /// @param Symbol - The symbol to have its n_desc field set.
     /// @param DescValue - The value to set into the n_desc field.
@@ -176,8 +176,8 @@ namespace llvm {
     /// etc.
     virtual void EmitBytes(StringRef Data, unsigned AddrSpace) = 0;
 
-    /// EmitValue - Emit the expression @param Value into the output as a native
-    /// integer of the given @param Size bytes.
+    /// EmitValue - Emit the expression @p Value into the output as a native
+    /// integer of the given @p Size bytes.
     ///
     /// This is used to implement assembler directives such as .word, .quad,
     /// etc.
@@ -192,7 +192,7 @@ namespace llvm {
     /// to pass in a MCExpr for constant integers.
     virtual void EmitIntValue(uint64_t Value, unsigned Size,unsigned AddrSpace);
     
-    /// EmitGPRel32Value - Emit the expression @param Value into the output as a
+    /// EmitGPRel32Value - Emit the expression @p Value into the output as a
     /// gprel32 (32-bit GP relative) value.
     ///
     /// This is used to implement assembler directives such as .gprel32 on
@@ -211,11 +211,11 @@ namespace llvm {
     }
 
     
-    /// EmitValueToAlignment - Emit some number of copies of @param Value until
-    /// the byte alignment @param ByteAlignment is reached.
+    /// EmitValueToAlignment - Emit some number of copies of @p Value until
+    /// the byte alignment @p ByteAlignment is reached.
     ///
     /// If the number of bytes need to emit for the alignment is not a multiple
-    /// of @param ValueSize, then the contents of the emitted fill bytes is
+    /// of @p ValueSize, then the contents of the emitted fill bytes is
     /// undefined.
     ///
     /// This used to implement the .align assembler directive.
@@ -223,8 +223,8 @@ namespace llvm {
     /// @param ByteAlignment - The alignment to reach. This must be a power of
     /// two on some targets.
     /// @param Value - The value to use when filling bytes.
-    /// @param Size - The size of the integer (in bytes) to emit for @param
-    /// Value. This must match a native machine width.
+    /// @param ValueSize - The size of the integer (in bytes) to emit for
+    /// @p Value. This must match a native machine width.
     /// @param MaxBytesToEmit - The maximum numbers of bytes to emit, or 0. If
     /// the alignment cannot be reached in this many bytes, no bytes are
     /// emitted.
@@ -232,8 +232,8 @@ namespace llvm {
                                       unsigned ValueSize = 1,
                                       unsigned MaxBytesToEmit = 0) = 0;
 
-    /// EmitValueToOffset - Emit some number of copies of @param Value until the
-    /// byte offset @param Offset is reached.
+    /// EmitValueToOffset - Emit some number of copies of @p Value until the
+    /// byte offset @p Offset is reached.
     ///
     /// This is used to implement assembler directives such as .org.
     ///
@@ -254,7 +254,7 @@ namespace llvm {
     /// directive.
     virtual void EmitDwarfFileDirective(unsigned FileNo,StringRef Filename) = 0;
 
-    /// EmitInstruction - Emit the given @param Instruction into the current
+    /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.
     virtual void EmitInstruction(const MCInst &Inst) = 0;
 

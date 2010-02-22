@@ -42,8 +42,8 @@ public:
   /// line should be parsed up to and including the end-of-statement token. On
   /// failure, the parser is not required to read to the end of the line.
   //
-  /// \param AP - The current parser object.
   /// \param Name - The instruction name.
+  /// \param NameLoc - The source location of the name.
   /// \param Operands [out] - The list of parsed operands, this returns
   ///        ownership of them to the caller.
   /// \return True on failure.
@@ -59,7 +59,7 @@ public:
   /// the target, the entire line is parsed up to and including the
   /// end-of-statement token and false is returned.
   ///
-  /// \param ID - the identifier token of the directive.
+  /// \param DirectiveID - the identifier token of the directive.
   virtual bool ParseDirective(AsmToken DirectiveID) = 0;
   
   /// MatchInstruction - Recognize a series of operands of a parsed instruction

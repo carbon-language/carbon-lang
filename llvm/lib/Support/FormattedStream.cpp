@@ -56,8 +56,6 @@ void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
 /// PadToColumn - Align the output to some column number.
 ///
 /// \param NewCol - The column to move to.
-/// \param MinPad - The minimum space to give after the most recent
-/// I/O, even if the current column + minpad > newcol.
 ///
 formatted_raw_ostream &formatted_raw_ostream::PadToColumn(unsigned NewCol) { 
   // Figure out what's in the buffer and add it to the column count.

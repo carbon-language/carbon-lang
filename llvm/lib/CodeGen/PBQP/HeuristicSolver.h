@@ -229,7 +229,7 @@ namespace PBQP {
     }
 
     /// \brief Apply rule R1.
-    /// @param nItr Node iterator for node to apply R1 to.
+    /// @param xnItr Node iterator for node to apply R1 to.
     ///
     /// Node will be automatically pushed to the solver stack.
     void applyR1(Graph::NodeItr xnItr) {
@@ -277,7 +277,7 @@ namespace PBQP {
     }
 
     /// \brief Apply rule R2.
-    /// @param nItr Node iterator for node to apply R2 to.
+    /// @param xnItr Node iterator for node to apply R2 to.
     ///
     /// Node will be automatically pushed to the solver stack.
     void applyR2(Graph::NodeItr xnItr) {

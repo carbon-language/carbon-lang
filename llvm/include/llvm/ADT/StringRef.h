@@ -355,7 +355,7 @@ namespace llvm {
     /// \param A - Where to put the substrings.
     /// \param Separator - The string to split on.
     /// \param MaxSplit - The maximum number of times the string is split.
-    /// \parm KeepEmpty - True if empty substring should be added.
+    /// \param KeepEmpty - True if empty substring should be added.
     void split(SmallVectorImpl<StringRef> &A,
                StringRef Separator, int MaxSplit = -1,
                bool KeepEmpty = true) const;

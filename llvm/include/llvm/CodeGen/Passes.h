@@ -187,7 +187,7 @@ namespace llvm {
   /// createMachineVerifierPass - This pass verifies cenerated machine code
   /// instructions for correctness.
   ///
-  /// @param allowPhysDoubleDefs ignore double definitions of
+  /// @param allowDoubleDefs ignore double definitions of
   ///        registers. Useful before LiveVariables has run.
   FunctionPass *createMachineVerifierPass(bool allowDoubleDefs);
 

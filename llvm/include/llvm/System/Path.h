@@ -203,7 +203,7 @@ namespace sys {
       }
 
       /// Makes a copy of \p that to \p this.
-      /// @param \p that A StringRef denoting the path
+      /// @param that A StringRef denoting the path
       /// @returns \p this
       /// @brief Assignment Operator
       Path &operator=(StringRef that);

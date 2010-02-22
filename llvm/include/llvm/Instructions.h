@@ -1805,7 +1805,7 @@ public:
     return i/2;
   }
 
-  /// getIncomingBlock - Return incoming basic block #i.
+  /// getIncomingBlock - Return incoming basic block number @p i.
   ///
   BasicBlock *getIncomingBlock(unsigned i) const {
     return cast<BasicBlock>(getOperand(i*2+1));
