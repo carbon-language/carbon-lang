@@ -19,6 +19,8 @@
 #include "PIC16TargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Intrinsics.h"
 using namespace llvm;
 

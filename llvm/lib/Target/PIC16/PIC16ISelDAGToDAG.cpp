@@ -15,9 +15,8 @@
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "PIC16ISelDAGToDAG.h"
 #include "llvm/Support/Debug.h"
-
+#include "PIC16ISelDAGToDAG.h"
 using namespace llvm;
 
 /// createPIC16ISelDag - This pass converts a legalized DAG into a
