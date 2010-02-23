@@ -137,7 +137,7 @@ static unsigned EmitVBRValue(unsigned Val, raw_ostream &OS) {
   
   unsigned InVal = Val;
   unsigned NumBytes = 0;
-  while (Val > 128) {
+  while (Val >= 128) {
     OS << (Val&127) << "|128,";
     Val >>= 7;
     ++NumBytes;
