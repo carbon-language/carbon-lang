@@ -900,6 +900,14 @@ void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
 ///
 void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
+  // Find ivars declared in class extension.
+  if (const ObjCCategoryDecl *CDecl = OI->getClassExtension()) {
+    for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
+         E = CDecl->ivar_end(); I != E; ++I) {
+      Ivars.push_back(*I);
+    }
+  }
+  
   for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
        E = OI->prop_end(); I != E; ++I) {
     if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())

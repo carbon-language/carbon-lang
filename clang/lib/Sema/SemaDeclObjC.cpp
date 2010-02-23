@@ -599,13 +599,9 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             SourceLocation EndProtoLoc) {
   ObjCCategoryDecl *CDecl = 0;
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc);
-  if (!CategoryName) {
+  if (!CategoryName)
     // Class extensions require a special treatment. Use an existing one.
-    for (CDecl = IDecl->getCategoryList(); CDecl;
-         CDecl = CDecl->getNextClassCategory())
-      if (CDecl->IsClassExtension()) 
-        break;  
-  }
+    CDecl = IDecl->getClassExtension();
   if (!CDecl) {
     CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, ClassLoc,
                                      CategoryLoc, CategoryName);
