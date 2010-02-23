@@ -55,7 +55,6 @@ void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
 bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &Fn.getRegInfo();
 
-  PHIDefs.clear();
   bool Changed = false;
 
   // Split critical edges to help the coalescer
@@ -213,10 +212,6 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     }
     TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
   }
-
-  // Record PHI def.
-  assert(!hasPHIDef(DestReg) && "Vreg has multiple phi-defs?");
-  PHIDefs[DestReg] = &MBB;
 
   // Update live variable information if there is any.
   LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();

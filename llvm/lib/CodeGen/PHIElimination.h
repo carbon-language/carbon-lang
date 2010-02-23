@@ -22,22 +22,14 @@ namespace llvm {
   /// Lower PHI instructions to copies.  
   class PHIElimination : public MachineFunctionPass {
     MachineRegisterInfo  *MRI; // Machine register information
-    typedef DenseMap<unsigned, MachineBasicBlock*> PHIDefMap;
 
   public:
-
     static char ID; // Pass identification, replacement for typeid
     PHIElimination() : MachineFunctionPass(&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-
-    /// Return true if the given vreg was defined by a PHI intsr prior to
-    /// lowering.
-    bool hasPHIDef(unsigned vreg) const {
-      return PHIDefs.count(vreg);
-    }
 
   private:
     /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions
@@ -106,7 +98,6 @@ namespace llvm {
     typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
 
     VRegPHIUse VRegPHIUseCount;
-    PHIDefMap PHIDefs;
 
     // Defs of PHI sources which are implicit_def.
     SmallPtrSet<MachineInstr*, 4> ImpDefs;
