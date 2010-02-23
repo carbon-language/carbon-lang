@@ -6,12 +6,12 @@
 include "llvm/CompilerDriver/Common.td"
 
 // CHECK: Hook(const char* Arg0, const char* Arg1, const char* Arg2);
+// CHECK: "/path"
 // CHECK: std::getenv("VARIABLE")
 // CHECK: "/2path"
-// CHECK: "/path"
 
 def dummy_tool : Tool<[
-(cmd_line "$CALL(Hook, 'Arg1',   'Arg2', 'Arg3 Arg3Cont')/path arg1 $ENV(VARIABLE)/2path arg2 $INFILE"),
+(command "$CALL(Hook, 'Arg1',   'Arg2', 'Arg3 Arg3Cont')/path arg1 $ENV(VARIABLE)/2path arg2"),
 (in_language "dummy"),
 (out_language "dummy")
 ]>;

@@ -52,7 +52,7 @@ def dummy : Tool<
 [(in_language "dummy"),
  (out_language "dummy"),
  (output_suffix "d"),
- (cmd_line "dummy $INFILE -o $OUTFILE"),
+ (command "dummy"),
  (actions (case (switch_on "foo"), (error),
                 (switch_on "bar"), (error),
                 (switch_on "baz"), (error),

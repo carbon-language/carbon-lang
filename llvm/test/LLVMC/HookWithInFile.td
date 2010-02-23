@@ -7,7 +7,7 @@ include "llvm/CompilerDriver/Common.td"
 
 def dummy_tool : Tool<[
 // CHECK: Hook(inFile.c_str())
-(cmd_line "$CALL(Hook, '$INFILE')/path $INFILE"),
+(command "$CALL(Hook, '$INFILE')/path"),
 (in_language "dummy"),
 (out_language "dummy")
 ]>;

@@ -13,14 +13,14 @@ def OptList : OptionList<[
 ]>;
 
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd $INFILE"),
+(command "dummy_cmd"),
 (in_language "dummy_lang"),
 (out_language "dummy_lang"),
 (actions (case
-         // CHECK: push_back("-arg1")
-         // CHECK: push_back("-arg2")
+         // CHECK: , "-arg1"));
+         // CHECK: , "-arg2"));
          (switch_on "dummy1"), (append_cmd "-arg1 -arg2"),
-         // CHECK: push_back("-arg3")
+         // CHECK: , "-arg3"));
          // CHECK: hooks::MyHook()
          (switch_on "dummy2"), (append_cmd "-arg3 $CALL(MyHook)")))
 ]>;

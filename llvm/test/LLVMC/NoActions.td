@@ -7,7 +7,7 @@ include "llvm/CompilerDriver/Common.td"
 
 // CHECK: class dummy_tool : public Tool {
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd $INFILE"),
+(command "dummy_cmd"),
 (in_language "dummy"),
 (out_language "dummy")
 ]>;
