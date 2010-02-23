@@ -5358,11 +5358,6 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       RewriteBlockPointerDecl(TD);
     else if (TD->getUnderlyingType()->isFunctionPointerType())
       CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
-    else if (TD->getUnderlyingType()->isRecordType()) {
-      RecordDecl *RD = TD->getUnderlyingType()->getAs<RecordType>()->getDecl();
-      if (RD->isDefinition())
-        RewriteRecordBody(RD);
-    }
     return;
   }
   if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
