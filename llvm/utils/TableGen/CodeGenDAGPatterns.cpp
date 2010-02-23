@@ -568,33 +568,36 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   return true; // unreachable
 }
 
+static std::string GetTypeName(unsigned char TypeID) {
+  switch (TypeID) {
+  case MVT::Other:      return "Other";
+  case MVT::iAny:       return "iAny";
+  case MVT::fAny:       return "fAny";
+  case MVT::vAny:       return "vAny";
+  case EEVT::isUnknown: return "isUnknown";
+  case MVT::iPTR:       return "iPTR";
+  case MVT::iPTRAny:    return "iPTRAny";
+  default:
+    std::string VTName = llvm::getName((MVT::SimpleValueType)TypeID);
+    // Strip off EVT:: prefix if present.
+    if (VTName.substr(0,5) == "MVT::")
+      VTName = VTName.substr(5);
+    return VTName;
+  }
+}
+
 
 void TreePatternNode::print(raw_ostream &OS) const {
   if (isLeaf()) {
     OS << *getLeafValue();
   } else {
-    OS << "(" << getOperator()->getName();
+    OS << '(' << getOperator()->getName();
   }
   
   // FIXME: At some point we should handle printing all the value types for 
   // nodes that are multiply typed.
-  switch (getExtTypeNum(0)) {
-  case MVT::Other: OS << ":Other"; break;
-  case MVT::iAny: OS << ":iAny"; break;
-  case MVT::fAny : OS << ":fAny"; break;
-  case MVT::vAny: OS << ":vAny"; break;
-  case EEVT::isUnknown: ; /*OS << ":?";*/ break;
-  case MVT::iPTR:  OS << ":iPTR"; break;
-  case MVT::iPTRAny:  OS << ":iPTRAny"; break;
-  default: {
-    std::string VTName = llvm::getName(getTypeNum(0));
-    // Strip off EVT:: prefix if present.
-    if (VTName.substr(0,5) == "MVT::")
-      VTName = VTName.substr(5);
-    OS << ":" << VTName;
-    break;
-  }
-  }
+  if (getExtTypeNum(0) != EEVT::isUnknown)
+    OS << ':' << GetTypeName(getExtTypeNum(0));
 
   if (!isLeaf()) {
     if (getNumChildren() != 0) {
@@ -2125,10 +2128,29 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
   // Scan all of the named values in the destination pattern, rejecting them if
   // they don't exist in the input pattern.
   for (std::map<std::string, NameRecord>::iterator
-         I = DstNames.begin(), E = DstNames.end(); I != E; ++I)
+       I = DstNames.begin(), E = DstNames.end(); I != E; ++I) {
     if (SrcNames[I->first].first == 0)
       Pattern->error("Pattern has input without matching name in output: $" +
                      I->first);
+    
+#if 0
+    const std::vector<unsigned char> &SrcTypeVec =
+      SrcNames[I->first].first->getExtTypes();
+    const std::vector<unsigned char> &DstTypeVec =
+      I->second.first->getExtTypes();
+    if (SrcTypeVec == DstTypeVec) continue;
+    
+    std::string SrcType, DstType;
+    for (unsigned i = 0, e = SrcTypeVec.size(); i != e; ++i)
+      SrcType += ":" + GetTypeName(SrcTypeVec[i]);
+    for (unsigned i = 0, e = DstTypeVec.size(); i != e; ++i)
+      DstType += ":" + GetTypeName(DstTypeVec[i]);
+    
+    Pattern->error("Variable $" + I->first +
+                   " has different types in source (" + SrcType +
+                   ") and dest (" + DstType + ") pattern!");
+#endif
+  }
   
   // Scan all of the named values in the source pattern, rejecting them if the
   // name isn't used in the dest, and isn't used to tie two values together.
