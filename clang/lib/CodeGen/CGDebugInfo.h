@@ -84,6 +84,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const RecordType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const EnumType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const VectorType *Ty, llvm::DICompileUnit Unit);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const LValueReferenceType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const MemberPointerType *Ty, llvm::DICompileUnit U);

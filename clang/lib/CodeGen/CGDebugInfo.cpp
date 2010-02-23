@@ -1034,6 +1034,28 @@ llvm::DIType CGDebugInfo::CreateType(const TagType *Ty,
   return llvm::DIType();
 }
 
+llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty,
+				     llvm::DICompileUnit Unit) {
+  llvm::DIType ElementTy = getOrCreateType(Ty->getElementType(), Unit);
+  uint64_t NumElems = Ty->getNumElements();
+  if (NumElems > 0)
+    --NumElems;
+  llvm::SmallVector<llvm::DIDescriptor, 8> Subscripts;
+  Subscripts.push_back(DebugFactory.GetOrCreateSubrange(0, NumElems));
+
+  llvm::DIArray SubscriptArray =
+    DebugFactory.GetOrCreateArray(Subscripts.data(), Subscripts.size());
+
+  uint64_t Size = CGM.getContext().getTypeSize(Ty);
+  uint64_t Align = CGM.getContext().getTypeAlign(Ty);
+
+  return
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_vector_type,
+                                     Unit, "", llvm::DICompileUnit(),
+                                     0, Size, Align, 0, 0,
+				     ElementTy,  SubscriptArray);
+}
+
 llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
                                      llvm::DICompileUnit Unit) {
   uint64_t Size;
@@ -1214,9 +1236,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
   // FIXME: Handle these.
   case Type::ExtVector:
-  case Type::Vector:
     return llvm::DIType();
-      
+
+  case Type::Vector:
+    return CreateType(cast<VectorType>(Ty), Unit);
   case Type::ObjCObjectPointer:
     return CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
   case Type::ObjCInterface:
