@@ -563,6 +563,12 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) {
 
       Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
     }
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(VD)) {
+      // In the case of a field in a packed struct, we want the minimum
+      // of the alignment of the field and the alignment of the struct.
+      Align = std::min(Align,
+        getPreferredTypeAlign(FD->getParent()->getTypeForDecl()));
+    }
   }
 
   return CharUnits::fromQuantity(Align / Target.getCharWidth());
