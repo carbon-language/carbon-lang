@@ -105,6 +105,8 @@ def OptList : OptionList<[
      (help "Remove unreachable blocks of code")),
  (switch_option "single_module", (hidden),
      (help "Build the library so it contains only one module")),
+ (parameter_option "install_name", (hidden),
+     (help "File name the library will be installed in")),
  (parameter_option "compatibility_version", (hidden),
      (help "Compatibility version number")),
  (parameter_option "current_version", (hidden),
@@ -258,8 +260,8 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
           (switch_on "single_module"), (forward "single_module"),
           (not_empty "compatibility_version"),
                      (forward "compatibility_version"),
-          (not_empty "current_version"),
-                     (forward "current_version")))
+          (not_empty "current_version"), (forward "current_version"),
+          (not_empty "install_name"), (forward "install_name")))
 ]>;
 
 // Default linker
