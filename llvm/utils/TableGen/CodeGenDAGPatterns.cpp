@@ -956,19 +956,25 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     }
     return MadeChange;
-  } else if (getOperator()->getName() == "implicit" ||
-             getOperator()->getName() == "parallel") {
+  }
+  
+  if (getOperator()->getName() == "implicit" ||
+      getOperator()->getName() == "parallel") {
     bool MadeChange = false;
     for (unsigned i = 0; i < getNumChildren(); ++i)
       MadeChange = getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;
-  } else if (getOperator()->getName() == "COPY_TO_REGCLASS") {
+  }
+  
+  if (getOperator()->getName() == "COPY_TO_REGCLASS") {
     bool MadeChange = false;
     MadeChange |= getChild(0)->ApplyTypeConstraints(TP, NotRegisters);
     MadeChange |= getChild(1)->ApplyTypeConstraints(TP, NotRegisters);
     return MadeChange;
-  } else if (const CodeGenIntrinsic *Int = getIntrinsicInfo(CDP)) {
+  }
+  
+  if (const CodeGenIntrinsic *Int = getIntrinsicInfo(CDP)) {
     bool MadeChange = false;
 
     // Apply the result type to the node.
@@ -992,7 +998,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
     return MadeChange;
-  } else if (getOperator()->isSubClassOf("SDNode")) {
+  }
+  
+  if (getOperator()->isSubClassOf("SDNode")) {
     const SDNodeInfo &NI = CDP.getSDNodeInfo(getOperator());
     
     bool MadeChange = NI.ApplyTypeConstraints(this, TP);
@@ -1004,7 +1012,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     
     return MadeChange;  
-  } else if (getOperator()->isSubClassOf("Instruction")) {
+  }
+  
+  if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst = CDP.getInstruction(getOperator());
     bool MadeChange = false;
     unsigned NumResults = Inst.getNumResults();
@@ -1080,24 +1090,24 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
                "' was provided too many operands!");
     
     return MadeChange;
-  } else {
-    assert(getOperator()->isSubClassOf("SDNodeXForm") && "Unknown node type!");
-    
-    // Node transforms always take one operand.
-    if (getNumChildren() != 1)
-      TP.error("Node transform '" + getOperator()->getName() +
-               "' requires one operand!");
-
-    // If either the output or input of the xform does not have exact
-    // type info. We assume they must be the same. Otherwise, it is perfectly
-    // legal to transform from one type to a completely different type.
-    if (!hasTypeSet() || !getChild(0)->hasTypeSet()) {
-      bool MadeChange = UpdateNodeType(getChild(0)->getExtTypes(), TP);
-      MadeChange |= getChild(0)->UpdateNodeType(getExtTypes(), TP);
-      return MadeChange;
-    }
-    return false;
   }
+  
+  assert(getOperator()->isSubClassOf("SDNodeXForm") && "Unknown node type!");
+  
+  // Node transforms always take one operand.
+  if (getNumChildren() != 1)
+    TP.error("Node transform '" + getOperator()->getName() +
+             "' requires one operand!");
+
+  // If either the output or input of the xform does not have exact
+  // type info. We assume they must be the same. Otherwise, it is perfectly
+  // legal to transform from one type to a completely different type.
+  if (!hasTypeSet() || !getChild(0)->hasTypeSet()) {
+    bool MadeChange = UpdateNodeType(getChild(0)->getExtTypes(), TP);
+    MadeChange |= getChild(0)->UpdateNodeType(getExtTypes(), TP);
+    return MadeChange;
+  }
+  return false;
 }
 
 /// OnlyOnRHSOfCommutative - Return true if this value is only allowed on the
