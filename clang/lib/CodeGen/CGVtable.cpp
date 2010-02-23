@@ -967,7 +967,7 @@ private:
                                VisitedVirtualBasesSetTy &VBases);
 
   /// AddVCallOffsets - Add vcall offsets for the given base subobject.
-  void AddVCallOffsets(BaseSubobject Base);
+  void AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset);
 
   /// AddVBaseOffsets - Add vbase offsets for the given class.
   void AddVBaseOffsets(const CXXRecordDecl *Base, int64_t OffsetToTop,
@@ -1108,10 +1108,13 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
 
   // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual && OffsetToTop != 0)
-    AddVCallOffsets(Base);
+    AddVCallOffsets(Base, Base.getBaseOffset());
 }
 
-void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
+void VtableBuilder::AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset) {
+  printf("adding call offsets for (%s, %llu) vbase offset %llu\n",
+         Base.getBase()->getQualifiedNameAsString().c_str(),
+         Base.getBaseOffset(), VBaseOffset);
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
@@ -1122,7 +1125,8 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
     uint64_t PrimaryBaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(PrimaryBase);
     
-    AddVCallOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset));
+    AddVCallOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
+                    VBaseOffset);
   }
 
   // Add the vcall offsets.
@@ -1147,28 +1151,15 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
     // signature.
     if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset))
       continue;
-    
-    // Get the 'this' pointer adjustment offset.
-    BaseOffset ThisAdjustmentOffset =
-      Overriders.getThisAdjustmentOffset(Base, MD);
-    
-    int64_t Offset = 0;
-    if (const CXXRecordDecl *VBaseDecl = ThisAdjustmentOffset.VirtualBase) {
-      const ASTRecordLayout &MostDerivedClassLayout =
-        Context.getASTRecordLayout(MostDerivedClass);
-      
-      FinalOverriders::OverriderInfo Overrider = 
-        Overriders.getOverrider(Base, MD);
 
-      Offset = 
-        -(int64_t)MostDerivedClassLayout.getVBaseClassOffset(VBaseDecl);
-      
-      // The base offset should be relative to the final overrider.
-      Offset += Overrider.BaseOffset;
-
-      // FIXME: We should not use / 8 here.
-      Offset = Offset / 8;
-    }
+    // Get the final overrider.
+    FinalOverriders::OverriderInfo Overrider = 
+      Overriders.getOverrider(Base, MD);
+    
+    /// The vcall offset is the offset from the virtual base to the object where
+    /// the function was overridden.
+    // FIXME: We should not use / 8 here.
+    int64_t Offset = (int64_t)(Overrider.BaseOffset - VBaseOffset) / 8;
 
     VCallAndVBaseOffsets.push_back(VtableComponent::MakeVCallOffset(Offset));
   }
@@ -1187,7 +1178,7 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
     uint64_t BaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(BaseDecl);
     
-    AddVCallOffsets(BaseSubobject(BaseDecl, BaseOffset));
+    AddVCallOffsets(BaseSubobject(BaseDecl, BaseOffset), VBaseOffset);
   }
 }
 
