@@ -1648,13 +1648,13 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
 
   if (const ClassTemplateSpecializationDecl *SD =
         dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
+    if (!isStdNamespace(SD->getDeclContext()))
+      return false;
+
     //    <substitution> ::= Ss # ::std::basic_string<char,
     //                            ::std::char_traits<char>,
     //                            ::std::allocator<char> >
     if (SD->getIdentifier()->isStr("basic_string")) {
-      if (!isStdNamespace(SD->getDeclContext()))
-        return false;
-
       const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
 
       if (TemplateArgs.size() != 3)
