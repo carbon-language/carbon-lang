@@ -92,7 +92,7 @@ def immSExt16int  : PatLeaf<(imm), [{ //(int)imm fits in a 16 bit sign extended 
          ((int64_t)N->getZExtValue() << 32) >> 32;
 }], SExt16>;
 
-def zappat : PatFrag<(ops node:$LHS), (and node:$LHS, imm:$L), [{
+def zappat : PatFrag<(ops node:$LHS), (and node:$LHS, imm), [{
   ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
   if (!RHS) return 0;
   uint64_t build = get_zapImm(N->getOperand(0), (uint64_t)RHS->getZExtValue());
@@ -602,9 +602,9 @@ def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA", s_rpcc>; //Read process cycle count
 def MB  : MfcPForm<0x18, 0x4000, "mb",  s_imisc>; //memory barrier
 def WMB : MfcPForm<0x18, 0x4400, "wmb", s_imisc>; //write memory barrier
 
-def : Pat<(membarrier (i64 imm:$ll), (i64 imm:$ls), (i64 imm:$sl), (i64 1), (i64 imm:$dev)),
+def : Pat<(membarrier (i64 imm), (i64 imm), (i64 imm), (i64 1), (i64 imm)),
           (WMB)>;
-def : Pat<(membarrier (i64 imm:$ll), (i64 imm:$ls), (i64 imm:$sl), (i64 imm:$ss), (i64 imm:$dev)),
+def : Pat<(membarrier (i64 imm), (i64 imm), (i64 imm), (i64 imm), (i64 imm)),
           (MB)>;
 
 //Basic Floating point ops

@@ -1480,11 +1480,11 @@ def : Pat<(extloadf32 xaddr:$src),
           (FMRSD (LFSX xaddr:$src))>;
 
 // Memory barriers
-def : Pat<(membarrier (i32 imm:$ll),
-                      (i32 imm:$ls),
-                      (i32 imm:$sl),
-                      (i32 imm:$ss),
-                      (i32 imm:$device)),
+def : Pat<(membarrier (i32 imm /*ll*/),
+                      (i32 imm /*ls*/),
+                      (i32 imm /*sl*/),
+                      (i32 imm /*ss*/),
+                      (i32 imm /*device*/)),
            (SYNC)>;
 
 include "PPCInstrAltivec.td"
