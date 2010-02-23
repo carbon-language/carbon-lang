@@ -191,6 +191,29 @@ def  VLD1q32  : VLD1Q<0b1000, "vld1", "32", v4i32, int_arm_neon_vld1>;
 def  VLD1qf   : VLD1Q<0b1000, "vld1", "32", v4f32, int_arm_neon_vld1>;
 def  VLD1q64  : VLD1Q<0b1100, "vld1", "64", v2i64, int_arm_neon_vld1>;
 
+// These (dreg triple/quadruple) are for disassembly only.
+class VLD1D3<bits<4> op7_4, string OpcodeStr, string Dt>
+  : NLdSt<0, 0b10, 0b0110, op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+          (ins addrmode6:$addr), IIC_VLD1, OpcodeStr, Dt,
+          "\\{$dst1, $dst2, $dst3\\}, $addr", "",
+          [/* For disassembly only; pattern left blank */]>;
+class VLD1D4<bits<4> op7_4, string OpcodeStr, string Dt>
+  : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$addr), IIC_VLD1, OpcodeStr, Dt,
+          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "",
+          [/* For disassembly only; pattern left blank */]>;
+
+def  VLD1d8T  : VLD1D3<0b0000, "vld1", "8">;
+def  VLD1d16T : VLD1D3<0b0100, "vld1", "16">;
+def  VLD1d32T : VLD1D3<0b1000, "vld1", "32">;
+//def  VLD1d64T : VLD1D3<0b1100, "vld1", "64">;
+
+def  VLD1d8Q  : VLD1D4<0b0000, "vld1", "8">;
+def  VLD1d16Q : VLD1D4<0b0100, "vld1", "16">;
+def  VLD1d32Q : VLD1D4<0b1000, "vld1", "32">;
+//def  VLD1d64Q : VLD1D4<0b1100, "vld1", "64">;
+
+
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD2     : Vector Load (multiple 2-element structures)
@@ -215,6 +238,16 @@ def  VLD2d64  : NLdSt<0,0b10,0b1010,0b1100, (outs DPR:$dst1, DPR:$dst2),
 def  VLD2q8   : VLD2Q<0b0000, "vld2", "8">;
 def  VLD2q16  : VLD2Q<0b0100, "vld2", "16">;
 def  VLD2q32  : VLD2Q<0b1000, "vld2", "32">;
+
+// These (double-spaced dreg pair) are for disassembly only.
+class VLD2Ddbl<bits<4> op7_4, string OpcodeStr, string Dt>
+  : NLdSt<0,0b10,0b1001,op7_4, (outs DPR:$dst1, DPR:$dst2),
+          (ins addrmode6:$addr), IIC_VLD2,
+          OpcodeStr, Dt, "\\{$dst1, $dst2\\}, $addr", "", []>;
+
+def  VLD2d8D  : VLD2Ddbl<0b0000, "vld2", "8">;
+def  VLD2d16D : VLD2Ddbl<0b0100, "vld2", "16">;
+def  VLD2d32D : VLD2Ddbl<0b1000, "vld2", "32">;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<bits<4> op7_4, string OpcodeStr, string Dt>
