@@ -539,9 +539,18 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
              !CFPf->getValueAPF().isZero()))
         return ReplaceInstUsesWith(SI, FalseVal);
       }
-      // Transform (X != Y) ? X : Y  -> X
-      if (FCI->getPredicate() == FCmpInst::FCMP_ONE)
+      // Transform (X une Y) ? X : Y  -> X
+      if (FCI->getPredicate() == FCmpInst::FCMP_UNE) {
+        // This is not safe in general for floating point:  
+        // consider X== -0, Y== +0.
+        // It becomes safe if either operand is a nonzero constant.
+        ConstantFP *CFPt, *CFPf;
+        if (((CFPt = dyn_cast<ConstantFP>(TrueVal)) &&
+              !CFPt->getValueAPF().isZero()) ||
+            ((CFPf = dyn_cast<ConstantFP>(FalseVal)) &&
+             !CFPf->getValueAPF().isZero()))
         return ReplaceInstUsesWith(SI, TrueVal);
+      }
       // NOTE: if we wanted to, this is where to detect MIN/MAX
 
     } else if (FCI->getOperand(0) == FalseVal && FCI->getOperand(1) == TrueVal){
@@ -557,9 +566,18 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
              !CFPf->getValueAPF().isZero()))
           return ReplaceInstUsesWith(SI, FalseVal);
       }
-      // Transform (X != Y) ? Y : X  -> Y
-      if (FCI->getPredicate() == FCmpInst::FCMP_ONE)
-        return ReplaceInstUsesWith(SI, TrueVal);
+      // Transform (X une Y) ? Y : X  -> Y
+      if (FCI->getPredicate() == FCmpInst::FCMP_UNE) {
+        // This is not safe in general for floating point:  
+        // consider X== -0, Y== +0.
+        // It becomes safe if either operand is a nonzero constant.
+        ConstantFP *CFPt, *CFPf;
+        if (((CFPt = dyn_cast<ConstantFP>(TrueVal)) &&
+              !CFPt->getValueAPF().isZero()) ||
+            ((CFPf = dyn_cast<ConstantFP>(FalseVal)) &&
+             !CFPf->getValueAPF().isZero()))
+          return ReplaceInstUsesWith(SI, TrueVal);
+      }
       // NOTE: if we wanted to, this is where to detect MIN/MAX
     }
     // NOTE: if we wanted to, this is where to detect ABS
