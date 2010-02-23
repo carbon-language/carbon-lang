@@ -14,28 +14,42 @@
 #ifndef LLVM_CLANG_REACHABLECODE_H
 #define LLVM_CLANG_REACHABLECODE_H
 
+#include "clang/Basic/SourceLocation.h"
+
 //===----------------------------------------------------------------------===//
 // Forward declarations.
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-class BitVector;
-} // end llvm namespace
+  class BitVector;
+}
 
 namespace clang {
-class CFGBlock;
-} // end clang namespace
+  class AnalysisContext;
+  class CFGBlock;
+}
 
 //===----------------------------------------------------------------------===//
 // API.
 //===----------------------------------------------------------------------===//
 
 namespace clang {
+namespace reachable_code {
+
+class Callback {
+public:
+  virtual ~Callback() {}
+  virtual void HandleUnreachable(SourceLocation L, SourceRange R1,
+                                 SourceRange R2) = 0;
+};
 
 /// ScanReachableFromBlock - Mark all blocks reachable from Start.
-/// Returns the total number of blocks that were marked reachable.
-unsigned ScanReachableFromBlock(const CFGBlock &B, llvm::BitVector &Reachable);
+/// Returns the total number of blocks that were marked reachable.  
+unsigned ScanReachableFromBlock(const CFGBlock &Start,
+                                llvm::BitVector &Reachable);
 
-} // end clang namespace
+void FindUnreachableCode(AnalysisContext &AC, Callback &CB);
+
+}} // end namespace clang::reachable_code
 
 #endif
