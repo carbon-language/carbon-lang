@@ -170,7 +170,6 @@ site.exp: FORCE
 	@echo 'set link "' $(CXX) $(CPP.Flags) $(CXX.Flags) $(TargetCommonOpts) $(CompileCommonOpts) $(LD.Flags) '"' >>site.tmp
 	@echo 'set llvmgcc "$(LLVMGCC) $(TargetCommonOpts) $(EXTRA_OPTIONS)"' >> site.tmp
 	@echo 'set llvmgxx "$(LLVMGCC) $(TargetCommonOpts) $(EXTRA_OPTIONS)"' >> site.tmp
-	@echo 'set llvmgccmajvers "$(LLVMGCC_MAJVERS)"' >> site.tmp
 	@echo 'set bugpoint_topts $(BUGPOINT_TOPTS)' >> site.tmp
 	@echo 'set shlibext "$(SHLIBEXT)"' >> site.tmp
 	@echo 'set ocamlopt "$(OCAMLOPT) -cc \"$(CXX_FOR_OCAMLOPT)\" -I $(LibDir)/ocaml"' >> site.tmp

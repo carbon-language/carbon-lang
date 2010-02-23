@@ -47,7 +47,7 @@ proc execOneLine { test PRS outcome lineno line } {
 # cases.
 proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet
-  global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers ocamlopt
+  global llvmgcc llvmgxx llvmgcc_version ocamlopt
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
   global llvmdsymutil valgrind grep gas bugpoint_topts
   set path [file join $srcdir $subdir]

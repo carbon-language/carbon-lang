@@ -19,7 +19,6 @@ set compile_cxx " /usr/bin/g++ -arch x86_64 -I/Users/ddunbar/llvm.obj.64/include
 set link " /usr/bin/g++ -arch x86_64 -I/Users/ddunbar/llvm.obj.64/include -I/Users/ddunbar/llvm.obj.64/test -I/Volumes/Data/ddunbar/llvm.obj.64/include -I/Volumes/Data/ddunbar/llvm/include -I/Volumes/Data/ddunbar/llvm/test -D_DEBUG -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -g -fno-exceptions -fno-common -Woverloaded-virtual -m64 -pedantic -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings -g -L/Users/ddunbar/llvm.obj.64/Debug/lib -L/Volumes/Data/ddunbar/llvm.obj.64/Debug/lib "
 set llvmgcc "/Users/ddunbar/llvm-gcc/install/bin/llvm-gcc -m64 "
 set llvmgxx "/Users/ddunbar/llvm-gcc/install/bin/llvm-gcc -m64 "
-set llvmgccmajvers "4"
 set bugpoint_topts "-gcc-tool-args -m64"
 set shlibext ".dylib"
 set ocamlopt "/sw/bin/ocamlopt -cc \"g++ -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT\" -I /Users/ddunbar/llvm.obj.64/Debug/lib/ocaml"
