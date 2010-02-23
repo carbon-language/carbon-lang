@@ -767,21 +767,22 @@ SPUDAGToDAGISel::Select(SDNode *N) {
     }
 
     SDNode *shufMaskLoad = emitBuildVector(shufMask.getNode());
-    SDNode *PromoteScalar = CurDAG->getNode(SPUISD::PREFSLOT2VEC, dl,
-                                            Op0VecVT, Op0).getNode();
-
+    
+    HandleSDNode PromoteScalar(CurDAG->getNode(SPUISD::PREFSLOT2VEC, dl,
+                                               Op0VecVT, Op0));
+    
+    SDValue PromScalar;
+    if (SDNode *N = SelectCode(PromoteScalar.getValue().getNode()))
+      PromScalar = SDValue(N, 0);
+    else
+      PromScalar = PromoteScalar.getValue();
+    
     SDValue zextShuffle =
             CurDAG->getNode(SPUISD::SHUFB, dl, OpVecVT,
-                            SDValue(PromoteScalar, 0),
-                            SDValue(PromoteScalar, 0),
+                            PromScalar, PromScalar, 
                             SDValue(shufMaskLoad, 0));
 
-    // N.B.: BIT_CONVERT replaces and updates the zextShuffle node, so we
-    // re-use it in the VEC2PREFSLOT selection without needing to explicitly
-    // call SelectCode (it's already done for us.)
-    HandleSDNode Dummy2(zextShuffle); //CurDAG->getNode(ISD::BIT_CONVERT, dl, OpVecVT,
-                                      //  zextShuffle));
-    
+    HandleSDNode Dummy2(zextShuffle);
     if (SDNode *N = SelectCode(Dummy2.getValue().getNode()))
       return N;
     HandleSDNode Dummy(CurDAG->getNode(SPUISD::VEC2PREFSLOT, dl, OpVT,
