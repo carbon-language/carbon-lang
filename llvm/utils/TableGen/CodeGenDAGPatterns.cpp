@@ -2091,20 +2091,21 @@ void CodeGenDAGPatterns::ParseInstructions() {
 typedef std::pair<const TreePatternNode*, unsigned> NameRecord;
 
 static void FindNames(const TreePatternNode *P, 
-                      std::map<std::string, NameRecord> &Names) {
+                      std::map<std::string, NameRecord> &Names,
+                      const TreePattern *PatternTop) {
   if (!P->getName().empty()) {
     NameRecord &Rec = Names[P->getName()];
     // If this is the first instance of the name, remember the node.
     if (Rec.second++ == 0)
       Rec.first = P;
-//    else
-//      assert(Rec.first->getExtTypes() == P->getExtTypes() &&
-//             "Type mismatch on name repetition");
+    else if (Rec.first->getExtTypes() != P->getExtTypes())
+      PatternTop->error("repetition of value: $" + P->getName() +
+                        " where different uses have different types!");
   }
   
   if (!P->isLeaf()) {
     for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
-      FindNames(P->getChild(i), Names);
+      FindNames(P->getChild(i), Names, PatternTop);
   }
 }
 
@@ -2118,8 +2119,8 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
   // Find all of the named values in the input and output, ensure they have the
   // same type.
   std::map<std::string, NameRecord> SrcNames, DstNames;
-  FindNames(PTM.getSrcPattern(), SrcNames);
-  FindNames(PTM.getDstPattern(), DstNames);
+  FindNames(PTM.getSrcPattern(), SrcNames, Pattern);
+  FindNames(PTM.getDstPattern(), DstNames, Pattern);
 
   // Scan all of the named values in the destination pattern, rejecting them if
   // they don't exist in the input pattern.
