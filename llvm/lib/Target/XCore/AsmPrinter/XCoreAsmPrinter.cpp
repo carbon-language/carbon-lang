@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
@@ -62,6 +63,11 @@ namespace {
     }
 
     void printMemOperand(const MachineInstr *MI, int opNum);
+    void printInlineJT(const MachineInstr *MI, int opNum,
+                       const std::string &directive = ".jmptable");
+    void printInlineJT32(const MachineInstr *MI, int opNum) {
+      printInlineJT(MI, opNum, ".jmptable32");
+    }
     void printOperand(const MachineInstr *MI, int opNum);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                         unsigned AsmVariant, const char *ExtraCode);
@@ -255,6 +261,23 @@ void XCoreAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum)
   
   O << "+";
   printOperand(MI, opNum+1);
+}
+
+void XCoreAsmPrinter::
+printInlineJT(const MachineInstr *MI, int opNum, const std::string &directive)
+{
+  unsigned JTI = MI->getOperand(opNum).getIndex();
+  const MachineFunction *MF = MI->getParent()->getParent();
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+  O << "\t" << directive << " ";
+  for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = JTBBs[i];
+    if (i > 0)
+      O << ",";
+    O << *MBB->getSymbol(OutContext);
+  }
 }
 
 void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {

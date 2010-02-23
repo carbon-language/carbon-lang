@@ -34,6 +34,15 @@ def XCoreBranchLink     : SDNode<"XCoreISD::BL",SDT_XCoreBranchLink,
 def XCoreRetsp       : SDNode<"XCoreISD::RETSP", SDTNone,
                          [SDNPHasChain, SDNPOptInFlag]>;
 
+def SDT_XCoreBR_JT    : SDTypeProfile<0, 2,
+                                      [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
+def XCoreBR_JT : SDNode<"XCoreISD::BR_JT", SDT_XCoreBR_JT,
+                        [SDNPHasChain]>;
+
+def XCoreBR_JT32 : SDNode<"XCoreISD::BR_JT32", SDT_XCoreBR_JT,
+                        [SDNPHasChain]>;
+
 def SDT_XCoreAddress    : SDTypeProfile<1, 1,
                             [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
@@ -183,6 +192,15 @@ def ADDRcpii : ComplexPattern<i32, 2, "SelectADDRcpii", [add, cprelwrapper],
 def MEMii : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops i32imm, i32imm);
+}
+
+// Jump tables.
+def InlineJT : Operand<i32> {
+  let PrintMethod = "printInlineJT";
+}
+
+def InlineJT32 : Operand<i32> {
+  let PrintMethod = "printInlineJT32";
 }
 
 //===----------------------------------------------------------------------===//
@@ -756,12 +774,22 @@ def CLZ_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
 
 // One operand short
 // TODO edu, eeu, waitet, waitef, freer, tstart, msync, mjoin, syncr, clrtp
-// bru, setdp, setcp, setv, setev, kcall
+// setdp, setcp, setv, setev, kcall
 // dgetreg
 let isBranch=1, isIndirectBranch=1, isTerminator=1 in
 def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
                  "bau $addr",
                  [(brind GRRegs:$addr)]>;
+
+let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
+def BR_JT : PseudoInstXCore<(outs), (ins InlineJT:$t, GRRegs:$i),
+                            "bru $i\n$t",
+                            [(XCoreBR_JT tjumptable:$t, GRRegs:$i)]>;
+
+let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
+def BR_JT32 : PseudoInstXCore<(outs), (ins InlineJT32:$t, GRRegs:$i),
+                              "bru $i\n$t",
+                              [(XCoreBR_JT32 tjumptable:$t, GRRegs:$i)]>;
 
 let Defs=[SP], neverHasSideEffects=1 in
 def SETSP_1r : _F1R<(outs), (ins GRRegs:$src),

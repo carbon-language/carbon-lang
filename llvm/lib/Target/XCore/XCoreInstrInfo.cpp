@@ -145,6 +145,11 @@ static inline bool IsCondBranch(unsigned BrOpc) {
   return IsBRF(BrOpc) || IsBRT(BrOpc);
 }
 
+static inline bool IsBR_JT(unsigned BrOpc) {
+  return BrOpc == XCore::BR_JT
+      || BrOpc == XCore::BR_JT32;
+}
+
 /// GetCondFromBranchOpc - Return the XCore CC that matches 
 /// the correspondent Branch instruction opcode.
 static XCore::CondCode GetCondFromBranchOpc(unsigned BrOpc) 
@@ -269,6 +274,14 @@ XCoreInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
     if (AllowModify)
       I->eraseFromParent();
     return false;
+  }
+
+  // Likewise if it ends with a branch table followed by an unconditional branch.
+  if (IsBR_JT(SecondLastInst->getOpcode()) && IsBRU(LastInst->getOpcode())) {
+    I = LastInst;
+    if (AllowModify)
+      I->eraseFromParent();
+    return true;
   }
 
   // Otherwise, can't handle this.
