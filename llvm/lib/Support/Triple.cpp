@@ -40,6 +40,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case x86:     return "i386";
   case x86_64:  return "x86_64";
   case xcore:   return "xcore";
+  case mblaze:  return "mblaze";
   }
 
   return "<invalid>";
@@ -61,6 +62,8 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
 
   case ppc64:
   case ppc:     return "ppc";
+
+  case mblaze:  return "mblaze";
 
   case sparcv9:
   case sparc:   return "sparc";
@@ -127,6 +130,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     return ppc64;
   if (Name == "ppc")
     return ppc;
+  if (Name == "mblaze")
+    return mblaze;
   if (Name == "sparc")
     return sparc;
   if (Name == "sparcv9")
@@ -198,6 +203,8 @@ const char *Triple::getArchNameForAssembler() {
     return "ppc";
   if (Str == "powerpc64")
     return "ppc64";
+  if (Str == "mblaze" || Str == "microblaze")
+    return "mblaze";
   if (Str == "arm")
     return "arm";
   if (Str == "armv4t" || Str == "thumbv4t")
@@ -234,6 +241,8 @@ void Triple::Parse() const {
     Arch = ppc;
   else if ((ArchName == "powerpc64") || (ArchName == "ppu"))
     Arch = ppc64;
+  else if (ArchName == "mblaze")
+    Arch = mblaze;
   else if (ArchName == "arm" ||
            ArchName.startswith("armv") ||
            ArchName == "xscale")

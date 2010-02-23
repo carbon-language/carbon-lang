@@ -335,3 +335,8 @@ D: Bunches of stuff
 N: Bob Wilson
 E: bob.wilson@acm.org
 D: Advanced SIMD (NEON) support in the ARM backend
+
+N: Wesley Peck
+E: peckw@wesleypeck.com
+W: http://wesleypeck.com/
+D: MicroBlaze backend
