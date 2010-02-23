@@ -294,15 +294,18 @@ namespace {
           ((vecVT == MVT::v2i64) &&
            ((SPU::get_vec_i16imm(bvNode, *CurDAG, MVT::i64).getNode() != 0) ||
             (SPU::get_ILHUvec_imm(bvNode, *CurDAG, MVT::i64).getNode() != 0) ||
-            (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i64).getNode() != 0))))
-        return Select(bvNode);
+            (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i64).getNode() != 0)))) {
+        HandleSDNode Dummy(SDValue(bvNode, 0));
+        Select(bvNode);
+        return Dummy.getValue().getNode();
+      }
 
       // No, need to emit a constant pool spill:
       std::vector<Constant*> CV;
 
       for (size_t i = 0; i < bvNode->getNumOperands(); ++i) {
         ConstantSDNode *V = dyn_cast<ConstantSDNode > (bvNode->getOperand(i));
-        CV.push_back(const_cast<ConstantInt *> (V->getConstantIntValue()));
+        CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       }
 
       Constant *CP = ConstantVector::get(CV);
@@ -311,10 +314,14 @@ namespace {
       SDValue CGPoolOffset =
               SPU::LowerConstantPool(CPIdx, *CurDAG,
                                      SPUtli.getSPUTargetMachine());
-      return SelectCode(CurDAG->getLoad(vecVT, dl,
-                                        CurDAG->getEntryNode(), CGPoolOffset,
-                                        PseudoSourceValue::getConstantPool(), 0,
-                                        false, false, Alignment).getNode());
+      
+      HandleSDNode Dummy(CurDAG->getLoad(vecVT, dl,
+                                         CurDAG->getEntryNode(), CGPoolOffset,
+                                         PseudoSourceValue::getConstantPool(),0,
+                                         false, false, Alignment));
+      CurDAG->ReplaceAllUsesWith(SDValue(bvNode, 0), Dummy.getValue());
+      SelectCode(Dummy.getValue().getNode());
+      return Dummy.getValue().getNode();
     }
 
     /// Select - Convert the specified operand from a target-independent to a
@@ -692,9 +699,8 @@ SPUDAGToDAGISel::Select(SDNode *N) {
   SDValue Ops[8];
   DebugLoc dl = N->getDebugLoc();
 
-  if (N->isMachineOpcode()) {
+  if (N->isMachineOpcode())
     return NULL;   // Already selected.
-  }
 
   if (Opc == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
@@ -773,29 +779,44 @@ SPUDAGToDAGISel::Select(SDNode *N) {
     // re-use it in the VEC2PREFSLOT selection without needing to explicitly
     // call SelectCode (it's already done for us.)
     SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, dl, OpVecVT, zextShuffle).getNode());
-    return SelectCode(CurDAG->getNode(SPUISD::VEC2PREFSLOT, dl, OpVT,
-                                      zextShuffle).getNode());
+    HandleSDNode Dummy(CurDAG->getNode(SPUISD::VEC2PREFSLOT, dl, OpVT,
+                                      zextShuffle));
+    
+    CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
+    SelectCode(Dummy.getValue().getNode());
+    return Dummy.getValue().getNode();
   } else if (Opc == ISD::ADD && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
     SDNode *CGLoad =
             emitBuildVector(getCarryGenerateShufMask(*CurDAG, dl).getNode());
 
-    return SelectCode(CurDAG->getNode(SPUISD::ADD64_MARKER, dl, OpVT,
-                                      N->getOperand(0), N->getOperand(1),
-                                      SDValue(CGLoad, 0)).getNode());
+    HandleSDNode Dummy(CurDAG->getNode(SPUISD::ADD64_MARKER, dl, OpVT,
+                                       N->getOperand(0), N->getOperand(1),
+                                       SDValue(CGLoad, 0)));
+    
+    CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
+    SelectCode(Dummy.getValue().getNode());
+    return Dummy.getValue().getNode();
   } else if (Opc == ISD::SUB && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
     SDNode *CGLoad =
             emitBuildVector(getBorrowGenerateShufMask(*CurDAG, dl).getNode());
 
-    return SelectCode(CurDAG->getNode(SPUISD::SUB64_MARKER, dl, OpVT,
-                                      N->getOperand(0), N->getOperand(1),
-                                      SDValue(CGLoad, 0)).getNode());
+    HandleSDNode Dummy(CurDAG->getNode(SPUISD::SUB64_MARKER, dl, OpVT,
+                                       N->getOperand(0), N->getOperand(1),
+                                       SDValue(CGLoad, 0)));
+    
+    CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
+    SelectCode(Dummy.getValue().getNode());
+    return Dummy.getValue().getNode();
   } else if (Opc == ISD::MUL && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
     SDNode *CGLoad =
             emitBuildVector(getCarryGenerateShufMask(*CurDAG, dl).getNode());
 
-    return SelectCode(CurDAG->getNode(SPUISD::MUL64_MARKER, dl, OpVT,
-                                      N->getOperand(0), N->getOperand(1),
-                                      SDValue(CGLoad, 0)).getNode());
+    HandleSDNode Dummy(CurDAG->getNode(SPUISD::MUL64_MARKER, dl, OpVT,
+                                       N->getOperand(0), N->getOperand(1),
+                                       SDValue(CGLoad, 0)));
+    CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
+    SelectCode(Dummy.getValue().getNode());
+    return Dummy.getValue().getNode();
   } else if (Opc == ISD::TRUNCATE) {
     SDValue Op0 = N->getOperand(0);
     if ((Op0.getOpcode() == ISD::SRA || Op0.getOpcode() == ISD::SRL)
@@ -832,17 +853,14 @@ SPUDAGToDAGISel::Select(SDNode *N) {
       }
     }
   } else if (Opc == ISD::SHL) {
-    if (OpVT == MVT::i64) {
+    if (OpVT == MVT::i64)
       return SelectSHLi64(N, OpVT);
-    }
   } else if (Opc == ISD::SRL) {
-    if (OpVT == MVT::i64) {
+    if (OpVT == MVT::i64)
       return SelectSRLi64(N, OpVT);
-    }
   } else if (Opc == ISD::SRA) {
-    if (OpVT == MVT::i64) {
+    if (OpVT == MVT::i64)
       return SelectSRAi64(N, OpVT);
-    }
   } else if (Opc == ISD::FNEG
              && (OpVT == MVT::f64 || OpVT == MVT::v2f64)) {
     DebugLoc dl = N->getDebugLoc();
