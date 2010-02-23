@@ -142,7 +142,8 @@ public:
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
           // Special case: check for assigning null to a pointer.
           //  This is a common form of defensive programming.
-          if (VD->getType()->isPointerType()) {
+          QualType T = VD->getType();
+          if (T->isPointerType() || T->isObjCObjectPointerType()) {
             if (B->getRHS()->isNullPointerConstant(Ctx,
                                               Expr::NPC_ValueDependentIsNull))
               return;
