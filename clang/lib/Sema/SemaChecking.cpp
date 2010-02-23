@@ -2490,22 +2490,20 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body,
 
   bool ReturnsVoid = false;
   bool HasNoReturn = false;
+
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // For function templates, class templates and member function templates
     // we'll do the analysis at instantiation time.
     if (FD->isDependentContext())
       return;
 
-    if (FD->getResultType()->isVoidType())
-      ReturnsVoid = true;
-    if (FD->hasAttr<NoReturnAttr>() ||
-        FD->getType()->getAs<FunctionType>()->getNoReturnAttr())
-      HasNoReturn = true;
+    ReturnsVoid = FD->getResultType()->isVoidType();
+    HasNoReturn = FD->hasAttr<NoReturnAttr>() ||
+                  FD->getType()->getAs<FunctionType>()->getNoReturnAttr();
+
   } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    if (MD->getResultType()->isVoidType())
-      ReturnsVoid = true;
-    if (MD->hasAttr<NoReturnAttr>())
-      HasNoReturn = true;
+    ReturnsVoid = MD->getResultType()->isVoidType();
+    HasNoReturn = MD->hasAttr<NoReturnAttr>();
   }
 
   // Short circuit for compilation speed.
