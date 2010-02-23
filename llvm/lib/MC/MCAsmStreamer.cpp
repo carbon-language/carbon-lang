@@ -518,8 +518,9 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 
 void MCAsmStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                       unsigned MaxBytesToEmit) {
-  // FIXME: a hack for now to only work for x86 using the 0x90 nop opcode.
-  EmitValueToAlignment(ByteAlignment, 0x90, 1, MaxBytesToEmit);
+  // Emit with a text fill value.
+  EmitValueToAlignment(ByteAlignment, MAI.getTextAlignFillValue(),
+                       1, MaxBytesToEmit);
 }
 
 void MCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
