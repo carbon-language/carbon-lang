@@ -1781,6 +1781,29 @@ void Sema::CompareMethodParamsInBaseAndSuper(Decl *ClassDecl,
   }
 }
 
+/// DiagnoseDuplicateIvars - 
+/// Check for duplicate ivars in the entire class at the start of 
+/// @implementation. This becomes necesssary because class extension can
+/// add ivars to a class in random order which will not be known until
+/// class's @implementation is seen.
+void Sema::DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID, 
+                                  ObjCInterfaceDecl *SID) {
+  for (ObjCInterfaceDecl::ivar_iterator IVI = ID->ivar_begin(),
+       IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
+    ObjCIvarDecl* Ivar = (*IVI);
+    if (Ivar->isInvalidDecl())
+      continue;
+    if (IdentifierInfo *II = Ivar->getIdentifier()) {
+      ObjCIvarDecl* prevIvar = SID->lookupInstanceVariable(II);
+      if (prevIvar) {
+        Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
+        Diag(prevIvar->getLocation(), diag::note_previous_declaration);
+        Ivar->setInvalidDecl();
+      }
+    }
+  }
+}
+
 // Note: For class/category implemenations, allMethods/allProperties is
 // always null.
 void Sema::ActOnAtEnd(SourceRange AtEnd,
@@ -1892,6 +1915,11 @@ void Sema::ActOnAtEnd(SourceRange AtEnd,
     if (ObjCInterfaceDecl* IDecl = IC->getClassInterface()) {
       ImplMethodsVsClassMethods(IC, IDecl);
       AtomicPropertySetterGetterRules(IC, IDecl);
+      if (LangOpts.ObjCNonFragileABI2)
+        while (IDecl->getSuperClass()) {
+          DiagnoseDuplicateIvars(IDecl, IDecl->getSuperClass());
+          IDecl = IDecl->getSuperClass();
+        }
     }
   } else if (ObjCCategoryImplDecl* CatImplClass =
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {

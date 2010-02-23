@@ -5659,21 +5659,8 @@ void Sema::ActOnFields(Scope* S,
       }
       // Must enforce the rule that ivars in the base classes may not be
       // duplicates.
-      if (ID->getSuperClass()) {
-        for (ObjCInterfaceDecl::ivar_iterator IVI = ID->ivar_begin(),
-             IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
-          ObjCIvarDecl* Ivar = (*IVI);
-
-          if (IdentifierInfo *II = Ivar->getIdentifier()) {
-            ObjCIvarDecl* prevIvar =
-              ID->getSuperClass()->lookupInstanceVariable(II);
-            if (prevIvar) {
-              Diag(Ivar->getLocation(), diag::err_duplicate_member) << II;
-              Diag(prevIvar->getLocation(), diag::note_previous_declaration);
-            }
-          }
-        }
-      }
+      if (ID->getSuperClass())
+        DiagnoseDuplicateIvars(ID, ID->getSuperClass());
     } else if (ObjCImplementationDecl *IMPDecl =
                   dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
       assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
