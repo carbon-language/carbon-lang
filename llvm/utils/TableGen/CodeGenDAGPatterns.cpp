@@ -2078,21 +2078,47 @@ void CodeGenDAGPatterns::ParseInstructions() {
     }
     
     Record *Instr = II->first;
-    TreePatternNode *DstPattern = TheInst.getResultPattern();
     AddPatternToMatch(I,
                       PatternToMatch(Instr->getValueAsListInit("Predicates"),
-                                     SrcPattern, DstPattern,
+                                     SrcPattern,
+                                     TheInst.getResultPattern(),
                                      TheInst.getImpResults(),
                                      Instr->getValueAsInt("AddedComplexity")));
   }
 }
 
+static void FindNames(const TreePatternNode *P, 
+                      std::map<std::string, const TreePatternNode*> &Names) {
+  if (!P->getName().empty())
+    Names[P->getName()] = P;
+  
+  if (!P->isLeaf()) {
+    for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
+      FindNames(P->getChild(i), Names);
+  }
+}
+
 void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
                                            const PatternToMatch &PTM) {
+  // Do some sanity checking on the pattern we're about to match.
   std::string Reason;
   if (!PTM.getSrcPattern()->canPatternMatch(Reason, *this))
-    Pattern->error("Instruction can never match: " + Reason);
+    Pattern->error("Pattern can never match: " + Reason);
   
+  // Find all of the named values in the input and output, ensure they have the
+  // same type.
+  std::map<std::string, const TreePatternNode*> SrcNames, DstNames;
+  FindNames(PTM.getSrcPattern(), SrcNames);
+  FindNames(PTM.getDstPattern(), DstNames);
+
+  // Scan all of the named values in the destination pattern, rejecting them if
+  // they don't exist in the input pattern.
+  for (std::map<std::string, const TreePatternNode*>::iterator
+         I = DstNames.begin(), E = DstNames.end(); I != E; ++I)
+    if (SrcNames[I->first] == 0)
+      Pattern->error("Pattern has input without matching name in output: $" +
+                     I->first);
+
   PatternsToMatch.push_back(PTM);
 }
 
