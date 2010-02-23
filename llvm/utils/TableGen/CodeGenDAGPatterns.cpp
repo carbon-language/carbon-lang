@@ -2087,10 +2087,20 @@ void CodeGenDAGPatterns::ParseInstructions() {
   }
 }
 
+
+typedef std::pair<const TreePatternNode*, unsigned> NameRecord;
+
 static void FindNames(const TreePatternNode *P, 
-                      std::map<std::string, const TreePatternNode*> &Names) {
-  if (!P->getName().empty())
-    Names[P->getName()] = P;
+                      std::map<std::string, NameRecord> &Names) {
+  if (!P->getName().empty()) {
+    NameRecord &Rec = Names[P->getName()];
+    // If this is the first instance of the name, remember the node.
+    if (Rec.second++ == 0)
+      Rec.first = P;
+//    else
+//      assert(Rec.first->getExtTypes() == P->getExtTypes() &&
+//             "Type mismatch on name repetition");
+  }
   
   if (!P->isLeaf()) {
     for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
@@ -2107,18 +2117,25 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
   
   // Find all of the named values in the input and output, ensure they have the
   // same type.
-  std::map<std::string, const TreePatternNode*> SrcNames, DstNames;
+  std::map<std::string, NameRecord> SrcNames, DstNames;
   FindNames(PTM.getSrcPattern(), SrcNames);
   FindNames(PTM.getDstPattern(), DstNames);
 
   // Scan all of the named values in the destination pattern, rejecting them if
   // they don't exist in the input pattern.
-  for (std::map<std::string, const TreePatternNode*>::iterator
+  for (std::map<std::string, NameRecord>::iterator
          I = DstNames.begin(), E = DstNames.end(); I != E; ++I)
-    if (SrcNames[I->first] == 0)
+    if (SrcNames[I->first].first == 0)
       Pattern->error("Pattern has input without matching name in output: $" +
                      I->first);
-
+  
+  // Scan all of the named values in the source pattern, rejecting them if the
+  // name isn't used in the dest, and isn't used to tie two values together.
+  for (std::map<std::string, NameRecord>::iterator
+       I = SrcNames.begin(), E = SrcNames.end(); I != E; ++I)
+    if (DstNames[I->first].first == 0 && SrcNames[I->first].second == 1)
+      Pattern->error("Pattern has dead named input: $" + I->first);
+  
   PatternsToMatch.push_back(PTM);
 }
 
