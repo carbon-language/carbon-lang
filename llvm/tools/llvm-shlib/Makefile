@@ -58,7 +58,7 @@ ifeq ($(HOST_OS), Linux)
     LLVMLibsOptions += -Wl,--warn-shared-textrel
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
-    ifneq ($(ARCH), ARM)
+    ifeq ($(ARCH), ARM)
         # ARM's shared libgcc omits several of the __sync functions that are
         # present in the static libgcc, so we also link in the static gcc.  This
         # is described at http://gcc.gnu.org/PR40133.
