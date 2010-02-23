@@ -1755,7 +1755,8 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
   }
 
   CallingConv CCOld = Fn->getCallConv();
-  if (CC == CCOld) return false;
+  if (S.Context.getCanonicalCallConv(CC) ==
+      S.Context.getCanonicalCallConv(CCOld)) return false;
 
   if (CCOld != CC_Default) {
     // Should we diagnose reapplications of the same convention?

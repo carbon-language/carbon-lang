@@ -36,3 +36,7 @@ void (__attribute__((cdecl)) *pctest2)() = ctest2;
 typedef void (__attribute__((fastcall)) *Handler) (float *);
 Handler H = foo;
 
+// PR6361
+void ctest3();
+void __attribute__((cdecl)) ctest3() {}
+
