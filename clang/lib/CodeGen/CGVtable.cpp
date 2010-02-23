@@ -1106,7 +1106,7 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
   int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
   AddVBaseOffsets(Base.getBase(), OffsetToTop, VBases);
 
-  // We only want to add vcall offsets for virtual bases in secondary vtables.
+  // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual && OffsetToTop != 0)
     AddVCallOffsets(Base);
 }
@@ -1183,10 +1183,6 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    // Ignore the primary base.
-    if (BaseDecl == PrimaryBase)
-      continue;
-    
     // Get the base offset of this base.
     uint64_t BaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(BaseDecl);
