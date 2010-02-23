@@ -9092,9 +9092,10 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
 }
 
 /// PerformANDCombine - Look for SSE and instructions of this form:
-/// (and x, (build_vector c1,c2,c3,c4)). If there exists a use of a build_vector
-/// that's the bitwise complement of the mask, then transform the node to
-/// (and (xor x, (build_vector -1,-1,-1,-1)), (build_vector ~c1,~c2,~c3,~c4)).
+/// (and x, (build_vector signbit,signbit,signbit,signbit)). If there
+/// exists a use of a build_vector that's the bitwise complement of the mask,
+/// then transform the node to
+/// (and (xor x, (build_vector -1,-1,-1,-1)), (build_vector ~sb,~sb,~sb,~sb)).
 static SDValue PerformANDCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI) {
   EVT VT = N->getValueType(0);
@@ -9118,7 +9119,11 @@ static SDValue PerformANDCombine(SDNode *N, SelectionDAG &DAG,
         continue;
       }
       ConstantSDNode *C = dyn_cast<ConstantSDNode>(Arg);
-      if (!C) return SDValue();
+      if (!C)
+        return SDValue();
+      if (!C->getAPIntValue().isSignBit() &&
+          !C->getAPIntValue().isMaxSignedValue())
+        return SDValue();
       Mask.push_back(DAG.getConstant(~C->getAPIntValue(), EltVT));
     }
     N1 = DAG.getNode(ISD::BUILD_VECTOR, N1.getDebugLoc(), VT,
