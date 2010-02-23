@@ -2342,10 +2342,8 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   }
 
   llvm::array_pod_sort(lines.begin(), lines.end(), LineCmp);
-  for (llvm::SmallVector<ErrLoc, 24>::iterator I = lines.begin(),
-         E = lines.end();
-       I != E;
-       ++I)
+  for (llvm::SmallVectorImpl::iterator I = lines.begin(), E = lines.end();
+       I != E; ++I)
     if (I->Loc.isValid())
       Diag(I->Loc, diag::warn_unreachable) << I->R1 << I->R2;
 }
