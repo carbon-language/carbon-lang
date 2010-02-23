@@ -720,12 +720,12 @@ else
                   $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
 endif
 
-BCCompile.C   = $(LLVMGCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
+BCCompile.C   = $(LLVMCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
 Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts) -E
 
-BCCompile.CXX = $(LLVMGXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
+BCCompile.CXX = $(LLVMCXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
 
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755
@@ -979,8 +979,8 @@ endif
 #---------------------------------------------------------
 
 ifdef MODULE_NAME
-ifeq ($(strip $(LLVMGCC)),)
-$(warning Modules require llvm-gcc but no llvm-gcc is available ****)
+ifeq ($(strip $(LLVMCC)),)
+$(warning Modules require LLVM capable compiler but none is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
@@ -1105,8 +1105,8 @@ endif
 #   targets for building them.
 #---------------------------------------------------------
 ifdef BYTECODE_LIBRARY
-ifeq ($(strip $(LLVMGCC)),)
-$(warning Bytecode libraries require llvm-gcc which could not be found ****)
+ifeq ($(strip $(LLVMCC)),)
+$(warning Bytecode libraries require LLVM capable compiler but none is available ****)
 else
 
 all-local:: $(LibName.BCA)
@@ -1389,19 +1389,19 @@ BC_DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.bc.d.tmp" \
 BC_DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.bc.d.tmp" "$(ObjDir)/$*.bc.d"; \
                      else $(RM) "$(ObjDir)/$*.bc.d.tmp"; exit 1; fi
 
-$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
+$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
                               $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
 	        $(BC_DEPEND_MOVEFILE)
 
-$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
+$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
                               $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
 	        $(BC_DEPEND_MOVEFILE)
 
-$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
+$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) $(BC_DEPEND_OPTIONS) \
                               $< -o $(ObjDir)/$*.ll -S -emit-llvm ; \
@@ -1422,15 +1422,15 @@ $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
 	$(Compile.C) $< -o $@
 
-$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
+$(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 
-$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGXX)
+$(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(BCCompile.CXX) $< -o $@ -S -emit-llvm
 
-$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMGCC)
+$(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(BCCompile.C) $< -o $@ -S -emit-llvm
 
