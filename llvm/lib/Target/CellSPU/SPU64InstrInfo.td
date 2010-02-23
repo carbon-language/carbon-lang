@@ -123,8 +123,8 @@ multiclass CompareLogicalGreaterThan64 {
 defm I64LGT: CompareLogicalGreaterThan64;
 
 def : Pat<(setugt R64C:$rA, R64C:$rB), I64LGTr64.Fragment>;
-def : Pat<(setugt (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
-                  I64LGTv2i64.Fragment>;
+//def : Pat<(setugt (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
+//          I64LGTv2i64.Fragment>;
 
 // i64 setult:
 def : I64SETCCNegCond<setule, I64LGTr64>;
@@ -201,8 +201,8 @@ multiclass CompareGreaterThan64 {
 defm I64GT: CompareLogicalGreaterThan64;
 
 def : Pat<(setgt R64C:$rA, R64C:$rB), I64GTr64.Fragment>;
-def : Pat<(setgt (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
-                  I64GTv2i64.Fragment>;
+//def : Pat<(setgt (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
+//                  I64GTv2i64.Fragment>;
 
 // i64 setult:
 def : I64SETCCNegCond<setle, I64GTr64>;
