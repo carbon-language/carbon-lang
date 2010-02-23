@@ -10,9 +10,6 @@
 LEVEL = ../..
 TOOLNAME = Fibonacci
 EXAMPLE_TOOL = 1
-# To keep the shared library working, we link a few of the examples
-# against it unconditionally.
-ENABLE_SHARED = 1
 
 # Link in JIT support
 LINK_COMPONENTS := jit interpreter nativecodegen

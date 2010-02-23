@@ -30,8 +30,8 @@ ifeq ($(BUILD_DIRS_ONLY),1)
   DIRS := lib/System lib/Support utils
   OPTIONAL_DIRS :=
 else
-  DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-shlib \
-          tools/llvm-config tools runtime docs unittests
+  DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
+          tools runtime docs unittests
   OPTIONAL_DIRS := projects bindings
 endif
 

@@ -689,7 +689,6 @@ TARGET_HAS_JIT
 ENABLE_DOXYGEN
 ENABLE_THREADS
 ENABLE_PIC
-ENABLE_SHARED
 TARGETS_TO_BUILD
 LLVM_ENUM_TARGETS
 LLVM_ENUM_ASM_PRINTERS
@@ -771,7 +770,6 @@ LLVMCC1PLUS
 LLVMGCCDIR
 LLVMGCC_LANGS
 SHLIBEXT
-SHLIBPATH_VAR
 LLVM_PREFIX
 LLVM_BINDIR
 LLVM_LIBDIR
@@ -1404,7 +1402,6 @@ Optional Features:
   --enable-threads        Use threads if available (default is YES)
   --enable-pic            Build LLVM with Position Independent Code (default
                           is YES)
-  --enable-shared         Link LLVM tools shared (default is NO)
   --enable-targets        Build specific host targets: all or
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, alpha, arm, mips, spu,
@@ -4869,25 +4866,6 @@ cat >>confdefs.h <<_ACEOF
 #define ENABLE_PIC $ENABLE_PIC
 _ACEOF
 
-
-# Check whether --enable-shared was given.
-if test "${enable_shared+set}" = set; then
-  enableval=$enable_shared;
-else
-  enableval=default
-fi
-
-case "$enableval" in
-  yes) ENABLE_SHARED=1
- ;;
-  no)  ENABLE_SHARED=0
- ;;
-  default) ENABLE_SHARED=0
- ;;
-  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-shared. Use \"yes\" or \"no\"" >&5
-echo "$as_me: error: Invalid setting for --enable-shared. Use \"yes\" or \"no\"" >&2;}
-   { (exit 1); exit 1; }; } ;;
-esac
 
 TARGETS_TO_BUILD=""
 # Check whether --enable-targets was given.
@@ -11132,7 +11110,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11130 "configure"
+#line 11108 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19713,9 +19691,6 @@ fi
 SHLIBEXT=$libltdl_cv_shlibext
 
 
-SHLIBPATH_VAR=$libltdl_cv_shlibpath_var
-
-
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in
 # that these configured values can be used by the makefiles
@@ -20773,7 +20748,6 @@ TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
 ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
 ENABLE_THREADS!$ENABLE_THREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
-ENABLE_SHARED!$ENABLE_SHARED$ac_delim
 TARGETS_TO_BUILD!$TARGETS_TO_BUILD$ac_delim
 LLVM_ENUM_TARGETS!$LLVM_ENUM_TARGETS$ac_delim
 LLVM_ENUM_ASM_PRINTERS!$LLVM_ENUM_ASM_PRINTERS$ac_delim
@@ -20783,6 +20757,7 @@ ENABLE_CBE_PRINTF_A!$ENABLE_CBE_PRINTF_A$ac_delim
 CLANGPATH!$CLANGPATH$ac_delim
 CLANGXXPATH!$CLANGXXPATH$ac_delim
 ENABLE_BUILT_CLANG!$ENABLE_BUILT_CLANG$ac_delim
+OPTIMIZE_OPTION!$OPTIMIZE_OPTION$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20824,7 +20799,6 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
-OPTIMIZE_OPTION!$OPTIMIZE_OPTION$ac_delim
 EXTRA_OPTIONS!$EXTRA_OPTIONS$ac_delim
 BINUTILS_INCDIR!$BINUTILS_INCDIR$ac_delim
 ENABLE_LLVMC_DYNAMIC!$ENABLE_LLVMC_DYNAMIC$ac_delim
@@ -20896,7 +20870,6 @@ LLVMCC1PLUS!$LLVMCC1PLUS$ac_delim
 LLVMGCCDIR!$LLVMGCCDIR$ac_delim
 LLVMGCC_LANGS!$LLVMGCC_LANGS$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
-SHLIBPATH_VAR!$SHLIBPATH_VAR$ac_delim
 LLVM_PREFIX!$LLVM_PREFIX$ac_delim
 LLVM_BINDIR!$LLVM_BINDIR$ac_delim
 LLVM_LIBDIR!$LLVM_LIBDIR$ac_delim
@@ -20917,7 +20890,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 89; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -28,17 +28,6 @@ CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/
 CPP.Flags += $(NO_VARIADIC_MACROS)
 TESTLIBS = -lGoogleTest -lUnitTestMain
 
-ifeq ($(ENABLE_SHARED), 1)
-  # Add the absolute path to the dynamic library.  This is ok because
-  # we'll never install unittests.
-  LD.Flags += $(RPATH) -Wl,$(LibDir)
-endif
-ifeq ($(ENABLE_SHARED), 1)
-  # Also set {DYLD,LD}_LIBRARY_PATH because OSX ignores the rpath most
-  # of the time.
-  Run.Shared := $(SHLIBPATH_VAR)="$(LibDir)$${$(SHLIBPATH_VAR):+:}$$$(SHLIBPATH_VAR)"
-endif
-
 $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) unit test $(TESTNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
@@ -49,6 +38,6 @@ $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 all:: $(LLVMUnitTestExe)
 
 unitcheck:: $(LLVMUnitTestExe)
-	$(Run.Shared) $(LLVMUnitTestExe)
+	$(LLVMUnitTestExe)
 
 endif
