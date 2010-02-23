@@ -18,7 +18,6 @@ execute_process(COMMAND date
 #set(LLVMGCCDIR "")
 #set(LLVMGCC "")
 #set(LLVMGXX "")
-#set(LLVMGCC_VERSION "")
 test_big_endian(IS_BIG_ENDIAN)
 if( IS_BIG_ENDIAN )
   set(ENDIAN "big")

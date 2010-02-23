@@ -765,7 +765,6 @@ LLVMCC1
 LLVMCC1PLUS
 LLVMGCCDIR
 LLVMGCCLIBEXEC
-LLVMGCC_VERSION
 LLVMGCC_LANGS
 SHLIBEXT
 LLVM_PREFIX
@@ -11034,7 +11033,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11037 "configure"
+#line 11036 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19578,10 +19577,6 @@ echo $ECHO_N "checking llvm-gcc component support... $ECHO_C" >&6; }
   llvmgcclibexec=`echo "$llvmcc1path" | sed 's,/cc1,,'`
   LLVMGCCLIBEXEC=$llvmgcclibexec
 
-  llvmgccversion=`"$LLVMGCC" -dumpversion 2>&1 | sed 's/^\([0-9.]*\).*/\1/'`
-  llvmgccmajvers=`echo $llvmgccversion | sed 's/^\([0-9]\).*/\1/'`
-  LLVMGCC_VERSION=$llvmgccversion
-
   llvmgcclangs=`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`
   LLVMGCC_LANGS=$llvmgcclangs
 
@@ -20766,7 +20761,6 @@ LLVMCC1!$LLVMCC1$ac_delim
 LLVMCC1PLUS!$LLVMCC1PLUS$ac_delim
 LLVMGCCDIR!$LLVMGCCDIR$ac_delim
 LLVMGCCLIBEXEC!$LLVMGCCLIBEXEC$ac_delim
-LLVMGCC_VERSION!$LLVMGCC_VERSION$ac_delim
 LLVMGCC_LANGS!$LLVMGCC_LANGS$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
 LLVM_PREFIX!$LLVM_PREFIX$ac_delim
@@ -20789,7 +20783,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
