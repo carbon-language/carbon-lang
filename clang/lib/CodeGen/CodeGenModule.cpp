@@ -1327,6 +1327,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
       GA->setLinkage(llvm::Function::DLLExportLinkage);
     }
   } else if (D->hasAttr<WeakAttr>() ||
+             D->hasAttr<WeakRefAttr>() ||
              D->hasAttr<WeakImportAttr>()) {
     GA->setLinkage(llvm::Function::WeakAnyLinkage);
   }

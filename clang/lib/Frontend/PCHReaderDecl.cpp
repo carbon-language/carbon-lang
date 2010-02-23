@@ -586,6 +586,7 @@ Attr *PCHReader::ReadAttributes() {
 
     SIMPLE_ATTR(WarnUnusedResult);
     SIMPLE_ATTR(Weak);
+    SIMPLE_ATTR(WeakRef);
     SIMPLE_ATTR(WeakImport);
     }
 

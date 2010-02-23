@@ -107,6 +107,7 @@ DEF_SIMPLE_ATTR_CLONE(Used)
 DEF_SIMPLE_ATTR_CLONE(WarnUnusedResult)
 DEF_SIMPLE_ATTR_CLONE(Weak)
 DEF_SIMPLE_ATTR_CLONE(WeakImport)
+DEF_SIMPLE_ATTR_CLONE(WeakRef)
 DEF_SIMPLE_ATTR_CLONE(X86ForceAlignArgPointer)
 
 Attr* PragmaPackAttr::clone(ASTContext &C) const {
@@ -196,5 +197,3 @@ Attr *ReqdWorkGroupSizeAttr::clone(ASTContext &C) const {
 Attr *MSP430InterruptAttr::clone(ASTContext &C) const {
   return ::new (C) MSP430InterruptAttr(Number);
 }
-
-

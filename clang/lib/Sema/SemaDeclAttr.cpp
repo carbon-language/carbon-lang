@@ -329,6 +329,86 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) NonNullAttr(S.Context, start, size));
 }
 
+static bool isStaticVarOrStaticFunciton(Decl *D) {
+  if (VarDecl *VD = dyn_cast<VarDecl>(D))
+    return VD->getStorageClass() == VarDecl::Static;
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return FD->getStorageClass() == FunctionDecl::Static;
+  return false;
+}
+
+static void HandleWeakRefAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() > 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    return;
+  }
+
+  // gcc rejects
+  // class c {
+  //   static int a __attribute__((weakref ("v2")));
+  //   static int b() __attribute__((weakref ("f3")));
+  // };
+  // and ignores the attributes of
+  // void f(void) {
+  //   static int a __attribute__((weakref ("v2")));
+  // }
+  // we reject them
+  if (const DeclContext *Ctx = d->getDeclContext()) {
+    Ctx = Ctx->getLookupContext();
+    if (!isa<TranslationUnitDecl>(Ctx) && !isa<NamespaceDecl>(Ctx) ) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_global_context) <<
+	dyn_cast<NamedDecl>(d)->getNameAsString();
+      return;
+    }
+  }
+
+  // The GCC manual says
+  //
+  // At present, a declaration to which `weakref' is attached can only
+  // be `static'.
+  //
+  // It also says
+  //
+  // Without a TARGET,
+  // given as an argument to `weakref' or to `alias', `weakref' is
+  // equivalent to `weak'.
+  //
+  // gcc 4.4.1 will accept
+  // int a7 __attribute__((weakref));
+  // as
+  // int a7 __attribute__((weak));
+  // This looks like a bug in gcc. We reject that for now. We should revisit
+  // it if this behaviour is actually used.
+
+  if (!isStaticVarOrStaticFunciton(d)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_static) <<
+      dyn_cast<NamedDecl>(d)->getNameAsString();
+    return;
+  }
+
+  // GCC rejects
+  // static ((alias ("y"), weakref)).
+  // Should we? How to check that weakref is before or after alias?
+
+  if (Attr.getNumArgs() == 1) {
+    Expr *Arg = static_cast<Expr*>(Attr.getArg(0));
+    Arg = Arg->IgnoreParenCasts();
+    StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+
+    if (Str == 0 || Str->isWide()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+          << "weakref" << 1;
+      return;
+    }
+    // GCC will accept anything as the argument of weakref. Should we
+    // check for an existing decl?
+    d->addAttr(::new (S.Context) AliasAttr(S.Context, Str->getString()));
+  }
+
+  d->addAttr(::new (S.Context) WeakRefAttr());
+}
+
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -777,13 +857,7 @@ static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   /* weak only applies to non-static declarations */
-  bool isStatic = false;
-  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    isStatic = VD->getStorageClass() == VarDecl::Static;
-  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    isStatic = FD->getStorageClass() == FunctionDecl::Static;
-  }
-  if (isStatic) {
+  if (isStaticVarOrStaticFunciton(D)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_weak_static) <<
       dyn_cast<NamedDecl>(D)->getNameAsString();
     return;
@@ -1809,6 +1883,7 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
   case AttributeList::AT_warn_unused_result: HandleWarnUnusedResult(D,Attr,S);
     break;
   case AttributeList::AT_weak:        HandleWeakAttr        (D, Attr, S); break;
+  case AttributeList::AT_weakref:     HandleWeakRefAttr     (D, Attr, S); break;
   case AttributeList::AT_weak_import: HandleWeakImportAttr  (D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
@@ -1847,9 +1922,17 @@ static void ProcessDeclAttribute(Scope *scope, Decl *D,
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
 /// attribute list to the specified decl, ignoring any type attributes.
 void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AttrList) {
-  while (AttrList) {
-    ProcessDeclAttribute(S, D, *AttrList, *this);
-    AttrList = AttrList->getNext();
+  for (const AttributeList* l = AttrList; l; l = l->getNext()) {
+    ProcessDeclAttribute(S, D, *l, *this);
+  }
+
+  // GCC accepts
+  // static int a9 __attribute__((weakref));
+  // but that looks really pointless. We reject it.
+  if (D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
+    Diag(AttrList->getLoc(), diag::err_attribute_weakref_without_alias) <<
+	dyn_cast<NamedDecl>(D)->getNameAsString();
+    return;
   }
 }
 

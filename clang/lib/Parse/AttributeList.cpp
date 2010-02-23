@@ -57,6 +57,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   // FIXME: Hand generating this is neither smart nor efficient.
   return llvm::StringSwitch<AttributeList::Kind>(AttrName)
     .Case("weak", AT_weak)
+    .Case("weakref", AT_weakref)
     .Case("pure", AT_pure)
     .Case("mode", AT_mode)
     .Case("used", AT_used)

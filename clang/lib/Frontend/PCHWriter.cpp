@@ -1916,6 +1916,7 @@ void PCHWriter::WriteAttributeRecord(const Attr *Attr) {
 
     case Attr::WarnUnusedResult:
     case Attr::Weak:
+    case Attr::WeakRef:
     case Attr::WeakImport:
       break;
     }
@@ -2335,4 +2336,3 @@ void PCHWriter::AddDeclarationName(DeclarationName Name, RecordData &Record) {
     break;
   }
 }
-

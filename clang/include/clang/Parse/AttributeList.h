@@ -109,6 +109,7 @@ public:
     AT_visibility,
     AT_warn_unused_result,
     AT_weak,
+    AT_weakref,
     AT_weak_import,
     AT_reqd_wg_size,
     IgnoredAttribute,

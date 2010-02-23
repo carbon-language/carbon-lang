@@ -94,6 +94,7 @@ public:
     WarnUnusedResult,
     Weak,
     WeakImport,
+    WeakRef,
 
     FIRST_TARGET_ATTRIBUTE,
     DLLExport,
@@ -357,6 +358,7 @@ DEF_SIMPLE_ATTR(Unused);
 DEF_SIMPLE_ATTR(Used);
 DEF_SIMPLE_ATTR(Weak);
 DEF_SIMPLE_ATTR(WeakImport);
+DEF_SIMPLE_ATTR(WeakRef);
 DEF_SIMPLE_ATTR(NoThrow);
 DEF_SIMPLE_ATTR(Const);
 DEF_SIMPLE_ATTR(Pure);
