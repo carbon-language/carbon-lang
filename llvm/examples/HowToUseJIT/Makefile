@@ -9,6 +9,9 @@
 LEVEL = ../..
 TOOLNAME = HowToUseJIT
 EXAMPLE_TOOL = 1
+# To keep the shared library working, we link a few of the examples
+# against it unconditionally.
+ENABLE_SHARED = 1
 
 LINK_COMPONENTS := jit interpreter nativecodegen
 

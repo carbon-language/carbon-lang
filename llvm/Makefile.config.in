@@ -262,6 +262,11 @@ ENABLE_THREADS := @ENABLE_THREADS@
 # Do we want to build with position independent code?
 ENABLE_PIC := @ENABLE_PIC@
 
+# Do we want to link the tools shared?
+ifndef ENABLE_SHARED
+  ENABLE_SHARED := @ENABLE_SHARED@
+endif
+
 # Use -fvisibility-inlines-hidden?
 ENABLE_VISIBILITY_INLINES_HIDDEN := @ENABLE_VISIBILITY_INLINES_HIDDEN@
 
@@ -271,6 +276,9 @@ ENABLE_VISIBILITY_INLINES_HIDDEN := @ENABLE_VISIBILITY_INLINES_HIDDEN@
 
 # Enable JIT for this platform
 TARGET_HAS_JIT = @TARGET_HAS_JIT@
+
+# Environment variable to set to change the runtime shared library search path.
+SHLIBPATH_VAR = @SHLIBPATH_VAR@
 
 # Shared library extension for host platform.
 SHLIBEXT = @SHLIBEXT@

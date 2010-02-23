@@ -623,11 +623,12 @@ endif
 ifneq ($(HOST_OS),Darwin)
 ifneq ($(DARWIN_MAJVERS),4)
 ifdef TOOLNAME
-ifdef EXAMPLE_TOOL
-  LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(RDYNAMIC)
-else
-  LD.Flags += $(RPATH) -Wl,$(ToolDir) $(RDYNAMIC)
-endif
+  LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
+  ifdef EXAMPLE_TOOL
+    LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(RDYNAMIC)
+  else
+    LD.Flags += $(RPATH) -Wl,$(ToolDir) $(RDYNAMIC)
+  endif
 endif
 endif
 endif
@@ -960,9 +961,14 @@ $(LLVM_CONFIG):
 
 $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT): $(LLVM_CONFIG)
 
+ifeq ($(ENABLE_SHARED), 1)
+LLVMLibsOptions += -lLLVM-$(LLVMVersion)
+LLVMLibsPaths += $(LibDir)/libLLVM-$(LLVMVersion)$(SHLIBEXT)
+else
 LLVMLibsOptions += $(shell $(LLVM_CONFIG) --libs     $(LINK_COMPONENTS))
 LLVMLibsPaths   += $(LLVM_CONFIG) \
                    $(shell $(LLVM_CONFIG) --libfiles $(LINK_COMPONENTS))
+endif
 endif
 endif
 
@@ -1169,9 +1175,11 @@ endif
 #   If neither BUILD_ARCHIVE or LOADABLE_MODULE are specified, default to
 #   building an archive.
 #---------------------------------------------------------
+ifndef NO_BUILD_ARCHIVE
 ifndef BUILD_ARCHIVE
 ifndef LOADABLE_MODULE
 BUILD_ARCHIVE = 1
+endif
 endif
 endif
 

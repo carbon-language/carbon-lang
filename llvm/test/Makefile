@@ -198,4 +198,6 @@ Unit/lit.site.cfg: $(PROJ_OBJ_DIR)/Unit/.dir FORCE
 	     -e "s#@LLVM_TOOLS_DIR@#$(ToolDir)#g" \
 	     -e "s#@LLVMGCCDIR@#$(LLVMGCCDIR)#g" \
 	     -e "s#@LLVM_BUILD_MODE@#$(BuildMode)#g" \
+	     -e "s#@ENABLE_SHARED@#$(ENABLE_SHARED)#g" \
+	     -e "s#@SHLIBPATH_VAR@#$(SHLIBPATH_VAR)#g" \
 	     $(PROJ_SRC_DIR)/Unit/lit.site.cfg.in > $@

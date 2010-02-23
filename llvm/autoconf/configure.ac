@@ -470,6 +470,18 @@ esac
 AC_DEFINE_UNQUOTED([ENABLE_PIC],$ENABLE_PIC,
                    [Define if position independent code is enabled])
 
+dnl Allow linking tools against the shared library.
+AC_ARG_ENABLE(shared,
+  AS_HELP_STRING([--enable-shared],
+                 [Link LLVM tools shared (default is NO)]),,
+                 enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_SHARED,[1]) ;;
+  no)  AC_SUBST(ENABLE_SHARED,[0]) ;;
+  default) AC_SUBST(ENABLE_SHARED,[0]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-shared. Use "yes" or "no"]) ;;
+esac
+
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
@@ -1331,6 +1343,10 @@ fi
 dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
 AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
+
+dnl Propagate the run-time library path variable that the libltdl
+dnl checks found to the Makefiles so we can use it there too
+AC_SUBST(SHLIBPATH_VAR,$libltdl_cv_shlibpath_var)
 
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in
