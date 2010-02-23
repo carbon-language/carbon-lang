@@ -1250,8 +1250,6 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_SUBST(LLVMCC1PLUS,$llvmcc1pluspath)
   llvmgccdir=`echo "$llvmcc1path" | sed 's,/libexec/.*,,'`
   AC_SUBST(LLVMGCCDIR,$llvmgccdir)
-  llvmgcclibexec=`echo "$llvmcc1path" | sed 's,/cc1,,'`
-  AC_SUBST(LLVMGCCLIBEXEC,$llvmgcclibexec)
   llvmgcclangs=[`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`]
   AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
   AC_MSG_RESULT([ok])

@@ -183,9 +183,6 @@ TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
 # want to override the value set by configure.
 LLVMGCCDIR := @LLVMGCCDIR@
 
-# Determine the path where the library executables are
-LLVMGCCLIBEXEC := @LLVMGCCLIBEXEC@
-
 # Full pathnames of LLVM C/C++ front-end 'cc1' and 'cc1plus' binaries:
 LLVMGCC  := @LLVMGCC@
 LLVMGXX  := @LLVMGXX@
