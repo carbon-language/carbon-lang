@@ -4,7 +4,6 @@
 set target_triplet "x86_64-apple-darwin10"
 set TARGETS_TO_BUILD "X86 Sparc PowerPC Alpha ARM Mips CellSPU PIC16 XCore MSP430 SystemZ Blackfin CBackend MSIL CppBackend"
 set llvmgcc_langs "c,c++,objc,obj-c++"
-set llvmgcc_version "4.2.1"
 set prcontext "/usr/bin/tclsh8.4 /Volumes/Data/ddunbar/llvm/test/Scripts/prcontext.tcl"
 set llvmtoolsdir "/Users/ddunbar/llvm.obj.64/Debug/bin"
 set llvmlibsdir "/Users/ddunbar/llvm.obj.64/Debug/lib"

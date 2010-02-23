@@ -155,7 +155,6 @@ site.exp: FORCE
 	@echo 'set target_triplet "$(TARGET_TRIPLE)"' >> site.tmp
 	@echo 'set TARGETS_TO_BUILD "$(TARGETS_TO_BUILD)"' >> site.tmp
 	@echo 'set llvmgcc_langs "$(LLVMGCC_LANGS)"' >> site.tmp
-	@echo 'set llvmgcc_version "$(LLVMGCC_VERSION)"' >> site.tmp
 	@echo 'set llvmtoolsdir "$(ToolDir)"' >>site.tmp
 	@echo 'set llvmlibsdir "$(LibDir)"' >>site.tmp
 	@echo 'set llvm_bindings "$(BINDINGS_TO_BUILD)"' >> site.tmp

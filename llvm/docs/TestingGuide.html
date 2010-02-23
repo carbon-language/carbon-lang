@@ -761,9 +761,6 @@ substitutions</a></div>
     <dd>The full path to the <tt>llvm-gxx</tt> executable as specified in the
     configured LLVM environment</dd>
 
-    <dt><b>llvmgcc_version</b> (%llvmgcc_version)</dt>
-    <dd>The full version number of the <tt>llvm-gcc</tt> executable.</dd>
-
     <dt><b>gccpath</b></dt>
     <dd>The full path to the C compiler used to <i>build </i> LLVM. Note that 
     this might not be gcc.</dd>
@@ -821,22 +818,20 @@ substitutions</a></div>
   </dl>
 
   <p>Sometimes it is necessary to mark a test case as "expected fail" or XFAIL.
-  You can easily mark a test as XFAIL just by including  <tt>XFAIL: </tt> on a
+  You can easily mark a test as XFAIL just by including <tt>XFAIL: </tt> on a
   line near the top of the file. This signals that the test case should succeed
   if the test fails. Such test cases are counted separately by DejaGnu. To
   specify an expected fail, use the XFAIL keyword in the comments of the test
   program followed by a colon and one or more regular expressions (separated by
-  a comma). The regular expressions allow you to XFAIL the test conditionally
-  by host platform. The regular expressions following the : are matched against
-  the target triplet or llvmgcc version number for the host machine. If there is
-  a match, the test is expected to fail. If not, the test is expected to
-  succeed. To XFAIL everywhere just specify <tt>XFAIL: *</tt>. When matching
-  the llvm-gcc version, you can specify the major (e.g. 3) or full version 
-  (i.e. 3.4) number. Here is an example of an <tt>XFAIL</tt> line:</p>
+  a comma). The regular expressions allow you to XFAIL the test conditionally by
+  host platform. The regular expressions following the : are matched against the
+  target triplet for the host machine. If there is a match, the test is expected
+  to fail. If not, the test is expected to succeed. To XFAIL everywhere just
+  specify <tt>XFAIL: *</tt>. Here is an example of an <tt>XFAIL</tt> line:</p>
 
 <div class="doc_code">
 <pre>
-; XFAIL: darwin,sun,llvmgcc4
+; XFAIL: darwin,sun
 </pre>
 </div>
 

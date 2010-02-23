@@ -47,7 +47,7 @@ proc execOneLine { test PRS outcome lineno line } {
 # cases.
 proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet
-  global llvmgcc llvmgxx llvmgcc_version ocamlopt
+  global llvmgcc llvmgxx ocamlopt
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
   global llvmdsymutil valgrind grep gas bugpoint_topts
   set path [file join $srcdir $subdir]
@@ -119,7 +119,7 @@ proc substitute { line test tmpFile } {
 
 # This procedure runs the set of tests for the test_source_files array.
 proc RunLLVMTests { test_source_files } {
-  global srcroot objroot srcdir objdir subdir target_triplet llvmgcc_version
+  global srcroot objroot srcdir objdir subdir target_triplet
   set timeout 60
 
   set path [file join $objdir $subdir]
@@ -194,12 +194,6 @@ proc RunLLVMTests { test_source_files } {
               if {$targetPASS != 1} {
                  set outcome XFAIL
               }
-          } elseif { [regexp {llvmgcc(([0-9]+)|([0-9]+[.][0-9]+))} $target match submatch submatch2]  } {
-            if { [regexp ^($submatch)$|^(($submatch)(\.)) $llvmgcc_version match] } {
-              if {$targetPASS != 1} {
-                 set outcome XFAIL
-              }
-            }
           }
         }
       } elseif {[regexp {XTARGET:[ *](.+)} $line match targets]} {
@@ -213,11 +207,6 @@ proc RunLLVMTests { test_source_files } {
           } elseif { [regexp $target $target_triplet match] } {
               set targetPASS 1
               set outcome PASS
-          } elseif { [regexp {llvmgcc(([0-9]+)|([0-9]+[.][0-9]+))} $target match submatch submatch2]  } {
-            if { [regexp ^($submatch)$|^(($submatch)(\.)) $llvmgcc_version match] } {
-              set targetPASS 1
-              set outcome PASS
-            }
           }
         }
       }

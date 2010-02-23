@@ -3,7 +3,6 @@
 set target_triplet "@TARGET_TRIPLE@"
 set TARGETS_TO_BUILD "@TARGETS_TO_BUILD@"
 set llvmgcc_langs "@LLVMGCC_LANGS@"
-set llvmgcc_version "@LLVMGCC_VERSION@"
 set llvmtoolsdir "@LLVM_TOOLS_DIR@"
 set llvmlibsdir "@LLVM_LIBS_DIR@"
 set llvm_bindings "@LLVM_BINDINGS@"
