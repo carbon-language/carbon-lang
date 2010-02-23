@@ -1682,13 +1682,13 @@ struct IntRange {
   }
 
   // Returns the supremum of two ranges: i.e. their conservative merge.
-  static IntRange join(const IntRange &L, const IntRange &R) {
+  static IntRange join(IntRange L, IntRange R) {
     return IntRange(std::max(L.Width, R.Width),
                     L.NonNegative && R.NonNegative);
   }
 
   // Returns the infinum of two ranges: i.e. their aggressive merge.
-  static IntRange meet(const IntRange &L, const IntRange &R) {
+  static IntRange meet(IntRange L, IntRange R) {
     return IntRange(std::min(L.Width, R.Width),
                     L.NonNegative || R.NonNegative);
   }
@@ -1806,6 +1806,15 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     case BinaryOperator::NE:
       return IntRange::forBoolType();
 
+    // The type of these compound assignments is the type of the LHS,
+    // so the RHS is not necessarily an integer.
+    case BinaryOperator::MulAssign:
+    case BinaryOperator::DivAssign:
+    case BinaryOperator::RemAssign:
+    case BinaryOperator::AddAssign:
+    case BinaryOperator::SubAssign:
+      return IntRange::forType(C, E->getType());
+
     // Operations with opaque sources are black-listed.
     case BinaryOperator::PtrMemD:
     case BinaryOperator::PtrMemI:
@@ -1813,15 +1822,18 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
 
     // Bitwise-and uses the *infinum* of the two source ranges.
     case BinaryOperator::And:
+    case BinaryOperator::AndAssign:
       return IntRange::meet(GetExprRange(C, BO->getLHS(), MaxWidth),
                             GetExprRange(C, BO->getRHS(), MaxWidth));
 
     // Left shift gets black-listed based on a judgement call.
     case BinaryOperator::Shl:
+    case BinaryOperator::ShlAssign:
       return IntRange::forType(C, E->getType());
 
     // Right shift by a constant can narrow its left argument.
-    case BinaryOperator::Shr: {
+    case BinaryOperator::Shr:
+    case BinaryOperator::ShrAssign: {
       IntRange L = GetExprRange(C, BO->getLHS(), MaxWidth);
 
       // If the shift amount is a positive constant, drop the width by

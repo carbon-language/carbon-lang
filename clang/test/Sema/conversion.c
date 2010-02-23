@@ -279,3 +279,11 @@ void test_7631400(void) {
   // This should show up despite the caret being inside a macro substitution
   char s = LONG_MAX; // expected-warning {{implicit cast loses integer precision: 'long' to 'char'}}
 }
+
+// <rdar://problem/7676608>: assertion for compound operators with non-integral RHS
+void f7676608(int);
+void test_7676608(void) {
+  float q = 0.7f;
+  char c = 5;
+  f7676608(c *= q);
+}
