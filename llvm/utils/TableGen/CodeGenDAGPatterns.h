@@ -625,6 +625,7 @@ private:
   void InferInstructionFlags();
   void GenerateVariants();
   
+  void AddPatternToMatch(const TreePattern *Pattern, const PatternToMatch &PTM);
   void FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                                    std::map<std::string,
                                    TreePatternNode*> &InstInputs,

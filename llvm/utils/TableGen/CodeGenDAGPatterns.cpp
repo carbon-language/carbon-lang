@@ -2077,18 +2077,25 @@ void CodeGenDAGPatterns::ParseInstructions() {
       SrcPattern = Pattern;
     }
     
-    std::string Reason;
-    if (!SrcPattern->canPatternMatch(Reason, *this))
-      I->error("Instruction can never match: " + Reason);
-    
     Record *Instr = II->first;
     TreePatternNode *DstPattern = TheInst.getResultPattern();
-    PatternsToMatch.
-      push_back(PatternToMatch(Instr->getValueAsListInit("Predicates"),
-                               SrcPattern, DstPattern, TheInst.getImpResults(),
-                               Instr->getValueAsInt("AddedComplexity")));
+    AddPatternToMatch(I,
+                      PatternToMatch(Instr->getValueAsListInit("Predicates"),
+                                     SrcPattern, DstPattern,
+                                     TheInst.getImpResults(),
+                                     Instr->getValueAsInt("AddedComplexity")));
   }
 }
+
+void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
+                                           const PatternToMatch &PTM) {
+  std::string Reason;
+  if (!PTM.getSrcPattern()->canPatternMatch(Reason, *this))
+    Pattern->error("Instruction can never match: " + Reason);
+  
+  PatternsToMatch.push_back(PTM);
+}
+
 
 
 void CodeGenDAGPatterns::InferInstructionFlags() {
@@ -2218,15 +2225,12 @@ void CodeGenDAGPatterns::ParsePatterns() {
     TreePattern Temp(Result->getRecord(), DstPattern, false, *this);
     Temp.InferAllTypes();
 
-    std::string Reason;
-    if (!Pattern->getTree(0)->canPatternMatch(Reason, *this))
-      Pattern->error("Pattern can never match: " + Reason);
     
-    PatternsToMatch.
-      push_back(PatternToMatch(Patterns[i]->getValueAsListInit("Predicates"),
-                               Pattern->getTree(0),
-                               Temp.getOnlyTree(), InstImpResults,
-                               Patterns[i]->getValueAsInt("AddedComplexity")));
+    AddPatternToMatch(Pattern,
+                 PatternToMatch(Patterns[i]->getValueAsListInit("Predicates"),
+                                Pattern->getTree(0),
+                                Temp.getOnlyTree(), InstImpResults,
+                                Patterns[i]->getValueAsInt("AddedComplexity")));
   }
 }
 
