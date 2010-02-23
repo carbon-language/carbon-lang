@@ -25,35 +25,35 @@ using namespace CodeGen;
 
 namespace {
 
+/// BaseOffset - Represents an offset from a derived class to a direct or
+/// indirect base class.
+struct BaseOffset {
+  /// DerivedClass - The derived class.
+  const CXXRecordDecl *DerivedClass;
+  
+  /// VirtualBase - If the path from the derived class to the base class
+  /// involves a virtual base class, this holds its declaration.
+  const CXXRecordDecl *VirtualBase;
+
+  /// NonVirtualOffset - The offset from the derived class to the base class.
+  /// (Or the offset from the virtual base class to the base class, if the 
+  /// path from the derived class to the base class involves a virtual base
+  /// class.
+  int64_t NonVirtualOffset;
+  
+  BaseOffset() : DerivedClass(0), VirtualBase(0), NonVirtualOffset(0) { }
+  BaseOffset(const CXXRecordDecl *DerivedClass,
+             const CXXRecordDecl *VirtualBase, int64_t NonVirtualOffset)
+    : DerivedClass(DerivedClass), VirtualBase(VirtualBase), 
+    NonVirtualOffset(NonVirtualOffset) { }
+
+  bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; }
+};
+
 /// FinalOverriders - Contains the final overrider member functions for all
 /// member functions in the base subobjects of a class.
 class FinalOverriders {
 public:
-  /// BaseOffset - Represents an offset from a derived class to a direct or
-  /// indirect base class.
-  struct BaseOffset {
-    /// DerivedClass - The derived class.
-    const CXXRecordDecl *DerivedClass;
-    
-    /// VirtualBase - If the path from the derived class to the base class
-    /// involves a virtual base class, this holds its declaration.
-    const CXXRecordDecl *VirtualBase;
-
-    /// NonVirtualOffset - The offset from the derived class to the base class.
-    /// (Or the offset from the virtual base class to the base class, if the 
-    /// path from the derived class to the base class involves a virtual base
-    /// class.
-    int64_t NonVirtualOffset;
-    
-    BaseOffset() : DerivedClass(0), VirtualBase(0), NonVirtualOffset(0) { }
-    BaseOffset(const CXXRecordDecl *DerivedClass,
-               const CXXRecordDecl *VirtualBase, int64_t NonVirtualOffset)
-      : DerivedClass(DerivedClass), VirtualBase(VirtualBase), 
-      NonVirtualOffset(NonVirtualOffset) { }
-
-    bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; }
-  };
-  
   /// OverriderInfo - Information about a final overrider.
   struct OverriderInfo {
     /// Method - The method decl of the overrider.
@@ -244,9 +244,9 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
   }
 }
 
-static FinalOverriders::BaseOffset
-ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *DerivedRD,
-                  const CXXBasePath &Path) {
+static BaseOffset ComputeBaseOffset(ASTContext &Context, 
+                                    const CXXRecordDecl *DerivedRD,
+                                    const CXXBasePath &Path) {
   int64_t NonVirtualOffset = 0;
 
   unsigned NonVirtualStart = 0;
@@ -282,27 +282,26 @@ ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *DerivedRD,
   // FIXME: This should probably use CharUnits or something. Maybe we should
   // even change the base offsets in ASTRecordLayout to be specified in 
   // CharUnits.
-  return FinalOverriders::BaseOffset(DerivedRD, VirtualBase, 
-                                     NonVirtualOffset / 8);
+  return BaseOffset(DerivedRD, VirtualBase, NonVirtualOffset / 8);
   
 }
 
-static FinalOverriders::BaseOffset 
-ComputeBaseOffset(ASTContext &Context, const CXXRecordDecl *BaseRD,
-                  const CXXRecordDecl *DerivedRD) {
+static BaseOffset ComputeBaseOffset(ASTContext &Context, 
+                                    const CXXRecordDecl *BaseRD,
+                                    const CXXRecordDecl *DerivedRD) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
                      /*RecordPaths=*/true, /*DetectVirtual=*/false);
   
   if (!const_cast<CXXRecordDecl *>(DerivedRD)->
       isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
     assert(false && "Class must be derived from the passed in base class!");
-    return FinalOverriders::BaseOffset();
+    return BaseOffset();
   }
 
   return ComputeBaseOffset(Context, DerivedRD, Paths.front());
 }
 
-static FinalOverriders::BaseOffset
+static BaseOffset
 ComputeReturnAdjustmentBaseOffset(ASTContext &Context, 
                                   const CXXMethodDecl *DerivedMD,
                                   const CXXMethodDecl *BaseMD) {
@@ -321,7 +320,7 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
   
   if (CanDerivedReturnType == CanBaseReturnType) {
     // No adjustment needed.
-    return FinalOverriders::BaseOffset();
+    return BaseOffset();
   }
   
   if (isa<ReferenceType>(CanDerivedReturnType)) {
@@ -344,7 +343,7 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
   if (CanDerivedReturnType.getUnqualifiedType() == 
       CanBaseReturnType.getUnqualifiedType()) {
     // No adjustment needed.
-    return FinalOverriders::BaseOffset();
+    return BaseOffset();
   }
   
   const CXXRecordDecl *DerivedRD = 
@@ -356,7 +355,7 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
   return ComputeBaseOffset(Context, BaseRD, DerivedRD);
 }
 
-FinalOverriders::BaseOffset
+BaseOffset
 FinalOverriders::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
                                                  BaseSubobject Derived) {
   const CXXRecordDecl *BaseRD = Base.getBase();
@@ -976,13 +975,13 @@ private:
 
   /// ComputeReturnAdjustment - Compute the return adjustment given a return
   /// adjustment base offset.
-  ReturnAdjustment ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset);
+  ReturnAdjustment ComputeReturnAdjustment(BaseOffset Offset);
   
   /// ComputeThisAdjustment - Compute the 'this' pointer adjustment for the
   /// given virtual member function and the 'this' pointer adjustment base 
   /// offset.
   ThisAdjustment ComputeThisAdjustment(const CXXMethodDecl *MD,
-                                       FinalOverriders::BaseOffset Offset);
+                                       BaseOffset Offset);
   
   /// AddMethod - Add a single virtual member function to the vtable
   /// components vector.
@@ -1044,7 +1043,7 @@ OverridesMethodInPrimaryBase(const CXXMethodDecl *MD,
 }
 
 VtableBuilder::ReturnAdjustment 
-VtableBuilder::ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset) {
+VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   ReturnAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
@@ -1067,7 +1066,7 @@ VtableBuilder::ComputeReturnAdjustment(FinalOverriders::BaseOffset Offset) {
 
 VtableBuilder::ThisAdjustment
 VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
-                                     FinalOverriders::BaseOffset Offset) {
+                                     BaseOffset Offset) {
   ThisAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
@@ -1150,7 +1149,7 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base) {
       continue;
     
     // Get the 'this' pointer adjustment offset.
-    FinalOverriders::BaseOffset ThisAdjustmentOffset =
+    BaseOffset ThisAdjustmentOffset =
       Overriders.getThisAdjustmentOffset(Base, MD);
     
     int64_t Offset = 0;
@@ -1298,14 +1297,14 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
     }
 
     // Check if this overrider needs a return adjustment.
-    FinalOverriders::BaseOffset ReturnAdjustmentOffset = 
+    BaseOffset ReturnAdjustmentOffset = 
       Overriders.getReturnAdjustmentOffset(Base, MD);
 
     ReturnAdjustment ReturnAdjustment = 
       ComputeReturnAdjustment(ReturnAdjustmentOffset);
     
     // Check if this overrider needs a 'this' pointer adjustment.
-    FinalOverriders::BaseOffset ThisAdjustmentOffset =
+    BaseOffset ThisAdjustmentOffset =
       Overriders.getThisAdjustmentOffset(Base, MD);
     
     ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
