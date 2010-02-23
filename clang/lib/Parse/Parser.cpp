@@ -743,10 +743,11 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     // Handle the full declarator list.
     while (1) {
       // If attributes are present, parse them.
-      llvm::OwningPtr<AttributeList> AttrList;
-      if (Tok.is(tok::kw___attribute))
-        // FIXME: attach attributes too.
-        AttrList.reset(ParseGNUAttributes());
+      if (Tok.is(tok::kw___attribute)) {
+        SourceLocation Loc;
+        AttributeList *AttrList = ParseGNUAttributes(&Loc);
+        ParmDeclarator.AddAttributes(AttrList, Loc);
+      }
 
       // Ask the actions module to compute the type for this declarator.
       Action::DeclPtrTy Param =
