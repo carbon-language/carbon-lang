@@ -532,13 +532,8 @@ endif
 ifndef LUPGRADE
 LUPGRADE := $(LLVMToolDir)/llvm-upgrade$(EXEEXT)
 endif
-ifeq ($(LLVMGCC_MAJVERS),3)
-LLVMGCCWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGCC)
-LLVMGXXWITHPATH  := PATH="$(LLVMToolDir):$(PATH)" $(LLVMGXX)
-else
 LLVMGCCWITHPATH  := $(LLVMGCC)
 LLVMGXXWITHPATH  := $(LLVMGXX)
-endif
 
 #--------------------------------------------------------------------
 # Adjust to user's request

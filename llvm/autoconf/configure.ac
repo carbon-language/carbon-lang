@@ -1255,7 +1255,6 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   llvmgccversion=[`"$LLVMGCC" -dumpversion 2>&1 | sed 's/^\([0-9.]*\).*/\1/'`]
   llvmgccmajvers=[`echo $llvmgccversion | sed 's/^\([0-9]\).*/\1/'`]
   AC_SUBST(LLVMGCC_VERSION,$llvmgccversion)
-  AC_SUBST(LLVMGCC_MAJVERS,$llvmgccmajvers)
   llvmgcclangs=[`"$LLVMGCC" -v --help 2>&1 | grep '^Configured with:' | sed 's/^.*--enable-languages=\([^ ]*\).*/\1/'`]
   AC_SUBST(LLVMGCC_LANGS,$llvmgcclangs)
   AC_MSG_RESULT([ok])

@@ -184,11 +184,7 @@ TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
 LLVMGCCDIR := @LLVMGCCDIR@
 
 # Determine the target for which LLVM should generate code.
-ifeq (@LLVMGCC_MAJVERS@,3)
-LLVMGCCARCH := @target@/3.4-llvm
-else
 LLVMGCCARCH := @target@/@LLVMGCC_VERSION@
-endif
 
 # Determine the path where the library executables are
 LLVMGCCLIBEXEC := @LLVMGCCLIBEXEC@
@@ -199,7 +195,6 @@ LLVMGXX  := @LLVMGXX@
 LLVMCC1  := @LLVMCC1@
 LLVMCC1PLUS := @LLVMCC1PLUS@
 LLVMGCC_VERSION := @LLVMGCC_VERSION@
-LLVMGCC_MAJVERS := @LLVMGCC_MAJVERS@
 LLVMGCC_LANGS := @LLVMGCC_LANGS@
 
 # Path to directory where object files should be stored during a build.
