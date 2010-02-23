@@ -1795,14 +1795,18 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
   switch (D.Type) {
   case OptionType::Switch:
     O.indent(IndentLevel)
-      << "vec.push_back(std::make_pair(0, \"" << Name << "\"));\n";
+      << "vec.push_back(std::make_pair(" << D.GenVariableName()
+      << ".getPosition(), \"" << Name << "\"));\n";
     break;
   case OptionType::Parameter:
-    O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, \"" << Name;
+    O.indent(IndentLevel) << "vec.push_back(std::make_pair("
+                          << D.GenVariableName()
+                          <<".getPosition(), \"" << Name;
 
     if (!D.isForwardNotSplit()) {
       O << "\"));\n";
-      O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, "
+      O.indent(IndentLevel) << "vec.push_back(std::make_pair("
+                            << D.GenVariableName() << ".getPosition(), "
                             << D.GenVariableName() << "));\n";
     }
     else {
@@ -1810,7 +1814,8 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
     }
     break;
   case OptionType::Prefix:
-    O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, \""
+    O.indent(IndentLevel) << "vec.push_back(std::make_pair("
+                          << D.GenVariableName() << ".getPosition(), \""
                           << Name << "\" + "
                           << D.GenVariableName() << "));\n";
     break;
@@ -1820,12 +1825,15 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
       << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
     O.indent(IndentLevel)
       << "E = " << D.GenVariableName() << ".end(); B != E;) {\n";
-    O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, \""
+    O.indent(IndentLevel1) << "unsigned pos = " << D.GenVariableName()
+                           << ".getPosition(B - " << D.GenVariableName()
+                           << ".begin());\n";
+    O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, \""
                            << Name << "\" + " << "*B));\n";
     O.indent(IndentLevel1) << "++B;\n";
 
     for (int i = 1, j = D.MultiVal; i < j; ++i) {
-      O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, *B));\n";
+      O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, *B));\n";
       O.indent(IndentLevel1) << "++B;\n";
     }
 
@@ -1837,11 +1845,14 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
       << D.GenVariableName() << ".begin(),\n";
     O.indent(IndentLevel) << "E = " << D.GenVariableName()
                           << ".end() ; B != E;) {\n";
-    O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, \""
+    O.indent(IndentLevel1) << "unsigned pos = " << D.GenVariableName()
+                           << ".getPosition(B - " << D.GenVariableName()
+                           << ".begin());\n";
+    O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, \""
                            << Name << "\"));\n";
 
     for (int i = 0, j = D.MultiVal; i < j; ++i) {
-      O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, *B));\n";
+      O.indent(IndentLevel1) << "vec.push_back(std::make_pair(pos, *B));\n";
       O.indent(IndentLevel1) << "++B;\n";
     }
 
@@ -1923,7 +1934,7 @@ class EmitActionHandlersCallback :
   {
     CheckNumberOfArguments(Dag, 1);
     this->EmitHookInvocation(InitPtrToString(Dag.getArg(0)),
-                             "vec.push_back(std::make_pair(0, ", "));\n",
+                             "vec.push_back(std::make_pair(65536, ", "));\n",
                              IndentLevel, O);
   }
 
@@ -1954,7 +1965,8 @@ class EmitActionHandlersCallback :
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
     if (D.isParameter()) {
-      O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, "
+      O.indent(IndentLevel) << "vec.push_back(std::make_pair("
+                            << D.GenVariableName() << ".getPosition(), "
                             << D.GenVariableName() << "));\n";
     }
     else {
@@ -1964,7 +1976,11 @@ class EmitActionHandlersCallback :
                                       << ".end(); B != E; ++B)\n";
       O.indent(IndentLevel) << "{\n";
       O.indent(IndentLevel + Indent1)
-        << "vec.push_back(std::make_pair(0, *B));\n";
+        << "unsigned pos = " << D.GenVariableName()
+        << ".getPosition(B - " << D.GenVariableName()
+        << ".begin());\n";
+      O.indent(IndentLevel + Indent1)
+        << "vec.push_back(std::make_pair(pos, *B));\n";
       O.indent(IndentLevel) << "}\n";
     }
   }
@@ -1977,8 +1993,10 @@ class EmitActionHandlersCallback :
     const std::string& Hook = InitPtrToString(Dag.getArg(1));
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
-    O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, " << "hooks::"
-                          << Hook << "(" << D.GenVariableName()
+    O.indent(IndentLevel) << "vec.push_back(std::make_pair("
+                          << D.GenVariableName() << ".getPosition("
+                          << (D.isList() ? "0" : "") << "), "
+                          << "hooks::" << Hook << "(" << D.GenVariableName()
                           << (D.isParameter() ? ".c_str()" : "") << ")));\n";
   }
 
@@ -2092,8 +2110,9 @@ void EmitGenerateActionMethod (const ToolDescription& D,
 
   // Input file (s)
   if (!D.InFileOption.empty()) {
-    O.indent(Indent2) << "vec.push_back(std::make_pair(0, \""
-                      << D.InFileOption << "\");\n";
+    O.indent(Indent2)
+      << "vec.push_back(std::make_pair(InputFilenames.getPosition(0), \""
+      << D.InFileOption << "\");\n";
   }
 
   if (IsJoin) {
@@ -2101,23 +2120,26 @@ void EmitGenerateActionMethod (const ToolDescription& D,
       << "for (PathVector::const_iterator B = inFiles.begin(),\n";
     O.indent(Indent3) << "E = inFiles.end(); B != E; ++B)\n";
     O.indent(Indent2) << "{\n";
-    O.indent(Indent3) << "vec.push_back(std::make_pair(0, B->str()));\n";
+    O.indent(Indent3) << "vec.push_back(std::make_pair("
+                      << "InputFilenames.getPosition(B - inFiles.begin()), "
+                      << "B->str()));\n";
     O.indent(Indent2) << "}\n";
   }
   else {
-    O.indent(Indent2) << "vec.push_back(std::make_pair(0, inFile.str()));\n";
+    O.indent(Indent2) << "vec.push_back(std::make_pair("
+                      << "InputFilenames.getPosition(0), inFile.str()));\n";
   }
 
   // Output file
   O.indent(Indent2) << "if (!no_out_file) {\n";
   if (!D.OutFileOption.empty())
-    O.indent(Indent3) << "vec.push_back(std::make_pair(0, \""
+    O.indent(Indent3) << "vec.push_back(std::make_pair(65536, \""
                       << D.OutFileOption << "\"));\n";
 
   O.indent(Indent3) << "out_file = this->OutFilename("
                     << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
   O.indent(Indent4) << "TempDir, stop_compilation, output_suffix).str();\n\n";
-  O.indent(Indent3) << "vec.push_back(std::make_pair(0, out_file));\n";
+  O.indent(Indent3) << "vec.push_back(std::make_pair(65536, out_file));\n";
 
   O.indent(Indent2) << "}\n\n";
 
@@ -2127,7 +2149,9 @@ void EmitGenerateActionMethod (const ToolDescription& D,
     O.indent(Indent3) << "for (cl::list<std::string>::iterator B = "
                       << SinkOptionName << ".begin(), E = " << SinkOptionName
                       << ".end(); B != E; ++B)\n";
-    O.indent(Indent4) << "vec.push_back(std::make_pair(0, *B));\n";
+    O.indent(Indent4) << "vec.push_back(std::make_pair(" << SinkOptionName
+                      << ".getPosition(B - " << SinkOptionName
+                      <<  ".begin()), *B));\n";
     O.indent(Indent2) << "}\n";
   }
 
