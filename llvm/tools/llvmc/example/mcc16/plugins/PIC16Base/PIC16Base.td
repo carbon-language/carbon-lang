@@ -72,16 +72,14 @@ class clang_based<string language, string cmd, string ext_E> : Tool<
 [(in_language language),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line (case
-           (switch_on "E"),
-           (case 
-              (not_empty "o"), !strconcat(cmd, " -E $INFILE -o $OUTFILE"),
-              (default), !strconcat(cmd, " -E $INFILE")),
-           (default), !strconcat(cmd, " $INFILE -o $OUTFILE"))),
- (actions (case 
-                (and (multiple_input_files), (or (switch_on "S"), (switch_on "c"))),
-              (error "cannot specify -o with -c or -S with multiple files"),
-                (switch_on "E"), [(stop_compilation), (output_suffix ext_E)],
+ (command cmd),
+ (actions (case
+                (and (multiple_input_files),
+                     (or (switch_on "S"), (switch_on "c"))),
+                  (error "cannot specify -o with -c or -S with multiple files"),
+                (switch_on "E"), [(forward "E"),
+                                  (stop_compilation), (output_suffix ext_E)],
+                (and (switch_on "E"), (empty "o")), (no_out_file),
                 (switch_on "bc"),[(stop_compilation), (output_suffix "bc")],
                 (switch_on "g"), (append_cmd "-g"),
                 (switch_on "w"), (append_cmd "-w"),
@@ -116,12 +114,13 @@ def llvm_ld : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "$CALL(GetBinDir)llvm-ld -L $CALL(GetStdLibsDir) -disable-gvn -disable-licm-promotion -disable-mem2reg $INFILE -b $OUTFILE -l std"),
+ (command "$CALL(GetBinDir)llvm-ld -L $CALL(GetStdLibsDir) -disable-gvn -disable-licm-promotion -disable-mem2reg -l std"),
+ (out_file_option "-b"),
  (actions (case
           (switch_on "O0"), (append_cmd "-disable-opt"),
           (switch_on "O1"), (append_cmd "-disable-opt"),
 // Whenever O3 is not specified on the command line, default i.e. disable-inlining will always be added.
-          (switch_on "O2"), (append_cmd ""), 
+          (switch_on "O2"), (append_cmd ""),
           (switch_on "O3"), (append_cmd ""),
           (default), (append_cmd "-disable-inlining"))),
  (join)
@@ -134,12 +133,13 @@ def llvm_ld_optimizer : Tool<[
  (output_suffix "bc"),
 // FIXME: we are still not disabling licm-promotion.
 // -disable-licm-promotion and building stdn library causes c16-71 to fail.
- (cmd_line "$CALL(GetBinDir)llvm-ld -disable-gvn -disable-mem2reg                              $INFILE -b $OUTFILE"),
+ (command "$CALL(GetBinDir)llvm-ld -disable-gvn -disable-mem2reg"),
+ (out_file_option "-b"),
  (actions (case
           (switch_on "O0"), (append_cmd "-disable-opt"),
           (switch_on "O1"), (append_cmd "-disable-opt"),
 // Whenever O3 is not specified on the command line, default i.e. disable-inlining will always be added.
-          (switch_on "O2"), (append_cmd ""), 
+          (switch_on "O2"), (append_cmd ""),
           (switch_on "O3"), (append_cmd ""),
           (default), (append_cmd "-disable-inlining")))
 ]>;
@@ -149,7 +149,7 @@ def pic16passes : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "obc"),
- (cmd_line "$CALL(GetBinDir)opt -pic16cg -pic16overlay $INFILE -f -o $OUTFILE"),
+ (command "$CALL(GetBinDir)opt -pic16cg -pic16overlay -f"),
  (actions (case
           (switch_on "O0"), (append_cmd "-disable-opt")))
 ]>;
@@ -158,7 +158,7 @@ def llc : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "assembler"),
  (output_suffix "s"),
- (cmd_line "$CALL(GetBinDir)llc -march=pic16 -disable-jump-tables -pre-RA-sched=list-burr -f $INFILE -o $OUTFILE"),
+ (command "$CALL(GetBinDir)llc -march=pic16 -disable-jump-tables -pre-RA-sched=list-burr -f"),
  (actions (case
           (switch_on "S"), (stop_compilation),
 //          (not_empty "Wllc,"), (unpack_values "Wllc,"),
@@ -171,7 +171,7 @@ def gpasm : Tool<[
  (in_language "assembler"),
  (out_language "object-code"),
  (output_suffix "o"),
- (cmd_line "$CALL(GetBinDir)gpasm -z -r decimal -I $CALL(GetStdAsmHeadersDir) -C -c -w 2 $INFILE -o $OUTFILE"),
+ (command "$CALL(GetBinDir)gpasm -z -r decimal -I $CALL(GetStdAsmHeadersDir) -C -c -w 2"),
  (actions (case
           (switch_on "c"), (stop_compilation),
           (switch_on "g"), (append_cmd "-g"),
@@ -184,7 +184,7 @@ def mplink : Tool<[
  (in_language "object-code"),
  (out_language "executable"),
  (output_suffix "cof"),
- (cmd_line "$CALL(GetBinDir)mplink -e -k $CALL(GetStdLinkerScriptsDir) -l $CALL(GetStdLibsDir) intrinsics.lib stdn.lib $INFILE -o $OUTFILE"),
+ (command "$CALL(GetBinDir)mplink -e -k $CALL(GetStdLinkerScriptsDir) -l $CALL(GetStdLibsDir) intrinsics.lib stdn.lib"),
  (actions (case
           (not_empty "Wl,"), (forward_value "Wl,"),
           (switch_on "X"), (append_cmd "-x"),
@@ -217,13 +217,13 @@ def LanguageMap : LanguageMap<[
 def CompilationGraph : CompilationGraph<[
     Edge<"root", "clang_cc">,
     Edge<"root", "llvm_ld">,
-    OptionalEdge<"root", "llvm_ld_optimizer", (case 
+    OptionalEdge<"root", "llvm_ld_optimizer", (case
                                          (switch_on "S"), (inc_weight),
                                          (switch_on "c"), (inc_weight))>,
     Edge<"root", "gpasm">,
     Edge<"root", "mplink">,
     Edge<"clang_cc", "llvm_ld">,
-    OptionalEdge<"clang_cc", "llvm_ld_optimizer", (case 
+    OptionalEdge<"clang_cc", "llvm_ld_optimizer", (case
                                          (switch_on "S"), (inc_weight),
                                          (switch_on "c"), (inc_weight))>,
     Edge<"llvm_ld", "pic16passes">,
