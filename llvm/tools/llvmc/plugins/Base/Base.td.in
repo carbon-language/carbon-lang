@@ -311,7 +311,7 @@ def LanguageMap : LanguageMap<
      LangToSuffixes<"assembler-with-cpp", ["S"]>,
      LangToSuffixes<"llvm-assembler", ["ll"]>,
      LangToSuffixes<"llvm-bitcode", ["bc"]>,
-     LangToSuffixes<"object-code", ["o"]>,
+     LangToSuffixes<"object-code", ["o", "*empty*"]>,
      LangToSuffixes<"executable", ["out"]>
      ]>;
 
