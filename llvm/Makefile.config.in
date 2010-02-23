@@ -190,6 +190,14 @@ LLVMCC1  := @LLVMCC1@
 LLVMCC1PLUS := @LLVMCC1PLUS@
 LLVMGCC_LANGS := @LLVMGCC_LANGS@
 
+# Information on Clang, if configured.
+CLANGPATH := @CLANGPATH@
+CLANGXXPATH := @CLANGXXPATH@
+ENABLE_BUILT_CLANG := @ENABLE_BUILT_CLANG@
+
+# The LLVM capable compiler to use.
+LLVMCC_OPTION := @LLVMCC_OPTION@
+
 # Path to directory where object files should be stored during a build.
 # Set OBJ_ROOT to "." if you do not want to use a separate place for
 # object files.
