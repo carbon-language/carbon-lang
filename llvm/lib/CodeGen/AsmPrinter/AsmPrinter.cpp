@@ -917,11 +917,10 @@ void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
   
   if (NumBits == 0) return;   // No need to emit alignment.
   
-  unsigned FillValue = 0;
   if (getCurrentSection()->getKind().isText())
-    FillValue = MAI->getTextAlignFillValue();
-  
-  OutStreamer.EmitValueToAlignment(1 << NumBits, FillValue, 1, 0);
+    OutStreamer.EmitCodeAlignment(1 << NumBits);
+  else
+    OutStreamer.EmitValueToAlignment(1 << NumBits, 0, 1, 0);
 }
 
 /// LowerConstant - Lower the specified LLVM Constant to an MCExpr.
