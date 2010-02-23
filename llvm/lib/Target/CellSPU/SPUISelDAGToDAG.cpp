@@ -296,7 +296,8 @@ namespace {
             (SPU::get_ILHUvec_imm(bvNode, *CurDAG, MVT::i64).getNode() != 0) ||
             (SPU::get_vec_u18imm(bvNode, *CurDAG, MVT::i64).getNode() != 0)))) {
         HandleSDNode Dummy(SDValue(bvNode, 0));
-        Select(bvNode);
+        if (SDNode *N = Select(bvNode))
+          return N;
         return Dummy.getValue().getNode();
       }
 
@@ -320,7 +321,8 @@ namespace {
                                          PseudoSourceValue::getConstantPool(),0,
                                          false, false, Alignment));
       CurDAG->ReplaceAllUsesWith(SDValue(bvNode, 0), Dummy.getValue());
-      SelectCode(Dummy.getValue().getNode());
+      if (SDNode *N = SelectCode(Dummy.getValue().getNode()))
+        return N;
       return Dummy.getValue().getNode();
     }
 
@@ -765,9 +767,8 @@ SPUDAGToDAGISel::Select(SDNode *N) {
     }
 
     SDNode *shufMaskLoad = emitBuildVector(shufMask.getNode());
-    SDNode *PromoteScalar =
-            SelectCode(CurDAG->getNode(SPUISD::PREFSLOT2VEC, dl,
-                                       Op0VecVT, Op0).getNode());
+    SDNode *PromoteScalar = CurDAG->getNode(SPUISD::PREFSLOT2VEC, dl,
+                                            Op0VecVT, Op0).getNode();
 
     SDValue zextShuffle =
             CurDAG->getNode(SPUISD::SHUFB, dl, OpVecVT,
@@ -778,9 +779,13 @@ SPUDAGToDAGISel::Select(SDNode *N) {
     // N.B.: BIT_CONVERT replaces and updates the zextShuffle node, so we
     // re-use it in the VEC2PREFSLOT selection without needing to explicitly
     // call SelectCode (it's already done for us.)
-    SelectCode(CurDAG->getNode(ISD::BIT_CONVERT, dl, OpVecVT, zextShuffle).getNode());
+    HandleSDNode Dummy2(zextShuffle); //CurDAG->getNode(ISD::BIT_CONVERT, dl, OpVecVT,
+                                      //  zextShuffle));
+    
+    if (SDNode *N = SelectCode(Dummy2.getValue().getNode()))
+      return N;
     HandleSDNode Dummy(CurDAG->getNode(SPUISD::VEC2PREFSLOT, dl, OpVT,
-                                      zextShuffle));
+                                       Dummy2.getValue()));
     
     CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
     SelectCode(Dummy.getValue().getNode());
@@ -794,7 +799,8 @@ SPUDAGToDAGISel::Select(SDNode *N) {
                                        SDValue(CGLoad, 0)));
     
     CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
-    SelectCode(Dummy.getValue().getNode());
+    if (SDNode *N = SelectCode(Dummy.getValue().getNode()))
+      return N;
     return Dummy.getValue().getNode();
   } else if (Opc == ISD::SUB && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
     SDNode *CGLoad =
@@ -805,7 +811,8 @@ SPUDAGToDAGISel::Select(SDNode *N) {
                                        SDValue(CGLoad, 0)));
     
     CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
-    SelectCode(Dummy.getValue().getNode());
+    if (SDNode *N = SelectCode(Dummy.getValue().getNode()))
+      return N;
     return Dummy.getValue().getNode();
   } else if (Opc == ISD::MUL && (OpVT == MVT::i64 || OpVT == MVT::v2i64)) {
     SDNode *CGLoad =
@@ -815,7 +822,8 @@ SPUDAGToDAGISel::Select(SDNode *N) {
                                        N->getOperand(0), N->getOperand(1),
                                        SDValue(CGLoad, 0)));
     CurDAG->ReplaceAllUsesWith(N, Dummy.getValue().getNode());
-    SelectCode(Dummy.getValue().getNode());
+    if (SDNode *N = SelectCode(Dummy.getValue().getNode()))
+      return N;
     return Dummy.getValue().getNode();
   } else if (Opc == ISD::TRUNCATE) {
     SDValue Op0 = N->getOperand(0);
@@ -1242,13 +1250,15 @@ SDNode *SPUDAGToDAGISel::SelectI64Constant(uint64_t Value64, EVT OpVT,
                             ? shufmask.getNode()
                             : emitBuildVector(shufmask.getNode()));
 
-    SDNode *shufNode =
-            Select(CurDAG->getNode(SPUISD::SHUFB, dl, OpVecVT,
+   SDValue shufNode =
+            CurDAG->getNode(SPUISD::SHUFB, dl, OpVecVT,
                                    SDValue(lhsNode, 0), SDValue(rhsNode, 0),
-                                   SDValue(shufMaskNode, 0)).getNode());
-
-    return CurDAG->getMachineNode(SPU::ORi64_v2i64, dl, OpVT,
-                                  SDValue(shufNode, 0));
+                                   SDValue(shufMaskNode, 0));
+    HandleSDNode Dummy(shufNode);
+    SDNode *SN = SelectCode(Dummy.getValue().getNode());
+    if (SN == 0) SN = Dummy.getValue().getNode();
+    
+    return CurDAG->getMachineNode(SPU::ORi64_v2i64, dl, OpVT, SDValue(SN, 0));
   } else if (i64vec.getOpcode() == ISD::BUILD_VECTOR) {
     return CurDAG->getMachineNode(SPU::ORi64_v2i64, dl, OpVT,
                                   SDValue(emitBuildVector(i64vec.getNode()), 0));
