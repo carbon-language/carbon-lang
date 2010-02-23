@@ -232,6 +232,20 @@ namespace llvm {
                                       unsigned ValueSize = 1,
                                       unsigned MaxBytesToEmit = 0) = 0;
 
+    /// EmitCodeAlignment - Emit nops until the byte alignment @p ByteAlignment
+    /// is reached.
+    ///
+    /// This used to align code where the alignment bytes may be executed.  This
+    /// can emit different bytes for different sizes to optimize execution.
+    ///
+    /// @param ByteAlignment - The alignment to reach. This must be a power of
+    /// two on some targets.
+    /// @param MaxBytesToEmit - The maximum numbers of bytes to emit, or 0. If
+    /// the alignment cannot be reached in this many bytes, no bytes are
+    /// emitted.
+    virtual void EmitCodeAlignment(unsigned ByteAlignment,
+                                   unsigned MaxBytesToEmit = 0) = 0;
+
     /// EmitValueToOffset - Emit some number of copies of @p Value until the
     /// byte offset @p Offset is reached.
     ///

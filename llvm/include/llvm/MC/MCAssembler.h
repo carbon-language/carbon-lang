@@ -195,12 +195,16 @@ class MCAlignFragment : public MCFragment {
   /// cannot be satisfied in this width then this fragment is ignored.
   unsigned MaxBytesToEmit;
 
+  /// EmitNops - true when aligning code and optimal nops to be used for filling
+  bool EmitNops;
+
 public:
   MCAlignFragment(unsigned _Alignment, int64_t _Value, unsigned _ValueSize,
-                  unsigned _MaxBytesToEmit, MCSectionData *SD = 0)
+                  unsigned _MaxBytesToEmit, bool _EmitNops,
+		  MCSectionData *SD = 0)
     : MCFragment(FT_Align, SD), Alignment(_Alignment),
       Value(_Value),ValueSize(_ValueSize),
-      MaxBytesToEmit(_MaxBytesToEmit) {}
+      MaxBytesToEmit(_MaxBytesToEmit), EmitNops(_EmitNops) {}
 
   /// @name Accessors
   /// @{
@@ -216,6 +220,8 @@ public:
   unsigned getValueSize() const { return ValueSize; }
 
   unsigned getMaxBytesToEmit() const { return MaxBytesToEmit; }
+
+  unsigned getEmitNops() const { return EmitNops; }
 
   /// @}
 

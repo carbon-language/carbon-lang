@@ -137,6 +137,8 @@ public:
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
                                     unsigned ValueSize = 1,
                                     unsigned MaxBytesToEmit = 0);
+  virtual void EmitCodeAlignment(unsigned ByteAlignment,
+                                 unsigned MaxBytesToEmit = 0);
   virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
   
@@ -357,7 +359,20 @@ void MCMachOStreamer::EmitValueToAlignment(unsigned ByteAlignment,
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
   new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit,
-                      CurSectionData);
+                      false /* EmitNops */, CurSectionData);
+
+  // Update the maximum alignment on the current section if necessary.
+  if (ByteAlignment > CurSectionData->getAlignment())
+    CurSectionData->setAlignment(ByteAlignment);
+}
+
+void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
+                                        unsigned MaxBytesToEmit) {
+  if (MaxBytesToEmit == 0)
+    MaxBytesToEmit = ByteAlignment;
+  // FIXME the 0x90 is the default x86 1 byte nop opcode.
+  new MCAlignFragment(ByteAlignment, 0x90, 1, MaxBytesToEmit,
+                      true /* EmitNops */, CurSectionData);
 
   // Update the maximum alignment on the current section if necessary.
   if (ByteAlignment > CurSectionData->getAlignment())

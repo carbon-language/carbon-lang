@@ -42,6 +42,8 @@ STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
                           MachObjectWriter &MOW);
 
+static uint64_t WriteNopData(uint64_t Count, MachObjectWriter &MOW);
+
 /// isVirtualSection - Check if this is a section which does not actually exist
 /// in the object file.
 static bool isVirtualSection(const MCSection &Section) {
@@ -1058,6 +1060,19 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
     SD.setFileSize(Address - SD.getAddress());
 }
 
+/// WriteNopData - Write optimal nops to the output file for the \arg Count
+/// bytes.  This returns the number of bytes written.  It may return 0 if
+/// the \arg Count is more than the maximum optimal nops.
+///
+/// FIXME this is X86 32-bit specific and should move to a better place.
+static uint64_t WriteNopData(uint64_t Count, MachObjectWriter &MOW) {
+  // FIXME for now just use the 0x90 nop opcode byte.
+  for (uint64_t i = 0; i < Count; i++)
+    MOW.Write8 (uint8_t(0x90));
+
+  return Count;
+}
+
 /// WriteFileData - Write the \arg F data to the output file.
 static void WriteFileData(raw_ostream &OS, const MCFragment &F,
                           MachObjectWriter &MOW) {
@@ -1080,6 +1095,14 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
                         Twine(AF.getValueSize()) +
                         "' is not a divisor of padding size '" +
                         Twine(AF.getFileSize()) + "'");
+
+    // See if we are aligning with nops, and if so do that first to try to fill
+    // the Count bytes.  Then if that did not fill any bytes or there are any
+    // bytes left to fill use the the Value and ValueSize to fill the rest.
+    if (AF.getEmitNops()) {
+      uint64_t NopByteCount = WriteNopData(Count, MOW);
+      Count -= NopByteCount;
+    }
 
     for (uint64_t i = 0; i != Count; ++i) {
       switch (AF.getValueSize()) {

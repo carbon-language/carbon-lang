@@ -55,6 +55,9 @@ namespace {
                                       unsigned ValueSize = 1,
                                       unsigned MaxBytesToEmit = 0) {}
 
+    virtual void EmitCodeAlignment(unsigned ByteAlignment,
+                                   unsigned MaxBytesToEmit = 0) {}
+
     virtual void EmitValueToOffset(const MCExpr *Offset,
                                    unsigned char Value = 0) {}
     
