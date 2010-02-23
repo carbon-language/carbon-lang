@@ -126,10 +126,6 @@ int Main(int argc, char** argv) {
       return 0;
     }
 
-    if (InputFilenames.empty()) {
-      throw std::runtime_error("no input files");
-    }
-
     if (Time) {
       GlobalTimeLog = new std::stringstream;
       GlobalTimeLog->precision(2);

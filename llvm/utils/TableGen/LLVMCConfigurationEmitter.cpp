@@ -783,6 +783,7 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
   std::string OutLanguage;
   std::string OutputSuffix;
   unsigned Flags;
+  const Init* OnEmpty;
 
   // Various boolean properties
   void setSink()      { Flags |= ToolFlags::Sink; }
@@ -792,9 +793,9 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
 
   // Default ctor here is needed because StringMap can only store
   // DefaultConstructible objects
-  ToolDescription() : CmdLine(0), Actions(0), Flags(0) {}
+  ToolDescription() : CmdLine(0), Actions(0), Flags(0), OnEmpty(0) {}
   ToolDescription (const std::string& n)
-  : Name(n), CmdLine(0), Actions(0), Flags(0)
+    : Name(n), CmdLine(0), Actions(0), Flags(0), OnEmpty(0)
   {}
 };
 
@@ -831,6 +832,7 @@ public:
       AddHandler("out_language", &CollectToolProperties::onOutLanguage);
       AddHandler("output_suffix", &CollectToolProperties::onOutputSuffix);
       AddHandler("sink", &CollectToolProperties::onSink);
+      AddHandler("works_on_empty", &CollectToolProperties::onWorksOnEmpty);
 
       staticMembersInitialized_ = true;
     }
@@ -905,6 +907,10 @@ private:
   void onSink (const DagInit& d) {
     CheckNumberOfArguments(d, 0);
     toolDesc_.setSink();
+  }
+
+  void onWorksOnEmpty (const DagInit& d) {
+    toolDesc_.OnEmpty = d.getArg(0);
   }
 
 };
@@ -1509,7 +1515,7 @@ public:
 /// EmitCaseConstructHandler - Emit code that handles the 'case'
 /// construct. Takes a function object that should emit code for every case
 /// clause. Implemented on top of WalkCase.
-/// Callback's type is void F(Init* Statement, unsigned IndentLevel,
+/// Callback's type is void F(const Init* Statement, unsigned IndentLevel,
 /// raw_ostream& O).
 /// EmitElseIf parameter controls the type of condition that is emitted ('if
 /// (..) {..} else if (..) {} .. else {..}' vs. 'if (..) {..} if(..)  {..}
@@ -2221,6 +2227,29 @@ void EmitIsJoinMethod (const ToolDescription& D, raw_ostream& O) {
   O.indent(Indent1) << "}\n\n";
 }
 
+/// EmitWorksOnEmptyCallback - Callback used by EmitWorksOnEmptyMethod in
+/// conjunction with EmitCaseConstructHandler.
+void EmitWorksOnEmptyCallback (const Init* Value,
+                               unsigned IndentLevel, raw_ostream& O) {
+  CheckBooleanConstant(Value);
+  O.indent(IndentLevel) << "return " << Value->getAsString() << ";\n";
+}
+
+/// EmitWorksOnEmptyMethod - Emit the WorksOnEmpty() method for a given Tool
+/// class.
+void EmitWorksOnEmptyMethod (const ToolDescription& D,
+                             const OptionDescriptions& OptDescs,
+                             raw_ostream& O)
+{
+  O.indent(Indent1) << "bool WorksOnEmpty() const {\n";
+  if (D.OnEmpty == 0)
+    O.indent(Indent2) << "return false;\n";
+  else
+    EmitCaseConstructHandler(D.OnEmpty, Indent2, EmitWorksOnEmptyCallback,
+                             /*EmitElseIf = */ true, OptDescs, O);
+  O.indent(Indent1) << "}\n\n";
+}
+
 /// EmitStaticMemberDefinitions - Emit static member definitions for a
 /// given Tool class.
 void EmitStaticMemberDefinitions(const ToolDescription& D, raw_ostream& O) {
@@ -2255,6 +2284,7 @@ void EmitToolClassDefinition (const ToolDescription& D,
   EmitNameMethod(D, O);
   EmitInOutLanguageMethods(D, O);
   EmitIsJoinMethod(D, O);
+  EmitWorksOnEmptyMethod(D, OptDescs, O);
   EmitGenerateActionMethods(D, OptDescs, O);
 
   // Close class definition

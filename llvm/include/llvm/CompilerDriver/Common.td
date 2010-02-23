@@ -23,6 +23,7 @@ def output_suffix;
 def cmd_line;
 def join;
 def sink;
+def works_on_empty;
 def actions;
 
 // Possible option types.

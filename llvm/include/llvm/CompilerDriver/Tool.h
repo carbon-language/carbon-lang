@@ -28,7 +28,7 @@ namespace llvmc {
   typedef std::vector<llvm::sys::Path> PathVector;
   typedef llvm::StringSet<> InputLanguagesSet;
 
-  /// Tool - A class
+  /// Tool - Represents a single tool.
   class Tool : public llvm::RefCountedBaseVPTR<Tool> {
   public:
 
@@ -51,6 +51,7 @@ namespace llvmc {
     virtual const char*  OutputLanguage() const = 0;
 
     virtual bool IsJoin() const = 0;
+    virtual bool WorksOnEmpty() const = 0;
 
   protected:
     /// OutFileName - Generate the output file name.

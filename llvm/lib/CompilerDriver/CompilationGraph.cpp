@@ -313,7 +313,7 @@ int CompilationGraph::Build (const sys::Path& TempDir,
     JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
 
     // Are there any files in the join list?
-    if (JT->JoinListEmpty())
+    if (JT->JoinListEmpty() && !(JT->WorksOnEmpty() && InputFilenames.empty()))
       continue;
 
     Action CurAction = JT->GenerateAction(CurNode->HasChildren(),
