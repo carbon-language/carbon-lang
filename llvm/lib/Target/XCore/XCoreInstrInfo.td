@@ -796,12 +796,12 @@ def SETSP_1r : _F1R<(outs), (ins GRRegs:$src),
                  "set sp, $src",
                  []>;
 
-let isBarrier = 1, hasCtrlDep = 1 in 
+let hasCtrlDep = 1 in 
 def ECALLT_1r : _F1R<(outs), (ins GRRegs:$src),
                  "ecallt $src",
                  []>;
 
-let isBarrier = 1, hasCtrlDep = 1 in 
+let hasCtrlDep = 1 in 
 def ECALLF_1r : _F1R<(outs), (ins GRRegs:$src),
                  "ecallf $src",
                  []>;
