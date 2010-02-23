@@ -599,21 +599,30 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             SourceLocation EndProtoLoc) {
   ObjCCategoryDecl *CDecl = 0;
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc);
-  if (!CategoryName)
+
+  /// Check that class of this category is already completely declared.
+  if (!IDecl || IDecl->isForwardDecl()) {
+    // Create an invalid ObjCCategoryDecl to serve as context for
+    // the enclosing method declarations.  We mark the decl invalid
+    // to make it clear that this isn't a valid AST.
+    CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
+                                     ClassLoc, CategoryLoc, CategoryName);
+    CDecl->setInvalidDecl();
+    Diag(ClassLoc, diag::err_undef_interface) << ClassName;
+    return DeclPtrTy::make(CDecl);
+  }
+
+  if (!CategoryName) {
     // Class extensions require a special treatment. Use an existing one.
+    // Note that 'getClassExtension()' can return NULL.
     CDecl = IDecl->getClassExtension();
+  }
+
   if (!CDecl) {
-    CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc, ClassLoc,
-                                     CategoryLoc, CategoryName);
+    CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
+                                     ClassLoc, CategoryLoc, CategoryName);
     // FIXME: PushOnScopeChains?
     CurContext->addDecl(CDecl);
-
-    /// Check that class of this category is already completely declared.
-    if (!IDecl || IDecl->isForwardDecl()) {
-      CDecl->setInvalidDecl();
-      Diag(ClassLoc, diag::err_undef_interface) << ClassName;
-      return DeclPtrTy::make(CDecl);
-    }
 
     CDecl->setClassInterface(IDecl);
     // Insert first use of class extension to the list of class's categories.

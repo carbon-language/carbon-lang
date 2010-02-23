@@ -73,3 +73,7 @@
 
 @implementation MultipleCat_I // expected-warning {{incomplete implementation}}, expected-warning {{method definition for 'im0' not found}}
 @end
+
+// <rdar://problem/7680391> - Handle nameless categories with no name that refer
+// to an undefined class
+@interface RDar7680391 () @end // expected-error{{cannot find interface declaration}}
