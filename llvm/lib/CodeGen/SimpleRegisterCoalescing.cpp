@@ -702,7 +702,8 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     for (const unsigned* SR = tri_->getSubRegisters(DstReg); *SR; ++SR) {
       if (!li_->hasInterval(*SR))
         continue;
-      DLR = li_->getInterval(*SR).getLiveRangeContaining(DefIdx);
+      const LiveRange *DLR =
+          li_->getInterval(*SR).getLiveRangeContaining(DefIdx);
       if (DLR && DLR->valno->getCopy() == CopyMI)
         DLR->valno->setCopy(0);
     }
@@ -741,9 +742,21 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
       NewMI->addOperand(MO);
     if (MO.isDef() && li_->hasInterval(MO.getReg())) {
       unsigned Reg = MO.getReg();
-      DLR = li_->getInterval(Reg).getLiveRangeContaining(DefIdx);
+      const LiveRange *DLR =
+          li_->getInterval(Reg).getLiveRangeContaining(DefIdx);
       if (DLR && DLR->valno->getCopy() == CopyMI)
         DLR->valno->setCopy(0);
+      // Handle subregs as well
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        for (const unsigned* SR = tri_->getSubRegisters(Reg); *SR; ++SR) {
+          if (!li_->hasInterval(*SR))
+            continue;
+          const LiveRange *DLR =
+              li_->getInterval(*SR).getLiveRangeContaining(DefIdx);
+          if (DLR && DLR->valno->getCopy() == CopyMI)
+            DLR->valno->setCopy(0);
+        }
+      }
     }
   }
 
@@ -752,6 +765,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);
   ReMatDefs.insert(DefMI);
+  DEBUG(dbgs() << "Remat: " << *NewMI);
   ++NumReMats;
   return true;
 }
@@ -1705,6 +1719,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         (AdjustCopiesBackFrom(SrcInt, DstInt, CopyMI) ||
          RemoveCopyByCommutingDef(SrcInt, DstInt, CopyMI))) {
       JoinedCopies.insert(CopyMI);
+      DEBUG(dbgs() << "Trivial!\n");
       return true;
     }
 
