@@ -46,6 +46,7 @@ def optional;
 def really_hidden;
 def required;
 def comma_separated;
+def forward_not_split;
 
 // The 'case' construct.
 def case;

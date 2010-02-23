@@ -229,7 +229,7 @@ namespace OptionDescriptionFlags {
   enum OptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
                                 ReallyHidden = 0x4, Extern = 0x8,
                                 OneOrMore = 0x10, Optional = 0x20,
-                                CommaSeparated = 0x40 };
+                                CommaSeparated = 0x40, ForwardNotSplit = 0x80 };
 }
 
 /// OptionDescription - Represents data contained in a single
@@ -270,6 +270,9 @@ struct OptionDescription {
 
   bool isExtern() const;
   void setExtern();
+
+  bool isForwardNotSplit() const;
+  void setForwardNotSplit();
 
   bool isRequired() const;
   void setRequired();
@@ -325,6 +328,13 @@ bool OptionDescription::isCommaSeparated() const {
 }
 void OptionDescription::setCommaSeparated() {
   Flags |= OptionDescriptionFlags::CommaSeparated;
+}
+
+bool OptionDescription::isForwardNotSplit() const {
+  return Flags & OptionDescriptionFlags::ForwardNotSplit;
+}
+void OptionDescription::setForwardNotSplit() {
+  Flags |= OptionDescriptionFlags::ForwardNotSplit;
 }
 
 bool OptionDescription::isExtern() const {
@@ -586,6 +596,8 @@ public:
       AddHandler("required", &CollectOptionProperties::onRequired);
       AddHandler("optional", &CollectOptionProperties::onOptional);
       AddHandler("comma_separated", &CollectOptionProperties::onCommaSeparated);
+      AddHandler("forward_not_split",
+                 &CollectOptionProperties::onForwardNotSplit);
 
       staticMembersInitialized_ = true;
     }
@@ -627,6 +639,13 @@ private:
     if (!optDesc_.isList())
       throw "'comma_separated' is valid only on list options!";
     optDesc_.setCommaSeparated();
+  }
+
+  void onForwardNotSplit (const DagInit& d) {
+    CheckNumberOfArguments(d, 0);
+    if (!optDesc_.isParameter())
+      throw "'forward_not_split' is valid only for parameter options!";
+    optDesc_.setForwardNotSplit();
   }
 
   void onRequired (const DagInit& d) {
@@ -1792,8 +1811,16 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
     O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\");\n";
     break;
   case OptionType::Parameter:
-    O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\");\n";
-    O.indent(IndentLevel) << "vec.push_back(" << D.GenVariableName() << ");\n";
+    O.indent(IndentLevel) << "vec.push_back(\"" << Name;
+
+    if (!D.isForwardNotSplit()) {
+      O << "\");\n";
+      O.indent(IndentLevel) << "vec.push_back("
+                            << D.GenVariableName() << ");\n";
+    }
+    else {
+      O << "=\" + " << D.GenVariableName() << ");\n";
+    }
     break;
   case OptionType::Prefix:
     O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\" + "
