@@ -134,7 +134,7 @@ class llvm_gcc_based <string cmd_prefix, string in_lang,
                       string E_ext, string out_lang> : Tool<
 [(in_language in_lang),
  (out_language "llvm-bitcode"),
- (output_suffix "bc"),
+ (output_suffix out_lang),
  (command cmd_prefix),
  (actions
      (case
