@@ -6315,7 +6315,11 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
 }
 
 static void checkForCyclesHelper(const SDNode *N,
-                                 std::set<const SDNode *> &visited) {
+                                 std::set<const SDNode *> &visited,
+                                 std::set<const SDNode *> &checked) {
+  if (checked.find(N) != checked.end())
+    return;
+
   if (visited.find(N) != visited.end()) {
     dbgs() << "Offending node:\n";
     N->dumprFull();
@@ -6329,16 +6333,18 @@ static void checkForCyclesHelper(const SDNode *N,
   assert(inserted && "Missed cycle");
 
   for(unsigned i = 0; i < N->getNumOperands(); ++i) {
-    checkForCyclesHelper(N->getOperand(i).getNode(), visited);
+    checkForCyclesHelper(N->getOperand(i).getNode(), visited, checked);
   }
   visited.erase(i);
+  checked.insert(N);
 }
 
 void llvm::checkForCycles(const llvm::SDNode *N) {
 #ifdef XDEBUG
   assert(N && "Checking nonexistant SDNode");
   std::set<const SDNode *> visited;
-  checkForCyclesHelper(N, visited);
+  std::set<const SDNode *> checked;
+  checkForCyclesHelper(N, visited, checked);
 #endif
 }
 
