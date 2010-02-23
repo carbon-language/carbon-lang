@@ -189,7 +189,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                                                  CGF.ConvertType(PtrTy));
     EmitInitializationToLValue(E->getSubExpr(),
                                LValue::MakeAddr(CastPtr, Qualifiers()), 
-                               E->getType());
+                               E->getSubExpr()->getType());
     break;
   }
 
