@@ -797,7 +797,7 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
   // Default ctor here is needed because StringMap can only store
   // DefaultConstructible objects
   ToolDescription ()
-    : CmdLine(0), Actions(0), OutFileOption("-o"), 
+    : CmdLine(0), Actions(0), OutFileOption("-o"),
       Flags(0), OnEmpty(0)
   {}
   ToolDescription (const std::string& n)
