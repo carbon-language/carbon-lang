@@ -426,13 +426,15 @@ def MMX_CVTTPS2PIrm : MMXI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
 
 
 // Extract / Insert
-def MMX_X86pextrw : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
-def MMX_X86pinsrw : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
+def MMX_X86pinsrw : SDNode<"X86ISD::MMX_PINSRW",
+                    SDTypeProfile<1, 3, [SDTCisVT<0, v4i16>, SDTCisSameAs<0,1>,
+                                         SDTCisVT<2, i32>, SDTCisPtrTy<3>]>>;
+
 
 def MMX_PEXTRWri  : MMXIi8<0xC5, MRMSrcReg,
                            (outs GR32:$dst), (ins VR64:$src1, i16i8imm:$src2),
                            "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                           [(set GR32:$dst, (MMX_X86pextrw (v4i16 VR64:$src1),
+                           [(set GR32:$dst, (X86pextrw (v4i16 VR64:$src1),
                                              (iPTR imm:$src2)))]>;
 let Constraints = "$src1 = $dst" in {
   def MMX_PINSRWrri : MMXIi8<0xC4, MRMSrcReg,

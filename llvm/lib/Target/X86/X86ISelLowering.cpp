@@ -4817,8 +4817,16 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
 
   if ((EltVT.getSizeInBits() == 8 || EltVT.getSizeInBits() == 16) &&
       isa<ConstantSDNode>(N2)) {
-    unsigned Opc = (EltVT.getSizeInBits() == 8) ? X86ISD::PINSRB
-                                                : X86ISD::PINSRW;
+    unsigned Opc;
+    if (VT == MVT::v8i16)
+      Opc = X86ISD::PINSRW;
+    else if (VT == MVT::v4i16)
+      Opc = X86ISD::MMX_PINSRW;
+    else if (VT == MVT::v16i8)
+      Opc = X86ISD::PINSRB;
+    else
+      Opc = X86ISD::PINSRB;
+
     // Transform it so it match pinsr{b,w} which expects a GR32 as its second
     // argument.
     if (N1.getValueType() != MVT::i32)
@@ -4869,7 +4877,8 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
       N1 = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i32, N1);
     if (N2.getValueType() != MVT::i32)
       N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getZExtValue());
-    return DAG.getNode(X86ISD::PINSRW, dl, VT, N0, N1, N2);
+    return DAG.getNode(VT == MVT::v8i16 ? X86ISD::PINSRW : X86ISD::MMX_PINSRW,
+                       dl, VT, N0, N1, N2);
   }
   return SDValue();
 }
@@ -7663,6 +7672,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::INSERTPS:           return "X86ISD::INSERTPS";
   case X86ISD::PINSRB:             return "X86ISD::PINSRB";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
+  case X86ISD::MMX_PINSRW:         return "X86ISD::MMX_PINSRW";
   case X86ISD::PSHUFB:             return "X86ISD::PSHUFB";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
