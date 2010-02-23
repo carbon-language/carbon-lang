@@ -1288,9 +1288,54 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
   // If the base and the first base in the primary base chain have the same
   // offsets, then this overrider will be used.
   if (Base.getBaseOffset() == FirstBaseInPrimaryBaseChain.getBaseOffset())
+   return true;
+
+  // We know now that Base (or a direct or indirect base of it) is a primary
+  // base in part of the class hierarchy, but not a primary base in the most 
+  // derived class.
+  
+  // If the overrider is the first base in the primary base chain, we know
+  // that the overrider will be used.
+  if (Overrider.Method->getParent() == FirstBaseInPrimaryBaseChain.getBase())
     return true;
   
-  return true;
+  VtableBuilder::PrimaryBasesSetTy PrimaryBases;
+
+  const CXXRecordDecl *RD = FirstBaseInPrimaryBaseChain.getBase();
+  PrimaryBases.insert(RD);
+
+  // Now traverse the base chain, starting with the first base, until we find
+  // the base that is no longer a primary base.
+  while (true) {
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+    
+    if (!PrimaryBase)
+      break;
+    
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 && 
+             "Primary base should always be at offset 0!");
+
+      const ASTRecordLayout &MostDerivedClassLayout = 
+        Context.getASTRecordLayout(MostDerivedClass);
+
+      // Now check if this is the primary base that is not a primary base in the
+      // most derived class.
+      if (MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase) !=
+          FirstBaseInPrimaryBaseChain.getBaseOffset()) {
+        // We found it, stop walking the chain.
+        break;
+      }
+    } else {
+      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 && 
+             "Primary base should always be at offset 0!");
+    }
+  }
+  
+  // If the final overrider is an override of one of the primary bases,
+  // then we know that it will be used.
+  return OverridesMethodInPrimaryBase(Overrider.Method, PrimaryBases);
 }
 
 void 
