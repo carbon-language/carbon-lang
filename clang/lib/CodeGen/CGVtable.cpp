@@ -1112,15 +1112,11 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
 }
 
 void VtableBuilder::AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset) {
-  printf("adding call offsets for (%s, %llu) vbase offset %llu\n",
-         Base.getBase()->getQualifiedNameAsString().c_str(),
-         Base.getBaseOffset(), VBaseOffset);
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   // Handle the primary base first.
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-  if (PrimaryBase && Layout.getPrimaryBaseWasVirtual()) {
+  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
     // Get the base offset of the primary base.
     uint64_t PrimaryBaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(PrimaryBase);

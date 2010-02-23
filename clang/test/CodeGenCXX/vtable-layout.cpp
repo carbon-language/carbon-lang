@@ -422,3 +422,62 @@ struct C : virtual B {
 void C::f() { }
 
 }
+
+namespace Test12 {
+
+// Test that the right vcall offsets are generated in the right order.
+
+// CHECK:      Vtable for 'Test12::B' (19 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test12::B RTTI
+// CHECK-NEXT:        -- (Test12::B, 0) vtable address --
+// CHECK-NEXT:    3 | void Test12::B::f()
+// CHECK-NEXT:    4 | void Test12::B::a()
+// CHECK-NEXT:    5 | vcall_offset (32)
+// CHECK-NEXT:    6 | vcall_offset (16)
+// CHECK-NEXT:    7 | vcall_offset (-8)
+// CHECK-NEXT:    8 | vcall_offset (0)
+// CHECK-NEXT:    9 | offset_to_top (-8)
+// CHECK-NEXT:   10 | Test12::B RTTI
+// CHECK-NEXT:        -- (Test12::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test12::A1, 8) vtable address --
+// CHECK-NEXT:   11 | void Test12::A1::a1()
+// CHECK-NEXT:   12 | void Test12::B::a()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+// CHECK-NEXT:   13 | offset_to_top (-24)
+// CHECK-NEXT:   14 | Test12::B RTTI
+// CHECK-NEXT:        -- (Test12::A2, 24) vtable address --
+// CHECK-NEXT:   15 | void Test12::A2::a2()
+// CHECK-NEXT:   16 | offset_to_top (-40)
+// CHECK-NEXT:   17 | Test12::B RTTI
+// CHECK-NEXT:        -- (Test12::A3, 40) vtable address --
+// CHECK-NEXT:   18 | void Test12::A3::a3()
+struct A1 {
+  virtual void a1();
+  int a;
+};
+
+struct A2 {
+  virtual void a2();
+  int a;
+};
+
+struct A3 {
+  virtual void a3();
+  int a;
+};
+
+struct A : A1, A2, A3 {
+  virtual void a();
+  int i;
+};
+
+struct B : virtual A {
+  virtual void f();
+
+  virtual void a();
+};
+void B::f() { } 
+
+}
