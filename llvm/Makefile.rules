@@ -529,9 +529,6 @@ endif
 ifndef LBUGPOINT
 LBUGPOINT := $(LLVMToolDir)/bugpoint$(EXEEXT)
 endif
-ifndef LUPGRADE
-LUPGRADE := $(LLVMToolDir)/llvm-upgrade$(EXEEXT)
-endif
 LLVMGCCWITHPATH  := $(LLVMGCC)
 LLVMGXXWITHPATH  := $(LLVMGXX)
 
