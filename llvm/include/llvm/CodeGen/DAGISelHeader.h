@@ -618,25 +618,46 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // the old nodes.
       unsigned NumChains = MatcherTable[MatcherIndex++];
       assert(NumChains != 0 && "Can't TF zero chains");
+
+      assert(ChainNodesMatched.empty() &&
+             "Should only have one EmitMergeInputChains per match");
+
+      // Handle the first chain.
+      unsigned RecNo = MatcherTable[MatcherIndex++];
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+      ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+      
+      // If the chained node is not the root, we can't fold it if it has
+      // multiple uses.
+      // FIXME: What if other value results of the node have uses not matched by
+      // this pattern?
+      if (ChainNodesMatched.back() != NodeToMatch &&
+          !RecordedNodes[RecNo].hasOneUse()) {
+        ChainNodesMatched.clear();
+        break;
+      }
       
       // The common case here is that we have exactly one chain, which is really
       // cheap to handle, just do it.
       if (NumChains == 1) {
-        unsigned RecNo = MatcherTable[MatcherIndex++];
-        assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-        ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
         InputChain = RecordedNodes[RecNo].getOperand(0);
         assert(InputChain.getValueType() == MVT::Other && "Not a chain");
         continue;
       }
       
       // Read all of the chained nodes.
-      assert(ChainNodesMatched.empty() &&
-             "Should only have one EmitMergeInputChains per match");
-      for (unsigned i = 0; i != NumChains; ++i) {
-        unsigned RecNo = MatcherTable[MatcherIndex++];
+      for (unsigned i = 1; i != NumChains; ++i) {
+        RecNo = MatcherTable[MatcherIndex++];
         assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
         ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+        
+        // FIXME: What if other value results of the node have uses not matched by
+        // this pattern?
+        if (ChainNodesMatched.back() != NodeToMatch &&
+            !RecordedNodes[RecNo].hasOneUse()) {
+          ChainNodesMatched.clear();
+          break;
+        }
       }
 
       // Walk all the chained nodes, adding the input chains if they are not in
