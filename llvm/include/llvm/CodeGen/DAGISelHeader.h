@@ -200,6 +200,24 @@ GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
   return Val;
 }
 
+/// GetVBR - decode a vbr encoding whose top bit is set.
+ALWAYS_INLINE static unsigned
+GetVBR(unsigned Val, const unsigned char *MatcherTable, unsigned &Idx) {
+  assert(Val >= 128 && "Not a VBR");
+  Val &= 127;  // Remove first vbr bit.
+  
+  unsigned Shift = 7;
+  unsigned NextBits;
+  do {
+    NextBits = GetInt1(MatcherTable, Idx);
+    Val |= (NextBits&127) << Shift;
+    Shift += 7;
+  } while (NextBits & 128);
+  
+  return Val;
+}
+
+
 enum BuiltinOpcodes {
   OPC_Push, OPC_Push2,
   OPC_RecordNode,
@@ -691,6 +709,9 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       SmallVector<SDValue, 8> Ops;
       for (unsigned i = 0; i != NumOps; ++i) {
         unsigned RecNo = MatcherTable[MatcherIndex++];
+        if (RecNo & 128)
+          RecNo = GetVBR(RecNo, MatcherTable, MatcherIndex);
+        
         assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
         Ops.push_back(RecordedNodes[RecNo]);
       }
@@ -763,6 +784,9 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
       for (unsigned i = 0; i != NumResults; ++i) {
         unsigned ResSlot = MatcherTable[MatcherIndex++];
+        if (ResSlot & 128)
+          ResSlot = GetVBR(ResSlot, MatcherTable, MatcherIndex);
+        
         assert(ResSlot < RecordedNodes.size() && "Invalid CheckSame");
         SDValue Res = RecordedNodes[ResSlot];
         

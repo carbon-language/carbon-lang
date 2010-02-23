@@ -127,6 +127,25 @@ private:
 };
 } // end anonymous namespace.
 
+/// EmitVBRValue - Emit the specified value as a VBR, returning the number of
+/// bytes emitted.
+static unsigned EmitVBRValue(unsigned Val, raw_ostream &OS) {
+  if (Val <= 127) {
+    OS << Val << ", ";
+    return 1;
+  }
+  
+  unsigned InVal = Val;
+  unsigned NumBytes = 0;
+  while (Val > 128) {
+    OS << (Val&127) << "|128,";
+    Val >>= 7;
+    ++NumBytes;
+  }
+  OS << Val << "/*" << InVal << "*/, ";
+  return NumBytes+1;
+}
+
 /// EmitMatcherOpcodes - Emit bytes for the specified matcher and return
 /// the number of bytes emitted.
 unsigned MatcherTableEmitter::
@@ -309,22 +328,27 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
       OS << getEnumName(EN->getVT(i)) << ", ";
 
     OS << EN->getNumOperands() << "/*#Ops*/, ";
-    for (unsigned i = 0, e = EN->getNumOperands(); i != e; ++i)
-      OS << EN->getOperand(i) << ", ";
+    unsigned NumOperandBytes = 0;
+    for (unsigned i = 0, e = EN->getNumOperands(); i != e; ++i) {
+      // We emit the operand numbers in VBR encoded format, in case the number
+      // is too large to represent with a byte.
+      NumOperandBytes += EmitVBRValue(EN->getOperand(i), OS);
+    }
     OS << '\n';
-    return 6+EN->getNumVTs()+EN->getNumOperands();
+    return 6+EN->getNumVTs()+NumOperandBytes;
   }
   case MatcherNode::CompleteMatch: {
     const CompleteMatchMatcherNode *CM = cast<CompleteMatchMatcherNode>(N);
     OS << "OPC_CompleteMatch, " << CM->getNumResults() << ", ";
+    unsigned NumResultBytes = 0;
     for (unsigned i = 0, e = CM->getNumResults(); i != e; ++i)
-      OS << CM->getResult(i) << ", ";
+      NumResultBytes += EmitVBRValue(CM->getResult(i), OS);
     OS << '\n';
     OS.PadToColumn(Indent*2) << "// Src: "
       << *CM->getPattern().getSrcPattern() << '\n';
     OS.PadToColumn(Indent*2) << "// Dst: " 
       << *CM->getPattern().getDstPattern() << '\n';
-    return 2+CM->getNumResults();
+    return 2 + NumResultBytes;
   }
   }
   assert(0 && "Unreachable");
