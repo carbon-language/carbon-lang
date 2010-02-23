@@ -49,7 +49,7 @@ def OptList : OptionList<[
  (parameter_option "linker",
     (help "Choose linker (possible values: gcc, g++)")),
  (parameter_option "mtune",
-    (help "Target a specific CPU type"), (hidden)),
+    (help "Target a specific CPU type"), (hidden), (forward_not_split)),
 
  // TODO: Add a conditional compilation mechanism to make Darwin-only options
  // like '-arch' really Darwin-only.
@@ -57,9 +57,9 @@ def OptList : OptionList<[
  (parameter_option "arch",
     (help "Compile for the specified target architecture"), (hidden)),
  (parameter_option "march",
-    (help "A synonym for -mtune"), (hidden)),
+    (help "A synonym for -mtune"), (hidden), (forward_not_split)),
  (parameter_option "mcpu",
-    (help "A deprecated synonym for -mtune"), (hidden)),
+    (help "A deprecated synonym for -mtune"), (hidden), (forward_not_split)),
  (switch_option "mfix-and-continue",
     (help "Needed by gdb to load .o files dynamically"), (hidden)),
  (parameter_option "MF",
@@ -250,8 +250,8 @@ def llc : Tool<
           (switch_on "fPIC"), (append_cmd "-relocation-model=pic"),
           (switch_on "mdynamic-no-pic"),
                      (append_cmd "-relocation-model=dynamic-no-pic"),
-          (not_empty "march"), (forward "mcpu"),
-          (not_empty "mtune"), (forward "mcpu"),
+          (not_empty "march"), (forward_as "mtune", "-mcpu"),
+          (not_empty "mtune"), (forward_as "mtune", "-mcpu"),
           (not_empty "mcpu"), (forward "mcpu"),
           (not_empty "m"), (forward_transformed_value "m", "ConvertToMAttr"),
           (not_empty "Wllc,"), (forward_value "Wllc,")))
