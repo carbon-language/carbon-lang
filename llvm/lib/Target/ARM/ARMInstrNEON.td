@@ -1113,6 +1113,44 @@ class N2VCvtQ<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
 //   S = single int (32 bit) elements
 //   D = double int (64 bit) elements
 
+// Neon 2-register vector operations -- for disassembly only.
+
+// First with only element sizes of 8, 16 and 32 bits:
+multiclass N2V_QHS_np<bits<2> op24_23, bits<2> op21_20, bits<2> op17_16,
+                   bits<5> op11_7, bit op4, string opc, string asm> {
+  // 64-bit vector types.
+  def v8i8  : N2V<op24_23, op21_20, 0b00, op17_16, op11_7, 0, op4,
+                  (outs DPR:$dst), (ins DPR:$src), NoItinerary,
+                  opc, "i8", asm, "", []>;
+  def v4i16 : N2V<op24_23, op21_20, 0b01, op17_16, op11_7, 0, op4,
+                  (outs DPR:$dst), (ins DPR:$src), NoItinerary,
+                  opc, "i16", asm, "", []>;
+  def v2i32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 0, op4,
+                  (outs DPR:$dst), (ins DPR:$src), NoItinerary,
+                  opc, "i32", asm, "", []>;
+  def v2f32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 0, op4,
+                  (outs DPR:$dst), (ins DPR:$src), NoItinerary,
+                  opc, "f32", asm, "", []> {
+    let Inst{10} = 1; // overwrite F = 1
+  }
+
+  // 128-bit vector types.
+  def v16i8 : N2V<op24_23, op21_20, 0b00, op17_16, op11_7, 1, op4,
+                  (outs QPR:$dst), (ins QPR:$src), NoItinerary,
+                  opc, "i8", asm, "", []>;
+  def v8i16 : N2V<op24_23, op21_20, 0b01, op17_16, op11_7, 1, op4,
+                  (outs QPR:$dst), (ins QPR:$src), NoItinerary,
+                  opc, "i16", asm, "", []>;
+  def v4i32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 1, op4,
+                  (outs QPR:$dst), (ins QPR:$src), NoItinerary,
+                  opc, "i32", asm, "", []>;
+  def v4f32 : N2V<op24_23, op21_20, 0b10, op17_16, op11_7, 1, op4,
+                  (outs QPR:$dst), (ins QPR:$src), NoItinerary,
+                  opc, "f32", asm, "", []> {
+    let Inst{10} = 1; // overwrite F = 1
+  }
+}
+
 // Neon 3-register vector operations.
 
 // First with only element sizes of 8, 16 and 32 bits:
@@ -1951,6 +1989,9 @@ def  VCEQfd   : N3VD<0,0,0b00,0b1110,0, IIC_VBIND, "vceq", "f32", v2i32, v2f32,
                      NEONvceq, 1>;
 def  VCEQfq   : N3VQ<0,0,0b00,0b1110,0, IIC_VBINQ, "vceq", "f32", v4i32, v4f32,
                      NEONvceq, 1>;
+// For disassembly only.
+defm VCEQz    : N2V_QHS_np<0b11,0b11,0b01,0b00010,0, "vceq", "$dst, $src, #0">;
+
 //   VCGE     : Vector Compare Greater Than or Equal
 defm VCGEs    : N3V_QHS<0, 0, 0b0011, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
                         IIC_VBINi4Q, "vcge", "s", NEONvcge, 0>;
