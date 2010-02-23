@@ -84,7 +84,11 @@ def OptList : OptionList<[
     (help "Add a directory to include path")),
  (prefix_list_option "D",
     (help "Define a macro")),
+ (parameter_list_option "Xpreprocessor", (hidden),
+    (help "Pass options to preprocessor")),
  (prefix_list_option "Wa,", (comma_separated),
+    (help "Pass options to assembler")),
+ (parameter_list_option "Xassembler", (hidden),
     (help "Pass options to assembler")),
  (prefix_list_option "Wllc,", (comma_separated),
     (help "Pass options to llc")),
@@ -93,6 +97,8 @@ def OptList : OptionList<[
  (prefix_list_option "l",
     (help "Search a library when linking")),
  (prefix_list_option "Wl,",
+    (help "Pass options to linker")),
+ (parameter_list_option "Xlinker", (hidden),
     (help "Pass options to linker")),
  (prefix_list_option "Wo,", (comma_separated),
     (help "Pass options to opt")),
@@ -154,6 +160,7 @@ class llvm_gcc_based <string cmd_prefix, string in_lang,
              [(append_cmd "-c"), (append_cmd "-emit-llvm")],
 
          // Forwards
+         (not_empty "Xpreprocessor"), (forward "Xpreprocessor"),
          (not_empty "include"), (forward "include"),
          (not_empty "iquote"), (forward "iquote"),
          (not_empty "save-temps"), (append_cmd "-save-temps"),
@@ -225,7 +232,8 @@ def llvm_gcc_assembler : Tool<
  (actions (case
           (switch_on "c"), (stop_compilation),
           (not_empty "arch"), (forward "arch"),
-          (not_empty "Wa,"), (forward_value "Wa,")))
+          (not_empty "Xassembler"), (forward "Xassembler"),
+          (not_empty "Wa,"), (forward "Wa,")))
 ]>;
 
 def llc : Tool<
@@ -269,6 +277,7 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
           (switch_on "m32"), (forward "m32"),
           (switch_on "m64"), (forward "m64"),
           (not_empty "l"), (forward "l"),
+          (not_empty "Xlinker"), (forward "Xlinker"),
           (not_empty "Wl,"), (forward "Wl,"),
           (switch_on "dynamiclib"), (forward "dynamiclib"),
           (switch_on "prebind"), (forward "prebind"),
