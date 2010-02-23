@@ -1103,7 +1103,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
         AllArgs += *I;
     }
 
-    Diags->Report(diag::err_fe_clang) << AllArgs << ErrMsg;
+    Diags->Report(diag::err_fe_invoking) << AllArgs << ErrMsg;
   }
 
   ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,

@@ -82,7 +82,7 @@ def note_fixit_main_file_unchanged : Note<
 def warn_fixit_no_changes : Note<
     "FIX-IT detected errors it could not fix; no output will be generated">;
 
-def err_fe_clang : Error<"error invoking%s: %s">, DefaultFatal;
+def err_fe_invoking : Error<"error invoking%0: %1">, DefaultFatal;
 
 // PCH reader
 def err_relocatable_without_without_isysroot : Error<

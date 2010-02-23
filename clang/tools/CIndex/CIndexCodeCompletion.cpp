@@ -330,7 +330,7 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
         AllArgs += *I;
     }
     
-    Diags->Report(diag::err_fe_clang) << AllArgs << ErrMsg;
+    Diags->Report(diag::err_fe_invoking) << AllArgs << ErrMsg;
   }
 
   // Parse the resulting source file to find code-completion results.
