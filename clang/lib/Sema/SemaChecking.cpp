@@ -2278,9 +2278,8 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
     CFGBlock &b = **I;
     if (!reachable[b.getBlockID()]) {
-      if (b.pred_begin() == b.pred_end()) {
-        if (!AddEHEdges && b.getTerminator()
-            && isa<CXXTryStmt>(b.getTerminator())) {
+      if (b.pred_empty()) {
+        if (!AddEHEdges && dyn_cast_or_null<CXXTryStmt>(b.getTerminator())) {
           // When not adding EH edges from calls, catch clauses
           // can otherwise seem dead.  Avoid noting them as dead.
           numReachable += ScanReachableFromBlock(b, reachable);
