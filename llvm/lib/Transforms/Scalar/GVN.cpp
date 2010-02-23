@@ -1707,6 +1707,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // Add the newly created load.
     ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,
                                                         NewLoad));
+    MD->invalidateCachedPointerInfo(LoadPtr);
+    DEBUG(dbgs() << "GVN INSERTED " << *NewLoad << '\n');
   }
 
   // Perform PHI construction.
