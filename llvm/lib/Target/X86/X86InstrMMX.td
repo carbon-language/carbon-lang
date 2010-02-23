@@ -599,13 +599,6 @@ let AddedComplexity = 10 in {
             (MMX_PUNPCKHDQrr VR64:$src, VR64:$src)>;
 }
 
-// Patterns to perform vector shuffling with a zeroed out vector.
-let AddedComplexity = 20 in {
-  def : Pat<(bc_v2i32 (mmx_unpckl immAllZerosV,
-                       (v2i32 (scalar_to_vector (load_mmx addr:$src))))),
-            (MMX_PUNPCKLDQrm VR64:$src, VR64:$src)>;
-}
-
 // Some special case PANDN patterns.
 // FIXME: Get rid of these.
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
