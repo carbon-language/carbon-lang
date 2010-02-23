@@ -1579,10 +1579,10 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
         if (TPN->ContainsUnresolvedType()) {
           if (iter == 0)
             throw "Value #" + utostr(i) + " of PredicateOperand '" +
-              DefaultOps[iter][i]->getName() + "' doesn't have a concrete type!";
+              DefaultOps[iter][i]->getName() +"' doesn't have a concrete type!";
           else
             throw "Value #" + utostr(i) + " of OptionalDefOperand '" +
-              DefaultOps[iter][i]->getName() + "' doesn't have a concrete type!";
+              DefaultOps[iter][i]->getName() +"' doesn't have a concrete type!";
         }
         DefaultOpInfo.DefaultOps.push_back(TPN);
       }
@@ -1626,21 +1626,21 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
   TreePatternNode *&Slot = InstInputs[Pat->getName()];
   if (!Slot) {
     Slot = Pat;
-  } else {
-    Record *SlotRec;
-    if (Slot->isLeaf()) {
-      SlotRec = dynamic_cast<DefInit*>(Slot->getLeafValue())->getDef();
-    } else {
-      assert(Slot->getNumChildren() == 0 && "can't be a use with children!");
-      SlotRec = Slot->getOperator();
-    }
-    
-    // Ensure that the inputs agree if we've already seen this input.
-    if (Rec != SlotRec)
-      I->error("All $" + Pat->getName() + " inputs must agree with each other");
-    if (Slot->getExtTypes() != Pat->getExtTypes())
-      I->error("All $" + Pat->getName() + " inputs must agree with each other");
+    return true;
   }
+  Record *SlotRec;
+  if (Slot->isLeaf()) {
+    SlotRec = dynamic_cast<DefInit*>(Slot->getLeafValue())->getDef();
+  } else {
+    assert(Slot->getNumChildren() == 0 && "can't be a use with children!");
+    SlotRec = Slot->getOperator();
+  }
+  
+  // Ensure that the inputs agree if we've already seen this input.
+  if (Rec != SlotRec)
+    I->error("All $" + Pat->getName() + " inputs must agree with each other");
+  if (Slot->getExtTypes() != Pat->getExtTypes())
+    I->error("All $" + Pat->getName() + " inputs must agree with each other");
   return true;
 }
 
