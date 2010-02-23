@@ -159,7 +159,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
   case ISD::BlockAddress:     return LowerBlockAddress(Op, DAG);
   case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
-  case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
   case ISD::BR_JT:            return LowerBR_JT(Op, DAG);
   case ISD::LOAD:             return LowerLOAD(Op, DAG);
   case ISD::STORE:            return LowerSTORE(Op, DAG);
@@ -315,17 +314,6 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
                                     CP->getAlignment());
   }
   return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, Res);
-}
-
-SDValue XCoreTargetLowering::
-LowerJumpTable(SDValue Op, SelectionDAG &DAG)
-{
-  // FIXME there isn't really debug info here
-  DebugLoc dl = Op.getDebugLoc();
-  EVT PtrVT = Op.getValueType();
-  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
-  SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
-  return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, JTI);
 }
 
 SDValue XCoreTargetLowering::
