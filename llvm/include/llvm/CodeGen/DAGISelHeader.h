@@ -712,7 +712,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         if (RecNo & 128)
           RecNo = GetVBR(RecNo, MatcherTable, MatcherIndex);
         
-        assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+        assert(RecNo < RecordedNodes.size() && "Invalid EmitNode");
         Ops.push_back(RecordedNodes[RecNo]);
       }
       
