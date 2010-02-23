@@ -529,8 +529,6 @@ endif
 ifndef LBUGPOINT
 LBUGPOINT := $(LLVMToolDir)/bugpoint$(EXEEXT)
 endif
-LLVMGCCWITHPATH  := $(LLVMGCC)
-LLVMGXXWITHPATH  := $(LLVMGXX)
 
 #--------------------------------------------------------------------
 # Adjust to user's request
@@ -702,14 +700,12 @@ else
                   $(TargetCommonOpts)  $(CompileCommonOpts) $(LD.Flags) $(Strip)
 endif
 
-BCCompile.C   = $(LLVMGCCWITHPATH) $(CPP.Flags) $(C.Flags) $(CFLAGS) \
-		$(CPPFLAGS) \
+BCCompile.C   = $(LLVMGCC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
 Preprocess.C  = $(CC) $(CPP.Flags) $(C.Flags) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts) -E
 
-BCCompile.CXX = $(LLVMGXXWITHPATH) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
-		$(CPPFLAGS) \
+BCCompile.CXX = $(LLVMGXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
                 $(TargetCommonOpts) $(CompileCommonOpts)
 
 ProgInstall   = $(INSTALL) $(Install.StripFlag) -m 0755

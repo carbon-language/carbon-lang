@@ -49,15 +49,15 @@ clean::
 
 # Compile from X.c to Output/X.ll
 Output/%.ll: %.c $(LCC1) Output/.dir $(INCLUDES)
-	-$(LLVMGCCWITHPATH) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
+	-$(LLVMGCC) $(CPPFLAGS) $(LCCFLAGS) -S $< -o $@
 
 # Compile from X.cpp to Output/X.ll
 Output/%.ll: %.cpp $(LCC1XX) Output/.dir $(INCLUDES)
-	-$(LLVMGXXWITHPATH) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+	-$(LLVMGXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # Compile from X.cc to Output/X.ll
 Output/%.ll: %.cc $(LCC1XX) Output/.dir $(INCLUDES)
-	-$(LLVMGXXWITHPATH) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
+	-$(LLVMGXX) $(CPPFLAGS) $(LCXXFLAGS) -S $< -o $@
 
 # LLVM Assemble from Output/X.ll to Output/X.bc.  Output/X.ll must have come
 # from GCC output, so use GCCAS.
