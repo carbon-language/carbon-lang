@@ -416,6 +416,18 @@ bool CodeGenModule::ReturnTypeUsesSret(const CGFunctionInfo &FI) {
   return FI.getReturnInfo().isIndirect();
 }
 
+const llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
+  const CGFunctionInfo &FI = getFunctionInfo(GD);
+  
+  // For definition purposes, don't consider a K&R function variadic.
+  bool Variadic = false;
+  if (const FunctionProtoType *FPT =
+        cast<FunctionDecl>(GD.getDecl())->getType()->getAs<FunctionProtoType>())
+    Variadic = FPT->isVariadic();
+
+  return GetFunctionType(FI, Variadic);
+}
+
 const llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
   std::vector<const llvm::Type*> ArgTys;

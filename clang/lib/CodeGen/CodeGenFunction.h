@@ -789,6 +789,9 @@ public:
                                const CXXRecordDecl *BaseClassDecl,
                                QualType Ty);
 
+  void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
+                                      CXXCtorType CtorType,
+                                      const FunctionArgList &Args);
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
                               llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,

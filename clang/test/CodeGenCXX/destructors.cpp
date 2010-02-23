@@ -1,4 +1,11 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -mconstructor-aliases | FileCheck %s
+
+// CHECK: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
+// CHECK: @_ZN5test11MD2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK: @_ZN5test11ND2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK: @_ZN5test11OD2Ev = alias {{.*}} @_ZN5test11AD2Ev
+// CHECK: @_ZN5test11SD2Ev = alias bitcast {{.*}} @_ZN5test11AD2Ev
+
 struct A {
   int a;
   
@@ -60,7 +67,7 @@ namespace test0 {
   // The function-try-block won't suppress -mconstructor-aliases here.
   A::~A() try { } catch (int i) {}
 
-// CHECK: @_ZN5test01AD1Ev = alias {{.*}} @_ZN5test01AD2Ev
+// complete destructor alias tested above
 
 // CHECK: define void @_ZN5test01AD2Ev
 // CHECK: invoke void @_ZN5test06MemberD1Ev
@@ -88,4 +95,41 @@ namespace test0 {
 // CHECK:   unwind label [[MEM_UNWIND:%[a-zA-Z0-9.]+]]
 // CHECK: invoke void @_ZN5test04BaseD2Ev
 // CHECK:   unwind label [[BASE_UNWIND:%[a-zA-Z0-9.]+]]
+}
+
+// Test base-class aliasing.
+namespace test1 {
+  struct A { ~A(); char ***m; }; // non-trivial destructor
+  struct B { ~B(); }; // non-trivial destructor
+  struct Empty { }; // trivial destructor, empty
+  struct NonEmpty { int x; }; // trivial destructor, non-empty
+
+  struct M : A { ~M(); };
+  M::~M() {} // alias tested above
+
+  struct N : A, Empty { ~N(); };
+  N::~N() {} // alias tested above
+
+  struct O : Empty, A { ~O(); };
+  O::~O() {} // alias tested above
+
+  struct P : NonEmpty, A { ~P(); };
+  P::~P() {} // CHECK: define void @_ZN5test11PD2Ev
+
+  struct Q : A, B { ~Q(); };
+  Q::~Q() {} // CHECK: define void @_ZN5test11QD2Ev
+
+  struct R : A { ~R(); };
+  R::~R() { A a; } // CHECK: define void @_ZN5test11RD2Ev
+
+  struct S : A { ~S(); int x; };
+  S::~S() {} // alias tested above
+
+  struct T : A { ~T(); B x; };
+  T::~T() {} // CHECK: define void @_ZN5test11TD2Ev
+
+  // The VTT parameter prevents this.  We could still make this work
+  // for calling conventions that are safe against extra parameters.
+  struct U : A, virtual B { ~U(); };
+  U::~U() {} // CHECK: define void @_ZN5test11UD2Ev
 }

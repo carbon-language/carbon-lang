@@ -27,23 +27,87 @@
 using namespace clang;
 using namespace CodeGen;
 
+/// Determines whether the given function has a trivial body that does
+/// not require any specific codegen.
+static bool HasTrivialBody(const FunctionDecl *FD) {
+  Stmt *S = FD->getBody();
+  if (!S)
+    return true;
+  if (isa<CompoundStmt>(S) && cast<CompoundStmt>(S)->body_empty())
+    return true;
+  return false;
+}
+
+/// Try to emit a base destructor as an alias to its primary
+/// base-class destructor.
+bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
+  if (!getCodeGenOpts().CXXCtorDtorAliases)
+    return true;
+
+  // If the destructor doesn't have a trivial body, we have to emit it
+  // separately.
+  if (!HasTrivialBody(D))
+    return true;
+
+  const CXXRecordDecl *Class = D->getParent();
+
+  // If we need to manipulate a VTT parameter, give up.
+  if (Class->getNumVBases()) {
+    // Extra Credit:  passing extra parameters is perfectly safe
+    // in many calling conventions, so only bail out if the ctor's
+    // calling convention is nonstandard.
+    return true;
+  }
+
+  // If any fields have a non-trivial destructor, we have to emit it
+  // separately.
+  for (CXXRecordDecl::field_iterator I = Class->field_begin(),
+         E = Class->field_end(); I != E; ++I)
+    if (const RecordType *RT = (*I)->getType()->getAs<RecordType>())
+      if (!cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor())
+        return true;
+
+  // Try to find a unique base class with a non-trivial destructor.
+  const CXXRecordDecl *UniqueBase = 0;
+  for (CXXRecordDecl::base_class_const_iterator I = Class->bases_begin(),
+         E = Class->bases_end(); I != E; ++I) {
+
+    // We're in the base destructor, so skip virtual bases.
+    if (I->isVirtual()) continue;
+
+    // Skip base classes with trivial destructors.
+    const CXXRecordDecl *Base
+      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    if (Base->hasTrivialDestructor()) continue;
+
+    // If we've already found a base class with a non-trivial
+    // destructor, give up.
+    if (UniqueBase) return true;
+    UniqueBase = Base;
+  }
+
+  // If we didn't find any bases with a non-trivial destructor, then
+  // the base destructor is actually effectively trivial, which can
+  // happen if it was needlessly user-defined or if there are virtual
+  // bases with non-trivial destructors.
+  if (!UniqueBase)
+    return true;
+
+  // If the base is at a non-zero offset, give up.
+  const ASTRecordLayout &ClassLayout = Context.getASTRecordLayout(Class);
+  if (ClassLayout.getBaseClassOffset(UniqueBase) != 0)
+    return true;
+
+  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor(getContext());
+  return TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Base),
+                                  GlobalDecl(BaseD, Dtor_Base));
+}
+
 /// Try to emit a definition as a global alias for another definition.
 bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
                                              GlobalDecl TargetDecl) {
   if (!getCodeGenOpts().CXXCtorDtorAliases)
     return true;
-
-  // Find the referrent.
-  llvm::GlobalValue *Ref = cast<llvm::GlobalValue>(GetAddrOfGlobal(TargetDecl));
-
-  // Look for an existing entry.
-  const char *MangledName = getMangledName(AliasDecl);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-  if (Entry) {
-    assert(Entry->isDeclaration() && "definition already exists for alias");
-    assert(Entry->getType() == Ref->getType() &&
-           "declaration exists with different type");
-  }
 
   // The alias will use the linkage of the referrent.  If we can't
   // support aliases with that linkage, fail.
@@ -72,11 +136,32 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return true;
   }
 
+  // Derive the type for the alias.
+  const llvm::PointerType *AliasType
+    = getTypes().GetFunctionType(AliasDecl)->getPointerTo();
+
+  // Look for an existing entry.
+  const char *MangledName = getMangledName(AliasDecl);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  if (Entry) {
+    assert(Entry->isDeclaration() && "definition already exists for alias");
+    assert(Entry->getType() == AliasType &&
+           "declaration exists with different type");
+  }
+
+  // Find the referrent.  Some aliases might require a bitcast, in
+  // which case the caller is responsible for ensuring the soundness
+  // of these semantics.
+  llvm::GlobalValue *Ref = cast<llvm::GlobalValue>(GetAddrOfGlobal(TargetDecl));
+  llvm::Constant *Aliasee = Ref;
+  if (Ref->getType() != AliasType)
+    Aliasee = llvm::ConstantExpr::getBitCast(Ref, AliasType);
+
   // Create the alias with no name.
   llvm::GlobalAlias *Alias = 
-    new llvm::GlobalAlias(Ref->getType(), Linkage, "", Ref, &getModule());
+    new llvm::GlobalAlias(AliasType, Linkage, "", Aliasee, &getModule());
 
-  // Switch any previous uses to the alias and continue.
+  // Switch any previous uses to the alias and kill the previous decl.
   if (Entry) {
     Entry->replaceAllUsesWith(Alias);
     Entry->eraseFromParent();
@@ -89,7 +174,6 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 
   return false;
 }
-
 
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
   // The constructor used for constructing this as a complete class;
@@ -167,6 +251,13 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
       !D->getParent()->getNumVBases() &&
       !TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Complete),
                                 GlobalDecl(D, Dtor_Base)))
+    return;
+
+  // The base destructor is equivalent to the base destructor of its
+  // base class if there is exactly one non-virtual base class with a
+  // non-trivial destructor, there are no fields with a non-trivial
+  // destructor, and the body of the destructor is trivial.
+  if (Type == Dtor_Base && !TryEmitBaseDestructorAsAlias(D))
     return;
 
   llvm::Function *Fn = cast<llvm::Function>(GetAddrOfCXXDestructor(D, Type));

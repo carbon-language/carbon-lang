@@ -543,14 +543,14 @@ CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
   return 0;
 }
 
-CXXDestructorDecl *CXXRecordDecl::getDestructor(ASTContext &Context) {
+CXXDestructorDecl *CXXRecordDecl::getDestructor(ASTContext &Context) const {
   QualType ClassType = Context.getTypeDeclType(this);
 
   DeclarationName Name
     = Context.DeclarationNames.getCXXDestructorName(
                                           Context.getCanonicalType(ClassType));
 
-  DeclContext::lookup_iterator I, E;
+  DeclContext::lookup_const_iterator I, E;
   llvm::tie(I, E) = lookup(Name);
   assert(I != E && "Did not find a destructor!");
 

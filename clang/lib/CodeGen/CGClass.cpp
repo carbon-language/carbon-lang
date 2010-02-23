@@ -891,31 +891,80 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   }
 }
 
+/// Checks whether the given constructor is a valid subject for the
+/// complete-to-base constructor delegation optimization, i.e.
+/// emitting the complete constructor as a simple call to the base
+/// constructor.
+static bool IsConstructorDelegationValid(const CXXConstructorDecl *Ctor) {
+
+  // Currently we disable the optimization for classes with virtual
+  // bases because (1) the addresses of parameter variables need to be
+  // consistent across all initializers but (2) the delegate function
+  // call necessarily creates a second copy of the parameter variable.
+  //
+  // The limiting example (purely theoretical AFAIK):
+  //   struct A { A(int &c) { c++; } };
+  //   struct B : virtual A {
+  //     B(int count) : A(count) { printf("%d\n", count); }
+  //   };
+  // ...although even this example could in principle be emitted as a
+  // delegation since the address of the parameter doesn't escape.
+  if (Ctor->getParent()->getNumVBases()) {
+    // TODO: white-list trivial vbase initializers.  This case wouldn't
+    // be subject to the restrictions below.
+
+    // TODO: white-list cases where:
+    //  - there are no non-reference parameters to the constructor
+    //  - the initializers don't access any non-reference parameters
+    //  - the initializers don't take the address of non-reference
+    //    parameters
+    //  - etc.
+    // If we ever add any of the above cases, remember that:
+    //  - function-try-blocks will always blacklist this optimization
+    //  - we need to perform the constructor prologue and cleanup in
+    //    EmitConstructorBody.
+
+    return false;
+  }
+
+  // We also disable the optimization for variadic functions because
+  // it's impossible to "re-pass" varargs.
+  if (Ctor->getType()->getAs<FunctionProtoType>()->isVariadic())
+    return false;
+
+  return true;
+}
+
 /// EmitConstructorBody - Emits the body of the current constructor.
 void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(CurGD.getDecl());
   CXXCtorType CtorType = CurGD.getCtorType();
 
+  // Before we go any further, try the complete->base constructor
+  // delegation optimization.
+  if (CtorType == Ctor_Complete && IsConstructorDelegationValid(Ctor)) {
+    EmitDelegateCXXConstructorCall(Ctor, Ctor_Base, Args);
+    return;
+  }
+
   Stmt *Body = Ctor->getBody();
 
-  // Some of the optimizations we want to do can't be done with
-  // function try blocks.
+  // Enter the function-try-block before the constructor prologue if
+  // applicable.
   CXXTryStmtInfo TryInfo;
-  bool isTryBody = (Body && isa<CXXTryStmt>(Body));
-  if (isTryBody)
+  bool IsTryBody = (Body && isa<CXXTryStmt>(Body));
+
+  if (IsTryBody)
     TryInfo = EnterCXXTryStmt(*cast<CXXTryStmt>(Body));
 
   unsigned CleanupStackSize = CleanupEntries.size();
 
-  // Emit the constructor prologue, i.e. the base and member initializers.
-
-  // TODO: for non-variadic complete-object constructors without a
-  // function try block for a body, we can get away with just emitting
-  // the vbase initializers, then calling the base constructor.
+  // Emit the constructor prologue, i.e. the base and member
+  // initializers.
   EmitCtorPrologue(Ctor, CtorType);
 
   // Emit the body of the statement.
-  if (isTryBody)
+  if (IsTryBody)
     EmitStmt(cast<CXXTryStmt>(Body)->getTryBlock());
   else if (Body)
     EmitStmt(Body);
@@ -933,7 +982,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   // constructed.
   EmitCleanupBlocks(CleanupStackSize);
 
-  if (isTryBody)
+  if (IsTryBody)
     ExitCXXTryStmt(*cast<CXXTryStmt>(Body), TryInfo);
 }
 
@@ -1404,6 +1453,71 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
   llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(D, Type);
 
   EmitCXXMemberCall(D, Callee, ReturnValueSlot(), This, VTT, ArgBeg, ArgEnd);
+}
+
+void
+CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
+                                                CXXCtorType CtorType,
+                                                const FunctionArgList &Args) {
+  CallArgList DelegateArgs;
+
+  FunctionArgList::const_iterator I = Args.begin(), E = Args.end();
+  assert(I != E && "no parameters to constructor");
+
+  // this
+  DelegateArgs.push_back(std::make_pair(RValue::get(LoadCXXThis()),
+                                        I->second));
+  ++I;
+
+  // vtt
+  if (llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(Ctor, CtorType))) {
+    QualType VoidPP = getContext().getPointerType(getContext().VoidPtrTy);
+    DelegateArgs.push_back(std::make_pair(RValue::get(VTT), VoidPP));
+
+    if (CGVtableInfo::needsVTTParameter(CurGD)) {
+      assert(I != E && "cannot skip vtt parameter, already done with args");
+      assert(I->second == VoidPP && "skipping parameter not of vtt type");
+      ++I;
+    }
+  }
+
+  // Explicit arguments.
+  for (; I != E; ++I) {
+    
+    const VarDecl *Param = I->first;
+    QualType ArgType = Param->getType(); // because we're passing it to itself
+
+    // StartFunction converted the ABI-lowered parameter(s) into a
+    // local alloca.  We need to turn that into an r-value suitable
+    // for EmitCall.
+    llvm::Value *Local = GetAddrOfLocalVar(Param);
+    RValue Arg;
+ 
+    // For the most part, we just need to load the alloca, except:
+    // 1) aggregate r-values are actually pointers to temporaries, and
+    // 2) references to aggregates are pointers directly to the aggregate.
+    // I don't know why references to non-aggregates are different here.
+    if (ArgType->isReferenceType()) {
+      const ReferenceType *RefType = ArgType->getAs<ReferenceType>();
+      if (hasAggregateLLVMType(RefType->getPointeeType()))
+        Arg = RValue::getAggregate(Local);
+      else
+        // Locals which are references to scalars are represented
+        // with allocas holding the pointer.
+        Arg = RValue::get(Builder.CreateLoad(Local));
+    } else {
+      if (hasAggregateLLVMType(ArgType))
+        Arg = RValue::getAggregate(Local);
+      else
+        Arg = RValue::get(EmitLoadOfScalar(Local, false, ArgType));
+    }
+
+    DelegateArgs.push_back(std::make_pair(Arg, ArgType));
+  }
+
+  EmitCall(CGM.getTypes().getFunctionInfo(Ctor, CtorType),
+           CGM.GetAddrOfCXXConstructor(Ctor, CtorType), 
+           ReturnValueSlot(), DelegateArgs, Ctor);
 }
 
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,

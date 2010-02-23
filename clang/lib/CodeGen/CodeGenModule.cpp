@@ -1195,28 +1195,8 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
 
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
-  const llvm::FunctionType *Ty;
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
-
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    bool isVariadic = D->getType()->getAs<FunctionProtoType>()->isVariadic();
-
-    Ty = getTypes().GetFunctionType(getTypes().getFunctionInfo(MD), isVariadic);
-  } else {
-    Ty = cast<llvm::FunctionType>(getTypes().ConvertType(D->getType()));
-
-    // As a special case, make sure that definitions of K&R function
-    // "type foo()" aren't declared as varargs (which forces the backend
-    // to do unnecessary work).
-    if (D->getType()->isFunctionNoProtoType()) {
-      assert(Ty->isVarArg() && "Didn't lower type as expected");
-      // Due to stret, the lowered function could have arguments.
-      // Just create the same type as was lowered by ConvertType
-      // but strip off the varargs bit.
-      std::vector<const llvm::Type*> Args(Ty->param_begin(), Ty->param_end());
-      Ty = llvm::FunctionType::get(Ty->getReturnType(), Args, false);
-    }
-  }
+  const llvm::FunctionType *Ty = getTypes().GetFunctionType(GD);
 
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);

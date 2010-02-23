@@ -168,6 +168,8 @@ public:
   const llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
                                             bool IsVariadic);
 
+  const llvm::FunctionType *GetFunctionType(GlobalDecl GD);
+
 
   /// GetFunctionTypeForVtable - Get the LLVM function type for use in a vtable,
   /// given a CXXMethodDecl. If the method to has an incomplete return type, 
