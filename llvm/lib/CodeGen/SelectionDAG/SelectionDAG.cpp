@@ -4553,7 +4553,10 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDVTList VTs, const SDValue *Ops,
                                    unsigned NumOps) {
-  return MorphNodeTo(N, ~MachineOpc, VTs, Ops, NumOps);
+  N = MorphNodeTo(N, ~MachineOpc, VTs, Ops, NumOps);
+  // Reset the NodeID to -1.
+  N->setNodeId(-1);
+  return N;
 }
 
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
