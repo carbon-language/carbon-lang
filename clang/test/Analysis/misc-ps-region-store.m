@@ -1,6 +1,10 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -DTEST_64 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -verify -fblocks   -analyzer-opt-analyze-nested-blocks %s
 
+typedef long unsigned int size_t;
+void *memcpy(void *, const void *, size_t);
+void *alloca(size_t);
+
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;
 typedef int NSInteger;
@@ -867,3 +871,20 @@ int test_c_rev96062() {
   test_a_rev96062_aux2(&z);
   return a + b; // no-warning
 }
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7242010> - The access to y[0] at the bottom previously
+//  was reported as an uninitialized value.
+//===----------------------------------------------------------------------===//
+
+char *rdar_7242010(int count, char **y) {
+  char **x = alloca((count + 4) * sizeof(*x));
+  x[0] = "hi";
+  x[1] = "there";
+  x[2] = "every";
+  x[3] = "body";
+  memcpy(x + 4, y, count * sizeof(*x));
+  y = x;
+  return y[0]; // no-warning
+}
+
