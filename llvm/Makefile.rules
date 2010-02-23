@@ -495,6 +495,27 @@ LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
 LLVMExmplDir:= $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
 
 #--------------------------------------------------------------------
+# LLVM Capable Compiler
+#--------------------------------------------------------------------
+
+ifeq ($(LLVMCC_OPTION),llvm-gcc)
+  LLVMCC := $(LLVMGCC)
+  LLVMCXX := $(LLVMGXX)
+else
+  ifeq ($(LLVMCC_OPTION),clang)
+    ifneq ($(CLANGPATH),)
+      LLVMCC := $(CLANGPATH)
+      LLVMCXX := $(CLANGXXPATH)
+    else
+      ifeq ($(ENABLE_BUILT_CLANG),1)
+        LLVMCC := $(LLVMToolDir)/clang
+        LLVMCXX := $(LLVMToolDir)/clang++
+      endif
+    endif
+  endif
+endif
+
+#--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
 #--------------------------------------------------------------------
 EchoCmd  = $(ECHO) llvm[$(MAKELEVEL)]:
