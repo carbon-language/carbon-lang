@@ -5,6 +5,7 @@ add_clang_library(clangAnalysis
   CFG.cpp
   LiveVariables.cpp
   PrintfFormatString.cpp
+  ReachableCode.cpp
   UninitializedValues.cpp
   )
 

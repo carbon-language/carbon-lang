@@ -13,8 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/CFG.h"
+#include "clang/Analysis/Analyses/ReachableCode.h"
 #include "clang/Analysis/Analyses/PrintfFormatString.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
@@ -2104,37 +2105,6 @@ void Sema::CheckImplicitConversion(Expr *E, QualType T) {
   return;
 }
 
-// MarkReachable - Mark all the blocks reachable from Start as live. 
-// Returns the total number of blocks that were marked reachable.
-static unsigned MarkReachable(CFGBlock &Start, llvm::BitVector &live) {
-  unsigned count = 0;
-  llvm::SmallVector<CFGBlock*, 12> WL;
-
-  // Prep work queue
-  live.set(Start.getBlockID());
-  ++count;
-  WL.push_back(&Start);
-  
-  // Find the reachable blocks from 'Start'.
-  while (!WL.empty()) {
-    CFGBlock *item = WL.back();
-    WL.pop_back();
-    
-    // Look at the successors and mark then reachable.
-    for (CFGBlock::succ_iterator I=item->succ_begin(), E=item->succ_end();
-         I != E; ++I)
-      if (CFGBlock *B = *I) {
-        unsigned blockID = B->getBlockID();
-        if (!live[blockID]) {
-          live.set(blockID);
-          ++count;
-          WL.push_back(B);
-        }
-      }
-  }
-  return count;
-}
-
 static SourceLocation GetUnreachableLoc(CFGBlock &b, SourceRange &R1,
                                         SourceRange &R2) {
   Stmt *S;
@@ -2281,7 +2251,6 @@ namespace {
 
 /// CheckUnreachable - Check for unreachable code.
 void Sema::CheckUnreachable(AnalysisContext &AC) {
-  unsigned count;
   // We avoid checking when there are errors, as the CFG won't faithfully match
   // the user's code.
   if (getDiagnostics().hasErrorOccurred() ||
@@ -2293,11 +2262,11 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
     return;
 
   // Mark all live things first.
-  llvm::BitVector live(cfg->getNumBlockIDs());
-  count = MarkReachable(cfg->getEntry(), live);
+  llvm::BitVector reachable(cfg->getNumBlockIDs());
+  unsigned numReachable = ScanReachableFromBlock(cfg->getEntry(), reachable);
 
   // If there are no dead blocks, we're done.
-  if (count == cfg->getNumBlockIDs())
+  if (numReachable == cfg->getNumBlockIDs())
     return;
 
   SourceRange R1, R2;
@@ -2308,37 +2277,37 @@ void Sema::CheckUnreachable(AnalysisContext &AC) {
   // can't be part of a loop.
   for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
     CFGBlock &b = **I;
-    if (!live[b.getBlockID()]) {
+    if (!reachable[b.getBlockID()]) {
       if (b.pred_begin() == b.pred_end()) {
         if (!AddEHEdges && b.getTerminator()
             && isa<CXXTryStmt>(b.getTerminator())) {
           // When not adding EH edges from calls, catch clauses
           // can otherwise seem dead.  Avoid noting them as dead.
-          count += MarkReachable(b, live);
+          numReachable += ScanReachableFromBlock(b, reachable);
           continue;
         }
         SourceLocation c = GetUnreachableLoc(b, R1, R2);
         if (!c.isValid()) {
           // Blocks without a location can't produce a warning, so don't mark
           // reachable blocks from here as live.
-          live.set(b.getBlockID());
-          ++count;
+          reachable.set(b.getBlockID());
+          ++numReachable;
           continue;
         }
         lines.push_back(ErrLoc(c, R1, R2));
         // Avoid excessive errors by marking everything reachable from here
-        count += MarkReachable(b, live);
+        numReachable += ScanReachableFromBlock(b, reachable);
       }
     }
   }
 
-  if (count < cfg->getNumBlockIDs()) {
+  if (numReachable < cfg->getNumBlockIDs()) {
     // And then give warnings for the tops of loops.
     for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
       CFGBlock &b = **I;
-      if (!live[b.getBlockID()])
+      if (!reachable[b.getBlockID()])
         // Avoid excessive errors by marking everything reachable from here
-        lines.push_back(ErrLoc(MarkLiveTop(&b, live,
+        lines.push_back(ErrLoc(MarkLiveTop(&b, reachable,
                                            Context.getSourceManager()),
                                SourceRange(), SourceRange()));
     }
@@ -2370,7 +2339,7 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
   // confuse us, so we mark all live things first.
   std::queue<CFGBlock*> workq;
   llvm::BitVector live(cfg->getNumBlockIDs());
-  unsigned count = MarkReachable(cfg->getEntry(), live);
+  unsigned count = ScanReachableFromBlock(cfg->getEntry(), live);
 
   bool AddEHEdges = AC.getAddEHEdges();
   if (!AddEHEdges && count != cfg->getNumBlockIDs())
@@ -2384,7 +2353,7 @@ Sema::ControlFlowKind Sema::CheckFallThrough(AnalysisContext &AC) {
           if (b.getTerminator() && isa<CXXTryStmt>(b.getTerminator()))
             // When not adding EH edges from calls, catch clauses
             // can otherwise seem dead.  Avoid noting them as dead.
-            count += MarkReachable(b, live);
+            count += ScanReachableFromBlock(b, live);
           continue;
         }
       }
