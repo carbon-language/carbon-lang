@@ -17,7 +17,12 @@ PARALLEL_DIRS += ParallelJIT
 endif
 
 ifeq ($(LLVM_ON_UNIX),1)
-PARALLEL_DIRS += ExceptionDemo
+    ifeq ($(ARCH),x86)
+	PARALLEL_DIRS += ExceptionDemo
+    endif
+    ifeq ($(ARCH),x86_64)
+	PARALLEL_DIRS += ExceptionDemo
+    endif
 endif
 
 include $(LEVEL)/Makefile.common
