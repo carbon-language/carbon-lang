@@ -510,6 +510,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   PHIVarInfo = new SmallVector<unsigned, 4>[MF->getNumBlockIDs()];
   std::fill(PhysRegDef,  PhysRegDef  + NumRegs, (MachineInstr*)0);
   std::fill(PhysRegUse,  PhysRegUse  + NumRegs, (MachineInstr*)0);
+  PHIJoins.clear();
 
   /// Get some space for a respectable number of registers.
   VirtRegInfo.resize(64);

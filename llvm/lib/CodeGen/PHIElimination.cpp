@@ -223,6 +223,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
 
       // Increment use count of the newly created virtual register.
       VI.NumUses++;
+      LV->setPHIJoin(IncomingReg);
 
       // When we are reusing the incoming register, it may already have been
       // killed in this block. The old kill will also have been inserted at

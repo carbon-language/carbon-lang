@@ -124,6 +124,11 @@ private:
   ///
   std::vector<VarInfo> VirtRegInfo;
 
+  /// PHIJoins - list of virtual registers that are PHI joins. These registers
+  /// may have multiple definitions, and they require special handling when
+  /// building live intervals.
+  SparseBitVector<> PHIJoins;
+
   /// ReservedRegisters - This vector keeps track of which registers
   /// are reserved register which are not allocatable by the target machine.
   /// We can not track liveness for values that are in this set.
@@ -295,6 +300,12 @@ public:
   void addNewBlock(MachineBasicBlock *BB,
                    MachineBasicBlock *DomBB,
                    MachineBasicBlock *SuccBB);
+
+  /// isPHIJoin - Return true if Reg is a phi join register.
+  bool isPHIJoin(unsigned Reg) { return PHIJoins.test(Reg); }
+
+  /// setPHIJoin - Mark Reg as a phi join register.
+  void setPHIJoin(unsigned Reg) { PHIJoins.set(Reg); }
 };
 
 } // End llvm namespace
