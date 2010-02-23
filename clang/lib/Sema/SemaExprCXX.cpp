@@ -49,7 +49,7 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
   //     s->N::S<int>::~S();
   //   }
   //
-  // 
+  // See also PR6358 and PR6359.
   QualType SearchType;
   DeclContext *LookupCtx = 0;
   bool isDependent = false;
@@ -62,7 +62,39 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
     SearchType = GetTypeFromParser(ObjectTypePtr);
 
   if (SS.isSet()) {
-    // C++ [basic.lookup.qual]p6:
+    NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
+    
+    bool AlreadySearched = false;
+    bool LookAtPrefix = true;
+    if (!getLangOptions().CPlusPlus0x) {
+      // C++ [basic.lookup.qual]p6:
+      //   If a pseudo-destructor-name (5.2.4) contains a nested-name-specifier, 
+      //   the type-names are looked up as types in the scope designated by the
+      //   nested-name-specifier. In a qualified-id of the form:
+      // 
+      //     ::[opt] nested-name-specifier  ̃ class-name 
+      //
+      //   where the nested-name-specifier designates a namespace scope, and in
+      //   a qualified-id of the form:
+      //
+      //     ::opt nested-name-specifier class-name ::  ̃ class-name 
+      //
+      //   the class-names are looked up as types in the scope designated by 
+      //   the nested-name-specifier.
+      //
+      // Here, we check the first case (completely) and determine whether the
+      // code below is permitted to look at the prefix of the 
+      // nested-name-specifier (as we do in C++0x).
+      DeclContext *DC = computeDeclContext(SS, EnteringContext);
+      if (DC && DC->isFileContext()) {
+        AlreadySearched = true;
+        LookupCtx = DC;
+        isDependent = false;
+      } else if (DC && isa<CXXRecordDecl>(DC))
+        LookAtPrefix = false;
+    }
+    
+    // C++0x [basic.lookup.qual]p6:
     //   If a pseudo-destructor-name (5.2.4) contains a
     //   nested-name-specifier, the type-names are looked up as types
     //   in the scope designated by the nested-name-specifier. Similarly, in 
@@ -72,23 +104,33 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
     //
     //   the second class-name is looked up in the same scope as the first.
     //
-    // FIXME: We don't implement this, because it breaks lots of
-    // perfectly reasonable code that no other compilers diagnose. The
-    // issue is that the first class-name is looked up as a
-    // nested-name-specifier, so we ignore value declarations, but the
-    // second lookup is presumably an ordinary name lookup. Hence, we
-    // end up finding values (say, a function) and complain. See PRs
-    // 6358 and 6359 for examples of such code. DPG to investigate
-    // further.
-    if (ObjectTypePtr) {
+    // To implement this, we look at the prefix of the
+    // nested-name-specifier we were given, and determine the lookup
+    // context from that.
+    //
+    // We also fold in the second case from the C++03 rules quoted further 
+    // above.
+    NestedNameSpecifier *Prefix = 0;
+    if (AlreadySearched) {
+      // Nothing left to do.
+    } else if (LookAtPrefix && (Prefix = NNS->getPrefix())) {
+      CXXScopeSpec PrefixSS;
+      PrefixSS.setScopeRep(Prefix);
+      LookupCtx = computeDeclContext(PrefixSS, EnteringContext);
+      isDependent = isDependentScopeSpecifier(PrefixSS);
+    } else if (getLangOptions().CPlusPlus0x &&
+               (LookupCtx = computeDeclContext(SS, EnteringContext))) {
+      if (!LookupCtx->isTranslationUnit())
+        LookupCtx = LookupCtx->getParent();
+      isDependent = LookupCtx && LookupCtx->isDependentContext();
+    } else if (ObjectTypePtr) {
       LookupCtx = computeDeclContext(SearchType);
       isDependent = SearchType->isDependentType();
     } else {
       LookupCtx = computeDeclContext(SS, EnteringContext);
-      if (LookupCtx)
-        isDependent = LookupCtx->isDependentContext();
+      isDependent = LookupCtx && LookupCtx->isDependentContext();
     }
-
+    
     LookInScope = (LookupCtx == 0) && !isDependent;
   } else if (ObjectTypePtr) {
     // C++ [basic.lookup.classref]p3:

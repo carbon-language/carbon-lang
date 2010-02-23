@@ -29,7 +29,7 @@ void f(A* a, Foo *f, int *i, double *d) {
   g().~Bar(); // expected-error{{non-scalar}}
   
   f->::~Bar();
-  f->N::~Wibble(); // FIXME: Cannot use typedef name in destructor id.
+  f->N::~Wibble(); // FIXME: technically, Wibble isn't a class-name
   
   f->::~Bar(17, 42); // expected-error{{cannot have any arguments}}
 
