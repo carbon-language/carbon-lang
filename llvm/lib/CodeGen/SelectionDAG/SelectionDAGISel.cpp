@@ -1318,8 +1318,20 @@ static SDNode *findFlagUse(SDNode *N) {
 static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
                           SDNode *Root,
                           SmallPtrSet<SDNode*, 16> &Visited) {
-  if (Use->getNodeId() < Def->getNodeId() ||
-      !Visited.insert(Use))
+  // The NodeID's are given uniques ID's where a node ID is guaranteed to be
+  // greater than all of its (recursive) operands.  If we scan to a point where
+  // 'use' is smaller than the node we're scanning for, then we know we will
+  // never find it.
+  //
+  // The Use may be -1 (unassigned) if it is a newly allocated node.  This can
+  // happen because we scan down to newly selected nodes in the case of flag
+  // uses.
+  if ((Use->getNodeId() < Def->getNodeId() && Use->getNodeId() != -1))
+    return false;
+  
+  // Don't revisit nodes if we already scanned it and didn't fail, we know we
+  // won't fail if we scan it again.
+  if (!Visited.insert(Use))
     return false;
 
   for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
