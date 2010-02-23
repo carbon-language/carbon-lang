@@ -1129,7 +1129,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
       assert(!AFI->isThumb1OnlyFunction() &&
-             "This eliminateCallFramePseudoInstr does not suppor Thumb1!");
+             "This eliminateCallFramePseudoInstr does not support Thumb1!");
       bool isARM = !AFI->isThumbFunction();
 
       // Replace the pseudo instruction with a new instruction...
@@ -1266,7 +1266,7 @@ emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
-         "This emitPrologue does not suppor Thumb1!");
+         "This emitPrologue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
   unsigned NumBytes = MFI->getStackSize();
@@ -1427,7 +1427,7 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
-         "This emitEpilogue does not suppor Thumb1!");
+         "This emitEpilogue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
 
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
