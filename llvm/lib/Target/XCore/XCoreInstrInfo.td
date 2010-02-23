@@ -642,7 +642,7 @@ defm RETSP : FU6_LU6<"retsp", XCoreRetsp>;
 
 // TODO extdp, kentsp, krestsp, blat, setsr
 // clrsr, getsr, kalli
-let isBranch = 1, isTerminator = 1 in {
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 def BRBU_u6 : _FU6<
                  (outs),
                  (ins brtarget:$target),
@@ -703,7 +703,7 @@ def LDAP_lu10_ba : _FLU10<(outs),
                           "ldap r11, $addr",
                           [(set R11, (pcrelwrapper tblockaddress:$addr))]>;
 
-let isCall=1,
+let isCall=1, isBarrier = 1,
 // All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR] in {
 def BL_u10 : _FU10<
@@ -776,7 +776,7 @@ def CLZ_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
 // TODO edu, eeu, waitet, waitef, freer, tstart, msync, mjoin, syncr, clrtp
 // setdp, setcp, setv, setev, kcall
 // dgetreg
-let isBranch=1, isIndirectBranch=1, isTerminator=1 in
+let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
 def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
                  "bau $addr",
                  [(brind GRRegs:$addr)]>;
