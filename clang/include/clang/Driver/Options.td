@@ -235,7 +235,6 @@ def fastcp : Flag<"-fastcp">, Group<f_Group>;
 def fastf : Flag<"-fastf">, Group<f_Group>;
 def fast : Flag<"-fast">, Group<f_Group>;
 def fasynchronous_unwind_tables : Flag<"-fasynchronous-unwind-tables">, Group<f_Group>;
-def fblock_introspection : Flag<"-fblock-introspection">, Group<f_Group>;
 def fblocks : Flag<"-fblocks">, Group<f_Group>;
 def fbootclasspath_EQ : Joined<"-fbootclasspath=">, Group<f_Group>;
 def fbuiltin_strcat : Flag<"-fbuiltin-strcat">, Group<f_Group>;
