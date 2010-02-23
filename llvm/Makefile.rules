@@ -493,7 +493,6 @@ ExmplDir    := $(PROJ_OBJ_ROOT)/$(BuildMode)/examples
 LLVMLibDir  := $(LLVM_OBJ_ROOT)/$(BuildMode)/lib
 LLVMToolDir := $(LLVM_OBJ_ROOT)/$(BuildMode)/bin
 LLVMExmplDir:= $(LLVM_OBJ_ROOT)/$(BuildMode)/examples
-CFERuntimeLibDir := $(LLVMGCCDIR)/lib
 
 #--------------------------------------------------------------------
 # Full Paths To Compiled Tools and Utilities
@@ -964,7 +963,7 @@ $(warning Modules require llvm-gcc but no llvm-gcc is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
-LinkModule := $(LLVMLD) -L$(CFERuntimeLibDir) -r
+LinkModule := $(LLVMLD) -r
 
 
 ifdef EXPORTED_SYMBOL_FILE
@@ -1092,8 +1091,7 @@ else
 all-local:: $(LibName.BCA)
 
 ifdef EXPORTED_SYMBOL_FILE
-BCLinkLib = $(LLVMLD) -L$(CFERuntimeLibDir) \
-                     -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
+BCLinkLib = $(LLVMLD) -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 
 $(LibName.BCA): $(ObjectsBC) $(LibDir)/.dir $(LLVMLD) \
                 $(LLVMToolDir)/llvm-ar
