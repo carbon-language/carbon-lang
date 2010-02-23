@@ -65,11 +65,17 @@ def i64immSExt8  : PatLeaf<(i64 imm), [{
   return (int64_t)N->getZExtValue() == (int8_t)N->getZExtValue();
 }]>;
 
+def GetLo32XForm : SDNodeXForm<imm, [{
+  // Transformation function: get the low 32 bits.
+  return getI32Imm((unsigned)N->getZExtValue());
+}]>;
+
 def i64immSExt32  : PatLeaf<(i64 imm), [{
   // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // sign extended field.
   return (int64_t)N->getZExtValue() == (int32_t)N->getZExtValue();
 }]>;
+
 
 def i64immZExt32  : PatLeaf<(i64 imm), [{
   // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
@@ -1981,7 +1987,7 @@ def : Pat<(and GR64:$src, i64immZExt32:$imm),
             (i64 0),
             (AND32ri
               (EXTRACT_SUBREG GR64:$src, x86_subreg_32bit),
-              imm:$imm),
+              (i32 (GetLo32XForm imm:$imm))),
             x86_subreg_32bit)>;
 
 // r & (2^32-1) ==> movz
