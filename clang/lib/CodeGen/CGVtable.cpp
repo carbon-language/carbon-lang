@@ -992,9 +992,33 @@ private:
   void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment,
                  ThisAdjustment ThisAdjustment);
 
+  /// IsOverriderUsed - Returns whether the overrider will ever be used in this
+  /// part of the vtable. 
+  ///
+  /// Itanium C++ ABI 2.5.2:
+  ///
+  ///   struct A { virtual void f(); };
+  ///   struct B : virtual public A { int i; };
+  ///   struct C : virtual public A { int j; };
+  ///   struct D : public B, public C {};
+  ///
+  ///   When B and C are declared, A is a primary base in each case, so although
+  ///   vcall offsets are allocated in the A-in-B and A-in-C vtables, no this
+  ///   adjustment is required and no thunk is generated. However, inside D
+  ///   objects, A is no longer a primary base of C, so if we allowed calls to
+  ///   C::f() to use the copy of A's vtable in the C subobject, we would need
+  ///   to adjust this from C* to B::A*, which would require a third-party 
+  ///   thunk. Since we require that a call to C::f() first convert to A*, 
+  ///   C-in-D's copy of A's vtable is never referenced, so this is not 
+  ///   necessary.
+  bool IsOverriderUsed(BaseSubobject Base, 
+                       BaseSubobject FirstBaseInPrimaryBaseChain,
+                       FinalOverriders::OverriderInfo Overrider) const;
+  
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
-  void AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases);
+  void AddMethods(BaseSubobject Base, BaseSubobject FirstBaseInPrimaryBaseChain,
+                  PrimaryBasesSetTy &PrimaryBases);
 
   // LayoutVtable - Layout the vtable for the most derived class, including its
   // secondary vtables and any vtables for virtual bases.
@@ -1257,8 +1281,22 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
   }
 }
 
+bool 
+VtableBuilder::IsOverriderUsed(BaseSubobject Base, 
+                               BaseSubobject FirstBaseInPrimaryBaseChain,
+                               FinalOverriders::OverriderInfo Overrider) const {
+  // If the base and the first base in the primary base chain have the same
+  // offsets, then this overrider will be used.
+  if (Base.getBaseOffset() == FirstBaseInPrimaryBaseChain.getBaseOffset())
+    return true;
+  
+  return true;
+}
+
 void 
-VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
+VtableBuilder::AddMethods(BaseSubobject Base, 
+                          BaseSubobject FirstBaseInPrimaryBaseChain,
+                          PrimaryBasesSetTy &PrimaryBases) {
   const CXXRecordDecl *RD = Base.getBase();
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -1283,7 +1321,8 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
       BaseOffset = Base.getBaseOffset();
     }
     
-    AddMethods(BaseSubobject(PrimaryBase, BaseOffset), PrimaryBases);
+    AddMethods(BaseSubobject(PrimaryBase, BaseOffset), 
+               FirstBaseInPrimaryBaseChain, PrimaryBases);
     
     if (!PrimaryBases.insert(PrimaryBase))
       assert(false && "Found a duplicate primary base!");
@@ -1311,6 +1350,13 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
         continue;
     }
 
+    // Check if this overrider is going to be used.
+    if (!IsOverriderUsed(Base, FirstBaseInPrimaryBaseChain, Overrider)) {
+      const CXXMethodDecl *OverriderMD = Overrider.Method;
+      Components.push_back(VtableComponent::MakeUnusedFunction(OverriderMD));
+      continue;
+    }
+    
     // Check if this overrider needs a return adjustment.
     BaseOffset ReturnAdjustmentOffset = 
       Overriders.getReturnAdjustmentOffset(Base, MD);
@@ -1363,7 +1409,7 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetTy PrimaryBases;
-  AddMethods(Base, PrimaryBases);
+  AddMethods(Base, Base, PrimaryBases);
 
   // Record the address point.
   AddressPoints.insert(std::make_pair(Base, AddressPoint));
