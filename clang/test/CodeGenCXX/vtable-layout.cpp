@@ -481,3 +481,32 @@ struct B : virtual A {
 void B::f() { } 
 
 }
+
+namespace Test13 {
+
+// Test that we don't try to emit a vtable for 'A' twice.
+struct A {
+  virtual void f();
+};
+
+struct B : virtual A {
+  virtual void f();
+};
+
+// CHECK:      Vtable for 'Test13::C' (6 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (0)
+// CHECK-NEXT:    2 | vcall_offset (0)
+// CHECK-NEXT:    3 | offset_to_top (0)
+// CHECK-NEXT:    4 | Test13::C RTTI
+// CHECK-NEXT:        -- (Test13::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test13::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test13::C, 0) vtable address --
+// CHECK-NEXT:    5 | void Test13::C::f()
+struct C : virtual B, virtual A {
+  virtual void f();
+};
+void C::f() { }
+
+}
+

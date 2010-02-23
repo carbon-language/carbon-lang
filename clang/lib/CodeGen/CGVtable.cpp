@@ -961,6 +961,10 @@ private:
   
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
 
+  /// PrimaryVirtualBases - All known virtual bases who is a primary base of
+  /// some other base.
+  VisitedVirtualBasesSetTy PrimaryVirtualBases;
+
   /// AddVCallAndVBaseOffsets - Add vcall offsets and vbase offsets for the
   /// given base subobject.
   void AddVCallAndVBaseOffsets(BaseSubobject Base, bool BaseIsVirtual,
@@ -1107,7 +1111,7 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
   AddVBaseOffsets(Base.getBase(), OffsetToTop, VBases);
 
   // We only want to add vcall offsets for virtual bases.
-  if (BaseIsVirtual && OffsetToTop != 0)
+  if (BaseIsVirtual)
     AddVCallOffsets(Base, Base.getBaseOffset());
 }
 
@@ -1117,9 +1121,24 @@ void VtableBuilder::AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset) {
 
   // Handle the primary base first.
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
+    uint64_t PrimaryBaseOffset;
+    
     // Get the base offset of the primary base.
-    uint64_t PrimaryBaseOffset = Base.getBaseOffset() + 
-      Layout.getBaseClassOffset(PrimaryBase);
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
+             "Primary vbase should have a zero offset!");
+      
+      const ASTRecordLayout &MostDerivedClassLayout =
+        Context.getASTRecordLayout(MostDerivedClass);
+      
+      PrimaryBaseOffset = 
+        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+    } else {
+      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+             "Primary base should have a zero offset!");
+
+      PrimaryBaseOffset = Base.getBaseOffset();
+    }
     
     AddVCallOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
                     VBaseOffset);
@@ -1245,13 +1264,26 @@ VtableBuilder::AddMethods(BaseSubobject Base, PrimaryBasesSetTy &PrimaryBases) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
-    if (Layout.getPrimaryBaseWasVirtual())
-      assert(false && "FIXME: Handle vbases here.");
-    else
+    uint64_t BaseOffset;
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
+             "Primary vbase should have a zero offset!");
+      
+      const ASTRecordLayout &MostDerivedClassLayout =
+        Context.getASTRecordLayout(MostDerivedClass);
+      
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+      
+      // Keep track of this primary virtual base.
+      PrimaryVirtualBases.insert(PrimaryBase);
+    } else {
       assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
+
+      BaseOffset = Base.getBaseOffset();
+    }
     
-    AddMethods(BaseSubobject(PrimaryBase, Base.getBaseOffset()), PrimaryBases);
+    AddMethods(BaseSubobject(PrimaryBase, BaseOffset), PrimaryBases);
     
     if (!PrimaryBases.insert(PrimaryBase))
       assert(false && "Found a duplicate primary base!");
@@ -1409,10 +1441,11 @@ VtableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    // Check if this base needs a vtable. (If it's virtual, and we haven't
-    // visited it before).
+    // Check if this base needs a vtable. (If it's virtual, not a primary base
+    // of some other class, and we haven't visited it before).
     if (I->isVirtual() && BaseDecl->isDynamicClass() && 
-        BaseDecl != PrimaryBase && VBases.insert(BaseDecl)) {
+        BaseDecl != PrimaryBase && !PrimaryVirtualBases.count(BaseDecl) && 
+        VBases.insert(BaseDecl)) {
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       uint64_t BaseOffset = 
