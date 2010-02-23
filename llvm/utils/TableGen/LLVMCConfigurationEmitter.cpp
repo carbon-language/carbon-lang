@@ -43,6 +43,7 @@ const unsigned TabWidth = 4;
 const unsigned Indent1  = TabWidth*1;
 const unsigned Indent2  = TabWidth*2;
 const unsigned Indent3  = TabWidth*3;
+const unsigned Indent4  = TabWidth*4;
 
 // Default help string.
 const char * const DefaultHelpString = "NO HELP MESSAGE PROVIDED";
@@ -780,6 +781,8 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
   Init* CmdLine;
   Init* Actions;
   StrVector InLanguage;
+  std::string InFileOption;
+  std::string OutFileOption;
   std::string OutLanguage;
   std::string OutputSuffix;
   unsigned Flags;
@@ -793,9 +796,13 @@ struct ToolDescription : public RefCountedBase<ToolDescription> {
 
   // Default ctor here is needed because StringMap can only store
   // DefaultConstructible objects
-  ToolDescription() : CmdLine(0), Actions(0), Flags(0), OnEmpty(0) {}
+  ToolDescription ()
+    : CmdLine(0), Actions(0), OutFileOption("-o"), 
+      Flags(0), OnEmpty(0)
+  {}
   ToolDescription (const std::string& n)
-    : Name(n), CmdLine(0), Actions(0), Flags(0), OnEmpty(0)
+    : Name(n), CmdLine(0), Actions(0), OutFileOption("-o"),
+      Flags(0), OnEmpty(0)
   {}
 };
 
@@ -826,10 +833,14 @@ public:
     if (!staticMembersInitialized_) {
 
       AddHandler("actions", &CollectToolProperties::onActions);
-      AddHandler("cmd_line", &CollectToolProperties::onCmdLine);
+      AddHandler("command", &CollectToolProperties::onCommand);
       AddHandler("in_language", &CollectToolProperties::onInLanguage);
       AddHandler("join", &CollectToolProperties::onJoin);
       AddHandler("out_language", &CollectToolProperties::onOutLanguage);
+
+      AddHandler("out_file_option", &CollectToolProperties::onOutFileOption);
+      AddHandler("in_file_option", &CollectToolProperties::onInFileOption);
+
       AddHandler("output_suffix", &CollectToolProperties::onOutputSuffix);
       AddHandler("sink", &CollectToolProperties::onSink);
       AddHandler("works_on_empty", &CollectToolProperties::onWorksOnEmpty);
@@ -857,7 +868,7 @@ private:
     toolDesc_.Actions = Case;
   }
 
-  void onCmdLine (const DagInit& d) {
+  void onCommand (const DagInit& d) {
     CheckNumberOfArguments(d, 1);
     toolDesc_.CmdLine = d.getArg(0);
   }
@@ -897,6 +908,16 @@ private:
   void onOutLanguage (const DagInit& d) {
     CheckNumberOfArguments(d, 1);
     toolDesc_.OutLanguage = InitPtrToString(d.getArg(0));
+  }
+
+  void onOutFileOption (const DagInit& d) {
+    CheckNumberOfArguments(d, 1);
+    toolDesc_.OutFileOption = InitPtrToString(d.getArg(0));
+  }
+
+  void onInFileOption (const DagInit& d) {
+    CheckNumberOfArguments(d, 1);
+    toolDesc_.InFileOption = InitPtrToString(d.getArg(0));
   }
 
   void onOutputSuffix (const DagInit& d) {
@@ -1724,81 +1745,40 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
   if (StrVec.empty())
     throw "Tool '" + ToolName + "' has empty command line!";
 
-  StrVector::const_iterator I = StrVec.begin(), E = StrVec.end();
+  StrVector::const_iterator B = StrVec.begin(), E = StrVec.end();
 
-  // If there is a hook invocation on the place of the first command, skip it.
+  // Emit the command itself.
   assert(!StrVec[0].empty());
+  O.indent(IndentLevel) << "cmd = ";
   if (StrVec[0][0] == '$') {
-    while (I != E && (*I)[0] != ')' )
-      ++I;
-
-    // Skip the ')' symbol.
-    ++I;
+    B = SubstituteSpecialCommands(B, E, IsJoin, O);
+    ++B;
   }
   else {
-    ++I;
+    O << '"' << StrVec[0] << '"';
+    ++B;
   }
+  O << ";\n";
 
-  bool hasINFILE = false;
+  // Go through the command arguments.
+  assert(B <= E);
+  for (; B != E; ++B) {
+    const std::string& cmd = *B;
 
-  for (; I != E; ++I) {
-    const std::string& cmd = *I;
     assert(!cmd.empty());
     O.indent(IndentLevel);
+
     if (cmd.at(0) == '$') {
-      if (cmd == "$INFILE") {
-        hasINFILE = true;
-        if (IsJoin) {
-          O << "for (PathVector::const_iterator B = inFiles.begin()"
-            << ", E = inFiles.end();\n";
-          O.indent(IndentLevel) << "B != E; ++B)\n";
-          O.indent(IndentLevel + Indent1) << "vec.push_back(B->str());\n";
-        }
-        else {
-          O << "vec.push_back(inFile.str());\n";
-        }
-      }
-      else if (cmd == "$OUTFILE") {
-        O << "vec.push_back(\"\");\n";
-        O.indent(IndentLevel) << "out_file_index = vec.size()-1;\n";
-      }
-      else {
-        O << "vec.push_back(";
-        I = SubstituteSpecialCommands(I, E, IsJoin, O);
-        O << ");\n";
-      }
+      O << "vec.push_back(std::make_pair(0, ";
+      B = SubstituteSpecialCommands(B, E, IsJoin, O);
+      O << "));\n";
     }
     else {
-      O << "vec.push_back(\"" << cmd << "\");\n";
+      O << "vec.push_back(std::make_pair(0, \"" << cmd << "\"));\n";
     }
   }
-  if (!hasINFILE)
-    throw "Tool '" + ToolName + "' doesn't take any input!";
 
-  O.indent(IndentLevel) << "cmd = ";
-  if (StrVec[0][0] == '$')
-    SubstituteSpecialCommands(StrVec.begin(), StrVec.end(), IsJoin, O);
-  else
-    O << '"' << StrVec[0] << '"';
-  O << ";\n";
 }
-
-/// EmitCmdLineVecFillCallback - A function object wrapper around
-/// EmitCmdLineVecFill(). Used by EmitGenerateActionMethod() as an
-/// argument to EmitCaseConstructHandler().
-class EmitCmdLineVecFillCallback {
-  bool IsJoin;
-  const std::string& ToolName;
- public:
-  EmitCmdLineVecFillCallback(bool J, const std::string& TN)
-    : IsJoin(J), ToolName(TN) {}
-
-  void operator()(const Init* Statement, unsigned IndentLevel,
-                  raw_ostream& O) const
-  {
-    EmitCmdLineVecFill(Statement, ToolName, IsJoin, IndentLevel, O);
-  }
-};
 
 /// EmitForwardOptionPropertyHandlingCode - Helper function used to
 /// implement EmitActionHandler. Emits code for
@@ -1814,23 +1794,25 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
 
   switch (D.Type) {
   case OptionType::Switch:
-    O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\");\n";
+    O.indent(IndentLevel)
+      << "vec.push_back(std::make_pair(0, \"" << Name << "\"));\n";
     break;
   case OptionType::Parameter:
-    O.indent(IndentLevel) << "vec.push_back(\"" << Name;
+    O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, \"" << Name;
 
     if (!D.isForwardNotSplit()) {
-      O << "\");\n";
-      O.indent(IndentLevel) << "vec.push_back("
-                            << D.GenVariableName() << ");\n";
+      O << "\"));\n";
+      O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, "
+                            << D.GenVariableName() << "));\n";
     }
     else {
-      O << "=\" + " << D.GenVariableName() << ");\n";
+      O << "=\" + " << D.GenVariableName() << "));\n";
     }
     break;
   case OptionType::Prefix:
-    O.indent(IndentLevel) << "vec.push_back(\"" << Name << "\" + "
-                          << D.GenVariableName() << ");\n";
+    O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, \""
+                          << Name << "\" + "
+                          << D.GenVariableName() << "));\n";
     break;
   case OptionType::PrefixList:
     O.indent(IndentLevel)
@@ -1838,11 +1820,12 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
       << "::iterator B = " << D.GenVariableName() << ".begin(),\n";
     O.indent(IndentLevel)
       << "E = " << D.GenVariableName() << ".end(); B != E;) {\n";
-    O.indent(IndentLevel1) << "vec.push_back(\"" << Name << "\" + " << "*B);\n";
+    O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, \""
+                           << Name << "\" + " << "*B));\n";
     O.indent(IndentLevel1) << "++B;\n";
 
     for (int i = 1, j = D.MultiVal; i < j; ++i) {
-      O.indent(IndentLevel1) << "vec.push_back(*B);\n";
+      O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, *B));\n";
       O.indent(IndentLevel1) << "++B;\n";
     }
 
@@ -1854,10 +1837,11 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
       << D.GenVariableName() << ".begin(),\n";
     O.indent(IndentLevel) << "E = " << D.GenVariableName()
                           << ".end() ; B != E;) {\n";
-    O.indent(IndentLevel1) << "vec.push_back(\"" << Name << "\");\n";
+    O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, \""
+                           << Name << "\"));\n";
 
     for (int i = 0, j = D.MultiVal; i < j; ++i) {
-      O.indent(IndentLevel1) << "vec.push_back(*B);\n";
+      O.indent(IndentLevel1) << "vec.push_back(std::make_pair(0, *B));\n";
       O.indent(IndentLevel1) << "++B;\n";
     }
 
@@ -1939,7 +1923,8 @@ class EmitActionHandlersCallback :
   {
     CheckNumberOfArguments(Dag, 1);
     this->EmitHookInvocation(InitPtrToString(Dag.getArg(0)),
-                             "vec.push_back(", ");\n", IndentLevel, O);
+                             "vec.push_back(std::make_pair(0, ", "));\n",
+                             IndentLevel, O);
   }
 
   void onForward (const DagInit& Dag,
@@ -1969,13 +1954,18 @@ class EmitActionHandlersCallback :
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
     if (D.isParameter()) {
-      O.indent(IndentLevel) << "vec.push_back("
-                            << D.GenVariableName() << ");\n";
+      O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, "
+                            << D.GenVariableName() << "));\n";
     }
     else {
-      O.indent(IndentLevel) << "std::copy(" << D.GenVariableName()
-                            << ".begin(), " << D.GenVariableName()
-                            << ".end(), std::back_inserter(vec));\n";
+      O.indent(IndentLevel) << "for (cl::list<std::string>::iterator B = "
+                            << D.GenVariableName() << ".begin(), \n";
+      O.indent(IndentLevel + Indent1) << " E = " << D.GenVariableName()
+                                      << ".end(); B != E; ++B)\n";
+      O.indent(IndentLevel) << "{\n";
+      O.indent(IndentLevel + Indent1)
+        << "vec.push_back(std::make_pair(0, *B));\n";
+      O.indent(IndentLevel) << "}\n";
     }
   }
 
@@ -1987,9 +1977,16 @@ class EmitActionHandlersCallback :
     const std::string& Hook = InitPtrToString(Dag.getArg(1));
     const OptionDescription& D = OptDescs.FindListOrParameter(Name);
 
-    O.indent(IndentLevel) << "vec.push_back(" << "hooks::"
+    O.indent(IndentLevel) << "vec.push_back(std::make_pair(0, " << "hooks::"
                           << Hook << "(" << D.GenVariableName()
-                          << (D.isParameter() ? ".c_str()" : "") << "));\n";
+                          << (D.isParameter() ? ".c_str()" : "") << ")));\n";
+  }
+
+  void onNoOutFile (const DagInit& Dag,
+                    unsigned IndentLevel, raw_ostream& O) const
+  {
+    CheckNumberOfArguments(Dag, 0);
+    O.indent(IndentLevel) << "no_out_file = true;\n";
   }
 
   void onOutputSuffix (const DagInit& Dag,
@@ -2028,11 +2025,14 @@ class EmitActionHandlersCallback :
       AddHandler("forward_value", &EmitActionHandlersCallback::onForwardValue);
       AddHandler("forward_transformed_value",
                  &EmitActionHandlersCallback::onForwardTransformedValue);
+      AddHandler("no_out_file",
+                 &EmitActionHandlersCallback::onNoOutFile);
       AddHandler("output_suffix", &EmitActionHandlersCallback::onOutputSuffix);
       AddHandler("stop_compilation",
                  &EmitActionHandlersCallback::onStopCompilation);
       AddHandler("unpack_values",
                  &EmitActionHandlersCallback::onUnpackValues);
+
 
       staticMembersInitialized_ = true;
     }
@@ -2044,58 +2044,6 @@ class EmitActionHandlersCallback :
     InvokeDagInitHandler(this, I, IndentLevel, O);
   }
 };
-
-bool IsOutFileIndexCheckRequiredStr (const Init* CmdLine) {
-  StrVector StrVec;
-  TokenizeCmdLine(InitPtrToString(CmdLine), StrVec);
-
-  for (StrVector::const_iterator I = StrVec.begin(), E = StrVec.end();
-       I != E; ++I) {
-    if (*I == "$OUTFILE")
-      return false;
-  }
-
-  return true;
-}
-
-class IsOutFileIndexCheckRequiredStrCallback {
-  bool* ret_;
-
-public:
-  IsOutFileIndexCheckRequiredStrCallback(bool* ret) : ret_(ret)
-  {}
-
-  void operator()(const Init* CmdLine) {
-    // Ignore nested 'case' DAG.
-    if (typeid(*CmdLine) == typeid(DagInit))
-      return;
-
-    if (IsOutFileIndexCheckRequiredStr(CmdLine))
-      *ret_ = true;
-  }
-
-  void operator()(const DagInit* Test, unsigned, bool) {
-    this->operator()(Test);
-  }
-  void operator()(const Init* Statement, unsigned) {
-    this->operator()(Statement);
-  }
-};
-
-bool IsOutFileIndexCheckRequiredCase (Init* CmdLine) {
-  bool ret = false;
-  WalkCase(CmdLine, Id(), IsOutFileIndexCheckRequiredStrCallback(&ret));
-  return ret;
-}
-
-/// IsOutFileIndexCheckRequired - Should we emit an "out_file_index != -1" check
-/// in EmitGenerateActionMethod() ?
-bool IsOutFileIndexCheckRequired (Init* CmdLine) {
-  if (typeid(*CmdLine) == typeid(StringInit))
-    return IsOutFileIndexCheckRequiredStr(CmdLine);
-  else
-    return IsOutFileIndexCheckRequiredCase(CmdLine);
-}
 
 void EmitGenerateActionMethodHeader(const ToolDescription& D,
                                     bool IsJoin, raw_ostream& O)
@@ -2111,8 +2059,10 @@ void EmitGenerateActionMethodHeader(const ToolDescription& D,
   O.indent(Indent2) << "const LanguageMap& LangMap) const\n";
   O.indent(Indent1) << "{\n";
   O.indent(Indent2) << "std::string cmd;\n";
-  O.indent(Indent2) << "std::vector<std::string> vec;\n";
+  O.indent(Indent2) << "std::string out_file;\n";
+  O.indent(Indent2) << "std::vector<std::pair<unsigned, std::string> > vec;\n";
   O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
+  O.indent(Indent2) << "bool no_out_file = false;\n";
   O.indent(Indent2) << "const char* output_suffix = \""
                     << D.OutputSuffix << "\";\n";
 }
@@ -2128,46 +2078,61 @@ void EmitGenerateActionMethod (const ToolDescription& D,
   if (!D.CmdLine)
     throw "Tool " + D.Name + " has no cmd_line property!";
 
-  bool IndexCheckRequired = IsOutFileIndexCheckRequired(D.CmdLine);
-  O.indent(Indent2) << "int out_file_index"
-                    << (IndexCheckRequired ? " = -1" : "")
-                    << ";\n\n";
+  // Process the 'command' property.
+  O << '\n';
+  EmitCmdLineVecFill(D.CmdLine, D.Name, IsJoin, Indent2, O);
+  O << '\n';
 
-  // Process the cmd_line property.
-  if (typeid(*D.CmdLine) == typeid(StringInit))
-    EmitCmdLineVecFill(D.CmdLine, D.Name, IsJoin, Indent2, O);
-  else
-    EmitCaseConstructHandler(D.CmdLine, Indent2,
-                             EmitCmdLineVecFillCallback(IsJoin, D.Name),
-                             true, OptDescs, O);
-
-  // For every understood option, emit handling code.
+  // Process the 'actions' list of this tool.
   if (D.Actions)
     EmitCaseConstructHandler(D.Actions, Indent2,
                              EmitActionHandlersCallback(OptDescs),
                              false, OptDescs, O);
-
   O << '\n';
-  O.indent(Indent2)
-    << "std::string out_file = OutFilename("
-    << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
-  O.indent(Indent3) << "TempDir, stop_compilation, output_suffix).str();\n\n";
 
-  if (IndexCheckRequired)
-    O.indent(Indent2) << "if (out_file_index != -1)\n";
-  O.indent(IndexCheckRequired ? Indent3 : Indent2)
-    << "vec[out_file_index] = out_file;\n";
+  // Input file (s)
+  if (!D.InFileOption.empty()) {
+    O.indent(Indent2) << "vec.push_back(std::make_pair(0, \""
+                      << D.InFileOption << "\");\n";
+  }
+
+  if (IsJoin) {
+    O.indent(Indent2)
+      << "for (PathVector::const_iterator B = inFiles.begin(),\n";
+    O.indent(Indent3) << "E = inFiles.end(); B != E; ++B)\n";
+    O.indent(Indent2) << "{\n";
+    O.indent(Indent3) << "vec.push_back(std::make_pair(0, B->str()));\n";
+    O.indent(Indent2) << "}\n";
+  }
+  else {
+    O.indent(Indent2) << "vec.push_back(std::make_pair(0, inFile.str()));\n";
+  }
+
+  // Output file
+  O.indent(Indent2) << "if (!no_out_file) {\n";
+  if (!D.OutFileOption.empty())
+    O.indent(Indent3) << "vec.push_back(std::make_pair(0, \""
+                      << D.OutFileOption << "\"));\n";
+
+  O.indent(Indent3) << "out_file = this->OutFilename("
+                    << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
+  O.indent(Indent4) << "TempDir, stop_compilation, output_suffix).str();\n\n";
+  O.indent(Indent3) << "vec.push_back(std::make_pair(0, out_file));\n";
+
+  O.indent(Indent2) << "}\n\n";
 
   // Handle the Sink property.
   if (D.isSink()) {
     O.indent(Indent2) << "if (!" << SinkOptionName << ".empty()) {\n";
-    O.indent(Indent3) << "vec.insert(vec.end(), "
-                      << SinkOptionName << ".begin(), " << SinkOptionName
-                      << ".end());\n";
+    O.indent(Indent3) << "for (cl::list<std::string>::iterator B = "
+                      << SinkOptionName << ".begin(), E = " << SinkOptionName
+                      << ".end(); B != E; ++B)\n";
+    O.indent(Indent4) << "vec.push_back(std::make_pair(0, *B));\n";
     O.indent(Indent2) << "}\n";
   }
 
-  O.indent(Indent2) << "return Action(cmd, vec, stop_compilation, out_file);\n";
+  O.indent(Indent2) << "return Action(cmd, this->SortArgs(vec), "
+                    << "stop_compilation, out_file);\n";
   O.indent(Indent1) << "}\n\n";
 }
 
@@ -3038,7 +3003,7 @@ void LLVMCConfigurationEmitter::run (raw_ostream &O) {
   CollectPluginData(Records, Data);
   CheckPluginData(Data);
 
-  EmitSourceFileHeader("LLVMC Configuration Library", O);
+  this->EmitSourceFileHeader("LLVMC Configuration Library", O);
   EmitPluginCode(Data, O);
 
   } catch (std::exception& Error) {

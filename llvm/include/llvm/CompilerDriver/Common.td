@@ -20,7 +20,9 @@ class Tool<list<dag> l> {
 def in_language;
 def out_language;
 def output_suffix;
-def cmd_line;
+def command;
+def out_file_option;
+def in_file_option;
 def join;
 def sink;
 def works_on_empty;
@@ -83,6 +85,7 @@ def forward_as;
 def forward_value;
 def forward_transformed_value;
 def stop_compilation;
+def no_out_file;
 def unpack_values;
 def warning;
 def error;

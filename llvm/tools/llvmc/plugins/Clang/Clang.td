@@ -1,12 +1,3 @@
-// A replacement for the Clang's ccc script.
-// Depends on the Base plugin.
-// To compile, use this command:
-//
-//    cd $LLVMC2_DIR
-//    make DRIVER_NAME=ccc2 BUILTIN_PLUGINS=Clang
-//
-// Or just use the default llvmc, which now has this plugin enabled.
-
 include "llvm/CompilerDriver/Common.td"
 
 def Priority : PluginPriority<1>;

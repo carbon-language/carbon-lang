@@ -71,3 +71,12 @@ sys::Path Tool::OutFilename(const sys::Path& In,
   }
   return Out;
 }
+
+StrVector Tool::SortArgs(ArgsVector& Args) const {
+  StrVector Out;
+
+  for (ArgsVector::iterator B = Args.begin(), E = Args.end(); B != E; ++B)
+    Out.push_back(B->second);
+
+  return Out;
+}

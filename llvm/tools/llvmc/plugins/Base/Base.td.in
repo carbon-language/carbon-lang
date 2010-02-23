@@ -134,28 +134,26 @@ class llvm_gcc_based <string cmd_prefix, string in_lang,
                       string E_ext, string out_lang> : Tool<
 [(in_language in_lang),
  (out_language "llvm-bitcode"),
- (output_suffix out_lang),
- (cmd_line (case
-            (switch_on "E"),
-              (case (not_empty "o"),
-                    !strconcat(cmd_prefix, " -E $INFILE -o $OUTFILE"),
-                    (default),
-                    !strconcat(cmd_prefix, " -E $INFILE")),
-            (switch_on "fsyntax-only"),
-              !strconcat(cmd_prefix, " -fsyntax-only $INFILE"),
-            (and (switch_on "S"), (switch_on "emit-llvm")),
-              !strconcat(cmd_prefix, " -S $INFILE -o $OUTFILE -emit-llvm"),
-            (default),
-              !strconcat(cmd_prefix, " -c $INFILE -o $OUTFILE -emit-llvm"))),
+ (output_suffix "bc"),
+ (command cmd_prefix),
  (actions
      (case
-         (and (multiple_input_files), (or (switch_on "S"), (switch_on "c"))),
+         (and (not_empty "o"),
+              (multiple_input_files), (or (switch_on "S"), (switch_on "c"))),
               (error "cannot specify -o with -c or -S with multiple files"),
-         (switch_on "E"), [(stop_compilation), (output_suffix E_ext)],
+         (switch_on "E"),
+              [(forward "E"), (stop_compilation), (output_suffix E_ext)],
+         (and (switch_on "E"), (empty "o")), (no_out_file),
          (switch_on ["emit-llvm", "S"]),
               [(output_suffix "ll"), (stop_compilation)],
          (switch_on ["emit-llvm", "c"]), (stop_compilation),
-         (switch_on "fsyntax-only"), (stop_compilation),
+         (switch_on "fsyntax-only"), [(forward "fsyntax-only"),
+                                      (no_out_file), (stop_compilation)],
+         (switch_on ["S", "emit-llvm"]), [(forward "S"), (forward "emit-llvm")],
+         (not (or (switch_on ["S", "emit-llvm"]), (switch_on "fsyntax-only"))),
+             [(append_cmd "-c"), (append_cmd "-emit-llvm")],
+
+         // Forwards
          (not_empty "include"), (forward "include"),
          (not_empty "iquote"), (forward "iquote"),
          (not_empty "save-temps"), (append_cmd "-save-temps"),
@@ -208,14 +206,14 @@ def opt : Tool<
                 (switch_on "O1"), (forward "O1"),
                 (switch_on "O2"), (forward "O2"),
                 (switch_on "O3"), (forward "O3"))),
- (cmd_line "opt -f $INFILE -o $OUTFILE")
+ (command "opt -f")
 ]>;
 
 def llvm_as : Tool<
 [(in_language "llvm-assembler"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "llvm-as $INFILE -o $OUTFILE"),
+ (command "llvm-as"),
  (actions (case (switch_on "emit-llvm"), (stop_compilation)))
 ]>;
 
@@ -223,7 +221,7 @@ def llvm_gcc_assembler : Tool<
 [(in_language "assembler"),
  (out_language "object-code"),
  (output_suffix "o"),
- (cmd_line "@LLVMGCCCOMMAND@ -c -x assembler $INFILE -o $OUTFILE"),
+ (command "@LLVMGCCCOMMAND@ -c -x assembler"),
  (actions (case
           (switch_on "c"), (stop_compilation),
           (not_empty "arch"), (forward "arch"),
@@ -234,7 +232,7 @@ def llc : Tool<
 [(in_language ["llvm-bitcode", "llvm-assembler"]),
  (out_language "assembler"),
  (output_suffix "s"),
- (cmd_line "llc -f $INFILE -o $OUTFILE"),
+ (command "llc -f"),
  (actions (case
           (switch_on "S"), (stop_compilation),
           (switch_on "O0"), (forward "O0"),
@@ -256,7 +254,7 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
 [(in_language "object-code"),
  (out_language "executable"),
  (output_suffix "out"),
- (cmd_line !strconcat(cmd_prefix, " $INFILE -o $OUTFILE")),
+ (command cmd_prefix),
  (works_on_empty (case (not_empty "filelist"), true,
                        (default), false)),
  (join),

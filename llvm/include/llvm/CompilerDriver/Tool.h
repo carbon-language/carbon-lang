@@ -20,12 +20,16 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/System/Path.h"
 
+#include <string>
 #include <vector>
+#include <utility>
 
 namespace llvmc {
 
   class LanguageMap;
+  typedef std::vector<std::pair<unsigned, std::string> > ArgsVector;
   typedef std::vector<llvm::sys::Path> PathVector;
+  typedef std::vector<std::string> StrVector;
   typedef llvm::StringSet<> InputLanguagesSet;
 
   /// Tool - Represents a single tool.
@@ -59,6 +63,8 @@ namespace llvmc {
                                 const llvm::sys::Path& TempDir,
                                 bool StopCompilation,
                                 const char* OutputSuffix) const;
+
+    StrVector SortArgs(ArgsVector& Args) const;
   };
 
   /// JoinTool - A Tool that has an associated input file list.
