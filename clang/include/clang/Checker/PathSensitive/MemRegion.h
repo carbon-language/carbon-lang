@@ -428,7 +428,6 @@ public:
 ///  which correspond to "code+data".  The distinction is important, because
 ///  like a closure a block captures the values of externally referenced
 ///  variables.
-/// BlockDataRegion - A region that represents code texts of blocks (closures).
 class BlockDataRegion : public SubRegion {
   friend class MemRegionManager;
   const BlockTextRegion *BC;
