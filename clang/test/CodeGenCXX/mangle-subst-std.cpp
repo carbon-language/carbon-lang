@@ -55,3 +55,9 @@ namespace std
   terminate_handler set_terminate(terminate_handler) { return 0; }
 }
 }
+
+// Make sure we don't treat the following like std::string
+// CHECK: define void @_Z1f12basic_stringIcSt11char_traitsIcESaIcEE
+template<typename, typename, typename> struct basic_string { };
+typedef basic_string<char, std::char_traits<char>, std::allocator<char> > not_string;
+void f(not_string) { }
