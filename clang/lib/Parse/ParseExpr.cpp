@@ -996,12 +996,16 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 
       CXXScopeSpec SS;
       Action::TypeTy *ObjectType = 0;
+      bool MayBePseudoDestructor = false;
       if (getLang().CPlusPlus && !LHS.isInvalid()) {
         LHS = Actions.ActOnStartCXXMemberReference(CurScope, move(LHS),
-                                                   OpLoc, OpKind, ObjectType);
+                                                   OpLoc, OpKind, ObjectType,
+                                                   MayBePseudoDestructor);
         if (LHS.isInvalid())
           break;
-        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false, true);
+
+        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false, 
+                                       &MayBePseudoDestructor);
       }
 
       if (Tok.is(tok::code_completion)) {
@@ -1012,6 +1016,17 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ConsumeToken();
       }
       
+      if (MayBePseudoDestructor) {
+        LHS = ParseCXXPseudoDestructor(move(LHS), OpLoc, OpKind, SS, 
+                                       ObjectType);
+        break;
+      }
+
+      // Either the action has told is that this cannot be a
+      // pseudo-destructor expression (based on the type of base
+      // expression), or we didn't see a '~' in the right place. We
+      // can still parse a destructor name here, but in that case it
+      // names a real destructor.
       UnqualifiedId Name;
       if (ParseUnqualifiedId(SS, 
                              /*EnteringContext=*/false, 
@@ -1022,10 +1037,9 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         return ExprError();
       
       if (!LHS.isInvalid())
-        LHS = Actions.ActOnMemberAccessExpr(CurScope, move(LHS), OpLoc, OpKind,
-                                            SS, Name, ObjCImpDecl,
+        LHS = Actions.ActOnMemberAccessExpr(CurScope, move(LHS), OpLoc, 
+                                            OpKind, SS, Name, ObjCImpDecl,
                                             Tok.is(tok::l_paren));
-      
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'

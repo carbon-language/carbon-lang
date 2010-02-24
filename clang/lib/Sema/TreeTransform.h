@@ -5041,10 +5041,12 @@ TreeTransform<Derived>::TransformCXXDependentScopeMemberExpr(
 
     // Start the member reference and compute the object's type.
     Sema::TypeTy *ObjectTy = 0;
+    bool MayBePseudoDestructor = false;
     Base = SemaRef.ActOnStartCXXMemberReference(0, move(Base),
                                                 E->getOperatorLoc(),
                                       E->isArrow()? tok::arrow : tok::period,
-                                                ObjectTy);
+                                                ObjectTy,
+                                                MayBePseudoDestructor);
     if (Base.isInvalid())
       return SemaRef.ExprError();
 

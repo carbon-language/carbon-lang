@@ -964,7 +964,7 @@ private:
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                       TypeTy *ObjectType,
                                       bool EnteringContext,
-                                      bool InMemberAccessExpr = false);
+                                      bool *MayBePseudoDestructor = 0);
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
@@ -973,6 +973,13 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Type Identification
   OwningExprResult ParseCXXTypeid();
+
+  //===--------------------------------------------------------------------===//
+  // C++ 5.2.4: C++ Pseudo-Destructor Expressions
+  OwningExprResult ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
+                                            tok::TokenKind OpKind,
+                                            CXXScopeSpec &SS,
+                                            Action::TypeTy *ObjectType);
 
   //===--------------------------------------------------------------------===//
   // C++ 9.3.2: C++ 'this' pointer
@@ -1415,7 +1422,8 @@ private:
                                     SourceLocation NameLoc,
                                     bool EnteringContext,
                                     TypeTy *ObjectType,
-                                    UnqualifiedId &Id);
+                                    UnqualifiedId &Id,
+                                    bool AssumeTemplateId = false);
   bool ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
                                   TypeTy *ObjectType,
                                   UnqualifiedId &Result);

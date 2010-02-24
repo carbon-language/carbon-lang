@@ -21,6 +21,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Template.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 
@@ -2325,7 +2326,8 @@ FullExpr Sema::CreateFullExpr(Expr *SubExpr) {
 
 Sema::OwningExprResult
 Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
-                                   tok::TokenKind OpKind, TypeTy *&ObjectType) {
+                                   tok::TokenKind OpKind, TypeTy *&ObjectType,
+                                   bool &MayBePseudoDestructor) {
   // Since this might be a postfix expression, get rid of ParenListExprs.
   Base = MaybeConvertParenListExprToParenExpr(S, move(Base));
 
@@ -2333,6 +2335,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   assert(BaseExpr && "no record expansion");
 
   QualType BaseType = BaseExpr->getType();
+  MayBePseudoDestructor = false;
   if (BaseType->isDependentType()) {
     // If we have a pointer to a dependent type and are using the -> operator,
     // the object type is the type that the pointer points to. We might still
@@ -2342,6 +2345,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
         BaseType = Ptr->getPointeeType();
     
     ObjectType = BaseType.getAsOpaquePtr();
+    MayBePseudoDestructor = true;
     return move(Base);
   }
 
@@ -2383,7 +2387,11 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
     //   [...] If the type of the object expression is of pointer to scalar
     //   type, the unqualified-id is looked up in the context of the complete
     //   postfix-expression.
+    //
+    // This also indicates that we should be parsing a
+    // pseudo-destructor-name.
     ObjectType = 0;
+    MayBePseudoDestructor = true;
     return move(Base);
   }
 
@@ -2399,8 +2407,147 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   //   type C (or of pointer to a class type C), the unqualified-id is looked
   //   up in the scope of class C. [...]
   ObjectType = BaseType.getAsOpaquePtr();
-  
   return move(Base);
+}
+
+Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+                                                       SourceLocation OpLoc,
+                                                       tok::TokenKind OpKind,
+                                                       const CXXScopeSpec &SS,
+                                                  UnqualifiedId &FirstTypeName,
+                                                       SourceLocation CCLoc,
+                                                       SourceLocation TildeLoc,
+                                                 UnqualifiedId &SecondTypeName,
+                                                       bool HasTrailingLParen) {
+  assert((FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
+          FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
+         "Invalid first type name in pseudo-destructor");
+  assert((SecondTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
+          SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
+         "Invalid second type name in pseudo-destructor");
+
+  Expr *BaseE = (Expr *)Base.get();
+  QualType ObjectType;
+  if (BaseE->isTypeDependent())
+    ObjectType = Context.DependentTy;
+
+  // The nested-name-specifier provided by the parser, then extended
+  // by the "type-name ::" in the pseudo-destructor-name, if present.
+  CXXScopeSpec ExtendedSS = SS;
+
+  if (FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId || 
+      FirstTypeName.Identifier) {
+    // We have a pseudo-destructor with a "type-name ::". 
+    // FIXME: As a temporary hack, we go ahead and resolve this to part of
+    // a nested-name-specifier.
+    if (FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) {
+      // Resolve the identifier to a nested-name-specifier.
+      CXXScopeTy *FinalScope
+        = ActOnCXXNestedNameSpecifier(S, SS, 
+                                      FirstTypeName.StartLocation,
+                                      CCLoc,
+                                      *FirstTypeName.Identifier,
+                                      true,
+                                      ObjectType.getAsOpaquePtr(),
+                                      false);
+      if (SS.getBeginLoc().isInvalid())
+        ExtendedSS.setBeginLoc(FirstTypeName.StartLocation);
+      ExtendedSS.setEndLoc(CCLoc);
+      ExtendedSS.setScopeRep(FinalScope);
+    } else {
+      // Resolve the template-id to a type, and that to a
+      // nested-name-specifier.
+      TemplateIdAnnotation *TemplateId = FirstTypeName.TemplateId;
+      ASTTemplateArgsPtr TemplateArgsPtr(*this,
+                                         TemplateId->getTemplateArgs(),
+                                         TemplateId->NumArgs);
+      TypeResult T = ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
+                                         TemplateId->TemplateNameLoc,
+                                         TemplateId->LAngleLoc,
+                                         TemplateArgsPtr,
+                                         TemplateId->RAngleLoc);
+      if (!T.isInvalid()) {
+        CXXScopeTy *FinalScope
+          = ActOnCXXNestedNameSpecifier(S, SS, T.get(), 
+                                        SourceRange(TemplateId->TemplateNameLoc,
+                                                    TemplateId->RAngleLoc),
+                                        CCLoc,
+                                        true);
+        if (SS.getBeginLoc().isInvalid())
+          ExtendedSS.setBeginLoc(TemplateId->TemplateNameLoc);
+        ExtendedSS.setEndLoc(CCLoc);
+        ExtendedSS.setScopeRep(FinalScope);        
+      }
+    }
+  }
+
+  // Produce a destructor name based on the second type-name (which
+  // follows the tilde).
+  TypeTy *DestructedType;
+  SourceLocation EndLoc;
+  if (SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) {
+    const CXXScopeSpec *LookupSS = &SS;
+    bool isDependent = isDependentScopeSpecifier(ExtendedSS);
+    if (isDependent || computeDeclContext(ExtendedSS))
+      LookupSS = &ExtendedSS;
+
+    DestructedType = getTypeName(*SecondTypeName.Identifier, 
+                                 SecondTypeName.StartLocation,
+                                 S, LookupSS, true, ObjectType.getTypePtr());
+    if (!DestructedType && isDependent) {
+      // We didn't find our type, but that's okay: it's dependent
+      // anyway.
+      // FIXME: We should not be building a typename type here!
+      NestedNameSpecifier *NNS = 0;
+      SourceRange Range;
+      if (SS.isSet()) {
+        NNS = (NestedNameSpecifier *)ExtendedSS.getScopeRep();
+        Range = SourceRange(ExtendedSS.getRange().getBegin(), 
+                            SecondTypeName.StartLocation);
+      } else {
+        NNS = NestedNameSpecifier::Create(Context, SecondTypeName.Identifier);
+        Range = SourceRange(SecondTypeName.StartLocation);
+      }
+      
+      DestructedType = CheckTypenameType(NNS, *SecondTypeName.Identifier, 
+                                         Range).getAsOpaquePtr();
+      if (!DestructedType)
+        return ExprError();
+    }
+
+    if (!DestructedType) {
+      // FIXME: Crummy diagnostic.
+      Diag(SecondTypeName.StartLocation, diag::err_destructor_class_name);
+      return ExprError();
+    }
+
+    EndLoc = SecondTypeName.EndLocation;
+  } else {
+    // Resolve the template-id to a type, and that to a
+    // nested-name-specifier.
+    TemplateIdAnnotation *TemplateId = SecondTypeName.TemplateId;
+    ASTTemplateArgsPtr TemplateArgsPtr(*this,
+                                       TemplateId->getTemplateArgs(),
+                                         TemplateId->NumArgs);
+    EndLoc = TemplateId->RAngleLoc;
+    TypeResult T = ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
+                                       TemplateId->TemplateNameLoc,
+                                       TemplateId->LAngleLoc,
+                                       TemplateArgsPtr,
+                                       TemplateId->RAngleLoc);
+    if (T.isInvalid() || !T.get())
+      return ExprError();
+    
+    DestructedType = T.get();
+  }
+
+  // Form a (possibly fake) destructor name and let the member access
+  // expression code deal with this.
+  // FIXME: Don't do this! It's totally broken!
+  UnqualifiedId Destructor;
+  Destructor.setDestructorName(TildeLoc, DestructedType, EndLoc);
+  return ActOnMemberAccessExpr(S, move(Base), OpLoc, OpKind, ExtendedSS, 
+                               Destructor, DeclPtrTy(), HasTrailingLParen);
 }
 
 CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 

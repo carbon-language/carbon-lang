@@ -2175,7 +2175,18 @@ public:
                                                         ExprArg Base,
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
-                                                        TypeTy *&ObjectType);
+                                                        TypeTy *&ObjectType,
+                                                   bool &MayBePseudoDestructor);
+
+  virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+                                                     SourceLocation OpLoc,
+                                                     tok::TokenKind OpKind,
+                                                     const CXXScopeSpec &SS,
+                                                   UnqualifiedId &FirstTypeName,
+                                                     SourceLocation CCLoc,
+                                                     SourceLocation TildeLoc,
+                                                  UnqualifiedId &SecondTypeName,
+                                                     bool HasTrailingLParen);
 
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is
   /// non-empty, will create a new CXXExprWithTemporaries expression.

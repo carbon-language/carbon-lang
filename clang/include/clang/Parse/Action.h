@@ -1614,12 +1614,66 @@ public:
   /// with the type into which name lookup should look to find the member in
   /// the member access expression.
   ///
+  /// \param MayBePseudoDestructor Originally false. The action should
+  /// set this true if the expression may end up being a
+  /// pseudo-destructor expression, indicating to the parser that it
+  /// shoudl be parsed as a pseudo-destructor rather than as a member
+  /// access expression. Note that this should apply both when the
+  /// object type is a scalar and when the object type is dependent.
+  ///
   /// \returns the (possibly modified) \p Base expression
   virtual OwningExprResult ActOnStartCXXMemberReference(Scope *S,
                                                         ExprArg Base,
                                                         SourceLocation OpLoc,
                                                         tok::TokenKind OpKind,
-                                                        TypeTy *&ObjectType) {
+                                                        TypeTy *&ObjectType,
+                                                  bool &MayBePseudoDestructor) {
+    return ExprEmpty();
+  }
+
+  /// \brief Parsed a C++ pseudo-destructor expression or a dependent
+  /// member access expression that has the same syntactic form as a
+  /// pseudo-destructor expression.
+  ///
+  /// \param S The scope in which the member access expression occurs.
+  ///
+  /// \param Base The expression in which a member is being accessed, e.g., the
+  /// "x" in "x.f".
+  ///
+  /// \param OpLoc The location of the member access operator ("." or "->")
+  ///
+  /// \param OpKind The kind of member access operator ("." or "->")
+  ///
+  /// \param SS The nested-name-specifier that precedes the type names
+  /// in the grammar. Note that this nested-name-specifier will not
+  /// cover the last "type-name ::" in the grammar, because it isn't
+  /// necessarily a nested-name-specifier.
+  ///
+  /// \param FirstTypeName The type name that follows the optional
+  /// nested-name-specifier but precedes the '::', e.g., the first
+  /// type-name in "type-name :: type-name". This type name may be
+  /// empty. This will be either an identifier or a template-id.
+  ///
+  /// \param CCLoc The location of the '::' in "type-name ::
+  /// typename". May be invalid, if there is no \p FirstTypeName.
+  ///
+  /// \param TildeLoc The location of the '~'.
+  ///
+  /// \param SecondTypeName The type-name following the '~', which is
+  /// the name of the type being destroyed. This will be either an
+  /// identifier or a template-id.
+  ///
+  /// \param HasTrailingLParen Whether the next token in the stream is
+  /// a left parentheses.
+  virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+                                                     SourceLocation OpLoc,
+                                                     tok::TokenKind OpKind,
+                                                     const CXXScopeSpec &SS,
+                                                  UnqualifiedId &FirstTypeName,
+                                                     SourceLocation CCLoc,
+                                                     SourceLocation TildeLoc,
+                                                 UnqualifiedId &SecondTypeName,
+                                                     bool HasTrailingLParen) {
     return ExprEmpty();
   }
 
