@@ -32,6 +32,9 @@ namespace mblazeIntrinsic {
     , num_mblaze_intrinsics
   };
 
+#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+#include "MBlazeGenIntrinsics.inc"
+#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 }
 
 std::string MBlazeIntrinsicInfo::getName(unsigned IntrID, const Type **Tys,
@@ -58,6 +61,11 @@ lookupName(const char *Name, unsigned Len) const {
 #include "MBlazeGenIntrinsics.inc"
 #undef GET_FUNCTION_RECOGNIZER
   return 0;
+}
+
+unsigned MBlazeIntrinsicInfo::
+lookupGCCName(const char *Name) const {
+    return mblazeIntrinsic::getIntrinsicForGCCBuiltin("mblaze",Name);
 }
 
 bool MBlazeIntrinsicInfo::isOverloaded(unsigned IntrID) const {

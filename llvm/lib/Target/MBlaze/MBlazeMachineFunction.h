@@ -34,12 +34,11 @@ private:
   /// saved. This is used on Prologue and Epilogue to emit RA save/restore
   int RAStackOffset;
 
-  /// At each function entry, two special bitmask directives must be emitted
-  /// to help debugging, for CPU and FPU callee saved registers. Both need
-  /// the negative offset from the final stack size and its higher registers
-  /// location on the stack.
+  /// At each function entry a special bitmask directive must be emitted
+  /// to help in debugging CPU callee saved registers. It needs a negative
+  /// offset from the final stack size and its higher register location on
+  /// the stack.
   int CPUTopSavedRegOff;
-  int FPUTopSavedRegOff;
 
   /// MBlazeFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MBlazeFIHolder {
@@ -83,8 +82,8 @@ private:
 public:
   MBlazeFunctionInfo(MachineFunction& MF) 
   : FPStackOffset(0), RAStackOffset(0), CPUTopSavedRegOff(0), 
-    FPUTopSavedRegOff(0), GPHolder(-1,-1), HasLoadArgs(false), 
-    HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0)
+    GPHolder(-1,-1), HasLoadArgs(false), HasStoreVarArgs(false),
+    SRetReturnReg(0), GlobalBaseReg(0)
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -95,9 +94,6 @@ public:
 
   int getCPUTopSavedRegOff() const { return CPUTopSavedRegOff; }
   void setCPUTopSavedRegOff(int Off) { CPUTopSavedRegOff = Off; }
-
-  int getFPUTopSavedRegOff() const { return FPUTopSavedRegOff; }
-  void setFPUTopSavedRegOff(int Off) { FPUTopSavedRegOff = Off; }
 
   int getGPStackOffset() const { return GPHolder.SPOffset; }
   int getGPFI() const { return GPHolder.FI; }

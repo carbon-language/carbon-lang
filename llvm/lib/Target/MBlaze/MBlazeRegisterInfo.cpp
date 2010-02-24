@@ -96,7 +96,7 @@ unsigned MBlazeRegisterInfo::getPICCallReg() {
 /// MBlaze Callee Saved Registers
 const unsigned* MBlazeRegisterInfo::
 getCalleeSavedRegs(const MachineFunction *MF) const {
-  // MBlaze callee-save register range is R19 - R31
+  // MBlaze callee-save register range is R20 - R31
   static const unsigned CalleeSavedRegs[] = {
     MBlaze::R20, MBlaze::R21, MBlaze::R22, MBlaze::R23,
     MBlaze::R24, MBlaze::R25, MBlaze::R26, MBlaze::R27,

@@ -470,7 +470,6 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
           SmallVectorImpl<SDValue> &InVals) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -556,7 +555,7 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
-  unsigned char OpFlag = IsPIC ? MBlazeII::MO_GOT_CALL : MBlazeII::MO_NO_FLAG;
+  unsigned char OpFlag = MBlazeII::MO_NO_FLAG;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(),
                                 getPointerTy(), 0, OpFlag);
