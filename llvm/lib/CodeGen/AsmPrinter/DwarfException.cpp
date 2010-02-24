@@ -638,18 +638,18 @@ void DwarfException::EmitExceptionTable() {
   const unsigned LandingPadSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
   bool IsSJLJ = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
   bool HaveTTData = IsSJLJ ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
-  unsigned SizeSites;
+  unsigned CallSiteTableLength;
 
   if (IsSJLJ)
-    SizeSites = 0;
+    CallSiteTableLength = 0;
   else
-    SizeSites = CallSites.size() *
+    CallSiteTableLength = CallSites.size() *
       (SiteStartSize + SiteLengthSize + LandingPadSize);
 
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
-    SizeSites += MCAsmInfo::getULEB128Size(CallSites[i].Action);
+    CallSiteTableLength += MCAsmInfo::getULEB128Size(CallSites[i].Action);
     if (IsSJLJ)
-      SizeSites += MCAsmInfo::getULEB128Size(i);
+      CallSiteTableLength += MCAsmInfo::getULEB128Size(i);
   }
 
   // Type infos.
@@ -698,39 +698,8 @@ void DwarfException::EmitExceptionTable() {
   Asm->OutStreamer.SwitchSection(LSDASection);
   Asm->EmitAlignment(2, 0, 0, false);
 
+  // Emit the LSDA.
   O << "GCC_except_table" << SubprogramCount << ":\n";
-
-  // The type infos need to be aligned. GCC does this by inserting padding just
-  // before the type infos. However, this changes the size of the exception
-  // table, so you need to take this into account when you output the exception
-  // table size. However, the size is output using a variable length encoding.
-  // So by increasing the size by inserting padding, you may increase the number
-  // of bytes used for writing the size. If it increases, say by one byte, then
-  // you now need to output one less byte of padding to get the type infos
-  // aligned.  However this decreases the size of the exception table. This
-  // changes the value you have to output for the exception table size. Due to
-  // the variable length encoding, the number of bytes used for writing the
-  // length may decrease. If so, you then have to increase the amount of
-  // padding. And so on. If you look carefully at the GCC code you will see that
-  // it indeed does this in a loop, going on and on until the values stabilize.
-  // We chose another solution: don't output padding inside the table like GCC
-  // does, instead output it before the table.
-  unsigned SizeTypes = TypeInfos.size() * TypeFormatSize;
-  unsigned TyOffset = sizeof(int8_t) +          // Call site format
-    MCAsmInfo::getULEB128Size(SizeSites) +      // Call site table length
-    SizeSites + SizeActions + SizeTypes;
-  unsigned TotalSize = sizeof(int8_t) +         // LPStart format
-                       sizeof(int8_t) +         // TType format
-    (HaveTTData ?
-     MCAsmInfo::getULEB128Size(TyOffset) : 0) + // TType base offset
-    TyOffset;
-  unsigned SizeAlign = (4 - TotalSize) & 3;
-
-  for (unsigned i = 0; i != SizeAlign; ++i) {
-    Asm->EmitInt8(0);
-    EOL("Padding");
-  }
-
   EmitLabel("exception", SubprogramCount);
 
   if (IsSJLJ) {
@@ -740,17 +709,50 @@ void DwarfException::EmitExceptionTable() {
     O << LSDAName.str() << ":\n";
   }
 
-  // Emit the header.
+  // Emit the LSDA header.
   EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
   EmitEncodingByte(TTypeEncoding, "@TType");
 
+  // The type infos need to be aligned. GCC does this by inserting padding just
+  // before the type infos. However, this changes the size of the exception
+  // table, so you need to take this into account when you output the exception
+  // table size. However, the size is output using a variable length encoding.
+  // So by increasing the size by inserting padding, you may increase the number
+  // of bytes used for writing the size. If it increases, say by one byte, then
+  // you now need to output one less byte of padding to get the type infos
+  // aligned. However this decreases the size of the exception table. This
+  // changes the value you have to output for the exception table size. Due to
+  // the variable length encoding, the number of bytes used for writing the
+  // length may decrease. If so, you then have to increase the amount of
+  // padding. And so on. If you look carefully at the GCC code you will see that
+  // it indeed does this in a loop, going on and on until the values stabilize.
+  // We chose another solution: don't output padding inside the table like GCC
+  // does, instead output it before the table.
+  unsigned SizeTypes = TypeInfos.size() * TypeFormatSize;
+  unsigned CallSiteTableLengthSize =
+    MCAsmInfo::getULEB128Size(CallSiteTableLength);
+  unsigned TTypeBaseOffset =
+    sizeof(int8_t) +                            // Call site format
+    CallSiteTableLengthSize +                   // Call site table length size
+    CallSiteTableLength +                       // Call site table length
+    SizeActions +                               // Actions size
+    SizeTypes;
+  unsigned TTypeBaseOffsetSize = MCAsmInfo::getULEB128Size(TTypeBaseOffset);
+  unsigned TotalSize =
+    sizeof(int8_t) +                            // LPStart format
+    sizeof(int8_t) +                            // TType format
+    (HaveTTData ? TTypeBaseOffsetSize : 0) +    // TType base offset size
+    TTypeBaseOffset;                            // TType base offset
+  unsigned SizeAlign = (4 - TotalSize) & 3;
+
   if (HaveTTData)
-    EmitULEB128(TyOffset, "@TType base offset");
+    // Pad here for alignment.
+    EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset");
 
   // SjLj Exception handling
   if (IsSJLJ) {
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
-    EmitULEB128(SizeSites, "Call site table length");
+    EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
 
     // Emit the landing pad site information.
     unsigned idx = 0;
@@ -791,7 +793,7 @@ void DwarfException::EmitExceptionTable() {
 
     // Emit the landing pad call site table.
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
-    EmitULEB128(SizeSites, "Call site table length");
+    EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
 
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {

@@ -159,29 +159,37 @@ void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
     Value >>= 7;
     IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
     if (IsMore) Byte |= 0x80;
-    
     Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
   } while (IsMore);
 }
 
 /// EmitULEB128 - emit the specified signed leb128 value.
-void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc) const {
+void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
+                               unsigned PadTo) const {
   if (Asm->VerboseAsm && Desc)
     Asm->OutStreamer.AddComment(Desc);
  
-  if (MAI->hasLEB128()) {
+  if (MAI->hasLEB128() && PadTo == 0) {
     O << "\t.uleb128\t" << Value;
     Asm->OutStreamer.AddBlankLine();
     return;
   }
   
-  // If we don't have .uleb128, emit as .bytes.
+  // If we don't have .uleb128 or we want to emit padding, emit as .bytes.
   do {
     unsigned char Byte = static_cast<unsigned char>(Value & 0x7f);
     Value >>= 7;
-    if (Value) Byte |= 0x80;
+    if (Value || PadTo != 0) Byte |= 0x80;
     Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
   } while (Value);
+
+  if (PadTo)
+    while (PadTo--) {
+      unsigned char Byte = (PadTo ? 0x80 : 0x00);
+      if (Asm->VerboseAsm)
+        Asm->OutStreamer.AddComment("Padding");
+      Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
+    }
 }
 
 

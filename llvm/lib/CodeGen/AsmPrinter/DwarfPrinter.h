@@ -111,7 +111,8 @@ public:
   void EmitSLEB128(int Value, const char *Desc) const;
 
   /// EmitULEB128 - emit the specified unsigned leb128 value.
-  void EmitULEB128(unsigned Value, const char *Desc = 0) const;
+  void EmitULEB128(unsigned Value, const char *Desc = 0,
+                   unsigned PadTo = 0) const;
 
   
   /// PrintLabelName - Print label name in form used by Dwarf writer.
