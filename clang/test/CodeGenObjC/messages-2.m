@@ -136,4 +136,7 @@ typedef struct {
   x.height *= 2;
   return x;
 }
+-(const float) returnAConstFloat {
+  return 5;
+}
 @end

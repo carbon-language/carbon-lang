@@ -186,11 +186,6 @@ public:
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
 
-private:
-  const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *FTNP);
-  const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *FTP);
-
-public:
   /// getFunctionInfo - Get the function info for the specified function decl.
   const CGFunctionInfo &getFunctionInfo(GlobalDecl GD);
   
@@ -207,6 +202,8 @@ public:
     return getFunctionInfo(Ty->getResultType(), Args,
                            Ty->getCallConv(), Ty->getNoReturnAttr());
   }
+  const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *Ty);
+  const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *Ty);
 
   // getFunctionInfo - Get the function info for a member function.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
@@ -224,7 +221,7 @@ public:
                                         CallingConv CC,
                                         bool NoReturn);
   const CGFunctionInfo &getFunctionInfo(QualType RetTy,
-                                  const llvm::SmallVector<QualType, 16> &ArgTys,
+                                  const llvm::SmallVectorImpl<QualType> &ArgTys,
                                         CallingConv CC,
                                         bool NoReturn);
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o %t
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 int g();
 
@@ -38,3 +38,12 @@ struct foo { int X, Y, Z; } f3() {
 // PR4423 - This shouldn't crash in codegen
 void f4() {}
 void f5() { f4(42); }
+
+// Qualifiers on parameter types shouldn't make a difference.
+static void f6(const float f, const float g) {
+}
+void f7(float f, float g) {
+  f6(f, g);
+// CHECK: define void @f7(float{{.*}}, float{{.*}})
+// CHECK: call void @f6(float{{.*}}, float{{.*}})
+}

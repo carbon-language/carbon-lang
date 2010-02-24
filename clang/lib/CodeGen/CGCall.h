@@ -82,7 +82,7 @@ namespace CodeGen {
     CGFunctionInfo(unsigned CallingConvention,
                    bool NoReturn,
                    QualType ResTy,
-                   const llvm::SmallVector<QualType, 16> &ArgTys);
+                   const llvm::SmallVectorImpl<QualType> &ArgTys);
     ~CGFunctionInfo() { delete[] Args; }
 
     const_arg_iterator arg_begin() const { return Args + 1; }

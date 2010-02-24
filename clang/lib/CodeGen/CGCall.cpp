@@ -41,21 +41,54 @@ static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   }
 }
 
-const
-CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionNoProtoType *FTNP) {
-  return getFunctionInfo(FTNP->getResultType(),
-                         llvm::SmallVector<QualType, 16>(),
-                         FTNP->getCallConv(), FTNP->getNoReturnAttr());
+/// Derives the 'this' type for codegen purposes, i.e. ignoring method
+/// qualification.
+/// FIXME: address space qualification?
+static QualType GetThisType(ASTContext &Context, const CXXRecordDecl *RD) {
+  return Context.getPointerType(Context.getTagDeclType(RD));
 }
 
-const
-CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
-  llvm::SmallVector<QualType, 16> ArgTys;
+/// Returns the canonical formal type of the given C++ method.
+static const FunctionProtoType *GetFormalType(const CXXMethodDecl *MD) {
+  return cast<FunctionProtoType>(MD->getType()->getCanonicalTypeInternal());
+}
+
+/// Returns the "extra-canonicalized" return type, which discards
+/// qualifiers on the return type.  Codegen doesn't care about them,
+/// and it makes ABI code a little easier to be able to assume that
+/// all parameter and return types are top-level unqualified.
+static QualType GetReturnType(QualType RetTy) {
+  return RetTy->getCanonicalTypeInternal().getUnqualifiedType();
+}
+
+const CGFunctionInfo &
+CodeGenTypes::getFunctionInfo(const FunctionNoProtoType *FTNP) {
+  assert(FTNP->isCanonicalUnqualified() && "type must be canonical");
+  return getFunctionInfo(GetReturnType(FTNP->getResultType()),
+                         llvm::SmallVector<QualType, 16>(),
+                         FTNP->getCallConv(),
+                         FTNP->getNoReturnAttr());
+}
+
+/// \param Args - contains any initial parameters besides those
+///   in the formal type
+static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
+                                       llvm::SmallVectorImpl<QualType> &ArgTys,
+                                             const FunctionProtoType *FTP) {
+  assert(FTP->isCanonicalUnqualified() && "type must be canonical");
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys,
-                         FTP->getCallConv(), FTP->getNoReturnAttr());
+  return CGT.getFunctionInfo(GetReturnType(FTP->getResultType()),
+                             ArgTys,
+                             FTP->getCallConv(),
+                             FTP->getNoReturnAttr());
+}
+
+const CGFunctionInfo &
+CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+  return ::getFunctionInfo(*this, ArgTys, FTP);
 }
 
 static CallingConv getCallingConventionForDecl(const Decl *D) {
@@ -72,30 +105,22 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXRecordDecl *RD,
                                                  const FunctionProtoType *FTP) {
   llvm::SmallVector<QualType, 16> ArgTys;
-  
+
   // Add the 'this' pointer.
-  ArgTys.push_back(Context.getPointerType(Context.getTagDeclType(RD)));
-  
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    ArgTys.push_back(FTP->getArgType(i));
-  
-  // FIXME: Set calling convention correctly, it needs to be associated with the
-  // type somehow.
-  return getFunctionInfo(FTP->getResultType(), ArgTys,
-                         FTP->getCallConv(), FTP->getNoReturnAttr());
+  ArgTys.push_back(GetThisType(Context, RD));
+
+  return ::getFunctionInfo(*this, ArgTys,
+                   cast<FunctionProtoType>(FTP->getCanonicalTypeInternal()));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   llvm::SmallVector<QualType, 16> ArgTys;
+
   // Add the 'this' pointer unless this is a static method.
   if (MD->isInstance())
-    ArgTys.push_back(MD->getThisType(Context));
+    ArgTys.push_back(GetThisType(Context, MD->getParent()));
 
-  const FunctionProtoType *FTP = MD->getType()->getAs<FunctionProtoType>();
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys, FTP->getCallConv(),
-                         FTP->getNoReturnAttr());
+  return ::getFunctionInfo(*this, ArgTys, GetFormalType(MD));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D, 
@@ -103,17 +128,13 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D,
   llvm::SmallVector<QualType, 16> ArgTys;
 
   // Add the 'this' pointer.
-  ArgTys.push_back(D->getThisType(Context));
+  ArgTys.push_back(GetThisType(Context, D->getParent()));
 
   // Check if we need to add a VTT parameter (which has type void **).
   if (Type == Ctor_Base && D->getParent()->getNumVBases() != 0)
     ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
-  
-  const FunctionProtoType *FTP = D->getType()->getAs<FunctionProtoType>();
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys, FTP->getCallConv(),
-                         FTP->getNoReturnAttr());
+
+  return ::getFunctionInfo(*this, ArgTys, GetFormalType(D));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
@@ -126,12 +147,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
   // Check if we need to add a VTT parameter (which has type void **).
   if (Type == Dtor_Base && D->getParent()->getNumVBases() != 0)
     ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
-  
-  const FunctionProtoType *FTP = D->getType()->getAs<FunctionProtoType>();
-  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-    ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys, FTP->getCallConv(),
-                         FTP->getNoReturnAttr());
+
+  return ::getFunctionInfo(*this, ArgTys, GetFormalType(D));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
@@ -139,19 +156,11 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
     if (MD->isInstance())
       return getFunctionInfo(MD);
 
-  const FunctionType *FTy = FD->getType()->getAs<FunctionType>();
-  if (const FunctionNoProtoType *FNTP = dyn_cast<FunctionNoProtoType>(FTy))
-    return getFunctionInfo(FNTP->getResultType(), 
-                           llvm::SmallVector<QualType, 16>(),
-                           FNTP->getCallConv(), FNTP->getNoReturnAttr());
-  
-  const FunctionProtoType *FPT = cast<FunctionProtoType>(FTy);
-  llvm::SmallVector<QualType, 16> ArgTys;
-  // FIXME: Kill copy.
-  for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
-    ArgTys.push_back(FPT->getArgType(i));
-  return getFunctionInfo(FPT->getResultType(), ArgTys,
-                         FPT->getCallConv(), FPT->getNoReturnAttr());
+  const FunctionType *FTy
+    = cast<FunctionType>(FD->getType()->getCanonicalTypeInternal());
+  if (isa<FunctionNoProtoType>(FTy))
+    return getFunctionInfo(cast<FunctionNoProtoType>(FTy));  
+  return getFunctionInfo(cast<FunctionProtoType>(FTy));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
@@ -160,9 +169,11 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
   ArgTys.push_back(Context.getObjCSelType());
   // FIXME: Kill copy?
   for (ObjCMethodDecl::param_iterator i = MD->param_begin(),
-         e = MD->param_end(); i != e; ++i)
-    ArgTys.push_back((*i)->getType());
-  return getFunctionInfo(MD->getResultType(), ArgTys,
+         e = MD->param_end(); i != e; ++i) {
+    ArgTys.push_back(Context.getCanonicalParamType((*i)->getType()));
+  }
+  return getFunctionInfo(GetReturnType(MD->getResultType()),
+                         ArgTys,
                          getCallingConventionForDecl(MD),
                          /*NoReturn*/ false);
 }
@@ -188,8 +199,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   llvm::SmallVector<QualType, 16> ArgTys;
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
-    ArgTys.push_back(i->second);
-  return getFunctionInfo(ResTy, ArgTys, CC, NoReturn);
+    ArgTys.push_back(Context.getCanonicalParamType(i->second));
+  return getFunctionInfo(GetReturnType(ResTy), ArgTys, CC, NoReturn);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
@@ -200,12 +211,12 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   llvm::SmallVector<QualType, 16> ArgTys;
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
-    ArgTys.push_back(i->second);
-  return getFunctionInfo(ResTy, ArgTys, CC, NoReturn);
+    ArgTys.push_back(Context.getCanonicalParamType(i->second));
+  return getFunctionInfo(GetReturnType(ResTy), ArgTys, CC, NoReturn);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
-                                  const llvm::SmallVector<QualType, 16> &ArgTys,
+                           const llvm::SmallVectorImpl<QualType> &ArgTys,
                                                     CallingConv CallConv,
                                                     bool NoReturn) {
   unsigned CC = ClangCallConvToLLVMCallConv(CallConv);
@@ -233,7 +244,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
                                bool _NoReturn,
                                QualType ResTy,
-                               const llvm::SmallVector<QualType, 16> &ArgTys) 
+                               const llvm::SmallVectorImpl<QualType> &ArgTys) 
   : CallingConvention(_CallingConvention),
     EffectiveCallingConvention(_CallingConvention),
     NoReturn(_NoReturn)

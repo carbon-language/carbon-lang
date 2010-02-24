@@ -972,12 +972,11 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   } else if (CoerceTo == llvm::Type::getDoubleTy(CoerceTo->getContext())) {
-    // FIXME: It would probably be better to make CGFunctionInfo only map using
-    // canonical types than to canonize here.
-    QualType CTy = Context.getCanonicalType(Ty);
+    assert(Ty.isCanonical() && "should always have a canonical type here");
+    assert(!Ty.hasQualifiers() && "should never have a qualified type here");
 
     // Float and double end up in a single SSE reg.
-    if (CTy == Context.FloatTy || CTy == Context.DoubleTy)
+    if (Ty == Context.FloatTy || Ty == Context.DoubleTy)
       return ABIArgInfo::getDirect();
 
   }
