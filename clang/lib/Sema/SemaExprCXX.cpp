@@ -2783,7 +2783,12 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
         ScopeType = GetTypeFromParser(T.get(), &ScopeTypeInfo);      
     }
   }
-            
+      
+  if (!ScopeType.isNull() && !ScopeTypeInfo)
+    ScopeTypeInfo = Context.getTrivialTypeSourceInfo(ScopeType,
+                                                  FirstTypeName.StartLocation);
+
+    
   return BuildPseudoDestructorExpr(move(Base), OpLoc, OpKind, SS,
                                    ScopeTypeInfo, CCLoc, DestructedTypeInfo,
                                    HasTrailingLParen);
