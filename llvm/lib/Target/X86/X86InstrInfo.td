@@ -1156,7 +1156,7 @@ def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
 } // neverHasSideEffects
 
 // unsigned division/remainder
-let Defs = [AL,AH,EFLAGS], Uses = [AX] in
+let Defs = [AX,EFLAGS], Uses = [AX] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
                "div{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
