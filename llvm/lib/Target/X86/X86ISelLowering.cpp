@@ -5883,26 +5883,31 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
 
 /// LowerToBT - Result of 'and' is compared against zero. Turn it into a BT node
 /// if it's possible.
-static SDValue LowerToBT(SDValue Op0, ISD::CondCode CC,
+static SDValue LowerToBT(SDValue And, ISD::CondCode CC,
                          DebugLoc dl, SelectionDAG &DAG) {
+  SDValue Op0 = And.getOperand(0);
+  SDValue Op1 = And.getOperand(1);
+  if (Op0.getOpcode() == ISD::TRUNCATE)
+    Op0 = Op0.getOperand(0);
+  if (Op1.getOpcode() == ISD::TRUNCATE)
+    Op1 = Op1.getOperand(0);
+
   SDValue LHS, RHS;
-  if (Op0.getOperand(1).getOpcode() == ISD::SHL) {
-    if (ConstantSDNode *Op010C =
-        dyn_cast<ConstantSDNode>(Op0.getOperand(1).getOperand(0)))
-      if (Op010C->getZExtValue() == 1) {
-        LHS = Op0.getOperand(0);
-        RHS = Op0.getOperand(1).getOperand(1);
+  if (Op1.getOpcode() == ISD::SHL) {
+    if (ConstantSDNode *And10C = dyn_cast<ConstantSDNode>(Op1.getOperand(0)))
+      if (And10C->getZExtValue() == 1) {
+        LHS = Op0;
+        RHS = Op1.getOperand(1);
       }
-  } else if (Op0.getOperand(0).getOpcode() == ISD::SHL) {
-    if (ConstantSDNode *Op000C =
-        dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(0)))
-      if (Op000C->getZExtValue() == 1) {
-        LHS = Op0.getOperand(1);
-        RHS = Op0.getOperand(0).getOperand(1);
+  } else if (Op0.getOpcode() == ISD::SHL) {
+    if (ConstantSDNode *And00C = dyn_cast<ConstantSDNode>(Op0.getOperand(0)))
+      if (And00C->getZExtValue() == 1) {
+        LHS = Op1;
+        RHS = Op0.getOperand(1);
       }
-  } else if (Op0.getOperand(1).getOpcode() == ISD::Constant) {
-    ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op0.getOperand(1));
-    SDValue AndLHS = Op0.getOperand(0);
+  } else if (Op1.getOpcode() == ISD::Constant) {
+    ConstantSDNode *AndRHS = cast<ConstantSDNode>(Op1);
+    SDValue AndLHS = Op0;
     if (AndRHS->getZExtValue() == 1 && AndLHS.getOpcode() == ISD::SRL) {
       LHS = AndLHS.getOperand(0);
       RHS = AndLHS.getOperand(1);
@@ -5950,6 +5955,21 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
     SDValue NewSetCC = LowerToBT(Op0, CC, dl, DAG);
     if (NewSetCC.getNode())
       return NewSetCC;
+  }
+
+  // Look for "(setcc) == / != 1" to avoid unncessary setcc.
+  if (Op0.getOpcode() == X86ISD::SETCC &&
+      Op1.getOpcode() == ISD::Constant &&
+      (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
+       cast<ConstantSDNode>(Op1)->isNullValue()) &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
+    bool Invert = (CC == ISD::SETNE) ^
+      cast<ConstantSDNode>(Op1)->isNullValue();
+    if (Invert)
+      CCode = X86::GetOppositeBranchCondition(CCode);
+    return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                       DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
   }
 
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
