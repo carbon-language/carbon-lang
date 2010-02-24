@@ -140,15 +140,6 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   const llvm::PointerType *AliasType
     = getTypes().GetFunctionType(AliasDecl)->getPointerTo();
 
-  // Look for an existing entry.
-  const char *MangledName = getMangledName(AliasDecl);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-  if (Entry) {
-    assert(Entry->isDeclaration() && "definition already exists for alias");
-    assert(Entry->getType() == AliasType &&
-           "declaration exists with different type");
-  }
-
   // Find the referrent.  Some aliases might require a bitcast, in
   // which case the caller is responsible for ensuring the soundness
   // of these semantics.
@@ -161,8 +152,13 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   llvm::GlobalAlias *Alias = 
     new llvm::GlobalAlias(AliasType, Linkage, "", Aliasee, &getModule());
 
-  // Switch any previous uses to the alias and kill the previous decl.
+  // Switch any previous uses to the alias.
+  const char *MangledName = getMangledName(AliasDecl);
+  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
   if (Entry) {
+    assert(Entry->isDeclaration() && "definition already exists for alias");
+    assert(Entry->getType() == AliasType &&
+           "declaration exists with different type");
     Entry->replaceAllUsesWith(Alias);
     Entry->eraseFromParent();
   }
