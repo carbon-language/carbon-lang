@@ -2433,6 +2433,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
                                                        const CXXScopeSpec &SS,
                                                  TypeSourceInfo *ScopeTypeInfo,
                                                        SourceLocation CCLoc,
+                                                       SourceLocation TildeLoc,
                                              TypeSourceInfo *DestructedTypeInfo,
                                                        bool HasTrailingLParen) {
   assert(DestructedTypeInfo && "No destructed type in pseudo-destructor expr?");
@@ -2513,6 +2514,7 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
                                                   SS.getRange(),
                                                   ScopeTypeInfo,
                                                   CCLoc,
+                                                  TildeLoc,
                                                   DestructedTypeInfo));
   if (HasTrailingLParen)
     return move(Result);
@@ -2789,8 +2791,8 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
 
     
   return BuildPseudoDestructorExpr(move(Base), OpLoc, OpKind, SS,
-                                   ScopeTypeInfo, CCLoc, DestructedTypeInfo,
-                                   HasTrailingLParen);
+                                   ScopeTypeInfo, CCLoc, TildeLoc,
+                                   DestructedTypeInfo, HasTrailingLParen);
 }
 
 CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 

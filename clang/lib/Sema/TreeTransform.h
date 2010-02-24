@@ -888,6 +888,7 @@ public:
                                                   SourceRange QualifierRange,
                                                   TypeSourceInfo *ScopeType,
                                                   SourceLocation CCLoc,
+                                                  SourceLocation TildeLoc,
                                                 TypeSourceInfo *DestroyedType);
 
   /// \brief Build a new unary operator expression.
@@ -4705,6 +4706,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
                                                      E->getQualifierRange(),
                                                      ScopeTypeInfo,
                                                      E->getColonColonLoc(),
+                                                     E->getTildeLoc(),
                                                      DestroyedTypeInfo);
 }
 
@@ -5755,6 +5757,7 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
                                                      SourceRange QualifierRange,
                                                      TypeSourceInfo *ScopeType,
                                                        SourceLocation CCLoc,
+                                                       SourceLocation TildeLoc,
                                                TypeSourceInfo *DestroyedType) {
   CXXScopeSpec SS;
   if (Qualifier) {
@@ -5771,7 +5774,7 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
     // This pseudo-destructor expression is still a pseudo-destructor.
     return SemaRef.BuildPseudoDestructorExpr(move(Base), OperatorLoc,
                                              isArrow? tok::arrow : tok::period,
-                                             SS, ScopeType, CCLoc,
+                                             SS, ScopeType, CCLoc, TildeLoc,
                                              DestroyedType, 
                                              /*FIXME?*/true);
   }

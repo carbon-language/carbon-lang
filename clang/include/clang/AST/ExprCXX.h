@@ -1047,6 +1047,9 @@ class CXXPseudoDestructorExpr : public Expr {
   /// expression.
   SourceLocation ColonColonLoc;
   
+  /// \brief The location of the '~'.
+  SourceLocation TildeLoc;
+  
   /// \brief The type being destroyed.
   TypeSourceInfo *DestroyedType;
 
@@ -1057,6 +1060,7 @@ public:
                           SourceRange QualifierRange,
                           TypeSourceInfo *ScopeType,
                           SourceLocation ColonColonLoc,
+                          SourceLocation TildeLoc,
                           TypeSourceInfo *DestroyedType)
     : Expr(CXXPseudoDestructorExprClass,
            Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
@@ -1069,7 +1073,7 @@ public:
       Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
       OperatorLoc(OperatorLoc), Qualifier(Qualifier),
       QualifierRange(QualifierRange), 
-      ScopeType(ScopeType), ColonColonLoc(ColonColonLoc),
+      ScopeType(ScopeType), ColonColonLoc(ColonColonLoc), TildeLoc(TildeLoc),
       DestroyedType(DestroyedType) { }
 
   void setBase(Expr *E) { Base = E; }
@@ -1112,6 +1116,9 @@ public:
   /// \brief Retrieve the location of the '::' in a qualified pseudo-destructor
   /// expression.
   SourceLocation getColonColonLoc() const { return ColonColonLoc; }
+  
+  /// \brief Retrieve the location of the '~'.
+  SourceLocation getTildeLoc() const { return TildeLoc; }
   
   /// \brief Retrieve the type that is being destroyed.
   QualType getDestroyedType() const { return DestroyedType->getType(); }

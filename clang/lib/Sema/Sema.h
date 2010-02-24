@@ -2187,6 +2187,7 @@ public:
                                              const CXXScopeSpec &SS,
                                              TypeSourceInfo *ScopeType,
                                              SourceLocation CCLoc,
+                                             SourceLocation TildeLoc,
                                              TypeSourceInfo *DestroyedType,
                                              bool HasTrailingLParen);
   

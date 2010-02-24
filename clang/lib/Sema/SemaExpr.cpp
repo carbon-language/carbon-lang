@@ -2940,6 +2940,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                                (NestedNameSpecifier *) SS.getScopeRep(),
                                                        SS.getRange(),
                                                        0, SourceLocation(),
+                                                       MemberLoc,
                                                        DestroyedTypeInfo));
   }
 
