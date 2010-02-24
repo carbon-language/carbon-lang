@@ -52,8 +52,8 @@ void test4() {
     int mem;
   } s;
   S &foor();
-  halt(), foor()
-    .mem;       // expected-warning {{will never be executed}}
+  halt(), foor()// expected-warning {{will never be executed}}
+    .mem;       
 }
 
 void test5() {

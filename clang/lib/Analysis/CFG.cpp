@@ -589,7 +589,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
     AddEHEdge = false;
 
   if (!NoReturn && !AddEHEdge)
-    return VisitStmt(C, asc);
+    return VisitStmt(C, AddStmtChoice::AlwaysAdd);
 
   if (Block) {
     Succ = Block;

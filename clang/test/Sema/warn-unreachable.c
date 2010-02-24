@@ -35,8 +35,8 @@ void test2() {
       dead();   // expected-warning {{will never be executed}}
 
   case 3:
-  live()
-    +           // expected-warning {{will never be executed}}
+  live()        // expected-warning {{will never be executed}}
+    +           
     halt();
   dead();
 
