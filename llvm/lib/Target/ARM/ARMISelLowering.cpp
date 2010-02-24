@@ -924,7 +924,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // These operations are automatically eliminated by the prolog/epilog pass
   Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
 
-  SDValue StackPtr = DAG.getRegister(ARM::SP, MVT::i32);
+  SDValue StackPtr = DAG.getCopyFromReg(Chain, dl, ARM::SP, getPointerTy());
 
   RegsToPassVector RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
@@ -973,8 +973,6 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                            VA, ArgLocs[++i], StackPtr, MemOpChains, Flags);
         } else {
           assert(VA.isMemLoc());
-          if (StackPtr.getNode() == 0)
-            StackPtr = DAG.getCopyFromReg(Chain, dl, ARM::SP, getPointerTy());
 
           MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Op1,
                                                  dl, DAG, VA, Flags));
@@ -987,8 +985,6 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
       assert(VA.isMemLoc());
-      if (StackPtr.getNode() == 0)
-        StackPtr = DAG.getCopyFromReg(Chain, dl, ARM::SP, getPointerTy());
 
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
                                              dl, DAG, VA, Flags));

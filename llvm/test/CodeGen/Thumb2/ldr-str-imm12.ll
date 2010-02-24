@@ -52,7 +52,7 @@ bb420:                                            ; preds = %bb20, %bb20
 ; CHECK: str r{{[0-7]}}, [sp]
 ; CHECK: str r{{[0-7]}}, [sp, #+4]
 ; CHECK: str r{{[0-7]}}, [sp, #+8]
-; CHECK: str r{{[0-7]}}, [sp, #+24]
+; CHECK: str{{(.w)?}} r{{[0-9]+}}, [sp, #+24]
   store %union.rec* null, %union.rec** @zz_hold, align 4
   store %union.rec* null, %union.rec** @zz_res, align 4
   store %union.rec* %x, %union.rec** @zz_hold, align 4
