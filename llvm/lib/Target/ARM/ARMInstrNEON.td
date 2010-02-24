@@ -410,6 +410,31 @@ def  VST1qf   : VST1Q<0b1000, "vst1", "32", v4f32, int_arm_neon_vst1>;
 def  VST1q64  : VST1Q<0b1100, "vst1", "64", v2i64, int_arm_neon_vst1>;
 } // hasExtraSrcRegAllocReq
 
+// These (dreg triple/quadruple) are for disassembly only.
+class VST1D3<bits<4> op7_4, string OpcodeStr, string Dt>
+  : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
+          OpcodeStr, Dt,
+          "\\{$src1, $src2, $src3\\}, $addr", "",
+          [/* For disassembly only; pattern left blank */]>;
+class VST1D4<bits<4> op7_4, string OpcodeStr, string Dt>
+  : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST, OpcodeStr, Dt,
+          "\\{$src1, $src2, $src3, $src4\\}, $addr", "",
+          [/* For disassembly only; pattern left blank */]>;
+
+def  VST1d8T  : VST1D3<0b0000, "vld1", "8">;
+def  VST1d16T : VST1D3<0b0100, "vld1", "16">;
+def  VST1d32T : VST1D3<0b1000, "vld1", "32">;
+//def  VST1d64T : VST1D3<0b1100, "vld1", "64">;
+
+def  VST1d8Q  : VST1D4<0b0000, "vld1", "8">;
+def  VST1d16Q : VST1D4<0b0100, "vld1", "16">;
+def  VST1d32Q : VST1D4<0b1000, "vld1", "32">;
+//def  VST1d64Q : VST1D4<0b1100, "vld1", "64">;
+
+
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 
 //   VST2     : Vector Store (multiple 2-element structures)
@@ -433,6 +458,16 @@ def  VST2d64  : NLdSt<0,0b00,0b1010,0b1100, (outs),
 def  VST2q8   : VST2Q<0b0000, "vst2", "8">;
 def  VST2q16  : VST2Q<0b0100, "vst2", "16">;
 def  VST2q32  : VST2Q<0b1000, "vst2", "32">;
+
+// These (double-spaced dreg pair) are for disassembly only.
+class VST2Ddbl<bits<4> op7_4, string OpcodeStr, string Dt>
+  : NLdSt<0, 0b00, 0b1001, op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
+          OpcodeStr, Dt, "\\{$src1, $src2\\}, $addr", "", []>;
+
+def  VST2d8D  : VST2Ddbl<0b0000, "vst2", "8">;
+def  VST2d16D : VST2Ddbl<0b0100, "vst2", "16">;
+def  VST2d32D : VST2Ddbl<0b1000, "vst2", "32">;
 
 //   VST3     : Vector Store (multiple 3-element structures)
 class VST3D<bits<4> op7_4, string OpcodeStr, string Dt>
