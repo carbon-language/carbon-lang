@@ -1633,13 +1633,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       LoadPtr = Address.PHITranslateWithInsertion(LoadBB, UnavailablePred,
                                                   *DT, NewInsts);
     } else {
-      Address.PHITranslateValue(LoadBB, UnavailablePred);
+      Address.PHITranslateValue(LoadBB, UnavailablePred, DT);
       LoadPtr = Address.getAddr();
-    
-      // Make sure the value is live in the predecessor.
-      if (Instruction *Inst = dyn_cast_or_null<Instruction>(LoadPtr))
-        if (!DT->dominates(Inst->getParent(), UnavailablePred))
-          LoadPtr = 0;
     }
 
     // If we couldn't find or insert a computation of this phi translated value,

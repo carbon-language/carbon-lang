@@ -66,9 +66,11 @@ public:
   bool IsPotentiallyPHITranslatable() const;
   
   /// PHITranslateValue - PHI translate the current address up the CFG from
-  /// CurBB to Pred, updating our state the reflect any needed changes.  This
-  /// returns true on failure and sets Addr to null.
-  bool PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB);
+  /// CurBB to Pred, updating our state to reflect any needed changes.  If the
+  /// dominator tree DT is non-null, the translated value must dominate
+  /// PredBB.  This returns true on failure and sets Addr to null.
+  bool PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB,
+                         const DominatorTree *DT);
   
   /// PHITranslateWithInsertion - PHI translate this value into the specified
   /// predecessor block, inserting a computation of the value if it is
@@ -88,14 +90,8 @@ public:
   /// returns false.
   bool Verify() const;
 private:
-  Value *PHITranslateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB);
-  
-  
-  /// GetAvailablePHITranslatedSubExpr - Return the value computed by
-  /// PHITranslateSubExpr if it dominates PredBB, otherwise return null.
-  Value *GetAvailablePHITranslatedSubExpr(Value *V,
-                                          BasicBlock *CurBB, BasicBlock *PredBB,
-                                          const DominatorTree &DT) const;
+  Value *PHITranslateSubExpr(Value *V, BasicBlock *CurBB, BasicBlock *PredBB,
+                             const DominatorTree *DT);
   
   /// InsertPHITranslatedSubExpr - Insert a computation of the PHI translated
   /// version of 'V' for the edge PredBB->CurBB into the end of the PredBB

@@ -134,7 +134,8 @@ static void RemoveInstInputs(Value *V,
 }
 
 Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
-                                         BasicBlock *PredBB) {
+                                         BasicBlock *PredBB,
+                                         const DominatorTree *DT) {
   // If this is a non-instruction value, it can't require PHI translation.
   Instruction *Inst = dyn_cast<Instruction>(V);
   if (Inst == 0) return V;
@@ -177,7 +178,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
   // operands need to be phi translated, and if so, reconstruct it.
   
   if (BitCastInst *BC = dyn_cast<BitCastInst>(Inst)) {
-    Value *PHIIn = PHITranslateSubExpr(BC->getOperand(0), CurBB, PredBB);
+    Value *PHIIn = PHITranslateSubExpr(BC->getOperand(0), CurBB, PredBB, DT);
     if (PHIIn == 0) return 0;
     if (PHIIn == BC->getOperand(0))
       return BC;
@@ -193,7 +194,8 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     for (Value::use_iterator UI = PHIIn->use_begin(), E = PHIIn->use_end();
          UI != E; ++UI) {
       if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI))
-        if (BCI->getType() == BC->getType())
+        if (BCI->getType() == BC->getType() &&
+            (!DT || DT->dominates(BCI->getParent(), PredBB)))
           return BCI;
     }
     return 0;
@@ -204,7 +206,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     SmallVector<Value*, 8> GEPOps;
     bool AnyChanged = false;
     for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i) {
-      Value *GEPOp = PHITranslateSubExpr(GEP->getOperand(i), CurBB, PredBB);
+      Value *GEPOp = PHITranslateSubExpr(GEP->getOperand(i), CurBB, PredBB, DT);
       if (GEPOp == 0) return 0;
       
       AnyChanged |= GEPOp != GEP->getOperand(i);
@@ -229,7 +231,8 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI))
         if (GEPI->getType() == GEP->getType() &&
             GEPI->getNumOperands() == GEPOps.size() &&
-            GEPI->getParent()->getParent() == CurBB->getParent()) {
+            GEPI->getParent()->getParent() == CurBB->getParent() &&
+            (!DT || DT->dominates(GEPI->getParent(), PredBB))) {
           bool Mismatch = false;
           for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
             if (GEPI->getOperand(i) != GEPOps[i]) {
@@ -251,7 +254,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
     bool isNSW = cast<BinaryOperator>(Inst)->hasNoSignedWrap();
     bool isNUW = cast<BinaryOperator>(Inst)->hasNoUnsignedWrap();
     
-    Value *LHS = PHITranslateSubExpr(Inst->getOperand(0), CurBB, PredBB);
+    Value *LHS = PHITranslateSubExpr(Inst->getOperand(0), CurBB, PredBB, DT);
     if (LHS == 0) return 0;
     
     // If the PHI translated LHS is an add of a constant, fold the immediates.
@@ -287,7 +290,8 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*UI))
         if (BO->getOpcode() == Instruction::Add &&
             BO->getOperand(0) == LHS && BO->getOperand(1) == RHS &&
-            BO->getParent()->getParent() == CurBB->getParent())
+            BO->getParent()->getParent() == CurBB->getParent() &&
+            (!DT || DT->dominates(BO->getParent(), PredBB)))
           return BO;
     }
     
@@ -300,33 +304,24 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
 
 
 /// PHITranslateValue - PHI translate the current address up the CFG from
-/// CurBB to Pred, updating our state the reflect any needed changes.  This
-/// returns true on failure and sets Addr to null.
-bool PHITransAddr::PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB) {
+/// CurBB to Pred, updating our state to reflect any needed changes.  If the
+/// dominator tree DT is non-null, the translated value must dominate
+/// PredBB.  This returns true on failure and sets Addr to null.
+bool PHITransAddr::PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB,
+                                     const DominatorTree *DT) {
   assert(Verify() && "Invalid PHITransAddr!");
-  Addr = PHITranslateSubExpr(Addr, CurBB, PredBB);
+  Addr = PHITranslateSubExpr(Addr, CurBB, PredBB, DT);
   assert(Verify() && "Invalid PHITransAddr!");
+
+  if (DT) {
+    // Make sure the value is live in the predecessor.
+    if (Instruction *Inst = dyn_cast_or_null<Instruction>(Addr))
+      if (!DT->dominates(Inst->getParent(), PredBB))
+        Addr = 0;
+  }
+
   return Addr == 0;
 }
-
-/// GetAvailablePHITranslatedSubExpr - Return the value computed by
-/// PHITranslateSubExpr if it dominates PredBB, otherwise return null.
-Value *PHITransAddr::
-GetAvailablePHITranslatedSubExpr(Value *V, BasicBlock *CurBB,BasicBlock *PredBB,
-                                 const DominatorTree &DT) const {
-  PHITransAddr Tmp(V, TD);
-  Tmp.PHITranslateValue(CurBB, PredBB);
-  
-  // See if PHI translation succeeds.
-  V = Tmp.getAddr();
-  
-  // Make sure the value is live in the predecessor.
-  if (Instruction *Inst = dyn_cast_or_null<Instruction>(V))
-    if (!DT.dominates(Inst->getParent(), PredBB))
-      return 0;
-  return V;
-}
-
 
 /// PHITranslateWithInsertion - PHI translate this value into the specified
 /// predecessor block, inserting a computation of the value if it is
@@ -365,8 +360,9 @@ InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
                            SmallVectorImpl<Instruction*> &NewInsts) {
   // See if we have a version of this value already available and dominating
   // PredBB.  If so, there is no need to insert a new instance of it.
-  if (Value *Res = GetAvailablePHITranslatedSubExpr(InVal, CurBB, PredBB, DT))
-    return Res;
+  PHITransAddr Tmp(InVal, TD);
+  if (!Tmp.PHITranslateValue(CurBB, PredBB, &DT))
+    return Tmp.getAddr();
 
   // If we don't have an available version of this value, it must be an
   // instruction.
