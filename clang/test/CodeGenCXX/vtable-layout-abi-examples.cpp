@@ -155,3 +155,35 @@ struct E : X, D {
 void E::f() { } 
 
 }
+
+namespace Test2 {
+
+// From http://www.codesourcery.com/public/cxx-abi/abi.html#class-types.
+
+struct A { virtual void f(); };
+struct B : virtual public A { int i; };
+struct C : virtual public A { int j; };
+
+// CHECK:      Vtable for 'Test2::D' (11 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test2::D RTTI
+// CHECK-NEXT:        -- (Test2::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test2::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test2::D, 0) vtable address --
+// CHECK-NEXT:    4 | void Test2::A::f()
+// CHECK-NEXT:    5 | void Test2::D::d()
+// CHECK-NEXT:    6 | vbase_offset (-16)
+// CHECK-NEXT:    7 | vcall_offset (-16)
+// CHECK-NEXT:    8 | offset_to_top (-16)
+// CHECK-NEXT:    9 | Test2::D RTTI
+// CHECK-NEXT:        -- (Test2::A, 16) vtable address --
+// CHECK-NEXT:        -- (Test2::C, 16) vtable address --
+// CHECK-NEXT:   10 | [unused] void Test2::A::f()
+struct D : public B, public C {
+  virtual void d();
+};
+void D::d() { } 
+
+}

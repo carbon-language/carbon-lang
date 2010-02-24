@@ -968,6 +968,7 @@ private:
   /// AddVCallAndVBaseOffsets - Add vcall offsets and vbase offsets for the
   /// given base subobject.
   void AddVCallAndVBaseOffsets(BaseSubobject Base, bool BaseIsVirtual,
+                               uint64_t RealBaseOffset,
                                VisitedVirtualBasesSetTy &VBases);
 
   /// AddVCallOffsets - Add vcall offsets for the given base subobject.
@@ -1112,6 +1113,7 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
 void 
 VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
                                        bool BaseIsVirtual,
+                                       uint64_t RealBaseOffset,
                                        VisitedVirtualBasesSetTy &VBases) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base.getBase());
   
@@ -1126,8 +1128,28 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
   // emit them for the primary base first).
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
     bool PrimaryBaseIsVirtual = Layout.getPrimaryBaseWasVirtual();
-    AddVCallAndVBaseOffsets(BaseSubobject(PrimaryBase, Base.getBaseOffset()),
-                            PrimaryBaseIsVirtual, VBases);
+
+    uint64_t PrimaryBaseOffset;
+    
+    // Get the base offset of the primary base.
+    if (PrimaryBaseIsVirtual) {
+      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
+             "Primary vbase should have a zero offset!");
+      
+      const ASTRecordLayout &MostDerivedClassLayout =
+        Context.getASTRecordLayout(MostDerivedClass);
+      
+      PrimaryBaseOffset = 
+        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+    } else {
+      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
+             "Primary base should have a zero offset!");
+
+      PrimaryBaseOffset = Base.getBaseOffset();
+    }
+
+    AddVCallAndVBaseOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
+                            PrimaryBaseIsVirtual, RealBaseOffset, VBases);
   }
 
   // FIXME: Don't use /8 here.
@@ -1136,7 +1158,7 @@ VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
 
   // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual)
-    AddVCallOffsets(Base, Base.getBaseOffset());
+    AddVCallOffsets(Base, RealBaseOffset);
 }
 
 void VtableBuilder::AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset) {
@@ -1434,7 +1456,7 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
 
   // Add vcall and vbase offsets for this vtable.
   VisitedVirtualBasesSetTy VBases;
-  AddVCallAndVBaseOffsets(Base, BaseIsVirtual, VBases);
+  AddVCallAndVBaseOffsets(Base, BaseIsVirtual, Base.getBaseOffset(), VBases);
 
   // Reverse them and add them to the vtable components.
   std::reverse(VCallAndVBaseOffsets.begin(), VCallAndVBaseOffsets.end());
@@ -1470,11 +1492,11 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
     AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
   }
 
-  // Layout secondary vtables.
-  LayoutSecondaryVtables(Base);
-  
   // Clear the vcall offsets.
   VCallOffsets.clear();  
+
+  // Layout secondary vtables.
+  LayoutSecondaryVtables(Base);
 }
 
 void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
