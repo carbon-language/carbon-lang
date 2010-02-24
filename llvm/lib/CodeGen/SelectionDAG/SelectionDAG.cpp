@@ -5484,15 +5484,15 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
         if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
           if (getMachineOpcode() < TII->getNumOpcodes())
             return TII->get(getMachineOpcode()).getName();
-      return "<<Unknown Machine Node>>";
+      return "<<Unknown Machine Node #" + utostr(getOpcode()) + ">>";
     }
     if (G) {
       const TargetLowering &TLI = G->getTargetLoweringInfo();
       const char *Name = TLI.getTargetNodeName(getOpcode());
       if (Name) return Name;
-      return "<<Unknown Target Node>>";
+      return "<<Unknown Target Node #" + utostr(getOpcode()) + ">>";
     }
-    return "<<Unknown Node>>";
+    return "<<Unknown Node #" + utostr(getOpcode()) + ">>";
 
 #ifndef NDEBUG
   case ISD::DELETED_NODE:
