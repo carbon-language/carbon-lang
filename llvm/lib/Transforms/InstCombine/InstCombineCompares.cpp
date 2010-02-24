@@ -2458,17 +2458,17 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
           return SelectInst::Create(LHSI->getOperand(0), Op1, Op2);
         break;
       }
-    case Instruction::Load:
-      if (GetElementPtrInst *GEP =
-          dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
-          if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
-              !cast<LoadInst>(LHSI)->isVolatile())
-            if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
-              return Res;
+      case Instruction::Load:
+        if (GetElementPtrInst *GEP =
+            dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
+          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getOperand(0)))
+            if (GV->isConstant() && GV->hasDefinitiveInitializer() &&
+                !cast<LoadInst>(LHSI)->isVolatile())
+              if (Instruction *Res = FoldCmpLoadFromIndexedGlobal(GEP, GV, I))
+                return Res;
+        }
+        break;
       }
-      break;
-    }
   }
 
   return Changed ? &I : 0;
