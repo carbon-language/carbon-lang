@@ -424,15 +424,15 @@ class VST1D4<bits<4> op7_4, string OpcodeStr, string Dt>
           "\\{$src1, $src2, $src3, $src4\\}, $addr", "",
           [/* For disassembly only; pattern left blank */]>;
 
-def  VST1d8T  : VST1D3<0b0000, "vld1", "8">;
-def  VST1d16T : VST1D3<0b0100, "vld1", "16">;
-def  VST1d32T : VST1D3<0b1000, "vld1", "32">;
-//def  VST1d64T : VST1D3<0b1100, "vld1", "64">;
+def  VST1d8T  : VST1D3<0b0000, "vst1", "8">;
+def  VST1d16T : VST1D3<0b0100, "vst1", "16">;
+def  VST1d32T : VST1D3<0b1000, "vst1", "32">;
+//def  VST1d64T : VST1D3<0b1100, "vst1", "64">;
 
-def  VST1d8Q  : VST1D4<0b0000, "vld1", "8">;
-def  VST1d16Q : VST1D4<0b0100, "vld1", "16">;
-def  VST1d32Q : VST1D4<0b1000, "vld1", "32">;
-//def  VST1d64Q : VST1D4<0b1100, "vld1", "64">;
+def  VST1d8Q  : VST1D4<0b0000, "vst1", "8">;
+def  VST1d16Q : VST1D4<0b0100, "vst1", "16">;
+def  VST1d32Q : VST1D4<0b1000, "vst1", "32">;
+//def  VST1d64Q : VST1D4<0b1100, "vst1", "64">;
 
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
