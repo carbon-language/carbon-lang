@@ -2664,7 +2664,8 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
   //
   //     ::[opt] nested-name-specifier[opt] type-name :: ~ type-name 
   //
-  //   shall designate the same scalar type.  
+  //   shall designate the same scalar type.
+  TypeSourceInfo *ScopeTypeLoc;
   QualType ScopeType;
   if (FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId || 
       FirstTypeName.Identifier) {
@@ -2680,7 +2681,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
           return ExprError();        
       } else {
         // FIXME: Drops source-location information.
-        ScopeType = GetTypeFromParser(T);
+        ScopeType = GetTypeFromParser(T, &ScopeTypeLoc);
         
         if (!ScopeType->isDependentType() &&
             !Context.hasSameUnqualifiedType(DestructedType, ScopeType)) {
@@ -2690,6 +2691,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
             << ObjectType << ScopeType << BaseE->getSourceRange();
           
           ScopeType = QualType();
+          ScopeTypeLoc = 0;
         }
       }
     } else {
@@ -2707,7 +2709,6 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
     }
   }
   
-  // FIXME: Drops the scope type.
   OwningExprResult Result
     = Owned(new (Context) CXXPseudoDestructorExpr(Context, 
                                                   Base.takeAs<Expr>(),
@@ -2715,6 +2716,8 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                   OpLoc,
                                        (NestedNameSpecifier *) SS.getScopeRep(),
                                                   SS.getRange(),
+                                                  ScopeTypeLoc,
+                                                  CCLoc,
                                                   DestructedType,
                                                  SecondTypeName.StartLocation));
   if (HasTrailingLParen)

@@ -2936,6 +2936,7 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                                                        IsArrow, OpLoc,
                                (NestedNameSpecifier *) SS.getScopeRep(),
                                                        SS.getRange(),
+                                                       0, SourceLocation(),
                                                    MemberName.getCXXNameType(),
                                                        MemberLoc));
   }

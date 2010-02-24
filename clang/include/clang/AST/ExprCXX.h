@@ -999,19 +999,28 @@ public:
 
 /// \brief Represents a C++ pseudo-destructor (C++ [expr.pseudo]).
 ///
-/// Example:
+/// A pseudo-destructor is an expression that looks like a member access to a
+/// destructor of a scalar type, except that scalar types don't have 
+/// destructors. For example:
 ///
 /// \code
-/// template<typename T>
-/// void destroy(T* ptr) {
-///   ptr->~T();
+/// typedef int T;
+/// void f(int *p) {
+///   p->T::~T();
 /// }
 /// \endcode
 ///
-/// When the template is parsed, the expression \c ptr->~T will be stored as
-/// a member reference expression. If it then instantiated with a scalar type
-/// as a template argument for T, the resulting expression will be a
-/// pseudo-destructor expression.
+/// Pseudo-destructors typically occur when instantiating templates such as:
+/// 
+/// \code
+/// template<typename T>
+/// void destroy(T* ptr) {
+///   ptr->T::~T();
+/// }
+/// \endcode
+///
+/// for scalar types. A pseudo-destructor expression has no run-time semantics
+/// beyond evaluating the base expression.
 class CXXPseudoDestructorExpr : public Expr {
   /// \brief The base expression (that is being destroyed).
   Stmt *Base;
@@ -1030,6 +1039,14 @@ class CXXPseudoDestructorExpr : public Expr {
   /// present.
   SourceRange QualifierRange;
 
+  /// \brief The type that precedes the '::' in a qualified pseudo-destructor
+  /// expression.
+  TypeSourceInfo *ScopeType;
+  
+  /// \brief The location of the '::' in a qualified pseudo-destructor 
+  /// expression.
+  SourceLocation ColonColonLoc;
+  
   /// \brief The type being destroyed.
   QualType DestroyedType;
 
@@ -1041,6 +1058,8 @@ public:
                           Expr *Base, bool isArrow, SourceLocation OperatorLoc,
                           NestedNameSpecifier *Qualifier,
                           SourceRange QualifierRange,
+                          TypeSourceInfo *ScopeType,
+                          SourceLocation ColonColonLoc,
                           QualType DestroyedType,
                           SourceLocation DestroyedTypeLoc)
     : Expr(CXXPseudoDestructorExprClass,
@@ -1052,8 +1071,9 @@ public:
            /*isValueDependent=*/Base->isValueDependent()),
       Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
       OperatorLoc(OperatorLoc), Qualifier(Qualifier),
-      QualifierRange(QualifierRange), DestroyedType(DestroyedType),
-      DestroyedTypeLoc(DestroyedTypeLoc) { }
+      QualifierRange(QualifierRange), 
+      ScopeType(ScopeType), ColonColonLoc(ColonColonLoc),
+      DestroyedType(DestroyedType), DestroyedTypeLoc(DestroyedTypeLoc) { }
 
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
@@ -1081,6 +1101,21 @@ public:
   /// \brief Retrieve the location of the '.' or '->' operator.
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
 
+  /// \brief Retrieve the scope type in a qualified pseudo-destructor 
+  /// expression.
+  ///
+  /// Pseudo-destructor expressions can have extra qualification within them
+  /// that is not part of the nested-name-specifier, e.g., \c p->T::~T().
+  /// Here, if the object type of the expression is (or may be) a scalar type,
+  /// \p T may also be a scalar type and, therefore, cannot be part of a 
+  /// nested-name-specifier. It is stored as the "scope type" of the pseudo-
+  /// destructor expression.
+  TypeSourceInfo *getScopeTypeLoc() const { return ScopeType; }
+  
+  /// \brief Retrieve the location of the '::' in a qualified pseudo-destructor
+  /// expression.
+  SourceLocation getColonColonLoc() const { return ColonColonLoc; }
+  
   /// \brief Retrieve the type that is being destroyed.
   QualType getDestroyedType() const { return DestroyedType; }
 
