@@ -11,6 +11,7 @@ void g();
 
 namespace N {
   typedef Foo Wibble;
+  typedef int OtherInteger;
 }
 
 void f(A* a, Foo *f, int *i, double *d) {
@@ -35,8 +36,11 @@ void f(A* a, Foo *f, int *i, double *d) {
 
   i->~Integer();
   i->Integer::~Integer();
-
-  i->Integer::~Double(); // expected-error{{the type of object expression ('int') does not match the type being destroyed ('double') in pseudo-destructor expression}}
+  i->N::~OtherInteger();
+  i->N::OtherInteger::~OtherInteger();
+  i->N::OtherInteger::~Integer(); // expected-error{{'Integer' does not refer to a type name in pseudo-destructor expression; expected the name of type 'int'}}
+  i->N::~Integer(); // expected-error{{'Integer' does not refer to a type name in pseudo-destructor expression; expected the name of type 'int'}}
+  i->Integer::~Double(); // expected-error{{the type of object expression ('int') does not match the type being destroyed ('Double' (aka 'double')) in pseudo-destructor expression}}
 }
 
 typedef int Integer;

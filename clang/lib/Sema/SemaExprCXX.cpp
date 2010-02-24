@@ -2410,31 +2410,41 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   return move(Base);
 }
 
-Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
-                                                       SourceLocation OpLoc,
-                                                       tok::TokenKind OpKind,
-                                                       const CXXScopeSpec &SS,
-                                                  UnqualifiedId &FirstTypeName,
-                                                       SourceLocation CCLoc,
-                                                       SourceLocation TildeLoc,
-                                                 UnqualifiedId &SecondTypeName,
-                                                       bool HasTrailingLParen) {
-  assert((FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
-          FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
-         "Invalid first type name in pseudo-destructor");
-  assert((SecondTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
-          SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
-         "Invalid second type name in pseudo-destructor");
+Sema::OwningExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
+                                                   ExprArg MemExpr) {
+  Expr *E = (Expr *) MemExpr.get();
+  SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(NameLoc);
+  Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
+    << isa<CXXPseudoDestructorExpr>(E)
+    << CodeModificationHint::CreateInsertion(ExpectedLParenLoc, "()");
+  
+  return ActOnCallExpr(/*Scope*/ 0,
+                       move(MemExpr),
+                       /*LPLoc*/ ExpectedLParenLoc,
+                       Sema::MultiExprArg(*this, 0, 0),
+                       /*CommaLocs*/ 0,
+                       /*RPLoc*/ ExpectedLParenLoc);
+}
 
+Sema::OwningExprResult 
+Sema::ActOnDependentPseudoDestructorExpr(Scope *S, 
+                                         ExprArg Base,
+                                         SourceLocation OpLoc,
+                                         tok::TokenKind OpKind,
+                                         const CXXScopeSpec &SS,
+                                         UnqualifiedId &FirstTypeName,
+                                         SourceLocation CCLoc,
+                                         SourceLocation TildeLoc,
+                                         UnqualifiedId &SecondTypeName,
+                                         bool HasTrailingLParen) {
   Expr *BaseE = (Expr *)Base.get();
-  QualType ObjectType;
-  if (BaseE->isTypeDependent())
-    ObjectType = Context.DependentTy;
-
+  QualType ObjectType = BaseE->getType();
+  assert(ObjectType->isDependentType());
+  
   // The nested-name-specifier provided by the parser, then extended
   // by the "type-name ::" in the pseudo-destructor-name, if present.
   CXXScopeSpec ExtendedSS = SS;
-
+  
   if (FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId || 
       FirstTypeName.Identifier) {
     // We have a pseudo-destructor with a "type-name ::". 
@@ -2443,13 +2453,13 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
     if (FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) {
       // Resolve the identifier to a nested-name-specifier.
       CXXScopeTy *FinalScope
-        = ActOnCXXNestedNameSpecifier(S, SS, 
-                                      FirstTypeName.StartLocation,
-                                      CCLoc,
-                                      *FirstTypeName.Identifier,
-                                      true,
-                                      ObjectType.getAsOpaquePtr(),
-                                      false);
+      = ActOnCXXNestedNameSpecifier(S, SS, 
+                                    FirstTypeName.StartLocation,
+                                    CCLoc,
+                                    *FirstTypeName.Identifier,
+                                    true,
+                                    ObjectType.getAsOpaquePtr(),
+                                    false);
       if (SS.getBeginLoc().isInvalid())
         ExtendedSS.setBeginLoc(FirstTypeName.StartLocation);
       ExtendedSS.setEndLoc(CCLoc);
@@ -2468,11 +2478,11 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                          TemplateId->RAngleLoc);
       if (!T.isInvalid()) {
         CXXScopeTy *FinalScope
-          = ActOnCXXNestedNameSpecifier(S, SS, T.get(), 
-                                        SourceRange(TemplateId->TemplateNameLoc,
-                                                    TemplateId->RAngleLoc),
-                                        CCLoc,
-                                        true);
+        = ActOnCXXNestedNameSpecifier(S, SS, T.get(), 
+                                      SourceRange(TemplateId->TemplateNameLoc,
+                                                  TemplateId->RAngleLoc),
+                                      CCLoc,
+                                      true);
         if (SS.getBeginLoc().isInvalid())
           ExtendedSS.setBeginLoc(TemplateId->TemplateNameLoc);
         ExtendedSS.setEndLoc(CCLoc);
@@ -2480,7 +2490,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
       }
     }
   }
-
+  
   // Produce a destructor name based on the second type-name (which
   // follows the tilde).
   TypeTy *DestructedType;
@@ -2490,7 +2500,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
     bool isDependent = isDependentScopeSpecifier(ExtendedSS);
     if (isDependent || computeDeclContext(ExtendedSS))
       LookupSS = &ExtendedSS;
-
+    
     DestructedType = getTypeName(*SecondTypeName.Identifier, 
                                  SecondTypeName.StartLocation,
                                  S, LookupSS, true, ObjectType.getTypePtr());
@@ -2514,13 +2524,13 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
       if (!DestructedType)
         return ExprError();
     }
-
+    
     if (!DestructedType) {
       // FIXME: Crummy diagnostic.
       Diag(SecondTypeName.StartLocation, diag::err_destructor_class_name);
       return ExprError();
     }
-
+    
     EndLoc = SecondTypeName.EndLocation;
   } else {
     // Resolve the template-id to a type, and that to a
@@ -2528,7 +2538,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
     TemplateIdAnnotation *TemplateId = SecondTypeName.TemplateId;
     ASTTemplateArgsPtr TemplateArgsPtr(*this,
                                        TemplateId->getTemplateArgs(),
-                                         TemplateId->NumArgs);
+                                       TemplateId->NumArgs);
     EndLoc = TemplateId->RAngleLoc;
     TypeResult T = ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
                                        TemplateId->TemplateNameLoc,
@@ -2540,7 +2550,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
     
     DestructedType = T.get();
   }
-
+  
   // Form a (possibly fake) destructor name and let the member access
   // expression code deal with this.
   // FIXME: Don't do this! It's totally broken!
@@ -2548,6 +2558,169 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
   Destructor.setDestructorName(TildeLoc, DestructedType, EndLoc);
   return ActOnMemberAccessExpr(S, move(Base), OpLoc, OpKind, ExtendedSS, 
                                Destructor, DeclPtrTy(), HasTrailingLParen);
+  
+}
+
+Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
+                                                       SourceLocation OpLoc,
+                                                       tok::TokenKind OpKind,
+                                                       const CXXScopeSpec &SS,
+                                                  UnqualifiedId &FirstTypeName,
+                                                       SourceLocation CCLoc,
+                                                       SourceLocation TildeLoc,
+                                                 UnqualifiedId &SecondTypeName,
+                                                       bool HasTrailingLParen) {
+  assert((FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
+          FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
+         "Invalid first type name in pseudo-destructor");
+  assert((SecondTypeName.getKind() == UnqualifiedId::IK_TemplateId ||
+          SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
+         "Invalid second type name in pseudo-destructor");
+
+  Expr *BaseE = (Expr *)Base.get();
+  if (BaseE->isTypeDependent())
+    return ActOnDependentPseudoDestructorExpr(S, move(Base), OpLoc, OpKind,
+                                              SS, FirstTypeName, CCLoc, 
+                                              TildeLoc, SecondTypeName,
+                                              HasTrailingLParen);
+  
+  // C++ [expr.pseudo]p2:
+  //   The left-hand side of the dot operator shall be of scalar type. The 
+  //   left-hand side of the arrow operator shall be of pointer to scalar type.
+  //   This scalar type is the object type. 
+  QualType ObjectType = BaseE->getType();
+  if (OpKind == tok::arrow) {
+    if (const PointerType *Ptr = ObjectType->getAs<PointerType>()) {
+      ObjectType = Ptr->getPointeeType();
+    } else {
+      // The user wrote "p->" when she probably meant "p."; fix it.
+      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+        << ObjectType << true
+        << CodeModificationHint::CreateReplacement(OpLoc, ".");
+      if (isSFINAEContext())
+        return ExprError();
+      
+      OpKind = tok::period;
+    }
+  }
+
+  if (!ObjectType->isScalarType()) {
+    Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
+      << ObjectType << BaseE->getSourceRange();
+    return ExprError();
+  }
+
+  // 
+  
+  // C++ [expr.pseudo]p2:
+  //   [...] The cv-unqualified versions of the object type and of the type 
+  //   designated by the pseudo-destructor-name shall be the same type.
+  QualType DestructedType;
+  TypeSourceInfo *DestructedTypeInfo = 0;
+  if (SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) {
+    TypeTy *T = getTypeName(*SecondTypeName.Identifier, 
+                            SecondTypeName.StartLocation,
+                            S, &SS);
+    if (!T) {
+      Diag(SecondTypeName.StartLocation, 
+           diag::err_pseudo_dtor_destructor_non_type)
+        << SecondTypeName.Identifier << ObjectType;
+      if (isSFINAEContext())
+        return ExprError();
+      
+      // Recover by assuming we had the right type all along.
+      DestructedType = ObjectType;
+    } else {
+      DestructedType = GetTypeFromParser(T, &DestructedTypeInfo);
+      
+      if (!DestructedType->isDependentType() &&
+          !Context.hasSameUnqualifiedType(DestructedType, ObjectType)) {
+        // The types mismatch. Recover by assuming we had the right type
+        // all along.
+        Diag(SecondTypeName.StartLocation, diag::err_pseudo_dtor_type_mismatch)
+          << ObjectType << DestructedType << BaseE->getSourceRange();
+        
+        DestructedType = ObjectType;
+        DestructedTypeInfo = 0;
+      }
+    }
+  } else {
+    // FIXME: C++0x template aliases would allow a template-id here. For now,
+    // just diagnose this as an error.
+    TemplateIdAnnotation *TemplateId = SecondTypeName.TemplateId;
+    Diag(TemplateId->TemplateNameLoc, diag::err_pseudo_dtor_template)
+      << TemplateId->Name << ObjectType
+      << SourceRange(TemplateId->TemplateNameLoc, TemplateId->RAngleLoc);
+    if (isSFINAEContext())
+      return ExprError();
+    
+    // Recover by assuming we had the right type all along.
+    DestructedType = ObjectType;
+  }
+  
+  // C++ [expr.pseudo]p2:
+  //   [...] Furthermore, the two type-names in a pseudo-destructor-name of the
+  //   form
+  //
+  //     ::[opt] nested-name-specifier[opt] type-name :: ~ type-name 
+  //
+  //   shall designate the same scalar type.  
+  QualType ScopeType;
+  if (FirstTypeName.getKind() == UnqualifiedId::IK_TemplateId || 
+      FirstTypeName.Identifier) {
+    if (FirstTypeName.getKind() == UnqualifiedId::IK_Identifier) {
+      TypeTy *T = getTypeName(*FirstTypeName.Identifier, 
+                              FirstTypeName.StartLocation,
+                              S, &SS);
+      if (!T) {
+        Diag(FirstTypeName.StartLocation, 
+             diag::err_pseudo_dtor_destructor_non_type)
+          << FirstTypeName.Identifier << ObjectType;
+        if (isSFINAEContext())
+          return ExprError();        
+      } else {
+        // FIXME: Drops source-location information.
+        ScopeType = GetTypeFromParser(T);
+        
+        if (!ScopeType->isDependentType() &&
+            !Context.hasSameUnqualifiedType(DestructedType, ScopeType)) {
+          // The types mismatch. Recover by assuming we don't have a scoping 
+          // type.
+          Diag(FirstTypeName.StartLocation, diag::err_pseudo_dtor_type_mismatch)
+            << ObjectType << ScopeType << BaseE->getSourceRange();
+          
+          ScopeType = QualType();
+        }
+      }
+    } else {
+      // FIXME: C++0x template aliases would allow a template-id here. For now,
+      // just diagnose this as an error.
+      TemplateIdAnnotation *TemplateId = FirstTypeName.TemplateId;
+      Diag(TemplateId->TemplateNameLoc, diag::err_pseudo_dtor_template)
+        << TemplateId->Name << ObjectType
+        << SourceRange(TemplateId->TemplateNameLoc, TemplateId->RAngleLoc);
+      if (isSFINAEContext())
+        return ExprError();
+      
+      // Recover by assuming we have no scoping type.
+      DestructedType = ObjectType;
+    }
+  }
+  
+  // FIXME: Drops the scope type.
+  OwningExprResult Result
+    = Owned(new (Context) CXXPseudoDestructorExpr(Context, 
+                                                  Base.takeAs<Expr>(),
+                                                  OpKind == tok::arrow,
+                                                  OpLoc,
+                                       (NestedNameSpecifier *) SS.getScopeRep(),
+                                                  SS.getRange(),
+                                                  DestructedType,
+                                                 SecondTypeName.StartLocation));
+  if (HasTrailingLParen)
+    return move(Result);
+  
+  return DiagnoseDtorReference(SecondTypeName.StartLocation, move(Result));
 }
 
 CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 

@@ -2178,6 +2178,20 @@ public:
                                                         TypeTy *&ObjectType,
                                                    bool &MayBePseudoDestructor);
 
+  OwningExprResult DiagnoseDtorReference(SourceLocation NameLoc,
+                                         ExprArg MemExpr);
+  
+  OwningExprResult ActOnDependentPseudoDestructorExpr(Scope *S, 
+                                                      ExprArg Base,
+                                                      SourceLocation OpLoc,
+                                                      tok::TokenKind OpKind,
+                                                      const CXXScopeSpec &SS,
+                                                  UnqualifiedId &FirstTypeName,
+                                                      SourceLocation CCLoc,
+                                                      SourceLocation TildeLoc,
+                                                  UnqualifiedId &SecondTypeName,
+                                                      bool HasTrailingLParen);
+  
   virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                      SourceLocation OpLoc,
                                                      tok::TokenKind OpKind,
@@ -2187,7 +2201,7 @@ public:
                                                      SourceLocation TildeLoc,
                                                   UnqualifiedId &SecondTypeName,
                                                      bool HasTrailingLParen);
-
+   
   /// MaybeCreateCXXExprWithTemporaries - If the list of temporaries is
   /// non-empty, will create a new CXXExprWithTemporaries expression.
   /// Otherwise, just returs the passed in expression.
@@ -2215,7 +2229,11 @@ public:
                                        bool MayBePseudoDestructor = false);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
 
-
+  virtual bool isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
+                                            SourceLocation IdLoc,
+                                            IdentifierInfo &II,
+                                            TypeTy *ObjectType);
+  
   CXXScopeTy *BuildCXXNestedNameSpecifier(Scope *S,
                                           const CXXScopeSpec &SS,
                                           SourceLocation IdLoc,

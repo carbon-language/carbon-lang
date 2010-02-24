@@ -3178,23 +3178,6 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
   return ExprError();
 }
 
-static Sema::OwningExprResult DiagnoseDtorReference(Sema &SemaRef,
-                                                    SourceLocation NameLoc,
-                                                    Sema::ExprArg MemExpr) {
-  Expr *E = (Expr *) MemExpr.get();
-  SourceLocation ExpectedLParenLoc = SemaRef.PP.getLocForEndOfToken(NameLoc);
-  SemaRef.Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
-    << isa<CXXPseudoDestructorExpr>(E)
-    << CodeModificationHint::CreateInsertion(ExpectedLParenLoc, "()");
-  
-  return SemaRef.ActOnCallExpr(/*Scope*/ 0,
-                               move(MemExpr),
-                               /*LPLoc*/ ExpectedLParenLoc,
-                               Sema::MultiExprArg(SemaRef, 0, 0),
-                               /*CommaLocs*/ 0,
-                               /*RPLoc*/ ExpectedLParenLoc);
-}
-
 /// The main callback when the parser finds something like
 ///   expression . [nested-name-specifier] identifier
 ///   expression -> [nested-name-specifier] identifier
@@ -3265,7 +3248,7 @@ Sema::OwningExprResult Sema::ActOnMemberAccessExpr(Scope *S, ExprArg BaseArg,
         // call now.
         if (!HasTrailingLParen &&
             Id.getKind() == UnqualifiedId::IK_DestructorName)
-          return DiagnoseDtorReference(*this, NameLoc, move(Result));
+          return DiagnoseDtorReference(NameLoc, move(Result));
 
         return move(Result);
       }

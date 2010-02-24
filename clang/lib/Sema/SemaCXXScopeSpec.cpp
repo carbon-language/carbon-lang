@@ -332,6 +332,54 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
   return 0;
 }
 
+bool Sema::isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
+                                        SourceLocation IdLoc,
+                                        IdentifierInfo &II,
+                                        TypeTy *ObjectTypePtr) {
+  QualType ObjectType = GetTypeFromParser(ObjectTypePtr);
+  LookupResult Found(*this, &II, IdLoc, LookupNestedNameSpecifierName);
+  
+  // Determine where to perform name lookup
+  DeclContext *LookupCtx = 0;
+  bool isDependent = false;
+  if (!ObjectType.isNull()) {
+    // This nested-name-specifier occurs in a member access expression, e.g.,
+    // x->B::f, and we are looking into the type of the object.
+    assert(!SS.isSet() && "ObjectType and scope specifier cannot coexist");
+    LookupCtx = computeDeclContext(ObjectType);
+    isDependent = ObjectType->isDependentType();
+  } else if (SS.isSet()) {
+    // This nested-name-specifier occurs after another nested-name-specifier,
+    // so long into the context associated with the prior nested-name-specifier.
+    LookupCtx = computeDeclContext(SS, false);
+    isDependent = isDependentScopeSpecifier(SS);
+    Found.setContextRange(SS.getRange());
+  }
+  
+  if (LookupCtx) {
+    // Perform "qualified" name lookup into the declaration context we
+    // computed, which is either the type of the base of a member access
+    // expression or the declaration context associated with a prior
+    // nested-name-specifier.
+    
+    // The declaration context must be complete.
+    if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
+      return false;
+    
+    LookupQualifiedName(Found, LookupCtx);
+  } else if (isDependent) {
+    return false;
+  } else {
+    LookupName(Found, S);
+  }
+  Found.suppressDiagnostics();
+  
+  if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
+    return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
+  
+  return false;
+}
+
 /// \brief Build a new nested-name-specifier for "identifier::", as described
 /// by ActOnCXXNestedNameSpecifier.
 ///

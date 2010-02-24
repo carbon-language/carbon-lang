@@ -327,13 +327,26 @@ public:
     return false;
   }
   
+  /// \brief Determine whether the given name refers to a non-type nested name
+  /// specifier, e.g., the name of a namespace or namespace alias.
+  ///
+  /// This actual is used in the parsing of pseudo-destructor names to 
+  /// distinguish a nested-name-specifier and a "type-name ::" when we
+  /// see the token sequence "X :: ~".
+  virtual bool isNonTypeNestedNameSpecifier(Scope *S, const CXXScopeSpec &SS,
+                                            SourceLocation IdLoc,
+                                            IdentifierInfo &II,
+                                            TypeTy *ObjectType) {
+    return false;
+  }
+  
   /// ActOnCXXGlobalScopeSpecifier - Return the object that represents the
   /// global scope ('::').
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
                                                    SourceLocation CCLoc) {
     return 0;
   }
-
+  
   /// \brief Parsed an identifier followed by '::' in a C++
   /// nested-name-specifier.
   ///

@@ -2078,7 +2078,12 @@ def err_pseudo_dtor_call_with_args : Error<
 def err_dtor_expr_without_call : Error<
   "%select{destructor reference|pseudo-destructor expression}0 must be "
   "called immediately with '()'">;
-
+def err_pseudo_dtor_destructor_non_type : Error<
+  "%0 does not refer to a type name in pseudo-destructor expression; expected "
+  "the name of type %1">;
+def err_pseudo_dtor_template : Error<
+  "specialization of template %0 does not refer to a scalar type in pseudo-"
+  "destructor expression">;
 def err_invalid_use_of_function_type : Error<
   "a function type is not allowed here">;
 def err_invalid_use_of_array_type : Error<"an array type is not allowed here">;
