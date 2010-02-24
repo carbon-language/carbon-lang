@@ -2932,13 +2932,15 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
 
     // FIXME: We've lost the precise spelling of the type by going through
     // DeclarationName. Can we do better?
+    TypeSourceInfo *DestroyedTypeInfo
+      = Context.getTrivialTypeSourceInfo(MemberName.getCXXNameType(),
+                                         MemberLoc);
     return Owned(new (Context) CXXPseudoDestructorExpr(Context, BaseExpr,
                                                        IsArrow, OpLoc,
                                (NestedNameSpecifier *) SS.getScopeRep(),
                                                        SS.getRange(),
                                                        0, SourceLocation(),
-                                                   MemberName.getCXXNameType(),
-                                                       MemberLoc));
+                                                       DestroyedTypeInfo));
   }
 
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and

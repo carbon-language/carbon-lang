@@ -2431,11 +2431,11 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
                                                        SourceLocation OpLoc,
                                                        tok::TokenKind OpKind,
                                                        const CXXScopeSpec &SS,
-                                                   TypeSourceInfo *ScopeTypeInfo,
+                                                 TypeSourceInfo *ScopeTypeInfo,
                                                        SourceLocation CCLoc,
-                                               TypeSourceInfo *DestructedTypeLoc,
+                                             TypeSourceInfo *DestructedTypeInfo,
                                                        bool HasTrailingLParen) {
-  assert(DestructedTypeLoc && "No destructed type in pseudo-destructor expr?");
+  assert(DestructedTypeInfo && "No destructed type in pseudo-destructor expr?");
   
   // C++ [expr.pseudo]p2:
   //   The left-hand side of the dot operator shall be of scalar type. The 
@@ -2467,18 +2467,18 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
   // C++ [expr.pseudo]p2:
   //   [...] The cv-unqualified versions of the object type and of the type 
   //   designated by the pseudo-destructor-name shall be the same type.
-  QualType DestructedType = DestructedTypeLoc->getType();
+  QualType DestructedType = DestructedTypeInfo->getType();
   SourceLocation DestructedTypeStart
-    = DestructedTypeLoc->getTypeLoc().getSourceRange().getBegin();
+    = DestructedTypeInfo->getTypeLoc().getSourceRange().getBegin();
   if (!DestructedType->isDependentType() && !ObjectType->isDependentType() &&
       !Context.hasSameUnqualifiedType(DestructedType, ObjectType)) {
     Diag(DestructedTypeStart, diag::err_pseudo_dtor_type_mismatch)
       << ObjectType << DestructedType << BaseE->getSourceRange()
-      << DestructedTypeLoc->getTypeLoc().getSourceRange();
+      << DestructedTypeInfo->getTypeLoc().getSourceRange();
     
     // Recover by 
     DestructedType = ObjectType;
-    DestructedTypeLoc = Context.getTrivialTypeSourceInfo(ObjectType,
+    DestructedTypeInfo = Context.getTrivialTypeSourceInfo(ObjectType,
                                                          DestructedTypeStart);
   }
    
@@ -2513,13 +2513,12 @@ Sema::OwningExprResult Sema::BuildPseudoDestructorExpr(ExprArg Base,
                                                   SS.getRange(),
                                                   ScopeTypeInfo,
                                                   CCLoc,
-                                                  DestructedType,
-                                                  DestructedTypeStart));
+                                                  DestructedTypeInfo));
   if (HasTrailingLParen)
     return move(Result);
   
   return DiagnoseDtorReference(
-                  DestructedTypeLoc->getTypeLoc().getSourceRange().getBegin(),
+                  DestructedTypeInfo->getTypeLoc().getSourceRange().getBegin(),
                                move(Result));  
 }
 

@@ -1048,10 +1048,7 @@ class CXXPseudoDestructorExpr : public Expr {
   SourceLocation ColonColonLoc;
   
   /// \brief The type being destroyed.
-  QualType DestroyedType;
-
-  /// \brief The location of the type after the '~'.
-  SourceLocation DestroyedTypeLoc;
+  TypeSourceInfo *DestroyedType;
 
 public:
   CXXPseudoDestructorExpr(ASTContext &Context,
@@ -1060,20 +1057,20 @@ public:
                           SourceRange QualifierRange,
                           TypeSourceInfo *ScopeType,
                           SourceLocation ColonColonLoc,
-                          QualType DestroyedType,
-                          SourceLocation DestroyedTypeLoc)
+                          TypeSourceInfo *DestroyedType)
     : Expr(CXXPseudoDestructorExprClass,
            Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
                                                           false, 0, false, 
                                                           false, 0, 0, false,
                                                           CC_Default)),
-           /*isTypeDependent=*/false,
+           /*isTypeDependent=*/(Base->isTypeDependent() ||
+                                DestroyedType->getType()->isDependentType()),
            /*isValueDependent=*/Base->isValueDependent()),
       Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
       OperatorLoc(OperatorLoc), Qualifier(Qualifier),
       QualifierRange(QualifierRange), 
       ScopeType(ScopeType), ColonColonLoc(ColonColonLoc),
-      DestroyedType(DestroyedType), DestroyedTypeLoc(DestroyedTypeLoc) { }
+      DestroyedType(DestroyedType) { }
 
   void setBase(Expr *E) { Base = E; }
   Expr *getBase() const { return cast<Expr>(Base); }
@@ -1110,21 +1107,20 @@ public:
   /// \p T may also be a scalar type and, therefore, cannot be part of a 
   /// nested-name-specifier. It is stored as the "scope type" of the pseudo-
   /// destructor expression.
-  TypeSourceInfo *getScopeTypeLoc() const { return ScopeType; }
+  TypeSourceInfo *getScopeTypeInfo() const { return ScopeType; }
   
   /// \brief Retrieve the location of the '::' in a qualified pseudo-destructor
   /// expression.
   SourceLocation getColonColonLoc() const { return ColonColonLoc; }
   
   /// \brief Retrieve the type that is being destroyed.
-  QualType getDestroyedType() const { return DestroyedType; }
+  QualType getDestroyedType() const { return DestroyedType->getType(); }
 
-  /// \brief Retrieve the location of the type being destroyed.
-  SourceLocation getDestroyedTypeLoc() const { return DestroyedTypeLoc; }
+  /// \brief Retrieve the source location information for the type
+  /// being destroyed.
+  TypeSourceInfo *getDestroyedTypeInfo() const { return DestroyedType; }
 
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(Base->getLocStart(), DestroyedTypeLoc);
-  }
+  virtual SourceRange getSourceRange() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXPseudoDestructorExprClass;
