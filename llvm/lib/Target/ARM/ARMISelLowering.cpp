@@ -3879,50 +3879,59 @@ static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
 
   unsigned Opcode = 0;
   bool IsReversed;
-  if (LHS == CondLHS && RHS == CondRHS) {
+  if (DAG.isEqualTo(LHS, CondLHS) && DAG.isEqualTo(RHS, CondRHS)) {
     IsReversed = false; // x CC y ? x : y
-  } else if (LHS == CondRHS && RHS == CondLHS) {
+  } else if (DAG.isEqualTo(LHS, CondRHS) && DAG.isEqualTo(RHS, CondLHS)) {
     IsReversed = true ; // x CC y ? y : x
   } else {
     return SDValue();
   }
 
+  bool IsUnordered;
   switch (CC) {
   default: break;
   case ISD::SETOLT:
   case ISD::SETOLE:
   case ISD::SETLT:
   case ISD::SETLE:
-    // This can be vmin if we can prove that the LHS is not a NaN.
-    // (If either operand is NaN, the comparison will be false and the result
-    // will be the RHS, which matches vmin if RHS is the NaN.)
-    if (DAG.isKnownNeverNaN(LHS))
-      Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
-    break;
-
   case ISD::SETULT:
   case ISD::SETULE:
-    // Likewise, for ULT/ULE we need to know that RHS is not a NaN.
-    if (DAG.isKnownNeverNaN(RHS))
-      Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
+    // If LHS is NaN, an ordered comparison will be false and the result will
+    // be the RHS, but vmin(NaN, RHS) = NaN.  Avoid this by checking that LHS
+    // != NaN.  Likewise, for unordered comparisons, check for RHS != NaN.
+    IsUnordered = (CC == ISD::SETULT || CC == ISD::SETULE);
+    if (!DAG.isKnownNeverNaN(IsUnordered ? RHS : LHS))
+      break;
+    // For less-than-or-equal comparisons, "+0 <= -0" will be true but vmin
+    // will return -0, so vmin can only be used for unsafe math or if one of
+    // the operands is known to be nonzero.
+    if ((CC == ISD::SETLE || CC == ISD::SETOLE || CC == ISD::SETULE) &&
+        !UnsafeFPMath &&
+        !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
+      break;
+    Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
     break;
 
   case ISD::SETOGT:
   case ISD::SETOGE:
   case ISD::SETGT:
   case ISD::SETGE:
-    // This can be vmax if we can prove that the LHS is not a NaN.
-    // (If either operand is NaN, the comparison will be false and the result
-    // will be the RHS, which matches vmax if RHS is the NaN.)
-    if (DAG.isKnownNeverNaN(LHS))
-      Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;
-    break;
-
   case ISD::SETUGT:
   case ISD::SETUGE:
-    // Likewise, for UGT/UGE we need to know that RHS is not a NaN.
-    if (DAG.isKnownNeverNaN(RHS))
-      Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;
+    // If LHS is NaN, an ordered comparison will be false and the result will
+    // be the RHS, but vmax(NaN, RHS) = NaN.  Avoid this by checking that LHS
+    // != NaN.  Likewise, for unordered comparisons, check for RHS != NaN.
+    IsUnordered = (CC == ISD::SETUGT || CC == ISD::SETUGE);
+    if (!DAG.isKnownNeverNaN(IsUnordered ? RHS : LHS))
+      break;
+    // For greater-than-or-equal comparisons, "-0 >= +0" will be true but vmax
+    // will return +0, so vmax can only be used for unsafe math or if one of
+    // the operands is known to be nonzero.
+    if ((CC == ISD::SETGE || CC == ISD::SETOGE || CC == ISD::SETUGE) &&
+        !UnsafeFPMath &&
+        !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
+      break;
+    Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;
     break;
   }
 

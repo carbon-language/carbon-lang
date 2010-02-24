@@ -8,6 +8,14 @@ define float @fmin_ole(float %x) nounwind {
   ret float %min1
 }
 
+define float @fmin_ole_zero(float %x) nounwind {
+;CHECK: fmin_ole_zero:
+;CHECK-NOT: vmin.f32
+  %cond = fcmp ole float 0.0, %x
+  %min1 = select i1 %cond, float 0.0, float %x
+  ret float %min1
+}
+
 define float @fmin_ult(float %x) nounwind {
 ;CHECK: fmin_ult:
 ;CHECK: vmin.f32
@@ -29,6 +37,14 @@ define float @fmax_uge(float %x) nounwind {
 ;CHECK: vmax.f32
   %cond = fcmp uge float %x, 1.0
   %max1 = select i1 %cond, float %x, float 1.0
+  ret float %max1
+}
+
+define float @fmax_uge_zero(float %x) nounwind {
+;CHECK: fmax_uge_zero:
+;CHECK-NOT: vmax.f32
+  %cond = fcmp uge float %x, 0.0
+  %max1 = select i1 %cond, float %x, float 0.0
   ret float %max1
 }
 
