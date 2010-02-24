@@ -20,11 +20,9 @@
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
-namespace {
 enum {
   CommentIndent = 30
 };
-}
 
 /// ClassifyInt - Classify an integer by size, return '1','2','4','8' if this
 /// fits in 1, 2, 4, or 8 sign extended bytes.
@@ -78,6 +76,8 @@ class MatcherTableEmitter {
   DenseMap<Record*, unsigned> NodeXFormMap;
   std::vector<const Record*> NodeXForms;
 
+  // Per opcode frequence count. 
+  std::vector<unsigned> Histogram;
 public:
   MatcherTableEmitter() {}
 
@@ -85,6 +85,8 @@ public:
                            unsigned StartIdx, formatted_raw_ostream &OS);
   
   void EmitPredicateFunctions(formatted_raw_ostream &OS);
+  
+  void EmitHistogram(formatted_raw_ostream &OS);
 private:
   unsigned EmitMatcher(const MatcherNode *N, unsigned Indent,
                        formatted_raw_ostream &OS);
@@ -377,6 +379,10 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
                 formatted_raw_ostream &OS) {
   unsigned Size = 0;
   while (N) {
+    if (unsigned(N->getKind()) >= Histogram.size())
+      Histogram.resize(N->getKind()+1);
+    Histogram[N->getKind()]++;
+    
     // Push is a special case since it is binary.
     if (const PushMatcherNode *PMN = dyn_cast<PushMatcherNode>(N)) {
       // We need to encode the child and the offset of the failure code before
@@ -498,6 +504,54 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   OS << "}\n\n";
 }
 
+void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
+  OS << "  // Opcode Histogram:\n";
+  for (unsigned i = 0, e = Histogram.size(); i != e; ++i) {
+    OS << "  // #";
+    switch ((MatcherNode::KindTy)i) {
+    case MatcherNode::Push: OS << "OPC_Push"; break; 
+    case MatcherNode::RecordNode: OS << "OPC_RecordNode"; break; 
+    case MatcherNode::RecordChild: OS << "OPC_RecordChild"; break;
+    case MatcherNode::RecordMemRef: OS << "OPC_RecordMemRef"; break;
+    case MatcherNode::CaptureFlagInput: OS << "OPC_CaptureFlagInput"; break;
+    case MatcherNode::MoveChild: OS << "OPC_MoveChild"; break;
+    case MatcherNode::MoveParent: OS << "OPC_MoveParent"; break;
+    case MatcherNode::CheckSame: OS << "OPC_CheckSame"; break;
+    case MatcherNode::CheckPatternPredicate:
+      OS << "OPC_CheckPatternPredicate"; break;
+    case MatcherNode::CheckPredicate: OS << "OPC_CheckPredicate"; break;
+    case MatcherNode::CheckOpcode: OS << "OPC_CheckOpcode"; break;
+    case MatcherNode::CheckMultiOpcode: OS << "OPC_CheckMultiOpcode"; break;
+    case MatcherNode::CheckType: OS << "OPC_CheckType"; break;
+    case MatcherNode::CheckInteger: OS << "OPC_CheckInteger"; break;
+    case MatcherNode::CheckCondCode: OS << "OPC_CheckCondCode"; break;
+    case MatcherNode::CheckValueType: OS << "OPC_CheckValueType"; break;
+    case MatcherNode::CheckComplexPat: OS << "OPC_CheckComplexPat"; break;
+    case MatcherNode::CheckAndImm: OS << "OPC_CheckAndImm"; break;
+    case MatcherNode::CheckOrImm: OS << "OPC_CheckOrImm"; break;
+    case MatcherNode::CheckFoldableChainNode:
+      OS << "OPC_CheckFoldableChainNode"; break;
+    case MatcherNode::CheckChainCompatible:
+      OS << "OPC_CheckChainCompatible"; break;
+    case MatcherNode::EmitInteger: OS << "OPC_EmitInteger"; break;
+    case MatcherNode::EmitStringInteger: OS << "OPC_EmitStringInteger"; break;
+    case MatcherNode::EmitRegister: OS << "OPC_EmitRegister"; break;
+    case MatcherNode::EmitConvertToTarget:
+      OS << "OPC_EmitConvertToTarget"; break;
+    case MatcherNode::EmitMergeInputChains:
+      OS << "OPC_EmitMergeInputChains"; break;
+    case MatcherNode::EmitCopyToReg: OS << "OPC_EmitCopyToReg"; break;
+    case MatcherNode::EmitNode: OS << "OPC_EmitNode"; break;
+    case MatcherNode::EmitNodeXForm: OS << "OPC_EmitNodeXForm"; break;
+    case MatcherNode::MarkFlagResults: OS << "OPC_MarkFlagResults"; break;
+    case MatcherNode::CompleteMatch: OS << "OPC_CompleteMatch"; break;    
+    }
+    
+    OS.PadToColumn(40) << " = " << Histogram[i] << '\n';
+  }
+  OS << '\n';
+}
+
 
 void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   formatted_raw_ostream OS(O);
@@ -512,6 +566,9 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   OS << "  static const unsigned char MatcherTable[] = {\n";
   unsigned TotalSize = MatcherEmitter.EmitMatcherList(Matcher, 5, 0, OS);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
+  
+  MatcherEmitter.EmitHistogram(OS);
+  
   OS << "  #undef TARGET_OPCODE\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
   OS << "\n";
