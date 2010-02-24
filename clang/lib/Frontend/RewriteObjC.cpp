@@ -120,6 +120,9 @@ namespace {
 
     // Block expressions.
     llvm::SmallVector<BlockExpr *, 32> Blocks;
+    llvm::SmallVector<int, 32> InnerDeclRefsCount;
+    llvm::SmallVector<BlockDeclRefExpr *, 32> InnerDeclRefs;
+    
     llvm::SmallVector<BlockDeclRefExpr *, 32> BlockDeclRefs;
     llvm::DenseMap<BlockDeclRefExpr *, CallExpr *> BlockCallExprs;
 
@@ -385,6 +388,9 @@ namespace {
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
     void GetBlockCallExprs(Stmt *S);
     void GetBlockDeclRefExprs(Stmt *S);
+    void GetInnerBlockDeclRefExprs(Stmt *S, 
+                llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
+                llvm::SmallPtrSet<ValueDecl *, 8> &InnerBlockValueDecls);
 
     // We avoid calling Type::isBlockPointerType(), since it operates on the
     // canonical type. We only care if the top-level type is a closure pointer.
@@ -416,7 +422,8 @@ namespace {
     void RewriteCastExpr(CStyleCastExpr *CE);
 
     FunctionDecl *SynthBlockInitFunctionDecl(const char *name);
-    Stmt *SynthBlockInitExpr(BlockExpr *Exp);
+    Stmt *SynthBlockInitExpr(BlockExpr *Exp,
+            const llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs);
 
     void QuoteDoublequotes(std::string &From, std::string &To) {
       for (unsigned i = 0; i < From.length(); i++) {
@@ -4187,8 +4194,15 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   // Insert closures that were part of the function.
   for (unsigned i = 0; i < Blocks.size(); i++) {
-
+    // Need to copy-in the inner copied-in variables not actually used in this
+    // block.
+    for (int j = 0; j < InnerDeclRefsCount[i]; j++)
+      BlockDeclRefs.push_back(InnerDeclRefs[j]);
     CollectBlockDeclRefInfo(Blocks[i]);
+    llvm::SmallPtrSet<ValueDecl *, 8> InnerBlockValueDecls;
+    llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
+    GetInnerBlockDeclRefExprs(Blocks[i]->getBody(),
+                              InnerBlockDeclRefs, InnerBlockValueDecls);
 
     std::string ImplTag = "__" + std::string(FunName) + "_block_impl_" + utostr(i);
     std::string DescTag = "__" + std::string(FunName) + "_block_desc_" + utostr(i);
@@ -4218,6 +4232,8 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     ImportedBlockDecls.clear();
   }
   Blocks.clear();
+  InnerDeclRefsCount.clear();
+  InnerDeclRefs.clear();
   RewrittenBlockExprs.clear();
 }
 
@@ -4262,6 +4278,33 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
     // FIXME: Handle enums.
     if (!isa<FunctionDecl>(CDRE->getDecl()))
       BlockDeclRefs.push_back(CDRE);
+  return;
+}
+
+void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S, 
+                llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
+                llvm::SmallPtrSet<ValueDecl *, 8> &InnerBlockValueDecls) {
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    if (*CI) {
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
+        GetInnerBlockDeclRefExprs(CBE->getBody(),
+                                  InnerBlockDeclRefs,
+                                  InnerBlockValueDecls);
+      else
+        GetInnerBlockDeclRefExprs(*CI,
+                                  InnerBlockDeclRefs,
+                                  InnerBlockValueDecls);
+
+    }
+  // Handle specific things.
+  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
+    if (!isa<FunctionDecl>(CDRE->getDecl()) &&
+        !CDRE->isByRef() &&
+        !InnerBlockValueDecls.count(CDRE->getDecl())) {
+      InnerBlockValueDecls.insert(CDRE->getDecl());
+      InnerBlockDeclRefs.push_back(CDRE);
+    }
   return;
 }
 
@@ -4854,10 +4897,34 @@ FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(const char *name) {
                               false);
 }
 
-Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp) {
+Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
+          const llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs) {
   Blocks.push_back(Exp);
 
   CollectBlockDeclRefInfo(Exp);
+  
+  // Add inner imported variables now used in current block.
+ int countOfInnerDecls = 0;
+  for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++) {
+    BlockDeclRefExpr *Exp = InnerBlockDeclRefs[i];
+    ValueDecl *VD = Exp->getDecl();
+    if (!BlockByCopyDeclsPtrSet.count(VD)) {
+      // We need to save the copied-in variables in nested
+      // blocks because it is needed at the end for some of the API generations.
+      // See SynthesizeBlockLiterals routine.
+      InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
+      BlockDeclRefs.push_back(Exp);
+      BlockByCopyDeclsPtrSet.insert(VD);
+      BlockByCopyDecls.push_back(VD);
+      if (Exp->getType()->isObjCObjectPointerType() || 
+          Exp->getType()->isBlockPointerType()) {
+        GetBlockCallExprs(Exp);
+        ImportedBlockDecls.insert(VD);
+      }
+    }
+  }
+  InnerDeclRefsCount.push_back(countOfInnerDecls);
+  
   std::string FuncName;
 
   if (CurFunctionDef)
@@ -5036,6 +5103,10 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     }
 
   if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
+    llvm::SmallPtrSet<ValueDecl *, 8> InnerBlockValueDecls;
+    llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
+    GetInnerBlockDeclRefExprs(BE->getBody(),
+                              InnerBlockDeclRefs, InnerBlockValueDecls);
     // Rewrite the block body in place.
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
 
@@ -5043,7 +5114,8 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     std::string Str = Rewrite.getRewrittenText(BE->getSourceRange());
     RewrittenBlockExprs[BE] = Str;
 
-    Stmt *blockTranscribed = SynthBlockInitExpr(BE);
+    Stmt *blockTranscribed = SynthBlockInitExpr(BE, InnerBlockDeclRefs);
+                            
     //blockTranscribed->dump();
     ReplaceStmt(S, blockTranscribed);
     return blockTranscribed;
