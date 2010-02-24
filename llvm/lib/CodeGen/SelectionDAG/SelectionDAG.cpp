@@ -2235,6 +2235,29 @@ bool SelectionDAG::isKnownNeverNaN(SDValue Op) const {
   return false;
 }
 
+bool SelectionDAG::isKnownNeverZero(SDValue Op) const {
+  // If the value is a constant, we can obviously see if it is a zero or not.
+  if (const ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Op))
+    return !C->isZero();
+
+  // TODO: Recognize more cases here.
+
+  return false;
+}
+
+bool SelectionDAG::isEqualTo(SDValue A, SDValue B) const {
+  // Check the obvious case.
+  if (A == B) return true;
+
+  // For for negative and positive zero.
+  if (const ConstantFPSDNode *CA = dyn_cast<ConstantFPSDNode>(A))
+    if (const ConstantFPSDNode *CB = dyn_cast<ConstantFPSDNode>(B))
+      if (CA->isZero() && CB->isZero()) return true;
+
+  // Otherwise they may not be equal.
+  return false;
+}
+
 bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
   GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
   if (!GA) return false;

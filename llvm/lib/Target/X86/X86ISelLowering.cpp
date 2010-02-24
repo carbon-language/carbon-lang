@@ -8833,18 +8833,35 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 
     unsigned Opcode = 0;
     // Check for x CC y ? x : y.
-    if (LHS == Cond.getOperand(0) && RHS == Cond.getOperand(1)) {
+    if (DAG.isEqualTo(LHS, Cond.getOperand(0)) &&
+        DAG.isEqualTo(RHS, Cond.getOperand(1))) {
       switch (CC) {
       default: break;
       case ISD::SETULT:
-        if (!UnsafeFPMath) break;
+        // Converting this to a min would handle NaNs incorrectly, and swapping
+        // the operands would cause it to handle comparisons between positive
+        // and negative zero incorrectly.
+        if (!FiniteOnlyFPMath() &&
+            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))) {
+          if (!UnsafeFPMath &&
+              !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
+            break;
+          std::swap(LHS, RHS);
+        }
         Opcode = X86ISD::FMIN;
         break;
       case ISD::SETOLE:
-        if (!UnsafeFPMath) break;
+        // Converting this to a min would handle comparisons between positive
+        // and negative zero incorrectly.
+        if (!UnsafeFPMath &&
+            !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS))
+          break;
         Opcode = X86ISD::FMIN;
         break;
       case ISD::SETULE:
+        // Converting this to a min would handle both negative zeros and NaNs
+        // incorrectly, but we can swap the operands to fix both.
+        std::swap(LHS, RHS);
       case ISD::SETOLT:
       case ISD::SETLT:
       case ISD::SETLE:
@@ -8852,14 +8869,30 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         break;
 
       case ISD::SETOGE:
-        if (!UnsafeFPMath) break;
+        // Converting this to a max would handle comparisons between positive
+        // and negative zero incorrectly.
+        if (!UnsafeFPMath &&
+            !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(LHS))
+          break;
         Opcode = X86ISD::FMAX;
         break;
       case ISD::SETUGT:
-        if (!UnsafeFPMath) break;
+        // Converting this to a max would handle NaNs incorrectly, and swapping
+        // the operands would cause it to handle comparisons between positive
+        // and negative zero incorrectly.
+        if (!FiniteOnlyFPMath() &&
+            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))) {
+          if (!UnsafeFPMath &&
+              !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
+            break;
+          std::swap(LHS, RHS);
+        }
         Opcode = X86ISD::FMAX;
         break;
       case ISD::SETUGE:
+        // Converting this to a max would handle both negative zeros and NaNs
+        // incorrectly, but we can swap the operands to fix both.
+        std::swap(LHS, RHS);
       case ISD::SETOGT:
       case ISD::SETGT:
       case ISD::SETGE:
@@ -8867,18 +8900,34 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         break;
       }
     // Check for x CC y ? y : x -- a min/max with reversed arms.
-    } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
+    } else if (DAG.isEqualTo(LHS, Cond.getOperand(1)) &&
+               DAG.isEqualTo(RHS, Cond.getOperand(0))) {
       switch (CC) {
       default: break;
       case ISD::SETOGE:
-        if (!UnsafeFPMath) break;
+        // Converting this to a min would handle comparisons between positive
+        // and negative zero incorrectly, and swapping the operands would
+        // cause it to handle NaNs incorrectly.
+        if (!UnsafeFPMath &&
+            !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS))) {
+          if (!FiniteOnlyFPMath() &&
+              (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+            break;
+          std::swap(LHS, RHS);
+        }
         Opcode = X86ISD::FMIN;
         break;
       case ISD::SETUGT:
-        if (!UnsafeFPMath) break;
+        // Converting this to a min would handle NaNs incorrectly.
+        if (!UnsafeFPMath &&
+            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+          break;
         Opcode = X86ISD::FMIN;
         break;
       case ISD::SETUGE:
+        // Converting this to a min would handle both negative zeros and NaNs
+        // incorrectly, but we can swap the operands to fix both.
+        std::swap(LHS, RHS);
       case ISD::SETOGT:
       case ISD::SETGT:
       case ISD::SETGE:
@@ -8886,14 +8935,29 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         break;
 
       case ISD::SETULT:
-        if (!UnsafeFPMath) break;
+        // Converting this to a max would handle NaNs incorrectly.
+        if (!FiniteOnlyFPMath() &&
+            (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+          break;
         Opcode = X86ISD::FMAX;
         break;
       case ISD::SETOLE:
-        if (!UnsafeFPMath) break;
+        // Converting this to a max would handle comparisons between positive
+        // and negative zero incorrectly, and swapping the operands would
+        // cause it to handle NaNs incorrectly.
+        if (!UnsafeFPMath &&
+            !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS)) {
+          if (!FiniteOnlyFPMath() &&
+              (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
+            break;
+          std::swap(LHS, RHS);
+        }
         Opcode = X86ISD::FMAX;
         break;
       case ISD::SETULE:
+        // Converting this to a max would handle both negative zeros and NaNs
+        // incorrectly, but we can swap the operands to fix both.
+        std::swap(LHS, RHS);
       case ISD::SETOLT:
       case ISD::SETLT:
       case ISD::SETLE:

@@ -898,6 +898,15 @@ public:
   /// isKnownNeverNan - Test whether the given SDValue is known to never be NaN.
   bool isKnownNeverNaN(SDValue Op) const;
 
+  /// isKnownNeverZero - Test whether the given SDValue is known to never be
+  /// positive or negative Zero.
+  bool isKnownNeverZero(SDValue Op) const;
+
+  /// isEqualTo - Test whether two SDValues are known to compare equal. This
+  /// is true if they are the same value, or if one is negative zero and the
+  /// other positive zero.
+  bool isEqualTo(SDValue A, SDValue B) const;
+
   /// isVerifiedDebugInfoDesc - Returns true if the specified SDValue has
   /// been verified as a debug information descriptor.
   bool isVerifiedDebugInfoDesc(SDValue Op) const;
