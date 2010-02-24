@@ -4226,14 +4226,15 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
           }
         }
 
-        Constant *C;
+        Constant *C = 0;
         if (const CmpInst *CI = dyn_cast<CmpInst>(I))
           C = ConstantFoldCompareInstOperands(CI->getPredicate(),
                                               Operands[0], Operands[1], TD);
         else
           C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                        &Operands[0], Operands.size(), TD);
-        return getSCEV(C);
+        if (C)
+          return getSCEV(C);
       }
     }
 
