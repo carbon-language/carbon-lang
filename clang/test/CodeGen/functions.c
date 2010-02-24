@@ -30,7 +30,7 @@ void f2(void) {
 // CHECK: define void @f1()
 void f1() {}
 
-// CHECK: define {{.*}} @f3()
+// CHECK: define {{.*}} @f3{{\(\)|\(.*sret.*\)}}
 struct foo { int X, Y, Z; } f3() {
   while (1) {}
 }
