@@ -11,6 +11,7 @@ add_executable(tblgen
   DAGISelEmitter.cpp
   DAGISelMatcherEmitter.cpp
   DAGISelMatcherGen.cpp
+  DAGISelMatcherOpt.cpp
   DAGISelMatcher.cpp
   DisassemblerEmitter.cpp
   EDEmitter.cpp

@@ -26,7 +26,7 @@ namespace llvm {
 
 MatcherNode *ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                      const CodeGenDAGPatterns &CGP);
-
+void OptimizeMatcher(const MatcherNode *Matcher);
 void EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &OS);
 
   

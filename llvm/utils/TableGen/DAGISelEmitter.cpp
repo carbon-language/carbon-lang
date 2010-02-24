@@ -24,6 +24,9 @@
 #include <iostream>
 using namespace llvm;
 
+//#define ENABLE_NEW_ISEL
+
+
 static cl::opt<bool>
 GenDebug("gen-debug", cl::desc("Generate debug code"), cl::init(false));
 
@@ -1791,6 +1794,9 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDNode *N) {\n"
+#ifdef ENABLE_NEW_ISEL
+     << "  return SelectCode2(N);\n"
+#endif
      << "  MVT::SimpleValueType NVT = N->getValueType(0).getSimpleVT().SimpleTy;\n"
      << "  switch (N->getOpcode()) {\n"
      << "  default:\n"
@@ -1946,7 +1952,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   // definitions.  Emit the resultant instruction selector.
   EmitInstructionSelector(OS);  
   
-#if 0
+#ifdef ENABLE_NEW_ISEL
   MatcherNode *Matcher = 0;
 
   // Add all the patterns to a temporary list so we can sort them.
@@ -1977,7 +1983,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
       Matcher = new PushMatcherNode(N, Matcher);
   }
 
-  // OptimizeMatcher(Matcher);
+  OptimizeMatcher(Matcher);
   //Matcher->dump();
   EmitMatcherTable(Matcher, OS);
   delete Matcher;
