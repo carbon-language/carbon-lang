@@ -222,7 +222,12 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
     OS << "OPC_CheckType, "
        << getEnumName(cast<CheckTypeMatcherNode>(N)->getType()) << ",\n";
     return 2;
-
+  case MatcherNode::CheckChildType:
+    OS << "OPC_CheckChild"
+       << cast<CheckChildTypeMatcherNode>(N)->getChildNo() << "Type, "
+       << getEnumName(cast<CheckChildTypeMatcherNode>(N)->getType()) << ",\n";
+    return 2;
+      
   case MatcherNode::CheckInteger: {
     int64_t Val = cast<CheckIntegerMatcherNode>(N)->getValue();
     OS << "OPC_CheckInteger" << ClassifyInt(Val) << ", ";
@@ -523,6 +528,7 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
     case MatcherNode::CheckOpcode: OS << "OPC_CheckOpcode"; break;
     case MatcherNode::CheckMultiOpcode: OS << "OPC_CheckMultiOpcode"; break;
     case MatcherNode::CheckType: OS << "OPC_CheckType"; break;
+    case MatcherNode::CheckChildType: OS << "OPC_CheckChildType"; break;
     case MatcherNode::CheckInteger: OS << "OPC_CheckInteger"; break;
     case MatcherNode::CheckCondCode: OS << "OPC_CheckCondCode"; break;
     case MatcherNode::CheckValueType: OS << "OPC_CheckValueType"; break;

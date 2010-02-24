@@ -233,6 +233,9 @@ enum BuiltinOpcodes {
   OPC_CheckOpcode,
   OPC_CheckMultiOpcode,
   OPC_CheckType,
+  OPC_CheckChild0Type, OPC_CheckChild1Type, OPC_CheckChild2Type,
+  OPC_CheckChild3Type, OPC_CheckChild4Type, OPC_CheckChild5Type,
+  OPC_CheckChild6Type, OPC_CheckChild7Type,
   OPC_CheckInteger1, OPC_CheckInteger2, OPC_CheckInteger4, OPC_CheckInteger8,
   OPC_CheckCondCode,
   OPC_CheckValueType,
@@ -475,6 +478,23 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
       if (N.getValueType() != VT) {
+        // Handle the case when VT is iPTR.
+        if (VT != MVT::iPTR || N.getValueType() != TLI.getPointerTy())
+          break;
+      }
+      continue;
+    }
+    case OPC_CheckChild0Type: case OPC_CheckChild1Type:
+    case OPC_CheckChild2Type: case OPC_CheckChild3Type:
+    case OPC_CheckChild4Type: case OPC_CheckChild5Type:
+    case OPC_CheckChild6Type: case OPC_CheckChild7Type: {
+      unsigned ChildNo = Opcode-OPC_CheckChild0Type;
+      if (ChildNo >= N.getNumOperands())
+        break;  // Match fails if out of range child #.
+      
+      MVT::SimpleValueType VT =
+        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+      if (N.getOperand(ChildNo).getValueType() != VT) {
         // Handle the case when VT is iPTR.
         if (VT != MVT::iPTR || N.getValueType() != TLI.getPointerTy())
           break;

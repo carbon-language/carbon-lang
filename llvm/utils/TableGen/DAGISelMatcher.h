@@ -54,6 +54,7 @@ public:
     CheckOpcode,          // Fail if not opcode.
     CheckMultiOpcode,     // Fail if not in opcode list.
     CheckType,            // Fail if not correct type.
+    CheckChildType,       // Fail if child has wrong type.
     CheckInteger,         // Fail if wrong val.
     CheckCondCode,        // Fail if not condcode.
     CheckValueType,
@@ -328,6 +329,26 @@ public:
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
+  
+/// CheckChildTypeMatcherNode - This checks to see if a child node has the
+/// specified type, if not it fails to match.
+class CheckChildTypeMatcherNode : public MatcherNode {
+  unsigned ChildNo;
+  MVT::SimpleValueType Type;
+public:
+  CheckChildTypeMatcherNode(unsigned childno, MVT::SimpleValueType type)
+    : MatcherNode(CheckChildType), ChildNo(childno), Type(type) {}
+  
+  unsigned getChildNo() const { return ChildNo; }
+  MVT::SimpleValueType getType() const { return Type; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == CheckChildType;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
 
 /// CheckIntegerMatcherNode - This checks to see if the current node is a
 /// ConstantSDNode with the specified integer value, if not it fails to match.

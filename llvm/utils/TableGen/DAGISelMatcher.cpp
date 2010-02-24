@@ -91,6 +91,13 @@ void CheckTypeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   printNext(OS, indent);
 }
 
+void CheckChildTypeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "CheckChildType " << ChildNo << " "
+    << getEnumName(Type) << '\n';
+  printNext(OS, indent);
+}
+
+
 void CheckIntegerMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckInteger " << Value << '\n';
   printNext(OS, indent);

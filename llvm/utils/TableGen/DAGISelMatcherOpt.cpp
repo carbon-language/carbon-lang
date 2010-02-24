@@ -26,12 +26,19 @@ static void ContractNodes(OwningPtr<MatcherNode> &Matcher) {
   // If we found a movechild node with a node that comes in a 'foochild' form,
   // transform it.
   if (MoveChildMatcherNode *MC = dyn_cast<MoveChildMatcherNode>(N)) {
-    if (RecordMatcherNode *RM = dyn_cast<RecordMatcherNode>(MC->getNext())) {
-      MatcherNode *New
-        = new RecordChildMatcherNode(MC->getChildNo(), RM->getWhatFor());
+    MatcherNode *New = 0;
+    if (RecordMatcherNode *RM = dyn_cast<RecordMatcherNode>(MC->getNext()))
+      New = new RecordChildMatcherNode(MC->getChildNo(), RM->getWhatFor());
+    
+    if (CheckTypeMatcherNode *CT= dyn_cast<CheckTypeMatcherNode>(MC->getNext()))
+      New = new CheckChildTypeMatcherNode(MC->getChildNo(), CT->getType());
+    
+    if (New) {
+      // Insert the new node.
       New->setNext(Matcher.take());
       Matcher.reset(New);
-      MC->setNext(RM->takeNext());
+      // Remove the old one.
+      MC->setNext(MC->getNext()->takeNext());
       return ContractNodes(Matcher);
     }
   }
