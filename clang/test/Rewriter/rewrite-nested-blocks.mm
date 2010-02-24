@@ -24,3 +24,15 @@ void f(void (^block)(void));
 }
 @end
 
+struct S {
+  int y;
+};
+
+void foo () {
+	struct S *SELF;
+	f(^{
+		f(^{
+			SELF->y = 42;
+		});
+	});
+}
