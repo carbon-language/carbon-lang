@@ -921,9 +921,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
         if (MaxBECount == RecastedMaxBECount) {
           const Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no unsigned overflow.
-          const SCEV *ZMul =
-            getMulExpr(CastedMaxBECount,
-                       getTruncateOrZeroExtend(Step, Start->getType()));
+          const SCEV *ZMul = getMulExpr(CastedMaxBECount, Step);
           const SCEV *Add = getAddExpr(Start, ZMul);
           const SCEV *OperandExtendedAdd =
             getAddExpr(getZeroExtendExpr(Start, WideTy),
@@ -937,9 +935,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
 
           // Similar to above, only this time treat the step value as signed.
           // This covers loops that count down.
-          const SCEV *SMul =
-            getMulExpr(CastedMaxBECount,
-                       getTruncateOrSignExtend(Step, Start->getType()));
+          const SCEV *SMul = getMulExpr(CastedMaxBECount, Step);
           Add = getAddExpr(Start, SMul);
           OperandExtendedAdd =
             getAddExpr(getZeroExtendExpr(Start, WideTy),
@@ -1060,9 +1056,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
         if (MaxBECount == RecastedMaxBECount) {
           const Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no signed overflow.
-          const SCEV *SMul =
-            getMulExpr(CastedMaxBECount,
-                       getTruncateOrSignExtend(Step, Start->getType()));
+          const SCEV *SMul = getMulExpr(CastedMaxBECount, Step);
           const SCEV *Add = getAddExpr(Start, SMul);
           const SCEV *OperandExtendedAdd =
             getAddExpr(getSignExtendExpr(Start, WideTy),
@@ -1076,9 +1070,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
 
           // Similar to above, only this time treat the step value as unsigned.
           // This covers loops that count up with an unsigned step.
-          const SCEV *UMul =
-            getMulExpr(CastedMaxBECount,
-                       getTruncateOrZeroExtend(Step, Start->getType()));
+          const SCEV *UMul = getMulExpr(CastedMaxBECount, Step);
           Add = getAddExpr(Start, UMul);
           OperandExtendedAdd =
             getAddExpr(getSignExtendExpr(Start, WideTy),
