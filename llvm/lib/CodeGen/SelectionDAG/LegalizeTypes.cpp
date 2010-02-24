@@ -966,7 +966,8 @@ SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, EVT EltVT,
     Index = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Index);
 
   // Calculate the element offset and add it to the pointer.
-  unsigned EltSize = EltVT.getSizeInBits() / 8; // FIXME: should be ABI size.
+  unsigned EltSize = TLI.getTargetData()->
+    getTypeAllocSize(EltVT.getTypeForEVT(*DAG.getContext()));
 
   Index = DAG.getNode(ISD::MUL, dl, Index.getValueType(), Index,
                       DAG.getConstant(EltSize, Index.getValueType()));
