@@ -10,7 +10,7 @@ define i8 @mov(i8 %a, i8 %b) nounwind {
 
 define i8 @add(i8 %a, i8 %b) nounwind {
 ; CHECK: add:
-; CHECK: add.b	r14, r15
+; CHECK: add.b	r12, r15
 	%1 = add i8 %a, %b
 	ret i8 %1
 }

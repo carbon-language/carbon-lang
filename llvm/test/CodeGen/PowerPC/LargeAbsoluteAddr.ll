@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin | \
-; RUN:   grep {stw r4, 32751}
+; RUN:   grep {stw r3, 32751}
 ; RUN: llc < %s -march=ppc64 -mtriple=powerpc-apple-darwin | \
-; RUN:   grep {stw r4, 32751}
+; RUN:   grep {stw r3, 32751}
 ; RUN: llc < %s -march=ppc64 -mtriple=powerpc-apple-darwin | \
 ; RUN:   grep {std r3, 9024}
 

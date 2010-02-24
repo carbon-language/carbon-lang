@@ -218,8 +218,20 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
   // Check to see if the scheduler cares about latencies.
   bool UnitLatencies = ForceUnitLatencies();
 
-  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
-       E = DAG->allnodes_end(); NI != E; ++NI) {
+  // Add all nodes in depth first order.
+  SmallVector<SDNode*, 64> Worklist;
+  SmallPtrSet<SDNode*, 64> Visited;
+  Worklist.push_back(DAG->getRoot().getNode());
+  Visited.insert(DAG->getRoot().getNode());
+  
+  while (!Worklist.empty()) {
+    SDNode *NI = Worklist.pop_back_val();
+    
+    // Add all operands to the worklist unless they've already been added.
+    for (unsigned i = 0, e = NI->getNumOperands(); i != e; ++i)
+      if (Visited.insert(NI->getOperand(i).getNode()))
+        Worklist.push_back(NI->getOperand(i).getNode());
+  
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
       continue;
     
