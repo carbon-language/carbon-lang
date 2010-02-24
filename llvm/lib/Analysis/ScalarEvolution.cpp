@@ -3744,14 +3744,10 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
   // Handle common loops like: for (X = "string"; *X; ++X)
   if (LoadInst *LI = dyn_cast<LoadInst>(ExitCond->getOperand(0)))
     if (Constant *RHS = dyn_cast<Constant>(ExitCond->getOperand(1))) {
-      const SCEV *ItCnt =
+      BackedgeTakenInfo ItCnt =
         ComputeLoadConstantCompareBackedgeTakenCount(LI, RHS, L, Cond);
-      if (!isa<SCEVCouldNotCompute>(ItCnt)) {
-        unsigned BitWidth = getTypeSizeInBits(ItCnt->getType());
-        return BackedgeTakenInfo(ItCnt,
-                                 isa<SCEVConstant>(ItCnt) ? ItCnt :
-                                   getConstant(APInt::getMaxValue(BitWidth)-1));
-      }
+      if (ItCnt.hasAnyInfo())
+        return ItCnt;
     }
 
   const SCEV *LHS = getSCEV(ExitCond->getOperand(0));
@@ -3785,14 +3781,14 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
   switch (Cond) {
   case ICmpInst::ICMP_NE: {                     // while (X != Y)
     // Convert to: while (X-Y != 0)
-    const SCEV *TC = HowFarToZero(getMinusSCEV(LHS, RHS), L);
-    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    BackedgeTakenInfo BTI = HowFarToZero(getMinusSCEV(LHS, RHS), L);
+    if (BTI.hasAnyInfo()) return BTI;
     break;
   }
   case ICmpInst::ICMP_EQ: {                     // while (X == Y)
     // Convert to: while (X-Y == 0)
-    const SCEV *TC = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
-    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    BackedgeTakenInfo BTI = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
+    if (BTI.hasAnyInfo()) return BTI;
     break;
   }
   case ICmpInst::ICMP_SLT: {
@@ -3879,7 +3875,7 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
 /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition of
 /// 'icmp op load X, cst', try to see if we can compute the backedge
 /// execution count.
-const SCEV *
+ScalarEvolution::BackedgeTakenInfo
 ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
                                                 LoadInst *LI,
                                                 Constant *RHS,
@@ -3888,6 +3884,7 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
   if (LI->isVolatile()) return getCouldNotCompute();
 
   // Check to see if the loaded pointer is a getelementptr of a global.
+  // TODO: Use SCEV instead of manually grubbing with GEPs.
   GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(LI->getOperand(0));
   if (!GEP) return getCouldNotCompute();
 
@@ -4452,7 +4449,8 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 
 /// HowFarToZero - Return the number of times a backedge comparing the specified
 /// value to zero will execute.  If not computable, return CouldNotCompute.
-const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
+ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // If the value is a constant
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
     // If the value is already zero, the branch will execute zero times.
@@ -4532,7 +4530,8 @@ const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 /// HowFarToNonZero - Return the number of times a backedge checking the
 /// specified value for nonzero will execute.  If not computable, return
 /// CouldNotCompute
-const SCEV *ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
+ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   // Loops that look like: while (X == 0) are very strange indeed.  We don't
   // handle them yet except for the trivial case.  This could be expanded in the
   // future as needed.

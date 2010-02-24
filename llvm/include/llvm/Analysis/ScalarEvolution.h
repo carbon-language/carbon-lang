@@ -305,7 +305,7 @@ namespace llvm {
     /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
     /// of 'icmp op load X, cst', try to see if we can compute the
     /// backedge-taken count.
-    const SCEV *
+    BackedgeTakenInfo
       ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI,
                                                    Constant *RHS,
                                                    const Loop *L,
@@ -323,12 +323,12 @@ namespace llvm {
     /// HowFarToZero - Return the number of times a backedge comparing the
     /// specified value to zero will execute.  If not computable, return
     /// CouldNotCompute.
-    const SCEV *HowFarToZero(const SCEV *V, const Loop *L);
+    BackedgeTakenInfo HowFarToZero(const SCEV *V, const Loop *L);
 
     /// HowFarToNonZero - Return the number of times a backedge checking the
     /// specified value for nonzero will execute.  If not computable, return
     /// CouldNotCompute.
-    const SCEV *HowFarToNonZero(const SCEV *V, const Loop *L);
+    BackedgeTakenInfo HowFarToNonZero(const SCEV *V, const Loop *L);
 
     /// HowManyLessThans - Return the number of times a backedge containing the
     /// specified less-than comparison will execute.  If not computable, return
