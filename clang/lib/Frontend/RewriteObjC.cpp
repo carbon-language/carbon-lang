@@ -2815,6 +2815,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     }
     returnType = OMD->getResultType()->isObjCQualifiedIdType()
                    ? Context->getObjCIdType() : OMD->getResultType();
+    if (isTopLevelBlockPointerType(returnType)) {
+      const BlockPointerType *BPT = returnType->getAs<BlockPointerType>();
+      returnType = Context->getPointerType(BPT->getPointeeType());
+    }
   } else {
     returnType = Context->getObjCIdType();
   }

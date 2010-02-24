@@ -3,6 +3,7 @@
 // radar 7638400
 
 typedef void * id;
+void *sel_registerName(const char *);
 
 @interface X
 @end
@@ -33,3 +34,27 @@ void *_Block_copy(const void *aBlock);
 void x(void (^block)(void)) {
         block = ((__typeof(block))_Block_copy((const void *)(block)));
 }
+
+// radar 7682149
+@interface Y {
+@private
+    id _private;
+}
+- (void (^)(void))f;
+@end
+
+typedef void (^void_block_t)(void);
+
+@interface YY {
+    void_block_t __completion;
+}
+@property (copy) void_block_t f;
+@end
+
+@implementation Y
+- (void (^)(void))f {
+    return [_private f];
+}
+
+@end
+
