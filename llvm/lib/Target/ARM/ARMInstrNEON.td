@@ -2536,6 +2536,14 @@ def  VCNTq    : N2VQInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
                         IIC_VCNTiQ, "vcnt", "8",
                         v16i8, v16i8, int_arm_neon_vcnt>;
 
+// Vector Swap -- for disassembly only.
+def  VSWPd    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 0, 0,
+                     (outs DPR:$dst), (ins DPR:$src), NoItinerary,
+                     "vswp", "$dst, $src", "", []>;
+def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
+                     (outs QPR:$dst), (ins QPR:$src), NoItinerary,
+                     "vswp", "$dst, $src", "", []>;
+
 // Vector Move Operations.
 
 //   VMOV     : Vector Move (Register)
