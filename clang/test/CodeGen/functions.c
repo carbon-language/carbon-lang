@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -o - -verify | FileCheck %s
 
 int g();
 
@@ -19,25 +19,25 @@ void test3(T f) {
 int a(int);
 int a() {return 1;}
 
-// RUN: grep 'define void @f0()' %t
 void f0() {}
+// CHECK: define void @f0()
 
 void f1();
-// RUN: grep 'call void @f1()' %t
 void f2(void) {
+// CHECK: call void @f1()
   f1(1, 2, 3);
 }
-// RUN: grep 'define void @f1()' %t
+// CHECK: define void @f1()
 void f1() {}
 
-// RUN: grep 'define .* @f3' %t | not grep -F '...'
+// CHECK: define {{.*}} @f3()
 struct foo { int X, Y, Z; } f3() {
   while (1) {}
 }
 
 // PR4423 - This shouldn't crash in codegen
 void f4() {}
-void f5() { f4(42); }
+void f5() { f4(42); } //expected-warning {{too many arguments}}
 
 // Qualifiers on parameter types shouldn't make a difference.
 static void f6(const float f, const float g) {
