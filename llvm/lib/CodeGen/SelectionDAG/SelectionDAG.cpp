@@ -6343,36 +6343,36 @@ bool ShuffleVectorSDNode::isSplatMask(const int *Mask, EVT VT) {
   return true;
 }
 
+#ifdef XDEBUG
 static void checkForCyclesHelper(const SDNode *N,
-                                 std::set<const SDNode *> &visited,
-                                 std::set<const SDNode *> &checked) {
-  if (checked.find(N) != checked.end())
+                                 SmallPtrSet<const SDNode*, 32> &Visited,
+                                 SmallPtrSet<const SDNode*, 32> &Checked) {
+  // If this node has already been checked, don't check it again.
+  if (Checked.count(N))
     return;
-
-  if (visited.find(N) != visited.end()) {
+  
+  // If a node has already been visited on this depth-first walk, reject it as
+  // a cycle.
+  if (!Visited.insert(N)) {
     dbgs() << "Offending node:\n";
     N->dumprFull();
-    assert(0 && "Detected cycle in SelectionDAG");
+    errs() << "Detected cycle in SelectionDAG\n";
+    abort();
   }
-
-  std::set<const SDNode*>::iterator i;
-  bool inserted;
-
-  tie(i, inserted) = visited.insert(N);
-  assert(inserted && "Missed cycle");
-
-  for(unsigned i = 0; i < N->getNumOperands(); ++i) {
-    checkForCyclesHelper(N->getOperand(i).getNode(), visited, checked);
-  }
-  visited.erase(i);
-  checked.insert(N);
+  
+  for(unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    checkForCyclesHelper(N->getOperand(i).getNode(), Visited, Checked);
+  
+  Checked.insert(N);
+  Visited.erase(N);
 }
+#endif
 
 void llvm::checkForCycles(const llvm::SDNode *N) {
 #ifdef XDEBUG
   assert(N && "Checking nonexistant SDNode");
-  std::set<const SDNode *> visited;
-  std::set<const SDNode *> checked;
+  SmallPtrSet<const SDNode*, 32> visited;
+  SmallPtrSet<const SDNode*, 32> checked;
   checkForCyclesHelper(N, visited, checked);
 #endif
 }
