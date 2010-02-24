@@ -337,6 +337,15 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
     OS << '\n';
     return 6+EN->getNumVTs()+NumOperandBytes;
   }
+  case MatcherNode::MarkFlagResults: {
+    const MarkFlagResultsMatcherNode *CFR = cast<MarkFlagResultsMatcherNode>(N);
+    OS << "OPC_MarkFlagResults, " << CFR->getNumNodes() << ", ";
+    unsigned NumOperandBytes = 0;
+    for (unsigned i = 0, e = CFR->getNumNodes(); i != e; ++i)
+      NumOperandBytes += EmitVBRValue(CFR->getNode(i), OS);
+    OS << '\n';
+    return 2+NumOperandBytes;
+  }
   case MatcherNode::CompleteMatch: {
     const CompleteMatchMatcherNode *CM = cast<CompleteMatchMatcherNode>(N);
     OS << "OPC_CompleteMatch, " << CM->getNumResults() << ", ";

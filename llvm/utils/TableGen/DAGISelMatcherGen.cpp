@@ -70,6 +70,10 @@ namespace {
     /// MatchedChainNodes - This maintains the position in the recorded nodes
     /// array of all of the recorded input nodes that have chains.
     SmallVector<unsigned, 2> MatchedChainNodes;
+
+    /// MatchedFlagResultNodes - This maintains the position in the recorded
+    /// nodes array of all of the recorded input nodes that have flag results.
+    SmallVector<unsigned, 2> MatchedFlagResultNodes;
     
     /// PhysRegInputs - List list has an entry for each explicitly specified
     /// physreg input to the pattern.  The first elt is the Register node, the
@@ -287,6 +291,9 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
         AddMatcherNode(new CheckChainCompatibleMatcherNode(PrevOp));
       }
     }
+    
+    // TODO: Complex patterns can't have output flags, if they did, we'd want
+    // to record them.
     return;
   }
   
@@ -415,6 +422,18 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
       if (NeedCheck)
         AddMatcherNode(new CheckFoldableChainNodeMatcherNode());
     }
+  }
+
+  // If this node has an output flag and isn't the root, remember it.
+  if (N->NodeHasProperty(SDNPOutFlag, CGP) && 
+      N != Pattern.getSrcPattern()) {
+    // TODO: This redundantly records nodes with both flags and chains.
+    
+    // Record the node and remember it in our chained nodes list.
+    AddMatcherNode(new RecordMatcherNode("'" + N->getOperator()->getName() +
+                                         "' flag output node"));
+    // Remember all of the nodes with output flags our pattern will match.
+    MatchedFlagResultNodes.push_back(NextRecordedOperandNo++);
   }
   
   // If this node is known to have an input flag or if it *might* have an input
@@ -598,16 +617,16 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   bool isRoot = N == Pattern.getDstPattern();
 
-  // NodeHasOutFlag - True if this node has a flag.
-  bool NodeHasInFlag = false, NodeHasOutFlag = false;
+  // TreeHasOutFlag - True if this tree has a flag.
+  bool TreeHasInFlag = false, TreeHasOutFlag = false;
   if (isRoot) {
     const TreePatternNode *SrcPat = Pattern.getSrcPattern();
-    NodeHasInFlag = SrcPat->TreeHasProperty(SDNPOptInFlag, CGP) ||
+    TreeHasInFlag = SrcPat->TreeHasProperty(SDNPOptInFlag, CGP) ||
                     SrcPat->TreeHasProperty(SDNPInFlag, CGP);
   
     // FIXME2: this is checking the entire pattern, not just the node in
     // question, doing this just for the root seems like a total hack.
-    NodeHasOutFlag = SrcPat->TreeHasProperty(SDNPOutFlag, CGP);
+    TreeHasOutFlag = SrcPat->TreeHasProperty(SDNPOutFlag, CGP);
   }
 
   // NumResults - This is the number of results produced by the instruction in
@@ -668,7 +687,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
                                                   PhysRegInputs[i].first));
     // Even if the node has no other flag inputs, the resultant node must be
     // flagged to the CopyFromReg nodes we just generated.
-    NodeHasInFlag = true;
+    TreeHasInFlag = true;
   }
   
   // Result order: node results, chain, flags
@@ -694,7 +713,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   }
   if (NodeHasChain)
     ResultVTs.push_back(MVT::Other);
-  if (NodeHasOutFlag)
+  if (TreeHasOutFlag)
     ResultVTs.push_back(MVT::Flag);
 
   // FIXME2: Instead of using the isVariadic flag on the instruction, we should
@@ -727,7 +746,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   AddMatcherNode(new EmitNodeMatcherNode(II.Namespace+"::"+II.TheDef->getName(),
                                          ResultVTs.data(), ResultVTs.size(),
                                          InstOps.data(), InstOps.size(),
-                                         NodeHasChain, NodeHasInFlag,
+                                         NodeHasChain, TreeHasInFlag,
                                          NodeHasMemRefs,NumFixedArityOperands));
   
   // The non-chain and non-flag results of the newly emitted node get recorded.
@@ -813,6 +832,13 @@ void MatcherGen::EmitResultCode() {
   assert(Ops.size() >= NumSrcResults && "Didn't provide enough results");
   Ops.resize(NumSrcResults);
 #endif
+
+  // If the matched pattern covers nodes which define a flag result, emit a node
+  // that tells the matcher about them so that it can update their results.
+  if (!MatchedFlagResultNodes.empty())
+    AddMatcherNode(new MarkFlagResultsMatcherNode(MatchedFlagResultNodes.data(),
+                                                MatchedFlagResultNodes.size()));
+  
   
   // We know that the resulting pattern has exactly one result/
   // FIXME2: why?  what about something like (set a,b,c, (complexpat))

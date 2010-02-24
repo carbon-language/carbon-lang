@@ -185,6 +185,11 @@ void EmitNodeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   printNext(OS, indent);
 }
 
+void MarkFlagResultsMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "MarkFlagResults <todo: args>\n";
+  printNext(OS, indent);
+}
+
 void CompleteMatchMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CompleteMatch <todo args>\n";
   OS.indent(indent) << "Src = " << *Pattern.getSrcPattern() << "\n";

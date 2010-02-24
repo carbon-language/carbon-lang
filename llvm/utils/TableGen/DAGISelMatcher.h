@@ -71,6 +71,7 @@ public:
     EmitCopyToReg,        // Emit a copytoreg into a physreg.
     EmitNode,             // Create a DAG node
     EmitNodeXForm,        // Run a SDNodeXForm
+    MarkFlagResults,      // Indicate which interior nodes have flag results.
     CompleteMatch         // Finish a match and update the results.
   };
   const KindTy Kind;
@@ -623,6 +624,29 @@ public:
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
+/// MarkFlagResultsMatcherNode - This node indicates which non-root nodes in the
+/// pattern produce flags.  This allows CompleteMatchMatcherNode to update them
+/// with the output flag of the resultant code.
+class MarkFlagResultsMatcherNode : public MatcherNode {
+  SmallVector<unsigned, 3> FlagResultNodes;
+public:
+  MarkFlagResultsMatcherNode(const unsigned *nodes, unsigned NumNodes)
+  : MatcherNode(MarkFlagResults), FlagResultNodes(nodes, nodes+NumNodes) {}
+  
+  unsigned getNumNodes() const { return FlagResultNodes.size(); }
+  
+  unsigned getNode(unsigned i) const {
+    assert(i < FlagResultNodes.size());
+    return FlagResultNodes[i];
+  }  
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == MarkFlagResults;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+
 /// CompleteMatchMatcherNode - Complete a match by replacing the results of the
 /// pattern with the newly generated nodes.  This also prints a comment
 /// indicating the source and dest patterns.
