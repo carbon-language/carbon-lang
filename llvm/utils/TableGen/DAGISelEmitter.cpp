@@ -1794,7 +1794,6 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDNode *N) {\n"
-     << "  return SelectCode2(N);\n"
      << "  MVT::SimpleValueType NVT = N->getValueType(0).getSimpleVT().SimpleTy;\n"
      << "  switch (N->getOpcode()) {\n"
      << "  default:\n"
