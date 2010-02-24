@@ -204,3 +204,18 @@ void test_asl(aslclient asl) {
 // <rdar://problem/7595366>
 typedef enum { A } int_t;
 void f0(int_t x) { printf("%d\n", x); }
+
+// Unicode test cases.  These are possibly specific to Mac OS X.  If so, they should
+// eventually be moved into a separate test.
+typedef __WCHAR_TYPE__ wchar_t;
+
+void test_unicode_conversions(wchar_t *s) {
+  printf("%S", s); // no-warning
+  printf("%s", s); // expected-warning{{conversion specifies type 'char *' but the argument has type 'wchar_t *'}}
+  printf("%C", s[0]); // no-warning
+  printf("%c", s[0]);
+  printf("%C", 10);
+  // FIXME: we report the expected type as 'int*' instead of 'wchar_t*'
+  printf("%S", "hello"); // expected-warning{{but the argument has type 'char *'}}
+}
+

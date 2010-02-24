@@ -75,11 +75,14 @@ public:
    VoidPtrArg,    // 'p'
    OutIntPtrArg,  // 'n'
    PercentArg,    // '%'
-    // Objective-C specific specifiers.
+   // MacOS X unicode extensions.
+   CArg, // 'C'
+   UnicodeStrArg, // 'S'
+   // Objective-C specific specifiers.
    ObjCObjArg,    // '@'
-    // GlibC specific specifiers.
+   // GlibC specific specifiers.
    PrintErrno,    // 'm'
-    // Specifier ranges.
+   // Specifier ranges.
    IntArgBeg = dArg,
    IntArgEnd = iArg,
    UIntArgBeg = oArg,

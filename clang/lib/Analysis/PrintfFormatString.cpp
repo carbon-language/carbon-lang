@@ -214,25 +214,28 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
     default:
       break;
     // C99: 7.19.6.1 (section 8).
+    case '%': k = ConversionSpecifier::PercentArg;   break;
+    case 'A': k = ConversionSpecifier::AArg; break;
+    case 'E': k = ConversionSpecifier::EArg; break;
+    case 'F': k = ConversionSpecifier::FArg; break;
+    case 'G': k = ConversionSpecifier::GArg; break;
+    case 'X': k = ConversionSpecifier::XArg; break;
+    case 'a': k = ConversionSpecifier::aArg; break;
+    case 'c': k = ConversionSpecifier::IntAsCharArg; break;
     case 'd': k = ConversionSpecifier::dArg; break;
+    case 'e': k = ConversionSpecifier::eArg; break;
+    case 'f': k = ConversionSpecifier::fArg; break;
+    case 'g': k = ConversionSpecifier::gArg; break;
     case 'i': k = ConversionSpecifier::iArg; break;
+    case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
     case 'o': k = ConversionSpecifier::oArg; break;
+    case 'p': k = ConversionSpecifier::VoidPtrArg;   break;
+    case 's': k = ConversionSpecifier::CStrArg;      break;
     case 'u': k = ConversionSpecifier::uArg; break;
     case 'x': k = ConversionSpecifier::xArg; break;
-    case 'X': k = ConversionSpecifier::XArg; break;
-    case 'f': k = ConversionSpecifier::fArg; break;
-    case 'F': k = ConversionSpecifier::FArg; break;
-    case 'e': k = ConversionSpecifier::eArg; break;
-    case 'E': k = ConversionSpecifier::EArg; break;
-    case 'g': k = ConversionSpecifier::gArg; break;
-    case 'G': k = ConversionSpecifier::GArg; break;
-    case 'a': k = ConversionSpecifier::aArg; break;
-    case 'A': k = ConversionSpecifier::AArg; break;
-    case 'c': k = ConversionSpecifier::IntAsCharArg; break;
-    case 's': k = ConversionSpecifier::CStrArg;      break;
-    case 'p': k = ConversionSpecifier::VoidPtrArg;   break;
-    case 'n': k = ConversionSpecifier::OutIntPtrArg; break;
-    case '%': k = ConversionSpecifier::PercentArg;   break;
+    // Mac OS X (unicode) specific
+    case 'C': k = ConversionSpecifier::CArg; break;
+    case 'S': k = ConversionSpecifier::UnicodeStrArg; break;
     // Objective-C.
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
     // Glibc specific.
@@ -345,8 +348,10 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
     if (!PT)
       return false;
 
-    QualType pointeeTy = PT->getPointeeType();
-    return pointeeTy == C.WCharTy;
+    QualType pointeeTy =
+      C.getCanonicalType(PT->getPointeeType()).getUnqualifiedType();
+
+    return pointeeTy == C.getWCharType();
   }
 
   return false;
@@ -359,7 +364,7 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
   if (K == CStrTy)
     return C.getPointerType(C.CharTy);
   if (K == WCStrTy)
-    return C.getPointerType(C.WCharTy);
+    return C.getPointerType(C.getWCharType());
   if (K == ObjCPointerTy)
     return C.ObjCBuiltinIdTy;
 
@@ -425,11 +430,19 @@ ArgTypeResult FormatSpecifier::getArgType(ASTContext &Ctx) const {
       return Ctx.LongDoubleTy;
     return Ctx.DoubleTy;
   }
-
-  if (CS.getKind() == ConversionSpecifier::CStrArg)
-    return ArgTypeResult(LM == AsWideChar ? ArgTypeResult::WCStrTy
-                                          : ArgTypeResult::CStrTy);
-
+  
+  switch (CS.getKind()) {
+    case ConversionSpecifier::CStrArg:
+      return ArgTypeResult(LM == AsWideChar ? ArgTypeResult::WCStrTy                                            : ArgTypeResult::CStrTy);
+    case ConversionSpecifier::UnicodeStrArg:
+      // FIXME: This appears to be Mac OS X specific.
+      return ArgTypeResult::WCStrTy;
+    case ConversionSpecifier::CArg:
+      return Ctx.WCharTy;    
+    default:
+      break;
+  }
+  
   // FIXME: Handle other cases.
   return ArgTypeResult();
 }
