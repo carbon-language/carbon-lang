@@ -40,3 +40,7 @@ Handler H = foo;
 void ctest3();
 void __attribute__((cdecl)) ctest3() {}
 
+// PR6408
+typedef __attribute__((stdcall)) void (*PROC)();
+PROC __attribute__((cdecl)) ctest4(const char *x) {}
+
