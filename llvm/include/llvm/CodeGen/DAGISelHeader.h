@@ -221,6 +221,8 @@ GetVBR(unsigned Val, const unsigned char *MatcherTable, unsigned &Idx) {
 enum BuiltinOpcodes {
   OPC_Push, OPC_Push2,
   OPC_RecordNode,
+  OPC_RecordChild0, OPC_RecordChild1, OPC_RecordChild2, OPC_RecordChild3, 
+  OPC_RecordChild4, OPC_RecordChild5, OPC_RecordChild6, OPC_RecordChild7,
   OPC_RecordMemRef,
   OPC_CaptureFlagInput,
   OPC_MoveChild,
@@ -365,7 +367,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   unsigned MatcherIndex = 0;
   while (1) {
     assert(MatcherIndex < TableSize && "Invalid index");
-    switch ((BuiltinOpcodes)MatcherTable[MatcherIndex++]) {
+    BuiltinOpcodes Opcode = (BuiltinOpcodes)MatcherTable[MatcherIndex++];
+    switch (Opcode) {
     case OPC_Push: {
       unsigned NumToSkip = MatcherTable[MatcherIndex++];
       MatchScope NewEntry;
@@ -398,6 +401,18 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // Remember this node, it may end up being an operand in the pattern.
       RecordedNodes.push_back(N);
       continue;
+        
+    case OPC_RecordChild0: case OPC_RecordChild1:
+    case OPC_RecordChild2: case OPC_RecordChild3:
+    case OPC_RecordChild4: case OPC_RecordChild5:
+    case OPC_RecordChild6: case OPC_RecordChild7: {
+      unsigned ChildNo = Opcode-OPC_RecordChild0;
+      if (ChildNo >= N.getNumOperands())
+        break;  // Match fails if out of range child #.
+
+      RecordedNodes.push_back(N->getOperand(ChildNo));
+      continue;
+    }
     case OPC_RecordMemRef:
       MatchedMemRefs.push_back(cast<MemSDNode>(N)->getMemOperand());
       continue;
@@ -410,10 +425,10 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
         
     case OPC_MoveChild: {
-      unsigned Child = MatcherTable[MatcherIndex++];
-      if (Child >= N.getNumOperands())
+      unsigned ChildNo = MatcherTable[MatcherIndex++];
+      if (ChildNo >= N.getNumOperands())
         break;  // Match fails if out of range child #.
-      N = N.getOperand(Child);
+      N = N.getOperand(ChildNo);
       NodeStack.push_back(N);
       continue;
     }

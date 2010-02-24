@@ -26,7 +26,7 @@ namespace llvm {
 
 MatcherNode *ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                      const CodeGenDAGPatterns &CGP);
-void OptimizeMatcher(const MatcherNode *Matcher);
+MatcherNode *OptimizeMatcher(MatcherNode *Matcher);
 void EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &OS);
 
   
@@ -41,6 +41,7 @@ public:
     // Matcher state manipulation.
     Push,                 // Push a checking scope.
     RecordNode,           // Record the current node.
+    RecordChild,          // Record a child of the current node.
     RecordMemRef,         // Record the memref in the current node.
     CaptureFlagInput,     // If the current node has an input flag, save it.
     MoveChild,            // Move current node to specified child.
@@ -86,6 +87,9 @@ public:
   MatcherNode *getNext() { return Next.get(); }
   const MatcherNode *getNext() const { return Next.get(); }
   void setNext(MatcherNode *C) { Next.reset(C); }
+  MatcherNode *takeNext() { return Next.take(); }
+
+  OwningPtr<MatcherNode> &getNextPtr() { return Next; }
   
   static inline bool classof(const MatcherNode *) { return true; }
   
@@ -109,6 +113,7 @@ public:
   MatcherNode *getFailure() { return Failure.get(); }
   const MatcherNode *getFailure() const { return Failure.get(); }
   void setFailure(MatcherNode *N) { Failure.reset(N); }
+  OwningPtr<MatcherNode> &getFailurePtr() { return Failure; }
 
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == Push;
@@ -130,6 +135,29 @@ public:
   
   static inline bool classof(const MatcherNode *N) {
     return N->getKind() == RecordNode;
+  }
+  
+  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+};
+  
+/// RecordChildMatcherNode - Save a numbered child of the current node, or fail
+/// the match if it doesn't exist.  This is logically equivalent to:
+///    MoveChild N + RecordNode + MoveParent.
+class RecordChildMatcherNode : public MatcherNode {
+  unsigned ChildNo;
+  
+  /// WhatFor - This is a string indicating why we're recording this.  This
+  /// should only be used for comment generation not anything semantic.
+  std::string WhatFor;
+public:
+  RecordChildMatcherNode(unsigned childno, const std::string &whatfor)
+  : MatcherNode(RecordChild), ChildNo(childno), WhatFor(whatfor) {}
+  
+  unsigned getChildNo() const { return ChildNo; }
+  const std::string &getWhatFor() const { return WhatFor; }
+  
+  static inline bool classof(const MatcherNode *N) {
+    return N->getKind() == RecordChild;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;

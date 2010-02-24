@@ -35,6 +35,11 @@ void RecordMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   printNext(OS, indent);
 }
 
+void RecordChildMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "RecordChild: " << ChildNo << '\n';
+  printNext(OS, indent);
+}
+
 void RecordMemRefMatcherNode::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "RecordMemRef\n";
   printNext(OS, indent);

@@ -159,6 +159,13 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
     OS.PadToColumn(CommentIndent) << "// "
        << cast<RecordMatcherNode>(N)->getWhatFor() << '\n';
     return 1;
+
+  case MatcherNode::RecordChild:
+    OS << "OPC_RecordChild" << cast<RecordChildMatcherNode>(N)->getChildNo()
+       << ',';
+    OS.PadToColumn(CommentIndent) << "// "
+      << cast<RecordChildMatcherNode>(N)->getWhatFor() << '\n';
+    return 1;
       
   case MatcherNode::RecordMemRef:
     OS << "OPC_RecordMemRef,\n";

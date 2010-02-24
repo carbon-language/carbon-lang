@@ -1983,7 +1983,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
       Matcher = new PushMatcherNode(N, Matcher);
   }
 
-  OptimizeMatcher(Matcher);
+  Matcher = OptimizeMatcher(Matcher);
   //Matcher->dump();
   EmitMatcherTable(Matcher, OS);
   delete Matcher;
