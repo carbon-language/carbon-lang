@@ -1092,7 +1092,7 @@ hasReservedCallFrame(MachineFunction &MF) const {
 bool ARMBaseRegisterInfo::
 canSimplifyCallFramePseudos(MachineFunction &MF) const {
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  return hasReservedCallFrame(MF) || (AFI->isThumb1OnlyFunction() && hasFP(MF));
+  return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 static void

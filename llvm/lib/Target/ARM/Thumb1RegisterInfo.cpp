@@ -450,9 +450,9 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset -= AFI->getGPRCalleeSavedArea1Offset();
   else if (AFI->isGPRCalleeSavedArea2Frame(FrameIndex))
     Offset -= AFI->getGPRCalleeSavedArea2Offset();
-  else if (hasFP(MF)) {
-    assert(SPAdj == 0 && "Unexpected");
-    // There is alloca()'s in this function, must reference off the frame
+  else if (MF.getFrameInfo()->hasVarSizedObjects()) {
+    assert(SPAdj == 0 && hasFP(MF) && "Unexpected");
+    // There are alloca()'s in this function, must reference off the frame
     // pointer instead.
     FrameReg = getFrameRegister(MF);
     Offset -= AFI->getFramePtrSpillOffset();
