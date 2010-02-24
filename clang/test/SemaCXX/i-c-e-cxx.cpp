@@ -37,3 +37,8 @@ namespace pr6206 {
     return str[0];
   }
 }
+
+// PR6373:  default arguments don't count.
+void pr6373(const unsigned x = 0) {
+  unsigned max = 80 / x;
+}

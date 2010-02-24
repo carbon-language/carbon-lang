@@ -1682,11 +1682,18 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       return NoDiag();
     if (Ctx.getLangOptions().CPlusPlus &&
         E->getType().getCVRQualifiers() == Qualifiers::Const) {
+      const NamedDecl *D = cast<DeclRefExpr>(E)->getDecl();
+
+      // Parameter variables are never constants.  Without this check,
+      // getAnyInitializer() can find a default argument, which leads
+      // to chaos.
+      if (isa<ParmVarDecl>(D))
+        return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
+
       // C++ 7.1.5.1p2
       //   A variable of non-volatile const-qualified integral or enumeration
       //   type initialized by an ICE can be used in ICEs.
-      if (const VarDecl *Dcl =
-              dyn_cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl())) {
+      if (const VarDecl *Dcl = dyn_cast<VarDecl>(D)) {
         Qualifiers Quals = Ctx.getCanonicalType(Dcl->getType()).getQualifiers();
         if (Quals.hasVolatile() || !Quals.hasConst())
           return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
