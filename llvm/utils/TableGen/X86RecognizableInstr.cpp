@@ -282,6 +282,10 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
       IsCodeGenOnly)
     return FILTER_STRONG;
   
+  if (Form == X86Local::MRMInitReg)
+    return FILTER_STRONG;
+
+  
   // Filter out instructions with a LOCK prefix;
   //   prefer forms that do not have the prefix
   if (HasLockPrefix)
@@ -353,9 +357,6 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
   if (AsmString.find("subreg") != AsmString.npos)
     return FILTER_STRONG;
 
-  assert(Form != X86Local::MRMInitReg &&
-         "FORMAT_MRMINITREG instruction not skipped");
-  
   if (HasFROperands && Name.find("MOV") != Name.npos &&
      ((Name.find("2") != Name.npos && Name.find("32") == Name.npos) || 
       (Name.find("to") != Name.npos)))
