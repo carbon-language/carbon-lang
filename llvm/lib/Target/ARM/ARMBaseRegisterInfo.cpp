@@ -1091,7 +1091,6 @@ hasReservedCallFrame(MachineFunction &MF) const {
 // even when FP is available in Thumb2 mode.
 bool ARMBaseRegisterInfo::
 canSimplifyCallFramePseudos(MachineFunction &MF) const {
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
