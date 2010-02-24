@@ -513,7 +513,7 @@ cannotEliminateFrame(const MachineFunction &MF) const {
 }
 
 /// estimateStackSize - Estimate and return the size of the frame.
-static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
+static unsigned estimateStackSize(MachineFunction &MF) {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   int Offset = 0;
   for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
@@ -671,8 +671,16 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     }
   }
 
+  // If any of the stack slot references may be out of range of an immediate
+  // offset, make sure a register (or a spill slot) is available for the
+  // register scavenger. Note that if we're indexing off the frame pointer, the
+  // effective stack size is 4 bytes larger since the FP points to the stack
+  // slot of the previous FP.
+  bool BigStack = RS &&
+    estimateStackSize(MF) + (hasFP(MF) ? 4 : 0) >= estimateRSStackSizeLimit(MF);
+
   bool ExtraCSSpill = false;
-  if (!CanEliminateFrame || cannotEliminateFrame(MF)) {
+  if (BigStack || !CanEliminateFrame || cannotEliminateFrame(MF)) {
     AFI->setHasStackFrame(true);
 
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
@@ -727,51 +735,43 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // callee-saved register or reserve a special spill slot to facilitate
     // register scavenging. Thumb1 needs a spill slot for stack pointer
     // adjustments also, even when the frame itself is small.
-    if (RS && !ExtraCSSpill) {
-      MachineFrameInfo  *MFI = MF.getFrameInfo();
-      // If any of the stack slot references may be out of range of an
-      // immediate offset, make sure a register (or a spill slot) is
-      // available for the register scavenger. Note that if we're indexing
-      // off the frame pointer, the effective stack size is 4 bytes larger
-      // since the FP points to the stack slot of the previous FP.
-      if (estimateStackSize(MF, MFI) + (hasFP(MF) ? 4 : 0)
-          >= estimateRSStackSizeLimit(MF)) {
-        // If any non-reserved CS register isn't spilled, just spill one or two
-        // extra. That should take care of it!
-        unsigned NumExtras = TargetAlign / 4;
-        SmallVector<unsigned, 2> Extras;
-        while (NumExtras && !UnspilledCS1GPRs.empty()) {
-          unsigned Reg = UnspilledCS1GPRs.back();
-          UnspilledCS1GPRs.pop_back();
+    if (BigStack && !ExtraCSSpill) {
+      // If any non-reserved CS register isn't spilled, just spill one or two
+      // extra. That should take care of it!
+      unsigned NumExtras = TargetAlign / 4;
+      SmallVector<unsigned, 2> Extras;
+      while (NumExtras && !UnspilledCS1GPRs.empty()) {
+        unsigned Reg = UnspilledCS1GPRs.back();
+        UnspilledCS1GPRs.pop_back();
+        if (!isReservedReg(MF, Reg)) {
+          Extras.push_back(Reg);
+          NumExtras--;
+        }
+      }
+      // For non-Thumb1 functions, also check for hi-reg CS registers
+      if (!AFI->isThumb1OnlyFunction()) {
+        while (NumExtras && !UnspilledCS2GPRs.empty()) {
+          unsigned Reg = UnspilledCS2GPRs.back();
+          UnspilledCS2GPRs.pop_back();
           if (!isReservedReg(MF, Reg)) {
             Extras.push_back(Reg);
             NumExtras--;
           }
         }
-        // For non-Thumb1 functions, also check for hi-reg CS registers
-        if (!AFI->isThumb1OnlyFunction()) {
-          while (NumExtras && !UnspilledCS2GPRs.empty()) {
-            unsigned Reg = UnspilledCS2GPRs.back();
-            UnspilledCS2GPRs.pop_back();
-            if (!isReservedReg(MF, Reg)) {
-              Extras.push_back(Reg);
-              NumExtras--;
-            }
-          }
+      }
+      if (Extras.size() && NumExtras == 0) {
+        for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
+          MF.getRegInfo().setPhysRegUsed(Extras[i]);
+          AFI->setCSRegisterIsSpilled(Extras[i]);
         }
-        if (Extras.size() && NumExtras == 0) {
-          for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
-            MF.getRegInfo().setPhysRegUsed(Extras[i]);
-            AFI->setCSRegisterIsSpilled(Extras[i]);
-          }
-        } else if (!AFI->isThumb1OnlyFunction()) {
-          // note: Thumb1 functions spill to R12, not the stack.
-          // Reserve a slot closest to SP or frame pointer.
-          const TargetRegisterClass *RC = ARM::GPRRegisterClass;
-          RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
-                                                             RC->getAlignment(),
-                                                             false));
-        }
+      } else if (!AFI->isThumb1OnlyFunction()) {
+        // note: Thumb1 functions spill to R12, not the stack.  Reserve a slot
+        // closest to SP or frame pointer.
+        const TargetRegisterClass *RC = ARM::GPRRegisterClass;
+        MachineFrameInfo *MFI = MF.getFrameInfo();
+        RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
+                                                           RC->getAlignment(),
+                                                           false));
       }
     }
   }
