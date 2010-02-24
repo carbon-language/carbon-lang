@@ -503,7 +503,7 @@ void llvm::EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &O) {
   formatted_raw_ostream OS(O);
   
   OS << "// The main instruction selector code.\n";
-  OS << "SDNode *SelectCode2(SDNode *N) {\n";
+  OS << "SDNode *SelectCode(SDNode *N) {\n";
 
   MatcherTableEmitter MatcherEmitter;
 

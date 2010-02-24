@@ -1794,9 +1794,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
   
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDNode *N) {\n"
-#ifdef ENABLE_NEW_ISEL
      << "  return SelectCode2(N);\n"
-#endif
      << "  MVT::SimpleValueType NVT = N->getValueType(0).getSimpleVT().SimpleTy;\n"
      << "  switch (N->getOpcode()) {\n"
      << "  default:\n"
@@ -1947,11 +1945,6 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     DEBUG(errs() << "\n");
   }
   
-  // At this point, we have full information about the 'Patterns' we need to
-  // parse, both implicitly from instructions as well as from explicit pattern
-  // definitions.  Emit the resultant instruction selector.
-  EmitInstructionSelector(OS);  
-  
 #ifdef ENABLE_NEW_ISEL
   MatcherNode *Matcher = 0;
 
@@ -1987,5 +1980,11 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   //Matcher->dump();
   EmitMatcherTable(Matcher, OS);
   delete Matcher;
+  
+#else
+  // At this point, we have full information about the 'Patterns' we need to
+  // parse, both implicitly from instructions as well as from explicit pattern
+  // definitions.  Emit the resultant instruction selector.
+  EmitInstructionSelector(OS);  
 #endif
 }
