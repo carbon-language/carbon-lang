@@ -862,14 +862,14 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, DebugLoc DL, EVT VT) {
 /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
 ///
 SDValue SelectionDAG::getNOT(DebugLoc DL, SDValue Val, EVT VT) {
-  EVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
+  EVT EltVT = VT.getScalarType();
   SDValue NegOne =
     getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()), VT);
   return getNode(ISD::XOR, DL, VT, Val, NegOne);
 }
 
 SDValue SelectionDAG::getConstant(uint64_t Val, EVT VT, bool isT) {
-  EVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
+  EVT EltVT = VT.getScalarType();
   assert((EltVT.getSizeInBits() >= 64 ||
          (uint64_t)((int64_t)Val >> EltVT.getSizeInBits()) + 1 < 2) &&
          "getConstant with a uint64_t value that doesn't fit in the type!");
@@ -883,7 +883,7 @@ SDValue SelectionDAG::getConstant(const APInt &Val, EVT VT, bool isT) {
 SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT) {
   assert(VT.isInteger() && "Cannot create FP integer constant!");
 
-  EVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
+  EVT EltVT = VT.getScalarType();
   assert(Val.getBitWidth() == EltVT.getSizeInBits() &&
          "APInt size does not match type size!");
 
@@ -926,8 +926,7 @@ SDValue SelectionDAG::getConstantFP(const APFloat& V, EVT VT, bool isTarget) {
 SDValue SelectionDAG::getConstantFP(const ConstantFP& V, EVT VT, bool isTarget){
   assert(VT.isFloatingPoint() && "Cannot create integer FP constant!");
 
-  EVT EltVT =
-    VT.isVector() ? VT.getVectorElementType() : VT;
+  EVT EltVT = VT.getScalarType();
 
   // Do the map lookup using the actual bit pattern for the floating point
   // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
@@ -961,8 +960,7 @@ SDValue SelectionDAG::getConstantFP(const ConstantFP& V, EVT VT, bool isTarget){
 }
 
 SDValue SelectionDAG::getConstantFP(double Val, EVT VT, bool isTarget) {
-  EVT EltVT =
-    VT.isVector() ? VT.getVectorElementType() : VT;
+  EVT EltVT = VT.getScalarType();
   if (EltVT==MVT::f32)
     return getConstantFP(APFloat((float)Val), VT, isTarget);
   else
@@ -3106,8 +3104,7 @@ SDValue SelectionDAG::getStackArgumentTokenFactor(SDValue Chain) {
 /// operand.
 static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
                               DebugLoc dl) {
-  unsigned NumBits = VT.isVector() ?
-    VT.getVectorElementType().getSizeInBits() : VT.getSizeInBits();
+  unsigned NumBits = VT.getScalarType().getSizeInBits();
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
     APInt Val = APInt(NumBits, C->getZExtValue() & 255);
     unsigned Shift = 8;
