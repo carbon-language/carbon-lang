@@ -97,10 +97,6 @@ private:
   /// ReturnAdjustments - Holds return adjustments for all the overriders that 
   /// need to perform return value adjustments.
   AdjustmentOffsetsMapTy ReturnAdjustments;
-  
-  /// ThisAdjustments - Holds 'this' adjustments for all the overriders that
-  /// need them.
-  AdjustmentOffsetsMapTy ThisAdjustments;
 
   typedef llvm::SmallVector<uint64_t, 1> OffsetVectorTy;
   
@@ -174,14 +170,6 @@ public:
     return ReturnAdjustments.lookup(std::make_pair(Base, MD));
   }
 
-  /// getThisAdjustmentOffset - Get the 'this' pointer adjustment offset for the
-  /// method decl in the given base subobject. Returns an empty base offset if
-  /// no adjustment is needed.
-  BaseOffset getThisAdjustmentOffset(BaseSubobject Base,
-                                     const CXXMethodDecl *MD) const {
-    return ThisAdjustments.lookup(std::make_pair(Base, MD));
-  }
-  
   /// dump - dump the final overriders.
   void dump() {
     assert(VisitedVirtualBases.empty() &&
@@ -450,17 +438,6 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
           // Store the return adjustment base offset.
           ReturnAdjustments[SubobjectAndMethod] = ReturnBaseOffset;
         }
-        
-        // Check if we need a 'this' adjustment base offset as well.
-        if (Offset != NewBase.getBaseOffset()) {
-          BaseOffset ThisBaseOffset =
-            ComputeThisAdjustmentBaseOffset(OverriddenSubobject,
-                                            NewBase);
-          assert(!ThisBaseOffset.isEmpty() && 
-                 "Should not get an empty 'this' adjustment!");
-          
-          ThisAdjustments[SubobjectAndMethod] = ThisBaseOffset;
-        }
       }
 
       // Set the new overrider.
@@ -636,17 +613,6 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
       if (Offset.VirtualBase)
         Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
              
-      Out << Offset.NonVirtualOffset << " nv]";
-    }
-    
-    AI = ThisAdjustments.find(std::make_pair(Base, MD));
-    if (AI != ThisAdjustments.end()) {
-      const BaseOffset &Offset = AI->second;
-      
-      Out << " [this-adj: ";
-      if (Offset.VirtualBase)
-        Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
-      
       Out << Offset.NonVirtualOffset << " nv]";
     }
     
