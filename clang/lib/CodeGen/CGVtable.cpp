@@ -1432,12 +1432,23 @@ VtableBuilder::AddMethods(BaseSubobject Base,
     ReturnAdjustment ReturnAdjustment = 
       ComputeReturnAdjustment(ReturnAdjustmentOffset);
     
-    // Check if this overrider needs a 'this' pointer adjustment.
-    BaseOffset ThisAdjustmentOffset =
-      Overriders.getThisAdjustmentOffset(Base, MD);
+    ThisAdjustment ThisAdjustment;
     
-    ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
-                                                          ThisAdjustmentOffset);
+    // Check if this overrider needs a 'this' pointer adjustment.
+    // (We use the base offset of the first base in the primary base chain here,
+    // because Base will not have the right offset if it is a primary virtual
+    // base that is not a primary base in the complete class.
+    if (FirstBaseInPrimaryBaseChain.getBaseOffset() != Overrider.BaseOffset) {
+      BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
+                                           Overrider.BaseOffset);
+      
+      BaseOffset ThisAdjustmentOffset =
+        Overriders.ComputeThisAdjustmentBaseOffset(FirstBaseInPrimaryBaseChain,
+                                                   OverriderBaseSubobject);
+
+      ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
+                                             ThisAdjustmentOffset);
+    }
     
     AddMethod(Overrider.Method, ReturnAdjustment, ThisAdjustment);
   }
