@@ -2181,6 +2181,15 @@ public:
   OwningExprResult DiagnoseDtorReference(SourceLocation NameLoc,
                                          ExprArg MemExpr);
   
+  OwningExprResult BuildPseudoDestructorExpr(ExprArg Base,
+                                             SourceLocation OpLoc,
+                                             tok::TokenKind OpKind,
+                                             const CXXScopeSpec &SS,
+                                             TypeSourceInfo *ScopeType,
+                                             SourceLocation CCLoc,
+                                             TypeSourceInfo *DestroyedType,
+                                             bool HasTrailingLParen);
+  
   OwningExprResult ActOnDependentPseudoDestructorExpr(Scope *S, 
                                                       ExprArg Base,
                                                       SourceLocation OpLoc,
