@@ -889,6 +889,7 @@ bool Parser::ParseCXXTypeSpecifierSeq(DeclSpec &DS) {
          ParsedTemplateInfo(), /*SuppressDeclarations*/true))
   {}
 
+  DS.Finish(Diags, PP);
   return false;
 }
 
