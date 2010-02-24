@@ -494,9 +494,10 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      if (N.getOperand(ChildNo).getValueType() != VT) {
+      EVT ChildVT = N.getOperand(ChildNo).getValueType();
+      if (ChildVT != VT) {
         // Handle the case when VT is iPTR.
-        if (VT != MVT::iPTR || N.getValueType() != TLI.getPointerTy())
+        if (VT != MVT::iPTR || ChildVT != TLI.getPointerTy())
           break;
       }
       continue;
