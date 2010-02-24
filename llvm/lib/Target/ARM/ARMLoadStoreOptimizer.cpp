@@ -748,10 +748,18 @@ static bool isMemoryOp(const MachineInstr *MI) {
     if (MMO->isVolatile())
       return false;
 
-    // Unaligned ldr/str is emulated by some kernels, but unaligned ldm/stm is not.
+    // Unaligned ldr/str is emulated by some kernels, but unaligned ldm/stm is
+    // not.
     if (MMO->getAlignment() < 4)
       return false;
   }
+
+  // str <undef> could probably be eliminated entirely, but for now we just want
+  // to avoid making a mess of it.
+  // FIXME: Use str <undef> as a wildcard to enable better stm folding.
+  if (MI->getNumOperands() > 0 && MI->getOperand(0).isReg() &&
+      MI->getOperand(0).isUndef())
+    return false;
 
   int Opcode = MI->getOpcode();
   switch (Opcode) {
