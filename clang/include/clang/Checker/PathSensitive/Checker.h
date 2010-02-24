@@ -147,6 +147,8 @@ public:
   
   void addTransition(const GRState *state) {
     assert(state);
+    // If the 'state' is not new, we need to check if the cached state 'ST'
+    // is new.
     if (state != getState() || (ST && ST != B.GetState(Pred)))
       GenerateNode(state, true);
     else
