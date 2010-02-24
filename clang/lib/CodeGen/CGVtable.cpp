@@ -144,17 +144,18 @@ private:
                           const CXXMethodDecl *NewMD,
                           SubobjectOffsetsMapTy &Offsets);
   
-  /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
-  /// the 'this' pointer from the base subobject to the derived subobject.
-  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
-                                             BaseSubobject Derived);
-                                             
   static void MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
                                     SubobjectOffsetsMapTy &Offsets);
 
 public:
   explicit FinalOverriders(const CXXRecordDecl *MostDerivedClass);
-  
+
+  /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
+  /// the 'this' pointer from the base subobject to the derived subobject.
+  /// FIXME: This should move to VtableBuilder.
+  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
+                                             BaseSubobject Derived) const;
+
   /// getOverrider - Get the final overrider for the given method declaration in
   /// the given base subobject.
   OverriderInfo getOverrider(BaseSubobject Base,
@@ -357,7 +358,7 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
 
 BaseOffset
 FinalOverriders::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
-                                                 BaseSubobject Derived) {
+                                                 BaseSubobject Derived) const {
   const CXXRecordDecl *BaseRD = Base.getBase();
   const CXXRecordDecl *DerivedRD = Derived.getBase();
   
