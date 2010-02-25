@@ -430,7 +430,9 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
 
   // Check if this node entered a callee.
   if (isa<CallEnter>(N->getLocation())) {
-    Eng.WList->Enqueue(N, B, Idx); // Still use the index of the CallExpr.
+    // Still use the index of the CallExpr. It's needed to create the callee
+    // StackFrameContext.
+    Eng.WList->Enqueue(N, B, Idx);
     return;
   }
 
