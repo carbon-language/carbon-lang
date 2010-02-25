@@ -813,55 +813,49 @@ static void ConstantPropUsersOf(Value *V) {
 static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      CallInst *CI,
                                                      const Type *AllocTy,
-                                                     Value* NElems,
+                                                     ConstantInt *NElements,
                                                      TargetData* TD) {
-  DEBUG(dbgs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
-
-  const Type *IntPtrTy = TD->getIntPtrType(GV->getContext());
+  DEBUG(errs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
   
-  // CI has either 0 or 1 bitcast uses (getMallocType() would otherwise have
-  // returned NULL and we would not be here).
-  BitCastInst *BCI = NULL;
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); UI != E; )
-    if ((BCI = dyn_cast<BitCastInst>(cast<Instruction>(*UI++))))
-      break;
-
-  ConstantInt *NElements = cast<ConstantInt>(NElems);
-  if (NElements->getZExtValue() != 1) {
-    // If we have an array allocation, transform it to a single element
-    // allocation to make the code below simpler.
-    Type *NewTy = ArrayType::get(AllocTy, NElements->getZExtValue());
-    unsigned TypeSize = TD->getTypeAllocSize(NewTy);
-    if (const StructType *ST = dyn_cast<StructType>(NewTy))
-      TypeSize = TD->getStructLayout(ST)->getSizeInBytes();
-    Instruction *NewCI = CallInst::CreateMalloc(CI, IntPtrTy, NewTy,
-                                         ConstantInt::get(IntPtrTy, TypeSize));
-    Value* Indices[2];
-    Indices[0] = Indices[1] = Constant::getNullValue(IntPtrTy);
-    Value *NewGEP = GetElementPtrInst::Create(NewCI, Indices, Indices + 2,
-                                              NewCI->getName()+".el0", CI);
-    Value *Cast = new BitCastInst(NewGEP, CI->getType(), "el0", CI);
-    if (BCI) BCI->replaceAllUsesWith(NewGEP);
-    CI->replaceAllUsesWith(Cast);
-    if (BCI) BCI->eraseFromParent();
-    CI->eraseFromParent();
-    BCI = dyn_cast<BitCastInst>(NewCI);
-    CI = BCI ? extractMallocCallFromBitCast(BCI) : cast<CallInst>(NewCI);
-  }
+  const Type *GlobalType;
+  if (NElements->getZExtValue() == 1)
+    GlobalType = AllocTy;
+  else
+    // If we have an array allocation, the global variable is of an array.
+    GlobalType = ArrayType::get(AllocTy, NElements->getZExtValue());
 
   // Create the new global variable.  The contents of the malloc'd memory is
   // undefined, so initialize with an undef value.
   const Type *MAT = getMallocAllocatedType(CI);
-  Constant *Init = UndefValue::get(MAT);
   GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(), 
                                              MAT, false,
-                                             GlobalValue::InternalLinkage, Init,
+                                             GlobalValue::InternalLinkage,
+                                             UndefValue::get(MAT),
                                              GV->getName()+".body",
                                              GV,
                                              GV->isThreadLocal());
   
-  // Anything that used the malloc or its bitcast now uses the global directly.
-  if (BCI) BCI->replaceAllUsesWith(NewGV);
+  // If there are bitcast users of the malloc (which is typical, usually we have
+  // a malloc + bitcast) then replace them with uses of the new global.  Update
+  // other users to use the global as well.
+  BitCastInst *TheBC = 0;
+  while (!CI->use_empty()) {
+    Instruction *User = cast<Instruction>(CI->use_back());
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
+      if (BCI->getType() == NewGV->getType()) {
+        BCI->replaceAllUsesWith(NewGV);
+        BCI->eraseFromParent();
+      } else {
+        BCI->setOperand(0, NewGV);
+      }
+    } else {
+      if (TheBC == 0)
+        TheBC = new BitCastInst(NewGV, CI->getType(), "newgv", CI);
+      User->replaceUsesOfWith(CI, TheBC);
+    }
+  }
+  
+  // Update Anything else that used the malloc or its bitcast now uses the global directly.
   CI->replaceAllUsesWith(new BitCastInst(NewGV, CI->getType(), "newgv", CI));
 
   Constant *RepValue = NewGV;
@@ -879,60 +873,60 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   bool InitBoolUsed = false;
 
   // Loop over all uses of GV, processing them in turn.
-  std::vector<StoreInst*> Stores;
-  while (!GV->use_empty())
-    if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
-      while (!LI->use_empty()) {
-        Use &LoadUse = LI->use_begin().getUse();
-        if (!isa<ICmpInst>(LoadUse.getUser()))
-          LoadUse = RepValue;
-        else {
-          ICmpInst *ICI = cast<ICmpInst>(LoadUse.getUser());
-          // Replace the cmp X, 0 with a use of the bool value.
-          Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", ICI);
-          InitBoolUsed = true;
-          switch (ICI->getPredicate()) {
-          default: llvm_unreachable("Unknown ICmp Predicate!");
-          case ICmpInst::ICMP_ULT:
-          case ICmpInst::ICMP_SLT:   // X < null -> always false
-            LV = ConstantInt::getFalse(GV->getContext());
-            break;
-          case ICmpInst::ICMP_ULE:
-          case ICmpInst::ICMP_SLE:
-          case ICmpInst::ICMP_EQ:
-            LV = BinaryOperator::CreateNot(LV, "notinit", ICI);
-            break;
-          case ICmpInst::ICMP_NE:
-          case ICmpInst::ICMP_UGE:
-          case ICmpInst::ICMP_SGE:
-          case ICmpInst::ICMP_UGT:
-          case ICmpInst::ICMP_SGT:
-            break;  // no change.
-          }
-          ICI->replaceAllUsesWith(LV);
-          ICI->eraseFromParent();
-        }
-      }
-      LI->eraseFromParent();
-    } else {
-      StoreInst *SI = cast<StoreInst>(GV->use_back());
+  while (!GV->use_empty()) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(GV->use_back())) {
       // The global is initialized when the store to it occurs.
       new StoreInst(ConstantInt::getTrue(GV->getContext()), InitBool, SI);
       SI->eraseFromParent();
+      continue;
     }
+    
+    LoadInst *LI = cast<LoadInst>(GV->use_back());
+    while (!LI->use_empty()) {
+      Use &LoadUse = LI->use_begin().getUse();
+      if (!isa<ICmpInst>(LoadUse.getUser())) {
+        LoadUse = RepValue;
+        continue;
+      }
+      
+      ICmpInst *ICI = cast<ICmpInst>(LoadUse.getUser());
+      // Replace the cmp X, 0 with a use of the bool value.
+      Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", ICI);
+      InitBoolUsed = true;
+      switch (ICI->getPredicate()) {
+      default: llvm_unreachable("Unknown ICmp Predicate!");
+      case ICmpInst::ICMP_ULT:
+      case ICmpInst::ICMP_SLT:   // X < null -> always false
+        LV = ConstantInt::getFalse(GV->getContext());
+        break;
+      case ICmpInst::ICMP_ULE:
+      case ICmpInst::ICMP_SLE:
+      case ICmpInst::ICMP_EQ:
+        LV = BinaryOperator::CreateNot(LV, "notinit", ICI);
+        break;
+      case ICmpInst::ICMP_NE:
+      case ICmpInst::ICMP_UGE:
+      case ICmpInst::ICMP_SGE:
+      case ICmpInst::ICMP_UGT:
+      case ICmpInst::ICMP_SGT:
+        break;  // no change.
+      }
+      ICI->replaceAllUsesWith(LV);
+      ICI->eraseFromParent();
+    }
+    LI->eraseFromParent();
+  }
 
   // If the initialization boolean was used, insert it, otherwise delete it.
   if (!InitBoolUsed) {
     while (!InitBool->use_empty())  // Delete initializations
-      cast<Instruction>(InitBool->use_back())->eraseFromParent();
+      cast<StoreInst>(InitBool->use_back())->eraseFromParent();
     delete InitBool;
   } else
     GV->getParent()->getGlobalList().insert(GV, InitBool);
 
-
-  // Now the GV is dead, nuke it and the malloc (both CI and BCI).
+  // Now the GV is dead, nuke it and the malloc..
   GV->eraseFromParent();
-  if (BCI) BCI->eraseFromParent();
   CI->eraseFromParent();
 
   // To further other optimizations, loop over all users of NewGV and try to
@@ -1497,7 +1491,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       // something.
       if (TD && 
           NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
-        GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElems, TD);
+        GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, TD);
         return true;
       }
   
