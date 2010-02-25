@@ -20,26 +20,26 @@ namespace clang {
 class GRExprEngine;
 
 void RegisterAdjustedReturnValueChecker(GRExprEngine &Eng);
+void RegisterArrayBoundChecker(GRExprEngine &Eng);
 void RegisterAttrNonNullChecker(GRExprEngine &Eng);
+void RegisterBuiltinFunctionChecker(GRExprEngine &Eng);
+void RegisterCallAndMessageChecker(GRExprEngine &Eng);
+void RegisterCastToStructChecker(GRExprEngine &Eng);
 void RegisterDereferenceChecker(GRExprEngine &Eng);
 void RegisterDivZeroChecker(GRExprEngine &Eng);
+void RegisterFixedAddressChecker(GRExprEngine &Eng);
+void RegisterNoReturnFunctionChecker(GRExprEngine &Eng);
+void RegisterOSAtomicChecker(GRExprEngine &Eng);
+void RegisterPointerArithChecker(GRExprEngine &Eng);
+void RegisterPointerSubChecker(GRExprEngine &Eng);
 void RegisterReturnPointerRangeChecker(GRExprEngine &Eng);
 void RegisterReturnStackAddressChecker(GRExprEngine &Eng);  
 void RegisterReturnUndefChecker(GRExprEngine &Eng);
-void RegisterVLASizeChecker(GRExprEngine &Eng);
-void RegisterPointerSubChecker(GRExprEngine &Eng);
-void RegisterPointerArithChecker(GRExprEngine &Eng);
-void RegisterFixedAddressChecker(GRExprEngine &Eng);
-void RegisterCastToStructChecker(GRExprEngine &Eng);
-void RegisterCallAndMessageChecker(GRExprEngine &Eng);
-void RegisterArrayBoundChecker(GRExprEngine &Eng);
-void RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng);
-void RegisterUndefinedAssignmentChecker(GRExprEngine &Eng);
 void RegisterUndefBranchChecker(GRExprEngine &Eng);
 void RegisterUndefCapturedBlockVarChecker(GRExprEngine &Eng);
 void RegisterUndefResultChecker(GRExprEngine &Eng);
-void RegisterNoReturnFunctionChecker(GRExprEngine &Eng);
-void RegisterBuiltinFunctionChecker(GRExprEngine &Eng);
-void RegisterOSAtomicChecker(GRExprEngine &Eng);
+void RegisterUndefinedArraySubscriptChecker(GRExprEngine &Eng);
+void RegisterUndefinedAssignmentChecker(GRExprEngine &Eng);
+void RegisterVLASizeChecker(GRExprEngine &Eng);
 } // end clang namespace
 #endif
