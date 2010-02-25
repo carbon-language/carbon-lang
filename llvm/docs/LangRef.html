@@ -4077,9 +4077,9 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !<index>]
-  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !<index>]
-  !<index> = !{ i32 1 }
+  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
+  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
+  !&lt;index&gt; = !{ i32 1 }
 </pre>
 
 <h5>Overview:</h5>
@@ -4094,21 +4094,21 @@ Instruction</a> </div>
    volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
    instructions.</p>
 
-<p>The optional constant "align" argument specifies the alignment of the
+<p>The optional constant <tt>align</tt> argument specifies the alignment of the
    operation (that is, the alignment of the memory address). A value of 0 or an
-   omitted "align" argument means that the operation has the preferential
+   omitted <tt>align</tt> argument means that the operation has the preferential
    alignment for the target. It is the responsibility of the code emitter to
    ensure that the alignment information is correct. Overestimating the
-   alignment results in an undefined behavior. Underestimating the alignment may
+   alignment results in undefined behavior. Underestimating the alignment may
    produce less efficient code. An alignment of 1 is always safe.</p>
 
-<p>The optional !nontemporal metadata must reference a single metatadata
-   name <index> corresponding to a metadata node with one i32 entry of
-   value 1.  The existance of the !nontemporal metatadata on the
-   instruction tells the optimizer and code generator that this load is
-   not expected to be reused in the cache.  The code generator may
-   select special instructions to save cache bandwidth, such as the
-   MOVNT intruction on x86.</p>
+<p>The optional <tt>!nontemporal</tt> metadata must reference a single
+   metatadata name &lt;index&gt; corresponding to a metadata node with
+   one <tt>i32</tt> entry of value 1.  The existance of
+   the <tt>!nontemporal</tt> metatadata on the instruction tells the optimizer
+   and code generator that this load is not expected to be reused in the cache.
+   The code generator may select special instructions to save cache bandwidth,
+   such as the <tt>MOVNT</tt> intruction on x86.</p>
 
 <h5>Semantics:</h5>
 <p>The location of memory pointed to is loaded.  If the value being loaded is of
