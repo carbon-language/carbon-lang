@@ -1950,6 +1950,65 @@ def t2BXJ : T2I<(outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{12} = 0;
 }
 
+// Secure Monitor Call is a system instruction -- for disassembly only
+// Option = Inst{19-16}
+def t2SMC : T2I<(outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26-20} = 0b1111111;
+  let Inst{15-12} = 0b1000;
+}
+
+// Store Return State is a system instruction -- for disassembly only
+def t2SRSDBW : T2I<(outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp!, $mode",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0000010; // W = 1
+}
+
+def t2SRSDB  : T2I<(outs),(ins i32imm:$mode),NoItinerary,"srsdb","\tsp, $mode",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0000000; // W = 0
+}
+
+def t2SRSIAW : T2I<(outs),(ins i32imm:$mode),NoItinerary,"srsia","\tsp!, $mode",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0011010; // W = 1
+}
+
+def t2SRSIA  : T2I<(outs), (ins i32imm:$mode),NoItinerary,"srsia","\tsp, $mode",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0011000; // W = 0
+}
+
+// Return From Exception is a system instruction -- for disassembly only
+def t2RFEDBW : T2I<(outs), (ins GPR:$base), NoItinerary, "rfedb", "\t$base!",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0000011; // W = 1
+}
+
+def t2RFEDB  : T2I<(outs), (ins GPR:$base), NoItinerary, "rfeab", "\t$base",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0000001; // W = 0
+}
+
+def t2RFEIAW : T2I<(outs), (ins GPR:$base), NoItinerary, "rfeia", "\t$base!",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0011011; // W = 1
+}
+
+def t2RFEIA  : T2I<(outs), (ins GPR:$base), NoItinerary, "rfeia", "\t$base",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-20} = 0b0011001; // W = 0
+}
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
