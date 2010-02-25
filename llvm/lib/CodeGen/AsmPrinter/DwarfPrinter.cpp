@@ -183,13 +183,11 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
     Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
   } while (Value);
 
-  if (PadTo)
-    while (PadTo--) {
-      unsigned char Byte = (PadTo ? 0x80 : 0x00);
-      if (Asm->VerboseAsm)
-        Asm->OutStreamer.AddComment("Padding");
-      Asm->OutStreamer.EmitIntValue(Byte, 1, /*addrspace*/0);
-    }
+  if (PadTo) {
+    if (PadTo > 1)
+      Asm->OutStreamer.EmitFill(PadTo - 1, 0x80/*fillval*/, 0/*addrspace*/);
+    Asm->OutStreamer.EmitFill(1, 0/*fillval*/, 0/*addrspace*/);
+  }
 }
 
 
