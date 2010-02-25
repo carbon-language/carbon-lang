@@ -39,7 +39,7 @@ class MatcherNode {
 public:
   enum KindTy {
     // Matcher state manipulation.
-    Push,                 // Push a checking scope.
+    Scope,                // Push a checking scope.
     RecordNode,           // Record the current node.
     RecordChild,          // Record a child of the current node.
     RecordMemRef,         // Record the memref in the current node.
@@ -100,24 +100,24 @@ protected:
   void printNext(raw_ostream &OS, unsigned indent) const;
 };
   
-/// PushMatcherNode - This pushes a failure scope on the stack and evaluates
-/// 'Next'.  If 'Next' fails to match, it pops its scope and attempts to
-/// match 'Failure'.
-class PushMatcherNode : public MatcherNode {
-  OwningPtr<MatcherNode> Failure;
+/// ScopeMatcherNode - This pushes a failure scope on the stack and evaluates
+/// 'Check'.  If 'Check' fails to match, it pops its scope and continues on to
+/// 'Next'.
+class ScopeMatcherNode : public MatcherNode {
+  OwningPtr<MatcherNode> Check;
 public:
-  PushMatcherNode(MatcherNode *next = 0, MatcherNode *failure = 0)
-    : MatcherNode(Push), Failure(failure) {
+  ScopeMatcherNode(MatcherNode *check = 0, MatcherNode *next = 0)
+    : MatcherNode(Scope), Check(check) {
     setNext(next);
   }
   
-  MatcherNode *getFailure() { return Failure.get(); }
-  const MatcherNode *getFailure() const { return Failure.get(); }
-  void setFailure(MatcherNode *N) { Failure.reset(N); }
-  OwningPtr<MatcherNode> &getFailurePtr() { return Failure; }
+  MatcherNode *getCheck() { return Check.get(); }
+  const MatcherNode *getCheck() const { return Check.get(); }
+  void setCheck(MatcherNode *N) { Check.reset(N); }
+  OwningPtr<MatcherNode> &getCheckPtr() { return Check; }
 
   static inline bool classof(const MatcherNode *N) {
-    return N->getKind() == Push;
+    return N->getKind() == Scope;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;

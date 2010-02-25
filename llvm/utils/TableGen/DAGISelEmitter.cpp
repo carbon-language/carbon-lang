@@ -1972,7 +1972,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     if (Matcher == 0)
       Matcher = N;
     else
-      Matcher = new PushMatcherNode(N, Matcher);
+      Matcher = new ScopeMatcherNode(N, Matcher);
   }
 
   Matcher = OptimizeMatcher(Matcher);

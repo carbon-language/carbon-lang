@@ -14,14 +14,14 @@
 #include "DAGISelMatcher.h"
 using namespace llvm;
 
-static void ContractNodes(OwningPtr<MatcherNode> &Matcher) {
+static void ContractNodes(OwningPtr<MatcherNode> &MatcherPtr) {
   // If we reached the end of the chain, we're done.
-  MatcherNode *N = Matcher.get();
+  MatcherNode *N = MatcherPtr.get();
   if (N == 0) return;
   
-  // If we have a push node, walk down both edges.
-  if (PushMatcherNode *Push = dyn_cast<PushMatcherNode>(N))
-    ContractNodes(Push->getFailurePtr());
+  // If we have a scope node, walk down both edges.
+  if (ScopeMatcherNode *Push = dyn_cast<ScopeMatcherNode>(N))
+    ContractNodes(Push->getCheckPtr());
   
   // If we found a movechild node with a node that comes in a 'foochild' form,
   // transform it.
@@ -35,24 +35,23 @@ static void ContractNodes(OwningPtr<MatcherNode> &Matcher) {
     
     if (New) {
       // Insert the new node.
-      New->setNext(Matcher.take());
-      Matcher.reset(New);
+      New->setNext(MatcherPtr.take());
+      MatcherPtr.reset(New);
       // Remove the old one.
       MC->setNext(MC->getNext()->takeNext());
-      return ContractNodes(Matcher);
+      return ContractNodes(MatcherPtr);
     }
   }
   
   if (MoveChildMatcherNode *MC = dyn_cast<MoveChildMatcherNode>(N))
     if (MoveParentMatcherNode *MP = 
           dyn_cast<MoveParentMatcherNode>(MC->getNext())) {
-      Matcher.reset(MP->takeNext());
-      return ContractNodes(Matcher);
+      MatcherPtr.reset(MP->takeNext());
+      return ContractNodes(MatcherPtr);
     }
   
   ContractNodes(N->getNextPtr());
 }
-
 
 MatcherNode *llvm::OptimizeMatcher(MatcherNode *Matcher) {
   OwningPtr<MatcherNode> MatcherPtr(Matcher);

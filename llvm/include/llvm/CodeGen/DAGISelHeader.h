@@ -219,7 +219,7 @@ GetVBR(unsigned Val, const unsigned char *MatcherTable, unsigned &Idx) {
 
 
 enum BuiltinOpcodes {
-  OPC_Push, OPC_Push2,
+  OPC_Scope, OPC_Scope2,
   OPC_RecordNode,
   OPC_RecordChild0, OPC_RecordChild1, OPC_RecordChild2, OPC_RecordChild3, 
   OPC_RecordChild4, OPC_RecordChild5, OPC_RecordChild6, OPC_RecordChild7,
@@ -372,7 +372,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     assert(MatcherIndex < TableSize && "Invalid index");
     BuiltinOpcodes Opcode = (BuiltinOpcodes)MatcherTable[MatcherIndex++];
     switch (Opcode) {
-    case OPC_Push: {
+    case OPC_Scope: {
       unsigned NumToSkip = MatcherTable[MatcherIndex++];
       MatchScope NewEntry;
       NewEntry.FailIndex = MatcherIndex+NumToSkip;
@@ -386,7 +386,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       MatchScopes.push_back(NewEntry);
       continue;
     }
-    case OPC_Push2: {
+    case OPC_Scope2: {
       unsigned NumToSkip = GetInt2(MatcherTable, MatcherIndex);
       MatchScope NewEntry;
       NewEntry.FailIndex = MatcherIndex+NumToSkip;

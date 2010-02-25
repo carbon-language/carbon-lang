@@ -155,7 +155,7 @@ EmitMatcher(const MatcherNode *N, unsigned Indent, formatted_raw_ostream &OS) {
   OS.PadToColumn(Indent*2);
   
   switch (N->getKind()) {
-  case MatcherNode::Push: assert(0 && "Should be handled by caller");
+  case MatcherNode::Scope: assert(0 && "Should be handled by caller");
   case MatcherNode::RecordNode:
     OS << "OPC_RecordNode,";
     OS.PadToColumn(CommentIndent) << "// "
@@ -388,8 +388,8 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
       Histogram.resize(N->getKind()+1);
     Histogram[N->getKind()]++;
     
-    // Push is a special case since it is binary.
-    if (const PushMatcherNode *PMN = dyn_cast<PushMatcherNode>(N)) {
+    // Scope is a special case since it is binary.
+    if (const ScopeMatcherNode *SMN = dyn_cast<ScopeMatcherNode>(N)) {
       // We need to encode the child and the offset of the failure code before
       // emitting either of them.  Handle this by buffering the output into a
       // string while we get the size.
@@ -398,7 +398,7 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
       {
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
-        NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
+        NextSize = EmitMatcherList(cast<ScopeMatcherNode>(N)->getCheck(),
                                    Indent+1, CurrentIdx+2, FOS);
       }
 
@@ -408,7 +408,7 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
         TmpBuf.clear();
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
-        NextSize = EmitMatcherList(cast<PushMatcherNode>(N)->getNext(),
+        NextSize = EmitMatcherList(cast<ScopeMatcherNode>(N)->getCheck(),
                                    Indent+1, CurrentIdx+3, FOS);
         if (NextSize > 65535) {
           errs() <<
@@ -421,14 +421,14 @@ EmitMatcherList(const MatcherNode *N, unsigned Indent, unsigned CurrentIdx,
       OS.PadToColumn(Indent*2);
       
       if (NextSize < 256)
-        OS << "OPC_Push, " << NextSize << ",\n";
+        OS << "OPC_Scope, " << NextSize << ",\n";
       else
-        OS << "OPC_Push2, " << (NextSize&255) << ", " << (NextSize>>8) << ",\n";
+        OS << "OPC_Scope2, " << (NextSize&255) << ", " << (NextSize>>8) <<",\n";
       OS << TmpBuf.str();
       
       Size += 2+NextSize;
       CurrentIdx += 2+NextSize;
-      N = PMN->getFailure();
+      N = SMN->getNext();
       continue;
     }
   
@@ -514,7 +514,7 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
   for (unsigned i = 0, e = Histogram.size(); i != e; ++i) {
     OS << "  // #";
     switch ((MatcherNode::KindTy)i) {
-    case MatcherNode::Push: OS << "OPC_Push"; break; 
+    case MatcherNode::Scope: OS << "OPC_Scope"; break; 
     case MatcherNode::RecordNode: OS << "OPC_RecordNode"; break; 
     case MatcherNode::RecordChild: OS << "OPC_RecordChild"; break;
     case MatcherNode::RecordMemRef: OS << "OPC_RecordMemRef"; break;

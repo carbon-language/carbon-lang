@@ -24,10 +24,10 @@ void MatcherNode::printNext(raw_ostream &OS, unsigned indent) const {
 }
 
 
-void PushMatcherNode::print(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "Push\n";
-  printNext(OS, indent+2);
-  Failure->print(OS, indent);
+void ScopeMatcherNode::print(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "Scope\n";
+  Check->print(OS, indent+2);
+  printNext(OS, indent);
 }
 
 void RecordMatcherNode::print(raw_ostream &OS, unsigned indent) const {
