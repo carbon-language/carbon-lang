@@ -698,8 +698,9 @@ public:
   /// independent way (Note: the return type is an i64).
   static Constant *getAlignOf(const Type* Ty);
   
-  /// getSizeOf constant expr - computes the size of a type in a target
-  /// independent way (Note: the return type is an i64).
+  /// getSizeOf constant expr - computes the (alloc) size of a type (in
+  /// address-units, not bits) in a target independent way (Note: the return
+  /// type is an i64).
   ///
   static Constant *getSizeOf(const Type* Ty);
 
