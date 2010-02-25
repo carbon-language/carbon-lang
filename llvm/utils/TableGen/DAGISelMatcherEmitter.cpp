@@ -536,15 +536,12 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
     case Matcher::CheckOrImm: OS << "OPC_CheckOrImm"; break;
     case Matcher::CheckFoldableChainNode:
       OS << "OPC_CheckFoldableChainNode"; break;
-    case Matcher::CheckChainCompatible:
-      OS << "OPC_CheckChainCompatible"; break;
+    case Matcher::CheckChainCompatible: OS << "OPC_CheckChainCompatible"; break;
     case Matcher::EmitInteger: OS << "OPC_EmitInteger"; break;
     case Matcher::EmitStringInteger: OS << "OPC_EmitStringInteger"; break;
     case Matcher::EmitRegister: OS << "OPC_EmitRegister"; break;
-    case Matcher::EmitConvertToTarget:
-      OS << "OPC_EmitConvertToTarget"; break;
-    case Matcher::EmitMergeInputChains:
-      OS << "OPC_EmitMergeInputChains"; break;
+    case Matcher::EmitConvertToTarget: OS << "OPC_EmitConvertToTarget"; break;
+    case Matcher::EmitMergeInputChains: OS << "OPC_EmitMergeInputChains"; break;
     case Matcher::EmitCopyToReg: OS << "OPC_EmitCopyToReg"; break;
     case Matcher::EmitNode: OS << "OPC_EmitNode"; break;
     case Matcher::EmitNodeXForm: OS << "OPC_EmitNodeXForm"; break;
