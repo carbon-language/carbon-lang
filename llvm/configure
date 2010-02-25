@@ -813,6 +813,7 @@ projects/llvm-java
 projects/llvm-tv
 projects/llvm-poolalloc
 projects/poolalloc
+projects/safecode
 projects/llvm-kernel'
 
 # Initialize some variables set by options.
@@ -1978,6 +1979,8 @@ do
       llvm-poolalloc) subdirs="$subdirs projects/llvm-poolalloc"
  ;;
       poolalloc)    subdirs="$subdirs projects/poolalloc"
+ ;;
+      safecode)     subdirs="$subdirs projects/safecode"
  ;;
       llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
  ;;
@@ -11133,7 +11136,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11136 "configure"
+#line 11139 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
