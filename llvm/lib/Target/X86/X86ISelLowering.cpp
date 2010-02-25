@@ -7780,7 +7780,7 @@ bool X86TargetLowering::isTruncateFree(const Type *Ty1, const Type *Ty2) const {
   unsigned NumBits2 = Ty2->getPrimitiveSizeInBits();
   if (NumBits1 <= NumBits2)
     return false;
-  return Subtarget->is64Bit() || NumBits1 < 64;
+  return true;
 }
 
 bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
@@ -7790,7 +7790,7 @@ bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   unsigned NumBits2 = VT2.getSizeInBits();
   if (NumBits1 <= NumBits2)
     return false;
-  return Subtarget->is64Bit() || NumBits1 < 64;
+  return true;
 }
 
 bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
