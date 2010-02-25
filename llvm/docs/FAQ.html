@@ -437,7 +437,7 @@ Stop.
 <div class="answer">
 <p>The <tt>GNUmakefile</tt> in the top-level directory of LLVM-GCC is a special
    <tt>Makefile</tt> used by Apple to invoke the <tt>build_gcc</tt> script after
-   setting up a special environment. This has the unforunate side-effect that
+   setting up a special environment. This has the unfortunate side-effect that
    trying to build LLVM-GCC with srcdir == objdir in a "non-Apple way" invokes
    the <tt>GNUmakefile</tt> instead of <tt>Makefile</tt>. Because the
    environment isn't set up correctly to do this, the build fails.</p>
