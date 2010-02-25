@@ -30,8 +30,8 @@ ifeq ($(BUILD_DIRS_ONLY),1)
   DIRS := lib/System lib/Support utils
   OPTIONAL_DIRS :=
 else
-  DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
-          tools runtime docs unittests
+  DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-shlib \
+          tools/llvm-config tools runtime docs unittests
   OPTIONAL_DIRS := projects bindings
 endif
 
@@ -42,6 +42,10 @@ endif
 EXTRA_DIST := test unittests llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config
+
+ifneq ($(ENABLE_SHARED),1)
+  DIRS := $(filter-out tools/llvm-shlib, $(DIRS))
+endif
 
 ifeq ($(MAKECMDGOALS),libs-only)
   DIRS := $(filter-out tools runtime docs, $(DIRS))
