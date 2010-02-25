@@ -18,24 +18,24 @@
 
 namespace llvm {
   class CodeGenDAGPatterns;
-  class MatcherNode;
+  class Matcher;
   class PatternToMatch;
   class raw_ostream;
   class ComplexPattern;
   class Record;
 
-MatcherNode *ConvertPatternToMatcher(const PatternToMatch &Pattern,
-                                     const CodeGenDAGPatterns &CGP);
-MatcherNode *OptimizeMatcher(MatcherNode *Matcher);
-void EmitMatcherTable(const MatcherNode *Matcher, raw_ostream &OS);
+Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,
+                                 const CodeGenDAGPatterns &CGP);
+Matcher *OptimizeMatcher(Matcher *Matcher);
+void EmitMatcherTable(const Matcher *Matcher, raw_ostream &OS);
 
   
-/// MatcherNode - Base class for all the the DAG ISel Matcher representation
+/// Matcher - Base class for all the the DAG ISel Matcher representation
 /// nodes.
-class MatcherNode {
+class Matcher {
   // The next matcher node that is executed after this one.  Null if this is the
   // last stage of a match.
-  OwningPtr<MatcherNode> Next;
+  OwningPtr<Matcher> Next;
 public:
   enum KindTy {
     // Matcher state manipulation.
@@ -79,20 +79,20 @@ public:
   const KindTy Kind;
 
 protected:
-  MatcherNode(KindTy K) : Kind(K) {}
+  Matcher(KindTy K) : Kind(K) {}
 public:
-  virtual ~MatcherNode() {}
+  virtual ~Matcher() {}
   
   KindTy getKind() const { return Kind; }
 
-  MatcherNode *getNext() { return Next.get(); }
-  const MatcherNode *getNext() const { return Next.get(); }
-  void setNext(MatcherNode *C) { Next.reset(C); }
-  MatcherNode *takeNext() { return Next.take(); }
+  Matcher *getNext() { return Next.get(); }
+  const Matcher *getNext() const { return Next.get(); }
+  void setNext(Matcher *C) { Next.reset(C); }
+  Matcher *takeNext() { return Next.take(); }
 
-  OwningPtr<MatcherNode> &getNextPtr() { return Next; }
+  OwningPtr<Matcher> &getNextPtr() { return Next; }
   
-  static inline bool classof(const MatcherNode *) { return true; }
+  static inline bool classof(const Matcher *) { return true; }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const = 0;
   void dump() const;
@@ -100,76 +100,76 @@ protected:
   void printNext(raw_ostream &OS, unsigned indent) const;
 };
   
-/// ScopeMatcherNode - This pushes a failure scope on the stack and evaluates
+/// ScopeMatcher - This pushes a failure scope on the stack and evaluates
 /// 'Check'.  If 'Check' fails to match, it pops its scope and continues on to
 /// 'Next'.
-class ScopeMatcherNode : public MatcherNode {
-  OwningPtr<MatcherNode> Check;
+class ScopeMatcher : public Matcher {
+  OwningPtr<Matcher> Check;
 public:
-  ScopeMatcherNode(MatcherNode *check = 0, MatcherNode *next = 0)
-    : MatcherNode(Scope), Check(check) {
+  ScopeMatcher(Matcher *check = 0, Matcher *next = 0)
+    : Matcher(Scope), Check(check) {
     setNext(next);
   }
   
-  MatcherNode *getCheck() { return Check.get(); }
-  const MatcherNode *getCheck() const { return Check.get(); }
-  void setCheck(MatcherNode *N) { Check.reset(N); }
-  OwningPtr<MatcherNode> &getCheckPtr() { return Check; }
+  Matcher *getCheck() { return Check.get(); }
+  const Matcher *getCheck() const { return Check.get(); }
+  void setCheck(Matcher *N) { Check.reset(N); }
+  OwningPtr<Matcher> &getCheckPtr() { return Check; }
 
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == Scope;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// RecordMatcherNode - Save the current node in the operand list.
-class RecordMatcherNode : public MatcherNode {
+/// RecordMatcher - Save the current node in the operand list.
+class RecordMatcher : public Matcher {
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
 public:
-  RecordMatcherNode(const std::string &whatfor)
-    : MatcherNode(RecordNode), WhatFor(whatfor) {}
+  RecordMatcher(const std::string &whatfor)
+    : Matcher(RecordNode), WhatFor(whatfor) {}
   
   const std::string &getWhatFor() const { return WhatFor; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordNode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// RecordChildMatcherNode - Save a numbered child of the current node, or fail
+/// RecordChildMatcher - Save a numbered child of the current node, or fail
 /// the match if it doesn't exist.  This is logically equivalent to:
 ///    MoveChild N + RecordNode + MoveParent.
-class RecordChildMatcherNode : public MatcherNode {
+class RecordChildMatcher : public Matcher {
   unsigned ChildNo;
   
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
 public:
-  RecordChildMatcherNode(unsigned childno, const std::string &whatfor)
-  : MatcherNode(RecordChild), ChildNo(childno), WhatFor(whatfor) {}
+  RecordChildMatcher(unsigned childno, const std::string &whatfor)
+  : Matcher(RecordChild), ChildNo(childno), WhatFor(whatfor) {}
   
   unsigned getChildNo() const { return ChildNo; }
   const std::string &getWhatFor() const { return WhatFor; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordChild;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// RecordMemRefMatcherNode - Save the current node's memref.
-class RecordMemRefMatcherNode : public MatcherNode {
+/// RecordMemRefMatcher - Save the current node's memref.
+class RecordMemRefMatcher : public Matcher {
 public:
-  RecordMemRefMatcherNode() : MatcherNode(RecordMemRef) {}
+  RecordMemRefMatcher() : Matcher(RecordMemRef) {}
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordMemRef;
   }
   
@@ -177,98 +177,95 @@ public:
 };
 
   
-/// CaptureFlagInputMatcherNode - If the current record has a flag input, record
+/// CaptureFlagInputMatcher - If the current record has a flag input, record
 /// it so that it is used as an input to the generated code.
-class CaptureFlagInputMatcherNode : public MatcherNode {
+class CaptureFlagInputMatcher : public Matcher {
 public:
-  CaptureFlagInputMatcherNode()
-    : MatcherNode(CaptureFlagInput) {}
+  CaptureFlagInputMatcher() : Matcher(CaptureFlagInput) {}
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CaptureFlagInput;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// MoveChildMatcherNode - This tells the interpreter to move into the
+/// MoveChildMatcher - This tells the interpreter to move into the
 /// specified child node.
-class MoveChildMatcherNode : public MatcherNode {
+class MoveChildMatcher : public Matcher {
   unsigned ChildNo;
 public:
-  MoveChildMatcherNode(unsigned childNo)
-  : MatcherNode(MoveChild), ChildNo(childNo) {}
+  MoveChildMatcher(unsigned childNo) : Matcher(MoveChild), ChildNo(childNo) {}
   
   unsigned getChildNo() const { return ChildNo; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == MoveChild;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// MoveParentMatcherNode - This tells the interpreter to move to the parent
+/// MoveParentMatcher - This tells the interpreter to move to the parent
 /// of the current node.
-class MoveParentMatcherNode : public MatcherNode {
+class MoveParentMatcher : public Matcher {
 public:
-  MoveParentMatcherNode()
-  : MatcherNode(MoveParent) {}
+  MoveParentMatcher() : Matcher(MoveParent) {}
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == MoveParent;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CheckSameMatcherNode - This checks to see if this node is exactly the same
+/// CheckSameMatcher - This checks to see if this node is exactly the same
 /// node as the specified match that was recorded with 'Record'.  This is used
 /// when patterns have the same name in them, like '(mul GPR:$in, GPR:$in)'.
-class CheckSameMatcherNode : public MatcherNode {
+class CheckSameMatcher : public Matcher {
   unsigned MatchNumber;
 public:
-  CheckSameMatcherNode(unsigned matchnumber)
-  : MatcherNode(CheckSame), MatchNumber(matchnumber) {}
+  CheckSameMatcher(unsigned matchnumber)
+  : Matcher(CheckSame), MatchNumber(matchnumber) {}
   
   unsigned getMatchNumber() const { return MatchNumber; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckSame;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckPatternPredicateMatcherNode - This checks the target-specific predicate
+/// CheckPatternPredicateMatcher - This checks the target-specific predicate
 /// to see if the entire pattern is capable of matching.  This predicate does
 /// not take a node as input.  This is used for subtarget feature checks etc.
-class CheckPatternPredicateMatcherNode : public MatcherNode {
+class CheckPatternPredicateMatcher : public Matcher {
   std::string Predicate;
 public:
-  CheckPatternPredicateMatcherNode(StringRef predicate)
-  : MatcherNode(CheckPatternPredicate), Predicate(predicate) {}
+  CheckPatternPredicateMatcher(StringRef predicate)
+  : Matcher(CheckPatternPredicate), Predicate(predicate) {}
   
   StringRef getPredicate() const { return Predicate; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckPatternPredicate;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckPredicateMatcherNode - This checks the target-specific predicate to
+/// CheckPredicateMatcher - This checks the target-specific predicate to
 /// see if the node is acceptable.
-class CheckPredicateMatcherNode : public MatcherNode {
+class CheckPredicateMatcher : public Matcher {
   StringRef PredName;
 public:
-  CheckPredicateMatcherNode(StringRef predname)
-    : MatcherNode(CheckPredicate), PredName(predname) {}
+  CheckPredicateMatcher(StringRef predname)
+    : Matcher(CheckPredicate), PredName(predname) {}
   
   StringRef getPredicateName() const { return PredName; }
 
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckPredicate;
   }
   
@@ -276,35 +273,35 @@ public:
 };
   
   
-/// CheckOpcodeMatcherNode - This checks to see if the current node has the
+/// CheckOpcodeMatcher - This checks to see if the current node has the
 /// specified opcode, if not it fails to match.
-class CheckOpcodeMatcherNode : public MatcherNode {
+class CheckOpcodeMatcher : public Matcher {
   StringRef OpcodeName;
 public:
-  CheckOpcodeMatcherNode(StringRef opcodename)
-    : MatcherNode(CheckOpcode), OpcodeName(opcodename) {}
+  CheckOpcodeMatcher(StringRef opcodename)
+    : Matcher(CheckOpcode), OpcodeName(opcodename) {}
   
   StringRef getOpcodeName() const { return OpcodeName; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckOpcode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckMultiOpcodeMatcherNode - This checks to see if the current node has one
+/// CheckMultiOpcodeMatcher - This checks to see if the current node has one
 /// of the specified opcode, if not it fails to match.
-class CheckMultiOpcodeMatcherNode : public MatcherNode {
+class CheckMultiOpcodeMatcher : public Matcher {
   SmallVector<StringRef, 4> OpcodeNames;
 public:
-  CheckMultiOpcodeMatcherNode(const StringRef *opcodes, unsigned numops)
-  : MatcherNode(CheckMultiOpcode), OpcodeNames(opcodes, opcodes+numops) {}
+  CheckMultiOpcodeMatcher(const StringRef *opcodes, unsigned numops)
+    : Matcher(CheckMultiOpcode), OpcodeNames(opcodes, opcodes+numops) {}
   
   unsigned getNumOpcodeNames() const { return OpcodeNames.size(); }
   StringRef getOpcodeName(unsigned i) const { return OpcodeNames[i]; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckMultiOpcode;
   }
   
@@ -313,36 +310,36 @@ public:
   
   
   
-/// CheckTypeMatcherNode - This checks to see if the current node has the
+/// CheckTypeMatcher - This checks to see if the current node has the
 /// specified type, if not it fails to match.
-class CheckTypeMatcherNode : public MatcherNode {
+class CheckTypeMatcher : public Matcher {
   MVT::SimpleValueType Type;
 public:
-  CheckTypeMatcherNode(MVT::SimpleValueType type)
-    : MatcherNode(CheckType), Type(type) {}
+  CheckTypeMatcher(MVT::SimpleValueType type)
+    : Matcher(CheckType), Type(type) {}
   
   MVT::SimpleValueType getType() const { return Type; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckType;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckChildTypeMatcherNode - This checks to see if a child node has the
+/// CheckChildTypeMatcher - This checks to see if a child node has the
 /// specified type, if not it fails to match.
-class CheckChildTypeMatcherNode : public MatcherNode {
+class CheckChildTypeMatcher : public Matcher {
   unsigned ChildNo;
   MVT::SimpleValueType Type;
 public:
-  CheckChildTypeMatcherNode(unsigned childno, MVT::SimpleValueType type)
-    : MatcherNode(CheckChildType), ChildNo(childno), Type(type) {}
+  CheckChildTypeMatcher(unsigned childno, MVT::SimpleValueType type)
+    : Matcher(CheckChildType), ChildNo(childno), Type(type) {}
   
   unsigned getChildNo() const { return ChildNo; }
   MVT::SimpleValueType getType() const { return Type; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckChildType;
   }
   
@@ -350,51 +347,51 @@ public:
 };
   
 
-/// CheckIntegerMatcherNode - This checks to see if the current node is a
+/// CheckIntegerMatcher - This checks to see if the current node is a
 /// ConstantSDNode with the specified integer value, if not it fails to match.
-class CheckIntegerMatcherNode : public MatcherNode {
+class CheckIntegerMatcher : public Matcher {
   int64_t Value;
 public:
-  CheckIntegerMatcherNode(int64_t value)
-    : MatcherNode(CheckInteger), Value(value) {}
+  CheckIntegerMatcher(int64_t value)
+    : Matcher(CheckInteger), Value(value) {}
   
   int64_t getValue() const { return Value; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckInteger;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckCondCodeMatcherNode - This checks to see if the current node is a
+/// CheckCondCodeMatcher - This checks to see if the current node is a
 /// CondCodeSDNode with the specified condition, if not it fails to match.
-class CheckCondCodeMatcherNode : public MatcherNode {
+class CheckCondCodeMatcher : public Matcher {
   StringRef CondCodeName;
 public:
-  CheckCondCodeMatcherNode(StringRef condcodename)
-  : MatcherNode(CheckCondCode), CondCodeName(condcodename) {}
+  CheckCondCodeMatcher(StringRef condcodename)
+    : Matcher(CheckCondCode), CondCodeName(condcodename) {}
   
   StringRef getCondCodeName() const { return CondCodeName; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckCondCode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckValueTypeMatcherNode - This checks to see if the current node is a
+/// CheckValueTypeMatcher - This checks to see if the current node is a
 /// VTSDNode with the specified type, if not it fails to match.
-class CheckValueTypeMatcherNode : public MatcherNode {
+class CheckValueTypeMatcher : public Matcher {
   StringRef TypeName;
 public:
-  CheckValueTypeMatcherNode(StringRef type_name)
-  : MatcherNode(CheckValueType), TypeName(type_name) {}
+  CheckValueTypeMatcher(StringRef type_name)
+    : Matcher(CheckValueType), TypeName(type_name) {}
   
   StringRef getTypeName() const { return TypeName; }
 
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckValueType;
   }
   
@@ -403,172 +400,172 @@ public:
   
   
   
-/// CheckComplexPatMatcherNode - This node runs the specified ComplexPattern on
+/// CheckComplexPatMatcher - This node runs the specified ComplexPattern on
 /// the current node.
-class CheckComplexPatMatcherNode : public MatcherNode {
+class CheckComplexPatMatcher : public Matcher {
   const ComplexPattern &Pattern;
 public:
-  CheckComplexPatMatcherNode(const ComplexPattern &pattern)
-  : MatcherNode(CheckComplexPat), Pattern(pattern) {}
+  CheckComplexPatMatcher(const ComplexPattern &pattern)
+    : Matcher(CheckComplexPat), Pattern(pattern) {}
   
   const ComplexPattern &getPattern() const { return Pattern; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckComplexPat;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// CheckAndImmMatcherNode - This checks to see if the current node is an 'and'
+/// CheckAndImmMatcher - This checks to see if the current node is an 'and'
 /// with something equivalent to the specified immediate.
-class CheckAndImmMatcherNode : public MatcherNode {
+class CheckAndImmMatcher : public Matcher {
   int64_t Value;
 public:
-  CheckAndImmMatcherNode(int64_t value)
-  : MatcherNode(CheckAndImm), Value(value) {}
+  CheckAndImmMatcher(int64_t value)
+    : Matcher(CheckAndImm), Value(value) {}
   
   int64_t getValue() const { return Value; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckAndImm;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CheckOrImmMatcherNode - This checks to see if the current node is an 'and'
+/// CheckOrImmMatcher - This checks to see if the current node is an 'and'
 /// with something equivalent to the specified immediate.
-class CheckOrImmMatcherNode : public MatcherNode {
+class CheckOrImmMatcher : public Matcher {
   int64_t Value;
 public:
-  CheckOrImmMatcherNode(int64_t value)
-    : MatcherNode(CheckOrImm), Value(value) {}
+  CheckOrImmMatcher(int64_t value)
+    : Matcher(CheckOrImm), Value(value) {}
   
   int64_t getValue() const { return Value; }
 
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckOrImm;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CheckFoldableChainNodeMatcherNode - This checks to see if the current node
+/// CheckFoldableChainNodeMatcher - This checks to see if the current node
 /// (which defines a chain operand) is safe to fold into a larger pattern.
-class CheckFoldableChainNodeMatcherNode : public MatcherNode {
+class CheckFoldableChainNodeMatcher : public Matcher {
 public:
-  CheckFoldableChainNodeMatcherNode()
-    : MatcherNode(CheckFoldableChainNode) {}
+  CheckFoldableChainNodeMatcher()
+    : Matcher(CheckFoldableChainNode) {}
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckFoldableChainNode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CheckChainCompatibleMatcherNode - Verify that the current node's chain
+/// CheckChainCompatibleMatcher - Verify that the current node's chain
 /// operand is 'compatible' with the specified recorded node's.
-class CheckChainCompatibleMatcherNode : public MatcherNode {
+class CheckChainCompatibleMatcher : public Matcher {
   unsigned PreviousOp;
 public:
-  CheckChainCompatibleMatcherNode(unsigned previousop)
-    : MatcherNode(CheckChainCompatible), PreviousOp(previousop) {}
+  CheckChainCompatibleMatcher(unsigned previousop)
+    : Matcher(CheckChainCompatible), PreviousOp(previousop) {}
   
   unsigned getPreviousOp() const { return PreviousOp; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckChainCompatible;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// EmitIntegerMatcherNode - This creates a new TargetConstant.
-class EmitIntegerMatcherNode : public MatcherNode {
+/// EmitIntegerMatcher - This creates a new TargetConstant.
+class EmitIntegerMatcher : public Matcher {
   int64_t Val;
   MVT::SimpleValueType VT;
 public:
-  EmitIntegerMatcherNode(int64_t val, MVT::SimpleValueType vt)
-  : MatcherNode(EmitInteger), Val(val), VT(vt) {}
+  EmitIntegerMatcher(int64_t val, MVT::SimpleValueType vt)
+    : Matcher(EmitInteger), Val(val), VT(vt) {}
   
   int64_t getValue() const { return Val; }
   MVT::SimpleValueType getVT() const { return VT; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitInteger;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// EmitStringIntegerMatcherNode - A target constant whose value is represented
+/// EmitStringIntegerMatcher - A target constant whose value is represented
 /// by a string.
-class EmitStringIntegerMatcherNode : public MatcherNode {
+class EmitStringIntegerMatcher : public Matcher {
   std::string Val;
   MVT::SimpleValueType VT;
 public:
-  EmitStringIntegerMatcherNode(const std::string &val, MVT::SimpleValueType vt)
-    : MatcherNode(EmitStringInteger), Val(val), VT(vt) {}
+  EmitStringIntegerMatcher(const std::string &val, MVT::SimpleValueType vt)
+    : Matcher(EmitStringInteger), Val(val), VT(vt) {}
   
   const std::string &getValue() const { return Val; }
   MVT::SimpleValueType getVT() const { return VT; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitStringInteger;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// EmitRegisterMatcherNode - This creates a new TargetConstant.
-class EmitRegisterMatcherNode : public MatcherNode {
+/// EmitRegisterMatcher - This creates a new TargetConstant.
+class EmitRegisterMatcher : public Matcher {
   /// Reg - The def for the register that we're emitting.  If this is null, then
   /// this is a reference to zero_reg.
   Record *Reg;
   MVT::SimpleValueType VT;
 public:
-  EmitRegisterMatcherNode(Record *reg, MVT::SimpleValueType vt)
-    : MatcherNode(EmitRegister), Reg(reg), VT(vt) {}
+  EmitRegisterMatcher(Record *reg, MVT::SimpleValueType vt)
+    : Matcher(EmitRegister), Reg(reg), VT(vt) {}
   
   Record *getReg() const { return Reg; }
   MVT::SimpleValueType getVT() const { return VT; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitRegister;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// EmitConvertToTargetMatcherNode - Emit an operation that reads a specified
+/// EmitConvertToTargetMatcher - Emit an operation that reads a specified
 /// recorded node and converts it from being a ISD::Constant to
 /// ISD::TargetConstant, likewise for ConstantFP.
-class EmitConvertToTargetMatcherNode : public MatcherNode {
+class EmitConvertToTargetMatcher : public Matcher {
   unsigned Slot;
 public:
-  EmitConvertToTargetMatcherNode(unsigned slot)
-    : MatcherNode(EmitConvertToTarget), Slot(slot) {}
+  EmitConvertToTargetMatcher(unsigned slot)
+    : Matcher(EmitConvertToTarget), Slot(slot) {}
   
   unsigned getSlot() const { return Slot; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitConvertToTarget;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// EmitMergeInputChainsMatcherNode - Emit a node that merges a list of input
+/// EmitMergeInputChainsMatcher - Emit a node that merges a list of input
 /// chains together with a token factor.  The list of nodes are the nodes in the
 /// matched pattern that have chain input/outputs.  This node adds all input
 /// chains of these nodes if they are not themselves a node in the pattern.
-class EmitMergeInputChainsMatcherNode : public MatcherNode {
+class EmitMergeInputChainsMatcher : public Matcher {
   SmallVector<unsigned, 3> ChainNodes;
 public:
-  EmitMergeInputChainsMatcherNode(const unsigned *nodes, unsigned NumNodes)
-  : MatcherNode(EmitMergeInputChains), ChainNodes(nodes, nodes+NumNodes) {}
+  EmitMergeInputChainsMatcher(const unsigned *nodes, unsigned NumNodes)
+    : Matcher(EmitMergeInputChains), ChainNodes(nodes, nodes+NumNodes) {}
   
   unsigned getNumNodes() const { return ChainNodes.size(); }
   
@@ -577,27 +574,27 @@ public:
     return ChainNodes[i];
   }  
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitMergeInputChains;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// EmitCopyToRegMatcherNode - Emit a CopyToReg node from a value to a physreg,
+/// EmitCopyToRegMatcher - Emit a CopyToReg node from a value to a physreg,
 /// pushing the chain and flag results.
 ///
-class EmitCopyToRegMatcherNode : public MatcherNode {
+class EmitCopyToRegMatcher : public Matcher {
   unsigned SrcSlot; // Value to copy into the physreg.
   Record *DestPhysReg;
 public:
-  EmitCopyToRegMatcherNode(unsigned srcSlot, Record *destPhysReg)
-  : MatcherNode(EmitCopyToReg), SrcSlot(srcSlot), DestPhysReg(destPhysReg) {}
+  EmitCopyToRegMatcher(unsigned srcSlot, Record *destPhysReg)
+    : Matcher(EmitCopyToReg), SrcSlot(srcSlot), DestPhysReg(destPhysReg) {}
   
   unsigned getSrcSlot() const { return SrcSlot; }
   Record *getDestPhysReg() const { return DestPhysReg; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitCopyToReg;
   }
   
@@ -606,27 +603,27 @@ public:
   
     
   
-/// EmitNodeXFormMatcherNode - Emit an operation that runs an SDNodeXForm on a
+/// EmitNodeXFormMatcher - Emit an operation that runs an SDNodeXForm on a
 /// recorded node and records the result.
-class EmitNodeXFormMatcherNode : public MatcherNode {
+class EmitNodeXFormMatcher : public Matcher {
   unsigned Slot;
   Record *NodeXForm;
 public:
-  EmitNodeXFormMatcherNode(unsigned slot, Record *nodeXForm)
-  : MatcherNode(EmitNodeXForm), Slot(slot), NodeXForm(nodeXForm) {}
+  EmitNodeXFormMatcher(unsigned slot, Record *nodeXForm)
+    : Matcher(EmitNodeXForm), Slot(slot), NodeXForm(nodeXForm) {}
   
   unsigned getSlot() const { return Slot; }
   Record *getNodeXForm() const { return NodeXForm; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitNodeXForm;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// EmitNodeMatcherNode - This signals a successful match and generates a node.
-class EmitNodeMatcherNode : public MatcherNode {
+/// EmitNodeMatcher - This signals a successful match and generates a node.
+class EmitNodeMatcher : public Matcher {
   std::string OpcodeName;
   const SmallVector<MVT::SimpleValueType, 3> VTs;
   const SmallVector<unsigned, 6> Operands;
@@ -637,12 +634,12 @@ class EmitNodeMatcherNode : public MatcherNode {
   /// operands in the root of the pattern.  The rest are appended to this node.
   int NumFixedArityOperands;
 public:
-  EmitNodeMatcherNode(const std::string &opcodeName,
+  EmitNodeMatcher(const std::string &opcodeName,
                       const MVT::SimpleValueType *vts, unsigned numvts,
                       const unsigned *operands, unsigned numops,
                       bool hasChain, bool hasFlag, bool hasmemrefs,
                       int numfixedarityoperands)
-    : MatcherNode(EmitNode), OpcodeName(opcodeName),
+    : Matcher(EmitNode), OpcodeName(opcodeName),
       VTs(vts, vts+numvts), Operands(operands, operands+numops),
       HasChain(hasChain), HasFlag(hasFlag), HasMemRefs(hasmemrefs),
       NumFixedArityOperands(numfixedarityoperands) {}
@@ -666,21 +663,21 @@ public:
   bool hasMemRefs() const { return HasMemRefs; }
   int getNumFixedArityOperands() const { return NumFixedArityOperands; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitNode;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
   
-/// MarkFlagResultsMatcherNode - This node indicates which non-root nodes in the
-/// pattern produce flags.  This allows CompleteMatchMatcherNode to update them
+/// MarkFlagResultsMatcher - This node indicates which non-root nodes in the
+/// pattern produce flags.  This allows CompleteMatchMatcher to update them
 /// with the output flag of the resultant code.
-class MarkFlagResultsMatcherNode : public MatcherNode {
+class MarkFlagResultsMatcher : public Matcher {
   SmallVector<unsigned, 3> FlagResultNodes;
 public:
-  MarkFlagResultsMatcherNode(const unsigned *nodes, unsigned NumNodes)
-  : MatcherNode(MarkFlagResults), FlagResultNodes(nodes, nodes+NumNodes) {}
+  MarkFlagResultsMatcher(const unsigned *nodes, unsigned NumNodes)
+    : Matcher(MarkFlagResults), FlagResultNodes(nodes, nodes+NumNodes) {}
   
   unsigned getNumNodes() const { return FlagResultNodes.size(); }
   
@@ -689,30 +686,30 @@ public:
     return FlagResultNodes[i];
   }  
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == MarkFlagResults;
   }
   
   virtual void print(raw_ostream &OS, unsigned indent = 0) const;
 };
 
-/// CompleteMatchMatcherNode - Complete a match by replacing the results of the
+/// CompleteMatchMatcher - Complete a match by replacing the results of the
 /// pattern with the newly generated nodes.  This also prints a comment
 /// indicating the source and dest patterns.
-class CompleteMatchMatcherNode : public MatcherNode {
+class CompleteMatchMatcher : public Matcher {
   SmallVector<unsigned, 2> Results;
   const PatternToMatch &Pattern;
 public:
-  CompleteMatchMatcherNode(const unsigned *results, unsigned numresults,
+  CompleteMatchMatcher(const unsigned *results, unsigned numresults,
                            const PatternToMatch &pattern)
-  : MatcherNode(CompleteMatch), Results(results, results+numresults),
+  : Matcher(CompleteMatch), Results(results, results+numresults),
     Pattern(pattern) {}
 
   unsigned getNumResults() const { return Results.size(); }
   unsigned getResult(unsigned R) const { return Results[R]; }
   const PatternToMatch &getPattern() const { return Pattern; }
   
-  static inline bool classof(const MatcherNode *N) {
+  static inline bool classof(const Matcher *N) {
     return N->getKind() == CompleteMatch;
   }
   

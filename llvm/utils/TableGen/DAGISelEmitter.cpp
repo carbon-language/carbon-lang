@@ -1945,7 +1945,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   }
   
 #ifdef ENABLE_NEW_ISEL
-  MatcherNode *Matcher = 0;
+  Matcher *TheMatcher = 0;
 
   // Add all the patterns to a temporary list so we can sort them.
   std::vector<const PatternToMatch*> Patterns;
@@ -1967,18 +1967,18 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     const PatternToMatch &Pattern = *Patterns.back();
     Patterns.pop_back();
     
-    MatcherNode *N = ConvertPatternToMatcher(Pattern, CGP);
+    Matcher *N = ConvertPatternToMatcher(Pattern, CGP);
     
-    if (Matcher == 0)
-      Matcher = N;
+    if (TheMatcher == 0)
+      TheMatcher = N;
     else
-      Matcher = new ScopeMatcherNode(N, Matcher);
+      TheMatcher = new ScopeMatcher(N, TheMatcher);
   }
 
-  Matcher = OptimizeMatcher(Matcher);
+  TheMatcher = OptimizeMatcher(TheMatcher);
   //Matcher->dump();
-  EmitMatcherTable(Matcher, OS);
-  delete Matcher;
+  EmitMatcherTable(TheMatcher, OS);
+  delete TheMatcher;
   
 #else
   // At this point, we have full information about the 'Patterns' we need to

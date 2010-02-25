@@ -14,24 +14,24 @@
 #include "DAGISelMatcher.h"
 using namespace llvm;
 
-static void ContractNodes(OwningPtr<MatcherNode> &MatcherPtr) {
+static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
   // If we reached the end of the chain, we're done.
-  MatcherNode *N = MatcherPtr.get();
+  Matcher *N = MatcherPtr.get();
   if (N == 0) return;
   
   // If we have a scope node, walk down both edges.
-  if (ScopeMatcherNode *Push = dyn_cast<ScopeMatcherNode>(N))
+  if (ScopeMatcher *Push = dyn_cast<ScopeMatcher>(N))
     ContractNodes(Push->getCheckPtr());
   
   // If we found a movechild node with a node that comes in a 'foochild' form,
   // transform it.
-  if (MoveChildMatcherNode *MC = dyn_cast<MoveChildMatcherNode>(N)) {
-    MatcherNode *New = 0;
-    if (RecordMatcherNode *RM = dyn_cast<RecordMatcherNode>(MC->getNext()))
-      New = new RecordChildMatcherNode(MC->getChildNo(), RM->getWhatFor());
+  if (MoveChildMatcher *MC = dyn_cast<MoveChildMatcher>(N)) {
+    Matcher *New = 0;
+    if (RecordMatcher *RM = dyn_cast<RecordMatcher>(MC->getNext()))
+      New = new RecordChildMatcher(MC->getChildNo(), RM->getWhatFor());
     
-    if (CheckTypeMatcherNode *CT= dyn_cast<CheckTypeMatcherNode>(MC->getNext()))
-      New = new CheckChildTypeMatcherNode(MC->getChildNo(), CT->getType());
+    if (CheckTypeMatcher *CT= dyn_cast<CheckTypeMatcher>(MC->getNext()))
+      New = new CheckChildTypeMatcher(MC->getChildNo(), CT->getType());
     
     if (New) {
       // Insert the new node.
@@ -43,9 +43,9 @@ static void ContractNodes(OwningPtr<MatcherNode> &MatcherPtr) {
     }
   }
   
-  if (MoveChildMatcherNode *MC = dyn_cast<MoveChildMatcherNode>(N))
-    if (MoveParentMatcherNode *MP = 
-          dyn_cast<MoveParentMatcherNode>(MC->getNext())) {
+  if (MoveChildMatcher *MC = dyn_cast<MoveChildMatcher>(N))
+    if (MoveParentMatcher *MP = 
+          dyn_cast<MoveParentMatcher>(MC->getNext())) {
       MatcherPtr.reset(MP->takeNext());
       return ContractNodes(MatcherPtr);
     }
@@ -53,21 +53,21 @@ static void ContractNodes(OwningPtr<MatcherNode> &MatcherPtr) {
   ContractNodes(N->getNextPtr());
 }
 
-static void FactorNodes(OwningPtr<MatcherNode> &MatcherPtr) {
+static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   // If we reached the end of the chain, we're done.
-  MatcherNode *N = MatcherPtr.get();
+  Matcher *N = MatcherPtr.get();
   if (N == 0) return;
   
   // If this is not a push node, just scan for one.
-  if (!isa<ScopeMatcherNode>(N))
+  if (!isa<ScopeMatcher>(N))
     return FactorNodes(N->getNextPtr());
   
   // Okay, pull together the series of linear push nodes into a vector so we can
   // inspect it more easily.
-  SmallVector<MatcherNode*, 32> OptionsToMatch;
+  SmallVector<Matcher*, 32> OptionsToMatch;
   
-  MatcherNode *CurNode = N;
-  for (; ScopeMatcherNode *PMN = dyn_cast<ScopeMatcherNode>(CurNode);
+  Matcher *CurNode = N;
+  for (; ScopeMatcher *PMN = dyn_cast<ScopeMatcher>(CurNode);
        CurNode = PMN->getNext())
     OptionsToMatch.push_back(PMN->getCheck());
   OptionsToMatch.push_back(CurNode);
@@ -75,8 +75,8 @@ static void FactorNodes(OwningPtr<MatcherNode> &MatcherPtr) {
   
 }
 
-MatcherNode *llvm::OptimizeMatcher(MatcherNode *Matcher) {
-  OwningPtr<MatcherNode> MatcherPtr(Matcher);
+Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher) {
+  OwningPtr<Matcher> MatcherPtr(TheMatcher);
   ContractNodes(MatcherPtr);
   FactorNodes(MatcherPtr);
   return MatcherPtr.take();
