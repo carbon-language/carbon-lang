@@ -745,10 +745,52 @@ void DwarfException::EmitExceptionTable() {
     TTypeBaseOffset;                            // TType base offset
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
-  if (HaveTTData)
+  if (HaveTTData) {
     // Account for any extra padded that will be added to the call site table
     // length.
-    EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset");
+    unsigned Offset = TTypeBaseOffset + SizeAlign;
+    unsigned OffsetSize = MCAsmInfo::getULEB128Size(Offset);
+    unsigned TTypeBaseOverflow = 0;
+
+    // If adding the extra alignment to the TType base offset makes the new
+    // value of TTypeBaseOffset overflow (i.e., go from encoded as 1 byte to 2
+    // bytes), then the padding needs to be smaller by that amount.
+    if (OffsetSize != TTypeBaseOffsetSize) {
+      assert((int)OffsetSize - (int)TTypeBaseOffsetSize);
+      TTypeBaseOverflow = OffsetSize - TTypeBaseOffsetSize;
+      assert(TTypeBaseOffsetSize >= SizeAlign);
+      SizeAlign -= TTypeBaseOverflow;
+    }
+
+    if (!TTypeBaseOverflow || SizeAlign != 0)
+      EmitULEB128(Offset, "@TType base offset");
+    else
+      // If adding the extra padding to this offset causes it to buffer to the
+      // size of the padding needed, then we should perform the padding here and
+      // not at the call site table below. E.g. if we have this:
+      //
+      //    GCC_except_table1:
+      //    Lexception1:
+      //        .byte   0xff  ## @LPStart Encoding = omit
+      //        .byte   0x9b  ## @TType Encoding = indirect pcrel sdata4
+      //        .byte   0x7f  ## @TType base offset
+      //        .byte   0x03  ## Call site Encoding = udata4
+      //        .byte   0x89  ## Call site table length
+      //
+      // with padding of 1. We want to emit the padding like this:
+      // 
+      //    GCC_except_table1:
+      //    Lexception1:
+      //        .byte   0xff  ## @LPStart Encoding = omit
+      //        .byte   0x9b  ## @TType Encoding = indirect pcrel sdata4
+      //        .byte   0xff  ## @TType base offset
+      //        .space  1,0   ## Padding
+      //        .byte   0x03  ## Call site Encoding = udata4
+      //        .byte   0x89  ## Call site table length
+      //
+      // and not with padding on the "Call site table length" entry.
+      EmitULEB128(TTypeBaseOffset, "@TType base offset", TTypeBaseOverflow);
+  }
 
   // SjLj Exception handling
   if (IsSJLJ) {
