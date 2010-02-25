@@ -334,11 +334,7 @@ static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
     Constant *E = getFoldedSizeOf(ATy->getElementType(), DestTy, true);
     return ConstantExpr::getNUWMul(E, N);
   }
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-    Constant *N = ConstantInt::get(DestTy, VTy->getNumElements());
-    Constant *E = getFoldedSizeOf(VTy->getElementType(), DestTy, true);
-    return ConstantExpr::getNUWMul(E, N);
-  }
+
   if (const StructType *STy = dyn_cast<StructType>(Ty))
     if (!STy->isPacked()) {
       unsigned NumElems = STy->getNumElements();
@@ -464,13 +460,7 @@ static Constant *getFoldedOffsetOf(const Type *Ty, Constant *FieldNo,
     Constant *E = getFoldedSizeOf(ATy->getElementType(), DestTy, true);
     return ConstantExpr::getNUWMul(E, N);
   }
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-    Constant *N = ConstantExpr::getCast(CastInst::getCastOpcode(FieldNo, false,
-                                                                DestTy, false),
-                                        FieldNo, DestTy);
-    Constant *E = getFoldedSizeOf(VTy->getElementType(), DestTy, true);
-    return ConstantExpr::getNUWMul(E, N);
-  }
+
   if (const StructType *STy = dyn_cast<StructType>(Ty))
     if (!STy->isPacked()) {
       unsigned NumElems = STy->getNumElements();
