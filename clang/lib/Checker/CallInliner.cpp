@@ -26,6 +26,7 @@ public:
   }
 
   virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
+  virtual void EvalEndPath(GREndPathNodeBuilder &B,void *tag,GRExprEngine &Eng);
 };
 }
 
@@ -45,10 +46,79 @@ bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   if (!FD->isThisDeclarationADefinition())
     return false;
 
-  // Now we have the definition of the callee, create a CallEnter node.
-  CallEnter Loc(CE, FD, C.getPredecessor()->getLocationContext());
-  C.addTransition(state, Loc);
+  GRStmtNodeBuilder &Builder = C.getNodeBuilder();
+  // Make a new LocationContext.
+  const StackFrameContext *LocCtx = C.getAnalysisManager().getStackFrame(FD, 
+                                   C.getPredecessor()->getLocationContext(), CE,
+                                   Builder.getBlock(), Builder.getIndex());
+
+  CFGBlock const *Entry = &(LocCtx->getCFG()->getEntry());
+
+  assert (Entry->empty() && "Entry block must be empty.");
+
+  assert (Entry->succ_size() == 1 && "Entry block must have 1 successor.");
+
+  // Get the solitary successor.
+  CFGBlock const *SuccB = *(Entry->succ_begin());
+
+  // Construct an edge representing the starting location in the function.
+  BlockEdge Loc(Entry, SuccB, LocCtx);
+
+  state = C.getStoreManager().EnterStackFrame(state, LocCtx);
+
+  // This is a hack. We really should not use the GRStmtNodeBuilder.
+  bool isNew;
+  GRExprEngine &Eng = C.getEngine();
+  ExplodedNode *Pred = C.getPredecessor();
+  
+
+  ExplodedNode *SuccN = Eng.getGraph().getNode(Loc, state, &isNew);
+  SuccN->addPredecessor(Pred, Eng.getGraph());
+  C.getNodeBuilder().Deferred.erase(Pred);
+  
+  if (isNew)
+    Builder.getWorkList()->Enqueue(SuccN);
+
+  Builder.HasGeneratedNode = true;
 
   return true;
 }
 
+void CallInliner::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
+                              GRExprEngine &Eng) {
+  const GRState *state = B.getState();
+
+  ExplodedNode *Pred = B.getPredecessor();
+
+  const StackFrameContext *LocCtx = 
+                         cast<StackFrameContext>(Pred->getLocationContext());
+  // Check if this is the top level stack frame.
+  if (!LocCtx->getParent())
+    return;
+
+  const StackFrameContext *ParentSF = 
+                                   cast<StackFrameContext>(LocCtx->getParent());
+
+  SymbolReaper SymReaper(*ParentSF->getLiveVariables(), Eng.getSymbolManager(), 
+                         ParentSF);
+  const Stmt *CE = LocCtx->getCallSite();
+
+  state = Eng.getStateManager().RemoveDeadBindings(state, const_cast<Stmt*>(CE),
+                                                   SymReaper);
+
+
+  PostStmt NodeLoc(CE, LocCtx->getParent());
+
+  bool isNew;
+  ExplodedNode *Succ = Eng.getGraph().getNode(NodeLoc, state, &isNew);
+  Succ->addPredecessor(Pred, Eng.getGraph());
+
+  // When creating the new work list unit, increment the statement index to
+  // point to the statement after the CallExpr.
+  if (isNew)
+    B.getWorkList().Enqueue(Succ, 
+                            *const_cast<CFGBlock*>(LocCtx->getCallSiteBlock()),
+                            LocCtx->getIndex() + 1);
+
+  B.HasGeneratedNode = true;
+}

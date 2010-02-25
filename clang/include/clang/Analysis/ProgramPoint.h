@@ -26,7 +26,6 @@
 namespace clang {
 
 class LocationContext;
-class FunctionDecl;
 
 class ProgramPoint {
 public:
@@ -42,8 +41,6 @@ public:
               PostPurgeDeadSymbolsKind,
               PostStmtCustomKind,
               PostLValueKind,
-              CallEnterKind,
-              CallExitKind,
               MinPostStmtKind = PostStmtKind,
               MaxPostStmtKind = PostLValueKind };
 
@@ -308,36 +305,6 @@ public:
 
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == BlockEdgeKind;
-  }
-};
-
-class CallEnter : public StmtPoint {
-public:
-  // CallEnter uses the caller's location context.
-  CallEnter(const Stmt *S, const FunctionDecl *fd, const LocationContext *L)
-    : StmtPoint(S, fd, CallEnterKind, L, 0) {}
-
-  const Stmt *getCallExpr() const {
-    return static_cast<const Stmt *>(getData1());
-  }
-
-  const FunctionDecl *getCallee() const {
-    return static_cast<const FunctionDecl *>(getData2());
-  }
-
-  static bool classof(const ProgramPoint *Location) {
-    return Location->getKind() == CallEnterKind;
-  }
-};
-
-class CallExit : public StmtPoint {
-public:
-  // CallExit uses the callee's location context.
-  CallExit(const Stmt *S, const LocationContext *L)
-    : StmtPoint(S, 0, CallExitKind, L, 0) {}
-
-  static bool classof(const ProgramPoint *Location) {
-    return Location->getKind() == CallExitKind;
   }
 };
 

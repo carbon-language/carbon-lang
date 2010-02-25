@@ -155,14 +155,6 @@ public:
       Dst.Add(Pred);
   }
 
-  // Generate a node with a new program point different from the one that will
-  // be created by the GRStmtNodeBuilder.
-  void addTransition(const GRState *state, ProgramPoint Loc) {
-    ExplodedNode *N = B.generateNode(Loc, state, Pred);
-    if (N)
-      addTransition(N);
-  }
-
   void EmitReport(BugReport *R) {
     Eng.getBugReporter().EmitReport(R);
   }
