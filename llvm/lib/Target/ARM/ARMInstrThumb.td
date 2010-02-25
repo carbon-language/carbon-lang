@@ -142,6 +142,48 @@ def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
   let Inst{7-0} = 0b00000000;
 } 
 
+def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "",
+                  [/* For disassembly only; pattern left blank */]>,
+             T1Encoding<0b101111> {
+  let Inst{9-8} = 0b11;
+  let Inst{7-0} = 0b00010000;
+} 
+
+def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "",
+                [/* For disassembly only; pattern left blank */]>,
+           T1Encoding<0b101111> {
+  let Inst{9-8} = 0b11;
+  let Inst{7-0} = 0b00100000;
+} 
+
+def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "",
+                [/* For disassembly only; pattern left blank */]>,
+           T1Encoding<0b101111> {
+  let Inst{9-8} = 0b11;
+  let Inst{7-0} = 0b00110000;
+} 
+
+def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "",
+                [/* For disassembly only; pattern left blank */]>,
+           T1Encoding<0b101111> {
+  let Inst{9-8} = 0b11;
+  let Inst{7-0} = 0b01000000;
+} 
+
+def tSETENDBE : T1I<(outs), (ins), NoItinerary, "setend\tbe",
+                    [/* For disassembly only; pattern left blank */]>,
+                T1Encoding<0b101101> {
+  let Inst{9-5} = 0b10010;
+  let Inst{3} = 1;
+}
+
+def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
+                    [/* For disassembly only; pattern left blank */]>,
+                T1Encoding<0b101101> {
+  let Inst{9-5} = 0b10010;
+  let Inst{3} = 0;
+}
+
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
 def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
