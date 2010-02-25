@@ -660,8 +660,7 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   unsigned CastOpc = IdxVT.bitsGT(PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
   Tmp3 = DAG.getNode(CastOpc, dl, PtrVT, Tmp3);
   // Add the offset to the index.
-  unsigned EltSize = TLI.getTargetData()->
-    getTypeAllocSize(EltVT.getTypeForEVT(*DAG.getContext()));
+  unsigned EltSize = EltVT.getSizeInBits()/8;
   Tmp3 = DAG.getNode(ISD::MUL, dl, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
   SDValue StackPtr2 = DAG.getNode(ISD::ADD, dl, IdxVT, Tmp3, StackPtr);
   // Store the scalar value.
@@ -1513,9 +1512,8 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
                             false, false, 0);
 
   // Add the offset to the index.
-  unsigned EltSize = TLI.getTargetData()->getTypeAllocSize(
-    Vec.getValueType().getVectorElementType().getTypeForEVT(*DAG.getContext()));
-
+  unsigned EltSize =
+      Vec.getValueType().getVectorElementType().getSizeInBits()/8;
   Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, Idx.getValueType()));
 
@@ -1550,8 +1548,7 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
 
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
-  unsigned TypeByteSize = TLI.getTargetData()->
-    getTypeAllocSize(EltVT.getTypeForEVT(*DAG.getContext()));
+  unsigned TypeByteSize = EltVT.getSizeInBits() / 8;
   // Store (in the right endianness) the elements to memory.
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     // Ignore undef elements.

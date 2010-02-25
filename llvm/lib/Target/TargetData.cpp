@@ -455,7 +455,7 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
     return getPointerSizeInBits();
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    return getTypeSizeInBits(ATy->getElementType())*ATy->getNumElements();
+    return getTypeAllocSizeInBits(ATy->getElementType())*ATy->getNumElements();
   }
   case Type::StructTyID:
     // Get the layout annotation... which is lazily created on demand.
@@ -482,47 +482,6 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
     break;
   }
   return 0;
-}
-
-/// getTypeStoreSize - Return the maximum number of bytes that may be
-/// overwritten by storing the specified type.  For example, returns 5
-/// for i36 and 10 for x86_fp80.
-uint64_t TargetData::getTypeStoreSize(const Type *Ty) const {
-  // Arrays and vectors are allocated as sequences of elements.
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    if (ATy->getNumElements() == 0)
-      return 0;
-    const Type *ElementType = ATy->getElementType();
-    return getTypeAllocSize(ElementType) * (ATy->getNumElements() - 1) +
-           getTypeStoreSize(ElementType);
-  }
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-    const Type *ElementType = VTy->getElementType();
-    return getTypeAllocSize(ElementType) * (VTy->getNumElements() - 1) +
-           getTypeStoreSize(ElementType);
-  }
-
-  return (getTypeSizeInBits(Ty)+7)/8;
-}
-
-/// getTypeAllocSize - Return the offset in bytes between successive objects
-/// of the specified type, including alignment padding.  This is the amount
-/// that alloca reserves for this type.  For example, returns 12 or 16 for
-/// x86_fp80, depending on alignment.
-uint64_t TargetData::getTypeAllocSize(const Type* Ty) const {
-  // Arrays and vectors are allocated as sequences of elements.
-  // Note that this means that things like vectors-of-i1 are not bit-packed
-  // in memory (except on a hypothetical bit-addressable machine). If
-  // someone builds hardware with native vector-of-i1 stores and the idiom
-  // of bitcasting vectors to integers in order to bitpack them for storage
-  // isn't sufficient, TargetData may need new "size" concept.
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty))
-    return getTypeAllocSize(ATy->getElementType()) * ATy->getNumElements();
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return getTypeAllocSize(VTy->getElementType()) * VTy->getNumElements();
-
-  // Round up to the next alignment boundary.
-  return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
 }
 
 /*!

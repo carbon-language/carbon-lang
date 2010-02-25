@@ -193,7 +193,9 @@ public:
   /// getTypeStoreSize - Return the maximum number of bytes that may be
   /// overwritten by storing the specified type.  For example, returns 5
   /// for i36 and 10 for x86_fp80.
-  uint64_t getTypeStoreSize(const Type *Ty) const;
+  uint64_t getTypeStoreSize(const Type *Ty) const {
+    return (getTypeSizeInBits(Ty)+7)/8;
+  }
 
   /// getTypeStoreSizeInBits - Return the maximum number of bits that may be
   /// overwritten by storing the specified type; always a multiple of 8.  For
@@ -206,7 +208,10 @@ public:
   /// of the specified type, including alignment padding.  This is the amount
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSize(const Type* Ty) const;
+  uint64_t getTypeAllocSize(const Type* Ty) const {
+    // Round up to the next alignment boundary.
+    return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
+  }
 
   /// getTypeAllocSizeInBits - Return the offset in bits between successive
   /// objects of the specified type, including alignment padding; always a
