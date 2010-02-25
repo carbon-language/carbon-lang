@@ -103,10 +103,10 @@ public:
     return (getHashImpl() << 4) ^ getKind();
   }
   
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const = 0;
+  void print(raw_ostream &OS, unsigned indent = 0) const;
   void dump() const;
 protected:
-  void printNext(raw_ostream &OS, unsigned indent) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const = 0;
   virtual bool isEqualImpl(const Matcher *M) const = 0;
   virtual unsigned getHashImpl() const = 0;
 };
@@ -132,7 +132,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return false; }
   virtual unsigned getHashImpl() const { return 0; }
 };
@@ -153,7 +153,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
@@ -179,7 +179,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<RecordChildMatcher>(M)->getChildNo() == getChildNo();
   }
@@ -196,7 +196,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
@@ -213,7 +213,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
@@ -232,7 +232,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<MoveChildMatcher>(M)->getChildNo() == getChildNo();
   }
@@ -250,7 +250,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
@@ -271,7 +271,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckSameMatcher>(M)->getMatchNumber() == getMatchNumber();
   }
@@ -294,7 +294,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckPatternPredicateMatcher>(M)->getPredicate() == Predicate;
   }
@@ -316,7 +316,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckPredicateMatcher>(M)->PredName == PredName;
   }
@@ -339,7 +339,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckOpcodeMatcher>(M)->OpcodeName == OpcodeName;
   }
@@ -362,7 +362,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckMultiOpcodeMatcher>(M)->OpcodeNames == OpcodeNames;
   }
@@ -386,7 +386,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckTypeMatcher>(this)->Type == Type;
   }
@@ -410,7 +410,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckChildTypeMatcher>(M)->ChildNo == ChildNo &&
            cast<CheckChildTypeMatcher>(M)->Type == Type;
@@ -434,7 +434,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckIntegerMatcher>(M)->Value == Value;
   }
@@ -456,7 +456,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckCondCodeMatcher>(M)->CondCodeName == CondCodeName;
   }
@@ -478,7 +478,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckValueTypeMatcher>(M)->TypeName == TypeName;
   }
@@ -502,7 +502,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return &cast<CheckComplexPatMatcher>(M)->Pattern == &Pattern;
   }
@@ -526,7 +526,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckAndImmMatcher>(M)->Value == Value;
   }
@@ -548,7 +548,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckOrImmMatcher>(M)->Value == Value;
   }
@@ -567,7 +567,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
   virtual unsigned getHashImpl() const { return 0; }
 };
@@ -587,7 +587,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CheckChainCompatibleMatcher>(this)->PreviousOp == PreviousOp;
   }
@@ -610,7 +610,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitIntegerMatcher>(M)->Val == Val &&
            cast<EmitIntegerMatcher>(M)->VT == VT;
@@ -635,7 +635,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitStringIntegerMatcher>(M)->Val == Val &&
            cast<EmitStringIntegerMatcher>(M)->VT == VT;
@@ -661,7 +661,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitRegisterMatcher>(M)->Reg == Reg &&
            cast<EmitRegisterMatcher>(M)->VT == VT;
@@ -687,7 +687,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitConvertToTargetMatcher>(M)->Slot == Slot;
   }
@@ -716,7 +716,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitMergeInputChainsMatcher>(M)->ChainNodes == ChainNodes;
   }
@@ -741,7 +741,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitCopyToRegMatcher>(M)->SrcSlot == SrcSlot &&
            cast<EmitCopyToRegMatcher>(M)->DestPhysReg == DestPhysReg; 
@@ -770,7 +770,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<EmitNodeXFormMatcher>(M)->Slot == Slot &&
            cast<EmitNodeXFormMatcher>(M)->NodeXForm == NodeXForm; 
@@ -826,7 +826,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const;
   virtual unsigned getHashImpl() const;
 };
@@ -852,7 +852,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<MarkFlagResultsMatcher>(M)->FlagResultNodes == FlagResultNodes;
   }
@@ -880,7 +880,7 @@ public:
   }
   
 private:
-  virtual void print(raw_ostream &OS, unsigned indent = 0) const;
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
     return cast<CompleteMatchMatcher>(M)->Results == Results &&
           &cast<CompleteMatchMatcher>(M)->Pattern == &Pattern;
