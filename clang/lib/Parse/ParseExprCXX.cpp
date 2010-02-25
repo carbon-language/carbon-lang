@@ -212,8 +212,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
             Actions.ActOnCXXNestedNameSpecifier(CurScope, SS,
                                                 TypeToken.getAnnotationValue(),
                                                 TypeToken.getAnnotationRange(),
-                                                CCLoc,
-                                                false));
+                                                CCLoc));
         else
           SS.setScopeRep(0);
         SS.setEndLoc(CCLoc);
@@ -240,15 +239,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     // If we get foo:bar, this is almost certainly a typo for foo::bar.  Recover
     // and emit a fixit hint for it.
     if (Next.is(tok::colon) && !ColonIsSacred) {
-      if (CheckForDestructor && GetLookAheadToken(2).is(tok::tilde) &&
-          !Actions.isNonTypeNestedNameSpecifier(CurScope, SS, Tok.getLocation(),
-                                                II, ObjectType)) {
-        *MayBePseudoDestructor = true;
-        return HasScopeSpecifier;
-      }
-
-      if (Actions.IsInvalidUnlessNestedName(CurScope, SS, II, 
-                                            false, ObjectType,
+      if (Actions.IsInvalidUnlessNestedName(CurScope, SS, II, ObjectType, 
                                             EnteringContext) &&
           // If the token after the colon isn't an identifier, it's still an
           // error, but they probably meant something else strange so don't
@@ -287,8 +278,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
 
       SS.setScopeRep(
         Actions.ActOnCXXNestedNameSpecifier(CurScope, SS, IdLoc, CCLoc, II,
-                                            false, ObjectType,
-                                            EnteringContext));
+                                            ObjectType, EnteringContext));
       SS.setEndLoc(CCLoc);
       continue;
     }

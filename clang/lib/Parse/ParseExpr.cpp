@@ -1004,7 +1004,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         if (LHS.isInvalid())
           break;
 
-        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false, 
+        ParseOptionalCXXScopeSpecifier(SS, ObjectType, false,
                                        &MayBePseudoDestructor);
       }
 

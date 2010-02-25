@@ -365,11 +365,6 @@ public:
   /// \param II the identifier that represents the scope that this
   /// nested-name-specifier refers to, e.g., the "bar" in "foo::bar::".
   ///
-  /// \param MayBePseudoDestructor Whether this nested-name-specifier
-  /// may be part of a pseudo-destructor, meaning that we are in a
-  /// member access expression (such as p->T::~T()) and a '~' follows
-  /// the '::'.
-  ///
   /// \param ObjectType if this nested-name-specifier occurs as part of a
   /// C++ member access expression such as "x->Base::f", the type of the base
   /// object (e.g., *x in the example, if "x" were a pointer).
@@ -384,7 +379,6 @@ public:
                                                   SourceLocation IdLoc,
                                                   SourceLocation CCLoc,
                                                   IdentifierInfo &II,
-                                                  bool MayBePseudoDestructor,
                                                   TypeTy *ObjectType,
                                                   bool EnteringContext) {
     return 0;
@@ -399,7 +393,6 @@ public:
   virtual bool IsInvalidUnlessNestedName(Scope *S,
                                          const CXXScopeSpec &SS,
                                          IdentifierInfo &II,
-                                         bool MayBePseudoDestructor,
                                          TypeTy *ObjectType,
                                          bool EnteringContext) {
     return false;
@@ -417,8 +410,7 @@ public:
                                                   const CXXScopeSpec &SS,
                                                   TypeTy *Type,
                                                   SourceRange TypeRange,
-                                                  SourceLocation CCLoc,
-                                                  bool MayBePseudoDestructor) {
+                                                  SourceLocation CCLoc) {
     return 0;
   }
 

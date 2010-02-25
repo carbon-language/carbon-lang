@@ -176,15 +176,16 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
 
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
-    if (const TagType *Tag = NNS->getAsType()->getAs<TagType>())
-      return Tag->getDecl();
-    break;
-  } 
+    const TagType *Tag = NNS->getAsType()->getAs<TagType>();
+    assert(Tag && "Non-tag type in nested-name-specifier");
+    return Tag->getDecl();
+  } break;
 
   case NestedNameSpecifier::Global:
     return Context.getTranslationUnitDecl();
   }
 
+  // Required to silence a GCC warning.
   return 0;
 }
 
@@ -269,8 +270,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXGlobalScopeSpecifier(Scope *S,
 
 /// \brief Determines whether the given declaration is an valid acceptable
 /// result for name lookup of a nested-name-specifier.
-bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD,
-                                           bool MayBePseudoDestructor) {
+bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
   if (!SD)
     return false;
 
@@ -280,11 +280,6 @@ bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD,
 
   if (!isa<TypeDecl>(SD))
     return false;
-
-  // If this may be part of a pseudo-destructor expression, we'll
-  // accept any type.
-  if (MayBePseudoDestructor)
-    return true;
 
   // Determine whether we have a class (or, in C++0x, an enum) or
   // a typedef thereof. If so, build the nested-name-specifier.
@@ -326,7 +321,7 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
     return 0;
 
   NamedDecl *Result = Found.getFoundDecl();
-  if (isAcceptableNestedNameSpecifier(Result, true))
+  if (isAcceptableNestedNameSpecifier(Result))
     return Result;
 
   return 0;
@@ -398,7 +393,6 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
-                                                    bool MayBePseudoDestructor,
                                                     QualType ObjectType,
                                                   NamedDecl *ScopeLookupResult,
                                                     bool EnteringContext,
@@ -493,8 +487,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     DeclarationName Name = Found.getLookupName();
     if (CorrectTypo(Found, S, &SS, LookupCtx, EnteringContext) &&
         Found.isSingleResult() &&
-        isAcceptableNestedNameSpecifier(Found.getAsSingle<NamedDecl>(),
-                                        MayBePseudoDestructor)) {
+        isAcceptableNestedNameSpecifier(Found.getAsSingle<NamedDecl>())) {
       if (LookupCtx)
         Diag(Found.getNameLoc(), diag::err_no_member_suggest)
           << Name << LookupCtx << Found.getLookupName() << SS.getRange()
@@ -514,7 +507,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
   }
 
   NamedDecl *SD = Found.getAsSingle<NamedDecl>();
-  if (isAcceptableNestedNameSpecifier(SD, MayBePseudoDestructor)) {
+  if (isAcceptableNestedNameSpecifier(SD)) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope) {
       // C++ [basic.lookup.classref]p4:
       //   [...] If the name is found in both contexts, the
@@ -526,14 +519,13 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       // scope, reconstruct the result from the template instantiation itself.
       NamedDecl *OuterDecl;
       if (S) {
-        LookupResult FoundOuter(*this, &II, IdLoc, 
-                                LookupNestedNameSpecifierName);
+        LookupResult FoundOuter(*this, &II, IdLoc, LookupNestedNameSpecifierName);
         LookupName(FoundOuter, S);
         OuterDecl = FoundOuter.getAsSingle<NamedDecl>();
       } else
         OuterDecl = ScopeLookupResult;
 
-      if (isAcceptableNestedNameSpecifier(OuterDecl, MayBePseudoDestructor) &&
+      if (isAcceptableNestedNameSpecifier(OuterDecl) &&
           OuterDecl->getCanonicalDecl() != SD->getCanonicalDecl() &&
           (!isa<TypeDecl>(OuterDecl) || !isa<TypeDecl>(SD) ||
            !Context.hasSameType(
@@ -610,11 +602,9 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     SourceLocation IdLoc,
                                                     SourceLocation CCLoc,
                                                     IdentifierInfo &II,
-                                                    bool MayBePseudoDestructor,
                                                     TypeTy *ObjectTypePtr,
                                                     bool EnteringContext) {
   return BuildCXXNestedNameSpecifier(S, SS, IdLoc, CCLoc, II,
-                                     MayBePseudoDestructor,
                                      QualType::getFromOpaquePtr(ObjectTypePtr),
                                      /*ScopeLookupResult=*/0, EnteringContext,
                                      false);
@@ -627,13 +617,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 ///
 /// The arguments are the same as those passed to ActOnCXXNestedNameSpecifier.
 bool Sema::IsInvalidUnlessNestedName(Scope *S, const CXXScopeSpec &SS,
-                                     IdentifierInfo &II, 
-                                     bool MayBePseudoDestructor,
-                                     TypeTy *ObjectType,
+                                     IdentifierInfo &II, TypeTy *ObjectType,
                                      bool EnteringContext) {
   return BuildCXXNestedNameSpecifier(S, SS, SourceLocation(), SourceLocation(),
-                                     II, MayBePseudoDestructor,
-                                     QualType::getFromOpaquePtr(ObjectType),
+                                     II, QualType::getFromOpaquePtr(ObjectType),
                                      /*ScopeLookupResult=*/0, EnteringContext,
                                      true);
 }
@@ -642,8 +629,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
                                                     const CXXScopeSpec &SS,
                                                     TypeTy *Ty,
                                                     SourceRange TypeRange,
-                                                    SourceLocation CCLoc,
-                                                  bool MayBePseudoDestructor) {
+                                                    SourceLocation CCLoc) {
   NestedNameSpecifier *Prefix
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   QualType T = GetTypeFromParser(Ty);
