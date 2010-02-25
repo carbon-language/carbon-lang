@@ -39,8 +39,6 @@ static bool CompareByFrequency(const std::pair<const llvm::Type*,
 
 /// ValueEnumerator - Enumerate module-level information.
 ValueEnumerator::ValueEnumerator(const Module *M) {
-  InstructionCount = 0;
-
   // Enumerate the global variables.
   for (Module::const_global_iterator I = M->global_begin(),
          E = M->global_end(); I != E; ++I)
@@ -377,6 +375,7 @@ void ValueEnumerator::EnumerateAttributes(const AttrListPtr &PAL) {
 
 
 void ValueEnumerator::incorporateFunction(const Function &F) {
+  InstructionCount = 0;
   NumModuleValues = Values.size();
 
   // Adding function arguments to the value table.

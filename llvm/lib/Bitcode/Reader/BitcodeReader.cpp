@@ -1622,6 +1622,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
   if (Stream.EnterSubBlock(bitc::FUNCTION_BLOCK_ID))
     return Error("Malformed block record");
 
+  InstructionList.clear();
   unsigned ModuleValueListSize = ValueList.size();
 
   // Add all the function arguments to the value table.
