@@ -98,6 +98,9 @@ static void CheckOpen(CheckerContext &C, const CallExpr *CE, BugType *&BT) {
 
   if (CE->getNumArgs() < 3) {
     ExplodedNode *N = C.GenerateSink(trueState);
+    if (!N)
+      return;
+
     EnhancedBugReport *report =
       new EnhancedBugReport(*BT,
                             "Call to 'open' requires a third argument when "
