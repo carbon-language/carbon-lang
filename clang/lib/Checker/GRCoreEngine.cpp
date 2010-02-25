@@ -144,6 +144,14 @@ void GRCoreEngine::ProcessSwitch(GRSwitchNodeBuilder& Builder) {
   SubEngine.ProcessSwitch(Builder);
 }
 
+void GRCoreEngine::ProcessCallEnter(GRCallEnterNodeBuilder &Builder) {
+  SubEngine.ProcessCallEnter(Builder);
+}
+
+void GRCoreEngine::ProcessCallExit(GRCallExitNodeBuilder &Builder) {
+  SubEngine.ProcessCallExit(Builder);
+}
+
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
 bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
 
@@ -196,6 +204,15 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
         assert (false && "BlockExit location never occur in forward analysis.");
         break;
 
+      case ProgramPoint::CallEnterKind:
+        HandleCallEnter(cast<CallEnter>(Node->getLocation()), WU.getBlock(), 
+                        WU.getIndex(), Node);
+        break;
+
+      case ProgramPoint::CallExitKind:
+        HandleCallExit(cast<CallExit>(Node->getLocation()), Node);
+        break;
+
       default:
         assert(isa<PostStmt>(Node->getLocation()));
         HandlePostStmt(cast<PostStmt>(Node->getLocation()), WU.getBlock(),
@@ -207,6 +224,17 @@ bool GRCoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps) {
   return WList->hasWork();
 }
 
+void GRCoreEngine::HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
+                                   unsigned Index, ExplodedNode *Pred) {
+  GRCallEnterNodeBuilder Builder(*this, Pred, L.getCallExpr(), L.getCallee(), 
+                                 Block, Index);
+  ProcessCallEnter(Builder);
+}
+
+void GRCoreEngine::HandleCallExit(const CallExit &L, ExplodedNode *Pred) {
+  GRCallExitNodeBuilder Builder(*this, Pred);
+  ProcessCallExit(Builder);
+}
 
 void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
 
@@ -399,6 +427,12 @@ GRStmtNodeBuilder::~GRStmtNodeBuilder() {
 
 void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
   assert (!N->isSink());
+
+  // Check if this node entered a callee.
+  if (isa<CallEnter>(N->getLocation())) {
+    Eng.WList->Enqueue(N, B, Idx); // Still use the index of the CallExpr.
+    return;
+  }
 
   PostStmt Loc(getStmt(), N->getLocationContext());
 
@@ -596,4 +630,58 @@ GREndPathNodeBuilder::generateNode(const GRState* State, const void *tag,
   }
 
   return NULL;
+}
+
+void GREndPathNodeBuilder::GenerateCallExitNode(const GRState *state) {
+  HasGeneratedNode = true;
+  // Create a CallExit node and enqueue it.
+  const StackFrameContext *LocCtx
+                         = cast<StackFrameContext>(Pred->getLocationContext());
+  const Stmt *CE = LocCtx->getCallSite();
+
+  // Use the the callee location context.
+  CallExit Loc(CE, LocCtx);
+
+  bool isNew;
+  ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
+  Node->addPredecessor(Pred, *Eng.G);
+
+  if (isNew)
+    Eng.WList->Enqueue(Node);
+}
+                                                
+
+void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
+                                          const LocationContext *LocCtx) {
+  // Get the callee entry block.
+  const CFGBlock *Entry = &(LocCtx->getCFG()->getEntry());
+  assert(Entry->empty());
+  assert(Entry->succ_size() == 1);
+
+  // Get the solitary successor.
+  const CFGBlock *SuccB = *(Entry->succ_begin());
+
+  // Construct an edge representing the starting location in the callee.
+  BlockEdge Loc(Entry, SuccB, LocCtx);
+
+  bool isNew;
+  ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
+  Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
+
+  if (isNew)
+    Eng.WList->Enqueue(Node);
+}
+
+void GRCallExitNodeBuilder::GenerateNode() {
+  // Get the callee's location context.
+  const StackFrameContext *LocCtx 
+                         = cast<StackFrameContext>(Pred->getLocationContext());
+
+  PostStmt Loc(LocCtx->getCallSite(), LocCtx->getParent());
+  bool isNew;
+  ExplodedNode *Node = Eng.G->getNode(Loc, Pred->getState(), &isNew);
+  Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
+  if (isNew)
+    Eng.WList->Enqueue(Node, *const_cast<CFGBlock*>(LocCtx->getCallSiteBlock()),
+                       LocCtx->getIndex() + 1);
 }

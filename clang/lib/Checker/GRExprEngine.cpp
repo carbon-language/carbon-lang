@@ -1290,6 +1290,24 @@ void GRExprEngine::ProcessSwitch(GRSwitchNodeBuilder& builder) {
   if (defaultIsFeasible) builder.generateDefaultCaseNode(DefaultSt);
 }
 
+void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
+  const FunctionDecl *FD = B.getCallee();
+  const StackFrameContext *LocCtx = AMgr.getStackFrame(FD, 
+                                                       B.getLocationContext(),
+                                                       B.getCallExpr(),
+                                                       B.getBlock(),
+                                                       B.getIndex());
+
+  const GRState *state = B.getState();
+  state = getStoreManager().EnterStackFrame(state, LocCtx);
+
+  B.GenerateNode(state, LocCtx);
+}
+
+void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
+  B.GenerateNode();
+}
+
 //===----------------------------------------------------------------------===//
 // Transfer functions: logical operations ('&&', '||').
 //===----------------------------------------------------------------------===//
@@ -3139,6 +3157,14 @@ struct DOTGraphTraits<ExplodedNode*> :
 
       case ProgramPoint::BlockExitKind:
         assert (false);
+        break;
+
+      case ProgramPoint::CallEnterKind:
+        Out << "CallEnter";
+        break;
+
+      case ProgramPoint::CallExitKind:
+        Out << "CallExit";
         break;
 
       default: {

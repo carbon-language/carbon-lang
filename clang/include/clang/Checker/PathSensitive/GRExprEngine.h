@@ -171,7 +171,13 @@ public:
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
   void ProcessEndPath(GREndPathNodeBuilder& builder);
-  
+
+  // Generate the entry node of the callee.
+  void ProcessCallEnter(GRCallEnterNodeBuilder &builder);
+
+  // Generate the first post callsite node.
+  void ProcessCallExit(GRCallExitNodeBuilder &builder);
+
   /// EvalAssume - Callback function invoked by the ConstraintManager when
   ///  making assumptions about state values.
   const GRState *ProcessAssume(const GRState *state, SVal cond, bool assumption);

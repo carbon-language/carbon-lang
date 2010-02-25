@@ -40,6 +40,8 @@ class GRCoreEngine {
   friend class GRIndirectGotoNodeBuilder;
   friend class GRSwitchNodeBuilder;
   friend class GREndPathNodeBuilder;
+  friend class GRCallEnterNodeBuilder;
+  friend class GRCallExitNodeBuilder;
 
   GRSubEngine& SubEngine;
 
@@ -67,6 +69,9 @@ class GRCoreEngine {
 
   void HandleBranch(Stmt* Cond, Stmt* Term, CFGBlock* B,
                     ExplodedNode* Pred);
+  void HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
+                       unsigned Index, ExplodedNode *Pred);
+  void HandleCallExit(const CallExit &L, ExplodedNode *Pred);
 
   /// Get the initial state from the subengine.
   const GRState* getInitialState(const LocationContext *InitLoc) {
@@ -89,6 +94,9 @@ class GRCoreEngine {
 
 
   void ProcessSwitch(GRSwitchNodeBuilder& Builder);
+
+  void ProcessCallEnter(GRCallEnterNodeBuilder &Builder);
+  void ProcessCallExit(GRCallExitNodeBuilder &Builder);
 
 private:
   GRCoreEngine(const GRCoreEngine&); // Do not implement.
@@ -192,6 +200,12 @@ public:
   ExplodedNode* generateNode(const Stmt *S, const GRState *St,
                              ExplodedNode *Pred) {
     return generateNode(S, St, Pred, PointKind);
+  }
+
+  ExplodedNode *generateNode(const ProgramPoint &PP, const GRState* State,
+                             ExplodedNode* Pred) {
+    HasGeneratedNode = true;
+    return generateNodeInternal(PP, State, Pred);
   }
 
   ExplodedNode*
@@ -431,6 +445,8 @@ public:
   ExplodedNode* generateNode(const GRState* State, const void *tag = 0,
                              ExplodedNode *P = 0);
 
+  void GenerateCallExitNode(const GRState *state);
+
   CFGBlock* getBlock() const { return &B; }
 
   const GRState* getState() const {
@@ -438,6 +454,56 @@ public:
   }
 };
 
+class GRCallEnterNodeBuilder {
+  GRCoreEngine &Eng;
+
+  const ExplodedNode *Pred;
+
+  // The call site.
+  const Stmt *CE;
+
+  // The definition of callee.
+  const FunctionDecl *FD;
+
+  // The parent block of the CallExpr.
+  const CFGBlock *Block;
+
+  // The CFGBlock index of the CallExpr.
+  unsigned Index;
+
+public:
+  GRCallEnterNodeBuilder(GRCoreEngine &eng, const ExplodedNode *pred, 
+                         const Stmt *s, const FunctionDecl *fd, 
+                         const CFGBlock *blk, unsigned idx)
+    : Eng(eng), Pred(pred), CE(s), FD(fd), Block(blk), Index(idx) {}
+
+  const GRState *getState() const { return Pred->getState(); }
+
+  const LocationContext *getLocationContext() const { 
+    return Pred->getLocationContext();
+  }
+
+  const Stmt *getCallExpr() const { return CE; }
+
+  const FunctionDecl *getCallee() const { return FD; }
+
+  const CFGBlock *getBlock() const { return Block; }
+
+  unsigned getIndex() const { return Index; }
+
+  void GenerateNode(const GRState *state, const LocationContext *LocCtx);
+};
+
+class GRCallExitNodeBuilder {
+  GRCoreEngine &Eng;
+  const ExplodedNode *Pred;
+
+public:
+  GRCallExitNodeBuilder(GRCoreEngine &eng, const ExplodedNode *pred)
+    : Eng(eng), Pred(pred) {}
+
+  void GenerateNode();
+}; 
 } // end clang namespace
 
 #endif
