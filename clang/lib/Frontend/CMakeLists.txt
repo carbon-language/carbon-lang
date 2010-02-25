@@ -5,8 +5,8 @@ add_clang_library(clangFrontend
   ASTMerge.cpp
   ASTUnit.cpp
   AnalysisConsumer.cpp
-  Backend.cpp
   CacheTokens.cpp
+  CodeGenAction.cpp
   CompilerInstance.cpp
   CompilerInvocation.cpp
   DeclXML.cpp
