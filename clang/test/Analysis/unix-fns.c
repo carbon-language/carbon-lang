@@ -1,7 +1,11 @@
 // RUN: %clang_cc1 -analyze -analyzer-check-objc-mem %s -analyzer-store=region
 // RUN: %clang_cc1 -analyze -analyzer-check-objc-mem %s -analyzer-store=basic
 
-#include <fcntl.h>
+#ifndef O_CREAT
+#define O_CREAT 0x0200
+#define O_RDONLY 0x0000
+#endif
+int open(const char *, int, ...);
 
 void test_open(const char *path) {
   int fd;
