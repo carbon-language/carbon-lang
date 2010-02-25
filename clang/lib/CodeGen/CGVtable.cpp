@@ -261,10 +261,10 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
     
     // Check the base class offset.
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(Element.Class);
-    
+
     const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
     const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
-    
+
     NonVirtualOffset += Layout.getBaseClassOffset(Base);
   }
   
@@ -512,7 +512,7 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
     if (!BaseDecl->isPolymorphic())
       continue;
     
-    bool IsVisitedVirtualBase = false;
+    bool IsVisitedVirtualBase = BaseSubobjectIsVisitedVBase;
     uint64_t BaseOffset;
     if (I->isVirtual()) {
       if (!VisitedVirtualBases.insert(BaseDecl))

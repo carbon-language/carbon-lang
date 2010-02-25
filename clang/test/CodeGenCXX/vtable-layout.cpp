@@ -510,3 +510,32 @@ void C::f() { }
 
 }
 
+namespace Test14 {
+
+// Verify that we handle A being a non-virtual base of B, which is a virtual base.
+
+struct A { 
+  virtual void f(); 
+};
+
+struct B : A { };
+
+struct C : virtual B { };
+
+// CHECK:      Vtable for 'Test14::D' (5 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test14::D RTTI
+// CHECK-NEXT:        -- (Test14::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test14::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test14::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test14::D, 0) vtable address --
+// CHECK-NEXT:    4 | void Test14::D::f()
+struct D : C, virtual B {
+ virtual void f();
+};
+void D::f() { }
+
+}
+
