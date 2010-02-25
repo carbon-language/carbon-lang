@@ -28,6 +28,8 @@ class GRBranchNodeBuilder;
 class GRIndirectGotoNodeBuilder;
 class GRSwitchNodeBuilder;
 class GREndPathNodeBuilder;
+class GRCallEnterNodeBuilder;
+class GRCallExitNodeBuilder;
 class LocationContext;
 
 class GRSubEngine {
@@ -64,6 +66,12 @@ public:
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
   virtual void ProcessEndPath(GREndPathNodeBuilder& builder) = 0;
+
+  // Generate the entry node of the callee.
+  virtual void ProcessCallEnter(GRCallEnterNodeBuilder &builder) = 0;
+
+  // Generate the first post callsite node.
+  virtual void ProcessCallExit(GRCallExitNodeBuilder &builder) = 0;
   
   /// EvalAssume - Called by ConstraintManager. Used to call checker-specific
   ///  logic for handling assumptions on symbolic values.
