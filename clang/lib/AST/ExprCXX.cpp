@@ -122,9 +122,24 @@ Stmt::child_iterator CXXPseudoDestructorExpr::child_end() {
   return &Base + 1;
 }
 
+PseudoDestructorTypeStorage::PseudoDestructorTypeStorage(TypeSourceInfo *Info)
+ : Type(Info) 
+{
+  Location = Info->getTypeLoc().getSourceRange().getBegin();
+}
+
+QualType CXXPseudoDestructorExpr::getDestroyedType() const {
+  if (TypeSourceInfo *TInfo = DestroyedType.getTypeSourceInfo())
+    return TInfo->getType();
+  
+  return QualType();
+}
+
 SourceRange CXXPseudoDestructorExpr::getSourceRange() const {
-  return SourceRange(Base->getLocStart(), 
-                     DestroyedType->getTypeLoc().getSourceRange().getEnd());
+  SourceLocation End = DestroyedType.getLocation();
+  if (TypeSourceInfo *TInfo = DestroyedType.getTypeSourceInfo())
+    End = TInfo->getTypeLoc().getSourceRange().getEnd();
+  return SourceRange(Base->getLocStart(), End);
 }
 
 

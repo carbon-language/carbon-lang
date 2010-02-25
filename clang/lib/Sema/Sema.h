@@ -95,6 +95,7 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
   class ObjCContainerDecl;
+  class PseudoDestructorTypeStorage;
   class FunctionProtoType;
   class CXXBasePath;
   class CXXBasePaths;
@@ -2188,20 +2189,9 @@ public:
                                              TypeSourceInfo *ScopeType,
                                              SourceLocation CCLoc,
                                              SourceLocation TildeLoc,
-                                             TypeSourceInfo *DestroyedType,
+                                     PseudoDestructorTypeStorage DestroyedType,
                                              bool HasTrailingLParen);
-  
-  OwningExprResult ActOnDependentPseudoDestructorExpr(Scope *S, 
-                                                      ExprArg Base,
-                                                      SourceLocation OpLoc,
-                                                      tok::TokenKind OpKind,
-                                                      const CXXScopeSpec &SS,
-                                                  UnqualifiedId &FirstTypeName,
-                                                      SourceLocation CCLoc,
-                                                      SourceLocation TildeLoc,
-                                                  UnqualifiedId &SecondTypeName,
-                                                      bool HasTrailingLParen);
-  
+    
   virtual OwningExprResult ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
                                                      SourceLocation OpLoc,
                                                      tok::TokenKind OpKind,

@@ -997,6 +997,35 @@ public:
   virtual child_iterator child_end();
 };
 
+/// \brief Structure used to store the type being destroyed by a 
+/// pseudo-destructor expression.
+class PseudoDestructorTypeStorage {
+  /// \brief Either the type source information or the name of the type, if 
+  /// it couldn't be resolved due to type-dependence.
+  llvm::PointerUnion<TypeSourceInfo *, IdentifierInfo *> Type;
+  
+  /// \brief The starting source location of the pseudo-destructor type.
+  SourceLocation Location;
+  
+public:
+  PseudoDestructorTypeStorage() { }
+  
+  PseudoDestructorTypeStorage(IdentifierInfo *II, SourceLocation Loc)
+    : Type(II), Location(Loc) { }
+  
+  PseudoDestructorTypeStorage(TypeSourceInfo *Info);
+  
+  TypeSourceInfo *getTypeSourceInfo() const { 
+    return Type.dyn_cast<TypeSourceInfo *>(); 
+  }
+  
+  IdentifierInfo *getIdentifier() const {
+    return Type.dyn_cast<IdentifierInfo *>();
+  }
+  
+  SourceLocation getLocation() const { return Location; }
+};
+  
 /// \brief Represents a C++ pseudo-destructor (C++ [expr.pseudo]).
 ///
 /// A pseudo-destructor is an expression that looks like a member access to a
@@ -1050,8 +1079,9 @@ class CXXPseudoDestructorExpr : public Expr {
   /// \brief The location of the '~'.
   SourceLocation TildeLoc;
   
-  /// \brief The type being destroyed.
-  TypeSourceInfo *DestroyedType;
+  /// \brief The type being destroyed, or its name if we were unable to 
+  /// resolve the name.
+  PseudoDestructorTypeStorage DestroyedType;
 
 public:
   CXXPseudoDestructorExpr(ASTContext &Context,
@@ -1061,14 +1091,15 @@ public:
                           TypeSourceInfo *ScopeType,
                           SourceLocation ColonColonLoc,
                           SourceLocation TildeLoc,
-                          TypeSourceInfo *DestroyedType)
+                          PseudoDestructorTypeStorage DestroyedType)
     : Expr(CXXPseudoDestructorExprClass,
            Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
                                                           false, 0, false, 
                                                           false, 0, 0, false,
                                                           CC_Default)),
            /*isTypeDependent=*/(Base->isTypeDependent() ||
-                                DestroyedType->getType()->isDependentType()),
+            (DestroyedType.getTypeSourceInfo() &&
+              DestroyedType.getTypeSourceInfo()->getType()->isDependentType())),
            /*isValueDependent=*/Base->isValueDependent()),
       Base(static_cast<Stmt *>(Base)), IsArrow(isArrow),
       OperatorLoc(OperatorLoc), Qualifier(Qualifier),
@@ -1120,12 +1151,31 @@ public:
   /// \brief Retrieve the location of the '~'.
   SourceLocation getTildeLoc() const { return TildeLoc; }
   
-  /// \brief Retrieve the type that is being destroyed.
-  QualType getDestroyedType() const { return DestroyedType->getType(); }
-
   /// \brief Retrieve the source location information for the type
   /// being destroyed.
-  TypeSourceInfo *getDestroyedTypeInfo() const { return DestroyedType; }
+  ///
+  /// This type-source information is available for non-dependent 
+  /// pseudo-destructor expressions and some dependent pseudo-destructor
+  /// expressions. Returns NULL if we only have the identifier for a
+  /// dependent pseudo-destructor expression.
+  TypeSourceInfo *getDestroyedTypeInfo() const { 
+    return DestroyedType.getTypeSourceInfo(); 
+  }
+  
+  /// \brief In a dependent pseudo-destructor expression for which we do not
+  /// have full type information on the destroyed type, provides the name
+  /// of the destroyed type.
+  IdentifierInfo *getDestroyedTypeIdentifier() const {
+    return DestroyedType.getIdentifier();
+  }
+  
+  /// \brief Retrieve the type being destroyed.
+  QualType getDestroyedType() const;
+  
+  /// \brief Retrieve the starting location of the type being destroyed.
+  SourceLocation getDestroyedTypeLoc() const { 
+    return DestroyedType.getLocation(); 
+  }
 
   virtual SourceRange getSourceRange() const;
 

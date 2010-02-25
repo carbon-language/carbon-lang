@@ -63,11 +63,13 @@ void test_convert(X2 x2) {
 template<typename T>
 void destruct(T* ptr) {
   ptr->~T();
+  ptr->T::~T();
 }
 
 template<typename T>
 void destruct_intptr(int *ip) {
   ip->~T();
+  ip->T::~T();
 }
 
 void test_destruct(X2 *x2p, int *ip) {

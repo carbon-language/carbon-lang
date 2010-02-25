@@ -25,6 +25,8 @@ namespace PR6152 {
   void X<T>::f() {
     Y<T> *y;
     y->template Y<T>::~Y();
+    y->template Y<T>::~Y<T>();
+    y->~Y();
   }
   
   template struct X<int>;

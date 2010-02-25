@@ -884,12 +884,12 @@ public:
   OwningExprResult RebuildCXXPseudoDestructorExpr(ExprArg Base,
                                                   SourceLocation OperatorLoc,
                                                   bool isArrow,
-                                                  NestedNameSpecifier *Qualifier,
+                                                NestedNameSpecifier *Qualifier,
                                                   SourceRange QualifierRange,
                                                   TypeSourceInfo *ScopeType,
                                                   SourceLocation CCLoc,
                                                   SourceLocation TildeLoc,
-                                                TypeSourceInfo *DestroyedType);
+                                        PseudoDestructorTypeStorage Destroyed);
 
   /// \brief Build a new unary operator expression.
   ///
@@ -4671,34 +4671,67 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
 
+  Sema::TypeTy *ObjectTypePtr = 0;
+  bool MayBePseudoDestructor = false;
+  Base = SemaRef.ActOnStartCXXMemberReference(0, move(Base), 
+                                              E->getOperatorLoc(),
+                                        E->isArrow()? tok::arrow : tok::period,
+                                              ObjectTypePtr,
+                                              MayBePseudoDestructor);
+  if (Base.isInvalid())
+    return SemaRef.ExprError();
+                                              
+  QualType ObjectType = QualType::getFromOpaquePtr(ObjectTypePtr);
   NestedNameSpecifier *Qualifier
     = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
                                                 E->getQualifierRange(),
-                                                true);
+                                                true,
+                                                ObjectType);
   if (E->getQualifier() && !Qualifier)
     return SemaRef.ExprError();
 
-  // FIXME: Object type!
-  TypeSourceInfo *DestroyedTypeInfo
-    = getDerived().TransformType(E->getDestroyedTypeInfo());
-  if (!DestroyedTypeInfo)
-    return SemaRef.ExprError();
+  PseudoDestructorTypeStorage Destroyed;
+  if (E->getDestroyedTypeInfo()) {
+    TypeSourceInfo *DestroyedTypeInfo
+      = getDerived().TransformType(E->getDestroyedTypeInfo(), ObjectType);
+    if (!DestroyedTypeInfo)
+      return SemaRef.ExprError();
+    Destroyed = DestroyedTypeInfo;
+  } else if (ObjectType->isDependentType()) {
+    // We aren't likely to be able to resolve the identifier down to a type
+    // now anyway, so just retain the identifier.
+    Destroyed = PseudoDestructorTypeStorage(E->getDestroyedTypeIdentifier(),
+                                            E->getDestroyedTypeLoc());
+  } else {
+    // Look for a destructor known with the given name.
+    CXXScopeSpec SS;
+    if (Qualifier) {
+      SS.setScopeRep(Qualifier);
+      SS.setRange(E->getQualifierRange());
+    }
+    
+    Sema::TypeTy *T = SemaRef.getDestructorName(E->getTildeLoc(),
+                                              *E->getDestroyedTypeIdentifier(),
+                                                E->getDestroyedTypeLoc(),
+                                                /*Scope=*/0,
+                                                SS, ObjectTypePtr,
+                                                false);
+    if (!T)
+      return SemaRef.ExprError();
+    
+    Destroyed
+      = SemaRef.Context.getTrivialTypeSourceInfo(SemaRef.GetTypeFromParser(T),
+                                                 E->getDestroyedTypeLoc());
+  }
 
-  // FIXME: Object type!
   TypeSourceInfo *ScopeTypeInfo = 0;
   if (E->getScopeTypeInfo()) {
-    ScopeTypeInfo = getDerived().TransformType(E->getScopeTypeInfo());
+    ScopeTypeInfo = getDerived().TransformType(E->getScopeTypeInfo(), 
+                                               ObjectType);
     if (!ScopeTypeInfo)
       return SemaRef.ExprError();
   }
   
-  if (!getDerived().AlwaysRebuild() &&
-      Base.get() == E->getBase() &&
-      Qualifier == E->getQualifier() &&
-      ScopeTypeInfo == E->getScopeTypeInfo() &&
-      DestroyedTypeInfo == E->getDestroyedTypeInfo())
-    return SemaRef.Owned(E->Retain());
-
   return getDerived().RebuildCXXPseudoDestructorExpr(move(Base),
                                                      E->getOperatorLoc(),
                                                      E->isArrow(),
@@ -4707,7 +4740,7 @@ TreeTransform<Derived>::TransformCXXPseudoDestructorExpr(
                                                      ScopeTypeInfo,
                                                      E->getColonColonLoc(),
                                                      E->getTildeLoc(),
-                                                     DestroyedTypeInfo);
+                                                     Destroyed);
 }
 
 template<typename Derived>
@@ -5758,7 +5791,7 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
                                                      TypeSourceInfo *ScopeType,
                                                        SourceLocation CCLoc,
                                                        SourceLocation TildeLoc,
-                                               TypeSourceInfo *DestroyedType) {
+                                        PseudoDestructorTypeStorage Destroyed) {
   CXXScopeSpec SS;
   if (Qualifier) {
     SS.setRange(QualifierRange);
@@ -5767,18 +5800,19 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
 
   Expr *BaseE = (Expr *)Base.get();
   QualType BaseType = BaseE->getType();
-  if (BaseE->isTypeDependent() ||
+  if (BaseE->isTypeDependent() || Destroyed.getIdentifier() ||
       (!isArrow && !BaseType->getAs<RecordType>()) ||
       (isArrow && BaseType->getAs<PointerType>() && 
-       !BaseType->getAs<PointerType>()->getAs<RecordType>())) {
+       !BaseType->getAs<PointerType>()->getPointeeType()->getAs<RecordType>())){
     // This pseudo-destructor expression is still a pseudo-destructor.
     return SemaRef.BuildPseudoDestructorExpr(move(Base), OperatorLoc,
                                              isArrow? tok::arrow : tok::period,
                                              SS, ScopeType, CCLoc, TildeLoc,
-                                             DestroyedType, 
+                                             Destroyed,
                                              /*FIXME?*/true);
   }
   
+  TypeSourceInfo *DestroyedType = Destroyed.getTypeSourceInfo();
   DeclarationName Name
     = SemaRef.Context.DeclarationNames.getCXXDestructorName(
                 SemaRef.Context.getCanonicalType(DestroyedType->getType()));
@@ -5788,8 +5822,7 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
   return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
                                             OperatorLoc, isArrow,
                                             SS, /*FIXME: FirstQualifier*/ 0,
-                                            Name, 
-                        DestroyedType->getTypeLoc().getSourceRange().getBegin(),
+                                            Name, Destroyed.getLocation(),
                                             /*TemplateArgs*/ 0);
 }
 

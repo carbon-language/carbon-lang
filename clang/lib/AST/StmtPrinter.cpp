@@ -1120,7 +1120,10 @@ void StmtPrinter::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
     E->getQualifier()->print(OS, Policy);
 
   std::string TypeS;
-  E->getDestroyedType().getAsStringInternal(TypeS, Policy);
+  if (IdentifierInfo *II = E->getDestroyedTypeIdentifier())
+    OS << II->getName();
+  else
+    E->getDestroyedType().getAsStringInternal(TypeS, Policy);
   OS << TypeS;
 }
 
