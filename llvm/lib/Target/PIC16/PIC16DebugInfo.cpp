@@ -419,7 +419,7 @@ void PIC16DbgInfo::EmitAuxEntry(const std::string VarName, int Aux[], int Num,
   if (TagName != "")
     O << ", " << TagName;
   for (int i = 0; i<Num; i++)
-    O << "," << Aux[i];
+    O << "," << (Aux[i] && 0xff);
 }
 
 /// EmitSymbol - Emit .def for a symbol. Value is offset for the member.
