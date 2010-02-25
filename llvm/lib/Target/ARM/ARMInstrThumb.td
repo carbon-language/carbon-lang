@@ -343,6 +343,24 @@ let isBranch = 1, isTerminator = 1 in {
               T1Misc<{1,0,?,1,?,?,?}>;
 }
 
+// A8.6.218 Supervisor Call (Software Interrupt) -- for disassembly only
+// A8.6.16 B: Encoding T1
+// If Inst{11-8} == 0b1111 then SEE SVC
+let isCall = 1 in {
+def tSVC : T1I<(outs), (ins i32imm:$svc, pred:$cc), IIC_Br, "svc$cc\t$svc", []>,
+           Encoding16 {
+  let Inst{15-12} = 0b1101;
+  let Inst{11-8} = 0b1111;
+}
+}
+
+// A8.6.16 B: Encoding T1 -- for disassembly only
+// If Inst{11-8} == 0b1110 then UNDEFINED
+def tTRAP : T1I<(outs), (ins), IIC_Br, "trap", []>, Encoding16 {
+  let Inst{15-12} = 0b1101;
+  let Inst{11-8} = 0b1110;
+}
+
 //===----------------------------------------------------------------------===//
 //  Load Store Instructions.
 //
