@@ -746,7 +746,8 @@ void DwarfException::EmitExceptionTable() {
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   if (HaveTTData)
-    // Pad here for alignment.
+    // Account for any extra padded that will be added to the call site table
+    // length.
     EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset");
 
   // SjLj Exception handling
