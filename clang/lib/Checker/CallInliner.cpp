@@ -26,7 +26,6 @@ public:
   }
 
   virtual bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
-  virtual void EvalEndPath(GREndPathNodeBuilder &B,void *tag,GRExprEngine &Eng);
 };
 }
 
@@ -53,17 +52,3 @@ bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   return true;
 }
 
-void CallInliner::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
-                              GRExprEngine &Eng) {
-  const GRState *state = B.getState();
-
-  ExplodedNode *Pred = B.getPredecessor();
-
-  const StackFrameContext *LocCtx = 
-                        cast<StackFrameContext>(Pred->getLocationContext());
-  // Check if this is the top level stack frame.
-  if (!LocCtx->getParent())
-   return;
-
-  B.GenerateCallExitNode(state);
-}

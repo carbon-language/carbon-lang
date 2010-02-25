@@ -612,7 +612,13 @@ GRSwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
 
 GREndPathNodeBuilder::~GREndPathNodeBuilder() {
   // Auto-generate an EOP node if one has not been generated.
-  if (!HasGeneratedNode) generateNode(Pred->State);
+  if (!HasGeneratedNode) {
+    // If we are in an inlined call, generate CallExit node.
+    if (Pred->getLocationContext()->getParent())
+      GenerateCallExitNode(Pred->State);
+    else
+      generateNode(Pred->State);
+  }
 }
 
 ExplodedNode*
