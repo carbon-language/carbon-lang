@@ -642,7 +642,7 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V,
         return false;
     } else if (isa<ICmpInst>(*UI) &&
                isa<ConstantPointerNull>(UI->getOperand(1))) {
-      // Ignore setcc X, null
+      // Ignore icmp X, null
     } else {
       //cerr << "NONTRAPPING USE: " << **UI;
       return false;
