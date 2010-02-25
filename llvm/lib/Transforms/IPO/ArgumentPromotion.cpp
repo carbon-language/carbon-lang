@@ -317,7 +317,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
   GEPIndicesSet ToPromote;
 
   // If the pointer is always valid, any load with first index 0 is valid.
-  if(isByVal || AllCalleesPassInValidPointerForArgument(Arg))
+  if (isByVal || AllCalleesPassInValidPointerForArgument(Arg))
     SafeToUnconditionallyLoad.insert(IndicesVector(1, 0));
 
   // First, iterate the entry block and mark loads of (geps of) arguments as
