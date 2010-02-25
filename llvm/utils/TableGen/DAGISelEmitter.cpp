@@ -1945,8 +1945,6 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   }
   
 #ifdef ENABLE_NEW_ISEL
-  Matcher *TheMatcher = 0;
-
   // Add all the patterns to a temporary list so we can sort them.
   std::vector<const PatternToMatch*> Patterns;
   for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(), E = CGP.ptm_end();
@@ -1960,20 +1958,13 @@ void DAGISelEmitter::run(raw_ostream &OS) {
                    PatternSortingPredicate2(CGP));
   
   
-  // Walk the patterns backwards (since we append to the front of the generated
-  // code), building a matcher for each and adding it to the matcher for the
-  // whole target.
-  while (!Patterns.empty()) {
-    const PatternToMatch &Pattern = *Patterns.back();
-    Patterns.pop_back();
-    
-    Matcher *N = ConvertPatternToMatcher(Pattern, CGP);
-    
-    if (TheMatcher == 0)
-      TheMatcher = N;
-    else
-      TheMatcher = new ScopeMatcher(N, TheMatcher);
-  }
+  // Convert each pattern into Matcher's.
+  std::vector<Matcher*> PatternMatchers;
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
+    PatternMatchers.push_back(ConvertPatternToMatcher(*Patterns[i], CGP));
+  
+  Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
+                                         PatternMatchers.size());
 
   TheMatcher = OptimizeMatcher(TheMatcher);
   //Matcher->dump();

@@ -21,9 +21,15 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
   Matcher *N = MatcherPtr.get();
   if (N == 0) return;
   
-  // If we have a scope node, walk down both edges.
-  if (ScopeMatcher *Push = dyn_cast<ScopeMatcher>(N))
-    ContractNodes(Push->getCheckPtr());
+  // If we have a scope node, walk down all of the children.
+  if (ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N)) {
+    for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
+      OwningPtr<Matcher> Child(Scope->takeChild(i));
+      ContractNodes(Child);
+      Scope->resetChild(i, Child.take());
+    }
+    return;
+  }
   
   // If we found a movechild node with a node that comes in a 'foochild' form,
   // transform it.
@@ -61,30 +67,29 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   if (N == 0) return;
   
   // If this is not a push node, just scan for one.
-  if (!isa<ScopeMatcher>(N))
+  ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N);
+  if (Scope == 0)
     return FactorNodes(N->getNextPtr());
   
-  // Okay, pull together the series of linear push nodes into a vector so we can
+  // Okay, pull together the children of the scope node into a vector so we can
   // inspect it more easily.  While we're at it, bucket them up by the hash
   // code of their first predicate.
   SmallVector<Matcher*, 32> OptionsToMatch;
   typedef DenseMap<unsigned, std::vector<Matcher*> > HashTableTy;
   HashTableTy MatchersByHash;
   
-  Matcher *CurNode = N;
-  for (; ScopeMatcher *PMN = dyn_cast<ScopeMatcher>(CurNode);
-       CurNode = PMN->getNext()) {
+  for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
     // Factor the subexpression.
-    FactorNodes(PMN->getCheckPtr());
-    if (Matcher *Check = PMN->getCheck()) {
-      OptionsToMatch.push_back(Check);
-      MatchersByHash[Check->getHash()].push_back(Check);
+    OwningPtr<Matcher> Child(Scope->takeChild(i));
+    FactorNodes(Child);
+    
+    // FIXME: Eventually don't pass ownership back to the scope node.
+    Scope->resetChild(i, Child.take());
+    
+    if (Matcher *N = Scope->getChild(i)) {
+      OptionsToMatch.push_back(N);
+      MatchersByHash[N->getHash()].push_back(N);
     }
-  }
-  
-  if (CurNode) {
-    OptionsToMatch.push_back(CurNode);
-    MatchersByHash[CurNode->getHash()].push_back(CurNode);
   }
   
   

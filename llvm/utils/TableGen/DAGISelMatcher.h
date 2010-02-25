@@ -111,21 +111,32 @@ protected:
   virtual unsigned getHashImpl() const = 0;
 };
   
-/// ScopeMatcher - This pushes a failure scope on the stack and evaluates
-/// 'Check'.  If 'Check' fails to match, it pops its scope and continues on to
-/// 'Next'.
+/// ScopeMatcher - This attempts to match each of its children to find the first
+/// one that successfully matches.  If one child fails, it tries the next child.
+/// If none of the children match then this check fails.  It never has a 'next'.
 class ScopeMatcher : public Matcher {
-  OwningPtr<Matcher> Check;
+  SmallVector<Matcher*, 4> Children;
 public:
-  ScopeMatcher(Matcher *check = 0, Matcher *next = 0)
-    : Matcher(Scope), Check(check) {
-    setNext(next);
+  ScopeMatcher(Matcher *const *children, unsigned numchildren)
+    : Matcher(Scope), Children(children, children+numchildren) {
   }
+  virtual ~ScopeMatcher();
   
-  Matcher *getCheck() { return Check.get(); }
-  const Matcher *getCheck() const { return Check.get(); }
-  void setCheck(Matcher *N) { Check.reset(N); }
-  OwningPtr<Matcher> &getCheckPtr() { return Check; }
+  unsigned getNumChildren() const { return Children.size(); }
+  
+  Matcher *getChild(unsigned i) { return Children[i]; }
+  const Matcher *getChild(unsigned i) const { return Children[i]; }
+  
+  void resetChild(unsigned i, Matcher *N) {
+    delete Children[i];
+    Children[i] = N;
+  }
+
+  Matcher *takeChild(unsigned i) {
+    Matcher *Res = Children[i];
+    Children[i] = 0;
+    return Res;
+  }
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == Scope;
@@ -134,7 +145,7 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return false; }
-  virtual unsigned getHashImpl() const { return 0; }
+  virtual unsigned getHashImpl() const { return 12312; }
 };
 
 /// RecordMatcher - Save the current node in the operand list.

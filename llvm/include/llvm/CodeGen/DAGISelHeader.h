@@ -219,7 +219,7 @@ GetVBR(unsigned Val, const unsigned char *MatcherTable, unsigned &Idx) {
 
 
 enum BuiltinOpcodes {
-  OPC_Scope, OPC_Scope2,
+  OPC_Scope,
   OPC_RecordNode,
   OPC_RecordChild0, OPC_RecordChild1, OPC_RecordChild2, OPC_RecordChild3, 
   OPC_RecordChild4, OPC_RecordChild5, OPC_RecordChild6, OPC_RecordChild7,
@@ -374,20 +374,13 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     switch (Opcode) {
     case OPC_Scope: {
       unsigned NumToSkip = MatcherTable[MatcherIndex++];
-      MatchScope NewEntry;
-      NewEntry.FailIndex = MatcherIndex+NumToSkip;
-      NewEntry.NodeStackSize = NodeStack.size();
-      NewEntry.NumRecordedNodes = RecordedNodes.size();
-      NewEntry.NumMatchedMemRefs = MatchedMemRefs.size();
-      NewEntry.InputChain = InputChain;
-      NewEntry.InputFlag = InputFlag;
-      NewEntry.HasChainNodesMatched = !ChainNodesMatched.empty();
-      NewEntry.HasFlagResultNodesMatched = !FlagResultNodesMatched.empty();
-      MatchScopes.push_back(NewEntry);
-      continue;
-    }
-    case OPC_Scope2: {
-      unsigned NumToSkip = GetInt2(MatcherTable, MatcherIndex);
+      if (NumToSkip & 128)
+        NumToSkip = GetVBR(NumToSkip, MatcherTable, MatcherIndex);
+      assert(NumToSkip != 0 &&
+             "First entry of OPC_Scope shouldn't be 0, scope has no children?");
+
+      // Push a MatchScope which indicates where to go if the first child fails
+      // to match.
       MatchScope NewEntry;
       NewEntry.FailIndex = MatcherIndex+NumToSkip;
       NewEntry.NodeStackSize = NodeStack.size();
@@ -929,33 +922,54 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     }
     }
     
-    // If the code reached this point, then the match failed pop out to the next
-    // match scope.
-    if (MatchScopes.empty()) {
-      CannotYetSelect(NodeToMatch);
-      return 0;
+    // If the code reached this point, then the match failed.  See if there is
+    // another child to try in the current 'Scope', otherwise pop it until we
+    // find a case to check.
+    while (1) {
+      if (MatchScopes.empty()) {
+        CannotYetSelect(NodeToMatch);
+        return 0;
+      }
+
+      // Restore the interpreter state back to the point where the scope was
+      // formed.
+      MatchScope &LastScope = MatchScopes.back();
+      RecordedNodes.resize(LastScope.NumRecordedNodes);
+      NodeStack.resize(LastScope.NodeStackSize);
+      N = NodeStack.back();
+
+      DEBUG(errs() << "  Match failed at index " << MatcherIndex
+                   << " continuing at " << LastScope.FailIndex << "\n");
+    
+      if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
+        MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
+      MatcherIndex = LastScope.FailIndex;
+      
+      InputChain = LastScope.InputChain;
+      InputFlag = LastScope.InputFlag;
+      if (!LastScope.HasChainNodesMatched)
+        ChainNodesMatched.clear();
+      if (!LastScope.HasFlagResultNodesMatched)
+        FlagResultNodesMatched.clear();
+
+      // Check to see what the offset is at the new MatcherIndex.  If it is zero
+      // we have reached the end of this scope, otherwise we have another child
+      // in the current scope to try.
+      unsigned NumToSkip = MatcherTable[MatcherIndex++];
+      if (NumToSkip & 128)
+        NumToSkip = GetVBR(NumToSkip, MatcherTable, MatcherIndex);
+
+      // If we have another child in this scope to match, update FailIndex and
+      // try it.
+      if (NumToSkip != 0) {
+        LastScope.FailIndex = MatcherIndex+NumToSkip;
+        break;
+      }
+      
+      // End of this scope, pop it and try the next child in the containing
+      // scope.
+      MatchScopes.pop_back();
     }
-    
-    const MatchScope &LastScope = MatchScopes.back();
-    RecordedNodes.resize(LastScope.NumRecordedNodes);
-    NodeStack.resize(LastScope.NodeStackSize);
-    N = NodeStack.back();
-
-    DEBUG(errs() << "  Match failed at index " << MatcherIndex
-                 << " continuing at " << LastScope.FailIndex << "\n");
-    
-    if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
-      MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
-    MatcherIndex = LastScope.FailIndex;
-    
-    InputChain = LastScope.InputChain;
-    InputFlag = LastScope.InputFlag;
-    if (!LastScope.HasChainNodesMatched)
-      ChainNodesMatched.clear();
-    if (!LastScope.HasFlagResultNodesMatched)
-      FlagResultNodesMatched.clear();
-
-    MatchScopes.pop_back();
   }
 }
     

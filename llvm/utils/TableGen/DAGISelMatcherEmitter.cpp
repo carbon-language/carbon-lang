@@ -88,7 +88,7 @@ public:
   
   void EmitHistogram(formatted_raw_ostream &OS);
 private:
-  unsigned EmitMatcher(const Matcher *N, unsigned Indent,
+  unsigned EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
                        formatted_raw_ostream &OS);
   
   unsigned getNodePredicate(StringRef PredName) {
@@ -129,6 +129,17 @@ private:
 };
 } // end anonymous namespace.
 
+static unsigned GetVBRSize(unsigned Val) {
+  if (Val <= 127) return 1;
+  
+  unsigned NumBytes = 0;
+  while (Val >= 128) {
+    Val >>= 7;
+    ++NumBytes;
+  }
+  return NumBytes+1;
+}
+
 /// EmitVBRValue - Emit the specified value as a VBR, returning the number of
 /// bytes emitted.
 static unsigned EmitVBRValue(unsigned Val, raw_ostream &OS) {
@@ -151,11 +162,58 @@ static unsigned EmitVBRValue(unsigned Val, raw_ostream &OS) {
 /// EmitMatcherOpcodes - Emit bytes for the specified matcher and return
 /// the number of bytes emitted.
 unsigned MatcherTableEmitter::
-EmitMatcher(const Matcher *N, unsigned Indent, formatted_raw_ostream &OS) {
+EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
+            formatted_raw_ostream &OS) {
   OS.PadToColumn(Indent*2);
   
   switch (N->getKind()) {
-  case Matcher::Scope: assert(0 && "Should be handled by caller");
+  case Matcher::Scope: {
+    const ScopeMatcher *SM = cast<ScopeMatcher>(N);
+    assert(SM->getNext() == 0 && "Shouldn't have next after scope");
+    
+    unsigned StartIdx = CurrentIdx;
+    
+    // Emit all of the children.
+    for (unsigned i = 0, e = SM->getNumChildren(); i != e; ++i) {
+      if (i == 0) {
+        OS << "OPC_Scope, ";
+        ++CurrentIdx;
+      } else {
+        OS << "/*" << CurrentIdx << "*/";
+        OS.PadToColumn(Indent*2) << "/*Scope*/ ";
+      }
+
+      // We need to encode the child and the offset of the failure code before
+      // emitting either of them.  Handle this by buffering the output into a
+      // string while we get the size.  Unfortunately, the offset of the
+      // children depends on the VBR size of the child, so for large children we
+      // have to iterate a bit.
+      SmallString<128> TmpBuf;
+      unsigned ChildSize = 0;
+      unsigned VBRSize = 0;
+      do {
+        VBRSize = GetVBRSize(ChildSize);
+        
+        TmpBuf.clear();
+        raw_svector_ostream OS(TmpBuf);
+        formatted_raw_ostream FOS(OS);
+        ChildSize = EmitMatcherList(cast<ScopeMatcher>(N)->getChild(i),
+                                   Indent+1, CurrentIdx+VBRSize, FOS);
+      } while (GetVBRSize(ChildSize) != VBRSize);
+      
+      assert(ChildSize != 0 && "Should not have a zero-sized child!");
+    
+      CurrentIdx += EmitVBRValue(ChildSize, OS);
+      OS << '\n' << TmpBuf.str();
+      CurrentIdx += ChildSize;
+    }
+    
+    // Emit a zero as a sentinel indicating end of 'Scope'.
+    OS << "/*" << CurrentIdx << "*/";
+    OS.PadToColumn(Indent*2) << "0, /*End of Scope*/\n";
+    return CurrentIdx - StartIdx + 1;
+  }
+      
   case Matcher::RecordNode:
     OS << "OPC_RecordNode,";
     OS.PadToColumn(CommentIndent) << "// "
@@ -387,52 +445,8 @@ EmitMatcherList(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       Histogram.resize(N->getKind()+1);
     Histogram[N->getKind()]++;
     
-    // Scope is a special case since it is binary.
-    if (const ScopeMatcher *SMN = dyn_cast<ScopeMatcher>(N)) {
-      // We need to encode the child and the offset of the failure code before
-      // emitting either of them.  Handle this by buffering the output into a
-      // string while we get the size.
-      SmallString<128> TmpBuf;
-      unsigned NextSize;
-      {
-        raw_svector_ostream OS(TmpBuf);
-        formatted_raw_ostream FOS(OS);
-        NextSize = EmitMatcherList(cast<ScopeMatcher>(N)->getCheck(),
-                                   Indent+1, CurrentIdx+2, FOS);
-      }
-
-      // In the unlikely event that we have something too big to emit with a
-      // one byte offset, regenerate it with a two-byte one.
-      if (NextSize > 255) {
-        TmpBuf.clear();
-        raw_svector_ostream OS(TmpBuf);
-        formatted_raw_ostream FOS(OS);
-        NextSize = EmitMatcherList(cast<ScopeMatcher>(N)->getCheck(),
-                                   Indent+1, CurrentIdx+3, FOS);
-        if (NextSize > 65535) {
-          errs() <<
-            "Tblgen internal error: can't handle pattern this complex yet\n";
-          exit(1);
-        }
-      }
-      
-      OS << "/*" << CurrentIdx << "*/";
-      OS.PadToColumn(Indent*2);
-      
-      if (NextSize < 256)
-        OS << "OPC_Scope, " << NextSize << ",\n";
-      else
-        OS << "OPC_Scope2, " << (NextSize&255) << ", " << (NextSize>>8) <<",\n";
-      OS << TmpBuf.str();
-      
-      Size += 2+NextSize;
-      CurrentIdx += 2+NextSize;
-      N = SMN->getNext();
-      continue;
-    }
-  
     OS << "/*" << CurrentIdx << "*/";
-    unsigned MatcherSize = EmitMatcher(N, Indent, OS);
+    unsigned MatcherSize = EmitMatcher(N, Indent, CurrentIdx, OS);
     Size += MatcherSize;
     CurrentIdx += MatcherSize;
     

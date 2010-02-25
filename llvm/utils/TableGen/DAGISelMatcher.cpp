@@ -25,9 +25,18 @@ void Matcher::print(raw_ostream &OS, unsigned indent) const {
     return Next->print(OS, indent);
 }
 
+ScopeMatcher::~ScopeMatcher() {
+  for (unsigned i = 0, e = Children.size(); i != e; ++i)
+    delete Children[i];
+}
+
+
+// printImpl methods.
+
 void ScopeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Scope\n";
-  Check->print(OS, indent+2);
+  for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+    getChild(i)->print(OS, indent+2);
 }
 
 void RecordMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
