@@ -1988,12 +1988,16 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   }
 
   // Print Metadata info.
-  if (!MDNames.empty()) {
-    SmallVector<std::pair<unsigned, MDNode*>, 4> InstMD;
-    I.getAllMetadata(InstMD);
-    for (unsigned i = 0, e = InstMD.size(); i != e; ++i)
-      Out << ", !" << MDNames[InstMD[i].first]
-          << " !" << Machine.getMetadataSlot(InstMD[i].second);
+  SmallVector<std::pair<unsigned, MDNode*>, 4> InstMD;
+  I.getAllMetadata(InstMD);
+  for (unsigned i = 0, e = InstMD.size(); i != e; ++i) {
+    unsigned Kind = InstMD[i].first;
+    if (Kind < MDNames.size()) {
+      Out << ", !" << MDNames[Kind];
+    } else {
+      Out << ", !<unknown kind #" << Kind << ">";
+    }
+    Out << " !" << Machine.getMetadataSlot(InstMD[i].second);
   }
   printInfoComment(I);
 }
