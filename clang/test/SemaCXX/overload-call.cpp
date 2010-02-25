@@ -360,12 +360,13 @@ namespace DerivedToBaseVsVoid {
   }
 }
 
-// PR 6398
+// PR 6398 + PR 6421
 namespace test4 {
   class A;
   class B {
     static void foo(); // expected-note {{not viable}}
     static void foo(int*); // expected-note {{not viable}}
+    static void foo(long*); // expected-note {{not viable}}
 
     void bar(A *a) { 
       foo(a); // expected-error {{no matching function for call}}

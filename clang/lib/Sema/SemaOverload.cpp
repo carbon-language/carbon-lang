@@ -4797,7 +4797,8 @@ struct CompareOverloadCandidatesForDisplay {
         assert(L->Conversions.size() == R->Conversions.size());
 
         int leftBetter = 0;
-        for (unsigned I = 0, E = L->Conversions.size(); I != E; ++I) {
+        unsigned I = (L->IgnoreObjectArgument || R->IgnoreObjectArgument);
+        for (unsigned E = L->Conversions.size(); I != E; ++I) {
           switch (S.CompareImplicitConversionSequences(L->Conversions[I],
                                                        R->Conversions[I])) {
           case ImplicitConversionSequence::Better:
