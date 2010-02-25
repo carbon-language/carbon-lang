@@ -50,3 +50,11 @@ typedef double Matrix4[4][4];
 bool f(Matrix4 m1, const Matrix4 m2) {
   return m1 != m2;
 }
+
+// PR6346
+bool f1(bool b, void **p, const void **q) {
+  if (p == q) // expected-warning{{comparison of distinct pointer types ('void **' and 'void const **') uses non-standard composite pointer type 'void const *const *'}}
+    return false;
+
+  return b? p : q; // expected-warning{{incompatible operand types ('void **' and 'void const **') use non-standard composite pointer type 'void const *const *'}}
+}

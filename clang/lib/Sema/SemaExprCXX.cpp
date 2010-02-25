@@ -2080,9 +2080,18 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //      performed to bring them to a common type, whose cv-qualification
   //      shall match the cv-qualification of either the second or the third
   //      operand. The result is of the common type.
-  QualType Composite = FindCompositePointerType(LHS, RHS);
-  if (!Composite.isNull())
+  bool NonStandardCompositeType = false;
+  QualType Composite = FindCompositePointerType(LHS, RHS,
+                              isSFINAEContext()? 0 : &NonStandardCompositeType);
+  if (!Composite.isNull()) {
+    if (NonStandardCompositeType)
+      Diag(QuestionLoc, 
+           diag::ext_typecheck_cond_incompatible_operands_nonstandard)
+        << LTy << RTy << Composite
+        << LHS->getSourceRange() << RHS->getSourceRange();
+      
     return Composite;
+  }
   
   // Similarly, attempt to find composite type of twp objective-c pointers.
   Composite = FindCompositeObjCPointerType(LHS, RHS, QuestionLoc);
@@ -2101,7 +2110,16 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 /// and @p E2 according to C++0x 5.9p2. It converts both expressions to this
 /// type and returns it.
 /// It does not emit diagnostics.
-QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
+///
+/// If \p NonStandardCompositeType is non-NULL, then we are permitted to find
+/// a non-standard (but still sane) composite type to which both expressions
+/// can be converted. When such a type is chosen, \c *NonStandardCompositeType
+/// will be set true.
+QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2,
+                                        bool *NonStandardCompositeType) {
+  if (NonStandardCompositeType)
+    *NonStandardCompositeType = false;
+  
   assert(getLangOptions().CPlusPlus && "This function assumes C++");
   QualType T1 = E1->getType(), T2 = E2->getType();
 
@@ -2152,12 +2170,20 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   ContainingClassVector MemberOfClass;
   QualType Composite1 = Context.getCanonicalType(T1),
            Composite2 = Context.getCanonicalType(T2);
+  unsigned NeedConstBefore = 0;  
   do {
     const PointerType *Ptr1, *Ptr2;
     if ((Ptr1 = Composite1->getAs<PointerType>()) &&
         (Ptr2 = Composite2->getAs<PointerType>())) {
       Composite1 = Ptr1->getPointeeType();
       Composite2 = Ptr2->getPointeeType();
+      
+      // If we're allowed to create a non-standard composite type, keep track
+      // of where we need to fill in additional 'const' qualifiers. 
+      if (NonStandardCompositeType &&
+          Composite1.getCVRQualifiers() != Composite2.getCVRQualifiers())
+        NeedConstBefore = QualifierUnion.size();
+      
       QualifierUnion.push_back(
                  Composite1.getCVRQualifiers() | Composite2.getCVRQualifiers());
       MemberOfClass.push_back(std::make_pair((const Type *)0, (const Type *)0));
@@ -2169,6 +2195,13 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
         (MemPtr2 = Composite2->getAs<MemberPointerType>())) {
       Composite1 = MemPtr1->getPointeeType();
       Composite2 = MemPtr2->getPointeeType();
+      
+      // If we're allowed to create a non-standard composite type, keep track
+      // of where we need to fill in additional 'const' qualifiers. 
+      if (NonStandardCompositeType &&
+          Composite1.getCVRQualifiers() != Composite2.getCVRQualifiers())
+        NeedConstBefore = QualifierUnion.size();
+      
       QualifierUnion.push_back(
                  Composite1.getCVRQualifiers() | Composite2.getCVRQualifiers());
       MemberOfClass.push_back(std::make_pair(MemPtr1->getClass(),
@@ -2182,6 +2215,18 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
     break;
   } while (true);
 
+  if (NeedConstBefore && NonStandardCompositeType) {
+    // Extension: Add 'const' to qualifiers that come before the first qualifier
+    // mismatch, so that our (non-standard!) composite type meets the 
+    // requirements of C++ [conv.qual]p4 bullet 3.
+    for (unsigned I = 0; I != NeedConstBefore; ++I) {
+      if ((QualifierUnion[I] & Qualifiers::Const) == 0) {
+        QualifierUnion[I] = QualifierUnion[I] | Qualifiers::Const;
+        *NonStandardCompositeType = true;
+      }
+    }
+  }
+  
   // Rewrap the composites as pointers or member pointers with the union CVRs.
   ContainingClassVector::reverse_iterator MOC
     = MemberOfClass.rbegin();

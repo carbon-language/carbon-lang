@@ -1828,6 +1828,9 @@ def ext_typecheck_cond_incompatible_operands : ExtWarn<
   "incompatible operand types (%0 and %1)">;
 def err_typecheck_comparison_of_distinct_pointers : Error<
   "comparison of distinct pointer types (%0 and %1)">;
+def ext_typecheck_comparison_of_distinct_pointers_nonstandard : ExtWarn<
+  "comparison of distinct pointer types (%0 and %1) uses non-standard "
+  "composite pointer type %2">;
 def err_typecheck_vector_comparison : Error<
   "comparison of vector types (%0 and %1) not supported yet">;
 def err_typecheck_assign_const : Error<"read-only variable is not assignable">;
@@ -2252,6 +2255,9 @@ def err_typecheck_expect_scalar_operand : Error<
   "operand of type %0 where arithmetic or pointer type is required">;
 def err_typecheck_cond_incompatible_operands : Error<
   "incompatible operand types (%0 and %1)">;
+def ext_typecheck_cond_incompatible_operands_nonstandard : ExtWarn<
+  "incompatible operand types (%0 and %1) use non-standard composite pointer "
+  "type %2">;
 def err_cast_selector_expr : Error<
   "cannot type cast @selector expression">;
 def warn_typecheck_cond_incompatible_pointers : ExtWarn<

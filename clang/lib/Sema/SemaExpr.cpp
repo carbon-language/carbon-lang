@@ -5324,11 +5324,18 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       //
       // C++ [expr.eq]p1 uses the same notion for (in)equality
       // comparisons of pointers.
-      QualType T = FindCompositePointerType(lex, rex);
+      bool NonStandardCompositeType = false;
+      QualType T = FindCompositePointerType(lex, rex,
+                              isSFINAEContext()? 0 : &NonStandardCompositeType);
       if (T.isNull()) {
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
         return QualType();
+      } else if (NonStandardCompositeType) {
+        Diag(Loc, 
+             diag::ext_typecheck_comparison_of_distinct_pointers_nonstandard)
+          << lType << rType << T 
+          << lex->getSourceRange() << rex->getSourceRange();
       }
 
       ImpCastExprToType(lex, T, CastExpr::CK_BitCast);
@@ -5390,11 +5397,18 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       //   of one of the operands, with a cv-qualification signature (4.4)
       //   that is the union of the cv-qualification signatures of the operand
       //   types.
-      QualType T = FindCompositePointerType(lex, rex);
+      bool NonStandardCompositeType = false;
+      QualType T = FindCompositePointerType(lex, rex,
+                              isSFINAEContext()? 0 : &NonStandardCompositeType);
       if (T.isNull()) {
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_pointers)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
         return QualType();
+      } else if (NonStandardCompositeType) {
+        Diag(Loc, 
+             diag::ext_typecheck_comparison_of_distinct_pointers_nonstandard)
+          << lType << rType << T 
+          << lex->getSourceRange() << rex->getSourceRange();
       }
 
       ImpCastExprToType(lex, T, CastExpr::CK_BitCast);
