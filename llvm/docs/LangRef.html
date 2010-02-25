@@ -1827,10 +1827,13 @@ Classifications</a> </div>
 <div class="doc_text">
 
 <h5>Overview:</h5>
-<p>As in many languages, the pointer type represents a pointer or reference to
-   another object, which must live in memory. Pointer types may have an optional
-   address space attribute defining the target-specific numbered address space
-   where the pointed-to object resides. The default address space is zero.</p>
+<p>The pointer type is used to specify memory locations.
+   Pointers are commonly used to reference objects in memory.</p>
+   
+<p>Pointer types may have an optional address space attribute defining the
+   numbered address space where the pointed-to object resides. The default
+   address space is number zero. The semantics of non-zero address
+   spaces are target-specific.</p>
 
 <p>Note that LLVM does not permit pointers to void (<tt>void*</tt>) nor does it
    permit pointers to labels (<tt>label*</tt>).  Use <tt>i8*</tt> instead.</p>
