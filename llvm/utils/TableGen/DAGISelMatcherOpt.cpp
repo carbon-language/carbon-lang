@@ -53,8 +53,31 @@ static void ContractNodes(OwningPtr<MatcherNode> &MatcherPtr) {
   ContractNodes(N->getNextPtr());
 }
 
+static void FactorNodes(OwningPtr<MatcherNode> &MatcherPtr) {
+  // If we reached the end of the chain, we're done.
+  MatcherNode *N = MatcherPtr.get();
+  if (N == 0) return;
+  
+  // If this is not a push node, just scan for one.
+  if (!isa<ScopeMatcherNode>(N))
+    return FactorNodes(N->getNextPtr());
+  
+  // Okay, pull together the series of linear push nodes into a vector so we can
+  // inspect it more easily.
+  SmallVector<MatcherNode*, 32> OptionsToMatch;
+  
+  MatcherNode *CurNode = N;
+  for (; ScopeMatcherNode *PMN = dyn_cast<ScopeMatcherNode>(CurNode);
+       CurNode = PMN->getNext())
+    OptionsToMatch.push_back(PMN->getCheck());
+  OptionsToMatch.push_back(CurNode);
+  
+  
+}
+
 MatcherNode *llvm::OptimizeMatcher(MatcherNode *Matcher) {
   OwningPtr<MatcherNode> MatcherPtr(Matcher);
   ContractNodes(MatcherPtr);
+  FactorNodes(MatcherPtr);
   return MatcherPtr.take();
 }
