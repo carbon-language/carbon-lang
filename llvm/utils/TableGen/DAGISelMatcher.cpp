@@ -12,6 +12,7 @@
 #include "CodeGenTarget.h"
 #include "Record.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 void Matcher::dump() const {
@@ -22,7 +23,6 @@ void Matcher::printNext(raw_ostream &OS, unsigned indent) const {
   if (Next)
     return Next->print(OS, indent);
 }
-
 
 void ScopeMatcher::print(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Scope\n";
@@ -209,3 +209,69 @@ void CompleteMatchMatcher::print(raw_ostream &OS, unsigned indent) const {
   printNext(OS, indent);
 }
 
+// getHashImpl Implementation.
+
+unsigned CheckPatternPredicateMatcher::getHashImpl() const {
+  return HashString(Predicate);
+}
+
+unsigned CheckPredicateMatcher::getHashImpl() const {
+  return HashString(PredName);
+}
+
+unsigned CheckOpcodeMatcher::getHashImpl() const {
+  return HashString(OpcodeName);
+}
+
+unsigned CheckMultiOpcodeMatcher::getHashImpl() const {
+  unsigned Result = 0;
+  for (unsigned i = 0, e = OpcodeNames.size(); i != e; ++i)
+    Result |= HashString(OpcodeNames[i]);
+  return Result;
+}
+
+unsigned CheckCondCodeMatcher::getHashImpl() const {
+  return HashString(CondCodeName);
+}
+
+unsigned CheckValueTypeMatcher::getHashImpl() const {
+  return HashString(TypeName);
+}
+
+unsigned EmitStringIntegerMatcher::getHashImpl() const {
+  return HashString(Val) ^ VT;
+}
+
+template<typename It>
+static unsigned HashUnsigneds(It I, It E) {
+  unsigned Result = 0;
+  for (; I != E; ++I)
+    Result = (Result<<3) ^ *I;
+  return Result;
+}
+
+unsigned EmitMergeInputChainsMatcher::getHashImpl() const {
+  return HashUnsigneds(ChainNodes.begin(), ChainNodes.end());
+}
+
+bool EmitNodeMatcher::isEqualImpl(const Matcher *m) const {
+  const EmitNodeMatcher *M = cast<EmitNodeMatcher>(m);
+  return M->OpcodeName == OpcodeName && M->VTs == VTs &&
+         M->Operands == Operands && M->HasChain == HasChain &&
+         M->HasFlag == HasFlag && M->HasMemRefs == HasMemRefs &&
+         M->NumFixedArityOperands == NumFixedArityOperands;
+}
+
+unsigned EmitNodeMatcher::getHashImpl() const {
+  return (HashString(OpcodeName) << 4) | Operands.size();
+}
+
+
+unsigned MarkFlagResultsMatcher::getHashImpl() const {
+  return HashUnsigneds(FlagResultNodes.begin(), FlagResultNodes.end());
+}
+
+unsigned CompleteMatchMatcher::getHashImpl() const {
+  return HashUnsigneds(Results.begin(), Results.end()) ^ 
+          ((unsigned)(intptr_t)&Pattern << 8);
+}
