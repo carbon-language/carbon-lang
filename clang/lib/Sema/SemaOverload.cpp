@@ -2094,32 +2094,6 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     }
   }
 
-  // Compare based on reference bindings.
-  if (SCS1.ReferenceBinding && SCS2.ReferenceBinding &&
-      SCS1.Second == ICK_Derived_To_Base) {
-    //   -- binding of an expression of type C to a reference of type
-    //      B& is better than binding an expression of type C to a
-    //      reference of type A&,
-    if (Context.hasSameUnqualifiedType(FromType1, FromType2) &&
-        !Context.hasSameUnqualifiedType(ToType1, ToType2)) {
-      if (IsDerivedFrom(ToType1, ToType2))
-        return ImplicitConversionSequence::Better;
-      else if (IsDerivedFrom(ToType2, ToType1))
-        return ImplicitConversionSequence::Worse;
-    }
-
-    //   -- binding of an expression of type B to a reference of type
-    //      A& is better than binding an expression of type C to a
-    //      reference of type A&,
-    if (!Context.hasSameUnqualifiedType(FromType1, FromType2) &&
-        Context.hasSameUnqualifiedType(ToType1, ToType2)) {
-      if (IsDerivedFrom(FromType2, FromType1))
-        return ImplicitConversionSequence::Better;
-      else if (IsDerivedFrom(FromType1, FromType2))
-        return ImplicitConversionSequence::Worse;
-    }
-  }
-  
   // Ranking of member-pointer types.
   if (SCS1.Second == ICK_Pointer_Member && SCS2.Second == ICK_Pointer_Member &&
       FromType1->isMemberPointerType() && FromType2->isMemberPointerType() &&
@@ -2156,9 +2130,13 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     }
   }
   
-  if (SCS1.CopyConstructor && SCS2.CopyConstructor &&
+  if ((SCS1.ReferenceBinding || SCS1.CopyConstructor) && 
+      (SCS2.ReferenceBinding || SCS2.CopyConstructor) &&
       SCS1.Second == ICK_Derived_To_Base) {
     //   -- conversion of C to B is better than conversion of C to A,
+    //   -- binding of an expression of type C to a reference of type
+    //      B& is better than binding an expression of type C to a
+    //      reference of type A&,
     if (Context.hasSameUnqualifiedType(FromType1, FromType2) &&
         !Context.hasSameUnqualifiedType(ToType1, ToType2)) {
       if (IsDerivedFrom(ToType1, ToType2))
@@ -2168,6 +2146,9 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     }
 
     //   -- conversion of B to A is better than conversion of C to A.
+    //   -- binding of an expression of type B to a reference of type
+    //      A& is better than binding an expression of type C to a
+    //      reference of type A&,
     if (!Context.hasSameUnqualifiedType(FromType1, FromType2) &&
         Context.hasSameUnqualifiedType(ToType1, ToType2)) {
       if (IsDerivedFrom(FromType2, FromType1))

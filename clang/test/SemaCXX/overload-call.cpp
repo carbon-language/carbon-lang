@@ -373,3 +373,16 @@ namespace test4 {
     }
   };
 }
+
+namespace DerivedToBase {
+  struct A { };
+  struct B : A { };
+  struct C : B { };
+  
+  int &f0(const A&);
+  float &f0(B);
+  
+  void g() {
+    float &fr = f0(C());
+  }
+}
