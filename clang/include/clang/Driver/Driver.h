@@ -70,6 +70,9 @@ public:
   /// Default name for linked images (e.g., "a.out").
   std::string DefaultImageName;
 
+  /// Driver title to use with help.
+  std::string DriverTitle;
+
   /// Host information for the platform the driver is running as. This
   /// will generally be the actual host platform, but not always.
   const HostInfo *Host;
@@ -136,6 +139,9 @@ public:
   bool getCheckInputsExist() const { return CheckInputsExist; }
 
   void setCheckInputsExist(bool Value) { CheckInputsExist = Value; }
+
+  const std::string &getTitle() { return DriverTitle; }
+  void setTitle(std::string Value) { DriverTitle = Value; }
 
   /// @}
   /// @name Primary Functionality

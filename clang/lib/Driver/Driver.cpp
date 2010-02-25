@@ -49,6 +49,7 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
   : Opts(createDriverOptTable()), Diags(_Diags),
     Name(_Name), Dir(_Dir), DefaultHostTriple(_DefaultHostTriple),
     DefaultImageName(_DefaultImageName),
+    DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
     CCCGenericGCCName("gcc"), CCCIsCXX(false), CCCEcho(false),
     CCCPrintBindings(false), CheckInputsExist(true), CCCUseClang(true),
@@ -273,8 +274,8 @@ void Driver::PrintOptions(const ArgList &Args) const {
 // FIXME: Move -ccc options to real options in the .td file (or eliminate), and
 // then move to using OptTable::PrintHelp.
 void Driver::PrintHelp(bool ShowHidden) const {
-  getOpts().PrintHelp(llvm::outs(), Name.c_str(),
-                      "clang \"gcc-compatible\" driver", ShowHidden);
+  getOpts().PrintHelp(llvm::outs(), Name.c_str(), DriverTitle.c_str(),
+                      ShowHidden);
 }
 
 void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
