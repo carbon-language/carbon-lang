@@ -804,8 +804,8 @@ public:
   /// vtable address point) for the given virtual member function.
   int64_t getVCallOffsetOffset(const CXXMethodDecl *MD);
   
-  /// clear - Clear the offset map.
-  void clear() { Offsets.clear(); }
+  // empty - Return whether the offset map is empty or not.
+  bool empty() const { return Offsets.empty(); }
 };
 
 bool VCallOffsetMap::MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
@@ -905,7 +905,6 @@ public:
   const_iterator components_begin() const { return Components.rbegin(); }
   const_iterator components_end() const { return Components.rend(); }
   
-  /// FIXME: Get rid of this getter.
   const VCallOffsetMap& getVCallOffsets() const { return VCallOffsets; }
 };
   
@@ -1092,8 +1091,9 @@ private:
   /// FinalOverriders - The final overriders of the most derived class.
   const FinalOverriders Overriders;
 
-  /// VCallOffsets - Keeps track of vcall offsets for the current vtable.
-  VCallOffsetMap VCallOffsets;
+  /// VCallOffsetsForVBases - Keeps track of vcall offsets for the virtual
+  /// bases in this vtable.
+  llvm::DenseMap<const CXXRecordDecl *, VCallOffsetMap> VCallOffsetsForVBases;
 
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
@@ -1267,7 +1267,19 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
   
   if (!Offset.isEmpty()) {
     if (Offset.VirtualBase) {
-      // Get the vcall offset offset.
+      // Get the vcall offset map for this virtual base.
+      VCallOffsetMap &VCallOffsets = VCallOffsetsForVBases[Offset.VirtualBase];
+      
+      if (VCallOffsets.empty()) {
+        // We don't have vcall offsets for this virtual base, go ahead and
+        // build them.
+        VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, 0,
+                                           BaseSubobject(Offset.VirtualBase, 0),
+                                           /*BaseIsVirtual=*/true);
+        
+        VCallOffsets = Builder.getVCallOffsets();
+      }
+      
       Adjustment.VCallOffsetOffset = VCallOffsets.getVCallOffsetOffset(MD);
     }
 
@@ -1478,9 +1490,14 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
                                      Base, BaseIsVirtual);
   Components.append(Builder.components_begin(), Builder.components_end());
   
-  // FIXME: This is not how we should do vcall offsets.
-  VCallOffsets = Builder.getVCallOffsets();
-  
+  // Check if we need to add these vcall offsets.
+  if (BaseIsVirtual && !Builder.getVCallOffsets().empty()) {
+    VCallOffsetMap &VCallOffsets = VCallOffsetsForVBases[Base.getBase()];
+    
+    if (VCallOffsets.empty())
+      VCallOffsets = Builder.getVCallOffsets();
+  }
+
   // Add the offset to top.
   // FIXME: This is not going to be right for construction vtables.
   // FIXME: We should not use / 8 here.
@@ -1509,9 +1526,6 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
     BaseSubobject PrimaryBase(BaseDecl, Base.getBaseOffset());
     AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
   }
-
-  // Clear the vcall offsets.
-  VCallOffsets.clear();  
 
   // Layout secondary vtables.
   LayoutSecondaryVtables(Base);
