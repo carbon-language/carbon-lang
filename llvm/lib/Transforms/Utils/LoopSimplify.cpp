@@ -159,6 +159,22 @@ ReprocessLoop:
     }
   }
 
+  // If there are exiting blocks with branches on undef, resolve the undef in
+  // the direction which will exit the loop. This will help simplify loop
+  // trip count computations.
+  SmallVector<BasicBlock*, 8> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
+  for (SmallVectorImpl<BasicBlock *>::iterator I = ExitingBlocks.begin(),
+       E = ExitingBlocks.end(); I != E; ++I)
+    if (BranchInst *BI = dyn_cast<BranchInst>((*I)->getTerminator()))
+      if (BI->isConditional()) {
+        if (UndefValue *Cond = dyn_cast<UndefValue>(BI->getCondition())) {
+          BI->setCondition(ConstantInt::get(Cond->getType(),
+                                            !L->contains(BI->getSuccessor(0))));
+          Changed = true;
+        }
+      }
+
   // Does the loop already have a preheader?  If so, don't insert one.
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
@@ -250,8 +266,6 @@ ReprocessLoop:
         break;
       }
   if (UniqueExit) {
-    SmallVector<BasicBlock*, 8> ExitingBlocks;
-    L->getExitingBlocks(ExitingBlocks);
     for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
       BasicBlock *ExitingBlock = ExitingBlocks[i];
       if (!ExitingBlock->getSinglePredecessor()) continue;

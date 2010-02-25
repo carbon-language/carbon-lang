@@ -384,17 +384,18 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // in this loop, insert a canonical induction variable of the largest size.
   Value *IndVar = 0;
   if (NeedCannIV) {
-    // Check to see if the loop already has a canonical-looking induction
-    // variable. If one is present and it's wider than the planned canonical
-    // induction variable, temporarily remove it, so that the Rewriter
-    // doesn't attempt to reuse it.
-    PHINode *OldCannIV = L->getCanonicalInductionVariable();
-    if (OldCannIV) {
+    // Check to see if the loop already has any canonical-looking induction
+    // variables. If any are present and wider than the planned canonical
+    // induction variable, temporarily remove them, so that the Rewriter
+    // doesn't attempt to reuse them.
+    SmallVector<PHINode *, 2> OldCannIVs;
+    while (PHINode *OldCannIV = L->getCanonicalInductionVariable()) {
       if (SE->getTypeSizeInBits(OldCannIV->getType()) >
           SE->getTypeSizeInBits(LargestType))
         OldCannIV->removeFromParent();
       else
-        OldCannIV = 0;
+        break;
+      OldCannIVs.push_back(OldCannIV);
     }
 
     IndVar = Rewriter.getOrInsertCanonicalInductionVariable(L, LargestType);
@@ -404,17 +405,21 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     DEBUG(dbgs() << "INDVARS: New CanIV: " << *IndVar << '\n');
 
     // Now that the official induction variable is established, reinsert
-    // the old canonical-looking variable after it so that the IR remains
-    // consistent. It will be deleted as part of the dead-PHI deletion at
+    // any old canonical-looking variables after it so that the IR remains
+    // consistent. They will be deleted as part of the dead-PHI deletion at
     // the end of the pass.
-    if (OldCannIV)
-      OldCannIV->insertAfter(cast<Instruction>(IndVar));
+    while (!OldCannIVs.empty()) {
+      PHINode *OldCannIV = OldCannIVs.pop_back_val();
+      OldCannIV->insertBefore(L->getHeader()->getFirstNonPHI());
+    }
   }
 
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  We can currently only handle loops with a single exit.
   ICmpInst *NewICmp = 0;
-  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount) && ExitingBlock) {
+  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount) &&
+      !BackedgeTakenCount->isZero() &&
+      ExitingBlock) {
     assert(NeedCannIV &&
            "LinearFunctionTestReplace requires a canonical induction variable");
     // Can't rewrite non-branch yet.

@@ -2549,14 +2549,14 @@ PushDefUseChildren(Instruction *I,
 /// the Scalars map if they reference SymName. This is used during PHI
 /// resolution.
 void
-ScalarEvolution::ForgetSymbolicName(Instruction *I, const SCEV *SymName) {
+ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
   SmallVector<Instruction *, 16> Worklist;
-  PushDefUseChildren(I, Worklist);
+  PushDefUseChildren(PN, Worklist);
 
   SmallPtrSet<Instruction *, 8> Visited;
-  Visited.insert(I);
+  Visited.insert(PN);
   while (!Worklist.empty()) {
-    I = Worklist.pop_back_val();
+    Instruction *I = Worklist.pop_back_val();
     if (!Visited.insert(I)) continue;
 
     std::map<SCEVCallbackVH, const SCEV *>::iterator It =
@@ -2568,12 +2568,15 @@ ScalarEvolution::ForgetSymbolicName(Instruction *I, const SCEV *SymName) {
         continue;
 
       // SCEVUnknown for a PHI either means that it has an unrecognized
-      // structure, or it's a PHI that's in the progress of being computed
-      // by createNodeForPHI.  In the former case, additional loop trip
-      // count information isn't going to change anything. In the later
-      // case, createNodeForPHI will perform the necessary updates on its
-      // own when it gets to that point.
-      if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second)) {
+      // structure, it's a PHI that's in the progress of being computed
+      // by createNodeForPHI, or it's a single-value PHI. In the first case,
+      // additional loop trip count information isn't going to change anything.
+      // In the second case, createNodeForPHI will perform the necessary
+      // updates on its own when it gets to that point. In the third, we do
+      // want to forget the SCEVUnknown.
+      if (!isa<PHINode>(I) ||
+          !isa<SCEVUnknown>(It->second) ||
+          (I != PN && It->second == SymName)) {
         ValuesAtScopes.erase(It->second);
         Scalars.erase(It);
       }
@@ -2696,9 +2699,21 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
         return SymbolicName;
       }
 
-  // It's tempting to recognize PHIs with a unique incoming value, however
-  // this leads passes like indvars to break LCSSA form. Fortunately, such
-  // PHIs are rare, as instcombine zaps them.
+  // If the PHI has a single incoming value, follow that value, unless the
+  // PHI's incoming blocks are in a different loop, in which case doing so
+  // risks breaking LCSSA form. Instcombine would normally zap these, but
+  // it doesn't have DominatorTree information, so it may miss cases.
+  if (Value *V = PN->hasConstantValue(DT)) {
+    bool AllSameLoop = true;
+    Loop *PNLoop = LI->getLoopFor(PN->getParent());
+    for (size_t i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (LI->getLoopFor(PN->getIncomingBlock(i)) != PNLoop) {
+        AllSameLoop = false;
+        break;
+      }
+    if (AllSameLoop)
+      return getSCEV(V);
+  }
 
   // If it's not a loop phi, we can't handle it yet.
   return getUnknown(PN);
