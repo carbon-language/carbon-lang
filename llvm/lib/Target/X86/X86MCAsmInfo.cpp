@@ -75,6 +75,8 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 
+  TextAlignFillValue = 0x90;
+
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   PCSymbol = ".";
@@ -99,4 +101,6 @@ MCSection *X86ELFMCAsmInfo::getNonexecutableStackSection(MCContext &Ctx) const {
 X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
+
+  TextAlignFillValue = 0x90;
 }
