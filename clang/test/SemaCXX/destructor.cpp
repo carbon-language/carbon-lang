@@ -61,3 +61,20 @@ struct X {};
 struct Y {
   ~X(); // expected-error {{expected the class name after '~' to name the enclosing class}}
 };
+
+namespace PR6421 {
+  class T; // expected-note{{forward declaration}}
+
+  class QGenericArgument
+  {
+    template<typename U>
+    void foo(T t) // expected-error{{variable has incomplete type}}
+    { }
+    
+    void disconnect()
+    {
+      T* t;
+      bob<QGenericArgument>(t); // expected-error{{undeclared identifier 'bob'}}
+    }
+  };
+}
