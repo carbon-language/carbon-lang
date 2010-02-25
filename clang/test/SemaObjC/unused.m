@@ -7,18 +7,13 @@ int printf(const char *, ...);
 @end
 
 @implementation Greeter
-+ (void) hello {
-    printf("Hello, World!\n");
-}
++ (void) hello { printf("Hello, World!\n"); }
 @end
-
 
 int test1(void) {
   [Greeter hello];
   return 0;
 }
-
-
 
 @interface NSObject @end
 @interface NSString : NSObject 
@@ -29,10 +24,6 @@ void test2() {
   @"pointless example call for test purposes".length; // expected-warning {{property access result unused - getters should not have side effects}}
 }
 
-
-
-
-
 @interface foo
 - (int)meth: (int)x: (int)y: (int)z ;
 @end
@@ -41,4 +32,14 @@ void test2() {
 - (int) meth: (int)x: 
 (int)y: // expected-warning{{unused}} 
 (int) __attribute__((unused))z { return x; }
+@end
+
+//===------------------------------------------------------------------------===
+// The next test shows how clang accepted attribute((unused)) on ObjC
+// instance variables, which GCC does not.
+//===------------------------------------------------------------------------===
+
+@interface TestUnusedIvar {
+  id x __attribute__((unused)); // no-warning
+}
 @end
