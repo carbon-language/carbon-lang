@@ -70,6 +70,8 @@ opendir DIR,$Directory;
 my @files = readdir DIR;
 closedir DIR;
 my @libs = grep(/libLLVM.*\.(dylib|so|a)$/,sort(@files));
+# Omit the all-of-llvm shared library.
+@libs = grep(!/libLLVM-\d\.\d(svn)?\.(dylib|so)/, @libs);
 my @objs = grep(/LLVM.*\.o$/,sort(@files));
 
 # Declare the hashes we will use to keep track of the library and object file
