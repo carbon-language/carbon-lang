@@ -453,8 +453,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
   }
 
   if (!getLangOptions().CPlusPlus) {
-    ICS.setBad();
-    ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
+    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
     return ICS;
   }
 
@@ -500,8 +499,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     //   13.3.1.6 in all cases, only standard conversion sequences and
     //   ellipsis conversion sequences are allowed.
     if (SuppressUserConversions && ICS.isUserDefined()) {
-      ICS.setBad();
-      ICS.Bad.init(BadConversionSequence::suppressed_user, From, ToType);
+      ICS.setBad(BadConversionSequence::suppressed_user, From, ToType);
     }
   } else if (UserDefResult == OR_Ambiguous && !SuppressUserConversions) {
     ICS.setAmbiguous();
@@ -512,8 +510,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
       if (Cand->Viable)
         ICS.Ambiguous.addConversion(Cand->Function);
   } else {
-    ICS.setBad();
-    ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
+    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
   }
 
   return ICS;
@@ -2196,7 +2193,7 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
                             bool InOverloadResolution) {
   if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
-    ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
+    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
     CheckReferenceInit(From, ToType,
                        /*FIXME:*/From->getLocStart(),
                        SuppressUserConversions,
@@ -2268,8 +2265,6 @@ Sema::TryObjectArgumentInitialization(QualType OrigFromType,
   // Set up the conversion sequence as a "bad" conversion, to allow us
   // to exit early.
   ImplicitConversionSequence ICS;
-  ICS.Standard.setAsIdentityConversion();
-  ICS.setBad();
 
   // We need to have an object of class type.
   QualType FromType = OrigFromType;
@@ -2293,25 +2288,29 @@ Sema::TryObjectArgumentInitialization(QualType OrigFromType,
   if (ImplicitParamType.getCVRQualifiers() 
                                     != FromTypeCanon.getLocalCVRQualifiers() &&
       !ImplicitParamType.isAtLeastAsQualifiedAs(FromTypeCanon)) {
-    ICS.Bad.init(BadConversionSequence::bad_qualifiers,
-                 OrigFromType, ImplicitParamType);
+    ICS.setBad(BadConversionSequence::bad_qualifiers,
+               OrigFromType, ImplicitParamType);
     return ICS;
   }
 
   // Check that we have either the same type or a derived type. It
   // affects the conversion rank.
   QualType ClassTypeCanon = Context.getCanonicalType(ClassType);
-  if (ClassTypeCanon == FromTypeCanon.getLocalUnqualifiedType())
-    ICS.Standard.Second = ICK_Identity;
-  else if (IsDerivedFrom(FromType, ClassType))
-    ICS.Standard.Second = ICK_Derived_To_Base;
+  ImplicitConversionKind SecondKind;
+  if (ClassTypeCanon == FromTypeCanon.getLocalUnqualifiedType()) {
+    SecondKind = ICK_Identity;
+  } else if (IsDerivedFrom(FromType, ClassType))
+    SecondKind = ICK_Derived_To_Base;
   else {
-    ICS.Bad.init(BadConversionSequence::unrelated_class, FromType, ImplicitParamType);
+    ICS.setBad(BadConversionSequence::unrelated_class,
+               FromType, ImplicitParamType);
     return ICS;
   }
 
   // Success. Mark this as a reference binding.
   ICS.setStandard();
+  ICS.Standard.setAsIdentityConversion();
+  ICS.Standard.Second = SecondKind;
   ICS.Standard.setFromType(FromType);
   ICS.Standard.setAllToTypes(ImplicitParamType);
   ICS.Standard.ReferenceBinding = true;
@@ -4464,7 +4463,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   QualType ToTy = Conv.Bad.getToType();
 
   if (FromTy == S.Context.OverloadTy) {
-    assert(FromExpr);
+    assert(FromExpr && "overload set argument came from implicit argument?");
     Expr *E = FromExpr->IgnoreParens();
     if (isa<UnaryOperator>(E))
       E = cast<UnaryOperator>(E)->getSubExpr()->IgnoreParens();
@@ -4667,8 +4666,9 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
   case ovl_fail_bad_final_conversion:
     return S.NoteOverloadCandidate(Fn);
 
-  case ovl_fail_bad_conversion:
-    for (unsigned I = 0, N = Cand->Conversions.size(); I != N; ++I)
+  case ovl_fail_bad_conversion: {
+    unsigned I = (Cand->IgnoreObjectArgument ? 1 : 0);
+    for (unsigned N = Cand->Conversions.size(); I != N; ++I)
       if (Cand->Conversions[I].isBad())
         return DiagnoseBadConversion(S, Cand, I);
     
@@ -4676,6 +4676,7 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
     // when user-conversion overload fails.  Figure out how to handle
     // those conditions and diagnose them well.
     return S.NoteOverloadCandidate(Fn);
+  }
   }
 }
 
@@ -4842,7 +4843,7 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
   if (Cand->FailureKind != ovl_fail_bad_conversion) return;
 
   // Skip forward to the first bad conversion.
-  unsigned ConvIdx = 0;
+  unsigned ConvIdx = (Cand->IgnoreObjectArgument ? 1 : 0);
   unsigned ConvCount = Cand->Conversions.size();
   while (true) {
     assert(ConvIdx != ConvCount && "no bad conversion in candidate");
@@ -4853,6 +4854,9 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
 
   if (ConvIdx == ConvCount)
     return;
+
+  assert(!Cand->Conversions[ConvIdx].isInitialized() &&
+         "remaining conversion is initialized?");
 
   // FIXME: these should probably be preserved from the overload
   // operation somehow.

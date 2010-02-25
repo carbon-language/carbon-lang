@@ -316,12 +316,20 @@ namespace clang {
     };
 
   private:
+    enum {
+      Uninitialized = BadConversion + 1
+    };
+
     /// ConversionKind - The kind of implicit conversion sequence.
-    Kind ConversionKind;
+    unsigned ConversionKind;
 
     void setKind(Kind K) {
-      if (isAmbiguous()) Ambiguous.destruct();
+      destruct();
       ConversionKind = K;
+    }
+
+    void destruct() {
+      if (ConversionKind == AmbiguousConversion) Ambiguous.destruct();
     }
 
   public:
@@ -343,14 +351,15 @@ namespace clang {
       BadConversionSequence Bad;
     };
 
-    ImplicitConversionSequence() : ConversionKind(BadConversion) {}
+    ImplicitConversionSequence() : ConversionKind(Uninitialized) {}
     ~ImplicitConversionSequence() {
-      if (isAmbiguous()) Ambiguous.destruct();
+      destruct();
     }
     ImplicitConversionSequence(const ImplicitConversionSequence &Other)
       : ConversionKind(Other.ConversionKind)
     {
       switch (ConversionKind) {
+      case Uninitialized: break;
       case StandardConversion: Standard = Other.Standard; break;
       case UserDefinedConversion: UserDefined = Other.UserDefined; break;
       case AmbiguousConversion: Ambiguous.copyFrom(Other.Ambiguous); break;
@@ -361,26 +370,45 @@ namespace clang {
 
     ImplicitConversionSequence &
         operator=(const ImplicitConversionSequence &Other) {
-      if (isAmbiguous()) Ambiguous.destruct();
+      destruct();
       new (this) ImplicitConversionSequence(Other);
       return *this;
     }
     
-    Kind getKind() const { return ConversionKind; }
-    bool isBad() const { return ConversionKind == BadConversion; }
-    bool isStandard() const { return ConversionKind == StandardConversion; }
-    bool isEllipsis() const { return ConversionKind == EllipsisConversion; }
-    bool isAmbiguous() const { return ConversionKind == AmbiguousConversion; }
-    bool isUserDefined() const {
-      return ConversionKind == UserDefinedConversion;
+    Kind getKind() const {
+      assert(isInitialized() && "querying uninitialized conversion");
+      return Kind(ConversionKind);
+    }
+    bool isBad() const { return getKind() == BadConversion; }
+    bool isStandard() const { return getKind() == StandardConversion; }
+    bool isEllipsis() const { return getKind() == EllipsisConversion; }
+    bool isAmbiguous() const { return getKind() == AmbiguousConversion; }
+    bool isUserDefined() const { return getKind() == UserDefinedConversion; }
+
+    /// Determines whether this conversion sequence has been
+    /// initialized.  Most operations should never need to query
+    /// uninitialized conversions and should assert as above.
+    bool isInitialized() const { return ConversionKind != Uninitialized; }
+
+    /// Sets this sequence as a bad conversion for an explicit argument.
+    void setBad(BadConversionSequence::FailureKind Failure,
+                Expr *FromExpr, QualType ToType) {
+      setKind(BadConversion);
+      Bad.init(Failure, FromExpr, ToType);
     }
 
-    void setBad() { setKind(BadConversion); }
+    /// Sets this sequence as a bad conversion for an implicit argument.
+    void setBad(BadConversionSequence::FailureKind Failure,
+                QualType FromType, QualType ToType) {
+      setKind(BadConversion);
+      Bad.init(Failure, FromType, ToType);
+    }
+
     void setStandard() { setKind(StandardConversion); }
     void setEllipsis() { setKind(EllipsisConversion); }
     void setUserDefined() { setKind(UserDefinedConversion); }
     void setAmbiguous() {
-      if (isAmbiguous()) return;
+      if (ConversionKind == AmbiguousConversion) return;
       ConversionKind = AmbiguousConversion;
       Ambiguous.construct();
     }
@@ -490,6 +518,7 @@ namespace clang {
     bool hasAmbiguousConversion() const {
       for (llvm::SmallVectorImpl<ImplicitConversionSequence>::const_iterator
              I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
+        if (!I->isInitialized()) return false;
         if (I->isAmbiguous()) return true;
       }
       return false;

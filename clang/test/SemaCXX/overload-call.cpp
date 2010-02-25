@@ -359,3 +359,16 @@ namespace DerivedToBaseVsVoid {
     int &ir = f(b);
   }
 }
+
+// PR 6398
+namespace test4 {
+  class A;
+  class B {
+    static void foo(); // expected-note {{not viable}}
+    static void foo(int*); // expected-note {{not viable}}
+
+    void bar(A *a) { 
+      foo(a); // expected-error {{no matching function for call}}
+    }
+  };
+}

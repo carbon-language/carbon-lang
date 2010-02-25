@@ -1344,8 +1344,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 AssignmentAction Action, bool AllowExplicit,
                                 bool Elidable,
                                 ImplicitConversionSequence& ICS) {
-  ICS.setBad();
-  ICS.Bad.init(BadConversionSequence::no_conversion, From, ToType);
+  ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
   if (Elidable && getLangOptions().CPlusPlus0x) {
     ICS = TryImplicitConversion(From, ToType,
                                 /*SuppressUserConversions=*/false,
@@ -1759,6 +1758,7 @@ static QualType TargetType(const ImplicitConversionSequence &ICS) {
     return ICS.UserDefined.After.getToType(2);
   case ImplicitConversionSequence::AmbiguousConversion:
     return ICS.Ambiguous.getToType();
+
   case ImplicitConversionSequence::EllipsisConversion:
   case ImplicitConversionSequence::BadConversion:
     llvm_unreachable("function not valid for ellipsis or bad conversions");
@@ -1802,7 +1802,7 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
         return false;
     }
   }
-  ICS.setBad();
+
   //   -- If E2 is an rvalue, or if the conversion above cannot be done:
   //      -- if E1 and E2 have class type, and the underlying class types are
   //         the same or one is a base class of the other:
@@ -1816,14 +1816,22 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
     //         E1 can be converted to match E2 if the class of T2 is the
     //         same type as, or a base class of, the class of T1, and
     //         [cv2 > cv1].
-    if ((FRec == TRec || FDerivedFromT) && TTy.isAtLeastAsQualifiedAs(FTy)) {
-      // Could still fail if there's no copy constructor.
-      // FIXME: Is this a hard error then, or just a conversion failure? The
-      // standard doesn't say.
-      ICS = Self.TryCopyInitialization(From, TTy,
-                                       /*SuppressUserConversions=*/false,
-                                       /*ForceRValue=*/false,
-                                       /*InOverloadResolution=*/false);
+    if (FRec == TRec || FDerivedFromT) {
+      if (TTy.isAtLeastAsQualifiedAs(FTy)) {
+        // Could still fail if there's no copy constructor.
+        // FIXME: Is this a hard error then, or just a conversion failure? The
+        // standard doesn't say.
+        ICS = Self.TryCopyInitialization(From, TTy,
+                                         /*SuppressUserConversions=*/false,
+                                         /*ForceRValue=*/false,
+                                         /*InOverloadResolution=*/false);
+      } else {
+        ICS.setBad(BadConversionSequence::bad_qualifiers, From, TTy);
+      }
+    } else {
+      // Can't implicitly convert FTy to a derived class TTy.
+      // TODO: more specific error for this.
+      ICS.setBad(BadConversionSequence::no_conversion, From, TTy);
     }
   } else {
     //     -- Otherwise: E1 can be converted to match E2 if E1 can be
@@ -2212,9 +2220,8 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
                           /*ForceRValue=*/false,
                           /*InOverloadResolution=*/false);
 
+  bool ToC2Viable = false;
   ImplicitConversionSequence E1ToC2, E2ToC2;
-  E1ToC2.setBad();
-  E2ToC2.setBad();  
   if (Context.getCanonicalType(Composite1) !=
       Context.getCanonicalType(Composite2)) {
     E1ToC2 = TryImplicitConversion(E1, Composite2,
@@ -2227,10 +2234,10 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
                                    /*AllowExplicit=*/false,
                                    /*ForceRValue=*/false,
                                    /*InOverloadResolution=*/false);
+    ToC2Viable = !E1ToC2.isBad() && !E2ToC2.isBad();
   }
 
   bool ToC1Viable = !E1ToC1.isBad() && !E2ToC1.isBad();
-  bool ToC2Viable = !E1ToC2.isBad() && !E2ToC2.isBad();
   if (ToC1Viable && !ToC2Viable) {
     if (!PerformImplicitConversion(E1, Composite1, E1ToC1, Sema::AA_Converting) &&
         !PerformImplicitConversion(E2, Composite1, E2ToC1, Sema::AA_Converting))
