@@ -502,7 +502,11 @@ public:
   GRCallExitNodeBuilder(GRCoreEngine &eng, const ExplodedNode *pred)
     : Eng(eng), Pred(pred) {}
 
-  void GenerateNode();
+  const ExplodedNode *getPredecessor() const { return Pred; }
+
+  const GRState *getState() const { return Pred->getState(); }
+
+  void GenerateNode(const GRState *state);
 }; 
 } // end clang namespace
 

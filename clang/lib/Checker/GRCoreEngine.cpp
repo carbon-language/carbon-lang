@@ -674,14 +674,14 @@ void GRCallEnterNodeBuilder::GenerateNode(const GRState *state,
     Eng.WList->Enqueue(Node);
 }
 
-void GRCallExitNodeBuilder::GenerateNode() {
+void GRCallExitNodeBuilder::GenerateNode(const GRState *state) {
   // Get the callee's location context.
   const StackFrameContext *LocCtx 
                          = cast<StackFrameContext>(Pred->getLocationContext());
 
   PostStmt Loc(LocCtx->getCallSite(), LocCtx->getParent());
   bool isNew;
-  ExplodedNode *Node = Eng.G->getNode(Loc, Pred->getState(), &isNew);
+  ExplodedNode *Node = Eng.G->getNode(Loc, state, &isNew);
   Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
   if (isNew)
     Eng.WList->Enqueue(Node, *const_cast<CFGBlock*>(LocCtx->getCallSiteBlock()),

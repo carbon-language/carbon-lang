@@ -1305,7 +1305,21 @@ void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
 }
 
 void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
-  B.GenerateNode();
+  const GRState *state = B.getState();
+  const ExplodedNode *Pred = B.getPredecessor();
+  const StackFrameContext *LocCtx = 
+                            cast<StackFrameContext>(Pred->getLocationContext());
+  const StackFrameContext *ParentSF = 
+                            cast<StackFrameContext>(LocCtx->getParent());
+
+  SymbolReaper SymReaper(*ParentSF->getLiveVariables(), getSymbolManager(),
+                         ParentSF);
+  const Stmt *CE = LocCtx->getCallSite();
+
+  state = getStateManager().RemoveDeadBindings(state, const_cast<Stmt*>(CE),
+                                               SymReaper);
+  
+  B.GenerateNode(state);
 }
 
 //===----------------------------------------------------------------------===//

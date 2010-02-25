@@ -60,20 +60,10 @@ void CallInliner::EvalEndPath(GREndPathNodeBuilder &B, void *tag,
   ExplodedNode *Pred = B.getPredecessor();
 
   const StackFrameContext *LocCtx = 
-                         cast<StackFrameContext>(Pred->getLocationContext());
+                        cast<StackFrameContext>(Pred->getLocationContext());
   // Check if this is the top level stack frame.
   if (!LocCtx->getParent())
-    return;
-
-  const StackFrameContext *ParentSF = 
-                                   cast<StackFrameContext>(LocCtx->getParent());
-
-  SymbolReaper SymReaper(*ParentSF->getLiveVariables(), Eng.getSymbolManager(), 
-                         ParentSF);
-  const Stmt *CE = LocCtx->getCallSite();
-  // FIXME: move this logic to GRExprEngine::ProcessCallExit().
-  state = Eng.getStateManager().RemoveDeadBindings(state, const_cast<Stmt*>(CE),
-                                                   SymReaper);
+   return;
 
   B.GenerateCallExitNode(state);
 }
