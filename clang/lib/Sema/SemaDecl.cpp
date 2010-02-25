@@ -4778,12 +4778,15 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     //   If a friend declaration in a non-local class first declares a
     //   class or function, the friend class or function is a member of
     //   the innermost enclosing namespace.
-    while (!SearchDC->isFileContext())
-      SearchDC = SearchDC->getParent();
+    SearchDC = SearchDC->getEnclosingNamespaceContext();
 
-    // The entity of a decl scope is a DeclContext; see PushDeclContext.
-    while (S->getEntity() != SearchDC)
+    // Look up through our scopes until we find one with an entity which
+    // matches our declaration context.
+    while (S->getEntity() &&
+           ((DeclContext *)S->getEntity())->getPrimaryContext() != SearchDC) {
       S = S->getParent();
+      assert(S && "No enclosing scope matching the enclosing namespace.");
+    }
   }
 
 CreateNewDecl:
