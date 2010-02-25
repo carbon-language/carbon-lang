@@ -43,6 +43,7 @@ void RegisterUndefinedAssignmentChecker(GRExprEngine &Eng);
 void RegisterVLASizeChecker(GRExprEngine &Eng);
 
 // API checks.
+void RegisterMacOSXAPIChecker(GRExprEngine &Eng);
 void RegisterOSAtomicChecker(GRExprEngine &Eng);
 void RegisterUnixAPIChecker(GRExprEngine &Eng);
 

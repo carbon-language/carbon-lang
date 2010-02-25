@@ -319,6 +319,7 @@ static void RegisterInternalChecks(GRExprEngine &Eng) {
   RegisterBuiltinFunctionChecker(Eng);
   RegisterOSAtomicChecker(Eng);
   RegisterUnixAPIChecker(Eng);
+  RegisterMacOSXAPIChecker(Eng);
 }
 
 GRExprEngine::GRExprEngine(AnalysisManager &mgr, GRTransferFuncs *tf)

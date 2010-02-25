@@ -34,6 +34,7 @@ add_clang_library(clangChecker
   GRExprEngineExperimentalChecks.cpp
   GRState.cpp
   LLVMConventionsChecker.cpp
+  MacOSXAPIChecker.cpp
   MallocChecker.cpp
   ManagerRegistry.cpp
   MemRegion.cpp
