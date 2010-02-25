@@ -1092,10 +1092,6 @@ private:
   /// FinalOverriders - The final overriders of the most derived class.
   const FinalOverriders Overriders;
 
-  /// VCallAndVBaseOffsets - The vcall and vbase offset, of the vtable we're
-  // building (in reverse order).
-  llvm::SmallVector<VtableComponent, 64> VCallAndVBaseOffsets;
-
   /// VCallOffsets - Keeps track of vcall offsets for the current vtable.
   VCallOffsetMap VCallOffsets;
 
@@ -1148,19 +1144,6 @@ private:
   /// PrimaryVirtualBases - All known virtual bases who is a primary base of
   /// some other base.
   VisitedVirtualBasesSetTy PrimaryVirtualBases;
-
-  /// AddVCallAndVBaseOffsets - Add vcall offsets and vbase offsets for the
-  /// given base subobject.
-  void AddVCallAndVBaseOffsets(BaseSubobject Base, bool BaseIsVirtual,
-                               uint64_t RealBaseOffset,
-                               VisitedVirtualBasesSetTy &VBases);
-
-  /// AddVCallOffsets - Add vcall offsets for the given base subobject.
-  void AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset);
-
-  /// AddVBaseOffsets - Add vbase offsets for the given class.
-  void AddVBaseOffsets(const CXXRecordDecl *Base, int64_t OffsetToTop,
-                       VisitedVirtualBasesSetTy &VBases);
 
   /// ComputeReturnAdjustment - Compute the return adjustment given a return
   /// adjustment base offset.
@@ -1292,165 +1275,6 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
   }
   
   return Adjustment;
-}
-
-void 
-VtableBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
-                                       bool BaseIsVirtual,
-                                       uint64_t RealBaseOffset,
-                                       VisitedVirtualBasesSetTy &VBases) {
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base.getBase());
-  
-  // Itanium C++ ABI 2.5.2:
-  //   ..in classes sharing a virtual table with a primary base class, the vcall
-  //   and vbase offsets added by the derived class all come before the vcall
-  //   and vbase offsets required by the base class, so that the latter may be
-  //   laid out as required by the base class without regard to additions from
-  //   the derived class(es).
-
-  // (Since we're emitting the vcall and vbase offsets in reverse order, we'll
-  // emit them for the primary base first).
-  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
-    bool PrimaryBaseIsVirtual = Layout.getPrimaryBaseWasVirtual();
-
-    uint64_t PrimaryBaseOffset;
-    
-    // Get the base offset of the primary base.
-    if (PrimaryBaseIsVirtual) {
-      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
-             "Primary vbase should have a zero offset!");
-      
-      const ASTRecordLayout &MostDerivedClassLayout =
-        Context.getASTRecordLayout(MostDerivedClass);
-      
-      PrimaryBaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
-    } else {
-      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
-             "Primary base should have a zero offset!");
-
-      PrimaryBaseOffset = Base.getBaseOffset();
-    }
-
-    AddVCallAndVBaseOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
-                            PrimaryBaseIsVirtual, RealBaseOffset, VBases);
-  }
-
-  // FIXME: Don't use /8 here.
-  int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
-  AddVBaseOffsets(Base.getBase(), OffsetToTop, VBases);
-
-  // We only want to add vcall offsets for virtual bases.
-  if (BaseIsVirtual)
-    AddVCallOffsets(Base, RealBaseOffset);
-}
-
-void VtableBuilder::AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset) {
-  const CXXRecordDecl *RD = Base.getBase();
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-
-  // Handle the primary base first.
-  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
-    uint64_t PrimaryBaseOffset;
-    
-    // Get the base offset of the primary base.
-    if (Layout.getPrimaryBaseWasVirtual()) {
-      assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
-             "Primary vbase should have a zero offset!");
-      
-      const ASTRecordLayout &MostDerivedClassLayout =
-        Context.getASTRecordLayout(MostDerivedClass);
-      
-      PrimaryBaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
-    } else {
-      assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
-             "Primary base should have a zero offset!");
-
-      PrimaryBaseOffset = Base.getBaseOffset();
-    }
-    
-    AddVCallOffsets(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
-                    VBaseOffset);
-  }
-
-  // Add the vcall offsets.
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-       E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-    
-    if (!MD->isVirtual())
-      continue;
-
-    // OffsetIndex is the index of this vcall offset, relative to the vtable
-    // address point. (We subtract 3 to account for the information just
-    // above the address point, the RTTI info, the offset to top, and the
-    // vcall offset itself).
-    int64_t OffsetIndex = -(int64_t)(3 + VCallAndVBaseOffsets.size());
-    
-    // FIXME: We shouldn't use / 8 here.
-    int64_t OffsetOffset = OffsetIndex * 
-      (int64_t)Context.Target.getPointerWidth(0) / 8;
-    
-    // Don't add a vcall offset if we already have one for this member function
-    // signature.
-    if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset))
-      continue;
-
-    // Get the final overrider.
-    FinalOverriders::OverriderInfo Overrider = 
-      Overriders.getOverrider(Base, MD);
-    
-    /// The vcall offset is the offset from the virtual base to the object where
-    /// the function was overridden.
-    // FIXME: We should not use / 8 here.
-    int64_t Offset = (int64_t)(Overrider.BaseOffset - VBaseOffset) / 8;
-
-    VCallAndVBaseOffsets.push_back(VtableComponent::MakeVCallOffset(Offset));
-  }
-
-  // And iterate over all non-virtual bases (ignoring the primary base).
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-  
-    if (I->isVirtual())
-      continue;
-
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-    // Get the base offset of this base.
-    uint64_t BaseOffset = Base.getBaseOffset() + 
-      Layout.getBaseClassOffset(BaseDecl);
-    
-    AddVCallOffsets(BaseSubobject(BaseDecl, BaseOffset), VBaseOffset);
-  }
-}
-
-void VtableBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
-                                    int64_t OffsetToTop,
-                                    VisitedVirtualBasesSetTy &VBases) {
-  const ASTRecordLayout &MostDerivedClassLayout = 
-    Context.getASTRecordLayout(MostDerivedClass);
-
-  // Add vbase offsets.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-
-    // Check if this is a virtual base that we haven't visited before.
-    if (I->isVirtual() && VBases.insert(BaseDecl)) {
-      // FIXME: We shouldn't use / 8 here.
-      uint64_t Offset = 
-        OffsetToTop + MostDerivedClassLayout.getVBaseClassOffset(BaseDecl) / 8;
-    
-      VCallAndVBaseOffsets.push_back(VtableComponent::MakeVBaseOffset(Offset));
-    }
-    
-    // Check the base class looking for more vbase offsets.
-    AddVBaseOffsets(BaseDecl, OffsetToTop, VBases);
-  }
 }
 
 void 
