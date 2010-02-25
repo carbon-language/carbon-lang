@@ -5781,7 +5781,8 @@ TreeTransform<Derived>::RebuildCXXPseudoDestructorExpr(ExprArg Base,
   if (BaseE->isTypeDependent() || Destroyed.getIdentifier() ||
       (!isArrow && !BaseType->getAs<RecordType>()) ||
       (isArrow && BaseType->getAs<PointerType>() && 
-       !BaseType->getAs<PointerType>()->getPointeeType()->getAs<RecordType>())){
+       !BaseType->getAs<PointerType>()->getPointeeType()
+                                              ->template getAs<RecordType>())){
     // This pseudo-destructor expression is still a pseudo-destructor.
     return SemaRef.BuildPseudoDestructorExpr(move(Base), OperatorLoc,
                                              isArrow? tok::arrow : tok::period,
