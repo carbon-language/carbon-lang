@@ -2900,50 +2900,6 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
     return Owned((Expr*) 0);
   }
 
-  // Handle pseudo-destructors (C++ [expr.pseudo]). Since anything referring
-  // into a record type was handled above, any destructor we see here is a
-  // pseudo-destructor.
-  if (MemberName.getNameKind() == DeclarationName::CXXDestructorName) {
-    // C++ [expr.pseudo]p2:
-    //   The left hand side of the dot operator shall be of scalar type. The
-    //   left hand side of the arrow operator shall be of pointer to scalar
-    //   type.
-    if (!BaseType->isScalarType())
-      return Owned(Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
-                     << BaseType << BaseExpr->getSourceRange());
-
-    //   [...] The type designated by the pseudo-destructor-name shall be the
-    //   same as the object type.
-    if (!MemberName.getCXXNameType()->isDependentType() &&
-        !Context.hasSameUnqualifiedType(BaseType, MemberName.getCXXNameType()))
-      return Owned(Diag(OpLoc, diag::err_pseudo_dtor_type_mismatch)
-                     << BaseType << MemberName.getCXXNameType()
-                     << BaseExpr->getSourceRange() << SourceRange(MemberLoc));
-
-    //   [...] Furthermore, the two type-names in a pseudo-destructor-name of
-    //   the form
-    //
-    //       ::[opt] nested-name-specifier[opt] type-name ::  ̃ type-name
-    //
-    //   shall designate the same scalar type.
-    //
-    // FIXME: DPG can't see any way to trigger this particular clause, so it
-    // isn't checked here.
-
-    // FIXME: We've lost the precise spelling of the type by going through
-    // DeclarationName. Can we do better?
-    TypeSourceInfo *DestroyedTypeInfo
-      = Context.getTrivialTypeSourceInfo(MemberName.getCXXNameType(),
-                                         MemberLoc);
-    return Owned(new (Context) CXXPseudoDestructorExpr(Context, BaseExpr,
-                                                       IsArrow, OpLoc,
-                               (NestedNameSpecifier *) SS.getScopeRep(),
-                                                       SS.getRange(),
-                                                       0, SourceLocation(),
-                                                       MemberLoc,
-                                                       DestroyedTypeInfo));
-  }
-
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
   // (*Obj).ivar.
   if ((IsArrow && BaseType->isObjCObjectPointerType()) ||
