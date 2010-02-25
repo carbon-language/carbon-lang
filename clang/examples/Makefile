@@ -9,6 +9,6 @@
 
 LEVEL = ../../..
 
-PARALLEL_DIRS := PrintFunctionNames wpa
+PARALLEL_DIRS := clang-interpreter PrintFunctionNames wpa
 
 include $(LEVEL)/Makefile.common
