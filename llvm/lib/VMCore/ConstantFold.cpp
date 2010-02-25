@@ -357,6 +357,22 @@ static Constant *getFoldedSizeOf(const Type *Ty, const Type *DestTy,
       }
     }
 
+  if (const UnionType *UTy = dyn_cast<UnionType>(Ty)) {
+    unsigned NumElems = UTy->getNumElements();
+    // Check for a union with all members having the same size.
+    Constant *MemberSize =
+      getFoldedSizeOf(UTy->getElementType(0), DestTy, true);
+    bool AllSame = true;
+    for (unsigned i = 1; i != NumElems; ++i)
+      if (MemberSize !=
+          getFoldedSizeOf(UTy->getElementType(i), DestTy, true)) {
+        AllSame = false;
+        break;
+      }
+    if (AllSame)
+      return MemberSize;
+  }
+
   // Pointer size doesn't depend on the pointee type, so canonicalize them
   // to an arbitrary pointee.
   if (const PointerType *PTy = dyn_cast<PointerType>(Ty))
@@ -415,6 +431,24 @@ static Constant *getFoldedAlignOf(const Type *Ty, const Type *DestTy,
     bool AllSame = true;
     for (unsigned i = 1; i != NumElems; ++i)
       if (MemberAlign != getFoldedAlignOf(STy->getElementType(i), DestTy, true)) {
+        AllSame = false;
+        break;
+      }
+    if (AllSame)
+      return MemberAlign;
+  }
+
+  if (const UnionType *UTy = dyn_cast<UnionType>(Ty)) {
+    // Union alignment is the maximum alignment of any member.
+    // Without target data, we can't compare much, but we can check to see
+    // if all the members have the same alignment.
+    unsigned NumElems = UTy->getNumElements();
+    // Check for a union with all members having the same alignment.
+    Constant *MemberAlign =
+      getFoldedAlignOf(UTy->getElementType(0), DestTy, true);
+    bool AllSame = true;
+    for (unsigned i = 1; i != NumElems; ++i)
+      if (MemberAlign != getFoldedAlignOf(UTy->getElementType(i), DestTy, true)) {
         AllSame = false;
         break;
       }

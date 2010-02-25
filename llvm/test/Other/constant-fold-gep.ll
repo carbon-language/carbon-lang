@@ -69,6 +69,8 @@
 ; PLAIN: @g = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; PLAIN: @h = constant i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
 ; PLAIN: @i = constant i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; PLAIN: @j = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; PLAIN: @k = constant i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64)
 ; OPT: @a = constant i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2310)
 ; OPT: @b = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; OPT: @c = constant i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2)
@@ -78,6 +80,8 @@
 ; OPT: @g = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
 ; OPT: @h = constant i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
 ; OPT: @i = constant i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; OPT: @j = constant i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; OPT: @k = constant i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64)
 ; TO: @a = constant i64 18480
 ; TO: @b = constant i64 8
 ; TO: @c = constant i64 16
@@ -87,6 +91,8 @@
 ; TO: @g = constant i64 8
 ; TO: @h = constant i64 8
 ; TO: @i = constant i64 8
+; TO: @j = constant i64 8
+; TO: @k = constant i64 8
 
 @a = constant i64 mul (i64 3, i64 mul (i64 ptrtoint ({[7 x double], [7 x double]}* getelementptr ({[7 x double], [7 x double]}* null, i64 11) to i64), i64 5))
 @b = constant i64 ptrtoint ([13 x double]* getelementptr ({i1, [13 x double]}* null, i64 0, i32 1) to i64)
@@ -97,6 +103,8 @@
 @g = constant i64 ptrtoint ({double, double}* getelementptr ({i1, {double, double}}* null, i64 0, i32 1) to i64)
 @h = constant i64 ptrtoint (double** getelementptr (double** null, i64 1) to i64)
 @i = constant i64 ptrtoint (double** getelementptr ({i1, double*}* null, i64 0, i32 1) to i64)
+@j = constant i64 ptrtoint (union {double, double}* getelementptr ({i1, union {double, double}}* null, i64 0, i32 1) to i64)
+@k = constant i64 ptrtoint (union {double, double}* getelementptr (union {double, double}* null, i64 1) to i64)
 
 ; The target-dependent folder should cast GEP indices to integer-sized pointers.
 
@@ -244,15 +252,23 @@ define i1* @hoo1() nounwind {
 ; PLAIN:   ret i64 %t
 ; PLAIN: }
 ; PLAIN: define i64 @fg() nounwind {
-; PLAIN:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; PLAIN:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64) to i64
 ; PLAIN:   ret i64 %t
 ; PLAIN: }
 ; PLAIN: define i64 @fh() nounwind {
-; PLAIN:   %t = bitcast i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; PLAIN:   %t = bitcast i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64) to i64
 ; PLAIN:   ret i64 %t
 ; PLAIN: }
 ; PLAIN: define i64 @fi() nounwind {
-; PLAIN:   %t = bitcast i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; PLAIN:   %t = bitcast i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64) to i64
+; PLAIN:   ret i64 %t
+; PLAIN: }
+; PLAIN: define i64 @fj() nounwind {
+; PLAIN:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64) to i64
+; PLAIN:   ret i64 %t
+; PLAIN: }
+; PLAIN: define i64 @fk() nounwind {
+; PLAIN:   %t = bitcast i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64) to i64
 ; PLAIN:   ret i64 %t
 ; PLAIN: }
 ; OPT: define i64 @fa() nounwind {
@@ -282,6 +298,12 @@ define i1* @hoo1() nounwind {
 ; OPT: define i64 @fi() nounwind {
 ; OPT:   ret i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
 ; OPT: }
+; OPT: define i64 @fj() nounwind {
+; OPT:   ret i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; OPT: }
+; OPT: define i64 @fk() nounwind {
+; OPT:   ret i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64)
+; OPT: }
 ; TO: define i64 @fa() nounwind {
 ; TO:   ret i64 18480
 ; TO: }
@@ -309,6 +331,12 @@ define i1* @hoo1() nounwind {
 ; TO: define i64 @fi() nounwind {
 ; TO:   ret i64 8
 ; TO: }
+; TO: define i64 @fj() nounwind {
+; TO:   ret i64 8
+; TO: }
+; TO: define i64 @fk() nounwind {
+; TO:   ret i64 8
+; TO: }
 ; SCEV: Classifying expressions for: @fa
 ; SCEV:   %t = bitcast i64 mul (i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64), i64 2310) to i64 
 ; SCEV:   -->  (2310 * sizeof(double))
@@ -328,14 +356,20 @@ define i1* @hoo1() nounwind {
 ; SCEV:   %t = bitcast i64 1 to i64 
 ; SCEV:   -->  1
 ; SCEV: Classifying expressions for: @fg
-; SCEV:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64)
+; SCEV:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64) to i64
 ; SCEV:   -->  alignof(double)
 ; SCEV: Classifying expressions for: @fh
-; SCEV:   %t = bitcast i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64)
+; SCEV:   %t = bitcast i64 ptrtoint (i1** getelementptr (i1** null, i32 1) to i64) to i64
 ; SCEV:   -->  sizeof(i1*)
 ; SCEV: Classifying expressions for: @fi
-; SCEV:   %t = bitcast i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64)
+; SCEV:   %t = bitcast i64 ptrtoint (i1** getelementptr (%2* null, i64 0, i32 1) to i64) to i64
 ; SCEV:   -->  alignof(i1*)
+; SCEV: Classifying expressions for: @fj
+; SCEV:   %t = bitcast i64 ptrtoint (double* getelementptr (%0* null, i64 0, i32 1) to i64) to i64
+; SCEV:   -->  alignof(double)
+; SCEV: Classifying expressions for: @fk
+; SCEV:   %t = bitcast i64 ptrtoint (double* getelementptr (double* null, i32 1) to i64) to i64
+; SCEV:   -->  sizeof(double)
 
 define i64 @fa() nounwind {
   %t = bitcast i64 mul (i64 3, i64 mul (i64 ptrtoint ({[7 x double], [7 x double]}* getelementptr ({[7 x double], [7 x double]}* null, i64 11) to i64), i64 5)) to i64
@@ -371,6 +405,14 @@ define i64 @fh() nounwind {
 }
 define i64 @fi() nounwind {
   %t = bitcast i64 ptrtoint (double** getelementptr ({i1, double*}* null, i64 0, i32 1) to i64) to i64
+  ret i64 %t
+}
+define i64 @fj() nounwind {
+  %t = bitcast i64 ptrtoint (union {double, double}* getelementptr ({i1, union {double, double}}* null, i64 0, i32 1) to i64) to i64
+  ret i64 %t
+}
+define i64 @fk() nounwind {
+  %t = bitcast i64 ptrtoint (union {double, double}* getelementptr (union {double, double}* null, i64 1) to i64) to i64
   ret i64 %t
 }
 
