@@ -945,9 +945,11 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
       ObjCProtocolDecl *Proto = (*P);
       Protocols.insert(Proto);
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-           PE = Proto->protocol_end(); P != PE; ++P)
+           PE = Proto->protocol_end(); P != PE; ++P) {
+        Protocols.insert(*P);
         CollectInheritedProtocols(*P, Protocols);
       }
+    }
     
     // Categories of this Interface.
     for (const ObjCCategoryDecl *CDeclChain = OI->getCategoryList(); 
