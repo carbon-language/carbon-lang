@@ -69,26 +69,6 @@ ASTConsumer *CreateObjCRewriter(const std::string &InFile,
                                 const LangOptions &LOpts,
                                 bool SilenceRewriteMacroWarning);
 
-// LLVM code generator: uses the code generation backend to generate LLVM
-// assembly. This runs optimizations depending on the CodeGenOptions
-// parameter. The output depends on the Action parameter.
-enum BackendAction {
-  Backend_EmitAssembly,  // Emit native assembly files
-  Backend_EmitBC,        // Emit LLVM bitcode files
-  Backend_EmitLL,        // Emit human-readable LLVM assembly
-  Backend_EmitNothing,   // Don't emit anything (benchmarking mode)
-  Backend_EmitObj        // Emit native object files
-};
-ASTConsumer *CreateBackendConsumer(BackendAction Action,
-                                   Diagnostic &Diags,
-                                   const LangOptions &Features,
-                                   const CodeGenOptions &CodeGenOpts,
-                                   const TargetOptions &TargetOpts,
-                                   bool TimePasses,
-                                   const std::string &ModuleID,
-                                   llvm::raw_ostream *OS,
-                                   llvm::LLVMContext& C);
-
 /// CreateHTMLPrinter - Create an AST consumer which rewrites source code to
 /// HTML with syntax highlighting suitable for viewing in a web-browser.
 ASTConsumer *CreateHTMLPrinter(llvm::raw_ostream *OS, Preprocessor &PP,

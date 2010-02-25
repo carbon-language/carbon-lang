@@ -1,4 +1,4 @@
-//===--- Backend.cpp - Interface to LLVM backend technologies -------------===//
+//===--- CodeGenAction.cpp - LLVM Code Generation Frontend Action ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/ASTConsumers.h"
+#include "clang/Frontend/CodeGenAction.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclGroup.h"
@@ -15,6 +15,8 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
+#include "clang/Frontend/ASTConsumers.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -37,6 +39,14 @@ using namespace clang;
 using namespace llvm;
 
 namespace {
+  enum BackendAction {
+    Backend_EmitAssembly,  ///< Emit native assembly files
+    Backend_EmitBC,        ///< Emit LLVM bitcode files
+    Backend_EmitLL,        ///< Emit human-readable LLVM assembly
+    Backend_EmitNothing,   ///< Don't emit anything (benchmarking mode)
+    Backend_EmitObj        ///< Emit native object files
+  };
+
   class BackendConsumer : public ASTConsumer {
     Diagnostic &Diags;
     BackendAction Action;
@@ -419,15 +429,46 @@ void BackendConsumer::EmitAssembly() {
   }
 }
 
-ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
-                                          Diagnostic &Diags,
-                                          const LangOptions &LangOpts,
-                                          const CodeGenOptions &CodeGenOpts,
-                                          const TargetOptions &TargetOpts,
-                                          bool TimePasses,
-                                          const std::string& InFile,
-                                          llvm::raw_ostream* OS,
-                                          LLVMContext& C) {
-  return new BackendConsumer(Action, Diags, LangOpts, CodeGenOpts,
-                             TargetOpts, TimePasses, InFile, OS, C);
+//
+
+CodeGenAction::CodeGenAction(unsigned _Act) : Act(_Act) {}
+
+ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
+                                              llvm::StringRef InFile) {
+  BackendAction BA = static_cast<BackendAction>(Act);
+  llvm::OwningPtr<llvm::raw_ostream> OS;
+  switch (BA) {
+  case Backend_EmitAssembly:
+    OS.reset(CI.createDefaultOutputFile(false, InFile, "s"));
+    break;
+  case Backend_EmitLL:
+    OS.reset(CI.createDefaultOutputFile(false, InFile, "ll"));
+    break;
+  case Backend_EmitBC:
+    OS.reset(CI.createDefaultOutputFile(true, InFile, "bc"));
+    break;
+  case Backend_EmitNothing:
+    break;
+  case Backend_EmitObj:
+    OS.reset(CI.createDefaultOutputFile(true, InFile, "o"));
+    break;
+  }
+  if (BA != Backend_EmitNothing && !OS)
+    return 0;
+
+  return new BackendConsumer(BA, CI.getDiagnostics(), CI.getLangOpts(),
+                             CI.getCodeGenOpts(), CI.getTargetOpts(),
+                             CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
+                             CI.getLLVMContext());
 }
+
+EmitAssemblyAction::EmitAssemblyAction()
+  : CodeGenAction(Backend_EmitAssembly) {}
+
+EmitBCAction::EmitBCAction() : CodeGenAction(Backend_EmitBC) {}
+
+EmitLLVMAction::EmitLLVMAction() : CodeGenAction(Backend_EmitLL) {}
+
+EmitLLVMOnlyAction::EmitLLVMOnlyAction() : CodeGenAction(Backend_EmitNothing) {}
+
+EmitObjAction::EmitObjAction() : CodeGenAction(Backend_EmitObj) {}
