@@ -54,12 +54,12 @@ namespace clang {
     ICK_Floating_Conversion,   ///< Floating point conversions (C++ 4.8)
     ICK_Complex_Conversion,    ///< Complex conversions (C99 6.3.1.6)
     ICK_Floating_Integral,     ///< Floating-integral conversions (C++ 4.9)
-    ICK_Complex_Real,          ///< Complex-real conversions (C99 6.3.1.7)
     ICK_Pointer_Conversion,    ///< Pointer conversions (C++ 4.10)
     ICK_Pointer_Member,        ///< Pointer-to-member conversions (C++ 4.11)
     ICK_Boolean_Conversion,    ///< Boolean conversions (C++ 4.12)
     ICK_Compatible_Conversion, ///< Conversions between compatible types in C99
     ICK_Derived_To_Base,       ///< Derived-to-base (C++ [over.best.ics])
+    ICK_Complex_Real,          ///< Complex-real conversions (C99 6.3.1.7)
     ICK_Num_Conversion_Kinds   ///< The number of conversion kinds
   };
 
@@ -83,9 +83,10 @@ namespace clang {
   /// 13.3.3.1.1) and are listed such that better conversion ranks
   /// have smaller values.
   enum ImplicitConversionRank {
-    ICR_Exact_Match = 0, ///< Exact Match
-    ICR_Promotion,       ///< Promotion
-    ICR_Conversion       ///< Conversion
+    ICR_Exact_Match = 0,        ///< Exact Match
+    ICR_Promotion,              ///< Promotion
+    ICR_Conversion,             ///< Conversion
+    ICR_Complex_Real_Conversion ///< Complex <-> Real conversion
   };
 
   ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind);

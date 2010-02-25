@@ -80,7 +80,7 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
-    ICR_Conversion
+    ICR_Complex_Real_Conversion
   };
   return Rank[(int)Kind];
 }
@@ -669,13 +669,18 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // Integral conversions (C++ 4.7).
     SCS.Second = ICK_Integral_Conversion;
     FromType = ToType.getUnqualifiedType();
-  } else if (FromType->isFloatingType() && ToType->isFloatingType()) {
-    // Floating point conversions (C++ 4.8).
-    SCS.Second = ICK_Floating_Conversion;
-    FromType = ToType.getUnqualifiedType();
   } else if (FromType->isComplexType() && ToType->isComplexType()) {
     // Complex conversions (C99 6.3.1.6)
     SCS.Second = ICK_Complex_Conversion;
+    FromType = ToType.getUnqualifiedType();
+  } else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
+             (ToType->isComplexType() && FromType->isArithmeticType())) {
+    // Complex-real conversions (C99 6.3.1.7)
+    SCS.Second = ICK_Complex_Real;
+    FromType = ToType.getUnqualifiedType();
+  } else if (FromType->isFloatingType() && ToType->isFloatingType()) {
+    // Floating point conversions (C++ 4.8).
+    SCS.Second = ICK_Floating_Conversion;
     FromType = ToType.getUnqualifiedType();
   } else if ((FromType->isFloatingType() &&
               ToType->isIntegralType() && (!ToType->isBooleanType() &&
@@ -684,11 +689,6 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
               ToType->isFloatingType())) {
     // Floating-integral conversions (C++ 4.9).
     SCS.Second = ICK_Floating_Integral;
-    FromType = ToType.getUnqualifiedType();
-  } else if ((FromType->isComplexType() && ToType->isArithmeticType()) ||
-             (ToType->isComplexType() && FromType->isArithmeticType())) {
-    // Complex-real conversions (C99 6.3.1.7)
-    SCS.Second = ICK_Complex_Real;
     FromType = ToType.getUnqualifiedType();
   } else if (IsPointerConversion(From, FromType, ToType, InOverloadResolution,
                                  FromType, IncompatibleObjC)) {

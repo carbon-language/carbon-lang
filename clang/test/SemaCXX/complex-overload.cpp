@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-char *foo(float); // expected-note 3 {{candidate function}}
+char *foo(float);
 
 void test_foo_1(float fv, double dv, float _Complex fc, double _Complex dc) {
   char *cp1 = foo(fv);
@@ -9,20 +9,20 @@ void test_foo_1(float fv, double dv, float _Complex fc, double _Complex dc) {
   char *cp4 = foo(dc);
 }
 
-int *foo(float _Complex); // expected-note 3 {{candidate function}}
+int *foo(float _Complex);
 
 void test_foo_2(float fv, double dv, float _Complex fc, double _Complex dc) {
   char *cp1 = foo(fv);
-  char *cp2 = foo(dv); // expected-error{{call to 'foo' is ambiguous; candidates are:}}
+  char *cp2 = foo(dv);
   int *ip = foo(fc);
-  int *lp = foo(dc); // expected-error{{call to 'foo' is ambiguous; candidates are:}}
+  int *lp = foo(dc);
 }
 
-long *foo(double _Complex); // expected-note {{candidate function}}
+long *foo(double _Complex);
 
 void test_foo_3(float fv, double dv, float _Complex fc, double _Complex dc) {
   char *cp1 = foo(fv);
-  char *cp2 = foo(dv); // expected-error{{call to 'foo' is ambiguous; candidates are:}}
+  char *cp2 = foo(dv);
   int *ip = foo(fc);
   long *lp = foo(dc);
 }
