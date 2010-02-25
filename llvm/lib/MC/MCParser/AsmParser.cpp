@@ -146,7 +146,7 @@ bool AsmParser::Run() {
   // FIXME: Target hook & command line option for initial section.
   Out.SwitchSection(getMachOSection("__TEXT", "__text",
                                     MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                    0, SectionKind()));
+                                    0, SectionKind::getText()));
 
 
   // Prime the lexer.
@@ -1237,8 +1237,14 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
     }
   }
 
-  // FIXME: Target specific behavior about how the "extra" bytes are filled.
-  Out.EmitValueToAlignment(Alignment, FillExpr, ValueSize, MaxBytesToFill);
+  // FIXME: hard code the parser to use EmitCodeAlignment for text when using
+  // the TextAlignFillValue.
+  if(Out.getCurrentSection()->getKind().isText() && 
+     Lexer.getMAI().getTextAlignFillValue() == FillExpr)
+    Out.EmitCodeAlignment(Alignment, MaxBytesToFill);
+  else
+    // FIXME: Target specific behavior about how the "extra" bytes are filled.
+    Out.EmitValueToAlignment(Alignment, FillExpr, ValueSize, MaxBytesToFill);
 
   return false;
 }
