@@ -135,6 +135,13 @@ PseudoInst<(outs), (ins i32imm:$amt), NoItinerary,
            [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb1Only]>;
 }
 
+def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
+                [/* For disassembly only; pattern left blank */]>,
+           T1Encoding<0b101111> {
+  let Inst{9-8} = 0b11;
+  let Inst{7-0} = 0b00000000;
+} 
+
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
 def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
@@ -347,7 +354,7 @@ let isBranch = 1, isTerminator = 1 in {
 // A8.6.16 B: Encoding T1
 // If Inst{11-8} == 0b1111 then SEE SVC
 let isCall = 1 in {
-def tSVC : T1I<(outs), (ins i32imm:$svc, pred:$cc), IIC_Br, "svc$cc\t$svc", []>,
+def tSVC : T1pI<(outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc", []>,
            Encoding16 {
   let Inst{15-12} = 0b1101;
   let Inst{11-8} = 0b1111;
