@@ -37,10 +37,18 @@ class TextDiagnosticPrinter : public DiagnosticClient {
   unsigned LastCaretDiagnosticWasNote : 1;
   unsigned OwnsOutputStream : 1;
 
+  /// A string to prefix to error messages.
+  std::string Prefix;
+
 public:
   TextDiagnosticPrinter(llvm::raw_ostream &os, const DiagnosticOptions &diags,
                         bool OwnsOutputStream = false);
   virtual ~TextDiagnosticPrinter();
+
+  /// setPrefix - Set the diagnostic printer prefix string, which will be
+  /// printed at the start of any diagnostics. If empty, no prefix string is
+  /// used.
+  void setPrefix(std::string Value) { Prefix = Value; }
 
   void BeginSourceFile(const LangOptions &LO, const Preprocessor *PP) {
     LangOpts = &LO;

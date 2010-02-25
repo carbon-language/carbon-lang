@@ -31,7 +31,7 @@ static const enum llvm::raw_ostream::Colors warningColor =
   llvm::raw_ostream::MAGENTA;
 static const enum llvm::raw_ostream::Colors errorColor = llvm::raw_ostream::RED;
 static const enum llvm::raw_ostream::Colors fatalColor = llvm::raw_ostream::RED;
-// used for changing only the bold attribute
+// Used for changing only the bold attribute.
 static const enum llvm::raw_ostream::Colors savedColor =
   llvm::raw_ostream::SAVEDCOLOR;
 
@@ -681,6 +681,9 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // message. We use this information to determine how long the
   // file+line+column number prefix is.
   uint64_t StartOfLocationInfo = OS.tell();
+
+  if (!Prefix.empty())
+    OS << Prefix << ": ";
 
   // If the location is specified, print out a file/line/col and include trace
   // if enabled.
