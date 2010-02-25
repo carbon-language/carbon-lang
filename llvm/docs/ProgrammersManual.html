@@ -525,7 +525,7 @@ lightweight <a href="http://en.wikipedia.org/wiki/Rope_(computer_science)">rope<
 which points to temporary (stack allocated) objects.  Twines can be implicitly
 constructed as the result of the plus operator applied to strings (i.e., a C
 strings, an <tt>std::string</tt>, or a <tt>StringRef</tt>).  The twine delays the
-actual concatentation of strings until it is actually required, at which point
+actual concatenation of strings until it is actually required, at which point
 it can be efficiently rendered directly into a character array.  This avoids
 unnecessary heap allocation involved in constructing the temporary results of
 string concatenation. See
@@ -1098,7 +1098,7 @@ in the default manner.</p>
 </div>
 
 <div class="doc_text">
-<p><tt>ilist</tt>s have another speciality that must be considered. To be a good
+<p><tt>ilist</tt>s have another specialty that must be considered. To be a good
 citizen in the C++ ecosystem, it needs to support the standard container
 operations, such as <tt>begin</tt> and <tt>end</tt> iterators, etc. Also, the
 <tt>operator--</tt> must work correctly on the <tt>end</tt> iterator in the
