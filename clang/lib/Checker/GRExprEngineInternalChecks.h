@@ -44,6 +44,7 @@ void RegisterVLASizeChecker(GRExprEngine &Eng);
 
 // API checks.
 void RegisterOSAtomicChecker(GRExprEngine &Eng);
+void RegisterUnixAPIChecker(GRExprEngine &Eng);
 
 } // end clang namespace
 #endif
