@@ -14,7 +14,6 @@
 #include "GRExprEngineInternalChecks.h"
 #include "clang/Checker/PathSensitive/Checker.h"
 #include "clang/Basic/Builtins.h"
-#include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
 
