@@ -15,6 +15,8 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/Option.h"
+#include "clang/Frontend/DiagnosticOptions.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -28,38 +30,6 @@
 #include "llvm/System/Signals.h"
 using namespace clang;
 using namespace clang::driver;
-
-class DriverDiagnosticPrinter : public DiagnosticClient {
-  std::string ProgName;
-  llvm::raw_ostream &OS;
-
-public:
-  DriverDiagnosticPrinter(const std::string _ProgName,
-                          llvm::raw_ostream &_OS)
-    : ProgName(_ProgName),
-      OS(_OS) {}
-
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                const DiagnosticInfo &Info);
-};
-
-void DriverDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
-                                               const DiagnosticInfo &Info) {
-  OS << ProgName << ": ";
-
-  switch (Level) {
-  case Diagnostic::Ignored: assert(0 && "Invalid diagnostic type");
-  case Diagnostic::Note:    OS << "note: "; break;
-  case Diagnostic::Warning: OS << "warning: "; break;
-  case Diagnostic::Error:   OS << "error: "; break;
-  case Diagnostic::Fatal:   OS << "fatal error: "; break;
-  }
-
-  llvm::SmallString<100> OutStr;
-  Info.FormatDiagnostic(OutStr);
-  OS.write(OutStr.begin(), OutStr.size());
-  OS << '\n';
-}
 
 llvm::sys::Path GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
   if (!CanonicalPrefixes)
@@ -218,7 +188,8 @@ int main(int argc, const char **argv) {
 
   llvm::sys::Path Path = GetExecutablePath(argv[0], CanonicalPrefixes);
 
-  DriverDiagnosticPrinter DiagClient(Path.getBasename(), llvm::errs());
+  TextDiagnosticPrinter DiagClient(llvm::errs(), DiagnosticOptions());
+  DiagClient.setPrefix(Path.getBasename());
 
   Diagnostic Diags(&DiagClient);
 
