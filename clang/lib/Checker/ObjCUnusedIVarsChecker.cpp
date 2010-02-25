@@ -1,4 +1,4 @@
-//==- CheckObjCUnusedIVars.cpp - Check for unused ivars ----------*- C++ -*-==//
+//==- ObjCUnusedIVarsChecker.cpp - Check for unused ivars --------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -68,14 +68,14 @@ static void Scan(IvarUsageMap& M, const ObjCContainerDecl* D) {
   for (ObjCContainerDecl::instmeth_iterator I = D->instmeth_begin(),
        E = D->instmeth_end(); I!=E; ++I)
     Scan(M, (*I)->getBody());
-  
-  if (const ObjCImplementationDecl *ID = dyn_cast<ObjCImplementationDecl>(D)) {    
+
+  if (const ObjCImplementationDecl *ID = dyn_cast<ObjCImplementationDecl>(D)) {
     // Scan for @synthesized property methods that act as setters/getters
     // to an ivar.
     for (ObjCImplementationDecl::propimpl_iterator I = ID->propimpl_begin(),
          E = ID->propimpl_end(); I!=E; ++I)
       Scan(M, *I);
-    
+
     // Scan the associated categories as well.
     for (const ObjCCategoryDecl *CD =
           ID->getClassInterface()->getCategoryList(); CD ;
@@ -92,7 +92,7 @@ static void Scan(IvarUsageMap &M, const DeclContext *C, const FileID FID,
        I!=E; ++I)
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
       SourceLocation L = FD->getLocStart();
-      if (SM.getFileID(L) == FID)      
+      if (SM.getFileID(L) == FID)
         Scan(M, FD->getBody());
     }
 }
@@ -109,12 +109,12 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
 
     const ObjCIvarDecl* ID = *I;
 
-    // Ignore ivars that aren't private.
-    if (ID->getAccessControl() != ObjCIvarDecl::Private)
-      continue;
-
-    // Skip IB Outlets.
-    if (ID->getAttr<IBOutletAttr>())
+    // Ignore ivars that...
+    // (a) aren't private
+    // (b) explicitly marked unused
+    // (c) are iboutlets
+    if (ID->getAccessControl() != ObjCIvarDecl::Private ||
+        ID->getAttr<UnusedAttr>() || ID->getAttr<IBOutletAttr>())
       continue;
 
     M[ID] = Unused;
@@ -122,11 +122,10 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
 
   if (M.empty())
     return;
-  
+
   // Now scan the implementation declaration.
   Scan(M, D);
 
-  
   // Any potentially unused ivars?
   bool hasUnused = false;
   for (IvarUsageMap::iterator I = M.begin(), E = M.end(); I!=E; ++I)
@@ -134,10 +133,10 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
       hasUnused = true;
       break;
     }
-  
+
   if (!hasUnused)
     return;
-  
+
   // We found some potentially unused ivars.  Scan the entire translation unit
   // for functions inside the @implementation that reference these ivars.
   // FIXME: In the future hopefully we can just use the lexical DeclContext
