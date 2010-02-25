@@ -62,7 +62,7 @@ namespace {
 
     llvm::OwningPtr<CodeGenerator> Gen;
 
-    llvm::Module *TheModule;
+    llvm::OwningPtr<llvm::Module> TheModule;
     llvm::TargetData *TheTargetData;
 
     mutable FunctionPassManager *CodeGenPasses;
@@ -97,7 +97,7 @@ namespace {
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
       Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
-      TheModule(0), TheTargetData(0),
+      TheTargetData(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
 
       if (AsmOutStream)
@@ -109,11 +109,12 @@ namespace {
 
     ~BackendConsumer() {
       delete TheTargetData;
-      delete TheModule;
       delete CodeGenPasses;
       delete PerModulePasses;
       delete PerFunctionPasses;
     }
+
+    llvm::Module *takeModule() { return TheModule.take(); }
 
     virtual void Initialize(ASTContext &Ctx) {
       Context = &Ctx;
@@ -123,7 +124,7 @@ namespace {
 
       Gen->Initialize(Ctx);
 
-      TheModule = Gen->GetModule();
+      TheModule.reset(Gen->GetModule());
       TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
 
       if (llvm::TimePassesIsEnabled)
@@ -179,7 +180,7 @@ namespace {
 
 FunctionPassManager *BackendConsumer::getCodeGenPasses() const {
   if (!CodeGenPasses) {
-    CodeGenPasses = new FunctionPassManager(TheModule);
+    CodeGenPasses = new FunctionPassManager(&*TheModule);
     CodeGenPasses->add(new TargetData(*TheTargetData));
   }
 
@@ -197,7 +198,7 @@ PassManager *BackendConsumer::getPerModulePasses() const {
 
 FunctionPassManager *BackendConsumer::getPerFunctionPasses() const {
   if (!PerFunctionPasses) {
-    PerFunctionPasses = new FunctionPassManager(TheModule);
+    PerFunctionPasses = new FunctionPassManager(&*TheModule);
     PerFunctionPasses->add(new TargetData(*TheTargetData));
   }
 
@@ -391,11 +392,12 @@ void BackendConsumer::EmitAssembly() {
   if (!M) {
     // The module has been released by IR gen on failures, do not
     // double free.
-    TheModule = 0;
+    TheModule.take();
     return;
   }
 
-  assert(TheModule == M && "Unexpected module change during IR generation");
+  assert(TheModule.get() == M &&
+         "Unexpected module change during IR generation");
 
   CreatePasses();
   if (!AddEmitPasses())
@@ -432,6 +434,22 @@ void BackendConsumer::EmitAssembly() {
 //
 
 CodeGenAction::CodeGenAction(unsigned _Act) : Act(_Act) {}
+
+void CodeGenAction::EndSourceFileAction() {
+  // If the consumer creation failed, do nothing.
+  if (!getCompilerInstance().hasASTConsumer())
+    return;
+
+  // Steal the module from the consumer.
+  BackendConsumer *Consumer = static_cast<BackendConsumer*>(
+    &getCompilerInstance().getASTConsumer());
+
+  TheModule.reset(Consumer->takeModule());
+}
+
+llvm::Module *CodeGenAction::takeModule() {
+  return TheModule.take();
+}
 
 ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {

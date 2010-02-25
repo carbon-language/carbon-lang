@@ -8,18 +8,31 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/FrontendAction.h"
+#include "llvm/ADT/OwningPtr.h"
+
+namespace llvm {
+  class Module;
+}
 
 namespace clang {
 
 class CodeGenAction : public ASTFrontendAction {
 private:
   unsigned Act;
+  llvm::OwningPtr<llvm::Module> TheModule;
 
 protected:
   CodeGenAction(unsigned _Act);
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile);
+
+  virtual void EndSourceFileAction();
+
+public:
+  /// takeModule - Take the generated LLVM module, for use after the action has
+  /// been run. The result may be null on failure.
+  llvm::Module *takeModule();
 };
 
 class EmitAssemblyAction : public CodeGenAction {
