@@ -1984,3 +1984,53 @@ def t2LDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb2]>;
+
+//===----------------------------------------------------------------------===//
+// Move between special register and ARM core register -- for disassembly only
+//
+
+// Rd = Instr{11-8}
+def t2MRS : T2I<(outs GPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, cpsr",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26} = 0;
+  let Inst{25-21} = 0b11111;
+  let Inst{20} = 0; // The R bit.
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+}
+
+// Rd = Instr{11-8}
+def t2MRSsys : T2I<(outs GPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, spsr",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26} = 0;
+  let Inst{25-21} = 0b11111;
+  let Inst{20} = 1; // The R bit.
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+}
+
+// FIXME: mask is ignored for the time being.
+// Rn = Inst{19-16}
+def t2MSR : T2I<(outs), (ins GPR:$src), NoItinerary, "msr", "\tcpsr, $src",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26} = 0;
+  let Inst{25-21} = 0b11100;
+  let Inst{20} = 0; // The R bit.
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+}
+
+// FIXME: mask is ignored for the time being.
+// Rn = Inst{19-16}
+def t2MSRsys : T2I<(outs), (ins GPR:$src), NoItinerary, "msr", "\tspsr, $src",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26} = 0;
+  let Inst{25-21} = 0b11100;
+  let Inst{20} = 1; // The R bit.
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+}
