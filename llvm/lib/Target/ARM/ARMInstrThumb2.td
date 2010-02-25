@@ -1939,6 +1939,17 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
   let Inst{15-8} = 0b10111111;
 }
 
+// Branch and Exchange Jazelle -- for disassembly only
+// Rm = Inst{19-16}
+def t2BXJ : T2I<(outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
+              [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{26} = 0;
+  let Inst{25-20} = 0b111100;
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
