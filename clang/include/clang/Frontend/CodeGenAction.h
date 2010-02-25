@@ -23,6 +23,7 @@ private:
 
 protected:
   CodeGenAction(unsigned _Act);
+  ~CodeGenAction();
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile);

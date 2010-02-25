@@ -435,6 +435,8 @@ void BackendConsumer::EmitAssembly() {
 
 CodeGenAction::CodeGenAction(unsigned _Act) : Act(_Act) {}
 
+CodeGenAction::~CodeGenAction() {}
+
 void CodeGenAction::EndSourceFileAction() {
   // If the consumer creation failed, do nothing.
   if (!getCompilerInstance().hasASTConsumer())
