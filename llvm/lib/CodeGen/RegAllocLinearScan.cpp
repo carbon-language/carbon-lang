@@ -334,10 +334,6 @@ namespace {
                             SmallVector<unsigned, 256> &inactiveCounts,
                             bool SkipDGRegs);
 
-    /// assignVirt2StackSlot - assigns this virtual register to a
-    /// stack slot. returns the stack slot
-    int assignVirt2StackSlot(unsigned virtReg);
-
     void ComputeRelatedRegClasses();
 
     template <typename ItTy>
