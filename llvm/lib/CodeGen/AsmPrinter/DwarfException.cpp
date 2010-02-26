@@ -758,7 +758,7 @@ void DwarfException::EmitExceptionTable() {
     if (OffsetSize != TTypeBaseOffsetSize) {
       assert((int)OffsetSize - (int)TTypeBaseOffsetSize);
       TTypeBaseOverflow = OffsetSize - TTypeBaseOffsetSize;
-      assert(TTypeBaseOffsetSize >= SizeAlign);
+      assert(SizeAlign >= TTypeBaseOffsetSize);
       SizeAlign -= TTypeBaseOverflow;
     }
 
