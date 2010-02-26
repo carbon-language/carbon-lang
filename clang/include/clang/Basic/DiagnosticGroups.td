@@ -24,6 +24,7 @@ def AddressOfTemporary : DiagGroup<"address-of-temporary">;
 def : DiagGroup<"aggregate-return">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
+def BadLiteral : DiagGroup<"bad-literal">; // not in gcc
 def : DiagGroup<"c++-compat">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;

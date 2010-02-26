@@ -38,20 +38,20 @@ char f = 'abcd';  // ignored.
 float t0[] = {
   1.9e20f,
   1.9e-20f,
-  1.9e50f,   // expected-error {{too large}}
-  1.9e-50f,  // expected-error {{too small}}
+  1.9e50f,   // expected-warning {{too large}}
+  1.9e-50f,  // expected-warning {{too small}}
   -1.9e20f,
   -1.9e-20f,
-  -1.9e50f,  // expected-error {{too large}}
-  -1.9e-50f  // expected-error {{too small}}
+  -1.9e50f,  // expected-warning {{too large}}
+  -1.9e-50f  // expected-warning {{too small}}
 };
 double t1[] = {
   1.9e50,
   1.9e-50,
-  1.9e500,   // expected-error {{too large}}
-  1.9e-500,  // expected-error {{too small}}
+  1.9e500,   // expected-warning {{too large}}
+  1.9e-500,  // expected-warning {{too small}}
   -1.9e50,
   -1.9e-50,
-  -1.9e500,  // expected-error {{too large}}
-  -1.9e-500  // expected-error {{too small}}
+  -1.9e500,  // expected-warning {{too large}}
+  -1.9e-500  // expected-warning {{too small}}
 };

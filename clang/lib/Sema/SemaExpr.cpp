@@ -1736,10 +1736,10 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       unsigned diagnostic;
       llvm::SmallVector<char, 20> buffer;
       if (result & APFloat::opOverflow) {
-        diagnostic = diag::err_float_overflow;
+        diagnostic = diag::warn_float_overflow;
         APFloat::getLargest(Format).toString(buffer);
       } else {
-        diagnostic = diag::err_float_underflow;
+        diagnostic = diag::warn_float_underflow;
         APFloat::getSmallest(Format).toString(buffer);
       }
 

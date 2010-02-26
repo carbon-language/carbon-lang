@@ -29,10 +29,12 @@ def ext_null_pointer_expr_not_ice : Extension<
 // Semantic analysis of constant literals.
 def ext_predef_outside_function : Warning<
   "predefined identifier is only valid inside function">;
-def err_float_overflow : Error<
-  "magnitude of floating-point constant too large for type %0; maximum is %1">;
-def err_float_underflow : Error<
-  "magnitude of floating-point constant too small for type %0; minimum is %1">;
+def warn_float_overflow : Warning<
+  "magnitude of floating-point constant too large for type %0; maximum is %1">,
+   InGroup<BadLiteral>;
+def warn_float_underflow : Warning<
+  "magnitude of floating-point constant too small for type %0; minimum is %1">,
+  InGroup<BadLiteral>;
 
 // C99 Designated Initializers
 def err_array_designator_negative : Error<
