@@ -1146,6 +1146,142 @@ def : T2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
 def : T2Pat<(add       GPR:$src, imm0_4095_neg:$imm),
             (t2SUBri12 GPR:$src, imm0_4095_neg:$imm)>;
 
+// A6.3.13, A6.3.14, A6.3.15 Parallel addition and subtraction (signed/unsigned)
+// And Miscellaneous operations -- for disassembly only
+class T2I_pam<bits<3> op22_20, bits<4> op7_4, string opc>
+  : T2I<(outs GPR:$dst), (ins GPR:$a, GPR:$b), NoItinerary, opc,
+        "\t$dst, $a, $b", [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11111;
+  let Inst{26-23} = 0b0101;
+  let Inst{22-20} = op22_20;
+  let Inst{15-12} = 0b1111;
+  let Inst{7-4} = op7_4;
+}
+
+// Saturating add/subtract -- for disassembly only
+
+def t2QADD    : T2I_pam<0b000, 0b1000, "qadd">;
+def t2QADD16  : T2I_pam<0b001, 0b0001, "qadd16">;
+def t2QADD8   : T2I_pam<0b000, 0b0001, "qadd8">;
+def t2QASX    : T2I_pam<0b010, 0b0001, "qasx">;
+def t2QDADD   : T2I_pam<0b000, 0b1001, "qdadd">;
+def t2QDSUB   : T2I_pam<0b000, 0b1011, "qdsub">;
+def t2QSAX    : T2I_pam<0b110, 0b0001, "qsax">;
+def t2QSUB    : T2I_pam<0b000, 0b1010, "qsub">;
+def t2QSUB16  : T2I_pam<0b101, 0b0001, "qsub16">;
+def t2QSUB8   : T2I_pam<0b100, 0b0001, "qsub8">;
+def t2UQADD16 : T2I_pam<0b001, 0b0101, "uqadd16">;
+def t2UQADD8  : T2I_pam<0b000, 0b0101, "uqadd8">;
+def t2UQASX   : T2I_pam<0b010, 0b0101, "uqasx">;
+def t2UQSAX   : T2I_pam<0b110, 0b0101, "uqsax">;
+def t2UQSUB16 : T2I_pam<0b101, 0b0101, "uqsub16">;
+def t2UQSUB8  : T2I_pam<0b100, 0b0101, "uqsub8">;
+
+// Signed/Unsigned add/subtract -- for disassembly only
+
+def t2SASX    : T2I_pam<0b010, 0b0000, "sasx">;
+def t2SADD16  : T2I_pam<0b001, 0b0000, "sadd16">;
+def t2SADD8   : T2I_pam<0b000, 0b0000, "sadd8">;
+def t2SSAX    : T2I_pam<0b110, 0b0000, "ssax">;
+def t2SSUB16  : T2I_pam<0b101, 0b0000, "ssub16">;
+def t2SSUB8   : T2I_pam<0b100, 0b0000, "ssub8">;
+def t2UASX    : T2I_pam<0b010, 0b0100, "uasx">;
+def t2UADD16  : T2I_pam<0b001, 0b0100, "uadd16">;
+def t2UADD8   : T2I_pam<0b000, 0b0100, "uadd8">;
+def t2USAX    : T2I_pam<0b110, 0b0100, "usax">;
+def t2USUB16  : T2I_pam<0b101, 0b0100, "usub16">;
+def t2USUB8   : T2I_pam<0b100, 0b0100, "usub8">;
+
+// Signed/Unsigned halving add/subtract -- for disassembly only
+
+def t2SHASX   : T2I_pam<0b010, 0b0010, "shasx">;
+def t2SHADD16 : T2I_pam<0b001, 0b0010, "shadd16">;
+def t2SHADD8  : T2I_pam<0b000, 0b0010, "shadd8">;
+def t2SHSAX   : T2I_pam<0b110, 0b0010, "shsax">;
+def t2SHSUB16 : T2I_pam<0b101, 0b0010, "shsub16">;
+def t2SHSUB8  : T2I_pam<0b100, 0b0010, "shsub8">;
+def t2UHASX   : T2I_pam<0b010, 0b0110, "uhasx">;
+def t2UHADD16 : T2I_pam<0b001, 0b0110, "uhadd16">;
+def t2UHADD8  : T2I_pam<0b000, 0b0110, "uhadd8">;
+def t2UHSAX   : T2I_pam<0b110, 0b0110, "uhsax">;
+def t2UHSUB16 : T2I_pam<0b101, 0b0110, "uhsub16">;
+def t2UHSUB8  : T2I_pam<0b100, 0b0110, "uhsub8">;
+
+// Unsigned Sum of Absolute Differences [and Accumulate] -- for disassembly only
+
+def t2USAD8   : T2I_mac<0, 0b111, 0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                        NoItinerary, "usad8", "\t$dst, $a, $b", []> {
+  let Inst{15-12} = 0b1111;
+}
+def t2USADA8  : T2I_mac<0, 0b111, 0b0000, (outs GPR:$dst),
+                        (ins GPR:$a, GPR:$b, GPR:$acc), NoItinerary, "usada8",
+                        "\t$dst, $a, $b, $acc", []>;
+
+// Signed/Unsigned saturate -- for disassembly only
+
+def t2SSATlsl : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos,GPR:$a,i32imm:$shamt),
+                    NoItinerary, "ssat", "\t$dst, $bit_pos, $a, LSL $shamt",
+                    [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25-22} = 0b1100;
+  let Inst{20} = 0;
+  let Inst{15} = 0;
+  let Inst{21} = 0;        // sh = '0'
+}
+
+def t2SSATasr : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos,GPR:$a,i32imm:$shamt),
+                    NoItinerary, "ssat", "\t$dst, $bit_pos, $a, ASR $shamt",
+                    [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25-22} = 0b1100;
+  let Inst{20} = 0;
+  let Inst{15} = 0;
+  let Inst{21} = 1;        // sh = '1'
+}
+
+def t2SSAT16 : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), NoItinerary,
+                   "ssat16", "\t$dst, $bit_pos, $a",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25-22} = 0b1100;
+  let Inst{20} = 0;
+  let Inst{15} = 0;
+  let Inst{21} = 1;        // sh = '1'
+  let Inst{14-12} = 0b000; // imm3 = '000'
+  let Inst{7-6} = 0b00;    // imm2 = '00'
+}
+
+def t2USATlsl : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos,GPR:$a,i32imm:$shamt),
+                     NoItinerary, "usat", "\t$dst, $bit_pos, $a, LSL $shamt",
+                     [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25-22} = 0b1110;
+  let Inst{20} = 0;
+  let Inst{15} = 0;
+  let Inst{21} = 0;        // sh = '0'
+}
+
+def t2USATasr : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos,GPR:$a,i32imm:$shamt),
+                     NoItinerary, "usat", "\t$dst, $bit_pos, $a, ASR $shamt",
+                     [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25-22} = 0b1110;
+  let Inst{20} = 0;
+  let Inst{15} = 0;
+  let Inst{21} = 1;        // sh = '1'
+}
+
+def t2USAT16 : T2I<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), NoItinerary,
+                   "usat16", "\t$dst, $bit_pos, $a",
+                   [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-27} = 0b11110;
+  let Inst{25-22} = 0b1110;
+  let Inst{20} = 0;
+  let Inst{15} = 0;
+  let Inst{21} = 1;        // sh = '1'
+  let Inst{14-12} = 0b000; // imm3 = '000'
+  let Inst{7-6} = 0b00;    // imm2 = '00'
+}
 
 //===----------------------------------------------------------------------===//
 //  Shift and rotate Instructions.
@@ -1535,9 +1671,63 @@ multiclass T2I_smla<string opc, PatFrag opnode> {
 defm t2SMUL : T2I_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 defm t2SMLA : T2I_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 
-// TODO: Halfword multiple accumulate long: SMLAL<x><y>
-// TODO: Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
+// Halfword multiple accumulate long: SMLAL<x><y> -- for disassembly only
+def t2SMLALBB : T2I_mac<1, 0b100, 0b1000, (outs GPR:$ldst,GPR:$hdst),
+           (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlalbb", "\t$ldst, $hdst, $a, $b",
+           [/* For disassembly only; pattern left blank */]>;
+def t2SMLALBT : T2I_mac<1, 0b100, 0b1001, (outs GPR:$ldst,GPR:$hdst),
+           (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlalbt", "\t$ldst, $hdst, $a, $b",
+           [/* For disassembly only; pattern left blank */]>;
+def t2SMLALTB : T2I_mac<1, 0b100, 0b1010, (outs GPR:$ldst,GPR:$hdst),
+           (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlaltb", "\t$ldst, $hdst, $a, $b",
+           [/* For disassembly only; pattern left blank */]>;
+def t2SMLALTT : T2I_mac<1, 0b100, 0b1011, (outs GPR:$ldst,GPR:$hdst),
+           (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlaltt", "\t$ldst, $hdst, $a, $b",
+           [/* For disassembly only; pattern left blank */]>;
 
+// Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
+// These are for disassembly only.
+
+def t2SMUAD   : T2I_mac<0, 0b010, 0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                        IIC_iMAC32, "smuad", "\t$dst, $a, $b", []> {
+  let Inst{15-12} = 0b1111;
+}
+def t2SMUADX  : T2I_mac<0, 0b010, 0b0001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                        IIC_iMAC32, "smuadx", "\t$dst, $a, $b", []> {
+  let Inst{15-12} = 0b1111;
+}
+def t2SMUSD   : T2I_mac<0, 0b100, 0b0000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                        IIC_iMAC32, "smusd", "\t$dst, $a, $b", []> {
+  let Inst{15-12} = 0b1111;
+}
+def t2SMUSDX  : T2I_mac<0, 0b100, 0b0001, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
+                        IIC_iMAC32, "smusdx", "\t$dst, $a, $b", []> {
+  let Inst{15-12} = 0b1111;
+}
+def t2SMLAD   : T2I_mac<0, 0b010, 0b0000, (outs GPR:$dst),
+                        (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC32, "smlad",
+                        "\t$dst, $a, $b, $acc", []>;
+def t2SMLADX  : T2I_mac<0, 0b010, 0b0001, (outs GPR:$dst),
+                        (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC32, "smladx",
+                        "\t$dst, $a, $b, $acc", []>;
+def t2SMLSD   : T2I_mac<0, 0b100, 0b0000, (outs GPR:$dst),
+                        (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC32, "smlsd",
+                        "\t$dst, $a, $b, $acc", []>;
+def t2SMLSDX  : T2I_mac<0, 0b100, 0b0001, (outs GPR:$dst),
+                        (ins GPR:$a, GPR:$b, GPR:$acc), IIC_iMAC32, "smlsdx",
+                        "\t$dst, $a, $b, $acc", []>;
+def t2SMLALD  : T2I_mac<1, 0b100, 0b1100, (outs GPR:$ldst,GPR:$hdst),
+                        (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlald",
+                        "\t$ldst, $hdst, $a, $b", []>;
+def t2SMLALDX : T2I_mac<1, 0b100, 0b1101, (outs GPR:$ldst,GPR:$hdst),
+                        (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlaldx",
+                        "\t$ldst, $hdst, $a, $b", []>;
+def t2SMLSLD  : T2I_mac<1, 0b101, 0b1100, (outs GPR:$ldst,GPR:$hdst),
+                        (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlsld",
+                        "\t$ldst, $hdst, $a, $b", []>;
+def t2SMLSLDX : T2I_mac<1, 0b101, 0b1101, (outs GPR:$ldst,GPR:$hdst),
+                        (ins GPR:$a,GPR:$b), IIC_iMAC64, "smlsldx",
+                        "\t$ldst, $hdst, $a, $b", []>;
 
 //===----------------------------------------------------------------------===//
 //  Misc. Arithmetic Instructions.

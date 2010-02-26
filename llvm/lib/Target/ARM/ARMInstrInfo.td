@@ -1586,9 +1586,9 @@ def UHSAX   : AAI<0b01100111, 0b0101, "uhsax">;
 def UHSUB16 : AAI<0b01100111, 0b0111, "uhsub16">;
 def UHSUB8  : AAI<0b01100111, 0b1111, "uhsub8">;
 
-// Unsigned Sum of Absolute Difference [and Accumulate] -- for disassembly only
+// Unsigned Sum of Absolute Differences [and Accumulate] -- for disassembly only
 
-def USAD8  : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
+def USAD8  : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 MulFrm /* for convenience */, NoItinerary, "usad8",
                 "\t$dst, $a, $b", []>,
              Requires<[IsARM, HasV6]> {
