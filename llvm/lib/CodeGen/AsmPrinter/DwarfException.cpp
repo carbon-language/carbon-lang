@@ -748,61 +748,15 @@ void DwarfException::EmitExceptionTable() {
   if (HaveTTData) {
     // Account for any extra padding that will be added to the call site table
     // length.
-    unsigned Offset = TTypeBaseOffset + SizeAlign;
-    unsigned OffsetSize = MCAsmInfo::getULEB128Size(Offset);
-    unsigned TTypeBaseOverflow = 0;
-
-    // If adding the extra alignment to the TType base offset makes the new
-    // value of TTypeBaseOffset overflow (i.e., go from encoded as 1 byte to 2
-    // bytes), then the padding needs to be smaller by that amount.
-    if (OffsetSize != TTypeBaseOffsetSize) {
-      assert((int)OffsetSize - (int)TTypeBaseOffsetSize);
-      TTypeBaseOverflow = OffsetSize - TTypeBaseOffsetSize;
-      assert(SizeAlign >= TTypeBaseOverflow);
-      SizeAlign -= TTypeBaseOverflow;
-    }
-
-    if (!TTypeBaseOverflow) {
-      EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset");
-    } else if (SizeAlign != 0) {
-      // If the new "offset + alignment" size doesn't require the same extra
-      // padding that the original one did, then we need to insert that padding
-      // ourselves.
-      EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset",
-                  MCAsmInfo::getULEB128Size(TTypeBaseOffset + SizeAlign) !=
-                  OffsetSize ? TTypeBaseOverflow : 0);
-    } else {
-      // If adding the extra padding to this offset causes it to buffer to the
-      // size of the padding needed, then we should perform the padding here and
-      // not at the call site table below. E.g. if we have this:
-      //
-      //    GCC_except_table1:
-      //    Lexception1:
-      //        .byte   0xff  ## @LPStart Encoding = omit
-      //        .byte   0x9b  ## @TType Encoding = indirect pcrel sdata4
-      //        .byte   0x7f  ## @TType base offset
-      //        .byte   0x03  ## Call site Encoding = udata4
-      //        .byte   0x89  ## Call site table length
-      //
-      // with padding of 1. We want to emit the padding like this:
-      // 
-      //    GCC_except_table1:
-      //    Lexception1:
-      //        .byte   0xff  ## @LPStart Encoding = omit
-      //        .byte   0x9b  ## @TType Encoding = indirect pcrel sdata4
-      //        .byte   0xff  ## @TType base offset
-      //        .space  1,0   ## Padding
-      //        .byte   0x03  ## Call site Encoding = udata4
-      //        .byte   0x89  ## Call site table length
-      //
-      // and not with padding on the "Call site table length" entry.
-      EmitULEB128(TTypeBaseOffset, "@TType base offset", TTypeBaseOverflow);
-    }
+    EmitULEB128(TTypeBaseOffset, "@TType base offset", SizeAlign);
+    SizeAlign = 0;
   }
 
   // SjLj Exception handling
   if (IsSJLJ) {
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
+
+    // Add extra padding if it wasn't added to the TType base offset.
     EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
 
     // Emit the landing pad site information.
@@ -844,6 +798,8 @@ void DwarfException::EmitExceptionTable() {
 
     // Emit the landing pad call site table.
     EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
+
+    // Add extra padding if it wasn't added to the TType base offset.
     EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
 
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
