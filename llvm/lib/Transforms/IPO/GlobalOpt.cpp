@@ -1297,9 +1297,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
                                         ConstantInt::get(IntPtrTy, TypeSize),
                                         NElems,
                                         CI->getName() + ".f" + Twine(FieldNo));
-    CallInst *NCI = dyn_cast<BitCastInst>(NMI) ?
-                    extractMallocCallFromBitCast(NMI) : cast<CallInst>(NMI);
-    FieldMallocs.push_back(NCI);
+    FieldMallocs.push_back(NMI);
     new StoreInst(NMI, NGV, CI);
   }
   
