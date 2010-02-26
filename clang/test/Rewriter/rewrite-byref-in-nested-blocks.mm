@@ -13,10 +13,13 @@ void f(void (^block)(void));
 @implementation X
 - (void)foo {
         __block int kerfluffle;
+        // radar 7692183
+        __block x; 
         f(^{
                 f(^{
                                 y = 42;
                             kerfluffle = 1;
+			    x = 2;
                 });
         });
 }

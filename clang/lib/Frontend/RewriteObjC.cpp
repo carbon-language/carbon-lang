@@ -4781,6 +4781,10 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
   int flag = 0;
   int isa = 0;
   SourceLocation DeclLoc = ND->getTypeSpecStartLoc();
+  if (DeclLoc.isInvalid())
+    // If type location is missing, it is because of missing type (a warning).
+    // Use variable's location which is good for this case.
+    DeclLoc = ND->getLocation();
   const char *startBuf = SM->getCharacterData(DeclLoc);
   SourceLocation X = ND->getLocEnd();
   X = SM->getInstantiationLoc(X);
