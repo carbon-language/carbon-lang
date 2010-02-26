@@ -35,6 +35,7 @@ namespace llvm {
 namespace clang {
   class ABIInfo;
   class ASTContext;
+  template <typename> class CanQual;
   class CXXConstructorDecl;
   class CXXDestructorDecl;
   class CXXMethodDecl;
@@ -48,6 +49,7 @@ namespace clang {
   class TagDecl;
   class TargetInfo;
   class Type;
+  typedef CanQual<Type> CanQualType;
 
 namespace CodeGen {
   class CodeGenTypes;
@@ -202,8 +204,8 @@ public:
     return getFunctionInfo(Ty->getResultType(), Args,
                            Ty->getCallConv(), Ty->getNoReturnAttr());
   }
-  const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *Ty);
-  const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *Ty);
+  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty);
+  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty);
 
   // getFunctionInfo - Get the function info for a member function.
   const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
@@ -220,8 +222,12 @@ public:
                                         const FunctionArgList &Args,
                                         CallingConv CC,
                                         bool NoReturn);
-  const CGFunctionInfo &getFunctionInfo(QualType RetTy,
-                                  const llvm::SmallVectorImpl<QualType> &ArgTys,
+
+  /// Retrieves the ABI information for the given function signature.
+  /// 
+  /// \param ArgTys - must all actually be canonical as params
+  const CGFunctionInfo &getFunctionInfo(CanQualType RetTy,
+                               const llvm::SmallVectorImpl<CanQualType> &ArgTys,
                                         CallingConv CC,
                                         bool NoReturn);
 

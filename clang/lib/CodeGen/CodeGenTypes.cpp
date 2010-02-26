@@ -313,10 +313,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // The function type can be built; call the appropriate routines to
     // build it.
     if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(&Ty))
-      return GetFunctionType(getFunctionInfo(FPT), FPT->isVariadic());
+      return GetFunctionType(getFunctionInfo(
+                CanQual<FunctionProtoType>::CreateUnsafe(QualType(FPT,0))),
+                             FPT->isVariadic());
 
     const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
-    return GetFunctionType(getFunctionInfo(FNPT), true);
+    return GetFunctionType(getFunctionInfo(
+                CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT,0))),
+                           true);
   }
 
   case Type::ObjCInterface: {

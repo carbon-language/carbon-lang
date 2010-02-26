@@ -90,8 +90,12 @@ namespace clang {
   class TemplateArgument;
   class TemplateArgumentLoc;
   class TemplateArgumentListInfo;
+  class Type;
   class QualifiedNameType;
   struct PrintingPolicy;
+
+  template <typename> class CanQual;  
+  typedef CanQual<Type> CanQualType;
 
   // Provide forward declarations for all of the *Type classes
 #define TYPE(Class, Base) class Class##Type;
@@ -976,7 +980,10 @@ public:
   /// \brief Determine the linkage of this type.
   virtual Linkage getLinkage() const;
 
-  QualType getCanonicalTypeInternal() const { return CanonicalType; }
+  QualType getCanonicalTypeInternal() const {
+    return CanonicalType;
+  }
+  CanQualType getCanonicalTypeUnqualified() const; // in CanonicalType.h
   void dump() const;
   static bool classof(const Type *) { return true; }
 };

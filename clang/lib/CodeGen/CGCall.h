@@ -18,6 +18,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Value.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/CanonicalType.h"
 
 #include "CGValue.h"
 
@@ -57,7 +58,7 @@ namespace CodeGen {
   /// function definition.
   class CGFunctionInfo : public llvm::FoldingSetNode {
     struct ArgInfo {
-      QualType type;
+      CanQualType type;
       ABIArgInfo info;
     };
 
@@ -81,8 +82,8 @@ namespace CodeGen {
 
     CGFunctionInfo(unsigned CallingConvention,
                    bool NoReturn,
-                   QualType ResTy,
-                   const llvm::SmallVectorImpl<QualType> &ArgTys);
+                   CanQualType ResTy,
+                   const llvm::SmallVectorImpl<CanQualType> &ArgTys);
     ~CGFunctionInfo() { delete[] Args; }
 
     const_arg_iterator arg_begin() const { return Args + 1; }
@@ -107,7 +108,7 @@ namespace CodeGen {
       EffectiveCallingConvention = Value;
     }
 
-    QualType getReturnType() const { return Args[0].type; }
+    CanQualType getReturnType() const { return Args[0].type; }
 
     ABIArgInfo &getReturnInfo() { return Args[0].info; }
     const ABIArgInfo &getReturnInfo() const { return Args[0].info; }
@@ -123,14 +124,16 @@ namespace CodeGen {
     static void Profile(llvm::FoldingSetNodeID &ID,
                         unsigned CallingConvention,
                         bool NoReturn,
-                        QualType ResTy,
+                        CanQualType ResTy,
                         Iterator begin,
                         Iterator end) {
       ID.AddInteger(CallingConvention);
       ID.AddBoolean(NoReturn);
       ResTy.Profile(ID);
-      for (; begin != end; ++begin)
-        begin->Profile(ID);
+      for (; begin != end; ++begin) {
+        CanQualType T = *begin; // force iterator to be over canonical types
+        T.Profile(ID);
+      }
     }
   };
   

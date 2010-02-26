@@ -120,6 +120,13 @@ public:
     return Stored.isLocalRestrictQualified();
   }
 
+  /// \brief Determines if this canonical type is furthermore
+  /// canonical as a parameter.  The parameter-canonicalization
+  /// process decays arrays to pointers and drops top-level qualifiers.
+  bool isCanonicalAsParam() const {
+    return Stored.isCanonicalAsParam();
+  }
+
   /// \brief Retrieve the unqualified form of this type.
   CanQual<T> getUnqualifiedType() const;
 
@@ -157,6 +164,10 @@ public:
   /// ensure that the given type is a canonical type with the correct
   // (dynamic) type.
   static CanQual<T> CreateUnsafe(QualType Other);
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddPointer(getAsOpaquePtr());
+  }
 };
 
 template<typename T, typename U>
@@ -171,6 +182,10 @@ inline bool operator!=(CanQual<T> x, CanQual<U> y) {
 
 /// \brief Represents a canonical, potentially-qualified type.
 typedef CanQual<Type> CanQualType;
+
+inline CanQualType Type::getCanonicalTypeUnqualified() const {
+  return CanQualType::CreateUnsafe(getCanonicalTypeInternal());
+}
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            CanQualType T) {
@@ -547,18 +562,24 @@ struct CanProxyAdaptor<ExtVectorType> : public CanProxyBase<ExtVectorType> {
 template<>
 struct CanProxyAdaptor<FunctionType> : public CanProxyBase<FunctionType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, getNoReturnAttr)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(CallingConv, getCallConv)
 };
 
 template<>
 struct CanProxyAdaptor<FunctionNoProtoType>
   : public CanProxyBase<FunctionNoProtoType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, getNoReturnAttr)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(CallingConv, getCallConv)
 };
 
 template<>
 struct CanProxyAdaptor<FunctionProtoType>
   : public CanProxyBase<FunctionProtoType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, getNoReturnAttr)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(CallingConv, getCallConv)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getNumArgs)
   CanQualType getArgType(unsigned i) const {
     return CanQualType::CreateUnsafe(this->getTypePtr()->getArgType(i));

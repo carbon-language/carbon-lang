@@ -297,9 +297,9 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // id objc_getProperty (id, SEL, ptrdiff_t, bool)
-    llvm::SmallVector<QualType,16> Params;
-    QualType IdType = Ctx.getObjCIdType();
-    QualType SelType = Ctx.getObjCSelType();
+    llvm::SmallVector<CanQualType,4> Params;
+    CanQualType IdType = Ctx.getCanonicalParamType(Ctx.getObjCIdType());
+    CanQualType SelType = Ctx.getCanonicalParamType(Ctx.getObjCSelType());
     Params.push_back(IdType);
     Params.push_back(SelType);
     Params.push_back(Ctx.LongTy);
@@ -314,9 +314,9 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
-    llvm::SmallVector<QualType,16> Params;
-    QualType IdType = Ctx.getObjCIdType();
-    QualType SelType = Ctx.getObjCSelType();
+    llvm::SmallVector<CanQualType,6> Params;
+    CanQualType IdType = Ctx.getCanonicalParamType(Ctx.getObjCIdType());
+    CanQualType SelType = Ctx.getCanonicalParamType(Ctx.getObjCSelType());
     Params.push_back(IdType);
     Params.push_back(SelType);
     Params.push_back(Ctx.LongTy);
@@ -333,8 +333,8 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // void objc_enumerationMutation (id)
-    llvm::SmallVector<QualType,16> Params;
-    Params.push_back(Ctx.getObjCIdType());
+    llvm::SmallVector<CanQualType,1> Params;
+    Params.push_back(Ctx.getCanonicalParamType(Ctx.getObjCIdType()));
     const llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
                                                   CC_Default, false), false);
@@ -5093,9 +5093,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   // Find the message function name.
   // FIXME. This is too much work to get the ABI-specific result type needed to
   // find the message name.
-  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType,
-                                                       llvm::SmallVector<QualType, 16>(),
-                                                       CC_Default, false);
+  const CGFunctionInfo &FnInfo
+    = Types.getFunctionInfo(ResultType, CallArgList(), CC_Default, false);
   llvm::Constant *Fn = 0;
   std::string Name("\01l_");
   if (CGM.ReturnTypeUsesSret(FnInfo)) {

@@ -56,7 +56,7 @@ private:
   const llvm::FunctionType *IMPTy;
   const llvm::PointerType *IdTy;
   const llvm::PointerType *PtrToIdTy;
-  QualType ASTIdTy;
+  CanQualType ASTIdTy;
   const llvm::IntegerType *IntTy;
   const llvm::PointerType *PtrTy;
   const llvm::IntegerType *LongTy;
@@ -262,7 +262,7 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
   PtrTy = PtrToInt8Ty;
 
   // Object type
-  ASTIdTy = CGM.getContext().getObjCIdType();
+  ASTIdTy = CGM.getContext().getCanonicalType(CGM.getContext().getObjCIdType());
   if (QualType() == ASTIdTy) {
     IdTy = PtrToInt8Ty;
   } else {
@@ -1685,7 +1685,7 @@ llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
   ASTContext &Ctx = CGM.getContext();
   // void objc_enumerationMutation (id)
-  llvm::SmallVector<QualType,16> Params;
+  llvm::SmallVector<CanQualType,1> Params;
   Params.push_back(ASTIdTy);
   const llvm::FunctionType *FTy =
     Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
