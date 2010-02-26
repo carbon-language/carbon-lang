@@ -126,6 +126,7 @@ std::string EVT::getEVTString() const {
   case MVT::v8f32:   return "v8f32";
   case MVT::v2f64:   return "v2f64";
   case MVT::v4f64:   return "v4f64";
+  case MVT::Metadata:return "Metadata";
   }
 }
 
