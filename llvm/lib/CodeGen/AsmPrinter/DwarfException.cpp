@@ -762,9 +762,16 @@ void DwarfException::EmitExceptionTable() {
       SizeAlign -= TTypeBaseOverflow;
     }
 
-    if (!TTypeBaseOverflow || SizeAlign != 0)
-      EmitULEB128(Offset, "@TType base offset");
-    else
+    if (!TTypeBaseOverflow) {
+      EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset");
+    } else if (SizeAlign != 0) {
+      // If the new "offset + alignment" size doesn't require extra the same
+      // extra padding that the original one did, then we need to insert that
+      // padding ourselves.
+      EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset",
+                  MCAsmInfo::getULEB128Size(TTypeBaseOffset + SizeAlign) !=
+                  OffsetSize ? TTypeBaseOverflow : 0);
+    } else {
       // If adding the extra padding to this offset causes it to buffer to the
       // size of the padding needed, then we should perform the padding here and
       // not at the call site table below. E.g. if we have this:
@@ -790,6 +797,7 @@ void DwarfException::EmitExceptionTable() {
       //
       // and not with padding on the "Call site table length" entry.
       EmitULEB128(TTypeBaseOffset, "@TType base offset", TTypeBaseOverflow);
+    }
   }
 
   // SjLj Exception handling
