@@ -4373,7 +4373,6 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
   // Handle specific things.
   if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
     if (!isa<FunctionDecl>(CDRE->getDecl()) &&
-        !CDRE->isByRef() &&
         !isa<ParmVarDecl>(CDRE->getDecl()) &&
         !InnerBlockValueDecls.count(CDRE->getDecl())) {
       InnerBlockValueDecls.insert(CDRE->getDecl());
@@ -4982,7 +4981,7 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++) {
     BlockDeclRefExpr *Exp = InnerBlockDeclRefs[i];
     ValueDecl *VD = Exp->getDecl();
-    if (!BlockByCopyDeclsPtrSet.count(VD)) {
+    if (!Exp->isByRef() && !BlockByCopyDeclsPtrSet.count(VD)) {
       // We need to save the copied-in variables in nested
       // blocks because it is needed at the end for some of the API generations.
       // See SynthesizeBlockLiterals routine.
@@ -4995,6 +4994,14 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
         GetBlockCallExprs(Exp);
         ImportedBlockDecls.insert(VD);
       }
+    }
+    if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
+      InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
+      BlockDeclRefs.push_back(Exp);
+      BlockByRefDeclsPtrSet.insert(VD);
+      BlockByRefDecls.push_back(VD);
+      GetBlockCallExprs(Exp);
+      ImportedBlockDecls.insert(VD);
     }
   }
   InnerDeclRefsCount.push_back(countOfInnerDecls);
