@@ -409,7 +409,7 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckTypeMatcher>(this)->Type == Type;
+    return cast<CheckTypeMatcher>(M)->Type == Type;
   }
   virtual unsigned getHashImpl() const { return Type; }
 };
