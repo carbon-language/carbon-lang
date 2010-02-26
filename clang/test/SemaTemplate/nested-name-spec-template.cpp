@@ -49,6 +49,5 @@ struct ::N::A<int>::X {
 template<typename T>
 struct TestA {
   typedef typename N::template B<T>::type type; // expected-error{{'B' following the 'template' keyword does not refer to a template}} \
-                                                // expected-error{{identifier or template-id}} \
                                                 // expected-error{{expected member name}}
 };

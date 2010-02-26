@@ -626,6 +626,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
           Next.is(tok::l_paren)) {
         // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
         if (TryAnnotateTypeOrScopeToken())
+          return ExprError();
+        if (!Tok.is(tok::identifier))
           return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
       }
     }
@@ -790,7 +792,7 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
     if (SavedKind == tok::kw_typename) {
       // postfix-expression: typename-specifier '(' expression-list[opt] ')'
-      if (!TryAnnotateTypeOrScopeToken())
+      if (TryAnnotateTypeOrScopeToken())
         return ExprError();
     }
 
@@ -852,6 +854,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // ::foo::bar -> global qualified name etc.   If TryAnnotateTypeOrScopeToken
     // annotates the token, tail recurse.
     if (TryAnnotateTypeOrScopeToken())
+      return ExprError();
+    if (!Tok.is(tok::coloncolon))
       return ParseCastExpression(isUnaryExpression, isAddressOfOperand);
 
     // ::new -> [C++] new-expression

@@ -891,8 +891,7 @@ Parser::OwningExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
 /// specifier, and another one to get the actual type inside
 /// ParseDeclarationSpecifiers).
 ///
-/// This returns true if the token was annotated or an unrecoverable error
-/// occurs.
+/// This returns true if an error occurred.
 ///
 /// Note that this routine emits an error if you call it with ::new or ::delete
 /// as the current tokens, so only call it in contexts where these are invalid.
@@ -910,11 +909,11 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    bool HadNestedNameSpecifier
-      = ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
-    if (!HadNestedNameSpecifier) {
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false))
+      return true;
+    if (!SS.isSet()) {
       Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);
-      return false;
+      return true;
     }
 
     TypeResult Ty;
@@ -928,7 +927,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       if (TemplateId->Kind == TNK_Function_template) {
         Diag(Tok, diag::err_typename_refers_to_non_type_template)
           << Tok.getAnnotationRange();
-        return false;
+        return true;
       }
 
       AnnotateTemplateIdTokenAsType(0);
@@ -942,7 +941,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     } else {
       Diag(Tok, diag::err_expected_type_name_after_typename)
         << SS.getRange();
-      return false;
+      return true;
     }
 
     SourceLocation EndLoc = Tok.getLastLoc();
@@ -951,7 +950,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     Tok.setAnnotationEndLoc(EndLoc);
     Tok.setLocation(TypenameLoc);
     PP.AnnotateCachedTokens(Tok);
-    return true;
+    return false;
   }
 
   // Remembers whether the token was originally a scope annotation.
@@ -959,7 +958,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
 
   CXXScopeSpec SS;
   if (getLang().CPlusPlus)
-    ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext);
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
+      return true;
 
   if (Tok.is(tok::identifier)) {
     // Determine whether the identifier is a type name.
@@ -976,7 +976,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       // In case the tokens were cached, have Preprocessor replace
       // them with the annotation token.
       PP.AnnotateCachedTokens(Tok);
-      return true;
+      return false;
     }
 
     if (!getLang().CPlusPlus) {
@@ -1001,7 +1001,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
           // If an unrecoverable error occurred, we need to return true here,
           // because the token stream is in a damaged state.  We may not return
           // a valid identifier.
-          return Tok.isNot(tok::identifier);
+          return true;
         }
       }
     }
@@ -1021,12 +1021,12 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
       // to produce a type annotation token. Update the template-id
       // annotation token to a type annotation token now.
       AnnotateTemplateIdTokenAsType(&SS);
-      return true;
+      return false;
     }
   }
 
   if (SS.isEmpty())
-    return Tok.isNot(tok::identifier) && Tok.isNot(tok::coloncolon);
+    return false;
 
   // A C++ scope specifier that isn't followed by a typename.
   // Push the current token back into the token stream (or revert it if it is
@@ -1044,7 +1044,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
   // just reverted back to the state we were in before being called.
   if (!wasScopeAnnotation)
     PP.AnnotateCachedTokens(Tok);
-  return true;
+  return false;
 }
 
 /// TryAnnotateScopeToken - Like TryAnnotateTypeOrScopeToken but only
@@ -1061,10 +1061,10 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;
-  if (!ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
-    // If the token left behind is not an identifier, we either had an error or
-    // successfully turned it into an annotation token.
-    return Tok.isNot(tok::identifier);
+  if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, EnteringContext))
+    return true;
+  if (!SS.isSet())
+    return false;
 
   // Push the current token back into the token stream (or revert it if it is
   // cached) and use an annotation scope token for current token.
@@ -1079,7 +1079,7 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   // In case the tokens were cached, have Preprocessor replace them with the
   // annotation token.
   PP.AnnotateCachedTokens(Tok);
-  return true;
+  return false;
 }
 
 // Anchor the Parser::FieldCallback vtable to this translation unit.

@@ -320,9 +320,9 @@ private:
   /// This returns true if the token was annotated.
   bool TryAnnotateTypeOrScopeToken(bool EnteringContext = false);
 
-  /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but only
-  /// annotates C++ scope specifiers.  This returns true if the token was
-  /// annotated.
+  /// TryAnnotateCXXScopeToken - Like TryAnnotateTypeOrScopeToken but
+  /// only annotates C++ scope specifiers.  This returns true if there
+  /// was an unrecoverable error.
   bool TryAnnotateCXXScopeToken(bool EnteringContext = false);
 
   /// TryAltiVecToken - Check for context-sensitive AltiVec identifier tokens,

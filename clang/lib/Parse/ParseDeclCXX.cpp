@@ -645,7 +645,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // "FOO : BAR" is not a potential typo for "FOO::BAR".
     ColonProtectionRAIIObject X(*this);
     
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true))
+    ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true);
+    if (SS.isSet())
       if (Tok.isNot(tok::identifier) && Tok.isNot(tok::annot_template_id))
         Diag(Tok, diag::err_expected_ident);
   }
@@ -1163,7 +1164,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   // Access declarations.
   if (!TemplateInfo.Kind &&
       (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
-      TryAnnotateCXXScopeToken() &&
+      !TryAnnotateCXXScopeToken() &&
       Tok.is(tok::annot_cxxscope)) {
     bool isAccessDecl = false;
     if (NextToken().is(tok::identifier))

@@ -55,7 +55,7 @@ using namespace clang;
 
 /// member access expression, e.g., the \p T:: in \p p->T::m.
 ///
-/// \returns true if a scope specifier was parsed.
+/// \returns true if there was an error parsing a scope specifier
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                             Action::TypeTy *ObjectType,
                                             bool EnteringContext,
@@ -67,7 +67,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     SS.setScopeRep(Tok.getAnnotationValue());
     SS.setRange(Tok.getAnnotationRange());
     ConsumeToken();
-    return true;
+    return false;
   }
 
   bool HasScopeSpecifier = false;
@@ -168,10 +168,10 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         = Actions.ActOnDependentTemplateName(TemplateKWLoc, SS, TemplateName,
                                              ObjectType, EnteringContext);
       if (!Template)
-        break;
+        return true;
       if (AnnotateTemplateIdToken(Template, TNK_Dependent_template_name,
                                   &SS, TemplateName, TemplateKWLoc, false))
-        break;
+        return true;
 
       continue;
     }
@@ -188,7 +188,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
       if (CheckForDestructor && GetLookAheadToken(2).is(tok::tilde)) {
         *MayBePseudoDestructor = true;
-        return HasScopeSpecifier;
+        return false;
       }
 
       if (TemplateId->Kind == TNK_Type_template ||
@@ -258,7 +258,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           !Actions.isNonTypeNestedNameSpecifier(CurScope, SS, Tok.getLocation(),
                                                 II, ObjectType)) {
         *MayBePseudoDestructor = true;
-        return HasScopeSpecifier;
+        return false;
       }
 
       // We have an identifier followed by a '::'. Lookup this name
@@ -303,7 +303,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         ConsumeToken();
         if (AnnotateTemplateIdToken(Template, TNK, &SS, TemplateName, 
                                     SourceLocation(), false))
-          break;
+          return true;
         continue;
       }
     }
@@ -319,7 +319,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
   if (CheckForDestructor && Tok.is(tok::tilde))
     *MayBePseudoDestructor = true;
 
-  return HasScopeSpecifier;
+  return false;
 }
 
 /// ParseCXXIdExpression - Handle id-expression.

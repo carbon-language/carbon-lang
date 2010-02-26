@@ -13,8 +13,9 @@ namespace A {
 }
 
 A:: ; // expected-error {{expected unqualified-id}}
-::A::ax::undef ex3; // expected-error {{no member named}}
-A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}}
+// FIXME: redundant errors
+::A::ax::undef ex3; // expected-error {{no member named}} expected-error {{unknown type name}}
+A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}} expected-error {{unknown type name}}
 
 int A::C::Ag1() { return 0; }
 

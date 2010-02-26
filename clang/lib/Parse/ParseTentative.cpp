@@ -491,7 +491,8 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
 
   while (1) {
     if (Tok.is(tok::coloncolon) || Tok.is(tok::identifier))
-      TryAnnotateCXXScopeToken(true);
+      if (TryAnnotateCXXScopeToken(true))
+        return TPResult::Error();
 
     if (Tok.is(tok::star) || Tok.is(tok::amp) || Tok.is(tok::caret) ||
         (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::star))) {
@@ -681,9 +682,10 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
-      return isCXXDeclarationSpecifier();
-    // Otherwise, not a typename.
-    return TPResult::False();
+      return TPResult::Error();
+    if (Tok.is(tok::identifier))
+      return TPResult::False();
+    return isCXXDeclarationSpecifier();
 
   case tok::coloncolon: {    // ::foo::bar
     const Token &Next = NextToken();
@@ -694,9 +696,8 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
-      return isCXXDeclarationSpecifier();
-    // Otherwise, not a typename.
-    return TPResult::False();
+      return TPResult::Error();
+    return isCXXDeclarationSpecifier();
   }
       
     // decl-specifier:
@@ -762,7 +763,9 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
 
   case tok::annot_cxxscope: // foo::bar or ::foo::bar, but already parsed
     // We've already annotated a scope; try to annotate a type.
-    if (!(TryAnnotateTypeOrScopeToken() && Tok.is(tok::annot_typename)))
+    if (TryAnnotateTypeOrScopeToken())
+      return TPResult::Error();
+    if (!Tok.is(tok::annot_typename))
       return TPResult::False();
     // If that succeeded, fallthrough into the generic simple-type-id case.
 
