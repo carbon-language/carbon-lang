@@ -152,17 +152,20 @@ class OptionalAmount {
 public:
   enum HowSpecified { NotSpecified, Constant, Arg };
 
-  OptionalAmount(HowSpecified h, const char *st)
-    : start(st), hs(h), amt(0) {}
+  OptionalAmount(HowSpecified h, unsigned i, const char *st)
+    : start(st), hs(h), amt(i) {}
 
   OptionalAmount()
     : start(0), hs(NotSpecified), amt(0) {}
 
-  OptionalAmount(unsigned i, const char *st)
-    : start(st), hs(Constant), amt(i) {}
-
   HowSpecified getHowSpecified() const { return hs; }
+
   bool hasDataArgument() const { return hs == Arg; }
+
+  unsigned getArgIndex() const {
+    assert(hasDataArgument());
+    return amt;
+  }
 
   unsigned getConstantAmount() const {
     assert(hs == Constant);
@@ -188,14 +191,14 @@ class FormatSpecifier {
   unsigned HasSpacePrefix : 1;
   unsigned HasAlternativeForm : 1;
   unsigned HasLeadingZeroes : 1;
-  unsigned flags : 5;
+  unsigned argIndex;
   ConversionSpecifier CS;
   OptionalAmount FieldWidth;
   OptionalAmount Precision;
 public:
   FormatSpecifier() : LM(None),
     IsLeftJustified(0), HasPlusPrefix(0), HasSpacePrefix(0),
-    HasAlternativeForm(0), HasLeadingZeroes(0) {}
+    HasAlternativeForm(0), HasLeadingZeroes(0), argIndex(0) {}
 
   static FormatSpecifier Parse(const char *beg, const char *end);
 
@@ -211,6 +214,16 @@ public:
   void setHasSpacePrefix() { HasSpacePrefix = 1; }
   void setHasAlternativeForm() { HasAlternativeForm = 1; }
   void setHasLeadingZeros() { HasLeadingZeroes = 1; }
+
+  void setArgIndex(unsigned i) {
+    assert(CS.consumesDataArgument());
+    argIndex = i;
+  }
+
+  unsigned getArgIndex() const {
+    assert(CS.consumesDataArgument());
+    return argIndex;
+  }
 
   // Methods for querying the format specifier.
 
@@ -262,10 +275,10 @@ public:
 
   virtual void HandleNullChar(const char *nullCharacter) {}
 
-  virtual void
+  virtual bool
     HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
                                      const char *startSpecifier,
-                                     unsigned specifierLen) {}
+                                     unsigned specifierLen) { return true; }
 
   virtual bool HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
                                      const char *startSpecifier,

@@ -955,6 +955,7 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
 ///  FormatGuard: Automatic Protection From printf Format String
 ///  Vulnerabilities, Proceedings of the 10th USENIX Security Symposium, 2001.
 ///
+/// TODO:
 /// Functionality implemented:
 ///
 ///  We can statically check the following properties for string
@@ -965,7 +966,7 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
 ///      data arguments?
 ///
 ///  (2) Does each format conversion correctly match the type of the
-///      corresponding data argument?  (TODO)
+///      corresponding data argument?
 ///
 /// Moreover, for all printf functions we can:
 ///
@@ -984,7 +985,6 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
 ///
 /// All of these checks can be done by parsing the format string.
 ///
-/// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
 void
 Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
                            unsigned format_idx, unsigned firstDataArg) {
@@ -1044,13 +1044,13 @@ class CheckPrintfHandler : public analyze_printf::FormatStringHandler {
   Sema &S;
   const StringLiteral *FExpr;
   const Expr *OrigFormatExpr;
-  unsigned NumConversions;
   const unsigned NumDataArgs;
   const bool IsObjCLiteral;
   const char *Beg; // Start of format string.
   const bool HasVAListArg;
   const CallExpr *TheCall;
   unsigned FormatIdx;
+  llvm::BitVector CoveredArgs;
 public:
   CheckPrintfHandler(Sema &s, const StringLiteral *fexpr,
                      const Expr *origFormatExpr,
@@ -1058,17 +1058,20 @@ public:
                      const char *beg, bool hasVAListArg,
                      const CallExpr *theCall, unsigned formatIdx)
     : S(s), FExpr(fexpr), OrigFormatExpr(origFormatExpr),
-      NumConversions(0), NumDataArgs(numDataArgs),
+      NumDataArgs(numDataArgs),
       IsObjCLiteral(isObjCLiteral), Beg(beg),
       HasVAListArg(hasVAListArg),
-      TheCall(theCall), FormatIdx(formatIdx) {}
+      TheCall(theCall), FormatIdx(formatIdx) {
+        CoveredArgs.resize(numDataArgs);
+        CoveredArgs.reset();
+      }
 
   void DoneProcessing();
 
   void HandleIncompleteFormatSpecifier(const char *startSpecifier,
                                        unsigned specifierLen);
 
-  void
+  bool
   HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
                                    const char *startSpecifier,
                                    unsigned specifierLen);
@@ -1117,18 +1120,35 @@ HandleIncompleteFormatSpecifier(const char *startSpecifier,
     << getFormatSpecifierRange(startSpecifier, specifierLen);
 }
 
-void CheckPrintfHandler::
+bool CheckPrintfHandler::
 HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,
                                  const char *startSpecifier,
                                  unsigned specifierLen) {
 
-  ++NumConversions;
+  unsigned argIndex = FS.getArgIndex();
+  bool keepGoing = true;
+  if (argIndex < NumDataArgs) {
+    // Consider the argument coverered, even though the specifier doesn't
+    // make sense.
+    CoveredArgs.set(argIndex);
+  }
+  else {
+    // If argIndex exceeds the number of data arguments we
+    // don't issue a warning because that is just a cascade of warnings (and
+    // they may have intended '%%' anyway). We don't want to continue processing
+    // the format string after this point, however, as we will like just get
+    // gibberish when trying to match arguments.
+    keepGoing = false;
+  }
+
   const analyze_printf::ConversionSpecifier &CS =
     FS.getConversionSpecifier();
   SourceLocation Loc = getLocationOfByte(CS.getStart());
   S.Diag(Loc, diag::warn_printf_invalid_conversion)
       << llvm::StringRef(CS.getStart(), CS.getLength())
       << getFormatSpecifierRange(startSpecifier, specifierLen);
+
+  return keepGoing;
 }
 
 void CheckPrintfHandler::HandleNullChar(const char *nullCharacter) {
@@ -1139,7 +1159,7 @@ void CheckPrintfHandler::HandleNullChar(const char *nullCharacter) {
 }
 
 const Expr *CheckPrintfHandler::getDataArg(unsigned i) const {
-  return TheCall->getArg(FormatIdx + i);
+  return TheCall->getArg(FormatIdx + i + 1);
 }
 
 
@@ -1162,9 +1182,9 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
                                  unsigned specifierLen) {
 
   if (Amt.hasDataArgument()) {
-    ++NumConversions;
     if (!HasVAListArg) {
-      if (NumConversions > NumDataArgs) {
+      unsigned argIndex = Amt.getArgIndex();
+      if (argIndex >= NumDataArgs) {
         S.Diag(getLocationOfByte(Amt.getStart()), MissingArgDiag)
           << getFormatSpecifierRange(startSpecifier, specifierLen);
         // Don't do any more checking.  We will just emit
@@ -1176,7 +1196,8 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
       // Although not in conformance with C99, we also allow the argument to be
       // an 'unsigned int' as that is a reasonably safe case.  GCC also
       // doesn't emit a warning for that case.
-      const Expr *Arg = getDataArg(NumConversions);
+      CoveredArgs.set(argIndex);
+      const Expr *Arg = getDataArg(argIndex);
       QualType T = Arg->getType();
 
       const analyze_printf::ArgTypeResult &ATR = Amt.getArgType(S.Context);
@@ -1221,22 +1242,21 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
     return false;
   }
 
-  // Check for using an Objective-C specific conversion specifier
-  // in a non-ObjC literal.
-  if (!IsObjCLiteral && CS.isObjCArg()) {
-    HandleInvalidConversionSpecifier(FS, startSpecifier, specifierLen);
-
-    // Continue checking the other format specifiers.
-    return true;
-  }
-
   if (!CS.consumesDataArgument()) {
     // FIXME: Technically specifying a precision or field width here
     // makes no sense.  Worth issuing a warning at some point.
     return true;
   }
 
-  ++NumConversions;
+  // Consume the argument.
+  unsigned argIndex = FS.getArgIndex();
+  CoveredArgs.set(argIndex);
+
+  // Check for using an Objective-C specific conversion specifier
+  // in a non-ObjC literal.
+  if (!IsObjCLiteral && CS.isObjCArg()) {
+    return HandleInvalidConversionSpecifier(FS, startSpecifier, specifierLen);
+  }
 
   // Are we using '%n'?  Issue a warning about this being
   // a possible security issue.
@@ -1270,7 +1290,7 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
   if (HasVAListArg)
     return true;
 
-  if (NumConversions > NumDataArgs) {
+  if (argIndex >= NumDataArgs) {
     S.Diag(getLocationOfByte(CS.getStart()),
            diag::warn_printf_insufficient_data_args)
       << getFormatSpecifierRange(startSpecifier, specifierLen);
@@ -1280,7 +1300,7 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
 
   // Now type check the data expression that matches the
   // format specifier.
-  const Expr *Ex = getDataArg(NumConversions);
+  const Expr *Ex = getDataArg(argIndex);
   const analyze_printf::ArgTypeResult &ATR = FS.getArgType(S.Context);
   if (ATR.isValid() && !ATR.matchesType(S.Context, Ex->getType())) {
     // Check if we didn't match because of an implicit cast from a 'char'
@@ -1304,10 +1324,17 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
 void CheckPrintfHandler::DoneProcessing() {
   // Does the number of data arguments exceed the number of
   // format conversions in the format string?
-  if (!HasVAListArg && NumConversions < NumDataArgs)
-    S.Diag(getDataArg(NumConversions+1)->getLocStart(),
-           diag::warn_printf_too_many_data_args)
-      << getFormatStringRange();
+  if (!HasVAListArg) {
+    // Find any arguments that weren't covered.
+    CoveredArgs.flip();
+    signed notCoveredArg = CoveredArgs.find_first();
+    if (notCoveredArg >= 0) {
+      assert((unsigned)notCoveredArg < NumDataArgs);
+      S.Diag(getDataArg((unsigned) notCoveredArg)->getLocStart(),
+             diag::warn_printf_data_arg_not_used)
+        << getFormatStringRange();
+    }
+  }
 }
 
 void Sema::CheckPrintfString(const StringLiteral *FExpr,

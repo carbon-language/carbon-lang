@@ -55,7 +55,7 @@ void check_conditional_literal(const char* s, int i) {
   printf(i == 1 ? "yes" : "no"); // no-warning
   printf(i == 0 ? (i == 1 ? "yes" : "no") : "dont know"); // no-warning
   printf(i == 0 ? (i == 1 ? s : "no") : "dont know"); // expected-warning{{format string is not a string literal}}
-  printf("yes" ?: "no %d", 1); // expected-warning{{more data arguments than format specifiers}}
+  printf("yes" ?: "no %d", 1); // expected-warning{{data argument not used by format string}}
 }
 
 void check_writeback_specifier()
@@ -155,7 +155,7 @@ void test10(int x, float f, int i, long long lli) {
   printf("%**\n"); // expected-warning{{invalid conversion specifier '*'}}
   printf("%n", &i); // expected-warning{{use of '%n' in format string discouraged (potentially insecure)}}
   printf("%d%d\n", x); // expected-warning{{more '%' conversions than data arguments}}
-  printf("%d\n", x, x); // expected-warning{{more data arguments than format specifiers}}
+  printf("%d\n", x, x); // expected-warning{{data argument not used by format string}}
   printf("%W%d%Z\n", x, x, x); // expected-warning{{invalid conversion specifier 'W'}} expected-warning{{invalid conversion specifier 'Z'}}
   printf("%"); // expected-warning{{incomplete format specifier}}
   printf("%.d", x); // no-warning
