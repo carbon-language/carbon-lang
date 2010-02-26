@@ -10,8 +10,10 @@
 <div class="doc_title">Advice on Packaging LLVM</div>
 <ol>
   <li><a href="#overview">Overview</a></li>
+  <li><a href="#compilation">Compile Flags</a></li>
   <li><a href="#cxx-features">C++ Features</a></li>
   <li><a href="#shared-library">Shared Library</a></li>
+  <li><a href="#deps">Dependencies</a></li>
 </ol>
 
 <!--=========================================================================-->
@@ -24,6 +26,42 @@ break things for constrained platforms.  These settings are not optimal for most
 desktop systems, and we hope that packagers (i.e., Redhat, Debian, MacPorts,
 etc.) will tweak them.  This document lists settings we suggest you tweak.
 </p>
+
+<p>LLVM's API changes with each release, so users are likely to want, for
+example, both LLVM-2.6 and LLVM-2.7 installed at the same time to support apps
+developed against each.
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="compilation">Compile Flags</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<p>LLVM runs much more quickly when it's optimized and assertions are removed.
+However, such a build is currently incompatible with users who build without
+defining NDEBUG, and the lack of assertions makes it hard to debug problems in
+user code.  We recommend allowing users to install both optimized and debug
+versions of LLVM in parallel.  The following configure flags are relevant:
+</p>
+
+<dl>
+  <dt><tt>--disable-assertions</tt></dt><dd>Builds LLVM with <tt>NDEBUG</tt>
+  defined.  Changes the LLVM ABI.  Also available by setting
+  <tt>DISABLE_ASSERTIONS=0|1</tt> in <tt>make</tt>'s environment.  This defaults
+  to enabled regardless of the optimization setting, but it slows things
+  down.</dd>
+
+  <dt><tt>--enable-debug-symbols</tt></dt><dd>Builds LLVM with <tt>-g</tt>.
+  Also available by setting <tt>DEBUG_SYMBOLS=0|1</tt> in <tt>make</tt>'s
+  environment.  This defaults to disabled when optimizing, so you should turn it
+  back on to let users debug their programs.</dd>
+
+  <dt><tt>--enable-optimized</tt></dt><dd>(For svn checkouts) Builds LLVM with
+  <tt>-O2</tt> and, by default, turns off debug symbols.  Also available by
+  setting <tt>ENABLE_OPTIMIZED=0|1</tt> in <tt>make</tt>'s environment.  This
+  defaults to enabled when not in a checkout.</dd>
+</dl>
 </div>
 
 <!--=========================================================================-->
@@ -51,6 +89,22 @@ etc.) will tweak them.  This document lists settings we suggest you tweak.
 <tt>libLLVM-<var>major</var>.<var>minor</var>.(so|dylib)</tt> and link the tools
 against it.  This saves lots of binary size at the cost of some startup time.
 </p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="deps">Dependencies</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<dl>
+<dt><tt>--enable-libffi</tt></dt><dd>Depend on <a
+href="http://sources.redhat.com/libffi/">libffi</a> to allow the LLVM
+interpreter to call external functions.</dd>
+<dt><tt>--with-oprofile</tt></dt><dd>Depend on <a
+href="http://oprofile.sourceforge.net/doc/devel/index.html">libopagent</a>
+(>=version 0.9.4) to let the LLVM JIT tell oprofile about function addresses and
+line numbers.</dd>
+</dl>
 </div>
 
 <!-- *********************************************************************** -->
