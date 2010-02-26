@@ -914,8 +914,10 @@ bool AsmParser::ParseDirectiveDarwinSection() {
     return Error(Loc, ErrorStr.c_str());
   
   // FIXME: Arch specific.
+  bool isText = Segment == "__TEXT";  // FIXME: Hack.
   Out.SwitchSection(getMachOSection(Segment, Section, TAA, StubSize,
-                                    SectionKind()));
+                                    isText ? SectionKind::getText()
+                                           : SectionKind::getDataRel()));
   return false;
 }
 
@@ -929,8 +931,10 @@ bool AsmParser::ParseDirectiveSectionSwitch(const char *Segment,
   Lex();
   
   // FIXME: Arch specific.
+  bool isText = StringRef(Segment) == "__TEXT";  // FIXME: Hack.
   Out.SwitchSection(getMachOSection(Segment, Section, TAA, StubSize,
-                                    SectionKind()));
+                                    isText ? SectionKind::getText()
+                                    : SectionKind::getDataRel()));
 
   // Set the implicit alignment, if any.
   //
@@ -1368,7 +1372,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   if (IsLocal) {
     Out.EmitZerofill(getMachOSection("__DATA", "__bss",
                                      MCSectionMachO::S_ZEROFILL, 0,
-                                     SectionKind()),
+                                     SectionKind::getBSS()),
                      Sym, Size, 1 << Pow2Alignment);
     return false;
   }
@@ -1404,7 +1408,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
     // Create the zerofill section but no symbol
     Out.EmitZerofill(getMachOSection(Segment, Section,
                                      MCSectionMachO::S_ZEROFILL, 0,
-                                     SectionKind()));
+                                     SectionKind::getBSS()));
     return false;
   }
 
@@ -1462,7 +1466,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   // FIXME: Arch specific.
   Out.EmitZerofill(getMachOSection(Segment, Section,
                                  MCSectionMachO::S_ZEROFILL, 0,
-                                 SectionKind()),
+                                 SectionKind::getBSS()),
                    Sym, Size, 1 << Pow2Alignment);
 
   return false;
