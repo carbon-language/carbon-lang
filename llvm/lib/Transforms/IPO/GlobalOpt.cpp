@@ -826,11 +826,10 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   // Create the new global variable.  The contents of the malloc'd memory is
   // undefined, so initialize with an undef value.
-  const Type *MAT = getMallocAllocatedType(CI);
   GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(), 
-                                             MAT, false,
+                                             GlobalType, false,
                                              GlobalValue::InternalLinkage,
-                                             UndefValue::get(MAT),
+                                             UndefValue::get(GlobalType),
                                              GV->getName()+".body",
                                              GV,
                                              GV->isThreadLocal());
