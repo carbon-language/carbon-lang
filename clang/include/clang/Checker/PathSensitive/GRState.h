@@ -76,16 +76,13 @@ public:
   typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;
 
 private:
-  void operator=(const GRState& R) const;
+  void operator=(const GRState& R) const; // Do not implement.
 
   friend class GRStateManager;
 
   GRStateManager *StateMgr;
   Environment Env;
   Store St;
-
-  // FIXME: Make these private.
-public:
   GenericDataMap   GDM;
 
 public:
