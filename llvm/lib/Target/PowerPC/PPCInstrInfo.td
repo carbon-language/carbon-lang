@@ -1019,20 +1019,16 @@ let Uses = [RM] in {
   }
 }
 
-/// FMR is split into 3 versions, one for 4/8 byte FP, and one for extending.
+/// FMR is split into 2 versions, one for 4/8 byte FP, and one for extending.
 ///
 /// Note that these are defined as pseudo-ops on the PPC970 because they are
 /// often coalesced away and we don't want the dispatch group builder to think
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
-def FMRS   : XForm_26<63, 72, (outs F4RC:$frD), (ins F4RC:$frB),
-                      "fmr $frD, $frB", FPGeneral,
-                      []>,  // (set F4RC:$frD, F4RC:$frB)
-                      PPC970_Unit_Pseudo;
-def FMRD   : XForm_26<63, 72, (outs F8RC:$frD), (ins F8RC:$frB),
-                      "fmr $frD, $frB", FPGeneral,
-                      []>,  // (set F8RC:$frD, F8RC:$frB)
-                      PPC970_Unit_Pseudo;
+def FMR   : XForm_26<63, 72, (outs F4RC:$frD), (ins F4RC:$frB),
+                     "fmr $frD, $frB", FPGeneral,
+                     []>,  // (set F4RC:$frD, F4RC:$frB)
+                     PPC970_Unit_Pseudo;
 def FMRSD  : XForm_26<63, 72, (outs F8RC:$frD), (ins F4RC:$frB),
                       "fmr $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (fextend F4RC:$frB))]>,

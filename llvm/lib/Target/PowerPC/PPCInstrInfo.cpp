@@ -74,8 +74,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
       destReg = MI.getOperand(0).getReg();
       return true;
     }
-  } else if (oc == PPC::FMRS || oc == PPC::FMRD ||
-             oc == PPC::FMRSD) {      // fmr r1, r2
+  } else if (oc == PPC::FMR || oc == PPC::FMRSD) { // fmr r1, r2
     assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
@@ -345,10 +344,9 @@ bool PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(PPC::OR), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (DestRC == PPC::G8RCRegisterClass) {
     BuildMI(MBB, MI, DL, get(PPC::OR8), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (DestRC == PPC::F4RCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::FMRS), DestReg).addReg(SrcReg);
-  } else if (DestRC == PPC::F8RCRegisterClass) {
-    BuildMI(MBB, MI, DL, get(PPC::FMRD), DestReg).addReg(SrcReg);
+  } else if (DestRC == PPC::F4RCRegisterClass ||
+             DestRC == PPC::F8RCRegisterClass) {
+    BuildMI(MBB, MI, DL, get(PPC::FMR), DestReg).addReg(SrcReg);
   } else if (DestRC == PPC::CRRCRegisterClass) {
     BuildMI(MBB, MI, DL, get(PPC::MCRF), DestReg).addReg(SrcReg);
   } else if (DestRC == PPC::VRRCRegisterClass) {
@@ -689,7 +687,7 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                         getUndefRegState(isUndef)),
                                 FrameIndex);
     }
-  } else if (Opc == PPC::FMRD || Opc == PPC::FMRS || Opc == PPC::FMRSD) {
+  } else if (Opc == PPC::FMR || Opc == PPC::FMRSD) {
     // The register may be F4RC or F8RC, and that determines the memory op.
     unsigned OrigReg = MI->getOperand(OpNum).getReg();
     // We cannot tell the register class from a physreg alone.
@@ -739,7 +737,7 @@ bool PPCInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   else if ((Opc == PPC::OR8 &&
               MI->getOperand(1).getReg() == MI->getOperand(2).getReg()))
     return true;
-  else if (Opc == PPC::FMRD || Opc == PPC::FMRS)
+  else if (Opc == PPC::FMR || Opc == PPC::FMRSD)
     return true;
 
   return false;
