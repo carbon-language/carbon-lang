@@ -573,7 +573,13 @@ bool CXXMethodDecl::isUsualDeallocationFunction() const {
   if (getOverloadedOperator() != OO_Delete &&
       getOverloadedOperator() != OO_Array_Delete)
     return false;
-  
+
+  // C++ [basic.stc.dynamic.deallocation]p2:
+  //   A template instance is never a usual deallocation function,
+  //   regardless of its signature.
+  if (getPrimaryTemplate())
+    return false;
+
   // C++ [basic.stc.dynamic.deallocation]p2:
   //   If a class T has a member deallocation function named operator delete 
   //   with exactly one parameter, then that function is a usual (non-placement)

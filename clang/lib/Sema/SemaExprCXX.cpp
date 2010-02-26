@@ -780,6 +780,12 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     ConsArgs = (Expr **)ConvertedConstructorArgs.take();
   }
   
+  // Mark the new and delete operators as referenced.
+  if (OperatorNew)
+    MarkDeclarationReferenced(StartLoc, OperatorNew);
+  if (OperatorDelete)
+    MarkDeclarationReferenced(StartLoc, OperatorDelete);
+
   // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
   
   PlacementArgs.release();
@@ -819,6 +825,20 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
   return false;
 }
 
+/// \brief Determine whether the given function is a non-placement
+/// deallocation function.
+static bool isNonPlacementDeallocationFunction(FunctionDecl *FD) {
+  if (FD->isInvalidDecl())
+    return false;
+
+  if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FD))
+    return Method->isUsualDeallocationFunction();
+
+  return ((FD->getOverloadedOperator() == OO_Delete ||
+           FD->getOverloadedOperator() == OO_Array_Delete) &&
+          FD->getNumParams() == 1);
+}
+
 /// FindAllocationFunctions - Finds the overloads of operator new and delete
 /// that are appropriate for the allocation.
 bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
@@ -835,7 +855,6 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   //   operator new.
   // 3) The first argument is always size_t. Append the arguments from the
   //   placement form.
-  // FIXME: Also find the appropriate delete operator.
 
   llvm::SmallVector<Expr*, 8> AllocArgs(1 + NumPlaceArgs);
   // We don't care about the actual value of this argument.
@@ -848,12 +867,20 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   AllocArgs[0] = &Size;
   std::copy(PlaceArgs, PlaceArgs + NumPlaceArgs, AllocArgs.begin() + 1);
 
+  // C++ [expr.new]p8:
+  //   If the allocated type is a non-array type, the allocation
+  //   function’s name is operator new and the deallocation function’s
+  //   name is operator delete. If the allocated type is an array
+  //   type, the allocation function’s name is operator new[] and the
+  //   deallocation function’s name is operator delete[].
   DeclarationName NewName = Context.DeclarationNames.getCXXOperatorName(
                                         IsArray ? OO_Array_New : OO_New);
+  DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
+                                        IsArray ? OO_Array_Delete : OO_Delete);
+
   if (AllocType->isRecordType() && !UseGlobal) {
     CXXRecordDecl *Record
       = cast<CXXRecordDecl>(AllocType->getAs<RecordType>()->getDecl());
-    // FIXME: We fail to find inherited overloads.
     if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
                           AllocArgs.size(), Record, /*AllowMissing=*/true,
                           OperatorNew))
@@ -873,6 +900,110 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // copy them back.
   if (NumPlaceArgs > 0)
     std::copy(&AllocArgs[1], AllocArgs.end(), PlaceArgs);
+
+  // C++ [expr.new]p19:
+  //
+  //   If the new-expression begins with a unary :: operator, the
+  //   deallocation function’s name is looked up in the global
+  //   scope. Otherwise, if the allocated type is a class type T or an
+  //   array thereof, the deallocation function’s name is looked up in
+  //   the scope of T. If this lookup fails to find the name, or if
+  //   the allocated type is not a class type or array thereof, the
+  //   deallocation function’s name is looked up in the global scope.
+  LookupResult FoundDelete(*this, DeleteName, StartLoc, LookupOrdinaryName);
+  if (AllocType->isRecordType() && !UseGlobal) {
+    CXXRecordDecl *RD
+      = cast<CXXRecordDecl>(AllocType->getAs<RecordType>()->getDecl());
+    LookupQualifiedName(FoundDelete, RD);
+  }
+
+  if (FoundDelete.empty()) {
+    DeclareGlobalNewDelete();
+    LookupQualifiedName(FoundDelete, Context.getTranslationUnitDecl());
+  }
+
+  FoundDelete.suppressDiagnostics();
+  llvm::SmallVector<NamedDecl *, 4> Matches;
+  if (NumPlaceArgs > 1) {
+    // C++ [expr.new]p20:
+    //   A declaration of a placement deallocation function matches the
+    //   declaration of a placement allocation function if it has the
+    //   same number of parameters and, after parameter transformations
+    //   (8.3.5), all parameter types except the first are
+    //   identical. [...]
+    // 
+    // To perform this comparison, we compute the function type that
+    // the deallocation function should have, and use that type both
+    // for template argument deduction and for comparison purposes.
+    QualType ExpectedFunctionType;
+    {
+      const FunctionProtoType *Proto
+        = OperatorNew->getType()->getAs<FunctionProtoType>();
+      llvm::SmallVector<QualType, 4> ArgTypes;
+      ArgTypes.push_back(Context.VoidPtrTy); 
+      for (unsigned I = 1, N = Proto->getNumArgs(); I < N; ++I)
+        ArgTypes.push_back(Proto->getArgType(I));
+
+      ExpectedFunctionType
+        = Context.getFunctionType(Context.VoidTy, ArgTypes.data(),
+                                  ArgTypes.size(),
+                                  Proto->isVariadic(),
+                                  0, false, false, 0, 0, false, CC_Default);
+    }
+
+    for (LookupResult::iterator D = FoundDelete.begin(), 
+                             DEnd = FoundDelete.end();
+         D != DEnd; ++D) {
+      FunctionDecl *Fn = 0;
+      if (FunctionTemplateDecl *FnTmpl 
+            = dyn_cast<FunctionTemplateDecl>((*D)->getUnderlyingDecl())) {
+        // Perform template argument deduction to try to match the
+        // expected function type.
+        TemplateDeductionInfo Info(Context, StartLoc);
+        if (DeduceTemplateArguments(FnTmpl, 0, ExpectedFunctionType, Fn, Info))
+          continue;
+      } else
+        Fn = cast<FunctionDecl>((*D)->getUnderlyingDecl());
+
+      if (Context.hasSameType(Fn->getType(), ExpectedFunctionType))
+        Matches.push_back(Fn);
+    }
+  } else {
+    // C++ [expr.new]p20:
+    //   [...] Any non-placement deallocation function matches a
+    //   non-placement allocation function. [...]
+    for (LookupResult::iterator D = FoundDelete.begin(), 
+                             DEnd = FoundDelete.end();
+         D != DEnd; ++D) {
+      if (FunctionDecl *Fn = dyn_cast<FunctionDecl>((*D)->getUnderlyingDecl()))
+        if (isNonPlacementDeallocationFunction(Fn))
+          Matches.push_back(*D);
+    }
+  }
+
+  // C++ [expr.new]p20:
+  //   [...] If the lookup finds a single matching deallocation
+  //   function, that function will be called; otherwise, no
+  //   deallocation function will be called.
+  if (Matches.size() == 1) {
+    // FIXME: Drops access, using-declaration info!
+    OperatorDelete = cast<FunctionDecl>(Matches[0]->getUnderlyingDecl());
+
+    // C++0x [expr.new]p20:
+    //   If the lookup finds the two-parameter form of a usual
+    //   deallocation function (3.7.4.2) and that function, considered
+    //   as a placement deallocation function, would have been
+    //   selected as a match for the allocation function, the program
+    //   is ill-formed.
+    if (NumPlaceArgs && getLangOptions().CPlusPlus0x &&
+        isNonPlacementDeallocationFunction(OperatorDelete)) {
+      Diag(StartLoc, diag::err_placement_new_non_placement_delete)
+        << SourceRange(PlaceArgs[0]->getLocStart(), 
+                       PlaceArgs[NumPlaceArgs - 1]->getLocEnd());
+      Diag(OperatorDelete->getLocation(), diag::note_previous_decl)
+        << DeleteName;
+    }
+  }
 
   return false;
 }
