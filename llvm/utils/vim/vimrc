@@ -24,7 +24,7 @@ if v:version >= 702
   au BufWinEnter * let w:m0=matchadd('LongLine', '\%>80v.\+', -1)
 
   " Whitespace at the end of a line. This little dance suppresses
-  " of whitespace that has just been typed.
+  " whitespace that has just been typed.
   au BufWinEnter * let w:m1=matchadd('WhitespaceEOL', '\s\+$', -1)
   au InsertEnter * call matchdelete(w:m1)
   au InsertEnter * let w:m2=matchadd('WhitespaceEOL', '\s\+\%#\@<!$', -1)
