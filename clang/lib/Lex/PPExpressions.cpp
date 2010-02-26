@@ -106,7 +106,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
   // Consume identifier.
   Result.setEnd(PeekTok.getLocation());
-  PP.LexNonComment(PeekTok);
+  PP.LexUnexpandedToken(PeekTok);
 
   // If we are in parens, ensure we have a trailing ).
   if (LParenLoc.isValid()) {
