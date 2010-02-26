@@ -178,21 +178,18 @@ namespace llvm {
       return Func1 + tag;
     }
 
-    // Get the retval label for the given function.
     static std::string getRetvalLabel(const std::string &Func) {
       std::string Func1 = addPrefix(Func);
       std::string tag = getTagName(RET_LABEL);
       return Func1 + tag;
     }
 
-    // Get the argument label for the given function.
     static std::string getArgsLabel(const std::string &Func) {
       std::string Func1 = addPrefix(Func);
       std::string tag = getTagName(ARGS_LABEL);
       return Func1 + tag;
     }
 
-    // Get the tempdata label for the given function.
     static std::string getTempdataLabel(const std::string &Func) {
       std::string Func1 = addPrefix(Func);
       std::string tag = getTagName(TEMPS_LABEL);
@@ -266,7 +263,6 @@ namespace llvm {
       return false;
     }
 
-
     inline static bool isMemIntrinsic (const std::string &Name) {
       if (Name.compare("@memcpy") == 0 || Name.compare("@memset") == 0 ||
           Name.compare("@memmove") == 0) {
@@ -275,41 +271,6 @@ namespace llvm {
       
       return false;
     }
-
-    // Currently names of libcalls are assigned during TargetLowering
-    // object construction. There is no provision to change the when the 
-    // code for a function IL function being generated. 
-    // So we have to change these names while printing assembly.
-    // We need to do that mainly for names related to intrinsics. This
-    // function returns true if a name needs to be cloned. 
-    inline static bool isIntrinsicStuff(const std::string &Name) {
-      // Return true if the name contains LIBCALL marker, or a MemIntrinisc.
-      // these are mainly ARGS_LABEL, RET_LABEL, and the LIBCALL name itself.
-      if ((Name.find(getTagName(LIBCALL)) != std::string::npos) 
-          || isMemIntrinsic(Name))
-        return true;
- 
-      return false;
-    }
-
-    // Rename the name for IL.
-    inline static std::string Rename(const std::string &Name) {
-      std::string Newname;
-      // If its a label (LIBCALL+Func+LABEL), change it to
-      // (LIBCALL+Func+IL+LABEL).
-      TAGS id = getSymbolTag(Name);
-      if (id == ARGS_LABEL || id == RET_LABEL) {
-        std::size_t pos = Name.find(getTagName(id));
-        Newname = Name.substr(0, pos) + ".IL" + getTagName(id);
-        return Newname;
-      }
- 
-      // Else, just append IL to name. 
-      return Name + ".IL";
-   }
-    
-    
-   
 
     inline static bool isLocalToFunc (std::string &Func, std::string &Var) {
       if (! isLocalName(Var)) return false;

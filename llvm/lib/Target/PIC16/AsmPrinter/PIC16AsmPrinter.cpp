@@ -158,7 +158,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 // printOperand - print operand of insn.
 void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
-  const Function *F = MI->getParent()->getParent()->getFunction();
 
   switch (MO.getType()) {
     case MachineOperand::MO_Register:
@@ -191,18 +190,19 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     }
     case MachineOperand::MO_ExternalSymbol: {
        const char *Sname = MO.getSymbolName();
-       std::string Printname = Sname;
 
-      // Intrinsic stuff needs to be renamed if we are printing IL fn. 
-      if (PAN::isIntrinsicStuff(Printname)) {
-        if (PAN::isISR(F->getSection())) {
-          Printname = PAN::Rename(Sname);
-        }
-        // Record these decls, we need to print them in asm as extern.
-        LibcallDecls.push_back(createESName(Printname));
+      // If its a libcall name, record it to decls section.
+      if (PAN::getSymbolTag(Sname) == PAN::LIBCALL)
+        LibcallDecls.push_back(Sname);
+
+      // Record a call to intrinsic to print the extern declaration for it.
+      std::string Sym = Sname;  
+      if (PAN::isMemIntrinsic(Sym)) {
+        Sym = PAN::addPrefix(Sym);
+        LibcallDecls.push_back(createESName(Sym));
       }
 
-      O << Printname;
+      O << Sym;
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
