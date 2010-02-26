@@ -2227,7 +2227,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
                                            ToType, CandidateSet);
         else
           S.AddConversionCandidate(Conv, I.getAccess(), ActingDC,
-                                   Initializer, cv1T1, CandidateSet);
+                                   Initializer, ToType, CandidateSet);
       }
     }
   }
