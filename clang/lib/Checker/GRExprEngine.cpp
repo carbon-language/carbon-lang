@@ -37,6 +37,15 @@ using llvm::dyn_cast_or_null;
 using llvm::cast;
 using llvm::APSInt;
 
+namespace {
+  // Trait class for recording returned expression in the state.
+  struct ReturnExpr {
+    static int TagInt;
+    typedef const Stmt *data_type;
+  };
+  int ReturnExpr::TagInt; 
+}
+
 //===----------------------------------------------------------------------===//
 // Utility functions.
 //===----------------------------------------------------------------------===//
@@ -1309,16 +1318,15 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
   const ExplodedNode *Pred = B.getPredecessor();
   const StackFrameContext *LocCtx = 
                             cast<StackFrameContext>(Pred->getLocationContext());
-  const StackFrameContext *ParentSF = 
-                            cast<StackFrameContext>(LocCtx->getParent());
-
-  SymbolReaper SymReaper(*ParentSF->getLiveVariables(), getSymbolManager(),
-                         ParentSF);
   const Stmt *CE = LocCtx->getCallSite();
 
-  state = getStateManager().RemoveDeadBindings(state, const_cast<Stmt*>(CE),
-                                               SymReaper);
-  
+  // If the callee returns an expression, bind its value to CallExpr.
+  const Stmt *ReturnedExpr = state->get<ReturnExpr>();
+  if (ReturnedExpr) {
+    SVal RetVal = state->getSVal(ReturnedExpr);
+    state = state->BindExpr(CE, RetVal);
+  }
+
   B.GenerateNode(state);
 }
 
@@ -2889,10 +2897,20 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
 
 void GRExprEngine::VisitReturnStmt(ReturnStmt *RS, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
-
   ExplodedNodeSet Src;
   if (Expr *RetE = RS->getRetValue()) {
-    Visit(RetE, Pred, Src);
+    // Record the returned expression in the state.
+    {
+      static int Tag;
+      SaveAndRestore<const void *> OldTag(Builder->Tag);
+      Builder->Tag = &Tag;
+      const GRState *state = GetState(Pred);
+      state = state->set<ReturnExpr>(RetE);
+      Pred = Builder->generateNode(RetE, state, Pred);
+    }
+    // We may get a NULL Pred because we generated a cached node.
+    if (Pred)
+      Visit(RetE, Pred, Src);
   }
   else {
     Src.Add(Pred);
