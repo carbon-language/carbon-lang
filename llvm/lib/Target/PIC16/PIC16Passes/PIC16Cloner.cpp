@@ -218,8 +218,8 @@ void PIC16Cloner::cloneSharedFunctions(CallGraphNode *CGN) {
        // Such a case may occur when the function has been declarated
        // in the C source code but its body exists in assembly file.
        if (!CalledF->isDeclaration()) {
-         cloneFunction(CalledF);
-         // FIXME: remap all the call sites here.
+         Function *cf = cloneFunction(CalledF);
+         remapAllSites(CGN->getFunction(), CalledF, cf);
        }  else {
          // It is called only from ISR. Still mark it as we need this info
          // in code gen while calling intrinsics.Function is not marked.
