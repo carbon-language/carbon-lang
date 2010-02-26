@@ -23,7 +23,6 @@ private:
 
 protected:
   CodeGenAction(unsigned _Act);
-  ~CodeGenAction();
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile);
@@ -31,6 +30,8 @@ protected:
   virtual void EndSourceFileAction();
 
 public:
+  ~CodeGenAction();
+
   /// takeModule - Take the generated LLVM module, for use after the action has
   /// been run. The result may be null on failure.
   llvm::Module *takeModule();
