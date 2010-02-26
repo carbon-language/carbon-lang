@@ -89,6 +89,9 @@ bool PIC16Cloner::runOnModule(Module &M) {
      if (mainCGN && isrCGN)
        break;
    }
+
+   // We have nothing to do if any of the main or ISR is missing.
+   if (! mainCGN || ! isrCGN) return false;
        
    // Time for some diagnostics.
    // See if the main itself is interrupt function then report an error.
