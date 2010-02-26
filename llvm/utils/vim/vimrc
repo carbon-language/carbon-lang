@@ -10,17 +10,30 @@
 " It's VIM, not VI
 set nocompatible
 
-" Wrap text at 80 cols
-set textwidth=80
-
 " A tab produces a 2-space indentation
 set softtabstop=2
 set shiftwidth=2
 set expandtab
 
-" Highlight trailing whitespace
+" Highlight trailing whitespace and lines longer than 80 columns.
+highlight LongLine ctermbg=DarkYellow guibg=DarkYellow
 highlight WhitespaceEOL ctermbg=DarkYellow guibg=DarkYellow
-match WhitespaceEOL /\s\+$/
+if v:version >= 702
+  " Lines longer than 80 columns.
+  au BufWinEnter * let w:m0=matchadd('LongLine', '\%>80v.\+', -1)
+
+  " Whitespace at the end of a line. This little dance suppresses
+  " of whitespace that has just been typed.
+  au BufWinEnter * let w:m1=matchadd('WhitespaceEOL', '\s\+$', -1)
+  au InsertEnter * call matchdelete(w:m1)
+  au InsertEnter * let w:m2=matchadd('WhitespaceEOL', '\s\+\%#\@<!$', -1)
+  au InsertLeave * call matchdelete(w:m2)
+  au InsertLeave * let w:m1=matchadd('WhitespaceEOL', '\s\+$', -1)
+else
+  au BufRead,BufNewFile * syntax match LongLine /\%>80v.\+/
+  au InsertEnter * syntax match WhitespaceEOL /\s\+\%#\@<!$/
+  au InsertLeave * syntax match WhitespaceEOL /\s\+$/
+endif
 
 " Enable filetype detection
 filetype on
@@ -70,3 +83,10 @@ augroup END
 augroup filetype
   au! BufRead,BufNewFile *.td     set filetype=tablegen
 augroup END
+
+" Additional vim features to optionally uncomment.
+"set showcmd
+"set showmatch
+"set showmode
+"set incsearch
+"set ruler
