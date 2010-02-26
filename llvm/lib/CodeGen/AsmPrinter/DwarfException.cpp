@@ -746,7 +746,7 @@ void DwarfException::EmitExceptionTable() {
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   if (HaveTTData) {
-    // Account for any extra padded that will be added to the call site table
+    // Account for any extra padding that will be added to the call site table
     // length.
     unsigned Offset = TTypeBaseOffset + SizeAlign;
     unsigned OffsetSize = MCAsmInfo::getULEB128Size(Offset);
