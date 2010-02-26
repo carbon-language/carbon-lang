@@ -765,9 +765,9 @@ void DwarfException::EmitExceptionTable() {
     if (!TTypeBaseOverflow) {
       EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset");
     } else if (SizeAlign != 0) {
-      // If the new "offset + alignment" size doesn't require extra the same
-      // extra padding that the original one did, then we need to insert that
-      // padding ourselves.
+      // If the new "offset + alignment" size doesn't require the same extra
+      // padding that the original one did, then we need to insert that padding
+      // ourselves.
       EmitULEB128(TTypeBaseOffset + SizeAlign, "@TType base offset",
                   MCAsmInfo::getULEB128Size(TTypeBaseOffset + SizeAlign) !=
                   OffsetSize ? TTypeBaseOverflow : 0);
