@@ -204,6 +204,12 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       assert(ChildSize != 0 && "Should not have a zero-sized child!");
     
       CurrentIdx += EmitVBRValue(ChildSize, OS);
+      OS << "/*->" << CurrentIdx+ChildSize << "*/";
+      
+      if (i == 0)
+        OS.PadToColumn(CommentIndent) << "// " << SM->getNumChildren()
+          << " children in Scope";
+      
       OS << '\n' << TmpBuf.str();
       CurrentIdx += ChildSize;
     }
