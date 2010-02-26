@@ -808,6 +808,28 @@ public:
   bool empty() const { return Offsets.empty(); }
 };
 
+static bool HasSameVirtualSignature(const CXXMethodDecl *LHS,
+                                    const CXXMethodDecl *RHS) {
+  ASTContext &C = LHS->getASTContext(); // TODO: thread this down
+  CanQual<FunctionProtoType>
+    LT = C.getCanonicalType(LHS->getType()).getAs<FunctionProtoType>(),
+    RT = C.getCanonicalType(RHS->getType()).getAs<FunctionProtoType>();
+
+  // Fast-path matches in the canonical types.
+  if (LT == RT) return true;
+
+  // Force the signatures to match.  We can't rely on the overrides
+  // list here because there isn't necessarily an inheritance
+  // relationship between the two methods.
+  if (LT.getQualifiers() != RT.getQualifiers() ||
+      LT->getNumArgs() != RT->getNumArgs())
+    return false;
+  for (unsigned I = 0, E = LT->getNumArgs(); I != E; ++I)
+    if (LT->getArgType(I) != RT->getArgType(I))
+      return false;
+  return true;
+}
+
 bool VCallOffsetMap::MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
                                                 const CXXMethodDecl *RHS) {
   assert(LHS->isVirtual() && "LHS must be virtual!");
@@ -815,20 +837,14 @@ bool VCallOffsetMap::MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
   
   // FIXME: We need to check more things here.
   
+  // Must have the same name.
+  // FIXME: are destructors an exception to this?
   DeclarationName LHSName = LHS->getDeclName();
   DeclarationName RHSName = RHS->getDeclName();
-  if (LHSName.getNameKind() != LHSName.getNameKind())
+  if (LHSName != RHSName)
     return false;
-  
-  switch (LHSName.getNameKind()) {
-  default:
-    assert(false && "Unhandled name kind!");
-  case DeclarationName::Identifier:
-    if (LHSName.getAsIdentifierInfo() != RHSName.getAsIdentifierInfo())
-      return false;
-  }
-  
-  return true;
+
+  return (HasSameVirtualSignature(LHS, RHS));
 }
 
 bool VCallOffsetMap::AddVCallOffset(const CXXMethodDecl *MD, 
@@ -963,8 +979,10 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+
   // Handle the primary base first.
-  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
+  if (PrimaryBase) {
     uint64_t PrimaryBaseOffset;
     
     // Get the base offset of the primary base.
@@ -1036,6 +1054,8 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
 
     const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    if (BaseDecl == PrimaryBase)
+      continue;
 
     // Get the base offset of this base.
     uint64_t BaseOffset = Base.getBaseOffset() + 
@@ -1126,7 +1146,7 @@ private:
     /// nearest virtual base.
     int64_t NonVirtual;
 
-    /// VCallOffsetOffset - The offset (in bytes), relative to the address point
+    /// VCallOffsetOffset - The offset (in bytes), relative to the address point,
     /// of the virtual call offset.
     int64_t VCallOffsetOffset;
     
