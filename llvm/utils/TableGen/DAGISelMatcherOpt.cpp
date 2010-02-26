@@ -83,15 +83,11 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     OwningPtr<Matcher> Child(Scope->takeChild(i));
     FactorNodes(Child);
     
-    // FIXME: Eventually don't pass ownership back to the scope node.
-    Scope->resetChild(i, Child.take());
-    
-    if (Matcher *N = Scope->getChild(i)) {
+    if (Matcher *N = Child.take()) {
       OptionsToMatch.push_back(N);
       MatchersByHash[N->getHash()].push_back(N);
     }
   }
-  
   
   SmallVector<Matcher*, 32> NewOptionsToMatch;
 
@@ -109,7 +105,10 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     // hash table, then we must have previously processed a node equal to this
     // one.
     HashTableTy::iterator DMI = MatchersByHash.find(Optn->getHash());
-    if (DMI == MatchersByHash.end()) continue;
+    if (DMI == MatchersByHash.end()) {
+      delete Optn;
+      continue;
+    }
 
     std::vector<Matcher*> &HashMembers = DMI->second;
     assert(!HashMembers.empty() && "Should be removed if empty");
@@ -118,7 +117,10 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     // previous node and removed.
     std::vector<Matcher*>::iterator MemberSlot =
       std::find(HashMembers.begin(), HashMembers.end(), Optn);
-    if (MemberSlot == HashMembers.end()) continue;
+    if (MemberSlot == HashMembers.end()) {
+      delete Optn;
+      continue;
+    }
     
     // If the node *does* exist in HashMembers, then we've confirmed that it
     // hasn't been processed as equal to a previous node.  Process it now, start
@@ -155,14 +157,33 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     }
     
     // Factor these checks by pulling the first node off each entry and
-    // discarding it, replacing it with...
-    // something amazing??
+    // discarding it.  Take the first one off the first entry to reuse.
+    Matcher *Shared = Optn;
+    Optn = Optn->takeNext();
+    EqualMatchers[0] = Optn;
+
+    // Skip the first node.  Leave the first node around though, we'll delete it
+    // on subsequent iterations over OptionsToMatch.
+    for (unsigned i = 1, e = EqualMatchers.size(); i != e; ++i)
+      EqualMatchers[i] = EqualMatchers[i]->takeNext();
     
-    // FIXME: Need to change the Scope model.
+    Shared->setNext(new ScopeMatcher(&EqualMatchers[0], EqualMatchers.size()));
+
+    // Recursively factor the newly created node.
+    FactorNodes(Shared->getNextPtr());
+    
+    NewOptionsToMatch.push_back(Shared);
   }
 
   // Reassemble a new Scope node.
-  
+  assert(!NewOptionsToMatch.empty() && "where'd all our children go?");
+  if (NewOptionsToMatch.size() == 1)
+    MatcherPtr.reset(NewOptionsToMatch[0]);
+  else {
+    Scope->setNumChildren(NewOptionsToMatch.size());
+    for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i)
+      Scope->resetChild(i, NewOptionsToMatch[i]);
+  }
 }
 
 Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher) {
