@@ -610,7 +610,7 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckChainCompatibleMatcher>(this)->PreviousOp == PreviousOp;
+    return cast<CheckChainCompatibleMatcher>(M)->PreviousOp == PreviousOp;
   }
   virtual unsigned getHashImpl() const { return PreviousOp; }
 };
