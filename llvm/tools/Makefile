@@ -44,4 +44,9 @@ ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
   DIRS := $(filter-out lto gold, $(DIRS))
 endif
 
+# Only build edis if X86 target support is enabled.
+ifeq ($(filter $(TARGETS_TO_BUILD), X86),)
+  PARALLEL_DIRS := $(filter-out edis, $(PARALLEL_DIRS))
+endif
+
 include $(LEVEL)/Makefile.common
