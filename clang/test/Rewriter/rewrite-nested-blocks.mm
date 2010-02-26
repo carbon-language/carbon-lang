@@ -36,3 +36,21 @@ void foo () {
 		});
 	});
 }
+
+// radar 7692419
+@interface Bar
+@end
+
+void f(Bar *);
+void q(void (^block)(void));
+
+void x() {
+        void (^myblock)(Bar *b) = ^(Bar *b) {
+                q(^{
+                        f(b);   
+                });
+        };
+        
+        Bar *b = (Bar *)42;
+        myblock(b);
+}

@@ -4374,6 +4374,7 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
   if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
     if (!isa<FunctionDecl>(CDRE->getDecl()) &&
         !CDRE->isByRef() &&
+        !isa<ParmVarDecl>(CDRE->getDecl()) &&
         !InnerBlockValueDecls.count(CDRE->getDecl())) {
       InnerBlockValueDecls.insert(CDRE->getDecl());
       InnerBlockDeclRefs.push_back(CDRE);
