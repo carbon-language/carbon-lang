@@ -114,7 +114,7 @@ def llvm_ld : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (command "$CALL(GetBinDir)llvm-ld -L $CALL(GetStdLibsDir) -disable-gvn -disable-licm-promotion -disable-mem2reg -l std"),
+ (command "$CALL(GetBinDir)llvm-ld -L $CALL(GetStdLibsDir) -disable-licm-promotion -l std"),
  (out_file_option "-b"),
  (actions (case
           (switch_on "O0"), (append_cmd "-disable-opt"),
@@ -133,7 +133,7 @@ def llvm_ld_optimizer : Tool<[
  (output_suffix "bc"),
 // FIXME: we are still not disabling licm-promotion.
 // -disable-licm-promotion and building stdn library causes c16-71 to fail.
- (command "$CALL(GetBinDir)llvm-ld -disable-gvn -disable-mem2reg"),
+ (command "$CALL(GetBinDir)llvm-ld "),
  (out_file_option "-b"),
  (actions (case
           (switch_on "O0"), (append_cmd "-disable-opt"),
@@ -149,7 +149,7 @@ def pic16passes : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "obc"),
- (command "$CALL(GetBinDir)opt -pic16cg -pic16overlay -f"),
+ (command "$CALL(GetBinDir)opt -pic16cloner -pic16overlay -f"),
  (actions (case
           (switch_on "O0"), (append_cmd "-disable-opt")))
 ]>;
