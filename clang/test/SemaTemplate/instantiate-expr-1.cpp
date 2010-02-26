@@ -137,3 +137,19 @@ void test_asm() {
   int b;
   test_asm(b); // expected-note {{in instantiation of function template specialization 'test_asm<int>' requested here}}
 }
+
+namespace PR6424 {
+  template<int I> struct X { 
+    X() { 
+      int *ip = I; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+    }
+  };
+  
+  template<int> struct Y {
+    typedef X<7> X7;
+    
+    void f() { X7(); } // expected-note{{instantiation}}
+  };
+  
+  template void Y<3>::f(); 
+}

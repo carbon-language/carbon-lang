@@ -4906,8 +4906,10 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       T == E->getType() &&
       Constructor == E->getConstructor() &&
-      !ArgumentChanged)
+      !ArgumentChanged) {
+    SemaRef.MarkDeclarationReferenced(E->getLocStart(), Constructor);
     return SemaRef.Owned(E->Retain());
+  }
 
   return getDerived().RebuildCXXConstructExpr(T, /*FIXME:*/E->getLocStart(),
                                               Constructor, E->isElidable(),
