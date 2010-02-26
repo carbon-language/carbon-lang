@@ -1083,7 +1083,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
       case X86::MOV8r0:  Opc = X86::MOV8ri;  break;
       case X86::MOV16r0: Opc = X86::MOV16ri; break;
       case X86::MOV32r0: Opc = X86::MOV32ri; break;
-      case X86::MOV64r0: Opc = X86::MOV64ri; break;
+      case X86::MOV64r0: Opc = X86::MOV64ri64i32; break;
       }
       Clone = false;
     }
