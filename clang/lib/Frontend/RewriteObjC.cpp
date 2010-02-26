@@ -4955,28 +4955,32 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
   
   // Add inner imported variables now used in current block.
  int countOfInnerDecls = 0;
-  for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++) {
-    BlockDeclRefExpr *Exp = InnerBlockDeclRefs[i];
-    ValueDecl *VD = Exp->getDecl();
-    if (!Exp->isByRef() && !BlockByCopyDeclsPtrSet.count(VD)) {
+  if (!InnerBlockDeclRefs.empty()) {
+    for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++) {
+      BlockDeclRefExpr *Exp = InnerBlockDeclRefs[i];
+      ValueDecl *VD = Exp->getDecl();
+      if (!Exp->isByRef() && !BlockByCopyDeclsPtrSet.count(VD)) {
       // We need to save the copied-in variables in nested
       // blocks because it is needed at the end for some of the API generations.
       // See SynthesizeBlockLiterals routine.
-      InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
-      BlockDeclRefs.push_back(Exp);
-      BlockByCopyDeclsPtrSet.insert(VD);
-      BlockByCopyDecls.push_back(VD);
-      if (Exp->getType()->isObjCObjectPointerType() || 
-          Exp->getType()->isBlockPointerType())
-        ImportedBlockDecls.insert(VD);
+        InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
+        BlockDeclRefs.push_back(Exp);
+        BlockByCopyDeclsPtrSet.insert(VD);
+        BlockByCopyDecls.push_back(VD);
+      }
+      if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
+        InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
+        BlockDeclRefs.push_back(Exp);
+        BlockByRefDeclsPtrSet.insert(VD);
+        BlockByRefDecls.push_back(VD);
+      }
     }
-    if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
-      InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
-      BlockDeclRefs.push_back(Exp);
-      BlockByRefDeclsPtrSet.insert(VD);
-      BlockByRefDecls.push_back(VD);
-      ImportedBlockDecls.insert(VD);
-    }
+    // Find any imported blocks...they will need special attention.
+    for (unsigned i = 0; i < InnerBlockDeclRefs.size(); i++)
+      if (InnerBlockDeclRefs[i]->isByRef() ||
+          InnerBlockDeclRefs[i]->getType()->isObjCObjectPointerType() || 
+          InnerBlockDeclRefs[i]->getType()->isBlockPointerType())
+        ImportedBlockDecls.insert(InnerBlockDeclRefs[i]->getDecl());
   }
   InnerDeclRefsCount.push_back(countOfInnerDecls);
   
