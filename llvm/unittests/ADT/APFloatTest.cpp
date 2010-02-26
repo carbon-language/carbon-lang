@@ -236,6 +236,13 @@ TEST(APFloatTest, fromDecimalString) {
   EXPECT_EQ(2.05e12,   APFloat(APFloat::IEEEdouble, "002.05000e12").convertToDouble());
   EXPECT_EQ(2.05e+12,  APFloat(APFloat::IEEEdouble, "002.05000e+12").convertToDouble());
   EXPECT_EQ(2.05e-12,  APFloat(APFloat::IEEEdouble, "002.05000e-12").convertToDouble());
+
+  // These are "carefully selected" to overflow the fast log-base
+  // calculations in APFloat.cpp
+  EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "99e99999").isInfinity());
+  EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "-99e99999").isInfinity());
+  EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "1e-99999").isPosZero());
+  EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "-1e-99999").isNegZero());
 }
 
 TEST(APFloatTest, fromHexadecimalString) {

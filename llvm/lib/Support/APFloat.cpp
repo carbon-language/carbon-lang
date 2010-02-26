@@ -17,6 +17,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include <limits.h>
 #include <cstring>
 
 using namespace llvm;
@@ -2345,11 +2346,24 @@ APFloat::convertFromDecimalString(const StringRef &str, roundingMode rounding_mo
   if (decDigitValue(*D.firstSigDigit) >= 10U) {
     category = fcZero;
     fs = opOK;
-  } else if ((D.normalizedExponent + 1) * 28738
-             <= 8651 * (semantics->minExponent - (int) semantics->precision)) {
+
+  /* Check whether the normalized exponent is high enough to overflow
+     max during the log-rebasing in the max-exponent check below. */
+  } else if (D.normalizedExponent - 1 > INT_MAX / 42039) {
+    fs = handleOverflow(rounding_mode);
+
+  /* If it wasn't, then it also wasn't high enough to overflow max
+     during the log-rebasing in the min-exponent check.  Check that it
+     won't overflow min in either check, then perform the min-exponent
+     check. */
+  } else if (D.normalizedExponent - 1 < INT_MIN / 42039 ||
+             (D.normalizedExponent + 1) * 28738 <=
+               8651 * (semantics->minExponent - (int) semantics->precision)) {
     /* Underflow to zero and round.  */
     zeroSignificand();
     fs = normalize(rounding_mode, lfLessThanHalf);
+
+  /* We can finally safely perform the max-exponent check. */
   } else if ((D.normalizedExponent - 1) * 42039
              >= 12655 * semantics->maxExponent) {
     /* Overflow and round.  */
