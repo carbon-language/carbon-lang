@@ -1192,19 +1192,22 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
        iter != endIter ; iter++) {
     std::vector<llvm::Constant*> Fields;
     ObjCPropertyDecl *property = (*iter)->getPropertyDecl();
+    ObjCPropertyImplDecl *propertyImpl = *iter;
+    bool isSynthesized = (propertyImpl->getPropertyImplementation() == 
+        ObjCPropertyImplDecl::Synthesize);
 
     Fields.push_back(MakeConstantString(property->getNameAsString()));
     Fields.push_back(llvm::ConstantInt::get(Int8Ty,
                 property->getPropertyAttributes()));
-    Fields.push_back(llvm::ConstantInt::get(Int8Ty,
-                (*iter)->getPropertyImplementation() ==
-                ObjCPropertyImplDecl::Synthesize));
+    Fields.push_back(llvm::ConstantInt::get(Int8Ty, isSynthesized));
     if (ObjCMethodDecl *getter = property->getGetterMethodDecl()) {
-      InstanceMethodSels.push_back(getter->getSelector());
       std::string TypeStr;
       Context.getObjCEncodingForMethodDecl(getter,TypeStr);
       llvm::Constant *TypeEncoding = MakeConstantString(TypeStr);
-      InstanceMethodTypes.push_back(TypeEncoding);
+      if (isSynthesized) {
+        InstanceMethodTypes.push_back(TypeEncoding);
+        InstanceMethodSels.push_back(getter->getSelector());
+      }
       Fields.push_back(MakeConstantString(getter->getSelector().getAsString()));
       Fields.push_back(TypeEncoding);
     } else {
@@ -1212,11 +1215,13 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
       Fields.push_back(NULLPtr);
     }
     if (ObjCMethodDecl *setter = property->getSetterMethodDecl()) {
-      InstanceMethodSels.push_back(setter->getSelector());
       std::string TypeStr;
       Context.getObjCEncodingForMethodDecl(setter,TypeStr);
       llvm::Constant *TypeEncoding = MakeConstantString(TypeStr);
-      InstanceMethodTypes.push_back(TypeEncoding);
+      if (isSynthesized) {
+        InstanceMethodTypes.push_back(TypeEncoding);
+        InstanceMethodSels.push_back(setter->getSelector());
+      }
       Fields.push_back(MakeConstantString(setter->getSelector().getAsString()));
       Fields.push_back(TypeEncoding);
     } else {
