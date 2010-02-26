@@ -124,7 +124,6 @@ namespace {
     llvm::SmallVector<BlockDeclRefExpr *, 32> InnerDeclRefs;
     
     llvm::SmallVector<BlockDeclRefExpr *, 32> BlockDeclRefs;
-    llvm::DenseMap<BlockDeclRefExpr *, CallExpr *> BlockCallExprs;
 
     // Block related declarations.
     llvm::SmallVector<ValueDecl *, 8> BlockByCopyDecls;
@@ -388,7 +387,6 @@ namespace {
     void RewriteRecordBody(RecordDecl *RD);
 
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
-    void GetBlockCallExprs(Stmt *S);
     void GetBlockDeclRefExprs(Stmt *S);
     void GetInnerBlockDeclRefExprs(Stmt *S, 
                 llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
@@ -4301,7 +4299,6 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     BlockByRefDeclsPtrSet.clear();
     BlockByCopyDecls.clear();
     BlockByCopyDeclsPtrSet.clear();
-    BlockCallExprs.clear();
     ImportedBlockDecls.clear();
   }
   Blocks.clear();
@@ -4378,24 +4375,6 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
       InnerBlockValueDecls.insert(CDRE->getDecl());
       InnerBlockDeclRefs.push_back(CDRE);
     }
-  return;
-}
-
-void RewriteObjC::GetBlockCallExprs(Stmt *S) {
-  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
-       CI != E; ++CI)
-    if (*CI) {
-      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
-        GetBlockCallExprs(CBE->getBody());
-      else
-        GetBlockCallExprs(*CI);
-    }
-
-  if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
-    if (CE->getCallee()->getType()->isBlockPointerType()) {
-      BlockCallExprs[dyn_cast<BlockDeclRefExpr>(CE->getCallee())] = CE;
-    }
-  }
   return;
 }
 
@@ -4955,10 +4934,8 @@ void RewriteObjC::CollectBlockDeclRefInfo(BlockExpr *Exp) {
     for (unsigned i = 0; i < BlockDeclRefs.size(); i++)
       if (BlockDeclRefs[i]->isByRef() ||
           BlockDeclRefs[i]->getType()->isObjCObjectPointerType() || 
-          BlockDeclRefs[i]->getType()->isBlockPointerType()) {
-        GetBlockCallExprs(BlockDeclRefs[i]);
+          BlockDeclRefs[i]->getType()->isBlockPointerType())
         ImportedBlockDecls.insert(BlockDeclRefs[i]->getDecl());
-      }
   }
 }
 
@@ -4990,17 +4967,14 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       BlockByCopyDeclsPtrSet.insert(VD);
       BlockByCopyDecls.push_back(VD);
       if (Exp->getType()->isObjCObjectPointerType() || 
-          Exp->getType()->isBlockPointerType()) {
-        GetBlockCallExprs(Exp);
+          Exp->getType()->isBlockPointerType())
         ImportedBlockDecls.insert(VD);
-      }
     }
     if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
       InnerDeclRefs.push_back(Exp); countOfInnerDecls++;
       BlockDeclRefs.push_back(Exp);
       BlockByRefDeclsPtrSet.insert(VD);
       BlockByRefDecls.push_back(VD);
-      GetBlockCallExprs(Exp);
       ImportedBlockDecls.insert(VD);
     }
   }
