@@ -543,7 +543,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
 
   if (NewGlobals.empty())
     return 0;
-
+  
   DEBUG(dbgs() << "PERFORMING GLOBAL SRA ON: " << *GV);
 
   Constant *NullInt =Constant::getNullValue(Type::getInt32Ty(GV->getContext()));
@@ -855,9 +855,6 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     }
   }
   
-  // Update Anything else that used the malloc or its bitcast now uses the global directly.
-  CI->replaceAllUsesWith(new BitCastInst(NewGV, CI->getType(), "newgv", CI));
-
   Constant *RepValue = NewGV;
   if (NewGV->getType() != GV->getType()->getElementType())
     RepValue = ConstantExpr::getBitCast(RepValue, 
