@@ -3242,6 +3242,23 @@ bool Sema::CheckClassTemplatePartialSpecializationArgs(
   return false;
 }
 
+/// \brief Retrieve the previous declaration of the given declaration.
+static NamedDecl *getPreviousDecl(NamedDecl *ND) {
+  if (VarDecl *VD = dyn_cast<VarDecl>(ND))
+    return VD->getPreviousDeclaration();
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
+    return FD->getPreviousDeclaration();
+  if (TagDecl *TD = dyn_cast<TagDecl>(ND))
+    return TD->getPreviousDeclaration();
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(ND))
+    return TD->getPreviousDeclaration();
+  if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
+    return FTD->getPreviousDeclaration();
+  if (ClassTemplateDecl *CTD = dyn_cast<ClassTemplateDecl>(ND))
+    return CTD->getPreviousDeclaration();
+  return 0;
+}
+
 Sema::DeclResult
 Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        TagUseKind TUK,
@@ -3547,15 +3564,26 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   //   instantiation to take place, in every translation unit in which such a 
   //   use occurs; no diagnostic is required.
   if (PrevDecl && PrevDecl->getPointOfInstantiation().isValid()) {
-    SourceRange Range(TemplateNameLoc, RAngleLoc);
-    Diag(TemplateNameLoc, diag::err_specialization_after_instantiation)
-      << Context.getTypeDeclType(Specialization) << Range;
+    bool Okay = false;
+    for (NamedDecl *Prev = PrevDecl; Prev; Prev = getPreviousDecl(Prev)) {
+      // Is there any previous explicit specialization declaration?
+      if (getTemplateSpecializationKind(Prev) == TSK_ExplicitSpecialization) {
+        Okay = true;
+        break;
+      }
+    }
 
-    Diag(PrevDecl->getPointOfInstantiation(), 
-         diag::note_instantiation_required_here)
-      << (PrevDecl->getTemplateSpecializationKind() 
+    if (!Okay) {
+      SourceRange Range(TemplateNameLoc, RAngleLoc);
+      Diag(TemplateNameLoc, diag::err_specialization_after_instantiation)
+        << Context.getTypeDeclType(Specialization) << Range;
+
+      Diag(PrevDecl->getPointOfInstantiation(), 
+           diag::note_instantiation_required_here)
+        << (PrevDecl->getTemplateSpecializationKind() 
                                                 != TSK_ImplicitInstantiation);
-    return true;
+      return true;
+    }
   }
   
   // If this is not a friend, note that this is an explicit specialization.
@@ -3728,6 +3756,12 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   before the first use of that specialization that would cause an 
       //   implicit instantiation to take place, in every translation unit in
       //   which such a use occurs; no diagnostic is required.
+      for (NamedDecl *Prev = PrevDecl; Prev; Prev = getPreviousDecl(Prev)) {
+        // Is there any previous explicit specialization declaration?
+        if (getTemplateSpecializationKind(Prev) == TSK_ExplicitSpecialization)
+          return false;
+      }
+
       Diag(NewLoc, diag::err_specialization_after_instantiation)
         << PrevDecl;
       Diag(PrevPointOfInstantiation, diag::note_instantiation_required_here)

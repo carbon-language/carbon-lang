@@ -54,3 +54,10 @@ void f(Array<String>& v) {
 
 template<> void sort<String>(Array<String>& v); // // expected-error{{after instantiation}}
 template<> void sort<>(Array<char*>& v);	// OK: sort<char*> not yet used
+
+namespace PR6160 {
+  template<typename T> void f(T);
+  template<> void f(int);
+  extern template void f(int);
+  template<> void f(int) { }
+}
