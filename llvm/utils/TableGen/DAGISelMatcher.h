@@ -100,7 +100,8 @@ public:
   }
   
   unsigned getHash() const {
-    return (getHashImpl() << 4) ^ getKind();
+    // Clear the high bit so we don't conflict with tombstones etc.
+    return ((getHashImpl() << 4) ^ getKind()) & (~0U>>1);
   }
   
   void print(raw_ostream &OS, unsigned indent = 0) const;
@@ -136,6 +137,15 @@ public:
     Matcher *Res = Children[i];
     Children[i] = 0;
     return Res;
+  }
+  
+  void setNumChildren(unsigned NC) {
+    if (NC < Children.size()) {
+      // delete any children we're about to lose pointers to.
+      for (unsigned i = NC, e = Children.size(); i != e; ++i)
+        delete Children[i];
+    }
+    Children.resize(NC);
   }
 
   static inline bool classof(const Matcher *N) {
