@@ -256,6 +256,8 @@ namespace {
     void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
     void RewriteImplementationDecl(Decl *Dcl);
     void RewriteObjCMethodDecl(ObjCMethodDecl *MDecl, std::string &ResultStr);
+    void RewriteTypeIntoString(QualType T, std::string &ResultStr,
+                               const FunctionType *&FPRetType);
     void RewriteByRefString(std::string &ResultStr, const std::string &Name,
                             ValueDecl *VD);
     void RewriteCategoryDecl(ObjCCategoryDecl *Dcl);
@@ -349,7 +351,7 @@ namespace {
                                          std::string &Result);
     void SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                       std::string &Result);
-    void SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl,
+    void SynthesizeIvarOffsetComputation(ObjCContainerDecl *IDecl,
                                          ObjCIvarDecl *ivar,
                                          std::string &Result);
     void RewriteImplementations();
@@ -558,7 +560,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#define __OBJC_RW_DLLIMPORT extern \"C\" __declspec(dllimport)\n";
     Preamble += "#define __OBJC_RW_STATICIMPORT extern \"C\"\n";
   } else
-    Preamble += "#define __OBJC_RW_DLLIMPORT extern\n";
+  Preamble += "#define __OBJC_RW_DLLIMPORT extern\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSend";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
   Preamble += "__OBJC_RW_DLLIMPORT struct objc_object *objc_msgSendSuper";
@@ -617,7 +619,8 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "};\n";
   Preamble += "// Runtime copy/destroy helper functions (from Block_private.h)\n";
   Preamble += "#ifdef __OBJC_EXPORT_BLOCKS\n";
-  Preamble += "extern \"C\" __declspec(dllexport) void _Block_object_assign(void *, const void *, const int);\n";
+  Preamble += "extern \"C\" __declspec(dllexport) "
+              "void _Block_object_assign(void *, const void *, const int);\n";
   Preamble += "extern \"C\" __declspec(dllexport) void _Block_object_dispose(const void *, const int);\n";
   Preamble += "extern \"C\" __declspec(dllexport) void *_NSConcreteGlobalBlock[32];\n";
   Preamble += "extern \"C\" __declspec(dllexport) void *_NSConcreteStackBlock[32];\n";
@@ -638,6 +641,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#define __block\n";
     Preamble += "#define __weak\n";
   }
+  Preamble += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((long) &((TYPE *)0)->MEMBER)\n";
 }
 
 
@@ -761,6 +765,8 @@ static std::string getIvarAccessString(ObjCInterfaceDecl *ClassDecl,
 void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
                                           ObjCImplementationDecl *IMD,
                                           ObjCCategoryImplDecl *CID) {
+  static bool objcGetPropertyDefined = false;
+  static bool objcSetPropertyDefined = false;
   SourceLocation startLoc = PID->getLocStart();
   InsertText(startLoc, "// ");
   const char *startBuf = SM->getCharacterData(startLoc);
@@ -780,15 +786,55 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 
   if (!OID)
     return;
-
+  unsigned Attributes = PD->getPropertyAttributes();
+  bool GenGetProperty = !(Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
+                         (Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
+                                        ObjCPropertyDecl::OBJC_PR_copy));
   std::string Getr;
+  if (GenGetProperty && !objcGetPropertyDefined) {
+    objcGetPropertyDefined = true;
+    // FIXME. Is this attribute correct in all cases?
+    Getr = "\nextern \"C\" __declspec(dllimport) "
+           "id objc_getProperty(id, SEL, long, bool);\n";
+  }
   RewriteObjCMethodDecl(PD->getGetterMethodDecl(), Getr);
   Getr += "{ ";
   // Synthesize an explicit cast to gain access to the ivar.
-  // FIXME: deal with code generation implications for various property
-  // attributes (copy, retain, nonatomic).
   // See objc-act.c:objc_synthesize_new_getter() for details.
-  Getr += "return " + getIvarAccessString(ClassDecl, OID);
+  if (GenGetProperty) {
+    // return objc_getProperty(self, _cmd, offsetof(ClassDecl, OID), 1)
+    Getr += "typedef ";
+    const FunctionType *FPRetType = 0;
+    RewriteTypeIntoString(PD->getGetterMethodDecl()->getResultType(), Getr, 
+                          FPRetType);
+    Getr += " _TYPE";
+    if (FPRetType) {
+      Getr += ")"; // close the precedence "scope" for "*".
+      
+      // Now, emit the argument types (if any).
+      if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(FPRetType)) {
+        Getr += "(";
+        for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
+          if (i) Getr += ", ";
+          std::string ParamStr = FT->getArgType(i).getAsString();
+          Getr += ParamStr;
+        }
+        if (FT->isVariadic()) {
+          if (FT->getNumArgs()) Getr += ", ";
+          Getr += "...";
+        }
+        Getr += ")";
+      } else
+        Getr += "()";
+    }
+    Getr += ";\n";
+    Getr += "return (_TYPE)";
+    Getr += "objc_getProperty(self, _cmd, ";
+    SynthesizeIvarOffsetComputation(ClassDecl, OID, Getr);
+    Getr += ", 1)";
+  }
+  else
+    Getr += "return " + getIvarAccessString(ClassDecl, OID);
   Getr += "; }";
   InsertText(onePastSemiLoc, Getr);
   if (PD->isReadOnly())
@@ -796,14 +842,38 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 
   // Generate the 'setter' function.
   std::string Setr;
+  bool GenSetProperty = Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
+                                      ObjCPropertyDecl::OBJC_PR_copy);
+  if (GenSetProperty && !objcSetPropertyDefined) {
+    objcSetPropertyDefined = true;
+    // FIXME. Is this attribute correct in all cases?
+    Setr = "\nextern \"C\" __declspec(dllimport) "
+    "void objc_setProperty (id, SEL, long, id, bool, bool);\n";
+  }
+  
   RewriteObjCMethodDecl(PD->getSetterMethodDecl(), Setr);
   Setr += "{ ";
   // Synthesize an explicit cast to initialize the ivar.
-  // FIXME: deal with code generation implications for various property
-  // attributes (copy, retain, nonatomic).
   // See objc-act.c:objc_synthesize_new_setter() for details.
-  Setr += getIvarAccessString(ClassDecl, OID) + " = ";
-  Setr += PD->getNameAsCString();
+  if (GenSetProperty) {
+    Setr += "objc_setProperty (self, _cmd, ";
+    SynthesizeIvarOffsetComputation(ClassDecl, OID, Setr);
+    Setr += ", (id)";
+    Setr += PD->getNameAsCString();
+    Setr += ", ";
+    if (Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic)
+      Setr += "0, ";
+    else
+      Setr += "1, ";
+    if (Attributes & ObjCPropertyDecl::OBJC_PR_copy)
+      Setr += "1)";
+    else
+      Setr += "0)";
+  }
+  else {
+    Setr += getIvarAccessString(ClassDecl, OID) + " = ";
+    Setr += PD->getNameAsCString();
+  }
   Setr += "; }";
   InsertText(onePastSemiLoc, Setr);
 }
@@ -940,18 +1010,15 @@ void RewriteObjC::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
   ReplaceText(LocStart, 0, "// ");
 }
 
-void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
-                                        std::string &ResultStr) {
-  //fprintf(stderr,"In RewriteObjCMethodDecl\n");
-  const FunctionType *FPRetType = 0;
-  ResultStr += "\nstatic ";
-  if (OMD->getResultType()->isObjCQualifiedIdType())
+void RewriteObjC::RewriteTypeIntoString(QualType T, std::string &ResultStr,
+                                        const FunctionType *&FPRetType) {
+  if (T->isObjCQualifiedIdType())
     ResultStr += "id";
-  else if (OMD->getResultType()->isFunctionPointerType() ||
-           OMD->getResultType()->isBlockPointerType()) {
+  else if (T->isFunctionPointerType() ||
+           T->isBlockPointerType()) {
     // needs special handling, since pointer-to-functions have special
     // syntax (where a decaration models use).
-    QualType retType = OMD->getResultType();
+    QualType retType = T;
     QualType PointeeTy;
     if (const PointerType* PT = retType->getAs<PointerType>())
       PointeeTy = PT->getPointeeType();
@@ -962,7 +1029,15 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       ResultStr += "(*";
     }
   } else
-    ResultStr += OMD->getResultType().getAsString();
+    ResultStr += T.getAsString();
+}
+
+void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
+                                        std::string &ResultStr) {
+  //fprintf(stderr,"In RewriteObjCMethodDecl\n");
+  const FunctionType *FPRetType = 0;
+  ResultStr += "\nstatic ";
+  RewriteTypeIntoString(OMD->getResultType(), ResultStr, FPRetType);
   ResultStr += " ";
 
   // Unique method name
@@ -3509,7 +3584,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
 
 /// SynthesizeIvarOffsetComputation - This rutine synthesizes computation of
 /// ivar offset.
-void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl,
+void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCContainerDecl *IDecl,
                                                   ObjCIvarDecl *ivar,
                                                   std::string &Result) {
   if (ivar->isBitField()) {
@@ -3807,9 +3882,7 @@ void RewriteObjC::RewriteImplementations() {
 void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
-
-  // This is needed for determining instance variable offsets.
-  Result += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((long) &((TYPE *)0)->MEMBER)\n";
+  
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
     RewriteObjCClassMetaData(ClassImplementation[i], Result);
