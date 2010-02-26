@@ -138,7 +138,6 @@ class GRStmtNodeBuilder {
   CFGBlock& B;
   const unsigned Idx;
   ExplodedNode* Pred;
-  ExplodedNode* LastNode;
   GRStateManager& Mgr;
   GRAuditor* Auditor;
 
@@ -164,10 +163,6 @@ public:
   ~GRStmtNodeBuilder();
 
   ExplodedNode* getBasePredecessor() const { return Pred; }
-
-  ExplodedNode* getLastNode() const {
-    return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
-  }
 
   // FIXME: This should not be exposed.
   GRWorkList *getWorkList() { return Eng.WList; }

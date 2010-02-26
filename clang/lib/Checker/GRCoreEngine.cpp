@@ -412,11 +412,11 @@ void GRCoreEngine::GenerateNode(const ProgramPoint& Loc,
 GRStmtNodeBuilder::GRStmtNodeBuilder(CFGBlock* b, unsigned idx,
                                      ExplodedNode* N, GRCoreEngine* e,
                                      GRStateManager &mgr)
-  : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N), Mgr(mgr), Auditor(0),
+  : Eng(*e), B(*b), Idx(idx), Pred(N), Mgr(mgr), Auditor(0),
     PurgingDeadSymbols(false), BuildSinks(false), HasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
-  CleanedState = getLastNode()->getState();
+  CleanedState = Pred->getState();
 }
 
 GRStmtNodeBuilder::~GRStmtNodeBuilder() {
@@ -498,11 +498,9 @@ GRStmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
 
   if (IsNew) {
     Deferred.insert(N);
-    LastNode = N;
     return N;
   }
 
-  LastNode = NULL;
   return NULL;
 }
 

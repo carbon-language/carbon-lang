@@ -460,7 +460,7 @@ void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
                                 "Error evaluating statement");
 
   Builder = &builder;
-  EntryNode = builder.getLastNode();
+  EntryNode = builder.getBasePredecessor();
 
   // Set up our simple checks.
   if (BatchAuditor)
