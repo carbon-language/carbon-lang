@@ -822,9 +822,9 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst),
 
 let AddedComplexity = 20 in {
 def : Pat<(v4f32 (movddup VR128:$src, (undef))),
-          (MOVLHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVLHPSrr VR128:$src, VR128:$src)>;
 def : Pat<(v2i64 (movddup VR128:$src, (undef))),
-          (MOVLHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVLHPSrr VR128:$src, VR128:$src)>;
 }
 
 
@@ -1084,13 +1084,11 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins), "",
                  [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 
-let Predicates = [HasSSE1] in {
-  def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
-  def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
-  def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
-  def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
-  def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
-}
+def : Pat<(v2i64 immAllZerosV), (V_SET0)>;
+def : Pat<(v8i16 immAllZerosV), (V_SET0)>;
+def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
+def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
+def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
 
 // FR32 to 128-bit vector conversion.
 let isAsCheapAsAMove = 1 in
@@ -3051,13 +3049,13 @@ let Predicates = [HasSSE2] in {
 let AddedComplexity = 15 in {
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
 def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-          (MOVLSD2PDrr (V_SET0), FR64:$src)>, Requires<[HasSSE2]>;
+          (MOVLSD2PDrr (V_SET0), FR64:$src)>;
 def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-          (MOVLSS2PSrr (V_SET0), FR32:$src)>, Requires<[HasSSE1]>;
+          (MOVLSS2PSrr (V_SET0), FR32:$src)>;
 def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-          (MOVLPSrr (V_SET0), VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVLPSrr (V_SET0), VR128:$src)>;
 def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-          (MOVLPSrr (V_SET0), VR128:$src)>, Requires<[HasSSE1]>;
+          (MOVLPSrr (V_SET0), VR128:$src)>;
 }
 
 // Splat v2f64 / v2i64
@@ -3075,8 +3073,7 @@ def : Pat<(unpckh (v2i64 VR128:$src), (undef)),
 // Special unary SHUFPSrri case.
 def : Pat<(v4f32 (pshufd:$src3 VR128:$src1, (undef))),
           (SHUFPSrri VR128:$src1, VR128:$src1,
-                     (SHUFFLE_get_shuf_imm VR128:$src3))>,
-      Requires<[HasSSE1]>;
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>;
 let AddedComplexity = 5 in
 def : Pat<(v4f32 (pshufd:$src2 VR128:$src1, (undef))),
           (PSHUFDri VR128:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>,
@@ -3122,13 +3119,13 @@ def : Pat<(v4f32 (unpckl_undef:$src2 VR128:$src, (undef))),
 }
 let AddedComplexity = 10 in {
 def : Pat<(v4f32 (unpckl_undef VR128:$src, (undef))),
-          (UNPCKLPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (UNPCKLPSrr VR128:$src, VR128:$src)>;
 def : Pat<(v16i8 (unpckl_undef VR128:$src, (undef))),
-          (PUNPCKLBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (PUNPCKLBWrr VR128:$src, VR128:$src)>;
 def : Pat<(v8i16 (unpckl_undef VR128:$src, (undef))),
-          (PUNPCKLWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (PUNPCKLWDrr VR128:$src, VR128:$src)>;
 def : Pat<(v4i32 (unpckl_undef VR128:$src, (undef))),
-          (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (PUNPCKLDQrr VR128:$src, VR128:$src)>;
 }
 
 // vector_shuffle v1, <undef>, <2, 2, 3, 3, ...>
@@ -3142,13 +3139,13 @@ def : Pat<(v4f32 (unpckh_undef:$src2 VR128:$src, (undef))),
 }
 let AddedComplexity = 10 in {
 def : Pat<(v4f32 (unpckh_undef VR128:$src, (undef))),
-          (UNPCKHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+          (UNPCKHPSrr VR128:$src, VR128:$src)>;
 def : Pat<(v16i8 (unpckh_undef VR128:$src, (undef))),
-          (PUNPCKHBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (PUNPCKHBWrr VR128:$src, VR128:$src)>;
 def : Pat<(v8i16 (unpckh_undef VR128:$src, (undef))),
-          (PUNPCKHWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (PUNPCKHWDrr VR128:$src, VR128:$src)>;
 def : Pat<(v4i32 (unpckh_undef VR128:$src, (undef))),
-          (PUNPCKHDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+          (PUNPCKHDQrr VR128:$src, VR128:$src)>;
 }
 
 let AddedComplexity = 20 in {
@@ -3170,25 +3167,25 @@ def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
 let AddedComplexity = 20 in {
 // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
 def : Pat<(v4f32 (movlp VR128:$src1, (load addr:$src2))),
-          (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
+          (MOVLPSrm VR128:$src1, addr:$src2)>;
 def : Pat<(v2f64 (movlp VR128:$src1, (load addr:$src2))),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (MOVLPDrm VR128:$src1, addr:$src2)>;
 def : Pat<(v4i32 (movlp VR128:$src1, (load addr:$src2))),
-          (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (MOVLPSrm VR128:$src1, addr:$src2)>;
 def : Pat<(v2i64 (movlp VR128:$src1, (load addr:$src2))),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+          (MOVLPDrm VR128:$src1, addr:$src2)>;
 }
 
 // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
 def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-          (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
+          (MOVLPSmr addr:$src1, VR128:$src2)>;
 def : Pat<(store (v2f64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-          (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (MOVLPDmr addr:$src1, VR128:$src2)>;
 def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)), VR128:$src2)),
                  addr:$src1),
-          (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
+          (MOVLPSmr addr:$src1, VR128:$src2)>;
 def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-          (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (MOVLPDmr addr:$src1, VR128:$src2)>;
 
 let AddedComplexity = 15 in {
 // Setting the lowest element in the vector.
@@ -3208,7 +3205,7 @@ def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
 // fall back to this for SSE1)
 def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
           (SHUFPSrri VR128:$src2, VR128:$src1,
-                     (SHUFFLE_get_shuf_imm VR128:$src3))>, Requires<[HasSSE1]>;
+                     (SHUFFLE_get_shuf_imm VR128:$src3))>;
 
 // Set lowest element and zero upper elements.
 let AddedComplexity = 15 in
@@ -3250,30 +3247,30 @@ def : Pat<(v2i32 (fp_to_sint (v2f64 VR128:$src))),
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
 def : Pat<(alignedloadv4i32 addr:$src),
-          (MOVAPSrm addr:$src)>, Requires<[HasSSE1]>;
+          (MOVAPSrm addr:$src)>;
 def : Pat<(loadv4i32 addr:$src),
-          (MOVUPSrm addr:$src)>, Requires<[HasSSE1]>;
+          (MOVUPSrm addr:$src)>;
 def : Pat<(alignedloadv2i64 addr:$src),
-          (MOVAPSrm addr:$src)>, Requires<[HasSSE2]>;
+          (MOVAPSrm addr:$src)>;
 def : Pat<(loadv2i64 addr:$src),
-          (MOVUPSrm addr:$src)>, Requires<[HasSSE2]>;
+          (MOVUPSrm addr:$src)>;
 
 def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVAPSmr addr:$dst, VR128:$src)>;
 def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVAPSmr addr:$dst, VR128:$src)>;
 def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVAPSmr addr:$dst, VR128:$src)>;
 def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
-          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVAPSmr addr:$dst, VR128:$src)>;
 def : Pat<(store (v2i64 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVUPSmr addr:$dst, VR128:$src)>;
 def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVUPSmr addr:$dst, VR128:$src)>;
 def : Pat<(store (v8i16 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVUPSmr addr:$dst, VR128:$src)>;
 def : Pat<(store (v16i8 VR128:$src), addr:$dst),
-          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+          (MOVUPSmr addr:$dst, VR128:$src)>;
 
 //===----------------------------------------------------------------------===//
 // SSE4.1 Instructions
