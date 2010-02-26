@@ -152,4 +152,21 @@ namespace PR6424 {
   };
   
   template void Y<3>::f(); 
+
+  template<int I> 
+  struct X2 {
+    void *operator new(__SIZE_TYPE__) { 
+      int *ip = I; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+      return ip;
+    }
+  };
+
+  template<int> struct Y2 {
+    typedef X2<7> X;
+    void f() { 
+      new X(); // expected-note{{instantiation of}}
+    }
+  };
+
+  template void Y2<3>::f();
 }

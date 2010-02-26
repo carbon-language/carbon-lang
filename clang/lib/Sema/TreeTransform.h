@@ -4588,11 +4588,48 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
     ConstructorArgs.push_back(Arg.take());
   }
 
+  // Transform constructor, new operator, and delete operator.
+  CXXConstructorDecl *Constructor = 0;
+  if (E->getConstructor()) {
+    Constructor = cast_or_null<CXXConstructorDecl>(
+                               getDerived().TransformDecl(E->getConstructor()));
+    if (!Constructor)
+      return SemaRef.ExprError();
+  }
+
+  FunctionDecl *OperatorNew = 0;
+  if (E->getOperatorNew()) {
+    OperatorNew = cast_or_null<FunctionDecl>(
+                               getDerived().TransformDecl(E->getOperatorNew()));
+    if (!OperatorNew)
+      return SemaRef.ExprError();
+  }
+
+  FunctionDecl *OperatorDelete = 0;
+  if (E->getOperatorDelete()) {
+    OperatorDelete = cast_or_null<FunctionDecl>(
+                           getDerived().TransformDecl(E->getOperatorDelete()));
+    if (!OperatorDelete)
+      return SemaRef.ExprError();
+  }
+  
   if (!getDerived().AlwaysRebuild() &&
       AllocType == E->getAllocatedType() &&
       ArraySize.get() == E->getArraySize() &&
-      !ArgumentChanged)
+      Constructor == E->getConstructor() &&
+      OperatorNew == E->getOperatorNew() &&
+      OperatorDelete == E->getOperatorDelete() &&
+      !ArgumentChanged) {
+    // Mark any declarations we need as referenced.
+    // FIXME: instantiation-specific.
+    if (Constructor)
+      SemaRef.MarkDeclarationReferenced(E->getLocStart(), Constructor);
+    if (OperatorNew)
+      SemaRef.MarkDeclarationReferenced(E->getLocStart(), OperatorNew);
+    if (OperatorDelete)
+      SemaRef.MarkDeclarationReferenced(E->getLocStart(), OperatorDelete);
     return SemaRef.Owned(E->Retain());
+  }
 
   if (!ArraySize.get()) {
     // If no array size was specified, but the new expression was
@@ -4641,9 +4678,24 @@ TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E) {
   if (Operand.isInvalid())
     return SemaRef.ExprError();
 
+  // Transform the delete operator, if known.
+  FunctionDecl *OperatorDelete = 0;
+  if (E->getOperatorDelete()) {
+    OperatorDelete = cast_or_null<FunctionDecl>(
+                            getDerived().TransformDecl(E->getOperatorDelete()));
+    if (!OperatorDelete)
+      return SemaRef.ExprError();
+  }
+  
   if (!getDerived().AlwaysRebuild() &&
-      Operand.get() == E->getArgument())
+      Operand.get() == E->getArgument() &&
+      OperatorDelete == E->getOperatorDelete()) {
+    // Mark any declarations we need as referenced.
+    // FIXME: instantiation-specific.
+    if (OperatorDelete)
+      SemaRef.MarkDeclarationReferenced(E->getLocStart(), OperatorDelete);
     return SemaRef.Owned(E->Retain());
+  }
 
   return getDerived().RebuildCXXDeleteExpr(E->getLocStart(),
                                            E->isGlobalDelete(),
@@ -4907,6 +4959,8 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
       T == E->getType() &&
       Constructor == E->getConstructor() &&
       !ArgumentChanged) {
+    // Mark the constructor as referenced.
+    // FIXME: Instantiation-specific
     SemaRef.MarkDeclarationReferenced(E->getLocStart(), Constructor);
     return SemaRef.Owned(E->Retain());
   }
