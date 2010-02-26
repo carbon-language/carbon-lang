@@ -174,7 +174,8 @@ MemoryBuffer *MemoryBuffer::getFile(StringRef Filename, std::string *ErrStr,
 #ifdef O_BINARY
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
-  int FD = ::open(Filename.str().c_str(), O_RDONLY|OpenFlags);
+  SmallString<256> PathBuf(Filename.begin(), Filename.end());
+  int FD = ::open(PathBuf.c_str(), O_RDONLY|OpenFlags);
   if (FD == -1) {
     if (ErrStr) *ErrStr = strerror(errno);
     return 0;
