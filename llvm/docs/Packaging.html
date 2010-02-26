@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Advice on Packaging LLVM</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<div class="doc_title">Advice on Packaging LLVM</div>
+<ol>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#cxx-features">C++ Features</a></li>
+  <li><a href="#shared-library">Shared Library</a></li>
+</ol>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="overview">Overview</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<p>LLVM sets certain default configure options to make sure our developers don't
+break things for constrained platforms.  These settings are not optimal for most
+desktop systems, and we hope that packagers (i.e., Redhat, Debian, MacPorts,
+etc.) will tweak them.  This document lists settings we suggest you tweak.
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="cxx-features">C++ Features</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<dl>
+  <dt>RTTI</dt><dd>LLVM disables RTTI by default.  Add <tt>REQUIRES_RTTI=1</tt>
+  to your environment while running <tt>make</tt> to re-enable it.  This will
+  allow users to build with RTTI enabled and inherit from LLVM classes.</dd>
+  <dt>Exceptions</dt><dd>LLVM disables exceptions by default.  Add
+  <tt>REQUIRES_EH=1</tt> to your environment while running <tt>make</tt> to
+  re-enable them.  This will allow users to link LLVM and exception-using code.
+  It also re-enables RTTI.</dd>
+</dl>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="shared-library">Shared Library</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<p>Configure with <tt>--enable-shared</tt> to build
+<tt>libLLVM-<var>major</var>.<var>minor</var>.(so|dylib)</tt> and link the tools
+against it.  This saves lots of binary size at the cost of some startup time.
+</p>
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2009-01-01 23:10:51 -0800 (Thu, 01 Jan 2009) $
+</address>
+</body>
+</html>

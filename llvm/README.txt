@@ -10,3 +10,6 @@ the license agreement found in LICENSE.txt.
 
 Please see the HTML documentation provided in docs/index.html for further
 assistance with LLVM.
+
+If you're writing a package for LLVM, see docs/Packaging.html for our
+suggestions.
