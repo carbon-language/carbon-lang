@@ -1,7 +1,6 @@
 " Vim syntax file
 " Language:   llvm
 " Maintainer: The LLVM team, http://llvm.org/
-" Updated:    2003-06-02
 
 if version < 600
   syntax clear
