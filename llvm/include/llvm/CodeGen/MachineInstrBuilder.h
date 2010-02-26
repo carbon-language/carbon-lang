@@ -127,7 +127,7 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addMetadata(MDNode *MD) const {
+  const MachineInstrBuilder &addMetadata(const MDNode *MD) const {
     MI->addOperand(MachineOperand::CreateMetadata(MD));
     return *this;
   }

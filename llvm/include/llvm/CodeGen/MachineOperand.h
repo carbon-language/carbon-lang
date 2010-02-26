@@ -100,7 +100,7 @@ private:
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
     const ConstantFP *CFP;    // For MO_FPImmediate.
     int64_t ImmVal;           // For MO_Immediate.
-    MDNode *MD;               // For MO_Metadata.
+    const MDNode *MD;         // For MO_Metadata.
 
     struct {                  // For MO_Register.
       unsigned RegNo;
@@ -467,7 +467,7 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateMetadata(MDNode *Meta) {
+  static MachineOperand CreateMetadata(const MDNode *Meta) {
     MachineOperand Op(MachineOperand::MO_Metadata);
     Op.Contents.MD = Meta;
     return Op;
