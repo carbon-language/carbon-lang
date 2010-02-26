@@ -261,19 +261,21 @@ bool VirtRegMap::FindUnusedRegisters(LiveIntervals* LIs) {
 
 void VirtRegMap::print(raw_ostream &OS, const Module* M) const {
   const TargetRegisterInfo* TRI = MF->getTarget().getRegisterInfo();
+  const MachineRegisterInfo &MRI = MF->getRegInfo();
 
   OS << "********** REGISTER MAP **********\n";
   for (unsigned i = TargetRegisterInfo::FirstVirtualRegister,
          e = MF->getRegInfo().getLastVirtReg(); i <= e; ++i) {
     if (Virt2PhysMap[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
       OS << "[reg" << i << " -> " << TRI->getName(Virt2PhysMap[i])
-         << "]\n";
+         << "] " << MRI.getRegClass(i)->getName() << "\n";
   }
 
   for (unsigned i = TargetRegisterInfo::FirstVirtualRegister,
          e = MF->getRegInfo().getLastVirtReg(); i <= e; ++i)
     if (Virt2StackSlotMap[i] != VirtRegMap::NO_STACK_SLOT)
-      OS << "[reg" << i << " -> fi#" << Virt2StackSlotMap[i] << "]\n";
+      OS << "[reg" << i << " -> fi#" << Virt2StackSlotMap[i]
+         << "] " << MRI.getRegClass(i)->getName() << "\n";
   OS << '\n';
 }
 

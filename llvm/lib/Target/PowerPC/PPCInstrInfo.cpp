@@ -19,6 +19,7 @@
 #include "PPCTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -688,12 +689,21 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                         getUndefRegState(isUndef)),
                                 FrameIndex);
     }
-  } else if (Opc == PPC::FMRD) {
+  } else if (Opc == PPC::FMRD || Opc == PPC::FMRS || Opc == PPC::FMRSD) {
+    // The register may be F4RC or F8RC, and that determines the memory op.
+    unsigned OrigReg = MI->getOperand(OpNum).getReg();
+    // We cannot tell the register class from a physreg alone.
+    if (TargetRegisterInfo::isPhysicalRegister(OrigReg))
+      return NULL;
+    const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(OrigReg);
+    const bool is64 = RC == PPC::F8RCRegisterClass;
+
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       bool isUndef = MI->getOperand(1).isUndef();
-      NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::STFD))
+      NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(),
+                                        get(is64 ? PPC::STFD : PPC::STFS))
                                 .addReg(InReg,
                                         getKillRegState(isKill) |
                                         getUndefRegState(isUndef)),
@@ -702,28 +712,8 @@ MachineInstr *PPCInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
       bool isUndef = MI->getOperand(0).isUndef();
-      NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::LFD))
-                                .addReg(OutReg,
-                                        RegState::Define |
-                                        getDeadRegState(isDead) |
-                                        getUndefRegState(isUndef)),
-                                FrameIndex);
-    }
-  } else if (Opc == PPC::FMRS) {
-    if (OpNum == 0) {  // move -> store
-      unsigned InReg = MI->getOperand(1).getReg();
-      bool isKill = MI->getOperand(1).isKill();
-      bool isUndef = MI->getOperand(1).isUndef();
-      NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::STFS))
-                                .addReg(InReg,
-                                        getKillRegState(isKill) |
-                                        getUndefRegState(isUndef)),
-                                FrameIndex);
-    } else {           // move -> load
-      unsigned OutReg = MI->getOperand(0).getReg();
-      bool isDead = MI->getOperand(0).isDead();
-      bool isUndef = MI->getOperand(0).isUndef();
-      NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(), get(PPC::LFS))
+      NewMI = addFrameReference(BuildMI(MF, MI->getDebugLoc(),
+                                        get(is64 ? PPC::LFD : PPC::LFS))
                                 .addReg(OutReg,
                                         RegState::Define |
                                         getDeadRegState(isDead) |
