@@ -72,11 +72,8 @@ versions of LLVM in parallel.  The following configure flags are relevant:
 <dl>
   <dt>RTTI</dt><dd>LLVM disables RTTI by default.  Add <tt>REQUIRES_RTTI=1</tt>
   to your environment while running <tt>make</tt> to re-enable it.  This will
-  allow users to build with RTTI enabled and inherit from LLVM classes.</dd>
-  <dt>Exceptions</dt><dd>LLVM disables exceptions by default.  Add
-  <tt>REQUIRES_EH=1</tt> to your environment while running <tt>make</tt> to
-  re-enable them.  This will allow users to link LLVM and exception-using code.
-  It also re-enables RTTI.</dd>
+  allow users to build with RTTI enabled and still inherit from LLVM
+  classes.</dd>
 </dl>
 </div>
 
