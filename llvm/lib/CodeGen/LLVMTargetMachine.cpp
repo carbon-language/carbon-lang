@@ -227,7 +227,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Optionally, tun split-GEPs and no-load GVN.
   if (EnableSplitGEPGVN) {
     PM.add(createGEPSplitterPass());
-    PM.add(createGVNPass(/*NoPRE=*/false, /*NoLoads=*/true));
+    PM.add(createGVNPass(/*NoLoads=*/true));
   }
 
   // Run loop strength reduction before anything else.
