@@ -350,6 +350,34 @@ bool FastISel::SelectCall(User *I) {
     (void)TargetSelectInstruction(cast<Instruction>(I));
     return true;
   }
+  case Intrinsic::dbg_value: {
+    // This requires target support, but right now X86 is the only Fast target.
+    DbgValueInst *DI = cast<DbgValueInst>(I);
+    const TargetInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
+    Value *V = DI->getValue();
+    if (!V) {
+      // Currently the optimizer can produce this; insert an undef to
+      // help debugging.  Probably the optimizer should not do this.
+      BuildMI(MBB, DL, II).addReg(0U).addImm(DI->getOffset()).
+                                     addMetadata(DI->getVariable());
+    } else if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      BuildMI(MBB, DL, II).addImm(CI->getZExtValue()).addImm(DI->getOffset()).
+                                     addMetadata(DI->getVariable());
+    } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
+      BuildMI(MBB, DL, II).addFPImm(CF).addImm(DI->getOffset()).
+                                     addMetadata(DI->getVariable());
+    } else if (unsigned Reg = lookUpRegForValue(V)) {
+      BuildMI(MBB, DL, II).addReg(Reg, RegState::Debug).addImm(DI->getOffset()).
+                                     addMetadata(DI->getVariable());
+    } else {
+      // We can't yet handle anything else here because it would require
+      // generating code, thus altering codegen because of debug info.
+      // Insert an undef so we can see what we dropped.
+      BuildMI(MBB, DL, II).addReg(0U).addImm(DI->getOffset()).
+                                     addMetadata(DI->getVariable());
+    }     
+    return true;
+  }
   case Intrinsic::eh_exception: {
     EVT VT = TLI.getValueType(I->getType());
     switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {
