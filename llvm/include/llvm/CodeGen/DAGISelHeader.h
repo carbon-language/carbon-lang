@@ -283,8 +283,8 @@ struct MatchScope {
   /// FailIndex - If this match fails, this is the index to continue with.
   unsigned FailIndex;
   
-  /// NodeStackSize - The size of the node stack when the scope was formed.
-  unsigned NodeStackSize;
+  /// NodeStack - The node stack when the scope was formed.
+  SmallVector<SDValue, 4> NodeStack;
   
   /// NumRecordedNodes - The number of recorded nodes when the scope was formed.
   unsigned NumRecordedNodes;
@@ -383,7 +383,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // to match.
       MatchScope NewEntry;
       NewEntry.FailIndex = MatcherIndex+NumToSkip;
-      NewEntry.NodeStackSize = NodeStack.size();
+      NewEntry.NodeStack.append(NodeStack.begin(), NodeStack.end());
       NewEntry.NumRecordedNodes = RecordedNodes.size();
       NewEntry.NumMatchedMemRefs = MatchedMemRefs.size();
       NewEntry.InputChain = InputChain;
@@ -935,7 +935,8 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // formed.
       MatchScope &LastScope = MatchScopes.back();
       RecordedNodes.resize(LastScope.NumRecordedNodes);
-      NodeStack.resize(LastScope.NodeStackSize);
+      NodeStack.clear();
+      NodeStack.append(LastScope.NodeStack.begin(), LastScope.NodeStack.end());
       N = NodeStack.back();
 
       DEBUG(errs() << "  Match failed at index " << MatcherIndex
