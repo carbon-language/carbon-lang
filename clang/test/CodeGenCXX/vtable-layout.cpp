@@ -539,3 +539,33 @@ void D::f() { }
 
 }
 
+namespace Test15 {
+
+// Test that we don't emit an extra vtable for B since it's a primary base of C.
+struct A { virtual void a(); };
+struct B { virtual void b(); };
+
+struct C : virtual B { };
+
+// CHECK:      Vtable for 'Test15::D' (11 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | vbase_offset (8)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test15::D RTTI
+// CHECK-NEXT:        -- (Test15::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test15::D, 0) vtable address --
+// CHECK-NEXT:    4 | void Test15::A::a()
+// CHECK-NEXT:    5 | void Test15::D::f()
+// CHECK-NEXT:    6 | vbase_offset (0)
+// CHECK-NEXT:    7 | vcall_offset (0)
+// CHECK-NEXT:    8 | offset_to_top (-8)
+// CHECK-NEXT:    9 | Test15::D RTTI
+// CHECK-NEXT:        -- (Test15::B, 8) vtable address --
+// CHECK-NEXT:        -- (Test15::C, 8) vtable address --
+// CHECK-NEXT:   10 | void Test15::B::b()
+struct D : A, virtual B, virtual C { 
+  virtual void f();
+};
+void D::f() { } 
+
+}

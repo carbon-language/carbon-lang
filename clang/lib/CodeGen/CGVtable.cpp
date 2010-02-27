@@ -1220,7 +1220,12 @@ private:
   /// LayoutSecondaryVtables - Layout the secondary vtables for the given base
   /// subobject.
   void LayoutSecondaryVtables(BaseSubobject Base);
-  
+
+  /// DeterminePrimaryVirtualBases - Determine the primary virtual bases in this
+  /// class hierarchy.
+  void DeterminePrimaryVirtualBases(const CXXRecordDecl *RD, 
+                                    VisitedVirtualBasesSetTy &VBases);
+
   /// LayoutVtablesForVirtualBases - Layout vtables for all virtual bases of the
   /// given base (excluding any primary bases).
   void LayoutVtablesForVirtualBases(const CXXRecordDecl *RD, 
@@ -1418,9 +1423,6 @@ VtableBuilder::AddMethods(BaseSubobject Base,
         Context.getASTRecordLayout(MostDerivedClass);
       
       BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
-      
-      // Keep track of this primary virtual base.
-      PrimaryVirtualBases.insert(PrimaryBase);
     } else {
       assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
@@ -1498,6 +1500,11 @@ void VtableBuilder::LayoutVtable() {
                                       /*BaseIsVirtual=*/false);
   
   VisitedVirtualBasesSetTy VBases;
+  
+  // Determine the primary virtual bases.
+  DeterminePrimaryVirtualBases(MostDerivedClass, VBases);
+  VBases.clear();
+  
   LayoutVtablesForVirtualBases(MostDerivedClass, VBases);
 }
   
@@ -1592,15 +1599,37 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
 }
 
 void
+VtableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD, 
+                                            VisitedVirtualBasesSetTy &VBases) {
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  
+  // Check if this base has a primary base.
+  if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
+    // Check if it's virtual
+    if (Layout.getPrimaryBaseWasVirtual())
+      PrimaryVirtualBases.insert(PrimaryBase);
+  }
+
+  // Traverse bases, looking for more primary virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    if (I->isVirtual() && !VBases.insert(BaseDecl))
+      continue;
+
+    DeterminePrimaryVirtualBases(BaseDecl, VBases);
+  }
+}
+
+void
 VtableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD, 
                                             VisitedVirtualBasesSetTy &VBases) {
   // Itanium C++ ABI 2.5.2:
   //   Then come the virtual base virtual tables, also in inheritance graph
   //   order, and again excluding primary bases (which share virtual tables with
   //   the classes for which they are primary).
-  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
        E = RD->bases_end(); I != E; ++I) {
     const CXXRecordDecl *BaseDecl = 
@@ -1609,8 +1638,7 @@ VtableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
     // Check if this base needs a vtable. (If it's virtual, not a primary base
     // of some other class, and we haven't visited it before).
     if (I->isVirtual() && BaseDecl->isDynamicClass() && 
-        BaseDecl != PrimaryBase && !PrimaryVirtualBases.count(BaseDecl) && 
-        VBases.insert(BaseDecl)) {
+        !PrimaryVirtualBases.count(BaseDecl) && VBases.insert(BaseDecl)) {
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       uint64_t BaseOffset = 
