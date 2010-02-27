@@ -706,3 +706,51 @@ struct D : virtual B, virtual C, virtual A
 void D::f() {}
 
 }
+
+namespace Test19 {
+
+// Another 'this' adjustment test.
+
+struct A {
+  int a;
+
+  virtual void f();
+};
+
+struct B : A {
+  int b;
+
+  virtual void g();
+};
+
+struct C {
+  virtual void c();
+};
+
+// CHECK:      Vtable for 'Test19::D' (13 entries).
+// CHECK-NEXT:    0 | vbase_offset (24)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test19::D RTTI
+// CHECK-NEXT:        -- (Test19::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test19::D, 0) vtable address --
+// CHECK-NEXT:    3 | void Test19::C::c()
+// CHECK-NEXT:    4 | void Test19::D::f()
+// CHECK-NEXT:    5 | offset_to_top (-8)
+// CHECK-NEXT:    6 | Test19::D RTTI
+// CHECK-NEXT:        -- (Test19::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test19::B, 8) vtable address --
+// CHECK-NEXT:    7 | void Test19::D::f()
+// CHECK-NEXT:        [this adjustment: -8 non-virtual]
+// CHECK-NEXT:    8 | void Test19::B::g()
+// CHECK-NEXT:    9 | vcall_offset (-24)
+// CHECK-NEXT:   10 | offset_to_top (-24)
+// CHECK-NEXT:   11 | Test19::D RTTI
+// CHECK-NEXT:        -- (Test19::A, 24) vtable address --
+// CHECK-NEXT:   12 | void Test19::D::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+struct D : C, B, virtual A {
+  virtual void f();
+};
+void D::f() { }
+
+}
