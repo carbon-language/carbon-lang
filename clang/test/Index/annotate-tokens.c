@@ -61,4 +61,5 @@ void f(void *ptr) {
 // CHECK: Literal: ""Hello"" [9:24 - 9:31]
 // CHECK: Punctuation: ";" [9:31 - 9:32]
 // CHECK: Punctuation: "}" [10:1 - 10:2]
-
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:165:32 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:4:1:165:38 %s | FileCheck %s
