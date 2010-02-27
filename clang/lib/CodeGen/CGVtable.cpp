@@ -1315,8 +1315,12 @@ void VtableBuilder::ComputeThisAdjustments() {
       continue;
     
     uint64_t VtableIndex = MethodInfo.VtableIndex;
-    
-    // Ignore this adjustments for unused function pointers.
+
+    // Ignore adjustments for pure virtual member functions.
+    if (Overrider.Method->isPure())
+      continue;
+
+    // Ignore adjustments for unused function pointers.
     if (Components[VtableIndex].getKind() == 
         VtableComponent::CK_UnusedFunctionPointer)
       continue;

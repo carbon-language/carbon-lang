@@ -754,3 +754,36 @@ struct D : C, B, virtual A {
 void D::f() { }
 
 }
+
+namespace Test20 {
+
+// pure virtual member functions should never have 'this' adjustments.
+
+struct A {
+  virtual void f() = 0;
+  virtual void g();
+};
+
+struct B : A { };
+
+// CHECK:      Vtable for 'Test20::C' (9 entries).
+// CHECK-NEXT:    0 | offset_to_top (0)
+// CHECK-NEXT:    1 | Test20::C RTTI
+// CHECK-NEXT:        -- (Test20::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test20::C, 0) vtable address --
+// CHECK-NEXT:    2 | void Test20::C::f() [pure]
+// CHECK-NEXT:    3 | void Test20::A::g()
+// CHECK-NEXT:    4 | void Test20::C::h()
+// CHECK-NEXT:    5 | offset_to_top (-8)
+// CHECK-NEXT:    6 | Test20::C RTTI
+// CHECK-NEXT:        -- (Test20::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test20::B, 8) vtable address --
+// CHECK-NEXT:    7 | void Test20::C::f() [pure]
+// CHECK-NEXT:    8 | void Test20::A::g()
+struct C : A, B { 
+  virtual void f() = 0;
+  virtual void h();
+};
+void C::h() { }
+
+}
