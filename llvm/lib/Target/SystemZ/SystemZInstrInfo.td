@@ -257,7 +257,7 @@ def MOV64rihi32 : RILI<0xEC0, (outs GR64:$dst), (ins i64imm:$src),
                        [(set GR64:$dst, i64hi32:$src)]>;
 }
 
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def MOV32rm  : RXI<0x58,
                    (outs GR32:$dst), (ins rriaddr12:$src),
                    "l\t{$dst, $src}",

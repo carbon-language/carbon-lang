@@ -1062,14 +1062,13 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins addrmode4:$addr, GPR:$base),
 //
 
 // Load
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoadr,
                "ldr", "\t$dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
-let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1,
-    mayHaveSideEffects = 1  in
+let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1 in
 def LDRcp : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoadr,
                  "ldr", "\t$dst, $addr", []>;
 

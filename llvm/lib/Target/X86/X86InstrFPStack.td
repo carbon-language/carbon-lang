@@ -397,7 +397,7 @@ def CMOVNP_F : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
 let canFoldAsLoad = 1 in {
 def LD_Fp32m   : FpIf32<(outs RFP32:$dst), (ins f32mem:$src), ZeroArgFP,
                   [(set RFP32:$dst, (loadf32 addr:$src))]>;
-let isReMaterializable = 1, mayHaveSideEffects = 1 in
+let isReMaterializable = 1 in
   def LD_Fp64m : FpIf64<(outs RFP64:$dst), (ins f64mem:$src), ZeroArgFP,
                   [(set RFP64:$dst, (loadf64 addr:$src))]>;
 def LD_Fp80m   : FpI_<(outs RFP80:$dst), (ins f80mem:$src), ZeroArgFP,

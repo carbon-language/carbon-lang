@@ -54,7 +54,7 @@ def vfp_f64imm : Operand<f64>,
 //  Load / store Instructions.
 //
 
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
                  IIC_fpLoad64, "vldr", ".64\t$dst, $addr",
                  [(set DPR:$dst, (load addrmode5:$addr))]>;

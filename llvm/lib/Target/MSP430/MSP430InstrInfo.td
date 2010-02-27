@@ -250,7 +250,7 @@ def MOV16ri : I16ri<0x0,
                     [(set GR16:$dst, imm:$src)]>;
 }
 
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def MOV8rm  : I8rm<0x0,
                    (outs GR8:$dst), (ins memsrc:$src),
                    "mov.b\t{$src, $dst}",

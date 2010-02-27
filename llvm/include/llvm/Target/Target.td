@@ -211,16 +211,9 @@ class Instruction {
   //  hasSideEffects - The instruction has side effects that are not
   //    captured by any operands of the instruction or other flags.
   //
-  //  mayHaveSideEffects  - Some instances of the instruction can have side
-  //    effects. The virtual method "isReallySideEffectFree" is called to
-  //    determine this. Load instructions are an example of where this is
-  //    useful. In general, loads always have side effects. However, loads from
-  //    constant pools don't. Individual back ends make this determination.
-  //
   //  neverHasSideEffects - Set on an instruction with no pattern if it has no
   //    side effects.
   bit hasSideEffects = 0;
-  bit mayHaveSideEffects = 0;
   bit neverHasSideEffects = 0;
 
   // Is this instruction a "real" instruction (with a distinct machine

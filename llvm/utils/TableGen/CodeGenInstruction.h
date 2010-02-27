@@ -133,7 +133,6 @@ namespace llvm {
     bool isNotDuplicable;
     bool hasOptionalDef;
     bool hasSideEffects;
-    bool mayHaveSideEffects;
     bool neverHasSideEffects;
     bool isAsCheapAsAMove;
     bool hasExtraSrcRegAllocReq;

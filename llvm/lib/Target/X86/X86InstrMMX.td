@@ -141,7 +141,7 @@ def MMX_MOVD64rrv164 : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
 let neverHasSideEffects = 1 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
                         "movq\t{$src, $dst|$dst, $src}",
                         [(set VR64:$dst, (load_mmx addr:$src))]>;

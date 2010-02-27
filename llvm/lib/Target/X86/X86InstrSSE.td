@@ -374,7 +374,7 @@ let Uses = [EFLAGS], usesCustomInserter = 1 in {
 let neverHasSideEffects = 1 in
 def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVSSrm : SSI<0x10, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
                   "movss\t{$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (loadf32 addr:$src))]>;
@@ -544,7 +544,7 @@ def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
 
 // Alias instruction to load FR32 from f128mem using movaps. Upper bits are
 // disregarded.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
                      "movaps\t{$src, $dst|$dst, $src}",
                      [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
@@ -741,7 +741,7 @@ defm MIN : sse1_fp_binop_rm<0x5D, "min", X86fmin,
 let neverHasSideEffects = 1 in
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVAPSrm : PSI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv4f32 addr:$src))]>;
@@ -753,7 +753,7 @@ def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 let neverHasSideEffects = 1 in
 def MOVUPSrr : PSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movups\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVUPSrm : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movups\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (loadv4f32 addr:$src))]>;
@@ -762,7 +762,7 @@ def MOVUPSmr : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    [(store (v4f32 VR128:$src), addr:$dst)]>;
 
 // Intrinsic forms of MOVUPS load and store
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVUPSrm_Int : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "movups\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>;
@@ -1152,7 +1152,7 @@ def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
 let neverHasSideEffects = 1 in
 def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVSDrm : SDI<0x10, MRMSrcMem, (outs FR64:$dst), (ins f64mem:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (loadf64 addr:$src))]>;
@@ -1332,7 +1332,7 @@ def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
 
 // Alias instruction to load FR64 from f128mem using movapd. Upper bits are
 // disregarded.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      "movapd\t{$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
@@ -1530,7 +1530,7 @@ defm MIN : sse2_fp_binop_rm<0x5D, "min", X86fmin,
 let neverHasSideEffects = 1 in
 def MOVAPDrr : PDI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movapd\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVAPDrm : PDI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movapd\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv2f64 addr:$src))]>;

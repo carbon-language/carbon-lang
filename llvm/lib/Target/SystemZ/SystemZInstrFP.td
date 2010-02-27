@@ -58,7 +58,7 @@ def FMOV64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                       []>;
 }
 
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def FMOV32rm  : Pseudo<(outs FP32:$dst), (ins rriaddr12:$src),
                       "le\t{$dst, $src}",
                       [(set FP32:$dst, (load rriaddr12:$src))]>;

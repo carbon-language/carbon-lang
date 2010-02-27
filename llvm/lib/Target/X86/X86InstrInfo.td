@@ -1037,7 +1037,7 @@ def MOV16rr_REV : I<0x8B, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
 def MOV32rr_REV : I<0x8B, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                     "mov{l}\t{$src, $dst|$dst, $src}", []>;
 
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
                 [(set GR8:$dst, (loadi8 addr:$src))]>;
@@ -1071,7 +1071,7 @@ def MOV8mr_NOREX : I<0x88, MRMDestMem,
                      (outs), (ins i8mem_NOREX:$dst, GR8_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;
 let mayLoad = 1,
-    canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+    canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOV8rm_NOREX : I<0x8A, MRMSrcMem,
                      (outs GR8_NOREX:$dst), (ins i8mem_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}  # NOREX", []>;

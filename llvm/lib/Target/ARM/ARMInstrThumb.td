@@ -414,7 +414,7 @@ def tTRAP : T1I<(outs), (ins), IIC_Br, "trap", []>, Encoding16 {
 //  Load Store Instructions.
 //
 
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def tLDR : T1pI4<(outs tGPR:$dst), (ins t_addrmode_s4:$addr), IIC_iLoadr,
                "ldr", "\t$dst, $addr",
                [(set tGPR:$dst, (load t_addrmode_s4:$addr))]>,
@@ -469,15 +469,14 @@ def tRestore : T1pIs<(outs tGPR:$dst), (ins t_addrmode_sp:$addr), IIC_iLoadi,
 
 // Load tconstpool
 // FIXME: Use ldr.n to work around a Darwin assembler bug.
-let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1  in
+let canFoldAsLoad = 1, isReMaterializable = 1 in
 def tLDRpci : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
                   "ldr", ".n\t$dst, $addr",
                   [(set tGPR:$dst, (load (ARMWrapper tconstpool:$addr)))]>,
               T1Encoding<{0,1,0,0,1,?}>; // A6.2 & A8.6.59
 
 // Special LDR for loads from non-pc-relative constpools.
-let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1,
-    mayHaveSideEffects = 1  in
+let canFoldAsLoad = 1, mayLoad = 1, isReMaterializable = 1 in
 def tLDRcp  : T1pIs<(outs tGPR:$dst), (ins i32imm:$addr), IIC_iLoadi,
                   "ldr", "\t$dst, $addr", []>,
               T1LdStSP<{1,?,?}>;

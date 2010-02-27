@@ -117,7 +117,6 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
   hasSideEffects = R->getValueAsBit("hasSideEffects");
-  mayHaveSideEffects = R->getValueAsBit("mayHaveSideEffects");
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
   isAsCheapAsAMove = R->getValueAsBit("isAsCheapAsAMove");
   hasExtraSrcRegAllocReq = R->getValueAsBit("hasExtraSrcRegAllocReq");
@@ -125,7 +124,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasOptionalDef = false;
   isVariadic = false;
 
-  if (mayHaveSideEffects + neverHasSideEffects + hasSideEffects > 1)
+  if (neverHasSideEffects + hasSideEffects > 1)
     throw R->getName() + ": multiple conflicting side-effect flags set!";
 
   DagInit *DI;
