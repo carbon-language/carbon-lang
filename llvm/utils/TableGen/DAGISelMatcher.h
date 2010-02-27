@@ -110,12 +110,26 @@ public:
     return false;
   }
   
+  /// isContradictory - Return true of these two matchers could never match on
+  /// the same node.
+  bool isContradictory(const Matcher *Other) const {
+    // Since this predicate is reflexive, we canonicalize the ordering so that
+    // we always match a node against nodes with kinds that are greater or equal
+    // to them.  For example, we'll pass in a CheckType node as an argument to
+    // the CheckOpcode method, not the other way around.
+    if (getKind() < Other->getKind())
+      return isContradictoryImpl(Other);
+    return Other->isContradictoryImpl(this);
+  }
+  
   void print(raw_ostream &OS, unsigned indent = 0) const;
+  void printOne(raw_ostream &OS) const;
   void dump() const;
 protected:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const = 0;
   virtual bool isEqualImpl(const Matcher *M) const = 0;
   virtual unsigned getHashImpl() const = 0;
+  virtual bool isContradictoryImpl(const Matcher *M) const { return false; }
 };
   
 /// ScopeMatcher - This attempts to match each of its children to find the first
@@ -391,6 +405,7 @@ private:
     return cast<CheckOpcodeMatcher>(M)->OpcodeName == OpcodeName;
   }
   virtual unsigned getHashImpl() const;
+  virtual bool isContradictoryImpl(const Matcher *M) const;
 };
   
 /// CheckMultiOpcodeMatcher - This checks to see if the current node has one
@@ -442,6 +457,7 @@ private:
     return cast<CheckTypeMatcher>(M)->Type == Type;
   }
   virtual unsigned getHashImpl() const { return Type; }
+  virtual bool isContradictoryImpl(const Matcher *M) const;
 };
   
 /// CheckChildTypeMatcher - This checks to see if a child node has the
@@ -469,6 +485,7 @@ private:
            cast<CheckChildTypeMatcher>(M)->Type == Type;
   }
   virtual unsigned getHashImpl() const { return (Type << 3) | ChildNo; }
+  virtual bool isContradictoryImpl(const Matcher *M) const;
 };
   
 

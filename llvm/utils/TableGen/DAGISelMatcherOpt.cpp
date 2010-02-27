@@ -11,8 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "isel-opt"
 #include "DAGISelMatcher.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include <vector>
 using namespace llvm;
 
@@ -156,26 +159,66 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
 
   // Loop over options to match, merging neighboring patterns with identical
   // starting nodes into a shared matcher.
-  for (unsigned i = 0, e = OptionsToMatch.size(); i != e;) {
+  for (unsigned OptionIdx = 0, e = OptionsToMatch.size(); OptionIdx != e;) {
     // Find the set of matchers that start with this node.
-    Matcher *Optn = OptionsToMatch[i++];
- 
-    // See if the next option starts with the same matcher, if not, no sharing.
-    if (i == e || !OptionsToMatch[i]->isEqual(Optn)) {
-      // TODO: Skip over mutually exclusive patterns.
+    Matcher *Optn = OptionsToMatch[OptionIdx++];
+
+    if (OptionIdx == e) {
       NewOptionsToMatch.push_back(Optn);
       continue;
     }
     
-    // If the two neighbors *do* start with the same matcher, we can factor the
-    // matcher out of at least these two patterns.  See what the maximal set we
-    // can merge together is.
+    // See if the next option starts with the same matcher.  If the two
+    // neighbors *do* start with the same matcher, we can factor the matcher out
+    // of at least these two patterns.  See what the maximal set we can merge
+    // together is.
     SmallVector<Matcher*, 8> EqualMatchers;
     EqualMatchers.push_back(Optn);
-    EqualMatchers.push_back(OptionsToMatch[i++]);
     
-    while (i != e && OptionsToMatch[i]->isEqual(Optn))
-      EqualMatchers.push_back(OptionsToMatch[i++]);
+    // Factor all of the known-equal matchers after this one into the same
+    // group.
+    while (OptionIdx != e && OptionsToMatch[OptionIdx]->isEqual(Optn))
+      EqualMatchers.push_back(OptionsToMatch[OptionIdx++]);
+
+    // If we found a non-equal matcher, see if it is contradictory with the
+    // current node.  If so, we know that the ordering relation between the
+    // current sets of nodes and this node don't matter.  Look past it to see if
+    // we can merge anything else into this matching group.
+    unsigned Scan = OptionIdx;
+    while (1) {
+      while (Scan != e && Optn->isContradictory(OptionsToMatch[Scan]))
+        ++Scan;
+      
+      // Ok, we found something that isn't known to be contradictory.  If it is
+      // equal, we can merge it into the set of nodes to factor, if not, we have
+      // to cease factoring.
+      if (Scan == e || !Optn->isEqual(OptionsToMatch[Scan])) break;
+
+      // If is equal after all, add the option to EqualMatchers and remove it
+      // from OptionsToMatch.
+      EqualMatchers.push_back(OptionsToMatch[Scan]);
+      OptionsToMatch.erase(OptionsToMatch.begin()+Scan);
+      --e;
+    }
+      
+    if (Scan != e) {
+      DEBUG(errs() << "Couldn't merge this:\n  ";
+            Optn->printOne(errs());
+            errs() << "into this:\n  ";
+            OptionsToMatch[OptionIdx]->printOne(errs());
+            if (OptionIdx+1 != e)
+              OptionsToMatch[OptionIdx+1]->printOne(errs());
+            if (OptionIdx+2 < e)
+              OptionsToMatch[OptionIdx+2]->printOne(errs());
+            errs() << "\n");
+    }
+    
+    // If we only found one option starting with this matcher, no factoring is
+    // possible.
+    if (EqualMatchers.size() == 1) {
+      NewOptionsToMatch.push_back(EqualMatchers[0]);
+      continue;
+    }
     
     // Factor these checks by pulling the first node off each entry and
     // discarding it.  Take the first one off the first entry to reuse.
