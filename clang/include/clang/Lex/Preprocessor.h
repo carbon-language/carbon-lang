@@ -574,19 +574,7 @@ public:
   /// SmallVector. Note that the returned StringRef may not point to the
   /// supplied buffer if a copy can be avoided.
   llvm::StringRef getSpelling(const Token &Tok,
-                              llvm::SmallVectorImpl<char> &Buffer) const {
-    // Try the fast path.
-    if (const IdentifierInfo *II = Tok.getIdentifierInfo())
-      return II->getName();
-
-    // Resize the buffer if we need to copy into it.
-    if (Tok.needsCleaning())
-      Buffer.resize(Tok.getLength());
-
-    const char *Ptr = Buffer.data();
-    unsigned Len = getSpelling(Tok, Ptr);
-    return llvm::StringRef(Ptr, Len);
-  }
+                              llvm::SmallVectorImpl<char> &Buffer) const;
 
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
