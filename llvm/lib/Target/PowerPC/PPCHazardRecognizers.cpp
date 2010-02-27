@@ -257,7 +257,7 @@ void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
     case PPC::STWX:   case PPC::STWX8:
     case PPC::STWUX:
     case PPC::STW:    case PPC::STW8:
-    case PPC::STWU:   case PPC::STWU8:
+    case PPC::STWU:
     case PPC::STVEWX:
     case PPC::STFIWX:
     case PPC::STWBRX:
