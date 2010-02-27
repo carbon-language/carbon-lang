@@ -147,12 +147,6 @@ private:
 public:
   explicit FinalOverriders(const CXXRecordDecl *MostDerivedClass);
 
-  /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
-  /// the 'this' pointer from the base subobject to the derived subobject.
-  /// FIXME: This should move to VtableBuilder.
-  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
-                                             BaseSubobject Derived) const;
-
   /// getOverrider - Get the final overrider for the given method declaration in
   /// the given base subobject.
   OverriderInfo getOverrider(BaseSubobject Base,
@@ -345,58 +339,6 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
   return ComputeBaseOffset(Context, BaseRD, DerivedRD);
 }
 
-BaseOffset
-FinalOverriders::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
-                                                 BaseSubobject Derived) const {
-  const CXXRecordDecl *BaseRD = Base.getBase();
-  const CXXRecordDecl *DerivedRD = Derived.getBase();
-  
-  CXXBasePaths Paths(/*FindAmbiguities=*/true,
-                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
-
-  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
-      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
-    assert(false && "Class must be derived from the passed in base class!");
-    return BaseOffset();
-  }
-
-  // We have to go through all the paths, and see which one leads us to the
-  // right base subobject.
-  for (CXXBasePaths::const_paths_iterator I = Paths.begin(), E = Paths.end();
-       I != E; ++I) {
-    BaseOffset Offset = ComputeBaseOffset(Context, DerivedRD, *I);
-    
-    // FIXME: Should not use * 8 here.
-    uint64_t OffsetToBaseSubobject = Offset.NonVirtualOffset * 8;
-    
-    if (Offset.VirtualBase) {
-      // If we have a virtual base class, the non-virtual offset is relative
-      // to the virtual base class offset.
-      const ASTRecordLayout &MostDerivedClassLayout = 
-        Context.getASTRecordLayout(MostDerivedClass);
-      
-      /// Get the virtual base offset, relative to the most derived class 
-      /// layout.
-      OffsetToBaseSubobject += 
-        MostDerivedClassLayout.getVBaseClassOffset(Offset.VirtualBase);
-    } else {
-      // Otherwise, the non-virtual offset is relative to the derived class 
-      // offset.
-      OffsetToBaseSubobject += Derived.getBaseOffset();
-    }
-    
-    // Check if this path gives us the right base subobject.
-    if (OffsetToBaseSubobject == Base.getBaseOffset()) {
-      // Since we're going from the base class _to_ the derived class, we'll
-      // invert the non-virtual offset here.
-      Offset.NonVirtualOffset = -Offset.NonVirtualOffset;
-      return Offset;
-    }      
-  }
-  
-  return BaseOffset();
-}
-  
 void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
                                          BaseSubobject NewBase,
                                          const CXXMethodDecl *NewMD,
@@ -1202,6 +1144,11 @@ private:
   /// adjustment base offset.
   ReturnAdjustment ComputeReturnAdjustment(BaseOffset Offset);
   
+  /// ComputeThisAdjustmentBaseOffset - Compute the base offset for adjusting
+  /// the 'this' pointer from the base subobject to the derived subobject.
+  BaseOffset ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
+                                             BaseSubobject Derived) const;
+
   /// ComputeThisAdjustment - Compute the 'this' pointer adjustment for the
   /// given virtual member function and the 'this' pointer adjustment base 
   /// offset.
@@ -1332,9 +1279,9 @@ void VtableBuilder::ComputeThisAdjustments() {
 
     // Compute the adjustment offset.
     BaseOffset ThisAdjustmentOffset =
-      Overriders.ComputeThisAdjustmentBaseOffset(OverriddenBaseSubobject,
-                                                 OverriderBaseSubobject);
-    
+      ComputeThisAdjustmentBaseOffset(OverriddenBaseSubobject,
+                                      OverriderBaseSubobject);
+
     // Then compute the adjustment itself.
     ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
                                                           ThisAdjustmentOffset);
@@ -1378,6 +1325,59 @@ VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   
   return Adjustment;
 }
+
+BaseOffset
+VtableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
+                                               BaseSubobject Derived) const {
+  const CXXRecordDecl *BaseRD = Base.getBase();
+  const CXXRecordDecl *DerivedRD = Derived.getBase();
+  
+  CXXBasePaths Paths(/*FindAmbiguities=*/true,
+                     /*RecordPaths=*/true, /*DetectVirtual=*/true);
+
+  if (!const_cast<CXXRecordDecl *>(DerivedRD)->
+      isDerivedFrom(const_cast<CXXRecordDecl *>(BaseRD), Paths)) {
+    assert(false && "Class must be derived from the passed in base class!");
+    return BaseOffset();
+  }
+
+  // We have to go through all the paths, and see which one leads us to the
+  // right base subobject.
+  for (CXXBasePaths::const_paths_iterator I = Paths.begin(), E = Paths.end();
+       I != E; ++I) {
+    BaseOffset Offset = ComputeBaseOffset(Context, DerivedRD, *I);
+    
+    // FIXME: Should not use * 8 here.
+    uint64_t OffsetToBaseSubobject = Offset.NonVirtualOffset * 8;
+    
+    if (Offset.VirtualBase) {
+      // If we have a virtual base class, the non-virtual offset is relative
+      // to the virtual base class offset.
+      const ASTRecordLayout &MostDerivedClassLayout = 
+        Context.getASTRecordLayout(MostDerivedClass);
+      
+      /// Get the virtual base offset, relative to the most derived class 
+      /// layout.
+      OffsetToBaseSubobject += 
+        MostDerivedClassLayout.getVBaseClassOffset(Offset.VirtualBase);
+    } else {
+      // Otherwise, the non-virtual offset is relative to the derived class 
+      // offset.
+      OffsetToBaseSubobject += Derived.getBaseOffset();
+    }
+    
+    // Check if this path gives us the right base subobject.
+    if (OffsetToBaseSubobject == Base.getBaseOffset()) {
+      // Since we're going from the base class _to_ the derived class, we'll
+      // invert the non-virtual offset here.
+      Offset.NonVirtualOffset = -Offset.NonVirtualOffset;
+      return Offset;
+    }      
+  }
+  
+  return BaseOffset();
+}
+  
 
 VtableBuilder::ThisAdjustment
 VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
