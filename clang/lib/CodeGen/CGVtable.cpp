@@ -1058,6 +1058,15 @@ private:
   /// vtable.
   const CXXRecordDecl *MostDerivedClass;
 
+  /// MostDerivedClassOffset - If we're building a construction vtable, this
+  /// holds the offset from the layout class to the most derived class.
+  const uint64_t MostDerivedClassOffset;
+  
+  /// LayoutClass - The class we're using for layout information. Will be 
+  /// different than the most derived class if we're building a construction
+  /// vtable.
+  const CXXRecordDecl *LayoutClass;
+  
   /// Context - The ASTContext which we will use for layout information.
   ASTContext &Context;
   
@@ -1215,9 +1224,12 @@ private:
                                     VisitedVirtualBasesSetTy &VBases);
 
 public:
-  VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass)
-    : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass), 
-    Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) { 
+  VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass,
+                uint64_t MostDerivedClassOffset, 
+                const CXXRecordDecl *LayoutClass)
+    : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass),
+    MostDerivedClassOffset(MostDerivedClassOffset), LayoutClass(LayoutClass),
+    Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) {
 
     LayoutVtable();
   }
@@ -1808,8 +1820,17 @@ VtableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
 
 /// dumpLayout - Dump the vtable layout.
 void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
-  
-  Out << "Vtable for '" << MostDerivedClass->getQualifiedNameAsString();
+
+  if (MostDerivedClass == LayoutClass) {
+    Out << "Vtable for '";
+    Out << MostDerivedClass->getQualifiedNameAsString();
+  } else {
+    Out << "Construction vtable for ('";
+    Out << MostDerivedClass->getQualifiedNameAsString() << "', ";
+    // FIXME: Don't use / 8 .
+    Out << MostDerivedClassOffset / 8 << ") in '";
+    Out << LayoutClass->getQualifiedNameAsString();
+  }
   Out << "' (" << Components.size() << " entries).\n";
 
   // Iterate through the address points and insert them into a new map where
@@ -1983,7 +2004,8 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
     Out << '\n';
   }
-  
+
+  Out << '\n';
 }
   
 }
@@ -3272,11 +3294,17 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset,
                              AddressPointsMapTy& AddressPoints) {
-  if (GenerateDefinition && LayoutClass == RD) {
-    VtableBuilder Builder(*this, RD);
+  if (GenerateDefinition) {
+    if (LayoutClass == RD) {
+      VtableBuilder Builder(*this, RD, Offset, LayoutClass);
 
-    if (CGM.getLangOptions().DumpVtableLayouts)
+      if (CGM.getLangOptions().DumpVtableLayouts)
+        Builder.dumpLayout(llvm::errs());
+    } else if (CGM.getLangOptions().DumpVtableLayouts) {
+      // We only build construction vtables when dumping vtable layouts for now.
+      VtableBuilder Builder(*this, RD, Offset, LayoutClass);
       Builder.dumpLayout(llvm::errs());
+    }
   }
 
   llvm::SmallString<256> OutName;
