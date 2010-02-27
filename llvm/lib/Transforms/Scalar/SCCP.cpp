@@ -1921,9 +1921,9 @@ bool IPSCCP::runOnModule(Module &M) {
   //
   // Do this in two stages: first identify the functions we should process, then
   // actually zap their returns.  This is important because we can only do this
-  // the address of the function isn't taken.  In cases where a return is the
+  // if the address of the function isn't taken.  In cases where a return is the
   // last use of a function, the order of processing functions would affect
-  // whether we other functions are optimizable.
+  // whether other functions are optimizable.
   SmallVector<ReturnInst*, 8> ReturnsToZap;
   
   // TODO: Process multiple value ret instructions also.
