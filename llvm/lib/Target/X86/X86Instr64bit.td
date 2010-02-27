@@ -562,7 +562,7 @@ def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                   addr:$dst)]>;
 def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
                       "adc{q}\t{$src2, $dst|$dst, $src2}",
-                 [(store (adde (load addr:$dst), i64immSExt8:$src2), 
+                 [(store (adde (load addr:$dst), i64immSExt32:$src2), 
                   addr:$dst)]>;
 } // Uses = [EFLAGS]
 
