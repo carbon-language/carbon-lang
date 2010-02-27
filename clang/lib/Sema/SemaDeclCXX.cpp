@@ -586,7 +586,10 @@ Sema::ActOnBaseSpecifier(DeclPtrTy classdecl, SourceRange SpecifierRange,
     return true;
 
   AdjustDeclIfTemplate(classdecl);
-  CXXRecordDecl *Class = cast<CXXRecordDecl>(classdecl.getAs<Decl>());
+  CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(classdecl.getAs<Decl>());
+  if (!Class)
+    return true;
+
   QualType BaseType = GetTypeFromParser(basetype);
   if (CXXBaseSpecifier *BaseSpec = CheckBaseSpecifier(Class, SpecifierRange,
                                                       Virtual, Access,

@@ -94,9 +94,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     // Keep track of inherited vbases for this base class.
     const CXXBaseSpecifier *Base = Bases[i];
     QualType BaseType = Base->getType();
-    // Skip template types.
-    // FIXME. This means that this list must be rebuilt during template
-    // instantiation.
+    // Skip dependent types; we can't do any checking on them now.
     if (BaseType->isDependentType())
       continue;
     CXXRecordDecl *BaseClassDecl
@@ -143,6 +141,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     data().NumVBases = vbaseCount;
     for (int i = 0; i < vbaseCount; i++) {
       QualType QT = UniqueVbases[i]->getType();
+      // Skip dependent types; we can't do any checking on them now.
+      if (QT->isDependentType())
+        continue;
       CXXRecordDecl *VBaseClassDecl
         = cast<CXXRecordDecl>(QT->getAs<RecordType>()->getDecl());
       data().VBases[i] =

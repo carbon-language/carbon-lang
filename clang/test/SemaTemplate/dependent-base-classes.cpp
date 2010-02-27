@@ -109,3 +109,15 @@ namespace PR6081 {
     }
   };
 }
+
+namespace PR6413 {
+  template <typename T> class Base_A { };
+  
+  class Base_B { };
+  
+  template <typename T>
+  class Derived
+    : public virtual Base_A<T>
+    , public virtual Base_B
+  { };
+}
