@@ -835,16 +835,20 @@ bool VCallOffsetMap::MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
   assert(LHS->isVirtual() && "LHS must be virtual!");
   assert(RHS->isVirtual() && "LHS must be virtual!");
   
+  // A destructor can share a vcall offset with another destructor.
+  if (isa<CXXDestructorDecl>(LHS))
+    return isa<CXXDestructorDecl>(RHS);
+
   // FIXME: We need to check more things here.
   
-  // Must have the same name.
-  // FIXME: are destructors an exception to this?
+  // The methods must have the same name.
   DeclarationName LHSName = LHS->getDeclName();
   DeclarationName RHSName = RHS->getDeclName();
   if (LHSName != RHSName)
     return false;
 
-  return (HasSameVirtualSignature(LHS, RHS));
+  // And the same signatures.
+  return HasSameVirtualSignature(LHS, RHS);
 }
 
 bool VCallOffsetMap::AddVCallOffset(const CXXMethodDecl *MD, 

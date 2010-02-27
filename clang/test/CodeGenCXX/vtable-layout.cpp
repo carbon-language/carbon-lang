@@ -569,3 +569,43 @@ struct D : A, virtual B, virtual C {
 void D::f() { } 
 
 }
+
+namespace Test16 {
+
+// Test that destructors share vcall offsets.
+
+struct A { virtual ~A(); };
+struct B { virtual ~B(); };
+
+struct C : A, B { virtual ~C(); };
+
+// CHECK:      Vtable for 'Test16::D' (15 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test16::D RTTI
+// CHECK-NEXT:        -- (Test16::D, 0) vtable address --
+// CHECK-NEXT:    3 | void Test16::D::f()
+// CHECK-NEXT:    4 | Test16::D::~D() [complete]
+// CHECK-NEXT:    5 | Test16::D::~D() [deleting]
+// CHECK-NEXT:    6 | vcall_offset (-8)
+// CHECK-NEXT:    7 | offset_to_top (-8)
+// CHECK-NEXT:    8 | Test16::D RTTI
+// CHECK-NEXT:        -- (Test16::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test16::C, 8) vtable address --
+// CHECK-NEXT:    9 | Test16::D::~D() [complete]
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:   10 | Test16::D::~D() [deleting]
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:   11 | offset_to_top (-16)
+// CHECK-NEXT:   12 | Test16::D RTTI
+// CHECK-NEXT:        -- (Test16::B, 16) vtable address --
+// CHECK-NEXT:   13 | Test16::D::~D() [complete]
+// CHECK-NEXT:        [this adjustment: -8 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:   14 | Test16::D::~D() [deleting]
+// CHECK-NEXT:        [this adjustment: -8 non-virtual, -24 vcall offset offset]
+struct D : virtual C {
+  virtual void f();
+};
+void D::f() { } 
+
+}
