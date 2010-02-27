@@ -3,13 +3,14 @@
 ; value and as the operand of a branch.
 ; RUN: llc < %s -march=x86 | FileCheck %s
 
-define i1 @test1(i32 %X) zeroext {
+define i1 @test1(i32 %X) zeroext nounwind {
     %Y = trunc i32 %X to i1
     ret i1 %Y
 }
+; CHECK: test1:
 ; CHECK: andl $1, %eax
 
-define i1 @test2(i32 %val, i32 %mask) {
+define i1 @test2(i32 %val, i32 %mask) nounwind {
 entry:
     %shifted = ashr i32 %val, %mask
     %anded = and i32 %shifted, 1
@@ -20,9 +21,10 @@ ret_true:
 ret_false:
     ret i1 false
 }
-; CHECK: testb $1, %al
+; CHECK: test2:
+; CHECK: btl %eax
 
-define i32 @test3(i8* %ptr) {
+define i32 @test3(i8* %ptr) nounwind {
     %val = load i8* %ptr
     %tmp = trunc i8 %val to i1
     br i1 %tmp, label %cond_true, label %cond_false
@@ -31,9 +33,10 @@ cond_true:
 cond_false:
     ret i32 42
 }
-; CHECK: testb $1, %al
+; CHECK: test3:
+; CHECK: testb $1, (%eax)
 
-define i32 @test4(i8* %ptr) {
+define i32 @test4(i8* %ptr) nounwind {
     %tmp = ptrtoint i8* %ptr to i1
     br i1 %tmp, label %cond_true, label %cond_false
 cond_true:
@@ -41,9 +44,10 @@ cond_true:
 cond_false:
     ret i32 42
 }
-; CHECK: testb $1, %al
+; CHECK: test4:
+; CHECK: testb $1, 4(%esp)
 
-define i32 @test6(double %d) {
+define i32 @test5(double %d) nounwind {
     %tmp = fptosi double %d to i1
     br i1 %tmp, label %cond_true, label %cond_false
 cond_true:
@@ -51,4 +55,5 @@ cond_true:
 cond_false:
     ret i32 42
 }
+; CHECK: test5:
 ; CHECK: testb $1
