@@ -23,6 +23,7 @@ namespace llvm {
   class raw_ostream;
   class ComplexPattern;
   class Record;
+  class SDNodeInfo;
 
 Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                  const CodeGenDAGPatterns &CGP);
@@ -386,12 +387,12 @@ private:
 /// CheckOpcodeMatcher - This checks to see if the current node has the
 /// specified opcode, if not it fails to match.
 class CheckOpcodeMatcher : public Matcher {
-  StringRef OpcodeName;
+  const SDNodeInfo &Opcode;
 public:
-  CheckOpcodeMatcher(StringRef opcodename)
-    : Matcher(CheckOpcode), OpcodeName(opcodename) {}
+  CheckOpcodeMatcher(const SDNodeInfo &opcode)
+    : Matcher(CheckOpcode), Opcode(opcode) {}
   
-  StringRef getOpcodeName() const { return OpcodeName; }
+  const SDNodeInfo &getOpcode() const { return Opcode; }
   
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckOpcode;
@@ -402,7 +403,7 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckOpcodeMatcher>(M)->OpcodeName == OpcodeName;
+    return &cast<CheckOpcodeMatcher>(M)->Opcode == &Opcode;
   }
   virtual unsigned getHashImpl() const;
   virtual bool isContradictoryImpl(const Matcher *M) const;
@@ -411,13 +412,13 @@ private:
 /// CheckMultiOpcodeMatcher - This checks to see if the current node has one
 /// of the specified opcode, if not it fails to match.
 class CheckMultiOpcodeMatcher : public Matcher {
-  SmallVector<StringRef, 4> OpcodeNames;
+  SmallVector<const SDNodeInfo*, 4> Opcodes;
 public:
-  CheckMultiOpcodeMatcher(const StringRef *opcodes, unsigned numops)
-    : Matcher(CheckMultiOpcode), OpcodeNames(opcodes, opcodes+numops) {}
+  CheckMultiOpcodeMatcher(const SDNodeInfo * const *opcodes, unsigned numops)
+    : Matcher(CheckMultiOpcode), Opcodes(opcodes, opcodes+numops) {}
   
-  unsigned getNumOpcodeNames() const { return OpcodeNames.size(); }
-  StringRef getOpcodeName(unsigned i) const { return OpcodeNames[i]; }
+  unsigned getNumOpcodes() const { return Opcodes.size(); }
+  const SDNodeInfo &getOpcode(unsigned i) const { return *Opcodes[i]; }
   
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckMultiOpcode;
@@ -428,7 +429,7 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckMultiOpcodeMatcher>(M)->OpcodeNames == OpcodeNames;
+    return cast<CheckMultiOpcodeMatcher>(M)->Opcodes == Opcodes;
   }
   virtual unsigned getHashImpl() const;
 };

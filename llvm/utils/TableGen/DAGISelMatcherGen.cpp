@@ -252,14 +252,12 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     if (N == Pattern.getSrcPattern()) {
       const std::vector<Record*> &OpNodes = CP.getRootNodes();
       if (OpNodes.size() == 1) {
-        StringRef OpName = CGP.getSDNodeInfo(OpNodes[0]).getEnumName();
-        AddMatcher(new CheckOpcodeMatcher(OpName));
+        AddMatcher(new CheckOpcodeMatcher(CGP.getSDNodeInfo(OpNodes[0])));
       } else if (!OpNodes.empty()) {
-        SmallVector<StringRef, 4> OpNames;
+        SmallVector<const SDNodeInfo*, 4> OpNames;
         for (unsigned i = 0, e = OpNodes.size(); i != e; i++)
-          OpNames.push_back(CGP.getSDNodeInfo(OpNodes[i]).getEnumName());
-        AddMatcher(new CheckMultiOpcodeMatcher(OpNames.data(),
-                                                       OpNames.size()));
+          OpNames.push_back(&CGP.getSDNodeInfo(OpNodes[i]));
+        AddMatcher(new CheckMultiOpcodeMatcher(OpNames.data(), OpNames.size()));
       }
     }
     
@@ -337,7 +335,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   }
   
   // Check that the current opcode lines up.
-  AddMatcher(new CheckOpcodeMatcher(CInfo.getEnumName()));
+  AddMatcher(new CheckOpcodeMatcher(CInfo));
   
   // If there are node predicates for this node, generate their checks.
   for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)

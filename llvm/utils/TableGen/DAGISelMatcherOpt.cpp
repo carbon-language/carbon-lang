@@ -201,7 +201,9 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
       --e;
     }
       
-    if (Scan != e) {
+    if (Scan != e &&
+        // Don't print it's obvious nothing extra could be merged anyway.
+        Scan+1 != e) {
       DEBUG(errs() << "Couldn't merge this:\n";
             Optn->print(errs(), 4);
             errs() << "into this:\n";

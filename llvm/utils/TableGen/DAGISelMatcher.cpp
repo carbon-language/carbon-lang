@@ -81,7 +81,7 @@ void CheckPredicateMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 }
 
 void CheckOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "CheckOpcode " << OpcodeName << '\n';
+  OS.indent(indent) << "CheckOpcode " << Opcode.getEnumName() << '\n';
 }
 
 void CheckMultiOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const{
@@ -202,13 +202,13 @@ unsigned CheckPredicateMatcher::getHashImpl() const {
 }
 
 unsigned CheckOpcodeMatcher::getHashImpl() const {
-  return HashString(OpcodeName);
+  return HashString(Opcode.getEnumName());
 }
 
 unsigned CheckMultiOpcodeMatcher::getHashImpl() const {
   unsigned Result = 0;
-  for (unsigned i = 0, e = OpcodeNames.size(); i != e; ++i)
-    Result |= HashString(OpcodeNames[i]);
+  for (unsigned i = 0, e = Opcodes.size(); i != e; ++i)
+    Result |= HashString(Opcodes[i]->getEnumName());
   return Result;
 }
 
@@ -263,7 +263,7 @@ unsigned CompleteMatchMatcher::getHashImpl() const {
 bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   if (const CheckOpcodeMatcher *COM = dyn_cast<CheckOpcodeMatcher>(M)) {
     // One node can't have two different opcodes!
-    return COM->getOpcodeName() != getOpcodeName();
+    return &COM->getOpcode() != &getOpcode();
   }
   
   // TODO: CheckMultiOpcodeMatcher?
@@ -272,8 +272,8 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   // ISD::STORE nodes can't have non-void type.
   if (const CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(M))
     // FIXME: This sucks, get void nodes from type constraints.
-    return (getOpcodeName() == "ISD::STORE" ||
-            getOpcodeName() == "ISD::INTRINSIC_VOID") &&
+    return (getOpcode().getEnumName() == "ISD::STORE" ||
+            getOpcode().getEnumName() == "ISD::INTRINSIC_VOID") &&
            CT->getType() != MVT::isVoid;
   
   return false;

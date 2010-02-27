@@ -269,16 +269,16 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
 
   case Matcher::CheckOpcode:
     OS << "OPC_CheckOpcode, "
-       << cast<CheckOpcodeMatcher>(N)->getOpcodeName() << ",\n";
+       << cast<CheckOpcodeMatcher>(N)->getOpcode().getEnumName() << ",\n";
     return 2;
       
   case Matcher::CheckMultiOpcode: {
     const CheckMultiOpcodeMatcher *CMO = cast<CheckMultiOpcodeMatcher>(N);
-    OS << "OPC_CheckMultiOpcode, " << CMO->getNumOpcodeNames() << ", ";
-    for (unsigned i = 0, e = CMO->getNumOpcodeNames(); i != e; ++i)
-      OS << CMO->getOpcodeName(i) << ", ";
+    OS << "OPC_CheckMultiOpcode, " << CMO->getNumOpcodes() << ", ";
+    for (unsigned i = 0, e = CMO->getNumOpcodes(); i != e; ++i)
+      OS << CMO->getOpcode(i).getEnumName() << ", ";
     OS << '\n';
-    return 2 + CMO->getNumOpcodeNames();
+    return 2 + CMO->getNumOpcodes();
   }
       
   case Matcher::CheckType:
