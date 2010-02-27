@@ -145,6 +145,7 @@ void torture(va_list v8) {
 }
 
 void test10(int x, float f, int i, long long lli) {
+  printf("%s"); // expected-warning{{more '%' conversions than data arguments}}
   printf("%@", 12); // expected-warning{{invalid conversion specifier '@'}}
   printf("\0"); // expected-warning{{format string contains '\0' within the string body}}
   printf("xs\0"); // expected-warning{{format string contains '\0' within the string body}}

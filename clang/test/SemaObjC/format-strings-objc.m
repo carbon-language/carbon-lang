@@ -50,3 +50,8 @@ void rdar_7068334() {
   printf("%i ",test); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
   NSLog(@"%i ",test); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
 }
+
+// <rdar://problem/7697748>
+void rdar_7697748() {
+  NSLog(@"%@!"); // expected-warning{{more '%' conversions than data arguments}}
+}

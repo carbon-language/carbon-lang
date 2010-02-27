@@ -1283,7 +1283,12 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
 
   // Consume the argument.
   unsigned argIndex = FS.getArgIndex();
-  CoveredArgs.set(argIndex);
+  if (argIndex < NumDataArgs) {
+    // The check to see if the argIndex is valid will come later.
+    // We set the bit here because we may exit early from this
+    // function if we encounter some other error.
+    CoveredArgs.set(argIndex);
+  }
 
   // Check for using an Objective-C specific conversion specifier
   // in a non-ObjC literal.
