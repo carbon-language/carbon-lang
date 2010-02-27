@@ -1918,6 +1918,14 @@ bool IPSCCP::runOnModule(Module &M) {
   // all call uses with the inferred value.  This means we don't need to bother
   // actually returning anything from the function.  Replace all return
   // instructions with return undef.
+  //
+  // Do this in two stages: first identify the functions we should process, then
+  // actually zap their returns.  This is important because we can only do this
+  // the address of the function isn't taken.  In cases where a return is the
+  // last use of a function, the order of processing functions would affect
+  // whether we other functions are optimizable.
+  SmallVector<ReturnInst*, 8> ReturnsToZap;
+  
   // TODO: Process multiple value ret instructions also.
   const DenseMap<Function*, LatticeVal> &RV = Solver.getTrackedRetVals();
   for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
@@ -1933,7 +1941,13 @@ bool IPSCCP::runOnModule(Module &M) {
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
         if (!isa<UndefValue>(RI->getOperand(0)))
-          RI->setOperand(0, UndefValue::get(F->getReturnType()));
+          ReturnsToZap.push_back(RI);
+  }
+
+  // Zap all returns which we've identified as zap to change.
+  for (unsigned i = 0, e = ReturnsToZap.size(); i != e; ++i) {
+    Function *F = ReturnsToZap[i]->getParent()->getParent();
+    ReturnsToZap[i]->setOperand(0, UndefValue::get(F->getReturnType()));
   }
     
   // If we infered constant or undef values for globals variables, we can delete
