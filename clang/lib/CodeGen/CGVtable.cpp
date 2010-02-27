@@ -1296,6 +1296,8 @@ OverridesMethodInBases(const CXXMethodDecl *MD,
 }
 
 void VtableBuilder::ComputeThisAdjustments() {
+  std::map<uint64_t, ThisAdjustment> SortedThisAdjustments;
+  
   // Now go through the method info map and see if any of the methods need
   // 'this' pointer adjustments.
   for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
@@ -1338,17 +1340,21 @@ void VtableBuilder::ComputeThisAdjustments() {
                                                           ThisAdjustmentOffset);
 
     // Add it.
-    ThisAdjustments.push_back(std::make_pair(VtableIndex, ThisAdjustment));
+    SortedThisAdjustments.insert(std::make_pair(VtableIndex, ThisAdjustment));
     
     if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
-      ThisAdjustments.push_back(std::make_pair(VtableIndex + 1,
-                                               ThisAdjustment));
+      SortedThisAdjustments.insert(std::make_pair(VtableIndex + 1,
+                                                  ThisAdjustment));
     }
   }
 
   /// Clear the method info map.
   MethodInfoMap.clear();
+  
+  // Add the sorted elements.
+  ThisAdjustments.append(SortedThisAdjustments.begin(),
+                         SortedThisAdjustments.end());
 }
 
 VtableBuilder::ReturnAdjustment 

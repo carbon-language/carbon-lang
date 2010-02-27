@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm-only -fdump-vtable-layouts 2>&1 | FileCheck %s
-// XFAIL: *
 
 /// Examples from the Itanium C++ ABI specification.
 /// http://www.codesourcery.com/public/cxx-abi/
