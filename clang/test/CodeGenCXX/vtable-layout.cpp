@@ -609,3 +609,39 @@ struct D : virtual C {
 void D::f() { } 
 
 }
+
+namespace Test17 {
+
+// Test that we don't mark E::f in the C-in-E vtable as unused.
+struct A { virtual void f(); };
+struct B : virtual A { virtual void f(); };
+struct C : virtual A { virtual void f(); };
+struct D : virtual B, virtual C { virtual void f(); };
+
+// CHECK:      Vtable for 'Test17::E' (13 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (8)
+// CHECK-NEXT:    2 | vbase_offset (0)
+// CHECK-NEXT:    3 | vbase_offset (0)
+// CHECK-NEXT:    4 | vcall_offset (0)
+// CHECK-NEXT:    5 | offset_to_top (0)
+// CHECK-NEXT:    6 | Test17::E RTTI
+// CHECK-NEXT:        -- (Test17::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test17::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test17::D, 0) vtable address --
+// CHECK-NEXT:        -- (Test17::E, 0) vtable address --
+// CHECK-NEXT:    7 | void Test17::E::f()
+// CHECK-NEXT:    8 | vbase_offset (-8)
+// CHECK-NEXT:    9 | vcall_offset (-8)
+// CHECK-NEXT:   10 | offset_to_top (-8)
+// CHECK-NEXT:   11 | Test17::E RTTI
+// CHECK-NEXT:        -- (Test17::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test17::C, 8) vtable address --
+// CHECK-NEXT:   12 | void Test17::E::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+class E : virtual D {
+  virtual void f();  
+};
+void E::f() {}
+
+}

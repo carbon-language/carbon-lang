@@ -1247,12 +1247,12 @@ public:
   void dumpLayout(llvm::raw_ostream&);
 };
 
-/// OverridesMethodInPrimaryBase - Checks whether whether this virtual member 
-/// function overrides a member function in a direct or indirect primary base.
+/// OverridesMethodInBases - Checks whether whether this virtual member 
+/// function overrides a member function in any of the given bases.
 /// Returns the overridden member function, or null if none was found.
 static const CXXMethodDecl * 
-OverridesMethodInPrimaryBase(const CXXMethodDecl *MD,
-                             VtableBuilder::PrimaryBasesSetTy &PrimaryBases) {
+OverridesMethodInBases(const CXXMethodDecl *MD,
+                       VtableBuilder::PrimaryBasesSetTy &Bases) {
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
        E = MD->end_overridden_methods(); I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
@@ -1260,7 +1260,7 @@ OverridesMethodInPrimaryBase(const CXXMethodDecl *MD,
     assert(OverriddenMD->isCanonicalDecl() &&
            "Should have the canonical decl of the overridden RD!");
     
-    if (PrimaryBases.count(OverriddenRD))
+    if (Bases.count(OverriddenRD))
       return OverriddenMD;
   }
       
@@ -1352,6 +1352,38 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
   }
 }
 
+/// OverridesIndirectMethodInBase - Return whether the given member function
+/// overrides any methods in the set of given bases. 
+/// Unlike OverridesMethodInBase, this checks "overriders of overriders".
+/// For example, if we have:
+///
+/// struct A { virtual void f(); }
+/// struct B : A { virtual void f(); }
+/// struct C : B { virtual void f(); }
+///
+/// OverridesIndirectMethodInBase will return true if given C::f as the method 
+/// and { A } as the set of  bases.
+static bool
+OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
+                               VtableBuilder::PrimaryBasesSetTy &Bases) {
+  for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+       E = MD->end_overridden_methods(); I != E; ++I) {
+    const CXXMethodDecl *OverriddenMD = *I;
+    const CXXRecordDecl *OverriddenRD = OverriddenMD->getParent();
+    assert(OverriddenMD->isCanonicalDecl() &&
+           "Should have the canonical decl of the overridden RD!");
+    
+    if (Bases.count(OverriddenRD))
+      return true;
+    
+    // Check "indirect overriders".
+    if (OverridesIndirectMethodInBases(OverriddenMD, Bases))
+      return true;
+  }
+   
+  return false;
+}
+
 bool 
 VtableBuilder::IsOverriderUsed(BaseSubobject Base, 
                                BaseSubobject FirstBaseInPrimaryBaseChain,
@@ -1406,7 +1438,7 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
   
   // If the final overrider is an override of one of the primary bases,
   // then we know that it will be used.
-  return OverridesMethodInPrimaryBase(Overrider.Method, PrimaryBases);
+  return OverridesIndirectMethodInBases(Overrider.Method, PrimaryBases);
 }
 
 void 
@@ -1457,7 +1489,7 @@ VtableBuilder::AddMethods(BaseSubobject Base,
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
-        OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
+          OverridesMethodInBases(MD, PrimaryBases)) {
       if (ComputeReturnAdjustmentBaseOffset(Context, MD, 
                                             OverriddenMD).isEmpty())
         continue;
@@ -2959,7 +2991,7 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
 
     // Check if this method overrides a method in the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
-          OverridesMethodInPrimaryBase(MD, PrimaryBases)) {
+          OverridesMethodInBases(MD, PrimaryBases)) {
       // Check if converting from the return type of the method to the 
       // return type of the overridden method requires conversion.
       if (ComputeReturnAdjustmentBaseOffset(CGM.getContext(), MD, 
