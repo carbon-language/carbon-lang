@@ -2318,13 +2318,13 @@ static void CombineChildVariants(TreePatternNode *Orig,
   bool NotDone;
   do {
 #ifndef NDEBUG
-    if (DebugFlag && !Idxs.empty()) {
-      errs() << Orig->getOperator()->getName() << ": Idxs = [ ";
-        for (unsigned i = 0; i < Idxs.size(); ++i) {
-          errs() << Idxs[i] << " ";
-      }
-      errs() << "]\n";
-    }
+    DEBUG(if (!Idxs.empty()) {
+            errs() << Orig->getOperator()->getName() << ": Idxs = [ ";
+              for (unsigned i = 0; i < Idxs.size(); ++i) {
+                errs() << Idxs[i] << " ";
+            }
+            errs() << "]\n";
+          });
 #endif
     // Create the variant and add it to the output list.
     std::vector<TreePatternNode*> NewChildren;
