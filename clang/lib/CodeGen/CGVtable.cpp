@@ -1314,6 +1314,13 @@ void VtableBuilder::ComputeThisAdjustments() {
     if (Overrider.BaseOffset == MethodInfo.BaseOffset)
       continue;
     
+    uint64_t VtableIndex = MethodInfo.VtableIndex;
+    
+    // Ignore this adjustments for unused function pointers.
+    if (Components[VtableIndex].getKind() == 
+        VtableComponent::CK_UnusedFunctionPointer)
+      continue;
+
     BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
                                          Overrider.BaseOffset);
 
@@ -1326,11 +1333,12 @@ void VtableBuilder::ComputeThisAdjustments() {
     ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
                                                           ThisAdjustmentOffset);
 
-    ThisAdjustments.push_back(std::make_pair(MethodInfo.VtableIndex,
-                                             ThisAdjustment));
+    // Add it.
+    ThisAdjustments.push_back(std::make_pair(VtableIndex, ThisAdjustment));
+    
     if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
-      ThisAdjustments.push_back(std::make_pair(MethodInfo.VtableIndex + 1,
+      ThisAdjustments.push_back(std::make_pair(VtableIndex + 1,
                                                ThisAdjustment));
     }
   }
@@ -1493,6 +1501,8 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
       assert(Layout.getBaseClassOffset(PrimaryBase) == 0 && 
              "Primary base should always be at offset 0!");
     }
+    
+    RD = PrimaryBase;
   }
   
   // If the final overrider is an override of one of the primary bases,
@@ -1591,19 +1601,19 @@ VtableBuilder::AddMethods(BaseSubobject Base,
       }
     }
 
-    // Check if this overrider is going to be used.
-    if (!IsOverriderUsed(Base, FirstBaseInPrimaryBaseChain, Overrider)) {
-      const CXXMethodDecl *OverriderMD = Overrider.Method;
-      Components.push_back(VtableComponent::MakeUnusedFunction(OverriderMD));
-      continue;
-    }
-
     // Insert the method info for this method.
     MethodInfo MethodInfo(Base.getBaseOffset(), Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
            "Should not have method info for this method yet!");
     MethodInfoMap.insert(std::make_pair(MD, MethodInfo));
+
+    // Check if this overrider is going to be used.
+    if (!IsOverriderUsed(Base, FirstBaseInPrimaryBaseChain, Overrider)) {
+      const CXXMethodDecl *OverriderMD = Overrider.Method;
+      Components.push_back(VtableComponent::MakeUnusedFunction(OverriderMD));
+      continue;
+    }
     
     // Check if this overrider needs a return adjustment.
     BaseOffset ReturnAdjustmentOffset = 
