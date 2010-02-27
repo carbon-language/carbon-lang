@@ -206,9 +206,9 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
             Optn->print(errs(), 4);
             errs() << "into this:\n";
             OptionsToMatch[Scan]->print(errs(), 4);
-            if (OptionIdx+1 != e)
+            if (Scan+1 != e)
               OptionsToMatch[Scan+1]->printOne(errs());
-            if (OptionIdx+2 < e)
+            if (Scan+2 < e)
               OptionsToMatch[Scan+2]->printOne(errs());
             errs() << "\n");
     }
