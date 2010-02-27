@@ -1512,6 +1512,9 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
              "Primary base should always be at offset 0!");
     }
     
+    if (!PrimaryBases.insert(PrimaryBase))
+      assert(false && "Found a duplicate primary base!");
+
     RD = PrimaryBase;
   }
   
