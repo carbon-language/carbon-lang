@@ -541,13 +541,9 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
     return false;
 
   case tok::angle_string_literal:
-  case tok::string_literal: {
-    FilenameBuffer.resize(Tok.getLength());
-    const char *FilenameStart = &FilenameBuffer[0];
-    unsigned Len = PP.getSpelling(Tok, FilenameStart);
-    Filename = llvm::StringRef(FilenameStart, Len);
+  case tok::string_literal:
+    Filename = PP.getSpelling(Tok, FilenameBuffer);
     break;
-  }
 
   case tok::less:
     // This could be a <foo/bar.h> file coming from a macro expansion.  In this

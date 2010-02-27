@@ -570,6 +570,24 @@ public:
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
 
+  /// getSpelling - This method is used to get the spelling of a token into a
+  /// SmallVector. Note that the returned StringRef may not point to the
+  /// supplied buffer if a copy can be avoided.
+  llvm::StringRef getSpelling(const Token &Tok,
+                              llvm::SmallVectorImpl<char> &Buffer) const {
+    // Try the fast path.
+    if (const IdentifierInfo *II = Tok.getIdentifierInfo())
+      return II->getName();
+
+    // Resize the buffer if we need to copy into it.
+    if (!Tok.needsCleaning())
+      Buffer.resize(Tok.getLength());
+
+    const char *Ptr = Buffer.data();
+    unsigned Len = getSpelling(Tok, Ptr);
+    return llvm::StringRef(Ptr, Len);
+  }
+
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
   char getSpellingOfSingleCharacterNumericConstant(const Token &Tok) const {

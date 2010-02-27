@@ -287,11 +287,8 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
 
   // Reserve a buffer to get the spelling.
   llvm::SmallString<128> FilenameBuffer;
-  FilenameBuffer.resize(FilenameTok.getLength());
+  llvm::StringRef Filename = getSpelling(FilenameTok, FilenameBuffer);
 
-  const char *FilenameStart = &FilenameBuffer[0];
-  unsigned Len = getSpelling(FilenameTok, FilenameStart);
-  llvm::StringRef Filename(FilenameStart, Len);
   bool isAngled =
     GetIncludeFilenameSpelling(FilenameTok.getLocation(), Filename);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an

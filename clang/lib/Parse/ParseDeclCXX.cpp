@@ -167,9 +167,7 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallVector<char, 8> LangBuffer;
   // LangBuffer is guaranteed to be big enough.
-  LangBuffer.resize(Tok.getLength());
-  const char *LangBufPtr = &LangBuffer[0];
-  unsigned StrSize = PP.getSpelling(Tok, LangBufPtr);
+  llvm::StringRef Lang = PP.getSpelling(Tok, LangBuffer);
 
   SourceLocation Loc = ConsumeStringToken();
 
@@ -177,7 +175,7 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
   DeclPtrTy LinkageSpec
     = Actions.ActOnStartLinkageSpecification(CurScope,
                                              /*FIXME: */SourceLocation(),
-                                             Loc, LangBufPtr, StrSize,
+                                             Loc, Lang.data(), Lang.size(),
                                        Tok.is(tok::l_brace)? Tok.getLocation()
                                                            : SourceLocation());
 

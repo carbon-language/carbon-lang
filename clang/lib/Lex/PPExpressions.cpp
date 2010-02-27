@@ -218,10 +218,9 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   }
   case tok::char_constant: {   // 'x'
     llvm::SmallString<32> CharBuffer;
-    CharBuffer.resize(PeekTok.getLength());
-    const char *ThisTokBegin = &CharBuffer[0];
-    unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
-    CharLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength,
+    llvm::StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer);
+
+    CharLiteralParser Literal(ThisTok.begin(), ThisTok.end(),
                               PeekTok.getLocation(), PP);
     if (Literal.hadError())
       return true;  // A diagnostic was already emitted.

@@ -503,10 +503,8 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
     llvm::SmallVector<char, 64> IdentifierBuffer;
-    IdentifierBuffer.resize(Identifier.getLength());
-    const char *TmpBuf = &IdentifierBuffer[0];
-    unsigned Size = getSpelling(Identifier, TmpBuf);
-    II = getIdentifierInfo(llvm::StringRef(TmpBuf, Size));
+    llvm::StringRef CleanedStr = getSpelling(Identifier, IdentifierBuffer);
+    II = getIdentifierInfo(CleanedStr);
   }
   Identifier.setIdentifierInfo(II);
   return II;

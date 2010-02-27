@@ -1664,12 +1664,10 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
 
 Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
-  CharBuffer.resize(Tok.getLength());
-  const char *ThisTokBegin = &CharBuffer[0];
-  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
+  llvm::StringRef ThisTok = PP.getSpelling(Tok, CharBuffer);
 
-  CharLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength,
-                            Tok.getLocation(), PP);
+  CharLiteralParser Literal(ThisTok.begin(), ThisTok.end(), Tok.getLocation(),
+                            PP);
   if (Literal.hadError())
     return ExprError();
 

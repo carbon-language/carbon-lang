@@ -1024,13 +1024,9 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return;
 
   case tok::angle_string_literal:
-  case tok::string_literal: {
-    FilenameBuffer.resize(FilenameTok.getLength());
-    const char *FilenameStart = &FilenameBuffer[0];
-    unsigned Len = getSpelling(FilenameTok, FilenameStart);
-    Filename = llvm::StringRef(FilenameStart, Len);
+  case tok::string_literal:
+    Filename = getSpelling(FilenameTok, FilenameBuffer);
     break;
-  }
 
   case tok::less:
     // This could be a <foo/bar.h> file coming from a macro expansion.  In this

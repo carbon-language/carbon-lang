@@ -67,12 +67,7 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
     if (I->hasLeadingSpace())
       OS << ' ';
 
-    // Make sure we have enough space in the spelling buffer.
-    if (I->getLength() > SpellingBuffer.size())
-      SpellingBuffer.resize(I->getLength());
-    const char *Buffer = SpellingBuffer.data();
-    unsigned SpellingLen = PP.getSpelling(*I, Buffer);
-    OS.write(Buffer, SpellingLen);
+    OS << PP.getSpelling(*I, SpellingBuffer);
   }
 }
 
