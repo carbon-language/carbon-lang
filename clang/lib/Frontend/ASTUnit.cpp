@@ -162,6 +162,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
     if (!FromFile) {
       Diags.Report(diag::err_fe_remap_missing_from_file)
         << RemappedFiles[I].first;
+      delete RemappedFiles[I].second;
       continue;
     }
     

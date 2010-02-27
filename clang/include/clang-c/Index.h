@@ -87,14 +87,12 @@ struct CXUnsavedFile {
   const char *Filename;
 
   /**
-   * \brief A null-terminated buffer containing the unsaved contents
-   * of this file.
+   * \brief A buffer containing the unsaved contents of this file.
    */
   const char *Contents;
 
   /**
-   * \brief The length of the unsaved contents of this buffer, not
-   * counting the NULL at the end of the buffer.
+   * \brief The length of the unsaved contents of this buffer.
    */
   unsigned long Length;
 };

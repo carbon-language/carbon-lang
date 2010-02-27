@@ -439,6 +439,7 @@ static void InitializeFileRemapping(Diagnostic &Diags,
     if (!FromFile) {
       Diags.Report(diag::err_fe_remap_missing_from_file)
         << Remap->first;
+      delete Remap->second;
       continue;
     }
 
@@ -477,7 +478,7 @@ static void InitializeFileRemapping(Diagnostic &Diags,
     = llvm::MemoryBuffer::getFile(ToFile->getName(), &ErrorStr);
     if (!Buffer) {
       Diags.Report(diag::err_fe_error_opening)
-      << Remap->second << ErrorStr;
+        << Remap->second << ErrorStr;
       continue;
     }
     

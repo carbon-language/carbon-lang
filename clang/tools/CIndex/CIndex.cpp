@@ -966,7 +966,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     const llvm::MemoryBuffer *Buffer
-      = llvm::MemoryBuffer::getMemBuffer(unsaved_files[I].Contents,
+      = llvm::MemoryBuffer::getMemBufferCopy(unsaved_files[I].Contents,
                           unsaved_files[I].Contents + unsaved_files[I].Length,
                                          unsaved_files[I].Filename);
     RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
