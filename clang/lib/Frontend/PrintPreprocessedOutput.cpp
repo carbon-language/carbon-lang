@@ -390,7 +390,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
 static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
                                     PrintPPOutputPPCallbacks *Callbacks,
                                     llvm::raw_ostream &OS) {
-  llvm::SmallString<256> Buffer;
+  char Buffer[256];
   Token PrevTok;
   while (1) {
 
@@ -406,13 +406,29 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
       OS << ' ';
     }
 
-    llvm::StringRef Str = PP.getSpelling(Tok, Buffer);
-    OS << Str;
-    // Tokens that can contain embedded newlines need to adjust our current
-    // line number.
-    if (Tok.getKind() == tok::comment)
-      Callbacks->HandleNewlinesInToken(Str.data(), Str.size());
+    if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+      OS << II->getName();
+    } else if (Tok.isLiteral() && !Tok.needsCleaning() &&
+               Tok.getLiteralData()) {
+      OS.write(Tok.getLiteralData(), Tok.getLength());
+    } else if (Tok.getLength() < 256) {
+      const char *TokPtr = Buffer;
+      unsigned Len = PP.getSpelling(Tok, TokPtr);
+      OS.write(TokPtr, Len);
 
+      // Tokens that can contain embedded newlines need to adjust our current
+      // line number.
+      if (Tok.getKind() == tok::comment)
+        Callbacks->HandleNewlinesInToken(TokPtr, Len);
+    } else {
+      std::string S = PP.getSpelling(Tok);
+      OS.write(&S[0], S.size());
+
+      // Tokens that can contain embedded newlines need to adjust our current
+      // line number.
+      if (Tok.getKind() == tok::comment)
+        Callbacks->HandleNewlinesInToken(&S[0], S.size());
+    }
     Callbacks->SetEmittedTokensOnThisLine();
 
     if (Tok.is(tok::eof)) break;
