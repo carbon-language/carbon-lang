@@ -267,7 +267,12 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   }
   
   // TODO: CheckMultiOpcodeMatcher?
-  // TODO: CheckType?
+  
+  // This is a special common case we see a lot in the X86 backend, we know that
+  // ISD::STORE nodes can't have non-void type.
+  if (const CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(M))
+    return getOpcodeName() == "ISD::STORE" && CT->getType() != MVT::isVoid;
+  
   return false;
 }
 
@@ -307,4 +312,8 @@ bool CheckChildTypeMatcher::isContradictoryImpl(const Matcher *M) const {
   return false;
 }
   
-
+bool CheckIntegerMatcher::isContradictoryImpl(const Matcher *M) const {
+  if (const CheckIntegerMatcher *CIM = dyn_cast<CheckIntegerMatcher>(M))
+    return CIM->getValue() != getValue();
+  return false;
+}

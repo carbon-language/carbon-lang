@@ -202,14 +202,14 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     }
       
     if (Scan != e) {
-      DEBUG(errs() << "Couldn't merge this:\n  ";
-            Optn->printOne(errs());
-            errs() << "into this:\n  ";
-            OptionsToMatch[OptionIdx]->printOne(errs());
+      DEBUG(errs() << "Couldn't merge this:\n";
+            Optn->print(errs(), 4);
+            errs() << "into this:\n";
+            OptionsToMatch[Scan]->print(errs(), 4);
             if (OptionIdx+1 != e)
-              OptionsToMatch[OptionIdx+1]->printOne(errs());
+              OptionsToMatch[Scan+1]->printOne(errs());
             if (OptionIdx+2 < e)
-              OptionsToMatch[OptionIdx+2]->printOne(errs());
+              OptionsToMatch[Scan+2]->printOne(errs());
             errs() << "\n");
     }
     

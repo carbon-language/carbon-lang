@@ -511,6 +511,7 @@ private:
     return cast<CheckIntegerMatcher>(M)->Value == Value;
   }
   virtual unsigned getHashImpl() const { return Value; }
+  virtual bool isContradictoryImpl(const Matcher *M) const;
 };
   
 /// CheckCondCodeMatcher - This checks to see if the current node is a
