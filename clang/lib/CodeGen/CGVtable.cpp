@@ -178,6 +178,8 @@ public:
   void dump(llvm::raw_ostream &Out, BaseSubobject Base);
 };
 
+#define DUMP_OVERRIDERS 0
+
 FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
   : MostDerivedClass(MostDerivedClass), 
   Context(MostDerivedClass->getASTContext()),
@@ -188,7 +190,8 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
   ComputeFinalOverriders(BaseSubobject(MostDerivedClass, 0), 
                          /*BaseSubobjectIsVisitedVBase=*/false, Offsets);
   VisitedVirtualBases.clear();
-    
+
+#if DUMP_OVERRIDERS
   // And dump them (for now).
   dump();
     
@@ -203,6 +206,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass)
     for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I)
       llvm::errs() << "  " << I << " - " << OffsetVector[I] << '\n';
   }
+#endif
 }
 
 void FinalOverriders::AddOverriders(BaseSubobject Base,
@@ -3268,11 +3272,11 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset,
                              AddressPointsMapTy& AddressPoints) {
-  if (GenerateDefinition && CGM.getLangOptions().DumpVtableLayouts && 
-      LayoutClass == RD) {
+  if (GenerateDefinition && LayoutClass == RD) {
     VtableBuilder Builder(*this, RD);
-    
-    Builder.dumpLayout(llvm::errs());
+
+    if (CGM.getLangOptions().DumpVtableLayouts)
+      Builder.dumpLayout(llvm::errs());
   }
 
   llvm::SmallString<256> OutName;
