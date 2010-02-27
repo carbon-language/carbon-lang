@@ -645,3 +645,64 @@ class E : virtual D {
 void E::f() {}
 
 }
+
+namespace Test18 {
+
+// Test that we compute the right 'this' adjustment offsets.
+
+struct A {
+  virtual void f();
+  virtual void g();
+};
+
+struct B : virtual A {
+  virtual void f();
+};
+
+struct C : A, B {
+  virtual void g();
+};
+
+// CHECK:      Vtable for 'Test18::D' (24 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | vbase_offset (0)
+// CHECK-NEXT:    2 | vbase_offset (0)
+// CHECK-NEXT:    3 | vcall_offset (8)
+// CHECK-NEXT:    4 | vcall_offset (0)
+// CHECK-NEXT:    5 | offset_to_top (0)
+// CHECK-NEXT:    6 | Test18::D RTTI
+// CHECK-NEXT:        -- (Test18::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test18::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test18::D, 0) vtable address --
+// CHECK-NEXT:    7 | void Test18::D::f()
+// CHECK-NEXT:    8 | void Test18::C::g()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+// CHECK-NEXT:    9 | void Test18::D::h()
+// CHECK-NEXT:   10 | vcall_offset (0)
+// CHECK-NEXT:   11 | vcall_offset (-8)
+// CHECK-NEXT:   12 | vbase_offset (-8)
+// CHECK-NEXT:   13 | offset_to_top (-8)
+// CHECK-NEXT:   14 | Test18::D RTTI
+// CHECK-NEXT:        -- (Test18::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test18::C, 8) vtable address --
+// CHECK-NEXT:   15 | void Test18::D::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+// CHECK-NEXT:   16 | void Test18::C::g()
+// CHECK-NEXT:   17 | vbase_offset (-16)
+// CHECK-NEXT:   18 | vcall_offset (-8)
+// CHECK-NEXT:   19 | vcall_offset (-16)
+// CHECK-NEXT:   20 | offset_to_top (-16)
+// CHECK-NEXT:   21 | Test18::D RTTI
+// CHECK-NEXT:        -- (Test18::A, 16) vtable address --
+// CHECK-NEXT:        -- (Test18::B, 16) vtable address --
+// CHECK-NEXT:   22 | void Test18::D::f()
+// CHECK-NEXT:        [this adjustment: -8 non-virtual, -32 vcall offset offset]
+// CHECK-NEXT:   23 | [unused] void Test18::C::g()
+struct D : virtual B, virtual C, virtual A 
+{
+  virtual void f();
+  virtual void h();
+};
+void D::f() {}
+
+}

@@ -1159,6 +1159,8 @@ private:
     
     MethodInfo(uint64_t BaseOffset, uint64_t VtableIndex)
       : BaseOffset(BaseOffset), VtableIndex(VtableIndex) { }
+    
+    MethodInfo() : BaseOffset(0), VtableIndex(0) { }
   };
   
   typedef llvm::DenseMap<const CXXMethodDecl *, MethodInfo> MethodInfoMapTy;
@@ -1186,6 +1188,10 @@ private:
   llvm::SmallVector<std::pair<uint64_t, ThisAdjustment>, 16> 
     ThisAdjustments;
 
+  /// ComputeThisAdjustments - Compute the 'this' pointer adjustments for the
+  /// part of the vtable we're currently building.
+  void ComputeThisAdjustments();
+  
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
 
   /// PrimaryVirtualBases - All known virtual bases who are a primary base of
@@ -1204,8 +1210,7 @@ private:
   
   /// AddMethod - Add a single virtual member function to the vtable
   /// components vector.
-  void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment,
-                 ThisAdjustment ThisAdjustment);
+  void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment);
 
   /// IsOverriderUsed - Returns whether the overrider will ever be used in this
   /// part of the vtable. 
@@ -1290,6 +1295,50 @@ OverridesMethodInBases(const CXXMethodDecl *MD,
   return 0;
 }
 
+void VtableBuilder::ComputeThisAdjustments() {
+  // Now go through the method info map and see if any of the methods need
+  // 'this' pointer adjustments.
+  for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
+       E = MethodInfoMap.end(); I != E; ++I) {
+    const CXXMethodDecl *MD = I->first;
+    const MethodInfo &MethodInfo = I->second;
+
+    BaseSubobject OverriddenBaseSubobject(MD->getParent(),
+                                          MethodInfo.BaseOffset);
+
+    // Get the final overrider for this method.
+    FinalOverriders::OverriderInfo Overrider =
+      Overriders.getOverrider(OverriddenBaseSubobject, MD);
+    
+    // Check if we need an adjustment.
+    if (Overrider.BaseOffset == MethodInfo.BaseOffset)
+      continue;
+    
+    BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
+                                         Overrider.BaseOffset);
+
+    // Compute the adjustment offset.
+    BaseOffset ThisAdjustmentOffset =
+      Overriders.ComputeThisAdjustmentBaseOffset(OverriddenBaseSubobject,
+                                                 OverriderBaseSubobject);
+    
+    // Then compute the adjustment itself.
+    ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
+                                                          ThisAdjustmentOffset);
+
+    ThisAdjustments.push_back(std::make_pair(MethodInfo.VtableIndex,
+                                             ThisAdjustment));
+    if (isa<CXXDestructorDecl>(MD)) {
+      // Add an adjustment for the deleting destructor as well.
+      ThisAdjustments.push_back(std::make_pair(MethodInfo.VtableIndex + 1,
+                                               ThisAdjustment));
+    }
+  }
+
+  /// Clear the method info map.
+  MethodInfoMap.clear();
+}
+
 VtableBuilder::ReturnAdjustment 
 VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   ReturnAdjustment Adjustment;
@@ -1343,18 +1392,10 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
 
 void 
 VtableBuilder::AddMethod(const CXXMethodDecl *MD,
-                         ReturnAdjustment ReturnAdjustment,
-                         ThisAdjustment ThisAdjustment) {
+                         ReturnAdjustment ReturnAdjustment) {
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
     assert(ReturnAdjustment.isEmpty() && 
            "Destructor can't have return adjustment!");
-    // Add the 'this' pointer adjustments if necessary.
-    if (!ThisAdjustment.isEmpty()) {
-      ThisAdjustments.push_back(std::make_pair(Components.size(),
-                                               ThisAdjustment));
-      ThisAdjustments.push_back(std::make_pair(Components.size() + 1,
-                                               ThisAdjustment));
-    }
 
     // Add both the complete destructor and the deleting destructor.
     Components.push_back(VtableComponent::MakeCompleteDtor(DD));
@@ -1364,11 +1405,6 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
     if (!ReturnAdjustment.isEmpty())
       ReturnAdjustments.push_back(std::make_pair(Components.size(),
                                                  ReturnAdjustment));
-
-    // Add the 'this' pointer adjustment if necessary.
-    if (!ThisAdjustment.isEmpty())
-      ThisAdjustments.push_back(std::make_pair(Components.size(),
-                                               ThisAdjustment));
 
     // Add the function.
     Components.push_back(VtableComponent::MakeFunction(MD));
@@ -1464,6 +1500,28 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
   return OverridesIndirectMethodInBases(Overrider.Method, PrimaryBases);
 }
 
+/// FindNearestOverriddenMethod - Given a method, returns the overridden method
+/// from the nearest base. Returns null if no method was found.
+static const CXXMethodDecl * 
+FindNearestOverriddenMethod(const CXXMethodDecl *MD,
+                            VtableBuilder::PrimaryBasesSetVectorTy &Bases) {
+  for (int I = Bases.size(), E = 0; I != E; --I) {
+    const CXXRecordDecl *PrimaryBase = Bases[I - 1];
+
+    // Now check the overriden methods.
+    for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
+         E = MD->end_overridden_methods(); I != E; ++I) {
+      const CXXMethodDecl *OverriddenMD = *I;
+
+      // We found our overridden method.
+      if (OverriddenMD->getParent() == PrimaryBase)
+        return OverriddenMD;
+    }
+  }
+  
+  return 0;
+}  
+
 void 
 VtableBuilder::AddMethods(BaseSubobject Base, 
                           BaseSubobject FirstBaseInPrimaryBaseChain,
@@ -1512,10 +1570,25 @@ VtableBuilder::AddMethods(BaseSubobject Base,
     // base. If this is the case, and the return type doesn't require adjustment
     // then we can just use the member function from the primary base.
     if (const CXXMethodDecl *OverriddenMD = 
-          OverridesMethodInBases(MD, PrimaryBases)) {
+          FindNearestOverriddenMethod(MD, PrimaryBases)) {
       if (ComputeReturnAdjustmentBaseOffset(Context, MD, 
-                                            OverriddenMD).isEmpty())
+                                            OverriddenMD).isEmpty()) {
+        // Replace the method info of the overridden method with our own
+        // method.
+        assert(MethodInfoMap.count(OverriddenMD) && 
+               "Did not find the overridden method!");
+        MethodInfo &OverriddenMethodInfo = MethodInfoMap[OverriddenMD];
+        
+        MethodInfo MethodInfo(Base.getBaseOffset(), 
+                              OverriddenMethodInfo.VtableIndex);
+
+        assert(!MethodInfoMap.count(MD) &&
+               "Should not have method info for this method yet!");
+        
+        MethodInfoMap.insert(std::make_pair(MD, MethodInfo));
+        MethodInfoMap.erase(OverriddenMD);
         continue;
+      }
     }
 
     // Check if this overrider is going to be used.
@@ -1524,6 +1597,13 @@ VtableBuilder::AddMethods(BaseSubobject Base,
       Components.push_back(VtableComponent::MakeUnusedFunction(OverriderMD));
       continue;
     }
+
+    // Insert the method info for this method.
+    MethodInfo MethodInfo(Base.getBaseOffset(), Components.size());
+
+    assert(!MethodInfoMap.count(MD) &&
+           "Should not have method info for this method yet!");
+    MethodInfoMap.insert(std::make_pair(MD, MethodInfo));
     
     // Check if this overrider needs a return adjustment.
     BaseOffset ReturnAdjustmentOffset = 
@@ -1532,25 +1612,7 @@ VtableBuilder::AddMethods(BaseSubobject Base,
     ReturnAdjustment ReturnAdjustment = 
       ComputeReturnAdjustment(ReturnAdjustmentOffset);
     
-    ThisAdjustment ThisAdjustment;
-    
-    // Check if this overrider needs a 'this' pointer adjustment.
-    // (We use the base offset of the first base in the primary base chain here,
-    // because Base will not have the right offset if it is a primary virtual
-    // base that is not a primary base in the complete class.
-    if (FirstBaseInPrimaryBaseChain.getBaseOffset() != Overrider.BaseOffset) {
-      BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
-                                           Overrider.BaseOffset);
-      
-      BaseOffset ThisAdjustmentOffset =
-        Overriders.ComputeThisAdjustmentBaseOffset(FirstBaseInPrimaryBaseChain,
-                                                   OverriderBaseSubobject);
-
-      ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
-                                             ThisAdjustmentOffset);
-    }
-    
-    AddMethod(Overrider.Method, ReturnAdjustment, ThisAdjustment);
+    AddMethod(Overrider.Method, ReturnAdjustment);
   }
 }
 
@@ -1598,6 +1660,9 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetVectorTy PrimaryBases;
   AddMethods(Base, Base, PrimaryBases);
+
+  // Compute 'this' pointer adjustments.
+  ComputeThisAdjustments();
 
   // Record the address point.
   AddressPoints.insert(std::make_pair(Base, AddressPoint));
