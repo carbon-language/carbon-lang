@@ -221,3 +221,16 @@ void test_unicode_conversions(wchar_t *s) {
   printf("%S", "hello"); // expected-warning{{but the argument has type 'char *'}}
 }
 
+// Mac OS X supports positional arguments in format strings.
+// This is an IEEE extension (IEEE Std 1003.1).
+// FIXME: This is probably not portable everywhere.
+void test_positional_arguments() {
+  printf("%0$", (int)2); // expected-warning{{position arguments in format strings start counting at 1 (not 0)}}
+  printf("%1$d", (int) 2); // no-warning
+  printf("%1$d", (int) 2, 2); // expected-warning{{data argument not used by format string}}
+  printf("%1$d%1$f", (int) 2); // expected-warning{{conversion specifies type 'double' but the argument has type 'int'}}
+  printf("%1$2.2d", (int) 2); // no-warning
+  printf("%2$*1$.2d", (int) 2, (int) 3); // no-warning
+  printf("%2$*8$d", (int) 2, (int) 3); // expected-warning{{specified field width is missing a matching 'int' argument}}
+}
+

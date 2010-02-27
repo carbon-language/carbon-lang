@@ -110,7 +110,8 @@ bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
     }
     if (format_idx < TheCall->getNumArgs()) {
       Expr *Format = TheCall->getArg(format_idx)->IgnoreParenCasts();
-      if (!Format->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+      if (!Format->isNullPointerConstant(Context,
+                                         Expr::NPC_ValueDependentIsNull))
         return true;
     }
   }
@@ -1051,6 +1052,8 @@ class CheckPrintfHandler : public analyze_printf::FormatStringHandler {
   const CallExpr *TheCall;
   unsigned FormatIdx;
   llvm::BitVector CoveredArgs;
+  bool usesPositionalArgs;
+  bool atFirstArg;
 public:
   CheckPrintfHandler(Sema &s, const StringLiteral *fexpr,
                      const Expr *origFormatExpr,
@@ -1061,7 +1064,8 @@ public:
       NumDataArgs(numDataArgs),
       IsObjCLiteral(isObjCLiteral), Beg(beg),
       HasVAListArg(hasVAListArg),
-      TheCall(theCall), FormatIdx(formatIdx) {
+      TheCall(theCall), FormatIdx(formatIdx),
+      usesPositionalArgs(false), atFirstArg(true) {
         CoveredArgs.resize(numDataArgs);
         CoveredArgs.reset();
       }
@@ -1076,6 +1080,12 @@ public:
                                    const char *startSpecifier,
                                    unsigned specifierLen);
 
+  virtual void HandleInvalidPosition(const char *startSpecifier,
+                                     unsigned specifierLen,
+                                     analyze_printf::PositionContext p);
+
+  virtual void HandleZeroPosition(const char *startPos, unsigned posLen);
+
   void HandleNullChar(const char *nullCharacter);
 
   bool HandleFormatSpecifier(const analyze_printf::FormatSpecifier &FS,
@@ -1087,9 +1097,8 @@ private:
                                       unsigned specifierLen);
   SourceLocation getLocationOfByte(const char *x);
 
-  bool HandleAmount(const analyze_printf::OptionalAmount &Amt,
-                    unsigned MissingArgDiag, unsigned BadTypeDiag,
-          const char *startSpecifier, unsigned specifierLen);
+  bool HandleAmount(const analyze_printf::OptionalAmount &Amt, unsigned k,
+                    const char *startSpecifier, unsigned specifierLen);
   void HandleFlags(const analyze_printf::FormatSpecifier &FS,
                    llvm::StringRef flag, llvm::StringRef cspec,
                    const char *startSpecifier, unsigned specifierLen);
@@ -1118,6 +1127,21 @@ HandleIncompleteFormatSpecifier(const char *startSpecifier,
   SourceLocation Loc = getLocationOfByte(startSpecifier);
   S.Diag(Loc, diag::warn_printf_incomplete_specifier)
     << getFormatSpecifierRange(startSpecifier, specifierLen);
+}
+
+void
+CheckPrintfHandler::HandleInvalidPosition(const char *startPos, unsigned posLen,
+                                          analyze_printf::PositionContext p) {
+  SourceLocation Loc = getLocationOfByte(startPos);
+  S.Diag(Loc, diag::warn_printf_invalid_positional_specifier)
+    << (unsigned) p << getFormatSpecifierRange(startPos, posLen);
+}
+
+void CheckPrintfHandler::HandleZeroPosition(const char *startPos,
+                                            unsigned posLen) {
+  SourceLocation Loc = getLocationOfByte(startPos);
+  S.Diag(Loc, diag::warn_printf_zero_positional_specifier)
+    << getFormatSpecifierRange(startPos, posLen);
 }
 
 bool CheckPrintfHandler::
@@ -1176,17 +1200,16 @@ void CheckPrintfHandler::HandleFlags(const analyze_printf::FormatSpecifier &FS,
 
 bool
 CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
-                                 unsigned MissingArgDiag,
-                                 unsigned BadTypeDiag,
-                                 const char *startSpecifier,
+                                 unsigned k, const char *startSpecifier,
                                  unsigned specifierLen) {
 
   if (Amt.hasDataArgument()) {
     if (!HasVAListArg) {
       unsigned argIndex = Amt.getArgIndex();
       if (argIndex >= NumDataArgs) {
-        S.Diag(getLocationOfByte(Amt.getStart()), MissingArgDiag)
-          << getFormatSpecifierRange(startSpecifier, specifierLen);
+        S.Diag(getLocationOfByte(Amt.getStart()),
+               diag::warn_printf_asterisk_missing_arg)
+          << k << getFormatSpecifierRange(startSpecifier, specifierLen);
         // Don't do any more checking.  We will just emit
         // spurious errors.
         return false;
@@ -1204,7 +1227,9 @@ CheckPrintfHandler::HandleAmount(const analyze_printf::OptionalAmount &Amt,
       assert(ATR.isValid());
 
       if (!ATR.matchesType(S.Context, T)) {
-        S.Diag(getLocationOfByte(Amt.getStart()), BadTypeDiag)
+        S.Diag(getLocationOfByte(Amt.getStart()),
+               diag::warn_printf_asterisk_wrong_type)
+          << k
           << ATR.getRepresentativeType(S.Context) << T
           << getFormatSpecifierRange(startSpecifier, specifierLen)
           << Arg->getSourceRange();
@@ -1223,22 +1248,30 @@ CheckPrintfHandler::HandleFormatSpecifier(const analyze_printf::FormatSpecifier
                                           const char *startSpecifier,
                                           unsigned specifierLen) {
 
-  using namespace analyze_printf;
+  using namespace analyze_printf;  
   const ConversionSpecifier &CS = FS.getConversionSpecifier();
 
-  // First check if the field width, precision, and conversion specifier
-  // have matching data arguments.
-  if (!HandleAmount(FS.getFieldWidth(),
-                    diag::warn_printf_asterisk_width_missing_arg,
-                    diag::warn_printf_asterisk_width_wrong_type,
-          startSpecifier, specifierLen)) {
+  if (atFirstArg) {
+    atFirstArg = false;
+    usesPositionalArgs = FS.usesPositionalArg();
+  }
+  else if (usesPositionalArgs != FS.usesPositionalArg()) {
+    // Cannot mix-and-match positional and non-positional arguments.
+    S.Diag(getLocationOfByte(CS.getStart()),
+           diag::warn_printf_mix_positional_nonpositional_args)
+      << getFormatSpecifierRange(startSpecifier, specifierLen);
     return false;
   }
 
-  if (!HandleAmount(FS.getPrecision(),
-                    diag::warn_printf_asterisk_precision_missing_arg,
-                    diag::warn_printf_asterisk_precision_wrong_type,
-          startSpecifier, specifierLen)) {
+  // First check if the field width, precision, and conversion specifier
+  // have matching data arguments.
+  if (!HandleAmount(FS.getFieldWidth(), /* field width */ 0,
+                    startSpecifier, specifierLen)) {
+    return false;
+  }
+
+  if (!HandleAmount(FS.getPrecision(), /* precision */ 1,
+                    startSpecifier, specifierLen)) {
     return false;
   }
 

@@ -150,13 +150,17 @@ enum LengthModifier {
 
 class OptionalAmount {
 public:
-  enum HowSpecified { NotSpecified, Constant, Arg };
+  enum HowSpecified { NotSpecified, Constant, Arg, Invalid };
 
   OptionalAmount(HowSpecified h, unsigned i, const char *st)
     : start(st), hs(h), amt(i) {}
 
-  OptionalAmount()
-    : start(0), hs(NotSpecified), amt(0) {}
+  OptionalAmount(bool b = true)
+    : start(0), hs(b ? NotSpecified : Invalid), amt(0) {}
+
+  bool isInvalid() const {
+    return hs == Invalid;
+  }
 
   HowSpecified getHowSpecified() const { return hs; }
 
@@ -191,6 +195,7 @@ class FormatSpecifier {
   unsigned HasSpacePrefix : 1;
   unsigned HasAlternativeForm : 1;
   unsigned HasLeadingZeroes : 1;
+  unsigned UsesPositionalArg : 1;
   unsigned argIndex;
   ConversionSpecifier CS;
   OptionalAmount FieldWidth;
@@ -198,7 +203,8 @@ class FormatSpecifier {
 public:
   FormatSpecifier() : LM(None),
     IsLeftJustified(0), HasPlusPrefix(0), HasSpacePrefix(0),
-    HasAlternativeForm(0), HasLeadingZeroes(0), argIndex(0) {}
+    HasAlternativeForm(0), HasLeadingZeroes(0), UsesPositionalArg(0),
+    argIndex(0) {}
 
   static FormatSpecifier Parse(const char *beg, const char *end);
 
@@ -214,6 +220,7 @@ public:
   void setHasSpacePrefix() { HasSpacePrefix = 1; }
   void setHasAlternativeForm() { HasAlternativeForm = 1; }
   void setHasLeadingZeros() { HasLeadingZeroes = 1; }
+  void setUsesPositionalArg() { UsesPositionalArg = 1; }
 
   void setArgIndex(unsigned i) {
     assert(CS.consumesDataArgument());
@@ -263,7 +270,10 @@ public:
   bool hasAlternativeForm() const { return (bool) HasAlternativeForm; }
   bool hasLeadingZeros() const { return (bool) HasLeadingZeroes; }
   bool hasSpacePrefix() const { return (bool) HasSpacePrefix; }
+  bool usesPositionalArg() const { return (bool) UsesPositionalArg; }
 };
+
+enum PositionContext { FieldWidthPos = 0, PrecisionPos = 1 };
 
 class FormatStringHandler {
 public:
@@ -274,6 +284,11 @@ public:
                                                unsigned specifierLen) {}
 
   virtual void HandleNullChar(const char *nullCharacter) {}
+
+  virtual void HandleInvalidPosition(const char *startPos, unsigned posLen,
+                                     PositionContext p) {}
+
+  virtual void HandleZeroPosition(const char *startPos, unsigned posLen) {}
 
   virtual bool
     HandleInvalidConversionSpecifier(const analyze_printf::FormatSpecifier &FS,

@@ -15,10 +15,12 @@
 #include "clang/Analysis/Analyses/PrintfFormatString.h"
 #include "clang/AST/ASTContext.h"
 
-using clang::analyze_printf::FormatSpecifier;
-using clang::analyze_printf::OptionalAmount;
 using clang::analyze_printf::ArgTypeResult;
+using clang::analyze_printf::FormatSpecifier;
 using clang::analyze_printf::FormatStringHandler;
+using clang::analyze_printf::OptionalAmount;
+using clang::analyze_printf::PositionContext;
+
 using namespace clang;
 
 namespace {
@@ -62,34 +64,139 @@ public:
 // Methods for parsing format strings.
 //===----------------------------------------------------------------------===//
 
-static OptionalAmount ParseAmount(const char *&Beg, const char *E,
-                                  unsigned &argIndex) {
+static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
   const char *I = Beg;
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
 
-  bool foundDigits = false;
   unsigned accumulator = 0;
 
   for ( ; I != E; ++I) {
     char c = *I;
     if (c >= '0' && c <= '9') {
-      foundDigits = true;
+      // Ignore '0' on the first character.
+      if (c == '0' && I == Beg)
+        break;
       accumulator += (accumulator * 10) + (c - '0');
       continue;
     }
 
-    if (foundDigits)
+    if (accumulator)
       return OptionalAmount(OptionalAmount::Constant, accumulator, Beg);
-
-    if (c == '*') {
-      ++I;
-      return OptionalAmount(OptionalAmount::Arg, argIndex++, Beg);
-    }
 
     break;
   }
 
   return OptionalAmount();
+}
+
+static OptionalAmount ParseNonPositionAmount(const char *&Beg, const char *E,
+                                             unsigned &argIndex) {
+  if (*Beg == '*') {
+    ++Beg;
+    return OptionalAmount(OptionalAmount::Arg, argIndex++, Beg);
+  }
+
+  return ParseAmount(Beg, E);
+}
+
+static OptionalAmount ParsePositionAmount(FormatStringHandler &H,
+                                          const char *Start,
+                                          const char *&Beg, const char *E,
+                                          PositionContext p) {
+  if (*Beg == '*') {
+    const char *I = Beg + 1;
+    const OptionalAmount &Amt = ParseAmount(I, E);
+
+    if (Amt.getHowSpecified() == OptionalAmount::NotSpecified) {
+      H.HandleInvalidPosition(Beg, I - Beg, p);
+      return OptionalAmount(false);
+    }
+
+    if (I== E) {
+      // No more characters left?
+      H.HandleIncompleteFormatSpecifier(Start, E - Start);
+      return OptionalAmount(false);
+    }
+
+    if (*I == '$') {
+      const char *Tmp = Beg;
+      Beg = ++I;
+      return OptionalAmount(OptionalAmount::Arg, Amt.getConstantAmount() - 1,
+                            Tmp);
+    }
+
+    H.HandleInvalidPosition(Beg, I - Beg, p);
+    return OptionalAmount(false);
+  }
+
+  return ParseAmount(Beg, E);
+}
+
+static bool ParsePrecision(FormatStringHandler &H, FormatSpecifier &FS,
+                           const char *Start, const char *&Beg, const char *E,
+                           unsigned *argIndex) {
+  if (argIndex) {
+    FS.setPrecision(ParseNonPositionAmount(Beg, E, *argIndex));
+  }
+  else {
+    const OptionalAmount Amt = ParsePositionAmount(H, Start, Beg, E,
+                                                  analyze_printf::PrecisionPos);
+    if (Amt.isInvalid())
+      return true;
+    FS.setPrecision(Amt);
+  }
+  return false;
+}
+
+static bool ParseFieldWidth(FormatStringHandler &H, FormatSpecifier &FS,
+                            const char *Start, const char *&Beg, const char *E,
+                            unsigned *argIndex) {
+  // FIXME: Support negative field widths.
+  if (argIndex) {
+    FS.setFieldWidth(ParseNonPositionAmount(Beg, E, *argIndex));
+  }
+  else {
+    const OptionalAmount Amt = ParsePositionAmount(H, Start, Beg, E,
+                                                 analyze_printf::FieldWidthPos);
+    if (Amt.isInvalid())
+      return true;
+    FS.setFieldWidth(Amt);
+  }
+  return false;
+}
+
+
+static bool ParseArgPosition(FormatStringHandler &H,
+                             FormatSpecifier &FS, const char *Start,
+                             const char *&Beg, const char *E) {
+
+  using namespace clang::analyze_printf;
+  const char *I = Beg;
+
+  const OptionalAmount &Amt = ParseAmount(I, E);
+
+  if (I == E) {
+    // No more characters left?
+    H.HandleIncompleteFormatSpecifier(Start, E - Start);
+    return true;
+  }
+
+  if (Amt.getHowSpecified() == OptionalAmount::Constant && *(I++) == '$') {
+    FS.setArgIndex(Amt.getConstantAmount() - 1);
+    FS.setUsesPositionalArg();
+    // Update the caller's pointer if we decided to consume
+    // these characters.
+    Beg = I;
+    return false;
+  }
+
+  // Special case: '%0$', since this is an easy mistake.
+  if (*I == '0' && (I+1) != E && *(I+1) == '$') {
+    H.HandleZeroPosition(Start, I - Start + 2);
+    return true;
+  }
+
+  return false;
 }
 
 static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
@@ -128,6 +235,14 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   }
 
   FormatSpecifier FS;
+  if (ParseArgPosition(H, FS, Start, I, E))
+    return true;
+
+  if (I == E) {
+    // No more characters left?
+    H.HandleIncompleteFormatSpecifier(Start, E - Start);
+    return true;
+  }
 
   // Look for flags (if any).
   bool hasMore = true;
@@ -151,7 +266,9 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   }
 
   // Look for the field width (if any).
-  FS.setFieldWidth(ParseAmount(I, E, argIndex));
+  if (ParseFieldWidth(H, FS, Start, I, E,
+                      FS.usesPositionalArg() ? 0 : &argIndex))
+    return true;
 
   if (I == E) {
     // No more characters left?
@@ -167,7 +284,9 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
       return true;
     }
 
-    FS.setPrecision(ParseAmount(I, E, argIndex));
+    if (ParsePrecision(H, FS, Start, I, E,
+                       FS.usesPositionalArg() ? 0 : &argIndex))
+      return true;
 
     if (I == E) {
       // No more characters left?
@@ -245,7 +364,7 @@ static FormatSpecifierResult ParseFormatSpecifier(FormatStringHandler &H,
   }
   ConversionSpecifier CS(conversionPosition, k);
   FS.setConversionSpecifier(CS);
-  if (CS.consumesDataArgument())
+  if (CS.consumesDataArgument() && !FS.usesPositionalArg())
     FS.setArgIndex(argIndex++);
 
   if (k == ConversionSpecifier::InvalidSpecifier) {
