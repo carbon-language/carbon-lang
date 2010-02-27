@@ -580,7 +580,7 @@ public:
       return II->getName();
 
     // Resize the buffer if we need to copy into it.
-    if (!Tok.needsCleaning())
+    if (Tok.needsCleaning())
       Buffer.resize(Tok.getLength());
 
     const char *Ptr = Buffer.data();
