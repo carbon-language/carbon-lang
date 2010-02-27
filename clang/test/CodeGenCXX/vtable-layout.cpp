@@ -833,3 +833,38 @@ class F : virtual D, virtual E {
 void F::f() { }
 
 }
+
+namespace Test22 {
+
+// Very simple construction vtable test.
+struct V1 {
+  int v1;
+}; 
+
+struct V2 : virtual V1 {
+  int v2; 
+};
+
+// CHECK:      Vtable for 'Test22::C' (8 entries).
+// CHECK-NEXT:    0 | vbase_offset (16)
+// CHECK-NEXT:    1 | vbase_offset (12)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test22::C RTTI
+// CHECK-NEXT:        -- (Test22::C, 0) vtable address --
+// CHECK-NEXT:    4 | void Test22::C::f()
+// CHECK-NEXT:    5 | vbase_offset (-4)
+// CHECK-NEXT:    6 | offset_to_top (-16)
+// CHECK-NEXT:    7 | Test22::C RTTI
+
+// CHECK:      Construction vtable for ('Test22::V2', 16) in 'Test22::C' (3 entries).
+// CHECK-NEXT:    0 | vbase_offset (-4)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test22::V2 RTTI
+
+struct C : virtual V1, virtual V2 {
+  int c; 
+  virtual void f(); 
+};
+void C::f() { } 
+
+}

@@ -828,6 +828,15 @@ class VCallAndVBaseOffsetBuilder {
   /// vtable.
   const CXXRecordDecl *MostDerivedClass;
   
+  /// MostDerivedClassOffset - If we're building a construction vtable, this
+  /// holds the offset from the layout class to the most derived class.
+  const uint64_t MostDerivedClassOffset;
+  
+  /// LayoutClass - The class we're using for layout information. Will be 
+  /// different than the most derived class if we're building a construction
+  /// vtable.
+  const CXXRecordDecl *LayoutClass;
+  
   /// Context - The ASTContext which we will use for layout information.
   ASTContext &Context;
 
@@ -858,9 +867,12 @@ class VCallAndVBaseOffsetBuilder {
   
 public:
   VCallAndVBaseOffsetBuilder(const CXXRecordDecl *MostDerivedClass,
+                             uint64_t MostDerivedClassOffset,
+                             const CXXRecordDecl *LayoutClass,
                              const FinalOverriders *Overriders,
                              BaseSubobject Base, bool BaseIsVirtual)
-    : MostDerivedClass(MostDerivedClass), 
+    : MostDerivedClass(MostDerivedClass),
+    MostDerivedClassOffset(MostDerivedClassOffset), LayoutClass(LayoutClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(Overriders) {
       
     // Add vcall and vbase offsets.
@@ -1016,11 +1028,10 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   }
 }
 
-
 void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
                                                  int64_t OffsetToTop) {
-  const ASTRecordLayout &MostDerivedClassLayout = 
-    Context.getASTRecordLayout(MostDerivedClass);
+  const ASTRecordLayout &LayoutClassLayout = 
+    Context.getASTRecordLayout(LayoutClass);
 
   // Add vbase offsets.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -1032,8 +1043,11 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
     if (I->isVirtual() && VisitedVirtualBases.insert(BaseDecl)) {
       // FIXME: We shouldn't use / 8 here.
       uint64_t Offset = 
-        OffsetToTop + MostDerivedClassLayout.getVBaseClassOffset(BaseDecl) / 8;
+        OffsetToTop + LayoutClassLayout.getVBaseClassOffset(BaseDecl) / 8;
     
+      // The offset should be relative to the most derived class offset.
+      Offset -= MostDerivedClassOffset / 8;
+
       Components.push_back(VtableComponent::MakeVBaseOffset(Offset));
     }
     
@@ -1409,6 +1423,7 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
         // We don't have vcall offsets for this virtual base, go ahead and
         // build them.
         VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, 0,
+                                           MostDerivedClass, 0,
                                            BaseSubobject(Offset.VirtualBase, 0),
                                            /*BaseIsVirtual=*/true);
         
@@ -1673,7 +1688,8 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
   assert(Base.getBase()->isDynamicClass() && "class does not have a vtable!");
 
   // Add vcall and vbase offsets for this vtable.
-  VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, &Overriders,
+  VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, MostDerivedClassOffset,
+                                     LayoutClass, &Overriders,
                                      Base, BaseIsVirtual);
   Components.append(Builder.components_begin(), Builder.components_end());
   
