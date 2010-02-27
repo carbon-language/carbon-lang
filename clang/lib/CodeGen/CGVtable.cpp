@@ -971,7 +971,7 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
   }
 
   // FIXME: Don't use /8 here.
-  int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
+  int64_t OffsetToTop = -(int64_t)RealBaseOffset / 8;
   AddVBaseOffsets(Base.getBase(), OffsetToTop);
 
   // We only want to add vcall offsets for virtual bases.

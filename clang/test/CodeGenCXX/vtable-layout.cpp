@@ -787,3 +787,49 @@ struct C : A, B {
 void C::h() { }
 
 }
+
+namespace Test21 {
+
+// Test that we get vbase offsets right in secondary vtables.
+struct A { 
+  virtual void f();
+};
+
+struct B : virtual A { };
+class C : virtual B { };
+class D : virtual C { };
+
+class E : virtual C { };
+
+// CHECK:      Vtable for 'Test21::F' (16 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | vbase_offset (0)
+// CHECK-NEXT:    2 | vbase_offset (0)
+// CHECK-NEXT:    3 | vbase_offset (0)
+// CHECK-NEXT:    4 | vbase_offset (0)
+// CHECK-NEXT:    5 | vcall_offset (0)
+// CHECK-NEXT:    6 | offset_to_top (0)
+// CHECK-NEXT:    7 | Test21::F RTTI
+// CHECK-NEXT:        -- (Test21::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test21::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test21::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test21::D, 0) vtable address --
+// CHECK-NEXT:        -- (Test21::F, 0) vtable address --
+// CHECK-NEXT:    8 | void Test21::F::f()
+// CHECK-NEXT:    9 | vbase_offset (-8)
+// CHECK-NEXT:   10 | vbase_offset (-8)
+// CHECK-NEXT:   11 | vbase_offset (-8)
+// CHECK-NEXT:   12 | vcall_offset (-8)
+// CHECK-NEXT:   13 | offset_to_top (-8)
+// CHECK-NEXT:   14 | Test21::F RTTI
+// CHECK-NEXT:        -- (Test21::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test21::B, 8) vtable address --
+// CHECK-NEXT:        -- (Test21::C, 8) vtable address --
+// CHECK-NEXT:        -- (Test21::E, 8) vtable address --
+// CHECK-NEXT:   15 | [unused] void Test21::F::f()
+class F : virtual D, virtual E {
+  virtual void f();
+};
+void F::f() { }
+
+}
