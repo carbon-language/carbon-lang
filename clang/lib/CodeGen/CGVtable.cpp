@@ -16,6 +16,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
 #include <cstdio>
@@ -1098,9 +1099,11 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
 /// VtableBuilder - Class for building vtable layout information.
 class VtableBuilder {
 public:
-  /// PrimaryBasesSetTy - A set of direct and indirect primary bases.
-  typedef llvm::SmallPtrSet<const CXXRecordDecl *, 8> PrimaryBasesSetTy;
-
+  /// PrimaryBasesSetVectorTy - A set vector of direct and indirect 
+  /// primary bases.
+  typedef llvm::SmallSetVector<const CXXRecordDecl *, 8> 
+    PrimaryBasesSetVectorTy;
+  
 private:
   /// VtableInfo - Global vtable information.
   CGVtableInfo &VtableInfo;
@@ -1144,6 +1147,26 @@ private:
   llvm::SmallVector<std::pair<uint64_t, ReturnAdjustment>, 16> 
     ReturnAdjustments;
 
+  /// MethodInfo - Contains information about a method in a vtable.
+  /// (Used for computing 'this' pointer adjustment thunks.
+  struct MethodInfo {
+    /// BaseOffset - The base offset of this method.
+    const uint64_t BaseOffset;
+    
+    /// VtableIndex - The index in the vtable that this method has.
+    /// (For destructors, this is the index of the complete destructor).
+    const uint64_t VtableIndex;
+    
+    MethodInfo(uint64_t BaseOffset, uint64_t VtableIndex)
+      : BaseOffset(BaseOffset), VtableIndex(VtableIndex) { }
+  };
+  
+  typedef llvm::DenseMap<const CXXMethodDecl *, MethodInfo> MethodInfoMapTy;
+  
+  /// MethodInfoMap - The information for all methods in the vtable we're
+  /// currently building.
+  MethodInfoMapTy MethodInfoMap;
+  
   /// ThisAdjustment - A 'this' pointer adjustment thunk.
   struct ThisAdjustment {
     /// NonVirtual - The non-virtual adjustment from the derived object to its
@@ -1162,10 +1185,10 @@ private:
   /// ThisAdjustments - The 'this' pointer adjustments needed in this vtable.
   llvm::SmallVector<std::pair<uint64_t, ThisAdjustment>, 16> 
     ThisAdjustments;
-  
+
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
 
-  /// PrimaryVirtualBases - All known virtual bases who is a primary base of
+  /// PrimaryVirtualBases - All known virtual bases who are a primary base of
   /// some other base.
   VisitedVirtualBasesSetTy PrimaryVirtualBases;
 
@@ -1210,7 +1233,7 @@ private:
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
   void AddMethods(BaseSubobject Base, BaseSubobject FirstBaseInPrimaryBaseChain,
-                  PrimaryBasesSetTy &PrimaryBases);
+                  PrimaryBasesSetVectorTy &PrimaryBases);
 
   // LayoutVtable - Layout the vtable for the most derived class, including its
   // secondary vtables and any vtables for virtual bases.
@@ -1252,7 +1275,7 @@ public:
 /// Returns the overridden member function, or null if none was found.
 static const CXXMethodDecl * 
 OverridesMethodInBases(const CXXMethodDecl *MD,
-                       VtableBuilder::PrimaryBasesSetTy &Bases) {
+                       VtableBuilder::PrimaryBasesSetVectorTy &Bases) {
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
        E = MD->end_overridden_methods(); I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
@@ -1365,7 +1388,7 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
 /// and { A } as the set of  bases.
 static bool
 OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
-                               VtableBuilder::PrimaryBasesSetTy &Bases) {
+                               VtableBuilder::PrimaryBasesSetVectorTy &Bases) {
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
        E = MD->end_overridden_methods(); I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
@@ -1402,7 +1425,7 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
   if (Overrider.Method->getParent() == FirstBaseInPrimaryBaseChain.getBase())
     return true;
   
-  VtableBuilder::PrimaryBasesSetTy PrimaryBases;
+  VtableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
 
   const CXXRecordDecl *RD = FirstBaseInPrimaryBaseChain.getBase();
   PrimaryBases.insert(RD);
@@ -1444,7 +1467,7 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
 void 
 VtableBuilder::AddMethods(BaseSubobject Base, 
                           BaseSubobject FirstBaseInPrimaryBaseChain,
-                          PrimaryBasesSetTy &PrimaryBases) {
+                          PrimaryBasesSetVectorTy &PrimaryBases) {
   const CXXRecordDecl *RD = Base.getBase();
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -1573,14 +1596,14 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
   uint64_t AddressPoint = Components.size();
 
   // Now go through all virtual member functions and add them.
-  PrimaryBasesSetTy PrimaryBases;
+  PrimaryBasesSetVectorTy PrimaryBases;
   AddMethods(Base, Base, PrimaryBases);
 
   // Record the address point.
   AddressPoints.insert(std::make_pair(Base, AddressPoint));
   
   // Record the address points for all primary bases.
-  for (PrimaryBasesSetTy::const_iterator I = PrimaryBases.begin(),
+  for (PrimaryBasesSetVectorTy::const_iterator I = PrimaryBases.begin(),
        E = PrimaryBases.end(); I != E; ++I) {
     const CXXRecordDecl *BaseDecl = *I;
     
@@ -2973,7 +2996,7 @@ void CGVtableInfo::ComputeMethodVtableIndices(const CXXRecordDecl *RD) {
 
   // Collect all the primary bases, so we can check whether methods override
   // a method from the base.
-  VtableBuilder::PrimaryBasesSetTy PrimaryBases;
+  VtableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
   for (ASTRecordLayout::primary_base_info_iterator
        I = Layout.primary_base_begin(), E = Layout.primary_base_end();
        I != E; ++I)
