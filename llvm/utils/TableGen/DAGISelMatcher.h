@@ -104,6 +104,12 @@ public:
     return ((getHashImpl() << 4) ^ getKind()) & (~0U>>1);
   }
   
+  /// isSafeToReorderWithPatternPredicate - Return true if it is safe to sink a
+  /// PatternPredicate node past this one.
+  virtual bool isSafeToReorderWithPatternPredicate() const {
+    return false;
+  }
+  
   void print(raw_ostream &OS, unsigned indent = 0) const;
   void dump() const;
 protected:
@@ -173,6 +179,7 @@ public:
     return N->getKind() == RecordNode;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
@@ -199,6 +206,8 @@ public:
     return N->getKind() == RecordChild;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -216,6 +225,8 @@ public:
     return N->getKind() == RecordMemRef;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
@@ -233,6 +244,8 @@ public:
     return N->getKind() == CaptureFlagInput;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
@@ -252,6 +265,8 @@ public:
     return N->getKind() == MoveChild;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -270,6 +285,8 @@ public:
     return N->getKind() == MoveParent;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
@@ -291,6 +308,8 @@ public:
     return N->getKind() == CheckSame;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -314,6 +333,8 @@ public:
     return N->getKind() == CheckPatternPredicate;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -336,6 +357,9 @@ public:
     return N->getKind() == CheckPredicate;
   }
   
+  // TODO: Ok?
+  //virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -359,6 +383,8 @@ public:
     return N->getKind() == CheckOpcode;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -382,6 +408,8 @@ public:
     return N->getKind() == CheckMultiOpcode;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -406,6 +434,8 @@ public:
     return N->getKind() == CheckType;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -430,6 +460,8 @@ public:
     return N->getKind() == CheckChildType;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -454,6 +486,8 @@ public:
     return N->getKind() == CheckInteger;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -476,6 +510,8 @@ public:
     return N->getKind() == CheckCondCode;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -498,6 +534,8 @@ public:
     return N->getKind() == CheckValueType;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -522,6 +560,9 @@ public:
     return N->getKind() == CheckComplexPat;
   }
   
+  // Not safe to move a pattern predicate past a complex pattern.
+  virtual bool isSafeToReorderWithPatternPredicate() const { return false; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -546,6 +587,8 @@ public:
     return N->getKind() == CheckAndImm;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -568,6 +611,8 @@ public:
     return N->getKind() == CheckOrImm;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
@@ -587,6 +632,8 @@ public:
     return N->getKind() == CheckFoldableChainNode;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const { return true; }
@@ -607,6 +654,8 @@ public:
     return N->getKind() == CheckChainCompatible;
   }
   
+  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
+
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {

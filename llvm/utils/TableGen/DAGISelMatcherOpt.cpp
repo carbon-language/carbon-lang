@@ -16,6 +16,8 @@
 #include <vector>
 using namespace llvm;
 
+/// ContractNodes - Turn multiple matcher node patterns like 'MoveChild+Record'
+/// into single compound nodes like RecordChild.
 static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
   // If we reached the end of the chain, we're done.
   Matcher *N = MatcherPtr.get();
@@ -61,6 +63,71 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
   ContractNodes(N->getNextPtr());
 }
 
+/// SinkPatternPredicates - Pattern predicates can be checked at any level of
+/// the matching tree.  The generator dumps them at the top level of the pattern
+/// though, which prevents factoring from being able to see past them.  This
+/// optimization sinks them as far down into the pattern as possible.
+///
+/// Conceptually, we'd like to sink these predicates all the way to the last
+/// matcher predicate in the series.  However, it turns out that some
+/// ComplexPatterns have side effects on the graph, so we really don't want to
+/// run a the complex pattern if the pattern predicate will fail.  For this
+/// reason, we refuse to sink the pattern predicate past a ComplexPattern.
+///
+static void SinkPatternPredicates(OwningPtr<Matcher> &MatcherPtr) {
+  // Recursively scan for a PatternPredicate.
+  // If we reached the end of the chain, we're done.
+  Matcher *N = MatcherPtr.get();
+  if (N == 0) return;
+  
+  // Walk down all members of a scope node.
+  if (ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N)) {
+    for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
+      OwningPtr<Matcher> Child(Scope->takeChild(i));
+      SinkPatternPredicates(Child);
+      Scope->resetChild(i, Child.take());
+    }
+    return;
+  }
+  
+  // If this node isn't a CheckPatternPredicateMatcher we keep scanning until
+  // we find one.
+  CheckPatternPredicateMatcher *CPPM =dyn_cast<CheckPatternPredicateMatcher>(N);
+  if (CPPM == 0)
+    return SinkPatternPredicates(N->getNextPtr());
+  
+  // Ok, we found one, lets try to sink it. Check if we can sink it past the
+  // next node in the chain.  If not, we won't be able to change anything and
+  // might as well bail.
+  if (!CPPM->getNext()->isSafeToReorderWithPatternPredicate())
+    return;
+  
+  // Okay, we know we can sink it past at least one node.  Unlink it from the
+  // chain and scan for the new insertion point.
+  MatcherPtr.take();  // Don't delete CPPM.
+  MatcherPtr.reset(CPPM->takeNext());
+  
+  N = MatcherPtr.get();
+  while (N->getNext()->isSafeToReorderWithPatternPredicate())
+    N = N->getNext();
+  
+  // At this point, we want to insert CPPM after N.
+  CPPM->setNext(N->takeNext());
+  N->setNext(CPPM);
+}
+
+/// FactorNodes - Turn matches like this:
+///   Scope
+///     OPC_CheckType i32
+///       ABC
+///     OPC_CheckType i32
+///       XYZ
+/// into:
+///   OPC_CheckType i32
+///     Scope
+///       ABC
+///       XYZ
+///
 static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   // If we reached the end of the chain, we're done.
   Matcher *N = MatcherPtr.get();
@@ -145,6 +212,7 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
 Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher) {
   OwningPtr<Matcher> MatcherPtr(TheMatcher);
   ContractNodes(MatcherPtr);
+  SinkPatternPredicates(MatcherPtr);
   FactorNodes(MatcherPtr);
   return MatcherPtr.take();
 }
