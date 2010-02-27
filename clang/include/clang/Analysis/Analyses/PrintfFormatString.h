@@ -195,6 +195,9 @@ class FormatSpecifier {
   unsigned HasSpacePrefix : 1;
   unsigned HasAlternativeForm : 1;
   unsigned HasLeadingZeroes : 1;
+  /// Positional arguments, an IEEE extension:
+  ///  IEEE Std 1003.1, 2004 Edition
+  ///  http://www.opengroup.org/onlinepubs/009695399/functions/printf.html
   unsigned UsesPositionalArg : 1;
   unsigned argIndex;
   ConversionSpecifier CS;
