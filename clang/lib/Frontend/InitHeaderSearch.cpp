@@ -489,8 +489,10 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.3",
                                 "i686-pc-linux-gnu", "", "", triple);
     // Debian sid
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4.2",
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
                                 "x86_64-linux-gnu", "32", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
+                                "i486-linux-gnu", "64", "", triple);
     // Ubuntu 7.10 - Gutsy Gibbon
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.3",
                                 "i486-linux-gnu", "", "", triple);
