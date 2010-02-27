@@ -56,7 +56,7 @@ CAMLprim value llvm_get_module_provider(LLVMContextRef C,
   if (LLVMGetBitcodeModuleProviderInContext(C, MemBuf, &MP, &Message))
     llvm_raise(llvm_bitreader_error_exn, Message);
   
-  CAMLreturn((value) MemBuf);
+  CAMLreturn((value) MP);
 }
 
 /* Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule */
