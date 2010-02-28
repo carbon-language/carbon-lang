@@ -902,15 +902,6 @@ public:
     return VTs[i];
   }
 
-  /// getNumNonChainFlagVTs - Return the number of normal results that this node
-  /// will have, ignoring flag and chain results.
-  unsigned getNumNonChainFlagVTs() const {
-    for (unsigned i = 0, e = getNumVTs(); i != e; ++i)
-      if (VTs[i] == MVT::Flag || VTs[i] == MVT::Other)
-        return i;
-    return getNumVTs();
-  }
-  
   unsigned getNumOperands() const { return Operands.size(); }
   unsigned getOperand(unsigned i) const {
     assert(i < Operands.size());

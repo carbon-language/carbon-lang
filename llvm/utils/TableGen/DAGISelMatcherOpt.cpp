@@ -65,7 +65,9 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       MatcherPtr.reset(MP->takeNext());
       return ContractNodes(MatcherPtr, CGP);
     }
-  
+
+  // FIXME: Handle OPC_MarkFlagResults.
+
   // Turn EmitNode->CompleteMatch into MorphNodeTo if we can.
   if (EmitNodeMatcher *EN = dyn_cast<EmitNodeMatcher>(N))
     if (CompleteMatchMatcher *CM =
@@ -120,8 +122,6 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
         return;
       }
 
-      // FIXME: Handle OPC_MarkFlagResults.
-      
       // FIXME2: Kill off all the SelectionDAG::MorphNodeTo and getMachineNode
       // variants.
     }

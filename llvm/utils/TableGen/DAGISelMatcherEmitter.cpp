@@ -372,7 +372,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     
     // Print the result #'s for EmitNode.
     if (const EmitNodeMatcher *E = dyn_cast<EmitNodeMatcher>(EN)) {
-      if (unsigned NumResults = EN->getNumNonChainFlagVTs()) {
+      if (unsigned NumResults = EN->getNumVTs()) {
         OS.PadToColumn(CommentIndent) << "// Results = ";
         unsigned First = E->getFirstResultSlot();
         for (unsigned i = 0; i != NumResults; ++i)
