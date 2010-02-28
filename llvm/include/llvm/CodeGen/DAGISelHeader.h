@@ -167,11 +167,6 @@ bool CheckOrImmediate(SDValue V, int64_t Val) {
   return true;
 }
 
-void EmitInteger(int64_t Val, MVT::SimpleValueType VT,
-                 SmallVectorImpl<SDValue> &RecordedNodes) {
-  RecordedNodes.push_back(CurDAG->getTargetConstant(Val, VT));
-}
-
 // These functions are marked always inline so that Idx doesn't get pinned to
 // the stack.
 ALWAYS_INLINE static int8_t
@@ -186,28 +181,14 @@ GetInt2(const unsigned char *MatcherTable, unsigned &Idx) {
   return Val;
 }
 
-ALWAYS_INLINE static int32_t
-GetInt4(const unsigned char *MatcherTable, unsigned &Idx) {
-  int32_t Val = (uint16_t)GetInt2(MatcherTable, Idx);
-  Val |= int32_t(GetInt2(MatcherTable, Idx)) << 16;
-  return Val;
-}
-
-ALWAYS_INLINE static int64_t
-GetInt8(const unsigned char *MatcherTable, unsigned &Idx) {
-  int64_t Val = (uint32_t)GetInt4(MatcherTable, Idx);
-  Val |= int64_t(GetInt4(MatcherTable, Idx)) << 32;
-  return Val;
-}
-
 /// GetVBR - decode a vbr encoding whose top bit is set.
-ALWAYS_INLINE static unsigned
-GetVBR(unsigned Val, const unsigned char *MatcherTable, unsigned &Idx) {
+ALWAYS_INLINE static uint64_t
+GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
   assert(Val >= 128 && "Not a VBR");
   Val &= 127;  // Remove first vbr bit.
   
   unsigned Shift = 7;
-  unsigned NextBits;
+  uint64_t NextBits;
   do {
     NextBits = GetInt1(MatcherTable, Idx);
     Val |= (NextBits&127) << Shift;
@@ -501,44 +482,27 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       }
       continue;
     }
-    case OPC_CheckInteger1:
-      if (CheckInteger(N, GetInt1(MatcherTable, MatcherIndex))) break;
+    case OPC_CheckInteger: {
+      int64_t Val = MatcherTable[MatcherIndex++];
+      if (Val & 128)
+        Val = GetVBR(Val, MatcherTable, MatcherIndex);
+      if (CheckInteger(N, Val)) break;
       continue;
-    case OPC_CheckInteger2:
-      if (CheckInteger(N, GetInt2(MatcherTable, MatcherIndex))) break;
+    }        
+    case OPC_CheckAndImm: {
+      int64_t Val = MatcherTable[MatcherIndex++];
+      if (Val & 128)
+        Val = GetVBR(Val, MatcherTable, MatcherIndex);
+      if (CheckAndImmediate(N, Val)) break;
       continue;
-    case OPC_CheckInteger4:
-      if (CheckInteger(N, GetInt4(MatcherTable, MatcherIndex))) break;
+    }
+    case OPC_CheckOrImm: {
+      int64_t Val = MatcherTable[MatcherIndex++];
+      if (Val & 128)
+        Val = GetVBR(Val, MatcherTable, MatcherIndex);
+      if (CheckOrImmediate(N, Val)) break;
       continue;
-    case OPC_CheckInteger8:
-      if (CheckInteger(N, GetInt8(MatcherTable, MatcherIndex))) break;
-      continue;
-        
-    case OPC_CheckAndImm1:
-      if (CheckAndImmediate(N, GetInt1(MatcherTable, MatcherIndex))) break;
-      continue;
-    case OPC_CheckAndImm2:
-      if (CheckAndImmediate(N, GetInt2(MatcherTable, MatcherIndex))) break;
-      continue;
-    case OPC_CheckAndImm4:
-      if (CheckAndImmediate(N, GetInt4(MatcherTable, MatcherIndex))) break;
-      continue;
-    case OPC_CheckAndImm8:
-      if (CheckAndImmediate(N, GetInt8(MatcherTable, MatcherIndex))) break;
-      continue;
-
-    case OPC_CheckOrImm1:
-      if (CheckOrImmediate(N, GetInt1(MatcherTable, MatcherIndex))) break;
-      continue;
-    case OPC_CheckOrImm2:
-      if (CheckOrImmediate(N, GetInt2(MatcherTable, MatcherIndex))) break;
-      continue;
-    case OPC_CheckOrImm4:
-      if (CheckOrImmediate(N, GetInt4(MatcherTable, MatcherIndex))) break;
-      continue;
-    case OPC_CheckOrImm8:
-      if (CheckOrImmediate(N, GetInt8(MatcherTable, MatcherIndex))) break;
-      continue;
+    }
         
     case OPC_CheckFoldableChainNode: {
       assert(NodeStack.size() != 1 && "No parent node");
@@ -581,31 +545,15 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     }
         
-    case OPC_EmitInteger1: {
+    case OPC_EmitInteger: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      EmitInteger(GetInt1(MatcherTable, MatcherIndex), VT, RecordedNodes);
+      int64_t Val = MatcherTable[MatcherIndex++];
+      if (Val & 128)
+        Val = GetVBR(Val, MatcherTable, MatcherIndex);
+      RecordedNodes.push_back(CurDAG->getTargetConstant(Val, VT));
       continue;
     }
-    case OPC_EmitInteger2: {
-      MVT::SimpleValueType VT =
-        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      EmitInteger(GetInt2(MatcherTable, MatcherIndex), VT, RecordedNodes);
-      continue;
-    }
-    case OPC_EmitInteger4: {
-      MVT::SimpleValueType VT =
-        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      EmitInteger(GetInt4(MatcherTable, MatcherIndex), VT, RecordedNodes);
-      continue;
-    }
-    case OPC_EmitInteger8: {
-      MVT::SimpleValueType VT =
-       (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      EmitInteger(GetInt8(MatcherTable, MatcherIndex), VT, RecordedNodes);
-      continue;
-    }
-        
     case OPC_EmitRegister: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];

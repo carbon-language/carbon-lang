@@ -24,46 +24,6 @@ enum {
   CommentIndent = 30
 };
 
-/// ClassifyInt - Classify an integer by size, return '1','2','4','8' if this
-/// fits in 1, 2, 4, or 8 sign extended bytes.
-static char ClassifyInt(int64_t Val) {
-  if (Val == int8_t(Val))  return '1';
-  if (Val == int16_t(Val)) return '2';
-  if (Val == int32_t(Val)) return '4';
-  return '8';
-}
-
-/// EmitInt - Emit the specified integer, returning the number of bytes emitted.
-static unsigned EmitInt(int64_t Val, formatted_raw_ostream &OS) {
-  unsigned BytesEmitted = 1;
-  OS << (int)(unsigned char)Val << ", ";
-  if (Val == int8_t(Val)) {
-    OS << '\n';
-    return BytesEmitted;
-  }
-  
-  OS << (int)(unsigned char)(Val >> 8) << ", ";
-  ++BytesEmitted;
-  
-  if (Val != int16_t(Val)) {
-    OS << (int)(unsigned char)(Val >> 16) << ", "
-       << (int)(unsigned char)(Val >> 24) << ", ";
-    BytesEmitted += 2;
-    
-    if (Val != int32_t(Val)) {
-      OS << (int)(unsigned char)(Val >> 32) << ", "
-         << (int)(unsigned char)(Val >> 40) << ", "
-         << (int)(unsigned char)(Val >> 48) << ", "
-         << (int)(unsigned char)(Val >> 56) << ", ";
-      BytesEmitted += 4;
-    }   
-  }
-  
-  OS.PadToColumn(CommentIndent) << "// " << Val << " aka 0x";
-  OS.write_hex(Val) << '\n';
-  return BytesEmitted;
-}
-
 namespace {
 class MatcherTableEmitter {
   StringMap<unsigned> NodePredicateMap, PatternPredicateMap;
@@ -142,13 +102,13 @@ static unsigned GetVBRSize(unsigned Val) {
 
 /// EmitVBRValue - Emit the specified value as a VBR, returning the number of
 /// bytes emitted.
-static unsigned EmitVBRValue(unsigned Val, raw_ostream &OS) {
+static uint64_t EmitVBRValue(uint64_t Val, raw_ostream &OS) {
   if (Val <= 127) {
     OS << Val << ", ";
     return 1;
   }
   
-  unsigned InVal = Val;
+  uint64_t InVal = Val;
   unsigned NumBytes = 0;
   while (Val >= 128) {
     OS << (Val&127) << "|128,";
@@ -291,11 +251,9 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
        << getEnumName(cast<CheckChildTypeMatcher>(N)->getType()) << ",\n";
     return 2;
       
-  case Matcher::CheckInteger: {
-    int64_t Val = cast<CheckIntegerMatcher>(N)->getValue();
-    OS << "OPC_CheckInteger" << ClassifyInt(Val) << ", ";
-    return EmitInt(Val, OS)+1;
-  }   
+  case Matcher::CheckInteger:
+    OS << "OPC_CheckInteger, ";
+    return 1+EmitVBRValue(cast<CheckIntegerMatcher>(N)->getValue(), OS);
   case Matcher::CheckCondCode:
     OS << "OPC_CheckCondCode, ISD::"
        << cast<CheckCondCodeMatcher>(N)->getCondCodeName() << ",\n";
@@ -318,17 +276,14 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 2;
   }
       
-  case Matcher::CheckAndImm: {
-    int64_t Val = cast<CheckAndImmMatcher>(N)->getValue();
-    OS << "OPC_CheckAndImm" << ClassifyInt(Val) << ", ";
-    return EmitInt(Val, OS)+1;
-  }
+  case Matcher::CheckAndImm:
+    OS << "OPC_CheckAndImm, ";
+    return 1+EmitVBRValue(cast<CheckAndImmMatcher>(N)->getValue(), OS);
 
-  case Matcher::CheckOrImm: {
-    int64_t Val = cast<CheckOrImmMatcher>(N)->getValue();
-    OS << "OPC_CheckOrImm" << ClassifyInt(Val) << ", ";
-    return EmitInt(Val, OS)+1;
-  }
+  case Matcher::CheckOrImm:
+    OS << "OPC_CheckOrImm, ";
+    return 1+EmitVBRValue(cast<CheckOrImmMatcher>(N)->getValue(), OS);
+      
   case Matcher::CheckFoldableChainNode:
     OS << "OPC_CheckFoldableChainNode,\n";
     return 1;
@@ -339,14 +294,14 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       
   case Matcher::EmitInteger: {
     int64_t Val = cast<EmitIntegerMatcher>(N)->getValue();
-    OS << "OPC_EmitInteger" << ClassifyInt(Val) << ", "
+    OS << "OPC_EmitInteger, "
        << getEnumName(cast<EmitIntegerMatcher>(N)->getVT()) << ", ";
-    return EmitInt(Val, OS)+2;
+    return 2+EmitVBRValue(Val, OS);
   }
   case Matcher::EmitStringInteger: {
     const std::string &Val = cast<EmitStringIntegerMatcher>(N)->getValue();
     // These should always fit into one byte.
-    OS << "OPC_EmitInteger1, "
+    OS << "OPC_EmitInteger, "
       << getEnumName(cast<EmitStringIntegerMatcher>(N)->getVT()) << ", "
       << Val << ",\n";
     return 3;
