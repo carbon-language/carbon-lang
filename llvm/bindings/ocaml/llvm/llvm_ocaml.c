@@ -1204,18 +1204,6 @@ CAMLprim LLVMValueRef llvm_build_not(LLVMValueRef X,
 /*--... Memory .............................................................--*/
 
 /* lltype -> string -> llbuilder -> llvalue */
-CAMLprim LLVMValueRef llvm_build_malloc(LLVMTypeRef Ty,
-                                        value Name, value B) {
-  return LLVMBuildMalloc(Builder_val(B), Ty, String_val(Name));
-}
-
-/* lltype -> llvalue -> string -> llbuilder -> llvalue */
-CAMLprim LLVMValueRef llvm_build_array_malloc(LLVMTypeRef Ty, LLVMValueRef Size,
-                                              value Name, value B) {
-  return LLVMBuildArrayMalloc(Builder_val(B), Ty, Size, String_val(Name));
-}
-
-/* lltype -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_alloca(LLVMTypeRef Ty,
                                         value Name, value B) {
   return LLVMBuildAlloca(Builder_val(B), Ty, String_val(Name));
@@ -1225,11 +1213,6 @@ CAMLprim LLVMValueRef llvm_build_alloca(LLVMTypeRef Ty,
 CAMLprim LLVMValueRef llvm_build_array_alloca(LLVMTypeRef Ty, LLVMValueRef Size,
                                               value Name, value B) {
   return LLVMBuildArrayAlloca(Builder_val(B), Ty, Size, String_val(Name));
-}
-
-/* llvalue -> llbuilder -> llvalue */
-CAMLprim LLVMValueRef llvm_build_free(LLVMValueRef Pointer, value B) {
-  return LLVMBuildFree(Builder_val(B), Pointer);
 }
 
 /* llvalue -> string -> llbuilder -> llvalue */

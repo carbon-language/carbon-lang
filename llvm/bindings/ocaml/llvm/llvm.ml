@@ -745,15 +745,10 @@ external build_not : llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_not"
 
 (*--... Memory .............................................................--*)
-external build_malloc : lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_malloc"
-external build_array_malloc : lltype -> llvalue -> string -> llbuilder ->
-                              llvalue = "llvm_build_array_malloc"
 external build_alloca : lltype -> string -> llbuilder -> llvalue
                       = "llvm_build_alloca"
 external build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
                               llvalue = "llvm_build_array_alloca"
-external build_free : llvalue -> llbuilder -> llvalue = "llvm_build_free"
 external build_load : llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_load"
 external build_store : llvalue -> llvalue -> llbuilder -> llvalue

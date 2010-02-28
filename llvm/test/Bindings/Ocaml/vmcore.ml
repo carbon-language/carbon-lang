@@ -937,21 +937,15 @@ let test_builder () =
     let bb08 = append_block context "Bb08" fn in
     let b = builder_at_end context bb08 in
 
-    (* RUN: grep {Inst20.*malloc} < %t.ll
-     * RUN: grep {Inst21.*malloc} < %t.ll
-     * RUN: grep {Inst22.*alloca.*i32 } < %t.ll
+    (* RUN: grep {Inst22.*alloca.*i32 } < %t.ll
      * RUN: grep {Inst23.*alloca.*i32.*P2} < %t.ll
-     * RUN: grep {free.*Inst20} < %t.ll
-     * RUN: grep {Inst25.*load.*Inst21} < %t.ll
+     * RUN: grep {Inst25.*load.*Inst23} < %t.ll
      * RUN: grep {store.*P2.*Inst22} < %t.ll
      * RUN: grep {Inst27.*getelementptr.*Inst23.*P2} < %t.ll
      *)
-    let inst20 = build_malloc i8_type "Inst20" b in
-    let inst21 = build_array_malloc i8_type p1 "Inst21" b in
     let inst22 = build_alloca i32_type "Inst22" b in
     let inst23 = build_array_alloca i32_type p2 "Inst23" b in
-          ignore(build_free inst20 b);
-          ignore(build_load inst21 "Inst25" b);
+          ignore(build_load inst23 "Inst25" b);
           ignore(build_store p2 inst22 b);
           ignore(build_gep inst23 [| p2 |] "Inst27" b);
           ignore(build_unreachable b)

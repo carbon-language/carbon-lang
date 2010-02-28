@@ -1628,20 +1628,6 @@ external build_not : llvalue -> string -> llbuilder -> llvalue
 
 (** {7 Memory} *)
 
-(** [build_malloc ty name b] creates a
-    [%name = malloc %ty]
-    instruction at the position specified by the instruction builder [b].
-    See the method [llvm::LLVMBuilder::CreateAlloca]. *)
-external build_malloc : lltype -> string -> llbuilder -> llvalue
-                      = "llvm_build_malloc"
-
-(** [build_array_malloc ty n name b] creates a
-    [%name = malloc %ty, %n]
-    instruction at the position specified by the instruction builder [b].
-    See the method [llvm::LLVMBuilder::CreateMalloc]. *)
-external build_array_malloc : lltype -> llvalue -> string -> llbuilder ->
-                              llvalue = "llvm_build_array_malloc"
-
 (** [build_alloca ty name b] creates a
     [%name = alloca %ty]
     instruction at the position specified by the instruction builder [b].
@@ -1655,12 +1641,6 @@ external build_alloca : lltype -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateAlloca]. *)
 external build_array_alloca : lltype -> llvalue -> string -> llbuilder ->
                               llvalue = "llvm_build_array_alloca"
-
-(** [build_free v b] creates a
-    [free %v]
-    instruction at the position specified by the instruction builder [b].
-    See the method [llvm::LLVMBuilder::CreateFree]. *)
-external build_free : llvalue -> llbuilder -> llvalue = "llvm_build_free"
 
 (** [build_load v name b] creates a
     [%name = load %v]
