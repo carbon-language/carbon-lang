@@ -42,7 +42,7 @@ bool CallInliner::EvalCallExpr(CheckerContext &C, const CallExpr *CE) {
   if (!FD)
     return false;
 
-  if (!FD->isThisDeclarationADefinition())
+  if (!FD->getBody(FD))
     return false;
 
   // Now we have the definition of the callee, create a CallEnter node.
