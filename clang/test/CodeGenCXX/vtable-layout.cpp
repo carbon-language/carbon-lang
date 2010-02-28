@@ -921,3 +921,46 @@ struct D : virtual A, virtual B, C {
 void D::f() { } 
 
 }
+
+namespace Test24 {
+
+// Another construction vtable test.
+
+// CHECK:      Vtable for 'Test24::D' (10 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test24::D RTTI
+// CHECK-NEXT:        -- (Test24::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test24::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test24::D, 0) vtable address --
+// CHECK-NEXT:    4 | void Test24::D::f()
+// CHECK-NEXT:    5 | vbase_offset (-8)
+// CHECK-NEXT:    6 | vcall_offset (-8)
+// CHECK-NEXT:    7 | offset_to_top (-8)
+// CHECK-NEXT:    8 | Test24::D RTTI
+// CHECK-NEXT:        -- (Test24::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test24::C, 8) vtable address --
+// CHECK-NEXT:    9 | [unused] void Test24::D::f()
+
+// CHECK:      Construction vtable for ('Test24::B', 0) in 'Test24::D' (5 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test24::B RTTI
+// CHECK-NEXT:        -- (Test24::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test24::B, 0) vtable address --
+// CHECK-NEXT:    4 | void Test24::A::f()
+
+struct A {
+  virtual void f();
+};
+
+struct B : virtual A { };
+struct C : virtual A { };
+
+struct D : B, C {
+  virtual void f();
+};
+void D::f() { }
+}
