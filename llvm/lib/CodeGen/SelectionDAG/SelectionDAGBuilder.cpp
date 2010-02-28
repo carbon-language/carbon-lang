@@ -849,14 +849,12 @@ void SelectionDAGBuilder::visitRet(ReturnInst &I) {
 
     Chain = DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
                         MVT::Other, &Chains[0], NumValues);
-  } else {
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-      SmallVector<EVT, 4> ValueVTs;
-      ComputeValueVTs(TLI, I.getOperand(i)->getType(), ValueVTs);
-      unsigned NumValues = ValueVTs.size();
-      if (NumValues == 0) continue;
-
-      SDValue RetOp = getValue(I.getOperand(i));
+  } else if (I.getNumOperands() != 0) {
+    SmallVector<EVT, 4> ValueVTs;
+    ComputeValueVTs(TLI, I.getOperand(0)->getType(), ValueVTs);
+    unsigned NumValues = ValueVTs.size();
+    if (NumValues) {
+      SDValue RetOp = getValue(I.getOperand(0));
       for (unsigned j = 0, f = NumValues; j != f; ++j) {
         EVT VT = ValueVTs[j];
 
