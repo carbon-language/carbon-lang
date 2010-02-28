@@ -1479,20 +1479,6 @@ static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
 }
 
 
-// These functions are marked always inline so that Idx doesn't get pinned to
-// the stack.
-ALWAYS_INLINE static int8_t
-GetInt1(const unsigned char *MatcherTable, unsigned &Idx) {
-  return MatcherTable[Idx++];
-}
-
-ALWAYS_INLINE static int16_t
-GetInt2(const unsigned char *MatcherTable, unsigned &Idx) {
-  int16_t Val = (uint8_t)GetInt1(MatcherTable, Idx);
-  Val |= int16_t(GetInt1(MatcherTable, Idx)) << 8;
-  return Val;
-}
-
 /// GetVBR - decode a vbr encoding whose top bit is set.
 ALWAYS_INLINE static uint64_t
 GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
@@ -1502,7 +1488,7 @@ GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
   unsigned Shift = 7;
   uint64_t NextBits;
   do {
-    NextBits = GetInt1(MatcherTable, Idx);
+    NextBits = MatcherTable[Idx++];
     Val |= (NextBits&127) << Shift;
     Shift += 7;
   } while (NextBits & 128);
@@ -2035,7 +2021,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         
     case OPC_EmitNode:
     case OPC_MorphNodeTo: {
-      uint16_t TargetOpc = GetInt2(MatcherTable, MatcherIndex);
+      uint16_t TargetOpc = MatcherTable[MatcherIndex++];
+      TargetOpc |= (unsigned short)MatcherTable[MatcherIndex++] << 8;
       unsigned EmitNodeInfo = MatcherTable[MatcherIndex++];
       // Get the result VT list.
       unsigned NumVTs = MatcherTable[MatcherIndex++];
