@@ -390,9 +390,9 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   }
       
   case Matcher::EmitNode:
-  case Matcher::SelectNodeTo: {
+  case Matcher::MorphNodeTo: {
     const EmitNodeMatcherCommon *EN = cast<EmitNodeMatcherCommon>(N);
-    OS << (isa<EmitNodeMatcher>(EN) ? "OPC_EmitNode" : "OPC_SelectNodeTo");
+    OS << (isa<EmitNodeMatcher>(EN) ? "OPC_EmitNode" : "OPC_MorphNodeTo");
     OS << ", TARGET_OPCODE(" << EN->getOpcodeName() << "), 0";
     
     if (EN->hasChain())   OS << "|OPFL_Chain";
@@ -425,7 +425,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     }
     OS << '\n';
     
-    if (const SelectNodeToMatcher *SNT = dyn_cast<SelectNodeToMatcher>(N)) {
+    if (const MorphNodeToMatcher *SNT = dyn_cast<MorphNodeToMatcher>(N)) {
       OS.PadToColumn(Indent*2) << "// Src: "
       << *SNT->getPattern().getSrcPattern() << '\n';
       OS.PadToColumn(Indent*2) << "// Dst: " 
@@ -585,7 +585,7 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
     case Matcher::EmitMergeInputChains: OS << "OPC_EmitMergeInputChains"; break;
     case Matcher::EmitCopyToReg: OS << "OPC_EmitCopyToReg"; break;
     case Matcher::EmitNode: OS << "OPC_EmitNode"; break;
-    case Matcher::SelectNodeTo: OS << "OPC_SelectNodeTo"; break;
+    case Matcher::MorphNodeTo: OS << "OPC_MorphNodeTo"; break;
     case Matcher::EmitNodeXForm: OS << "OPC_EmitNodeXForm"; break;
     case Matcher::MarkFlagResults: OS << "OPC_MarkFlagResults"; break;
     case Matcher::CompleteMatch: OS << "OPC_CompleteMatch"; break;    

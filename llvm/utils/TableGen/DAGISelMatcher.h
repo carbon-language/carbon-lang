@@ -76,7 +76,7 @@ public:
     EmitNodeXForm,        // Run a SDNodeXForm
     MarkFlagResults,      // Indicate which interior nodes have flag results.
     CompleteMatch,        // Finish a match and update the results.
-    SelectNodeTo          // Build a node, finish a match and update results.
+    MorphNodeTo           // Build a node, finish a match and update results.
   };
   const KindTy Kind;
 
@@ -871,7 +871,7 @@ private:
 };
   
 /// EmitNodeMatcherCommon - Common class shared between EmitNode and
-/// SelectNodeTo.
+/// MorphNodeTo.
 class EmitNodeMatcherCommon : public Matcher {
   std::string OpcodeName;
   const SmallVector<MVT::SimpleValueType, 3> VTs;
@@ -887,8 +887,8 @@ public:
                         const MVT::SimpleValueType *vts, unsigned numvts,
                         const unsigned *operands, unsigned numops,
                         bool hasChain, bool hasFlag, bool hasmemrefs,
-                        int numfixedarityoperands, bool isSelectNodeTo)
-    : Matcher(isSelectNodeTo ? SelectNodeTo : EmitNode), OpcodeName(opcodeName),
+                        int numfixedarityoperands, bool isMorphNodeTo)
+    : Matcher(isMorphNodeTo ? MorphNodeTo : EmitNode), OpcodeName(opcodeName),
       VTs(vts, vts+numvts), Operands(operands, operands+numops),
       HasChain(hasChain), HasFlag(hasFlag), HasMemRefs(hasmemrefs),
       NumFixedArityOperands(numfixedarityoperands) {}
@@ -926,7 +926,7 @@ public:
   int getNumFixedArityOperands() const { return NumFixedArityOperands; }
   
   static inline bool classof(const Matcher *N) {
-    return N->getKind() == EmitNode || N->getKind() == SelectNodeTo;
+    return N->getKind() == EmitNode || N->getKind() == MorphNodeTo;
   }
   
 private:
@@ -956,14 +956,14 @@ public:
   
 };
   
-class SelectNodeToMatcher : public EmitNodeMatcherCommon {
+class MorphNodeToMatcher : public EmitNodeMatcherCommon {
   const PatternToMatch &Pattern;
 public:
-  SelectNodeToMatcher(const std::string &opcodeName,
-                      const MVT::SimpleValueType *vts, unsigned numvts,
-                      const unsigned *operands, unsigned numops,
-                      bool hasChain, bool hasFlag, bool hasmemrefs,
-                      int numfixedarityoperands, const PatternToMatch &pattern)
+  MorphNodeToMatcher(const std::string &opcodeName,
+                     const MVT::SimpleValueType *vts, unsigned numvts,
+                     const unsigned *operands, unsigned numops,
+                     bool hasChain, bool hasFlag, bool hasmemrefs,
+                     int numfixedarityoperands, const PatternToMatch &pattern)
     : EmitNodeMatcherCommon(opcodeName, vts, numvts, operands, numops, hasChain,
                             hasFlag, hasmemrefs, numfixedarityoperands, true),
       Pattern(pattern) {
@@ -972,7 +972,7 @@ public:
   const PatternToMatch &getPattern() const { return Pattern; }
 
   static inline bool classof(const Matcher *N) {
-    return N->getKind() == SelectNodeTo;
+    return N->getKind() == MorphNodeTo;
   }
 };
   

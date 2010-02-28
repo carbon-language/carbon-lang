@@ -66,11 +66,11 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       return ContractNodes(MatcherPtr, CGP);
     }
   
-  // Turn EmitNode->CompleteMatch into SelectNodeTo if we can.
+  // Turn EmitNode->CompleteMatch into MorphNodeTo if we can.
   if (EmitNodeMatcher *EN = dyn_cast<EmitNodeMatcher>(N))
     if (CompleteMatchMatcher *CM =
           dyn_cast<CompleteMatchMatcher>(EN->getNext())) {
-      // We can only use SelectNodeTo if the result values match up.
+      // We can only use MorphNodeTo if the result values match up.
       unsigned RootResultFirst = EN->getFirstResultSlot();
       bool ResultsMatch = true;
       for (unsigned i = 0, e = CM->getNumResults(); i != e; ++i)
@@ -78,7 +78,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
           ResultsMatch = false;
       
       // If the selected node defines a subset of the flag/chain results, we
-      // can't use SelectNodeTo.  For example, we can't use SelectNodeTo if the
+      // can't use MorphNodeTo.  For example, we can't use MorphNodeTo if the
       // matched pattern has a chain but the root node doesn't.
       const PatternToMatch &Pattern = CM->getPattern();
       
@@ -87,7 +87,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
         ResultsMatch = false;
 
       // If the matched node has a flag and the output root doesn't, we can't
-      // use SelectNodeTo.
+      // use MorphNodeTo.
       //
       // NOTE: Strictly speaking, we don't have to check for the flag here
       // because the code in the pattern generator doesn't handle it right.  We
@@ -109,20 +109,20 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       if (ResultsMatch) {
         const SmallVectorImpl<MVT::SimpleValueType> &VTs = EN->getVTList();
         const SmallVectorImpl<unsigned> &Operands = EN->getOperandList();
-        MatcherPtr.reset(new SelectNodeToMatcher(EN->getOpcodeName(),
-                                                 &VTs[0], VTs.size(),
-                                               Operands.data(), Operands.size(),
-                                                 EN->hasChain(), EN->hasFlag(),
-                                                 EN->hasMemRefs(),
-                                                 EN->getNumFixedArityOperands(),
-                                                 Pattern));
+        MatcherPtr.reset(new MorphNodeToMatcher(EN->getOpcodeName(),
+                                                &VTs[0], VTs.size(),
+                                                Operands.data(),Operands.size(),
+                                                EN->hasChain(), EN->hasFlag(),
+                                                EN->hasMemRefs(),
+                                                EN->getNumFixedArityOperands(),
+                                                Pattern));
         return;
       }
 
       // FIXME: Handle OPC_MarkFlagResults.
       
-      // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
-      // variants.  Call MorphNodeTo instead of SelectNodeTo.
+      // FIXME2: Kill off all the SelectionDAG::MorphNodeTo and getMachineNode
+      // variants.
     }
   
   ContractNodes(N->getNextPtr(), CGP);

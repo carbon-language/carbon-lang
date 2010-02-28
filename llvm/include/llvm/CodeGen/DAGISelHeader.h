@@ -223,7 +223,7 @@ void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
                           const SmallVectorImpl<SDNode*> &ChainNodesMatched,
                           SDValue InputFlag,
                           const SmallVectorImpl<SDNode*>&FlagResultNodesMatched,
-                          bool isSelectNodeTo) {
+                          bool isMorphNodeTo) {
   // Now that all the normal results are replaced, we replace the chain and
   // flag results if present.
   if (!ChainNodesMatched.empty()) {
@@ -235,8 +235,8 @@ void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
       SDNode *ChainNode = ChainNodesMatched[i];
       
       // Don't replace the results of the root node if we're doing a
-      // SelectNodeTo.
-      if (ChainNode == NodeToMatch && isSelectNodeTo)
+      // MorphNodeTo.
+      if (ChainNode == NodeToMatch && isMorphNodeTo)
         continue;
       
       SDValue ChainVal = SDValue(ChainNode, ChainNode->getNumValues()-1);
@@ -297,7 +297,7 @@ enum BuiltinOpcodes {
   OPC_EmitCopyToReg,
   OPC_EmitNodeXForm,
   OPC_EmitNode,
-  OPC_SelectNodeTo,
+  OPC_MorphNodeTo,
   OPC_MarkFlagResults,
   OPC_CompleteMatch
 };
@@ -788,7 +788,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     }
         
     case OPC_EmitNode:
-    case OPC_SelectNodeTo: {
+    case OPC_MorphNodeTo: {
       uint16_t TargetOpc = GetInt2(MatcherTable, MatcherIndex);
       unsigned EmitNodeInfo = MatcherTable[MatcherIndex++];
       // Get the result VT list.
@@ -842,13 +842,13 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       // Create the node.
       SDNode *Res = 0;
-      if (Opcode == OPC_SelectNodeTo) {
-        // It is possible we're using SelectNodeTo to replace a node with no
+      if (Opcode == OPC_MorphNodeTo) {
+        // It is possible we're using MorphNodeTo to replace a node with no
         // normal results with one that has a normal result (or we could be
         // adding a chain) and the input could have flags and chains as well.
         // In this case we need to shifting the operands down.
         // FIXME: This is a horrible hack and broken in obscure cases, no worse
-        // than the old isel though.  We should sink this into SelectNodeTo.
+        // than the old isel though.  We should sink this into MorphNodeTo.
         int OldFlagResultNo = -1, OldChainResultNo = -1;
         
         unsigned NTMNumResults = NodeToMatch->getNumValues();
@@ -860,8 +860,11 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         } else if (NodeToMatch->getValueType(NTMNumResults-1) == MVT::Other)
           OldChainResultNo = NTMNumResults-1;
         
-        Res = CurDAG->SelectNodeTo(NodeToMatch, TargetOpc, VTList,
-                                   Ops.data(), Ops.size());
+        Res = CurDAG->MorphNodeTo(NodeToMatch, ~TargetOpc, VTList,
+                                  Ops.data(), Ops.size());
+        // Reset the node ID, to the isel, this should be just like a newly
+        // allocated machine node.
+        Res->setNodeId(-1);
         
         // FIXME: Whether the selected node has a flag result should come from
         // flags on the node.
@@ -915,11 +918,11 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       }
       
       DEBUG(errs() << "  "
-                   << (Opcode == OPC_SelectNodeTo ? "Selected" : "Created")
+                   << (Opcode == OPC_MorphNodeTo ? "Morphed" : "Created")
                    << " node: "; Res->dump(CurDAG); errs() << "\n");
       
-      // If this was a SelectNodeTo then we're completely done!
-      if (Opcode == OPC_SelectNodeTo) {
+      // If this was a MorphNodeTo then we're completely done!
+      if (Opcode == OPC_MorphNodeTo) {
         // Update chain and flag uses.
         UpdateChainsAndFlags(NodeToMatch, InputChain, ChainNodesMatched,
                              InputFlag, FlagResultNodesMatched, true);

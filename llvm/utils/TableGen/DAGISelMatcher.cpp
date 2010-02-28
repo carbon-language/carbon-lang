@@ -176,7 +176,7 @@ void EmitNodeXFormMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 
 void EmitNodeMatcherCommon::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent);
-  OS << (isa<SelectNodeToMatcher>(this) ? "SelectNodeTo: " : "EmitNode: ")
+  OS << (isa<MorphNodeToMatcher>(this) ? "MorphNodeTo: " : "EmitNode: ")
      << OpcodeName << ": <todo flags> ";
 
   for (unsigned i = 0, e = VTs.size(); i != e; ++i)
