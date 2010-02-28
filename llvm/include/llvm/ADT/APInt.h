@@ -150,7 +150,17 @@ class APInt {
     return isSingleWord() ? VAL : pVal[whichWord(bitPosition)];
   }
 
+  /// Converts a string into a number.  The string must be non-empty
+  /// and well-formed as a number of the given base. The bit-width
+  /// must be sufficient to hold the result.
+  ///
   /// This is used by the constructors that take string arguments.
+  ///
+  /// StringRef::getAsInteger is superficially similar but (1) does
+  /// not assume that the string is well-formed and (2) grows the
+  /// result to hold the input.
+  ///
+  /// @param radix 2, 8, 10, or 16
   /// @brief Convert a char array into an APInt
   void fromString(unsigned numBits, const StringRef &str, uint8_t radix);
 
@@ -570,6 +580,21 @@ public:
   /// @returns *this after ORing with RHS.
   /// @brief Bitwise OR assignment operator.
   APInt& operator|=(const APInt& RHS);
+
+  /// Performs a bitwise OR operation on this APInt and RHS. RHS is
+  /// logically zero-extended or truncated to match the bit-width of
+  /// the LHS.
+  /// 
+  /// @brief Bitwise OR assignment operator.
+  APInt& operator|=(uint64_t RHS) {
+    if (isSingleWord()) {
+      VAL |= RHS;
+      clearUnusedBits();
+    } else {
+      pVal[0] |= RHS;
+    }
+    return *this;
+  }
 
   /// Performs a bitwise XOR operation on this APInt and RHS. The result is
   /// assigned to *this.
