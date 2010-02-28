@@ -966,8 +966,15 @@ struct C : virtual A { };
 // CHECK-NEXT:    3 | Test24::C RTTI
 // CHECK-NEXT:        -- (Test24::A, 8) vtable address --
 // CHECK-NEXT:        -- (Test24::C, 8) vtable address --
+// CHECK-NEXT:    4 | [unused] void Test24::A::f()
+// CHECK-NEXT:    5 | vcall_offset (0)
+// CHECK-NEXT: 6 | offset_to_top (8)
+// CHECK-NEXT: 7 | Test24::C RTTI
+// CHECK-NEXT:     -- (Test24::A, 0) vtable address --
+// CHECK-NEXT: 8 | void Test24::A::f()
 struct D : B, C {
   virtual void f();
 };
 void D::f() { }
+
 }

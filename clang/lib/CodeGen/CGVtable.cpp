@@ -1203,11 +1203,13 @@ private:
   ///   necessary.
   bool IsOverriderUsed(BaseSubobject Base, 
                        BaseSubobject FirstBaseInPrimaryBaseChain,
+                       uint64_t OffsetInLayoutClass,
                        FinalOverriders::OverriderInfo Overrider) const;
   
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
   void AddMethods(BaseSubobject Base, BaseSubobject FirstBaseInPrimaryBaseChain,
+                  uint64_t OffsetInLayoutClass,
                   PrimaryBasesSetVectorTy &PrimaryBases);
 
   // LayoutVtable - Layout the vtable for the given base class, including its
@@ -1501,10 +1503,11 @@ OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
 bool 
 VtableBuilder::IsOverriderUsed(BaseSubobject Base, 
                                BaseSubobject FirstBaseInPrimaryBaseChain,
+                               uint64_t OffsetInLayoutClass,
                                FinalOverriders::OverriderInfo Overrider) const {
   // If the base and the first base in the primary base chain have the same
   // offsets, then this overrider will be used.
-  if (Base.getBaseOffset() == FirstBaseInPrimaryBaseChain.getBaseOffset())
+  if (Base.getBaseOffset() == OffsetInLayoutClass)
    return true;
 
   // We know now that Base (or a direct or indirect base of it) is a primary
@@ -1534,13 +1537,13 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
       assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 && 
              "Primary base should always be at offset 0!");
 
-      const ASTRecordLayout &MostDerivedClassLayout = 
-        Context.getASTRecordLayout(MostDerivedClass);
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
 
       // Now check if this is the primary base that is not a primary base in the
       // most derived class.
-      if (MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase) !=
-          FirstBaseInPrimaryBaseChain.getBaseOffset()) {
+      if (LayoutClassLayout.getVBaseClassOffset(PrimaryBase) !=
+          OffsetInLayoutClass) {
         // We found it, stop walking the chain.
         break;
       }
@@ -1585,6 +1588,7 @@ FindNearestOverriddenMethod(const CXXMethodDecl *MD,
 void 
 VtableBuilder::AddMethods(BaseSubobject Base, 
                           BaseSubobject FirstBaseInPrimaryBaseChain,
+                          uint64_t OffsetInLayoutClass,                          
                           PrimaryBasesSetVectorTy &PrimaryBases) {
   const CXXRecordDecl *RD = Base.getBase();
 
@@ -1606,9 +1610,10 @@ VtableBuilder::AddMethods(BaseSubobject Base,
 
       BaseOffset = Base.getBaseOffset();
     }
-    
+
+    // FIXME: OffsetInLayoutClass is not right here.
     AddMethods(BaseSubobject(PrimaryBase, BaseOffset), 
-               FirstBaseInPrimaryBaseChain, PrimaryBases);
+               FirstBaseInPrimaryBaseChain, OffsetInLayoutClass, PrimaryBases);
     
     if (!PrimaryBases.insert(PrimaryBase))
       assert(false && "Found a duplicate primary base!");
@@ -1659,7 +1664,8 @@ VtableBuilder::AddMethods(BaseSubobject Base,
     MethodInfoMap.insert(std::make_pair(MD, MethodInfo));
 
     // Check if this overrider is going to be used.
-    if (!IsOverriderUsed(Base, FirstBaseInPrimaryBaseChain, Overrider)) {
+    if (!IsOverriderUsed(Base, FirstBaseInPrimaryBaseChain, OffsetInLayoutClass,
+                         Overrider)) {
       const CXXMethodDecl *OverriderMD = Overrider.Method;
       Components.push_back(VtableComponent::MakeUnusedFunction(OverriderMD));
       continue;
@@ -1722,7 +1728,9 @@ VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetVectorTy PrimaryBases;
-  AddMethods(Base, Base, PrimaryBases);
+  printf("adding methods, offset in layout class is %llu\n", 
+         OffsetInLayoutClass);
+  AddMethods(Base, Base, OffsetInLayoutClass, PrimaryBases);
 
   // Compute 'this' pointer adjustments.
   ComputeThisAdjustments();
