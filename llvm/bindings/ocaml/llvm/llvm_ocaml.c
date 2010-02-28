@@ -164,6 +164,18 @@ CAMLprim value llvm_delete_type_name(value Name, LLVMModuleRef M) {
   return Val_unit;
 }
 
+/* llmodule -> string -> lltype option */
+CAMLprim value llvm_type_by_name(LLVMModuleRef M, value Name) {
+  CAMLparam1(Name);
+  LLVMTypeRef T;
+  if ((T = LLVMGetTypeByName(M, String_val(Name)))) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = (value) T;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
+}
+
 /* llmodule -> unit */
 CAMLprim value llvm_dump_module(LLVMModuleRef M) {
   LLVMDumpModule(M);

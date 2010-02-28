@@ -185,6 +185,14 @@ let test_types () =
   let ty = opaque_type context in
   insist (define_type_name "delete_type" ty m);
   delete_type_name "delete_type" m;
+
+  (* RUN: grep {type_name.*opaque} < %t.ll
+   *)
+  group "type_name"; begin
+    let ty = opaque_type context in
+    insist (define_type_name "type_name" ty m);
+    insist ((type_by_name m "type_name") = Some ty)
+  end;
   
   (* RUN: grep -v {recursive_type.*recursive_type} < %t.ll
    *)

@@ -274,6 +274,11 @@ external define_type_name : string -> lltype -> llmodule -> bool
 external delete_type_name : string -> llmodule -> unit
                           = "llvm_delete_type_name"
 
+(** [type_by_name m n] returns the type in the module [m] named [n], or [None]
+    if it does not exist. See the method [llvm::Module::getTypeByName]. *)
+external type_by_name : llmodule -> string -> lltype option
+                      = "llvm_type_by_name"
+
 (** [dump_module m] prints the .ll representation of the module [m] to standard
     error. See the method [llvm::Module::dump]. *)
 external dump_module : llmodule -> unit = "llvm_dump_module"
