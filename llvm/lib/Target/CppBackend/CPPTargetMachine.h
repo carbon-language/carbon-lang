@@ -30,7 +30,8 @@ struct CPPTargetMachine : public TargetMachine {
   virtual bool addPassesToEmitWholeFile(PassManager &PM,
                                         formatted_raw_ostream &Out,
                                         CodeGenFileType FileType,
-                                        CodeGenOpt::Level OptLevel);
+                                        CodeGenOpt::Level OptLevel,
+                                        bool DisableVerify);
 
   virtual const TargetData *getTargetData() const { return 0; }
 };

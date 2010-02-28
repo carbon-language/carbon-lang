@@ -38,7 +38,8 @@ namespace llvm {
     virtual bool addPassesToEmitWholeFile(PassManager &PM,
                                           formatted_raw_ostream &Out,
                                           CodeGenFileType FileType,
-                                          CodeGenOpt::Level OptLevel);
+                                          CodeGenOpt::Level OptLevel,
+                                          bool DisableVerify);
 
     virtual const TargetData *getTargetData() const { return 0; }
   };
@@ -1688,7 +1689,8 @@ void MSILWriter::printExternals() {
 bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM,
                                           formatted_raw_ostream &o,
                                           CodeGenFileType FileType,
-                                          CodeGenOpt::Level OptLevel)
+                                          CodeGenOpt::Level OptLevel,
+                                          bool DisableVerify)
 {
   if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
   MSILWriter* Writer = new MSILWriter(o);

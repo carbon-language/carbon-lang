@@ -190,7 +190,8 @@ public:
   virtual bool addPassesToEmitFile(PassManagerBase &,
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
-                                   CodeGenOpt::Level) {
+                                   CodeGenOpt::Level,
+                                   bool DisableVerify = true) {
     return true;
   }
 
@@ -202,7 +203,8 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &,
                                           JITCodeEmitter &,
-                                          CodeGenOpt::Level) {
+                                          CodeGenOpt::Level,
+                                          bool DisableVerify = true) {
     return true;
   }
 
@@ -212,7 +214,8 @@ public:
   virtual bool WantsWholeFile() const { return false; }
   virtual bool addPassesToEmitWholeFile(PassManager &, formatted_raw_ostream &,
                                         CodeGenFileType,
-                                        CodeGenOpt::Level) {
+                                        CodeGenOpt::Level,
+                                        bool DisableVerify = true) {
     return true;
   }
 };
@@ -227,7 +230,8 @@ protected: // Can only create subclasses.
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
   /// both emitting to assembly files or machine code output.
   ///
-  bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level);
+  bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level,
+                              bool DisableVerify);
 
 private:
   virtual void setCodeModelForJIT();
@@ -242,7 +246,8 @@ public:
   virtual bool addPassesToEmitFile(PassManagerBase &PM,
                                    formatted_raw_ostream &Out,
                                    CodeGenFileType FileType,
-                                   CodeGenOpt::Level);
+                                   CodeGenOpt::Level,
+                                   bool DisableVerify = true);
   
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a JITCodeEmitter object to handle
@@ -252,7 +257,8 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
                                           JITCodeEmitter &MCE,
-                                          CodeGenOpt::Level);
+                                          CodeGenOpt::Level,
+                                          bool DisableVerify = true);
   
   /// Target-Independent Code Generator Pass Configuration Options.
   

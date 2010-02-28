@@ -2009,7 +2009,8 @@ char CppWriter::ID = 0;
 bool CPPTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
                                                 formatted_raw_ostream &o,
                                                 CodeGenFileType FileType,
-                                                CodeGenOpt::Level OptLevel) {
+                                                CodeGenOpt::Level OptLevel,
+                                                bool DisableVerify) {
   if (FileType != TargetMachine::CGFT_AssemblyFile) return true;
   PM.add(new CppWriter(o));
   return false;
