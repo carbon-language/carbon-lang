@@ -855,6 +855,7 @@ struct V2 : virtual V1 {
 // CHECK-NEXT:    5 | vbase_offset (-4)
 // CHECK-NEXT:    6 | offset_to_top (-16)
 // CHECK-NEXT:    7 | Test22::C RTTI
+// CHECK-NEXT:        -- (Test22::V2, 16) vtable address --
 
 // CHECK:      Construction vtable for ('Test22::V2', 16) in 'Test22::C' (3 entries).
 // CHECK-NEXT:    0 | vbase_offset (-4)
@@ -866,5 +867,57 @@ struct C : virtual V1, virtual V2 {
   virtual void f(); 
 };
 void C::f() { } 
+
+}
+
+namespace Test23 {
+
+struct A {
+  int a;
+};
+
+struct B : virtual A {
+  int b;
+};
+
+struct C : A, virtual B {
+  int c;
+};
+
+// CHECK:      Vtable for 'Test23::D' (7 entries).
+// CHECK-NEXT:    0 | vbase_offset (20)
+// CHECK-NEXT:    1 | vbase_offset (24)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test23::D RTTI
+// CHECK-NEXT:        -- (Test23::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test23::D, 0) vtable address --
+// CHECK-NEXT:    4 | vbase_offset (-4)
+// CHECK-NEXT:    5 | offset_to_top (-24)
+// CHECK-NEXT:    6 | Test23::D RTTI
+// CHECK-NEXT:        -- (Test23::B, 24) vtable address --
+
+// CHECK:      Construction vtable for ('Test23::C', 0) in 'Test23::D' (7 entries).
+// CHECK-NEXT:    0 | vbase_offset (20)
+// CHECK-NEXT:    1 | vbase_offset (24)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test23::C RTTI
+// CHECK-NEXT:        -- (Test23::C, 0) vtable address --
+// CHECK-NEXT:    4 | vbase_offset (-4)
+// CHECK-NEXT:    5 | offset_to_top (-24)
+// CHECK-NEXT:    6 | Test23::C RTTI
+// CHECK-NEXT:        -- (Test23::B, 24) vtable address --
+
+// CHECK:      Construction vtable for ('Test23::B', 24) in 'Test23::D' (3 entries).
+// CHECK-NEXT:    0 | vbase_offset (-4)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test23::B RTTI
+// CHECK-NEXT:        -- (Test23::B, 24) vtable address --
+
+struct D : virtual A, virtual B, C {
+  int d;
+
+  void f();
+};
+void D::f() { } 
 
 }

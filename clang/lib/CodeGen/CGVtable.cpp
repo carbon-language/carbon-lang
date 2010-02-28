@@ -824,13 +824,9 @@ int64_t VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
 
 /// VCallAndVBaseOffsetBuilder - Class for building vcall and vbase offsets.
 class VCallAndVBaseOffsetBuilder {
-  /// MostDerivedClass - The most derived class for which we're building this
-  /// vtable.
+  /// MostDerivedClass - The most derived class for which we're building vcall
+  /// and vbase offsets.
   const CXXRecordDecl *MostDerivedClass;
-  
-  /// MostDerivedClassOffset - If we're building a construction vtable, this
-  /// holds the offset from the layout class to the most derived class.
-  const uint64_t MostDerivedClassOffset;
   
   /// LayoutClass - The class we're using for layout information. Will be 
   /// different than the most derived class if we're building a construction
@@ -867,16 +863,15 @@ class VCallAndVBaseOffsetBuilder {
   
 public:
   VCallAndVBaseOffsetBuilder(const CXXRecordDecl *MostDerivedClass,
-                             uint64_t MostDerivedClassOffset,
                              const CXXRecordDecl *LayoutClass,
                              const FinalOverriders *Overriders,
-                             BaseSubobject Base, bool BaseIsVirtual)
-    : MostDerivedClass(MostDerivedClass),
-    MostDerivedClassOffset(MostDerivedClassOffset), LayoutClass(LayoutClass), 
+                             BaseSubobject Base, bool BaseIsVirtual,
+                             uint64_t OffsetInLayoutClass)
+    : MostDerivedClass(MostDerivedClass), LayoutClass(LayoutClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(Overriders) {
       
     // Add vcall and vbase offsets.
-    AddVCallAndVBaseOffsets(Base, BaseIsVirtual, Base.getBaseOffset());
+    AddVCallAndVBaseOffsets(Base, BaseIsVirtual, OffsetInLayoutClass);
   }
   
   /// Methods for iterating over the components.
@@ -1045,9 +1040,6 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
       uint64_t Offset = 
         OffsetToTop + LayoutClassLayout.getVBaseClassOffset(BaseDecl) / 8;
     
-      // The offset should be relative to the most derived class offset.
-      Offset -= MostDerivedClassOffset / 8;
-
       Components.push_back(VtableComponent::MakeVBaseOffset(Offset));
     }
     
@@ -1222,14 +1214,15 @@ private:
   // secondary vtables and any vtables for virtual bases.
   void LayoutVtable();
 
-  /// LayoutPrimaryAndAndSecondaryVtables - Layout the primary vtable for the
+  /// LayoutPrimaryAndSecondaryVtables - Layout the primary vtable for the
   /// given base subobject, as well as all its secondary vtables.
-  void LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base, 
-                                           bool BaseIsVirtual);
+  void LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
+                                        bool BaseIsVirtual,
+                                        uint64_t OffsetInLayoutClass);
   
   /// LayoutSecondaryVtables - Layout the secondary vtables for the given base
   /// subobject.
-  void LayoutSecondaryVtables(BaseSubobject Base);
+  void LayoutSecondaryVtables(BaseSubobject Base, uint64_t OffsetInLayoutClass);
 
   /// DeterminePrimaryVirtualBases - Determine the primary virtual bases in this
   /// class hierarchy.
@@ -1434,10 +1427,11 @@ VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
       if (VCallOffsets.empty()) {
         // We don't have vcall offsets for this virtual base, go ahead and
         // build them.
-        VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, 0,
-                                           MostDerivedClass, 0,
-                                           BaseSubobject(Offset.VirtualBase, 0),
-                                           /*BaseIsVirtual=*/true);
+        VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, MostDerivedClass,
+                                           /*FinalOverriders=*/0,
+                                           BaseSubobject(Offset.VirtualBase, 0),                                           
+                                           /*BaseIsVirtual=*/true,
+                                           /*OffsetInLayoutClass=*/0);
         
         VCallOffsets = Builder.getVCallOffsets();
       }
@@ -1683,8 +1677,9 @@ VtableBuilder::AddMethods(BaseSubobject Base,
 }
 
 void VtableBuilder::LayoutVtable() {
-  LayoutPrimaryAndAndSecondaryVtables(BaseSubobject(MostDerivedClass, 0),
-                                      MostDerivedClassIsVirtual);
+  LayoutPrimaryAndSecondaryVtables(BaseSubobject(MostDerivedClass, 0),
+                                   MostDerivedClassIsVirtual,
+                                   MostDerivedClassOffset);
   
   VisitedVirtualBasesSetTy VBases;
   
@@ -1695,14 +1690,15 @@ void VtableBuilder::LayoutVtable() {
   LayoutVtablesForVirtualBases(MostDerivedClass, VBases);
 }
   
-void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
-                                                        bool BaseIsVirtual) {
+void
+VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
+                                                bool BaseIsVirtual,
+                                                uint64_t OffsetInLayoutClass) {
   assert(Base.getBase()->isDynamicClass() && "class does not have a vtable!");
 
   // Add vcall and vbase offsets for this vtable.
-  VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, MostDerivedClassOffset,
-                                     LayoutClass, &Overriders,
-                                     Base, BaseIsVirtual);
+  VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, LayoutClass, &Overriders,
+                                     Base, BaseIsVirtual, OffsetInLayoutClass);
   Components.append(Builder.components_begin(), Builder.components_end());
   
   // Check if we need to add these vcall offsets.
@@ -1714,9 +1710,9 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
   }
 
   // Add the offset to top.
-  // FIXME: This is not going to be right for construction vtables.
   // FIXME: We should not use / 8 here.
-  int64_t OffsetToTop = -(int64_t)Base.getBaseOffset() / 8;
+  int64_t OffsetToTop = -(int64_t)(OffsetInLayoutClass -
+                                   MostDerivedClassOffset) / 8;
   Components.push_back(VtableComponent::MakeOffsetToTop(OffsetToTop));
   
   // Next, add the RTTI.
@@ -1732,7 +1728,9 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
   ComputeThisAdjustments();
 
   // Record the address point.
-  AddressPoints.insert(std::make_pair(Base, AddressPoint));
+  AddressPoints.insert(std::make_pair(BaseSubobject(Base.getBase(),
+                                                    OffsetInLayoutClass),
+                                      AddressPoint));
   
   // Record the address points for all primary bases.
   for (PrimaryBasesSetVectorTy::const_iterator I = PrimaryBases.begin(),
@@ -1741,15 +1739,16 @@ void VtableBuilder::LayoutPrimaryAndAndSecondaryVtables(BaseSubobject Base,
     
     // We know that all the primary bases have the same offset as the base
     // subobject.
-    BaseSubobject PrimaryBase(BaseDecl, Base.getBaseOffset());
+    BaseSubobject PrimaryBase(BaseDecl, OffsetInLayoutClass);
     AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
   }
 
   // Layout secondary vtables.
-  LayoutSecondaryVtables(Base);
+  LayoutSecondaryVtables(Base, OffsetInLayoutClass);
 }
 
-void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
+void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
+                                           uint64_t OffsetInLayoutClass) {
   // Itanium C++ ABI 2.5.2:
   //   Following the primary virtual table of a derived class are secondary 
   //   virtual tables for each of its proper base classes, except any primary
@@ -1773,19 +1772,23 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base) {
       continue;
 
     // Get the base offset of this base.
-    uint64_t BaseOffset = Base.getBaseOffset() + 
-      Layout.getBaseClassOffset(BaseDecl);
+    uint64_t RelativeBaseOffset = Layout.getBaseClassOffset(BaseDecl);
+    uint64_t BaseOffset = Base.getBaseOffset() + RelativeBaseOffset;
+    
+    uint64_t BaseOffsetInLayoutClass = OffsetInLayoutClass + RelativeBaseOffset;
     
     // Don't emit a secondary vtable for a primary base. We might however want 
     // to emit secondary vtables for other bases of this base.
     if (BaseDecl == PrimaryBase) {
-      LayoutSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset));
+      LayoutSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
+                             BaseOffsetInLayoutClass);
       continue;
     }
 
     // Layout the primary vtable (and any secondary vtables) for this base.
-    LayoutPrimaryAndAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
-                                        /*BaseIsVirtual=*/false);
+    LayoutPrimaryAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
+                                     /*BaseIsVirtual=*/false,
+                                     BaseOffsetInLayoutClass);
   }
 }
 
@@ -1835,8 +1838,14 @@ VtableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
       uint64_t BaseOffset = 
         MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       
-      LayoutPrimaryAndAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
-                                          /*BaseIsVirtual=*/true);
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
+      uint64_t BaseOffsetInLayoutClass = 
+        LayoutClassLayout.getVBaseClassOffset(BaseDecl);
+
+      LayoutPrimaryAndSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
+                                       /*BaseIsVirtual=*/true,
+                                       BaseOffsetInLayoutClass);
     }
     
     // We only need to check the base for virtual base vtables if it actually
