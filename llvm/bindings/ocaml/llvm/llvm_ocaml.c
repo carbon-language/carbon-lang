@@ -978,7 +978,7 @@ CAMLprim value llvm_position_builder(value Pos, value B) {
 }
 
 /* llbuilder -> llbasicblock */
-CAMLprim LLVMBasicBlockRef llvm_insertion_block(LLVMBuilderRef B) {
+CAMLprim LLVMBasicBlockRef llvm_insertion_block(value B) {
   LLVMBasicBlockRef InsertBlock = LLVMGetInsertBlock(Builder_val(B));
   if (!InsertBlock)
     raise_not_found();
@@ -986,9 +986,8 @@ CAMLprim LLVMBasicBlockRef llvm_insertion_block(LLVMBuilderRef B) {
 }
 
 /* llvalue -> string -> llbuilder -> unit */
-CAMLprim value llvm_insert_into_builder(LLVMValueRef I, value Name,
-                                               LLVMBuilderRef B) {
-  LLVMInsertIntoBuilderWithName(B, I, String_val(Name));
+CAMLprim value llvm_insert_into_builder(LLVMValueRef I, value Name, value B) {
+  LLVMInsertIntoBuilderWithName(Builder_val(B), I, String_val(Name));
   return Val_unit;
 }
 
