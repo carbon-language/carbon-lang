@@ -242,6 +242,9 @@ external dump_value : llvalue -> unit = "llvm_dump_value"
 external replace_all_uses_with : llvalue -> llvalue -> unit
                                = "LLVMReplaceAllUsesWith"
 
+(*--... Operations on users ................................................--*)
+external operand : llvalue -> int -> llvalue = "llvm_operand"
+
 (*--... Operations on constants of (mostly) any type .......................--*)
 external is_constant : llvalue -> bool = "llvm_is_constant"
 external const_null : lltype -> llvalue = "LLVMConstNull"

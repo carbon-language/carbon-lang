@@ -440,6 +440,13 @@ CAMLprim value llvm_dump_value(LLVMValueRef Val) {
   return Val_unit;
 }
 
+/*--... Operations on users ................................................--*/
+
+/* llvalue -> int -> llvalue */
+CAMLprim LLVMValueRef llvm_operand(LLVMValueRef V, value I) {
+  return LLVMGetOperand(V, Int_val(I));
+}
+
 /*--... Operations on constants of (mostly) any type .......................--*/
 
 /* llvalue -> bool */

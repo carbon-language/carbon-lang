@@ -513,6 +513,13 @@ external replace_all_uses_with : llvalue -> llvalue -> unit
                                = "LLVMReplaceAllUsesWith"
 
 
+(* {6 Users} *)
+
+(** [operand v i] returns the operand at index [i] for the value [v]. See the
+    method [llvm::User::getOperand]. *)
+external operand : llvalue -> int -> llvalue = "llvm_operand"
+
+
 (** {7 Operations on constants of (mostly) any type} *)
 
 (** [is_constant v] returns [true] if the value [v] is a constant, [false]

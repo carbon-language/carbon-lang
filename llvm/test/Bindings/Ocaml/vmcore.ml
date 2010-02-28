@@ -606,6 +606,24 @@ let test_global_variables () =
     dispose_module m
   end
 
+
+(*===-- Users -------------------------------------------------------------===*)
+
+let test_users () =
+  let ty = function_type i32_type [| i32_type; i32_type |] in
+  let fn = define_function "user_function" ty m in
+  let b = builder_at_end context (entry_block fn) in
+
+  let p1 = param fn 0 in
+  let p2 = param fn 1 in
+  let i = build_add p1 p2 "sum" b in
+
+  insist ((operand i 0) = p1);
+  insist ((operand i 1) = p2);
+
+  ignore (build_unreachable b)
+
+
 (*===-- Aliases -----------------------------------------------------------===*)
 
 let test_aliases () =
@@ -1273,6 +1291,7 @@ let _ =
   suite "constants"        test_constants;
   suite "global values"    test_global_values;
   suite "global variables" test_global_variables;
+  suite "users"            test_users;
   suite "aliases"          test_aliases;
   suite "functions"        test_functions;
   suite "params"           test_params;
