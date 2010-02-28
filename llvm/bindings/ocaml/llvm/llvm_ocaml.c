@@ -1096,6 +1096,12 @@ CAMLprim LLVMValueRef llvm_build_nsw_add(LLVMValueRef LHS, LLVMValueRef RHS,
 }
 
 /* llvalue -> llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nuw_add(LLVMValueRef LHS, LLVMValueRef RHS,
+                                         value Name, value B) {
+  return LLVMBuildNUWAdd(Builder_val(B), LHS, RHS, String_val(Name));
+}
+
+/* llvalue -> llvalue -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_fadd(LLVMValueRef LHS, LLVMValueRef RHS,
                                       value Name, value B) {
   return LLVMBuildFAdd(Builder_val(B), LHS, RHS, String_val(Name));
@@ -1108,6 +1114,18 @@ CAMLprim LLVMValueRef llvm_build_sub(LLVMValueRef LHS, LLVMValueRef RHS,
 }
 
 /* llvalue -> llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nsw_sub(LLVMValueRef LHS, LLVMValueRef RHS,
+                                         value Name, value B) {
+  return LLVMBuildNSWSub(Builder_val(B), LHS, RHS, String_val(Name));
+}
+
+/* llvalue -> llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nuw_sub(LLVMValueRef LHS, LLVMValueRef RHS,
+                                         value Name, value B) {
+  return LLVMBuildNUWSub(Builder_val(B), LHS, RHS, String_val(Name));
+}
+
+/* llvalue -> llvalue -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_fsub(LLVMValueRef LHS, LLVMValueRef RHS,
                                       value Name, value B) {
   return LLVMBuildFSub(Builder_val(B), LHS, RHS, String_val(Name));
@@ -1117,6 +1135,18 @@ CAMLprim LLVMValueRef llvm_build_fsub(LLVMValueRef LHS, LLVMValueRef RHS,
 CAMLprim LLVMValueRef llvm_build_mul(LLVMValueRef LHS, LLVMValueRef RHS,
                                      value Name, value B) {
   return LLVMBuildMul(Builder_val(B), LHS, RHS, String_val(Name));
+}
+
+/* llvalue -> llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nsw_mul(LLVMValueRef LHS, LLVMValueRef RHS,
+                                         value Name, value B) {
+  return LLVMBuildNSWMul(Builder_val(B), LHS, RHS, String_val(Name));
+}
+
+/* llvalue -> llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nuw_mul(LLVMValueRef LHS, LLVMValueRef RHS,
+                                         value Name, value B) {
+  return LLVMBuildNUWMul(Builder_val(B), LHS, RHS, String_val(Name));
 }
 
 /* llvalue -> llvalue -> string -> llbuilder -> llvalue */
@@ -1207,6 +1237,24 @@ CAMLprim LLVMValueRef llvm_build_xor(LLVMValueRef LHS, LLVMValueRef RHS,
 CAMLprim LLVMValueRef llvm_build_neg(LLVMValueRef X,
                                      value Name, value B) {
   return LLVMBuildNeg(Builder_val(B), X, String_val(Name));
+}
+
+/* llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nsw_neg(LLVMValueRef X,
+                                         value Name, value B) {
+  return LLVMBuildNSWNeg(Builder_val(B), X, String_val(Name));
+}
+
+/* llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_nuw_neg(LLVMValueRef X,
+                                         value Name, value B) {
+  return LLVMBuildNUWNeg(Builder_val(B), X, String_val(Name));
+}
+
+/* llvalue -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_fneg(LLVMValueRef X,
+                                     value Name, value B) {
+  return LLVMBuildFNeg(Builder_val(B), X, String_val(Name));
 }
 
 /* llvalue -> string -> llbuilder -> llvalue */

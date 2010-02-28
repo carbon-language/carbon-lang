@@ -594,6 +594,17 @@ LLVMValueRef LLVMConstNeg(LLVMValueRef ConstantVal) {
                                    unwrap<Constant>(ConstantVal)));
 }
 
+LLVMValueRef LLVMConstNSWNeg(LLVMValueRef ConstantVal) {
+  return wrap(ConstantExpr::getNSWNeg(
+                                      unwrap<Constant>(ConstantVal)));
+}
+
+LLVMValueRef LLVMConstNUWNeg(LLVMValueRef ConstantVal) {
+  return wrap(ConstantExpr::getNUWNeg(
+                                      unwrap<Constant>(ConstantVal)));
+}
+
+
 LLVMValueRef LLVMConstFNeg(LLVMValueRef ConstantVal) {
   return wrap(ConstantExpr::getFNeg(
                                     unwrap<Constant>(ConstantVal)));
@@ -617,6 +628,13 @@ LLVMValueRef LLVMConstNSWAdd(LLVMValueRef LHSConstant,
                                       unwrap<Constant>(RHSConstant)));
 }
 
+LLVMValueRef LLVMConstNUWAdd(LLVMValueRef LHSConstant,
+                             LLVMValueRef RHSConstant) {
+  return wrap(ConstantExpr::getNUWAdd(
+                                      unwrap<Constant>(LHSConstant),
+                                      unwrap<Constant>(RHSConstant)));
+}
+
 LLVMValueRef LLVMConstFAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
   return wrap(ConstantExpr::getFAdd(
                                     unwrap<Constant>(LHSConstant),
@@ -629,6 +647,20 @@ LLVMValueRef LLVMConstSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
                                    unwrap<Constant>(RHSConstant)));
 }
 
+LLVMValueRef LLVMConstNSWSub(LLVMValueRef LHSConstant,
+                             LLVMValueRef RHSConstant) {
+  return wrap(ConstantExpr::getNSWSub(
+                                      unwrap<Constant>(LHSConstant),
+                                      unwrap<Constant>(RHSConstant)));
+}
+
+LLVMValueRef LLVMConstNUWSub(LLVMValueRef LHSConstant,
+                             LLVMValueRef RHSConstant) {
+  return wrap(ConstantExpr::getNUWSub(
+                                      unwrap<Constant>(LHSConstant),
+                                      unwrap<Constant>(RHSConstant)));
+}
+
 LLVMValueRef LLVMConstFSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
   return wrap(ConstantExpr::getFSub(unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
@@ -638,6 +670,20 @@ LLVMValueRef LLVMConstMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
   return wrap(ConstantExpr::getMul(
                                    unwrap<Constant>(LHSConstant),
                                    unwrap<Constant>(RHSConstant)));
+}
+
+LLVMValueRef LLVMConstNSWMul(LLVMValueRef LHSConstant,
+                             LLVMValueRef RHSConstant) {
+  return wrap(ConstantExpr::getNSWMul(
+                                      unwrap<Constant>(LHSConstant),
+                                      unwrap<Constant>(RHSConstant)));
+}
+
+LLVMValueRef LLVMConstNUWMul(LLVMValueRef LHSConstant,
+                             LLVMValueRef RHSConstant) {
+  return wrap(ConstantExpr::getNUWMul(
+                                      unwrap<Constant>(LHSConstant),
+                                      unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstFMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
@@ -1628,6 +1674,11 @@ LLVMValueRef LLVMBuildNSWAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RH
   return wrap(unwrap(B)->CreateNSWAdd(unwrap(LHS), unwrap(RHS), Name));
 }
 
+LLVMValueRef LLVMBuildNUWAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateNUWAdd(unwrap(LHS), unwrap(RHS), Name));
+}
+
 LLVMValueRef LLVMBuildFAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
                           const char *Name) {
   return wrap(unwrap(B)->CreateFAdd(unwrap(LHS), unwrap(RHS), Name));
@@ -1638,6 +1689,16 @@ LLVMValueRef LLVMBuildSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
   return wrap(unwrap(B)->CreateSub(unwrap(LHS), unwrap(RHS), Name));
 }
 
+LLVMValueRef LLVMBuildNSWSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateNSWSub(unwrap(LHS), unwrap(RHS), Name));
+}
+
+LLVMValueRef LLVMBuildNUWSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateNUWSub(unwrap(LHS), unwrap(RHS), Name));
+}
+
 LLVMValueRef LLVMBuildFSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
                           const char *Name) {
   return wrap(unwrap(B)->CreateFSub(unwrap(LHS), unwrap(RHS), Name));
@@ -1646,6 +1707,16 @@ LLVMValueRef LLVMBuildFSub(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
 LLVMValueRef LLVMBuildMul(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
                           const char *Name) {
   return wrap(unwrap(B)->CreateMul(unwrap(LHS), unwrap(RHS), Name));
+}
+
+LLVMValueRef LLVMBuildNSWMul(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateNSWMul(unwrap(LHS), unwrap(RHS), Name));
+}
+
+LLVMValueRef LLVMBuildNUWMul(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
+                          const char *Name) {
+  return wrap(unwrap(B)->CreateNUWMul(unwrap(LHS), unwrap(RHS), Name));
 }
 
 LLVMValueRef LLVMBuildFMul(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
@@ -1727,6 +1798,16 @@ LLVMValueRef LLVMBuildBinOp(LLVMBuilderRef B, LLVMOpcode Op,
 
 LLVMValueRef LLVMBuildNeg(LLVMBuilderRef B, LLVMValueRef V, const char *Name) {
   return wrap(unwrap(B)->CreateNeg(unwrap(V), Name));
+}
+
+LLVMValueRef LLVMBuildNSWNeg(LLVMBuilderRef B, LLVMValueRef V,
+                             const char *Name) {
+  return wrap(unwrap(B)->CreateNSWNeg(unwrap(V), Name));
+}
+
+LLVMValueRef LLVMBuildNUWNeg(LLVMBuilderRef B, LLVMValueRef V,
+                             const char *Name) {
+  return wrap(unwrap(B)->CreateNUWNeg(unwrap(V), Name));
 }
 
 LLVMValueRef LLVMBuildFNeg(LLVMBuilderRef B, LLVMValueRef V, const char *Name) {

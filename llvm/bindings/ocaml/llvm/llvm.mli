@@ -615,6 +615,16 @@ external size_of : lltype -> llvalue = "LLVMSizeOf"
     See the method [llvm::ConstantExpr::getNeg]. *)
 external const_neg : llvalue -> llvalue = "LLVMConstNeg"
 
+(** [const_nsw_neg c] returns the arithmetic negation of the constant [c] with
+    no signed wrapping. The result is undefined if the negation overflows.
+    See the method [llvm::ConstantExpr::getNSWNeg]. *)
+external const_nsw_neg : llvalue -> llvalue = "LLVMConstNSWNeg"
+
+(** [const_nuw_neg c] returns the arithmetic negation of the constant [c] with
+    no unsigned wrapping. The result is undefined if the negation overflows.
+    See the method [llvm::ConstantExpr::getNUWNeg]. *)
+external const_nuw_neg : llvalue -> llvalue = "LLVMConstNUWNeg"
+
 (** [const_fneg c] returns the arithmetic negation of the constant float [c].
     See the method [llvm::ConstantExpr::getFNeg]. *)
 external const_fneg : llvalue -> llvalue = "LLVMConstFNeg"
@@ -632,6 +642,11 @@ external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
     See the method [llvm::ConstantExpr::getNSWAdd]. *)
 external const_nsw_add : llvalue -> llvalue -> llvalue = "LLVMConstNSWAdd"
 
+(** [const_nuw_add c1 c2] returns the constant sum of two constants with no
+    unsigned wrapping. The result is undefined if the sum overflows.
+    See the method [llvm::ConstantExpr::getNSWAdd]. *)
+external const_nuw_add : llvalue -> llvalue -> llvalue = "LLVMConstNUWAdd"
+
 (** [const_fadd c1 c2] returns the constant sum of two constant floats.
     See the method [llvm::ConstantExpr::getFAdd]. *)
 external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
@@ -640,6 +655,16 @@ external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
     constants. See the method [llvm::ConstantExpr::getSub]. *)
 external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
 
+(** [const_nsw_sub c1 c2] returns the constant difference of two constants with
+    no signed wrapping. The result is undefined if the sum overflows.
+    See the method [llvm::ConstantExpr::getNSWSub]. *)
+external const_nsw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNSWSub"
+
+(** [const_nuw_sub c1 c2] returns the constant difference of two constants with
+    no unsigned wrapping. The result is undefined if the sum overflows.
+    See the method [llvm::ConstantExpr::getNSWSub]. *)
+external const_nuw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNUWSub"
+
 (** [const_fsub c1 c2] returns the constant difference, [c1 - c2], of two
     constant floats. See the method [llvm::ConstantExpr::getFSub]. *)
 external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
@@ -647,6 +672,16 @@ external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
 (** [const_mul c1 c2] returns the constant product of two constants.
     See the method [llvm::ConstantExpr::getMul]. *)
 external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
+
+(** [const_nsw_mul c1 c2] returns the constant product of two constants with
+    no signed wrapping. The result is undefined if the sum overflows.
+    See the method [llvm::ConstantExpr::getNSWMul]. *)
+external const_nsw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNSWMul"
+
+(** [const_nuw_mul c1 c2] returns the constant product of two constants with
+    no unsigned wrapping. The result is undefined if the sum overflows.
+    See the method [llvm::ConstantExpr::getNSWMul]. *)
+external const_nuw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNUWMul"
 
 (** [const_fmul c1 c2] returns the constant product of two constants floats.
     See the method [llvm::ConstantExpr::getFMul]. *)
@@ -1502,6 +1537,13 @@ external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
 external build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
                       = "llvm_build_nsw_add"
 
+(** [build_nuw_add x y name b] creates a
+    [%name = nuw add %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateNUWAdd]. *)
+external build_nuw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                      = "llvm_build_nuw_add"
+
 (** [build_fadd x y name b] creates a
     [%name = fadd %x, %y]
     instruction at the position specified by the instruction builder [b].
@@ -1516,6 +1558,20 @@ external build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
 external build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_sub"
 
+(** [build_nsw_sub x y name b] creates a
+    [%name = nsw sub %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateNSWSub]. *)
+external build_nsw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_sub"
+
+(** [build_nuw_sub x y name b] creates a
+    [%name = nuw sub %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateNUWSub]. *)
+external build_nuw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_sub"
+
 (** [build_fsub x y name b] creates a
     [%name = fsub %x, %y]
     instruction at the position specified by the instruction builder [b].
@@ -1529,6 +1585,20 @@ external build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateMul]. *)
 external build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_mul"
+
+(** [build_nsw_mul x y name b] creates a
+    [%name = nsw mul %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateNSWMul]. *)
+external build_nsw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_mul"
+
+(** [build_nuw_mul x y name b] creates a
+    [%name = nuw mul %x, %y]
+    instruction at the position specified by the instruction builder [b].
+    See the method [llvm::LLVMBuilder::CreateNUWMul]. *)
+external build_nuw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_mul"
 
 (** [build_fmul x y name b] creates a
     [%name = fmul %x, %y]
@@ -1635,6 +1705,30 @@ external build_xor : llvalue -> llvalue -> string -> llbuilder -> llvalue
     See the method [llvm::LLVMBuilder::CreateNeg]. *)
 external build_neg : llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_neg"
+
+(** [build_nsw_neg x name b] creates a
+    [%name = nsw sub 0, %x]
+    instruction at the position specified by the instruction builder [b].
+    [-0.0] is used for floating point types to compute the correct sign.
+    See the method [llvm::LLVMBuilder::CreateNeg]. *)
+external build_nsw_neg : llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_neg"
+
+(** [build_nuw_neg x name b] creates a
+    [%name = nuw sub 0, %x]
+    instruction at the position specified by the instruction builder [b].
+    [-0.0] is used for floating point types to compute the correct sign.
+    See the method [llvm::LLVMBuilder::CreateNeg]. *)
+external build_nuw_neg : llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_neg"
+
+(** [build_fneg x name b] creates a
+    [%name = fsub 0, %x]
+    instruction at the position specified by the instruction builder [b].
+    [-0.0] is used for floating point types to compute the correct sign.
+    See the method [llvm::LLVMBuilder::CreateFNeg]. *)
+external build_fneg : llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fneg"
 
 (** [build_xor x name b] creates a
     [%name = xor %x, -1]

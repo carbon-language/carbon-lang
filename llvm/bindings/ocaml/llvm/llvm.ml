@@ -270,14 +270,21 @@ external const_union : lltype -> llvalue -> llvalue = "LLVMConstUnion"
 external align_of : lltype -> llvalue = "LLVMAlignOf"
 external size_of : lltype -> llvalue = "LLVMSizeOf"
 external const_neg : llvalue -> llvalue = "LLVMConstNeg"
+external const_nsw_neg : llvalue -> llvalue = "LLVMConstNSWNeg"
+external const_nuw_neg : llvalue -> llvalue = "LLVMConstNUWNeg"
 external const_fneg : llvalue -> llvalue = "LLVMConstFNeg"
 external const_not : llvalue -> llvalue = "LLVMConstNot"
 external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
 external const_nsw_add : llvalue -> llvalue -> llvalue = "LLVMConstNSWAdd"
+external const_nuw_add : llvalue -> llvalue -> llvalue = "LLVMConstNUWAdd"
 external const_fadd : llvalue -> llvalue -> llvalue = "LLVMConstFAdd"
 external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
+external const_nsw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNSWSub"
+external const_nuw_sub : llvalue -> llvalue -> llvalue = "LLVMConstNUWSub"
 external const_fsub : llvalue -> llvalue -> llvalue = "LLVMConstFSub"
 external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
+external const_nsw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNSWMul"
+external const_nuw_mul : llvalue -> llvalue -> llvalue = "LLVMConstNUWMul"
 external const_fmul : llvalue -> llvalue -> llvalue = "LLVMConstFMul"
 external const_udiv : llvalue -> llvalue -> llvalue = "LLVMConstUDiv"
 external const_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstSDiv"
@@ -711,14 +718,24 @@ external build_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_add"
 external build_nsw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
                        = "llvm_build_nsw_add"
+external build_nuw_add : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_add"
 external build_fadd : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_fadd"
 external build_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_sub"
+external build_nsw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_sub"
+external build_nuw_sub : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_sub"
 external build_fsub : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_fsub"
 external build_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_mul"
+external build_nsw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_mul"
+external build_nuw_mul : llvalue -> llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_mul"
 external build_fmul : llvalue -> llvalue -> string -> llbuilder -> llvalue
                     = "llvm_build_fmul"
 external build_udiv : llvalue -> llvalue -> string -> llbuilder -> llvalue
@@ -749,6 +766,12 @@ external build_xor : llvalue -> llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_xor"
 external build_neg : llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_neg"
+external build_nsw_neg : llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nsw_neg"
+external build_nuw_neg : llvalue -> string -> llbuilder -> llvalue
+                       = "llvm_build_nuw_neg"
+external build_fneg : llvalue -> string -> llbuilder -> llvalue
+                    = "llvm_build_fneg"
 external build_not : llvalue -> string -> llbuilder -> llvalue
                    = "llvm_build_not"
 

@@ -292,7 +292,7 @@ let test_constants () =
   group "union";
   let t = union_type context [| i1_type; i16_type; i64_type; double_type |] in
   let c = const_union t one in
-  ignore (define_global "Const_union" c m);
+  ignore (define_global "const_union" c m);
   insist (t = (type_of c));
   
   (* RUN: grep {const_null.*zeroinit} < %t.ll
@@ -318,12 +318,25 @@ let test_constants () =
   
   group "constant arithmetic";
   (* RUN: grep {@const_neg = global i64 sub} < %t.ll
+   * RUN: grep {@const_nsw_neg = global i64 sub nsw } < %t.ll
+   * RUN: grep {@const_nuw_neg = global i64 sub nuw } < %t.ll
+   * RUN: grep {@const_fneg = global double fsub } < %t.ll
    * RUN: grep {@const_not = global i64 xor } < %t.ll
    * RUN: grep {@const_add = global i64 add } < %t.ll
+   * RUN: grep {@const_nsw_add = global i64 add nsw } < %t.ll
+   * RUN: grep {@const_nuw_add = global i64 add nuw } < %t.ll
+   * RUN: grep {@const_fadd = global double fadd } < %t.ll
    * RUN: grep {@const_sub = global i64 sub } < %t.ll
+   * RUN: grep {@const_nsw_sub = global i64 sub nsw } < %t.ll
+   * RUN: grep {@const_nuw_sub = global i64 sub nuw } < %t.ll
+   * RUN: grep {@const_fsub = global double fsub } < %t.ll
    * RUN: grep {@const_mul = global i64 mul } < %t.ll
+   * RUN: grep {@const_nsw_mul = global i64 mul nsw } < %t.ll
+   * RUN: grep {@const_nuw_mul = global i64 mul nuw } < %t.ll
+   * RUN: grep {@const_fmul = global double fmul } < %t.ll
    * RUN: grep {@const_udiv = global i64 udiv } < %t.ll
    * RUN: grep {@const_sdiv = global i64 sdiv } < %t.ll
+   * RUN: grep {@const_exact_sdiv = global i64 sdiv exact } < %t.ll
    * RUN: grep {@const_fdiv = global double fdiv } < %t.ll
    * RUN: grep {@const_urem = global i64 urem } < %t.ll
    * RUN: grep {@const_srem = global i64 srem } < %t.ll
@@ -341,12 +354,25 @@ let test_constants () =
   let foldbomb = const_ptrtoint foldbomb_gv i64_type in
   let ffoldbomb = const_uitofp foldbomb double_type in
   ignore (define_global "const_neg" (const_neg foldbomb) m);
+  ignore (define_global "const_nsw_neg" (const_nsw_neg foldbomb) m);
+  ignore (define_global "const_nuw_neg" (const_nuw_neg foldbomb) m);
+  ignore (define_global "const_fneg" (const_fneg ffoldbomb) m);
   ignore (define_global "const_not" (const_not foldbomb) m);
   ignore (define_global "const_add" (const_add foldbomb five) m);
+  ignore (define_global "const_nsw_add" (const_nsw_add foldbomb five) m);
+  ignore (define_global "const_nuw_add" (const_nuw_add foldbomb five) m);
+  ignore (define_global "const_fadd" (const_fadd ffoldbomb ffive) m);
   ignore (define_global "const_sub" (const_sub foldbomb five) m);
+  ignore (define_global "const_nsw_sub" (const_nsw_sub foldbomb five) m);
+  ignore (define_global "const_nuw_sub" (const_nuw_sub foldbomb five) m);
+  ignore (define_global "const_fsub" (const_fsub ffoldbomb ffive) m);
   ignore (define_global "const_mul" (const_mul foldbomb five) m);
+  ignore (define_global "const_nsw_mul" (const_nsw_mul foldbomb five) m);
+  ignore (define_global "const_nuw_mul" (const_nuw_mul foldbomb five) m);
+  ignore (define_global "const_fmul" (const_fmul ffoldbomb ffive) m);
   ignore (define_global "const_udiv" (const_udiv foldbomb five) m);
   ignore (define_global "const_sdiv" (const_sdiv foldbomb five) m);
+  ignore (define_global "const_exact_sdiv" (const_exact_sdiv foldbomb five) m);
   ignore (define_global "const_fdiv" (const_fdiv ffoldbomb ffive) m);
   ignore (define_global "const_urem" (const_urem foldbomb five) m);
   ignore (define_global "const_srem" (const_srem foldbomb five) m);
@@ -902,10 +928,20 @@ let test_builder () =
     let b = builder_at_end context bb07 in
     
     (* RUN: grep {%build_add = add i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_nsw_add = add nsw i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_nuw_add = add nuw i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_fadd = fadd float %F1, %F2} < %t.ll
      * RUN: grep {%build_sub = sub i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_nsw_sub = sub nsw i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_nuw_sub = sub nuw i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_fsub = fsub float %F1, %F2} < %t.ll
      * RUN: grep {%build_mul = mul i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_nsw_mul = mul nsw i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_nuw_mul = mul nuw i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_fmul = fmul float %F1, %F2} < %t.ll
      * RUN: grep {%build_udiv = udiv i32 %P1, %P2} < %t.ll
      * RUN: grep {%build_sdiv = sdiv i32 %P1, %P2} < %t.ll
+     * RUN: grep {%build_exact_sdiv = sdiv exact i32 %P1, %P2} < %t.ll
      * RUN: grep {%build_fdiv = fdiv float %F1, %F2} < %t.ll
      * RUN: grep {%build_urem = urem i32 %P1, %P2} < %t.ll
      * RUN: grep {%build_srem = srem i32 %P1, %P2} < %t.ll
@@ -917,13 +953,26 @@ let test_builder () =
      * RUN: grep {%build_or = or i32 %P1, %P2} < %t.ll
      * RUN: grep {%build_xor = xor i32 %P1, %P2} < %t.ll
      * RUN: grep {%build_neg = sub i32 0, %P1} < %t.ll
+     * RUN: grep {%build_nsw_neg = sub nsw i32 0, %P1} < %t.ll
+     * RUN: grep {%build_nuw_neg = sub nuw i32 0, %P1} < %t.ll
+     * RUN: grep {%build_fneg = fsub float .*0.*, %F1} < %t.ll
      * RUN: grep {%build_not = xor i32 %P1, -1} < %t.ll
      *)
     ignore (build_add p1 p2 "build_add" b);
+    ignore (build_nsw_add p1 p2 "build_nsw_add" b);
+    ignore (build_nuw_add p1 p2 "build_nuw_add" b);
+    ignore (build_fadd f1 f2 "build_fadd" b);
     ignore (build_sub p1 p2 "build_sub" b);
+    ignore (build_nsw_sub p1 p2 "build_nsw_sub" b);
+    ignore (build_nuw_sub p1 p2 "build_nuw_sub" b);
+    ignore (build_fsub f1 f2 "build_fsub" b);
     ignore (build_mul p1 p2 "build_mul" b);
+    ignore (build_nsw_mul p1 p2 "build_nsw_mul" b);
+    ignore (build_nuw_mul p1 p2 "build_nuw_mul" b);
+    ignore (build_fmul f1 f2 "build_fmul" b);
     ignore (build_udiv p1 p2 "build_udiv" b);
     ignore (build_sdiv p1 p2 "build_sdiv" b);
+    ignore (build_exact_sdiv p1 p2 "build_exact_sdiv" b);
     ignore (build_fdiv f1 f2 "build_fdiv" b);
     ignore (build_urem p1 p2 "build_urem" b);
     ignore (build_srem p1 p2 "build_srem" b);
@@ -935,6 +984,9 @@ let test_builder () =
     ignore (build_or p1 p2 "build_or" b);
     ignore (build_xor p1 p2 "build_xor" b);
     ignore (build_neg p1 "build_neg" b);
+    ignore (build_nsw_neg p1 "build_nsw_neg" b);
+    ignore (build_nuw_neg p1 "build_nuw_neg" b);
+    ignore (build_fneg f1 "build_fneg" b);
     ignore (build_not p1 "build_not" b);
     ignore (build_unreachable b)
   end;
