@@ -1728,8 +1728,6 @@ VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetVectorTy PrimaryBases;
-  printf("adding methods, offset in layout class is %llu\n", 
-         OffsetInLayoutClass);
   AddMethods(Base, Base, OffsetInLayoutClass, PrimaryBases);
 
   // Compute 'this' pointer adjustments.
