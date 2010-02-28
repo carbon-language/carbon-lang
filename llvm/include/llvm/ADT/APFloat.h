@@ -173,11 +173,16 @@ namespace llvm {
       fcZero
     };
 
+    enum uninitializedTag {
+      uninitialized
+    };
+
     // Constructors.
     APFloat(const fltSemantics &); // Default construct to 0.0
     APFloat(const fltSemantics &, const StringRef &);
     APFloat(const fltSemantics &, integerPart);
-    APFloat(const fltSemantics &, fltCategory, bool negative, unsigned type=0);
+    APFloat(const fltSemantics &, fltCategory, bool negative);
+    APFloat(const fltSemantics &, uninitializedTag);
     explicit APFloat(double d);
     explicit APFloat(float f);
     explicit APFloat(const APInt &, bool isIEEE = false);
@@ -199,7 +204,26 @@ namespace llvm {
     /// default.  The value is truncated as necessary.
     static APFloat getNaN(const fltSemantics &Sem, bool Negative = false,
                           unsigned type = 0) {
-      return APFloat(Sem, fcNaN, Negative, type);
+      if (type) {
+        APInt fill(64, type);
+        return getQNaN(Sem, Negative, &fill);
+      } else {
+        return getQNaN(Sem, Negative, 0);
+      }
+    }
+
+    /// getQNan - Factory for QNaN values.
+    static APFloat getQNaN(const fltSemantics &Sem,
+                           bool Negative = false,
+                           const APInt *payload = 0) {
+      return makeNaN(Sem, false, Negative, payload);
+    }
+
+    /// getSNan - Factory for SNaN values.
+    static APFloat getSNaN(const fltSemantics &Sem,
+                           bool Negative = false,
+                           const APInt *payload = 0) {
+      return makeNaN(Sem, true, Negative, payload);
     }
 
     /// getLargest - Returns the largest finite number in the given
@@ -350,7 +374,9 @@ namespace llvm {
     opStatus modSpecials(const APFloat &);
 
     /* Miscellany.  */
-    void makeNaN(unsigned = 0);
+    static APFloat makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
+                           const APInt *fill);
+    void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
     opStatus normalize(roundingMode, lostFraction);
     opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
     cmpResult compareAbsoluteValue(const APFloat &) const;

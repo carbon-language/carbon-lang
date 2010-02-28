@@ -344,6 +344,35 @@ TEST(APFloatTest, toString) {
   ASSERT_EQ("8.731834E+2", convertToString(873.1834, 0, 0));
 }
 
+static APInt nanbits(const fltSemantics &Sem,
+                     bool SNaN, bool Negative, uint64_t fill) {
+  APInt apfill(64, fill);
+  if (SNaN)
+    return APFloat::getSNaN(Sem, Negative, &apfill).bitcastToAPInt();
+  else
+    return APFloat::getQNaN(Sem, Negative, &apfill).bitcastToAPInt();
+}
+
+TEST(APFloatTest, makeNaN) {
+  ASSERT_EQ(0x7fc00000, nanbits(APFloat::IEEEsingle, false, false, 0));
+  ASSERT_EQ(0xffc00000, nanbits(APFloat::IEEEsingle, false, true, 0));
+  ASSERT_EQ(0x7fc0ae72, nanbits(APFloat::IEEEsingle, false, false, 0xae72));
+  ASSERT_EQ(0x7fffae72, nanbits(APFloat::IEEEsingle, false, false, 0xffffae72));
+  ASSERT_EQ(0x7fa00000, nanbits(APFloat::IEEEsingle, true, false, 0));
+  ASSERT_EQ(0xffa00000, nanbits(APFloat::IEEEsingle, true, true, 0));
+  ASSERT_EQ(0x7f80ae72, nanbits(APFloat::IEEEsingle, true, false, 0xae72));
+  ASSERT_EQ(0x7fbfae72, nanbits(APFloat::IEEEsingle, true, false, 0xffffae72));
+
+  ASSERT_EQ(0x7ff8000000000000ULL, nanbits(APFloat::IEEEdouble, false, false, 0));
+  ASSERT_EQ(0xfff8000000000000ULL, nanbits(APFloat::IEEEdouble, false, true, 0));
+  ASSERT_EQ(0x7ff800000000ae72ULL, nanbits(APFloat::IEEEdouble, false, false, 0xae72));
+  ASSERT_EQ(0x7fffffffffffae72ULL, nanbits(APFloat::IEEEdouble, false, false, 0xffffffffffffae72ULL));
+  ASSERT_EQ(0x7ff4000000000000ULL, nanbits(APFloat::IEEEdouble, true, false, 0));
+  ASSERT_EQ(0xfff4000000000000ULL, nanbits(APFloat::IEEEdouble, true, true, 0));
+  ASSERT_EQ(0x7ff000000000ae72ULL, nanbits(APFloat::IEEEdouble, true, false, 0xae72));
+  ASSERT_EQ(0x7ff7ffffffffae72ULL, nanbits(APFloat::IEEEdouble, true, false, 0xffffffffffffae72ULL));
+}
+
 #ifdef GTEST_HAS_DEATH_TEST
 TEST(APFloatTest, SemanticsDeath) {
   EXPECT_DEATH(APFloat(APFloat::IEEEsingle, 0.0f).convertToDouble(), "Float semantics are not IEEEdouble");

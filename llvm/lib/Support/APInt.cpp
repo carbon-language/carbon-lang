@@ -2344,11 +2344,19 @@ APInt::tcExtractBit(const integerPart *parts, unsigned int bit)
          & ((integerPart) 1 << bit % integerPartWidth)) != 0;
 }
 
-/* Set the given bit of a bignum.  */
+/* Set the given bit of a bignum. */
 void
 APInt::tcSetBit(integerPart *parts, unsigned int bit)
 {
   parts[bit / integerPartWidth] |= (integerPart) 1 << (bit % integerPartWidth);
+}
+
+/* Clears the given bit of a bignum. */
+void
+APInt::tcClearBit(integerPart *parts, unsigned int bit)
+{
+  parts[bit / integerPartWidth] &=
+    ~((integerPart) 1 << (bit % integerPartWidth));
 }
 
 /* Returns the bit number of the least significant set bit of a

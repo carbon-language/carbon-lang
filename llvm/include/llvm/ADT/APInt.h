@@ -1308,6 +1308,9 @@ public:
   /// Set the given bit of a bignum.  Zero-based.
   static void tcSetBit(integerPart *, unsigned int bit);
 
+  /// Clear the given bit of a bignum.  Zero-based.
+  static void tcClearBit(integerPart *, unsigned int bit);
+
   /// Returns the bit number of the least or most significant set bit
   /// of a number.  If the input number has no bits set -1U is
   /// returned.
