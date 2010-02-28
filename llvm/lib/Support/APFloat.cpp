@@ -631,25 +631,45 @@ void APFloat::makeNaN(bool SNaN, bool Negative, const APInt *fill)
   category = fcNaN;
   sign = Negative;
 
+  integerPart *significand = significandParts();
+  unsigned numParts = partCount();
+
   // Set the significand bits to the fill.
-  if (!fill || fill->getNumWords() < partCount())
-    APInt::tcSet(significandParts(), 0, partCount());
-  if (fill)
-    APInt::tcAssign(significandParts(), fill->getRawData(), partCount());
+  if (!fill || fill->getNumWords() < numParts)
+    APInt::tcSet(significand, 0, numParts);
+  if (fill) {
+    APInt::tcAssign(significand, fill->getRawData(), partCount());
+
+    // Zero out the excess bits of the significand.
+    unsigned bitsToPreserve = semantics->precision - 1;
+    unsigned part = bitsToPreserve / 64;
+    bitsToPreserve %= 64;
+    significand[part] &= ((1ULL << bitsToPreserve) - 1);
+    for (part++; part != numParts; ++part)
+      significand[part] = 0;
+  }
+
+  unsigned QNaNBit = semantics->precision - 2;
 
   if (SNaN) {
     // We always have to clear the QNaN bit to make it an SNaN.
-    APInt::tcClearBit(significandParts(), semantics->precision - 2);
+    APInt::tcClearBit(significand, QNaNBit);
 
     // If there are no bits set in the payload, we have to set
     // *something* to make it a NaN instead of an infinity;
     // conventionally, this is the next bit down from the QNaN bit.
-    if (APInt::tcIsZero(significandParts(), partCount()))
-      APInt::tcSetBit(significandParts(), semantics->precision - 3);
+    if (APInt::tcIsZero(significand, numParts))
+      APInt::tcSetBit(significand, QNaNBit - 1);
   } else {
     // We always have to set the QNaN bit to make it a QNaN.
-    APInt::tcSetBit(significandParts(), semantics->precision - 2);
+    APInt::tcSetBit(significand, QNaNBit);
   }
+
+  // For x87 extended precision, we want to make a NaN, not a
+  // pseudo-NaN.  Maybe we should expose the ability to make
+  // pseudo-NaNs?
+  if (semantics == &APFloat::x87DoubleExtended)
+    APInt::tcSetBit(significand, QNaNBit + 1);
 }
 
 APFloat APFloat::makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
