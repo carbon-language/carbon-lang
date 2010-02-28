@@ -999,8 +999,8 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
       FinalOverriders::OverriderInfo Overrider = 
         Overriders->getOverrider(Base, MD);
       
-      /// The vcall offset is the offset from the virtual base to the object where
-      /// the function was overridden.
+      /// The vcall offset is the offset from the virtual base to the object 
+      /// where the function was overridden.
       // FIXME: We should not use / 8 here.
       Offset = (int64_t)(Overrider.BaseOffset - VBaseOffset) / 8;
     }
@@ -1236,6 +1236,12 @@ private:
   /// given base (excluding any primary bases).
   void LayoutVtablesForVirtualBases(const CXXRecordDecl *RD, 
                                     VisitedVirtualBasesSetTy &VBases);
+
+  /// isBuildingConstructionVtable - Return whether this vtable builder is
+  /// building a construction vtable.
+  bool isBuildingConstructorVtable() const { 
+    return MostDerivedClass != LayoutClass;
+  }
 
 public:
   VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass,
