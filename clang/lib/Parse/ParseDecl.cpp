@@ -3303,3 +3303,69 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
                          DiagID, Operand.release()))
     Diag(StartLoc, DiagID) << PrevSpec;
 }
+
+
+/// TryAltiVecVectorTokenOutOfLine - Out of line body that should only be called
+/// from TryAltiVecVectorToken.
+bool Parser::TryAltiVecVectorTokenOutOfLine() {
+  Token Next = NextToken();
+  switch (Next.getKind()) {
+  default: return false;
+  case tok::kw_short:
+  case tok::kw_long:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw_void:
+  case tok::kw_char:
+  case tok::kw_int:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw_bool:
+  case tok::kw___pixel:
+    Tok.setKind(tok::kw___vector);
+    return true;
+  case tok::identifier:
+    if (Next.getIdentifierInfo() == Ident_pixel) {
+      Tok.setKind(tok::kw___vector);
+      return true;
+    }
+    return false;
+  }
+}
+
+bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
+                                      const char *&PrevSpec, unsigned &DiagID,
+                                      bool &isInvalid) {
+  if (Tok.getIdentifierInfo() == Ident_vector) {
+    Token Next = NextToken();
+    switch (Next.getKind()) {
+    case tok::kw_short:
+    case tok::kw_long:
+    case tok::kw_signed:
+    case tok::kw_unsigned:
+    case tok::kw_void:
+    case tok::kw_char:
+    case tok::kw_int:
+    case tok::kw_float:
+    case tok::kw_double:
+    case tok::kw_bool:
+    case tok::kw___pixel:
+      isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+      return true;
+    case tok::identifier:
+      if (Next.getIdentifierInfo() == Ident_pixel) {
+        isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+        return true;
+      }
+      break;
+    default:
+      break;
+    }
+  } else if (Tok.getIdentifierInfo() == Ident_pixel &&
+             DS.isTypeAltiVecVector()) {
+    isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
+    return true;
+  }
+  return false;
+}
+  

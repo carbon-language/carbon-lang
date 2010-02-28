@@ -331,39 +331,12 @@ private:
   bool TryAltiVecToken(DeclSpec &DS, SourceLocation Loc,
                        const char *&PrevSpec, unsigned &DiagID,
                        bool &isInvalid) {
-    if (getLang().AltiVec) {
-      if (Tok.getIdentifierInfo() == Ident_vector) {
-        const Token nextToken = NextToken();
-        switch (nextToken.getKind()) {
-          case tok::kw_short:
-          case tok::kw_long:
-          case tok::kw_signed:
-          case tok::kw_unsigned:
-          case tok::kw_void:
-          case tok::kw_char:
-          case tok::kw_int:
-          case tok::kw_float:
-          case tok::kw_double:
-          case tok::kw_bool:
-          case tok::kw___pixel:
-            isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
-            return true;
-          case tok::identifier:
-            if (nextToken.getIdentifierInfo() == Ident_pixel) {
-              isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
-              return true;
-            }
-            break;
-          default:
-            break;
-        }
-      } else if ((Tok.getIdentifierInfo() == Ident_pixel) &&
-          DS.isTypeAltiVecVector()) {
-        isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
-        return true;
-      }
-    }
-    return false;
+    if (!getLang().AltiVec ||
+        (Tok.getIdentifierInfo() != Ident_vector &&
+         Tok.getIdentifierInfo() != Ident_pixel))
+      return false;
+    
+    return TryAltiVecTokenOutOfLine(DS, Loc, PrevSpec, DiagID, isInvalid);
   }
 
   /// TryAltiVecVectorToken - Check for context-sensitive AltiVec vector
@@ -372,33 +345,14 @@ private:
   bool TryAltiVecVectorToken() {
     if (!getLang().AltiVec ||
         Tok.getIdentifierInfo() != Ident_vector) return false;
-    const Token nextToken = NextToken();
-    switch (nextToken.getKind()) {
-    case tok::kw_short:
-    case tok::kw_long:
-    case tok::kw_signed:
-    case tok::kw_unsigned:
-    case tok::kw_void:
-    case tok::kw_char:
-    case tok::kw_int:
-    case tok::kw_float:
-    case tok::kw_double:
-    case tok::kw_bool:
-    case tok::kw___pixel:
-      Tok.setKind(tok::kw___vector);
-      return true;
-    case tok::identifier:
-      if (nextToken.getIdentifierInfo() == Ident_pixel) {
-        Tok.setKind(tok::kw___vector);
-        return true;
-      }
-      break;
-    default:
-      break;
-    }
-    return false;
+    return TryAltiVecVectorTokenOutOfLine();
   }
-
+  
+  bool TryAltiVecVectorTokenOutOfLine();
+  bool TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
+                                const char *&PrevSpec, unsigned &DiagID,
+                                bool &isInvalid);
+    
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and
   /// after the token consumption is done, Commit() or Revert() is called to
