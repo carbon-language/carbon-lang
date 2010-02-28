@@ -1774,6 +1774,11 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, ToType.getNonReferenceType(),
                       CastExpr::CK_NoOp,
                       ToType->isLValueReferenceType());
+
+    if (SCS.DeprecatedStringLiteralToCharPtr)
+      Diag(From->getLocStart(), diag::warn_deprecated_string_literal_conversion)
+        << ToType.getNonReferenceType();
+
     break;
       
   default:

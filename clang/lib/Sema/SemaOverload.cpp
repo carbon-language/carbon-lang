@@ -118,7 +118,7 @@ void StandardConversionSequence::setAsIdentityConversion() {
   First = ICK_Identity;
   Second = ICK_Identity;
   Third = ICK_Identity;
-  Deprecated = false;
+  DeprecatedStringLiteralToCharPtr = false;
   ReferenceBinding = false;
   DirectBinding = false;
   RRefBinding = false;
@@ -549,7 +549,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 
   // Standard conversions (C++ [conv])
   SCS.setAsIdentityConversion();
-  SCS.Deprecated = false;
+  SCS.DeprecatedStringLiteralToCharPtr = false;
   SCS.IncompatibleObjC = false;
   SCS.setFromType(FromType);
   SCS.CopyConstructor = 0;
@@ -592,7 +592,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 
     if (IsStringLiteralToNonConstPointerConversion(From, ToType)) {
       // This conversion is deprecated. (C++ D.4).
-      SCS.Deprecated = true;
+      SCS.DeprecatedStringLiteralToCharPtr = true;
 
       // For the purpose of ranking in overload resolution
       // (13.3.3.1.1), this conversion is considered an
@@ -1993,7 +1993,7 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
   // the deprecated string literal array to pointer conversion.
   switch (Result) {
   case ImplicitConversionSequence::Better:
-    if (SCS1.Deprecated)
+    if (SCS1.DeprecatedStringLiteralToCharPtr)
       Result = ImplicitConversionSequence::Indistinguishable;
     break;
 
@@ -2001,7 +2001,7 @@ Sema::CompareQualificationConversions(const StandardConversionSequence& SCS1,
     break;
 
   case ImplicitConversionSequence::Worse:
-    if (SCS2.Deprecated)
+    if (SCS2.DeprecatedStringLiteralToCharPtr)
       Result = ImplicitConversionSequence::Indistinguishable;
     break;
   }

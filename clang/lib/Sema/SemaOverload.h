@@ -117,7 +117,7 @@ namespace clang {
     /// Deprecated - Whether this the deprecated conversion of a
     /// string literal to a pointer to non-const character data
     /// (C++ 4.2p2).
-    bool Deprecated : 1;
+    bool DeprecatedStringLiteralToCharPtr : 1;
 
     /// IncompatibleObjC - Whether this is an Objective-C conversion
     /// that we should warn about (if we actually use it).

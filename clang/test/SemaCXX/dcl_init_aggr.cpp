@@ -38,7 +38,7 @@ char cv[4] = { 'a', 's', 'd', 'f', 0 }; // expected-error{{excess elements in ar
 
 // C++ [dcl.init.aggr]p7
 struct TooFew { int a; char* b; int c; }; 
-TooFew too_few = { 1, "asdf" }; // okay
+TooFew too_few = { 1, "asdf" }; // expected-warning{{conversion from string literal to 'char *' is deprecated}}
 
 struct NoDefaultConstructor { // expected-note 3 {{candidate constructor (the implicit copy constructor)}} \
                               // expected-note{{declared here}}

@@ -11,7 +11,7 @@ void f() {
   int *p;
   bool v6 = T(0) == p;
   char *str;
-  str = "a string";
+  str = "a string"; // expected-warning{{conversion from string literal to 'char *' is deprecated}}
   wchar_t *wstr;
-  wstr = L"a wide string";
+  wstr = L"a wide string"; // expected-warning{{conversion from string literal to 'wchar_t *' is deprecated}}
 }
