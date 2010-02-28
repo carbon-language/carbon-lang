@@ -1346,10 +1346,16 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     break;
 
   case Expr::DeclRefExprClass: {
-    const Decl *D = cast<DeclRefExpr>(E)->getDecl();
+    const NamedDecl *D = cast<DeclRefExpr>(E)->getDecl();
 
     switch (D->getKind()) {
-    default: assert(false && "Unhandled decl kind!");
+    default: 
+      //  <expr-primary> ::= L <mangled-name> E # external name
+      Out << 'L';
+      mangle(D, "_Z");
+      Out << 'E';
+      break;
+
     case Decl::NonTypeTemplateParm: {
       const NonTypeTemplateParmDecl *PD = cast<NonTypeTemplateParmDecl>(D);
       mangleTemplateParameter(PD->getIndex());

@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
-
 namespace test1 {
 int x;
 template <int& D> class T { };
@@ -65,4 +64,24 @@ template <void(A::*)(float)> class T { };
 // FIXME: Fails because we don't treat as an expression.
 // CHECK-FAIL: void @_ZN5test62f0ENS_1TIXadL_ZNS_1A3im0EfEEEE(
 void f0(T<&A::im0> a0) {}
+}
+
+namespace test7 {
+  template<typename T>
+  struct meta {
+    static const unsigned value = sizeof(T);
+  };
+
+  template<unsigned> struct int_c { 
+    typedef float type;
+  };
+
+  template<typename T>
+  struct X {
+    template<typename U>
+    X(U*, typename int_c<(meta<T>::value + meta<U>::value)>::type *) { }
+  };
+
+  // CHECK: define void @_ZN5test71XIiEC1IdEEPT_PNS_5int_cIXplL_ZNS_4metaIiE5valueEEsrNS6_IS3_EE5valueEE4typeE
+  template X<int>::X(double*, float*);
 }
