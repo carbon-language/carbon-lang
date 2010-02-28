@@ -370,17 +370,55 @@ let Uses = [EFLAGS], usesCustomInserter = 1 in {
 // SSE1 Instructions
 //===----------------------------------------------------------------------===//
 
-// Move Instructions
-let neverHasSideEffects = 1 in
-def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
-                  "movss\t{$src, $dst|$dst, $src}", []>;
+// Move Instructions. Register-to-register movss is not used for FR32
+// register copies because it's a partial register update; FsMOVAPSrr is
+// used instead. Register-to-register movss is not modeled as an INSERT_SUBREG
+// because INSERT_SUBREG requires that the insert be implementable in terms of
+// a copy, and just mentioned, we don't use movss for copies.
+let Constraints = "$src1 = $dst" in
+def MOVSSrr : SSI<0x10, MRMSrcReg,
+                  (outs VR128:$dst), (ins VR128:$src1, FR32:$src2),
+                  "movss\t{$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst,
+                        (movl VR128:$src1, (scalar_to_vector FR32:$src2)))]>;
+
+// Extract the low 32-bit value from one vector and insert it into another.
+let AddedComplexity = 15 in
+def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
+          (MOVSSrr VR128:$src1,
+                   (EXTRACT_SUBREG (v4f32 VR128:$src2), x86_subreg_ss))>;
+
+// Implicitly promote a 32-bit scalar to a vector.
+def : Pat<(v4f32 (scalar_to_vector FR32:$src)),
+          (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), FR32:$src, x86_subreg_ss)>;
+
+// Loading from memory automatically zeroing upper bits.
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 def MOVSSrm : SSI<0x10, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
                   "movss\t{$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (loadf32 addr:$src))]>;
+
+// MOVSSrm zeros the high parts of the register; represent this
+// with SUBREG_TO_REG.
+let AddedComplexity = 20 in {
+def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
+          (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), x86_subreg_ss)>;
+def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
+          (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), x86_subreg_ss)>;
+def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
+          (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), x86_subreg_ss)>;
+}
+
+// Store scalar value to memory.
 def MOVSSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}",
                   [(store FR32:$src, addr:$dst)]>;
+
+// Extract and store.
+def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
+                 addr:$dst),
+          (MOVSSmr addr:$dst,
+                   (EXTRACT_SUBREG (v4f32 VR128:$src), x86_subreg_ss))>;
 
 // Conversion instructions
 def CVTTSS2SIrr : SSI<0x2C, MRMSrcReg, (outs GR32:$dst), (ins FR32:$src),
@@ -1090,75 +1128,66 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
 def : Pat<(v2f64 immAllZerosV), (V_SET0)>;
 def : Pat<(v4f32 immAllZerosV), (V_SET0)>;
 
-// FR32 to 128-bit vector conversion.
-let isAsCheapAsAMove = 1 in
-def MOVSS2PSrr : SSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR32:$src),
-                      "movss\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v4f32 (scalar_to_vector FR32:$src)))]>;
-def MOVSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
-                     "movss\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst,
-                       (v4f32 (scalar_to_vector (loadf32 addr:$src))))]>;
-
-// FIXME: may not be able to eliminate this movss with coalescing the src and
-// dest register classes are different. We really want to write this pattern
-// like this:
-// def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
-//           (f32 FR32:$src)>;
-let isAsCheapAsAMove = 1 in
-def MOVPS2SSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins VR128:$src),
-                     "movss\t{$src, $dst|$dst, $src}",
-                     [(set FR32:$dst, (vector_extract (v4f32 VR128:$src),
-                                       (iPTR 0)))]>;
-def MOVPS2SSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, VR128:$src),
-                     "movss\t{$src, $dst|$dst, $src}",
-                     [(store (f32 (vector_extract (v4f32 VR128:$src),
-                                   (iPTR 0))), addr:$dst)]>;
-
-
-// Move to lower bits of a VR128, leaving upper bits alone.
-// Three operand (but two address) aliases.
-let Constraints = "$src1 = $dst" in {
-let neverHasSideEffects = 1 in
-  def MOVLSS2PSrr : SSI<0x10, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, FR32:$src2),
-                        "movss\t{$src2, $dst|$dst, $src2}", []>;
-
-  let AddedComplexity = 15 in
-    def MOVLPSrr : SSI<0x10, MRMSrcReg,
-                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                       "movss\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst,
-                         (v4f32 (movl VR128:$src1, VR128:$src2)))]>;
-}
-
-// Move to lower bits of a VR128 and zeroing upper bits.
-// Loading from memory automatically zeroing upper bits.
-let AddedComplexity = 20 in
-def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
-                      "movss\t{$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (v4f32 (X86vzmovl (v4f32 (scalar_to_vector
-                                                    (loadf32 addr:$src))))))]>;
-
-def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-          (MOVZSS2PSrm addr:$src)>;
+def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
+          (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), x86_subreg_ss))>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 Instructions
 //===---------------------------------------------------------------------===//
 
-// Move Instructions
-let neverHasSideEffects = 1 in
-def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
-                  "movsd\t{$src, $dst|$dst, $src}", []>;
-let canFoldAsLoad = 1, isReMaterializable = 1 in
+// Move Instructions. Register-to-register movsd is not used for FR64
+// register copies because it's a partial register update; FsMOVAPDrr is
+// used instead. Register-to-register movsd is not modeled as an INSERT_SUBREG
+// because INSERT_SUBREG requires that the insert be implementable in terms of
+// a copy, and just mentioned, we don't use movsd for copies.
+let Constraints = "$src1 = $dst" in
+def MOVSDrr : SDI<0x10, MRMSrcReg,
+                  (outs VR128:$dst), (ins VR128:$src1, FR64:$src2),
+                  "movsd\t{$src2, $dst|$dst, $src2}",
+                  [(set VR128:$dst,
+                        (movl VR128:$src1, (scalar_to_vector FR64:$src2)))]>;
+
+// Extract the low 64-bit value from one vector and insert it into another.
+let AddedComplexity = 15 in
+def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
+          (MOVSDrr VR128:$src1,
+                   (EXTRACT_SUBREG (v2f64 VR128:$src2), x86_subreg_sd))>;
+
+// Implicitly promote a 64-bit scalar to a vector.
+def : Pat<(v2f64 (scalar_to_vector FR64:$src)),
+          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), FR64:$src, x86_subreg_sd)>;
+
+// Loading from memory automatically zeroing upper bits.
+let canFoldAsLoad = 1, isReMaterializable = 1, AddedComplexity = 20 in
 def MOVSDrm : SDI<0x10, MRMSrcMem, (outs FR64:$dst), (ins f64mem:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (loadf64 addr:$src))]>;
+
+// MOVSDrm zeros the high parts of the register; represent this
+// with SUBREG_TO_REG.
+let AddedComplexity = 20 in {
+def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
+          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), x86_subreg_sd)>;
+def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
+          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), x86_subreg_sd)>;
+def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
+          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), x86_subreg_sd)>;
+def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
+          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), x86_subreg_sd)>;
+def : Pat<(v2f64 (X86vzload addr:$src)),
+          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), x86_subreg_sd)>;
+}
+
+// Store scalar value to memory.
 def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(store FR64:$src, addr:$dst)]>;
+
+// Extract and store.
+def : Pat<(store (f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
+                 addr:$dst),
+          (MOVSDmr addr:$dst,
+                   (EXTRACT_SUBREG (v2f64 VR128:$src), x86_subreg_sd))>;
 
 // Conversion instructions
 def CVTTSD2SIrr : SDI<0x2C, MRMSrcReg, (outs GR32:$dst), (ins FR64:$src),
@@ -1213,7 +1242,8 @@ def CVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst), (ins f32mem:$src),
                  Requires<[HasSSE2, OptForSize]>;
 
 def : Pat<(extloadf32 addr:$src),
-          (CVTSS2SDrr (MOVSSrm addr:$src))>, Requires<[HasSSE2, OptForSpeed]>;
+          (CVTSS2SDrr (MOVSSrm addr:$src))>,
+      Requires<[HasSSE2, OptForSpeed]>;
 
 // Match intrinsics which expect XMM operand(s).
 def Int_CVTSD2SIrr : SDI<0x2D, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
@@ -2397,17 +2427,6 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
-// FR64 to 128-bit vector conversion.
-let isAsCheapAsAMove = 1 in
-def MOVSD2PDrr : SDI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR64:$src),
-                      "movsd\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v2f64 (scalar_to_vector FR64:$src)))]>;
-def MOVSD2PDrm : SDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                     "movsd\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst,
-                       (v2f64 (scalar_to_vector (loadf64 addr:$src))))]>;
-
 def MOVDI2PDIrr : PDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
@@ -2436,20 +2455,9 @@ def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
                       [(store (i64 (vector_extract (v2i64 VR128:$src),
                                     (iPTR 0))), addr:$dst)]>;
 
-// FIXME: may not be able to eliminate this movss with coalescing the src and
-// dest register classes are different. We really want to write this pattern
-// like this:
-// def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
-//           (f32 FR32:$src)>;
-let isAsCheapAsAMove = 1 in
-def MOVPD2SDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins VR128:$src),
-                     "movsd\t{$src, $dst|$dst, $src}",
-                     [(set FR64:$dst, (vector_extract (v2f64 VR128:$src),
-                                       (iPTR 0)))]>;
-def MOVPD2SDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
-                     "movsd\t{$src, $dst|$dst, $src}",
-                     [(store (f64 (vector_extract (v2f64 VR128:$src),
-                                   (iPTR 0))), addr:$dst)]>;
+def : Pat<(f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
+          (f64 (EXTRACT_SUBREG (v2f64 VR128:$src), x86_subreg_sd))>;
+
 def MOVPDI2DIrr  : PDI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR128:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(set GR32:$dst, (vector_extract (v4i32 VR128:$src),
@@ -2466,43 +2474,10 @@ def MOVSS2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, FR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(store (i32 (bitconvert FR32:$src)), addr:$dst)]>;
 
-
-// Move to lower bits of a VR128, leaving upper bits alone.
-// Three operand (but two address) aliases.
-let Constraints = "$src1 = $dst" in {
-  let neverHasSideEffects = 1 in
-  def MOVLSD2PDrr : SDI<0x10, MRMSrcReg,
-                        (outs VR128:$dst), (ins VR128:$src1, FR64:$src2),
-                        "movsd\t{$src2, $dst|$dst, $src2}", []>;
-
-  let AddedComplexity = 15 in
-    def MOVLPDrr : SDI<0x10, MRMSrcReg,
-                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                       "movsd\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst,
-                         (v2f64 (movl VR128:$src1, VR128:$src2)))]>;
-}
-
 // Store / copy lower 64-bits of a XMM register.
 def MOVLQ128mr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
                      "movq\t{$src, $dst|$dst, $src}",
                      [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>;
-
-// Move to lower bits of a VR128 and zeroing upper bits.
-// Loading from memory automatically zeroing upper bits.
-let AddedComplexity = 20 in {
-def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                      "movsd\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst,
-                        (v2f64 (X86vzmovl (v2f64 (scalar_to_vector
-                                                 (loadf64 addr:$src))))))]>;
-
-def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-            (MOVZSD2PDrm addr:$src)>;
-def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
-            (MOVZSD2PDrm addr:$src)>;
-def : Pat<(v2f64 (X86vzload addr:$src)), (MOVZSD2PDrm addr:$src)>;
-}
 
 // movd / movq to XMM register zero-extends
 let AddedComplexity = 15 in {
@@ -3049,13 +3024,15 @@ let Predicates = [HasSSE2] in {
 let AddedComplexity = 15 in {
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
 def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
-          (MOVLSD2PDrr (V_SET0), FR64:$src)>;
+          (MOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
 def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
-          (MOVLSS2PSrr (V_SET0), FR32:$src)>;
+          (MOVSSrr (v4f32 (V_SET0)), FR32:$src)>;
 def : Pat<(v4f32 (X86vzmovl (v4f32 VR128:$src))),
-          (MOVLPSrr (V_SET0), VR128:$src)>;
+          (MOVSSrr (v4f32 (V_SET0)),
+                   (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), x86_subreg_ss)))>;
 def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
-          (MOVLPSrr (V_SET0), VR128:$src)>;
+          (MOVSSrr (v4i32 (V_SET0)),
+                   (EXTRACT_SUBREG (v4i32 VR128:$src), x86_subreg_ss))>;
 }
 
 // Splat v2f64 / v2i64
@@ -3190,15 +3167,19 @@ def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
 let AddedComplexity = 15 in {
 // Setting the lowest element in the vector.
 def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
-          (MOVLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (MOVSSrr (v4i32 VR128:$src1),
+                   (EXTRACT_SUBREG (v4i32 VR128:$src2), x86_subreg_ss))>;
 def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
-          (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (MOVSDrr (v2i64 VR128:$src1),
+                   (EXTRACT_SUBREG (v2i64 VR128:$src2), x86_subreg_sd))>;
 
-// vector_shuffle v1, v2 <4, 5, 2, 3> using MOVLPDrr (movsd)
+// vector_shuffle v1, v2 <4, 5, 2, 3> using movsd
 def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
-          (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, x86_subreg_sd))>,
+      Requires<[HasSSE2]>;
 def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
-          (MOVLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+          (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, x86_subreg_sd))>,
+      Requires<[HasSSE2]>;
 }
 
 // vector_shuffle v1, v2 <4, 5, 2, 3> using SHUFPSrri (we prefer movsd, but

@@ -276,11 +276,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOVDQArr,    X86::MOVDQAmr, 0, 16 },
     { X86::MOVPDI2DIrr, X86::MOVPDI2DImr, 0, 0 },
     { X86::MOVPQIto64rr,X86::MOVPQI2QImr, 0, 0 },
-    { X86::MOVPS2SSrr,  X86::MOVPS2SSmr, 0, 0 },
-    { X86::MOVSDrr,     X86::MOVSDmr, 0, 0 },
     { X86::MOVSDto64rr, X86::MOVSDto64mr, 0, 0 },
     { X86::MOVSS2DIrr,  X86::MOVSS2DImr, 0, 0 },
-    { X86::MOVSSrr,     X86::MOVSSmr, 0, 0 },
     { X86::MOVUPDrr,    X86::MOVUPDmr, 0, 0 },
     { X86::MOVUPSrr,    X86::MOVUPSmr, 0, 0 },
     { X86::MUL16r,      X86::MUL16m, 1, 0 },
@@ -389,12 +386,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::MOVDI2PDIrr,     X86::MOVDI2PDIrm, 0 },
     { X86::MOVDI2SSrr,      X86::MOVDI2SSrm, 0 },
     { X86::MOVDQArr,        X86::MOVDQArm, 16 },
-    { X86::MOVSD2PDrr,      X86::MOVSD2PDrm, 0 },
-    { X86::MOVSDrr,         X86::MOVSDrm, 0 },
     { X86::MOVSHDUPrr,      X86::MOVSHDUPrm, 16 },
     { X86::MOVSLDUPrr,      X86::MOVSLDUPrm, 16 },
-    { X86::MOVSS2PSrr,      X86::MOVSS2PSrm, 0 },
-    { X86::MOVSSrr,         X86::MOVSSrm, 0 },
     { X86::MOVSX16rr8,      X86::MOVSX16rm8, 0 },
     { X86::MOVSX32rr16,     X86::MOVSX32rm16, 0 },
     { X86::MOVSX32rr8,      X86::MOVSX32rm8, 0 },
@@ -682,23 +675,20 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   case X86::MOV16rr:
   case X86::MOV32rr: 
   case X86::MOV64rr:
-  case X86::MOVSSrr:
-  case X86::MOVSDrr:
 
   // FP Stack register class copies
   case X86::MOV_Fp3232: case X86::MOV_Fp6464: case X86::MOV_Fp8080:
   case X86::MOV_Fp3264: case X86::MOV_Fp3280:
   case X86::MOV_Fp6432: case X86::MOV_Fp8032:
-      
+
+  // Note that MOVSSrr and MOVSDrr are not considered copies. FR32 and FR64
+  // copies are done with FsMOVAPSrr and FsMOVAPDrr.
+
   case X86::FsMOVAPSrr:
   case X86::FsMOVAPDrr:
   case X86::MOVAPSrr:
   case X86::MOVAPDrr:
   case X86::MOVDQArr:
-  case X86::MOVSS2PSrr:
-  case X86::MOVSD2PDrr:
-  case X86::MOVPS2SSrr:
-  case X86::MOVPD2SDrr:
   case X86::MMX_MOVQ64rr:
     assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&

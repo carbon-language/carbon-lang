@@ -158,22 +158,22 @@ let Namespace = "X86" in {
   def XMM15: Register<"xmm15">, DwarfRegNum<[32, -2, -2]>;
 
   // YMM Registers, used by AVX instructions
-  def YMM0: Register<"ymm0">, DwarfRegNum<[17, 21, 21]>;
-  def YMM1: Register<"ymm1">, DwarfRegNum<[18, 22, 22]>;
-  def YMM2: Register<"ymm2">, DwarfRegNum<[19, 23, 23]>;
-  def YMM3: Register<"ymm3">, DwarfRegNum<[20, 24, 24]>;
-  def YMM4: Register<"ymm4">, DwarfRegNum<[21, 25, 25]>;
-  def YMM5: Register<"ymm5">, DwarfRegNum<[22, 26, 26]>;
-  def YMM6: Register<"ymm6">, DwarfRegNum<[23, 27, 27]>;
-  def YMM7: Register<"ymm7">, DwarfRegNum<[24, 28, 28]>;
-  def YMM8:  Register<"ymm8">,  DwarfRegNum<[25, -2, -2]>;
-  def YMM9:  Register<"ymm9">,  DwarfRegNum<[26, -2, -2]>;
-  def YMM10: Register<"ymm10">, DwarfRegNum<[27, -2, -2]>;
-  def YMM11: Register<"ymm11">, DwarfRegNum<[28, -2, -2]>;
-  def YMM12: Register<"ymm12">, DwarfRegNum<[29, -2, -2]>;
-  def YMM13: Register<"ymm13">, DwarfRegNum<[30, -2, -2]>;
-  def YMM14: Register<"ymm14">, DwarfRegNum<[31, -2, -2]>;
-  def YMM15: Register<"ymm15">, DwarfRegNum<[32, -2, -2]>;
+  def YMM0: RegisterWithSubRegs<"ymm0", [XMM0]>, DwarfRegNum<[17, 21, 21]>;
+  def YMM1: RegisterWithSubRegs<"ymm1", [XMM1]>, DwarfRegNum<[18, 22, 22]>;
+  def YMM2: RegisterWithSubRegs<"ymm2", [XMM2]>, DwarfRegNum<[19, 23, 23]>;
+  def YMM3: RegisterWithSubRegs<"ymm3", [XMM3]>, DwarfRegNum<[20, 24, 24]>;
+  def YMM4: RegisterWithSubRegs<"ymm4", [XMM4]>, DwarfRegNum<[21, 25, 25]>;
+  def YMM5: RegisterWithSubRegs<"ymm5", [XMM5]>, DwarfRegNum<[22, 26, 26]>;
+  def YMM6: RegisterWithSubRegs<"ymm6", [XMM6]>, DwarfRegNum<[23, 27, 27]>;
+  def YMM7: RegisterWithSubRegs<"ymm7", [XMM7]>, DwarfRegNum<[24, 28, 28]>;
+  def YMM8:  RegisterWithSubRegs<"ymm8", [XMM8]>,  DwarfRegNum<[25, -2, -2]>;
+  def YMM9:  RegisterWithSubRegs<"ymm9", [XMM9]>,  DwarfRegNum<[26, -2, -2]>;
+  def YMM10: RegisterWithSubRegs<"ymm10", [XMM10]>, DwarfRegNum<[27, -2, -2]>;
+  def YMM11: RegisterWithSubRegs<"ymm11", [XMM11]>, DwarfRegNum<[28, -2, -2]>;
+  def YMM12: RegisterWithSubRegs<"ymm12", [XMM12]>, DwarfRegNum<[29, -2, -2]>;
+  def YMM13: RegisterWithSubRegs<"ymm13", [XMM13]>, DwarfRegNum<[30, -2, -2]>;
+  def YMM14: RegisterWithSubRegs<"ymm14", [XMM14]>, DwarfRegNum<[31, -2, -2]>;
+  def YMM15: RegisterWithSubRegs<"ymm15", [XMM15]>, DwarfRegNum<[32, -2, -2]>;
 
   // Floating point stack registers
   def ST0 : Register<"st(0)">, DwarfRegNum<[33, 12, 11]>;
@@ -238,6 +238,10 @@ def x86_subreg_8bit_hi : PatLeaf<(i32 2)>;
 def x86_subreg_16bit   : PatLeaf<(i32 3)>;
 def x86_subreg_32bit   : PatLeaf<(i32 4)>;
 
+def x86_subreg_ss   : PatLeaf<(i32 1)>;
+def x86_subreg_sd   : PatLeaf<(i32 2)>;
+def x86_subreg_xmm  : PatLeaf<(i32 3)>;
+
 def : SubRegSet<1, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
                     R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
                    [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
@@ -277,9 +281,29 @@ def : SubRegSet<4, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,
                    [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, 
                     R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
 
-def : SubRegSet<1, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,  
+def : SubRegSet<1, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
+                    YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
+                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+
+def : SubRegSet<2, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
+                    YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
+                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+
+def : SubRegSet<3, [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,  
                     YMM8, YMM9, YMM10, YMM11, YMM12, YMM13, YMM14, YMM15],
                    [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, 
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+
+def : SubRegSet<1, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
+                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
+
+def : SubRegSet<2, [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+                    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15],
+                   [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
                     XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15]>;
 
 //===----------------------------------------------------------------------===//
@@ -793,6 +817,7 @@ def VR128 : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],128,
                           [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
                            XMM8, XMM9, XMM10, XMM11,
                            XMM12, XMM13, XMM14, XMM15]> {
+  let SubRegClassList = [FR32, FR64];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
@@ -811,7 +836,9 @@ def VR128 : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],128,
 def VR256 : RegisterClass<"X86", [ v8i32, v4i64, v8f32, v4f64],256,
                           [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
                            YMM8, YMM9, YMM10, YMM11,
-                           YMM12, YMM13, YMM14, YMM15]>;
+                           YMM12, YMM13, YMM14, YMM15]> {
+  let SubRegClassList = [FR32, FR64, VR128];
+}
 
 // Status flags registers.
 def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]> {

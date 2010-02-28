@@ -35,7 +35,8 @@ namespace X86 {
   /// these indices must be kept in sync with the class indices in the 
   /// X86RegisterInfo.td file.
   enum SubregIndex {
-    SUBREG_8BIT = 1, SUBREG_8BIT_HI = 2, SUBREG_16BIT = 3, SUBREG_32BIT = 4
+    SUBREG_8BIT = 1, SUBREG_8BIT_HI = 2, SUBREG_16BIT = 3, SUBREG_32BIT = 4,
+    SUBREG_SS = 1, SUBREG_SD = 2, SUBREG_XMM = 3
   };
 }
 
