@@ -20,9 +20,9 @@
 namespace llvm {
 class GlobalValue;
 class TargetMachine;
-  
+
 /// PICStyles - The X86 backend supports a number of different styles of PIC.
-/// 
+///
 namespace PICStyles {
 enum Style {
   StubPIC,          // Used on i386-darwin in -fPIC mode.
@@ -46,7 +46,7 @@ protected:
   /// PICStyle - Which PIC style to use
   ///
   PICStyles::Style PICStyle;
-  
+
   /// X86SSELevel - MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, or
   /// none supported.
   X86SSEEnum X86SSELevel;
@@ -58,7 +58,7 @@ protected:
   /// HasCMov - True if this processor has conditional move instructions
   /// (generally pentium pro+).
   bool HasCMov;
-  
+
   /// HasX86_64 - True if the processor supports X86-64 instructions.
   ///
   bool HasX86_64;
@@ -78,8 +78,9 @@ protected:
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
-  /// HasVectorUAMem - True if SIMD operations can have unaligned memory operands.
-  ///                  This may require setting a feature bit in the processor.
+  /// HasVectorUAMem - True if SIMD operations can have unaligned memory
+  ///                  operands. This may require setting a feature bit in the
+  ///                  processor.
   bool HasVectorUAMem;
 
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
@@ -150,20 +151,20 @@ public:
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
-  
+
   bool isTargetWindows() const { return TargetType == isWindows; }
   bool isTargetMingw() const { return TargetType == isMingw; }
   bool isTargetCygwin() const { return TargetType == isCygwin; }
   bool isTargetCygMing() const {
     return TargetType == isMingw || TargetType == isCygwin;
   }
-  
+
   /// isTargetCOFF - Return true if this is any COFF/Windows target variant.
   bool isTargetCOFF() const {
     return TargetType == isMingw || TargetType == isCygwin ||
            TargetType == isWindows;
   }
-  
+
   bool isTargetWin64() const {
     return Is64Bit && (TargetType == isMingw || TargetType == isWindows);
   }
@@ -196,11 +197,11 @@ public:
   bool isPICStyleStubAny() const {
     return PICStyle == PICStyles::StubDynamicNoPIC ||
            PICStyle == PICStyles::StubPIC; }
-  
+
   /// getDarwinVers - Return the darwin version number, 8 = Tiger, 9 = Leopard,
   /// 10 = Snow Leopard, etc.
   unsigned getDarwinVers() const { return DarwinVers; }
-    
+
   /// ClassifyGlobalReference - Classify a global variable reference for the
   /// current subtarget according to how we should reference it in a non-pcrel
   /// context.
