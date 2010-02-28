@@ -46,7 +46,8 @@ class VTTBuilder {
   llvm::DenseMap<std::pair<const CXXRecordDecl *, BaseSubobject>, uint64_t> 
     CtorVtableAddressPoints;
   
-  llvm::Constant *getCtorVtable(const BaseSubobject &Base) {
+  llvm::Constant *getCtorVtable(const BaseSubobject &Base,
+                                bool BaseIsVirtual) {
     if (!GenerateDefinition)
       return 0;
 
@@ -54,7 +55,7 @@ class VTTBuilder {
     if (!CtorVtable) {
       // Build the vtable.
       CGVtableInfo::CtorVtableInfo Info
-        = CGM.getVtableInfo().getCtorVtable(Class, Base);
+        = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseIsVirtual);
       
       CtorVtable = Info.Vtable;
       
@@ -166,7 +167,7 @@ class VTTBuilder {
         if (BaseMorallyVirtual || VtblClass == Class)
           init = BuildVtablePtr(vtbl, VtblClass, Base, BaseOffset);
         else {
-          init = getCtorVtable(BaseSubobject(Base, BaseOffset));
+          init = getCtorVtable(BaseSubobject(Base, BaseOffset), i->isVirtual());
           
           subvtbl = init;
           subVtblClass = Base;
@@ -186,7 +187,8 @@ class VTTBuilder {
 
   /// BuiltVTT - Add the VTT to Inits.  Offset is the offset in bits to the
   /// currnet object we're working on.
-  void BuildVTT(const CXXRecordDecl *RD, uint64_t Offset, bool MorallyVirtual) {
+  void BuildVTT(const CXXRecordDecl *RD, uint64_t Offset, bool BaseIsVirtual,
+                bool MorallyVirtual) {
     // Itanium C++ ABI 2.6.2:
     //   An array of virtual table addresses, called the VTT, is declared for 
     //   each class type that has indirect or direct virtual base classes.
@@ -204,7 +206,8 @@ class VTTBuilder {
       Vtable = ClassVtbl;
       VtableClass = Class;
     } else {
-      Vtable = getCtorVtable(BaseSubobject(RD, Offset));
+      Vtable = getCtorVtable(BaseSubobject(RD, Offset), 
+                             /*IsVirtual=*/BaseIsVirtual);
       VtableClass = RD;
     }
     
@@ -235,7 +238,7 @@ class VTTBuilder {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base);
       
-      BuildVTT(Base, BaseOffset, MorallyVirtual);
+      BuildVTT(Base, BaseOffset, /*BaseIsVirtual=*/false, MorallyVirtual);
     }
   }
 
@@ -249,7 +252,7 @@ class VTTBuilder {
       if (i->isVirtual() && !SeenVBase.count(Base)) {
         SeenVBase.insert(Base);
         uint64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        BuildVTT(Base, BaseOffset, false);
+        BuildVTT(Base, BaseOffset, /*BaseIsVirtual=*/true, false);
       }
       VirtualVTTs(Base);
     }
@@ -335,13 +338,13 @@ CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
 
 CGVtableInfo::CtorVtableInfo 
 CGVtableInfo::getCtorVtable(const CXXRecordDecl *RD, 
-                            const BaseSubobject &Base) {
+                            const BaseSubobject &Base, bool BaseIsVirtual) {
   CtorVtableInfo Info;
   
   Info.Vtable = GenerateVtable(llvm::GlobalValue::InternalLinkage,
                                /*GenerateDefinition=*/true,
                                RD, Base.getBase(), Base.getBaseOffset(),
-                               Info.AddressPoints);
+                               BaseIsVirtual, Info.AddressPoints);
   return Info;
 }
 

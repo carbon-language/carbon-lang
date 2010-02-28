@@ -185,7 +185,7 @@ private:
   llvm::GlobalVariable *
   GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                  bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
-                 const CXXRecordDecl *RD, uint64_t Offset,
+                 const CXXRecordDecl *RD, uint64_t Offset, bool IsVirtual,
                  AddressPointsMapTy& AddressPoints);
 
   llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
@@ -239,7 +239,8 @@ public:
   };
   
   CtorVtableInfo getCtorVtable(const CXXRecordDecl *RD, 
-                               const BaseSubobject &Base);
+                               const BaseSubobject &Base,
+                               bool BaseIsVirtual);
   
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   

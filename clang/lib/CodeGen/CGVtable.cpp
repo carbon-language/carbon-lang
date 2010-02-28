@@ -1076,6 +1076,10 @@ private:
   /// holds the offset from the layout class to the most derived class.
   const uint64_t MostDerivedClassOffset;
   
+  /// MostDerivedClassIsVirtual - Whether the most derived class is a virtual 
+  /// base. (This only makes sense when building a construction vtable).
+  bool MostDerivedClassIsVirtual;
+  
   /// LayoutClass - The class we're using for layout information. Will be 
   /// different than the most derived class if we're building a construction
   /// vtable.
@@ -1214,7 +1218,7 @@ private:
   void AddMethods(BaseSubobject Base, BaseSubobject FirstBaseInPrimaryBaseChain,
                   PrimaryBasesSetVectorTy &PrimaryBases);
 
-  // LayoutVtable - Layout the vtable for the most derived class, including its
+  // LayoutVtable - Layout the vtable for the given base class, including its
   // secondary vtables and any vtables for virtual bases.
   void LayoutVtable();
 
@@ -1245,11 +1249,13 @@ private:
 
 public:
   VtableBuilder(CGVtableInfo &VtableInfo, const CXXRecordDecl *MostDerivedClass,
-                uint64_t MostDerivedClassOffset, 
+                uint64_t MostDerivedClassOffset, bool MostDerivedClassIsVirtual,
                 const CXXRecordDecl *LayoutClass)
     : VtableInfo(VtableInfo), MostDerivedClass(MostDerivedClass),
-    MostDerivedClassOffset(MostDerivedClassOffset), LayoutClass(LayoutClass),
-    Context(MostDerivedClass->getASTContext()), Overriders(MostDerivedClass) {
+    MostDerivedClassOffset(MostDerivedClassOffset), 
+    MostDerivedClassIsVirtual(MostDerivedClassIsVirtual), 
+    LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()), 
+    Overriders(MostDerivedClass) {
 
     LayoutVtable();
   }
@@ -1678,7 +1684,7 @@ VtableBuilder::AddMethods(BaseSubobject Base,
 
 void VtableBuilder::LayoutVtable() {
   LayoutPrimaryAndAndSecondaryVtables(BaseSubobject(MostDerivedClass, 0),
-                                      /*BaseIsVirtual=*/false);
+                                      MostDerivedClassIsVirtual);
   
   VisitedVirtualBasesSetTy VBases;
   
@@ -3318,16 +3324,23 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                              bool GenerateDefinition,
                              const CXXRecordDecl *LayoutClass,
                              const CXXRecordDecl *RD, uint64_t Offset,
+                             bool IsVirtual,
                              AddressPointsMapTy& AddressPoints) {
   if (GenerateDefinition) {
     if (LayoutClass == RD) {
-      VtableBuilder Builder(*this, RD, Offset, LayoutClass);
+      assert(!IsVirtual && 
+             "Can't only have a virtual base in construction vtables!");
+      VtableBuilder Builder(*this, RD, Offset, 
+                            /*MostDerivedClassIsVirtual=*/false,
+                            LayoutClass);
 
       if (CGM.getLangOptions().DumpVtableLayouts)
         Builder.dumpLayout(llvm::errs());
     } else if (CGM.getLangOptions().DumpVtableLayouts) {
       // We only build construction vtables when dumping vtable layouts for now.
-      VtableBuilder Builder(*this, RD, Offset, LayoutClass);
+      VtableBuilder Builder(*this, RD, Offset, 
+                            /*MostDerivedClassIsVirtual=*/IsVirtual,
+                            LayoutClass);
       Builder.dumpLayout(llvm::errs());
     }
   }
@@ -3390,6 +3403,7 @@ void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   
   AddressPointsMapTy AddressPoints;
   Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
+                          /*IsVirtual=*/false,
                           AddressPoints);
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);  
 }
@@ -3401,7 +3415,7 @@ llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
     AddressPointsMapTy AddressPoints;
     Vtable = GenerateVtable(llvm::GlobalValue::ExternalLinkage, 
                             /*GenerateDefinition=*/false, RD, RD, 0,
-                            AddressPoints);
+                            /*IsVirtual=*/false, AddressPoints);
   }
 
   return Vtable;
