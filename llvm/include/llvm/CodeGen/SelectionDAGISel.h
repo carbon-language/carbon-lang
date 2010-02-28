@@ -154,6 +154,14 @@ public:
     OPFL_VariadicInfo = OPFL_Variadic6
   };
   
+  /// getNumFixedFromVariadicInfo - Transform an EmitNode flags word into the
+  /// number of fixed arity values that should be skipped when copying from the
+  /// root.
+  static inline int getNumFixedFromVariadicInfo(unsigned Flags) {
+    return ((Flags&OPFL_VariadicInfo) >> 4)-1;
+  }
+  
+  
 protected:
   /// DAGSize - Size of DAG being instruction selected.
   ///
@@ -204,6 +212,10 @@ protected:
   SDNode *Select_INLINEASM(SDNode *N);
   SDNode *Select_UNDEF(SDNode *N);
   SDNode *Select_EH_LABEL(SDNode *N);
+  
+  SDNode *SelectCodeCommon(SDNode *NodeToMatch,
+                           const unsigned char *MatcherTable,
+                           unsigned TableSize);
   void CannotYetSelect(SDNode *N);
   void CannotYetSelectIntrinsic(SDNode *N);
 
