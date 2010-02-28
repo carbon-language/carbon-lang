@@ -56,11 +56,20 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
     }
   }
   
+  // Zap movechild -> moveparent.
   if (MoveChildMatcher *MC = dyn_cast<MoveChildMatcher>(N))
     if (MoveParentMatcher *MP = 
           dyn_cast<MoveParentMatcher>(MC->getNext())) {
       MatcherPtr.reset(MP->takeNext());
       return ContractNodes(MatcherPtr);
+    }
+  
+  // Turn EmitNode->CompleteMatch into SelectNodeTo if we can.
+  if (EmitNodeMatcher *EN = dyn_cast<EmitNodeMatcher>(N))
+    if (CompleteMatchMatcher *CM = cast<CompleteMatchMatcher>(EN->getNext())) {
+      (void)CM;
+      
+      
     }
   
   ContractNodes(N->getNextPtr());

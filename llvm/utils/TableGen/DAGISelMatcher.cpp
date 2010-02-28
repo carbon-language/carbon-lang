@@ -170,8 +170,10 @@ void EmitNodeXFormMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 }
 
 
-void EmitNodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "EmitNode: " << OpcodeName << ": <todo flags> ";
+void EmitNodeMatcherCommon::printImpl(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent);
+  OS << (isSelectNodeTo() ? "SelectNodeTo: " : "EmitNode: ")
+     << OpcodeName << ": <todo flags> ";
 
   for (unsigned i = 0, e = VTs.size(); i != e; ++i)
     OS << ' ' << getEnumName(VTs[i]);
@@ -236,15 +238,15 @@ unsigned EmitMergeInputChainsMatcher::getHashImpl() const {
   return HashUnsigneds(ChainNodes.begin(), ChainNodes.end());
 }
 
-bool EmitNodeMatcher::isEqualImpl(const Matcher *m) const {
-  const EmitNodeMatcher *M = cast<EmitNodeMatcher>(m);
+bool EmitNodeMatcherCommon::isEqualImpl(const Matcher *m) const {
+  const EmitNodeMatcherCommon *M = cast<EmitNodeMatcherCommon>(m);
   return M->OpcodeName == OpcodeName && M->VTs == VTs &&
          M->Operands == Operands && M->HasChain == HasChain &&
          M->HasFlag == HasFlag && M->HasMemRefs == HasMemRefs &&
          M->NumFixedArityOperands == NumFixedArityOperands;
 }
 
-unsigned EmitNodeMatcher::getHashImpl() const {
+unsigned EmitNodeMatcherCommon::getHashImpl() const {
   return (HashString(OpcodeName) << 4) | Operands.size();
 }
 

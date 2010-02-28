@@ -746,10 +746,10 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   // (add (load)) -> add32rm is ok because result #0 is the result and result #1
   // is new.
   AddMatcher(new EmitNodeMatcher(II.Namespace+"::"+II.TheDef->getName(),
-                                         ResultVTs.data(), ResultVTs.size(),
-                                         InstOps.data(), InstOps.size(),
-                                         NodeHasChain, TreeHasInFlag,
-                                         NodeHasMemRefs,NumFixedArityOperands));
+                                 ResultVTs.data(), ResultVTs.size(),
+                                 InstOps.data(), InstOps.size(),
+                                 NodeHasChain, TreeHasInFlag,
+                                 NodeHasMemRefs, NumFixedArityOperands));
   
   // The non-chain and non-flag results of the newly emitted node get recorded.
   for (unsigned i = 0, e = ResultVTs.size(); i != e; ++i) {

@@ -75,7 +75,8 @@ public:
     EmitNode,             // Create a DAG node
     EmitNodeXForm,        // Run a SDNodeXForm
     MarkFlagResults,      // Indicate which interior nodes have flag results.
-    CompleteMatch         // Finish a match and update the results.
+    CompleteMatch,        // Finish a match and update the results.
+    SelectNodeTo          // Build a node, finish a match and update results.
   };
   const KindTy Kind;
 
@@ -869,8 +870,9 @@ private:
   }
 };
   
-/// EmitNodeMatcher - This signals a successful match and generates a node.
-class EmitNodeMatcher : public Matcher {
+/// EmitNodeMatcherCommon - Common class shared between EmitNode and
+/// SelectNodeTo.
+class EmitNodeMatcherCommon : public Matcher {
   std::string OpcodeName;
   const SmallVector<MVT::SimpleValueType, 3> VTs;
   const SmallVector<unsigned, 6> Operands;
@@ -881,15 +883,17 @@ class EmitNodeMatcher : public Matcher {
   /// operands in the root of the pattern.  The rest are appended to this node.
   int NumFixedArityOperands;
 public:
-  EmitNodeMatcher(const std::string &opcodeName,
-                  const MVT::SimpleValueType *vts, unsigned numvts,
-                  const unsigned *operands, unsigned numops,
-                  bool hasChain, bool hasFlag, bool hasmemrefs,
-                  int numfixedarityoperands)
-    : Matcher(EmitNode), OpcodeName(opcodeName),
+  EmitNodeMatcherCommon(const std::string &opcodeName,
+                        const MVT::SimpleValueType *vts, unsigned numvts,
+                        const unsigned *operands, unsigned numops,
+                        bool hasChain, bool hasFlag, bool hasmemrefs,
+                        int numfixedarityoperands, bool isSelectNodeTo)
+    : Matcher(isSelectNodeTo ? SelectNodeTo : EmitNode), OpcodeName(opcodeName),
       VTs(vts, vts+numvts), Operands(operands, operands+numops),
       HasChain(hasChain), HasFlag(hasFlag), HasMemRefs(hasmemrefs),
       NumFixedArityOperands(numfixedarityoperands) {}
+  
+  bool isSelectNodeTo() const { return getKind() == SelectNodeTo; }
   
   const std::string &getOpcodeName() const { return OpcodeName; }
   
@@ -911,13 +915,51 @@ public:
   int getNumFixedArityOperands() const { return NumFixedArityOperands; }
   
   static inline bool classof(const Matcher *N) {
-    return N->getKind() == EmitNode;
+    return N->getKind() == EmitNode || N->getKind() == SelectNodeTo;
   }
   
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const;
   virtual unsigned getHashImpl() const;
+};
+  
+/// EmitNodeMatcher - This signals a successful match and generates a node.
+class EmitNodeMatcher : public EmitNodeMatcherCommon {
+public:
+  EmitNodeMatcher(const std::string &opcodeName,
+                  const MVT::SimpleValueType *vts, unsigned numvts,
+                  const unsigned *operands, unsigned numops,
+                  bool hasChain, bool hasFlag, bool hasmemrefs,
+                  int numfixedarityoperands)
+  : EmitNodeMatcherCommon(opcodeName, vts, numvts, operands, numops, hasChain,
+                          hasFlag, hasmemrefs, numfixedarityoperands, false)
+    {}
+  
+  static inline bool classof(const Matcher *N) {
+    return N->getKind() == EmitNode;
+  }
+  
+};
+  
+class SelectNodeToMatcher : public EmitNodeMatcherCommon {
+  const PatternToMatch &Pattern;
+public:
+  SelectNodeToMatcher(const std::string &opcodeName,
+                      const MVT::SimpleValueType *vts, unsigned numvts,
+                      const unsigned *operands, unsigned numops,
+                      bool hasChain, bool hasFlag, bool hasmemrefs,
+                      int numfixedarityoperands, const PatternToMatch &pattern)
+    : EmitNodeMatcherCommon(opcodeName, vts, numvts, operands, numops, hasChain,
+                            hasFlag, hasmemrefs, numfixedarityoperands, true),
+      Pattern(pattern) {
+  }
+  
+  const PatternToMatch &getPattern() const { return Pattern; }
+
+  static inline bool classof(const Matcher *N) {
+    return N->getKind() == SelectNodeTo;
+  }
 };
   
 /// MarkFlagResultsMatcher - This node indicates which non-root nodes in the
@@ -976,7 +1018,7 @@ private:
   }
   virtual unsigned getHashImpl() const;
 };
-  
+ 
 } // end namespace llvm
 
 #endif
