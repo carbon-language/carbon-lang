@@ -97,6 +97,64 @@ public:
   /// to use for this target when scheduling the DAG.
   virtual ScheduleHazardRecognizer *CreateTargetHazardRecognizer();
   
+  
+  // Opcodes used by the DAG state machine:
+  enum BuiltinOpcodes {
+    OPC_Scope,
+    OPC_RecordNode,
+    OPC_RecordChild0, OPC_RecordChild1, OPC_RecordChild2, OPC_RecordChild3, 
+    OPC_RecordChild4, OPC_RecordChild5, OPC_RecordChild6, OPC_RecordChild7,
+    OPC_RecordMemRef,
+    OPC_CaptureFlagInput,
+    OPC_MoveChild,
+    OPC_MoveParent,
+    OPC_CheckSame,
+    OPC_CheckPatternPredicate,
+    OPC_CheckPredicate,
+    OPC_CheckOpcode,
+    OPC_CheckMultiOpcode,
+    OPC_CheckType,
+    OPC_CheckChild0Type, OPC_CheckChild1Type, OPC_CheckChild2Type,
+    OPC_CheckChild3Type, OPC_CheckChild4Type, OPC_CheckChild5Type,
+    OPC_CheckChild6Type, OPC_CheckChild7Type,
+    OPC_CheckInteger1, OPC_CheckInteger2, OPC_CheckInteger4, OPC_CheckInteger8,
+    OPC_CheckCondCode,
+    OPC_CheckValueType,
+    OPC_CheckComplexPat,
+    OPC_CheckAndImm1, OPC_CheckAndImm2, OPC_CheckAndImm4, OPC_CheckAndImm8,
+    OPC_CheckOrImm1, OPC_CheckOrImm2, OPC_CheckOrImm4, OPC_CheckOrImm8,
+    OPC_CheckFoldableChainNode,
+    OPC_CheckChainCompatible,
+    
+    OPC_EmitInteger1, OPC_EmitInteger2, OPC_EmitInteger4, OPC_EmitInteger8,
+    OPC_EmitRegister,
+    OPC_EmitConvertToTarget,
+    OPC_EmitMergeInputChains,
+    OPC_EmitCopyToReg,
+    OPC_EmitNodeXForm,
+    OPC_EmitNode,
+    OPC_MorphNodeTo,
+    OPC_MarkFlagResults,
+    OPC_CompleteMatch
+  };
+  
+  enum {
+    OPFL_None       = 0,     // Node has no chain or flag input and isn't variadic.
+    OPFL_Chain      = 1,     // Node has a chain input.
+    OPFL_FlagInput  = 2,     // Node has a flag input.
+    OPFL_FlagOutput = 4,     // Node has a flag output.
+    OPFL_MemRefs    = 8,     // Node gets accumulated MemRefs.
+    OPFL_Variadic0  = 1<<4,  // Node is variadic, root has 0 fixed inputs.
+    OPFL_Variadic1  = 2<<4,  // Node is variadic, root has 1 fixed inputs.
+    OPFL_Variadic2  = 3<<4,  // Node is variadic, root has 2 fixed inputs.
+    OPFL_Variadic3  = 4<<4,  // Node is variadic, root has 3 fixed inputs.
+    OPFL_Variadic4  = 5<<4,  // Node is variadic, root has 4 fixed inputs.
+    OPFL_Variadic5  = 6<<4,  // Node is variadic, root has 5 fixed inputs.
+    OPFL_Variadic6  = 7<<4,  // Node is variadic, root has 6 fixed inputs.
+    
+    OPFL_VariadicInfo = OPFL_Variadic6
+  };
+  
 protected:
   /// DAGSize - Size of DAG being instruction selected.
   ///
