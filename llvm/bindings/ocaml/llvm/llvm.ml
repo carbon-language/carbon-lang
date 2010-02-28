@@ -237,6 +237,8 @@ external type_of : llvalue -> lltype = "llvm_type_of"
 external value_name : llvalue -> string = "llvm_value_name"
 external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
 external dump_value : llvalue -> unit = "llvm_dump_value"
+external replace_all_uses_with : llvalue -> llvalue -> unit
+                               = "LLVMReplaceAllUsesWith"
 
 (*--... Operations on constants of (mostly) any type .......................--*)
 external is_constant : llvalue -> bool = "llvm_is_constant"

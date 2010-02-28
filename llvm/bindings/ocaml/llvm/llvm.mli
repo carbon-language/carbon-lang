@@ -502,6 +502,11 @@ external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
     error. See the method [llvm::Value::dump]. *)
 external dump_value : llvalue -> unit = "llvm_dump_value"
 
+(** [replace_all_uses_with old new] replaces all uses of the value [old]
+ * with the value [new]. See the method [llvm::Value::replaceAllUsesWith]. *)
+external replace_all_uses_with : llvalue -> llvalue -> unit
+                               = "LLVMReplaceAllUsesWith"
+
 
 (** {7 Operations on constants of (mostly) any type} *)
 
