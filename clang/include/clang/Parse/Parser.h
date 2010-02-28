@@ -329,7 +329,8 @@ private:
   /// replacing them with the non-context-sensitive keywords.  This returns
   /// true if the token was replaced.
   bool TryAltiVecToken(DeclSpec &DS, SourceLocation Loc,
-      const char *&PrevSpec, unsigned &DiagID, bool &isInvalid) {
+                       const char *&PrevSpec, unsigned &DiagID,
+                       bool &isInvalid) {
     if (getLang().AltiVec) {
       if (Tok.getIdentifierInfo() == Ident_vector) {
         const Token nextToken = NextToken();
@@ -369,33 +370,31 @@ private:
   /// identifier token, replacing it with the non-context-sensitive __vector.
   /// This returns true if the token was replaced.
   bool TryAltiVecVectorToken() {
-    if (getLang().AltiVec) {
-      if (Tok.getIdentifierInfo() == Ident_vector) {
-        const Token nextToken = NextToken();
-        switch (nextToken.getKind()) {
-          case tok::kw_short:
-          case tok::kw_long:
-          case tok::kw_signed:
-          case tok::kw_unsigned:
-          case tok::kw_void:
-          case tok::kw_char:
-          case tok::kw_int:
-          case tok::kw_float:
-          case tok::kw_double:
-          case tok::kw_bool:
-          case tok::kw___pixel:
-            Tok.setKind(tok::kw___vector);
-            return true;
-          case tok::identifier:
-            if (nextToken.getIdentifierInfo() == Ident_pixel) {
-              Tok.setKind(tok::kw___vector);
-              return true;
-            }
-            break;
-          default:
-            break;
-        }
+    if (!getLang().AltiVec ||
+        Tok.getIdentifierInfo() != Ident_vector) return false;
+    const Token nextToken = NextToken();
+    switch (nextToken.getKind()) {
+    case tok::kw_short:
+    case tok::kw_long:
+    case tok::kw_signed:
+    case tok::kw_unsigned:
+    case tok::kw_void:
+    case tok::kw_char:
+    case tok::kw_int:
+    case tok::kw_float:
+    case tok::kw_double:
+    case tok::kw_bool:
+    case tok::kw___pixel:
+      Tok.setKind(tok::kw___vector);
+      return true;
+    case tok::identifier:
+      if (nextToken.getIdentifierInfo() == Ident_pixel) {
+        Tok.setKind(tok::kw___vector);
+        return true;
       }
+      break;
+    default:
+      break;
     }
     return false;
   }
@@ -1181,6 +1180,11 @@ private:
   bool isDeclarationSpecifier();
   bool isTypeSpecifierQualifier();
   bool isTypeQualifier() const;
+  
+  /// isKnownToBeTypeSpecifier - Return true if we know that the specified token
+  /// is definitely a type-specifier.  Return false if it isn't part of a type
+  /// specifier or if we're not sure.
+  bool isKnownToBeTypeSpecifier(const Token &Tok) const;
 
   /// isDeclarationStatement - Disambiguates between a declaration or an
   /// expression statement, when parsing function bodies.

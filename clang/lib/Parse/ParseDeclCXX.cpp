@@ -940,7 +940,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   //
   // This switch enumerates the valid "follow" set for definition.
   if (TUK == Action::TUK_Definition) {
+    bool ExpectedSemi = true;
     switch (Tok.getKind()) {
+    default: break;
     case tok::semi:               // struct foo {...} ;
     case tok::star:               // struct foo {...} *         P;
     case tok::amp:                // struct foo {...} &         R = ...
@@ -951,24 +953,46 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     case tok::annot_template_id:  // struct foo {...} a<int>    ::b;
     case tok::l_paren:            // struct foo {...} (         x);
     case tok::comma:              // __builtin_offsetof(struct foo{...} ,
+      ExpectedSemi = false;
+      break;
+    // Type qualifiers
+    case tok::kw_const:           // struct foo {...} const     x;
+    case tok::kw_volatile:        // struct foo {...} volatile  x;
+    case tok::kw_restrict:        // struct foo {...} restrict  x;
+    case tok::kw_inline:          // struct foo {...} inline    foo() {};
     // Storage-class specifiers
     case tok::kw_static:          // struct foo {...} static    x;
     case tok::kw_extern:          // struct foo {...} extern    x;
     case tok::kw_typedef:         // struct foo {...} typedef   x;
     case tok::kw_register:        // struct foo {...} register  x;
     case tok::kw_auto:            // struct foo {...} auto      x;
-    // Type qualifiers
-    case tok::kw_const:           // struct foo {...} const     x;
-    case tok::kw_volatile:        // struct foo {...} volatile  x;
-    case tok::kw_restrict:        // struct foo {...} restrict  x;
-    case tok::kw_inline:          // struct foo {...} inline    foo() {};
+      // As shown above, type qualifiers and storage class specifiers absolutely
+      // can occur after class specifiers according to the grammar.  However,
+      // almost noone actually writes code like this.  If we see one of these,
+      // it is much more likely that someone missed a semi colon and the
+      // type/storage class specifier we're seeing is part of the *next*
+      // intended declaration, as in:
+      //
+      //   struct foo { ... }
+      //   typedef int X;
+      //
+      // We'd really like to emit a missing semicolon error instead of emitting
+      // an error on the 'int' saying that you can't have two type specifiers in
+      // the same declaration of X.  Because of this, we look ahead past this
+      // token to see if it's a type specifier.  If so, we know the code is
+      // otherwise invalid, so we can produce the expected semi error.
+      if (!isKnownToBeTypeSpecifier(NextToken()))
+        ExpectedSemi = false;
       break;
         
     case tok::r_brace:  // struct bar { struct foo {...} } 
       // Missing ';' at end of struct is accepted as an extension in C mode.
-      if (!getLang().CPlusPlus) break;
-      // FALL THROUGH.
-    default:
+      if (!getLang().CPlusPlus)
+        ExpectedSemi = false;
+      break;
+    }
+    
+    if (ExpectedSemi) {
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
                        TagType == DeclSpec::TST_class ? "class"
                        : TagType == DeclSpec::TST_struct? "struct" : "union");
@@ -977,7 +1001,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // ';' after the definition.
       PP.EnterToken(Tok);
       Tok.setKind(tok::semi);  
-      break;
     }
   }
 }

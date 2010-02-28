@@ -31,3 +31,8 @@ struct test1 {
 
 void test2() {}
 
+
+// PR6423
+struct test3s {
+} // expected-error {{expected ';' after struct}}
+typedef int test3g;

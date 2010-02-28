@@ -2019,6 +2019,47 @@ bool Parser::isTypeQualifier() const {
   }
 }
 
+/// isKnownToBeTypeSpecifier - Return true if we know that the specified token
+/// is definitely a type-specifier.  Return false if it isn't part of a type
+/// specifier or if we're not sure.
+bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
+  switch (Tok.getKind()) {
+  default: return false;
+    // type-specifiers
+  case tok::kw_short:
+  case tok::kw_long:
+  case tok::kw_signed:
+  case tok::kw_unsigned:
+  case tok::kw__Complex:
+  case tok::kw__Imaginary:
+  case tok::kw_void:
+  case tok::kw_char:
+  case tok::kw_wchar_t:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
+  case tok::kw_int:
+  case tok::kw_float:
+  case tok::kw_double:
+  case tok::kw_bool:
+  case tok::kw__Bool:
+  case tok::kw__Decimal32:
+  case tok::kw__Decimal64:
+  case tok::kw__Decimal128:
+  case tok::kw___vector:
+    
+    // struct-or-union-specifier (C99) or class-specifier (C++)
+  case tok::kw_class:
+  case tok::kw_struct:
+  case tok::kw_union:
+    // enum-specifier
+  case tok::kw_enum:
+    
+    // typedef-name
+  case tok::annot_typename:
+    return true;
+  }
+}
+
 /// isTypeSpecifierQualifier - Return true if the current token could be the
 /// start of a specifier-qualifier-list.
 bool Parser::isTypeSpecifierQualifier() {
