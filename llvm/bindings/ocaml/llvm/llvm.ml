@@ -35,6 +35,7 @@ module TypeKind = struct
   | Opaque
   | Vector
   | Metadata
+  | Union
 end
 
 module Linkage = struct
@@ -198,8 +199,14 @@ external param_types : lltype -> lltype array = "llvm_param_types"
 external struct_type : llcontext -> lltype array -> lltype = "llvm_struct_type"
 external packed_struct_type : llcontext -> lltype array -> lltype
                             = "llvm_packed_struct_type"
-external element_types : lltype -> lltype array = "llvm_element_types"
+external struct_element_types : lltype -> lltype array
+                              = "llvm_struct_element_types"
 external is_packed : lltype -> bool = "llvm_is_packed"
+
+(*--... Operations on union types ..........................................--*)
+external union_type : llcontext -> lltype array -> lltype = "llvm_union_type"
+external union_element_types : lltype -> lltype array
+                             = "llvm_union_element_types"
 
 (*--... Operations on pointer, vector, and array types .....................--*)
 external array_type : lltype -> int -> lltype = "llvm_array_type"
@@ -257,6 +264,7 @@ external const_struct : llcontext -> llvalue array -> llvalue
 external const_packed_struct : llcontext -> llvalue array -> llvalue
                              = "llvm_const_packed_struct"
 external const_vector : llvalue array -> llvalue = "llvm_const_vector"
+external const_union : lltype -> llvalue -> llvalue = "LLVMConstUnion"
 
 (*--... Constant expressions ...............................................--*)
 external align_of : lltype -> llvalue = "LLVMAlignOf"
@@ -892,11 +900,14 @@ let rec string_of_lltype ty =
   | TypeKind.Pointer -> (string_of_lltype (element_type ty)) ^ "*"
   | TypeKind.Struct ->
       let s = "{ " ^ (concat2 ", " (
-                Array.map string_of_lltype (element_types ty)
+                Array.map string_of_lltype (struct_element_types ty)
               )) ^ " }" in
       if is_packed ty
         then "<" ^ s ^ ">"
         else s
+  | TypeKind.Union -> "union { " ^ (concat2 ", " (
+                        Array.map string_of_lltype (union_element_types ty)
+                      )) ^ " }"
   | TypeKind.Array -> "["   ^ (string_of_int (array_length ty)) ^
                       " x " ^ (string_of_lltype (element_type ty)) ^ "]"
   | TypeKind.Vector -> "<"   ^ (string_of_int (vector_size ty)) ^

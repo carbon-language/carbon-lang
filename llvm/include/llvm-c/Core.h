@@ -551,6 +551,7 @@ LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              LLVMBool Packed);
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size);
+LLVMValueRef LLVMConstUnion(LLVMTypeRef Ty, LLVMValueRef Val);
 
 /* Constant expressions */
 LLVMOpcode LLVMGetConstOpcode(LLVMValueRef ConstantVal);

@@ -567,10 +567,12 @@ LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
   return LLVMConstStructInContext(LLVMGetGlobalContext(), ConstantVals, Count,
                                   Packed);
 }
-
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
   return wrap(ConstantVector::get(
                             unwrap<Constant>(ScalarConstantVals, Size), Size));
+}
+LLVMValueRef LLVMConstUnion(LLVMTypeRef Ty, LLVMValueRef Val) {
+  return wrap(ConstantUnion::get(unwrap<UnionType>(Ty), unwrap<Constant>(Val)));
 }
 
 /*--.. Constant expressions ................................................--*/

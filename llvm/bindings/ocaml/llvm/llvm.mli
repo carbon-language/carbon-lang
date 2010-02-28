@@ -73,6 +73,7 @@ module TypeKind : sig
   | Opaque
   | Vector
   | Metadata
+  | Union
 end
 
 (** The linkage of a global value, accessed with {!linkage} and
@@ -381,13 +382,27 @@ external struct_type : llcontext -> lltype array -> lltype
 external packed_struct_type : llcontext -> lltype array -> lltype
                             = "llvm_packed_struct_type"
 
-(** [element_types sty] returns the constituent types of the struct type [sty].
-    See the method [llvm::StructType::getElementType]. *)
-external element_types : lltype -> lltype array = "llvm_element_types"
+(** [struct_element_types sty] returns the constituent types of the struct type
+    [sty]. See the method [llvm::StructType::getElementType]. *)
+external struct_element_types : lltype -> lltype array
+                              = "llvm_struct_element_types"
 
 (** [is_packed sty] returns [true] if the structure type [sty] is packed,
     [false] otherwise. See the method [llvm::StructType::isPacked]. *)
 external is_packed : lltype -> bool = "llvm_is_packed"
+
+
+(** {7 Operations on union types} *)
+
+(** [union_type context tys] returns the union type in the context [context]
+    containing the types in the array [tys]. See the method
+    [llvm::UnionType::get] *)
+external union_type : llcontext -> lltype array -> lltype = "llvm_union_type"
+
+(** [union_element_types uty] returns the constituent types of the union type
+    [uty]. See the method [llvm::UnionType::getElementType]. *)
+external union_element_types : lltype -> lltype array
+                             = "llvm_union_element_types"
 
 
 (** {7 Operations on pointer, vector, and array types} *)
@@ -576,6 +591,10 @@ external const_packed_struct : llcontext -> llvalue array -> llvalue
     [vector_type (type_of elts.(0)) (Array.length elts)] and containing the
     values [elts]. See the method [llvm::ConstantVector::get]. *)
 external const_vector : llvalue array -> llvalue = "llvm_const_vector"
+
+(** [const_union ty v] returns the union constant of type [union_type tys] and
+    containing the value [v]. See the method [llvm::ConstantUnion::get]. *)
+external const_union : lltype -> llvalue -> llvalue = "LLVMConstUnion"
 
 
 (** {7 Constant expressions} *)
