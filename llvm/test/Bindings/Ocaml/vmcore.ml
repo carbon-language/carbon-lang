@@ -493,28 +493,46 @@ let test_global_variables () =
   let (++) x f = f x; x in
   let fourty_two32 = const_int i32_type 42 in
 
-  (* RUN: grep {GVar01.*external} < %t.ll
-   *)
-  group "declarations";
-  insist (None == lookup_global "GVar01" m);
-  let g = declare_global i32_type "GVar01" m in
-  insist (is_declaration g);
-  insist (pointer_type float_type ==
-            type_of (declare_global float_type "GVar01" m));
-  insist (g == declare_global i32_type "GVar01" m);
-  insist (match lookup_global "GVar01" m with Some x -> x = g
-                                            | None -> false);
+  group "declarations"; begin
+    (* RUN: grep {GVar01.*external} < %t.ll
+     *)
+    insist (None == lookup_global "GVar01" m);
+    let g = declare_global i32_type "GVar01" m in
+    insist (is_declaration g);
+    insist (pointer_type float_type ==
+              type_of (declare_global float_type "GVar01" m));
+    insist (g == declare_global i32_type "GVar01" m);
+    insist (match lookup_global "GVar01" m with Some x -> x = g
+                                              | None -> false);
+
+    insist (None == lookup_global "QGVar01" m);
+    let g = declare_qualified_global i32_type "QGVar01" 3 m in
+    insist (is_declaration g);
+    insist (qualified_pointer_type float_type 3 ==
+              type_of (declare_qualified_global float_type "QGVar01" 3 m));
+    insist (g == declare_qualified_global i32_type "QGVar01" 3 m);
+    insist (match lookup_global "QGVar01" m with Some x -> x = g
+                                              | None -> false);
+  end;
   
-  (* RUN: grep {GVar02.*42} < %t.ll
-   * RUN: grep {GVar03.*42} < %t.ll
-   *)
-  group "definitions";
-  let g = define_global "GVar02" fourty_two32 m in
-  let g2 = declare_global i32_type "GVar03" m ++
+  group "definitions"; begin
+    (* RUN: grep {GVar02.*42} < %t.ll
+     * RUN: grep {GVar03.*42} < %t.ll
+     *)
+    let g = define_global "GVar02" fourty_two32 m in
+    let g2 = declare_global i32_type "GVar03" m ++
            set_initializer fourty_two32 in
-  insist (not (is_declaration g));
-  insist (not (is_declaration g2));
-  insist ((global_initializer g) == (global_initializer g2));
+    insist (not (is_declaration g));
+    insist (not (is_declaration g2));
+    insist ((global_initializer g) == (global_initializer g2));
+
+    let g = define_qualified_global "QGVar02" fourty_two32 3 m in
+    let g2 = declare_qualified_global i32_type "QGVar03" 3 m ++
+           set_initializer fourty_two32 in
+    insist (not (is_declaration g));
+    insist (not (is_declaration g2));
+    insist ((global_initializer g) == (global_initializer g2));
+  end;
 
   (* RUN: grep {GVar04.*thread_local} < %t.ll
    *)

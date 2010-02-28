@@ -697,6 +697,20 @@ CAMLprim LLVMValueRef llvm_declare_global(LLVMTypeRef Ty, value Name,
   return LLVMAddGlobal(M, Ty, String_val(Name));
 }
 
+/* lltype -> string -> int -> llmodule -> llvalue */
+CAMLprim LLVMValueRef llvm_declare_qualified_global(LLVMTypeRef Ty, value Name,
+                                                    value AddressSpace,
+                                                    LLVMModuleRef M) {
+  LLVMValueRef GlobalVar;
+  if ((GlobalVar = LLVMGetNamedGlobal(M, String_val(Name)))) {
+    if (LLVMGetElementType(LLVMTypeOf(GlobalVar)) != Ty)
+      return LLVMConstBitCast(GlobalVar,
+                              LLVMPointerType(Ty, Int_val(AddressSpace)));
+    return GlobalVar;
+  }
+  return LLVMAddGlobal(M, Ty, String_val(Name));
+}
+
 /* string -> llmodule -> llvalue option */
 CAMLprim value llvm_lookup_global(value Name, LLVMModuleRef M) {
   CAMLparam1(Name);
@@ -714,6 +728,19 @@ CAMLprim LLVMValueRef llvm_define_global(value Name, LLVMValueRef Initializer,
                                          LLVMModuleRef M) {
   LLVMValueRef GlobalVar = LLVMAddGlobal(M, LLVMTypeOf(Initializer),
                                          String_val(Name));
+  LLVMSetInitializer(GlobalVar, Initializer);
+  return GlobalVar;
+}
+
+/* string -> llvalue -> int -> llmodule -> llvalue */
+CAMLprim LLVMValueRef llvm_define_qualified_global(value Name,
+                                                   LLVMValueRef Initializer,
+                                                   value AddressSpace,
+                                                   LLVMModuleRef M) {
+  LLVMValueRef GlobalVar = LLVMAddGlobalInAddressSpace(M,
+                                                       LLVMTypeOf(Initializer),
+                                                       String_val(Name),
+                                                       Int_val(AddressSpace));
   LLVMSetInitializer(GlobalVar, Initializer);
   return GlobalVar;
 }

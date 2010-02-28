@@ -1003,18 +1003,34 @@ external set_alignment : int -> llvalue -> unit = "llvm_set_alignment"
 (** {7 Operations on global variables} *)
 
 (** [declare_global ty name m] returns a new global variable of type [ty] and
-    with name [name] in module [m]. If such a global variable already exists,
-    it is returned. If the type of the existing global differs, then a bitcast
-    to [ty] is returned. *)
+    with name [name] in module [m] in the default address space (0). If such a
+    global variable already exists, it is returned. If the type of the existing
+    global differs, then a bitcast to [ty] is returned. *)
 external declare_global : lltype -> string -> llmodule -> llvalue
                         = "llvm_declare_global"
 
+(** [declare_qualified_global ty name as m] returns a new global variable of
+    type [ty] and with name [name] in module [m] in the address space [as]. If
+    such a global variable already exists, it is returned. If the type of the
+    existing global differs, then a bitcast to [ty] is returned. *)
+external declare_qualified_global : lltype -> string -> int -> llmodule ->
+                                    llvalue
+                                  = "llvm_declare_qualified_global"
+
 (** [define_global name init m] returns a new global with name [name] and
-    initializer [init] in module [m]. If the named global already exists, it is
-    renamed.
+    initializer [init] in module [m] in the default address space (0). If the
+    named global already exists, it is renamed.
     See the constructor of [llvm::GlobalVariable]. *)
 external define_global : string -> llvalue -> llmodule -> llvalue
                        = "llvm_define_global"
+
+(** [define_qualified_global name init as m] returns a new global with name
+    [name] and initializer [init] in module [m] in the address space [as]. If
+    the named global already exists, it is renamed.
+    See the constructor of [llvm::GlobalVariable]. *)
+external define_qualified_global : string -> llvalue -> int -> llmodule ->
+                                   llvalue
+                                 = "llvm_define_qualified_global"
 
 (** [lookup_global name m] returns [Some g] if a global variable with name
     [name] exists in module [m]. If no such global exists, returns [None].

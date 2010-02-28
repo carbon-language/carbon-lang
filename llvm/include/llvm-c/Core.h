@@ -671,6 +671,9 @@ void LLVMSetAlignment(LLVMValueRef Global, unsigned Bytes);
 
 /* Operations on global variables */
 LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name);
+LLVMValueRef LLVMAddGlobalInAddressSpace(LLVMModuleRef M, LLVMTypeRef Ty,
+                                         const char *Name,
+                                         unsigned AddressSpace);
 LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name);
 LLVMValueRef LLVMGetFirstGlobal(LLVMModuleRef M);
 LLVMValueRef LLVMGetLastGlobal(LLVMModuleRef M);

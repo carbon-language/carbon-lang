@@ -371,8 +371,14 @@ external set_global_constant : bool -> llvalue -> unit
 (*--... Operations on global variables .....................................--*)
 external declare_global : lltype -> string -> llmodule -> llvalue
                         = "llvm_declare_global"
+external declare_qualified_global : lltype -> string -> int -> llmodule ->
+                                    llvalue
+                                  = "llvm_declare_qualified_global"
 external define_global : string -> llvalue -> llmodule -> llvalue
                        = "llvm_define_global"
+external define_qualified_global : string -> llvalue -> int -> llmodule ->
+                                   llvalue
+                                 = "llvm_define_qualified_global"
 external lookup_global : string -> llmodule -> llvalue option
                        = "llvm_lookup_global"
 external delete_global : llvalue -> unit = "llvm_delete_global"

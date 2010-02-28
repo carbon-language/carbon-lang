@@ -1153,6 +1153,14 @@ LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name) {
                                  GlobalValue::ExternalLinkage, 0, Name));
 }
 
+LLVMValueRef LLVMAddGlobalInAddressSpace(LLVMModuleRef M, LLVMTypeRef Ty,
+                                         const char *Name,
+                                         unsigned AddressSpace) {
+  return wrap(new GlobalVariable(*unwrap(M), unwrap(Ty), false,
+                                 GlobalValue::ExternalLinkage, 0, Name, false,
+                                 AddressSpace));
+}
+
 LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name) {
   return wrap(unwrap(M)->getNamedGlobal(Name));
 }
