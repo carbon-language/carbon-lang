@@ -60,6 +60,7 @@ STATISTIC(NumPRELoad,   "Number of loads PRE'd");
 static cl::opt<bool> EnablePRE("enable-pre",
                                cl::init(true), cl::Hidden);
 static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
+static cl::opt<bool> EnableFullLoadPRE("enable-full-load-pre", cl::init(false));
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -661,12 +662,10 @@ namespace {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit GVN(bool fullloadpre = true, bool noloads = false)
-      : FunctionPass(&ID), EnableFullLoadPRE(fullloadpre),
-        NoLoads(noloads), MD(0) { }
+    explicit GVN(bool noloads = false)
+      : FunctionPass(&ID), NoLoads(noloads), MD(0) { }
 
   private:
-    bool EnableFullLoadPRE;
     bool NoLoads;
     MemoryDependenceAnalysis *MD;
     DominatorTree *DT;
@@ -711,8 +710,8 @@ namespace {
 }
 
 // createGVNPass - The public interface to this file...
-FunctionPass *llvm::createGVNPass(bool EnableFullLoadPRE, bool NoLoads) {
-  return new GVN(EnableFullLoadPRE, NoLoads);
+FunctionPass *llvm::createGVNPass(bool NoLoads) {
+  return new GVN(NoLoads);
 }
 
 static RegisterPass<GVN> X("gvn",

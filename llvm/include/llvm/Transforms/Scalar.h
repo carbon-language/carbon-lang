@@ -263,8 +263,7 @@ extern const PassInfo *const LCSSAID;
 // GVN - This pass performs global value numbering and redundant load 
 // elimination cotemporaneously.
 //
-FunctionPass *createGVNPass(bool EnableFullLoadPRE = true,
-                            bool NoLoads = false);
+FunctionPass *createGVNPass(bool NoLoads = false);
 
 //===----------------------------------------------------------------------===//
 //
