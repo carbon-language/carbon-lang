@@ -4,7 +4,7 @@
 
 @X = internal global i16 0              ; <i16*> [#uses=2]
 
-define void @foo() {
+define void @foo() nounwind {
         %tmp.0 = load i16* @X           ; <i16> [#uses=1]
         %tmp.3 = add i16 %tmp.0, 329            ; <i16> [#uses=1]
         store i16 %tmp.3, i16* @X
