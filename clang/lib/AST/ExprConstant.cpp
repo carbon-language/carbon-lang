@@ -1560,6 +1560,31 @@ static bool EvaluateFloat(const Expr* E, APFloat& Result, EvalInfo &Info) {
   return FloatExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
+static bool TryEvaluateBuiltinNaN(ASTContext &Context,
+                                  QualType ResultTy,
+                                  const Expr *Arg,
+                                  bool SNaN,
+                                  llvm::APFloat &Result) {
+  const StringLiteral *S = dyn_cast<StringLiteral>(Arg->IgnoreParenCasts());
+  if (!S) return false;
+
+  const llvm::fltSemantics &Sem = Context.getFloatTypeSemantics(ResultTy);
+
+  llvm::APInt fill;
+
+  // Treat empty strings as if they were zero.
+  if (S->getString().empty())
+    fill = llvm::APInt(32, 0);
+  else if (S->getString().getAsInteger(0, fill))
+    return false;
+
+  if (SNaN)
+    Result = llvm::APFloat::getSNaN(Sem, false, &fill);
+  else
+    Result = llvm::APFloat::getQNaN(Sem, false, &fill);
+  return true;
+}
+
 bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
   switch (E->isBuiltinCall(Info.Ctx)) {
   default: return false;
@@ -1575,24 +1600,19 @@ bool FloatExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return true;
   }
 
+  case Builtin::BI__builtin_nans:
+  case Builtin::BI__builtin_nansf:
+  case Builtin::BI__builtin_nansl:
+    return TryEvaluateBuiltinNaN(Info.Ctx, E->getType(), E->getArg(0),
+                                 true, Result);
+
   case Builtin::BI__builtin_nan:
   case Builtin::BI__builtin_nanf:
   case Builtin::BI__builtin_nanl:
     // If this is __builtin_nan() turn this into a nan, otherwise we
     // can't constant fold it.
-    if (const StringLiteral *S =
-        dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenCasts())) {
-      if (!S->isWide()) {
-        const llvm::fltSemantics &Sem =
-          Info.Ctx.getFloatTypeSemantics(E->getType());
-        unsigned Type = 0;
-        if (!S->getString().empty() && S->getString().getAsInteger(0, Type))
-          return false;
-        Result = llvm::APFloat::getNaN(Sem, false, Type);
-        return true;
-      }
-    }
-    return false;
+    return TryEvaluateBuiltinNaN(Info.Ctx, E->getType(), E->getArg(0),
+                                 false, Result);
 
   case Builtin::BI__builtin_fabs:
   case Builtin::BI__builtin_fabsf:
