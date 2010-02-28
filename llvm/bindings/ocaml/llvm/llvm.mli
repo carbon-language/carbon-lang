@@ -950,6 +950,10 @@ external const_extractvalue : llvalue -> int array -> llvalue
 external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
                            = "llvm_const_insertvalue"
 
+(** [block_address f bb] returns the address of the basic block [bb] in the
+    function [f]. See the method [llvm::BasicBlock::get]. *)
+external block_address : llvalue -> llbasicblock -> llvalue = "LLVMBlockAddress"
+
 
 (** {7 Operations on global variables, functions, and aliases (globals)} *)
 
@@ -1561,6 +1565,20 @@ external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
     See the method [llvm::SwitchInst::addCase]. **)
 external add_case : llvalue -> llvalue -> llbasicblock -> unit
                   = "llvm_add_case"
+
+(** [build_indirect_br addr count b] creates a
+    [indirectbr %addr]
+    instruction at the position specified by the instruction builder [b] with
+    space reserved for [count] destinations.
+    See the method [llvm::LLVMBuilder::CreateIndirectBr]. *)
+external build_indirect_br : llvalue -> int -> llbuilder -> llvalue
+                           = "llvm_build_indirect_br"
+
+(** [add_destination br bb] adds the basic block [bb] as a possible branch
+    location for the indirectbr instruction [br].
+    See the method [llvm::IndirectBrInst::addDestination]. **)
+external add_destination : llvalue -> llbasicblock -> unit
+                         = "llvm_add_destination"
 
 (** [build_invoke fn args tobb unwindbb name b] creates an
     [%name = invoke %fn(args) to %tobb unwind %unwindbb]

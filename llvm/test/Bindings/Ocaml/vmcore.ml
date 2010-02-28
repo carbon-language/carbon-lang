@@ -897,6 +897,23 @@ let test_builder () =
     let si = build_switch p1 bb3 1 (builder_at_end context bb1) in
     ignore (add_case si (const_int i32_type 2) bb2)
   end;
+
+  group "indirectbr"; begin
+    (* RUN: grep {indirectbr i8\\* blockaddress(@X7, %IBRBlock2), \\\[label %IBRBlock2, label %IBRBlock3\\\]} < %t.ll
+     *)
+    let bb1 = append_block context "IBRBlock1" fn in
+
+    let bb2 = append_block context "IBRBlock2" fn in
+    ignore (build_unreachable (builder_at_end context bb2));
+
+    let bb3 = append_block context "IBRBlock3" fn in
+    ignore (build_unreachable (builder_at_end context bb3));
+
+    let addr = block_address fn bb2 in
+    let ibr = build_indirect_br addr 2 (builder_at_end context bb1) in
+    ignore (add_destination ibr bb2);
+    ignore (add_destination ibr bb3)
+  end;
   
   group "invoke"; begin
     (* RUN: grep {build_invoke.*invoke.*P1.*P2} < %t.ll

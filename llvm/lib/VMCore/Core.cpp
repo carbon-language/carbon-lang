@@ -1013,6 +1013,10 @@ LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const char *AsmString,
                              Constraints, HasSideEffects, IsAlignStack));
 }
 
+LLVMValueRef LLVMBlockAddress(LLVMValueRef F, LLVMBasicBlockRef BB) {
+  return wrap(BlockAddress::get(unwrap<Function>(F), unwrap(BB)));
+}
+
 /*--.. Operations on global variables, functions, and aliases (globals) ....--*/
 
 LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global) {
@@ -1696,6 +1700,11 @@ LLVMValueRef LLVMBuildSwitch(LLVMBuilderRef B, LLVMValueRef V,
   return wrap(unwrap(B)->CreateSwitch(unwrap(V), unwrap(Else), NumCases));
 }
 
+LLVMValueRef LLVMBuildIndirectBr(LLVMBuilderRef B, LLVMValueRef Addr,
+                                 unsigned NumDests) {
+  return wrap(unwrap(B)->CreateIndirectBr(unwrap(Addr), NumDests));
+}
+
 LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn,
                              LLVMValueRef *Args, unsigned NumArgs,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
@@ -1716,6 +1725,10 @@ LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef B) {
 void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
                  LLVMBasicBlockRef Dest) {
   unwrap<SwitchInst>(Switch)->addCase(unwrap<ConstantInt>(OnVal), unwrap(Dest));
+}
+
+void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest) {
+  unwrap<IndirectBrInst>(IndirectBr)->addDestination(unwrap(Dest));
 }
 
 /*--.. Arithmetic ..........................................................--*/

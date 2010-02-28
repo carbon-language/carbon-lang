@@ -1138,6 +1138,20 @@ CAMLprim value llvm_add_case(LLVMValueRef Switch, LLVMValueRef OnVal,
   return Val_unit;
 }
 
+/* llvalue -> llbasicblock -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_indirect_br(LLVMValueRef Addr,
+                                             value EstimatedDests,
+                                             value B) {
+  return LLVMBuildIndirectBr(Builder_val(B), Addr, EstimatedDests);
+}
+
+/* llvalue -> llvalue -> llbasicblock -> unit */
+CAMLprim value llvm_add_destination(LLVMValueRef IndirectBr,
+                                    LLVMBasicBlockRef Dest) {
+  LLVMAddDestination(IndirectBr, Dest);
+  return Val_unit;
+}
+
 /* llvalue -> llvalue array -> llbasicblock -> llbasicblock -> string ->
    llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_invoke_nat(LLVMValueRef Fn, value Args,

@@ -655,6 +655,7 @@ LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
 LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty,
                                 const char *AsmString, const char *Constraints,
                                 LLVMBool HasSideEffects, LLVMBool IsAlignStack);
+LLVMValueRef LLVMBlockAddress(LLVMValueRef F, LLVMBasicBlockRef BB);
 
 /* Operations on global variables, functions, and aliases (globals) */
 LLVMModuleRef LLVMGetGlobalParent(LLVMValueRef Global);
@@ -805,6 +806,8 @@ LLVMValueRef LLVMBuildCondBr(LLVMBuilderRef, LLVMValueRef If,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Else);
 LLVMValueRef LLVMBuildSwitch(LLVMBuilderRef, LLVMValueRef V,
                              LLVMBasicBlockRef Else, unsigned NumCases);
+LLVMValueRef LLVMBuildIndirectBr(LLVMBuilderRef B, LLVMValueRef Addr,
+                                 unsigned NumDests);
 LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
                              LLVMValueRef *Args, unsigned NumArgs,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
@@ -815,6 +818,9 @@ LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 /* Add a case to the switch instruction */
 void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
                  LLVMBasicBlockRef Dest);
+
+/* Add a destination to the indirectbr instruction */
+void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);
 
 /* Arithmetic */
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,

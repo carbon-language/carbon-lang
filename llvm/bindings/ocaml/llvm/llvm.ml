@@ -351,6 +351,7 @@ external const_extractvalue : llvalue -> int array -> llvalue
                             = "llvm_const_extractvalue"
 external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
                            = "llvm_const_insertvalue"
+external block_address : llvalue -> llbasicblock -> llvalue = "LLVMBlockAddress"
 
 (*--... Operations on global variables, functions, and aliases (globals) ...--*)
 external global_parent : llvalue -> llmodule = "LLVMGetGlobalParent"
@@ -729,6 +730,10 @@ external build_switch : llvalue -> llbasicblock -> int -> llbuilder -> llvalue
                       = "llvm_build_switch"
 external add_case : llvalue -> llvalue -> llbasicblock -> unit
                   = "llvm_add_case"
+external build_indirect_br : llvalue -> int -> llbuilder -> llvalue
+                           = "llvm_build_indirect_br"
+external add_destination : llvalue -> llbasicblock -> unit
+                         = "llvm_add_destination"
 external build_invoke : llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
                       = "llvm_build_invoke_bc" "llvm_build_invoke_nat"
