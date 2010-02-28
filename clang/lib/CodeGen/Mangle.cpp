@@ -1369,7 +1369,18 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
 
   case Expr::DependentScopeDeclRefExprClass: {
     const DependentScopeDeclRefExpr *DRE = cast<DependentScopeDeclRefExpr>(E);
-    const Type *QTy = DRE->getQualifier()->getAsType();
+    NestedNameSpecifier *NNS = DRE->getQualifier();
+    const Type *QTy = NNS->getAsType();
+
+    // When we're dealing with a nested-name-specifier that has just a
+    // dependent identifier in it, mangle that as a typename.  FIXME:
+    // It isn't clear that we ever actually want to have such a
+    // nested-name-specifier; why not just represent it as a typename type?
+    if (!QTy && NNS->getAsIdentifier() && NNS->getPrefix()) {
+      QTy = getASTContext().getTypenameType(NNS->getPrefix(),
+                                            NNS->getAsIdentifier())
+              .getTypePtr();
+    }
     assert(QTy && "Qualifier was not type!");
 
     // ::= sr <type> <unqualified-name>                   # dependent name

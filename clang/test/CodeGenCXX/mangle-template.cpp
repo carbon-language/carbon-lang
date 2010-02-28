@@ -85,3 +85,22 @@ namespace test7 {
   // CHECK: define void @_ZN5test71XIiEC1IdEEPT_PNS_5int_cIXplL_ZNS_4metaIiE5valueEEsrNS6_IS3_EE5valueEE4typeE
   template X<int>::X(double*, float*);
 }
+
+namespace test8 {
+  template<typename T>
+  struct meta {
+    struct type {
+      static const unsigned value = sizeof(T);
+    };
+  };
+
+  template<unsigned> struct int_c { 
+    typedef float type;
+  };
+
+  template<typename T>
+  void f(int_c<meta<T>::type::value>) { }
+
+  // CHECK: define void @_ZN5test81fIiEEvNS_5int_cIXsrNS_4metaIT_E4typeE5valueEEE
+  template void f<int>(int_c<sizeof(int)>);
+}
