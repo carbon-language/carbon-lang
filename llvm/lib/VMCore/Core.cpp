@@ -55,6 +55,15 @@ void LLVMContextDispose(LLVMContextRef C) {
   delete unwrap(C);
 }
 
+unsigned LLVMGetMDKindIDInContext(LLVMContextRef C, const char* Name,
+                                  unsigned SLen) {
+  return unwrap(C)->getMDKindID(StringRef(Name, SLen));
+}
+
+unsigned LLVMGetMDKindID(const char* Name, unsigned SLen) {
+  return LLVMGetMDKindIDInContext(LLVMGetGlobalContext(), Name, SLen);
+}
+
 
 /*===-- Operations on modules ---------------------------------------------===*/
 
@@ -425,6 +434,18 @@ void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal) {
   unwrap(OldVal)->replaceAllUsesWith(unwrap(NewVal));
 }
 
+int LLVMHasMetadata(LLVMValueRef Inst) {
+  return unwrap<Instruction>(Inst)->hasMetadata();
+}
+
+LLVMValueRef LLVMGetMetadata(LLVMValueRef Inst, unsigned KindID) {
+  return wrap(unwrap<Instruction>(Inst)->getMetadata(KindID));
+}
+
+void LLVMSetMetadata(LLVMValueRef Inst, unsigned KindID, LLVMValueRef MD) {
+  unwrap<Instruction>(Inst)->setMetadata(KindID, MD? unwrap<MDNode>(MD) : NULL);
+}
+
 /*--.. Conversion functions ................................................--*/
 
 #define LLVM_DEFINE_VALUE_CAST(name)                                       \
@@ -491,6 +512,26 @@ LLVMBool LLVMIsUndef(LLVMValueRef Val) {
 LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty) {
   return
       wrap(ConstantPointerNull::get(unwrap<PointerType>(Ty)));
+}
+
+/*--.. Operations on metadata nodes ........................................--*/
+
+LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
+                                   unsigned SLen) {
+  return wrap(MDString::get(*unwrap(C), StringRef(Str, SLen)));
+}
+
+LLVMValueRef LLVMMDString(const char *Str, unsigned SLen) {
+  return LLVMMDStringInContext(LLVMGetGlobalContext(), Str, SLen);
+}
+
+LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
+                                 unsigned Count) {
+  return wrap(MDNode::get(*unwrap(C), unwrap<Value>(Vals, Count), Count));
+}
+
+LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count) {
+  return LLVMMDNodeInContext(LLVMGetGlobalContext(), Vals, Count);
 }
 
 /*--.. Operations on scalar constants ......................................--*/
@@ -1610,6 +1651,21 @@ void LLVMInsertIntoBuilderWithName(LLVMBuilderRef Builder, LLVMValueRef Instr,
 void LLVMDisposeBuilder(LLVMBuilderRef Builder) {
   delete unwrap(Builder);
 }
+
+/*--.. Metadata builders ...................................................--*/
+
+void LLVMSetCurrentDebugLocation(LLVMBuilderRef Builder, LLVMValueRef L) {
+  unwrap(Builder)->SetCurrentDebugLocation(L? unwrap<MDNode>(L) : NULL);
+}
+
+LLVMValueRef LLVMGetCurrentDebugLocation(LLVMBuilderRef Builder) {
+  return wrap(unwrap(Builder)->getCurrentDebugLocation());
+}
+
+void LLVMSetInstDebugLocation(LLVMBuilderRef Builder, LLVMValueRef Inst) {
+  unwrap(Builder)->SetInstDebugLocation(unwrap<Instruction>(Inst));
+}
+
 
 /*--.. Instruction builders ................................................--*/
 

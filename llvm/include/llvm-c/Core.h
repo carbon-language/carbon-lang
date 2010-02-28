@@ -282,12 +282,18 @@ typedef enum {
 void LLVMDisposeMessage(char *Message);
 
 
-/*===-- Modules -----------------------------------------------------------===*/
+/*===-- Contexts ----------------------------------------------------------===*/
 
 /* Create and destroy contexts. */
 LLVMContextRef LLVMContextCreate(void);
 LLVMContextRef LLVMGetGlobalContext(void);
 void LLVMContextDispose(LLVMContextRef C);
+
+unsigned LLVMGetMDKindIDInContext(LLVMContextRef C, const char* Name,
+                                  unsigned SLen);
+unsigned LLVMGetMDKindID(const char* Name, unsigned SLen);
+
+/*===-- Modules -----------------------------------------------------------===*/
 
 /* Create and destroy modules. */ 
 /** See llvm::Module::Module. */
@@ -497,6 +503,9 @@ const char *LLVMGetValueName(LLVMValueRef Val);
 void LLVMSetValueName(LLVMValueRef Val, const char *Name);
 void LLVMDumpValue(LLVMValueRef Val);
 void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal);
+int LLVMHasMetadata(LLVMValueRef Val);
+LLVMValueRef LLVMGetMetadata(LLVMValueRef Val, unsigned KindID);
+void LLVMSetMetadata(LLVMValueRef Val, unsigned KindID, LLVMValueRef Node);
 
 /* Conversion functions. Return the input value if it is an instance of the
    specified class, otherwise NULL. See llvm::dyn_cast_or_null<>. */
@@ -521,6 +530,14 @@ LLVMBool LLVMIsConstant(LLVMValueRef Val);
 LLVMBool LLVMIsNull(LLVMValueRef Val);
 LLVMBool LLVMIsUndef(LLVMValueRef Val);
 LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty);
+
+/* Operations on metadata */
+LLVMValueRef LLVMMDStringInContext(LLVMContextRef C, const char *Str,
+                                   unsigned SLen);
+LLVMValueRef LLVMMDString(const char *Str, unsigned SLen);
+LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
+                                 unsigned Count);
+LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
 
 /* Operations on scalar constants */
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
@@ -772,6 +789,11 @@ void LLVMInsertIntoBuilder(LLVMBuilderRef Builder, LLVMValueRef Instr);
 void LLVMInsertIntoBuilderWithName(LLVMBuilderRef Builder, LLVMValueRef Instr,
                                    const char *Name);
 void LLVMDisposeBuilder(LLVMBuilderRef Builder);
+
+/* Metadata */
+void LLVMSetCurrentDebugLocation(LLVMBuilderRef Builder, LLVMValueRef L);
+LLVMValueRef LLVMGetCurrentDebugLocation(LLVMBuilderRef Builder);
+void LLVMSetInstDebugLocation(LLVMBuilderRef Builder, LLVMValueRef Inst);
 
 /* Terminators */
 LLVMValueRef LLVMBuildRetVoid(LLVMBuilderRef);

@@ -1089,6 +1089,46 @@ let test_builder () =
     ignore (build_insertelement vec1 p1 p2 "build_insertelement" atentry);
     ignore (build_shufflevector vec1 vec2 t3 "build_shufflevector" atentry);
   end;
+
+  group "metadata"; begin
+    (* RUN: grep {%metadata = add i32 %P1, %P2, !test !0} < %t.ll
+     * RUN: grep {!0 = metadata !\{i32 1, metadata !"metadata test"\}} < %t.ll
+     *)
+    let i = build_add p1 p2 "metadata" atentry in
+    insist ((has_metadata i) = false);
+
+    let m1 = const_int i32_type 1 in
+    let m2 = mdstring context "metadata test" in
+    let md = mdnode context [| m1; m2 |] in
+
+    let kind = mdkind_id context "test" in
+    set_metadata i kind md;
+
+    insist ((has_metadata i) = true);
+    insist ((metadata i kind) = Some md);
+
+    clear_metadata i kind;
+
+    insist ((has_metadata i) = false);
+    insist ((metadata i kind) = None);
+
+    set_metadata i kind md
+  end;
+
+  group "dbg"; begin
+    (* RUN: grep {%dbg = add i32 %P1, %P2, !dbg !1} < %t.ll
+     * RUN: grep {!1 = metadata !\{i32 2, metadata !"dbg test"\}} < %t.ll
+     *)
+    let m1 = const_int i32_type 2 in
+    let m2 = mdstring context "dbg test" in
+    let md = mdnode context [| m1; m2 |] in
+    set_current_debug_location atentry md;
+
+    let i = build_add p1 p2 "dbg" atentry in
+    insist ((has_metadata i) = true);
+
+    clear_current_debug_location atentry
+  end;
   
   group "phi"; begin
     (* RUN: grep {PhiNode.*P1.*PhiBlock1.*P2.*PhiBlock2} < %t.ll

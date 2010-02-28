@@ -148,6 +148,7 @@ type ('a, 'b) llrev_pos =
 external create_context : unit -> llcontext = "llvm_create_context"
 external dispose_context : llcontext -> unit = "llvm_dispose_context"
 external global_context : unit -> llcontext = "llvm_global_context"
+external mdkind_id : llcontext -> string -> int = "llvm_mdkind_id"
 
 (*===-- Modules -----------------------------------------------------------===*)
 external create_module : llcontext -> string -> llmodule = "llvm_create_module"
@@ -244,6 +245,16 @@ external const_all_ones : (*int|vec*)lltype -> llvalue = "LLVMConstAllOnes"
 external undef : lltype -> llvalue = "LLVMGetUndef"
 external is_null : llvalue -> bool = "llvm_is_null"
 external is_undef : llvalue -> bool = "llvm_is_undef"
+
+(*--... Operations on instructions .........................................--*)
+external has_metadata : llvalue -> bool = "llvm_has_metadata"
+external metadata : llvalue -> int -> llvalue option = "llvm_metadata"
+external set_metadata : llvalue -> int -> llvalue -> unit = "llvm_set_metadata"
+external clear_metadata : llvalue -> int -> unit = "llvm_clear_metadata"
+
+(*--... Operations on metadata .......,.....................................--*)
+external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
+external mdnode : llcontext -> llvalue array -> llvalue = "llvm_mdnode"
 
 (*--... Operations on scalar constants .....................................--*)
 external const_int : lltype -> int -> llvalue = "llvm_const_int"
@@ -693,6 +704,17 @@ let builder_at_end context bb = builder_at context (At_end bb)
 
 let position_before i = position_builder (Before i)
 let position_at_end bb = position_builder (At_end bb)
+
+
+(*--... Metadata ...........................................................--*)
+external set_current_debug_location : llbuilder -> llvalue -> unit
+                                    = "llvm_set_current_debug_location"
+external clear_current_debug_location : llbuilder -> unit
+                                      = "llvm_clear_current_debug_location"
+external current_debug_location : llbuilder -> llvalue option
+                                    = "llvm_current_debug_location"
+external set_inst_debug_location : llbuilder -> llvalue -> unit
+                                 = "llvm_set_inst_debug_location"
 
 
 (*--... Terminators ........................................................--*)

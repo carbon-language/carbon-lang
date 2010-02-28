@@ -110,6 +110,13 @@ CAMLprim LLVMContextRef llvm_global_context(value Unit) {
   return LLVMGetGlobalContext();
 }
 
+/* llcontext -> string -> int */
+CAMLprim value llvm_mdkind_id(LLVMContextRef C, value Name) {
+  unsigned MDKindID = LLVMGetMDKindIDInContext(C, String_val(Name),
+                                               caml_string_length(Name));
+  return Val_int(MDKindID);
+}
+
 /*===-- Modules -----------------------------------------------------------===*/
 
 /* llcontext -> string -> llmodule */
@@ -436,6 +443,52 @@ CAMLprim value llvm_is_null(LLVMValueRef Val) {
 /* llvalue -> bool */
 CAMLprim value llvm_is_undef(LLVMValueRef Val) {
   return Val_bool(LLVMIsUndef(Val));
+}
+
+/*--... Operations on instructions .........................................--*/
+
+/* llvalue -> bool */
+CAMLprim value llvm_has_metadata(LLVMValueRef Val) {
+  return Val_bool(LLVMHasMetadata(Val));
+}
+
+/* llvalue -> int -> llvalue option */
+CAMLprim value llvm_metadata(LLVMValueRef Val, value MDKindID) {
+  CAMLparam1(MDKindID);
+  LLVMValueRef MD;
+  if ((MD = LLVMGetMetadata(Val, Int_val(MDKindID)))) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = (value) MD;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
+}
+
+/* llvalue -> int -> llvalue -> unit */
+CAMLprim value llvm_set_metadata(LLVMValueRef Val, value MDKindID,
+                                 LLVMValueRef MD) {
+  LLVMSetMetadata(Val, Int_val(MDKindID), MD);
+  return Val_unit;
+}
+
+/* llvalue -> int -> unit */
+CAMLprim value llvm_clear_metadata(LLVMValueRef Val, value MDKindID) {
+  LLVMSetMetadata(Val, Int_val(MDKindID), NULL);
+  return Val_unit;
+}
+
+
+/*--... Operations on metadata .............................................--*/
+
+/* llcontext -> string -> llvalue */
+CAMLprim LLVMValueRef llvm_mdstring(LLVMContextRef C, value S) {
+  return LLVMMDStringInContext(C, String_val(S), caml_string_length(S));
+}
+
+/* llcontext -> llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_mdnode(LLVMContextRef C, value ElementVals) {
+  return LLVMMDNodeInContext(C, (LLVMValueRef*) Op_val(ElementVals),
+                             Wosize_val(ElementVals));
 }
 
 /*--... Operations on scalar constants .....................................--*/
@@ -1005,6 +1058,39 @@ CAMLprim value llvm_insert_into_builder(LLVMValueRef I, value Name, value B) {
   LLVMInsertIntoBuilderWithName(Builder_val(B), I, String_val(Name));
   return Val_unit;
 }
+
+/*--... Metadata ...........................................................--*/
+
+/* llbuilder -> llvalue -> unit */
+CAMLprim value llvm_set_current_debug_location(value B, LLVMValueRef V) {
+  LLVMSetCurrentDebugLocation(Builder_val(B), V);
+  return Val_unit;
+}
+
+/* llbuilder -> unit */
+CAMLprim value llvm_clear_current_debug_location(value B) {
+  LLVMSetCurrentDebugLocation(Builder_val(B), NULL);
+  return Val_unit;
+}
+
+/* llbuilder -> llvalue option */
+CAMLprim value llvm_current_debug_location(value B) {
+  CAMLparam0();
+  LLVMValueRef L;
+  if ((L = LLVMGetCurrentDebugLocation(Builder_val(B)))) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = (value) L;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
+}
+
+/* llbuilder -> llvalue -> unit */
+CAMLprim value llvm_set_inst_debug_location(value B, LLVMValueRef V) {
+  LLVMSetInstDebugLocation(Builder_val(B), V);
+  return Val_unit;
+}
+
 
 /*--... Terminators ........................................................--*/
 

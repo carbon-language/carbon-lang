@@ -221,6 +221,11 @@ external dispose_context : llcontext -> unit = "llvm_dispose_context"
 (** See the function [llvm::getGlobalContext]. *)
 external global_context : unit -> llcontext = "llvm_global_context"
 
+(** [mdkind_id context name] returns the MDKind ID that corresponds to the
+    name [name] in the context [context].  See the function
+    [llvm::LLVMContext::getMDKindID]. *)
+external mdkind_id : llcontext -> string -> int = "llvm_mdkind_id"
+
 
 (** {6 Modules} *)
 
@@ -523,6 +528,39 @@ external is_null : llvalue -> bool = "llvm_is_null"
 (** [is_undef v] returns [true] if the value [v] is an undefined value, [false]
     otherwise. Similar to [llvm::isa<UndefValue>]. *)
 external is_undef : llvalue -> bool = "llvm_is_undef"
+
+
+(** {7 Operations on instructions} *)
+
+(** [has_metadata i] returns whether or not the instruction [i] has any
+    metadata attached to it. See the function
+    [llvm::Instruction::hasMetadata]. *)
+external has_metadata : llvalue -> bool = "llvm_has_metadata"
+
+(** [metadata i kind] optionally returns the metadata associated with the
+    kind [kind] in the instruction [i] See the function
+    [llvm::Instruction::getMetadata]. *)
+external metadata : llvalue -> int -> llvalue option = "llvm_metadata"
+
+(** [set_metadata i kind md] sets the metadata [md] of kind [kind] in the
+    instruction [i]. See the function [llvm::Instruction::setMetadata]. *)
+external set_metadata : llvalue -> int -> llvalue -> unit = "llvm_set_metadata"
+
+(** [clear_metadata i kind] clears the metadata of kind [kind] in the
+    instruction [i]. See the function [llvm::Instruction::setMetadata]. *)
+external clear_metadata : llvalue -> int -> unit = "llvm_clear_metadata"
+
+
+(** {7 Operations on metadata} *)
+
+(** [mdstring c s] returns the MDString of the string [s] in the context [c].
+    See the method [llvm::MDNode::get]. *)
+external mdstring : llcontext -> string -> llvalue = "llvm_mdstring"
+
+(** [mdnode c elts] returns the MDNode containing the values [elts] in the
+    context [c].
+    See the method [llvm::MDNode::get]. *)
+external mdnode : llcontext -> llvalue array -> llvalue = "llvm_mdnode"
 
 
 (** {7 Operations on scalar constants} *)
@@ -1451,6 +1489,30 @@ external insertion_block : llbuilder -> llbasicblock = "llvm_insertion_block"
 external insert_into_builder : llvalue -> string -> llbuilder -> unit
                              = "llvm_insert_into_builder"
 
+(** {7 Metadata} *)
+
+(** [set_current_debug_location b md] sets the current debug location [md] in
+    the builder [b].
+    See the method [llvm::IRBuilder::SetDebugLocation]. *)
+external set_current_debug_location : llbuilder -> llvalue -> unit
+                                    = "llvm_set_current_debug_location"
+
+(** [clear_current_debug_location b] clears the current debug location in the
+    builder [b]. *)
+external clear_current_debug_location : llbuilder -> unit
+                                      = "llvm_clear_current_debug_location"
+
+(** [current_debug_location b] returns the current debug location, or None
+    if none is currently set.
+    See the method [llvm::IRBuilder::GetDebugLocation]. *)
+external current_debug_location : llbuilder -> llvalue option
+                                = "llvm_current_debug_location"
+
+(** [set_inst_debug_location b i] sets the current debug location of the builder
+    [b] to the instruction [i].
+    See the method [llvm::IRBuilder::SetInstDebugLocation]. *)
+external set_inst_debug_location : llbuilder -> llvalue -> unit
+                                 = "llvm_set_inst_debug_location"
 
 (** {7 Terminators} *)
 
