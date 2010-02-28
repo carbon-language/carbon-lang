@@ -606,6 +606,14 @@ let test_global_variables () =
     dispose_module m
   end
 
+(*===-- Aliases -----------------------------------------------------------===*)
+
+let test_aliases () =
+  (* RUN: grep {@alias = alias i32\\* @aliasee} < %t.ll
+   *)
+  let v = declare_global i32_type "aliasee" m in
+  ignore (add_alias m (pointer_type i32_type) v "alias")
+
 
 (*===-- Functions ---------------------------------------------------------===*)
 
@@ -1265,6 +1273,7 @@ let _ =
   suite "constants"        test_constants;
   suite "global values"    test_global_values;
   suite "global variables" test_global_variables;
+  suite "aliases"          test_aliases;
   suite "functions"        test_functions;
   suite "params"           test_params;
   suite "basic blocks"     test_basic_blocks;

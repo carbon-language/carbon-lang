@@ -807,6 +807,13 @@ CAMLprim value llvm_set_global_constant(value Flag, LLVMValueRef GlobalVar) {
   return Val_unit;
 }
 
+/*--... Operations on aliases ..............................................--*/
+
+CAMLprim LLVMValueRef llvm_add_alias(LLVMModuleRef M, LLVMTypeRef Ty,
+                                     LLVMValueRef Aliasee, value Name) {
+  return LLVMAddAlias(M, Ty, Aliasee, String_val(Name));
+}
+
 /*--... Operations on functions ............................................--*/
 
 DEFINE_ITERATORS(function, Function, LLVMModuleRef, LLVMValueRef,

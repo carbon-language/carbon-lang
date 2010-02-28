@@ -444,6 +444,10 @@ let rec fold_right_global_range f i e init =
 let fold_right_globals f m init =
   fold_right_global_range f (global_end m) (At_start m) init
 
+(*--... Operations on aliases ..............................................--*)
+external add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
+                   = "llvm_add_alias"
+
 (*--... Operations on functions ............................................--*)
 external declare_function : string -> lltype -> llmodule -> llvalue
                           = "llvm_declare_function"

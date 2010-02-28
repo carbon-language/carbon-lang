@@ -1140,6 +1140,15 @@ external is_thread_local : llvalue -> bool = "llvm_is_thread_local"
 external set_thread_local : bool -> llvalue -> unit = "llvm_set_thread_local"
 
 
+(** {7 Operations on aliases} *)
+
+(** [add_alias m t a n] inserts an alias in the module [m] with the type [t] and
+    the aliasee [a] with the name [n].
+    See the constructor for [llvm::GlobalAlias]. *)
+external add_alias : llmodule -> lltype -> llvalue -> string -> llvalue
+                   = "llvm_add_alias"
+
+
 (** {7 Operations on functions} *)
 
 (** [declare_function name ty m] returns a new function of type [ty] and
