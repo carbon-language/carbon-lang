@@ -246,7 +246,8 @@ bool EmitNodeMatcherCommon::isEqualImpl(const Matcher *m) const {
   const EmitNodeMatcherCommon *M = cast<EmitNodeMatcherCommon>(m);
   return M->OpcodeName == OpcodeName && M->VTs == VTs &&
          M->Operands == Operands && M->HasChain == HasChain &&
-         M->HasFlag == HasFlag && M->HasMemRefs == HasMemRefs &&
+         M->HasInFlag == HasInFlag && M->HasOutFlag == HasOutFlag &&
+         M->HasMemRefs == HasMemRefs &&
          M->NumFixedArityOperands == NumFixedArityOperands;
 }
 

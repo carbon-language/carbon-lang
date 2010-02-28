@@ -396,7 +396,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS << ", TARGET_OPCODE(" << EN->getOpcodeName() << "), 0";
     
     if (EN->hasChain())   OS << "|OPFL_Chain";
-    if (EN->hasFlag())    OS << "|OPFL_Flag";
+    if (EN->hasInFlag())  OS << "|OPFL_FlagInput";
+    if (EN->hasOutFlag()) OS << "|OPFL_FlagOutput";
     if (EN->hasMemRefs()) OS << "|OPFL_MemRefs";
     if (EN->getNumFixedArityOperands() != -1)
       OS << "|OPFL_Variadic" << EN->getNumFixedArityOperands();

@@ -303,17 +303,18 @@ enum BuiltinOpcodes {
 };
 
 enum {
-  OPFL_None      = 0,     // Node has no chain or flag input and isn't variadic.
-  OPFL_Chain     = 1,     // Node has a chain input.
-  OPFL_Flag      = 2,     // Node has a flag input.
-  OPFL_MemRefs   = 4,     // Node gets accumulated MemRefs.
-  OPFL_Variadic0 = 1<<3,  // Node is variadic, root has 0 fixed inputs.
-  OPFL_Variadic1 = 2<<3,  // Node is variadic, root has 1 fixed inputs.
-  OPFL_Variadic2 = 3<<3,  // Node is variadic, root has 2 fixed inputs.
-  OPFL_Variadic3 = 4<<3,  // Node is variadic, root has 3 fixed inputs.
-  OPFL_Variadic4 = 5<<3,  // Node is variadic, root has 4 fixed inputs.
-  OPFL_Variadic5 = 6<<3,  // Node is variadic, root has 5 fixed inputs.
-  OPFL_Variadic6 = 7<<3,  // Node is variadic, root has 6 fixed inputs.
+  OPFL_None       = 0,     // Node has no chain or flag input and isn't variadic.
+  OPFL_Chain      = 1,     // Node has a chain input.
+  OPFL_FlagInput  = 2,     // Node has a flag input.
+  OPFL_FlagOutput = 4,     // Node has a flag output.
+  OPFL_MemRefs    = 8,     // Node gets accumulated MemRefs.
+  OPFL_Variadic0  = 1<<4,  // Node is variadic, root has 0 fixed inputs.
+  OPFL_Variadic1  = 2<<4,  // Node is variadic, root has 1 fixed inputs.
+  OPFL_Variadic2  = 3<<4,  // Node is variadic, root has 2 fixed inputs.
+  OPFL_Variadic3  = 4<<4,  // Node is variadic, root has 3 fixed inputs.
+  OPFL_Variadic4  = 5<<4,  // Node is variadic, root has 4 fixed inputs.
+  OPFL_Variadic5  = 6<<4,  // Node is variadic, root has 5 fixed inputs.
+  OPFL_Variadic6  = 7<<4,  // Node is variadic, root has 6 fixed inputs.
   
   OPFL_VariadicInfo = OPFL_Variadic6
 };
@@ -322,7 +323,7 @@ enum {
 /// number of fixed arity values that should be skipped when copying from the
 /// root.
 static inline int getNumFixedFromVariadicInfo(unsigned Flags) {
-  return ((Flags&OPFL_VariadicInfo) >> 3)-1;
+  return ((Flags&OPFL_VariadicInfo) >> 4)-1;
 }
 
 struct MatchScope {
@@ -793,7 +794,6 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned EmitNodeInfo = MatcherTable[MatcherIndex++];
       // Get the result VT list.
       unsigned NumVTs = MatcherTable[MatcherIndex++];
-      assert(NumVTs != 0 && "Invalid node result");
       SmallVector<EVT, 4> VTs;
       for (unsigned i = 0; i != NumVTs; ++i) {
         MVT::SimpleValueType VT =
@@ -801,6 +801,11 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         if (VT == MVT::iPTR) VT = TLI.getPointerTy().SimpleTy;
         VTs.push_back(VT);
       }
+      
+      if (EmitNodeInfo & OPFL_Chain)
+        VTs.push_back(MVT::Other);
+      if (EmitNodeInfo & OPFL_FlagOutput)
+        VTs.push_back(MVT::Flag);
       
       // FIXME: Use faster version for the common 'one VT' case?
       SDVTList VTList = CurDAG->getVTList(VTs.data(), VTs.size());
@@ -837,7 +842,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // If this has chain/flag inputs, add them.
       if (EmitNodeInfo & OPFL_Chain)
         Ops.push_back(InputChain);
-      if ((EmitNodeInfo & OPFL_Flag) && InputFlag.getNode() != 0)
+      if ((EmitNodeInfo & OPFL_FlagInput) && InputFlag.getNode() != 0)
         Ops.push_back(InputFlag);
       
       // Create the node.

@@ -713,10 +713,6 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
       if (Pattern.getDstRegs()[i]->isSubClassOf("Register"))
         ResultVTs.push_back(getRegisterValueType(Pattern.getDstRegs()[i], CGT));
   }
-  if (NodeHasChain)
-    ResultVTs.push_back(MVT::Other);
-  if (TreeHasOutFlag)
-    ResultVTs.push_back(MVT::Flag);
 
   // FIXME2: Instead of using the isVariadic flag on the instruction, we should
   // have an SDNP that indicates variadicism.  The TargetInstrInfo isVariadic
@@ -744,7 +740,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   AddMatcher(new EmitNodeMatcher(II.Namespace+"::"+II.TheDef->getName(),
                                  ResultVTs.data(), ResultVTs.size(),
                                  InstOps.data(), InstOps.size(),
-                                 NodeHasChain, TreeHasInFlag,
+                                 NodeHasChain, TreeHasInFlag, TreeHasOutFlag,
                                  NodeHasMemRefs, NumFixedArityOperands,
                                  NextRecordedOperandNo));
   

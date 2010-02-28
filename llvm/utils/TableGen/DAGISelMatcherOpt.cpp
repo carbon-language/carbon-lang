@@ -92,7 +92,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       // NOTE: Strictly speaking, we don't have to check for the flag here
       // because the code in the pattern generator doesn't handle it right.  We
       // do it anyway for thoroughness.
-      if (!EN->hasFlag() &&
+      if (!EN->hasOutFlag() &&
           Pattern.getSrcPattern()->NodeHasProperty(SDNPOutFlag, CGP))
         ResultsMatch = false;
       
@@ -110,9 +110,10 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
         const SmallVectorImpl<MVT::SimpleValueType> &VTs = EN->getVTList();
         const SmallVectorImpl<unsigned> &Operands = EN->getOperandList();
         MatcherPtr.reset(new MorphNodeToMatcher(EN->getOpcodeName(),
-                                                &VTs[0], VTs.size(),
+                                                VTs.data(), VTs.size(),
                                                 Operands.data(),Operands.size(),
-                                                EN->hasChain(), EN->hasFlag(),
+                                                EN->hasChain(), EN->hasInFlag(),
+                                                EN->hasOutFlag(),
                                                 EN->hasMemRefs(),
                                                 EN->getNumFixedArityOperands(),
                                                 Pattern));
