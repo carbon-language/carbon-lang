@@ -66,10 +66,9 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
   
   // Turn EmitNode->CompleteMatch into SelectNodeTo if we can.
   if (EmitNodeMatcher *EN = dyn_cast<EmitNodeMatcher>(N))
-    if (CompleteMatchMatcher *CM = cast<CompleteMatchMatcher>(EN->getNext())) {
+    if (CompleteMatchMatcher *CM =
+          dyn_cast<CompleteMatchMatcher>(EN->getNext())) {
       (void)CM;
-      
-      
     }
   
   ContractNodes(N->getNextPtr());

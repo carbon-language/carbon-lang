@@ -749,7 +749,8 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
                                  ResultVTs.data(), ResultVTs.size(),
                                  InstOps.data(), InstOps.size(),
                                  NodeHasChain, TreeHasInFlag,
-                                 NodeHasMemRefs, NumFixedArityOperands));
+                                 NodeHasMemRefs, NumFixedArityOperands,
+                                 NextRecordedOperandNo));
   
   // The non-chain and non-flag results of the newly emitted node get recorded.
   for (unsigned i = 0, e = ResultVTs.size(); i != e; ++i) {

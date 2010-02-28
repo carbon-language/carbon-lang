@@ -893,8 +893,6 @@ public:
       HasChain(hasChain), HasFlag(hasFlag), HasMemRefs(hasmemrefs),
       NumFixedArityOperands(numfixedarityoperands) {}
   
-  bool isSelectNodeTo() const { return getKind() == SelectNodeTo; }
-  
   const std::string &getOpcodeName() const { return OpcodeName; }
   
   unsigned getNumVTs() const { return VTs.size(); }
@@ -926,15 +924,18 @@ private:
   
 /// EmitNodeMatcher - This signals a successful match and generates a node.
 class EmitNodeMatcher : public EmitNodeMatcherCommon {
+  unsigned FirstResultSlot;
 public:
   EmitNodeMatcher(const std::string &opcodeName,
                   const MVT::SimpleValueType *vts, unsigned numvts,
                   const unsigned *operands, unsigned numops,
                   bool hasChain, bool hasFlag, bool hasmemrefs,
-                  int numfixedarityoperands)
+                  int numfixedarityoperands, unsigned firstresultslot)
   : EmitNodeMatcherCommon(opcodeName, vts, numvts, operands, numops, hasChain,
-                          hasFlag, hasmemrefs, numfixedarityoperands, false)
-    {}
+                          hasFlag, hasmemrefs, numfixedarityoperands, false),
+    FirstResultSlot(firstresultslot) {}
+  
+  unsigned getFirstResultSlot() const { return FirstResultSlot; }
   
   static inline bool classof(const Matcher *N) {
     return N->getKind() == EmitNode;

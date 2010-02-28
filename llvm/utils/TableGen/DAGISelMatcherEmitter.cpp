@@ -392,7 +392,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   case Matcher::EmitNode:
   case Matcher::SelectNodeTo: {
     const EmitNodeMatcherCommon *EN = cast<EmitNodeMatcherCommon>(N);
-    OS << (EN->isSelectNodeTo() ? "OPC_EmitNode" : "OPC_SelectNodeTo");
+    OS << (isa<EmitNodeMatcher>(EN) ? "OPC_EmitNode" : "OPC_SelectNodeTo");
     OS << ", TARGET_OPCODE(" << EN->getOpcodeName() << "), 0";
     
     if (EN->hasChain())   OS << "|OPFL_Chain";
@@ -413,6 +413,20 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       // is too large to represent with a byte.
       NumOperandBytes += EmitVBRValue(EN->getOperand(i), OS);
     }
+    
+    // Print the result #'s for EmitNode.
+    if (const EmitNodeMatcher *E = dyn_cast<EmitNodeMatcher>(EN)) {
+      if (EN->getVT(0) != MVT::Flag && EN->getVT(0) != MVT::Other) {
+        OS.PadToColumn(CommentIndent) << "// Results = ";
+        unsigned First = E->getFirstResultSlot();
+        for (unsigned i = 0, e = EN->getNumVTs(); i != e; ++i) {
+          if (EN->getVT(0) == MVT::Flag || EN->getVT(0) == MVT::Other)
+            break;
+          OS << "#" << First+i << " ";
+        }
+      }
+    }
+    
     OS << '\n';
     return 6+EN->getNumVTs()+NumOperandBytes;
   }
