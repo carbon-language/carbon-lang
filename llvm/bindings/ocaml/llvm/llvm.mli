@@ -527,6 +527,10 @@ external const_null : lltype -> llvalue = "LLVMConstNull"
     [ty]. See the method [llvm::Constant::getAllOnesValue]. *)
 external const_all_ones : (*int|vec*)lltype -> llvalue = "LLVMConstAllOnes"
 
+(** [const_pointer_null ty] returns the constant null (zero) pointer of the type
+    [ty]. See the method [llvm::ConstantPointerNull::get]. *)
+external const_pointer_null : lltype -> llvalue = "LLVMConstPointerNull"
+
 (** [undef ty] returns the undefined value of the type [ty].
     See the method [llvm::UndefValue::get]. *)
 external undef : lltype -> llvalue = "LLVMGetUndef"

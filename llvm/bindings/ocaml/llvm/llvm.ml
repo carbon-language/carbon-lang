@@ -246,6 +246,7 @@ external replace_all_uses_with : llvalue -> llvalue -> unit
 external is_constant : llvalue -> bool = "llvm_is_constant"
 external const_null : lltype -> llvalue = "LLVMConstNull"
 external const_all_ones : (*int|vec*)lltype -> llvalue = "LLVMConstAllOnes"
+external const_pointer_null : lltype -> llvalue = "LLVMConstPointerNull"
 external undef : lltype -> llvalue = "LLVMGetUndef"
 external is_null : llvalue -> bool = "llvm_is_null"
 external is_undef : llvalue -> bool = "llvm_is_undef"

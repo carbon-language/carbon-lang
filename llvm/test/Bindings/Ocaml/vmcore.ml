@@ -315,6 +315,13 @@ let test_constants () =
   group "all ones";
   let c = const_all_ones i64_type in
   ignore (define_global "const_all_ones" c m);
+
+  group "pointer null"; begin
+    (* RUN: grep {const_pointer_null = global i64\\* null} < %t.ll
+     *)
+    let c = const_pointer_null (pointer_type i64_type) in
+    ignore (define_global "const_pointer_null" c m);
+  end;
   
   (* RUN: grep {const_undef.*undef} < %t.ll
    *)
