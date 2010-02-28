@@ -741,10 +741,6 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   bool NodeHasMemRefs =
     isRoot && Pattern.getSrcPattern()->TreeHasProperty(SDNPMemOperand, CGP);
 
-  // FIXME: Eventually add a SelectNodeTo form.  It works if the new node has a
-  // superset of the results of the old node, in the same places.  E.g. turning
-  // (add (load)) -> add32rm is ok because result #0 is the result and result #1
-  // is new.
   AddMatcher(new EmitNodeMatcher(II.Namespace+"::"+II.TheDef->getName(),
                                  ResultVTs.data(), ResultVTs.size(),
                                  InstOps.data(), InstOps.size(),
@@ -757,9 +753,6 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     if (ResultVTs[i] == MVT::Other || ResultVTs[i] == MVT::Flag) break;
     OutputOps.push_back(NextRecordedOperandNo++);
   }
-  
-  // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
-  // variants.  Call MorphNodeTo instead of SelectNodeTo.
 }
 
 void MatcherGen::
@@ -851,7 +844,7 @@ void MatcherGen::EmitResultCode() {
 
 
 Matcher *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
-                                           const CodeGenDAGPatterns &CGP) {
+                                       const CodeGenDAGPatterns &CGP) {
   MatcherGen Gen(Pattern, CGP);
 
   // Generate the code for the matcher.

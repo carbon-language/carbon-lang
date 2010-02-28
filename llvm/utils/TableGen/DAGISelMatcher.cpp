@@ -39,8 +39,12 @@ ScopeMatcher::~ScopeMatcher() {
 
 void ScopeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Scope\n";
-  for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
-    getChild(i)->print(OS, indent+2);
+  for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
+    if (getChild(i) == 0)
+      OS.indent(indent+1) << "NULL POINTER\n";
+    else
+      getChild(i)->print(OS, indent+2);
+  }
 }
 
 void RecordMatcher::printImpl(raw_ostream &OS, unsigned indent) const {

@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "isel-opt"
 #include "DAGISelMatcher.h"
+#include "CodeGenDAGPatterns.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -21,7 +22,8 @@ using namespace llvm;
 
 /// ContractNodes - Turn multiple matcher node patterns like 'MoveChild+Record'
 /// into single compound nodes like RecordChild.
-static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
+static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
+                          const CodeGenDAGPatterns &CGP) {
   // If we reached the end of the chain, we're done.
   Matcher *N = MatcherPtr.get();
   if (N == 0) return;
@@ -30,7 +32,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
   if (ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N)) {
     for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
       OwningPtr<Matcher> Child(Scope->takeChild(i));
-      ContractNodes(Child);
+      ContractNodes(Child, CGP);
       Scope->resetChild(i, Child.take());
     }
     return;
@@ -52,7 +54,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
       MatcherPtr.reset(New);
       // Remove the old one.
       MC->setNext(MC->getNext()->takeNext());
-      return ContractNodes(MatcherPtr);
+      return ContractNodes(MatcherPtr, CGP);
     }
   }
   
@@ -61,17 +63,69 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr) {
     if (MoveParentMatcher *MP = 
           dyn_cast<MoveParentMatcher>(MC->getNext())) {
       MatcherPtr.reset(MP->takeNext());
-      return ContractNodes(MatcherPtr);
+      return ContractNodes(MatcherPtr, CGP);
     }
   
   // Turn EmitNode->CompleteMatch into SelectNodeTo if we can.
   if (EmitNodeMatcher *EN = dyn_cast<EmitNodeMatcher>(N))
     if (CompleteMatchMatcher *CM =
           dyn_cast<CompleteMatchMatcher>(EN->getNext())) {
-      (void)CM;
+      // We can only use SelectNodeTo if the result values match up.
+      unsigned RootResultFirst = EN->getFirstResultSlot();
+      bool ResultsMatch = true;
+      for (unsigned i = 0, e = CM->getNumResults(); i != e; ++i)
+        if (CM->getResult(i) != RootResultFirst+i)
+          ResultsMatch = false;
+      
+      // If the selected node defines a subset of the flag/chain results, we
+      // can't use SelectNodeTo.  For example, we can't use SelectNodeTo if the
+      // matched pattern has a chain but the root node doesn't.
+      const PatternToMatch &Pattern = CM->getPattern();
+      
+      if (!EN->hasChain() &&
+          Pattern.getSrcPattern()->NodeHasProperty(SDNPHasChain, CGP))
+        ResultsMatch = false;
+
+      // If the matched node has a flag and the output root doesn't, we can't
+      // use SelectNodeTo.
+      //
+      // NOTE: Strictly speaking, we don't have to check for the flag here
+      // because the code in the pattern generator doesn't handle it right.  We
+      // do it anyway for thoroughness.
+      if (!EN->hasFlag() &&
+          Pattern.getSrcPattern()->NodeHasProperty(SDNPOutFlag, CGP))
+        ResultsMatch = false;
+      
+      
+      // If the root result node defines more results than the source root node
+      // *and* has a chain or flag input, then we can't match it because it
+      // would end up replacing the extra result with the chain/flag.
+#if 0
+      if ((EN->hasFlag() || EN->hasChain()) &&
+          EN->getNumNonChainFlagVTs() > ... need to get no results reliably ...)
+        ResultMatch = false;
+#endif
+          
+      if (ResultsMatch) {
+        const SmallVectorImpl<MVT::SimpleValueType> &VTs = EN->getVTList();
+        const SmallVectorImpl<unsigned> &Operands = EN->getOperandList();
+        MatcherPtr.reset(new SelectNodeToMatcher(EN->getOpcodeName(),
+                                                 &VTs[0], VTs.size(),
+                                               Operands.data(), Operands.size(),
+                                                 EN->hasChain(), EN->hasFlag(),
+                                                 EN->hasMemRefs(),
+                                                 EN->getNumFixedArityOperands(),
+                                                 Pattern));
+        return;
+      }
+
+      // FIXME: Handle OPC_MarkFlagResults.
+      
+      // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
+      // variants.  Call MorphNodeTo instead of SelectNodeTo.
     }
   
-  ContractNodes(N->getNextPtr());
+  ContractNodes(N->getNextPtr(), CGP);
 }
 
 /// SinkPatternPredicates - Pattern predicates can be checked at any level of
@@ -253,6 +307,8 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
 
   // Reassemble a new Scope node.
   assert(!NewOptionsToMatch.empty() && "where'd all our children go?");
+  if (NewOptionsToMatch.empty())
+    MatcherPtr.reset(0);
   if (NewOptionsToMatch.size() == 1)
     MatcherPtr.reset(NewOptionsToMatch[0]);
   else {
@@ -262,9 +318,10 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   }
 }
 
-Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher) {
+Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher,
+                               const CodeGenDAGPatterns &CGP) {
   OwningPtr<Matcher> MatcherPtr(TheMatcher);
-  ContractNodes(MatcherPtr);
+  ContractNodes(MatcherPtr, CGP);
   SinkPatternPredicates(MatcherPtr);
   FactorNodes(MatcherPtr);
   return MatcherPtr.take();

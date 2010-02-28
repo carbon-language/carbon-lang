@@ -1966,7 +1966,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
                                          PatternMatchers.size());
 
-  TheMatcher = OptimizeMatcher(TheMatcher);
+  TheMatcher = OptimizeMatcher(TheMatcher, CGP);
   //Matcher->dump();
   EmitMatcherTable(TheMatcher, OS);
   delete TheMatcher;

@@ -416,18 +416,23 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     
     // Print the result #'s for EmitNode.
     if (const EmitNodeMatcher *E = dyn_cast<EmitNodeMatcher>(EN)) {
-      if (EN->getVT(0) != MVT::Flag && EN->getVT(0) != MVT::Other) {
+      if (unsigned NumResults = EN->getNumNonChainFlagVTs()) {
         OS.PadToColumn(CommentIndent) << "// Results = ";
         unsigned First = E->getFirstResultSlot();
-        for (unsigned i = 0, e = EN->getNumVTs(); i != e; ++i) {
-          if (EN->getVT(0) == MVT::Flag || EN->getVT(0) == MVT::Other)
-            break;
+        for (unsigned i = 0; i != NumResults; ++i)
           OS << "#" << First+i << " ";
-        }
       }
     }
-    
     OS << '\n';
+    
+    if (const SelectNodeToMatcher *SNT = dyn_cast<SelectNodeToMatcher>(N)) {
+      OS.PadToColumn(Indent*2) << "// Src: "
+      << *SNT->getPattern().getSrcPattern() << '\n';
+      OS.PadToColumn(Indent*2) << "// Dst: " 
+      << *SNT->getPattern().getDstPattern() << '\n';
+      
+    }
+    
     return 6+EN->getNumVTs()+NumOperandBytes;
   }
   case Matcher::MarkFlagResults: {

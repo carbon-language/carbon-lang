@@ -27,7 +27,7 @@ namespace llvm {
 
 Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                  const CodeGenDAGPatterns &CGP);
-Matcher *OptimizeMatcher(Matcher *Matcher);
+Matcher *OptimizeMatcher(Matcher *Matcher, const CodeGenDAGPatterns &CGP);
 void EmitMatcherTable(const Matcher *Matcher, raw_ostream &OS);
 
   
@@ -900,12 +900,25 @@ public:
     assert(i < VTs.size());
     return VTs[i];
   }
+
+  /// getNumNonChainFlagVTs - Return the number of normal results that this node
+  /// will have, ignoring flag and chain results.
+  unsigned getNumNonChainFlagVTs() const {
+    for (unsigned i = 0, e = getNumVTs(); i != e; ++i)
+      if (VTs[i] == MVT::Flag || VTs[i] == MVT::Other)
+        return i;
+    return getNumVTs();
+  }
   
   unsigned getNumOperands() const { return Operands.size(); }
   unsigned getOperand(unsigned i) const {
     assert(i < Operands.size());
     return Operands[i];
-  }  
+  }
+  
+  const SmallVectorImpl<MVT::SimpleValueType> &getVTList() const { return VTs; }
+  const SmallVectorImpl<unsigned> &getOperandList() const { return Operands; }
+
   
   bool hasChain() const { return HasChain; }
   bool hasFlag() const { return HasFlag; }
@@ -999,7 +1012,7 @@ class CompleteMatchMatcher : public Matcher {
   const PatternToMatch &Pattern;
 public:
   CompleteMatchMatcher(const unsigned *results, unsigned numresults,
-                           const PatternToMatch &pattern)
+                       const PatternToMatch &pattern)
   : Matcher(CompleteMatch), Results(results, results+numresults),
     Pattern(pattern) {}
 
