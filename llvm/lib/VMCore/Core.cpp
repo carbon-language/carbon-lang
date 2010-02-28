@@ -1716,6 +1716,13 @@ LLVMValueRef LLVMBuildXor(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
   return wrap(unwrap(B)->CreateXor(unwrap(LHS), unwrap(RHS), Name));
 }
 
+LLVMValueRef LLVMBuildBinOp(LLVMBuilderRef B, LLVMOpcode Op,
+                            LLVMValueRef LHS, LLVMValueRef RHS,
+                            const char *Name) {
+  return wrap(unwrap(B)->CreateBinOp(Instruction::BinaryOps(Op), unwrap(LHS),
+                                     unwrap(RHS), Name));
+}
+
 LLVMValueRef LLVMBuildNeg(LLVMBuilderRef B, LLVMValueRef V, const char *Name) {
   return wrap(unwrap(B)->CreateNeg(unwrap(V), Name));
 }
@@ -1885,6 +1892,12 @@ LLVMValueRef LLVMBuildTruncOrBitCast(LLVMBuilderRef B, LLVMValueRef Val,
                                      LLVMTypeRef DestTy, const char *Name) {
   return wrap(unwrap(B)->CreateTruncOrBitCast(unwrap(Val), unwrap(DestTy),
                                               Name));
+}
+
+LLVMValueRef LLVMBuildCast(LLVMBuilderRef B, LLVMOpcode Op, LLVMValueRef Val,
+                           LLVMTypeRef DestTy, const char *Name) {
+  return wrap(unwrap(B)->CreateCast(Instruction::CastOps(Op), unwrap(Val),
+                                    unwrap(DestTy), Name));
 }
 
 LLVMValueRef LLVMBuildPointerCast(LLVMBuilderRef B, LLVMValueRef Val,
