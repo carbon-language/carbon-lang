@@ -456,7 +456,17 @@ let test_constants () =
   ignore (define_global "const_shufflevector" (const_shufflevector
     (const_vector [| zero; one |])
     (const_vector [| one; zero |])
-    (const_bitcast foldbomb (vector_type i32_type 2))) m)
+    (const_bitcast foldbomb (vector_type i32_type 2))) m);
+
+  group "asm"; begin
+    let ft = function_type void_type [| i32_type; i32_type; i32_type |] in
+    ignore (const_inline_asm
+      ft
+      ""
+      "{cx},{ax},{di},~{dirflag},~{fpsr},~{flags},~{edi},~{ecx}"
+      true
+      false)
+  end
 
 
 (*===-- Global Values -----------------------------------------------------===*)

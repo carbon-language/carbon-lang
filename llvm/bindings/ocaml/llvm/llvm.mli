@@ -964,6 +964,12 @@ external const_extractvalue : llvalue -> int array -> llvalue
 external const_insertvalue : llvalue -> llvalue -> int array -> llvalue
                            = "llvm_const_insertvalue"
 
+(** [const_inline_asm ty asm con side align] inserts a inline assembly string.
+    See the method [llvm::InlineAsm::get]. *)
+external const_inline_asm : lltype -> string -> string -> bool -> bool ->
+                            llvalue
+                          = "llvm_const_inline_asm"
+
 (** [block_address f bb] returns the address of the basic block [bb] in the
     function [f]. See the method [llvm::BasicBlock::get]. *)
 external block_address : llvalue -> llbasicblock -> llvalue = "LLVMBlockAddress"

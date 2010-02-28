@@ -641,6 +641,14 @@ CAMLprim LLVMValueRef llvm_const_insertvalue(LLVMValueRef Aggregate,
   CAMLreturnT(LLVMValueRef, result);
 }
 
+/* lltype -> string -> string -> bool -> bool -> llvalue */
+CAMLprim LLVMValueRef llvm_const_inline_asm(LLVMTypeRef Ty, value Asm,
+                                     value Constraints, value HasSideEffects,
+                                     value IsAlignStack) {
+  return LLVMConstInlineAsm(Ty, String_val(Asm), String_val(Constraints),
+                            Bool_val(HasSideEffects), Bool_val(IsAlignStack));
+}
+
 /*--... Operations on global variables, functions, and aliases (globals) ...--*/
 
 /* llvalue -> bool */
