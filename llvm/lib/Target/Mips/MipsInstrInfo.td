@@ -592,8 +592,8 @@ def : Pat<(MipsJmpLink (i32 tglobaladdr:$dst)),
           (JAL tglobaladdr:$dst)>;
 def : Pat<(MipsJmpLink (i32 texternalsym:$dst)),
           (JAL texternalsym:$dst)>;
-def : Pat<(MipsJmpLink CPURegs:$dst),
-          (JALR CPURegs:$dst)>;
+//def : Pat<(MipsJmpLink CPURegs:$dst),
+//          (JALR CPURegs:$dst)>;
 
 // hi/lo relocs
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
