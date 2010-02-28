@@ -260,25 +260,6 @@ unsigned CompleteMatchMatcher::getHashImpl() const {
 
 // isContradictoryImpl Implementations.
 
-bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
-  if (const CheckOpcodeMatcher *COM = dyn_cast<CheckOpcodeMatcher>(M)) {
-    // One node can't have two different opcodes!
-    return &COM->getOpcode() != &getOpcode();
-  }
-  
-  // TODO: CheckMultiOpcodeMatcher?
-  
-  // This is a special common case we see a lot in the X86 backend, we know that
-  // ISD::STORE nodes can't have non-void type.
-  if (const CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(M))
-    // FIXME: This sucks, get void nodes from type constraints.
-    return (getOpcode().getEnumName() == "ISD::STORE" ||
-            getOpcode().getEnumName() == "ISD::INTRINSIC_VOID") &&
-           CT->getType() != MVT::isVoid;
-  
-  return false;
-}
-
 static bool TypesAreContradictory(MVT::SimpleValueType T1,
                                   MVT::SimpleValueType T2) {
   // If the two types are the same, then they are the same, so they don't
@@ -295,6 +276,32 @@ static bool TypesAreContradictory(MVT::SimpleValueType T1,
   
   // Otherwise, they are two different non-iPTR types, they conflict.
   return true;
+}
+
+bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
+  if (const CheckOpcodeMatcher *COM = dyn_cast<CheckOpcodeMatcher>(M)) {
+    // One node can't have two different opcodes!
+    return &COM->getOpcode() != &getOpcode();
+  }
+  
+  // TODO: CheckMultiOpcodeMatcher?
+  
+  // If the node has a known type, and if the type we're checking for is
+  // different, then we know they contradict.  For example, a check for
+  // ISD::STORE will never be true at the same time a check for Type i32 is.
+  if (const CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(M)) {
+    // FIXME: What result is this referring to?
+    unsigned NodeType;
+    if (getOpcode().getNumResults() == 0)
+      NodeType = MVT::isVoid;
+    else
+      NodeType = getOpcode().getKnownType();
+    if (NodeType != EEVT::isUnknown)
+      return TypesAreContradictory((MVT::SimpleValueType)NodeType,
+                                   CT->getType());
+  }
+  
+  return false;
 }
 
 bool CheckTypeMatcher::isContradictoryImpl(const Matcher *M) const {

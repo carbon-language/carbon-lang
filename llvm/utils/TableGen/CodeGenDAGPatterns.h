@@ -125,6 +125,11 @@ public:
     return TypeConstraints;
   }
   
+  /// getKnownType - If the type constraints on this node imply a fixed type
+  /// (e.g. all stores return void, etc), then return it as an
+  /// MVT::SimpleValueType.  Otherwise, return EEVT::isUnknown.
+  unsigned getKnownType() const;
+  
   /// hasProperty - Return true if this node has the specified property.
   ///
   bool hasProperty(enum SDNP Prop) const { return Properties & (1 << Prop); }

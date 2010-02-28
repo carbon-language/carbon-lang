@@ -447,6 +447,30 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   TypeConstraints.assign(ConstraintList.begin(), ConstraintList.end());
 }
 
+/// getKnownType - If the type constraints on this node imply a fixed type
+/// (e.g. all stores return void, etc), then return it as an
+/// MVT::SimpleValueType.  Otherwise, return EEVT::isUnknown.
+unsigned SDNodeInfo::getKnownType() const {
+  unsigned NumResults = getNumResults();
+  assert(NumResults <= 1 &&
+         "We only work with nodes with zero or one result so far!");
+  
+  for (unsigned i = 0, e = TypeConstraints.size(); i != e; ++i) {
+    // Make sure that this applies to the correct node result.
+    if (TypeConstraints[i].OperandNo >= NumResults)  // FIXME: need value #
+      continue;
+    
+    switch (TypeConstraints[i].ConstraintType) {
+    default: break;
+    case SDTypeConstraint::SDTCisVT:
+      return TypeConstraints[i].x.SDTCisVT_Info.VT;
+    case SDTypeConstraint::SDTCisPtrTy:
+      return MVT::iPTR;
+    }
+  }
+  return EEVT::isUnknown;
+}
+
 //===----------------------------------------------------------------------===//
 // TreePatternNode implementation
 //
