@@ -889,17 +889,15 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           Res->setNodeId(-1);
         }
         
-        // FIXME: Whether the selected node has a flag result should come from
-        // flags on the node.
         unsigned ResNumResults = Res->getNumValues();
-        if (Res->getValueType(ResNumResults-1) == MVT::Flag) {
-          // Move the flag if needed.
-          if (OldFlagResultNo != -1 &&
-              (unsigned)OldFlagResultNo != ResNumResults-1)
-            ReplaceUses(SDValue(NodeToMatch, OldFlagResultNo), 
-                        SDValue(Res, ResNumResults-1));
+        // Move the flag if needed.
+        if ((EmitNodeInfo & OPFL_FlagOutput) && OldFlagResultNo != -1 &&
+            (unsigned)OldFlagResultNo != ResNumResults-1)
+          ReplaceUses(SDValue(NodeToMatch, OldFlagResultNo), 
+                      SDValue(Res, ResNumResults-1));
+        
+        if ((EmitNodeInfo & OPFL_FlagOutput) != 0)
           --ResNumResults;
-        }
 
         // Move the chain reference if needed.
         if ((EmitNodeInfo & OPFL_Chain) && OldChainResultNo != -1 &&
