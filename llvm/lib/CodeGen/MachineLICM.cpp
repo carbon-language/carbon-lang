@@ -458,9 +458,20 @@ bool MachineLICM::EliminateCSE(MachineInstr *MI,
 
   if (const MachineInstr *Dup = LookForDuplicate(MI, CI->second)) {
     DEBUG(dbgs() << "CSEing " << *MI << " with " << *Dup);
+
+    // Replace virtual registers defined by MI by their counterparts defined
+    // by Dup.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isDef())
+
+      // Physical registers may not differ here.
+      assert((!MO.isReg() || MO.getReg() == 0 ||
+              !TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
+              MO.getReg() == Dup->getOperand(i).getReg()) &&
+             "Instructions with different phys regs are not identical!");
+
+      if (MO.isReg() && MO.isDef() &&
+          !TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
         RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
     }
     MI->eraseFromParent();
