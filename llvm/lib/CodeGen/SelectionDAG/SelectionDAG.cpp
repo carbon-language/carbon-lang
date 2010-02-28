@@ -4660,7 +4660,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
   return MorphNodeTo(N, Opc, VTs, Ops, 3);
 }
 
-/// MorphNodeTo - These *mutate* the specified node to have the specified
+/// MorphNodeTo - This *mutates* the specified node to have the specified
 /// return type, opcode, and operands.
 ///
 /// Note that MorphNodeTo returns the resultant node.  If there is already a

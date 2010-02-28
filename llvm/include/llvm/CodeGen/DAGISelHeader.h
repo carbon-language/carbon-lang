@@ -842,7 +842,19 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       // Create the node.
       SDNode *Res = 0;
-      if (Opcode == OPC_MorphNodeTo) {
+      if (Opcode != OPC_MorphNodeTo) {
+        // If this is a normal EmitNode command, just create the new node and
+        // add the results to the RecordedNodes list.
+        Res = CurDAG->getMachineNode(TargetOpc, NodeToMatch->getDebugLoc(),
+                                     VTList, Ops.data(), Ops.size());
+        
+        // Add all the non-flag/non-chain results to the RecordedNodes list.
+        for (unsigned i = 0, e = VTs.size(); i != e; ++i) {
+          if (VTs[i] == MVT::Other || VTs[i] == MVT::Flag) break;
+          RecordedNodes.push_back(SDValue(Res, i));
+        }
+        
+      } else {
         // It is possible we're using MorphNodeTo to replace a node with no
         // normal results with one that has a normal result (or we could be
         // adding a chain) and the input could have flags and chains as well.
@@ -862,9 +874,15 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         
         Res = CurDAG->MorphNodeTo(NodeToMatch, ~TargetOpc, VTList,
                                   Ops.data(), Ops.size());
-        // Reset the node ID, to the isel, this should be just like a newly
-        // allocated machine node.
-        Res->setNodeId(-1);
+        
+        // MorphNodeTo can operate in two ways: if an existing node with the
+        // specified operands exists, it can just return it.  Otherwise, it
+        // updates the node in place to have the requested operands.
+        if (Res == NodeToMatch) {
+          // If we updated the node in place, reset the node ID.  To the isel,
+          // this should be just like a newly allocated machine node.
+          Res->setNodeId(-1);
+        }
         
         // FIXME: Whether the selected node has a flag result should come from
         // flags on the node.
@@ -873,7 +891,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           // Move the flag if needed.
           if (OldFlagResultNo != -1 &&
               (unsigned)OldFlagResultNo != ResNumResults-1)
-            ReplaceUses(SDValue(Res, OldFlagResultNo), 
+            ReplaceUses(SDValue(NodeToMatch, OldFlagResultNo), 
                         SDValue(Res, ResNumResults-1));
           --ResNumResults;
         }
@@ -881,16 +899,12 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // Move the chain reference if needed.
         if ((EmitNodeInfo & OPFL_Chain) && OldChainResultNo != -1 &&
             (unsigned)OldChainResultNo != ResNumResults-1)
-          ReplaceUses(SDValue(Res, OldChainResultNo), 
+          ReplaceUses(SDValue(NodeToMatch, OldChainResultNo), 
                       SDValue(Res, ResNumResults-1));
-      } else {
-        Res = CurDAG->getMachineNode(TargetOpc, NodeToMatch->getDebugLoc(),
-                                     VTList, Ops.data(), Ops.size());
-      
-        // Add all the non-flag/non-chain results to the RecordedNodes list.
-        for (unsigned i = 0, e = VTs.size(); i != e; ++i) {
-          if (VTs[i] == MVT::Other || VTs[i] == MVT::Flag) break;
-          RecordedNodes.push_back(SDValue(Res, i));
+
+        if (Res != NodeToMatch) {
+          // Otherwise, no replacement happened because the node already exists.
+          ReplaceUses(NodeToMatch, Res);
         }
       }
       
@@ -926,7 +940,7 @@ SDNode *SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // Update chain and flag uses.
         UpdateChainsAndFlags(NodeToMatch, InputChain, ChainNodesMatched,
                              InputFlag, FlagResultNodesMatched, true);
-        return Res;
+        return 0;
       }
       
       continue;
