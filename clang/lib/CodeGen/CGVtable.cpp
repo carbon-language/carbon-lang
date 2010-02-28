@@ -1799,9 +1799,22 @@ VtableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
   
   // Check if this base has a primary base.
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
-    // Check if it's virtual
-    if (Layout.getPrimaryBaseWasVirtual())
-      PrimaryVirtualBases.insert(PrimaryBase);
+
+    // Check if it's virtual.
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      bool IsPrimaryVirtualBase = true;
+
+      if (isBuildingConstructorVtable()) {
+        // Check if the base is actually a primary base in the class we use for
+        // layout.
+        // FIXME: Is this check enough?
+        if (MostDerivedClassOffset != 0)
+          IsPrimaryVirtualBase = false;
+      }
+        
+      if (IsPrimaryVirtualBase)
+        PrimaryVirtualBases.insert(PrimaryBase);
+    }
   }
 
   // Traverse bases, looking for more primary virtual bases.

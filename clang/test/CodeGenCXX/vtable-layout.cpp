@@ -926,6 +926,13 @@ namespace Test24 {
 
 // Another construction vtable test.
 
+struct A {
+  virtual void f();
+};
+
+struct B : virtual A { };
+struct C : virtual A { };
+
 // CHECK:      Vtable for 'Test24::D' (10 entries).
 // CHECK-NEXT:    0 | vbase_offset (0)
 // CHECK-NEXT:    1 | vcall_offset (0)
@@ -952,13 +959,13 @@ namespace Test24 {
 // CHECK-NEXT:        -- (Test24::B, 0) vtable address --
 // CHECK-NEXT:    4 | void Test24::A::f()
 
-struct A {
-  virtual void f();
-};
-
-struct B : virtual A { };
-struct C : virtual A { };
-
+// CHECK:      Construction vtable for ('Test24::C', 8) in 'Test24::D' (9 entries).
+// CHECK-NEXT:    0 | vbase_offset (-8)
+// CHECK-NEXT:    1 | vcall_offset (-8)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test24::C RTTI
+// CHECK-NEXT:        -- (Test24::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test24::C, 8) vtable address --
 struct D : B, C {
   virtual void f();
 };
