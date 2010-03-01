@@ -162,6 +162,7 @@ FuncAttr      ::= noreturn
  | readnone
  | readonly
  | inlinehint
+ | alignstack
  | noinline
  | alwaysinline
  | optsize
