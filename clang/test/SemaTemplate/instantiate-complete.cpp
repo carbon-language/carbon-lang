@@ -66,3 +66,20 @@ struct X3 {
 void enum_constructors(X1<float> &x1) {
   X3<X1<float> > x3 = x1;
 }
+
+namespace PR6376 {
+  template<typename T, typename U> struct W { };
+
+  template<typename T>
+  struct X {
+    template<typename U>
+    struct apply {
+      typedef W<T, U> type;
+    };
+  };
+  
+  template<typename T, typename U>
+  struct Y : public X<T>::template apply<U>::type { };
+
+  template struct Y<int, float>;
+}

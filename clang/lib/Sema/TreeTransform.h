@@ -237,13 +237,15 @@ public:
   ///
   /// By default, acts as the identity function on declarations. Subclasses
   /// may override this function to provide alternate behavior.
-  Decl *TransformDecl(Decl *D) { return D; }
+  Decl *TransformDecl(SourceLocation Loc, Decl *D) { return D; }
 
   /// \brief Transform the definition of the given declaration.
   ///
   /// By default, invokes TransformDecl() to transform the declaration.
   /// Subclasses may override this function to provide alternate behavior.
-  Decl *TransformDefinition(Decl *D) { return getDerived().TransformDecl(D); }
+  Decl *TransformDefinition(SourceLocation Loc, Decl *D) { 
+    return getDerived().TransformDecl(D); 
+  }
 
   /// \brief Transform the given declaration, which was the first part of a
   /// nested-name-specifier in a member access expression.
@@ -255,7 +257,7 @@ public:
   /// By default, invokes TransformDecl() to transform the declaration.
   /// Subclasses may override this function to provide alternate behavior.
   NamedDecl *TransformFirstQualifierInScope(NamedDecl *D, SourceLocation Loc) { 
-    return cast_or_null<NamedDecl>(getDerived().TransformDecl(D)); 
+    return cast_or_null<NamedDecl>(getDerived().TransformDecl(Loc, D)); 
   }
   
   /// \brief Transform the given nested-name-specifier.
@@ -1745,7 +1747,8 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
   case NestedNameSpecifier::Namespace: {
     NamespaceDecl *NS
       = cast_or_null<NamespaceDecl>(
-                            getDerived().TransformDecl(NNS->getAsNamespace()));
+                                    getDerived().TransformDecl(Range.getBegin(),
+                                                       NNS->getAsNamespace()));
     if (!getDerived().AlwaysRebuild() &&
         Prefix == NNS->getPrefix() &&
         NS == NNS->getAsNamespace())
@@ -1822,6 +1825,8 @@ template<typename Derived>
 TemplateName
 TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
                                               QualType ObjectType) {
+  SourceLocation Loc = getDerived().getBaseLocation();
+
   if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
     NestedNameSpecifier *NNS
       = getDerived().TransformNestedNameSpecifier(QTN->getQualifier(),
@@ -1832,7 +1837,7 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
 
     if (TemplateDecl *Template = QTN->getTemplateDecl()) {
       TemplateDecl *TransTemplate
-        = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Template));
+        = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Loc, Template));
       if (!TransTemplate)
         return TemplateName();
 
@@ -1872,7 +1877,7 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
 
   if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
     TemplateDecl *TransTemplate
-      = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Template));
+      = cast_or_null<TemplateDecl>(getDerived().TransformDecl(Loc, Template));
     if (!TransTemplate)
       return TemplateName();
 
@@ -1949,7 +1954,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     if (NamedDecl *ND = dyn_cast<NamedDecl>(Arg.getAsDecl()))
       Name = ND->getDeclName();
     TemporaryBase Rebase(*this, Input.getLocation(), Name);
-    Decl *D = getDerived().TransformDecl(Arg.getAsDecl());
+    Decl *D = getDerived().TransformDecl(Input.getLocation(), Arg.getAsDecl());
     if (!D) return true;
 
     Expr *SourceExpr = Input.getSourceDeclExpression();
@@ -2618,7 +2623,7 @@ TreeTransform<Derived>::TransformUnresolvedUsingType(TypeLocBuilder &TLB,
                                                  UnresolvedUsingTypeLoc TL,
                                                      QualType ObjectType) {
   UnresolvedUsingType *T = TL.getTypePtr();
-  Decl *D = getDerived().TransformDecl(T->getDecl());
+  Decl *D = getDerived().TransformDecl(TL.getNameLoc(), T->getDecl());
   if (!D)
     return QualType();
 
@@ -2643,7 +2648,8 @@ QualType TreeTransform<Derived>::TransformTypedefType(TypeLocBuilder &TLB,
                                                       QualType ObjectType) {
   TypedefType *T = TL.getTypePtr();
   TypedefDecl *Typedef
-    = cast_or_null<TypedefDecl>(getDerived().TransformDecl(T->getDecl()));
+    = cast_or_null<TypedefDecl>(getDerived().TransformDecl(TL.getNameLoc(),
+                                                           T->getDecl()));
   if (!Typedef)
     return QualType();
 
@@ -2748,7 +2754,8 @@ QualType TreeTransform<Derived>::TransformRecordType(TypeLocBuilder &TLB,
                                                      QualType ObjectType) {
   RecordType *T = TL.getTypePtr();
   RecordDecl *Record
-    = cast_or_null<RecordDecl>(getDerived().TransformDecl(T->getDecl()));
+    = cast_or_null<RecordDecl>(getDerived().TransformDecl(TL.getNameLoc(),
+                                                          T->getDecl()));
   if (!Record)
     return QualType();
 
@@ -2772,7 +2779,8 @@ QualType TreeTransform<Derived>::TransformEnumType(TypeLocBuilder &TLB,
                                                    QualType ObjectType) {
   EnumType *T = TL.getTypePtr();
   EnumDecl *Enum
-    = cast_or_null<EnumDecl>(getDerived().TransformDecl(T->getDecl()));
+    = cast_or_null<EnumDecl>(getDerived().TransformDecl(TL.getNameLoc(),
+                                                        T->getDecl()));
   if (!Enum)
     return QualType();
 
@@ -3588,7 +3596,8 @@ TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
   }
 
   ValueDecl *ND
-    = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getDecl()));
+    = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getLocation(),
+                                                         E->getDecl()));
   if (!ND)
     return SemaRef.ExprError();
 
@@ -3797,7 +3806,8 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   }
 
   ValueDecl *Member
-    = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getMemberDecl()));
+    = cast_or_null<ValueDecl>(getDerived().TransformDecl(E->getMemberLoc(),
+                                                         E->getMemberDecl()));
   if (!Member)
     return SemaRef.ExprError();
 
@@ -4521,7 +4531,8 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
   ParmVarDecl *Param
-    = cast_or_null<ParmVarDecl>(getDerived().TransformDecl(E->getParam()));
+    = cast_or_null<ParmVarDecl>(getDerived().TransformDecl(E->getLocStart(),
+                                                           E->getParam()));
   if (!Param)
     return SemaRef.ExprError();
 
@@ -4592,7 +4603,8 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   CXXConstructorDecl *Constructor = 0;
   if (E->getConstructor()) {
     Constructor = cast_or_null<CXXConstructorDecl>(
-                               getDerived().TransformDecl(E->getConstructor()));
+                                   getDerived().TransformDecl(E->getLocStart(),
+                                                         E->getConstructor()));
     if (!Constructor)
       return SemaRef.ExprError();
   }
@@ -4600,7 +4612,8 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   FunctionDecl *OperatorNew = 0;
   if (E->getOperatorNew()) {
     OperatorNew = cast_or_null<FunctionDecl>(
-                               getDerived().TransformDecl(E->getOperatorNew()));
+                                 getDerived().TransformDecl(E->getLocStart(),
+                                                         E->getOperatorNew()));
     if (!OperatorNew)
       return SemaRef.ExprError();
   }
@@ -4608,7 +4621,8 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   FunctionDecl *OperatorDelete = 0;
   if (E->getOperatorDelete()) {
     OperatorDelete = cast_or_null<FunctionDecl>(
-                           getDerived().TransformDecl(E->getOperatorDelete()));
+                                   getDerived().TransformDecl(E->getLocStart(),
+                                                       E->getOperatorDelete()));
     if (!OperatorDelete)
       return SemaRef.ExprError();
   }
@@ -4682,7 +4696,8 @@ TreeTransform<Derived>::TransformCXXDeleteExpr(CXXDeleteExpr *E) {
   FunctionDecl *OperatorDelete = 0;
   if (E->getOperatorDelete()) {
     OperatorDelete = cast_or_null<FunctionDecl>(
-                            getDerived().TransformDecl(E->getOperatorDelete()));
+                                   getDerived().TransformDecl(E->getLocStart(),
+                                                       E->getOperatorDelete()));
     if (!OperatorDelete)
       return SemaRef.ExprError();
   }
@@ -4794,7 +4809,9 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
   // Transform all the decls.
   for (UnresolvedLookupExpr::decls_iterator I = Old->decls_begin(),
          E = Old->decls_end(); I != E; ++I) {
-    NamedDecl *InstD = static_cast<NamedDecl*>(getDerived().TransformDecl(*I));
+    NamedDecl *InstD = static_cast<NamedDecl*>(
+                                 getDerived().TransformDecl(Old->getNameLoc(),
+                                                            *I));
     if (!InstD) {
       // Silently ignore these if a UsingShadowDecl instantiated to nothing.
       // This can happen because of dependent hiding.
@@ -4933,7 +4950,8 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
 
   CXXConstructorDecl *Constructor
     = cast_or_null<CXXConstructorDecl>(
-                              getDerived().TransformDecl(E->getConstructor()));
+                                getDerived().TransformDecl(E->getLocStart(),
+                                                         E->getConstructor()));
   if (!Constructor)
     return SemaRef.ExprError();
 
@@ -5013,7 +5031,8 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
 
   CXXConstructorDecl *Constructor
     = cast_or_null<CXXConstructorDecl>(
-                            getDerived().TransformDecl(E->getConstructor()));
+                                  getDerived().TransformDecl(E->getLocStart(), 
+                                                         E->getConstructor()));
   if (!Constructor)
     return SemaRef.ExprError();
 
@@ -5221,7 +5240,9 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
   // Transform all the decls.
   for (UnresolvedMemberExpr::decls_iterator I = Old->decls_begin(),
          E = Old->decls_end(); I != E; ++I) {
-    NamedDecl *InstD = static_cast<NamedDecl*>(getDerived().TransformDecl(*I));
+    NamedDecl *InstD = static_cast<NamedDecl*>(
+                                getDerived().TransformDecl(Old->getMemberLoc(),
+                                                           *I));
     if (!InstD) {
       // Silently ignore these if a UsingShadowDecl instantiated to nothing.
       // This can happen because of dependent hiding.
@@ -5319,7 +5340,8 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformObjCProtocolExpr(ObjCProtocolExpr *E) {
   ObjCProtocolDecl *Protocol
     = cast_or_null<ObjCProtocolDecl>(
-                                getDerived().TransformDecl(E->getProtocol()));
+                                 getDerived().TransformDecl(E->getLocStart(),
+                                                            E->getProtocol()));
   if (!Protocol)
     return SemaRef.ExprError();
 

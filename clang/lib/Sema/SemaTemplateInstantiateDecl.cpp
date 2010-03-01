@@ -162,7 +162,8 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
     Typedef->setInvalidDecl();
 
   if (TypedefDecl *Prev = D->getPreviousDeclaration()) {
-    NamedDecl *InstPrev = SemaRef.FindInstantiatedDecl(Prev, TemplateArgs);
+    NamedDecl *InstPrev = SemaRef.FindInstantiatedDecl(D->getLocation(), Prev,
+                                                       TemplateArgs);
     Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
   }
 
@@ -433,7 +434,8 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     // Hack to make this work almost well pending a rewrite.
     if (ND->getDeclContext()->isRecord()) {
       if (!ND->getDeclContext()->isDependentContext()) {
-        NewND = SemaRef.FindInstantiatedDecl(ND, TemplateArgs);
+        NewND = SemaRef.FindInstantiatedDecl(D->getLocation(), ND, 
+                                             TemplateArgs);
       } else {
         // FIXME: Hack to avoid crashing when incorrectly trying to instantiate
         // templated friend declarations. This doesn't produce a correct AST;
@@ -699,7 +701,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (D->isInjectedClassName())
     PrevDecl = cast<CXXRecordDecl>(Owner);
   else if (D->getPreviousDeclaration()) {
-    NamedDecl *Prev = SemaRef.FindInstantiatedDecl(D->getPreviousDeclaration(),
+    NamedDecl *Prev = SemaRef.FindInstantiatedDecl(D->getLocation(),
+                                                   D->getPreviousDeclaration(),
                                                    TemplateArgs);
     if (!Prev) return 0;
     PrevDecl = cast<CXXRecordDecl>(Prev);
@@ -772,7 +775,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   if (D->getDeclContext()->isFunctionOrMethod())
     DC = Owner;
   else
-    DC = SemaRef.FindInstantiatedContext(D->getDeclContext(), TemplateArgs);
+    DC = SemaRef.FindInstantiatedContext(D->getLocation(), D->getDeclContext(), 
+                                         TemplateArgs);
 
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
@@ -1228,7 +1232,8 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
          I != E; ++I) {
     UsingShadowDecl *Shadow = *I;
     NamedDecl *InstTarget =
-      cast<NamedDecl>(SemaRef.FindInstantiatedDecl(Shadow->getTargetDecl(),
+      cast<NamedDecl>(SemaRef.FindInstantiatedDecl(Shadow->getLocation(),
+                                                   Shadow->getTargetDecl(),
                                                    TemplateArgs));
 
     if (CheckRedeclaration &&
@@ -1922,9 +1927,11 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
 
       // Is this an anonymous union?
       if (FieldDecl *UnionInit = Init->getAnonUnionMember())
-        Member = cast<FieldDecl>(FindInstantiatedDecl(UnionInit, TemplateArgs));
+        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMemberLocation(),
+                                                      UnionInit, TemplateArgs));
       else
-        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMember(),
+        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMemberLocation(),
+                                                      Init->getMember(),
                                                       TemplateArgs));
 
       NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(),
@@ -2154,10 +2161,10 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
 /// within the current instantiation.
 ///
 /// \returns NULL if there was an error
-DeclContext *Sema::FindInstantiatedContext(DeclContext* DC,
+DeclContext *Sema::FindInstantiatedContext(SourceLocation Loc, DeclContext* DC,
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (NamedDecl *D = dyn_cast<NamedDecl>(DC)) {
-    Decl* ID = FindInstantiatedDecl(D, TemplateArgs);
+    Decl* ID = FindInstantiatedDecl(Loc, D, TemplateArgs);
     return cast_or_null<DeclContext>(ID);
   } else return DC;
 }
@@ -2188,7 +2195,7 @@ DeclContext *Sema::FindInstantiatedContext(DeclContext* DC,
 /// X<T>::<Kind>::KnownValue) to its instantiation
 /// (X<int>::<Kind>::KnownValue). InstantiateCurrentDeclRef() performs
 /// this mapping from within the instantiation of X<int>.
-NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
+NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   DeclContext *ParentDC = D->getDeclContext();
   if (isa<ParmVarDecl>(D) || isa<NonTypeTemplateParmDecl>(D) ||
@@ -2275,7 +2282,7 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
   if (!ParentDC->isDependentContext())
     return D;
   
-  ParentDC = FindInstantiatedContext(ParentDC, TemplateArgs);
+  ParentDC = FindInstantiatedContext(Loc, ParentDC, TemplateArgs);
   if (!ParentDC)
     return 0;
 
@@ -2283,6 +2290,20 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
     // We performed some kind of instantiation in the parent context,
     // so now we need to look into the instantiated parent context to
     // find the instantiation of the declaration D.
+
+    // If our context is a class template specialization, we may need
+    // to instantiate it before performing lookup into that context.
+    if (ClassTemplateSpecializationDecl *Spec
+                       = dyn_cast<ClassTemplateSpecializationDecl>(ParentDC)) {
+      if (!Spec->isDependentContext()) {
+        QualType T = Context.getTypeDeclType(Spec);
+        if (const TagType *Tag = T->getAs<TagType>())
+          if (!Tag->isBeingDefined() &&
+              RequireCompleteType(Loc, T, diag::err_incomplete_type))
+            return 0;
+      }
+    }
+
     NamedDecl *Result = 0;
     if (D->getDeclName()) {
       DeclContext::lookup_result Found = ParentDC->lookup(D->getDeclName());

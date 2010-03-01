@@ -455,6 +455,8 @@ def err_qualified_member_nonclass : Error<
   "qualified member access refers to a member in %0">;
 def err_incomplete_member_access : Error<
   "member access into incomplete type %0">;
+def err_incomplete_type : Error<
+  "incomplete type %0 where a complete type is required">;
   
 // C++ class members
 def err_storageclass_invalid_for_member : Error<

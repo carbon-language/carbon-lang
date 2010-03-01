@@ -3539,9 +3539,9 @@ public:
                                   const CXXConstructorDecl *Tmpl,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
 
-  NamedDecl *FindInstantiatedDecl(NamedDecl *D,
+  NamedDecl *FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
                           const MultiLevelTemplateArgumentList &TemplateArgs);
-  DeclContext *FindInstantiatedContext(DeclContext *DC,
+  DeclContext *FindInstantiatedContext(SourceLocation Loc, DeclContext *DC,
                           const MultiLevelTemplateArgumentList &TemplateArgs);
 
   // Objective-C declarations.
