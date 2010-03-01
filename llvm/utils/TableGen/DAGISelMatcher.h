@@ -55,7 +55,6 @@ public:
     CheckPredicate,       // Fail if node predicate fails.
     CheckOpcode,          // Fail if not opcode.
     SwitchOpcode,         // Dispatch based on opcode.
-    CheckMultiOpcode,     // Fail if not in opcode list.
     CheckType,            // Fail if not correct type.
     CheckChildType,       // Fail if child has wrong type.
     CheckInteger,         // Fail if wrong val.

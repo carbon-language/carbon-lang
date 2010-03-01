@@ -205,8 +205,17 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     AddMatcher(new CheckPredicateMatcher(N->getPredicateFns()[i]));
   
   // Direct match against an integer constant.
-  if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue()))
+  if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
+    // If this is the root of the dag we're matching, we emit a redundant opcode
+    // check to ensure that this gets folded into the normal top-level
+    // OpcodeSwitch.
+    if (N == Pattern.getSrcPattern()) {
+      const SDNodeInfo &NI = CGP.getSDNodeInfo(CGP.getSDNodeNamed("imm"));
+      AddMatcher(new CheckOpcodeMatcher(NI));
+    }
+
     return AddMatcher(new CheckIntegerMatcher(II->getValue()));
+  }
   
   DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue());
   if (DI == 0) {
