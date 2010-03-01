@@ -455,7 +455,9 @@ void CXXNameMangler::mangleUnresolvedScope(NestedNameSpecifier *Qualifier) {
     mangleType(QualType(Qualifier->getAsType(), 0));
     break;
   case NestedNameSpecifier::Identifier:
-    mangleUnresolvedScope(Qualifier->getPrefix());
+    // Member expressions can have these without prefixes.
+    if (Qualifier->getPrefix())
+      mangleUnresolvedScope(Qualifier->getPrefix());
     mangleSourceName(Qualifier->getAsIdentifier());
     break;
   }
@@ -1120,6 +1122,42 @@ void CXXNameMangler::mangleType(const TypenameType *T) {
 
   mangleSourceName(T->getIdentifier());
 
+  Out << 'E';
+}
+
+void CXXNameMangler::mangleType(const TypeOfType *T) {
+  // FIXME: this is pretty unsatisfactory, but there isn't an obvious
+  // "extension with parameters" mangling.
+  Out << "u6typeof";
+}
+
+void CXXNameMangler::mangleType(const TypeOfExprType *T) {
+  // FIXME: this is pretty unsatisfactory, but there isn't an obvious
+  // "extension with parameters" mangling.
+  Out << "u6typeof";
+}
+
+void CXXNameMangler::mangleType(const DecltypeType *T) {
+  Expr *E = T->getUnderlyingExpr();
+  
+  // type ::= Dt <expression> E  # decltype of an id-expression
+  //                             #   or class member access
+  //      ::= DT <expression> E  # decltype of an expression
+
+  // This purports to be an exhaustive list of id-expressions and
+  // class member accesses.  Note that we do not ignore parentheses;
+  // parentheses change the semantics of decltype for these
+  // expressions (and cause the mangler to use the other form).
+  if (isa<DeclRefExpr>(E) ||
+      isa<MemberExpr>(E) ||
+      isa<UnresolvedLookupExpr>(E) ||
+      isa<DependentScopeDeclRefExpr>(E) ||
+      isa<CXXDependentScopeMemberExpr>(E) ||
+      isa<UnresolvedMemberExpr>(E))
+    Out << "Dt";
+  else
+    Out << "DT";
+  mangleExpression(E);
   Out << 'E';
 }
 

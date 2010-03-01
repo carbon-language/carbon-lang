@@ -2419,6 +2419,27 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                                  OnlyDeduced, Depth, Used);
     break;
 
+  case Type::TypeOf:
+    if (!OnlyDeduced)
+      MarkUsedTemplateParameters(SemaRef,
+                                 cast<TypeOfType>(T)->getUnderlyingType(),
+                                 OnlyDeduced, Depth, Used);
+    break;
+
+  case Type::TypeOfExpr:
+    if (!OnlyDeduced)
+      MarkUsedTemplateParameters(SemaRef,
+                                 cast<TypeOfExprType>(T)->getUnderlyingExpr(),
+                                 OnlyDeduced, Depth, Used);
+    break;
+
+  case Type::Decltype:
+    if (!OnlyDeduced)
+      MarkUsedTemplateParameters(SemaRef,
+                                 cast<DecltypeType>(T)->getUnderlyingExpr(),
+                                 OnlyDeduced, Depth, Used);
+    break;
+
   // None of these types have any template parameters in them.
   case Type::Builtin:
   case Type::VariableArray:

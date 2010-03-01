@@ -190,6 +190,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 #define ABSTRACT_TYPE(Class, Base)
 #define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
     assert(false && "Non-canonical or dependent types aren't possible.");
     break;
@@ -390,9 +391,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                                    NULL);
     return PtrDiffTy;
   }
-
-  case Type::TemplateSpecialization:
-    assert(false && "Dependent types can't get here");
   }
 
   // FIXME: implement.

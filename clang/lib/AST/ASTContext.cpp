@@ -4522,6 +4522,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   switch (LHSClass) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
 #define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
@@ -4644,9 +4645,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 
     return QualType();
   }
-  case Type::TemplateSpecialization:
-    assert(false && "Dependent types have no size");
-    break;
   }
 
   return QualType();

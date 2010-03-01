@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -fblocks | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -fblocks -std=c++0x | FileCheck %s
 struct X { };
 struct Y { };
 
@@ -376,3 +376,41 @@ namespace test1 {
 // CHECK: define internal void @_Z27functionWithInternalLinkagev()
 static void functionWithInternalLinkage() {  }
 void g() { functionWithInternalLinkage(); }
+
+namespace test2 {
+  template <class T> decltype(((T*) 0)->member) read_member(T& obj) {
+    return obj.member;
+  }
+
+  struct A { int member; } obj;
+  int test() {
+    return read_member(obj);
+  }
+
+  // CHECK: define linkonce_odr i32 @_ZN5test211read_memberINS_1AEEEDtptcvPT_Li0E6memberERS2_(
+}
+
+namespace test3 {
+  struct AmbiguousBase { int ab; };
+  struct Path1 : AmbiguousBase { float p; };
+  struct Path2 : AmbiguousBase { double p; };
+  struct Derived : Path1, Path2 { };
+
+  //template <class T> decltype(((T*) 0)->Path1::ab) get_ab_1(T &ref) { return ref.Path1::ab; }
+  //template <class T> decltype(((T*) 0)->Path2::ab) get_ab_2(T &ref) { return ref.Path2::ab; }
+
+  // define linkonce_odr float @_ZN5test37get_p_1INS_7DerivedEEEDtptcvPT_Li0E5Path11pERS2_(
+  template <class T> decltype(((T*) 0)->Path1::p) get_p_1(T &ref) { return ref.Path1::p; }
+
+  // define linkonce_odr double @_ZN5test37get_p_1INS_7DerivedEEEDtptcvPT_Li0E5Path21pERS2_(
+  template <class T> decltype(((T*) 0)->Path2::p) get_p_2(T &ref) { return ref.Path2::p; }
+
+  Derived obj;
+  void test() {
+    // FIXME: uncomment these when we support diamonds competently
+    //get_ab_1(obj);
+    //get_ab_2(obj);
+    get_p_1(obj);
+    get_p_2(obj);
+  }
+}
