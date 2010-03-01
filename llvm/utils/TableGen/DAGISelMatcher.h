@@ -54,6 +54,7 @@ public:
     CheckPatternPredicate,
     CheckPredicate,       // Fail if node predicate fails.
     CheckOpcode,          // Fail if not opcode.
+    SwitchOpcode,         // Dispatch based on opcode.
     CheckMultiOpcode,     // Fail if not in opcode list.
     CheckType,            // Fail if not correct type.
     CheckChildType,       // Fail if child has wrong type.
@@ -416,11 +417,36 @@ public:
 
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
-  virtual bool isEqualImpl(const Matcher *M) const {
-    return &cast<CheckOpcodeMatcher>(M)->Opcode == &Opcode;
-  }
+  virtual bool isEqualImpl(const Matcher *M) const;
   virtual unsigned getHashImpl() const;
   virtual bool isContradictoryImpl(const Matcher *M) const;
+};
+
+/// SwitchOpcodeMatcher - Switch based on the current node's opcode, dispatching
+/// to one matcher per opcode.  If the opcode doesn't match any of the cases,
+/// then the match fails.  This is semantically equivalent to a Scope node where
+/// every child does a CheckOpcode, but is much faster.
+class SwitchOpcodeMatcher : public Matcher {
+  SmallVector<std::pair<const SDNodeInfo*, Matcher*>, 8> Cases;
+public:
+  SwitchOpcodeMatcher(const std::pair<const SDNodeInfo*, Matcher*> *cases,
+                      unsigned numcases)
+    : Matcher(SwitchOpcode), Cases(cases, cases+numcases) {}
+
+  static inline bool classof(const Matcher *N) {
+    return N->getKind() == SwitchOpcode;
+  }
+  
+  unsigned getNumCases() const { return Cases.size(); }
+  
+  const SDNodeInfo &getCaseOpcode(unsigned i) const { return *Cases[i].first; }
+  Matcher *getCaseMatcher(unsigned i) { return Cases[i].second; }
+  const Matcher *getCaseMatcher(unsigned i) const { return Cases[i].second; }
+  
+private:
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
+  virtual bool isEqualImpl(const Matcher *M) const { return false; }
+  virtual unsigned getHashImpl() const { return 4123; }
 };
   
 /// CheckMultiOpcodeMatcher - This checks to see if the current node has one

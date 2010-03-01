@@ -1757,6 +1757,36 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (N->getOpcode() != MatcherTable[MatcherIndex++]) break;
       continue;
         
+    case OPC_SwitchOpcode: {
+      unsigned CurNodeOpcode = N.getOpcode();
+
+      unsigned SwitchStart = MatcherIndex-1;
+      
+      unsigned CaseSize;
+      while (1) {
+        // Get the size of this case.
+        CaseSize = MatcherTable[MatcherIndex++];
+        if (CaseSize & 128)
+          CaseSize = GetVBR(CaseSize, MatcherTable, MatcherIndex);
+        if (CaseSize == 0) break;
+
+        // If the opcode matches, then we will execute this case.
+        if (CurNodeOpcode == MatcherTable[MatcherIndex++])
+          break;
+      
+        // Otherwise, skip over this case.
+        MatcherIndex += CaseSize;
+      }
+      
+      // If we failed to match, bail out.
+      if (CaseSize == 0) break;
+      
+      // Otherwise, execute the case we found.
+      DEBUG(errs() << "  OpcodeSwitch from " << SwitchStart
+                   << " to " << MatcherIndex << "\n");
+      continue;
+    }
+        
     case OPC_CheckMultiOpcode: {
       unsigned NumOps = MatcherTable[MatcherIndex++];
       bool OpcodeEquals = false;

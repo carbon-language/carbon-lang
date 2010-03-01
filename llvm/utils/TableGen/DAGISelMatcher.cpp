@@ -88,6 +88,16 @@ void CheckOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckOpcode " << Opcode.getEnumName() << '\n';
 }
 
+void SwitchOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "SwitchOpcode: {\n";
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
+    OS.indent(indent) << "case " << Cases[i].first->getEnumName() << ":\n";
+    Cases[i].second->print(OS, indent+2);
+  }
+  OS.indent(indent) << "}\n";
+}
+
+
 void CheckMultiOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const{
   OS.indent(indent) << "CheckMultiOpcode <todo args>\n";
 }
@@ -242,6 +252,14 @@ unsigned EmitMergeInputChainsMatcher::getHashImpl() const {
   return HashUnsigneds(ChainNodes.begin(), ChainNodes.end());
 }
 
+bool CheckOpcodeMatcher::isEqualImpl(const Matcher *M) const {
+  // Note: pointer equality isn't enough here, we have to check the enum names
+  // to ensure that the nodes are for the same opcode. 
+  return cast<CheckOpcodeMatcher>(M)->Opcode.getEnumName() ==
+          Opcode.getEnumName();
+}
+
+
 bool EmitNodeMatcherCommon::isEqualImpl(const Matcher *m) const {
   const EmitNodeMatcherCommon *M = cast<EmitNodeMatcherCommon>(m);
   return M->OpcodeName == OpcodeName && M->VTs == VTs &&
@@ -288,7 +306,9 @@ static bool TypesAreContradictory(MVT::SimpleValueType T1,
 bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   if (const CheckOpcodeMatcher *COM = dyn_cast<CheckOpcodeMatcher>(M)) {
     // One node can't have two different opcodes!
-    return &COM->getOpcode() != &getOpcode();
+    // Note: pointer equality isn't enough here, we have to check the enum names
+    // to ensure that the nodes are for the same opcode. 
+    return COM->getOpcode().getEnumName() != getOpcode().getEnumName();
   }
   
   // TODO: CheckMultiOpcodeMatcher?

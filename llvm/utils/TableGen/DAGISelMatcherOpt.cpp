@@ -15,6 +15,7 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
@@ -152,7 +153,8 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
   // like X86 where many operations are valid on multiple types.
   if ((isa<CheckTypeMatcher>(N) || isa<CheckChildTypeMatcher>(N) ||
        isa<RecordMatcher>(N)) &&
-      isa<CheckOpcodeMatcher>(N->getNext())) {
+      (isa<CheckOpcodeMatcher>(N->getNext()) ||
+       isa<CheckMultiOpcodeMatcher>(N->getNext()))) {
     // Unlink the two nodes from the list.
     Matcher *CheckType = MatcherPtr.take();
     Matcher *CheckOpcode = CheckType->takeNext();
@@ -256,7 +258,7 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   }
   
   SmallVector<Matcher*, 32> NewOptionsToMatch;
-
+  
   // Loop over options to match, merging neighboring patterns with identical
   // starting nodes into a shared matcher.
   for (unsigned OptionIdx = 0, e = OptionsToMatch.size(); OptionIdx != e;) {
@@ -342,13 +344,55 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     
     NewOptionsToMatch.push_back(Shared);
   }
+  
+  // If we're down to a single pattern to match, then we don't need this scope
+  // anymore.
+  if (NewOptionsToMatch.size() == 1) {
+    MatcherPtr.reset(NewOptionsToMatch[0]);
+    return;
+  }
+  
+  // If our factoring failed (didn't achieve anything) see if we can simplify in
+  // other ways.
+  
+  // Check to see if all of the leading entries are now opcode checks.  If so,
+  // we can convert this Scope to be a OpcodeSwitch instead.
+  bool AllOpcodeChecks = true;
+  for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
+    if (isa<CheckOpcodeMatcher>(NewOptionsToMatch[i])) continue;
+   
+#if 0
+    if (i > 3) {
+      errs() << "FAILING OPC #" << i << "\n";
+      NewOptionsToMatch[i]->dump();
+    }
+#endif
+    
+    AllOpcodeChecks = false;
+    break;
+  }
+  
+  // If all the options are CheckOpcode's, we can form the SwitchOpcode, woot.
+  if (AllOpcodeChecks) {
+    StringSet<> Opcodes;
+    SmallVector<std::pair<const SDNodeInfo*, Matcher*>, 8> Cases;
+    for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
+      CheckOpcodeMatcher *COM =cast<CheckOpcodeMatcher>(NewOptionsToMatch[i]);
+      assert(Opcodes.insert(COM->getOpcode().getEnumName()) &&
+             "Duplicate opcodes not factored?");
+      Cases.push_back(std::make_pair(&COM->getOpcode(), COM->getNext()));
+    }
+    
+    MatcherPtr.reset(new SwitchOpcodeMatcher(&Cases[0], Cases.size()));
+    return;
+  }
+  
 
   // Reassemble a new Scope node.
-  assert(!NewOptionsToMatch.empty() && "where'd all our children go?");
+  assert(!NewOptionsToMatch.empty() &&
+         "Where'd all our children go?  Did we really factor everything??");
   if (NewOptionsToMatch.empty())
     MatcherPtr.reset(0);
-  if (NewOptionsToMatch.size() == 1)
-    MatcherPtr.reset(NewOptionsToMatch[0]);
   else {
     Scope->setNumChildren(NewOptionsToMatch.size());
     for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i)

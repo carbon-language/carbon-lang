@@ -158,8 +158,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
         TmpBuf.clear();
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
-        ChildSize = EmitMatcherList(cast<ScopeMatcher>(N)->getChild(i),
-                                   Indent+1, CurrentIdx+VBRSize, FOS);
+        ChildSize = EmitMatcherList(SM->getChild(i), Indent+1,
+                                    CurrentIdx+VBRSize, FOS);
       } while (GetVBRSize(ChildSize) != VBRSize);
       
       assert(ChildSize != 0 && "Should not have a zero-sized child!");
@@ -235,6 +235,53 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
        << cast<CheckOpcodeMatcher>(N)->getOpcode().getEnumName() << ",\n";
     return 2;
       
+  case Matcher::SwitchOpcode: {
+    unsigned StartIdx = CurrentIdx;
+    const SwitchOpcodeMatcher *SOM = cast<SwitchOpcodeMatcher>(N);
+    OS << "OPC_SwitchOpcode /*" << SOM->getNumCases() << " cases */, ";
+    ++CurrentIdx;
+    
+    // For each case we emit the size, then the opcode, then the matcher.
+    for (unsigned i = 0, e = SOM->getNumCases(); i != e; ++i) {
+      // We need to encode the opcode and the offset of the case code before
+      // emitting the case code.  Handle this by buffering the output into a
+      // string while we get the size.  Unfortunately, the offset of the
+      // children depends on the VBR size of the child, so for large children we
+      // have to iterate a bit.
+      SmallString<128> TmpBuf;
+      unsigned ChildSize = 0;
+      unsigned VBRSize = 0;
+      do {
+        VBRSize = GetVBRSize(ChildSize);
+        
+        TmpBuf.clear();
+        raw_svector_ostream OS(TmpBuf);
+        formatted_raw_ostream FOS(OS);
+        ChildSize = EmitMatcherList(SOM->getCaseMatcher(i),
+                                    Indent+1, CurrentIdx+VBRSize+1, FOS);
+      } while (GetVBRSize(ChildSize) != VBRSize);
+      
+      assert(ChildSize != 0 && "Should not have a zero-sized child!");
+      
+      if (i != 0)
+        OS.PadToColumn(Indent*2) << "/*SwitchOpcode*/ ";
+      
+      // Emit the VBR.
+      CurrentIdx += EmitVBRValue(ChildSize, OS);
+      
+      OS << " " << SOM->getCaseOpcode(i).getEnumName() << ",";
+      OS << "// ->" << CurrentIdx+ChildSize+1 << '\n';
+      ++CurrentIdx;
+      OS << TmpBuf.str();
+      CurrentIdx += ChildSize;
+    }
+
+    // Emit the final zero to terminate the switch.
+    OS.PadToColumn(Indent*2) << "0, // EndSwitchOpcode\n";
+    ++CurrentIdx;
+    return CurrentIdx-StartIdx;
+  }
+
   case Matcher::CheckMultiOpcode: {
     const CheckMultiOpcodeMatcher *CMO = cast<CheckMultiOpcodeMatcher>(N);
     OS << "OPC_CheckMultiOpcode, " << CMO->getNumOpcodes() << ", ";
@@ -575,6 +622,7 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
       OS << "OPC_CheckPatternPredicate"; break;
     case Matcher::CheckPredicate: OS << "OPC_CheckPredicate"; break;
     case Matcher::CheckOpcode: OS << "OPC_CheckOpcode"; break;
+    case Matcher::SwitchOpcode: OS << "OPC_SwitchOpcode"; break;
     case Matcher::CheckMultiOpcode: OS << "OPC_CheckMultiOpcode"; break;
     case Matcher::CheckType: OS << "OPC_CheckType"; break;
     case Matcher::CheckChildType: OS << "OPC_CheckChildType"; break;
