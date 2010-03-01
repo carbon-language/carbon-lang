@@ -88,7 +88,7 @@ TEST(AllocatorTest, TestOverflow) {
   Alloc.Allocate(4096 - sizeof(MemSlab), 0);
   EXPECT_EQ(1U, Alloc.GetNumSlabs());
 
-  // If we dont't allocate a new slab, then we will have overflowed.
+  // If we don't allocate a new slab, then we will have overflowed.
   Alloc.Allocate(1, 0);
   EXPECT_EQ(2U, Alloc.GetNumSlabs());
 }
