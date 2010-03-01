@@ -127,6 +127,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
 
+  NumErrorsAtStartOfFunction = 0;
+  
   // Tell diagnostics how to render things from the AST library.
   PP.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument, 
                                        &Context);

@@ -50,6 +50,7 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
     return;
 
   CurFunctionNeedsScopeChecking = false;
+  NumErrorsAtStartOfFunction = getDiagnostics().getNumErrors();
 
   // Allow the rest of sema to find private method decl implementations.
   if (MDecl->isInstanceMethod())

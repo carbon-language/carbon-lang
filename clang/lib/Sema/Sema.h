@@ -147,6 +147,10 @@ struct BlockScopeInfo : FunctionScopeInfo {
   /// return types, if any, in the block body.
   QualType ReturnType;
 
+  /// SavedNumErrorsAtStartOfFunction - This is the value of the
+  /// NumErrorsAtStartOfFunction variable at the point when the block started.
+  unsigned SavedNumErrorsAtStartOfFunction;
+  
   /// SavedFunctionNeedsScopeChecking - This is the value of
   /// CurFunctionNeedsScopeChecking at the point when the block started.
   bool SavedFunctionNeedsScopeChecking;
@@ -241,6 +245,13 @@ public:
   /// the current full expression.
   llvm::SmallVector<CXXTemporary*, 8> ExprTemporaries;
 
+  /// NumErrorsAtStartOfFunction - This is the number of errors that were
+  /// emitted to the diagnostics object at the start of the current
+  /// function/method definition.  If no additional errors are emitted by the
+  /// end of the function, we assume the AST is well formed enough to be
+  /// worthwhile to emit control flow diagnostics. 
+  unsigned NumErrorsAtStartOfFunction;
+  
   /// CurFunctionNeedsScopeChecking - This is set to true when a function or
   /// ObjC method body contains a VLA or an ObjC try block, which introduce
   /// scopes that need to be checked for goto conditions.  If a function does

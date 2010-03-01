@@ -6734,8 +6734,10 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   BSI->hasBlockDeclRefExprs = false;
   BSI->hasPrototype = false;
   BSI->SavedFunctionNeedsScopeChecking = CurFunctionNeedsScopeChecking;
+  BSI->SavedNumErrorsAtStartOfFunction = NumErrorsAtStartOfFunction;
   CurFunctionNeedsScopeChecking = false;
-
+  NumErrorsAtStartOfFunction = getDiagnostics().getNumErrors();
+  
   BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
   CurContext->addDecl(BSI->TheDecl);
   PushDeclContext(BlockScope, BSI->TheDecl);
@@ -6849,6 +6851,7 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
   llvm::OwningPtr<BlockScopeInfo> CC(CurBlock);
 
   CurFunctionNeedsScopeChecking = CurBlock->SavedFunctionNeedsScopeChecking;
+  NumErrorsAtStartOfFunction = CurBlock->SavedNumErrorsAtStartOfFunction;
 
   // Pop off CurBlock, handle nested blocks.
   PopDeclContext();
@@ -6895,9 +6898,12 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   // If needed, diagnose invalid gotos and switches in the block.
-  if (CurFunctionNeedsScopeChecking)
+  if (CurFunctionNeedsScopeChecking &&
+      NumErrorsAtStartOfFunction == getDiagnostics().getNumErrors())
     DiagnoseInvalidJumps(static_cast<CompoundStmt*>(body.get()));
+  
   CurFunctionNeedsScopeChecking = BSI->SavedFunctionNeedsScopeChecking;
+  NumErrorsAtStartOfFunction = BSI->SavedNumErrorsAtStartOfFunction;
 
   BSI->TheDecl->setBody(body.takeAs<CompoundStmt>());
 

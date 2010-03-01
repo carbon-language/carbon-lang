@@ -850,7 +850,7 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
   // is normally mapped to an error, but can be controlled with
   // -Wtypedef-redefinition.  If either the original or the redefinition is
   // in a system header, don't emit this for compatibility with GCC.
-  if (PP.getDiagnostics().getSuppressSystemWarnings() &&
+  if (getDiagnostics().getSuppressSystemWarnings() &&
       (Context.getSourceManager().isInSystemHeader(Old->getLocation()) ||
        Context.getSourceManager().isInSystemHeader(New->getLocation())))
     return;
@@ -2500,7 +2500,12 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
 
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||
-      NewVD->hasAttr<BlocksAttr>())
+      NewVD->hasAttr<BlocksAttr>() ||
+      // FIXME: We need to diagnose jumps passed initialized variables in C++.
+      // However, this turns on the scope checker for everything with a variable
+      // which may impact compile time.  See if we can find a better solution
+      // to this, perhaps only checking functions that contain gotos in C++?
+      (LangOpts.CPlusPlus && NewVD->hasLocalStorage()))
     CurFunctionNeedsScopeChecking = true;
 
   if ((isVM && NewVD->hasLinkage()) ||
@@ -4079,6 +4084,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
     FD = cast<FunctionDecl>(D.getAs<Decl>());
 
   CurFunctionNeedsScopeChecking = false;
+  NumErrorsAtStartOfFunction = getDiagnostics().getNumErrors();
 
   // See if this is a redefinition.
   // But don't complain if we're in GNU89 mode and the previous definition
@@ -4257,7 +4263,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   CheckUnreachable(AC);
 
   // Verify that that gotos and switch cases don't jump into scopes illegally.
-  if (CurFunctionNeedsScopeChecking)
+  if (CurFunctionNeedsScopeChecking &&
+      NumErrorsAtStartOfFunction == getDiagnostics().getNumErrors())
     DiagnoseInvalidJumps(Body);
 
   // C++ constructors that have function-try-blocks can't have return
@@ -4272,7 +4279,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   // If any errors have occurred, clear out any temporaries that may have
   // been leftover. This ensures that these temporaries won't be picked up for
   // deletion in some later function.
-  if (PP.getDiagnostics().hasErrorOccurred())
+  if (getDiagnostics().hasErrorOccurred())
     ExprTemporaries.clear();
   
   assert(ExprTemporaries.empty() && "Leftover temporaries in function");

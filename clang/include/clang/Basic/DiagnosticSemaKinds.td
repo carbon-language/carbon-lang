@@ -1592,6 +1592,8 @@ def err_indirect_goto_in_protected_scope : Error<
 def err_addr_of_label_in_protected_scope : Error<
   "address taken of label in protected scope, jump to it would have "
   "unknown effect on scope">;
+def note_protected_by_variable_init : Note<
+  "jump bypasses variable initialization">;
 def note_protected_by_vla_typedef : Note<
   "jump bypasses initialization of VLA typedef">;
 def note_protected_by_vla : Note<

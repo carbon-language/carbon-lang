@@ -77,7 +77,7 @@ JumpScopeChecker::JumpScopeChecker(Stmt *Body, Sema &s) : S(s) {
 
 /// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
 /// diagnostic that should be emitted if control goes over it. If not, return 0.
-static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
+static unsigned GetDiagForGotoScopeDecl(const Decl *D, bool isCPlusPlus) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (VD->getType()->isVariablyModifiedType())
       return diag::note_protected_by_vla;
@@ -85,6 +85,9 @@ static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
       return diag::note_protected_by_cleanup;
     if (VD->hasAttr<BlocksAttr>())
       return diag::note_protected_by___block;
+    if (isCPlusPlus && VD->hasLocalStorage() && VD->hasInit())
+      return diag::note_protected_by_variable_init;
+    
   } else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
       return diag::note_protected_by_vla_typedef;
@@ -116,18 +119,17 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     Stmt *SubStmt = *CI;
     if (SubStmt == 0) continue;
 
-    // FIXME: diagnose jumps past initialization: required in C++, warning in C.
-    //   goto L; int X = 4;   L: ;
+    bool isCPlusPlus = this->S.getLangOptions().CPlusPlus;
 
     // If this is a declstmt with a VLA definition, it defines a scope from here
     // to the end of the containing context.
     if (DeclStmt *DS = dyn_cast<DeclStmt>(SubStmt)) {
-      // The decl statement creates a scope if any of the decls in it are VLAs or
-      // have the cleanup attribute.
+      // The decl statement creates a scope if any of the decls in it are VLAs
+      // or have the cleanup attribute.
       for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
            I != E; ++I) {
         // If this decl causes a new scope, push and switch to it.
-        if (unsigned Diag = GetDiagForGotoScopeDecl(*I)) {
+        if (unsigned Diag = GetDiagForGotoScopeDecl(*I, isCPlusPlus)) {
           Scopes.push_back(GotoScope(ParentScope, Diag, (*I)->getLocation()));
           ParentScope = Scopes.size()-1;
         }
