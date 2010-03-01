@@ -127,6 +127,26 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
     }
   
   ContractNodes(N->getNextPtr(), CGP);
+  
+  
+  // If we have a CheckType/CheckChildType/Record node followed by a
+  // CheckOpcode, invert the two nodes.  We prefer to do structural checks
+  // before type checks, as this opens opportunities for factoring on targets
+  // like X86 where many operations are valid on multiple types.
+  if ((isa<CheckTypeMatcher>(N) || isa<CheckChildTypeMatcher>(N) ||
+       isa<RecordMatcher>(N)) &&
+      isa<CheckOpcodeMatcher>(N->getNext())) {
+    // Unlink the two nodes from the list.
+    Matcher *CheckType = MatcherPtr.take();
+    Matcher *CheckOpcode = CheckType->takeNext();
+    Matcher *Tail = CheckOpcode->takeNext();
+    
+    // Relink them.
+    MatcherPtr.reset(CheckOpcode);
+    CheckOpcode->setNext(CheckType);
+    CheckType->setNext(Tail);
+    return ContractNodes(MatcherPtr, CGP);
+  }
 }
 
 /// SinkPatternPredicates - Pattern predicates can be checked at any level of

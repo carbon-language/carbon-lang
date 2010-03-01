@@ -320,6 +320,13 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
       N->getPredicateFns().empty()) {
     if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
       if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
+        // If this is at the root of the pattern, we emit a redundant
+        // CheckOpcode so that the following checks get factored properly under
+        // a single opcode check.
+        if (N == Pattern.getSrcPattern())
+          AddMatcher(new CheckOpcodeMatcher(CInfo));
+
+        // Emit the CheckAndImm/CheckOrImm node.
         if (N->getOperator()->getName() == "and")
           AddMatcher(new CheckAndImmMatcher(II->getValue()));
         else
