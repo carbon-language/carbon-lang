@@ -1407,7 +1407,6 @@ void TreePattern::dump() const { print(errs()); }
 // CodeGenDAGPatterns implementation
 //
 
-// FIXME: REMOVE OSTREAM ARGUMENT
 CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) : Records(R) {
   Intrinsics = LoadIntrinsics(Records, false);
   TgtIntrinsics = LoadIntrinsics(Records, true);
@@ -2143,6 +2142,15 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
   std::string Reason;
   if (!PTM.getSrcPattern()->canPatternMatch(Reason, *this))
     Pattern->error("Pattern can never match: " + Reason);
+  
+  // If the source pattern's root is a complex pattern, that complex pattern
+  // must specify the nodes it can potentially match.
+  if (const ComplexPattern *CP =
+        PTM.getSrcPattern()->getComplexPatternInfo(*this))
+    if (CP->getRootNodes().empty())
+      Pattern->error("ComplexPattern at root must specify list of opcodes it"
+                     " could match");
+  
   
   // Find all of the named values in the input and output, ensure they have the
   // same type.

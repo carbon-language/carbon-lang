@@ -233,7 +233,6 @@ void DAGISelEmitter::run(raw_ostream &OS) {
     }
   }
           
-  
   Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
                                          PatternMatchers.size());
 

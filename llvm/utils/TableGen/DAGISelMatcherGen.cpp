@@ -505,16 +505,11 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
   // check.
   if (const ComplexPattern *CP =
                    Pattern.getSrcPattern()->getComplexPatternInfo(CGP)) {
-    
     const std::vector<Record*> &OpNodes = CP->getRootNodes();
-    if (OpNodes.empty()) {
-      // FIXME: Empty OpNodes runs on everything, is this even valid?
-      if (Variant != 0) return true;
-    } else {
-      if (Variant >= OpNodes.size()) return true;
-      
-      AddMatcher(new CheckOpcodeMatcher(CGP.getSDNodeInfo(OpNodes[Variant])));
-    }
+    assert(!OpNodes.empty() &&"Complex Pattern must specify what it can match");
+    if (Variant >= OpNodes.size()) return true;
+    
+    AddMatcher(new CheckOpcodeMatcher(CGP.getSDNodeInfo(OpNodes[Variant])));
   } else {
     if (Variant != 0) return true;
   }

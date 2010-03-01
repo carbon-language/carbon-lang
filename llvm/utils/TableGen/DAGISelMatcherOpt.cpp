@@ -140,7 +140,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
         return;
       }
 
-      // FIXME2: Kill off all the SelectionDAG::MorphNodeTo and getMachineNode
+      // FIXME2: Kill off all the SelectionDAG::SelectNodeTo and getMachineNode
       // variants.
     }
   
