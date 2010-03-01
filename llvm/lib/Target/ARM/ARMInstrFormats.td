@@ -815,7 +815,7 @@ class AI3sthpo<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{6}     = 0; // S bit
   let Inst{7}     = 1;
   let Inst{20}    = 0; // L bit
-  let Inst{21}    = 1; // W bit
+  let Inst{21}    = 0; // W bit
   let Inst{24}    = 0; // P bit
   let Inst{27-25} = 0b000;
 }

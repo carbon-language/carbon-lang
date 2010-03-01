@@ -1260,7 +1260,7 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
                      "strd", "\t$src1, $src2, [$base], $offset",
                      "$base = $base_wb", []>;
 
-// STRT and STRBT are for disassembly only.
+// STRT, STRBT, and STRHT are for disassembly only.
 
 def STRT : AI2stwpo<(outs GPR:$base_wb),
                     (ins GPR:$src, GPR:$base,am2offset:$offset),
@@ -1275,6 +1275,14 @@ def STRBT : AI2stbpo<(outs GPR:$base_wb),
                      StFrm, IIC_iStoreru,
                      "strbt", "\t$src, [$base], $offset", "$base = $base_wb",
                      [/* For disassembly only; pattern left blank */]> {
+  let Inst{21} = 1; // overwrite
+}
+
+def STRHT: AI3sthpo<(outs GPR:$base_wb),
+                    (ins GPR:$src, GPR:$base,am3offset:$offset),
+                    StMiscFrm, IIC_iStoreru,
+                    "strht", "\t$src, [$base], $offset", "$base = $base_wb",
+                    [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
 }
 
