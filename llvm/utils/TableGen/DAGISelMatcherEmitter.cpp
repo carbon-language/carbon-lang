@@ -314,6 +314,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS.PadToColumn(Indent*2) << "0, ";
     if (!OmitComments)
       OS << "// EndSwitchOpcode";
+    OS << '\n';
     ++CurrentIdx;
     return CurrentIdx-StartIdx;
   }
