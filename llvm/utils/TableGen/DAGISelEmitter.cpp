@@ -1942,7 +1942,6 @@ void DAGISelEmitter::run(raw_ostream &OS) {
         });
 
   // FIXME: These are being used by hand written code, gross.
-  EmitNodeTransforms(OS);
   EmitPredicateFunctions(OS);
 
 #ifdef ENABLE_NEW_ISEL
@@ -1980,7 +1979,8 @@ void DAGISelEmitter::run(raw_ostream &OS) {
   delete TheMatcher;
   
 #else
-  
+  EmitNodeTransforms(OS);
+
   // At this point, we have full information about the 'Patterns' we need to
   // parse, both implicitly from instructions as well as from explicit pattern
   // definitions.  Emit the resultant instruction selector.
