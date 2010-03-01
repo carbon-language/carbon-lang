@@ -80,10 +80,6 @@ namespace {
     /// second is the recorded slot number the input pattern match saved it in.
     SmallVector<std::pair<Record*, unsigned>, 2> PhysRegInputs;
     
-    /// EmittedMergeInputChains - For nodes that match patterns involving
-    /// chains, is set to true if we emitted the "MergeInputChains" operation.
-    bool EmittedMergeInputChains;
-    
     /// Matcher - This is the top level of the generated matcher, the result.
     Matcher *TheMatcher;
     
@@ -141,7 +137,7 @@ namespace {
 MatcherGen::MatcherGen(const PatternToMatch &pattern,
                        const CodeGenDAGPatterns &cgp)
 : Pattern(pattern), CGP(cgp), NextRecordedOperandNo(0),
-  EmittedMergeInputChains(false), TheMatcher(0), CurPredicate(0) {
+  TheMatcher(0), CurPredicate(0) {
   // We need to produce the matcher tree for the patterns source pattern.  To do
   // this we need to match the structure as well as the types.  To do the type
   // matching, we want to figure out the fewest number of type checks we need to
@@ -693,19 +689,6 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     ++ChildNo;
   }
   
-  // Nodes that match patterns with (potentially multiple) chain inputs have to
-  // merge them together into a token factor.
-  if (NodeHasChain && !EmittedMergeInputChains) {
-    // FIXME2: Move this out of emitresult to a top level place.
-    assert(!MatchedChainNodes.empty() &&
-           "How can this node have chain if no inputs do?");
-    // Otherwise, we have to emit an operation to merge the input chains and
-    // set this as the current input chain.
-    AddMatcher(new EmitMergeInputChainsMatcher
-                        (MatchedChainNodes.data(), MatchedChainNodes.size()));
-    EmittedMergeInputChains = true;
-  }
-  
   // If this node has an input flag or explicitly specified input physregs, we
   // need to add chained and flagged copyfromreg nodes and materialize the flag
   // input.
@@ -819,6 +802,13 @@ void MatcherGen::EmitResultOperand(const TreePatternNode *N,
 }
 
 void MatcherGen::EmitResultCode() {
+  // Patterns that match nodes with (potentially multiple) chain inputs have to
+  // merge them together into a token factor.  This informs the generated code
+  // what all the chained nodes are.
+  if (!MatchedChainNodes.empty())
+    AddMatcher(new EmitMergeInputChainsMatcher
+               (MatchedChainNodes.data(), MatchedChainNodes.size()));
+  
   // Codegen the root of the result pattern, capturing the resulting values.
   SmallVector<unsigned, 8> Ops;
   EmitResultOperand(Pattern.getDstPattern(), Ops);
