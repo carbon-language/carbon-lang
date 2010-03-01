@@ -34,7 +34,7 @@ class MatcherTableEmitter {
 
 
   DenseMap<Record*, unsigned> NodeXFormMap;
-  std::vector<const Record*> NodeXForms;
+  std::vector<Record*> NodeXForms;
 
   // Per opcode frequence count. 
   std::vector<unsigned> Histogram;
@@ -44,7 +44,8 @@ public:
   unsigned EmitMatcherList(const Matcher *N, unsigned Indent,
                            unsigned StartIdx, formatted_raw_ostream &OS);
   
-  void EmitPredicateFunctions(formatted_raw_ostream &OS);
+  void EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
+                              formatted_raw_ostream &OS);
   
   void EmitHistogram(formatted_raw_ostream &OS);
 private:
@@ -440,7 +441,8 @@ EmitMatcherList(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   return Size;
 }
 
-void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
+void MatcherTableEmitter::EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
+                                                 formatted_raw_ostream &OS) {
   // FIXME: Don't build off the DAGISelEmitter's predicates, emit them directly
   // here into the case stmts.
   
@@ -454,15 +456,40 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
     OS << "  }\n";
     OS << "}\n\n";
   }
-    
-
+   
   // Emit Node predicates.
+  // FIXME: Annoyingly, these are stored by name, which we never even emit. Yay?
+  StringMap<TreePattern*> PFsByName;
+  
+  for (CodeGenDAGPatterns::pf_iterator I = CGP.pf_begin(), E = CGP.pf_end();
+       I != E; ++I)
+    PFsByName[I->first->getName()] = I->second;
+  
   if (!NodePredicates.empty()) {
-    OS << "bool CheckNodePredicate(SDNode *N, unsigned PredNo) const {\n";
+    OS << "bool CheckNodePredicate(SDNode *Node, unsigned PredNo) const {\n";
     OS << "  switch (PredNo) {\n";
     OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
-    for (unsigned i = 0, e = NodePredicates.size(); i != e; ++i)
-      OS << "  case " << i << ": return "  << NodePredicates[i] << "(N);\n";
+    for (unsigned i = 0, e = NodePredicates.size(); i != e; ++i) {
+      // FIXME: Storing this by name is horrible.
+      TreePattern *P =PFsByName[NodePredicates[i].substr(strlen("Predicate_"))];
+      assert(P && "Unknown name?");
+      
+      // Emit the predicate code corresponding to this pattern.
+      std::string Code = P->getRecord()->getValueAsCode("Predicate");
+      assert(!Code.empty() && "No code in this predicate");
+      OS << "  case " << i << ": { // " << NodePredicates[i] << '\n';
+      std::string ClassName;
+      if (P->getOnlyTree()->isLeaf())
+        ClassName = "SDNode";
+      else
+        ClassName =
+          CGP.getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
+      if (ClassName == "SDNode")
+        OS << "    SDNode *N = Node;\n";
+      else
+        OS << "    " << ClassName << "*N = cast<" << ClassName << ">(Node);\n";
+      OS << Code << "\n  }\n";
+    }
     OS << "  }\n";
     OS << "}\n\n";
   }
@@ -498,6 +525,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
     OS << "}\n\n";
   }
   
+  
   // Emit SDNodeXForm handlers.
   // FIXME: This should be const.
   if (!NodeXForms.empty()) {
@@ -506,9 +534,23 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
     OS << "  default: assert(0 && \"Invalid xform # in table?\");\n";
     
     // FIXME: The node xform could take SDValue's instead of SDNode*'s.
-    for (unsigned i = 0, e = NodeXForms.size(); i != e; ++i)
-      OS << "  case " << i << ": return Transform_" << NodeXForms[i]->getName()
-         << "(V.getNode());\n";
+    for (unsigned i = 0, e = NodeXForms.size(); i != e; ++i) {
+      const CodeGenDAGPatterns::NodeXForm &Entry =
+        CGP.getSDNodeTransform(NodeXForms[i]);
+      
+      Record *SDNode = Entry.first;
+      const std::string &Code = Entry.second;
+      
+      OS << "  case " << i << ": {  // " << NodeXForms[i]->getName() << '\n';
+      
+      std::string ClassName = CGP.getSDNodeInfo(SDNode).getSDClassName();
+      if (ClassName == "SDNode")
+        OS << "    SDNode *N = V.getNode();\n";
+      else
+        OS << "    " << ClassName << " *N = cast<" << ClassName
+           << ">(V.getNode());\n";
+      OS << Code << "\n  }\n";
+    }
     OS << "  }\n";
     OS << "}\n\n";
   }
@@ -562,7 +604,8 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
 }
 
 
-void llvm::EmitMatcherTable(const Matcher *TheMatcher, raw_ostream &O) {
+void llvm::EmitMatcherTable(const Matcher *TheMatcher,
+                            const CodeGenDAGPatterns &CGP, raw_ostream &O) {
   formatted_raw_ostream OS(O);
   
   OS << "// The main instruction selector code.\n";
@@ -583,5 +626,5 @@ void llvm::EmitMatcherTable(const Matcher *TheMatcher, raw_ostream &O) {
   OS << "\n";
   
   // Next up, emit the function for node and pattern predicates:
-  MatcherEmitter.EmitPredicateFunctions(OS);
+  MatcherEmitter.EmitPredicateFunctions(CGP, OS);
 }

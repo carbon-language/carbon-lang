@@ -829,7 +829,7 @@ void MatcherGen::EmitResultCode() {
   // that tells the matcher about them so that it can update their results.
   if (!MatchedFlagResultNodes.empty())
     AddMatcher(new MarkFlagResultsMatcher(MatchedFlagResultNodes.data(),
-                                                MatchedFlagResultNodes.size()));
+                                          MatchedFlagResultNodes.size()));
   
   
   // We know that the resulting pattern has exactly one result/

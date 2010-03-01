@@ -28,7 +28,8 @@ namespace llvm {
 Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,
                                  const CodeGenDAGPatterns &CGP);
 Matcher *OptimizeMatcher(Matcher *Matcher, const CodeGenDAGPatterns &CGP);
-void EmitMatcherTable(const Matcher *Matcher, raw_ostream &OS);
+void EmitMatcherTable(const Matcher *Matcher, const CodeGenDAGPatterns &CGP,
+                      raw_ostream &OS);
 
   
 /// Matcher - Base class for all the the DAG ISel Matcher representation

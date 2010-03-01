@@ -1933,17 +1933,18 @@ void DAGISelEmitter::run(raw_ostream &OS) {
      << "// by the instruction selector.\n";
   OS << "#include \"llvm/CodeGen/DAGISelHeader.h\"\n\n";
   
+  DEBUG(errs() << "\n\nALL PATTERNS TO MATCH:\n\n";
+        for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
+             E = CGP.ptm_end(); I != E; ++I) {
+          errs() << "PATTERN: ";   I->getSrcPattern()->dump();
+          errs() << "\nRESULT:  "; I->getDstPattern()->dump();
+          errs() << "\n";
+        });
+
+  // FIXME: These are being used by hand written code, gross.
   EmitNodeTransforms(OS);
   EmitPredicateFunctions(OS);
-  
-  DEBUG(errs() << "\n\nALL PATTERNS TO MATCH:\n\n");
-  for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(), E = CGP.ptm_end();
-       I != E; ++I) {
-    DEBUG(errs() << "PATTERN: ";   I->getSrcPattern()->dump());
-    DEBUG(errs() << "\nRESULT:  "; I->getDstPattern()->dump());
-    DEBUG(errs() << "\n");
-  }
-  
+
 #ifdef ENABLE_NEW_ISEL
   // Add all the patterns to a temporary list so we can sort them.
   std::vector<const PatternToMatch*> Patterns;
@@ -1968,10 +1969,11 @@ void DAGISelEmitter::run(raw_ostream &OS) {
 
   TheMatcher = OptimizeMatcher(TheMatcher, CGP);
   //Matcher->dump();
-  EmitMatcherTable(TheMatcher, OS);
+  EmitMatcherTable(TheMatcher, CGP, OS);
   delete TheMatcher;
   
 #else
+  
   // At this point, we have full information about the 'Patterns' we need to
   // parse, both implicitly from instructions as well as from explicit pattern
   // definitions.  Emit the resultant instruction selector.
