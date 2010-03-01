@@ -351,6 +351,11 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     return;
   }
   
+  if (NewOptionsToMatch.empty()) {
+    MatcherPtr.reset(0);
+    return;
+  }
+  
   // If our factoring failed (didn't achieve anything) see if we can simplify in
   // other ways.
   
