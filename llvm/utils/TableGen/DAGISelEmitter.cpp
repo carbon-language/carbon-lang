@@ -1959,10 +1959,17 @@ void DAGISelEmitter::run(raw_ostream &OS) {
                    PatternSortingPredicate2(CGP));
   
   
-  // Convert each pattern into Matcher's.
+  // Convert each variant of each pattern into a Matcher.
   std::vector<Matcher*> PatternMatchers;
-  for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
-    PatternMatchers.push_back(ConvertPatternToMatcher(*Patterns[i], CGP));
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+    for (unsigned Variant = 0; ; ++Variant) {
+      if (Matcher *M = ConvertPatternToMatcher(*Patterns[i], Variant, CGP))
+        PatternMatchers.push_back(M);
+      else
+        break;
+    }
+  }
+          
   
   Matcher *TheMatcher = new ScopeMatcher(&PatternMatchers[0],
                                          PatternMatchers.size());

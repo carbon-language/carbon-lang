@@ -153,8 +153,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
   // like X86 where many operations are valid on multiple types.
   if ((isa<CheckTypeMatcher>(N) || isa<CheckChildTypeMatcher>(N) ||
        isa<RecordMatcher>(N)) &&
-      (isa<CheckOpcodeMatcher>(N->getNext()) ||
-       isa<CheckMultiOpcodeMatcher>(N->getNext()))) {
+      isa<CheckOpcodeMatcher>(N->getNext())) {
     // Unlink the two nodes from the list.
     Matcher *CheckType = MatcherPtr.take();
     Matcher *CheckOpcode = CheckType->takeNext();

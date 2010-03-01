@@ -97,7 +97,7 @@ namespace {
       delete PatWithNoTypes;
     }
     
-    void EmitMatcherCode();
+    bool EmitMatcherCode(unsigned Variant);
     void EmitResultCode();
     
     Matcher *GetMatcher() const { return TheMatcher; }
@@ -247,20 +247,6 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
 
     // Handle complex pattern.
     const ComplexPattern &CP = CGP.getComplexPattern(LeafRec);
-
-    // If we're at the root of the pattern, we have to check that the opcode
-    // is a one of the ones requested to be matched.
-    if (N == Pattern.getSrcPattern()) {
-      const std::vector<Record*> &OpNodes = CP.getRootNodes();
-      if (OpNodes.size() == 1) {
-        AddMatcher(new CheckOpcodeMatcher(CGP.getSDNodeInfo(OpNodes[0])));
-      } else if (!OpNodes.empty()) {
-        SmallVector<const SDNodeInfo*, 4> OpNames;
-        for (unsigned i = 0, e = OpNodes.size(); i != e; i++)
-          OpNames.push_back(&CGP.getSDNodeInfo(OpNodes[i]));
-        AddMatcher(new CheckMultiOpcodeMatcher(OpNames.data(), OpNames.size()));
-      }
-    }
     
     // Emit a CheckComplexPat operation, which does the match (aborting if it
     // fails) and pushes the matched operands onto the recorded nodes list.
@@ -495,7 +481,30 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
     EmitOperatorMatchCode(N, NodeNoTypes);
 }
 
-void MatcherGen::EmitMatcherCode() {
+/// EmitMatcherCode - Generate the code that matches the predicate of this
+/// pattern for the specified Variant.  If the variant is invalid this returns
+/// true and does not generate code, if it is valid, it returns false.
+bool MatcherGen::EmitMatcherCode(unsigned Variant) {
+  // If the root of the pattern is a ComplexPattern and if it is specified to
+  // match some number of root opcodes, these are considered to be our variants.
+  // Depending on which variant we're generating code for, emit the root opcode
+  // check.
+  if (const ComplexPattern *CP =
+                   Pattern.getSrcPattern()->getComplexPatternInfo(CGP)) {
+    
+    const std::vector<Record*> &OpNodes = CP->getRootNodes();
+    if (OpNodes.empty()) {
+      // FIXME: Empty OpNodes runs on everything, is this even valid?
+      if (Variant != 0) return true;
+    } else {
+      if (Variant >= OpNodes.size()) return true;
+      
+      AddMatcher(new CheckOpcodeMatcher(CGP.getSDNodeInfo(OpNodes[Variant])));
+    }
+  } else {
+    if (Variant != 0) return true;
+  }
+    
   // If the pattern has a predicate on it (e.g. only enabled when a subtarget
   // feature is around, do the check).
   // FIXME: This should get emitted after the match code below to encourage
@@ -503,11 +512,11 @@ void MatcherGen::EmitMatcherCode() {
   // dag combine, eliminating the horrible side-effect-full stuff from 
   // X86's MatchAddress.
   if (!Pattern.getPredicateCheck().empty())
-    AddMatcher(new 
-                 CheckPatternPredicateMatcher(Pattern.getPredicateCheck()));
-  
+    AddMatcher(new CheckPatternPredicateMatcher(Pattern.getPredicateCheck()));
+
   // Emit the matcher for the pattern structure and types.
   EmitMatchCode(Pattern.getSrcPattern(), PatWithNoTypes);
+  return false;
 }
 
 
@@ -849,13 +858,16 @@ void MatcherGen::EmitResultCode() {
 }
 
 
+/// ConvertPatternToMatcher - Create the matcher for the specified pattern with
+/// the specified variant.  If the variant number is invalid, this returns null.
 Matcher *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
+                                       unsigned Variant,
                                        const CodeGenDAGPatterns &CGP) {
   MatcherGen Gen(Pattern, CGP);
 
   // Generate the code for the matcher.
-  Gen.EmitMatcherCode();
-  
+  if (Gen.EmitMatcherCode(Variant))
+    return 0;
   
   // FIXME2: Kill extra MoveParent commands at the end of the matcher sequence.
   // FIXME2: Split result code out to another table, and make the matcher end

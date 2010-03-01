@@ -1787,15 +1787,6 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     }
         
-    case OPC_CheckMultiOpcode: {
-      unsigned NumOps = MatcherTable[MatcherIndex++];
-      bool OpcodeEquals = false;
-      for (unsigned i = 0; i != NumOps; ++i)
-        OpcodeEquals |= N->getOpcode() == MatcherTable[MatcherIndex++];
-      if (!OpcodeEquals) break;
-      continue;
-    }
-        
     case OPC_CheckType: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];

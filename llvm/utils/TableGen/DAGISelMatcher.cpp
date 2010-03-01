@@ -98,10 +98,6 @@ void SwitchOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 }
 
 
-void CheckMultiOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const{
-  OS.indent(indent) << "CheckMultiOpcode <todo args>\n";
-}
-
 void CheckTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckType " << getEnumName(Type) << '\n';
 }
@@ -221,13 +217,6 @@ unsigned CheckOpcodeMatcher::getHashImpl() const {
   return HashString(Opcode.getEnumName());
 }
 
-unsigned CheckMultiOpcodeMatcher::getHashImpl() const {
-  unsigned Result = 0;
-  for (unsigned i = 0, e = Opcodes.size(); i != e; ++i)
-    Result |= HashString(Opcodes[i]->getEnumName());
-  return Result;
-}
-
 unsigned CheckCondCodeMatcher::getHashImpl() const {
   return HashString(CondCodeName);
 }
@@ -310,8 +299,6 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
     // to ensure that the nodes are for the same opcode. 
     return COM->getOpcode().getEnumName() != getOpcode().getEnumName();
   }
-  
-  // TODO: CheckMultiOpcodeMatcher?
   
   // If the node has a known type, and if the type we're checking for is
   // different, then we know they contradict.  For example, a check for

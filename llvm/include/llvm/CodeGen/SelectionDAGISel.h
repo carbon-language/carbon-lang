@@ -113,7 +113,6 @@ public:
     OPC_CheckPredicate,
     OPC_CheckOpcode,
     OPC_SwitchOpcode,
-    OPC_CheckMultiOpcode,
     OPC_CheckType,
     OPC_CheckChild0Type, OPC_CheckChild1Type, OPC_CheckChild2Type,
     OPC_CheckChild3Type, OPC_CheckChild4Type, OPC_CheckChild5Type,

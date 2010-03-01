@@ -282,16 +282,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return CurrentIdx-StartIdx;
   }
 
-  case Matcher::CheckMultiOpcode: {
-    const CheckMultiOpcodeMatcher *CMO = cast<CheckMultiOpcodeMatcher>(N);
-    OS << "OPC_CheckMultiOpcode, " << CMO->getNumOpcodes() << ", ";
-    for (unsigned i = 0, e = CMO->getNumOpcodes(); i != e; ++i)
-      OS << CMO->getOpcode(i).getEnumName() << ", ";
-    OS << '\n';
-    return 2 + CMO->getNumOpcodes();
-  }
-      
-  case Matcher::CheckType:
+ case Matcher::CheckType:
     OS << "OPC_CheckType, "
        << getEnumName(cast<CheckTypeMatcher>(N)->getType()) << ",\n";
     return 2;
@@ -623,7 +614,6 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
     case Matcher::CheckPredicate: OS << "OPC_CheckPredicate"; break;
     case Matcher::CheckOpcode: OS << "OPC_CheckOpcode"; break;
     case Matcher::SwitchOpcode: OS << "OPC_SwitchOpcode"; break;
-    case Matcher::CheckMultiOpcode: OS << "OPC_CheckMultiOpcode"; break;
     case Matcher::CheckType: OS << "OPC_CheckType"; break;
     case Matcher::CheckChildType: OS << "OPC_CheckChildType"; break;
     case Matcher::CheckInteger: OS << "OPC_CheckInteger"; break;

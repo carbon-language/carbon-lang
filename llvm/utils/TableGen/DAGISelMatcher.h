@@ -25,7 +25,7 @@ namespace llvm {
   class Record;
   class SDNodeInfo;
 
-Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,
+Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,unsigned Variant,
                                  const CodeGenDAGPatterns &CGP);
 Matcher *OptimizeMatcher(Matcher *Matcher, const CodeGenDAGPatterns &CGP);
 void EmitMatcherTable(const Matcher *Matcher, const CodeGenDAGPatterns &CGP,
@@ -448,33 +448,6 @@ private:
   virtual bool isEqualImpl(const Matcher *M) const { return false; }
   virtual unsigned getHashImpl() const { return 4123; }
 };
-  
-/// CheckMultiOpcodeMatcher - This checks to see if the current node has one
-/// of the specified opcode, if not it fails to match.
-class CheckMultiOpcodeMatcher : public Matcher {
-  SmallVector<const SDNodeInfo*, 4> Opcodes;
-public:
-  CheckMultiOpcodeMatcher(const SDNodeInfo * const *opcodes, unsigned numops)
-    : Matcher(CheckMultiOpcode), Opcodes(opcodes, opcodes+numops) {}
-  
-  unsigned getNumOpcodes() const { return Opcodes.size(); }
-  const SDNodeInfo &getOpcode(unsigned i) const { return *Opcodes[i]; }
-  
-  static inline bool classof(const Matcher *N) {
-    return N->getKind() == CheckMultiOpcode;
-  }
-  
-  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
-
-private:
-  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
-  virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckMultiOpcodeMatcher>(M)->Opcodes == Opcodes;
-  }
-  virtual unsigned getHashImpl() const;
-};
-  
-  
   
 /// CheckTypeMatcher - This checks to see if the current node has the
 /// specified type, if not it fails to match.
