@@ -23,12 +23,12 @@ entry:
   br i1 %cmp, label %cond.true, label %cond.false
 
 cond.true:
-  %1 = load i8** %retval;
-  ret i8* %1;
+  %1 = load i8** %retval
+  ret i8* %1
 
 cond.false:
-  %2 = load i8** %retval;
-  ret i8* %2;
+  %2 = load i8** %retval
+  ret i8* %2
 }
 
 define i32 @f() nounwind {
@@ -64,7 +64,7 @@ entry:
 }
 
 @.str5 = private constant [9 x i32] [i32 97, i32 98, i32 99, i32 100, i32 0, i32
- 101, i32 102, i32 103, i32 0], align 4 ;
+ 101, i32 102, i32 103, i32 0], align 4
 define i32 @test2() nounwind {
 ; CHECK: @test2
 ; CHECK-NEXT: ret i32 34
