@@ -70,18 +70,14 @@ SVal ValueManager::convertToArrayIndex(SVal V) {
   return SVator->EvalCastNL(cast<NonLoc>(V), ArrayIndexTy);
 }
 
-DefinedOrUnknownSVal ValueManager::getRegionValueSymbolVal(const MemRegion* R,
-                                                           QualType T) {
-
-  if (T.isNull()) {
-    const TypedRegion* TR = cast<TypedRegion>(R);
-    T = TR->getValueType(SymMgr.getContext());
-  }
+DefinedOrUnknownSVal 
+ValueManager::getRegionValueSymbolVal(const TypedRegion* R) {
+  QualType T = R->getValueType(SymMgr.getContext());
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getRegionValueSymbol(R, T);
+  SymbolRef sym = SymMgr.getRegionValueSymbol(R);
 
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));

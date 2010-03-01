@@ -94,8 +94,7 @@ public:
   DefinedOrUnknownSVal makeZeroVal(QualType T);
 
   /// getRegionValueSymbolVal - make a unique symbol for value of R.
-  DefinedOrUnknownSVal getRegionValueSymbolVal(const MemRegion *R,
-                                               QualType T = QualType());
+  DefinedOrUnknownSVal getRegionValueSymbolVal(const TypedRegion *R);
 
   DefinedOrUnknownSVal getConjuredSymbolVal(const void *SymbolTag,
                                             const Expr *E, unsigned Count);

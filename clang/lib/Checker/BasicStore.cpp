@@ -319,7 +319,7 @@ Store BasicStoreManager::scanForIvars(Stmt *B, const Decl* SelfDecl,
       const Expr *Base = IV->getBase()->IgnoreParenCasts();
       if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Base)) {
         if (DR->getDecl() == SelfDecl) {
-          const MemRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
+          const ObjCIvarRegion *IVR = MRMgr.getObjCIvarRegion(IV->getDecl(),
                                                          SelfRegion);
           SVal X = ValMgr.getRegionValueSymbolVal(IVR);
           St = Bind(St, ValMgr.makeLoc(IVR), X);
@@ -351,7 +351,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
         if (MD->getSelfDecl() == PD) {
           // FIXME: Add type constraints (when they become available) to
           // SelfRegion?  (i.e., it implements MD->getClassInterface()).
-          const MemRegion *VR = MRMgr.getVarRegion(PD, InitLoc);
+          const VarRegion *VR = MRMgr.getVarRegion(PD, InitLoc);
           const MemRegion *SelfRegion =
             ValMgr.getRegionValueSymbolVal(VR).getAsRegion();          
           assert(SelfRegion);          
@@ -369,7 +369,7 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
 
       // Initialize globals and parameters to symbolic values.
       // Initialize local variables to undefined.
-      const MemRegion *R = ValMgr.getRegionManager().getVarRegion(VD, InitLoc);
+      const VarRegion *R = ValMgr.getRegionManager().getVarRegion(VD, InitLoc);
       SVal X = UndefinedVal();
       if (R->hasGlobalsOrParametersStorage())
         X = ValMgr.getRegionValueSymbolVal(R);

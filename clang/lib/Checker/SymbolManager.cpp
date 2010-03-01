@@ -79,14 +79,14 @@ void SymbolRegionValue::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 const SymbolRegionValue*
-SymbolManager::getRegionValueSymbol(const MemRegion* R, QualType T) {
+SymbolManager::getRegionValueSymbol(const TypedRegion* R) {
   llvm::FoldingSetNodeID profile;
-  SymbolRegionValue::Profile(profile, R, T);
+  SymbolRegionValue::Profile(profile, R);
   void* InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolRegionValue>();
-    new (SD) SymbolRegionValue(SymbolCounter, R, T);
+    new (SD) SymbolRegionValue(SymbolCounter, R);
     DataSet.InsertNode(SD, InsertPos);
     ++SymbolCounter;
   }
@@ -176,13 +176,7 @@ QualType SymbolDerived::getType(ASTContext& Ctx) const {
 }
 
 QualType SymbolRegionValue::getType(ASTContext& C) const {
-  if (!T.isNull())
-    return T;
-
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
-    return TR->getValueType(C);
-
-  return QualType();
+  return R->getValueType(C);
 }
 
 SymbolManager::~SymbolManager() {}

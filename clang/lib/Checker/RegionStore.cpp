@@ -1070,7 +1070,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   }
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolVal(R, RTy);
+  return ValMgr.getRegionValueSymbolVal(R);
 }
 
 std::pair<Store, const MemRegion *>
@@ -1231,7 +1231,7 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   }
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolVal(R, Ty);
+  return ValMgr.getRegionValueSymbolVal(R);
 }
 
 SVal RegionStoreManager::RetrieveObjCIvar(Store store, const ObjCIvarRegion* R){
@@ -1271,11 +1271,11 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
   
   if (isa<UnknownSpaceRegion>(MS) || 
       isa<StackArgumentsSpaceRegion>(MS))
-    return ValMgr.getRegionValueSymbolVal(R, T);
+    return ValMgr.getRegionValueSymbolVal(R);
 
   if (isa<GlobalsSpaceRegion>(MS)) {
     if (VD->isFileVarDecl())
-      return ValMgr.getRegionValueSymbolVal(R, T);
+      return ValMgr.getRegionValueSymbolVal(R);
 
     if (T->isIntegerType())
       return ValMgr.makeIntVal(0, T);
@@ -1293,7 +1293,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
   QualType valTy = R->getValueType(getContext());
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolVal(R, valTy);
+  return ValMgr.getRegionValueSymbolVal(R);
 }
 
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {

@@ -97,7 +97,7 @@ SVal FlatStoreManager::RetrieveRegionWithNoBinding(const MemRegion *R,
   if (R->hasStackNonParametersStorage())
     return UndefinedVal();
   else
-    return ValMgr.getRegionValueSymbolVal(R, T);
+    return ValMgr.getRegionValueSymbolVal(cast<TypedRegion>(R));
 }
 
 Store FlatStoreManager::Bind(Store store, Loc L, SVal val) {
