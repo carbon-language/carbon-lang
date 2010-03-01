@@ -1665,8 +1665,43 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         NodeToMatch->dump(CurDAG);
         errs() << '\n');
   
-  // Interpreter starts at opcode #0.
+  // Determine where to start the interpreter.  Normally we start at opcode #0,
+  // but if the state machine starts with an OPC_SwitchOpcode, then we
+  // accelerate the first lookup (which is guaranteed to be hot) with the
+  // OpcodeOffset table.
   unsigned MatcherIndex = 0;
+  
+  if (!OpcodeOffset.empty()) {
+    // Already computed the OpcodeOffset table, just index into it.
+    if (N.getOpcode() < OpcodeOffset.size())
+      MatcherIndex = OpcodeOffset[N.getOpcode()];
+    DEBUG(errs() << "  Initial Opcode index to " << MatcherIndex << "\n");
+
+  } else if (MatcherTable[0] == OPC_SwitchOpcode) {
+    // Otherwise, the table isn't computed, but the state machine does start
+    // with an OPC_SwitchOpcode instruction.  Populate the table now, since this
+    // is the first time we're selecting an instruction.
+    unsigned Idx = 1;
+    while (1) {
+      // Get the size of this case.
+      unsigned CaseSize = MatcherTable[Idx++];
+      if (CaseSize & 128)
+        CaseSize = GetVBR(CaseSize, MatcherTable, Idx);
+      if (CaseSize == 0) break;
+
+      // Get the opcode, add the index to the table.
+      unsigned Opc = MatcherTable[Idx++];
+      if (Opc >= OpcodeOffset.size())
+        OpcodeOffset.resize((Opc+1)*2);
+      OpcodeOffset[Opc] = Idx;
+      Idx += CaseSize;
+    }
+
+    // Okay, do the lookup for the first opcode.
+    if (N.getOpcode() < OpcodeOffset.size())
+      MatcherIndex = OpcodeOffset[N.getOpcode()];
+  }
+  
   while (1) {
     assert(MatcherIndex < TableSize && "Invalid index");
     BuiltinOpcodes Opcode = (BuiltinOpcodes)MatcherTable[MatcherIndex++];

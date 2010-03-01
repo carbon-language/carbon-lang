@@ -245,6 +245,10 @@ private:
   /// one preferred by the target.
   ///
   ScheduleDAGSDNodes *CreateScheduler();
+  
+  /// OpcodeOffset - This is a cache used to dispatch efficiently into isel
+  /// state machines that start with a OPC_SwitchOpcode node.
+  std::vector<unsigned> OpcodeOffset;
 };
 
 }
