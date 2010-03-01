@@ -16,7 +16,7 @@
 
 namespace llvm {
   
-// Invariant opcodes: All instruction sets have these as their low opcodes.
+/// Invariant opcodes: All instruction sets have these as their low opcodes.
 namespace TargetOpcode {
   enum { 
     PHI = 0,
@@ -63,7 +63,7 @@ namespace TargetOpcode {
     /// the copy are emitted with the TargetInstrInfo::copyRegToReg hook.
     COPY_TO_REGCLASS = 10,
     
-    // DBG_VALUE - a mapping of the llvm.dbg.value intrinsic
+    /// DBG_VALUE - a mapping of the llvm.dbg.value intrinsic
     DBG_VALUE = 11
   };
 } // end namespace TargetOpcode
