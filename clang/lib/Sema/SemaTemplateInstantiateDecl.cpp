@@ -491,6 +491,9 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   Owner->addDecl(Enum);
   Enum->startDefinition();
 
+  if (D->getDeclContext()->isFunctionOrMethod())
+    SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Enum);
+    
   llvm::SmallVector<Sema::DeclPtrTy, 4> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
@@ -530,6 +533,12 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
       Enum->addDecl(EnumConst);
       Enumerators.push_back(Sema::DeclPtrTy::make(EnumConst));
       LastEnumConst = EnumConst;
+      
+      if (D->getDeclContext()->isFunctionOrMethod()) {
+        // If the enumeration is within a function or method, record the enum
+        // constant as a local.
+        SemaRef.CurrentInstantiationScope->InstantiatedLocal(*EC, EnumConst);
+      }
     }
   }
 

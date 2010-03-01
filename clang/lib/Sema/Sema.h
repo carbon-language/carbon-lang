@@ -3433,7 +3433,7 @@ public:
     
     void InstantiatedLocal(const Decl *D, Decl *Inst) {
       Decl *&Stored = LocalDecls[D];
-      assert(!Stored && "Already instantiated this local");
+      assert((!Stored || Stored == Inst) && "Already instantiated this local");
       Stored = Inst;
     }
   };
