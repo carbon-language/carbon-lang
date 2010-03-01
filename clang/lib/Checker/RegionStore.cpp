@@ -975,8 +975,10 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   if (isa<AllocaRegion>(MR) || isa<SymbolicRegion>(MR))
     MR = GetElementZeroRegion(MR, T);
 
-  if (isa<CodeTextRegion>(MR))
+  if (isa<CodeTextRegion>(MR)) {
+    assert(0 && "Why load from a code text region?");
     return UnknownVal();
+  }
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
