@@ -233,7 +233,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   bool Redeclaration = false;
   // FIXME: having to fake up a LookupResult is dumb.
   LookupResult Previous(SemaRef, Var->getDeclName(), Var->getLocation(),
-                        Sema::LookupOrdinaryName);
+                        Sema::LookupOrdinaryName, Sema::ForRedeclaration);
   if (D->isStaticDataMember())
     SemaRef.LookupQualifiedName(Previous, Owner, false);
   SemaRef.CheckVariableDeclaration(Var, Previous, Redeclaration);
