@@ -569,6 +569,16 @@ namespace llvm {
     ///
     unsigned getSize() const;
 
+    /// isSpillable - Can this interval be spilled?
+    bool isSpillable() const {
+      return weight != HUGE_VALF;
+    }
+
+    /// markNotSpillable - Mark interval as not spillable
+    void markNotSpillable() {
+      weight = HUGE_VALF;
+    }
+
     /// ComputeJoinedWeight - Set the weight of a live interval after
     /// Other has been merged into it.
     void ComputeJoinedWeight(const LiveInterval &Other);

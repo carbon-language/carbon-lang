@@ -70,9 +70,8 @@ namespace llvm {
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass(&ID) {}
 
-    static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
-      return (isDef + isUse) * powf(10.0F, (float)loopDepth);
-    }
+    // Calculate the spill weight to assign to a single instruction.
+    static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth);
 
     // After summing the spill weights of all defs and uses, the final weight
     // should be normalized, dividing the weight of the interval by its size.

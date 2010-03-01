@@ -1340,11 +1340,9 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     MachineBasicBlock *MBB = MI->getParent();
 
     if (ImpUse && MI != ReMatDefMI) {
-      // Re-matting an instruction with virtual register use. Update the
-      // register interval's spill weight to HUGE_VALF to prevent it from
-      // being spilled.
-      LiveInterval &ImpLi = getInterval(ImpUse);
-      ImpLi.weight = HUGE_VALF;
+      // Re-matting an instruction with virtual register use. Prevent interval
+      // from being spilled.
+      getInterval(ImpUse).markNotSpillable();
     }
 
     unsigned MBBId = MBB->getNumber();
@@ -1396,7 +1394,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     LiveInterval &nI = getOrCreateInterval(NewVReg);
     if (!TrySplit) {
       // The spill weight is now infinity as it cannot be spilled again.
-      nI.weight = HUGE_VALF;
+      nI.markNotSpillable();
       continue;
     }
 
@@ -1544,6 +1542,22 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
   }
 }
 
+float
+LiveIntervals::getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
+  // Limit the loop depth ridiculousness.
+  if (loopDepth > 200)
+    loopDepth = 200;
+
+  // The loop depth is used to roughly estimate the number of times the
+  // instruction is executed. Something like 10^d is simple, but will quickly
+  // overflow a float. This expression behaves like 10^d for small d, but is
+  // more tempered for large d. At d=200 we get 6.7e33 which leaves a bit of
+  // headroom before overflow.
+  float lc = powf(1 + (100.0f / (loopDepth+10)), (float)loopDepth);
+
+  return (isDef + isUse) * lc;
+}
+
 void
 LiveIntervals::normalizeSpillWeights(std::vector<LiveInterval*> &NewLIs) {
   for (unsigned i = 0, e = NewLIs.size(); i != e; ++i)
@@ -1558,8 +1572,7 @@ addIntervalsForSpillsFast(const LiveInterval &li,
 
   std::vector<LiveInterval*> added;
 
-  assert(li.weight != HUGE_VALF &&
-         "attempt to spill already spilled interval!");
+  assert(li.isSpillable() && "attempt to spill already spilled interval!");
 
   DEBUG({
       dbgs() << "\t\t\t\tadding intervals for spills for interval: ";
@@ -1595,10 +1608,7 @@ addIntervalsForSpillsFast(const LiveInterval &li,
       
       // create a new register for this spill
       LiveInterval &nI = getOrCreateInterval(NewVReg);
-
-      // the spill weight is now infinity as it
-      // cannot be spilled again
-      nI.weight = HUGE_VALF;
+      nI.markNotSpillable();
       
       // Rewrite register operands to use the new vreg.
       for (SmallVectorImpl<unsigned>::iterator I = Indices.begin(),
@@ -1652,8 +1662,7 @@ addIntervalsForSpills(const LiveInterval &li,
   if (EnableFastSpilling)
     return addIntervalsForSpillsFast(li, loopInfo, vrm);
   
-  assert(li.weight != HUGE_VALF &&
-         "attempt to spill already spilled interval!");
+  assert(li.isSpillable() && "attempt to spill already spilled interval!");
 
   DEBUG({
       dbgs() << "\t\t\t\tadding intervals for spills for interval: ";
@@ -1920,11 +1929,10 @@ addIntervalsForSpills(const LiveInterval &li,
             unsigned ImpUse = getReMatImplicitUse(li, ReMatDefMI);
             if (ImpUse) {
               // Re-matting an instruction with virtual register use. Add the
-              // register as an implicit use on the use MI and update the register
-              // interval's spill weight to HUGE_VALF to prevent it from being
-              // spilled.
+              // register as an implicit use on the use MI and mark the register
+              // interval as unspillable.
               LiveInterval &ImpLi = getInterval(ImpUse);
-              ImpLi.weight = HUGE_VALF;
+              ImpLi.markNotSpillable();
               MI->addOperand(MachineOperand::CreateReg(ImpUse, false, true));
             }
           }
