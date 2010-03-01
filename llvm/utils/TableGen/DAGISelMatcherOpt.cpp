@@ -67,7 +67,23 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
       return ContractNodes(MatcherPtr, CGP);
     }
 
-  // FIXME: Handle OPC_MarkFlagResults.
+  // Turn EmitNode->MarkFlagResults->CompleteMatch into
+  // MarkFlagResults->EmitNode->CompleteMatch when we can to encourage
+  // MorphNodeTo formation.  This is safe because MarkFlagResults never refers
+  // to the root of the pattern.
+  if (isa<EmitNodeMatcher>(N) && isa<MarkFlagResultsMatcher>(N->getNext()) &&
+      isa<CompleteMatchMatcher>(N->getNext()->getNext())) {
+    // Unlink the two nodes from the list.
+    Matcher *EmitNode = MatcherPtr.take();
+    Matcher *MFR = EmitNode->takeNext();
+    Matcher *Tail = MFR->takeNext();
+        
+    // Relink them.
+    MatcherPtr.reset(MFR);
+    MFR->setNext(EmitNode);
+    EmitNode->setNext(Tail);
+    return ContractNodes(MatcherPtr, CGP);
+  }
 
   // Turn EmitNode->CompleteMatch into MorphNodeTo if we can.
   if (EmitNodeMatcher *EN = dyn_cast<EmitNodeMatcher>(N))
