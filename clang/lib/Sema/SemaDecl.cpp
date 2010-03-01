@@ -4535,8 +4535,9 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   bool isStdBadAlloc = false;
   bool Invalid = false;
 
-  RedeclarationKind Redecl = (TUK != TUK_Reference ? ForRedeclaration
-                                                   : NotForRedeclaration);
+  RedeclarationKind Redecl = ForRedeclaration;
+  if (TUK == TUK_Friend || TUK == TUK_Reference)
+    Redecl = NotForRedeclaration;
 
   LookupResult Previous(*this, Name, NameLoc, LookupTagName, Redecl);
 
