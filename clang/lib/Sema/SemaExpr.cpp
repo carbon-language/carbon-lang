@@ -393,10 +393,10 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 /// variables defined outside the block) or false if this is not needed (e.g.
 /// for values inside the block or for globals).
 ///
-/// This also keeps the 'hasBlockDeclRefExprs' in the BlockSemaInfo records
+/// This also keeps the 'hasBlockDeclRefExprs' in the BlockScopeInfo records
 /// up-to-date.
 ///
-static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
+static bool ShouldSnapshotBlockValueReference(BlockScopeInfo *CurBlock,
                                               ValueDecl *VD) {
   // If the value is defined inside the block, we couldn't snapshot it even if
   // we wanted to.
@@ -421,7 +421,7 @@ static bool ShouldSnapshotBlockValueReference(BlockSemaInfo *CurBlock,
   // which case that outer block doesn't get "hasBlockDeclRefExprs") or it may
   // be defined outside all of the current blocks (in which case the blocks do
   // all get the bit).  Walk the nesting chain.
-  for (BlockSemaInfo *NextBlock = CurBlock->PrevBlockInfo; NextBlock;
+  for (BlockScopeInfo *NextBlock = CurBlock->PrevBlockInfo; NextBlock;
        NextBlock = NextBlock->PrevBlockInfo) {
     // If we found the defining block for the variable, don't mark the block as
     // having a reference outside it.
@@ -6723,7 +6723,7 @@ Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
 /// ActOnBlockStart - This callback is invoked when a block literal is started.
 void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   // Analyze block parameters.
-  BlockSemaInfo *BSI = new BlockSemaInfo();
+  BlockScopeInfo *BSI = new BlockScopeInfo();
 
   // Add BSI to CurBlock.
   BSI->PrevBlockInfo = CurBlock;
@@ -6846,7 +6846,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 /// is invoked to pop the information about the block from the action impl.
 void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
   // Ensure that CurBlock is deleted.
-  llvm::OwningPtr<BlockSemaInfo> CC(CurBlock);
+  llvm::OwningPtr<BlockScopeInfo> CC(CurBlock);
 
   CurFunctionNeedsScopeChecking = CurBlock->SavedFunctionNeedsScopeChecking;
 
@@ -6865,7 +6865,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     Diag(CaretLoc, diag::err_blocks_disable);
 
   // Ensure that CurBlock is deleted.
-  llvm::OwningPtr<BlockSemaInfo> BSI(CurBlock);
+  llvm::OwningPtr<BlockScopeInfo> BSI(CurBlock);
 
   PopDeclContext();
 

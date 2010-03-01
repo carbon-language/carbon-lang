@@ -108,9 +108,30 @@ namespace clang {
   class TargetAttributesSema;
   class ADLResult;
 
-/// BlockSemaInfo - When a block is being parsed, this contains information
-/// about the block.  It is pointed to from Sema::CurBlock.
-struct BlockSemaInfo {
+/// \brief Retains information about a function, method, or block that is 
+/// currently being parsed.
+struct FunctionScopeInfo {
+  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
+  /// it (which acts like the label decl in some ways).  Forward referenced
+  /// labels have a LabelStmt created for them with a null location & SubStmt.
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  
+  /// SwitchStack - This is the current set of active switch statements in the
+  /// block.
+  llvm::SmallVector<SwitchStmt*, 8> SwitchStack;  
+  
+  /// \brief Whether this scope information structure defined information for
+  /// a block.
+  bool IsBlockInfo;
+  
+  FunctionScopeInfo() : IsBlockInfo(false) { }
+  
+  static bool classof(const FunctionScopeInfo *FSI) { return true; }
+};
+  
+  
+/// \brief Retains information about a block that is currently being parsed.
+struct BlockScopeInfo : FunctionScopeInfo {
   llvm::SmallVector<ParmVarDecl*, 8> Params;
   bool hasPrototype;
   bool isVariadic;
@@ -126,22 +147,16 @@ struct BlockSemaInfo {
   /// return types, if any, in the block body.
   QualType ReturnType;
 
-  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
-  /// it (which acts like the label decl in some ways).  Forward referenced
-  /// labels have a LabelStmt created for them with a null location & SubStmt.
-  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
-
-  /// SwitchStack - This is the current set of active switch statements in the
-  /// block.
-  llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
-
   /// SavedFunctionNeedsScopeChecking - This is the value of
   /// CurFunctionNeedsScopeChecking at the point when the block started.
   bool SavedFunctionNeedsScopeChecking;
 
-  /// PrevBlockInfo - If this is nested inside another block, this points
-  /// to the outer block.
-  BlockSemaInfo *PrevBlockInfo;
+  BlockScopeInfo *PrevBlockInfo;
+  
+  BlockScopeInfo() : FunctionScopeInfo() { IsBlockInfo = true; }
+  
+  static bool classof(const FunctionScopeInfo *FSI) { return FSI->IsBlockInfo; }
+  static bool classof(const BlockScopeInfo *BSI) { return true; }
 };
 
 /// \brief Holds a QualType and a TypeSourceInfo* that came out of a declarator
@@ -202,7 +217,7 @@ public:
 
   /// CurBlock - If inside of a block definition, this contains a pointer to
   /// the active block object that represents it.
-  BlockSemaInfo *CurBlock;
+  BlockScopeInfo *CurBlock;
 
   /// PackContext - Manages the stack for #pragma pack. An alignment
   /// of 0 indicates default alignment.
