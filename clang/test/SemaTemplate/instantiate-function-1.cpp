@@ -177,9 +177,11 @@ template<typename T> struct IndirectGoto0 {
     goto *x; // expected-error{{incompatible}}
 
   prior:
-    T prior_label = &&prior;
+    T prior_label;
+    prior_label = &&prior;
 
-    T later_label = &&later;
+    T later_label;
+    later_label = &&later;
 
   later:
     (void)(1+1);
