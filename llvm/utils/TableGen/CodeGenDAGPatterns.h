@@ -476,15 +476,16 @@ public:
   PatternToMatch(ListInit *preds,
                  TreePatternNode *src, TreePatternNode *dst,
                  const std::vector<Record*> &dstregs,
-                 unsigned complexity):
-    Predicates(preds), SrcPattern(src), DstPattern(dst), Dstregs(dstregs),
-    AddedComplexity(complexity) {}
+                 unsigned complexity, unsigned uid)
+    : Predicates(preds), SrcPattern(src), DstPattern(dst),
+      Dstregs(dstregs), AddedComplexity(complexity), ID(uid) {}
 
   ListInit        *Predicates;  // Top level predicate conditions to match.
   TreePatternNode *SrcPattern;  // Source pattern to match.
   TreePatternNode *DstPattern;  // Resulting pattern.
   std::vector<Record*> Dstregs; // Physical register defs being matched.
   unsigned         AddedComplexity; // Add to matching pattern complexity.
+  unsigned         ID;          // Unique ID for the record.
 
   ListInit        *getPredicates() const { return Predicates; }
   TreePatternNode *getSrcPattern() const { return SrcPattern; }

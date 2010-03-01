@@ -2110,7 +2110,8 @@ void CodeGenDAGPatterns::ParseInstructions() {
                                      SrcPattern,
                                      TheInst.getResultPattern(),
                                      TheInst.getImpResults(),
-                                     Instr->getValueAsInt("AddedComplexity")));
+                                     Instr->getValueAsInt("AddedComplexity"),
+                                     Instr->getID()));
   }
 }
 
@@ -2320,7 +2321,8 @@ void CodeGenDAGPatterns::ParsePatterns() {
                  PatternToMatch(Patterns[i]->getValueAsListInit("Predicates"),
                                 Pattern->getTree(0),
                                 Temp.getOnlyTree(), InstImpResults,
-                                Patterns[i]->getValueAsInt("AddedComplexity")));
+                                Patterns[i]->getValueAsInt("AddedComplexity"),
+                                Patterns[i]->getID()));
   }
 }
 
@@ -2614,7 +2616,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
         push_back(PatternToMatch(PatternsToMatch[i].getPredicates(),
                                  Variant, PatternsToMatch[i].getDstPattern(),
                                  PatternsToMatch[i].getDstRegs(),
-                                 PatternsToMatch[i].getAddedComplexity()));
+                                 PatternsToMatch[i].getAddedComplexity(),
+                                 Record::getNewUID()));
     }
 
     DEBUG(errs() << "\n");

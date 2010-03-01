@@ -1225,6 +1225,10 @@ public:
     ID(LastID++), Name(N), Loc(loc) {}
   ~Record() {}
 
+  
+  static unsigned getNewUID() { return LastID++; }
+    
+    
   unsigned getID() const { return ID; }
 
   const std::string &getName() const { return Name; }

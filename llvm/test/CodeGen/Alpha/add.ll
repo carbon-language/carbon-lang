@@ -4,9 +4,8 @@
 ; RUN: grep {	addl} %t.s | count 2
 ; RUN: grep {	addq} %t.s | count 2
 ; RUN: grep {	subl} %t.s | count 2
-; RUN: grep {	subq} %t.s | count 1
+; RUN: grep {	subq} %t.s | count 2
 ;
-; RUN: grep {lda \$0,-100(\$16)} %t.s | count 1
 ; RUN: grep {s4addl} %t.s | count 2
 ; RUN: grep {s8addl} %t.s | count 2
 ; RUN: grep {s4addq} %t.s | count 2

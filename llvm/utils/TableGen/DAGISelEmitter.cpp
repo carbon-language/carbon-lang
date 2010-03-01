@@ -174,8 +174,14 @@ struct PatternSortingPredicate {
     if (LHSCost < RHSCost) return true;
     if (LHSCost > RHSCost) return false;
     
-    return getResultPatternSize(LHS->getDstPattern(), CGP) <
-           getResultPatternSize(RHS->getDstPattern(), CGP);
+    unsigned LHSPatSize = getResultPatternSize(LHS->getDstPattern(), CGP);
+    unsigned RHSPatSize = getResultPatternSize(RHS->getDstPattern(), CGP);
+    if (LHSPatSize < RHSPatSize) return true;
+    if (LHSPatSize > RHSPatSize) return false;
+    
+    // Sort based on the UID of the pattern, giving us a deterministic ordering.
+    assert(LHS->ID != RHS->ID);
+    return LHS->ID < RHS->ID;
   }
 };
 }
