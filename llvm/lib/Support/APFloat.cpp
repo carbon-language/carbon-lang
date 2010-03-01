@@ -638,7 +638,8 @@ void APFloat::makeNaN(bool SNaN, bool Negative, const APInt *fill)
   if (!fill || fill->getNumWords() < numParts)
     APInt::tcSet(significand, 0, numParts);
   if (fill) {
-    APInt::tcAssign(significand, fill->getRawData(), partCount());
+    APInt::tcAssign(significand, fill->getRawData(),
+                    std::min(fill->getNumWords(), numParts));
 
     // Zero out the excess bits of the significand.
     unsigned bitsToPreserve = semantics->precision - 1;
