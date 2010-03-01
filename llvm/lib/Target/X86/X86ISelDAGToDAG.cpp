@@ -12,15 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Force NDEBUG on in any optimized build on Darwin.
-//
-// FIXME: This is a huge hack, to work around ridiculously awful compile times
-// on this file with gcc-4.2 on Darwin, in Release mode.
-#if (!defined(__llvm__) && defined(__APPLE__) && \
-     defined(__OPTIMIZE__) && !defined(NDEBUG))
-#define NDEBUG
-#endif
-
 #define DEBUG_TYPE "x86-isel"
 #include "X86.h"
 #include "X86InstrBuilder.h"
