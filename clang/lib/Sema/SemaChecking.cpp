@@ -506,6 +506,7 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   }
 
   // Determine whether the current function is variadic or not.
+  BlockScopeInfo *CurBlock = getCurBlock();
   bool isVariadic;
   if (CurBlock)
     isVariadic = CurBlock->isVariadic;

@@ -129,6 +129,9 @@ private:
   typedef llvm::SmallVector<Action::DeclPtrTy, 2> UsingDirectivesTy;
   UsingDirectivesTy UsingDirectives;
 
+  /// \brief The number of errors at the start of the given scope.
+  unsigned NumErrorsAtStart;
+  
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
@@ -208,6 +211,10 @@ public:
   void* getEntity() const { return Entity; }
   void setEntity(void *E) { Entity = E; }
 
+  /// \brief Retrieve the number of errors that had been emitted when we
+  /// entered this scope.
+  unsigned getNumErrorsAtStart() const { return NumErrorsAtStart; }
+  
   /// isClassScope - Return true if this scope is a class/struct/union scope.
   bool isClassScope() const {
     return (getFlags() & Scope::ClassScope);
@@ -300,6 +307,7 @@ public:
     DeclsInScope.clear();
     UsingDirectives.clear();
     Entity = 0;
+    NumErrorsAtStart = 0;
   }
 };
 

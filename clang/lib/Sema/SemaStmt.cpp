@@ -1036,6 +1036,7 @@ Action::OwningStmtResult
 Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // If this is the first return we've seen in the block, infer the type of
   // the block from it.
+  BlockScopeInfo *CurBlock = getCurBlock();
   if (CurBlock->ReturnType.isNull()) {
     if (RetValExp) {
       // Don't call UsualUnaryConversions(), since we don't want to do
@@ -1130,7 +1131,7 @@ static bool IsReturnCopyElidable(ASTContext &Ctx, QualType RetType,
 Action::OwningStmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
   Expr *RetValExp = rex.takeAs<Expr>();
-  if (CurBlock)
+  if (getCurBlock())
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 
   QualType FnRetType;
@@ -1500,7 +1501,7 @@ Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtArg Body) {
 Action::OwningStmtResult
 Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc,
                          StmtArg Try, StmtArg Catch, StmtArg Finally) {
-  CurFunctionNeedsScopeChecking = true;
+  FunctionNeedsScopeChecking() = true;
   return Owned(new (Context) ObjCAtTryStmt(AtLoc, Try.takeAs<Stmt>(),
                                            Catch.takeAs<Stmt>(),
                                            Finally.takeAs<Stmt>()));
@@ -1533,7 +1534,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
 Action::OwningStmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
                                   StmtArg SynchBody) {
-  CurFunctionNeedsScopeChecking = true;
+  FunctionNeedsScopeChecking() = true;
 
   // Make sure the expression type is an ObjC pointer or "void *".
   Expr *SyncExpr = static_cast<Expr*>(SynchExpr.get());
@@ -1643,7 +1644,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
   // Neither of these are explicitly forbidden, but every compiler detects them
   // and warns.
 
-  CurFunctionNeedsScopeChecking = true;
+  FunctionNeedsScopeChecking() = true;
   RawHandlers.release();
   return Owned(CXXTryStmt::Create(Context, TryLoc,
                                   static_cast<Stmt*>(TryBlock.release()),

@@ -26,7 +26,18 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
-                                       
+
+FunctionScopeInfo::~FunctionScopeInfo() { }
+
+void FunctionScopeInfo::Clear(unsigned NumErrors) {
+  NeedsScopeChecking = false;
+  LabelMap.clear();
+  SwitchStack.clear();
+  NumErrorsAtStartOfFunction = NumErrors;
+}
+
+BlockScopeInfo::~BlockScopeInfo() { }
+
 static inline RecordDecl *CreateStructDecl(ASTContext &C, const char *Name) {
   if (C.getLangOptions().CPlusPlus)
     return CXXRecordDecl::Create(C, TagDecl::TK_struct,
@@ -116,7 +127,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
-    CurBlock(0), PackContext(0), ParsingDeclDepth(0),
+    PackContext(0), TopFunctionScope(0), ParsingDeclDepth(0),
     IdResolver(pp.getLangOptions()), StdNamespace(0), StdBadAlloc(0),
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
@@ -127,8 +138,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
 
-  NumErrorsAtStartOfFunction = 0;
-  
   // Tell diagnostics how to render things from the AST library.
   PP.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument, 
                                        &Context);
@@ -140,6 +149,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 Sema::~Sema() {
   if (PackContext) FreePackedContext();
   delete TheTargetAttributesSema;
+  while (!FunctionScopes.empty())
+    PopFunctionOrBlockScope();
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
@@ -342,6 +353,51 @@ Sema::Diag(SourceLocation Loc, const PartialDiagnostic& PD) {
   PD.Emit(Builder);
 
   return Builder;
+}
+
+
+/// \brief Enter a new function scope
+void Sema::PushFunctionScope() {
+  if (FunctionScopes.empty()) {
+    // Use the "top" function scope rather than having to allocate memory for
+    // a new scope.
+    TopFunctionScope.Clear(getDiagnostics().getNumErrors());
+    FunctionScopes.push_back(&TopFunctionScope);
+    return;
+  }
+  
+  FunctionScopes.push_back(
+                      new FunctionScopeInfo(getDiagnostics().getNumErrors()));
+}
+
+void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
+  FunctionScopes.push_back(new BlockScopeInfo(getDiagnostics().getNumErrors(),
+                                              BlockScope, Block));
+}
+
+void Sema::PopFunctionOrBlockScope() {
+  if (FunctionScopes.back() != &TopFunctionScope)
+    delete FunctionScopes.back();
+  else
+    TopFunctionScope.Clear(getDiagnostics().getNumErrors());
+  
+  FunctionScopes.pop_back();
+}
+
+/// \brief Determine whether any errors occurred within this function/method/
+/// block.
+bool Sema::hasAnyErrorsInThisFunction() const {
+  unsigned NumErrors = TopFunctionScope.NumErrorsAtStartOfFunction;
+  if (!FunctionScopes.empty())
+    NumErrors = FunctionScopes.back()->NumErrorsAtStartOfFunction;
+  return NumErrors != getDiagnostics().getNumErrors();
+}
+
+BlockScopeInfo *Sema::getCurBlock() {
+  if (FunctionScopes.empty())
+    return 0;
+  
+  return dyn_cast<BlockScopeInfo>(FunctionScopes.back());  
 }
 
 void Sema::ActOnComment(SourceRange Comment) {

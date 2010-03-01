@@ -274,6 +274,7 @@ void Parser::EnterScope(unsigned ScopeFlags) {
   } else {
     CurScope = new Scope(CurScope, ScopeFlags);
   }
+  CurScope->NumErrorsAtStart = Diags.getNumErrors();
 }
 
 /// ExitScope - Pop a scope off the scope stack.

@@ -553,8 +553,8 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     if (!D->getDeclName()) continue;
 
     // Diagnose unused variables in this scope.
-    if (ShouldDiagnoseUnusedDecl(D) &&
-        NumErrorsAtStartOfFunction == getDiagnostics().getNumErrors())
+    if (ShouldDiagnoseUnusedDecl(D) && 
+        S->getNumErrorsAtStart() == getDiagnostics().getNumErrors())
       Diag(D->getLocation(), diag::warn_unused_variable) << D->getDeclName();
     
     // Remove this name from our lexical scope.
@@ -2180,7 +2180,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // then it shall have block scope.
   QualType T = NewTD->getUnderlyingType();
   if (T->isVariablyModifiedType()) {
-    CurFunctionNeedsScopeChecking = true;
+    FunctionNeedsScopeChecking() = true;
 
     if (S->getFnParent() == 0) {
       bool SizeIsNegative;
@@ -2507,7 +2507,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
       // which may impact compile time.  See if we can find a better solution
       // to this, perhaps only checking functions that contain gotos in C++?
       (LangOpts.CPlusPlus && NewVD->hasLocalStorage()))
-    CurFunctionNeedsScopeChecking = true;
+    FunctionNeedsScopeChecking() = true;
 
   if ((isVM && NewVD->hasLinkage()) ||
       (T->isVariableArrayType() && NewVD->hasGlobalStorage())) {
@@ -4084,8 +4084,8 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   else
     FD = cast<FunctionDecl>(D.getAs<Decl>());
 
-  CurFunctionNeedsScopeChecking = false;
-  NumErrorsAtStartOfFunction = getDiagnostics().getNumErrors();
+  // Enter a new function scope
+  PushFunctionScope();
 
   // See if this is a redefinition.
   // But don't complain if we're in GNU89 mode and the previous definition
@@ -4217,11 +4217,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
 
   // Verify and clean out per-function state.
 
-  assert(&getLabelMap() == &FunctionLabelMap && "Didn't pop block right?");
-
   // Check goto/label use.
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
-       I = FunctionLabelMap.begin(), E = FunctionLabelMap.end(); I != E; ++I) {
+       I = getLabelMap().begin(), E = getLabelMap().end(); I != E; ++I) {
     LabelStmt *L = I->second;
 
     // Verify that we have no forward references left.  If so, there was a goto
@@ -4257,25 +4255,34 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     Elements.push_back(L);
     Compound->setStmts(Context, &Elements[0], Elements.size());
   }
-  FunctionLabelMap.clear();
 
-  if (!Body) return D;
+  if (Body) {
+    CheckUnreachable(AC);
 
-  CheckUnreachable(AC);
-
+    // C++ constructors that have function-try-blocks can't have return
+    // statements in the handlers of that block. (C++ [except.handle]p14)
+    // Verify this.
+    if (FD && isa<CXXConstructorDecl>(FD) && isa<CXXTryStmt>(Body))
+      DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
+    
   // Verify that that gotos and switch cases don't jump into scopes illegally.
-  if (CurFunctionNeedsScopeChecking &&
-      NumErrorsAtStartOfFunction == getDiagnostics().getNumErrors())
-    DiagnoseInvalidJumps(Body);
+  // Verify that that gotos and switch cases don't jump into scopes illegally.
+    if (FunctionNeedsScopeChecking() && !hasAnyErrorsInThisFunction())
+      DiagnoseInvalidJumps(Body);
 
-  // C++ constructors that have function-try-blocks can't have return
-  // statements in the handlers of that block. (C++ [except.handle]p14)
-  // Verify this.
-  if (FD && isa<CXXConstructorDecl>(FD) && isa<CXXTryStmt>(Body))
-    DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
-
-  if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
-    MarkBaseAndMemberDestructorsReferenced(Destructor);
+    if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
+      MarkBaseAndMemberDestructorsReferenced(Destructor);
+    
+    // If any errors have occurred, clear out any temporaries that may have
+    // been leftover. This ensures that these temporaries won't be picked up for
+    // deletion in some later function.
+    if (PP.getDiagnostics().hasErrorOccurred())
+      ExprTemporaries.clear();
+    
+    assert(ExprTemporaries.empty() && "Leftover temporaries in function");
+  }
+  
+  PopFunctionOrBlockScope();
   
   // If any errors have occurred, clear out any temporaries that may have
   // been leftover. This ensures that these temporaries won't be picked up for
@@ -4283,7 +4290,6 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   if (getDiagnostics().hasErrorOccurred())
     ExprTemporaries.clear();
   
-  assert(ExprTemporaries.empty() && "Leftover temporaries in function");
   return D;
 }
 

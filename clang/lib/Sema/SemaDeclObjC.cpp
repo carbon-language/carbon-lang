@@ -49,9 +49,6 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
   if (!MDecl)
     return;
 
-  CurFunctionNeedsScopeChecking = false;
-  NumErrorsAtStartOfFunction = getDiagnostics().getNumErrors();
-
   // Allow the rest of sema to find private method decl implementations.
   if (MDecl->isInstanceMethod())
     AddInstanceMethodToGlobalPool(MDecl);
@@ -60,7 +57,8 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
 
   // Allow all of Sema to see that we are entering a method definition.
   PushDeclContext(FnBodyScope, MDecl);
-
+  PushFunctionScope();
+  
   // Create Decl objects for each parameter, entrring them in the scope for
   // binding to their use.
 
@@ -1989,7 +1987,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   // Make sure we can establish a context for the method.
   if (!ClassDecl) {
     Diag(MethodLoc, diag::error_missing_method_context);
-    FunctionLabelMap.clear();
+    getLabelMap().clear();
     return DeclPtrTy();
   }
   QualType resultDeclType;

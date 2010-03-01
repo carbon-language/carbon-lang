@@ -396,7 +396,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 /// This also keeps the 'hasBlockDeclRefExprs' in the BlockScopeInfo records
 /// up-to-date.
 ///
-static bool ShouldSnapshotBlockValueReference(BlockScopeInfo *CurBlock,
+static bool ShouldSnapshotBlockValueReference(Sema &S, BlockScopeInfo *CurBlock,
                                               ValueDecl *VD) {
   // If the value is defined inside the block, we couldn't snapshot it even if
   // we wanted to.
@@ -421,8 +421,12 @@ static bool ShouldSnapshotBlockValueReference(BlockScopeInfo *CurBlock,
   // which case that outer block doesn't get "hasBlockDeclRefExprs") or it may
   // be defined outside all of the current blocks (in which case the blocks do
   // all get the bit).  Walk the nesting chain.
-  for (BlockScopeInfo *NextBlock = CurBlock->PrevBlockInfo; NextBlock;
-       NextBlock = NextBlock->PrevBlockInfo) {
+  for (unsigned I = S.FunctionScopes.size() - 1; I; --I) {
+    BlockScopeInfo *NextBlock = dyn_cast<BlockScopeInfo>(S.FunctionScopes[I]);
+    
+    if (!NextBlock)
+      continue;
+    
     // If we found the defining block for the variable, don't mark the block as
     // having a reference outside it.
     if (NextBlock->TheDecl == VD->getDeclContext())
@@ -1597,7 +1601,8 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   // We do not do this for things like enum constants, global variables, etc,
   // as they do not get snapshotted.
   //
-  if (CurBlock && ShouldSnapshotBlockValueReference(CurBlock, VD)) {
+  if (getCurBlock() && 
+      ShouldSnapshotBlockValueReference(*this, getCurBlock(), VD)) {
     if (VD->getType().getTypePtr()->isVariablyModifiedType()) {
       Diag(Loc, diag::err_ref_vm_type);
       Diag(D->getLocation(), diag::note_declared_at);
@@ -6722,30 +6727,16 @@ Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
 
 /// ActOnBlockStart - This callback is invoked when a block literal is started.
 void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
-  // Analyze block parameters.
-  BlockScopeInfo *BSI = new BlockScopeInfo();
-
-  // Add BSI to CurBlock.
-  BSI->PrevBlockInfo = CurBlock;
-  CurBlock = BSI;
-
-  BSI->ReturnType = QualType();
-  BSI->TheScope = BlockScope;
-  BSI->hasBlockDeclRefExprs = false;
-  BSI->hasPrototype = false;
-  BSI->SavedFunctionNeedsScopeChecking = CurFunctionNeedsScopeChecking;
-  BSI->SavedNumErrorsAtStartOfFunction = NumErrorsAtStartOfFunction;
-  CurFunctionNeedsScopeChecking = false;
-  NumErrorsAtStartOfFunction = getDiagnostics().getNumErrors();
-  
-  BSI->TheDecl = BlockDecl::Create(Context, CurContext, CaretLoc);
-  CurContext->addDecl(BSI->TheDecl);
-  PushDeclContext(BlockScope, BSI->TheDecl);
+  BlockDecl *Block = BlockDecl::Create(Context, CurContext, CaretLoc);
+  PushBlockScope(BlockScope, Block);
+  CurContext->addDecl(Block);
+  PushDeclContext(BlockScope, Block);
 }
 
 void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   assert(ParamInfo.getIdentifier()==0 && "block-id should have no identifier!");
-
+  BlockScopeInfo *CurBlock = getCurBlock();
+  
   if (ParamInfo.getNumTypeObjects() == 0
       || ParamInfo.getTypeObject(0).Kind != DeclaratorChunk::Function) {
     ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
@@ -6847,15 +6838,9 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 /// ActOnBlockError - If there is an error parsing a block, this callback
 /// is invoked to pop the information about the block from the action impl.
 void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
-  // Ensure that CurBlock is deleted.
-  llvm::OwningPtr<BlockScopeInfo> CC(CurBlock);
-
-  CurFunctionNeedsScopeChecking = CurBlock->SavedFunctionNeedsScopeChecking;
-  NumErrorsAtStartOfFunction = CurBlock->SavedNumErrorsAtStartOfFunction;
-
   // Pop off CurBlock, handle nested blocks.
   PopDeclContext();
-  CurBlock = CurBlock->PrevBlockInfo;
+  PopFunctionOrBlockScope();
   // FIXME: Delete the ParmVarDecl objects as well???
 }
 
@@ -6867,13 +6852,9 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   if (!LangOpts.Blocks)
     Diag(CaretLoc, diag::err_blocks_disable);
 
-  // Ensure that CurBlock is deleted.
-  llvm::OwningPtr<BlockScopeInfo> BSI(CurBlock);
+  BlockScopeInfo *BSI = cast<BlockScopeInfo>(FunctionScopes.back());
 
   PopDeclContext();
-
-  // Pop off CurBlock, handle nested blocks.
-  CurBlock = CurBlock->PrevBlockInfo;
 
   QualType RetTy = Context.VoidTy;
   if (!BSI->ReturnType.isNull())
@@ -6898,12 +6879,8 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   BlockTy = Context.getBlockPointerType(BlockTy);
 
   // If needed, diagnose invalid gotos and switches in the block.
-  if (CurFunctionNeedsScopeChecking &&
-      NumErrorsAtStartOfFunction == getDiagnostics().getNumErrors())
+  if (FunctionNeedsScopeChecking() && !hasAnyErrorsInThisFunction())
     DiagnoseInvalidJumps(static_cast<CompoundStmt*>(body.get()));
-  
-  CurFunctionNeedsScopeChecking = BSI->SavedFunctionNeedsScopeChecking;
-  NumErrorsAtStartOfFunction = BSI->SavedNumErrorsAtStartOfFunction;
 
   BSI->TheDecl->setBody(body.takeAs<CompoundStmt>());
 
@@ -6922,15 +6899,18 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     Diag(L->getIdentLoc(), diag::err_undeclared_label_use) << L->getName();
     Good = false;
   }
-  BSI->LabelMap.clear();
-  if (!Good)
+  if (!Good) {
+    PopFunctionOrBlockScope();
     return ExprError();
-
+  }
+  
   AnalysisContext AC(BSI->TheDecl);
   CheckFallThroughForBlock(BlockTy, BSI->TheDecl->getBody(), AC);
   CheckUnreachable(AC);
-  return Owned(new (Context) BlockExpr(BSI->TheDecl, BlockTy,
-                                       BSI->hasBlockDeclRefExprs));
+  Expr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy,
+                                         BSI->hasBlockDeclRefExprs);
+  PopFunctionOrBlockScope();  
+  return Owned(Result);
 }
 
 Sema::OwningExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,

@@ -111,6 +111,19 @@ namespace clang {
 /// \brief Retains information about a function, method, or block that is 
 /// currently being parsed.
 struct FunctionScopeInfo {
+  /// \brief Whether this scope information structure defined information for
+  /// a block.
+  bool IsBlockInfo;
+  
+  /// \brief Set true when a function, method contains a VLA or ObjC try block, 
+  /// which introduce scopes that need to be checked for goto conditions.  If a
+  /// function does not contain this, then it need not have the jump checker run on it.
+  bool NeedsScopeChecking;
+    
+  /// \brief The number of errors that had occurred before starting this
+  /// function or block.
+  unsigned NumErrorsAtStartOfFunction;
+  
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
   /// labels have a LabelStmt created for them with a null location & SubStmt.
@@ -120,13 +133,17 @@ struct FunctionScopeInfo {
   /// block.
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;  
   
-  /// \brief Whether this scope information structure defined information for
-  /// a block.
-  bool IsBlockInfo;
+  FunctionScopeInfo(unsigned NumErrors) 
+    : IsBlockInfo(false), NeedsScopeChecking(false), 
+      NumErrorsAtStartOfFunction(NumErrors) { }
+
+  virtual ~FunctionScopeInfo();
+
+  /// \brief Clear out the information in this function scope, making it
+  /// suitable for reuse.
+  void Clear(unsigned NumErrors);
   
-  FunctionScopeInfo() : IsBlockInfo(false) { }
-  
-  static bool classof(const FunctionScopeInfo *FSI) { return true; }
+  static bool classof(const FunctionScopeInfo *FSI) { return true; }  
 };
   
   
@@ -147,18 +164,15 @@ struct BlockScopeInfo : FunctionScopeInfo {
   /// return types, if any, in the block body.
   QualType ReturnType;
 
-  /// SavedNumErrorsAtStartOfFunction - This is the value of the
-  /// NumErrorsAtStartOfFunction variable at the point when the block started.
-  unsigned SavedNumErrorsAtStartOfFunction;
-  
-  /// SavedFunctionNeedsScopeChecking - This is the value of
-  /// CurFunctionNeedsScopeChecking at the point when the block started.
-  bool SavedFunctionNeedsScopeChecking;
+  BlockScopeInfo(unsigned NumErrors, Scope *BlockScope, BlockDecl *Block) 
+    : FunctionScopeInfo(NumErrors), hasPrototype(false), isVariadic(false), 
+      hasBlockDeclRefExprs(false), TheDecl(Block), TheScope(BlockScope) 
+  {
+    IsBlockInfo = true; 
+  }
 
-  BlockScopeInfo *PrevBlockInfo;
-  
-  BlockScopeInfo() : FunctionScopeInfo() { IsBlockInfo = true; }
-  
+  virtual ~BlockScopeInfo();
+
   static bool classof(const FunctionScopeInfo *FSI) { return FSI->IsBlockInfo; }
   static bool classof(const BlockScopeInfo *BSI) { return true; }
 };
@@ -219,44 +233,24 @@ public:
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
-  /// CurBlock - If inside of a block definition, this contains a pointer to
-  /// the active block object that represents it.
-  BlockScopeInfo *CurBlock;
-
   /// PackContext - Manages the stack for #pragma pack. An alignment
   /// of 0 indicates default alignment.
   void *PackContext; // Really a "PragmaPackStack*"
 
-  /// FunctionLabelMap - This is a mapping from label identifiers to the
-  /// LabelStmt for it (which acts like the label decl in some ways).  Forward
-  /// referenced labels have a LabelStmt created for them with a null location &
-  /// SubStmt.
+  /// \brief Stack containing information about each of the nested function,
+  /// block, and method scopes that are currently active.
+  llvm::SmallVector<FunctionScopeInfo *, 4> FunctionScopes;
+  
+  /// \brief Cached function scope object used for the top function scope
+  /// and when there is no function scope (in error cases).
   ///
-  /// Note that this should always be accessed through getLabelMap() in order
-  /// to handle blocks properly.
-  llvm::DenseMap<IdentifierInfo*, LabelStmt*> FunctionLabelMap;
-
-  /// FunctionSwitchStack - This is the current set of active switch statements
-  /// in the top level function.  Clients should always use getSwitchStack() to
-  /// handle the case when they are in a block.
-  llvm::SmallVector<SwitchStmt*, 8> FunctionSwitchStack;
-
+  /// This should never be accessed directly; rather, it's address will be 
+  /// pushed into \c FunctionScopes when we want to re-use it.
+  FunctionScopeInfo TopFunctionScope;
+  
   /// ExprTemporaries - This is the stack of temporaries that are created by
   /// the current full expression.
   llvm::SmallVector<CXXTemporary*, 8> ExprTemporaries;
-
-  /// NumErrorsAtStartOfFunction - This is the number of errors that were
-  /// emitted to the diagnostics object at the start of the current
-  /// function/method definition.  If no additional errors are emitted by the
-  /// end of the function, we assume the AST is well formed enough to be
-  /// worthwhile to emit control flow diagnostics. 
-  unsigned NumErrorsAtStartOfFunction;
-  
-  /// CurFunctionNeedsScopeChecking - This is set to true when a function or
-  /// ObjC method body contains a VLA or an ObjC try block, which introduce
-  /// scopes that need to be checked for goto conditions.  If a function does
-  /// not contain this, then it need not have the jump checker run on it.
-  bool CurFunctionNeedsScopeChecking;
 
   /// ExtVectorDecls - This is a list all the extended vector types. This allows
   /// us to associate a raw vector type with one of the ext_vector type names.
@@ -633,18 +627,42 @@ public:
 
   virtual void ActOnEndOfTranslationUnit();
 
+  void PushFunctionScope();
+  void PushBlockScope(Scope *BlockScope, BlockDecl *Block);
+  void PopFunctionOrBlockScope();
+  
   /// getLabelMap() - Return the current label map.  If we're in a block, we
   /// return it.
   llvm::DenseMap<IdentifierInfo*, LabelStmt*> &getLabelMap() {
-    return CurBlock ? CurBlock->LabelMap : FunctionLabelMap;
+    if (FunctionScopes.empty())
+      return TopFunctionScope.LabelMap;
+    
+    return FunctionScopes.back()->LabelMap;
   }
 
   /// getSwitchStack - This is returns the switch stack for the current block or
   /// function.
   llvm::SmallVector<SwitchStmt*,8> &getSwitchStack() {
-    return CurBlock ? CurBlock->SwitchStack : FunctionSwitchStack;
+    if (FunctionScopes.empty())
+      return TopFunctionScope.SwitchStack;
+    
+    return FunctionScopes.back()->SwitchStack;
   }
 
+  /// \brief Determine whether the current function or block needs scope 
+  /// checking.
+  bool &FunctionNeedsScopeChecking() {
+    if (FunctionScopes.empty())
+      return TopFunctionScope.NeedsScopeChecking;
+    
+    return FunctionScopes.back()->NeedsScopeChecking;
+  }
+  
+  bool hasAnyErrorsInThisFunction() const;
+  
+  /// \brief Retrieve the current block, if any.
+  BlockScopeInfo *getCurBlock();
+  
   /// WeakTopLevelDeclDecls - access to #pragma weak-generated Decls
   llvm::SmallVector<Decl*,2> &WeakTopLevelDecls() { return WeakTopLevelDecl; }
 
