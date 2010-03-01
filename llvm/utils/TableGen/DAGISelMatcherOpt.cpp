@@ -392,16 +392,10 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   }
   
 
-  // Reassemble a new Scope node.
-  assert(!NewOptionsToMatch.empty() &&
-         "Where'd all our children go?  Did we really factor everything??");
-  if (NewOptionsToMatch.empty())
-    MatcherPtr.reset(0);
-  else {
-    Scope->setNumChildren(NewOptionsToMatch.size());
-    for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i)
-      Scope->resetChild(i, NewOptionsToMatch[i]);
-  }
+  // Reassemble the Scope node with the adjusted children.
+  Scope->setNumChildren(NewOptionsToMatch.size());
+  for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i)
+    Scope->resetChild(i, NewOptionsToMatch[i]);
 }
 
 Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher,
