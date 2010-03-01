@@ -215,6 +215,10 @@ public:
   /// entered this scope.
   unsigned getNumErrorsAtStart() const { return NumErrorsAtStart; }
   
+  void setNumErrorsAtStart(unsigned NumErrors) {
+    NumErrorsAtStart = NumErrors;
+  }
+                           
   /// isClassScope - Return true if this scope is a class/struct/union scope.
   bool isClassScope() const {
     return (getFlags() & Scope::ClassScope);
