@@ -162,7 +162,7 @@ AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
     errs() << MRString << ":  Ptr: ";
     errs() << "[" << Size << "B] ";
     WriteAsOperand(errs(), P, true, M);
-    errs() << "\t<->" << *CS.getInstruction();
+    errs() << "\t<->" << *CS.getInstruction() << '\n';
   }
   return R;
 }
