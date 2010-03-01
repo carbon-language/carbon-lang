@@ -183,14 +183,16 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       
   case Matcher::RecordNode:
     OS << "OPC_RecordNode,";
-    OS.PadToColumn(CommentIndent) << "// "
+    OS.PadToColumn(CommentIndent) << "// #"
+       << cast<RecordMatcher>(N)->getResultNo() << " = "
        << cast<RecordMatcher>(N)->getWhatFor() << '\n';
     return 1;
 
   case Matcher::RecordChild:
     OS << "OPC_RecordChild" << cast<RecordChildMatcher>(N)->getChildNo()
        << ',';
-    OS.PadToColumn(CommentIndent) << "// "
+    OS.PadToColumn(CommentIndent) << "// #"
+      << cast<RecordChildMatcher>(N)->getResultNo() << " = "
       << cast<RecordChildMatcher>(N)->getWhatFor() << '\n';
     return 1;
       

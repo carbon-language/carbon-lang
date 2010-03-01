@@ -225,7 +225,8 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   // If we have a physreg reference like (mul gpr:$src, EAX) then we need to
   // record the register 
   if (LeafRec->isSubClassOf("Register")) {
-    AddMatcher(new RecordMatcher("physreg input "+LeafRec->getName()));
+    AddMatcher(new RecordMatcher("physreg input "+LeafRec->getName(),
+                                 NextRecordedOperandNo));
     PhysRegInputs.push_back(std::make_pair(LeafRec, NextRecordedOperandNo++));
     return;
   }
@@ -360,7 +361,8 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   if (N->NodeHasProperty(SDNPHasChain, CGP)) {
     // Record the node and remember it in our chained nodes list.
     AddMatcher(new RecordMatcher("'" + N->getOperator()->getName() +
-                                         "' chained node"));
+                                         "' chained node",
+                                 NextRecordedOperandNo));
     // Remember all of the input chains our pattern will match.
     MatchedChainNodes.push_back(NextRecordedOperandNo++);
     
@@ -436,7 +438,8 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
     
     // Record the node and remember it in our chained nodes list.
     AddMatcher(new RecordMatcher("'" + N->getOperator()->getName() +
-                                         "' flag output node"));
+                                         "' flag output node",
+                                 NextRecordedOperandNo));
     // Remember all of the nodes with output flags our pattern will match.
     MatchedFlagResultNodes.push_back(NextRecordedOperandNo++);
   }
@@ -474,8 +477,8 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
     unsigned &VarMapEntry = VariableMap[N->getName()];
     if (VarMapEntry == 0) {
       // If it is a named node, we must emit a 'Record' opcode.
+      AddMatcher(new RecordMatcher("$" + N->getName(), NextRecordedOperandNo));
       VarMapEntry = ++NextRecordedOperandNo;
-      AddMatcher(new RecordMatcher("$" + N->getName()));
     } else {
       // If we get here, this is a second reference to a specific name.  Since
       // we already have checked that the first reference is valid, we don't

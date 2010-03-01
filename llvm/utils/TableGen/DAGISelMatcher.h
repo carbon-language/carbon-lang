@@ -186,11 +186,16 @@ class RecordMatcher : public Matcher {
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
+  
+  /// ResultNo - The slot number in the RecordedNodes vector that this will be,
+  /// just printed as a comment.
+  unsigned ResultNo;
 public:
-  RecordMatcher(const std::string &whatfor)
-    : Matcher(RecordNode), WhatFor(whatfor) {}
+  RecordMatcher(const std::string &whatfor, unsigned resultNo)
+    : Matcher(RecordNode), WhatFor(whatfor), ResultNo(resultNo) {}
   
   const std::string &getWhatFor() const { return WhatFor; }
+  unsigned getResultNo() const { return ResultNo; }
   
   static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordNode;
@@ -212,13 +217,20 @@ class RecordChildMatcher : public Matcher {
   /// WhatFor - This is a string indicating why we're recording this.  This
   /// should only be used for comment generation not anything semantic.
   std::string WhatFor;
+  
+  /// ResultNo - The slot number in the RecordedNodes vector that this will be,
+  /// just printed as a comment.
+  unsigned ResultNo;
 public:
-  RecordChildMatcher(unsigned childno, const std::string &whatfor)
-  : Matcher(RecordChild), ChildNo(childno), WhatFor(whatfor) {}
+  RecordChildMatcher(unsigned childno, const std::string &whatfor,
+                     unsigned resultNo)
+  : Matcher(RecordChild), ChildNo(childno), WhatFor(whatfor),
+    ResultNo(resultNo) {}
   
   unsigned getChildNo() const { return ChildNo; }
   const std::string &getWhatFor() const { return WhatFor; }
-  
+  unsigned getResultNo() const { return ResultNo; }
+
   static inline bool classof(const Matcher *N) {
     return N->getKind() == RecordChild;
   }

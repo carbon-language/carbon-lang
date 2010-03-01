@@ -43,7 +43,8 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
   if (MoveChildMatcher *MC = dyn_cast<MoveChildMatcher>(N)) {
     Matcher *New = 0;
     if (RecordMatcher *RM = dyn_cast<RecordMatcher>(MC->getNext()))
-      New = new RecordChildMatcher(MC->getChildNo(), RM->getWhatFor());
+      New = new RecordChildMatcher(MC->getChildNo(), RM->getWhatFor(),
+                                   RM->getResultNo());
     
     if (CheckTypeMatcher *CT= dyn_cast<CheckTypeMatcher>(MC->getNext()))
       New = new CheckChildTypeMatcher(MC->getChildNo(), CT->getType());
