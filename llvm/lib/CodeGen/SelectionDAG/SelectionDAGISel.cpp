@@ -1760,7 +1760,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_SwitchOpcode: {
       unsigned CurNodeOpcode = N.getOpcode();
 
-      unsigned SwitchStart = MatcherIndex-1;
+      unsigned SwitchStart = MatcherIndex-1; (void)SwitchStart;
       
       unsigned CaseSize;
       while (1) {
@@ -2060,8 +2060,15 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (EmitNodeInfo & OPFL_FlagOutput)
         VTs.push_back(MVT::Flag);
       
-      // FIXME: Use faster version for the common 'one VT' case?
-      SDVTList VTList = CurDAG->getVTList(VTs.data(), VTs.size());
+      // This is hot code, so optimize the two most common cases of 1 and 2
+      // results.
+      SDVTList VTList;
+      if (VTs.size() == 1)
+        VTList = CurDAG->getVTList(VTs[0]);
+      else if (VTs.size() == 2)
+        VTList = CurDAG->getVTList(VTs[0], VTs[1]);
+      else
+        VTList = CurDAG->getVTList(VTs.data(), VTs.size());
 
       // Get the operand list.
       unsigned NumOps = MatcherTable[MatcherIndex++];

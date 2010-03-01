@@ -4736,12 +4736,14 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
 
   // Delete any nodes that are still dead after adding the uses for the
   // new operands.
-  SmallVector<SDNode *, 16> DeadNodes;
-  for (SmallPtrSet<SDNode *, 16>::iterator I = DeadNodeSet.begin(),
-       E = DeadNodeSet.end(); I != E; ++I)
-    if ((*I)->use_empty())
-      DeadNodes.push_back(*I);
-  RemoveDeadNodes(DeadNodes);
+  if (!DeadNodeSet.empty()) {
+    SmallVector<SDNode *, 16> DeadNodes;
+    for (SmallPtrSet<SDNode *, 16>::iterator I = DeadNodeSet.begin(),
+         E = DeadNodeSet.end(); I != E; ++I)
+      if ((*I)->use_empty())
+        DeadNodes.push_back(*I);
+    RemoveDeadNodes(DeadNodes);
+  }
 
   if (IP)
     CSEMap.InsertNode(N, IP);   // Memoize the new node.
