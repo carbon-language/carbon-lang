@@ -503,6 +503,12 @@ public:
     return;
   }
 
+  /// \brief Note that the given declaration had an initializer that could not
+  /// be parsed.
+  virtual void ActOnInitializerError(DeclPtrTy Dcl) {
+    return;
+  }
+  
   /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
   /// gives the actions implementation a chance to process the group as a whole.
   virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec& DS,

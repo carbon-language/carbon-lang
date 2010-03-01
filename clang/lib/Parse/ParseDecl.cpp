@@ -564,10 +564,10 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
       }
 
       if (Init.isInvalid()) {
-        SkipUntil(tok::semi, true, true);
-        return DeclPtrTy();
-      }
-      Actions.AddInitializerToDecl(ThisDecl, move(Init));
+        SkipUntil(tok::comma, true, true);
+        Actions.ActOnInitializerError(ThisDecl);
+      } else
+        Actions.AddInitializerToDecl(ThisDecl, move(Init));
     }
   } else if (Tok.is(tok::l_paren)) {
     // Parse C++ direct initializer: '(' expression-list ')'

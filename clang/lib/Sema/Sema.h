@@ -3413,7 +3413,8 @@ public:
 
     Decl *getInstantiationOf(const Decl *D) {
       Decl *Result = LocalDecls[D];
-      assert(Result && "declaration was not instantiated in this scope!");
+      assert((Result || D->isInvalidDecl()) && 
+             "declaration was not instantiated in this scope!");
       return Result;
     }
 
