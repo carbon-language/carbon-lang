@@ -1163,20 +1163,14 @@ void CXXNameMangler::mangleCalledExpression(const Expr *E, unsigned Arity) {
 /// Mangles a member expression.  Implicit accesses are not handled,
 /// but that should be okay, because you shouldn't be able to
 /// make an implicit access in a function template declaration.
-///
-/// The standard ABI does not describe how member expressions should
-/// be mangled, so this is very unstandardized.  We mangle as if it
-/// were a binary operator, except that the RHS is mangled as an
-/// abstract name.
-///
-/// The standard ABI also does not assign a mangling to the dot
-/// operator, so we arbitrarily select 'me'.
 void CXXNameMangler::mangleMemberExpr(const Expr *Base,
                                       bool IsArrow,
                                       NestedNameSpecifier *Qualifier,
                                       DeclarationName Member,
                                       unsigned Arity) {
-  Out << (IsArrow ? "pt" : "me");
+  // gcc-4.4 uses 'dt' for dot expressions, which is reasonable.
+  // OTOH, gcc also mangles the name as an expression.
+  Out << (IsArrow ? "pt" : "dt");
   mangleExpression(Base);
   mangleUnresolvedName(Qualifier, Member, Arity);
 }

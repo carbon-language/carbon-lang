@@ -363,7 +363,7 @@ namespace test0 {
     char buffer[1024];
     j<A>(buffer);
   }
-  // CHECK: define linkonce_odr void @_ZN5test01jINS_1AEEEvRAszmecvT__E6buffer_c(
+  // CHECK: define linkonce_odr void @_ZN5test01jINS_1AEEEvRAszdtcvT__E6buffer_c(
 }
 
 namespace test1 {
