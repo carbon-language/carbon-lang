@@ -848,7 +848,7 @@ define i32 @main() {                                        <i>; i32()* </i>
 
 <div class="doc_text">
 
-<p>LLVM function definitions consist of the "<tt>define</tt>" keyord, an
+<p>LLVM function definitions consist of the "<tt>define</tt>" keyword, an
    optional <a href="#linkage">linkage type</a>, an optional
    <a href="#visibility">visibility style</a>, an optional
    <a href="#callingconv">calling convention</a>, a return type, an optional
@@ -4104,11 +4104,11 @@ Instruction</a> </div>
 
 <p>The optional <tt>!nontemporal</tt> metadata must reference a single
    metatadata name &lt;index&gt; corresponding to a metadata node with
-   one <tt>i32</tt> entry of value 1.  The existance of
+   one <tt>i32</tt> entry of value 1.  The existence of
    the <tt>!nontemporal</tt> metatadata on the instruction tells the optimizer
    and code generator that this load is not expected to be reused in the cache.
    The code generator may select special instructions to save cache bandwidth,
-   such as the <tt>MOVNT</tt> intruction on x86.</p>
+   such as the <tt>MOVNT</tt> instruction on x86.</p>
 
 <h5>Semantics:</h5>
 <p>The location of memory pointed to is loaded.  If the value being loaded is of
@@ -4164,11 +4164,11 @@ Instruction</a> </div>
 
 <p>The optional !nontemporal metadata must reference a single metatadata
    name <index> corresponding to a metadata node with one i32 entry of
-   value 1.  The existance of the !nontemporal metatadata on the
+   value 1.  The existence of the !nontemporal metatadata on the
    instruction tells the optimizer and code generator that this load is
    not expected to be reused in the cache.  The code generator may
    select special instructions to save cache bandwidth, such as the
-   MOVNT intruction on x86.</p>
+   MOVNT instruction on x86.</p>
 
 
 <h5>Semantics:</h5>
@@ -4964,7 +4964,7 @@ entry:
       <tt>op1</tt> is equal to <tt>op2</tt>.</li>
 
   <li><tt>ogt</tt>: yields <tt>true</tt> if both operands are not a QNAN and
-      <tt>op1</tt> is greather than <tt>op2</tt>.</li>
+      <tt>op1</tt> is greater than <tt>op2</tt>.</li>
 
   <li><tt>oge</tt>: yields <tt>true</tt> if both operands are not a QNAN and
       <tt>op1</tt> is greater than or equal to <tt>op2</tt>.</li>
@@ -5209,7 +5209,7 @@ Loop:       ; Infinite loop that counts from 0 on up...
 standard C99 library as being the C99 library functions, and may perform
 optimizations or generate code for them under that assumption.  This is
 something we'd like to change in the future to provide better support for
-freestanding environments and non-C-based langauges.</p>
+freestanding environments and non-C-based languages.</p>
 
 </div>
 
@@ -5765,7 +5765,7 @@ LLVM</a>.</p>
 
 <h5>Semantics:</h5>
 <p>This intrinsic does not modify the behavior of the program.  Backends that do
-   not support this intrinisic may ignore it.</p>
+   not support this intrinsic may ignore it.</p>
 
 </div>
 
@@ -5845,7 +5845,7 @@ LLVM</a>.</p>
    number of bytes to copy, and the fourth argument is the alignment of the
    source and destination locations.</p>
 
-<p>If the call to this intrinisic has an alignment value that is not 0 or 1,
+<p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that both the source and destination pointers are
    aligned to that boundary.</p>
 
@@ -5895,7 +5895,7 @@ LLVM</a>.</p>
    number of bytes to copy, and the fourth argument is the alignment of the
    source and destination locations.</p>
 
-<p>If the call to this intrinisic has an alignment value that is not 0 or 1,
+<p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that the source and destination pointers are
    aligned to that boundary.</p>
 
@@ -5943,7 +5943,7 @@ LLVM</a>.</p>
    specifying the number of bytes to fill, and the fourth argument is the known
    alignment of destination location.</p>
 
-<p>If the call to this intrinisic has an alignment value that is not 0 or 1,
+<p>If the call to this intrinsic has an alignment value that is not 0 or 1,
    then the caller guarantees that the destination pointer is aligned to that
    boundary.</p>
 
@@ -6714,7 +6714,7 @@ LLVM</a>.</p>
 <h5>Arguments:</h5>
 <p>The <tt>llvm.memory.barrier</tt> intrinsic requires five boolean arguments.
    The first four arguments enables a specific barrier as listed below.  The
-   fith argument specifies that the barrier applies to io or device or uncached
+   fifth argument specifies that the barrier applies to io or device or uncached
    memory.</p>
 
 <ul>
