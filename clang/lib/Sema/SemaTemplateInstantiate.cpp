@@ -544,7 +544,7 @@ namespace {
 
     /// \brief Transform the definition of the given declaration by
     /// instantiating it.
-    Decl *TransformDefinition(Decl *D);
+    Decl *TransformDefinition(SourceLocation Loc, Decl *D);
 
     /// \bried Transform the first qualifier within a scope by instantiating the
     /// declaration.
@@ -603,7 +603,7 @@ Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
   return SemaRef.FindInstantiatedDecl(Loc, cast<NamedDecl>(D), TemplateArgs);
 }
 
-Decl *TemplateInstantiator::TransformDefinition(Decl *D) {
+Decl *TemplateInstantiator::TransformDefinition(SourceLocation Loc, Decl *D) {
   Decl *Inst = getSema().SubstDecl(D, getSema().CurContext, TemplateArgs);
   if (!Inst)
     return 0;

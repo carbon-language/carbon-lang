@@ -244,7 +244,7 @@ public:
   /// By default, invokes TransformDecl() to transform the declaration.
   /// Subclasses may override this function to provide alternate behavior.
   Decl *TransformDefinition(SourceLocation Loc, Decl *D) { 
-    return getDerived().TransformDecl(D); 
+    return getDerived().TransformDecl(Loc, D); 
   }
 
   /// \brief Transform the given declaration, which was the first part of a
@@ -3117,7 +3117,9 @@ TreeTransform<Derived>::TransformIfStmt(IfStmt *S) {
   if (S->getConditionVariable()) {
     ConditionVar 
       = cast_or_null<VarDecl>(
-                   getDerived().TransformDefinition(S->getConditionVariable()));
+                   getDerived().TransformDefinition(
+                                      S->getConditionVariable()->getLocation(),
+                                                    S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
   } else {
@@ -3160,7 +3162,9 @@ TreeTransform<Derived>::TransformSwitchStmt(SwitchStmt *S) {
   if (S->getConditionVariable()) {
     ConditionVar 
       = cast_or_null<VarDecl>(
-                   getDerived().TransformDefinition(S->getConditionVariable()));
+                   getDerived().TransformDefinition(
+                                      S->getConditionVariable()->getLocation(),
+                                                    S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
   } else {
@@ -3197,7 +3201,9 @@ TreeTransform<Derived>::TransformWhileStmt(WhileStmt *S) {
   if (S->getConditionVariable()) {
     ConditionVar 
       = cast_or_null<VarDecl>(
-                   getDerived().TransformDefinition(S->getConditionVariable()));
+                   getDerived().TransformDefinition(
+                                      S->getConditionVariable()->getLocation(),
+                                                    S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
   } else {
@@ -3261,7 +3267,9 @@ TreeTransform<Derived>::TransformForStmt(ForStmt *S) {
   if (S->getConditionVariable()) {
     ConditionVar 
       = cast_or_null<VarDecl>(
-                   getDerived().TransformDefinition(S->getConditionVariable()));
+                   getDerived().TransformDefinition(
+                                      S->getConditionVariable()->getLocation(),
+                                                    S->getConditionVariable()));
     if (!ConditionVar)
       return SemaRef.StmtError();
   } else {
@@ -3349,7 +3357,8 @@ TreeTransform<Derived>::TransformDeclStmt(DeclStmt *S) {
   llvm::SmallVector<Decl *, 4> Decls;
   for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
        D != DEnd; ++D) {
-    Decl *Transformed = getDerived().TransformDefinition(*D);
+    Decl *Transformed = getDerived().TransformDefinition((*D)->getLocation(),
+                                                         *D);
     if (!Transformed)
       return SemaRef.StmtError();
 
