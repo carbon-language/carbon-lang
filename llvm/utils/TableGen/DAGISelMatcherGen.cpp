@@ -36,12 +36,9 @@ static MVT::SimpleValueType getRegisterValueType(Record *R,
       VT = RC.getValueTypeNum(0);
       continue;
     }
-    
-    // In multiple RC's.  If the Types of the RC's do not agree, return
-    // MVT::Other. The target is responsible for handling this.
-    if (VT != RC.getValueTypeNum(0))
-      // FIXME2: when does this happen?  Abort?
-      return MVT::Other;
+
+    // If this occurs in multiple register classes, they all have to agree.
+    assert(VT == RC.getValueTypeNum(0));
   }
   return VT;
 }
@@ -849,10 +846,6 @@ void MatcherGen::EmitResultCode() {
     AddMatcher(new MarkFlagResultsMatcher(MatchedFlagResultNodes.data(),
                                           MatchedFlagResultNodes.size()));
   
-  
-  // We know that the resulting pattern has exactly one result/
-  // FIXME2: why?  what about something like (set a,b,c, (complexpat))
-  // FIXME2: Implicit results should be pushed here I guess?
   AddMatcher(new CompleteMatchMatcher(Ops.data(), Ops.size(), Pattern));
 }
 
