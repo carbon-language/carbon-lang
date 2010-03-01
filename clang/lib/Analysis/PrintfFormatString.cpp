@@ -69,18 +69,17 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
   UpdateOnReturn <const char*> UpdateBeg(Beg, I);
 
   unsigned accumulator = 0;
+  bool hasDigits = false;
 
   for ( ; I != E; ++I) {
     char c = *I;
     if (c >= '0' && c <= '9') {
-      // Ignore '0' on the first character.
-      if (c == '0' && I == Beg)
-        break;
+      hasDigits = true;
       accumulator += (accumulator * 10) + (c - '0');
       continue;
     }
 
-    if (accumulator)
+    if (hasDigits)
       return OptionalAmount(OptionalAmount::Constant, accumulator, Beg);
 
     break;
@@ -118,9 +117,18 @@ static OptionalAmount ParsePositionAmount(FormatStringHandler &H,
       return OptionalAmount(false);
     }
 
+    assert(Amt.getHowSpecified() == OptionalAmount::Constant);
+
     if (*I == '$') {
+      // Special case: '*0$', since this is an easy mistake.
+      if (Amt.getConstantAmount() == 0) {
+        H.HandleZeroPosition(Beg, I - Beg + 1);
+        return OptionalAmount(false);
+      }
+
       const char *Tmp = Beg;
       Beg = ++I;
+
       return OptionalAmount(OptionalAmount::Arg, Amt.getConstantAmount() - 1,
                             Tmp);
     }
@@ -182,18 +190,18 @@ static bool ParseArgPosition(FormatStringHandler &H,
   }
 
   if (Amt.getHowSpecified() == OptionalAmount::Constant && *(I++) == '$') {
+    // Special case: '%0$', since this is an easy mistake.
+    if (Amt.getConstantAmount() == 0) {
+      H.HandleZeroPosition(Start, I - Start);
+      return true;
+    }
+
     FS.setArgIndex(Amt.getConstantAmount() - 1);
     FS.setUsesPositionalArg();
     // Update the caller's pointer if we decided to consume
     // these characters.
     Beg = I;
     return false;
-  }
-
-  // Special case: '%0$', since this is an easy mistake.
-  if (*I == '0' && (I+1) != E && *(I+1) == '$') {
-    H.HandleZeroPosition(Start, I - Start + 2);
-    return true;
   }
 
   return false;

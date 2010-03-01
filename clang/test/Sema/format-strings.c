@@ -170,6 +170,8 @@ void test10(int x, float f, int i, long long lli) {
   printf("%d", (long long) 10); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
   printf("%Lf\n", (long double) 1.0); // no-warning
   printf("%f\n", (long double) 1.0); // expected-warning{{conversion specifies type 'double' but the argument has type 'long double'}}
+  // The man page says that a zero precision is okay.
+  printf("%.0Lf", (long double) 1.0); // no-warning
 } 
 
 void test11(void *p, char *s) {
@@ -227,6 +229,7 @@ void test_unicode_conversions(wchar_t *s) {
 // FIXME: This is probably not portable everywhere.
 void test_positional_arguments() {
   printf("%0$", (int)2); // expected-warning{{position arguments in format strings start counting at 1 (not 0)}}
+  printf("%1$*0$d", (int) 2); // expected-warning{{position arguments in format strings start counting at 1 (not 0)}}
   printf("%1$d", (int) 2); // no-warning
   printf("%1$d", (int) 2, 2); // expected-warning{{data argument not used by format string}}
   printf("%1$d%1$f", (int) 2); // expected-warning{{conversion specifies type 'double' but the argument has type 'int'}}
