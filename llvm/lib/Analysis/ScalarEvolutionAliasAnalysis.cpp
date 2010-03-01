@@ -10,6 +10,10 @@
 // This file defines the ScalarEvolutionAliasAnalysis pass, which implements a
 // simple alias analysis implemented in terms of ScalarEvolution queries.
 //
+// This differs from traditional loop dependence analysis in that it tests
+// for dependencies within a single iteration of a loop, rather than
+// dependences between different iterations.
+//
 // ScalarEvolution has a more complete understanding of pointer arithmetic
 // than BasicAliasAnalysis' collection of ad-hoc analyses.
 //
@@ -41,7 +45,7 @@ namespace {
         return (AliasAnalysis*)this;
       return this;
     }
-                                         
+
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnFunction(Function &F);
