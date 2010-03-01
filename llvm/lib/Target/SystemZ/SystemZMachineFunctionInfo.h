@@ -33,7 +33,8 @@ class SystemZMachineFunctionInfo : public MachineFunctionInfo {
 public:
   SystemZMachineFunctionInfo() : CalleeSavedFrameSize(0) {}
 
-  SystemZMachineFunctionInfo(MachineFunction &MF) : CalleeSavedFrameSize(0) {}
+  explicit SystemZMachineFunctionInfo(MachineFunction &MF)
+    : CalleeSavedFrameSize(0) {}
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
   void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }

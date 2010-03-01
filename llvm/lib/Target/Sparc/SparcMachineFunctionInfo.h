@@ -22,7 +22,7 @@ namespace llvm {
     unsigned GlobalBaseReg;
   public:
     SparcMachineFunctionInfo() : GlobalBaseReg(0) {}
-    SparcMachineFunctionInfo(MachineFunction &MF) : GlobalBaseReg(0) {}
+    explicit SparcMachineFunctionInfo(MachineFunction &MF) : GlobalBaseReg(0) {}
 
     unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
     void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
