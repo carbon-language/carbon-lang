@@ -26,6 +26,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseSet.h"
+
 using namespace clang;
 using llvm::utostr;
 
@@ -390,7 +391,7 @@ namespace {
     void GetBlockDeclRefExprs(Stmt *S);
     void GetInnerBlockDeclRefExprs(Stmt *S, 
                 llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
-                llvm::SmallPtrSet<ValueDecl *, 8> &InnerBlockValueDecls);
+                llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts);
 
     // We avoid calling Type::isBlockPointerType(), since it operates on the
     // canonical type. We only care if the top-level type is a closure pointer.
@@ -4264,16 +4265,23 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
   if (CurFunctionDeclToDeclareForBlock && !Blocks.empty())
     RewriteBlockLiteralFunctionDecl(CurFunctionDeclToDeclareForBlock);
   // Insert closures that were part of the function.
-  for (unsigned i = 0; i < Blocks.size(); i++) {
+  for (unsigned i = 0, count=0; i < Blocks.size(); i++) {
+    CollectBlockDeclRefInfo(Blocks[i]);
     // Need to copy-in the inner copied-in variables not actually used in this
     // block.
-    for (int j = 0; j < InnerDeclRefsCount[i]; j++)
-      BlockDeclRefs.push_back(InnerDeclRefs[j]);
-    CollectBlockDeclRefInfo(Blocks[i]);
-    llvm::SmallPtrSet<ValueDecl *, 8> InnerBlockValueDecls;
-    llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
-    GetInnerBlockDeclRefExprs(Blocks[i]->getBody(),
-                              InnerBlockDeclRefs, InnerBlockValueDecls);
+    for (int j = 0; j < InnerDeclRefsCount[i]; j++) {
+      BlockDeclRefExpr *Exp = InnerDeclRefs[count++];
+      ValueDecl *VD = Exp->getDecl();
+      BlockDeclRefs.push_back(Exp);
+      if (!Exp->isByRef() && !BlockByCopyDeclsPtrSet.count(VD)) {
+        BlockByCopyDeclsPtrSet.insert(VD);
+        BlockByCopyDecls.push_back(VD);
+      }
+      if (Exp->isByRef() && !BlockByRefDeclsPtrSet.count(VD)) {
+        BlockByRefDeclsPtrSet.insert(VD);
+        BlockByRefDecls.push_back(VD);
+      }
+    }
 
     std::string ImplTag = "__" + std::string(FunName) + "_block_impl_" + utostr(i);
     std::string DescTag = "__" + std::string(FunName) + "_block_desc_" + utostr(i);
@@ -4353,28 +4361,28 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
 
 void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S, 
                 llvm::SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs,
-                llvm::SmallPtrSet<ValueDecl *, 8> &InnerBlockValueDecls) {
+                llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts) {
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI) {
-      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI))
+      if (BlockExpr *CBE = dyn_cast<BlockExpr>(*CI)) {
+        InnerContexts.insert(cast<DeclContext>(CBE->getBlockDecl()));
         GetInnerBlockDeclRefExprs(CBE->getBody(),
                                   InnerBlockDeclRefs,
-                                  InnerBlockValueDecls);
+                                  InnerContexts);
+      }
       else
         GetInnerBlockDeclRefExprs(*CI,
                                   InnerBlockDeclRefs,
-                                  InnerBlockValueDecls);
+                                  InnerContexts);
 
     }
   // Handle specific things.
   if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
     if (!isa<FunctionDecl>(CDRE->getDecl()) &&
-        !isa<ParmVarDecl>(CDRE->getDecl()) &&
-        !InnerBlockValueDecls.count(CDRE->getDecl())) {
-      InnerBlockValueDecls.insert(CDRE->getDecl());
+        !InnerContexts.count(CDRE->getDecl()->getDeclContext()))
       InnerBlockDeclRefs.push_back(CDRE);
-    }
+  
   return;
 }
 
@@ -5166,10 +5174,11 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     }
 
   if (BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
-    llvm::SmallPtrSet<ValueDecl *, 8> InnerBlockValueDecls;
     llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
+    llvm::SmallPtrSet<const DeclContext *, 8> InnerContexts;
+    InnerContexts.insert(BE->getBlockDecl());
     GetInnerBlockDeclRefExprs(BE->getBody(),
-                              InnerBlockDeclRefs, InnerBlockValueDecls);
+                              InnerBlockDeclRefs, InnerContexts);
     // Rewrite the block body in place.
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
 
