@@ -58,3 +58,7 @@ struct test4 {
   int y;
   int z  // expected-error {{expected ';' at end of declaration list}}
 };
+
+// PR5825
+struct test5 {};
+::new(static_cast<void*>(0)) test5; // expected-error {{expected unqualified-id}}

@@ -865,6 +865,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           DS.SetTypeSpecError();
         goto DoneWithDeclSpec;
       }
+      if (Tok.is(tok::coloncolon)) // ::new or ::delete
+        goto DoneWithDeclSpec;
       continue;
 
     case tok::annot_cxxscope: {
