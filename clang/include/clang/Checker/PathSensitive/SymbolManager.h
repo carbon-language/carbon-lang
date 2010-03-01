@@ -89,6 +89,7 @@ public:
 
 typedef const SymbolData* SymbolRef;
 
+// A symbol representing the value of a MemRegion.
 class SymbolRegionValue : public SymbolData {
   const MemRegion *R;
   // We may cast the region to another type, so the expected type of the symbol
@@ -122,6 +123,7 @@ public:
   }
 };
 
+// A symbol representing the result of an expression.
 class SymbolConjured : public SymbolData {
   const Stmt* S;
   QualType T;
@@ -161,6 +163,8 @@ public:
   }
 };
 
+// A symbol representing the value of a MemRegion whose parent region has 
+// symbolic value.
 class SymbolDerived : public SymbolData {
   SymbolRef parentSymbol;
   const TypedRegion *R;
