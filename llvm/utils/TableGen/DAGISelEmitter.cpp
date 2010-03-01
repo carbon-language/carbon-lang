@@ -24,7 +24,7 @@
 #include <iostream>
 using namespace llvm;
 
-//#define ENABLE_NEW_ISEL
+#define ENABLE_NEW_ISEL
 
 
 static cl::opt<bool>
