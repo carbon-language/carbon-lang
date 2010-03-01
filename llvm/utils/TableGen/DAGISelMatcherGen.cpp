@@ -460,8 +460,9 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   // If N and NodeNoTypes don't agree on a type, then this is a case where we
   // need to do a type check.  Emit the check, apply the tyep to NodeNoTypes and
   // reinfer any correlated types.
+  unsigned NodeType = EEVT::isUnknown;
   if (NodeNoTypes->getExtTypes() != N->getExtTypes()) {
-    AddMatcher(new CheckTypeMatcher(N->getTypeNum(0)));
+    NodeType = N->getTypeNum(0);
     NodeNoTypes->setTypes(N->getExtTypes());
     InferPossibleTypes();
   }
@@ -488,6 +489,10 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
     EmitLeafMatchCode(N);
   else
     EmitOperatorMatchCode(N, NodeNoTypes);
+  
+  if (NodeType != EEVT::isUnknown)
+    AddMatcher(new CheckTypeMatcher((MVT::SimpleValueType)NodeType));
+
 }
 
 /// EmitMatcherCode - Generate the code that matches the predicate of this
