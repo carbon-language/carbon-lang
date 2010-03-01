@@ -539,9 +539,6 @@ EmitMatcherList(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
 
 void MatcherTableEmitter::EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
                                                  formatted_raw_ostream &OS) {
-  // FIXME: Don't build off the DAGISelEmitter's predicates, emit them directly
-  // here into the case stmts.
-  
   // Emit pattern predicates.
   if (!PatternPredicates.empty()) {
     OS << "bool CheckPatternPredicate(unsigned PredNo) const {\n";
