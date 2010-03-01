@@ -314,15 +314,13 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
   // Perform a conversion to the promoted condition type if needed.
   if (NewWidth > Val.getBitWidth()) {
     // If this is an extension, just do it.
-    llvm::APSInt OldVal(Val);
     Val.extend(NewWidth);
-
-    // If the input was signed and negative and the output is unsigned,
-    // warn.
-    if (!NewSign && OldVal.isSigned() && OldVal.isNegative())
-      Diag(Loc, DiagID) << OldVal.toString(10) << Val.toString(10);
-
     Val.setIsSigned(NewSign);
+
+    // If the input was signed and negative and the output is
+    // unsigned, don't bother to warn: this is implementation-defined
+    // behavior.
+    // FIXME: Introduce a second, default-ignored warning for this case?
   } else if (NewWidth < Val.getBitWidth()) {
     // If this is a truncation, check for overflow.
     llvm::APSInt ConvVal(Val);

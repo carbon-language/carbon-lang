@@ -254,3 +254,10 @@ int test14(int a) {
   }
   return 0;
 }
+
+void f1(unsigned x) {
+  switch (x) {
+  case -1: break;
+  default: break;
+  }
+}
