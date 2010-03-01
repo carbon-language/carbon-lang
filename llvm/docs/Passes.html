@@ -75,7 +75,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><th colspan="2"><b>ANALYSIS PASSES</b></th></tr>
 <tr><th>Option</th><th>Name</th></tr>
 <tr><td><a href="#aa-eval">-aa-eval</a></td><td>Exhaustive Alias Analysis Precision Evaluator</td></tr>
-<tr><td><a href="#anders-aa">-anders-aa</a></td><td>Andersen's Interprocedural Alias Analysis</td></tr>
 <tr><td><a href="#basicaa">-basicaa</a></td><td>Basic Alias Analysis (default AA impl)</td></tr>
 <tr><td><a href="#basiccg">-basiccg</a></td><td>Basic CallGraph Construction</td></tr>
 <tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Optimize for code generation</td></tr>
@@ -200,80 +199,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
   <p>This is inspired and adapted from code by: Naveen Neelakantam, Francesco
   Spadini, and Wojciech Stryjewski.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="anders-aa">Andersen's Interprocedural Alias Analysis</a>
-</div>
-<div class="doc_text">
-  <p>
-  This is an implementation of Andersen's interprocedural alias
-  analysis
-  </p>
-  
-  <p>
-  In pointer analysis terms, this is a subset-based, flow-insensitive,
-  field-sensitive, and context-insensitive algorithm pointer algorithm.
-  </p>
-  
-  <p>
-  This algorithm is implemented as three stages:
-  </p>
-  
-  <ol>
-    <li>Object identification.</li>
-    <li>Inclusion constraint identification.</li>
-    <li>Offline constraint graph optimization.</li>
-    <li>Inclusion constraint solving.</li>
-  </ol>
-  
-  <p>
-  The object identification stage identifies all of the memory objects in the
-  program, which includes globals, heap allocated objects, and stack allocated
-  objects.
-  </p>
-  
-  <p>
-  The inclusion constraint identification stage finds all inclusion constraints
-  in the program by scanning the program, looking for pointer assignments and
-  other statements that effect the points-to graph.  For a statement like 
-  <code><var>A</var> = <var>B</var></code>, this statement is processed to 
-  indicate that <var>A</var> can point to anything that <var>B</var> can point 
-  to.  Constraints can handle copies, loads, and stores, and address taking.
-  </p>
-  
-  <p>
-  The offline constraint graph optimization portion includes offline variable
-  substitution algorithms intended to computer pointer and location
-  equivalences.  Pointer equivalences are those pointers that will have the
-  same points-to sets, and location equivalences are those variables that
-  always appear together in points-to sets.
-  </p>
-  
-  <p>
-  The inclusion constraint solving phase iteratively propagates the inclusion
-  constraints until a fixed point is reached.  This is an O(<var>n</var>³) 
-  algorithm.
-  </p>
-  
-  <p>
-  Function constraints are handled as if they were structs with <var>X</var> 
-  fields. Thus, an access to argument <var>X</var> of function <var>Y</var> is 
-  an access to node index <code>getNode(<var>Y</var>) + <var>X</var></code>.  
-  This representation allows handling of indirect calls without any issues.  To 
-  wit, an indirect call <code><var>Y</var>(<var>a</var>,<var>b</var>)</code> is 
-  equivalent to <code>*(<var>Y</var> + 1) = <var>a</var>, *(<var>Y</var> + 2) = 
-  <var>b</var></code>. The return node for a function <var>F</var> is always 
-  located at <code>getNode(<var>F</var>) + CallReturnPos</code>. The arguments 
-  start at <code>getNode(<var>F</var>) + CallArgPos</code>.
-  </p>
-
-  <p>
-  Please keep in mind that the current andersen's pass has many known
-  problems and bugs.  It should be considered "research quality".
-  </p>
-
 </div>
 
 <!-------------------------------------------------------------------------- -->

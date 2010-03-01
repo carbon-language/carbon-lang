@@ -403,7 +403,7 @@ implementing, you just override the interfaces you can improve.</p>
 href="#basic-aa">basicaa</a></tt> and <a href="#no-aa"><tt>no-aa</tt></a>
 passes) every alias analysis pass chains to another alias analysis
 implementation (for example, the user can specify "<tt>-basicaa -ds-aa
--anders-aa -licm</tt>" to get the maximum benefit from the three alias
+-licm</tt>" to get the maximum benefit from both alias
 analyses).  The alias analysis class automatically takes care of most of this
 for methods that you don't override.  For methods that you do override, in code
 paths that return a conservative MayAlias or Mod/Ref result, simply return
@@ -705,25 +705,6 @@ non-address taken globals), but is very quick analysis.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="anders-aa">The <tt>-anders-aa</tt> pass</a>
-</div>
-
-<div class="doc_text">
-
-<p>The <tt>-anders-aa</tt> pass implements the well-known "Andersen's algorithm"
-for interprocedural alias analysis.  This algorithm is a subset-based,
-flow-insensitive, context-insensitive, and field-insensitive alias analysis that
-is widely believed to be fairly precise.  Unfortunately, this algorithm is also
-O(N<sup>3</sup>).  The LLVM implementation currently does not implement any of
-the refinements (such as "online cycle elimination" or "offline variable
-substitution") to improve its efficiency, so it can be quite slow in common
-cases.
-</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
   <a name="steens-aa">The <tt>-steens-aa</tt> pass</a>
 </div>
 
@@ -855,7 +836,7 @@ pointer.</p>
 <div class="doc_text">
 
 <p>These passes are useful for evaluating the various alias analysis
-implementations.  You can use them with commands like '<tt>opt -anders-aa -ds-aa
+implementations.  You can use them with commands like '<tt>opt -ds-aa
 -aa-eval foo.bc -disable-output -stats</tt>'.</p>
 
 </div>
