@@ -164,7 +164,11 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
       default: break;
       case ISD::Constant: {
         if (Predicate_immMskBitp(N)) {
-          SDValue MskSize = Transform_msksize_xform(N);
+          // Transformation function: get the size of a mask
+          int64_t MaskVal = cast<ConstantSDNode>(N)->getZExtValue();
+          assert(isMask_32(MaskVal));
+          // Look for the first non-zero bit
+          SDValue MskSize = getI32Imm(32 - CountLeadingZeros_32(MaskVal));
           return CurDAG->getMachineNode(XCore::MKMSK_rus, dl,
                                         MVT::i32, MskSize);
         }
