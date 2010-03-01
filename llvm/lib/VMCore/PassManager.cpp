@@ -1118,6 +1118,7 @@ bool BBPassManager::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
+      bool LocalChanged = false;
 
       dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getName());
       dumpRequiredSet(BP);
@@ -1129,11 +1130,12 @@ bool BBPassManager::runOnFunction(Function &F) {
         PassManagerPrettyStackEntry X(BP, *I);
       
         Timer *T = StartPassTimer(BP);
-        Changed |= BP->runOnBasicBlock(*I);
+        LocalChanged |= BP->runOnBasicBlock(*I);
         StopPassTimer(BP, T);
       }
 
-      if (Changed) 
+      Changed |= LocalChanged;
+      if (LocalChanged) 
         dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG,
                      I->getName());
       dumpPreservedSet(BP);
@@ -1334,6 +1336,7 @@ bool FPPassManager::runOnFunction(Function &F) {
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
+    bool LocalChanged = false;
 
     dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpRequiredSet(FP);
@@ -1344,11 +1347,12 @@ bool FPPassManager::runOnFunction(Function &F) {
       PassManagerPrettyStackEntry X(FP, F);
 
       Timer *T = StartPassTimer(FP);
-      Changed |= FP->runOnFunction(F);
+      LocalChanged |= FP->runOnFunction(F);
       StopPassTimer(FP, T);
     }
 
-    if (Changed) 
+    Changed |= LocalChanged;
+    if (LocalChanged)
       dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpPreservedSet(FP);
 
@@ -1407,6 +1411,7 @@ MPPassManager::runOnModule(Module &M) {
 
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     ModulePass *MP = getContainedPass(Index);
+    bool LocalChanged = false;
 
     dumpPassInfo(MP, EXECUTION_MSG, ON_MODULE_MSG, M.getModuleIdentifier());
     dumpRequiredSet(MP);
@@ -1416,11 +1421,12 @@ MPPassManager::runOnModule(Module &M) {
     {
       PassManagerPrettyStackEntry X(MP, M);
       Timer *T = StartPassTimer(MP);
-      Changed |= MP->runOnModule(M);
+      LocalChanged |= MP->runOnModule(M);
       StopPassTimer(MP, T);
     }
 
-    if (Changed) 
+    Changed |= LocalChanged;
+    if (LocalChanged)
       dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG,
                    M.getModuleIdentifier());
     dumpPreservedSet(MP);
