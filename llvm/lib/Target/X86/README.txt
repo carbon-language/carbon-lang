@@ -227,11 +227,6 @@ lambda, siod, optimizer-eval, ackermann, hash2, nestedloop, strcat, and Treesor.
 
 //===---------------------------------------------------------------------===//
 
-Teach the coalescer to coalesce vregs of different register classes. e.g. FR32 /
-FR64 to VR128.
-
-//===---------------------------------------------------------------------===//
-
 Adding to the list of cmp / test poor codegen issues:
 
 int test(__m128 *A, __m128 *B) {
