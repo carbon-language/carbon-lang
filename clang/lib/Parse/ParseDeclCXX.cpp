@@ -1084,7 +1084,7 @@ Parser::BaseResult Parser::ParseBaseSpecifier(DeclPtrTy ClassDecl) {
 
   // Parse optional '::' and optional nested-name-specifier.
   CXXScopeSpec SS;
-  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true);
+  ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
 
   // The location of the base class itself.
   SourceLocation BaseLoc = Tok.getLocation();
