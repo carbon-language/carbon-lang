@@ -608,10 +608,6 @@ void MatcherTableEmitter::EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
       OS << "    Result.resize(Result.size()+" << NumOps << ");\n";
       OS << "    return "  << P.getSelectFunc();
 
-      // FIXME: Temporary hack until old isel dies.
-      if (P.hasProperty(SDNPHasChain))
-        OS << "XXX";
-      
       OS << "(Root, N";
       for (unsigned i = 0; i != NumOps; ++i)
         OS << ", Result[Result.size()-" << (NumOps-i) << ']';
