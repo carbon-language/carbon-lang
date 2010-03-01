@@ -17,3 +17,9 @@ void f1(void) {
 	(void)sizeof(i);
 	return;
 }
+
+// PR5933
+int f2() {
+  int X = 4;  // Shouldn't have a bogus 'unused variable X' warning.
+  return Y + X; // expected-error {{use of undeclared identifier 'Y'}}
+}
