@@ -152,7 +152,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
 
 /// FactorOutConstant - Test if S is divisible by Factor, using signed
 /// division. If so, update S with Factor divided out and return true.
-/// S need not be evenly divisble if a reasonable remainder can be
+/// S need not be evenly divisible if a reasonable remainder can be
 /// computed.
 /// TODO: When ScalarEvolution gets a SCEVSDivExpr, this can be made
 /// unnecessary; in its place, just signed-divide Ops[i] by the scale and
@@ -462,7 +462,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
       break;
   }
 
-  // If none of the operands were convertable to proper GEP indices, cast
+  // If none of the operands were convertible to proper GEP indices, cast
   // the base to i8* and do an ugly getelementptr with that. It's still
   // better than ptrtoint+arithmetic+inttoptr at least.
   if (!AnyNonZeroIndices) {
@@ -820,7 +820,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
   const Type *ExpandTy = PostLoopScale ? IntTy : STy;
   PHINode *PN = getAddRecExprPHILiterally(Normalized, L, ExpandTy, IntTy);
 
-  // Accomodate post-inc mode, if necessary.
+  // Accommodate post-inc mode, if necessary.
   Value *Result;
   if (L != PostIncLoop)
     Result = PN;
@@ -1131,7 +1131,7 @@ void SCEVExpander::rememberInstruction(Value *I) {
 }
 
 void SCEVExpander::restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I) {
-  // If we aquired more instructions since the old insert point was saved,
+  // If we acquired more instructions since the old insert point was saved,
   // advance past them.
   while (isInsertedInstruction(I)) ++I;
 

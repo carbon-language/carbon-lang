@@ -198,7 +198,7 @@ struct Formula {
 
 }
 
-/// DoInitialMatch - Recurrsion helper for InitialMatch.
+/// DoInitialMatch - Recursion helper for InitialMatch.
 static void DoInitialMatch(const SCEV *S, Loop *L,
                            SmallVectorImpl<const SCEV *> &Good,
                            SmallVectorImpl<const SCEV *> &Bad,
@@ -1246,7 +1246,7 @@ public:
 }
 
 /// OptimizeShadowIV - If IV is used in a int-to-float cast
-/// inside the loop then try to eliminate the cast opeation.
+/// inside the loop then try to eliminate the cast operation.
 void LSRInstance::OptimizeShadowIV() {
   const SCEV *BackedgeTakenCount = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
@@ -1673,7 +1673,7 @@ LSRInstance::reconcileNewOffset(LSRUse &LU, int64_t NewOffset,
 
 /// getUse - Return an LSRUse index and an offset value for a fixup which
 /// needs the given expression, with the given kind and optional access type.
-/// Either reuse an exisitng use or create a new one, as needed.
+/// Either reuse an existing use or create a new one, as needed.
 std::pair<size_t, int64_t>
 LSRInstance::getUse(const SCEV *&Expr,
                     LSRUse::KindType Kind, const Type *AccessTy) {
@@ -2035,7 +2035,7 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 /// loop-dominating registers added into a single register.
 void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
                                        Formula Base) {
-  // This method is only intersting on a plurality of registers.
+  // This method is only interesting on a plurality of registers.
   if (Base.BaseRegs.size() <= 1) return;
 
   Formula F = Base;
@@ -2054,7 +2054,7 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
     const SCEV *Sum = SE.getAddExpr(Ops);
     // TODO: If Sum is zero, it probably means ScalarEvolution missed an
     // opportunity to fold something. For now, just ignore such cases
-    // rather than procede with zero in a register.
+    // rather than proceed with zero in a register.
     if (!Sum->isZero()) {
       F.BaseRegs.push_back(Sum);
       (void)InsertFormula(LU, LUIdx, F);
@@ -2401,7 +2401,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
     const SCEV *NegImmS = SE.getSCEV(ConstantInt::get(IntTy, -(uint64_t)Imm));
     unsigned BitWidth = SE.getTypeSizeInBits(IntTy);
 
-    // TODO: Use a more targetted data structure.
+    // TODO: Use a more targeted data structure.
     for (size_t L = 0, LE = LU.Formulae.size(); L != LE; ++L) {
       Formula F = LU.Formulae[L];
       // Use the immediate in the scaled register.
@@ -2569,9 +2569,9 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
         });
 }
 
-/// NarrowSearchSpaceUsingHeuristics - If there are an extrordinary number of
+/// NarrowSearchSpaceUsingHeuristics - If there are an extraordinary number of
 /// formulae to choose from, use some rough heuristics to prune down the number
-/// of formulae. This keeps the main solver from taking an extrordinary amount
+/// of formulae. This keeps the main solver from taking an extraordinary amount
 /// of time in some worst-case scenarios.
 void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
   // This is a rough guess that seems to work fairly well.
@@ -2621,7 +2621,7 @@ void LSRInstance::NarrowSearchSpaceUsingHeuristics() {
     }
 
     DEBUG(dbgs() << "Narrowing the search space by assuming " << *Best
-                 << " will yeild profitable reuse.\n");
+                 << " will yield profitable reuse.\n");
     Taken.insert(Best);
 
     // In any use with formulae which references this register, delete formulae
@@ -2668,7 +2668,7 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
   //    - sort the formula so that the most profitable solutions are found first
   //    - sort the uses too
   //  - search faster:
-  //    - dont compute a cost, and then compare. compare while computing a cost
+  //    - don't compute a cost, and then compare. compare while computing a cost
   //      and bail early.
   //    - track register sets with SmallBitVector
 
@@ -3104,7 +3104,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
         dbgs() << ":\n");
 
   /// OptimizeShadowIV - If IV is used in a int-to-float cast
-  /// inside the loop then try to eliminate the cast opeation.
+  /// inside the loop then try to eliminate the cast operation.
   OptimizeShadowIV();
 
   // Change loop terminating condition to use the postinc iv when possible.

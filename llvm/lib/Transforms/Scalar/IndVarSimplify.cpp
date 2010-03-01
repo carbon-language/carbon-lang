@@ -594,8 +594,8 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
   }
 }
 
-/// Return true if it is OK to use SIToFPInst for an inducation variable
-/// with given inital and exit values.
+/// Return true if it is OK to use SIToFPInst for an induction variable
+/// with given initial and exit values.
 static bool useSIToFPInst(ConstantFP &InitV, ConstantFP &ExitV,
                           uint64_t intIV, uint64_t intEV) {
 
@@ -648,7 +648,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   if (!convertToInt(InitValue->getValueAPF(), &newInitValue))
     return;
 
-  // Check IV increment. Reject this PH if increement operation is not
+  // Check IV increment. Reject this PH if increment operation is not
   // an add or increment value can not be represented by an integer.
   BinaryOperator *Incr =
     dyn_cast<BinaryOperator>(PH->getIncomingValue(BackEdge));
@@ -684,7 +684,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
     if (BI->getCondition() != EC) return;
   }
 
-  // Find exit value. If exit value can not be represented as an interger then
+  // Find exit value. If exit value can not be represented as an integer then
   // do not handle this floating point PH.
   ConstantFP *EV = NULL;
   unsigned EVIndex = 1;
@@ -746,11 +746,11 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),
                                  NewPred, LHS, RHS, EC->getName());
 
-  // In the following deltions, PH may become dead and may be deleted.
+  // In the following deletions, PH may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.
   WeakVH WeakPH = PH;
 
-  // Delete old, floating point, exit comparision instruction.
+  // Delete old, floating point, exit comparison instruction.
   NewEC->takeName(EC);
   EC->replaceAllUsesWith(NewEC);
   RecursivelyDeleteTriviallyDeadInstructions(EC);

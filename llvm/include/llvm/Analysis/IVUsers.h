@@ -61,7 +61,7 @@ public:
     Stride = Val;
   }
 
-  /// getOffset - Return the offset to add to a theoeretical induction
+  /// getOffset - Return the offset to add to a theoretical induction
   /// variable that starts at zero and counts up by the stride to compute
   /// the value for the use. This always has the same type as the stride.
   const SCEV *getOffset() const { return Offset; }
@@ -116,7 +116,7 @@ private:
   bool IsUseOfPostIncrementedValue;
 
   /// Deleted - Implementation of CallbackVH virtual function to
-  /// recieve notification when the User is deleted.
+  /// receive notification when the User is deleted.
   virtual void deleted();
 };
 

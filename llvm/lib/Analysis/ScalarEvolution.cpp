@@ -616,7 +616,7 @@ namespace {
 /// When this routine is finished, we know that any duplicates in the vector are
 /// consecutive and that complexity is monotonically increasing.
 ///
-/// Note that we go take special precautions to ensure that we get determinstic
+/// Note that we go take special precautions to ensure that we get deterministic
 /// results from this routine.  In other words, we don't want the results of
 /// this to depend on where the addresses of various SCEV objects happened to
 /// land in memory.
@@ -744,7 +744,7 @@ static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
   // We need at least W + T bits for the multiplication step
   unsigned CalculationBits = W + T;
 
-  // Calcuate 2^T, at width T+W.
+  // Calculate 2^T, at width T+W.
   APInt DivFactor = APInt(CalculationBits, 1).shl(T);
 
   // Calculate the multiplicative inverse of K! / 2^T;
@@ -1410,7 +1410,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
 
     // If we deleted at least one add, we added operands to the end of the list,
     // and they are not necessarily sorted.  Recurse to resort and resimplify
-    // any operands we just aquired.
+    // any operands we just acquired.
     if (DeletedAdd)
       return getAddExpr(Ops);
   }
@@ -1717,7 +1717,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
 
     // If we deleted at least one mul, we added operands to the end of the list,
     // and they are not necessarily sorted.  Recurse to resort and resimplify
-    // any operands we just aquired.
+    // any operands we just acquired.
     if (DeletedMul)
       return getMulExpr(Ops);
   }
@@ -2746,7 +2746,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *LocalOffset = getSCEV(Index);
-      // Getelementptr indicies are signed.
+      // Getelementptr indices are signed.
       LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
       // Lower "inbounds" GEPs to NSW arithmetic.
       LocalOffset = getMulExpr(LocalOffset, getSizeOfExpr(*GTI),
@@ -3220,7 +3220,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
               const Type *Z0Ty = Z0->getType();
               unsigned Z0TySize = getTypeSizeInBits(Z0Ty);
 
-              // If C is a low-bits mask, the zero extend is zerving to
+              // If C is a low-bits mask, the zero extend is serving to
               // mask off the high bits. Complement the operand and
               // re-apply the zext.
               if (APIntOps::isMask(Z0TySize, CI->getValue()))
@@ -3405,7 +3405,7 @@ PushLoopPHIs(const Loop *L, SmallVectorImpl<Instruction *> &Worklist) {
 const ScalarEvolution::BackedgeTakenInfo &
 ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // Initially insert a CouldNotCompute for this loop. If the insertion
-  // succeeds, procede to actually compute a backedge-taken count and
+  // succeeds, proceed to actually compute a backedge-taken count and
   // update the value. The temporary CouldNotCompute value tells SCEV
   // code elsewhere that it shouldn't attempt to request a new
   // backedge-taken count, which could result in infinite recursion.
@@ -3622,7 +3622,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExit(const Loop *L,
       return getCouldNotCompute();
   }
 
-  // Procede to the next level to examine the exit condition expression.
+  // Proceed to the next level to examine the exit condition expression.
   return ComputeBackedgeTakenCountFromExitCond(L, ExitBr->getCondition(),
                                                ExitBr->getSuccessor(0),
                                                ExitBr->getSuccessor(1));
@@ -3711,7 +3711,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
   }
 
   // With an icmp, it may be feasible to compute an exact backedge-taken count.
-  // Procede to the next level to examine the icmp.
+  // Proceed to the next level to examine the icmp.
   if (ICmpInst *ExitCondICmp = dyn_cast<ICmpInst>(ExitCond))
     return ComputeBackedgeTakenCountFromExitCondICmp(L, ExitCondICmp, TBB, FBB);
 
@@ -4780,7 +4780,7 @@ bool ScalarEvolution::isImpliedCond(Value *CondValue,
                                     ICmpInst::Predicate Pred,
                                     const SCEV *LHS, const SCEV *RHS,
                                     bool Inverse) {
-  // Recursivly handle And and Or conditions.
+  // Recursively handle And and Or conditions.
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CondValue)) {
     if (BO->getOpcode() == Instruction::And) {
       if (!Inverse)
@@ -4983,7 +4983,7 @@ bool ScalarEvolution::isImpliedCond(Value *CondValue,
 }
 
 /// isImpliedCondOperands - Test whether the condition described by Pred,
-/// LHS, and RHS is true whenever the condition desribed by Pred, FoundLHS,
+/// LHS, and RHS is true whenever the condition described by Pred, FoundLHS,
 /// and FoundRHS is true.
 bool ScalarEvolution::isImpliedCondOperands(ICmpInst::Predicate Pred,
                                             const SCEV *LHS, const SCEV *RHS,
@@ -4998,7 +4998,7 @@ bool ScalarEvolution::isImpliedCondOperands(ICmpInst::Predicate Pred,
 }
 
 /// isImpliedCondOperandsHelper - Test whether the condition described by
-/// Pred, LHS, and RHS is true whenever the condition desribed by Pred,
+/// Pred, LHS, and RHS is true whenever the condition described by Pred,
 /// FoundLHS, and FoundRHS is true.
 bool
 ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
@@ -5156,7 +5156,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
     // If MaxEnd is within a step of the maximum integer value in its type,
     // adjust it down to the minimum value which would produce the same effect.
-    // This allows the subsequent ceiling divison of (N+(step-1))/step to
+    // This allows the subsequent ceiling division of (N+(step-1))/step to
     // compute the correct value.
     const SCEV *StepMinusOne = getMinusSCEV(Step,
                                             getIntegerSCEV(1, Step->getType()));
@@ -5433,7 +5433,7 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
 }
 
 void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
-  // ScalarEvolution's implementaiton of the print method is to print
+  // ScalarEvolution's implementation of the print method is to print
   // out SCEV values of all instructions that are interesting. Doing
   // this potentially causes it to create new SCEV objects though,
   // which technically conflicts with the const qualifier. This isn't

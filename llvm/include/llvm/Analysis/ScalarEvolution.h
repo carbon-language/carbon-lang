@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // The ScalarEvolution class is an LLVM pass which can be used to analyze and
-// catagorize scalar expressions in loops.  It specializes in recognizing
+// categorize scalar expressions in loops.  It specializes in recognizing
 // general induction variables, representing them with the abstract and opaque
 // SCEV class.  Given this analysis, trip counts of loops and other important
 // properties can be obtained.
@@ -55,7 +55,7 @@ namespace llvm {
 
   protected:
     /// SubclassData - This field is initialized to zero and may be used in
-    /// subclasses to store miscelaneous information.
+    /// subclasses to store miscellaneous information.
     unsigned short SubclassData;
 
   private:
@@ -177,7 +177,7 @@ namespace llvm {
     ///
     LoopInfo *LI;
 
-    /// TD - The target data information for the target we are targetting.
+    /// TD - The target data information for the target we are targeting.
     ///
     TargetData *TD;
 
@@ -194,7 +194,7 @@ namespace llvm {
     std::map<SCEVCallbackVH, const SCEV *> Scalars;
 
     /// BackedgeTakenInfo - Information about the backedge-taken count
-    /// of a loop. This currently inclues an exact count and a maximum count.
+    /// of a loop. This currently includes an exact count and a maximum count.
     ///
     struct BackedgeTakenInfo {
       /// Exact - An expression indicating the exact backedge-taken count of
@@ -353,14 +353,14 @@ namespace llvm {
                        bool Inverse);
 
     /// isImpliedCondOperands - Test whether the condition described by Pred,
-    /// LHS, and RHS is true whenever the condition desribed by Pred, FoundLHS,
+    /// LHS, and RHS is true whenever the condition described by Pred, FoundLHS,
     /// and FoundRHS is true.
     bool isImpliedCondOperands(ICmpInst::Predicate Pred,
                                const SCEV *LHS, const SCEV *RHS,
                                const SCEV *FoundLHS, const SCEV *FoundRHS);
 
     /// isImpliedCondOperandsHelper - Test whether the condition described by
-    /// Pred, LHS, and RHS is true whenever the condition desribed by Pred,
+    /// Pred, LHS, and RHS is true whenever the condition described by Pred,
     /// FoundLHS, and FoundRHS is true.
     bool isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
                                      const SCEV *LHS, const SCEV *RHS,

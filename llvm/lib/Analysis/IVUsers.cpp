@@ -222,7 +222,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
     // Descend recursively, but not into PHI nodes outside the current loop.
     // It's important to see the entire expression outside the loop to get
     // choices that depend on addressing mode use right, although we won't
-    // consider references ouside the loop in all cases.
+    // consider references outside the loop in all cases.
     // If User is already in Processed, we don't want to recurse into it again,
     // but do want to record a second reference in the same instruction.
     bool AddUserToIVUsers = false;
@@ -330,7 +330,7 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
   }
   OS << ":\n";
 
-  // Use a defualt AssemblyAnnotationWriter to suppress the default info
+  // Use a default AssemblyAnnotationWriter to suppress the default info
   // comments, which aren't relevant here.
   AssemblyAnnotationWriter Annotator;
   for (ilist<IVStrideUse>::const_iterator UI = IVUses.begin(),
