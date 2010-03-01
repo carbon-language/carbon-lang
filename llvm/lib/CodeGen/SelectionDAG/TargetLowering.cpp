@@ -1441,8 +1441,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::TRUNCATE: {
     // Simplify the input, using demanded bit information, and compute the known
     // zero/one bits live out.
+    unsigned OperandBitWidth =
+      Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
     APInt TruncMask = NewMask;
-    TruncMask.zext(Op.getOperand(0).getValueSizeInBits());
+    TruncMask.zext(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), TruncMask,
                              KnownZero, KnownOne, TLO, Depth+1))
       return true;
@@ -1453,15 +1455,14 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // on the known demanded bits.
     if (Op.getOperand(0).getNode()->hasOneUse()) {
       SDValue In = Op.getOperand(0);
-      unsigned InBitWidth = In.getValueSizeInBits();
       switch (In.getOpcode()) {
       default: break;
       case ISD::SRL:
         // Shrink SRL by a constant if none of the high bits shifted in are
         // demanded.
         if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1))){
-          APInt HighBits = APInt::getHighBitsSet(InBitWidth,
-                                                 InBitWidth - BitWidth);
+          APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
+                                                 OperandBitWidth - BitWidth);
           HighBits = HighBits.lshr(ShAmt->getZExtValue());
           HighBits.trunc(BitWidth);
           
