@@ -2237,7 +2237,7 @@ bool GVN::splitCriticalEdges() {
     std::pair<TerminatorInst*, unsigned> Edge = toSplit.pop_back_val();
     SplitCriticalEdge(Edge.first, Edge.second, this);
   } while (!toSplit.empty());
-  MD->invalidateCachedPredecessors();
+  if (MD) MD->invalidateCachedPredecessors();
   return true;
 }
 
