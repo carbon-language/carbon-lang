@@ -305,6 +305,14 @@ int main(int argc, char **argv) {
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
 
+  // Request that addPassesToEmitFile run the Verifier after running
+  // passes which modify the IR.
+#ifndef NDEBUG
+  bool DisableVerify = false;
+#else
+  bool DisableVerify = true;
+#endif
+
   // If this target requires addPassesToEmitWholeFile, do it now.  This is
   // used by strange things like the C backend.
   if (Target.WantsWholeFile()) {
@@ -320,7 +328,8 @@ int main(int argc, char **argv) {
       PM.add(createVerifierPass());
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OLvl)) {
+    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OLvl,
+                                        DisableVerify)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       if (Out != &fouts()) delete Out;
@@ -347,7 +356,8 @@ int main(int argc, char **argv) {
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
 
-    if (Target.addPassesToEmitFile(Passes, *Out, FileType, OLvl)) {
+    if (Target.addPassesToEmitFile(Passes, *Out, FileType, OLvl,
+                                   DisableVerify)) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       if (Out != &fouts()) delete Out;
