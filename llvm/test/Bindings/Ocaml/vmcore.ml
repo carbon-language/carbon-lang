@@ -607,6 +607,33 @@ let test_global_variables () =
   end
 
 
+(*===-- Uses --------------------------------------------------------------===*)
+
+let test_uses () =
+  let ty = function_type i32_type [| i32_type; i32_type |] in
+  let fn = define_function "use_function" ty m in
+  let b = builder_at_end context (entry_block fn) in
+
+  let p1 = param fn 0 in
+  let p2 = param fn 1 in
+  let v1 = build_add p1 p2 "v1" b in
+  let v2 = build_add p1 v1 "v2" b in
+  let _ = build_add v1 v2 "v3" b in
+
+  let lf s u = value_name (user u) ^ "->" ^ s in
+  insist ("v2->v3->" = fold_left_uses lf "" v1);
+  let rf u s = value_name (user u) ^ "<-" ^ s in
+  insist ("v3<-v2<-" = fold_right_uses rf v1 "");
+
+  let lf s u = value_name (used_value u) ^ "->" ^ s in
+  insist ("v1->v1->" = fold_left_uses lf "" v1);
+
+  let rf u s = value_name (used_value u) ^ "<-" ^ s in
+  insist ("v1<-v1<-" = fold_right_uses rf v1 "");
+
+  ignore (build_unreachable b)
+
+
 (*===-- Users -------------------------------------------------------------===*)
 
 let test_users () =
@@ -1291,6 +1318,7 @@ let _ =
   suite "constants"        test_constants;
   suite "global values"    test_global_values;
   suite "global variables" test_global_variables;
+  suite "uses"             test_uses;
   suite "users"            test_users;
   suite "aliases"          test_aliases;
   suite "functions"        test_functions;

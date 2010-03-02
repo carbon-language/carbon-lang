@@ -13,6 +13,7 @@ type llmodule
 type lltype
 type lltypehandle
 type llvalue
+type lluse
 type llbasicblock
 type llbuilder
 type llmoduleprovider
@@ -241,6 +242,38 @@ external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
 external dump_value : llvalue -> unit = "llvm_dump_value"
 external replace_all_uses_with : llvalue -> llvalue -> unit
                                = "LLVMReplaceAllUsesWith"
+
+(*--... Operations on uses .................................................--*)
+external use_begin : llvalue -> lluse option = "llvm_use_begin"
+external use_succ : lluse -> lluse option = "llvm_use_succ"
+external user : lluse -> llvalue = "llvm_user"
+external used_value : lluse -> llvalue = "llvm_used_value"
+
+let iter_uses f v =
+  let rec aux = function
+    | None -> ()
+    | Some u ->
+        f u;
+        aux (use_succ u)
+  in
+  aux (use_begin v)
+
+let fold_left_uses f init v =
+  let rec aux init u =
+    match u with
+    | None -> init
+    | Some u -> aux (f init u) (use_succ u)
+  in
+  aux init (use_begin v)
+
+let fold_right_uses f v init =
+  let rec aux u init =
+    match u with
+    | None -> init
+    | Some u -> f u (aux (use_succ u) init)
+  in
+  aux (use_begin v) init
+
 
 (*--... Operations on users ................................................--*)
 external operand : llvalue -> int -> llvalue = "llvm_operand"

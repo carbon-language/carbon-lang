@@ -707,6 +707,42 @@ CAMLprim value llvm_set_alignment(value Bytes, LLVMValueRef Global) {
   return Val_unit;
 }
 
+/*--... Operations on uses .................................................--*/
+
+/* llvalue -> lluse option */
+CAMLprim value llvm_use_begin(LLVMValueRef Val) {
+  CAMLparam0();
+  LLVMUseRef First;
+  if ((First = LLVMGetFirstUse(Val))) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = (value) First;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
+}
+
+/* lluse -> lluse option */
+CAMLprim value llvm_use_succ(LLVMUseRef U) {
+  CAMLparam0();
+  LLVMUseRef Next;
+  if ((Next = LLVMGetNextUse(U))) {
+    value Option = alloc(1, 0);
+    Field(Option, 0) = (value) Next;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
+}
+
+/* lluse -> llvalue */
+CAMLprim LLVMValueRef llvm_user(LLVMUseRef UR) {
+  return LLVMGetUser(UR);
+}
+
+/* lluse -> llvalue */
+CAMLprim LLVMValueRef llvm_used_value(LLVMUseRef UR) {
+  return LLVMGetUsedValue(UR);
+}
+
 /*--... Operations on global variables .....................................--*/
 
 DEFINE_ITERATORS(global, Global, LLVMModuleRef, LLVMValueRef,

@@ -39,6 +39,9 @@ type lltypehandle
     This type covers a wide range of subclasses. *)
 type llvalue
 
+(** Used to store users and usees of values. See the [llvm::Use] class. *)
+type lluse
+
 (** A basic block in LLVM IR. See the [llvm::BasicBlock] class. *)
 type llbasicblock
 
@@ -511,6 +514,38 @@ external dump_value : llvalue -> unit = "llvm_dump_value"
  * with the value [new]. See the method [llvm::Value::replaceAllUsesWith]. *)
 external replace_all_uses_with : llvalue -> llvalue -> unit
                                = "LLVMReplaceAllUsesWith"
+
+
+(* {6 Uses} *)
+
+(** [use_begin v] returns the first position in the use list for the value [v].
+    [use_begin] and [use_succ] can e used to iterate over the use list in order.
+    See the method [llvm::Value::use_begin]. *)
+external use_begin : llvalue -> lluse option = "llvm_use_begin"
+
+(** [use_succ u] returns the use list position succeeding [u].
+    See the method [llvm::use_value_iterator::operator++]. *)
+external use_succ : lluse -> lluse option = "llvm_use_succ"
+
+(** [user u] returns the user of the use [u].
+    See the method [llvm::Use::getUser]. *)
+external user : lluse -> llvalue = "llvm_user"
+
+(** [used_value u] returns the usee of the use [u].
+    See the method [llvm::Use::getUsedValue]. *)
+external used_value : lluse -> llvalue = "llvm_used_value"
+
+(** [iter_uses f v] applies function [f] to each of the users of the value [v]
+    in order. Tail recursive. *)
+val iter_uses : (lluse -> unit) -> llvalue -> unit
+
+(** [fold_left_uses f init v] is [f (... (f init u1) ...) uN] where
+    [u1,...,uN] are the users of the value [v]. Tail recursive. *)
+val fold_left_uses : ('a -> lluse -> 'a) -> 'a -> llvalue -> 'a
+
+(** [fold_right_uses f v init] is [f u1 (... (f uN init) ...)] where
+    [u1,...,uN] are the users of the value [v]. Not tail recursive. *)
+val fold_right_uses : (lluse -> 'a -> 'a) -> llvalue -> 'a -> 'a
 
 
 (* {6 Users} *)
