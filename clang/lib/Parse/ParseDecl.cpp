@@ -738,7 +738,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
 
       // Parse this as a tag as if the missing tag were present.
       if (TagKind == tok::kw_enum)
-        ParseEnumSpecifier(Loc, DS, AS);
+        ParseEnumSpecifier(Loc, DS, TemplateInfo, AS);
       else
         ParseClassSpecifier(TagKind, Loc, DS, TemplateInfo, AS);
       return true;
@@ -1306,7 +1306,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     // enum-specifier:
     case tok::kw_enum:
       ConsumeToken();
-      ParseEnumSpecifier(Loc, DS, AS);
+      ParseEnumSpecifier(Loc, DS, TemplateInfo, AS);
       continue;
 
     // cv-qualifier:
@@ -1572,7 +1572,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   // enum-specifier:
   case tok::kw_enum:
     ConsumeToken();
-    ParseEnumSpecifier(Loc, DS);
+    ParseEnumSpecifier(Loc, DS, TemplateInfo, AS_none);
     return true;
 
   // cv-qualifier:
@@ -1850,6 +1850,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 /// [C++]   'enum' '::'[opt] nested-name-specifier[opt] identifier
 ///
 void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
+                                const ParsedTemplateInfo &TemplateInfo,
                                 AccessSpecifier AS) {
   // Parse the tag portion of this.
   if (Tok.is(tok::code_completion)) {
@@ -1886,6 +1887,15 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     // Skip the rest of this declarator, up until the comma or semicolon.
     SkipUntil(tok::comma, true);
     return;
+  }
+
+  // enums cannot be templates.
+  if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) {
+    Diag(Tok, diag::err_enum_template);
+
+    // Skip the rest of this declarator, up until the comma or semicolon.
+    SkipUntil(tok::comma, true);
+    return;      
   }
 
   // If an identifier is present, consume and remember it.

@@ -1115,7 +1115,7 @@ private:
   void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
 
   void ParseEnumSpecifier(SourceLocation TagLoc, DeclSpec &DS,
-                          AccessSpecifier AS = AS_none);
+                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),                          AccessSpecifier AS = AS_none);
   void ParseEnumBody(SourceLocation StartLoc, DeclPtrTy TagDecl);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclPtrTy TagDecl);

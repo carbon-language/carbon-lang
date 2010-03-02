@@ -300,6 +300,7 @@ def err_explicit_instantiation_with_definition : Error<
     "explicit template instantiation cannot have a definition; if this "
     "definition is meant to be an explicit specialization, add '<>' after the "
     "'template' keyword">;
+def err_enum_template : Error<"enumeration cannot be a template">;
 
 // Constructor template diagnostics.
 def err_out_of_line_constructor_template_id : Error<

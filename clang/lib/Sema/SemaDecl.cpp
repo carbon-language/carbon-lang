@@ -5757,12 +5757,13 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   llvm::APSInt EnumVal(IntWidth);
   QualType EltTy;
   if (Val) {
-    if (Enum->isDependentType())
+    if (Enum->isDependentType() || Val->isTypeDependent())
       EltTy = Context.DependentTy;
     else {
       // C99 6.7.2.2p2: Make sure we have an integer constant expression.
       SourceLocation ExpLoc;
-      if (VerifyIntegerConstantExpression(Val, &EnumVal)) {
+      if (!Val->isValueDependent() &&
+          VerifyIntegerConstantExpression(Val, &EnumVal)) {
         Val = 0;
       } else {        
         if (!getLangOptions().CPlusPlus) {
@@ -5864,7 +5865,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
     }
   }
 
-  if (!Enum->isDependentType()) {
+  if (!EltTy->isDependentType()) {
     // Make the enumerator value match the signedness and size of the 
     // enumerator's type.
     EnumVal.zextOrTrunc(Context.getTypeSize(EltTy));
