@@ -1087,7 +1087,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
       // If the SCEV is computable at this level, insert it into the header
       // after the PHIs (and after any other instructions that we've inserted
       // there) so that it is guaranteed to dominate any user inside the loop.
-      if (L && S->hasComputableLoopEvolution(L))
+      if (L && S->hasComputableLoopEvolution(L) && L != PostIncLoop)
         InsertPt = L->getHeader()->getFirstNonPHI();
       while (isInsertedInstruction(InsertPt))
         InsertPt = llvm::next(BasicBlock::iterator(InsertPt));

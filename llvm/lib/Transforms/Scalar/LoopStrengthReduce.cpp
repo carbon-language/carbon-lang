@@ -2793,8 +2793,12 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     if (Instruction *I =
           dyn_cast<Instruction>(cast<ICmpInst>(LF.UserInst)->getOperand(1)))
       Inputs.push_back(I);
-  if (LF.PostIncLoop && !L->contains(LF.UserInst))
-    Inputs.push_back(L->getLoopLatch()->getTerminator());
+  if (LF.PostIncLoop) {
+    if (!L->contains(LF.UserInst))
+      Inputs.push_back(L->getLoopLatch()->getTerminator());
+    else
+      Inputs.push_back(IVIncInsertPos);
+  }
 
   // Then, climb up the immediate dominator tree as far as we can go while
   // still being dominated by the input positions.
