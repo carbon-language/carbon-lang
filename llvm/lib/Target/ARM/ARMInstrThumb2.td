@@ -13,7 +13,7 @@
 
 // IT block predicate field
 def it_pred : Operand<i32> {
-  let PrintMethod = "printPredicateOperand";
+  let PrintMethod = "printMandatoryPredicateOperand";
 }
 
 // IT block condition mask

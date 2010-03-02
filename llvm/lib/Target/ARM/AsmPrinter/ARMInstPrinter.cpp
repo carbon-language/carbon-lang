@@ -325,6 +325,12 @@ void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum) {
     O << ARMCondCodeToString(CC);
 }
 
+void ARMInstPrinter::printMandatoryPredicateOperand(const MCInst *MI, 
+                                                    unsigned OpNum) {
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
+  O << ARMCondCodeToString(CC);
+}
+
 void ARMInstPrinter::printSBitModifierOperand(const MCInst *MI, unsigned OpNum){
   if (MI->getOperand(OpNum).getReg()) {
     assert(MI->getOperand(OpNum).getReg() == ARM::CPSR &&

@@ -122,6 +122,7 @@ namespace {
     void printT2AddrModeSoRegOperand(const MachineInstr *MI, int OpNum);
 
     void printPredicateOperand(const MachineInstr *MI, int OpNum);
+    void printMandatoryPredicateOperand(const MachineInstr *MI, int OpNum);
     void printSBitModifierOperand(const MachineInstr *MI, int OpNum);
     void printPCLabel(const MachineInstr *MI, int OpNum);
     void printRegisterList(const MachineInstr *MI, int OpNum);
@@ -784,6 +785,12 @@ void ARMAsmPrinter::printPredicateOperand(const MachineInstr *MI, int OpNum) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
   if (CC != ARMCC::AL)
     O << ARMCondCodeToString(CC);
+}
+
+void ARMAsmPrinter::printMandatoryPredicateOperand(const MachineInstr *MI,
+                                                   int OpNum) {
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
+  O << ARMCondCodeToString(CC);
 }
 
 void ARMAsmPrinter::printSBitModifierOperand(const MachineInstr *MI, int OpNum){

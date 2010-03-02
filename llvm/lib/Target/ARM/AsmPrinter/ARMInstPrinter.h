@@ -71,6 +71,7 @@ public:
   void printT2AddrModeSoRegOperand(const MCInst *MI, unsigned OpNum) {}
   
   void printPredicateOperand(const MCInst *MI, unsigned OpNum);
+  void printMandatoryPredicateOperand(const MCInst *MI, unsigned OpNum);
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum);
   void printRegisterList(const MCInst *MI, unsigned OpNum);
   void printCPInstOperand(const MCInst *MI, unsigned OpNum,
