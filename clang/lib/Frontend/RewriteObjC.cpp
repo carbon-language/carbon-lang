@@ -640,7 +640,9 @@ void RewriteObjC::Initialize(ASTContext &context) {
     Preamble += "#define __block\n";
     Preamble += "#define __weak\n";
   }
-  Preamble += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((long) &((TYPE *)0)->MEMBER)\n";
+  // NOTE! Windows uses LLP64 for 64bit mode. So, cast pointer to long long
+  // as this avoids warning in any 64bit/32bit compilation model.
+  Preamble += "\n#define __OFFSETOFIVAR__(TYPE, MEMBER) ((long long) &((TYPE *)0)->MEMBER)\n";
 }
 
 
