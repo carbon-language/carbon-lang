@@ -2098,6 +2098,16 @@ def t2STREXD : T2I_strex<0b11, (outs GPR:$success),
                          {?, ?, ?, ?}>;
 }
 
+// Clear-Exclusive is for disassembly only.
+def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "",
+                  [/* For disassembly only; pattern left blank */]>,
+            Requires<[IsARM, HasV7]>  {
+  let Inst{31-20} = 0xf3b;
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+  let Inst{7-4} = 0b0010;
+}
+
 //===----------------------------------------------------------------------===//
 // TLS Instructions
 //
