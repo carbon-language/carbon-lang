@@ -550,8 +550,8 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   }
 
   // Exception Handling.
-  LSDASection = getMachOSection("__DATA", "__gcc_except_tab", 0,
-                                SectionKind::getDataRel());
+  LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
+                                SectionKind::getReadOnlyWithRel());
   EHFrameSection =
     getMachOSection("__TEXT", "__eh_frame",
                     MCSectionMachO::S_COALESCED |
@@ -779,7 +779,7 @@ unsigned TargetLoweringObjectFileMachO::getFDEEncoding() const {
 }
 
 unsigned TargetLoweringObjectFileMachO::getTTypeEncoding() const {
-  return DW_EH_PE_absptr;
+  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
 }
 
 //===----------------------------------------------------------------------===//
