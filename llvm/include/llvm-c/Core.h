@@ -92,11 +92,8 @@ typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 /** See the llvm::PassManagerBase class. */
 typedef struct LLVMOpaquePassManager *LLVMPassManagerRef;
 
-/**
- * Used to iterate through the uses of a Value, allowing access to all Values
- * that use this Value.  See the llvm::Use and llvm::value_use_iterator classes.
- */
-typedef struct LLVMOpaqueUseIterator *LLVMUseIteratorRef;
+/** Used to get the users and usees of a Value. See the llvm::Use class. */
+typedef struct LLVMOpaqueUse *LLVMUseRef;
 
 typedef enum {
     LLVMZExtAttribute       = 1<<0,
@@ -514,10 +511,10 @@ void LLVMSetMetadata(LLVMValueRef Val, unsigned KindID, LLVMValueRef Node);
 LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DECLARE_VALUE_CAST)
 
 /* Operations on Uses */
-LLVMUseIteratorRef LLVMGetFirstUse(LLVMValueRef Val);
-LLVMUseIteratorRef LLVMGetNextUse(LLVMUseIteratorRef U);
-LLVMValueRef LLVMGetUser(LLVMUseIteratorRef U);
-LLVMValueRef LLVMGetUsedValue(LLVMUseIteratorRef U);
+LLVMUseRef LLVMGetFirstUse(LLVMValueRef Val);
+LLVMUseRef LLVMGetNextUse(LLVMUseRef U);
+LLVMValueRef LLVMGetUser(LLVMUseRef U);
+LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
 
 /* Operations on Users */
 LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index);
@@ -1096,7 +1093,7 @@ namespace llvm {
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,       LLVMTypeHandleRef    )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMContext,        LLVMContextRef       )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use,                LLVMUseIteratorRef           )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use,                LLVMUseRef           )
   DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassManagerBase,    LLVMPassManagerRef   )
   /* LLVMModuleProviderRef exists for historical reasons, but now just holds a
    * Module.

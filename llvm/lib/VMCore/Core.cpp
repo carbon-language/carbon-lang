@@ -456,7 +456,7 @@ void LLVMSetMetadata(LLVMValueRef Inst, unsigned KindID, LLVMValueRef MD) {
 LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DEFINE_VALUE_CAST)
 
 /*--.. Operations on Uses ..................................................--*/
-LLVMUseIteratorRef LLVMGetFirstUse(LLVMValueRef Val) {
+LLVMUseRef LLVMGetFirstUse(LLVMValueRef Val) {
   Value *V = unwrap(Val);
   Value::use_iterator I = V->use_begin();
   if (I == V->use_end())
@@ -464,16 +464,19 @@ LLVMUseIteratorRef LLVMGetFirstUse(LLVMValueRef Val) {
   return wrap(&(I.getUse()));
 }
 
-LLVMUseIteratorRef LLVMGetNextUse(LLVMUseIteratorRef UR) {
-  return wrap(unwrap(UR)->getNext());
+LLVMUseRef LLVMGetNextUse(LLVMUseRef U) {
+  Use *Next = unwrap(U)->getNext();
+  if (Next)
+    return wrap(Next);
+  return 0;
 }
 
-LLVMValueRef LLVMGetUser(LLVMUseIteratorRef UR) {
-  return wrap(unwrap(UR)->getUser());
+LLVMValueRef LLVMGetUser(LLVMUseRef U) {
+  return wrap(unwrap(U)->getUser());
 }
 
-LLVMValueRef LLVMGetUsedValue(LLVMUseIteratorRef UR) {
-  return wrap(unwrap(UR)->get());
+LLVMValueRef LLVMGetUsedValue(LLVMUseRef U) {
+  return wrap(unwrap(U)->get());
 }
 
 /*--.. Operations on Users .................................................--*/
