@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This pass performs global common subexpression elimination on machine
-// instructions using a scoped hash table based value numbering schemem. IT
+// instructions using a scoped hash table based value numbering scheme. It
 // must be run while the machine function is still in SSA form.
 //
 //===----------------------------------------------------------------------===//
