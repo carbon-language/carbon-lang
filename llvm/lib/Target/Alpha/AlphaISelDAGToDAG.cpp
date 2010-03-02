@@ -159,10 +159,6 @@ namespace {
     // target-specific node if it hasn't already been changed.
     SDNode *Select(SDNode *N);
     
-    /// InstructionSelect - This callback is invoked by
-    /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelect();
-    
     virtual const char *getPassName() const {
       return "Alpha DAG->DAG Pattern Instruction Selection";
     } 
@@ -222,20 +218,11 @@ SDNode *AlphaDAGToDAGISel::getGlobalRetAddr() {
   return CurDAG->getRegister(GlobalRetAddr, TLI.getPointerTy()).getNode();
 }
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void AlphaDAGToDAGISel::InstructionSelect() {
-  // Select target instructions for the DAG.
-  SelectRoot(*CurDAG);
-  CurDAG->RemoveDeadNodes();
-}
-
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDNode *AlphaDAGToDAGISel::Select(SDNode *N) {
-  if (N->isMachineOpcode()) {
+  if (N->isMachineOpcode())
     return NULL;   // Already selected.
-  }
   DebugLoc dl = N->getDebugLoc();
 
   switch (N->getOpcode()) {

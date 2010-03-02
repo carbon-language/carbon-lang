@@ -35,7 +35,6 @@ class SparcDAGToDAGISel : public SelectionDAGISel {
   /// make the right decision when generating code for different targets.
   const SparcSubtarget &Subtarget;
   SparcTargetMachine& TM;
-  MachineBasicBlock *CurBB;
 public:
   explicit SparcDAGToDAGISel(SparcTargetMachine &tm)
     : SelectionDAGISel(tm),
@@ -56,10 +55,6 @@ public:
                                             char ConstraintCode,
                                             std::vector<SDValue> &OutOps);
 
-  /// InstructionSelect - This callback is invoked by
-  /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-  virtual void InstructionSelect();
-
   virtual const char *getPassName() const {
     return "SPARC DAG->DAG Pattern Instruction Selection";
   }
@@ -72,17 +67,8 @@ private:
 };
 }  // end anonymous namespace
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void SparcDAGToDAGISel::InstructionSelect() {
-  CurBB = BB;
-  // Select target instructions for the DAG.
-  SelectRoot(*CurDAG);
-  CurDAG->RemoveDeadNodes();
-}
-
 SDNode* SparcDAGToDAGISel::getGlobalBaseReg() {
-  MachineFunction *MF = CurBB->getParent();
+  MachineFunction *MF = BB->getParent();
   unsigned GlobalBaseReg = TM.getInstrInfo()->getGlobalBaseReg(MF);
   return CurDAG->getRegister(GlobalBaseReg, TLI.getPointerTy()).getNode();
 }

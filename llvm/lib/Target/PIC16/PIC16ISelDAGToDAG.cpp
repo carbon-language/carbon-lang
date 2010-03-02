@@ -24,13 +24,6 @@ FunctionPass *llvm::createPIC16ISelDag(PIC16TargetMachine &TM) {
 }
 
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void PIC16DAGToDAGISel::InstructionSelect() {
-  SelectRoot(*CurDAG);
-  CurDAG->RemoveDeadNodes();
-}
-
 /// Select - Select instructions not customized! Used for
 /// expanded, promoted and normal instructions.
 SDNode* PIC16DAGToDAGISel::Select(SDNode *N) {

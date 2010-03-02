@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -34,14 +33,6 @@
 #include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
-
-#ifndef NDEBUG
-static cl::opt<bool>
-ViewRMWDAGs("view-msp430-rmw-dags", cl::Hidden,
-          cl::desc("Pop up a window to show isel dags after RMW preprocess"));
-#else
-static const bool ViewRMWDAGs = false;
-#endif
 
 STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
@@ -123,7 +114,8 @@ namespace {
         Lowering(*TM.getTargetLowering()),
         Subtarget(*TM.getSubtargetImpl()) { }
 
-    virtual void InstructionSelect();
+    virtual void PreprocessISelDAG();
+    virtual void PostprocessISelDAG();
 
     virtual const char *getPassName() const {
       return "MSP430 DAG->DAG Pattern Instruction Selection";
@@ -151,10 +143,6 @@ namespace {
                                unsigned Opc8, unsigned Opc16);
 
     bool SelectAddr(SDNode *Op, SDValue Addr, SDValue &Base, SDValue &Disp);
-
-  #ifndef NDEBUG
-    unsigned Indent;
-  #endif
   };
 }  // end anonymous namespace
 
@@ -681,28 +669,11 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedBinOp(SDNode *Op,
 }
 
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void MSP430DAGToDAGISel::InstructionSelect() {
-  std::string BlockName;
-  if (ViewRMWDAGs)
-    BlockName = MF->getFunction()->getNameStr() + ":" +
-                BB->getBasicBlock()->getNameStr();
-
+void MSP430DAGToDAGISel::PreprocessISelDAG() {
   PreprocessForRMW();
+}
 
-  if (ViewRMWDAGs) CurDAG->viewGraph("RMW preprocessed:" + BlockName);
-
-  DEBUG(errs() << "Selection DAG after RMW preprocessing:\n");
-  DEBUG(CurDAG->dump());
-
-  // Codegen the basic block.
-  DEBUG(errs() << "===== Instruction selection begins:\n");
-  DEBUG(Indent = 0);
-  SelectRoot(*CurDAG);
-  DEBUG(errs() << "===== Instruction selection ends:\n");
-
-  CurDAG->RemoveDeadNodes();
+void MSP430DAGToDAGISel::PostprocessISelDAG() {
   RMWStores.clear();
 }
 
@@ -710,17 +681,15 @@ SDNode *MSP430DAGToDAGISel::Select(SDNode *Node) {
   DebugLoc dl = Node->getDebugLoc();
 
   // Dump information about the Node being selected
-  DEBUG(errs().indent(Indent) << "Selecting: ");
+  DEBUG(errs() << "Selecting: ");
   DEBUG(Node->dump(CurDAG));
   DEBUG(errs() << "\n");
-  DEBUG(Indent += 2);
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    DEBUG(errs().indent(Indent-2) << "== ";
+    DEBUG(errs() << "== ";
           Node->dump(CurDAG);
           errs() << "\n");
-    DEBUG(Indent -= 2);
     return NULL;
   }
 
@@ -808,13 +777,12 @@ SDNode *MSP430DAGToDAGISel::Select(SDNode *Node) {
   // Select the default instruction
   SDNode *ResNode = SelectCode(Node);
 
-  DEBUG(errs() << std::string(Indent-2, ' ') << "=> ");
+  DEBUG(errs() << "=> ");
   if (ResNode == NULL || ResNode == Node)
     DEBUG(Node->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
   DEBUG(errs() << "\n");
-  DEBUG(Indent -= 2);
 
   return ResNode;
 }

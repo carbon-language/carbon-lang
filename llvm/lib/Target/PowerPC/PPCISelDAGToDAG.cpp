@@ -156,10 +156,6 @@ namespace {
     SDValue BuildSDIVSequence(SDNode *N);
     SDValue BuildUDIVSequence(SDNode *N);
     
-    /// InstructionSelect - This callback is invoked by
-    /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelect();
-    
     void InsertVRSaveCode(MachineFunction &MF);
 
     virtual const char *getPassName() const {
@@ -182,14 +178,6 @@ namespace {
 private:
     SDNode *SelectSETCC(SDNode *N);
   };
-}
-
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void PPCDAGToDAGISel::InstructionSelect() {
-  // Select target instructions for the DAG.
-  SelectRoot(*CurDAG);
-  CurDAG->RemoveDeadNodes();
 }
 
 /// InsertVRSaveCode - Once the entire function has been instruction selected,

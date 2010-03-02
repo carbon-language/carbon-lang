@@ -100,8 +100,6 @@ namespace {
         Lowering(*TM.getTargetLowering()),
         Subtarget(*TM.getSubtargetImpl()) { }
 
-    virtual void InstructionSelect();
-
     virtual const char *getPassName() const {
       return "SystemZ DAG->DAG Pattern Instruction Selection";
     }
@@ -152,10 +150,6 @@ namespace {
     bool MatchAddressBase(SDValue N, SystemZRRIAddressMode &AM);
     bool MatchAddressRI(SDValue N, SystemZRRIAddressMode &AM,
                         bool is12Bit);
-
-  #ifndef NDEBUG
-    unsigned Indent;
-  #endif
   };
 }  // end anonymous namespace
 
@@ -599,35 +593,17 @@ bool SystemZDAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
   return false;
 }
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void SystemZDAGToDAGISel::InstructionSelect() {
-  // Codegen the basic block.
-  DEBUG(errs() << "===== Instruction selection begins:\n");
-  DEBUG(Indent = 0);
-  SelectRoot(*CurDAG);
-  DEBUG(errs() << "===== Instruction selection ends:\n");
-
-  CurDAG->RemoveDeadNodes();
-}
-
 SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
   EVT NVT = Node->getValueType(0);
   DebugLoc dl = Node->getDebugLoc();
   unsigned Opcode = Node->getOpcode();
 
   // Dump information about the Node being selected
-  DEBUG(errs().indent(Indent) << "Selecting: ";
-        Node->dump(CurDAG);
-        errs() << "\n");
-  DEBUG(Indent += 2);
+  DEBUG(errs() << "Selecting: "; Node->dump(CurDAG); errs() << "\n");
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    DEBUG(errs().indent(Indent-2) << "== ";
-          Node->dump(CurDAG);
-          errs() << "\n");
-    DEBUG(Indent -= 2);
+    DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
     return NULL; // Already selected.
   }
 
@@ -693,9 +669,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
                                                                      MVT::i32));
 
       ReplaceUses(SDValue(Node, 0), SDValue(Div, 0));
-      DEBUG(errs().indent(Indent-2) << "=> ";
-            Result->dump(CurDAG);
-            errs() << "\n");
+      DEBUG(errs() << "=> "; Result->dump(CurDAG); errs() << "\n");
     }
 
     // Copy the remainder (even subreg) result, if it is needed.
@@ -708,14 +682,8 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
                                                                      MVT::i32));
 
       ReplaceUses(SDValue(Node, 1), SDValue(Rem, 0));
-      DEBUG(errs().indent(Indent-2) << "=> ";
-            Result->dump(CurDAG);
-            errs() << "\n");
+      DEBUG(errs() << "=> "; Result->dump(CurDAG); errs() << "\n");
     }
-
-#ifndef NDEBUG
-    Indent -= 2;
-#endif
 
     return NULL;
   }
@@ -782,9 +750,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
                                            CurDAG->getTargetConstant(SubRegIdx,
                                                                      MVT::i32));
       ReplaceUses(SDValue(Node, 0), SDValue(Div, 0));
-      DEBUG(errs().indent(Indent-2) << "=> ";
-            Result->dump(CurDAG);
-            errs() << "\n");
+      DEBUG(errs() << "=> "; Result->dump(CurDAG); errs() << "\n");
     }
 
     // Copy the remainder (even subreg) result, if it is needed.
@@ -796,14 +762,8 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
                                            CurDAG->getTargetConstant(SubRegIdx,
                                                                      MVT::i32));
       ReplaceUses(SDValue(Node, 1), SDValue(Rem, 0));
-      DEBUG(errs().indent(Indent-2) << "=> ";
-            Result->dump(CurDAG);
-            errs() << "\n");
+      DEBUG(errs() << "=> "; Result->dump(CurDAG); errs() << "\n");
     }
-
-#ifndef NDEBUG
-    Indent -= 2;
-#endif
 
     return NULL;
   }
@@ -812,14 +772,12 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
   // Select the default instruction
   SDNode *ResNode = SelectCode(Node);
 
-  DEBUG(errs().indent(Indent-2) << "=> ";
+  DEBUG(errs() << "=> ";
         if (ResNode == NULL || ResNode == Node)
           Node->dump(CurDAG);
         else
           ResNode->dump(CurDAG);
         errs() << "\n";
         );
-  DEBUG(Indent -= 2);
-
   return ResNode;
 }

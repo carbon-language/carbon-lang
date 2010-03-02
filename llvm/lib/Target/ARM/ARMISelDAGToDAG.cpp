@@ -58,8 +58,6 @@ public:
     return "ARM Instruction Selection";
   }
 
-  virtual void InstructionSelect();
-
   /// getI32Imm - Return a target constant of type i32 with the specified
   /// value.
   inline SDValue getI32Imm(unsigned Imm) {
@@ -202,11 +200,6 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
          isInt32Immediate(N->getOperand(1).getNode(), Imm);
 }
 
-
-void ARMDAGToDAGISel::InstructionSelect() {
-  SelectRoot(*CurDAG);
-  CurDAG->RemoveDeadNodes();
-}
 
 bool ARMDAGToDAGISel::SelectShifterOperandReg(SDNode *Op,
                                               SDValue N,

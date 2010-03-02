@@ -68,12 +68,18 @@ public:
   unsigned MakeReg(EVT VT);
 
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
-  virtual void InstructionSelect() = 0;
   
-  void SelectRootInit() {
-    DAGSize = CurDAG->AssignTopologicalOrder();
-  }
-
+  /// PreprocessISelDAG - This hook allows targets to hack on the graph before
+  /// instruction selection starts.
+  virtual void PreprocessISelDAG() {}
+  
+  /// PostprocessISelDAG() - This hook allows the target to hack on the graph
+  /// right after selection.
+  virtual void PostprocessISelDAG() {}
+  
+  /// Select - Main hook targets implement to select a node.
+  virtual SDNode *Select(SDNode *N) = 0;
+  
   /// SelectInlineAsmMemoryOperand - Select the specified address as a target
   /// addressing mode, according to the specified constraint code.  If this does
   /// not match or is not implemented, return true.  The resultant operands
@@ -268,6 +274,8 @@ protected:
   void CannotYetSelectIntrinsic(SDNode *N);
 
 private:
+  void DoInstructionSelection();
+  
   void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
                             MachineModuleInfo *MMI,
                             DwarfWriter *DW,

@@ -65,8 +65,6 @@ namespace {
     bool SelectADDRcpii(SDNode *Op, SDValue Addr, SDValue &Base,
                         SDValue &Offset);
     
-    virtual void InstructionSelect();
-
     virtual const char *getPassName() const {
       return "XCore DAG->DAG Pattern Instruction Selection";
     } 
@@ -145,15 +143,6 @@ bool XCoreDAGToDAGISel::SelectADDRcpii(SDNode *Op, SDValue Addr,
     }
   }
   return false;
-}
-
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void XCoreDAGToDAGISel::InstructionSelect() {
-  // Select target instructions for the DAG.
-  SelectRoot(*CurDAG);
-  
-  CurDAG->RemoveDeadNodes();
 }
 
 SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {

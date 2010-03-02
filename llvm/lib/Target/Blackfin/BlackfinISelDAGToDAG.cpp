@@ -41,7 +41,7 @@ namespace {
     BlackfinDAGToDAGISel(BlackfinTargetMachine &TM, CodeGenOpt::Level OptLevel)
       : SelectionDAGISel(TM, OptLevel) {}
 
-    virtual void InstructionSelect();
+    virtual void PostprocessISelDAG();
 
     virtual const char *getPassName() const {
       return "Blackfin DAG->DAG Pattern Instruction Selection";
@@ -72,13 +72,7 @@ FunctionPass *llvm::createBlackfinISelDag(BlackfinTargetMachine &TM,
   return new BlackfinDAGToDAGISel(TM, OptLevel);
 }
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void BlackfinDAGToDAGISel::InstructionSelect() {
-  // Select target instructions for the DAG.
-  SelectRoot(*CurDAG);
-  DEBUG(errs() << "Selected selection DAG before regclass fixup:\n");
-  DEBUG(CurDAG->dump());
+void BlackfinDAGToDAGISel::PostprocessISelDAG() {
   FixRegisterClasses(*CurDAG);
 }
 

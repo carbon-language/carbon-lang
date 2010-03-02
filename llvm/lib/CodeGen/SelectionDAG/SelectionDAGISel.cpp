@@ -723,9 +723,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // code to the MachineBasicBlock.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("Instruction Selection", GroupName);
-    InstructionSelect();
+    DoInstructionSelection();
   } else {
-    InstructionSelect();
+    DoInstructionSelection();
   }
 
   DEBUG(dbgs() << "Selected selection DAG:\n");
@@ -764,6 +764,63 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   DEBUG(dbgs() << "Selected machine code:\n");
   DEBUG(BB->dump());
 }
+
+void SelectionDAGISel::DoInstructionSelection() {
+  DEBUG(errs() << "===== Instruction selection begins:\n");
+
+  PreprocessISelDAG();
+  
+  // Select target instructions for the DAG.
+  {
+    // Number all nodes with a topological order and set DAGSize.
+    DAGSize = CurDAG->AssignTopologicalOrder();
+    
+    // Create a dummy node (which is not added to allnodes), that adds
+    // a reference to the root node, preventing it from being deleted,
+    // and tracking any changes of the root.
+    HandleSDNode Dummy(CurDAG->getRoot());
+    ISelPosition = SelectionDAG::allnodes_iterator(CurDAG->getRoot().getNode());
+    ++ISelPosition;
+    
+    // The AllNodes list is now topological-sorted. Visit the
+    // nodes by starting at the end of the list (the root of the
+    // graph) and preceding back toward the beginning (the entry
+    // node).
+    while (ISelPosition != CurDAG->allnodes_begin()) {
+      SDNode *Node = --ISelPosition;
+      // Skip dead nodes. DAGCombiner is expected to eliminate all dead nodes,
+      // but there are currently some corner cases that it misses. Also, this
+      // makes it theoretically possible to disable the DAGCombiner.
+      if (Node->use_empty())
+        continue;
+      
+      SDNode *ResNode = Select(Node);
+      
+      // If node should not be replaced, continue with the next one.
+      if (ResNode == Node)
+        continue;
+      // Replace node.
+      if (ResNode)
+        ReplaceUses(Node, ResNode);
+      
+      // If after the replacement this node is not used any more,
+      // remove this dead node.
+      if (Node->use_empty()) { // Don't delete EntryToken, etc.
+        ISelUpdater ISU(ISelPosition);
+        CurDAG->RemoveDeadNode(Node, &ISU);
+      }
+    }
+    
+    CurDAG->setRoot(Dummy.getValue());
+  }    
+  DEBUG(errs() << "===== Instruction selection ends:\n");
+
+  PostprocessISelDAG();
+  
+  // FIXME: This shouldn't be needed, remove it.
+  CurDAG->RemoveDeadNodes();
+}
+
 
 void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
                                             MachineFunction &MF,

@@ -59,8 +59,6 @@ public:
   SelectionDAGISel(tm),
   TM(tm), Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
   
-  virtual void InstructionSelect();
-
   // Pass Name
   virtual const char *getPassName() const {
     return "MIPS DAG->DAG Pattern Instruction Selection";
@@ -98,29 +96,10 @@ private:
   inline SDValue getI32Imm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);
   }
-
-
-  #ifndef NDEBUG
-  unsigned Indent;
-  #endif
 };
 
 }
 
-/// InstructionSelect - This callback is invoked by
-/// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void MipsDAGToDAGISel::InstructionSelect() {
-  // Codegen the basic block.
-  DEBUG(errs() << "===== Instruction selection begins:\n");
-  DEBUG(Indent = 0);
-
-  // Select target instructions for the DAG.
-  SelectRoot(*CurDAG);
-
-  DEBUG(errs() << "===== Instruction selection ends:\n");
-
-  CurDAG->RemoveDeadNodes();
-}
 
 /// getGlobalBaseReg - Output the instructions required to put the
 /// GOT address into a register.
@@ -329,17 +308,11 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   DebugLoc dl = Node->getDebugLoc();
 
   // Dump information about the Node being selected
-  DEBUG(errs().indent(Indent) << "Selecting: ";
-        Node->dump(CurDAG);
-        errs() << "\n");
-  DEBUG(Indent += 2);
+  DEBUG(errs() << "Selecting: "; Node->dump(CurDAG); errs() << "\n");
 
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    DEBUG(errs().indent(Indent-2) << "== ";
-          Node->dump(CurDAG);
-          errs() << "\n");
-    DEBUG(Indent -= 2);
+    DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
     return NULL;
   }
 
@@ -547,14 +520,12 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   // Select the default instruction
   SDNode *ResNode = SelectCode(Node);
 
-  DEBUG(errs().indent(Indent-2) << "=> ");
+  DEBUG(errs() << "=> ");
   if (ResNode == NULL || ResNode == Node)
     DEBUG(Node->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));
   DEBUG(errs() << "\n");
-  DEBUG(Indent -= 2);
-
   return ResNode;
 }
 
