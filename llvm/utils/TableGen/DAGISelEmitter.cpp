@@ -180,7 +180,7 @@ struct PatternSortingPredicate {
     if (LHSPatSize > RHSPatSize) return false;
     
     // Sort based on the UID of the pattern, giving us a deterministic ordering.
-    assert(LHS->ID != RHS->ID);
+    assert(LHS == RHS || LHS->ID != RHS->ID);
     return LHS->ID < RHS->ID;
   }
 };
