@@ -22,6 +22,7 @@ add_llvm_library(LLVMCodeGen
   LiveVariables.cpp
   LowerSubregs.cpp
   MachineBasicBlock.cpp
+  MachineCSE.cpp
   MachineDominators.cpp
   MachineFunction.cpp
   MachineFunctionAnalysis.cpp
