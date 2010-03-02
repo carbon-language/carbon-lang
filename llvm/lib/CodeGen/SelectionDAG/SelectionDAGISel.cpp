@@ -1722,7 +1722,7 @@ WalkChainUsers(SDNode *ChainedNode,
 }
 
 /// HandleMergeInputChains - This implements the OPC_EmitMergeInputChains
-/// operation for when the pattern matched multiple nodes with chains.  The
+/// operation for when the pattern matched at least one node with a chains.  The
 /// input vector contains a list of all of the chained nodes that we match.  We
 /// must determine if this is a valid thing to cover (i.e. matching it won't
 /// induce cycles in the DAG) and if so, creating a TokenFactor node. that will
@@ -1730,9 +1730,6 @@ WalkChainUsers(SDNode *ChainedNode,
 static SDValue
 HandleMergeInputChains(SmallVectorImpl<SDNode*> &ChainNodesMatched,
                        SelectionDAG *CurDAG) {
-  assert(ChainNodesMatched.size() > 1 && 
-         "Should only happen for multi chain node case");
-
   // Walk all of the chained nodes we've matched, recursively scanning down the
   // users of the chain result. This adds any TokenFactor nodes that are caught
   // in between chained nodes to the chained and interior nodes list.
@@ -2230,32 +2227,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       assert(ChainNodesMatched.empty() &&
              "Should only have one EmitMergeInputChains per match");
 
-      // Handle the first chain.
-      unsigned RecNo = MatcherTable[MatcherIndex++];
-      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
-      ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
-      
-      // If the chained node is not the root, we can't fold it if it has
-      // multiple uses.
-      // FIXME: What if other value results of the node have uses not matched by
-      // this pattern?
-      if (ChainNodesMatched.back() != NodeToMatch &&
-          !RecordedNodes[RecNo].hasOneUse()) {
-        ChainNodesMatched.clear();
-        break;
-      }
-      
-      // The common case here is that we have exactly one chain, which is really
-      // cheap to handle, just do it.
-      if (NumChains == 1) {
-        InputChain = RecordedNodes[RecNo].getOperand(0);
-        assert(InputChain.getValueType() == MVT::Other && "Not a chain");
-        continue;
-      }
-      
       // Read all of the chained nodes.
-      for (unsigned i = 1; i != NumChains; ++i) {
-        RecNo = MatcherTable[MatcherIndex++];
+      for (unsigned i = 0; i != NumChains; ++i) {
+        unsigned RecNo = MatcherTable[MatcherIndex++];
         assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
         ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
         
