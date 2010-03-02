@@ -38,13 +38,21 @@ static SourceLocation GetEndLoc(Decl* D) {
   
 class AddStmtChoice {
 public:
-  enum Kind { NotAlwaysAdd = 0, AlwaysAdd, AlwaysAddAsLValue };
+  enum Kind { NotAlwaysAdd = 0,
+              AlwaysAdd = 1,
+              AsLValueNotAlwaysAdd = 2,
+              AlwaysAddAsLValue = 3 };
+
 public:
-  AddStmtChoice(Kind kind) : k(kind) {}  
-  bool alwaysAdd() const { return k != NotAlwaysAdd; }
-  bool asLValue() const { return k == AlwaysAddAsLValue; }
+  AddStmtChoice(Kind k)
+    : AsLValue(k >= AlwaysAddAsLValue), AlwaysAddStmt((unsigned)k & 0x1) {}
+
+  bool alwaysAdd() const { return (bool) AlwaysAddStmt; };
+  bool asLValue() const { return (bool) AsLValue; };
+
 private:
-  Kind k;
+  unsigned AsLValue : 1;
+  unsigned AlwaysAddStmt : 1;
 };
 
 /// CFGBuilder - This class implements CFG construction from an AST.
@@ -771,18 +779,10 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
   Expr *Init = VD->getInit();
 
   if (Init) {
-    // Optimization: Don't create separate block-level statements for literals.
-    switch (Init->getStmtClass()) {
-      case Stmt::IntegerLiteralClass:
-      case Stmt::CharacterLiteralClass:
-      case Stmt::StringLiteralClass:
-        break;
-      default:
-        Block = addStmt(Init,
-                        VD->getType()->isReferenceType()
-                        ? AddStmtChoice::AlwaysAddAsLValue
-                        : AddStmtChoice::AlwaysAdd);
-    }
+    AddStmtChoice::Kind k =
+      VD->getType()->isReferenceType() ? AddStmtChoice::AsLValueNotAlwaysAdd
+                                       : AddStmtChoice::NotAlwaysAdd;
+    Visit(Init, AddStmtChoice(k));
   }
 
   // If the type of VD is a VLA, then we must process its size expressions.

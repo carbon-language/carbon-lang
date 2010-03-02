@@ -95,6 +95,8 @@ public:
              const char *sep);
 
 private:
+  SVal LazyRetrieve(Store store, const TypedRegion *R);
+
   ASTContext& getContext() { return StateMgr.getContext(); }
 };
 
@@ -126,6 +128,25 @@ static bool isHigherOrderRawPtr(QualType T, ASTContext &C) {
   }
 }
 
+SVal BasicStoreManager::LazyRetrieve(Store store, const TypedRegion *R) {
+  const VarRegion *VR = dyn_cast<VarRegion>(R);
+  if (!VR)
+    return UnknownVal();
+
+  const VarDecl *VD = VR->getDecl();
+  QualType T = VD->getType();
+
+  // Only handle simple types that we can symbolicate.
+  if (!SymbolManager::canSymbolicate(T) || !T->isScalarType())
+    return UnknownVal();
+
+  // Globals and parameters start with symbolic values.
+  // Local variables initially are undefined.
+  if (VR->hasGlobalsOrParametersStorage())
+    return ValMgr.getRegionValueSymbolVal(R);
+  return UndefinedVal();
+}
+
 SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
   if (isa<UnknownVal>(loc))
     return UnknownVal();
@@ -142,11 +163,13 @@ SVal BasicStoreManager::Retrieve(Store store, Loc loc, QualType T) {
 
       BindingsTy B = GetBindings(store);
       BindingsTy::data_type *Val = B.lookup(R);
+      const TypedRegion *TR = cast<TypedRegion>(R);
 
-      if (!Val)
-        break;
+      if (Val)
+        return CastRetrievedVal(*Val, TR, T);
 
-      return CastRetrievedVal(*Val, cast<TypedRegion>(R), T);
+      SVal V = LazyRetrieve(store, TR);
+      return V.isUnknownOrUndef() ? V : CastRetrievedVal(V, TR, T);
     }
 
     case loc::ConcreteIntKind:
@@ -353,8 +376,8 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
           // SelfRegion?  (i.e., it implements MD->getClassInterface()).
           const VarRegion *VR = MRMgr.getVarRegion(PD, InitLoc);
           const MemRegion *SelfRegion =
-            ValMgr.getRegionValueSymbolVal(VR).getAsRegion();          
-          assert(SelfRegion);          
+            ValMgr.getRegionValueSymbolVal(VR).getAsRegion();
+          assert(SelfRegion);
           St = Bind(St, ValMgr.makeLoc(VR), loc::MemRegionVal(SelfRegion));
           // Scan the method for ivar references.  While this requires an
           // entire AST scan, the cost should not be high in practice.
@@ -362,21 +385,8 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
         }
       }
     }
-    else if (VarDecl* VD = dyn_cast<VarDecl>(ND)) {
-      // Only handle simple types that we can symbolicate.
-      if (!SymbolManager::canSymbolicate(VD->getType()))
-        continue;
-
-      // Initialize globals and parameters to symbolic values.
-      // Initialize local variables to undefined.
-      const VarRegion *R = ValMgr.getRegionManager().getVarRegion(VD, InitLoc);
-      SVal X = UndefinedVal();
-      if (R->hasGlobalsOrParametersStorage())
-        X = ValMgr.getRegionValueSymbolVal(R);
-
-      St = Bind(St, ValMgr.makeLoc(R), X);
-    }
   }
+
   return St;
 }
 

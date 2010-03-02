@@ -134,8 +134,12 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
   for (DeclStmt::decl_iterator I=S->decl_begin(), E=S->decl_end(); I!=E; ++I) {
     VarDecl *VD = dyn_cast<VarDecl>(*I);
     if (VD && VD->isBlockVarDecl()) {
-      if (Stmt* I = VD->getInit())
-        V(VD,AD) = AD.FullUninitTaint ? V(cast<Expr>(I),AD) : Initialized;
+      if (Stmt* I = VD->getInit()) {
+        // Visit the subexpression to check for uses of uninitialized values,
+        // even if we don't propagate that value.
+        bool isSubExprUninit = Visit(I);
+        V(VD,AD) = AD.FullUninitTaint ? isSubExprUninit : Initialized;
+      }
       else {
         // Special case for declarations of array types.  For things like:
         //
