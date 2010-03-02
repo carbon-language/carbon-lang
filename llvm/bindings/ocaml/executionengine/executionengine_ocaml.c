@@ -226,7 +226,7 @@ CAMLprim value llvm_ee_find_function(value Name, LLVMExecutionEngineRef EE) {
   LLVMValueRef Found;
   if (LLVMFindFunction(EE, String_val(Name), &Found))
     CAMLreturn(Val_unit);
-  Option = alloc(1, 1);
+  Option = alloc(1, 0);
   Field(Option, 0) = Val_op(Found);
   CAMLreturn(Option);
 }
