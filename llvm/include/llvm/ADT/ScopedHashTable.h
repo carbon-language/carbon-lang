@@ -130,6 +130,14 @@ public:
     assert(CurScope == 0 && TopLevelMap.empty() && "Scope imbalance!");
   }
 
+  bool count(const K &Key) const {
+    return TopLevelMap.count(Key);
+  }
+
+  V lookup(const K &Key) {
+    return TopLevelMap[Key].getValue();
+  }
+
   void insert(const K &Key, const V &Val) {
     assert(CurScope && "No scope active!");
 
