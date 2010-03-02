@@ -60,7 +60,7 @@ extern "C" {
     // whole compilation callback doesn't exist as far as the caller is
     // concerned, so we can't just preserve the callee saved regs.
     "stmdb sp!, {r0, r1, r2, r3, lr}\n"
-#if defined(__VFP_FP__) && !defined(__SOFTFP__))
+#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
     "fstmfdd sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
 #endif
     // The LR contains the address of the stub function on entry.
@@ -83,7 +83,7 @@ extern "C" {
     // 6-20 | D0..D7 | Saved VFP registers
     //      +--------+
     //
-#if defined(__VFP_FP__) && !defined(__SOFTFP__))
+#if (defined(__VFP_FP__) && !defined(__SOFTFP__))
     // Restore VFP caller-saved registers.
     "fldmfdd sp!, {d0, d1, d2, d3, d4, d5, d6, d7}\n"
 #endif
