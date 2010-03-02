@@ -192,6 +192,19 @@ def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
   let Inst{9-8} = 0b10;
 }
 
+// Change Processor State is a system instruction -- for disassembly only.
+// The singleton $opt operand contains the following information:
+// opt{4-0} = mode ==> don't care
+// opt{5} = changemode ==> 0 (false for 16-bit Thumb instr)
+// opt{8-6} = AIF from Inst{2-0}
+// opt{10-9} = 1:imod from Inst{4} with 0b10 as enable and 0b11 as disable
+//
+// The opt{4-0} and opt{5} sub-fields are to accommodate 32-bit Thumb and ARM
+// CPS which has more options.
+def tCPS : T1I<(outs), (ins i32imm:$opt), NoItinerary, "cps${opt:cps}",
+              [/* For disassembly only; pattern left blank */]>,
+           T1Misc<0b0110011>;
+
 // For both thumb1 and thumb2.
 let isNotDuplicable = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr,
