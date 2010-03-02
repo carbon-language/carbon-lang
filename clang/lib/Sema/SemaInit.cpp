@@ -3439,10 +3439,25 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
           
       // Build the an expression that constructs a temporary.
-      CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
-                                        Constructor, 
-                                        move_arg(ConstructorArgs),
-                                        ConstructorInitRequiresZeroInit,
+      if (Entity.getKind() == InitializedEntity::EK_Temporary &&
+          (Kind.getKind() == InitializationKind::IK_Direct ||
+           Kind.getKind() == InitializationKind::IK_Value)) {
+        // An explicitly-constructed temporary, e.g., X(1, 2).
+        unsigned NumExprs = ConstructorArgs.size();
+        Expr **Exprs = (Expr **)ConstructorArgs.take();
+        S.MarkDeclarationReferenced(Kind.getLocation(), Constructor);
+        CurInit = S.Owned(new (S.Context) CXXTemporaryObjectExpr(S.Context,
+                                                                 Constructor,
+                                                              Entity.getType(),
+                                                            Kind.getLocation(),
+                                                                 Exprs, 
+                                                                 NumExprs,
+                                                Kind.getParenRange().getEnd()));
+      } else
+        CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
+                                          Constructor, 
+                                          move_arg(ConstructorArgs),
+                                          ConstructorInitRequiresZeroInit,
                                Entity.getKind() == InitializedEntity::EK_Base);
       if (CurInit.isInvalid())
         return S.ExprError();

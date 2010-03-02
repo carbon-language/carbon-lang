@@ -26,3 +26,14 @@ void test_f1(X0 *x0, int *ip, float *fp, double *dp) {
   f1(x0, ip, dp); // expected-note{{instantiation}}
 }
 
+namespace PR6457 {
+  template <typename T> struct X { explicit X(T* p = 0) { }; };
+  template <typename T> struct Y { Y(int, const T& x); };
+  struct A { };
+  template <typename T>
+  struct B {
+    B() : y(0, X<A>()) { }
+    Y<X<A> > y;
+  };
+  B<int> b;
+}

@@ -5051,6 +5051,11 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
   for (CXXTemporaryObjectExpr::arg_iterator Arg = E->arg_begin(),
                                          ArgEnd = E->arg_end();
        Arg != ArgEnd; ++Arg) {
+    if (getDerived().DropCallArgument(*Arg)) {
+      ArgumentChanged = true;
+      break;
+    }
+
     OwningExprResult TransArg = getDerived().TransformExpr(*Arg);
     if (TransArg.isInvalid())
       return SemaRef.ExprError();
@@ -5062,8 +5067,11 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
   if (!getDerived().AlwaysRebuild() &&
       T == E->getType() &&
       Constructor == E->getConstructor() &&
-      !ArgumentChanged)
+      !ArgumentChanged) {
+    // FIXME: Instantiation-specific
+    SemaRef.MarkDeclarationReferenced(E->getTypeBeginLoc(), Constructor);
     return SemaRef.Owned(E->Retain());
+  }
 
   // FIXME: Bogus location information
   SourceLocation CommaLoc;
