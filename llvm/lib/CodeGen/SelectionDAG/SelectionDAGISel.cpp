@@ -1574,7 +1574,34 @@ static void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
   DEBUG(errs() << "ISEL: Match complete!\n");
 }
 
-
+/// HandleMergeInputChains - This implements the OPC_EmitMergeInputChains
+/// operation for when the pattern matched multiple nodes with chains.
+static SDValue
+HandleMergeInputChains(const SmallVectorImpl<SDNode*> &ChainNodesMatched,
+                       SelectionDAG *CurDAG) {
+  assert(ChainNodesMatched.size() > 1 && 
+         "Should only happen for multi chain node case");
+  
+  // Walk all the chained nodes, adding the input chains if they are not in
+  // ChainedNodes (and this, not in the matched pattern).  This is an N^2
+  // algorithm, but # chains is usually 2 here, at most 3 for MSP430.
+  SmallVector<SDValue, 3> InputChains;
+  for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
+    SDValue InChain = ChainNodesMatched[i]->getOperand(0);
+    assert(InChain.getValueType() == MVT::Other && "Not a chain");
+    bool Invalid = false;
+    for (unsigned j = 0; j != e; ++j)
+      Invalid |= ChainNodesMatched[j] == InChain.getNode();
+    if (!Invalid)
+      InputChains.push_back(InChain);
+  }
+  
+  SDValue Res;
+  if (InputChains.size() == 1)
+    return InputChains[0];
+  return CurDAG->getNode(ISD::TokenFactor, ChainNodesMatched[0]->getDebugLoc(),
+                         MVT::Other, &InputChains[0], InputChains.size());
+}  
 
 struct MatchScope {
   /// FailIndex - If this match fails, this is the index to continue with.
@@ -2026,28 +2053,17 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           break;
         }
       }
+      
+      // If the inner loop broke out, the match fails.
+      if (ChainNodesMatched.empty())
+        break;
 
-      // Walk all the chained nodes, adding the input chains if they are not in
-      // ChainedNodes (and this, not in the matched pattern).  This is an N^2
-      // algorithm, but # chains is usually 2 here, at most 3 for MSP430.
-      SmallVector<SDValue, 3> InputChains;
-      for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
-        SDValue InChain = ChainNodesMatched[i]->getOperand(0);
-        assert(InChain.getValueType() == MVT::Other && "Not a chain");
-        bool Invalid = false;
-        for (unsigned j = 0; j != e; ++j)
-          Invalid |= ChainNodesMatched[j] == InChain.getNode();
-        if (!Invalid)
-          InputChains.push_back(InChain);
-      }
+      // Merge the input chains if they are not intra-pattern references.
+      InputChain = HandleMergeInputChains(ChainNodesMatched, CurDAG);
+      
+      if (InputChain.getNode() == 0)
+        break;  // Failed to merge.
 
-      SDValue Res;
-      if (InputChains.size() == 1)
-        InputChain = InputChains[0];
-      else
-        InputChain = CurDAG->getNode(ISD::TokenFactor,
-                                     NodeToMatch->getDebugLoc(), MVT::Other,
-                                     &InputChains[0], InputChains.size());
       continue;
     }
         
