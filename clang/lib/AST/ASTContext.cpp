@@ -59,6 +59,12 @@ ASTContext::~ASTContext() {
   // Release the DenseMaps associated with DeclContext objects.
   // FIXME: Is this the ideal solution?
   ReleaseDeclContextMaps();
+
+  // Release all of the memory associated with overridden C++ methods.
+  for (llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::iterator 
+         OM = OverriddenMethods.begin(), OMEnd = OverriddenMethods.end();
+       OM != OMEnd; ++OM)
+    OM->second.Destroy();
   
   if (FreeMemory) {
     // Deallocate all the types.
@@ -317,6 +323,80 @@ void ASTContext::setInstantiatedFromUnnamedFieldDecl(FieldDecl *Inst,
          "Already noted what unnamed field was instantiated from");
 
   InstantiatedFromUnnamedFieldDecl[Inst] = Tmpl;
+}
+
+CXXMethodVector::iterator CXXMethodVector::begin() const {
+  if ((Storage & 0x01) == 0)
+    return reinterpret_cast<iterator>(&Storage);
+
+  vector_type *Vec = reinterpret_cast<vector_type *>(Storage & ~0x01);
+  return &Vec->front();
+}
+
+CXXMethodVector::iterator CXXMethodVector::end() const {
+  if ((Storage & 0x01) == 0) {
+    if (Storage == 0)
+      return reinterpret_cast<iterator>(&Storage);
+
+    return reinterpret_cast<iterator>(&Storage) + 1;
+  }
+
+  vector_type *Vec = reinterpret_cast<vector_type *>(Storage & ~0x01);
+  return &Vec->front() + Vec->size();
+}
+
+void CXXMethodVector::push_back(const CXXMethodDecl *Method) {
+  if (Storage == 0) {
+    // 0 -> 1 element.
+    Storage = reinterpret_cast<uintptr_t>(Method);
+    return;
+  }
+
+  vector_type *Vec;
+  if ((Storage & 0x01) == 0) {
+    // 1 -> 2 elements. Allocate a new vector and push the element into that
+    // vector.
+    Vec = new vector_type;
+    Vec->push_back(reinterpret_cast<const CXXMethodDecl *>(Storage));
+    Storage = reinterpret_cast<uintptr_t>(Vec) | 0x01;
+  } else
+    Vec = reinterpret_cast<vector_type *>(Storage & ~0x01);
+
+  // Add the new method to the vector.
+  Vec->push_back(Method);
+}
+
+void CXXMethodVector::Destroy() {
+  if (Storage & 0x01)
+    delete reinterpret_cast<vector_type *>(Storage & ~0x01);
+
+  Storage = 0;
+}
+
+
+ASTContext::overridden_cxx_method_iterator
+ASTContext::overridden_methods_begin(const CXXMethodDecl *Method) const {
+  llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
+    = OverriddenMethods.find(Method);
+  if (Pos == OverriddenMethods.end())
+    return 0;
+
+  return Pos->second.begin();
+}
+
+ASTContext::overridden_cxx_method_iterator
+ASTContext::overridden_methods_end(const CXXMethodDecl *Method) const {
+  llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
+    = OverriddenMethods.find(Method);
+  if (Pos == OverriddenMethods.end())
+    return 0;
+
+  return Pos->second.end();
+}
+
+void ASTContext::addOverriddenMethod(const CXXMethodDecl *Method, 
+                                     const CXXMethodDecl *Overridden) {
+  OverriddenMethods[Method].push_back(Overridden);
 }
 
 namespace {

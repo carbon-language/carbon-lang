@@ -67,6 +67,26 @@ namespace clang {
 
   namespace Builtin { class Context; }
 
+/// \brief A vector of C++ member functions that is optimized for
+/// storing a single method.
+class CXXMethodVector {
+  /// \brief Storage for the vector.
+  ///
+  /// When the low bit is zero, this is a const CXXMethodDecl *. When the
+  /// low bit is one, this is a std::vector<const CXXMethodDecl *> *.
+  mutable uintptr_t Storage;
+
+  typedef std::vector<const CXXMethodDecl *> vector_type;
+
+public:
+  typedef const CXXMethodDecl **iterator;
+  iterator begin() const;
+  iterator end() const;
+
+  void push_back(const CXXMethodDecl *Method);
+  void Destroy();
+};
+
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
@@ -219,6 +239,14 @@ class ASTContext {
 
   llvm::DenseMap<FieldDecl *, FieldDecl *> InstantiatedFromUnnamedFieldDecl;
 
+  /// \brief Mapping that stores the methods overridden by a given C++
+  /// member function.
+  ///
+  /// Since most C++ member functions aren't virtual and therefore
+  /// don't override anything, we store the overridden functions in
+  /// this map on the side rather than within the CXXMethodDecl structure.
+  llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector> OverriddenMethods;
+
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -310,6 +338,19 @@ public:
 
   void setInstantiatedFromUnnamedFieldDecl(FieldDecl *Inst, FieldDecl *Tmpl);
 
+  // Access to the set of methods overridden by the given C++ method.
+  typedef CXXMethodVector::iterator overridden_cxx_method_iterator;
+  overridden_cxx_method_iterator
+  overridden_methods_begin(const CXXMethodDecl *Method) const;
+
+  overridden_cxx_method_iterator
+  overridden_methods_end(const CXXMethodDecl *Method) const;
+
+  /// \brief Note that the given C++ \p Method overrides the given \p
+  /// Overridden method.
+  void addOverriddenMethod(const CXXMethodDecl *Method, 
+                           const CXXMethodDecl *Overridden);
+  
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
 

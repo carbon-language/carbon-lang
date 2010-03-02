@@ -611,51 +611,20 @@ bool CXXMethodDecl::isUsualDeallocationFunction() const {
   return true;
 }
 
-typedef llvm::DenseMap<const CXXMethodDecl*,
-                       std::vector<const CXXMethodDecl *> *>
-                       OverriddenMethodsMapTy;
-
-// FIXME: We hate static data.  This doesn't survive PCH saving/loading, and
-// the vtable building code uses it at CG time.
-static OverriddenMethodsMapTy *OverriddenMethods = 0;
-
 void CXXMethodDecl::addOverriddenMethod(const CXXMethodDecl *MD) {
   assert(MD->isCanonicalDecl() && "Method is not canonical!");
   assert(!MD->getParent()->isDependentContext() &&
          "Can't add an overridden method to a class template!");
 
-  // FIXME: The CXXMethodDecl dtor needs to remove and free the entry.
-
-  if (!OverriddenMethods)
-    OverriddenMethods = new OverriddenMethodsMapTy();
-
-  std::vector<const CXXMethodDecl *> *&Methods = (*OverriddenMethods)[this];
-  if (!Methods)
-    Methods = new std::vector<const CXXMethodDecl *>;
-
-  Methods->push_back(MD);
+  getASTContext().addOverriddenMethod(this, MD);
 }
 
 CXXMethodDecl::method_iterator CXXMethodDecl::begin_overridden_methods() const {
-  if (!OverriddenMethods)
-    return 0;
-
-  OverriddenMethodsMapTy::iterator it = OverriddenMethods->find(this);
-  if (it == OverriddenMethods->end() || it->second->empty())
-    return 0;
-
-  return &(*it->second)[0];
+  return getASTContext().overridden_methods_begin(this);
 }
 
 CXXMethodDecl::method_iterator CXXMethodDecl::end_overridden_methods() const {
-  if (!OverriddenMethods)
-    return 0;
-
-  OverriddenMethodsMapTy::iterator it = OverriddenMethods->find(this);
-  if (it == OverriddenMethods->end() || it->second->empty())
-    return 0;
-
-  return &(*it->second)[0] + it->second->size();
+  return getASTContext().overridden_methods_end(this);
 }
 
 QualType CXXMethodDecl::getThisType(ASTContext &C) const {
