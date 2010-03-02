@@ -860,7 +860,7 @@ class VCallAndVBaseOffsetBuilder {
   void AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset);
   
   /// AddVBaseOffsets - Add vbase offsets for the given class.
-  void AddVBaseOffsets(const CXXRecordDecl *Base, int64_t OffsetToTop);
+  void AddVBaseOffsets(const CXXRecordDecl *Base, uint64_t OffsetInLayoutClass);
   
 public:
   VCallAndVBaseOffsetBuilder(const CXXRecordDecl *MostDerivedClass,
@@ -924,9 +924,7 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
                             PrimaryBaseIsVirtual, RealBaseOffset);
   }
 
-  // FIXME: Don't use /8 here.
-  int64_t OffsetToTop = -(int64_t)RealBaseOffset / 8;
-  AddVBaseOffsets(Base.getBase(), OffsetToTop);
+  AddVBaseOffsets(Base.getBase(), RealBaseOffset);
 
   // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual)
@@ -1025,7 +1023,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
 }
 
 void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
-                                                 int64_t OffsetToTop) {
+                                                 uint64_t OffsetInLayoutClass) {
   const ASTRecordLayout &LayoutClassLayout = 
     Context.getASTRecordLayout(LayoutClass);
 
@@ -1038,14 +1036,15 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
     // Check if this is a virtual base that we haven't visited before.
     if (I->isVirtual() && VisitedVirtualBases.insert(BaseDecl)) {
       // FIXME: We shouldn't use / 8 here.
-      uint64_t Offset = 
-        OffsetToTop + LayoutClassLayout.getVBaseClassOffset(BaseDecl) / 8;
+      int64_t Offset = 
+        (int64_t)(LayoutClassLayout.getVBaseClassOffset(BaseDecl) - 
+                  OffsetInLayoutClass) / 8;
     
       Components.push_back(VtableComponent::MakeVBaseOffset(Offset));
     }
     
     // Check the base class looking for more vbase offsets.
-    AddVBaseOffsets(BaseDecl, OffsetToTop);
+    AddVBaseOffsets(BaseDecl, OffsetInLayoutClass);
   }
 }
 
