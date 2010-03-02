@@ -1067,10 +1067,11 @@ external set_alignment : int -> llvalue -> unit = "llvm_set_alignment"
 external declare_global : lltype -> string -> llmodule -> llvalue
                         = "llvm_declare_global"
 
-(** [declare_qualified_global ty name as m] returns a new global variable of
-    type [ty] and with name [name] in module [m] in the address space [as]. If
-    such a global variable already exists, it is returned. If the type of the
-    existing global differs, then a bitcast to [ty] is returned. *)
+(** [declare_qualified_global ty name addrspace m] returns a new global variable
+    of type [ty] and with name [name] in module [m] in the address space
+    [addrspace]. If such a global variable already exists, it is returned. If
+    the type of the existing global differs, then a bitcast to [ty] is
+    returned. *)
 external declare_qualified_global : lltype -> string -> int -> llmodule ->
                                     llvalue
                                   = "llvm_declare_qualified_global"
@@ -1082,9 +1083,9 @@ external declare_qualified_global : lltype -> string -> int -> llmodule ->
 external define_global : string -> llvalue -> llmodule -> llvalue
                        = "llvm_define_global"
 
-(** [define_qualified_global name init as m] returns a new global with name
-    [name] and initializer [init] in module [m] in the address space [as]. If
-    the named global already exists, it is renamed.
+(** [define_qualified_global name init addrspace m] returns a new global with
+    name [name] and initializer [init] in module [m] in the address space
+    [addrspace]. If the named global already exists, it is renamed.
     See the constructor of [llvm::GlobalVariable]. *)
 external define_qualified_global : string -> llvalue -> int -> llmodule ->
                                    llvalue
