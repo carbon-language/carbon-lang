@@ -1680,8 +1680,8 @@ HandleMergeInputChains(SmallVectorImpl<SDNode*> &ChainNodesMatched,
     // that are not part of the pattern we're matching.
     for (unsigned op = 0, e = N->getNumOperands(); op != e; ++op) {
       if (!std::count(ChainNodesMatched.begin(), ChainNodesMatched.end(),
-                      N->getOperand(i).getNode()))
-        InputChains.push_back(N->getOperand(i));
+                      N->getOperand(op).getNode()))
+        InputChains.push_back(N->getOperand(op));
     }
   }
   
