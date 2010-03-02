@@ -959,8 +959,8 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
 /// SawStore is set to true, it means that there is a store (or call) between
 /// the instruction's location and its intended destination.
 bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
-                                bool &SawStore,
-                                AliasAnalysis *AA) const {
+                                AliasAnalysis *AA,
+                                bool &SawStore) const {
   // Ignore stuff that we obviously can't move.
   if (TID->mayStore() || TID->isCall()) {
     SawStore = true;
@@ -985,11 +985,11 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
 /// isSafeToReMat - Return true if it's safe to rematerialize the specified
 /// instruction which defined the specified register instead of copying it.
 bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII,
-                                 unsigned DstReg,
-                                 AliasAnalysis *AA) const {
+                                 AliasAnalysis *AA,
+                                 unsigned DstReg) const {
   bool SawStore = false;
   if (!TII->isTriviallyReMaterializable(this, AA) ||
-      !isSafeToMove(TII, SawStore, AA))
+      !isSafeToMove(TII, AA, SawStore))
     return false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);

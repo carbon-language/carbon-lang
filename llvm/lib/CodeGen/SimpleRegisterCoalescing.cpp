@@ -662,7 +662,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   if (!tii_->isTriviallyReMaterializable(DefMI, AA))
     return false;
   bool SawStore = false;
-  if (!DefMI->isSafeToMove(tii_, SawStore, AA))
+  if (!DefMI->isSafeToMove(tii_, AA, SawStore))
     return false;
   if (TID.getNumDefs() != 1)
     return false;

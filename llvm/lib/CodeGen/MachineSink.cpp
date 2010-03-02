@@ -149,7 +149,7 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // Check if it's safe to move the instruction.
-  if (!MI->isSafeToMove(TII, SawStore, AA))
+  if (!MI->isSafeToMove(TII, AA, SawStore))
     return false;
   
   // FIXME: This should include support for sinking instructions within the
