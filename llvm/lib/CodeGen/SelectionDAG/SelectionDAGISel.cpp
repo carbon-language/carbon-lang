@@ -1496,37 +1496,6 @@ GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
   return Val;
 }
 
-/// ISelUpdater - helper class to handle updates of the 
-/// instruciton selection graph.
-namespace {
-class ISelUpdater : public SelectionDAG::DAGUpdateListener {
-  SelectionDAG::allnodes_iterator &ISelPosition;
-public:
-  explicit ISelUpdater(SelectionDAG::allnodes_iterator &isp)
-  : ISelPosition(isp) {}
-  
-  /// NodeDeleted - Handle nodes deleted from the graph. If the
-  /// node being deleted is the current ISelPosition node, update
-  /// ISelPosition.
-  ///
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
-    if (ISelPosition == SelectionDAG::allnodes_iterator(N))
-      ++ISelPosition;
-  }
-  
-  /// NodeUpdated - Ignore updates for now.
-  virtual void NodeUpdated(SDNode *N) {}
-};
-}
-
-#if 0
-/// ReplaceUses - replace all uses of the old node F with the use
-/// of the new node T.
-static void ReplaceUses(SDValue F, SDValue T) {
-  ISelUpdater ISU(ISelPosition);
-  CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISU);
-}
-#endif
 
 /// UpdateChainsAndFlags - When a match is complete, this method updates uses of
 /// interior flag and chain results to use the new flag and chain results.
