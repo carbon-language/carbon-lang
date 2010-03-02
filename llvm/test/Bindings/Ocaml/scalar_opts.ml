@@ -22,7 +22,6 @@ let suite name f =
 
 let filename = Sys.argv.(1)
 let m = create_module context filename
-let mp = ModuleProvider.create m
 
 
 (*===-- Transforms --------------------------------------------------------===*)
@@ -36,7 +35,7 @@ let test_transforms () =
   
   let td = TargetData.create (target_triple m) in
   
-  ignore (PassManager.create_function mp
+  ignore (PassManager.create_function m
            ++ TargetData.add td
            ++ add_instruction_combining
            ++ add_reassociation
@@ -55,4 +54,4 @@ let test_transforms () =
 
 let _ =
   suite "transforms" test_transforms;
-  ModuleProvider.dispose mp
+  dispose_module m

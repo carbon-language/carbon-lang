@@ -41,16 +41,16 @@ let _ =
     true
   end;
   
-  (* get_module_provider *)
+  (* get_module *)
   begin
     let mb = Llvm.MemoryBuffer.of_file fn in
-    let mp = begin try
-      Llvm_bitreader.get_module_provider context mb
+    let m = begin try
+      Llvm_bitreader.get_module context mb
     with x ->
       Llvm.MemoryBuffer.dispose mb;
       raise x
     end in
-    Llvm.ModuleProvider.dispose mp
+    Llvm.dispose_module m
   end;
   
   (* corrupt the bitcode *)
@@ -60,17 +60,17 @@ let _ =
     close_out oc
   end;
   
-  (* test get_module_provider exceptions *)
+  (* test get_module exceptions *)
   test begin
     try
       let mb = Llvm.MemoryBuffer.of_file fn in
-      let mp = begin try
-        Llvm_bitreader.get_module_provider context mb
+      let m = begin try
+        Llvm_bitreader.get_module context mb
       with x ->
         Llvm.MemoryBuffer.dispose mb;
         raise x
       end in
-      Llvm.ModuleProvider.dispose mp;
+      Llvm.dispose_module m;
       false
     with Llvm_bitreader.Error _ ->
       true

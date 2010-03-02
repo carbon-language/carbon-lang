@@ -58,7 +58,6 @@ let suite name f =
 
 let filename = Sys.argv.(1)
 let m = create_module context filename
-let mp = ModuleProvider.create m
 
 
 (*===-- Target ------------------------------------------------------------===*)
@@ -1264,14 +1263,6 @@ let test_builder () =
   end
 
 
-(*===-- Module Provider ---------------------------------------------------===*)
-
-let test_module_provider () =
-  let m = create_module context "test" in
-  let mp = ModuleProvider.create m in
-  ModuleProvider.dispose mp
-
-
 (*===-- Pass Managers -----------------------------------------------------===*)
 
 let test_pass_manager () =
@@ -1288,7 +1279,7 @@ let test_pass_manager () =
     let fn = define_function "FunctionPassManager" fty m in
     ignore (build_ret_void (builder_at_end context (entry_block fn)));
     
-    ignore (PassManager.create_function mp
+    ignore (PassManager.create_function m
              ++ PassManager.initialize
              ++ PassManager.run_function fn
              ++ PassManager.finalize
@@ -1307,7 +1298,7 @@ let test_writer () =
   group "writer";
   insist (write_bitcode_file m filename);
   
-  ModuleProvider.dispose mp
+  dispose_module m
 
 
 (*===-- Driver ------------------------------------------------------------===*)
@@ -1326,7 +1317,6 @@ let _ =
   suite "basic blocks"     test_basic_blocks;
   suite "instructions"     test_instructions;
   suite "builder"          test_builder;
-  suite "module provider"  test_module_provider;
   suite "pass manager"     test_pass_manager;
   suite "writer"           test_writer; (* Keep this last; it disposes m. *)
   exit !exit_status

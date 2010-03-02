@@ -14,14 +14,12 @@
 
 exception Error of string
 
-(** [get_module_provider context mb] reads the bitcode for a new
-    module provider [m] from the memory buffer [mb] in the context [context].
-    Returns [m] if successful, or raises [Error msg] otherwise, where [msg] is a
-    description of the error encountered. See the function
-    [llvm::getBitcodeModuleProvider]. *)
-external get_module_provider : Llvm.llcontext -> Llvm.llmemorybuffer ->
-                               Llvm.llmoduleprovider
-                             = "llvm_get_module_provider"
+(** [get_module context mb] reads the bitcode for a new module [m] from the
+    memory buffer [mb] in the context [context].  Returns [m] if successful, or
+    raises [Error msg] otherwise, where [msg] is a description of the error
+    encountered. See the function [llvm::getBitcodeModule]. *)
+external get_module : Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule
+                    = "llvm_get_module"
 
 (** [parse_bitcode context mb] parses the bitcode for a new module [m] from the
     memory buffer [mb] in the context [context]. Returns [m] if successful, or

@@ -49,10 +49,6 @@ type llbasicblock
     class. *)
 type llbuilder
 
-(** Used to provide a module to JIT or interpreter.
-    See the [llvm::ModuleProvider] class. *)
-type llmoduleprovider
-
 (** Used to efficiently handle large buffers of read-only binary data.
     See the [llvm::MemoryBuffer] class. *)
 type llmemorybuffer
@@ -2198,20 +2194,6 @@ external build_is_not_null : llvalue -> string -> llbuilder -> llvalue
 external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
                        = "llvm_build_ptrdiff"
 
-(** {6 Module providers} *)
-
-module ModuleProvider : sig
-  (** [create_module_provider m] encapsulates [m] in a module provider and takes
-      ownership of the module. See the constructor
-      [llvm::ExistingModuleProvider::ExistingModuleProvider]. *)
-  external create : llmodule -> llmoduleprovider
-                  = "LLVMCreateModuleProviderForExistingModule"
-  
-  (** [dispose_module_provider mp] destroys the module provider [mp] as well as
-      the contained module. *)
-  external dispose : llmoduleprovider -> unit = "llvm_dispose_module_provider"
-end
-
 
 (** {6 Memory buffers} *)
 
@@ -2243,12 +2225,12 @@ module PassManager : sig
       See the constructor of [llvm::PassManager]. *)
   external create : unit -> [ `Module ] t = "llvm_passmanager_create"
   
-  (** [PassManager.create_function mp] constructs a new function-by-function
-      pass pipeline over the module provider [mp]. It does not take ownership of
-      [mp]. This type of pipeline is suitable for code generation and JIT
-      compilation tasks.
+  (** [PassManager.create_function m] constructs a new function-by-function
+      pass pipeline over the module [m]. It does not take ownership of [m].
+      This type of pipeline is suitable for code generation and JIT compilation
+      tasks.
       See the constructor of [llvm::FunctionPassManager]. *)
-  external create_function : llmoduleprovider -> [ `Function ] t
+  external create_function : llmodule -> [ `Function ] t
                            = "LLVMCreateFunctionPassManager"
   
   (** [run_module m pm] initializes, executes on the module [m], and finalizes
@@ -2278,7 +2260,7 @@ module PassManager : sig
   external finalize : [ `Function ] t -> bool = "llvm_passmanager_finalize"
   
   (** Frees the memory of a pass pipeline. For function pipelines, does not free
-      the module provider.
+      the module.
       See the destructor of [llvm::BasePassManager]. *)
   external dispose : [< any ] t -> unit = "llvm_passmanager_dispose"
 end

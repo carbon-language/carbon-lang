@@ -46,17 +46,16 @@ static void llvm_raise(value Prototype, char *Message) {
 /*===-- Modules -----------------------------------------------------------===*/
 
 /* Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule */
-CAMLprim value llvm_get_module_provider(LLVMContextRef C,
-                                        LLVMMemoryBufferRef MemBuf) {
+CAMLprim value llvm_get_module(LLVMContextRef C, LLVMMemoryBufferRef MemBuf) {
   CAMLparam0();
   CAMLlocal2(Variant, MessageVal);
   char *Message;
   
-  LLVMModuleProviderRef MP;
-  if (LLVMGetBitcodeModuleProviderInContext(C, MemBuf, &MP, &Message))
+  LLVMModuleRef M;
+  if (LLVMGetBitcodeModuleInContext(C, MemBuf, &M, &Message))
     llvm_raise(llvm_bitreader_error_exn, Message);
   
-  CAMLreturn((value) MP);
+  CAMLreturn((value) M);
 }
 
 /* Llvm.llcontext -> Llvm.llmemorybuffer -> Llvm.llmodule */

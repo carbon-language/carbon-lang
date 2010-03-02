@@ -16,7 +16,6 @@ type llvalue
 type lluse
 type llbasicblock
 type llbuilder
-type llmoduleprovider
 type llmemorybuffer
 
 module TypeKind = struct
@@ -948,14 +947,6 @@ external build_is_not_null : llvalue -> string -> llbuilder -> llvalue
 external build_ptrdiff : llvalue -> llvalue -> string -> llbuilder -> llvalue
                        = "llvm_build_ptrdiff"
 
-(*===-- Module providers --------------------------------------------------===*)
-
-module ModuleProvider = struct
-  external create : llmodule -> llmoduleprovider
-                  = "LLVMCreateModuleProviderForExistingModule"
-  external dispose : llmoduleprovider -> unit = "llvm_dispose_module_provider"
-end
-
 
 (*===-- Memory buffers ----------------------------------------------------===*)
 
@@ -972,7 +963,7 @@ module PassManager = struct
   type 'a t
   type any = [ `Module | `Function ]
   external create : unit -> [ `Module ] t = "llvm_passmanager_create"
-  external create_function : llmoduleprovider -> [ `Function ] t
+  external create_function : llmodule -> [ `Function ] t
                            = "LLVMCreateFunctionPassManager"
   external run_module : llmodule -> [ `Module ] t -> bool
                       = "llvm_passmanager_run_module"

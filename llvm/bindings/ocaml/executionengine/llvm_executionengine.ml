@@ -56,19 +56,19 @@ module ExecutionEngine = struct
             call into LLVM. *)
   let _ = register_exns (Error "")
   
-  external create: Llvm.llmoduleprovider -> t
+  external create: Llvm.llmodule -> t
     = "llvm_ee_create"
-  external create_interpreter: Llvm.llmoduleprovider -> t
+  external create_interpreter: Llvm.llmodule -> t
     = "llvm_ee_create_interpreter"
-  external create_jit: Llvm.llmoduleprovider -> t
+  external create_jit: Llvm.llmodule -> t
     = "llvm_ee_create_jit"
-  external create_fast_jit: Llvm.llmoduleprovider -> t
+  external create_fast_jit: Llvm.llmodule -> t
     = "llvm_ee_create_fast_jit"
   external dispose: t -> unit
     = "llvm_ee_dispose"
-  external add_module_provider: Llvm.llmoduleprovider -> t -> unit
+  external add_module: Llvm.llmodule -> t -> unit
     = "llvm_ee_add_mp"
-  external remove_module_provider: Llvm.llmoduleprovider -> t -> Llvm.llmodule
+  external remove_module: Llvm.llmodule -> t -> Llvm.llmodule
     = "llvm_ee_remove_mp"
   external find_function: string -> t -> Llvm.llvalue option
     = "llvm_ee_find_function"

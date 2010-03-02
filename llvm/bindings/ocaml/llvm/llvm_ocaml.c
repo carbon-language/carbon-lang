@@ -1752,14 +1752,6 @@ CAMLprim LLVMValueRef llvm_build_ptrdiff(LLVMValueRef LHS, LLVMValueRef RHS,
   return LLVMBuildPtrDiff(Builder_val(B), LHS, RHS, String_val(Name));
 }
 
-/*===-- Module Providers --------------------------------------------------===*/
-
-/* llmoduleprovider -> unit */
-CAMLprim value llvm_dispose_module_provider(LLVMModuleProviderRef MP) {
-  LLVMDisposeModuleProvider(MP);
-  return Val_unit;
-}
-
 
 /*===-- Memory buffers ----------------------------------------------------===*/
 

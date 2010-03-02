@@ -85,48 +85,47 @@ module ExecutionEngine: sig
       invoking a static compiler and generating a native executable. *)
   type t
   
-  (** [create mp] creates a new execution engine, taking ownership of the
-      module provider [mp] if successful. Creates a JIT if possible, else falls
-      back to an interpreter. Raises [Error msg] if an error occurrs. The
+  (** [create m] creates a new execution engine, taking ownership of the
+      module [m] if successful. Creates a JIT if possible, else falls back to an
+      interpreter. Raises [Error msg] if an error occurrs. The execution engine
+      is not garbage collected and must be destroyed with [dispose ee].
+      See the function [llvm::EngineBuilder::create]. *)
+  val create: Llvm.llmodule -> t
+  
+  (** [create_interpreter m] creates a new interpreter, taking ownership of the
+      module [m] if successful. Raises [Error msg] if an error occurrs. The
       execution engine is not garbage collected and must be destroyed with
-      [dispose ee]. See the function [llvm::EngineBuilder::create]. *)
-  val create: Llvm.llmoduleprovider -> t
+      [dispose ee].
+      See the function [llvm::EngineBuilder::create]. *)
+  val create_interpreter: Llvm.llmodule -> t
   
-  (** [create_interpreter mp] creates a new interpreter, taking ownership of the
-      module provider [mp] if successful. Raises [Error msg] if an error
-      occurrs. The execution engine is not garbage collected and must be
+  (** [create_jit m] creates a new JIT (just-in-time compiler), taking
+      ownership of the module [m] if successful. This function creates a JIT
+      which favors code quality over compilation speed. Raises [Error msg] if an
+      error occurrs. The execution engine is not garbage collected and must be
       destroyed with [dispose ee].
       See the function [llvm::EngineBuilder::create]. *)
-  val create_interpreter: Llvm.llmoduleprovider -> t
+  val create_jit: Llvm.llmodule -> t
   
-  (** [create_jit mp] creates a new JIT (just-in-time compiler), taking
-      ownership of the module provider [mp] if successful. This function creates
-      a JIT which favors code quality over compilation speed. Raises [Error msg]
-      if an error occurrs. The execution engine is not garbage collected and
-      must be destroyed with [dispose ee].
-      See the function [llvm::EngineBuilder::create]. *)
-  val create_jit: Llvm.llmoduleprovider -> t
-  
-  (** [create_fast_jit mp] creates a new JIT (just-in-time compiler) which
+  (** [create_fast_jit m] creates a new JIT (just-in-time compiler) which
       favors compilation speed over code quality. It takes ownership of the
-      module provider [mp] if successful. Raises [Error msg] if an error
-      occurrs. The execution engine is not garbage collected and must be
-      destroyed with [dispose ee].
+      module [m] if successful. Raises [Error msg] if an error occurrs. The
+      execution engine is not garbage collected and must be destroyed with
+      [dispose ee].
       See the function [llvm::EngineBuilder::create]. *)
-  val create_fast_jit: Llvm.llmoduleprovider -> t
+  val create_fast_jit: Llvm.llmodule -> t
   
   (** [dispose ee] releases the memory used by the execution engine and must be
       invoked to avoid memory leaks. *)
   val dispose: t -> unit
   
-  (** [add_module_provider mp ee] adds the module provider [mp] to the execution
-      engine [ee]. *)
-  val add_module_provider: Llvm.llmoduleprovider -> t -> unit
+  (** [add_module m ee] adds the module [m] to the execution engine [ee]. *)
+  val add_module: Llvm.llmodule -> t -> unit
   
-  (** [remove_module_provider mp ee] removes the module provider [mp] from the
-      execution engine [ee], disposing of [mp] and the module referenced by
-      [mp]. Raises [Error msg] if an error occurs. *)
-  val remove_module_provider: Llvm.llmoduleprovider -> t -> Llvm.llmodule
+  (** [remove_module m ee] removes the module [m] from the execution engine
+      [ee], disposing of [m] and the module referenced by [mp]. Raises
+      [Error msg] if an error occurs. *)
+  val remove_module: Llvm.llmodule -> t -> Llvm.llmodule
   
   (** [find_function n ee] finds the function named [n] defined in any of the
       modules owned by the execution engine [ee]. Returns [None] if the function
