@@ -1,5 +1,5 @@
 ; RUN: opt < %s -instcombine -S | \
-; RUN:   grep {add float}
+; RUN:   grep {fadd float}
 
         %V = type <4 x float>
 

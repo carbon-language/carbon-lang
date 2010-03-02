@@ -581,12 +581,12 @@ then:    ; preds = %entry
 
 else:    ; preds = %entry
   <b>%x3 = load double* %x1</b>
-  %subtmp = sub double %x3, 1.000000e+00
+  %subtmp = fsub double %x3, 1.000000e+00
   %calltmp = call double @fib( double %subtmp )
   <b>%x4 = load double* %x1</b>
-  %subtmp5 = sub double %x4, 2.000000e+00
+  %subtmp5 = fsub double %x4, 2.000000e+00
   %calltmp6 = call double @fib( double %subtmp5 )
-  %addtmp = add double %calltmp, %calltmp6
+  %addtmp = fadd double %calltmp, %calltmp6
   br label %ifcont
 
 ifcont:    ; preds = %else, %then
@@ -619,11 +619,11 @@ then:
   br label %ifcont
 
 else:
-  %subtmp = sub double <b>%x</b>, 1.000000e+00
+  %subtmp = fsub double <b>%x</b>, 1.000000e+00
   %calltmp = call double @fib( double %subtmp )
-  %subtmp5 = sub double <b>%x</b>, 2.000000e+00
+  %subtmp5 = fsub double <b>%x</b>, 2.000000e+00
   %calltmp6 = call double @fib( double %subtmp5 )
-  %addtmp = add double %calltmp, %calltmp6
+  %addtmp = fadd double %calltmp, %calltmp6
   br label %ifcont
 
 ifcont:    ; preds = %else, %then
@@ -649,11 +649,11 @@ entry:
   br i1 %ifcond, label %else, label %ifcont
 
 else:
-  %subtmp = sub double %x, 1.000000e+00
+  %subtmp = fsub double %x, 1.000000e+00
   %calltmp = call double @fib( double %subtmp )
-  %subtmp5 = sub double %x, 2.000000e+00
+  %subtmp5 = fsub double %x, 2.000000e+00
   %calltmp6 = call double @fib( double %subtmp5 )
-  %addtmp = add double %calltmp, %calltmp6
+  %addtmp = fadd double %calltmp, %calltmp6
   ret double %addtmp
 
 ifcont:

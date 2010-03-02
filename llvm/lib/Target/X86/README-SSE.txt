@@ -67,8 +67,8 @@ no_exit.i7:		; preds = %no_exit.i7, %build_tree.exit
                                    [ %tmp.34.i18, %no_exit.i7 ]
 	%tmp.0.0.0.i10 = phi double [ 0.000000e+00, %build_tree.exit ],
                                     [ %tmp.28.i16, %no_exit.i7 ]
-	%tmp.28.i16 = add double %tmp.0.0.0.i10, 0.000000e+00
-	%tmp.34.i18 = add double %tmp.0.1.0.i9, 0.000000e+00
+	%tmp.28.i16 = fadd double %tmp.0.0.0.i10, 0.000000e+00
+	%tmp.34.i18 = fadd double %tmp.0.1.0.i9, 0.000000e+00
 	br i1 false, label %Compute_Tree.exit23, label %no_exit.i7
 
 Compute_Tree.exit23:		; preds = %no_exit.i7
@@ -97,7 +97,7 @@ pcmp/pand/pandn/por to do a selection instead of a conditional branch:
 
 double %X(double %Y, double %Z, double %A, double %B) {
         %C = setlt double %A, %B
-        %z = add double %Z, 0.0    ;; select operand is not a load
+        %z = fadd double %Z, 0.0    ;; select operand is not a load
         %D = select bool %C, double %Y, double %z
         ret double %D
 }
@@ -545,7 +545,7 @@ eliminates a constant pool load.  For example, consider:
 
 define i64 @ccosf(float %z.0, float %z.1) nounwind readonly  {
 entry:
- %tmp6 = sub float -0.000000e+00, %z.1		; <float> [#uses=1]
+ %tmp6 = fsub float -0.000000e+00, %z.1		; <float> [#uses=1]
  %tmp20 = tail call i64 @ccoshf( float %tmp6, float %z.0 ) nounwind readonly
  ret i64 %tmp20
 }

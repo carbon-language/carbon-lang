@@ -203,7 +203,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
       if (Op1F->isExactlyValue(1.0))
-        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
+        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'fmul double %X, 1.0'
     } else if (Op1C->getType()->isVectorTy()) {
       if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1C)) {
         // As above, vector X*splat(1.0) -> X in all defined cases.

@@ -144,11 +144,11 @@ invcont57:		; preds = %invcont51
 	store double %tmp64, double* %tmp62
 	%tmp65 = call double* @_ZN6QSizeF6rwidthEv( %struct.QPointF* %scaledPageSize )		; <double*> [#uses=2]
 	%tmp67 = load double* %tmp65		; <double> [#uses=1]
-	%tmp69 = mul double %tmp67, %tmp48		; <double> [#uses=1]
+	%tmp69 = fmul double %tmp67, %tmp48		; <double> [#uses=1]
 	store double %tmp69, double* %tmp65
 	%tmp71 = call double* @_ZN6QSizeF7rheightEv( %struct.QPointF* %scaledPageSize )		; <double*> [#uses=2]
 	%tmp73 = load double* %tmp71		; <double> [#uses=1]
-	%tmp75 = mul double %tmp73, %tmp54		; <double> [#uses=1]
+	%tmp75 = fmul double %tmp73, %tmp54		; <double> [#uses=1]
 	store double %tmp75, double* %tmp71
 	%tmp78 = getelementptr %struct.QPrinter* %printer, i32 0, i32 0		; <%struct.QPaintDevice*> [#uses=1]
 	%tmp80 = invoke i32 @_ZNK12QPaintDevice6heightEv( %struct.QPaintDevice* %tmp78 )
@@ -190,7 +190,7 @@ invcont104:		; preds = %invcont103
 			to label %invcont106 unwind label %cleanup329		; <i32> [#uses=1]
 invcont106:		; preds = %invcont104
 	%tmp108 = sitofp i32 %tmp107 to double		; <double> [#uses=1]
-	%tmp109 = mul double %tmp108, 0x3FE93264C993264C		; <double> [#uses=1]
+	%tmp109 = fmul double %tmp108, 0x3FE93264C993264C		; <double> [#uses=1]
 	%tmp109.upgrd.17 = fptosi double %tmp109 to i32		; <i32> [#uses=3]
 	%tmp.upgrd.18 = call %struct.QTextBlockGroup* @_ZNK13QTextDocument9rootFrameEv( %struct.QAbstractTextDocumentLayout* %tmp95 )		; <%struct.QTextBlockGroup*> [#uses=1]
 	invoke void @_ZNK10QTextFrame11frameFormatEv( %struct.QTextBlockFormat* sret  %fmt, %struct.QTextBlockGroup* %tmp.upgrd.18 )
@@ -237,7 +237,7 @@ invcont124:		; preds = %invcont122
 	store double %tmp137, double* %tmp135
 	%tmp138 = call double @_ZNK6QRectF6heightEv( %struct.QRectF* %body )		; <double> [#uses=1]
 	%tmp139 = sitofp i32 %tmp109.upgrd.17 to double		; <double> [#uses=1]
-	%tmp140 = sub double %tmp138, %tmp139		; <double> [#uses=1]
+	%tmp140 = fsub double %tmp138, %tmp139		; <double> [#uses=1]
 	%tmp142 = invoke %struct.QPaintDevice* @_ZNK8QPainter6deviceEv( %struct.QPainter* %p )
 			to label %invcont141 unwind label %cleanup192		; <%struct.QPaintDevice*> [#uses=1]
 invcont141:		; preds = %invcont124
@@ -251,7 +251,7 @@ invcont146:		; preds = %invcont144
 			to label %invcont148 unwind label %cleanup168		; <i32> [#uses=1]
 invcont148:		; preds = %invcont146
 	%tmp149.upgrd.21 = sitofp i32 %tmp149 to double		; <double> [#uses=1]
-	%tmp150 = add double %tmp140, %tmp149.upgrd.21		; <double> [#uses=1]
+	%tmp150 = fadd double %tmp140, %tmp149.upgrd.21		; <double> [#uses=1]
 	%tmp152 = invoke %struct.QPaintDevice* @_ZNK8QPainter6deviceEv( %struct.QPainter* %p )
 			to label %invcont151 unwind label %cleanup168		; <%struct.QPaintDevice*> [#uses=1]
 invcont151:		; preds = %invcont148
@@ -261,10 +261,10 @@ invcont153:		; preds = %invcont151
 	%tmp155 = mul i32 %tmp154, 5		; <i32> [#uses=1]
 	%tmp156 = sdiv i32 %tmp155, 72		; <i32> [#uses=1]
 	%tmp156.upgrd.22 = sitofp i32 %tmp156 to double		; <double> [#uses=1]
-	%tmp157 = add double %tmp150, %tmp156.upgrd.22		; <double> [#uses=1]
+	%tmp157 = fadd double %tmp150, %tmp156.upgrd.22		; <double> [#uses=1]
 	%tmp158 = call double @_ZNK6QRectF5widthEv( %struct.QRectF* %body )		; <double> [#uses=1]
 	%tmp159 = sitofp i32 %tmp109.upgrd.17 to double		; <double> [#uses=1]
-	%tmp160 = sub double %tmp158, %tmp159		; <double> [#uses=1]
+	%tmp160 = fsub double %tmp158, %tmp159		; <double> [#uses=1]
 	call void @_ZN7QPointFC1Edd( %struct.QPointF* %tmp2, double %tmp160, double %tmp157 )
 	%tmp161 = getelementptr %struct.QPointF* %pageNumberPos, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp162 = getelementptr %struct.QPointF* %tmp2, i32 0, i32 0		; <double*> [#uses=1]

@@ -678,7 +678,7 @@ loop:		; preds = %loop, %entry
         ; body
 	%calltmp = call double @putchard( double 4.200000e+01 )
         ; increment
-	%nextvar = add double %i, 1.000000e+00
+	%nextvar = fadd double %i, 1.000000e+00
 
         ; termination test
 	%cmptmp = fcmp ult double %i, %n

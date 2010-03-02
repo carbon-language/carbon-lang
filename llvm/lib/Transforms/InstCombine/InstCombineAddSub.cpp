@@ -373,10 +373,10 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
     if (CFP->getValueAPF().isPosZero() && CannotBeNegativeZero(LHS))
       return ReplaceInstUsesWith(I, LHS);
 
-  // Check for (add double (sitofp x), y), see if we can merge this into an
+  // Check for (fadd double (sitofp x), y), see if we can merge this into an
   // integer add followed by a promotion.
   if (SIToFPInst *LHSConv = dyn_cast<SIToFPInst>(LHS)) {
-    // (add double (sitofp x), fpcst) --> (sitofp (add int x, intcst))
+    // (fadd double (sitofp x), fpcst) --> (sitofp (add int x, intcst))
     // ... if the constant fits in the integer value.  This is useful for things
     // like (double)(x & 1234) + 4.0 -> (double)((X & 1234)+4) which no longer
     // requires a constant pool load, and generally allows the add to be better
@@ -394,7 +394,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
       }
     }
     
-    // (add double (sitofp x), (sitofp y)) --> (sitofp (add int x, y))
+    // (fadd double (sitofp x), (sitofp y)) --> (sitofp (add int x, y))
     if (SIToFPInst *RHSConv = dyn_cast<SIToFPInst>(RHS)) {
       // Only do this if x/y have the same type, if at last one of them has a
       // single use (so we don't increase the number of int->fp conversions),

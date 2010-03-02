@@ -72,8 +72,8 @@ ready&gt; <b>def test(x) 1+2+x;</b>
 Read function definition:
 define double @test(double %x) {
 entry:
-        %addtmp = add double 1.000000e+00, 2.000000e+00
-        %addtmp1 = add double %addtmp, %x
+        %addtmp = fadd double 1.000000e+00, 2.000000e+00
+        %addtmp1 = fadd double %addtmp, %x
         ret double %addtmp1
 }
 </pre>
@@ -104,7 +104,7 @@ ready&gt; <b>def test(x) 1+2+x;</b>
 Read function definition:
 define double @test(double %x) {
 entry:
-        %addtmp = add double 3.000000e+00, %x
+        %addtmp = fadd double 3.000000e+00, %x
         ret double %addtmp
 }
 </pre>
@@ -127,9 +127,9 @@ ready&gt; <b>def test(x) (1+2+x)*(x+(1+2));</b>
 ready&gt; Read function definition:
 define double @test(double %x) {
 entry:
-        %addtmp = add double 3.000000e+00, %x
-        %addtmp1 = add double %x, 3.000000e+00
-        %multmp = mul double %addtmp, %addtmp1
+        %addtmp = fadd double 3.000000e+00, %x
+        %addtmp1 = fadd double %x, 3.000000e+00
+        %multmp = fmul double %addtmp, %addtmp1
         ret double %multmp
 }
 </pre>
@@ -267,8 +267,8 @@ ready&gt; <b>def test(x) (1+2+x)*(x+(1+2));</b>
 ready&gt; Read function definition:
 define double @test(double %x) {
 entry:
-        %addtmp = add double %x, 3.000000e+00
-        %multmp = mul double %addtmp, %addtmp
+        %addtmp = fadd double %x, 3.000000e+00
+        %multmp = fmul double %addtmp, %addtmp
         ret double %multmp
 }
 </pre>
@@ -388,8 +388,8 @@ ready&gt; <b>def testfunc(x y) x + y*2; </b>
 Read function definition:
 define double @testfunc(double %x, double %y) {
 entry:
-        %multmp = mul double %y, 2.000000e+00
-        %addtmp = add double %multmp, %x
+        %multmp = fmul double %y, 2.000000e+00
+        %addtmp = fadd double %multmp, %x
         ret double %addtmp
 }
 
@@ -436,10 +436,10 @@ Read function definition:
 define double @foo(double %x) {
 entry:
         %calltmp = call double @sin( double %x )
-        %multmp = mul double %calltmp, %calltmp
+        %multmp = fmul double %calltmp, %calltmp
         %calltmp2 = call double @cos( double %x )
-        %multmp4 = mul double %calltmp2, %calltmp2
-        %addtmp = add double %multmp, %multmp4
+        %multmp4 = fmul double %calltmp2, %calltmp2
+        %addtmp = fadd double %multmp, %multmp4
         ret double %addtmp
 }
 

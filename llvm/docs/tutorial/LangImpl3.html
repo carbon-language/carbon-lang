@@ -554,12 +554,12 @@ ready&gt; <b>def foo(a b) a*a + 2*a*b + b*b;</b>
 Read function definition:
 define double @foo(double %a, double %b) {
 entry:
-        %multmp = mul double %a, %a
-        %multmp1 = mul double 2.000000e+00, %a
-        %multmp2 = mul double %multmp1, %b
-        %addtmp = add double %multmp, %multmp2
-        %multmp3 = mul double %b, %b
-        %addtmp4 = add double %addtmp, %multmp3
+        %multmp = fmul double %a, %a
+        %multmp1 = fmul double 2.000000e+00, %a
+        %multmp2 = fmul double %multmp1, %b
+        %addtmp = fadd double %multmp, %multmp2
+        %multmp3 = fmul double %b, %b
+        %addtmp4 = fadd double %addtmp, %multmp3
         ret double %addtmp4
 }
 </pre>
@@ -576,7 +576,7 @@ define double @bar(double %a) {
 entry:
         %calltmp = call double @foo( double %a, double 4.000000e+00 )
         %calltmp1 = call double @bar( double 3.133700e+04 )
-        %addtmp = add double %calltmp, %calltmp1
+        %addtmp = fadd double %calltmp, %calltmp1
         ret double %addtmp
 }
 </pre>
@@ -612,18 +612,18 @@ ready&gt; <b>^D</b>
 
 define double @""() {
 entry:
-        %addtmp = add double 4.000000e+00, 5.000000e+00
+        %addtmp = fadd double 4.000000e+00, 5.000000e+00
         ret double %addtmp
 }
 
 define double @foo(double %a, double %b) {
 entry:
-        %multmp = mul double %a, %a
-        %multmp1 = mul double 2.000000e+00, %a
-        %multmp2 = mul double %multmp1, %b
-        %addtmp = add double %multmp, %multmp2
-        %multmp3 = mul double %b, %b
-        %addtmp4 = add double %addtmp, %multmp3
+        %multmp = fmul double %a, %a
+        %multmp1 = fmul double 2.000000e+00, %a
+        %multmp2 = fmul double %multmp1, %b
+        %addtmp = fadd double %multmp, %multmp2
+        %multmp3 = fmul double %b, %b
+        %addtmp4 = fadd double %addtmp, %multmp3
         ret double %addtmp4
 }
 
@@ -631,7 +631,7 @@ define double @bar(double %a) {
 entry:
         %calltmp = call double @foo( double %a, double 4.000000e+00 )
         %calltmp1 = call double @bar( double 3.133700e+04 )
-        %addtmp = add double %calltmp, %calltmp1
+        %addtmp = fadd double %calltmp, %calltmp1
         ret double %addtmp
 }
 
