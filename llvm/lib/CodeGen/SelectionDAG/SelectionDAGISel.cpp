@@ -1770,9 +1770,8 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   } else if (Node->getValueType(NTMNumResults-1) == MVT::Other)
     OldChainResultNo = NTMNumResults-1;
 
-  // FIXME: If this matches multiple nodes it will just leave them here
-  // dead with noone to love them.  These dead nodes can block future
-  // matches (!).
+  // Call the underlying SelectionDAG routine to do the transmogrification. Note
+  // that this deletes operands of the old node that become dead.
   SDNode *Res = CurDAG->MorphNodeTo(Node, ~TargetOpc, VTList, Ops, NumOps);
 
   // MorphNodeTo can operate in two ways: if an existing node with the
