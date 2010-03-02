@@ -16544,6 +16544,7 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
+    ac_save_CXXFLAGS=$CXXFLAGS
     CXXFLAGS=-pedantic
     if test "$cross_compiling" = yes; then
   ac_cv_huge_val_sanity=yes
@@ -16596,6 +16597,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$a
 fi
 
 
+    CXXFLAGS=$ac_save_CXXFLAGS
     ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
