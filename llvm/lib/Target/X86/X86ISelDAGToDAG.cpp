@@ -207,7 +207,7 @@ namespace {
                      SDValue &Index, SDValue &Disp,
                      SDValue &Segment);
     
-    void PreprocessForRMW();
+    void PreprocessForCallLoads();
     void PreprocessForFPConvert();
 
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
@@ -352,57 +352,6 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
   return true;
 }
 
-/// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
-/// and move load below the TokenFactor. Replace store's chain operand with
-/// load's chain result.
-static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
-                                 SDValue Store, SDValue TF) {
-  SmallVector<SDValue, 4> Ops;
-  for (unsigned i = 0, e = TF.getNode()->getNumOperands(); i != e; ++i)
-    if (Load.getNode() == TF.getOperand(i).getNode())
-      Ops.push_back(Load.getOperand(0));
-    else
-      Ops.push_back(TF.getOperand(i));
-  SDValue NewTF = CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
-  SDValue NewLoad = CurDAG->UpdateNodeOperands(Load, NewTF,
-                                               Load.getOperand(1),
-                                               Load.getOperand(2));
-  CurDAG->UpdateNodeOperands(Store, NewLoad.getValue(1), Store.getOperand(1),
-                             Store.getOperand(2), Store.getOperand(3));
-}
-
-/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG.  The 
-/// chain produced by the load must only be used by the store's chain operand,
-/// otherwise this may produce a cycle in the DAG.
-/// 
-static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
-                      SDValue &Load) {
-  if (N.getOpcode() == ISD::BIT_CONVERT) {
-    if (!N.hasOneUse())
-      return false;
-    N = N.getOperand(0);
-  }
-
-  LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
-  if (!LD || LD->isVolatile())
-    return false;
-  if (LD->getAddressingMode() != ISD::UNINDEXED)
-    return false;
-
-  ISD::LoadExtType ExtType = LD->getExtensionType();
-  if (ExtType != ISD::NON_EXTLOAD && ExtType != ISD::EXTLOAD)
-    return false;
-
-  if (N.hasOneUse() &&
-      LD->hasNUsesOfValue(1, 1) &&
-      N.getOperand(1) == Address &&
-      LD->isOperandOf(Chain.getNode())) {
-    Load = N;
-    return true;
-  }
-  return false;
-}
-
 /// MoveBelowCallSeqStart - Replace CALLSEQ_START operand with load's chain
 /// operand and move load below the call's chain operand.
 static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
@@ -467,95 +416,37 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
 }
 
 
-void X86DAGToDAGISel::PreprocessForRMW() {
+void X86DAGToDAGISel::PreprocessForCallLoads() {
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
-    if (I->getOpcode() == X86ISD::CALL) {
-      /// Also try moving call address load from outside callseq_start to just
-      /// before the call to allow it to be folded.
-      ///
-      ///     [Load chain]
-      ///         ^
-      ///         |
-      ///       [Load]
-      ///       ^    ^
-      ///       |    |
-      ///      /      \--
-      ///     /          |
-      ///[CALLSEQ_START] |
-      ///     ^          |
-      ///     |          |
-      /// [LOAD/C2Reg]   |
-      ///     |          |
-      ///      \        /
-      ///       \      /
-      ///       [CALL]
-      SDValue Chain = I->getOperand(0);
-      SDValue Load  = I->getOperand(1);
-      if (!isCalleeLoad(Load, Chain))
-        continue;
-      MoveBelowCallSeqStart(CurDAG, Load, SDValue(I, 0), Chain);
-      ++NumLoadMoved;
+    if (I->getOpcode() != X86ISD::CALL)
       continue;
-    }
     
-    continue;
-    
-
-    if (!ISD::isNON_TRUNCStore(I))
-      continue;
+    /// Also try moving call address load from outside callseq_start to just
+    /// before the call to allow it to be folded.
+    ///
+    ///     [Load chain]
+    ///         ^
+    ///         |
+    ///       [Load]
+    ///       ^    ^
+    ///       |    |
+    ///      /      \--
+    ///     /          |
+    ///[CALLSEQ_START] |
+    ///     ^          |
+    ///     |          |
+    /// [LOAD/C2Reg]   |
+    ///     |          |
+    ///      \        /
+    ///       \      /
+    ///       [CALL]
     SDValue Chain = I->getOperand(0);
-
-    if (Chain.getNode()->getOpcode() != ISD::TokenFactor)
+    SDValue Load  = I->getOperand(1);
+    if (!isCalleeLoad(Load, Chain))
       continue;
-
-    SDValue N1 = I->getOperand(1);
-    SDValue N2 = I->getOperand(2);
-    if ((N1.getValueType().isFloatingPoint() &&
-         !N1.getValueType().isVector()) ||
-        !N1.hasOneUse())
-      continue;
-
-    bool RModW = false;
-    SDValue Load;
-    unsigned Opcode = N1.getNode()->getOpcode();
-    switch (Opcode) {
-    case ISD::ADD:
-    case ISD::MUL:
-    case ISD::AND:
-    case ISD::OR:
-    case ISD::XOR:
-    case ISD::ADDC:
-    case ISD::ADDE:
-    case ISD::VECTOR_SHUFFLE: {
-      SDValue N10 = N1.getOperand(0);
-      SDValue N11 = N1.getOperand(1);
-      RModW = isRMWLoad(N10, Chain, N2, Load);
-      if (!RModW)
-        RModW = isRMWLoad(N11, Chain, N2, Load);
-      break;
-    }
-    case ISD::SUB:
-    case ISD::SHL:
-    case ISD::SRA:
-    case ISD::SRL:
-    case ISD::ROTL:
-    case ISD::ROTR:
-    case ISD::SUBC:
-    case ISD::SUBE:
-    case X86ISD::SHLD:
-    case X86ISD::SHRD: {
-      SDValue N10 = N1.getOperand(0);
-      RModW = isRMWLoad(N10, Chain, N2, Load);
-      break;
-    }
-    }
-
-    if (RModW) {
-      MoveBelowTokenFactor(CurDAG, Load, SDValue(I, 0), Chain);
-      ++NumLoadMoved;
-      checkForCycles(I);
-    }
+    MoveBelowCallSeqStart(CurDAG, Load, SDValue(I, 0), Chain);
+    ++NumLoadMoved;
   }
 }
 
@@ -631,7 +522,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
   OptForSize = MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize);
 
   if (OptLevel != CodeGenOpt::None)
-    PreprocessForRMW();
+    PreprocessForCallLoads();
 
   // FIXME: This should only happen when not compiled with -O0.
   PreprocessForFPConvert();
