@@ -3790,6 +3790,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   of a template appears after a declaration of an explicit 
       //   specialization for that template, the explicit instantiation has no
       //   effect.
+      SuppressNew = true;
       return false;
         
     case TSK_ExplicitInstantiationDefinition:

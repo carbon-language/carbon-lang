@@ -30,3 +30,19 @@ template long X0<long>::value;
 
 template<> struct X0<double>;
 template struct X0<double>;
+
+// PR 6458
+namespace test0 {
+  template <class T> class foo {
+    int compare(T x, T y);
+  };
+
+  template <> int foo<char>::compare(char x, char y);
+  template <class T> int foo<T>::compare(T x, T y) {
+    // invalid at T=char; if we get a diagnostic here, we're
+    // inappropriately instantiating this template.
+    void *ptr = x;
+  }
+  extern template class foo<char>;
+  template class foo<char>;
+}
