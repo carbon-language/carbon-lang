@@ -165,6 +165,55 @@ protected:
   /// DAGSize - Size of DAG being instruction selected.
   ///
   unsigned DAGSize;
+  
+  /// ISelPosition - Node iterator marking the current position of
+  /// instruction selection as it procedes through the topologically-sorted
+  /// node list.
+  SelectionDAG::allnodes_iterator ISelPosition;
+
+  
+  /// ISelUpdater - helper class to handle updates of the 
+  /// instruction selection graph.
+  class ISelUpdater : public SelectionDAG::DAGUpdateListener {
+    SelectionDAG::allnodes_iterator &ISelPosition;
+  public:
+    explicit ISelUpdater(SelectionDAG::allnodes_iterator &isp)
+      : ISelPosition(isp) {}
+    
+    /// NodeDeleted - Handle nodes deleted from the graph. If the
+    /// node being deleted is the current ISelPosition node, update
+    /// ISelPosition.
+    ///
+    virtual void NodeDeleted(SDNode *N, SDNode *E) {
+      if (ISelPosition == SelectionDAG::allnodes_iterator(N))
+        ++ISelPosition;
+    }
+    
+    /// NodeUpdated - Ignore updates for now.
+    virtual void NodeUpdated(SDNode *N) {}
+  };
+  
+  /// ReplaceUses - replace all uses of the old node F with the use
+  /// of the new node T.
+  void ReplaceUses(SDValue F, SDValue T) {
+    ISelUpdater ISU(ISelPosition);
+    CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISU);
+  }
+  
+  /// ReplaceUses - replace all uses of the old nodes F with the use
+  /// of the new nodes T.
+  void ReplaceUses(const SDValue *F, const SDValue *T, unsigned Num) {
+    ISelUpdater ISU(ISelPosition);
+    CurDAG->ReplaceAllUsesOfValuesWith(F, T, Num, &ISU);
+  }
+  
+  /// ReplaceUses - replace all uses of the old node F with the use
+  /// of the new node T.
+  void ReplaceUses(SDNode *F, SDNode *T) {
+    ISelUpdater ISU(ISelPosition);
+    CurDAG->ReplaceAllUsesWith(F, T, &ISU);
+  }
+  
 
   /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
   /// by tblgen.  Others should not call it.
