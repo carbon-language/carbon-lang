@@ -86,6 +86,12 @@ LiveVariables::LiveVariables(AnalysisContext &AC) {
 
   RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
+
+  // Register all parameters even if they didn't occur in the function body.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(AC.getDecl()))
+    for (FunctionDecl::param_const_iterator PI = FD->param_begin(), 
+           PE = FD->param_end(); PI != PE; ++PI)
+      getAnalysisData().Register(*PI);
 }
 
 //===----------------------------------------------------------------------===//
