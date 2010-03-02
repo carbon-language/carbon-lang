@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86 -stats |& grep {Number of loads added} | grep 2
-; RUN: llc < %s -march=x86 -stats |& grep {Number of register spills} | grep 1
-; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 34
+; RUN: llc < %s -march=x86 -stats |& not grep {Number of loads added}
+; RUN: llc < %s -march=x86 -stats |& not grep {Number of register spills}
+; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 32
 ; PR3495
 
 target triple = "i386-pc-linux-gnu"
