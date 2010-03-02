@@ -365,6 +365,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::eh_unwind_init, 0, 0);
     return RValue::get(Builder.CreateCall(F));
   }
+  case Builtin::BI__builtin_extend_pointer: {
+    // Extends a pointer to the size of an _Unwind_Word, which is
+    // generally a uint64_t.  Generally this gets poked directly into
+    // a register (or a "register" depending on platform) and then
+    // called, so if the pointer is shorter than a word we need to
+    // zext / sext based on the platform's expectations for pointers
+    // in registers.
+    //
+    // See: http://gcc.gnu.org/ml/gcc-bugs/2002-02/msg00237.html
+    //
+    // FIXME: ptrtoint always zexts; use a target hook if we start
+    // supporting targets where this matters.
+    Value *Ptr = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *Ty = CGM.getTypes().ConvertType(E->getType());
+    return RValue::get(Builder.CreatePtrToInt(Ptr, Ty));
+  }
 #if 0
   // FIXME: Finish/enable when LLVM backend support stabilizes
   case Builtin::BI__builtin_setjmp: {
