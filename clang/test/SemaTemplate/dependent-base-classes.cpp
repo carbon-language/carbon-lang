@@ -121,3 +121,15 @@ namespace PR6413 {
     , public virtual Base_B
   { };
 }
+
+namespace PR5812 {
+  template <class T> struct Base { 
+    Base* p; 
+  }; 
+
+  template <class T> struct Derived: public Base<T> { 
+    typename Derived::Base* p; // meaning Derived::Base<T> 
+  };
+
+  Derived<int> di;
+}
