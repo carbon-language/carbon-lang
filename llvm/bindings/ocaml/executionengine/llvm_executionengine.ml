@@ -60,10 +60,8 @@ module ExecutionEngine = struct
     = "llvm_ee_create"
   external create_interpreter: Llvm.llmodule -> t
     = "llvm_ee_create_interpreter"
-  external create_jit: Llvm.llmodule -> t
+  external create_jit: Llvm.llmodule -> int -> t
     = "llvm_ee_create_jit"
-  external create_fast_jit: Llvm.llmodule -> t
-    = "llvm_ee_create_fast_jit"
   external dispose: t -> unit
     = "llvm_ee_dispose"
   external add_module: Llvm.llmodule -> t -> unit

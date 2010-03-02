@@ -187,22 +187,12 @@ llvm_ee_create_interpreter(LLVMModuleRef M) {
   return Interp;
 }
 
-/* llmodule -> ExecutionEngine.t */
+/* llmodule -> int -> ExecutionEngine.t */
 CAMLprim LLVMExecutionEngineRef
-llvm_ee_create_jit(LLVMModuleRef M) {
+llvm_ee_create_jit(LLVMModuleRef M, value OptLevel) {
   LLVMExecutionEngineRef JIT;
   char *Error;
-  if (LLVMCreateJITCompilerForModule(&JIT, M, 3, &Error))
-    llvm_raise(llvm_ee_error_exn, Error);
-  return JIT;
-}
-
-/* llmodule -> ExecutionEngine.t */
-CAMLprim LLVMExecutionEngineRef
-llvm_ee_create_fast_jit(LLVMModuleRef M) {
-  LLVMExecutionEngineRef JIT;
-  char *Error;
-  if (LLVMCreateJITCompiler(&JIT, M, 0, &Error))
+  if (LLVMCreateJITCompilerForModule(&JIT, M, Int_val(OptLevel), &Error))
     llvm_raise(llvm_ee_error_exn, Error);
   return JIT;
 }

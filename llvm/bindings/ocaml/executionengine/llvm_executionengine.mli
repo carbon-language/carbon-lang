@@ -99,22 +99,13 @@ module ExecutionEngine: sig
       See the function [llvm::EngineBuilder::create]. *)
   val create_interpreter: Llvm.llmodule -> t
   
-  (** [create_jit m] creates a new JIT (just-in-time compiler), taking
-      ownership of the module [m] if successful. This function creates a JIT
-      which favors code quality over compilation speed. Raises [Error msg] if an
-      error occurrs. The execution engine is not garbage collected and must be
-      destroyed with [dispose ee].
+  (** [create_jit m optlevel] creates a new JIT (just-in-time compiler), taking
+      ownership of the module [m] if successful with the desired optimization
+      level [optlevel]. Raises [Error msg] if an error occurrs. The execution
+      engine is not garbage collected and must be destroyed with [dispose ee].
       See the function [llvm::EngineBuilder::create]. *)
-  val create_jit: Llvm.llmodule -> t
-  
-  (** [create_fast_jit m] creates a new JIT (just-in-time compiler) which
-      favors compilation speed over code quality. It takes ownership of the
-      module [m] if successful. Raises [Error msg] if an error occurrs. The
-      execution engine is not garbage collected and must be destroyed with
-      [dispose ee].
-      See the function [llvm::EngineBuilder::create]. *)
-  val create_fast_jit: Llvm.llmodule -> t
-  
+  val create_jit : Llvm.llmodule -> int -> t
+
   (** [dispose ee] releases the memory used by the execution engine and must be
       invoked to avoid memory leaks. *)
   val dispose: t -> unit
