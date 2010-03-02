@@ -38,6 +38,13 @@ inline void Emit16(llvm::raw_ostream& Out, uint32_t V) {
   assert((V >> 16) == 0);
 }
 
+inline void Emit24(llvm::raw_ostream& Out, uint32_t V) {
+  Out << (unsigned char)(V);
+  Out << (unsigned char)(V >>  8);
+  Out << (unsigned char)(V >> 16);
+  assert((V >> 24) == 0);
+}
+
 inline void Emit32(llvm::raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);

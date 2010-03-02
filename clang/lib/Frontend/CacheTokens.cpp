@@ -190,12 +190,7 @@ class PTHWriter {
 
   void Emit16(uint32_t V) { ::Emit16(Out, V); }
 
-  void Emit24(uint32_t V) {
-    Out << (unsigned char)(V);
-    Out << (unsigned char)(V >>  8);
-    Out << (unsigned char)(V >> 16);
-    assert((V >> 24) == 0);
-  }
+  void Emit24(uint32_t V) { ::Emit24(Out, V); }
 
   void Emit32(uint32_t V) { ::Emit32(Out, V); }
 
