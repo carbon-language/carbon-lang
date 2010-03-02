@@ -60,10 +60,10 @@ public:
     /// Method - The method decl of the overrider.
     const CXXMethodDecl *Method;
 
-    /// BaseOffset - the base offset of the overrider.
-    uint64_t BaseOffset;
+    /// Offset - the base offset of the overrider relative to the layout class.
+    int64_t Offset;
     
-    OverriderInfo() : Method(0), BaseOffset(0) { }
+    OverriderInfo() : Method(0), Offset(0) { }
   };
 
 private:
@@ -227,7 +227,7 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
     OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
     assert(!Overrider.Method && "Overrider should not exist yet!");
 
-    Overrider.BaseOffset = Base.getBaseOffset();
+    Overrider.Offset = Base.getBaseOffset();
     Overrider.Method = MD;
   }
 }
@@ -388,7 +388,7 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
       }
 
       // Set the new overrider.
-      Overrider.BaseOffset = NewBase.getBaseOffset();
+      Overrider.Offset = NewBase.getBaseOffset();
       Overrider.Method = NewMD;
       
       // And propagate it further.
@@ -548,9 +548,10 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
   
     OverriderInfo Overrider = getOverrider(Base, MD);
 
-    Out << "  " << MD->getQualifiedNameAsString() << " - ";
+    Out << "  " << MD->getQualifiedNameAsString() << " - (";
     Out << Overrider.Method->getQualifiedNameAsString();
-    
+    Out << ", " << Overrider.Offset << ')';
+
     AdjustmentOffsetsMapTy::const_iterator AI =
       ReturnAdjustments.find(std::make_pair(Base, MD));
     if (AI != ReturnAdjustments.end()) {
@@ -997,7 +998,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
       /// The vcall offset is the offset from the virtual base to the object 
       /// where the function was overridden.
       // FIXME: We should not use / 8 here.
-      Offset = (int64_t)(Overrider.BaseOffset - VBaseOffset) / 8;
+      Offset = (int64_t)(Overrider.Offset - VBaseOffset) / 8;
     }
     
     Components.push_back(VtableComponent::MakeVCallOffset(Offset));
@@ -1297,7 +1298,7 @@ void VtableBuilder::ComputeThisAdjustments() {
       Overriders.getOverrider(OverriddenBaseSubobject, MD);
     
     // Check if we need an adjustment.
-    if (Overrider.BaseOffset == MethodInfo.BaseOffset)
+    if (Overrider.Offset == (int64_t)MethodInfo.BaseOffset)
       continue;
     
     uint64_t VtableIndex = MethodInfo.VtableIndex;
@@ -1312,7 +1313,7 @@ void VtableBuilder::ComputeThisAdjustments() {
       continue;
 
     BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
-                                         Overrider.BaseOffset);
+                                         Overrider.Offset);
 
     // Compute the adjustment offset.
     BaseOffset ThisAdjustmentOffset =
