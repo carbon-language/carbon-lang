@@ -123,7 +123,6 @@ public:
     OPC_CheckComplexPat,
     OPC_CheckAndImm, OPC_CheckOrImm,
     OPC_CheckFoldableChainNode,
-    OPC_CheckChainCompatible,
     
     OPC_EmitInteger,
     OPC_EmitRegister,

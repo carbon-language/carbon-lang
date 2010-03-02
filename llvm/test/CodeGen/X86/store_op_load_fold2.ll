@@ -4,7 +4,7 @@
 target datalayout = "e-p:32:32"
         %struct.Macroblock = type { i32, i32, i32, i32, i32, [8 x i32], %struct.Macroblock*, %struct.Macroblock*, i32, [2 x [4 x [4 x [2 x i32]]]], [16 x i8], [16 x i8], i32, i64, [4 x i32], [4 x i32], i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i16, double, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 
-define internal fastcc i32 @dct_chroma(i32 %uv, i32 %cr_cbp) {
+define internal fastcc i32 @dct_chroma(i32 %uv, i32 %cr_cbp) nounwind {
 entry:
         br i1 true, label %cond_true2732.preheader, label %cond_true129
 cond_true129:           ; preds = %entry

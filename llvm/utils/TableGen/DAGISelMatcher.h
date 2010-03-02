@@ -64,7 +64,6 @@ public:
     CheckAndImm,
     CheckOrImm,
     CheckFoldableChainNode,
-    CheckChainCompatible,
     
     // Node creation/emisssion.
     EmitInteger,          // Create a TargetConstant
@@ -671,30 +670,6 @@ private:
   virtual unsigned getHashImpl() const { return 0; }
 };
 
-/// CheckChainCompatibleMatcher - Verify that the current node's chain
-/// operand is 'compatible' with the specified recorded node's.
-class CheckChainCompatibleMatcher : public Matcher {
-  unsigned PreviousOp;
-public:
-  CheckChainCompatibleMatcher(unsigned previousop)
-    : Matcher(CheckChainCompatible), PreviousOp(previousop) {}
-  
-  unsigned getPreviousOp() const { return PreviousOp; }
-  
-  static inline bool classof(const Matcher *N) {
-    return N->getKind() == CheckChainCompatible;
-  }
-  
-  virtual bool isSafeToReorderWithPatternPredicate() const { return true; }
-
-private:
-  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
-  virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckChainCompatibleMatcher>(M)->PreviousOp == PreviousOp;
-  }
-  virtual unsigned getHashImpl() const { return PreviousOp; }
-};
-  
 /// EmitIntegerMatcher - This creates a new TargetConstant.
 class EmitIntegerMatcher : public Matcher {
   int64_t Val;

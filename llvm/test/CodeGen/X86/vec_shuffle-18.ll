@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8.8.0 | grep mov | count 7
+; XFAIL: *
 
 	%struct.vector4_t = type { <4 x float> }
 

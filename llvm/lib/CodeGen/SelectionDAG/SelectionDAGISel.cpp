@@ -1455,30 +1455,6 @@ SDNode *SelectionDAGISel::Select_EH_LABEL(SDNode *N) {
                               MVT::Other, Tmp, Chain);
 }
 
-
-/// ChainNotReachable - Returns true if Chain does not reach Op.
-static bool ChainNotReachable(SDNode *Chain, SDNode *Op) {
-  if (Chain->getOpcode() == ISD::EntryToken)
-    return true;
-  if (Chain->getOpcode() == ISD::TokenFactor)
-    return false;
-  if (Chain->getNumOperands() > 0) {
-    SDValue C0 = Chain->getOperand(0);
-    if (C0.getValueType() == MVT::Other)
-      return C0.getNode() != Op && ChainNotReachable(C0.getNode(), Op);
-  }
-  return true;
-}
-
-/// IsChainCompatible - Returns true if Chain is Op or Chain does not reach Op.
-/// This is used to ensure that there are no nodes trapped between Chain, which
-/// is the first chain node discovered in a pattern and Op, a later node, that
-/// will not be selected into the pattern.
-static bool IsChainCompatible(SDNode *Chain, SDNode *Op) {
-  return Chain == Op || ChainNotReachable(Chain, Op);
-}
-
-
 /// GetVBR - decode a vbr encoding whose top bit is set.
 ALWAYS_INLINE static uint64_t
 GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
@@ -1543,26 +1519,170 @@ static void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
   DEBUG(errs() << "ISEL: Match complete!\n");
 }
 
+enum ChainResult {
+  CR_Simple,
+  CR_InducesCycle,
+  CR_LeadsToInteriorNode
+};
+
+/// WalkChainUsers - Walk down the users of the specified chained node that is
+/// part of the pattern we're matching, looking at all of the users we find.
+/// This determines whether something is an interior node, whether we have a
+/// non-pattern node in between two pattern nodes (which prevent folding because
+/// it would induce a cycle) and whether we have a TokenFactor node sandwiched
+/// between pattern nodes (in which case the TF becomes part of the pattern).
+///
+/// The walk we do here is guaranteed to be small because we quickly get down to
+/// already selected nodes "below" us.
+static ChainResult 
+WalkChainUsers(SDNode *ChainedNode,
+               SmallVectorImpl<SDNode*> &ChainedNodesInPattern,
+               SmallVectorImpl<SDNode*> &InteriorChainedNodes) {
+  ChainResult Result = CR_Simple;
+  
+  for (SDNode::use_iterator UI = ChainedNode->use_begin(),
+         E = ChainedNode->use_end(); UI != E; ++UI) {
+    // Make sure the use is of the chain, not some other value we produce.
+    if (UI.getUse().getValueType() != MVT::Other) continue;
+    
+    SDNode *User = *UI;
+
+    // If we see an already-selected machine node, then we've gone beyond the
+    // pattern that we're selecting down into the already selected chunk of the
+    // DAG.
+    if (User->isMachineOpcode() ||
+        User->getOpcode() == ISD::CopyToReg ||
+        User->getOpcode() == ISD::CopyFromReg ||
+        User->getOpcode() == ISD::INLINEASM ||
+        User->getOpcode() == ISD::HANDLENODE)  // Root of the graph.
+      continue;
+
+    // If we have a TokenFactor, we handle it specially.
+    if (User->getOpcode() != ISD::TokenFactor) {
+      // If the node isn't a token factor and isn't part of our pattern, then it
+      // must be a random chained node in between two nodes we're selecting.
+      // This happens when we have something like:
+      //   x = load ptr
+      //   call
+      //   y = x+4
+      //   store y -> ptr
+      // Because we structurally match the load/store as a read/modify/write,
+      // but the call is chained between them.  We cannot fold in this case
+      // because it would induce a cycle in the graph.
+      if (!std::count(ChainedNodesInPattern.begin(),
+                      ChainedNodesInPattern.end(), User))
+        return CR_InducesCycle;
+      
+      // Otherwise we found a node that is part of our pattern.  For example in:
+      //   x = load ptr
+      //   y = x+4
+      //   store y -> ptr
+      // This would happen when we're scanning down from the load and see the
+      // store as a user.  Record that there is a use of ChainedNode that is
+      // part of the pattern and keep scanning uses.
+      Result = CR_LeadsToInteriorNode;
+      InteriorChainedNodes.push_back(User);
+      continue;
+    }
+    
+    // If we found a TokenFactor, there are two cases to consider: first if the
+    // TokenFactor is just hanging "below" the pattern we're matching (i.e. no
+    // uses of the TF are in our pattern) we just want to ignore it.  Second,
+    // the TokenFactor can be sandwiched in between two chained nodes, like so:
+    //     [Load chain]
+    //         ^
+    //         |
+    //       [Load]
+    //       ^    ^
+    //       |    \                    DAG's like cheese
+    //      /       \                       do you?
+    //     /         |
+    // [TokenFactor] [Op]
+    //     ^          ^
+    //     |          |
+    //      \        /
+    //       \      /
+    //       [Store]
+    //
+    // In this case, the TokenFactor becomes part of our match and we rewrite it
+    // as a new TokenFactor.
+    //
+    // To distinguish these two cases, do a recursive walk down the uses.
+    switch (WalkChainUsers(User, ChainedNodesInPattern, InteriorChainedNodes)) {
+    case CR_Simple:
+      // If the uses of the TokenFactor are just already-selected nodes, ignore
+      // it, it is "below" our pattern.
+      continue;
+    case CR_InducesCycle:
+      // If the uses of the TokenFactor lead to nodes that are not part of our
+      // pattern that are not selected, folding would turn this into a cycle,
+      // bail out now.
+      return CR_InducesCycle;
+    case CR_LeadsToInteriorNode:
+      break;  // Otherwise, keep processing.
+    }
+    
+    // Okay, we know we're in the interesting interior case.  The TokenFactor
+    // is now going to be considered part of the pattern so that we rewrite its
+    // uses (it may have uses that are not part of the pattern) with the
+    // ultimate chain result of the generated code.  We will also add its chain
+    // inputs as inputs to the ultimate TokenFactor we create.
+    Result = CR_LeadsToInteriorNode;
+    ChainedNodesInPattern.push_back(User);
+    InteriorChainedNodes.push_back(User);
+    continue;
+  }
+  
+  return Result;
+}
+
 /// HandleMergeInputChains - This implements the OPC_EmitMergeInputChains
-/// operation for when the pattern matched multiple nodes with chains.
+/// operation for when the pattern matched multiple nodes with chains.  The
+/// input vector contains a list of all of the chained nodes that we match.  We
+/// must determine if this is a valid thing to cover (i.e. matching it won't
+/// induce cycles in the DAG) and if so, creating a TokenFactor node. that will
+/// be used as the input node chain for the generated nodes.
 static SDValue
-HandleMergeInputChains(const SmallVectorImpl<SDNode*> &ChainNodesMatched,
+HandleMergeInputChains(SmallVectorImpl<SDNode*> &ChainNodesMatched,
                        SelectionDAG *CurDAG) {
   assert(ChainNodesMatched.size() > 1 && 
          "Should only happen for multi chain node case");
+
+  // Walk all of the chained nodes we've matched, recursively scanning down the
+  // users of the chain result. This adds any TokenFactor nodes that are caught
+  // in between chained nodes to the chained and interior nodes list.
+  SmallVector<SDNode*, 3> InteriorChainedNodes;
+  for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
+    if (WalkChainUsers(ChainNodesMatched[i], ChainNodesMatched,
+                       InteriorChainedNodes) == CR_InducesCycle)
+      return SDValue(); // Would induce a cycle.
+  }
   
-  // Walk all the chained nodes, adding the input chains if they are not in
-  // ChainedNodes (and this, not in the matched pattern).  This is an N^2
-  // algorithm, but # chains is usually 2 here, at most 3 for MSP430.
+  // Okay, we have walked all the matched nodes and collected TokenFactor nodes
+  // that we are interested in.  Form our input TokenFactor node.
   SmallVector<SDValue, 3> InputChains;
   for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
-    SDValue InChain = ChainNodesMatched[i]->getOperand(0);
-    assert(InChain.getValueType() == MVT::Other && "Not a chain");
-    bool Invalid = false;
-    for (unsigned j = 0; j != e; ++j)
-      Invalid |= ChainNodesMatched[j] == InChain.getNode();
-    if (!Invalid)
+    // Add the input chain of this node to the InputChains list (which will be
+    // the operands of the generated TokenFactor) if it's not an interior node.
+    SDNode *N = ChainNodesMatched[i];
+    if (N->getOpcode() != ISD::TokenFactor) {
+      if (std::count(InteriorChainedNodes.begin(),InteriorChainedNodes.end(),N))
+        continue;
+      
+      // Otherwise, add the input chain.
+      SDValue InChain = ChainNodesMatched[i]->getOperand(0);
+      assert(InChain.getValueType() == MVT::Other && "Not a chain");
       InputChains.push_back(InChain);
+      continue;
+    }
+    
+    // If we have a token factor, we want to add all inputs of the token factor
+    // that are not part of the pattern we're matching.
+    for (unsigned op = 0, e = N->getNumOperands(); op != e; ++op) {
+      if (!std::count(ChainNodesMatched.begin(), ChainNodesMatched.end(),
+                      N->getOperand(i).getNode()))
+        InputChains.push_back(N->getOperand(i));
+    }
   }
   
   SDValue Res;
@@ -1916,25 +2036,6 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       continue;
     }
-    case OPC_CheckChainCompatible: {
-      unsigned PrevNode = MatcherTable[MatcherIndex++];
-      assert(PrevNode < RecordedNodes.size() && "Invalid CheckChainCompatible");
-      SDValue PrevChainedNode = RecordedNodes[PrevNode];
-      SDValue ThisChainedNode = RecordedNodes.back();
-      
-      // We have two nodes with chains, verify that their input chains are good.
-      assert(PrevChainedNode.getOperand(0).getValueType() == MVT::Other &&
-             ThisChainedNode.getOperand(0).getValueType() == MVT::Other &&
-             "Invalid chained nodes");
-      
-      if (!IsChainCompatible(// Input chain of the previous node.
-                             PrevChainedNode.getOperand(0).getNode(),
-                             // Node with chain.
-                             ThisChainedNode.getNode()))
-        break;
-      continue;
-    }
-        
     case OPC_EmitInteger: {
       MVT::SimpleValueType VT =
         (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
@@ -2157,6 +2258,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         } else if (NodeToMatch->getValueType(NTMNumResults-1) == MVT::Other)
           OldChainResultNo = NTMNumResults-1;
         
+        // FIXME: If this matches multiple nodes it will just leave them here
+        // dead with noone to love them.  These dead nodes can block future
+        // matches (!).
         Res = CurDAG->MorphNodeTo(NodeToMatch, ~TargetOpc, VTList,
                                   Ops.data(), Ops.size());
         

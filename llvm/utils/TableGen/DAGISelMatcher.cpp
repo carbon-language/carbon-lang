@@ -137,11 +137,6 @@ void CheckFoldableChainNodeMatcher::printImpl(raw_ostream &OS,
   OS.indent(indent) << "CheckFoldableChainNode\n";
 }
 
-void CheckChainCompatibleMatcher::printImpl(raw_ostream &OS,
-                                              unsigned indent) const {
-  OS.indent(indent) << "CheckChainCompatible " << PreviousOp << "\n";
-}
-
 void EmitIntegerMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "EmitInteger " << Val << " VT=" << VT << '\n';
 }

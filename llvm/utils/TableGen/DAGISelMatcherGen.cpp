@@ -267,16 +267,6 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
       assert(NextRecordedOperandNo > 1 &&
              "Should have recorded input/result chains at least!");
       MatchedChainNodes.push_back(NextRecordedOperandNo-1);
-
-      // If we need to check chains, do so, see comment for
-      // "NodeHasProperty(SDNPHasChain" below.
-      if (MatchedChainNodes.size() > 1) {
-        // FIXME2: This is broken, we should eliminate this nonsense completely,
-        // but we want to produce the same selections that the old matcher does
-        // for now.
-        unsigned PrevOp = MatchedChainNodes[MatchedChainNodes.size()-2];
-        AddMatcher(new CheckChainCompatibleMatcher(PrevOp));
-      }
     }
     
     // TODO: Complex patterns can't have output flags, if they did, we'd want
@@ -353,19 +343,6 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
                                  NextRecordedOperandNo));
     // Remember all of the input chains our pattern will match.
     MatchedChainNodes.push_back(NextRecordedOperandNo++);
-    
-    // If this is the second (e.g. indbr(load) or store(add(load))) or third
-    // input chain (e.g. (store (add (load, load))) from msp430) we need to make
-    // sure that folding the chain won't induce cycles in the DAG.  This could
-    // happen if there were an intermediate node between the indbr and load, for
-    // example.
-    if (MatchedChainNodes.size() > 1) {
-      // FIXME2: This is broken, we should eliminate this nonsense completely,
-      // but we want to produce the same selections that the old matcher does
-      // for now.
-      unsigned PrevOp = MatchedChainNodes[MatchedChainNodes.size()-2];
-      AddMatcher(new CheckChainCompatibleMatcher(PrevOp));
-    }
     
     // Don't look at the input chain when matching the tree pattern to the
     // SDNode.
