@@ -1749,6 +1749,66 @@ HandleMergeInputChains(SmallVectorImpl<SDNode*> &ChainNodesMatched,
                          MVT::Other, &InputChains[0], InputChains.size());
 }  
 
+/// MorphNode - Handle morphing a node in place for the selector.
+SDNode *SelectionDAGISel::
+MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
+          const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo) {
+  // It is possible we're using MorphNodeTo to replace a node with no
+  // normal results with one that has a normal result (or we could be
+  // adding a chain) and the input could have flags and chains as well.
+  // In this case we need to shifting the operands down.
+  // FIXME: This is a horrible hack and broken in obscure cases, no worse
+  // than the old isel though.  We should sink this into MorphNodeTo.
+  int OldFlagResultNo = -1, OldChainResultNo = -1;
+
+  unsigned NTMNumResults = Node->getNumValues();
+  if (Node->getValueType(NTMNumResults-1) == MVT::Flag) {
+    OldFlagResultNo = NTMNumResults-1;
+    if (NTMNumResults != 1 &&
+        Node->getValueType(NTMNumResults-2) == MVT::Other)
+      OldChainResultNo = NTMNumResults-2;
+  } else if (Node->getValueType(NTMNumResults-1) == MVT::Other)
+    OldChainResultNo = NTMNumResults-1;
+
+  // FIXME: If this matches multiple nodes it will just leave them here
+  // dead with noone to love them.  These dead nodes can block future
+  // matches (!).
+  SDNode *Res = CurDAG->MorphNodeTo(Node, ~TargetOpc, VTList, Ops, NumOps);
+
+  // MorphNodeTo can operate in two ways: if an existing node with the
+  // specified operands exists, it can just return it.  Otherwise, it
+  // updates the node in place to have the requested operands.
+  if (Res == Node) {
+    // If we updated the node in place, reset the node ID.  To the isel,
+    // this should be just like a newly allocated machine node.
+    Res->setNodeId(-1);
+  }
+
+  unsigned ResNumResults = Res->getNumValues();
+  // Move the flag if needed.
+  if ((EmitNodeInfo & OPFL_FlagOutput) && OldFlagResultNo != -1 &&
+      (unsigned)OldFlagResultNo != ResNumResults-1)
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(Node, OldFlagResultNo), 
+                                      SDValue(Res, ResNumResults-1));
+
+  if ((EmitNodeInfo & OPFL_FlagOutput) != 0)
+  --ResNumResults;
+
+  // Move the chain reference if needed.
+  if ((EmitNodeInfo & OPFL_Chain) && OldChainResultNo != -1 &&
+      (unsigned)OldChainResultNo != ResNumResults-1)
+    CurDAG->ReplaceAllUsesOfValueWith(SDValue(Node, OldChainResultNo), 
+                                      SDValue(Res, ResNumResults-1));
+
+  // Otherwise, no replacement happened because the node already exists. Replace
+  // Uses of the old node with the new one.
+  if (Res != Node)
+    CurDAG->ReplaceAllUsesWith(Node, Res);
+  
+  return Res;
+}
+
+
 struct MatchScope {
   /// FailIndex - If this match fails, this is the index to continue with.
   unsigned FailIndex;
@@ -2298,60 +2358,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         }
         
       } else {
-        // It is possible we're using MorphNodeTo to replace a node with no
-        // normal results with one that has a normal result (or we could be
-        // adding a chain) and the input could have flags and chains as well.
-        // In this case we need to shifting the operands down.
-        // FIXME: This is a horrible hack and broken in obscure cases, no worse
-        // than the old isel though.  We should sink this into MorphNodeTo.
-        int OldFlagResultNo = -1, OldChainResultNo = -1;
-        
-        unsigned NTMNumResults = NodeToMatch->getNumValues();
-        if (NodeToMatch->getValueType(NTMNumResults-1) == MVT::Flag) {
-          OldFlagResultNo = NTMNumResults-1;
-          if (NTMNumResults != 1 &&
-              NodeToMatch->getValueType(NTMNumResults-2) == MVT::Other)
-            OldChainResultNo = NTMNumResults-2;
-        } else if (NodeToMatch->getValueType(NTMNumResults-1) == MVT::Other)
-          OldChainResultNo = NTMNumResults-1;
-        
-        // FIXME: If this matches multiple nodes it will just leave them here
-        // dead with noone to love them.  These dead nodes can block future
-        // matches (!).
-        Res = CurDAG->MorphNodeTo(NodeToMatch, ~TargetOpc, VTList,
-                                  Ops.data(), Ops.size());
-        
-        // MorphNodeTo can operate in two ways: if an existing node with the
-        // specified operands exists, it can just return it.  Otherwise, it
-        // updates the node in place to have the requested operands.
-        if (Res == NodeToMatch) {
-          // If we updated the node in place, reset the node ID.  To the isel,
-          // this should be just like a newly allocated machine node.
-          Res->setNodeId(-1);
-        }
-        
-        unsigned ResNumResults = Res->getNumValues();
-        // Move the flag if needed.
-        if ((EmitNodeInfo & OPFL_FlagOutput) && OldFlagResultNo != -1 &&
-            (unsigned)OldFlagResultNo != ResNumResults-1)
-          CurDAG->ReplaceAllUsesOfValueWith(SDValue(NodeToMatch,
-                                                    OldFlagResultNo), 
-                                            SDValue(Res, ResNumResults-1));
-        
-        if ((EmitNodeInfo & OPFL_FlagOutput) != 0)
-          --ResNumResults;
-
-        // Move the chain reference if needed.
-        if ((EmitNodeInfo & OPFL_Chain) && OldChainResultNo != -1 &&
-            (unsigned)OldChainResultNo != ResNumResults-1)
-          CurDAG->ReplaceAllUsesOfValueWith(SDValue(NodeToMatch,
-                                                    OldChainResultNo), 
-                                            SDValue(Res, ResNumResults-1));
-
-        if (Res != NodeToMatch) {
-          // Otherwise, no replacement happened because the node already exists.
-          CurDAG->ReplaceAllUsesWith(NodeToMatch, Res);
-        }
+        Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops.data(), Ops.size(),
+                        EmitNodeInfo);
       }
       
       // If the node had chain/flag results, update our notion of the current
