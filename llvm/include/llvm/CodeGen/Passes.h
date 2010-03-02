@@ -162,6 +162,10 @@ namespace llvm {
   /// 
   FunctionPass *createGCInfoPrinter(raw_ostream &OS);
   
+  /// createMachineCSEPass - This pass performs global CSE on machine
+  /// instructions.
+  FunctionPass *createMachineCSEPass();
+
   /// createMachineLICMPass - This pass performs LICM on machine instructions.
   /// 
   FunctionPass *createMachineLICMPass();
