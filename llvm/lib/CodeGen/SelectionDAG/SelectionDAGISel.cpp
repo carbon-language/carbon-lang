@@ -796,8 +796,11 @@ void SelectionDAGISel::DoInstructionSelection() {
       
       SDNode *ResNode = Select(Node);
       
+      // FIXME: This is pretty gross.  'Select' should be changed to not return
+      // anything at all and this code should be nuked with a tactical strike.
+      
       // If node should not be replaced, continue with the next one.
-      if (ResNode == Node)
+      if (ResNode == Node || Node->getOpcode() == ISD::DELETED_NODE)
         continue;
       // Replace node.
       if (ResNode)
@@ -1532,11 +1535,16 @@ GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
 
 /// UpdateChainsAndFlags - When a match is complete, this method updates uses of
 /// interior flag and chain results to use the new flag and chain results.
-static void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
-                              const SmallVectorImpl<SDNode*> &ChainNodesMatched,
-                                 SDValue InputFlag,
-                         const SmallVectorImpl<SDNode*> &FlagResultNodesMatched,
-                                 bool isMorphNodeTo, SelectionDAG *CurDAG) {
+void SelectionDAGISel::
+UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
+                     const SmallVectorImpl<SDNode*> &ChainNodesMatched,
+                     SDValue InputFlag,
+                     const SmallVectorImpl<SDNode*> &FlagResultNodesMatched,
+                     bool isMorphNodeTo) {
+  SmallVector<SDNode*, 4> NowDeadNodes;
+  
+  ISelUpdater ISU(ISelPosition);
+
   // Now that all the normal results are replaced, we replace the chain and
   // flag results if present.
   if (!ChainNodesMatched.empty()) {
@@ -1547,6 +1555,10 @@ static void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
     for (unsigned i = 0, e = ChainNodesMatched.size(); i != e; ++i) {
       SDNode *ChainNode = ChainNodesMatched[i];
       
+      // If this node was already deleted, don't look at it.
+      if (ChainNode->getOpcode() == ISD::DELETED_NODE)
+        continue;
+      
       // Don't replace the results of the root node if we're doing a
       // MorphNodeTo.
       if (ChainNode == NodeToMatch && isMorphNodeTo)
@@ -1556,7 +1568,11 @@ static void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
       if (ChainVal.getValueType() == MVT::Flag)
         ChainVal = ChainVal.getValue(ChainVal->getNumValues()-2);
       assert(ChainVal.getValueType() == MVT::Other && "Not a chain?");
-      CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain);
+      CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain, &ISU);
+      
+      // If the node became dead, delete it.
+      if (ChainNode->use_empty())
+        NowDeadNodes.push_back(ChainNode);
     }
   }
   
@@ -1566,12 +1582,24 @@ static void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
     // Handle any interior nodes explicitly marked.
     for (unsigned i = 0, e = FlagResultNodesMatched.size(); i != e; ++i) {
       SDNode *FRN = FlagResultNodesMatched[i];
+      
+      // If this node was already deleted, don't look at it.
+      if (FRN->getOpcode() == ISD::DELETED_NODE)
+        continue;
+      
       assert(FRN->getValueType(FRN->getNumValues()-1) == MVT::Flag &&
              "Doesn't have a flag result");
       CurDAG->ReplaceAllUsesOfValueWith(SDValue(FRN, FRN->getNumValues()-1),
-                                        InputFlag);
+                                        InputFlag, &ISU);
+      
+      // If the node became dead, delete it.
+      if (FRN->use_empty())
+        NowDeadNodes.push_back(FRN);
     }
   }
+  
+  if (!NowDeadNodes.empty())
+    CurDAG->RemoveDeadNodes(NowDeadNodes, &ISU);
   
   DEBUG(errs() << "ISEL: Match complete!\n");
 }
@@ -2363,7 +2391,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       // If the node had chain/flag results, update our notion of the current
       // chain and flag.
-      if (VTs.back() == MVT::Flag) {
+      if (EmitNodeInfo & OPFL_FlagOutput) {
         InputFlag = SDValue(Res, VTs.size()-1);
         if (EmitNodeInfo & OPFL_Chain)
           InputChain = SDValue(Res, VTs.size()-2);
@@ -2392,8 +2420,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (Opcode == OPC_MorphNodeTo) {
         // Update chain and flag uses.
         UpdateChainsAndFlags(NodeToMatch, InputChain, ChainNodesMatched,
-                             InputFlag, FlagResultNodesMatched, true, CurDAG);
-        return 0;
+                             InputFlag, FlagResultNodesMatched, true);
+        return Res;
       }
       
       continue;
@@ -2452,7 +2480,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       
       // Update chain and flag uses.
       UpdateChainsAndFlags(NodeToMatch, InputChain, ChainNodesMatched,
-                           InputFlag, FlagResultNodesMatched, false, CurDAG);
+                           InputFlag, FlagResultNodesMatched, false);
       
       assert(NodeToMatch->use_empty() &&
              "Didn't replace all uses of the node?");

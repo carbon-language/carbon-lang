@@ -307,6 +307,12 @@ private:
   /// OpcodeOffset - This is a cache used to dispatch efficiently into isel
   /// state machines that start with a OPC_SwitchOpcode node.
   std::vector<unsigned> OpcodeOffset;
+  
+  void UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
+                            const SmallVectorImpl<SDNode*> &ChainNodesMatched,
+                            SDValue InputFlag,const SmallVectorImpl<SDNode*> &F,
+                            bool isMorphNodeTo);
+    
 };
 
 }
