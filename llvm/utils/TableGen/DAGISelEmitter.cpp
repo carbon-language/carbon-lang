@@ -195,10 +195,6 @@ void DAGISelEmitter::run(raw_ostream &OS) {
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
 
-  OS << "// Include standard, target-independent definitions and methods used\n"
-     << "// by the instruction selector.\n";
-  OS << "#include \"llvm/CodeGen/DAGISelHeader.h\"\n\n";
-  
   DEBUG(errs() << "\n\nALL PATTERNS TO MATCH:\n\n";
         for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
              E = CGP.ptm_end(); I != E; ++I) {
