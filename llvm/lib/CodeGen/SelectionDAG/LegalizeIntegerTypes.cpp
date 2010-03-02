@@ -1080,8 +1080,8 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
   SDValue Amt = N->getOperand(1);
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   EVT ShTy = Amt.getValueType();
-  unsigned ShBits = ShTy.getSizeInBits();
-  unsigned NVTBits = NVT.getSizeInBits();
+  unsigned ShBits = ShTy.getScalarType().getSizeInBits();
+  unsigned NVTBits = NVT.getScalarType().getSizeInBits();
   assert(isPowerOf2_32(NVTBits) &&
          "Expanded integer type size not a power of two!");
   DebugLoc dl = N->getDebugLoc();

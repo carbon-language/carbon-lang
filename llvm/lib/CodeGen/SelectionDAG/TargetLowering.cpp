@@ -1608,7 +1608,7 @@ static bool ValueHasExactlyOneBitSet(SDValue Val, const SelectionDAG &DAG) {
 
   // Fall back to ComputeMaskedBits to catch other known cases.
   EVT OpVT = Val.getValueType();
-  unsigned BitWidth = OpVT.getSizeInBits();
+  unsigned BitWidth = OpVT.getScalarType().getSizeInBits();
   APInt Mask = APInt::getAllOnesValue(BitWidth);
   APInt KnownZero, KnownOne;
   DAG.ComputeMaskedBits(Val, Mask, KnownZero, KnownOne);

@@ -1064,7 +1064,7 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   if (VT.isInteger() && !VT.isVector()) {
     APInt LHSZero, LHSOne;
     APInt RHSZero, RHSOne;
-    APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits());
+    APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
     DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
 
     if (LHSZero.getBoolValue()) {
@@ -1136,7 +1136,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   // fold (addc a, b) -> (or a, b), CARRY_FALSE iff a and b share no bits.
   APInt LHSZero, LHSOne;
   APInt RHSZero, RHSOne;
-  APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits());
+  APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
   DAG.ComputeMaskedBits(N0, Mask, LHSZero, LHSOne);
 
   if (LHSZero.getBoolValue()) {
@@ -2754,7 +2754,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::CTLZ &&
       N1C->getAPIntValue() == Log2_32(VT.getSizeInBits())) {
     APInt KnownZero, KnownOne;
-    APInt Mask = APInt::getAllOnesValue(VT.getSizeInBits());
+    APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
     DAG.ComputeMaskedBits(N0.getOperand(0), Mask, KnownZero, KnownOne);
 
     // If any of the input bits are KnownOne, then the input couldn't be all

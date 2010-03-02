@@ -31,11 +31,10 @@ define <1 x i32> @f(<1 x i16> %a) nounwind {
   ret <1 x i32> %c
 }
 
-; TODO: Legalize doesn't yet handle this.
-;define <8 x i16> @g(<8 x i32> %a) nounwind {
-;  %c = trunc <8 x i32> %a to <8 x i16>
-;  ret <8 x i16> %c
-;}
+define <8 x i16> @g(<8 x i32> %a) nounwind {
+  %c = trunc <8 x i32> %a to <8 x i16>
+  ret <8 x i16> %c
+}
 
 define <3 x i16> @h(<3 x i32> %a) nounwind {
   %c = trunc <3 x i32> %a to <3 x i16>
@@ -45,4 +44,13 @@ define <3 x i16> @h(<3 x i32> %a) nounwind {
 define <1 x i16> @i(<1 x i32> %a) nounwind {
   %c = trunc <1 x i32> %a to <1 x i16>
   ret <1 x i16> %c
+}
+
+; PR6438
+define void @__OpenCL_math_kernel4_kernel() nounwind {
+  %tmp12.i = and <4 x i32> zeroinitializer, <i32 2139095040, i32 2139095040, i32 2139095040, i32 2139095040> ; <<4 x i32>> [#uses=1]
+  %cmp13.i = icmp eq <4 x i32> %tmp12.i, <i32 2139095040, i32 2139095040, i32 2139095040, i32 2139095040> ; <<4 x i1>> [#uses=2]
+  %cmp.ext14.i = sext <4 x i1> %cmp13.i to <4 x i32> ; <<4 x i32>> [#uses=0]
+  %tmp2110.i = and <4 x i1> %cmp13.i, zeroinitializer ; <<4 x i1>> [#uses=0]
+  ret void
 }
