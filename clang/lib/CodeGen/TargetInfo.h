@@ -44,6 +44,15 @@ namespace clang {
     /// target-specific attributes for the given global.
     virtual void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                                      CodeGen::CodeGenModule &M) const { }
+
+    /// Controls whether __builtin_extend_pointer should sign-extend
+    /// pointers to uint64_t or zero-extend them (the default).  Has
+    /// no effect for targets:
+    ///   - that have 64-bit pointers, or
+    ///   - that cannot address through registers larger than pointers, or
+    ///   - that implicitly ignore/truncate the top bits when addressing
+    ///     through such registers.
+    virtual bool extendPointerWithSExt() const { return false; }
   };
 }
 

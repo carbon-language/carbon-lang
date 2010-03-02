@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "TargetInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
@@ -19,6 +20,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/Basic/TargetBuiltins.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
@@ -367,19 +369,32 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI__builtin_extend_pointer: {
     // Extends a pointer to the size of an _Unwind_Word, which is
-    // generally a uint64_t.  Generally this gets poked directly into
-    // a register (or a "register" depending on platform) and then
-    // called, so if the pointer is shorter than a word we need to
-    // zext / sext based on the platform's expectations for pointers
-    // in registers.
+    // uint64_t on all platforms.  Generally this gets poked into a
+    // register and eventually used as an address, so if the
+    // addressing registers are wider than pointers and the platform
+    // doesn't implicitly ignore high-order bits when doing
+    // addressing, we need to make sure we zext / sext based on
+    // the platform's expectations.
     //
     // See: http://gcc.gnu.org/ml/gcc-bugs/2002-02/msg00237.html
-    //
-    // FIXME: ptrtoint always zexts; use a target hook if we start
-    // supporting targets where this matters.
+
+    LLVMContext &C = CGM.getLLVMContext();
+
+    // Cast the pointer to intptr_t.
     Value *Ptr = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *Ty = CGM.getTypes().ConvertType(E->getType());
-    return RValue::get(Builder.CreatePtrToInt(Ptr, Ty));
+    const llvm::IntegerType *IntPtrTy = CGM.getTargetData().getIntPtrType(C);
+    Value *Result = Builder.CreatePtrToInt(Ptr, IntPtrTy, "extend.cast");
+
+    // If that's 64 bits, we're done.
+    if (IntPtrTy->getBitWidth() == 64)
+      return RValue::get(Result);
+
+    // Otherwise, ask the codegen data what to do.
+    const llvm::IntegerType *Int64Ty = llvm::IntegerType::get(C, 64);
+    if (CGM.getTargetCodeGenInfo().extendPointerWithSExt())
+      return RValue::get(Builder.CreateSExt(Result, Int64Ty, "extend.sext"));
+    else
+      return RValue::get(Builder.CreateZExt(Result, Int64Ty, "extend.zext"));
   }
 #if 0
   // FIXME: Finish/enable when LLVM backend support stabilizes

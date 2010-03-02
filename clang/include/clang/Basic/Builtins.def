@@ -317,7 +317,7 @@ BUILTIN(__builtin_frob_return_addr, "v*v*", "n")
 BUILTIN(__builtin_dwarf_cfa, "v*", "n")
 BUILTIN(__builtin_init_dwarf_reg_size_table, "vv*", "n")
 BUILTIN(__builtin_dwarf_sp_column, "Ui", "n")
-BUILTIN(__builtin_extend_pointer, "zv*", "n") // Really _Unwind_Ptr -> _Unwind_Word
+BUILTIN(__builtin_extend_pointer, "ULLiv*", "n") // _Unwind_Word == uint64_t
 
 // GCC Object size checking builtins
 BUILTIN(__builtin_object_size, "zv*i", "n")
