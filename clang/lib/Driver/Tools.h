@@ -34,6 +34,7 @@ namespace tools {
                                  const InputInfoList &Inputs) const;
 
     void AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddMIPSTargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
     void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:
