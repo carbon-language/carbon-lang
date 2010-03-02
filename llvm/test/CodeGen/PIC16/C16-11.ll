@@ -1,4 +1,5 @@
 ;RUN: llc < %s -march=pic16
+; XFAIL: *
 
 @c612.auto.a.b = internal global i1 false         ; <i1*> [#uses=2]
 @c612.auto.A.b = internal global i1 false         ; <i1*> [#uses=2]
