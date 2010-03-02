@@ -15,3 +15,18 @@ namespace PR6382 {
     return -1;
   }
 }
+
+namespace PR6383 {
+  void test (bool gross)
+  {
+    struct compare_and_set
+    {
+      void operator() (const bool inner, const bool gross = false)
+      {
+        // the code
+      }
+    } compare_and_set2;
+
+    compare_and_set2 (false, gross);
+  }
+}

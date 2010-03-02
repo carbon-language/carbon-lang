@@ -1143,7 +1143,7 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
         LateMethod->DefaultArgs.reserve(FTI.NumArgs);
         for (unsigned I = 0; I < ParamIdx; ++I)
           LateMethod->DefaultArgs.push_back(
-                    LateParsedDefaultArgument(FTI.ArgInfo[ParamIdx].Param));
+                             LateParsedDefaultArgument(FTI.ArgInfo[I].Param));
       }
 
       // Add this parameter to the list of parameters (it or may
