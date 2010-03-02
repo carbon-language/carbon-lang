@@ -1177,7 +1177,7 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
     return SPDie;
 
   SPDie = new DIE(dwarf::DW_TAG_subprogram);
-  // constructors and operators for anonymous aggregates does not names.
+  // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
     addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
