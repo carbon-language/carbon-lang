@@ -1614,14 +1614,14 @@ def USADA8 : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc),
 // Signed/Unsigned saturate -- for disassembly only
 
 def SSATlsl : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, LSL $shamt",
+                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, lsl $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110101;
   let Inst{6-4} = 0b001;
 }
 
 def SSATasr : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, ASR $shamt",
+                 DPFrm, NoItinerary, "ssat", "\t$dst, $bit_pos, $a, asr $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110101;
   let Inst{6-4} = 0b101;
@@ -1635,14 +1635,14 @@ def SSAT16 : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a), DPFrm,
 }
 
 def USATlsl : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, LSL $shamt",
+                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, lsl $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110111;
   let Inst{6-4} = 0b001;
 }
 
 def USATasr : AI<(outs GPR:$dst), (ins i32imm:$bit_pos, GPR:$a, i32imm:$shamt),
-                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, ASR $shamt",
+                 DPFrm, NoItinerary, "usat", "\t$dst, $bit_pos, $a, asr $shamt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{27-21} = 0b0110111;
   let Inst{6-4} = 0b101;
@@ -2054,7 +2054,7 @@ def REVSH : AMiscA1I<0b01101111, (outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
 
 def PKHBT : AMiscA1I<0b01101000, (outs GPR:$dst),
                                  (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
-               IIC_iALUsi, "pkhbt", "\t$dst, $src1, $src2, LSL $shamt",
+               IIC_iALUsi, "pkhbt", "\t$dst, $src1, $src2, lsl $shamt",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF),
                                    (and (shl GPR:$src2, (i32 imm:$shamt)),
                                         0xFFFF0000)))]>,
@@ -2071,7 +2071,7 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$shamt)),
 
 def PKHTB : AMiscA1I<0b01101000, (outs GPR:$dst),
                                  (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
-               IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2, ASR $shamt",
+               IIC_iALUsi, "pkhtb", "\t$dst, $src1, $src2, asr $shamt",
                [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
                                    (and (sra GPR:$src2, imm16_31:$shamt),
                                         0xFFFF)))]>, Requires<[IsARM, HasV6]> {
