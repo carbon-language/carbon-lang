@@ -5140,7 +5140,7 @@ Loop:       ; Infinite loop that counts from 0 on up...
         <li>The call is in tail position (ret immediately follows call and ret
             uses value of call or is void).</li>
         <li>Option <tt>-tailcallopt</tt> is enabled,
-            or <code>llvm::PerformTailCallOpt</code> is <code>true</code>.</li>
+            or <code>llvm::GuaranteedTailCallOpt</code> is <code>true</code>.</li>
         <li><a href="CodeGenerator.html#tailcallopt">Platform specific
             constraints are met.</a></li>
       </ul>
