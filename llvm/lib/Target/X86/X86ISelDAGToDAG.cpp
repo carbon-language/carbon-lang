@@ -207,9 +207,6 @@ namespace {
                      SDValue &Index, SDValue &Disp,
                      SDValue &Segment);
     
-    void PreprocessForCallLoads();
-    void PreprocessForFPConvert();
-
     /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
     /// inline asm expressions.
     virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
@@ -415,54 +412,50 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
   return false;
 }
 
-
-void X86DAGToDAGISel::PreprocessForCallLoads() {
-  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
-         E = CurDAG->allnodes_end(); I != E; ++I) {
-    if (I->getOpcode() != X86ISD::CALL)
-      continue;
-    
-    /// Also try moving call address load from outside callseq_start to just
-    /// before the call to allow it to be folded.
-    ///
-    ///     [Load chain]
-    ///         ^
-    ///         |
-    ///       [Load]
-    ///       ^    ^
-    ///       |    |
-    ///      /      \--
-    ///     /          |
-    ///[CALLSEQ_START] |
-    ///     ^          |
-    ///     |          |
-    /// [LOAD/C2Reg]   |
-    ///     |          |
-    ///      \        /
-    ///       \      /
-    ///       [CALL]
-    SDValue Chain = I->getOperand(0);
-    SDValue Load  = I->getOperand(1);
-    if (!isCalleeLoad(Load, Chain))
-      continue;
-    MoveBelowCallSeqStart(CurDAG, Load, SDValue(I, 0), Chain);
-    ++NumLoadMoved;
-  }
-}
-
-
-/// PreprocessForFPConvert - Walk over the dag lowering fpround and fpextend
-/// nodes that target the FP stack to be store and load to the stack.  This is a
-/// gross hack.  We would like to simply mark these as being illegal, but when
-/// we do that, legalize produces these when it expands calls, then expands
-/// these in the same legalize pass.  We would like dag combine to be able to
-/// hack on these between the call expansion and the node legalization.  As such
-/// this pass basically does "really late" legalization of these inline with the
-/// X86 isel pass.
-void X86DAGToDAGISel::PreprocessForFPConvert() {
+void X86DAGToDAGISel::PreprocessISelDAG() {
+  OptForSize = MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize);
+  
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
        E = CurDAG->allnodes_end(); I != E; ) {
     SDNode *N = I++;  // Preincrement iterator to avoid invalidation issues.
+
+    if (OptLevel != CodeGenOpt::None && N->getOpcode() == X86ISD::CALL) {
+      /// Also try moving call address load from outside callseq_start to just
+      /// before the call to allow it to be folded.
+      ///
+      ///     [Load chain]
+      ///         ^
+      ///         |
+      ///       [Load]
+      ///       ^    ^
+      ///       |    |
+      ///      /      \--
+      ///     /          |
+      ///[CALLSEQ_START] |
+      ///     ^          |
+      ///     |          |
+      /// [LOAD/C2Reg]   |
+      ///     |          |
+      ///      \        /
+      ///       \      /
+      ///       [CALL]
+      SDValue Chain = N->getOperand(0);
+      SDValue Load  = N->getOperand(1);
+      if (!isCalleeLoad(Load, Chain))
+        continue;
+      MoveBelowCallSeqStart(CurDAG, Load, SDValue(N, 0), Chain);
+      ++NumLoadMoved;
+      continue;
+    }
+    
+    // Lower fpround and fpextend nodes that target the FP stack to be store and
+    // load to the stack.  This is a gross hack.  We would like to simply mark
+    // these as being illegal, but when we do that, legalize produces these when
+    // it expands calls, then expands these in the same legalize pass.  We would
+    // like dag combine to be able to hack on these between the call expansion
+    // and the node legalization.  As such this pass basically does "really
+    // late" legalization of these inline with the X86 isel pass.
+    // FIXME: This should only happen when not compiled with -O0.
     if (N->getOpcode() != ISD::FP_ROUND && N->getOpcode() != ISD::FP_EXTEND)
       continue;
     
@@ -518,15 +511,6 @@ void X86DAGToDAGISel::PreprocessForFPConvert() {
   }  
 }
 
-void X86DAGToDAGISel::PreprocessISelDAG() {
-  OptForSize = MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize);
-
-  if (OptLevel != CodeGenOpt::None)
-    PreprocessForCallLoads();
-
-  // FIXME: This should only happen when not compiled with -O0.
-  PreprocessForFPConvert();
-}
 
 /// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
 /// the main function.
