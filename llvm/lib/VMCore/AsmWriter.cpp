@@ -17,6 +17,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/AsmAnnotationWriter.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -1236,7 +1237,6 @@ class AssemblyWriter {
   TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
   std::vector<const Type*> NumberedTypes;
-  SmallVector<StringRef, 8> MDNames;
   
 public:
   inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
@@ -1244,8 +1244,6 @@ public:
                         AssemblyAnnotationWriter *AAW)
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
-    if (M)
-      M->getMDKindNames(MDNames);
   }
 
   void printMDNodeBody(const MDNode *MD);
@@ -1990,14 +1988,18 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Print Metadata info.
   SmallVector<std::pair<unsigned, MDNode*>, 4> InstMD;
   I.getAllMetadata(InstMD);
-  for (unsigned i = 0, e = InstMD.size(); i != e; ++i) {
-    unsigned Kind = InstMD[i].first;
-    if (Kind < MDNames.size()) {
-      Out << ", !" << MDNames[Kind];
-    } else {
-      Out << ", !<unknown kind #" << Kind << ">";
+  if (!InstMD.empty()) {
+    SmallVector<StringRef, 8> MDNames;
+    I.getType()->getContext().getMDKindNames(MDNames);
+    for (unsigned i = 0, e = InstMD.size(); i != e; ++i) {
+      unsigned Kind = InstMD[i].first;
+       if (Kind < MDNames.size()) {
+         Out << ", !" << MDNames[Kind];
+      } else {
+        Out << ", !<unknown kind #" << Kind << ">";
+      }
+      Out << " !" << Machine.getMetadataSlot(InstMD[i].second);
     }
-    Out << " !" << Machine.getMetadataSlot(InstMD[i].second);
   }
   printInfoComment(I);
 }
