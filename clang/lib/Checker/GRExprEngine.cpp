@@ -2358,8 +2358,9 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
 
       // Recover some path-sensitivity if a scalar value evaluated to
       // UnknownVal.
-      if (InitVal.isUnknown() ||
-          !getConstraintManager().canReasonAbout(InitVal)) {
+      if ((InitVal.isUnknown() ||
+          !getConstraintManager().canReasonAbout(InitVal)) &&
+          !VD->getType()->isReferenceType()) {
         InitVal = ValMgr.getConjuredSymbolVal(NULL, InitEx,
                                                Builder->getCurrentBlockCount());
       }
@@ -2901,9 +2902,8 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt *RS, ExplodedNode *Pred,
   if (Expr *RetE = RS->getRetValue()) {
     // Record the returned expression in the state.
     {
-      static int Tag;
-      SaveAndRestore<const void *> OldTag(Builder->Tag);
-      Builder->Tag = &Tag;
+      static int Tag = 0;
+      SaveAndRestore<const void *> OldTag(Builder->Tag, &Tag);
       const GRState *state = GetState(Pred);
       state = state->set<ReturnExpr>(RetE);
       Pred = Builder->generateNode(RetE, state, Pred);
