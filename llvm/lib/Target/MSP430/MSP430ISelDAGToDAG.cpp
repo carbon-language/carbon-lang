@@ -125,7 +125,9 @@ namespace {
     bool MatchWrapper(SDValue N, MSP430ISelAddressMode &AM);
     bool MatchAddressBase(SDValue N, MSP430ISelAddressMode &AM);
 
+#if 0
     bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root) const;
+#endif
 
     virtual bool
     SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
@@ -323,6 +325,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   return false;
 }
 
+#if 0
 bool MSP430DAGToDAGISel::IsLegalToFold(SDValue N, SDNode *U,
                                        SDNode *Root) const {
   if (OptLevel == CodeGenOpt::None) return false;
@@ -357,6 +360,7 @@ bool MSP430DAGToDAGISel::IsLegalToFold(SDValue N, SDNode *U,
   // Proceed to 'generic' cycle finder code
   return SelectionDAGISel::IsLegalToFold(N, U, Root);
 }
+#endif
 
 
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
@@ -516,6 +520,7 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
 /// This allows selection of mem-mem instructions. Yay!
 
 void MSP430DAGToDAGISel::PreprocessForRMW() {
+  return;
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
     if (!ISD::isNON_TRUNCStore(I))

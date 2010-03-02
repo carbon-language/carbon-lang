@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
-; RUN:   grep {and	DWORD PTR} | count 2
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | FileCheck %s
 
 target datalayout = "e-p:32:32"
         %struct.Macroblock = type { i32, i32, i32, i32, i32, [8 x i32], %struct.Macroblock*, %struct.Macroblock*, i32, [2 x [4 x [4 x [2 x i32]]]], [16 x i8], [16 x i8], i32, i64, [4 x i32], [4 x i32], i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i16, double, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
@@ -16,5 +15,10 @@ cond_true2732.preheader:                ; preds = %entry
         %tmp2676.us.us = and i64 %tmp2667.us.us, %tmp2675not.us.us              ; <i64> [#uses=1]
         store i64 %tmp2676.us.us, i64* %tmp2666
         ret i32 0
+
+; CHECK: 	and	{{E..}}, DWORD PTR [360]
+; CHECK:	and	DWORD PTR [356], {{E..}}
+; CHECK:	mov	DWORD PTR [360], {{E..}}
+
 }
 

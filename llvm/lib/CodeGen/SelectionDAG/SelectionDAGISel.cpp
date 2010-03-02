@@ -1376,8 +1376,8 @@ static SDNode *findFlagUse(SDNode *N) {
 /// This function recursively traverses up the operand chain, ignoring
 /// certain nodes.
 static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
-                          SDNode *Root,
-                          SmallPtrSet<SDNode*, 16> &Visited) {
+                          SDNode *Root, SmallPtrSet<SDNode*, 16> &Visited,
+                          bool IgnoreChains) {
   // The NodeID's are given uniques ID's where a node ID is guaranteed to be
   // greater than all of its (recursive) operands.  If we scan to a point where
   // 'use' is smaller than the node we're scanning for, then we know we will
@@ -1395,6 +1395,10 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
     return false;
 
   for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
+    // Ignore chain uses, they are validated by HandleMergeInputChains.
+    if (Use->getOperand(i).getValueType() == MVT::Other && IgnoreChains)
+      continue;
+    
     SDNode *N = Use->getOperand(i).getNode();
     if (N == Def) {
       if (Use == ImmedUse || Use == Root)
@@ -1404,7 +1408,7 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
     }
 
     // Traverse up the operand chain.
-    if (findNonImmUse(N, Def, ImmedUse, Root, Visited))
+    if (findNonImmUse(N, Def, ImmedUse, Root, Visited, IgnoreChains))
       return true;
   }
   return false;
@@ -1419,9 +1423,10 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
 /// have one non-chain use, we only need to watch out for load/op/store
 /// and load/op/cmp case where the root (store / cmp) may reach the load via
 /// its chain operand.
-static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse) {
+static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse,
+                               bool IgnoreChains) {
   SmallPtrSet<SDNode*, 16> Visited;
-  return findNonImmUse(Root, Def, ImmedUse, Root, Visited);
+  return findNonImmUse(Root, Def, ImmedUse, Root, Visited, IgnoreChains);
 }
 
 /// IsProfitableToFold - Returns true if it's profitable to fold the specific
@@ -1434,7 +1439,8 @@ bool SelectionDAGISel::IsProfitableToFold(SDValue N, SDNode *U,
 
 /// IsLegalToFold - Returns true if the specific operand node N of
 /// U can be folded during instruction selection that starts at Root.
-bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root) const {
+bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
+                                     bool IgnoreChains) const {
   if (OptLevel == CodeGenOpt::None) return false;
 
   // If Root use can somehow reach N through a path that that doesn't contain
@@ -1488,7 +1494,7 @@ bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root) const {
     VT = Root->getValueType(Root->getNumValues()-1);
   }
 
-  return !isNonImmUse(Root, N.getNode(), U);
+  return !isNonImmUse(Root, N.getNode(), U, IgnoreChains);
 }
 
 SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
@@ -1500,6 +1506,7 @@ SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
   VTs.push_back(MVT::Flag);
   SDValue New = CurDAG->getNode(ISD::INLINEASM, N->getDebugLoc(),
                                 VTs, &Ops[0], Ops.size());
+  New->setNodeId(-1);
   return New.getNode();
 }
 
@@ -1636,11 +1643,17 @@ WalkChainUsers(SDNode *ChainedNode,
     // pattern that we're selecting down into the already selected chunk of the
     // DAG.
     if (User->isMachineOpcode() ||
-        User->getOpcode() == ISD::CopyToReg ||
-        User->getOpcode() == ISD::CopyFromReg ||
-        User->getOpcode() == ISD::INLINEASM ||
         User->getOpcode() == ISD::HANDLENODE)  // Root of the graph.
       continue;
+    
+    if (User->getOpcode() == ISD::CopyToReg ||
+        User->getOpcode() == ISD::CopyFromReg ||
+        User->getOpcode() == ISD::INLINEASM) {
+      // If their node ID got reset to -1 then they've already been selected.
+      // Treat them like a MachineOpcode.
+      if (User->getNodeId() == -1)
+        continue;
+    }
 
     // If we have a TokenFactor, we handle it specially.
     if (User->getOpcode() != ISD::TokenFactor) {
@@ -1876,6 +1889,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   case ISD::TokenFactor:
   case ISD::CopyFromReg:
   case ISD::CopyToReg:
+    NodeToMatch->setNodeId(-1); // Mark selected.
     return 0;
   case ISD::AssertSext:
   case ISD::AssertZext:
@@ -2172,7 +2186,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (!IsProfitableToFold(N, NodeStack[NodeStack.size()-2].getNode(),
                               NodeToMatch) ||
           !IsLegalToFold(N, NodeStack[NodeStack.size()-2].getNode(),
-                         NodeToMatch))
+                         NodeToMatch, true/*We validate our own chains*/))
         break;
       
       continue;

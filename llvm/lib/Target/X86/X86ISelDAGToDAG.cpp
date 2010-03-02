@@ -467,46 +467,6 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
 }
 
 
-/// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
-/// This is only run if not in -O0 mode.
-/// This allows the instruction selector to pick more read-modify-write
-/// instructions. This is a common case:
-///
-///     [Load chain]
-///         ^
-///         |
-///       [Load]
-///       ^    ^
-///       |    |
-///      /      \-
-///     /         |
-/// [TokenFactor] [Op]
-///     ^          ^
-///     |          |
-///      \        /
-///       \      /
-///       [Store]
-///
-/// The fact the store's chain operand != load's chain will prevent the
-/// (store (op (load))) instruction from being selected. We can transform it to:
-///
-///     [Load chain]
-///         ^
-///         |
-///    [TokenFactor]
-///         ^
-///         |
-///       [Load]
-///       ^    ^
-///       |    |
-///       |     \- 
-///       |       | 
-///       |     [Op]
-///       |       ^
-///       |       |
-///       \      /
-///        \    /
-///       [Store]
 void X86DAGToDAGISel::PreprocessForRMW() {
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
@@ -538,6 +498,9 @@ void X86DAGToDAGISel::PreprocessForRMW() {
       ++NumLoadMoved;
       continue;
     }
+    
+    continue;
+    
 
     if (!ISD::isNON_TRUNCStore(I))
       continue;
@@ -1415,11 +1378,12 @@ bool X86DAGToDAGISel::TryFoldLoad(SDNode *P, SDValue N,
                                   SDValue &Base, SDValue &Scale,
                                   SDValue &Index, SDValue &Disp,
                                   SDValue &Segment) {
-  if (ISD::isNON_EXTLoad(N.getNode()) &&
-      IsProfitableToFold(N, P, P) &&
-      IsLegalToFold(N, P, P))
-    return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp, Segment);
-  return false;
+  if (!ISD::isNON_EXTLoad(N.getNode()) ||
+      !IsProfitableToFold(N, P, P) ||
+      !IsLegalToFold(N, P, P))
+    return false;
+  
+  return SelectAddr(P, N.getOperand(1), Base, Scale, Index, Disp, Segment);
 }
 
 /// getGlobalBaseReg - Return an SDNode that returns the value of
