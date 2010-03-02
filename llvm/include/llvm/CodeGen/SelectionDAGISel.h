@@ -97,8 +97,8 @@ public:
 
   /// IsLegalToFold - Returns true if the specific operand node N of
   /// U can be folded during instruction selection that starts at Root.
-  virtual bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
-                             bool IgnoreChains = false) const;
+  bool IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
+                     bool IgnoreChains = false) const;
 
   /// CreateTargetHazardRecognizer - Return a newly allocated hazard recognizer
   /// to use for this target when scheduling the DAG.
