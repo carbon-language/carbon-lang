@@ -752,14 +752,20 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     // A called constructor which has no definition or declaration need be
     // synthesized.
     else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-      if (CD->isImplicit())
+      if (CD->isImplicit()) {
+        assert (CD->isUsed());
         DeferredDeclsToEmit.push_back(D);
+      }
     } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
-      if (DD->isImplicit())
+      if (DD->isImplicit()) {
+        assert (DD->isUsed());
         DeferredDeclsToEmit.push_back(D);
+      }
     } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      if (MD->isCopyAssignment() && MD->isImplicit())
+      if (MD->isCopyAssignment() && MD->isImplicit()) {
+        assert (MD->isUsed());
         DeferredDeclsToEmit.push_back(D);
+      }
     }
   }
 

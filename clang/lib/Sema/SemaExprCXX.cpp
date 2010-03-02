@@ -426,6 +426,18 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
                                             : diag::err_throw_incomplete)
                               << E->getSourceRange()))
       return true;
+
+    // FIXME: This is just a hack to mark the copy constructor referenced.
+    // This should go away when the next FIXME is fixed.
+    const RecordType *RT = Ty->getAs<RecordType>();
+    if (!RT)
+      return false;
+
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+    if (RD->hasTrivialCopyConstructor())
+      return false;
+    CXXConstructorDecl *CopyCtor = RD->getCopyConstructor(Context, 0);
+    MarkDeclarationReferenced(ThrowLoc, CopyCtor);
   }
 
   // FIXME: Construct a temporary here.

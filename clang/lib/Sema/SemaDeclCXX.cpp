@@ -1638,8 +1638,22 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       new (Context) CXXBaseOrMemberInitializer*[NumInitializers];
 
     Constructor->setBaseOrMemberInitializers(baseOrMemberInitializers);
-    for (unsigned Idx = 0; Idx < NumInitializers; ++Idx)
-      baseOrMemberInitializers[Idx] = AllToInit[Idx];
+    for (unsigned Idx = 0; Idx < NumInitializers; ++Idx) {
+      CXXBaseOrMemberInitializer *Member = AllToInit[Idx];
+      baseOrMemberInitializers[Idx] = Member;
+      if (!Member->isBaseInitializer())
+        continue;
+      const Type *BaseType = Member->getBaseClass();
+      const RecordType *RT = BaseType->getAs<RecordType>();
+      if (!RT)
+        continue;
+      CXXRecordDecl *BaseClassDecl =
+          cast<CXXRecordDecl>(RT->getDecl());
+      if (BaseClassDecl->hasTrivialDestructor())
+        continue;
+      CXXDestructorDecl *DD = BaseClassDecl->getDestructor(Context);
+      MarkDeclarationReferenced(Constructor->getLocation(), DD);
+    }
   }
 
   return HadError;
@@ -5791,55 +5805,74 @@ Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   return Dcl;
 }
 
-void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
-                                             CXXMethodDecl *MD) {
+static bool needsVtable(CXXMethodDecl *MD, ASTContext &Context) {
   // Ignore dependent types.
   if (MD->isDependentContext())
-    return;
-  
-  CXXRecordDecl *RD = MD->getParent();
-  
-  // Ignore classes without a vtable.
-  if (!RD->isDynamicClass())
-    return;
+    return false;
 
   // Ignore declarations that are not definitions.
   if (!MD->isThisDeclarationADefinition())
-    return;
-  
-  if (isa<CXXConstructorDecl>(MD)) {
-    switch (MD->getParent()->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      // Classes that aren't instantiations of templates don't need their
-      // virtual methods marked until we see the definition of the key 
-      // function.
-      return;
-        
-    case TSK_ImplicitInstantiation:
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-      // This is a constructor of a class template; mark all of the virtual
-      // members as referenced to ensure that they get instantiatied.
-      break;
-    }
-  } else if (!MD->isOutOfLine()) {
-    // Consider only out-of-line definitions of member functions. When we see
-    // an inline definition, it's too early to compute the key function.
-    return;
-  } else if (const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD)) {
-    // If this is not the key function, we don't need to mark virtual members.
-    if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
-      return;
-  } else {
-    // The class has no key function, so we've already noted that we need to
-    // mark the virtual members of this class.
-    return;
+    return false;
+
+  CXXRecordDecl *RD = MD->getParent();
+
+  // Ignore classes without a vtable.
+  if (!RD->isDynamicClass())
+    return false;
+
+  switch (MD->getParent()->getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization:
+    // Classes that aren't instantiations of templates don't need their
+    // virtual methods marked until we see the definition of the key 
+    // function.
+    break;
+
+  case TSK_ImplicitInstantiation:
+    // This is a constructor of a class template; mark all of the virtual
+    // members as referenced to ensure that they get instantiatied.
+    if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
+      return true;
+    break;
+
+  case TSK_ExplicitInstantiationDeclaration:
+    return true; //FIXME: This looks wrong.
+
+  case TSK_ExplicitInstantiationDefinition:
+    // This is method of a explicit instantiation; mark all of the virtual
+    // members as referenced to ensure that they get instantiatied.
+    return true;
   }
-  
+
+  // Consider only out-of-line definitions of member functions. When we see
+  // an inline definition, it's too early to compute the key function.
+  if (!MD->isOutOfLine())
+    return false;
+
+  const CXXMethodDecl *KeyFunction = Context.getKeyFunction(RD);
+
+  // If there is no key function, we will need a copy of the vtable.
+  if (!KeyFunction)
+    return true;
+
+  // If this is the key function, we need to mark virtual members.
+  if (KeyFunction->getCanonicalDecl() == MD->getCanonicalDecl())
+    return true;
+
+  return false;
+}
+
+void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
+                                             CXXMethodDecl *MD) {
+  CXXRecordDecl *RD = MD->getParent();
+
   // We will need to mark all of the virtual members as referenced to build the
   // vtable.
-  ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
+  // We actually call MarkVirtualMembersReferenced instead of adding to
+  // ClassesWithUnmarkedVirtualMembers because this marking is needed by
+  // codegen that will happend before we finish parsing the file.
+  if (needsVtable(MD, Context))
+    MarkVirtualMembersReferenced(Loc, RD);
 }
 
 bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
@@ -5867,4 +5900,3 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD) {
       MarkDeclarationReferenced(Loc, MD);
   }
 }
-

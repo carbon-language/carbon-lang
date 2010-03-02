@@ -14,7 +14,7 @@ template<class T> int A<T>::a(T x) {
 }
 
 void f(A<int> x) {
-  x.anchor();
+  x.anchor(); // expected-note{{in instantiation of member function 'PR5557::A<int>::anchor' requested here}}
 }
 
 template<typename T>
@@ -36,10 +36,10 @@ struct Base {
 
 template<typename T>
 struct Derived : Base<T> {
-  virtual void foo() { }
+  virtual void foo() { } // expected-note {{in instantiation of member function 'Base<int>::~Base' requested here}}
 };
 
-template struct Derived<int>; // expected-note{{instantiation}}
+template struct Derived<int>;
 
 template<typename T>
 struct HasOutOfLineKey {
@@ -52,4 +52,4 @@ T *HasOutOfLineKey<T>::f(float *fp) {
   return fp; // expected-error{{cannot initialize return object of type 'int *' with an lvalue of type 'float *'}}
 }
 
-HasOutOfLineKey<int> out_of_line;
+HasOutOfLineKey<int> out_of_line; // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::HasOutOfLineKey' requested here}}
