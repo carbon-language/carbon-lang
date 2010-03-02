@@ -55,14 +55,30 @@ void LLVMDisposeGenericValue(LLVMGenericValueRef GenVal);
 
 /*===-- Operations on execution engines -----------------------------------===*/
 
+LLVMBool LLVMCreateExecutionEngineForModule(LLVMExecutionEngineRef *OutEE,
+                                            LLVMModuleRef M,
+                                            char **OutError);
+
+LLVMBool LLVMCreateInterpreterForModule(LLVMExecutionEngineRef *OutInterp,
+                                        LLVMModuleRef M,
+                                        char **OutError);
+
+LLVMBool LLVMCreateJITCompilerForModule(LLVMExecutionEngineRef *OutJIT,
+                                        LLVMModuleRef M,
+                                        unsigned OptLevel,
+                                        char **OutError);
+
+/** Deprecated: Use LLVMCreateExecutionEngineForModule instead. */
 LLVMBool LLVMCreateExecutionEngine(LLVMExecutionEngineRef *OutEE,
                                    LLVMModuleProviderRef MP,
                                    char **OutError);
 
+/** Deprecated: Use LLVMCreateInterpreterForModule instead. */
 LLVMBool LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
                                LLVMModuleProviderRef MP,
                                char **OutError);
 
+/** Deprecated: Use LLVMCreateJITCompilerForModule instead. */
 LLVMBool LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
                                LLVMModuleProviderRef MP,
                                unsigned OptLevel,
@@ -84,8 +100,15 @@ LLVMGenericValueRef LLVMRunFunction(LLVMExecutionEngineRef EE, LLVMValueRef F,
 
 void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F);
 
+void LLVMAddModule(LLVMExecutionEngineRef EE, LLVMModuleRef M);
+
+/** Deprecated: Use LLVMAddModule instead. */
 void LLVMAddModuleProvider(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP);
 
+LLVMBool LLVMRemoveModule(LLVMExecutionEngineRef EE, LLVMModuleRef M,
+                          LLVMModuleRef *OutMod, char **OutError);
+
+/** Deprecated: Use LLVMRemoveModule instead. */
 LLVMBool LLVMRemoveModuleProvider(LLVMExecutionEngineRef EE,
                                   LLVMModuleProviderRef MP,
                                   LLVMModuleRef *OutMod, char **OutError);

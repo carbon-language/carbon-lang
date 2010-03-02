@@ -1022,6 +1022,9 @@ LLVMPassManagerRef LLVMCreatePassManager(void);
     provider. It does not take ownership of the module provider. This type of
     pipeline is suitable for code generation and JIT compilation tasks.
     See llvm::FunctionPassManager::FunctionPassManager. */
+LLVMPassManagerRef LLVMCreateFunctionPassManagerForModule(LLVMModuleRef M);
+
+/** Deprecated: Use LLVMCreateFunctionPassManagerForModule instead. */
 LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef MP);
 
 /** Initializes, executes on the provided module, and finalizes all of the

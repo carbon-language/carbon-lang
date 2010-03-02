@@ -1712,8 +1712,13 @@ LLVMPassManagerRef LLVMCreatePassManager() {
   return wrap(new PassManager());
 }
 
+LLVMPassManagerRef LLVMCreateFunctionPassManagerForModule(LLVMModuleRef M) {
+  return wrap(new FunctionPassManager(unwrap(M)));
+}
+
 LLVMPassManagerRef LLVMCreateFunctionPassManager(LLVMModuleProviderRef P) {
-  return wrap(new FunctionPassManager(unwrap(P)));
+  return LLVMCreateFunctionPassManagerForModule(
+                                            reinterpret_cast<LLVMModuleRef>(P));
 }
 
 LLVMBool LLVMRunPassManager(LLVMPassManagerRef PM, LLVMModuleRef M) {
