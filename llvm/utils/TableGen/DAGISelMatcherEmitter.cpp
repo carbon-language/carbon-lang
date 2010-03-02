@@ -329,9 +329,12 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
        << getEnumName(cast<CheckChildTypeMatcher>(N)->getType()) << ",\n";
     return 2;
       
-  case Matcher::CheckInteger:
+  case Matcher::CheckInteger: {
     OS << "OPC_CheckInteger, ";
-    return 1+EmitVBRValue(cast<CheckIntegerMatcher>(N)->getValue(), OS);
+    unsigned Bytes=1+EmitVBRValue(cast<CheckIntegerMatcher>(N)->getValue(), OS);
+    OS << '\n';
+    return Bytes;
+  }
   case Matcher::CheckCondCode:
     OS << "OPC_CheckCondCode, ISD::"
        << cast<CheckCondCodeMatcher>(N)->getCondCodeName() << ",\n";
@@ -356,13 +359,19 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 2;
   }
       
-  case Matcher::CheckAndImm:
+  case Matcher::CheckAndImm: {
     OS << "OPC_CheckAndImm, ";
-    return 1+EmitVBRValue(cast<CheckAndImmMatcher>(N)->getValue(), OS);
+    unsigned Bytes=1+EmitVBRValue(cast<CheckAndImmMatcher>(N)->getValue(), OS);
+    OS << '\n';
+    return Bytes;
+  }
 
-  case Matcher::CheckOrImm:
+  case Matcher::CheckOrImm: {
     OS << "OPC_CheckOrImm, ";
-    return 1+EmitVBRValue(cast<CheckOrImmMatcher>(N)->getValue(), OS);
+    unsigned Bytes = 1+EmitVBRValue(cast<CheckOrImmMatcher>(N)->getValue(), OS);
+    OS << '\n';
+    return Bytes;
+  }
       
   case Matcher::CheckFoldableChainNode:
     OS << "OPC_CheckFoldableChainNode,\n";
@@ -376,7 +385,9 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     int64_t Val = cast<EmitIntegerMatcher>(N)->getValue();
     OS << "OPC_EmitInteger, "
        << getEnumName(cast<EmitIntegerMatcher>(N)->getVT()) << ", ";
-    return 2+EmitVBRValue(Val, OS);
+    unsigned Bytes = 2+EmitVBRValue(Val, OS);
+    OS << '\n';
+    return Bytes;
   }
   case Matcher::EmitStringInteger: {
     const std::string &Val = cast<EmitStringIntegerMatcher>(N)->getValue();
@@ -456,11 +467,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       OS << "/*#Ops*/";
     OS << ", ";
     unsigned NumOperandBytes = 0;
-    for (unsigned i = 0, e = EN->getNumOperands(); i != e; ++i) {
-      // We emit the operand numbers in VBR encoded format, in case the number
-      // is too large to represent with a byte.
+    for (unsigned i = 0, e = EN->getNumOperands(); i != e; ++i)
       NumOperandBytes += EmitVBRValue(EN->getOperand(i), OS);
-    }
     
     if (!OmitComments) {
       // Print the result #'s for EmitNode.
