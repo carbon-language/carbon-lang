@@ -1,5 +1,7 @@
-;RUN: llc < %s -march=pic16
+; RUN: llc < %s -march=pic16
 ; XFAIL: *
+; This fails because PIC16 doesn't define a (xor reg, reg) pattern.
+; 
 
 @c612.auto.a.b = internal global i1 false         ; <i1*> [#uses=2]
 @c612.auto.A.b = internal global i1 false         ; <i1*> [#uses=2]
