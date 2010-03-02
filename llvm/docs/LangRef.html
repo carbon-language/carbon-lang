@@ -1664,7 +1664,7 @@ Classifications</a> </div>
    which indicates that the function takes a variable number of arguments.
    Variable argument functions can access their arguments with
    the <a href="#int_varargs">variable argument handling intrinsic</a>
-   functions.  '<tt>&lt;returntype&gt;</tt>' is a any type except
+   functions.  '<tt>&lt;returntype&gt;</tt>' is any type except
    <a href="#t_label">label</a>.</p>
 
 <h5>Examples:</h5>
@@ -1674,12 +1674,11 @@ Classifications</a> </div>
     <td class="left">function taking an <tt>i32</tt>, returning an <tt>i32</tt>
     </td>
   </tr><tr class="layout">
-    <td class="left"><tt>float&nbsp;(i16&nbsp;signext,&nbsp;i32&nbsp;*)&nbsp;*
+    <td class="left"><tt>float&nbsp;(i16,&nbsp;i32&nbsp;*)&nbsp;*
     </tt></td>
     <td class="left"><a href="#t_pointer">Pointer</a> to a function that takes
-      an <tt>i16</tt> that should be sign extended and a
-      <a href="#t_pointer">pointer</a> to <tt>i32</tt>, returning
-      <tt>float</tt>.
+      an <tt>i16</tt> and a <a href="#t_pointer">pointer</a> to <tt>i32</tt>,
+      returning <tt>float</tt>.
     </td>
   </tr><tr class="layout">
     <td class="left"><tt>i32 (i8*, ...)</tt></td>
@@ -2888,9 +2887,10 @@ IfUnequal:
       function to be invoked. </li>
 
   <li>'<tt>function args</tt>': argument list whose types match the function
-      signature argument types.  If the function signature indicates the
-      function accepts a variable number of arguments, the extra arguments can
-      be specified.</li>
+      signature argument types and parameter attributes. All arguments must be
+      of <a href="#t_firstclass">first class</a> type. If the function
+      signature indicates the function accepts a variable number of arguments,
+      the extra arguments can be specified.</li>
 
   <li>'<tt>normal label</tt>': the label reached when the called function
       executes a '<tt><a href="#i_ret">ret</a></tt>' instruction. </li>
@@ -5171,10 +5171,10 @@ Loop:       ; Infinite loop that counts from 0 on up...
       to function value.</li>
 
   <li>'<tt>function args</tt>': argument list whose types match the function
-      signature argument types. All arguments must be of
-      <a href="#t_firstclass">first class</a> type. If the function signature
-      indicates the function accepts a variable number of arguments, the extra
-      arguments can be specified.</li>
+      signature argument types and parameter attributes. All arguments must be
+      of <a href="#t_firstclass">first class</a> type. If the function
+      signature indicates the function accepts a variable number of arguments,
+      the extra arguments can be specified.</li>
 
   <li>The optional <a href="#fnattrs">function attributes</a> list. Only
       '<tt>noreturn</tt>', '<tt>nounwind</tt>', '<tt>readonly</tt>' and
