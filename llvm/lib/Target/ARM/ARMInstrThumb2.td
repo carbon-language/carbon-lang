@@ -415,10 +415,10 @@ let Defs = [CPSR] in {
 multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                                bit Commutable = 0> {
    // shifted imm
-   def Sri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
-                  opc, "\t$dst, $lhs, $rhs",
-                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>,
-                  Requires<[IsThumb2]> {
+   def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs), IIC_iALUi,
+                 opc, "\t$dst, $lhs, $rhs",
+                 [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>,
+                 Requires<[IsThumb2]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
@@ -426,10 +426,10 @@ multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{15} = 0;
    }
    // register
-   def Srr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
-                  opc, ".w\t$dst, $lhs, $rhs",
-                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>,
-                  Requires<[IsThumb2]> {
+   def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
+                 opc, ".w\t$dst, $lhs, $rhs",
+                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>,
+                 Requires<[IsThumb2]> {
      let isCommutable = Commutable;
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
@@ -440,10 +440,10 @@ multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def Srs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs), IIC_iALUsi,
-                  opc, ".w\t$dst, $lhs, $rhs",
-                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>,
-                  Requires<[IsThumb2]> {
+   def rs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs), IIC_iALUsi,
+                 opc, ".w\t$dst, $lhs, $rhs",
+                 [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>,
+                 Requires<[IsThumb2]> {
      let Inst{31-27} = 0b11101;
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
@@ -1196,9 +1196,9 @@ defm t2ADC  : T2I_adde_sube_irs<0b1010, "adc",
                           BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
 defm t2SBC  : T2I_adde_sube_irs<0b1011, "sbc",
                           BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
-defm t2ADCS : T2I_adde_sube_s_irs<0b1010, "adcs",
+defm t2ADCS : T2I_adde_sube_s_irs<0b1010, "adc",
                           BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
-defm t2SBCS : T2I_adde_sube_s_irs<0b1011, "sbcs",
+defm t2SBCS : T2I_adde_sube_s_irs<0b1011, "sbc",
                           BinOpFrag<(sube_live_carry node:$LHS, node:$RHS)>>;
 
 // RSB
