@@ -1177,7 +1177,9 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
     return SPDie;
 
   SPDie = new DIE(dwarf::DW_TAG_subprogram);
-  addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
+  // constructors and operators for anonymous aggregates does not names.
+  if (!SP.getName().empty())
+    addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, SP.getName());
 
   StringRef LinkageName = SP.getLinkageName();
   if (!LinkageName.empty())
