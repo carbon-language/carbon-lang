@@ -10,3 +10,16 @@ void g() {
   S a( f() );
 }
 
+namespace PR6064 {
+  struct A {
+    A() { }
+    inline A(A&, int);
+  };
+
+  A::A(A&, int = 0) { }
+
+  void f() {
+    A const a;
+    A b(a);
+  }
+}
