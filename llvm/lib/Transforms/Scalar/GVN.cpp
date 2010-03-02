@@ -1542,11 +1542,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // at least one of the values is LI.  Since this means that we won't be able
   // to eliminate LI even if we insert uses in the other predecessors, we will
   // end up increasing code size.  Reject this by scanning for LI.
-  if (!EnableFullLoadPRE) {
-    for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-      if (ValuesPerBlock[i].isSimpleValue() &&
-          ValuesPerBlock[i].getSimpleValue() == LI)
+  for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
+    if (ValuesPerBlock[i].isSimpleValue() &&
+        ValuesPerBlock[i].getSimpleValue() == LI) {
+      // Skip cases where LI is the only definition, even for EnableFullLoadPRE.
+      if (!EnableFullLoadPRE || e == 1)
         return false;
+    }
   }
 
   // FIXME: It is extremely unclear what this loop is doing, other than
