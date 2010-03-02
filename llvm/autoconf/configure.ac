@@ -185,7 +185,7 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Haiku"
-    llvm_cv_platform_type="Unix" ;;  
+    llvm_cv_platform_type="Unix" ;;
   *-unknown-eabi*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
@@ -237,7 +237,7 @@ AC_CACHE_CHECK([type of operating system we're going to target],
   *-*-mingw*)
     llvm_cv_target_os_type="MingW" ;;
   *-*-haiku*)
-    llvm_cv_target_os_type="Haiku" ;;  
+    llvm_cv_target_os_type="Haiku" ;;
   *-unknown-eabi*)
     llvm_cv_target_os_type="Freestanding" ;;
   *)
@@ -1084,7 +1084,7 @@ fi
 dnl Tool compatibility is okay if we make it here.
 AC_MSG_RESULT([ok])
 
-dnl Check optional compiler flags. 
+dnl Check optional compiler flags.
 AC_MSG_CHECKING([optional compiler flags])
 CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
 CXX_FLAG_CHECK(NO_MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
@@ -1363,7 +1363,7 @@ eval LLVM_PREFIX="${prefix}";
 eval LLVM_BINDIR="${prefix}/bin";
 eval LLVM_LIBDIR="${prefix}/lib";
 eval LLVM_DATADIR="${prefix}/share/llvm";
-eval LLVM_DOCSDIR="${prefix}/docs/llvm";
+eval LLVM_DOCSDIR="${prefix}/share/doc/llvm";
 eval LLVM_ETCDIR="${prefix}/etc/llvm";
 eval LLVM_INCLUDEDIR="${prefix}/include";
 eval LLVM_INFODIR="${prefix}/info";
