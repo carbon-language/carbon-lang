@@ -3496,7 +3496,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY),
                                       TLI.getPointerTy()),
-                    Args, *this, dl, GetOrdering(Chain.getNode()));
+                    Args, *this, dl);
   return CallResult.second;
 }
 
@@ -3545,7 +3545,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE),
                                       TLI.getPointerTy()),
-                    Args, *this, dl, GetOrdering(Chain.getNode()));
+                    Args, *this, dl);
   return CallResult.second;
 }
 
@@ -3604,7 +3604,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
                     /*isReturnValueUsed=*/false,
                     getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
                                       TLI.getPointerTy()),
-                    Args, *this, dl, GetOrdering(Chain.getNode()));
+                    Args, *this, dl);
   return CallResult.second;
 }
 

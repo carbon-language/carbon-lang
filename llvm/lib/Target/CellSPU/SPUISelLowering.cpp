@@ -118,8 +118,7 @@ namespace {
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                             0, TLI.getLibcallCallingConv(LC), false,
                             /*isReturnValueUsed=*/true,
-                            Callee, Args, DAG, Op.getDebugLoc(),
-                            DAG.GetOrdering(InChain.getNode()));
+                            Callee, Args, DAG, Op.getDebugLoc());
 
     return CallInfo.first;
   }

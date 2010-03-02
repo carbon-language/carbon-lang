@@ -155,7 +155,7 @@ namespace {
     /// this value and returns the result as a ValueVTs value.  This uses
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     /// If the Flag pointer is NULL, no flag is used.
-    SDValue getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
+    SDValue getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
                             SDValue &Chain, SDValue *Flag) const;
 
     /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -163,14 +163,14 @@ namespace {
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
     /// If the Flag pointer is NULL, no flag is used.
     void getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
-                       unsigned Order, SDValue &Chain, SDValue *Flag) const;
+                       SDValue &Chain, SDValue *Flag) const;
 
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker, matching input operand index
     /// (if applicable), and includes the number of values added into it.
     void AddInlineAsmOperands(unsigned Code,
                               bool HasMatching, unsigned MatchingIdx,
-                              SelectionDAG &DAG, unsigned Order,
+                              SelectionDAG &DAG,
                               std::vector<SDValue> &Ops) const;
   };
 }
@@ -180,7 +180,7 @@ namespace {
 /// larger then ValueVT then AssertOp can be used to specify whether the extra
 /// bits are known to be zero (ISD::AssertZext) or sign extended from ValueVT
 /// (ISD::AssertSext).
-static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
+static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
                                 const SDValue *Parts,
                                 unsigned NumParts, EVT PartVT, EVT ValueVT,
                                 ISD::NodeType AssertOp = ISD::DELETED_NODE) {
@@ -205,9 +205,9 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
       EVT HalfVT = EVT::getIntegerVT(*DAG.getContext(), RoundBits/2);
 
       if (RoundParts > 2) {
-        Lo = getCopyFromParts(DAG, dl, Order, Parts, RoundParts / 2,
+        Lo = getCopyFromParts(DAG, dl, Parts, RoundParts / 2,
                               PartVT, HalfVT);
-        Hi = getCopyFromParts(DAG, dl, Order, Parts + RoundParts / 2,
+        Hi = getCopyFromParts(DAG, dl, Parts + RoundParts / 2,
                               RoundParts / 2, PartVT, HalfVT);
       } else {
         Lo = DAG.getNode(ISD::BIT_CONVERT, dl, HalfVT, Parts[0]);
@@ -223,7 +223,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
         // Assemble the trailing non-power-of-2 part.
         unsigned OddParts = NumParts - RoundParts;
         EVT OddVT = EVT::getIntegerVT(*DAG.getContext(), OddParts * PartBits);
-        Hi = getCopyFromParts(DAG, dl, Order,
+        Hi = getCopyFromParts(DAG, dl,
                               Parts + RoundParts, OddParts, PartVT, OddVT);
 
         // Combine the round and odd parts.
@@ -259,7 +259,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
         // If the register was not expanded, truncate or copy the value,
         // as appropriate.
         for (unsigned i = 0; i != NumParts; ++i)
-          Ops[i] = getCopyFromParts(DAG, dl, Order, &Parts[i], 1,
+          Ops[i] = getCopyFromParts(DAG, dl, &Parts[i], 1,
                                     PartVT, IntermediateVT);
       } else if (NumParts > 0) {
         // If the intermediate type was expanded, build the intermediate
@@ -268,7 +268,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
                "Must expand into a divisible number of parts!");
         unsigned Factor = NumParts / NumIntermediates;
         for (unsigned i = 0; i != NumIntermediates; ++i)
-          Ops[i] = getCopyFromParts(DAG, dl, Order, &Parts[i * Factor], Factor,
+          Ops[i] = getCopyFromParts(DAG, dl, &Parts[i * Factor], Factor,
                                     PartVT, IntermediateVT);
       }
 
@@ -292,7 +292,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
       assert(ValueVT.isFloatingPoint() && PartVT.isInteger() &&
              !PartVT.isVector() && "Unexpected split");
       EVT IntVT = EVT::getIntegerVT(*DAG.getContext(), ValueVT.getSizeInBits());
-      Val = getCopyFromParts(DAG, dl, Order, Parts, NumParts, PartVT, IntVT);
+      Val = getCopyFromParts(DAG, dl, Parts, NumParts, PartVT, IntVT);
     }
   }
 
@@ -349,7 +349,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
 /// getCopyToParts - Create a series of nodes that contain the specified value
 /// split into legal parts.  If the parts contain more bits than Val, then, for
 /// integers, ExtendKind can be used to specify how to generate the extra bits.
-static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
+static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl,
                            SDValue Val, SDValue *Parts, unsigned NumParts,
                            EVT PartVT,
                            ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
@@ -417,7 +417,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
       SDValue OddVal = DAG.getNode(ISD::SRL, dl, ValueVT, Val,
                                    DAG.getConstant(RoundBits,
                                                    TLI.getPointerTy()));
-      getCopyToParts(DAG, dl, Order, OddVal, Parts + RoundParts,
+      getCopyToParts(DAG, dl, OddVal, Parts + RoundParts,
                      OddParts, PartVT);
 
       if (TLI.isBigEndian())
@@ -514,7 +514,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
     // If the register was not expanded, promote or copy the value,
     // as appropriate.
     for (unsigned i = 0; i != NumParts; ++i)
-      getCopyToParts(DAG, dl, Order, Ops[i], &Parts[i], 1, PartVT);
+      getCopyToParts(DAG, dl, Ops[i], &Parts[i], 1, PartVT);
   } else if (NumParts > 0) {
     // If the intermediate type was expanded, split each the value into
     // legal parts.
@@ -522,7 +522,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, unsigned Order,
            "Must expand into a divisible number of parts!");
     unsigned Factor = NumParts / NumIntermediates;
     for (unsigned i = 0; i != NumIntermediates; ++i)
-      getCopyToParts(DAG, dl, Order, Ops[i], &Parts[i*Factor], Factor, PartVT);
+      getCopyToParts(DAG, dl, Ops[i], &Parts[i*Factor], Factor, PartVT);
   }
 }
 
@@ -747,8 +747,7 @@ SDValue SelectionDAGBuilder::getValue(const Value *V) {
 
   RegsForValue RFV(*DAG.getContext(), TLI, InReg, V->getType());
   SDValue Chain = DAG.getEntryNode();
-  return RFV.getCopyFromRegs(DAG, getCurDebugLoc(),
-                             SDNodeOrder, Chain, NULL);
+  return RFV.getCopyFromRegs(DAG, getCurDebugLoc(), Chain, NULL);
 }
 
 /// Get the EVTs and ArgFlags collections that represent the legalized return 
@@ -879,7 +878,7 @@ void SelectionDAGBuilder::visitRet(ReturnInst &I) {
         unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
         EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
         SmallVector<SDValue, 4> Parts(NumParts);
-        getCopyToParts(DAG, getCurDebugLoc(), SDNodeOrder,
+        getCopyToParts(DAG, getCurDebugLoc(),
                        SDValue(RetOp.getNode(), RetOp.getResNo() + j),
                        &Parts[0], NumParts, PartVT, ExtendKind);
 
@@ -2888,7 +2887,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(CallInst &I,
 ///
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
-GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl, unsigned Order) {
+GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl) {
   SDValue t1 = DAG.getNode(ISD::AND, dl, MVT::i32, Op,
                            DAG.getConstant(0x007fffff, MVT::i32));
   SDValue t2 = DAG.getNode(ISD::OR, dl, MVT::i32, t1,
@@ -2903,7 +2902,7 @@ GetSignificand(SelectionDAG &DAG, SDValue Op, DebugLoc dl, unsigned Order) {
 /// where Op is the hexidecimal representation of floating point value.
 static SDValue
 GetExponent(SelectionDAG &DAG, SDValue Op, const TargetLowering &TLI,
-            DebugLoc dl, unsigned Order) {
+            DebugLoc dl) {
   SDValue t0 = DAG.getNode(ISD::AND, dl, MVT::i32, Op,
                            DAG.getConstant(0x7f800000, MVT::i32));
   SDValue t1 = DAG.getNode(ISD::SRL, dl, MVT::i32, t0,
@@ -3087,13 +3086,13 @@ SelectionDAGBuilder::visitLog(CallInst &I) {
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 
     // Scale the exponent by log(2) [0.69314718f].
-    SDValue Exp = GetExponent(DAG, Op1, TLI, dl, SDNodeOrder);
+    SDValue Exp = GetExponent(DAG, Op1, TLI, dl);
     SDValue LogOfExponent = DAG.getNode(ISD::FMUL, dl, MVT::f32, Exp,
                                         getF32Constant(DAG, 0x3f317218));
 
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
-    SDValue X = GetSignificand(DAG, Op1, dl, SDNodeOrder);
+    SDValue X = GetSignificand(DAG, Op1, dl);
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -3197,11 +3196,11 @@ SelectionDAGBuilder::visitLog2(CallInst &I) {
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 
     // Get the exponent.
-    SDValue LogOfExponent = GetExponent(DAG, Op1, TLI, dl, SDNodeOrder);
+    SDValue LogOfExponent = GetExponent(DAG, Op1, TLI, dl);
 
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
-    SDValue X = GetSignificand(DAG, Op1, dl, SDNodeOrder);
+    SDValue X = GetSignificand(DAG, Op1, dl);
 
     // Different possible minimax approximations of significand in
     // floating-point for various degrees of accuracy over [1,2].
@@ -3306,13 +3305,13 @@ SelectionDAGBuilder::visitLog10(CallInst &I) {
     SDValue Op1 = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 
     // Scale the exponent by log10(2) [0.30102999f].
-    SDValue Exp = GetExponent(DAG, Op1, TLI, dl, SDNodeOrder);
+    SDValue Exp = GetExponent(DAG, Op1, TLI, dl);
     SDValue LogOfExponent = DAG.getNode(ISD::FMUL, dl, MVT::f32, Exp,
                                         getF32Constant(DAG, 0x3e9a209a));
 
     // Get the significand and build it into a floating-point number with
     // exponent of 1.
-    SDValue X = GetSignificand(DAG, Op1, dl, SDNodeOrder);
+    SDValue X = GetSignificand(DAG, Op1, dl);
 
     if (LimitFloatPrecision <= 6) {
       // For floating-point precision of 6:
@@ -4394,7 +4393,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
                     CS.getCallingConv(),
                     isTailCall,
                     !CS.getInstruction()->use_empty(),
-                    Callee, Args, DAG, getCurDebugLoc(), SDNodeOrder);
+                    Callee, Args, DAG, getCurDebugLoc());
   assert((isTailCall || Result.second.getNode()) &&
          "Non-null chain expected with non-tail call!");
   assert((Result.second.getNode() || !Result.first.getNode()) &&
@@ -4442,7 +4441,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
       unsigned NumRegs = TLI.getNumRegisters(RetTy->getContext(), VT);
   
       SDValue ReturnValue =
-        getCopyFromParts(DAG, getCurDebugLoc(), SDNodeOrder, &Values[CurReg], NumRegs,
+        getCopyFromParts(DAG, getCurDebugLoc(), &Values[CurReg], NumRegs,
                          RegisterVT, VT, AssertOp);
       ReturnValues.push_back(ReturnValue);
       CurReg += NumRegs;
@@ -4709,8 +4708,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
 SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
-                                      unsigned Order, SDValue &Chain,
-                                      SDValue *Flag) const {
+                                      SDValue &Chain, SDValue *Flag) const {
   // Assemble the legal parts into the final values.
   SmallVector<SDValue, 4> Values(ValueVTs.size());
   SmallVector<SDValue, 8> Parts;
@@ -4775,7 +4773,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
       Parts[i] = P;
     }
 
-    Values[Value] = getCopyFromParts(DAG, dl, Order, Parts.begin(),
+    Values[Value] = getCopyFromParts(DAG, dl, Parts.begin(),
                                      NumRegs, RegisterVT, ValueVT);
     Part += NumRegs;
     Parts.clear();
@@ -4791,8 +4789,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG, DebugLoc dl,
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
 void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
-                                 unsigned Order, SDValue &Chain,
-                                 SDValue *Flag) const {
+                                 SDValue &Chain, SDValue *Flag) const {
   // Get the list of the values's legal parts.
   unsigned NumRegs = Regs.size();
   SmallVector<SDValue, 8> Parts(NumRegs);
@@ -4801,7 +4798,7 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
     unsigned NumParts = TLI->getNumRegisters(*DAG.getContext(), ValueVT);
     EVT RegisterVT = RegVTs[Value];
 
-    getCopyToParts(DAG, dl, Order,
+    getCopyToParts(DAG, dl,
                    Val.getValue(Val.getResNo() + Value),
                    &Parts[Part], NumParts, RegisterVT);
     Part += NumParts;
@@ -4842,7 +4839,7 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
 /// values added into it.
 void RegsForValue::AddInlineAsmOperands(unsigned Code,
                                         bool HasMatching,unsigned MatchingIdx,
-                                        SelectionDAG &DAG, unsigned Order,
+                                        SelectionDAG &DAG,
                                         std::vector<SDValue> &Ops) const {
   assert(Regs.size() < (1 << 13) && "Too many inline asm outputs!");
   unsigned Flag = Code | (Regs.size() << 3);
@@ -5432,7 +5429,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
                                                2 /* REGDEF */ ,
                                                false,
                                                0,
-                                               DAG, SDNodeOrder,
+                                               DAG,
                                                AsmNodeOperands);
       break;
     }
@@ -5480,10 +5477,10 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
 
           // Use the produced MatchedRegs object to
           MatchedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
-                                    SDNodeOrder, Chain, &Flag);
+                                    Chain, &Flag);
           MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/,
                                            true, OpInfo.getMatchedOperand(),
-                                           DAG, SDNodeOrder, AsmNodeOperands);
+                                           DAG, AsmNodeOperands);
           break;
         } else {
           assert(((OpFlag & 7) == 4) && "Unknown matching constraint!");
@@ -5544,11 +5541,10 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
-                                        SDNodeOrder, Chain, &Flag);
+                                        Chain, &Flag);
 
       OpInfo.AssignedRegs.AddInlineAsmOperands(1/*REGUSE*/, false, 0,
-                                               DAG, SDNodeOrder,
-                                               AsmNodeOperands);
+                                               DAG, AsmNodeOperands);
       break;
     }
     case InlineAsm::isClobber: {
@@ -5556,7 +5552,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
       // allocator is aware that the physreg got clobbered.
       if (!OpInfo.AssignedRegs.Regs.empty())
         OpInfo.AssignedRegs.AddInlineAsmOperands(6 /* EARLYCLOBBER REGDEF */,
-                                                 false, 0, DAG, SDNodeOrder,
+                                                 false, 0, DAG,
                                                  AsmNodeOperands);
       break;
     }
@@ -5576,7 +5572,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
   // and set it as the value of the call.
   if (!RetValRegs.Regs.empty()) {
     SDValue Val = RetValRegs.getCopyFromRegs(DAG, getCurDebugLoc(),
-                                             SDNodeOrder, Chain, &Flag);
+                                             Chain, &Flag);
 
     // FIXME: Why don't we do this for inline asms with MRVs?
     if (CS.getType()->isSingleValueType() && CS.getType()->isSized()) {
@@ -5616,7 +5612,7 @@ void SelectionDAGBuilder::visitInlineAsm(CallSite CS) {
     RegsForValue &OutRegs = IndirectStoresToEmit[i].first;
     Value *Ptr = IndirectStoresToEmit[i].second;
     SDValue OutVal = OutRegs.getCopyFromRegs(DAG, getCurDebugLoc(),
-                                             SDNodeOrder, Chain, &Flag);
+                                             Chain, &Flag);
     StoresToEmit.push_back(std::make_pair(OutVal, Ptr));
 
   }
@@ -5681,8 +5677,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             CallingConv::ID CallConv, bool isTailCall,
                             bool isReturnValueUsed,
                             SDValue Callee,
-                            ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl,
-                            unsigned Order) {
+                            ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {
   // Handle all of the outgoing arguments.
   SmallVector<ISD::OutputArg, 32> Outs;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -5733,7 +5728,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       else if (Args[i].isZExt)
         ExtendKind = ISD::ZERO_EXTEND;
 
-      getCopyToParts(DAG, dl, Order, Op, &Parts[0], NumParts,
+      getCopyToParts(DAG, dl, Op, &Parts[0], NumParts,
                      PartVT, ExtendKind);
 
       for (unsigned j = 0; j != NumParts; ++j) {
@@ -5812,7 +5807,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     EVT RegisterVT = getRegisterType(RetTy->getContext(), VT);
     unsigned NumRegs = getNumRegisters(RetTy->getContext(), VT);
 
-    ReturnValues.push_back(getCopyFromParts(DAG, dl, Order, &InVals[CurReg],
+    ReturnValues.push_back(getCopyFromParts(DAG, dl, &InVals[CurReg],
                                             NumRegs, RegisterVT, VT,
                                             AssertOp));
     CurReg += NumRegs;
@@ -5852,7 +5847,7 @@ void SelectionDAGBuilder::CopyValueToVirtualRegister(Value *V, unsigned Reg) {
 
   RegsForValue RFV(V->getContext(), TLI, Reg, V->getType());
   SDValue Chain = DAG.getEntryNode();
-  RFV.getCopyToRegs(Op, DAG, getCurDebugLoc(), SDNodeOrder, Chain, 0);
+  RFV.getCopyToRegs(Op, DAG, getCurDebugLoc(), Chain, 0);
   PendingExports.push_back(Chain);
 }
 
@@ -5978,7 +5973,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
     EVT VT = ValueVTs[0];
     EVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
-    SDValue ArgValue = getCopyFromParts(DAG, dl, 0, &InVals[0], 1,
+    SDValue ArgValue = getCopyFromParts(DAG, dl, &InVals[0], 1,
                                         RegVT, VT, AssertOp);
 
     MachineFunction& MF = SDB->DAG.getMachineFunction();
@@ -6012,7 +6007,7 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
         else if (F.paramHasAttr(Idx, Attribute::ZExt))
           AssertOp = ISD::AssertZext;
 
-        ArgValues.push_back(getCopyFromParts(DAG, dl, 0, &InVals[i],
+        ArgValues.push_back(getCopyFromParts(DAG, dl, &InVals[i],
                                              NumParts, PartVT, VT,
                                              AssertOp));
       }

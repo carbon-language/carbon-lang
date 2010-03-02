@@ -1034,8 +1034,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     false, 0, TLI.getLibcallCallingConv(LC), false,
                     /*isReturnValueUsed=*/true,
-                    Callee, Args, DAG, dl,
-                    DAG.GetOrdering(DAG.getEntryNode().getNode()));
+                    Callee, Args, DAG, dl);
   return CallInfo.first;
 }
 

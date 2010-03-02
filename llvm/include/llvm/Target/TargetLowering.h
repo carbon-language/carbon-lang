@@ -1164,7 +1164,7 @@ public:
               bool isVarArg, bool isInreg, unsigned NumFixedArgs,
               CallingConv::ID CallConv, bool isTailCall,
               bool isReturnValueUsed, SDValue Callee, ArgListTy &Args,
-              SelectionDAG &DAG, DebugLoc dl, unsigned Order);
+              SelectionDAG &DAG, DebugLoc dl);
 
   /// LowerCall - This hook must be implemented to lower calls into the
   /// the specified DAG. The outgoing arguments to the call are described
