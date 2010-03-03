@@ -350,6 +350,30 @@ def immSext8 : PatLeaf<(imm), [{
 def i16immSExt8  : PatLeaf<(i16 immSext8)>;
 def i32immSExt8  : PatLeaf<(i32 immSext8)>;
 
+/// Load patterns: these constraint the match to the right address space.
+def dsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      if (PT->getAddressSpace() > 255)
+        return false;
+  return true;
+}]>;
+
+def gsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      return PT->getAddressSpace() == 256;
+  return false;
+}]>;
+
+def fsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
+    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+      return PT->getAddressSpace() == 257;
+  return false;
+}]>;
+
+
 // Helper fragments for loads.
 // It's always safe to treat a anyext i16 load as a i32 load if the i16 is
 // known to be 32-bit aligned or better. Ditto for i8 to i16.
@@ -367,8 +391,7 @@ def loadi16 : PatFrag<(ops node:$ptr), (i16 (unindexedload node:$ptr)), [{
   return false;
 }]>;
 
-def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)),
-[{
+def loadi16_anyext : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)),[{
   LoadSDNode *LD = cast<LoadSDNode>(N);
   if (const Value *Src = LD->getSrcValue())
     if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
@@ -410,56 +433,12 @@ def nvloadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   return false;
 }]>;
 
-def gsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      return PT->getAddressSpace() == 256;
-  return false;
-}]>;
 
-def fsload : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      return PT->getAddressSpace() == 257;
-  return false;
-}]>;
-
-def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr)), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      if (PT->getAddressSpace() > 255)
-        return false;
-  return true;
-}]>;
-def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr)), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      if (PT->getAddressSpace() > 255)
-        return false;
-  return true;
-}]>;
-
-def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr)), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      if (PT->getAddressSpace() > 255)
-        return false;
-  return true;
-}]>;
-def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr)), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      if (PT->getAddressSpace() > 255)
-        return false;
-  return true;
-}]>;
-def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr)), [{
-  if (const Value *Src = cast<LoadSDNode>(N)->getSrcValue())
-    if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
-      if (PT->getAddressSpace() > 255)
-        return false;
-  return true;
-}]>;
+def loadi8  : PatFrag<(ops node:$ptr), (i8  (dsload node:$ptr))>;
+def loadi64 : PatFrag<(ops node:$ptr), (i64 (dsload node:$ptr))>;
+def loadf32 : PatFrag<(ops node:$ptr), (f32 (dsload node:$ptr))>;
+def loadf64 : PatFrag<(ops node:$ptr), (f64 (dsload node:$ptr))>;
+def loadf80 : PatFrag<(ops node:$ptr), (f80 (dsload node:$ptr))>;
 
 def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextloadi8 node:$ptr))>;
 def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextloadi8 node:$ptr))>;
