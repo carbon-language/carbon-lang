@@ -630,19 +630,6 @@ multiclass T2I_st<bits<2> opcod, string opc, PatFrag opnode> {
   }
 }
 
-/// T2I_picld - Defines the PIC load pattern.
-class T2I_picld<string opc, PatFrag opnode> :
-      T2I<(outs GPR:$dst), (ins addrmodepc:$addr), IIC_iLoadi,
-          !strconcat("\n${addr:label}:\n\t", opc), "\t$dst, $addr",
-          [(set GPR:$dst, (opnode addrmodepc:$addr))]>;
-
-/// T2I_picst - Defines the PIC store pattern.
-class T2I_picst<string opc, PatFrag opnode> :
-      T2I<(outs), (ins GPR:$src, addrmodepc:$addr), IIC_iStorer,
-          !strconcat("\n${addr:label}:\n\t", opc), "\t$src, $addr",
-          [(opnode GPR:$src, addrmodepc:$addr)]>;
-
-
 /// T2I_unary_rrot - A unary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
 multiclass T2I_unary_rrot<bits<3> opcod, string opc, PatFrag opnode> {
