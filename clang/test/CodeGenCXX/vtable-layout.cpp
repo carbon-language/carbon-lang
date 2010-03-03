@@ -978,3 +978,61 @@ struct D : B, C {
 void D::f() { }
 
 }
+
+namespace Test25 {
+  
+// This mainly tests that we don't assert on this class hierarchy.
+
+struct V {
+  virtual void f();
+};
+
+struct A : virtual V { };
+struct B : virtual V { };
+
+// CHECK:      Vtable for 'Test25::C' (11 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test25::C RTTI
+// CHECK-NEXT:        -- (Test25::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test25::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test25::V, 0) vtable address --
+// CHECK-NEXT:    4 | void Test25::V::f()
+// CHECK-NEXT:    5 | void Test25::C::g()
+// CHECK-NEXT:    6 | vbase_offset (-8)
+// CHECK-NEXT:    7 | vcall_offset (-8)
+// CHECK-NEXT:    8 | offset_to_top (-8)
+// CHECK-NEXT:    9 | Test25::C RTTI
+// CHECK-NEXT:        -- (Test25::B, 8) vtable address --
+// CHECK-NEXT:        -- (Test25::V, 8) vtable address --
+// CHECK-NEXT:   10 | [unused] void Test25::V::f()
+
+// CHECK:      Construction vtable for ('Test25::A', 0) in 'Test25::C' (5 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test25::A RTTI
+// CHECK-NEXT:        -- (Test25::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test25::V, 0) vtable address --
+// CHECK-NEXT:    4 | void Test25::V::f()
+
+// CHECK:      Construction vtable for ('Test25::B', 8) in 'Test25::C' (9 entries).
+// CHECK-NEXT:    0 | vbase_offset (-8)
+// CHECK-NEXT:    1 | vcall_offset (-8)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test25::B RTTI
+// CHECK-NEXT:        -- (Test25::B, 8) vtable address --
+// CHECK-NEXT:        -- (Test25::V, 8) vtable address --
+// CHECK-NEXT:    4 | [unused] void Test25::V::f()
+// CHECK-NEXT:    5 | vcall_offset (0)
+// CHECK-NEXT:    6 | offset_to_top (8)
+// CHECK-NEXT:    7 | Test25::B RTTI
+// CHECK-NEXT:        -- (Test25::V, 0) vtable address --
+// CHECK-NEXT:    8 | void Test25::V::f()
+struct C : A, virtual V, B {
+  virtual void g();
+};
+void C::g() { }
+
+}

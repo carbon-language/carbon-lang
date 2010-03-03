@@ -99,7 +99,8 @@ private:
   /// need to perform return value adjustments.
   AdjustmentOffsetsMapTy ReturnAdjustments;
 
-  typedef llvm::SmallVector<uint64_t, 1> OffsetVectorTy;
+  // FIXME: We might be able to get away with making this a SmallSet.
+  typedef llvm::SmallSetVector<uint64_t, 2> OffsetSetVectorTy;
   
   /// SubobjectOffsetsMapTy - This map is used for keeping track of all the
   /// base subobject offsets that a single class declaration might refer to.
@@ -114,7 +115,7 @@ private:
   /// when we determine that C::f() overrides A::f(), we need to update the
   /// overriders map for both A-in-B1 and A-in-B2 and the subobject offsets map
   /// will have the subobject offsets for both A copies.
-  typedef llvm::DenseMap<const CXXRecordDecl *, OffsetVectorTy>
+  typedef llvm::DenseMap<const CXXRecordDecl *, OffsetSetVectorTy>
     SubobjectOffsetsMapTy;
   
   /// ComputeFinalOverriders - Compute the final overriders for a given base
@@ -360,7 +361,7 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
     /// struct C : B1, B2 { virtual void f(); };
     ///
     /// When overriding A::f with C::f we need to do so in both A subobjects.
-    const OffsetVectorTy &OffsetVector = Offsets[OverriddenRD];
+    const OffsetSetVectorTy &OffsetVector = Offsets[OverriddenRD];
     
     // Go through all the subobjects.
     for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
@@ -404,41 +405,12 @@ FinalOverriders::MergeSubobjectOffsets(const SubobjectOffsetsMapTy &NewOffsets,
   for (SubobjectOffsetsMapTy::const_iterator I = NewOffsets.begin(),
        E = NewOffsets.end(); I != E; ++I) {
     const CXXRecordDecl *NewRD = I->first;
-    const OffsetVectorTy& NewOffsetVector = I->second;
+    const OffsetSetVectorTy& NewOffsetVector = I->second;
     
-    OffsetVectorTy &OffsetVector = Offsets[NewRD];
-    if (OffsetVector.empty()) {
-      // There were no previous offsets in this vector, just insert all entries
-      // from the new offset vector.
-      OffsetVector.append(NewOffsetVector.begin(), NewOffsetVector.end());
-      continue;
-    }
+    OffsetSetVectorTy &OffsetVector = Offsets[NewRD];
     
-    // We need to merge the new offsets vector into the old, but we don't want
-    // to have duplicate entries. Do this by inserting the old offsets in a set
-    // so they'll be unique. After this, we iterate over the new offset vector
-    // and only append elements that aren't in the set.
-    
-    // First, add the existing offsets to the set.
-    llvm::SmallSet<uint64_t, 4> OffsetSet;
-    for (unsigned I = 0, E = OffsetVector.size(); I != E; ++I) {
-      bool Inserted = OffsetSet.insert(OffsetVector[I]);
-      if (!Inserted)
-        assert(false && "Set of offsets should be unique!");
-    }
-    
-    // Next, only add the new offsets if they are not already in the set.
-    for (unsigned I = 0, E = NewOffsetVector.size(); I != E; ++I) {
-      uint64_t Offset = NewOffsetVector[I];
-
-      if (OffsetSet.count(Offset)) {
-        // Ignore the offset.
-        continue;
-      }
-      
-      // Otherwise, add it to the offsets vector.
-      OffsetVector.push_back(Offset);
-    }
+    // Merge the new offsets set vector into the old.
+    OffsetVector.insert(NewOffsetVector.begin(), NewOffsetVector.end());
   }
 }
 
@@ -503,7 +475,7 @@ void FinalOverriders::ComputeFinalOverriders(BaseSubobject Base,
   MergeSubobjectOffsets(NewOffsets, Offsets);
 
   /// Finally, add the offset for our own subobject.
-  Offsets[RD].push_back(Base.getBaseOffset());
+  Offsets[RD].insert(Base.getBaseOffset());
 }
 
 void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
