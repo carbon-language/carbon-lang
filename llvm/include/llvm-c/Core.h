@@ -112,11 +112,13 @@ typedef enum {
     LLVMOptimizeForSizeAttribute = 1<<13,
     LLVMStackProtectAttribute    = 1<<14,
     LLVMStackProtectReqAttribute = 1<<15,
+    LLVMAlignment = 31<<16,
     LLVMNoCaptureAttribute  = 1<<21,
     LLVMNoRedZoneAttribute  = 1<<22,
     LLVMNoImplicitFloatAttribute = 1<<23,
     LLVMNakedAttribute      = 1<<24,
-    LLVMInlineHintAttribute = 1<<25
+    LLVMInlineHintAttribute = 1<<25,
+    LLVMStackAlignment = 7<<26
 } LLVMAttribute;
 
 typedef enum {

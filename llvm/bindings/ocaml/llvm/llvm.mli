@@ -139,11 +139,13 @@ module Attribute : sig
   | Optsize
   | Ssp
   | Sspreq
+  | Alignment
   | Nocapture
   | Noredzone
   | Noimplicitfloat
   | Naked
   | Inlinehint
+  | Stackalignment
 end
 
 (** The predicate for an integer comparison ([icmp]) instruction.

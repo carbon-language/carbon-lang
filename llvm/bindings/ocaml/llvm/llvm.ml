@@ -90,11 +90,13 @@ module Attribute = struct
   | Optsize
   | Ssp
   | Sspreq
+  | Alignment
   | Nocapture
   | Noredzone
   | Noimplicitfloat
   | Naked
   | Inlinehint
+  | Stackalignment
 end
 
 module Icmp = struct
