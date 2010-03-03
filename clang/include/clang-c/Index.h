@@ -889,6 +889,32 @@ CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
 
 /**
+ * \brief Describe the linkage of the entity referred to by a cursor.
+ */
+enum CXLinkageKind {
+  /** \brief This value indicates that no linkage information is available
+   * for a provided CXCursor. */
+  CXLinkage_Invalid,
+  /**
+   * \brief This is the linkage for variables, parameters, and so on that
+   *  have automatic storage.  This covers normal (non-extern) local variables.
+   */
+  CXLinkage_NoLinkage,
+  /** \brief This is the linkage for static variables and static functions. */
+  CXLinkage_Internal,
+  /** \brief This is the linkage for entities with external linkage that live
+   * in C++ anonymous namespaces.*/
+  CXLinkage_UniqueExternal,
+  /** \brief This is the linkage for entities with true, external linkage. */
+  CXLinkage_External
+};
+
+/**
+ * \brief Determine the linkage of the entity referred to be a given cursor.
+ */
+CINDEX_LINKAGE enum CXLinkageKind clang_getCursorLinkage(CXCursor cursor);
+
+/**
  * @}
  */
 

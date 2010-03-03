@@ -2210,6 +2210,25 @@ void clang_disposeTokens(CXTranslationUnit TU,
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
+// Operations for querying linkage of a cursor.
+//===----------------------------------------------------------------------===//
+
+extern "C" {
+CXLinkageKind clang_getCursorLinkage(CXCursor cursor) {
+  Decl *D = cxcursor::getCursorDecl(cursor);
+  if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D))
+    switch (ND->getLinkage()) {
+      case NoLinkage: return CXLinkage_NoLinkage;
+      case InternalLinkage: return CXLinkage_Internal;
+      case UniqueExternalLinkage: return CXLinkage_UniqueExternal;
+      case ExternalLinkage: return CXLinkage_External;
+    };
+
+  return CXLinkage_Invalid;
+}
+} // end: extern "C"
+
+//===----------------------------------------------------------------------===//
 // CXString Operations.
 //===----------------------------------------------------------------------===//
 
