@@ -369,6 +369,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Result = getTargetHooks().encodeReturnAddress(*this, Address);
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_eh_return: {
+    Value *Int = EmitScalarExpr(E->getArg(0));
+    Value *Ptr = EmitScalarExpr(E->getArg(1));
+
+    const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(Int->getType());
+    assert((IntTy->getBitWidth() == 32 || IntTy->getBitWidth() == 64) &&
+           "LLVM's __builtin_eh_return only supports 32- and 64-bit variants");
+    Value *F = CGM.getIntrinsic(IntTy->getBitWidth() == 32
+                                  ? Intrinsic::eh_return_i32
+                                  : Intrinsic::eh_return_i64,
+                                0, 0);
+    Builder.CreateCall2(F, Int, Ptr);
+    Value *V = Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+    return RValue::get(V);
+  }
   case Builtin::BI__builtin_unwind_init: {
     Value *F = CGM.getIntrinsic(Intrinsic::eh_unwind_init, 0, 0);
     return RValue::get(Builder.CreateCall(F));
