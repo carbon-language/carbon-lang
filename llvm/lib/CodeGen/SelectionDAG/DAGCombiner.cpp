@@ -2029,7 +2029,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
              isa<ConstantSDNode>(N0.getOperand(1))) {
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
-    if ((C1->getZExtValue() & N1C->getZExtValue()) != 0)
+    if ((C1->getAPIntValue() & N1C->getAPIntValue()) != 0)
       return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
                          DAG.getNode(ISD::OR, N0.getDebugLoc(), VT,
                                      N0.getOperand(0), N1),
