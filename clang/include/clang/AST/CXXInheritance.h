@@ -16,6 +16,7 @@
 
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
 #include "llvm/ADT/SmallVector.h"
@@ -159,7 +160,11 @@ class CXXBasePaths {
   friend class CXXRecordDecl;
   
   void ComputeDeclsFound();
-  
+
+  bool lookupInBases(ASTContext &Context, 
+                     const CXXRecordDecl *Record,
+                     CXXRecordDecl::BaseMatchesCallback *BaseMatches, 
+                     void *UserData);
 public:
   typedef std::list<CXXBasePath>::iterator paths_iterator;
   typedef std::list<CXXBasePath>::const_iterator const_paths_iterator;

@@ -140,18 +140,20 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
   return AllMatches;
 }
 
-bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
-                                  void *UserData,
-                                  CXXBasePaths &Paths) const {
+bool CXXBasePaths::lookupInBases(ASTContext &Context, 
+                                 const CXXRecordDecl *Record,
+                               CXXRecordDecl::BaseMatchesCallback *BaseMatches, 
+                                 void *UserData) {
   bool FoundPath = false;
 
   // The access of the path down to this record.
-  AccessSpecifier AccessToHere = Paths.ScratchPath.Access;
-  bool IsFirstStep = Paths.ScratchPath.empty();
+  AccessSpecifier AccessToHere = ScratchPath.Access;
+  bool IsFirstStep = ScratchPath.empty();
 
-  ASTContext &Context = getASTContext();
-  for (base_class_const_iterator BaseSpec = bases_begin(),
-         BaseSpecEnd = bases_end(); BaseSpec != BaseSpecEnd; ++BaseSpec) {
+  for (CXXRecordDecl::base_class_const_iterator BaseSpec = Record->bases_begin(),
+         BaseSpecEnd = Record->bases_end(); 
+       BaseSpec != BaseSpecEnd; 
+       ++BaseSpec) {
     // Find the record of the base class subobjects for this type.
     QualType BaseType = Context.getCanonicalType(BaseSpec->getType())
                                                           .getUnqualifiedType();
@@ -167,31 +169,31 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
     
     // Determine whether we need to visit this base class at all,
     // updating the count of subobjects appropriately.
-    std::pair<bool, unsigned>& Subobjects = Paths.ClassSubobjects[BaseType];
+    std::pair<bool, unsigned>& Subobjects = ClassSubobjects[BaseType];
     bool VisitBase = true;
     bool SetVirtual = false;
     if (BaseSpec->isVirtual()) {
       VisitBase = !Subobjects.first;
       Subobjects.first = true;
-      if (Paths.isDetectingVirtual() && Paths.DetectedVirtual == 0) {
+      if (isDetectingVirtual() && DetectedVirtual == 0) {
         // If this is the first virtual we find, remember it. If it turns out
         // there is no base path here, we'll reset it later.
-        Paths.DetectedVirtual = BaseType->getAs<RecordType>();
+        DetectedVirtual = BaseType->getAs<RecordType>();
         SetVirtual = true;
       }
     } else
       ++Subobjects.second;
     
-    if (Paths.isRecordingPaths()) {
+    if (isRecordingPaths()) {
       // Add this base specifier to the current path.
       CXXBasePathElement Element;
       Element.Base = &*BaseSpec;
-      Element.Class = this;
+      Element.Class = Record;
       if (BaseSpec->isVirtual())
         Element.SubobjectNumber = 0;
       else
         Element.SubobjectNumber = Subobjects.second;
-      Paths.ScratchPath.push_back(Element);
+      ScratchPath.push_back(Element);
 
       // Calculate the "top-down" access to this base class.
       // The spec actually describes this bottom-up, but top-down is
@@ -209,22 +211,22 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
       // 3. Otherwise, overall access is determined by the most restrictive
       //    access in the sequence.
       if (IsFirstStep)
-        Paths.ScratchPath.Access = BaseSpec->getAccessSpecifier();
+        ScratchPath.Access = BaseSpec->getAccessSpecifier();
       else
-        Paths.ScratchPath.Access
-          = MergeAccess(AccessToHere, BaseSpec->getAccessSpecifier());
+        ScratchPath.Access = CXXRecordDecl::MergeAccess(AccessToHere, 
+                                                 BaseSpec->getAccessSpecifier());
     }
     
     // Track whether there's a path involving this specific base.
     bool FoundPathThroughBase = false;
     
-    if (BaseMatches(BaseSpec, Paths.ScratchPath, UserData)) {
+    if (BaseMatches(BaseSpec, ScratchPath, UserData)) {
       // We've found a path that terminates at this base.
       FoundPath = FoundPathThroughBase = true;
-      if (Paths.isRecordingPaths()) {
+      if (isRecordingPaths()) {
         // We have a path. Make a copy of it before moving on.
-        Paths.Paths.push_back(Paths.ScratchPath);
-      } else if (!Paths.isFindingAmbiguities()) {
+        Paths.push_back(ScratchPath);
+      } else if (!isFindingAmbiguities()) {
         // We found a path and we don't care about ambiguities;
         // return immediately.
         return FoundPath;
@@ -233,7 +235,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
       CXXRecordDecl *BaseRecord
         = cast<CXXRecordDecl>(BaseSpec->getType()->getAs<RecordType>()
                                 ->getDecl());
-      if (BaseRecord->lookupInBases(BaseMatches, UserData, Paths)) {
+      if (lookupInBases(Context, BaseRecord, BaseMatches, UserData)) {
         // C++ [class.member.lookup]p2:
         //   A member name f in one sub-object B hides a member name f in
         //   a sub-object A if A is a base class sub-object of B. Any
@@ -243,27 +245,33 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
         // There is a path to a base class that meets the criteria. If we're 
         // not collecting paths or finding ambiguities, we're done.
         FoundPath = FoundPathThroughBase = true;
-        if (!Paths.isFindingAmbiguities())
+        if (!isFindingAmbiguities())
           return FoundPath;
       }
     }
     
     // Pop this base specifier off the current path (if we're
     // collecting paths).
-    if (Paths.isRecordingPaths()) {
-      Paths.ScratchPath.pop_back();
+    if (isRecordingPaths()) {
+      ScratchPath.pop_back();
     }
 
     // If we set a virtual earlier, and this isn't a path, forget it again.
     if (SetVirtual && !FoundPathThroughBase) {
-      Paths.DetectedVirtual = 0;
+      DetectedVirtual = 0;
     }
   }
 
   // Reset the scratch path access.
-  Paths.ScratchPath.Access = AccessToHere;
+  ScratchPath.Access = AccessToHere;
   
   return FoundPath;
+}
+
+bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
+                                  void *UserData,
+                                  CXXBasePaths &Paths) const {
+  return Paths.lookupInBases(getASTContext(), this, BaseMatches, UserData);
 }
 
 bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier, 
