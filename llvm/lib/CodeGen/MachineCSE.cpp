@@ -128,8 +128,6 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
     if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
         MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg())
       continue;    
-    if (hasLivePhysRegDefUse(MI))
-      continue;
 
     bool FoundCSE = VNT.count(MI);
     if (!FoundCSE) {
@@ -137,6 +135,11 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
       if (PerformTrivialCoalescing(MI, MBB))
         FoundCSE = VNT.count(MI);
     }
+
+    // If the instruction defines a physical register and the value *may* be
+    // used, then it's not safe to replace it with a common subexpression.
+    if (FoundCSE && hasLivePhysRegDefUse(MI))
+      FoundCSE = false;
 
     if (!FoundCSE) {
       VNT.insert(MI, CurrVN++);
