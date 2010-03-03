@@ -432,6 +432,9 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   case llvm::Triple::MinGW32:
     AddPath("c:/mingw/include", System, true, false, false);
     break;
+  case llvm::Triple::Linux:
+    AddPath("/usr/include/linux", System, false, false, false);
+    break;
   default:
     break;
   }
@@ -566,6 +569,17 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
     AddGnuCPlusPlusIncludePaths(
         "/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4",
         "i686-pc-linux-gnu", "", "", triple);
+        
+    // Gentoo amd64 gcc 4.3.2
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/x86_64-pc-linux-gnu/4.3.2/include/g++-v4",
+        "x86_64-pc-linux-gnu", "", "", triple);
+        
+    // Gentoo amd64 gcc 4.4.3
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/x86_64-pc-linux-gnu/4.4.3/include/g++-v4",
+        "x86_64-pc-linux-gnu", "32", "", triple);
+    
     break;
   case llvm::Triple::FreeBSD:
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2", "", "", "", triple);
