@@ -91,7 +91,7 @@ CAMLprim value llvm_genericvalue_of_float(LLVMTypeRef Ty, value N) {
 }
 
 /* 'a -> t */
-CAMLprim value llvm_genericvalue_of_value(value V) {
+CAMLprim value llvm_genericvalue_of_pointer(value V) {
   CAMLparam1(V);
   CAMLreturn(alloc_generic_value(LLVMCreateGenericValueOfPointer(Op_val(V))));
 }
@@ -130,7 +130,7 @@ CAMLprim value llvm_genericvalue_as_float(LLVMTypeRef Ty, value GenVal) {
 }
 
 /* t -> 'a */
-CAMLprim value llvm_genericvalue_as_value(value GenVal) {
+CAMLprim value llvm_genericvalue_as_pointer(value GenVal) {
   return Val_op(LLVMGenericValueToPointer(Genericvalue_val(GenVal)));
 }
 
@@ -204,14 +204,14 @@ CAMLprim value llvm_ee_dispose(LLVMExecutionEngineRef EE) {
 }
 
 /* llmodule -> ExecutionEngine.t -> unit */
-CAMLprim value llvm_ee_add_mp(LLVMModuleRef M, LLVMExecutionEngineRef EE) {
+CAMLprim value llvm_ee_add_module(LLVMModuleRef M, LLVMExecutionEngineRef EE) {
   LLVMAddModule(EE, M);
   return Val_unit;
 }
 
 /* llmodule -> ExecutionEngine.t -> llmodule */
-CAMLprim LLVMModuleRef llvm_ee_remove_mp(LLVMModuleRef M,
-                                         LLVMExecutionEngineRef EE) {
+CAMLprim LLVMModuleRef llvm_ee_remove_module(LLVMModuleRef M,
+                                             LLVMExecutionEngineRef EE) {
   LLVMModuleRef RemovedModule;
   char *Error;
   if (LLVMRemoveModule(EE, M, &RemovedModule, &Error))

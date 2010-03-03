@@ -29,7 +29,7 @@ module GenericValue: sig
   
   (** [of_pointer v] boxes the pointer value [v] in a generic value. See the
       field [llvm::GenericValue::PointerVal]. *)
-  external of_pointer : 'a -> t = "llvm_genericvalue_of_value"
+  external of_pointer : 'a -> t = "llvm_genericvalue_of_pointer"
   
   (** [of_int32 n w] boxes the int32 [i] in a generic value with the bitwidth
       [w]. See the field [llvm::GenericValue::IntVal]. *)
@@ -55,7 +55,7 @@ module GenericValue: sig
   
   (** [as_pointer gv] unboxes the pointer-valued generic value [gv]. See the
       field [llvm::GenericValue::PointerVal]. *)
-  external as_pointer : t -> 'a = "llvm_genericvalue_as_value"
+  external as_pointer : t -> 'a = "llvm_genericvalue_as_pointer"
   
   (** [as_int32 gv] unboxes the integer-valued generic value [gv] as an [int32].
       Is invalid if [gv] has a bitwidth greater than 32 bits. See the field
@@ -71,7 +71,7 @@ module GenericValue: sig
   (** [as_natint gv] unboxes the integer-valued generic value [gv] as a
       [nativeint]. Is invalid if [gv] has a bitwidth greater than
       [nativeint]. See the field [llvm::GenericValue::IntVal]. *)
-  external as_nativeint : t -> nativeint = "llvm_genericvalue_as_int"
+  external as_nativeint : t -> nativeint = "llvm_genericvalue_as_nativeint"
   
   (** [as_int64 gv] returns the integer-valued generic value [gv] as an [int64].
       Is invalid if [gv] has a bitwidth greater than [int64]. See the field
@@ -112,7 +112,7 @@ module ExecutionEngine: sig
   external dispose : t -> unit = "llvm_ee_dispose"
   
   (** [add_module m ee] adds the module [m] to the execution engine [ee]. *)
-  external add_module : Llvm.llmodule -> t -> unit = "llvm_ee_add_mp"
+  external add_module : Llvm.llmodule -> t -> unit = "llvm_ee_add_module"
   
   (** [remove_module m ee] removes the module [m] from the execution engine
       [ee], disposing of [m] and the module referenced by [mp]. Raises
