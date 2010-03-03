@@ -67,6 +67,9 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
+static cl::opt<bool> EnableMachineCSE("machine-cse", cl::Hidden,
+    cl::desc("Enable Machine CSE"));
+
 static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
@@ -317,6 +320,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createOptimizeExtsPass());
+    if (EnableMachineCSE)
+      PM.add(createMachineCSEPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
     if (!DisableMachineSink)
