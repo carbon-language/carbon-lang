@@ -28,69 +28,6 @@ using namespace llvm;
 STATISTIC(NumCoalesces, "Number of copies coalesced");
 STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
 
-namespace llvm {
-  template<> struct DenseMapInfo<MachineInstr*> {
-    static inline MachineInstr *getEmptyKey() {
-      return 0;
-    }
-
-    static inline MachineInstr *getTombstoneKey() {
-      return reinterpret_cast<MachineInstr*>(-1);
-    }
-
-    static unsigned getHashValue(const MachineInstr* const &MI) {
-      unsigned Hash = MI->getOpcode() * 37;
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI->getOperand(i);
-        uint64_t Key = (uint64_t)MO.getType() << 32;
-        switch (MO.getType()) {
-        default: break;
-        case MachineOperand::MO_Register:
-          if (MO.isDef() && TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-            continue;  // Skip virtual register defs.
-          Key |= MO.getReg();
-          break;
-        case MachineOperand::MO_Immediate:
-          Key |= MO.getImm();
-          break;
-        case MachineOperand::MO_FrameIndex:
-        case MachineOperand::MO_ConstantPoolIndex:
-        case MachineOperand::MO_JumpTableIndex:
-          Key |= MO.getIndex();
-          break;
-        case MachineOperand::MO_MachineBasicBlock:
-          Key |= DenseMapInfo<void*>::getHashValue(MO.getMBB());
-          break;
-        case MachineOperand::MO_GlobalAddress:
-          Key |= DenseMapInfo<void*>::getHashValue(MO.getGlobal());
-          break;
-        case MachineOperand::MO_BlockAddress:
-          Key |= DenseMapInfo<void*>::getHashValue(MO.getBlockAddress());
-          break;
-        }
-        Key += ~(Key << 32);
-        Key ^= (Key >> 22);
-        Key += ~(Key << 13);
-        Key ^= (Key >> 8);
-        Key += (Key << 3);
-        Key ^= (Key >> 15);
-        Key += ~(Key << 27);
-        Key ^= (Key >> 31);
-        Hash = (unsigned)Key + Hash * 37;
-      }
-      return Hash;
-    }
-
-    static bool isEqual(const MachineInstr* const &LHS,
-                        const MachineInstr* const &RHS) {
-      if (RHS == getEmptyKey() || RHS == getTombstoneKey() ||
-          LHS == getEmptyKey() || LHS == getTombstoneKey())
-        return LHS == RHS;
-      return LHS->isIdenticalTo(RHS, MachineInstr::IgnoreVRegDefs);
-    }
-  };
-} // end llvm namespace
-
 namespace {
   class MachineCSE : public MachineFunctionPass {
     const TargetInstrInfo *TII;
@@ -111,7 +48,7 @@ namespace {
 
   private:
     unsigned CurrVN;
-    ScopedHashTable<MachineInstr*, unsigned> VNT;
+    ScopedHashTable<MachineInstr*, unsigned, MachineInstrExpressionTrait> VNT;
     SmallVector<MachineInstr*, 64> Exps;
 
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
@@ -176,7 +113,8 @@ static bool hasLivePhysRegDefUse(MachineInstr *MI) {
 bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
   bool Changed = false;
 
-  ScopedHashTableScope<MachineInstr*, unsigned> VNTS(VNT);
+  ScopedHashTableScope<MachineInstr*, unsigned,
+    MachineInstrExpressionTrait> VNTS(VNT);
   MachineBasicBlock *MBB = Node->getBlock();
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E; ) {
     MachineInstr *MI = &*I;
