@@ -2,7 +2,7 @@
 struct A { 
   int a;  // expected-note 4{{member found by ambiguous name lookup}}
   static int b;
-  static int c; // expected-note 4{{member found by ambiguous name lookup}}
+  static int c; // expected-note 2{{member found by ambiguous name lookup}}
 
   enum E { enumerator };
 
@@ -75,7 +75,7 @@ struct B2 : virtual A {
 };
 
 struct C2 : virtual A {
-  int c; // expected-note 2{{member found by ambiguous name lookup}}
+  int c;
   int d; // expected-note 2{{member found by ambiguous name lookup}}
 
   enum E3 { enumerator3_2 }; // expected-note 2{{member found by ambiguous name lookup}}
@@ -93,7 +93,7 @@ struct G : F, D2 {
 void test_virtual_lookup(D2 d2, G g) {
   (void)d2.a;
   (void)d2.b;
-  d2.c; // expected-error{{member 'c' found in multiple base classes of different types}}
+  (void)d2.c; // okay
   d2.d; // expected-error{{member 'd' found in multiple base classes of different types}}
   d2.f(0); // okay
   d2.static_f(0); // okay
@@ -112,7 +112,7 @@ void test_virtual_lookup(D2 d2, G g) {
 void D2::test_virtual_lookup() {
   (void)a;
   (void)b;
-  c; // expected-error{{member 'c' found in multiple base classes of different types}}
+  (void)c; // okay
   d; // expected-error{{member 'd' found in multiple base classes of different types}}
   f(0); // okay
   static_f(0); // okay
