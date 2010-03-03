@@ -419,6 +419,33 @@ void PrintInclusionStack(CXTranslationUnit TU) {
 }
 
 /******************************************************************************/
+/* Linkage testing.                                                           */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
+                                            CXClientData d) {
+  const char *linkage = 0;
+
+  if (clang_isInvalid(clang_getCursorKind(cursor)))
+    return CXChildVisit_Recurse;
+
+  switch (clang_getCursorLinkage(cursor)) {
+    case CXLinkage_Invalid: break;
+    case CXLinkage_NoLinkage: linkage = "NoLinkage";
+    case CXLinkage_Internal: linkage = "Internal";
+    case CXLinkage_UniqueExternal: linkage = "UniqueExternal";
+    case CXLinkage_External: linkage = "External";
+  }
+
+  if (linkage) {
+    PrintCursor(cursor);
+    printf("linkage=%s\n", linkage);
+  }
+
+  return CXChildVisit_Recurse;
+}
+
+/******************************************************************************/
 /* Loading ASTs/source.                                                       */
 /******************************************************************************/
 
@@ -978,7 +1005,8 @@ static void print_usage(void) {
   fprintf(stderr,
     "       c-index-test -test-annotate-tokens=<range> {<args>}*\n"
     "       c-index-test -test-inclusion-stack-source {<args>}*\n"
-    "       c-index-test -test-inclusion-stack-tu <AST file>\n\n"
+    "       c-index-test -test-inclusion-stack-tu <AST file>\n"
+    "       c-index-test -test-print-linkage-source {<args>}*\n\n"
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
@@ -1018,6 +1046,9 @@ int main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-inclusion-stack-tu") == 0)
     return perform_test_load_tu(argv[2], "all", NULL, NULL,
                                 PrintInclusionStack);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-linkage-source") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all", PrintLinkage,
+                                    NULL);
 
   print_usage();
   return 1;
