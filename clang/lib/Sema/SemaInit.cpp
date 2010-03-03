@@ -3365,8 +3365,7 @@ InitializationSequence::Perform(Sema &S,
         // FIXME: Should we move this initialization into a separate 
         // derived-to-base conversion? I believe the answer is "no", because
         // we don't want to turn off access control here for c-style casts.
-        if (S.PerformObjectArgumentInitialization(CurInitExpr, /*Qualifier=*/0,
-                                                  Conversion))
+        if (S.PerformObjectArgumentInitialization(CurInitExpr, Conversion))
           return S.ExprError();
 
         // Do a little dance to make sure that CurInit has the proper
