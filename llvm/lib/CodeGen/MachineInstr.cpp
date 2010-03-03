@@ -1355,3 +1355,48 @@ void MachineInstr::addRegisterDefined(unsigned IncomingReg,
                                          true  /*IsDef*/,
                                          true  /*IsImp*/));
 }
+
+unsigned
+MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
+  unsigned Hash = MI->getOpcode() * 37;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    uint64_t Key = (uint64_t)MO.getType() << 32;
+    switch (MO.getType()) {
+      default: break;
+      case MachineOperand::MO_Register:
+        if (MO.isDef() && MO.getReg() &&
+            TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+          continue;  // Skip virtual register defs.
+        Key |= MO.getReg();
+        break;
+      case MachineOperand::MO_Immediate:
+        Key |= MO.getImm();
+        break;
+      case MachineOperand::MO_FrameIndex:
+      case MachineOperand::MO_ConstantPoolIndex:
+      case MachineOperand::MO_JumpTableIndex:
+        Key |= MO.getIndex();
+        break;
+      case MachineOperand::MO_MachineBasicBlock:
+        Key |= DenseMapInfo<void*>::getHashValue(MO.getMBB());
+        break;
+      case MachineOperand::MO_GlobalAddress:
+        Key |= DenseMapInfo<void*>::getHashValue(MO.getGlobal());
+        break;
+      case MachineOperand::MO_BlockAddress:
+        Key |= DenseMapInfo<void*>::getHashValue(MO.getBlockAddress());
+        break;
+    }
+    Key += ~(Key << 32);
+    Key ^= (Key >> 22);
+    Key += ~(Key << 13);
+    Key ^= (Key >> 8);
+    Key += (Key << 3);
+    Key ^= (Key >> 15);
+    Key += ~(Key << 27);
+    Key ^= (Key >> 31);
+    Hash = (unsigned)Key + Hash * 37;
+  }
+  return Hash;
+}
