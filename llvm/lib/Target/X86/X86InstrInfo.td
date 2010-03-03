@@ -343,17 +343,12 @@ def X86_COND_O   : PatLeaf<(i8 13)>;
 def X86_COND_P   : PatLeaf<(i8 14)>; // alt. COND_PE
 def X86_COND_S   : PatLeaf<(i8 15)>;
 
-def i16immSExt8  : PatLeaf<(i16 imm), [{
-  // i16immSExt8 predicate - True if the 16-bit immediate fits in a 8-bit
-  // sign extended field.
-  return (int16_t)N->getZExtValue() == (int8_t)N->getZExtValue();
+def immSext8 : PatLeaf<(imm), [{
+  return N->getSExtValue() == (int8_t)N->getSExtValue();
 }]>;
 
-def i32immSExt8  : PatLeaf<(i32 imm), [{
-  // i32immSExt8 predicate - True if the 32-bit immediate fits in a 8-bit
-  // sign extended field.
-  return (int32_t)N->getZExtValue() == (int8_t)N->getZExtValue();
-}]>;
+def i16immSExt8  : PatLeaf<(i16 immSext8)>;
+def i32immSExt8  : PatLeaf<(i32 immSext8)>;
 
 // Helper fragments for loads.
 // It's always safe to treat a anyext i16 load as a i32 load if the i16 is

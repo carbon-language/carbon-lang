@@ -59,11 +59,7 @@ def tls64addr : ComplexPattern<i64, 4, "SelectTLSADDRAddr",
 // Pattern fragments.
 //
 
-def i64immSExt8  : PatLeaf<(i64 imm), [{
-  // i64immSExt8 predicate - True if the 64-bit immediate fits in a 8-bit
-  // sign extended field.
-  return (int64_t)N->getZExtValue() == (int8_t)N->getZExtValue();
-}]>;
+def i64immSExt8  : PatLeaf<(i64 immSext8)>;
 
 def GetLo32XForm : SDNodeXForm<imm, [{
   // Transformation function: get the low 32 bits.

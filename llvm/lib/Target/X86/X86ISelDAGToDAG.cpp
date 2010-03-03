@@ -1361,7 +1361,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
       Opc = X86::LOCK_DEC16m;
     else if (isSub) {
       if (isCN) {
-        if (Predicate_i16immSExt8(Val.getNode()))
+        if (Predicate_immSext8(Val.getNode()))
           Opc = X86::LOCK_SUB16mi8;
         else
           Opc = X86::LOCK_SUB16mi;
@@ -1369,7 +1369,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
         Opc = X86::LOCK_SUB16mr;
     } else {
       if (isCN) {
-        if (Predicate_i16immSExt8(Val.getNode()))
+        if (Predicate_immSext8(Val.getNode()))
           Opc = X86::LOCK_ADD16mi8;
         else
           Opc = X86::LOCK_ADD16mi;
@@ -1384,7 +1384,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
       Opc = X86::LOCK_DEC32m;
     else if (isSub) {
       if (isCN) {
-        if (Predicate_i32immSExt8(Val.getNode()))
+        if (Predicate_immSext8(Val.getNode()))
           Opc = X86::LOCK_SUB32mi8;
         else
           Opc = X86::LOCK_SUB32mi;
@@ -1392,7 +1392,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
         Opc = X86::LOCK_SUB32mr;
     } else {
       if (isCN) {
-        if (Predicate_i32immSExt8(Val.getNode()))
+        if (Predicate_immSext8(Val.getNode()))
           Opc = X86::LOCK_ADD32mi8;
         else
           Opc = X86::LOCK_ADD32mi;
@@ -1408,7 +1408,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
     else if (isSub) {
       Opc = X86::LOCK_SUB64mr;
       if (isCN) {
-        if (Predicate_i64immSExt8(Val.getNode()))
+        if (Predicate_immSext8(Val.getNode()))
           Opc = X86::LOCK_SUB64mi8;
         else if (Predicate_i64immSExt32(Val.getNode()))
           Opc = X86::LOCK_SUB64mi32;
@@ -1416,7 +1416,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
     } else {
       Opc = X86::LOCK_ADD64mr;
       if (isCN) {
-        if (Predicate_i64immSExt8(Val.getNode()))
+        if (Predicate_immSext8(Val.getNode()))
           Opc = X86::LOCK_ADD64mi8;
         else if (Predicate_i64immSExt32(Val.getNode()))
           Opc = X86::LOCK_ADD64mi32;
