@@ -56,6 +56,7 @@ public:
     CheckOpcode,          // Fail if not opcode.
     SwitchOpcode,         // Dispatch based on opcode.
     CheckType,            // Fail if not correct type.
+    SwitchType,           // Dispatch based on type.
     CheckChildType,       // Fail if child has wrong type.
     CheckInteger,         // Fail if wrong val.
     CheckCondCode,        // Fail if not condcode.
@@ -471,6 +472,34 @@ private:
   virtual unsigned getHashImpl() const { return Type; }
   virtual bool isContradictoryImpl(const Matcher *M) const;
 };
+  
+/// SwitchTypeMatcher - Switch based on the current node's type, dispatching
+/// to one matcher per case.  If the type doesn't match any of the cases,
+/// then the match fails.  This is semantically equivalent to a Scope node where
+/// every child does a CheckType, but is much faster.
+class SwitchTypeMatcher : public Matcher {
+  SmallVector<std::pair<MVT::SimpleValueType, Matcher*>, 8> Cases;
+public:
+  SwitchTypeMatcher(const std::pair<MVT::SimpleValueType, Matcher*> *cases,
+                    unsigned numcases)
+  : Matcher(SwitchType), Cases(cases, cases+numcases) {}
+  
+  static inline bool classof(const Matcher *N) {
+    return N->getKind() == SwitchType;
+  }
+  
+  unsigned getNumCases() const { return Cases.size(); }
+  
+  MVT::SimpleValueType getCaseType(unsigned i) const { return Cases[i].first; }
+  Matcher *getCaseMatcher(unsigned i) { return Cases[i].second; }
+  const Matcher *getCaseMatcher(unsigned i) const { return Cases[i].second; }
+  
+private:
+  virtual void printImpl(raw_ostream &OS, unsigned indent) const;
+  virtual bool isEqualImpl(const Matcher *M) const { return false; }
+  virtual unsigned getHashImpl() const { return 4123; }
+};
+  
   
 /// CheckChildTypeMatcher - This checks to see if a child node has the
 /// specified type, if not it fails to match.

@@ -102,6 +102,15 @@ void CheckTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckType " << getEnumName(Type) << '\n';
 }
 
+void SwitchTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
+  OS.indent(indent) << "SwitchType: {\n";
+  for (unsigned i = 0, e = Cases.size(); i != e; ++i) {
+    OS.indent(indent) << "case " << getEnumName(Cases[i].first) << ":\n";
+    Cases[i].second->print(OS, indent+2);
+  }
+  OS.indent(indent) << "}\n";
+}
+
 void CheckChildTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "CheckChildType " << ChildNo << " "
     << getEnumName(Type) << '\n';

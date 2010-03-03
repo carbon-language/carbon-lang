@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "isel-opt"
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -361,33 +361,60 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   
   // Check to see if all of the leading entries are now opcode checks.  If so,
   // we can convert this Scope to be a OpcodeSwitch instead.
-  bool AllOpcodeChecks = true;
+  bool AllOpcodeChecks = true, AllTypeChecks = true;
   for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
-    if (isa<CheckOpcodeMatcher>(NewOptionsToMatch[i])) continue;
-   
+    if (!isa<CheckOpcodeMatcher>(NewOptionsToMatch[i])) {
 #if 0
-    if (i > 3) {
-      errs() << "FAILING OPC #" << i << "\n";
-      NewOptionsToMatch[i]->dump();
-    }
+      if (i > 3 && AllOpcodeChecks) {
+        errs() << "FAILING OPC #" << i << "\n";
+        NewOptionsToMatch[i]->dump();
+      }
 #endif
-    
-    AllOpcodeChecks = false;
-    break;
+      AllOpcodeChecks = false;
+    }
+
+    if (!isa<CheckTypeMatcher>(NewOptionsToMatch[i]) ||
+        // iPTR checks could alias any other case without us knowing, don't
+        // bother with them.
+        cast<CheckTypeMatcher>(NewOptionsToMatch[i])->getType() == MVT::iPTR) {
+#if 0
+      if (i > 3 && AllTypeChecks) {
+        errs() << "FAILING TYPE #" << i << "\n";
+        NewOptionsToMatch[i]->dump();
+      }
+#endif
+      AllTypeChecks = false;
+    }
   }
+  // TODO: Can also do CheckChildNType.
   
   // If all the options are CheckOpcode's, we can form the SwitchOpcode, woot.
   if (AllOpcodeChecks) {
     StringSet<> Opcodes;
     SmallVector<std::pair<const SDNodeInfo*, Matcher*>, 8> Cases;
     for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
-      CheckOpcodeMatcher *COM =cast<CheckOpcodeMatcher>(NewOptionsToMatch[i]);
+      CheckOpcodeMatcher *COM = cast<CheckOpcodeMatcher>(NewOptionsToMatch[i]);
       assert(Opcodes.insert(COM->getOpcode().getEnumName()) &&
              "Duplicate opcodes not factored?");
       Cases.push_back(std::make_pair(&COM->getOpcode(), COM->getNext()));
     }
     
     MatcherPtr.reset(new SwitchOpcodeMatcher(&Cases[0], Cases.size()));
+    return;
+  }
+  
+  // If all the options are CheckType's, we can form the SwitchType, woot.
+  if (AllTypeChecks) {
+    DenseSet<unsigned> Types;
+    SmallVector<std::pair<MVT::SimpleValueType, Matcher*>, 8> Cases;
+    for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
+      CheckTypeMatcher *CTM = cast<CheckTypeMatcher>(NewOptionsToMatch[i]);
+      assert(Types.insert(CTM->getType()).second &&
+             "Duplicate types not factored?");
+      Cases.push_back(std::make_pair(CTM->getType(), CTM->getNext()));
+    }
+    
+    MatcherPtr.reset(new SwitchTypeMatcher(&Cases[0], Cases.size()));
     return;
   }
   

@@ -2065,9 +2065,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         
     case OPC_SwitchOpcode: {
       unsigned CurNodeOpcode = N.getOpcode();
-
       unsigned SwitchStart = MatcherIndex-1; (void)SwitchStart;
-      
       unsigned CaseSize;
       while (1) {
         // Get the size of this case.
@@ -2084,7 +2082,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         MatcherIndex += CaseSize;
       }
       
-      // If we failed to match, bail out.
+      // If no cases matched, bail out.
       if (CaseSize == 0) break;
       
       // Otherwise, execute the case we found.
@@ -2101,6 +2099,39 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         if (VT != MVT::iPTR || N.getValueType() != TLI.getPointerTy())
           break;
       }
+      continue;
+    }
+        
+    case OPC_SwitchType: {
+      MVT::SimpleValueType CurNodeVT = N.getValueType().getSimpleVT().SimpleTy;
+      unsigned SwitchStart = MatcherIndex-1; (void)SwitchStart;
+      unsigned CaseSize;
+      while (1) {
+        // Get the size of this case.
+        CaseSize = MatcherTable[MatcherIndex++];
+        if (CaseSize & 128)
+          CaseSize = GetVBR(CaseSize, MatcherTable, MatcherIndex);
+        if (CaseSize == 0) break;
+        
+        MVT::SimpleValueType CaseVT =
+          (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+        if (CaseVT == MVT::iPTR)
+          CaseVT = TLI.getPointerTy().SimpleTy;
+        
+        // If the VT matches, then we will execute this case.
+        if (CurNodeVT == CaseVT)
+          break;
+        
+        // Otherwise, skip over this case.
+        MatcherIndex += CaseSize;
+      }
+      
+      // If no cases matched, bail out.
+      if (CaseSize == 0) break;
+      
+      // Otherwise, execute the case we found.
+      DEBUG(errs() << "  TypeSwitch[" << EVT(CurNodeVT).getEVTString()
+                   << "] from " << SwitchStart << " to " << MatcherIndex<<'\n');
       continue;
     }
     case OPC_CheckChild0Type: case OPC_CheckChild1Type:

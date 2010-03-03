@@ -261,17 +261,32 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
        << cast<CheckOpcodeMatcher>(N)->getOpcode().getEnumName() << ",\n";
     return 2;
       
-  case Matcher::SwitchOpcode: {
+  case Matcher::SwitchOpcode:
+  case Matcher::SwitchType: {
     unsigned StartIdx = CurrentIdx;
-    const SwitchOpcodeMatcher *SOM = cast<SwitchOpcodeMatcher>(N);
-    OS << "OPC_SwitchOpcode ";
+    
+    unsigned NumCases;
+    if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N)) {
+      OS << "OPC_SwitchOpcode ";
+      NumCases = SOM->getNumCases();
+    } else {
+      OS << "OPC_SwitchType ";
+      NumCases = cast<SwitchTypeMatcher>(N)->getNumCases();
+    }
+
     if (!OmitComments)
-      OS << "/*" << SOM->getNumCases() << " cases */";
+      OS << "/*" << NumCases << " cases */";
     OS << ", ";
     ++CurrentIdx;
     
     // For each case we emit the size, then the opcode, then the matcher.
-    for (unsigned i = 0, e = SOM->getNumCases(); i != e; ++i) {
+    for (unsigned i = 0, e = NumCases; i != e; ++i) {
+      const Matcher *Child;
+      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
+        Child = SOM->getCaseMatcher(i);
+      else
+        Child = cast<SwitchTypeMatcher>(N)->getCaseMatcher(i);
+      
       // We need to encode the opcode and the offset of the case code before
       // emitting the case code.  Handle this by buffering the output into a
       // string while we get the size.  Unfortunately, the offset of the
@@ -286,8 +301,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
         TmpBuf.clear();
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
-        ChildSize = EmitMatcherList(SOM->getCaseMatcher(i),
-                                    Indent+1, CurrentIdx+VBRSize+1, FOS);
+        ChildSize = EmitMatcherList(Child, Indent+1, CurrentIdx+VBRSize+1, FOS);
       } while (GetVBRSize(ChildSize) != VBRSize);
       
       assert(ChildSize != 0 && "Should not have a zero-sized child!");
@@ -295,13 +309,20 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       if (i != 0) {
         OS.PadToColumn(Indent*2);
         if (!OmitComments)
-         OS << "/*SwitchOpcode*/ ";
+        OS << (isa<SwitchOpcodeMatcher>(N) ?
+                   "/*SwitchOpcode*/ " : "/*SwitchType*/ ");
       }
       
       // Emit the VBR.
       CurrentIdx += EmitVBRValue(ChildSize, OS);
       
-      OS << " " << SOM->getCaseOpcode(i).getEnumName() << ",";
+      OS << ' ';
+      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
+        OS << SOM->getCaseOpcode(i).getEnumName();
+      else
+        OS << getEnumName(cast<SwitchTypeMatcher>(N)->getCaseType(i));
+      OS << ',';
+      
       if (!OmitComments)
         OS << "// ->" << CurrentIdx+ChildSize+1;
       OS << '\n';
@@ -313,7 +334,9 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     // Emit the final zero to terminate the switch.
     OS.PadToColumn(Indent*2) << "0, ";
     if (!OmitComments)
-      OS << "// EndSwitchOpcode";
+      OS << (isa<SwitchOpcodeMatcher>(N) ?
+             "// EndSwitchOpcode" : "// EndSwitchType");
+
     OS << '\n';
     ++CurrentIdx;
     return CurrentIdx-StartIdx;
@@ -323,6 +346,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS << "OPC_CheckType, "
        << getEnumName(cast<CheckTypeMatcher>(N)->getType()) << ",\n";
     return 2;
+      
   case Matcher::CheckChildType:
     OS << "OPC_CheckChild"
        << cast<CheckChildTypeMatcher>(N)->getChildNo() << "Type, "
@@ -673,6 +697,7 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
     case Matcher::CheckOpcode: OS << "OPC_CheckOpcode"; break;
     case Matcher::SwitchOpcode: OS << "OPC_SwitchOpcode"; break;
     case Matcher::CheckType: OS << "OPC_CheckType"; break;
+    case Matcher::SwitchType: OS << "OPC_SwitchType"; break;
     case Matcher::CheckChildType: OS << "OPC_CheckChildType"; break;
     case Matcher::CheckInteger: OS << "OPC_CheckInteger"; break;
     case Matcher::CheckCondCode: OS << "OPC_CheckCondCode"; break;

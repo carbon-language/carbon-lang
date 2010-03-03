@@ -121,6 +121,7 @@ public:
     OPC_CheckOpcode,
     OPC_SwitchOpcode,
     OPC_CheckType,
+    OPC_SwitchType,
     OPC_CheckChild0Type, OPC_CheckChild1Type, OPC_CheckChild2Type,
     OPC_CheckChild3Type, OPC_CheckChild4Type, OPC_CheckChild5Type,
     OPC_CheckChild6Type, OPC_CheckChild7Type,
