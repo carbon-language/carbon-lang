@@ -43,16 +43,13 @@ public:
               AsLValueNotAlwaysAdd = 2,
               AlwaysAddAsLValue = 3 };
 
-public:
-  AddStmtChoice(Kind k)
-    : AsLValue(k >= AlwaysAddAsLValue), AlwaysAddStmt((unsigned)k & 0x1) {}
+  AddStmtChoice(Kind kind) : k(kind) {}
 
-  bool alwaysAdd() const { return (bool) AlwaysAddStmt; };
-  bool asLValue() const { return (bool) AsLValue; };
+  bool alwaysAdd() const { return (unsigned)k & 0x1; }
+  bool asLValue() const { return k >= AlwaysAddAsLValue; }
 
 private:
-  unsigned AsLValue : 1;
-  unsigned AlwaysAddStmt : 1;
+  Kind k;
 };
 
 /// CFGBuilder - This class implements CFG construction from an AST.
