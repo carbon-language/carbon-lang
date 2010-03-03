@@ -59,6 +59,10 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction& CGF,
   return RValue::get(CGF.Builder.CreateBinOp(Op, Result, Operand));
 }
 
+static llvm::ConstantInt *getInt32(llvm::LLVMContext &Context, int32_t Value) {
+  return llvm::ConstantInt::get(llvm::Type::getInt32Ty(Context), Value);
+}
+
 RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                         unsigned BuiltinID, const CallExpr *E) {
   // See if we can constant fold this builtin.  If so, don't emit it at all.
@@ -342,6 +346,20 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                         EmitScalarExpr(E->getArg(2)),
                         llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 1));
     return RValue::get(Address);
+  }
+  case Builtin::BI__builtin_dwarf_cfa: {
+    // The offset in bytes from the first argument to the CFA.
+    //
+    // Why on earth is this in the frontend?  Is there any reason at
+    // all that the backend can't reasonably determine this while
+    // lowering llvm.eh.dwarf.cfa()?
+    //
+    // TODO: If there's a satisfactory reason, add a target hook for
+    // this instead of hard-coding 0, which is correct for most targets.
+    int32_t Offset = 0;
+
+    Value *F = CGM.getIntrinsic(Intrinsic::eh_dwarf_cfa, 0, 0);
+    return RValue::get(Builder.CreateCall(F, getInt32(VMContext, Offset)));
   }
   case Builtin::BI__builtin_return_address: {
     Value *Depth = EmitScalarExpr(E->getArg(0));
