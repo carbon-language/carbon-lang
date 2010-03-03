@@ -41,7 +41,7 @@ llvm::StringRef getClangRepositoryPath() {
 
 std::string getClangRevision() {
 #ifdef SVN_REVISION
-  if (SVN_VERSION[0] != '\0') {
+  if (SVN_REVISION[0] != '\0') {
     std::string revision;
     llvm::raw_string_ostream OS(revision);
     OS << strtol(SVN_REVISION, 0, 10);
