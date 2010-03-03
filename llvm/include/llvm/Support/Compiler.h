@@ -78,7 +78,9 @@
 
 // ALWAYS_INLINE - On compilers where we have a directive to do so, mark a
 // method "always inline" because it is performance sensitive.
-#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+// GCC 3.4 supported this but is buggy in various cases and produces
+// unimplemented errors, just use it in GCC 4.0 and later.
+#if __GNUC__ > 3
 #define ALWAYS_INLINE __attribute__((always_inline))
 #else
 // TODO: No idea how to do this with MSVC.
