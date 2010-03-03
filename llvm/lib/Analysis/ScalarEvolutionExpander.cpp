@@ -528,138 +528,48 @@ static bool isNonConstantNegative(const SCEV *F) {
   return SC->getValue()->getValue().isNegative();
 }
 
-/// PickMostRelevantLoop - Given two loops pick the one that's most relevant for
-/// SCEV expansion. If they are nested, this is the most nested. If they are
-/// neighboring, pick the later.
-static const Loop *PickMostRelevantLoop(const Loop *A, const Loop *B,
-                                        DominatorTree &DT) {
-  if (!A) return B;
-  if (!B) return A;
-  if (A->contains(B)) return B;
-  if (B->contains(A)) return A;
-  if (DT.dominates(A->getHeader(), B->getHeader())) return B;
-  if (DT.dominates(B->getHeader(), A->getHeader())) return A;
-  return A; // Arbitrarily break the tie.
-}
-
-/// GetRelevantLoop - Get the most relevant loop associated with the given
-/// expression, according to PickMostRelevantLoop.
-static const Loop *GetRelevantLoop(const SCEV *S, LoopInfo &LI,
-                                   DominatorTree &DT) {
-  if (isa<SCEVConstant>(S))
-    return 0;
-  if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
-    if (const Instruction *I = dyn_cast<Instruction>(U->getValue()))
-      return LI.getLoopFor(I->getParent());
-    return 0;
-  }
-  if (const SCEVNAryExpr *N = dyn_cast<SCEVNAryExpr>(S)) {
-    const Loop *L = 0;
-    if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S))
-      L = AR->getLoop();
-    for (SCEVNAryExpr::op_iterator I = N->op_begin(), E = N->op_end();
-         I != E; ++I)
-      L = PickMostRelevantLoop(L, GetRelevantLoop(*I, LI, DT), DT);
-    return L;
-  }
-  if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(S))
-    return GetRelevantLoop(C->getOperand(), LI, DT);
-  if (const SCEVUDivExpr *D = dyn_cast<SCEVUDivExpr>(S))
-    return PickMostRelevantLoop(GetRelevantLoop(D->getLHS(), LI, DT),
-                                GetRelevantLoop(D->getRHS(), LI, DT),
-                                DT);
-  llvm_unreachable("Unexpected SCEV type!");
-}
-
-namespace {
-
-/// LoopCompare - Compare loops by PickMostRelevantLoop.
-class LoopCompare {
-  DominatorTree &DT;
-public:
-  explicit LoopCompare(DominatorTree &dt) : DT(dt) {}
-
-  bool operator()(std::pair<const Loop *, const SCEV *> LHS,
-                  std::pair<const Loop *, const SCEV *> RHS) const {
-    // Compare loops with PickMostRelevantLoop.
-    if (LHS.first != RHS.first)
-      return PickMostRelevantLoop(LHS.first, RHS.first, DT) == LHS.first;
-
-    // If one operand is a non-constant negative and the other is not,
-    // put the non-constant negative on the right so that a sub can
-    // be used instead of a negate and add.
-    if (isNonConstantNegative(LHS.second)) {
-      if (!isNonConstantNegative(RHS.second))
-        return false;
-    } else if (isNonConstantNegative(RHS.second))
-      return true;
-
-    // Otherwise they are equivalent according to this comparison.
-    return false;
-  }
-};
-
-}
-
 Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
+  int NumOperands = S->getNumOperands();
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
 
-  // Collect all the add operands in a loop, along with their associated loops.
-  // Iterate in reverse so that constants are emitted last, all else equal, and
-  // so that pointer operands are inserted first, which the code below relies on
-  // to form more involved GEPs.
-  SmallVector<std::pair<const Loop *, const SCEV *>, 8> OpsAndLoops;
-  for (std::reverse_iterator<SCEVAddExpr::op_iterator> I(S->op_end()),
-       E(S->op_begin()); I != E; ++I)
-    OpsAndLoops.push_back(std::make_pair(GetRelevantLoop(*I, *SE.LI, *SE.DT),
-                                         *I));
+  // Find the index of an operand to start with. Choose the operand with
+  // pointer type, if there is one, or the last operand otherwise.
+  int PIdx = 0;
+  for (; PIdx != NumOperands - 1; ++PIdx)
+    if (S->getOperand(PIdx)->getType()->isPointerTy()) break;
 
-  // Sort by loop. Use a stable sort so that constants follow non-constants and
-  // pointer operands precede non-pointer operands.
-  std::stable_sort(OpsAndLoops.begin(), OpsAndLoops.end(), LoopCompare(*SE.DT));
+  // Expand code for the operand that we chose.
+  Value *V = expand(S->getOperand(PIdx));
 
-  // Emit instructions to add all the operands. Hoist as much as possible
-  // out of loops, and form meaningful getelementptrs where possible.
-  Value *Sum = 0;
-  for (SmallVectorImpl<std::pair<const Loop *, const SCEV *> >::iterator
-       I = OpsAndLoops.begin(), E = OpsAndLoops.end(); I != E; ) {
-    const Loop *CurLoop = I->first;
-    const SCEV *Op = I->second;
-    if (!Sum) {
-      // This is the first operand. Just expand it.
-      Sum = expand(Op);
-      ++I;
-    } else if (const PointerType *PTy = dyn_cast<PointerType>(Sum->getType())) {
-      // The running sum expression is a pointer. Try to form a getelementptr
-      // at this level with that as the base.
-      SmallVector<const SCEV *, 4> NewOps;
-      for (; I != E && I->first == CurLoop; ++I)
-        NewOps.push_back(I->second);
-      Sum = expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, Sum);
-    } else if (const PointerType *PTy = dyn_cast<PointerType>(Op->getType())) {
-      // The running sum is an integer, and there's a pointer at this level.
-      // Try to form a getelementptr.
-      SmallVector<const SCEV *, 4> NewOps;
-      NewOps.push_back(SE.getUnknown(Sum));
-      for (++I; I != E && I->first == CurLoop; ++I)
-        NewOps.push_back(I->second);
-      Sum = expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, expand(Op));
-    } else if (isNonConstantNegative(Op)) {
-      // Instead of doing a negate and add, just do a subtract.
-      Value *W = expandCodeFor(SE.getNegativeSCEV(Op), Ty);
-      Sum = InsertNoopCastOfTo(Sum, Ty);
-      Sum = InsertBinop(Instruction::Sub, Sum, W);
-      ++I;
-    } else {
-      // A simple add.
-      Value *W = expandCodeFor(Op, Ty);
-      Sum = InsertNoopCastOfTo(Sum, Ty);
-      Sum = InsertBinop(Instruction::Add, Sum, W);
-      ++I;
-    }
+  // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
+  // comments on expandAddToGEP for details.
+  if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
+    // Take the operand at PIdx out of the list.
+    const SmallVectorImpl<const SCEV *> &Ops = S->getOperands();
+    SmallVector<const SCEV *, 8> NewOps;
+    NewOps.insert(NewOps.end(), Ops.begin(), Ops.begin() + PIdx);
+    NewOps.insert(NewOps.end(), Ops.begin() + PIdx + 1, Ops.end());
+    // Make a GEP.
+    return expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, V);
   }
 
-  return Sum;
+  // Otherwise, we'll expand the rest of the SCEVAddExpr as plain integer
+  // arithmetic.
+  V = InsertNoopCastOfTo(V, Ty);
+
+  // Emit a bunch of add instructions
+  for (int i = NumOperands-1; i >= 0; --i) {
+    if (i == PIdx) continue;
+    const SCEV *Op = S->getOperand(i);
+    if (isNonConstantNegative(Op)) {
+      Value *W = expandCodeFor(SE.getNegativeSCEV(Op), Ty);
+      V = InsertBinop(Instruction::Sub, V, W);
+    } else {
+      Value *W = expandCodeFor(Op, Ty);
+      V = InsertBinop(Instruction::Add, V, W);
+    }
+  }
+  return V;
 }
 
 Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
