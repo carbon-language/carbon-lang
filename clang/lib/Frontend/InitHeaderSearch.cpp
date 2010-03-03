@@ -432,9 +432,6 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   case llvm::Triple::MinGW32:
     AddPath("c:/mingw/include", System, true, false, false);
     break;
-  case llvm::Triple::Linux:
-    AddPath("/usr/include/linux", System, false, false, false);
-    break;
   default:
     break;
   }
