@@ -4869,6 +4869,43 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
   return NULL;
 }
 
+namespace {
+
+/// RAUWUpdateListner - Helper for ReplaceAllUsesWith - When the node
+/// pointed to by a use iterator is deleted, increment the use iterator
+/// so that it doesn't dangle.
+///
+/// This class also manages a "downlink" DAGUpdateListener, to forward
+/// messages to ReplaceAllUsesWith's callers.
+///
+class RAUWUpdateListener : public SelectionDAG::DAGUpdateListener {
+  SelectionDAG::DAGUpdateListener *DownLink;
+  SDNode::use_iterator &UI;
+  SDNode::use_iterator &UE;
+
+  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+    // Increment the iterator as needed.
+    while (UI != UE && N == *UI)
+      ++UI;
+
+    // Then forward the message.
+    if (DownLink) DownLink->NodeDeleted(N, E);
+  }
+
+  virtual void NodeUpdated(SDNode *N) {
+    // Just forward the message.
+    if (DownLink) DownLink->NodeUpdated(N);
+  }
+
+public:
+  RAUWUpdateListener(SelectionDAG::DAGUpdateListener *dl,
+                     SDNode::use_iterator &ui,
+                     SDNode::use_iterator &ue)
+    : DownLink(dl), UI(ui), UE(ue) {}
+};
+
+}
+
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
@@ -4889,6 +4926,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
   // is replaced by To, we don't want to replace of all its users with To
   // too. See PR3018 for more info.
   SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
+  RAUWUpdateListener Listener(UpdateListener, UI, UE);
   while (UI != UE) {
     SDNode *User = *UI;
 
@@ -4907,7 +4945,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDValue FromN, SDValue To,
 
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
-    AddModifiedNodeToCSEMaps(User, UpdateListener);
+    AddModifiedNodeToCSEMaps(User, &Listener);
   }
 }
 
@@ -4933,6 +4971,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
   // Iterate over just the existing users of From. See the comments in
   // the ReplaceAllUsesWith above.
   SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
+  RAUWUpdateListener Listener(UpdateListener, UI, UE);
   while (UI != UE) {
     SDNode *User = *UI;
 
@@ -4951,7 +4990,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
-    AddModifiedNodeToCSEMaps(User, UpdateListener);
+    AddModifiedNodeToCSEMaps(User, &Listener);
   }
 }
 
@@ -4969,6 +5008,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
   // Iterate over just the existing users of From. See the comments in
   // the ReplaceAllUsesWith above.
   SDNode::use_iterator UI = From->use_begin(), UE = From->use_end();
+  RAUWUpdateListener Listener(UpdateListener, UI, UE);
   while (UI != UE) {
     SDNode *User = *UI;
 
@@ -4988,7 +5028,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
 
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
-    AddModifiedNodeToCSEMaps(User, UpdateListener);
+    AddModifiedNodeToCSEMaps(User, &Listener);
   }
 }
 
@@ -5010,6 +5050,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
   // the ReplaceAllUsesWith above.
   SDNode::use_iterator UI = From.getNode()->use_begin(),
                        UE = From.getNode()->use_end();
+  RAUWUpdateListener Listener(UpdateListener, UI, UE);
   while (UI != UE) {
     SDNode *User = *UI;
     bool UserRemovedFromCSEMaps = false;
@@ -5045,7 +5086,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDValue From, SDValue To,
 
     // Now that we have modified User, add it back to the CSE maps.  If it
     // already exists there, recursively merge the results together.
-    AddModifiedNodeToCSEMaps(User, UpdateListener);
+    AddModifiedNodeToCSEMaps(User, &Listener);
   }
 }
 
