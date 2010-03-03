@@ -120,3 +120,14 @@ void t17() {
 // CHECK: call void asm "nop", "=*m,
 }
 
+// <rdar://problem/6841383>
+int t18(unsigned data) {
+  int a, b;
+  
+  asm("xyz" :"=a"(a), "=d"(b) : "a"(data));
+  return a + b;
+// CHECK: t18(i32
+// CHECK: = call {{.*}}asm "xyz"
+// CHECK-NEXT: extractvalue
+// CHECK-NEXT: extractvalue
+}
