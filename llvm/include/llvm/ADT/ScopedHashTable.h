@@ -139,7 +139,7 @@ public:
   }
 
   V lookup(const K &Key) {
-    return TopLevelMap[Key].getValue();
+    return TopLevelMap[Key]->getValue();
   }
 
   void insert(const K &Key, const V &Val) {
