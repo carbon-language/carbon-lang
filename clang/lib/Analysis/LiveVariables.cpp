@@ -280,9 +280,16 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE = DS->decl_end();
        DI != DE; ++DI)
     if (VarDecl* VD = dyn_cast<VarDecl>(*DI)) {
-      // The initializer is evaluated after the variable comes into scope.
+      // Update liveness information by killing the VarDecl.
+      unsigned bit = AD.getIdx(VD);
+      LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
+
+      // The initializer is evaluated after the variable comes into scope, but
+      // before the DeclStmt (which binds the value to the variable).
       // Since this is a reverse dataflow analysis, we must evaluate the
-      // transfer function for this expression first.
+      // transfer function for this expression after the DeclStmt.  If the
+      // initializer references the variable (which is bad) then we extend
+      // its liveness.
       if (Expr* Init = VD->getInit())
         Visit(Init);
 
@@ -292,10 +299,6 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
         StmtIterator E;
         for (; I != E; ++I) Visit(*I);
       }
-
-      // Update liveness information by killing the VarDecl.
-      unsigned bit = AD.getIdx(VD);
-      LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
     }
 }
 
