@@ -194,11 +194,10 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   const Type *ITy = GetCompareTy(LHS);
   
   // icmp X, X -> true/false
-  if (LHS == RHS)
+  // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
+  // because X could be 0.
+  if (LHS == RHS || isa<UndefValue>(RHS))
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
-
-  if (isa<UndefValue>(RHS))                  // X icmp undef -> undef
-    return UndefValue::get(ITy);
   
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.

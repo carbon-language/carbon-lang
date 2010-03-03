@@ -1818,7 +1818,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 
   // Handle some degenerate cases first
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
-    return UndefValue::get(ResultTy);
+    return ConstantInt::get(ResultTy, CmpInst::isTrueWhenEqual(pred));
 
   // No compile-time operations on this type yet.
   if (C1->getType()->isPPC_FP128Ty())
