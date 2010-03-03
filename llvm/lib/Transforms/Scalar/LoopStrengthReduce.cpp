@@ -2874,6 +2874,13 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, 0, IP)));
   }
 
+  // Flush the operand list to suppress SCEVExpander hoisting.
+  if (!Ops.empty()) {
+    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+    Ops.clear();
+    Ops.push_back(SE.getUnknown(FullV));
+  }
+
   // Expand the ScaledReg portion.
   Value *ICmpScaledV = 0;
   if (F.AM.Scale != 0) {
@@ -2900,12 +2907,25 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
                               SE.getIntegerSCEV(F.AM.Scale,
                                                 ScaledS->getType()));
       Ops.push_back(ScaledS);
+
+      // Flush the operand list to suppress SCEVExpander hoisting.
+      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+      Ops.clear();
+      Ops.push_back(SE.getUnknown(FullV));
     }
   }
 
-  // Expand the immediate portions.
-  if (F.AM.BaseGV)
-    Ops.push_back(SE.getSCEV(F.AM.BaseGV));
+  // Expand the GV portion.
+  if (F.AM.BaseGV) {
+    Ops.push_back(SE.getUnknown(F.AM.BaseGV));
+
+    // Flush the operand list to suppress SCEVExpander hoisting.
+    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty, IP);
+    Ops.clear();
+    Ops.push_back(SE.getUnknown(FullV));
+  }
+
+  // Expand the immediate portion.
   int64_t Offset = (uint64_t)F.AM.BaseOffs + LF.Offset;
   if (Offset != 0) {
     if (LU.Kind == LSRUse::ICmpZero) {
@@ -2920,7 +2940,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
     } else {
       // Just add the immediate values. These again are expected to be matched
       // as part of the address.
-      Ops.push_back(SE.getIntegerSCEV(Offset, IntTy));
+      Ops.push_back(SE.getUnknown(ConstantInt::getSigned(IntTy, Offset)));
     }
   }
 
