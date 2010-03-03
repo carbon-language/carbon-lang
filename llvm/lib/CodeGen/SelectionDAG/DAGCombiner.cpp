@@ -1786,7 +1786,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
   SDValue RAND = ReassociateOps(ISD::AND, N->getDebugLoc(), N0, N1);
   if (RAND.getNode() != 0)
     return RAND;
-  // fold (and (or x, 0xFFFF), 0xFF) -> 0xFF
+  // fold (and (or x, C), D) -> D if (C & D) == D
   if (N1C && N0.getOpcode() == ISD::OR)
     if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
       if ((ORI->getAPIntValue() & N1C->getAPIntValue()) == N1C->getAPIntValue())
@@ -2025,13 +2025,15 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (ROR.getNode() != 0)
     return ROR;
   // Canonicalize (or (and X, c1), c2) -> (and (or X, c2), c1|c2)
+  // iff (c1 & c2) == 0.
   if (N1C && N0.getOpcode() == ISD::AND && N0.getNode()->hasOneUse() &&
              isa<ConstantSDNode>(N0.getOperand(1))) {
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
-    return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
-                       DAG.getNode(ISD::OR, N0.getDebugLoc(), VT,
-                                   N0.getOperand(0), N1),
-                       DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1));
+    if ((C1->getZExtValue() & N1C->getZExtValue()) != 0)
+      return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                         DAG.getNode(ISD::OR, N0.getDebugLoc(), VT,
+                                     N0.getOperand(0), N1),
+                         DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1));
   }
   // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
