@@ -179,17 +179,16 @@ public:
     return MemRefsEnd - MemRefs == 1;
   }
 
+  enum MICheckType {
+    CheckDefs,      // Check all operands for equality
+    IgnoreDefs,     // Ignore all definitions
+    IgnoreVRegDefs  // Ignore virtual register definitions
+  };
+
   /// isIdenticalTo - Return true if this instruction is identical to (same
   /// opcode and same operands as) the specified instruction.
-  bool isIdenticalTo(const MachineInstr *Other) const {
-    if (Other->getOpcode() != getOpcode() ||
-        Other->getNumOperands() != getNumOperands())
-      return false;
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      if (!getOperand(i).isIdenticalTo(Other->getOperand(i)))
-        return false;
-    return true;
-  }
+  bool isIdenticalTo(const MachineInstr *Other,
+                     MICheckType Check = CheckDefs) const;
 
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, and returns it, but does not delete it.

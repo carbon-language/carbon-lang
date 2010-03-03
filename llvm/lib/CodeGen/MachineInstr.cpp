@@ -18,6 +18,7 @@
 #include "llvm/Type.h"
 #include "llvm/Value.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -699,6 +700,28 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
 
   MemRefs = NewMemRefs;
   MemRefsEnd = NewMemRefsEnd;
+}
+
+bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
+                                 MICheckType Check) const {
+    if (Other->getOpcode() != getOpcode() ||
+        Other->getNumOperands() != getNumOperands())
+      return false;
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = getOperand(i);
+      const MachineOperand &OMO = Other->getOperand(i);
+      if (Check != CheckDefs && MO.isReg() && MO.isDef()) {
+        if (Check == IgnoreDefs)
+          continue;
+        // Check == IgnoreVRegDefs
+        if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
+            TargetRegisterInfo::isPhysicalRegister(OMO.getReg()))
+          if (MO.getReg() != OMO.getReg())
+            return false;
+      } else if (!MO.isIdenticalTo(OMO))
+        return false;
+    }
+    return true;
 }
 
 /// removeFromParent - This method unlinks 'this' from the containing basic

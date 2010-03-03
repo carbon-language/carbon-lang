@@ -1037,9 +1037,8 @@ ARMBaseInstrInfo::duplicate(MachineInstr *Orig, MachineFunction &MF) const {
   return MI;
 }
 
-bool ARMBaseInstrInfo::isIdentical(const MachineInstr *MI0,
-                                  const MachineInstr *MI1,
-                                  const MachineRegisterInfo *MRI) const {
+bool ARMBaseInstrInfo::produceSameValue(const MachineInstr *MI0,
+                                        const MachineInstr *MI1) const {
   int Opcode = MI0->getOpcode();
   if (Opcode == ARM::t2LDRpci ||
       Opcode == ARM::t2LDRpci_pic ||
@@ -1068,7 +1067,7 @@ bool ARMBaseInstrInfo::isIdentical(const MachineInstr *MI0,
     return ACPV0->hasSameValue(ACPV1);
   }
 
-  return TargetInstrInfoImpl::isIdentical(MI0, MI1, MRI);
+  return MI0->isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate

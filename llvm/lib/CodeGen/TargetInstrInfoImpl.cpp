@@ -150,42 +150,16 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
+bool TargetInstrInfoImpl::produceSameValue(const MachineInstr *MI0,
+                                           const MachineInstr *MI1) const {
+  return MI0->isIdenticalTo(MI1, MachineInstr::IgnoreVRegDefs);
+}
+
 MachineInstr *TargetInstrInfoImpl::duplicate(MachineInstr *Orig,
                                              MachineFunction &MF) const {
   assert(!Orig->getDesc().isNotDuplicable() &&
          "Instruction cannot be duplicated");
   return MF.CloneMachineInstr(Orig);
-}
-
-bool
-TargetInstrInfoImpl::isIdentical(const MachineInstr *MI,
-                                 const MachineInstr *Other,
-                                 const MachineRegisterInfo *MRI) const {
-  if (MI->getOpcode() != Other->getOpcode() ||
-      MI->getNumOperands() != Other->getNumOperands())
-    return false;
-
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    const MachineOperand &OMO = Other->getOperand(i);
-    if (MO.isReg() && MO.isDef()) {
-      assert(OMO.isReg() && OMO.isDef());
-      unsigned Reg = MO.getReg();
-      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        if (Reg != OMO.getReg())
-          return false;
-      } else if (MRI->getRegClass(MO.getReg()) !=
-                 MRI->getRegClass(OMO.getReg()))
-        return false;
-
-      continue;
-    }
-
-    if (!MO.isIdenticalTo(OMO))
-      return false;
-  }
-
-  return true;
 }
 
 unsigned

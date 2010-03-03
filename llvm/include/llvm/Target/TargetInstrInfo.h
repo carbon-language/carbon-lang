@@ -19,14 +19,14 @@
 
 namespace llvm {
 
-class MCAsmInfo;
-class TargetRegisterClass;
-class TargetRegisterInfo;
-class LiveVariables;
 class CalleeSavedInfo;
+class LiveVariables;
+class MCAsmInfo;
+class MachineMemOperand;
 class SDNode;
 class SelectionDAG;
-class MachineMemOperand;
+class TargetRegisterClass;
+class TargetRegisterInfo;
 
 template<class T> class SmallVectorImpl;
 
@@ -243,13 +243,11 @@ public:
   virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                                      unsigned &SrcOpIdx2) const = 0;
 
-  /// isIdentical - Return true if two instructions are identical. This differs
-  /// from MachineInstr::isIdenticalTo() in that it does not require the
-  /// virtual destination registers to be the same. This is used by MachineLICM
-  /// and other MI passes to perform CSE.
-  virtual bool isIdentical(const MachineInstr *MI,
-                           const MachineInstr *Other,
-                           const MachineRegisterInfo *MRI) const = 0;
+  /// produceSameValue - Return true if two machine instructions would produce
+  /// identical values. By default, this is only true when the two instructions
+  /// are deemed identical except for defs.
+  virtual bool produceSameValue(const MachineInstr *MI0,
+                                const MachineInstr *MI1) const = 0;
 
   /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
   /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
@@ -560,10 +558,8 @@ public:
                              const TargetRegisterInfo *TRI) const;
   virtual MachineInstr *duplicate(MachineInstr *Orig,
                                   MachineFunction &MF) const;
-  virtual bool isIdentical(const MachineInstr *MI,
-                           const MachineInstr *Other,
-                           const MachineRegisterInfo *MRI) const;
-
+  virtual bool produceSameValue(const MachineInstr *MI0,
+                                const MachineInstr *MI1) const;
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 };
 

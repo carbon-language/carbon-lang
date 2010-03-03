@@ -445,7 +445,7 @@ MachineLICM::LookForDuplicate(const MachineInstr *MI,
                               std::vector<const MachineInstr*> &PrevMIs) {
   for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
     const MachineInstr *PrevMI = PrevMIs[i];
-    if (TII->isIdentical(MI, PrevMI, RegInfo))
+    if (TII->produceSameValue(MI, PrevMI))
       return PrevMI;
   }
   return 0;

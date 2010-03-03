@@ -289,8 +289,8 @@ public:
 
   MachineInstr *duplicate(MachineInstr *Orig, MachineFunction &MF) const;
 
-  virtual bool isIdentical(const MachineInstr *MI, const MachineInstr *Other,
-                           const MachineRegisterInfo *MRI) const;
+  virtual bool produceSameValue(const MachineInstr *MI0,
+                                const MachineInstr *MI1) const;
 };
 
 static inline
