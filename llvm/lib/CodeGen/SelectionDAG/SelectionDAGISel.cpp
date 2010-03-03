@@ -1845,6 +1845,94 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   return Res;
 }
 
+/// CheckPatternPredicate - Implements OP_CheckPatternPredicate.
+ALWAYS_INLINE static bool
+CheckPatternPredicate(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+                      SelectionDAGISel &SDISel) {
+  return SDISel.CheckPatternPredicate(MatcherTable[MatcherIndex++]);
+}
+
+/// CheckNodePredicate - Implements OP_CheckNodePredicate.
+ALWAYS_INLINE static bool
+CheckNodePredicate(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+                   SelectionDAGISel &SDISel, SDNode *N) {
+  return SDISel.CheckNodePredicate(N, MatcherTable[MatcherIndex++]);
+}
+
+ALWAYS_INLINE static bool
+CheckOpcode(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+            SDNode *N) {
+  return N->getOpcode() == MatcherTable[MatcherIndex++];
+}
+
+ALWAYS_INLINE static bool
+CheckType(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+          SDValue N, const TargetLowering &TLI) {
+  MVT::SimpleValueType VT = (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
+  if (N.getValueType() == VT) return true;
+  
+  // Handle the case when VT is iPTR.
+  return VT == MVT::iPTR && N.getValueType() == TLI.getPointerTy();
+}
+
+ALWAYS_INLINE static bool
+CheckInteger(const unsigned char *MatcherTable, unsigned &MatcherIndex,
+             SDValue N) {
+  int64_t Val = MatcherTable[MatcherIndex++];
+  if (Val & 128)
+    Val = GetVBR(Val, MatcherTable, MatcherIndex);
+  
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
+  return C != 0 && C->getSExtValue() == Val;
+}
+
+/// IsPredicateKnownToFail - If we know how and can do so without pushing a
+/// scope, evaluate the current node.  If the current predicate is known to
+/// fail, set Result=true and return anything.  If the current predicate is
+/// known to pass, set Result=false and return the MatcherIndex to continue
+/// with.  If the current predicate is unknown, set Result=false and return the
+/// MatcherIndex to continue with. 
+static unsigned IsPredicateKnownToFail(const unsigned char *Table,
+                                       unsigned Index, SDValue N,
+                                       bool &Result, SelectionDAGISel &SDISel) {
+  switch (Table[Index++]) {
+  default:
+    Result = false;
+    return Index-1;  // Could not evaluate this predicate.
+  
+  case SelectionDAGISel::OPC_CheckPatternPredicate:
+    Result = !CheckPatternPredicate(Table, Index, SDISel);
+    return Index;
+  case SelectionDAGISel::OPC_CheckPredicate:
+    Result = !CheckNodePredicate(Table, Index, SDISel, N.getNode());
+    return Index;
+  case SelectionDAGISel::OPC_CheckOpcode:
+    Result = !::CheckOpcode(Table, Index, N.getNode());
+    return Index;
+  case SelectionDAGISel::OPC_CheckType:
+    Result = !::CheckType(Table, Index, N, SDISel.TLI);
+    return Index;
+  case SelectionDAGISel::OPC_CheckChild0Type:
+  case SelectionDAGISel::OPC_CheckChild1Type:
+  case SelectionDAGISel::OPC_CheckChild2Type:
+  case SelectionDAGISel::OPC_CheckChild3Type:
+  case SelectionDAGISel::OPC_CheckChild4Type:
+  case SelectionDAGISel::OPC_CheckChild5Type:
+  case SelectionDAGISel::OPC_CheckChild6Type:
+  case SelectionDAGISel::OPC_CheckChild7Type: {
+    unsigned ChildNo = Table[Index-1] - SelectionDAGISel::OPC_CheckChild0Type;
+    if (ChildNo >= N.getNumOperands())
+      Result = true;  // Match fails if out of range child #.
+    else
+      Result = !::CheckType(Table, Index, N.getOperand(ChildNo), SDISel.TLI);
+    return Index;
+  }
+  case SelectionDAGISel::OPC_CheckInteger:
+    Result = !::CheckInteger(Table, Index, N);
+    return Index;
+  }
+}
+
 
 struct MatchScope {
   /// FailIndex - If this match fails, this is the index to continue with.
@@ -1978,16 +2066,50 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     BuiltinOpcodes Opcode = (BuiltinOpcodes)MatcherTable[MatcherIndex++];
     switch (Opcode) {
     case OPC_Scope: {
-      unsigned NumToSkip = MatcherTable[MatcherIndex++];
-      if (NumToSkip & 128)
-        NumToSkip = GetVBR(NumToSkip, MatcherTable, MatcherIndex);
-      assert(NumToSkip != 0 &&
-             "First entry of OPC_Scope shouldn't be 0, scope has no children?");
+      // Okay, the semantics of this operation are that we should push a scope
+      // then evaluate the first child.  However, pushing a scope only to have
+      // the first check fail (which then pops it) is inefficient.  If we can
+      // determine immediately that the first check (or first several) will
+      // immediately fail, don't even bother pushing a scope for them.
+      unsigned FailIndex;
+      
+      while (1) {
+        unsigned NumToSkip = MatcherTable[MatcherIndex++];
+        if (NumToSkip & 128)
+          NumToSkip = GetVBR(NumToSkip, MatcherTable, MatcherIndex);
+        // Found the end of the scope with no match.
+        if (NumToSkip == 0) {
+          FailIndex = 0;
+          break;
+        }
+        
+        FailIndex = MatcherIndex+NumToSkip;
+        
+        // If we can't evaluate this predicate without pushing a scope (e.g. if
+        // it is a 'MoveParent') or if the predicate succeeds on this node, we
+        // push the scope and evaluate the full predicate chain.
+        bool Result;
+        MatcherIndex = IsPredicateKnownToFail(MatcherTable, MatcherIndex, N,
+                                              Result, *this);
+        if (!Result)
+          break;
+        
+        DEBUG(errs() << "  Skipped scope entry at index " << MatcherIndex
+              << " continuing at " << FailIndex << "\n");
 
+        
+        // Otherwise, we know that this case of the Scope is guaranteed to fail,
+        // move to the next case.
+        MatcherIndex = FailIndex;
+      }
+      
+      // If the whole scope failed to match, bail.
+      if (FailIndex == 0) break;
+      
       // Push a MatchScope which indicates where to go if the first child fails
       // to match.
       MatchScope NewEntry;
-      NewEntry.FailIndex = MatcherIndex+NumToSkip;
+      NewEntry.FailIndex = FailIndex;
       NewEntry.NodeStack.append(NodeStack.begin(), NodeStack.end());
       NewEntry.NumRecordedNodes = RecordedNodes.size();
       NewEntry.NumMatchedMemRefs = MatchedMemRefs.size();
@@ -2049,10 +2171,12 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     }
     case OPC_CheckPatternPredicate:
-      if (!CheckPatternPredicate(MatcherTable[MatcherIndex++])) break;
+      if (!::CheckPatternPredicate(MatcherTable, MatcherIndex, *this)) break;
       continue;
     case OPC_CheckPredicate:
-      if (!CheckNodePredicate(N.getNode(), MatcherTable[MatcherIndex++])) break;
+      if (!::CheckNodePredicate(MatcherTable, MatcherIndex, *this,
+                                N.getNode()))
+        break;
       continue;
     case OPC_CheckComplexPat:
       if (!CheckComplexPattern(NodeToMatch, N, 
@@ -2060,7 +2184,11 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         break;
       continue;
     case OPC_CheckOpcode:
-      if (N->getOpcode() != MatcherTable[MatcherIndex++]) break;
+      if (!::CheckOpcode(MatcherTable, MatcherIndex, N.getNode())) break;
+      continue;
+        
+    case OPC_CheckType:
+      if (!::CheckType(MatcherTable, MatcherIndex, N, TLI)) break;
       continue;
         
     case OPC_SwitchOpcode: {
@@ -2088,17 +2216,6 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // Otherwise, execute the case we found.
       DEBUG(errs() << "  OpcodeSwitch from " << SwitchStart
                    << " to " << MatcherIndex << "\n");
-      continue;
-    }
-        
-    case OPC_CheckType: {
-      MVT::SimpleValueType VT =
-        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      if (N.getValueType() != VT) {
-        // Handle the case when VT is iPTR.
-        if (VT != MVT::iPTR || N.getValueType() != TLI.getPointerTy())
-          break;
-      }
       continue;
     }
         
@@ -2141,15 +2258,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       unsigned ChildNo = Opcode-OPC_CheckChild0Type;
       if (ChildNo >= N.getNumOperands())
         break;  // Match fails if out of range child #.
-      
-      MVT::SimpleValueType VT =
-        (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
-      EVT ChildVT = N.getOperand(ChildNo).getValueType();
-      if (ChildVT != VT) {
-        // Handle the case when VT is iPTR.
-        if (VT != MVT::iPTR || ChildVT != TLI.getPointerTy())
-          break;
-      }
+      if (!::CheckType(MatcherTable, MatcherIndex, N.getOperand(ChildNo), TLI))
+        break;
       continue;
     }
     case OPC_CheckCondCode:
@@ -2166,16 +2276,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       }
       continue;
     }
-    case OPC_CheckInteger: {
-      int64_t Val = MatcherTable[MatcherIndex++];
-      if (Val & 128)
-        Val = GetVBR(Val, MatcherTable, MatcherIndex);
-      
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
-      if (C == 0 || C->getSExtValue() != Val)
-        break;
+    case OPC_CheckInteger:
+      if (!::CheckInteger(MatcherTable, MatcherIndex, N)) break;
       continue;
-    }        
     case OPC_CheckAndImm: {
       int64_t Val = MatcherTable[MatcherIndex++];
       if (Val & 128)
