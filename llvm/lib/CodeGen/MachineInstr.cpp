@@ -704,24 +704,31 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
 
 bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
                                  MICheckType Check) const {
-    if (Other->getOpcode() != getOpcode() ||
-        Other->getNumOperands() != getNumOperands())
+  // If opcodes or number of operands are not the same then the two
+  // instructions are obviously not identical.
+  if (Other->getOpcode() != getOpcode() ||
+      Other->getNumOperands() != getNumOperands())
+    return false;
+
+  // Check operands to make sure they match.
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = getOperand(i);
+    const MachineOperand &OMO = Other->getOperand(i);
+    // Clients may or may not want to ignore defs when testing for equality.
+    // For example, machine CSE pass only cares about finding common
+    // subexpressions, so it's safe to ignore virtual register defs.
+    if (Check != CheckDefs && MO.isReg() && MO.isDef()) {
+      if (Check == IgnoreDefs)
+        continue;
+      // Check == IgnoreVRegDefs
+      if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
+          TargetRegisterInfo::isPhysicalRegister(OMO.getReg()))
+        if (MO.getReg() != OMO.getReg())
+          return false;
+    } else if (!MO.isIdenticalTo(OMO))
       return false;
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = getOperand(i);
-      const MachineOperand &OMO = Other->getOperand(i);
-      if (Check != CheckDefs && MO.isReg() && MO.isDef()) {
-        if (Check == IgnoreDefs)
-          continue;
-        // Check == IgnoreVRegDefs
-        if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
-            TargetRegisterInfo::isPhysicalRegister(OMO.getReg()))
-          if (MO.getReg() != OMO.getReg())
-            return false;
-      } else if (!MO.isIdenticalTo(OMO))
-        return false;
-    }
-    return true;
+  }
+  return true;
 }
 
 /// removeFromParent - This method unlinks 'this' from the containing basic
