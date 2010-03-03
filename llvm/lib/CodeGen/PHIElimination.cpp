@@ -443,34 +443,3 @@ MachineBasicBlock *PHIElimination::SplitCriticalEdge(MachineBasicBlock *A,
 
   return NMBB;
 }
-
-unsigned
-PHIElimination::PHINodeTraits::getHashValue(const MachineInstr *MI) {
-  if (!MI || MI==getEmptyKey() || MI==getTombstoneKey())
-    return DenseMapInfo<MachineInstr*>::getHashValue(MI);
-  unsigned hash = 0;
-  for (unsigned ni = 1, ne = MI->getNumOperands(); ni != ne; ni += 2)
-    hash = hash*37 + DenseMapInfo<BBVRegPair>::
-      getHashValue(BBVRegPair(MI->getOperand(ni+1).getMBB()->getNumber(),
-                              MI->getOperand(ni).getReg()));
-  return hash;
-}
-
-bool PHIElimination::PHINodeTraits::isEqual(const MachineInstr *LHS,
-                                            const MachineInstr *RHS) {
-  const MachineInstr *EmptyKey = getEmptyKey();
-  const MachineInstr *TombstoneKey = getTombstoneKey();
-  if (!LHS || !RHS || LHS==EmptyKey || RHS==EmptyKey ||
-      LHS==TombstoneKey || RHS==TombstoneKey)
-    return LHS==RHS;
-
-  unsigned ne = LHS->getNumOperands();
-  if (ne != RHS->getNumOperands())
-      return false;
-  // Ignore operand 0, the defined register.
-  for (unsigned ni = 1; ni != ne; ni += 2)
-    if (LHS->getOperand(ni).getReg() != RHS->getOperand(ni).getReg() ||
-        LHS->getOperand(ni+1).getMBB() != RHS->getOperand(ni+1).getMBB())
-      return false;
-  return true;
-}

@@ -102,15 +102,9 @@ namespace llvm {
     // Defs of PHI sources which are implicit_def.
     SmallPtrSet<MachineInstr*, 4> ImpDefs;
 
-    // Lowered PHI nodes may be reused. We provide special DenseMap traits to
-    // match PHI nodes with identical arguments.
-    struct PHINodeTraits : public DenseMapInfo<MachineInstr*> {
-      static unsigned getHashValue(const MachineInstr *PtrVal);
-      static bool isEqual(const MachineInstr *LHS, const MachineInstr *RHS);
-    };
-
     // Map reusable lowered PHI node -> incoming join register.
-    typedef DenseMap<MachineInstr*, unsigned, PHINodeTraits> LoweredPHIMap;
+    typedef DenseMap<MachineInstr*, unsigned,
+                     MachineInstrExpressionTrait> LoweredPHIMap;
     LoweredPHIMap LoweredPHIs;
   };
 
