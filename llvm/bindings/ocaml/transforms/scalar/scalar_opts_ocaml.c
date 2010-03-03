@@ -26,8 +26,68 @@ CAMLprim value llvm_add_constant_propagation(LLVMPassManagerRef PM) {
 }
 
 /* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
-CAMLprim value llvm_add_instruction_combining(LLVMPassManagerRef PM) {
+CAMLprim value llvm_add_sccp(LLVMPassManagerRef PM) {
+  LLVMAddSCCPPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_dead_store_elimination(LLVMPassManagerRef PM) {
+  LLVMAddDeadStoreEliminationPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_aggressive_dce(LLVMPassManagerRef PM) {
+  LLVMAddAggressiveDCEPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_scalar_repl_aggregation(LLVMPassManagerRef PM) {
+  LLVMAddScalarReplAggregatesPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_ind_var_simplification(LLVMPassManagerRef PM) {
+  LLVMAddIndVarSimplifyPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_instruction_combination(LLVMPassManagerRef PM) {
   LLVMAddInstructionCombiningPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_licm(LLVMPassManagerRef PM) {
+  LLVMAddLICMPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_loop_unswitch(LLVMPassManagerRef PM) {
+  LLVMAddLoopUnrollPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_loop_unroll(LLVMPassManagerRef PM) {
+  LLVMAddLoopUnrollPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_loop_rotation(LLVMPassManagerRef PM) {
+  LLVMAddLoopRotatePass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_loop_index_split(LLVMPassManagerRef PM) {
+  LLVMAddLoopIndexSplitPass(PM);
   return Val_unit;
 }
 
@@ -50,13 +110,43 @@ CAMLprim value llvm_add_reassociation(LLVMPassManagerRef PM) {
 }
 
 /* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
-CAMLprim value llvm_add_gvn(LLVMPassManagerRef PM) {
-  LLVMAddGVNPass(PM);
+CAMLprim value llvm_add_jump_threading(LLVMPassManagerRef PM) {
+  LLVMAddJumpThreadingPass(PM);
   return Val_unit;
 }
 
 /* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
 CAMLprim value llvm_add_cfg_simplification(LLVMPassManagerRef PM) {
   LLVMAddCFGSimplificationPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_tail_call_elimination(LLVMPassManagerRef PM) {
+  LLVMAddTailCallEliminationPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_gvn(LLVMPassManagerRef PM) {
+  LLVMAddGVNPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_memcpy_opt(LLVMPassManagerRef PM) {
+  LLVMAddMemCpyOptPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_loop_deletion(LLVMPassManagerRef PM) {
+  LLVMAddLoopDeletionPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_lib_call_simplification(LLVMPassManagerRef PM) {
+  LLVMAddSimplifyLibCallsPass(PM);
   return Val_unit;
 }
