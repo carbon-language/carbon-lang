@@ -2032,6 +2032,66 @@ def t2Int_SyncBarrierV7 : AInoP<(outs), (ins),
 }
 }
 
+// Helper class for multiclass T2MemB -- for disassembly only
+class T2I_memb<string opc, string asm>
+  : T2I<(outs), (ins), NoItinerary, opc, asm,
+        [/* For disassembly only; pattern left blank */]>,
+    Requires<[IsThumb2, HasV7]> {
+  let Inst{31-20} = 0xf3b;
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+}
+
+multiclass T2MemB<bits<4> op7_4, string opc> {
+
+  def st : T2I_memb<opc, "\tst"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b1110;
+  }
+
+  def ish : T2I_memb<opc, "\tish"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b1011;
+  }
+
+  def ishst : T2I_memb<opc, "\tishst"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b1010;
+  }
+
+  def nsh : T2I_memb<opc, "\tnsh"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b0111;
+  }
+
+  def nshst : T2I_memb<opc, "\tnshst"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b0110;
+  }
+
+  def osh : T2I_memb<opc, "\tosh"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b0011;
+  }
+
+  def oshst : T2I_memb<opc, "\toshst"> {
+    let Inst{7-4} = op7_4;
+    let Inst{3-0} = 0b0010;
+  }
+}
+
+// These DMB variants are for disassembly only.
+defm t2DMB : T2MemB<0b0101, "dmb">;
+
+// These DSB variants are for disassembly only.
+defm t2DSB : T2MemB<0b0100, "dsb">;
+
+// ISB has only full system option -- for disassembly only
+def t2ISBsy : T2I_memb<"isb", ""> {
+  let Inst{7-4} = 0b0110;
+  let Inst{3-0} = 0b1111;
+}
+
 class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
                 list<dag> pattern, bits<4> rt2 = 0b1111>
