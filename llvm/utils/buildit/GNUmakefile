@@ -34,7 +34,7 @@ DSTROOT = $(OBJROOT)/../dst
 
 PREFIX = /usr/local
 
-# Unless assertions are forced on in the GMAKE command line, enable them.
+# Unless assertions are forced on in the GMAKE command line, disable them.
 ifndef ENABLE_ASSERTIONS
 ENABLE_ASSERTIONS := no
 endif
