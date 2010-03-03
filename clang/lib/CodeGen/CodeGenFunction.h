@@ -55,6 +55,7 @@ namespace clang {
   class ObjCImplementationDecl;
   class ObjCPropertyImplDecl;
   class TargetInfo;
+  class TargetCodeGenInfo;
   class VarDecl;
   class ObjCForCollectionStmt;
   class ObjCAtTryStmt;
@@ -62,7 +63,6 @@ namespace clang {
   class ObjCAtSynchronizedStmt;
 
 namespace CodeGen {
-  class CodeGenModule;
   class CodeGenTypes;
   class CGDebugInfo;
   class CGFunctionInfo;
@@ -1337,6 +1337,10 @@ private:
       Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
                                     ArgType));
     }
+  }
+
+  const TargetCodeGenInfo &getTargetHooks() const {
+    return CGM.getTargetCodeGenInfo();
   }
 };
 

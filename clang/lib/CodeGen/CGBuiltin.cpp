@@ -360,8 +360,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F, Depth));
   }
   case Builtin::BI__builtin_extract_return_addr: {
-    // FIXME: There should be a target hook for this
-    return RValue::get(EmitScalarExpr(E->getArg(0)));
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Value *Result = getTargetHooks().decodeReturnAddress(*this, Address);
+    return RValue::get(Result);
+  }
+  case Builtin::BI__builtin_frob_return_addr: {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Value *Result = getTargetHooks().encodeReturnAddress(*this, Address);
+    return RValue::get(Result);
   }
   case Builtin::BI__builtin_unwind_init: {
     Value *F = CGM.getIntrinsic(Intrinsic::eh_unwind_init, 0, 0);
@@ -391,7 +397,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     // Otherwise, ask the codegen data what to do.
     const llvm::IntegerType *Int64Ty = llvm::IntegerType::get(C, 64);
-    if (CGM.getTargetCodeGenInfo().extendPointerWithSExt())
+    if (getTargetHooks().extendPointerWithSExt())
       return RValue::get(Builder.CreateSExt(Result, Int64Ty, "extend.sext"));
     else
       return RValue::get(Builder.CreateZExt(Result, Int64Ty, "extend.zext"));
