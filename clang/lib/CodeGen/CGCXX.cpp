@@ -93,12 +93,18 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
   if (!UniqueBase)
     return true;
 
+  /// If we don't have a definition for the destructor yet, don't
+  /// emit.  We can't emit aliases to declarations; that's just not
+  /// how aliases work.
+  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor(getContext());
+  if (!BaseD->isImplicit() && !BaseD->getBody())
+    return true;
+
   // If the base is at a non-zero offset, give up.
   const ASTRecordLayout &ClassLayout = Context.getASTRecordLayout(Class);
   if (ClassLayout.getBaseClassOffset(UniqueBase) != 0)
     return true;
 
-  const CXXDestructorDecl *BaseD = UniqueBase->getDestructor(getContext());
   return TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Base),
                                   GlobalDecl(BaseD, Dtor_Base));
 }

@@ -104,6 +104,10 @@ namespace test1 {
   struct Empty { }; // trivial destructor, empty
   struct NonEmpty { int x; }; // trivial destructor, non-empty
 
+  // There must be a definition in this translation unit for the alias
+  // optimization to apply.
+  A::~A() { delete m; }
+
   struct M : A { ~M(); };
   M::~M() {} // alias tested above
 
@@ -132,4 +136,14 @@ namespace test1 {
   // for calling conventions that are safe against extra parameters.
   struct U : A, virtual B { ~U(); };
   U::~U() {} // CHECK: define void @_ZN5test11UD2Ev
+}
+
+// PR6471
+namespace test2 {
+  struct A { ~A(); char ***m; };
+  struct B : A { ~B(); };
+
+  B::~B() {}
+  // CHECK: define void @_ZN5test21BD2Ev
+  // CHECK: call void @_ZN5test21AD2Ev
 }
