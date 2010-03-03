@@ -734,7 +734,7 @@ def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
 // multiply register
 let isCommutable = 1 in
 def tMUL : T1sIt<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iMUL32,
-                 "mul", "\t$dst, $rhs",
+                 "mul", "\t$dst, $rhs, $dst", /* A8.6.105 MUL Encoding T1 */
                  [(set tGPR:$dst, (mul tGPR:$lhs, tGPR:$rhs))]>,
            T1DataProcessing<0b1101>;
 
