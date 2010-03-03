@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o %t
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 void t1(int len) {
   __asm__ volatile("" : "=&r"(len), "+&r"(len));
 }
@@ -110,3 +110,13 @@ int t16() {
        );
   return 0;
 }
+
+// PR6475
+void t17() {
+  int i;
+  __asm__ ( "nop": "=m"(i));
+  
+// CHECK: @t17()
+// CHECK: call void asm "nop", "=*m,
+}
+
