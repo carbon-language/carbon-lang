@@ -1282,8 +1282,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
 
-      if (FromPointeeType->isRecordType() &&
-          ToPointeeType->isRecordType()) {
+      if (FromPointeeType->isRecordType() && ToPointeeType->isRecordType() &&
+          !Context.hasSameUnqualifiedType(FromPointeeType, ToPointeeType)) {
         // We must have a derived-to-base conversion. Check an
         // ambiguous or inaccessible conversion.
         if (CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
@@ -2304,7 +2304,9 @@ Sema::TryObjectArgumentInitialization(QualType OrigFromType,
 /// the implicit object parameter for the given Method with the given
 /// expression.
 bool
-Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
+Sema::PerformObjectArgumentInitialization(Expr *&From, 
+                                          NestedNameSpecifier *Qualifier, 
+                                          CXXMethodDecl *Method) {
   QualType FromRecordType, DestType;
   QualType ImplicitParamRecordType  =
     Method->getThisType(Context)->getAs<PointerType>()->getPointeeType();
@@ -2327,15 +2329,12 @@ Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
                 diag::err_implicit_object_parameter_init)
        << ImplicitParamRecordType << FromRecordType << From->getSourceRange();
 
-  if (ICS.Standard.Second == ICK_Derived_To_Base &&
-      CheckDerivedToBaseConversion(FromRecordType,
-                                   ImplicitParamRecordType,
-                                   From->getSourceRange().getBegin(),
-                                   From->getSourceRange()))
-    return true;
+  if (ICS.Standard.Second == ICK_Derived_To_Base)
+    return PerformObjectMemberConversion(From, Qualifier, Method);
 
-  ImpCastExprToType(From, DestType, CastExpr::CK_DerivedToBase,
-                    /*isLvalue=*/true);
+  if (!Context.hasSameType(From->getType(), DestType))
+    ImpCastExprToType(From, DestType, CastExpr::CK_NoOp,
+                      /*isLvalue=*/!From->getType()->getAs<PointerType>());
   return false;
 }
 
@@ -5545,7 +5544,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
         CheckMemberOperatorAccess(OpLoc, Args[0], Method, Best->getAccess());
 
-        if (PerformObjectArgumentInitialization(Input, Method))
+        if (PerformObjectArgumentInitialization(Input, /*Qualifier=*/0, Method))
           return ExprError();
       } else {
         // Convert the arguments.
@@ -5738,7 +5737,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
           if (Arg1.isInvalid())
             return ExprError();
 
-          if (PerformObjectArgumentInitialization(Args[0], Method))
+          if (PerformObjectArgumentInitialization(Args[0], /*Qualifier=*/0, 
+                                                  Method))
             return ExprError();
 
           Args[1] = RHS = Arg1.takeAs<Expr>();
@@ -5904,7 +5904,8 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 
         // Convert the arguments.
         CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
-        if (PerformObjectArgumentInitialization(Args[0], Method))
+        if (PerformObjectArgumentInitialization(Args[0], /*Qualifier=*/0, 
+                                                Method))
           return ExprError();
 
         // Convert the arguments.
@@ -6009,12 +6010,15 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   
   MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;
+  NestedNameSpecifier *Qualifier = 0;
   if (isa<MemberExpr>(NakedMemExpr)) {
     MemExpr = cast<MemberExpr>(NakedMemExpr);
     Method = cast<CXXMethodDecl>(MemExpr->getMemberDecl());
+    Qualifier = MemExpr->getQualifier();
   } else {
     UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
-
+    Qualifier = UnresExpr->getQualifier();
+    
     QualType ObjectType = UnresExpr->getBaseType();
 
     // Add overload candidates
@@ -6113,7 +6117,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   // Convert the object argument (for a non-static member function call).
   Expr *ObjectArg = MemExpr->getBase();
   if (!Method->isStatic() &&
-      PerformObjectArgumentInitialization(ObjectArg, Method))
+      PerformObjectArgumentInitialization(ObjectArg, Qualifier, Method))
     return ExprError();
   MemExpr->setBase(ObjectArg);
 
@@ -6333,7 +6337,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   bool IsError = false;
 
   // Initialize the implicit object parameter.
-  IsError |= PerformObjectArgumentInitialization(Object, Method);
+  IsError |= PerformObjectArgumentInitialization(Object, /*Qualifier=*/0, 
+                                                 Method);
   TheCall->setArg(0, Object);
 
 
@@ -6458,7 +6463,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
 
   // Convert the object parameter.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
-  if (PerformObjectArgumentInitialization(Base, Method))
+  if (PerformObjectArgumentInitialization(Base, /*Qualifier=*/0, Method))
     return ExprError();
 
   // No concerns about early exits now.

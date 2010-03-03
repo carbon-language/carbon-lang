@@ -1097,12 +1097,16 @@ public:
   ImplicitConversionSequence
   TryObjectArgumentInitialization(QualType FromType, CXXMethodDecl *Method,
                                   CXXRecordDecl *ActingContext);
-  bool PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method);
+  bool PerformObjectArgumentInitialization(Expr *&From, 
+                                           NestedNameSpecifier *Qualifier,
+                                           CXXMethodDecl *Method);
 
   ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
   bool PerformContextuallyConvertToBool(Expr *&From);
 
-  bool PerformObjectMemberConversion(Expr *&From, NamedDecl *Member);
+  bool PerformObjectMemberConversion(Expr *&From, 
+                                     NestedNameSpecifier *Qualifier,
+                                     NamedDecl *Member);
 
   // Members have to be NamespaceDecl* or TranslationUnitDecl*.
   // TODO: make this is a typesafe union.

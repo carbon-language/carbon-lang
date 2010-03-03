@@ -969,7 +969,7 @@ public:
       assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
 
       Expr *BaseExpr = Base.takeAs<Expr>();
-      if (getSema().PerformObjectMemberConversion(BaseExpr, Member))
+      if (getSema().PerformObjectMemberConversion(BaseExpr, Qualifier, Member))
         return getSema().ExprError();
 
       MemberExpr *ME =

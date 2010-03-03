@@ -2881,7 +2881,7 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
 
 CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 
                                                 CXXMethodDecl *Method) {
-  if (PerformObjectArgumentInitialization(Exp, Method))
+  if (PerformObjectArgumentInitialization(Exp, /*Qualifier=*/0, Method))
     assert(0 && "Calling BuildCXXMemberCallExpr with invalid call?");
 
   MemberExpr *ME = 
