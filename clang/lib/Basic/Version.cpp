@@ -40,15 +40,15 @@ llvm::StringRef getClangRepositoryPath() {
 }
 
 std::string getClangRevision() {
-#ifndef SVN_REVISION
-  // Subversion was not available at build time?
-  return "";
-#else
-  std::string revision;
-  llvm::raw_string_ostream OS(revision);
-  OS << strtol(SVN_REVISION, 0, 10);
-  return revision;
+#ifdef SVN_REVISION
+  if (SVN_VERSION[0] != '\0') {
+    std::string revision;
+    llvm::raw_string_ostream OS(revision);
+    OS << strtol(SVN_REVISION, 0, 10);
+    return revision;
+  }
 #endif
+  return "";
 }
 
 std::string getClangFullRepositoryVersion() {
