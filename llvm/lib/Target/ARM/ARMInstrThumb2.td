@@ -2341,6 +2341,34 @@ def t2CPS : T2XI<(outs),(ins i32imm:$opt), NoItinerary, "cps${opt:cps}",
   let Inst{12} = 0;
 }
 
+// A6.3.4 Branches and miscellaneous control
+// Table A6-14 Change Processor State, and hint instructions
+// Helper class for disassembly only.
+class T2I_hint<bits<8> op7_0, string opc, string asm>
+  : T2I<(outs), (ins), NoItinerary, opc, asm,
+        [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-20} = 0xf3a;
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+  let Inst{10-8} = 0b000;
+  let Inst{7-0} = op7_0;
+}
+
+def t2NOP   : T2I_hint<0b00000000, "nop",   ".w">;
+def t2YIELD : T2I_hint<0b00000001, "yield", ".w">;
+def t2WFE   : T2I_hint<0b00000010, "wfe",   ".w">;
+def t2WFI   : T2I_hint<0b00000011, "wfi",   ".w">;
+def t2SEV   : T2I_hint<0b00000100, "sev",   ".w">;
+
+def t2DBG : T2I<(outs),(ins i32imm:$opt), NoItinerary, "dbg", "\t$opt",
+                [/* For disassembly only; pattern left blank */]> {
+  let Inst{31-20} = 0xf3a;
+  let Inst{15-14} = 0b10;
+  let Inst{12} = 0;
+  let Inst{10-8} = 0b000;
+  let Inst{7-4} = 0b1111;
+}
+
 // Secure Monitor Call is a system instruction -- for disassembly only
 // Option = Inst{19-16}
 def t2SMC : T2I<(outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
