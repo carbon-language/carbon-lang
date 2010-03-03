@@ -25,6 +25,9 @@
 
 using namespace llvm;
 
+STATISTIC(NumCoalesces, "Number of copies coalesced");
+STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
+
 namespace llvm {
   template<> struct DenseMapInfo<MachineInstr*> {
     static inline MachineInstr *getEmptyKey() {
@@ -93,8 +96,6 @@ namespace {
     const TargetInstrInfo *TII;
     MachineRegisterInfo  *MRI;
     MachineDominatorTree *DT;
-    ScopedHashTable<MachineInstr*, unsigned> VNT;
-    unsigned CurrVN;
   public:
     static char ID; // Pass identification
     MachineCSE() : MachineFunctionPass(&ID), CurrVN(0) {}
@@ -109,6 +110,10 @@ namespace {
     }
 
   private:
+    unsigned CurrVN;
+    ScopedHashTable<MachineInstr*, unsigned> VNT;
+    SmallVector<MachineInstr*, 64> Exps;
+
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool ProcessBlock(MachineDomTreeNode *Node);
   };
@@ -125,20 +130,26 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
   bool Changed = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isUse()) {
-      unsigned Reg = MO.getReg();
-      if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
-        continue;
-      MachineInstr *DefMI = MRI->getVRegDef(Reg);
-      if (DefMI->getParent() == MBB) {
-        unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-        if (TII->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-            TargetRegisterInfo::isVirtualRegister(SrcReg) &&
-            !SrcSubIdx && !DstSubIdx) {
-          MO.setReg(SrcReg);
-          Changed = true;
-        }
-      }
+    if (!MO.isReg() || !MO.isUse())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg || TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+    if (!MRI->hasOneUse(Reg))
+      // Only coalesce single use copies. This ensure the copy will be
+      // deleted.
+      continue;
+    MachineInstr *DefMI = MRI->getVRegDef(Reg);
+    if (DefMI->getParent() != MBB)
+      continue;
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (TII->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+        TargetRegisterInfo::isVirtualRegister(SrcReg) &&
+        !SrcSubIdx && !DstSubIdx) {
+      MO.setReg(SrcReg);
+      DefMI->eraseFromParent();
+      ++NumCoalesces;
+      Changed = true;
     }
   }
 
@@ -153,6 +164,8 @@ static bool hasLivePhysRegDefUse(MachineInstr *MI) {
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
+    // FIXME: This is obviously overly conservative. On x86 lots of instructions
+    // will def EFLAGS and they are not marked dead at this point.
     if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
         !(MO.isDef() && MO.isDead()))
       return true;
@@ -165,17 +178,18 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
 
   ScopedHashTableScope<MachineInstr*, unsigned> VNTS(VNT);
   MachineBasicBlock *MBB = Node->getBlock();
-  for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
-       ++I) {
+  for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E; ) {
     MachineInstr *MI = &*I;
+    ++I;
     bool SawStore = false;
     if (!MI->isSafeToMove(TII, 0, SawStore))
       continue;
     // Ignore copies or instructions that read / write physical registers
     // (except for dead defs of physical registers).
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
-      continue;
+    if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
+        MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg())
+      continue;    
     if (hasLivePhysRegDefUse(MI))
       continue;
 
@@ -186,10 +200,33 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
         FoundCSE = VNT.count(MI);
     }
 
-    if (FoundCSE)
-      DEBUG(dbgs() << "Found a common subexpression: " << *MI);
-    else
-      VNT.insert(MI, ++CurrVN);
+    if (!FoundCSE) {
+      VNT.insert(MI, CurrVN++);
+      Exps.push_back(MI);
+      continue;
+    }
+
+    // Found a common subexpression, eliminate it.
+    unsigned CSVN = VNT.lookup(MI);
+    MachineInstr *CSMI = Exps[CSVN];
+    DEBUG(dbgs() << "Examining: " << *MI);
+    DEBUG(dbgs() << "*** Found a common subexpression: " << *CSMI);
+    unsigned NumDefs = MI->getDesc().getNumDefs();
+    for (unsigned i = 0, e = MI->getNumOperands(); NumDefs && i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg() || !MO.isDef())
+        continue;
+      unsigned OldReg = MO.getReg();
+      unsigned NewReg = CSMI->getOperand(i).getReg();
+      assert(OldReg != NewReg &&
+             TargetRegisterInfo::isVirtualRegister(OldReg) &&
+             TargetRegisterInfo::isVirtualRegister(NewReg) &&
+             "Do not CSE physical register defs!");
+      MRI->replaceRegWith(OldReg, NewReg);
+      --NumDefs;
+    }
+    MI->eraseFromParent();
+    ++NumCSEs;
   }
 
   // Recursively call ProcessBlock with childred.
