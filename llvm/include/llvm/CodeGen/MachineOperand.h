@@ -19,14 +19,14 @@
 
 namespace llvm {
   
-class ConstantFP;
 class BlockAddress;
-class MachineBasicBlock;
+class ConstantFP;
 class GlobalValue;
+class MachineBasicBlock;
 class MachineInstr;
-class TargetMachine;
 class MachineRegisterInfo;
 class MDNode;
+class TargetMachine;
 class raw_ostream;
   
 /// MachineOperand class - Representation of each machine instruction operand.
