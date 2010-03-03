@@ -14,7 +14,8 @@
 //===----------------------------------------------------------------------===//
 def RetCC_Alpha : CallingConv<[
   // i64 is returned in register R0
-  CCIfType<[i64], CCAssignToReg<[R0]>>,
+  // R1 is an llvm extension, I don't know what gcc does
+  CCIfType<[i64], CCAssignToReg<[R0,R1]>>,
 
   // f32 / f64 are returned in F0/F1
   CCIfType<[f32, f64], CCAssignToReg<[F0, F1]>>
