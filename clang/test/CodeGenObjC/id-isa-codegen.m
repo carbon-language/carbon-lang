@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm -o - %s
 
 typedef struct objc_class *Class;
 
@@ -48,3 +48,19 @@ id Test2() {
       return (*[Foo method]).isa;
     return [Foo method]->isa;
 }
+
+// rdar 7709015
+@interface Cat   {}
+@end
+
+@interface SuperCat : Cat {}
++(void)geneticallyAlterCat:(Cat *)cat;
+@end
+
+@implementation SuperCat
++ (void)geneticallyAlterCat:(Cat *)cat {
+    Class dynamicSubclass;
+    ((id)cat)->isa = dynamicSubclass;
+}
+@end
+

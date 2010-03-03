@@ -1888,6 +1888,8 @@ LValue CodeGenFunction::EmitObjCIsaExpr(const ObjCIsaExpr *E) {
     V = CreateTempAlloca(ClassPtrTy, "resval");
     llvm::Value *Src = EmitScalarExpr(BaseExpr);
     Builder.CreateStore(Src, V);
+    LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+    V = ScalarExprEmitter(*this).EmitLoadOfLValue(LV, E->getType());
   }
   else {
       if (E->isArrow())
