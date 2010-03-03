@@ -79,6 +79,8 @@ class CXXMethodVector {
   typedef std::vector<const CXXMethodDecl *> vector_type;
 
 public:
+  CXXMethodVector() : Storage(0) { }
+
   typedef const CXXMethodDecl **iterator;
   iterator begin() const;
   iterator end() const;
