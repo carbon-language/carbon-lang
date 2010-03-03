@@ -983,6 +983,28 @@ def t2LDRSH_POST : T2Iidxldst<1, 0b01, 1, 0, (outs GPR:$dst, GPR:$base_wb),
                             []>;
 }
 
+// LDRT, LDRBT, LDRHT, LDRSBT, LDRSHT all have offset mode (PUW=0b110) and are
+// for disassembly only.
+// Ref: A8.6.57 LDR (immediate, Thumb) Encoding T4
+class T2IldT<bit signed, bits<2> type, string opc>
+  : T2Ii8<(outs GPR:$dst), (ins t2addrmode_imm8:$addr), IIC_iLoadi, opc,
+          "\t$dst, $addr", []> {
+  let Inst{31-27} = 0b11111;
+  let Inst{26-25} = 0b00;
+  let Inst{24} = signed;
+  let Inst{23} = 0;
+  let Inst{22-21} = type;
+  let Inst{20} = 1; // load
+  let Inst{11} = 1;
+  let Inst{10-8} = 0b110; // PUW.
+}
+
+def t2LDRT   : T2IldT<0, 0b10, "ldrt">;
+def t2LDRBT  : T2IldT<0, 0b00, "ldrbt">;
+def t2LDRHT  : T2IldT<0, 0b01, "ldrht">;
+def t2LDRSBT : T2IldT<1, 0b00, "ldrsbt">;
+def t2LDRSHT : T2IldT<1, 0b01, "ldrsht">;
+
 // Store
 defm t2STR :T2I_st<0b10,"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
 defm t2STRB:T2I_st<0b00,"strb",BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
@@ -1037,6 +1059,25 @@ def t2STRB_POST : T2Iidxldst<0, 0b00, 0, 0, (outs GPR:$base_wb),
         [(set GPR:$base_wb,
               (post_truncsti8 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
 
+// STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
+// only.
+// Ref: A8.6.193 STR (immediate, Thumb) Encoding T4
+class T2IstT<bits<2> type, string opc>
+  : T2Ii8<(outs GPR:$src), (ins t2addrmode_imm8:$addr), IIC_iStorei, opc,
+          "\t$src, $addr", []> {
+  let Inst{31-27} = 0b11111;
+  let Inst{26-25} = 0b00;
+  let Inst{24} = 0; // not signed
+  let Inst{23} = 0;
+  let Inst{22-21} = type;
+  let Inst{20} = 0; // store
+  let Inst{11} = 1;
+  let Inst{10-8} = 0b110; // PUW
+}
+
+def t2STRT   : T2IstT<0b10, "strt">;
+def t2STRBT  : T2IstT<0b00, "strbt">;
+def t2STRHT  : T2IstT<0b01, "strht">;
 
 // FIXME: ldrd / strd pre / post variants
 
