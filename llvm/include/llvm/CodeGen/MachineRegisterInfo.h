@@ -115,6 +115,10 @@ public:
   /// register.
   bool use_empty(unsigned RegNo) const { return use_begin(RegNo) == use_end(); }
 
+  /// hasOneUse - Return true if there is exactly one instruction using the
+  /// specified register.
+  bool hasOneUse(unsigned RegNo) const;
+
   /// use_nodbg_iterator/use_nodbg_begin/use_nodbg_end - Walk all uses of the
   /// specified register, skipping those marked as Debug.
   typedef defusechain_iterator<true,false,true> use_nodbg_iterator;
@@ -128,6 +132,10 @@ public:
   bool use_nodbg_empty(unsigned RegNo) const {
     return use_nodbg_begin(RegNo) == use_nodbg_end();
   }
+
+  /// hasOneNonDBGUse - Return true if there is exactly one non-Debug
+  /// instruction using the specified register.
+  bool hasOneNonDBGUse(unsigned RegNo) const;
 
   /// replaceRegWith - Replace all instances of FromReg with ToReg in the
   /// machine function.  This is like llvm-level X->replaceAllUsesWith(Y),

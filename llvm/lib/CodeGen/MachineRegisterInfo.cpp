@@ -116,6 +116,19 @@ MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
   return 0;
 }
 
+bool MachineRegisterInfo::hasOneUse(unsigned RegNo) const {
+  use_iterator UI = use_begin(RegNo);
+  if (UI == use_end())
+    return false;
+  return ++UI == use_end();
+}
+
+bool MachineRegisterInfo::hasOneNonDBGUse(unsigned RegNo) const {
+  use_nodbg_iterator UI = use_nodbg_begin(RegNo);
+  if (UI == use_nodbg_end())
+    return false;
+  return ++UI == use_nodbg_end();
+}
 
 #ifndef NDEBUG
 void MachineRegisterInfo::dumpUses(unsigned Reg) const {

@@ -454,13 +454,10 @@ MachineInstr *findOnlyInterestingUse(unsigned Reg, MachineBasicBlock *MBB,
                                      const TargetInstrInfo *TII,
                                      bool &IsCopy,
                                      unsigned &DstReg, bool &IsDstPhys) {
-  MachineRegisterInfo::use_nodbg_iterator UI = MRI->use_nodbg_begin(Reg);
-  if (UI == MRI->use_nodbg_end())
+  if (!MRI->hasOneNonDBGUse(Reg))
+    // None or more than one use.
     return 0;
-  MachineInstr &UseMI = *UI;
-  if (++UI != MRI->use_nodbg_end())
-    // More than one use.
-    return 0;
+  MachineInstr &UseMI = *MRI->use_nodbg_begin(Reg);
   if (UseMI.getParent() != MBB)
     return 0;
   unsigned SrcReg;
