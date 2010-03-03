@@ -1,0 +1,20 @@
+//===--- BuiltinsARM.def - ARM Builtin function database ----*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the ARM-specific builtin function database.  Users of
+// this file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+
+// FIXME: This is just a placeholder. NEON intrinsics should be listed here.
+BUILTIN(__builtin_thread_pointer, "v*", "")
+
+#undef BUILTIN

@@ -14,12 +14,13 @@
 #undef PPC
 
 namespace clang {
-  /// X86 builtins
-  namespace X86 {
+
+  /// ARM builtins
+  namespace ARM {
     enum {
         LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "clang/Basic/BuiltinsX86.def"
+#include "clang/Basic/BuiltinsARM.def"
         LastTSBuiltin
     };
   }
@@ -33,6 +34,17 @@ namespace clang {
         LastTSBuiltin
     };
   }
+
+  /// X86 builtins
+  namespace X86 {
+    enum {
+        LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsX86.def"
+        LastTSBuiltin
+    };
+  }
+
 } // end namespace clang.
 
 #endif

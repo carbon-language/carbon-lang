@@ -735,6 +735,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
                                               const CallExpr *E) {
   switch (Target.getTriple().getArch()) {
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    return EmitARMBuiltinExpr(BuiltinID, E);
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     return EmitX86BuiltinExpr(BuiltinID, E);
@@ -743,6 +746,18 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
     return EmitPPCBuiltinExpr(BuiltinID, E);
   default:
     return 0;
+  }
+}
+
+Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
+                                           const CallExpr *E) {
+  switch (BuiltinID) {
+  default: return 0;
+
+  case ARM::BI__builtin_thread_pointer: {
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::arm_thread_pointer, 0, 0);
+    return Builder.CreateCall(AtomF);
+  }
   }
 }
 

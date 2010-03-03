@@ -1207,6 +1207,8 @@ class ARMTargetInfo : public TargetInfo {
   unsigned SoftFloat : 1;
   unsigned SoftFloatABI : 1;
 
+  static const Builtin::Info BuiltinInfo[];
+
 public:
   ARMTargetInfo(const std::string &TripleStr)
     : TargetInfo(TripleStr), ABI("aapcs-linux"), CPU("arm1136j-s")
@@ -1393,9 +1395,8 @@ public:
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
-    // FIXME: Implement.
-    Records = 0;
-    NumRecords = 0;
+    Records = BuiltinInfo;
+    NumRecords = clang::ARM::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
@@ -1460,6 +1461,12 @@ void ARMTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
   Aliases = GCCRegAliases;
   NumAliases = llvm::array_lengthof(GCCRegAliases);
 }
+
+const Builtin::Info ARMTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, false },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER, false },
+#include "clang/Basic/BuiltinsARM.def"
+};
 } // end anonymous namespace.
 
 
