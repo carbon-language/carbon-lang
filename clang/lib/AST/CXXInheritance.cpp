@@ -140,20 +140,18 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
   return AllMatches;
 }
 
-static bool lookupInBases(ASTContext &Context, const CXXRecordDecl *Record,
-                          CXXRecordDecl::BaseMatchesCallback *BaseMatches, 
-                          void *UserData,
-                          CXXBasePaths &Paths) {
+bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
+                                  void *UserData,
+                                  CXXBasePaths &Paths) const {
   bool FoundPath = false;
 
   // The access of the path down to this record.
   AccessSpecifier AccessToHere = Paths.ScratchPath.Access;
   bool IsFirstStep = Paths.ScratchPath.empty();
 
-  for (CXXRecordDecl::base_class_const_iterator BaseSpec = Record->bases_begin(),
-         BaseSpecEnd = Record->bases_end(); 
-       BaseSpec != BaseSpecEnd; 
-       ++BaseSpec) {
+  ASTContext &Context = getASTContext();
+  for (base_class_const_iterator BaseSpec = bases_begin(),
+         BaseSpecEnd = bases_end(); BaseSpec != BaseSpecEnd; ++BaseSpec) {
     // Find the record of the base class subobjects for this type.
     QualType BaseType = Context.getCanonicalType(BaseSpec->getType())
                                                           .getUnqualifiedType();
@@ -188,7 +186,7 @@ static bool lookupInBases(ASTContext &Context, const CXXRecordDecl *Record,
       // Add this base specifier to the current path.
       CXXBasePathElement Element;
       Element.Base = &*BaseSpec;
-      Element.Class = Record;
+      Element.Class = this;
       if (BaseSpec->isVirtual())
         Element.SubobjectNumber = 0;
       else
@@ -214,8 +212,7 @@ static bool lookupInBases(ASTContext &Context, const CXXRecordDecl *Record,
         Paths.ScratchPath.Access = BaseSpec->getAccessSpecifier();
       else
         Paths.ScratchPath.Access
-          = CXXRecordDecl::MergeAccess(AccessToHere, 
-                                       BaseSpec->getAccessSpecifier());
+          = MergeAccess(AccessToHere, BaseSpec->getAccessSpecifier());
     }
     
     // Track whether there's a path involving this specific base.
@@ -236,7 +233,7 @@ static bool lookupInBases(ASTContext &Context, const CXXRecordDecl *Record,
       CXXRecordDecl *BaseRecord
         = cast<CXXRecordDecl>(BaseSpec->getType()->getAs<RecordType>()
                                 ->getDecl());
-      if (lookupInBases(Context, BaseRecord, BaseMatches, UserData, Paths)) {
+      if (BaseRecord->lookupInBases(BaseMatches, UserData, Paths)) {
         // C++ [class.member.lookup]p2:
         //   A member name f in one sub-object B hides a member name f in
         //   a sub-object A if A is a base class sub-object of B. Any
@@ -267,12 +264,6 @@ static bool lookupInBases(ASTContext &Context, const CXXRecordDecl *Record,
   Paths.ScratchPath.Access = AccessToHere;
   
   return FoundPath;
-}
-
-bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
-                                  void *UserData,
-                                  CXXBasePaths &Paths) const {
-  return ::lookupInBases(getASTContext(), this, BaseMatches, UserData, Paths);
 }
 
 bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier, 
