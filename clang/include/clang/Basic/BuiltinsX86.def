@@ -281,8 +281,8 @@ BUILTIN(__builtin_ia32_pmovzxwq128, "V2LLiV8s", "")
 BUILTIN(__builtin_ia32_pmuldq128, "V2LLiV4iV4i", "")
 BUILTIN(__builtin_ia32_pmulld128, "V4iV4iV4i", "")
 BUILTIN(__builtin_ia32_roundps, "V4fV4fi", "")
-BUILTIN(__builtin_ia32_roundss, "V4fV4fi", "")
-BUILTIN(__builtin_ia32_roundsd, "V2dV2di", "")
+BUILTIN(__builtin_ia32_roundss, "V4fV4fV4fi", "")
+BUILTIN(__builtin_ia32_roundsd, "V2dV2dV2di", "")
 BUILTIN(__builtin_ia32_roundpd, "V2dV2di", "")
 
 
