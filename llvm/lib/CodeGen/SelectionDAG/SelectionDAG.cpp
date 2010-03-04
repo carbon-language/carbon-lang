@@ -4871,7 +4871,7 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 
 namespace {
 
-/// RAUWUpdateListner - Helper for ReplaceAllUsesWith - When the node
+/// RAUWUpdateListener - Helper for ReplaceAllUsesWith - When the node
 /// pointed to by a use iterator is deleted, increment the use iterator
 /// so that it doesn't dangle.
 ///
