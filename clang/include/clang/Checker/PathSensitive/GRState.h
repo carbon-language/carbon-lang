@@ -115,6 +115,8 @@ public:
     return Env.getAnalysisContext();
   }
 
+  const GRState *setAnalysisContext(AnalysisContext *ctx) const;
+
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
   const Environment& getEnvironment() const { return Env; }

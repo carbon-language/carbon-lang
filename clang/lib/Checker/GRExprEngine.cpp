@@ -1309,6 +1309,7 @@ void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
 
   const GRState *state = B.getState();
   state = getStoreManager().EnterStackFrame(state, LocCtx);
+  state = state->setAnalysisContext(LocCtx->getAnalysisContext());
 
   B.GenerateNode(state, LocCtx);
 }

@@ -23,6 +23,12 @@ using namespace clang;
 // FIXME: Move this elsewhere.
 ConstraintManager::~ConstraintManager() {}
 
+const GRState *GRState::setAnalysisContext(AnalysisContext *ctx) const {
+  GRState NewState = *this;
+  NewState.Env.setAnalysisContext(ctx);
+  return StateMgr->getPersistentState(NewState);
+}
+
 GRStateManager::~GRStateManager() {
   for (std::vector<GRState::Printer*>::iterator I=Printers.begin(),
         E=Printers.end(); I!=E; ++I)

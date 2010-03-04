@@ -59,11 +59,13 @@ public:
   SVal GetSVal(const Stmt* Ex, ValueManager& ValMgr) const;
 
   AnalysisContext &getAnalysisContext() const { return *ACtx; }
+  void setAnalysisContext(AnalysisContext *ctx) { ACtx = ctx; }
 
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const Environment* E) {
     E->ExprBindings.Profile(ID);
+    ID.AddPointer(E->ACtx);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
