@@ -64,6 +64,7 @@ namespace {
 
     llvm::OwningPtr<llvm::Module> TheModule;
     llvm::TargetData *TheTargetData;
+    llvm::OwningPtr<llvm::TargetMachine> TheTargetMachine;
 
     mutable FunctionPassManager *CodeGenPasses;
     mutable PassManager *PerModulePasses;
@@ -84,6 +85,7 @@ namespace {
 
   public:
     BackendConsumer(BackendAction action, Diagnostic &_Diags,
+                    llvm::TargetMachine &machine,
                     const LangOptions &langopts, const CodeGenOptions &compopts,
                     const TargetOptions &targetopts, bool TimePasses,
                     const std::string &infile, llvm::raw_ostream *OS,
@@ -96,8 +98,8 @@ namespace {
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
-      TheTargetData(0),
+      Gen(CreateLLVMCodeGen(Diags, infile, compopts, machine, C)),
+      TheTargetData(0), TheTargetMachine(&machine),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
 
       if (AsmOutStream)
@@ -216,15 +218,6 @@ bool BackendConsumer::AddEmitPasses() {
   } else {
     bool Fast = CodeGenOpts.OptimizationLevel == 0;
 
-    // Create the TargetMachine for generating code.
-    std::string Error;
-    std::string Triple = TheModule->getTargetTriple();
-    const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
-    if (!TheTarget) {
-      Diags.Report(diag::err_fe_unable_to_create_target) << Error;
-      return false;
-    }
-
     // FIXME: Expose these capabilities via actual APIs!!!! Aside from just
     // being gross, this is also totally broken if we ever care about
     // concurrency.
@@ -241,32 +234,6 @@ bool BackendConsumer::AddEmitPasses() {
     llvm::UseSoftFloat = CodeGenOpts.SoftFloat;
     UnwindTablesMandatory = CodeGenOpts.UnwindTables;
 
-    TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
-
-    // FIXME: Parse this earlier.
-    if (CodeGenOpts.RelocationModel == "static") {
-      TargetMachine::setRelocationModel(llvm::Reloc::Static);
-    } else if (CodeGenOpts.RelocationModel == "pic") {
-      TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
-    } else {
-      assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
-             "Invalid PIC model!");
-      TargetMachine::setRelocationModel(llvm::Reloc::DynamicNoPIC);
-    }
-    // FIXME: Parse this earlier.
-    if (CodeGenOpts.CodeModel == "small") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Small);
-    } else if (CodeGenOpts.CodeModel == "kernel") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Kernel);
-    } else if (CodeGenOpts.CodeModel == "medium") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Medium);
-    } else if (CodeGenOpts.CodeModel == "large") {
-      TargetMachine::setCodeModel(llvm::CodeModel::Large);
-    } else {
-      assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
-      TargetMachine::setCodeModel(llvm::CodeModel::Default);
-    }
-
     std::vector<const char *> BackendArgs;
     BackendArgs.push_back("clang"); // Fake program name.
     if (!CodeGenOpts.DebugPass.empty()) {
@@ -282,18 +249,6 @@ bool BackendConsumer::AddEmitPasses() {
     BackendArgs.push_back(0);
     llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
                                       (char**) &BackendArgs[0]);
-
-    std::string FeaturesStr;
-    if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
-      SubtargetFeatures Features;
-      Features.setCPU(TargetOpts.CPU);
-      for (std::vector<std::string>::const_iterator
-             it = TargetOpts.Features.begin(),
-             ie = TargetOpts.Features.end(); it != ie; ++it)
-        Features.AddFeature(*it);
-      FeaturesStr = Features.getString();
-    }
-    TargetMachine *TM = TheTarget->createTargetMachine(Triple, FeaturesStr);
 
     // Set register scheduler & allocation policy.
     RegisterScheduler::setDefault(createDefaultScheduler);
@@ -327,8 +282,8 @@ bool BackendConsumer::AddEmitPasses() {
     TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
     if (Action == Backend_EmitObj)
       CGFT = TargetMachine::CGFT_ObjectFile;
-    if (TM->addPassesToEmitFile(*PM, FormattedOutStream, CGFT, OptLevel,
-                                DisableVerify)) {
+    if (TheTargetMachine->addPassesToEmitFile(*PM, FormattedOutStream,
+                                              CGFT, OptLevel, DisableVerify)) {
       Diags.Report(diag::err_fe_unable_to_interface_with_target);
       return false;
     }
@@ -462,8 +417,65 @@ llvm::Module *CodeGenAction::takeModule() {
   return TheModule.take();
 }
 
+static llvm::TargetMachine *CreateTargetMachine(CompilerInstance &CI) {
+  const CodeGenOptions &CodeGenOpts = CI.getCodeGenOpts();
+  const TargetOptions &TargetOpts = CI.getTargetOpts();
+
+  std::string Error;
+  std::string Triple = CI.getTarget().getTriple().getTriple();
+  const llvm::Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
+  if (!TheTarget) {
+    CI.getDiagnostics().Report(diag::err_fe_unable_to_create_target) << Error;
+    return 0;
+  }
+
+  TargetMachine::setAsmVerbosityDefault(CodeGenOpts.AsmVerbose);
+
+  // FIXME: Parse this earlier.
+  if (CodeGenOpts.RelocationModel == "static") {
+    TargetMachine::setRelocationModel(llvm::Reloc::Static);
+  } else if (CodeGenOpts.RelocationModel == "pic") {
+    TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
+  } else {
+    assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
+           "Invalid PIC model!");
+    TargetMachine::setRelocationModel(llvm::Reloc::DynamicNoPIC);
+  }
+
+  // FIXME: Parse this earlier.
+  if (CodeGenOpts.CodeModel == "small") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Small);
+  } else if (CodeGenOpts.CodeModel == "kernel") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Kernel);
+  } else if (CodeGenOpts.CodeModel == "medium") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Medium);
+  } else if (CodeGenOpts.CodeModel == "large") {
+    TargetMachine::setCodeModel(llvm::CodeModel::Large);
+  } else {
+    assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
+    TargetMachine::setCodeModel(llvm::CodeModel::Default);
+  }
+
+  std::string FeaturesStr;
+  if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
+    SubtargetFeatures Features;
+    Features.setCPU(TargetOpts.CPU);
+    for (std::vector<std::string>::const_iterator
+           it = TargetOpts.Features.begin(),
+           ie = TargetOpts.Features.end(); it != ie; ++it)
+      Features.AddFeature(*it);
+    FeaturesStr = Features.getString();
+  }
+
+  return TheTarget->createTargetMachine(Triple, FeaturesStr);
+}
+
 ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
+  llvm::OwningPtr<llvm::TargetMachine> TM(CreateTargetMachine(CI));
+  if (!TM)
+    return 0;
+
   BackendAction BA = static_cast<BackendAction>(Act);
   llvm::OwningPtr<llvm::raw_ostream> OS;
   switch (BA) {
@@ -485,9 +497,15 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 
-  return new BackendConsumer(BA, CI.getDiagnostics(), CI.getLangOpts(),
-                             CI.getCodeGenOpts(), CI.getTargetOpts(),
-                             CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
+  return new BackendConsumer(BA,
+                             CI.getDiagnostics(),
+                             *TM.take(),
+                             CI.getLangOpts(),
+                             CI.getCodeGenOpts(),
+                             CI.getTargetOpts(),
+                             CI.getFrontendOpts().ShowTimers,
+                             InFile,
+                             OS.take(),
                              CI.getLLVMContext());
 }
 

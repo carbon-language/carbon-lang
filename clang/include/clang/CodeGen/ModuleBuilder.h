@@ -20,6 +20,7 @@
 namespace llvm {
   class LLVMContext;
   class Module;
+  class TargetMachine;
 }
 
 namespace clang {
@@ -36,6 +37,7 @@ namespace clang {
   CodeGenerator *CreateLLVMCodeGen(Diagnostic &Diags,
                                    const std::string &ModuleName,
                                    const CodeGenOptions &CGO,
+                                   const llvm::TargetMachine &Machine,
                                    llvm::LLVMContext& C);
 }
 

@@ -38,6 +38,7 @@ namespace llvm {
   class Function;
   class GlobalValue;
   class TargetData;
+  class TargetMachine;
   class FunctionType;
   class LLVMContext;
 }
@@ -86,6 +87,7 @@ class CodeGenModule : public BlockModule {
   const LangOptions &Features;
   const CodeGenOptions &CodeGenOpts;
   llvm::Module &TheModule;
+  const llvm::TargetMachine &TheTargetMachine;
   const llvm::TargetData &TheTargetData;
   mutable const TargetCodeGenInfo *TheTargetCodeGenInfo;
   Diagnostic &Diags;
@@ -168,7 +170,8 @@ class CodeGenModule : public BlockModule {
   llvm::LLVMContext &VMContext;
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
-                llvm::Module &M, const llvm::TargetData &TD, Diagnostic &Diags);
+                llvm::Module &M, const llvm::TargetMachine &TM,
+                const llvm::TargetData &TD, Diagnostic &Diags);
 
   ~CodeGenModule();
 
@@ -198,6 +201,9 @@ public:
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
   const TargetCodeGenInfo &getTargetCodeGenInfo() const;
+  const llvm::TargetMachine &getTargetMachine() const {
+    return TheTargetMachine;
+  }
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
   LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;

@@ -29,6 +29,7 @@ namespace {
   class CodeGeneratorImpl : public CodeGenerator {
     Diagnostic &Diags;
     llvm::OwningPtr<const llvm::TargetData> TD;
+    const llvm::TargetMachine &TM;
     ASTContext *Ctx;
     const CodeGenOptions CodeGenOpts;  // Intentionally copied in.
   protected:
@@ -36,8 +37,11 @@ namespace {
     llvm::OwningPtr<CodeGen::CodeGenModule> Builder;
   public:
     CodeGeneratorImpl(Diagnostic &diags, const std::string& ModuleName,
-                      const CodeGenOptions &CGO, llvm::LLVMContext& C)
-      : Diags(diags), CodeGenOpts(CGO), M(new llvm::Module(ModuleName, C)) {}
+                      const CodeGenOptions &CGO,
+                      const llvm::TargetMachine &TM,
+                      llvm::LLVMContext& C)
+      : Diags(diags), TM(TM), CodeGenOpts(CGO),
+        M(new llvm::Module(ModuleName, C)) {}
 
     virtual ~CodeGeneratorImpl() {}
 
@@ -56,7 +60,7 @@ namespace {
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts,
-                                               *M, *TD, Diags));
+                                               *M, TM, *TD, Diags));
     }
 
     virtual void HandleTopLevelDecl(DeclGroupRef DG) {
@@ -95,6 +99,7 @@ namespace {
 CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags,
                                         const std::string& ModuleName,
                                         const CodeGenOptions &CGO,
+                                        const llvm::TargetMachine &Machine,
                                         llvm::LLVMContext& C) {
-  return new CodeGeneratorImpl(Diags, ModuleName, CGO, C);
+  return new CodeGeneratorImpl(Diags, ModuleName, CGO, Machine, C);
 }
