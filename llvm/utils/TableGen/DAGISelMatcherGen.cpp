@@ -476,10 +476,6 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
   
   // If the pattern has a predicate on it (e.g. only enabled when a subtarget
   // feature is around, do the check).
-  // FIXME: This should get emitted after the match code below to encourage
-  // sharing.  This can't happen until we get an X86ISD::AddrMode node made by
-  // dag combine, eliminating the horrible side-effect-full stuff from 
-  // X86's MatchAddress.
   if (!Pattern.getPredicateCheck().empty())
     AddMatcher(new CheckPatternPredicateMatcher(Pattern.getPredicateCheck()));
   
