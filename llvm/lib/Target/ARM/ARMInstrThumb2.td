@@ -657,6 +657,32 @@ multiclass T2I_unary_rrot<bits<3> opcod, string opc, PatFrag opnode> {
    }
 }
 
+// SXTB16 and UXTB16 do not need the .w qualifier.
+multiclass T2I_unary_rrot_nw<bits<3> opcod, string opc, PatFrag opnode> {
+  def r     : T2I<(outs GPR:$dst), (ins GPR:$src), IIC_iUNAr,
+                  opc, "\t$dst, $src",
+                 [(set GPR:$dst, (opnode GPR:$src))]> {
+     let Inst{31-27} = 0b11111;
+     let Inst{26-23} = 0b0100;
+     let Inst{22-20} = opcod;
+     let Inst{19-16} = 0b1111; // Rn
+     let Inst{15-12} = 0b1111;
+     let Inst{7} = 1;
+     let Inst{5-4} = 0b00; // rotate
+   }
+  def r_rot : T2I<(outs GPR:$dst), (ins GPR:$src, i32imm:$rot), IIC_iUNAsi,
+                  opc, "\t$dst, $src, ror $rot",
+                 [(set GPR:$dst, (opnode (rotr GPR:$src, rot_imm:$rot)))]> {
+     let Inst{31-27} = 0b11111;
+     let Inst{26-23} = 0b0100;
+     let Inst{22-20} = opcod;
+     let Inst{19-16} = 0b1111; // Rn
+     let Inst{15-12} = 0b1111;
+     let Inst{7} = 1;
+     let Inst{5-4} = {?,?}; // rotate
+   }
+}
+
 // DO variant - disassembly only, no pattern
 
 multiclass T2I_unary_rrot_DO<bits<3> opcod, string opc> {
@@ -1260,7 +1286,7 @@ defm t2UXTB   : T2I_unary_rrot<0b101, "uxtb",
                                UnOpFrag<(and node:$Src, 0x000000FF)>>;
 defm t2UXTH   : T2I_unary_rrot<0b001, "uxth",
                                UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
-defm t2UXTB16 : T2I_unary_rrot<0b011, "uxtb16",
+defm t2UXTB16 : T2I_unary_rrot_nw<0b011, "uxtb16",
                                UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
 def : T2Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
