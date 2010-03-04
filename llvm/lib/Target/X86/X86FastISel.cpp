@@ -425,10 +425,17 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
       break;
     // Ok, the GEP indices were covered by constant-offset and scaled-index
     // addressing. Update the address state and move on to examining the base.
+    X86AddressMode SavedAM = AM;
     AM.IndexReg = IndexReg;
     AM.Scale = Scale;
     AM.Disp = (uint32_t)Disp;
-    return X86SelectAddress(U->getOperand(0), AM);
+    if (X86SelectAddress(U->getOperand(0), AM))
+      return true;
+    
+    // If we couldn't merge the sub value into this addr mode, revert back to
+    // our address and just match the value instead of completely failing.
+    AM = SavedAM;
+    break;
   unsupported_gep:
     // Ok, the GEP indices weren't all covered.
     break;
