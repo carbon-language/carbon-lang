@@ -388,6 +388,8 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
   }
 
   case Instruction::GetElementPtr: {
+    X86AddressMode SavedAM = AM;
+
     // Pattern-match simple GEPs.
     uint64_t Disp = (int32_t)AM.Disp;
     unsigned IndexReg = AM.IndexReg;
@@ -425,7 +427,6 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
       break;
     // Ok, the GEP indices were covered by constant-offset and scaled-index
     // addressing. Update the address state and move on to examining the base.
-    X86AddressMode SavedAM = AM;
     AM.IndexReg = IndexReg;
     AM.Scale = Scale;
     AM.Disp = (uint32_t)Disp;
