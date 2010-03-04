@@ -781,7 +781,7 @@ ObjectsBC := $(BaseNameSources:%=$(ObjDir)/%.bc)
 # in the file so they get built before dependencies
 #---------------------------------------------------------
 
-$(PROJ_bindir) $(PROJ_libdir) $(PROJ_includedir) $(PROJ_etcdir)::
+$(DESTDIR)$(PROJ_bindir) $(DESTDIR)$(PROJ_libdir) $(DESTDIR)$(PROJ_includedir) $(DESTDIR)$(PROJ_etcdir)::
 	$(Verb) $(MKDIR) $@
 
 # To create other directories, as needed, and timestamp their creation
@@ -904,22 +904,22 @@ install-local::
 uninstall-local::
 	$(Echo) UnInstall circumvented with NO_INSTALL
 else
-install-local:: $(PROJ_etcdir) $(CONFIG_FILES)
-	$(Echo) Installing Configuration Files To $(PROJ_etcdir)
+install-local:: $(DESTDIR)$(PROJ_etcdir) $(CONFIG_FILES)
+	$(Echo) Installing Configuration Files To $(DESTDIR)$(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
           if test -f $(PROJ_OBJ_DIR)/$${file} ; then \
-            $(DataInstall) $(PROJ_OBJ_DIR)/$${file} $(PROJ_etcdir) ; \
+            $(DataInstall) $(PROJ_OBJ_DIR)/$${file} $(DESTDIR)$(PROJ_etcdir) ; \
           elif test -f $(PROJ_SRC_DIR)/$${file} ; then \
-            $(DataInstall) $(PROJ_SRC_DIR)/$${file} $(PROJ_etcdir) ; \
+            $(DataInstall) $(PROJ_SRC_DIR)/$${file} $(DESTDIR)$(PROJ_etcdir) ; \
           else \
             $(ECHO) Error: cannot find config file $${file}. ; \
           fi \
 	done
 
 uninstall-local::
-	$(Echo) Uninstalling Configuration Files From $(PROJ_etcdir)
+	$(Echo) Uninstalling Configuration Files From $(DESTDIR)$(PROJ_etcdir)
 	$(Verb)for file in $(CONFIG_FILES); do \
-	  $(RM) -f $(PROJ_etcdir)/$${file} ; \
+	  $(RM) -f $(DESTDIR)$(PROJ_etcdir)/$${file} ; \
 	done
 endif
 
@@ -1011,7 +1011,7 @@ endif
 ifdef BYTECODE_DESTINATION
 ModuleDestDir := $(BYTECODE_DESTINATION)
 else
-ModuleDestDir := $(PROJ_libdir)
+ModuleDestDir := $(DESTDIR)$(PROJ_libdir)
 endif
 
 ifdef NO_INSTALL
@@ -1090,17 +1090,17 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestSharedLib = $(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
+DestSharedLib = $(DESTDIR)$(PROJ_libdir)/lib$(LIBRARYNAME)$(SHLIBEXT)
 
 install-local:: $(DestSharedLib)
 
-$(DestSharedLib): $(LibName.SO) $(PROJ_libdir)
+$(DestSharedLib): $(LibName.SO) $(DESTDIR)$(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Shared Library $(DestSharedLib)
 	$(Verb) $(INSTALL) $(LibName.SO) $(DestSharedLib)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
-	-$(Verb) $(RM) -f $(PROJ_libdir)/lib$(LIBRARYNAME).*
+	-$(Verb) $(RM) -f $(DESTDIR)$(PROJ_libdir)/lib$(LIBRARYNAME).*
 endif
 endif
 
@@ -1144,7 +1144,7 @@ endif
 ifdef BYTECODE_DESTINATION
 BytecodeDestDir := $(BYTECODE_DESTINATION)
 else
-BytecodeDestDir := $(PROJ_libdir)
+BytecodeDestDir := $(DESTDIR)$(PROJ_libdir)
 endif
 
 DestBytecodeLib = $(BytecodeDestDir)/lib$(LIBRARYNAME).bca
@@ -1209,13 +1209,13 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestArchiveLib := $(PROJ_libdir)/lib$(LIBRARYNAME).a
+DestArchiveLib := $(DESTDIR)$(PROJ_libdir)/lib$(LIBRARYNAME).a
 
 install-local:: $(DestArchiveLib)
 
-$(DestArchiveLib): $(LibName.A) $(PROJ_libdir)
+$(DestArchiveLib): $(LibName.A) $(DESTDIR)$(PROJ_libdir)
 	$(Echo) Installing $(BuildMode) Archive Library $(DestArchiveLib)
-	$(Verb) $(MKDIR) $(PROJ_libdir)
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_libdir)
 	$(Verb) $(INSTALL) $(LibName.A) $(DestArchiveLib)
 
 uninstall-local::
@@ -1315,11 +1315,11 @@ install-local::
 uninstall-local::
 	$(Echo) Uninstall circumvented with NO_INSTALL
 else
-DestTool = $(PROJ_bindir)/$(TOOLEXENAME)
+DestTool = $(DESTDIR)$(PROJ_bindir)/$(TOOLEXENAME)
 
 install-local:: $(DestTool)
 
-$(DestTool): $(ToolBuildPath) $(PROJ_bindir)
+$(DestTool): $(ToolBuildPath) $(DESTDIR)$(PROJ_bindir)
 	$(Echo) Installing $(BuildMode) $(DestTool)
 	$(Verb) $(ProgInstall) $(ToolBuildPath) $(DestTool)
 
@@ -1964,25 +1964,25 @@ uninstall-local::
 else
 install-local::
 	$(Echo) Installing include files
-	$(Verb) $(MKDIR) $(PROJ_includedir)
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_includedir)
 	$(Verb) if test -d "$(PROJ_SRC_ROOT)/include" ; then \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	  for  hdr in `find . -type f '!' '(' -name '*~' \
 	      -o -name '.#*' -o -name '*.in' ')' -print | grep -v CVS | \
 	      grep -v .svn` ; do \
-	    instdir=`dirname "$(PROJ_includedir)/$$hdr"` ; \
+	    instdir=`dirname "$(DESTDIR)$(PROJ_includedir)/$$hdr"` ; \
 	    if test \! -d "$$instdir" ; then \
 	      $(EchoCmd) Making install directory $$instdir ; \
 	      $(MKDIR) $$instdir ;\
 	    fi ; \
-	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
+	    $(DataInstall) $$hdr $(DESTDIR)$(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
 ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/include" ; then \
 	  cd $(PROJ_OBJ_ROOT)/include && \
 	  for hdr in `find . -type f -print | grep -v CVS` ; do \
-	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
+	    $(DataInstall) $$hdr $(DESTDIR)$(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
 endif
@@ -1994,10 +1994,10 @@ uninstall-local::
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f \
 	      '!' '(' -name '*~' -o -name '.#*' \
         -o -name '*.in' ')' -print ')' | \
-        grep -v CVS | sed 's#^#$(PROJ_includedir)/#'` ; \
+        grep -v CVS | sed 's#^#$(DESTDIR)$(PROJ_includedir)/#'` ; \
 	  cd $(PROJ_SRC_ROOT)/include && \
 	    $(RM) -f `find . -path '*/Internal' -prune -o '(' -type f -name '*.in' \
-      -print ')' | sed 's#\.in$$##;s#^#$(PROJ_includedir)/#'` ; \
+      -print ')' | sed 's#\.in$$##;s#^#$(DESTDIR)$(PROJ_includedir)/#'` ; \
 	fi
 endif
 endif

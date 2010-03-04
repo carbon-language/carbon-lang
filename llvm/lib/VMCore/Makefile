@@ -30,5 +30,5 @@ $(GENFILE): $(ObjDir)/Intrinsics.gen.tmp
 	    changed significantly. )
 
 install-local:: $(GENFILE)
-	$(Echo) Installing $(PROJ_includedir)/llvm/Intrinsics.gen
-	$(Verb) $(DataInstall) $(GENFILE) $(PROJ_includedir)/llvm/Intrinsics.gen
+	$(Echo) Installing $(DESTDIR)$(PROJ_includedir)/llvm/Intrinsics.gen
+	$(Verb) $(DataInstall) $(GENFILE) $(DESTDIR)$(PROJ_includedir)/llvm/Intrinsics.gen

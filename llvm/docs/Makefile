@@ -48,11 +48,11 @@ generated:: doxygen ocamldoc
 
 install-html: $(PROJ_OBJ_DIR)/html.tar.gz
 	$(Echo) Installing HTML documentation
-	$(Verb) $(MKDIR) $(PROJ_docsdir)/html
-	$(Verb) $(MKDIR) $(PROJ_docsdir)/html/img
-	$(Verb) $(DataInstall) $(HTML) $(PROJ_docsdir)/html
-	$(Verb) $(DataInstall) $(IMAGES) $(PROJ_docsdir)/html/img
-	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/html.tar.gz $(PROJ_docsdir)
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/html
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/html/img
+	$(Verb) $(DataInstall) $(HTML) $(DESTDIR)$(PROJ_docsdir)/html
+	$(Verb) $(DataInstall) $(IMAGES) $(DESTDIR)$(PROJ_docsdir)/html/img
+	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/html.tar.gz $(DESTDIR)$(PROJ_docsdir)
 
 $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 	$(Echo) Packaging HTML documentation
@@ -63,11 +63,11 @@ $(PROJ_OBJ_DIR)/html.tar.gz: $(HTML)
 
 install-doxygen: doxygen
 	$(Echo) Installing doxygen documentation
-	$(Verb) $(MKDIR) $(PROJ_docsdir)/html/doxygen
-	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_docsdir)
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/html/doxygen
+	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(DESTDIR)$(PROJ_docsdir)
 	$(Verb) cd $(PROJ_OBJ_DIR)/doxygen && \
 	  $(FIND) . -type f -exec \
-	    $(DataInstall) {} $(PROJ_docsdir)/html/doxygen \;
+	    $(DataInstall) {} $(DESTDIR)$(PROJ_docsdir)/html/doxygen \;
 
 doxygen: regendoc $(PROJ_OBJ_DIR)/doxygen.tar.gz
 
@@ -94,11 +94,11 @@ $(LLVM_SRC_ROOT)/docs/userloc.html:
 
 install-ocamldoc: ocamldoc
 	$(Echo) Installing ocamldoc documentation
-	$(Verb) $(MKDIR) $(PROJ_docsdir)/ocamldoc/html
-	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(PROJ_docsdir)
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_docsdir)/ocamldoc/html
+	$(Verb) $(DataInstall) $(PROJ_OBJ_DIR)/ocamldoc.tar.gz $(DESTDIR)$(PROJ_docsdir)
 	$(Verb) cd $(PROJ_OBJ_DIR)/ocamldoc && \
 	  $(FIND) . -type f -exec \
-	    $(DataInstall) {} $(PROJ_docsdir)/ocamldoc/html \;
+	    $(DataInstall) {} $(DESTDIR)$(PROJ_docsdir)/ocamldoc/html \;
 
 ocamldoc: regen-ocamldoc
 	$(Echo) Packaging ocamldoc documentation
@@ -120,4 +120,4 @@ regen-ocamldoc:
 
 uninstall-local::
 	$(Echo) Uninstalling Documentation
-	$(Verb) $(RM) -rf $(PROJ_docsdir)
+	$(Verb) $(RM) -rf $(DESTDIR)$(PROJ_docsdir)

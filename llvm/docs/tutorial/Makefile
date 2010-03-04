@@ -12,7 +12,7 @@ include $(LEVEL)/Makefile.common
 
 HTML       := $(wildcard $(PROJ_SRC_DIR)/*.html)
 EXTRA_DIST := $(HTML) index.html
-HTML_DIR   := $(PROJ_docsdir)/html/tutorial
+HTML_DIR   := $(DESTDIR)$(PROJ_docsdir)/html/tutorial
 
 install-local:: $(HTML)
 	$(Echo) Installing HTML Tutorial Documentation

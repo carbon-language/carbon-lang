@@ -76,14 +76,14 @@ endif
 
 LLVMMAKE := $(LLVM_SRC_ROOT)/make
 
-PROJ_bindir     := $(DESTDIR)$(PROJ_prefix)/bin
-PROJ_libdir     := $(DESTDIR)$(PROJ_prefix)/lib
-PROJ_datadir    := $(DESTDIR)$(PROJ_prefix)/share
-PROJ_docsdir    := $(DESTDIR)$(PROJ_prefix)/docs/llvm
-PROJ_etcdir     := $(DESTDIR)$(PROJ_prefix)/etc/llvm
-PROJ_includedir := $(DESTDIR)$(PROJ_prefix)/include
-PROJ_infodir    := $(DESTDIR)$(PROJ_prefix)/info
-PROJ_mandir     := $(DESTDIR)$(PROJ_prefix)/share/man
+PROJ_bindir     := $(PROJ_prefix)/bin
+PROJ_libdir     := $(PROJ_prefix)/lib
+PROJ_datadir    := $(PROJ_prefix)/share
+PROJ_docsdir    := $(PROJ_prefix)/docs/llvm
+PROJ_etcdir     := $(PROJ_prefix)/etc/llvm
+PROJ_includedir := $(PROJ_prefix)/include
+PROJ_infodir    := $(PROJ_prefix)/info
+PROJ_mandir     := $(PROJ_prefix)/share/man
 
 # Determine if we're on a unix type operating system
 LLVM_ON_UNIX:=@LLVM_ON_UNIX@

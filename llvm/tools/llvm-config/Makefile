@@ -126,6 +126,6 @@ clean-local::
 	  $(LibDeps) GenLibDeps.out
 install-local:: all-local
 	$(Echo) Installing llvm-config
-	$(Verb) $(MKDIR) $(PROJ_bindir)
-	$(Verb) $(ScriptInstall) $(ToolDir)/llvm-config $(PROJ_bindir)
+	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_bindir)
+	$(Verb) $(ScriptInstall) $(ToolDir)/llvm-config $(DESTDIR)$(PROJ_bindir)
 

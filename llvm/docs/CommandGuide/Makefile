@@ -77,9 +77,9 @@ EXTRA_DIST := $(POD) index.html
 clean-local::
 	$(Verb) $(RM) -f pod2htm*.*~~ $(HTML) $(MAN) $(PS)
 
-HTML_DIR := $(PROJ_docsdir)/html/CommandGuide
-MAN_DIR  := $(PROJ_mandir)/man1
-PS_DIR   := $(PROJ_docsdir)/ps
+HTML_DIR := $(DESTDIR)$(PROJ_docsdir)/html/CommandGuide
+MAN_DIR  := $(DESTDIR)$(PROJ_mandir)/man1
+PS_DIR   := $(DESTDIR)$(PROJ_docsdir)/ps
 
 install-local:: $(HTML) $(INSTALL_MANS) $(PS)
 	$(Echo) Installing HTML CommandGuide Documentation
