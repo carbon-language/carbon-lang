@@ -29,6 +29,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ValueHandle.h"
 #include <list>
 
@@ -116,6 +117,11 @@ class CodeGenModule : public BlockModule {
   /// IR symbol table, but this is quicker to query since it is doing uniqued
   /// pointer lookups instead of full string lookups.
   llvm::DenseMap<const char*, llvm::GlobalValue*> GlobalDeclMap;
+
+  // WeakRefReferences - A set of references that have only been seen via
+  // a weakref so far. This is used to remove the weak of the reference if we ever
+  // see a direct reference or a definition.
+  llvm::SmallPtrSet<llvm::GlobalValue*, 10> WeakRefReferences;
 
   /// \brief Contains the strings used for mangled names.
   ///
@@ -242,6 +248,9 @@ public:
                                 const CovariantThunkAdjustment &ThisAdjustment);
   void BuildThunksForVirtual(GlobalDecl GD);
   void BuildThunksForVirtualRecursive(GlobalDecl GD, GlobalDecl BaseOGD);
+
+  /// GetWeakRefReference - Get a reference to the target of VD.
+  llvm::Constant *GetWeakRefReference(const ValueDecl *VD);
 
   /// BuildThunk - Build a thunk for the given method.
   llvm::Constant *BuildThunk(GlobalDecl GD, bool Extern, 

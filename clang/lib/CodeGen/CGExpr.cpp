@@ -1062,6 +1062,16 @@ static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
 
+  if (ND->hasAttr<WeakRefAttr>()) {
+    const ValueDecl* VD = cast<ValueDecl>(ND);
+    llvm::Constant *Aliasee = CGM.GetWeakRefReference(VD);
+
+    Qualifiers Quals = MakeQualifiers(E->getType());
+    LValue LV = LValue::MakeAddr(Aliasee, Quals);
+
+    return LV;
+  }
+
   if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     
     // Check if this is a global variable.

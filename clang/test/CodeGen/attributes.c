@@ -30,12 +30,6 @@ int t12 __attribute__((section("SECT")));
 void __t8() {}
 void t9() __attribute__((weak, alias("__t8")));
 
-static void t22(void) __attribute__((weakref("t8")));
-// CHECK: @t22 = alias weak void ()* @t8
-
-static void t23(void) __attribute__((weakref, alias("t8")));
-// CHECK: @t23 = alias weak void ()* @t8
-
 // CHECK: declare extern_weak i32 @t15()
 int __attribute__((weak_import)) t15(void);
 int t17() {
