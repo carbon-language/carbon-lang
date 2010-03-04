@@ -131,7 +131,7 @@ def t2addrmode_imm12 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
-// t2addrmode_imm8  := reg - imm8
+// t2addrmode_imm8  := reg +/- imm8
 def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand";
@@ -1080,6 +1080,76 @@ def t2STRBT  : T2IstT<0b00, "strbt">;
 def t2STRHT  : T2IstT<0b01, "strht">;
 
 // FIXME: ldrd / strd pre / post variants
+
+// T2Ipl (Preload Data/Instruction) signals the memory system of possible future
+// data/instruction access.  These are for disassembly only.
+multiclass T2Ipl<bit instr, bit write, string opc> {
+
+  def i12 : T2I<(outs), (ins t2addrmode_imm12:$addr), IIC_iLoadi, opc,
+                "\t$addr", []> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{23} = 1; // U = 1
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{15-12} = 0b1111;
+  }
+
+  def i8 : T2I<(outs), (ins t2addrmode_imm8:$addr), IIC_iLoadi, opc,
+                "\t$addr", []> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{23} = 0; // U = 0
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{15-12} = 0b1111;
+    let Inst{11-8} = 0b1100;
+  }
+
+  // A8.6.118 #0 and #-0 differs.  Maps -0 to -1, -1 to -2, ..., etc.
+  def pci : T2I<(outs), (ins GPR:$base, i32imm:$imm), IIC_iLoadi, opc,
+                "\t[pc, ${imm:negzero}]", []> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{23} = ?; // add = (U == 1)
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{19-16} = 0b1111; // Rn = 0b1111
+    let Inst{15-12} = 0b1111;
+  }
+
+  def r   : T2I<(outs), (ins GPR:$base, GPR:$a), IIC_iLoadi, opc,
+                "\t[$base, $a]", []> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{23} = 0; // add = TRUE for T1
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{15-12} = 0b1111;
+    let Inst{11-6} = 0000000;
+    let Inst{5-4} = 0b00; // no shift is applied
+  }
+
+  def s   : T2I<(outs), (ins GPR:$base, GPR:$a, i32imm:$shamt), IIC_iLoadi, opc,
+                "\t[$base, $a, lsl $shamt]", []> {
+    let Inst{31-25} = 0b1111100;
+    let Inst{24} = instr;
+    let Inst{23} = 0; // add = TRUE for T1
+    let Inst{22} = 0;
+    let Inst{21} = write;
+    let Inst{20} = 1;
+    let Inst{15-12} = 0b1111;
+    let Inst{11-6} = 0000000;
+  }
+}
+
+defm t2PLD  : T2Ipl<0, 0, "pld">;
+defm t2PLDW : T2Ipl<0, 1, "pldw">;
+defm t2PLI  : T2Ipl<1, 0, "pli">;
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
