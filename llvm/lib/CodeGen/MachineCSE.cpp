@@ -31,6 +31,7 @@ STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
 namespace {
   class MachineCSE : public MachineFunctionPass {
     const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
     MachineRegisterInfo  *MRI;
     MachineDominatorTree *DT;
   public:
@@ -51,6 +52,10 @@ namespace {
     ScopedHashTable<MachineInstr*, unsigned, MachineInstrExpressionTrait> VNT;
     SmallVector<MachineInstr*, 64> Exps;
 
+    bool hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool isPhysDefTriviallyDead(unsigned Reg,
+                                MachineBasicBlock::const_iterator I,
+                                MachineBasicBlock::const_iterator E);
     bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool ProcessBlock(MachineDomTreeNode *Node);
   };
@@ -93,7 +98,39 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
   return Changed;
 }
 
-static bool hasLivePhysRegDefUse(MachineInstr *MI) {
+bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
+                                        MachineBasicBlock::const_iterator I,
+                                        MachineBasicBlock::const_iterator E) {
+  unsigned LookAheadLeft = 5;
+  while (LookAheadLeft--) {
+    if (I == E)
+      // Reached end of block, register is obviously dead.
+      return true;
+
+    if (I->isDebugValue())
+      continue;
+    bool SeenDef = false;
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = I->getOperand(i);
+      if (!MO.isReg() || !MO.getReg())
+        continue;
+      if (!TRI->regsOverlap(MO.getReg(), Reg))
+        continue;
+      if (MO.isUse())
+        return false;
+      SeenDef = true;
+    }
+    if (SeenDef)
+      // See a def of Reg (or an alias) before encountering any use, it's 
+      // trivially dead.
+      return true;
+    ++I;
+  }
+  return false;
+}
+
+bool MachineCSE::hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB){
+  unsigned PhysDef = 0;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg())
@@ -101,10 +138,26 @@ static bool hasLivePhysRegDefUse(MachineInstr *MI) {
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
-    // FIXME: This is obviously overly conservative. On x86 lots of instructions
-    // will def EFLAGS and they are not marked dead at this point.
-    if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
-        !(MO.isDef() && MO.isDead()))
+    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      if (MO.isUse())
+        // Can't touch anything to read a physical register.
+        return true;
+      if (MO.isDead())
+        // If the def is dead, it's ok.
+        continue;
+      // Ok, this is a physical register def that's not marked "dead". That's
+      // common since this pass is run before livevariables. We can scan
+      // forward a few instructions and check if it is obviously dead.
+      if (PhysDef)
+        // Multiple physical register defs. These are rare, forget about it.
+        return true;
+      PhysDef = Reg;
+    }
+  }
+
+  if (PhysDef) {
+    MachineBasicBlock::iterator I = MI; I = llvm::next(I);
+    if (!isPhysDefTriviallyDead(PhysDef, I, MBB->end()))
       return true;
   }
   return false;
@@ -135,10 +188,11 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
       if (PerformTrivialCoalescing(MI, MBB))
         FoundCSE = VNT.count(MI);
     }
+    // FIXME: commute commutable instructions?
 
     // If the instruction defines a physical register and the value *may* be
     // used, then it's not safe to replace it with a common subexpression.
-    if (FoundCSE && hasLivePhysRegDefUse(MI))
+    if (FoundCSE && hasLivePhysRegDefUse(MI, MBB))
       FoundCSE = false;
 
     if (!FoundCSE) {
@@ -180,6 +234,7 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
 
 bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
+  TRI = MF.getTarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
   return ProcessBlock(DT->getRootNode());
