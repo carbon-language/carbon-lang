@@ -375,9 +375,12 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS << "OPC_CheckComplexPat, " << getComplexPat(Pattern) << ',';
     if (!OmitComments) {
       OS.PadToColumn(CommentIndent) << "// " << Pattern.getSelectFunc();
-      OS << ": " << Pattern.getNumOperands() << " operands";
+      OS << ':';
+      for (unsigned i = 0, e = Pattern.getNumOperands(); i != e; ++i)
+        OS << " #" << cast<CheckComplexPatMatcher>(N)->getFirstResult()+i;
+           
       if (Pattern.hasProperty(SDNPHasChain))
-        OS << " + chain result and input";
+        OS << " + chain result";
     }
     OS << '\n';
     return 2;

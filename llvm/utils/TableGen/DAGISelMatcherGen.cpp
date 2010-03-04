@@ -252,7 +252,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     
     // Emit a CheckComplexPat operation, which does the match (aborting if it
     // fails) and pushes the matched operands onto the recorded nodes list.
-    AddMatcher(new CheckComplexPatMatcher(CP));
+    AddMatcher(new CheckComplexPatMatcher(CP, NextRecordedOperandNo));
     
     // Record the right number of operands.
     NextRecordedOperandNo += CP.getNumOperands();

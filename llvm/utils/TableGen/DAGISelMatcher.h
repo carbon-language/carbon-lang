@@ -609,11 +609,15 @@ private:
 /// the current node.
 class CheckComplexPatMatcher : public Matcher {
   const ComplexPattern &Pattern;
+  /// FirstResult - This is the first slot in the RecordedNodes list that the
+  /// result of the match populates.
+  unsigned FirstResult;
 public:
-  CheckComplexPatMatcher(const ComplexPattern &pattern)
-    : Matcher(CheckComplexPat), Pattern(pattern) {}
+  CheckComplexPatMatcher(const ComplexPattern &pattern, unsigned firstresult)
+    : Matcher(CheckComplexPat), Pattern(pattern), FirstResult(firstresult) {}
   
   const ComplexPattern &getPattern() const { return Pattern; }
+  unsigned getFirstResult() const { return FirstResult; }
   
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckComplexPat;
