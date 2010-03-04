@@ -413,6 +413,7 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
 }
 
 void X86DAGToDAGISel::PreprocessISelDAG() {
+  // OptForSize is used in pattern predicates that isel is matching.
   OptForSize = MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize);
   
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
