@@ -780,6 +780,10 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse4")
       Features["sse41"] = Features["sse42"] = false;
+    else if (Name == "sse4.2")
+      Features["sse42"] = false;
+    else if (Name == "sse4.1")
+      Features["sse41"] = Features["sse42"] = false;
     else if (Name == "3dnow")
       Features["3dnow"] = Features["3dnowa"] = false;
     else if (Name == "3dnowa")
