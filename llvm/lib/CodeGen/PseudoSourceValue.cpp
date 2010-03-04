@@ -18,19 +18,38 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Mutex.h"
 #include <map>
 using namespace llvm;
 
-static ManagedStatic<PseudoSourceValue[4]> PSVs;
+namespace {
+struct PSVGlobalsTy {
+  // PseudoSourceValues are immutable so don't need locking.
+  const PseudoSourceValue PSVs[4];
+  sys::Mutex Lock;  // Guards FSValues, but not the values inside it.
+  std::map<int, const PseudoSourceValue *> FSValues;
+
+  PSVGlobalsTy() : PSVs() {}
+  ~PSVGlobalsTy() {
+    for (std::map<int, const PseudoSourceValue *>::iterator
+           I = FSValues.begin(), E = FSValues.end(); I != E; ++I) {
+      delete I->second;
+    }
+  }
+};
+
+static ManagedStatic<PSVGlobalsTy> PSVGlobals;
+
+}  // anonymous namespace
 
 const PseudoSourceValue *PseudoSourceValue::getStack()
-{ return &(*PSVs)[0]; }
+{ return &PSVGlobals->PSVs[0]; }
 const PseudoSourceValue *PseudoSourceValue::getGOT()
-{ return &(*PSVs)[1]; }
+{ return &PSVGlobals->PSVs[1]; }
 const PseudoSourceValue *PseudoSourceValue::getJumpTable()
-{ return &(*PSVs)[2]; }
+{ return &PSVGlobals->PSVs[2]; }
 const PseudoSourceValue *PseudoSourceValue::getConstantPool()
-{ return &(*PSVs)[3]; }
+{ return &PSVGlobals->PSVs[3]; }
 
 static const char *const PSVNames[] = {
   "Stack",
@@ -48,13 +67,13 @@ PseudoSourceValue::PseudoSourceValue(enum ValueTy Subclass) :
         Subclass) {}
 
 void PseudoSourceValue::printCustom(raw_ostream &O) const {
-  O << PSVNames[this - *PSVs];
+  O << PSVNames[this - PSVGlobals->PSVs];
 }
 
-static ManagedStatic<std::map<int, const PseudoSourceValue *> > FSValues;
-
 const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
-  const PseudoSourceValue *&V = (*FSValues)[FI];
+  PSVGlobalsTy &PG = *PSVGlobals;
+  sys::ScopedLock locked(PG.Lock);
+  const PseudoSourceValue *&V = PG.FSValues[FI];
   if (!V)
     V = new FixedStackPseudoSourceValue(FI);
   return V;
