@@ -156,53 +156,18 @@ namespace {
     // was no stub.  This function uses the call-site->function map to find a
     // relevant function, but asserts that only stubs and not other call sites
     // will be passed in.
-    Function *EraseStub(const MutexGuard &locked, void *Stub) {
-      CallSiteToFunctionMapTy::iterator C2F_I =
-        CallSiteToFunctionMap.find(Stub);
-      if (C2F_I == CallSiteToFunctionMap.end()) {
-        // Not a stub.
-        return NULL;
-      }
+    Function *EraseStub(const MutexGuard &locked, void *Stub);
 
-      Function *const F = C2F_I->second;
-#ifndef NDEBUG
-      void *RealStub = FunctionToLazyStubMap.lookup(F);
-      assert(RealStub == Stub &&
-             "Call-site that wasn't a stub pass in to EraseStub");
-#endif
-      FunctionToLazyStubMap.erase(F);
-      CallSiteToFunctionMap.erase(C2F_I);
-
-      // Remove the stub from the function->call-sites map, and remove the whole
-      // entry from the map if that was the last call site.
-      FunctionToCallSitesMapTy::iterator F2C_I = FunctionToCallSitesMap.find(F);
-      assert(F2C_I != FunctionToCallSitesMap.end() &&
-             "FunctionToCallSitesMap broken");
-      bool Erased = F2C_I->second.erase(Stub);
-      (void)Erased;
-      assert(Erased && "FunctionToCallSitesMap broken");
-      if (F2C_I->second.empty())
-        FunctionToCallSitesMap.erase(F2C_I);
-
-      return F;
-    }
-
-    void EraseAllCallSites(const MutexGuard &locked, Function *F) {
+    void EraseAllCallSitesFor(const MutexGuard &locked, Function *F) {
       assert(locked.holds(TheJIT->lock));
-      EraseAllCallSitesPrelocked(F);
+      EraseAllCallSitesForPrelocked(F);
     }
-    void EraseAllCallSitesPrelocked(Function *F) {
-      FunctionToCallSitesMapTy::iterator F2C = FunctionToCallSitesMap.find(F);
-      if (F2C == FunctionToCallSitesMap.end())
-        return;
-      for (SmallPtrSet<void*, 1>::const_iterator I = F2C->second.begin(),
-             E = F2C->second.end(); I != E; ++I) {
-        bool Erased = CallSiteToFunctionMap.erase(*I);
-        (void)Erased;
-        assert(Erased && "Missing call site->function mapping");
-      }
-      FunctionToCallSitesMap.erase(F2C);
-    }
+    void EraseAllCallSitesForPrelocked(Function *F);
+
+    // Erases _all_ call sites regardless of their function.  This is used to
+    // unregister the stub addresses from the StubToResolverMap in
+    // ~JITResolver().
+    void EraseAllCallSitesPrelocked();
   };
 
   /// JITResolver - Keep track of, and resolve, call sites for functions that
@@ -239,6 +204,8 @@ namespace {
       : state(&jit), nextGOTIndex(0), JE(je), TheJIT(&jit) {
       LazyResolverFn = jit.getJITInfo().getLazyResolverFunction(JITCompilerFn);
     }
+
+    ~JITResolver();
 
     /// getLazyFunctionStubIfAvailable - This returns a pointer to a function's
     /// lazy-compilation stub if it has already been created.
@@ -304,6 +271,17 @@ namespace {
       assert(I != Map.begin() && "This is not a known stub!");
       --I;
       return I->second;
+    }
+    /// True if any stubs refer to the given resolver. Only used in an assert().
+    /// O(N)
+    bool ResolverHasStubs(JITResolver* Resolver) const {
+      MutexGuard guard(Lock);
+      for (std::map<void*, JITResolver*>::const_iterator I = Map.begin(),
+             E = Map.end(); I != E; ++I) {
+        if (I->second == Resolver)
+          return true;
+      }
+      return false;
     }
   };
   /// This needs to be static so that a lazy call stub can access it with no
@@ -536,7 +514,73 @@ namespace {
 }
 
 void CallSiteValueMapConfig::onDelete(JITResolverState *JRS, Function *F) {
-  JRS->EraseAllCallSitesPrelocked(F);
+  JRS->EraseAllCallSitesForPrelocked(F);
+}
+
+Function *JITResolverState::EraseStub(const MutexGuard &locked, void *Stub) {
+  CallSiteToFunctionMapTy::iterator C2F_I =
+    CallSiteToFunctionMap.find(Stub);
+  if (C2F_I == CallSiteToFunctionMap.end()) {
+    // Not a stub.
+    return NULL;
+  }
+
+  StubToResolverMap->UnregisterStubResolver(Stub);
+
+  Function *const F = C2F_I->second;
+#ifndef NDEBUG
+  void *RealStub = FunctionToLazyStubMap.lookup(F);
+  assert(RealStub == Stub &&
+         "Call-site that wasn't a stub passed in to EraseStub");
+#endif
+  FunctionToLazyStubMap.erase(F);
+  CallSiteToFunctionMap.erase(C2F_I);
+
+  // Remove the stub from the function->call-sites map, and remove the whole
+  // entry from the map if that was the last call site.
+  FunctionToCallSitesMapTy::iterator F2C_I = FunctionToCallSitesMap.find(F);
+  assert(F2C_I != FunctionToCallSitesMap.end() &&
+         "FunctionToCallSitesMap broken");
+  bool Erased = F2C_I->second.erase(Stub);
+  (void)Erased;
+  assert(Erased && "FunctionToCallSitesMap broken");
+  if (F2C_I->second.empty())
+    FunctionToCallSitesMap.erase(F2C_I);
+
+  return F;
+}
+
+void JITResolverState::EraseAllCallSitesForPrelocked(Function *F) {
+  FunctionToCallSitesMapTy::iterator F2C = FunctionToCallSitesMap.find(F);
+  if (F2C == FunctionToCallSitesMap.end())
+    return;
+  StubToResolverMapTy &S2RMap = *StubToResolverMap;
+  for (SmallPtrSet<void*, 1>::const_iterator I = F2C->second.begin(),
+         E = F2C->second.end(); I != E; ++I) {
+    S2RMap.UnregisterStubResolver(*I);
+    bool Erased = CallSiteToFunctionMap.erase(*I);
+    (void)Erased;
+    assert(Erased && "Missing call site->function mapping");
+  }
+  FunctionToCallSitesMap.erase(F2C);
+}
+
+void JITResolverState::EraseAllCallSitesPrelocked() {
+  StubToResolverMapTy &S2RMap = *StubToResolverMap;
+  for (CallSiteToFunctionMapTy::const_iterator
+         I = CallSiteToFunctionMap.begin(),
+         E = CallSiteToFunctionMap.end(); I != E; ++I) {
+    S2RMap.UnregisterStubResolver(I->first);
+  }
+  CallSiteToFunctionMap.clear();
+  FunctionToCallSitesMap.clear();
+}
+
+JITResolver::~JITResolver() {
+  // No need to lock because we're in the destructor, and state isn't shared.
+  state.EraseAllCallSitesPrelocked();
+  assert(!StubToResolverMap->ResolverHasStubs(this) &&
+         "Resolver destroyed with stubs still alive.");
 }
 
 /// getLazyFunctionStubIfAvailable - This returns a pointer to a function stub
@@ -589,20 +633,22 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
   DEBUG(dbgs() << "JIT: Lazy stub emitted at [" << Stub << "] for function '"
         << F->getName() << "'\n");
 
-  // Register this JITResolver as the one corresponding to this call site so
-  // JITCompilerFn will be able to find it.
-  StubToResolverMap->RegisterStubResolver(Stub, this);
+  if (TheJIT->isCompilingLazily()) {
+    // Register this JITResolver as the one corresponding to this call site so
+    // JITCompilerFn will be able to find it.
+    StubToResolverMap->RegisterStubResolver(Stub, this);
 
-  // Finally, keep track of the stub-to-Function mapping so that the
-  // JITCompilerFn knows which function to compile!
-  state.AddCallSite(locked, Stub, F);
-
-  // If we are JIT'ing non-lazily but need to call a function that does not
-  // exist yet, add it to the JIT's work list so that we can fill in the stub
-  // address later.
-  if (!Actual && !TheJIT->isCompilingLazily())
-    if (!isNonGhostDeclaration(F) && !F->hasAvailableExternallyLinkage())
-      TheJIT->addPendingFunction(F);
+    // Finally, keep track of the stub-to-Function mapping so that the
+    // JITCompilerFn knows which function to compile!
+    state.AddCallSite(locked, Stub, F);
+  } else if (!Actual) {
+    // If we are JIT'ing non-lazily but need to call a function that does not
+    // exist yet, add it to the JIT's work list so that we can fill in the
+    // stub address later.
+    assert(!isNonGhostDeclaration(F) && !F->hasAvailableExternallyLinkage() &&
+           "'Actual' should have been set above.");
+    TheJIT->addPendingFunction(F);
+  }
 
   return Stub;
 }
