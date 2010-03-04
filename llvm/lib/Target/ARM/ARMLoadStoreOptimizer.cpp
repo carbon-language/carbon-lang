@@ -761,6 +761,11 @@ static bool isMemoryOp(const MachineInstr *MI) {
       MI->getOperand(0).isUndef())
     return false;
 
+  // Likewise don't mess with references to undefined addresses.
+  if (MI->getNumOperands() > 1 && MI->getOperand(1).isReg() &&
+      MI->getOperand(1).isUndef())
+    return false;
+
   int Opcode = MI->getOpcode();
   switch (Opcode) {
   default: break;
