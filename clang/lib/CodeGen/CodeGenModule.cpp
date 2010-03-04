@@ -40,12 +40,11 @@ using namespace CodeGen;
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
-                             llvm::Module &M, const llvm::TargetMachine &TM,
-                             const llvm::TargetData &TD, Diagnostic &diags)
+                             llvm::Module &M, const llvm::TargetData &TD,
+                             Diagnostic &diags)
   : BlockModule(C, M, TD, Types, *this), Context(C),
     Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
-    TheTargetMachine(TM), TheTargetData(TD), TheTargetCodeGenInfo(0),
-    Diags(diags),
+    TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo()),
     MangleCtx(C), VtableInfo(*this), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),

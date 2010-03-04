@@ -1,7 +1,5 @@
 // RUN: %clang_cc1 -triple armv6-unknown-unknown -emit-llvm -o %t %s
 
-// XFAIL: win32
-
 void test0(void) {
 	asm volatile("mov r0, r0" :: );
 }

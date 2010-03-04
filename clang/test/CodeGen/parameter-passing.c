@@ -5,8 +5,6 @@
 // We also check _Bool and empty structures, as these can have annoying
 // corner cases.
 
-// XFAIL: win32
-
 // RUN: %clang_cc1 %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t
 // RUN: not grep '@g0' %t
 
