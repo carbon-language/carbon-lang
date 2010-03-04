@@ -42,8 +42,6 @@ class MatcherTableEmitter {
   DenseMap<Record*, unsigned> NodeXFormMap;
   std::vector<Record*> NodeXForms;
 
-  // Per opcode frequence count. 
-  std::vector<unsigned> Histogram;
 public:
   MatcherTableEmitter() {}
 
@@ -53,7 +51,7 @@ public:
   void EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
                               formatted_raw_ostream &OS);
   
-  void EmitHistogram(formatted_raw_ostream &OS);
+  void EmitHistogram(const Matcher *N, formatted_raw_ostream &OS);
 private:
   unsigned EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
                        formatted_raw_ostream &OS);
@@ -554,9 +552,6 @@ EmitMatcherList(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
                 formatted_raw_ostream &OS) {
   unsigned Size = 0;
   while (N) {
-    if (unsigned(N->getKind()) >= Histogram.size())
-      Histogram.resize(N->getKind()+1);
-    Histogram[N->getKind()]++;
     if (!OmitComments)
       OS << "/*" << CurrentIdx << "*/";
     unsigned MatcherSize = EmitMatcher(N, Indent, CurrentIdx, OS);
@@ -681,11 +676,38 @@ void MatcherTableEmitter::EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
   }
 }
 
-void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
+static void BuildHistogram(const Matcher *M, std::vector<unsigned> &OpcodeFreq){
+  for (; M != 0; M = M->getNext()) {
+    // Count this node.
+    if (unsigned(M->getKind()) >= OpcodeFreq.size())
+      OpcodeFreq.resize(M->getKind()+1);
+    OpcodeFreq[M->getKind()]++;
+  
+    // Handle recursive nodes.
+    if (const ScopeMatcher *SM = dyn_cast<ScopeMatcher>(M)) {
+      for (unsigned i = 0, e = SM->getNumChildren(); i != e; ++i)
+        BuildHistogram(SM->getChild(i), OpcodeFreq);
+    } else if (const SwitchOpcodeMatcher *SOM = 
+                 dyn_cast<SwitchOpcodeMatcher>(M)) {
+      for (unsigned i = 0, e = SOM->getNumCases(); i != e; ++i)
+        BuildHistogram(SOM->getCaseMatcher(i), OpcodeFreq);
+    } else if (const SwitchTypeMatcher *STM = dyn_cast<SwitchTypeMatcher>(M)) {
+      for (unsigned i = 0, e = STM->getNumCases(); i != e; ++i)
+        BuildHistogram(STM->getCaseMatcher(i), OpcodeFreq);
+    }
+  }
+}
+
+void MatcherTableEmitter::EmitHistogram(const Matcher *M,
+                                        formatted_raw_ostream &OS) {
   if (OmitComments)
     return;
+  
+  std::vector<unsigned> OpcodeFreq;
+  BuildHistogram(M, OpcodeFreq);
+  
   OS << "  // Opcode Histogram:\n";
-  for (unsigned i = 0, e = Histogram.size(); i != e; ++i) {
+  for (unsigned i = 0, e = OpcodeFreq.size(); i != e; ++i) {
     OS << "  // #";
     switch ((Matcher::KindTy)i) {
     case Matcher::Scope: OS << "OPC_Scope"; break; 
@@ -725,7 +747,7 @@ void MatcherTableEmitter::EmitHistogram(formatted_raw_ostream &OS) {
     case Matcher::CompleteMatch: OS << "OPC_CompleteMatch"; break;    
     }
     
-    OS.PadToColumn(40) << " = " << Histogram[i] << '\n';
+    OS.PadToColumn(40) << " = " << OpcodeFreq[i] << '\n';
   }
   OS << '\n';
 }
@@ -746,7 +768,7 @@ void llvm::EmitMatcherTable(const Matcher *TheMatcher,
   unsigned TotalSize = MatcherEmitter.EmitMatcherList(TheMatcher, 5, 0, OS);
   OS << "    0\n  }; // Total Array size is " << (TotalSize+1) << " bytes\n\n";
   
-  MatcherEmitter.EmitHistogram(OS);
+  MatcherEmitter.EmitHistogram(TheMatcher, OS);
   
   OS << "  #undef TARGET_OPCODE\n";
   OS << "  return SelectCodeCommon(N, MatcherTable,sizeof(MatcherTable));\n}\n";
