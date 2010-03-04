@@ -431,10 +431,10 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
 
   switch (clang_getCursorLinkage(cursor)) {
     case CXLinkage_Invalid: break;
-    case CXLinkage_NoLinkage: linkage = "NoLinkage";
-    case CXLinkage_Internal: linkage = "Internal";
-    case CXLinkage_UniqueExternal: linkage = "UniqueExternal";
-    case CXLinkage_External: linkage = "External";
+    case CXLinkage_NoLinkage: linkage = "NoLinkage"; break;
+    case CXLinkage_Internal: linkage = "Internal"; break;
+    case CXLinkage_UniqueExternal: linkage = "UniqueExternal"; break;
+    case CXLinkage_External: linkage = "External"; break;
   }
 
   if (linkage) {
