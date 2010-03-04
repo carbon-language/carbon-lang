@@ -353,6 +353,8 @@ def isExpectedFail(xfails, xtargets, target_triple):
 
     return True
 
+import re
+
 def parseIntegratedTestScript(test):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'XTARGET'
@@ -387,20 +389,11 @@ def parseIntegratedTestScript(test):
     xtargets = []
     ignoredAny = False
     for ln in open(sourcepath):
-        if 'IF(' in ln:
-            # Required syntax here is IF(condition(value)):
-            index = ln.index('IF(')
-            ln = ln[index+3:]
-            index = ln.index('(')
-            if index is -1:
-                return (Test.UNRESOLVED, "ill-formed IF at '"+ln[:10]+"'")
-            condition = ln[:index]
-            ln = ln[index+1:]
-            index = ln.index(')')
-            if index is -1 or ln[index:index+3] != ')):':
-                return (Test.UNRESOLVED, "ill-formed IF at '"+ln[:10]+"'")
-            value = ln[:index]
-            ln = ln[index+3:]
+        conditional = re.search('IF\((.+?)\((.+?)\)\):', ln)
+        if conditional:
+            ln = ln[conditional.end():]
+            condition = conditional.group(1)
+            value = conditional.group(2)
 
             # Actually test the condition.
             if condition not in test.config.conditions:
