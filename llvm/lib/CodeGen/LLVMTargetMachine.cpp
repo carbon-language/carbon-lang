@@ -67,7 +67,7 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
-static cl::opt<bool> EnableMachineCSE("machine-cse", cl::Hidden,
+static cl::opt<bool> EnableMachineCSE("enable-machine-cse", cl::Hidden,
     cl::desc("Enable Machine CSE"));
 
 static cl::opt<cl::boolOrDefault>
