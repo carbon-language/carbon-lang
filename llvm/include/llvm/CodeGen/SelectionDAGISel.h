@@ -276,7 +276,6 @@ private:
   SDNode *Select_UNDEF(SDNode *N);
   SDNode *Select_EH_LABEL(SDNode *N);
   void CannotYetSelect(SDNode *N);
-  void CannotYetSelectIntrinsic(SDNode *N);
 
 private:
   void DoInstructionSelection();

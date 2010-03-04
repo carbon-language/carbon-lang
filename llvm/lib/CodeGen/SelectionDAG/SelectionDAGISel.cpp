@@ -2711,29 +2711,26 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
 
 void SelectionDAGISel::CannotYetSelect(SDNode *N) {
-  if (N->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
-      N->getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
-      N->getOpcode() == ISD::INTRINSIC_VOID)
-    return CannotYetSelectIntrinsic(N);
-  
   std::string msg;
   raw_string_ostream Msg(msg);
   Msg << "Cannot yet select: ";
-  N->printrFull(Msg, CurDAG);
+  
+  if (N->getOpcode() != ISD::INTRINSIC_W_CHAIN &&
+      N->getOpcode() != ISD::INTRINSIC_WO_CHAIN &&
+      N->getOpcode() != ISD::INTRINSIC_VOID) {
+    N->printrFull(Msg, CurDAG);
+  } else {
+    bool HasInputChain = N->getOperand(0).getValueType() == MVT::Other;
+    unsigned iid =
+      cast<ConstantSDNode>(N->getOperand(HasInputChain))->getZExtValue();
+    if (iid < Intrinsic::num_intrinsics)
+      Msg << "intrinsic %" << Intrinsic::getName((Intrinsic::ID)iid);
+    else if (const TargetIntrinsicInfo *TII = TM.getIntrinsicInfo())
+      Msg << "target intrinsic %" << TII->getName(iid);
+    else
+      Msg << "unknown intrinsic #" << iid;
+  }
   llvm_report_error(Msg.str());
-}
-
-void SelectionDAGISel::CannotYetSelectIntrinsic(SDNode *N) {
-  dbgs() << "Cannot yet select: ";
-  unsigned iid =
-    cast<ConstantSDNode>(N->getOperand(N->getOperand(0).getValueType() ==
-                                       MVT::Other))->getZExtValue();
-  if (iid < Intrinsic::num_intrinsics)
-    llvm_report_error("Cannot yet select: intrinsic %" +
-                      Intrinsic::getName((Intrinsic::ID)iid));
-  else if (const TargetIntrinsicInfo *tii = TM.getIntrinsicInfo())
-    llvm_report_error(Twine("Cannot yet select: target intrinsic %") +
-                      tii->getName(iid));
 }
 
 char SelectionDAGISel::ID = 0;
