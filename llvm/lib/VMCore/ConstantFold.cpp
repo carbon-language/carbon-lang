@@ -2070,7 +2070,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(C2)) {
       Constant *CE2Op0 = CE2->getOperand(0);
       if (CE2->getOpcode() == Instruction::BitCast &&
-          CE2->getType()->isVectorTy()==CE2Op0->getType()->isVectorTy()) {
+          CE2->getType()->isVectorTy() == CE2Op0->getType()->isVectorTy()) {
         Constant *Inverse = ConstantExpr::getBitCast(C1, CE2Op0->getType());
         return ConstantExpr::getICmp(pred, Inverse, CE2Op0);
       }
@@ -2078,8 +2078,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 
     // If the left hand side is an extension, try eliminating it.
     if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
-      if (CE1->getOpcode() == Instruction::SExt ||
-          CE1->getOpcode() == Instruction::ZExt) {
+      if ((CE1->getOpcode() == Instruction::SExt && ICmpInst::isSigned(pred)) ||
+          (CE1->getOpcode() == Instruction::ZExt && !ICmpInst::isSigned(pred))){
         Constant *CE1Op0 = CE1->getOperand(0);
         Constant *CE1Inverse = ConstantExpr::getTrunc(CE1, CE1Op0->getType());
         if (CE1Inverse == CE1Op0) {
@@ -2097,27 +2097,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
       // If C2 is a constant expr and C1 isn't, flip them around and fold the
       // other way if possible.
       // Also, if C1 is null and C2 isn't, flip them around.
-      switch (pred) {
-      case ICmpInst::ICMP_EQ:
-      case ICmpInst::ICMP_NE:
-        // No change of predicate required.
-        return ConstantExpr::getICmp(pred, C2, C1);
-
-      case ICmpInst::ICMP_ULT:
-      case ICmpInst::ICMP_SLT:
-      case ICmpInst::ICMP_UGT:
-      case ICmpInst::ICMP_SGT:
-      case ICmpInst::ICMP_ULE:
-      case ICmpInst::ICMP_SLE:
-      case ICmpInst::ICMP_UGE:
-      case ICmpInst::ICMP_SGE:
-        // Change the predicate as necessary to swap the operands.
-        pred = ICmpInst::getSwappedPredicate((ICmpInst::Predicate)pred);
-        return ConstantExpr::getICmp(pred, C2, C1);
-
-      default:  // These predicates cannot be flopped around.
-        break;
-      }
+      pred = ICmpInst::getSwappedPredicate((ICmpInst::Predicate)pred);
+      return ConstantExpr::getICmp(pred, C2, C1);
     }
   }
   return 0;
