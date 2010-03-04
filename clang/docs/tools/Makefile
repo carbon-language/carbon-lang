@@ -84,9 +84,9 @@ EXTRA_DIST := $(POD)
 clean-local::
 	$(Verb) $(RM) -f pod2htm*.*~~ $(HTML) $(MAN) $(PS)
 
-HTML_DIR := $(PROJ_docsdir)/html/clang
-MAN_DIR  := $(PROJ_mandir)/man1
-PS_DIR   := $(PROJ_docsdir)/ps
+HTML_DIR := $(DESTDIR)$(PROJ_docsdir)/html/clang
+MAN_DIR  := $(DESTDIR)$(PROJ_mandir)/man1
+PS_DIR   := $(DESTDIR)$(PROJ_docsdir)/ps
 
 install-html:: $(HTML)
 	$(Echo) Installing HTML Clang Tools Documentation
