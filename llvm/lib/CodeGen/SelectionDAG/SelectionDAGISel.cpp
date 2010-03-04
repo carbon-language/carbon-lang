@@ -2249,11 +2249,15 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                                 N.getNode()))
         break;
       continue;
-    case OPC_CheckComplexPat:
-      if (!CheckComplexPattern(NodeToMatch, N, 
-                               MatcherTable[MatcherIndex++], RecordedNodes))
+    case OPC_CheckComplexPat: {
+      unsigned CPNum = MatcherTable[MatcherIndex++];
+      unsigned RecNo = MatcherTable[MatcherIndex++];
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckComplexPat");
+      if (!CheckComplexPattern(NodeToMatch, RecordedNodes[RecNo], CPNum,
+                               RecordedNodes))
         break;
       continue;
+    }
     case OPC_CheckOpcode:
       if (!::CheckOpcode(MatcherTable, MatcherIndex, N.getNode())) break;
       continue;

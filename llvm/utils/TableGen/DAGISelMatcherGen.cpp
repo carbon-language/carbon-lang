@@ -72,6 +72,14 @@ namespace {
     /// nodes array of all of the recorded input nodes that have flag results.
     SmallVector<unsigned, 2> MatchedFlagResultNodes;
     
+    /// MatchedComplexPatterns - This maintains a list of all of the
+    /// ComplexPatterns that we need to check.  The patterns are known to have
+    /// names which were recorded.  The second element of each pair is the first
+    /// slot number that the OPC_CheckComplexPat opcode drops the matched
+    /// results into.
+    SmallVector<std::pair<const TreePatternNode*,
+                          unsigned>, 2> MatchedComplexPatterns;
+    
     /// PhysRegInputs - List list has an entry for each explicitly specified
     /// physreg input to the pattern.  The first elt is the Register node, the
     /// second is the recorded slot number the input pattern match saved it in.
@@ -247,30 +255,9 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
       exit(1);
     }
 
-    // Handle complex pattern.
-    const ComplexPattern &CP = CGP.getComplexPattern(LeafRec);
-    
-    // Emit a CheckComplexPat operation, which does the match (aborting if it
-    // fails) and pushes the matched operands onto the recorded nodes list.
-    AddMatcher(new CheckComplexPatMatcher(CP, NextRecordedOperandNo));
-    
-    // Record the right number of operands.
-    NextRecordedOperandNo += CP.getNumOperands();
-    if (CP.hasProperty(SDNPHasChain))
-      ++NextRecordedOperandNo; // Chained node operand.
-    
-    // If the complex pattern has a chain, then we need to keep track of the
-    // fact that we just recorded a chain input.  The chain input will be
-    // matched as the last operand of the predicate if it was successful.
-    if (CP.hasProperty(SDNPHasChain)) {
-      // It is the last operand recorded.
-      assert(NextRecordedOperandNo > 1 &&
-             "Should have recorded input/result chains at least!");
-      MatchedChainNodes.push_back(NextRecordedOperandNo-1);
-    }
-    
-    // TODO: Complex patterns can't have output flags, if they did, we'd want
-    // to record them.
+    // Remember this ComplexPattern so that we can emit it after all the other
+    // structural matches are done.
+    MatchedComplexPatterns.push_back(std::make_pair(N, 0));
     return;
   }
   
@@ -495,6 +482,50 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
 
   // Emit the matcher for the pattern structure and types.
   EmitMatchCode(Pattern.getSrcPattern(), PatWithNoTypes);
+  
+  // Now that we've completed the structural type match, emit any ComplexPattern
+  // checks (e.g. addrmode matches).  We emit this after the structural match
+  // because they are generally more expensive to evaluate and more difficult to
+  // factor.
+  // FIXME2: Can the patternpredicatematcher be moved to right before this??
+  for (unsigned i = 0, e = MatchedComplexPatterns.size(); i != e; ++i) {
+    const TreePatternNode *N = MatchedComplexPatterns[i].first;
+    
+    // Remember where the results of this match get stuck.
+    MatchedComplexPatterns[i].second = NextRecordedOperandNo;
+
+    // Get the slot we recorded the value in from the name on the node.
+    unsigned RecNodeEntry = VariableMap[N->getName()];
+    assert(!N->getName().empty() && RecNodeEntry &&
+           "Complex pattern should have a name and slot");
+    --RecNodeEntry;  // Entries in VariableMap are biased.
+    
+    const ComplexPattern &CP =
+      CGP.getComplexPattern(((DefInit*)N->getLeafValue())->getDef());
+    
+    // Emit a CheckComplexPat operation, which does the match (aborting if it
+    // fails) and pushes the matched operands onto the recorded nodes list.
+    AddMatcher(new CheckComplexPatMatcher(CP, RecNodeEntry,
+                                          N->getName(), NextRecordedOperandNo));
+    
+    // Record the right number of operands.
+    NextRecordedOperandNo += CP.getNumOperands();
+    if (CP.hasProperty(SDNPHasChain)) {
+      // If the complex pattern has a chain, then we need to keep track of the
+      // fact that we just recorded a chain input.  The chain input will be
+      // matched as the last operand of the predicate if it was successful.
+      ++NextRecordedOperandNo; // Chained node operand.
+    
+      // It is the last operand recorded.
+      assert(NextRecordedOperandNo > 1 &&
+             "Should have recorded input/result chains at least!");
+      MatchedChainNodes.push_back(NextRecordedOperandNo-1);
+    }
+    
+    // TODO: Complex patterns can't have output flags, if they did, we'd want
+    // to record them.
+  }
+  
   return false;
 }
 
@@ -507,17 +538,25 @@ void MatcherGen::EmitResultOfNamedOperand(const TreePatternNode *N,
                                           SmallVectorImpl<unsigned> &ResultOps){
   assert(!N->getName().empty() && "Operand not named!");
   
-  unsigned SlotNo = getNamedArgumentSlot(N->getName());
-  
   // A reference to a complex pattern gets all of the results of the complex
   // pattern's match.
   if (const ComplexPattern *CP = N->getComplexPatternInfo(CGP)) {
+    unsigned SlotNo = 0;
+    for (unsigned i = 0, e = MatchedComplexPatterns.size(); i != e; ++i)
+      if (MatchedComplexPatterns[i].first->getName() == N->getName()) {
+        SlotNo = MatchedComplexPatterns[i].second;
+        break;
+      }
+    assert(SlotNo != 0 && "Didn't get a slot number assigned?");
+    
     // The first slot entry is the node itself, the subsequent entries are the
     // matched values.
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-      ResultOps.push_back(SlotNo+i+1);
+      ResultOps.push_back(SlotNo+i);
     return;
   }
+
+  unsigned SlotNo = getNamedArgumentSlot(N->getName());
 
   // If this is an 'imm' or 'fpimm' node, make sure to convert it to the target
   // version of the immediate so that it doesn't get selected due to some other

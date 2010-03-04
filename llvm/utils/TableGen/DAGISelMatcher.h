@@ -609,14 +609,27 @@ private:
 /// the current node.
 class CheckComplexPatMatcher : public Matcher {
   const ComplexPattern &Pattern;
+  
+  /// MatchNumber - This is the recorded nodes slot that contains the node we want to
+  /// match against.
+  unsigned MatchNumber;
+  
+  /// Name - The name of the node we're matching, for comment emission.
+  std::string Name;
+  
   /// FirstResult - This is the first slot in the RecordedNodes list that the
   /// result of the match populates.
   unsigned FirstResult;
 public:
-  CheckComplexPatMatcher(const ComplexPattern &pattern, unsigned firstresult)
-    : Matcher(CheckComplexPat), Pattern(pattern), FirstResult(firstresult) {}
+  CheckComplexPatMatcher(const ComplexPattern &pattern, unsigned matchnumber,
+                         const std::string &name, unsigned firstresult)
+    : Matcher(CheckComplexPat), Pattern(pattern), MatchNumber(matchnumber),
+      Name(name), FirstResult(firstresult) {}
   
   const ComplexPattern &getPattern() const { return Pattern; }
+  unsigned getMatchNumber() const { return MatchNumber; }
+  
+  const std::string getName() const { return Name; }
   unsigned getFirstResult() const { return FirstResult; }
   
   static inline bool classof(const Matcher *N) {
@@ -629,10 +642,11 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return &cast<CheckComplexPatMatcher>(M)->Pattern == &Pattern;
+    return &cast<CheckComplexPatMatcher>(M)->Pattern == &Pattern &&
+           cast<CheckComplexPatMatcher>(M)->MatchNumber == MatchNumber;
   }
   virtual unsigned getHashImpl() const {
-    return (unsigned)(intptr_t)&Pattern;
+    return (unsigned)(intptr_t)&Pattern ^ MatchNumber;
   }
 };
   

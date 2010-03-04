@@ -370,20 +370,22 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 2;
 
   case Matcher::CheckComplexPat: {
-    const ComplexPattern &Pattern =
-      cast<CheckComplexPatMatcher>(N)->getPattern();
-    OS << "OPC_CheckComplexPat, " << getComplexPat(Pattern) << ',';
+    const CheckComplexPatMatcher *CCPM = cast<CheckComplexPatMatcher>(N);
+    const ComplexPattern &Pattern = CCPM->getPattern();
+    OS << "OPC_CheckComplexPat, /*CP*/" << getComplexPat(Pattern) << ", /*#*/"
+       << CCPM->getMatchNumber() << ',';
+    
     if (!OmitComments) {
       OS.PadToColumn(CommentIndent) << "// " << Pattern.getSelectFunc();
-      OS << ':';
+      OS << ":$" << CCPM->getName();
       for (unsigned i = 0, e = Pattern.getNumOperands(); i != e; ++i)
-        OS << " #" << cast<CheckComplexPatMatcher>(N)->getFirstResult()+i;
+        OS << " #" << CCPM->getFirstResult()+i;
            
       if (Pattern.hasProperty(SDNPHasChain))
         OS << " + chain result";
     }
     OS << '\n';
-    return 2;
+    return 3;
   }
       
   case Matcher::CheckAndImm: {
