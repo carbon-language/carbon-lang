@@ -135,7 +135,6 @@ public:
   /// Profile - Profile the contents of a GRState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
-    // FIXME: Do we need to include the AnalysisContext in the profile?
     V->Env.Profile(ID);
     ID.AddPointer(V->St);
     V->GDM.Profile(ID);
