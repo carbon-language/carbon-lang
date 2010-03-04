@@ -348,9 +348,6 @@ namespace {
     /// MMI - Machine module info for exception informations
     MachineModuleInfo* MMI;
 
-    // GVSet - a set to keep track of which globals have been seen
-    SmallPtrSet<const GlobalVariable*, 8> GVSet;
-
     // CurFn - The llvm function being emitted.  Only valid during
     // finishFunction().
     const Function *CurFn;
@@ -507,8 +504,14 @@ namespace {
                              bool MayNeedFarStub);
     void *getPointerToGVIndirectSym(GlobalValue *V, void *Reference);
     unsigned addSizeOfGlobal(const GlobalVariable *GV, unsigned Size);
-    unsigned addSizeOfGlobalsInConstantVal(const Constant *C, unsigned Size);
-    unsigned addSizeOfGlobalsInInitializer(const Constant *Init, unsigned Size);
+    unsigned addSizeOfGlobalsInConstantVal(
+      const Constant *C, unsigned Size,
+      SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
+      SmallVectorImpl<const GlobalVariable*> &Worklist);
+    unsigned addSizeOfGlobalsInInitializer(
+      const Constant *Init, unsigned Size,
+      SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
+      SmallVectorImpl<const GlobalVariable*> &Worklist);
     unsigned GetSizeOfGlobalsInBytes(MachineFunction &MF);
   };
 }
@@ -968,11 +971,14 @@ unsigned JITEmitter::addSizeOfGlobal(const GlobalVariable *GV, unsigned Size) {
 }
 
 /// addSizeOfGlobalsInConstantVal - find any globals that we haven't seen yet
-/// but are referenced from the constant; put them in GVSet and add their
-/// size into the running total Size.
+/// but are referenced from the constant; put them in SeenGlobals and the
+/// Worklist, and add their size into the running total Size.
 
-unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
-                                              unsigned Size) {
+unsigned JITEmitter::addSizeOfGlobalsInConstantVal(
+    const Constant *C,
+    unsigned Size,
+    SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
+    SmallVectorImpl<const GlobalVariable*> &Worklist) {
   // If its undefined, return the garbage.
   if (isa<UndefValue>(C))
     return Size;
@@ -994,7 +1000,7 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
     case Instruction::PtrToInt:
     case Instruction::IntToPtr:
     case Instruction::BitCast: {
-      Size = addSizeOfGlobalsInConstantVal(Op0, Size);
+      Size = addSizeOfGlobalsInConstantVal(Op0, Size, SeenGlobals, Worklist);
       break;
     }
     case Instruction::Add:
@@ -1010,8 +1016,9 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor: {
-      Size = addSizeOfGlobalsInConstantVal(Op0, Size);
-      Size = addSizeOfGlobalsInConstantVal(CE->getOperand(1), Size);
+      Size = addSizeOfGlobalsInConstantVal(Op0, Size, SeenGlobals, Worklist);
+      Size = addSizeOfGlobalsInConstantVal(CE->getOperand(1), Size,
+                                           SeenGlobals, Worklist);
       break;
     }
     default: {
@@ -1025,8 +1032,10 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
 
   if (C->getType()->getTypeID() == Type::PointerTyID)
     if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
-      if (GVSet.insert(GV))
+      if (SeenGlobals.insert(GV)) {
+        Worklist.push_back(GV);
         Size = addSizeOfGlobal(GV, Size);
+      }
 
   return Size;
 }
@@ -1034,15 +1043,18 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
 /// addSizeOfGLobalsInInitializer - handle any globals that we haven't seen yet
 /// but are referenced from the given initializer.
 
-unsigned JITEmitter::addSizeOfGlobalsInInitializer(const Constant *Init,
-                                              unsigned Size) {
+unsigned JITEmitter::addSizeOfGlobalsInInitializer(
+    const Constant *Init,
+    unsigned Size,
+    SmallPtrSet<const GlobalVariable*, 8> &SeenGlobals,
+    SmallVectorImpl<const GlobalVariable*> &Worklist) {
   if (!isa<UndefValue>(Init) &&
       !isa<ConstantVector>(Init) &&
       !isa<ConstantAggregateZero>(Init) &&
       !isa<ConstantArray>(Init) &&
       !isa<ConstantStruct>(Init) &&
       Init->getType()->isFirstClassType())
-    Size = addSizeOfGlobalsInConstantVal(Init, Size);
+    Size = addSizeOfGlobalsInConstantVal(Init, Size, SeenGlobals, Worklist);
   return Size;
 }
 
@@ -1053,7 +1065,7 @@ unsigned JITEmitter::addSizeOfGlobalsInInitializer(const Constant *Init,
 
 unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
   unsigned Size = 0;
-  GVSet.clear();
+  SmallPtrSet<const GlobalVariable*, 8> SeenGlobals;
 
   for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
        MBB != E; ++MBB) {
@@ -1077,7 +1089,7 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
           // assuming the addresses of the new globals in this module
           // start at 0 (or something) and adjusting them after codegen
           // complete.  Another possibility is to grab a marker bit in GV.
-          if (GVSet.insert(GV))
+          if (SeenGlobals.insert(GV))
             // A variable as yet unseen.  Add in its size.
             Size = addSizeOfGlobal(GV, Size);
         }
@@ -1086,12 +1098,14 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
   }
   DEBUG(dbgs() << "JIT: About to look through initializers\n");
   // Look for more globals that are referenced only from initializers.
-  // GVSet.end is computed each time because the set can grow as we go.
-  for (SmallPtrSet<const GlobalVariable *, 8>::iterator I = GVSet.begin();
-       I != GVSet.end(); I++) {
-    const GlobalVariable* GV = *I;
+  SmallVector<const GlobalVariable*, 8> Worklist(
+    SeenGlobals.begin(), SeenGlobals.end());
+  while (!Worklist.empty()) {
+    const GlobalVariable* GV = Worklist.back();
+    Worklist.pop_back();
     if (GV->hasInitializer())
-      Size = addSizeOfGlobalsInInitializer(GV->getInitializer(), Size);
+      Size = addSizeOfGlobalsInInitializer(GV->getInitializer(), Size,
+                                           SeenGlobals, Worklist);
   }
 
   return Size;
