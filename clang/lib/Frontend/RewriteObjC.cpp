@@ -4311,6 +4311,23 @@ void RewriteObjC::SynthesizeBlockLiterals(SourceLocation FunLocStart,
     BlockByCopyDeclsPtrSet.clear();
     ImportedBlockDecls.clear();
   }
+  if (GlobalVarDecl && !Blocks.empty()) {
+    // Must insert any 'const/volatile/static here. Since it has been
+    // removed as result of rewriting of block literals.
+    // FIXME. We add as we need.
+    std::string SC;
+    if (GlobalVarDecl->getStorageClass() == VarDecl::Static)
+      SC = "static ";
+    if (GlobalVarDecl->getStorageClass() == VarDecl::Extern)
+      SC = "extern ";
+    if (GlobalVarDecl->getType().isConstQualified())
+      SC += "const ";
+    if (GlobalVarDecl->getType().isVolatileQualified())
+      SC += "volatile ";
+    if (!SC.empty())
+      InsertText(FunLocStart, SC);
+  }
+  
   Blocks.clear();
   InnerDeclRefsCount.clear();
   InnerDeclRefs.clear();
