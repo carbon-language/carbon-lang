@@ -9838,11 +9838,20 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     // rorw $$8, ${0:w}  -->  llvm.bswap.i16
     if (CI->getType()->isIntegerTy(16) &&
         AsmPieces.size() == 3 &&
-        AsmPieces[0] == "rorw" &&
+        (AsmPieces[0] == "rorw" || AsmPieces[0] == "rolw") &&
         AsmPieces[1] == "$$8," &&
         AsmPieces[2] == "${0:w}" &&
-        IA->getConstraintString() == "=r,0,~{dirflag},~{fpsr},~{flags},~{cc}") {
-      return LowerToBSwap(CI);
+        IA->getConstraintString().compare(0, 5, "=r,0,") == 0) {
+      AsmPieces.clear();
+      SplitString(IA->getConstraintString().substr(5), AsmPieces, ",");
+      std::sort(AsmPieces.begin(), AsmPieces.end());
+      if (AsmPieces.size() == 4 &&
+          AsmPieces[0] == "~{cc}" &&
+          AsmPieces[1] == "~{dirflag}" &&
+          AsmPieces[2] == "~{flags}" &&
+          AsmPieces[3] == "~{fpsr}") {
+        return LowerToBSwap(CI);
+      }
     }
     break;
   case 3:
