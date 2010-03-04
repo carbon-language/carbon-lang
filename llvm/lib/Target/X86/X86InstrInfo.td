@@ -1050,7 +1050,10 @@ def MOV32cr : I<0x22, MRMSrcReg, (outs CONTROL_REG_32:$dst), (ins GR32:$src),
 //
 
 // Extra precision multiplication
-let Defs = [AL,AH,EFLAGS], Uses = [AL] in
+
+// AL is really implied by AX, by the registers in Defs must match the
+// SDNode results (i8, i32).
+let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
@@ -1068,7 +1071,7 @@ def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src),
                "mul{l}\t$src",
                []>; // EAX,EDX = EAX*GR32
 
-let Defs = [AL,AH,EFLAGS], Uses = [AL] in
+let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
@@ -1090,7 +1093,7 @@ def MUL32m : I<0xF7, MRM4m, (outs), (ins i32mem:$src),
 }
 
 let neverHasSideEffects = 1 in {
-let Defs = [AL,AH,EFLAGS], Uses = [AL] in
+let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", []>;
               // AL,AH = AL*GR8
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
@@ -1100,7 +1103,7 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", []>;
               // EAX,EDX = EAX*GR32
 let mayLoad = 1 in {
-let Defs = [AL,AH,EFLAGS], Uses = [AL] in
+let Defs = [AL,EFLAGS,AX], Uses = [AL] in
 def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
                 "imul{b}\t$src", []>;    // AL,AH = AL*[mem8]
 let Defs = [AX,DX,EFLAGS], Uses = [AX] in
@@ -1113,7 +1116,7 @@ def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
 } // neverHasSideEffects
 
 // unsigned division/remainder
-let Defs = [AX,EFLAGS], Uses = [AX] in
+let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
                "div{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -1123,7 +1126,7 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32r : I<0xF7, MRM6r, (outs),  (ins GR32:$src),   // EDX:EAX/r32 = EAX,EDX
                "div{l}\t$src", []>;
 let mayLoad = 1 in {
-let Defs = [AL,AH,EFLAGS], Uses = [AX] in
+let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
                "div{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -1136,7 +1139,7 @@ def DIV32m : I<0xF7, MRM6m, (outs), (ins i32mem:$src),
 }
 
 // Signed division/remainder.
-let Defs = [AL,AH,EFLAGS], Uses = [AX] in
+let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def IDIV8r : I<0xF6, MRM7r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
                "idiv{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
@@ -1146,7 +1149,7 @@ let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32r: I<0xF7, MRM7r, (outs),  (ins GR32:$src),   // EDX:EAX/r32 = EAX,EDX
                "idiv{l}\t$src", []>;
 let mayLoad = 1, mayLoad = 1 in {
-let Defs = [AL,AH,EFLAGS], Uses = [AX] in
+let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
                "idiv{b}\t$src", []>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
