@@ -1758,7 +1758,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   EVT VT = N1.getValueType();
-  unsigned BitWidth = VT.getSizeInBits();
+  unsigned BitWidth = VT.getScalarType().getSizeInBits();
 
   // fold vector ops
   if (VT.isVector()) {
@@ -1872,9 +1872,9 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     EVT MemVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    unsigned BitWidth = N1.getValueSizeInBits();
+    unsigned BitWidth = N1.getValueType().getScalarType().getSizeInBits();
     if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
-                                     BitWidth - MemVT.getSizeInBits())) &&
+                           BitWidth - MemVT.getScalarType().getSizeInBits())) &&
         ((!LegalOperations && !LN0->isVolatile()) ||
          TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT))) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, N0.getDebugLoc(), VT,
@@ -1895,9 +1895,9 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     EVT MemVT = LN0->getMemoryVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    unsigned BitWidth = N1.getValueSizeInBits();
+    unsigned BitWidth = N1.getValueType().getScalarType().getSizeInBits();
     if (DAG.MaskedValueIsZero(N1, APInt::getHighBitsSet(BitWidth,
-                                     BitWidth - MemVT.getSizeInBits())) &&
+                           BitWidth - MemVT.getScalarType().getSizeInBits())) &&
         ((!LegalOperations && !LN0->isVolatile()) ||
          TLI.isLoadExtLegal(ISD::ZEXTLOAD, MemVT))) {
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, N0.getDebugLoc(), VT,
