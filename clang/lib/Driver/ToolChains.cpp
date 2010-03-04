@@ -728,6 +728,66 @@ DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args,
   return new DerivedArgList(Args, true);
 }
 
+
+/// TCEToolChain - A tool chain using the llvm bitcode tools to perform
+/// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
+/// Currently does not support anything else but compilation.
+
+TCEToolChain::TCEToolChain(const HostInfo &Host, const llvm::Triple& Triple)
+  : ToolChain(Host, Triple) {
+  // Path mangling to find libexec
+  std::string Path(getDriver().Dir);
+
+  Path += "/../libexec";
+  getProgramPaths().push_back(Path);
+}
+
+TCEToolChain::~TCEToolChain() {
+  for (llvm::DenseMap<unsigned, Tool*>::iterator
+           it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
+      delete it->second;
+}
+
+bool TCEToolChain::IsMathErrnoDefault() const { 
+  return true; 
+}
+
+bool TCEToolChain::IsUnwindTablesDefault() const {
+  return false;
+}
+
+const char *TCEToolChain::GetDefaultRelocationModel() const {
+  return "static";
+}
+
+const char *TCEToolChain::GetForcedPicModel() const {
+  return 0;
+}
+
+Tool &TCEToolChain::SelectTool(const Compilation &C, 
+                            const JobAction &JA) const {
+  Action::ActionClass Key;
+  Key = Action::AnalyzeJobClass;
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::PreprocessJobClass:
+      T = new tools::gcc::Preprocess(*this); break;
+    case Action::AnalyzeJobClass:
+      T = new tools::Clang(*this); break;
+    default:
+     assert(false && "Unsupported action for TCE target.");
+    }
+  }
+  return *T;
+}
+
+DerivedArgList *TCEToolChain::TranslateArgs(InputArgList &Args,
+                                            const char *BoundArch) const {
+  return new DerivedArgList(Args, true);
+}
+
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
 
 OpenBSD::OpenBSD(const HostInfo &Host, const llvm::Triple& Triple)

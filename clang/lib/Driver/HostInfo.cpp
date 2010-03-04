@@ -157,6 +157,46 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
   return TC;
 }
 
+// TCE Host Info
+
+/// TCEHostInfo - TCE host information implementation (see http://tce.cs.tut.fi)
+class TCEHostInfo : public HostInfo {
+
+public:
+  TCEHostInfo(const Driver &D, const llvm::Triple &Triple);
+  ~TCEHostInfo() {};
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    types::ID Ty = types::lookupTypeForExtension(Ext);
+
+    if (Ty == types::TY_PP_Asm)
+      return types::TY_Asm;
+
+    return Ty;
+  }
+
+  virtual ToolChain *CreateToolChain(const ArgList &Args, 
+                                     const char *ArchName) const;
+};
+
+TCEHostInfo::TCEHostInfo(const Driver &D, const llvm::Triple& Triple)
+  : HostInfo(D, Triple) {
+}
+
+bool TCEHostInfo::useDriverDriver() const { 
+  return false;
+}
+
+ToolChain *TCEHostInfo::CreateToolChain(const ArgList &Args, 
+                                        const char *ArchName) const {
+  llvm::Triple TCTriple(getTriple());
+//  TCTriple.setArchName(ArchName);
+  return new toolchains::TCEToolChain(*this, TCTriple);
+}
+
+
 // Unknown Host Info
 
 /// UnknownHostInfo - Generic host information to use for unknown hosts.
@@ -533,6 +573,12 @@ const HostInfo *
 clang::driver::createLinuxHostInfo(const Driver &D,
                                    const llvm::Triple& Triple) {
   return new LinuxHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createTCEHostInfo(const Driver &D,
+                                   const llvm::Triple& Triple) {
+  return new TCEHostInfo(D, Triple);
 }
 
 const HostInfo *

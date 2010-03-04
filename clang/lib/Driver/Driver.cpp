@@ -1145,6 +1145,10 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   llvm::PrettyStackTraceString CrashInfo("Constructing host");
   llvm::Triple Triple(TripleStr);
 
+  // TCE is an osless target
+  if (Triple.getArchName() == "tce")
+    return createTCEHostInfo(*this, Triple); 
+
   switch (Triple.getOS()) {
   case llvm::Triple::AuroraUX:
     return createAuroraUXHostInfo(*this, Triple);

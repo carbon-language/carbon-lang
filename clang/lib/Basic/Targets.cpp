@@ -1908,9 +1908,10 @@ namespace {
       FloatFormat = &llvm::APFloat::IEEEsingle;
       DoubleFormat = &llvm::APFloat::IEEEsingle;
       LongDoubleFormat = &llvm::APFloat::IEEEsingle;
-      DescriptionString = "E-p:32:32:32-a0:32:32"
-                          "-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64"
-                          "-f32:32:32-f64:32:64-n32";
+      DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:32-"
+                          "i16:16:32-i32:32:32-i64:32:32-"
+                          "f32:32:32-f64:64:64-v64:64:64-"
+                          "v128:128:128-a0:0:64-n32";
     }
 
     virtual void getTargetDefines(const LangOptions &Opts,

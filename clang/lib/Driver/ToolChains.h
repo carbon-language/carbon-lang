@@ -267,6 +267,26 @@ public:
 };
 
 
+/// TCEToolChain - A tool chain using the llvm bitcode tools to perform
+/// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
+class VISIBILITY_HIDDEN TCEToolChain : public ToolChain {
+public:
+  TCEToolChain(const HostInfo &Host, const llvm::Triple& Triple);
+  ~TCEToolChain();
+
+  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
+                                        const char *BoundArch) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  bool IsMathErrnoDefault() const;
+  bool IsUnwindTablesDefault() const;
+  const char* GetDefaultRelocationModel() const;
+  const char* GetForcedPicModel() const;
+
+private:
+  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+
+};
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang
