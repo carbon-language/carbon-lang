@@ -15,7 +15,8 @@ using namespace llvm;
 Target llvm::ThePIC16Target, llvm::TheCooperTarget;
 
 extern "C" void LLVMInitializePIC16TargetInfo() { 
-  RegisterTarget<> X(ThePIC16Target, "pic16", "PIC16 14-bit [experimental]");
+  RegisterTarget<Triple::pic16> X(ThePIC16Target, "pic16",
+                                  "PIC16 14-bit [experimental]");
 
   RegisterTarget<> Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental]");
 }
