@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
-// RUN: FileCheck -check-prefix LP --input-file=%t-rw.cpp %s
+// RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc %s -o %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -Wno-address-of-temporary -D"SEL=void*" -D"id=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 7589414
 
 @protocol NSPortDelegate;
@@ -30,12 +30,3 @@ void f() {
         id a;
         id b = bar((id <Proto>)a);
 }
-
-// CHECK-LP: NSConnection /*<NSPortDelegate>*/ *conn = 0; 
-
-// CHECK-LP: id /*<NSPortDelegate>*/ *idc = 0; 
-
-// CHECK-LP: func(id/*<Proto1, Proto2>*/ inProxy);
-
-// CHECK-LP: bar((id /*<Proto>*/)a);
-
