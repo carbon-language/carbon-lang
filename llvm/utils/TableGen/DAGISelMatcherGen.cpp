@@ -471,6 +471,9 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
     if (Variant != 0) return true;
   }
     
+  // Emit the matcher for the pattern structure and types.
+  EmitMatchCode(Pattern.getSrcPattern(), PatWithNoTypes);
+  
   // If the pattern has a predicate on it (e.g. only enabled when a subtarget
   // feature is around, do the check).
   // FIXME: This should get emitted after the match code below to encourage
@@ -479,15 +482,11 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
   // X86's MatchAddress.
   if (!Pattern.getPredicateCheck().empty())
     AddMatcher(new CheckPatternPredicateMatcher(Pattern.getPredicateCheck()));
-
-  // Emit the matcher for the pattern structure and types.
-  EmitMatchCode(Pattern.getSrcPattern(), PatWithNoTypes);
   
   // Now that we've completed the structural type match, emit any ComplexPattern
   // checks (e.g. addrmode matches).  We emit this after the structural match
   // because they are generally more expensive to evaluate and more difficult to
   // factor.
-  // FIXME2: Can the patternpredicatematcher be moved to right before this??
   for (unsigned i = 0, e = MatchedComplexPatterns.size(); i != e; ++i) {
     const TreePatternNode *N = MatchedComplexPatterns[i].first;
     
