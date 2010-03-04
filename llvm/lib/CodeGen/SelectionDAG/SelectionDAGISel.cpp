@@ -56,8 +56,11 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
+
+STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
 
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
@@ -930,6 +933,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         // feed PHI nodes in successor blocks.
         if (isa<TerminatorInst>(BI))
           if (!HandlePHINodesInSuccessorBlocksFast(LLVMBB, FastIS)) {
+            ++NumFastIselFailures;
             ResetDebugLoc(SDB, FastIS);
             if (EnableFastISelVerbose || EnableFastISelAbort) {
               dbgs() << "FastISel miss: ";
@@ -954,6 +958,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
         if (isa<CallInst>(BI)) {
+          ++NumFastIselFailures;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel missed call: ";
             BI->dump();
@@ -983,6 +988,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         // Otherwise, give up on FastISel for the rest of the block.
         // For now, be a little lenient about non-branch terminators.
         if (!isa<TerminatorInst>(BI) || isa<BranchInst>(BI)) {
+          ++NumFastIselFailures;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel miss: ";
             BI->dump();
