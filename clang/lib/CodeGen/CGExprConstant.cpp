@@ -761,7 +761,9 @@ public:
       return C;
     }
     case Expr::DeclRefExprClass: {
-      NamedDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
+      ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
+      if (Decl->hasAttr<WeakRefAttr>())
+	return CGM.GetWeakRefReference(Decl);
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunction(FD);
       if (const VarDecl* VD = dyn_cast<VarDecl>(Decl)) {

@@ -52,3 +52,11 @@ void test6_h(void) {
 void test6_foo(void) {
   test6_f();
 }
+
+// CHECK: declare extern_weak void @test7_f()
+void test7_f(void);
+static void test7_g(void) __attribute__((weakref("test7_f")));
+static void *const test7_zed = (void *) &test7_g;
+void* test7_h(void) {
+  return test7_zed;
+}
