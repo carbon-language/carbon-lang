@@ -64,6 +64,7 @@ def clang_ignored_m_Group : OptionGroup<"<clang ignored m group>">,
 //   , => _COMMA
 //   = => _EQ
 //   C++ => CXX
+//   . => _
 
 // Developer Driver Options
 
@@ -420,6 +421,8 @@ def mno_sse2 : Flag<"-mno-sse2">, Group<m_x86_Features_Group>;
 def mno_sse3 : Flag<"-mno-sse3">, Group<m_x86_Features_Group>;
 def mno_sse4a : Flag<"-mno-sse4a">, Group<m_x86_Features_Group>;
 def mno_sse4 : Flag<"-mno-sse4">, Group<m_x86_Features_Group>;
+def mno_sse4_1 : Flag<"-mno-sse4.1">, Group<m_x86_Features_Group>;
+def mno_sse4_2 : Flag<"-mno-sse4.2">, Group<m_x86_Features_Group>;
 def mno_sse : Flag<"-mno-sse">, Group<m_x86_Features_Group>;
 def mno_ssse3 : Flag<"-mno-ssse3">, Group<m_x86_Features_Group>;
 
@@ -434,6 +437,8 @@ def msse2 : Flag<"-msse2">, Group<m_x86_Features_Group>;
 def msse3 : Flag<"-msse3">, Group<m_x86_Features_Group>;
 def msse4a : Flag<"-msse4a">, Group<m_x86_Features_Group>;
 def msse4 : Flag<"-msse4">, Group<m_x86_Features_Group>;
+def msse4_1 : Flag<"-msse4.1">, Group<m_x86_Features_Group>;
+def msse4_2 : Flag<"-msse4.2">, Group<m_x86_Features_Group>;
 def msse : Flag<"-msse">, Group<m_x86_Features_Group>;
 def mssse3 : Flag<"-mssse3">, Group<m_x86_Features_Group>;
 def mthumb : Flag<"-mthumb">, Group<m_Group>;

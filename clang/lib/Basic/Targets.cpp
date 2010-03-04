@@ -734,8 +734,10 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
 bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
                                       const std::string &Name,
                                       bool Enabled) const {
-  // FIXME: This *really* should not be here.
-  if (!Features.count(Name) && Name != "sse4")
+  // FIXME: This *really* should not be here.  We need some way of translating
+  // options into llvm subtarget features.
+  if (!Features.count(Name) &&
+      (Name != "sse4" && Name != "sse4.2" && Name != "sse4.1"))
     return false;
 
   if (Enabled) {
@@ -751,9 +753,12 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "ssse3")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = true;
-    else if (Name == "sse4")
+    else if (Name == "sse4" || Name == "sse4.2")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
+    else if (Name == "sse4.1")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+        Features["ssse3"] = Features["sse41"] = true;
     else if (Name == "3dnow")
       Features["3dnowa"] = true;
     else if (Name == "3dnowa")
