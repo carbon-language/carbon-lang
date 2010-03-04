@@ -385,7 +385,30 @@ def parseIntegratedTestScript(test):
     script = []
     xfails = []
     xtargets = []
+    ignoredAny = False
     for ln in open(sourcepath):
+        if 'IF(' in ln:
+            # Required syntax here is IF(condition(value)):
+            index = ln.index('IF(')
+            ln = ln[index+3:]
+            index = ln.index('(')
+            if index is -1:
+                return (Test.UNRESOLVED, "ill-formed IF at '"+ln[:10]+"'")
+            condition = ln[:index]
+            ln = ln[index+1:]
+            index = ln.index(')')
+            if index is -1 or ln[index:index+3] != ')):':
+                return (Test.UNRESOLVED, "ill-formed IF at '"+ln[:10]+"'")
+            value = ln[:index]
+            ln = ln[index+3:]
+
+            # Actually test the condition.
+            if condition not in test.config.conditions:
+                return (Test.UNRESOLVED, "unknown condition '"+condition+"'")
+            if not test.config.conditions[condition](value):
+                ignoredAny = True
+                continue
+
         if 'RUN:' in ln:
             # Isolate the command to run.
             index = ln.index('RUN:')
@@ -422,6 +445,8 @@ def parseIntegratedTestScript(test):
 
     # Verify the script contains a run line.
     if not script:
+        if ignoredAny:
+            return (Test.UNSUPPORTED, "Test has only ignored run lines")
         return (Test.UNRESOLVED, "Test has no run line!")
 
     if script[-1][-1] == '\\':

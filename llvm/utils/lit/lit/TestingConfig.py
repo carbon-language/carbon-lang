@@ -27,7 +27,8 @@ class TestingConfig:
                                    on_clone = None,
                                    test_exec_root = None,
                                    test_source_root = None,
-                                   excludes = [])
+                                   excludes = [],
+                                   conditions = {})
 
         if os.path.exists(path):
             # FIXME: Improve detection and error reporting of errors in the
@@ -53,7 +54,7 @@ class TestingConfig:
 
     def __init__(self, parent, name, suffixes, test_format,
                  environment, substitutions, unsupported, on_clone,
-                 test_exec_root, test_source_root, excludes):
+                 test_exec_root, test_source_root, excludes, conditions):
         self.parent = parent
         self.name = str(name)
         self.suffixes = set(suffixes)
@@ -65,6 +66,7 @@ class TestingConfig:
         self.test_exec_root = test_exec_root
         self.test_source_root = test_source_root
         self.excludes = set(excludes)
+        self.conditions = dict(conditions)
 
     def clone(self, path):
         # FIXME: Chain implementations?
@@ -74,7 +76,7 @@ class TestingConfig:
                             self.environment, self.substitutions,
                             self.unsupported, self.on_clone,
                             self.test_exec_root, self.test_source_root,
-                            self.excludes)
+                            self.excludes, self.conditions)
         if cfg.on_clone:
             cfg.on_clone(self, cfg, path)
         return cfg
