@@ -246,6 +246,11 @@ public:
       MDNode *N = &(*MDNodeSet.begin());
       N->destroy();
     }
+    // Destroy MDStrings.
+    for (StringMap<MDString*>::iterator I = MDStringCache.begin(),
+           E = MDStringCache.end(); I != E; ++I) {
+      delete I->second;
+    }
   }
 };
 

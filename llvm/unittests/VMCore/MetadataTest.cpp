@@ -20,11 +20,15 @@ using namespace llvm;
 
 namespace {
 
-LLVMContext &Context = getGlobalContext();
+class MetadataTest : public testing::Test {
+protected:
+  LLVMContext Context;
+};
+typedef MetadataTest MDStringTest;
 
 // Test that construction of MDString with different value produces different
 // MDString objects, even with the same string pointer and nulls in the string.
-TEST(MDStringTest, CreateDifferent) {
+TEST_F(MDStringTest, CreateDifferent) {
   char x[3] = { 'f', 0, 'A' };
   MDString *s1 = MDString::get(Context, StringRef(&x[0], 3));
   x[2] = 'B';
@@ -34,7 +38,7 @@ TEST(MDStringTest, CreateDifferent) {
 
 // Test that creation of MDStrings with the same string contents produces the
 // same MDString object, even with different pointers.
-TEST(MDStringTest, CreateSame) {
+TEST_F(MDStringTest, CreateSame) {
   char x[4] = { 'a', 'b', 'c', 'X' };
   char y[4] = { 'a', 'b', 'c', 'Y' };
 
@@ -44,7 +48,7 @@ TEST(MDStringTest, CreateSame) {
 }
 
 // Test that MDString prints out the string we fed it.
-TEST(MDStringTest, PrintingSimple) {
+TEST_F(MDStringTest, PrintingSimple) {
   char *str = new char[13];
   strncpy(str, "testing 1 2 3", 13);
   MDString *s = MDString::get(Context, StringRef(str, 13));
@@ -58,7 +62,7 @@ TEST(MDStringTest, PrintingSimple) {
 }
 
 // Test printing of MDString with non-printable characters.
-TEST(MDStringTest, PrintingComplex) {
+TEST_F(MDStringTest, PrintingComplex) {
   char str[5] = {0, '\n', '"', '\\', -1};
   MDString *s = MDString::get(Context, StringRef(str+0, 5));
   std::string Str;
@@ -67,8 +71,10 @@ TEST(MDStringTest, PrintingComplex) {
   EXPECT_STREQ("metadata !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
 }
 
+typedef MetadataTest MDNodeTest;
+
 // Test the two constructors, and containing other Constants.
-TEST(MDNodeTest, Simple) {
+TEST_F(MDNodeTest, Simple) {
   char x[3] = { 'a', 'b', 'c' };
   char y[3] = { '1', '2', '3' };
 
@@ -101,7 +107,7 @@ TEST(MDNodeTest, Simple) {
   EXPECT_EQ(n1, n2->getOperand(0));
 }
 
-TEST(MDNodeTest, Delete) {
+TEST_F(MDNodeTest, Delete) {
   Constant *C = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 1);
   Instruction *I = new BitCastInst(C, Type::getInt32Ty(getGlobalContext()));
 
@@ -115,8 +121,9 @@ TEST(MDNodeTest, Delete) {
 }
 
 TEST(NamedMDNodeTest, Search) {
-  Constant *C = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 1);
-  Constant *C2 = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 2);
+  LLVMContext Context;
+  Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Constant *C2 = ConstantInt::get(Type::getInt32Ty(Context), 2);
 
   Value *const V = C;
   Value *const V2 = C2;
@@ -125,9 +132,9 @@ TEST(NamedMDNodeTest, Search) {
 
   MDNode *Nodes[2] = { n, n2 };
 
-  Module *M = new Module("MyModule", getGlobalContext());
+  Module *M = new Module("MyModule", Context);
   const char *Name = "llvm.NMD1";
-  NamedMDNode *NMD = NamedMDNode::Create(getGlobalContext(), Name, &Nodes[0], 2, M);
+  NamedMDNode *NMD = NamedMDNode::Create(Context, Name, &Nodes[0], 2, M);
   std::string Str;
   raw_string_ostream oss(Str);
   NMD->print(oss);
