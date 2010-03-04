@@ -320,10 +320,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createOptimizeExtsPass());
-    if (EnableMachineCSE)
-      PM.add(createMachineCSEPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
+    if (EnableMachineCSE)
+      PM.add(createMachineCSEPass());
     if (!DisableMachineSink)
       PM.add(createMachineSinkingPass());
     printAndVerify(PM, "After MachineLICM and MachineSinking",
