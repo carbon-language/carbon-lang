@@ -162,3 +162,10 @@ void bar() {
 
 }
 // CHECK: }
+
+// CHECK: define void @test0(
+void test0() {
+  // CHECK: i64 7
+  unsigned long long x = __builtin_dwarf_sp_column();
+}
+// CHECK: }

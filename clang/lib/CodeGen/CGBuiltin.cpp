@@ -21,6 +21,9 @@
 #include "clang/Basic/TargetBuiltins.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
@@ -406,6 +409,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_unwind_init: {
     Value *F = CGM.getIntrinsic(Intrinsic::eh_unwind_init, 0, 0);
     return RValue::get(Builder.CreateCall(F));
+  }
+  case Builtin::BI__builtin_dwarf_sp_column: {
+    const llvm::TargetMachine &Machine = CGM.getTargetMachine();
+    llvm::TargetLowering *TL = Machine.getTargetLowering();
+    assert(TL && "need lowering to codegen __builtin_dwarf_sp_column");
+    const llvm::TargetRegisterInfo *TRI = Machine.getRegisterInfo();
+    assert(TRI && "need register info to codegen __builtin_dwarf_sp_column");
+    unsigned SP = TL->getStackPointerRegisterToSaveRestore();
+    int DwarfSP = TRI->getDwarfRegNum(SP, /*for EH*/ true);
+
+    return RValue::get(
+      llvm::ConstantInt::getSigned(cast<IntegerType>(LLVMIntTy), DwarfSP));
   }
   case Builtin::BI__builtin_extend_pointer: {
     // Extends a pointer to the size of an _Unwind_Word, which is
