@@ -1,3 +1,5 @@
+// XFAIL: win32
+
 // RUN: %clang_cc1 -g -triple armv6-apple-darwin9 -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple armv6-unknown-unknown -emit-llvm -o %t %s
 // RUN: %clang_cc1 -g -triple bfin-unknown-unknown -emit-llvm -o %t %s

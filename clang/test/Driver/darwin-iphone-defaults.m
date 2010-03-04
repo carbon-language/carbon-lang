@@ -1,5 +1,7 @@
 // RUN: %clang -ccc-host-triple i386-apple-darwin9 -arch armv7 -flto -S -o - %s | FileCheck %s
 
+// XFAIL: win32
+
 // CHECK: @f0
 // CHECK-NOT: ssp
 // CHECK: ) {
