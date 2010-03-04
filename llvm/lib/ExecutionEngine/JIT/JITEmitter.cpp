@@ -226,8 +226,6 @@ namespace {
     void getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
                            SmallVectorImpl<void*> &Ptrs);
 
-    GlobalValue *invalidateStub(void *Stub);
-
     /// getGOTIndexForAddress - Return a new or existing index in the GOT for
     /// an address.  This function only manages slots, it does not manage the
     /// contents of the slots or the memory associated with the GOT.
@@ -371,16 +369,6 @@ namespace {
     ValueMap<const Function *, EmittedCode,
              EmittedFunctionConfig> EmittedFunctions;
 
-    // CurFnStubUses - For a given Function, a vector of stubs that it
-    // references.  This facilitates the JIT detecting that a stub is no
-    // longer used, so that it may be deallocated.
-    DenseMap<AssertingVH<const Function>, SmallVector<void*, 1> > CurFnStubUses;
-
-    // StubFnRefs - For a given pointer to a stub, a set of Functions which
-    // reference the stub.  When the count of a stub's references drops to zero,
-    // the stub is unused.
-    DenseMap<void *, SmallPtrSet<const Function*, 1> > StubFnRefs;
-
     DILocation PrevDLT;
 
     /// Instance of the JIT
@@ -468,11 +456,6 @@ namespace {
     /// deallocateMemForFunction - Deallocate all memory for the specified
     /// function body.
     void deallocateMemForFunction(const Function *F);
-
-    /// AddStubToCurrentFunction - Mark the current function being JIT'd as
-    /// using the stub at the specified address. Allows
-    /// deallocateMemForFunction to also remove stubs no longer referenced.
-    void AddStubToCurrentFunction(void *Stub);
 
     virtual void processDebugLoc(DebugLoc DL, bool BeforePrintingInsn);
 
@@ -725,42 +708,6 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
   }
 }
 
-GlobalValue *JITResolver::invalidateStub(void *Stub) {
-  MutexGuard locked(TheJIT->lock);
-
-  // Remove the stub from the StubToResolverMap.
-  StubToResolverMap->UnregisterStubResolver(Stub);
-
-  GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
-
-  // Look up the cheap way first, to see if it's a function stub we are
-  // invalidating.  If so, remove it from both the forward and reverse maps.
-  if (Function *F = state.EraseStub(locked, Stub)) {
-    return F;
-  }
-
-  // Otherwise, it might be an indirect symbol stub.  Find it and remove it.
-  for (GlobalToIndirectSymMapTy::iterator i = GM.begin(), e = GM.end();
-       i != e; ++i) {
-    if (i->second != Stub)
-      continue;
-    GlobalValue *GV = i->first;
-    GM.erase(i);
-    return GV;
-  }
-
-  // Lastly, check to see if it's in the ExternalFnToStubMap.
-  for (std::map<void *, void *>::iterator i = ExternalFnToStubMap.begin(),
-       e = ExternalFnToStubMap.end(); i != e; ++i) {
-    if (i->second != Stub)
-      continue;
-    ExternalFnToStubMap.erase(i);
-    break;
-  }
-
-  return 0;
-}
-
 /// JITCompilerFn - This function is called when a lazy compilation stub has
 /// been entered.  It looks up which function this stub corresponds to, compiles
 /// it if necessary, then returns the resultant function pointer.
@@ -846,7 +793,6 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     // that we're returning the same address for the function as any previous
     // call.  TODO: Yes, this is wrong. The lazy stub isn't guaranteed to be
     // close enough to call.
-    AddStubToCurrentFunction(FnStub);
     return FnStub;
   }
 
@@ -863,18 +809,10 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
       return TheJIT->getPointerToFunction(F);
   }
 
-  // Otherwise, we may need a to emit a stub, and, conservatively, we
-  // always do so.
-  void *StubAddr = Resolver.getLazyFunctionStub(F);
-
-  // Add the stub to the current function's list of referenced stubs, so we can
-  // deallocate them if the current function is ever freed.  It's possible to
-  // return null from getLazyFunctionStub in the case of a weak extern that
-  // fails to resolve.
-  if (StubAddr)
-    AddStubToCurrentFunction(StubAddr);
-
-  return StubAddr;
+  // Otherwise, we may need a to emit a stub, and, conservatively, we always do
+  // so.  Note that it's possible to return null from getLazyFunctionStub in the
+  // case of a weak extern that fails to resolve.
+  return Resolver.getLazyFunctionStub(F);
 }
 
 void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference) {
@@ -882,22 +820,7 @@ void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference) {
   // resolved address.
   void *GVAddress = getPointerToGlobal(V, Reference, false);
   void *StubAddr = Resolver.getGlobalValueIndirectSym(V, GVAddress);
-
-  // Add the stub to the current function's list of referenced stubs, so we can
-  // deallocate them if the current function is ever freed.
-  AddStubToCurrentFunction(StubAddr);
-
   return StubAddr;
-}
-
-void JITEmitter::AddStubToCurrentFunction(void *StubAddr) {
-  assert(CurFn && "Stub added to current function, but current function is 0!");
-
-  SmallVectorImpl<void*> &StubsUsed = CurFnStubUses[CurFn];
-  StubsUsed.push_back(StubAddr);
-
-  SmallPtrSet<const Function *, 1> &FnRefs = StubFnRefs[StubAddr];
-  FnRefs.insert(CurFn);
 }
 
 void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
@@ -1407,40 +1330,6 @@ void JITEmitter::deallocateMemForFunction(const Function *F) {
   if (JITEmitDebugInfo) {
     DR->UnregisterFunction(F);
   }
-
-  // If the function did not reference any stubs, return.
-  if (CurFnStubUses.find(F) == CurFnStubUses.end())
-    return;
-
-  // For each referenced stub, erase the reference to this function, and then
-  // erase the list of referenced stubs.
-  SmallVectorImpl<void *> &StubList = CurFnStubUses[F];
-  for (unsigned i = 0, e = StubList.size(); i != e; ++i) {
-    void *Stub = StubList[i];
-
-    // If we already invalidated this stub for this function, continue.
-    if (StubFnRefs.count(Stub) == 0)
-      continue;
-
-    SmallPtrSet<const Function *, 1> &FnRefs = StubFnRefs[Stub];
-    FnRefs.erase(F);
-
-    // If this function was the last reference to the stub, invalidate the stub
-    // in the JITResolver.  Were there a memory manager deallocateStub routine,
-    // we could call that at this point too.
-    if (FnRefs.empty()) {
-      DEBUG(dbgs() << "\nJIT: Invalidated Stub at [" << Stub << "]\n");
-      StubFnRefs.erase(Stub);
-
-      // Invalidate the stub.  If it is a GV stub, update the JIT's global
-      // mapping for that GV to zero.
-      GlobalValue *GV = Resolver.invalidateStub(Stub);
-      if (GV) {
-        TheJIT->updateGlobalMapping(GV, 0);
-      }
-    }
-  }
-  CurFnStubUses.erase(F);
 }
 
 

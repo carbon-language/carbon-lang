@@ -655,6 +655,29 @@ TEST_F(JITTest, NeedsExactSizeWithManyGlobals) {
   EXPECT_EQ(42, *********test());
 }
 
+TEST_F(JITTest, EscapedLazyStubStillCallable) {
+  TheJIT->DisableLazyCompilation(false);
+  LoadAssembly("define internal i32 @stubbed() { "
+               "  ret i32 42 "
+               "} "
+               " "
+               "define i32()* @get_stub() { "
+               "  ret i32()* @stubbed "
+               "} ");
+  typedef int32_t(*StubTy)();
+
+  // Call get_stub() to get the address of @stubbed without actually JITting it.
+  Function *get_stubIR = M->getFunction("get_stub");
+  StubTy (*get_stub)() = reinterpret_cast<StubTy(*)()>(
+    (intptr_t)TheJIT->getPointerToFunction(get_stubIR));
+  StubTy stubbed = get_stub();
+  // Now get_stubIR is the only reference to stubbed's stub.
+  get_stubIR->eraseFromParent();
+  // Now there are no references inside the JIT, but we've got a pointer outside
+  // it.  The stub should be callable and return the right value.
+  EXPECT_EQ(42, stubbed());
+}
+
 // Converts the LLVM assembly to bitcode and returns it in a std::string.  An
 // empty string indicates an error.
 std::string AssembleToBitcode(LLVMContext &Context, const char *Assembly) {
