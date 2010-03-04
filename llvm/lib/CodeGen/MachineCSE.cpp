@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
@@ -34,6 +35,7 @@ namespace {
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo  *MRI;
     MachineDominatorTree *DT;
+    AliasAnalysis *AA;
   public:
     static char ID; // Pass identification
     MachineCSE() : MachineFunctionPass(&ID), CurrVN(0) {}
@@ -43,6 +45,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
+      AU.addRequired<AliasAnalysis>();
       AU.addRequired<MachineDominatorTree>();
       AU.addPreserved<MachineDominatorTree>();
     }
@@ -52,11 +55,12 @@ namespace {
     ScopedHashTable<MachineInstr*, unsigned, MachineInstrExpressionTrait> VNT;
     SmallVector<MachineInstr*, 64> Exps;
 
-    bool hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isPhysDefTriviallyDead(unsigned Reg,
                                 MachineBasicBlock::const_iterator I,
                                 MachineBasicBlock::const_iterator E);
-    bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool isCSECandidate(MachineInstr *MI);
     bool ProcessBlock(MachineDomTreeNode *Node);
   };
 } // end anonymous namespace
@@ -163,6 +167,33 @@ bool MachineCSE::hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB){
   return false;
 }
 
+bool MachineCSE::isCSECandidate(MachineInstr *MI) {
+  // Ignore copies or instructions that read / write physical registers
+  // (except for dead defs of physical registers).
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
+      MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg())
+    return false;
+
+  // Ignore stuff that we obviously can't move.
+  const TargetInstrDesc &TID = MI->getDesc();  
+  if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
+      TID.hasUnmodeledSideEffects())
+    return false;
+
+  if (TID.mayLoad()) {
+    // Okay, this instruction does a load. As a refinement, we allow the target
+    // to decide whether the loaded value is actually a constant. If so, we can
+    // actually use it as a load.
+    if (!MI->isInvariantLoad(AA))
+      // FIXME: we should be able to hoist loads with no other side effects if
+      // there are no other instructions which can change memory in this loop.
+      // This is a trivial form of alias analysis.
+      return false;
+  }
+  return true;
+}
+
 bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
   bool Changed = false;
 
@@ -172,15 +203,9 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E; ) {
     MachineInstr *MI = &*I;
     ++I;
-    bool SawStore = false;
-    if (!MI->isSafeToMove(TII, 0, SawStore))
+
+    if (!isCSECandidate(MI))
       continue;
-    // Ignore copies or instructions that read / write physical registers
-    // (except for dead defs of physical registers).
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
-        MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg())
-      continue;    
 
     bool FoundCSE = VNT.count(MI);
     if (!FoundCSE) {
@@ -237,5 +262,6 @@ bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   TRI = MF.getTarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
+  AA = &getAnalysis<AliasAnalysis>();
   return ProcessBlock(DT->getRootNode());
 }
