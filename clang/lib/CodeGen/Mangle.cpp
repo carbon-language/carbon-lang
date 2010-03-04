@@ -65,8 +65,6 @@ static const CXXMethodDecl *getStructor(const CXXMethodDecl *MD) {
 }
 
 static const unsigned UnknownArity = ~0U;
-static unsigned Discriminator = 0;
-static llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
   
 /// CXXNameMangler - Manage the mangling of a single name.
 class CXXNameMangler {
@@ -672,17 +670,14 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
     Out << 'E';
     mangleNestedName(ND, DC, true /*NoFunction*/);
     
-    // FIXME. This still does not conform to ABI and does not cover all cases.
-    unsigned &discriminator = Uniquifier[ND];
-    if (!discriminator)
-      discriminator = ++Discriminator;
-    if (discriminator == 1)
-      return;
-    unsigned disc = discriminator-2;
-    if (disc < 10)
-      Out << '_' << disc;
-    else 
-      Out << "__" << disc << '_';
+    // FIXME. This still does not cover all cases.
+    unsigned disc;
+    if (Context.getNextDiscriminator(ND, disc)) {
+      if (disc < 10)
+        Out << '_' << disc;
+      else 
+        Out << "__" << disc << '_';
+    }
 
     return;
   }

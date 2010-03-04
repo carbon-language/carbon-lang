@@ -44,7 +44,9 @@ class MangleContext {
   ASTContext &Context;
 
   llvm::DenseMap<const TagDecl *, uint64_t> AnonStructIds;
-
+  unsigned Discriminator;
+  llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
+  
 public:
   explicit MangleContext(ASTContext &Context)
     : Context(Context) { }
@@ -85,7 +87,20 @@ public:
                      llvm::SmallVectorImpl<char> &);
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                      llvm::SmallVectorImpl<char> &);
+  
+  void mangleInitDiscriminator() {
+    Discriminator = 0;
+  }
 
+  bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
+    unsigned &discriminator = Uniquifier[ND];
+    if (!discriminator)
+      discriminator = ++Discriminator;
+    if (discriminator == 1)
+      return false;
+    disc = discriminator-2;
+    return true;
+  }
   /// @}
 };
   
