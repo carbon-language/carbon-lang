@@ -1786,6 +1786,7 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                            const SmallVectorImpl<MachineOperand> &Cond) const {
   // FIXME this should probably have a DebugLoc operand
   DebugLoc dl = DebugLoc::getUnknownLoc();
+
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -1799,34 +1800,72 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   }
 
   // Conditional branch.
+  const MachineBasicBlock *NextBB = next(&MBB);
   unsigned Count = 0;
   X86::CondCode CC = (X86::CondCode)Cond[0].getImm();
+
+  // In a two-way conditional branch, if the fall-through block is the
+  // "false" branch of the conditional jumps, we can cut out the
+  // unconditional jump by rearranging the conditional jumps. This saves a
+  // few bytes and improves performance. I.e., for COND_NE_OR_P:
+  //
+  //     JNE L1
+  //     JP  L1
+  //     JMP L2
+  // L1:
+  //     ...
+  // L2:
+  //     ...
+  //
+  // to:
+  // 
+  //     JP  L1
+  //     JE  L2
+  // L1:
+  //     ...
+  // L2:
+  //     ...
+  //
+  // Similarly for COND_NP_OR_E.
   switch (CC) {
+  default:
+    BuildMI(&MBB, dl, get(GetCondBranchFromCond(CC))).addMBB(TBB);
+    ++Count;
+    break;
   case X86::COND_NP_OR_E:
     // Synthesize NP_OR_E with two branches.
-    BuildMI(&MBB, dl, get(X86::JNP_4)).addMBB(TBB);
-    ++Count;
-    BuildMI(&MBB, dl, get(X86::JE_4)).addMBB(TBB);
-    ++Count;
+    if (FBB && FBB == NextBB) {
+      BuildMI(&MBB, dl, get(X86::JNP_4)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(X86::JNE_4)).addMBB(FBB);
+      FBB = 0;
+    } else {
+      BuildMI(&MBB, dl, get(X86::JNP_4)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(X86::JE_4)).addMBB(TBB);
+    }
+
+    Count += 2;
     break;
   case X86::COND_NE_OR_P:
     // Synthesize NE_OR_P with two branches.
-    BuildMI(&MBB, dl, get(X86::JNE_4)).addMBB(TBB);
-    ++Count;
-    BuildMI(&MBB, dl, get(X86::JP_4)).addMBB(TBB);
-    ++Count;
+    if (FBB && FBB == NextBB) {
+      BuildMI(&MBB, dl, get(X86::JP_4)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(X86::JE_4)).addMBB(FBB);
+      FBB = 0;
+    } else {
+      BuildMI(&MBB, dl, get(X86::JNE_4)).addMBB(TBB);
+      BuildMI(&MBB, dl, get(X86::JP_4)).addMBB(TBB);
+    }
+
+    Count += 2;
     break;
-  default: {
-    unsigned Opc = GetCondBranchFromCond(CC);
-    BuildMI(&MBB, dl, get(Opc)).addMBB(TBB);
-    ++Count;
   }
-  }
+
   if (FBB) {
     // Two-way Conditional branch. Insert the second branch.
     BuildMI(&MBB, dl, get(X86::JMP_4)).addMBB(FBB);
     ++Count;
   }
+
   return Count;
 }
 
