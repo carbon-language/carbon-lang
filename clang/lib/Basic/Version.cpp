@@ -45,7 +45,7 @@ std::string getClangRevision() {
     std::string revision;
     llvm::raw_string_ostream OS(revision);
     OS << strtol(SVN_REVISION, 0, 10);
-    return revision;
+    return OS.str();
   }
 #endif
   return "";
@@ -58,7 +58,7 @@ std::string getClangFullRepositoryVersion() {
   const std::string &Revision = getClangRevision();
   if (!Revision.empty())
     OS << ' ' << Revision;
-  return buf;
+  return OS.str();
 }
   
 std::string getClangFullVersion() {
@@ -69,7 +69,7 @@ std::string getClangFullVersion() {
 #endif
   OS << "clang version " CLANG_VERSION_STRING " ("
      << getClangFullRepositoryVersion() << ')';
-  return buf;
+  return OS.str();
 }
 
 } // end namespace clang
