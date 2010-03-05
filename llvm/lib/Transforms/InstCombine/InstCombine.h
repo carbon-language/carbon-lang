@@ -117,11 +117,11 @@ public:
   Instruction *visitUDiv(BinaryOperator &I);
   Instruction *visitSDiv(BinaryOperator &I);
   Instruction *visitFDiv(BinaryOperator &I);
-  Instruction *FoldAndOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
-  Instruction *FoldAndOfFCmps(Instruction &I, FCmpInst *LHS, FCmpInst *RHS);
+  Value *FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS);
+  Value *FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS);
   Instruction *visitAnd(BinaryOperator &I);
-  Instruction *FoldOrOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
-  Instruction *FoldOrOfFCmps(Instruction &I, FCmpInst *LHS, FCmpInst *RHS);
+  Value *FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS);
+  Value *FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS);
   Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op,
                                    Value *A, Value *B, Value *C);
   Instruction *visitOr (BinaryOperator &I);
@@ -327,8 +327,8 @@ private:
   
   Value *FoldLogicalPlusAnd(Value *LHS, Value *RHS, ConstantInt *Mask,
                             bool isSub, Instruction &I);
-  Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
-                               bool isSigned, bool Inside, Instruction &IB);
+  Value *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
+                         bool isSigned, bool Inside);
   Instruction *PromoteCastOfAllocation(BitCastInst &CI, AllocaInst &AI);
   Instruction *MatchBSwap(BinaryOperator &I);
   bool SimplifyStoreAtEndOfBlock(StoreInst &SI);

@@ -237,3 +237,18 @@ entry:
   %or = or i32 %and42, %and47
   ret i32 %or
 }
+
+; PR6503
+define void @test12(i32* %A) nounwind {
+entry:
+  %tmp1 = load i32* %A
+  %cmp = icmp ugt i32 1, %tmp1                    ; <i1> [#uses=1]
+  %conv = zext i1 %cmp to i32                     ; <i32> [#uses=1]
+  %tmp2 = load i32* %A
+  %cmp3 = icmp ne i32 %tmp2, 0                    ; <i1> [#uses=1]
+  %conv4 = zext i1 %cmp3 to i32                   ; <i32> [#uses=1]
+  %or = or i32 %conv, %conv4                      ; <i32> [#uses=1]
+  %cmp5 = icmp ugt i32 undef, %or                 ; <i1> [#uses=1]
+  %conv6 = zext i1 %cmp5 to i32                   ; <i32> [#uses=0]
+  ret void
+}

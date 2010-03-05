@@ -137,7 +137,8 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
 /// opcode and two operands into either a constant true or false, or a brand 
 /// new ICmp instruction. The sign is passed in to determine which kind
 /// of predicate to use in the new icmp instruction.
-static Value *getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS) {
+static Value *getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
+                           InstCombiner::BuilderTy *Builder) {
   CmpInst::Predicate Pred;
   switch (Code) {
   default: assert(0 && "Illegal ICmp code!");
@@ -152,14 +153,15 @@ static Value *getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS) {
   case 7: // True.
     return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 1);
   }
-  return new ICmpInst(Pred, LHS, RHS);
+  return Builder->CreateICmp(Pred, LHS, RHS);
 }
 
 /// getFCmpValue - This is the complement of getFCmpCode, which turns an
 /// opcode and two operands into either a FCmp instruction. isordered is passed
 /// in to determine which kind of predicate to use in the new fcmp instruction.
 static Value *getFCmpValue(bool isordered, unsigned code,
-                           Value *LHS, Value *RHS) {
+                           Value *LHS, Value *RHS,
+                           InstCombiner::BuilderTy *Builder) {
   CmpInst::Predicate Pred;
   switch (code) {
   default: assert(0 && "Illegal FCmp code!");
@@ -172,7 +174,7 @@ static Value *getFCmpValue(bool isordered, unsigned code,
   case 6: Pred = isordered ? FCmpInst::FCMP_OLE : FCmpInst::FCMP_ULE; break;
   case 7: return ConstantInt::getTrue(LHS->getContext());
   }
-  return new FCmpInst(Pred, LHS, RHS);
+  return Builder->CreateFCmp(Pred, LHS, RHS);
 }
 
 /// PredicatesFoldable - Return true if both predicates match sign or if at
@@ -317,40 +319,39 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 /// (V-Lo) <u Hi-Lo.  This method expects that Lo <= Hi. isSigned indicates
 /// whether to treat the V, Lo and HI as signed or not. IB is the location to
 /// insert new instructions.
-Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
-                                           bool isSigned, bool Inside, 
-                                           Instruction &IB) {
+Value *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
+                                     bool isSigned, bool Inside) {
   assert(cast<ConstantInt>(ConstantExpr::getICmp((isSigned ? 
             ICmpInst::ICMP_SLE:ICmpInst::ICMP_ULE), Lo, Hi))->getZExtValue() &&
          "Lo is not <= Hi in range emission code!");
     
   if (Inside) {
     if (Lo == Hi)  // Trivially false.
-      return new ICmpInst(ICmpInst::ICMP_NE, V, V);
+      return ConstantInt::getFalse(V->getContext());
 
     // V >= Min && V < Hi --> V < Hi
     if (cast<ConstantInt>(Lo)->isMinValue(isSigned)) {
       ICmpInst::Predicate pred = (isSigned ? 
         ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT);
-      return new ICmpInst(pred, V, Hi);
+      return Builder->CreateICmp(pred, V, Hi);
     }
 
     // Emit V-Lo <u Hi-Lo
     Constant *NegLo = ConstantExpr::getNeg(Lo);
     Value *Add = Builder->CreateAdd(V, NegLo, V->getName()+".off");
     Constant *UpperBound = ConstantExpr::getAdd(NegLo, Hi);
-    return new ICmpInst(ICmpInst::ICMP_ULT, Add, UpperBound);
+    return Builder->CreateICmpULT(Add, UpperBound);
   }
 
   if (Lo == Hi)  // Trivially true.
-    return new ICmpInst(ICmpInst::ICMP_EQ, V, V);
+    return ConstantInt::getTrue(V->getContext());
 
   // V < Min || V >= Hi -> V > Hi-1
   Hi = SubOne(cast<ConstantInt>(Hi));
   if (cast<ConstantInt>(Lo)->isMinValue(isSigned)) {
     ICmpInst::Predicate pred = (isSigned ? 
         ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT);
-    return new ICmpInst(pred, V, Hi);
+    return Builder->CreateICmp(pred, V, Hi);
   }
 
   // Emit V-Lo >u Hi-1-Lo
@@ -358,7 +359,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   ConstantInt *NegLo = cast<ConstantInt>(ConstantExpr::getNeg(Lo));
   Value *Add = Builder->CreateAdd(V, NegLo, V->getName()+".off");
   Constant *LowerBound = ConstantExpr::getAdd(NegLo, Hi);
-  return new ICmpInst(ICmpInst::ICMP_UGT, Add, LowerBound);
+  return Builder->CreateICmpUGT(Add, LowerBound);
 }
 
 // isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
@@ -434,8 +435,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
 }
 
 /// FoldAndOfICmps - Fold (icmp)&(icmp) if possible.
-Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
-                                          ICmpInst *LHS, ICmpInst *RHS) {
+Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
 
   // (icmp1 A, B) & (icmp2 A, B) --> (icmp3 A, B)
@@ -448,11 +448,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       Value *Op0 = LHS->getOperand(0), *Op1 = LHS->getOperand(1);
       unsigned Code = getICmpCode(LHS) & getICmpCode(RHS);
       bool isSigned = LHS->isSigned() || RHS->isSigned();
-      Value *RV = getICmpValue(isSigned, Code, Op0, Op1);
-      if (Instruction *I = dyn_cast<Instruction>(RV))
-        return I;
-      // Otherwise, it's a constant boolean value.
-      return ReplaceInstUsesWith(I, RV);
+      return getICmpValue(isSigned, Code, Op0, Op1, Builder);
     }
   }
   
@@ -468,13 +464,13 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     if (LHSCC == ICmpInst::ICMP_ULT &&
         LHSCst->getValue().isPowerOf2()) {
       Value *NewOr = Builder->CreateOr(Val, Val2);
-      return new ICmpInst(LHSCC, NewOr, LHSCst);
+      return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
     
     // (icmp eq A, 0) & (icmp eq B, 0) --> (icmp eq (A|B), 0)
     if (LHSCC == ICmpInst::ICMP_EQ && LHSCst->isZero()) {
       Value *NewOr = Builder->CreateOr(Val, Val2);
-      return new ICmpInst(LHSCC, NewOr, LHSCst);
+      return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
   }
   
@@ -524,33 +520,32 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     case ICmpInst::ICMP_EQ:         // (X == 13 & X == 15) -> false
     case ICmpInst::ICMP_UGT:        // (X == 13 & X >  15) -> false
     case ICmpInst::ICMP_SGT:        // (X == 13 & X >  15) -> false
-      return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     case ICmpInst::ICMP_NE:         // (X == 13 & X != 15) -> X == 13
     case ICmpInst::ICMP_ULT:        // (X == 13 & X <  15) -> X == 13
     case ICmpInst::ICMP_SLT:        // (X == 13 & X <  15) -> X == 13
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     }
   case ICmpInst::ICMP_NE:
     switch (RHSCC) {
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_ULT:
       if (LHSCst == SubOne(RHSCst)) // (X != 13 & X u< 14) -> X < 13
-        return new ICmpInst(ICmpInst::ICMP_ULT, Val, LHSCst);
+        return Builder->CreateICmpULT(Val, LHSCst);
       break;                        // (X != 13 & X u< 15) -> no change
     case ICmpInst::ICMP_SLT:
       if (LHSCst == SubOne(RHSCst)) // (X != 13 & X s< 14) -> X < 13
-        return new ICmpInst(ICmpInst::ICMP_SLT, Val, LHSCst);
+        return Builder->CreateICmpSLT(Val, LHSCst);
       break;                        // (X != 13 & X s< 15) -> no change
     case ICmpInst::ICMP_EQ:         // (X != 13 & X == 15) -> X == 15
     case ICmpInst::ICMP_UGT:        // (X != 13 & X u> 15) -> X u> 15
     case ICmpInst::ICMP_SGT:        // (X != 13 & X s> 15) -> X s> 15
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     case ICmpInst::ICMP_NE:
       if (LHSCst == SubOne(RHSCst)){// (X != 13 & X != 14) -> X-13 >u 1
         Constant *AddCST = ConstantExpr::getNeg(LHSCst);
         Value *Add = Builder->CreateAdd(Val, AddCST, Val->getName()+".off");
-        return new ICmpInst(ICmpInst::ICMP_UGT, Add,
-                            ConstantInt::get(Add->getType(), 1));
+        return Builder->CreateICmpUGT(Add, ConstantInt::get(Add->getType(), 1));
       }
       break;                        // (X != 13 & X != 15) -> no change
     }
@@ -560,12 +555,12 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u< 13 & X == 15) -> false
     case ICmpInst::ICMP_UGT:        // (X u< 13 & X u> 15) -> false
-      return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     case ICmpInst::ICMP_SGT:        // (X u< 13 & X s> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X u< 13 & X != 15) -> X u< 13
     case ICmpInst::ICMP_ULT:        // (X u< 13 & X u< 15) -> X u< 13
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     case ICmpInst::ICMP_SLT:        // (X u< 13 & X s< 15) -> no change
       break;
     }
@@ -575,12 +570,12 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s< 13 & X == 15) -> false
     case ICmpInst::ICMP_SGT:        // (X s< 13 & X s> 15) -> false
-      return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     case ICmpInst::ICMP_UGT:        // (X s< 13 & X u> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X s< 13 & X != 15) -> X < 13
     case ICmpInst::ICMP_SLT:        // (X s< 13 & X s< 15) -> X < 13
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     case ICmpInst::ICMP_ULT:        // (X s< 13 & X u< 15) -> no change
       break;
     }
@@ -590,16 +585,15 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u> 13 & X == 15) -> X == 15
     case ICmpInst::ICMP_UGT:        // (X u> 13 & X u> 15) -> X u> 15
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     case ICmpInst::ICMP_SGT:        // (X u> 13 & X s> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:
       if (RHSCst == AddOne(LHSCst)) // (X u> 13 & X != 14) -> X u> 14
-        return new ICmpInst(LHSCC, Val, RHSCst);
+        return Builder->CreateICmp(LHSCC, Val, RHSCst);
       break;                        // (X u> 13 & X != 15) -> no change
     case ICmpInst::ICMP_ULT:        // (X u> 13 & X u< 15) -> (X-14) <u 1
-      return InsertRangeTest(Val, AddOne(LHSCst),
-                             RHSCst, false, true, I);
+      return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, false, true);
     case ICmpInst::ICMP_SLT:        // (X u> 13 & X s< 15) -> no change
       break;
     }
@@ -609,16 +603,15 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s> 13 & X == 15) -> X == 15
     case ICmpInst::ICMP_SGT:        // (X s> 13 & X s> 15) -> X s> 15
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     case ICmpInst::ICMP_UGT:        // (X s> 13 & X u> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:
       if (RHSCst == AddOne(LHSCst)) // (X s> 13 & X != 14) -> X s> 14
-        return new ICmpInst(LHSCC, Val, RHSCst);
+        return Builder->CreateICmp(LHSCC, Val, RHSCst);
       break;                        // (X s> 13 & X != 15) -> no change
     case ICmpInst::ICMP_SLT:        // (X s> 13 & X s< 15) -> (X-14) s< 1
-      return InsertRangeTest(Val, AddOne(LHSCst),
-                             RHSCst, true, true, I);
+      return InsertRangeTest(Val, AddOne(LHSCst), RHSCst, true, true);
     case ICmpInst::ICMP_ULT:        // (X s> 13 & X u< 15) -> no change
       break;
     }
@@ -628,9 +621,10 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
   return 0;
 }
 
-Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
-                                          FCmpInst *RHS) {
-  
+/// FoldAndOfFCmps - Optimize (fcmp)&(fcmp).  NOTE: Unlike the rest of
+/// instcombine, this returns a Value which should already be inserted into the
+/// function.
+Value *InstCombiner::FoldAndOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
       RHS->getPredicate() == FCmpInst::FCMP_ORD) {
     // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
@@ -639,17 +633,15 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
         // If either of the constants are nans, then the whole thing returns
         // false.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
-        return new FCmpInst(FCmpInst::FCMP_ORD,
-                            LHS->getOperand(0), RHS->getOperand(0));
+          return ConstantInt::getFalse(LHS->getContext());
+        return Builder->CreateFCmpORD(LHS->getOperand(0), RHS->getOperand(0));
       }
     
     // Handle vector zeros.  This occurs because the canonical form of
     // "fcmp ord x,x" is "fcmp ord x, 0".
     if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
         isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return new FCmpInst(FCmpInst::FCMP_ORD,
-                          LHS->getOperand(0), RHS->getOperand(0));
+      return Builder->CreateFCmpORD(LHS->getOperand(0), RHS->getOperand(0));
     return 0;
   }
   
@@ -667,14 +659,13 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
   if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
     // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
     if (Op0CC == Op1CC)
-      return new FCmpInst((FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
-    
+      return Builder->CreateFCmp((FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
     if (Op0CC == FCmpInst::FCMP_FALSE || Op1CC == FCmpInst::FCMP_FALSE)
-      return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
     if (Op0CC == FCmpInst::FCMP_TRUE)
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     if (Op1CC == FCmpInst::FCMP_TRUE)
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     
     bool Op0Ordered;
     bool Op1Ordered;
@@ -689,14 +680,14 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
       // uno && ueq -> uno && (uno || eq) -> ueq
       // ord && olt -> ord && (ord && lt) -> olt
       if (Op0Ordered == Op1Ordered)
-        return ReplaceInstUsesWith(I, RHS);
+        return RHS;
       
       // uno && oeq -> uno && (ord && eq) -> false
       // uno && ord -> false
       if (!Op0Ordered)
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+        return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
       // ord && ueq -> ord && (uno || eq) -> oeq
-      return cast<Instruction>(getFCmpValue(true, Op1Pred, Op0LHS, Op0RHS));
+      return getFCmpValue(true, Op1Pred, Op0LHS, Op0RHS, Builder);
     }
   }
 
@@ -892,14 +883,14 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0))
-      if (Instruction *Res = FoldAndOfICmps(I, LHS, RHS))
-        return Res;
+      if (Value *Res = FoldAndOfICmps(LHS, RHS))
+        return ReplaceInstUsesWith(I, Res);
   
   // If and'ing two fcmp, try combine them into one.
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0)))
     if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
-      if (Instruction *Res = FoldAndOfFCmps(I, LHS, RHS))
-        return Res;
+      if (Value *Res = FoldAndOfFCmps(LHS, RHS))
+        return ReplaceInstUsesWith(I, Res);
   
   
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
@@ -922,19 +913,15 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // cast is otherwise not optimizable.  This happens for vector sexts.
         if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
           if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
-            if (Instruction *Res = FoldAndOfICmps(I, LHS, RHS)) {
-              InsertNewInstBefore(Res, I);
+            if (Value *Res = FoldAndOfICmps(LHS, RHS))
               return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-            }
         
         // If this is and(cast(fcmp), cast(fcmp)), try to fold this even if the
         // cast is otherwise not optimizable.  This happens for vector sexts.
         if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
           if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
-            if (Instruction *Res = FoldAndOfFCmps(I, LHS, RHS)) {
-              InsertNewInstBefore(Res, I);
+            if (Value *Res = FoldAndOfFCmps(LHS, RHS))
               return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-            }
       }
     }
     
@@ -1140,10 +1127,8 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   return 0;
 }
 
-/// FoldOrOfICmps - Fold (icmp)|(icmp) and (cast (icmp))|(cast (icmp)) if
-/// possible.
-Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
-                                         ICmpInst *LHS, ICmpInst *RHS) {
+/// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
+Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
 
   // (icmp1 A, B) | (icmp2 A, B) --> (icmp3 A, B)
@@ -1156,11 +1141,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
       Value *Op0 = LHS->getOperand(0), *Op1 = LHS->getOperand(1);
       unsigned Code = getICmpCode(LHS) | getICmpCode(RHS);
       bool isSigned = LHS->isSigned() || RHS->isSigned();
-      Value *RV = getICmpValue(isSigned, Code, Op0, Op1);
-      if (Instruction *I = dyn_cast<Instruction>(RV))
-        return I;
-      // Otherwise, it's a constant boolean value.
-      return ReplaceInstUsesWith(I, RV);
+      return getICmpValue(isSigned, Code, Op0, Op1, Builder);
     }
   }
   
@@ -1174,7 +1155,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
   if (LHSCst == RHSCst && LHSCC == RHSCC &&
       LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero()) {
     Value *NewOr = Builder->CreateOr(Val, Val2);
-    return new ICmpInst(LHSCC, NewOr, LHSCst);
+    return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
   }
   
   // From here on, we only handle:
@@ -1226,7 +1207,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
         Constant *AddCST = ConstantExpr::getNeg(LHSCst);
         Value *Add = Builder->CreateAdd(Val, AddCST, Val->getName()+".off");
         AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
-        return new ICmpInst(ICmpInst::ICMP_ULT, Add, AddCST);
+        return Builder->CreateICmpULT(Add, AddCST);
       }
       break;                         // (X == 13 | X == 15) -> no change
     case ICmpInst::ICMP_UGT:         // (X == 13 | X u> 14) -> no change
@@ -1235,7 +1216,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     case ICmpInst::ICMP_NE:          // (X == 13 | X != 15) -> X != 15
     case ICmpInst::ICMP_ULT:         // (X == 13 | X u< 15) -> X u< 15
     case ICmpInst::ICMP_SLT:         // (X == 13 | X s< 15) -> X s< 15
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     }
     break;
   case ICmpInst::ICMP_NE:
@@ -1244,11 +1225,11 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     case ICmpInst::ICMP_EQ:          // (X != 13 | X == 15) -> X != 13
     case ICmpInst::ICMP_UGT:         // (X != 13 | X u> 15) -> X != 13
     case ICmpInst::ICMP_SGT:         // (X != 13 | X s> 15) -> X != 13
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     case ICmpInst::ICMP_NE:          // (X != 13 | X != 15) -> true
     case ICmpInst::ICMP_ULT:         // (X != 13 | X u< 15) -> true
     case ICmpInst::ICMP_SLT:         // (X != 13 | X s< 15) -> true
-      return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+      return ConstantInt::getTrue(LHS->getContext());
     }
     break;
   case ICmpInst::ICMP_ULT:
@@ -1260,14 +1241,13 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
       // If RHSCst is [us]MAXINT, it is always false.  Not handling
       // this can cause overflow.
       if (RHSCst->isMaxValue(false))
-        return ReplaceInstUsesWith(I, LHS);
-      return InsertRangeTest(Val, LHSCst, AddOne(RHSCst),
-                             false, false, I);
+        return LHS;
+      return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), false, false);
     case ICmpInst::ICMP_SGT:        // (X u< 13 | X s> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X u< 13 | X != 15) -> X != 15
     case ICmpInst::ICMP_ULT:        // (X u< 13 | X u< 15) -> X u< 15
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     case ICmpInst::ICMP_SLT:        // (X u< 13 | X s< 15) -> no change
       break;
     }
@@ -1281,14 +1261,13 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
       // If RHSCst is [us]MAXINT, it is always false.  Not handling
       // this can cause overflow.
       if (RHSCst->isMaxValue(true))
-        return ReplaceInstUsesWith(I, LHS);
-      return InsertRangeTest(Val, LHSCst, AddOne(RHSCst),
-                             true, false, I);
+        return LHS;
+      return InsertRangeTest(Val, LHSCst, AddOne(RHSCst), true, false);
     case ICmpInst::ICMP_UGT:        // (X s< 13 | X u> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X s< 13 | X != 15) -> X != 15
     case ICmpInst::ICMP_SLT:        // (X s< 13 | X s< 15) -> X s< 15
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     case ICmpInst::ICMP_ULT:        // (X s< 13 | X u< 15) -> no change
       break;
     }
@@ -1298,12 +1277,12 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u> 13 | X == 15) -> X u> 13
     case ICmpInst::ICMP_UGT:        // (X u> 13 | X u> 15) -> X u> 13
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     case ICmpInst::ICMP_SGT:        // (X u> 13 | X s> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X u> 13 | X != 15) -> true
     case ICmpInst::ICMP_ULT:        // (X u> 13 | X u< 15) -> true
-      return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+      return ConstantInt::getTrue(LHS->getContext());
     case ICmpInst::ICMP_SLT:        // (X u> 13 | X s< 15) -> no change
       break;
     }
@@ -1313,12 +1292,12 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     default: llvm_unreachable("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s> 13 | X == 15) -> X > 13
     case ICmpInst::ICMP_SGT:        // (X s> 13 | X s> 15) -> X > 13
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     case ICmpInst::ICMP_UGT:        // (X s> 13 | X u> 15) -> no change
       break;
     case ICmpInst::ICMP_NE:         // (X s> 13 | X != 15) -> true
     case ICmpInst::ICMP_SLT:        // (X s> 13 | X s< 15) -> true
-      return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+      return ConstantInt::getTrue(LHS->getContext());
     case ICmpInst::ICMP_ULT:        // (X s> 13 | X u< 15) -> no change
       break;
     }
@@ -1327,8 +1306,10 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
   return 0;
 }
 
-Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
-                                         FCmpInst *RHS) {
+/// FoldOrOfFCmps - Optimize (fcmp)|(fcmp).  NOTE: Unlike the rest of
+/// instcombine, this returns a Value which should already be inserted into the
+/// function.
+Value *InstCombiner::FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS) {
   if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
       RHS->getPredicate() == FCmpInst::FCMP_UNO && 
       LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
@@ -1337,20 +1318,18 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
         // If either of the constants are nans, then the whole thing returns
         // true.
         if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+          return ConstantInt::getTrue(LHS->getContext());
         
         // Otherwise, no need to compare the two constants, compare the
         // rest.
-        return new FCmpInst(FCmpInst::FCMP_UNO,
-                            LHS->getOperand(0), RHS->getOperand(0));
+        return Builder->CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
       }
     
     // Handle vector zeros.  This occurs because the canonical form of
     // "fcmp uno x,x" is "fcmp uno x, 0".
     if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
         isa<ConstantAggregateZero>(RHS->getOperand(1)))
-      return new FCmpInst(FCmpInst::FCMP_UNO,
-                          LHS->getOperand(0), RHS->getOperand(0));
+      return Builder->CreateFCmpUNO(LHS->getOperand(0), RHS->getOperand(0));
     
     return 0;
   }
@@ -1367,14 +1346,13 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
   if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
     // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
     if (Op0CC == Op1CC)
-      return new FCmpInst((FCmpInst::Predicate)Op0CC,
-                          Op0LHS, Op0RHS);
+      return Builder->CreateFCmp((FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
     if (Op0CC == FCmpInst::FCMP_TRUE || Op1CC == FCmpInst::FCMP_TRUE)
-      return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+      return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 1);
     if (Op0CC == FCmpInst::FCMP_FALSE)
-      return ReplaceInstUsesWith(I, RHS);
+      return RHS;
     if (Op1CC == FCmpInst::FCMP_FALSE)
-      return ReplaceInstUsesWith(I, LHS);
+      return LHS;
     bool Op0Ordered;
     bool Op1Ordered;
     unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
@@ -1382,11 +1360,7 @@ Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
     if (Op0Ordered == Op1Ordered) {
       // If both are ordered or unordered, return a new fcmp with
       // or'ed predicates.
-      Value *RV = getFCmpValue(Op0Ordered, Op0Pred|Op1Pred, Op0LHS, Op0RHS);
-      if (Instruction *I = dyn_cast<Instruction>(RV))
-        return I;
-      // Otherwise, it's a constant boolean value...
-      return ReplaceInstUsesWith(I, RV);
+      return getFCmpValue(Op0Ordered, Op0Pred|Op1Pred, Op0LHS, Op0RHS, Builder);
     }
   }
   return 0;
@@ -1649,14 +1623,14 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
-      if (Instruction *Res = FoldOrOfICmps(I, LHS, RHS))
-        return Res;
+      if (Value *Res = FoldOrOfICmps(LHS, RHS))
+        return ReplaceInstUsesWith(I, Res);
     
   // (fcmp uno x, c) | (fcmp uno y, c)  -> (fcmp uno x, y)
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0)))
     if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
-      if (Instruction *Res = FoldOrOfFCmps(I, LHS, RHS))
-        return Res;
+      if (Value *Res = FoldOrOfFCmps(LHS, RHS))
+        return ReplaceInstUsesWith(I, Res);
   
   // fold (or (cast A), (cast B)) -> (cast (or A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
@@ -1680,19 +1654,15 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           // cast is otherwise not optimizable.  This happens for vector sexts.
           if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1COp))
             if (ICmpInst *LHS = dyn_cast<ICmpInst>(Op0COp))
-              if (Instruction *Res = FoldOrOfICmps(I, LHS, RHS)) {
-                InsertNewInstBefore(Res, I);
+              if (Value *Res = FoldOrOfICmps(LHS, RHS))
                 return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-              }
           
           // If this is or(cast(fcmp), cast(fcmp)), try to fold this even if the
           // cast is otherwise not optimizable.  This happens for vector sexts.
           if (FCmpInst *RHS = dyn_cast<FCmpInst>(Op1COp))
             if (FCmpInst *LHS = dyn_cast<FCmpInst>(Op0COp))
-              if (Instruction *Res = FoldOrOfFCmps(I, LHS, RHS)) {
-                InsertNewInstBefore(Res, I);
+              if (Value *Res = FoldOrOfFCmps(LHS, RHS))
                 return CastInst::Create(Op0C->getOpcode(), Res, I.getType());
-              }
         }
       }
   }
@@ -1968,11 +1938,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           Value *Op0 = LHS->getOperand(0), *Op1 = LHS->getOperand(1);
           unsigned Code = getICmpCode(LHS) ^ getICmpCode(RHS);
           bool isSigned = LHS->isSigned() || RHS->isSigned();
-          Value *RV = getICmpValue(isSigned, Code, Op0, Op1);
-          if (Instruction *I = dyn_cast<Instruction>(RV))
-            return I;
-          // Otherwise, it's a constant boolean value.
-          return ReplaceInstUsesWith(I, RV);
+          return ReplaceInstUsesWith(I, 
+                               getICmpValue(isSigned, Code, Op0, Op1, Builder));
         }
       }
 

@@ -877,25 +877,26 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   case ICmpInst::ICMP_EQ:
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse(ICI.getContext()));
-    else if (HiOverflow)
+    if (HiOverflow)
       return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE :
                           ICmpInst::ICMP_UGE, X, LoBound);
-    else if (LoOverflow)
+    if (LoOverflow)
       return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT :
                           ICmpInst::ICMP_ULT, X, HiBound);
-    else
-      return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, true, ICI);
+    return ReplaceInstUsesWith(ICI,
+                               InsertRangeTest(X, LoBound, HiBound, DivIsSigned,
+                                               true));
   case ICmpInst::ICMP_NE:
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(ICI.getContext()));
-    else if (HiOverflow)
+    if (HiOverflow)
       return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT :
                           ICmpInst::ICMP_ULT, X, LoBound);
-    else if (LoOverflow)
+    if (LoOverflow)
       return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE :
                           ICmpInst::ICMP_UGE, X, HiBound);
-    else
-      return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, false, ICI);
+    return ReplaceInstUsesWith(ICI, InsertRangeTest(X, LoBound, HiBound,
+                                                    DivIsSigned, false));
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_SLT:
     if (LoOverflow == +1)   // Low bound is greater than input range.
