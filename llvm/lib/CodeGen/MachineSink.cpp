@@ -72,8 +72,13 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
                                              MachineBasicBlock *MBB) const {
   assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
          "Only makes sense for vregs");
-  for (MachineRegisterInfo::use_iterator I = RegInfo->use_begin(Reg),
-       E = RegInfo->use_end(); I != E; ++I) {
+  // Ignoring debug uses is necessary so debug info doesn't affect the code.
+  // This may leave a referencing dbg_value in the original block, before
+  // the definition of the vreg.  Dwarf generator handles this although the
+  // user might not get the right info at runtime.
+  for (MachineRegisterInfo::use_nodbg_iterator I = 
+       RegInfo->use_nodbg_begin(Reg),
+       E = RegInfo->use_nodbg_end(); I != E; ++I) {
     // Determine the block of the use.
     MachineInstr *UseInst = &*I;
     MachineBasicBlock *UseBlock = UseInst->getParent();
@@ -135,7 +140,10 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
     ProcessedBegin = I == MBB.begin();
     if (!ProcessedBegin)
       --I;
-    
+
+    if (MI->isDebugValue())
+      continue;
+
     if (SinkInstruction(MI, SawStore))
       ++NumSunk, MadeChange = true;
     

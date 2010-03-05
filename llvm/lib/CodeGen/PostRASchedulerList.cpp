@@ -460,6 +460,8 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
   for (MachineBasicBlock::iterator I = MBB->end(), E = MBB->begin();
        I != E; --Count) {
     MachineInstr *MI = --I;
+    if (MI->isDebugValue())
+      continue;
 
     // Update liveness.  Registers that are defed but not used in this
     // instruction are now dead. Mark register and all subregs as they

@@ -334,7 +334,9 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   unsigned TailLen = 0;
   while (I1 != MBB1->begin() && I2 != MBB2->begin()) {
     --I1; --I2;
-    if (!I1->isIdenticalTo(I2) ||
+    // Don't merge debugging pseudos.
+    if (I1->isDebugValue() || I2->isDebugValue() ||
+        !I1->isIdenticalTo(I2) ||
         // FIXME: This check is dubious. It's used to get around a problem where
         // people incorrectly expect inline asm directives to remain in the same
         // relative order. This is untenable because normal compiler
@@ -412,6 +414,8 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
                                 MachineBasicBlock::iterator E) {
   unsigned Time = 0;
   for (; I != E; ++I) {
+    if (I->isDebugValue())
+      continue;
     const TargetInstrDesc &TID = I->getDesc();
     if (TID.isCall())
       Time += 10;

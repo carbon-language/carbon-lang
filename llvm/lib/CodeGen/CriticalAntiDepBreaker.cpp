@@ -119,6 +119,8 @@ void CriticalAntiDepBreaker::FinishBlock() {
 
 void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
                                      unsigned InsertPosIndex) {
+  if (MI->isDebugValue())
+    return;
   assert(Count < InsertPosIndex && "Instruction index out of expected range!");
 
   // Any register which was defined within the previous scheduling region
@@ -409,6 +411,8 @@ BreakAntiDependencies(std::vector<SUnit>& SUnits,
   for (MachineBasicBlock::iterator I = End, E = Begin;
        I != E; --Count) {
     MachineInstr *MI = --I;
+    if (MI->isDebugValue())
+      continue;
 
     // Check if this instruction has a dependence on the critical path that
     // is an anti-dependence that we may be able to break. If it is, set
