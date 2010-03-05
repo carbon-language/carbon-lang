@@ -15,6 +15,7 @@
 
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/STLExtras.h"
@@ -137,6 +138,10 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
   if (IP != BlockBegin) {
     --IP;
     for (; ScanLimit; --IP, --ScanLimit) {
+      // Don't count dbg.value against the ScanLimit, to avoid perturbing the
+      // generated code.
+      if (isa<DbgInfoIntrinsic>(IP))
+        ScanLimit++;
       if (IP->getOpcode() == (unsigned)Opcode && IP->getOperand(0) == LHS &&
           IP->getOperand(1) == RHS)
         return IP;
@@ -505,6 +510,10 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     if (IP != BlockBegin) {
       --IP;
       for (; ScanLimit; --IP, --ScanLimit) {
+        // Don't count dbg.value against the ScanLimit, to avoid perturbing the
+        // generated code.
+        if (isa<DbgInfoIntrinsic>(IP))
+          ScanLimit++;
         if (IP->getOpcode() == Instruction::GetElementPtr &&
             IP->getOperand(0) == V && IP->getOperand(1) == Idx)
           return IP;
