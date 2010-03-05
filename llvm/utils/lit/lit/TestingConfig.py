@@ -10,6 +10,7 @@ class TestingConfig:
         if config is None:
             # Set the environment based on the command line arguments.
             environment = {
+                'LD_LIBRARY_PATH' : os.environ.get('LD_LIBRARY_PATH',''),
                 'PATH' : os.pathsep.join(litConfig.path +
                                          [os.environ.get('PATH','')]),
                 'PATHEXT' : os.environ.get('PATHEXT',''),
