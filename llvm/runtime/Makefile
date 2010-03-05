@@ -20,6 +20,10 @@ ifeq ($(ARCH), Sparc)
 PARALLEL_DIRS := $(filter-out libprofile, $(PARALLEL_DIRS))
 endif
 
+ifeq ($(OS), Cygwin)
+PARALLEL_DIRS := $(filter-out libprofile, $(PARALLEL_DIRS))
+endif
+
 endif
 
 include $(LEVEL)/Makefile.common
