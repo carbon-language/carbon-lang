@@ -52,6 +52,7 @@ set(LLVM_ALL_TARGETS
   CellSPU
   CppBackend
   Mips
+  MBlaze
   MSIL
   MSP430
   PIC16
