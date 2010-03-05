@@ -34,5 +34,8 @@ SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, const StringRef &TT) {
   // Exception handling is not supported on CellSPU (think about it: you only
   // have 256K for code+data. Would you support exception handling?)
   ExceptionsType = ExceptionHandling::None;
+
+  // SPU assembly requires ".section" before ".bss" 
+  UsesELFSectionDirectiveForBSS = true;  
 }
 
