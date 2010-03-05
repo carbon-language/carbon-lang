@@ -1034,7 +1034,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         const ObjCInterfaceType *OIT = T->getAs<ObjCInterfaceType>();
         T = Context.getObjCObjectPointerType(T,
                                          (ObjCProtocolDecl **)OIT->qual_begin(),
-                                         OIT->getNumProtocols());
+                                         OIT->getNumProtocols(),
+                                         DeclType.Ptr.TypeQuals);
         break;
       }
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);

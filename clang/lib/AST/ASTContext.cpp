@@ -2240,14 +2240,16 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **Protocols,
 /// the given interface decl and the conforming protocol list.
 QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
                                               ObjCProtocolDecl **Protocols,
-                                              unsigned NumProtocols) {
+                                              unsigned NumProtocols,
+                                              unsigned Quals) {
   llvm::FoldingSetNodeID ID;
   ObjCObjectPointerType::Profile(ID, InterfaceT, Protocols, NumProtocols);
+  Qualifiers Qs = Qualifiers::fromCVRMask(Quals);
 
   void *InsertPos = 0;
   if (ObjCObjectPointerType *QT =
               ObjCObjectPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(QT, 0);
+    return getQualifiedType(QualType(QT, 0), Qs);
 
   // Sort the protocol list alphabetically to canonicalize it.
   QualType Canonical;
@@ -2282,7 +2284,7 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
 
   Types.push_back(QType);
   ObjCObjectPointerTypes.InsertNode(QType, InsertPos);
-  return QualType(QType, 0);
+  return getQualifiedType(QualType(QType, 0), Qs);
 }
 
 /// getObjCInterfaceType - Return the unique reference to the type for the

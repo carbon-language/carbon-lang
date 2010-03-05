@@ -37,3 +37,8 @@ void Gorf() // expected-error {{redefinition of 'Gorf' as different kind of symb
 
 @interface A(Cat)<P> @end // expected-note {{previous definition is here}}
 @interface A(Cat)<Q> @end // expected-warning {{duplicate definition of category 'Cat' on interface 'A'}}
+
+// rdar 7626768
+@class NSString;
+NSString * TestBaz;  // expected-note {{previous definition is here}}
+NSString * const TestBaz;  // expected-error {{redefinition of 'TestBaz' with a different type}}

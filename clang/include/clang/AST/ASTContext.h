@@ -621,7 +621,8 @@ public:
   /// given interface decl and the conforming protocol list.
   QualType getObjCObjectPointerType(QualType OIT,
                                     ObjCProtocolDecl **ProtocolList = 0,
-                                    unsigned NumProtocols = 0);
+                                    unsigned NumProtocols = 0,
+                                    unsigned Quals = 0);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExprType(Expr *e);
