@@ -89,7 +89,6 @@ class ASTUnit {
   /// destroyed.
   llvm::SmallVector<llvm::sys::Path, 4> TemporaryFiles;
 
-#ifdef _DEBUG
   /// \brief Simple hack to allow us to assert that ASTUnit is not being
   /// used concurrently, which is not supported.
   ///
@@ -99,35 +98,26 @@ class ASTUnit {
   unsigned int ConcurrencyCheckValue;
   static const unsigned int CheckLocked = 28573289;
   static const unsigned int CheckUnlocked = 9803453;
-#endif
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
   
 public:
   class ConcurrencyCheck {
-#ifdef _DEBUG
     volatile ASTUnit &Self;
-#endif
     
   public:
     explicit ConcurrencyCheck(ASTUnit &Self)
-#ifdef _DEBUG
       : Self(Self) 
-#endif
     { 
-#ifdef _DEBUG
       assert(Self.ConcurrencyCheckValue == CheckUnlocked && 
              "Concurrent access to ASTUnit!");
       Self.ConcurrencyCheckValue = CheckLocked;
-#endif
     }
     
-#ifdef _DEBUG
     ~ConcurrencyCheck() {
       Self.ConcurrencyCheckValue = CheckUnlocked;
     }
-#endif
   };
   friend class ConcurrencyCheck;
   
