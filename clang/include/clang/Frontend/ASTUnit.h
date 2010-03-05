@@ -88,11 +88,49 @@ class ASTUnit {
   /// \brief Temporary files that should be removed when the ASTUnit is 
   /// destroyed.
   llvm::SmallVector<llvm::sys::Path, 4> TemporaryFiles;
+
+#ifndef NDEBUG
+  /// \brief Simple hack to allow us to assert that ASTUnit is not being
+  /// used concurrently, which is not supported.
+  ///
+  /// Clients should create instances of the ConcurrencyCheck class whenever
+  /// using the ASTUnit in a way that isn't intended to be concurrent, which is
+  /// just about any usage.
+  unsigned int ConcurrencyCheckValue;
+  static const unsigned int CheckLocked = 28573289;
+  static const unsigned int CheckUnlocked = 9803453;
+#endif
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
-
+  
 public:
+  class ConcurrencyCheck {
+#ifndef NDEBUG
+    volatile ASTUnit &Self;
+#endif
+    
+  public:
+    explicit ConcurrencyCheck(ASTUnit &Self)
+#ifndef NDEBUG
+      : Self(Self) 
+#endif
+    { 
+#ifndef NDEBUG
+      assert(Self.ConcurrencyCheckValue == CheckUnlocked && 
+             "Concurrent access to ASTUnit!");
+      Self.ConcurrencyCheckValue = CheckLocked;
+#endif
+    }
+    
+#ifndef NDEBUG
+    ~ConcurrencyCheck() {
+      Self.ConcurrencyCheckValue = CheckUnlocked;
+    }
+#endif
+  };
+  friend class ConcurrencyCheck;
+  
   ASTUnit(bool MainFileIsAST);
   ~ASTUnit();
 

@@ -36,9 +36,12 @@
 using namespace clang;
 
 ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : MainFileIsAST(_MainFileIsAST) {
+  : MainFileIsAST(_MainFileIsAST), ConcurrencyCheckValue(CheckUnlocked) {
 }
 ASTUnit::~ASTUnit() {
+#ifndef NDEBUG
+  ConcurrencyCheckValue = CheckLocked;
+#endif
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
     TemporaryFiles[I].eraseFromDisk();
 }

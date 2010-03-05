@@ -1527,6 +1527,8 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
 
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
 
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
   CXCursor Result = MakeCXCursorInvalid(CXCursor_NoDeclFound);
   if (SLoc.isValid()) {
@@ -2052,6 +2054,8 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   if (!CXXUnit || !Tokens || !NumTokens)
     return;
 
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
+  
   SourceRange R = cxloc::translateCXSourceRange(Range);
   if (R.isInvalid())
     return;
@@ -2174,6 +2178,8 @@ void clang_annotateTokens(CXTranslationUnit TU,
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU);
   if (!CXXUnit || !Tokens)
     return;
+
+  ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
   // Annotate all of the source locations in the region of interest that map
   SourceRange RegionOfInterest;
