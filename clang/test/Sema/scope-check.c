@@ -140,7 +140,7 @@ L2: ;
 
 L3:
 L4:  
-  goto *P;  // expected-error {{illegal indirect goto in protected scope, unknown effect on scopes}}
+  goto *P;  // expected-warning {{illegal indirect goto in protected scope, unknown effect on scopes}}
   goto L3;  // ok
   goto L4;  // ok
   
