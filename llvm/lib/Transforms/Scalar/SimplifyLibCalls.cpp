@@ -1006,10 +1006,12 @@ struct MemCpyChkOpt : public LibCallOptimization {
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
+    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!ObjSizeCI)
       return 0;
-    if (SizeCI->isAllOnesValue()) {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (ObjSizeCI->isAllOnesValue() ||
+        (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3), 1, B);
       return CI->getOperand(1);
     }
@@ -1034,10 +1036,12 @@ struct MemSetChkOpt : public LibCallOptimization {
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
+    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!ObjSizeCI)
       return 0;
-    if (SizeCI->isAllOnesValue()) {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (ObjSizeCI->isAllOnesValue() ||
+        (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
       Value *Val = B.CreateIntCast(CI->getOperand(2), Type::getInt8Ty(*Context),
 				   false);
       EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
@@ -1064,10 +1068,12 @@ struct MemMoveChkOpt : public LibCallOptimization {
         FT->getParamType(2) != TD->getIntPtrType(*Context))
       return 0;
 
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
+    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!ObjSizeCI)
       return 0;
-    if (SizeCI->isAllOnesValue()) {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (ObjSizeCI->isAllOnesValue() ||
+        (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
       EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
 		  1, B);
       return CI->getOperand(1);
@@ -1085,8 +1091,8 @@ struct StrCpyChkOpt : public LibCallOptimization {
         !FT->getParamType(1)->isPointerTy())
       return 0;
 
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeCI)
+    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!ObjSizeCI)
       return 0;
     
     // If a) we don't have any length information, or b) we know this will
@@ -1094,8 +1100,8 @@ struct StrCpyChkOpt : public LibCallOptimization {
     // strcpy_chk call which may fail at runtime if the size is too long.
     // TODO: It might be nice to get a maximum length out of the possible
     // string lengths for varying.
-    if (SizeCI->isAllOnesValue() ||
-        SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2)))
+    if (ObjSizeCI->isAllOnesValue() ||
+        ObjSizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2)))
       return EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B);
 
     return 0;
