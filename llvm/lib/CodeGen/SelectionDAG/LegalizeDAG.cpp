@@ -2011,11 +2011,11 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
 
   // Implementation following __floatundidf in compiler_rt.
   SDValue TwoP52 =
-    DAG.getConstant(0x4330000000000000, MVT::i64);
+    DAG.getConstant(UINT64_C(0x4330000000000000), MVT::i64);
   SDValue TwoP84PlusTwoP52 =
-    DAG.getConstantFP(BitsToDouble(0x4530000000100000), MVT::f64);
+    DAG.getConstantFP(BitsToDouble(UINT64_C(0x4530000000100000)), MVT::f64);
   SDValue TwoP84 =
-    DAG.getConstant(0x4530000000000000, MVT::i64);
+    DAG.getConstant(UINT64_C(0x4530000000000000), MVT::i64);
 
   SDValue Lo = DAG.getZeroExtendInReg(Op0, dl, MVT::i32);
   SDValue Hi = DAG.getNode(ISD::SRL, dl, MVT::i64, Op0,
