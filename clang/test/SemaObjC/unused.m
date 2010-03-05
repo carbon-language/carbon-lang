@@ -39,7 +39,15 @@ void test2() {
 // instance variables, which GCC does not.
 //===------------------------------------------------------------------------===
 
+#if __has_feature(attribute_objc_ivar_unused)
+#define UNUSED_IVAR __attribute__((unused))
+#else
+#error __attribute__((unused)) not supported on ivars
+#endif
+
 @interface TestUnusedIvar {
-  id x __attribute__((unused)); // no-warning
+  id y __attribute__((unused)); // no-warning
+  id x UNUSED_IVAR; // no-warning
 }
 @end
+
