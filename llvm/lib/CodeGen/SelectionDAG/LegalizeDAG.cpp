@@ -2008,48 +2008,24 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     return Result;
   }
   assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
-  SDValue Tmp1 = DAG.getNode(ISD::SINT_TO_FP, dl, DestVT, Op0);
 
-  SDValue SignSet = DAG.getSetCC(dl, TLI.getSetCCResultType(Op0.getValueType()),
-                                 Op0, DAG.getConstant(0, Op0.getValueType()),
-                                 ISD::SETLT);
-  SDValue Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
-  SDValue CstOffset = DAG.getNode(ISD::SELECT, dl, Zero.getValueType(),
-                                    SignSet, Four, Zero);
+  // Implementation following __floatundidf in compiler_rt.
+  SDValue TwoP52 =
+    DAG.getConstant(0x4330000000000000, MVT::i64);
+  SDValue TwoP84PlusTwoP52 =
+    DAG.getConstantFP(BitsToDouble(0x4530000000100000), MVT::f64);
+  SDValue TwoP84 =
+    DAG.getConstant(0x4530000000000000, MVT::i64);
 
-  // If the sign bit of the integer is set, the large number will be treated
-  // as a negative number.  To counteract this, the dynamic code adds an
-  // offset depending on the data type.
-  uint64_t FF;
-  switch (Op0.getValueType().getSimpleVT().SimpleTy) {
-  default: llvm_unreachable("Unsupported integer type!");
-  case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
-  case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)
-  case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
-  case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
-  }
-  if (TLI.isLittleEndian()) FF <<= 32;
-  Constant *FudgeFactor = ConstantInt::get(
-                                       Type::getInt64Ty(*DAG.getContext()), FF);
-
-  SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
-  unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-  CPIdx = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), CPIdx, CstOffset);
-  Alignment = std::min(Alignment, 4u);
-  SDValue FudgeInReg;
-  if (DestVT == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, dl, DAG.getEntryNode(), CPIdx,
-                             PseudoSourceValue::getConstantPool(), 0,
-                             false, false, Alignment);
-  else {
-    FudgeInReg =
-      LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, dl, DestVT,
-                                DAG.getEntryNode(), CPIdx,
-                                PseudoSourceValue::getConstantPool(), 0,
-                                MVT::f32, false, false, Alignment));
-  }
-
-  return DAG.getNode(ISD::FADD, dl, DestVT, Tmp1, FudgeInReg);
+  SDValue Lo = DAG.getZeroExtendInReg(Op0, dl, MVT::i32);
+  SDValue Hi = DAG.getNode(ISD::SRL, dl, MVT::i64, Op0,
+                           DAG.getConstant(32, MVT::i64));
+  SDValue LoOr = DAG.getNode(ISD::OR, dl, MVT::i64, Lo, TwoP52);
+  SDValue HiOr = DAG.getNode(ISD::OR, dl, MVT::i64, Hi, TwoP84);
+  SDValue LoFlt = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, LoOr);
+  SDValue HiFlt = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, HiOr);
+  SDValue HiSub = DAG.getNode(ISD::FSUB, dl, MVT::f64, HiFlt, TwoP84PlusTwoP52);
+  return DAG.getNode(ISD::FADD, dl, MVT::f64, LoFlt, HiSub);
 }
 
 /// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
