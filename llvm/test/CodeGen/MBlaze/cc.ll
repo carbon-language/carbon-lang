@@ -101,7 +101,7 @@ define i32 @params7_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                              i32 %g) {
     ; CHECK:        params7_32bitret:
     ret i32 %g
-    ; CHECK:        {{lwi? r3, r1, 8}}
+    ; CHECK:        {{lwi? r3, r1, 32}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
     ; CHECK:        rtsd
 }
@@ -110,7 +110,7 @@ define i32 @params8_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                              i32 %g, i32 %h) {
     ; CHECK:        params8_32bitret:
     ret i32 %h
-    ; CHECK:        {{lwi? r3, r1, 12}}
+    ; CHECK:        {{lwi? r3, r1, 36}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
     ; CHECK:        rtsd
 }
@@ -119,7 +119,7 @@ define i32 @params9_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                              i32 %g, i32 %h, i32 %i) {
     ; CHECK:        params9_32bitret:
     ret i32 %i
-    ; CHECK:        {{lwi? r3, r1, 16}}
+    ; CHECK:        {{lwi? r3, r1, 40}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
     ; CHECK:        rtsd
 }
@@ -128,7 +128,7 @@ define i32 @params10_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                               i32 %g, i32 %h, i32 %i, i32 %j) {
     ; CHECK:        params10_32bitret:
     ret i32 %j
-    ; CHECK:        {{lwi? r3, r1, 20}}
+    ; CHECK:        {{lwi? r3, r1, 44}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
     ; CHECK:        rtsd
 }
@@ -243,7 +243,7 @@ define void @testing() {
 
     %tmp.11 = call i32 @params7_32bitret(i32 1, i32 2, i32 3, i32 4, i32 5,
                                          i32 6, i32 7)
-    ; CHECK:        {{swi? .*, r1, 4}}
+    ; CHECK:        {{swi? .*, r1, 28}}
     ; CHECK:        {{.* r5, .*, .*}}
     ; CHECK:        {{.* r6, .*, .*}}
     ; CHECK:        {{.* r7, .*, .*}}
@@ -259,8 +259,8 @@ define void @testing() {
 
     %tmp.12 = call i32 @params8_32bitret(i32 1, i32 2, i32 3, i32 4, i32 5,
                                          i32 6, i32 7, i32 8)
-    ; CHECK:        {{swi? .*, r1, 4}}
-    ; CHECK:        {{swi? .*, r1, 8}}
+    ; CHECK:        {{swi? .*, r1, 28}}
+    ; CHECK:        {{swi? .*, r1, 32}}
     ; CHECK:        {{.* r5, .*, .*}}
     ; CHECK:        {{.* r6, .*, .*}}
     ; CHECK:        {{.* r7, .*, .*}}
@@ -276,9 +276,9 @@ define void @testing() {
 
     %tmp.13 = call i32 @params9_32bitret(i32 1, i32 2, i32 3, i32 4, i32 5,
                                          i32 6, i32 7, i32 8, i32 9)
-    ; CHECK:        {{swi? .*, r1, 4}}
-    ; CHECK:        {{swi? .*, r1, 8}}
-    ; CHECK:        {{swi? .*, r1, 12}}
+    ; CHECK:        {{swi? .*, r1, 28}}
+    ; CHECK:        {{swi? .*, r1, 32}}
+    ; CHECK:        {{swi? .*, r1, 36}}
     ; CHECK:        {{.* r5, .*, .*}}
     ; CHECK:        {{.* r6, .*, .*}}
     ; CHECK:        {{.* r7, .*, .*}}
@@ -294,10 +294,10 @@ define void @testing() {
 
     %tmp.14 = call i32 @params10_32bitret(i32 1, i32 2, i32 3, i32 4, i32 5,
                                           i32 6, i32 7, i32 8, i32 9, i32 10)
-    ; CHECK:        {{swi? .*, r1, 4}}
-    ; CHECK:        {{swi? .*, r1, 8}}
-    ; CHECK:        {{swi? .*, r1, 12}}
-    ; CHECK:        {{swi? .*, r1, 16}}
+    ; CHECK:        {{swi? .*, r1, 28}}
+    ; CHECK:        {{swi? .*, r1, 32}}
+    ; CHECK:        {{swi? .*, r1, 36}}
+    ; CHECK:        {{swi? .*, r1, 40}}
     ; CHECK:        {{.* r5, .*, .*}}
     ; CHECK:        {{.* r6, .*, .*}}
     ; CHECK:        {{.* r7, .*, .*}}
