@@ -268,7 +268,7 @@ public:
 
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
-  void setInvalidDecl(bool Invalid = true) { InvalidDecl = Invalid; }
+  void setInvalidDecl(bool Invalid = true);
   bool isInvalidDecl() const { return (bool) InvalidDecl; }
 
   /// isImplicit - Indicates whether the declaration was implicitly

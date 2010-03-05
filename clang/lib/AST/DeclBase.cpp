@@ -46,6 +46,16 @@ const char *Decl::getDeclKindName() const {
   }
 }
 
+void Decl::setInvalidDecl(bool Invalid) {
+  InvalidDecl = Invalid;
+  if (Invalid) {
+    // Defensive maneuver for ill-formed code: we're likely not to make it to
+    // a point where we set the access specifier, so default it to "public"
+    // to avoid triggering asserts elsewhere in the front end. 
+    setAccess(AS_public);
+  }
+}
+
 const char *DeclContext::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Declaration context not in DeclNodes.def!");
