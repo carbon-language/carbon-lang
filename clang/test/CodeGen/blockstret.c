@@ -8,8 +8,8 @@
 // X32:   store i32 1610612736, i32* %want
 
 // rdar://7677537
-
-#include <stdlib.h>
+int printf(const char *, ...);
+void *malloc(__SIZE_TYPE__ size);
 
 typedef struct bigbig {
    int array[512];
@@ -31,9 +31,6 @@ BigStruct_t foo(int param) {
    return x;
 }
 
-#if 1
-#include <stdio.h>
-#include <stdbool.h>
 enum {
     BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
     BLOCK_HAS_CXX_OBJ =       (1 << 26),
@@ -67,14 +64,14 @@ struct block_layout_abi { // can't change
 
 const char *getBlockSignature(void *block) {
    struct block_layout_abi *layout = (struct block_layout_abi *)block;
-   if ((layout->flags & BLOCK_HAS_OBJC_TYPE) != BLOCK_HAS_OBJC_TYPE) return NULL;
+   if ((layout->flags & BLOCK_HAS_OBJC_TYPE) != BLOCK_HAS_OBJC_TYPE) return 0;
    if (layout->flags & BLOCK_HAS_COPY_DISPOSE) 
       return layout->descriptor->signature;
    else
       return ((struct block_descriptor_small *)layout->descriptor)->signature;
 }
 
-bool usesStruct(void *block) {
+int usesStruct(void *block) {
    struct block_layout_abi *layout = (struct block_layout_abi *)block;
    int want = BLOCK_HAS_OBJC_TYPE | BLOCK_USE_STRET;
    return (layout->flags & want) == want;
@@ -107,4 +104,3 @@ should be non-zero: 1
 should be zero: 0
 
 */
-#endif
