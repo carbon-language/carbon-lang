@@ -2235,7 +2235,8 @@ static
 bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
                          MachineFrameInfo *MFI, const MachineRegisterInfo *MRI,
                          const X86InstrInfo *TII) {
-  int FI;
+  unsigned Bytes = Arg.getValueType().getSizeInBits() / 8;
+  int FI = INT_MAX;
   if (Arg.getOpcode() == ISD::CopyFromReg) {
     unsigned VR = cast<RegisterSDNode>(Arg.getOperand(1))->getReg();
     if (!VR || TargetRegisterInfo::isPhysicalRegister(VR))
@@ -2251,25 +2252,30 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
       if ((Opcode == X86::LEA32r || Opcode == X86::LEA64r) &&
           Def->getOperand(1).isFI()) {
         FI = Def->getOperand(1).getIndex();
-        if (MFI->getObjectSize(FI) != Flags.getByValSize())
-          return false;
+        Bytes = Flags.getByValSize();
       } else
         return false;
     }
-  } else {
-    LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg);
-    if (!Ld)
+  } else if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg)) {
+    if (Flags.isByVal())
+      // ByVal argument is passed in as a pointer but it's now being
+      // derefernced. e.g.
+      // define @foo(%struct.X* %A) {
+      //   tail call @bar(%struct.X* byval %A)
+      // }
       return false;
     SDValue Ptr = Ld->getBasePtr();
     FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Ptr);
     if (!FINode)
       return false;
     FI = FINode->getIndex();
-  }
+  } else
+    return false;
 
+  assert(FI != INT_MAX);
   if (!MFI->isFixedObjectIndex(FI))
     return false;
-  return Offset == MFI->getObjectOffset(FI);
+  return Offset == MFI->getObjectOffset(FI) && Bytes == MFI->getObjectSize(FI);
 }
 
 /// IsEligibleForTailCallOptimization - Check whether the call is eligible

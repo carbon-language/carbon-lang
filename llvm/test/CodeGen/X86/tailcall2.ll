@@ -195,3 +195,24 @@ bb2:
 }
 
 declare i32 @foo6(i32, i32, %struct.t* byval align 4)
+
+; rdar://r7717598
+%struct.ns = type { i32, i32 }
+%struct.cp = type { float, float }
+
+define %struct.ns* @t13(%struct.cp* %yy) nounwind ssp {
+; 32: t13:
+; 32-NOT: jmp
+; 32: call
+; 32: ret
+
+; 64: t13:
+; 64-NOT: jmp
+; 64: call
+; 64: ret
+entry:
+  %0 = tail call fastcc %struct.ns* @foo7(%struct.cp* byval align 4 %yy, i8 signext 0) nounwind
+  ret %struct.ns* %0
+}
+
+declare fastcc %struct.ns* @foo7(%struct.cp* byval align 4, i8 signext) nounwind ssp
