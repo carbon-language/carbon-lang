@@ -33,15 +33,15 @@ endif
 include $(LEVEL)/Makefile.config
 
 ifeq ($(ENABLE_PIC),1)
-  DIRS += lto
+  PARALLEL_DIRS += lto
   ifdef BINUTILS_INCDIR
-    DIRS += gold
+    PARALLEL_DIRS += gold
   endif
 endif
 
 # No support for lto / gold on windows targets
 ifeq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
-  DIRS := $(filter-out lto gold, $(DIRS))
+  PARALLEL_DIRS := $(filter-out lto gold, $(DIRS))
 endif
 
 # Only build edis if X86 target support is enabled.
