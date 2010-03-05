@@ -361,6 +361,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return ReplaceInstUsesWith(CI, RetVal);
       
     }
+    break;
   }
   case Intrinsic::bswap:
     // bswap(bswap(x)) -> x
