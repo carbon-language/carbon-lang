@@ -230,7 +230,8 @@ namespace OptionDescriptionFlags {
   enum OptionDescriptionFlags { Required = 0x1, Hidden = 0x2,
                                 ReallyHidden = 0x4, Extern = 0x8,
                                 OneOrMore = 0x10, Optional = 0x20,
-                                CommaSeparated = 0x40, ForwardNotSplit = 0x80 };
+                                CommaSeparated = 0x40, ForwardNotSplit = 0x80,
+                                ZeroOrMore = 0x100 };
 }
 
 /// OptionDescription - Represents data contained in a single
@@ -260,6 +261,9 @@ struct OptionDescription {
   /// Merge - Merge two option descriptions.
   void Merge (const OptionDescription& other);
 
+  /// CheckConsistency - Check that the flags are consistent.
+  void CheckConsistency() const;
+
   // Misc convenient getters/setters.
 
   bool isAlias() const;
@@ -281,6 +285,9 @@ struct OptionDescription {
   bool isOneOrMore() const;
   void setOneOrMore();
 
+  bool isZeroOrMore() const;
+  void setZeroOrMore();
+
   bool isOptional() const;
   void setOptional();
 
@@ -300,6 +307,20 @@ struct OptionDescription {
   { return OptionType::IsList(this->Type); }
 
 };
+
+void OptionDescription::CheckConsistency() const {
+  unsigned i = 0;
+
+  i += this->isRequired();
+  i += this->isOptional();
+  i += this->isOneOrMore();
+  i += this->isZeroOrMore();
+
+  if (i > 1) {
+    throw "Only one of (required), (optional), (one_or_more) or "
+      "(zero_or_more) properties is allowed!";
+  }
+}
 
 void OptionDescription::Merge (const OptionDescription& other)
 {
@@ -357,6 +378,13 @@ bool OptionDescription::isOneOrMore() const {
 }
 void OptionDescription::setOneOrMore() {
   Flags |= OptionDescriptionFlags::OneOrMore;
+}
+
+bool OptionDescription::isZeroOrMore() const {
+  return Flags & OptionDescriptionFlags::ZeroOrMore;
+}
+void OptionDescription::setZeroOrMore() {
+  Flags |= OptionDescriptionFlags::ZeroOrMore;
 }
 
 bool OptionDescription::isOptional() const {
@@ -593,6 +621,7 @@ public:
       AddHandler("init", &CollectOptionProperties::onInit);
       AddHandler("multi_val", &CollectOptionProperties::onMultiVal);
       AddHandler("one_or_more", &CollectOptionProperties::onOneOrMore);
+      AddHandler("zero_or_more", &CollectOptionProperties::onZeroOrMore);
       AddHandler("really_hidden", &CollectOptionProperties::onReallyHidden);
       AddHandler("required", &CollectOptionProperties::onRequired);
       AddHandler("optional", &CollectOptionProperties::onOptional);
@@ -651,10 +680,9 @@ private:
 
   void onRequired (const DagInit& d) {
     CheckNumberOfArguments(d, 0);
-    if (optDesc_.isOneOrMore() || optDesc_.isOptional())
-      throw "Only one of (required), (optional) or "
-        "(one_or_more) properties is allowed!";
+
     optDesc_.setRequired();
+    optDesc_.CheckConsistency();
   }
 
   void onInit (const DagInit& d) {
@@ -673,24 +701,31 @@ private:
 
   void onOneOrMore (const DagInit& d) {
     CheckNumberOfArguments(d, 0);
-    if (optDesc_.isRequired() || optDesc_.isOptional())
-      throw "Only one of (required), (optional) or "
-        "(one_or_more) properties is allowed!";
-    if (!OptionType::IsList(optDesc_.Type))
-      llvm::errs() << "Warning: specifying the 'one_or_more' property "
-        "on a non-list option will have no effect.\n";
+
     optDesc_.setOneOrMore();
+    optDesc_.CheckConsistency();
+  }
+
+  void onZeroOrMore (const DagInit& d) {
+    CheckNumberOfArguments(d, 0);
+
+    if (OptionType::IsList(optDesc_.Type))
+      llvm::errs() << "Warning: specifying the 'zero_or_more' property "
+        "on a list option has no effect.\n";
+
+    optDesc_.setZeroOrMore();
+    optDesc_.CheckConsistency();
   }
 
   void onOptional (const DagInit& d) {
     CheckNumberOfArguments(d, 0);
-    if (optDesc_.isRequired() || optDesc_.isOneOrMore())
-      throw "Only one of (required), (optional) or "
-        "(one_or_more) properties is allowed!";
+
     if (!OptionType::IsList(optDesc_.Type))
       llvm::errs() << "Warning: specifying the 'optional' property"
-        "on a non-list option will have no effect.\n";
+        "on a non-list option has no effect.\n";
+
     optDesc_.setOptional();
+    optDesc_.CheckConsistency();
   }
 
   void onMultiVal (const DagInit& d) {
@@ -2323,12 +2358,15 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
       else
         O << ", cl::Required";
     }
-    else if (val.isOneOrMore() && val.isList()) {
-        O << ", cl::OneOrMore";
-    }
-    else if (val.isOptional() && val.isList()) {
+
+    if (val.isOptional())
         O << ", cl::Optional";
-    }
+
+    if (val.isOneOrMore())
+        O << ", cl::OneOrMore";
+
+    if (val.isZeroOrMore())
+        O << ", cl::ZeroOrMore";
 
     if (val.isReallyHidden())
       O << ", cl::ReallyHidden";

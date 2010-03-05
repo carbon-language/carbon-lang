@@ -329,16 +329,22 @@ separate option groups syntactically.
 
    - ``required`` - this option must be specified exactly once (or, in case of
      the list options without the ``multi_val`` property, at least
-     once). Incompatible with ``zero_or_one`` and ``one_or_more``.
+     once). Incompatible with ``optional`` and ``one_or_more``.
 
-   - ``one_or_more`` - the option must be specified at least one time. Useful
-     only for list options in conjunction with ``multi_val``; for ordinary lists
-     it is synonymous with ``required``. Incompatible with ``required`` and
-     ``zero_or_one``.
+   - ``optional`` - the option can be specified either zero times or exactly
+     once. The default for switch options. Useful only for list options in
+     conjunction with ``multi_val``. Incompatible with ``required``,
+     ``zero_or_more`` and ``one_or_more``.
 
-   - ``optional`` - the option can be specified zero or one times. Useful only
-     for list options in conjunction with ``multi_val``. Incompatible with
-     ``required`` and ``one_or_more``.
+   - ``one_or_more`` - the option must be specified at least once. Can be useful
+     to allow switch options be both obligatory and be specified multiple
+     times. For list options is useful only in conjunction with ``multi_val``;
+     for ordinary it is synonymous with ``required``. Incompatible with
+     ``required``, ``optional`` and ``zero_or_more``.
+
+   - ``zero_or_more`` - the option can be specified zero or more times. Useful
+     to allow a single switch option to be specified more than
+     once. Incompatible with ``required``, ``optional`` and ``one_or_more``.
 
    - ``hidden`` - the description of this option will not appear in
      the ``--help`` output (but will appear in the ``--help-hidden``

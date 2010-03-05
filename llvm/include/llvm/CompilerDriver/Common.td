@@ -45,6 +45,7 @@ def hidden;
 def init;
 def multi_val;
 def one_or_more;
+def zero_or_more;
 def optional;
 def really_hidden;
 def required;
