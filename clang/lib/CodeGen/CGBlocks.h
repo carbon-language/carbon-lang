@@ -54,9 +54,11 @@ public:
         BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
         BLOCK_HAS_CXX_OBJ =       (1 << 26),
         BLOCK_IS_GLOBAL =         (1 << 28),
-        BLOCK_HAS_OBJC_TYPE  =    (1 << 30)
+        BLOCK_USE_STRET =         (1 << 29),
+        BLOCK_HAS_SIGNATURE  =    (1 << 30)
     };
 };
+
 
 class BlockModule : public BlockBase {
   ASTContext &Context;

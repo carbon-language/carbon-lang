@@ -154,7 +154,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
   {
     // C = BuildBlockStructInitlist();
-    unsigned int flags = BLOCK_HAS_OBJC_TYPE;
+    unsigned int flags = BLOCK_HAS_SIGNATURE;
 
     // We run this first so that we set BlockHasCopyDispose from the entire
     // block literal.
@@ -184,6 +184,18 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     Elts[0] = C;
 
     // __flags
+    {
+      QualType BPT = BE->getType();
+      const FunctionType *ftype = BPT->getPointeeType()->getAs<FunctionType>();
+      QualType ResultType = ftype->getResultType();
+    
+      CallArgList Args;
+      CodeGenTypes &Types = CGM.getTypes();
+      const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, Args,
+                                                       CC_Default, false);
+      if (CGM.ReturnTypeUsesSret(FnInfo))
+        flags |= BLOCK_USE_STRET;
+    }
     const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
       CGM.getTypes().ConvertType(CGM.getContext().IntTy));
     C = llvm::ConstantInt::get(IntTy, flags);
@@ -200,6 +212,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       // Optimize to being a global block.
       Elts[0] = CGM.getNSConcreteGlobalBlock();
+      
       Elts[1] = llvm::ConstantInt::get(IntTy, flags|BLOCK_IS_GLOBAL);
 
       C = llvm::ConstantStruct::get(VMContext, Elts, false);
@@ -604,7 +617,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   // Flags
   LiteralFields[1] =
-    llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_OBJC_TYPE);
+    llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_SIGNATURE);
 
   // Reserved
   LiteralFields[2] = llvm::Constant::getNullValue(IntTy);
