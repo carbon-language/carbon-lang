@@ -17,6 +17,7 @@
 
 #define DEBUG_TYPE "simplify-libcalls"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -67,367 +68,9 @@ public:
       Context = &CI->getCalledFunction()->getContext();
     return CallOptimizer(CI->getCalledFunction(), CI, B);
   }
-
-  /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
-  Value *CastToCStr(Value *V, IRBuilder<> &B);
-
-  /// EmitStrLen - Emit a call to the strlen function to the builder, for the
-  /// specified pointer.  Ptr is required to be some pointer type, and the
-  /// return value has 'intptr_t' type.
-  Value *EmitStrLen(Value *Ptr, IRBuilder<> &B);
-
-  /// EmitStrChr - Emit a call to the strchr function to the builder, for the
-  /// specified pointer and character.  Ptr is required to be some pointer type,
-  /// and the return value has 'i8*' type.
-  Value *EmitStrChr(Value *Ptr, char C, IRBuilder<> &B);
-
-  /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
-  /// specified pointer arguments.
-  Value *EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B);
-  
-  /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This
-  /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-  Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len,
-                    unsigned Align, IRBuilder<> &B);
-
-  /// EmitMemMove - Emit a call to the memmove function to the builder.  This
-  /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-  Value *EmitMemMove(Value *Dst, Value *Src, Value *Len,
-		     unsigned Align, IRBuilder<> &B);
-
-  /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
-  /// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
-  Value *EmitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilder<> &B);
-
-  /// EmitMemCmp - Emit a call to the memcmp function.
-  Value *EmitMemCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B);
-
-  /// EmitMemSet - Emit a call to the memset function
-  Value *EmitMemSet(Value *Dst, Value *Val, Value *Len, IRBuilder<> &B);
-
-  /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name'
-  /// (e.g.  'floor').  This function is known to take a single of type matching
-  /// 'Op' and returns one value with the same type.  If 'Op' is a long double,
-  /// 'l' is added as the suffix of name, if 'Op' is a float, we add a 'f'
-  /// suffix.
-  Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder<> &B,
-                              const AttrListPtr &Attrs);
-
-  /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
-  /// is an integer.
-  Value *EmitPutChar(Value *Char, IRBuilder<> &B);
-
-  /// EmitPutS - Emit a call to the puts function.  This assumes that Str is
-  /// some pointer.
-  void EmitPutS(Value *Str, IRBuilder<> &B);
-
-  /// EmitFPutC - Emit a call to the fputc function.  This assumes that Char is
-  /// an i32, and File is a pointer to FILE.
-  void EmitFPutC(Value *Char, Value *File, IRBuilder<> &B);
-
-  /// EmitFPutS - Emit a call to the puts function.  Str is required to be a
-  /// pointer and File is a pointer to FILE.
-  void EmitFPutS(Value *Str, Value *File, IRBuilder<> &B);
-
-  /// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
-  /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
-  void EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B);
-
 };
 } // End anonymous namespace.
 
-/// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
-Value *LibCallOptimization::CastToCStr(Value *V, IRBuilder<> &B) {
-  return B.CreateBitCast(V, Type::getInt8PtrTy(*Context), "cstr");
-}
-
-/// EmitStrLen - Emit a call to the strlen function to the builder, for the
-/// specified pointer.  This always returns an integer value of size intptr_t.
-Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[2];
-  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(~0u, Attribute::ReadOnly |
-                                   Attribute::NoUnwind);
-
-  Constant *StrLen =M->getOrInsertFunction("strlen", AttrListPtr::get(AWI, 2),
-                                           TD->getIntPtrType(*Context),
-                                           Type::getInt8PtrTy(*Context),
-                                           NULL);
-  CallInst *CI = B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
-  if (const Function *F = dyn_cast<Function>(StrLen->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-
-  return CI;
-}
-
-/// EmitStrChr - Emit a call to the strchr function to the builder, for the
-/// specified pointer and character.  Ptr is required to be some pointer type,
-/// and the return value has 'i8*' type.
-Value *LibCallOptimization::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI =
-    AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
-
-  const Type *I8Ptr = Type::getInt8PtrTy(*Context);
-  const Type *I32Ty = Type::getInt32Ty(*Context);
-  Constant *StrChr = M->getOrInsertFunction("strchr", AttrListPtr::get(&AWI, 1),
-                                            I8Ptr, I8Ptr, I32Ty, NULL);
-  CallInst *CI = B.CreateCall2(StrChr, CastToCStr(Ptr, B),
-                               ConstantInt::get(I32Ty, C), "strchr");
-  if (const Function *F = dyn_cast<Function>(StrChr->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-  return CI;
-}
-
-/// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
-/// specified pointer arguments.
-Value *LibCallOptimization::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[2];
-  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  const Type *I8Ptr = Type::getInt8PtrTy(*Context);
-  Value *StrCpy = M->getOrInsertFunction("strcpy", AttrListPtr::get(AWI, 2),
-                                         I8Ptr, I8Ptr, I8Ptr, NULL);
-  CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
-                               "strcpy");
-  if (const Function *F = dyn_cast<Function>(StrCpy->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-  return CI;
-}
-
-/// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
-/// expects that the size has type 'intptr_t' and Dst/Src are pointers.
-Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
-                                       unsigned Align, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  const Type *Ty = Len->getType();
-  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, &Ty, 1);
-  Dst = CastToCStr(Dst, B);
-  Src = CastToCStr(Src, B);
-  return B.CreateCall4(MemCpy, Dst, Src, Len,
-                       ConstantInt::get(Type::getInt32Ty(*Context), Align));
-}
-
-/// EmitMemMove - Emit a call to the memmove function to the builder.  This
-/// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-Value *LibCallOptimization::EmitMemMove(Value *Dst, Value *Src, Value *Len,
-					unsigned Align, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  const Type *Ty = TD->getIntPtrType(*Context);
-  Value *MemMove = Intrinsic::getDeclaration(M, Intrinsic::memmove, &Ty, 1);
-  Dst = CastToCStr(Dst, B);
-  Src = CastToCStr(Src, B);
-  Value *A = ConstantInt::get(Type::getInt32Ty(*Context), Align);
-  return B.CreateCall4(MemMove, Dst, Src, Len, A);
-}
-
-/// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
-/// a pointer, Val is an i32 value, and Len is an 'intptr_t' value.
-Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
-                                       Value *Len, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI;
-  AWI = AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
-
-  Value *MemChr = M->getOrInsertFunction("memchr", AttrListPtr::get(&AWI, 1),
-                                         Type::getInt8PtrTy(*Context),
-                                         Type::getInt8PtrTy(*Context),
-                                         Type::getInt32Ty(*Context),
-                                         TD->getIntPtrType(*Context),
-                                         NULL);
-  CallInst *CI = B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
-
-  if (const Function *F = dyn_cast<Function>(MemChr->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-
-  return CI;
-}
-
-/// EmitMemCmp - Emit a call to the memcmp function.
-Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
-                                       Value *Len, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[3];
-  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(2, Attribute::NoCapture);
-  AWI[2] = AttributeWithIndex::get(~0u, Attribute::ReadOnly |
-                                   Attribute::NoUnwind);
-
-  Value *MemCmp = M->getOrInsertFunction("memcmp", AttrListPtr::get(AWI, 3),
-                                         Type::getInt32Ty(*Context),
-                                         Type::getInt8PtrTy(*Context),
-                                         Type::getInt8PtrTy(*Context),
-                                         TD->getIntPtrType(*Context), NULL);
-  CallInst *CI = B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
-                               Len, "memcmp");
-
-  if (const Function *F = dyn_cast<Function>(MemCmp->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-
-  return CI;
-}
-
-/// EmitMemSet - Emit a call to the memset function
-Value *LibCallOptimization::EmitMemSet(Value *Dst, Value *Val,
-                                       Value *Len, IRBuilder<> &B) {
- Module *M = Caller->getParent();
- Intrinsic::ID IID = Intrinsic::memset;
- const Type *Tys[1];
- Tys[0] = Len->getType();
- Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 1);
- Value *Align = ConstantInt::get(Type::getInt32Ty(*Context), 1);
- return B.CreateCall4(MemSet, CastToCStr(Dst, B), Val, Len, Align);
-}
-
-/// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
-/// 'floor').  This function is known to take a single of type matching 'Op' and
-/// returns one value with the same type.  If 'Op' is a long double, 'l' is
-/// added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
-Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
-                                                 IRBuilder<> &B,
-                                                 const AttrListPtr &Attrs) {
-  char NameBuffer[20];
-  if (!Op->getType()->isDoubleTy()) {
-    // If we need to add a suffix, copy into NameBuffer.
-    unsigned NameLen = strlen(Name);
-    assert(NameLen < sizeof(NameBuffer)-2);
-    memcpy(NameBuffer, Name, NameLen);
-    if (Op->getType()->isFloatTy())
-      NameBuffer[NameLen] = 'f';  // floorf
-    else
-      NameBuffer[NameLen] = 'l';  // floorl
-    NameBuffer[NameLen+1] = 0;
-    Name = NameBuffer;
-  }
-
-  Module *M = Caller->getParent();
-  Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
-                                         Op->getType(), NULL);
-  CallInst *CI = B.CreateCall(Callee, Op, Name);
-  CI->setAttributes(Attrs);
-  if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-
-  return CI;
-}
-
-/// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
-/// is an integer.
-Value *LibCallOptimization::EmitPutChar(Value *Char, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  Value *PutChar = M->getOrInsertFunction("putchar", Type::getInt32Ty(*Context),
-                                          Type::getInt32Ty(*Context), NULL);
-  CallInst *CI = B.CreateCall(PutChar,
-                              B.CreateIntCast(Char,
-                              Type::getInt32Ty(*Context),
-                              /*isSigned*/true,
-                              "chari"),
-                              "putchar");
-
-  if (const Function *F = dyn_cast<Function>(PutChar->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-  return CI;
-}
-
-/// EmitPutS - Emit a call to the puts function.  This assumes that Str is
-/// some pointer.
-void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[2];
-  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-
-  Value *PutS = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
-                                       Type::getInt32Ty(*Context),
-                                       Type::getInt8PtrTy(*Context),
-                                       NULL);
-  CallInst *CI = B.CreateCall(PutS, CastToCStr(Str, B), "puts");
-  if (const Function *F = dyn_cast<Function>(PutS->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-
-}
-
-/// EmitFPutC - Emit a call to the fputc function.  This assumes that Char is
-/// an integer and File is a pointer to FILE.
-void LibCallOptimization::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[2];
-  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  Constant *F;
-  if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction("fputc", AttrListPtr::get(AWI, 2),
-                               Type::getInt32Ty(*Context),
-                               Type::getInt32Ty(*Context), File->getType(),
-                               NULL);
-  else
-    F = M->getOrInsertFunction("fputc",
-                               Type::getInt32Ty(*Context),
-                               Type::getInt32Ty(*Context),
-                               File->getType(), NULL);
-  Char = B.CreateIntCast(Char, Type::getInt32Ty(*Context), /*isSigned*/true,
-                         "chari");
-  CallInst *CI = B.CreateCall2(F, Char, File, "fputc");
-
-  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
-    CI->setCallingConv(Fn->getCallingConv());
-}
-
-/// EmitFPutS - Emit a call to the puts function.  Str is required to be a
-/// pointer and File is a pointer to FILE.
-void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[3];
-  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(2, Attribute::NoCapture);
-  AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  Constant *F;
-  if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction("fputs", AttrListPtr::get(AWI, 3),
-                               Type::getInt32Ty(*Context),
-                               Type::getInt8PtrTy(*Context),
-                               File->getType(), NULL);
-  else
-    F = M->getOrInsertFunction("fputs", Type::getInt32Ty(*Context),
-                               Type::getInt8PtrTy(*Context),
-                               File->getType(), NULL);
-  CallInst *CI = B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
-
-  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
-    CI->setCallingConv(Fn->getCallingConv());
-}
-
-/// EmitFWrite - Emit a call to the fwrite function.  This assumes that Ptr is
-/// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
-void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
-                                     IRBuilder<> &B) {
-  Module *M = Caller->getParent();
-  AttributeWithIndex AWI[3];
-  AWI[0] = AttributeWithIndex::get(1, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(4, Attribute::NoCapture);
-  AWI[2] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  Constant *F;
-  if (File->getType()->isPointerTy())
-    F = M->getOrInsertFunction("fwrite", AttrListPtr::get(AWI, 3),
-                               TD->getIntPtrType(*Context),
-                               Type::getInt8PtrTy(*Context),
-                               TD->getIntPtrType(*Context),
-                               TD->getIntPtrType(*Context),
-                               File->getType(), NULL);
-  else
-    F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(*Context),
-                               Type::getInt8PtrTy(*Context),
-                               TD->getIntPtrType(*Context),
-                               TD->getIntPtrType(*Context),
-                               File->getType(), NULL);
-  CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
-                        ConstantInt::get(TD->getIntPtrType(*Context), 1), File);
-
-  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
-    CI->setCallingConv(Fn->getCallingConv());
-}
 
 //===----------------------------------------------------------------------===//
 // Helper Functions
@@ -489,7 +132,7 @@ struct StrCatOpt : public LibCallOptimization {
   void EmitStrLenMemCpy(Value *Src, Value *Dst, uint64_t Len, IRBuilder<> &B) {
     // We need to find the end of the destination string.  That's where the
     // memory is to be moved to. We just generate a call to strlen.
-    Value *DstLen = EmitStrLen(Dst, B);
+    Value *DstLen = EmitStrLen(Dst, B, TD);
 
     // Now that we have the destination's length, we must index into the
     // destination's pointer to get the actual memcpy destination (end of
@@ -499,7 +142,7 @@ struct StrCatOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     EmitMemCpy(CpyDst, Src,
-               ConstantInt::get(TD->getIntPtrType(*Context), Len+1), 1, B);
+               ConstantInt::get(TD->getIntPtrType(*Context), Len+1), 1, B, TD);
   }
 };
 
@@ -577,7 +220,8 @@ struct StrChrOpt : public LibCallOptimization {
         return 0;
 
       return EmitMemChr(SrcStr, CI->getOperand(2), // include nul.
-                        ConstantInt::get(TD->getIntPtrType(*Context), Len), B);
+                        ConstantInt::get(TD->getIntPtrType(*Context), Len),
+                        B, TD);
     }
 
     // Otherwise, the character is a constant, see if the first argument is
@@ -648,7 +292,7 @@ struct StrCmpOpt : public LibCallOptimization {
 
       return EmitMemCmp(Str1P, Str2P,
                         ConstantInt::get(TD->getIntPtrType(*Context),
-                        std::min(Len1, Len2)), B);
+                        std::min(Len1, Len2)), B, TD);
     }
 
     return 0;
@@ -728,7 +372,7 @@ struct StrCpyOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     EmitMemCpy(Dst, Src,
-               ConstantInt::get(TD->getIntPtrType(*Context), Len), 1, B);
+               ConstantInt::get(TD->getIntPtrType(*Context), Len), 1, B, TD);
     return Dst;
   }
 };
@@ -757,7 +401,7 @@ struct StrNCpyOpt : public LibCallOptimization {
     if (SrcLen == 0) {
       // strncpy(x, "", y) -> memset(x, '\0', y, 1)
       EmitMemSet(Dst, ConstantInt::get(Type::getInt8Ty(*Context), '\0'), LenOp,
-		 B);
+		             B, TD);
       return Dst;
     }
 
@@ -777,7 +421,7 @@ struct StrNCpyOpt : public LibCallOptimization {
 
     // strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant]
     EmitMemCpy(Dst, Src,
-               ConstantInt::get(TD->getIntPtrType(*Context), Len), 1, B);
+               ConstantInt::get(TD->getIntPtrType(*Context), Len), 1, B, TD);
 
     return Dst;
   }
@@ -869,7 +513,7 @@ struct StrStrOpt : public LibCallOptimization {
 
     // fold strstr(x, "y") -> strchr(x, 'y').
     if (HasStr2 && ToFindStr.size() == 1)
-      return B.CreateBitCast(EmitStrChr(CI->getOperand(1), ToFindStr[0], B),
+      return B.CreateBitCast(EmitStrChr(CI->getOperand(1), ToFindStr[0], B, TD),
                              CI->getType());
     return 0;
   }
@@ -937,7 +581,8 @@ struct MemCpyOpt : public LibCallOptimization {
       return 0;
 
     // memcpy(x, y, n) -> llvm.memcpy(x, y, n, 1)
-    EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3), 1, B);
+    EmitMemCpy(CI->getOperand(1), CI->getOperand(2),
+               CI->getOperand(3), 1, B, TD);
     return CI->getOperand(1);
   }
 };
@@ -958,7 +603,8 @@ struct MemMoveOpt : public LibCallOptimization {
       return 0;
 
     // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
-    EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3), 1, B);
+    EmitMemMove(CI->getOperand(1), CI->getOperand(2),
+                CI->getOperand(3), 1, B, TD);
     return CI->getOperand(1);
   }
 };
@@ -981,7 +627,7 @@ struct MemSetOpt : public LibCallOptimization {
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
     Value *Val = B.CreateIntCast(CI->getOperand(2), Type::getInt8Ty(*Context),
 				 false);
-    EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
+    EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
     return CI->getOperand(1);
   }
 };
@@ -1012,7 +658,8 @@ struct MemCpyChkOpt : public LibCallOptimization {
     ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
     if (ObjSizeCI->isAllOnesValue() ||
         (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3), 1, B);
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(2),
+                 CI->getOperand(3), 1, B, TD);
       return CI->getOperand(1);
     }
 
@@ -1044,7 +691,7 @@ struct MemSetChkOpt : public LibCallOptimization {
         (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
       Value *Val = B.CreateIntCast(CI->getOperand(2), Type::getInt8Ty(*Context),
 				   false);
-      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
+      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
       return CI->getOperand(1);
     }
 
@@ -1075,7 +722,7 @@ struct MemMoveChkOpt : public LibCallOptimization {
     if (ObjSizeCI->isAllOnesValue() ||
         (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
       EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-		  1, B);
+		              1, B, TD);
       return CI->getOperand(1);
     }
 
@@ -1102,7 +749,7 @@ struct StrCpyChkOpt : public LibCallOptimization {
     // string lengths for varying.
     if (ObjSizeCI->isAllOnesValue() ||
         ObjSizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2)))
-      return EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B);
+      return EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
 
     return 0;
   }
@@ -1394,7 +1041,7 @@ struct PrintFOpt : public LibCallOptimization {
     // in case there is an error writing to stdout.
     if (FormatStr.size() == 1) {
       Value *Res = EmitPutChar(ConstantInt::get(Type::getInt32Ty(*Context),
-                                                FormatStr[0]), B);
+                                                FormatStr[0]), B, TD);
       if (CI->use_empty()) return CI;
       return B.CreateIntCast(Res, CI->getType(), true);
     }
@@ -1408,7 +1055,7 @@ struct PrintFOpt : public LibCallOptimization {
       Constant *C = ConstantArray::get(*Context, FormatStr, true);
       C = new GlobalVariable(*Callee->getParent(), C->getType(), true,
                              GlobalVariable::InternalLinkage, C, "str");
-      EmitPutS(C, B);
+      EmitPutS(C, B, TD);
       return CI->use_empty() ? (Value*)CI :
                     ConstantInt::get(CI->getType(), FormatStr.size()+1);
     }
@@ -1417,7 +1064,7 @@ struct PrintFOpt : public LibCallOptimization {
     // printf("%c", chr) --> putchar(*(i8*)dst)
     if (FormatStr == "%c" && CI->getNumOperands() > 2 &&
         CI->getOperand(2)->getType()->isIntegerTy()) {
-      Value *Res = EmitPutChar(CI->getOperand(2), B);
+      Value *Res = EmitPutChar(CI->getOperand(2), B, TD);
 
       if (CI->use_empty()) return CI;
       return B.CreateIntCast(Res, CI->getType(), true);
@@ -1427,7 +1074,7 @@ struct PrintFOpt : public LibCallOptimization {
     if (FormatStr == "%s\n" && CI->getNumOperands() > 2 &&
         CI->getOperand(2)->getType()->isPointerTy() &&
         CI->use_empty()) {
-      EmitPutS(CI->getOperand(2), B);
+      EmitPutS(CI->getOperand(2), B, TD);
       return CI;
     }
     return 0;
@@ -1464,8 +1111,8 @@ struct SPrintFOpt : public LibCallOptimization {
 
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), // Copy the nul byte.
-          ConstantInt::get
-                 (TD->getIntPtrType(*Context), FormatStr.size()+1),1,B);
+                 ConstantInt::get(TD->getIntPtrType(*Context),
+                 FormatStr.size()+1), 1, B, TD);
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
 
@@ -1496,11 +1143,11 @@ struct SPrintFOpt : public LibCallOptimization {
       // sprintf(dest, "%s", str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
       if (!CI->getOperand(3)->getType()->isPointerTy()) return 0;
 
-      Value *Len = EmitStrLen(CI->getOperand(3), B);
+      Value *Len = EmitStrLen(CI->getOperand(3), B, TD);
       Value *IncLen = B.CreateAdd(Len,
                                   ConstantInt::get(Len->getType(), 1),
                                   "leninc");
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(3), IncLen, 1, B);
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(3), IncLen, 1, B, TD);
 
       // The sprintf result is the unincremented number of bytes in the string.
       return B.CreateIntCast(Len, CI->getType(), false);
@@ -1536,7 +1183,7 @@ struct FWriteOpt : public LibCallOptimization {
     // If this is writing one byte, turn it into fputc.
     if (Bytes == 1) {  // fwrite(S,1,1,F) -> fputc(S[0],F)
       Value *Char = B.CreateLoad(CastToCStr(CI->getOperand(1), B), "char");
-      EmitFPutC(Char, CI->getOperand(4), B);
+      EmitFPutC(Char, CI->getOperand(4), B, TD);
       return ConstantInt::get(CI->getType(), 1);
     }
 
@@ -1564,7 +1211,7 @@ struct FPutsOpt : public LibCallOptimization {
     if (!Len) return 0;
     EmitFWrite(CI->getOperand(1),
                ConstantInt::get(TD->getIntPtrType(*Context), Len-1),
-               CI->getOperand(2), B);
+               CI->getOperand(2), B, TD);
     return CI;  // Known to have no uses (see above).
   }
 };
@@ -1598,7 +1245,7 @@ struct FPrintFOpt : public LibCallOptimization {
       EmitFWrite(CI->getOperand(2),
                  ConstantInt::get(TD->getIntPtrType(*Context),
                                   FormatStr.size()),
-                 CI->getOperand(1), B);
+                 CI->getOperand(1), B, TD);
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
 
@@ -1611,7 +1258,7 @@ struct FPrintFOpt : public LibCallOptimization {
     if (FormatStr[1] == 'c') {
       // fprintf(F, "%c", chr) --> *(i8*)dst = chr
       if (!CI->getOperand(3)->getType()->isIntegerTy()) return 0;
-      EmitFPutC(CI->getOperand(3), CI->getOperand(1), B);
+      EmitFPutC(CI->getOperand(3), CI->getOperand(1), B, TD);
       return ConstantInt::get(CI->getType(), 1);
     }
 
@@ -1619,7 +1266,7 @@ struct FPrintFOpt : public LibCallOptimization {
       // fprintf(F, "%s", str) -> fputs(str, F)
       if (!CI->getOperand(3)->getType()->isPointerTy() || !CI->use_empty())
         return 0;
-      EmitFPutS(CI->getOperand(3), CI->getOperand(1), B);
+      EmitFPutS(CI->getOperand(3), CI->getOperand(1), B, TD);
       return CI;
     }
     return 0;
