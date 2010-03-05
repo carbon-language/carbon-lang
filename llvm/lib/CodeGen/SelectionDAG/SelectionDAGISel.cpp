@@ -1038,6 +1038,8 @@ SelectionDAGISel::FinishBasicBlock() {
       MachineInstr *PHI = SDB->PHINodesToUpdate[i].first;
       assert(PHI->isPHI() &&
              "This is not a machine PHI node that we are updating!");
+      if (!BB->isSuccessor(PHI->getParent()))
+        continue;
       PHI->addOperand(MachineOperand::CreateReg(SDB->PHINodesToUpdate[i].second,
                                                 false));
       PHI->addOperand(MachineOperand::CreateMBB(BB));
