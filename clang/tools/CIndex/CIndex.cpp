@@ -104,7 +104,8 @@ public:
   {
     {
       llvm::raw_svector_ostream Out(CrashString);
-      Out << "ClangCIndex [createTranslationUnitFromSourceFile]: clang";
+      Out << "ClangCIndex [" << getClangFullVersion() << "]"
+          << "[createTranslationUnitFromSourceFile]: clang";
       for (llvm::SmallVectorImpl<const char*>::iterator I=Args.begin(),
            E=Args.end(); I!=E; ++I)
         Out << ' ' << *I;
