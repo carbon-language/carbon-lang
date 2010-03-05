@@ -143,6 +143,10 @@ public:
     return Type::getVoidTy(Context);
   }
   
+  const Type *getInt8PtrTy() {
+    return Type::getInt8PtrTy(Context);
+  }
+  
   /// getCurrentFunctionReturnType - Get the return type of the current function
   /// that we're emitting into.
   const Type *getCurrentFunctionReturnType() const;
