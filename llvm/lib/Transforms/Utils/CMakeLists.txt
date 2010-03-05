@@ -3,6 +3,7 @@ add_llvm_library(LLVMTransformUtils
   BasicBlockUtils.cpp
   BasicInliner.cpp
   BreakCriticalEdges.cpp
+  BuildLibCalls.cpp
   CloneFunction.cpp
   CloneLoop.cpp
   CloneModule.cpp
