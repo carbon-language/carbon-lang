@@ -266,6 +266,7 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
   // and if TD isn't around, we can't handle the mixed case.
   bool isVolatile = FirstLI->isVolatile();
   unsigned LoadAlignment = FirstLI->getAlignment();
+  unsigned LoadAddrSpace = FirstLI->getPointerAddressSpace();
   
   // We can't sink the load if the loaded value could be modified between the
   // load and the PHI.
@@ -290,6 +291,7 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
     // the load and the PHI.
     if (LI->isVolatile() != isVolatile ||
         LI->getParent() != PN.getIncomingBlock(i) ||
+        LI->getPointerAddressSpace() != LoadAddrSpace ||
         !isSafeAndProfitableToSinkLoad(LI))
       return 0;
       
