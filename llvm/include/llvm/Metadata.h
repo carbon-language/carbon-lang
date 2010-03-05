@@ -108,9 +108,6 @@ class MDNode : public Value, public FoldingSetNode {
   /// node with T.
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
-  /// replaceAllOperandsWithNull - This is used while destroying llvm context to 
-  /// gracefully delete all nodes. This method replaces all operands with null.
-  void replaceAllOperandsWithNull();
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
@@ -166,9 +163,7 @@ private:
   bool isNotUniqued() const { 
     return (getSubclassDataFromValue() & NotUniquedBit) != 0;
   }
-  void setIsNotUniqued() {
-    setValueSubclassData(getSubclassDataFromValue() | NotUniquedBit);
-  }
+  void setIsNotUniqued();
   
   // Shadow Value::setValueSubclassData with a private forwarding method so that
   // any future subclasses cannot accidentally use it.

@@ -110,8 +110,10 @@ MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
 MDNode::~MDNode() {
   assert((getSubclassDataFromValue() & DestroyFlag) != 0 &&
          "Not being destroyed through destroy()?");
-  if (!isNotUniqued()) {
-    LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  if (isNotUniqued()) {
+    pImpl->NonUniquedMDNodes.erase(this);
+  } else {
     pImpl->MDNodeSet.RemoveNode(this);
   }
 
@@ -257,12 +259,10 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(getOperand(i));
 }
 
-// replaceAllOperandsWithNull - This is used while destroying llvm context to 
-// gracefully delete all nodes. This method replaces all operands with null.
-void MDNode::replaceAllOperandsWithNull() {
-  for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
-       Op != E; ++Op)
-    replaceOperand(Op, 0);
+void MDNode::setIsNotUniqued() {
+  setValueSubclassData(getSubclassDataFromValue() | NotUniquedBit);
+  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+  pImpl->NonUniquedMDNodes.insert(this);
 }
 
 // Replace value from this node's operand list.
