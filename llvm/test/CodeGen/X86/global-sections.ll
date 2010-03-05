@@ -100,7 +100,7 @@
 
 @G8 = constant [4 x i16] [ i16 1, i16 2, i16 3, i16 0 ]
 
-; DARWIN:	.section	__TEXT,__ustring
+; DARWIN:	.section	__TEXT,__const
 ; DARWIN:	.globl _G8
 ; DARWIN: _G8:
 
@@ -110,7 +110,6 @@
 
 @G9 = constant [4 x i32] [ i32 1, i32 2, i32 3, i32 0 ]
 
-; DARWIN:	.section        __TEXT,__const
 ; DARWIN:	.globl _G9
 ; DARWIN: _G9:
 

@@ -652,7 +652,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   // FIXME: Alignment check should be handled by section classifier.
   if (Kind.isMergeable1ByteCString() ||
-      Kind.isMergeable2ByteCString()) {
+      (Kind.isMergeable2ByteCString() && !GV->hasExternalLinkage())) {
     if (TM.getTargetData()->getPreferredAlignment(
                                               cast<GlobalVariable>(GV)) < 32) {
       if (Kind.isMergeable1ByteCString())
