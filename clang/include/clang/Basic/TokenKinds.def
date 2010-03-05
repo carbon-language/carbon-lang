@@ -336,8 +336,6 @@ KEYWORD(__declspec                  , KEYALL)
 KEYWORD(__cdecl                     , KEYALL)
 KEYWORD(__stdcall                   , KEYALL)
 KEYWORD(__fastcall                  , KEYALL)
-KEYWORD(__ptr64                     , KEYALL)
-KEYWORD(__w64                       , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
 
 // Altivec Extension.
@@ -368,6 +366,8 @@ ALIAS("__volatile"   , volatile   , KEYALL)
 ALIAS("__volatile__" , volatile   , KEYALL)
 
 // Microsoft extensions which should be disabled in strict conformance mode
+KEYWORD(__ptr64                   , KEYMS)
+KEYWORD(__w64                     , KEYMS)
 ALIAS("_asm"         , asm        , KEYMS)
 ALIAS("_cdecl"       , __cdecl    , KEYMS)
 ALIAS("_fastcall"    , __fastcall , KEYMS)
