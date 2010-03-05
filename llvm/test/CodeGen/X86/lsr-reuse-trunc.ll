@@ -1,19 +1,10 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 ; Full strength reduction wouldn't reduce register pressure, so LSR should
 ; stick with indexing here.
 
-; Also checks andps and andnps shares the same constantpool. Previously llvm
-; will codegen two andps, one using 0x80000000, the other 0x7fffffff.
-; rdar://7323335
-
-; CHECK: movaps LCPI1_0
-; CHECK: movaps LCPI1_1
-; CHECK-NOT: movaps LCPI1_2
-; CHECK: movaps (%rsi,%rax,4), %xmm2
-; CHECK: andps
-; CHECK: andnps
-; CHECK: movaps %xmm2, (%rdi,%rax,4)
+; CHECK: movaps        (%rsi,%rax,4), %xmm3
+; CHECK: movaps        %xmm3, (%rdi,%rax,4)
 ; CHECK: addq  $4, %rax
 ; CHECK: cmpl  %eax, (%rdx)
 ; CHECK-NEXT: jg

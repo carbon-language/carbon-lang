@@ -990,7 +990,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::BUILD_VECTOR);
   setTargetDAGCombine(ISD::SELECT);
-  setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::SHL);
   setTargetDAGCombine(ISD::SRA);
   setTargetDAGCombine(ISD::SRL);
@@ -9174,58 +9173,6 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformANDCombine - Look for SSE and instructions of this form:
-/// (and x, (build_vector signbit,signbit,signbit,signbit)). If there
-/// exists a use of a build_vector that's the bitwise complement of the mask,
-/// then transform the node to
-/// (and (xor x, (build_vector -1,-1,-1,-1)), (build_vector ~sb,~sb,~sb,~sb)).
-static SDValue PerformANDCombine(SDNode *N, SelectionDAG &DAG,
-                                 TargetLowering::DAGCombinerInfo &DCI) {
-  EVT VT = N->getValueType(0);
-  if (!VT.isVector() || !VT.isInteger())
-    return SDValue();
-
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
-  if (N0.getOpcode() == ISD::XOR || !N1.hasOneUse())
-    return SDValue();
-
-  if (N1.getOpcode() == ISD::BUILD_VECTOR) {
-    unsigned NumElts = VT.getVectorNumElements();
-    EVT EltVT = VT.getVectorElementType();
-    SmallVector<SDValue, 8> Mask;
-    Mask.reserve(NumElts);
-    for (unsigned i = 0; i != NumElts; ++i) {
-      SDValue Arg = N1.getOperand(i);
-      if (Arg.getOpcode() == ISD::UNDEF) {
-        Mask.push_back(Arg);
-        continue;
-      }
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Arg);
-      if (!C)
-        return SDValue();
-      if (!C->getAPIntValue().isSignBit() &&
-          !C->getAPIntValue().isMaxSignedValue())
-        return SDValue();
-      Mask.push_back(DAG.getConstant(~C->getAPIntValue(), EltVT));
-    }
-    N1 = DAG.getNode(ISD::BUILD_VECTOR, N1.getDebugLoc(), VT,
-                     &Mask[0], NumElts);
-    if (!N1.use_empty()) {
-      unsigned Bits = EltVT.getSizeInBits();
-      Mask.clear();
-      for (unsigned i = 0; i != NumElts; ++i)
-        Mask.push_back(DAG.getConstant(APInt::getAllOnesValue(Bits), EltVT));
-      SDValue NewMask = DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(),
-                                    VT, &Mask[0], NumElts);
-      return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
-                         DAG.getNode(ISD::XOR, N->getDebugLoc(), VT,
-                                     N0, NewMask), N1);
-    }
-  }
-
-  return SDValue();
-}
 
 /// PerformMulCombine - Optimize a single multiply with constant into two
 /// in order to implement it with two cheaper instructions, e.g.
@@ -9755,7 +9702,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
-  case ISD::AND:            return PerformANDCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
   case ISD::SRA:
