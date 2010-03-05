@@ -146,7 +146,7 @@ L4:
   
   void *Ptrs[] = {
     &&L2,   // Ok.
-    &&L3   // expected-error {{address taken of label in protected scope, jump to it would have unknown effect on scope}}
+    &&L3   // expected-warning {{address taken of label in protected scope, jump to it would have unknown effect on scope}}
   };
 }
 
