@@ -89,8 +89,8 @@ define i1 @test8(i32 %X) {
   ret i1 %S
 ; CHECK: @test8
 ; CHECK-NEXT: add i32 %X, -8
-; CHECK-NEXT: %S = icmp ult i32 {{.*}}, 2
-; CHECK-NEXT: ret i1 %S
+; CHECK-NEXT: icmp ult i32 {{.*}}, 2
+; CHECK-NEXT: ret i1
 }
 
 @GA = internal constant [4 x { i32, i32 } ] [
@@ -107,6 +107,6 @@ define i1 @test9(i32 %X) {
   ret i1 %R
 ; CHECK: @test9
 ; CHECK-NEXT: add i32 %X, -1
-; CHECK-NEXT: %R = icmp ult i32 {{.*}}, 2
-; CHECK-NEXT: ret i1 %R
+; CHECK-NEXT: icmp ult i32 {{.*}}, 2
+; CHECK-NEXT: ret i1
 }

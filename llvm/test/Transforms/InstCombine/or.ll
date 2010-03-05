@@ -126,8 +126,8 @@ define i1 @test14(i32 %A, i32 %B) {
         %D = or i1 %C1, %C2
         ret i1 %D
 ; CHECK: @test14
-; CHECK: %D = icmp ne i32 %A, %B
-; CHECK: ret i1 %D
+; CHECK: icmp ne i32 %A, %B
+; CHECK: ret i1
 }
 
 define i1 @test15(i32 %A, i32 %B) {
@@ -137,8 +137,8 @@ define i1 @test15(i32 %A, i32 %B) {
         %D = or i1 %C1, %C2
         ret i1 %D
 ; CHECK: @test15
-; CHECK: %D = icmp ule i32 %A, %B
-; CHECK: ret i1 %D
+; CHECK:  icmp ule i32 %A, %B
+; CHECK: ret i1
 }
 
 define i32 @test16(i32 %A) {
@@ -171,8 +171,8 @@ define i1 @test18(i32 %A) {
         ret i1 %D
 ; CHECK: @test18
 ; CHECK: add i32
-; CHECK: %D = icmp ugt 
-; CHECK: ret i1 %D
+; CHECK:  icmp ugt 
+; CHECK: ret i1 
 }
 
 define i1 @test19(i32 %A) {
@@ -183,8 +183,8 @@ define i1 @test19(i32 %A) {
         ret i1 %D
 ; CHECK: @test19
 ; CHECK: add i32
-; CHECK: %D = icmp ult 
-; CHECK: ret i1 %D
+; CHECK: icmp ult 
+; CHECK: ret i1
 }
 
 define i32 @test20(i32 %x) {
@@ -236,8 +236,8 @@ define i1 @test24(double %X, double %Y) {
         ret i1 %bothcond
         
 ; CHECK: @test24
-; CHECK:   %bothcond = fcmp uno double %Y, %X              ; <i1> [#uses=1]
-; CHECK:   ret i1 %bothcond
+; CHECK:    = fcmp uno double %Y, %X
+; CHECK:   ret i1 
 }
 
 ; PR3266 & PR5276
