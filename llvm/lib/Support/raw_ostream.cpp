@@ -368,6 +368,7 @@ void format_object_base::home() {
 /// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
                                unsigned Flags) : pos(0) {
+  assert(Filename != 0 && "Filename is null");
   // Verify that we don't have both "append" and "excl".
   assert((!(Flags & F_Excl) || !(Flags & F_Append)) &&
          "Cannot specify both 'excl' and 'append' file creation flags!");
