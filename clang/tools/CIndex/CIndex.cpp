@@ -1003,7 +1003,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
     if (NumErrors != Diags->getNumErrors()) {
-      if (CXXIdx->getDisplayDiagnostics()) {
+      // Make sure to check that 'Unit' is non-NULL.
+      if (CXXIdx->getDisplayDiagnostics() && Unit.get()) {
         for (ASTUnit::diag_iterator D = Unit->diag_begin(), 
                                  DEnd = Unit->diag_end();
              D != DEnd; ++D) {
