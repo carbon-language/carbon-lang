@@ -102,4 +102,24 @@ bb12:
   unreachable
 }
 
+; rdar://7718857
+
+%struct.data = type { [100 x i32], [100 x i32], [1024 x i8] }
+
+define i32 @test4() nounwind ssp {
+; CHECK: @test4
+entry:
+  %0 = alloca %struct.data, align 8
+  %1 = bitcast %struct.data* %0 to i8*
+  %2 = call i64 @llvm.objectsize.i64(i8* %1, i1 false) nounwind
+; CHECK-NOT: @llvm.objectsize
+; CHECK: @__memset_chk(i8* %1, i32 0, i64 1824, i64 1824)
+  %3 = call i8* @__memset_chk(i8* %1, i32 0, i64 1824, i64 %2) nounwind
+  ret i32 0
+}
+
+declare i8* @__memset_chk(i8*, i32, i64, i64) nounwind
+
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
+
+declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly

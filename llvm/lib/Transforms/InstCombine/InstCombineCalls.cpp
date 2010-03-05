@@ -304,29 +304,39 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   switch (II->getIntrinsicID()) {
   default: break;
   case Intrinsic::objectsize: {
-    const Type *ReturnTy = CI.getType();
-    Value *Op1 = II->getOperand(1);
-    bool Min = (cast<ConstantInt>(II->getOperand(2))->getZExtValue() == 1);
-    
     // We need target data for just about everything so depend on it.
     if (!TD) break;
     
+    const Type *ReturnTy = CI.getType();
+    bool Min = (cast<ConstantInt>(II->getOperand(2))->getZExtValue() == 1);
+
     // Get to the real allocated thing and offset as fast as possible.
-    Op1 = Op1->stripPointerCasts();
+    Value *Op1 = II->getOperand(1)->stripPointerCasts();
     
     // If we've stripped down to a single global variable that we
     // can know the size of then just return that.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op1)) {
       if (GV->hasDefinitiveInitializer()) {
         Constant *C = GV->getInitializer();
-        uint64_t globalSize = TD->getTypeAllocSize(C->getType());
-        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, globalSize));
+        uint64_t GlobalSize = TD->getTypeAllocSize(C->getType());
+        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, GlobalSize));
       } else {
+        // Can't determine size of the GV.
         Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);
         return ReplaceInstUsesWith(CI, RetVal);
       }
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {
-      
+    } else if (AllocaInst *AI = dyn_cast<AllocaInst>(Op1)) {
+      // Get alloca size.
+      if (AI->getAllocatedType()->isSized()) {
+        uint64_t AllocaSize = TD->getTypeAllocSize(AI->getAllocatedType());
+        if (AI->isArrayAllocation()) {
+          const ConstantInt *C = dyn_cast<ConstantInt>(AI->getArraySize());
+          if (!C) break;
+          AllocaSize *= C->getZExtValue();
+        }
+        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, AllocaSize));
+      }
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {      
       // Only handle constant GEPs here.
       if (CE->getOpcode() != Instruction::GetElementPtr) break;
       GEPOperator *GEP = cast<GEPOperator>(CE);
@@ -361,6 +371,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return ReplaceInstUsesWith(CI, RetVal);
       
     }
+
+    // Do not return "I don't know" here. Later optimization passes could
+    // make it possible to evaluate objectsize to a constant.
     break;
   }
   case Intrinsic::bswap:
