@@ -2259,7 +2259,7 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
   } else if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Arg)) {
     if (Flags.isByVal())
       // ByVal argument is passed in as a pointer but it's now being
-      // derefernced. e.g.
+      // dereferenced. e.g.
       // define @foo(%struct.X* %A) {
       //   tail call @bar(%struct.X* byval %A)
       // }
