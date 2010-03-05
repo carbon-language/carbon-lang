@@ -5212,14 +5212,35 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
                              AbstractVariableType))
     Invalid = true;
 
-  // FIXME: Need to test for ability to copy-construct and destroy the
-  // exception variable.
-
-  // FIXME: Need to check for abstract classes.
-
   VarDecl *ExDecl = VarDecl::Create(Context, CurContext, Loc,
                                     Name, ExDeclType, TInfo, VarDecl::None);
 
+  if (!Invalid) {
+    if (const RecordType *RecordTy = ExDeclType->getAs<RecordType>()) {
+      // C++ [except.handle]p16:
+      //   The object declared in an exception-declaration or, if the 
+      //   exception-declaration does not specify a name, a temporary (12.2) is 
+      //   copy-initialized (8.5) from the exception object. [...]
+      //   The object is destroyed when the handler exits, after the destruction
+      //   of any automatic objects initialized within the handler.
+      //
+      // We just pretend to initialize the object with itself, then make sure 
+      // it can be destroyed later.
+      InitializedEntity Entity = InitializedEntity::InitializeVariable(ExDecl);
+      Expr *ExDeclRef = DeclRefExpr::Create(Context, 0, SourceRange(), ExDecl, 
+                                            Loc, ExDeclType, 0);
+      InitializationKind Kind = InitializationKind::CreateCopy(Loc, 
+                                                               SourceLocation());
+      InitializationSequence InitSeq(*this, Entity, Kind, &ExDeclRef, 1);
+      OwningExprResult Result = InitSeq.Perform(*this, Entity, Kind, 
+                                    MultiExprArg(*this, (void**)&ExDeclRef, 1));
+      if (Result.isInvalid())
+        Invalid = true;
+      else 
+        FinalizeVarWithDestructor(ExDecl, RecordTy);
+    }
+  }
+  
   if (Invalid)
     ExDecl->setInvalidDecl();
 
