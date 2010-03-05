@@ -184,9 +184,7 @@ class PTHWriter {
   /// Emit a token to the PTH file.
   void EmitToken(const Token& T);
 
-  void Emit8(uint32_t V) {
-    Out << (unsigned char)(V);
-  }
+  void Emit8(uint32_t V) { ::Emit8(Out, V); }
 
   void Emit16(uint32_t V) { ::Emit16(Out, V); }
 
