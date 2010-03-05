@@ -1420,21 +1420,6 @@ static bool findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
   return false;
 }
 
-/// isNonImmUse - Start searching from Root up the DAG to check is Def can
-/// be reached. Return true if that's the case. However, ignore direct uses
-/// by ImmedUse (which would be U in the example illustrated in
-/// IsLegalToFold) and by Root (which can happen in the store case).
-/// FIXME: to be really generic, we should allow direct use by any node
-/// that is being folded. But realisticly since we only fold loads which
-/// have one non-chain use, we only need to watch out for load/op/store
-/// and load/op/cmp case where the root (store / cmp) may reach the load via
-/// its chain operand.
-static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse,
-                               bool IgnoreChains) {
-  SmallPtrSet<SDNode*, 16> Visited;
-  return findNonImmUse(Root, Def, ImmedUse, Root, Visited, IgnoreChains);
-}
-
 /// IsProfitableToFold - Returns true if it's profitable to fold the specific
 /// operand node N of U during instruction selection that starts at Root.
 bool SelectionDAGISel::IsProfitableToFold(SDValue N, SDNode *U,
@@ -1491,6 +1476,8 @@ bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
   // Fold. But since Fold and FU are flagged together, this will create
   // a cycle in the scheduling graph.
 
+  // If the node has flags, walk down the graph to the "lowest" node in the
+  // flagged set.
   EVT VT = Root->getValueType(Root->getNumValues()-1);
   while (VT == MVT::Flag) {
     SDNode *FU = findFlagUse(Root);
@@ -1500,7 +1487,8 @@ bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
     VT = Root->getValueType(Root->getNumValues()-1);
   }
 
-  return !isNonImmUse(Root, N.getNode(), U, IgnoreChains);
+  SmallPtrSet<SDNode*, 16> Visited;
+  return !findNonImmUse(Root, N.getNode(), U, Root, Visited, IgnoreChains);
 }
 
 SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
