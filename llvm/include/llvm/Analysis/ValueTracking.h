@@ -124,6 +124,10 @@ namespace llvm {
   /// character is included in the result string.
   bool GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset = 0,
                              bool StopAtNul = true);
+                        
+  /// GetStringLength - If we can compute the length of the string pointed to by
+  /// the specified pointer, return 'len+1'.  If we can't, return 0.
+  uint64_t GetStringLength(Value *V);
 } // end namespace llvm
 
 #endif
