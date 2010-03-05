@@ -138,33 +138,21 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
 /// new ICmp instruction. The sign is passed in to determine which kind
 /// of predicate to use in the new icmp instruction.
 static Value *getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS) {
+  CmpInst::Predicate Pred;
   switch (Code) {
   default: assert(0 && "Illegal ICmp code!");
-  case 0:
-    return ConstantInt::getFalse(LHS->getContext());
-  case 1: 
-    if (Sign)
-      return new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS);
-    return new ICmpInst(ICmpInst::ICMP_UGT, LHS, RHS);
-  case 2:
-    return new ICmpInst(ICmpInst::ICMP_EQ,  LHS, RHS);
-  case 3: 
-    if (Sign)
-      return new ICmpInst(ICmpInst::ICMP_SGE, LHS, RHS);
-    return new ICmpInst(ICmpInst::ICMP_UGE, LHS, RHS);
-  case 4: 
-    if (Sign)
-      return new ICmpInst(ICmpInst::ICMP_SLT, LHS, RHS);
-    return new ICmpInst(ICmpInst::ICMP_ULT, LHS, RHS);
-  case 5:
-    return new ICmpInst(ICmpInst::ICMP_NE,  LHS, RHS);
-  case 6: 
-    if (Sign)
-      return new ICmpInst(ICmpInst::ICMP_SLE, LHS, RHS);
-    return new ICmpInst(ICmpInst::ICMP_ULE, LHS, RHS);
-  case 7:
-    return ConstantInt::getTrue(LHS->getContext());
+  case 0: // False.
+    return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
+  case 1: Pred = Sign ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT; break;
+  case 2: Pred = ICmpInst::ICMP_EQ; break;
+  case 3: Pred = Sign ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE; break;
+  case 4: Pred = Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT; break;
+  case 5: Pred = ICmpInst::ICMP_NE; break;
+  case 6: Pred = Sign ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE; break;
+  case 7: // True.
+    return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 1);
   }
+  return new ICmpInst(Pred, LHS, RHS);
 }
 
 /// getFCmpValue - This is the complement of getFCmpCode, which turns an
@@ -172,45 +160,19 @@ static Value *getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS) {
 /// in to determine which kind of predicate to use in the new fcmp instruction.
 static Value *getFCmpValue(bool isordered, unsigned code,
                            Value *LHS, Value *RHS) {
+  CmpInst::Predicate Pred;
   switch (code) {
-  default: llvm_unreachable("Illegal FCmp code!");
-  case  0:
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_ORD, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_UNO, LHS, RHS);
-  case  1: 
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_OGT, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_UGT, LHS, RHS);
-  case  2: 
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_OEQ, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_UEQ, LHS, RHS);
-  case  3: 
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_OGE, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_UGE, LHS, RHS);
-  case  4: 
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_OLT, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_ULT, LHS, RHS);
-  case  5: 
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_ONE, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_UNE, LHS, RHS);
-  case  6: 
-    if (isordered)
-      return new FCmpInst(FCmpInst::FCMP_OLE, LHS, RHS);
-    else
-      return new FCmpInst(FCmpInst::FCMP_ULE, LHS, RHS);
-  case  7: return ConstantInt::getTrue(LHS->getContext());
+  default: assert(0 && "Illegal FCmp code!");
+  case 0: Pred = isordered ? FCmpInst::FCMP_ORD : FCmpInst::FCMP_UNO; break;
+  case 1: Pred = isordered ? FCmpInst::FCMP_OGT : FCmpInst::FCMP_UGT; break;
+  case 2: Pred = isordered ? FCmpInst::FCMP_OEQ : FCmpInst::FCMP_UEQ; break;
+  case 3: Pred = isordered ? FCmpInst::FCMP_OGE : FCmpInst::FCMP_UGE; break;
+  case 4: Pred = isordered ? FCmpInst::FCMP_OLT : FCmpInst::FCMP_ULT; break;
+  case 5: Pred = isordered ? FCmpInst::FCMP_ONE : FCmpInst::FCMP_UNE; break;
+  case 6: Pred = isordered ? FCmpInst::FCMP_OLE : FCmpInst::FCMP_ULE; break;
+  case 7: return ConstantInt::getTrue(LHS->getContext());
   }
+  return new FCmpInst(Pred, LHS, RHS);
 }
 
 /// PredicatesFoldable - Return true if both predicates match sign or if at
@@ -1178,7 +1140,8 @@ static Instruction *MatchSelectFromAndOr(Value *A, Value *B,
   return 0;
 }
 
-/// FoldOrOfICmps - Fold (icmp)|(icmp) if possible.
+/// FoldOrOfICmps - Fold (icmp)|(icmp) and (cast (icmp))|(cast (icmp)) if
+/// possible.
 Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
                                          ICmpInst *LHS, ICmpInst *RHS) {
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
