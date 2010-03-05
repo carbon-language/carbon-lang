@@ -1134,7 +1134,7 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{11-8} = 0b1100;
   }
 
-  // A8.6.118 #0 and #-0 differs.  Maps -0 to -1, -1 to -2, ..., etc.
+  // A8.6.118 #0 and #-0 differs.  Translates -0 to -1, -1 to -2, ..., etc.
   def pci : T2I<(outs), (ins GPR:$base, i32imm:$imm), IIC_iLoadi, opc,
                 "\t[pc, ${imm:negzero}]", []> {
     let Inst{31-25} = 0b1111100;
