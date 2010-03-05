@@ -1485,7 +1485,14 @@ bool SelectionDAGISel::IsLegalToFold(SDValue N, SDNode *U, SDNode *Root,
       break;
     Root = FU;
     VT = Root->getValueType(Root->getNumValues()-1);
+    
+    // If our query node has a flag result with a use, we've walked up it.  If
+    // the user (which has already been selected) has a chain or indirectly uses
+    // the chain, our WalkChainUsers predicate will not consider it.  Because of
+    // this, we cannot ignore chains in this predicate.
+    IgnoreChains = false;
   }
+  
 
   SmallPtrSet<SDNode*, 16> Visited;
   return !findNonImmUse(Root, N.getNode(), U, Root, Visited, IgnoreChains);
