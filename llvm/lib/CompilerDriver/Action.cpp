@@ -15,6 +15,7 @@
 #include "llvm/CompilerDriver/BuiltinOptions.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/TimeValue.h"
 
@@ -24,13 +25,23 @@
 using namespace llvm;
 using namespace llvmc;
 
+namespace llvmc {
+
+extern int Main(int argc, char** argv);
+extern const char* ProgramName;
+
+}
+
 namespace {
   int ExecuteProgram(const std::string& name,
                      const StrVector& args) {
     sys::Path prog = sys::Program::FindProgramByName(name);
 
-    if (prog.isEmpty())
-      throw std::runtime_error("Can't find program '" + name + "'");
+    if (prog.isEmpty()) {
+      prog = FindExecutable(name, ProgramName, (void *)(intptr_t)&Main);
+      if (prog.isEmpty())
+        throw std::runtime_error("Can't find program '" + name + "'");
+    }
     if (!prog.canExecute())
       throw std::runtime_error("Program '" + name + "' is not executable.");
 
