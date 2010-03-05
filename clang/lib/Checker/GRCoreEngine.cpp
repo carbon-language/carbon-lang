@@ -682,7 +682,6 @@ void GRCallExitNodeBuilder::GenerateNode(const GRState *state) {
   // Get the callee's location context.
   const StackFrameContext *LocCtx 
                          = cast<StackFrameContext>(Pred->getLocationContext());
-  state = state->setAnalysisContext(LocCtx->getParent()->getAnalysisContext());
 
   PostStmt Loc(LocCtx->getCallSite(), LocCtx->getParent());
   bool isNew;

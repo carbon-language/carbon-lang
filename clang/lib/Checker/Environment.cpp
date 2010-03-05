@@ -78,12 +78,12 @@ Environment EnvironmentManager::BindExpr(Environment Env, const Stmt *S,
 
   if (V.isUnknown()) {
     if (Invalidate)
-      return Environment(F.Remove(Env.ExprBindings, S), Env.ACtx);
+      return Environment(F.Remove(Env.ExprBindings, S));
     else
       return Env;
   }
 
-  return Environment(F.Add(Env.ExprBindings, S, V), Env.ACtx);
+  return Environment(F.Add(Env.ExprBindings, S, V));
 }
 
 namespace {
@@ -109,12 +109,12 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, const Stmt *S,
                                        const GRState *ST,
                               llvm::SmallVectorImpl<const MemRegion*> &DRoots) {
 
-  CFG &C = *Env.getAnalysisContext().getCFG();
+  CFG &C = *SymReaper.getLocationContext()->getCFG();
 
   // We construct a new Environment object entirely, as this is cheaper than
   // individually removing all the subexpression bindings (which will greatly
   // outnumber block-level expression bindings).
-  Environment NewEnv = getInitialEnvironment(&Env.getAnalysisContext());
+  Environment NewEnv = getInitialEnvironment();
 
   // Iterate over the block-expr bindings.
   for (Environment::iterator I = Env.begin(), E = Env.end();

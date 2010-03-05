@@ -109,14 +109,6 @@ public:
     return *StateMgr;
   }
 
-  /// getAnalysisContext - Return the AnalysisContext associated with this
-  /// state.
-  AnalysisContext &getAnalysisContext() const {
-    return Env.getAnalysisContext();
-  }
-
-  const GRState *setAnalysisContext(AnalysisContext *ctx) const;
-
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
   const Environment& getEnvironment() const { return Env; }
@@ -338,12 +330,12 @@ public:
   };
 
   // Pretty-printing.
-  void print(llvm::raw_ostream& Out, const char *nl = "\n",
+  void print(llvm::raw_ostream& Out, CFG &C, const char *nl = "\n",
              const char *sep = "") const;
 
-  void printStdErr() const;
+  void printStdErr(CFG &C) const;
 
-  void printDOT(llvm::raw_ostream& Out) const;
+  void printDOT(llvm::raw_ostream& Out, CFG &C) const;
 };
 
 class GRStateSet {

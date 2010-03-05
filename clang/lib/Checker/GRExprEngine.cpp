@@ -477,8 +477,9 @@ void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
 
   // Create the cleaned state.
   const ExplodedNode *BasePred = Builder->getBasePredecessor();
-  SymbolReaper SymReaper(BasePred->getLiveVariables(), SymMgr,
-                        BasePred->getLocationContext()->getCurrentStackFrame());
+
+  SymbolReaper SymReaper(BasePred->getLocationContext(), SymMgr);
+
   CleanedState = AMgr.shouldPurgeDead()
     ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, SymReaper)
     : EntryNode->getState();
@@ -1309,7 +1310,6 @@ void GRExprEngine::ProcessCallEnter(GRCallEnterNodeBuilder &B) {
 
   const GRState *state = B.getState();
   state = getStoreManager().EnterStackFrame(state, LocCtx);
-  state = state->setAnalysisContext(LocCtx->getAnalysisContext());
 
   B.GenerateNode(state, LocCtx);
 }
@@ -3320,7 +3320,7 @@ struct DOTGraphTraits<ExplodedNode*> :
     Out << "\\|StateID: " << (void*) N->getState() << "\\|";
 
     const GRState *state = N->getState();
-    state->printDOT(Out);
+    state->printDOT(Out, *N->getLocationContext()->getCFG());
 
     Out << "\\l";
     return Out.str();

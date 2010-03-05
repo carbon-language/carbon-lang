@@ -215,13 +215,17 @@ bool SymbolReaper::isLive(SymbolRef sym) {
   return isa<SymbolRegionValue>(sym);
 }
 
+bool SymbolReaper::isLive(const Stmt* Loc, const Stmt* ExprVal) const {
+  return LCtx->getLiveVariables()->isLive(Loc, ExprVal);
+}
+
 bool SymbolReaper::isLive(const Stmt *Loc, const VarRegion *VR) const {
   const StackFrameContext *SFC = VR->getStackFrame();
 
-  if (SFC == CurrentStackFrame)
-    return Liveness.isLive(Loc, VR->getDecl());
+  if (SFC == LCtx->getCurrentStackFrame())
+    return LCtx->getLiveVariables()->isLive(Loc, VR->getDecl());
   else
-    return SFC->isParentOf(CurrentStackFrame);
+    return SFC->isParentOf(LCtx->getCurrentStackFrame());
 }
 
 SymbolVisitor::~SymbolVisitor() {}

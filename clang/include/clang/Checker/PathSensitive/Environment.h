@@ -26,7 +26,6 @@
 
 namespace clang {
 
-class AnalysisContext;
 class EnvironmentManager;
 class ValueManager;
 class LiveVariables;
@@ -41,10 +40,9 @@ private:
 
   // Data.
   BindingsTy ExprBindings;
-  AnalysisContext *ACtx;
 
-  Environment(BindingsTy eb, AnalysisContext *aCtx)
-    : ExprBindings(eb), ACtx(aCtx) {}
+  Environment(BindingsTy eb)
+    : ExprBindings(eb) {}
 
 public:
   typedef BindingsTy::iterator iterator;
@@ -58,14 +56,10 @@ public:
 
   SVal GetSVal(const Stmt* Ex, ValueManager& ValMgr) const;
 
-  AnalysisContext &getAnalysisContext() const { return *ACtx; }
-  void setAnalysisContext(AnalysisContext *ctx) { ACtx = ctx; }
-
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const Environment* E) {
     E->ExprBindings.Profile(ID);
-    ID.AddPointer(E->ACtx);
   }
 
   /// Profile - Used to profile the contents of this object for inclusion
@@ -88,8 +82,8 @@ public:
   EnvironmentManager(llvm::BumpPtrAllocator& Allocator) : F(Allocator) {}
   ~EnvironmentManager() {}
 
-  Environment getInitialEnvironment(AnalysisContext *ACtx) {
-    return Environment(F.GetEmptyMap(), ACtx);
+  Environment getInitialEnvironment() {
+    return Environment(F.GetEmptyMap());
   }
 
   Environment BindExpr(Environment Env, const Stmt *S, SVal V,
