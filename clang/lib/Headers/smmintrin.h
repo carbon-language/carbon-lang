@@ -48,7 +48,7 @@ typedef double __v2df __attribute__ ((__vector_size__ (16)));
 #define _MM_FROUND_CEIL      (_MM_FROUND_RAISE_EXC | _MM_FROUND_TO_POS_INF)
 #define _MM_FROUND_TRUNC     (_MM_FROUND_RAISE_EXC | _MM_FROUND_TO_ZERO)
 #define _MM_FROUND_RINT      (_MM_FROUND_RAISE_EXC | _MM_FROUND_CUR_DIRECTION)
-#define _MM_FROUND_NEARBYINT (_MM_FROUND_RAISE_EXC | _MM_FROUND_CUR_DIRECTION)
+#define _MM_FROUND_NEARBYINT (_MM_FROUND_NO_EXC | _MM_FROUND_CUR_DIRECTION)
 
 #define _mm_ceil_ps(X)       _mm_round_ps((X), _MM_FROUND_CEIL)
 #define _mm_ceil_pd(X)       _mm_round_pd((X), _MM_FROUND_CEIL)
@@ -60,30 +60,10 @@ typedef double __v2df __attribute__ ((__vector_size__ (16)));
 #define _mm_floor_ss(X, Y)   _mm_round_ss((X), (Y), _MM_FROUND_FLOOR)
 #define _mm_floor_sd(X, Y)   _mm_round_sd((X), (Y), _MM_FROUND_FLOOR)
 
-/* SSE4 Rounding Intrinsics.  */
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_round_ps (__m128 __V, const int __M)
-{
-  return (__m128) __builtin_ia32_roundps ((__v4sf)__V, __M);
-}
-
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_round_ss (__m128 __V1, __m128 __V2, const int __M)
-{
-  return (__m128) __builtin_ia32_roundss ((__v4sf)__V1, (__v4sf)__V2, __M);
-}
-
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_round_pd (__m128d __V, const int __M)
-{
-  return (__m128d) __builtin_ia32_roundpd ((__v2df)__V, __M);
-}
-
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_round_sd(__m128d __V1, __m128d __V2, const int __M)
-{
-  return (__m128d) __builtin_ia32_roundsd ((__v2df)__V1, (__v2df)__V2, __M);
-}
+#define _mm_round_ps(X, Y)      __builtin_ia32_roundps((X), (Y))
+#define _mm_round_ss(X, Y, M)   __builtin_ia32_roundss((X), (Y), (M))
+#define _mm_round_pd(X, M)      __builtin_ia32_roundpd((X), (M))
+#define _mm_round_sd(X, Y, M)   __builtin_ia32_roundsd((X), (Y), (M))
 
 /* SSE4 Packed Blending Intrinsics.  */
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
