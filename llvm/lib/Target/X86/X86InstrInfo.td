@@ -533,8 +533,16 @@ def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
                                                          imm:$regsavefi,
                                                          imm:$offset)]>;
 
+// Dynamic stack allocation yields _alloca call for Cygwin/Mingw targets.  Calls
+// to _alloca is needed to probe the stack when allocating more than 4k bytes in
+// one go. Touching the stack at 4K increments is necessary to ensure that the
+// guard pages used by the OS virtual memory manager are allocated in correct
+// sequence.
+// The main point of having separate instruction are extra unmodelled effects
+// (compared to ordinary calls) like stack pointer change.
+
 def MINGW_ALLOCA : I<0, Pseudo, (outs), (ins),
-                     "call __alloca",
+                     "# dynamic stack allocation",
                      [(X86MingwAlloca)]>;
 }
 
