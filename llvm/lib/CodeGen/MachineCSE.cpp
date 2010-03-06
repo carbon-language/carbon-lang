@@ -238,8 +238,9 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
         continue;
       unsigned OldReg = MO.getReg();
       unsigned NewReg = CSMI->getOperand(i).getReg();
-      assert(OldReg != NewReg &&
-             TargetRegisterInfo::isVirtualRegister(OldReg) &&
+      if (OldReg == NewReg)
+        continue;
+      assert(TargetRegisterInfo::isVirtualRegister(OldReg) &&
              TargetRegisterInfo::isVirtualRegister(NewReg) &&
              "Do not CSE physical register defs!");
       MRI->replaceRegWith(OldReg, NewReg);
