@@ -3366,7 +3366,7 @@ namespace {
 
 void APFloat::toString(SmallVectorImpl<char> &Str,
                        unsigned FormatPrecision,
-                       unsigned FormatMaxPadding) {
+                       unsigned FormatMaxPadding) const {
   switch (category) {
   case fcInfinity:
     if (isNegative())

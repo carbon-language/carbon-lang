@@ -344,7 +344,7 @@ namespace llvm {
     /// 1.01E-2              4             1       1.01E-2
     void toString(SmallVectorImpl<char> &Str,
                   unsigned FormatPrecision = 0,
-                  unsigned FormatMaxPadding = 3);
+                  unsigned FormatMaxPadding = 3) const;
 
   private:
 
