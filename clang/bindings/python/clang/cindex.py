@@ -207,7 +207,7 @@ class Diagnostic(object):
 
     @property
     def ranges(self):
-        class Ranges:
+        class RangeIterator:
             def __init__(self, diag):
                 self.diag = diag
 
@@ -217,11 +217,11 @@ class Diagnostic(object):
             def __getitem__(self, key):
                 return _clang_getDiagnosticRange(self.diag, key)
 
-        return Ranges(self.ptr)
+        return RangeIterator(self.ptr)
 
     @property
     def fixits(self):
-        class FixIts:
+        class FixItIterator:
             def __init__(self, diag):
                 self.diag = diag
 
@@ -231,10 +231,12 @@ class Diagnostic(object):
             def __getitem__(self, key):
                 range = SourceRange()
                 value = _clang_getDiagnosticFixIt(self.diag, key, byref(range))
+                if len(value) == 0:
+                    raise IndexError
 
                 return FixIt(range, value)
 
-        return FixIts(self.ptr)
+        return FixItIterator(self.ptr)
 
     def __repr__(self):
         return "<Diagnostic severity %r, location %r, spelling %r>" % (
@@ -581,9 +583,6 @@ class _CXUnsavedFile(Structure):
 
 ## Diagnostic Conversion ##
 
-# Diagnostic objects are temporary, we must extract all the information from the
-# diagnostic object when it is passed to the callback.
-
 _clang_getNumDiagnostics = lib.clang_getNumDiagnostics
 _clang_getNumDiagnostics.argtypes = [c_object_p]
 _clang_getNumDiagnostics.restype = c_uint
@@ -730,7 +729,7 @@ class TranslationUnit(ClangObject):
         """
         Return an iterable (and indexable) object containing the diagnostics.
         """
-        class Diags:
+        class DiagIterator:
             def __init__(self, tu):
                 self.tu = tu
 
@@ -738,9 +737,12 @@ class TranslationUnit(ClangObject):
                 return int(_clang_getNumDiagnostics(self.tu))
 
             def __getitem__(self, key):
-                return Diagnostic(_clang_getDiagnostic(self.tu, key))
+                diag = _clang_getDiagnostic(self.tu, key)
+                if not diag:
+                    raise IndexError
+                return Diagnostic(diag)
 
-        return Diags(self)
+        return DiagIterator(self)
 
 class File(ClangObject):
     """
