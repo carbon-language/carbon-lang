@@ -387,6 +387,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Result = getTargetHooks().encodeReturnAddress(*this, Address);
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_dwarf_sp_column: {
+    const llvm::IntegerType *Ty
+      = cast<llvm::IntegerType>(ConvertType(E->getType()));
+    int Column = getTargetHooks().getDwarfEHStackPointer(CGM);
+    if (Column == -1) {
+      CGM.ErrorUnsupported(E, "__builtin_dwarf_sp_column");
+      return RValue::get(llvm::UndefValue::get(Ty));
+    }
+    return RValue::get(llvm::ConstantInt::get(Ty, Column, true));
+  }
+  case Builtin::BI__builtin_init_dwarf_reg_size_table: {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    if (getTargetHooks().initDwarfEHRegSizeTable(*this, Address))
+      CGM.ErrorUnsupported(E, "__builtin_init_dwarf_reg_size_table");
+    return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
+  }
   case Builtin::BI__builtin_eh_return: {
     Value *Int = EmitScalarExpr(E->getArg(0));
     Value *Ptr = EmitScalarExpr(E->getArg(1));

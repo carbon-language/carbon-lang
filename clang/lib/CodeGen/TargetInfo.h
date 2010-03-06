@@ -56,6 +56,23 @@ namespace clang {
     ///     through such registers.
     virtual bool extendPointerWithSExt() const { return false; }
 
+    /// Determines the DWARF register number for the stack pointer, for
+    /// exception-handling purposes.  Implements __builtin_dwarf_sp_column.
+    ///
+    /// Returns -1 if the operation is unsupported by this target.
+    virtual int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
+      return -1;
+    }
+
+    /// Initializes the given DWARF EH register-size table, a char*.
+    /// Implements __builtin_init_dwarf_reg_size_table.
+    ///
+    /// Returns true if the operation is unsupported by this target.
+    virtual bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *Address) const {
+      return true;
+    }
+
     /// Performs the code-generation required to convert a return
     /// address as stored by the system into the actual address of the
     /// next instruction that will be executed.

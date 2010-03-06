@@ -204,6 +204,7 @@ public:
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
   const TargetCodeGenInfo &getTargetCodeGenInfo() const;
+  bool isTargetDarwin() const;
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
   LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;

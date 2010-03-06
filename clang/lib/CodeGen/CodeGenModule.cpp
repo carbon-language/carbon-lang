@@ -33,6 +33,7 @@
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -87,6 +88,10 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitAnnotations();
   EmitLLVMUsed();
+}
+
+bool CodeGenModule::isTargetDarwin() const {
+  return getContext().Target.getTriple().getOS() == llvm::Triple::Darwin;
 }
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the

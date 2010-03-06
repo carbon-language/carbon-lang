@@ -328,6 +328,16 @@ public:
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
+    // Darwin uses different dwarf register numbers for EH.
+    if (CGM.isTargetDarwin()) return 5;
+
+    return 4;
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const;
 };
 
 }
@@ -568,6 +578,51 @@ void X86_32TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
   }
 }
 
+bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
+                                               CodeGen::CodeGenFunction &CGF,
+                                               llvm::Value *Address) const {
+  CodeGen::CGBuilderTy &Builder = CGF.Builder;
+  llvm::LLVMContext &Context = CGF.getLLVMContext();
+
+  const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
+  llvm::Value *Four8 = llvm::ConstantInt::get(i8, 4);
+    
+  // 0-7 are the eight integer registers;  the order is different
+  //   on Darwin (for EH), but the range is the same.
+  // 8 is %eip.
+  for (unsigned I = 0, E = 9; I != E; ++I) {
+    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+    Builder.CreateStore(Four8, Slot);
+  }
+
+  if (CGF.CGM.isTargetDarwin()) {
+    // 12-16 are st(0..4).  Not sure why we stop at 4.
+    // These have size 16, which is sizeof(long double) on
+    // platforms with 8-byte alignment for that type.
+    llvm::Value *Sixteen8 = llvm::ConstantInt::get(i8, 16);
+    for (unsigned I = 12, E = 17; I != E; ++I) {
+      llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+      Builder.CreateStore(Sixteen8, Slot);
+    }
+      
+  } else {
+    // 9 is %eflags, which doesn't get a size on Darwin for some
+    // reason.
+    Builder.CreateStore(Four8, Builder.CreateConstInBoundsGEP1_32(Address, 9));
+
+    // 11-16 are st(0..5).  Not sure why we stop at 5.
+    // These have size 12, which is sizeof(long double) on
+    // platforms with 4-byte alignment for that type.
+    llvm::Value *Twelve8 = llvm::ConstantInt::get(i8, 12);
+    for (unsigned I = 11, E = 17; I != E; ++I) {
+      llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+      Builder.CreateStore(Twelve8, Slot);
+    }
+  }      
+
+  return false;
+}
+
 namespace {
 /// X86_64ABIInfo - The X86_64 ABI information.
 class X86_64ABIInfo : public ABIInfo {
@@ -656,6 +711,28 @@ public:
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   X86_64TargetCodeGenInfo():TargetCodeGenInfo(new X86_64ABIInfo()) {}
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
+    return 7;
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const {
+    CodeGen::CGBuilderTy &Builder = CGF.Builder;
+    llvm::LLVMContext &Context = CGF.getLLVMContext();
+
+    const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
+    llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
+      
+    // 0-16 are the 16 integer registers.
+    // 17 is %rip.
+    for (unsigned I = 0, E = 17; I != E; ++I) {
+      llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+      Builder.CreateStore(Eight8, Slot);
+    }
+
+    return false;
+  }
 };
 
 }
@@ -1559,6 +1636,10 @@ class ARMTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   ARMTargetCodeGenInfo(ARMABIInfo::ABIKind K)
     :TargetCodeGenInfo(new ARMABIInfo(K)) {}
+
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
+    return 13;
+  }
 };
 
 }
