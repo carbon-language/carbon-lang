@@ -1,4 +1,4 @@
-; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
 @a = common global [60 x i8] zeroinitializer, align 1 ; <[60 x i8]*> [#uses=1]
 @.str = private constant [8 x i8] c"abcdefg\00"   ; <[8 x i8]*> [#uses=1]
 

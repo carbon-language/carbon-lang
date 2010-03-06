@@ -633,130 +633,6 @@ struct MemSetOpt : public LibCallOptimization {
 };
 
 //===----------------------------------------------------------------------===//
-// Object Size Checking Optimizations
-//===----------------------------------------------------------------------===//
-
-//===---------------------------------------===//
-// 'memcpy_chk' Optimizations
-
-struct MemCpyChkOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
-    if (!TD) return 0;
-
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        !FT->getParamType(3)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
-      return 0;
-
-    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!ObjSizeCI)
-      return 0;
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (ObjSizeCI->isAllOnesValue() ||
-        (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(2),
-                 CI->getOperand(3), 1, B, TD);
-      return CI->getOperand(1);
-    }
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
-// 'memset_chk' Optimizations
-
-struct MemSetChkOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
-    if (!TD) return 0;
-
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isIntegerTy() ||
-        !FT->getParamType(3)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
-      return 0;
-
-    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!ObjSizeCI)
-      return 0;
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (ObjSizeCI->isAllOnesValue() ||
-        (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
-      Value *Val = B.CreateIntCast(CI->getOperand(2), Type::getInt8Ty(*Context),
-				   false);
-      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
-      return CI->getOperand(1);
-    }
-
-    return 0;
-  }
-};
-
-//===---------------------------------------===//
-// 'memmove_chk' Optimizations
-
-struct MemMoveChkOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    // These optimizations require TargetData.
-    if (!TD) return 0;
-
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy() ||
-        !FT->getParamType(3)->isIntegerTy() ||
-        FT->getParamType(2) != TD->getIntPtrType(*Context))
-      return 0;
-
-    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!ObjSizeCI)
-      return 0;
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (ObjSizeCI->isAllOnesValue() ||
-        (SizeCI && ObjSizeCI->getValue().uge(SizeCI->getValue()))) {
-      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-		              1, B, TD);
-      return CI->getOperand(1);
-    }
-
-    return 0;
-  }
-};
-
-struct StrCpyChkOpt : public LibCallOptimization {
-  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
-    const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-        !FT->getParamType(0)->isPointerTy() ||
-        !FT->getParamType(1)->isPointerTy())
-      return 0;
-
-    ConstantInt *ObjSizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!ObjSizeCI)
-      return 0;
-    
-    // If a) we don't have any length information, or b) we know this will
-    // fit then just lower to a plain strcpy. Otherwise we'll keep our
-    // strcpy_chk call which may fail at runtime if the size is too long.
-    // TODO: It might be nice to get a maximum length out of the possible
-    // string lengths for varying.
-    if (ObjSizeCI->isAllOnesValue() ||
-        ObjSizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2)))
-      return EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
-
-    return 0;
-  }
-};
-
-  
-//===----------------------------------------------------------------------===//
 // Math Library Optimizations
 //===----------------------------------------------------------------------===//
 
@@ -1298,10 +1174,6 @@ namespace {
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
 
-    // Object Size Checking
-    MemCpyChkOpt MemCpyChk; MemSetChkOpt MemSetChk; MemMoveChkOpt MemMoveChk;
-    StrCpyChkOpt StrCpyChk;
-
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
@@ -1407,12 +1279,6 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["fwrite"] = &FWrite;
   Optimizations["fputs"] = &FPuts;
   Optimizations["fprintf"] = &FPrintF;
-
-  // Object Size Checking
-  Optimizations["__memcpy_chk"] = &MemCpyChk;
-  Optimizations["__memset_chk"] = &MemSetChk;
-  Optimizations["__memmove_chk"] = &MemMoveChk;
-  Optimizations["__strcpy_chk"] = &StrCpyChk;
 }
 
 

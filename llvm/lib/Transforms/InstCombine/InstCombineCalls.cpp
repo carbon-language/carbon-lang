@@ -16,6 +16,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Transforms/Utils/BuildLibCalls.h"
 using namespace llvm;
 
 /// getPromotedType - Return the specified type promoted as it would be to pass
@@ -347,7 +348,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       Operand = Operand->stripPointerCasts();
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Operand))
         if (!GV->hasDefinitiveInitializer()) break;
-      
+        
       // Get what we're pointing to and its size. 
       const PointerType *BaseType = 
         cast<PointerType>(Operand->getType());
@@ -370,7 +371,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       Constant *RetVal = ConstantInt::get(ReturnTy, Size-Offset);
       return ReplaceInstUsesWith(CI, RetVal);
       
-    }
+    } 
 
     // Do not return "I don't know" here. Later optimization passes could
     // make it possible to evaluate objectsize to a constant.
@@ -740,6 +741,122 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   return true;
 }
 
+// Try to fold some different type of calls here.
+// Currently we're only working with the checking functions, memcpy_chk, 
+// mempcpy_chk, memmove_chk, memset_chk, strcpy_chk, stpcpy_chk, strncpy_chk,
+// strcat_chk and strncat_chk.
+Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const TargetData *TD) {
+  if (CI->getCalledFunction() == 0) return 0;
+  
+  StringRef Name = CI->getCalledFunction()->getName();
+  BasicBlock *BB = CI->getParent();
+  IRBuilder<> B(CI->getParent()->getContext());
+  
+  // Set the builder to the instruction after the call.
+  B.SetInsertPoint(BB, CI);
+
+  if (Name == "__memcpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeArg)
+      return 0;
+    if (SizeCI->isAllOnesValue() ||
+        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+                 1, B, TD);
+      return ReplaceInstUsesWith(*CI, CI->getOperand(1));
+    }
+    return 0;
+  }
+
+  // Should be similar to memcpy.
+  if (Name == "__mempcpy_chk") {
+    return 0;
+  }
+
+  if (Name == "__memmove_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeArg)
+      return 0;
+    if (SizeCI->isAllOnesValue() ||
+        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
+      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+                  1, B, TD);
+      return ReplaceInstUsesWith(*CI, CI->getOperand(1));
+    }
+    return 0;
+  }
+
+  if (Name == "__memset_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeArg)
+      return 0;
+    if (SizeCI->isAllOnesValue() ||
+        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
+      Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
+                                   false);
+      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
+      return ReplaceInstUsesWith(*CI, CI->getOperand(1));
+    }
+    return 0;
+  }
+
+  if (Name == "__strcpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeCI)
+      return 0;
+    // If a) we don't have any length information, or b) we know this will
+    // fit then just lower to a plain strcpy. Otherwise we'll keep our
+    // strcpy_chk call which may fail at runtime if the size is too long.
+    // TODO: It might be nice to get a maximum length out of the possible
+    // string lengths for varying.
+    if (SizeCI->isAllOnesValue() ||
+      SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2))) {
+      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      return ReplaceInstUsesWith(*CI, Ret);
+    }
+    return 0;
+  }
+
+  // Should be similar to strcpy.
+  if (Name == "__stpcpy_chk") {
+    return 0;
+  }
+
+  if (Name == "__strncpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeArg)
+      return 0;
+    if (SizeCI->isAllOnesValue() ||
+        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
+      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      return ReplaceInstUsesWith(*CI, Ret);
+    }
+    return 0; 
+  }
+
+  if (Name == "__strcat_chk") {
+    return 0;
+  }
+
+  if (Name == "__strncat_chk") {
+    return 0;
+  }
+
+  return 0;
+}
+
 // visitCallSite - Improvements for call and invoke instructions.
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
@@ -824,6 +941,14 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // Inline asm calls cannot throw - mark them 'nounwind'.
     CS.setDoesNotThrow();
     Changed = true;
+  }
+
+  // Try to optimize the call if possible, we require TargetData for most of
+  // this.  None of these calls are seen as possibly dead so go ahead and
+  // delete the instruction now.
+  if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction())) {
+    Instruction *I = tryOptimizeCall(CI, TD);
+    return I ? EraseInstFromFunction(*I): 0;
   }
 
   return Changed ? CS.getInstruction() : 0;

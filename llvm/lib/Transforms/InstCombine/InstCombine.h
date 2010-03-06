@@ -207,6 +207,7 @@ private:
                           const Type *Ty);
 
   Instruction *visitCallSite(CallSite CS);
+  Instruction *tryOptimizeCall(CallInst *CI, const TargetData *TD);
   bool transformConstExprCastCall(CallSite CS);
   Instruction *transformCallThroughTrampoline(CallSite CS);
   Instruction *transformZExtICmp(ICmpInst *ICI, Instruction &CI,

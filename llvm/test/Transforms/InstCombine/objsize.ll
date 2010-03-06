@@ -91,7 +91,7 @@ bb11:
   %1 = bitcast float* %0 to i8*                   ; <i8*> [#uses=1]
   %2 = call i32 @llvm.objectsize.i32(i8* %1, i1 false) ; <i32> [#uses=1]
   %3 = call i8* @__memcpy_chk(i8* undef, i8* undef, i32 512, i32 %2) nounwind ; <i8*> [#uses=0]
-; CHECK: @__memcpy_chk
+; CHECK: unreachable
   unreachable
 
 bb12:
@@ -113,7 +113,7 @@ entry:
   %1 = bitcast %struct.data* %0 to i8*
   %2 = call i64 @llvm.objectsize.i64(i8* %1, i1 false) nounwind
 ; CHECK-NOT: @llvm.objectsize
-; CHECK: @__memset_chk(i8* %1, i32 0, i64 1824, i64 1824)
+; CHECK: @llvm.memset.i64(i8* %1, i8 0, i64 1824, i32 8)
   %3 = call i8* @__memset_chk(i8* %1, i32 0, i64 1824, i64 %2) nounwind
   ret i32 0
 }
