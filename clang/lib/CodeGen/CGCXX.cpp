@@ -109,16 +109,6 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
                                   GlobalDecl(BaseD, Dtor_Base));
 }
 
-static bool isWeakForLinker(llvm::GlobalValue::LinkageTypes Linkage) {
-  return (Linkage == llvm::GlobalValue::AvailableExternallyLinkage ||
-          Linkage == llvm::GlobalValue::WeakAnyLinkage ||
-          Linkage == llvm::GlobalValue::WeakODRLinkage ||
-          Linkage == llvm::GlobalValue::LinkOnceAnyLinkage ||
-          Linkage == llvm::GlobalValue::LinkOnceODRLinkage ||
-          Linkage == llvm::GlobalValue::CommonLinkage ||
-          Linkage == llvm::GlobalValue::ExternalWeakLinkage);
-}
-
 /// Try to emit a definition as a global alias for another definition.
 bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
                                              GlobalDecl TargetDecl) {
@@ -155,7 +145,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   llvm::GlobalValue::LinkageTypes TargetLinkage
     = getFunctionLinkage(cast<FunctionDecl>(TargetDecl.getDecl()));
 
-  if (isWeakForLinker(TargetLinkage))
+  if (llvm::GlobalValue::isWeakForLinker(TargetLinkage))
     return true;
 
   // Derive the type for the alias.
