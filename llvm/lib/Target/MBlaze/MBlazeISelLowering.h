@@ -63,8 +63,6 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
 
   class MBlazeTargetLowering : public TargetLowering  {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-
   public:
 
     explicit MBlazeTargetLowering(MBlazeTargetMachine &TM);
@@ -98,7 +96,6 @@ namespace llvm {
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG);
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
-    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG);
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
