@@ -240,6 +240,11 @@ BUILTIN(__builtin_isinf_sign, "i.", "nc")
 BUILTIN(__builtin_isnan,      "i.", "nc")
 BUILTIN(__builtin_isnormal,   "i.", "nc")
 
+// FP signbit builtins
+BUILTIN(__builtin_signbit, "id", "nc")
+BUILTIN(__builtin_signbitf, "if", "nc")
+BUILTIN(__builtin_signbitl, "iLd", "nc")
+
 // Builtins for arithmetic.
 BUILTIN(__builtin_clz  , "iUi"  , "nc")
 BUILTIN(__builtin_clzl , "iULi" , "nc")

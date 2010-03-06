@@ -118,6 +118,7 @@ int main() {
   // V(clear_cache, (&N, &N+1));
   V(trap, ());
   R(extract_return_addr, (&N));
+  P(signbit, (1.0));
 
   return 0;
 }
