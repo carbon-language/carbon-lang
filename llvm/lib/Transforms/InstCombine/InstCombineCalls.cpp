@@ -336,16 +336,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         }
         return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy, AllocaSize));
       }
-    } else if (CallInst *MI = extractMallocCall(Op1)) {
-      const Type* MallocType = getMallocAllocatedType(MI);
-      // Get alloca size.
-      if (MallocType->isSized()) {
-        if (Value *NElems = getMallocArraySize(MI, TD, true)) {
-          if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
-        return ReplaceInstUsesWith(CI, ConstantInt::get(ReturnTy,
-               (NElements->getZExtValue() * TD->getTypeAllocSize(MallocType))));
-        }
-      }
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op1)) {      
       // Only handle constant GEPs here.
       if (CE->getOpcode() != Instruction::GetElementPtr) break;
