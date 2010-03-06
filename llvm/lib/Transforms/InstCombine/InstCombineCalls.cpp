@@ -948,7 +948,9 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   // delete the instruction now.
   if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction())) {
     Instruction *I = tryOptimizeCall(CI, TD);
-    return I ? EraseInstFromFunction(*I): 0;
+    // If we changed something return the result, etc. Otherwise let
+    // the fallthrough check.
+    if (I) return EraseInstFromFunction(*I);
   }
 
   return Changed ? CS.getInstruction() : 0;
