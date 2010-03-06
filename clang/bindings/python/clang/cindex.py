@@ -187,12 +187,54 @@ class Diagnostic(object):
     Error   = 3
     Fatal   = 4
 
-    def __init__(self, severity, location, spelling, ranges, fixits):
-        self.severity = severity
-        self.location = location
-        self.spelling = spelling
-        self.ranges = ranges
-        self.fixits = fixits
+    def __init__(self, ptr):
+        self.ptr = ptr
+
+    def __del__(self):
+        _clang_disposeDiagnostic(self.ptr)
+
+    @property
+    def severity(self):
+        return _clang_getDiagnosticSeverity(self.ptr)
+
+    @property
+    def location(self):
+        return _clang_getDiagnosticLocation(self.ptr)
+
+    @property
+    def spelling(self):
+        return _clang_getDiagnosticSpelling(self.ptr)
+
+    @property
+    def ranges(self):
+        class Ranges:
+            def __init__(self, diag):
+                self.diag = diag
+
+            def __len__(self):
+                return int(_clang_getDiagnosticNumRanges(self.diag))
+
+            def __getitem__(self, key):
+                return _clang_getDiagnosticRange(self.diag, key)
+
+        return Ranges(self.ptr)
+
+    @property
+    def fixits(self):
+        class FixIts:
+            def __init__(self, diag):
+                self.diag = diag
+
+            def __len__(self):
+                return int(_clang_getDiagnosticNumFixIts(self.diag))
+
+            def __getitem__(self, key):
+                range = SourceRange()
+                value = _clang_getDiagnosticFixIt(self.diag, key, byref(range))
+
+                return FixIt(range, value)
+
+        return FixIts(self.ptr)
 
     def __repr__(self):
         return "<Diagnostic severity %r, location %r, spelling %r>" % (
@@ -542,6 +584,17 @@ class _CXUnsavedFile(Structure):
 # Diagnostic objects are temporary, we must extract all the information from the
 # diagnostic object when it is passed to the callback.
 
+_clang_getNumDiagnostics = lib.clang_getNumDiagnostics
+_clang_getNumDiagnostics.argtypes = [c_object_p]
+_clang_getNumDiagnostics.restype = c_uint
+
+_clang_getDiagnostic = lib.clang_getDiagnostic
+_clang_getDiagnostic.argtypes = [c_object_p, c_uint]
+_clang_getDiagnostic.restype = c_object_p
+
+_clang_disposeDiagnostic = lib.clang_disposeDiagnostic
+_clang_disposeDiagnostic.argtypes = [c_object_p]
+
 _clang_getDiagnosticSeverity = lib.clang_getDiagnosticSeverity
 _clang_getDiagnosticSeverity.argtypes = [c_object_p]
 _clang_getDiagnosticSeverity.restype = c_int
@@ -567,67 +620,10 @@ _clang_getDiagnosticNumFixIts = lib.clang_getDiagnosticNumFixIts
 _clang_getDiagnosticNumFixIts.argtypes = [c_object_p]
 _clang_getDiagnosticNumFixIts.restype = c_uint
 
-_clang_getDiagnosticFixItKind = lib.clang_getDiagnosticFixItKind
-_clang_getDiagnosticFixItKind.argtypes = [c_object_p, c_uint]
-_clang_getDiagnosticFixItKind.restype = c_int
-
-_clang_getDiagnosticFixItInsertion = lib.clang_getDiagnosticFixItInsertion
-_clang_getDiagnosticFixItInsertion.argtypes = [c_object_p, c_uint,
-                                               POINTER(SourceLocation)]
-_clang_getDiagnosticFixItInsertion.restype = _CXString
-_clang_getDiagnosticFixItInsertion.errcheck = _CXString.from_result
-
-_clang_getDiagnosticFixItRemoval = lib.clang_getDiagnosticFixItRemoval
-_clang_getDiagnosticFixItRemoval.argtypes = [c_object_p, c_uint,
-                                             POINTER(SourceLocation)]
-_clang_getDiagnosticFixItRemoval.restype = _CXString
-_clang_getDiagnosticFixItRemoval.errcheck = _CXString.from_result
-
-_clang_getDiagnosticFixItReplacement = lib.clang_getDiagnosticFixItReplacement
-_clang_getDiagnosticFixItReplacement.argtypes = [c_object_p, c_uint,
-                                                 POINTER(SourceRange)]
-_clang_getDiagnosticFixItReplacement.restype = _CXString
-_clang_getDiagnosticFixItReplacement.errcheck = _CXString.from_result
-
-def _convert_fixit(diag_ptr, index):
-    # We normalize all the fix-its to a single representation, this is more
-    # convenient.
-    #
-    # FIXME: Push this back into API? It isn't exactly clear what the
-    # SourceRange semantics are, we should make sure we can represent an empty
-    # range.
-    kind = _clang_getDiagnosticFixItKind(diag_ptr, index)
-    range = None
-    value = None
-    if kind == 0: # insertion
-        location = SourceLocation()
-        value = _clang_getDiagnosticFixItInsertion(diag_ptr, index,
-                                                   byref(location))
-        range = SourceRange.from_locations(location, location)
-    elif kind == 1: # removal
-        range = _clang_getDiagnosticFixItRemoval(diag_ptr, index)
-        value = ''
-    else: # replacement
-        assert kind == 2
-        range = SourceRange()
-        value = _clang_getDiagnosticFixItReplacement(diag_ptr, index,
-                                                     byref(range))
-    return FixIt(range, value)
-
-def _convert_diag(diag_ptr, diag_list):
-    severity = _clang_getDiagnosticSeverity(diag_ptr)
-    loc = _clang_getDiagnosticLocation(diag_ptr)
-    spelling = _clang_getDiagnosticSpelling(diag_ptr)
-
-    # Diagnostic ranges.
-    num_ranges = _clang_getDiagnosticNumRanges(diag_ptr)
-    ranges = [_clang_getDiagnosticRange(diag_ptr, i)
-              for i in range(num_ranges)]
-
-    fixits = [_convert_fixit(diag_ptr, i)
-              for i in range(_clang_getDiagnosticNumFixIts(diag_ptr))]
-
-    diag_list.append(Diagnostic(severity, loc, spelling, ranges, fixits))
+_clang_getDiagnosticFixIt = lib.clang_getDiagnosticFixIt
+_clang_getDiagnosticFixIt.argtypes = [c_object_p, c_uint, POINTER(SourceRange)]
+_clang_getDiagnosticFixIt.restype = _CXString
+_clang_getDiagnosticFixIt.errcheck = _CXString.from_result
 
 ###
 
@@ -645,18 +641,14 @@ class Index(ClangObject):
         Parameters:
         excludeDecls -- Exclude local declarations from translation units.
         """
-        return Index(Index_create(excludeDecls))
+        return Index(Index_create(excludeDecls, 0))
 
     def __del__(self):
         Index_dispose(self)
 
     def read(self, path):
         """Load the translation unit from the given AST file."""
-        # FIXME: In theory, we could support streaming diagnostics. It's hard to
-        # integrate this into the API cleanly, however. Resolve.
-        diags = []
-        ptr = TranslationUnit_read(self, path,
-                                   Diagnostic_callback(_convert_diag), diags)
+        ptr = TranslationUnit_read(self, path)
         return TranslationUnit(ptr) if ptr else None
 
     def parse(self, path, args = [], unsaved_files = []):
@@ -687,13 +679,9 @@ class Index(ClangObject):
                 unsaved_files_array[i].name = name
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
-        # FIXME: In theory, we could support streaming diagnostics. It's hard to
-        # integrate this into the API cleanly, however. Resolve.
-        diags = []
         ptr = TranslationUnit_parse(self, path, len(args), arg_array,
-                                    len(unsaved_files), unsaved_files_array,
-                                    Diagnostic_callback(_convert_diag), diags)
-        return TranslationUnit(ptr, diags) if ptr else None
+                                    len(unsaved_files), unsaved_files_array)
+        return TranslationUnit(ptr) if ptr else None
 
 
 class TranslationUnit(ClangObject):
@@ -702,9 +690,8 @@ class TranslationUnit(ClangObject):
     provides read-only access to its top-level declarations.
     """
 
-    def __init__(self, ptr, diagnostics):
+    def __init__(self, ptr):
         ClangObject.__init__(self, ptr)
-        self.diagnostics = diagnostics
 
     def __del__(self):
         TranslationUnit_dispose(self)
@@ -737,6 +724,23 @@ class TranslationUnit(ClangObject):
                                  TranslationUnit_includes_callback(visitor),
                                  includes)
         return iter(includes)
+
+    @property
+    def diagnostics(self):
+        """
+        Return an iterable (and indexable) object containing the diagnostics.
+        """
+        class Diags:
+            def __init__(self, tu):
+                self.tu = tu
+
+            def __len__(self):
+                return int(_clang_getNumDiagnostics(self.tu))
+
+            def __getitem__(self, key):
+                return Diagnostic(_clang_getDiagnostic(self.tu, key))
+
+        return Diags(self)
 
 class File(ClangObject):
     """
@@ -876,24 +880,20 @@ Cursor_visit.restype = c_uint
 
 # Index Functions
 Index_create = lib.clang_createIndex
-Index_create.argtypes = [c_int]
+Index_create.argtypes = [c_int, c_int]
 Index_create.restype = c_object_p
 
 Index_dispose = lib.clang_disposeIndex
 Index_dispose.argtypes = [Index]
 
 # Translation Unit Functions
-Diagnostic_callback = CFUNCTYPE(None, c_object_p, py_object)
-
 TranslationUnit_read = lib.clang_createTranslationUnit
-TranslationUnit_read.argtypes = [Index, c_char_p,
-                                 Diagnostic_callback, py_object]
+TranslationUnit_read.argtypes = [Index, c_char_p]
 TranslationUnit_read.restype = c_object_p
 
 TranslationUnit_parse = lib.clang_createTranslationUnitFromSourceFile
 TranslationUnit_parse.argtypes = [Index, c_char_p, c_int, c_void_p,
-                                  c_int, c_void_p,
-                                  Diagnostic_callback, py_object]
+                                  c_int, c_void_p]
 TranslationUnit_parse.restype = c_object_p
 
 TranslationUnit_cursor = lib.clang_getTranslationUnitCursor
