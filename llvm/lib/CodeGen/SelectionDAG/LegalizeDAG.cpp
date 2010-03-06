@@ -2008,6 +2008,31 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     return Result;
   }
   assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
+
+  // Implementation of unsigned i64 to f64 following the algorithm in
+  // __floatundidf in compiler_rt. This implementation has the advantage
+  // of performing rounding correctly, both in the default rounding mode
+  // and in all alternate rounding modes.
+  // TODO: Generalize this for use with other types.
+  if (Op0.getValueType() == MVT::i64 && DestVT == MVT::f64) {
+    SDValue TwoP52 =
+      DAG.getConstant(UINT64_C(0x4330000000000000), MVT::i64);
+    SDValue TwoP84PlusTwoP52 =
+      DAG.getConstantFP(BitsToDouble(UINT64_C(0x4530000000100000)), MVT::f64);
+    SDValue TwoP84 =
+      DAG.getConstant(UINT64_C(0x4530000000000000), MVT::i64);
+
+    SDValue Lo = DAG.getZeroExtendInReg(Op0, dl, MVT::i32);
+    SDValue Hi = DAG.getNode(ISD::SRL, dl, MVT::i64, Op0,
+                             DAG.getConstant(32, MVT::i64));
+    SDValue LoOr = DAG.getNode(ISD::OR, dl, MVT::i64, Lo, TwoP52);
+    SDValue HiOr = DAG.getNode(ISD::OR, dl, MVT::i64, Hi, TwoP84);
+    SDValue LoFlt = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, LoOr);
+    SDValue HiFlt = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f64, HiOr);
+    SDValue HiSub = DAG.getNode(ISD::FSUB, dl, MVT::f64, HiFlt, TwoP84PlusTwoP52);
+    return DAG.getNode(ISD::FADD, dl, MVT::f64, LoFlt, HiSub);
+  }
+
   SDValue Tmp1 = DAG.getNode(ISD::SINT_TO_FP, dl, DestVT, Op0);
 
   SDValue SignSet = DAG.getSetCC(dl, TLI.getSetCCResultType(Op0.getValueType()),
