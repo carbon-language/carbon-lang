@@ -110,36 +110,51 @@ public:
     return ODR ? WeakODRLinkage : WeakAnyLinkage;
   }
 
-  bool hasExternalLinkage() const { return Linkage == ExternalLinkage; }
-  bool hasAvailableExternallyLinkage() const {
+  static bool isExternalLinkage(LinkageTypes Linkage) {
+    return Linkage == ExternalLinkage;
+  }
+  static bool isAvailableExternallyLinkage(LinkageTypes Linkage) {
     return Linkage == AvailableExternallyLinkage;
   }
-  bool hasLinkOnceLinkage() const {
+  static bool isLinkOnceLinkage(LinkageTypes Linkage) {
     return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
   }
-  bool hasWeakLinkage() const {
+  static bool isWeakLinkage(LinkageTypes Linkage) {
     return Linkage == WeakAnyLinkage || Linkage == WeakODRLinkage;
   }
-  bool hasAppendingLinkage() const { return Linkage == AppendingLinkage; }
-  bool hasInternalLinkage() const { return Linkage == InternalLinkage; }
-  bool hasPrivateLinkage() const { return Linkage == PrivateLinkage; }
-  bool hasLinkerPrivateLinkage() const { return Linkage==LinkerPrivateLinkage; }
-  bool hasLocalLinkage() const {
-    return hasInternalLinkage() || hasPrivateLinkage() ||
-      hasLinkerPrivateLinkage();
+  static bool isAppendingLinkage(LinkageTypes Linkage) {
+    return Linkage == AppendingLinkage;
   }
-  bool hasDLLImportLinkage() const { return Linkage == DLLImportLinkage; }
-  bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }
-  bool hasExternalWeakLinkage() const { return Linkage == ExternalWeakLinkage; }
-  bool hasCommonLinkage() const { return Linkage == CommonLinkage; }
-
-  void setLinkage(LinkageTypes LT) { Linkage = LT; }
-  LinkageTypes getLinkage() const { return Linkage; }
+  static bool isInternalLinkage(LinkageTypes Linkage) {
+    return Linkage == InternalLinkage;
+  }
+  static bool isPrivateLinkage(LinkageTypes Linkage) {
+    return Linkage == PrivateLinkage;
+  }
+  static bool isLinkerPrivateLinkage(LinkageTypes Linkage) {
+    return Linkage==LinkerPrivateLinkage;
+  }
+  static bool isLocalLinkage(LinkageTypes Linkage) {
+    return isInternalLinkage(Linkage) || isPrivateLinkage(Linkage) ||
+      isLinkerPrivateLinkage(Linkage);
+  }
+  static bool isDLLImportLinkage(LinkageTypes Linkage) {
+    return Linkage == DLLImportLinkage;
+  }
+  static bool isDLLExportLinkage(LinkageTypes Linkage) {
+    return Linkage == DLLExportLinkage;
+  }
+  static bool isExternalWeakLinkage(LinkageTypes Linkage) {
+    return Linkage == ExternalWeakLinkage;
+  }
+  static bool isCommonLinkage(LinkageTypes Linkage) {
+    return Linkage == CommonLinkage;
+  }
 
   /// mayBeOverridden - Whether the definition of this global may be replaced
   /// by something non-equivalent at link time.  For example, if a function has
   /// weak linkage then the code defining it may be replaced by different code.
-  bool mayBeOverridden() const {
+  static bool mayBeOverridden(LinkageTypes Linkage) {
     return (Linkage == WeakAnyLinkage ||
             Linkage == LinkOnceAnyLinkage ||
             Linkage == CommonLinkage ||
@@ -148,7 +163,7 @@ public:
 
   /// isWeakForLinker - Whether the definition of this global may be replaced at
   /// link time.
-  bool isWeakForLinker() const {
+  static bool isWeakForLinker(LinkageTypes Linkage)  {
     return (Linkage == AvailableExternallyLinkage ||
             Linkage == WeakAnyLinkage ||
             Linkage == WeakODRLinkage ||
@@ -157,6 +172,33 @@ public:
             Linkage == CommonLinkage ||
             Linkage == ExternalWeakLinkage);
   }
+
+  bool hasExternalLinkage() const { return isExternalLinkage(Linkage); }
+  bool hasAvailableExternallyLinkage() const {
+    return isAvailableExternallyLinkage(Linkage);
+  }
+  bool hasLinkOnceLinkage() const {
+    return isLinkOnceLinkage(Linkage);
+  }
+  bool hasWeakLinkage() const {
+    return isWeakLinkage(Linkage);
+  }
+  bool hasAppendingLinkage() const { return isAppendingLinkage(Linkage); }
+  bool hasInternalLinkage() const { return isInternalLinkage(Linkage); }
+  bool hasPrivateLinkage() const { return isPrivateLinkage(Linkage); }
+  bool hasLinkerPrivateLinkage() const { return isLinkerPrivateLinkage(Linkage); }
+  bool hasLocalLinkage() const { return isLocalLinkage(Linkage); }
+  bool hasDLLImportLinkage() const { return isDLLImportLinkage(Linkage); }
+  bool hasDLLExportLinkage() const { return isDLLExportLinkage(Linkage); }
+  bool hasExternalWeakLinkage() const { return isExternalWeakLinkage(Linkage); }
+  bool hasCommonLinkage() const { return isCommonLinkage(Linkage); }
+
+  void setLinkage(LinkageTypes LT) { Linkage = LT; }
+  LinkageTypes getLinkage() const { return Linkage; }
+
+  bool mayBeOverridden() const { return mayBeOverridden(Linkage); }
+
+  bool isWeakForLinker() const { return isWeakForLinker(Linkage); }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a GlobalValue) from the GlobalValue Src to this one.
