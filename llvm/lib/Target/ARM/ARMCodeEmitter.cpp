@@ -1138,7 +1138,7 @@ void ARMCodeEmitter::emitMiscBranchInstruction(const MachineInstr &MI) {
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
-  if (TID.Opcode == ARM::BX_RET)
+  if (TID.Opcode == ARM::BX_RET || TID.Opcode == ARM::MOVPCLR)
     // The return register is LR.
     Binary |= ARMRegisterInfo::getRegisterNumbering(ARM::LR);
   else

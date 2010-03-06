@@ -113,6 +113,8 @@ def ARMrbit          : SDNode<"ARMISD::RBIT", SDTIntUnaryOp>;
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
 //
+def HasV4T    : Predicate<"Subtarget->hasV4TOps()">;
+def NoV4T     : Predicate<"!Subtarget->hasV4TOps()">;
 def HasV5T    : Predicate<"Subtarget->hasV5TOps()">;
 def HasV5TE   : Predicate<"Subtarget->hasV5TEOps()">;
 def HasV6     : Predicate<"Subtarget->hasV6Ops()">;
@@ -851,22 +853,48 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
 //  Control Flow Instructions.
 //
 
-let isReturn = 1, isTerminator = 1, isBarrier = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
+  // ARMV4T and above
   def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br,
-                  "bx", "\tlr", [(ARMretflag)]> {
-  let Inst{3-0}   = 0b1110;
-  let Inst{7-4}   = 0b0001;
-  let Inst{19-8}  = 0b111111111111;
-  let Inst{27-20} = 0b00010010;
+                  "bx", "\tlr", [(ARMretflag)]>,
+               Requires<[IsARM, HasV4T]> {
+    let Inst{3-0}   = 0b1110;
+    let Inst{7-4}   = 0b0001;
+    let Inst{19-8}  = 0b111111111111;
+    let Inst{27-20} = 0b00010010;
+  }
+
+  // ARMV4 only
+  def MOVPCLR : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
+                  "mov", "\tpc, lr", [(ARMretflag)]>,
+               Requires<[IsARM, NoV4T]> {
+    let Inst{11-0}  = 0b000000001110;
+    let Inst{15-12} = 0b1111;
+    let Inst{19-16} = 0b0000;
+    let Inst{27-20} = 0b00011010;
+  }
 }
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
+  // ARMV4T and above
   def BRIND : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx\t$dst",
-                  [(brind GPR:$dst)]> {
+                  [(brind GPR:$dst)]>,
+              Requires<[IsARM, HasV4T]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
+    let Inst{31-28} = 0b1110;
+  }
+
+  // ARMV4 only
+  def MOVPCRX : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "mov\tpc, $dst",
+                  [(brind GPR:$dst)]>,
+              Requires<[IsARM, NoV4T]> {
+    let Inst{11-4}  = 0b00000000;
+    let Inst{15-12} = 0b1111;
+    let Inst{19-16} = 0b0000;
+    let Inst{27-20} = 0b00011010;
     let Inst{31-28} = 0b1110;
   }
 }
@@ -913,10 +941,21 @@ let isCall = 1,
   def BX : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
-           Requires<[IsARM, IsNotDarwin]> {
+           Requires<[IsARM, HasV4T, IsNotDarwin]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
+  }
+
+  // ARMv4
+  def BMOVPCRX : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
+                 IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
+                 [(ARMcall_nolink tGPR:$func)]>,
+           Requires<[IsARM, NoV4T, IsNotDarwin]> {
+    let Inst{11-4}  = 0b00000000;
+    let Inst{15-12} = 0b1111;
+    let Inst{19-16} = 0b0000;
+    let Inst{27-20} = 0b00011010;
   }
 }
 
@@ -950,10 +989,22 @@ let isCall = 1,
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
   def BXr9 : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
                   IIC_Br, "mov\tlr, pc\n\tbx\t$func",
-                  [(ARMcall_nolink tGPR:$func)]>, Requires<[IsARM, IsDarwin]> {
+                  [(ARMcall_nolink tGPR:$func)]>,
+             Requires<[IsARM, HasV4T, IsDarwin]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
+  }
+
+  // ARMv4
+  def BMOVPCRXr9 : ABXIx2<(outs), (ins tGPR:$func, variable_ops),
+                 IIC_Br, "mov\tlr, pc\n\tmov\tpc, $func",
+                 [(ARMcall_nolink tGPR:$func)]>,
+           Requires<[IsARM, NoV4T, IsDarwin]> {
+    let Inst{11-4}  = 0b00000000;
+    let Inst{15-12} = 0b1111;
+    let Inst{19-16} = 0b0000;
+    let Inst{27-20} = 0b00011010;
   }
 }
 

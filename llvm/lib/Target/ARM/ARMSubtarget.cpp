@@ -33,7 +33,7 @@ UseMOVT("arm-use-movt",
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
                            bool isT)
-  : ARMArchVersion(V4T)
+  : ARMArchVersion(V4)
   , ARMFPUType(None)
   , UseNEONForSinglePrecisionFP(UseNEONFP)
   , IsThumb(isT)
@@ -54,6 +54,11 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   // Parse features string.
   CPUString = ParseSubtargetFeatures(FS, CPUString);
 
+  // When no arch is specified either by CPU or by attributes, make the default
+  // ARMv4T.
+  if (CPUString == "generic" && (FS.empty() || FS == "generic"))
+    ARMArchVersion = V4T;
+
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   unsigned Len = TT.length();
@@ -68,25 +73,28 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   }
   if (Idx) {
     unsigned SubVer = TT[Idx];
-    if (SubVer > '4' && SubVer <= '9') {
-      if (SubVer >= '7') {
-        ARMArchVersion = V7A;
-      } else if (SubVer == '6') {
-        ARMArchVersion = V6;
-        if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
-          ARMArchVersion = V6T2;
-      } else if (SubVer == '5') {
-        ARMArchVersion = V5T;
-        if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
-          ARMArchVersion = V5TE;
-      }
-      if (ARMArchVersion >= V6T2)
-        ThumbMode = Thumb2;
+    if (SubVer >= '7' && SubVer <= '9') {
+      ARMArchVersion = V7A;
+    } else if (SubVer == '6') {
+      ARMArchVersion = V6;
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
+        ARMArchVersion = V6T2;
+    } else if (SubVer == '5') {
+      ARMArchVersion = V5T;
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
+        ARMArchVersion = V5TE;
+    } else if (SubVer == '4') {
+      if (Len >= Idx+2 && TT[Idx+1] == 't')
+        ARMArchVersion = V4T;
+      else
+        ARMArchVersion = V4;
     }
   }
 
   // Thumb2 implies at least V6T2.
-  if (ARMArchVersion < V6T2 && ThumbMode >= Thumb2)
+  if (ARMArchVersion >= V6T2)
+    ThumbMode = Thumb2;
+  else if (ThumbMode >= Thumb2)
     ARMArchVersion = V6T2;
 
   if (Len >= 10) {
