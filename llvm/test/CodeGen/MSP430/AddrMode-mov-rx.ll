@@ -26,7 +26,7 @@ define i8 @am3(i16 %n) nounwind {
 	ret i8 %2
 }
 ; CHECK: am3:
-; CHECK:		mov.b	&bar(r15), r15
+; CHECK:		mov.b	bar(r15), r15
 
 define i16 @am4() nounwind {
 	%1 = volatile load i16* inttoptr(i16 32 to i16*)
@@ -63,5 +63,5 @@ define i8 @am7(i16 %n) nounwind {
 	ret i8 %3
 }
 ; CHECK: am7:
-; CHECK:		mov.b	&duh+2(r15), r15
+; CHECK:		mov.b	duh+2(r15), r15
 

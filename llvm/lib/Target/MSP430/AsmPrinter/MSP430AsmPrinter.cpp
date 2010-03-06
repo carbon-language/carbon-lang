@@ -98,12 +98,19 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     uint64_t Offset = MO.getOffset();
 
-    O << (isMemOp ? '&' : '#');
+    // If the global address expression is a part of displacement field with a
+    // register base, we should not emit any prefix symbol here, e.g.
+    //   mov.w &foo, r1
+    // vs
+    //   mov.w glb(r1), r2
+    // Otherwise (!) msp430-as will silently miscompile the output :(
+    if (!Modifier || strcmp(Modifier, "nohash"))
+      O << (isMemOp ? '&' : '#');
     if (Offset)
       O << '(' << Offset << '+';
 
     O << *GetGlobalValueSymbol(MO.getGlobal());
-    
+
     if (Offset)
       O << ')';
 
@@ -124,15 +131,11 @@ void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
   const MachineOperand &Disp = MI->getOperand(OpNum+1);
 
   // Print displacement first
-  if (!Disp.isImm()) {
-    printOperand(MI, OpNum+1, "mem");
-  } else {
-    if (!Base.getReg())
-      O << '&';
 
-    printOperand(MI, OpNum+1, "nohash");
-  }
-
+  // Imm here is in fact global address - print extra modifier.
+  if (Disp.isImm() && !Base.getReg())
+    O << '&';
+  printOperand(MI, OpNum+1, "nohash");
 
   // Print register base field
   if (Base.getReg()) {
