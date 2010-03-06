@@ -28,7 +28,7 @@ int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
 }
 
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
-  raw_fd_ostream OS(FileHandle, false);
+  raw_fd_ostream OS(FileHandle, true);
   
   WriteBitcodeToFile(unwrap(M), OS);
   return 0;
