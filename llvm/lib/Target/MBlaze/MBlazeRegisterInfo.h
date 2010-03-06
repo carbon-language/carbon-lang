@@ -43,6 +43,7 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// MBlaze::RA, return the number that it corresponds to (e.g. 31).
   static unsigned getRegisterNumbering(unsigned RegEnum);
+  static unsigned getRegisterFromNumbering(unsigned RegEnum);
 
   /// Get PIC indirect call register
   static unsigned getPICCallReg();
@@ -81,6 +82,11 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   /// Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
+
+  /// targetHandlesStackFrameRounding - Returns true if the target is
+  /// responsible for rounding up the stack frame (probably at emitPrologue
+  /// time).
+  bool targetHandlesStackFrameRounding() const { return true; }
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 };

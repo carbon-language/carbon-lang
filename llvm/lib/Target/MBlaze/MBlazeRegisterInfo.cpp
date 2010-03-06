@@ -85,6 +85,47 @@ unsigned MBlazeRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   return 0; // Not reached
 }
 
+/// getRegisterFromNumbering - Given the enum value for some register, e.g.
+/// MBlaze::R0, return the number that it corresponds to (e.g. 0).
+unsigned MBlazeRegisterInfo::getRegisterFromNumbering(unsigned Reg) {
+  switch (Reg) {
+    case 0  : return MBlaze::R0;
+    case 1  : return MBlaze::R1;
+    case 2  : return MBlaze::R2;
+    case 3  : return MBlaze::R3;
+    case 4  : return MBlaze::R4;
+    case 5  : return MBlaze::R5;
+    case 6  : return MBlaze::R6;
+    case 7  : return MBlaze::R7;
+    case 8  : return MBlaze::R8;
+    case 9  : return MBlaze::R9;
+    case 10 : return MBlaze::R10;
+    case 11 : return MBlaze::R11;
+    case 12 : return MBlaze::R12;
+    case 13 : return MBlaze::R13;
+    case 14 : return MBlaze::R14;
+    case 15 : return MBlaze::R15;
+    case 16 : return MBlaze::R16;
+    case 17 : return MBlaze::R17;
+    case 18 : return MBlaze::R18;
+    case 19 : return MBlaze::R19;
+    case 20 : return MBlaze::R20;
+    case 21 : return MBlaze::R21;
+    case 22 : return MBlaze::R22;
+    case 23 : return MBlaze::R23;
+    case 24 : return MBlaze::R24;
+    case 25 : return MBlaze::R25;
+    case 26 : return MBlaze::R26;
+    case 27 : return MBlaze::R27;
+    case 28 : return MBlaze::R28;
+    case 29 : return MBlaze::R29;
+    case 30 : return MBlaze::R30;
+    case 31 : return MBlaze::R31;
+    default: llvm_unreachable("Unknown register number!");
+  }
+  return 0; // Not reached
+}
+
 unsigned MBlazeRegisterInfo::getPICCallReg() {
   return MBlaze::R20;
 }
@@ -180,9 +221,9 @@ void MBlazeRegisterInfo::adjustMBlazeStackFrame(MachineFunction &MF) const {
   }
 
   if (MFI->hasCalls()) {
+    MBlazeFI->setRAStackOffset(0);
     MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
                          StackOffset);
-    MBlazeFI->setRAStackOffset(StackOffset);
     TopCPUSavedRegOff = StackOffset;
     StackOffset += RegSize;
   }
@@ -245,7 +286,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   // as explained on LowerFormalArguments, detect negative offsets
   // and adjust SPOffsets considering the final stack size.
-  int Offset = ((spOffset < 0) ? (stackSize + (-(spOffset+4))) : (spOffset));
+  int Offset = (spOffset < 0) ? (stackSize - spOffset) : (spOffset + 4);
   Offset    += MI.getOperand(oi).getImm();
 
   DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
@@ -272,6 +313,7 @@ emitPrologue(MachineFunction &MF) const {
 
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->hasCalls()) return;
+  if (StackSize < 28 && MFI->hasCalls()) StackSize = 28;
 
   int FPOffset = MBlazeFI->getFPStackOffset();
   int RAOffset = MBlazeFI->getRAStackOffset();
@@ -307,9 +349,6 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
   MBlazeFunctionInfo *MBlazeFI         = MF.getInfo<MBlazeFunctionInfo>();
   DebugLoc dl = MBBI->getDebugLoc();
 
-  // Get the number of bytes from FrameInfo
-  int NumBytes = (int) MFI->getStackSize();
-
   // Get the FI's where RA and FP are saved.
   int FPOffset = MBlazeFI->getFPStackOffset();
   int RAOffset = MBlazeFI->getRAStackOffset();
@@ -333,11 +372,15 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
       .addImm(RAOffset).addReg(MBlaze::R1);
   }
 
+  // Get the number of bytes from FrameInfo
+  int StackSize = (int) MFI->getStackSize();
+  if (StackSize < 28 && MFI->hasCalls()) StackSize = 28;
+
   // adjust stack.
   // addi R1, R1, imm
-  if (NumBytes) {
+  if (StackSize) {
     BuildMI(MBB, MBBI, dl, TII.get(MBlaze::ADDI), MBlaze::R1)
-      .addReg(MBlaze::R1).addImm(NumBytes);
+      .addReg(MBlaze::R1).addImm(StackSize);
   }
 }
 

@@ -129,14 +129,14 @@ SelectAddrRegReg(SDNode *Op, SDValue N, SDValue &Base, SDValue &Index) {
       N.getOpcode() == ISD::TargetGlobalAddress)
     return false;  // direct calls.
 
-  if (N.getOperand(0).getOpcode() == ISD::TargetJumpTable ||
-      N.getOperand(1).getOpcode() == ISD::TargetJumpTable)
-    return false; // jump tables.
-
   int32_t imm = 0;
   if (N.getOpcode() == ISD::ADD || N.getOpcode() == ISD::OR) {
     if (isIntS32Immediate(N.getOperand(1), imm))
       return false;    // r+i
+
+    if (N.getOperand(0).getOpcode() == ISD::TargetJumpTable ||
+        N.getOperand(1).getOpcode() == ISD::TargetJumpTable)
+      return false; // jump tables.
 
     Base = N.getOperand(1);
     Index = N.getOperand(0);
