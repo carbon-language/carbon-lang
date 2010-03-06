@@ -13,6 +13,10 @@ int main(int argc, char **argv) {
 
   int (^XXX)(void) = ^{ return III+JJJJ; };
 
+   // rdar 7671883
+   __block char array[10] = {'a', 'b', 'c', 'd'};
+   char (^ch)() = ^{ array[1] = 'X'; return array[5]; };
+   ch();
+
   return 0;
 }
-

@@ -1691,7 +1691,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       return ExprError();
     }
 
-    if (VD->getType()->isArrayType()) {
+    if (VD->getType()->isArrayType() && !VD->hasAttr<BlocksAttr>()) {
       Diag(Loc, diag::err_ref_array_type);
       Diag(D->getLocation(), diag::note_declared_at);
       return ExprError();
