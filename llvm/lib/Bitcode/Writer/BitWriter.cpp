@@ -27,20 +27,9 @@ int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
   return 0;
 }
 
-#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR >= 4)
-#include <ext/stdio_filebuf.h>
-
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
   raw_fd_ostream OS(FileHandle, false);
   
   WriteBitcodeToFile(unwrap(M), OS);
   return 0;
 }
-
-#else
-
-int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
-  return -1; // Not supported.
-}
-
-#endif
