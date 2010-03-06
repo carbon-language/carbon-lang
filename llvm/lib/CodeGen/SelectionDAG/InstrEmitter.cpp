@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "instr-emitter"
 #include "InstrEmitter.h"
+#include "SDDbgValue.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -495,6 +496,56 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
   bool isNew = VRBaseMap.insert(std::make_pair(Op, NewVReg)).second;
   isNew = isNew; // Silence compiler warning.
   assert(isNew && "Node emitted out of order - early");
+}
+
+/// EmitDbgValue - Generate any debug info that refers to this Node.  Constant
+/// dbg_value is not handled here.
+void
+InstrEmitter::EmitDbgValue(SDNode *Node,
+                           DenseMap<SDValue, unsigned> &VRBaseMap,
+                           SDDbgValue *sd) {
+  if (!Node->getHasDebugValue())
+    return;
+  if (!sd)
+    return;
+  unsigned VReg = getVR(SDValue(sd->getSDNode(), sd->getResNo()), VRBaseMap);
+  const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
+  DebugLoc DL = sd->getDebugLoc();
+  MachineInstr *MI;
+  if (VReg) {
+    MI = BuildMI(*MF, DL, II).addReg(VReg, RegState::Debug).
+                              addImm(sd->getOffset()).
+                              addMetadata(sd->getMDPtr());
+  } else {
+    // Insert an Undef so we can see what we dropped.
+    MI = BuildMI(*MF, DL, II).addReg(0U).addImm(sd->getOffset()).
+                                    addMetadata(sd->getMDPtr());
+  }
+  MBB->insert(InsertPos, MI);
+}
+
+/// EmitDbgValue - Generate constant debug info.  No SDNode is involved.
+void
+InstrEmitter::EmitDbgValue(SDDbgValue *sd) {
+  if (!sd)
+    return;
+  const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
+  DebugLoc DL = sd->getDebugLoc();
+  MachineInstr *MI;
+  Value *V = sd->getConst();
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    MI = BuildMI(*MF, DL, II).addImm(CI->getZExtValue()).
+                                   addImm(sd->getOffset()).
+                                   addMetadata(sd->getMDPtr());
+  } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
+    MI = BuildMI(*MF, DL, II).addFPImm(CF).addImm(sd->getOffset()).
+                                   addMetadata(sd->getMDPtr());
+  } else {
+    // Insert an Undef so we can see what we dropped.
+    MI = BuildMI(*MF, DL, II).addReg(0U).addImm(sd->getOffset()).
+                                    addMetadata(sd->getMDPtr());
+  }
+  MBB->insert(InsertPos, MI);
 }
 
 /// EmitNode - Generate machine code for a node and needed dependencies.

@@ -1027,11 +1027,15 @@ private:
   /// then they will be delete[]'d when the node is destroyed.
   uint16_t OperandsNeedDelete : 1;
 
+  /// HasDebugValue - This tracks whether this node has one or more dbg_value
+  /// nodes corresponding to it.
+  uint16_t HasDebugValue : 1;
+
 protected:
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
   /// This field is initialized to zero by the ctor.
-  uint16_t SubclassData : 15;
+  uint16_t SubclassData : 14;
 
 private:
   /// NodeId - Unique id per SDNode in the DAG.
@@ -1093,6 +1097,12 @@ public:
     assert(isMachineOpcode() && "Not a MachineInstr opcode!");
     return ~NodeType;
   }
+
+  /// getHasDebugValue - get this bit.
+  bool getHasDebugValue() const { return HasDebugValue; }
+
+  /// setHasDebugValue - set this bit.
+  void setHasDebugValue(bool b) { HasDebugValue = b; }
 
   /// use_empty - Return true if there are no uses of this node.
   ///
@@ -1357,8 +1367,8 @@ protected:
 
   SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs, const SDValue *Ops,
          unsigned NumOps)
-    : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
-      NodeId(-1),
+    : NodeType(Opc), OperandsNeedDelete(true), HasDebugValue(false),
+      SubclassData(0), NodeId(-1),
       OperandList(NumOps ? new SDUse[NumOps] : 0),
       ValueList(VTs.VTs), UseList(NULL),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
