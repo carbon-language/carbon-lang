@@ -439,11 +439,11 @@ public:
   /// \param OS - The output stream, which should be non-null.
   void addOutputFile(llvm::StringRef Path, llvm::raw_ostream *OS);
 
-  /// ClearOutputFiles - Clear the output file list, destroying the contained
+  /// clearOutputFiles - Clear the output file list, destroying the contained
   /// output streams.
   ///
   /// \param EraseFiles - If true, attempt to erase the files from disk.
-  void ClearOutputFiles(bool EraseFiles);
+  void clearOutputFiles(bool EraseFiles);
 
   /// }
   /// @name Construction Utility Methods

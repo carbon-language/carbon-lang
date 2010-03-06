@@ -94,7 +94,7 @@ namespace {
   public:
     explicit BinaryDiagnosticSerializer(llvm::raw_ostream &OS)
       : OS(OS), SourceMgr(0) { }
-    
+
     virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                   const DiagnosticInfo &Info);
   };
@@ -341,7 +341,7 @@ void CompilerInstance::addOutputFile(llvm::StringRef Path,
   OutputFiles.push_back(std::make_pair(Path, OS));
 }
 
-void CompilerInstance::ClearOutputFiles(bool EraseFiles) {
+void CompilerInstance::clearOutputFiles(bool EraseFiles) {
   for (std::list< std::pair<std::string, llvm::raw_ostream*> >::iterator
          it = OutputFiles.begin(), ie = OutputFiles.end(); it != ie; ++it) {
     delete it->second;
