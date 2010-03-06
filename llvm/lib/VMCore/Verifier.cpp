@@ -1525,6 +1525,15 @@ void Verifier::VerifyType(const Type *Ty) {
       VerifyType(ElTy);
     }
   } break;
+  case Type::UnionTyID: {
+    const UnionType *UTy = cast<UnionType>(Ty);
+    for (unsigned i = 0, e = UTy->getNumElements(); i != e; ++i) {
+      const Type *ElTy = UTy->getElementType(i);
+      Assert2(UnionType::isValidElementType(ElTy),
+              "Union type with invalid element type", ElTy, UTy);
+      VerifyType(ElTy);
+    }
+  } break;
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     Assert1(ArrayType::isValidElementType(ATy->getElementType()),
