@@ -798,17 +798,17 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     // synthesized.
     else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
       if (CD->isImplicit()) {
-        assert (CD->isUsed());
+        assert(CD->isUsed() && "Sema doesn't consider constructor as used.");
         DeferredDeclsToEmit.push_back(D);
       }
     } else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD)) {
       if (DD->isImplicit()) {
-        assert (DD->isUsed());
+        assert(DD->isUsed() && "Sema doesn't consider destructor as used.");
         DeferredDeclsToEmit.push_back(D);
       }
     } else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
       if (MD->isCopyAssignment() && MD->isImplicit()) {
-        assert (MD->isUsed());
+        assert(MD->isUsed() && "Sema doesn't consider CopyAssignment as used.");
         DeferredDeclsToEmit.push_back(D);
       }
     }
