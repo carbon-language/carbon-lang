@@ -204,9 +204,10 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has
 /// exactly one predecessor and the control transfer mechanism between
 /// the predecessor and this block is a fall-through.
-/// Override AsmPrinter implementation to handle delay slots
-bool SparcAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) 
-    const {
+///
+/// This overrides AsmPrinter's implementation to handle delay slots.
+bool SparcAsmPrinter::
+isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   // If this is a landing pad, it isn't a fall through.  If it has no preds,
   // then nothing falls through to it.
   if (MBB->isLandingPad() || MBB->pred_empty())
@@ -224,10 +225,10 @@ bool SparcAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock 
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
   
-  // Check if the last terminator is an unconditional branch
+  // Check if the last terminator is an unconditional branch.
   MachineBasicBlock::const_iterator I = Pred->end();
-  while( I != Pred->begin() && !(--I)->getDesc().isTerminator() )
-      ; /* Noop */
+  while (I != Pred->begin() && !(--I)->getDesc().isTerminator())
+    ; // Noop
   return I == Pred->end() || !I->getDesc().isBarrier();
 }
 
