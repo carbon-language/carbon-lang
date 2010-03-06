@@ -6418,24 +6418,13 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   EVT IntPtr = getPointerTy();
   EVT SPTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
 
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true));
-
   Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Size, Flag);
   Flag = Chain.getValue(1);
 
-  SDVTList  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDValue Ops[] = { Chain,
-                      DAG.getTargetExternalSymbol("_alloca", IntPtr),
-                      DAG.getRegister(X86::EAX, IntPtr),
-                      DAG.getRegister(X86StackPtr, SPTy),
-                      Flag };
-  Chain = DAG.getNode(X86ISD::CALL, dl, NodeTys, Ops, 5);
-  Flag = Chain.getValue(1);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
 
-  Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getIntPtrConstant(0, true),
-                             DAG.getIntPtrConstant(0, true),
-                             Flag);
+  Chain = DAG.getNode(X86ISD::MINGW_ALLOCA, dl, NodeTys, Chain, Flag);
+  Flag = Chain.getValue(1);
 
   Chain = DAG.getCopyFromReg(Chain, dl, X86StackPtr, SPTy).getValue(1);
 
@@ -7741,6 +7730,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
+  case X86ISD::MINGW_ALLOCA:       return "X86ISD::MINGW_ALLOCA";
   }
 }
 
@@ -8410,6 +8400,29 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   return BB;
 }
 
+MachineBasicBlock *
+X86TargetLowering::EmitLoweredMingwAlloca(MachineInstr *MI,
+                                          MachineBasicBlock *BB,
+                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  MachineFunction *F = BB->getParent();
+
+  // The lowering is pretty easy: we're just emitting the call to _alloca.  The
+  // non-trivial part is impdef of ESP.
+  // FIXME: The code should be tweaked as soon as we'll try to do codegen for
+  // mingw-w64.
+
+  BuildMI(BB, DL, TII->get(X86::CALLpcrel32))
+    .addExternalSymbol("_alloca")
+    .addReg(X86::EAX, RegState::Implicit)
+    .addReg(X86::ESP, RegState::Implicit)
+    .addReg(X86::EAX, RegState::Define | RegState::Implicit)
+    .addReg(X86::ESP, RegState::Define | RegState::Implicit);
+
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+  return BB;
+}
 
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
@@ -8417,6 +8430,8 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
+  case X86::MINGW_ALLOCA:
+    return EmitLoweredMingwAlloca(MI, BB, EM);
   case X86::CMOV_GR8:
   case X86::CMOV_V1I64:
   case X86::CMOV_FR32:

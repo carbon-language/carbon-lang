@@ -1057,7 +1057,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
         .addImm(NumBytes);
       BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-        .addExternalSymbol("_alloca");
+        .addExternalSymbol("_alloca")
+        .addReg(StackPtr, RegState::Define | RegState::Implicit);
     } else {
       // Save EAX
       BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
@@ -1068,7 +1069,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
         .addImm(NumBytes - 4);
       BuildMI(MBB, MBBI, DL, TII.get(X86::CALLpcrel32))
-        .addExternalSymbol("_alloca");
+        .addExternalSymbol("_alloca")
+        .addReg(StackPtr, RegState::Define | RegState::Implicit);
 
       // Restore EAX
       MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),

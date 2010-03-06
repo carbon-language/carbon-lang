@@ -65,7 +65,7 @@ def SDT_X86VASTART_SAVE_XMM_REGS : SDTypeProfile<0, -1, [SDTCisVT<0, i8>,
 
 def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
-def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
+def SDTX86Void    : SDTypeProfile<0, 0, []>;
 
 def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
@@ -143,7 +143,7 @@ def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
                          SDNPMayLoad]>;
 
-def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
+def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG", SDTX86Void,
                         [SDNPHasChain, SDNPOutFlag, SDNPSideEffect]>;
 
 def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
@@ -177,6 +177,9 @@ def X86and_flag  : SDNode<"X86ISD::AND",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 
 def X86mul_imm : SDNode<"X86ISD::MUL_IMM", SDTIntBinOp>;
+
+def X86MingwAlloca : SDNode<"X86ISD::MINGW_ALLOCA", SDTX86Void,
+                            [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -519,7 +522,7 @@ def ADJCALLSTACKUP32   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 }
 
 // x86-64 va_start lowering magic.
-let usesCustomInserter = 1 in
+let usesCustomInserter = 1 in {
 def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
                               (outs),
                               (ins GR8:$al,
@@ -529,6 +532,11 @@ def VASTART_SAVE_XMM_REGS : I<0, Pseudo,
                               [(X86vastart_save_xmm_regs GR8:$al,
                                                          imm:$regsavefi,
                                                          imm:$offset)]>;
+
+def MINGW_ALLOCA : I<0, Pseudo, (outs), (ins),
+                     "call __alloca",
+                     [(X86MingwAlloca)]>;
+}
 
 // Nop
 let neverHasSideEffects = 1 in {
