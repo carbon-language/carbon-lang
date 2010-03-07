@@ -105,6 +105,23 @@ _mm_blend_epi16 (__m128i __V1, __m128i __V2, const int __M)
   return (__m128i) __builtin_ia32_pblendw128 ((__v8hi)__V1, (__v8hi)__V2, __M);
 }
 
+/* SSE4 Dword Multiply Instructions.  */
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_mullo_epi32 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pmulld128((__v4si)__V1, (__v4si)__V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_mul_epi32 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pmuldq128 ((__v4si)__V1, (__v4si)__V2);
+}
+
+/* SSE4 Floating Point Dot Product Instructions.  */
+#define _mm_dp_ps(X, Y, M) __builtin_ia32_dpps ((X), (Y), (M))
+#define _mm_dp_pd(X, Y, M) __builtin_ia32_dppd ((X), (Y), (M))
+
 #endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */
