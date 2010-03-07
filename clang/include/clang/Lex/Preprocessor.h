@@ -43,7 +43,7 @@ class ScratchBuffer;
 class TargetInfo;
 class PPCallbacks;
 class DirectoryLookup;
-  
+
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
@@ -60,7 +60,7 @@ class Preprocessor {
 
   /// \brief External source of macros.
   ExternalPreprocessorSource *ExternalSource;
-  
+
   /// PTH - An optional PTHManager object used for getting tokens from
   ///  a token cache rather than lexing the original source file.
   llvm::OwningPtr<PTHManager> PTH;
@@ -105,7 +105,7 @@ class Preprocessor {
 
   /// \brief Whether we have already loaded macros from the external source.
   mutable bool ReadMacrosFromExternalSource : 1;
-  
+
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   mutable IdentifierTable Identifiers;
@@ -186,7 +186,7 @@ class Preprocessor {
   /// allocation.
   /// FIXME: why not use a singly linked list?
   std::vector<MacroInfo*> MICache;
-  
+
   /// MacroArgCache - This is a "freelist" of MacroArg objects that can be
   /// reused for quick allocation.
   MacroArgs *MacroArgCache;
@@ -257,11 +257,11 @@ public:
   void setExternalSource(ExternalPreprocessorSource *Source) {
     ExternalSource = Source;
   }
-  
+
   ExternalPreprocessorSource *getExternalSource() const {
     return ExternalSource;
   }
-  
+
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
   void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {
@@ -287,11 +287,11 @@ public:
   /// expansions going on at the time.
   PreprocessorLexer *getCurrentFileLexer() const;
 
-  /// getPPCallbacks/setPPCallbacks - Accessors for preprocessor callbacks.
+  /// getPPCallbacks/addPPCallbacks - Accessors for preprocessor callbacks.
   /// Note that this class takes ownership of any PPCallbacks object given to
   /// it.
   PPCallbacks *getPPCallbacks() const { return Callbacks; }
-  void setPPCallbacks(PPCallbacks *C) {
+  void addPPCallbacks(PPCallbacks *C) {
     if (Callbacks)
       C = new PPChainedCallbacks(C, Callbacks);
     Callbacks = C;
@@ -313,7 +313,7 @@ public:
                          MacroInfo*>::const_iterator macro_iterator;
   macro_iterator macro_begin(bool IncludeExternalMacros = true) const;
   macro_iterator macro_end(bool IncludeExternalMacros = true) const;
-  
+
   const std::string &getPredefines() const { return Predefines; }
   /// setPredefines - Set the predefines for this Preprocessor.  These
   /// predefines are automatically injected when parsing the main file.
@@ -523,7 +523,7 @@ public:
   /// (1-based).
   ///
   /// \returns true if an error occurred, false otherwise.
-  bool SetCodeCompletionPoint(const FileEntry *File, 
+  bool SetCodeCompletionPoint(const FileEntry *File,
                               unsigned Line, unsigned Column);
 
   /// \brief Determine if this source location refers into the file

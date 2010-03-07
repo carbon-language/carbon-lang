@@ -52,7 +52,7 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
 
     if (MI.isGNUVarargs())
       OS << "...";  // #define foo(x...)
-    
+
     OS << ')';
   }
 
@@ -102,7 +102,7 @@ public:
     EmittedMacroOnThisLine = false;
     FileType = SrcMgr::C_User;
     Initialized = false;
-         
+
     // If we're in microsoft mode, use normal #line instead of line markers.
     UseLineDirective = PP.getLangOptions().Microsoft;
   }
@@ -150,7 +150,7 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
     OS << '#' << ' ' << LineNo << ' ' << '"';
     OS.write(&CurFilename[0], CurFilename.size());
     OS << '"';
-    
+
     if (ExtraLen)
       OS.write(Extra, ExtraLen);
 
@@ -492,7 +492,7 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream *OS,
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",
                                                       Callbacks));
 
-  PP.setPPCallbacks(Callbacks);
+  PP.addPPCallbacks(Callbacks);
 
   // After we have configured the preprocessor, enter the main file.
   PP.EnterMainSourceFile();
