@@ -509,7 +509,8 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                                     "{")
     << CodeModificationHint::CreateInsertion(
                                     SemaRef.PP.getLocForEndOfToken(
-                                      StructuredSubobjectInitList->getLocEnd()),                                      "}");
+                                      StructuredSubobjectInitList->getLocEnd()), 
+                                      "}");
   }
 }
 
