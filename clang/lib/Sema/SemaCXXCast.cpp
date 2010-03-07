@@ -84,7 +84,8 @@ static TryCastResult TryStaticDowncast(Sema &Self, CanQualType SrcType,
                                        QualType OrigSrcType,
                                        QualType OrigDestType, unsigned &msg,
                                        CastExpr::CastKind &Kind);
-static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType,
+static TryCastResult TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr,
+                                                  QualType SrcType,
                                                   QualType DestType,bool CStyle,
                                                   const SourceRange &OpRange,
                                                   unsigned &msg,
@@ -554,7 +555,7 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *&SrcExpr,
   // Reverse member pointer conversion. C++ 4.11 specifies member pointer
   // conversion. C++ 5.2.9p9 has additional information.
   // DR54's access restrictions apply here also.
-  tcr = TryStaticMemberPointerUpcast(Self, SrcType, DestType, CStyle,
+  tcr = TryStaticMemberPointerUpcast(Self, SrcExpr, SrcType, DestType, CStyle,
                                      OpRange, msg, Kind);
   if (tcr != TC_NotApplicable)
     return tcr;
@@ -798,12 +799,23 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
 ///   where B is a base class of D [...].
 ///
 TryCastResult
-TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
-                             bool CStyle, const SourceRange &OpRange,
+TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType, 
+                             QualType DestType, bool CStyle, 
+                             const SourceRange &OpRange,
                              unsigned &msg, CastExpr::CastKind &Kind) {
   const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>();
   if (!DestMemPtr)
     return TC_NotApplicable;
+
+  bool WasOverloadedFunction = false;
+  if (FunctionDecl *Fn
+          = Self.ResolveAddressOfOverloadedFunction(SrcExpr, DestType, false)) {
+    CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
+    SrcType = Self.Context.getMemberPointerType(Fn->getType(),
+                    Self.Context.getTypeDeclType(M->getParent()).getTypePtr());
+    WasOverloadedFunction = true;
+  }
+
   const MemberPointerType *SrcMemPtr = SrcType->getAs<MemberPointerType>();
   if (!SrcMemPtr) {
     msg = diag::err_bad_static_cast_member_pointer_nonmp;
@@ -851,6 +863,24 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
                                            Paths.front())) {
     msg = 0;
     return TC_Failed;
+  }
+
+  if (WasOverloadedFunction) {
+    // Resolve the address of the overloaded function again, this time
+    // allowing complaints if something goes wrong.
+    FunctionDecl *Fn = Self.ResolveAddressOfOverloadedFunction(SrcExpr, 
+                                                               DestType, 
+                                                               true);
+    if (!Fn) {
+      msg = 0;
+      return TC_Failed;
+    }
+
+    SrcExpr = Self.FixOverloadedFunctionReference(SrcExpr, Fn);
+    if (!SrcExpr) {
+      msg = 0;
+      return TC_Failed;
+    }
   }
 
   Kind = CastExpr::CK_DerivedToBaseMemberPointer;

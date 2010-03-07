@@ -178,6 +178,11 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //===----------------------------------------------------------------------===//
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
+  if (!DestPtr) {
+    Visit(E->getSubExpr());
+    return;
+  }
+
   switch (E->getCastKind()) {
   default: assert(0 && "Unhandled cast kind!");
 
@@ -205,6 +210,11 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
 
   case CastExpr::CK_NullToMemberPointer: {
+    // If the subexpression's type is the C++0x nullptr_t, emit the
+    // subexpression, which may have side effects.
+    if (E->getSubExpr()->getType()->isNullPtrType())
+      Visit(E->getSubExpr());
+
     const llvm::Type *PtrDiffTy = 
       CGF.ConvertType(CGF.getContext().getPointerDiffType());
 

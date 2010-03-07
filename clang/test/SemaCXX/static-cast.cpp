@@ -181,3 +181,17 @@ struct X4 {
 
 // PR5897 - accept static_cast from const void* to const int (*)[1].
 void PR5897() { (void)static_cast<const int(*)[1]>((const void*)0); }
+
+namespace PR6072 {
+  struct A { }; 
+  struct B : A { void f(int); void f(); }; 
+  struct C : B { };
+  struct D { };
+
+  void f() {
+    (void)static_cast<void (A::*)()>(&B::f);
+    (void)static_cast<void (B::*)()>(&B::f);
+    (void)static_cast<void (C::*)()>(&B::f);
+    (void)static_cast<void (D::*)()>(&B::f); // expected-error{{static_cast from '<overloaded function type>' to 'void (struct PR6072::D::*)()' is not allowed}}
+  }
+}
