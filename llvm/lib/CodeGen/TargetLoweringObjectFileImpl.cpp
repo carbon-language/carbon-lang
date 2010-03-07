@@ -651,16 +651,16 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   }
 
   // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergeable1ByteCString() ||
-      (Kind.isMergeable2ByteCString() && !GV->hasExternalLinkage())) {
-    if (TM.getTargetData()->getPreferredAlignment(
-                                              cast<GlobalVariable>(GV)) < 32) {
-      if (Kind.isMergeable1ByteCString())
-        return CStringSection;
-      assert(Kind.isMergeable2ByteCString());
-      return UStringSection;
-    }
-  }
+  if (Kind.isMergeable1ByteCString() &&
+      TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV)) < 32)
+    return CStringSection;
+      
+  // Do not put 16-bit arrays in the UString section if they have an
+  // externally visible label, this runs into issues with certain linker
+  // versions.
+  if (Kind.isMergeable2ByteCString() && !GV->hasExternalLinkage() &&
+      TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV)) < 32)
+    return UStringSection;
 
   if (Kind.isMergeableConst()) {
     if (Kind.isMergeableConst4())
