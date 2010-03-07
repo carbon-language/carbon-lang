@@ -120,7 +120,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
   PARSE_LANGOPT_BENIGN(CatchUndefined);
   PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_pch_elide_constructors);
-#undef PARSE_LANGOPT_IRRELEVANT
+#undef PARSE_LANGOPT_IMPORTANT
 #undef PARSE_LANGOPT_BENIGN
 
   return false;
@@ -1089,13 +1089,13 @@ void PCHReader::ReadDefinedMacros() {
   // If there was no preprocessor block, do nothing.
   if (!MacroCursor.getBitStreamReader())
     return;
-  
+
   llvm::BitstreamCursor Cursor = MacroCursor;
   if (Cursor.EnterSubBlock(pch::PREPROCESSOR_BLOCK_ID)) {
     Error("malformed preprocessor block record in PCH file");
     return;
   }
-  
+
   RecordData Record;
   while (true) {
     unsigned Code = Cursor.ReadCode();
@@ -1104,7 +1104,7 @@ void PCHReader::ReadDefinedMacros() {
         Error("error at end of preprocessor block in PCH file");
       return;
     }
-    
+
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       // No known subblocks, always skip them.
       Cursor.ReadSubBlockID();
@@ -1114,12 +1114,12 @@ void PCHReader::ReadDefinedMacros() {
       }
       continue;
     }
-    
+
     if (Code == llvm::bitc::DEFINE_ABBREV) {
       Cursor.ReadAbbrevRecord();
       continue;
     }
-    
+
     // Read a record.
     const char *BlobStart;
     unsigned BlobLen;
@@ -1127,7 +1127,7 @@ void PCHReader::ReadDefinedMacros() {
     switch (Cursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
     default:  // Default behavior: ignore.
       break;
-        
+
     case pch::PP_MACRO_OBJECT_LIKE:
     case pch::PP_MACRO_FUNCTION_LIKE:
         DecodeIdentifierInfo(Record[0]);
@@ -1339,7 +1339,7 @@ PCHReader::ReadPCHBlock() {
       }
       UnusedStaticFuncs.swap(Record);
       break;
-        
+
     case pch::LOCALLY_SCOPED_EXTERNAL_DECLS:
       if (!LocallyScopedExternalDecls.empty()) {
         Error("duplicate LOCALLY_SCOPED_EXTERNAL_DECLS record in PCH file");
@@ -1385,7 +1385,7 @@ PCHReader::ReadPCHBlock() {
       break;
 
     case pch::STAT_CACHE: {
-      PCHStatCache *MyStatCache = 
+      PCHStatCache *MyStatCache =
         new PCHStatCache((const unsigned char *)BlobStart + Record[0],
                          (const unsigned char *)BlobStart,
                          NumStatHits, NumStatMisses);
@@ -1393,7 +1393,7 @@ PCHReader::ReadPCHBlock() {
       StatCache = MyStatCache;
       break;
     }
-        
+
     case pch::EXT_VECTOR_DECLS:
       if (!ExtVectorDecls.empty()) {
         Error("duplicate EXT_VECTOR_DECLS record in PCH file");
@@ -1412,7 +1412,7 @@ PCHReader::ReadPCHBlock() {
       Comments = (SourceRange *)BlobStart;
       NumComments = BlobLen / sizeof(SourceRange);
       break;
-        
+
     case pch::VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
       llvm::StringRef PCHBranch(BlobStart, BlobLen);
@@ -1561,7 +1561,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
   PP->getHeaderSearchInfo().SetExternalLookup(this);
   PP->setExternalSource(this);
-  
+
   // Load the translation unit declaration
   ReadDeclRecord(DeclOffsets[0], 0);
 
@@ -2271,7 +2271,7 @@ PCHReader::GetTemplateArgumentLocInfo(TemplateArgument::ArgKind Kind,
   case TemplateArgument::Type:
     return GetTypeSourceInfo(Record, Index);
   case TemplateArgument::Template: {
-    SourceLocation 
+    SourceLocation
       QualStart = SourceLocation::getFromRawEncoding(Record[Index++]),
       QualEnd = SourceLocation::getFromRawEncoding(Record[Index++]),
       TemplateNameLoc = SourceLocation::getFromRawEncoding(Record[Index++]);
@@ -2487,7 +2487,7 @@ void PCHReader::InitializeSema(Sema &S) {
     VarDecl *Var = cast<VarDecl>(GetDecl(TentativeDefinitions[I]));
     SemaObj->TentativeDefinitions.push_back(Var);
   }
-  
+
   // If there were any unused static functions, deserialize them and add to
   // Sema's list of unused static functions.
   for (unsigned I = 0, N = UnusedStaticFuncs.size(); I != N; ++I) {
