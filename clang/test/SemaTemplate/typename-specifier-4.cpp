@@ -99,3 +99,20 @@ namespace PR6268 {
     return Inner<U>();
   }
 }
+
+namespace PR6463 {
+  struct B { typedef int type; }; // expected-note 2{{member found by ambiguous name lookup}}
+  struct C { typedef int type; }; // expected-note 2{{member found by ambiguous name lookup}}
+
+  template<typename T>
+  struct A : B, C { 
+    type& a(); // expected-error{{found in multiple base classes}}
+    int x; 
+  };
+
+  // FIXME: Improve source location info here.
+  template<typename T>
+  typename A<T>::type& A<T>::a() { // expected-error{{found in multiple base classes}}
+    return x;  // expected-error{{undeclared identifier}}
+  }
+}

@@ -1083,6 +1083,9 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
           // specialization, we take it as a type name.
           BaseType = CheckTypenameType((NestedNameSpecifier *)SS.getScopeRep(),
                                        *MemberOrBase, SS.getRange());
+          if (BaseType.isNull())
+            return true;
+
           R.clear();
         }
       }

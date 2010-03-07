@@ -4992,6 +4992,9 @@ CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
     Result = getDerived().RebuildTypenameType(NNS, T->getIdentifier(),
                                               SourceRange(TL.getNameLoc()));
 
+  if (Result.isNull())
+    return QualType();
+
   TypenameTypeLoc NewTL = TLB.push<TypenameTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
   return Result;
