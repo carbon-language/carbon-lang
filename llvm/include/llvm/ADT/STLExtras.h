@@ -279,28 +279,6 @@ static inline void array_pod_sort(IteratorTy Start, IteratorTy End,
   qsort(&*Start, End-Start, sizeof(*Start), Compare);
 }
   
-//===----------------------------------------------------------------------===//
-//     Extra additions to <algorithm>
-//===----------------------------------------------------------------------===//
-
-/// For a container of pointers, deletes the pointers and then clears the
-/// container.
-template<typename Container>
-void DeleteContainerPointers(Container &C) {
-  for (typename Container::iterator I = C.begin(), E = C.end(); I != E; ++I)
-    delete *I;
-  C.clear();
-}
-
-/// In a container of pairs (usually a map) whose second element is a pointer,
-/// deletes the second elements and then clears the container.
-template<typename Container>
-void DeleteContainerSeconds(Container &C) {
-  for (typename Container::iterator I = C.begin(), E = C.end(); I != E; ++I)
-    delete I->second;
-  C.clear();
-}
-
 } // End llvm namespace
 
 #endif
