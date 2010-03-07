@@ -105,11 +105,6 @@ public:
   StringMap<MDString*> MDStringCache;
   
   FoldingSet<MDNode> MDNodeSet;
-  // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
-  // aren't in the MDNodeSet, but they're still shared between objects, so no
-  // one object can destroy them.  This set allows us to at least destroy them
-  // on Context destruction.
-  SmallPtrSet<MDNode*, 1> NonUniquedMDNodes;
   
   ConstantUniqueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
 
@@ -240,21 +235,17 @@ public:
       (*I)->AbstractTypeUsers.clear();
       delete *I;
     }
-    // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
-    // and the NonUniquedMDNodes sets, so copy the values out first.
-    SmallVector<MDNode*, 8> MDNodes;
-    MDNodes.reserve(MDNodeSet.size() + NonUniquedMDNodes.size());
+    // Destroy MDNode operands first.
     for (FoldingSetIterator<MDNode> I = MDNodeSet.begin(), E = MDNodeSet.end();
-         I != E; ++I) {
-      MDNodes.push_back(&*I);
+         I != E;) {
+      MDNode *N = &(*I);
+      ++I;
+      N->replaceAllOperandsWithNull();
     }
-    MDNodes.append(NonUniquedMDNodes.begin(), NonUniquedMDNodes.end());
-    for (SmallVector<MDNode*, 8>::iterator I = MDNodes.begin(),
-           E = MDNodes.end(); I != E; ++I) {
-      (*I)->destroy();
+    while (!MDNodeSet.empty()) {
+      MDNode *N = &(*MDNodeSet.begin());
+      N->destroy();
     }
-    assert(MDNodeSet.empty() && NonUniquedMDNodes.empty() &&
-           "Destroying all MDNodes didn't empty the Context's sets.");
     // Destroy MDStrings.
     for (StringMap<MDString*>::iterator I = MDStringCache.begin(),
            E = MDStringCache.end(); I != E; ++I) {
