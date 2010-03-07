@@ -502,7 +502,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
   // Warn about missing braces.
   if (T->isArrayType() || T->isRecordType()) {
     SemaRef.Diag(StructuredSubobjectInitList->getLocStart(), 
-                     +                 diag::warn_missing_braces)
+                                      diag::warn_missing_braces)
     << StructuredSubobjectInitList->getSourceRange()
     << CodeModificationHint::CreateInsertion(
                                     StructuredSubobjectInitList->getLocStart(), 
