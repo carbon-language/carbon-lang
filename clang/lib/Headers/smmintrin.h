@@ -32,6 +32,7 @@
 
 /* Type defines.  */
 typedef double __v2df __attribute__ ((__vector_size__ (16)));
+typedef long long __v2di __attribute__ ((__vector_size__ (16)));
 
 /* SSE4 Rounding macros. */
 #define _MM_FROUND_TO_NEAREST_INT    0x00
@@ -121,6 +122,13 @@ _mm_mul_epi32 (__m128i __V1, __m128i __V2)
 /* SSE4 Floating Point Dot Product Instructions.  */
 #define _mm_dp_ps(X, Y, M) __builtin_ia32_dpps ((X), (Y), (M))
 #define _mm_dp_pd(X, Y, M) __builtin_ia32_dppd ((X), (Y), (M))
+
+/* SSE4 Streaming Load Hint Instruction.  */
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_stream_load_si128 (__m128i *__V)
+{
+  return (__m128i) __builtin_ia32_movntdqa ((__v2di *) __V);
+}
 
 #endif /* __SSE4_1__ */
 
