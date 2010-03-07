@@ -286,6 +286,7 @@ BUILTIN(__builtin_ia32_roundsd, "V2dV2dV2di", "")
 BUILTIN(__builtin_ia32_roundpd, "V2dV2di", "")
 BUILTIN(__builtin_ia32_dpps, "V4fV4fV4fi", "")
 BUILTIN(__builtin_ia32_dppd, "V2dV2dV2di", "")
+BUILTIN(__builtin_ia32_movntdqa, "V2LLiV2LLi*", "")
 
 
 #undef BUILTIN
