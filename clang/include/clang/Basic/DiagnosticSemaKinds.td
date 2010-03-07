@@ -141,7 +141,8 @@ def err_using_decl_conflict_reverse : Error<
 def note_using_decl : Note<"%select{|previous }0using declaration">;
 
 def warn_access_decl_deprecated : Warning<
-  "access declarations are deprecated; use using declarations instead">;
+  "access declarations are deprecated; use using declarations instead">,
+  InGroup<Deprecated>;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;
@@ -1788,7 +1789,7 @@ def err_array_init_not_init_list : Error<
   "array initializer must be an initializer "
   "list%select{| or string literal}0">;
 def warn_deprecated_string_literal_conversion : Warning<
-  "conversion from string literal to %0 is deprecated">;
+  "conversion from string literal to %0 is deprecated">, InGroup<Deprecated>;
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
 def err_typecheck_sclass_fscope : Error<
   "illegal storage class on file-scoped variable">;
@@ -2046,7 +2047,7 @@ def note_delete_member_function_declared_here : Note<
   "%0 declared here">;
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;
 def warn_increment_bool : Warning<
-  "incrementing expression of type bool is deprecated">;
+  "incrementing expression of type bool is deprecated">, InGroup<Deprecated>;
 def err_catch_incomplete_ptr : Error<
   "cannot catch pointer to incomplete type %0">;
 def err_catch_incomplete_ref : Error<

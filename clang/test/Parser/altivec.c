@@ -41,28 +41,28 @@ void f_a(vector int a);
 void f_a2(int b, vector int a);
 
 // These should have warnings.
-__vector long vv_l;                 // expected-warning {{Use of "long" with "__vector" is deprecated}}
-__vector signed long vv_sl;         // expected-warning {{Use of "long" with "__vector" is deprecated}}
-__vector unsigned long vv_ul;       // expected-warning {{Use of "long" with "__vector" is deprecated}}
-__vector long int vv_li;            // expected-warning {{Use of "long" with "__vector" is deprecated}}
-__vector signed long int vv_sli;    // expected-warning {{Use of "long" with "__vector" is deprecated}}
-__vector unsigned long int vv_uli;  // expected-warning {{Use of "long" with "__vector" is deprecated}}
-vector long v_l;                    // expected-warning {{Use of "long" with "__vector" is deprecated}}
-vector signed long v_sl;            // expected-warning {{Use of "long" with "__vector" is deprecated}}
-vector unsigned long v_ul;          // expected-warning {{Use of "long" with "__vector" is deprecated}}
-vector long int v_li;               // expected-warning {{Use of "long" with "__vector" is deprecated}}
-vector signed long int v_sli;       // expected-warning {{Use of "long" with "__vector" is deprecated}}
-vector unsigned long int v_uli;     // expected-warning {{Use of "long" with "__vector" is deprecated}}
-__vector long double  vv_ld;        // expected-warning {{Use of "long" with "__vector" is deprecated}} expected-error {{cannot use "double" with "__vector"}}
-vector long double  v_ld;           // expected-warning {{Use of "long" with "__vector" is deprecated}} expected-error {{cannot use "double" with "__vector"}}
+__vector long vv_l;                 // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+__vector signed long vv_sl;         // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+__vector unsigned long vv_ul;       // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+__vector long int vv_li;            // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+__vector signed long int vv_sli;    // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+__vector unsigned long int vv_uli;  // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+vector long v_l;                    // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+vector signed long v_sl;            // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+vector unsigned long v_ul;          // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+vector long int v_li;               // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+vector signed long int v_sli;       // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+vector unsigned long int v_uli;     // expected-warning {{Use of 'long' with '__vector' is deprecated}}
+__vector long double  vv_ld;        // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
+vector long double  v_ld;           // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
 
 // These should have errors.
-__vector double vv_d;               // expected-error {{cannot use "double" with "__vector"}}
-__vector double vv_d;               // expected-error {{cannot use "double" with "__vector"}}
-vector double v_d;                  // expected-error {{cannot use "double" with "__vector"}}
-vector double v_d;                  // expected-error {{cannot use "double" with "__vector"}}
-__vector long double  vv_ld;        // expected-warning {{Use of "long" with "__vector" is deprecated}} expected-error {{cannot use "double" with "__vector"}}
-vector long double  v_ld;           // expected-warning {{Use of "long" with "__vector" is deprecated}} expected-error {{cannot use "double" with "__vector"}}
+__vector double vv_d;               // expected-error {{cannot use 'double' with '__vector'}}
+__vector double vv_d;               // expected-error {{cannot use 'double' with '__vector'}}
+vector double v_d;                  // expected-error {{cannot use 'double' with '__vector'}}
+vector double v_d;                  // expected-error {{cannot use 'double' with '__vector'}}
+__vector long double  vv_ld;        // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
+vector long double  v_ld;           // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
 
 void f() {
   __vector unsigned int v = {0,0,0,0};

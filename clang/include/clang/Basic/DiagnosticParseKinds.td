@@ -159,13 +159,13 @@ def err_typename_invalid_functionspec : Error<
 def err_invalid_decl_spec_combination : Error<
   "cannot combine with previous '%0' declaration specifier">;
 def err_invalid_vector_decl_spec_combination : Error<
-  "cannot combine with previous '%0' declaration specifier. \"__vector\" must be first">;
+  "cannot combine with previous '%0' declaration specifier. '__vector' must be first">;
 def err_invalid_pixel_decl_spec_combination : Error<
-  "\"__pixel\" must be preceded by \"__vector\".  '%0' declaration specifier not allowed here">;
+  "'__pixel' must be preceded by '__vector'.  '%0' declaration specifier not allowed here">;
 def err_invalid_vector_double_decl_spec_combination : Error<
-  "cannot use \"double\" with \"__vector\"">;
+  "cannot use 'double' with '__vector'">;
 def warn_vector_long_decl_spec_combination : Warning<
-  "Use of \"long\" with \"__vector\" is deprecated">;
+  "Use of 'long' with '__vector' is deprecated">, InGroup<Deprecated>;
 def err_friend_invalid_in_context : Error<
   "'friend' used outside of class">;
 def err_unknown_typename : Error<
