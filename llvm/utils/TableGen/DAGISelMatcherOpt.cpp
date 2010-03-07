@@ -220,13 +220,13 @@ static void SinkPatternPredicates(OwningPtr<Matcher> &MatcherPtr) {
   N->setNext(CPPM);
 }
 
-/// FindCheckType - Scan a series of matchers looking for a CheckType that can
-/// be pulled up to the start of the matcher.  Return null if we didn't find one
-/// otherwise return the matcher.
-static CheckTypeMatcher *FindCheckType(Matcher *M) {
+/// FindNodeWithKind - Scan a series of matchers looking for a matcher with a
+/// specified kind.  Return null if we didn't find one otherwise return the
+/// matcher.
+static Matcher *FindNodeWithKind(Matcher *M, Matcher::KindTy Kind) {
   for (; M; M = M->getNext())
-    if (CheckTypeMatcher *CTM = dyn_cast<CheckTypeMatcher>(M))
-      return CTM;
+    if (M->getKind() == Kind)
+      return M;
   return 0;
 }
 
@@ -301,12 +301,14 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
       // If we ran out of stuff to scan, we're done.
       if (Scan == e) break;
       
+      Matcher *ScanMatcher = OptionsToMatch[Scan];
+      
       // If we found an entry that matches out matcher, merge it into the set to
       // handle.
-      if (Optn->isEqual(OptionsToMatch[Scan])) {
+      if (Optn->isEqual(ScanMatcher)) {
         // If is equal after all, add the option to EqualMatchers and remove it
         // from OptionsToMatch.
-        EqualMatchers.push_back(OptionsToMatch[Scan]);
+        EqualMatchers.push_back(ScanMatcher);
         OptionsToMatch.erase(OptionsToMatch.begin()+Scan);
         --e;
         continue;
@@ -314,20 +316,22 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
       
       // If the option we're checking for contradicts the start of the list,
       // skip over it.
-      if (Optn->isContradictory(OptionsToMatch[Scan])) {
+      if (Optn->isContradictory(ScanMatcher)) {
         ++Scan;
         continue;
       }
 
-      // If we're scannig for a type comparison and the type comparison got
-      // moved late, see if we can pull it up.
-      if (isa<CheckTypeMatcher>(Optn)) {
-        CheckTypeMatcher *CTM = FindCheckType(OptionsToMatch[Scan]);
-        if (CTM != 0 && CTM != OptionsToMatch[Scan] &&
-            CTM->canMoveBefore(OptionsToMatch[Scan])) {
-          Matcher *MatcherWithoutCTM = OptionsToMatch[Scan]->unlinkNode(CTM);
-          CTM->setNext(MatcherWithoutCTM);
-          OptionsToMatch[Scan] = CTM;
+      // If we're scanning for a simple node, see if it occurs later in the
+      // sequence.  If so, and if we can move it up, it might be contradictory
+      // or the same as what we're looking for.  If so, reorder it.
+      if (Optn->isSimplePredicateOrRecordNode()) {
+        Matcher *M2 = FindNodeWithKind(ScanMatcher, Optn->getKind());
+        if (M2 != 0 && M2 != ScanMatcher &&
+            M2->canMoveBefore(ScanMatcher) &&
+            (M2->isEqual(Optn) || M2->isContradictory(Optn))) {
+          Matcher *MatcherWithoutM2 = ScanMatcher->unlinkNode(M2);
+          M2->setNext(MatcherWithoutM2);
+          OptionsToMatch[Scan] = M2;
           continue;
         }
       }
@@ -339,7 +343,7 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     if (Scan != e &&
         // Don't print it's obvious nothing extra could be merged anyway.
         Scan+1 != e) {
-      DEBUG(errs() << "Couldn't merge this:\n";
+      /*DEBUG(*/errs() << "Couldn't merge this:\n";
             Optn->print(errs(), 4);
             errs() << "into this:\n";
             OptionsToMatch[Scan]->print(errs(), 4);
@@ -347,7 +351,7 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
               OptionsToMatch[Scan+1]->printOne(errs());
             if (Scan+2 < e)
               OptionsToMatch[Scan+2]->printOne(errs());
-            errs() << "\n");
+            errs() << "\n";
     }
     
     // If we only found one option starting with this matcher, no factoring is
@@ -411,7 +415,9 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
 
     // Check to see if this breaks a series of CheckTypeMatcher's.
     if (AllTypeChecks) {
-      CheckTypeMatcher *CTM = FindCheckType(NewOptionsToMatch[i]);
+      CheckTypeMatcher *CTM =
+        cast_or_null<CheckTypeMatcher>(FindNodeWithKind(NewOptionsToMatch[i],
+                                                        Matcher::CheckType));
       if (CTM == 0 || 
           // iPTR checks could alias any other case without us knowing, don't
           // bother with them.
@@ -450,7 +456,9 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     DenseMap<unsigned, unsigned> TypeEntry;
     SmallVector<std::pair<MVT::SimpleValueType, Matcher*>, 8> Cases;
     for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
-      CheckTypeMatcher *CTM = FindCheckType(NewOptionsToMatch[i]);
+      CheckTypeMatcher *CTM =
+        cast_or_null<CheckTypeMatcher>(FindNodeWithKind(NewOptionsToMatch[i],
+                                                        Matcher::CheckType));
       Matcher *MatcherWithoutCTM = NewOptionsToMatch[i]->unlinkNode(CTM);
       MVT::SimpleValueType CTMTy = CTM->getType();
       delete CTM;

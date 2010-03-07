@@ -201,10 +201,6 @@ void MatcherGen::AddMatcher(Matcher *NewNode) {
 void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   assert(N->isLeaf() && "Not a leaf?");
   
-  // If there are node predicates for this node, generate their checks.
-  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
-    AddMatcher(new CheckPredicateMatcher(N->getPredicateFns()[i]));
-  
   // Direct match against an integer constant.
   if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
     // If this is the root of the dag we're matching, we emit a redundant opcode
@@ -309,11 +305,6 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
   
   // Check that the current opcode lines up.
   AddMatcher(new CheckOpcodeMatcher(CInfo));
-  
-  // If there are node predicates for this node, generate their checks.
-  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
-    AddMatcher(new CheckPredicateMatcher(N->getPredicateFns()[i]));
-  
   
   // If this node has memory references (i.e. is a load or store), tell the
   // interpreter to capture them in the memref array.
@@ -447,9 +438,12 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   else
     EmitOperatorMatchCode(N, NodeNoTypes);
   
+  // If there are node predicates for this node, generate their checks.
+  for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
+    AddMatcher(new CheckPredicateMatcher(N->getPredicateFns()[i]));
+  
   if (NodeType != EEVT::isUnknown)
     AddMatcher(new CheckTypeMatcher((MVT::SimpleValueType)NodeType));
-
 }
 
 /// EmitMatcherCode - Generate the code that matches the predicate of this
