@@ -112,7 +112,6 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIE - A structured debug information entry.  Has an abbreviation which
   /// describes it's organization.
-  class CompileUnit;
   class DIEValue;
 
   class DIE {
@@ -159,7 +158,6 @@ namespace llvm {
     void setTag(unsigned Tag) { Abbrev.setTag(Tag); }
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }
-    void setParent(DIE *P) { Parent = P; }
     
     /// addValue - Add a value and attributes to a DIE.
     ///
@@ -185,7 +183,7 @@ namespace llvm {
       }
       Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
       Children.push_back(Child);
-      Child->setParent(this);
+      Child->Parent = this;
     }
 
 #ifndef NDEBUG
