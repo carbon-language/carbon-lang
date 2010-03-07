@@ -29,6 +29,54 @@ void Matcher::printOne(raw_ostream &OS) const {
   printImpl(OS, 0);
 }
 
+/// unlinkNode - Unlink the specified node from this chain.  If Other == this,
+/// we unlink the next pointer and return it.  Otherwise we unlink Other from
+/// the list and return this.
+Matcher *Matcher::unlinkNode(Matcher *Other) {
+  if (this == Other)
+    return takeNext();
+ 
+  // Scan until we find the predecessor of Other.
+  Matcher *Cur = this;
+  for (; Cur && Cur->getNext() != Other; Cur = Cur->getNext())
+    /*empty*/;
+
+  if (Cur == 0) return 0;
+  Cur->takeNext();
+  Cur->setNext(Other->takeNext());
+  return this;
+}
+
+/// canMoveBefore - Return true if this matcher is the same as Other, or if
+/// we can move this matcher past all of the nodes in-between Other and this
+/// node.  Other must be equal to or before this.
+bool Matcher::canMoveBefore(const Matcher *Other) const {
+  for (;; Other = Other->getNext()) {
+    assert(Other && "Other didn't come before 'this'?");
+    if (this == Other) return true;
+
+    // We have to be able to move this node across the Other node.
+    if (!canMoveBeforeNode(Other))
+      return false;
+  }
+}
+
+/// canMoveBefore - Return true if it is safe to move the current matcher
+/// across the specified one.
+bool Matcher::canMoveBeforeNode(const Matcher *Other) const {
+  // We can move simple predicates before record nodes.
+  if (isSimplePredicateNode())
+    return Other->isSimplePredicateOrRecordNode();
+  
+  // We can move record nodes across simple predicates.
+  if (isSimplePredicateOrRecordNode())
+    return isSimplePredicateNode();
+  
+  // We can't move record nodes across each other etc.
+  return false;
+}
+
+
 ScopeMatcher::~ScopeMatcher() {
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     delete Children[i];
@@ -345,3 +393,10 @@ bool CheckIntegerMatcher::isContradictoryImpl(const Matcher *M) const {
     return CIM->getValue() != getValue();
   return false;
 }
+
+bool CheckValueTypeMatcher::isContradictoryImpl(const Matcher *M) const {
+  if (const CheckValueTypeMatcher *CVT = dyn_cast<CheckValueTypeMatcher>(M))
+    return CVT->getTypeName() != getTypeName();
+  return false;
+}
+

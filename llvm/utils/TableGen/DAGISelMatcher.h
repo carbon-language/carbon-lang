@@ -113,6 +113,49 @@ public:
     return false;
   }
   
+  /// isSimplePredicateNode - Return true if this is a simple predicate that
+  /// operates on the node or its children without potential side effects or a
+  /// change of the current node.
+  bool isSimplePredicateNode() const {
+    switch (getKind()) {
+    default: return false;
+    case CheckSame:
+    case CheckPatternPredicate:
+    case CheckPredicate:
+    case CheckOpcode:
+    case CheckType:
+    case CheckChildType:
+    case CheckInteger:
+    case CheckCondCode:
+    case CheckValueType:
+    case CheckAndImm:
+    case CheckOrImm:
+    case CheckFoldableChainNode:
+      return true;
+    }
+  }
+  
+  /// isSimplePredicateOrRecordNode - Return true if this is a record node or
+  /// a simple predicate.
+  bool isSimplePredicateOrRecordNode() const {
+    return isSimplePredicateNode() ||
+           getKind() == RecordNode || getKind() == RecordChild;
+  }
+  
+  /// unlinkNode - Unlink the specified node from this chain.  If Other == this,
+  /// we unlink the next pointer and return it.  Otherwise we unlink Other from
+  /// the list and return this.
+  Matcher *unlinkNode(Matcher *Other);
+  
+  /// canMoveBefore - Return true if this matcher is the same as Other, or if
+  /// we can move this matcher past all of the nodes in-between Other and this
+  /// node.  Other must be equal to or before this.
+  bool canMoveBefore(const Matcher *Other) const;
+  
+  /// canMoveBefore - Return true if it is safe to move the current matcher
+  /// across the specified one.
+  bool canMoveBeforeNode(const Matcher *Other) const;
+  
   /// isContradictory - Return true of these two matchers could never match on
   /// the same node.
   bool isContradictory(const Matcher *Other) const {
@@ -601,6 +644,7 @@ private:
     return cast<CheckValueTypeMatcher>(M)->TypeName == TypeName;
   }
   virtual unsigned getHashImpl() const;
+  bool isContradictoryImpl(const Matcher *M) const;
 };
   
   
