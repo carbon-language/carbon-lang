@@ -130,6 +130,55 @@ _mm_stream_load_si128 (__m128i *__V)
   return (__m128i) __builtin_ia32_movntdqa ((__v2di *) __V);
 }
 
+/* SSE4 Packed Integer Min/Max Instructions.  */
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_min_epi8 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pminsb128 ((__v16qi) __V1, (__v16qi) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_max_epi8 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pmaxsb128 ((__v16qi) __V1, (__v16qi) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_min_epu16 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pminuw128 ((__v8hi) __V1, (__v8hi) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_max_epu16 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pmaxuw128 ((__v8hi) __V1, (__v8hi) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_min_epi32 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pminsd128 ((__v4si) __V1, (__v4si) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_max_epi32 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pmaxsd128 ((__v4si) __V1, (__v4si) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_min_epu32 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pminud128((__v4si) __V1, (__v4si) __V2);
+}
+
+static inline  __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_max_epu32 (__m128i __V1, __m128i __V2)
+{
+  return (__m128i) __builtin_ia32_pmaxud128((__v4si) __V1, (__v4si) __V2);
+}
+
 #endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */
