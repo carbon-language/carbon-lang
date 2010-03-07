@@ -220,6 +220,17 @@ static void SinkPatternPredicates(OwningPtr<Matcher> &MatcherPtr) {
   N->setNext(CPPM);
 }
 
+/// FindCheckType - Scan a series of matchers looking for a CheckType that can
+/// be pulled up to the start of the matcher.  Return null if we didn't find one
+/// otherwise return the matcher.
+static CheckTypeMatcher *FindCheckType(Matcher *M) {
+  for (; M; M = M->getNext())
+    if (CheckTypeMatcher *CTM = dyn_cast<CheckTypeMatcher>(M))
+      return CTM;
+  return 0;
+}
+
+
 /// FactorNodes - Turn matches like this:
 ///   Scope
 ///     OPC_CheckType i32
@@ -287,19 +298,42 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     // we can merge anything else into this matching group.
     unsigned Scan = OptionIdx;
     while (1) {
-      while (Scan != e && Optn->isContradictory(OptionsToMatch[Scan]))
-        ++Scan;
+      // If we ran out of stuff to scan, we're done.
+      if (Scan == e) break;
       
-      // Ok, we found something that isn't known to be contradictory.  If it is
-      // equal, we can merge it into the set of nodes to factor, if not, we have
-      // to cease factoring.
-      if (Scan == e || !Optn->isEqual(OptionsToMatch[Scan])) break;
+      // If we found an entry that matches out matcher, merge it into the set to
+      // handle.
+      if (Optn->isEqual(OptionsToMatch[Scan])) {
+        // If is equal after all, add the option to EqualMatchers and remove it
+        // from OptionsToMatch.
+        EqualMatchers.push_back(OptionsToMatch[Scan]);
+        OptionsToMatch.erase(OptionsToMatch.begin()+Scan);
+        --e;
+        continue;
+      }
+      
+      // If the option we're checking for contradicts the start of the list,
+      // skip over it.
+      if (Optn->isContradictory(OptionsToMatch[Scan])) {
+        ++Scan;
+        continue;
+      }
 
-      // If is equal after all, add the option to EqualMatchers and remove it
-      // from OptionsToMatch.
-      EqualMatchers.push_back(OptionsToMatch[Scan]);
-      OptionsToMatch.erase(OptionsToMatch.begin()+Scan);
-      --e;
+      // If we're scannig for a type comparison and the type comparison got
+      // moved late, see if we can pull it up.
+      if (isa<CheckTypeMatcher>(Optn)) {
+        CheckTypeMatcher *CTM = FindCheckType(OptionsToMatch[Scan]);
+        if (CTM != 0 && CTM != OptionsToMatch[Scan] &&
+            CTM->canMoveBefore(OptionsToMatch[Scan])) {
+          Matcher *MatcherWithoutCTM = OptionsToMatch[Scan]->unlinkNode(CTM);
+          CTM->setNext(MatcherWithoutCTM);
+          OptionsToMatch[Scan] = CTM;
+          continue;
+        }
+      }
+      
+      // Otherwise, we don't know how to handle this entry, we have to bail.
+      break;
     }
       
     if (Scan != e &&
@@ -363,9 +397,11 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   // we can convert this Scope to be a OpcodeSwitch instead.
   bool AllOpcodeChecks = true, AllTypeChecks = true;
   for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
-    if (!isa<CheckOpcodeMatcher>(NewOptionsToMatch[i])) {
+    // Check to see if this breaks a series of CheckOpcodeMatchers.
+    if (AllOpcodeChecks &&
+        !isa<CheckOpcodeMatcher>(NewOptionsToMatch[i])) {
 #if 0
-      if (i > 3 && AllOpcodeChecks) {
+      if (i > 3) {
         errs() << "FAILING OPC #" << i << "\n";
         NewOptionsToMatch[i]->dump();
       }
@@ -373,20 +409,26 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
       AllOpcodeChecks = false;
     }
 
-    if (!isa<CheckTypeMatcher>(NewOptionsToMatch[i]) ||
-        // iPTR checks could alias any other case without us knowing, don't
-        // bother with them.
-        cast<CheckTypeMatcher>(NewOptionsToMatch[i])->getType() == MVT::iPTR) {
+    // Check to see if this breaks a series of CheckTypeMatcher's.
+    if (AllTypeChecks) {
+      CheckTypeMatcher *CTM = FindCheckType(NewOptionsToMatch[i]);
+      if (CTM == 0 || 
+          // iPTR checks could alias any other case without us knowing, don't
+          // bother with them.
+          CTM->getType() == MVT::iPTR ||
+          // If the CheckType isn't at the start of the list, see if we can move
+          // it there.
+          !CTM->canMoveBefore(NewOptionsToMatch[i])) {
 #if 0
-      if (i > 3 && AllTypeChecks) {
-        errs() << "FAILING TYPE #" << i << "\n";
-        NewOptionsToMatch[i]->dump();
-      }
+        if (i > 3 && AllTypeChecks) {
+          errs() << "FAILING TYPE #" << i << "\n";
+          NewOptionsToMatch[i]->dump();
+        }
 #endif
-      AllTypeChecks = false;
+        AllTypeChecks = false;
+      }
     }
   }
-  // TODO: Can also do CheckChildNType.
   
   // If all the options are CheckOpcode's, we can form the SwitchOpcode, woot.
   if (AllOpcodeChecks) {
@@ -405,16 +447,40 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
   
   // If all the options are CheckType's, we can form the SwitchType, woot.
   if (AllTypeChecks) {
-    DenseSet<unsigned> Types;
+    DenseMap<unsigned, unsigned> TypeEntry;
     SmallVector<std::pair<MVT::SimpleValueType, Matcher*>, 8> Cases;
     for (unsigned i = 0, e = NewOptionsToMatch.size(); i != e; ++i) {
-      CheckTypeMatcher *CTM = cast<CheckTypeMatcher>(NewOptionsToMatch[i]);
-      assert(Types.insert(CTM->getType()).second &&
-             "Duplicate types not factored?");
-      Cases.push_back(std::make_pair(CTM->getType(), CTM->getNext()));
+      CheckTypeMatcher *CTM = FindCheckType(NewOptionsToMatch[i]);
+      Matcher *MatcherWithoutCTM = NewOptionsToMatch[i]->unlinkNode(CTM);
+      MVT::SimpleValueType CTMTy = CTM->getType();
+      delete CTM;
+      
+      unsigned &Entry = TypeEntry[CTMTy];
+      if (Entry != 0) {
+        // If we have unfactored duplicate types, then we should factor them.
+        Matcher *PrevMatcher = Cases[Entry-1].second;
+        if (ScopeMatcher *SM = dyn_cast<ScopeMatcher>(PrevMatcher)) {
+          SM->setNumChildren(SM->getNumChildren()+1);
+          SM->resetChild(SM->getNumChildren()-1, MatcherWithoutCTM);
+          continue;
+        }
+        
+        Matcher *Entries[2] = { PrevMatcher, MatcherWithoutCTM };
+        Cases[Entry-1].second = new ScopeMatcher(Entries, 2);
+        continue;
+      }
+      
+      Entry = Cases.size()+1;
+      Cases.push_back(std::make_pair(CTMTy, MatcherWithoutCTM));
     }
     
-    MatcherPtr.reset(new SwitchTypeMatcher(&Cases[0], Cases.size()));
+    if (Cases.size() != 1) {
+      MatcherPtr.reset(new SwitchTypeMatcher(&Cases[0], Cases.size()));
+    } else {
+      // If we factored and ended up with one case, create it now.
+      MatcherPtr.reset(new CheckTypeMatcher(Cases[0].first));
+      MatcherPtr->setNext(Cases[0].second);
+    }
     return;
   }
   
