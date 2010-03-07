@@ -3208,7 +3208,7 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
   bool isSrcConst = isa<ConstantSDNode>(Src);
   EVT VT = TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr, DAG);
   bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses(VT);
-  if (VT != MVT::iAny) {
+  if (VT != MVT::Other) {
     const Type *Ty = VT.getTypeForEVT(*DAG.getContext());
     unsigned NewAlign = (unsigned) TLI.getTargetData()->getABITypeAlignment(Ty);
     // If source is a string constant, this will require an unaligned load.
@@ -3216,14 +3216,14 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
       if (Dst.getOpcode() != ISD::FrameIndex) {
         // Can't change destination alignment. It requires a unaligned store.
         if (AllowUnalign)
-          VT = MVT::iAny;
+          VT = MVT::Other;
       } else {
         int FI = cast<FrameIndexSDNode>(Dst)->getIndex();
         MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
         if (MFI->isFixedObjectIndex(FI)) {
           // Can't change destination alignment. It requires a unaligned store.
           if (AllowUnalign)
-            VT = MVT::iAny;
+            VT = MVT::Other;
         } else {
           // Give the stack frame object a larger alignment if needed.
           if (MFI->getObjectAlignment(FI) < NewAlign)
@@ -3234,7 +3234,7 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
     }
   }
 
-  if (VT == MVT::iAny) {
+  if (VT == MVT::Other) {
     if (TLI.allowsUnalignedMemoryAccesses(MVT::i64)) {
       VT = MVT::i64;
     } else {

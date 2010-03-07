@@ -664,12 +664,12 @@ public:
 
   /// getOptimalMemOpType - Returns the target specific optimal type for load
   /// and store operations as a result of memset, memcpy, and memmove lowering.
-  /// It returns EVT::iAny if SelectionDAG should be responsible for
+  /// It returns EVT::Other if SelectionDAG should be responsible for
   /// determining it.
   virtual EVT getOptimalMemOpType(uint64_t Size, unsigned Align,
                                   bool isSrcConst, bool isSrcStr,
                                   SelectionDAG &DAG) const {
-    return MVT::iAny;
+    return MVT::Other;
   }
   
   /// usesUnderscoreSetJmp - Determine if we should use _setjmp or setjmp
