@@ -64,7 +64,7 @@ public:
   PTHEntryKeyVariant(struct stat* statbuf, const char* path)
     : Path(path), Kind(IsDE), StatBuf(new struct stat(*statbuf)) {}
 
-  PTHEntryKeyVariant(const char* path)
+  explicit PTHEntryKeyVariant(const char* path)
     : Path(path), Kind(IsNoExist), StatBuf(0) {}
 
   bool isFile() const { return Kind == IsFE; }
@@ -513,7 +513,7 @@ public:
     int result = StatSysCallCache::stat(path, buf);
 
     if (result != 0) // Failed 'stat'.
-      PM.insert(path, PTHEntry());
+      PM.insert(PTHEntryKeyVariant(path), PTHEntry());
     else if (S_ISDIR(buf->st_mode)) {
       // Only cache directories with absolute paths.
       if (!llvm::sys::Path(path).isAbsolute())
