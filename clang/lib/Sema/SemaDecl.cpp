@@ -5030,7 +5030,7 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
   // Exit this scope of this tag's definition.
   PopDeclContext();
 
-  if (isa<CXXRecordDecl>(Tag) && !Tag->getDeclContext()->isRecord())
+  if (isa<CXXRecordDecl>(Tag) && !Tag->getLexicalDeclContext()->isRecord())
     RecordDynamicClassesWithNoKeyFunction(*this, cast<CXXRecordDecl>(Tag),
                                           RBraceLoc);
                                           
