@@ -386,3 +386,23 @@ namespace DerivedToBase {
     float &fr = f0(C());
   }
 }
+
+namespace PR6483 {
+  struct X0 {
+    operator const unsigned int & () const;
+  };
+
+  struct X1 {
+    operator unsigned int & () const;
+  };
+
+  void f0(const bool &);
+  void f1(bool &); // expected-note 2{{not viable}}
+
+  void g(X0 x0, X1 x1) {
+    f0(x0);
+    f1(x0); // expected-error{{no matching function for call}}
+    f0(x1);
+    f1(x1); // expected-error{{no matching function for call}}
+  }  
+}

@@ -4526,20 +4526,23 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     OverloadCandidateSet::iterator Best;
     switch (BestViableFunction(CandidateSet, DeclLoc, Best)) {
     case OR_Success:
+      // C++ [over.ics.ref]p1:
+      //
+      //   [...] If the parameter binds directly to the result of
+      //   applying a conversion function to the argument
+      //   expression, the implicit conversion sequence is a
+      //   user-defined conversion sequence (13.3.3.1.2), with the
+      //   second standard conversion sequence either an identity
+      //   conversion or, if the conversion function returns an
+      //   entity of a type that is a derived class of the parameter
+      //   type, a derived-to-base Conversion.
+      if (!Best->FinalConversion.DirectBinding)
+        break;
+
       // This is a direct binding.
       BindsDirectly = true;
 
       if (ICS) {
-        // C++ [over.ics.ref]p1:
-        //
-        //   [...] If the parameter binds directly to the result of
-        //   applying a conversion function to the argument
-        //   expression, the implicit conversion sequence is a
-        //   user-defined conversion sequence (13.3.3.1.2), with the
-        //   second standard conversion sequence either an identity
-        //   conversion or, if the conversion function returns an
-        //   entity of a type that is a derived class of the parameter
-        //   type, a derived-to-base Conversion.
         ICS->setUserDefined();
         ICS->UserDefined.Before = Best->Conversions[0].Standard;
         ICS->UserDefined.After = Best->FinalConversion;
