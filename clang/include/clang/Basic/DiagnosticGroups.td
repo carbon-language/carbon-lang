@@ -48,7 +48,7 @@ def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;
 def : DiagGroup<"invalid-pch">;
-def : DiagGroup<"missing-braces">;
+def MissingBraces : DiagGroup<"missing-braces">;
 def : DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
 def : DiagGroup<"missing-include-dirs">;
@@ -156,6 +156,7 @@ def Most : DiagGroup<"most", [
     Format,
     Implicit,
     MismatchedTags,
+    MissingBraces,
     MultiChar,
     ReturnType,
     Switch,

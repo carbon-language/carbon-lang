@@ -18,6 +18,7 @@
 #include "SemaInit.h"
 #include "Lookup.h"
 #include "Sema.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Designator.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ExprCXX.h"
@@ -496,6 +497,20 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
     SourceLocation EndLoc
       = ParentIList->getInit(EndIndex)->getSourceRange().getEnd();
     StructuredSubobjectInitList->setRBraceLoc(EndLoc);
+  }
+  
+  // Warn about missing braces.
+  if (T->isArrayType() || T->isRecordType()) {
+    SemaRef.Diag(StructuredSubobjectInitList->getLocStart(), 
+                     +                 diag::warn_missing_braces)
+    << StructuredSubobjectInitList->getSourceRange()
+    << CodeModificationHint::CreateInsertion(
+                                    StructuredSubobjectInitList->getLocStart(), 
+                                             llvm::StringRef("{"))
+    << CodeModificationHint::CreateInsertion(
+                                    SemaRef.PP.getLocForEndOfToken(
+StructuredSubobjectInitList->getLocEnd()), 
+                                             llvm::StringRef("}"));
   }
 }
 

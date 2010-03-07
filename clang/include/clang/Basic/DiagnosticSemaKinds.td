@@ -1580,6 +1580,9 @@ def err_bitfield_width_exceeds_type_size : Error<
   "size of bit-field %0 exceeds size of its type (%1 bits)">;
 def err_anon_bitfield_width_exceeds_type_size : Error<
   "size of anonymous bit-field exceeds size of its type (%0 bits)">;
+def warn_missing_braces : Warning<
+  "suggest braces around initialization of subobject">,
+  InGroup<DiagGroup<"missing-braces">>, DefaultIgnore;
 
 def err_redefinition_of_label : Error<"redefinition of label '%0'">;
 def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
