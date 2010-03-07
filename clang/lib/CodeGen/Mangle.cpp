@@ -214,12 +214,6 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
   if (!getASTContext().getLangOptions().CPlusPlus)
     return false;
 
-  // No mangling in an "implicit extern C" header.
-  if (D->getLocation().isValid() &&
-      getASTContext().getSourceManager().
-      isInExternCSystemHeader(D->getLocation()))
-    return false;
-
   // Variables at global scope with non-internal linkage are not mangled
   if (!FD) {
     const DeclContext *DC = D->getDeclContext();

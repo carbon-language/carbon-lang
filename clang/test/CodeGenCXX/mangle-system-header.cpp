@@ -5,3 +5,7 @@
 # 1 "fake_system_header.h" 1 3 4
 // CHECK: define void @_ZdlPvS_(
 void operator delete (void*, void*) {}
+
+// PR6217
+// CHECK: define void @_Z3barv() 
+void bar() { }
