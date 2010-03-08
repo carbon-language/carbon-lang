@@ -333,7 +333,7 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
   for (DebugInfoFinder::iterator I = DbgFinder.type_begin(),
          E = DbgFinder.type_end(); I != E; ++I) {
     DICompositeType CTy(*I);
-    if (!CTy.Verify())
+    if (CTy.isNull())
       continue;
     if (CTy.getTag() == dwarf::DW_TAG_union_type ||
         CTy.getTag() == dwarf::DW_TAG_structure_type ) {

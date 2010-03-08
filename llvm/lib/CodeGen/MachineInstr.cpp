@@ -1219,7 +1219,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     DIScope Scope = DLT.getScope();
     OS << " dbg:";
     // Omit the directory, since it's usually long and uninteresting.
-    if (Scope.Verify())
+    if (!Scope.isNull())
       OS << Scope.getFilename();
     else
       OS << "<unknown>";

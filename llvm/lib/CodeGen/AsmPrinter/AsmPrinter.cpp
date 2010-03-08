@@ -335,7 +335,7 @@ static void EmitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
     // Print source line info.
     DIScope Scope = DLT.getScope();
     // Omit the directory, because it's likely to be long and uninteresting.
-    if (Scope.Verify())
+    if (!Scope.isNull())
       CommentOS << Scope.getFilename();
     else
       CommentOS << "<unknown>";
@@ -1287,7 +1287,7 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
   if (DL.isUnknown())
     return;
   DILocation CurDLT = MF->getDILocation(DL);
-  if (!CurDLT.getScope().Verify())
+  if (CurDLT.getScope().isNull())
     return;
 
   if (!BeforePrintingInsn) {
