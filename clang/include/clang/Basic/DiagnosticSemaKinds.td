@@ -31,10 +31,10 @@ def ext_predef_outside_function : Warning<
   "predefined identifier is only valid inside function">;
 def warn_float_overflow : Warning<
   "magnitude of floating-point constant too large for type %0; maximum is %1">,
-   InGroup<BadLiteral>;
+   InGroup<LiteralRange>;
 def warn_float_underflow : Warning<
   "magnitude of floating-point constant too small for type %0; minimum is %1">,
-  InGroup<BadLiteral>;
+  InGroup<LiteralRange>;
 
 // C99 Designated Initializers
 def err_array_designator_negative : Error<

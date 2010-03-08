@@ -24,7 +24,6 @@ def AddressOfTemporary : DiagGroup<"address-of-temporary">;
 def : DiagGroup<"aggregate-return">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
-def BadLiteral : DiagGroup<"bad-literal">;
 def : DiagGroup<"c++-compat">;
 def : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
@@ -49,6 +48,7 @@ def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;
 def : DiagGroup<"invalid-pch">;
+def LiteralRange : DiagGroup<"literal-range">;
 def MissingBraces : DiagGroup<"missing-braces">;
 def : DiagGroup<"missing-declarations">;
 def : DiagGroup<"missing-format-attribute">;
@@ -183,4 +183,4 @@ def : DiagGroup<"comments", [Comment]>;         // -Wcomments = -Wcomment
 // A warning group for warnings that we want to have on by default in clang,
 // but which aren't on by default in GCC.
 def NonGCC : DiagGroup<"non-gcc",
-    [SignCompare, Conversion, BadLiteral]>;
+    [SignCompare, Conversion, LiteralRange]>;
