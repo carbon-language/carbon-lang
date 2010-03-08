@@ -27,11 +27,18 @@
 #define __STDDEF_H
 
 typedef __typeof__(((int*)0)-((int*)0)) ptrdiff_t;
+#ifndef _SIZE_T
+#define _SIZE_T
 typedef __typeof__(sizeof(int)) size_t;
+#endif
 #ifndef __cplusplus
+#ifndef _WCHAR_T
+#define _WCHAR_T
 typedef __typeof__(*L"") wchar_t;
 #endif
+#endif
 
+#undef NULL
 #ifdef __cplusplus
 #define NULL __null
 #else
