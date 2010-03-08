@@ -230,8 +230,9 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
-    EmitSectionOffset("eh_frame_begin", "eh_frame_common",
-                      EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
+    EmitSectionOffset(getDWLabel("eh_frame_begin", EHFrameInfo.Number),
+                      getDWLabel("eh_frame_common",
+                                 EHFrameInfo.PersonalityIndex),
                       true, true, false);
 
     EOL("FDE CIE offset");
@@ -819,12 +820,14 @@ void DwarfException::EmitExceptionTable() {
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
-      EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
+      EmitSectionOffset(getDWLabel(BeginTag, BeginNumber),
+                        getDWLabel("eh_func_begin", SubprogramCount),
                         true, true);
       EOL("Region start");
 
       if (!S.EndLabel)
-        EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber,
+        EmitDifference(getDWLabel("eh_func_end", SubprogramCount),
+                       getDWLabel(BeginTag, BeginNumber),
                        true);
       else
         EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, true);
@@ -837,7 +840,8 @@ void DwarfException::EmitExceptionTable() {
         Asm->OutStreamer.AddComment("Landing pad");
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       } else {
-        EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
+        EmitSectionOffset(getDWLabel("label", S.PadLabel),
+                          getDWLabel("eh_func_begin", SubprogramCount),
                           true, true);
         EOL("Landing pad");
       }

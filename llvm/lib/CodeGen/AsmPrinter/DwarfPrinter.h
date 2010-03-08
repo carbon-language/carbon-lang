@@ -14,7 +14,6 @@
 #ifndef CODEGEN_ASMPRINTER_DWARFPRINTER_H__
 #define CODEGEN_ASMPRINTER_DWARFPRINTER_H__
 
-#include "DwarfLabel.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/FormattedStream.h"
@@ -86,6 +85,14 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return MAI; }
   const TargetData *getTargetData() const { return TD; }
 
+  /// getDWLabel - Return the MCSymbol corresponding to the assembler temporary
+  /// label with the specified stem and unique ID.
+  MCSymbol *getDWLabel(const char *Name, unsigned ID) const;
+  
+  /// getTempLabel - Return an assembler temporary label with the specified
+  /// name.
+  MCSymbol *getTempLabel(const char *Name) const;
+
   /// SizeOfEncodedValue - Return the size of the encoding in bytes.
   unsigned SizeOfEncodedValue(unsigned Encoding) const;
 
@@ -117,33 +124,24 @@ public:
   
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
-  void PrintLabelName(const DWLabel &Label) const {
-    PrintLabelName(Label.getTag(), Label.getNumber());
-  }
+  void PrintLabelName(const MCSymbol *Label) const;
   void PrintLabelName(const char *Tag, unsigned Number) const;
   void PrintLabelName(const char *Tag, unsigned Number,
                       const char *Suffix) const;
 
   /// EmitLabel - Emit location label for internal use by Dwarf.
   ///
-  void EmitLabel(const DWLabel &Label) const {
-    EmitLabel(Label.getTag(), Label.getNumber());
-  }
+  void EmitLabel(const MCSymbol *Label) const;
   void EmitLabel(const char *Tag, unsigned Number) const;
 
   /// EmitReference - Emit a reference to a label.
   ///
-  void EmitReference(const DWLabel &Label, bool IsPCRelative = false,
-                     bool Force32Bit = false) const {
-    EmitReference(Label.getTag(), Label.getNumber(),
-                  IsPCRelative, Force32Bit);
-  }
+  void EmitReference(const MCSymbol *Label, bool IsPCRelative = false,
+                     bool Force32Bit = false) const;
   void EmitReference(const char *Tag, unsigned Number,
                      bool IsPCRelative = false,
                      bool Force32Bit = false) const;
   void EmitReference(const std::string &Name, bool IsPCRelative = false,
-                     bool Force32Bit = false) const;
-  void EmitReference(const MCSymbol *Sym, bool IsPCRelative = false,
                      bool Force32Bit = false) const;
 
   void EmitReference(const char *Tag, unsigned Number, unsigned Encoding) const;
@@ -151,20 +149,22 @@ public:
   void EmitReference(const GlobalValue *GV, unsigned Encoding) const;
 
   /// EmitDifference - Emit the difference between two labels.
-  void EmitDifference(const DWLabel &LabelHi, const DWLabel &LabelLo,
-                      bool IsSmall = false) {
-    EmitDifference(LabelHi.getTag(), LabelHi.getNumber(),
-                   LabelLo.getTag(), LabelLo.getNumber(),
-                   IsSmall);
-  }
+  void EmitDifference(const MCSymbol *LabelHi, const MCSymbol *LabelLo,
+                      bool IsSmall = false);
   void EmitDifference(const char *TagHi, unsigned NumberHi,
                       const char *TagLo, unsigned NumberLo,
                       bool IsSmall = false);
 
+  void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,
+                         bool IsSmall = false, bool isEH = false,
+                         bool useSet = true);
+  
+#if 0
   void EmitSectionOffset(const char* Label, const char* Section,
                          unsigned LabelNumber, unsigned SectionNumber,
                          bool IsSmall = false, bool isEH = false,
                          bool useSet = true);
+#endif
 
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.

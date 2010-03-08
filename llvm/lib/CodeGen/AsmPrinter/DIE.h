@@ -14,7 +14,6 @@
 #ifndef CODEGEN_ASMPRINTER_DIE_H__
 #define CODEGEN_ASMPRINTER_DIE_H__
 
-#include "DwarfLabel.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
@@ -26,6 +25,7 @@ namespace llvm {
   class DwarfPrinter;
   class TargetData;
   class MCSymbol;
+  class raw_ostream;
 
   //===--------------------------------------------------------------------===//
   /// DIEAbbrevData - Dwarf abbreviation data, describes the one attribute of a
@@ -308,10 +308,11 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   /// DIEDwarfLabel - A Dwarf internal label expression DIE.
   //
+  /// FIXME: Merge into DIEObjectLabel.
   class DIEDwarfLabel : public DIEValue {
-    const DWLabel Label;
+    const MCSymbol *Label;
   public:
-    explicit DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
+    explicit DIEDwarfLabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
 
     /// EmitValue - Emit label value.
     ///
@@ -362,12 +363,12 @@ namespace llvm {
   /// DIESectionOffset - A section offset DIE.
   ///
   class DIESectionOffset : public DIEValue {
-    const DWLabel Label;
-    const DWLabel Section;
+    const MCSymbol *Label;
+    const MCSymbol *Section;
     bool IsEH : 1;
     bool UseSet : 1;
   public:
-    DIESectionOffset(const DWLabel &Lab, const DWLabel &Sec,
+    DIESectionOffset(const MCSymbol *Lab, const MCSymbol *Sec,
                      bool isEH = false, bool useSet = true)
       : DIEValue(isSectionOffset), Label(Lab), Section(Sec),
         IsEH(isEH), UseSet(useSet) {}
@@ -395,10 +396,10 @@ namespace llvm {
   /// DIEDelta - A simple label difference DIE.
   ///
   class DIEDelta : public DIEValue {
-    const DWLabel LabelHi;
-    const DWLabel LabelLo;
+    const MCSymbol *LabelHi;
+    const MCSymbol *LabelLo;
   public:
-    DIEDelta(const DWLabel &Hi, const DWLabel &Lo)
+    DIEDelta(const MCSymbol *Hi, const MCSymbol *Lo)
       : DIEValue(isDelta), LabelHi(Hi), LabelLo(Lo) {}
 
     /// EmitValue - Emit delta value.

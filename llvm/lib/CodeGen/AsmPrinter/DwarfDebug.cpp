@@ -366,7 +366,8 @@ void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
 /// addLabel - Add a Dwarf label attribute data and value.
 ///
 void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                          const DWLabel &Label) {
+                          const MCSymbol *Label) {
+  // FIXME: Merge into DIEObjectLabel?
   DIEValue *Value = new DIEDwarfLabel(Label);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);
@@ -384,7 +385,7 @@ void DwarfDebug::addObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
 /// addSectionOffset - Add a section offset label attribute data and value.
 ///
 void DwarfDebug::addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
-                                  const DWLabel &Label, const DWLabel &Section,
+                                  const MCSymbol *Label,const MCSymbol *Section,
                                   bool isEH, bool useSet) {
   DIEValue *Value = new DIESectionOffset(Label, Section, isEH, useSet);
   DIEValues.push_back(Value);
@@ -394,7 +395,7 @@ void DwarfDebug::addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
 /// addDelta - Add a label delta attribute data and value.
 ///
 void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
-                          const DWLabel &Hi, const DWLabel &Lo) {
+                          const MCSymbol *Hi, const MCSymbol *Lo) {
   DIEValue *Value = new DIEDelta(Hi, Lo);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);
@@ -1355,9 +1356,9 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
  }
 
  addLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-          DWLabel("func_begin", SubprogramCount));
+          getDWLabel("func_begin", SubprogramCount));
  addLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-          DWLabel("func_end", SubprogramCount));
+          getDWLabel("func_end", SubprogramCount));
  MachineLocation Location(RI->getFrameRegister(*MF));
  addAddress(SPDie, dwarf::DW_AT_frame_base, Location);
 
@@ -1382,15 +1383,11 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
     return ScopeDIE;
 
   addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           StartID ?
-             DWLabel("label", StartID)
-           : DWLabel("func_begin", SubprogramCount));
+           StartID ? getDWLabel("label", StartID)
+                   : getDWLabel("func_begin", SubprogramCount));
   addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           EndID ?
-             DWLabel("label", EndID)
-           : DWLabel("func_end", SubprogramCount));
-
-
+           EndID ? getDWLabel("label", EndID)
+                 : getDWLabel("func_end", SubprogramCount));
 
   return ScopeDIE;
 }
@@ -1418,9 +1415,9 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
               dwarf::DW_FORM_ref4, OriginDIE);
 
   addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           DWLabel("label", StartID));
+           getDWLabel("label", StartID));
   addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           DWLabel("label", EndID));
+           getDWLabel("label", EndID));
 
   InlinedSubprogramDIEs.insert(OriginDIE);
 
@@ -1643,8 +1640,9 @@ CompileUnit *DwarfDebug::constructCompileUnit(MDNode *N) {
   unsigned ID = GetOrCreateSourceID(Dir, FN);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
+  // FIXME: Why getting the delta between two identical labels??
   addSectionOffset(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                   DWLabel("section_line", 0), DWLabel("section_line", 0),
+                   getTempLabel("section_line"), getTempLabel("section_line"),
                    false);
   addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
             DIUnit.getProducer());
@@ -2445,7 +2443,8 @@ void DwarfDebug::emitDebugInfo() {
 
   Asm->EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
   Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("DWARF version number");
-  EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true, false);
+  EmitSectionOffset(getTempLabel("abbrev_begin"),getTempLabel("section_abbrev"),
+                    true, false);
   EOL("Offset Into Abbrev. Section");
   Asm->EmitInt8(TD->getPointerSize()); EOL("Address Size (in bytes)");
 
@@ -2726,8 +2725,8 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
 
   EmitLabel("debug_frame_begin", DebugFrameInfo.Number);
 
-  EmitSectionOffset("debug_frame_common", "section_debug_frame",
-                    0, 0, true, false);
+  EmitSectionOffset(getTempLabel("debug_frame_common"),
+                    getTempLabel("section_debug_frame"), true, false);
   EOL("FDE CIE offset");
 
   EmitReference("func_begin", DebugFrameInfo.Number);
@@ -2759,8 +2758,9 @@ void DwarfDebug::emitDebugPubNames() {
 
   Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("DWARF Version");
 
-  EmitSectionOffset("info_begin", "section_info",
-                    ModuleCU->getID(), 0, true, false);
+  EmitSectionOffset(getDWLabel("info_begin", ModuleCU->getID()), 
+                    getTempLabel("section_info"),
+                    true, false);
   EOL("Offset of Compilation Unit Info");
 
   EmitDifference("info_end", ModuleCU->getID(), "info_begin", ModuleCU->getID(),
@@ -2798,8 +2798,8 @@ void DwarfDebug::emitDebugPubTypes() {
   if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DWARF Version");
   Asm->EmitInt16(dwarf::DWARF_VERSION);
 
-  EmitSectionOffset("info_begin", "section_info",
-                    ModuleCU->getID(), 0, true, false);
+  EmitSectionOffset(getDWLabel("info_begin", ModuleCU->getID()),
+                    getTempLabel("section_info"), true, false);
   EOL("Offset of Compilation ModuleCU Info");
 
   EmitDifference("info_end", ModuleCU->getID(), "info_begin", ModuleCU->getID(),
@@ -2961,12 +2961,13 @@ void DwarfDebug::emitDebugInlineInfo() {
       Asm->OutStreamer.EmitBytes(Name, 0);
       Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
     } else 
-      EmitSectionOffset("string", "section_str",
-                      StringPool.idFor(getRealLinkageName(LName)), false, true);
+      EmitSectionOffset(getDWLabel("string",
+                                   StringPool.idFor(getRealLinkageName(LName))),
+                        getTempLabel("section_str"), true);
 
     EOL("MIPS linkage name");
-    EmitSectionOffset("string", "section_str",
-                      StringPool.idFor(Name), false, true);
+    EmitSectionOffset(getDWLabel("string", StringPool.idFor(Name)),
+                      getTempLabel("section_str"), false, true);
     EOL("Function name");
     EmitULEB128(Labels.size(), "Inline count");
 

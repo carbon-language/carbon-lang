@@ -273,8 +273,7 @@ unsigned DIEDwarfLabel::SizeOf(const TargetData *TD, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIEDwarfLabel::print(raw_ostream &O) {
-  O << "Lbl: ";
-  Label.print(O);
+  O << "Lbl: " << Label->getName();
 }
 #endif
 
@@ -310,9 +309,7 @@ void DIEObjectLabel::print(raw_ostream &O) {
 ///
 void DIESectionOffset::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitSectionOffset(Label.getTag(), Section.getTag(),
-                       Label.getNumber(), Section.getNumber(),
-                       IsSmall, IsEH, UseSet);
+  D->EmitSectionOffset(Label, Section, IsSmall, IsEH, UseSet);
   D->getAsm()->O << '\n'; // FIXME: Necesssary?
 }
 
@@ -325,11 +322,8 @@ unsigned DIESectionOffset::SizeOf(const TargetData *TD, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIESectionOffset::print(raw_ostream &O) {
-  O << "Off: ";
-  Label.print(O);
-  O << "-";
-  Section.print(O);
-  O << "-" << IsEH << "-" << UseSet;
+  O << "Off: " << Label->getName() << "-" << Section->getName()
+    << "-" << IsEH << "-" << UseSet;
 }
 #endif
 
@@ -353,10 +347,7 @@ unsigned DIEDelta::SizeOf(const TargetData *TD, unsigned Form) const {
 
 #ifndef NDEBUG
 void DIEDelta::print(raw_ostream &O) {
-  O << "Del: ";
-  LabelHi.print(O);
-  O << "-";
-  LabelLo.print(O);
+  O << "Del: " << LabelHi->getName() << "-" << LabelLo->getName();
 }
 #endif
 

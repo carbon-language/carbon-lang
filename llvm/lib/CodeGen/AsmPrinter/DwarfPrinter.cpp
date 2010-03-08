@@ -37,6 +37,27 @@ DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
   SubprogramCount(0), Flavor(flavor), SetCounter(1) {}
 
+
+/// getDWLabel - Return the MCSymbol corresponding to the assembler temporary
+/// label with the specified stem and unique ID.
+MCSymbol *DwarfPrinter::getDWLabel(const char *Name, unsigned ID) const {
+  // FIXME: REMOVE this.  However, there is stuff in EH that passes counters in
+  // here that can be zero.
+  
+  //assert(ID && "Should use getTempLabel if no ID");
+  if (ID == 0) return getTempLabel(Name);
+  return Asm->OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix())
+                                           + Twine(Name) + Twine(ID));
+}
+
+/// getTempLabel - Return the MCSymbol corresponding to the assembler temporary
+/// label with the specified name.
+MCSymbol *DwarfPrinter::getTempLabel(const char *Name) const {
+  return Asm->OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix())
+                                           + Name);
+}
+
+
 /// SizeOfEncodedValue - Return the size of the encoding in bytes.
 unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
   if (Encoding == dwarf::DW_EH_PE_omit)
@@ -193,12 +214,19 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
 
 /// PrintLabelName - Print label name in form used by Dwarf writer.
 ///
+void DwarfPrinter::PrintLabelName(const MCSymbol *Label) const {
+  // FIXME: REMOVE.
+  O << Label->getName();
+}
+
 void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number) const {
+  // FIXME: REMOVE.
   O << MAI->getPrivateGlobalPrefix() << Tag;
   if (Number) O << Number;
 }
 void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number,
                                   const char *Suffix) const {
+  // FIXME: REMOVE.
   O << MAI->getPrivateGlobalPrefix() << Tag;
   if (Number) O << Number;
   O << Suffix;
@@ -207,6 +235,7 @@ void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number,
 /// EmitLabel - Emit location label for internal use by Dwarf.
 ///
 void DwarfPrinter::EmitLabel(const char *Tag, unsigned Number) const {
+  // FIXME: REMOVE.
   PrintLabelName(Tag, Number);
   O << ":\n";
 }
@@ -235,12 +264,8 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
 
 void DwarfPrinter::EmitReference(const char *Tag, unsigned Number,
                                  unsigned Encoding) const {
-  SmallString<64> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-                            << Tag << Number;
-
-  MCSymbol *Sym = Asm->OutContext.GetOrCreateSymbol(Name.str());
-  EmitReference(Sym, Encoding);
+  // FIXME: REMOVE.
+  EmitReference(getDWLabel(Tag, Number), Encoding);
 }
 
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
@@ -260,6 +285,31 @@ void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const 
 
 /// EmitDifference - Emit the difference between two labels.  If this assembler
 /// supports .set, we emit a .set of a temporary and then use it in the .word.
+void DwarfPrinter::EmitDifference(const MCSymbol *TagHi, const MCSymbol *TagLo,
+                                  bool IsSmall) {
+  if (MAI->hasSetDirective()) {
+    // FIXME: switch to OutStreamer.EmitAssignment.
+    O << "\t.set\t";
+    PrintLabelName("set", SetCounter, Flavor);
+    O << ",";
+    PrintLabelName(TagHi);
+    O << "-";
+    PrintLabelName(TagLo);
+    O << "\n";
+
+    PrintRelDirective(IsSmall);
+    PrintLabelName("set", SetCounter, Flavor);
+    ++SetCounter;
+  } else {
+    PrintRelDirective(IsSmall);
+    PrintLabelName(TagHi);
+    O << "-";
+    PrintLabelName(TagLo);
+  }
+}
+
+/// EmitDifference - Emit the difference between two labels.  If this assembler
+/// supports .set, we emit a .set of a temporary and then use it in the .word.
 void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
                                   const char *TagLo, unsigned NumberLo,
                                   bool IsSmall) {
@@ -272,7 +322,7 @@ void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
     O << "-";
     PrintLabelName(TagLo, NumberLo);
     O << "\n";
-
+    
     PrintRelDirective(IsSmall);
     PrintLabelName("set", SetCounter, Flavor);
     ++SetCounter;
@@ -284,9 +334,8 @@ void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
   }
 }
 
-void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
-                                     unsigned LabelNumber,
-                                     unsigned SectionNumber,
+void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
+                                     const MCSymbol *Section,
                                      bool IsSmall, bool isEH,
                                      bool useSet) {
   bool printAbsolute = false;
@@ -300,11 +349,11 @@ void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";
-    PrintLabelName(Label, LabelNumber);
+    PrintLabelName(Label);
 
     if (!printAbsolute) {
       O << "-";
-      PrintLabelName(Section, SectionNumber);
+      PrintLabelName(Section);
     }
 
     O << "\n";
@@ -313,11 +362,11 @@ void DwarfPrinter::EmitSectionOffset(const char* Label, const char* Section,
     ++SetCounter;
   } else {
     PrintRelDirective(IsSmall, true);
-    PrintLabelName(Label, LabelNumber);
+    PrintLabelName(Label);
 
     if (!printAbsolute) {
       O << "-";
-      PrintLabelName(Section, SectionNumber);
+      PrintLabelName(Section);
     }
   }
 }

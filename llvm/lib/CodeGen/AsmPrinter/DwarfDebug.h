@@ -243,7 +243,7 @@ class DwarfDebug : public DwarfPrinter {
   /// addLabel - Add a Dwarf label attribute data and value.
   ///
   void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                const DWLabel &Label);
+                const MCSymbol *Label);
 
   /// addObjectLabel - Add an non-Dwarf label attribute data and value.
   ///
@@ -253,13 +253,13 @@ class DwarfDebug : public DwarfPrinter {
   /// addSectionOffset - Add a section offset label attribute data and value.
   ///
   void addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
-                        const DWLabel &Label, const DWLabel &Section,
+                        const MCSymbol *Label, const MCSymbol *Section,
                         bool isEH = false, bool useSet = true);
 
   /// addDelta - Add a label delta attribute data and value.
   ///
   void addDelta(DIE *Die, unsigned Attribute, unsigned Form,
-                const DWLabel &Hi, const DWLabel &Lo);
+                const MCSymbol *Hi, const MCSymbol *Lo);
 
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
