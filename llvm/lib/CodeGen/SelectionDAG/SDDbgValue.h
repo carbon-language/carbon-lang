@@ -34,14 +34,16 @@ class SDDbgValue {
   MDNode *mdPtr;
   uint64_t Offset;
   DebugLoc DL;
+  unsigned Order;
 public:
   // Constructor for non-constants.
-  SDDbgValue(MDNode *mdP, SDNode *N, unsigned R, uint64_t off, DebugLoc dl) :
-    Node(N), ResNo(R), Const(0), mdPtr(mdP), Offset(off), DL(dl) {}
+  SDDbgValue(MDNode *mdP, SDNode *N, unsigned R, uint64_t off, DebugLoc dl,
+             unsigned O) :
+    Node(N), ResNo(R), Const(0), mdPtr(mdP), Offset(off), DL(dl), Order(O) {}
 
   // Constructor for constants.
-  SDDbgValue(MDNode *mdP, Value *C, uint64_t off, DebugLoc dl) : Node(0),
-    ResNo(0), Const(C), mdPtr(mdP), Offset(off), DL(dl) {}
+  SDDbgValue(MDNode *mdP, Value *C, uint64_t off, DebugLoc dl, unsigned O) : 
+    Node(0), ResNo(0), Const(C), mdPtr(mdP), Offset(off), DL(dl), Order(O) {}
 
   // Returns the MDNode pointer.
   MDNode *getMDPtr() { return mdPtr; }
@@ -60,6 +62,10 @@ public:
 
   // Returns the DebugLoc.
   DebugLoc getDebugLoc() { return DL; }
+
+  // Returns the SDNodeOrder.  This is the order of the preceding node in the
+  // input.
+  unsigned getOrder() { return Order; }
 };
 
 } // end llvm namespace
