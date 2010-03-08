@@ -57,7 +57,7 @@ def vfp_f64imm : Operand<f64>,
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
 def VLDRD : ADI5<0b1101, 0b01, (outs DPR:$dst), (ins addrmode5:$addr),
                  IIC_fpLoad64, "vldr", ".64\t$dst, $addr",
-                 [(set DPR:$dst, (load addrmode5:$addr))]>;
+                 [(set DPR:$dst, (f64 (load addrmode5:$addr)))]>;
 
 def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
                  IIC_fpLoad32, "vldr", ".32\t$dst, $addr",
@@ -66,7 +66,7 @@ def VLDRS : ASI5<0b1101, 0b01, (outs SPR:$dst), (ins addrmode5:$addr),
 
 def VSTRD  : ADI5<0b1101, 0b00, (outs), (ins DPR:$src, addrmode5:$addr),
                  IIC_fpStore64, "vstr", ".64\t$src, $addr",
-                 [(store DPR:$src, addrmode5:$addr)]>;
+                 [(store (f64 DPR:$src), addrmode5:$addr)]>;
 
 def VSTRS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
                  IIC_fpStore32, "vstr", ".32\t$src, $addr",
@@ -116,7 +116,7 @@ def VSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
 
 def VADDD  : ADbI<0b11100, 0b11, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  IIC_fpALU64, "vadd", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fadd DPR:$a, DPR:$b))]>;
+                 [(set DPR:$dst, (fadd DPR:$a, (f64 DPR:$b)))]>;
 
 def VADDS  : ASbIn<0b11100, 0b11, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                   IIC_fpALU32, "vadd", ".f32\t$dst, $a, $b",
@@ -126,7 +126,7 @@ def VADDS  : ASbIn<0b11100, 0b11, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
 let Defs = [FPSCR] in {
 def VCMPED : ADuI<0b11101, 0b11, 0b0100, 0b11, 0, (outs), (ins DPR:$a, DPR:$b),
                  IIC_fpCMP64, "vcmpe", ".f64\t$a, $b",
-                 [(arm_cmpfp DPR:$a, DPR:$b)]>;
+                 [(arm_cmpfp DPR:$a, (f64 DPR:$b))]>;
 
 def VCMPD  : ADuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins DPR:$a, DPR:$b),
                  IIC_fpCMP64, "vcmp", ".f64\t$a, $b",
@@ -143,7 +143,7 @@ def VCMPS  : ASuI<0b11101, 0b11, 0b0100, 0b01, 0, (outs), (ins SPR:$a, SPR:$b),
 
 def VDIVD  : ADbI<0b11101, 0b00, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  IIC_fpDIV64, "vdiv", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fdiv DPR:$a, DPR:$b))]>;
+                 [(set DPR:$dst, (fdiv DPR:$a, (f64 DPR:$b)))]>;
 
 def VDIVS  : ASbI<0b11101, 0b00, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  IIC_fpDIV32, "vdiv", ".f32\t$dst, $a, $b",
@@ -151,7 +151,7 @@ def VDIVS  : ASbI<0b11101, 0b00, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
 
 def VMULD  : ADbI<0b11100, 0b10, 0, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  IIC_fpMUL64, "vmul", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fmul DPR:$a, DPR:$b))]>;
+                 [(set DPR:$dst, (fmul DPR:$a, (f64 DPR:$b)))]>;
 
 def VMULS  : ASbIn<0b11100, 0b10, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                   IIC_fpMUL32, "vmul", ".f32\t$dst, $a, $b",
@@ -159,14 +159,14 @@ def VMULS  : ASbIn<0b11100, 0b10, 0, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
 
 def VNMULD  : ADbI<0b11100, 0b10, 1, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                   IIC_fpMUL64, "vnmul", ".f64\t$dst, $a, $b",
-                  [(set DPR:$dst, (fneg (fmul DPR:$a, DPR:$b)))]>;
+                  [(set DPR:$dst, (fneg (fmul DPR:$a, (f64 DPR:$b))))]>;
 
 def VNMULS  : ASbI<0b11100, 0b10, 1, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                   IIC_fpMUL32, "vnmul", ".f32\t$dst, $a, $b",
                   [(set SPR:$dst, (fneg (fmul SPR:$a, SPR:$b)))]>;
 
 // Match reassociated forms only if not sign dependent rounding.
-def : Pat<(fmul (fneg DPR:$a), DPR:$b),
+def : Pat<(fmul (fneg DPR:$a), (f64 DPR:$b)),
           (VNMULD DPR:$a, DPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
 def : Pat<(fmul (fneg SPR:$a), SPR:$b),
           (VNMULS SPR:$a, SPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
@@ -174,7 +174,7 @@ def : Pat<(fmul (fneg SPR:$a), SPR:$b),
 
 def VSUBD  : ADbI<0b11100, 0b11, 1, 0, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  IIC_fpALU64, "vsub", ".f64\t$dst, $a, $b",
-                 [(set DPR:$dst, (fsub DPR:$a, DPR:$b))]>;
+                 [(set DPR:$dst, (fsub DPR:$a, (f64 DPR:$b)))]>;
 
 def VSUBS  : ASbIn<0b11100, 0b11, 1, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                   IIC_fpALU32, "vsub", ".f32\t$dst, $a, $b",
@@ -186,7 +186,7 @@ def VSUBS  : ASbIn<0b11100, 0b11, 1, 0, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
 
 def VABSD  : ADuI<0b11101, 0b11, 0b0000, 0b11, 0, (outs DPR:$dst), (ins DPR:$a),
                  IIC_fpUNA64, "vabs", ".f64\t$dst, $a",
-                 [(set DPR:$dst, (fabs DPR:$a))]>;
+                 [(set DPR:$dst, (fabs (f64 DPR:$a)))]>;
 
 def VABSS  : ASuIn<0b11101, 0b11, 0b0000, 0b11, 0,(outs SPR:$dst), (ins SPR:$a),
                   IIC_fpUNA32, "vabs", ".f32\t$dst, $a",
@@ -195,7 +195,7 @@ def VABSS  : ASuIn<0b11101, 0b11, 0b0000, 0b11, 0,(outs SPR:$dst), (ins SPR:$a),
 let Defs = [FPSCR] in {
 def VCMPEZD : ADuI<0b11101, 0b11, 0b0101, 0b11, 0, (outs), (ins DPR:$a),
                   IIC_fpCMP64, "vcmpe", ".f64\t$a, #0",
-                  [(arm_cmpfp0 DPR:$a)]>;
+                  [(arm_cmpfp0 (f64 DPR:$a))]>;
 
 def VCMPZD  : ADuI<0b11101, 0b11, 0b0101, 0b01, 0, (outs), (ins DPR:$a),
                   IIC_fpCMP64, "vcmp", ".f64\t$a, #0",
@@ -253,7 +253,7 @@ def VMOVS: ASuI<0b11101, 0b11, 0b0000, 0b01, 0, (outs SPR:$dst), (ins SPR:$a),
 
 def VNEGD  : ADuI<0b11101, 0b11, 0b0001, 0b01, 0, (outs DPR:$dst), (ins DPR:$a),
                  IIC_fpUNA64, "vneg", ".f64\t$dst, $a",
-                 [(set DPR:$dst, (fneg DPR:$a))]>;
+                 [(set DPR:$dst, (fneg (f64 DPR:$a)))]>;
 
 def VNEGS  : ASuIn<0b11101, 0b11, 0b0001, 0b01, 0,(outs SPR:$dst), (ins SPR:$a),
                   IIC_fpUNA32, "vneg", ".f32\t$dst, $a",
@@ -261,7 +261,7 @@ def VNEGS  : ASuIn<0b11101, 0b11, 0b0001, 0b01, 0,(outs SPR:$dst), (ins SPR:$a),
 
 def VSQRTD : ADuI<0b11101, 0b11, 0b0001, 0b11, 0, (outs DPR:$dst), (ins DPR:$a),
                  IIC_fpSQRT64, "vsqrt", ".f64\t$dst, $a",
-                 [(set DPR:$dst, (fsqrt DPR:$a))]>;
+                 [(set DPR:$dst, (fsqrt (f64 DPR:$a)))]>;
 
 def VSQRTS : ASuI<0b11101, 0b11, 0b0001, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpSQRT32, "vsqrt", ".f32\t$dst, $a",
@@ -325,7 +325,7 @@ def VMOVSRR : AVConv5I<0b11000100, 0b1010,
 def VSITOD : AVConv1I<0b11101, 0b11, 0b1000, 0b1011,
                  (outs DPR:$dst), (ins SPR:$a),
                  IIC_fpCVTID, "vcvt", ".f64.s32\t$dst, $a",
-                 [(set DPR:$dst, (arm_sitof SPR:$a))]> {
+                 [(set DPR:$dst, (f64 (arm_sitof SPR:$a)))]> {
   let Inst{7} = 1; // s32
 }
 
@@ -339,7 +339,7 @@ def VSITOS : AVConv1In<0b11101, 0b11, 0b1000, 0b1010,
 def VUITOD : AVConv1I<0b11101, 0b11, 0b1000, 0b1011,
                  (outs DPR:$dst), (ins SPR:$a),
                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a",
-                 [(set DPR:$dst, (arm_uitof SPR:$a))]> {
+                 [(set DPR:$dst, (f64 (arm_uitof SPR:$a)))]> {
   let Inst{7} = 0; // u32
 }
 
@@ -356,7 +356,7 @@ def VUITOS : AVConv1In<0b11101, 0b11, 0b1000, 0b1010,
 def VTOSIZD : AVConv1I<0b11101, 0b11, 0b1101, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  IIC_fpCVTDI, "vcvt", ".s32.f64\t$dst, $a",
-                 [(set SPR:$dst, (arm_ftosi DPR:$a))]> {
+                 [(set SPR:$dst, (arm_ftosi (f64 DPR:$a)))]> {
   let Inst{7} = 1; // Z bit
 }
 
@@ -370,7 +370,7 @@ def VTOSIZS : AVConv1In<0b11101, 0b11, 0b1101, 0b1010,
 def VTOUIZD : AVConv1I<0b11101, 0b11, 0b1100, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a",
-                 [(set SPR:$dst, (arm_ftoui DPR:$a))]> {
+                 [(set SPR:$dst, (arm_ftoui (f64 DPR:$a)))]> {
   let Inst{7} = 1; // Z bit
 }
 
@@ -514,7 +514,8 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
 def VMLAD : ADbI<0b11100, 0b00, 0, 0,
                 (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 IIC_fpMAC64, "vmla", ".f64\t$dst, $a, $b",
-                [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
+                [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b),
+                                      (f64 DPR:$dstin)))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
@@ -526,7 +527,8 @@ def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
 def VNMLSD : ADbI<0b11100, 0b01, 0, 0,
                 (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 IIC_fpMAC64, "vnmls", ".f64\t$dst, $a, $b",
-                [(set DPR:$dst, (fsub (fmul DPR:$a, DPR:$b), DPR:$dstin))]>,
+                [(set DPR:$dst, (fsub (fmul DPR:$a, DPR:$b),
+                                (f64 DPR:$dstin)))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
@@ -538,7 +540,8 @@ def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
 def VMLSD : ADbI<0b11100, 0b00, 1, 0,
                  (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  IIC_fpMAC64, "vmls", ".f64\t$dst, $a, $b",
-             [(set DPR:$dst, (fadd (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,
+             [(set DPR:$dst, (fadd (fneg (fmul DPR:$a, DPR:$b)),
+                             (f64 DPR:$dstin)))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def VMLSS : ASbIn<0b11100, 0b00, 1, 0,
@@ -547,7 +550,7 @@ def VMLSS : ASbIn<0b11100, 0b00, 1, 0,
              [(set SPR:$dst, (fadd (fneg (fmul SPR:$a, SPR:$b)), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, DPR:$b)),
+def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
           (VMLSD DPR:$dstin, DPR:$a, DPR:$b)>, Requires<[DontUseNEONForFP]>;
 def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
           (VMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
@@ -555,7 +558,8 @@ def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
 def VNMLAD : ADbI<0b11100, 0b01, 1, 0,
                  (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  IIC_fpMAC64, "vnmla", ".f64\t$dst, $a, $b",
-             [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)), DPR:$dstin))]>,
+             [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)),
+                             (f64 DPR:$dstin)))]>,
                 RegConstraint<"$dstin = $dst">;
 
 def VNMLAS : ASbI<0b11100, 0b01, 1, 0,

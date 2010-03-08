@@ -21,7 +21,7 @@ def SDT_ARMCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
 
 def SDT_ARMSaveCallPC : SDTypeProfile<0, 1, []>;
 
-def SDT_ARMcall    : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
+def SDT_ARMcall    : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 
 def SDT_ARMCMov    : SDTypeProfile<1, 3,
                                    [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,

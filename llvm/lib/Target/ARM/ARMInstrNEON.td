@@ -2707,21 +2707,21 @@ def VSETLNi32 : NVSetLane<{1,1,1,0,0,0,?,0}, 0b1011, 0b00, (outs DPR:$dst),
 }
 def : Pat<(vector_insert (v16i8 QPR:$src1), GPR:$src2, imm:$lane),
           (v16i8 (INSERT_SUBREG QPR:$src1, 
-                  (VSETLNi8 (v8i8 (EXTRACT_SUBREG QPR:$src1,
+                  (v8i8 (VSETLNi8 (v8i8 (EXTRACT_SUBREG QPR:$src1,
                                    (DSubReg_i8_reg imm:$lane))),
-                            GPR:$src2, (SubReg_i8_lane imm:$lane)),
+                            GPR:$src2, (SubReg_i8_lane imm:$lane))),
                   (DSubReg_i8_reg imm:$lane)))>;
 def : Pat<(vector_insert (v8i16 QPR:$src1), GPR:$src2, imm:$lane),
           (v8i16 (INSERT_SUBREG QPR:$src1, 
-                  (VSETLNi16 (v4i16 (EXTRACT_SUBREG QPR:$src1,
+                  (v4i16 (VSETLNi16 (v4i16 (EXTRACT_SUBREG QPR:$src1,
                                      (DSubReg_i16_reg imm:$lane))),
-                             GPR:$src2, (SubReg_i16_lane imm:$lane)),
+                             GPR:$src2, (SubReg_i16_lane imm:$lane))),
                   (DSubReg_i16_reg imm:$lane)))>;
 def : Pat<(insertelt (v4i32 QPR:$src1), GPR:$src2, imm:$lane),
           (v4i32 (INSERT_SUBREG QPR:$src1, 
-                  (VSETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src1,
+                  (v2i32 (VSETLNi32 (v2i32 (EXTRACT_SUBREG QPR:$src1,
                                      (DSubReg_i32_reg imm:$lane))),
-                             GPR:$src2, (SubReg_i32_lane imm:$lane)),
+                             GPR:$src2, (SubReg_i32_lane imm:$lane))),
                   (DSubReg_i32_reg imm:$lane)))>;
 
 def : Pat<(v2f32 (insertelt DPR:$src1, SPR:$src2, imm:$src3)),
@@ -3093,16 +3093,17 @@ def  VTBX4
 
 class N2VSPat<SDNode OpNode, ValueType ResTy, ValueType OpTy, NeonI Inst>
   : NEONFPPat<(ResTy (OpNode SPR:$a)),
-              (EXTRACT_SUBREG (Inst (INSERT_SUBREG (OpTy (IMPLICIT_DEF)),
-                                                   SPR:$a, arm_ssubreg_0)),
+              (EXTRACT_SUBREG (OpTy (Inst (INSERT_SUBREG (OpTy (IMPLICIT_DEF)),
+                                                       SPR:$a, arm_ssubreg_0))),
                               arm_ssubreg_0)>;
 
 class N3VSPat<SDNode OpNode, NeonI Inst>
   : NEONFPPat<(f32 (OpNode SPR:$a, SPR:$b)),
-              (EXTRACT_SUBREG (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$a, arm_ssubreg_0),
-                                    (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                                   SPR:$b, arm_ssubreg_0)),
+              (EXTRACT_SUBREG (v2f32
+                                 (Inst (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                                      SPR:$a, arm_ssubreg_0),
+                                       (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
+                                                      SPR:$b, arm_ssubreg_0))),
                               arm_ssubreg_0)>;
 
 class N3VSMulOpPat<SDNode MulNode, SDNode OpNode, NeonI Inst>
