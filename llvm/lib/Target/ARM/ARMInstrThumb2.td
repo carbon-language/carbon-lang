@@ -331,9 +331,9 @@ multiclass T2I_bin_ii12rs<bits<3> op23_21, string opc, PatFrag opnode,
      let Inst{15} = 0;
    }
    // 12-bit imm
-   def ri12 : T2sI<(outs GPR:$dst), (ins GPR:$lhs, imm0_4095:$rhs), IIC_iALUi,
-                   !strconcat(opc, "w"), "\t$dst, $lhs, $rhs",
-                   [(set GPR:$dst, (opnode GPR:$lhs, imm0_4095:$rhs))]> {
+   def ri12 : T2I<(outs GPR:$dst), (ins GPR:$lhs, imm0_4095:$rhs), IIC_iALUi,
+                  !strconcat(opc, "w"), "\t$dst, $lhs, $rhs",
+                  [(set GPR:$dst, (opnode GPR:$lhs, imm0_4095:$rhs))]> {
      let Inst{31-27} = 0b11110;
      let Inst{25} = 1;
      let Inst{24} = 0;
