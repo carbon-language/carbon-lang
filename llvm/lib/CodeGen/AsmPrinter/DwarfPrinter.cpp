@@ -278,39 +278,18 @@ void DwarfPrinter::EmitDifference(const MCSymbol *TagHi, const MCSymbol *TagLo,
 
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
                                      const MCSymbol *Section,
-                                     bool IsSmall, bool isEH,
-                                     bool useSet) {
+                                     bool IsSmall, bool isEH) {
   bool printAbsolute = false;
   if (isEH)
     printAbsolute = MAI->isAbsoluteEHSectionOffsets();
   else
     printAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
-  if (MAI->hasSetDirective() && useSet) {
-    // FIXME: switch to OutStreamer.EmitAssignment.
-    O << "\t.set\t";
-    PrintLabelName("set", SetCounter, Flavor);
-    O << ",";
-    PrintLabelName(Label);
-
-    if (!printAbsolute) {
-      O << "-";
-      PrintLabelName(Section);
-    }
-
-    O << "\n";
-    PrintRelDirective(IsSmall);
-    PrintLabelName("set", SetCounter, Flavor);
-    ++SetCounter;
-  } else {
-    PrintRelDirective(IsSmall, true);
-    PrintLabelName(Label);
-
-    if (!printAbsolute) {
-      O << "-";
-      PrintLabelName(Section);
-    }
-  }
+  if (!printAbsolute)
+    return EmitDifference(Label, Section, IsSmall);
+  
+  PrintRelDirective(IsSmall, true);
+  PrintLabelName(Label);
 }
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the

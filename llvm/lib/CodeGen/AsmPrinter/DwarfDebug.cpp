@@ -376,8 +376,8 @@ void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
                                   const MCSymbol *Label,const MCSymbol *Section,
-                                  bool isEH, bool useSet) {
-  DIEValue *Value = new DIESectionOffset(Label, Section, isEH, useSet);
+                                  bool isEH) {
+  DIEValue *Value = new DIESectionOffset(Label, Section, isEH);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);
 }

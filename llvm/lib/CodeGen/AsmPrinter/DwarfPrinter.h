@@ -139,9 +139,9 @@ public:
   /// EmitDifference - Emit the difference between two labels.
   void EmitDifference(const MCSymbol *LabelHi, const MCSymbol *LabelLo,
                       bool IsSmall = false);
+
   void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,
-                         bool IsSmall = false, bool isEH = false,
-                         bool useSet = true);
+                         bool IsSmall = false, bool isEH = false);
   
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.

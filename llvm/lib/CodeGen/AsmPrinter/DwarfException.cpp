@@ -232,7 +232,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     EmitSectionOffset(getDWLabel("eh_frame_begin", EHFrameInfo.Number),
                       getDWLabel("eh_frame_common",
                                  EHFrameInfo.PersonalityIndex),
-                      true, true, false);
+                      true, true);
 
     EOL("FDE CIE offset");
 

@@ -336,12 +336,11 @@ namespace llvm {
     const MCSymbol *Label;
     const MCSymbol *Section;
     bool IsEH : 1;
-    bool UseSet : 1;
   public:
     DIESectionOffset(const MCSymbol *Lab, const MCSymbol *Sec,
-                     bool isEH = false, bool useSet = true)
+                     bool isEH = false)
       : DIEValue(isSectionOffset), Label(Lab), Section(Sec),
-        IsEH(isEH), UseSet(useSet) {}
+        IsEH(isEH) {}
 
     /// EmitValue - Emit section offset.
     ///

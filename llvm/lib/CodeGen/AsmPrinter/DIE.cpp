@@ -285,7 +285,7 @@ void DIELabel::print(raw_ostream &O) {
 ///
 void DIESectionOffset::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitSectionOffset(Label, Section, IsSmall, IsEH, UseSet);
+  D->EmitSectionOffset(Label, Section, IsSmall, IsEH);
   D->getAsm()->O << '\n'; // FIXME: Necesssary?
 }
 
@@ -299,7 +299,7 @@ unsigned DIESectionOffset::SizeOf(const TargetData *TD, unsigned Form) const {
 #ifndef NDEBUG
 void DIESectionOffset::print(raw_ostream &O) {
   O << "Off: " << Label->getName() << "-" << Section->getName()
-    << "-" << IsEH << "-" << UseSet;
+    << "-" << IsEH;
 }
 #endif
 

@@ -249,7 +249,7 @@ class DwarfDebug : public DwarfPrinter {
   ///
   void addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
                         const MCSymbol *Label, const MCSymbol *Section,
-                        bool isEH = false, bool useSet = true);
+                        bool isEH = false);
 
   /// addDelta - Add a label delta attribute data and value.
   ///
