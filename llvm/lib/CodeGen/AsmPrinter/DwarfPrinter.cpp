@@ -219,11 +219,6 @@ void DwarfPrinter::PrintLabelName(const MCSymbol *Label) const {
   O << Label->getName();
 }
 
-void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number) const {
-  // FIXME: REMOVE.
-  O << MAI->getPrivateGlobalPrefix() << Tag;
-  if (Number) O << Number;
-}
 void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number,
                                   const char *Suffix) const {
   // FIXME: REMOVE.
@@ -291,9 +286,9 @@ void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
     O << "\t.set\t";
     PrintLabelName("set", SetCounter, Flavor);
     O << ",";
-    PrintLabelName(TagHi, NumberHi);
+    PrintLabelName(getDWLabel(TagHi, NumberHi));
     O << "-";
-    PrintLabelName(TagLo, NumberLo);
+    PrintLabelName(getDWLabel(TagLo, NumberLo));
     O << "\n";
     
     PrintRelDirective(IsSmall);
@@ -301,9 +296,9 @@ void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
     ++SetCounter;
   } else {
     PrintRelDirective(IsSmall);
-    PrintLabelName(TagHi, NumberHi);
+    PrintLabelName(getDWLabel(TagHi, NumberHi));
     O << "-";
-    PrintLabelName(TagLo, NumberLo);
+    PrintLabelName(getDWLabel(TagLo, NumberLo));
   }
 }
 

@@ -2969,7 +2969,7 @@ void DwarfDebug::emitDebugInlineInfo() {
       else
         O << MAI->getData64bitsDirective();
 
-      PrintLabelName("label", LI->first); EOL("low_pc");
+      PrintLabelName(getDWLabel("label", LI->first)); EOL("low_pc");
     }
   }
 
