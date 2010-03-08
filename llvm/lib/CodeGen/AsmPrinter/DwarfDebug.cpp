@@ -2487,7 +2487,8 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(0); EOL("Extended Op");
   Asm->EmitInt8(TD->getPointerSize() + 1); EOL("Op size");
   Asm->EmitInt8(dwarf::DW_LNE_set_address); EOL("DW_LNE_set_address");
-  EmitReference("section_end", SectionEnd); EOL("Section end label");
+  EmitReference(getDWLabel("section_end", SectionEnd));
+  EOL("Section end label");
 
   // Mark end of matrix.
   Asm->EmitInt8(0); EOL("DW_LNE_end_sequence");
@@ -2608,7 +2609,7 @@ void DwarfDebug::emitDebugLines() {
       Asm->EmitInt8(0); EOL("Extended Op");
       Asm->EmitInt8(TD->getPointerSize() + 1); EOL("Op size");
       Asm->EmitInt8(dwarf::DW_LNE_set_address); EOL("DW_LNE_set_address");
-      EmitReference("label",  LabelID); EOL("Location label");
+      EmitReference(getDWLabel("label", LabelID)); EOL("Location label");
 
       // If change of source, then switch to the new source.
       if (Source != LineInfo.getSourceID()) {
@@ -2718,10 +2719,10 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
                     getTempLabel("section_debug_frame"), true, false);
   EOL("FDE CIE offset");
 
-  EmitReference("func_begin", DebugFrameInfo.Number);
+  EmitReference(getDWLabel("func_begin", DebugFrameInfo.Number));
   EOL("FDE initial location");
-  EmitDifference("func_end", DebugFrameInfo.Number,
-                 "func_begin", DebugFrameInfo.Number);
+  EmitDifference(getDWLabel("func_end", DebugFrameInfo.Number),
+                 getDWLabel("func_begin", DebugFrameInfo.Number));
   EOL("FDE address range");
 
   EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves,
@@ -2730,7 +2731,6 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
   Asm->EmitAlignment(2, 0, 0, false);
   Asm->OutStreamer.EmitLabel(getDWLabel("debug_frame_end",
                                         DebugFrameInfo.Number));
-  Asm->O << '\n';
 }
 
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.

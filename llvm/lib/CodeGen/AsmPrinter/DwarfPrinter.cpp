@@ -234,19 +234,6 @@ void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number,
 
 /// EmitReference - Emit a reference to a label.
 ///
-void DwarfPrinter::EmitReference(const char *Tag, unsigned Number,
-                                 bool IsPCRelative, bool Force32Bit) const {
-  PrintRelDirective(Force32Bit);
-  PrintLabelName(Tag, Number);
-  if (IsPCRelative) O << "-" << MAI->getPCSymbol();
-}
-void DwarfPrinter::EmitReference(const std::string &Name, bool IsPCRelative,
-                                 bool Force32Bit) const {
-  PrintRelDirective(Force32Bit);
-  O << Name;
-  if (IsPCRelative) O << "-" << MAI->getPCSymbol();
-}
-
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
                                  bool Force32Bit) const {
   PrintRelDirective(Force32Bit);
