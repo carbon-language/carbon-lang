@@ -171,6 +171,10 @@ bool MachineCSE::hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB){
 }
 
 bool MachineCSE::isCSECandidate(MachineInstr *MI) {
+  if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
+      MI->isKill() || MI->isInlineAsm())
+    return false;
+
   // Ignore copies or instructions that read / write physical registers
   // (except for dead defs of physical registers).
   unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
