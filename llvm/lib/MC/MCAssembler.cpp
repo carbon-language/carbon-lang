@@ -1049,8 +1049,8 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 
       // Align the fragment offset; it is safe to adjust the offset freely since
       // this is only in virtual sections.
-      uint64_t Aligned = RoundUpToAlignment(Address, ZFF.getAlignment());
-      F.setOffset(Aligned - SD.getAddress());
+      Address = RoundUpToAlignment(Address, ZFF.getAlignment());
+      F.setOffset(Address - SD.getAddress());
 
       // FIXME: This is misnamed.
       F.setFileSize(ZFF.getSize());
