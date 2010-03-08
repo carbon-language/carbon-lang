@@ -241,12 +241,6 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
   if (IsPCRelative) O << "-" << MAI->getPCSymbol();
 }
 
-void DwarfPrinter::EmitReference(const char *Tag, unsigned Number,
-                                 unsigned Encoding) const {
-  // FIXME: REMOVE.
-  EmitReference(getDWLabel(Tag, Number), Encoding);
-}
-
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
@@ -259,7 +253,7 @@ void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const 
 
   PrintRelDirective(Encoding);
   O << *TLOF.getSymbolForDwarfGlobalReference(GV, Asm->Mang,
-                                              Asm->MMI, Encoding);;
+                                              Asm->MMI, Encoding);
 }
 
 /// EmitDifference - Emit the difference between two labels.  If this assembler

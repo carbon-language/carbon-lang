@@ -134,7 +134,6 @@ public:
   void EmitReference(const MCSymbol *Label, bool IsPCRelative = false,
                      bool Force32Bit = false) const;
   
-  void EmitReference(const char *Tag, unsigned Number, unsigned Encoding) const;
   void EmitReference(const MCSymbol *Sym, unsigned Encoding) const;
   void EmitReference(const GlobalValue *GV, unsigned Encoding) const;
 

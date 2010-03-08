@@ -236,7 +236,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     EOL("FDE CIE offset");
 
-    EmitReference("eh_func_begin", EHFrameInfo.Number, FDEEncoding);
+    EmitReference(getDWLabel("eh_func_begin", EHFrameInfo.Number), FDEEncoding);
     EOL("FDE initial location");
     EmitDifference("eh_func_end", EHFrameInfo.Number,
                    "eh_func_begin", EHFrameInfo.Number,
@@ -250,7 +250,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
       EmitULEB128(Size, "Augmentation size");
       if (EHFrameInfo.hasLandingPads)
-        EmitReference("exception", EHFrameInfo.Number, LSDAEncoding);
+        EmitReference(getDWLabel("exception", EHFrameInfo.Number),LSDAEncoding);
       else
         Asm->OutStreamer.EmitIntValue(0, Size/*size*/, 0/*addrspace*/);
 
