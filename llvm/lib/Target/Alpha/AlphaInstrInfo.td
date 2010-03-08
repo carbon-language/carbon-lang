@@ -892,7 +892,7 @@ def : Pat<(brcond (setge GPRC:$RA, 0), bb:$DISP),
       (COND_BRANCH_I (immBRCond 2),  GPRC:$RA, bb:$DISP)>;
 def : Pat<(brcond (setgt GPRC:$RA, 0), bb:$DISP), 
       (COND_BRANCH_I (immBRCond 3),  GPRC:$RA, bb:$DISP)>;
-def : Pat<(brcond (and   GPRC:$RA, 1), bb:$DISP), 
+def : Pat<(brcond (and GPRC:$RA, 1), bb:$DISP), 
       (COND_BRANCH_I (immBRCond 6),  GPRC:$RA, bb:$DISP)>;
 def : Pat<(brcond (setle GPRC:$RA, 0), bb:$DISP), 
       (COND_BRANCH_I (immBRCond 4),  GPRC:$RA, bb:$DISP)>;
