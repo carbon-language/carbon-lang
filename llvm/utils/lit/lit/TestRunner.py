@@ -353,8 +353,6 @@ def isExpectedFail(xfails, xtargets, target_triple):
 
     return True
 
-import re
-
 def parseIntegratedTestScript(test):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'XTARGET'
@@ -387,21 +385,7 @@ def parseIntegratedTestScript(test):
     script = []
     xfails = []
     xtargets = []
-    ignoredAny = False
     for ln in open(sourcepath):
-        conditional = re.search('IF\((.+?)\((.+?)\)\):', ln)
-        if conditional:
-            ln = ln[conditional.end():]
-            condition = conditional.group(1)
-            value = conditional.group(2)
-
-            # Actually test the condition.
-            if condition not in test.config.conditions:
-                return (Test.UNRESOLVED, "unknown condition '"+condition+"'")
-            if not test.config.conditions[condition](value):
-                ignoredAny = True
-                continue
-
         if 'RUN:' in ln:
             # Isolate the command to run.
             index = ln.index('RUN:')
@@ -438,8 +422,6 @@ def parseIntegratedTestScript(test):
 
     # Verify the script contains a run line.
     if not script:
-        if ignoredAny:
-            return (Test.UNSUPPORTED, "Test has only ignored run lines")
         return (Test.UNRESOLVED, "Test has no run line!")
 
     if script[-1][-1] == '\\':
