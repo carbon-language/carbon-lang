@@ -98,7 +98,7 @@ llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
 
     // See if this compile unit has been used before for this valid location.
     llvm::DICompileUnit &Unit = CompileUnitCache[FID];
-    if (Unit.Verify()) return Unit;
+    if (!Unit.isNull()) return Unit;
   }
 
   // Get absolute path name.
@@ -698,7 +698,7 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DICompileUnit Unit,
 
 /// getOrCreateVTablePtrType - Return debug info descriptor for vtable.
 llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DICompileUnit Unit) {
-  if (VTablePtrType.isValid())
+  if (!VTablePtrType.isNull())
     return VTablePtrType;
 
   ASTContext &Context = CGM.getContext();
@@ -1306,8 +1306,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
       FI = SPCache.find(FD);
     if (FI != SPCache.end()) {
-      llvm::DIDescriptor SP(dyn_cast_or_null<llvm::MDNode>(FI->second));
-      if (SP.isSubprogram() && llvm::DISubprogram(SP.getNode()).isDefinition()) {
+      llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(FI->second));
+      if (!SP.isNull() && SP.isSubprogram() && SP.isDefinition()) {
         RegionStack.push_back(SP.getNode());
         RegionMap[D] = llvm::WeakVH(SP.getNode());
         return;
