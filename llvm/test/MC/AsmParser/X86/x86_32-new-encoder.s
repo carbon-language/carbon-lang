@@ -38,4 +38,6 @@ rdtscp
 	movl	%eax, 16(%ebp)
 // CHECK: movl	%eax, -16(%ebp)          # encoding: [0x89,0x45,0xf0]
 	movl	%eax, -16(%ebp)
-        
+
+// CHECK: testb	%bl, %cl                # encoding: [0x84,0xcb]
+        testb %bl, %cl

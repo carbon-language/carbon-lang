@@ -3135,16 +3135,16 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
 //
 let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
-def TEST8rr  : I<0x84, MRMDestReg, (outs),  (ins GR8:$src1, GR8:$src2),
+def TEST8rr  : I<0x84, MRMSrcReg, (outs),  (ins GR8:$src1, GR8:$src2),
                      "test{b}\t{$src2, $src1|$src1, $src2}",
                      [(X86cmp (and_su GR8:$src1, GR8:$src2), 0),
                       (implicit EFLAGS)]>;
-def TEST16rr : I<0x85, MRMDestReg, (outs),  (ins GR16:$src1, GR16:$src2),
+def TEST16rr : I<0x85, MRMSrcReg, (outs),  (ins GR16:$src1, GR16:$src2),
                      "test{w}\t{$src2, $src1|$src1, $src2}",
                      [(X86cmp (and_su GR16:$src1, GR16:$src2), 0),
                       (implicit EFLAGS)]>,
                  OpSize;
-def TEST32rr : I<0x85, MRMDestReg, (outs),  (ins GR32:$src1, GR32:$src2),
+def TEST32rr : I<0x85, MRMSrcReg, (outs),  (ins GR32:$src1, GR32:$src2),
                      "test{l}\t{$src2, $src1|$src1, $src2}",
                      [(X86cmp (and_su GR32:$src1, GR32:$src2), 0),
                       (implicit EFLAGS)]>;
