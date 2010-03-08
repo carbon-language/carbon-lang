@@ -1589,6 +1589,18 @@ unsigned clang_isTranslationUnit(enum CXCursorKind K) {
   return K == CXCursor_TranslationUnit;
 }
 
+unsigned clang_isUnexposed(enum CXCursorKind K) {
+  switch (K) {
+    case CXCursor_UnexposedDecl:
+    case CXCursor_UnexposedExpr:
+    case CXCursor_UnexposedStmt:
+    case CXCursor_UnexposedAttr:
+      return true;
+    default:
+      return false;
+  }
+}
+
 CXCursorKind clang_getCursorKind(CXCursor C) {
   return C.kind;
 }

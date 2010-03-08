@@ -888,6 +888,12 @@ CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
  */
 CINDEX_LINKAGE unsigned clang_isTranslationUnit(enum CXCursorKind);
 
+/***
+ * \brief Determine whether the given cursor represents a currently
+ *  unexposed piece of the AST (e.g., CXCursor_UnexposedStmt).
+ */
+CINDEX_LINKAGE unsigned clang_isUnexposed(enum CXCursorKind);
+
 /**
  * \brief Describe the linkage of the entity referred to by a cursor.
  */
