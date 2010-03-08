@@ -336,14 +336,14 @@ ConstantFoldMappedInstruction(const Instruction *I) {
 
 static MDNode *UpdateInlinedAtInfo(MDNode *InsnMD, MDNode *TheCallMD) {
   DILocation ILoc(InsnMD);
-  if (ILoc.isNull()) return InsnMD;
+  if (!ILoc.Verify()) return InsnMD;
 
   DILocation CallLoc(TheCallMD);
-  if (CallLoc.isNull()) return InsnMD;
+  if (!CallLoc.Verify()) return InsnMD;
 
   DILocation OrigLocation = ILoc.getOrigLocation();
   MDNode *NewLoc = TheCallMD;
-  if (!OrigLocation.isNull())
+  if (OrigLocation.Verify())
     NewLoc = UpdateInlinedAtInfo(OrigLocation.getNode(), TheCallMD);
 
   Value *MDVs[] = {
