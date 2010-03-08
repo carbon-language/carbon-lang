@@ -91,7 +91,10 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (TII->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         TargetRegisterInfo::isVirtualRegister(SrcReg) &&
+        MRI->getRegClass(SrcReg) == MRI->getRegClass(Reg) &&
         !SrcSubIdx && !DstSubIdx) {
+      DEBUG(dbgs() << "Coalescing: " << *DefMI);
+      DEBUG(dbgs() << "*** to: " << *MI);
       MO.setReg(SrcReg);
       DefMI->eraseFromParent();
       ++NumCoalesces;
