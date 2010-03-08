@@ -68,7 +68,6 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::Dwarf;
-  AbsoluteEHSectionOffsets = false;
 }
 
 X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
@@ -90,7 +89,6 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &Triple) {
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::Dwarf;
-  AbsoluteEHSectionOffsets = false;
 }
 
 MCSection *X86ELFMCAsmInfo::getNonexecutableStackSection(MCContext &Ctx) const {

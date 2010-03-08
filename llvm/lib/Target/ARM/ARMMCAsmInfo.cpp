@@ -48,7 +48,6 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::SjLj;
-  AbsoluteEHSectionOffsets = false;
 }
 
 ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
