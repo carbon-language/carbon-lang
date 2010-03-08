@@ -385,7 +385,7 @@ def MOVSSrr : SSI<0x10, MRMSrcReg,
 // Extract the low 32-bit value from one vector and insert it into another.
 let AddedComplexity = 15 in
 def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
-          (MOVSSrr VR128:$src1,
+          (MOVSSrr (v4f32 VR128:$src1),
                    (EXTRACT_SUBREG (v4f32 VR128:$src2), x86_subreg_ss))>;
 
 // Implicitly promote a 32-bit scalar to a vector.
@@ -827,7 +827,7 @@ let Constraints = "$src1 = $dst" in {
 
 
 def : Pat<(movlhps VR128:$src1, (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
-          (MOVHPSrm VR128:$src1, addr:$src2)>;
+          (MOVHPSrm (v4i32 VR128:$src1), addr:$src2)>;
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movlps\t{$src, $dst|$dst, $src}",
@@ -860,9 +860,9 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst),
 
 let AddedComplexity = 20 in {
 def : Pat<(v4f32 (movddup VR128:$src, (undef))),
-          (MOVLHPSrr VR128:$src, VR128:$src)>;
+          (MOVLHPSrr (v4f32 VR128:$src), (v4f32 VR128:$src))>;
 def : Pat<(v2i64 (movddup VR128:$src, (undef))),
-          (MOVLHPSrr VR128:$src, VR128:$src)>;
+          (MOVLHPSrr (v2i64 VR128:$src), (v2i64 VR128:$src))>;
 }
 
 
@@ -1011,9 +1011,9 @@ let Constraints = "$src1 = $dst" in {
                                             (memop addr:$src), imm:$cc))]>;
 }
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
-          (CMPPSrri VR128:$src1, VR128:$src2, imm:$cc)>;
+          (CMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
-          (CMPPSrmi VR128:$src1, addr:$src2, imm:$cc)>;
+          (CMPPSrmi (v4f32 VR128:$src1), addr:$src2, imm:$cc)>;
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {
@@ -1147,7 +1147,7 @@ def MOVSDrr : SDI<0x10, MRMSrcReg,
 // Extract the low 64-bit value from one vector and insert it into another.
 let AddedComplexity = 15 in
 def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
-          (MOVSDrr VR128:$src1,
+          (MOVSDrr (v2f64 VR128:$src1),
                    (EXTRACT_SUBREG (v2f64 VR128:$src2), x86_subreg_sd))>;
 
 // Implicitly promote a 64-bit scalar to a vector.
@@ -2391,9 +2391,6 @@ def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntdq\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
-
-def : Pat<(alignednontemporalstore (v4i32 VR128:$src), addr:$dst),
-          (MOVNTDQmr VR128:$src, addr:$dst)>;
 }
 
 // Flush cache
