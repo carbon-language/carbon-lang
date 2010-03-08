@@ -12,8 +12,8 @@ void trys() {
   } catch(float i) {
   } catch(void v) { // expected-error {{cannot catch incomplete type 'void'}}
   } catch(A a) { // expected-error {{cannot catch incomplete type 'struct A'}}
-  } catch(A *a) { // expected-error {{cannot catch pointer to incomplete type 'struct A'}}
-  } catch(A &a) { // expected-error {{cannot catch reference to incomplete type 'struct A'}}
+  } catch(A *a) { // expected-warning {{pointer to incomplete type 'struct A'}}
+  } catch(A &a) { // expected-warning {{reference to incomplete type 'struct A'}}
   } catch(Abstract) { // expected-error {{variable type 'Abstract' is an abstract class}}
   } catch(...) {
     int j = i; // expected-error {{use of undeclared identifier 'i'}}

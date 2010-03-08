@@ -2048,10 +2048,10 @@ def note_delete_member_function_declared_here : Note<
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;
 def warn_increment_bool : Warning<
   "incrementing expression of type bool is deprecated">, InGroup<Deprecated>;
-def err_catch_incomplete_ptr : Error<
-  "cannot catch pointer to incomplete type %0">;
-def err_catch_incomplete_ref : Error<
-  "cannot catch reference to incomplete type %0">;
+def ext_catch_incomplete_ptr : ExtWarn<
+  "ISO C++ forbids catching a pointer to incomplete type %0">;
+def ext_catch_incomplete_ref : ExtWarn<
+  "ISO C++ forbids catching a reference to incomplete type %0">;
 def err_catch_incomplete : Error<"cannot catch incomplete type %0">;
 def err_catch_rvalue_ref : Error<"cannot catch exceptions by rvalue reference">;
 def err_qualified_catch_declarator : Error<
