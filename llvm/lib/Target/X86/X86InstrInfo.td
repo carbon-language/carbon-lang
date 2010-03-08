@@ -5150,7 +5150,7 @@ def : Pat<(parallel (store (X86and_flag (loadi32 addr:$dst), i32immSExt8:$src2),
           (AND32mi8 addr:$dst, i32immSExt8:$src2)>;
 
 // -disable-16bit support.
-def : Pat<(truncstorei16 (i32 imm:$src), addr:$dst),
+def : Pat<(truncstorei16 (i16 imm:$src), addr:$dst),
           (MOV16mi addr:$dst, imm:$src)>;
 def : Pat<(truncstorei16 GR32:$src, addr:$dst),
           (MOV16mr addr:$dst, (EXTRACT_SUBREG GR32:$src, x86_subreg_16bit))>;
