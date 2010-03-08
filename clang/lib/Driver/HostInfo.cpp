@@ -164,7 +164,7 @@ class TCEHostInfo : public HostInfo {
 
 public:
   TCEHostInfo(const Driver &D, const llvm::Triple &Triple);
-  ~TCEHostInfo() {};
+  ~TCEHostInfo() {}
 
   virtual bool useDriverDriver() const;
 
