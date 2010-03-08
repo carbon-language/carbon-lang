@@ -88,10 +88,10 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     O << MAI->getPrivateGlobalPrefix();
   O << "EH_frame" << Index << ":\n";
   
-  EmitLabel("section_eh_frame", Index);
+  Asm->OutStreamer.EmitLabel(getDWLabel("section_eh_frame", Index));
 
   // Define base labels.
-  EmitLabel("eh_frame_common", Index);
+  Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common", Index));
 
   // Define the eh frame length.
   EmitDifference("eh_frame_common_end", Index,
@@ -99,7 +99,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   EOL("Length of Common Information Entry");
 
   // EH frame header.
-  EmitLabel("eh_frame_common_begin", Index);
+  Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common_begin", Index));
   if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("CIE Identifier Tag");
   Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
   if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DW_CIE_VERSION");
@@ -171,8 +171,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // be 8-byte on 64-bit targets to match what gcc does.  Otherwise you get
   // holes which confuse readers of eh_frame.
   Asm->EmitAlignment(TD->getPointerSize() == 4 ? 2 : 3, 0, 0, false);
-  EmitLabel("eh_frame_common_end", Index);
-  Asm->O << '\n';
+  Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common_end", Index));
 }
 
 /// EmitFDE - Emit the Frame Description Entry (FDE) for the function.
@@ -228,7 +227,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
                    true);
     EOL("Length of Frame Information Entry");
 
-    EmitLabel("eh_frame_begin", EHFrameInfo.Number);
+    Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_begin",EHFrameInfo.Number));
 
     EmitSectionOffset(getDWLabel("eh_frame_begin", EHFrameInfo.Number),
                       getDWLabel("eh_frame_common",
@@ -269,7 +268,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     // get holes which confuse readers of eh_frame.
     Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3,
                        0, 0, false);
-    EmitLabel("eh_frame_end", EHFrameInfo.Number);
+    Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_end", EHFrameInfo.Number));
 
     // If the function is marked used, this table should be also.  We cannot
     // make the mark unconditional in this case, since retaining the table also
@@ -701,7 +700,7 @@ void DwarfException::EmitExceptionTable() {
 
   // Emit the LSDA.
   O << "GCC_except_table" << SubprogramCount << ":\n";
-  EmitLabel("exception", SubprogramCount);
+  Asm->OutStreamer.EmitLabel(getDWLabel("exception", SubprogramCount));
 
   if (IsSJLJ) {
     SmallString<16> LSDAName;
@@ -949,7 +948,7 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
 
   if (shouldEmitMoves || shouldEmitTable)
     // Assumes in correct section after the entry point.
-    EmitLabel("eh_func_begin", ++SubprogramCount);
+    Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_begin", ++SubprogramCount));
 
   shouldEmitTableModule |= shouldEmitTable;
   shouldEmitMovesModule |= shouldEmitMoves;
@@ -966,7 +965,7 @@ void DwarfException::EndFunction() {
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 
-  EmitLabel("eh_func_end", SubprogramCount);
+  Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_end", SubprogramCount));
   EmitExceptionTable();
 
   MCSymbol *FunctionEHSym =

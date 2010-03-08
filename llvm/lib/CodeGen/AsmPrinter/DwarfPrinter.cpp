@@ -232,14 +232,6 @@ void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number,
   O << Suffix;
 }
 
-/// EmitLabel - Emit location label for internal use by Dwarf.
-///
-void DwarfPrinter::EmitLabel(const char *Tag, unsigned Number) const {
-  // FIXME: REMOVE.
-  PrintLabelName(Tag, Number);
-  O << ":\n";
-}
-
 /// EmitReference - Emit a reference to a label.
 ///
 void DwarfPrinter::EmitReference(const char *Tag, unsigned Number,

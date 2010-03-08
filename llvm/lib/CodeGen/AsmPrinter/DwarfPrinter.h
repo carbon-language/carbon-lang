@@ -129,11 +129,6 @@ public:
   void PrintLabelName(const char *Tag, unsigned Number,
                       const char *Suffix) const;
 
-  /// EmitLabel - Emit location label for internal use by Dwarf.
-  ///
-  void EmitLabel(const MCSymbol *Label) const;
-  void EmitLabel(const char *Tag, unsigned Number) const;
-
   /// EmitReference - Emit a reference to a label.
   ///
   void EmitReference(const MCSymbol *Label, bool IsPCRelative = false,
