@@ -2672,8 +2672,8 @@ void DwarfDebug::emitCommonDebugFrame() {
                               Asm->getObjFileLowering().getDwarfFrameSection());
 
   Asm->OutStreamer.EmitLabel(getTempLabel("debug_frame_common"));
-  EmitDifference("debug_frame_common_end", 0,
-                 "debug_frame_common_begin", 0, true);
+  EmitDifference(getTempLabel("debug_frame_common_end"),
+                 getTempLabel("debug_frame_common_begin"), true);
   EOL("Length of Common Information Entry");
 
   Asm->OutStreamer.EmitLabel(getTempLabel("debug_frame_common_begin"));
@@ -2708,8 +2708,8 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
   Asm->OutStreamer.SwitchSection(
                               Asm->getObjFileLowering().getDwarfFrameSection());
 
-  EmitDifference("debug_frame_end", DebugFrameInfo.Number,
-                 "debug_frame_begin", DebugFrameInfo.Number, true);
+  EmitDifference(getDWLabel("debug_frame_end", DebugFrameInfo.Number),
+                 getDWLabel("debug_frame_begin", DebugFrameInfo.Number), true);
   EOL("Length of Frame Information Entry");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("debug_frame_begin",
@@ -2740,8 +2740,8 @@ void DwarfDebug::emitDebugPubNames() {
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfPubNamesSection());
 
-  EmitDifference("pubnames_end", ModuleCU->getID(),
-                 "pubnames_begin", ModuleCU->getID(), true);
+  EmitDifference(getDWLabel("pubnames_end", ModuleCU->getID()),
+                 getDWLabel("pubnames_begin", ModuleCU->getID()), true);
   EOL("Length of Public Names Info");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("pubnames_begin", ModuleCU->getID()));
@@ -2753,7 +2753,8 @@ void DwarfDebug::emitDebugPubNames() {
                     true, false);
   EOL("Offset of Compilation Unit Info");
 
-  EmitDifference("info_end", ModuleCU->getID(), "info_begin", ModuleCU->getID(),
+  EmitDifference(getDWLabel("info_end", ModuleCU->getID()),
+                 getDWLabel("info_begin", ModuleCU->getID()),
                  true);
   EOL("Compilation Unit Length");
 
@@ -2778,8 +2779,8 @@ void DwarfDebug::emitDebugPubTypes() {
   // Start the dwarf pubnames section.
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfPubTypesSection());
-  EmitDifference("pubtypes_end", ModuleCU->getID(),
-                 "pubtypes_begin", ModuleCU->getID(), true);
+  EmitDifference(getDWLabel("pubtypes_end", ModuleCU->getID()),
+                 getDWLabel("pubtypes_begin", ModuleCU->getID()), true);
   EOL("Length of Public Types Info");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("pubtypes_begin", ModuleCU->getID()));
@@ -2791,7 +2792,8 @@ void DwarfDebug::emitDebugPubTypes() {
                     getTempLabel("section_info"), true, false);
   EOL("Offset of Compilation ModuleCU Info");
 
-  EmitDifference("info_end", ModuleCU->getID(), "info_begin", ModuleCU->getID(),
+  EmitDifference(getDWLabel("info_end", ModuleCU->getID()),
+                 getDWLabel("info_begin", ModuleCU->getID()),
                  true);
   EOL("Compilation ModuleCU Length");
 
@@ -2872,7 +2874,8 @@ void DwarfDebug::EmitDebugARanges() {
 
   // Range 1
   EmitReference("text_begin", 0); EOL("Address");
-  EmitDifference("text_end", 0, "text_begin", 0, true); EOL("Length");
+  EmitDifference(getTempLabel("text_end"), getTempLabel("text_begin"),
+                 true); EOL("Length");
 
   Asm->EmitInt32(0); EOL("EOM (1)");
   Asm->EmitInt32(0); EOL("EOM (2)");
@@ -2925,8 +2928,8 @@ void DwarfDebug::emitDebugInlineInfo() {
   Asm->OutStreamer.SwitchSection(
                         Asm->getObjFileLowering().getDwarfDebugInlineSection());
 
-  EmitDifference("debug_inlined_end", 1,
-                 "debug_inlined_begin", 1, true);
+  EmitDifference(getDWLabel("debug_inlined_end", 1),
+                 getDWLabel("debug_inlined_begin", 1), true);
   EOL("Length of Debug Inlined Information Entry");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("debug_inlined_begin", 1));

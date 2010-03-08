@@ -276,32 +276,6 @@ void DwarfPrinter::EmitDifference(const MCSymbol *TagHi, const MCSymbol *TagLo,
   }
 }
 
-/// EmitDifference - Emit the difference between two labels.  If this assembler
-/// supports .set, we emit a .set of a temporary and then use it in the .word.
-void DwarfPrinter::EmitDifference(const char *TagHi, unsigned NumberHi,
-                                  const char *TagLo, unsigned NumberLo,
-                                  bool IsSmall) {
-  if (MAI->hasSetDirective()) {
-    // FIXME: switch to OutStreamer.EmitAssignment.
-    O << "\t.set\t";
-    PrintLabelName("set", SetCounter, Flavor);
-    O << ",";
-    PrintLabelName(getDWLabel(TagHi, NumberHi));
-    O << "-";
-    PrintLabelName(getDWLabel(TagLo, NumberLo));
-    O << "\n";
-    
-    PrintRelDirective(IsSmall);
-    PrintLabelName("set", SetCounter, Flavor);
-    ++SetCounter;
-  } else {
-    PrintRelDirective(IsSmall);
-    PrintLabelName(getDWLabel(TagHi, NumberHi));
-    O << "-";
-    PrintLabelName(getDWLabel(TagLo, NumberLo));
-  }
-}
-
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
                                      const MCSymbol *Section,
                                      bool IsSmall, bool isEH,
@@ -367,7 +341,8 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     // Advance row if new location.
     if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
       EmitCFAByte(dwarf::DW_CFA_advance_loc4);
-      EmitDifference("label", LabelID, BaseLabel, BaseLabelID, true);
+      EmitDifference(getDWLabel("label", LabelID),
+                     getDWLabel(BaseLabel, BaseLabelID), true);
       Asm->O << '\n';
 
       BaseLabelID = LabelID;

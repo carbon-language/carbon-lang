@@ -94,8 +94,8 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common", Index));
 
   // Define the eh frame length.
-  EmitDifference("eh_frame_common_end", Index,
-                 "eh_frame_common_begin", Index, true);
+  EmitDifference(getDWLabel("eh_frame_common_end", Index),
+                 getDWLabel("eh_frame_common_begin", Index), true);
   EOL("Length of Common Information Entry");
 
   // EH frame header.
@@ -222,8 +222,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     O << *EHFrameInfo.FunctionEHSym << ":\n";
 
     // EH frame header.
-    EmitDifference("eh_frame_end", EHFrameInfo.Number,
-                   "eh_frame_begin", EHFrameInfo.Number,
+    EmitDifference(getDWLabel("eh_frame_end", EHFrameInfo.Number),
+                   getDWLabel("eh_frame_begin", EHFrameInfo.Number),
                    true);
     EOL("Length of Frame Information Entry");
 
@@ -238,8 +238,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
     EmitReference(getDWLabel("eh_func_begin", EHFrameInfo.Number), FDEEncoding);
     EOL("FDE initial location");
-    EmitDifference("eh_func_end", EHFrameInfo.Number,
-                   "eh_func_begin", EHFrameInfo.Number,
+    EmitDifference(getDWLabel("eh_func_end", EHFrameInfo.Number),
+                   getDWLabel("eh_func_begin", EHFrameInfo.Number),
                    SizeOfEncodedValue(FDEEncoding) == 4);
     EOL("FDE address range");
 
@@ -829,7 +829,8 @@ void DwarfException::EmitExceptionTable() {
                        getDWLabel(BeginTag, BeginNumber),
                        true);
       else
-        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, true);
+        EmitDifference(getDWLabel("label", S.EndLabel), 
+                       getDWLabel(BeginTag, BeginNumber), true);
 
       EOL("Region length");
 

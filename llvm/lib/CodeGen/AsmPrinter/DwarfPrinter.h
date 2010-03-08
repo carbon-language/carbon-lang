@@ -139,10 +139,6 @@ public:
   /// EmitDifference - Emit the difference between two labels.
   void EmitDifference(const MCSymbol *LabelHi, const MCSymbol *LabelLo,
                       bool IsSmall = false);
-  void EmitDifference(const char *TagHi, unsigned NumberHi,
-                      const char *TagLo, unsigned NumberLo,
-                      bool IsSmall = false);
-
   void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,
                          bool IsSmall = false, bool isEH = false,
                          bool useSet = true);
