@@ -136,8 +136,12 @@ private:
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
 
-  // Type of this method.
+  // Result type of this method.
   QualType MethodDeclType;
+  
+  // Type source information for the result type.
+  TypeSourceInfo *ResultTInfo;
+
   /// ParamInfo - List of pointers to VarDecls for the formal parameters of this
   /// Method.
   ObjCList<ParmVarDecl> ParamInfo;
@@ -158,6 +162,7 @@ private:
 
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
+                 TypeSourceInfo *ResultTInfo,
                  DeclContext *contextDecl,
                  bool isInstance = true,
                  bool isVariadic = false,
@@ -168,7 +173,7 @@ private:
     IsInstance(isInstance), IsVariadic(isVariadic),
     IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    MethodDeclType(T),
+    MethodDeclType(T), ResultTInfo(ResultTInfo),
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
   virtual ~ObjCMethodDecl() {}
@@ -186,7 +191,9 @@ public:
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc,
                                 SourceLocation endLoc, Selector SelInfo,
-                                QualType T, DeclContext *contextDecl,
+                                QualType T, 
+                                TypeSourceInfo *ResultTInfo,
+                                DeclContext *contextDecl,
                                 bool isInstance = true,
                                 bool isVariadic = false,
                                 bool isSynthesized = false,
@@ -219,6 +226,9 @@ public:
 
   QualType getResultType() const { return MethodDeclType; }
   void setResultType(QualType T) { MethodDeclType = T; }
+
+  TypeSourceInfo *getResultTypeSourceInfo() const { return ResultTInfo; }
+  void setResultTypeSourceInfo(TypeSourceInfo *TInfo) { ResultTInfo = TInfo; }
 
   // Iterator access to formal parameters.
   unsigned param_size() const { return ParamInfo.size(); }

@@ -211,6 +211,7 @@ void PCHDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record[Idx++]);
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
   MD->setResultType(Reader.GetType(Record[Idx++]));
+  MD->setResultTypeSourceInfo(Reader.GetTypeSourceInfo(Record, Idx));
   MD->setEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   unsigned NumParams = Record[Idx++];
   llvm::SmallVector<ParmVarDecl *, 16> Params;
@@ -690,7 +691,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_OBJC_METHOD:
     D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(),
-                               Selector(), QualType(), 0);
+                               Selector(), QualType(), 0, 0);
     break;
   case pch::DECL_OBJC_INTERFACE:
     D = ObjCInterfaceDecl::Create(*Context, 0, SourceLocation(), 0);

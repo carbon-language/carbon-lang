@@ -2244,12 +2244,14 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   if (ResultTy.isNull())
     return 0;
 
+  TypeSourceInfo *ResultTInfo = Importer.Import(D->getResultTypeSourceInfo());
+
   ObjCMethodDecl *ToMethod
     = ObjCMethodDecl::Create(Importer.getToContext(),
                              Loc,
                              Importer.Import(D->getLocEnd()),
                              Name.getObjCSelector(),
-                             ResultTy, DC,
+                             ResultTy, ResultTInfo, DC,
                              D->isInstanceMethod(),
                              D->isVariadic(),
                              D->isSynthesized(),

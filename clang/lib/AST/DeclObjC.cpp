@@ -304,15 +304,16 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        SourceLocation beginLoc,
                                        SourceLocation endLoc,
                                        Selector SelInfo, QualType T,
+                                       TypeSourceInfo *ResultTInfo,
                                        DeclContext *contextDecl,
                                        bool isInstance,
                                        bool isVariadic,
                                        bool isSynthesized,
                                        ImplementationControl impControl) {
   return new (C) ObjCMethodDecl(beginLoc, endLoc,
-                                  SelInfo, T, contextDecl,
-                                  isInstance,
-                                  isVariadic, isSynthesized, impControl);
+                                SelInfo, T, ResultTInfo, contextDecl,
+                                isInstance,
+                                isVariadic, isSynthesized, impControl);
 }
 
 void ObjCMethodDecl::Destroy(ASTContext &C) {

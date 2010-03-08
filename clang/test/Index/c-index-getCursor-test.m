@@ -90,7 +90,9 @@ int main (int argc, const char * argv[]) {
 // CHECK: [31:27 - 33:9] ObjCInterfaceDecl=Baz:31:12
 // CHECK: [33:9 - 33:16] ObjCIvarDecl=_anIVar:33:9 (Definition)
 // CHECK: [33:16 - 36:1] ObjCInterfaceDecl=Baz:31:12
-// CHECK: [36:1 - 36:21] ObjCInstanceMethodDecl=bazMethod:36:1
+// CHECK: [36:1 - 36:4] ObjCInstanceMethodDecl=bazMethod:36:1
+// CHECK: [36:4 - 36:7] ObjCClassRef=Foo:3:12
+// CHECK: [36:7 - 36:21] ObjCInstanceMethodDecl=bazMethod:36:1
 // CHECK: [36:21 - 38:5] ObjCInterfaceDecl=Baz:31:12
 // CHECK: [38:5 - 40:1] Invalid Cursor => NoDeclFound
 // CHECK: [40:1 - 41:3] EnumDecl=:40:1 (Definition)

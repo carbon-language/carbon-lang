@@ -1681,7 +1681,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     // for this class.
     GetterMethod = ObjCMethodDecl::Create(Context, property->getLocation(),
                              property->getLocation(), property->getGetterName(),
-                             property->getType(), CD, true, false, true,
+                             property->getType(), 0, CD, true, false, true,
                              (property->getPropertyImplementation() ==
                               ObjCPropertyDecl::Optional) ?
                              ObjCMethodDecl::Optional :
@@ -1703,7 +1703,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       SetterMethod = ObjCMethodDecl::Create(Context, property->getLocation(),
                                property->getLocation(),
                                property->getSetterName(),
-                               Context.VoidTy, CD, true, false, true,
+                               Context.VoidTy, 0, CD, true, false, true,
                                (property->getPropertyImplementation() ==
                                 ObjCPropertyDecl::Optional) ?
                                ObjCMethodDecl::Optional :
@@ -1992,8 +1992,9 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   }
   QualType resultDeclType;
 
+  TypeSourceInfo *ResultTInfo = 0;
   if (ReturnType) {
-    resultDeclType = GetTypeFromParser(ReturnType);
+    resultDeclType = GetTypeFromParser(ReturnType, &ResultTInfo);
 
     // Methods cannot return interface types. All ObjC objects are
     // passed by reference.
@@ -2007,6 +2008,7 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
 
   ObjCMethodDecl* ObjCMethod =
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
+                           ResultTInfo,
                            cast<DeclContext>(ClassDecl),
                            MethodType == tok::minus, isVariadic,
                            false,

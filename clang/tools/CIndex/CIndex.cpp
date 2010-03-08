@@ -532,9 +532,10 @@ bool CursorVisitor::VisitVarDecl(VarDecl *D) {
 }
 
 bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
-  // FIXME: We really need a TypeLoc covering Objective-C method declarations.
-  // At the moment, we don't have information about locations in the return
-  // type.
+  if (TypeSourceInfo *TSInfo = ND->getResultTypeSourceInfo())
+    if (Visit(TSInfo->getTypeLoc()))
+      return true;
+
   for (ObjCMethodDecl::param_iterator P = ND->param_begin(),
        PEnd = ND->param_end();
        P != PEnd; ++P) {
