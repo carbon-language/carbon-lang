@@ -447,13 +447,22 @@ public:
     // See <reloc.h>.
     const MCSymbol *A = Target.getSymA();
     MCSymbolData *SD = SymbolMap.lookup(A);
+
+    if (!SD->getFragment())
+      llvm_report_error("symbol '" + A->getName() +
+                        "' can not be undefined in a subtraction expression");
+
     uint32_t Value = SD->getFragment()->getAddress() + SD->getOffset();
     uint32_t Value2 = 0;
 
     if (const MCSymbol *B = Target.getSymB()) {
-      Type = RIT_LocalDifference;
-
       MCSymbolData *SD = SymbolMap.lookup(B);
+
+      if (!SD->getFragment())
+        llvm_report_error("symbol '" + B->getName() +
+                          "' can not be undefined in a subtraction expression");
+
+      Type = RIT_LocalDifference;
       Value2 = SD->getFragment()->getAddress() + SD->getOffset();
     }
 
