@@ -2370,7 +2370,7 @@ class ROTHInst<dag OOL, dag IOL, list<dag> pattern>:
 class ROTHVecInst<ValueType vectype>:
     ROTHInst<(outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
              [(set (vectype VECREG:$rT),
-                   (SPUvec_rotl VECREG:$rA, VECREG:$rB))]>;
+                   (SPUvec_rotl VECREG:$rA, (v8i16 VECREG:$rB)))]>;
 
 class ROTHRegInst<RegisterClass rclass>:
     ROTHInst<(outs rclass:$rT), (ins rclass:$rA, rclass:$rB),

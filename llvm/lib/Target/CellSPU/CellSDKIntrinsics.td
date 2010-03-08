@@ -205,6 +205,7 @@ def CellSDKnand:
 // Shift/rotate intrinsics:
 //===----------------------------------------------------------------------===//
 
+/* FIXME: These have (currently unenforced) type conflicts. */
 def CellSDKshli:
   Pat<(int_spu_si_shli (v4i32 VECREG:$rA), uimm7:$val),
       (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
