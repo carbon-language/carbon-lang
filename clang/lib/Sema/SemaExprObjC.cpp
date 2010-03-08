@@ -470,13 +470,13 @@ Sema::ExprResult Sema::ActOnClassMessage(
   // now, we simply pass the "super" identifier through (which isn't consistent
   // with instance methods.
   if (isSuper)
-    return new (Context) ObjCMessageExpr(Context, receiverName, Sel, returnType,
-                                         Method, lbrac, rbrac, ArgExprs,
-                                         NumArgs);
+    return new (Context) ObjCMessageExpr(Context, receiverName, receiverLoc,
+                                         Sel, returnType, Method, lbrac, rbrac, 
+                                         ArgExprs, NumArgs);
   else
-    return new (Context) ObjCMessageExpr(Context, ClassDecl, Sel, returnType,
-                                         Method, lbrac, rbrac, ArgExprs,
-                                         NumArgs);
+    return new (Context) ObjCMessageExpr(Context, ClassDecl, receiverLoc,
+                                         Sel, returnType, Method, lbrac, rbrac, 
+                                         ArgExprs, NumArgs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.

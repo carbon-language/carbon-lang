@@ -315,6 +315,7 @@ public:
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
   bool VisitExplicitCastExpr(ExplicitCastExpr *E);
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
+  bool VisitObjCMessageExpr(ObjCMessageExpr *E);
 };
 
 } // end anonymous namespace
@@ -897,6 +898,14 @@ bool CursorVisitor::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
   if (TypeSourceInfo *TSInfo = E->getTypeSourceInfo())
     if (Visit(TSInfo->getTypeLoc()))
       return true;
+
+  return VisitExpr(E);
+}
+
+bool CursorVisitor::VisitObjCMessageExpr(ObjCMessageExpr *E) {
+  ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
+  if (CI.Decl && Visit(MakeCursorObjCClassRef(CI.Decl, CI.Loc, TU)))
+    return true;
 
   return VisitExpr(E);
 }

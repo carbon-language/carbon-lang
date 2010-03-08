@@ -177,7 +177,7 @@ public:
       if (IsInstanceMethod)
         return false;
 
-      MsgD = Msg->getClassInfo().first;
+      MsgD = Msg->getClassInfo().Decl;
       // FIXME: Case when we only have an identifier.
       assert(MsgD && "Identifier only");
     }
@@ -250,7 +250,7 @@ public:
     while (true) {
       if (Msg->getReceiver() == 0) {
         CanBeClassMethod = true;
-        MsgD = Msg->getClassInfo().first;
+        MsgD = Msg->getClassInfo().Decl;
         // FIXME: Case when we only have an identifier.
         assert(MsgD && "Identifier only");
         break;

@@ -853,7 +853,7 @@ public:
 
   RetainSummary *getClassMethodSummary(const ObjCMessageExpr *ME) {
     return getClassMethodSummary(ME->getSelector(), ME->getClassName(),
-                                 ME->getClassInfo().first,
+                                 ME->getClassInfo().Decl,
                                  ME->getMethodDecl(), ME->getType());
   }
 
@@ -2511,7 +2511,7 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
         // id, id<...>, or Class. If we have an ObjCInterfaceDecl, we know this
         // is a call to a class method whose type we can resolve.  In such
         // cases, promote the return type to XXX* (where XXX is the class).
-        const ObjCInterfaceDecl *D = ME->getClassInfo().first;
+        const ObjCInterfaceDecl *D = ME->getClassInfo().Decl;
         return !D ? RetTy : Ctx.getPointerType(Ctx.getObjCInterfaceType(D));
       }
 

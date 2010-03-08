@@ -720,8 +720,9 @@ void PCHStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
   if (!E->getReceiver()) {
     ObjCMessageExpr::ClassInfo CI = E->getClassInfo();
-    Writer.AddDeclRef(CI.first, Record);
-    Writer.AddIdentifierRef(CI.second, Record);
+    Writer.AddDeclRef(CI.Decl, Record);
+    Writer.AddIdentifierRef(CI.Name, Record);
+    Writer.AddSourceLocation(CI.Loc, Record);
   }
 
   for (CallExpr::arg_iterator Arg = E->arg_begin(), ArgEnd = E->arg_end();

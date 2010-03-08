@@ -120,7 +120,9 @@ int main (int argc, const char * argv[]) {
 // CHECK: [47:4 - 47:6] VarDecl=c:47:12 (Definition)
 // CHECK: [47:6 - 47:10] ObjCProtocolRef=SubP:27:1
 // CHECK: [47:10 - 47:16] VarDecl=c:47:12 (Definition)
-// CHECK: [47:16 - 47:26] ObjCMessageExpr=fooC:8:1
+// CHECK: [47:16 - 47:17] ObjCMessageExpr=fooC:8:1
+// CHECK: [47:17 - 47:20] ObjCClassRef=Foo:3:12
+// CHECK: [47:20 - 47:26] ObjCMessageExpr=fooC:8:1
 // CHECK: [47:26 - 47:27] UnexposedStmt=
 // CHECK: [47:27 - 48:2] UnexposedStmt=
 // CHECK: [48:2 - 48:4] TypeRef=id:0:0

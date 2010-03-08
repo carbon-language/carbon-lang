@@ -347,6 +347,9 @@ class ObjCMessageExpr : public Expr {
   //  message expression.
   unsigned NumArgs;
 
+  /// \brief The location of the class name in a class message.
+  SourceLocation ClassNameLoc;
+
   // A unigue name for this message.
   Selector SelName;
 
@@ -367,7 +370,8 @@ class ObjCMessageExpr : public Expr {
 public:
   /// This constructor is used to represent class messages where the
   /// ObjCInterfaceDecl* of the receiver is not known.
-  ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName, Selector selInfo,
+  ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName, 
+                  SourceLocation clsNameLoc, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
@@ -375,7 +379,8 @@ public:
   /// This constructor is used to represent class messages where the
   /// ObjCInterfaceDecl* of the receiver is known.
   // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(ASTContext &C, ObjCInterfaceDecl *cls, Selector selInfo,
+  ObjCMessageExpr(ASTContext &C, ObjCInterfaceDecl *cls, 
+                  SourceLocation clsNameLoc, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
@@ -411,7 +416,24 @@ public:
   ObjCMethodDecl *getMethodDecl() { return MethodProto; }
   void setMethodDecl(ObjCMethodDecl *MD) { MethodProto = MD; }
 
-  typedef std::pair<ObjCInterfaceDecl*, IdentifierInfo*> ClassInfo;
+  /// \brief Describes the class receiver of a message send.
+  struct ClassInfo {
+    /// \brief The interface declaration for the class that is
+    /// receiving the message. May be NULL.
+    ObjCInterfaceDecl *Decl;
+
+    /// \brief The name of the class that is receiving the
+    /// message. This will never be NULL.
+    IdentifierInfo *Name;
+
+    /// \brief The source location of the class name.
+    SourceLocation Loc;
+
+    ClassInfo() : Decl(0), Name(0), Loc() { }
+
+    ClassInfo(ObjCInterfaceDecl *Decl, IdentifierInfo *Name, SourceLocation Loc)
+      : Decl(Decl), Name(Name), Loc(Loc) { }
+  };
 
   /// getClassInfo - For class methods, this returns both the ObjCInterfaceDecl*
   ///  and IdentifierInfo* of the invoked class.  Both can be NULL if this
@@ -423,7 +445,7 @@ public:
   /// getClassName - For class methods, this returns the invoked class,
   ///  and returns NULL otherwise.  For instance methods, use getReceiver.
   IdentifierInfo *getClassName() const {
-    return getClassInfo().second;
+    return getClassInfo().Name;
   }
 
   /// getNumArgs - Return the number of actual arguments to this call.

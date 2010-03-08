@@ -2115,12 +2115,12 @@ ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, Expr *receiver,
 // constructor for class messages.
 // FIXME: clsName should be typed to ObjCInterfaceType
 ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName,
-                                 Selector selInfo, QualType retType,
-                                 ObjCMethodDecl *mproto,
+                                 SourceLocation clsNameLoc, Selector selInfo, 
+                                 QualType retType, ObjCMethodDecl *mproto,
                                  SourceLocation LBrac, SourceLocation RBrac,
                                  Expr **ArgExprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
-    MethodProto(mproto) {
+  : Expr(ObjCMessageExprClass, retType, false, false), ClassNameLoc(clsNameLoc),
+    SelName(selInfo), MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new (C) Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | IsClsMethDeclUnknown);
@@ -2134,12 +2134,14 @@ ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, IdentifierInfo *clsName,
 
 // constructor for class messages.
 ObjCMessageExpr::ObjCMessageExpr(ASTContext &C, ObjCInterfaceDecl *cls,
-                                 Selector selInfo, QualType retType,
+                                 SourceLocation clsNameLoc, Selector selInfo, 
+                                 QualType retType,
                                  ObjCMethodDecl *mproto, SourceLocation LBrac,
                                  SourceLocation RBrac, Expr **ArgExprs,
                                  unsigned nargs)
-: Expr(ObjCMessageExprClass, retType, false, false), SelName(selInfo),
-MethodProto(mproto) {
+  : Expr(ObjCMessageExprClass, retType, false, false), ClassNameLoc(clsNameLoc),
+    SelName(selInfo), MethodProto(mproto) 
+{
   NumArgs = nargs;
   SubExprs = new (C) Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = (Expr*) ((uintptr_t) cls | IsClsMethDeclKnown);
@@ -2157,23 +2159,27 @@ ObjCMessageExpr::ClassInfo ObjCMessageExpr::getClassInfo() const {
     default:
       assert(false && "Invalid ObjCMessageExpr.");
     case IsInstMeth:
-      return ClassInfo(0, 0);
+      return ClassInfo(0, 0, SourceLocation());
     case IsClsMethDeclUnknown:
-      return ClassInfo(0, (IdentifierInfo*) (x & ~Flags));
+      return ClassInfo(0, (IdentifierInfo*) (x & ~Flags), ClassNameLoc);
     case IsClsMethDeclKnown: {
       ObjCInterfaceDecl* D = (ObjCInterfaceDecl*) (x & ~Flags);
-      return ClassInfo(D, D->getIdentifier());
+      return ClassInfo(D, D->getIdentifier(), ClassNameLoc);
     }
   }
 }
 
 void ObjCMessageExpr::setClassInfo(const ObjCMessageExpr::ClassInfo &CI) {
-  if (CI.first == 0 && CI.second == 0)
+  if (CI.Decl == 0 && CI.Name == 0) {
     SubExprs[RECEIVER] = (Expr*)((uintptr_t)0 | IsInstMeth);
-  else if (CI.first == 0)
-    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.second | IsClsMethDeclUnknown);
+    return;
+  }
+
+  if (CI.Decl == 0)
+    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.Name | IsClsMethDeclUnknown);
   else
-    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.first | IsClsMethDeclKnown);
+    SubExprs[RECEIVER] = (Expr*)((uintptr_t)CI.Decl | IsClsMethDeclKnown);
+  ClassNameLoc = CI.Loc;
 }
 
 void ObjCMessageExpr::DoDestroy(ASTContext &C) {
