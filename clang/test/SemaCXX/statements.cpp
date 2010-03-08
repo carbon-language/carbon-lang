@@ -15,3 +15,8 @@ void test2() {
 later:
   ;
 }
+
+namespace PR6536 {
+  struct A {};
+  void a() { goto out; A x; out: return; }
+}

@@ -3809,24 +3809,38 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       return;
     }
 
-    InitializedEntity Entity = InitializedEntity::InitializeVariable(Var);
-    InitializationKind Kind
-      = InitializationKind::CreateDefault(Var->getLocation());
+    const RecordType *Record
+      = Context.getBaseElementType(Type)->getAs<RecordType>();
+    if (Record && getLangOptions().CPlusPlus && !getLangOptions().CPlusPlus0x &&
+        cast<CXXRecordDecl>(Record->getDecl())->isPOD()) {
+      // C++03 [dcl.init]p9:
+      //   If no initializer is specified for an object, and the
+      //   object is of (possibly cv-qualified) non-POD class type (or
+      //   array thereof), the object shall be default-initialized; if
+      //   the object is of const-qualified type, the underlying class
+      //   type shall have a user-declared default
+      //   constructor. Otherwise, if no initializer is specified for
+      //   a non- static object, the object and its subobjects, if
+      //   any, have an indeterminate initial value); if the object
+      //   or any of its subobjects are of const-qualified type, the
+      //   program is ill-formed.
+      // FIXME: DPG thinks it is very fishy that C++0x disables this.
+    } else {
+      InitializedEntity Entity = InitializedEntity::InitializeVariable(Var);
+      InitializationKind Kind
+        = InitializationKind::CreateDefault(Var->getLocation());
     
-    InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
-    OwningExprResult Init = InitSeq.Perform(*this, Entity, Kind,
-                                            MultiExprArg(*this, 0, 0));
-    if (Init.isInvalid())
-      Var->setInvalidDecl();
-    else {
-      if (Init.get())
+      InitializationSequence InitSeq(*this, Entity, Kind, 0, 0);
+      OwningExprResult Init = InitSeq.Perform(*this, Entity, Kind,
+                                              MultiExprArg(*this, 0, 0));
+      if (Init.isInvalid())
+        Var->setInvalidDecl();
+      else if (Init.get())
         Var->setInit(MaybeCreateCXXExprWithTemporaries(Init.takeAs<Expr>()));
-
-      if (getLangOptions().CPlusPlus)
-        if (const RecordType *Record
-                        = Context.getBaseElementType(Type)->getAs<RecordType>())
-          FinalizeVarWithDestructor(Var, Record);
     }
+
+    if (!Var->isInvalidDecl() && getLangOptions().CPlusPlus && Record)
+      FinalizeVarWithDestructor(Var, Record);
   }
 }
 

@@ -5,7 +5,8 @@
 // If a program calls for the default initialization of an object of a
 // const-qualified type T, T shall be a class type with a
 // user-provided default constructor.
-struct NoUserDefault { };
+struct MakeNonPOD { MakeNonPOD(); };
+struct NoUserDefault : public MakeNonPOD { };
 struct HasUserDefault { HasUserDefault(); };
 
 void test_const_default_init() {
