@@ -245,11 +245,6 @@ class DwarfDebug : public DwarfPrinter {
   void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                 const MCSymbol *Label);
 
-  /// addObjectLabel - Add an non-Dwarf label attribute data and value.
-  ///
-  void addObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                      const MCSymbol *Sym);
-
   /// addSectionOffset - Add a section offset label attribute data and value.
   ///
   void addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,

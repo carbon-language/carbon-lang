@@ -159,13 +159,6 @@ public:
                          bool IsSmall = false, bool isEH = false,
                          bool useSet = true);
   
-#if 0
-  void EmitSectionOffset(const char* Label, const char* Section,
-                         unsigned LabelNumber, unsigned SectionNumber,
-                         bool IsSmall = false, bool isEH = false,
-                         bool useSet = true);
-#endif
-
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.
   void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,

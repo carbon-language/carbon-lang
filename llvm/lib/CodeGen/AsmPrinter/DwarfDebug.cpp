@@ -367,17 +367,7 @@ void DwarfDebug::addString(DIE *Die, unsigned Attribute, unsigned Form,
 ///
 void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
                           const MCSymbol *Label) {
-  // FIXME: Merge into DIEObjectLabel?
-  DIEValue *Value = new DIEDwarfLabel(Label);
-  DIEValues.push_back(Value);
-  Die->addValue(Attribute, Form, Value);
-}
-
-/// addObjectLabel - Add an non-Dwarf label attribute data and value.
-///
-void DwarfDebug::addObjectLabel(DIE *Die, unsigned Attribute, unsigned Form,
-                                const MCSymbol *Sym) {
-  DIEValue *Value = new DIEObjectLabel(Sym);
+  DIEValue *Value = new DIELabel(Label);
   DIEValues.push_back(Value);
   Die->addValue(Attribute, Form, Value);
 }
@@ -1704,16 +1694,16 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
                 dwarf::DW_FORM_ref4, VariableDie);
     DIEBlock *Block = new DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                   Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
+    addLabel(Block, 0, dwarf::DW_FORM_udata,
+             Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
     addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
     addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
     ModuleCU->addDie(VariableSpecDIE);
   } else {
     DIEBlock *Block = new DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                   Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
+    addLabel(Block, 0, dwarf::DW_FORM_udata,
+             Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
     addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
   }
   addToContextOwner(VariableDie, GVContext);

@@ -203,7 +203,6 @@ namespace llvm {
       isInteger,
       isString,
       isLabel,
-      isAsIsLabel,
       isSectionOffset,
       isDelta,
       isEntry,
@@ -306,13 +305,12 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIEDwarfLabel - A Dwarf internal label expression DIE.
+  /// DIELabel - A label expression DIE.
   //
-  /// FIXME: Merge into DIEObjectLabel.
-  class DIEDwarfLabel : public DIEValue {
+  class DIELabel : public DIEValue {
     const MCSymbol *Label;
   public:
-    explicit DIEDwarfLabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
+    explicit DIELabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
 
     /// EmitValue - Emit label value.
     ///
@@ -323,36 +321,8 @@ namespace llvm {
     virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
 
     // Implement isa/cast/dyncast.
-    static bool classof(const DIEDwarfLabel *)  { return true; }
+    static bool classof(const DIELabel *)  { return true; }
     static bool classof(const DIEValue *L) { return L->getType() == isLabel; }
-
-#ifndef NDEBUG
-    virtual void print(raw_ostream &O);
-#endif
-  };
-
-  //===--------------------------------------------------------------------===//
-  /// DIEObjectLabel - A label to an object in code or data.
-  //
-  class DIEObjectLabel : public DIEValue {
-    const MCSymbol *Sym;
-  public:
-    explicit DIEObjectLabel(const MCSymbol *S)
-      : DIEValue(isAsIsLabel), Sym(S) {}
-
-    /// EmitValue - Emit label value.
-    ///
-    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
-
-    /// SizeOf - Determine size of label value in bytes.
-    ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
-
-    // Implement isa/cast/dyncast.
-    static bool classof(const DIEObjectLabel *) { return true; }
-    static bool classof(const DIEValue *L) {
-      return L->getType() == isAsIsLabel;
-    }
 
 #ifndef NDEBUG
     virtual void print(raw_ostream &O);

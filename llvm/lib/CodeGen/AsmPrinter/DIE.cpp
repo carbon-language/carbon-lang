@@ -254,50 +254,26 @@ void DIEString::print(raw_ostream &O) {
 #endif
 
 //===----------------------------------------------------------------------===//
-// DIEDwarfLabel Implementation
+// DIELabel Implementation
 //===----------------------------------------------------------------------===//
 
 /// EmitValue - Emit label value.
 ///
-void DIEDwarfLabel::EmitValue(DwarfPrinter *D, unsigned Form) const {
+void DIELabel::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
   D->EmitReference(Label, false, IsSmall);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
-unsigned DIEDwarfLabel::SizeOf(const TargetData *TD, unsigned Form) const {
+unsigned DIELabel::SizeOf(const TargetData *TD, unsigned Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
   return TD->getPointerSize();
 }
 
 #ifndef NDEBUG
-void DIEDwarfLabel::print(raw_ostream &O) {
+void DIELabel::print(raw_ostream &O) {
   O << "Lbl: " << Label->getName();
-}
-#endif
-
-//===----------------------------------------------------------------------===//
-// DIEObjectLabel Implementation
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit label value.
-///
-void DIEObjectLabel::EmitValue(DwarfPrinter *D, unsigned Form) const {
-  bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitReference(Sym, false, IsSmall);
-}
-
-/// SizeOf - Determine size of label value in bytes.
-///
-unsigned DIEObjectLabel::SizeOf(const TargetData *TD, unsigned Form) const {
-  if (Form == dwarf::DW_FORM_data4) return 4;
-  return TD->getPointerSize();
-}
-
-#ifndef NDEBUG
-void DIEObjectLabel::print(raw_ostream &O) {
-  O << "Obj: " << Sym->getName();
 }
 #endif
 
