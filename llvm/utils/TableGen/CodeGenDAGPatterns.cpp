@@ -1238,6 +1238,14 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
                                 std::vector<std::pair<Init*, std::string> >()));
         return ParseTreePattern(Dag);
       }
+      
+      // Input argument?
+      if (R->getName() == "node") {
+        if (Dag->getArgName(0).empty())
+          error("'node' argument requires a name to match with operand list");
+        Args.push_back(Dag->getArgName(0));
+      }
+      
       New = new TreePatternNode(DI);
     } else if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
       New = ParseTreePattern(DI);
