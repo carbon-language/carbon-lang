@@ -118,7 +118,23 @@ entry:
   ret i32 0
 }
 
+@s = external global i8*
+
+define void @test5(i32 %n) nounwind ssp {
+; CHECK: @test5
+entry:
+  %0 = tail call noalias i8* @malloc(i32 20) nounwind
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %0, i1 false)
+  %2 = load i8** @s, align 8
+; CHECK-NOT: @llvm.objectsize
+; CHECK: @__memcpy_chk(i8* %0, i8* %1, i32 10, i32 20)
+  %3 = tail call i8* @__memcpy_chk(i8* %0, i8* %2, i32 10, i32 %1) nounwind
+  ret void
+}
+
 declare i8* @__memset_chk(i8*, i32, i64, i64) nounwind
+
+declare noalias i8* @malloc(i32) nounwind
 
 declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
 
