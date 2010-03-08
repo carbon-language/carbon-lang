@@ -66,6 +66,10 @@ class DwarfDebug : public DwarfPrinter {
   /// compile units.
   DenseMap<Value *, CompileUnit *> CompileUnitMap;
 
+  /// CompileUnits - All the compile units in this module.
+  ///
+  SmallVector<CompileUnit *, 8> CompileUnits;
+
   /// ModuleCU - All DIEs are inserted in ModuleCU.
   CompileUnit *ModuleCU;
 
@@ -130,8 +134,7 @@ class DwarfDebug : public DwarfPrinter {
   //
   DbgScope *CurrentFnDbgScope;
   
-  /// DbgScopeMap - Tracks the scopes in the current function.  Owns the
-  /// contained DbgScope*s.
+  /// DbgScopeMap - Tracks the scopes in the current function.
   ///
   DenseMap<MDNode *, DbgScope *> DbgScopeMap;
 
@@ -140,7 +143,7 @@ class DwarfDebug : public DwarfPrinter {
   DenseMap<MDNode *, DbgScope *> ConcreteScopes;
 
   /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
-  /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
+  /// not included DbgScopeMap.
   DenseMap<MDNode *, DbgScope *> AbstractScopes;
   SmallVector<DbgScope *, 4>AbstractScopesList;
 
