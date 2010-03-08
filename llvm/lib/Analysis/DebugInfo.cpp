@@ -219,6 +219,11 @@ bool DIDescriptor::isCompileUnit() const {
   return DbgNode && getTag() == dwarf::DW_TAG_compile_unit;
 }
 
+/// isFile - Return true if the specified tag is DW_TAG_file_type.
+bool DIDescriptor::isFile() const {
+  return DbgNode && getTag() == dwarf::DW_TAG_file_type;
+}
+
 /// isNameSpace - Return true if the specified tag is DW_TAG_namespace.
 bool DIDescriptor::isNameSpace() const {
   return DbgNode && getTag() == dwarf::DW_TAG_namespace;
@@ -424,6 +429,8 @@ StringRef DIScope::getFilename() const {
     return DINameSpace(DbgNode).getFilename();
   if (isType())
     return DIType(DbgNode).getFilename();
+  if (isFile())
+    return DIFile(DbgNode).getFilename();
   assert(0 && "Invalid DIScope!");
   return StringRef();
 }
@@ -441,6 +448,8 @@ StringRef DIScope::getDirectory() const {
     return DINameSpace(DbgNode).getDirectory();
   if (isType())
     return DIType(DbgNode).getDirectory();
+  if (isFile())
+    return DIFile(DbgNode).getDirectory();
   assert(0 && "Invalid DIScope!");
   return StringRef();
 }
@@ -659,6 +668,20 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
   };
 
   return DICompileUnit(MDNode::get(VMContext, &Elts[0], 10));
+}
+
+/// CreateFile -  Create a new descriptor for the specified file.
+DIFile DIFactory::CreateFile(StringRef Filename,
+                             StringRef Directory,
+                             DICompileUnit CU) {
+  Value *Elts[] = {
+    GetTagConstant(dwarf::DW_TAG_file_type),
+    MDString::get(VMContext, Filename),
+    MDString::get(VMContext, Directory),
+    CU.getNode()
+  };
+
+  return DIFile(MDNode::get(VMContext, &Elts[0], 4));
 }
 
 /// CreateEnumerator - Create a single enumerator value.

@@ -87,6 +87,7 @@ namespace llvm {
     bool isSubprogram() const;
     bool isGlobalVariable() const;
     bool isScope() const;
+    bool isFile() const;
     bool isCompileUnit() const;
     bool isNameSpace() const;
     bool isLexicalBlock() const;
@@ -156,6 +157,18 @@ namespace llvm {
 
     /// dump - print compile unit.
     void dump() const;
+  };
+
+  /// DIFile - This is a wrapper for a file.
+  class DIFile : public DIScope {
+  public:
+    explicit DIFile(MDNode *N = 0) : DIScope(N) {
+      if (DbgNode && !isFile())
+        DbgNode = 0;
+    }
+    StringRef getFilename() const  { return getStringField(1);   }
+    StringRef getDirectory() const { return getStringField(2);   }
+    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -501,6 +514,9 @@ namespace llvm {
                                     bool isOptimized = false,
                                     StringRef Flags = "",
                                     unsigned RunTimeVer = 0);
+
+    /// CreateFile -  Create a new descriptor for the specified file.
+    DIFile CreateFile(StringRef Filename, StringRef Directory, DICompileUnit CU);
 
     /// CreateEnumerator - Create a single enumerator value.
     DIEnumerator CreateEnumerator(StringRef Name, uint64_t Val);
