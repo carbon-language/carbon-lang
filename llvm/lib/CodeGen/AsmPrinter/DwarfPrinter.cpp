@@ -35,7 +35,7 @@ DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
                            const char *flavor)
 : O(OS), Asm(A), MAI(T), TD(Asm->TM.getTargetData()),
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
-  SubprogramCount(0), Flavor(flavor), SetCounter(1) {}
+  SubprogramCount(0), Flavor(flavor) {}
 
 
 /// getDWLabel - Return the MCSymbol corresponding to the assembler temporary
@@ -243,7 +243,7 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   O << *TLOF.getSymbolForDwarfReference(Sym, Asm->MMI, Encoding);;
 }
 
-void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const {
+void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   PrintRelDirective(Encoding);
@@ -255,25 +255,8 @@ void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const 
 /// supports .set, we emit a .set of a temporary and then use it in the .word.
 void DwarfPrinter::EmitDifference(const MCSymbol *TagHi, const MCSymbol *TagLo,
                                   bool IsSmall) {
-  if (MAI->hasSetDirective()) {
-    // FIXME: switch to OutStreamer.EmitAssignment.
-    O << "\t.set\t";
-    PrintLabelName("set", SetCounter, Flavor);
-    O << ",";
-    PrintLabelName(TagHi);
-    O << "-";
-    PrintLabelName(TagLo);
-    O << "\n";
-
-    PrintRelDirective(IsSmall);
-    PrintLabelName("set", SetCounter, Flavor);
-    ++SetCounter;
-  } else {
-    PrintRelDirective(IsSmall);
-    PrintLabelName(TagHi);
-    O << "-";
-    PrintLabelName(TagLo);
-  }
+  unsigned Size = IsSmall ? 4 : TD->getPointerSize();
+  Asm->EmitLabelDifference(TagHi, TagLo, Size);
 }
 
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,

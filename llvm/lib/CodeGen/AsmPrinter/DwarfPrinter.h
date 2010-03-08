@@ -70,9 +70,6 @@ protected:
   /// unique labels.
   const char * const Flavor;
 
-  /// SetCounter - A unique number for each '.set' directive.
-  unsigned SetCounter;
-
   DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
                const char *flavor);
 public:

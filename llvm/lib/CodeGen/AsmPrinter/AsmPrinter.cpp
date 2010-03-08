@@ -61,7 +61,7 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
   : MachineFunctionPass(&ID), O(o),
     TM(tm), MAI(T), TRI(tm.getRegisterInfo()),
     OutContext(Ctx), OutStreamer(Streamer),
-    LastMI(0), LastFn(0), Counter(~0U), PrevDLT(NULL) {
+    LastMI(0), LastFn(0), Counter(~0U), SetCounter(0), PrevDLT(NULL) {
   DW = 0; MMI = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
@@ -892,6 +892,33 @@ void AsmPrinter::EmitInt32(int Value) const {
 void AsmPrinter::EmitInt64(uint64_t Value) const {
   OutStreamer.EmitIntValue(Value, 8, 0/*addrspace*/);
 }
+
+/// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
+/// in bytes of the directive is specified by Size and Hi/Lo specify the
+/// labels.  This implicitly uses .set if it is available.
+void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
+                                     unsigned Size) const {
+  // Get the Hi-Lo expression.
+  const MCExpr *Diff = 
+    MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(Hi, OutContext),
+                            MCSymbolRefExpr::Create(Lo, OutContext),
+                            OutContext);
+  
+  if (!MAI->hasSetDirective()) {
+    OutStreamer.EmitValue(Diff, Size, 0/*AddrSpace*/);
+    return;
+  }
+
+  // Otherwise, emit with .set (aka assignment).
+  MCSymbol *SetLabel =
+    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + "set" +
+                                 Twine(SetCounter++));
+  OutStreamer.EmitAssignment(SetLabel, Diff);
+  
+  OutStreamer.EmitValue(MCSymbolRefExpr::Create(SetLabel, OutContext),
+                        Size, 0/*AddrSpace*/);
+}
+
 
 //===----------------------------------------------------------------------===//
 

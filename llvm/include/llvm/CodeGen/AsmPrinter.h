@@ -136,6 +136,7 @@ namespace llvm {
     mutable const MachineInstr *LastMI;
     mutable const Function *LastFn;
     mutable unsigned Counter;
+    mutable unsigned SetCounter;
     
     // Private state for processDebugLoc()
     mutable const MDNode *PrevDLT;
@@ -275,6 +276,13 @@ namespace llvm {
     /// EmitInt64 - Emit a long long directive and value.
     ///
     void EmitInt64(uint64_t Value) const;
+    
+    
+    /// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
+    /// in bytes of the directive is specified by Size and Hi/Lo specify the
+    /// labels.  This implicitly uses .set if it is available.
+    void EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
+                             unsigned Size) const;
 
     //===------------------------------------------------------------------===//
 
