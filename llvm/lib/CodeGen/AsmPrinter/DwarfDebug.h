@@ -346,7 +346,7 @@ class DwarfDebug : public DwarfPrinter {
                              DICompositeType *CTy);
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
-  DIE *constructEnumTypeDIE(DIEnumerator *ETy);
+  DIE *constructEnumTypeDIE(DIEnumerator ETy);
 
   /// createGlobalVariableDIE - Create new DIE using GV.
   DIE *createGlobalVariableDIE(const DIGlobalVariable &GV);

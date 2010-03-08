@@ -132,13 +132,12 @@ unsigned DIVariable::getNumAddrElements() const {
 /// isBasicType - Return true if the specified tag is legal for
 /// DIBasicType.
 bool DIDescriptor::isBasicType() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_base_type;
+  return DbgNode && getTag() == dwarf::DW_TAG_base_type;
 }
 
 /// isDerivedType - Return true if the specified tag is legal for DIDerivedType.
 bool DIDescriptor::isDerivedType() const {
-  assert(!isNull() && "Invalid descriptor!");
+  if (!DbgNode) return false;
   switch (getTag()) {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_pointer_type:
@@ -158,7 +157,7 @@ bool DIDescriptor::isDerivedType() const {
 /// isCompositeType - Return true if the specified tag is legal for
 /// DICompositeType.
 bool DIDescriptor::isCompositeType() const {
-  assert(!isNull() && "Invalid descriptor!");
+  if (!DbgNode) return false;
   switch (getTag()) {
   case dwarf::DW_TAG_array_type:
   case dwarf::DW_TAG_structure_type:
@@ -175,7 +174,7 @@ bool DIDescriptor::isCompositeType() const {
 
 /// isVariable - Return true if the specified tag is legal for DIVariable.
 bool DIDescriptor::isVariable() const {
-  assert(!isNull() && "Invalid descriptor!");
+  if (!DbgNode) return false;
   switch (getTag()) {
   case dwarf::DW_TAG_auto_variable:
   case dwarf::DW_TAG_arg_variable:
@@ -194,15 +193,13 @@ bool DIDescriptor::isType() const {
 /// isSubprogram - Return true if the specified tag is legal for
 /// DISubprogram.
 bool DIDescriptor::isSubprogram() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_subprogram;
+  return DbgNode && getTag() == dwarf::DW_TAG_subprogram;
 }
 
 /// isGlobalVariable - Return true if the specified tag is legal for
 /// DIGlobalVariable.
 bool DIDescriptor::isGlobalVariable() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_variable;
+  return DbgNode && getTag() == dwarf::DW_TAG_variable;
 }
 
 /// isGlobal - Return true if the specified tag is legal for DIGlobal.
@@ -213,7 +210,7 @@ bool DIDescriptor::isGlobal() const {
 /// isScope - Return true if the specified tag is one of the scope
 /// related tag.
 bool DIDescriptor::isScope() const {
-  assert(!isNull() && "Invalid descriptor!");
+  if (!DbgNode) return false;
   switch (getTag()) {
   case dwarf::DW_TAG_compile_unit:
   case dwarf::DW_TAG_lexical_block:
@@ -228,32 +225,27 @@ bool DIDescriptor::isScope() const {
 
 /// isCompileUnit - Return true if the specified tag is DW_TAG_compile_unit.
 bool DIDescriptor::isCompileUnit() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_compile_unit;
+  return DbgNode && getTag() == dwarf::DW_TAG_compile_unit;
 }
 
 /// isNameSpace - Return true if the specified tag is DW_TAG_namespace.
 bool DIDescriptor::isNameSpace() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_namespace;
+  return DbgNode && getTag() == dwarf::DW_TAG_namespace;
 }
 
 /// isLexicalBlock - Return true if the specified tag is DW_TAG_lexical_block.
 bool DIDescriptor::isLexicalBlock() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_lexical_block;
+  return DbgNode && getTag() == dwarf::DW_TAG_lexical_block;
 }
 
 /// isSubrange - Return true if the specified tag is DW_TAG_subrange_type.
 bool DIDescriptor::isSubrange() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_subrange_type;
+  return DbgNode && getTag() == dwarf::DW_TAG_subrange_type;
 }
 
 /// isEnumerator - Return true if the specified tag is DW_TAG_enumerator.
 bool DIDescriptor::isEnumerator() const {
-  assert(!isNull() && "Invalid descriptor!");
-  return getTag() == dwarf::DW_TAG_enumerator;
+  return DbgNode && getTag() == dwarf::DW_TAG_enumerator;
 }
 
 //===----------------------------------------------------------------------===//
@@ -268,7 +260,8 @@ DIType::DIType(MDNode *N) : DIDescriptor(N) {
 }
 
 unsigned DIArray::getNumElements() const {
-  assert(DbgNode && "Invalid DIArray");
+  if (!DbgNode)
+    return 0;
   return DbgNode->getNumOperands();
 }
 
@@ -276,10 +269,8 @@ unsigned DIArray::getNumElements() const {
 /// this descriptor. After this completes, the current debug info value
 /// is erased.
 void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
-  if (isNull())
+  if (!DbgNode)
     return;
-
-  assert(!D.isNull() && "Can not replace with null");
 
   // Since we use a TrackingVH for the node, its easy for clients to manufacture
   // legitimate situations where they want to replaceAllUsesWith() on something
@@ -295,7 +286,7 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
 
 /// Verify - Verify that a compile unit is well formed.
 bool DICompileUnit::Verify() const {
-  if (isNull())
+  if (!DbgNode)
     return false;
   StringRef N = getFilename();
   if (N.empty())
@@ -306,36 +297,36 @@ bool DICompileUnit::Verify() const {
 
 /// Verify - Verify that a type descriptor is well formed.
 bool DIType::Verify() const {
-  if (isNull())
+  if (!DbgNode)
     return false;
-  if (getContext().isNull())
+  if (!getContext().Verify())
     return false;
 
   DICompileUnit CU = getCompileUnit();
-  if (!CU.isNull() && !CU.Verify())
+  if (!CU.Verify())
     return false;
   return true;
 }
 
 /// Verify - Verify that a composite type descriptor is well formed.
 bool DICompositeType::Verify() const {
-  if (isNull())
+  if (!DbgNode)
     return false;
-  if (getContext().isNull())
+  if (!getContext().Verify())
     return false;
 
   DICompileUnit CU = getCompileUnit();
-  if (!CU.isNull() && !CU.Verify())
+  if (!CU.Verify())
     return false;
   return true;
 }
 
 /// Verify - Verify that a subprogram descriptor is well formed.
 bool DISubprogram::Verify() const {
-  if (isNull())
+  if (!DbgNode)
     return false;
 
-  if (getContext().isNull())
+  if (!getContext().Verify())
     return false;
 
   DICompileUnit CU = getCompileUnit();
@@ -343,24 +334,24 @@ bool DISubprogram::Verify() const {
     return false;
 
   DICompositeType Ty = getType();
-  if (!Ty.isNull() && !Ty.Verify())
+  if (!Ty.Verify())
     return false;
   return true;
 }
 
 /// Verify - Verify that a global variable descriptor is well formed.
 bool DIGlobalVariable::Verify() const {
-  if (isNull())
+  if (!DbgNode)
     return false;
 
   if (getDisplayName().empty())
     return false;
 
-  if (getContext().isNull())
+  if (!getContext().Verify())
     return false;
 
   DICompileUnit CU = getCompileUnit();
-  if (!CU.isNull() && !CU.Verify())
+  if (!CU.Verify())
     return false;
 
   DIType Ty = getType();
@@ -375,10 +366,10 @@ bool DIGlobalVariable::Verify() const {
 
 /// Verify - Verify that a variable descriptor is well formed.
 bool DIVariable::Verify() const {
-  if (isNull())
+  if (!DbgNode)
     return false;
 
-  if (getContext().isNull())
+  if (!getContext().Verify())
     return false;
 
   DIType Ty = getType();
@@ -386,6 +377,14 @@ bool DIVariable::Verify() const {
     return false;
 
   return true;
+}
+
+/// Verify - Verify that a location descriptor is well formed.
+bool DILocation::Verify() const {
+  if (!DbgNode)
+    return false;
+  
+  return DbgNode->getNumOperands() == 4;
 }
 
 /// getOriginalTypeSize - If this type is derived from a base type then
@@ -398,7 +397,7 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
     DIType BaseType = getTypeDerivedFrom();
     // If this type is not derived from any type then take conservative 
     // approach.
-    if (BaseType.isNull())
+    if (!BaseType.isValid())
       return getSizeInBits();
     if (BaseType.isDerivedType())
       return DIDerivedType(BaseType.getNode()).getOriginalTypeSize();
@@ -468,7 +467,7 @@ void DICompileUnit::dump() const {
 
 /// dump - Print type.
 void DIType::dump() const {
-  if (isNull()) return;
+  if (!DbgNode) return;
 
   StringRef Res = getName();
   if (!Res.empty())
@@ -521,8 +520,6 @@ void DIDerivedType::dump() const {
 /// dump - Print composite type.
 void DICompositeType::dump() const {
   DIArray A = getTypeArray();
-  if (A.isNull())
-    return;
   dbgs() << " [" << A.getNumElements() << " elements]";
 }
 
@@ -1155,9 +1152,8 @@ void DebugInfoFinder::processModule(Module &M) {
 
 /// processLocation - Process DILocation.
 void DebugInfoFinder::processLocation(DILocation Loc) {
-  if (Loc.isNull()) return;
-  DIScope S(Loc.getScope().getNode());
-  if (S.isNull()) return;
+  if (!Loc.Verify()) return;
+  DIDescriptor S(Loc.getScope().getNode());
   if (S.isCompileUnit())
     addCompileUnit(DICompileUnit(S.getNode()));
   else if (S.isSubprogram())
@@ -1177,26 +1173,21 @@ void DebugInfoFinder::processType(DIType DT) {
     DICompositeType DCT(DT.getNode());
     processType(DCT.getTypeDerivedFrom());
     DIArray DA = DCT.getTypeArray();
-    if (!DA.isNull())
-      for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
-        DIDescriptor D = DA.getElement(i);
-        DIType TyE = DIType(D.getNode());
-        if (!TyE.isNull())
-          processType(TyE);
-        else
-          processSubprogram(DISubprogram(D.getNode()));
-      }
+    for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
+      DIDescriptor D = DA.getElement(i);
+      if (D.isType())
+        processType(DIType(D.getNode()));
+      else if (D.isSubprogram())
+        processSubprogram(DISubprogram(D.getNode()));
+    }
   } else if (DT.isDerivedType()) {
     DIDerivedType DDT(DT.getNode());
-    if (!DDT.isNull())
-      processType(DDT.getTypeDerivedFrom());
+    processType(DDT.getTypeDerivedFrom());
   }
 }
 
 /// processLexicalBlock
 void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
-  if (LB.isNull())
-    return;
   DIScope Context = LB.getContext();
   if (Context.isLexicalBlock())
     return processLexicalBlock(DILexicalBlock(Context.getNode()));
@@ -1206,8 +1197,6 @@ void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
 
 /// processSubprogram - Process DISubprogram.
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
-  if (SP.isNull())
-    return;
   if (!addSubprogram(SP))
     return;
   addCompileUnit(SP.getCompileUnit());
@@ -1216,20 +1205,23 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
 
 /// processDeclare - Process DbgDeclareInst.
 void DebugInfoFinder::processDeclare(DbgDeclareInst *DDI) {
-  DIVariable DV(cast<MDNode>(DDI->getVariable()));
-  if (DV.isNull())
+  MDNode *N = dyn_cast<MDNode>(DDI->getVariable());
+  if (!N) return;
+
+  DIDescriptor DV(N);
+  if (!DV.isVariable())
     return;
 
   if (!NodesSeen.insert(DV.getNode()))
     return;
 
-  addCompileUnit(DV.getCompileUnit());
-  processType(DV.getType());
+  addCompileUnit(DIVariable(N).getCompileUnit());
+  processType(DIVariable(N).getType());
 }
 
 /// addType - Add type into Tys.
 bool DebugInfoFinder::addType(DIType DT) {
-  if (DT.isNull())
+  if (!DT.isValid())
     return false;
 
   if (!NodesSeen.insert(DT.getNode()))
@@ -1241,7 +1233,7 @@ bool DebugInfoFinder::addType(DIType DT) {
 
 /// addCompileUnit - Add compile unit into CUs.
 bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
-  if (CU.isNull())
+  if (!CU.Verify())
     return false;
 
   if (!NodesSeen.insert(CU.getNode()))
@@ -1253,7 +1245,7 @@ bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
 
 /// addGlobalVariable - Add global variable into GVs.
 bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
-  if (DIG.isNull())
+  if (!DIDescriptor(DIG.getNode()).isGlobalVariable())
     return false;
 
   if (!NodesSeen.insert(DIG.getNode()))
@@ -1265,7 +1257,7 @@ bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
 
 // addSubprogram - Add subprgoram into SPs.
 bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
-  if (SP.isNull())
+  if (!DIDescriptor(SP.getNode()).isSubprogram())
     return false;
 
   if (!NodesSeen.insert(SP.getNode()))
@@ -1283,10 +1275,10 @@ static Value *findDbgGlobalDeclare(GlobalVariable *V) {
     return 0;
 
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-    DIGlobalVariable DIG(cast_or_null<MDNode>(NMD->getOperand(i)));
-    if (DIG.isNull())
+    DIDescriptor DIG(cast_or_null<MDNode>(NMD->getOperand(i)));
+    if (!DIG.isGlobalVariable())
       continue;
-    if (DIG.getGlobal() == V)
+    if (DIGlobalVariable(DIG.getNode()).getGlobal() == V)
       return DIG.getNode();
   }
   return 0;
@@ -1378,12 +1370,6 @@ DebugLoc llvm::ExtractDebugLocation(DILocation &Loc,
 /// getDISubprogram - Find subprogram that is enclosing this scope.
 DISubprogram llvm::getDISubprogram(MDNode *Scope) {
   DIDescriptor D(Scope);
-  if (D.isNull())
-    return DISubprogram();
-  
-  if (D.isCompileUnit())
-    return DISubprogram();
-  
   if (D.isSubprogram())
     return DISubprogram(Scope);
   
@@ -1395,9 +1381,6 @@ DISubprogram llvm::getDISubprogram(MDNode *Scope) {
 
 /// getDICompositeType - Find underlying composite type.
 DICompositeType llvm::getDICompositeType(DIType T) {
-  if (T.isNull())
-    return DICompositeType();
-  
   if (T.isCompositeType())
     return DICompositeType(T.getNode());
   

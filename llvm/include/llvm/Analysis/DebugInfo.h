@@ -68,6 +68,7 @@ namespace llvm {
     explicit DIDescriptor(MDNode *N) : DbgNode(N) {}
 
     bool isNull() const { return DbgNode == 0; }
+    bool Verify() const { return DbgNode != 0; }
 
     MDNode *getNode() const { return DbgNode; }
 
@@ -246,7 +247,9 @@ namespace llvm {
     bool isArtificial() const {
       return (getFlags() & FlagArtificial) != 0;
     }
-
+    bool isValid() const {
+      return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
+    }
     /// dump - print type.
     void dump() const;
   };
@@ -360,7 +363,7 @@ namespace llvm {
     /// DIType or as DICompositeType.
     StringRef getReturnTypeName() const {
       DICompositeType DCT(getFieldAs<DICompositeType>(8));
-      if (!DCT.isNull()) {
+      if (DCT.Verify()) {
         DIArray A = DCT.getTypeArray();
         DIType T(A.getElement(0).getNode());
         return T.getName();
@@ -494,6 +497,7 @@ namespace llvm {
     DILocation getOrigLocation() const { return getFieldAs<DILocation>(3); }
     StringRef getFilename() const    { return getScope().getFilename(); }
     StringRef getDirectory() const   { return getScope().getDirectory(); }
+    bool Verify() const;
   };
 
   /// DIFactory - This object assists with the construction of the various
