@@ -9,6 +9,7 @@ set(CLANG_TEST_DIRECTORIES
   "Driver"
   "FixIt"
   "Frontend"
+  "Headers"
   "Index"
   "Lexer"
   "Misc"
