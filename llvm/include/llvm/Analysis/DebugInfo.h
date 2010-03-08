@@ -44,11 +44,6 @@ namespace llvm {
   protected:
     MDNode *DbgNode;
 
-    /// DIDescriptor constructor.  If the specified node is non-null, check
-    /// to make sure that the tag in the descriptor matches 'RequiredTag'.  If
-    /// not, the debug info is corrupt and we ignore it.
-    DIDescriptor(MDNode *N, unsigned RequiredTag);
-
     StringRef getStringField(unsigned Elt) const;
     unsigned getUnsignedField(unsigned Elt) const {
       return (unsigned)getUInt64Field(Elt);
@@ -104,8 +99,7 @@ namespace llvm {
   /// DISubrange - This is used to represent ranges, for array bounds.
   class DISubrange : public DIDescriptor {
   public:
-    explicit DISubrange(MDNode *N = 0)
-      : DIDescriptor(N, dwarf::DW_TAG_subrange_type) {}
+    explicit DISubrange(MDNode *N = 0) : DIDescriptor(N) {}
 
     int64_t getLo() const { return (int64_t)getUInt64Field(1); }
     int64_t getHi() const { return (int64_t)getUInt64Field(2); }
@@ -126,10 +120,7 @@ namespace llvm {
   /// DIScope - A base class for various scopes.
   class DIScope : public DIDescriptor {
   public:
-    explicit DIScope(MDNode *N = 0) : DIDescriptor (N) {
-      if (DbgNode && !isScope())
-        DbgNode = 0;
-    }
+    explicit DIScope(MDNode *N = 0) : DIDescriptor (N) {}
     virtual ~DIScope() {}
 
     StringRef getFilename() const;
@@ -139,10 +130,7 @@ namespace llvm {
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIScope {
   public:
-    explicit DICompileUnit(MDNode *N = 0) : DIScope(N) {
-      if (DbgNode && !isCompileUnit())
-        DbgNode = 0;
-    }
+    explicit DICompileUnit(MDNode *N = 0) : DIScope(N) {}
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
     StringRef getFilename() const  { return getStringField(3);   }
@@ -175,8 +163,7 @@ namespace llvm {
   /// type/precision or a file/line pair for location info.
   class DIEnumerator : public DIDescriptor {
   public:
-    explicit DIEnumerator(MDNode *N = 0)
-      : DIDescriptor(N, dwarf::DW_TAG_enumerator) {}
+    explicit DIEnumerator(MDNode *N = 0) : DIDescriptor(N) {}
 
     StringRef getName() const        { return getStringField(1); }
     uint64_t getEnumValue() const      { return getUInt64Field(2); }
@@ -199,8 +186,6 @@ namespace llvm {
     };
 
   protected:
-    DIType(MDNode *N, unsigned Tag)
-      : DIDescriptor(N, Tag) {}
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
     DIType(MDNode *N, bool, bool) : DIDescriptor(N) {}
@@ -256,8 +241,7 @@ namespace llvm {
   /// DIBasicType - A basic type, like 'int' or 'float'.
   class DIBasicType : public DIType {
   public:
-    explicit DIBasicType(MDNode *N = 0)
-      : DIType(N, dwarf::DW_TAG_base_type) {}
+    explicit DIBasicType(MDNode *N = 0) : DIType(N) {}
 
     unsigned getEncoding() const { return getUnsignedField(9); }
 
@@ -273,10 +257,7 @@ namespace llvm {
       : DIType(N, true, true) {}
   public:
     explicit DIDerivedType(MDNode *N = 0)
-      : DIType(N, true, true) {
-      if (DbgNode && !isDerivedType())
-        DbgNode = 0;
-    }
+      : DIType(N, true, true) {}
 
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
 
@@ -319,8 +300,7 @@ namespace llvm {
   /// DIGlobal - This is a common class for global variables and subprograms.
   class DIGlobal : public DIDescriptor {
   protected:
-    explicit DIGlobal(MDNode *N, unsigned RequiredTag)
-      : DIDescriptor(N, RequiredTag) {}
+    explicit DIGlobal(MDNode *N) : DIDescriptor(N) {}
 
   public:
     virtual ~DIGlobal() {}
@@ -345,10 +325,7 @@ namespace llvm {
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIScope {
   public:
-    explicit DISubprogram(MDNode *N = 0) : DIScope(N) {
-      if (DbgNode && !isSubprogram())
-        DbgNode = 0;
-    }
+    explicit DISubprogram(MDNode *N = 0) : DIScope(N) {}
 
     DIDescriptor getContext() const     { return getDescriptorField(2); }
     StringRef getName() const         { return getStringField(3); }
@@ -401,8 +378,7 @@ namespace llvm {
   /// DIGlobalVariable - This is a wrapper for a global variable.
   class DIGlobalVariable : public DIGlobal {
   public:
-    explicit DIGlobalVariable(MDNode *N = 0)
-      : DIGlobal(N, dwarf::DW_TAG_variable) {}
+    explicit DIGlobalVariable(MDNode *N = 0) : DIGlobal(N) {}
 
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
 
@@ -418,10 +394,7 @@ namespace llvm {
   class DIVariable : public DIDescriptor {
   public:
     explicit DIVariable(MDNode *N = 0)
-      : DIDescriptor(N) {
-      if (DbgNode && !isVariable())
-        DbgNode = 0;
-    }
+      : DIDescriptor(N) {}
 
     DIDescriptor getContext() const { return getDescriptorField(1); }
     StringRef getName() const     { return getStringField(2);     }
@@ -457,10 +430,7 @@ namespace llvm {
   /// DILexicalBlock - This is a wrapper for a lexical block.
   class DILexicalBlock : public DIScope {
   public:
-    explicit DILexicalBlock(MDNode *N = 0) : DIScope(N) {
-      if (DbgNode && !isLexicalBlock())
-        DbgNode = 0;
-    }
+    explicit DILexicalBlock(MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const       { return getFieldAs<DIScope>(1);      }
     StringRef getDirectory() const   { return getContext().getDirectory(); }
     StringRef getFilename() const    { return getContext().getFilename();  }
@@ -471,11 +441,7 @@ namespace llvm {
   /// DINameSpace - A wrapper for a C++ style name space.
   class DINameSpace : public DIScope { 
   public:
-    explicit DINameSpace(MDNode *N = 0) : DIScope(N) {
-      if (DbgNode && !isNameSpace())
-        DbgNode = 0;
-    }
-
+    explicit DINameSpace(MDNode *N = 0) : DIScope(N) {}
     DIScope getContext() const     { return getFieldAs<DIScope>(1);      }
     StringRef getName() const      { return getStringField(2);           }
     StringRef getDirectory() const { return getContext().getDirectory(); }

@@ -69,15 +69,6 @@ bool DIDescriptor::ValidDebugInfo(MDNode *N, unsigned OptLevel) {
   return true;
 }
 
-DIDescriptor::DIDescriptor(MDNode *N, unsigned RequiredTag) {
-  DbgNode = N;
-
-  // If this is non-null, check to see if the Tag matches. If not, set to null.
-  if (N && getTag() != RequiredTag) {
-    DbgNode = 0;
-  }
-}
-
 StringRef 
 DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)
