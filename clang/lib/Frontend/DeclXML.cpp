@@ -29,9 +29,26 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
     }
   }
 
+  void addFunctionBody(FunctionDecl* FD) {
+    if (FD->isThisDeclarationADefinition()) {
+      Doc.addSubNode("Body");
+      Doc.PrintStmt(FD->getBody());
+      Doc.toParent();
+    }
+  }
+
   void addSubNodes(RecordDecl* RD) {
     for (RecordDecl::field_iterator i = RD->field_begin(),
                                     e = RD->field_end(); i != e; ++i) {
+      Visit(*i);
+      Doc.toParent();
+    }
+  }
+
+  void addSubNodes(CXXRecordDecl* RD) {
+    addSubNodes(cast<RecordDecl>(RD));
+    for (CXXRecordDecl::method_iterator i = RD->method_begin(),
+                                        e = RD->method_end(); i != e; ++i) {
       Visit(*i);
       Doc.toParent();
     }
@@ -115,6 +132,8 @@ public:
 #define SUB_NODE_SEQUENCE_XML( CLASS )  addSubNodes(T);
 #define SUB_NODE_OPT_XML( CLASS )       addSubNodes(T);
 
+#define SUB_NODE_FN_BODY_XML            addFunctionBody(T);
+
 #include "clang/Frontend/DeclXML.def"
 };
 
@@ -122,13 +141,6 @@ public:
 //---------------------------------------------------------
 void DocumentXML::writeDeclToXML(Decl *D) {
   DeclPrinter(*this).Visit(D);
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (Stmt *Body = FD->getBody()) {
-      addSubNode("Body");
-      PrintStmt(Body);
-      toParent();
-    }
-  }
   toParent();
 }
 

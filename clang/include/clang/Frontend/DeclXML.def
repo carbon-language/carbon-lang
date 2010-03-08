@@ -103,7 +103,7 @@ NODE_XML(FunctionDecl, "Function")
   //ATTRIBUTE_OPT_XML(isVariadic(), "variadic")       // in the type reference
   ATTRIBUTE_XML(getNumParams(), "num_args")
   SUB_NODE_SEQUENCE_XML(ParmVarDecl)
-  //SUB_NODE_OPT_XML("Body")
+  SUB_NODE_FN_BODY_XML
 END_NODE_XML
 
 NODE_XML(CXXMethodDecl, "CXXMethodDecl")
@@ -118,12 +118,8 @@ NODE_XML(CXXMethodDecl, "CXXMethodDecl")
   ATTRIBUTE_OPT_XML(isVirtual(), "virtual")
   ATTRIBUTE_XML(getNumParams(), "num_args")
   SUB_NODE_SEQUENCE_XML(ParmVarDecl)
-  //SUB_NODE_OPT_XML("Body")
+  SUB_NODE_FN_BODY_XML
 END_NODE_XML
-
-//NODE_XML("Body")
-//  SUB_NODE_XML(Stmt)
-//END_NODE_XML
 
 NODE_XML(NamespaceDecl, "Namespace")
   ID_ATTRIBUTE_XML
@@ -147,6 +143,16 @@ NODE_XML(NamespaceAliasDecl, "NamespaceAlias")
 END_NODE_XML
 
 NODE_XML(RecordDecl, "Record")
+  ID_ATTRIBUTE_XML
+  ATTRIBUTE_FILE_LOCATION_XML
+  ATTRIBUTE_XML(getDeclContext(), "context")
+  ATTRIBUTE_XML(getNameAsString(), "name")
+  ATTRIBUTE_OPT_XML(isDefinition() == false, "forward")
+  ATTRIBUTE_XML(getTypeForDecl(), "type")             // refers to the type this decl creates
+  SUB_NODE_SEQUENCE_XML(FieldDecl)
+END_NODE_XML
+
+NODE_XML(CXXRecordDecl, "CXXRecord")
   ID_ATTRIBUTE_XML
   ATTRIBUTE_FILE_LOCATION_XML
   ATTRIBUTE_XML(getDeclContext(), "context")
@@ -248,3 +254,4 @@ END_NODE_XML
 #undef SUB_NODE_XML
 #undef SUB_NODE_SEQUENCE_XML
 #undef SUB_NODE_OPT_XML
+#undef SUB_NODE_FN_BODY_XML
