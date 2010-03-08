@@ -85,6 +85,8 @@ static unsigned GetDiagForGotoScopeDecl(const Decl *D, bool isCPlusPlus) {
       return diag::note_protected_by_cleanup;
     if (VD->hasAttr<BlocksAttr>())
       return diag::note_protected_by___block;
+    // FIXME: In C++0x, we have to check more conditions than "did we
+    // just give it an initializer?". See 6.7p3.
     if (isCPlusPlus && VD->hasLocalStorage() && VD->hasInit())
       return diag::note_protected_by_variable_init;
     
