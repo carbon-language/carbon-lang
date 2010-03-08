@@ -25,7 +25,6 @@
 #include "clang/Basic/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/ImmutableList.h"
-#include "llvm/ADT/StringSwitch.h"
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
