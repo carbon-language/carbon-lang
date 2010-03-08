@@ -310,12 +310,23 @@ static unsigned HashEndOfMBB(const MachineBasicBlock *MBB,
     return 0;   // Empty MBB.
 
   --I;
+  // Skip debug info so it will not affect codegen.
+  while (I->isDebugValue()) {
+    if (I==MBB->begin())
+      return 0;      // MBB empty except for debug info.
+    --I;
+  }
   unsigned Hash = HashMachineInstr(I);
 
   if (I == MBB->begin() || minCommonTailLength == 1)
     return Hash;   // Single instr MBB.
 
   --I;
+  while (I->isDebugValue()) {
+    if (I==MBB->begin())
+      return Hash;      // MBB with single non-debug instr.
+    --I;
+  }
   // Hash in the second-to-last instruction.
   Hash ^= HashMachineInstr(I) << 2;
   return Hash;
@@ -334,9 +345,18 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   unsigned TailLen = 0;
   while (I1 != MBB1->begin() && I2 != MBB2->begin()) {
     --I1; --I2;
-    // Don't merge debugging pseudos.
-    if (I1->isDebugValue() || I2->isDebugValue() ||
-        !I1->isIdenticalTo(I2) ||
+    // Skip debugging pseudos; necessary to avoid changing the code.
+    while (I1->isDebugValue()) {
+      if (I1==MBB1->begin())
+        return TailLen;
+      --I1;
+    }
+    while (I2->isDebugValue()) {
+      if (I2==MBB2->begin())
+        return TailLen;
+      --I2;
+    }
+    if (!I1->isIdenticalTo(I2) ||
         // FIXME: This check is dubious. It's used to get around a problem where
         // people incorrectly expect inline asm directives to remain in the same
         // relative order. This is untenable because normal compiler
@@ -643,6 +663,8 @@ unsigned BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
     SameTails[commonTailIndex].getTailStartPos();
   MachineBasicBlock *MBB = SameTails[commonTailIndex].getBlock();
 
+  // If the common tail includes any debug info we will take it pretty
+  // randomly from one of the inputs.  Might be better to remove it?
   DEBUG(dbgs() << "\nSplitting BB#" << MBB->getNumber() << ", size "
                << maxCommonTailLength);
 
