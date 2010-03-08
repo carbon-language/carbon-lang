@@ -67,6 +67,10 @@ def HI32 : SDNodeXForm<imm, [{
   return getI32Imm(N->getZExtValue() >> 32);
 }]>;
 
+def GetI64FromI32 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i64);
+}]>;
+
 def i32ll16 : PatLeaf<(i32 imm), [{
   // i32ll16 predicate - true if the 32-bit immediate has only rightmost 16
   // bits set.

@@ -1112,7 +1112,8 @@ def : Pat<(SystemZcall (i64 texternalsym:$dst)), (CALLi texternalsym:$dst)>;
 
 // Arbitrary immediate support.
 def : Pat<(i32 imm:$src),
-          (EXTRACT_SUBREG (MOV64ri32 (i64 imm:$src)), subreg_32bit)>;
+          (EXTRACT_SUBREG (MOV64ri32 (GetI64FromI32 (i32 imm:$src))),
+             subreg_32bit)>;
 
 // Implement in terms of LLIHF/OILF.
 def : Pat<(i64 imm:$imm),
