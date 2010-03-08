@@ -172,7 +172,7 @@ namespace llvm {
   /// DIType - This is a wrapper for a type.
   /// FIXME: Types should be factored much better so that CV qualifiers and
   /// others do not require a huge and empty descriptor full of zeros.
-  class DIType : public DIDescriptor {
+  class DIType : public DIScope {
   public:
     enum {
       FlagPrivate          = 1 << 0,
@@ -188,7 +188,7 @@ namespace llvm {
   protected:
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
-    DIType(MDNode *N, bool, bool) : DIDescriptor(N) {}
+    DIType(MDNode *N, bool, bool) : DIScope(N) {}
 
   public:
 
@@ -199,7 +199,7 @@ namespace llvm {
     explicit DIType() {}
     virtual ~DIType() {}
 
-    DIDescriptor getContext() const     { return getDescriptorField(1); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
@@ -234,6 +234,8 @@ namespace llvm {
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
     }
+    StringRef getFilename() const    { return getCompileUnit().getFilename();}
+    StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
     /// dump - print type.
     void dump() const;
   };
@@ -305,7 +307,7 @@ namespace llvm {
   public:
     virtual ~DIGlobal() {}
 
-    DIDescriptor getContext() const     { return getDescriptorField(2); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
     StringRef getName() const         { return getStringField(3); }
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
@@ -327,7 +329,7 @@ namespace llvm {
   public:
     explicit DISubprogram(MDNode *N = 0) : DIScope(N) {}
 
-    DIDescriptor getContext() const     { return getDescriptorField(2); }
+    DIScope getContext() const          { return getFieldAs<DIScope>(2); }
     StringRef getName() const         { return getStringField(3); }
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
@@ -396,8 +398,8 @@ namespace llvm {
     explicit DIVariable(MDNode *N = 0)
       : DIDescriptor(N) {}
 
-    DIDescriptor getContext() const { return getDescriptorField(1); }
-    StringRef getName() const     { return getStringField(2);     }
+    DIScope getContext() const          { return getFieldAs<DIScope>(1); }
+    StringRef getName() const           { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     DIType getType() const              { return getFieldAs<DIType>(5); }

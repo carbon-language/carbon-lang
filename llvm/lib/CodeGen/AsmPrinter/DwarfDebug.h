@@ -62,14 +62,6 @@ class DwarfDebug : public DwarfPrinter {
   // Attributes used to construct specific Dwarf sections.
   //
 
-  /// CompileUnitMap - A map of global variables representing compile units to
-  /// compile units.
-  DenseMap<Value *, CompileUnit *> CompileUnitMap;
-
-  /// CompileUnits - All the compile units in this module.
-  ///
-  SmallVector<CompileUnit *, 8> CompileUnits;
-
   /// ModuleCU - All DIEs are inserted in ModuleCU.
   CompileUnit *ModuleCU;
 
@@ -356,10 +348,6 @@ class DwarfDebug : public DwarfPrinter {
 
   /// createSubprogramDIE - Create new DIE using SP.
   DIE *createSubprogramDIE(const DISubprogram &SP, bool MakeDecl = false);
-
-  /// findCompileUnit - Get the compile unit for the given descriptor. 
-  ///
-  CompileUnit *findCompileUnit(DICompileUnit Unit);
 
   /// getUpdatedDbgScope - Find or create DbgScope assicated with 
   /// the instruction. Initialize scope and update scope hierarchy.

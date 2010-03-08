@@ -417,7 +417,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIVariable *V) {
     return;
 
   unsigned Line = V->getLineNumber();
-  unsigned FileID = findCompileUnit(V->getCompileUnit())->getID();
+  unsigned FileID = GetOrCreateSourceID(V->getContext().getDirectory(),
+                                        V->getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -431,7 +432,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIGlobal *G) {
     return;
 
   unsigned Line = G->getLineNumber();
-  unsigned FileID = findCompileUnit(G->getCompileUnit())->getID();
+  unsigned FileID = GetOrCreateSourceID(G->getContext().getDirectory(),
+                                        G->getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -447,9 +449,11 @@ void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
   if (SP->getLineNumber() == 0)
     return;
 
-
   unsigned Line = SP->getLineNumber();
-  unsigned FileID = findCompileUnit(SP->getCompileUnit())->getID();
+  if (!SP->getContext().Verify())
+    return;
+  unsigned FileID = GetOrCreateSourceID(SP->getContext().getDirectory(),
+                                        SP->getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -464,7 +468,10 @@ void DwarfDebug::addSourceLine(DIE *Die, const DIType *Ty) {
     return;
 
   unsigned Line = Ty->getLineNumber();
-  unsigned FileID = findCompileUnit(CU)->getID();
+  if (!Ty->getContext().Verify())
+    return;
+  unsigned FileID = GetOrCreateSourceID(Ty->getContext().getDirectory(),
+                                        Ty->getContext().getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -1233,16 +1240,6 @@ DIE *DwarfDebug::createSubprogramDIE(const DISubprogram &SP, bool MakeDecl) {
   return SPDie;
 }
 
-/// findCompileUnit - Get the compile unit for the given descriptor.
-///
-CompileUnit *DwarfDebug::findCompileUnit(DICompileUnit Unit) {
-  DenseMap<Value *, CompileUnit *>::const_iterator I =
-    CompileUnitMap.find(Unit.getNode());
-  if (I == CompileUnitMap.end())
-    return constructCompileUnit(Unit.getNode());
-  return I->second;
-}
-
 /// getUpdatedDbgScope - Find or create DbgScope assicated with the instruction.
 /// Initialize scope and update scope hierarchy.
 DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
@@ -1676,8 +1673,6 @@ CompileUnit *DwarfDebug::constructCompileUnit(MDNode *N) {
     ModuleCU = Unit;
   }
 
-  CompileUnitMap[DIUnit.getNode()] = Unit;
-  CompileUnits.push_back(Unit);
   return Unit;
 }
 
@@ -1783,17 +1778,8 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
          E = DbgFinder.compile_unit_end(); I != E; ++I)
     constructCompileUnit(*I);
 
-  if (CompileUnits.empty()) {
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-
-    return;
-  }
-
-  // If main compile unit for this module is not seen than randomly
-  // select first compile unit.
   if (!ModuleCU)
-    ModuleCU = CompileUnits[0];
+    return;
 
   // Create DIEs for each subprogram.
   for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),

@@ -243,7 +243,7 @@ bool DIDescriptor::isEnumerator() const {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-DIType::DIType(MDNode *N) : DIDescriptor(N) {
+DIType::DIType(MDNode *N) : DIScope(N) {
   if (!N) return;
   if (!isBasicType() && !isDerivedType() && !isCompositeType()) {
     DbgNode = 0;
@@ -412,6 +412,8 @@ bool DISubprogram::describes(const Function *F) {
 }
 
 StringRef DIScope::getFilename() const {
+  if (!DbgNode)
+    return StringRef();
   if (isLexicalBlock()) 
     return DILexicalBlock(DbgNode).getFilename();
   if (isSubprogram())
@@ -420,11 +422,15 @@ StringRef DIScope::getFilename() const {
     return DICompileUnit(DbgNode).getFilename();
   if (isNameSpace())
     return DINameSpace(DbgNode).getFilename();
+  if (isType())
+    return DIType(DbgNode).getFilename();
   assert(0 && "Invalid DIScope!");
   return StringRef();
 }
 
 StringRef DIScope::getDirectory() const {
+  if (!DbgNode)
+    return StringRef();
   if (isLexicalBlock()) 
     return DILexicalBlock(DbgNode).getDirectory();
   if (isSubprogram())
@@ -433,6 +439,8 @@ StringRef DIScope::getDirectory() const {
     return DICompileUnit(DbgNode).getDirectory();
   if (isNameSpace())
     return DINameSpace(DbgNode).getDirectory();
+  if (isType())
+    return DIType(DbgNode).getDirectory();
   assert(0 && "Invalid DIScope!");
   return StringRef();
 }
