@@ -78,21 +78,21 @@ ASTContext::~ASTContext() {
       // Increment in loop to prevent using deallocated memory.
       Deallocate(&*I++);
     }
-  }
 
-  for (llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
-       I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end(); I != E; ) {
-    // Increment in loop to prevent using deallocated memory.
-    ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
-    delete R;
-  }
+    for (llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
+         I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end(); I != E; ) {
+      // Increment in loop to prevent using deallocated memory.
+      if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
+        R->Destroy(*this);
+    }
 
-  for (llvm::DenseMap<const ObjCContainerDecl*,
-                      const ASTRecordLayout*>::iterator
-       I = ObjCLayouts.begin(), E = ObjCLayouts.end(); I != E; ) {
-    // Increment in loop to prevent using deallocated memory.
-    ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second);
-    delete R;
+    for (llvm::DenseMap<const ObjCContainerDecl*,
+         const ASTRecordLayout*>::iterator
+         I = ObjCLayouts.begin(), E = ObjCLayouts.end(); I != E; ) {
+      // Increment in loop to prevent using deallocated memory.
+      if (ASTRecordLayout *R = const_cast<ASTRecordLayout*>((I++)->second))
+        R->Destroy(*this);
+    }
   }
 
   // Destroy nested-name-specifiers.

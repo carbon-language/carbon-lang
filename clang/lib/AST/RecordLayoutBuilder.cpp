@@ -675,9 +675,10 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
   Builder.Layout(D);
 
   if (!isa<CXXRecordDecl>(D))
-    return new ASTRecordLayout(Builder.Size, Builder.Alignment, Builder.Size,
-                               Builder.FieldOffsets.data(),
-                               Builder.FieldOffsets.size());
+    return new (Ctx) ASTRecordLayout(Ctx, Builder.Size, Builder.Alignment,
+                                     Builder.Size,
+                                     Builder.FieldOffsets.data(),
+                                     Builder.FieldOffsets.size());
 
   // FIXME: This is not always correct. See the part about bitfields at
   // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
@@ -690,16 +691,16 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
   uint64_t NonVirtualSize =
     IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
 
-  return new ASTRecordLayout(Builder.Size, Builder.Alignment, DataSize,
-                             Builder.FieldOffsets.data(),
-                             Builder.FieldOffsets.size(),
-                             NonVirtualSize,
-                             Builder.NonVirtualAlignment,
-                             Builder.PrimaryBase,
-                             Builder.Bases.data(),
-                             Builder.Bases.size(),
-                             Builder.VBases.data(),
-                             Builder.VBases.size());
+  return new (Ctx) ASTRecordLayout(Ctx, Builder.Size, Builder.Alignment,
+                                   DataSize, Builder.FieldOffsets.data(),
+                                   Builder.FieldOffsets.size(),
+                                   NonVirtualSize,
+                                   Builder.NonVirtualAlignment,
+                                   Builder.PrimaryBase,
+                                   Builder.Bases.data(),
+                                   Builder.Bases.size(),
+                                   Builder.VBases.data(),
+                                   Builder.VBases.size());
 }
 
 const ASTRecordLayout *
@@ -710,10 +711,10 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
 
   Builder.Layout(D, Impl);
 
-  return new ASTRecordLayout(Builder.Size, Builder.Alignment,
-                             Builder.DataSize,
-                             Builder.FieldOffsets.data(),
-                             Builder.FieldOffsets.size());
+  return new (Ctx) ASTRecordLayout(Ctx, Builder.Size, Builder.Alignment,
+                                   Builder.DataSize,
+                                   Builder.FieldOffsets.data(),
+                                   Builder.FieldOffsets.size());
 }
 
 const CXXMethodDecl *

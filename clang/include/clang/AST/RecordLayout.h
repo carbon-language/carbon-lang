@@ -128,47 +128,24 @@ private:
   friend class ASTContext;
   friend class ASTRecordLayoutBuilder;
 
-  ASTRecordLayout(uint64_t size, unsigned alignment, unsigned datasize,
-                  const uint64_t *fieldoffsets, unsigned fieldcount)
-  : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
-    FieldCount(fieldcount), CXXInfo(0) {
-    if (FieldCount > 0)  {
-      FieldOffsets = new uint64_t[FieldCount];
-      for (unsigned i = 0; i < FieldCount; ++i)
-        FieldOffsets[i] = fieldoffsets[i];
-    }
-  }
+  ASTRecordLayout(ASTContext &Ctx, uint64_t size, unsigned alignment,
+                  unsigned datasize, const uint64_t *fieldoffsets,
+                  unsigned fieldcount);
 
   // Constructor for C++ records.
-  ASTRecordLayout(uint64_t size, unsigned alignment, uint64_t datasize,
+  ASTRecordLayout(ASTContext &Ctx,
+                  uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   const PrimaryBaseInfo &PrimaryBase,
                   const std::pair<const CXXRecordDecl *, uint64_t> *bases,
                   unsigned numbases,
                   const std::pair<const CXXRecordDecl *, uint64_t> *vbases,
-                  unsigned numvbases)
-  : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
-  FieldCount(fieldcount), CXXInfo(new CXXRecordLayoutInfo) {
-    if (FieldCount > 0)  {
-      FieldOffsets = new uint64_t[FieldCount];
-      for (unsigned i = 0; i < FieldCount; ++i)
-        FieldOffsets[i] = fieldoffsets[i];
-    }
+                  unsigned numvbases);
 
-    CXXInfo->PrimaryBase = PrimaryBase;
-    CXXInfo->NonVirtualSize = nonvirtualsize;
-    CXXInfo->NonVirtualAlign = nonvirtualalign;
-    for (unsigned i = 0; i != numbases; ++i)
-      CXXInfo->BaseOffsets[bases[i].first] = bases[i].second;
-    for (unsigned i = 0; i != numvbases; ++i)
-      CXXInfo->VBaseOffsets[vbases[i].first] = vbases[i].second;
-  }
+  ~ASTRecordLayout() {}
 
-  ~ASTRecordLayout() {
-    delete [] FieldOffsets;
-    delete CXXInfo;
-  }
+  void Destroy(ASTContext &Ctx);
 
   ASTRecordLayout(const ASTRecordLayout&);   // DO NOT IMPLEMENT
   void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
