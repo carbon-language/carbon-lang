@@ -1279,9 +1279,19 @@ void MCAssembler::Finish() {
     if (!isVirtualSection(SD.getSection()))
       continue;
 
+    // Align this section if necessary by adding padding bytes to the previous
+    // section.
+    if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment())) {
+      assert(Prev && "Missing prev section!");
+      Prev->setFileSize(Prev->getFileSize() + Pad);
+      Address += Pad;
+    }
+
     SD.setAddress(Address);
     LayoutSection(SD);
     Address += SD.getSize();
+
+    Prev = &SD;
   }
 
   DEBUG_WITH_TYPE("mc-dump", {
