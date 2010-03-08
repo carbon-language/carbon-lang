@@ -67,7 +67,6 @@ namespace llvm {
     explicit DIDescriptor() : DbgNode(0) {}
     explicit DIDescriptor(MDNode *N) : DbgNode(N) {}
 
-    bool isNull() const { return DbgNode == 0; }
     bool Verify() const { return DbgNode != 0; }
 
     MDNode *getNode() const { return DbgNode; }
