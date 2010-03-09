@@ -3453,12 +3453,18 @@ def CMP32rm : I<0x3B, MRMSrcMem,
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
                 [(X86cmp GR32:$src1, (loadi32 addr:$src2)),
                  (implicit EFLAGS)]>;
-def CMP8mrmrr : I<0x3A, MRMSrcReg, (outs), (ins GR8:$src1, GR8:$src2),
-                  "cmp{b}\t{$src2, $src1|$src1, $src2}", []>;
-def CMP16mrmrr : I<0x3B, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize;
-def CMP32mrmrr : I<0x3B, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}", []>;
+
+// These are alternate spellings for use by the disassembler, we mark them as
+// code gen only to ensure they aren't matched by the assembler.
+let isCodeGenOnly = 1 in {
+  def CMP8rr_alt : I<0x3A, MRMSrcReg, (outs), (ins GR8:$src1, GR8:$src2),
+                    "cmp{b}\t{$src2, $src1|$src1, $src2}", []>;
+  def CMP16rr_alt : I<0x3B, MRMSrcReg, (outs), (ins GR16:$src1, GR16:$src2),
+                     "cmp{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize;
+  def CMP32rr_alt : I<0x3B, MRMSrcReg, (outs), (ins GR32:$src1, GR32:$src2),
+                     "cmp{l}\t{$src2, $src1|$src1, $src2}", []>;
+}
+
 def CMP8ri  : Ii8<0x80, MRM7r,
                   (outs), (ins GR8:$src1, i8imm:$src2),
                   "cmp{b}\t{$src2, $src1|$src1, $src2}",

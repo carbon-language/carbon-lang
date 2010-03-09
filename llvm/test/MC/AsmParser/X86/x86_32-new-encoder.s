@@ -41,3 +41,6 @@ rdtscp
 
 // CHECK: testb	%bl, %cl                # encoding: [0x84,0xcb]
         testb %bl, %cl
+
+// CHECK: cmpl	%eax, %ebx              # encoding: [0x39,0xc3]
+        cmpl %eax, %ebx
