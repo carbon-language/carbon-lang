@@ -75,10 +75,9 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
     unsigned LabelID = Move.getLabelID();
     
     if (LabelID) {
-      LabelID = MMI->MappedLabel(LabelID);
-    
       // Throw out move if the label is invalid.
-      if (!LabelID) continue;
+      if (MMI->isLabelDeleted(LabelID))
+        continue;
     }
     
     intptr_t LabelPtr = 0;
@@ -722,10 +721,9 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
     unsigned LabelID = Move.getLabelID();
     
     if (LabelID) {
-      LabelID = MMI->MappedLabel(LabelID);
-    
       // Throw out move if the label is invalid.
-      if (!LabelID) continue;
+      if (MMI->isLabelDeleted(LabelID))
+        continue;
     }
     
     intptr_t LabelPtr = 0;

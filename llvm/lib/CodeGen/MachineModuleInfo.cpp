@@ -185,7 +185,8 @@ void MachineModuleInfo::addCleanup(MachineBasicBlock *LandingPad) {
 void MachineModuleInfo::TidyLandingPads() {
   for (unsigned i = 0; i != LandingPads.size(); ) {
     LandingPadInfo &LandingPad = LandingPads[i];
-    LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
+    if (isLabelDeleted(LandingPad.LandingPadLabel))
+      LandingPad.LandingPadLabel = 0;
 
     // Special case: we *should* emit LPs with null LP MBB. This indicates
     // "nounwind" case.
@@ -195,17 +196,14 @@ void MachineModuleInfo::TidyLandingPads() {
     }
 
     for (unsigned j=0; j != LandingPads[i].BeginLabels.size(); ) {
-      unsigned BeginLabel = MappedLabel(LandingPad.BeginLabels[j]);
-      unsigned EndLabel = MappedLabel(LandingPad.EndLabels[j]);
-
-      if (!BeginLabel || !EndLabel) {
+      unsigned BeginLabel = LandingPad.BeginLabels[j];
+      unsigned EndLabel = LandingPad.EndLabels[j];
+      if (isLabelDeleted(BeginLabel) || isLabelDeleted(EndLabel)) {
         LandingPad.BeginLabels.erase(LandingPad.BeginLabels.begin() + j);
         LandingPad.EndLabels.erase(LandingPad.EndLabels.begin() + j);
         continue;
       }
 
-      LandingPad.BeginLabels[j] = BeginLabel;
-      LandingPad.EndLabels[j] = EndLabel;
       ++j;
     }
 

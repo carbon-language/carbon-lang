@@ -1362,9 +1362,14 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
 /// constructLexicalScope - Construct new DW_TAG_lexical_block
 /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
 DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
-  unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
-  unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
+  unsigned StartID = Scope->getStartLabelID();
+  unsigned EndID = Scope->getEndLabelID();
 
+  assert(!MMI->isLabelDeleted(StartID) &&
+         "Invalid starting label for an inlined scope!");
+  assert(!MMI->isLabelDeleted(EndID) &&
+         "Invalid end label for an inlined scope!");
+  
   // Ignore empty scopes.
   if (StartID == EndID && StartID != 0)
     return NULL;
@@ -1387,12 +1392,14 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
 /// a function. Construct DIE to represent this concrete inlined copy
 /// of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
-  unsigned StartID = MMI->MappedLabel(Scope->getStartLabelID());
-  unsigned EndID = MMI->MappedLabel(Scope->getEndLabelID());
-  assert (StartID && "Invalid starting label for an inlined scope!");
-  assert (EndID && "Invalid end label for an inlined scope!");
+  unsigned StartID = Scope->getStartLabelID();
+  unsigned EndID = Scope->getEndLabelID();
+  assert(!MMI->isLabelDeleted(StartID) &&
+         "Invalid starting label for an inlined scope!");
+  assert(!MMI->isLabelDeleted(EndID) &&
+         "Invalid end label for an inlined scope!");
   // Ignore empty scopes.
-  if (StartID == EndID && StartID != 0)
+  if (StartID == EndID)
     return NULL;
   if (!Scope->getScopeNode())
     return NULL;
@@ -2589,8 +2596,8 @@ void DwarfDebug::emitDebugLines() {
     // Construct rows of the address, source, line, column matrix.
     for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
       const SrcLineInfo &LineInfo = LineInfos[i];
-      unsigned LabelID = MMI->MappedLabel(LineInfo.getLabelID());
-      if (!LabelID) continue;
+      unsigned LabelID = LineInfo.getLabelID();
+      if (MMI->isLabelDeleted(LabelID)) continue;
 
       if (LineInfo.getLine() == 0) continue;
 

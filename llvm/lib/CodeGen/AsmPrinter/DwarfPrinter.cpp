@@ -277,12 +277,9 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     const MachineMove &Move = Moves[i];
     unsigned LabelID = Move.getLabelID();
 
-    if (LabelID) {
-      LabelID = MMI->MappedLabel(LabelID);
-
-      // Throw out move if the label is invalid.
-      if (!LabelID) continue;
-    }
+    // Throw out move if the label is invalid.
+    if (LabelID && MMI->isLabelDeleted(LabelID))
+      continue;
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();
