@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -emit-llvm -o - %s | FileCheck -check-prefix LP64 %s
-// RUN: %clang_cc1 -triple i386-apple-darwin9  -emit-llvm -o - %s | FileCheck -check-prefix LP32 %s
+// RUN: %clang_cc1 -emit-llvm -o %t %s
 
 typedef struct objc_class *Class;
 
@@ -64,10 +63,3 @@ id Test2() {
     ((id)cat)->isa = dynamicSubclass;
 }
 @end
-// CHECK-LP64: %tmp2 = load i8** %
-// CHECK-LP64: %1 = bitcast i8* %tmp2 to i8**
-// CHECK-LP64: store i8* %tmp, i8** %1
-
-// CHECK-LP32: %tmp2 = load i8** %
-// CHECK-LP32: %1 = bitcast i8* %tmp2 to i8**
-// CHECK-LP32: store i8* %tmp, i8** %1
