@@ -440,7 +440,7 @@ public:
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                                      std::vector<MachRelocationEntry> &Relocs) {
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
-    unsigned IsPCRel = 0;
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned Type = RIT_Vanilla;
 
@@ -468,10 +468,16 @@ public:
 
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value - Value2 + Target.getConstant();
-    if (isFixupKindPCRel(Fixup.Kind)) {
+    if (IsPCRel)
       Fixup.FixedValue -= Address;
-      IsPCRel = 1;
-    }
+
+    // If this fixup is a vanilla PC relative relocation for a local label, we
+    // don't need a relocation.
+    //
+    // FIXME: Implement proper atom support.
+    if (IsPCRel && Target.getSymA() && Target.getSymA()->isTemporary() &&
+        !Target.getSymB())
+      return;
 
     MachRelocationEntry MRE;
     MRE.Word0 = ((Address   <<  0) |
@@ -516,7 +522,7 @@ public:
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     uint32_t Value = 0;
     unsigned Index = 0;
-    unsigned IsPCRel = 0;
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned IsExtern = 0;
     unsigned Type = 0;
@@ -554,11 +560,15 @@ public:
 
     // The value which goes in the fixup is current value of the expression.
     Fixup.FixedValue = Value + Target.getConstant();
-
-    if (isFixupKindPCRel(Fixup.Kind)) {
+    if (IsPCRel)
       Fixup.FixedValue -= Address;
-      IsPCRel = 1;
-    }
+
+    // If this fixup is a vanilla PC relative relocation for a local label, we
+    // don't need a relocation.
+    //
+    // FIXME: Implement proper atom support.
+    if (IsPCRel && Target.getSymA() && Target.getSymA()->isTemporary())
+      return;
 
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
