@@ -1286,6 +1286,8 @@ Value *SCEVExpander::expand(const SCEV *S) {
       // there) so that it is guaranteed to dominate any user inside the loop.
       if (L && S->hasComputableLoopEvolution(L) && L != PostIncLoop)
         InsertPt = L->getHeader()->getFirstNonPHI();
+      while (isa<DbgInfoIntrinsic>(InsertPt))
+        InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
       while (isInsertedInstruction(InsertPt))
         InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
       break;
