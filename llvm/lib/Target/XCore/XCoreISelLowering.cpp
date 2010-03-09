@@ -1105,6 +1105,10 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
     EVT VT = N0.getValueType();
 
+    // canonicalize constant to RHS
+    if (N0C && !N1C)
+      return DAG.getNode(XCoreISD::LADD, dl, DAG.getVTList(VT, VT), N1, N0, N2);
+
     // fold (ladd 0, 0, x) -> 0, x & 1
     if (N0C && N0C->isNullValue() && N1C && N1C->isNullValue()) {
       SDValue Carry = DAG.getConstant(0, VT);
