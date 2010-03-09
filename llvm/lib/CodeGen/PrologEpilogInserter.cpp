@@ -685,7 +685,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           // If this instruction has a FrameIndex operand, we need to
           // use that target machine register info object to eliminate
           // it.
-          int Value;
+          TargetRegisterInfo::FrameIndexValue Value;
           unsigned VReg =
             TRI.eliminateFrameIndex(MI, SPAdj, &Value,
                                     FrameIndexVirtualScavenging ?  NULL : RS);
@@ -693,7 +693,8 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
             assert (FrameIndexVirtualScavenging &&
                     "Not scavenging, but virtual returned from "
                     "eliminateFrameIndex()!");
-            FrameConstantRegMap[VReg] = FrameConstantEntry(Value, SPAdj);
+            FrameConstantRegMap[VReg] = FrameConstantEntry(Value.second,
+                                                           SPAdj);
           }
 
           // Reset the iterator if we were at the beginning of the BB.

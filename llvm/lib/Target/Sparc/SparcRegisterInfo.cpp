@@ -78,7 +78,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 unsigned
 SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                       int SPAdj, int *Value,
+                                       int SPAdj, FrameIndexValue *Value,
                                        RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 

@@ -221,7 +221,7 @@ static unsigned findScratchRegister(MachineBasicBlock::iterator II,
 
 unsigned
 BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                          int SPAdj, int *Value,
+                                          int SPAdj, FrameIndexValue *Value,
                                           RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();

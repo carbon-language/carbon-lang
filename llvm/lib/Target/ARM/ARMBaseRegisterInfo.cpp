@@ -1153,7 +1153,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                         int SPAdj, int *Value,
+                                         int SPAdj, FrameIndexValue *Value,
                                          RegScavenger *RS) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
@@ -1205,7 +1205,10 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
   else {
     ScratchReg = MF.getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
-    if (Value) *Value = Offset;
+    if (Value) {
+      Value->first = FrameReg; // use the frame register as a kind indicator
+      Value->second = Offset;
+    }
     if (!AFI->isThumbFunction())
       emitARMRegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
                               Offset, Pred, PredReg, TII);

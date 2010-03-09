@@ -682,8 +682,9 @@ public:
   /// When -enable-frame-index-scavenging is enabled, the virtual register
   /// allocated for this frame index is returned and its value is stored in
   /// *Value.
+  typedef std::pair<unsigned, int> FrameIndexValue;
   virtual unsigned eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                       int SPAdj, int *Value = NULL,
+                                       int SPAdj, FrameIndexValue *Value = NULL,
                                        RegScavenger *RS=NULL) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into

@@ -50,7 +50,7 @@ public:
                                      MachineBasicBlock::iterator I) const;
 
   unsigned eliminateFrameIndex(MachineBasicBlock::iterator II,
-                               int SPAdj, int *Value = NULL,
+                               int SPAdj, FrameIndexValue *Value = NULL,
                                RegScavenger *RS = NULL) const;
 
   void emitPrologue(MachineFunction &MF) const;

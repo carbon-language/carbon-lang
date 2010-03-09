@@ -143,7 +143,7 @@ public:
                                      MachineBasicBlock::iterator MI) const;
 
   unsigned eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                               int SPAdj, int *Value = NULL,
+                               int SPAdj, FrameIndexValue *Value = NULL,
                                RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,

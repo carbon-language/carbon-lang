@@ -49,7 +49,7 @@ class PIC16RegisterInfo : public PIC16GenRegisterInfo {
   virtual bool hasFP(const MachineFunction &MF) const;
 
   virtual unsigned eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                       int SPAdj, int *Value = NULL,
+                                       int SPAdj, FrameIndexValue *Value = NULL,
                                        RegScavenger *RS=NULL) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,

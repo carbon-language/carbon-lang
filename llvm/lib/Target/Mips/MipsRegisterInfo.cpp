@@ -355,7 +355,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 // direct reference.
 unsigned MipsRegisterInfo::
 eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
-                    int *Value, RegScavenger *RS) const
+                    FrameIndexValue *Value, RegScavenger *RS) const
 {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();

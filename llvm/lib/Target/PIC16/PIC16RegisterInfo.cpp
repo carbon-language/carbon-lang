@@ -53,7 +53,7 @@ bool PIC16RegisterInfo::hasFP(const MachineFunction &MF) const {
 
 unsigned PIC16RegisterInfo::
 eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
-                    int *Value, RegScavenger *RS) const
+                    FrameIndexValue *Value, RegScavenger *RS) const
 {
   /* NOT YET IMPLEMENTED */
   return 0;

@@ -429,7 +429,7 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
 
 unsigned
 Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                        int SPAdj, int *Value,
+                                        int SPAdj, FrameIndexValue *Value,
                                         RegScavenger *RS) const{
   unsigned VReg = 0;
   unsigned i = 0;
@@ -641,9 +641,10 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   } else if (Desc.mayStore()) {
       VReg = MF.getRegInfo().createVirtualRegister(ARM::tGPRRegisterClass);
       assert (Value && "Frame index virtual allocated, but Value arg is NULL!");
-      *Value = Offset;
       bool UseRR = false;
       bool TrackVReg = FrameReg == ARM::SP;
+      Value->first = FrameReg; // use the frame register as a kind indicator
+      Value->second = Offset;
 
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)

@@ -110,7 +110,7 @@ int SystemZRegisterInfo::getFrameIndexOffset(const MachineFunction &MF,
 
 unsigned
 SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                         int SPAdj, int *Value,
+                                         int SPAdj, FrameIndexValue *Value,
                                          RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unxpected");
 

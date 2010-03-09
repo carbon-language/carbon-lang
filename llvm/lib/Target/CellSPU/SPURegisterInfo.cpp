@@ -328,7 +328,8 @@ SPURegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
 
 unsigned
 SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
-                                     int *Value, RegScavenger *RS) const
+                                     FrameIndexValue *Value,
+                                     RegScavenger *RS) const
 {
   unsigned i = 0;
   MachineInstr &MI = *II;
