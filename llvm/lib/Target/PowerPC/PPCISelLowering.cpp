@@ -3258,6 +3258,16 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
                          false, false, 0);
   }
 
+  // On Darwin, R12 must contain the address of an indirect callee.  This does
+  // not mean the MTCTR instruction must use R12; it's easier to model this as
+  // an extra parameter, so do that.
+  if (!isTailCall && 
+      !dyn_cast<GlobalAddressSDNode>(Callee) &&
+      !dyn_cast<ExternalSymbolSDNode>(Callee) &&
+      !isBLACompatibleAddress(Callee, DAG))
+    RegsToPass.push_back(std::make_pair((unsigned)(isPPC64 ? PPC::X12 :
+                                                   PPC::R12), Callee));
+
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDValue InFlag;
