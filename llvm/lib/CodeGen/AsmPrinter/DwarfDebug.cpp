@@ -16,9 +16,10 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -171,8 +172,8 @@ class DbgScope {
   // Location at which this scope is inlined.
   AssertingVH<MDNode> InlinedAtLocation;  
   bool AbstractScope;                 // Abstract Scope
-  unsigned StartLabelID;              // Label ID of the beginning of scope.
-  unsigned EndLabelID;                // Label ID of the end of scope.
+  MCSymbol *StartLabel;               // Label ID of the beginning of scope.
+  MCSymbol *EndLabel;                 // Label ID of the end of scope.
   const MachineInstr *LastInsn;       // Last instruction of this scope.
   const MachineInstr *FirstInsn;      // First instruction of this scope.
   SmallVector<DbgScope *, 4> Scopes;  // Scopes defined in scope.
@@ -183,7 +184,7 @@ class DbgScope {
 public:
   DbgScope(DbgScope *P, DIDescriptor D, MDNode *I = 0)
     : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(false),
-      StartLabelID(0), EndLabelID(0),
+      StartLabel(0), EndLabel(0),
       LastInsn(0), FirstInsn(0), IndentLevel(0) {}
   virtual ~DbgScope();
 
@@ -195,12 +196,12 @@ public:
     return InlinedAtLocation;
   }
   MDNode *getScopeNode()         const { return Desc.getNode(); }
-  unsigned getStartLabelID()     const { return StartLabelID; }
-  unsigned getEndLabelID()       const { return EndLabelID; }
+  MCSymbol *getStartLabel()      const { return StartLabel; }
+  MCSymbol *getEndLabel()        const { return EndLabel; }
   SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
   SmallVector<DbgVariable *, 8> &getVariables() { return Variables; }
-  void setStartLabelID(unsigned S) { StartLabelID = S; }
-  void setEndLabelID(unsigned E)   { EndLabelID = E; }
+  void setStartLabel(MCSymbol *S) { StartLabel = S; }
+  void setEndLabel(MCSymbol *E)   { EndLabel = E; }
   void setLastInsn(const MachineInstr *MI) { LastInsn = MI; }
   const MachineInstr *getLastInsn()      { return LastInsn; }
   void setFirstInsn(const MachineInstr *MI) { FirstInsn = MI; }
@@ -264,7 +265,7 @@ void DbgScope::dump() const {
   err.indent(IndentLevel);
   MDNode *N = Desc.getNode();
   N->dump();
-  err << " [" << StartLabelID << ", " << EndLabelID << "]\n";
+  err << " [" << StartLabel << ", " << EndLabel << "]\n";
   if (AbstractScope)
     err << "Abstract Scope\n";
 
@@ -1362,24 +1363,20 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
 /// constructLexicalScope - Construct new DW_TAG_lexical_block
 /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
 DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
-  unsigned StartID = Scope->getStartLabelID();
-  unsigned EndID = Scope->getEndLabelID();
+  MCSymbol *Start = Scope->getStartLabel();
+  MCSymbol *End = Scope->getEndLabel();
 
-  assert(!MMI->isLabelDeleted(StartID) &&
-         "Invalid starting label for an inlined scope!");
-  assert(!MMI->isLabelDeleted(EndID) &&
-         "Invalid end label for an inlined scope!");
+  assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
+  assert(End->isDefined() && "Invalid end label for an inlined scope!");
   
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
   addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           StartID ? getDWLabel("label", StartID)
-                   : getDWLabel("func_begin", SubprogramCount));
+           Start ? Start : getDWLabel("func_begin", SubprogramCount));
   addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           EndID ? getDWLabel("label", EndID)
-                 : getDWLabel("func_end", SubprogramCount));
+           End ? End : getDWLabel("func_end", SubprogramCount));
 
   return ScopeDIE;
 }
@@ -1388,11 +1385,11 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
 /// a function. Construct DIE to represent this concrete inlined copy
 /// of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
-  unsigned StartID = Scope->getStartLabelID();
-  unsigned EndID = Scope->getEndLabelID();
-  assert(!MMI->isLabelDeleted(StartID) &&
+  MCSymbol *StartLabel = Scope->getStartLabel();
+  MCSymbol *EndLabel = Scope->getEndLabel();
+  assert(StartLabel->isDefined() &&
          "Invalid starting label for an inlined scope!");
-  assert(!MMI->isLabelDeleted(EndID) &&
+  assert(EndLabel->isDefined() &&
          "Invalid end label for an inlined scope!");
   if (!Scope->getScopeNode())
     return NULL;
@@ -1405,11 +1402,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
               dwarf::DW_FORM_ref4, OriginDIE);
 
-  MCSymbol *StartLabel = getDWLabel("label", StartID);
-  
   addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, StartLabel);
-  addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
-           getDWLabel("label", EndID));
+  addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr, EndLabel);
 
   InlinedSubprogramDIEs.insert(OriginDIE);
 
@@ -1961,7 +1955,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI, unsigned Label) {
   ScopeVector &SD = I->second;
   for (ScopeVector::iterator SDI = SD.begin(), SDE = SD.end();
        SDI != SDE; ++SDI)
-    (*SDI)->setStartLabelID(Label);
+    (*SDI)->setStartLabel(getDWLabel("label", Label));
 }
 
 /// endScope - Process end of a scope.
@@ -1970,13 +1964,13 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
   if (I == DbgScopeEndMap.end())
     return;
 
-  unsigned Label = MMI->NextLabelID();
-  Asm->printLabel(Label);
+  MCSymbol *Label = getDWLabel("label", MMI->NextLabelID());
+  Asm->OutStreamer.EmitLabel(Label);
 
-  SmallVector<DbgScope *, 2> &SD = I->second;
+  SmallVector<DbgScope*, 2> &SD = I->second;
   for (SmallVector<DbgScope *, 2>::iterator SDI = SD.begin(), SDE = SD.end();
        SDI != SDE; ++SDI)
-    (*SDI)->setEndLabelID(Label);
+    (*SDI)->setEndLabel(Label);
   return;
 }
 
@@ -2120,16 +2114,17 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   DebugLoc FDL = MF->getDefaultDebugLoc();
   if (!FDL.isUnknown()) {
     DILocation DLT = MF->getDILocation(FDL);
-    unsigned LabelID = 0;
     DISubprogram SP = getDISubprogram(DLT.getScope().getNode());
-    if (SP.Verify())
-      LabelID = recordSourceLine(SP.getLineNumber(), 0, 
-                                 DLT.getScope().getNode());
-    else
-      LabelID = recordSourceLine(DLT.getLineNumber(), 
-                                 DLT.getColumnNumber(), 
-                                 DLT.getScope().getNode());
-    Asm->printLabel(LabelID);
+    unsigned Line, Col;
+    if (SP.Verify()) {
+      Line = SP.getLineNumber();
+      Col = 0;
+    } else {
+      Line = DLT.getLineNumber();
+      Col = DLT.getColumnNumber();
+    }
+    
+    Asm->printLabel(recordSourceLine(Line, Col, DLT.getScope().getNode()));
   }
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
