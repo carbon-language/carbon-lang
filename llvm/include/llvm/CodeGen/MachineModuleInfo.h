@@ -217,17 +217,9 @@ public:
   /// MachineModuleInfo, for example because the code was deleted.
   void InvalidateLabel(unsigned LabelID) {
     // Remap to zero to indicate deletion.
-    RemapLabel(LabelID, 0);
-  }
-
-  /// RemapLabel - Indicate that a label has been merged into another.
-  ///
-  void RemapLabel(unsigned OldLabelID, unsigned NewLabelID) {
-    assert(0 < OldLabelID && OldLabelID <= LabelIDList.size() &&
-          "Old label ID out of range.");
-    assert(NewLabelID <= LabelIDList.size() &&
-          "New label ID out of range.");
-    LabelIDList[OldLabelID - 1] = NewLabelID;
+    assert(0 < LabelID && LabelID <= LabelIDList.size() &&
+           "Old label ID out of range.");
+    LabelIDList[LabelID - 1] = 0;
   }
   
   /// MappedLabel - Find out the label's final ID.  Zero indicates deletion.
