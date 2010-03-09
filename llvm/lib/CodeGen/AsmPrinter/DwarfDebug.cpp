@@ -1370,10 +1370,6 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
   assert(!MMI->isLabelDeleted(EndID) &&
          "Invalid end label for an inlined scope!");
   
-  // Ignore empty scopes.
-  if (StartID == EndID && StartID != 0)
-    return NULL;
-
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
     return ScopeDIE;
@@ -1398,9 +1394,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
          "Invalid starting label for an inlined scope!");
   assert(!MMI->isLabelDeleted(EndID) &&
          "Invalid end label for an inlined scope!");
-  // Ignore empty scopes.
-  if (StartID == EndID)
-    return NULL;
   if (!Scope->getScopeNode())
     return NULL;
   DIScope DS(Scope->getScopeNode());
