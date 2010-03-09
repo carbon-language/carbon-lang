@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
@@ -1128,17 +1129,29 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
       EmitAlignment(2);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        O << *Stubs[i].first << ":\n\t.indirect_symbol ";
-        O << *Stubs[i].second << "\n\t.long\t0\n";
+        // L_foo$stub:
+        OutStreamer.EmitLabel(Stubs[i].first);
+        //   .indirect_symbol _foo
+        OutStreamer.EmitSymbolAttribute(Stubs[i].second, MCSA_IndirectSymbol);
+        OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       }
+
+      Stubs.clear();
+      OutStreamer.AddBlankLine();
     }
 
     Stubs = MMIMacho.GetHiddenGVStubList();
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i)
-        O << *Stubs[i].first << ":\n\t.long " << *Stubs[i].second << "\n";
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        // L_foo$stub:
+        OutStreamer.EmitLabel(Stubs[i].first);
+        //   .long _foo
+        OutStreamer.EmitValue(MCSymbolRefExpr::Create(Stubs[i].second,
+                                                      OutContext),
+                              4/*size*/, 0/*addrspace*/);
+      }
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
