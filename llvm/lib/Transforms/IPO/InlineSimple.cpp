@@ -45,6 +45,9 @@ namespace {
     void resetCachedCostInfo(Function *Caller) {
       CA.resetCachedCostInfo(Caller);
     }
+    void growCachedCostInfo(Function* Caller, Function* Callee) {
+      CA.growCachedCostInfo(Caller, Callee);
+    }
     virtual bool doInitialization(CallGraph &CG);
   };
 }
