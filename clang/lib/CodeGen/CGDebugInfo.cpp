@@ -97,7 +97,7 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   llvm::sys::Path AbsFileName(PLoc.getFilename());
   AbsFileName.makeAbsolute();
 
-  return DebugFactory.CreateFile(AbsFileName.getBasename(), 
+  return DebugFactory.CreateFile(AbsFileName.getLast(),
                                  AbsFileName.getDirname(), TheCU);
 }
 /// CreateCompileUnit - Create new compile unit.
