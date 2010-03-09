@@ -45,7 +45,10 @@ namespace {
       return CA.getInlineFudgeFactor(CS);
     }
     void resetCachedCostInfo(Function *Caller) {
-      return CA.resetCachedCostInfo(Caller);
+      CA.resetCachedCostInfo(Caller);
+    }
+    void growCachedCostInfo(Function* Caller, Function* Callee) {
+      CA.growCachedCostInfo(Caller, Callee);
     }
     virtual bool doFinalization(CallGraph &CG) { 
       return removeDeadFunctions(CG, &NeverInline); 
