@@ -1281,17 +1281,13 @@ void MCAssembler::Finish() {
 
     // Align this section if necessary by adding padding bytes to the previous
     // section.
-    if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment())) {
-      assert(Prev && "Missing prev section!");
-      Prev->setFileSize(Prev->getFileSize() + Pad);
+    if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment()))
       Address += Pad;
-    }
 
     SD.setAddress(Address);
     LayoutSection(SD);
     Address += SD.getSize();
 
-    Prev = &SD;
   }
 
   DEBUG_WITH_TYPE("mc-dump", {
