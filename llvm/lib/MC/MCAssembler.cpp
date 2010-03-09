@@ -1351,7 +1351,7 @@ void MCDataFragment::dump() {
     OS << ",\n       ";
     OS << " Fixups:[";
     for (fixup_iterator it = fixup_begin(), ie = fixup_end(); it != ie; ++it) {
-      if (it != fixup_begin()) OS << ",\n            ";
+      if (it != fixup_begin()) OS << ",\n                ";
       OS << *it;
     }
     OS << "]";
@@ -1394,7 +1394,7 @@ void MCSectionData::dump() {
   OS << "<MCSectionData";
   OS << " Alignment:" << getAlignment() << " Address:" << Address
      << " Size:" << Size << " FileSize:" << FileSize
-     << " Fragments:[";
+     << " Fragments:[\n      ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n      ";
     it->dump();
@@ -1422,7 +1422,7 @@ void MCAssembler::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCAssembler\n";
-  OS << "  Sections:[";
+  OS << "  Sections:[\n    ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n    ";
     it->dump();
@@ -1431,7 +1431,7 @@ void MCAssembler::dump() {
   OS << "  Symbols:[";
 
   for (symbol_iterator it = symbol_begin(), ie = symbol_end(); it != ie; ++it) {
-    if (it != symbol_begin()) OS << ",\n    ";
+    if (it != symbol_begin()) OS << ",\n           ";
     it->dump();
   }
   OS << "]>\n";
