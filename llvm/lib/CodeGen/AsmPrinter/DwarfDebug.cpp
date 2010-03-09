@@ -1951,14 +1951,14 @@ void DwarfDebug::collectVariableInfo() {
 }
 
 /// beginScope - Process beginning of a scope starting at Label.
-void DwarfDebug::beginScope(const MachineInstr *MI, unsigned Label) {
+void DwarfDebug::beginScope(const MachineInstr *MI, MCSymbol *Label) {
   InsnToDbgScopeMapTy::iterator I = DbgScopeBeginMap.find(MI);
   if (I == DbgScopeBeginMap.end())
     return;
   ScopeVector &SD = I->second;
   for (ScopeVector::iterator SDI = SD.begin(), SDE = SD.end();
        SDI != SDE; ++SDI)
-    (*SDI)->setStartLabel(getDWLabel("label", Label));
+    (*SDI)->setStartLabel(Label);
 }
 
 /// endScope - Process end of a scope.
@@ -2127,7 +2127,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
       Col = DLT.getColumnNumber();
     }
     
-    Asm->printLabel(recordSourceLine(Line, Col, DLT.getScope().getNode()));
+    recordSourceLine(Line, Col, DLT.getScope().getNode());
   }
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
@@ -2183,11 +2183,10 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     DebugTimer->stopTimer();
 }
 
-/// recordSourceLine - Records location information and associates it with a
-/// label. Returns a unique label ID used to generate a label and provide
-/// correspondence to the source line list.
-unsigned DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
-                                      MDNode *S) {
+/// recordSourceLine - Register a source line with debug info. Returns the
+/// unique label that was emitted and which provides correspondence to
+/// the source line list.
+MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
   if (!MMI)
     return 0;
 
@@ -2220,7 +2219,9 @@ unsigned DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
 
-  return ID;
+  MCSymbol *Label = getDWLabel("label", ID);
+  Asm->OutStreamer.EmitLabel(Label);
+  return Label;
 }
 
 /// getOrCreateSourceID - Public version of GetOrCreateSourceID. This can be
