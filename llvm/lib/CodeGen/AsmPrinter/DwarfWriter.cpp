@@ -73,11 +73,11 @@ void DwarfWriter::EndFunction(const MachineFunction *MF) {
     MMI->EndFunction();
 }
 
-/// RecordSourceLine - Records location information and associates it with a 
-/// label. Returns a unique label ID used to generate a label and provide
-/// correspondence to the source line list.
-unsigned DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
-                                       MDNode *Scope) {
+/// RecordSourceLine - Register a source line with debug info. Returns the
+/// unique label that was emitted and which provides correspondence to
+/// the source line list.
+MCSymbol *DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
+                                        MDNode *Scope) {
   return DD->recordSourceLine(Line, Col, Scope);
 }
 
@@ -92,7 +92,7 @@ bool DwarfWriter::ShouldEmitDwarfDebug() const {
   return DD && DD->ShouldEmitDwarfDebug();
 }
 
-void DwarfWriter::BeginScope(const MachineInstr *MI, unsigned L) {
+void DwarfWriter::BeginScope(const MachineInstr *MI, MCSymbol *L) {
   DD->beginScope(MI, L);
 }
 void DwarfWriter::EndScope(const MachineInstr *MI) {
