@@ -1405,8 +1405,9 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
               dwarf::DW_FORM_ref4, OriginDIE);
 
-  addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-           getDWLabel("label", StartID));
+  MCSymbol *StartLabel = getDWLabel("label", StartID);
+  
+  addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, StartLabel);
   addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
            getDWLabel("label", EndID));
 
@@ -1417,11 +1418,11 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
     I = InlineInfo.find(InlinedSP.getNode());
 
   if (I == InlineInfo.end()) {
-    InlineInfo[InlinedSP.getNode()].push_back(std::make_pair(StartID,
+    InlineInfo[InlinedSP.getNode()].push_back(std::make_pair(StartLabel,
                                                              ScopeDIE));
     InlinedSPNodes.push_back(InlinedSP.getNode());
   } else
-    I->second.push_back(std::make_pair(StartID, ScopeDIE));
+    I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
 
   StringPool.insert(InlinedSP.getName());
   StringPool.insert(getRealLinkageName(InlinedSP.getLinkageName()));
@@ -2965,13 +2966,12 @@ void DwarfDebug::emitDebugInlineInfo() {
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
            LE = Labels.end(); LI != LE; ++LI) {
-      DIE *SP = LI->second;
-      Asm->EmitInt32(SP->getOffset()); EOL("DIE offset");
+      if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DIE offset");
+      Asm->EmitInt32(LI->second->getOffset());
 
-      // FIXME: "Labels" should hold MCSymbol*'s
-      MCSymbol *L = getDWLabel("label", LI->first);
       if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("low_pc");
-      Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(L, Asm->OutContext),
+      Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(LI->first,
+                                                         Asm->OutContext),
                                  TD->getPointerSize(), 0/*AddrSpace*/);
     }
   }

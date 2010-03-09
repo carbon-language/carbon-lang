@@ -167,8 +167,8 @@ class DwarfDebug : public DwarfPrinter {
 
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
-  typedef std::pair<unsigned, DIE *> InlineInfoLabels;
-  DenseMap<MDNode *, SmallVector<InlineInfoLabels, 4> > InlineInfo;
+  typedef std::pair<MCSymbol*, DIE *> InlineInfoLabels;
+  DenseMap<MDNode*, SmallVector<InlineInfoLabels, 4> > InlineInfo;
   SmallVector<MDNode *, 4> InlinedSPNodes;
 
   /// CompileUnitOffsets - A vector of the offsets of the compile units. This is
