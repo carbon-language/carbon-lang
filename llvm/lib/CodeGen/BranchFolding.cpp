@@ -347,15 +347,29 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
     --I1; --I2;
     // Skip debugging pseudos; necessary to avoid changing the code.
     while (I1->isDebugValue()) {
-      if (I1==MBB1->begin())
+      if (I1==MBB1->begin()) {
+        while (I2->isDebugValue()) {
+          if (I2==MBB2->begin())
+            // I1==DBG at begin; I2==DBG at begin
+            return TailLen;
+          --I2;
+        }
+        ++I2;
+        // I1==DBG at begin; I2==non-DBG, or first of DBGs not at begin
         return TailLen;
+      }
       --I1;
     }
+    // I1==first (untested) non-DBG preceding known match
     while (I2->isDebugValue()) {
-      if (I2==MBB2->begin())
+      if (I2==MBB2->begin()) {
+        ++I1;
+        // I1==non-DBG, or first of DBGs not at begin; I2==DBG at begin
         return TailLen;
+      }
       --I2;
     }
+    // I1, I2==first (untested) non-DBGs preceding known match
     if (!I1->isIdenticalTo(I2) ||
         // FIXME: This check is dubious. It's used to get around a problem where
         // people incorrectly expect inline asm directives to remain in the same
@@ -367,6 +381,29 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
       break;
     }
     ++TailLen;
+  }
+  // Back past possible debugging pseudos at beginning of block.  This matters
+  // when one block differs from the other only by whether debugging pseudos
+  // are present at the beginning.  (This way, the various checks later for
+  // I1==MBB1->begin() work as expected.)
+  if (I1 == MBB1->begin() && I2 != MBB2->begin()) {
+    --I2;
+    while (I2->isDebugValue()) {
+      if (I2 == MBB2->begin()) {
+        return TailLen;
+        }
+      --I2;
+    }
+    ++I2;
+  }
+  if (I2 == MBB2->begin() && I1 != MBB1->begin()) {
+    --I1;
+    while (I1->isDebugValue()) {
+      if (I1 == MBB1->begin())
+        return TailLen;
+      --I1;
+    }
+    ++I1;
   }
   return TailLen;
 }
@@ -1163,7 +1200,23 @@ ReoptimizeBlock:
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.
       TII->RemoveBranch(*MBB);
-
+      // If the only things remaining in the block are debug info, remove these
+      // as well, so this will behave the same as an empty block in non-debug
+      // mode.
+      if (!MBB->empty()) {
+        bool NonDebugInfoFound = false;
+        for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+             I != E; ++I) {
+          if (!I->isDebugValue()) {
+            NonDebugInfoFound = true;
+            break;
+          }
+        }
+        if (!NonDebugInfoFound)
+          // Make the block empty, losing the debug info (we could probably
+          // improve this in some cases.)
+          MBB->erase(MBB->begin(), MBB->end());
+      }
       // If this block is just an unconditional branch to CurTBB, we can
       // usually completely eliminate the block.  The only case we cannot
       // completely eliminate the block is when the block before this one
