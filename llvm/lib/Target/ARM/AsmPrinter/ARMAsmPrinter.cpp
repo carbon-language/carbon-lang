@@ -1132,8 +1132,16 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$stub:
         OutStreamer.EmitLabel(Stubs[i].first);
         //   .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second, MCSA_IndirectSymbol);
-        OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+        MCSymbol *MCSym = Stubs[i].second;
+        OutStreamer.EmitSymbolAttribute(MCSym, MCSA_IndirectSymbol);
+
+        if (MCSym->isUndefined())
+          // External to current translation unit.
+          OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+        else
+          // Internal to current translation unit.
+          OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym, OutContext),
+                                4/*size*/, 0/*addrspace*/);
       }
 
       Stubs.clear();
@@ -1152,6 +1160,9 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
                                                       OutContext),
                               4/*size*/, 0/*addrspace*/);
       }
+
+      Stubs.clear();
+      OutStreamer.AddBlankLine();
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
