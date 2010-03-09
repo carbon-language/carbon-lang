@@ -25,6 +25,7 @@
     <li><a href="#debug_info_descriptors">Debug information descriptors</a>
     <ul>
       <li><a href="#format_compile_units">Compile unit descriptors</a></li>
+      <li><a href="#format_files">File descriptors</a></li>
       <li><a href="#format_global_variables">Global variable descriptors</a></li>
       <li><a href="#format_subprograms">Subprogram descriptors</a></li>
       <li><a href="#format_blocks">Block descriptors</a></li>
@@ -255,7 +256,7 @@ height="369">
 <p>To provide basic functionality, the LLVM debugger does have to make some
    assumptions about the source-level language being debugged, though it keeps
    these to a minimum.  The only common features that the LLVM debugger assumes
-   exist are <a href="#format_compile_units">source files</a>,
+   exist are <a href="#format_files">source files</a>,
    and <a href="#format_global_variables">program objects</a>.  These abstract
    objects are used by a debugger to form stack traces, show information about
    local variables, etc.</p>
@@ -307,8 +308,8 @@ height="369">
    of tags are loosely bound to the tag values of DWARF information entries.
    However, that does not restrict the use of the information supplied to DWARF
    targets.  To facilitate versioning of debug information, the tag is augmented
-   with the current debug version (LLVMDebugVersion = 7 << 16 or 0x70000 or
-   458752.)</a></p>
+   with the current debug version (LLVMDebugVersion = 8 << 16 or 0x80000 or
+   524288.)</a></p>
 
 <p>The details of the various descriptors follow.</p>  
 
@@ -346,18 +347,36 @@ height="369">
    that produced it.</p>
 
 <p>Compile unit descriptors provide the root context for objects declared in a
-   specific source file.  Global variables and top level functions would be
-   defined using this context. Compile unit descriptors also provide context
-   for source line correspondence.</p>
+   specific compilation unit. File descriptors are defined using this context.</p>
 
-<p>Each input file is encoded as a separate compile unit in LLVM debugging
-   information output. However, many target specific tool chains prefer to
-   encode only one compile unit in an object file. In this situation, the LLVM
-   code generator will include debugging information entities in the compile
-   unit that is marked as main compile unit. The code generator accepts maximum
-   one main compile unit per module. If a module does not contain any main
-   compile unit then the code generator will emit multiple compile units in the
-   output object file.</p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection">
+  <a name="format_files">File descriptors</a>
+</div>
+
+<div class="doc_text">
+
+<div class="doc_code">
+<pre>
+!0 = metadata !{
+  i32,       ;; Tag = 41 + <a href="#LLVMDebugVersion">LLVMDebugVersion</a> 
+             ;; (DW_TAG_file_type)
+  metadata,  ;; Source file name
+  metadata,  ;; Source file directory (includes trailing slash)
+  metadata   ;; Reference to compile unit where defined
+}
+</pre>
+</div>
+
+<p>These descriptors contain informations for a file. Global variables and top
+   level functions would be defined using this context.k File descriptors also
+   provide context for source line correspondence. </p>
+
+<p>Each input file is encoded as a separate file descriptor in LLVM debugging
+   information output. Each file descriptor would be defined using a 
+   compile unit. </p>
 
 </div>
 
@@ -378,7 +397,7 @@ height="369">
   metadata, ;; Name
   metadata, ;; Display name (fully qualified C++ name)
   metadata, ;; MIPS linkage name (for C++)
-  metadata, ;; Reference to compile unit where defined
+  metadata, ;; Reference to file where defined
   i32,      ;; Line number where defined
   metadata, ;; Reference to type descriptor
   i1,       ;; True if the global is local to compile unit (static)
@@ -410,7 +429,7 @@ provide details such as name, type and where the variable is defined.</p>
   metadata, ;; Name
   metadata, ;; Display name (fully qualified C++ name)
   metadata, ;; MIPS linkage name (for C++)
-  metadata, ;; Reference to compile unit where defined
+  metadata, ;; Reference to file where defined
   i32,      ;; Line number where defined
   metadata, ;; Reference to type descriptor
   i1,       ;; True if the global is local to compile unit (static)
@@ -461,7 +480,7 @@ provide details such as name, type and where the variable is defined.</p>
             ;; (DW_TAG_base_type)
   metadata, ;; Reference to context (typically a compile unit)
   metadata, ;; Name (may be "" for anonymous types)
-  metadata, ;; Reference to compile unit where defined (may be NULL)
+  metadata, ;; Reference to file where defined (may be NULL)
   i32,      ;; Line number where defined (may be 0)
   i64,      ;; Size in bits
   i64,      ;; Alignment in bits
@@ -512,7 +531,7 @@ DW_ATE_unsigned_char = 8
   i32,      ;; Tag (see below)
   metadata, ;; Reference to context
   metadata, ;; Name (may be "" for anonymous types)
-  metadata, ;; Reference to compile unit where defined (may be NULL)
+  metadata, ;; Reference to file where defined (may be NULL)
   i32,      ;; Line number where defined (may be 0)
   i32,      ;; Size in bits
   i32,      ;; Alignment in bits
@@ -580,7 +599,7 @@ DW_TAG_restrict_type    = 55
   i32,      ;; Tag (see below)
   metadata, ;; Reference to context
   metadata, ;; Name (may be "" for anonymous types)
-  metadata, ;; Reference to compile unit where defined (may be NULL)
+  metadata, ;; Reference to file where defined (may be NULL)
   i32,      ;; Line number where defined (may be 0)
   i64,      ;; Size in bits
   i64,      ;; Alignment in bits
@@ -715,7 +734,7 @@ DW_TAG_inheritance      = 28
   i32,      ;; Tag (see below)
   metadata, ;; Context
   metadata, ;; Name
-  metadata, ;; Reference to compile unit where defined
+  metadata, ;; Reference to file where defined
   i32,      ;; Line number where defined
   metadata  ;; Type descriptor
 }
@@ -1012,10 +1031,10 @@ int main(int argc, char *argv[]) {
 <pre>
 ...
 ;;
-;; Define the compile unit for the source file "/Users/mine/sources/MySource.cpp".
+;; Define the compile unit for the main source file "/Users/mine/sources/MySource.cpp".
 ;;
-!3 = metadata !{
-  i32 458769,    ;; Tag
+!2 = metadata !{
+  i32 524305,    ;; Tag
   i32 0,         ;; Unused
   i32 4,         ;; Language Id
   metadata !"MySource.cpp", 
@@ -1027,19 +1046,24 @@ int main(int argc, char *argv[]) {
   i32 0}         ;; Runtime version
 
 ;;
-;; Define the compile unit for the header file "/Users/mine/sources/MyHeader.h".
+;; Define the file for the file "/Users/mine/sources/MySource.cpp".
 ;;
 !1 = metadata !{
-  i32 458769,    ;; Tag
-  i32 0,         ;; Unused
-  i32 4,         ;; Language Id
-  metadata !"MyHeader.h", 
+  i32 524329,    ;; Tag
+  metadata !"MySource.cpp", 
   metadata !"/Users/mine/sources", 
-  metadata !"4.2.1 (Based on Apple Inc. build 5649) (LLVM build 00)", 
-  i1 false,      ;; Main Compile Unit
-  i1 false,      ;; Optimized compile unit
-  metadata !"",  ;; Compiler flags
-  i32 0}         ;; Runtime version
+  metadata !3    ;; Compile unit
+}
+
+;;
+;; Define the file for the file "/Users/mine/sources/Myheader.h"
+;;
+!3 = metadata !{
+  i32 524329,    ;; Tag
+  metadata !"Myheader.h"
+  metadata !"/Users/mine/sources", 
+  metadata !3    ;; Compile unit
+}
 
 ...
 </pre>
@@ -1081,15 +1105,15 @@ int MyGlobal = 100;
 ;; variable anchor and the global variable itself.
 ;;
 !0 = metadata !{
-  i32 458804,              ;; Tag
+  i32 524340,              ;; Tag
   i32 0,                   ;; Unused
   metadata !1,             ;; Context
   metadata !"MyGlobal",    ;; Name
   metadata !"MyGlobal",    ;; Display Name
   metadata !"MyGlobal",    ;; Linkage Name
-  metadata !1,             ;; Compile Unit
+  metadata !3,             ;; Compile Unit
   i32 1,                   ;; Line Number
-  metadata !2,             ;; Type
+  metadata !4,             ;; Type
   i1 false,                ;; Is a local variable
   i1 true,                 ;; Is this a definition
   i32* @MyGlobal           ;; The global variable
@@ -1099,11 +1123,11 @@ int MyGlobal = 100;
 ;; Define the basic type of 32 bit signed integer.  Note that since int is an
 ;; intrinsic type the source file is NULL and line 0.
 ;;    
-!2 = metadata !{
-  i32 458788,              ;; Tag
+!4 = metadata !{
+  i32 524324,              ;; Tag
   metadata !1,             ;; Context
   metadata !"int",         ;; Name
-  metadata !1,             ;; Compile Unit
+  metadata !1,             ;; File
   i32 0,                   ;; Line number
   i64 32,                  ;; Size in Bits
   i64 32,                  ;; Align in Bits
@@ -1143,16 +1167,16 @@ int main(int argc, char *argv[]) {
 ;; anchor is 46, which is the same as the tag for subprograms
 ;; (46 = DW_TAG_subprogram.)
 ;;
-!0 = metadata !{
-  i32 458798,        ;; Tag
+!6 = metadata !{
+  i32 524334,        ;; Tag
   i32 0,             ;; Unused
   metadata !1,       ;; Context
   metadata !"main",  ;; Name
   metadata !"main",  ;; Display name
   metadata !"main",  ;; Linkage name
-  metadata !1,       ;; Compile unit
+  metadata !1,       ;; File
   i32 1,             ;; Line number
-  metadata !2,       ;; Type
+  metadata !4,       ;; Type
   i1 false,          ;; Is local 
   i1 true            ;; Is definition
 }
@@ -1188,10 +1212,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"bool",  ;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 8,             ;; Size in Bits
   i64 8,             ;; Align in Bits
@@ -1214,10 +1238,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"char",  ;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 8,             ;; Size in Bits
   i64 8,             ;; Align in Bits
@@ -1240,10 +1264,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"unsigned char", 
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 8,             ;; Size in Bits
   i64 8,             ;; Align in Bits
@@ -1266,10 +1290,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"short int",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 16,            ;; Size in Bits
   i64 16,            ;; Align in Bits
@@ -1292,10 +1316,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"short unsigned int",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 16,            ;; Size in Bits
   i64 16,            ;; Align in Bits
@@ -1318,10 +1342,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"int",   ;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 32,            ;; Size in Bits
   i64 32,            ;; Align in Bits
@@ -1343,10 +1367,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"unsigned int",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 32,            ;; Size in Bits
   i64 32,            ;; Align in Bits
@@ -1369,10 +1393,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"long long int",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 64,            ;; Size in Bits
   i64 64,            ;; Align in Bits
@@ -1395,10 +1419,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"long long unsigned int",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 64,            ;; Size in Bits
   i64 64,            ;; Align in Bits
@@ -1421,10 +1445,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"float",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 32,            ;; Size in Bits
   i64 32,            ;; Align in Bits
@@ -1447,10 +1471,10 @@ define i32 @main(i32 %argc, i8** %argv) {
 <div class="doc_code">
 <pre>
 !2 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"double",;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 64,            ;; Size in Bits
   i64 64,            ;; Align in Bits
@@ -1486,10 +1510,10 @@ typedef const int *IntPtr;
 ;; Define the typedef "IntPtr".
 ;;
 !2 = metadata !{
-  i32 458774,          ;; Tag
+  i32 524310,          ;; Tag
   metadata !1,         ;; Context
   metadata !"IntPtr",  ;; Name
-  metadata !3,         ;; Compile unit
+  metadata !3,         ;; File
   i32 0,               ;; Line number
   i64 0,               ;; Size in bits
   i64 0,               ;; Align in bits
@@ -1502,10 +1526,10 @@ typedef const int *IntPtr;
 ;; Define the pointer type.
 ;;
 !4 = metadata !{
-  i32 458767,          ;; Tag
+  i32 524303,          ;; Tag
   metadata !1,         ;; Context
   metadata !"",        ;; Name
-  metadata !1,         ;; Compile unit
+  metadata !1,         ;; File
   i32 0,               ;; Line number
   i64 64,              ;; Size in bits
   i64 64,              ;; Align in bits
@@ -1517,10 +1541,10 @@ typedef const int *IntPtr;
 ;; Define the const type.
 ;;
 !5 = metadata !{
-  i32 458790,          ;; Tag
+  i32 524326,          ;; Tag
   metadata !1,         ;; Context
   metadata !"",        ;; Name
-  metadata !1,         ;; Compile unit
+  metadata !1,         ;; File
   i32 0,               ;; Line number
   i64 32,              ;; Size in bits
   i64 32,              ;; Align in bits
@@ -1532,10 +1556,10 @@ typedef const int *IntPtr;
 ;; Define the int type.
 ;;
 !6 = metadata !{
-  i32 458788,          ;; Tag
+  i32 524324,          ;; Tag
   metadata !1,         ;; Context
   metadata !"int",     ;; Name
-  metadata !1,         ;; Compile unit
+  metadata !1,         ;; File
   i32 0,               ;; Line number
   i64 32,              ;; Size in bits
   i64 32,              ;; Align in bits
@@ -1575,10 +1599,10 @@ struct Color {
 ;; Define basic type for unsigned int.
 ;;
 !5 = metadata !{
-  i32 458788,        ;; Tag
+  i32 524324,        ;; Tag
   metadata !1,       ;; Context
   metadata !"unsigned int",
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 0,             ;; Line number
   i64 32,            ;; Size in Bits
   i64 32,            ;; Align in Bits
@@ -1590,7 +1614,7 @@ struct Color {
 ;; Define composite type for struct Color.
 ;;
 !2 = metadata !{
-  i32 458771,        ;; Tag
+  i32 524307,        ;; Tag
   metadata !1,       ;; Context
   metadata !"Color", ;; Name
   metadata !1,       ;; Compile unit
@@ -1608,10 +1632,10 @@ struct Color {
 ;; Define the Red field.
 ;;
 !4 = metadata !{
-  i32 458765,        ;; Tag
+  i32 524301,        ;; Tag
   metadata !1,       ;; Context
   metadata !"Red",   ;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 2,             ;; Line number
   i64 32,            ;; Size in bits
   i64 32,            ;; Align in bits
@@ -1624,10 +1648,10 @@ struct Color {
 ;; Define the Green field.
 ;;
 !6 = metadata !{
-  i32 458765,        ;; Tag
+  i32 524301,        ;; Tag
   metadata !1,       ;; Context
   metadata !"Green", ;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 3,             ;; Line number
   i64 32,            ;; Size in bits
   i64 32,            ;; Align in bits
@@ -1640,10 +1664,10 @@ struct Color {
 ;; Define the Blue field.
 ;;
 !7 = metadata !{
-  i32 458765,        ;; Tag
+  i32 524301,        ;; Tag
   metadata !1,       ;; Context
   metadata !"Blue",  ;; Name
-  metadata !1,       ;; Compile Unit
+  metadata !1,       ;; File
   i32 4,             ;; Line number
   i64 32,            ;; Size in bits
   i64 32,            ;; Align in bits
@@ -1688,10 +1712,10 @@ enum Trees {
 ;; Define composite type for enum Trees
 ;;
 !2 = metadata !{
-  i32 458756,        ;; Tag
+  i32 524292,        ;; Tag
   metadata !1,       ;; Context
   metadata !"Trees", ;; Name
-  metadata !1,       ;; Compile unit
+  metadata !1,       ;; File
   i32 1,             ;; Line number
   i64 32,            ;; Size in bits
   i64 32,            ;; Align in bits
@@ -1710,17 +1734,17 @@ enum Trees {
 ;;
 ;; Define Spruce enumerator.
 ;;
-!4 = metadata !{i32 458792, metadata !"Spruce", i64 100}
+!4 = metadata !{i32 524328, metadata !"Spruce", i64 100}
 
 ;;
 ;; Define Oak enumerator.
 ;;
-!5 = metadata !{i32 458792, metadata !"Oak", i64 200}
+!5 = metadata !{i32 524328, metadata !"Oak", i64 200}
 
 ;;
 ;; Define Maple enumerator.
 ;;
-!6 = metadata !{i32 458792, metadata !"Maple", i64 300}
+!6 = metadata !{i32 524328, metadata !"Maple", i64 300}
 
 </pre>
 </div>

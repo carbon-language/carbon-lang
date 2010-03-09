@@ -214,7 +214,13 @@ namespace llvm {
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
-    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
+    DICompileUnit getCompileUnit() const{ 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getFieldAs<DICompileUnit>(3);
+
+      DIFile F = getFieldAs<DIFile>(3);
+      return F.getCompileUnit();
+    }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     uint64_t getSizeInBits() const      { return getUInt64Field(5); }
     uint64_t getAlignInBits() const     { return getUInt64Field(6); }
@@ -324,7 +330,14 @@ namespace llvm {
     StringRef getName() const         { return getStringField(3); }
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
-    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(6); }
+    DICompileUnit getCompileUnit() const{ 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getFieldAs<DICompileUnit>(6);
+
+      DIFile F = getFieldAs<DIFile>(6); 
+      return F.getCompileUnit();
+    }
+
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DIType getType() const              { return getFieldAs<DIType>(8); }
 
@@ -346,7 +359,13 @@ namespace llvm {
     StringRef getName() const         { return getStringField(3); }
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
-    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(6); }
+    DICompileUnit getCompileUnit() const{ 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getFieldAs<DICompileUnit>(6);
+
+      DIFile F = getFieldAs<DIFile>(6); 
+      return F.getCompileUnit();
+    }
     unsigned getLineNumber() const      { return getUnsignedField(7); }
     DICompositeType getType() const { return getFieldAs<DICompositeType>(8); }
 
@@ -413,7 +432,13 @@ namespace llvm {
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
-    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
+    DICompileUnit getCompileUnit() const{ 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getFieldAs<DICompileUnit>(3);
+
+      DIFile F = getFieldAs<DIFile>(3); 
+      return F.getCompileUnit();
+    }
     unsigned getLineNumber() const      { return getUnsignedField(4); }
     DIType getType() const              { return getFieldAs<DIType>(5); }
 
@@ -461,7 +486,13 @@ namespace llvm {
     StringRef getName() const      { return getStringField(2);           }
     StringRef getDirectory() const { return getContext().getDirectory(); }
     StringRef getFilename() const  { return getContext().getFilename();  }
-    DICompileUnit getCompileUnit() const { return getFieldAs<DICompileUnit>(3);}
+    DICompileUnit getCompileUnit() const{ 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getFieldAs<DICompileUnit>(3);
+
+      DIFile F = getFieldAs<DIFile>(3); 
+      return F.getCompileUnit();
+    }
     unsigned getLineNumber() const { return getUnsignedField(4);         }
   };
 
@@ -523,14 +554,14 @@ namespace llvm {
 
     /// CreateBasicType - Create a basic type like int, float, etc.
     DIBasicType CreateBasicType(DIDescriptor Context, StringRef Name,
-                                DICompileUnit CompileUnit, unsigned LineNumber,
+                                DIFile F, unsigned LineNumber,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
                                 unsigned Encoding);
 
     /// CreateBasicType - Create a basic type like int, float, etc.
     DIBasicType CreateBasicTypeEx(DIDescriptor Context, StringRef Name,
-                                DICompileUnit CompileUnit, unsigned LineNumber,
+                                DIFile F, unsigned LineNumber,
                                 Constant *SizeInBits, Constant *AlignInBits,
                                 Constant *OffsetInBits, unsigned Flags,
                                 unsigned Encoding);
@@ -539,7 +570,7 @@ namespace llvm {
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedType(unsigned Tag, DIDescriptor Context,
                                     StringRef Name,
-                                    DICompileUnit CompileUnit,
+                                    DIFile F,
                                     unsigned LineNumber,
                                     uint64_t SizeInBits, uint64_t AlignInBits,
                                     uint64_t OffsetInBits, unsigned Flags,
@@ -548,17 +579,18 @@ namespace llvm {
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedTypeEx(unsigned Tag, DIDescriptor Context,
-                                        StringRef Name,
-                                    DICompileUnit CompileUnit,
-                                    unsigned LineNumber,
-                                    Constant *SizeInBits, Constant *AlignInBits,
-                                    Constant *OffsetInBits, unsigned Flags,
-                                    DIType DerivedFrom);
+                                      StringRef Name,
+                                      DIFile F,
+                                      unsigned LineNumber,
+                                      Constant *SizeInBits, 
+                                      Constant *AlignInBits,
+                                      Constant *OffsetInBits, unsigned Flags,
+                                      DIType DerivedFrom);
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeType(unsigned Tag, DIDescriptor Context,
                                         StringRef Name,
-                                        DICompileUnit CompileUnit,
+                                        DIFile F,
                                         unsigned LineNumber,
                                         uint64_t SizeInBits,
                                         uint64_t AlignInBits,
@@ -573,22 +605,23 @@ namespace llvm {
 
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeTypeEx(unsigned Tag, DIDescriptor Context,
-                                        StringRef Name,
-                                        DICompileUnit CompileUnit,
-                                        unsigned LineNumber,
-                                        Constant *SizeInBits,
-                                        Constant *AlignInBits,
-                                        Constant *OffsetInBits, unsigned Flags,
-                                        DIType DerivedFrom,
-                                        DIArray Elements,
-                                        unsigned RunTimeLang = 0);
+                                          StringRef Name,
+                                          DIFile F,
+                                          unsigned LineNumber,
+                                          Constant *SizeInBits,
+                                          Constant *AlignInBits,
+                                          Constant *OffsetInBits, 
+                                          unsigned Flags,
+                                          DIType DerivedFrom,
+                                          DIArray Elements,
+                                          unsigned RunTimeLang = 0);
 
     /// CreateSubprogram - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.
     DISubprogram CreateSubprogram(DIDescriptor Context, StringRef Name,
                                   StringRef DisplayName,
                                   StringRef LinkageName,
-                                  DICompileUnit CompileUnit, unsigned LineNo,
+                                  DIFile F, unsigned LineNo,
                                   DIType Ty, bool isLocalToUnit,
                                   bool isDefinition,
                                   unsigned VK = 0,
@@ -605,21 +638,21 @@ namespace llvm {
     CreateGlobalVariable(DIDescriptor Context, StringRef Name,
                          StringRef DisplayName,
                          StringRef LinkageName,
-                         DICompileUnit CompileUnit,
+                         DIFile F,
                          unsigned LineNo, DIType Ty, bool isLocalToUnit,
                          bool isDefinition, llvm::GlobalVariable *GV);
 
     /// CreateVariable - Create a new descriptor for the specified variable.
     DIVariable CreateVariable(unsigned Tag, DIDescriptor Context,
                               StringRef Name,
-                              DICompileUnit CompileUnit, unsigned LineNo,
+                              DIFile F, unsigned LineNo,
                               DIType Ty);
 
     /// CreateComplexVariable - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
     DIVariable CreateComplexVariable(unsigned Tag, DIDescriptor Context,
                                      const std::string &Name,
-                                     DICompileUnit CompileUnit, unsigned LineNo,
+                                     DIFile F, unsigned LineNo,
                                      DIType Ty,
                                      SmallVector<Value *, 9> &addr);
 
@@ -631,7 +664,7 @@ namespace llvm {
     /// CreateNameSpace - This creates new descriptor for a namespace
     /// with the specified parent context.
     DINameSpace CreateNameSpace(DIDescriptor Context, StringRef Name,
-                                DICompileUnit CU, unsigned LineNo);
+                                DIFile F, unsigned LineNo);
 
     /// CreateLocation - Creates a debug info location.
     DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,

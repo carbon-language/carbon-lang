@@ -22,7 +22,8 @@ namespace llvm {
 // Debug info constants.
 
 enum {
-  LLVMDebugVersion = (7 << 16),         // Current version of debug information.
+  LLVMDebugVersion = (8 << 16),         // Current version of debug information.
+  LLVMDebugVersion7 = (7 << 16),        // Constant for version 7.
   LLVMDebugVersion6 = (6 << 16),        // Constant for version 6.
   LLVMDebugVersion5 = (5 << 16),        // Constant for version 5.
   LLVMDebugVersion4 = (4 << 16),        // Constant for version 4.
