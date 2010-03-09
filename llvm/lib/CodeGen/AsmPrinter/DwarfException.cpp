@@ -94,15 +94,15 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common", Index));
 
   // Define the eh frame length.
+  Asm->OutStreamer.AddComment("Length of Common Information Entry");
   EmitDifference(getDWLabel("eh_frame_common_end", Index),
                  getDWLabel("eh_frame_common_begin", Index), true);
-  EOL("Length of Common Information Entry");
 
   // EH frame header.
   Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_common_begin", Index));
-  if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("CIE Identifier Tag");
+  Asm->OutStreamer.AddComment("CIE Identifier Tag");
   Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
-  if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DW_CIE_VERSION");
+  Asm->OutStreamer.AddComment("DW_CIE_VERSION");
   Asm->OutStreamer.EmitIntValue(dwarf::DW_CIE_VERSION, 1/*size*/, 0/*addr*/);
 
   // The personality presence indicates that language specific information will
@@ -138,14 +138,14 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   if (APtr != Augmentation + 1)
     Augmentation[0] = 'z';
 
+  Asm->OutStreamer.AddComment("CIE Augmentation");
   Asm->OutStreamer.EmitBytes(StringRef(Augmentation, strlen(Augmentation)+1),0);
-  EOL("CIE Augmentation");
 
   // Round out reader.
   EmitULEB128(1, "CIE Code Alignment Factor");
   EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
+  Asm->OutStreamer.AddComment("CIE Return Address Column");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
-  EOL("CIE Return Address Column");
 
   if (Augmentation[0]) {
     EmitULEB128(AugmentationSize, "Augmentation Size");
@@ -153,8 +153,8 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     // If there is a personality, we need to indicate the function's location.
     if (PersonalityFn) {
       EmitEncodingByte(PerEncoding, "Personality");
+      Asm->OutStreamer.AddComment("Personality");
       EmitReference(PersonalityFn, PerEncoding);
-      EOL("Personality");
     }
     if (UsesLSDA[Index])
       EmitEncodingByte(LSDAEncoding, "LSDA");
@@ -222,26 +222,26 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     O << *EHFrameInfo.FunctionEHSym << ":\n";
 
     // EH frame header.
+    Asm->OutStreamer.AddComment("Length of Frame Information Entry");
     EmitDifference(getDWLabel("eh_frame_end", EHFrameInfo.Number),
                    getDWLabel("eh_frame_begin", EHFrameInfo.Number),
                    true);
-    EOL("Length of Frame Information Entry");
 
     Asm->OutStreamer.EmitLabel(getDWLabel("eh_frame_begin",EHFrameInfo.Number));
 
+    Asm->OutStreamer.AddComment("FDE CIE offset");
     EmitSectionOffset(getDWLabel("eh_frame_begin", EHFrameInfo.Number),
                       getDWLabel("eh_frame_common",
                                  EHFrameInfo.PersonalityIndex),
                       true, true);
 
-    EOL("FDE CIE offset");
 
+    Asm->OutStreamer.AddComment("FDE initial location");
     EmitReference(getDWLabel("eh_func_begin", EHFrameInfo.Number), FDEEncoding);
-    EOL("FDE initial location");
+    Asm->OutStreamer.AddComment("FDE address range");
     EmitDifference(getDWLabel("eh_func_end", EHFrameInfo.Number),
                    getDWLabel("eh_func_begin", EHFrameInfo.Number),
                    SizeOfEncodedValue(FDEEncoding) == 4);
-    EOL("FDE address range");
 
     // If there is a personality and landing pads then point to the language
     // specific data area in the exception table.
@@ -249,12 +249,12 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       unsigned Size = SizeOfEncodedValue(LSDAEncoding);
 
       EmitULEB128(Size, "Augmentation size");
+      Asm->OutStreamer.AddComment("Language Specific Data Area");
       if (EHFrameInfo.hasLandingPads)
         EmitReference(getDWLabel("exception", EHFrameInfo.Number),LSDAEncoding);
       else
         Asm->OutStreamer.EmitIntValue(0, Size/*size*/, 0/*addrspace*/);
 
-      EOL("Language Specific Data Area");
     } else {
       EmitULEB128(0, "Augmentation size");
     }
@@ -819,11 +819,12 @@ void DwarfException::EmitExceptionTable() {
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
+      Asm->OutStreamer.AddComment("Region start");
       EmitSectionOffset(getDWLabel(BeginTag, BeginNumber),
                         getDWLabel("eh_func_begin", SubprogramCount),
                         true, true);
-      EOL("Region start");
 
+      Asm->OutStreamer.AddComment("Region length");
       if (!S.EndLabel)
         EmitDifference(getDWLabel("eh_func_end", SubprogramCount),
                        getDWLabel(BeginTag, BeginNumber),
@@ -832,18 +833,16 @@ void DwarfException::EmitExceptionTable() {
         EmitDifference(getDWLabel("label", S.EndLabel), 
                        getDWLabel(BeginTag, BeginNumber), true);
 
-      EOL("Region length");
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
+      Asm->OutStreamer.AddComment("Landing pad");
       if (!S.PadLabel) {
-        Asm->OutStreamer.AddComment("Landing pad");
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       } else {
         EmitSectionOffset(getDWLabel("label", S.PadLabel),
                           getDWLabel("eh_func_begin", SubprogramCount),
                           true, true);
-        EOL("Landing pad");
       }
 
       // Offset of the first associated action record, relative to the start of
@@ -854,11 +853,16 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Action Table.
-  if (Actions.size() != 0) EOL("-- Action Record Table --");
+  if (Actions.size() != 0) {
+    Asm->OutStreamer.AddComment("-- Action Record Table --");
+    Asm->OutStreamer.AddBlankLine();
+  }
+  
   for (SmallVectorImpl<ActionEntry>::const_iterator
          I = Actions.begin(), E = Actions.end(); I != E; ++I) {
     const ActionEntry &Action = *I;
-    EOL("Action Record:");
+    Asm->OutStreamer.AddComment("Action Record");
+    Asm->OutStreamer.AddBlankLine();
 
     // Type Filter
     //
@@ -874,23 +878,28 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Catch TypeInfos.
-  if (!TypeInfos.empty()) EOL("-- Catch TypeInfos --");
+  if (!TypeInfos.empty()) {
+    Asm->OutStreamer.AddComment("-- Catch TypeInfos --");
+    Asm->OutStreamer.AddBlankLine();
+  }
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
 
     if (GV) {
+      Asm->OutStreamer.AddComment("TypeInfo");
       EmitReference(GV, TTypeEncoding);
-      EOL("TypeInfo");
     } else {
       PrintRelDirective(TTypeEncoding);
-      O << "0x0";
-      EOL("");
+      O << "0x0\n";
     }
   }
 
   // Emit the Exception Specifications.
-  if (!FilterIds.empty()) EOL("-- Filter IDs --");
+  if (!FilterIds.empty()) {
+    Asm->OutStreamer.AddComment("-- Filter IDs --");
+    Asm->OutStreamer.AddBlankLine();
+  }
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;

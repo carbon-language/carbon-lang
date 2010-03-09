@@ -2405,7 +2405,9 @@ void DwarfDebug::emitDIE(DIE *Die) {
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
       emitDIE(Children[j]);
 
-    Asm->EmitInt8(0); EOL("End Of Children Mark");
+    if (Asm->VerboseAsm)
+      Asm->OutStreamer.AddComment("End Of Children Mark");
+    Asm->EmitInt8(0);
   }
 }
 
@@ -2427,19 +2429,23 @@ void DwarfDebug::emitDebugInfo() {
     sizeof(int8_t) +  // Pointer Size (in bytes)
     sizeof(int32_t);  // FIXME - extra pad for gdb bug.
 
-  Asm->EmitInt32(ContentSize);  EOL("Length of Compilation Unit Info");
-  Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("DWARF version number");
+  Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
+  Asm->EmitInt32(ContentSize);
+  Asm->OutStreamer.AddComment("DWARF version number");
+  Asm->EmitInt16(dwarf::DWARF_VERSION);
+  Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
   EmitSectionOffset(getTempLabel("abbrev_begin"),getTempLabel("section_abbrev"),
                     true, false);
-  EOL("Offset Into Abbrev. Section");
-  Asm->EmitInt8(TD->getPointerSize()); EOL("Address Size (in bytes)");
+  Asm->OutStreamer.AddComment("Address Size (in bytes)");
+  Asm->EmitInt8(TD->getPointerSize());
 
   emitDIE(Die);
   // FIXME - extra padding for gdb bug.
-  Asm->EmitInt8(0); EOL("Extra Pad For GDB");
-  Asm->EmitInt8(0); EOL("Extra Pad For GDB");
-  Asm->EmitInt8(0); EOL("Extra Pad For GDB");
-  Asm->EmitInt8(0); EOL("Extra Pad For GDB");
+  Asm->OutStreamer.AddComment("4 extra padding bytes for GDB");
+  Asm->EmitInt8(0);
+  Asm->EmitInt8(0);
+  Asm->EmitInt8(0);
+  Asm->EmitInt8(0);
   Asm->OutStreamer.EmitLabel(getDWLabel("info_end", ModuleCU->getID()));
 }
 
@@ -2478,14 +2484,20 @@ void DwarfDebug::emitAbbreviations() const {
 ///
 void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   // Define last address of section.
-  Asm->EmitInt8(0); EOL("Extended Op");
-  Asm->EmitInt8(TD->getPointerSize() + 1); EOL("Op size");
-  Asm->EmitInt8(dwarf::DW_LNE_set_address); EOL("DW_LNE_set_address");
+  Asm->OutStreamer.AddComment("Extended Op");
+  Asm->EmitInt8(0);
+  
+  Asm->OutStreamer.AddComment("Op size");
+  Asm->EmitInt8(TD->getPointerSize() + 1);
+  Asm->OutStreamer.AddComment("DW_LNE_set_address");
+  Asm->EmitInt8(dwarf::DW_LNE_set_address);
+
+  Asm->OutStreamer.AddComment("Section end label");
   EmitReference(getDWLabel("section_end", SectionEnd));
-  EOL("Section end label");
 
   // Mark end of matrix.
-  Asm->EmitInt8(0); EOL("DW_LNE_end_sequence");
+  Asm->OutStreamer.AddComment("DW_LNE_end_sequence");
+  Asm->EmitInt8(0);
   Asm->EmitInt8(1);
   Asm->EmitInt8(1);
 }
@@ -2508,33 +2520,48 @@ void DwarfDebug::emitDebugLines() {
                             Asm->getObjFileLowering().getDwarfLineSection());
 
   // Construct the section header.
+  Asm->OutStreamer.AddComment("Length of Source Line Info");
   EmitDifference(getTempLabel("line_end"), getTempLabel("line_begin"), true);
-  EOL("Length of Source Line Info");
   Asm->OutStreamer.EmitLabel(getTempLabel("line_begin"));
 
-  Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("DWARF version number");
+  Asm->OutStreamer.AddComment("DWARF version number");
+  Asm->EmitInt16(dwarf::DWARF_VERSION); 
 
+  Asm->OutStreamer.AddComment("Prolog Length");
   EmitDifference(getTempLabel("line_prolog_end"),
                  getTempLabel("line_prolog_begin"), true);
-  EOL("Prolog Length");
   Asm->OutStreamer.EmitLabel(getTempLabel("line_prolog_begin"));
 
-  Asm->EmitInt8(1); EOL("Minimum Instruction Length");
-  Asm->EmitInt8(1); EOL("Default is_stmt_start flag");
-  Asm->EmitInt8(MinLineDelta); EOL("Line Base Value (Special Opcodes)");
-  Asm->EmitInt8(MaxLineDelta); EOL("Line Range Value (Special Opcodes)");
-  Asm->EmitInt8(-MinLineDelta); EOL("Special Opcode Base");
+  Asm->OutStreamer.AddComment("Minimum Instruction Length");
+  Asm->EmitInt8(1);
+  Asm->OutStreamer.AddComment("Default is_stmt_start flag");
+  Asm->EmitInt8(1);
+  Asm->OutStreamer.AddComment("Line Base Value (Special Opcodes)");
+  Asm->EmitInt8(MinLineDelta);
+  Asm->OutStreamer.AddComment("Line Range Value (Special Opcodes)");
+  Asm->EmitInt8(MaxLineDelta);
+  Asm->OutStreamer.AddComment("Special Opcode Base");
+  Asm->EmitInt8(-MinLineDelta);
 
   // Line number standard opcode encodings argument count
-  Asm->EmitInt8(0); EOL("DW_LNS_copy arg count");
-  Asm->EmitInt8(1); EOL("DW_LNS_advance_pc arg count");
-  Asm->EmitInt8(1); EOL("DW_LNS_advance_line arg count");
-  Asm->EmitInt8(1); EOL("DW_LNS_set_file arg count");
-  Asm->EmitInt8(1); EOL("DW_LNS_set_column arg count");
-  Asm->EmitInt8(0); EOL("DW_LNS_negate_stmt arg count");
-  Asm->EmitInt8(0); EOL("DW_LNS_set_basic_block arg count");
-  Asm->EmitInt8(0); EOL("DW_LNS_const_add_pc arg count");
-  Asm->EmitInt8(1); EOL("DW_LNS_fixed_advance_pc arg count");
+  Asm->OutStreamer.AddComment("DW_LNS_copy arg count");
+  Asm->EmitInt8(0);
+  Asm->OutStreamer.AddComment("DW_LNS_advance_pc arg count");
+  Asm->EmitInt8(1);
+  Asm->OutStreamer.AddComment("DW_LNS_advance_line arg count");
+  Asm->EmitInt8(1);
+  Asm->OutStreamer.AddComment("DW_LNS_set_file arg count");
+  Asm->EmitInt8(1);
+  Asm->OutStreamer.AddComment("DW_LNS_set_column arg count");
+  Asm->EmitInt8(1);
+  Asm->OutStreamer.AddComment("DW_LNS_negate_stmt arg count");
+  Asm->EmitInt8(0);
+  Asm->OutStreamer.AddComment("DW_LNS_set_basic_block arg count");
+  Asm->EmitInt8(0);
+  Asm->OutStreamer.AddComment("DW_LNS_const_add_pc arg count");
+  Asm->EmitInt8(0);
+  Asm->OutStreamer.AddComment("DW_LNS_fixed_advance_pc arg count");
+  Asm->EmitInt8(1);
 
   // Emit directories.
   for (unsigned DI = 1, DE = getNumSourceDirectories()+1; DI != DE; ++DI) {
@@ -2543,7 +2570,8 @@ void DwarfDebug::emitDebugLines() {
     Asm->OutStreamer.EmitBytes(StringRef(Dir.c_str(), Dir.size()+1), 0);
   }
 
-  Asm->EmitInt8(0); EOL("End of directories");
+  Asm->OutStreamer.AddComment("End of directories");
+  Asm->EmitInt8(0);
 
   // Emit files.
   for (unsigned SI = 1, SE = getNumSourceIds()+1; SI != SE; ++SI) {
@@ -2558,7 +2586,8 @@ void DwarfDebug::emitDebugLines() {
     EmitULEB128(0, "File size");
   }
 
-  Asm->EmitInt8(0); EOL("End of files");
+  Asm->OutStreamer.AddComment("End of files");
+  Asm->EmitInt8(0);
 
   Asm->OutStreamer.EmitLabel(getTempLabel("line_prolog_end"));
 
@@ -2597,15 +2626,22 @@ void DwarfDebug::emitDebugLines() {
       }
 
       // Define the line address.
-      Asm->EmitInt8(0); EOL("Extended Op");
-      Asm->EmitInt8(TD->getPointerSize() + 1); EOL("Op size");
-      Asm->EmitInt8(dwarf::DW_LNE_set_address); EOL("DW_LNE_set_address");
-      EmitReference(getDWLabel("label", LabelID)); EOL("Location label");
+      Asm->OutStreamer.AddComment("Extended Op");
+      Asm->EmitInt8(0);
+      Asm->OutStreamer.AddComment("Op size");
+      Asm->EmitInt8(TD->getPointerSize() + 1);
+
+      Asm->OutStreamer.AddComment("DW_LNE_set_address");
+      Asm->EmitInt8(dwarf::DW_LNE_set_address); 
+
+      Asm->OutStreamer.AddComment("Location label");
+      EmitReference(getDWLabel("label", LabelID)); 
 
       // If change of source, then switch to the new source.
       if (Source != LineInfo.getSourceID()) {
         Source = LineInfo.getSourceID();
-        Asm->EmitInt8(dwarf::DW_LNS_set_file); EOL("DW_LNS_set_file");
+        Asm->OutStreamer.AddComment("DW_LNS_set_file");
+        Asm->EmitInt8(dwarf::DW_LNS_set_file); 
         EmitULEB128(Source, "New Source");
       }
 
@@ -2621,17 +2657,20 @@ void DwarfDebug::emitDebugLines() {
         // If delta is small enough and in range...
         if (Delta >= 0 && Delta < (MaxLineDelta - 1)) {
           // ... then use fast opcode.
-          Asm->EmitInt8(Delta - MinLineDelta); EOL("Line Delta");
+          Asm->OutStreamer.AddComment("Line Delta");
+          Asm->EmitInt8(Delta - MinLineDelta);
         } else {
           // ... otherwise use long hand.
+          Asm->OutStreamer.AddComment("DW_LNS_advance_line");
           Asm->EmitInt8(dwarf::DW_LNS_advance_line);
-          EOL("DW_LNS_advance_line");
           EmitSLEB128(Offset, "Line Offset");
-          Asm->EmitInt8(dwarf::DW_LNS_copy); EOL("DW_LNS_copy");
+          Asm->OutStreamer.AddComment("DW_LNS_copy");
+          Asm->EmitInt8(dwarf::DW_LNS_copy);
         }
       } else {
         // Copy the previous row (different address or source)
-        Asm->EmitInt8(dwarf::DW_LNS_copy); EOL("DW_LNS_copy");
+        Asm->OutStreamer.AddComment("DW_LNS_copy");
+        Asm->EmitInt8(dwarf::DW_LNS_copy);
       }
     }
 
@@ -2663,21 +2702,21 @@ void DwarfDebug::emitCommonDebugFrame() {
                               Asm->getObjFileLowering().getDwarfFrameSection());
 
   Asm->OutStreamer.EmitLabel(getTempLabel("debug_frame_common"));
+  Asm->OutStreamer.AddComment("Length of Common Information Entry");
   EmitDifference(getTempLabel("debug_frame_common_end"),
                  getTempLabel("debug_frame_common_begin"), true);
-  EOL("Length of Common Information Entry");
 
   Asm->OutStreamer.EmitLabel(getTempLabel("debug_frame_common_begin"));
+  Asm->OutStreamer.AddComment("CIE Identifier Tag");
   Asm->EmitInt32((int)dwarf::DW_CIE_ID);
-  EOL("CIE Identifier Tag");
+  Asm->OutStreamer.AddComment("CIE Version");
   Asm->EmitInt8(dwarf::DW_CIE_VERSION);
-  EOL("CIE Version");
+  Asm->OutStreamer.AddComment("CIE Augmentation");
   Asm->OutStreamer.EmitIntValue(0, 1, /*addrspace*/0); // nul terminator.
-  EOL("CIE Augmentation");
   EmitULEB128(1, "CIE Code Alignment Factor");
   EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
+  Asm->OutStreamer.AddComment("CIE RA Column");
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
-  EOL("CIE RA Column");
 
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
@@ -2699,22 +2738,22 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
   Asm->OutStreamer.SwitchSection(
                               Asm->getObjFileLowering().getDwarfFrameSection());
 
+  Asm->OutStreamer.AddComment("Length of Frame Information Entry");
   EmitDifference(getDWLabel("debug_frame_end", DebugFrameInfo.Number),
                  getDWLabel("debug_frame_begin", DebugFrameInfo.Number), true);
-  EOL("Length of Frame Information Entry");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("debug_frame_begin",
                                         DebugFrameInfo.Number));
 
+  Asm->OutStreamer.AddComment("FDE CIE offset");
   EmitSectionOffset(getTempLabel("debug_frame_common"),
                     getTempLabel("section_debug_frame"), true, false);
-  EOL("FDE CIE offset");
 
+  Asm->OutStreamer.AddComment("FDE initial location");
   EmitReference(getDWLabel("func_begin", DebugFrameInfo.Number));
-  EOL("FDE initial location");
+  Asm->OutStreamer.AddComment("FDE address range");
   EmitDifference(getDWLabel("func_end", DebugFrameInfo.Number),
                  getDWLabel("func_begin", DebugFrameInfo.Number));
-  EOL("FDE address range");
 
   EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves,
                  false);
@@ -2731,38 +2770,41 @@ void DwarfDebug::emitDebugPubNames() {
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfPubNamesSection());
 
+  Asm->OutStreamer.AddComment("Length of Public Names Info");
   EmitDifference(getDWLabel("pubnames_end", ModuleCU->getID()),
                  getDWLabel("pubnames_begin", ModuleCU->getID()), true);
-  EOL("Length of Public Names Info");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("pubnames_begin", ModuleCU->getID()));
 
-  Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("DWARF Version");
+  Asm->OutStreamer.AddComment("DWARF Version");
+  Asm->EmitInt16(dwarf::DWARF_VERSION); 
 
+  Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
   EmitSectionOffset(getDWLabel("info_begin", ModuleCU->getID()), 
                     getTempLabel("section_info"),
                     true, false);
-  EOL("Offset of Compilation Unit Info");
 
+  Asm->OutStreamer.AddComment("Compilation Unit Length");
   EmitDifference(getDWLabel("info_end", ModuleCU->getID()),
                  getDWLabel("info_begin", ModuleCU->getID()),
                  true);
-  EOL("Compilation Unit Length");
 
   const StringMap<DIE*> &Globals = ModuleCU->getGlobals();
   for (StringMap<DIE*>::const_iterator
          GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
     const char *Name = GI->getKeyData();
-    DIE * Entity = GI->second;
+    DIE *Entity = GI->second;
 
-    Asm->EmitInt32(Entity->getOffset()); EOL("DIE offset");
+    Asm->OutStreamer.AddComment("DIE offset");
+    Asm->EmitInt32(Entity->getOffset());
     
     if (Asm->VerboseAsm)
       Asm->OutStreamer.AddComment("External Name");
     Asm->OutStreamer.EmitBytes(StringRef(Name, strlen(Name)+1), 0);
   }
 
-  Asm->EmitInt32(0); EOL("End Mark");
+  Asm->OutStreamer.AddComment("End Mark");
+  Asm->EmitInt32(0);
   Asm->OutStreamer.EmitLabel(getDWLabel("pubnames_end", ModuleCU->getID()));
 }
 
@@ -2770,23 +2812,23 @@ void DwarfDebug::emitDebugPubTypes() {
   // Start the dwarf pubnames section.
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfPubTypesSection());
+  Asm->OutStreamer.AddComment("Length of Public Types Info");
   EmitDifference(getDWLabel("pubtypes_end", ModuleCU->getID()),
                  getDWLabel("pubtypes_begin", ModuleCU->getID()), true);
-  EOL("Length of Public Types Info");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("pubtypes_begin", ModuleCU->getID()));
 
   if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("DWARF Version");
   Asm->EmitInt16(dwarf::DWARF_VERSION);
 
+  Asm->OutStreamer.AddComment("Offset of Compilation ModuleCU Info");
   EmitSectionOffset(getDWLabel("info_begin", ModuleCU->getID()),
                     getTempLabel("section_info"), true, false);
-  EOL("Offset of Compilation ModuleCU Info");
 
+  Asm->OutStreamer.AddComment("Compilation ModuleCU Length");
   EmitDifference(getDWLabel("info_end", ModuleCU->getID()),
                  getDWLabel("info_begin", ModuleCU->getID()),
                  true);
-  EOL("Compilation ModuleCU Length");
 
   const StringMap<DIE*> &Globals = ModuleCU->getGlobalTypes();
   for (StringMap<DIE*>::const_iterator
@@ -2801,7 +2843,8 @@ void DwarfDebug::emitDebugPubTypes() {
     Asm->OutStreamer.EmitBytes(StringRef(Name, GI->getKeyLength()+1), 0);
   }
 
-  Asm->EmitInt32(0); EOL("End Mark");
+  Asm->OutStreamer.AddComment("End Mark");
+  Asm->EmitInt32(0); 
   Asm->OutStreamer.EmitLabel(getDWLabel("pubtypes_end", ModuleCU->getID()));
 }
 
@@ -2840,34 +2883,6 @@ void DwarfDebug::EmitDebugARanges() {
   // Start the dwarf aranges section.
   Asm->OutStreamer.SwitchSection(
                           Asm->getObjFileLowering().getDwarfARangesSection());
-
-  // FIXME - Mock up
-#if 0
-  CompileUnit *Unit = GetBaseCompileUnit();
-
-  // Don't include size of length
-  Asm->EmitInt32(0x1c); EOL("Length of Address Ranges Info");
-
-  Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("Dwarf Version");
-
-  EmitReference("info_begin", Unit->getID());
-  EOL("Offset of Compilation Unit Info");
-
-  Asm->EmitInt8(TD->getPointerSize()); EOL("Size of Address");
-
-  Asm->EmitInt8(0); EOL("Size of Segment Descriptor");
-
-  Asm->EmitInt16(0);  EOL("Pad (1)");
-  Asm->EmitInt16(0);  EOL("Pad (2)");
-
-  // Range 1
-  EmitReference("text_begin", 0); EOL("Address");
-  EmitDifference(getTempLabel("text_end"), getTempLabel("text_begin"),
-                 true); EOL("Length");
-
-  Asm->EmitInt32(0); EOL("EOM (1)");
-  Asm->EmitInt32(0); EOL("EOM (2)");
-#endif
 }
 
 /// emitDebugRanges - Emit visible names into a debug ranges section.
@@ -2916,14 +2931,16 @@ void DwarfDebug::emitDebugInlineInfo() {
   Asm->OutStreamer.SwitchSection(
                         Asm->getObjFileLowering().getDwarfDebugInlineSection());
 
+  Asm->OutStreamer.AddComment("Length of Debug Inlined Information Entry");
   EmitDifference(getDWLabel("debug_inlined_end", 1),
                  getDWLabel("debug_inlined_begin", 1), true);
-  EOL("Length of Debug Inlined Information Entry");
 
   Asm->OutStreamer.EmitLabel(getDWLabel("debug_inlined_begin", 1));
 
-  Asm->EmitInt16(dwarf::DWARF_VERSION); EOL("Dwarf Version");
-  Asm->EmitInt8(TD->getPointerSize()); EOL("Address Size (in bytes)");
+  Asm->OutStreamer.AddComment("Dwarf Version");
+  Asm->EmitInt16(dwarf::DWARF_VERSION);
+  Asm->OutStreamer.AddComment("Address Size (in bytes)");
+  Asm->EmitInt8(TD->getPointerSize());
 
   for (SmallVector<MDNode *, 4>::iterator I = InlinedSPNodes.begin(),
          E = InlinedSPNodes.end(); I != E; ++I) {
@@ -2936,6 +2953,7 @@ void DwarfDebug::emitDebugInlineInfo() {
     StringRef LName = SP.getLinkageName();
     StringRef Name = SP.getName();
 
+    Asm->OutStreamer.AddComment("MIPS linkage name");
     if (LName.empty()) {
       Asm->OutStreamer.EmitBytes(Name, 0);
       Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
@@ -2944,10 +2962,9 @@ void DwarfDebug::emitDebugInlineInfo() {
                                    StringPool.idFor(getRealLinkageName(LName))),
                         getTempLabel("section_str"), true);
 
-    EOL("MIPS linkage name");
+    Asm->OutStreamer.AddComment("Function name");
     EmitSectionOffset(getDWLabel("string", StringPool.idFor(Name)),
                       getTempLabel("section_str"), false, true);
-    EOL("Function name");
     EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
