@@ -352,11 +352,6 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // Calls usually take a long time, so they make the inlining gain smaller.
   InlineCost += CalleeFI.Metrics.NumCalls * InlineConstants::CallPenalty;
 
-  // Don't inline into something too big, which would make it bigger.
-  // "size" here is the number of basic blocks, not instructions.
-  //
-  InlineCost += Caller->size()/15;
-  
   // Look at the size of the callee. Each instruction counts as 5.
   InlineCost += CalleeFI.Metrics.NumInsts*InlineConstants::InstrCost;
 
