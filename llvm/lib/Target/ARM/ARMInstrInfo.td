@@ -2844,29 +2844,29 @@ def MRSsys : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary,"mrs","\t$dst, spsr",
   let Inst{7-4} = 0b0000;
 }
 
-// FIXME: mask is ignored for the time being.
-def MSR : ABI<0b0001,(outs),(ins GPR:$src), NoItinerary, "msr", "\tcpsr, $src",
+def MSR : ABI<0b0001, (outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
+              "\tcpsr${mask:msr}, $src",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0010;
   let Inst{7-4} = 0b0000;
 }
 
-// FIXME: mask is ignored for the time being.
-def MSRi : ABI<0b0011,(outs),(ins so_imm:$a), NoItinerary, "msr", "\tcpsr, $a",
+def MSRi : ABI<0b0011, (outs), (ins so_imm:$a, i32imm:$mask), NoItinerary,"msr",
+              "\tcpsr${mask:msr}, $a",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0010;
   let Inst{7-4} = 0b0000;
 }
 
-// FIXME: mask is ignored for the time being.
-def MSRsys : ABI<0b0001,(outs),(ins GPR:$src),NoItinerary,"msr","\tspsr, $src",
+def MSRsys : ABI<0b0001, (outs), (ins GPR:$src, i32imm:$mask),NoItinerary,"msr",
+              "\tspsr${mask:msr}, $src",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0110;
   let Inst{7-4} = 0b0000;
 }
 
-// FIXME: mask is ignored for the time being.
-def MSRsysi : ABI<0b0011,(outs),(ins so_imm:$a),NoItinerary,"msr","\tspsr, $a",
+def MSRsysi : ABI<0b0011,(outs),(ins so_imm:$a, i32imm:$mask),NoItinerary,"msr",
+              "\tspsr${mask:msr}, $a",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0110;
   let Inst{7-4} = 0b0000;

@@ -2637,9 +2637,9 @@ def t2MRSsys : T2I<(outs GPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, spsr",
   let Inst{12} = 0;
 }
 
-// FIXME: mask is ignored for the time being.
 // Rn = Inst{19-16}
-def t2MSR : T2I<(outs), (ins GPR:$src), NoItinerary, "msr", "\tcpsr, $src",
+def t2MSR : T2I<(outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
+                "\tcpsr${mask:msr}, $src",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
@@ -2649,9 +2649,9 @@ def t2MSR : T2I<(outs), (ins GPR:$src), NoItinerary, "msr", "\tcpsr, $src",
   let Inst{12} = 0;
 }
 
-// FIXME: mask is ignored for the time being.
 // Rn = Inst{19-16}
-def t2MSRsys : T2I<(outs), (ins GPR:$src), NoItinerary, "msr", "\tspsr, $src",
+def t2MSRsys : T2I<(outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
+                   "\tspsr${mask:msr}, $src",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
