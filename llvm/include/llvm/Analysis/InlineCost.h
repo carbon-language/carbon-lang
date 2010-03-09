@@ -179,11 +179,6 @@ namespace llvm {
     void resetCachedCostInfo(Function* Caller) {
       CachedFunctionInfo[Caller] = FunctionInfo();
     }
-
-    /// growCachedCostInfo - update the cached cost info for Caller after Callee
-    /// has been inlined. If Callee is NULL it means a dead call has been
-    /// eliminated.
-    void growCachedCostInfo(Function* Caller, Function* Callee);
   };
 }
 

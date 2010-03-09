@@ -75,10 +75,6 @@ struct Inliner : public CallGraphSCCPass {
   /// 
   virtual void resetCachedCostInfo(Function* Caller) = 0;
 
-  /// growCachedCostInfo - update the cached cost info for Caller after Callee
-  /// has been inlined.
-  virtual void growCachedCostInfo(Function* Caller, Function* Callee) = 0;
-
   /// removeDeadFunctions - Remove dead functions that are not included in
   /// DNR (Do Not Remove) list.
   bool removeDeadFunctions(CallGraph &CG, 

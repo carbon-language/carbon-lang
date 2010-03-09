@@ -369,8 +369,6 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
         CG[Caller]->removeCallEdgeFor(CS);
         CS.getInstruction()->eraseFromParent();
         ++NumCallsDeleted;
-        // Update the cached cost info with the missing call
-        growCachedCostInfo(Caller, NULL);
       } else {
         // We can only inline direct calls to non-declarations.
         if (Callee == 0 || Callee->isDeclaration()) continue;
@@ -384,9 +382,6 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
         if (!InlineCallIfPossible(CS, CG, TD, InlinedArrayAllocas))
           continue;
         ++NumInlined;
-
-        // Update the cached cost info with the inlined call.
-        growCachedCostInfo(Caller, Callee);
       }
       
       // If we inlined or deleted the last possible call site to the function,
@@ -412,6 +407,11 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
         delete CG.removeFunctionFromModule(CalleeNode);
         ++NumDeleted;
       }
+      
+      // Remove any cached cost info for this caller, as inlining the
+      // callee has increased the size of the caller (which may be the
+      // same as the callee).
+      resetCachedCostInfo(Caller);
 
       // Remove this call site from the list.  If possible, use 
       // swap/pop_back for efficiency, but do not use it if doing so would
