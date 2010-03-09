@@ -219,8 +219,10 @@ bool Inliner::shouldInline(CallSite CS) {
   Function *Caller = CS.getCaller();
   int CurrentThreshold = getInlineThreshold(CS);
   float FudgeFactor = getInlineFudgeFactor(CS);
-  if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
+  int AdjThreshold = (int)(CurrentThreshold * FudgeFactor);
+  if (Cost >= AdjThreshold) {
     DEBUG(dbgs() << "    NOT Inlining: cost=" << Cost
+          << ", thres=" << AdjThreshold
           << ", Call: " << *CS.getInstruction() << "\n");
     return false;
   }
@@ -285,6 +287,7 @@ bool Inliner::shouldInline(CallSite CS) {
   }
 
   DEBUG(dbgs() << "    Inlining: cost=" << Cost
+        << ", thres=" << AdjThreshold
         << ", Call: " << *CS.getInstruction() << '\n');
   return true;
 }
