@@ -1365,6 +1365,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
 DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
   MCSymbol *Start = Scope->getStartLabel();
   MCSymbol *End = Scope->getEndLabel();
+  if (Start == 0) return 0;
 
   assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
   assert(End->isDefined() && "Invalid end label for an inlined scope!");
@@ -1387,6 +1388,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DbgScope *Scope) {
 DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   MCSymbol *StartLabel = Scope->getStartLabel();
   MCSymbol *EndLabel = Scope->getEndLabel();
+  if (StartLabel == 0) return 0;
+  
   assert(StartLabel->isDefined() &&
          "Invalid starting label for an inlined scope!");
   assert(EndLabel->isDefined() &&
