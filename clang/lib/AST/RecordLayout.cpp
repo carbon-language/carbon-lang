@@ -32,8 +32,7 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx, uint64_t size, unsigned alignm
     FieldCount(fieldcount), CXXInfo(0) {
   if (FieldCount > 0)  {
     FieldOffsets = new (Ctx) uint64_t[FieldCount];
-    for (unsigned i = 0; i < FieldCount; ++i)
-      FieldOffsets[i] = fieldoffsets[i];
+    memcpy(FieldOffsets, fieldoffsets, FieldCount * sizeof(*FieldOffsets));
   }
 }
 
@@ -55,8 +54,7 @@ ASTRecordLayout::ASTRecordLayout(ASTContext &Ctx,
 {
   if (FieldCount > 0)  {
     FieldOffsets = new (Ctx) uint64_t[FieldCount];
-    for (unsigned i = 0; i < FieldCount; ++i)
-      FieldOffsets[i] = fieldoffsets[i];
+    memcpy(FieldOffsets, fieldoffsets, FieldCount * sizeof(*FieldOffsets));
   }
 
   CXXInfo->PrimaryBase = PrimaryBase;
