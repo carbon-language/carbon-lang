@@ -117,8 +117,6 @@ public:
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
   void PrintLabelName(const MCSymbol *Label) const;
-  void PrintLabelName(const char *Tag, unsigned Number,
-                      const char *Suffix) const;
 
   /// EmitReference - Emit a reference to a label.
   ///

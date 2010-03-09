@@ -218,14 +218,6 @@ void DwarfPrinter::PrintLabelName(const MCSymbol *Label) const {
   O << Label->getName();
 }
 
-void DwarfPrinter::PrintLabelName(const char *Tag, unsigned Number,
-                                  const char *Suffix) const {
-  // FIXME: REMOVE.
-  O << MAI->getPrivateGlobalPrefix() << Tag;
-  if (Number) O << Number;
-  O << Suffix;
-}
-
 /// EmitReference - Emit a reference to a label.
 ///
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
