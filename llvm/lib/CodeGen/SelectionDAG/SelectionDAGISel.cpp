@@ -2141,6 +2141,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   
   while (1) {
     assert(MatcherIndex < TableSize && "Invalid index");
+#ifndef NDEBUG
+    unsigned CurrentOpcodeIndex = MatcherIndex;
+#endif
     BuiltinOpcodes Opcode = (BuiltinOpcodes)MatcherTable[MatcherIndex++];
     switch (Opcode) {
     case OPC_Scope: {
@@ -2666,6 +2669,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     // If the code reached this point, then the match failed.  See if there is
     // another child to try in the current 'Scope', otherwise pop it until we
     // find a case to check.
+    DEBUG(errs() << "  Match failed at index " << CurrentOpcodeIndex << "\n");
     while (1) {
       if (MatchScopes.empty()) {
         CannotYetSelect(NodeToMatch);
@@ -2680,13 +2684,12 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       NodeStack.append(LastScope.NodeStack.begin(), LastScope.NodeStack.end());
       N = NodeStack.back();
 
-      DEBUG(errs() << "  Match failed at index " << (MatcherIndex-1)
-                   << " continuing at " << LastScope.FailIndex << "\n");
-    
       if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
         MatchedMemRefs.resize(LastScope.NumMatchedMemRefs);
       MatcherIndex = LastScope.FailIndex;
       
+      DEBUG(errs() << "  Continuing at " << MatcherIndex << "\n");
+    
       InputChain = LastScope.InputChain;
       InputFlag = LastScope.InputFlag;
       if (!LastScope.HasChainNodesMatched)
