@@ -504,15 +504,21 @@ public:
                              MCAsmFixup &Fixup,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                              std::vector<MachRelocationEntry> &Relocs) {
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
+
     MCValue Target;
     if (!Fixup.Value->EvaluateAsRelocatable(Target))
       llvm_report_error("expected relocatable expression");
 
-    // If this is a difference or a local symbol plus an offset, then we need a
-    // scattered relocation entry.
+    // If this is a difference or a defined symbol plus an offset, then we need
+    // a scattered relocation entry.
+    uint32_t Offset = Target.getConstant();
+    if (IsPCRel)
+      Offset += 1 << Log2Size;
     if (Target.getSymB() ||
         (Target.getSymA() && !Target.getSymA()->isUndefined() &&
-         Target.getConstant()))
+         Offset))
       return ComputeScatteredRelocationInfo(Asm, Fragment, Fixup, Target,
                                             SymbolMap, Relocs);
 
@@ -520,8 +526,6 @@ public:
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     uint32_t Value = 0;
     unsigned Index = 0;
-    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
-    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned IsExtern = 0;
     unsigned Type = 0;
 
