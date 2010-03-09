@@ -113,10 +113,6 @@ public:
                    unsigned PadTo = 0) const;
 
   
-  /// PrintLabelName - Print label name in form used by Dwarf writer.
-  ///
-  void PrintLabelName(const MCSymbol *Label) const;
-
   /// EmitReference - Emit a reference to a label.
   ///
   void EmitReference(const MCSymbol *Label, bool IsPCRelative = false,

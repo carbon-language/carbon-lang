@@ -15,6 +15,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -2967,12 +2968,11 @@ void DwarfDebug::emitDebugInlineInfo() {
       DIE *SP = LI->second;
       Asm->EmitInt32(SP->getOffset()); EOL("DIE offset");
 
-      if (TD->getPointerSize() == sizeof(int32_t))
-        O << MAI->getData32bitsDirective();
-      else
-        O << MAI->getData64bitsDirective();
-
-      PrintLabelName(getDWLabel("label", LI->first)); EOL("low_pc");
+      // FIXME: "Labels" should hold MCSymbol*'s
+      MCSymbol *L = getDWLabel("label", LI->first);
+      if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("low_pc");
+      Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(L, Asm->OutContext),
+                                 TD->getPointerSize(), 0/*AddrSpace*/);
     }
   }
 

@@ -209,13 +209,6 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
 }
 
 
-/// PrintLabelName - Print label name in form used by Dwarf writer.
-///
-void DwarfPrinter::PrintLabelName(const MCSymbol *Label) const {
-  // FIXME: REMOVE.
-  O << Label->getName();
-}
-
 /// EmitReference - Emit a reference to a label.
 ///
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
@@ -229,7 +222,7 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   PrintRelDirective(Encoding);
-  O << *TLOF.getSymbolForDwarfReference(Sym, Asm->MMI, Encoding);;
+  O << *TLOF.getSymbolForDwarfReference(Sym, Asm->MMI, Encoding);
 }
 
 void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
@@ -300,8 +293,6 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       EmitCFAByte(dwarf::DW_CFA_advance_loc4);
       EmitDifference(getDWLabel("label", LabelID),
                      getDWLabel(BaseLabel, BaseLabelID), true);
-      Asm->O << '\n';
-
       BaseLabelID = LabelID;
       BaseLabel = "label";
       IsLocal = true;
