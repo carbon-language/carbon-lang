@@ -489,13 +489,11 @@ public:
     Relocs.push_back(MRE);
 
     if (Type == RIT_LocalDifference) {
-      Type = RIT_Pair;
-
       MachRelocationEntry MRE;
       MRE.Word0 = ((0         <<  0) |
-                   (Type      << 24) |
+                   (RIT_Pair  << 24) |
                    (Log2Size  << 28) |
-                   (0   << 30) |
+                   (IsPCRel   << 30) |
                    RF_Scattered);
       MRE.Word1 = Value2;
       Relocs.push_back(MRE);
