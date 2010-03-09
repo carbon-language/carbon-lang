@@ -45,11 +45,11 @@ class CGDebugInfo {
   CodeGenModule &CGM;
   llvm::DIFactory DebugFactory;
   llvm::DICompileUnit TheCU;
-
   SourceLocation CurLoc, PrevLoc;
-  
   llvm::DIType VTablePtrType;
-
+  /// FwdDeclCount - This counter is used to ensure unique names for forward
+  /// record decls.
+  unsigned FwdDeclCount;
   
   /// TypeCache - Cache of previously constructed Types.
   // FIXME: Eliminate this map.  Be careful of iterator invalidation.

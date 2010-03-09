@@ -37,7 +37,7 @@ using namespace clang::CodeGen;
 
 CGDebugInfo::CGDebugInfo(CodeGenModule &CGM)
   : CGM(CGM), DebugFactory(CGM.getModule()),
-    BlockLiteralGenericSet(false) {
+    FwdDeclCount(0), BlockLiteralGenericSet(false) {
   CreateCompileUnit();
 }
 
@@ -774,12 +774,12 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   // A RD->getName() is not unique. However, the debug info descriptors 
   // are uniqued so use type name to ensure uniquness.
-  std::string STy = QualType(Ty, 0).getAsString();
+  char *FwdDeclName = (char *)alloca(65);
+  sprintf(FwdDeclName, "fwd.type.%d", FwdDeclCount++);
   llvm::DIDescriptor FDContext = 
     getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
   llvm::DICompositeType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, FDContext,
-                                     STy.c_str(),
+    DebugFactory.CreateCompositeType(Tag, FDContext, FwdDeclName,
                                      DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
 
