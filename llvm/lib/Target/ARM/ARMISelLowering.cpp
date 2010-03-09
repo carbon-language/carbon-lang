@@ -40,17 +40,11 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sstream>
 using namespace llvm;
-using namespace dwarf;
-
-static cl::opt<bool> EnableARMEHTest("enable-arm-eh-test", cl::Hidden,
-    cl::desc("Enable ARM EH Test"));
 
 static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
@@ -134,32 +128,9 @@ void ARMTargetLowering::addQRTypeForNEON(EVT VT) {
   addTypeForNEON(VT, MVT::v2f64, MVT::v4i32);
 }
 
-namespace llvm {
-
-  // FIXME: This is a test of <rdar://problem/6804645>.
-  class ARMMachOTargetObjectFile : public TargetLoweringObjectFileMachO {
-  public:
-    virtual void Initialize(MCContext &Ctx, const TargetMachine &TM) {
-      TargetLoweringObjectFileMachO::Initialize(Ctx, TM);
-
-      // Exception Handling.
-      LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
-                                    SectionKind::getReadOnlyWithRel());
-    }
-
-    virtual unsigned getTTypeEncoding() const {
-      return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-    }
-  };
-
-}
-
 static TargetLoweringObjectFile *createTLOF(TargetMachine &TM) {
   if (TM.getSubtarget<ARMSubtarget>().isTargetDarwin())
-    if (EnableARMEHTest)
-      return new ARMMachOTargetObjectFile();
-    else
-      return new TargetLoweringObjectFileMachO();
+    return new ARMMachOTargetObjectFile();
 
   return new ARMElfTargetObjectFile();
 }
