@@ -328,11 +328,11 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     PM.add(createOptimizeExtsPass());
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
-    if (EnableMachineCSE)
+    //if (EnableMachineCSE)
       PM.add(createMachineCSEPass());
     if (!DisableMachineSink)
       PM.add(createMachineSinkingPass());
-    printAndVerify(PM, "After MachineLICM and MachineSinking",
+    printAndVerify(PM, "After Machine LICM, CSE and Sinking passes",
                    /* allowDoubleDefs= */ true);
   }
 

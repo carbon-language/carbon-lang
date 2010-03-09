@@ -33,9 +33,9 @@ namespace {
   class MachineCSE : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
-    MachineRegisterInfo  *MRI;
-    MachineDominatorTree *DT;
     AliasAnalysis *AA;
+    MachineDominatorTree *DT;
+    MachineRegisterInfo *MRI;
   public:
     static char ID; // Pass identification
     MachineCSE() : MachineFunctionPass(&ID), CurrVN(0) {}
@@ -61,6 +61,7 @@ namespace {
                                 MachineBasicBlock::const_iterator E);
     bool hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isCSECandidate(MachineInstr *MI);
+    bool isProfitableToCSE(unsigned Reg, MachineInstr *MI);
     bool ProcessBlock(MachineDomTreeNode *Node);
   };
 } // end anonymous namespace
@@ -91,14 +92,17 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (TII->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         TargetRegisterInfo::isVirtualRegister(SrcReg) &&
-        MRI->getRegClass(SrcReg) == MRI->getRegClass(Reg) &&
         !SrcSubIdx && !DstSubIdx) {
-      DEBUG(dbgs() << "Coalescing: " << *DefMI);
-      DEBUG(dbgs() << "*** to: " << *MI);
-      MO.setReg(SrcReg);
-      DefMI->eraseFromParent();
-      ++NumCoalesces;
-      Changed = true;
+      const TargetRegisterClass *SRC = MRI->getRegClass(SrcReg);
+      const TargetRegisterClass *RC  = MRI->getRegClass(Reg);
+      if (SRC == RC || SRC->hasSubClass(RC) || RC->hasSubClass(SRC)) {
+        DEBUG(dbgs() << "Coalescing: " << *DefMI);
+        DEBUG(dbgs() << "*** to: " << *MI);
+        MO.setReg(SrcReg);
+        DefMI->eraseFromParent();
+        ++NumCoalesces;
+        Changed = true;
+      }
     }
   }
 
@@ -201,9 +205,31 @@ bool MachineCSE::isCSECandidate(MachineInstr *MI) {
   return true;
 }
 
+/// isProfitableToCSE - Return true if it's profitable to eliminate MI with a
+/// common expression that defines Reg.
+bool MachineCSE::isProfitableToCSE(unsigned Reg, MachineInstr *MI) {
+  // FIXME: This "heuristic" works around the lack the live range splitting.
+  // If the common subexpression is used by PHIs, do not reuse it unless the
+  // defined value is already used in the BB of the new use.
+  bool HasPHI = false;
+  SmallPtrSet<MachineBasicBlock*, 4> CSBBs;
+  for (MachineRegisterInfo::use_nodbg_iterator I = 
+       MRI->use_nodbg_begin(Reg),
+       E = MRI->use_nodbg_end(); I != E; ++I) {
+    MachineInstr *Use = &*I;
+    HasPHI |= Use->isPHI();
+    CSBBs.insert(Use->getParent());
+  }
+
+  if (!HasPHI)
+    return true;
+  return CSBBs.count(MI->getParent());
+}
+
 bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
   bool Changed = false;
 
+  SmallVector<std::pair<unsigned, unsigned>, 8> CSEPairs;
   ScopedHashTableScope<MachineInstr*, unsigned,
     MachineInstrExpressionTrait> VNTS(VNT);
   MachineBasicBlock *MBB = Node->getBlock();
@@ -238,6 +264,9 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
     MachineInstr *CSMI = Exps[CSVN];
     DEBUG(dbgs() << "Examining: " << *MI);
     DEBUG(dbgs() << "*** Found a common subexpression: " << *CSMI);
+
+    // Check if it's profitable to perform this CSE.
+    bool DoCSE = true;
     unsigned NumDefs = MI->getDesc().getNumDefs();
     for (unsigned i = 0, e = MI->getNumOperands(); NumDefs && i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
@@ -250,11 +279,26 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
       assert(TargetRegisterInfo::isVirtualRegister(OldReg) &&
              TargetRegisterInfo::isVirtualRegister(NewReg) &&
              "Do not CSE physical register defs!");
-      MRI->replaceRegWith(OldReg, NewReg);
+      if (!isProfitableToCSE(NewReg, MI)) {
+        DoCSE = false;
+        break;
+      }
+      CSEPairs.push_back(std::make_pair(OldReg, NewReg));
       --NumDefs;
     }
-    MI->eraseFromParent();
-    ++NumCSEs;
+
+    // Actually perform the elimination.
+    if (DoCSE) {
+      for (unsigned i = 0, e = CSEPairs.size(); i != e; ++i)
+        MRI->replaceRegWith(CSEPairs[i].first, CSEPairs[i].second);
+      MI->eraseFromParent();
+      ++NumCSEs;
+    } else {
+      DEBUG(dbgs() << "*** Not profitable, avoid CSE!\n");
+      VNT.insert(MI, CurrVN++);
+      Exps.push_back(MI);
+    }
+    CSEPairs.clear();
   }
 
   // Recursively call ProcessBlock with childred.
@@ -269,7 +313,7 @@ bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
-  DT = &getAnalysis<MachineDominatorTree>();
   AA = &getAnalysis<AliasAnalysis>();
+  DT = &getAnalysis<MachineDominatorTree>();
   return ProcessBlock(DT->getRootNode());
 }
