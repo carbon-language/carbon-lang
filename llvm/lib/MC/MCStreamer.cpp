@@ -31,6 +31,11 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
   EmitValue(MCConstantExpr::Create(Value, getContext()), Size, AddrSpace);
 }
 
+void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
+                                 unsigned AddrSpace) {
+  EmitValue(MCSymbolRefExpr::Create(Sym, getContext()), Size, AddrSpace);
+}
+
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
 void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue,

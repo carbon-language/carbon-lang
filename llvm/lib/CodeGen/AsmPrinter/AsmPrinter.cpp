@@ -914,9 +914,7 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
     OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + "set" +
                                  Twine(SetCounter++));
   OutStreamer.EmitAssignment(SetLabel, Diff);
-  
-  OutStreamer.EmitValue(MCSymbolRefExpr::Create(SetLabel, OutContext),
-                        Size, 0/*AddrSpace*/);
+  OutStreamer.EmitSymbolValue(SetLabel, Size, 0/*AddrSpace*/);
 }
 
 

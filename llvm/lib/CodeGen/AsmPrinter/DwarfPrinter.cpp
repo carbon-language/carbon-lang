@@ -258,8 +258,7 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
     O << SecOffDir << Label->getName();
   else {
     unsigned Size = IsSmall ? 4 : TD->getPointerSize();
-    Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(Label, Asm->OutContext),
-                               Size, 0/*AddrSpace*/);
+    Asm->OutStreamer.EmitSymbolValue(Label, Size, 0/*AddrSpace*/);
   }
 }
 

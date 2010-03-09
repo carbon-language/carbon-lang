@@ -191,6 +191,11 @@ namespace llvm {
     /// EmitIntValue - Special case of EmitValue that avoids the client having
     /// to pass in a MCExpr for constant integers.
     virtual void EmitIntValue(uint64_t Value, unsigned Size,unsigned AddrSpace);
+
+    /// EmitSymbolValue - Special case of EmitValue that avoids the client
+    /// having to pass in a MCExpr for MCSymbols.
+    virtual void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
+                                 unsigned AddrSpace);
     
     /// EmitGPRel32Value - Emit the expression @p Value into the output as a
     /// gprel32 (32-bit GP relative) value.

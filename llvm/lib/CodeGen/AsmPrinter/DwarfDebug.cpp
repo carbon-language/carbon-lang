@@ -10,12 +10,12 @@
 // This file contains support for writing dwarf debug info into asm files.
 //
 //===----------------------------------------------------------------------===//
+
 #define DEBUG_TYPE "dwarfdebug"
 #include "DwarfDebug.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -2970,9 +2970,7 @@ void DwarfDebug::emitDebugInlineInfo() {
       Asm->EmitInt32(LI->second->getOffset());
 
       if (Asm->VerboseAsm) Asm->OutStreamer.AddComment("low_pc");
-      Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(LI->first,
-                                                         Asm->OutContext),
-                                 TD->getPointerSize(), 0/*AddrSpace*/);
+      Asm->OutStreamer.EmitSymbolValue(LI->first, TD->getPointerSize(), 0);
     }
   }
 
