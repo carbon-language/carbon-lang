@@ -35,7 +35,6 @@ class Value;
 class Module;
 class MDNode;
 class MCAsmInfo;
-class MCSymbol;
 class raw_ostream;
 class Instruction;
 class DICompileUnit;
@@ -83,10 +82,10 @@ public:
   ///
   void EndFunction(const MachineFunction *MF);
 
-  /// RecordSourceLine - Register a source line with debug info. Returns the
-  /// unique label that was emitted and which provides correspondence to
+  /// RecordSourceLine - Register a source line with debug info. Returns a
+  /// unique label ID used to generate a label and provide correspondence to
   /// the source line list.
-  MCSymbol *RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
 
   /// getRecordSourceLineCount - Count source lines.
   unsigned getRecordSourceLineCount();
@@ -95,7 +94,7 @@ public:
   /// be emitted.
   bool ShouldEmitDwarfDebug() const;
 
-  void BeginScope(const MachineInstr *MI, MCSymbol *Label);
+  void BeginScope(const MachineInstr *MI, unsigned Label);
   void EndScope(const MachineInstr *MI);
 };
 

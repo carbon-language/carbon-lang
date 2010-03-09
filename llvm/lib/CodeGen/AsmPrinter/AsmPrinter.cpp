@@ -1319,9 +1319,10 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
     // After printing instruction
     DW->EndScope(MI);
   } else if (CurDLT.getNode() != PrevDLT) {
-    MCSymbol *L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
-                                       CurDLT.getColumnNumber(),
-                                       CurDLT.getScope().getNode());
+    unsigned L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
+                                      CurDLT.getColumnNumber(),
+                                      CurDLT.getScope().getNode());
+    printLabel(L);
     DW->BeginScope(MI, L);
     PrevDLT = CurDLT.getNode();
   }

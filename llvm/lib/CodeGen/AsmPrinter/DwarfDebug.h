@@ -512,10 +512,10 @@ public:
   ///
   void endFunction(const MachineFunction *MF);
 
-  /// recordSourceLine - Register a source line with debug info. Returns the
-  /// unique label that was emitted and which provides correspondence to
-  /// the source line list.
-  MCSymbol *recordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
+  /// recordSourceLine - Records location information and associates it with a 
+  /// label. Returns a unique label ID used to generate a label and provide
+  /// correspondence to the source line list.
+  unsigned recordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
 
   /// getSourceLineCount - Return the number of source lines in the debug
   /// info.
@@ -539,7 +539,7 @@ public:
   void collectVariableInfo();
 
   /// beginScope - Process beginning of a scope starting at Label.
-  void beginScope(const MachineInstr *MI, MCSymbol *Label);
+  void beginScope(const MachineInstr *MI, unsigned Label);
 
   /// endScope - Prcess end of a scope.
   void endScope(const MachineInstr *MI);
