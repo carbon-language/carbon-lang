@@ -213,6 +213,14 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
 ///
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
                                  bool Force32Bit) const {
+  unsigned Size = Force32Bit ? 4 : TD->getPointerSize();
+  
+  if (!IsPCRelative) {
+    Asm->OutStreamer.EmitSymbolValue(Sym, Size, 0/*AddrSpace*/);
+    return;
+  }
+  
+  // FIXME: Need an MCExpr for ".".
   PrintRelDirective(Force32Bit);
   O << *Sym;
   if (IsPCRelative) O << "-" << MAI->getPCSymbol();
