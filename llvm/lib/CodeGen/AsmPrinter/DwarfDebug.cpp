@@ -1972,7 +1972,6 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
 
   unsigned Label = MMI->NextLabelID();
   Asm->printLabel(Label);
-  O << '\n';
 
   SmallVector<DbgScope *, 2> &SD = I->second;
   for (SmallVector<DbgScope *, 2>::iterator SDI = SD.begin(), SDE = SD.end();
@@ -2131,7 +2130,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                                  DLT.getColumnNumber(), 
                                  DLT.getScope().getNode());
     Asm->printLabel(LabelID);
-    O << '\n';
   }
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();

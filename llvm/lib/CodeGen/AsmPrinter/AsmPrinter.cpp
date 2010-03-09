@@ -1323,7 +1323,6 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
                                       CurDLT.getColumnNumber(),
                                       CurDLT.getScope().getNode());
     printLabel(L);
-    O << '\n';
     DW->BeginScope(MI, L);
     PrevDLT = CurDLT.getNode();
   }
@@ -1554,12 +1553,17 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
-  printLabel(MI->getOperand(0).getImm());
-  OutStreamer.AddBlankLine();
+  MCSymbol *Sym = 
+    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                                 "label" + Twine(MI->getOperand(0).getImm()));
+  OutStreamer.EmitLabel(Sym);
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
-  O << MAI->getPrivateGlobalPrefix() << "label" << Id << ':';
+  MCSymbol *Sym = 
+    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                                 "label" + Twine(Id));
+  OutStreamer.EmitLabel(Sym);
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
