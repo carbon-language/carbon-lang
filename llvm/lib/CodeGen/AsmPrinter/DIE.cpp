@@ -131,17 +131,15 @@ void DIE::print(raw_ostream &O, unsigned IncIndent) {
       << "Die: "
       << format("0x%lx", (long)(intptr_t)this)
       << ", Offset: " << Offset
-      << ", Size: " << Size
-      << "\n";
+      << ", Size: " << Size << "\n";
 
     O << Indent
       << dwarf::TagString(Abbrev.getTag())
       << " "
-      << dwarf::ChildrenString(Abbrev.getChildrenFlag());
+      << dwarf::ChildrenString(Abbrev.getChildrenFlag()) << "\n";
   } else {
-    O << "Size: " << Size;
+    O << "Size: " << Size << "\n";
   }
-  O << "\n";
 
   const SmallVector<DIEAbbrevData, 8> &Data = Abbrev.getData();
 
@@ -286,7 +284,6 @@ void DIELabel::print(raw_ostream &O) {
 void DIESectionOffset::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
   D->EmitSectionOffset(Label, Section, IsSmall, IsEH);
-  D->getAsm()->O << '\n'; // FIXME: Necesssary?
 }
 
 /// SizeOf - Determine size of delta value in bytes.
@@ -367,15 +364,13 @@ void DIEBlock::EmitValue(DwarfPrinter *D, unsigned Form) const {
   case dwarf::DW_FORM_block1: Asm->EmitInt8(Size);         break;
   case dwarf::DW_FORM_block2: Asm->EmitInt16(Size);        break;
   case dwarf::DW_FORM_block4: Asm->EmitInt32(Size);        break;
-  case dwarf::DW_FORM_block:  D->EmitULEB128(Size); break;
-  default: llvm_unreachable("Improper form for block");         break;
+  case dwarf::DW_FORM_block:  D->EmitULEB128(Size);        break;
+  default: llvm_unreachable("Improper form for block");    break;
   }
 
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
-  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    Asm->O << '\n';
+  for (unsigned i = 0, N = Values.size(); i < N; ++i)
     Values[i]->EmitValue(D, AbbrevData[i].getForm());
-  }
 }
 
 /// SizeOf - Determine size of block data in bytes.

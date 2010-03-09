@@ -2360,8 +2360,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
   unsigned AbbrevNumber = Die->getAbbrevNumber();
   const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
 
-  Asm->O << '\n';
-
   // Emit the code (index) for the abbreviation.
   if (Asm->VerboseAsm)
     Asm->OutStreamer.AddComment("Abbrev [" + Twine(AbbrevNumber) + "] 0x" +
@@ -2396,7 +2394,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
     default:
       // Emit an attribute using the defined form.
       Values[i]->EmitValue(this, Form);
-      O << "\n"; // REMOVE This once all EmitValue impls emit their own newline.
       break;
     }
   }
@@ -2444,7 +2441,6 @@ void DwarfDebug::emitDebugInfo() {
   Asm->EmitInt8(0); EOL("Extra Pad For GDB");
   Asm->EmitInt8(0); EOL("Extra Pad For GDB");
   Asm->OutStreamer.EmitLabel(getDWLabel("info_end", ModuleCU->getID()));
-  Asm->O << '\n';
 }
 
 /// emitAbbreviations - Emit the abbreviation section.
@@ -2468,7 +2464,6 @@ void DwarfDebug::emitAbbreviations() const {
 
       // Emit the abbreviations data.
       Abbrev->Emit(this);
-      Asm->O << '\n';
     }
 
     // Mark end of abbreviations.
@@ -2579,7 +2574,6 @@ void DwarfDebug::emitDebugLines() {
       O << '\t' << MAI->getCommentString() << " Section"
         << S->getName() << '\n';
     }*/
-    Asm->O << '\n';
 
     // Dwarf assumes we start with first line of first source file.
     unsigned Source = 1;
@@ -2593,9 +2587,7 @@ void DwarfDebug::emitDebugLines() {
 
       if (LineInfo.getLine() == 0) continue;
 
-      if (!Asm->isVerbose())
-        Asm->O << '\n';
-      else {
+      if (Asm->isVerbose()) {
         std::pair<unsigned, unsigned> SourceID =
           getSourceDirectoryAndFileIds(LineInfo.getSourceID());
         O << '\t' << MAI->getCommentString() << ' '
@@ -2817,23 +2809,20 @@ void DwarfDebug::emitDebugPubTypes() {
 ///
 void DwarfDebug::emitDebugStr() {
   // Check to see if it is worth the effort.
-  if (!StringPool.empty()) {
-    // Start the dwarf str section.
-    Asm->OutStreamer.SwitchSection(
+  if (StringPool.empty()) return;
+  
+  // Start the dwarf str section.
+  Asm->OutStreamer.SwitchSection(
                                 Asm->getObjFileLowering().getDwarfStrSection());
 
-    // For each of strings in the string pool.
-    for (unsigned StringID = 1, N = StringPool.size();
-         StringID <= N; ++StringID) {
-      // Emit a label for reference from debug information entries.
-      Asm->OutStreamer.EmitLabel(getDWLabel("string", StringID));
-
-      // Emit the string itself.
-      const std::string &String = StringPool[StringID];
-      Asm->OutStreamer.EmitBytes(StringRef(String.c_str(), String.size()+1), 0);
-    }
-
-    Asm->O << '\n';
+  // For each of strings in the string pool.
+  for (unsigned StringID = 1, N = StringPool.size(); StringID <= N; ++StringID){
+    // Emit a label for reference from debug information entries.
+    Asm->OutStreamer.EmitLabel(getDWLabel("string", StringID));
+    
+    // Emit the string itself.
+    const std::string &String = StringPool[StringID];
+    Asm->OutStreamer.EmitBytes(StringRef(String.c_str(), String.size()+1), 0);
   }
 }
 
