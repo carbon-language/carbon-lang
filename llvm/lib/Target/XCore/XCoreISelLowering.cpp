@@ -1117,6 +1117,21 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue Ops [] = { Carry, Result };
       return DAG.getMergeValues(Ops, 2, dl);
     }
+
+    // fold (ladd x, 0, y) -> 0, add x, y iff carry is unused and y has only the
+    // low bit set
+    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 0)) { 
+      APInt KnownZero, KnownOne;
+      APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
+                                         VT.getSizeInBits() - 1);
+      DAG.ComputeMaskedBits(N2, Mask, KnownZero, KnownOne);
+      if (KnownZero == Mask) {
+        SDValue Carry = DAG.getConstant(0, VT);
+        SDValue Result = DAG.getNode(ISD::ADD, dl, VT, N0, N2);
+        SDValue Ops [] = { Carry, Result };
+        return DAG.getMergeValues(Ops, 2, dl);
+      }
+    }
   }
   break;
   case XCoreISD::LSUB: {
@@ -1137,6 +1152,21 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         SDValue Borrow = N2;
         SDValue Result = DAG.getNode(ISD::SUB, dl, VT,
                                      DAG.getConstant(0, VT), N2);
+        SDValue Ops [] = { Borrow, Result };
+        return DAG.getMergeValues(Ops, 2, dl);
+      }
+    }
+
+    // fold (lsub x, 0, y) -> 0, sub x, y iff borrow is unused and y has only the
+    // low bit set
+    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 0)) { 
+      APInt KnownZero, KnownOne;
+      APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
+                                         VT.getSizeInBits() - 1);
+      DAG.ComputeMaskedBits(N2, Mask, KnownZero, KnownOne);
+      if (KnownZero == Mask) {
+        SDValue Borrow = DAG.getConstant(0, VT);
+        SDValue Result = DAG.getNode(ISD::SUB, dl, VT, N0, N2);
         SDValue Ops [] = { Borrow, Result };
         return DAG.getMergeValues(Ops, 2, dl);
       }
