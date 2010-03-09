@@ -65,9 +65,9 @@ id Test2() {
 }
 @end
 // CHECK-LP64: %{{.*}} = load i8** %
-// CHECK-LP64: %{{.*}} = bitcast i8* %{{.*}} to i8**
-// CHECK-LP64: store i8* %{{.*}}, i8** %{{.*}}
+// CHECK-NEXT: %{{.*}} = bitcast i8* %{{.*}} to i8**
+// CHECK-NEXT: store i8* %{{.*}}, i8** %{{.*}}
 
 // CHECK-LP32: %{{.*}} = load i8** %
-// CHECK-LP32: %{{.*}} = bitcast i8* %{{.*}} to i8**
-// CHECK-LP32: store i8* %{{.*}}, i8** %{{.*}}
+// CHECK-NEXT: %{{.*}} = bitcast i8* %{{.*}} to i8**
+// CHECK-NEXT: store i8* %{{.*}}, i8** %{{.*}}
