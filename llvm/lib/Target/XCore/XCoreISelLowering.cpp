@@ -1097,6 +1097,48 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
   default: break;
+  case XCoreISD::LADD: {
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SDValue N2 = N->getOperand(2);
+    ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+    EVT VT = N0.getValueType();
+
+    // fold (ladd 0, 0, x) -> 0, x & 1
+    if (N0C && N0C->isNullValue() && N1C && N1C->isNullValue()) {
+      SDValue Carry = DAG.getConstant(0, VT);
+      SDValue Result = DAG.getNode(ISD::AND, dl, VT, N2,
+                                   DAG.getConstant(1, VT));
+      SDValue Ops [] = { Carry, Result };
+      return DAG.getMergeValues(Ops, 2, dl);
+    }
+  }
+  break;
+  case XCoreISD::LSUB: {
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SDValue N2 = N->getOperand(2);
+    ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+    EVT VT = N0.getValueType();
+
+    // fold (lsub 0, 0, x) -> x, -x iff x has only the low bit set
+    if (N0C && N0C->isNullValue() && N1C && N1C->isNullValue()) {   
+      APInt KnownZero, KnownOne;
+      APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
+                                         VT.getSizeInBits() - 1);
+      DAG.ComputeMaskedBits(N2, Mask, KnownZero, KnownOne);
+      if (KnownZero == Mask) {
+        SDValue Borrow = N2;
+        SDValue Result = DAG.getNode(ISD::SUB, dl, VT,
+                                     DAG.getConstant(0, VT), N2);
+        SDValue Ops [] = { Borrow, Result };
+        return DAG.getMergeValues(Ops, 2, dl);
+      }
+    }
+  }
+  break;
   case ISD::STORE: {
     // Replace unaligned store of unaligned load with memmove.
     StoreSDNode *ST  = cast<StoreSDNode>(N);
@@ -1135,6 +1177,27 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
   }
   }
   return SDValue();
+}
+
+void XCoreTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
+                                                         const APInt &Mask,
+                                                         APInt &KnownZero,
+                                                         APInt &KnownOne,
+                                                         const SelectionDAG &DAG,
+                                                         unsigned Depth) const {
+  KnownZero = KnownOne = APInt(Mask.getBitWidth(), 0);
+  switch (Op.getOpcode()) {
+  default: break;
+  case XCoreISD::LADD:
+  case XCoreISD::LSUB:
+    if (Op.getResNo() == 0) {
+      // Top bits of carry / borrow are clear.
+      KnownZero = APInt::getHighBitsSet(Mask.getBitWidth(),
+                                        Mask.getBitWidth() - 1);
+      KnownZero &= Mask;
+    }
+    break;
+  }
 }
 
 //===----------------------------------------------------------------------===//

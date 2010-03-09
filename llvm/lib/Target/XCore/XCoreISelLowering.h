@@ -144,6 +144,13 @@ namespace llvm {
 
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
+    virtual void computeMaskedBitsForTargetNode(const SDValue Op,
+                                                const APInt &Mask,
+                                                APInt &KnownZero,
+                                                APInt &KnownOne,
+                                                const SelectionDAG &DAG,
+                                                unsigned Depth = 0) const;
+
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv,
