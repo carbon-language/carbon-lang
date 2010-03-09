@@ -89,8 +89,7 @@ public:
   unsigned SizeOfEncodedValue(unsigned Encoding) const;
 
   void PrintRelDirective(unsigned Encoding) const;
-  void PrintRelDirective(bool Force32Bit = false,
-                         bool isInSection = false) const;
+  void PrintRelDirective(bool Force32Bit = false) const;
 
   /// EOL - Print a newline character to asm stream.  If a comment is present
   /// then it will be printed first.  Comments should not contain '\n'.
@@ -130,6 +129,8 @@ public:
   void EmitDifference(const MCSymbol *LabelHi, const MCSymbol *LabelLo,
                       bool IsSmall = false);
 
+  /// EmitSectionOffset - Emit Label-Section or use a special purpose directive
+  /// to emit a section offset if the target has one.
   void EmitSectionOffset(const MCSymbol *Label, const MCSymbol *Section,
                          bool IsSmall = false, bool isEH = false);
   

@@ -77,10 +77,8 @@ unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
   return 0;
 }
 
-void DwarfPrinter::PrintRelDirective(bool Force32Bit, bool isInSection) const {
-  if (isInSection && MAI->getDwarfSectionOffsetDirective())
-    O << MAI->getDwarfSectionOffsetDirective();
-  else if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
+void DwarfPrinter::PrintRelDirective(bool Force32Bit) const {
+  if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
     O << MAI->getData32bitsDirective();
   else
     O << MAI->getData64bitsDirective();
@@ -253,17 +251,23 @@ void DwarfPrinter::EmitDifference(const MCSymbol *TagHi, const MCSymbol *TagLo,
 void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
                                      const MCSymbol *Section,
                                      bool IsSmall, bool isEH) {
-  bool printAbsolute = false;
+  bool isAbsolute;
   if (isEH)
-    printAbsolute = MAI->isAbsoluteEHSectionOffsets();
+    isAbsolute = MAI->isAbsoluteEHSectionOffsets();
   else
-    printAbsolute = MAI->isAbsoluteDebugSectionOffsets();
+    isAbsolute = MAI->isAbsoluteDebugSectionOffsets();
 
-  if (!printAbsolute)
+  if (!isAbsolute)
     return EmitDifference(Label, Section, IsSmall);
   
-  PrintRelDirective(IsSmall, true);
-  PrintLabelName(Label);
+  // On COFF targets, we have to emit the weird .secrel32 directive.
+  if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective())
+    O << SecOffDir << Label->getName();
+  else {
+    unsigned Size = IsSmall ? 4 : TD->getPointerSize();
+    Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(Label, Asm->OutContext),
+                               Size, 0/*AddrSpace*/);
+  }
 }
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
