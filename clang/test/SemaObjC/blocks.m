@@ -55,3 +55,15 @@ int foo9() {
         }
 
 }
+
+// rdar 7725203
+@class NSString;
+
+extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
+
+void foo10() {
+    void(^myBlock)(void) = ^{
+    };
+    NSLog(@"%@", myBlock);
+}
+

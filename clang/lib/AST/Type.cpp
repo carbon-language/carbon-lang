@@ -650,6 +650,7 @@ bool Type::isPODType() const {
   case Vector:
   case ExtVector:
   case ObjCObjectPointer:
+  case BlockPointer:
     return true;
 
   case Enum:
