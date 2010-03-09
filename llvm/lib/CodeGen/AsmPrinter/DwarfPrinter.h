@@ -89,7 +89,6 @@ public:
   unsigned SizeOfEncodedValue(unsigned Encoding) const;
 
   void PrintRelDirective(unsigned Encoding) const;
-  void PrintRelDirective(bool Force32Bit = false) const;
 
   /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
   /// encoding.  If verbose assembly output is enabled, we output comments

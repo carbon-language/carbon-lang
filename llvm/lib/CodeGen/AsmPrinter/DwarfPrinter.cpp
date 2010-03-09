@@ -77,13 +77,6 @@ unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
   return 0;
 }
 
-void DwarfPrinter::PrintRelDirective(bool Force32Bit) const {
-  if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
-    O << MAI->getData32bitsDirective();
-  else
-    O << MAI->getData64bitsDirective();
-}
-
 void DwarfPrinter::PrintRelDirective(unsigned Encoding) const {
   unsigned Size = SizeOfEncodedValue(Encoding);
   assert((Size == 4 || Size == 8) && "Do not support other types or rels!");
@@ -211,7 +204,10 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
   }
   
   // FIXME: Need an MCExpr for ".".
-  PrintRelDirective(Force32Bit);
+  if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
+    O << MAI->getData32bitsDirective();
+  else
+    O << MAI->getData64bitsDirective();
   O << *Sym;
   if (IsPCRelative) O << "-" << MAI->getPCSymbol();
 }
