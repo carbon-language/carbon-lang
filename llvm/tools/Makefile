@@ -42,8 +42,7 @@ ifeq ($(ENABLE_PIC),1)
     # gold only builds if binutils is around.  It requires "lto" to build before
     # it so it is added to DIRS.
     ifdef BINUTILS_INCDIR
-      PARALLEL_DIRS += gold
-      DIRS += lto
+      DIRS += lto gold
     else
       PARALLEL_DIRS += lto
     endif
