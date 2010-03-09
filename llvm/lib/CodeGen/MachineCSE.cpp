@@ -95,7 +95,7 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
         !SrcSubIdx && !DstSubIdx) {
       const TargetRegisterClass *SRC = MRI->getRegClass(SrcReg);
       const TargetRegisterClass *RC  = MRI->getRegClass(Reg);
-      if (SRC == RC || SRC->hasSubClass(RC) || RC->hasSubClass(SRC)) {
+      if (SRC == RC || RC->hasSubClass(SRC)) {
         DEBUG(dbgs() << "Coalescing: " << *DefMI);
         DEBUG(dbgs() << "*** to: " << *MI);
         MO.setReg(SrcReg);
