@@ -66,12 +66,7 @@ protected:
   /// SubprogramCount - The running count of functions being compiled.
   unsigned SubprogramCount;
 
-  /// Flavor - A unique string indicating what dwarf producer this is, used to
-  /// unique labels.
-  const char * const Flavor;
-
-  DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
-               const char *flavor);
+  DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T);
 public:
   
   //===------------------------------------------------------------------===//

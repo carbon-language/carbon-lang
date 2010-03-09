@@ -39,7 +39,7 @@ using namespace llvm;
 
 DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
                                const MCAsmInfo *T)
-  : DwarfPrinter(OS, A, T, "eh"), shouldEmitTable(false),shouldEmitMoves(false),
+  : DwarfPrinter(OS, A, T), shouldEmitTable(false),shouldEmitMoves(false),
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
   if (TimePassesIsEnabled)

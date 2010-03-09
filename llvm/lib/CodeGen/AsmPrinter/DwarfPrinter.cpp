@@ -31,11 +31,10 @@
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
-DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T,
-                           const char *flavor)
+DwarfPrinter::DwarfPrinter(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
 : O(OS), Asm(A), MAI(T), TD(Asm->TM.getTargetData()),
   RI(Asm->TM.getRegisterInfo()), M(NULL), MF(NULL), MMI(NULL),
-  SubprogramCount(0), Flavor(flavor) {}
+  SubprogramCount(0) {}
 
 
 /// getDWLabel - Return the MCSymbol corresponding to the assembler temporary
