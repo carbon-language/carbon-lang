@@ -2680,7 +2680,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       NodeStack.append(LastScope.NodeStack.begin(), LastScope.NodeStack.end());
       N = NodeStack.back();
 
-      DEBUG(errs() << "  Match failed at index " << MatcherIndex
+      DEBUG(errs() << "  Match failed at index " << (MatcherIndex-1)
                    << " continuing at " << LastScope.FailIndex << "\n");
     
       if (LastScope.NumMatchedMemRefs != MatchedMemRefs.size())
