@@ -40,7 +40,7 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-static cl::opt<bool>
+cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
 

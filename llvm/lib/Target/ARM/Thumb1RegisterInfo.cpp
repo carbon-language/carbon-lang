@@ -33,9 +33,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+extern cl::opt<bool> ReuseFrameIndexVals;
 
 Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
                                        const ARMSubtarget &sti)
@@ -640,6 +643,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       assert (Value && "Frame index virtual allocated, but Value arg is NULL!");
       *Value = Offset;
       bool UseRR = false;
+      bool TrackVReg = FrameReg == ARM::SP;
 
       if (Opcode == ARM::tSpill) {
         if (FrameReg == ARM::SP)
@@ -648,6 +652,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         else {
           emitLoadConstPool(MBB, II, dl, VReg, 0, Offset);
           UseRR = true;
+          TrackVReg = false;
         }
       } else
         emitThumbRegPlusImmediate(MBB, II, VReg, FrameReg, Offset, TII,
@@ -658,6 +663,8 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
       else // tSTR has an extra register operand.
         MI.addOperand(MachineOperand::CreateReg(0, false));
+      if (!ReuseFrameIndexVals || !TrackVReg)
+        VReg = 0;
   } else
     assert(false && "Unexpected opcode!");
 
