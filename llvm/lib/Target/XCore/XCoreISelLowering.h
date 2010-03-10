@@ -54,6 +54,12 @@ namespace llvm {
       // Corresponds to LSUB instruction
       LSUB,
 
+      // Corresponds to MACCU instruction
+      MACCU,
+
+      // Corresponds to MACCS instruction
+      MACCS,
+
       // Jumptable branch.
       BR_JT,
 
@@ -140,6 +146,7 @@ namespace llvm {
               EVT VT) const;
   
     // Expand specifics
+    SDValue TryExpandADDSUBWithMul(SDNode *Op, SelectionDAG &DAG);
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
 
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;

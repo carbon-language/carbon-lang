@@ -54,6 +54,8 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::RETSP             : return "XCoreISD::RETSP";
     case XCoreISD::LADD              : return "XCoreISD::LADD";
     case XCoreISD::LSUB              : return "XCoreISD::LSUB";
+    case XCoreISD::MACCU             : return "XCoreISD::MACCU";
+    case XCoreISD::MACCS             : return "XCoreISD::MACCS";
     case XCoreISD::BR_JT             : return "XCoreISD::BR_JT";
     case XCoreISD::BR_JT32           : return "XCoreISD::BR_JT32";
     default                           : return NULL;
@@ -542,11 +544,76 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
+TryExpandADDSUBWithMul(SDNode *N, SelectionDAG &DAG)
+{
+  SDValue Mul;
+  SDValue Other;
+  if (N->getOperand(0).getOpcode() == ISD::MUL) {
+    Mul = N->getOperand(0);
+    Other = N->getOperand(1);
+  } else if (N->getOperand(1).getOpcode() == ISD::MUL) {
+    Mul = N->getOperand(1);
+    Other = N->getOperand(0);
+  } else {
+    return SDValue();
+  }
+  DebugLoc dl = N->getDebugLoc();
+  SDValue LL, RL, AddendL, AddendH;
+  LL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                   Mul.getOperand(0),  DAG.getConstant(0, MVT::i32));
+  RL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                   Mul.getOperand(1),  DAG.getConstant(0, MVT::i32));
+  AddendL = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                        Other,  DAG.getConstant(0, MVT::i32));
+  AddendH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                        Other,  DAG.getConstant(1, MVT::i32));
+  APInt HighMask = APInt::getHighBitsSet(64, 32);
+  unsigned LHSSB = DAG.ComputeNumSignBits(Mul.getOperand(0));
+  unsigned RHSSB = DAG.ComputeNumSignBits(Mul.getOperand(1));
+  if (DAG.MaskedValueIsZero(Mul.getOperand(0), HighMask) &&
+      DAG.MaskedValueIsZero(Mul.getOperand(1), HighMask)) {
+    // The inputs are both zero-extended.
+    SDValue Hi = DAG.getNode(XCoreISD::MACCU, dl,
+                             DAG.getVTList(MVT::i32, MVT::i32), AddendH,
+                             AddendL, LL, RL);
+    SDValue Lo(Hi.getNode(), 1);
+    return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
+  }
+  if (LHSSB > 32 && RHSSB > 32) {
+    // The inputs are both sign-extended.
+    SDValue Hi = DAG.getNode(XCoreISD::MACCS, dl,
+                             DAG.getVTList(MVT::i32, MVT::i32), AddendH,
+                             AddendL, LL, RL);
+    SDValue Lo(Hi.getNode(), 1);
+    return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
+  }
+  SDValue LH, RH;
+  LH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                   Mul.getOperand(0),  DAG.getConstant(1, MVT::i32));
+  RH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                   Mul.getOperand(1),  DAG.getConstant(1, MVT::i32));
+  SDValue Hi = DAG.getNode(XCoreISD::MACCU, dl,
+                           DAG.getVTList(MVT::i32, MVT::i32), AddendH,
+                           AddendL, LL, RL);
+  SDValue Lo(Hi.getNode(), 1);
+  RH = DAG.getNode(ISD::MUL, dl, MVT::i32, LL, RH);
+  LH = DAG.getNode(ISD::MUL, dl, MVT::i32, LH, RL);
+  Hi = DAG.getNode(ISD::ADD, dl, MVT::i32, Hi, RH);
+  Hi = DAG.getNode(ISD::ADD, dl, MVT::i32, Hi, LH);
+  return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
+}
+
+SDValue XCoreTargetLowering::
 ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
 {
   assert(N->getValueType(0) == MVT::i64 &&
          (N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
         "Unknown operand to lower!");
+
+  SDValue Result = TryExpandADDSUBWithMul(N, DAG);
+  if (Result.getNode() != 0)
+    return Result;
+
   DebugLoc dl = N->getDebugLoc();
   
   // Extract components
