@@ -142,7 +142,8 @@ SVal BasicStoreManager::LazyRetrieve(Store store, const TypedRegion *R) {
 
   // Globals and parameters start with symbolic values.
   // Local variables initially are undefined.
-  if (VR->hasGlobalsOrParametersStorage())
+  if (VR->hasGlobalsOrParametersStorage() ||
+      isa<UnknownSpaceRegion>(VR->getMemorySpace()))
     return ValMgr.getRegionValueSymbolVal(R);
   return UndefinedVal();
 }
