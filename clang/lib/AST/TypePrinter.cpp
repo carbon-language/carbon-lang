@@ -474,7 +474,12 @@ void TypePrinter::PrintEnum(const EnumType *T, std::string &S) {
 
 void TypePrinter::PrintElaborated(const ElaboratedType *T, std::string &S) { 
   Print(T->getUnderlyingType(), S);
-  S = std::string(T->getNameForTagKind(T->getTagKind())) + ' ' + S;  
+
+  // We don't actually make these in C, but the language options
+  // sometimes lie to us -- for example, if someone calls
+  // QualType::getAsString().  Just suppress the redundant tag if so.
+  if (Policy.LangOpts.CPlusPlus)
+    S = std::string(T->getNameForTagKind(T->getTagKind())) + ' ' + S;  
 }
 
 void TypePrinter::PrintTemplateTypeParm(const TemplateTypeParmType *T, 
