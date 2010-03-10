@@ -1334,11 +1334,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
-
-  const RecordType* RT = T->getAsStructureType();
-  RecordDecl* RD = RT->getDecl();
-  assert(RD->isDefinition());
-  (void)RD;
+  assert(T->getAsStructureType()->getDecl()->isDefinition());
   return ValMgr.makeLazyCompoundVal(store, R);
 }
 
