@@ -1342,17 +1342,44 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
   }
   break;
   case ISD::ADD: {
-    // Fold expressions such as add(add(mul(x,y),a),b) -> lmul(x, y, a, b).
+    // Fold 32 bit expressions such as add(add(mul(x,y),a),b) ->
+    // lmul(x, y, a, b). The high result of lmul will be ignored.
     // This is only profitable if the intermediate results are unused
     // elsewhere.
     SDValue Mul0, Mul1, Addend0, Addend1;
-    if (isADDADDMUL(SDValue(N, 0), Mul0, Mul1, Addend0, Addend1, true)) {
+    if (N->getValueType(0) == MVT::i32 &&
+        isADDADDMUL(SDValue(N, 0), Mul0, Mul1, Addend0, Addend1, true)) {
       SDValue Zero = DAG.getConstant(0, MVT::i32);
       SDValue Ignored = DAG.getNode(XCoreISD::LMUL, dl,
                                     DAG.getVTList(MVT::i32, MVT::i32), Mul0,
                                     Mul1, Addend0, Addend1);
       SDValue Result(Ignored.getNode(), 1);
       return Result;
+    }
+    APInt HighMask = APInt::getHighBitsSet(64, 32);
+    // Fold 64 bit expression such as add(add(mul(x,y),a),b) ->
+    // lmul(x, y, a, b) if all operands are zero-extended. We do this
+    // before type legalization as it is messy to match the operands after
+    // that.
+    if (N->getValueType(0) == MVT::i64 &&
+        isADDADDMUL(SDValue(N, 0), Mul0, Mul1, Addend0, Addend1, false) &&
+        DAG.MaskedValueIsZero(Mul0, HighMask) &&
+        DAG.MaskedValueIsZero(Mul1, HighMask) &&
+        DAG.MaskedValueIsZero(Addend0, HighMask) &&
+        DAG.MaskedValueIsZero(Addend1, HighMask)) {
+      SDValue Mul0L = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                                  Mul0, DAG.getConstant(0, MVT::i32));
+      SDValue Mul1L = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                                  Mul1, DAG.getConstant(0, MVT::i32));
+      SDValue Addend0L = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                                     Addend0, DAG.getConstant(0, MVT::i32));
+      SDValue Addend1L = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
+                                     Addend1, DAG.getConstant(0, MVT::i32));
+      SDValue Hi = DAG.getNode(XCoreISD::LMUL, dl,
+                               DAG.getVTList(MVT::i32, MVT::i32), Mul0L, Mul1L,
+                               Addend0L, Addend1L);
+      SDValue Lo(Hi.getNode(), 1);
+      return DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
     }
   }
   break;

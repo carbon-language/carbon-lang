@@ -42,3 +42,18 @@ entry:
 ; CHECK: maccs:
 ; CHECK: maccs r1, r0, r3, r2
 ; CHECK-NEXT: retsp 0
+
+define i64 @lmul(i32 %a, i32 %b, i32 %c, i32 %d) {
+entry:
+	%0 = zext i32 %a to i64
+	%1 = zext i32 %b to i64
+	%2 = zext i32 %c to i64
+	%3 = zext i32 %d to i64
+	%4 = mul i64 %1, %0
+	%5 = add i64 %4, %2
+	%6 = add i64 %5, %3
+	ret i64 %6
+}
+; CHECK: lmul:
+; CHECK: lmul r1, r0, r1, r0, r2, r3
+; CHECK-NEXT: retsp 0
