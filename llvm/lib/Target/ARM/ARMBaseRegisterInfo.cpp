@@ -590,6 +590,10 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       AFI->isThumb2Function())
     MF.getRegInfo().setPhysRegUsed(ARM::R4);
 
+  // Spill LR if Thumb1 function uses variable length argument lists.
+  if (AFI->isThumb1OnlyFunction() && AFI->getVarArgsRegSaveSize() > 0)
+    MF.getRegInfo().setPhysRegUsed(ARM::LR);
+
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
   const unsigned *CSRegs = getCalleeSavedRegs();
