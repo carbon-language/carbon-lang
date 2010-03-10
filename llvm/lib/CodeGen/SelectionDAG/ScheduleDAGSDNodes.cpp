@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
+#include "SDDbgValue.h"
 #include "ScheduleDAGSDNodes.h"
 #include "InstrEmitter.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -412,6 +413,14 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
   InstrEmitter Emitter(BB, InsertPos);
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
+
+  // For now, any constant debug info nodes go at the beginning.
+  for (SDDbgInfo::ConstDbgIterator I = DAG->DbgConstBegin(),
+       E = DAG->DbgConstEnd(); I!=E; I++) {
+    Emitter.EmitDbgValue(*I, EM);
+    delete *I;
+  }
+
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     SUnit *SU = Sequence[i];
     if (!SU) {
@@ -435,10 +444,20 @@ EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
     while (!FlaggedNodes.empty()) {
       Emitter.EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,
                        VRBaseMap, EM);
+      if (FlaggedNodes.back()->getHasDebugValue())
+        if (SDDbgValue *sd = DAG->GetDbgInfo(FlaggedNodes.back())) {
+          Emitter.EmitDbgValue(FlaggedNodes.back(), VRBaseMap, sd);
+          delete sd;
+        }
       FlaggedNodes.pop_back();
     }
     Emitter.EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned,
                      VRBaseMap, EM);
+    if (SU->getNode()->getHasDebugValue())
+      if (SDDbgValue *sd = DAG->GetDbgInfo(SU->getNode())) {
+        Emitter.EmitDbgValue(SU->getNode(), VRBaseMap, sd);
+        delete sd;
+      }
   }
 
   BB = Emitter.getBlock();

@@ -106,7 +106,8 @@ public:
 
 
   /// EmitDbgValue - Generate a constant DBG_VALUE.  No node is involved.
-  void EmitDbgValue(SDDbgValue* sd);
+  void EmitDbgValue(SDDbgValue* sd,
+                DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
 
   /// EmitNode - Generate machine code for a node and needed dependencies.
   ///

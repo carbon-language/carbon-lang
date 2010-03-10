@@ -35,6 +35,7 @@ class MachineConstantPoolValue;
 class MachineFunction;
 class MachineModuleInfo;
 class SDNodeOrdering;
+class SDDbgValue;
 class TargetLowering;
 
 template<> struct ilist_traits<SDNode> : public ilist_default_traits<SDNode> {
@@ -55,6 +56,46 @@ public:
   }
 private:
   static void createNode(const SDNode &);
+};
+
+/// SDDbgInfo - Keeps track of dbg_value information through SDISel.  We do
+/// not build SDNodes for these so as not to perturb the generated code;
+/// instead the info is kept off to the side in this structure.  SDNodes may
+/// have an associated dbg_value entry in DbgValMap.  Debug info that is not
+/// associated with any SDNode is held in DbgConstMap.  It is possible for
+/// optimizations to change a variable to a constant, in which case the
+/// corresponding debug info is moved from the variable to the constant table
+/// (NYI).
+class SDDbgInfo {
+  DenseMap<const SDNode*, SDDbgValue*> DbgVblMap;
+  SmallVector<SDDbgValue*, 4> DbgConstMap;
+
+  void operator=(const SDDbgInfo&);   // Do not implement.
+  SDDbgInfo(const SDDbgInfo&);   // Do not implement.
+public:
+  SDDbgInfo() {}
+
+  void add(const SDNode *Node, SDDbgValue *V) {
+    DbgVblMap[Node] = V;
+  }
+  void add(SDDbgValue *V) { DbgConstMap.push_back(V); }
+  void remove(const SDNode *Node) {
+    DenseMap<const SDNode*, SDDbgValue*>::iterator Itr =
+                      DbgVblMap.find(Node);
+    if (Itr != DbgVblMap.end())
+      DbgVblMap.erase(Itr);
+  }
+  // No need to remove a constant.
+  void clear() {
+    DbgVblMap.clear();
+    DbgConstMap.clear();
+  }
+  SDDbgValue *getSDDbgValue(const SDNode *Node) {
+    return DbgVblMap[Node];
+  }
+  typedef SmallVector<SDDbgValue*, 4>::iterator ConstDbgIterator;
+  ConstDbgIterator DbgConstBegin() { return DbgConstMap.begin(); }
+  ConstDbgIterator DbgConstEnd() { return DbgConstMap.end(); }
 };
 
 enum CombineLevel {
@@ -118,6 +159,9 @@ class SelectionDAG {
   /// SDNodeOrdering - The ordering of the SDNodes. It roughly corresponds to
   /// the ordering of the original LLVM instructions.
   SDNodeOrdering *Ordering;
+
+  /// DbgInfo - Tracks dbg_value information through SDISel.
+  SDDbgInfo *DbgInfo;
 
   /// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
   void VerifyNode(SDNode *N);
@@ -827,6 +871,20 @@ public:
 
   /// GetOrdering - Get the order for the SDNode.
   unsigned GetOrdering(const SDNode *SD) const;
+
+  /// AssignDbgInfo - Assign debug info to the SDNode.
+  void AssignDbgInfo(SDNode *SD, SDDbgValue *db);
+
+  /// RememberDbgInfo - Remember debug info with no associated SDNode.
+  void RememberDbgInfo(SDDbgValue *db);
+
+  /// GetDbgInfo - Get the debug info for the SDNode.
+  SDDbgValue *GetDbgInfo(const SDNode* SD);
+
+  SDDbgInfo::ConstDbgIterator DbgConstBegin() { 
+    return DbgInfo->DbgConstBegin(); 
+  }
+  SDDbgInfo::ConstDbgIterator DbgConstEnd() { return DbgInfo->DbgConstEnd(); }
 
   void dump() const;
 

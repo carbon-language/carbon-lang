@@ -106,6 +106,10 @@ namespace llvm {
     /// initialized and destructed for each block.
     std::vector<SUnit *> Defs[TargetRegisterInfo::FirstVirtualRegister];
     std::vector<SUnit *> Uses[TargetRegisterInfo::FirstVirtualRegister];
+ 
+    /// DbgValueVec - Remember DBG_VALUEs that refer to a particular
+    /// register.
+    std::vector<MachineInstr *>DbgValueVec;
 
     /// PendingLoads - Remember where unknown loads are after the most recent
     /// unknown store, as we iterate. As with Defs and Uses, this is here

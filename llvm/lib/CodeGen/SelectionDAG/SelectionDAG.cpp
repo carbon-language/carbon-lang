@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "SDNodeOrdering.h"
+#include "SDDbgValue.h"
 #include "llvm/Constants.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Function.h"
@@ -596,6 +597,9 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
 
   // Remove the ordering of this node.
   Ordering->remove(N);
+
+  // And its entry in the debug info table, if any.
+  DbgInfo->remove(N);
 }
 
 /// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
@@ -793,6 +797,7 @@ SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
     Root(getEntryNode()), Ordering(0) {
   AllNodes.push_back(&EntryNode);
   Ordering = new SDNodeOrdering();
+  DbgInfo = new SDDbgInfo();
 }
 
 void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
@@ -806,6 +811,7 @@ void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
 SelectionDAG::~SelectionDAG() {
   allnodes_clear();
   delete Ordering;
+  delete DbgInfo;
 }
 
 void SelectionDAG::allnodes_clear() {
@@ -833,6 +839,8 @@ void SelectionDAG::clear() {
   Root = getEntryNode();
   delete Ordering;
   Ordering = new SDNodeOrdering();
+  delete DbgInfo;
+  DbgInfo = new SDDbgInfo();
 }
 
 SDValue SelectionDAG::getSExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT) {
@@ -5264,6 +5272,25 @@ unsigned SelectionDAG::GetOrdering(const SDNode *SD) const {
   return Ordering->getOrder(SD);
 }
 
+/// AssignDbgInfo - Assign debug info to the SDNode.
+void SelectionDAG::AssignDbgInfo(SDNode* SD, SDDbgValue* db) {
+  assert(SD && "Trying to assign dbg info to a null node!");
+  DbgInfo->add(SD, db);
+  SD->setHasDebugValue(true);
+}
+
+/// RememberDbgInfo - Remember debug info which is not assigned to an SDNode.
+void SelectionDAG::RememberDbgInfo(SDDbgValue* db) {
+  DbgInfo->add(db);
+}
+
+/// GetDbgInfo - Get the debug info, if any, for the SDNode.
+SDDbgValue* SelectionDAG::GetDbgInfo(const SDNode *SD) {
+  assert(SD && "Trying to get the order of a null node!");
+  if (SD->getHasDebugValue())
+    return DbgInfo->getSDDbgValue(SD);
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
@@ -5911,7 +5938,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   if (G)
     if (unsigned Order = G->GetOrdering(this))
       OS << " [ORD=" << Order << ']';
-  
+
   if (getNodeId() != -1)
     OS << " [ID=" << getNodeId() << ']';
 }

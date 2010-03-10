@@ -508,6 +508,7 @@ InstrEmitter::EmitDbgValue(SDNode *Node,
     return;
   if (!sd)
     return;
+  assert(sd->getKind() == SDDbgValue::SD);
   unsigned VReg = getVR(SDValue(sd->getSDNode(), sd->getResNo()), VRBaseMap);
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
   DebugLoc DL = sd->getDebugLoc();
@@ -524,26 +525,46 @@ InstrEmitter::EmitDbgValue(SDNode *Node,
   MBB->insert(InsertPos, MI);
 }
 
-/// EmitDbgValue - Generate constant debug info.  No SDNode is involved.
+/// EmitDbgValue - Generate debug info that does not refer to a SDNode.
 void
-InstrEmitter::EmitDbgValue(SDDbgValue *sd) {
+InstrEmitter::EmitDbgValue(SDDbgValue *sd,
+                         DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
   if (!sd)
     return;
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
+  uint64_t Offset = sd->getOffset();
+  MDNode* mdPtr = sd->getMDPtr();
+  SDDbgValue::DbgValueKind kind = sd->getKind();
   DebugLoc DL = sd->getDebugLoc();
-  MachineInstr *MI;
-  Value *V = sd->getConst();
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-    MI = BuildMI(*MF, DL, II).addImm(CI->getZExtValue()).
-                                   addImm(sd->getOffset()).
-                                   addMetadata(sd->getMDPtr());
-  } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
-    MI = BuildMI(*MF, DL, II).addFPImm(CF).addImm(sd->getOffset()).
-                                   addMetadata(sd->getMDPtr());
+  MachineInstr* MI;
+  if (kind == SDDbgValue::CNST) {
+    Value *V = sd->getConst();
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      MI = BuildMI(*MF, DL, II).addImm(CI->getZExtValue()).
+                                     addImm(Offset).addMetadata(mdPtr);
+    } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
+      MI = BuildMI(*MF, DL, II).addFPImm(CF).
+                                     addImm(Offset).addMetadata(mdPtr);
+    } else {
+      // Could be an Undef.  In any case insert an Undef so we can see what we
+      // dropped.
+      MI = BuildMI(*MF, DL, II).addReg(0U).
+                                       addImm(Offset).addMetadata(mdPtr);
+    }
+  } else if (kind == SDDbgValue::FX) {
+    unsigned FrameIx = sd->getFrameIx();
+    // Stack address; this needs to be lowered in target-dependent fashion.
+    // FIXME test that the target supports this somehow; if not emit Undef.
+    // Create a pseudo for EmitInstrWithCustomInserter's consumption.
+    MI = BuildMI(*MF, DL, II).addImm(FrameIx).
+                                   addImm(Offset).addMetadata(mdPtr);
+    MBB = TLI->EmitInstrWithCustomInserter(MI, MBB, EM);
+    InsertPos = MBB->end();
+    return;
   } else {
     // Insert an Undef so we can see what we dropped.
-    MI = BuildMI(*MF, DL, II).addReg(0U).addImm(sd->getOffset()).
-                                    addMetadata(sd->getMDPtr());
+    MI = BuildMI(*MF, DL, II).addReg(0U).
+                                     addImm(Offset).addMetadata(mdPtr);
   }
   MBB->insert(InsertPos, MI);
 }
