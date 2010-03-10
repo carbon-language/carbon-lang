@@ -43,7 +43,8 @@ unsigned ContentCache::getSizeBytesMapped() const {
 ///  scratch buffer.  If the ContentCache encapsulates a source file, that
 ///  file is not lazily brought in from disk to satisfy this query.
 unsigned ContentCache::getSize() const {
-  return Buffer ? Buffer->getBufferSize() : Entry->getSize();
+  return Buffer ? (unsigned) Buffer->getBufferSize()
+                : (unsigned) Entry->getSize();
 }
 
 void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
