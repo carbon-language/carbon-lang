@@ -2616,6 +2616,8 @@ void DwarfDebug::emitDebugLines() {
         std::pair<unsigned, unsigned> SrcID =
           getSourceDirectoryAndFileIds(LineInfo.getSourceID());
         Asm->OutStreamer.AddComment(Twine(getSourceDirectoryName(SrcID.first)) +
+                                    "/" +
+                                    Twine(getSourceFileName(SrcID.second)) +
                                     ":" + Twine(LineInfo.getLine()));
       }
 
