@@ -118,9 +118,9 @@
 ; TO: @N = constant i64* inttoptr (i64 8 to i64*)
 ; TO: @O = constant i64* inttoptr (i64 8 to i64*)
 
-@M = constant i64* getelementptr (i64 *null, i32 1)
-@N = constant i64* getelementptr ({ i64, i64 } *null, i32 0, i32 1)
-@O = constant i64* getelementptr ([2 x i64] *null, i32 0, i32 1)
+@M = constant i64* getelementptr (i64* null, i32 1)
+@N = constant i64* getelementptr ({ i64, i64 }* null, i32 0, i32 1)
+@O = constant i64* getelementptr ([2 x i64]* null, i32 0, i32 1)
 
 ; Duplicate all of the above as function return values rather than
 ; global initializers.
@@ -457,14 +457,14 @@ define i64 @fk() nounwind {
 ; SCEV:   -->  sizeof(i64)
 
 define i64* @fM() nounwind {
-  %t = bitcast i64* getelementptr (i64 *null, i32 1) to i64*
+  %t = bitcast i64* getelementptr (i64* null, i32 1) to i64*
   ret i64* %t
 }
 define i64* @fN() nounwind {
-  %t = bitcast i64* getelementptr ({ i64, i64 } *null, i32 0, i32 1) to i64*
+  %t = bitcast i64* getelementptr ({ i64, i64 }* null, i32 0, i32 1) to i64*
   ret i64* %t
 }
 define i64* @fO() nounwind {
-  %t = bitcast i64* getelementptr ([2 x i64] *null, i32 0, i32 1) to i64*
+  %t = bitcast i64* getelementptr ([2 x i64]* null, i32 0, i32 1) to i64*
   ret i64* %t
 }
