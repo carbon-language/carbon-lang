@@ -1235,7 +1235,11 @@ private:
   
   /// LayoutSecondaryVtables - Layout the secondary vtables for the given base
   /// subobject.
-  void LayoutSecondaryVtables(BaseSubobject Base, uint64_t OffsetInLayoutClass);
+  ///
+  /// \param BaseIsMorallyVirtual whether the base subobject is a virtual base
+  /// or a direct or indirect base of a virtual base.
+  void LayoutSecondaryVtables(BaseSubobject Base, bool BaseIsMorallyVirtual,
+                              uint64_t OffsetInLayoutClass);
 
   /// DeterminePrimaryVirtualBases - Determine the primary virtual bases in this
   /// class hierarchy.
@@ -1772,11 +1776,16 @@ VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
     AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
   }
 
+  bool BaseIsMorallyVirtual = BaseIsVirtual;
+  if (isBuildingConstructorVtable() && Base.getBase() == MostDerivedClass)
+    BaseIsMorallyVirtual = false;
+  
   // Layout secondary vtables.
-  LayoutSecondaryVtables(Base, OffsetInLayoutClass);
+  LayoutSecondaryVtables(Base, BaseIsMorallyVirtual, OffsetInLayoutClass);
 }
 
 void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
+                                           bool BaseIsMorallyVirtual,
                                            uint64_t OffsetInLayoutClass) {
   // Itanium C++ ABI 2.5.2:
   //   Following the primary virtual table of a derived class are secondary 
@@ -1806,9 +1815,8 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
       //   tables, which will therefore not be present in the construction
       //   virtual table group, even though the subobject virtual tables are
       //   present in the main virtual table group for the complete object.
-      if (!BaseDecl->getNumVBases()) {
+      if (!BaseIsMorallyVirtual && !BaseDecl->getNumVBases())
         continue;
-      }
     }
 
     // Get the base offset of this base.
@@ -1821,7 +1829,7 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
     // to emit secondary vtables for other bases of this base.
     if (BaseDecl == PrimaryBase) {
       LayoutSecondaryVtables(BaseSubobject(BaseDecl, BaseOffset),
-                             BaseOffsetInLayoutClass);
+                             BaseIsMorallyVirtual, BaseOffsetInLayoutClass);
       continue;
     }
 

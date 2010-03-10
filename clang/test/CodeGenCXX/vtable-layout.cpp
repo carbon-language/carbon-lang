@@ -1150,4 +1150,71 @@ struct E : D {
   virtual void e();
 };
 void E::e() { }
+
+}
+
+namespace Test28 {
+
+// Check that we do include the vtable for B in the D-in-E construction vtable, since
+// B is a base class of a virtual base (C).
+
+struct A {
+  virtual void a();
+};
+
+struct B {
+  virtual void b();
+};
+
+struct C : A, B {
+  virtual void c();
+};
+
+struct D : virtual C {
+};
+
+// CHECK:      Vtable for 'Test28::E' (14 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test28::E RTTI
+// CHECK-NEXT:        -- (Test28::D, 0) vtable address --
+// CHECK-NEXT:        -- (Test28::E, 0) vtable address --
+// CHECK-NEXT:    3 | void Test28::E::e()
+// CHECK-NEXT:    4 | vcall_offset (8)
+// CHECK-NEXT:    5 | vcall_offset (0)
+// CHECK-NEXT:    6 | vcall_offset (0)
+// CHECK-NEXT:    7 | offset_to_top (-8)
+// CHECK-NEXT:    8 | Test28::E RTTI
+// CHECK-NEXT:        -- (Test28::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test28::C, 8) vtable address --
+// CHECK-NEXT:    9 | void Test28::A::a()
+// CHECK-NEXT:   10 | void Test28::C::c()
+// CHECK-NEXT:   11 | offset_to_top (-16)
+// CHECK-NEXT:   12 | Test28::E RTTI
+// CHECK-NEXT:        -- (Test28::B, 16) vtable address --
+// CHECK-NEXT:   13 | void Test28::B::b()
+
+// CHECK:      Construction vtable for ('Test28::D', 0) in 'Test28::E' (13 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test28::D RTTI
+// CHECK-NEXT:        -- (Test28::D, 0) vtable address --
+// CHECK-NEXT:    3 | vcall_offset (8)
+// CHECK-NEXT:    4 | vcall_offset (0)
+// CHECK-NEXT:    5 | vcall_offset (0)
+// CHECK-NEXT:    6 | offset_to_top (-8)
+// CHECK-NEXT:    7 | Test28::D RTTI
+// CHECK-NEXT:        -- (Test28::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test28::C, 8) vtable address --
+// CHECK-NEXT:    8 | void Test28::A::a()
+// CHECK-NEXT:    9 | void Test28::C::c()
+// CHECK-NEXT:   10 | offset_to_top (-16)
+// CHECK-NEXT:   11 | Test28::D RTTI
+// CHECK-NEXT:        -- (Test28::B, 16) vtable address --
+// CHECK-NEXT:   12 | void Test28::B::b()
+struct E : D {
+  virtual void e();
+};
+void E::e() { }
+
 }
