@@ -84,9 +84,13 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // Begin eh frame section.
   Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
+  MCSymbol *EHFrameSym;
   if (MAI->is_EHSymbolPrivate())
-    O << MAI->getPrivateGlobalPrefix();
-  O << "EH_frame" << Index << ":\n";
+    EHFrameSym = getDWLabel("EH_frame", Index);
+  else
+    EHFrameSym = Asm->OutContext.GetOrCreateSymbol(Twine("EH_frame") + 
+                                                   Twine(Index));
+  Asm->OutStreamer.EmitLabel(EHFrameSym);
   
   Asm->OutStreamer.EmitLabel(getDWLabel("section_eh_frame", Index));
 
@@ -195,7 +199,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
   // If corresponding function is weak definition, this should be too.
   if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
-    O << MAI->getWeakDefDirective() << *EHFrameInfo.FunctionEHSym << '\n';
+    Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
+                                         MCSA_WeakDefinition);
 
   // If corresponding function is hidden, this should be too.
   if (TheFunc->hasHiddenVisibility())
@@ -211,7 +216,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       (!TheFunc->isWeakForLinker() ||
        !MAI->getWeakDefDirective() ||
        MAI->getSupportsWeakOmittedEHFrame())) {
-    O << *EHFrameInfo.FunctionEHSym << " = 0\n";
+    Asm->OutStreamer.EmitAssignment(EHFrameInfo.FunctionEHSym,
+                                    MCConstantExpr::Create(0, Asm->OutContext));
     // This name has no connection to the function, so it might get
     // dead-stripped when the function is not, erroneously.  Prohibit
     // dead-stripping unconditionally.
@@ -219,7 +225,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
                                            MCSA_NoDeadStrip);
   } else {
-    O << *EHFrameInfo.FunctionEHSym << ":\n";
+    Asm->OutStreamer.EmitLabel(EHFrameInfo.FunctionEHSym);
 
     // EH frame header.
     Asm->OutStreamer.AddComment("Length of Frame Information Entry");
@@ -699,15 +705,14 @@ void DwarfException::EmitExceptionTable() {
   Asm->EmitAlignment(2, 0, 0, false);
 
   // Emit the LSDA.
-  O << "GCC_except_table" << SubprogramCount << ":\n";
+  MCSymbol *GCCETSym = 
+    Asm->OutContext.GetOrCreateSymbol(Twine("GCC_except_table")+
+                                      Twine(SubprogramCount));
+  Asm->OutStreamer.EmitLabel(GCCETSym);
   Asm->OutStreamer.EmitLabel(getDWLabel("exception", SubprogramCount));
 
-  if (IsSJLJ) {
-    SmallString<16> LSDAName;
-    raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
-      "_LSDA_" << Asm->getFunctionNumber();
-    O << LSDAName.str() << ":\n";
-  }
+  if (IsSJLJ)
+    Asm->OutStreamer.EmitLabel(getDWLabel("_LSDA_", Asm->getFunctionNumber()));
 
   // Emit the LSDA header.
   EmitEncodingByte(dwarf::DW_EH_PE_omit, "@LPStart");
