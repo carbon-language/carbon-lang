@@ -38,7 +38,7 @@ bool operator==(A&, Z&); // expected-note 2{{candidate function}}
 void h(A a, const A ac, Z z) {
   make_A() == z;
   a == z; // expected-error{{use of overloaded operator '==' is ambiguous; candidates are:}}
-  ac == z; // expected-error{{invalid operands to binary expression ('struct A const' and 'struct Z')}}
+  ac == z; // expected-error{{invalid operands to binary expression ('A const' and 'Z')}}
 }
 
 struct B {
@@ -172,7 +172,7 @@ void test_callable(Callable c, Callable2 c2, const Callable2& c2c,
   int &ir = c(1);
   float &fr = c(1, 3.14159, 17, 42);
 
-  c(); // expected-error{{no matching function for call to object of type 'struct Callable'; candidates are:}}
+  c(); // expected-error{{no matching function for call to object of type 'Callable'}}
 
   double &dr = c(1.0f);
 
@@ -200,12 +200,12 @@ struct ConvertToFuncDerived : ConvertToFunc { };
 void test_funcptr_call(ConvertToFunc ctf, ConvertToFuncDerived ctfd) {
   int &i1 = ctf(1.0f, 2.0);
   float &f1 = ctf((short int)1, 1.0f);
-  ctf((long int)17, 2.0); // expected-error{{error: call to object of type 'struct ConvertToFunc' is ambiguous; candidates are:}}
+  ctf((long int)17, 2.0); // expected-error{{call to object of type 'ConvertToFunc' is ambiguous}}
   ctf();
 
   int &i2 = ctfd(1.0f, 2.0);
   float &f2 = ctfd((short int)1, 1.0f);
-  ctfd((long int)17, 2.0); // expected-error{{error: call to object of type 'struct ConvertToFuncDerived' is ambiguous; candidates are:}}
+  ctfd((long int)17, 2.0); // expected-error{{call to object of type 'ConvertToFuncDerived' is ambiguous}}
   ctfd();
 }
 

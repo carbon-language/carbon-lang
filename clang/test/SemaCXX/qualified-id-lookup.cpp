@@ -96,12 +96,12 @@ void test_a() {
   a::a::a::i = 4;
 }
   
-struct Undef { // expected-note{{definition of 'struct Undef' is not complete until the closing '}'}}
+struct Undef { // expected-note{{definition of 'Undef' is not complete until the closing '}'}}
   typedef int type;
 
   Undef::type member;
 
-  static int size = sizeof(Undef); // expected-error{{invalid application of 'sizeof' to an incomplete type 'struct Undef'}}
+  static int size = sizeof(Undef); // expected-error{{invalid application of 'sizeof' to an incomplete type 'Undef'}}
 
   int f();
 };

@@ -38,10 +38,10 @@ void test_overloaded() {
 // CHECK-MEMBER: FieldDecl:{ResultType float}{Text Y::}{TypedText member}
 // CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{ResultType int}{TypedText operator int}{LeftParen (}{RightParen )}{Informative  const}
-// CHECK-MEMBER: FunctionDecl:{ResultType struct Z &}{TypedText operator=}{LeftParen (}{Placeholder struct Z const &}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType struct X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder struct X const &}{RightParen )}
-// CHECK-MEMBER: FunctionDecl:{ResultType struct Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder struct Y const &}{RightParen )}
-// CHECK-MEMBER: EnumConstantDecl:{ResultType enum X::E}{Informative E::}{TypedText Val1}
+// CHECK-MEMBER: FunctionDecl:{ResultType Z &}{TypedText operator=}{LeftParen (}{Placeholder Z const &}{RightParen )}
+// CHECK-MEMBER: FunctionDecl:{ResultType X &}{Text X::}{TypedText operator=}{LeftParen (}{Placeholder X const &}{RightParen )}
+// CHECK-MEMBER: FunctionDecl:{ResultType Y &}{Text Y::}{TypedText operator=}{LeftParen (}{Placeholder Y const &}{RightParen )}
+// CHECK-MEMBER: EnumConstantDecl:{ResultType X::E}{Informative E::}{TypedText Val1}
 // CHECK-MEMBER: StructDecl:{TypedText X}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Y}{Text ::}
 // CHECK-MEMBER: StructDecl:{TypedText Z}{Text ::}
@@ -49,6 +49,6 @@ void test_overloaded() {
 // CHECK-MEMBER: FunctionDecl:{ResultType void}{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: FunctionDecl:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
 
-// CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text struct Z z}{Comma , }{CurrentParameter int second}{RightParen )}
+// CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType double &}{Text overloaded}{LeftParen (}{Text float f}{Comma , }{CurrentParameter int second}{RightParen )}

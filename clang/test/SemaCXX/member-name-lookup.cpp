@@ -35,11 +35,11 @@ struct D : B, C {
 };
 
 void test_lookup(D d) {
-  d.a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'struct A'}}
+  d.a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'A':}}
   (void)d.b; // okay
   d.c; // expected-error{{member 'c' found in multiple base classes of different types}}
   d.d; // expected-error{{member 'd' found in multiple base classes of different types}}
-  d.f(0); // expected-error{{non-static member 'f' found in multiple base-class subobjects of type 'struct A'}}
+  d.f(0); // expected-error{{non-static member 'f' found in multiple base-class subobjects of type 'A':}}
   d.static_f(0); // okay
 
   D::E e = D::enumerator; // okay
@@ -51,11 +51,11 @@ void test_lookup(D d) {
 }
 
 void D::test_lookup() {
-  a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'struct A'}}
+  a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'A':}}
   (void)b; // okay
   c; // expected-error{{member 'c' found in multiple base classes of different types}}
   d; // expected-error{{member 'd' found in multiple base classes of different types}}
-  f(0); // expected-error{{non-static member 'f' found in multiple base-class subobjects of type 'struct A'}}
+  f(0); // expected-error{{non-static member 'f' found in multiple base-class subobjects of type 'A':}}
   static_f(0); // okay
 
   E e = enumerator; // okay
@@ -105,7 +105,7 @@ void test_virtual_lookup(D2 d2, G g) {
 
   D2::E3 e3; // expected-error{{member 'E3' found in multiple base classes of different types}}
 
-  g.a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'struct A'}}
+  g.a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'A':}}
   g.static_f(0); // okay
 }
 
@@ -126,7 +126,7 @@ void D2::test_virtual_lookup() {
 }
 
 void G::test_virtual_lookup() {
-  a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'struct A'}}
+  a; // expected-error{{non-static member 'a' found in multiple base-class subobjects of type 'A':}}
   static_f(0); // okay
 }
 

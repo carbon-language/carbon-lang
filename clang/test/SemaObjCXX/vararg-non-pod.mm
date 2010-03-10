@@ -17,7 +17,7 @@ void t1(D *d)
 {
   C c(10);
 
-  [d g:10, c]; // expected-warning{{cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
+  [d g:10, c]; // expected-warning{{cannot pass object of non-POD type 'C' through variadic method; call will abort at runtime}}
   [d g:10, version];
 }
 

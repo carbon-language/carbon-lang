@@ -4,12 +4,11 @@ struct X1 { // has no implicit default constructor
    X1(int);
 };
 
-struct X2  : X1 {  // expected-note {{'struct X2' declared here}} \
-                  //  expected-note {{'struct X2' declared here}}
+struct X2  : X1 {  // expected-note 2 {{'X2' declared here}}
    X2(int);
 };
 
-struct X3 : public X2 { // expected-error {{must explicitly initialize the base class 'struct X2'}}
+struct X3 : public X2 { // expected-error {{implicit default constructor for 'X3' must explicitly initialize the base class 'X2' which does not have a default constructor}}
 };
 X3 x3; // expected-note {{first required here}}
 

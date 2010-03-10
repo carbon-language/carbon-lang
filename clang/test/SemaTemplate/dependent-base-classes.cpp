@@ -32,7 +32,7 @@ namespace PR6031 {
   template <class TT>
   struct FI2
   {
-    C<typename FI2::type> a; // expected-error{{no type named 'type' in 'struct PR6031::FI2'}} \
+    C<typename FI2::type> a; // expected-error{{no type named 'type' in 'FI2<TT>'}} \
         // expected-error{{C++ requires a type specifier for all declarations}}
   };
 
@@ -58,7 +58,7 @@ namespace PR6031 {
       class NoDepBase::Nested nested; // expected-error{{'Nested' does not name a tag member in the specified scope}}
       typedef typename NoDepBase::template MemberTemplate<T>::type type; // expected-error{{'MemberTemplate' following the 'template' keyword does not refer to a template}} \
       // FIXME: expected-error{{unqualified-id}}
-      return NoDepBase::a; // expected-error{{no member named 'a' in 'struct PR6031::NoDepBase'}}
+      return NoDepBase::a; // expected-error{{no member named 'a' in 'NoDepBase<T>'}}
     }
   };
 }

@@ -8,7 +8,7 @@ struct D : private A {};
 struct E : A {};
 struct F : B, E {};
 
-struct Incomplete; // expected-note 2 {{forward declaration of 'struct Incomplete'}}
+struct Incomplete; // expected-note 2 {{forward declaration of 'Incomplete'}}
 
 struct Poly
 {
@@ -22,7 +22,7 @@ struct PolyDerived : Poly
 void basic_bad()
 {
   // ptr -> nonptr
-  (void)dynamic_cast<A>((A*)0); // expected-error {{'struct A' is not a reference or pointer}}
+  (void)dynamic_cast<A>((A*)0); // expected-error {{'A' is not a reference or pointer}}
   // nonptr -> ptr
   (void)dynamic_cast<A*>(0); // expected-error {{'int' is not a pointer}}
   // ptr -> noncls
@@ -34,9 +34,9 @@ void basic_bad()
   // noncls -> ref
   (void)dynamic_cast<A&>(*((int*)0)); // expected-error {{'int' is not a class}}
   // ptr -> incomplete
-  (void)dynamic_cast<Incomplete*>((A*)0); // expected-error {{'struct Incomplete' is an incomplete type}}
+  (void)dynamic_cast<Incomplete*>((A*)0); // expected-error {{'Incomplete' is an incomplete type}}
   // incomplete -> ptr
-  (void)dynamic_cast<A*>((Incomplete*)0); // expected-error {{'struct Incomplete' is an incomplete type}}
+  (void)dynamic_cast<A*>((Incomplete*)0); // expected-error {{'Incomplete' is an incomplete type}}
 }
 
 void same()
@@ -57,8 +57,8 @@ void up()
   //(void)dynamic_cast<A&>(*((D*)0));
 
   // Ambiguous
-  (void)dynamic_cast<A*>((F*)0); // expected-error {{ambiguous conversion from derived class 'struct F' to base class 'struct A':\n    struct F -> struct B -> struct A\n    struct F -> struct E -> struct A}}
-  (void)dynamic_cast<A&>(*((F*)0)); // expected-error {{ambiguous conversion from derived class 'struct F' to base class 'struct A':\n    struct F -> struct B -> struct A\n    struct F -> struct E -> struct A}}
+  (void)dynamic_cast<A*>((F*)0); // expected-error {{ambiguous conversion from derived class 'F' to base class 'A':\n    struct F -> struct B -> struct A\n    struct F -> struct E -> struct A}}
+  (void)dynamic_cast<A&>(*((F*)0)); // expected-error {{ambiguous conversion from derived class 'F' to base class 'A':\n    struct F -> struct B -> struct A\n    struct F -> struct E -> struct A}}
 }
 
 void poly()
@@ -69,6 +69,6 @@ void poly()
   (void)dynamic_cast<A&>(*((PolyDerived*)0));
 
   // Not polymorphic source
-  (void)dynamic_cast<Poly*>((A*)0); // expected-error {{'struct A' is not polymorphic}}
-  (void)dynamic_cast<PolyDerived&>(*((A*)0)); // expected-error {{'struct A' is not polymorphic}}
+  (void)dynamic_cast<Poly*>((A*)0); // expected-error {{'A' is not polymorphic}}
+  (void)dynamic_cast<PolyDerived&>(*((A*)0)); // expected-error {{'A' is not polymorphic}}
 }

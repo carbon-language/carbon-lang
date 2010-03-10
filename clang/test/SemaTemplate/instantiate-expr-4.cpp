@@ -153,7 +153,7 @@ struct TypeId0 {
     if (ptr)
       return typeid(ptr);
     else
-      return typeid(T); // expected-error{{'typeid' of incomplete type 'struct Incomplete'}}
+      return typeid(T); // expected-error{{'typeid' of incomplete type 'Incomplete'}}
   }
 };
 

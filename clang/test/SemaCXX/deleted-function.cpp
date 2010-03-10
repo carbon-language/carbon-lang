@@ -29,7 +29,7 @@ void test() {
   ov(1);
   ov(1.0); // expected-error {{call to deleted function 'ov'}}
 
-  WithDel dd; // expected-error {{call to deleted constructor of 'struct WithDel'}}
+  WithDel dd; // expected-error {{call to deleted constructor of 'WithDel'}}
   WithDel *d = 0;
   d->fn(); // expected-error {{attempt to use a deleted function}}
   int i = *d; // expected-error {{invokes a deleted function}}

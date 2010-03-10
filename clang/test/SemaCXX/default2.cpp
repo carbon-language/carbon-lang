@@ -91,12 +91,12 @@ public:
   }
 
   void test_Z(const Z& z) {
-    Z z2(z); // expected-error{{no matching constructor for initialization of 'class Z'}}
+    Z z2(z); // expected-error{{no matching constructor for initialization of 'Z'}}
   }
 };
 
 void test_Z(const Z& z) {
-  Z z2(z); // expected-error{{no matching constructor for initialization of 'class Z'}}
+  Z z2(z); // expected-error{{no matching constructor for initialization of 'Z'}}
 }
 
 struct ZZ {

@@ -7,5 +7,5 @@ void f() {
   
   B b;
   
-  A *a = &b; // expected-error{{cannot cast 'struct B' to its private base class 'struct A'}}
+  A *a = &b; // expected-error{{cannot cast 'B' to its private base class 'A'}}
 }

@@ -181,7 +181,6 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     }
 
     PrintingPolicy Policy(Context.getLangOptions());
-    Policy.SuppressTagKind = true;
 
     std::string Proto = FD->getQualifiedNameAsString(Policy);
 

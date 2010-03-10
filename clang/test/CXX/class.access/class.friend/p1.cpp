@@ -22,10 +22,10 @@ void test1() {
   S s;
   g()->f();
   S::f();
-  X::g(); // expected-error{{no member named 'g' in 'struct X'}}
-  X::S x_s; // expected-error{{no member named 'S' in 'struct X'}}
+  X::g(); // expected-error{{no member named 'g' in 'X'}}
+  X::S x_s; // expected-error{{no member named 'S' in 'X'}}
   X x;
-  x.g(); // expected-error{{no member named 'g' in 'struct X'}}
+  x.g(); // expected-error{{no member named 'g' in 'X'}}
 }
 
 // Test that we recurse through namespaces to find already declared names, but
@@ -46,17 +46,17 @@ namespace N {
     g()->f();
     S s;
     S::f();
-    X::g(); // expected-error{{no member named 'g' in 'struct N::X'}}
-    X::S x_s; // expected-error{{no member named 'S' in 'struct N::X'}}
+    X::g(); // expected-error{{no member named 'g' in 'N::X'}}
+    X::S x_s; // expected-error{{no member named 'S' in 'N::X'}}
     X x;
-    x.g(); // expected-error{{no member named 'g' in 'struct N::X'}}
+    x.g(); // expected-error{{no member named 'g' in 'N::X'}}
 
     g2();
     S2 s2;
     ::g2(); // expected-error{{no member named 'g2' in the global namespace}}
     ::S2 g_s2; // expected-error{{no member named 'S2' in the global namespace}}
-    X::g2(); // expected-error{{no member named 'g2' in 'struct N::X'}}
-    X::S2 x_s2; // expected-error{{no member named 'S2' in 'struct N::X'}}
-    x.g2(); // expected-error{{no member named 'g2' in 'struct N::X'}}
+    X::g2(); // expected-error{{no member named 'g2' in 'N::X'}}
+    X::S2 x_s2; // expected-error{{no member named 'S2' in 'N::X'}}
+    x.g2(); // expected-error{{no member named 'g2' in 'N::X'}}
   }
 }

@@ -56,10 +56,10 @@ void t_529_2()
   // Bad code below
 
   (void)static_cast<void*>((const int*)0); // expected-error {{static_cast from 'int const *' to 'void *' is not allowed}}
-  (void)static_cast<A*>((E*)0); // expected-error {{private base class 'struct A'}}
+  (void)static_cast<A*>((E*)0); // expected-error {{cannot cast 'E' to its private base class 'A'}}
   (void)static_cast<A*>((H*)0); // expected-error {{ambiguous conversion}}
   (void)static_cast<int>((int*)0); // expected-error {{static_cast from 'int *' to 'int' is not allowed}}
-  (void)static_cast<A**>((B**)0); // expected-error {{static_cast from 'struct B **' to 'struct A **' is not allowed}}
+  (void)static_cast<A**>((B**)0); // expected-error {{static_cast from 'B **' to 'A **' is not allowed}}
   (void)static_cast<char&>(i); // expected-error {{non-const lvalue reference to type 'char' cannot be initialized with a value of type 'int'}}
 }
 
@@ -80,18 +80,18 @@ void t_529_5_8()
 
   // Bad code below
 
-  (void)static_cast<C1*>((A*)0); // expected-error {{cannot cast 'struct A *' to 'struct C1 *' via virtual base 'struct B'}}
-  (void)static_cast<C1&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct C1 &' via virtual base 'struct B'}}
-  (void)static_cast<D*>((A*)0); // expected-error {{cannot cast 'struct A *' to 'struct D *' via virtual base 'struct B'}}
-  (void)static_cast<D&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct D &' via virtual base 'struct B'}}
-  (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'struct A const *' to 'struct B *' casts away constness}}
-  (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'struct A const' to 'struct B &' casts away constness}}
-  (void)static_cast<E*>((A*)0); // expected-error {{cannot cast private base class 'struct A' to 'struct E'}}
-  (void)static_cast<E&>(*((A*)0)); // expected-error {{cannot cast private base class 'struct A' to 'struct E'}}
-  (void)static_cast<H*>((A*)0); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
-  (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
-  (void)static_cast<E*>((B*)0); // expected-error {{static_cast from 'struct B *' to 'struct E *' is not allowed}}
-  (void)static_cast<E&>(*((B*)0)); // expected-error {{non-const lvalue reference to type 'struct E' cannot be initialized with a value of type 'struct B'}}
+  (void)static_cast<C1*>((A*)0); // expected-error {{cannot cast 'A *' to 'C1 *' via virtual base 'B'}}
+  (void)static_cast<C1&>(*((A*)0)); // expected-error {{cannot cast 'A' to 'C1 &' via virtual base 'B'}}
+  (void)static_cast<D*>((A*)0); // expected-error {{cannot cast 'A *' to 'D *' via virtual base 'B'}}
+  (void)static_cast<D&>(*((A*)0)); // expected-error {{cannot cast 'A' to 'D &' via virtual base 'B'}}
+  (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'A const *' to 'B *' casts away constness}}
+  (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'A const' to 'B &' casts away constness}}
+  (void)static_cast<E*>((A*)0); // expected-error {{cannot cast private base class 'A' to 'E'}}
+  (void)static_cast<E&>(*((A*)0)); // expected-error {{cannot cast private base class 'A' to 'E'}}
+  (void)static_cast<H*>((A*)0); // expected-error {{ambiguous cast from base 'A' to derived 'H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous cast from base 'A' to derived 'H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)static_cast<E*>((B*)0); // expected-error {{static_cast from 'B *' to 'E *' is not allowed}}
+  (void)static_cast<E&>(*((B*)0)); // expected-error {{non-const lvalue reference to type 'E' cannot be initialized with a value of type 'B'}}
 
   // TODO: Test inaccessible base in context where it's accessible, i.e.
   // member function and friend.
@@ -108,7 +108,7 @@ void t_529_7()
 
   // Bad code below
 
-  (void)static_cast<Enum>((int*)0); // expected-error {{static_cast from 'int *' to 'enum Enum' is not allowed}}
+  (void)static_cast<Enum>((int*)0); // expected-error {{static_cast from 'int *' to 'Enum' is not allowed}}
 }
 
 // Void pointer to object pointer
@@ -129,8 +129,8 @@ void t_529_9()
   (void)static_cast<int A::*>((int B::*)0);
 
   // Bad code below
-  (void)static_cast<int A::*>((int H::*)0); // expected-error {{ambiguous conversion from pointer to member of derived class 'struct H'}}
-  (void)static_cast<int A::*>((int F::*)0); // expected-error {{conversion from pointer to member of class 'struct F'}}
+  (void)static_cast<int A::*>((int H::*)0); // expected-error {{ambiguous conversion from pointer to member of derived class 'H' to pointer to member of base class 'A':}}
+  (void)static_cast<int A::*>((int F::*)0); // expected-error {{conversion from pointer to member of class 'F' to pointer to member of class 'A' via virtual base 'B' is not allowed}}
 }
 
 // PR 5261 - static_cast should instantiate template if possible
@@ -192,6 +192,6 @@ namespace PR6072 {
     (void)static_cast<void (A::*)()>(&B::f);
     (void)static_cast<void (B::*)()>(&B::f);
     (void)static_cast<void (C::*)()>(&B::f);
-    (void)static_cast<void (D::*)()>(&B::f); // expected-error{{static_cast from '<overloaded function type>' to 'void (struct PR6072::D::*)()' is not allowed}}
+    (void)static_cast<void (D::*)()>(&B::f); // expected-error{{static_cast from '<overloaded function type>' to 'void (PR6072::D::*)()' is not allowed}}
   }
 }

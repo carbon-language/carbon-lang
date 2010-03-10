@@ -17,12 +17,12 @@ struct X {
 X<int> f() { return 0; }
 
 struct XField {
-  X<float(int)> xf; // expected-note{{in instantiation of template class 'struct X<float (int)>' requested here}}
+  X<float(int)> xf; // expected-note{{in instantiation of template class 'X<float (int)>' requested here}}
 };
 
 void test_subscript(X<double> *ptr1, X<int(int)> *ptr2, int i) {
   (void)ptr1[i];
-  (void)ptr2[i]; // expected-note{{in instantiation of template class 'struct X<int (int)>' requested here}}
+  (void)ptr2[i]; // expected-note{{in instantiation of template class 'X<int (int)>' requested here}}
 }
 
 void test_arith(X<signed char> *ptr1, X<unsigned char> *ptr2,
@@ -30,13 +30,13 @@ void test_arith(X<signed char> *ptr1, X<unsigned char> *ptr2,
   (void)(ptr1 + 5);
   // FIXME: if I drop the ')' after void, below, it still parses (!)
   (void)(5 + ptr2);
-  (void)(ptr3 + 5); // expected-note{{in instantiation of template class 'struct X<char (char)>' requested here}}
-  (void)(5 + ptr4); // expected-note{{in instantiation of template class 'struct X<short (short)>' requested here}}
+  (void)(ptr3 + 5); // expected-note{{in instantiation of template class 'X<char (char)>' requested here}}
+  (void)(5 + ptr4); // expected-note{{in instantiation of template class 'X<short (short)>' requested here}}
 }
 
 void test_new() {
   (void)new X<float>(0);
-  (void)new X<float(float)>; // expected-note{{in instantiation of template class 'struct X<float (float)>' requested here}}
+  (void)new X<float(float)>; // expected-note{{in instantiation of template class 'X<float (float)>' requested here}}
 }
 
 void test_memptr(X<long> *p1, long X<long>::*pm1,

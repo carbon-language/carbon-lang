@@ -13,7 +13,7 @@ void self_conversion()
   int i = 0;
   (void)reinterpret_cast<int>(i); // expected-error {{reinterpret_cast from 'int' to 'int' is not allowed}}
   structure s;
-  (void)reinterpret_cast<structure>(s); // expected-error {{reinterpret_cast from 'struct structure' to 'struct structure' is not allowed}}
+  (void)reinterpret_cast<structure>(s); // expected-error {{reinterpret_cast from 'structure' to 'structure' is not allowed}}
   int *pi = 0;
   (void)reinterpret_cast<int*>(pi);
 }
@@ -77,18 +77,18 @@ void memptrs()
 {
   const int structure::*psi = 0;
   (void)reinterpret_cast<const float structure::*>(psi);
-  (void)reinterpret_cast<int structure::*>(psi); // expected-error {{reinterpret_cast from 'int const struct structure::*' to 'int struct structure::*' casts away constness}}
+  (void)reinterpret_cast<int structure::*>(psi); // expected-error {{reinterpret_cast from 'int const structure::*' to 'int structure::*' casts away constness}}
 
   void (structure::*psf)() = 0;
   (void)reinterpret_cast<int (structure::*)()>(psf);
 
-  (void)reinterpret_cast<void (structure::*)()>(psi); // expected-error {{reinterpret_cast from 'int const struct structure::*' to 'void (struct structure::*)()' is not allowed}}
-  (void)reinterpret_cast<int structure::*>(psf); // expected-error {{reinterpret_cast from 'void (struct structure::*)()' to 'int struct structure::*' is not allowed}}
+  (void)reinterpret_cast<void (structure::*)()>(psi); // expected-error {{reinterpret_cast from 'int const structure::*' to 'void (structure::*)()' is not allowed}}
+  (void)reinterpret_cast<int structure::*>(psf); // expected-error {{reinterpret_cast from 'void (structure::*)()' to 'int structure::*' is not allowed}}
 
   // Cannot cast from integers to member pointers, not even the null pointer
   // literal.
-  (void)reinterpret_cast<void (structure::*)()>(0); // expected-error {{reinterpret_cast from 'int' to 'void (struct structure::*)()' is not allowed}}
-  (void)reinterpret_cast<int structure::*>(0); // expected-error {{reinterpret_cast from 'int' to 'int struct structure::*' is not allowed}}
+  (void)reinterpret_cast<void (structure::*)()>(0); // expected-error {{reinterpret_cast from 'int' to 'void (structure::*)()' is not allowed}}
+  (void)reinterpret_cast<int structure::*>(0); // expected-error {{reinterpret_cast from 'int' to 'int structure::*' is not allowed}}
 }
 
 // PR5545

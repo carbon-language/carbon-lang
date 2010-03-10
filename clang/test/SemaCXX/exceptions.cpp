@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-struct A; // expected-note 4 {{forward declaration of 'struct A'}}
+struct A; // expected-note 4 {{forward declaration of 'A'}}
 
 struct Abstract { virtual void f() = 0; }; // expected-note {{pure virtual function 'f'}}
 
@@ -11,9 +11,9 @@ void trys() {
     int i; // expected-error {{redefinition of 'i'}}
   } catch(float i) {
   } catch(void v) { // expected-error {{cannot catch incomplete type 'void'}}
-  } catch(A a) { // expected-error {{cannot catch incomplete type 'struct A'}}
-  } catch(A *a) { // expected-warning {{pointer to incomplete type 'struct A'}}
-  } catch(A &a) { // expected-warning {{reference to incomplete type 'struct A'}}
+  } catch(A a) { // expected-error {{cannot catch incomplete type 'A'}}
+  } catch(A *a) { // expected-warning {{ISO C++ forbids catching a pointer to incomplete type 'A'}}
+  } catch(A &a) { // expected-warning {{ISO C++ forbids catching a reference to incomplete type 'A'}}
   } catch(Abstract) { // expected-error {{variable type 'Abstract' is an abstract class}}
   } catch(...) {
     int j = i; // expected-error {{use of undeclared identifier 'i'}}
@@ -29,7 +29,7 @@ void throws() {
   throw;
   throw 0;
   throw throw; // expected-error {{cannot throw object of incomplete type 'void'}}
-  throw (A*)0; // expected-error {{cannot throw pointer to object of incomplete type 'struct A'}}
+  throw (A*)0; // expected-error {{cannot throw pointer to object of incomplete type 'A'}}
 }
 
 void jumps() {

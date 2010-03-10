@@ -36,7 +36,7 @@ struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
   PrintingPolicy(const LangOptions &LO)
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
-      SuppressTag(false), SuppressTagKind(false), SuppressScope(false),
+      SuppressTag(false), SuppressScope(false),
       Dump(false), ConstantArraySizeAsWritten(false) { }
 
   /// \brief The number of spaces to use to indent each line.
@@ -71,10 +71,6 @@ struct PrintingPolicy {
   /// \endcode
   bool SuppressTag : 1;
 
-  /// \brief If we are printing a tag type, suppresses printing of the
-  /// kind of tag, e.g., "struct", "union", "enum".
-  bool SuppressTagKind : 1;
-
   /// \brief Suppresses printing of scope specifiers.
   bool SuppressScope : 1;
 
@@ -101,6 +97,7 @@ struct PrintingPolicy {
   /// char a[9] = "A string";
   /// \endcode
   bool ConstantArraySizeAsWritten : 1;
+
 };
 
 } // end namespace clang

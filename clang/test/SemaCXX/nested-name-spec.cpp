@@ -36,9 +36,9 @@ class C2 {
   int x;
 };
 
-void C2::m() const { } // expected-error{{out-of-line definition of 'm' does not match any declaration in 'class C2'}}
+void C2::m() const { } // expected-error{{out-of-line definition of 'm' does not match any declaration in 'C2'}}
 
-void C2::f(int) { } // expected-error{{out-of-line definition of 'f' does not match any declaration in 'class C2'}}
+void C2::f(int) { } // expected-error{{out-of-line definition of 'f' does not match any declaration in 'C2'}}
 
 void C2::m() {
   x = 0;
@@ -125,7 +125,7 @@ class Operators {
   operator bool();
 };
 
-Operators Operators::operator+(const Operators&) { // expected-error{{out-of-line definition of 'operator+' does not match any declaration in 'class Operators'}}
+Operators Operators::operator+(const Operators&) { // expected-error{{out-of-line definition of 'operator+' does not match any declaration in 'Operators'}}
   Operators ops;
   return ops;
 }
@@ -149,7 +149,7 @@ void A::g(const int&) { } // expected-error{{out-of-line definition of 'g' does 
 
 struct Struct { };
 
-void Struct::f() { } // expected-error{{out-of-line definition of 'f' does not match any declaration in 'struct Struct'}}
+void Struct::f() { } // expected-error{{out-of-line definition of 'f' does not match any declaration in 'Struct'}}
 
 void global_func(int);
 void global_func2(int);
@@ -164,8 +164,8 @@ void ::global_func2(int) { } // expected-error{{definition or redeclaration of '
 
 void N::f() { } // okay
 
-struct Y;  // expected-note{{forward declaration of 'struct Y'}}
-Y::foo y; // expected-error{{incomplete type 'struct Y' named in nested name specifier}} \
+struct Y;  // expected-note{{forward declaration of 'Y'}}
+Y::foo y; // expected-error{{incomplete type 'Y' named in nested name specifier}} \
          // expected-error{{no type named 'foo' in}}
 
 X::X() : a(5) { } // expected-error{{use of undeclared identifier 'X'}} \
@@ -227,6 +227,6 @@ namespace test3 {
   // FIXME: this should really only trigger once
   class A; // expected-note 2 {{forward declaration}}
   void foo(const char *path) {
-    A::execute(path); // expected-error 2 {{incomplete type 'class test3::A' named in nested name specifier}}
+    A::execute(path); // expected-error 2 {{incomplete type 'test3::A' named in nested name specifier}}
   }
 }

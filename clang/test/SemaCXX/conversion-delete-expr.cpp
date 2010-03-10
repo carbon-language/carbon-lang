@@ -11,7 +11,7 @@ struct D : B {
 
 void f (D d)
 {
-   delete d; // expected-error {{ambiguous conversion of delete expression of type 'struct D' to a pointer}}
+   delete d; // expected-error {{ambiguous conversion of delete expression of type 'D' to a pointer}}
 }
 
 // Test2
@@ -39,7 +39,7 @@ struct D2 : B2 {
 
 void f2 (D2 d)
 {
-   delete d; // expected-error {{ambiguous conversion of delete expression of type 'struct D2' to a pointer}}
+   delete d; // expected-error {{ambiguous conversion of delete expression of type 'D2' to a pointer}}
 }
 
 // Test4
@@ -56,7 +56,7 @@ struct D3 : A3, B3 {
 
 void f3 (D3 d)
 {
-   delete d; // expected-error {{mbiguous conversion of delete expression of type 'struct D3' to a pointer}}
+   delete d; // expected-error {{ambiguous conversion of delete expression of type 'D3' to a pointer}}
 }
 
 // Test5

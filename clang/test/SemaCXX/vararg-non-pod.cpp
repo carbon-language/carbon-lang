@@ -15,7 +15,7 @@ void t1()
 {
   C c(10);
   
-  g(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic function; call will abort at runtime}}
+  g(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic function; call will abort at runtime}}
   g(10, version);
 }
 
@@ -23,10 +23,10 @@ void t2()
 {
   C c(10);
 
-  c.g(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
+  c.g(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic method; call will abort at runtime}}
   c.g(10, version);
   
-  C::h(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic function; call will abort at runtime}}
+  C::h(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic function; call will abort at runtime}}
   C::h(10, version);
 }
 
@@ -36,7 +36,7 @@ void t3()
 {
   C c(10);
   
-  block(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic block; call will abort at runtime}}
+  block(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic block; call will abort at runtime}}
   block(10, version);
 }
 
@@ -51,7 +51,7 @@ void t4()
 
   D d;
   
-  d(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
+  d(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic method; call will abort at runtime}}
   d(10, version);
 }
 
@@ -63,8 +63,8 @@ void t5()
 {
   C c(10);
   
-  E e(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic constructor; call will abort at runtime}}
-  (void)E(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic constructor; call will abort at runtime}}
+  E e(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic constructor; call will abort at runtime}}
+  (void)E(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic constructor; call will abort at runtime}}
 }
 
 // PR5761: unevaluated operands and the non-POD warning
@@ -85,6 +85,6 @@ Base &get_base(...);
 int eat_base(...);
 
 void test_typeid(Base &base) {
-  (void)typeid(get_base(base)); // expected-warning{{cannot pass object of non-POD type 'struct Base' through variadic function; call will abort at runtime}}
+  (void)typeid(get_base(base)); // expected-warning{{cannot pass object of non-POD type 'Base' through variadic function; call will abort at runtime}}
   (void)typeid(eat_base(base)); // okay
 }

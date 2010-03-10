@@ -6,11 +6,11 @@ struct A {
 struct B : A {  // expected-error {{no suitable member 'operator delete' in 'B'}}
   B() { }
   void operator delete(void *, int); // expected-note {{'operator delete' declared here}}
-}; // expected-note {{implicit default destructor for 'struct B' first required here}}
+}; // expected-note {{implicit default destructor for 'B' first required here}}
 
 struct C : A {  // expected-error {{no suitable member 'operator delete' in 'C'}}
   void operator delete(void *, int); // expected-note {{'operator delete' declared here}}
-}; // expected-note {{implicit default destructor for 'struct C' first required here}}
+}; // expected-note {{implicit default destructor for 'C' first required here}}
 
 void f() {
   (void)new B;

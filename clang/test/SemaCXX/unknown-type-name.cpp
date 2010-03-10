@@ -9,10 +9,10 @@ namespace N {
 }
 using namespace N;
 
-foo::bar x; // expected-error{{no type named 'bar' in 'struct N::Wibble'}}
+foo::bar x; // expected-error{{no type named 'bar' in 'N::Wibble'}}
 
 void f() {
-  foo::bar  = 4; // expected-error{{no member named 'bar' in 'struct N::Wibble'}}
+  foo::bar  = 4; // expected-error{{no member named 'bar' in 'N::Wibble'}}
 }
 
 template<typename T>

@@ -49,9 +49,9 @@ class A { };
 
 class B : public A {
 public:
-  operator A&() const; // expected-warning{{conversion function converting 'class B' to its base class 'class A' will never be used}}
-  operator const void() const; // expected-warning{{conversion function converting 'class B' to 'void const' will never be used}}
-  operator const B(); // expected-warning{{conversion function converting 'class B' to itself will never be used}}
+  operator A&() const; // expected-warning{{conversion function converting 'B' to its base class 'A' will never be used}}
+  operator const void() const; // expected-warning{{conversion function converting 'B' to 'void const' will never be used}}
+  operator const B(); // expected-warning{{conversion function converting 'B' to itself will never be used}}
 };
 
 // This used to crash Clang.
@@ -63,7 +63,7 @@ struct Flop { // expected-note{{candidate is the implicit copy constructor}}
 struct Flip {
   operator Flop() const; // expected-note{{candidate function}}
 };
-Flop flop = Flip(); // expected-error {{conversion from 'struct Flip' to 'struct Flop' is ambiguous}}
+Flop flop = Flip(); // expected-error {{conversion from 'Flip' to 'Flop' is ambiguous}}
 
 // This tests that we don't add the second conversion declaration to the list of user conversions
 struct C {
@@ -88,7 +88,7 @@ public:
 };
 
 void f(Yb& a) {
-  if (a) { } // expected-error {{conversion from 'class Yb' to 'bool' is ambiguous}}
+  if (a) { } // expected-error {{conversion from 'Yb' to 'bool' is ambiguous}}
   int i = a; // OK. calls XB::operator int();
   char ch = a;  // OK. calls Yb::operator char();
 }

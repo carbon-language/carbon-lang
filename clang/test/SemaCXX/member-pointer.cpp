@@ -34,11 +34,11 @@ void f() {
   pdid = pdi2;
 
   // Fail conversion due to ambiguity and virtuality.
-  int F::*pdif = pdi1; // expected-error {{ambiguous conversion from pointer to member of base class 'struct A' to pointer to member of derived class 'struct F'}}
-  int G::*pdig = pdi1; // expected-error {{conversion from pointer to member of class 'struct A' to pointer to member of class 'struct G' via virtual base 'struct D' is not allowed}}
+  int F::*pdif = pdi1; // expected-error {{ambiguous conversion from pointer to member of base class 'A' to pointer to member of derived class 'F':}}
+  int G::*pdig = pdi1; // expected-error {{conversion from pointer to member of class 'A' to pointer to member of class 'G' via virtual base 'D' is not allowed}}
 
   // Conversion to member of base.
-  pdi1 = pdid; // expected-error {{incompatible type assigning 'int struct D::*', expected 'int struct A::*'}}
+  pdi1 = pdid; // expected-error {{incompatible type assigning 'int D::*', expected 'int A::*'}}
   
   // Comparisons
   int (A::*pf2)(int, int);
@@ -104,8 +104,8 @@ void h() {
   (hm.*pf)();
   (phm->*pf)();
 
-  (void)(hm->*pi); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct HasMembers'}}
-  (void)(phm.*pi); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'struct HasMembers *'}}
+  (void)(hm->*pi); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'HasMembers'}}
+  (void)(phm.*pi); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'HasMembers *'}}
   (void)(i.*pi); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'int'}}
   int *ptr;
   (void)(ptr->*pi); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'int *'}}
@@ -115,8 +115,8 @@ void h() {
   (void)(d.*pai);
   (void)(pd->*pai);
   F f, *ptrf = &f;
-  (void)(f.*pai); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'struct F'}}
-  (void)(ptrf->*pai); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct F *'}}
+  (void)(f.*pai); // expected-error {{left hand operand to .* must be a class compatible with the right hand operand, but is 'F'}}
+  (void)(ptrf->*pai); // expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'F *'}}
 
   (void)(hm.*i); // expected-error {{pointer-to-member}}
   (void)(phm->*i); // expected-error {{pointer-to-member}}

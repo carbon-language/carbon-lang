@@ -73,7 +73,7 @@ class Test6 {
 struct C : B, A { };
 
 void test7(C& c) {
-  A& a1 = c; // expected-error {{ambiguous conversion from derived class 'struct C' to base class 'struct A':}}
+  A& a1 = c; // expected-error {{ambiguous conversion from derived class 'C' to base class 'A':}}
 }
 
 // C++ [dcl.ref]p1, C++ [dcl.ref]p4

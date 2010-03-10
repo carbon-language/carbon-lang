@@ -20,7 +20,7 @@ int test_make2() {
 
 template<typename T, unsigned Length> 
 struct make3 { 
-  typedef T __attribute__((ext_vector_type(Length))) type; // expected-error{{invalid vector type 'struct s'}}
+  typedef T __attribute__((ext_vector_type(Length))) type; // expected-error{{invalid vector type 's'}}
 };
 
 struct s {};

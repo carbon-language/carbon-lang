@@ -18,7 +18,7 @@ void g()
 struct X; // expected-note 3{{forward declaration}}
 
 void g1(X &x) {
-  (void)typeid(X); // expected-error{{'typeid' of incomplete type 'struct X'}}
-  (void)typeid(X&); // expected-error{{'typeid' of incomplete type 'struct X'}}
-  (void)typeid(x); // expected-error{{'typeid' of incomplete type 'struct X'}}
+  (void)typeid(X); // expected-error{{'typeid' of incomplete type 'X'}}
+  (void)typeid(X&); // expected-error{{'typeid' of incomplete type 'X'}}
+  (void)typeid(x); // expected-error{{'typeid' of incomplete type 'X'}}
 }

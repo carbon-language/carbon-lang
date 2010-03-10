@@ -10,7 +10,7 @@ struct P {
 };
 
 void f() {
-  int i = __builtin_offsetof(P, fieldThatPointsToANonPODType.m); // expected-warning{{offset of on non-POD type 'struct P'}}
+  int i = __builtin_offsetof(P, fieldThatPointsToANonPODType.m); // expected-warning{{offset of on non-POD type 'P'}}
 }
 
 struct Base { int x; };

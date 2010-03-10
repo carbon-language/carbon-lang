@@ -44,7 +44,7 @@ void f() {
 
   conv_to_not_int_rvalue cnir;
   not_int &&ni4 = cnir; // expected-error {{rvalue reference cannot bind to lvalue}}
-  not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'struct not_int' cannot bind to a value of unrelated type 'struct conv_to_not_int_rvalue'}}
+  not_int &ni5 = cnir; // expected-error{{non-const lvalue reference to type 'not_int' cannot bind to a value of unrelated type 'conv_to_not_int_rvalue'}}
   not_int &&ni6 = conv_to_not_int_rvalue();
 
 
@@ -83,5 +83,5 @@ MoveOnly returningNonEligible() {
   else if (0) // Copy from reference can't be elided
     return r; // expected-error {{call to deleted constructor}}
   else // Construction from different type can't be elided
-    return i; // expected-error {{no viable conversion from 'int' to 'struct MoveOnly'}}
+    return i; // expected-error {{no viable conversion from 'int' to 'MoveOnly'}}
 }

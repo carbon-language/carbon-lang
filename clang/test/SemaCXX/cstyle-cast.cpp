@@ -122,12 +122,12 @@ void t_529_5_8()
 
   // Bad code below
 
-  (void)(C1*)((A*)0); // expected-error {{cannot cast 'struct A *' to 'struct C1 *' via virtual base 'struct B'}}
-  (void)(C1&)(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct C1 &' via virtual base 'struct B'}}
-  (void)(D*)((A*)0); // expected-error {{cannot cast 'struct A *' to 'struct D *' via virtual base 'struct B'}}
-  (void)(D&)(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct D &' via virtual base 'struct B'}}
-  (void)(H*)((A*)0); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
-  (void)(H&)(*((A*)0)); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)(C1*)((A*)0); // expected-error {{cannot cast 'A *' to 'C1 *' via virtual base 'B'}}
+  (void)(C1&)(*((A*)0)); // expected-error {{cannot cast 'A' to 'C1 &' via virtual base 'B'}}
+  (void)(D*)((A*)0); // expected-error {{cannot cast 'A *' to 'D *' via virtual base 'B'}}
+  (void)(D&)(*((A*)0)); // expected-error {{cannot cast 'A' to 'D &' via virtual base 'B'}}
+  (void)(H*)((A*)0); // expected-error {{ambiguous cast from base 'A' to derived 'H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)(H&)(*((A*)0)); // expected-error {{ambiguous cast from base 'A' to derived 'H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
 
   // TODO: Test DR427. This requires user-defined conversions, though.
 }
@@ -141,7 +141,7 @@ void t_529_7()
 
   // Bad code below
 
-  (void)(Enum)((int*)0); // expected-error {{C-style cast from 'int *' to 'enum Enum' is not allowed}}
+  (void)(Enum)((int*)0); // expected-error {{C-style cast from 'int *' to 'Enum' is not allowed}}
 }
 
 // Void pointer to object pointer
@@ -158,8 +158,8 @@ void t_529_9()
   (void)(int A::*)((int B::*)0);
 
   // Bad code below
-  (void)(int A::*)((int H::*)0); // expected-error {{ambiguous conversion from pointer to member of derived class 'struct H'}}
-  (void)(int A::*)((int F::*)0); // expected-error {{conversion from pointer to member of class 'struct F'}}
+  (void)(int A::*)((int H::*)0); // expected-error {{ambiguous conversion from pointer to member of derived class 'H' to pointer to member of base class 'A':}}
+  (void)(int A::*)((int F::*)0); // expected-error {{conversion from pointer to member of class 'F' to pointer to member of class 'A' via virtual base 'B' is not allowed}}
 }
 
 // -------- reinterpret_cast -----------
@@ -226,6 +226,6 @@ void memptrs()
   void (structure::*psf)() = 0;
   (void)(int (structure::*)())(psf);
 
-  (void)(void (structure::*)())(psi); // expected-error {{C-style cast from 'int const struct structure::*' to 'void (struct structure::*)()' is not allowed}}
-  (void)(int structure::*)(psf); // expected-error {{C-style cast from 'void (struct structure::*)()' to 'int struct structure::*' is not allowed}}
+  (void)(void (structure::*)())(psi); // expected-error {{C-style cast from 'int const structure::*' to 'void (structure::*)()' is not allowed}}
+  (void)(int structure::*)(psf); // expected-error {{C-style cast from 'void (structure::*)()' to 'int structure::*' is not allowed}}
 }

@@ -21,7 +21,7 @@ class A {
 };
 
 class B : A {
-  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrides ('struct T2::b *' is not derived from 'struct T2::a *')}}
+  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrides ('T2::b *' is not derived from 'T2::a *')}}
 };
 
 }
@@ -36,7 +36,7 @@ class A {
 };
 
 class B : A {
-  virtual b* f(); // expected-error{{invalid covariant return for virtual function: 'struct T3::a' is a private base class of 'struct T3::b'}}
+  virtual b* f(); // expected-error{{invalid covariant return for virtual function: 'T3::a' is a private base class of 'T3::b'}}
 };
 
 }
@@ -52,7 +52,7 @@ class A {
 };
 
 class B : A {
-  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrides (ambiguous conversion from derived class 'struct T4::b' to base class 'struct T4::a':\n\
+  virtual b* f(); // expected-error{{return type of virtual function 'f' is not covariant with the return type of the function it overrides (ambiguous conversion from derived class 'T4::b' to base class 'T4::a':\n\
     struct T4::b -> struct T4::a\n\
     struct T4::b -> struct T4::a1 -> struct T4::a)}}
 };
@@ -70,7 +70,7 @@ class A {
 
 class B : A {
   virtual a* const f(); 
-  virtual a* g(); // expected-error{{return type of virtual function 'g' is not covariant with the return type of the function it overrides ('struct T5::a *' has different qualifiers than 'struct T5::a *const')}}
+  virtual a* g(); // expected-error{{return type of virtual function 'g' is not covariant with the return type of the function it overrides ('T5::a *' has different qualifiers than 'T5::a *const')}}
 };
 
 }
@@ -86,7 +86,7 @@ class A {
 
 class B : A {
   virtual a* f(); 
-  virtual const a* g(); // expected-error{{return type of virtual function 'g' is not covariant with the return type of the function it overrides (class type 'struct T6::a const *' is more qualified than class type 'struct T6::a *'}}
+  virtual const a* g(); // expected-error{{return type of virtual function 'g' is not covariant with the return type of the function it overrides (class type 'T6::a const *' is more qualified than class type 'T6::a *'}}
 };
 
 }
@@ -106,14 +106,14 @@ namespace T7 {
 
 namespace T8 {
   struct a { };
-  struct b; // expected-note {{forward declaration of 'struct T8::b'}}
+  struct b; // expected-note {{forward declaration of 'T8::b'}}
   
   class A {
     virtual a *f();
   };
   
   class B : A {
-    b* f(); // expected-error {{return type of virtual function 'f' is not covariant with the return type of the function it overrides ('struct T8::b' is incomplete)}}
+    b* f(); // expected-error {{return type of virtual function 'f' is not covariant with the return type of the function it overrides ('T8::b' is incomplete)}}
   };
 }
 
@@ -129,7 +129,7 @@ namespace T9 {
   };
   
   class B : A {
-    virtual b<int> *f(); // expected-note {{in instantiation of template class 'struct T9::b<int>' requested here}}
+    virtual b<int> *f(); // expected-note {{in instantiation of template class 'T9::b<int>' requested here}}
   };
 }
 
@@ -230,7 +230,7 @@ namespace type_dependent_covariance {
   };
   template <int N, int M> struct X1 : X<N> {
     virtual TD<M>* f1(); // expected-error{{return type of virtual function 'f1' is not covariant with the return type of the function it overrides ('TD<1> *'}}
-    virtual D* f2(); // expected-error{{return type of virtual function 'f2' is not covariant with the return type of the function it overrides ('struct type_dependent_covariance::D *' is not derived from 'TB<1> *')}}
+    virtual D* f2(); // expected-error{{return type of virtual function 'f2' is not covariant with the return type of the function it overrides ('type_dependent_covariance::D *' is not derived from 'TB<1> *')}}
   };
 
   X1<0, 0> good;
@@ -260,7 +260,7 @@ namespace T11 {
   };
 
   struct D : C {
-    virtual B&& f(); // expected-error {{virtual function 'f' has a different return type ('struct T11::B &&') than the function it overrides (which has return type 'struct T11::A &')}}
+    virtual B&& f(); // expected-error {{virtual function 'f' has a different return type ('T11::B &&') than the function it overrides (which has return type 'T11::A &')}}
   };
 };
 
@@ -273,6 +273,6 @@ namespace T12 {
   };
 
   struct D : C {
-    virtual B& f(); // expected-error {{virtual function 'f' has a different return type ('struct T12::B &') than the function it overrides (which has return type 'struct T12::A &&')}}
+    virtual B& f(); // expected-error {{virtual function 'f' has a different return type ('T12::B &') than the function it overrides (which has return type 'T12::A &&')}}
   };
 };

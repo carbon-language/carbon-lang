@@ -9,4 +9,4 @@ template<typename T> struct S {
 };
 
 struct K { void f(); void f(int); };
-S<K> b; // expected-note{{in instantiation of template class 'struct S<struct K>' requested here}}
+S<K> b; // expected-note{{in instantiation of template class 'S<K>' requested here}}

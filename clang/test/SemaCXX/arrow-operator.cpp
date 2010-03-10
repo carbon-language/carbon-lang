@@ -16,7 +16,7 @@ struct C : A, B {
 
 struct D : A { };
 
-struct E; // expected-note {{forward declaration of 'struct E'}}
+struct E; // expected-note {{forward declaration of 'E'}}
 
 void f(C &c, D& d, E& e) {
   c->f(); // expected-error{{use of overloaded operator '->' is ambiguous}}

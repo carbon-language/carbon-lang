@@ -13,7 +13,7 @@ template<typename T> struct B : A<T> {
   using A<double>::f; // expected-error{{using declaration refers into 'A<double>::', which is not a base class of 'B<int>'}}
 };
 
-B<int> a; // expected-note{{in instantiation of template class 'struct B<int>' requested here}}
+B<int> a; // expected-note{{in instantiation of template class 'B<int>' requested here}}
 
 template<typename T> struct C : A<T> {
   using A<T>::f;

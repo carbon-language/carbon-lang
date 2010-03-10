@@ -44,12 +44,12 @@ struct ExplicitConvToRef {
 
 void test_explicit_bool(ExplicitConvToBool ecb) {
   bool b1(ecb); // okay
-  bool b2 = ecb; // expected-error{{no viable conversion from 'struct ExplicitConvToBool' to 'bool'}}
+  bool b2 = ecb; // expected-error{{no viable conversion from 'ExplicitConvToBool' to 'bool'}}
   accepts_bool(ecb); // expected-error{{no matching function for call to}}
 }
 
 void test_explicit_conv_to_ref(ExplicitConvToRef ecr) {
-  int& i1 = ecr; // expected-error{{non-const lvalue reference to type 'int' cannot bind to a value of unrelated type 'struct ExplicitConvToRef'}}
+  int& i1 = ecr; // expected-error{{non-const lvalue reference to type 'int' cannot bind to a value of unrelated type 'ExplicitConvToRef'}}
   int& i2(ecr); // okay
 }
 
@@ -61,7 +61,7 @@ struct C {
 };
 
 void test_copy_init_conversions(C c) {
-  A &a = c; // expected-error{{no viable conversion from 'struct C' to 'struct A'}}
+  A &a = c; // expected-error{{no viable conversion from 'C' to 'A'}}
   B &b = b; // okay
 }
 

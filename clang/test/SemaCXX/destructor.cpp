@@ -32,7 +32,7 @@ struct E;
 
 typedef E E_typedef;
 struct E {
-  ~E_typedef(); // expected-error{{destructor cannot be declared using a typedef 'E_typedef' (aka 'struct E') of the class name}}
+  ~E_typedef(); // expected-error{{destructor cannot be declared using a typedef 'E_typedef' (aka 'E') of the class name}}
 };
 
 struct F {

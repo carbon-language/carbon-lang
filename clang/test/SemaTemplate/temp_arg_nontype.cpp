@@ -16,7 +16,7 @@ enum E { Enumerator = 17 };
 A<E> *a5; // expected-error{{template argument for non-type template parameter must be an expression}}
 template<E Value> struct A1; // expected-note{{template parameter is declared here}}
 A1<Enumerator> *a6; // okay
-A1<17> *a7; // expected-error{{non-type template argument of type 'int' cannot be converted to a value of type 'enum E'}}
+A1<17> *a7; // expected-error{{non-type template argument of type 'int' cannot be converted to a value of type 'E'}}
 
 const long LongValue = 12345678;
 A<LongValue> *a8;
@@ -32,7 +32,7 @@ public:
   X(int, int);
   operator int() const;
 };
-A<X(17, 42)> *a11; // expected-error{{non-type template argument of type 'class X' must have an integral or enumeration type}}
+A<X(17, 42)> *a11; // expected-error{{non-type template argument of type 'X' must have an integral or enumeration type}}
 
 float f(float);
 
@@ -59,8 +59,8 @@ volatile X * X_volatile_ptr;
 template<X const &AnX> struct A4; // expected-note 2{{template parameter is declared here}}
 X an_X;
 A4<an_X> *a15_1; // okay
-A4<*X_volatile_ptr> *a15_2; // expected-error{{reference binding of non-type template parameter of type 'class X const &' to template argument of type 'class X volatile' ignores qualifiers}}
-A4<y> *15_3; //  expected-error{{non-type template parameter of reference type 'class X const &' cannot bind to template argument of type 'struct Y'}} \
+A4<*X_volatile_ptr> *a15_2; // expected-error{{reference binding of non-type template parameter of type 'X const &' to template argument of type 'X volatile' ignores qualifiers}}
+A4<y> *15_3; //  expected-error{{non-type template parameter of reference type 'X const &' cannot bind to template argument of type 'struct Y'}} \
             // FIXME: expected-error{{expected unqualified-id}}
 
 template<int (&fr)(int)> struct A5; // expected-note 2{{template parameter is declared here}}
@@ -83,14 +83,14 @@ struct Z {
 template<int (Z::*pmf)(int)> struct A6; // expected-note{{template parameter is declared here}}
 A6<&Z::foo> *a17_1;
 A6<&Z::bar> *a17_2;
-A6<&Z::baz> *a17_3; // expected-error{{non-type template argument of type 'double (struct Z::*)(double)' cannot be converted to a value of type 'int (struct Z::*)(int)'}}
+A6<&Z::baz> *a17_3; // expected-error{{non-type template argument of type 'double (Z::*)(double)' cannot be converted to a value of type 'int (Z::*)(int)'}}
 
 
 template<int Z::*pm> struct A7;  // expected-note{{template parameter is declared here}}
 template<int Z::*pm> struct A7c;
 A7<&Z::int_member> *a18_1;
 A7c<&Z::int_member> *a18_2;
-A7<&Z::float_member> *a18_3; // expected-error{{non-type template argument of type 'float struct Z::*' cannot be converted to a value of type 'int struct Z::*'}}
+A7<&Z::float_member> *a18_3; // expected-error{{non-type template argument of type 'float Z::*' cannot be converted to a value of type 'int Z::*'}}
 A7c<(&Z::int_member)> *a18_3; // expected-error{{non-type template argument cannot be surrounded by parentheses}}
 
 template<unsigned char C> struct Overflow; // expected-note{{template parameter is declared here}}

@@ -28,14 +28,14 @@ void test_instantiation(X<double>::C *x,
                         X<float>::D::F *f) {
   double &dr = x->foo();
   float &fr = e->bar();
-  f->foo(); // expected-error{{implicit instantiation of undefined member 'struct X<float>::D::F'}}
+  f->foo(); // expected-error{{implicit instantiation of undefined member 'X<float>::D::F'}}
   
 }
 
 
 X<void>::C *c3; // okay
 X<void>::D::E *e1; // okay
-X<void>::D::E e2; // expected-note{{in instantiation of member class 'struct X<void>::D::E' requested here}}
+X<void>::D::E e2; // expected-note{{in instantiation of member class 'X<void>::D::E' requested here}}
 
 // Redeclarations.
 namespace test1 {

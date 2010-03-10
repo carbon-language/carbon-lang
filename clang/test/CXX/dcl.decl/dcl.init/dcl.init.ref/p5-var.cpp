@@ -51,10 +51,10 @@ void bind_lvalue_to_lvalue(Base b, Derived d,
   Base &br1 = b;
   Base &br2 = d;
   Derived &dr1 = d;
-  Derived &dr2 = b; // expected-error{{non-const lvalue reference to type 'struct Derived' cannot bind to a value of unrelated type 'struct Base'}}
+  Derived &dr2 = b; // expected-error{{non-const lvalue reference to type 'Derived' cannot bind to a value of unrelated type 'Base'}}
   Base &br3 = bc; // expected-error{{drops qualifiers}}
   Base &br4 = dc; // expected-error{{drops qualifiers}}
-  Base &br5 = diamond; // expected-error{{ambiguous conversion from derived class 'struct Diamond' to base class 'struct Base'}}
+  Base &br5 = diamond; // expected-error{{ambiguous conversion from derived class 'Diamond' to base class 'Base':}}
   int &ir = i;
   long &lr = i; // expected-error{{non-const lvalue reference to type 'long' cannot bind to a value of unrelated type 'int'}}
 }
@@ -64,8 +64,8 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
                        volatile const int ivc) {
   volatile Base &bvr1 = b;
   volatile Base &bvr2 = d;
-  volatile Base &bvr3 = bvc; // expected-error{{binding of reference to type 'struct Base volatile' to a value of type 'struct Base const volatile' drops qualifiers}}
-  volatile Base &bvr4 = dvc; // expected-error{{binding of reference to type 'struct Base volatile' to a value of type 'struct Derived const volatile' drops qualifiers}}
+  volatile Base &bvr3 = bvc; // expected-error{{binding of reference to type 'Base volatile' to a value of type 'Base const volatile' drops qualifiers}}
+  volatile Base &bvr4 = dvc; // expected-error{{binding of reference to type 'Base volatile' to a value of type 'Derived const volatile' drops qualifiers}}
   
   volatile int &ir = ivc; // expected-error{{binding of reference to type 'int volatile' to a value of type 'int const volatile' drops qualifiers}}
 
@@ -74,17 +74,17 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
 }
 
 void bind_lvalue_to_rvalue() {
-  Base &br1 = Base(); // expected-error{{non-const lvalue reference to type 'struct Base' cannot bind to a temporary of type 'struct Base'}}
-  Base &br2 = Derived(); // expected-error{{non-const lvalue reference to type 'struct Base' cannot bind to a temporary of type 'struct Derived'}}
-  const volatile Base &br3 = Base(); // expected-error{{volatile lvalue reference to type 'struct Base const volatile' cannot bind to a temporary of type 'struct Base'}}
-  const volatile Base &br4 = Derived(); // expected-error{{volatile lvalue reference to type 'struct Base const volatile' cannot bind to a temporary of type 'struct Derived'}}
+  Base &br1 = Base(); // expected-error{{non-const lvalue reference to type 'Base' cannot bind to a temporary of type 'Base'}}
+  Base &br2 = Derived(); // expected-error{{non-const lvalue reference to type 'Base' cannot bind to a temporary of type 'Derived'}}
+  const volatile Base &br3 = Base(); // expected-error{{volatile lvalue reference to type 'Base const volatile' cannot bind to a temporary of type 'Base'}}
+  const volatile Base &br4 = Derived(); // expected-error{{volatile lvalue reference to type 'Base const volatile' cannot bind to a temporary of type 'Derived'}}
 
   int &ir = 17; // expected-error{{non-const lvalue reference to type 'int' cannot bind to a temporary of type 'int'}}
 }
 
 void bind_lvalue_to_unrelated(Unrelated ur) {
-  Base &br1 = ur; // expected-error{{non-const lvalue reference to type 'struct Base' cannot bind to a value of unrelated type 'struct Unrelated'}}
-  const volatile Base &br2 = ur; // expected-error{{volatile lvalue reference to type 'struct Base const volatile' cannot bind to a value of unrelated type 'struct Unrelated'}}
+  Base &br1 = ur; // expected-error{{non-const lvalue reference to type 'Base' cannot bind to a value of unrelated type 'Unrelated'}}
+  const volatile Base &br2 = ur; // expected-error{{volatile lvalue reference to type 'Base const volatile' cannot bind to a value of unrelated type 'Unrelated'}}
 }
 
 void bind_lvalue_to_conv_lvalue() {
@@ -97,7 +97,7 @@ void bind_lvalue_to_conv_lvalue() {
 
 void bind_lvalue_to_conv_lvalue_ambig(ConvertibleToBothDerivedRef both) {
   Derived &dr1 = both;
-  Base &br1 = both; // expected-error{{reference initialization of type 'struct Base &' with initializer of type 'struct ConvertibleToBothDerivedRef' is ambiguous}}
+  Base &br1 = both; // expected-error{{reference initialization of type 'Base &' with initializer of type 'ConvertibleToBothDerivedRef' is ambiguous}}
 }
 
 struct IntBitfield {
@@ -118,8 +118,8 @@ void bind_const_lvalue_to_rvalue() {
   const Base &br3 = create<const Base>();
   const Base &br4 = create<const Derived>();
 
-  const Base &br5 = create<const volatile Base>(); // expected-error{{binding of reference to type 'struct Base const' to a value of type 'struct Base const volatile' drops qualifiers}}
-  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding of reference to type 'struct Base const' to a value of type 'struct Derived const volatile' drops qualifiers}}
+  const Base &br5 = create<const volatile Base>(); // expected-error{{binding of reference to type 'Base const' to a value of type 'Base const volatile' drops qualifiers}}
+  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding of reference to type 'Base const' to a value of type 'Derived const volatile' drops qualifiers}}
 
   const int &ir = create<int>();
 }
@@ -131,5 +131,5 @@ void bind_const_lvalue_to_class_conv_temporary() {
 }
 void bind_lvalue_to_conv_rvalue_ambig(ConvertibleToBothDerived both) {
   const Derived &dr1 = both;
-  const Base &br1 = both; // expected-error{{reference initialization of type 'struct Base const &' with initializer of type 'struct ConvertibleToBothDerived' is ambiguous}}
+  const Base &br1 = both; // expected-error{{reference initialization of type 'Base const &' with initializer of type 'ConvertibleToBothDerived' is ambiguous}}
 }

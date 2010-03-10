@@ -16,14 +16,14 @@ public:
 
  template <typename CHECKER>
  void registerCheck(CHECKER *check) {
-   Checkers.push_back(S<void *>()); // expected-note {{in instantiation of member function 'vector<struct S<void *> >::push_back' requested here}}
+   Checkers.push_back(S<void *>()); // expected-note {{in instantiation of member function 'vector<S<void *> >::push_back' requested here}}
  }
 };
 
 class RetainReleaseChecker { };
 
 void f(GRExprEngine& Eng) {
-   Eng.registerCheck(new RetainReleaseChecker); // expected-note {{in instantiation of function template specialization 'GRExprEngine::registerCheck<class RetainReleaseChecker>' requested here}}
+   Eng.registerCheck(new RetainReleaseChecker); // expected-note {{in instantiation of function template specialization 'GRExprEngine::registerCheck<RetainReleaseChecker>' requested here}}
 }
 
 // PR 5838
@@ -43,7 +43,7 @@ namespace test1 {
     int a;
     template<typename T> struct B : A<T> {
       void f() {
-        a = 0; // expected-error {{type 'struct test1::O' is not a direct or virtual base of ''B<int>''}}
+        a = 0; // expected-error {{type 'test1::O' is not a direct or virtual base of ''B<int>''}}
       }
     };
   };

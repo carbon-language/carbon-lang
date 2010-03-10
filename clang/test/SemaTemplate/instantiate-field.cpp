@@ -20,9 +20,9 @@ void test1(const X<int> *xi) {
 }
 
 void test2(const X<float> *xf) {
-  (void)xf->x; // expected-note{{in instantiation of template class 'struct X<float>' requested here}}
+  (void)xf->x; // expected-note{{in instantiation of template class 'X<float>' requested here}}
 }
 
 void test3(const X<int(int)> *xf) {
-  (void)xf->x; // expected-note{{in instantiation of template class 'struct X<int (int)>' requested here}}
+  (void)xf->x; // expected-note{{in instantiation of template class 'X<int (int)>' requested here}}
 }

@@ -20,7 +20,7 @@ void test(X<int> *xi, int *ip, X<int(int)> *xf) {
 }
 
 void test_bad() {
-  X<void> xv; // expected-note{{in instantiation of template class 'class X<void>' requested here}}
+  X<void> xv; // expected-note{{in instantiation of template class 'X<void>' requested here}}
 }
 
 template<typename T, typename U>
@@ -36,7 +36,7 @@ void test_ovl(Overloading<int, long> *oil, int i, long l) {
 }
 
 void test_ovl_bad() {
-  Overloading<float, float> off; // expected-note{{in instantiation of template class 'class Overloading<float, float>' requested here}}
+  Overloading<float, float> off; // expected-note{{in instantiation of template class 'Overloading<float, float>' requested here}}
 }
 
 template<typename T>

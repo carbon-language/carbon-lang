@@ -11,10 +11,10 @@ struct X {
 };
 
 struct Y; // expected-note{{previous definition is here}}
-typedef int Y;  // expected-error{{typedef redefinition with different types ('int' vs 'struct Y')}}
+typedef int Y;  // expected-error{{typedef redefinition with different types ('int' vs 'Y')}}
 
 typedef int Y2; // expected-note{{previous definition is here}}
-struct Y2; // expected-error{{definition of type 'struct Y2' conflicts with typedef of the same name}}
+struct Y2; // expected-error{{definition of type 'Y2' conflicts with typedef of the same name}}
 
 void f(); // expected-note{{previous definition is here}}
 typedef int f; // expected-error{{redefinition of 'f' as different kind of symbol}}

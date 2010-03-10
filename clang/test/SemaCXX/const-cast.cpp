@@ -59,6 +59,6 @@ short *bad_const_cast_test(char const *volatile *const volatile *var)
   // Function pointers.
   f fp2 = const_cast<f>(fp1); // expected-error {{const_cast to 'f' (aka 'int (*)(int)'), which is not a reference, pointer-to-object, or pointer-to-data-member}}
   void (A::*mfn)() = 0;
-  (void)const_cast<void (A::*)()>(mfn); // expected-error {{const_cast to 'void (struct A::*)()', which is not a reference, pointer-to-object, or pointer-to-data-member}}
+  (void)const_cast<void (A::*)()>(mfn); // expected-error {{const_cast to 'void (A::*)()', which is not a reference, pointer-to-object, or pointer-to-data-member}}
   return **var3;
 }

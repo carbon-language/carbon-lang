@@ -29,10 +29,10 @@ struct Incomplete; // expected-note 3 {{forward declaration}}
 // Exception spec must not have incomplete types, or pointers to them, except
 // void.
 void ic1() throw(void); // expected-error {{incomplete type 'void' is not allowed in exception specification}}
-void ic2() throw(Incomplete); // expected-error {{incomplete type 'struct Incomplete' is not allowed in exception specification}}
+void ic2() throw(Incomplete); // expected-error {{incomplete type 'Incomplete' is not allowed in exception specification}}
 void ic3() throw(void*);
-void ic4() throw(Incomplete*); // expected-error {{pointer to incomplete type 'struct Incomplete' is not allowed in exception specification}}
-void ic5() throw(Incomplete&); // expected-error {{reference to incomplete type 'struct Incomplete' is not allowed in exception specification}}
+void ic4() throw(Incomplete*); // expected-error {{pointer to incomplete type 'Incomplete' is not allowed in exception specification}}
+void ic5() throw(Incomplete&); // expected-error {{reference to incomplete type 'Incomplete' is not allowed in exception specification}}
 
 // Redeclarations
 typedef int INT;

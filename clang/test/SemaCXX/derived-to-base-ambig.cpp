@@ -6,7 +6,7 @@ class D : public B, public C { };
 
 void f(D* d) {
   A* a;
-  a = d; // expected-error{{ambiguous conversion from derived class 'class D' to base class 'class A'}} expected-error{{incompatible type assigning 'class D *', expected 'class A *'}}
+  a = d; // expected-error{{ambiguous conversion from derived class 'D' to base class 'A':}} expected-error{{incompatible type assigning 'D *', expected 'A *'}}
 }
 
 class Object2 { };
@@ -20,7 +20,7 @@ class F2 : public E2, public A2 { };
 void g(E2* e2, F2* f2) {
   Object2* o2;
   o2 = e2;
-  o2 = f2; // expected-error{{ambiguous conversion from derived class 'class F2' to base class 'class Object2'}} expected-error{{incompatible type assigning 'class F2 *', expected 'class Object2 *'}}
+  o2 = f2; // expected-error{{ambiguous conversion from derived class 'F2' to base class 'Object2':}} expected-error{{incompatible type assigning 'F2 *', expected 'Object2 *'}}
 }
 
 // Test that ambiguous/inaccessibility checking does not trigger too

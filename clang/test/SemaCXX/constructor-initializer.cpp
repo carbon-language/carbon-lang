@@ -27,7 +27,7 @@ public:
 
 class E : public D, public B { 
 public:
-  E() : B(), D() { } // expected-error{{base class initializer 'class B' names both a direct base class and an inherited virtual base class}}
+  E() : B(), D() { } // expected-error{{base class initializer 'B' names both a direct base class and an inherited virtual base class}}
 };
 
 
@@ -65,7 +65,7 @@ struct S : Y, virtual X {
 };
 
 struct Z : S { 
-  Z() : X(), S(), E()  {} // expected-error {{type 'class E' is not a direct or virtual base of 'Z'}}
+  Z() : X(), S(), E()  {} // expected-error {{type 'E' is not a direct or virtual base of 'Z'}}
 };
 
 class U { 
@@ -104,13 +104,13 @@ struct M {              // expected-note 2 {{candidate constructor (the implicit
 };
 
 struct N : M  {
-  N() : M(1),        // expected-error {{no matching constructor for initialization of 'struct M'}}
-        m1(100) {  } // expected-error {{no matching constructor for initialization of 'struct M'}}
+  N() : M(1),        // expected-error {{no matching constructor for initialization of 'M'}}
+        m1(100) {  } // expected-error {{no matching constructor for initialization of 'M'}}
   M m1;
 };
 
 struct P : M  {
-  P()  {  } // expected-error {{base class 'struct M'}} \
+  P()  {  } // expected-error {{constructor for 'P' must explicitly initialize the base class 'M' which does not have a default constructor}} \
             // expected-error {{member 'm'}}
   M m; // expected-note {{member is declared here}}
 };

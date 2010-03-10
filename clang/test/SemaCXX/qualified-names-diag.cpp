@@ -16,7 +16,7 @@ namespace foo {
 namespace bar {
   typedef int y;
 
-  struct incomplete; // expected-note{{forward declaration of 'struct bar::incomplete'}}
+  struct incomplete; // expected-note{{forward declaration of 'bar::incomplete'}}
 }
 void test() {
   foo::wibble::x a;

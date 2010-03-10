@@ -22,10 +22,10 @@ void f() {
   (void)reinterpret_cast<__v2si>(ll);
   (void)(__v2si)(ll);
 
-  (void)reinterpret_cast<S>(v2si); // expected-error {{reinterpret_cast from '__v2si' to 'struct S' is not allowed}}
-  (void)(S)v2si; // expected-error {{C-style cast from '__v2si' to 'struct S' is not allowed}}
-  (void)reinterpret_cast<__v2si>(s); // expected-error {{reinterpret_cast from 'struct S' to '__v2si' is not allowed}}
-  (void)(__v2si)s; // expected-error {{C-style cast from 'struct S' to '__v2si' is not allowed}}
+  (void)reinterpret_cast<S>(v2si); // expected-error {{reinterpret_cast from '__v2si' to 'S' is not allowed}}
+  (void)(S)v2si; // expected-error {{C-style cast from '__v2si' to 'S' is not allowed}}
+  (void)reinterpret_cast<__v2si>(s); // expected-error {{reinterpret_cast from 'S' to '__v2si' is not allowed}}
+  (void)(__v2si)s; // expected-error {{C-style cast from 'S' to '__v2si' is not allowed}}
   
   (void)reinterpret_cast<unsigned char>(v2si); // expected-error {{reinterpret_cast from vector '__v2si' to scalar 'unsigned char' of different size}}
   (void)(unsigned char)v2si; // expected-error {{C-style cast from vector '__v2si' to scalar 'unsigned char' of different size}}

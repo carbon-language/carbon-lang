@@ -19,7 +19,7 @@ namespace test0 {
 
   const int Test1() {
     func(b1, f()); // expected-error {{call to 'func' is ambiguous}}
-    return f(); // expected-error {{conversion from 'struct test0::B' to 'int const' is ambiguous}}
+    return f(); // expected-error {{conversion from 'test0::B' to 'int const' is ambiguous}}
   }
 
   // This used to crash when comparing the two operands.

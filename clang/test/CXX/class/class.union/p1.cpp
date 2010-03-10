@@ -7,30 +7,30 @@ class Okay {
 };
 
 class Virtual {
-  virtual void foo() { abort(); } // expected-note 3 {{because type 'class Virtual' has a virtual member function}}
+  virtual void foo() { abort(); } // expected-note 3 {{because type 'Virtual' has a virtual member function}}
 };
 
-class VirtualBase : virtual Okay { // expected-note 3 {{because type 'class VirtualBase' has a virtual base class}}
+class VirtualBase : virtual Okay { // expected-note 3 {{because type 'VirtualBase' has a virtual base class}}
 };
 
 class Ctor {
-  Ctor() { abort(); } // expected-note 3 {{because type 'class Ctor' has a user-declared constructor}}
+  Ctor() { abort(); } // expected-note 3 {{because type 'Ctor' has a user-declared constructor}}
 };
 class Ctor2 {
-  Ctor2(); // expected-note 3 {{because type 'class Ctor2' has a user-declared constructor}}
+  Ctor2(); // expected-note 3 {{because type 'Ctor2' has a user-declared constructor}}
 };
 
 class CopyCtor {
-  CopyCtor(CopyCtor &cc) { abort(); } // expected-note 3 {{because type 'class CopyCtor' has a user-declared copy constructor}}
+  CopyCtor(CopyCtor &cc) { abort(); } // expected-note 3 {{because type 'CopyCtor' has a user-declared copy constructor}}
 };
 
 // FIXME: this should eventually trigger on the operator's declaration line
-class CopyAssign { // expected-note 3 {{because type 'class CopyAssign' has a user-declared copy assignment operator}}
+class CopyAssign { // expected-note 3 {{because type 'CopyAssign' has a user-declared copy assignment operator}}
   CopyAssign& operator=(CopyAssign& CA) { abort(); }
 };
 
 class Dtor {
-  ~Dtor() { abort(); } // expected-note 3 {{because type 'class Dtor' has a user-declared destructor}}
+  ~Dtor() { abort(); } // expected-note 3 {{because type 'Dtor' has a user-declared destructor}}
 };
 
 union U1 {
@@ -46,25 +46,25 @@ union U1 {
 
 union U2 {
   struct {
-    Virtual v; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial copy constructor}}
+    Virtual v; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy constructor}}
   } m1; // expected-error {{union member 'm1' has a non-trivial copy constructor}}
   struct {
-    VirtualBase vbase; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial copy constructor}}
+    VirtualBase vbase; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy constructor}}
   } m2; // expected-error {{union member 'm2' has a non-trivial copy constructor}}
   struct {
-    Ctor ctor; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial constructor}}
+    Ctor ctor; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial constructor}}
   } m3; // expected-error {{union member 'm3' has a non-trivial constructor}}
   struct {
-    Ctor2 ctor2; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial constructor}}
+    Ctor2 ctor2; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial constructor}}
   } m3a; // expected-error {{union member 'm3a' has a non-trivial constructor}}
   struct {
-    CopyCtor copyctor; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial copy constructor}}
+    CopyCtor copyctor; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy constructor}}
   } m4; // expected-error {{union member 'm4' has a non-trivial copy constructor}}
   struct {
-    CopyAssign copyassign; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial copy assignment operator}}
+    CopyAssign copyassign; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy assignment operator}}
   } m5; // expected-error {{union member 'm5' has a non-trivial copy assignment operator}}
   struct {
-    Dtor dtor; // expected-note {{because type 'struct U2::<anonymous>' has a member with a non-trivial destructor}}
+    Dtor dtor; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial destructor}}
   } m6; // expected-error {{union member 'm6' has a non-trivial destructor}}
   struct {
     Okay okay;
@@ -72,19 +72,19 @@ union U2 {
 };
 
 union U3 {
-  struct s1 : Virtual { // expected-note {{because type 'struct U3::s1' has a base class with a non-trivial copy constructor}}
+  struct s1 : Virtual { // expected-note {{because type 'U3::s1' has a base class with a non-trivial copy constructor}}
   } m1; // expected-error {{union member 'm1' has a non-trivial copy constructor}}
-  struct s2 : VirtualBase { // expected-note {{because type 'struct U3::s2' has a base class with a non-trivial copy constructor}}
+  struct s2 : VirtualBase { // expected-note {{because type 'U3::s2' has a base class with a non-trivial copy constructor}}
   } m2; // expected-error {{union member 'm2' has a non-trivial copy constructor}}
-  struct s3 : Ctor { // expected-note {{because type 'struct U3::s3' has a base class with a non-trivial constructor}}
+  struct s3 : Ctor { // expected-note {{because type 'U3::s3' has a base class with a non-trivial constructor}}
   } m3; // expected-error {{union member 'm3' has a non-trivial constructor}}
-  struct s3a : Ctor2 { // expected-note {{because type 'struct U3::s3a' has a base class with a non-trivial constructor}}
+  struct s3a : Ctor2 { // expected-note {{because type 'U3::s3a' has a base class with a non-trivial constructor}}
   } m3a; // expected-error {{union member 'm3a' has a non-trivial constructor}}
-  struct s4 : CopyCtor { // expected-note {{because type 'struct U3::s4' has a base class with a non-trivial copy constructor}}
+  struct s4 : CopyCtor { // expected-note {{because type 'U3::s4' has a base class with a non-trivial copy constructor}}
   } m4; // expected-error {{union member 'm4' has a non-trivial copy constructor}}
-  struct s5 : CopyAssign { // expected-note {{because type 'struct U3::s5' has a base class with a non-trivial copy assignment operator}}
+  struct s5 : CopyAssign { // expected-note {{because type 'U3::s5' has a base class with a non-trivial copy assignment operator}}
   } m5; // expected-error {{union member 'm5' has a non-trivial copy assignment operator}}
-  struct s6 : Dtor { // expected-note {{because type 'struct U3::s6' has a base class with a non-trivial destructor}}
+  struct s6 : Dtor { // expected-note {{because type 'U3::s6' has a base class with a non-trivial destructor}}
   } m6; // expected-error {{union member 'm6' has a non-trivial destructor}}
   struct s7 : Okay {
   } m7;

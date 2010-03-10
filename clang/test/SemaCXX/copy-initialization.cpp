@@ -9,7 +9,7 @@ public:
 class Y : public X { };
 
 void f(Y y, int *ip, float *fp) {
-  X x1 = y; // expected-error{{no matching constructor for initialization of 'class X'}}
+  X x1 = y; // expected-error{{no matching constructor for initialization of 'X'}}
   X x2 = 0;
   X x3 = ip;
   X x4 = fp; // expected-error{{no viable conversion}}
@@ -20,4 +20,4 @@ struct foo {
 };
 
 // PR3600
-void test(const foo *P) { P->bar(); } // expected-error{{cannot initialize object parameter of type 'struct foo' with an expression of type 'struct foo const'}}
+void test(const foo *P) { P->bar(); } // expected-error{{cannot initialize object parameter of type 'foo' with an expression of type 'foo const'}}

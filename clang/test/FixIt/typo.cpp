@@ -31,12 +31,12 @@ bool test_string(std::string s) {
   std::basic_sting<char> b2; // expected-error{{no template named 'basic_sting' in namespace 'std'; did you mean 'basic_string'?}}
   (void)b1;
   (void)b2;
-  return s.fnd("hello") // expected-error{{no member named 'fnd' in 'class std::basic_string<char>'; did you mean 'find'?}}
-    == std::string::pos; // expected-error{{no member named 'pos' in 'class std::basic_string<char>'; did you mean 'npos'?}}
+  return s.fnd("hello") // expected-error{{no member named 'fnd' in 'std::basic_string<char>'; did you mean 'find'?}}
+    == std::string::pos; // expected-error{{no member named 'pos' in 'std::basic_string<char>'; did you mean 'npos'?}}
 }
 
 struct Base { };
-struct Derived : public Base { // expected-note{{base class 'struct Base' specified here}}
+struct Derived : public Base { // expected-note{{base class 'Base' specified here}}
   int member; // expected-note 3{{'member' declared here}}
 
   Derived() : base(), // expected-error{{initializer 'base' does not name a non-static data member or base class; did you mean the base class 'Base'?}}

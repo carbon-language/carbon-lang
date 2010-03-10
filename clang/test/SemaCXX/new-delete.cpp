@@ -8,7 +8,7 @@ struct S // expected-note {{candidate}}
   S(double, int); // expected-note 2 {{candidate}}
   S(float, int); // expected-note 2 {{candidate}}
 };
-struct T; // expected-note{{forward declaration of 'struct T'}}
+struct T; // expected-note{{forward declaration of 'T'}}
 struct U
 {
   // A special new, to verify that the global version isn't used.
@@ -60,15 +60,15 @@ void bad_news(int *ip)
   (void)new int[1][i]; // expected-error {{only the first dimension}}
   (void)new (int[1][i]); // expected-error {{only the first dimension}}
   (void)new (int[i]); // expected-error {{when type is in parentheses}}
-  (void)new int(*(S*)0); // expected-error {{no viable conversion from 'struct S' to 'int'}}
+  (void)new int(*(S*)0); // expected-error {{no viable conversion from 'S' to 'int'}}
   (void)new int(1, 2); // expected-error {{excess elements in scalar initializer}}
   (void)new S(1); // expected-error {{no matching constructor}}
-  (void)new S(1, 1); // expected-error {{call to constructor of 'struct S' is ambiguous}}
+  (void)new S(1, 1); // expected-error {{call to constructor of 'S' is ambiguous}}
   (void)new const int; // expected-error {{default initialization of an object of const type 'int const'}}
   (void)new float*(ip); // expected-error {{cannot initialize a new value of type 'float *' with an lvalue of type 'int *'}}
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}
-  (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'struct S'}}
+  (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'S'}}
   (void)::S::new int; // expected-error {{expected unqualified-id}}
   (void)new (0, 0) int; // expected-error {{no matching function for call to 'operator new'}}
   (void)new (0L) int; // expected-error {{call to 'operator new' is ambiguous}}
@@ -114,7 +114,7 @@ struct X2 {
 void test_delete_conv(X0 x0, X1 x1, X2 x2) {
   delete x0; // expected-error{{cannot delete}}
   delete x1;
-  delete x2; // expected-error{{ambiguous conversion of delete expression of type 'struct X2' to a pointer}}
+  delete x2; // expected-error{{ambiguous conversion of delete expression of type 'X2' to a pointer}}
 }
 
 // PR4782
@@ -199,7 +199,7 @@ struct X11 : X10 { // expected-error {{no suitable member 'operator delete' in '
 };
 
 void f() {
-  X11 x11; // expected-note {{implicit default destructor for 'struct X11' first required here}}
+  X11 x11; // expected-note {{implicit default destructor for 'X11' first required here}}
 }
 
 struct X12 {

@@ -13,9 +13,9 @@ struct NonAggregate {
 
   int a, b;
 };
-NonAggregate non_aggregate_test = { 1, 2 }; // expected-error{{non-aggregate type 'struct NonAggregate' cannot be initialized with an initializer list}}
+NonAggregate non_aggregate_test = { 1, 2 }; // expected-error{{non-aggregate type 'NonAggregate' cannot be initialized with an initializer list}}
 
-NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error 2 {{initialization of non-aggregate type 'struct NonAggregate' with an initializer list}}
+NonAggregate non_aggregate_test2[2] = { { 1, 2 }, { 3, 4 } }; // expected-error 2 {{initialization of non-aggregate type 'NonAggregate' with an initializer list}}
 
 
 // C++ [dcl.init.aggr]p3
@@ -51,7 +51,7 @@ struct TooFewError { // expected-error{{implicit default constructor for}}
 TooFewError too_few_okay = { 1, 1 };
 TooFewError too_few_error = { 1 }; // expected-error{{no matching constructor}}
 
-TooFewError too_few_okay2[2] = { 1, 1 }; // expected-note{{implicit default constructor for 'struct TooFewError' first required here}}
+TooFewError too_few_okay2[2] = { 1, 1 }; // expected-note{{implicit default constructor for 'TooFewError' first required here}}
 TooFewError too_few_error2[2] = { 1 }; // expected-error{{no matching constructor}}
 
 NoDefaultConstructor too_few_error3[3] = { }; // expected-error {{no matching constructor}}

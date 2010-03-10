@@ -9,9 +9,9 @@ public:
   complex() : s2(1),  // expected-warning {{member 's2' will be initialized after}}
               s1(1) , // expected-note {{field s1}} 
               s3(3),  // expected-warning {{member 's3' will be initialized after}} 
-              BB1(),   // expected-note {{base 'struct BB1'}}  \
-                      // expected-warning {{base class 'struct BB1' will be initialized after}}
-              BB() {}  // expected-note {{base 'struct BB'}}
+              BB1(),   // expected-note {{base 'BB1'}}  \
+                      // expected-warning {{base class 'BB1' will be initialized after}}
+              BB() {}  // expected-note {{base 'BB'}}
   int s1;
   int s2;
   int s3;
@@ -44,14 +44,14 @@ struct C : public A, public B, private virtual V {
 
 
 struct D : public A, public B { 
-  D()  : A(), V() {   } // expected-warning {{base class 'struct A' will be initialized after}} \
-                        // expected-note {{base 'struct V'}}
+  D()  : A(), V() {   } // expected-warning {{base class 'A' will be initialized after}} \
+                        // expected-note {{base 'V'}}
 };
 
 
 struct E : public A, public B, private virtual V { 
-  E()  : A(), V() {  } // expected-warning {{base class 'struct A' will be initialized after}} \
-                       // expected-note {{base 'struct V'}}
+  E()  : A(), V() {  } // expected-warning {{base class 'A' will be initialized after}} \
+                       // expected-note {{base 'V'}}
 };
 
 
@@ -64,13 +64,13 @@ struct B1 {
 };
 
 struct F : public A1, public B1, private virtual V { 
-  F()  : A1(), V() {  } // expected-warning {{base class 'struct A1' will be initialized after}} \
-                        // expected-note {{base 'struct V'}}
+  F()  : A1(), V() {  } // expected-warning {{base class 'A1' will be initialized after}} \
+                        // expected-note {{base 'V'}}
 };
 
 struct X : public virtual A, virtual V, public virtual B {
-  X(): A(), V(), B() {} // expected-warning {{base class 'struct A' will be initialized after}} \
-                        // expected-note {{base 'struct V'}}
+  X(): A(), V(), B() {} // expected-warning {{base class 'A' will be initialized after}} \
+                        // expected-note {{base 'V'}}
 };
 
 class Anon {
