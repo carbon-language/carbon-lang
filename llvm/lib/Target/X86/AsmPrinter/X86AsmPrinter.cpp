@@ -133,24 +133,25 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
       MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-      
-      MCSymbol *&StubSym = 
+      MachineModuleInfoImpl::StubValueTy &StubSym = 
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
-      if (StubSym == 0)
-        StubSym = GetGlobalValueSymbol(GV);
-      
+      if (StubSym.getPointer() == 0)
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
       MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-      MCSymbol *&StubSym =
+      MachineModuleInfoImpl::StubValueTy &StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(Sym);
-      if (StubSym == 0)
-        StubSym = GetGlobalValueSymbol(GV);
+      if (StubSym.getPointer() == 0)
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$stub");
-      MCSymbol *&StubSym =
+      MachineModuleInfoImpl::StubValueTy &StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-      if (StubSym == 0)
-        StubSym = GetGlobalValueSymbol(GV);
+      if (StubSym.getPointer() == 0)
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
@@ -170,13 +171,15 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       TempNameStr += StringRef("$stub");
       
       MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
-      MCSymbol *&StubSym =
+      MachineModuleInfoImpl::StubValueTy &StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-      if (StubSym == 0) {
+      if (StubSym.getPointer() == 0) {
         TempNameStr.erase(TempNameStr.end()-5, TempNameStr.end());
-        StubSym = OutContext.GetOrCreateSymbol(TempNameStr.str());
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(OutContext.GetOrCreateSymbol(TempNameStr.str()),
+                      true);
       }
-      SymToPrint = StubSym;
+      SymToPrint = StubSym.getPointer();
     } else {
       SymToPrint = GetExternalSymbolSymbol(MO.getSymbolName());
     }
@@ -507,7 +510,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$stub:
         OutStreamer.EmitLabel(Stubs[i].first);
         //   .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second, MCSA_IndirectSymbol);
+        OutStreamer.EmitSymbolAttribute(Stubs[i].second.getPointer(),
+                                        MCSA_IndirectSymbol);
         // hlt; hlt; hlt; hlt; hlt     hlt = 0xf4 = -12.
         const char HltInsts[] = { -12, -12, -12, -12, -12 };
         OutStreamer.EmitBytes(StringRef(HltInsts, 5), 0/*addrspace*/);
@@ -530,7 +534,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$non_lazy_ptr:
         OutStreamer.EmitLabel(Stubs[i].first);
         // .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second, MCSA_IndirectSymbol);
+        OutStreamer.EmitSymbolAttribute(Stubs[i].second.getPointer(),
+                                        MCSA_IndirectSymbol);
         // .long 0
         OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       }
@@ -547,8 +552,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$non_lazy_ptr:
         OutStreamer.EmitLabel(Stubs[i].first);
         // .long _foo
-        OutStreamer.EmitValue(MCSymbolRefExpr::Create(Stubs[i].second,
-                                                      OutContext),
+        OutStreamer.EmitValue(MCSymbolRefExpr::
+                              Create(Stubs[i].second.getPointer(),
+                                     OutContext),
                               4/*size*/, 0/*addrspace*/);
       }
       Stubs.clear();
@@ -624,7 +630,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         O << *Stubs[i].first << ":\n"
           << (TD->getPointerSize() == 8 ?
               MAI->getData64bitsDirective() : MAI->getData32bitsDirective())
-          << *Stubs[i].second << '\n';
+          << *Stubs[i].second.getPointer() << '\n';
 
       Stubs.clear();
     }

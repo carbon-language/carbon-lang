@@ -404,14 +404,19 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
     MCSymbol *Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
-    MCSymbol *&StubSym = ELFMMI.getGVStubEntry(Sym);
-    if (StubSym == 0) {
+    MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(Sym);
+    if (StubSym.getPointer() == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
+
       if (GV->hasPrivateLinkage())
-        StubSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(getContext().GetOrCreateTemporarySymbol(Name.str()),
+                      false);
       else
-        StubSym = getContext().GetOrCreateSymbol(Name.str());
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(getContext().GetOrCreateSymbol(Name.str()),
+                      !GV->hasInternalLinkage());
     }
 
     return TargetLoweringObjectFile::
@@ -761,14 +766,19 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     // Add information about the stub reference to MachOMMI so that the stub
     // gets emitted by the asmprinter.
     MCSymbol *Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
-    MCSymbol *&StubSym = MachOMMI.getGVStubEntry(Sym);
-    if (StubSym == 0) {
+    MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(Sym);
+    if (StubSym.getPointer() == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
+
       if (GV->hasPrivateLinkage())
-        StubSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(getContext().GetOrCreateTemporarySymbol(Name.str()),
+                      false);
       else
-        StubSym = getContext().GetOrCreateSymbol(Name.str());
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(getContext().GetOrCreateSymbol(Name.str()),
+                      !GV->hasInternalLinkage());
     }
 
     return TargetLoweringObjectFile::

@@ -198,10 +198,11 @@ namespace {
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
             MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$stub");
-            MCSymbol *&StubSym =
+            MachineModuleInfoImpl::StubValueTy &StubSym =
               MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-            if (StubSym == 0)
-              StubSym = GetGlobalValueSymbol(GV);
+            if (StubSym.getPointer() == 0)
+              StubSym = MachineModuleInfoImpl::
+                StubValueTy(GetGlobalValueSymbol(GV),!GV->hasInternalLinkage());
             O << *Sym;
             return;
           }
@@ -212,10 +213,11 @@ namespace {
           TempNameStr += StringRef("$stub");
           
           MCSymbol *Sym = GetExternalSymbolSymbol(TempNameStr.str());
-          MCSymbol *&StubSym =
+          MachineModuleInfoImpl::StubValueTy &StubSym =
             MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-          if (StubSym == 0)
-            StubSym = GetExternalSymbolSymbol(MO.getSymbolName());
+          if (StubSym.getPointer() == 0)
+            StubSym = MachineModuleInfoImpl::
+              StubValueTy(GetExternalSymbolSymbol(MO.getSymbolName()), true);
           O << *Sym;
           return;
         }
@@ -404,10 +406,11 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     MCSymbol *NLPSym = 
       OutContext.GetOrCreateSymbol(StringRef(MAI->getGlobalPrefix())+
                                    MO.getSymbolName()+"$non_lazy_ptr");
-    MCSymbol *&StubSym = 
+    MachineModuleInfoImpl::StubValueTy &StubSym = 
       MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(NLPSym);
-    if (StubSym == 0)
-      StubSym = GetExternalSymbolSymbol(MO.getSymbolName());
+    if (StubSym.getPointer() == 0)
+      StubSym = MachineModuleInfoImpl::
+        StubValueTy(GetExternalSymbolSymbol(MO.getSymbolName()), true);
     
     O << *NLPSym;
     return;
@@ -422,19 +425,23 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
         (GV->isDeclaration() || GV->isWeakForLinker())) {
       if (!GV->hasHiddenVisibility()) {
         SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-        MCSymbol *&StubSym = 
-       MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(SymToPrint);
-        if (StubSym == 0)
-          StubSym = GetGlobalValueSymbol(GV);
+        MachineModuleInfoImpl::StubValueTy &StubSym = 
+          MMI->getObjFileInfo<MachineModuleInfoMachO>()
+            .getGVStubEntry(SymToPrint);
+        if (StubSym.getPointer() == 0)
+          StubSym = MachineModuleInfoImpl::
+            StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
         SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         
-        MCSymbol *&StubSym = 
+        MachineModuleInfoImpl::StubValueTy &StubSym = 
           MMI->getObjFileInfo<MachineModuleInfoMachO>().
                     getHiddenGVStubEntry(SymToPrint);
-        if (StubSym == 0)
-          StubSym = GetGlobalValueSymbol(GV);
+        if (StubSym.getPointer() == 0)
+          StubSym = MachineModuleInfoImpl::
+            StubValueTy(GetGlobalValueSymbol(GV),
+                        !GV->hasInternalLinkage());
       } else {
         SymToPrint = GetGlobalValueSymbol(GV);
       }
@@ -704,7 +711,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       EmitAlignment(4);
       
       const MCSymbol *Stub = Stubs[i].first;
-      const MCSymbol *RawSym = Stubs[i].second;
+      const MCSymbol *RawSym = Stubs[i].second.getPointer();
       const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
       const MCSymbol *AnonSymbol = GetAnonSym(Stub, OutContext);
                                            
@@ -738,7 +745,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
                               16, SectionKind::getText());
   for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
     const MCSymbol *Stub = Stubs[i].first;
-    const MCSymbol *RawSym = Stubs[i].second;
+    const MCSymbol *RawSym = Stubs[i].second.getPointer();
     const MCSymbol *LazyPtr = GetLazyPtr(Stub, OutContext);
 
     OutStreamer.SwitchSection(StubSection);
@@ -781,8 +788,10 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
          E = Personalities.end(); I != E; ++I) {
       if (*I) {
         MCSymbol *NLPSym = GetSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
-        MCSymbol *&StubSym = MMIMacho.getGVStubEntry(NLPSym);
-        StubSym = GetGlobalValueSymbol(*I);
+        MachineModuleInfoImpl::StubValueTy &StubSym =
+          MMIMacho.getGVStubEntry(NLPSym);
+        StubSym = MachineModuleInfoImpl::
+          StubValueTy(GetGlobalValueSymbol(*I), true);
       }
     }
   }
@@ -798,7 +807,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       O << *Stubs[i].first << ":\n";
-      O << "\t.indirect_symbol " << *Stubs[i].second << '\n';
+      O << "\t.indirect_symbol " << *Stubs[i].second.getPointer() << '\n';
+      // FIXME: This should use the "GV is external" bit.
       O << (isPPC64 ? "\t.quad\t0\n" : "\t.long\t0\n");
     }
   }
@@ -810,7 +820,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       O << *Stubs[i].first << ":\n";
-      O << (isPPC64 ? "\t.quad\t" : "\t.long\t") << *Stubs[i].second << '\n';
+      O << (isPPC64 ? "\t.quad\t" : "\t.long\t")
+        << *Stubs[i].second.getPointer() << '\n';
     }
   }
 

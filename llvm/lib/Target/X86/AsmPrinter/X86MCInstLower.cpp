@@ -91,35 +91,49 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
 
-    MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
-    if (StubSym == 0) {
+    MachineModuleInfoImpl::StubValueTy &StubSym =
+      getMachOMMI().getGVStubEntry(Sym);
+    if (StubSym.getPointer() == 0) {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
-      StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
+      StubSym =
+        MachineModuleInfoImpl::
+        StubValueTy(AsmPrinter.GetGlobalValueSymbol(MO.getGlobal()),
+                    !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
-    MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
-    if (StubSym == 0) {
+    MachineModuleInfoImpl::StubValueTy &StubSym =
+      getMachOMMI().getHiddenGVStubEntry(Sym);
+    if (StubSym.getPointer() == 0) {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
-      StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
+      StubSym =
+        MachineModuleInfoImpl::
+        StubValueTy(AsmPrinter.GetGlobalValueSymbol(MO.getGlobal()),
+                    !MO.getGlobal()->hasInternalLinkage());
     }
     return Sym;
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
-    MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
-    if (StubSym)
+    MachineModuleInfoImpl::StubValueTy &StubSym =
+      getMachOMMI().getFnStubEntry(Sym);
+    if (StubSym.getPointer())
       return Sym;
     
     if (MO.isGlobal()) {
-      StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
+      StubSym =
+        MachineModuleInfoImpl::
+        StubValueTy(AsmPrinter.GetGlobalValueSymbol(MO.getGlobal()),
+                    !MO.getGlobal()->hasInternalLinkage());
     } else {
       Name.erase(Name.end()-5, Name.end());
-      StubSym = Ctx.GetOrCreateTemporarySymbol(Name.str());
+      StubSym =
+        MachineModuleInfoImpl::
+        StubValueTy(Ctx.GetOrCreateTemporarySymbol(Name.str()), false);
     }
     return Sym;
   }

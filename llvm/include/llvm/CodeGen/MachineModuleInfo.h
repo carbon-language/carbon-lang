@@ -31,34 +31,34 @@
 #ifndef LLVM_CODEGEN_MACHINEMODULEINFO_H
 #define LLVM_CODEGEN_MACHINEMODULEINFO_H
 
-#include "llvm/Support/Dwarf.h"
-#include "llvm/System/DataTypes.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/UniqueVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
 #include "llvm/Metadata.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/UniqueVector.h"
+#include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
 // Forward declarations.
 class Constant;
+class GlobalVariable;
 class MCSymbol;
 class MDNode;
-class GlobalVariable;
 class MachineBasicBlock;
 class MachineFunction;
 class Module;
 class PointerType;
 class StructType;
-  
   
 /// MachineModuleInfoImpl - This class can be derived from and used by targets
 /// to hold private target-specific information for each Module.  Objects of
@@ -66,13 +66,11 @@ class StructType;
 /// MachineModuleInfo is destroyed.
 class MachineModuleInfoImpl {
 public:
+  typedef PointerIntPair<MCSymbol*, 1, bool> StubValueTy;
   virtual ~MachineModuleInfoImpl();
-
-  typedef std::vector<std::pair<MCSymbol*, MCSymbol*> >
-      SymbolListTy;
+  typedef std::vector<std::pair<MCSymbol*, StubValueTy> > SymbolListTy;
 protected:
-    static SymbolListTy
-    GetSortedStubs(const DenseMap<MCSymbol*, MCSymbol*> &Map);
+  static SymbolListTy GetSortedStubs(const DenseMap<MCSymbol*, StubValueTy>&);
 };
   
   

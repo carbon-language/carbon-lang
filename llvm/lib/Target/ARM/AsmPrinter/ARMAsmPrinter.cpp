@@ -205,11 +205,12 @@ namespace {
           
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
-          MCSymbol *&StubSym =
+          MachineModuleInfoImpl::StubValueTy &StubSym =
             GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
                                         MMIMachO.getGVStubEntry(Sym);
-          if (StubSym == 0)
-            StubSym = GetGlobalValueSymbol(GV);
+          if (StubSym.getPointer() == 0)
+            StubSym = MachineModuleInfoImpl::
+              StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
         }
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
@@ -1126,7 +1127,7 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
     // Output non-lazy-pointers for external and common global variables.
     MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetGVStubList();
-    
+
     if (!Stubs.empty()) {
       // Switch with ".non_lazy_symbol_pointer" directive.
       OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
@@ -1135,7 +1136,7 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$stub:
         OutStreamer.EmitLabel(Stubs[i].first);
         //   .indirect_symbol _foo
-        MCSymbol *MCSym = Stubs[i].second;
+        MCSymbol *MCSym = Stubs[i].second.getPointer();
         OutStreamer.EmitSymbolAttribute(MCSym, MCSA_IndirectSymbol);
 
         if (MCSym->isUndefined())
@@ -1159,8 +1160,9 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$stub:
         OutStreamer.EmitLabel(Stubs[i].first);
         //   .long _foo
-        OutStreamer.EmitValue(MCSymbolRefExpr::Create(Stubs[i].second,
-                                                      OutContext),
+        OutStreamer.EmitValue(MCSymbolRefExpr::
+                              Create(Stubs[i].second.getPointer(),
+                                     OutContext),
                               4/*size*/, 0/*addrspace*/);
       }
 

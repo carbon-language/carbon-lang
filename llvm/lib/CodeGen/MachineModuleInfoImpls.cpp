@@ -25,10 +25,9 @@ void MachineModuleInfoMachO::Anchor() {}
 void MachineModuleInfoELF::Anchor() {}
 
 static int SortSymbolPair(const void *LHS, const void *RHS) {
-  const MCSymbol *LHSS =
-    ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
-  const MCSymbol *RHSS =
-    ((const std::pair<MCSymbol*, MCSymbol*>*)RHS)->first;
+  typedef std::pair<MCSymbol*, MachineModuleInfoImpl::StubValueTy> PairTy;
+  const MCSymbol *LHSS = ((const PairTy *)LHS)->first;
+  const MCSymbol *RHSS = ((const PairTy *)RHS)->first;
   return LHSS->getName().compare(RHSS->getName());
 }
 
@@ -36,7 +35,7 @@ static int SortSymbolPair(const void *LHS, const void *RHS) {
 /// sorted orer.
 MachineModuleInfoImpl::SymbolListTy
 MachineModuleInfoImpl::GetSortedStubs(const DenseMap<MCSymbol*,
-                                                     MCSymbol*> &Map) {
+                                      MachineModuleInfoImpl::StubValueTy>&Map) {
   MachineModuleInfoImpl::SymbolListTy List(Map.begin(), Map.end());
 
   if (!List.empty())

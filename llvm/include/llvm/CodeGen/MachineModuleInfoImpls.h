@@ -25,32 +25,34 @@ namespace llvm {
   class MachineModuleInfoMachO : public MachineModuleInfoImpl {
     /// FnStubs - Darwin '$stub' stubs.  The key is something like "Lfoo$stub",
     /// the value is something like "_foo".
-    DenseMap<MCSymbol*, MCSymbol*> FnStubs;
+    DenseMap<MCSymbol*, StubValueTy> FnStubs;
     
     /// GVStubs - Darwin '$non_lazy_ptr' stubs.  The key is something like
-    /// "Lfoo$non_lazy_ptr", the value is something like "_foo".
-    DenseMap<MCSymbol*, MCSymbol*> GVStubs;
+    /// "Lfoo$non_lazy_ptr", the value is something like "_foo". The extra bit
+    /// is true if this GV is external.
+    DenseMap<MCSymbol*, StubValueTy> GVStubs;
     
     /// HiddenGVStubs - Darwin '$non_lazy_ptr' stubs.  The key is something like
     /// "Lfoo$non_lazy_ptr", the value is something like "_foo".  Unlike GVStubs
-    /// these are for things with hidden visibility.
-    DenseMap<MCSymbol*, MCSymbol*> HiddenGVStubs;
+    /// these are for things with hidden visibility. The extra bit is true if
+    /// this GV is external.
+    DenseMap<MCSymbol*, StubValueTy> HiddenGVStubs;
     
     virtual void Anchor();  // Out of line virtual method.
   public:
     MachineModuleInfoMachO(const MachineModuleInfo &) {}
     
-    MCSymbol *&getFnStubEntry(MCSymbol *Sym) {
+    StubValueTy &getFnStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return FnStubs[Sym];
     }
 
-    MCSymbol *&getGVStubEntry(MCSymbol *Sym) {
+    StubValueTy &getGVStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return GVStubs[Sym];
     }
 
-    MCSymbol *&getHiddenGVStubEntry(MCSymbol *Sym) {
+    StubValueTy &getHiddenGVStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return HiddenGVStubs[Sym];
     }
@@ -72,13 +74,13 @@ namespace llvm {
   class MachineModuleInfoELF : public MachineModuleInfoImpl {
     /// GVStubs - These stubs are used to materialize global addresses in PIC
     /// mode.
-    DenseMap<MCSymbol*, MCSymbol*> GVStubs;
+    DenseMap<MCSymbol*, StubValueTy> GVStubs;
 
     virtual void Anchor();  // Out of line virtual method.
   public:
     MachineModuleInfoELF(const MachineModuleInfo &) {}
 
-    MCSymbol *&getGVStubEntry(MCSymbol *Sym) {
+    StubValueTy &getGVStubEntry(MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return GVStubs[Sym];
     }
