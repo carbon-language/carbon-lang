@@ -211,6 +211,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D,
   if (D.getInit())
     GV = AddInitializerToGlobalBlockVarDecl(D, GV);
 
+  GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
+
   // FIXME: Merge attribute handling.
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
