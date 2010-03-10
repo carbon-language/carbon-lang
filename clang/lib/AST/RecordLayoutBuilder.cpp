@@ -41,22 +41,6 @@ void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
   }
 }
 
-void
-ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-       e = RD->bases_end(); i != e; ++i) {
-    if (!i->isVirtual()) {
-      assert(!i->getType()->isDependentType() &&
-             "Cannot layout class with dependent bases.");
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      // Skip the PrimaryBase here, as it is laid down first.
-      if (Base != PrimaryBase.getBase() || PrimaryBase.isVirtual())
-        LayoutBaseNonVirtually(Base, false);
-    }
-  }
-}
-
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
 bool ASTRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
@@ -174,10 +158,6 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
     setPrimaryBase(FirstPrimary, /*IsVirtual=*/true);
 }
 
-void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
-  LayoutBaseNonVirtually(RD, true);
-}
-
 uint64_t ASTRecordLayoutBuilder::getBaseOffset(const CXXRecordDecl *Base) {
   for (size_t i = 0; i < Bases.size(); ++i) {
     if (Bases[i].first == Base)
@@ -191,6 +171,25 @@ uint64_t ASTRecordLayoutBuilder::getBaseOffset(const CXXRecordDecl *Base) {
   return 0;
 }
 
+void
+ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+       e = RD->bases_end(); i != e; ++i) {
+    if (!i->isVirtual()) {
+      assert(!i->getType()->isDependentType() &&
+             "Cannot layout class with dependent bases.");
+      const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      // Skip the PrimaryBase here, as it is laid down first.
+      if (Base != PrimaryBase.getBase() || PrimaryBase.isVirtual())
+        LayoutBaseNonVirtually(Base, false);
+    }
+  }
+}
+
+void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
+  LayoutBaseNonVirtually(RD, false);
+}
 
 void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
                                                 const CXXRecordDecl *RD,
@@ -242,6 +241,51 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
                          IndirectPrimary);
     }
   }
+}
+
+void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
+  LayoutBaseNonVirtually(RD, true);
+}
+
+uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
+  const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
+
+  // If we have an empty base class, try to place it at offset 0.
+  if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0)) {
+    // We were able to place the class at offset 0.
+    UpdateEmptyClassOffsets(RD, 0);
+
+    Size = std::max(Size, BaseInfo.getSize());
+
+    return 0;
+  }
+  
+  unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
+  
+  // Round up the current record size to the base's alignment boundary.
+  uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
+  
+  // Try to place the base.
+  while (true) {
+    if (canPlaceRecordAtOffset(RD, Offset))
+      break;
+    
+    Offset += BaseAlign;
+  }
+
+  if (!RD->isEmpty()) {
+    // Update the data size.
+    DataSize = Offset + BaseInfo.getNonVirtualSize();
+
+    Size = std::max(Size, DataSize);
+  } else
+    Size = std::max(Size, Offset + BaseInfo.getSize());
+
+  // Remember max struct/class alignment.
+  UpdateAlignment(BaseAlign);
+
+  UpdateEmptyClassOffsets(RD, Offset);
+  return Offset;
 }
 
 bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD, 
@@ -388,47 +432,6 @@ ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
       ElementOffset += Info.getSize();
     }
   }
-}
-
-uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
-  const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
-
-  // If we have an empty base class, try to place it at offset 0.
-  if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0)) {
-    // We were able to place the class at offset 0.
-    UpdateEmptyClassOffsets(RD, 0);
-
-    Size = std::max(Size, BaseInfo.getSize());
-
-    return 0;
-  }
-  
-  unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
-  
-  // Round up the current record size to the base's alignment boundary.
-  uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
-  
-  // Try to place the base.
-  while (true) {
-    if (canPlaceRecordAtOffset(RD, Offset))
-      break;
-    
-    Offset += BaseAlign;
-  }
-
-  if (!RD->isEmpty()) {
-    // Update the data size.
-    DataSize = Offset + BaseInfo.getNonVirtualSize();
-
-    Size = std::max(Size, DataSize);
-  } else
-    Size = std::max(Size, Offset + BaseInfo.getSize());
-
-  // Remember max struct/class alignment.
-  UpdateAlignment(BaseAlign);
-
-  UpdateEmptyClassOffsets(RD, Offset);
-  return Offset;
 }
 
 void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,

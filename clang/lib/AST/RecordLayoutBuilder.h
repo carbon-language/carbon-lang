@@ -101,10 +101,6 @@ class ASTRecordLayoutBuilder {
   
   bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
   
-  /// LayoutBase - Will lay out a base and return the offset where it was 
-  /// placed, in bits.
-  uint64_t LayoutBase(const CXXRecordDecl *RD);
-  
   /// LayoutNonVirtualBases - Determines the primary base class (if any) and 
   /// lays it out. Will then proceed to lay out all non-virtual base clasess.
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
@@ -121,6 +117,10 @@ class ASTRecordLayoutBuilder {
   /// LayoutVirtualBase - Lays out a single virtual base.
   void LayoutVirtualBase(const CXXRecordDecl *RD);
 
+  /// LayoutBase - Will lay out a base and return the offset where it was 
+  /// placed, in bits.
+  uint64_t LayoutBase(const CXXRecordDecl *RD);
+  
   void LayoutVtable(const CXXRecordDecl *RD);
   void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
 
