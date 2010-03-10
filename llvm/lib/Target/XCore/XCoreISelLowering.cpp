@@ -58,7 +58,7 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::MACCS             : return "XCoreISD::MACCS";
     case XCoreISD::BR_JT             : return "XCoreISD::BR_JT";
     case XCoreISD::BR_JT32           : return "XCoreISD::BR_JT32";
-    default                           : return NULL;
+    default                          : return NULL;
   }
 }
 
