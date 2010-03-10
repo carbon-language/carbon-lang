@@ -138,6 +138,7 @@ void DwarfPrinter::EmitSLEB128(int Value, const char *Desc) const {
     Asm->OutStreamer.AddComment(Desc);
     
   if (MAI->hasLEB128()) {
+    // FIXME: MCize.
     O << "\t.sleb128\t" << Value;
     Asm->OutStreamer.AddBlankLine();
     return;
@@ -163,6 +164,7 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
     Asm->OutStreamer.AddComment(Desc);
  
   if (MAI->hasLEB128() && PadTo == 0) {
+    // FIXME: MCize.
     O << "\t.uleb128\t" << Value;
     Asm->OutStreamer.AddBlankLine();
     return;
@@ -196,6 +198,7 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
   }
   
   // FIXME: Need an MCExpr for ".".
+  // FIXME: MCize.
   if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
     O << MAI->getData32bitsDirective();
   else
@@ -241,7 +244,8 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
   
   // On COFF targets, we have to emit the weird .secrel32 directive.
   if (const char *SecOffDir = MAI->getDwarfSectionOffsetDirective())
-    O << SecOffDir << Label->getName();
+    // FIXME: MCize.
+    Asm->O << SecOffDir << Label->getName();
   else {
     unsigned Size = IsSmall ? 4 : TD->getPointerSize();
     Asm->OutStreamer.EmitSymbolValue(Label, Size, 0/*AddrSpace*/);

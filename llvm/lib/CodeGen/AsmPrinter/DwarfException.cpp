@@ -280,7 +280,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
         Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
                                              MCSA_NoDeadStrip);
   }
-  Asm->O << '\n';
+  Asm->OutStreamer.AddBlankLine();
 }
 
 /// SharedTypeIds - How many leading type ids two landing pads have in common.

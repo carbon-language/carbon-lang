@@ -2598,12 +2598,6 @@ void DwarfDebug::emitDebugLines() {
     // Isolate current sections line info.
     const std::vector<SrcLineInfo> &LineInfos = SectionSourceLines[j];
 
-    /*if (Asm->isVerbose()) {
-      const MCSection *S = SectionMap[j + 1];
-      O << '\t' << MAI->getCommentString() << " Section"
-        << S->getName() << '\n';
-    }*/
-
     // Dwarf assumes we start with first line of first source file.
     unsigned Source = 1;
     unsigned Line = 1;
@@ -2617,12 +2611,10 @@ void DwarfDebug::emitDebugLines() {
       if (LineInfo.getLine() == 0) continue;
 
       if (Asm->isVerbose()) {
-        std::pair<unsigned, unsigned> SourceID =
+        std::pair<unsigned, unsigned> SrcID =
           getSourceDirectoryAndFileIds(LineInfo.getSourceID());
-        O << '\t' << MAI->getCommentString() << ' '
-          << getSourceDirectoryName(SourceID.first) << '/'
-          << getSourceFileName(SourceID.second)
-          << ':' << utostr_32(LineInfo.getLine()) << '\n';
+        Asm->OutStreamer.AddComment(Twine(getSourceDirectoryName(SrcID.first)) +
+                                    ":" + Twine(LineInfo.getLine()));
       }
 
       // Define the line address.
