@@ -151,7 +151,7 @@ namespace llvm {
               EVT VT) const;
   
     // Expand specifics
-    SDValue TryExpandADDSUBWithMul(SDNode *Op, SelectionDAG &DAG);
+    SDValue TryExpandADDWithMul(SDNode *Op, SelectionDAG &DAG);
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
 
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;

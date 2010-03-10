@@ -584,7 +584,7 @@ LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG)
 }
 
 SDValue XCoreTargetLowering::
-TryExpandADDSUBWithMul(SDNode *N, SelectionDAG &DAG)
+TryExpandADDWithMul(SDNode *N, SelectionDAG &DAG)
 {
   SDValue Mul;
   SDValue Other;
@@ -650,9 +650,11 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
          (N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
         "Unknown operand to lower!");
 
-  SDValue Result = TryExpandADDSUBWithMul(N, DAG);
-  if (Result.getNode() != 0)
-    return Result;
+  if (N->getOpcode() == ISD::ADD) {
+    SDValue Result = TryExpandADDWithMul(N, DAG);
+    if (Result.getNode() != 0)
+      return Result;
+  }
 
   DebugLoc dl = N->getDebugLoc();
   
