@@ -6593,7 +6593,8 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtArg substmt,
   assert(SubStmt && isa<CompoundStmt>(SubStmt) && "Invalid action invocation!");
   CompoundStmt *Compound = cast<CompoundStmt>(SubStmt);
 
-  bool isFileScope = getCurFunctionOrMethodDecl() == 0;
+  bool isFileScope
+    = (getCurFunctionOrMethodDecl() == 0) && (getCurBlock() == 0);
   if (isFileScope)
     return ExprError(Diag(LPLoc, diag::err_stmtexpr_file_scope));
 

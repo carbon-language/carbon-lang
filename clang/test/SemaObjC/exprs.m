@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -Wno-unreachable-code
+// RUN: %clang_cc1 %s -fsyntax-only -fblocks -verify -Wno-unreachable-code
 
 // rdar://6597252
 Class test1(Class X) {
@@ -19,3 +19,6 @@ void test2() {
   
   if (@encode(int) == "foo") { }  // expected-warning {{result of comparison against @encode is unspecified}}
 }
+
+#define MAX(A,B) ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
+void (^foo)(int, int) = ^(int x, int y) { int z = MAX(x, y); };
