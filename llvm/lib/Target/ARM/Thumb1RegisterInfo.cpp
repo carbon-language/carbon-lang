@@ -854,6 +854,11 @@ void Thumb1RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   if (VARegSaveSize) {
+    // Unlike T2 and ARM mode, the T1 pop instruction cannot restore
+    // to LR, and we can't pop the value directly to the PC since
+    // we need to update the SP after popping the value. Therefore, we
+    // pop the old LR into R3 as a temporary.
+
     // Move back past the callee-saved register restoration
     while (MBBI != MBB.end() && isCSRestore(MBBI, CSRegs))
       ++MBBI;
