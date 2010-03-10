@@ -449,62 +449,103 @@ RegionStoreManager::getRegionStoreSubRegionMap(Store store) {
 }
 
 //===----------------------------------------------------------------------===//
+// Region Cluster analysis.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class ClusterAnalysis  {
+protected:
+  typedef BumpVector<BindingKey> RegionCluster;
+  typedef llvm::DenseMap<const MemRegion *, RegionCluster *> ClusterMap;
+
+  BumpVectorContext BVC;
+  ClusterMap ClusterM;
+
+  RegionStoreManager &RM;
+  ASTContext &Ctx;
+  ValueManager &ValMgr;
+
+public:
+    ClusterAnalysis(RegionStoreManager &rm,
+                    ASTContext &ctx, ValueManager &valMgr)
+    : RM(rm),  Ctx(ctx), ValMgr(valMgr) {}
+
+protected:
+  void AddToCluster(BindingKey K);
+  RegionCluster **getCluster(const MemRegion *R);
+  void GenerateClusters(RegionBindings B);
+};
+}
+
+void ClusterAnalysis::AddToCluster(BindingKey K) {
+  const MemRegion *R = K.getRegion();
+  const MemRegion *baseR = R->getBaseRegion();
+  RegionCluster **CPtr = getCluster(baseR);
+  assert(*CPtr);
+  (*CPtr)->push_back(K, BVC);
+}
+
+ClusterAnalysis::RegionCluster **
+ClusterAnalysis::getCluster(const MemRegion *R) {
+  RegionCluster *&CRef = ClusterM[R];
+  if (!CRef) {
+    void *Mem = BVC.getAllocator().Allocate<RegionCluster>();
+    CRef = new (Mem) RegionCluster(BVC, 10);
+  }
+  return &CRef;
+}
+
+void ClusterAnalysis::GenerateClusters(RegionBindings B) {
+  // Scan the entire set of bindings and make the region clusters.
+  for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI) {
+    AddToCluster(RI.getKey());
+    if (const MemRegion *R = RI.getData().getAsRegion()) {
+      // Generate a cluster, but don't add the region to the cluster
+      // if there aren't any bindings.
+      getCluster(R->getBaseRegion());
+    }
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // Binding invalidation.
 //===----------------------------------------------------------------------===//
 
 void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
                                                  const MemRegion *R,
                                                  RegionStoreSubRegionMap &M) {
-  
+
   if (const RegionStoreSubRegionMap::Set *S = M.getSubRegions(R))
     for (RegionStoreSubRegionMap::Set::iterator I = S->begin(), E = S->end();
          I != E; ++I)
       RemoveSubRegionBindings(B, *I, M);
-  
+
   B = Remove(B, R);
 }
 
 namespace {
-class InvalidateRegionsWorker {
-  typedef BumpVector<BindingKey> RegionCluster;
-  typedef llvm::DenseMap<const MemRegion *, RegionCluster *> ClusterMap;
+class InvalidateRegionsWorker : public ClusterAnalysis {
   typedef llvm::SmallVector<std::pair<const MemRegion *,RegionCluster*>, 10>
           WorkList;
 
-  BumpVectorContext BVC;
-  ClusterMap ClusterM;
-  WorkList WL;
-  
-  RegionStoreManager &RM;
   StoreManager::InvalidatedSymbols *IS;
-  ASTContext &Ctx;
-  ValueManager &ValMgr;
-  
+  WorkList WL;
+
 public:
   InvalidateRegionsWorker(RegionStoreManager &rm,
                           StoreManager::InvalidatedSymbols *is,
                           ASTContext &ctx, ValueManager &valMgr)
-    : RM(rm), IS(is), Ctx(ctx), ValMgr(valMgr) {}
-  
+    : ClusterAnalysis(rm, ctx, valMgr), IS(is) {}
+
   Store InvalidateRegions(Store store, const MemRegion * const *I,
                           const MemRegion * const *E,
                           const Expr *Ex, unsigned Count);
-  
+
 private:
   void AddToWorkList(BindingKey K);
   void AddToWorkList(const MemRegion *R);
-  void AddToCluster(BindingKey K);
-  RegionCluster **getCluster(const MemRegion *R);
   void VisitBinding(SVal V);
-};  
-}
-
-void InvalidateRegionsWorker::AddToCluster(BindingKey K) {
-  const MemRegion *R = K.getRegion();
-  const MemRegion *baseR = R->getBaseRegion();
-  RegionCluster **CPtr = getCluster(baseR);
-  assert(*CPtr);
-  (*CPtr)->push_back(K, BVC);
+};
 }
 
 void InvalidateRegionsWorker::AddToWorkList(BindingKey K) {
@@ -518,16 +559,6 @@ void InvalidateRegionsWorker::AddToWorkList(const MemRegion *R) {
     WL.push_back(std::make_pair(baseR, C));
     *CPtr = NULL;
   }
-}  
-
-InvalidateRegionsWorker::RegionCluster **
-InvalidateRegionsWorker::getCluster(const MemRegion *R) {
-  RegionCluster *&CRef = ClusterM[R];
-  if (!CRef) {
-    void *Mem = BVC.getAllocator().Allocate<RegionCluster>();
-    CRef = new (Mem) RegionCluster(BVC, 10);
-  }
-  return &CRef;
 }
 
 void InvalidateRegionsWorker::VisitBinding(SVal V) {
@@ -535,7 +566,7 @@ void InvalidateRegionsWorker::VisitBinding(SVal V) {
   if (IS)
     if (SymbolRef Sym = V.getAsSymbol())
       IS->insert(Sym);
-  
+
   if (const MemRegion *R = V.getAsRegion()) {
     AddToWorkList(R);
     return;
@@ -566,35 +597,28 @@ Store InvalidateRegionsWorker::InvalidateRegions(Store store,
   RegionBindings B = RegionStoreManager::GetRegionBindings(store);
 
   // Scan the entire store and make the region clusters.
-  for (RegionBindings::iterator RI = B.begin(), RE = B.end(); RI != RE; ++RI) {
-    AddToCluster(RI.getKey());
-    if (const MemRegion *R = RI.getData().getAsRegion()) {
-      // Generate a cluster, but don't add the region to the cluster
-      // if there aren't any bindings.
-      getCluster(R->getBaseRegion());
-    }
-  }
-  
+  GenerateClusters(B);
+
   // Add the cluster for I .. E to a worklist.
   for ( ; I != E; ++I)
     AddToWorkList(*I);
 
   while (!WL.empty()) {
     const MemRegion *baseR;
-    RegionCluster *C;    
+    RegionCluster *C;
     llvm::tie(baseR, C) = WL.back();
     WL.pop_back();
-    
+
     for (RegionCluster::iterator I = C->begin(), E = C->end(); I != E; ++I) {
       BindingKey K = *I;
-      
+
       // Get the old binding.  Is it a region?  If so, add it to the worklist.
       if (const SVal *V = RM.Lookup(B, K))
         VisitBinding(*V);
 
       B = RM.Remove(B, K);
     }
-    
+
     // Now inspect the base region.
 
     if (IS) {
@@ -602,7 +626,7 @@ Store InvalidateRegionsWorker::InvalidateRegions(Store store,
       if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
         IS->insert(SR->getSymbol());
     }
-    
+
     // BlockDataRegion?  If so, invalidate captured variables that are passed
     // by reference.
     if (const BlockDataRegion *BR = dyn_cast<BlockDataRegion>(baseR)) {
@@ -616,7 +640,7 @@ Store InvalidateRegionsWorker::InvalidateRegions(Store store,
       }
       continue;
     }
-    
+
     if (isa<AllocaRegion>(baseR) || isa<SymbolicRegion>(baseR)) {
       // Invalidate the region by setting its default value to
       // conjured symbol. The type of the symbol is irrelavant.
@@ -625,29 +649,29 @@ Store InvalidateRegionsWorker::InvalidateRegions(Store store,
       B = RM.Add(B, baseR, BindingKey::Default, V);
       continue;
     }
-    
+
     if (!baseR->isBoundable())
-      continue;      
-      
+      continue;
+
     const TypedRegion *TR = cast<TypedRegion>(baseR);
     QualType T = TR->getValueType(Ctx);
-    
-    // Invalidate the binding.      
+
+    // Invalidate the binding.
     if (const RecordType *RT = T->getAsStructureType()) {
-      const RecordDecl *RD = RT->getDecl()->getDefinition();      
+      const RecordDecl *RD = RT->getDecl()->getDefinition();
       // No record definition.  There is nothing we can do.
       if (!RD) {
         B = RM.Remove(B, baseR);
         continue;
       }
-    
+
       // Invalidate the region by setting its default value to
       // conjured symbol. The type of the symbol is irrelavant.
       DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy,
                                                            Count);
       B = RM.Add(B, baseR, BindingKey::Default, V);
       continue;
-    }    
+    }
 
     if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
       // Set the default value of the array to conjured symbol.
@@ -656,7 +680,7 @@ Store InvalidateRegionsWorker::InvalidateRegions(Store store,
       B = RM.Add(B, baseR, BindingKey::Default, V);
       continue;
     }
-      
+
     DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(baseR, Ex, T, Count);
     assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
     B = RM.Add(B, baseR, BindingKey::Direct, V);
