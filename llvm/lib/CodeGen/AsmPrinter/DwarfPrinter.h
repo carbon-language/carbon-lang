@@ -88,8 +88,6 @@ public:
   /// SizeOfEncodedValue - Return the size of the encoding in bytes.
   unsigned SizeOfEncodedValue(unsigned Encoding) const;
 
-  void PrintRelDirective(unsigned Encoding) const;
-
   /// EmitEncodingByte - Emit a .byte 42 directive that corresponds to an
   /// encoding.  If verbose assembly output is enabled, we output comments
   /// describing the encoding.  Desc is a string saying what the encoding is

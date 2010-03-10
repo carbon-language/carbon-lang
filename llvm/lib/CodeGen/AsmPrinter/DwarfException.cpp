@@ -886,13 +886,11 @@ void DwarfException::EmitExceptionTable() {
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
 
-    if (GV) {
-      Asm->OutStreamer.AddComment("TypeInfo");
+    Asm->OutStreamer.AddComment("TypeInfo");
+    if (GV)
       EmitReference(GV, TTypeEncoding);
-    } else {
-      PrintRelDirective(TTypeEncoding);
-      O << "0x0\n";
-    }
+    else
+      Asm->OutStreamer.EmitIntValue(0, SizeOfEncodedValue(TTypeEncoding), 0);
   }
 
   // Emit the Exception Specifications.

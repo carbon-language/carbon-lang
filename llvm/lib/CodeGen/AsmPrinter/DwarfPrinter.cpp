@@ -77,14 +77,6 @@ unsigned DwarfPrinter::SizeOfEncodedValue(unsigned Encoding) const {
   return 0;
 }
 
-void DwarfPrinter::PrintRelDirective(unsigned Encoding) const {
-  unsigned Size = SizeOfEncodedValue(Encoding);
-  assert((Size == 4 || Size == 8) && "Do not support other types or rels!");
-
-  O << (Size == 4 ?
-        MAI->getData32bitsDirective() : MAI->getData64bitsDirective());
-}
-
 static const char *DecodeDWARFEncoding(unsigned Encoding) {
   switch (Encoding) {
   case dwarf::DW_EH_PE_absptr: return "absptr";
@@ -215,16 +207,16 @@ void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
-  PrintRelDirective(Encoding);
-  O << *TLOF.getSymbolForDwarfReference(Sym, Asm->MMI, Encoding);
+  const MCExpr *Exp = TLOF.getSymbolForDwarfReference(Sym, Asm->MMI, Encoding);
+  Asm->OutStreamer.EmitValue(Exp, SizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
 
 void DwarfPrinter::EmitReference(const GlobalValue *GV, unsigned Encoding)const{
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
-  PrintRelDirective(Encoding);
-  O << *TLOF.getSymbolForDwarfGlobalReference(GV, Asm->Mang,
-                                              Asm->MMI, Encoding);
+  const MCExpr *Exp =
+    TLOF.getSymbolForDwarfGlobalReference(GV, Asm->Mang, Asm->MMI, Encoding);
+  Asm->OutStreamer.EmitValue(Exp, SizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
 
 /// EmitDifference - Emit the difference between two labels.  If this assembler
