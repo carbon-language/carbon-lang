@@ -2493,7 +2493,9 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(dwarf::DW_LNE_set_address);
 
   Asm->OutStreamer.AddComment("Section end label");
-  EmitReference(getDWLabel("section_end", SectionEnd));
+
+  Asm->OutStreamer.EmitSymbolValue(getDWLabel("section_end", SectionEnd),
+                                   TD->getPointerSize(), 0/*AddrSpace*/);
 
   // Mark end of matrix.
   Asm->OutStreamer.AddComment("DW_LNE_end_sequence");
@@ -2627,8 +2629,9 @@ void DwarfDebug::emitDebugLines() {
       Asm->EmitInt8(dwarf::DW_LNE_set_address); 
 
       Asm->OutStreamer.AddComment("Location label");
-      EmitReference(getDWLabel("label", LabelID)); 
-
+      Asm->OutStreamer.EmitSymbolValue(getDWLabel("label", LabelID),
+                                       TD->getPointerSize(), 0/*AddrSpace*/);
+      
       // If change of source, then switch to the new source.
       if (Source != LineInfo.getSourceID()) {
         Source = LineInfo.getSourceID();
@@ -2742,7 +2745,12 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
                     getTempLabel("section_debug_frame"), true, false);
 
   Asm->OutStreamer.AddComment("FDE initial location");
-  EmitReference(getDWLabel("func_begin", DebugFrameInfo.Number));
+  Asm->OutStreamer.EmitSymbolValue(getDWLabel("func_begin",
+                                              DebugFrameInfo.Number),
+                                   TD->getPointerSize(), 0/*AddrSpace*/);
+  
+  
+  
   Asm->OutStreamer.AddComment("FDE address range");
   EmitDifference(getDWLabel("func_end", DebugFrameInfo.Number),
                  getDWLabel("func_begin", DebugFrameInfo.Number));

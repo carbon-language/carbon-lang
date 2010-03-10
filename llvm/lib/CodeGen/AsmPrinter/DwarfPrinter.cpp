@@ -186,27 +186,6 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
 }
 
 
-/// EmitReference - Emit a reference to a label.
-///
-void DwarfPrinter::EmitReference(const MCSymbol *Sym, bool IsPCRelative,
-                                 bool Force32Bit) const {
-  unsigned Size = Force32Bit ? 4 : TD->getPointerSize();
-  
-  if (!IsPCRelative) {
-    Asm->OutStreamer.EmitSymbolValue(Sym, Size, 0/*AddrSpace*/);
-    return;
-  }
-  
-  // FIXME: Need an MCExpr for ".".
-  // FIXME: MCize.
-  if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
-    O << MAI->getData32bitsDirective();
-  else
-    O << MAI->getData64bitsDirective();
-  O << *Sym;
-  if (IsPCRelative) O << "-" << MAI->getPCSymbol();
-}
-
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 

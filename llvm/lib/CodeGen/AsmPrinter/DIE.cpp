@@ -259,7 +259,8 @@ void DIEString::print(raw_ostream &O) {
 ///
 void DIELabel::EmitValue(DwarfPrinter *D, unsigned Form) const {
   bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitReference(Label, false, IsSmall);
+  unsigned Size = IsSmall ? 4 : D->getTargetData()->getPointerSize();
+  D->getAsm()->OutStreamer.EmitSymbolValue(Label, Size, 0/*AddrSpace*/);
 }
 
 /// SizeOf - Determine size of label value in bytes.
