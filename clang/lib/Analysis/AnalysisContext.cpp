@@ -12,15 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/CFG.h"
-#include "clang/Analysis/AnalysisContext.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Support/BumpVector.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
@@ -207,11 +208,17 @@ class FindBlockDeclRefExprsVals : public StmtVisitor<FindBlockDeclRefExprsVals>{
   BumpVector<const VarDecl*> &BEVals;
   BumpVectorContext &BC;
   llvm::DenseMap<const VarDecl*, unsigned> Visited;
+  llvm::SmallSet<const DeclContext*, 4> IgnoredContexts;
 public:
   FindBlockDeclRefExprsVals(BumpVector<const VarDecl*> &bevals,
                             BumpVectorContext &bc)
   : BEVals(bevals), BC(bc) {}
-  
+
+  bool IsTrackedDecl(const VarDecl *VD) {
+    const DeclContext *DC = VD->getDeclContext();
+    return IgnoredContexts.count(DC) == 0;
+  }
+
   void VisitStmt(Stmt *S) {
     for (Stmt::child_iterator I = S->child_begin(), E = S->child_end();I!=E;++I)
       if (Stmt *child = *I)
@@ -229,15 +236,22 @@ public:
         }
       }
   }
-  
+
   void VisitBlockDeclRefExpr(BlockDeclRefExpr *DR) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
       unsigned &flag = Visited[VD];
       if (!flag) {
         flag = 1;
-        BEVals.push_back(VD, BC);
+        if (IsTrackedDecl(VD))
+          BEVals.push_back(VD, BC);
       }
     }
+  }
+
+  void VisitBlockExpr(BlockExpr *BR) {
+    // Blocks containing blocks can transitively capture more variables.
+    IgnoredContexts.insert(BR->getBlockDecl());
+    Visit(BR->getBlockDecl()->getBody());
   }
 };  
 } // end anonymous namespace

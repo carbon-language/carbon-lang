@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 
 void f1() {
   int k, y;
@@ -377,7 +377,7 @@ void f24_A(int y) {
   // FIXME: One day this should be reported as dead since 'z = x + y' is dead.
   int x = (y > 2); // no-warning
   ^ {
-    int z = x + y; // FIXME: Eventually this should be reported as a dead store.
+      int z = x + y; // expected-warning{{Value stored to 'z' during its initialization is never read}}
   }();  
 }
 
@@ -427,5 +427,19 @@ int f25_b(int y) {
   __block int z = 0;
   x = 4; // no-warning
   return z; 
+}
+
+int f26_nestedblocks() {
+  int z;
+  z = 1;
+  __block int y = 0;
+  ^{
+    int k;
+    k = 1; // expected-warning{{Value stored to 'k' is never read}}
+    ^{
+        y = z + 1;
+     }();
+  }();
+  return y;
 }
 
