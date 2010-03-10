@@ -46,11 +46,6 @@ namespace llvm {
     /// @name Symbol Managment
     /// @{
 
-    /// CreateSymbol - Create a new symbol with the specified @p Name.
-    ///
-    /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *CreateSymbol(StringRef Name);
-
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @p Name.  If it exists, return it.  If not, create a forward
     /// reference and return it.
@@ -59,13 +54,15 @@ namespace llvm {
     MCSymbol *GetOrCreateSymbol(StringRef Name);
     MCSymbol *GetOrCreateSymbol(const Twine &Name);
 
-    /// CreateTemporarySymbol - Create a new temporary symbol with the specified
-    /// @p Name.
+    /// GetOrCreateTemporarySymbol - Create a new assembler temporary symbol
+    /// with the specified @p Name if it doesn't exist or return the existing
+    /// one if it does.
     ///
     /// @param Name - The symbol name, for debugging purposes only, temporary
     /// symbols do not surive assembly. If non-empty the name must be unique
     /// across all symbols.
-    MCSymbol *CreateTemporarySymbol(StringRef Name = "");
+    MCSymbol *GetOrCreateTemporarySymbol(StringRef Name = "");
+    MCSymbol *GetOrCreateTemporarySymbol(const Twine &Name);
 
     /// LookupSymbol - Get the symbol for \p Name, or null.
     MCSymbol *LookupSymbol(StringRef Name) const;

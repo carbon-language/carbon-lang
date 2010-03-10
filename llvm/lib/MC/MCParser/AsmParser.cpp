@@ -240,14 +240,10 @@ bool AsmParser::ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 }
 
 MCSymbol *AsmParser::CreateSymbol(StringRef Name) {
-  if (MCSymbol *S = Ctx.LookupSymbol(Name))
-    return S;
-
   // If the label starts with L it is an assembler temporary label.
   if (Name.startswith("L"))
-    return Ctx.CreateTemporarySymbol(Name);
-
-  return Ctx.CreateSymbol(Name);
+    return Ctx.GetOrCreateTemporarySymbol(Name);
+  return Ctx.GetOrCreateSymbol(Name);
 }
 
 /// ParsePrimaryExpr - Parse a primary expression and return it.

@@ -23,16 +23,8 @@ MCContext::~MCContext() {
   // we don't need to free them here.
 }
 
-MCSymbol *MCContext::CreateSymbol(StringRef Name) {
-  assert(Name[0] != '\0' && "Normal symbols cannot be unnamed!");
-
-  // Create and bind the symbol, and ensure that names are unique.
-  MCSymbol *&Entry = Symbols[Name];
-  assert(!Entry && "Duplicate symbol definition!");
-  return Entry = new (*this) MCSymbol(Name, false);
-}
-
 MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
+  assert(!Name.empty() && "Normal symbols cannot be unnamed!");
   MCSymbol *&Entry = Symbols[Name];
   if (Entry) return Entry;
 
@@ -46,16 +38,23 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 }
 
 
-MCSymbol *MCContext::CreateTemporarySymbol(StringRef Name) {
+MCSymbol *MCContext::GetOrCreateTemporarySymbol(StringRef Name) {
   // If unnamed, just create a symbol.
   if (Name.empty())
     new (*this) MCSymbol("", true);
     
   // Otherwise create as usual.
   MCSymbol *&Entry = Symbols[Name];
-  assert(!Entry && "Duplicate symbol definition!");
+  if (Entry) return Entry;
   return Entry = new (*this) MCSymbol(Name, true);
 }
+
+MCSymbol *MCContext::GetOrCreateTemporarySymbol(const Twine &Name) {
+  SmallString<128> NameSV;
+  Name.toVector(NameSV);
+  return GetOrCreateTemporarySymbol(NameSV.str());
+}
+
 
 MCSymbol *MCContext::LookupSymbol(StringRef Name) const {
   return Symbols.lookup(Name);
