@@ -132,7 +132,7 @@ bool LoopSimplify::ProcessLoop(Loop *L, LPPassManager &LPM) {
   bool Changed = false;
 ReprocessLoop:
 
-  // Check to see that no blocks (other than the header) in this loop that has
+  // Check to see that no blocks (other than the header) in this loop have
   // predecessors that are not in the loop.  This is not valid for natural
   // loops, but can occur if the blocks are unreachable.  Since they are
   // unreachable we can just shamelessly delete those CFG edges!
