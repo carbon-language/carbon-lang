@@ -1127,14 +1127,21 @@ private:
     /// BaseOffset - The base offset of this method.
     const uint64_t BaseOffset;
     
+    /// BaseOffsetInLayoutClass - The base offset in the layout class of this
+    /// method.
+    const uint64_t BaseOffsetInLayoutClass;
+    
     /// VtableIndex - The index in the vtable that this method has.
     /// (For destructors, this is the index of the complete destructor).
     const uint64_t VtableIndex;
     
-    MethodInfo(uint64_t BaseOffset, uint64_t VtableIndex)
-      : BaseOffset(BaseOffset), VtableIndex(VtableIndex) { }
+    MethodInfo(uint64_t BaseOffset, uint64_t BaseOffsetInLayoutClass, 
+               uint64_t VtableIndex)
+      : BaseOffset(BaseOffset), 
+      BaseOffsetInLayoutClass(BaseOffsetInLayoutClass),
+      VtableIndex(VtableIndex) { }
     
-    MethodInfo() : BaseOffset(0), VtableIndex(0) { }
+    MethodInfo() : BaseOffset(0), BaseOffsetInLayoutClass(0), VtableIndex(0) { }
   };
   
   typedef llvm::DenseMap<const CXXMethodDecl *, MethodInfo> MethodInfoMapTy;
@@ -1305,15 +1312,13 @@ void VtableBuilder::ComputeThisAdjustments() {
     const CXXMethodDecl *MD = I->first;
     const MethodInfo &MethodInfo = I->second;
 
-    BaseSubobject OverriddenBaseSubobject(MD->getParent(),
-                                          MethodInfo.BaseOffset);
-
     // Get the final overrider for this method.
     FinalOverriders::OverriderInfo Overrider =
-      Overriders.getOverrider(OverriddenBaseSubobject, MD);
+      Overriders.getOverrider(BaseSubobject(MD->getParent(), 
+                                            MethodInfo.BaseOffset), MD);
     
     // Check if we need an adjustment.
-    if (Overrider.OldOffset == (int64_t)MethodInfo.BaseOffset)
+    if (Overrider.Offset == MethodInfo.BaseOffsetInLayoutClass)
       continue;
     
     uint64_t VtableIndex = MethodInfo.VtableIndex;
@@ -1327,8 +1332,11 @@ void VtableBuilder::ComputeThisAdjustments() {
         VtableComponent::CK_UnusedFunctionPointer)
       continue;
 
+    BaseSubobject OverriddenBaseSubobject(MD->getParent(),
+                                          MethodInfo.BaseOffsetInLayoutClass);
+    
     BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
-                                         Overrider.OldOffset);
+                                         Overrider.Offset);
 
     // Compute the adjustment offset.
     BaseOffset ThisAdjustmentOffset =
@@ -1406,13 +1414,13 @@ VtableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
     if (Offset.VirtualBase) {
       // If we have a virtual base class, the non-virtual offset is relative
       // to the virtual base class offset.
-      const ASTRecordLayout &MostDerivedClassLayout = 
-        Context.getASTRecordLayout(MostDerivedClass);
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
       
       /// Get the virtual base offset, relative to the most derived class 
       /// layout.
       OffsetToBaseSubobject += 
-        MostDerivedClassLayout.getVBaseClassOffset(Offset.VirtualBase);
+        LayoutClassLayout.getVBaseClassOffset(Offset.VirtualBase);
     } else {
       // Otherwise, the non-virtual offset is relative to the derived class 
       // offset.
@@ -1669,6 +1677,7 @@ VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         MethodInfo &OverriddenMethodInfo = MethodInfoMap[OverriddenMD];
         
         MethodInfo MethodInfo(Base.getBaseOffset(), 
+                              BaseOffsetInLayoutClass,
                               OverriddenMethodInfo.VtableIndex);
 
         assert(!MethodInfoMap.count(MD) &&
@@ -1681,7 +1690,8 @@ VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
     }
 
     // Insert the method info for this method.
-    MethodInfo MethodInfo(Base.getBaseOffset(), Components.size());
+    MethodInfo MethodInfo(Base.getBaseOffset(), BaseOffsetInLayoutClass,
+                          Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
            "Should not have method info for this method yet!");
