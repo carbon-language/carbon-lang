@@ -154,6 +154,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::STORE);
+  setTargetDAGCombine(ISD::ADD);
 }
 
 SDValue XCoreTargetLowering::
@@ -1277,6 +1278,61 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         return DAG.getMergeValues(Ops, 2, dl);
       }
     }
+  }
+  break;
+  case ISD::ADD: {
+    // Fold expressions such as add(add(mul(x,y),a),b) -> lmul(x, y, a, b).
+    // This is only profitable if the intermediate results are unused
+    // elsewhere.
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SDValue AddOp;
+    SDValue OtherOp;
+    if (N0.getOpcode() == ISD::ADD) {
+      AddOp = N0;
+      OtherOp = N1;
+    } else if (N1.getOpcode() == ISD::ADD) {
+      AddOp = N1;
+      OtherOp = N0;
+    } else {
+      break;
+    }
+    SDValue Addend0, Addend1;
+    SDValue Mul0;
+    SDValue Mul1;
+    if (OtherOp.getOpcode() == ISD::MUL) {
+      // add(add(a,b),mul(x,y))
+      if (!OtherOp.hasOneUse() || !AddOp.hasOneUse())
+        break;
+      Mul0 = OtherOp.getOperand(0);
+      Mul1 = OtherOp.getOperand(1);
+      Addend0 = AddOp.getOperand(0);
+      Addend1 = AddOp.getOperand(1);
+    } else if (AddOp.getOperand(0).getOpcode() == ISD::MUL) {
+      // add(add(mul(x,y),a),b)
+      if (!AddOp.getOperand(0).hasOneUse())
+        break;
+      Mul0 = AddOp.getOperand(0).getOperand(0);
+      Mul1 = AddOp.getOperand(0).getOperand(1);
+      Addend0 = AddOp.getOperand(1);
+      Addend1 = OtherOp;
+    } else if (AddOp.getOperand(1).getOpcode() == ISD::MUL) {
+      // add(add(a,mul(x,y)),b)
+      if (!AddOp.getOperand(1).hasOneUse())
+        break;
+      Mul0 = AddOp.getOperand(1).getOperand(0);
+      Mul1 = AddOp.getOperand(1).getOperand(1);
+      Addend0 = AddOp.getOperand(0);
+      Addend1 = OtherOp;
+    } else {
+      break;
+    }
+    SDValue Zero = DAG.getConstant(0, MVT::i32);
+    SDValue Ignored = DAG.getNode(XCoreISD::LMUL, dl,
+                                  DAG.getVTList(MVT::i32, MVT::i32), Mul0,
+                                  Mul1, Addend0, Addend1);
+    SDValue Result(Ignored.getNode(), 1);
+    return Result;
   }
   break;
   case ISD::STORE: {

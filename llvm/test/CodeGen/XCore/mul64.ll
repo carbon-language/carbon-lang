@@ -25,3 +25,15 @@ entry:
 ; CHECK-NEXT: mov r0, r3
 ; CHECK-NEXT: mov r1, r2
 ; CHECK-NEXT: retsp 0
+
+define i64 @mul64(i64 %a, i64 %b) {
+entry:
+	%0 = mul i64 %a, %b
+	ret i64 %0
+}
+; CHECK: mul64:
+; CHECK: ldc r11, 0
+; CHECK-NEXT: lmul r11, r4, r0, r2, r11, r11
+; CHECK-NEXT: mul r0, r0, r3
+; CHECK-NEXT: lmul r0, r1, r1, r2, r11, r0
+; CHECK-NEXT: mov r0, r4
