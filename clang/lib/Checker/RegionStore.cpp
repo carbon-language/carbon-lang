@@ -29,8 +29,6 @@
 
 using namespace clang;
 
-#define USE_EXPLICIT_COMPOUND 0
-
 //===----------------------------------------------------------------------===//
 // Representation of binding keys.
 //===----------------------------------------------------------------------===//
@@ -1341,49 +1339,12 @@ SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   RecordDecl* RD = RT->getDecl();
   assert(RD->isDefinition());
   (void)RD;
-#if USE_EXPLICIT_COMPOUND
-  llvm::ImmutableList<SVal> StructVal = getBasicVals().getEmptySValList();
-
-  // FIXME: We shouldn't use a std::vector.  If RecordDecl doesn't have a
-  // reverse iterator, we should implement one.
-  std::vector<FieldDecl *> Fields(RD->field_begin(), RD->field_end());
-
-  for (std::vector<FieldDecl *>::reverse_iterator Field = Fields.rbegin(),
-                                               FieldEnd = Fields.rend();
-       Field != FieldEnd; ++Field) {
-    FieldRegion* FR = MRMgr.getFieldRegion(*Field, R);
-    QualType FTy = (*Field)->getType();
-    SVal FieldValue = Retrieve(store, loc::MemRegionVal(FR), FTy).getSVal();
-    StructVal = getBasicVals().consVals(FieldValue, StructVal);
-  }
-
-  return ValMgr.makeCompoundVal(T, StructVal);
-#else
   return ValMgr.makeLazyCompoundVal(store, R);
-#endif
 }
 
 SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
-#if USE_EXPLICIT_COMPOUND
-  QualType T = R->getValueType(getContext());
-  ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
-
-  llvm::ImmutableList<SVal> ArrayVal = getBasicVals().getEmptySValList();
-  uint64_t size = CAT->getSize().getZExtValue();
-  for (uint64_t i = 0; i < size; ++i) {
-    SVal Idx = ValMgr.makeArrayIndex(i);
-    ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R,
-                                               getContext());
-    QualType ETy = ER->getElementType();
-    SVal ElementVal = Retrieve(store, loc::MemRegionVal(ER), ETy).getSVal();
-    ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
-  }
-
-  return ValMgr.makeCompoundVal(T, ArrayVal);
-#else
   assert(isa<ConstantArrayType>(R->getValueType(getContext())));
   return ValMgr.makeLazyCompoundVal(store, R);
-#endif
 }
 
 //===----------------------------------------------------------------------===//
