@@ -61,7 +61,8 @@ namespace {
                                 MachineBasicBlock::const_iterator E);
     bool hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB);
     bool isCSECandidate(MachineInstr *MI);
-    bool isProfitableToCSE(unsigned Reg, MachineInstr *MI);
+    bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
+                           MachineInstr *CSMI, MachineInstr *MI);
     bool ProcessBlock(MachineDomTreeNode *Node);
   };
 } // end anonymous namespace
@@ -143,6 +144,8 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
   return false;
 }
 
+/// hasLivePhysRegDefUse - Return true if the specified instruction read / write
+/// physical registers (except for dead defs of physical registers).
 bool MachineCSE::hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB){
   unsigned PhysDef = 0;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -177,16 +180,19 @@ bool MachineCSE::hasLivePhysRegDefUse(MachineInstr *MI, MachineBasicBlock *MBB){
   return false;
 }
 
+static bool isCopy(const MachineInstr *MI, const TargetInstrInfo *TII) {
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  return TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
+    MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg();
+}
+
 bool MachineCSE::isCSECandidate(MachineInstr *MI) {
   if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
       MI->isKill() || MI->isInlineAsm())
     return false;
 
-  // Ignore copies or instructions that read / write physical registers
-  // (except for dead defs of physical registers).
-  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-  if (TII->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) ||
-      MI->isExtractSubreg() || MI->isInsertSubreg() || MI->isSubregToReg())
+  // Ignore copies.
+  if (isCopy(MI, TII))
     return false;
 
   // Ignore stuff that we obviously can't move.
@@ -210,14 +216,52 @@ bool MachineCSE::isCSECandidate(MachineInstr *MI) {
 
 /// isProfitableToCSE - Return true if it's profitable to eliminate MI with a
 /// common expression that defines Reg.
-bool MachineCSE::isProfitableToCSE(unsigned Reg, MachineInstr *MI) {
-  // FIXME: This "heuristic" works around the lack the live range splitting.
-  // If the common subexpression is used by PHIs, do not reuse it unless the
-  // defined value is already used in the BB of the new use.
+bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
+                                   MachineInstr *CSMI, MachineInstr *MI) {
+  // FIXME: Heuristics that works around the lack the live range splitting.
+
+  // Heuristics #1: Don't cse "cheap" computating if the def is not local or in an
+  // immediate predecessor. We don't want to increase register pressure and end up
+  // causing other computation to be spilled.
+  if (MI->getDesc().isAsCheapAsAMove()) {
+    MachineBasicBlock *CSBB = CSMI->getParent();
+    MachineBasicBlock *BB = MI->getParent();
+    if (CSBB != BB && 
+        find(CSBB->succ_begin(), CSBB->succ_end(), BB) == CSBB->succ_end())
+      return false;
+  }
+
+  // Heuristics #2: If the expression doesn't not use a vr and the only use
+  // of the redundant computation are copies, do not cse.
+  bool HasVRegUse = false;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isUse() && MO.getReg() &&
+        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
+      HasVRegUse = true;
+      break;
+    }
+  }
+  if (!HasVRegUse) {
+    bool HasNonCopyUse = false;
+    for (MachineRegisterInfo::use_nodbg_iterator I =  MRI->use_nodbg_begin(Reg),
+           E = MRI->use_nodbg_end(); I != E; ++I) {
+      MachineInstr *Use = &*I;
+      // Ignore copies.
+      if (!isCopy(Use, TII)) {
+        HasNonCopyUse = true;
+        break;
+      }
+    }
+    if (!HasNonCopyUse)
+      return false;
+  }
+
+  // Heuristics #3: If the common subexpression is used by PHIs, do not reuse
+  // it unless the defined value is already used in the BB of the new use.
   bool HasPHI = false;
   SmallPtrSet<MachineBasicBlock*, 4> CSBBs;
-  for (MachineRegisterInfo::use_nodbg_iterator I = 
-       MRI->use_nodbg_begin(Reg),
+  for (MachineRegisterInfo::use_nodbg_iterator I =  MRI->use_nodbg_begin(CSReg),
        E = MRI->use_nodbg_end(); I != E; ++I) {
     MachineInstr *Use = &*I;
     HasPHI |= Use->isPHI();
@@ -282,7 +326,7 @@ bool MachineCSE::ProcessBlock(MachineDomTreeNode *Node) {
       assert(TargetRegisterInfo::isVirtualRegister(OldReg) &&
              TargetRegisterInfo::isVirtualRegister(NewReg) &&
              "Do not CSE physical register defs!");
-      if (!isProfitableToCSE(NewReg, MI)) {
+      if (!isProfitableToCSE(NewReg, OldReg, CSMI, MI)) {
         DoCSE = false;
         break;
       }
