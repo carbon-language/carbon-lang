@@ -57,17 +57,20 @@ class RegionState {};
 class MallocChecker : public CheckerVisitor<MallocChecker> {
   BuiltinBug *BT_DoubleFree;
   BuiltinBug *BT_Leak;
+  BuiltinBug *BT_UseFree;
   IdentifierInfo *II_malloc, *II_free, *II_realloc;
 
 public:
   MallocChecker() 
-    : BT_DoubleFree(0), BT_Leak(0), II_malloc(0), II_free(0), II_realloc(0) {}
+    : BT_DoubleFree(0), BT_Leak(0), BT_UseFree(0), 
+      II_malloc(0), II_free(0), II_realloc(0) {}
   static void *getTag();
   bool EvalCallExpr(CheckerContext &C, const CallExpr *CE);
   void EvalDeadSymbols(CheckerContext &C,const Stmt *S,SymbolReaper &SymReaper);
   void EvalEndPath(GREndPathNodeBuilder &B, void *tag, GRExprEngine &Eng);
   void PreVisitReturnStmt(CheckerContext &C, const ReturnStmt *S);
   const GRState *EvalAssume(const GRState *state, SVal Cond, bool Assumption);
+  void VisitLocation(CheckerContext &C, const Stmt *S, SVal l);
 
 private:
   void MallocMem(CheckerContext &C, const CallExpr *CE);
@@ -338,4 +341,23 @@ const GRState *MallocChecker::EvalAssume(const GRState *state, SVal Cond,
   }
 
   return state;
+}
+
+// Check if the location is a freed symbolic region.
+void MallocChecker::VisitLocation(CheckerContext &C, const Stmt *S, SVal l) {
+  SymbolRef Sym = l.getLocSymbolInBase();
+  if (Sym) {
+    const RefState *RS = C.getState()->get<RegionState>(Sym);
+    if (RS)
+      if (RS->isReleased()) {
+        ExplodedNode *N = C.GenerateSink();
+        if (!BT_UseFree)
+          BT_UseFree = new BuiltinBug("Use dynamically allocated memory after"
+                                      " it is freed.");
+
+        BugReport *R = new BugReport(*BT_UseFree, BT_UseFree->getDescription(),
+                                     N);
+        C.EmitReport(R);
+      }
+  }
 }

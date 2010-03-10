@@ -61,3 +61,9 @@ void pr6069() {
 void pr6293() {
   free(0);
 }
+
+void f7() {
+  char *x = (char*) malloc(4);
+  free(x);
+  x[0] = 'a'; // expected-warning{{Use dynamically allocated memory after it is freed.}}
+}

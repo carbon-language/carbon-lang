@@ -112,6 +112,9 @@ public:
   ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolData*
   SymbolRef getAsLocSymbol() const;
 
+  /// Get the symbol in the SVal or its base region.
+  SymbolRef getLocSymbolInBase() const;
+
   /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
   ///  Otherwise return a SymbolRef where 'isValid()' returns false.
   SymbolRef getAsSymbol() const;

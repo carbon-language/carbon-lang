@@ -70,6 +70,25 @@ SymbolRef SVal::getAsLocSymbol() const {
   return NULL;
 }
 
+/// Get the symbol in the SVal or its base region.
+SymbolRef SVal::getLocSymbolInBase() const {
+  const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this);
+
+  if (!X)
+    return 0;
+
+  const MemRegion *R = X->getRegion();
+
+  while (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
+    if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(SR))
+      return SymR->getSymbol();
+    else
+      R = SR->getSuperRegion();
+  }
+
+  return 0;
+}
+
 /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
 ///  Otherwise return 0.
 // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
