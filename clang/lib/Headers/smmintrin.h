@@ -179,6 +179,27 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
   return (__m128i) __builtin_ia32_pmaxud128((__v4si) __V1, (__v4si) __V2);
 }
 
+/* SSE4 Insertion and Extraction from XMM Register Instructions.  */
+#define _mm_insert_ps(X, Y, N) __builtin_ia32_insertps128((X), (Y), (N))
+#define _mm_extract_ps(X, N) (__extension__                      \
+                              ({ union { int i; float f; } __t;  \
+                                 __v4sf __a = (__v4sf)X;         \
+                                 __t.f = __a[N];                 \
+                                 __t.i;}))
+
+/* Miscellaneous insert and extract macros.  */
+/* Extract a single-precision float from X at index N into D.  */
+#define _MM_EXTRACT_FLOAT(D, X, N) (__extension__ ({ __v4sf __a = (__v4sf)X; \
+                                                    (D) = __a[N]; }))
+                                                    
+/* Or together 2 sets of indexes (X and Y) with the zeroing bits (Z) to create
+   an index suitable for _mm_insert_ps.  */
+#define _MM_MK_INSERTPS_NDX(X, Y, Z) (((X) << 6) | ((Y) << 4) | (Z))
+                                           
+/* Extract a float from X at index N into the first index of the return.  */
+#define _MM_PICK_OUT_PS(X, N) _mm_insert_ps (_mm_setzero_ps(), (X),   \
+                                             _MM_MK_INSERTPS_NDX((N), 0, 0x0e))
+
 #endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */
