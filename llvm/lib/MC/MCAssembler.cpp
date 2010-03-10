@@ -462,9 +462,11 @@ public:
         llvm_report_error("symbol '" + B->getName() +
                           "' can not be undefined in a subtraction expression");
 
-      // FIXME: This change of type based on the external bit doesn't make much
-      // sense, it seems to be redundant with the other information in the
-      // relocation entry.
+      // Select the appropriate difference relocation type.
+      //
+      // Note that there is no longer any semantic difference between these two
+      // relocation types from the linkers point of view, this is done solely
+      // for pedantic compatibility with 'as'.
       Type = A_SD->isExternal() ? RIT_Difference : RIT_LocalDifference;
       Value2 = B_SD->getFragment()->getAddress() + B_SD->getOffset();
     }
