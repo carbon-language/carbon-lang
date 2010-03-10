@@ -43,8 +43,10 @@ protected:
 
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);
-  static MDString *get(LLVMContext &Context, const char *Str);
-  
+  static MDString *get(LLVMContext &Context, const char *Str) {
+    return get(Context, Str ? StringRef(Str) : StringRef());
+  }
+
   StringRef getString() const { return Str; }
 
   unsigned getLength() const { return (unsigned)Str.size(); }

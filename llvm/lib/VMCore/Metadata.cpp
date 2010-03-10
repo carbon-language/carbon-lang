@@ -39,15 +39,6 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   return S;
 }
 
-MDString *MDString::get(LLVMContext &Context, const char *Str) {
-  LLVMContextImpl *pImpl = Context.pImpl;
-  StringMapEntry<MDString *> &Entry =
-    pImpl->MDStringCache.GetOrCreateValue(Str ? StringRef(Str) : StringRef());
-  MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Context, Entry.getKey());
-  return S;
-}
-
 //===----------------------------------------------------------------------===//
 // MDNodeOperand implementation.
 //
