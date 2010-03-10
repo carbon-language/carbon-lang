@@ -593,13 +593,10 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 
   MachineBasicBlock::iterator E = MBB->end();  
   while (mi != E) {
-    if (mi->isDebugValue()) {
+    while (mi != E && mi->isDebugValue())
       ++mi;
-      if (mi != E && !mi->isDebugValue()) {
-        baseIndex = indexes_->getNextNonNullIndex(baseIndex);
-      }
-      continue;
-    }
+    if (mi == E)
+      break;
     if (mi->killsRegister(interval.reg, tri_)) {
       DEBUG(dbgs() << " killed");
       end = baseIndex.getDefIndex();
