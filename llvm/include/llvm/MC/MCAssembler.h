@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCASSEMBLER_H
 #define LLVM_MC_MCASSEMBLER_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
@@ -587,6 +588,16 @@ private:
 
   iplist<MCSymbolData> Symbols;
 
+  /// The map of sections to their associated assembler backend data.
+  //
+  // FIXME: Avoid this indirection?
+  DenseMap<const MCSection*, MCSectionData*> SectionMap;
+
+  /// The map of symbols to their associated assembler backend data.
+  //
+  // FIXME: Avoid this indirection?
+  DenseMap<const MCSymbol*, MCSymbolData*> SymbolMap;
+
   std::vector<IndirectSymbolData> IndirectSymbols;
 
   unsigned SubsectionsViaSymbols : 1;
@@ -671,6 +682,44 @@ public:
   }
 
   size_t indirect_symbol_size() const { return IndirectSymbols.size(); }
+
+  /// @}
+  /// @name Backend Data Access
+  /// @{
+
+  MCSectionData &getSectionData(const MCSection &Section) {
+    MCSectionData *&Entry = SectionMap[&Section];
+    assert(Entry && "Missing section data!");
+    return *Entry;
+  }
+
+  MCSectionData &getOrCreateSectionData(const MCSection &Section,
+                                        bool *Created = 0) {
+    MCSectionData *&Entry = SectionMap[&Section];
+
+    if (Created) *Created = !Entry;
+    if (!Entry)
+      Entry = new MCSectionData(Section, this);
+
+    return *Entry;
+  }
+
+  MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
+    MCSymbolData *&Entry = SymbolMap[&Symbol];
+    assert(Entry && "Missing symbol data!");
+    return *Entry;
+  }
+
+  MCSymbolData &getOrCreateSymbolData(const MCSymbol &Symbol,
+                                      bool *Created = 0) {
+    MCSymbolData *&Entry = SymbolMap[&Symbol];
+
+    if (Created) *Created = !Entry;
+    if (!Entry)
+      Entry = new MCSymbolData(Symbol, 0, 0, this);
+
+    return *Entry;
+  }
 
   /// @}
 
