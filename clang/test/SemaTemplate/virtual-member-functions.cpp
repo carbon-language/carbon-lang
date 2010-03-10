@@ -14,7 +14,7 @@ template<class T> int A<T>::a(T x) {
 }
 
 void f(A<int> x) {
-  x.anchor(); // expected-note{{in instantiation of member function 'PR5557::A<int>::anchor' requested here}}
+  x.anchor();
 }
 
 template<typename T>
@@ -52,4 +52,4 @@ T *HasOutOfLineKey<T>::f(float *fp) {
   return fp; // expected-error{{cannot initialize return object of type 'int *' with an lvalue of type 'float *'}}
 }
 
-HasOutOfLineKey<int> out_of_line; // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::HasOutOfLineKey' requested here}}
+HasOutOfLineKey<int> out_of_line;

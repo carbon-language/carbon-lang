@@ -3405,7 +3405,22 @@ void CGVtableInfo::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
                           /*IsVirtual=*/false,
                           AddressPoints);
-  GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);  
+  GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
+
+  for (CXXRecordDecl::method_iterator i = RD->method_begin(),
+	 e = RD->method_end(); i != e; ++i) {
+    if (!(*i)->isVirtual())
+      continue;
+    if(!(*i)->hasInlineBody() && !(*i)->isImplicit())
+      continue;
+
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(*i)) {
+      CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Complete));
+      CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Deleting));
+    } else {
+      CGM.BuildThunksForVirtual(GlobalDecl(*i));
+    }
+  }
 }
 
 llvm::GlobalVariable *CGVtableInfo::getVtable(const CXXRecordDecl *RD) {
@@ -3438,19 +3453,12 @@ void CGVtableInfo::MaybeEmitVtable(GlobalDecl GD) {
       return;
   }
 
-  // Emit the data.
-  GenerateClassData(CGM.getVtableLinkage(RD), RD);
+  if (Vtables.count(RD))
+    return;
 
-  for (CXXRecordDecl::method_iterator i = RD->method_begin(),
-       e = RD->method_end(); i != e; ++i) {
-    if ((*i)->isVirtual() && ((*i)->hasInlineBody() || (*i)->isImplicit())) {
-      if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(*i)) {
-        CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Complete));
-        CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Deleting));
-      } else {
-        CGM.BuildThunksForVirtual(GlobalDecl(*i));
-      }
-    }
-  }
+  TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();
+  if (kind == TSK_ImplicitInstantiation)
+    CGM.DeferredVtables.push_back(RD);
+  else
+    GenerateClassData(CGM.getVtableLinkage(RD), RD);
 }
-

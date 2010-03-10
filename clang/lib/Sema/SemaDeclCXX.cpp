@@ -5902,10 +5902,13 @@ void Sema::MaybeMarkVirtualMembersReferenced(SourceLocation Loc,
 
   // We will need to mark all of the virtual members as referenced to build the
   // vtable.
-  // We actually call MarkVirtualMembersReferenced instead of adding to
-  // ClassesWithUnmarkedVirtualMembers because this marking is needed by
-  // codegen that will happend before we finish parsing the file.
-  if (needsVtable(MD, Context))
+  if (!needsVtable(MD, Context))
+    return;
+
+  TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();
+  if (kind == TSK_ImplicitInstantiation)
+    ClassesWithUnmarkedVirtualMembers.push_back(std::make_pair(RD, Loc));
+  else
     MarkVirtualMembersReferenced(Loc, RD);
 }
 

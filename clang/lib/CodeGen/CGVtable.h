@@ -173,15 +173,7 @@ private:
   uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
   
   void ComputeMethodVtableIndices(const CXXRecordDecl *RD);
-  
-  /// GenerateClassData - Generate all the class data requires to be generated
-  /// upon definition of a KeyFunction.  This includes the vtable, the
-  /// rtti data structure and the VTT.
-  /// 
-  /// \param Linkage - The desired linkage of the vtable, the RTTI and the VTT.
-  void GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
-                         const CXXRecordDecl *RD);
- 
+   
   llvm::GlobalVariable *
   GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                  bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
@@ -245,6 +237,14 @@ public:
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   
   void MaybeEmitVtable(GlobalDecl GD);
+
+  /// GenerateClassData - Generate all the class data requires to be generated
+  /// upon definition of a KeyFunction.  This includes the vtable, the
+  /// rtti data structure and the VTT.
+  ///
+  /// \param Linkage - The desired linkage of the vtable, the RTTI and the VTT.
+  void GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
+                         const CXXRecordDecl *RD);
 };
 
 } // end namespace CodeGen

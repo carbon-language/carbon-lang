@@ -488,7 +488,15 @@ void CodeGenModule::EmitDeferred() {
   // Emit code for any potentially referenced deferred decls.  Since a
   // previously unused static decl may become used during the generation of code
   // for a static function, iterate until no  changes are made.
-  while (!DeferredDeclsToEmit.empty()) {
+
+  while (!DeferredDeclsToEmit.empty() || !DeferredVtables.empty()) {
+    if (!DeferredVtables.empty()) {
+      const CXXRecordDecl *RD = DeferredVtables.back();
+      DeferredVtables.pop_back();
+      getVtableInfo().GenerateClassData(getVtableLinkage(RD), RD);
+      continue;
+    }
+
     GlobalDecl D = DeferredDeclsToEmit.back();
     DeferredDeclsToEmit.pop_back();
 
