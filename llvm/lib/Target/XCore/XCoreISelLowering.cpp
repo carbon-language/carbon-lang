@@ -607,10 +607,11 @@ isADDADDMUL(SDValue Op, SDValue &Mul0, SDValue &Mul1, SDValue &Addend0,
   } else {
     return false;
   }
+  if (requireIntermediatesHaveOneUse && !AddOp.hasOneUse())
+    return false;
   if (OtherOp.getOpcode() == ISD::MUL) {
     // add(add(a,b),mul(x,y))
-    if (requireIntermediatesHaveOneUse &&
-        (!OtherOp.hasOneUse() || !AddOp.hasOneUse()))
+    if (requireIntermediatesHaveOneUse && !OtherOp.hasOneUse())
       return false;
     Mul0 = OtherOp.getOperand(0);
     Mul1 = OtherOp.getOperand(1);
