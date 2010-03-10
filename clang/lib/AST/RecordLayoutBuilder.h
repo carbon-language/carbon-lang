@@ -105,14 +105,24 @@ class ASTRecordLayoutBuilder {
   /// placed, in bits.
   uint64_t LayoutBase(const CXXRecordDecl *RD);
   
-  void LayoutVtable(const CXXRecordDecl *RD);
+  /// LayoutNonVirtualBases - Determines the primary base class (if any) and 
+  /// lays it out. Will then proceed to lay out all non-virtual base clasess.
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
-  void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
-  void LayoutVirtualBase(const CXXRecordDecl *RD);
+
+  /// LayoutNonVirtualBase - Lays out a single non-virtual base.
+  void LayoutNonVirtualBase(const CXXRecordDecl *RD);
+
+  /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *Class, const CXXRecordDecl *RD,
                           const CXXRecordDecl *PB, uint64_t Offset, 
                           llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
+
+  /// LayoutVirtualBase - Lays out a single virtual base.
+  void LayoutVirtualBase(const CXXRecordDecl *RD);
+
+  void LayoutVtable(const CXXRecordDecl *RD);
+  void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
 
   /// canPlaceRecordAtOffset - Return whether a record (either a base class
   /// or a field) can be placed at the given offset. 

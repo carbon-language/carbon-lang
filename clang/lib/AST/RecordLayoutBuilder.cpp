@@ -57,9 +57,6 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
   }
 }
 
-// Helper routines related to the abi definition from:
-//   http://www.codesourcery.com/public/cxx-abi/abi.html
-//
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
 bool ASTRecordLayoutBuilder::IsNearlyEmpty(const CXXRecordDecl *RD) const {
