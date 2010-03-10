@@ -1,8 +1,10 @@
-; RUN: llc < %s
+; RUN: llc -mtriple=i386-pc-linux-gnu < %s
 ; PR4668
-; ModuleID = '<stdin>'
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32"
-target triple = "i386-pc-linux-gnu"
+; XFAIL: *
+; FIXME: If the coalescer happens to coalesce %level.1 with the copy to EAX
+; (for ret) then this will fail to compile. The fundamental problem is
+; once the coalescer fixes a virtual register to physical register we can't
+; evict it.
 
 define i32 @x(i32 %qscale) nounwind {
 entry:

@@ -18,9 +18,8 @@ entry:
 bb.nph:                                           ; preds = %entry
 ; CHECK: BB#1
 ; CHECK: ldr.n r2, LCPI1_0
-; CHECK: ldr r3, [r2]
-; CHECK: ldr r3, [r3]
 ; CHECK: ldr r2, [r2]
+; CHECK: ldr r3, [r2]
 ; CHECK: LBB1_2
 ; CHECK: LCPI1_0:
 ; CHECK-NOT: LCPI1_1:
@@ -29,9 +28,8 @@ bb.nph:                                           ; preds = %entry
 ; PIC: BB#1
 ; PIC: ldr.n r2, LCPI1_0
 ; PIC: add r2, pc
-; PIC: ldr r3, [r2]
-; PIC: ldr r3, [r3]
 ; PIC: ldr r2, [r2]
+; PIC: ldr r3, [r2]
 ; PIC: LBB1_2
 ; PIC: LCPI1_0:
 ; PIC-NOT: LCPI1_1:
