@@ -1090,5 +1090,4 @@ class D : virtual B, virtual C {
 };
 void D::d() { } 
 
-
 }
