@@ -446,24 +446,27 @@ public:
 
     // See <reloc.h>.
     const MCSymbol *A = Target.getSymA();
-    MCSymbolData *SD = SymbolMap.lookup(A);
+    MCSymbolData *A_SD = SymbolMap.lookup(A);
 
-    if (!SD->getFragment())
+    if (!A_SD->getFragment())
       llvm_report_error("symbol '" + A->getName() +
                         "' can not be undefined in a subtraction expression");
 
-    uint32_t Value = SD->getFragment()->getAddress() + SD->getOffset();
+    uint32_t Value = A_SD->getFragment()->getAddress() + A_SD->getOffset();
     uint32_t Value2 = 0;
 
     if (const MCSymbol *B = Target.getSymB()) {
-      MCSymbolData *SD = SymbolMap.lookup(B);
+      MCSymbolData *B_SD = SymbolMap.lookup(B);
 
-      if (!SD->getFragment())
+      if (!B_SD->getFragment())
         llvm_report_error("symbol '" + B->getName() +
                           "' can not be undefined in a subtraction expression");
 
-      Type = RIT_LocalDifference;
-      Value2 = SD->getFragment()->getAddress() + SD->getOffset();
+      // FIXME: This change of type based on the external bit doesn't make much
+      // sense, it seems to be redundant with the other information in the
+      // relocation entry.
+      Type = A_SD->isExternal() ? RIT_Difference : RIT_LocalDifference;
+      Value2 = B_SD->getFragment()->getAddress() + B_SD->getOffset();
     }
 
     // The value which goes in the fixup is current value of the expression.
@@ -488,7 +491,7 @@ public:
     MRE.Word1 = Value;
     Relocs.push_back(MRE);
 
-    if (Type == RIT_LocalDifference) {
+    if (Type == RIT_Difference || Type == RIT_LocalDifference) {
       MachRelocationEntry MRE;
       MRE.Word0 = ((0         <<  0) |
                    (RIT_Pair  << 24) |
