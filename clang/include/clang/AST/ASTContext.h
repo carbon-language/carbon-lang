@@ -405,6 +405,8 @@ private:
   /// getExtQualType - Return a type with extended qualifiers.
   QualType getExtQualType(const Type *Base, Qualifiers Quals);
 
+  QualType getTypeDeclTypeSlow(const TypeDecl *Decl);
+
 public:
   /// getAddSpaceQualType - Return the uniqued reference to the type for an
   /// address space qualified type with the specified type and address space.
@@ -580,7 +582,19 @@ public:
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.
-  QualType getTypeDeclType(const TypeDecl *Decl, const TypeDecl* PrevDecl=0);
+  QualType getTypeDeclType(const TypeDecl *Decl,
+                           const TypeDecl *PrevDecl = 0) {
+    assert(Decl && "Passed null for Decl param");
+    if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+
+    if (PrevDecl) {
+      assert(PrevDecl->TypeForDecl && "previous decl has no TypeForDecl");
+      Decl->TypeForDecl = PrevDecl->TypeForDecl;
+      return QualType(PrevDecl->TypeForDecl, 0);
+    }
+
+    return getTypeDeclTypeSlow(Decl);
+  }
 
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.

@@ -1957,38 +1957,36 @@ QualType ASTContext::getInjectedClassNameType(CXXRecordDecl *Decl,
 
 /// getTypeDeclType - Return the unique reference to the type for the
 /// specified type declaration.
-QualType ASTContext::getTypeDeclType(const TypeDecl *Decl,
-                                     const TypeDecl* PrevDecl) {
+QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) {
   assert(Decl && "Passed null for Decl param");
-  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+  assert(!Decl->TypeForDecl && "TypeForDecl present in slow case");
 
   if (const TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
     return getTypedefType(Typedef);
-  else if (isa<TemplateTypeParmDecl>(Decl)) {
-    assert(false && "Template type parameter types are always available.");
-  } else if (const ObjCInterfaceDecl *ObjCInterface
+
+  if (const ObjCInterfaceDecl *ObjCInterface
                = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
+  assert(!isa<TemplateTypeParmDecl>(Decl) &&
+         "Template type parameter types are always available.");
+
   if (const RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
-    if (PrevDecl)
-      Decl->TypeForDecl = PrevDecl->TypeForDecl;
-    else {
-      assert(!NeedsInjectedClassNameType(Record));
-      Decl->TypeForDecl = new (*this, TypeAlignment) RecordType(Record);
-    }
+    assert(!Record->getPreviousDeclaration() &&
+           "struct/union has previous declaration");
+    assert(!NeedsInjectedClassNameType(Record));
+    Decl->TypeForDecl = new (*this, TypeAlignment) RecordType(Record);
   } else if (const EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
-    if (PrevDecl)
-      Decl->TypeForDecl = PrevDecl->TypeForDecl;
-    else
-      Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Enum);
+    assert(!Enum->getPreviousDeclaration() &&
+           "enum has previous declaration");
+    Decl->TypeForDecl = new (*this, TypeAlignment) EnumType(Enum);
   } else if (const UnresolvedUsingTypenameDecl *Using =
                dyn_cast<UnresolvedUsingTypenameDecl>(Decl)) {
     Decl->TypeForDecl = new (*this, TypeAlignment) UnresolvedUsingType(Using);
   } else
-    assert(false && "TypeDecl without a type?");
+    llvm_unreachable("TypeDecl without a type?");
 
-  if (!PrevDecl) Types.push_back(Decl->TypeForDecl);
+  Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
 
