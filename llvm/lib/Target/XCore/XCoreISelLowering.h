@@ -138,6 +138,8 @@ namespace llvm {
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG);
     SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG);
   
     // Inline asm support

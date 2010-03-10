@@ -98,6 +98,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   // 64bit
   setOperationAction(ISD::ADD, MVT::i64, Custom);
   setOperationAction(ISD::SUB, MVT::i64, Custom);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Custom);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Custom);
   setOperationAction(ISD::MULHS, MVT::i32, Expand);
   setOperationAction(ISD::MULHU, MVT::i32, Expand);
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -167,6 +169,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::VAARG:            return LowerVAARG(Op, DAG);
   case ISD::VASTART:          return LowerVASTART(Op, DAG);
+  case ISD::SMUL_LOHI:        return LowerSMUL_LOHI(Op, DAG);
+  case ISD::UMUL_LOHI:        return LowerUMUL_LOHI(Op, DAG);
   // FIXME: Remove these when LegalizeDAGTypes lands.
   case ISD::ADD:
   case ISD::SUB:              return ExpandADDSUB(Op.getNode(), DAG);
@@ -541,6 +545,40 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
                     Args, DAG, dl);
 
   return CallResult.second;
+}
+
+SDValue XCoreTargetLowering::
+LowerSMUL_LOHI(SDValue Op, SelectionDAG &DAG)
+{
+  assert(Op.getValueType() == MVT::i32 && Op.getOpcode() == ISD::SMUL_LOHI &&
+         "Unexpected operand to lower!");
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue Zero = DAG.getConstant(0, MVT::i32);
+  SDValue Hi = DAG.getNode(XCoreISD::MACCS, dl,
+                           DAG.getVTList(MVT::i32, MVT::i32), Zero, Zero,
+                           LHS, RHS);
+  SDValue Lo(Hi.getNode(), 1);
+  SDValue Ops[] = { Lo, Hi };
+  return DAG.getMergeValues(Ops, 2, dl);
+}
+
+SDValue XCoreTargetLowering::
+LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG)
+{
+  assert(Op.getValueType() == MVT::i32 && Op.getOpcode() == ISD::UMUL_LOHI &&
+         "Unexpected operand to lower!");
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue Zero = DAG.getConstant(0, MVT::i32);
+  SDValue Hi = DAG.getNode(XCoreISD::MACCU, dl,
+                           DAG.getVTList(MVT::i32, MVT::i32), Zero, Zero,
+                           LHS, RHS);
+  SDValue Lo(Hi.getNode(), 1);
+  SDValue Ops[] = { Lo, Hi };
+  return DAG.getMergeValues(Ops, 2, dl);
 }
 
 SDValue XCoreTargetLowering::
