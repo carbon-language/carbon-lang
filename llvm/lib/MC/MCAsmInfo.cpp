@@ -68,9 +68,6 @@ MCAsmInfo::MCAsmInfo() {
   ExceptionsType = ExceptionHandling::None;
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
-  Is_EHSymbolPrivate = true;
-  GlobalEHDirective = 0;
-  SupportsWeakOmittedEHFrame = true;
   DwarfSectionOffsetDirective = 0;
 
   AsmTransCBE = 0;

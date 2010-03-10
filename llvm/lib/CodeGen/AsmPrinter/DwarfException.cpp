@@ -85,7 +85,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
   MCSymbol *EHFrameSym;
-  if (MAI->is_EHSymbolPrivate())
+  if (TLOF.isFunctionEHFrameSymbolPrivate())
     EHFrameSym = getDWLabel("EH_frame", Index);
   else
     EHFrameSym = Asm->OutContext.GetOrCreateSymbol(Twine("EH_frame") + 
@@ -193,9 +193,8 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
-  if (!TheFunc->hasLocalLinkage())
-    if (const char *GlobalEHDirective = MAI->getGlobalEHDirective())
-      O << GlobalEHDirective << *EHFrameInfo.FunctionEHSym << '\n';
+  if (!TheFunc->hasLocalLinkage() && TLOF.isFunctionEHSymbolGlobal())
+    Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,MCSA_Global);
 
   // If corresponding function is weak definition, this should be too.
   if (TheFunc->isWeakForLinker() && MAI->getWeakDefDirective())
@@ -215,7 +214,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   if (!EHFrameInfo.hasCalls && !UnwindTablesMandatory &&
       (!TheFunc->isWeakForLinker() ||
        !MAI->getWeakDefDirective() ||
-       MAI->getSupportsWeakOmittedEHFrame())) {
+       TLOF.getSupportsWeakOmittedEHFrame())) {
     Asm->OutStreamer.EmitAssignment(EHFrameInfo.FunctionEHSym,
                                     MCConstantExpr::Create(0, Asm->OutContext));
     // This name has no connection to the function, so it might get
@@ -981,9 +980,10 @@ void DwarfException::EndFunction() {
   Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_end", SubprogramCount));
   EmitExceptionTable();
 
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   MCSymbol *FunctionEHSym =
     Asm->GetSymbolWithGlobalValueBase(MF->getFunction(), ".eh",
-                                      Asm->MAI->is_EHSymbolPrivate());
+                                      TLOF.isFunctionEHFrameSymbolPrivate());
   
   // Save EH frame information
   EHFrames.push_back(FunctionEHFrameInfo(FunctionEHSym, SubprogramCount,

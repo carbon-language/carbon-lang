@@ -87,11 +87,23 @@ protected:
   const MCSection *DwarfRangesSection;
   const MCSection *DwarfMacroInfoSection;
   
+  /// SupportsWeakEmptyEHFrame - True if target object file supports a
+  /// weak_definition of constant 0 for an omitted EH frame.
+  bool SupportsWeakOmittedEHFrame;
+  
+  /// IsFunctionEHSymbolGlobal - This flag is set to true if the ".eh" symbol
+  /// for a function should be marked .globl.
+  bool IsFunctionEHSymbolGlobal;
+  
+  /// IsFunctionEHFrameSymbolPrivate - This flag is set to true if the
+  /// "EH_frame" symbol for EH information should be an assembler temporary (aka
+  /// private linkage, aka an L or .L label) or false if it should be a normal
+  /// non-.globl label.  This defaults to true.
+  bool IsFunctionEHFrameSymbolPrivate;
 public:
   
   MCContext &getContext() const { return *Ctx; }
   
-
   virtual ~TargetLoweringObjectFile();
   
   /// Initialize - this method must be called before any actual lowering is
@@ -101,6 +113,15 @@ public:
     Ctx = &ctx;
   }
   
+  bool isFunctionEHSymbolGlobal() const {
+    return IsFunctionEHSymbolGlobal;
+  }
+  bool isFunctionEHFrameSymbolPrivate() const {
+    return IsFunctionEHFrameSymbolPrivate;
+  }
+  bool getSupportsWeakOmittedEHFrame() const {
+    return SupportsWeakOmittedEHFrame;
+  }
   
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }

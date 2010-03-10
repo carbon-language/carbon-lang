@@ -247,18 +247,6 @@ namespace llvm {
     /// encode inline subroutine information.
     bool DwarfUsesInlineInfoSection;         // Defaults to false.
 
-    /// Is_EHSymbolPrivate - If set, the "_foo.eh" is made private so that it
-    /// doesn't show up in the symbol table of the object file.
-    bool Is_EHSymbolPrivate;                 // Defaults to true.
-
-    /// GlobalEHDirective - This is the directive used to make exception frame
-    /// tables globally visible.
-    const char *GlobalEHDirective;           // Defaults to NULL.
-
-    /// SupportsWeakEmptyEHFrame - True if target assembler and linker will
-    /// handle a weak_definition of constant 0 for an omitted EH frame.
-    bool SupportsWeakOmittedEHFrame;         // Defaults to true.
-
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
     
@@ -418,15 +406,6 @@ namespace llvm {
     }
     bool doesDwarfUsesInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
-    }
-    bool is_EHSymbolPrivate() const {
-      return Is_EHSymbolPrivate;
-    }
-    const char *getGlobalEHDirective() const {
-      return GlobalEHDirective;
-    }
-    bool getSupportsWeakOmittedEHFrame() const {
-      return SupportsWeakOmittedEHFrame;
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;

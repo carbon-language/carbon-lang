@@ -56,6 +56,10 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   DwarfARangesSection = 0;
   DwarfRangesSection = 0;
   DwarfMacroInfoSection = 0;
+  
+  IsFunctionEHSymbolGlobal = false;
+  IsFunctionEHFrameSymbolPrivate = true;
+  SupportsWeakOmittedEHFrame = true;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
