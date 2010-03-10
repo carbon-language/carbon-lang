@@ -437,7 +437,6 @@ public:
   void ComputeScatteredRelocationInfo(MCAssembler &Asm, MCFragment &Fragment,
                                       MCAsmFixup &Fixup,
                                       const MCValue &Target,
-                             DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                                      std::vector<MachRelocationEntry> &Relocs) {
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
@@ -446,7 +445,7 @@ public:
 
     // See <reloc.h>.
     const MCSymbol *A = Target.getSymA();
-    MCSymbolData *A_SD = SymbolMap.lookup(A);
+    MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
     if (!A_SD->getFragment())
       llvm_report_error("symbol '" + A->getName() +
@@ -456,7 +455,7 @@ public:
     uint32_t Value2 = 0;
 
     if (const MCSymbol *B = Target.getSymB()) {
-      MCSymbolData *B_SD = SymbolMap.lookup(B);
+      MCSymbolData *B_SD = &Asm.getSymbolData(*B);
 
       if (!B_SD->getFragment())
         llvm_report_error("symbol '" + B->getName() +
@@ -507,7 +506,6 @@ public:
 
   void ComputeRelocationInfo(MCAssembler &Asm, MCDataFragment &Fragment,
                              MCAsmFixup &Fixup,
-                             DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                              std::vector<MachRelocationEntry> &Relocs) {
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
@@ -525,7 +523,7 @@ public:
         (Target.getSymA() && !Target.getSymA()->isUndefined() &&
          Offset))
       return ComputeScatteredRelocationInfo(Asm, Fragment, Fixup, Target,
-                                            SymbolMap, Relocs);
+                                            Relocs);
 
     // See <reloc.h>.
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
@@ -543,7 +541,7 @@ public:
       llvm_unreachable("FIXME: Not yet implemented!");
     } else {
       const MCSymbol *Symbol = Target.getSymA();
-      MCSymbolData *SD = SymbolMap.lookup(Symbol);
+      MCSymbolData *SD = &Asm.getSymbolData(*Symbol);
 
       if (Symbol->isUndefined()) {
         IsExtern = 1;
@@ -588,8 +586,7 @@ public:
     Relocs.push_back(MRE);
   }
 
-  void BindIndirectSymbols(MCAssembler &Asm,
-                           DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap) {
+  void BindIndirectSymbols(MCAssembler &Asm) {
     // This is the point where 'as' creates actual symbols for indirect symbols
     // (in the following two passes). It would be easier for us to do this
     // sooner when we see the attribute, but that makes getting the order in the
@@ -609,9 +606,7 @@ public:
       if (Type != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
         continue;
 
-      MCSymbolData *&Entry = SymbolMap[it->Symbol];
-      if (!Entry)
-        Entry = new MCSymbolData(*it->Symbol, 0, 0, &Asm);
+      Asm.getOrCreateSymbolData(*it->Symbol);
     }
 
     // Then lazy symbol pointers and symbol stubs.
@@ -627,15 +622,13 @@ public:
           Type != MCSectionMachO::S_SYMBOL_STUBS)
         continue;
 
-      MCSymbolData *&Entry = SymbolMap[it->Symbol];
-      if (!Entry) {
-        Entry = new MCSymbolData(*it->Symbol, 0, 0, &Asm);
-
-        // Set the symbol type to undefined lazy, but only on construction.
-        //
-        // FIXME: Do not hardcode.
-        Entry->setFlags(Entry->getFlags() | 0x0001);
-      }
+      // Set the symbol type to undefined lazy, but only on construction.
+      //
+      // FIXME: Do not hardcode.
+      bool Created;
+      MCSymbolData &Entry = Asm.getOrCreateSymbolData(*it->Symbol, &Created);
+      if (Created)
+        Entry.setFlags(Entry.getFlags() | 0x0001);
     }
   }
 
@@ -756,16 +749,8 @@ public:
   void WriteObject(MCAssembler &Asm) {
     unsigned NumSections = Asm.size();
 
-    // Compute the symbol -> symbol data map.
-    //
-    // FIXME: This should not be here.
-    DenseMap<const MCSymbol*, MCSymbolData *> SymbolMap;
-    for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-           ie = Asm.symbol_end(); it != ie; ++it)
-      SymbolMap[&it->getSymbol()] = it;
-
     // Create symbol data for any indirect symbols.
-    BindIndirectSymbols(Asm, SymbolMap);
+    BindIndirectSymbols(Asm);
 
     // Compute symbol table information.
     SmallString<256> StringTable;
@@ -845,7 +830,7 @@ public:
         if (MCDataFragment *DF = dyn_cast<MCDataFragment>(&*it2))
           for (unsigned i = 0, e = DF->fixup_size(); i != e; ++i)
             ComputeRelocationInfo(Asm, *DF, DF->getFixups()[e - i - 1],
-                                  SymbolMap, RelocInfos);
+                                  RelocInfos);
 
       unsigned NumRelocs = RelocInfos.size() - NumRelocsStart;
       uint64_t SectionStart = SectionDataStart + SD.getAddress();
@@ -914,7 +899,7 @@ public:
         if (Type == MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS) {
           // If this symbol is defined and internal, mark it as such.
           if (it->Symbol->isDefined() &&
-              !SymbolMap.lookup(it->Symbol)->isExternal()) {
+              !Asm.getSymbolData(*it->Symbol).isExternal()) {
             uint32_t Flags = ISF_Local;
             if (it->Symbol->isAbsolute())
               Flags |= ISF_Absolute;
@@ -923,7 +908,7 @@ public:
           }
         }
 
-        Write32(SymbolMap[it->Symbol]->getIndex());
+        Write32(Asm.getSymbolData(*it->Symbol).getIndex());
       }
 
       // FIXME: Check that offsets match computed ones.
