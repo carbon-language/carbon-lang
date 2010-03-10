@@ -181,14 +181,20 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       // Skip the PrimaryBase here, as it is laid down first.
-      if (Base != PrimaryBase.getBase() || PrimaryBase.isVirtual())
-        LayoutBaseNonVirtually(Base, false);
+      if (Base != PrimaryBase.getBase() || PrimaryBase.isVirtual()) {
+        // Lay out the base.
+        LayoutNonVirtualBase(Base);
+      }
     }
   }
 }
 
 void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
-  LayoutBaseNonVirtually(RD, false);
+  // Layout the base.
+  uint64_t Offset = LayoutBase(RD);
+  
+  // Add its base class offset.
+  Bases.push_back(std::make_pair(RD, Offset));
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
@@ -244,7 +250,11 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
-  LayoutBaseNonVirtually(RD, true);
+  // Layout the base.
+  uint64_t Offset = LayoutBase(RD);
+
+  // Add its base class offset.
+  VBases.push_back(std::make_pair(RD, Offset));
 }
 
 uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
@@ -434,18 +444,6 @@ ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD,
   }
 }
 
-void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
-  bool IsVirtualBase) {
-  // Layout the base.
-  uint64_t Offset = LayoutBase(RD);
-
-  // Add base class offsets.
-  if (IsVirtualBase) 
-    VBases.push_back(std::make_pair(RD, Offset));
-  else
-    Bases.push_back(std::make_pair(RD, Offset));
-}
-
 void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   IsUnion = D->isUnion();
 
@@ -464,9 +462,13 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     LayoutVtable(RD);
     // PrimaryBase goes first.
     if (PrimaryBase.getBase()) {
-      if (PrimaryBase.isVirtual())
+      if (PrimaryBase.isVirtual()) {
         IndirectPrimaryBases.insert(PrimaryBase.getBase());
-      LayoutBaseNonVirtually(PrimaryBase.getBase(), PrimaryBase.isVirtual());
+        
+        LayoutVirtualBase(PrimaryBase.getBase());
+      } else {
+        LayoutNonVirtualBase(PrimaryBase.getBase());
+      }
     }
     LayoutNonVirtualBases(RD);
   }

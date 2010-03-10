@@ -122,7 +122,6 @@ class ASTRecordLayoutBuilder {
   uint64_t LayoutBase(const CXXRecordDecl *RD);
   
   void LayoutVtable(const CXXRecordDecl *RD);
-  void LayoutBaseNonVirtually(const CXXRecordDecl *RD, bool IsVBase);
 
   /// canPlaceRecordAtOffset - Return whether a record (either a base class
   /// or a field) can be placed at the given offset. 
