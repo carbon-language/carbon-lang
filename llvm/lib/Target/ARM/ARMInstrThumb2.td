@@ -1109,10 +1109,13 @@ def t2STRHT  : T2IstT<0b01, "strht">;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
 // data/instruction access.  These are for disassembly only.
+//
+// A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
+// The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
 multiclass T2Ipl<bit instr, bit write, string opc> {
 
-  def i12 : T2I<(outs), (ins t2addrmode_imm12:$addr), IIC_iLoadi, opc,
-                "\t$addr", []> {
+  def i12 : T2I<(outs), (ins GPR:$base, i32imm:$imm), IIC_iLoadi, opc,
+                "\t[$base, $imm]", []> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 1; // U = 1
@@ -1122,8 +1125,8 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{15-12} = 0b1111;
   }
 
-  def i8 : T2I<(outs), (ins t2addrmode_imm8:$addr), IIC_iLoadi, opc,
-                "\t$addr", []> {
+  def i8 : T2I<(outs), (ins GPR:$base, neg_zero:$imm), IIC_iLoadi, opc,
+                "\t[$base, $imm]", []> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = 0; // U = 0
@@ -1134,9 +1137,8 @@ multiclass T2Ipl<bit instr, bit write, string opc> {
     let Inst{11-8} = 0b1100;
   }
 
-  // A8.6.118 #0 and #-0 differs.  Translates -0 to -1, -1 to -2, ..., etc.
-  def pci : T2I<(outs), (ins GPR:$base, i32imm:$imm), IIC_iLoadi, opc,
-                "\t[pc, ${imm:negzero}]", []> {
+  def pci : T2I<(outs), (ins GPR:$base, neg_zero:$imm), IIC_iLoadi, opc,
+                "\t[pc, $imm]", []> {
     let Inst{31-25} = 0b1111100;
     let Inst{24} = instr;
     let Inst{23} = ?; // add = (U == 1)
@@ -2469,7 +2471,7 @@ def t2BXJ : T2I<(outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 // opt{5} = changemode from Inst{17}
 // opt{8-6} = AIF from Inst{8-6}
 // opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
-def t2CPS : T2XI<(outs),(ins i32imm:$opt), NoItinerary, "cps${opt:cps}",
+def t2CPS : T2XI<(outs),(ins cps_opt:$opt), NoItinerary, "cps$opt",
                  [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
@@ -2638,8 +2640,8 @@ def t2MRSsys : T2I<(outs GPR:$dst), (ins), NoItinerary, "mrs", "\t$dst, spsr",
 }
 
 // Rn = Inst{19-16}
-def t2MSR : T2I<(outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
-                "\tcpsr${mask:msr}, $src",
+def t2MSR : T2I<(outs), (ins GPR:$src, msr_mask:$mask), NoItinerary, "msr",
+                "\tcpsr$mask, $src",
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;
@@ -2650,8 +2652,8 @@ def t2MSR : T2I<(outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
 }
 
 // Rn = Inst{19-16}
-def t2MSRsys : T2I<(outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
-                   "\tspsr${mask:msr}, $src",
+def t2MSRsys : T2I<(outs), (ins GPR:$src, msr_mask:$mask), NoItinerary, "msr",
+                   "\tspsr$mask, $src",
                    [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{26} = 0;

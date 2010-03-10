@@ -710,7 +710,7 @@ def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
 // opt{5} = changemode from Inst{17}
 // opt{8-6} = AIF from Inst{8-6}
 // opt{10-9} = imod from Inst{19-18} with 0b10 as enable and 0b11 as disable
-def CPS : AXI<(outs),(ins i32imm:$opt), MiscFrm, NoItinerary, "cps${opt:cps}",
+def CPS : AXI<(outs), (ins cps_opt:$opt), MiscFrm, NoItinerary, "cps$opt",
               [/* For disassembly only; pattern left blank */]>,
           Requires<[IsARM]> {
   let Inst{31-28} = 0b1111;
@@ -721,9 +721,12 @@ def CPS : AXI<(outs),(ins i32imm:$opt), MiscFrm, NoItinerary, "cps${opt:cps}",
 
 // Preload signals the memory system of possible future data/instruction access.
 // These are for disassembly only.
+//
+// A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
+// The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
 multiclass APreLoad<bit data, bit read, string opc> {
 
-  def i : AXI<(outs), (ins GPR:$base, i32imm:$imm), MiscFrm, NoItinerary,
+  def i : AXI<(outs), (ins GPR:$base, neg_zero:$imm), MiscFrm, NoItinerary,
                !strconcat(opc, "\t[$base, $imm]"), []> {
     let Inst{31-26} = 0b111101;
     let Inst{25} = 0; // 0 for immediate form
@@ -2844,29 +2847,29 @@ def MRSsys : ABI<0b0001,(outs GPR:$dst),(ins), NoItinerary,"mrs","\t$dst, spsr",
   let Inst{7-4} = 0b0000;
 }
 
-def MSR : ABI<0b0001, (outs), (ins GPR:$src, i32imm:$mask), NoItinerary, "msr",
-              "\tcpsr${mask:msr}, $src",
+def MSR : ABI<0b0001, (outs), (ins GPR:$src, msr_mask:$mask), NoItinerary,
+              "msr", "\tcpsr$mask, $src",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0010;
   let Inst{7-4} = 0b0000;
 }
 
-def MSRi : ABI<0b0011, (outs), (ins so_imm:$a, i32imm:$mask), NoItinerary,"msr",
-              "\tcpsr${mask:msr}, $a",
+def MSRi : ABI<0b0011, (outs), (ins so_imm:$a, msr_mask:$mask), NoItinerary,
+              "msr", "\tcpsr$mask, $a",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0010;
   let Inst{7-4} = 0b0000;
 }
 
-def MSRsys : ABI<0b0001, (outs), (ins GPR:$src, i32imm:$mask),NoItinerary,"msr",
-              "\tspsr${mask:msr}, $src",
+def MSRsys : ABI<0b0001, (outs), (ins GPR:$src, msr_mask:$mask), NoItinerary,
+              "msr", "\tspsr$mask, $src",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0110;
   let Inst{7-4} = 0b0000;
 }
 
-def MSRsysi : ABI<0b0011,(outs),(ins so_imm:$a, i32imm:$mask),NoItinerary,"msr",
-              "\tspsr${mask:msr}, $a",
+def MSRsysi : ABI<0b0011, (outs), (ins so_imm:$a, msr_mask:$mask), NoItinerary,
+              "msr", "\tspsr$mask, $a",
               [/* For disassembly only; pattern left blank */]> {
   let Inst{23-20} = 0b0110;
   let Inst{7-4} = 0b0000;

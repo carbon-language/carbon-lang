@@ -122,6 +122,9 @@ namespace {
     void printT2AddrModeImm8OffsetOperand(const MachineInstr *MI, int OpNum);
     void printT2AddrModeSoRegOperand(const MachineInstr *MI, int OpNum);
 
+    void printCPSOptionOperand(const MachineInstr *MI, int OpNum) {}
+    void printMSRMaskOperand(const MachineInstr *MI, int OpNum) {}
+    void printNegZeroOperand(const MachineInstr *MI, int OpNum) {}
     void printPredicateOperand(const MachineInstr *MI, int OpNum);
     void printMandatoryPredicateOperand(const MachineInstr *MI, int OpNum);
     void printSBitModifierOperand(const MachineInstr *MI, int OpNum);

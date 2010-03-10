@@ -50,7 +50,7 @@ public:
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum);
   void printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
                               const char *Modifier = 0);
-    
+
   void printBitfieldInvMaskImmOperand(const MCInst *MI, unsigned OpNum);
 
   void printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum);
@@ -70,6 +70,9 @@ public:
   void printT2AddrModeImm8OffsetOperand(const MCInst *MI, unsigned OpNum) {}
   void printT2AddrModeSoRegOperand(const MCInst *MI, unsigned OpNum) {}
   
+  void printCPSOptionOperand(const MCInst *MI, unsigned OpNum) {}
+  void printMSRMaskOperand(const MCInst *MI, unsigned OpNum) {}
+  void printNegZeroOperand(const MCInst *MI, unsigned OpNum) {}
   void printPredicateOperand(const MCInst *MI, unsigned OpNum);
   void printMandatoryPredicateOperand(const MCInst *MI, unsigned OpNum);
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum);

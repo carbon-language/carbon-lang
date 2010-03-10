@@ -201,7 +201,7 @@ def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
 //
 // The opt{4-0} and opt{5} sub-fields are to accommodate 32-bit Thumb and ARM
 // CPS which has more options.
-def tCPS : T1I<(outs), (ins i32imm:$opt), NoItinerary, "cps${opt:cps}",
+def tCPS : T1I<(outs), (ins cps_opt:$opt), NoItinerary, "cps$opt",
               [/* For disassembly only; pattern left blank */]>,
            T1Misc<0b0110011>;
 

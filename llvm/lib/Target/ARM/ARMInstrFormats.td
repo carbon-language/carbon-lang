@@ -144,6 +144,23 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
   let PrintMethod = "printSBitModifierOperand";
 }
 
+// ARM special operands for disassembly only.
+//
+
+def cps_opt : Operand<i32> {
+  let PrintMethod = "printCPSOptionOperand";
+}
+
+def msr_mask : Operand<i32> {
+  let PrintMethod = "printMSRMaskOperand";
+}
+
+// A8.6.117, A8.6.118.  Different instructions are generated for #0 and #-0.
+// The neg_zero operand translates -0 to -1, -1 to -2, ..., etc.
+def neg_zero : Operand<i32> {
+  let PrintMethod = "printNegZeroOperand";
+}
+
 //===----------------------------------------------------------------------===//
 
 // ARM Instruction templates.
