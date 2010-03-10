@@ -1238,6 +1238,7 @@ private:
   /// DeterminePrimaryVirtualBases - Determine the primary virtual bases in this
   /// class hierarchy.
   void DeterminePrimaryVirtualBases(const CXXRecordDecl *RD, 
+                                    uint64_t OffsetInLayoutClass,
                                     VisitedVirtualBasesSetTy &VBases);
 
   /// LayoutVtablesForVirtualBases - Layout vtables for all virtual bases of the
@@ -1699,7 +1700,8 @@ void VtableBuilder::LayoutVtable() {
   VisitedVirtualBasesSetTy VBases;
   
   // Determine the primary virtual bases.
-  DeterminePrimaryVirtualBases(MostDerivedClass, VBases);
+  DeterminePrimaryVirtualBases(MostDerivedClass, MostDerivedClassOffset,
+                               VBases);
   VBases.clear();
   
   LayoutVtablesForVirtualBases(MostDerivedClass, VBases);
@@ -1808,7 +1810,8 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
 }
 
 void
-VtableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD, 
+VtableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
+                                            uint64_t OffsetInLayoutClass,
                                             VisitedVirtualBasesSetTy &VBases) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
   
@@ -1822,8 +1825,15 @@ VtableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
       if (isBuildingConstructorVtable()) {
         // Check if the base is actually a primary base in the class we use for
         // layout.
-        // FIXME: Is this check enough?
-        if (MostDerivedClassOffset != 0)
+        const ASTRecordLayout &LayoutClassLayout =
+          Context.getASTRecordLayout(LayoutClass);
+
+        uint64_t PrimaryBaseOffsetInLayoutClass =
+          LayoutClassLayout.getVBaseClassOffset(PrimaryBase);
+        
+        // We know that the base is not a primary base in the layout class if 
+        // the base offsets are different.
+        if (PrimaryBaseOffsetInLayoutClass != OffsetInLayoutClass)
           IsPrimaryVirtualBase = false;
       }
         
@@ -1838,10 +1848,22 @@ VtableBuilder::DeterminePrimaryVirtualBases(const CXXRecordDecl *RD,
     const CXXRecordDecl *BaseDecl = 
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
-    if (I->isVirtual() && !VBases.insert(BaseDecl))
-      continue;
+    uint64_t BaseOffsetInLayoutClass;
+    
+    if (I->isVirtual()) {
+      if (!VBases.insert(BaseDecl))
+        continue;
+      
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
 
-    DeterminePrimaryVirtualBases(BaseDecl, VBases);
+      BaseOffsetInLayoutClass = LayoutClassLayout.getVBaseClassOffset(BaseDecl);
+    } else {
+      BaseOffsetInLayoutClass = 
+        OffsetInLayoutClass + Layout.getBaseClassOffset(BaseDecl);
+    }
+
+    DeterminePrimaryVirtualBases(BaseDecl, BaseOffsetInLayoutClass, VBases);
   }
 }
 
