@@ -1036,3 +1036,59 @@ struct C : A, virtual V, B {
 void C::g() { }
 
 }
+
+namespace Test26 {
+
+// Test that we generate the right number of entries in the C-in-D construction vtable, and that
+// we don't mark A::a as unused.
+
+struct A {
+  virtual void a();
+};
+
+struct B {
+  virtual void c();
+};
+
+struct C : virtual A {
+  virtual void b();
+};
+
+// CHECK:      Vtable for 'Test26::D' (15 entries).
+// CHECK-NEXT:    0 | vbase_offset (8)
+// CHECK-NEXT:    1 | vbase_offset (8)
+// CHECK-NEXT:    2 | vbase_offset (0)
+// CHECK-NEXT:    3 | vcall_offset (0)
+// CHECK-NEXT:    4 | offset_to_top (0)
+// CHECK-NEXT:    5 | Test26::D RTTI
+// CHECK-NEXT:        -- (Test26::B, 0) vtable address --
+// CHECK-NEXT:        -- (Test26::D, 0) vtable address --
+// CHECK-NEXT:    6 | void Test26::B::c()
+// CHECK-NEXT:    7 | void Test26::D::d()
+// CHECK-NEXT:    8 | vcall_offset (0)
+// CHECK-NEXT:    9 | vbase_offset (0)
+// CHECK-NEXT:   10 | vcall_offset (0)
+// CHECK-NEXT:   11 | offset_to_top (-8)
+// CHECK-NEXT:   12 | Test26::D RTTI
+// CHECK-NEXT:        -- (Test26::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test26::C, 8) vtable address --
+// CHECK-NEXT:   13 | void Test26::A::a()
+// CHECK-NEXT:   14 | void Test26::C::b()
+
+// CHECK:      Construction vtable for ('Test26::C', 8) in 'Test26::D' (7 entries).
+// CHECK-NEXT:    0 | vcall_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (0)
+// CHECK-NEXT:    2 | vcall_offset (0)
+// CHECK-NEXT:    3 | offset_to_top (0)
+// CHECK-NEXT:    4 | Test26::C RTTI
+// CHECK-NEXT:        -- (Test26::A, 8) vtable address --
+// CHECK-NEXT:        -- (Test26::C, 8) vtable address --
+// CHECK-NEXT:    5 | void Test26::A::a()
+// CHECK-NEXT:    6 | void Test26::C::b()
+class D : virtual B, virtual C {
+  virtual void d();
+};
+void D::d() { } 
+
+
+}

@@ -1210,15 +1210,17 @@ private:
   ///   thunk. Since we require that a call to C::f() first convert to A*, 
   ///   C-in-D's copy of A's vtable is never referenced, so this is not 
   ///   necessary.
-  bool IsOverriderUsed(BaseSubobject Base, 
-                       BaseSubobject FirstBaseInPrimaryBaseChain,
-                       uint64_t OffsetInLayoutClass,
-                       FinalOverriders::OverriderInfo Overrider) const;
+  bool IsOverriderUsed(const CXXMethodDecl *Overrider,
+                       uint64_t BaseOffsetInLayoutClass,
+                       const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
+                       uint64_t FirstBaseOffsetInLayoutClass) const;
+
   
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
-  void AddMethods(BaseSubobject Base, BaseSubobject FirstBaseInPrimaryBaseChain,
-                  uint64_t OffsetInLayoutClass,
+  void AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,                  
+                  const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
+                  uint64_t FirstBaseOffsetInLayoutClass,
                   PrimaryBasesSetVectorTy &PrimaryBases);
 
   // LayoutVtable - Layout the vtable for the given base class, including its
@@ -1511,13 +1513,13 @@ OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
 }
 
 bool 
-VtableBuilder::IsOverriderUsed(BaseSubobject Base, 
-                               BaseSubobject FirstBaseInPrimaryBaseChain,
-                               uint64_t OffsetInLayoutClass,
-                               FinalOverriders::OverriderInfo Overrider) const {
+VtableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
+                               uint64_t BaseOffsetInLayoutClass,
+                               const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
+                               uint64_t FirstBaseOffsetInLayoutClass) const {
   // If the base and the first base in the primary base chain have the same
   // offsets, then this overrider will be used.
-  if (Base.getBaseOffset() == OffsetInLayoutClass)
+  if (BaseOffsetInLayoutClass == FirstBaseOffsetInLayoutClass)
    return true;
 
   // We know now that Base (or a direct or indirect base of it) is a primary
@@ -1526,12 +1528,12 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
   
   // If the overrider is the first base in the primary base chain, we know
   // that the overrider will be used.
-  if (Overrider.Method->getParent() == FirstBaseInPrimaryBaseChain.getBase())
+  if (Overrider->getParent() == FirstBaseInPrimaryBaseChain)
     return true;
   
   VtableBuilder::PrimaryBasesSetVectorTy PrimaryBases;
 
-  const CXXRecordDecl *RD = FirstBaseInPrimaryBaseChain.getBase();
+  const CXXRecordDecl *RD = FirstBaseInPrimaryBaseChain;
   PrimaryBases.insert(RD);
 
   // Now traverse the base chain, starting with the first base, until we find
@@ -1553,7 +1555,7 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
       // Now check if this is the primary base that is not a primary base in the
       // most derived class.
       if (LayoutClassLayout.getVBaseClassOffset(PrimaryBase) !=
-          OffsetInLayoutClass) {
+          FirstBaseOffsetInLayoutClass) {
         // We found it, stop walking the chain.
         break;
       }
@@ -1570,7 +1572,7 @@ VtableBuilder::IsOverriderUsed(BaseSubobject Base,
   
   // If the final overrider is an override of one of the primary bases,
   // then we know that it will be used.
-  return OverridesIndirectMethodInBases(Overrider.Method, PrimaryBases);
+  return OverridesIndirectMethodInBases(Overrider, PrimaryBases);
 }
 
 /// FindNearestOverriddenMethod - Given a method, returns the overridden method
@@ -1595,17 +1597,17 @@ FindNearestOverriddenMethod(const CXXMethodDecl *MD,
   return 0;
 }  
 
-void 
-VtableBuilder::AddMethods(BaseSubobject Base, 
-                          BaseSubobject FirstBaseInPrimaryBaseChain,
-                          uint64_t OffsetInLayoutClass,                          
+void
+VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,                  
+                          const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
+                          uint64_t FirstBaseOffsetInLayoutClass,
                           PrimaryBasesSetVectorTy &PrimaryBases) {
   const CXXRecordDecl *RD = Base.getBase();
-
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
-    uint64_t BaseOffset;
+    uint64_t PrimaryBaseOffset;
+    uint64_t PrimaryBaseOffsetInLayoutClass;
     if (Layout.getPrimaryBaseWasVirtual()) {
       assert(Layout.getVBaseClassOffset(PrimaryBase) == 0 &&
              "Primary vbase should have a zero offset!");
@@ -1613,17 +1615,25 @@ VtableBuilder::AddMethods(BaseSubobject Base,
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
       
-      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+      PrimaryBaseOffset = 
+        MostDerivedClassLayout.getVBaseClassOffset(PrimaryBase);
+      
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
+
+      PrimaryBaseOffsetInLayoutClass =
+        LayoutClassLayout.getVBaseClassOffset(PrimaryBase);
     } else {
       assert(Layout.getBaseClassOffset(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
 
-      BaseOffset = Base.getBaseOffset();
+      PrimaryBaseOffset = Base.getBaseOffset();
+      PrimaryBaseOffsetInLayoutClass = BaseOffsetInLayoutClass;
     }
 
-    // FIXME: OffsetInLayoutClass is not right here.
-    AddMethods(BaseSubobject(PrimaryBase, BaseOffset), 
-               FirstBaseInPrimaryBaseChain, OffsetInLayoutClass, PrimaryBases);
+    AddMethods(BaseSubobject(PrimaryBase, PrimaryBaseOffset),
+               PrimaryBaseOffsetInLayoutClass, FirstBaseInPrimaryBaseChain, 
+               FirstBaseOffsetInLayoutClass, PrimaryBases);
     
     if (!PrimaryBases.insert(PrimaryBase))
       assert(false && "Found a duplicate primary base!");
@@ -1674,9 +1684,10 @@ VtableBuilder::AddMethods(BaseSubobject Base,
     MethodInfoMap.insert(std::make_pair(MD, MethodInfo));
 
     // Check if this overrider is going to be used.
-    if (!IsOverriderUsed(Base, FirstBaseInPrimaryBaseChain, OffsetInLayoutClass,
-                         Overrider)) {
-      const CXXMethodDecl *OverriderMD = Overrider.Method;
+    const CXXMethodDecl *OverriderMD = Overrider.Method;
+    if (!IsOverriderUsed(OverriderMD, BaseOffsetInLayoutClass,
+                         FirstBaseInPrimaryBaseChain, 
+                         FirstBaseOffsetInLayoutClass)) {
       Components.push_back(VtableComponent::MakeUnusedFunction(OverriderMD));
       continue;
     }
@@ -1739,7 +1750,8 @@ VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetVectorTy PrimaryBases;
-  AddMethods(Base, Base, OffsetInLayoutClass, PrimaryBases);
+  AddMethods(Base, OffsetInLayoutClass, Base.getBase(), OffsetInLayoutClass, 
+             PrimaryBases);
 
   // Compute 'this' pointer adjustments.
   ComputeThisAdjustments();
