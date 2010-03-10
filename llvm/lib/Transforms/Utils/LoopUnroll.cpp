@@ -105,8 +105,6 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
 /// If a LoopPassManager is passed in, and the loop is fully removed, it will be
 /// removed from the LoopPassManager as well. LPM can also be NULL.
 bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM) {
-  assert(L->isLCSSAForm());
-
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     DEBUG(dbgs() << "  Can't unroll; loop preheader-insertion failed.\n");
@@ -369,10 +367,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
   // Remove the loop from the LoopPassManager if it's completely removed.
   if (CompletelyUnroll && LPM != NULL)
     LPM->deleteLoopFromQueue(L);
-
-  // If we didn't completely unroll the loop, it should still be in LCSSA form.
-  if (!CompletelyUnroll)
-    assert(L->isLCSSAForm());
 
   return true;
 }

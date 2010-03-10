@@ -571,7 +571,7 @@ public:
   unsigned getSmallConstantTripMultiple() const;
 
   /// isLCSSAForm - Return true if the Loop is in LCSSA form
-  bool isLCSSAForm() const;
+  bool isLCSSAForm(DominatorTree &DT) const;
 
   /// isLoopSimplifyForm - Return true if the Loop is in the form that
   /// the LoopSimplify form transforms loops to, which is sometimes called

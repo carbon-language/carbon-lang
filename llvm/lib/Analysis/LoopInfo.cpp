@@ -263,14 +263,7 @@ unsigned Loop::getSmallConstantTripMultiple() const {
 }
 
 /// isLCSSAForm - Return true if the Loop is in LCSSA form
-bool Loop::isLCSSAForm() const {
-  // Collect all the reachable blocks in the function, for fast lookups.
-  SmallPtrSet<BasicBlock *, 32> ReachableBBs;
-  BasicBlock *EntryBB = getHeader()->getParent()->begin();
-  for (df_iterator<BasicBlock *> NI = df_begin(EntryBB),
-       NE = df_end(EntryBB); NI != NE; ++NI)
-    ReachableBBs.insert(*NI);
-
+bool Loop::isLCSSAForm(DominatorTree &DT) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
   SmallPtrSet<BasicBlock *, 16> LoopBBs(block_begin(), block_end());
@@ -290,7 +283,7 @@ bool Loop::isLCSSAForm() const {
         // entry are special; uses in them don't need to go through PHIs.
         if (UserBB != BB &&
             !LoopBBs.count(UserBB) &&
-            ReachableBBs.count(UserBB))
+            DT.isReachableFromEntry(UserBB))
           return false;
       }
   }

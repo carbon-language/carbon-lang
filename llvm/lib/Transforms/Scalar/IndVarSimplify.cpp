@@ -215,7 +215,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 void IndVarSimplify::RewriteLoopExitValues(Loop *L,
                                            SCEVExpander &Rewriter) {
   // Verify the input to the pass in already in LCSSA form.
-  assert(L->isLCSSAForm());
+  assert(L->isLCSSAForm(*DT));
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
@@ -445,7 +445,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader());
   // Check a post-condition.
-  assert(L->isLCSSAForm() && "Indvars did not leave the loop in lcssa form!");
+  assert(L->isLCSSAForm(*DT) && "Indvars did not leave the loop in lcssa form!");
   return Changed;
 }
 

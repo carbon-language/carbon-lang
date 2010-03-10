@@ -88,7 +88,7 @@ namespace {
     /// verifyAnalysis() - Verify loop nest.
     virtual void verifyAnalysis() const {
       // Check the special guarantees that LCSSA makes.
-      assert(L->isLCSSAForm() && "LCSSA form not preserved!");
+      assert(L->isLCSSAForm(*DT) && "LCSSA form not preserved!");
     }
 
     /// inLoop - returns true if the given block is within the current loop
@@ -164,7 +164,7 @@ bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
     }
   }
   
-  assert(L->isLCSSAForm());
+  assert(L->isLCSSAForm(*DT));
   PredCache.clear();
 
   return MadeChange;
