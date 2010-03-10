@@ -201,19 +201,11 @@ class RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
   RegionBindings::Factory RBFactory;
 
-  typedef llvm::DenseMap<Store, RegionStoreSubRegionMap*> SMCache;
-  SMCache SC;
-
 public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr),
       Features(f),
       RBFactory(mgr.getAllocator()) {}
-
-  virtual ~RegionStoreManager() {
-    for (SMCache::iterator I = SC.begin(), E = SC.end(); I != E; ++I)
-      delete (*I).second;
-  }
 
   SubRegionMap *getSubRegionMap(Store store) {
     return getRegionStoreSubRegionMap(store);
