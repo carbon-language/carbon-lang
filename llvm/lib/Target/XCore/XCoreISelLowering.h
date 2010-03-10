@@ -54,6 +54,9 @@ namespace llvm {
       // Corresponds to LSUB instruction
       LSUB,
 
+      // Corresponds to LMUL instruction
+      LMUL,
+
       // Corresponds to MACCU instruction
       MACCU,
 

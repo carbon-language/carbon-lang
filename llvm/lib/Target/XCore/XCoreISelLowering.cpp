@@ -54,6 +54,7 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::RETSP             : return "XCoreISD::RETSP";
     case XCoreISD::LADD              : return "XCoreISD::LADD";
     case XCoreISD::LSUB              : return "XCoreISD::LSUB";
+    case XCoreISD::LMUL              : return "XCoreISD::LMUL";
     case XCoreISD::MACCU             : return "XCoreISD::MACCU";
     case XCoreISD::MACCS             : return "XCoreISD::MACCS";
     case XCoreISD::BR_JT             : return "XCoreISD::BR_JT";
@@ -573,9 +574,9 @@ LowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG)
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
   SDValue Zero = DAG.getConstant(0, MVT::i32);
-  SDValue Hi = DAG.getNode(XCoreISD::MACCU, dl,
-                           DAG.getVTList(MVT::i32, MVT::i32), Zero, Zero,
-                           LHS, RHS);
+  SDValue Hi = DAG.getNode(XCoreISD::LMUL, dl,
+                           DAG.getVTList(MVT::i32, MVT::i32), LHS, RHS,
+                           Zero, Zero);
   SDValue Lo(Hi.getNode(), 1);
   SDValue Ops[] = { Lo, Hi };
   return DAG.getMergeValues(Ops, 2, dl);
