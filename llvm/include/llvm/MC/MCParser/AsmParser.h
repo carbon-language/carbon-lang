@@ -31,7 +31,6 @@ class MCExpr;
 class MCInst;
 class MCStreamer;
 class MCAsmInfo;
-class MCValue;
 class SourceMgr;
 class TargetAsmParser;
 class Twine;
