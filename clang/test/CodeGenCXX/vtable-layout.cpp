@@ -1091,3 +1091,63 @@ class D : virtual B, virtual C {
 void D::d() { } 
 
 }
+
+namespace Test27 {
+
+// Test that we don't generate a secondary vtable for C in the D-in-E vtable, since
+// C doesn't have any virtual bases.
+
+struct A {
+  virtual void a();
+};
+
+struct B {
+  virtual void b();
+};
+
+struct C {
+  virtual void c();
+};
+
+struct D : A, virtual B, C {
+  virtual void d();
+};
+
+// CHECK:      Vtable for 'Test27::E' (13 entries).
+// CHECK-NEXT:    0 | vbase_offset (16)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test27::E RTTI
+// CHECK-NEXT:        -- (Test27::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test27::D, 0) vtable address --
+// CHECK-NEXT:        -- (Test27::E, 0) vtable address --
+// CHECK-NEXT:    3 | void Test27::A::a()
+// CHECK-NEXT:    4 | void Test27::D::d()
+// CHECK-NEXT:    5 | void Test27::E::e()
+// CHECK-NEXT:    6 | offset_to_top (-8)
+// CHECK-NEXT:    7 | Test27::E RTTI
+// CHECK-NEXT:        -- (Test27::C, 8) vtable address --
+// CHECK-NEXT:    8 | void Test27::C::c()
+// CHECK-NEXT:    9 | vcall_offset (0)
+// CHECK-NEXT:   10 | offset_to_top (-16)
+// CHECK-NEXT:   11 | Test27::E RTTI
+// CHECK-NEXT:        -- (Test27::B, 16) vtable address --
+// CHECK-NEXT:   12 | void Test27::B::b()
+
+// CHECK:      Construction vtable for ('Test27::D', 0) in 'Test27::E' (9 entries).
+// CHECK-NEXT:    0 | vbase_offset (16)
+// CHECK-NEXT:    1 | offset_to_top (0)
+// CHECK-NEXT:    2 | Test27::D RTTI
+// CHECK-NEXT:        -- (Test27::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test27::D, 0) vtable address --
+// CHECK-NEXT:    3 | void Test27::A::a()
+// CHECK-NEXT:    4 | void Test27::D::d()
+// CHECK-NEXT:    5 | vcall_offset (0)
+// CHECK-NEXT:    6 | offset_to_top (-16)
+// CHECK-NEXT:    7 | Test27::D RTTI
+// CHECK-NEXT:        -- (Test27::B, 16) vtable address --
+// CHECK-NEXT:    8 | void Test27::B::b()
+struct E : D {
+  virtual void e();
+};
+void E::e() { }
+}

@@ -1800,6 +1800,17 @@ void VtableBuilder::LayoutSecondaryVtables(BaseSubobject Base,
     if (!BaseDecl->isDynamicClass())
       continue;
 
+    if (isBuildingConstructorVtable()) {
+      // Itanium C++ ABI 2.6.4:
+      //   Some of the base class subobjects may not need construction virtual
+      //   tables, which will therefore not be present in the construction
+      //   virtual table group, even though the subobject virtual tables are
+      //   present in the main virtual table group for the complete object.
+      if (!BaseDecl->getNumVBases()) {
+        continue;
+      }
+    }
+
     // Get the base offset of this base.
     uint64_t RelativeBaseOffset = Layout.getBaseClassOffset(BaseDecl);
     uint64_t BaseOffset = Base.getBaseOffset() + RelativeBaseOffset;
