@@ -1868,7 +1868,7 @@ Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
   for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const BindingKey &K = I.getKey();
 
-    // If the cluster has been marked null, we know the region has been marked.
+    // If the cluster has been visited, we know the region has been marked.
     if (W.isVisited(K.getRegion()))
       continue;
 
