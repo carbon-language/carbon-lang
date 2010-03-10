@@ -642,7 +642,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       VReg = MF.getRegInfo().createVirtualRegister(ARM::tGPRRegisterClass);
       assert (Value && "Frame index virtual allocated, but Value arg is NULL!");
       bool UseRR = false;
-      bool TrackVReg = FrameReg == ARM::SP;
+      bool TrackVReg = true;
       Value->first = FrameReg; // use the frame register as a kind indicator
       Value->second = Offset;
 

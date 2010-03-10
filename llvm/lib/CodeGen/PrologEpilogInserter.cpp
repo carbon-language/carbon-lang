@@ -57,6 +57,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
+  FrameConstantRegMap.clear();
 
   // Get MachineModuleInfo so that we can track the construction of the
   // frame.
@@ -693,8 +694,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
             assert (FrameIndexVirtualScavenging &&
                     "Not scavenging, but virtual returned from "
                     "eliminateFrameIndex()!");
-            FrameConstantRegMap[VReg] = FrameConstantEntry(Value.second,
-                                                           SPAdj);
+            FrameConstantRegMap[VReg] = FrameConstantEntry(Value, SPAdj);
           }
 
           // Reset the iterator if we were at the beginning of the BB.
@@ -765,12 +765,12 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     unsigned CurrentVirtReg = 0;
     unsigned CurrentScratchReg = 0;
     bool havePrevValue = false;
-    int PrevValue = 0;
+    TargetRegisterInfo::FrameIndexValue PrevValue(0,0);
+    TargetRegisterInfo::FrameIndexValue Value(0,0);
     MachineInstr *PrevLastUseMI = NULL;
     unsigned PrevLastUseOp = 0;
     bool trackingCurrentValue = false;
     int SPAdj = 0;
-    int Value = 0;
 
     // The instruction stream may change in the loop, so check BB->end()
     // directly.
@@ -827,8 +827,11 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             if (trackingCurrentValue) {
               SPAdj = (*Entry).second.second;
               Value = (*Entry).second.first;
-            } else
-              SPAdj = Value = 0;
+            } else {
+              SPAdj = 0;
+              Value.first = 0;
+              Value.second = 0;
+            }
 
             // If the scratch register from the last allocation is still
             // available, see if the value matches. If it does, just re-use it.
