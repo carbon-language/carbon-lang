@@ -187,3 +187,126 @@ struct D : public B, public C {
 void D::d() { } 
 
 }
+
+namespace Test3 {
+
+// From http://www.codesourcery.com/public/cxx-abi/abi-examples.html#vtable-ctor
+
+struct V1 {
+  int v1;
+  virtual void f();
+};
+
+struct V2 : virtual V1 {
+  int v2;
+  virtual void f();
+};
+
+// CHECK:      Vtable for 'Test3::C' (14 entries).
+// CHECK-NEXT:    0 | vbase_offset (32)
+// CHECK-NEXT:    1 | vbase_offset (16)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test3::C RTTI
+// CHECK-NEXT:        -- (Test3::C, 0) vtable address --
+// CHECK-NEXT:    4 | void Test3::C::f()
+// CHECK-NEXT:    5 | vcall_offset (-16)
+// CHECK-NEXT:    6 | offset_to_top (-16)
+// CHECK-NEXT:    7 | Test3::C RTTI
+// CHECK-NEXT:        -- (Test3::V1, 16) vtable address --
+// CHECK-NEXT:    8 | void Test3::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:    9 | vcall_offset (-32)
+// CHECK-NEXT:   10 | vbase_offset (-16)
+// CHECK-NEXT:   11 | offset_to_top (-32)
+// CHECK-NEXT:   12 | Test3::C RTTI
+// CHECK-NEXT:        -- (Test3::V2, 32) vtable address --
+// CHECK-NEXT:   13 | void Test3::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+
+// CHECK:      Construction vtable for ('Test3::V2', 32) in 'Test3::C' (9 entries).
+// CHECK-NEXT:    0 | vcall_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (-16)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test3::V2 RTTI
+// CHECK-NEXT:        -- (Test3::V2, 32) vtable address --
+// CHECK-NEXT:    4 | void Test3::V2::f()
+// CHECK-NEXT:    5 | vcall_offset (16)
+// CHECK-NEXT:    6 | offset_to_top (16)
+// CHECK-NEXT:    7 | Test3::V2 RTTI
+// CHECK-NEXT:        -- (Test3::V1, 16) vtable address --
+// CHECK-NEXT:    8 | void Test3::V2::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+struct C : virtual V1, virtual V2 {
+  int c;
+  virtual void f();
+};
+void C::f() { }
+
+struct B {
+  int b;
+};
+
+// CHECK:      Vtable for 'Test3::D' (15 entries).
+// CHECK-NEXT:    0 | vbase_offset (40)
+// CHECK-NEXT:    1 | vbase_offset (24)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test3::D RTTI
+// CHECK-NEXT:        -- (Test3::C, 0) vtable address --
+// CHECK-NEXT:        -- (Test3::D, 0) vtable address --
+// CHECK-NEXT:    4 | void Test3::C::f()
+// CHECK-NEXT:    5 | void Test3::D::g()
+// CHECK-NEXT:    6 | vcall_offset (-24)
+// CHECK-NEXT:    7 | offset_to_top (-24)
+// CHECK-NEXT:    8 | Test3::D RTTI
+// CHECK-NEXT:        -- (Test3::V1, 24) vtable address --
+// CHECK-NEXT:    9 | void Test3::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:   10 | vcall_offset (-40)
+// CHECK-NEXT:   11 | vbase_offset (-16)
+// CHECK-NEXT:   12 | offset_to_top (-40)
+// CHECK-NEXT:   13 | Test3::D RTTI
+// CHECK-NEXT:        -- (Test3::V2, 40) vtable address --
+// CHECK-NEXT:   14 | void Test3::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+
+// CHECK:      Construction vtable for ('Test3::C', 0) in 'Test3::D' (14 entries).
+// CHECK-NEXT:    0 | vbase_offset (40)
+// CHECK-NEXT:    1 | vbase_offset (24)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test3::C RTTI
+// CHECK-NEXT:        -- (Test3::C, 0) vtable address --
+// CHECK-NEXT:    4 | void Test3::C::f()
+// CHECK-NEXT:    5 | vcall_offset (-24)
+// CHECK-NEXT:    6 | offset_to_top (-24)
+// CHECK-NEXT:    7 | Test3::C RTTI
+// CHECK-NEXT:        -- (Test3::V1, 24) vtable address --
+// CHECK-NEXT:    8 | void Test3::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:    9 | vcall_offset (-40)
+// CHECK-NEXT:   10 | vbase_offset (-16)
+// CHECK-NEXT:   11 | offset_to_top (-40)
+// CHECK-NEXT:   12 | Test3::C RTTI
+// CHECK-NEXT:        -- (Test3::V2, 40) vtable address --
+// CHECK-NEXT:   13 | void Test3::C::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -32 vcall offset offset]
+
+// CHECK:      Construction vtable for ('Test3::V2', 40) in 'Test3::D' (9 entries).
+// CHECK-NEXT:    0 | vcall_offset (0)
+// CHECK-NEXT:    1 | vbase_offset (-16)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test3::V2 RTTI
+// CHECK-NEXT:        -- (Test3::V2, 40) vtable address --
+// CHECK-NEXT:    4 | void Test3::V2::f()
+// CHECK-NEXT:    5 | vcall_offset (16)
+// CHECK-NEXT:    6 | offset_to_top (16)
+// CHECK-NEXT:    7 | Test3::V2 RTTI
+// CHECK-NEXT:        -- (Test3::V1, 24) vtable address --
+// CHECK-NEXT:    8 | void Test3::V2::f()
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+struct D : B, C {
+  int d;
+  virtual void g();
+};
+void D::g() { }
+
+}
