@@ -984,6 +984,17 @@ static bool IsEmptyBlock(MachineBasicBlock *MBB) {
   return true;
 }
 
+// Blocks with only debug info and branches should be considered the same
+// as blocks with only branches.
+static bool IsBranchOnlyBlock(MachineBasicBlock *MBB) {
+  MachineBasicBlock::iterator MBBI, MBBE;
+  for (MBBI = MBB->begin(), MBBE = MBB->end(); MBBI!=MBBE; ++MBBI) {
+    if (!MBBI->isDebugValue())
+      break;
+  }
+  return (MBBI->getDesc().isBranch());
+}
+
 /// IsBetterFallthrough - Return true if it would be clearly better to
 /// fall-through to MBB1 than to fall through into MBB2.  This has to return
 /// a strict ordering, returning true for both (MBB1,MBB2) and (MBB2,MBB1) will
@@ -1206,7 +1217,7 @@ ReoptimizeBlock:
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 &&
-        MBB->begin()->getDesc().isBranch() && CurTBB != MBB &&
+        IsBranchOnlyBlock(MBB) && CurTBB != MBB &&
         !MBB->hasAddressTaken()) {
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
