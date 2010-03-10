@@ -1819,3 +1819,27 @@ int test2(int mainType, int subType) {
 }
 
 //===---------------------------------------------------------------------===//
+
+The following test case (from PR6576):
+
+define i32 @mul(i32 %a, i32 %b) nounwind readnone {
+entry:
+ %cond1 = icmp eq i32 %b, 0                      ; <i1> [#uses=1]
+ br i1 %cond1, label %exit, label %bb.nph
+bb.nph:                                           ; preds = %entry
+ %tmp = mul i32 %b, %a                           ; <i32> [#uses=1]
+ ret i32 %tmp
+exit:                                             ; preds = %entry
+ ret i32 0
+}
+
+could be reduced to:
+
+define i32 @mul(i32 %a, i32 %b) nounwind readnone {
+entry:
+ %tmp = mul i32 %b, %a
+ ret i32 %tmp
+}
+
+//===---------------------------------------------------------------------===//
+
