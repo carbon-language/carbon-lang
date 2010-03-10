@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -std=c++0x
+// RUN: %clang_cc1 %s -emit-llvm
 
 namespace test0 {
 template <typename T> struct X {
