@@ -24,22 +24,21 @@ class SDNode;
 class Value;
 
 /// SDDbgValue - Holds the information from a dbg_value node through SDISel.
-/// Either Const or Node is nonzero, but not both.
 /// We do not use SDValue here to avoid including its header.
 
 class SDDbgValue {
 public:
   enum DbgValueKind {
-    SD = 0,
-    CNST = 1,
-    FX = 2
+    SDNODE = 0,             // value is the result of an expression
+    CONST = 1,              // value is a constant
+    FRAMEIX = 2             // value is contents of a stack location
   };
 private:
   enum DbgValueKind kind;
   union {
     struct {
-      SDNode *Node;         // valid for non-constants
-      unsigned ResNo;       // valid for non-constants
+      SDNode *Node;         // valid for expressions
+      unsigned ResNo;       // valid for expressions
     } s;
     Value *Const;           // valid for constants
     unsigned FrameIx;       // valid for stack objects
@@ -52,7 +51,7 @@ public:
   // Constructor for non-constants.
   SDDbgValue(MDNode *mdP, SDNode *N, unsigned R, uint64_t off, DebugLoc dl,
              unsigned O) : mdPtr(mdP), Offset(off), DL(dl), Order(O) {
-    kind = SD;
+    kind = SDNODE;
     u.s.Node = N;
     u.s.ResNo = R;
   }
@@ -60,14 +59,14 @@ public:
   // Constructor for constants.
   SDDbgValue(MDNode *mdP, Value *C, uint64_t off, DebugLoc dl, unsigned O) : 
     mdPtr(mdP), Offset(off), DL(dl), Order(O) {
-    kind = CNST;
+    kind = CONST;
     u.Const = C;
   }
 
   // Constructor for frame indices.
   SDDbgValue(MDNode *mdP, unsigned FI, uint64_t off, DebugLoc dl, unsigned O) : 
     mdPtr(mdP), Offset(off), DL(dl), Order(O) {
-    kind = FX;
+    kind = FRAMEIX;
     u.FrameIx = FI;
   }
 
@@ -78,16 +77,16 @@ public:
   MDNode *getMDPtr() { return mdPtr; }
 
   // Returns the SDNode* for a register ref
-  SDNode *getSDNode() { assert (kind==SD); return u.s.Node; }
+  SDNode *getSDNode() { assert (kind==SDNODE); return u.s.Node; }
 
   // Returns the ResNo for a register ref
-  unsigned getResNo() { assert (kind==SD); return u.s.ResNo; }
+  unsigned getResNo() { assert (kind==SDNODE); return u.s.ResNo; }
 
   // Returns the Value* for a constant
-  Value *getConst() { assert (kind==CNST); return u.Const; }
+  Value *getConst() { assert (kind==CONST); return u.Const; }
 
   // Returns the FrameIx for a stack object
-  unsigned getFrameIx() { assert (kind==FX); return u.FrameIx; }
+  unsigned getFrameIx() { assert (kind==FRAMEIX); return u.FrameIx; }
 
   // Returns the offset.
   uint64_t getOffset() { return Offset; }

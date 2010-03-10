@@ -508,7 +508,7 @@ InstrEmitter::EmitDbgValue(SDNode *Node,
     return;
   if (!sd)
     return;
-  assert(sd->getKind() == SDDbgValue::SD);
+  assert(sd->getKind() == SDDbgValue::SDNODE);
   unsigned VReg = getVR(SDValue(sd->getSDNode(), sd->getResNo()), VRBaseMap);
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
   DebugLoc DL = sd->getDebugLoc();
@@ -537,7 +537,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *sd,
   SDDbgValue::DbgValueKind kind = sd->getKind();
   DebugLoc DL = sd->getDebugLoc();
   MachineInstr* MI;
-  if (kind == SDDbgValue::CNST) {
+  if (kind == SDDbgValue::CONST) {
     Value *V = sd->getConst();
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       MI = BuildMI(*MF, DL, II).addImm(CI->getZExtValue()).
@@ -551,7 +551,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *sd,
       MI = BuildMI(*MF, DL, II).addReg(0U).
                                        addImm(Offset).addMetadata(mdPtr);
     }
-  } else if (kind == SDDbgValue::FX) {
+  } else if (kind == SDDbgValue::FRAMEIX) {
     unsigned FrameIx = sd->getFrameIx();
     // Stack address; this needs to be lowered in target-dependent fashion.
     // FIXME test that the target supports this somehow; if not emit Undef.
