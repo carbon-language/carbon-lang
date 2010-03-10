@@ -5409,7 +5409,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     if (SimplifyDemandedBits(Value,
                              APInt::getLowBitsSet(
                                Value.getValueType().getScalarType().getSizeInBits(),
-                               ST->getMemoryVT().getSizeInBits())))
+                               ST->getMemoryVT().getScalarType().getSizeInBits())))
       return SDValue(N, 0);
   }
 
