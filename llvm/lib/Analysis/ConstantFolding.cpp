@@ -589,6 +589,17 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   APInt Offset = APInt(BitWidth,
                        TD->getIndexedOffset(Ptr->getType(),
                                             (Value**)Ops+1, NumOps-1));
+
+  // If this is a GEP of a GEP, fold it all into a single GEP.
+  while (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
+    SmallVector<Value *, 4> NestedOps(GEP->op_begin()+1, GEP->op_end());
+    Ptr = cast<Constant>(GEP->getOperand(0));
+    Offset += APInt(BitWidth,
+                    TD->getIndexedOffset(Ptr->getType(),
+                                         (Value**)NestedOps.data(),
+                                         NestedOps.size()));
+  }
+
   // If the base value for this address is a literal integer value, fold the
   // getelementptr to the resulting integer value casted to the pointer type.
   if (BaseIsInt) {

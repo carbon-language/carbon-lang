@@ -21,10 +21,12 @@
 ; PLAIN: %1 = type { double, float, double, double }
 ; PLAIN: %2 = type { i1, i1* }
 ; PLAIN: %3 = type { i64, i64 }
+; PLAIN: %4 = type { i32, i32 }
 ; OPT: %0 = type { i1, double }
 ; OPT: %1 = type { double, float, double, double }
 ; OPT: %2 = type { i1, i1* }
 ; OPT: %3 = type { i64, i64 }
+; OPT: %4 = type { i32, i32 }
 
 ; The automatic constant folder in opt does not have targetdata access, so
 ; it can't fold gep arithmetic, in general. However, the constant folder run
@@ -121,6 +123,16 @@
 @M = constant i64* getelementptr (i64* null, i32 1)
 @N = constant i64* getelementptr ({ i64, i64 }* null, i32 0, i32 1)
 @O = constant i64* getelementptr ([2 x i64]* null, i32 0, i32 1)
+
+; Fold GEP of a GEP. Theoretically some of these cases could be folded
+; without using targetdata, however that's not implemented yet.
+
+; PLAIN: @Z = global i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x %4]* @ext, i64 0, i64 1, i32 0), i64 1)
+; OPT: @Z = global i32* getelementptr (i32* getelementptr inbounds ([3 x %4]* @ext, i64 0, i64 1, i32 0), i64 1)
+; TO: @Z = global i32* getelementptr inbounds ([3 x %0]* @ext, i64 0, i64 1, i32 1)
+
+@ext = external global [3 x { i32, i32 }]
+@Z = global i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
 
 ; Duplicate all of the above as function return values rather than
 ; global initializers.
@@ -467,4 +479,23 @@ define i64* @fN() nounwind {
 define i64* @fO() nounwind {
   %t = bitcast i64* getelementptr ([2 x i64]* null, i32 0, i32 1) to i64*
   ret i64* %t
+}
+
+; PLAIN: define i32* @fZ() nounwind {
+; PLAIN:   %t = bitcast i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x %4]* @ext, i64 0, i64 1, i32 0), i64 1) to i32*
+; PLAIN:   ret i32* %t
+; PLAIN: }
+; OPT: define i32* @fZ() nounwind {
+; OPT:   ret i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x %4]* @ext, i64 0, i64 1, i32 0), i64 1)
+; OPT: }
+; TO: define i32* @fZ() nounwind {
+; TO:   ret i32* getelementptr inbounds ([3 x %0]* @ext, i64 0, i64 1, i32 1)
+; TO: }
+; SCEV: Classifying expressions for: @fZ
+; SCEV:   %t = bitcast i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x %4]* @ext, i64 0, i64 1, i32 0), i64 1) to i32*
+; SCEV:   -->  ((3 * sizeof(i32)) + @ext)
+
+define i32* @fZ() nounwind {
+  %t = bitcast i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1) to i32*
+  ret i32* %t
 }
