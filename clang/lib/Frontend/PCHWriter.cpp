@@ -235,6 +235,12 @@ void PCHTypeWriter::VisitQualifiedNameType(const QualifiedNameType *T) {
   assert(false && "Cannot serialize qualified name types");
 }
 
+void PCHTypeWriter::VisitInjectedClassNameType(const InjectedClassNameType *T) {
+  Writer.AddDeclRef(T->getDecl(), Record);
+  Writer.AddTypeRef(T->getUnderlyingType(), Record);
+  Code = pch::TYPE_INJECTED_CLASS_NAME;
+}
+
 void PCHTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
   Record.push_back(T->getNumProtocols());
@@ -392,6 +398,9 @@ void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
     Writer.AddTemplateArgumentLoc(TL.getArgLoc(i), Record);
 }
 void TypeLocWriter::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitTypenameTypeLoc(TypenameTypeLoc TL) {

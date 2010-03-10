@@ -586,6 +586,8 @@ public:
   /// specified typename decl.
   QualType getTypedefType(const TypedefDecl *Decl);
 
+  QualType getInjectedClassNameType(CXXRecordDecl *Decl, QualType TST);
+
   QualType getSubstTemplateTypeParmType(const TemplateTypeParmType *Replaced,
                                         QualType Replacement);
 
@@ -601,6 +603,11 @@ public:
   QualType getTemplateSpecializationType(TemplateName T,
                                          const TemplateArgumentListInfo &Args,
                                          QualType Canon = QualType());
+
+  TypeSourceInfo *
+  getTemplateSpecializationTypeInfo(TemplateName T, SourceLocation TLoc,
+                                    const TemplateArgumentListInfo &Args,
+                                    QualType Canon = QualType());
 
   QualType getQualifiedNameType(NestedNameSpecifier *NNS,
                                 QualType NamedType);

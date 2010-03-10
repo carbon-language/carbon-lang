@@ -488,6 +488,14 @@ public:
   }
 };
 
+/// \brief Wrapper for source info for injected class names of class
+/// templates.
+class InjectedClassNameTypeLoc :
+    public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
+                                     InjectedClassNameTypeLoc,
+                                     InjectedClassNameType> {
+};
+
 /// \brief Wrapper for source info for unresolved typename using decls.
 class UnresolvedUsingTypeLoc :
     public InheritingConcreteTypeLoc<TypeSpecTypeLoc,

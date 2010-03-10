@@ -172,14 +172,6 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
 
     if (TypeDecl *Type = Found.getAsSingle<TypeDecl>()) {
       QualType T = Context.getTypeDeclType(Type);
-      // If we found the injected-class-name of a class template, retrieve the
-      // type of that template.
-      // FIXME: We really shouldn't need to do this.
-      if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Type))
-        if (Record->isInjectedClassName())
-          if (Record->getDescribedClassTemplate())
-            T = Record->getDescribedClassTemplate()
-                                           ->getInjectedClassNameType(Context);
 
       if (SearchType.isNull() || SearchType->isDependentType() ||
           Context.hasSameUnqualifiedType(T, SearchType)) {
@@ -200,16 +192,8 @@ Action::TypeTy *Sema::getDestructorName(SourceLocation TildeLoc,
       if (SS.isSet()) {
         if (DeclContext *Ctx = computeDeclContext(SS, EnteringContext)) {
           // Figure out the type of the context, if it has one.
-          if (ClassTemplateSpecializationDecl *Spec
-                          = dyn_cast<ClassTemplateSpecializationDecl>(Ctx))
-            MemberOfType = Context.getTypeDeclType(Spec);
-          else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
-            if (Record->getDescribedClassTemplate())
-              MemberOfType = Record->getDescribedClassTemplate()
-                                          ->getInjectedClassNameType(Context);
-            else
-              MemberOfType = Context.getTypeDeclType(Record);
-          }
+          if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx))
+            MemberOfType = Context.getTypeDeclType(Record);
         }
       }
       if (MemberOfType.isNull())

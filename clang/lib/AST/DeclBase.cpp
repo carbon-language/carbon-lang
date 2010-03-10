@@ -574,11 +574,22 @@ DeclContext *DeclContext::getPrimaryContext() {
     if (DeclKind >= Decl::TagFirst && DeclKind <= Decl::TagLast) {
       // If this is a tag type that has a definition or is currently
       // being defined, that definition is our primary context.
-      if (const TagType *TagT =cast<TagDecl>(this)->TypeForDecl->getAs<TagType>())
-        if (TagT->isBeingDefined() ||
-            (TagT->getDecl() && TagT->getDecl()->isDefinition()))
-          return TagT->getDecl();
-      return this;
+      TagDecl *Tag = cast<TagDecl>(this);
+      assert(isa<TagType>(Tag->TypeForDecl) ||
+             isa<InjectedClassNameType>(Tag->TypeForDecl));
+
+      if (TagDecl *Def = Tag->getDefinition())
+        return Def;
+
+      if (!isa<InjectedClassNameType>(Tag->TypeForDecl)) {
+        const TagType *TagTy = cast<TagType>(Tag->TypeForDecl);
+        if (TagTy->isBeingDefined())
+          // FIXME: is it necessarily being defined in the decl
+          // that owns the type?
+          return TagTy->getDecl();
+      }
+
+      return Tag;
     }
 
     assert(DeclKind >= Decl::FunctionFirst && DeclKind <= Decl::FunctionLast &&

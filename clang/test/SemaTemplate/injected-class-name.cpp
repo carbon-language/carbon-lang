@@ -42,3 +42,9 @@ struct X1 {
   void f0(const X1<T, N>&); // expected-error{{redecl}}
 };
 
+namespace pr6326 {
+  template <class T> class A {
+    friend class A;
+  };
+  template class A<int>;
+}

@@ -76,14 +76,6 @@ getCurrentInstantiationOf(ASTContext &Context, DeclContext *CurContext,
     // our context.
     if (Context.getCanonicalType(Context.getTypeDeclType(Record)) == T)
       return Record;
-    
-    if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate()) {
-      QualType InjectedClassName
-        = Template->getInjectedClassNameType(Context);
-      if (T == Context.getCanonicalType(InjectedClassName))
-        return Template->getTemplatedDecl();
-    }
-    // FIXME: check for class template partial specializations
   }  
   
   return 0;
@@ -130,8 +122,11 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
       return Record;
 
     if (EnteringContext) {
-      if (const TemplateSpecializationType *SpecType
-            = dyn_cast_or_null<TemplateSpecializationType>(NNS->getAsType())) {
+      const Type *NNSType = NNS->getAsType();
+      if (!NNSType) {
+        // do nothing, fall out
+      } else if (const TemplateSpecializationType *SpecType
+                   = NNSType->getAs<TemplateSpecializationType>()) {
         // We are entering the context of the nested name specifier, so try to
         // match the nested name specifier to either a primary class template
         // or a class template partial specialization.
@@ -144,7 +139,8 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
           // If the type of the nested name specifier is the same as the
           // injected class name of the named class template, we're entering
           // into that class template definition.
-          QualType Injected = ClassTemplate->getInjectedClassNameType(Context);
+          QualType Injected
+            = ClassTemplate->getInjectedClassNameSpecialization(Context);
           if (Context.hasSameType(Injected, ContextType))
             return ClassTemplate->getTemplatedDecl();
 
@@ -156,8 +152,7 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
                 = ClassTemplate->findPartialSpecialization(ContextType))
             return PartialSpec;
         }
-      } else if (const RecordType *RecordT
-                   = dyn_cast_or_null<RecordType>(NNS->getAsType())) {
+      } else if (const RecordType *RecordT = NNSType->getAs<RecordType>()) {
         // The nested name specifier refers to a member of a class template.
         return RecordT->getDecl();
       }
@@ -248,7 +243,7 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
     // If we're currently defining this type, then lookup into the
     // type is okay: don't complain that it isn't complete yet.
     const TagType *TagT = Context.getTypeDeclType(Tag)->getAs<TagType>();
-    if (TagT->isBeingDefined())
+    if (TagT && TagT->isBeingDefined())
       return false;
 
     // The type must be complete.

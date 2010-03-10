@@ -621,7 +621,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   Inst->setInstantiatedFromMemberTemplate(D);
   
   // Trigger creation of the type for the instantiation.
-  SemaRef.Context.getTypeDeclType(RecordInst);
+  SemaRef.Context.getInjectedClassNameType(RecordInst,
+                  Inst->getInjectedClassNameSpecialization(SemaRef.Context));
   
   // Finish handling of friends.
   if (Inst->getFriendObjectKind()) {
@@ -1462,8 +1463,10 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
   // actually wrote the specialization, rather than formatting the
   // name based on the "canonical" representation used to store the
   // template arguments in the specialization.
-  QualType WrittenTy
-    = SemaRef.Context.getTemplateSpecializationType(TemplateName(ClassTemplate),
+  TypeSourceInfo *WrittenTy
+    = SemaRef.Context.getTemplateSpecializationTypeInfo(
+                                                    TemplateName(ClassTemplate),
+                                                    PartialSpec->getLocation(),
                                                     InstTemplateArgs,
                                                     CanonType);
   
@@ -1499,6 +1502,7 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      ClassTemplate, 
                                                      Converted,
                                                      InstTemplateArgs,
+                                                     CanonType,
                                                      0);
   InstPartialSpec->setInstantiatedFromMember(PartialSpec);
   InstPartialSpec->setTypeAsWritten(WrittenTy);
@@ -2236,12 +2240,18 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     ClassTemplateDecl *ClassTemplate = Record->getDescribedClassTemplate();
     
     if (ClassTemplate) {
-      T = ClassTemplate->getInjectedClassNameType(Context);
+      T = ClassTemplate->getInjectedClassNameSpecialization(Context);
     } else if (ClassTemplatePartialSpecializationDecl *PartialSpec
                  = dyn_cast<ClassTemplatePartialSpecializationDecl>(Record)) {
-      T = Context.getTypeDeclType(Record);
       ClassTemplate = PartialSpec->getSpecializedTemplate();
-    } 
+
+      // If we call SubstType with an InjectedClassNameType here we
+      // can end up in an infinite loop.
+      T = Context.getTypeDeclType(Record);
+      assert(isa<InjectedClassNameType>(T) &&
+             "type of partial specialization is not an InjectedClassNameType");
+      T = cast<InjectedClassNameType>(T)->getUnderlyingType();
+    }  
     
     if (!T.isNull()) {
       // Substitute into the injected-class-name to get the type
@@ -2308,16 +2318,16 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     // so now we need to look into the instantiated parent context to
     // find the instantiation of the declaration D.
 
-    // If our context is a class template specialization, we may need
-    // to instantiate it before performing lookup into that context.
-    if (ClassTemplateSpecializationDecl *Spec
-                       = dyn_cast<ClassTemplateSpecializationDecl>(ParentDC)) {
+    // If our context used to be dependent, we may need to instantiate
+    // it before performing lookup into that context.
+    if (CXXRecordDecl *Spec = dyn_cast<CXXRecordDecl>(ParentDC)) {
       if (!Spec->isDependentContext()) {
         QualType T = Context.getTypeDeclType(Spec);
-        if (const TagType *Tag = T->getAs<TagType>())
-          if (!Tag->isBeingDefined() &&
-              RequireCompleteType(Loc, T, diag::err_incomplete_type))
-            return 0;
+        const RecordType *Tag = T->getAs<RecordType>();
+        assert(Tag && "type of non-dependent record is not a RecordType");
+        if (!Tag->isBeingDefined() &&
+            RequireCompleteType(Loc, T, diag::err_incomplete_type))
+          return 0;
       }
     }
 

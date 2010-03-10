@@ -2823,6 +2823,20 @@ QualType TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   return Result;
 }
 
+template<typename Derived>
+QualType TreeTransform<Derived>::TransformInjectedClassNameType(
+                                         TypeLocBuilder &TLB,
+                                         InjectedClassNameTypeLoc TL,
+                                         QualType ObjectType) {
+  Decl *D = getDerived().TransformDecl(TL.getNameLoc(),
+                                       TL.getTypePtr()->getDecl());
+  if (!D) return QualType();
+
+  QualType T = SemaRef.Context.getTypeDeclType(cast<TypeDecl>(D));
+  TLB.pushTypeSpec(T).setNameLoc(TL.getNameLoc());
+  return T;
+}
+
 
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateTypeParmType(

@@ -408,7 +408,9 @@ namespace clang {
       /// \brief A SubstTemplateTypeParmType record.
       TYPE_SUBST_TEMPLATE_TYPE_PARM = 25,
       /// \brief An UnresolvedUsingType record.
-      TYPE_UNRESOLVED_USING         = 26
+      TYPE_UNRESOLVED_USING         = 26,
+      /// \brief An InjectedClassNameType record.
+      TYPE_INJECTED_CLASS_NAME      = 27
     };
 
     /// \brief The type IDs for special types constructed by semantic

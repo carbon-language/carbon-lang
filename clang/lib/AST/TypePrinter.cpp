@@ -30,7 +30,7 @@ namespace {
     explicit TypePrinter(const PrintingPolicy &Policy) : Policy(Policy) { }
     
     void Print(QualType T, std::string &S);
-    void PrintTag(const TagType *T, std::string &S);
+    void PrintTag(TagDecl *T, std::string &S);
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT) \
   void Print##CLASS(const CLASS##Type *T, std::string &S);
@@ -330,19 +330,21 @@ void TypePrinter::PrintFunctionNoProto(const FunctionNoProtoType *T,
   Print(T->getResultType(), S);
 }
 
-void TypePrinter::PrintUnresolvedUsing(const UnresolvedUsingType *T,
-                                       std::string &S) {
-  IdentifierInfo *II = T->getDecl()->getIdentifier();
+static void PrintTypeSpec(const NamedDecl *D, std::string &S) {
+  IdentifierInfo *II = D->getIdentifier();
   if (S.empty())
     S = II->getName().str();
   else
     S = II->getName().str() + ' ' + S;
 }
 
+void TypePrinter::PrintUnresolvedUsing(const UnresolvedUsingType *T,
+                                       std::string &S) {
+  PrintTypeSpec(T->getDecl(), S);
+}
+
 void TypePrinter::PrintTypedef(const TypedefType *T, std::string &S) { 
-  if (!S.empty())    // Prefix the basic type, e.g. 'typedefname X'.
-    S = ' ' + S;
-  S = T->getDecl()->getIdentifier()->getName().str() + S;  
+  PrintTypeSpec(T->getDecl(), S);
 }
 
 void TypePrinter::PrintTypeOfExpr(const TypeOfExprType *T, std::string &S) {
@@ -371,18 +373,18 @@ void TypePrinter::PrintDecltype(const DecltypeType *T, std::string &S) {
   S = "decltype(" + s.str() + ")" + S;
 }
 
-void TypePrinter::PrintTag(const TagType *T, std::string &InnerString) {
+void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
   if (Policy.SuppressTag)
     return;
   
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   
-  const char *Kind = Policy.SuppressTagKind? 0 : T->getDecl()->getKindName();
+  const char *Kind = Policy.SuppressTagKind? 0 : D->getKindName();
   const char *ID;
-  if (const IdentifierInfo *II = T->getDecl()->getIdentifier())
+  if (const IdentifierInfo *II = D->getIdentifier())
     ID = II->getNameStart();
-  else if (TypedefDecl *Typedef = T->getDecl()->getTypedefForAnonDecl()) {
+  else if (TypedefDecl *Typedef = D->getTypedefForAnonDecl()) {
     Kind = 0;
     assert(Typedef->getIdentifier() && "Typedef without identifier?");
     ID = Typedef->getIdentifier()->getNameStart();
@@ -392,13 +394,22 @@ void TypePrinter::PrintTag(const TagType *T, std::string &InnerString) {
   // If this is a class template specialization, print the template
   // arguments.
   if (ClassTemplateSpecializationDecl *Spec
-      = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl())) {
-    const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+      = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    const TemplateArgument *Args;
+    unsigned NumArgs;
+    if (TypeSourceInfo *TAW = Spec->getTypeAsWritten()) {
+      const TemplateSpecializationType *TST =
+        cast<TemplateSpecializationType>(TAW->getType());
+      Args = TST->getArgs();
+      NumArgs = TST->getNumArgs();
+    } else {
+      const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+      Args = TemplateArgs.getFlatArgumentList();
+      NumArgs = TemplateArgs.flat_size();
+    }
     std::string TemplateArgsStr
-      = TemplateSpecializationType::PrintTemplateArgumentList(
-                                            TemplateArgs.getFlatArgumentList(),
-                                            TemplateArgs.flat_size(),
-                                            Policy);
+      = TemplateSpecializationType::PrintTemplateArgumentList(Args, NumArgs,
+                                                              Policy);
     InnerString = TemplateArgsStr + InnerString;
   }
   
@@ -406,7 +417,7 @@ void TypePrinter::PrintTag(const TagType *T, std::string &InnerString) {
     // Compute the full nested-name-specifier for this type. In C,
     // this will always be empty.
     std::string ContextStr;
-    for (DeclContext *DC = T->getDecl()->getDeclContext();
+    for (DeclContext *DC = D->getDeclContext();
          !DC->isTranslationUnit(); DC = DC->getParent()) {
       std::string MyPart;
       if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
@@ -441,11 +452,11 @@ void TypePrinter::PrintTag(const TagType *T, std::string &InnerString) {
 }
 
 void TypePrinter::PrintRecord(const RecordType *T, std::string &S) {
-  PrintTag(T, S);
+  PrintTag(T->getDecl(), S);
 }
 
 void TypePrinter::PrintEnum(const EnumType *T, std::string &S) { 
-  PrintTag(T, S);
+  PrintTag(T->getDecl(), S);
 }
 
 void TypePrinter::PrintElaborated(const ElaboratedType *T, std::string &S) { 
@@ -492,6 +503,12 @@ void TypePrinter::PrintTemplateSpecialization(
     S.swap(SpecString);
   else
     S = SpecString + ' ' + S;
+}
+
+void TypePrinter::PrintInjectedClassName(const InjectedClassNameType *T,
+                                         std::string &S) {
+  // TODO: this should probably be printed with template arguments
+  PrintTag(T->getDecl(), S);
 }
 
 void TypePrinter::PrintQualifiedName(const QualifiedNameType *T, 

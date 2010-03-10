@@ -771,6 +771,10 @@ class ClassTemplateSpecializationDecl
   llvm::PointerUnion<ClassTemplateDecl *, SpecializedPartialSpecialization *>
     SpecializedTemplate;
 
+  /// \brief The type-as-written of an explicit template specialization.
+  /// Does not apply to implicit specializations.
+  TypeSourceInfo *TypeAsWritten;
+
   /// \brief The template arguments used to describe this specialization.
   TemplateArgumentList TemplateArgs;
 
@@ -883,8 +887,14 @@ public:
 
   /// \brief Sets the type of this specialization as it was written by
   /// the user. This will be a class template specialization type.
-  void setTypeAsWritten(QualType T) {
-    TypeForDecl = T.getTypePtr();
+  void setTypeAsWritten(TypeSourceInfo *T) {
+    TypeAsWritten = T;
+  }
+
+  /// \brief Gets the type of this specialization as it was written by
+  /// the user, if it was so written.
+  TypeSourceInfo *getTypeAsWritten() const {
+    return TypeAsWritten;
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -921,6 +931,7 @@ class ClassTemplatePartialSpecializationDecl
   TemplateParameterList* TemplateParams;
 
   /// \brief The source info for the template arguments as written.
+  /// FIXME: redundant with TypeAsWritten?
   TemplateArgumentLoc *ArgsAsWritten;
   unsigned NumArgsAsWritten;
 
@@ -954,6 +965,7 @@ public:
          ClassTemplateDecl *SpecializedTemplate,
          TemplateArgumentListBuilder &Builder,
          const TemplateArgumentListInfo &ArgInfos,
+         QualType CanonInjectedType,
          ClassTemplatePartialSpecializationDecl *PrevDecl);
 
   /// Get the list of template parameters
@@ -1139,8 +1151,8 @@ public:
   /// the type \p T, or NULL if no such partial specialization exists.
   ClassTemplatePartialSpecializationDecl *findPartialSpecialization(QualType T);
 
-  /// \brief Retrieve the type of the injected-class-name for this
-  /// class template.
+  /// \brief Retrieve the template specialization type of the
+  /// injected-class-name for this class template.
   ///
   /// The injected-class-name for a class template \c X is \c
   /// X<template-args>, where \c template-args is formed from the
@@ -1153,7 +1165,7 @@ public:
   ///   typedef array this_type; // "array" is equivalent to "array<T, N>"
   /// };
   /// \endcode
-  QualType getInjectedClassNameType(ASTContext &Context);
+  QualType getInjectedClassNameSpecialization(ASTContext &Context);
 
   /// \brief Retrieve the member class template that this class template was
   /// derived from.

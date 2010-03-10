@@ -610,6 +610,16 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     break;
   }
 
+  case Type::InjectedClassName: {
+    const InjectedClassNameType *Inj1 = cast<InjectedClassNameType>(T1);
+    const InjectedClassNameType *Inj2 = cast<InjectedClassNameType>(T2);
+    if (!IsStructurallyEquivalent(Context,
+                                  Inj1->getUnderlyingType(),
+                                  Inj2->getUnderlyingType()))
+      return false;
+    break;
+  }
+
   case Type::Typename: {
     const TypenameType *Typename1 = cast<TypenameType>(T1);
     const TypenameType *Typename2 = cast<TypenameType>(T2);

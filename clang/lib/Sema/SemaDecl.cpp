@@ -188,18 +188,6 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
     DiagnoseUseOfDecl(IIDecl, NameLoc);
 
-    // C++ [temp.local]p2:
-    //   Within the scope of a class template specialization or
-    //   partial specialization, when the injected-class-name is
-    //   not followed by a <, it is equivalent to the
-    //   injected-class-name followed by the template-argument s
-    //   of the class template specialization or partial
-    //   specialization enclosed in <>.
-    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD))
-      if (RD->isInjectedClassName())
-        if (ClassTemplateDecl *Template = RD->getDescribedClassTemplate())
-          T = Template->getInjectedClassNameType(Context);
-
     if (T.isNull())
       T = Context.getTypeDeclType(TD);
     
@@ -1773,12 +1761,7 @@ DeclarationName Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
         return DeclarationName();
 
       // Determine the type of the class being constructed.
-      QualType CurClassType;
-      if (ClassTemplateDecl *ClassTemplate
-            = CurClass->getDescribedClassTemplate())
-        CurClassType = ClassTemplate->getInjectedClassNameType(Context);
-      else
-        CurClassType = Context.getTypeDeclType(CurClass);
+      QualType CurClassType = Context.getTypeDeclType(CurClass);
 
       // FIXME: Check two things: that the template-id names the same type as
       // CurClassType, and that the template-id does not occur when the name

@@ -2440,6 +2440,47 @@ public:
   static bool classof(const TemplateSpecializationType *T) { return true; }
 };
 
+/// \brief The injected class name of a C++ class template.  Used to
+/// record that a type was spelled with a bare identifier rather than
+/// as a template-id; the equivalent for non-templated classes is just
+/// RecordType.
+///
+/// For consistency, template instantiation turns these into RecordTypes.
+///
+/// The desugared form is always a unqualified TemplateSpecializationType.
+/// The canonical form is always either a TemplateSpecializationType
+/// (when dependent) or a RecordType (otherwise).
+class InjectedClassNameType : public Type {
+  CXXRecordDecl *Decl;
+
+  QualType UnderlyingType;
+
+  friend class ASTContext; // ASTContext creates these.
+  InjectedClassNameType(CXXRecordDecl *D, QualType TST, QualType Canon)
+    : Type(InjectedClassName, Canon, Canon->isDependentType()),
+      Decl(D), UnderlyingType(TST) {
+    assert(isa<TemplateSpecializationType>(TST));
+    assert(!TST.hasQualifiers());
+    assert(TST->getCanonicalTypeInternal() == Canon);
+  }
+
+public:
+  QualType getUnderlyingType() const { return UnderlyingType; }
+  const TemplateSpecializationType *getUnderlyingTST() const {
+    return cast<TemplateSpecializationType>(UnderlyingType.getTypePtr());
+  }
+
+  CXXRecordDecl *getDecl() const { return Decl; }
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return UnderlyingType; }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == InjectedClassName;
+  }
+  static bool classof(const InjectedClassNameType *T) { return true; }
+};
+
 /// \brief Represents a type that was referred to via a qualified
 /// name, e.g., N::M::type.
 ///

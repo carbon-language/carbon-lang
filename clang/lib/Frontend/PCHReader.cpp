@@ -2018,6 +2018,12 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       Context->getSubstTemplateTypeParmType(cast<TemplateTypeParmType>(Parm),
                                             Replacement);
   }
+
+  case pch::TYPE_INJECTED_CLASS_NAME: {
+    CXXRecordDecl *D = cast<CXXRecordDecl>(GetDecl(Record[0]));
+    QualType TST = GetType(Record[1]); // probably derivable
+    return Context->getInjectedClassNameType(D, TST);
+  }
   }
   // Suppress a GCC warning
   return QualType();
@@ -2170,6 +2176,9 @@ void TypeLocReader::VisitTemplateSpecializationTypeLoc(
                                           Record, Idx));
 }
 void TypeLocReader::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitTypenameTypeLoc(TypenameTypeLoc TL) {

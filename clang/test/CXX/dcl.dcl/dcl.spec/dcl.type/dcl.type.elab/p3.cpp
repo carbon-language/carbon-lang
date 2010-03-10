@@ -52,7 +52,7 @@ void e3(union B<A>::Member);
 void e4(enum B<A>::Member); // expected-error {{use of 'Member' with tag type that does not match previous declaration}}
 
 template <class T> struct C {
-  void foo(class B<T>::Member); // expected-error{{no type named 'Member' in 'B<int>'}}
+  void foo(class B<T>::Member); // expected-error{{no type named 'Member' in 'struct B<int>'}}
 };
 
 C<float> f1;

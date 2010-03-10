@@ -625,6 +625,15 @@ DeduceTemplateArguments(Sema &S,
       return Sema::TDK_Success;
     }
 
+    case Type::InjectedClassName: {
+      // Treat a template's injected-class-name as if the template
+      // specialization type had been used.
+      Param = cast<InjectedClassNameType>(Param)->getUnderlyingType();
+      assert(isa<TemplateSpecializationType>(Param) &&
+             "injected class name is not a template specialization type");
+      // fall through
+    }
+
     //     template-name<T> (where template-name refers to a class template)
     //     template-name<i>
     //     TT<T>

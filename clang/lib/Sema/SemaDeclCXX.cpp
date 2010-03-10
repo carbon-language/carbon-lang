@@ -665,22 +665,29 @@ void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
                        (CXXBaseSpecifier**)(Bases), NumBases);
 }
 
+static CXXRecordDecl *GetClassForType(QualType T) {
+  if (const RecordType *RT = T->getAs<RecordType>())
+    return cast<CXXRecordDecl>(RT->getDecl());
+  else if (const InjectedClassNameType *ICT = T->getAs<InjectedClassNameType>())
+    return ICT->getDecl();
+  else
+    return 0;
+}
+
 /// \brief Determine whether the type \p Derived is a C++ class that is
 /// derived from the type \p Base.
 bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
   if (!getLangOptions().CPlusPlus)
     return false;
-    
-  const RecordType *DerivedRT = Derived->getAs<RecordType>();
-  if (!DerivedRT)
+  
+  CXXRecordDecl *DerivedRD = GetClassForType(Derived);
+  if (!DerivedRD)
     return false;
   
-  const RecordType *BaseRT = Base->getAs<RecordType>();
-  if (!BaseRT)
+  CXXRecordDecl *BaseRD = GetClassForType(Base);
+  if (!BaseRD)
     return false;
   
-  CXXRecordDecl *DerivedRD = cast<CXXRecordDecl>(DerivedRT->getDecl());
-  CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
   // FIXME: instantiate DerivedRD if necessary.  We need a PoI for this.
   return DerivedRD->hasDefinition() && DerivedRD->isDerivedFrom(BaseRD);
 }
@@ -691,16 +698,14 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths) {
   if (!getLangOptions().CPlusPlus)
     return false;
   
-  const RecordType *DerivedRT = Derived->getAs<RecordType>();
-  if (!DerivedRT)
+  CXXRecordDecl *DerivedRD = GetClassForType(Derived);
+  if (!DerivedRD)
     return false;
   
-  const RecordType *BaseRT = Base->getAs<RecordType>();
-  if (!BaseRT)
+  CXXRecordDecl *BaseRD = GetClassForType(Base);
+  if (!BaseRD)
     return false;
   
-  CXXRecordDecl *DerivedRD = cast<CXXRecordDecl>(DerivedRT->getDecl());
-  CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
   return DerivedRD->isDerivedFrom(BaseRD, Paths);
 }
 

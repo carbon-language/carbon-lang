@@ -193,7 +193,8 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
   return 0;
 }
 
-QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
+QualType
+ClassTemplateDecl::getInjectedClassNameSpecialization(ASTContext &Context) {
   if (!CommonPtr->InjectedClassNameType.isNull())
     return CommonPtr->InjectedClassNameType;
 
@@ -393,6 +394,7 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                   SpecializedTemplate->getIdentifier(),
                   PrevDecl),
     SpecializedTemplate(SpecializedTemplate),
+    TypeAsWritten(0),
     TemplateArgs(Context, Builder, /*TakeArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
 }
@@ -453,6 +455,7 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
        ClassTemplateDecl *SpecializedTemplate,
        TemplateArgumentListBuilder &Builder,
        const TemplateArgumentListInfo &ArgInfos,
+       QualType CanonInjectedType,
        ClassTemplatePartialSpecializationDecl *PrevDecl) {
   unsigned N = ArgInfos.size();
   TemplateArgumentLoc *ClonedArgs = new (Context) TemplateArgumentLoc[N];
@@ -467,7 +470,8 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
                                                           ClonedArgs, N,
                                                           PrevDecl);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
-  Context.getTypeDeclType(Result, PrevDecl);
+
+  Context.getInjectedClassNameType(Result, CanonInjectedType);
   return Result;
 }
 
