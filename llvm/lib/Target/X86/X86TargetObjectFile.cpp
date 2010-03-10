@@ -20,14 +20,19 @@ using namespace dwarf;
 
 const MCExpr *X8664_MachoTargetObjectFile::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                           MachineModuleInfo *MMI, unsigned Encoding) const {
+                                 MachineModuleInfo *MMI, 
+                                 unsigned Encoding) const {
 
   // On Darwin/X86-64, we can reference dwarf symbols with foo@GOTPCREL+4, which
   // is an indirect pc-relative reference.
   if (Encoding & (DW_EH_PE_indirect | DW_EH_PE_pcrel)) {
     SmallString<128> Name;
     Mang->getNameWithPrefix(Name, GV, false);
-    const MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+    const MCSymbol *Sym;
+    if (GV->hasPrivateLinkage())
+      Sym = getContext().GetOrCreateTemporarySymbol(Name);
+    else
+      Sym = getContext().GetOrCreateSymbol(Name);
     const MCExpr *Res =
       X86MCTargetExpr::Create(Sym, X86MCTargetExpr::GOTPCREL, getContext());
     const MCExpr *Four = MCConstantExpr::Create(4, getContext());

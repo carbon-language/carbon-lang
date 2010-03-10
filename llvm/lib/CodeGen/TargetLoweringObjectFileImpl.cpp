@@ -403,12 +403,15 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
+    MCSymbol *Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
     MCSymbol *&StubSym = ELFMMI.getGVStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = getContext().GetOrCreateSymbol(Name.str());
+      if (GV->hasPrivateLinkage())
+        StubSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+      else
+        StubSym = getContext().GetOrCreateSymbol(Name.str());
     }
 
     return TargetLoweringObjectFile::
@@ -749,12 +752,15 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 
     // Add information about the stub reference to MachOMMI so that the stub
     // gets emitted by the asmprinter.
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(Name.str());
+    MCSymbol *Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
     MCSymbol *&StubSym = MachOMMI.getGVStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = getContext().GetOrCreateSymbol(Name.str());
+      if (GV->hasPrivateLinkage())
+        StubSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+      else
+        StubSym = getContext().GetOrCreateSymbol(Name.str());
     }
 
     return TargetLoweringObjectFile::

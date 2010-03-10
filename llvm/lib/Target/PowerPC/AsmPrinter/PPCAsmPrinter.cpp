@@ -309,8 +309,8 @@ namespace {
       const MCSymbol *&TOCEntry = TOC[Sym];
       if (TOCEntry == 0)
         TOCEntry = OutContext.
-          GetOrCreateSymbol(StringRef(MAI->getPrivateGlobalPrefix()) + "C" +
-                            Twine(LabelID++));
+          GetOrCreateTemporarySymbol(StringRef(MAI->getPrivateGlobalPrefix()) +
+                                     "C" + Twine(LabelID++));
 
       O << *TOCEntry << "@toc";
     }
@@ -672,14 +672,14 @@ static const MCSymbol *GetLazyPtr(const MCSymbol *Sym, MCContext &Ctx) {
   // Remove $stub suffix, add $lazy_ptr.
   SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end()-5);
   TmpStr += "$lazy_ptr";
-  return Ctx.GetOrCreateSymbol(TmpStr.str());
+  return Ctx.GetOrCreateTemporarySymbol(TmpStr.str());
 }
 
 static const MCSymbol *GetAnonSym(const MCSymbol *Sym, MCContext &Ctx) {
   // Add $tmp suffix to $stub, yielding $stub$tmp.
   SmallString<128> TmpStr(Sym->getName().begin(), Sym->getName().end());
   TmpStr += "$tmp";
-  return Ctx.GetOrCreateSymbol(TmpStr.str());
+  return Ctx.GetOrCreateTemporarySymbol(TmpStr.str());
 }
 
 void PPCDarwinAsmPrinter::

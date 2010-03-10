@@ -58,7 +58,7 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
   }
 
   // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateTemporarySymbol(Name.str());
 }
 
 MCSymbol *MSP430MCInstLower::
@@ -74,7 +74,7 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   }
 
   // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateTemporarySymbol(Name.str());
 }
 
 MCOperand MSP430MCInstLower::

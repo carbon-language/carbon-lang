@@ -464,7 +464,9 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
   SmallString<60> Name;
   raw_svector_ostream(Name)
     << Prefix << "JTI" << getFunctionNumber() << '_' << JTI;
-  return Ctx.GetOrCreateSymbol(Name.str());
+  if (isLinkerPrivate)
+    return Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateTemporarySymbol(Name.str());
 }
 
 

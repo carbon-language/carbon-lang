@@ -89,7 +89,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
 
     MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
     if (StubSym == 0) {
@@ -100,7 +100,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
     MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
     if (StubSym == 0) {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
@@ -110,7 +110,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
     MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
     if (StubSym)
       return Sym;
@@ -119,7 +119,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       StubSym = AsmPrinter.GetGlobalValueSymbol(MO.getGlobal());
     } else {
       Name.erase(Name.end()-5, Name.end());
-      StubSym = Ctx.GetOrCreateSymbol(Name.str());
+      StubSym = Ctx.GetOrCreateTemporarySymbol(Name.str());
     }
     return Sym;
   }
@@ -394,7 +394,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // However, we can't generate a ".", so just emit a new label here and refer
     // to it.  We know that this operand flag occurs at most once per function.
     const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *DotSym = OutContext.GetOrCreateSymbol(Twine(Prefix)+"picbaseref"+
+    MCSymbol *DotSym = OutContext.GetOrCreateTemporarySymbol(Twine(Prefix)+
+                                                             "picbaseref" +
                                                     Twine(getFunctionNumber()));
     OutStreamer.EmitLabel(DotSym);
     

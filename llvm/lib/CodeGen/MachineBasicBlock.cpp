@@ -42,12 +42,11 @@ MachineBasicBlock::~MachineBasicBlock() {
 /// getSymbol - Return the MCSymbol for this basic block.
 ///
 MCSymbol *MachineBasicBlock::getSymbol(MCContext &Ctx) const {
-  SmallString<60> Name;
   const MachineFunction *MF = getParent();
-  raw_svector_ostream(Name)
-    << MF->getTarget().getMCAsmInfo()->getPrivateGlobalPrefix() << "BB"
-    << MF->getFunctionNumber() << '_' << getNumber();
-  return Ctx.GetOrCreateSymbol(Name.str());
+  const char *Prefix = MF->getTarget().getMCAsmInfo()->getPrivateGlobalPrefix();
+  return Ctx.GetOrCreateTemporarySymbol(Twine(Prefix) + "BB" +
+                                        Twine(MF->getFunctionNumber()) + "_" +
+                                        Twine(getNumber()));
 }
 
 

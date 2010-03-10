@@ -1105,8 +1105,8 @@ MCSymbol *
 X86TargetLowering::getPICBaseSymbol(const MachineFunction *MF,
                                     MCContext &Ctx) const {
   const MCAsmInfo &MAI = *getTargetMachine().getMCAsmInfo();
-  return Ctx.GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix())+
-                               Twine(MF->getFunctionNumber())+"$pb");
+  return Ctx.GetOrCreateTemporarySymbol(Twine(MAI.getPrivateGlobalPrefix())+
+                                        Twine(MF->getFunctionNumber())+"$pb");
 }
 
 

@@ -911,8 +911,8 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
 
   // Otherwise, emit with .set (aka assignment).
   MCSymbol *SetLabel =
-    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + "set" +
-                                 Twine(SetCounter++));
+    OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                                          "set" + Twine(SetCounter++));
   OutStreamer.EmitAssignment(SetLabel, Diff);
   OutStreamer.EmitSymbolValue(SetLabel, Size, 0/*AddrSpace*/);
 }
@@ -1553,15 +1553,15 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
 /// exception handling tables.
 void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
   MCSymbol *Sym = 
-    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+    OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
                                  "label" + Twine(MI->getOperand(0).getImm()));
   OutStreamer.EmitLabel(Sym);
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
   MCSymbol *Sym = 
-    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                                 "label" + Twine(Id));
+    OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                                          "label" + Twine(Id));
   OutStreamer.EmitLabel(Sym);
 }
 
@@ -1603,15 +1603,14 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
                           "_" + FnName.str() + "_" + BB->getName(), 
                           Mangler::Private);
 
-  return OutContext.GetOrCreateSymbol(NameResult.str());
+  return OutContext.GetOrCreateTemporarySymbol(NameResult.str());
 }
 
 /// GetCPISymbol - Return the symbol for the specified constant pool entry.
 MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "CPI"
-    << getFunctionNumber() << '_' << CPID;
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return OutContext.GetOrCreateTemporarySymbol
+    (Twine(MAI->getPrivateGlobalPrefix()) + "CPI" + Twine(getFunctionNumber())
+     + "_" + Twine(CPID));
 }
 
 /// GetJTISymbol - Return the symbol for the specified jump table entry.
@@ -1622,10 +1621,9 @@ MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
 /// GetJTSetSymbol - Return the symbol for the specified jump table .set
 /// FIXME: privatize to AsmPrinter.
 MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << UID << "_set_" << MBBID;
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return OutContext.GetOrCreateTemporarySymbol
+  (Twine(MAI->getPrivateGlobalPrefix()) + Twine(getFunctionNumber()) + "_" +
+   Twine(UID) + "_set_" + Twine(MBBID));
 }
 
 /// GetGlobalValueSymbol - Return the MCSymbol for the specified global
@@ -1633,7 +1631,10 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
 MCSymbol *AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
   SmallString<60> NameStr;
   Mang->getNameWithPrefix(NameStr, GV, false);
-  return OutContext.GetOrCreateSymbol(NameStr.str());
+  
+  if (!GV->hasPrivateLinkage())
+    return OutContext.GetOrCreateSymbol(NameStr.str());
+  return OutContext.GetOrCreateTemporarySymbol(NameStr.str());
 }
 
 /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
@@ -1645,7 +1646,9 @@ MCSymbol *AsmPrinter::GetSymbolWithGlobalValueBase(const GlobalValue *GV,
   SmallString<60> NameStr;
   Mang->getNameWithPrefix(NameStr, GV, ForcePrivate);
   NameStr.append(Suffix.begin(), Suffix.end());
-  return OutContext.GetOrCreateSymbol(NameStr.str());
+  if (!GV->hasPrivateLinkage() && !ForcePrivate)
+    return OutContext.GetOrCreateSymbol(NameStr.str());
+  return OutContext.GetOrCreateTemporarySymbol(NameStr.str());
 }
 
 /// GetExternalSymbolSymbol - Return the MCSymbol for the specified

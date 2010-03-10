@@ -74,7 +74,7 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
 #endif
   
   // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateTemporarySymbol(Name.str());
 }
 
 MCSymbol *ARMMCInstLower::
@@ -90,7 +90,7 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
 #endif
   
   // Create a symbol for the name.
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateTemporarySymbol(Name.str());
 }
   
 MCOperand ARMMCInstLower::

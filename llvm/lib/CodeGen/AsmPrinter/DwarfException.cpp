@@ -60,7 +60,7 @@ const MCExpr *DwarfException::CreateLabelDiff(const MCExpr *ExprRef,
   raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
                             << LabelName << Asm->getFunctionNumber()
                             << "_" << Index;
-  MCSymbol *DotSym = Asm->OutContext.GetOrCreateSymbol(Name.str());
+  MCSymbol *DotSym = Asm->OutContext.GetOrCreateTemporarySymbol(Name.str());
   Asm->OutStreamer.EmitLabel(DotSym);
 
   return MCBinaryExpr::CreateSub(ExprRef,

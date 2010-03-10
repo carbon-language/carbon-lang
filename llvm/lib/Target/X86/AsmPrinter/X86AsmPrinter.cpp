@@ -56,7 +56,11 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
 MCSymbol *X86AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
   SmallString<60> NameStr;
   Mang->getNameWithPrefix(NameStr, GV, false);
-  MCSymbol *Symb = OutContext.GetOrCreateSymbol(NameStr.str());
+  MCSymbol *Symb;
+  if (GV->hasPrivateLinkage())
+    Symb = OutContext.GetOrCreateTemporarySymbol(NameStr.str());
+  else
+    Symb = OutContext.GetOrCreateSymbol(NameStr.str());
 
   if (Subtarget->isTargetCygMing()) {
     X86COFFMachineModuleInfo &COFFMMI =

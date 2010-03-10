@@ -127,6 +127,10 @@ public:
 
   static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx);
   static const MCSymbolRefExpr *Create(StringRef Name, MCContext &Ctx);
+  
+  /// CreateTemp - Create a reference to an assembler temporary label with the
+  /// specified name.
+  static const MCSymbolRefExpr *CreateTemp(StringRef Name, MCContext &Ctx);
 
   /// @}
   /// @name Accessors
