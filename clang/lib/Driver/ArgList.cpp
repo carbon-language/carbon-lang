@@ -80,9 +80,9 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
   Arg *A1 = getLastArgNoClaim(Id1);
   Arg *A2 = getLastArgNoClaim(Id2);
 
-  int A0Idx = A0 ? A0->getIndex() : -1;
-  int A1Idx = A1 ? A1->getIndex() : -1;
-  int A2Idx = A2 ? A2->getIndex() : -1;
+  int A0Idx = A0 ? (int) A0->getIndex() : -1;
+  int A1Idx = A1 ? (int) A1->getIndex() : -1;
+  int A2Idx = A2 ? (int) A2->getIndex() : -1;
 
   if (A0Idx > A1Idx) {
     if (A0Idx > A2Idx)
