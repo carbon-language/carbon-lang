@@ -445,9 +445,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// Protocols referenced in interface header declaration
   ObjCProtocolList ReferencedProtocols;
 
-  /// Instance variables in the interface. This list is completely redundant.
-  ObjCList<ObjCIvarDecl> IVars;
-
   /// List of categories defined for this class.
   /// FIXME: Why is this a linked list??
   ObjCCategoryDecl *CategoryList;

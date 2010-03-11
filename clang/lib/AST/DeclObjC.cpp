@@ -441,7 +441,6 @@ void ObjCInterfaceDecl::Destroy(ASTContext &C) {
   for (ivar_iterator I = ivar_begin(), E = ivar_end(); I != E; ++I)
     if (*I) (*I)->Destroy(C);
 
-  IVars.Destroy(C);
   // FIXME: CategoryList?
 
   // FIXME: Because there is no clear ownership
