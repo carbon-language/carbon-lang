@@ -77,6 +77,10 @@ class ASTRecordLayoutBuilder {
   /// inheritance graph order. Used for determining the primary base class.
   const CXXRecordDecl *FirstNearlyEmptyVBase;
 
+  /// VisitedVirtualBases - A set of all the visited virtual bases, used to
+  /// avoid visiting virtual bases more than once.
+  llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
+  
   /// EmptyClassOffsets - A map from offsets to empty record decls.
   typedef std::multimap<uint64_t, const CXXRecordDecl *> EmptyClassOffsetsTy;
   EmptyClassOffsetsTy EmptyClassOffsets;
@@ -113,8 +117,7 @@ class ASTRecordLayoutBuilder {
 
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *Class, const CXXRecordDecl *RD,
-                          const CXXRecordDecl *PB, uint64_t Offset, 
-                          llvm::SmallSet<const CXXRecordDecl*, 32> &mark);
+                          const CXXRecordDecl *PB, uint64_t Offset); 
 
   /// LayoutVirtualBase - Lays out a single virtual base.
   void LayoutVirtualBase(const CXXRecordDecl *RD);

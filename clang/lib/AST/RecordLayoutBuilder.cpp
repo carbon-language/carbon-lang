@@ -221,8 +221,7 @@ void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
 void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
                                                 const CXXRecordDecl *RD,
                                                 const CXXRecordDecl *PB,
-                                                uint64_t Offset,
-                               llvm::SmallSet<const CXXRecordDecl*, 32> &mark) {
+                                                uint64_t Offset) {
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     assert(!i->getType()->isDependentType() &&
@@ -233,10 +232,10 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
     if (i->isVirtual()) {
       if (Base == PB) {
         // Only lay things out once.
-        if (mark.count(Base))
+        if (VisitedVirtualBases.count(Base))
           continue;
         // Mark it so we don't lay it out twice.
-        mark.insert(Base);
+        VisitedVirtualBases.insert(Base);
         assert (IndirectPrimaryBases.count(Base) && "IndirectPrimary was wrong");
         VBases.push_back(std::make_pair(Base, Offset));
       } else if (IndirectPrimaryBases.count(Base)) {
@@ -244,10 +243,10 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
         ;
       } else {
         // Only lay things out once.
-        if (mark.count(Base))
+        if (VisitedVirtualBases.count(Base))
           continue;
         // Mark it so we don't lay it out twice.
-        mark.insert(Base);
+        VisitedVirtualBases.insert(Base);
         LayoutVirtualBase(Base);
         BaseOffset = VBases.back().second;
       }
@@ -263,7 +262,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
     if (Base->getNumVBases()) {
       const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Base);
       const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().getBase();
-      LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset, mark);
+      LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset);
     }
   }
 }
@@ -486,8 +485,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   NonVirtualAlignment = Alignment;
 
   if (RD) {
-    llvm::SmallSet<const CXXRecordDecl*, 32> mark;
-    LayoutVirtualBases(RD, RD, PrimaryBase.getBase(), 0, mark);
+    LayoutVirtualBases(RD, RD, PrimaryBase.getBase(), 0);
   }
 
   // Finally, round the size of the total struct up to the alignment of the
