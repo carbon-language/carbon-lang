@@ -14,6 +14,8 @@
 
 #include "llvm-c/Transforms/Scalar.h"
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
@@ -90,6 +92,11 @@ void LLVMAddScalarReplAggregatesPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createScalarReplAggregatesPass());
 }
 
+void LLVMAddScalarReplAggregatesPassWithThreshold(LLVMPassManagerRef PM,
+                                                  int Threshold) {
+  unwrap(PM)->add(createScalarReplAggregatesPass(Threshold));
+}
+
 void LLVMAddSimplifyLibCallsPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createSimplifyLibCallsPass());
 }
@@ -104,4 +111,12 @@ void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM) {
 
 void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createDemoteRegisterToMemoryPass());
+}
+
+void LLVMAddVerifierPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createVerifierPass());
+}
+
+void LLVMAddTargetData(LLVMPassManagerRef PM, LLVMModuleRef M) {
+  unwrap(PM)->add(new TargetData(unwrap(M)));
 }
