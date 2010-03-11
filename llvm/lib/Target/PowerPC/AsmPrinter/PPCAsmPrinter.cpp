@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -806,11 +807,16 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     EmitAlignment(isPPC64 ? 3 : 2);
     
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-      O << *Stubs[i].first << ":\n";
-      O << "\t.indirect_symbol " << *Stubs[i].second.getPointer() << '\n';
-      // FIXME: This should use the "GV is external" bit.
-      O << (isPPC64 ? "\t.quad\t0\n" : "\t.long\t0\n");
+      // L_foo$stub:
+      OutStreamer.EmitLabel(Stubs[i].first);
+      //   .indirect_symbol _foo
+      MachineModuleInfoImpl::StubValueTy &MCSym = Stubs[i].second;
+      OutStreamer.EmitSymbolAttribute(MCSym.getPointer(), MCSA_IndirectSymbol);
+      OutStreamer.EmitIntValue(0, isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
     }
+
+    Stubs.clear();
+    OutStreamer.AddBlankLine();
   }
 
   Stubs = MMIMacho.GetHiddenGVStubList();
@@ -819,10 +825,17 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     EmitAlignment(isPPC64 ? 3 : 2);
     
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-      O << *Stubs[i].first << ":\n";
-      O << (isPPC64 ? "\t.quad\t" : "\t.long\t")
-        << *Stubs[i].second.getPointer() << '\n';
+      // L_foo$stub:
+      OutStreamer.EmitLabel(Stubs[i].first);
+      //   .long _foo
+      OutStreamer.EmitValue(MCSymbolRefExpr::
+                            Create(Stubs[i].second.getPointer(),
+                                   OutContext),
+                            isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
     }
+
+    Stubs.clear();
+    OutStreamer.AddBlankLine();
   }
 
   // Funny Darwin hack: This flag tells the linker that no global symbols
@@ -834,8 +847,6 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   return AsmPrinter::doFinalization(M);
 }
-
-
 
 /// createPPCAsmPrinterPass - Returns a pass that prints the PPC assembly code
 /// for a MachineFunction to the given output stream, in a format that the
