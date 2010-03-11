@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/SmallString.h"
@@ -38,6 +39,11 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 
 
 MCSymbol *MCContext::GetOrCreateTemporarySymbol(StringRef Name) {
+  // If there is no name, create a new anonymous symbol.
+  if (Name.empty())
+    return GetOrCreateTemporarySymbol(Twine(MAI.getPrivateGlobalPrefix()) +
+                                      "tmp" + Twine(NextUniqueID++));
+  
   // Otherwise create as usual.
   MCSymbol *&Entry = Symbols[Name];
   if (Entry) return Entry;
