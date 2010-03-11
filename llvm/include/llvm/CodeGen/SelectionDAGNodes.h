@@ -1383,9 +1383,9 @@ protected:
   /// This constructor adds no operands itself; operands can be
   /// set later with InitOperands.
   SDNode(unsigned Opc, const DebugLoc dl, SDVTList VTs)
-    : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
-      NodeId(-1), OperandList(0), ValueList(VTs.VTs), UseList(NULL),
-      NumOperands(0), NumValues(VTs.NumVTs),
+    : NodeType(Opc), OperandsNeedDelete(false), HasDebugValue(false),
+      SubclassData(0), NodeId(-1), OperandList(0), ValueList(VTs.VTs),
+      UseList(NULL), NumOperands(0), NumValues(VTs.NumVTs),
       debugLoc(dl) {}
 
   /// InitOperands - Initialize the operands list of this with 1 operand.
