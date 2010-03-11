@@ -23,7 +23,17 @@ Command::Command(const Action &_Source, const Tool &_Creator,
 
 PipedJob::PipedJob() : Job(PipedJobClass) {}
 
+PipedJob::~PipedJob() {
+  for (iterator it = begin(), ie = end(); it != ie; ++it)
+    delete *it;
+}
+
 JobList::JobList() : Job(JobListClass) {}
+
+JobList::~JobList() {
+  for (iterator it = begin(), ie = end(); it != ie; ++it)
+    delete *it;
+}
 
 void Job::addCommand(Command *C) {
   if (PipedJob *PJ = dyn_cast<PipedJob>(this))
