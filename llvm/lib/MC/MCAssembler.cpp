@@ -539,10 +539,10 @@ public:
     if (Target.isAbsolute()) { // constant
       // SymbolNum of 0 indicates the absolute section.
       //
-      // FIXME: When is this generated?
+      // FIXME: Currently, these are never generated (see code below). I cannot
+      // find a case where they are actually emitted.
       Type = RIT_Vanilla;
       Value = 0;
-      llvm_unreachable("FIXME: Not yet implemented!");
     } else {
       const MCSymbol *Symbol = Target.getSymA();
       MCSymbolData *SD = &Asm.getSymbolData(*Symbol);
@@ -571,6 +571,12 @@ public:
     Fixup.FixedValue = Value + Target.getConstant();
     if (IsPCRel)
       Fixup.FixedValue -= Address;
+
+    // If the target evaluates to a constant, we don't need a relocation. This
+    // occurs with absolutized expressions which are not resolved to constants
+    // until after relaxation.
+    if (Target.isAbsolute())
+      return;
 
     // If this fixup is a vanilla PC relative relocation for a local label, we
     // don't need a relocation.

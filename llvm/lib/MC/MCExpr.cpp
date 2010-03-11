@@ -8,11 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
 
 void MCExpr::print(raw_ostream &OS) const {
@@ -187,8 +190,23 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res, MCAsmLayout *Layout) const {
     const MCSymbol &Sym = cast<MCSymbolRefExpr>(this)->getSymbol();
 
     // Evaluate recursively if this is a variable.
-    if (Sym.isVariable())
-      return Sym.getValue()->EvaluateAsRelocatable(Res, Layout);
+    if (Sym.isVariable()) {
+      if (!Sym.getValue()->EvaluateAsRelocatable(Res, Layout))
+        return false;
+
+      // Absolutize symbol differences when we have a layout object and the
+      // target requests it.
+      if (Layout && Res.getSymB() &&
+          Layout->getAssembler().getBackend().hasAbsolutizedSet()) {
+        MCSymbolData &A = Layout->getAssembler().getSymbolData(*Res.getSymA());
+        MCSymbolData &B = Layout->getAssembler().getSymbolData(*Res.getSymB());
+        Res = MCValue::get(+ A.getFragment()->getAddress() + A.getOffset()
+                           - B.getFragment()->getAddress() - B.getOffset()
+                           + Res.getConstant());
+      }
+
+      return true;
+    }
 
     Res = MCValue::get(&Sym, 0, 0);
     return true;
