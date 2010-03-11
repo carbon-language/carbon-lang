@@ -1095,9 +1095,17 @@ private:
                            BitVector &RegKills,
                            std::vector<MachineOperand*> &KillOps);
 
-  void TransferDeadness(unsigned CurDist,
-                        unsigned Reg, BitVector &RegKills,
+  void TransferDeadness(unsigned Reg, BitVector &RegKills,
                         std::vector<MachineOperand*> &KillOps);
+
+  bool InsertEmergencySpills(MachineInstr *MI);
+
+  bool InsertRestores(MachineInstr *MI,
+                      AvailableSpills &Spills,
+                      BitVector &RegKills,
+                      std::vector<MachineOperand*> &KillOps);
+
+  bool InsertSpills(MachineInstr *MI);
 
   void RewriteMBB(LiveIntervals *LIs,
                   AvailableSpills &Spills, BitVector &RegKills,
@@ -1604,8 +1612,7 @@ static bool isSafeToDelete(MachineInstr &MI) {
 /// TransferDeadness - A identity copy definition is dead and it's being
 /// removed. Find the last def or use and mark it as dead / kill.
 void LocalRewriter::
-TransferDeadness(unsigned CurDist,
-                 unsigned Reg, BitVector &RegKills,
+TransferDeadness(unsigned Reg, BitVector &RegKills,
                  std::vector<MachineOperand*> &KillOps) {
   SmallPtrSet<MachineInstr*, 4> Seens;
   SmallVector<std::pair<MachineInstr*, int>,8> Refs;
@@ -1615,7 +1622,7 @@ TransferDeadness(unsigned CurDist,
     if (UDMI->getParent() != MBB)
       continue;
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
-    if (DI == DistanceMap.end() || DI->second > CurDist)
+    if (DI == DistanceMap.end())
       continue;
     if (Seens.insert(UDMI))
       Refs.push_back(std::make_pair(UDMI, DI->second));
@@ -1657,6 +1664,180 @@ TransferDeadness(unsigned CurDist,
   }
 }
 
+/// InsertEmergencySpills - Insert emergency spills before MI if requested by
+/// VRM. Return true if spills were inserted.
+bool LocalRewriter::InsertEmergencySpills(MachineInstr *MI) {
+  if (!VRM->hasEmergencySpills(MI))
+    return false;
+  MachineBasicBlock::iterator MII = MI;
+  SmallSet<int, 4> UsedSS;
+  std::vector<unsigned> &EmSpills = VRM->getEmergencySpills(MI);
+  for (unsigned i = 0, e = EmSpills.size(); i != e; ++i) {
+    unsigned PhysReg = EmSpills[i];
+    const TargetRegisterClass *RC = TRI->getPhysicalRegisterRegClass(PhysReg);
+    assert(RC && "Unable to determine register class!");
+    int SS = VRM->getEmergencySpillSlot(RC);
+    if (UsedSS.count(SS))
+      llvm_unreachable("Need to spill more than one physical registers!");
+    UsedSS.insert(SS);
+    TII->storeRegToStackSlot(*MBB, MII, PhysReg, true, SS, RC);
+    MachineInstr *StoreMI = prior(MII);
+    VRM->addSpillSlotUse(SS, StoreMI);
+
+    // Back-schedule reloads and remats.
+    MachineBasicBlock::iterator InsertLoc =
+      ComputeReloadLoc(llvm::next(MII), MBB->begin(), PhysReg, TRI, false, SS,
+                       TII, *MBB->getParent());
+
+    TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SS, RC);
+
+    MachineInstr *LoadMI = prior(InsertLoc);
+    VRM->addSpillSlotUse(SS, LoadMI);
+    ++NumPSpills;
+    DistanceMap.insert(std::make_pair(LoadMI, DistanceMap.size()));
+  }
+  return true;
+}
+
+/// InsertRestores - Restore registers before MI is requested by VRM. Return
+/// true is any instructions were inserted.
+bool LocalRewriter::InsertRestores(MachineInstr *MI,
+                                   AvailableSpills &Spills,
+                                   BitVector &RegKills,
+                                   std::vector<MachineOperand*> &KillOps) {
+  if (!VRM->isRestorePt(MI))
+    return false;
+  MachineBasicBlock::iterator MII = MI;
+  std::vector<unsigned> &RestoreRegs = VRM->getRestorePtRestores(MI);
+  for (unsigned i = 0, e = RestoreRegs.size(); i != e; ++i) {
+    unsigned VirtReg = RestoreRegs[e-i-1];  // Reverse order.
+    if (!VRM->getPreSplitReg(VirtReg))
+      continue; // Split interval spilled again.
+    unsigned Phys = VRM->getPhys(VirtReg);
+    MRI->setPhysRegUsed(Phys);
+
+    // Check if the value being restored if available. If so, it must be
+    // from a predecessor BB that fallthrough into this BB. We do not
+    // expect:
+    // BB1:
+    // r1 = load fi#1
+    // ...
+    //    = r1<kill>
+    // ... # r1 not clobbered
+    // ...
+    //    = load fi#1
+    bool DoReMat = VRM->isReMaterialized(VirtReg);
+    int SSorRMId = DoReMat
+      ? VRM->getReMatId(VirtReg) : VRM->getStackSlot(VirtReg);
+    const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
+    unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
+    if (InReg == Phys) {
+      // If the value is already available in the expected register, save
+      // a reload / remat.
+      if (SSorRMId)
+        DEBUG(dbgs() << "Reusing RM#"
+                     << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1);
+      else
+        DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
+      DEBUG(dbgs() << " from physreg "
+                   << TRI->getName(InReg) << " for vreg"
+                   << VirtReg <<" instead of reloading into physreg "
+                   << TRI->getName(Phys) << '\n');
+      ++NumOmitted;
+      continue;
+    } else if (InReg && InReg != Phys) {
+      if (SSorRMId)
+        DEBUG(dbgs() << "Reusing RM#"
+                     << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1);
+      else
+        DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
+      DEBUG(dbgs() << " from physreg "
+                   << TRI->getName(InReg) << " for vreg"
+                   << VirtReg <<" by copying it into physreg "
+                   << TRI->getName(Phys) << '\n');
+
+      // If the reloaded / remat value is available in another register,
+      // copy it to the desired register.
+
+      // Back-schedule reloads and remats.
+      MachineBasicBlock::iterator InsertLoc =
+        ComputeReloadLoc(MII, MBB->begin(), Phys, TRI, DoReMat, SSorRMId, TII,
+                         *MBB->getParent());
+
+      TII->copyRegToReg(*MBB, InsertLoc, Phys, InReg, RC, RC);
+
+      // This invalidates Phys.
+      Spills.ClobberPhysReg(Phys);
+      // Remember it's available.
+      Spills.addAvailable(SSorRMId, Phys);
+
+      // Mark is killed.
+      MachineInstr *CopyMI = prior(InsertLoc);
+      CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
+      MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
+      KillOpnd->setIsKill();
+      UpdateKills(*CopyMI, TRI, RegKills, KillOps);
+
+      DEBUG(dbgs() << '\t' << *CopyMI);
+      ++NumCopified;
+      continue;
+    }
+
+    // Back-schedule reloads and remats.
+    MachineBasicBlock::iterator InsertLoc =
+      ComputeReloadLoc(MII, MBB->begin(), Phys, TRI, DoReMat, SSorRMId, TII,
+                       *MBB->getParent());
+
+    if (VRM->isReMaterialized(VirtReg)) {
+      ReMaterialize(*MBB, InsertLoc, Phys, VirtReg, TII, TRI, *VRM);
+    } else {
+      const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
+      TII->loadRegFromStackSlot(*MBB, InsertLoc, Phys, SSorRMId, RC);
+      MachineInstr *LoadMI = prior(InsertLoc);
+      VRM->addSpillSlotUse(SSorRMId, LoadMI);
+      ++NumLoads;
+      DistanceMap.insert(std::make_pair(LoadMI, DistanceMap.size()));
+    }
+
+    // This invalidates Phys.
+    Spills.ClobberPhysReg(Phys);
+    // Remember it's available.
+    Spills.addAvailable(SSorRMId, Phys);
+
+    UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
+    DEBUG(dbgs() << '\t' << *prior(MII));
+  }
+  return true;
+}
+
+/// InsertEmergencySpills - Insert spills after MI if requested by VRM. Return
+/// true if spills were inserted.
+bool LocalRewriter::InsertSpills(MachineInstr *MI) {
+  if (!VRM->isSpillPt(MI))
+    return false;
+  MachineBasicBlock::iterator MII = MI;
+  std::vector<std::pair<unsigned,bool> > &SpillRegs =
+    VRM->getSpillPtSpills(MI);
+  for (unsigned i = 0, e = SpillRegs.size(); i != e; ++i) {
+    unsigned VirtReg = SpillRegs[i].first;
+    bool isKill = SpillRegs[i].second;
+    if (!VRM->getPreSplitReg(VirtReg))
+      continue; // Split interval spilled again.
+    const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
+    unsigned Phys = VRM->getPhys(VirtReg);
+    int StackSlot = VRM->getStackSlot(VirtReg);
+    MachineBasicBlock::iterator oldNextMII = llvm::next(MII);
+    TII->storeRegToStackSlot(*MBB, llvm::next(MII), Phys, isKill, StackSlot,
+                             RC);
+    MachineInstr *StoreMI = prior(oldNextMII);
+    VRM->addSpillSlotUse(StackSlot, StoreMI);
+    DEBUG(dbgs() << "Store:\t" << *StoreMI);
+    VRM->virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
+  }
+  return true;
+}
+
+
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
 void
@@ -1687,178 +1868,26 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
   KillOps.clear();
   KillOps.resize(TRI->getNumRegs(), NULL);
 
-  unsigned Dist = 0;
   DistanceMap.clear();
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E; ) {
     MachineBasicBlock::iterator NextMII = llvm::next(MII);
 
-    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
-    bool Erased = false;
-    bool BackTracked = false;
     if (OptimizeByUnfold(MII, MaybeDeadStores, Spills, RegKills, KillOps))
       NextMII = llvm::next(MII);
 
+    if (InsertEmergencySpills(MII))
+      NextMII = llvm::next(MII);
+
+    InsertRestores(MII, Spills, RegKills, KillOps);
+
+    if (InsertSpills(MII))
+      NextMII = llvm::next(MII);
+
+    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
+    bool Erased = false;
+    bool BackTracked = false;
     MachineInstr &MI = *MII;
-
-    if (VRM->hasEmergencySpills(&MI)) {
-      // Spill physical register(s) in the rare case the allocator has run out
-      // of registers to allocate.
-      SmallSet<int, 4> UsedSS;
-      std::vector<unsigned> &EmSpills = VRM->getEmergencySpills(&MI);
-      for (unsigned i = 0, e = EmSpills.size(); i != e; ++i) {
-        unsigned PhysReg = EmSpills[i];
-        const TargetRegisterClass *RC =
-          TRI->getPhysicalRegisterRegClass(PhysReg);
-        assert(RC && "Unable to determine register class!");
-        int SS = VRM->getEmergencySpillSlot(RC);
-        if (UsedSS.count(SS))
-          llvm_unreachable("Need to spill more than one physical registers!");
-        UsedSS.insert(SS);
-        TII->storeRegToStackSlot(*MBB, MII, PhysReg, true, SS, RC);
-        MachineInstr *StoreMI = prior(MII);
-        VRM->addSpillSlotUse(SS, StoreMI);
-
-        // Back-schedule reloads and remats.
-        MachineBasicBlock::iterator InsertLoc =
-          ComputeReloadLoc(llvm::next(MII), MBB->begin(), PhysReg, TRI, false,
-                           SS, TII, MF);
-
-        TII->loadRegFromStackSlot(*MBB, InsertLoc, PhysReg, SS, RC);
-
-        MachineInstr *LoadMI = prior(InsertLoc);
-        VRM->addSpillSlotUse(SS, LoadMI);
-        ++NumPSpills;
-        DistanceMap.insert(std::make_pair(LoadMI, Dist++));
-      }
-      NextMII = llvm::next(MII);
-    }
-
-    // Insert restores here if asked to.
-    if (VRM->isRestorePt(&MI)) {
-      std::vector<unsigned> &RestoreRegs = VRM->getRestorePtRestores(&MI);
-      for (unsigned i = 0, e = RestoreRegs.size(); i != e; ++i) {
-        unsigned VirtReg = RestoreRegs[e-i-1];  // Reverse order.
-        if (!VRM->getPreSplitReg(VirtReg))
-          continue; // Split interval spilled again.
-        unsigned Phys = VRM->getPhys(VirtReg);
-        MRI->setPhysRegUsed(Phys);
-
-        // Check if the value being restored if available. If so, it must be
-        // from a predecessor BB that fallthrough into this BB. We do not
-        // expect:
-        // BB1:
-        // r1 = load fi#1
-        // ...
-        //    = r1<kill>
-        // ... # r1 not clobbered
-        // ...
-        //    = load fi#1
-        bool DoReMat = VRM->isReMaterialized(VirtReg);
-        int SSorRMId = DoReMat
-          ? VRM->getReMatId(VirtReg) : VRM->getStackSlot(VirtReg);
-        const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-        unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
-        if (InReg == Phys) {
-          // If the value is already available in the expected register, save
-          // a reload / remat.
-          if (SSorRMId)
-            DEBUG(dbgs() << "Reusing RM#"
-                  << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1);
-          else
-            DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
-          DEBUG(dbgs() << " from physreg "
-                << TRI->getName(InReg) << " for vreg"
-                << VirtReg <<" instead of reloading into physreg "
-                << TRI->getName(Phys) << '\n');
-          ++NumOmitted;
-          continue;
-        } else if (InReg && InReg != Phys) {
-          if (SSorRMId)
-            DEBUG(dbgs() << "Reusing RM#"
-                  << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1);
-          else
-            DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
-          DEBUG(dbgs() << " from physreg "
-                << TRI->getName(InReg) << " for vreg"
-                << VirtReg <<" by copying it into physreg "
-                << TRI->getName(Phys) << '\n');
-
-          // If the reloaded / remat value is available in another register,
-          // copy it to the desired register.
-
-          // Back-schedule reloads and remats.
-          MachineBasicBlock::iterator InsertLoc =
-            ComputeReloadLoc(MII, MBB->begin(), Phys, TRI, DoReMat,
-                             SSorRMId, TII, MF);
-
-          TII->copyRegToReg(*MBB, InsertLoc, Phys, InReg, RC, RC);
-
-          // This invalidates Phys.
-          Spills.ClobberPhysReg(Phys);
-          // Remember it's available.
-          Spills.addAvailable(SSorRMId, Phys);
-
-          // Mark is killed.
-          MachineInstr *CopyMI = prior(InsertLoc);
-          CopyMI->setAsmPrinterFlag(MachineInstr::ReloadReuse);
-          MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
-          KillOpnd->setIsKill();
-          UpdateKills(*CopyMI, TRI, RegKills, KillOps);
-
-          DEBUG(dbgs() << '\t' << *CopyMI);
-          ++NumCopified;
-          continue;
-        }
-
-        // Back-schedule reloads and remats.
-        MachineBasicBlock::iterator InsertLoc =
-          ComputeReloadLoc(MII, MBB->begin(), Phys, TRI, DoReMat,
-                           SSorRMId, TII, MF);
-
-        if (VRM->isReMaterialized(VirtReg)) {
-          ReMaterialize(*MBB, InsertLoc, Phys, VirtReg, TII, TRI, *VRM);
-        } else {
-          const TargetRegisterClass* RC = MRI->getRegClass(VirtReg);
-          TII->loadRegFromStackSlot(*MBB, InsertLoc, Phys, SSorRMId, RC);
-          MachineInstr *LoadMI = prior(InsertLoc);
-          VRM->addSpillSlotUse(SSorRMId, LoadMI);
-          ++NumLoads;
-          DistanceMap.insert(std::make_pair(LoadMI, Dist++));
-        }
-
-        // This invalidates Phys.
-        Spills.ClobberPhysReg(Phys);
-        // Remember it's available.
-        Spills.addAvailable(SSorRMId, Phys);
-
-        UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
-        DEBUG(dbgs() << '\t' << *prior(MII));
-      }
-    }
-
-    // Insert spills here if asked to.
-    if (VRM->isSpillPt(&MI)) {
-      std::vector<std::pair<unsigned,bool> > &SpillRegs =
-        VRM->getSpillPtSpills(&MI);
-      for (unsigned i = 0, e = SpillRegs.size(); i != e; ++i) {
-        unsigned VirtReg = SpillRegs[i].first;
-        bool isKill = SpillRegs[i].second;
-        if (!VRM->getPreSplitReg(VirtReg))
-          continue; // Split interval spilled again.
-        const TargetRegisterClass *RC = MRI->getRegClass(VirtReg);
-        unsigned Phys = VRM->getPhys(VirtReg);
-        int StackSlot = VRM->getStackSlot(VirtReg);
-        MachineBasicBlock::iterator oldNextMII = llvm::next(MII);
-        TII->storeRegToStackSlot(*MBB, llvm::next(MII), Phys, isKill, StackSlot,
-                                 RC);
-        MachineInstr *StoreMI = prior(oldNextMII);
-        VRM->addSpillSlotUse(StackSlot, StoreMI);
-        DEBUG(dbgs() << "Store:\t" << *StoreMI);
-        VRM->virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
-      }
-      NextMII = llvm::next(MII);
-    }
 
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
     /// reuse.
@@ -2125,7 +2154,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
           MachineInstr *LoadMI = prior(InsertLoc);
           VRM->addSpillSlotUse(SSorRMId, LoadMI);
           ++NumLoads;
-          DistanceMap.insert(std::make_pair(LoadMI, Dist++));
+          DistanceMap.insert(std::make_pair(LoadMI, DistanceMap.size()));
         }
         // This invalidates PhysReg.
         Spills.ClobberPhysReg(PhysReg);
@@ -2371,7 +2400,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
                    TRI->isSubRegister(KillRegs[0], Dst) ||
                    TRI->isSuperRegister(KillRegs[0], Dst));
             // Last def is now dead.
-            TransferDeadness(Dist, Src, RegKills, KillOps);
+            TransferDeadness(Src, RegKills, KillOps);
           }
           VRM->RemoveMachineInstrFromMaps(&MI);
           MBB->erase(&MI);
@@ -2470,7 +2499,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
       Erased = true;
     }
     if (!Erased)
-      DistanceMap.insert(std::make_pair(&MI, Dist++));
+      DistanceMap.insert(std::make_pair(&MI, DistanceMap.size()));
     if (!Erased && !BackTracked) {
       for (MachineBasicBlock::iterator II = &MI; II != NextMII; ++II)
         UpdateKills(*II, TRI, RegKills, KillOps);
