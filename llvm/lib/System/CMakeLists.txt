@@ -12,6 +12,7 @@ add_llvm_library(LLVMSystem
   Process.cpp
   Program.cpp
   RWMutex.cpp
+  SearchForAddressOfSpecialSymbol.cpp
   Signals.cpp
   ThreadLocal.cpp
   Threading.cpp
