@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wmissing-field-initializers %s
 
+// This was PR4808.
+
 struct Foo { int a, b; };
 
 struct Foo foo0 = { 1 }; // expected-warning {{missing field 'b' initializer}}
