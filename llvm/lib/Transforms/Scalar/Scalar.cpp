@@ -116,7 +116,3 @@ void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM) {
 void LLVMAddVerifierPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createVerifierPass());
 }
-
-void LLVMAddTargetData(LLVMPassManagerRef PM, LLVMModuleRef M) {
-  unwrap(PM)->add(new TargetData(unwrap(M)));
-}

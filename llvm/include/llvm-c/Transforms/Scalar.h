@@ -98,9 +98,6 @@ void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
 /** See llvm::createVerifierPass function. */
 void LLVMAddVerifierPass(LLVMPassManagerRef PM);
 
-/** PM->add(new TargetData(M)) */
-void LLVMAddTargetData(LLVMPassManagerRef PM, LLVMModuleRef M);
-
 #ifdef __cplusplus
 }
 #endif /* defined(__cplusplus) */
