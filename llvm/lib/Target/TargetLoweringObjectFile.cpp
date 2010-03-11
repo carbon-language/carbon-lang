@@ -290,12 +290,13 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
   return DataSection;
 }
 
-/// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a
+/// getExprForDwarfGlobalReference - Return an MCExpr to use for a
 /// reference to the specified global variable from exception
 /// handling information.
 const MCExpr *TargetLoweringObjectFile::
-getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                             MachineModuleInfo *MMI, unsigned Encoding) const {
+getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                               MachineModuleInfo *MMI, unsigned Encoding,
+                               MCStreamer &Streamer) const {
   // FIXME: Use GetGlobalValueSymbol.
   SmallString<128> Name;
   Mang->getNameWithPrefix(Name, GV, false);
@@ -306,12 +307,12 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
   else
     Sym = getContext().GetOrCreateSymbol(Name.str());
 
-  return getSymbolForDwarfReference(Sym, MMI, Encoding);
+  return getExprForDwarfReference(Sym, MMI, Encoding, Streamer);
 }
 
 const MCExpr *TargetLoweringObjectFile::
-getSymbolForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
-                           unsigned Encoding) const {
+getExprForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
+                         unsigned Encoding, MCStreamer &Streamer) const {
   const MCExpr *Res = MCSymbolRefExpr::Create(Sym, getContext());
 
   switch (Encoding & 0xF0) {

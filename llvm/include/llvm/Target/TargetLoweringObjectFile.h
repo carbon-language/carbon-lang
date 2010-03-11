@@ -22,11 +22,12 @@ namespace llvm {
   class MachineModuleInfo;
   class Mangler;
   class MCAsmInfo;
+  class MCContext;
   class MCExpr;
   class MCSection;
   class MCSectionMachO;
   class MCSymbol;
-  class MCContext;
+  class MCStreamer;
   class GlobalValue;
   class TargetMachine;
   
@@ -197,17 +198,20 @@ public:
     return 0;
   }
   
-  /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a reference
+  /// getExprForDwarfGlobalReference - Return an MCExpr to use for a reference
   /// to the specified global variable from exception handling information.
   ///
   virtual const MCExpr *
-  getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                              MachineModuleInfo *MMI, unsigned Encoding) const;
+  getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 MachineModuleInfo *MMI, unsigned Encoding,
+                                 MCStreamer &Streamer) const;
 
-  virtual const MCExpr *
-  getSymbolForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
-                             unsigned Encoding) const;
-
+  /// 
+  const MCExpr *
+  getExprForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
+                           unsigned Encoding,
+                           MCStreamer &Streamer) const;
+  
   virtual unsigned getPersonalityEncoding() const;
   virtual unsigned getLSDAEncoding() const;
   virtual unsigned getFDEEncoding() const;

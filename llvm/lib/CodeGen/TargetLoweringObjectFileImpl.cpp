@@ -391,8 +391,9 @@ getSectionForConstant(SectionKind Kind) const {
 }
 
 const MCExpr *TargetLoweringObjectFileELF::
-getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                             MachineModuleInfo *MMI, unsigned Encoding) const {
+getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                               MachineModuleInfo *MMI,
+                               unsigned Encoding, MCStreamer &Streamer) const {
 
   if (Encoding & dwarf::DW_EH_PE_indirect) {
     MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
@@ -420,12 +421,12 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     }
 
     return TargetLoweringObjectFile::
-      getSymbolForDwarfReference(Sym, MMI,
-                                 Encoding & ~dwarf::DW_EH_PE_indirect);
+      getExprForDwarfReference(Sym, MMI,
+                               Encoding & ~dwarf::DW_EH_PE_indirect, Streamer);
   }
 
   return TargetLoweringObjectFile::
-    getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
+    getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, Streamer);
 }
 
 //===----------------------------------------------------------------------===//
@@ -751,8 +752,9 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 }
 
 const MCExpr *TargetLoweringObjectFileMachO::
-getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                             MachineModuleInfo *MMI, unsigned Encoding) const {
+getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                               MachineModuleInfo *MMI, unsigned Encoding,
+                               MCStreamer &Streamer) const {
   // The mach-o version of this method defaults to returning a stub reference.
 
   if (Encoding & DW_EH_PE_indirect) {
@@ -782,12 +784,12 @@ getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     }
 
     return TargetLoweringObjectFile::
-      getSymbolForDwarfReference(Sym, MMI,
-                                 Encoding & ~dwarf::DW_EH_PE_indirect);
+      getExprForDwarfReference(Sym, MMI, Encoding & ~dwarf::DW_EH_PE_indirect,
+                               Streamer);
   }
 
   return TargetLoweringObjectFile::
-    getSymbolForDwarfGlobalReference(GV, Mang, MMI, Encoding);
+    getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, Streamer);
 }
 
 unsigned TargetLoweringObjectFileMachO::getPersonalityEncoding() const {

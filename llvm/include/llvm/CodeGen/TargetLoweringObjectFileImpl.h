@@ -78,12 +78,13 @@ public:
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 
-  /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a reference
+  /// getExprForDwarfGlobalReference - Return an MCExpr to use for a reference
   /// to the specified global variable from exception handling information.
   ///
   virtual const MCExpr *
-  getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                              MachineModuleInfo *MMI, unsigned Encoding) const;
+  getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 MachineModuleInfo *MMI, unsigned Encoding,
+                                 MCStreamer &Streamer) const;
 };
 
 
@@ -166,11 +167,12 @@ public:
     return NonLazySymbolPointerSection;
   }
 
-  /// getSymbolForDwarfGlobalReference - The mach-o version of this method
+  /// getExprForDwarfGlobalReference - The mach-o version of this method
   /// defaults to returning a stub reference.
   virtual const MCExpr *
-  getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
-                              MachineModuleInfo *MMI, unsigned Encoding) const;
+  getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 MachineModuleInfo *MMI, unsigned Encoding,
+                                 MCStreamer &Streamer) const;
 
   virtual unsigned getPersonalityEncoding() const;
   virtual unsigned getLSDAEncoding() const;
