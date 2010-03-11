@@ -173,29 +173,6 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
         }
         break;
       }
-      case ISD::SMUL_LOHI: {
-        // FIXME fold addition into the macc instruction
-        SDValue Zero(CurDAG->getMachineNode(XCore::LDC_ru6, dl, MVT::i32,
-                                CurDAG->getTargetConstant(0, MVT::i32)), 0);
-        SDValue Ops[] = { Zero, Zero, N->getOperand(0), N->getOperand(1) };
-        SDNode *ResNode = CurDAG->getMachineNode(XCore::MACCS_l4r, dl,
-                                                 MVT::i32, MVT::i32, Ops, 4);
-        ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
-        ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
-        return NULL;
-      }
-      case ISD::UMUL_LOHI: {
-        // FIXME fold addition into the macc / lmul instruction
-        SDValue Zero(CurDAG->getMachineNode(XCore::LDC_ru6, dl, MVT::i32,
-                                  CurDAG->getTargetConstant(0, MVT::i32)), 0);
-        SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
-                            Zero, Zero };
-        SDNode *ResNode = CurDAG->getMachineNode(XCore::LMUL_l6r, dl, MVT::i32,
-                                                 MVT::i32, Ops, 4);
-        ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
-        ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
-        return NULL;
-      }
       case XCoreISD::LADD: {
         SDValue Ops[] = { N->getOperand(0), N->getOperand(1),
                             N->getOperand(2) };
