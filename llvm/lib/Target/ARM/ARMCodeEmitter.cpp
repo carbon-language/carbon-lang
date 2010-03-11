@@ -436,8 +436,8 @@ void ARMCodeEmitter::emitConstPoolInstruction(const MachineInstr &MI) {
 void ARMCodeEmitter::emitMOVi2piecesInstruction(const MachineInstr &MI) {
   const MachineOperand &MO0 = MI.getOperand(0);
   const MachineOperand &MO1 = MI.getOperand(1);
-  assert(MO1.isImm() && ARM_AM::getSOImmVal(MO1.getImm()) != -1 &&
-                                            "Not a valid so_imm value!");
+  assert(MO1.isImm() && ARM_AM::isSOImmTwoPartVal(MO1.getImm()) &&
+                                                  "Not a valid so_imm value!");
   unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO1.getImm());
   unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO1.getImm());
 
