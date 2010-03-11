@@ -28,6 +28,7 @@
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Assembly/Writer.h"
@@ -36,6 +37,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/IRBuilder.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -72,6 +74,7 @@ namespace {
                             DenseMap<Value*,Value*> &SunkAddrs);
     bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
                                DenseMap<Value*,Value*> &SunkAddrs);
+    bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
     void findLoopBackEdges(const Function &F);
@@ -537,6 +540,133 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
   return MadeChange;
 }
 
+bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
+  bool MadeChange = false;
+  
+  // Lower all uses of llvm.objectsize.*
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
+  if (II && II->getIntrinsicID() == Intrinsic::objectsize) {
+    bool Min = (cast<ConstantInt>(II->getOperand(2))->getZExtValue() == 1);
+    const Type *ReturnTy = CI->getType();
+    Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);    
+    CI->replaceAllUsesWith(RetVal);
+    CI->eraseFromParent();
+    return true;
+  }
+
+  // From here on out we're working with named functions.
+  if (CI->getCalledFunction() == 0) return false;
+  
+  // We'll need TargetData from here on out.
+  const TargetData *TD = TLI ? TLI->getTargetData() : 0;
+  if (!TD) return false;
+  
+  // Lower all default uses of _chk calls.  This is code very similar
+  // to the code in InstCombineCalls, but here we are only lowering calls
+  // that have the default "don't know" as the objectsize.  Anything else
+  // should be left alone.
+  StringRef Name = CI->getCalledFunction()->getName();
+  BasicBlock *BB = CI->getParent();
+  IRBuilder<> B(CI->getParent()->getContext());
+  
+  // Set the builder to the instruction after the call.
+  B.SetInsertPoint(BB, CI);
+
+  if (Name == "__memcpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+                 1, B, TD);
+      CI->replaceAllUsesWith(CI->getOperand(1));
+      CI->eraseFromParent();
+      return true;
+    }
+    return 0;
+  }
+
+  // Should be similar to memcpy.
+  if (Name == "__mempcpy_chk") {
+    return 0;
+  }
+
+  if (Name == "__memmove_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+                  1, B, TD);
+      CI->replaceAllUsesWith(CI->getOperand(1));
+      CI->eraseFromParent();
+      return true;
+    }
+    return 0;
+  }
+
+  if (Name == "__memset_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
+                                   false);
+      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
+      CI->replaceAllUsesWith(CI->getOperand(1));
+      CI->eraseFromParent();
+      return true;
+    }
+    return 0;
+  }
+
+  if (Name == "__strcpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeCI)
+      return 0;
+    // If a) we don't have any length information, or b) we know this will
+    // fit then just lower to a plain strcpy. Otherwise we'll keep our
+    // strcpy_chk call which may fail at runtime if the size is too long.
+    // TODO: It might be nice to get a maximum length out of the possible
+    // string lengths for varying.
+    if (SizeCI->isAllOnesValue()) {
+      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      CI->replaceAllUsesWith(Ret);
+      CI->eraseFromParent();
+      return true;
+    }
+    return 0;
+  }
+
+  // Should be similar to strcpy.
+  if (Name == "__stpcpy_chk") {
+    return 0;
+  }
+
+  if (Name == "__strncpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
+    if (!SizeCI)
+      return 0;
+    if (SizeCI->isAllOnesValue()) {
+      Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
+                               CI->getOperand(3), B, TD);
+      CI->replaceAllUsesWith(Ret);
+      CI->eraseFromParent();
+      return true;
+    }
+    return 0; 
+  }
+
+  if (Name == "__strcat_chk") {
+    return 0;
+  }
+
+  if (Name == "__strncat_chk") {
+    return 0;
+  }
+  
+  return MadeChange;
+}
 //===----------------------------------------------------------------------===//
 // Memory Optimization
 //===----------------------------------------------------------------------===//
@@ -913,6 +1043,10 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
         } else
           // Sink address computing for memory operands into the block.
           MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
+      } else {
+        // Other CallInst optimizations that don't need to muck with the
+        // enclosing iterator here.
+        MadeChange |= OptimizeCallInst(CI);
       }
     }
   }
