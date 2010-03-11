@@ -38,10 +38,6 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 
 
 MCSymbol *MCContext::GetOrCreateTemporarySymbol(StringRef Name) {
-  // If unnamed, just create a symbol.
-  if (Name.empty())
-    new (*this) MCSymbol("", true);
-    
   // Otherwise create as usual.
   MCSymbol *&Entry = Symbols[Name];
   if (Entry) return Entry;
