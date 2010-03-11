@@ -22,26 +22,13 @@ class MCAssembler;
 /// even during the relaxation process.
 class MCAsmLayout {
 private:
-  uint64_t CurrentLocation;
-
   MCAssembler &Assembler;
 
 public:
-  MCAsmLayout(MCAssembler &_Assembler)
-    : CurrentLocation(0), Assembler(_Assember) {}
+  MCAsmLayout(MCAssembler &_Assembler) : Assembler(_Assembler) {}
 
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() { return Assembler; }
-
-  /// Get the current location value, i.e. that value of the '.' expression.
-  uin64_t getCurrentLocation() {
-    return CurrentLocation;
-  }
-
-  /// Set the current location.
-  void setCurrentLocation(uint64_t Value) {
-    CurrentLocation = Value;
-  }
 };
 
 } // end namespace llvm

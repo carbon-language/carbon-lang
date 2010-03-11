@@ -9,6 +9,7 @@
 
 #define DEBUG_TYPE "assembler"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
@@ -510,8 +511,11 @@ public:
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
+    // FIXME: Share layout object.
+    MCAsmLayout Layout(Asm);
+
     MCValue Target;
-    if (!Fixup.Value->EvaluateAsRelocatable(Target))
+    if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
       llvm_report_error("expected relocatable expression");
 
     // If this is a difference or a defined symbol plus an offset, then we need
@@ -1001,6 +1005,7 @@ MCAssembler::~MCAssembler() {
 }
 
 void MCAssembler::LayoutSection(MCSectionData &SD) {
+  MCAsmLayout Layout(*this);
   uint64_t Address = SD.getAddress();
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
@@ -1029,21 +1034,17 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
     case MCFragment::FT_Org: {
       MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
-      MCValue Target;
-      if (!OF.getOffset().EvaluateAsRelocatable(Target))
-        llvm_report_error("expected relocatable expression");
-
-      if (!Target.isAbsolute())
-        llvm_unreachable("FIXME: Not yet implemented!");
-      uint64_t OrgOffset = Target.getConstant();
-      uint64_t Offset = Address - SD.getAddress();
+      int64_t TargetLocation;
+      if (!OF.getOffset().EvaluateAsAbsolute(TargetLocation, &Layout))
+        llvm_report_error("expected assembly-time absolute expression");
 
       // FIXME: We need a way to communicate this error.
-      if (OrgOffset < Offset)
-        llvm_report_error("invalid .org offset '" + Twine(OrgOffset) +
-                          "' (at offset '" + Twine(Offset) + "'");
+      int64_t Offset = TargetLocation - F.getOffset();
+      if (Offset < 0)
+        llvm_report_error("invalid .org offset '" + Twine(TargetLocation) +
+                          "' (at offset '" + Twine(F.getOffset()) + "'");
 
-      F.setFileSize(OrgOffset - Offset);
+      F.setFileSize(Offset);
       break;
     }
 
