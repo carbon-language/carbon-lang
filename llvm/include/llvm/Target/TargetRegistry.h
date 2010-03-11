@@ -588,8 +588,9 @@ namespace llvm {
     }
 
   private:
-    static TargetAsmBackend *Allocator(const Target &T, MCAssembler &Backend) {
-      return new AsmBackendImpl(T, Backend);
+    static TargetAsmBackend *Allocator(const Target &T,
+                                       const std::string &Triple) {
+      return new AsmBackendImpl(T, Triple);
     }
   };
 
