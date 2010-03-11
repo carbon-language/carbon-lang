@@ -1596,6 +1596,80 @@ llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 }
 
 
+// PowerPC-32
+
+namespace {
+class PPC32TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
+public:
+  int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
+    // This is recovered from gcc output.
+    return 1; // r1 is the dedicated stack pointer
+  }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const;  
+};
+
+}
+
+bool
+PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                                                llvm::Value *Address) const {
+  // This is calculated from the LLVM and GCC tables and verified
+  // against gcc output.  AFAIK all ABIs use the same encoding.
+
+  CodeGen::CGBuilderTy &Builder = CGF.Builder;
+  llvm::LLVMContext &Context = CGF.getLLVMContext();
+
+  const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
+  llvm::Value *Four8 = llvm::ConstantInt::get(i8, 4);
+  llvm::Value *Eight8 = llvm::ConstantInt::get(i8, 8);
+  llvm::Value *Sixteen8 = llvm::ConstantInt::get(i8, 16);
+
+  // 0-31: r0-31, the 4-byte general-purpose registers
+  for (unsigned I = 0, E = 32; I != E; ++I) {
+    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+    Builder.CreateStore(Four8, Slot);
+  }
+
+  // 32-63: fp0-31, the 8-byte floating-point registers
+  for (unsigned I = 32, E = 64; I != E; ++I) {
+    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+    Builder.CreateStore(Eight8, Slot);
+  }
+
+  // 64-76 are various 4-byte special-purpose registers:
+  // 64: mq
+  // 65: lr
+  // 66: ctr
+  // 67: ap
+  // 68-75 cr0-7
+  // 76: xer
+  for (unsigned I = 64, E = 77; I != E; ++I) {
+    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+    Builder.CreateStore(Four8, Slot);
+  }
+
+  // 77-108: v0-31, the 16-byte vector registers
+  for (unsigned I = 77, E = 109; I != E; ++I) {
+    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+    Builder.CreateStore(Sixteen8, Slot);
+  }
+
+  // 109: vrsave
+  // 110: vscr
+  // 111: spe_acc
+  // 112: spefscr
+  // 113: sfp
+  for (unsigned I = 109, E = 114; I != E; ++I) {
+    llvm::Value *Slot = Builder.CreateConstInBoundsGEP1_32(Address, I);
+    Builder.CreateStore(Four8, Slot);
+  }
+
+  return false;  
+}
+
+
 // ARM ABI Implementation
 
 namespace {
@@ -2039,6 +2113,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() const {
 
   case llvm::Triple::pic16:
     return *(TheTargetCodeGenInfo = new PIC16TargetCodeGenInfo());
+
+  case llvm::Triple::ppc:
+    return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo());
 
   case llvm::Triple::systemz:
     return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo());
