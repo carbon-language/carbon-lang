@@ -5777,12 +5777,6 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
          "LowerCall emitted a return value for a tail call!");
   assert((isTailCall || InVals.size() == Ins.size()) &&
          "LowerCall didn't emit the correct number of values!");
-  DEBUG(for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
-          assert(InVals[i].getNode() &&
-                 "LowerCall emitted a null value!");
-          assert(Ins[i].VT == InVals[i].getValueType() &&
-                 "LowerCall emitted a value with the wrong type!");
-        });
 
   // For a tail call, the return value is merely live-out and there aren't
   // any nodes in the DAG representing it. Return a special value to
@@ -5792,6 +5786,13 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     DAG.setRoot(Chain);
     return std::make_pair(SDValue(), SDValue());
   }
+
+  DEBUG(for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+          assert(InVals[i].getNode() &&
+                 "LowerCall emitted a null value!");
+          assert(Ins[i].VT == InVals[i].getValueType() &&
+                 "LowerCall emitted a value with the wrong type!");
+        });
 
   // Collect the legal value parts into potentially illegal values
   // that correspond to the original function's return values.
