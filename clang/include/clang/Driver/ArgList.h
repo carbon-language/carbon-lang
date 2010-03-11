@@ -287,7 +287,7 @@ namespace driver {
     arglist_type ActualArgs;
 
     /// The list of arguments we synthesized.
-    arglist_type SynthesizedArgs;
+    mutable arglist_type SynthesizedArgs;
 
     /// Is this only a proxy for the base ArgList?
     bool OnlyProxy;
