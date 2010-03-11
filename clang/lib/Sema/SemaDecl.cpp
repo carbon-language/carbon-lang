@@ -2718,6 +2718,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                         D.getIdentifierLoc(), Name, R,
                                         isInline,
                                         /*isImplicitlyDeclared=*/false);
+      NewFD->setTypeSourceInfo(TInfo);
 
       isVirtualOkay = true;
     } else {

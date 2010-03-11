@@ -3593,6 +3593,8 @@ public:
   DeclContext *FindInstantiatedContext(SourceLocation Loc, DeclContext *DC,
                           const MultiLevelTemplateArgumentList &TemplateArgs);
 
+  bool CheckInstantiatedParams(llvm::SmallVectorImpl<ParmVarDecl *> &Params);
+
   // Objective-C declarations.
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                              IdentifierInfo *ClassName,

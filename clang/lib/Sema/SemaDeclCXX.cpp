@@ -2392,22 +2392,26 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     //   If a class has no user-declared destructor, a destructor is
     //   declared implicitly. An implicitly-declared destructor is an
     //   inline public member of its class.
+    QualType Ty = Context.getFunctionType(Context.VoidTy,
+                                          0, 0, false, 0,
+                                          /*FIXME:*/false,
+                                          false, 0, 0, false,
+                                          CC_Default);
+
     DeclarationName Name
       = Context.DeclarationNames.getCXXDestructorName(ClassType);
     CXXDestructorDecl *Destructor
       = CXXDestructorDecl::Create(Context, ClassDecl,
-                                  ClassDecl->getLocation(), Name,
-                                  Context.getFunctionType(Context.VoidTy,
-                                                          0, 0, false, 0,
-                                                           /*FIXME:*/false,
-                                                           false, 0, 0, false,
-                                                           CC_Default),
+                                  ClassDecl->getLocation(), Name, Ty,
                                   /*isInline=*/true,
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
     Destructor->setImplicit();
     Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
     ClassDecl->addDecl(Destructor);
+
+    // This could be uniqued if it ever proves significant.
+    Destructor->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(Ty));
     
     AddOverriddenMethods(ClassDecl, Destructor);
   }

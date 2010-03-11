@@ -567,6 +567,15 @@ namespace {
     Sema::OwningExprResult TransformTemplateParmRefExpr(DeclRefExpr *E,
                                                 NonTypeTemplateParmDecl *D);
 
+    /// \brief Transforms a function proto type by performing
+    /// substitution in the function parameters, possibly adjusting
+    /// their types and marking default arguments as uninstantiated.
+    bool TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
+                                     llvm::SmallVectorImpl<QualType> &PTypes,
+                                  llvm::SmallVectorImpl<ParmVarDecl*> &PVars);
+
+    ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm);
+
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
     QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
@@ -858,6 +867,59 @@ Sema::OwningExprResult TemplateInstantiator::TransformCXXDefaultArgExpr(
                                         E->getParam());
 }
 
+
+bool
+TemplateInstantiator::TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
+                                  llvm::SmallVectorImpl<QualType> &PTypes,
+                               llvm::SmallVectorImpl<ParmVarDecl*> &PVars) {
+  // Create a local instantiation scope for the parameters.
+  Sema::LocalInstantiationScope
+    Scope(SemaRef, SemaRef.CurrentInstantiationScope != 0);
+
+  if (TreeTransform<TemplateInstantiator>::
+        TransformFunctionTypeParams(TL, PTypes, PVars))
+    return true;
+
+  // Check instantiated parameters.
+  if (SemaRef.CheckInstantiatedParams(PVars))
+    return true;
+
+  return false;
+}
+
+ParmVarDecl *
+TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
+  TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
+  TypeSourceInfo *NewDI = getDerived().TransformType(OldDI);
+  if (!NewDI)
+    return 0;
+
+  // TODO: do we have to clone this decl if the types match and
+  // there's no default argument?
+
+  ParmVarDecl *NewParm
+    = ParmVarDecl::Create(SemaRef.Context,
+                          OldParm->getDeclContext(),
+                          OldParm->getLocation(),
+                          OldParm->getIdentifier(),
+                          NewDI->getType(),
+                          NewDI,
+                          OldParm->getStorageClass(),
+                          /* DefArg */ NULL);
+
+  // Maybe adjust new parameter type.
+  NewParm->setType(SemaRef.adjustParameterType(NewParm->getType()));
+
+  // Mark the (new) default argument as uninstantiated (if any).
+  if (OldParm->hasUninstantiatedDefaultArg()) {
+    Expr *Arg = OldParm->getUninstantiatedDefaultArg();
+    NewParm->setUninstantiatedDefaultArg(Arg);
+  } else if (Expr *Arg = OldParm->getDefaultArg())
+    NewParm->setUninstantiatedDefaultArg(Arg);
+
+  SemaRef.CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
+  return NewParm;
+}
 
 QualType
 TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,

@@ -315,6 +315,21 @@ public:
                                   QualType ObjectType = QualType());
 #include "clang/AST/TypeLocNodes.def"
 
+  /// \brief Transforms the parameters of a function type into the
+  /// given vectors.
+  ///
+  /// The result vectors should be kept in sync; null entries in the
+  /// variables vector are acceptable.
+  ///
+  /// Return true on error.
+  bool TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
+                                   llvm::SmallVectorImpl<QualType> &PTypes,
+                                   llvm::SmallVectorImpl<ParmVarDecl*> &PVars);
+
+  /// \brief Transforms a single function-type parameter.  Return null
+  /// on error.
+  ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm);
+
   QualType TransformReferenceType(TypeLocBuilder &TLB, ReferenceTypeLoc TL, 
                                   QualType ObjectType);
 
@@ -2520,6 +2535,66 @@ QualType TreeTransform<Derived>::TransformExtVectorType(TypeLocBuilder &TLB,
 }
 
 template<typename Derived>
+ParmVarDecl *
+TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
+  TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
+  TypeSourceInfo *NewDI = getDerived().TransformType(OldDI);
+  if (!NewDI)
+    return 0;
+
+  if (NewDI == OldDI)
+    return OldParm;
+  else
+    return ParmVarDecl::Create(SemaRef.Context,
+                               OldParm->getDeclContext(),
+                               OldParm->getLocation(),
+                               OldParm->getIdentifier(),
+                               NewDI->getType(),
+                               NewDI,
+                               OldParm->getStorageClass(),
+                               /* DefArg */ NULL);
+}
+
+template<typename Derived>
+bool TreeTransform<Derived>::
+  TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
+                              llvm::SmallVectorImpl<QualType> &PTypes,
+                              llvm::SmallVectorImpl<ParmVarDecl*> &PVars) {
+  FunctionProtoType *T = TL.getTypePtr();
+
+  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
+    ParmVarDecl *OldParm = TL.getArg(i);
+
+    QualType NewType;
+    ParmVarDecl *NewParm;
+
+    if (OldParm) {
+      assert(OldParm->getTypeSourceInfo()->getType() == T->getArgType(i));
+
+      NewParm = getDerived().TransformFunctionTypeParam(OldParm);
+      if (!NewParm)
+        return true;
+      NewType = NewParm->getType();
+
+    // Deal with the possibility that we don't have a parameter
+    // declaration for this parameter.
+    } else {
+      NewParm = 0;
+
+      QualType OldType = T->getArgType(i);
+      NewType = getDerived().TransformType(OldType);
+      if (NewType.isNull())
+        return true;
+    }
+
+    PTypes.push_back(NewType);
+    PVars.push_back(NewParm);
+  }
+
+  return false;
+}
+
+template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
                                                    FunctionProtoTypeLoc TL,
@@ -2532,47 +2607,8 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   // Transform the parameters.
   llvm::SmallVector<QualType, 4> ParamTypes;
   llvm::SmallVector<ParmVarDecl*, 4> ParamDecls;
-  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
-    ParmVarDecl *OldParm = TL.getArg(i);
-
-    QualType NewType;
-    ParmVarDecl *NewParm;
-
-    if (OldParm) {
-      TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
-      assert(OldDI->getType() == T->getArgType(i));
-
-      TypeSourceInfo *NewDI = getDerived().TransformType(OldDI);
-      if (!NewDI)
-        return QualType();
-
-      if (NewDI == OldDI)
-        NewParm = OldParm;
-      else
-        NewParm = ParmVarDecl::Create(SemaRef.Context,
-                                      OldParm->getDeclContext(),
-                                      OldParm->getLocation(),
-                                      OldParm->getIdentifier(),
-                                      NewDI->getType(),
-                                      NewDI,
-                                      OldParm->getStorageClass(),
-                                      /* DefArg */ NULL);
-      NewType = NewParm->getType();
-
-    // Deal with the possibility that we don't have a parameter
-    // declaration for this parameter.
-    } else {
-      NewParm = 0;
-
-      QualType OldType = T->getArgType(i);
-      NewType = getDerived().TransformType(OldType);
-      if (NewType.isNull())
-        return QualType();
-    }
-
-    ParamTypes.push_back(NewType);
-    ParamDecls.push_back(NewParm);
-  }
+  if (getDerived().TransformFunctionTypeParams(TL, ParamTypes, ParamDecls))
+    return QualType();
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
