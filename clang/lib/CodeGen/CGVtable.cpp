@@ -834,6 +834,11 @@ int64_t VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
 
 /// VCallAndVBaseOffsetBuilder - Class for building vcall and vbase offsets.
 class VCallAndVBaseOffsetBuilder {
+public:
+  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
+    VBaseOffsetOffsetsMapTy;
+
+private:
   /// MostDerivedClass - The most derived class for which we're building vcall
   /// and vbase offsets.
   const CXXRecordDecl *MostDerivedClass;
@@ -856,8 +861,6 @@ class VCallAndVBaseOffsetBuilder {
   /// VCallOffsets - Keeps track of vcall offsets.
   VCallOffsetMap VCallOffsets;
 
-  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
-    VBaseOffsetOffsetsMapTy;
 
   /// VBaseOffsetOffsets - Contains the offsets of the virtual base offsets,
   /// relative to the address point.
@@ -900,8 +903,8 @@ public:
   const_iterator components_begin() const { return Components.rbegin(); }
   const_iterator components_end() const { return Components.rend(); }
   
-  const VCallOffsetMap& getVCallOffsets() const { return VCallOffsets; }
-  const VBaseOffsetOffsetsMapTy getVBaseOffsetOffsets() const {
+  const VCallOffsetMap &getVCallOffsets() const { return VCallOffsets; }
+  const VBaseOffsetOffsetsMapTy &getVBaseOffsetOffsets() const {
     return VBaseOffsetOffsets;
   }
 };
@@ -1416,10 +1419,10 @@ VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
                                                 Offset.VirtualBase);
       }
 
-      // FIXME: Once the assert in getVirtualBaseOffsetIndex is back again,
+      // FIXME: Once the assert in getVirtualBaseOffsetOffset is back again,
       // we can get rid of this assert.
       assert(Adjustment.VBaseOffsetOffset != 0 && 
-             "Invalid base offset offset!");
+             "Invalid vbase offset offset!");
     }
 
     Adjustment.NonVirtual = Offset.NonVirtualOffset;
@@ -3453,16 +3456,15 @@ int64_t CGVtableInfo::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   if (I != VirtualBaseClassOffsetOffsets.end())
     return I->second;
   
-  // FIXME: This seems expensive.  Can we do a partial job to get
-  // just this data.
-  AddressPointsMapTy AddressPoints;
-  OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
-  D1(printf("vtable %s\n", RD->getNameAsCString()));
-  b.GenerateVtableForBase(RD);
-  b.GenerateVtableForVBases(RD);
+  VCallAndVBaseOffsetBuilder Builder(RD, RD, /*FinalOverriders=*/0,
+                                     BaseSubobject(RD, 0),                                           
+                                     /*BaseIsVirtual=*/false,
+                                     /*OffsetInLayoutClass=*/0);
   
-  for (llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I =
-       b.getVBIndex().begin(), E = b.getVBIndex().end(); I != E; ++I) {
+
+  for (VCallAndVBaseOffsetBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
+       Builder.getVBaseOffsetOffsets().begin(), 
+       E = Builder.getVBaseOffsetOffsets().end(); I != E; ++I) {
     // Insert all types.
     ClassPairTy ClassPair(RD, I->first);
     
@@ -3470,6 +3472,7 @@ int64_t CGVtableInfo::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   }
   
   I = VirtualBaseClassOffsetOffsets.find(ClassPair);
+  
   // FIXME: The assertion below assertion currently fails with the old vtable 
   /// layout code if there is a non-virtual thunk adjustment in a vtable.
   // Once the new layout is in place, this return should be removed.
