@@ -414,3 +414,42 @@ namespace test3 {
     get_p_2(obj);
   }
 }
+
+// CHECK: define void @_ZN5test41gEPNS_3zedIXadL_ZNS_3foo3barEEEEE
+namespace test4 {
+  struct foo { int bar; };
+  template <int (foo::*)>
+  struct zed {};
+  void g(zed<&foo::bar>*)
+  {}
+}
+// CHECK: define void @_ZN5test51gEPNS_3zedIXadL_ZNS_3foo3barEEEEE
+namespace test5 {
+  struct foo { static int bar; };
+  template <int *>
+  struct zed {};
+  void g(zed<&foo::bar>*)
+  {}
+}
+// CHECK: define void @_ZN5test61gEPNS_3zedIXadL_ZNS_3foo3barEvEEEE
+namespace test6 {
+  struct foo { int bar(); };
+  template <int (foo::*)()>
+  struct zed {};
+  void g(zed<&foo::bar>*)
+  {}
+}
+// CHECK: define void @_ZN5test71gEPNS_3zedIXadL_ZNS_3foo3barEvEEEE
+namespace test7 {
+  struct foo { static int bar(); };
+  template <int (*f)()>
+  struct zed {};
+  void g(zed<&foo::bar>*)
+  {}
+}
+// CHECK: define void @_ZN5test81AILZNS_1B5valueEEE3incEv
+namespace test8 {
+  template <int &counter> class A { void inc() { counter++; } };
+  class B { static int value; };
+  template class A<B::value>;
+}

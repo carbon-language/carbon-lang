@@ -172,10 +172,12 @@ private:
   void mangleCXXCtorType(CXXCtorType T);
   void mangleCXXDtorType(CXXDtorType T);
 
-  void mangleTemplateArgs(const TemplateArgument *TemplateArgs,
+  void mangleTemplateArgs(const TemplateParameterList &PL,
+                          const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);
-  void mangleTemplateArgs(const TemplateArgumentList &L);
-  void mangleTemplateArg(const TemplateArgument &A);
+  void mangleTemplateArgs(const TemplateParameterList &PL,
+                          const TemplateArgumentList &AL);
+  void mangleTemplateArg(const NamedDecl *P, const TemplateArgument &A);
 
   void mangleTemplateParameter(unsigned Index);
 };
@@ -248,8 +250,10 @@ void CXXNameMangler::mangle(const NamedDecl *D, llvm::StringRef Prefix) {
   Out << Prefix;
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     mangleFunctionEncoding(FD);
+  else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    mangleName(VD);
   else
-    mangleName(cast<VarDecl>(D));
+    mangleName(cast<FieldDecl>(D));
 }
 
 void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
@@ -369,7 +373,8 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     const TemplateArgumentList *TemplateArgs = 0;
     if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
       mangleUnscopedTemplateName(TD);
-      mangleTemplateArgs(*TemplateArgs);
+      TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+      mangleTemplateArgs(*TemplateParameters, *TemplateArgs);
       return;
     }
 
@@ -391,7 +396,8 @@ void CXXNameMangler::mangleName(const TemplateDecl *TD,
 
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     mangleUnscopedTemplateName(TD);
-    mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
+    TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+    mangleTemplateArgs(*TemplateParameters, TemplateArgs, NumTemplateArgs);
   } else {
     mangleNestedName(TD, TemplateArgs, NumTemplateArgs);
   }
@@ -628,7 +634,8 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND,
   const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     mangleTemplatePrefix(TD);
-    mangleTemplateArgs(*TemplateArgs);
+    TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+    mangleTemplateArgs(*TemplateParameters, *TemplateArgs);
   }
   else {
     manglePrefix(DC, NoFunction);
@@ -645,7 +652,8 @@ void CXXNameMangler::mangleNestedName(const TemplateDecl *TD,
   Out << 'N';
 
   mangleTemplatePrefix(TD);
-  mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
+  TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+  mangleTemplateArgs(*TemplateParameters, TemplateArgs, NumTemplateArgs);
 
   Out << 'E';
 }
@@ -702,7 +710,8 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(cast<NamedDecl>(DC), TemplateArgs)) {
     mangleTemplatePrefix(TD);
-    mangleTemplateArgs(*TemplateArgs);
+    TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+    mangleTemplateArgs(*TemplateParameters, *TemplateArgs);
   }
   else if(NoFunction && isa<FunctionDecl>(DC))
     return;
@@ -1143,7 +1152,9 @@ void CXXNameMangler::mangleType(const TypenameType *T) {
       TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
       assert(TD && "FIXME: Support dependent template names");
       mangleTemplatePrefix(TD);
-      mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
+      TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+      mangleTemplateArgs(*TemplateParameters, TST->getArgs(),
+                         TST->getNumArgs());
       addSubstitution(QualType(TST, 0));
     }
   } else if (const TemplateTypeParmType *TTPT =
@@ -1521,24 +1532,27 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
   }
 }
 
-void CXXNameMangler::mangleTemplateArgs(const TemplateArgumentList &L) {
+void CXXNameMangler::mangleTemplateArgs(const TemplateParameterList &PL,
+                                        const TemplateArgumentList &AL) {
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
-  for (unsigned i = 0, e = L.size(); i != e; ++i)
-    mangleTemplateArg(L[i]);
+  for (unsigned i = 0, e = AL.size(); i != e; ++i)
+    mangleTemplateArg(PL.getParam(i), AL[i]);
   Out << "E";
 }
 
-void CXXNameMangler::mangleTemplateArgs(const TemplateArgument *TemplateArgs,
+void CXXNameMangler::mangleTemplateArgs(const TemplateParameterList &PL,
+                                        const TemplateArgument *TemplateArgs,
                                         unsigned NumTemplateArgs) {
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
   for (unsigned i = 0; i != NumTemplateArgs; ++i)
-    mangleTemplateArg(TemplateArgs[i]);
+    mangleTemplateArg(PL.getParam(i), TemplateArgs[i]);
   Out << "E";
 }
 
-void CXXNameMangler::mangleTemplateArg(const TemplateArgument &A) {
+void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
+                                       const TemplateArgument &A) {
   // <template-arg> ::= <type>              # type or template
   //                ::= X <expression> E    # expression
   //                ::= <expr-primary>      # simple expressions
@@ -1566,18 +1580,33 @@ void CXXNameMangler::mangleTemplateArg(const TemplateArgument &A) {
   case TemplateArgument::Declaration: {
     //  <expr-primary> ::= L <mangled-name> E # external name
 
-    // FIXME: Clang produces AST's where pointer-to-member-function expressions
+    // Clang produces AST's where pointer-to-member-function expressions
     // and pointer-to-function expressions are represented as a declaration not
-    // an expression; this is not how gcc represents them and this changes the
-    // mangling.
+    // an expression. We compensate for it here to produce the correct mangling.
+    NamedDecl *D = cast<NamedDecl>(A.getAsDecl());
+    const NonTypeTemplateParmDecl *Parameter = cast<NonTypeTemplateParmDecl>(P);
+    bool compensateMangling = D->isCXXClassMember() &&
+      !Parameter->getType()->isReferenceType();
+    if (compensateMangling) {
+      Out << 'X';
+      mangleOperatorName(OO_Amp, 1);
+    }
+
     Out << 'L';
     // References to external entities use the mangled name; if the name would
     // not normally be manged then mangle it as unqualified.
     //
     // FIXME: The ABI specifies that external names here should have _Z, but
     // gcc leaves this off.
-    mangle(cast<NamedDecl>(A.getAsDecl()), "Z");
+    if (compensateMangling)
+      mangle(D, "_Z");
+    else
+      mangle(D, "Z");
     Out << 'E';
+
+    if (compensateMangling)
+      Out << 'E';
+
     break;
   }
   }
