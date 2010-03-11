@@ -213,6 +213,16 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
                                                     __a;}))
 #endif /* __x86_64__ */
 
+/* Extract int from packed integer array at index.  */
+#define _mm_extract_epi8(X, N) (__extension__ ({ __v16qi __a = (__v16qi)X; \
+                                                 __a[N];}))
+#define _mm_extract_epi32(X, N) (__extension__ ({ __v4si __a = (__v4si)X; \
+                                                  __a[N];}))
+#ifdef __x86_64__
+#define _mm_extract_epi64(X, N) (__extension__ ({ __v2di __a = (__v2di)X; \
+                                                  __a[N];}))
+#endif /* __x86_64 */
+
 #endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */
