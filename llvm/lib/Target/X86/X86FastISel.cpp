@@ -1166,6 +1166,30 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::objectsize: {
+    ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(2));
+    const Type *Ty = I.getCalledFunction()->getReturnType();
+    
+    assert(CI && "Non-constant type in Intrinsic::objectsize?");
+    
+    EVT VT;
+    if (!isTypeLegal(Ty, VT))
+      return false;
+    
+    unsigned OpC = 0;
+    if (VT == MVT::i32)
+      OpC = X86::MOV32ri;
+    else if (VT == MVT::i64)
+      OpC = X86::MOV64ri;
+    else
+      return false;
+    
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    BuildMI(MBB, DL, TII.get(OpC), ResultReg).
+                                  addImm(CI->getZExtValue() == 0 ? -1ULL : 0);
+    UpdateValueMap(&I, ResultReg);
+    return true;
+  }
   case Intrinsic::dbg_declare: {
     DbgDeclareInst *DI = cast<DbgDeclareInst>(&I);
     X86AddressMode AM;

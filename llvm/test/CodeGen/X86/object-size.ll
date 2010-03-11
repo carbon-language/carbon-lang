@@ -12,7 +12,7 @@ entry:
   %tmp = load i8** @p                             ; <i8*> [#uses=1]
   %0 = call i64 @llvm.objectsize.i64(i8* %tmp, i1 0) ; <i64> [#uses=1]
   %cmp = icmp ne i64 %0, -1                       ; <i1> [#uses=1]
-; X64: movq    $-1, %rax
+; X64: movabsq $-1, %rax
 ; X64: cmpq    $-1, %rax
   br i1 %cmp, label %cond.true, label %cond.false
 
