@@ -1324,6 +1324,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
  // expect specification DIE in parent function. So avoid creating 
  // specification DIE for a function defined inside a function.
  if (SP.isDefinition() && !SP.getContext().isCompileUnit()
+     && !SP.getContext().isFile()
      && !SP.getContext().isSubprogram()) {
    addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
   // Add arguments. 
@@ -1684,7 +1685,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
   // Do not create specification DIE if context is either compile unit
   // or a subprogram.
   if (DI_GV.isDefinition() && !GVContext.isCompileUnit()
-      && !GVContext.isSubprogram()) {
+      && !GVContext.isFile() && !GVContext.isSubprogram()) {
     // Create specification DIE.
     DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
     addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
