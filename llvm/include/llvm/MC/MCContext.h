@@ -15,6 +15,7 @@
 #include "llvm/Support/Allocator.h"
 
 namespace llvm {
+  class MCAsmInfo;
   class MCExpr;
   class MCSection;
   class MCSymbol;
@@ -28,20 +29,29 @@ namespace llvm {
     MCContext(const MCContext&); // DO NOT IMPLEMENT
     MCContext &operator=(const MCContext&); // DO NOT IMPLEMENT
 
+    /// The MCAsmInfo for this target.
+    const MCAsmInfo &MAI;
+    
     /// Sections - Bindings of names to allocated sections.
     StringMap<MCSection*> Sections;
 
     /// Symbols - Bindings of names to symbols.
     StringMap<MCSymbol*> Symbols;
 
+    /// NextUniqueID - The next ID to dole out to an unnamed assembler temporary
+    /// symbol.
+    unsigned NextUniqueID;
+    
     /// Allocator - Allocator object used for creating machine code objects.
     ///
     /// We use a bump pointer allocator to avoid the need to track all allocated
     /// objects.
     BumpPtrAllocator Allocator;
   public:
-    MCContext();
+    MCContext(const MCAsmInfo &MAI);
     ~MCContext();
+    
+    const MCAsmInfo &getAsmInfo() const { return MAI; }
 
     /// @name Symbol Managment
     /// @{

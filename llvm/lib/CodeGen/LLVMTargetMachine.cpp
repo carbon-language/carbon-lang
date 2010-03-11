@@ -121,14 +121,14 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (addCommonCodeGenPasses(PM, OptLevel, DisableVerify))
     return true;
 
-  OwningPtr<MCContext> Context(new MCContext());
+  const MCAsmInfo &MAI = *getMCAsmInfo();
+  OwningPtr<MCContext> Context(new MCContext(MAI));
   OwningPtr<MCStreamer> AsmStreamer;
 
   formatted_raw_ostream *LegacyOutput;
   switch (FileType) {
   default: return true;
   case CGFT_AssemblyFile: {
-    const MCAsmInfo &MAI = *getMCAsmInfo();
     MCInstPrinter *InstPrinter =
       getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, Out);
     AsmStreamer.reset(createAsmStreamer(*Context, Out, MAI,

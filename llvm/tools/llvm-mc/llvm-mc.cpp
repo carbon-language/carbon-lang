@@ -242,7 +242,11 @@ static int AssembleInput(const char *ProgName) {
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
   
-  MCContext Ctx;
+  
+  const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
+  assert(MAI && "Unable to create target asm info!");
+  
+  MCContext Ctx(*MAI);
   formatted_raw_ostream *Out = GetOutputStream();
   if (!Out)
     return 1;
@@ -261,9 +265,6 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
   OwningPtr<TargetAsmBackend> TAB;
-
-  const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
-  assert(MAI && "Unable to create target asm info!");
 
   if (FileType == OFT_AssemblyFile) {
     IP.reset(TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out));

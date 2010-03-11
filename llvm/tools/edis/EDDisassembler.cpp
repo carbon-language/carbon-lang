@@ -341,19 +341,17 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
   
   SourceMgr sourceMgr;
   sourceMgr.AddNewSourceBuffer(buf, SMLoc()); // ownership of buf handed over
-  MCContext context;
-  OwningPtr<MCStreamer> streamer
-    (createNullStreamer(context));
+  MCContext context(*AsmInfo);
+  OwningPtr<MCStreamer> streamer(createNullStreamer(context));
   AsmParser genericParser(sourceMgr, context, *streamer, *AsmInfo);
-  OwningPtr<TargetAsmParser> specificParser
-    (Tgt->createAsmParser(genericParser));
+  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(genericParser));
   
   AsmToken OpcodeToken = genericParser.Lex();
   
   if(OpcodeToken.is(AsmToken::Identifier)) {
     instName = OpcodeToken.getString();
     instLoc = OpcodeToken.getLoc();
-    if (specificParser->ParseInstruction(instName, instLoc, operands))
+    if (TargetParser->ParseInstruction(instName, instLoc, operands))
       ret = -1;
   }
   else {

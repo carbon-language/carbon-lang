@@ -14,7 +14,7 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
-MCContext::MCContext() {
+MCContext::MCContext(const MCAsmInfo &mai) : MAI(mai), NextUniqueID(0) {
 }
 
 MCContext::~MCContext() {
