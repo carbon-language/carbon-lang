@@ -971,22 +971,10 @@ void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
   CollectNonClassIvars(OI, Ivars);
 }
 
-void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
-                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
-  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(),
-       E = PD->prop_end(); I != E; ++I)
-    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
-      Ivars.push_back(Ivar);
-
-  // Also look into nested protocols.
-  for (ObjCProtocolDecl::protocol_iterator P = PD->protocol_begin(),
-       E = PD->protocol_end(); P != E; ++P)
-    CollectProtocolSynthesizedIvars(*P, Ivars);
-}
-
 /// CollectNonClassIvars -
 /// This routine collects all other ivars which are not declared in the class.
-/// This includes synthesized ivars and those in class's implementation.
+/// This includes synthesized ivars (via @synthesize) and those in
+//  class's @implementation.
 ///
 void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
@@ -997,21 +985,9 @@ void ASTContext::CollectNonClassIvars(const ObjCInterfaceDecl *OI,
       Ivars.push_back(*I);
     }
   }
-  
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
-       E = OI->prop_end(); I != E; ++I) {
-    if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
-      Ivars.push_back(Ivar);
-  }
-  // Also look into interface's protocol list for properties declared
-  // in the protocol and whose ivars are synthesized.
-  for (ObjCInterfaceDecl::protocol_iterator P = OI->protocol_begin(),
-       PE = OI->protocol_end(); P != PE; ++P) {
-    ObjCProtocolDecl *PD = (*P);
-    CollectProtocolSynthesizedIvars(PD, Ivars);
-  }
 
-  // Also add any ivar defined in this class's implementation
+  // Also add any ivar defined in this class's implementation.  This
+  // includes synthesized ivars.
   if (ObjCImplementationDecl *ImplDecl = OI->getImplementation()) {
     for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
          E = ImplDecl->ivar_end(); I != E; ++I)

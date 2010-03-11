@@ -2492,15 +2492,17 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     if (!Ivar) {
-      DeclContext *EnclosingContext = cast_or_null<DeclContext>(IDecl);
+      DeclContext *EnclosingContext = cast_or_null<DeclContext>(ClassImpDecl);
       assert(EnclosingContext &&
              "null DeclContext for synthesized ivar - ActOnPropertyImplDecl");
       Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, PropertyLoc,
                                   PropertyIvar, PropType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Public,
                                   (Expr *)0);
+      EnclosingContext->addDecl(Ivar);
       IDecl->makeDeclVisibleInContext(Ivar, false);
       property->setPropertyIvarDecl(Ivar);
+
       if (!getLangOptions().ObjCNonFragileABI)
         Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
         // Note! I deliberately want it to fall thru so, we have a
