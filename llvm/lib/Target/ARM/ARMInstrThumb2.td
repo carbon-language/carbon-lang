@@ -2159,7 +2159,7 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs GPR:$dst),
 // memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
 def t2Int_MemBarrierV7 : AInoP<(outs), (ins),
-                        Pseudo, NoItinerary,
+                        ThumbFrm, NoItinerary,
                         "dmb", "",
                         [(ARMMemBarrierV7)]>,
                         Requires<[IsThumb2]> {
@@ -2169,7 +2169,7 @@ def t2Int_MemBarrierV7 : AInoP<(outs), (ins),
 }
 
 def t2Int_SyncBarrierV7 : AInoP<(outs), (ins),
-                        Pseudo, NoItinerary,
+                        ThumbFrm, NoItinerary,
                         "dsb", "",
                         [(ARMSyncBarrierV7)]>,
                         Requires<[IsThumb2]> {
