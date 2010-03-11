@@ -87,6 +87,26 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   return CI;
 }
 
+/// EmitStrNCpy - Emit a call to the strcpy function to the builder, for the
+/// specified pointer arguments.
+Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
+                         IRBuilder<> &B, const TargetData *TD) {
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  const Type *I8Ptr = B.getInt8PtrTy();
+  Value *StrNCpy = M->getOrInsertFunction("strncpy", AttrListPtr::get(AWI, 2),
+                                         I8Ptr, I8Ptr, I8Ptr,
+                                         Len->getType(), NULL);
+  CallInst *CI = B.CreateCall3(StrNCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
+                               Len, "strncpy");
+  if (const Function *F = dyn_cast<Function>(StrNCpy->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+  return CI;
+}
+
+
 /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
 /// expects that the size has type 'intptr_t' and Dst/Src are pointers.
 Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len,

@@ -850,7 +850,8 @@ Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const TargetData *TD) {
       return 0;
     if (SizeCI->isAllOnesValue() ||
         SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
-      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
+                               CI->getOperand(3), B, TD);
       return ReplaceInstUsesWith(*CI, Ret);
     }
     return 0; 
