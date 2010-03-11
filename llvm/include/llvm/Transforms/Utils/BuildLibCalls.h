@@ -37,13 +37,8 @@ namespace llvm {
   /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
   /// specified pointer arguments.
   Value *EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
-                    const TargetData *TD);
-  
-  /// EmitStpCpy - Emit a call to the stpcpy function to the builder, for the
-  /// specified pointer arguments.
-  Value *EmitStpCpy(Value *Dst, Value *Src, IRBuilder<> &B,
-                    const TargetData *TD);
-  
+                    const TargetData *TD, StringRef Name = "strcpy");
+
   /// EmitStrNCpy - Emit a call to the strncpy function to the builder, for the
   /// specified pointer arguments and length.
   Value *EmitStrNCpy(Value *Dst, Value *Src, Value *Len, IRBuilder<> &B,

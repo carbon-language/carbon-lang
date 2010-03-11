@@ -620,25 +620,13 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     return 0;
   }
 
-  if (Name == "__strcpy_chk") {
+  if (Name == "__strcpy_chk" || Name == "__stpcpy_chk") {
     ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
     if (!SizeCI)
       return 0;
     if (SizeCI->isAllOnesValue()) {
-      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
-      CI->replaceAllUsesWith(Ret);
-      CI->eraseFromParent();
-      return true;
-    }
-    return 0;
-  }
-
-  if (Name == "__stpcpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeCI)
-      return 0;
-    if (SizeCI->isAllOnesValue()) {
-      Value *Ret = EmitStpCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD,
+                              Name.substr(2, 6));
       CI->replaceAllUsesWith(Ret);
       CI->eraseFromParent();
       return true;

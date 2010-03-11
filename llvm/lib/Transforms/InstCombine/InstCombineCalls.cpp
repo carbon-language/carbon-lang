@@ -819,36 +819,19 @@ Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const TargetData *TD) {
     return 0;
   }
 
-  if (Name == "__strcpy_chk") {
+  if (Name == "__strcpy_chk" || Name == "__stpcpy_chk") {
     ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
     if (!SizeCI)
       return 0;
     // If a) we don't have any length information, or b) we know this will
-    // fit then just lower to a plain strcpy. Otherwise we'll keep our
-    // strcpy_chk call which may fail at runtime if the size is too long.
+    // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
+    // st[rp]cpy_chk call which may fail at runtime if the size is too long.
     // TODO: It might be nice to get a maximum length out of the possible
     // string lengths for varying.
     if (SizeCI->isAllOnesValue() ||
       SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2))) {
-      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
-      return ReplaceInstUsesWith(*CI, Ret);
-    }
-    return 0;
-  }
-
-  // Should be similar to strcpy.
-  if (Name == "__stpcpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeCI)
-      return 0;
-    // If a) we don't have any length information, or b) we know this will
-    // fit then just lower to a plain stpcpy. Otherwise we'll keep our
-    // stpcpy_chk call which may fail at runtime if the size is too long.
-    // TODO: It might be nice to get a maximum length out of the possible
-    // string lengths for varying.
-    if (SizeCI->isAllOnesValue() ||
-        SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2))) {
-      Value *Ret = EmitStpCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD,
+                              Name.substr(2, 6));
       return ReplaceInstUsesWith(*CI, Ret);
     }
     return 0;

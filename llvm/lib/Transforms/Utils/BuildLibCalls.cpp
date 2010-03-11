@@ -72,35 +72,17 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
 /// EmitStrCpy - Emit a call to the strcpy function to the builder, for the
 /// specified pointer arguments.
 Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
-                        const TargetData *TD) {
+                        const TargetData *TD, StringRef Name) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
   const Type *I8Ptr = B.getInt8PtrTy();
-  Value *StrCpy = M->getOrInsertFunction("strcpy", AttrListPtr::get(AWI, 2),
+  Value *StrCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI, 2),
                                          I8Ptr, I8Ptr, I8Ptr, NULL);
   CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
-                               "strcpy");
+                               Name);
   if (const Function *F = dyn_cast<Function>(StrCpy->stripPointerCasts()))
-    CI->setCallingConv(F->getCallingConv());
-  return CI;
-}
-
-/// EmitStpCpy - Emit a call to the stpcpy function to the builder, for the
-/// specified pointer arguments.
-Value *llvm::EmitStpCpy(Value *Dst, Value *Src, IRBuilder<> &B,
-                        const TargetData *TD) {
-  Module *M = B.GetInsertBlock()->getParent()->getParent();
-  AttributeWithIndex AWI[2];
-  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
-  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  const Type *I8Ptr = B.getInt8PtrTy();
-  Value *StpCpy = M->getOrInsertFunction("stpcpy", AttrListPtr::get(AWI, 2),
-                                         I8Ptr, I8Ptr, I8Ptr, NULL);
-  CallInst *CI = B.CreateCall2(StpCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
-                               "stpcpy");
-  if (const Function *F = dyn_cast<Function>(StpCpy->stripPointerCasts()))
     CI->setCallingConv(F->getCallingConv());
   return CI;
 }
