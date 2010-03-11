@@ -61,7 +61,11 @@ public:
     ///      .set L4_5_set_123, LBB123 - LJTI1_2
     ///      .word L4_5_set_123
     EK_LabelDifference32,
-    
+
+    /// EK_Inline - Jump table entries are emitted inline at their point of
+    /// use. It is the responsibility of the target to emit the entries.
+    EK_Inline,
+
     /// EK_Custom32 - Each entry is a 32-bit value that is custom lowered by the
     /// TargetLowering::LowerCustomJumpTableEntry hook.
     EK_Custom32

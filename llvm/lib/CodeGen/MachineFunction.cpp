@@ -574,6 +574,8 @@ unsigned MachineJumpTableInfo::getEntrySize(const TargetData &TD) const {
   case MachineJumpTableInfo::EK_LabelDifference32:
   case MachineJumpTableInfo::EK_Custom32:
     return 4;
+  case MachineJumpTableInfo::EK_Inline:
+    return 0;
   }
   assert(0 && "Unknown jump table encoding!");
   return ~0;
@@ -591,6 +593,8 @@ unsigned MachineJumpTableInfo::getEntryAlignment(const TargetData &TD) const {
   case MachineJumpTableInfo::EK_LabelDifference32:
   case MachineJumpTableInfo::EK_Custom32:
     return TD.getABIIntegerTypeAlignment(32);
+  case MachineJumpTableInfo::EK_Inline:
+    return 1;
   }
   assert(0 && "Unknown jump table encoding!");
   return ~0;

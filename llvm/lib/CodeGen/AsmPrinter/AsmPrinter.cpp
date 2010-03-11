@@ -651,6 +651,7 @@ void AsmPrinter::EmitConstantPool() {
 void AsmPrinter::EmitJumpTableInfo() {
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   if (MJTI == 0) return;
+  if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_Inline) return;
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
 
@@ -727,6 +728,8 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                     unsigned UID) const {
   const MCExpr *Value = 0;
   switch (MJTI->getEntryKind()) {
+  case MachineJumpTableInfo::EK_Inline:
+    llvm_unreachable("Cannot emit EK_Inline jump table entry"); break;
   case MachineJumpTableInfo::EK_Custom32:
     Value = TM.getTargetLowering()->LowerCustomJumpTableEntry(MJTI, MBB, UID,
                                                               OutContext);
