@@ -66,7 +66,7 @@ namespace llvm {
                                             MCStreamer &Streamer,
                                             const MCAsmInfo *MAI);
     typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
-                                                  MCAssembler &A);
+                                                  const std::string &TT);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCAsmInfo &MAI);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P);
@@ -208,11 +208,12 @@ namespace llvm {
 
     /// createAsmBackend - Create a target specific assembly parser.
     ///
+    /// \arg Triple - The target triple string.
     /// \arg Backend - The target independent assembler object.
-    TargetAsmBackend *createAsmBackend(MCAssembler &Backend) const {
+    TargetAsmBackend *createAsmBackend(const std::string &Triple) const {
       if (!AsmBackendCtorFn)
         return 0;
-      return AsmBackendCtorFn(*this, Backend);
+      return AsmBackendCtorFn(*this, Triple);
     }
 
     /// createAsmLexer - Create a target specific assembly lexer.

@@ -21,7 +21,6 @@ namespace llvm {
 
 class FunctionPass;
 class JITCodeEmitter;
-class MCAssembler;
 class MCCodeEmitter;
 class MCContext;
 class MachineCodeEmitter;
@@ -57,8 +56,8 @@ MCCodeEmitter *createX86_32MCCodeEmitter(const Target &, TargetMachine &TM,
 MCCodeEmitter *createX86_64MCCodeEmitter(const Target &, TargetMachine &TM,
                                          MCContext &Ctx);
 
-TargetAsmBackend *createX86_32AsmBackend(const Target &, MCAssembler &);
-TargetAsmBackend *createX86_64AsmBackend(const Target &, MCAssembler &);
+TargetAsmBackend *createX86_32AsmBackend(const Target &, const std::string &);
+TargetAsmBackend *createX86_64AsmBackend(const Target &, const std::string &);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

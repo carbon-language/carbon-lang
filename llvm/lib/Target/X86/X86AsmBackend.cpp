@@ -17,18 +17,18 @@ namespace {
 
 class X86AsmBackend : public TargetAsmBackend {
 public:
-  X86AsmBackend(const Target &T, MCAssembler &A)
+  X86AsmBackend(const Target &T)
     : TargetAsmBackend(T) {}
 };
 
 }
 
 TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
-                                               MCAssembler &A) {
-  return new X86AsmBackend(T, A);
+                                               const std::string &TT) {
+  return new X86AsmBackend(T);
 }
 
 TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
-                                               MCAssembler &A) {
-  return new X86AsmBackend(T, A);
+                                               const std::string &TT) {
+  return new X86AsmBackend(T);
 }
