@@ -23,23 +23,7 @@ using namespace clang;
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), Packed(false), UnfilledBitsInLastByte(0),
   MaxFieldAlignment(0), DataSize(0), IsUnion(false), NonVirtualSize(0), 
-  NonVirtualAlignment(8) { }
-
-/// LayoutVtable - Lay out the vtable and set PrimaryBase.
-void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
-  if (!RD->isDynamicClass()) {
-    // There is no primary base in this case.
-    return;
-  }
-
-  SelectPrimaryBase(RD);
-  if (!PrimaryBase.getBase()) {
-    int AS = 0;
-    UpdateAlignment(Ctx.Target.getPointerAlign(AS));
-    Size += Ctx.Target.getPointerWidth(AS);
-    DataSize = Size;
-  }
-}
+  NonVirtualAlignment(8), FirstNearlyEmptyVBase(0) { }
 
 /// IsNearlyEmpty - Indicates when a class has a vtable pointer, but
 /// no other data.
@@ -78,8 +62,8 @@ void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
 }
 
 void
-ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
-                                           const CXXRecordDecl *&FirstPrimary) {
+ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
+
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     assert(!i->getType()->isDependentType() &&
@@ -87,35 +71,42 @@ ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD,
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     if (!i->isVirtual()) {
-      SelectPrimaryVBase(Base, FirstPrimary);
+      SelectPrimaryVBase(Base);
       if (PrimaryBase.getBase())
         return;
       continue;
     }
     if (IsNearlyEmpty(Base)) {
-      if (FirstPrimary==0)
-        FirstPrimary = Base;
+      // Is this the first nearly empty primary virtual base?
+      if (!FirstNearlyEmptyVBase)
+        FirstNearlyEmptyVBase = Base;
+
       if (!IndirectPrimaryBases.count(Base)) {
-        setPrimaryBase(Base, /*IsVirtual=*/true);
+        PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base,
+                                                       /*IsVirtual=*/true);
         return;
       }
     }
+    
     assert(i->isVirtual());
-    SelectPrimaryVBase(Base, FirstPrimary);
+    SelectPrimaryVBase(Base);
     if (PrimaryBase.getBase())
       return;
   }
 }
 
-/// SelectPrimaryBase - Selects the primary base for the given class and
-/// record that with setPrimaryBase.  We also calculate the IndirectPrimaries.
-void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
+/// DeterminePrimaryBase - Determine the primary base of the given class.
+void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
+  // If the class isn't dynamic, it won't have a primary base.
+  if (!RD->isDynamicClass())
+    return;
+  
   // Compute all the primary virtual bases for all of our direct and
   // indirect bases, and record all their primary virtual base classes.
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
        e = RD->bases_end(); i != e; ++i) {
     assert(!i->getType()->isDependentType() &&
-           "Cannot layout class with dependent bases.");
+           "Cannot lay out class with dependent bases.");
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
     IdentifyPrimaryBases(Base);
@@ -142,20 +133,32 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
 
   // Otherwise, it is the first nearly empty virtual base that is not an
   // indirect primary virtual base class, if one exists.
+  if (RD->getNumVBases() != 0) {
+    SelectPrimaryVBase(RD);
+    if (PrimaryBase.getBase())
+      return;
+  }
 
-  // If we have no virtual bases at this point, bail out as the searching below
-  // is expensive.
-  if (RD->getNumVBases() == 0)
+  // Otherwise, it is the first nearly empty virtual base that is not an
+  // indirect primary virtual base class, if one exists.
+  if (FirstNearlyEmptyVBase) {
+    PrimaryBase = 
+      ASTRecordLayout::PrimaryBaseInfo(FirstNearlyEmptyVBase, /*IsVirtual=*/true);
     return;
+  }
   
-  // Then we can search for the first nearly empty virtual base itself.
-  const CXXRecordDecl *FirstPrimary = 0;
-  SelectPrimaryVBase(RD, FirstPrimary);
+  // Otherwise there is no primary base class.
+  assert(!PrimaryBase.getBase() && "Should not get here with a primary base!");
 
-  // Otherwise if is the first nearly empty virtual base, if one exists,
-  // otherwise there is no primary base class.
-  if (!PrimaryBase.getBase())
-    setPrimaryBase(FirstPrimary, /*IsVirtual=*/true);
+  // Allocate the virtual table pointer at offset zero.
+  assert(DataSize == 0 && "Vtable pointer must be at offset zero!");
+           
+  // Update the size.
+  Size += Ctx.Target.getPointerWidth(0);
+  DataSize = Size;
+
+  // Update the alignment.
+  UpdateAlignment(Ctx.Target.getPointerAlign(0));
 }
 
 uint64_t ASTRecordLayoutBuilder::getBaseOffset(const CXXRecordDecl *Base) {
@@ -173,19 +176,38 @@ uint64_t ASTRecordLayoutBuilder::getBaseOffset(const CXXRecordDecl *Base) {
 
 void
 ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-       e = RD->bases_end(); i != e; ++i) {
-    if (!i->isVirtual()) {
-      assert(!i->getType()->isDependentType() &&
-             "Cannot layout class with dependent bases.");
-      const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      // Skip the PrimaryBase here, as it is laid down first.
-      if (Base != PrimaryBase.getBase() || PrimaryBase.isVirtual()) {
-        // Lay out the base.
-        LayoutNonVirtualBase(Base);
-      }
-    }
+  // First, determine the primary base class.
+  DeterminePrimaryBase(RD);
+  
+  // If we have a primary base class, lay it out.
+  if (const CXXRecordDecl *Base = PrimaryBase.getBase()) {
+    printf("found primary base %s\n", Base->getQualifiedNameAsString().c_str());
+    if (PrimaryBase.isVirtual()) {
+      // We have a virtual primary base, insert it as an indirect primary base.
+      IndirectPrimaryBases.insert(Base);
+      
+      LayoutVirtualBase(Base);
+    } else
+      LayoutNonVirtualBase(Base);
+  }
+  
+  // Now lay out the non-virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+
+    // Ignore virtual bases.
+    if (I->isVirtual())
+      continue;
+
+    const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // Skip the primary base.
+    if (Base == PrimaryBase.getBase() && !PrimaryBase.isVirtual())
+      continue;
+
+    // Lay out the base.
+    LayoutNonVirtualBase(Base);
   }
 }
 
@@ -458,20 +480,8 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   // If this is a C++ class, lay out the vtable and the non-virtual bases.
   const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
-  if (RD) {
-    LayoutVtable(RD);
-    // PrimaryBase goes first.
-    if (PrimaryBase.getBase()) {
-      if (PrimaryBase.isVirtual()) {
-        IndirectPrimaryBases.insert(PrimaryBase.getBase());
-        
-        LayoutVirtualBase(PrimaryBase.getBase());
-      } else {
-        LayoutNonVirtualBase(PrimaryBase.getBase());
-      }
-    }
+  if (RD)
     LayoutNonVirtualBases(RD);
-  }
 
   LayoutFields(D);
 

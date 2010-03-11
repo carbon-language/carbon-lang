@@ -56,6 +56,8 @@ class ASTRecordLayoutBuilder {
   uint64_t NonVirtualSize;
   unsigned NonVirtualAlignment;
   
+  /// PrimaryBase - the primary base class (if one exists) of the class
+  /// we're laying out.
   ASTRecordLayout::PrimaryBaseInfo PrimaryBase;
 
   typedef llvm::SmallVector<std::pair<const CXXRecordDecl *, 
@@ -71,6 +73,10 @@ class ASTRecordLayoutBuilder {
   /// primary base classes for some other direct or indirect base class.
   llvm::SmallSet<const CXXRecordDecl*, 32> IndirectPrimaryBases;
   
+  /// FirstNearlyEmptyVBase - The first nearly empty virtual base class in
+  /// inheritance graph order. Used for determining the primary base class.
+  const CXXRecordDecl *FirstNearlyEmptyVBase;
+
   /// EmptyClassOffsets - A map from offsets to empty record decls.
   typedef std::multimap<uint64_t, const CXXRecordDecl *> EmptyClassOffsetsTy;
   EmptyClassOffsetsTy EmptyClassOffsets;
@@ -86,18 +92,15 @@ class ASTRecordLayoutBuilder {
   void LayoutField(const FieldDecl *D);
   void LayoutBitField(const FieldDecl *D);
 
-  void SelectPrimaryBase(const CXXRecordDecl *RD);
-  void SelectPrimaryVBase(const CXXRecordDecl *RD,
-                          const CXXRecordDecl *&FirstPrimary);
+  /// DeterminePrimaryBase - Determine the primary base of the given class.
+  void DeterminePrimaryBase(const CXXRecordDecl *RD);
+
+  void SelectPrimaryVBase(const CXXRecordDecl *RD);
   
   /// IdentifyPrimaryBases - Identify all virtual base classes, direct or 
   /// indirect, that are primary base classes for some other direct or indirect 
   /// base class.
   void IdentifyPrimaryBases(const CXXRecordDecl *RD);
-  
-  void setPrimaryBase(const CXXRecordDecl *Base, bool IsVirtual) {
-    PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base, IsVirtual);
-  }
   
   bool IsNearlyEmpty(const CXXRecordDecl *RD) const;
   
@@ -120,8 +123,6 @@ class ASTRecordLayoutBuilder {
   /// LayoutBase - Will lay out a base and return the offset where it was 
   /// placed, in bits.
   uint64_t LayoutBase(const CXXRecordDecl *RD);
-  
-  void LayoutVtable(const CXXRecordDecl *RD);
 
   /// canPlaceRecordAtOffset - Return whether a record (either a base class
   /// or a field) can be placed at the given offset. 
