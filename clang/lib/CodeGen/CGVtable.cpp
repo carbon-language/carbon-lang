@@ -3429,20 +3429,17 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   if (GenerateDefinition) {
     if (LayoutClass == RD) {
       assert(!IsVirtual && 
-             "Can't only have a virtual base in construction vtables!");
-      VtableBuilder Builder(*this, RD, Offset, 
-                            /*MostDerivedClassIsVirtual=*/false,
-                            LayoutClass);
-
-      if (CGM.getLangOptions().DumpVtableLayouts)
-        Builder.dumpLayout(llvm::errs());
-    } else if (CGM.getLangOptions().DumpVtableLayouts) {
-      // We only build construction vtables when dumping vtable layouts for now.
-      VtableBuilder Builder(*this, RD, Offset, 
-                            /*MostDerivedClassIsVirtual=*/IsVirtual,
-                            LayoutClass);
-      Builder.dumpLayout(llvm::errs());
+             "Can only have a virtual base in construction vtables!");
+      assert(!Offset && 
+             "Can only have a base offset in construction vtables!");
     }
+    
+    VtableBuilder Builder(*this, RD, Offset, 
+                          /*MostDerivedClassIsVirtual=*/false,
+                          LayoutClass);
+
+    if (CGM.getLangOptions().DumpVtableLayouts)
+      Builder.dumpLayout(llvm::errs());
   }
 
   llvm::SmallString<256> OutName;
