@@ -365,8 +365,7 @@ bool ResultBuilder::isInterestingDecl(NamedDecl *ND,
   
   // Friend declarations and declarations introduced due to friends are never
   // added as results.
-  if (isa<FriendDecl>(ND) || 
-      (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend)))
+  if (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend))
     return false;
   
   // Class template (partial) specializations are never added as results.

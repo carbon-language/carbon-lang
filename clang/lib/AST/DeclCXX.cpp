@@ -846,28 +846,6 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXConversionDecl(RD, L, N, T, TInfo, isInline, isExplicit);
 }
 
-FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
-                               SourceLocation L,
-                               FriendUnion Friend,
-                               SourceLocation FriendL) {
-#ifndef NDEBUG
-  if (Friend.is<NamedDecl*>()) {
-    NamedDecl *D = Friend.get<NamedDecl*>();
-    assert(isa<FunctionDecl>(D) ||
-           isa<CXXRecordDecl>(D) ||
-           isa<FunctionTemplateDecl>(D) ||
-           isa<ClassTemplateDecl>(D));
-
-    // As a temporary hack, we permit template instantiation to point
-    // to the original declaration when instantiating members.
-    assert(D->getFriendObjectKind() ||
-           (cast<CXXRecordDecl>(DC)->getTemplateSpecializationKind()));
-  }
-#endif
-
-  return new (C) FriendDecl(DC, L, Friend, FriendL);
-}
-
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC,
                                          SourceLocation L,
