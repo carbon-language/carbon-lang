@@ -51,6 +51,12 @@ public:
   // symbols.
   Mangler(const MCAsmInfo &mai) : MAI(mai), NextAnonGlobalID(1) {}
 
+  /// getUniqueID() - Allocate and return a unique ID.
+  /// FIXME: Remove this.
+  unsigned getUniqueID() {
+    return NextAnonGlobalID++;
+  }
+  
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't
   /// have a name, this fills in a unique name for the global.

@@ -19,6 +19,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
@@ -307,29 +308,34 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
   else
     Sym = getContext().GetOrCreateSymbol(Name.str());
 
-  return getExprForDwarfReference(Sym, MMI, Encoding, Streamer);
+  return getExprForDwarfReference(Sym, Mang, MMI, Encoding, Streamer);
 }
 
 const MCExpr *TargetLoweringObjectFile::
-getExprForDwarfReference(const MCSymbol *Sym, MachineModuleInfo *MMI,
-                         unsigned Encoding, MCStreamer &Streamer) const {
+getExprForDwarfReference(const MCSymbol *Sym, Mangler *Mang,
+                         MachineModuleInfo *MMI, unsigned Encoding,
+                         MCStreamer &Streamer) const {
   const MCExpr *Res = MCSymbolRefExpr::Create(Sym, getContext());
 
   switch (Encoding & 0xF0) {
   default:
     llvm_report_error("We do not support this DWARF encoding yet!");
-    break;
   case dwarf::DW_EH_PE_absptr:
     // Do nothing special
-    break;
-  case dwarf::DW_EH_PE_pcrel:
-    // FIXME: PCSymbol
-    const MCExpr *PC = MCSymbolRefExpr::Create(".", getContext());
-    Res = MCBinaryExpr::CreateSub(Res, PC, getContext());
-    break;
-  }
+    return Res;
+  case dwarf::DW_EH_PE_pcrel: {
+    // Emit a label to the streamer for the current position.  This gives us
+    // .-foo addressing.
+    SmallString<128> Name;
+    Mang->getNameWithPrefix(Name, Twine("PCtemp") + Twine(Mang->getUniqueID()),
+                            Mangler::Private);
 
-  return Res;
+    MCSymbol *PCSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+    Streamer.EmitLabel(PCSym);
+    const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
+    return MCBinaryExpr::CreateSub(Res, PC, getContext());
+  }
+  }
 }
 
 unsigned TargetLoweringObjectFile::getPersonalityEncoding() const {

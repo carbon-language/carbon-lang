@@ -421,7 +421,7 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     }
 
     return TargetLoweringObjectFile::
-      getExprForDwarfReference(Sym, MMI,
+      getExprForDwarfReference(Sym, Mang, MMI,
                                Encoding & ~dwarf::DW_EH_PE_indirect, Streamer);
   }
 
@@ -784,8 +784,8 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     }
 
     return TargetLoweringObjectFile::
-      getExprForDwarfReference(Sym, MMI, Encoding & ~dwarf::DW_EH_PE_indirect,
-                               Streamer);
+      getExprForDwarfReference(Sym, Mang, MMI,
+                               Encoding & ~dwarf::DW_EH_PE_indirect, Streamer);
   }
 
   return TargetLoweringObjectFile::

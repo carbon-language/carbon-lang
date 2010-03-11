@@ -189,7 +189,8 @@ void DwarfPrinter::EmitULEB128(unsigned Value, const char *Desc,
 void DwarfPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
-  const MCExpr *Exp = TLOF.getExprForDwarfReference(Sym, Asm->MMI, Encoding,
+  const MCExpr *Exp = TLOF.getExprForDwarfReference(Sym, Asm->Mang,
+                                                    Asm->MMI, Encoding,
                                                     Asm->OutStreamer);
   Asm->OutStreamer.EmitValue(Exp, SizeOfEncodedValue(Encoding), /*addrspace*/0);
 }
