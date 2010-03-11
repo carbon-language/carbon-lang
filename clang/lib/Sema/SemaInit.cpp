@@ -1051,6 +1051,7 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
   RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
   RecordDecl::field_iterator FieldEnd = RD->field_end();
   bool InitializedSomething = false;
+  bool CheckForMissingFields = true;
   while (Index < IList->getNumInits()) {
     Expr *Init = IList->getInit(Index);
 
@@ -1070,6 +1071,10 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
         hadError = true;
 
       InitializedSomething = true;
+
+      // Disable check for missing fields when designators are used.
+      // This matches gcc behaviour.
+      CheckForMissingFields = false;
       continue;
     }
 
@@ -1104,6 +1109,21 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
     }
 
     ++Field;
+  }
+
+  // Emit warnings for missing struct field initializers.
+  if (CheckForMissingFields && Field != FieldEnd && 
+      !Field->getType()->isIncompleteArrayType() && !DeclType->isUnionType()) {
+    // It is possible we have one or more unnamed bitfields remaining.
+    // Find first (if any) named field and emit warning.
+    for (RecordDecl::field_iterator it = Field, end = RD->field_end();
+         it != end; ++it) {
+      if (!it->isUnnamedBitfield()) {
+        SemaRef.Diag(IList->getSourceRange().getEnd(),
+                     diag::warn_missing_field_initializers) << it->getName();
+        break;
+      }
+    }
   }
 
   if (Field == FieldEnd || !Field->getType()->isIncompleteArrayType() ||
