@@ -134,7 +134,8 @@ namespace {
     llvm::SmallPtrSet<ValueDecl *, 8> BlockByRefDeclsPtrSet;
     llvm::DenseMap<ValueDecl *, unsigned> BlockByRefDeclNo;
     llvm::SmallPtrSet<ValueDecl *, 8> ImportedBlockDecls;
-
+    llvm::SmallPtrSet<VarDecl *, 8> ImportedLocalExternalDecls;
+    
     llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
 
     // This maps a property to it's assignment statement.
@@ -372,6 +373,7 @@ namespace {
     void RewriteByRefVar(VarDecl *VD);
     std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD, int flag);
     Stmt *RewriteBlockDeclRefExpr(Expr *VD);
+    Stmt *RewriteLocalVariableExternalStorage(DeclRefExpr *DRE);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
 
     std::string SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
@@ -4025,6 +4027,12 @@ void RewriteObjC::RewriteByRefString(std::string &ResultStr,
     "_" + utostr(BlockByRefDeclNo[VD]) ;
 }
 
+static bool HasLocalVariableExternalStorage(ValueDecl *VD) {
+  if (VarDecl *Var = dyn_cast<VarDecl>(VD))
+    return (Var->isFunctionOrMethodVarDecl() && !Var->hasLocalStorage());
+  return false;
+}
+
 std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
                                                    const char *funcName,
                                                    std::string Tag) {
@@ -4099,7 +4107,10 @@ std::string RewriteObjC::SynthesizeBlockFunc(BlockExpr *CE, int i,
     }
     else {
       std::string Name = (*I)->getNameAsString();
-      (*I)->getType().getAsStringInternal(Name, Context->PrintingPolicy);
+      QualType QT = (*I)->getType();
+      if (HasLocalVariableExternalStorage(*I))
+        QT = Context->getPointerType(QT);
+      QT.getAsStringInternal(Name, Context->PrintingPolicy);
       S += Name + " = __cself->" + 
                               (*I)->getNameAsString() + "; // bound by copy\n";
     }
@@ -4188,8 +4199,11 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
         S += "struct __block_impl *";
         Constructor += ", void *" + ArgName;
       } else {
-        (*I)->getType().getAsStringInternal(FieldName, Context->PrintingPolicy);
-        (*I)->getType().getAsStringInternal(ArgName, Context->PrintingPolicy);
+        QualType QT = (*I)->getType();
+        if (HasLocalVariableExternalStorage(*I))
+          QT = Context->getPointerType(QT);
+        QT.getAsStringInternal(FieldName, Context->PrintingPolicy);
+        QT.getAsStringInternal(ArgName, Context->PrintingPolicy);
         Constructor += ", " + ArgName;
       }
       S += FieldName + ";\n";
@@ -4419,10 +4433,19 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
         GetBlockDeclRefExprs(*CI);
     }
   // Handle specific things.
-  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
+  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S)) {
     // FIXME: Handle enums.
     if (!isa<FunctionDecl>(CDRE->getDecl()))
       BlockDeclRefs.push_back(CDRE);
+  }
+  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S))
+    if (HasLocalVariableExternalStorage(DRE->getDecl())) {
+        BlockDeclRefExpr *BDRE = 
+          new (Context)BlockDeclRefExpr(DRE->getDecl(), DRE->getType(), 
+                                        DRE->getLocation(), false);
+        BlockDeclRefs.push_back(BDRE);
+    }
+  
   return;
 }
 
@@ -4445,10 +4468,16 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
 
     }
   // Handle specific things.
-  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S))
+  if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(S)) {
     if (!isa<FunctionDecl>(CDRE->getDecl()) &&
         !InnerContexts.count(CDRE->getDecl()->getDeclContext()))
       InnerBlockDeclRefs.push_back(CDRE);
+  }
+  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
+    if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl()))
+      if (Var->isFunctionOrMethodVarDecl())
+        ImportedLocalExternalDecls.insert(Var);
+  }
   
   return;
 }
@@ -4608,6 +4637,23 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(Expr *DeclRefExp) {
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
                                           ME);
   ReplaceStmt(DeclRefExp, PE);
+  return PE;
+}
+
+// Rewrites the imported local variable V with external storage 
+// (static, extern, etc.) as *V
+//
+Stmt *RewriteObjC::RewriteLocalVariableExternalStorage(DeclRefExpr *DRE) {
+  ValueDecl *VD = DRE->getDecl();
+  if (VarDecl *Var = dyn_cast<VarDecl>(VD))
+    if (!ImportedLocalExternalDecls.count(Var))
+      return DRE;
+  Expr *Exp = new (Context) UnaryOperator(DRE, UnaryOperator::Deref,
+                                    DRE->getType(), DRE->getLocation());
+  // Need parens to enforce precedence.
+  ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
+                                          Exp);
+  ReplaceStmt(DRE, PE);
   return PE;
 }
 
@@ -5130,6 +5176,13 @@ Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
       } else {
         FD = SynthBlockInitFunctionDecl((*I)->getNameAsCString());
         Exp = new (Context) DeclRefExpr(FD, FD->getType(), SourceLocation());
+        if (HasLocalVariableExternalStorage(*I)) {
+          QualType QT = (*I)->getType();
+          QT = Context->getPointerType(QT);
+          Exp = new (Context) UnaryOperator(Exp, UnaryOperator::AddrOf, QT, 
+                                            SourceLocation());
+        }
+        
       }
       InitExprs.push_back(Exp);
     }
@@ -5244,11 +5297,12 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     llvm::SmallVector<BlockDeclRefExpr *, 8> InnerBlockDeclRefs;
     llvm::SmallPtrSet<const DeclContext *, 8> InnerContexts;
     InnerContexts.insert(BE->getBlockDecl());
+    ImportedLocalExternalDecls.clear();
     GetInnerBlockDeclRefExprs(BE->getBody(),
                               InnerBlockDeclRefs, InnerContexts);
     // Rewrite the block body in place.
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
-
+    ImportedLocalExternalDecls.clear();
     // Now we snarf the rewritten text and stash it away for later use.
     std::string Str = Rewrite.getRewrittenText(BE->getSourceRange());
     RewrittenBlockExprs[BE] = Str;
@@ -5431,6 +5485,8 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     ValueDecl *VD = DRE->getDecl(); 
     if (VD->hasAttr<BlocksAttr>())
       return RewriteBlockDeclRefExpr(DRE);
+    if (HasLocalVariableExternalStorage(VD))
+      return RewriteLocalVariableExternalStorage(DRE);
   }
   
   if (CallExpr *CE = dyn_cast<CallExpr>(S)) {

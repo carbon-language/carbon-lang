@@ -500,7 +500,8 @@ public:
   bool isExternC() const;
 
   /// isBlockVarDecl - Returns true for local variable declarations.  Note that
-  /// this includes static variables inside of functions.
+  /// this includes static variables inside of functions. It also includes
+  /// variables inside blocks.
   ///
   ///   void foo() { int x; static int y; extern int z; }
   ///
@@ -509,6 +510,17 @@ public:
       return false;
     if (const DeclContext *DC = getDeclContext())
       return DC->getLookupContext()->isFunctionOrMethod();
+    return false;
+  }
+
+  /// isFunctionOrMethodVarDecl - Similar to isBlockVarDecl, but excludes
+  /// variables declared in blocks.
+  bool isFunctionOrMethodVarDecl() const {
+    if (getKind() != Decl::Var)
+      return false;
+    if (const DeclContext *DC = getDeclContext())
+      return DC->getLookupContext()->isFunctionOrMethod() &&
+             DC->getLookupContext()->getDeclKind() != Decl::Block;
     return false;
   }
 
