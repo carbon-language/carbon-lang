@@ -158,19 +158,6 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   UpdateAlignment(Ctx.Target.getPointerAlign(0));
 }
 
-uint64_t ASTRecordLayoutBuilder::getBaseOffset(const CXXRecordDecl *Base) {
-  ASTRecordLayout::BaseOffsetsMapTy::iterator I = Bases.find(Base);
-  if (I != Bases.end())
-    return I->second;
-  
-  I = VBases.find(Base);
-  if (I != VBases.end())
-      return I->second;
-
-  assert(0 && "missing base");
-  return 0;
-}
-
 void
 ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
   // First, determine the primary base class.
@@ -181,7 +168,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
     if (PrimaryBase.isVirtual()) {
       // We have a virtual primary base, insert it as an indirect primary base.
       IndirectPrimaryBases.insert(Base);
-      
+
       LayoutVirtualBase(Base);
     } else
       LayoutNonVirtualBase(Base);
@@ -221,7 +208,7 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
                                         uint64_t Offset,
                                         const CXXRecordDecl *MostDerivedClass) {
   const CXXRecordDecl *PrimaryBase;
-  
+
   if (MostDerivedClass == RD)
     PrimaryBase = this->PrimaryBase.getBase();
   else {
@@ -238,28 +225,30 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     if (I->isVirtual()) {
-      if (Base == PrimaryBase) {
+      bool IndirectPrimaryBase = IndirectPrimaryBases.count(Base);
+      
+      // We only want to visit this virtual base if it's either a primary base, 
+      // or not an indirect primary base.
+      if (Base == PrimaryBase || !IndirectPrimaryBase) {
         // Only lay things out once.
-        if (VisitedVirtualBases.count(Base))
+        if (!VisitedVirtualBases.insert(Base))
           continue;
-        // Mark it so we don't lay it out twice.
-        VisitedVirtualBases.insert(Base);
-        assert (IndirectPrimaryBases.count(Base) && "IndirectPrimary was wrong");
-        
-        if (!VBases.insert(std::make_pair(Base, Offset)).second) {
-          // FIXME: Enable this assertion.
-          // assert(false && "Added same vbase offset more than once!");
+
+        if (Base == PrimaryBase) {
+          assert(IndirectPrimaryBase && 
+                 "Base is supposed to be an indirect primary base!");
+
+          // We only want to add a vbase offset if this primary base is not the
+          // primary base of the most derived class.
+          if (PrimaryBase != this->PrimaryBase.getBase() ||
+              !this->PrimaryBase.isVirtual()) {
+            if (!VBases.insert(std::make_pair(Base, Offset)).second)
+              assert(false && "Added same vbase offset more than once!");
+          } 
+        } else {
+          // We actually do want to lay out this base.
+          LayoutVirtualBase(Base);
         }
-      } else if (IndirectPrimaryBases.count(Base)) {
-        // Someone else will eventually lay this out.
-        ;
-      } else {
-        // Only lay things out once.
-        if (VisitedVirtualBases.count(Base))
-          continue;
-        // Mark it so we don't lay it out twice.
-        VisitedVirtualBases.insert(Base);
-        LayoutVirtualBase(Base);
       }
     }
     
@@ -506,7 +495,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   NonVirtualSize = Size;
   NonVirtualAlignment = Alignment;
 
-  // If this is a C++ clas, lay out its virtual bases.
+  // If this is a C++ class, lay out its virtual bases.
   if (RD)
     LayoutVirtualBases(RD, 0, RD);
 

@@ -143,9 +143,6 @@ class ASTRecordLayoutBuilder {
   /// given offset.
   void UpdateEmptyClassOffsets(const FieldDecl *FD, uint64_t Offset);
   
-  /// getBaseOffset - Get the offset of a direct base class.
-  uint64_t getBaseOffset(const CXXRecordDecl *Base);
-
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
   void FinishLayout();
