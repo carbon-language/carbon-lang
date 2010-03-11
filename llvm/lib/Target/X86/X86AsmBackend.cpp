@@ -21,14 +21,34 @@ public:
     : TargetAsmBackend(T) {}
 };
 
+class DarwinX86AsmBackend : public X86AsmBackend {
+public:
+  DarwinX86AsmBackend(const Target &T)
+    : X86AsmBackend(T) {}
+
+  virtual bool hasAbsolutizedSet() const { return true; }
+
+  virtual bool hasScatteredSymbols() const { return true; }
+};
+
 }
 
 TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                                const std::string &TT) {
-  return new X86AsmBackend(T);
+  switch (Triple(TT).getOS()) {
+  case Triple::Darwin:
+    return new DarwinX86AsmBackend(T);
+  default:
+    return new X86AsmBackend(T);
+  }
 }
 
 TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                                const std::string &TT) {
-  return new X86AsmBackend(T);
+  switch (Triple(TT).getOS()) {
+  case Triple::Darwin:
+    return new DarwinX86AsmBackend(T);
+  default:
+    return new X86AsmBackend(T);
+  }
 }
