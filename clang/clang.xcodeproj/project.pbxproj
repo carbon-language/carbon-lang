@@ -49,6 +49,7 @@
 		1A81AA19108144F40094E50B /* CGVtable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A81AA18108144F40094E50B /* CGVtable.cpp */; };
 		1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A869A6E0BA2164C008DA07A /* LiteralSupport.h */; };
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
+		1A96785211486FDC00F24372 /* RecordLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A96785111486FDC00F24372 /* RecordLayout.cpp */; };
 		1A97825B1108BA18002B98FC /* CGVTT.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A97825A1108BA18002B98FC /* CGVTT.cpp */; };
 		1A986AB710D0746D00A8EA9E /* CGDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A986AB610D0746D00A8EA9E /* CGDeclCXX.cpp */; };
 		1AA1D91810125DE30078DEBC /* RecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */; };
@@ -420,6 +421,7 @@
 		1A81AA5D108278A20094E50B /* CGVtable.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGVtable.h; path = lib/CodeGen/CGVtable.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
+		1A96785111486FDC00F24372 /* RecordLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RecordLayout.cpp; path = lib/AST/RecordLayout.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A97825A1108BA18002B98FC /* CGVTT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGVTT.cpp; path = lib/CodeGen/CGVTT.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1A986AB610D0746D00A8EA9E /* CGDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGDeclCXX.cpp; path = lib/CodeGen/CGDeclCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = RecordLayoutBuilder.cpp; path = lib/AST/RecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -1438,6 +1440,7 @@
 				3557D1A80EB136B100C59739 /* InheritViz.cpp */,
 				DEDFE5CE0F7206E40035BD10 /* NestedNameSpecifier.cpp */,
 				35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */,
+				1A96785111486FDC00F24372 /* RecordLayout.cpp */,
 				1AA1D91610125DE30078DEBC /* RecordLayoutBuilder.cpp */,
 				1AA1D91710125DE30078DEBC /* RecordLayoutBuilder.h */,
 				DE3452400AEF1A2D00DBC861 /* Stmt.cpp */,
@@ -1993,6 +1996,7 @@
 				1A621C4411111D61009E6834 /* CIndexInclusionStack.cpp in Sources */,
 				1A621C4511111D61009E6834 /* CIndexUSRs.cpp in Sources */,
 				1A621C4611111D61009E6834 /* CXCursor.cpp in Sources */,
+				1A96785211486FDC00F24372 /* RecordLayout.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
