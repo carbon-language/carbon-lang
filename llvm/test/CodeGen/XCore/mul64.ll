@@ -37,3 +37,16 @@ entry:
 ; CHECK-NEXT: mul r0, r0, r3
 ; CHECK-NEXT: lmul r0, r1, r1, r2, r11, r0
 ; CHECK-NEXT: mov r0, r4
+
+define i64 @mul64_2(i64 %a, i32 %b) {
+entry:
+	%0 = zext i32 %b to i64
+	%1 = mul i64 %a, %0
+	ret i64 %1
+}
+; CHECK: mul64_2:
+; CHECK: ldc r3, 0
+; CHECK-NEXT: lmul r3, r0, r0, r2, r3, r3
+; CHECK-NEXT: mul r1, r1, r2
+; CHECK-NEXT: add r1, r3, r1
+; CHECK-NEXT: retsp 0

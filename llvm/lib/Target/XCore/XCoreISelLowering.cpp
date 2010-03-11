@@ -1345,6 +1345,33 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     }
   }
   break;
+  case XCoreISD::LMUL: {
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    SDValue N2 = N->getOperand(2);
+    SDValue N3 = N->getOperand(3);
+    ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+    EVT VT = N0.getValueType();
+    // Canonicalize multiplicative constant to RHS. If both multiplicative
+    // operands are constant canonicalize smallest to RHS.
+    if ((N0C && !N1C) ||
+        (N0C && N1C && N0C->getZExtValue() < N1C->getZExtValue()))
+      return DAG.getNode(XCoreISD::LMUL, dl, DAG.getVTList(VT, VT), N1, N0, N2, N3);
+
+    // lmul(x, 0, a, b)
+    if (N1C && N1C->isNullValue()) {
+      // If the high result is unused fold to add(a, b)
+      if (N->hasNUsesOfValue(0, 0)) {
+        SDValue Lo = DAG.getNode(ISD::ADD, dl, VT, N2, N3);
+        SDValue Ops [] = { Lo, Lo };
+        return DAG.getMergeValues(Ops, 2, dl);
+      }
+      // Otherwise fold to ladd(a, b, 0)
+      return DAG.getNode(XCoreISD::LADD, dl, DAG.getVTList(VT, VT), N2, N3, N1);
+    }
+  }
+  break;
   case ISD::ADD: {
     // Fold 32 bit expressions such as add(add(mul(x,y),a),b) ->
     // lmul(x, y, a, b). The high result of lmul will be ignored.
