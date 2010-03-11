@@ -221,14 +221,16 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
                                            const CXXRecordDecl *RD,
                                            const CXXRecordDecl *PB,
                                            uint64_t Offset) {
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-         e = RD->bases_end(); i != e; ++i) {
-    assert(!i->getType()->isDependentType() &&
+  
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+         E = RD->bases_end(); I != E; ++I) {
+    assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
+    
     const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    uint64_t BaseOffset = Offset;
-    if (i->isVirtual()) {
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    if (I->isVirtual()) {
       if (Base == PB) {
         // Only lay things out once.
         if (VisitedVirtualBases.count(Base))
@@ -251,22 +253,33 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
         // Mark it so we don't lay it out twice.
         VisitedVirtualBases.insert(Base);
         LayoutVirtualBase(Base);
-        BaseOffset = VBases[Base];
-      }
-    } else {
-      if (RD == Class)
-        BaseOffset = getBaseOffset(Base);
-      else {
-        const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
-        BaseOffset = Offset + Layout.getBaseClassOffset(Base);
       }
     }
     
-    if (Base->getNumVBases()) {
-      const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Base);
-      const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().getBase();
-      LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset);
+    if (!Base->getNumVBases()) {
+      // This base isn't interesting since it doesn't have any virtual bases.
+      continue;
     }
+
+    // Compute the offset of this base.
+    uint64_t BaseOffset;
+
+    if (I->isVirtual()) {
+      // We want the vbase offset from the class we're currently laying out.
+      assert(VBases.count(Base) && "Did not find virtual base!");
+      BaseOffset = VBases[Base];
+    } else if (RD == Class) {
+      // We want the base offset from the class we're currently laying out.
+      assert(Bases.count(Base) && "Did not find base!");
+      BaseOffset = Bases[Base];
+    } else {
+      const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
+      BaseOffset = Offset + Layout.getBaseClassOffset(Base);
+    }
+    
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Base);
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().getBase();
+    LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset);
   }
 }
 
