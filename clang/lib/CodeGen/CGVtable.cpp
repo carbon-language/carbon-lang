@@ -3435,7 +3435,7 @@ CGVtableInfo::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
     }
     
     VtableBuilder Builder(*this, RD, Offset, 
-                          /*MostDerivedClassIsVirtual=*/false,
+                          /*MostDerivedClassIsVirtual=*/IsVirtual,
                           LayoutClass);
 
     if (CGM.getLangOptions().DumpVtableLayouts)
