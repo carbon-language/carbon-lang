@@ -503,8 +503,11 @@ void Driver::BuildUniversalActions(const ArgList &Args,
         << types::getTypeName(Act->getType());
 
     ActionList Inputs;
-    for (unsigned i = 0, e = Archs.size(); i != e; ++i)
+    for (unsigned i = 0, e = Archs.size(); i != e; ++i) {
       Inputs.push_back(new BindArchAction(Act, Archs[i]));
+      if (i != 0)
+        Inputs.back()->setOwnsInputs(false);
+    }
 
     // Lipo if necessary, we do it this way because we need to set the arch flag
     // so that -Xarch_ gets overwritten.
