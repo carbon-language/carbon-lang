@@ -87,7 +87,7 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   return CI;
 }
 
-/// EmitStrNCpy - Emit a call to the strcpy function to the builder, for the
+/// EmitStrNCpy - Emit a call to the strncpy function to the builder, for the
 /// specified pointer arguments.
 Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
                          IRBuilder<> &B, const TargetData *TD) {
