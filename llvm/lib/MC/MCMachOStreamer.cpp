@@ -59,8 +59,9 @@ private:
   }
 
 public:
-  MCMachOStreamer(MCContext &Context, raw_ostream &_OS, MCCodeEmitter *_Emitter)
-    : MCStreamer(Context), Assembler(Context, _OS), Emitter(_Emitter),
+  MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
+                  raw_ostream &_OS, MCCodeEmitter *_Emitter)
+    : MCStreamer(Context), Assembler(Context, TAB, _OS), Emitter(_Emitter),
       CurSectionData(0) {}
   ~MCMachOStreamer() {}
 
@@ -398,7 +399,7 @@ void MCMachOStreamer::Finish() {
   Assembler.Finish();
 }
 
-MCStreamer *llvm::createMachOStreamer(MCContext &Context, raw_ostream &OS,
-                                      MCCodeEmitter *CE) {
-  return new MCMachOStreamer(Context, OS, CE);
+MCStreamer *llvm::createMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
+                                      raw_ostream &OS, MCCodeEmitter *CE) {
+  return new MCMachOStreamer(Context, TAB, OS, CE);
 }

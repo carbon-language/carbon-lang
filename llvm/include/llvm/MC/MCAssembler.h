@@ -28,6 +28,7 @@ class MCFragment;
 class MCSection;
 class MCSectionData;
 class MCSymbol;
+class TargetAsmBackend;
 
 /// MCAsmFixup - Represent a fixed size region of bytes inside some fragment
 /// which needs to be rewritten. This region will either be rewritten by the
@@ -582,6 +583,8 @@ private:
 
   MCContext &Context;
 
+  TargetAsmBackend &Backend;
+
   raw_ostream &OS;
 
   iplist<MCSectionData> Sections;
@@ -617,7 +620,7 @@ public:
   // concrete and require clients to pass in a target like object. The other
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
-  MCAssembler(MCContext &_Context, raw_ostream &OS);
+  MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend, raw_ostream &OS);
   ~MCAssembler();
 
   MCContext &getContext() const { return Context; }

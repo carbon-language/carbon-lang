@@ -94,8 +94,8 @@ static cl::opt<bool> EnableSplitGEPGVN("split-gep-gvn", cl::Hidden,
     cl::desc("Split GEPs and run no-load GVN"));
 
 LLVMTargetMachine::LLVMTargetMachine(const Target &T,
-                                     const std::string &TargetTriple)
-  : TargetMachine(T) {
+                                     const std::string &Triple)
+  : TargetMachine(T), TargetTriple(Triple) {
   AsmInfo = T.createAsmInfo(TargetTriple);
 }
 
@@ -143,10 +143,11 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
     MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this, *Context);
-    if (MCE == 0)
+    TargetAsmBackend *TAB = getTarget().createAsmBackend(TargetTriple);
+    if (MCE == 0 || TAB == 0)
       return true;
     
-    AsmStreamer.reset(createMachOStreamer(*Context, Out, MCE));
+    AsmStreamer.reset(createMachOStreamer(*Context, *TAB, Out, MCE));
     
     // Any output to the asmprinter's "O" stream is bad and needs to be fixed,
     // force it to come out stderr.

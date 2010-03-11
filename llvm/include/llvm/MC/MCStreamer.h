@@ -27,6 +27,7 @@ namespace llvm {
   class MCSection;
   class MCSymbol;
   class StringRef;
+class TargetAsmBackend;
   class Twine;
   class raw_ostream;
   class formatted_raw_ostream;
@@ -304,18 +305,10 @@ namespace llvm {
                                 MCCodeEmitter *CE = 0,
                                 bool ShowInst = false);
 
-  // FIXME: These two may end up getting rolled into a single
-  // createObjectStreamer interface, which implements the assembler backend, and
-  // is parameterized on an output object file writer.
-
   /// createMachOStream - Create a machine code streamer which will generative
   /// Mach-O format object files.
-  MCStreamer *createMachOStreamer(MCContext &Ctx, raw_ostream &OS,
-                                  MCCodeEmitter *CE);
-
-  /// createELFStreamer - Create a machine code streamer which will generative
-  /// ELF format object files.
-  MCStreamer *createELFStreamer(MCContext &Ctx, raw_ostream &OS);
+  MCStreamer *createMachOStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
+                                  raw_ostream &OS, MCCodeEmitter *CE);
 
 } // end namespace llvm
 

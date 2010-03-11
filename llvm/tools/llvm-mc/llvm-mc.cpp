@@ -27,6 +27,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -259,6 +260,7 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCInstPrinter> IP;
   OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
+  OwningPtr<TargetAsmBackend> TAB;
 
   const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
   assert(MAI && "Unable to create target asm info!");
@@ -274,7 +276,8 @@ static int AssembleInput(const char *ProgName) {
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
-    Str.reset(createMachOStreamer(Ctx, *Out, CE.get()));
+    TAB.reset(TheTarget->createAsmBackend(TripleName));
+    Str.reset(createMachOStreamer(Ctx, *TAB, *Out, CE.get()));
   }
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get(), *MAI);

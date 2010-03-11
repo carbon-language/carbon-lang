@@ -224,6 +224,8 @@ public:
 /// implemented with the LLVM target-independent code generator.
 ///
 class LLVMTargetMachine : public TargetMachine {
+  std::string TargetTriple;
+
 protected: // Can only create subclasses.
   LLVMTargetMachine(const Target &T, const std::string &TargetTriple);
   
