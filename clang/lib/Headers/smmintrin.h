@@ -199,6 +199,19 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
 /* Extract a float from X at index N into the first index of the return.  */
 #define _MM_PICK_OUT_PS(X, N) _mm_insert_ps (_mm_setzero_ps(), (X),   \
                                              _MM_MK_INSERTPS_NDX((N), 0, 0x0e))
+                                             
+/* Insert int into packed integer array at index.  */
+#define _mm_insert_epi8(X, I, N) (__extension__ ({ __v16qi __a = (__v16qi)X; \
+                                                   __a[N] = I;               \
+                                                   __a;}))
+#define _mm_insert_epi32(X, I, N) (__extension__ ({ __v4si __a = (__v4si)X; \
+                                                    __a[N] = I;             \
+                                                    __a;}))
+#ifdef __x86_64__
+#define _mm_insert_epi64(X, I, N) (__extension__ ({ __v2di __a = (__v2di)X; \
+                                                    __a[N] = I;             \
+                                                    __a;}))
+#endif /* __x86_64__ */
 
 #endif /* __SSE4_1__ */
 
