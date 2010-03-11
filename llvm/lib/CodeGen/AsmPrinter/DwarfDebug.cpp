@@ -52,9 +52,9 @@ class CompileUnit {
 
   /// Die - Compile unit debug information entry.
   ///
-  DIE *CUDie;
+  OwningPtr<DIE> CUDie;
 
-  /// IndexTyDie - An anonymous type for index type.
+  /// IndexTyDie - An anonymous type for index type.  Owned by CUDie.
   DIE *IndexTyDie;
 
   /// GVToDieMap - Tracks the mapping of unit level debug informaton
@@ -78,11 +78,10 @@ class CompileUnit {
 public:
   CompileUnit(unsigned I, DIE *D)
     : ID(I), CUDie(D), IndexTyDie(0) {}
-  ~CompileUnit() { delete CUDie; delete IndexTyDie; }
 
   // Accessors.
   unsigned getID()                  const { return ID; }
-  DIE* getCUDie()                   const { return CUDie; }
+  DIE* getCUDie()                   const { return CUDie.get(); }
   const StringMap<DIE*> &getGlobals()     const { return Globals; }
   const StringMap<DIE*> &getGlobalTypes() const { return GlobalTypes; }
 
@@ -1622,8 +1621,12 @@ DIE *DwarfDebug::getOrCreateNameSpace(DINameSpace NS) {
   return NDie;
 }
 
-CompileUnit *DwarfDebug::constructCompileUnit(MDNode *N) {
+void DwarfDebug::constructCompileUnit(MDNode *N) {
   DICompileUnit DIUnit(N);
+  // Use first compile unit marked as isMain as the compile unit for this
+  // module.
+  if (ModuleCU || !DIUnit.isMain())
+    return;
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
   unsigned ID = GetOrCreateSourceID(Dir, FN);
@@ -1653,14 +1656,9 @@ CompileUnit *DwarfDebug::constructCompileUnit(MDNode *N) {
     addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
             dwarf::DW_FORM_data1, RVer);
 
-  CompileUnit *Unit = new CompileUnit(ID, Die);
-  if (!ModuleCU && DIUnit.isMain()) {
-    // Use first compile unit marked as isMain as the compile unit
-    // for this module.
-    ModuleCU = Unit;
-  }
-
-  return Unit;
+  assert(!ModuleCU &&
+         "ModuleCU assigned since the top of constructCompileUnit");
+  ModuleCU = new CompileUnit(ID, Die);
 }
 
 void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
@@ -1897,6 +1895,9 @@ void DwarfDebug::endModule() {
 
   // Emit inline info.
   emitDebugInlineInfo();
+
+  delete ModuleCU;
+  ModuleCU = NULL;  // Reset for the next Module, if any.
 
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();

@@ -473,7 +473,7 @@ class DwarfDebug : public DwarfPrinter {
   /// as well.
   unsigned GetOrCreateSourceID(StringRef DirName, StringRef FileName);
 
-  CompileUnit *constructCompileUnit(MDNode *N);
+  void constructCompileUnit(MDNode *N);
 
   void constructGlobalVariableDIE(MDNode *N);
 
