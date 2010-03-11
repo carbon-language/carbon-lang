@@ -2091,7 +2091,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // tailcall must happen after callee-saved registers are poped.
     // FIXME: Give it a special register class that contains caller-saved
     // register instead?
-    unsigned TCReg = Is64Bit ? X86::R11 : X86::ECX;
+    unsigned TCReg = Is64Bit ? X86::R11 : X86::EAX;
     Chain = DAG.getCopyToReg(Chain,  dl,
                              DAG.getRegister(TCReg, getPointerTy()),
                              Callee,InFlag);
@@ -2145,7 +2145,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
 
     assert(((Callee.getOpcode() == ISD::Register &&
-               (cast<RegisterSDNode>(Callee)->getReg() == X86::ECX ||
+               (cast<RegisterSDNode>(Callee)->getReg() == X86::EAX ||
                 cast<RegisterSDNode>(Callee)->getReg() == X86::R11)) ||
               Callee.getOpcode() == ISD::TargetExternalSymbol ||
               Callee.getOpcode() == ISD::TargetGlobalAddress) &&
