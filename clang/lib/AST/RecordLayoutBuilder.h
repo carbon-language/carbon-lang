@@ -60,14 +60,11 @@ class ASTRecordLayoutBuilder {
   /// we're laying out.
   ASTRecordLayout::PrimaryBaseInfo PrimaryBase;
 
-  typedef llvm::SmallVector<std::pair<const CXXRecordDecl *, 
-                                      uint64_t>, 4> BaseOffsetsTy;
+  /// Bases - base classes and their offsets in the record.
+  ASTRecordLayout::BaseOffsetsMapTy Bases;
   
-  /// Bases - base classes and their offsets from the record.
-  BaseOffsetsTy Bases;
-  
-  // VBases - virtual base classes and their offsets from the record.
-  BaseOffsetsTy VBases;
+  // VBases - virtual base classes and their offsets in the record.
+  ASTRecordLayout::BaseOffsetsMapTy VBases;
 
   /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
   /// primary base classes for some other direct or indirect base class.

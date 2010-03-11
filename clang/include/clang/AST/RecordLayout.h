@@ -112,13 +112,14 @@ private:
     /// PrimaryBase - The primary base info for this record.
     PrimaryBaseInfo PrimaryBase;
     
-    /// BaseOffsets - Contains a map from base classes to their offset.
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
-    llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsets;
+    typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t> BaseOffsetsMapTy;
+    
+    /// BaseOffsets - Contains a map from base classes to their offset.
+    BaseOffsetsMapTy BaseOffsets;
 
     /// VBaseOffsets - Contains a map from vbase classes to their offset.
-    /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
-    llvm::DenseMap<const CXXRecordDecl *, uint64_t> VBaseOffsets;
+    BaseOffsetsMapTy VBaseOffsets;
   };
 
   /// CXXInfo - If the record layout is for a C++ record, this will have
@@ -133,15 +134,14 @@ private:
                   unsigned fieldcount);
 
   // Constructor for C++ records.
+  typedef CXXRecordLayoutInfo::BaseOffsetsMapTy BaseOffsetsMapTy;
   ASTRecordLayout(ASTContext &Ctx,
                   uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   const PrimaryBaseInfo &PrimaryBase,
-                  const std::pair<const CXXRecordDecl *, uint64_t> *bases,
-                  unsigned numbases,
-                  const std::pair<const CXXRecordDecl *, uint64_t> *vbases,
-                  unsigned numvbases);
+                  const BaseOffsetsMapTy& BaseOffsets,
+                  const BaseOffsetsMapTy& VBaseOffsets);
 
   ~ASTRecordLayout() {}
 

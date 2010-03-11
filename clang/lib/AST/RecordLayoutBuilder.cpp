@@ -159,14 +159,14 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
 }
 
 uint64_t ASTRecordLayoutBuilder::getBaseOffset(const CXXRecordDecl *Base) {
-  for (size_t i = 0; i < Bases.size(); ++i) {
-    if (Bases[i].first == Base)
-      return Bases[i].second;
-  }
-  for (size_t i = 0; i < VBases.size(); ++i) {
-    if (VBases[i].first == Base)
-      return VBases[i].second;
-  }
+  ASTRecordLayout::BaseOffsetsMapTy::iterator I = Bases.find(Base);
+  if (I != Bases.end())
+    return I->second;
+  
+  I = VBases.find(Base);
+  if (I != VBases.end())
+      return I->second;
+
   assert(0 && "missing base");
   return 0;
 }
@@ -212,13 +212,15 @@ void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
   uint64_t Offset = LayoutBase(RD);
   
   // Add its base class offset.
-  Bases.push_back(std::make_pair(RD, Offset));
+  if (!Bases.insert(std::make_pair(RD, Offset)).second)
+    assert(false && "Added same base offset more than once!");
 }
 
-void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
-                                                const CXXRecordDecl *RD,
-                                                const CXXRecordDecl *PB,
-                                                uint64_t Offset) {
+void 
+ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
+                                           const CXXRecordDecl *RD,
+                                           const CXXRecordDecl *PB,
+                                           uint64_t Offset) {
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
     assert(!i->getType()->isDependentType() &&
@@ -234,7 +236,11 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
         // Mark it so we don't lay it out twice.
         VisitedVirtualBases.insert(Base);
         assert (IndirectPrimaryBases.count(Base) && "IndirectPrimary was wrong");
-        VBases.push_back(std::make_pair(Base, Offset));
+        
+        if (!VBases.insert(std::make_pair(Base, Offset)).second) {
+          // FIXME: Enable this assertion.
+          // assert(false && "Added same vbase offset more than once!");
+        }
       } else if (IndirectPrimaryBases.count(Base)) {
         // Someone else will eventually lay this out.
         ;
@@ -245,7 +251,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
         // Mark it so we don't lay it out twice.
         VisitedVirtualBases.insert(Base);
         LayoutVirtualBase(Base);
-        BaseOffset = VBases.back().second;
+        BaseOffset = VBases[Base];
       }
     } else {
       if (RD == Class)
@@ -269,7 +275,8 @@ void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
   uint64_t Offset = LayoutBase(RD);
 
   // Add its base class offset.
-  VBases.push_back(std::make_pair(RD, Offset));
+  if (!VBases.insert(std::make_pair(RD, Offset)).second)
+    assert(false && "Added same vbase offset more than once!");
 }
 
 uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
@@ -700,10 +707,7 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                                    NonVirtualSize,
                                    Builder.NonVirtualAlignment,
                                    Builder.PrimaryBase,
-                                   Builder.Bases.data(),
-                                   Builder.Bases.size(),
-                                   Builder.VBases.data(),
-                                   Builder.VBases.size());
+                                   Builder.Bases, Builder.VBases);
 }
 
 const ASTRecordLayout *
