@@ -142,10 +142,10 @@ void MCTargetExpr::Anchor() {}
 
 /* *** */
 
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res) const {
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res, MCAsmLayout *Layout) const {
   MCValue Value;
   
-  if (!EvaluateAsRelocatable(Value) || !Value.isAbsolute())
+  if (!EvaluateAsRelocatable(Value, Layout) || !Value.isAbsolute())
     return false;
 
   Res = Value.getConstant();
@@ -174,10 +174,10 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS, const MCSymbol *RHS_A,
   return true;
 }
 
-bool MCExpr::EvaluateAsRelocatable(MCValue &Res) const {
+bool MCExpr::EvaluateAsRelocatable(MCValue &Res, MCAsmLayout *Layout) const {
   switch (getKind()) {
   case Target:
-    return cast<MCTargetExpr>(this)->EvaluateAsRelocatableImpl(Res);
+    return cast<MCTargetExpr>(this)->EvaluateAsRelocatableImpl(Res, Layout);
       
   case Constant:
     Res = MCValue::get(cast<MCConstantExpr>(this)->getValue());
@@ -188,7 +188,7 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res) const {
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable())
-      return Sym.getValue()->EvaluateAsRelocatable(Res);
+      return Sym.getValue()->EvaluateAsRelocatable(Res, Layout);
 
     Res = MCValue::get(&Sym, 0, 0);
     return true;
@@ -198,7 +198,7 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res) const {
     const MCUnaryExpr *AUE = cast<MCUnaryExpr>(this);
     MCValue Value;
 
-    if (!AUE->getSubExpr()->EvaluateAsRelocatable(Value))
+    if (!AUE->getSubExpr()->EvaluateAsRelocatable(Value, Layout))
       return false;
 
     switch (AUE->getOpcode()) {
@@ -231,8 +231,8 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res) const {
     const MCBinaryExpr *ABE = cast<MCBinaryExpr>(this);
     MCValue LHSValue, RHSValue;
     
-    if (!ABE->getLHS()->EvaluateAsRelocatable(LHSValue) ||
-        !ABE->getRHS()->EvaluateAsRelocatable(RHSValue))
+    if (!ABE->getLHS()->EvaluateAsRelocatable(LHSValue, Layout) ||
+        !ABE->getRHS()->EvaluateAsRelocatable(RHSValue, Layout))
       return false;
 
     // We only support a few operations on non-constant expressions, handle

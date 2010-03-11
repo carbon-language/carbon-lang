@@ -625,6 +625,8 @@ public:
 
   MCContext &getContext() const { return Context; }
 
+  TargetAsmBackend &getBackend() const { return Backend; }
+
   /// Finish - Do final processing and write the object to the output stream.
   void Finish();
 

@@ -15,6 +15,7 @@
 
 namespace llvm {
 class MCAsmInfo;
+class MCAsmLayout;
 class MCContext;
 class MCSymbol;
 class MCValue;
@@ -62,15 +63,19 @@ public:
   /// EvaluateAsAbsolute - Try to evaluate the expression to an absolute value.
   ///
   /// @param Res - The absolute value, if evaluation succeeds.
+  /// @param Layout - The assembler layout object to use for evaluating symbol
+  /// values. If not given, then only non-symbolic expressions will be
+  /// evaluated.
   /// @result - True on success.
-  bool EvaluateAsAbsolute(int64_t &Res) const;
+  bool EvaluateAsAbsolute(int64_t &Res, MCAsmLayout *Layout = 0) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).
   ///
   /// @param Res - The relocatable value, if evaluation succeeds.
+  /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
-  bool EvaluateAsRelocatable(MCValue &Res) const;
+  bool EvaluateAsRelocatable(MCValue &Res, MCAsmLayout *Layout = 0) const;
 
   /// @}
 
@@ -348,7 +353,8 @@ protected:
 public:
   
   virtual void PrintImpl(raw_ostream &OS) const = 0;
-  virtual bool EvaluateAsRelocatableImpl(MCValue &Res) const = 0;
+  virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
+                                         MCAsmLayout *Layout) const = 0;
 
   
   static bool classof(const MCExpr *E) {

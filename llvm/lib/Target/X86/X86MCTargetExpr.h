@@ -41,7 +41,7 @@ public:
                                  MCContext &Ctx);
   
   void PrintImpl(raw_ostream &OS) const;
-  bool EvaluateAsRelocatableImpl(MCValue &Res) const;
+  bool EvaluateAsRelocatableImpl(MCValue &Res, MCAsmLayout *Layout) const;
 };
   
 } // end namespace llvm
