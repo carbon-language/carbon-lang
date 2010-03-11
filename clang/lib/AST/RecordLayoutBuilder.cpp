@@ -63,32 +63,29 @@ void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
 
 void
 ASTRecordLayoutBuilder::SelectPrimaryVBase(const CXXRecordDecl *RD) {
-
-  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-         e = RD->bases_end(); i != e; ++i) {
-    assert(!i->getType()->isDependentType() &&
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
+    
     const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-    if (!i->isVirtual()) {
-      SelectPrimaryVBase(Base);
-      if (PrimaryBase.getBase())
-        return;
-      continue;
-    }
-    if (IsNearlyEmpty(Base)) {
-      // Is this the first nearly empty primary virtual base?
-      if (!FirstNearlyEmptyVBase)
-        FirstNearlyEmptyVBase = Base;
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
+    // Check if this is a nearly empty virtual base.
+    if (I->isVirtual() && IsNearlyEmpty(Base)) {
+      // If it's not an indirect primary base, then we've found our primary
+      // base.
       if (!IndirectPrimaryBases.count(Base)) {
         PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(Base,
                                                        /*IsVirtual=*/true);
         return;
       }
+      
+      // Is this the first nearly empty virtual base?
+      if (!FirstNearlyEmptyVBase)
+        FirstNearlyEmptyVBase = Base;
     }
     
-    assert(i->isVirtual());
     SelectPrimaryVBase(Base);
     if (PrimaryBase.getBase())
       return;
@@ -142,8 +139,8 @@ void ASTRecordLayoutBuilder::DeterminePrimaryBase(const CXXRecordDecl *RD) {
   // Otherwise, it is the first nearly empty virtual base that is not an
   // indirect primary virtual base class, if one exists.
   if (FirstNearlyEmptyVBase) {
-    PrimaryBase = 
-      ASTRecordLayout::PrimaryBaseInfo(FirstNearlyEmptyVBase, /*IsVirtual=*/true);
+    PrimaryBase = ASTRecordLayout::PrimaryBaseInfo(FirstNearlyEmptyVBase, 
+                                                   /*IsVirtual=*/true);
     return;
   }
   
