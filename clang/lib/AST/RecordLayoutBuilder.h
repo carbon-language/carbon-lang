@@ -114,8 +114,7 @@ class ASTRecordLayoutBuilder {
   /// LayoutVirtualBases - Lays out all the virtual bases.
   void LayoutVirtualBases(const CXXRecordDecl *Class, const CXXRecordDecl *RD,
                           const CXXRecordDecl *PB, uint64_t Offset, 
-                          llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
-                     llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
+                          llvm::SmallSet<const CXXRecordDecl*, 32> &mark);
 
   /// LayoutVirtualBase - Lays out a single virtual base.
   void LayoutVirtualBase(const CXXRecordDecl *RD);
