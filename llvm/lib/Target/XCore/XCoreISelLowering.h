@@ -80,6 +80,8 @@ namespace llvm {
 
     explicit XCoreTargetLowering(XCoreTargetMachine &TM);
 
+    virtual unsigned getJumpTableEncoding() const;
+
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
 

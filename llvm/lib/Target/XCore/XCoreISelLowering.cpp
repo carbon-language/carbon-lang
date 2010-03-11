@@ -324,6 +324,10 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, Res);
 }
 
+unsigned XCoreTargetLowering::getJumpTableEncoding() const {
+  return MachineJumpTableInfo::EK_Inline;
+}
+
 SDValue XCoreTargetLowering::
 LowerBR_JT(SDValue Op, SelectionDAG &DAG)
 {
