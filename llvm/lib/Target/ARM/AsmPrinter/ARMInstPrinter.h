@@ -68,6 +68,7 @@ public:
   void printT2AddrModeImm8Operand(const MCInst *MI, unsigned OpNum) {}
   void printT2AddrModeImm8s4Operand(const MCInst *MI, unsigned OpNum) {}
   void printT2AddrModeImm8OffsetOperand(const MCInst *MI, unsigned OpNum) {}
+  void printT2AddrModeImm8s4OffsetOperand(const MCInst *MI, unsigned OpNum) {}
   void printT2AddrModeSoRegOperand(const MCInst *MI, unsigned OpNum) {}
   
   void printCPSOptionOperand(const MCInst *MI, unsigned OpNum) {}

@@ -120,6 +120,7 @@ namespace {
     void printT2AddrModeImm8Operand(const MachineInstr *MI, int OpNum);
     void printT2AddrModeImm8s4Operand(const MachineInstr *MI, int OpNum);
     void printT2AddrModeImm8OffsetOperand(const MachineInstr *MI, int OpNum);
+    void printT2AddrModeImm8s4OffsetOperand(const MachineInstr *MI, int OpNum) {}
     void printT2AddrModeSoRegOperand(const MachineInstr *MI, int OpNum);
 
     void printCPSOptionOperand(const MachineInstr *MI, int OpNum) {}

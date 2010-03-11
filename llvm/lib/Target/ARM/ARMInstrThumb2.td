@@ -150,6 +150,10 @@ def t2addrmode_imm8s4 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
+def t2am_imm8s4_offset : Operand<i32> {
+  let PrintMethod = "printT2AddrModeImm8s4OffsetOperand";
+}
+
 // t2addrmode_so_reg  := reg + (reg << imm2)
 def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
@@ -903,7 +907,7 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 def t2LDRDi8  : T2Ii8s4<1, 0, 1, (outs GPR:$dst1, GPR:$dst2),
                         (ins t2addrmode_imm8s4:$addr),
                         IIC_iLoadi, "ldrd", "\t$dst1, $addr", []>;
-def t2LDRDpci : T2Ii8s4<?, ?, 1, (outs GPR:$dst1, GPR:$dst2),
+def t2LDRDpci : T2Ii8s4<1, 0, 1, (outs GPR:$dst1, GPR:$dst2),
                         (ins i32imm:$addr), IIC_iLoadi,
                        "ldrd", "\t$dst1, $addr", []> {
   let Inst{19-16} = 0b1111; // Rn
@@ -1105,7 +1109,24 @@ def t2STRT   : T2IstT<0b10, "strt">;
 def t2STRBT  : T2IstT<0b00, "strbt">;
 def t2STRHT  : T2IstT<0b01, "strht">;
 
-// FIXME: ldrd / strd pre / post variants
+// ldrd / strd pre / post variants
+// For disassembly only.
+
+def t2LDRD_PRE  : T2Ii8s4<1, 1, 1, (outs GPR:$dst1, GPR:$dst2),
+                 (ins GPR:$base, t2am_imm8s4_offset:$imm), NoItinerary,
+                 "ldrd", "\t$dst1, $dst2, [$base, $imm]!", []>;
+
+def t2LDRD_POST : T2Ii8s4<0, 1, 1, (outs GPR:$dst1, GPR:$dst2),
+                 (ins GPR:$base, t2am_imm8s4_offset:$imm), NoItinerary,
+                 "ldrd", "\t$dst1, $dst2, [$base], $imm", []>;
+
+def t2STRD_PRE  : T2Ii8s4<1, 1, 0, (outs),
+                 (ins GPR:$src1, GPR:$src2, GPR:$base, t2am_imm8s4_offset:$imm),
+                 NoItinerary, "strd", "\t$src1, $src2, [$base, $imm]!", []>;
+
+def t2STRD_POST : T2Ii8s4<0, 1, 0, (outs),
+                 (ins GPR:$src1, GPR:$src2, GPR:$base, t2am_imm8s4_offset:$imm),
+                 NoItinerary, "strd", "\t$src1, $src2, [$base], $imm", []>;
 
 // T2Ipl (Preload Data/Instruction) signals the memory system of possible future
 // data/instruction access.  These are for disassembly only.
