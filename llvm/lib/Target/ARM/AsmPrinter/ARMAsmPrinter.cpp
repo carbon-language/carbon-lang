@@ -1137,15 +1137,16 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$stub:
         OutStreamer.EmitLabel(Stubs[i].first);
         //   .indirect_symbol _foo
-        MCSymbol *MCSym = Stubs[i].second.getPointer();
-        OutStreamer.EmitSymbolAttribute(MCSym, MCSA_IndirectSymbol);
+        MachineModuleInfoImpl::StubValueTy &MCSym = Stubs[i].second;
+        OutStreamer.EmitSymbolAttribute(MCSym.getPointer(),MCSA_IndirectSymbol);
 
-        if (MCSym->isUndefined())
+        if (MCSym.getInt())
           // External to current translation unit.
           OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
         else
           // Internal to current translation unit.
-          OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym, OutContext),
+          OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
+                                                        OutContext),
                                 4/*size*/, 0/*addrspace*/);
       }
 
