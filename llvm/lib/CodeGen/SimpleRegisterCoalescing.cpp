@@ -1260,10 +1260,10 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
   RealDstReg = tri_->getMatchingSuperReg(DstReg, SubIdx, RC);
   assert(RealDstReg && "Invalid extract_subreg instruction!");
 
+  LiveInterval &RHS = li_->getInterval(SrcReg);
   // For this type of EXTRACT_SUBREG, conservatively
   // check if the live interval of the source register interfere with the
   // actual super physical register we are trying to coalesce with.
-  LiveInterval &RHS = li_->getInterval(SrcReg);
   if (li_->hasInterval(RealDstReg) &&
       RHS.overlaps(li_->getInterval(RealDstReg))) {
     DEBUG({
@@ -1273,7 +1273,11 @@ SimpleRegisterCoalescing::CanJoinExtractSubRegToPhysReg(unsigned DstReg,
     return false; // Not coalescable
   }
   for (const unsigned* SR = tri_->getSubRegisters(RealDstReg); *SR; ++SR)
-    if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
+    // Do not check DstReg or its sub-register. JoinIntervals() will take care
+    // of that.
+    if (*SR != DstReg &&
+        !tri_->isSubRegister(DstReg, *SR) &&
+        li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
       DEBUG({
           dbgs() << "Interfere with sub-register ";
           li_->getInterval(*SR).print(dbgs(), tri_);
@@ -1294,9 +1298,9 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
   RealSrcReg = tri_->getMatchingSuperReg(SrcReg, SubIdx, RC);
   assert(RealSrcReg && "Invalid extract_subreg instruction!");
 
-  LiveInterval &RHS = li_->getInterval(DstReg);
+  LiveInterval &LHS = li_->getInterval(DstReg);
   if (li_->hasInterval(RealSrcReg) &&
-      RHS.overlaps(li_->getInterval(RealSrcReg))) {
+      LHS.overlaps(li_->getInterval(RealSrcReg))) {
     DEBUG({
         dbgs() << "Interfere with register ";
         li_->getInterval(RealSrcReg).print(dbgs(), tri_);
@@ -1304,7 +1308,11 @@ SimpleRegisterCoalescing::CanJoinInsertSubRegToPhysReg(unsigned DstReg,
     return false; // Not coalescable
   }
   for (const unsigned* SR = tri_->getSubRegisters(RealSrcReg); *SR; ++SR)
-    if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
+    // Do not check SrcReg or its sub-register. JoinIntervals() will take care
+    // of that.
+    if (*SR != SrcReg &&
+        !tri_->isSubRegister(SrcReg, *SR) &&
+        li_->hasInterval(*SR) && LHS.overlaps(li_->getInterval(*SR))) {
       DEBUG({
           dbgs() << "Interfere with sub-register ";
           li_->getInterval(*SR).print(dbgs(), tri_);
@@ -1476,6 +1484,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         return false; // Not coalescable.
       }
 
+      // FIXME: The following checks are somewhat conservative. Perhaps a better
+      // way to implement this is to treat this as coalescing a vr with the
+      // super physical register.
       if (isExtSubReg) {
         if (!CanJoinExtractSubRegToPhysReg(DstReg, SrcReg, SubIdx, RealDstReg))
           return false; // Not coalescable
@@ -2205,7 +2216,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
         li_->intervalIsInOneMBB(RHS) &&
         li_->getApproximateInstructionCount(RHS) <= 10) {
       // Perform a more exhaustive check for some common cases.
-      if (li_->conflictsWithPhysRegRef(RHS, LHS.reg, true, JoinedCopies))
+      if (li_->conflictsWithSubPhysRegRef(RHS, LHS.reg, true, JoinedCopies))
         return false;
     } else {
       for (const unsigned* SR = tri_->getSubRegisters(LHS.reg); *SR; ++SR)
@@ -2222,7 +2233,7 @@ SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS,
     if (LHS.containsOneValue() &&
         li_->getApproximateInstructionCount(LHS) <= 10) {
       // Perform a more exhaustive check for some common cases.
-      if (li_->conflictsWithPhysRegRef(LHS, RHS.reg, false, JoinedCopies))
+      if (li_->conflictsWithSubPhysRegRef(LHS, RHS.reg, false, JoinedCopies))
         return false;
     } else {
       for (const unsigned* SR = tri_->getSubRegisters(RHS.reg); *SR; ++SR)

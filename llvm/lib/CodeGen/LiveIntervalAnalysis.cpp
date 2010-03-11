@@ -218,9 +218,9 @@ bool LiveIntervals::conflictsWithPhysReg(const LiveInterval &li,
   return false;
 }
 
-/// conflictsWithPhysRegRef - Similar to conflictsWithPhysRegRef except
-/// it can check use as well.
-bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
+/// conflictsWithSubPhysRegRef - Similar to conflictsWithPhysRegRef except
+/// it checks for sub-register reference and it can check use as well.
+bool LiveIntervals::conflictsWithSubPhysRegRef(LiveInterval &li,
                                             unsigned Reg, bool CheckUse,
                                   SmallPtrSet<MachineInstr*,32> &JoinedCopies) {
   for (LiveInterval::Ranges::const_iterator
