@@ -649,9 +649,9 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
       cast<CXXRecordDecl>(BI->getType()->getAs<RecordType>()->getDecl());
     
     if (BI->isVirtual()) {
-      // virtual base offset index is -ve. The code generator emits dwarf
+      // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
-      BaseOffset = 0 - CGM.getVtableInfo().getVirtualBaseOffsetIndex(RD, Base);
+      BaseOffset = 0 - CGM.getVtableInfo().getVirtualBaseOffsetOffset(RD, Base);
       BFlags = llvm::DIType::FlagVirtual;
     } else
       BaseOffset = RL.getBaseClassOffset(Base);

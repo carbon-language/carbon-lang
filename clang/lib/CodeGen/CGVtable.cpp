@@ -1412,8 +1412,8 @@ VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
           VBaseOffsetOffsets.lookup(Offset.VirtualBase);
       } else {
         Adjustment.VBaseOffsetOffset = 
-          VtableInfo.getVirtualBaseOffsetIndex(Offset.DerivedClass,
-                                               Offset.VirtualBase);
+          VtableInfo.getVirtualBaseOffsetOffset(Offset.DerivedClass,
+                                                Offset.VirtualBase);
       }
 
       // FIXME: Once the assert in getVirtualBaseOffsetIndex is back again,
@@ -2696,7 +2696,7 @@ public:
     CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
     CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
     if (D != MostDerivedClass)
-      return CGM.getVtableInfo().getVirtualBaseOffsetIndex(D, B);
+      return CGM.getVtableInfo().getVirtualBaseOffsetOffset(D, B);
     llvm::DenseMap<const CXXRecordDecl *, Index_t>::iterator i;
     i = VBIndex.find(B);
     if (i != VBIndex.end())
@@ -3444,13 +3444,13 @@ CGVtableInfo::getAdjustments(GlobalDecl GD) {
   return 0;
 }
 
-int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
-                                                const CXXRecordDecl *VBase) {
+int64_t CGVtableInfo::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
+                                                 const CXXRecordDecl *VBase) {
   ClassPairTy ClassPair(RD, VBase);
   
-  VirtualBaseClassIndiciesTy::iterator I = 
-    VirtualBaseClassIndicies.find(ClassPair);
-  if (I != VirtualBaseClassIndicies.end())
+  VirtualBaseClassOffsetOffsetsMapTy::iterator I = 
+    VirtualBaseClassOffsetOffsets.find(ClassPair);
+  if (I != VirtualBaseClassOffsetOffsets.end())
     return I->second;
   
   // FIXME: This seems expensive.  Can we do a partial job to get
@@ -3466,17 +3466,17 @@ int64_t CGVtableInfo::getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
     // Insert all types.
     ClassPairTy ClassPair(RD, I->first);
     
-    VirtualBaseClassIndicies.insert(std::make_pair(ClassPair, I->second));
+    VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
   }
   
-  I = VirtualBaseClassIndicies.find(ClassPair);
+  I = VirtualBaseClassOffsetOffsets.find(ClassPair);
   // FIXME: The assertion below assertion currently fails with the old vtable 
   /// layout code if there is a non-virtual thunk adjustment in a vtable.
   // Once the new layout is in place, this return should be removed.
-  if (I == VirtualBaseClassIndicies.end())
+  if (I == VirtualBaseClassOffsetOffsets.end())
     return 0;
   
-  assert(I != VirtualBaseClassIndicies.end() && "Did not find index!");
+  assert(I != VirtualBaseClassOffsetOffsets.end() && "Did not find index!");
   
   return I->second;
 }

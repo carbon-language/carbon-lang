@@ -149,10 +149,12 @@ private:
   typedef std::pair<const CXXRecordDecl *,
                     const CXXRecordDecl *> ClassPairTy;
 
-  /// VirtualBaseClassIndicies - Contains the index into the vtable where the
-  /// offsets for virtual bases of a class are stored.
-  typedef llvm::DenseMap<ClassPairTy, int64_t> VirtualBaseClassIndiciesTy;
-  VirtualBaseClassIndiciesTy VirtualBaseClassIndicies;
+  /// VirtualBaseClassOffsetOffsets - Contains the vtable offset (relative to 
+  /// the address point) in bytes where the offsets for virtual bases of a class
+  /// are stored.
+  typedef llvm::DenseMap<ClassPairTy, int64_t> 
+    VirtualBaseClassOffsetOffsetsMapTy;
+  VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
   /// Vtables - All the vtables which have been defined.
   llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> Vtables;
@@ -202,13 +204,13 @@ public:
   /// stored.
   uint64_t getMethodVtableIndex(GlobalDecl GD);
 
-  /// getVirtualBaseOffsetIndex - Return the index (relative to the vtable
-  /// address point) where the offset of the virtual base that contains the
-  /// given Base is stored, otherwise, if no virtual base contains the given
+  /// getVirtualBaseOffsetOffset - Return the offset in bytes (relative to the
+  /// vtable address point) where the offset of the virtual base that contains 
+  /// the given base is stored, otherwise, if no virtual base contains the given
   /// class, return 0.  Base must be a virtual base class or an unambigious
   /// base.
-  int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD,
-                                    const CXXRecordDecl *VBase);
+  int64_t getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
+                                     const CXXRecordDecl *VBase);
 
   AdjustmentVectorTy *getAdjustments(GlobalDecl GD);
 
