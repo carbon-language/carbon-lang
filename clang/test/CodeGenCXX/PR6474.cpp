@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm
+// RUN: %clang_cc1 %s -emit-llvm-only
 
 namespace test0 {
 template <typename T> struct X {
