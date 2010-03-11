@@ -1406,9 +1406,16 @@ VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   if (!Offset.isEmpty()) {
     if (Offset.VirtualBase) {
       // Get the virtual base offset offset.
-      Adjustment.VBaseOffsetOffset = 
-        VtableInfo.getVirtualBaseOffsetIndex(Offset.DerivedClass,
-                                             Offset.VirtualBase);
+      if (Offset.DerivedClass == MostDerivedClass) {
+        // We can get the offset offset directly from our map.
+        Adjustment.VBaseOffsetOffset = 
+          VBaseOffsetOffsets.lookup(Offset.VirtualBase);
+      } else {
+        Adjustment.VBaseOffsetOffset = 
+          VtableInfo.getVirtualBaseOffsetIndex(Offset.DerivedClass,
+                                               Offset.VirtualBase);
+      }
+
       // FIXME: Once the assert in getVirtualBaseOffsetIndex is back again,
       // we can get rid of this assert.
       assert(Adjustment.VBaseOffsetOffset != 0 && 
