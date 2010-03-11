@@ -507,6 +507,11 @@ public:
   uint64_t getOffset() const { return Offset; }
   void setOffset(uint64_t Value) { Offset = Value; }
 
+  uint64_t getAddress() const {
+    assert(getFragment() && "Invalid getAddress() on undefined symbol!");
+    return getFragment()->getAddress() + getOffset();
+  }
+
   /// @}
   /// @name Symbol Attributes
   /// @{

@@ -400,7 +400,7 @@ public:
       if (Symbol.isAbsolute()) {
         llvm_unreachable("FIXME: Not yet implemented!");
       } else {
-        Address = Data.getFragment()->getAddress() + Data.getOffset();
+        Address = Data.getAddress();
       }
     } else if (Data.isCommon()) {
       // Common symbols are encoded with the size in the address
@@ -452,7 +452,7 @@ public:
       llvm_report_error("symbol '" + A->getName() +
                         "' can not be undefined in a subtraction expression");
 
-    uint32_t Value = A_SD->getFragment()->getAddress() + A_SD->getOffset();
+    uint32_t Value = A_SD->getAddress();
     uint32_t Value2 = 0;
 
     if (const MCSymbol *B = Target.getSymB()) {
@@ -468,7 +468,7 @@ public:
       // relocation types from the linkers point of view, this is done solely
       // for pedantic compatibility with 'as'.
       Type = A_SD->isExternal() ? RIT_Difference : RIT_LocalDifference;
-      Value2 = B_SD->getFragment()->getAddress() + B_SD->getOffset();
+      Value2 = B_SD->getAddress();
     }
 
     // The value which goes in the fixup is current value of the expression.
@@ -561,7 +561,7 @@ public:
           if (&*it == SD->getFragment()->getParent())
             break;
         assert(it != ie && "Unable to find section index!");
-        Value = SD->getFragment()->getAddress() + SD->getOffset();
+        Value = SD->getAddress();
       }
 
       Type = RIT_Vanilla;
