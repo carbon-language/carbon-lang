@@ -214,3 +214,9 @@ template<typename T> struct X;
 template<typename T> struct Y : public X<T> {
   Y& x() { return *this; }
 };
+
+// Make sure our assertions don't get too uppity.
+namespace test0 {
+  template <class T> class A { void foo(T array[10]); };
+  template class A<int>;
+}

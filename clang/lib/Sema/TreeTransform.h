@@ -2569,8 +2569,6 @@ bool TreeTransform<Derived>::
     ParmVarDecl *NewParm;
 
     if (OldParm) {
-      assert(OldParm->getTypeSourceInfo()->getType() == T->getArgType(i));
-
       NewParm = getDerived().TransformFunctionTypeParam(OldParm);
       if (!NewParm)
         return true;
