@@ -856,6 +856,13 @@ class VCallAndVBaseOffsetBuilder {
   /// VCallOffsets - Keeps track of vcall offsets.
   VCallOffsetMap VCallOffsets;
 
+  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
+    VBaseOffsetOffsetsMapTy;
+
+  /// VBaseOffsetOffsets - Contains the offsets of the virtual base offsets,
+  /// relative to the address point.
+  VBaseOffsetOffsetsMapTy VBaseOffsetOffsets;
+  
   /// FinalOverriders - The final overriders of the most derived class.
   /// (Can be null when we're not building a vtable of the most derived class).
   const FinalOverriders *Overriders;
@@ -870,6 +877,10 @@ class VCallAndVBaseOffsetBuilder {
   
   /// AddVBaseOffsets - Add vbase offsets for the given class.
   void AddVBaseOffsets(const CXXRecordDecl *Base, uint64_t OffsetInLayoutClass);
+  
+  /// getCurrentOffsetOffset - Get the current vcall or vbase offset offset in
+  /// bytes, relative to the vtable address point.
+  int64_t getCurrentOffsetOffset() const;
   
 public:
   VCallAndVBaseOffsetBuilder(const CXXRecordDecl *MostDerivedClass,
@@ -890,6 +901,9 @@ public:
   const_iterator components_end() const { return Components.rend(); }
   
   const VCallOffsetMap& getVCallOffsets() const { return VCallOffsets; }
+  const VBaseOffsetOffsetsMapTy getVBaseOffsetOffsets() const {
+    return VBaseOffsetOffsets;
+  }
 };
   
 void 
@@ -940,6 +954,20 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
     AddVCallOffsets(Base, RealBaseOffset);
 }
 
+int64_t VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
+  // OffsetIndex is the index of this vcall or vbase offset, relative to the 
+  // vtable address point. (We subtract 3 to account for the information just
+  // above the address point, the RTTI info, the offset to top, and the
+  // vcall offset itself).
+  int64_t OffsetIndex = -(int64_t)(3 + Components.size());
+    
+  // FIXME: We shouldn't use / 8 here.
+  int64_t OffsetOffset = OffsetIndex * 
+    (int64_t)Context.Target.getPointerWidth(0) / 8;
+
+  return OffsetOffset;
+}
+
 void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base, 
                                                  uint64_t VBaseOffset) {
   const CXXRecordDecl *RD = Base.getBase();
@@ -980,15 +1008,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     if (!MD->isVirtual())
       continue;
 
-    // OffsetIndex is the index of this vcall offset, relative to the vtable
-    // address point. (We subtract 3 to account for the information just
-    // above the address point, the RTTI info, the offset to top, and the
-    // vcall offset itself).
-    int64_t OffsetIndex = -(int64_t)(3 + Components.size());
-    
-    // FIXME: We shouldn't use / 8 here.
-    int64_t OffsetOffset = OffsetIndex * 
-      (int64_t)Context.Target.getPointerWidth(0) / 8;
+    int64_t OffsetOffset = getCurrentOffsetOffset();
     
     // Don't add a vcall offset if we already have one for this member function
     // signature.
@@ -1048,10 +1068,17 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
       int64_t Offset = 
         (int64_t)(LayoutClassLayout.getVBaseClassOffset(BaseDecl) - 
                   OffsetInLayoutClass) / 8;
-    
+
+      // Add the vbase offset offset.
+      assert(!VBaseOffsetOffsets.count(BaseDecl) &&
+             "vbase offset offset already exists!");
+
+      int64_t VBaseOffsetOffset = getCurrentOffsetOffset();
+      VBaseOffsetOffsets.insert(std::make_pair(BaseDecl, VBaseOffsetOffset));
+
       Components.push_back(VtableComponent::MakeVBaseOffset(Offset));
     }
-    
+
     // Check the base class looking for more vbase offsets.
     AddVBaseOffsets(BaseDecl, OffsetInLayoutClass);
   }
@@ -1096,6 +1123,13 @@ private:
   /// bases in this vtable.
   llvm::DenseMap<const CXXRecordDecl *, VCallOffsetMap> VCallOffsetsForVBases;
 
+  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
+    VBaseOffsetOffsetsMapTy;
+  
+  /// VBaseOffsetOffsets - Contains the offsets of the virtual base offsets for
+  /// the most derived class.
+  VBaseOffsetOffsetsMapTy VBaseOffsetOffsets;
+  
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
 
@@ -1751,6 +1785,11 @@ VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
       VCallOffsets = Builder.getVCallOffsets();
   }
 
+  // If we're laying out the most derived class we want to keep track of the
+  // virtual base class offset offsets.
+  if (Base.getBase() == MostDerivedClass)
+    VBaseOffsetOffsets = Builder.getVBaseOffsetOffsets();
+
   // Add the offset to top.
   // FIXME: We should not use / 8 here.
   int64_t OffsetToTop = -(int64_t)(OffsetInLayoutClass -
@@ -1949,15 +1988,15 @@ VtableBuilder::LayoutVtablesForVirtualBases(const CXXRecordDecl *RD,
 /// dumpLayout - Dump the vtable layout.
 void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
-  if (MostDerivedClass == LayoutClass) {
-    Out << "Vtable for '";
-    Out << MostDerivedClass->getQualifiedNameAsString();
-  } else {
+  if (isBuildingConstructorVtable()) {
     Out << "Construction vtable for ('";
     Out << MostDerivedClass->getQualifiedNameAsString() << "', ";
     // FIXME: Don't use / 8 .
     Out << MostDerivedClassOffset / 8 << ") in '";
     Out << LayoutClass->getQualifiedNameAsString();
+  } else {
+    Out << "Vtable for '";
+    Out << MostDerivedClass->getQualifiedNameAsString();
   }
   Out << "' (" << Components.size() << " entries).\n";
 
@@ -2137,6 +2176,29 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   }
 
   Out << '\n';
+  
+  if (!isBuildingConstructorVtable()) {
+    Out << "Virtual base offset offsets for '";
+    Out << MostDerivedClass->getQualifiedNameAsString() << "'.\n";
+    
+    // We store the virtual base class names and their offsets in a map to get
+    // a stable order.
+    std::map<std::string, int64_t> ClassNamesAndOffsets;
+
+    for (VBaseOffsetOffsetsMapTy::const_iterator I = VBaseOffsetOffsets.begin(),
+         E = VBaseOffsetOffsets.end(); I != E; ++I) {
+      std::string ClassName = I->first->getQualifiedNameAsString();
+      int64_t OffsetOffset = I->second;
+      ClassNamesAndOffsets.insert(std::make_pair(ClassName, OffsetOffset));
+    }
+
+    for (std::map<std::string, int64_t>::const_iterator I =
+         ClassNamesAndOffsets.begin(), E = ClassNamesAndOffsets.end(); 
+         I != E; ++I)
+      Out << "   " << I->first << " | " << I->second << '\n';
+
+    Out << "\n";
+  }
 }
   
 }
