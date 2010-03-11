@@ -4245,8 +4245,7 @@ private:
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
   void CheckSignCompare(Expr *LHS, Expr *RHS, SourceLocation Loc,
-                        const PartialDiagnostic &PD,
-                        bool Equality = false);
+                        const BinaryOperator::Opcode* BinOpc = 0);
   void CheckImplicitConversion(Expr *E, QualType Target);
 };
 

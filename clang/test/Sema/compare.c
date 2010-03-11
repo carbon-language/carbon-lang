@@ -274,3 +274,11 @@ void test4() {
   if (value < (unsigned long) &ptr4) // expected-warning {{comparison of integers of different signs}}
     return;
 }
+
+// PR4807
+int test5(unsigned int x) {
+  return (x < 0) // expected-warning {{comparison of unsigned expression < 0 is always false}}
+    && (0 > x)   // expected-warning {{comparison of 0 > unsigned expression is always false}}
+    && (x >= 0)  // expected-warning {{comparison of unsigned expression >= 0 is always true}}
+    && (0 <= x); // expected-warning {{comparison of 0 <= unsigned expression is always true}}
+}

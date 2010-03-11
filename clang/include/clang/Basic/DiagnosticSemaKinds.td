@@ -1857,6 +1857,12 @@ def warn_mixed_sign_comparison : Warning<
 def warn_mixed_sign_conditional : Warning<
   "operands of ? are integers of different signs: %0 and %1">,
   InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
+def warn_lunsigned_always_true_comparison : Warning<
+  "comparison of unsigned expression %0 is always %1">,
+  InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
+def warn_runsigned_always_true_comparison : Warning<
+  "comparison of %0 unsigned expression is always %1">,
+  InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a nonstatic member function">;
