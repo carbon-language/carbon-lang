@@ -217,11 +217,18 @@ void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
 }
 
 void 
-ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
-                                           const CXXRecordDecl *RD,
-                                           const CXXRecordDecl *PB,
-                                           uint64_t Offset) {
+ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
+                                        uint64_t Offset,
+                                        const CXXRecordDecl *MostDerivedClass) {
+  const CXXRecordDecl *PrimaryBase;
   
+  if (MostDerivedClass == RD)
+    PrimaryBase = this->PrimaryBase.getBase();
+  else {
+    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
+    PrimaryBase = Layout.getPrimaryBase();
+  }
+
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
     assert(!I->getType()->isDependentType() &&
@@ -231,7 +238,7 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     if (I->isVirtual()) {
-      if (Base == PB) {
+      if (Base == PrimaryBase) {
         // Only lay things out once.
         if (VisitedVirtualBases.count(Base))
           continue;
@@ -268,7 +275,7 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
       // We want the vbase offset from the class we're currently laying out.
       assert(VBases.count(Base) && "Did not find virtual base!");
       BaseOffset = VBases[Base];
-    } else if (RD == Class) {
+    } else if (RD == MostDerivedClass) {
       // We want the base offset from the class we're currently laying out.
       assert(Bases.count(Base) && "Did not find base!");
       BaseOffset = Bases[Base];
@@ -277,9 +284,7 @@ ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *Class,
       BaseOffset = Offset + Layout.getBaseClassOffset(Base);
     }
     
-    const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(Base);
-    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBaseInfo().getBase();
-    LayoutVirtualBases(Class, Base, PrimaryBase, BaseOffset);
+    LayoutVirtualBases(Base, BaseOffset, MostDerivedClass);
   }
 }
 
@@ -501,9 +506,9 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   NonVirtualSize = Size;
   NonVirtualAlignment = Alignment;
 
-  if (RD) {
-    LayoutVirtualBases(RD, RD, PrimaryBase.getBase(), 0);
-  }
+  // If this is a C++ clas, lay out its virtual bases.
+  if (RD)
+    LayoutVirtualBases(RD, 0, RD);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
