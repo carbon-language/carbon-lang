@@ -87,6 +87,24 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   return CI;
 }
 
+/// EmitStpCpy - Emit a call to the stpcpy function to the builder, for the
+/// specified pointer arguments.
+Value *llvm::EmitStpCpy(Value *Dst, Value *Src, IRBuilder<> &B,
+                        const TargetData *TD) {
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
+  AttributeWithIndex AWI[2];
+  AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
+  AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  const Type *I8Ptr = B.getInt8PtrTy();
+  Value *StpCpy = M->getOrInsertFunction("stpcpy", AttrListPtr::get(AWI, 2),
+                                         I8Ptr, I8Ptr, I8Ptr, NULL);
+  CallInst *CI = B.CreateCall2(StpCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
+                               "stpcpy");
+  if (const Function *F = dyn_cast<Function>(StpCpy->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+  return CI;
+}
+
 /// EmitStrNCpy - Emit a call to the strncpy function to the builder, for the
 /// specified pointer arguments.
 Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,

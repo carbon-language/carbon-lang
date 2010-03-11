@@ -838,6 +838,19 @@ Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const TargetData *TD) {
 
   // Should be similar to strcpy.
   if (Name == "__stpcpy_chk") {
+    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!SizeCI)
+      return 0;
+    // If a) we don't have any length information, or b) we know this will
+    // fit then just lower to a plain stpcpy. Otherwise we'll keep our
+    // stpcpy_chk call which may fail at runtime if the size is too long.
+    // TODO: It might be nice to get a maximum length out of the possible
+    // string lengths for varying.
+    if (SizeCI->isAllOnesValue() ||
+        SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2))) {
+      Value *Ret = EmitStpCpy(CI->getOperand(1), CI->getOperand(2), B, TD);
+      return ReplaceInstUsesWith(*CI, Ret);
+    }
     return 0;
   }
 
