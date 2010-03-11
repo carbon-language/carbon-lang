@@ -122,8 +122,12 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
       // Reached end of block, register is obviously dead.
       return true;
 
-    if (I->isDebugValue())
+    if (I->isDebugValue()) {
+      // These must not count against the limit.
+      ++LookAheadLeft;
+      ++I;
       continue;
+    }
     bool SeenDef = false;
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = I->getOperand(i);
@@ -188,7 +192,7 @@ static bool isCopy(const MachineInstr *MI, const TargetInstrInfo *TII) {
 
 bool MachineCSE::isCSECandidate(MachineInstr *MI) {
   if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
-      MI->isKill() || MI->isInlineAsm())
+      MI->isKill() || MI->isInlineAsm() || MI->isDebugValue())
     return false;
 
   // Ignore copies.
