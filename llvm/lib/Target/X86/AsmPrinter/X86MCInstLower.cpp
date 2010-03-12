@@ -358,6 +358,13 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       } else
         printOperand(MI, 0);
     } else {
+      if (MI->getOperand(0).getType()==MachineOperand::MO_Register &&
+          MI->getOperand(0).getReg()==0) {
+        // Suppress offset in this case, it is not meaningful.
+        O << "undef";
+        OutStreamer.AddBlankLine();
+        return;
+      }
       // Frame address.  Currently handles register +- offset only.
       assert(MI->getOperand(0).getType()==MachineOperand::MO_Register);
       assert(MI->getOperand(3).getType()==MachineOperand::MO_Immediate);
