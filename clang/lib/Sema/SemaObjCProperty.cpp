@@ -16,6 +16,410 @@
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// Grammar actions.
+//===----------------------------------------------------------------------===//
+
+Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
+                                    FieldDeclarator &FD,
+                                    ObjCDeclSpec &ODS,
+                                    Selector GetterSel,
+                                    Selector SetterSel,
+                                    DeclPtrTy ClassCategory,
+                                    bool *isOverridingProperty,
+                                    tok::ObjCKeywordKind MethodImplKind) {
+  unsigned Attributes = ODS.getPropertyAttributes();
+  bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
+                      // default is readwrite!
+                      !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
+  // property is defaulted to 'assign' if it is readwrite and is
+  // not retain or copy
+  bool isAssign = ((Attributes & ObjCDeclSpec::DQ_PR_assign) ||
+                   (isReadWrite &&
+                    !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
+                    !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
+  QualType T = GetTypeForDeclarator(FD.D, S);
+  if (T->isReferenceType()) {
+    Diag(AtLoc, diag::error_reference_property);
+    return DeclPtrTy();
+  }
+  Decl *ClassDecl = ClassCategory.getAs<Decl>();
+  ObjCInterfaceDecl *CCPrimary = 0; // continuation class's primary class
+                                    // May modify Attributes.
+  CheckObjCPropertyAttributes(T, AtLoc, Attributes);
+  if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
+    if (CDecl->IsClassExtension()) {
+      // Diagnose if this property is already in continuation class.
+      DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
+      assert(DC && "ClassDecl is not a DeclContext");
+      DeclContext::lookup_result Found = DC->lookup(FD.D.getIdentifier());
+      if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
+        Diag(AtLoc, diag::err_duplicate_property);
+        Diag((*Found.first)->getLocation(), diag::note_property_declare);
+        return DeclPtrTy();
+      }
+      ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
+                                                         FD.D.getIdentifierLoc(),
+                                                         FD.D.getIdentifier(),
+                                                         AtLoc, T);
+      DC->addDecl(PDecl);
+
+      // This is a continuation class. property requires special
+      // handling.
+      if ((CCPrimary = CDecl->getClassInterface())) {
+        // Find the property in continuation class's primary class only.
+        IdentifierInfo *PropertyId = FD.D.getIdentifier();
+        if (ObjCPropertyDecl *PIDecl =
+            CCPrimary->FindPropertyVisibleInPrimaryClass(PropertyId)) {
+          // property 'PIDecl's readonly attribute will be over-ridden
+          // with continuation class's readwrite property attribute!
+          unsigned PIkind = PIDecl->getPropertyAttributes();
+          if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
+            unsigned retainCopyNonatomic =
+            (ObjCPropertyDecl::OBJC_PR_retain |
+             ObjCPropertyDecl::OBJC_PR_copy |
+             ObjCPropertyDecl::OBJC_PR_nonatomic);
+            if ((Attributes & retainCopyNonatomic) !=
+                (PIkind & retainCopyNonatomic)) {
+              Diag(AtLoc, diag::warn_property_attr_mismatch);
+              Diag(PIDecl->getLocation(), diag::note_property_declare);
+            }
+            DeclContext *DC = dyn_cast<DeclContext>(CCPrimary);
+            assert(DC && "ClassDecl is not a DeclContext");
+            DeclContext::lookup_result Found =
+            DC->lookup(PIDecl->getDeclName());
+            bool PropertyInPrimaryClass = false;
+            for (; Found.first != Found.second; ++Found.first)
+              if (isa<ObjCPropertyDecl>(*Found.first)) {
+                PropertyInPrimaryClass = true;
+                break;
+              }
+            if (!PropertyInPrimaryClass) {
+              // Protocol is not in the primary class. Must build one for it.
+              ObjCDeclSpec ProtocolPropertyODS;
+              // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind and
+              // ObjCPropertyDecl::PropertyAttributeKind have identical values.
+              // Should consolidate both into one enum type.
+              ProtocolPropertyODS.setPropertyAttributes(
+                                                        (ObjCDeclSpec::ObjCPropertyAttributeKind)PIkind);
+              DeclPtrTy ProtocolPtrTy =
+              ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
+                            PIDecl->getGetterName(),
+                            PIDecl->getSetterName(),
+                            DeclPtrTy::make(CCPrimary), isOverridingProperty,
+                            MethodImplKind);
+              PIDecl = ProtocolPtrTy.getAs<ObjCPropertyDecl>();
+            }
+            PIDecl->makeitReadWriteAttribute();
+            if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
+            if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
+            PIDecl->setSetterName(SetterSel);
+          } else {
+            Diag(AtLoc, diag::err_use_continuation_class)
+            << CCPrimary->getDeclName();
+            Diag(PIDecl->getLocation(), diag::note_property_declare);
+          }
+          *isOverridingProperty = true;
+          // Make sure setter decl is synthesized, and added to primary
+          // class's list.
+          ProcessPropertyDecl(PIDecl, CCPrimary);
+          return DeclPtrTy();
+        }
+
+        // No matching property found in the primary class. Just fall thru
+        // and add property to continuation class's primary class.
+        ClassDecl = CCPrimary;
+      } else {
+        Diag(CDecl->getLocation(), diag::err_continuation_class);
+        *isOverridingProperty = true;
+        return DeclPtrTy();
+      }
+    }
+
+  // Issue a warning if property is 'assign' as default and its object, which is
+  // gc'able conforms to NSCopying protocol
+  if (getLangOptions().getGCMode() != LangOptions::NonGC &&
+      isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
+    if (T->isObjCObjectPointerType()) {
+      QualType InterfaceTy = T->getPointeeType();
+      if (const ObjCInterfaceType *OIT =
+          InterfaceTy->getAs<ObjCInterfaceType>()) {
+        ObjCInterfaceDecl *IDecl = OIT->getDecl();
+        if (IDecl)
+          if (ObjCProtocolDecl* PNSCopying =
+              LookupProtocol(&Context.Idents.get("NSCopying")))
+            if (IDecl->ClassImplementsProtocol(PNSCopying, true))
+              Diag(AtLoc, diag::warn_implements_nscopying)
+              << FD.D.getIdentifier();
+      }
+    }
+  if (T->isObjCInterfaceType())
+    Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
+
+  DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
+  assert(DC && "ClassDecl is not a DeclContext");
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
+                                                     FD.D.getIdentifierLoc(),
+                                                     FD.D.getIdentifier(),
+                                                     AtLoc, T);
+  DeclContext::lookup_result Found = DC->lookup(PDecl->getDeclName());
+  if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
+    Diag(PDecl->getLocation(), diag::err_duplicate_property);
+    Diag((*Found.first)->getLocation(), diag::note_property_declare);
+    PDecl->setInvalidDecl();
+  }
+  else
+    DC->addDecl(PDecl);
+
+  if (T->isArrayType() || T->isFunctionType()) {
+    Diag(AtLoc, diag::err_property_type) << T;
+    PDecl->setInvalidDecl();
+  }
+
+  ProcessDeclAttributes(S, PDecl, FD.D);
+
+  // Regardless of setter/getter attribute, we save the default getter/setter
+  // selector names in anticipation of declaration of setter/getter methods.
+  PDecl->setGetterName(GetterSel);
+  PDecl->setSetterName(SetterSel);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
+
+  if (isReadWrite)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
+
+  if (isAssign)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
+
+  if (MethodImplKind == tok::objc_required)
+    PDecl->setPropertyImplementation(ObjCPropertyDecl::Required);
+  else if (MethodImplKind == tok::objc_optional)
+    PDecl->setPropertyImplementation(ObjCPropertyDecl::Optional);
+  // A case of continuation class adding a new property in the class. This
+  // is not what it was meant for. However, gcc supports it and so should we.
+  // Make sure setter/getters are declared here.
+  if (CCPrimary)
+    ProcessPropertyDecl(PDecl, CCPrimary);
+
+  return DeclPtrTy::make(PDecl);
+}
+
+
+/// ActOnPropertyImplDecl - This routine performs semantic checks and
+/// builds the AST node for a property implementation declaration; declared
+/// as @synthesize or @dynamic.
+///
+Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
+                                            SourceLocation PropertyLoc,
+                                            bool Synthesize,
+                                            DeclPtrTy ClassCatImpDecl,
+                                            IdentifierInfo *PropertyId,
+                                            IdentifierInfo *PropertyIvar) {
+  Decl *ClassImpDecl = ClassCatImpDecl.getAs<Decl>();
+  // Make sure we have a context for the property implementation declaration.
+  if (!ClassImpDecl) {
+    Diag(AtLoc, diag::error_missing_property_context);
+    return DeclPtrTy();
+  }
+  ObjCPropertyDecl *property = 0;
+  ObjCInterfaceDecl* IDecl = 0;
+  // Find the class or category class where this property must have
+  // a declaration.
+  ObjCImplementationDecl *IC = 0;
+  ObjCCategoryImplDecl* CatImplClass = 0;
+  if ((IC = dyn_cast<ObjCImplementationDecl>(ClassImpDecl))) {
+    IDecl = IC->getClassInterface();
+    // We always synthesize an interface for an implementation
+    // without an interface decl. So, IDecl is always non-zero.
+    assert(IDecl &&
+           "ActOnPropertyImplDecl - @implementation without @interface");
+
+    // Look for this property declaration in the @implementation's @interface
+    property = IDecl->FindPropertyDeclaration(PropertyId);
+    if (!property) {
+      Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getDeclName();
+      return DeclPtrTy();
+    }
+    if (const ObjCCategoryDecl *CD =
+        dyn_cast<ObjCCategoryDecl>(property->getDeclContext())) {
+      if (!CD->IsClassExtension()) {
+        Diag(PropertyLoc, diag::error_category_property) << CD->getDeclName();
+        Diag(property->getLocation(), diag::note_property_declare);
+        return DeclPtrTy();
+      }
+    }
+  } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
+    if (Synthesize) {
+      Diag(AtLoc, diag::error_synthesize_category_decl);
+      return DeclPtrTy();
+    }
+    IDecl = CatImplClass->getClassInterface();
+    if (!IDecl) {
+      Diag(AtLoc, diag::error_missing_property_interface);
+      return DeclPtrTy();
+    }
+    ObjCCategoryDecl *Category =
+    IDecl->FindCategoryDeclaration(CatImplClass->getIdentifier());
+
+    // If category for this implementation not found, it is an error which
+    // has already been reported eralier.
+    if (!Category)
+      return DeclPtrTy();
+    // Look for this property declaration in @implementation's category
+    property = Category->FindPropertyDeclaration(PropertyId);
+    if (!property) {
+      Diag(PropertyLoc, diag::error_bad_category_property_decl)
+      << Category->getDeclName();
+      return DeclPtrTy();
+    }
+  } else {
+    Diag(AtLoc, diag::error_bad_property_context);
+    return DeclPtrTy();
+  }
+  ObjCIvarDecl *Ivar = 0;
+  // Check that we have a valid, previously declared ivar for @synthesize
+  if (Synthesize) {
+    // @synthesize
+    if (!PropertyIvar)
+      PropertyIvar = PropertyId;
+    QualType PropType = Context.getCanonicalType(property->getType());
+    // Check that this is a previously declared 'ivar' in 'IDecl' interface
+    ObjCInterfaceDecl *ClassDeclared;
+    Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
+    if (!Ivar) {
+      DeclContext *EnclosingContext = cast_or_null<DeclContext>(ClassImpDecl);
+      assert(EnclosingContext &&
+             "null DeclContext for synthesized ivar - ActOnPropertyImplDecl");
+      Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, PropertyLoc,
+                                  PropertyIvar, PropType, /*Dinfo=*/0,
+                                  ObjCIvarDecl::Public,
+                                  (Expr *)0);
+      EnclosingContext->addDecl(Ivar);
+      IDecl->makeDeclVisibleInContext(Ivar, false);
+      property->setPropertyIvarDecl(Ivar);
+
+      if (!getLangOptions().ObjCNonFragileABI)
+        Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
+      // Note! I deliberately want it to fall thru so, we have a
+      // a property implementation and to avoid future warnings.
+    } else if (getLangOptions().ObjCNonFragileABI &&
+               ClassDeclared != IDecl) {
+      Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
+      << property->getDeclName() << Ivar->getDeclName()
+      << ClassDeclared->getDeclName();
+      Diag(Ivar->getLocation(), diag::note_previous_access_declaration)
+      << Ivar << Ivar->getNameAsCString();
+      // Note! I deliberately want it to fall thru so more errors are caught.
+    }
+    QualType IvarType = Context.getCanonicalType(Ivar->getType());
+
+    // Check that type of property and its ivar are type compatible.
+    if (PropType != IvarType) {
+      if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
+        Diag(PropertyLoc, diag::error_property_ivar_type)
+        << property->getDeclName() << Ivar->getDeclName();
+        // Note! I deliberately want it to fall thru so, we have a
+        // a property implementation and to avoid future warnings.
+      }
+
+      // FIXME! Rules for properties are somewhat different that those
+      // for assignments. Use a new routine to consolidate all cases;
+      // specifically for property redeclarations as well as for ivars.
+      QualType lhsType =Context.getCanonicalType(PropType).getUnqualifiedType();
+      QualType rhsType =Context.getCanonicalType(IvarType).getUnqualifiedType();
+      if (lhsType != rhsType &&
+          lhsType->isArithmeticType()) {
+        Diag(PropertyLoc, diag::error_property_ivar_type)
+        << property->getDeclName() << Ivar->getDeclName();
+        // Fall thru - see previous comment
+      }
+      // __weak is explicit. So it works on Canonical type.
+      if (PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak() &&
+          getLangOptions().getGCMode() != LangOptions::NonGC) {
+        Diag(PropertyLoc, diag::error_weak_property)
+        << property->getDeclName() << Ivar->getDeclName();
+        // Fall thru - see previous comment
+      }
+      if ((property->getType()->isObjCObjectPointerType() ||
+           PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
+          getLangOptions().getGCMode() != LangOptions::NonGC) {
+        Diag(PropertyLoc, diag::error_strong_property)
+        << property->getDeclName() << Ivar->getDeclName();
+        // Fall thru - see previous comment
+      }
+    }
+  } else if (PropertyIvar)
+    // @dynamic
+    Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
+  assert (property && "ActOnPropertyImplDecl - property declaration missing");
+  ObjCPropertyImplDecl *PIDecl =
+  ObjCPropertyImplDecl::Create(Context, CurContext, AtLoc, PropertyLoc,
+                               property,
+                               (Synthesize ?
+                                ObjCPropertyImplDecl::Synthesize
+                                : ObjCPropertyImplDecl::Dynamic),
+                               Ivar);
+  if (IC) {
+    if (Synthesize)
+      if (ObjCPropertyImplDecl *PPIDecl =
+          IC->FindPropertyImplIvarDecl(PropertyIvar)) {
+        Diag(PropertyLoc, diag::error_duplicate_ivar_use)
+        << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier()
+        << PropertyIvar;
+        Diag(PPIDecl->getLocation(), diag::note_previous_use);
+      }
+
+    if (ObjCPropertyImplDecl *PPIDecl
+        = IC->FindPropertyImplDecl(PropertyId)) {
+      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
+      Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
+      return DeclPtrTy();
+    }
+    IC->addPropertyImplementation(PIDecl);
+  } else {
+    if (Synthesize)
+      if (ObjCPropertyImplDecl *PPIDecl =
+          CatImplClass->FindPropertyImplIvarDecl(PropertyIvar)) {
+        Diag(PropertyLoc, diag::error_duplicate_ivar_use)
+        << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier()
+        << PropertyIvar;
+        Diag(PPIDecl->getLocation(), diag::note_previous_use);
+      }
+
+    if (ObjCPropertyImplDecl *PPIDecl =
+        CatImplClass->FindPropertyImplDecl(PropertyId)) {
+      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
+      Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
+      return DeclPtrTy();
+    }
+    CatImplClass->addPropertyImplementation(PIDecl);
+  }
+
+  return DeclPtrTy::make(PIDecl);
+}
+
+//===----------------------------------------------------------------------===//
+// Helper methods.
+//===----------------------------------------------------------------------===//
+
 /// DiagnosePropertyMismatch - Compares two properties for their
 /// attributes and types and warns on a variety of inconsistencies.
 ///
@@ -606,208 +1010,6 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
     Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
 }
 
-Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
-                                    FieldDeclarator &FD,
-                                    ObjCDeclSpec &ODS,
-                                    Selector GetterSel,
-                                    Selector SetterSel,
-                                    DeclPtrTy ClassCategory,
-                                    bool *isOverridingProperty,
-                                    tok::ObjCKeywordKind MethodImplKind) {
-  unsigned Attributes = ODS.getPropertyAttributes();
-  bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
-                      // default is readwrite!
-                      !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
-  // property is defaulted to 'assign' if it is readwrite and is
-  // not retain or copy
-  bool isAssign = ((Attributes & ObjCDeclSpec::DQ_PR_assign) ||
-                   (isReadWrite &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
-  QualType T = GetTypeForDeclarator(FD.D, S);
-  if (T->isReferenceType()) {
-    Diag(AtLoc, diag::error_reference_property);
-    return DeclPtrTy();
-  }
-  Decl *ClassDecl = ClassCategory.getAs<Decl>();
-  ObjCInterfaceDecl *CCPrimary = 0; // continuation class's primary class
-  // May modify Attributes.
-  CheckObjCPropertyAttributes(T, AtLoc, Attributes);
-  if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
-    if (CDecl->IsClassExtension()) {
-      // Diagnose if this property is already in continuation class.
-      DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
-      assert(DC && "ClassDecl is not a DeclContext");
-      DeclContext::lookup_result Found = DC->lookup(FD.D.getIdentifier());
-      if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
-        Diag(AtLoc, diag::err_duplicate_property);
-        Diag((*Found.first)->getLocation(), diag::note_property_declare);
-        return DeclPtrTy();
-      }
-      ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
-                                                         FD.D.getIdentifierLoc(),
-                                                         FD.D.getIdentifier(),
-                                                         AtLoc, T);
-      DC->addDecl(PDecl);
-
-      // This is a continuation class. property requires special
-      // handling.
-      if ((CCPrimary = CDecl->getClassInterface())) {
-        // Find the property in continuation class's primary class only.
-        IdentifierInfo *PropertyId = FD.D.getIdentifier();
-        if (ObjCPropertyDecl *PIDecl =
-              CCPrimary->FindPropertyVisibleInPrimaryClass(PropertyId)) {
-          // property 'PIDecl's readonly attribute will be over-ridden
-          // with continuation class's readwrite property attribute!
-          unsigned PIkind = PIDecl->getPropertyAttributes();
-          if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
-            unsigned retainCopyNonatomic =
-              (ObjCPropertyDecl::OBJC_PR_retain |
-               ObjCPropertyDecl::OBJC_PR_copy |
-               ObjCPropertyDecl::OBJC_PR_nonatomic);
-            if ((Attributes & retainCopyNonatomic) !=
-                (PIkind & retainCopyNonatomic)) {
-              Diag(AtLoc, diag::warn_property_attr_mismatch);
-              Diag(PIDecl->getLocation(), diag::note_property_declare);
-            }
-            DeclContext *DC = dyn_cast<DeclContext>(CCPrimary);
-            assert(DC && "ClassDecl is not a DeclContext");
-            DeclContext::lookup_result Found =
-              DC->lookup(PIDecl->getDeclName());
-            bool PropertyInPrimaryClass = false;
-            for (; Found.first != Found.second; ++Found.first)
-              if (isa<ObjCPropertyDecl>(*Found.first)) {
-                PropertyInPrimaryClass = true;
-                break;
-              }
-            if (!PropertyInPrimaryClass) {
-              // Protocol is not in the primary class. Must build one for it.
-              ObjCDeclSpec ProtocolPropertyODS;
-              // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind and
-              // ObjCPropertyDecl::PropertyAttributeKind have identical values.
-              // Should consolidate both into one enum type.
-              ProtocolPropertyODS.setPropertyAttributes(
-                (ObjCDeclSpec::ObjCPropertyAttributeKind)PIkind);
-              DeclPtrTy ProtocolPtrTy =
-                ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
-                              PIDecl->getGetterName(),
-                              PIDecl->getSetterName(),
-                              DeclPtrTy::make(CCPrimary), isOverridingProperty,
-                              MethodImplKind);
-              PIDecl = ProtocolPtrTy.getAs<ObjCPropertyDecl>();
-            }
-            PIDecl->makeitReadWriteAttribute();
-            if (Attributes & ObjCDeclSpec::DQ_PR_retain)
-              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
-            if (Attributes & ObjCDeclSpec::DQ_PR_copy)
-              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
-            PIDecl->setSetterName(SetterSel);
-          } else {
-            Diag(AtLoc, diag::err_use_continuation_class)
-              << CCPrimary->getDeclName();
-            Diag(PIDecl->getLocation(), diag::note_property_declare);
-          }
-          *isOverridingProperty = true;
-          // Make sure setter decl is synthesized, and added to primary
-          // class's list.
-          ProcessPropertyDecl(PIDecl, CCPrimary);
-          return DeclPtrTy();
-        }
-
-        // No matching property found in the primary class. Just fall thru
-        // and add property to continuation class's primary class.
-        ClassDecl = CCPrimary;
-      } else {
-        Diag(CDecl->getLocation(), diag::err_continuation_class);
-        *isOverridingProperty = true;
-        return DeclPtrTy();
-      }
-    }
-
-  // Issue a warning if property is 'assign' as default and its object, which is
-  // gc'able conforms to NSCopying protocol
-  if (getLangOptions().getGCMode() != LangOptions::NonGC &&
-      isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
-      if (T->isObjCObjectPointerType()) {
-        QualType InterfaceTy = T->getPointeeType();
-        if (const ObjCInterfaceType *OIT =
-              InterfaceTy->getAs<ObjCInterfaceType>()) {
-        ObjCInterfaceDecl *IDecl = OIT->getDecl();
-        if (IDecl)
-          if (ObjCProtocolDecl* PNSCopying =
-                LookupProtocol(&Context.Idents.get("NSCopying")))
-            if (IDecl->ClassImplementsProtocol(PNSCopying, true))
-              Diag(AtLoc, diag::warn_implements_nscopying)
-                << FD.D.getIdentifier();
-        }
-      }
-  if (T->isObjCInterfaceType())
-    Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
-
-  DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
-  assert(DC && "ClassDecl is not a DeclContext");
-  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
-                                                     FD.D.getIdentifierLoc(),
-                                                     FD.D.getIdentifier(),
-                                                     AtLoc, T);
-  DeclContext::lookup_result Found = DC->lookup(PDecl->getDeclName());
-  if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
-    Diag(PDecl->getLocation(), diag::err_duplicate_property);
-    Diag((*Found.first)->getLocation(), diag::note_property_declare);
-    PDecl->setInvalidDecl();
-  }
-  else
-    DC->addDecl(PDecl);
-
-  if (T->isArrayType() || T->isFunctionType()) {
-    Diag(AtLoc, diag::err_property_type) << T;
-    PDecl->setInvalidDecl();
-  }
-
-  ProcessDeclAttributes(S, PDecl, FD.D);
-
-  // Regardless of setter/getter attribute, we save the default getter/setter
-  // selector names in anticipation of declaration of setter/getter methods.
-  PDecl->setGetterName(GetterSel);
-  PDecl->setSetterName(SetterSel);
-
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
-
-  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
-
-  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
-
-  if (isReadWrite)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
-
-  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
-
-  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
-
-  if (isAssign)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
-
-  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
-    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
-
-  if (MethodImplKind == tok::objc_required)
-    PDecl->setPropertyImplementation(ObjCPropertyDecl::Required);
-  else if (MethodImplKind == tok::objc_optional)
-    PDecl->setPropertyImplementation(ObjCPropertyDecl::Optional);
-  // A case of continuation class adding a new property in the class. This
-  // is not what it was meant for. However, gcc supports it and so should we.
-  // Make sure setter/getters are declared here.
-  if (CCPrimary)
-    ProcessPropertyDecl(PDecl, CCPrimary);
-
-  return DeclPtrTy::make(PDecl);
-}
-
 ObjCIvarDecl*
 Sema::SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
                                 IdentifierInfo *NameII) {
@@ -828,198 +1030,5 @@ Sema::SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
     Prop->setPropertyIvarDecl(Ivar);
   }
   return Ivar;
-}
-
-/// ActOnPropertyImplDecl - This routine performs semantic checks and
-/// builds the AST node for a property implementation declaration; declared
-/// as @synthesize or @dynamic.
-///
-Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
-                                            SourceLocation PropertyLoc,
-                                            bool Synthesize,
-                                            DeclPtrTy ClassCatImpDecl,
-                                            IdentifierInfo *PropertyId,
-                                            IdentifierInfo *PropertyIvar) {
-  Decl *ClassImpDecl = ClassCatImpDecl.getAs<Decl>();
-  // Make sure we have a context for the property implementation declaration.
-  if (!ClassImpDecl) {
-    Diag(AtLoc, diag::error_missing_property_context);
-    return DeclPtrTy();
-  }
-  ObjCPropertyDecl *property = 0;
-  ObjCInterfaceDecl* IDecl = 0;
-  // Find the class or category class where this property must have
-  // a declaration.
-  ObjCImplementationDecl *IC = 0;
-  ObjCCategoryImplDecl* CatImplClass = 0;
-  if ((IC = dyn_cast<ObjCImplementationDecl>(ClassImpDecl))) {
-    IDecl = IC->getClassInterface();
-    // We always synthesize an interface for an implementation
-    // without an interface decl. So, IDecl is always non-zero.
-    assert(IDecl &&
-           "ActOnPropertyImplDecl - @implementation without @interface");
-
-    // Look for this property declaration in the @implementation's @interface
-    property = IDecl->FindPropertyDeclaration(PropertyId);
-    if (!property) {
-      Diag(PropertyLoc, diag::error_bad_property_decl) << IDecl->getDeclName();
-      return DeclPtrTy();
-    }
-    if (const ObjCCategoryDecl *CD =
-        dyn_cast<ObjCCategoryDecl>(property->getDeclContext())) {
-      if (!CD->IsClassExtension()) {
-        Diag(PropertyLoc, diag::error_category_property) << CD->getDeclName();
-        Diag(property->getLocation(), diag::note_property_declare);
-        return DeclPtrTy();
-      }
-    }
-  } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
-    if (Synthesize) {
-      Diag(AtLoc, diag::error_synthesize_category_decl);
-      return DeclPtrTy();
-    }
-    IDecl = CatImplClass->getClassInterface();
-    if (!IDecl) {
-      Diag(AtLoc, diag::error_missing_property_interface);
-      return DeclPtrTy();
-    }
-    ObjCCategoryDecl *Category =
-      IDecl->FindCategoryDeclaration(CatImplClass->getIdentifier());
-
-    // If category for this implementation not found, it is an error which
-    // has already been reported eralier.
-    if (!Category)
-      return DeclPtrTy();
-    // Look for this property declaration in @implementation's category
-    property = Category->FindPropertyDeclaration(PropertyId);
-    if (!property) {
-      Diag(PropertyLoc, diag::error_bad_category_property_decl)
-        << Category->getDeclName();
-      return DeclPtrTy();
-    }
-  } else {
-    Diag(AtLoc, diag::error_bad_property_context);
-    return DeclPtrTy();
-  }
-  ObjCIvarDecl *Ivar = 0;
-  // Check that we have a valid, previously declared ivar for @synthesize
-  if (Synthesize) {
-    // @synthesize
-    if (!PropertyIvar)
-      PropertyIvar = PropertyId;
-    QualType PropType = Context.getCanonicalType(property->getType());
-    // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    ObjCInterfaceDecl *ClassDeclared;
-    Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
-    if (!Ivar) {
-      DeclContext *EnclosingContext = cast_or_null<DeclContext>(ClassImpDecl);
-      assert(EnclosingContext &&
-             "null DeclContext for synthesized ivar - ActOnPropertyImplDecl");
-      Ivar = ObjCIvarDecl::Create(Context, EnclosingContext, PropertyLoc,
-                                  PropertyIvar, PropType, /*Dinfo=*/0,
-                                  ObjCIvarDecl::Public,
-                                  (Expr *)0);
-      EnclosingContext->addDecl(Ivar);
-      IDecl->makeDeclVisibleInContext(Ivar, false);
-      property->setPropertyIvarDecl(Ivar);
-
-      if (!getLangOptions().ObjCNonFragileABI)
-        Diag(PropertyLoc, diag::error_missing_property_ivar_decl) << PropertyId;
-        // Note! I deliberately want it to fall thru so, we have a
-        // a property implementation and to avoid future warnings.
-    } else if (getLangOptions().ObjCNonFragileABI &&
-               ClassDeclared != IDecl) {
-      Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
-        << property->getDeclName() << Ivar->getDeclName()
-        << ClassDeclared->getDeclName();
-      Diag(Ivar->getLocation(), diag::note_previous_access_declaration)
-        << Ivar << Ivar->getNameAsCString();
-      // Note! I deliberately want it to fall thru so more errors are caught.
-    }
-    QualType IvarType = Context.getCanonicalType(Ivar->getType());
-
-    // Check that type of property and its ivar are type compatible.
-    if (PropType != IvarType) {
-      if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
-        Diag(PropertyLoc, diag::error_property_ivar_type)
-          << property->getDeclName() << Ivar->getDeclName();
-        // Note! I deliberately want it to fall thru so, we have a
-        // a property implementation and to avoid future warnings.
-      }
-
-      // FIXME! Rules for properties are somewhat different that those
-      // for assignments. Use a new routine to consolidate all cases;
-      // specifically for property redeclarations as well as for ivars.
-      QualType lhsType =Context.getCanonicalType(PropType).getUnqualifiedType();
-      QualType rhsType =Context.getCanonicalType(IvarType).getUnqualifiedType();
-      if (lhsType != rhsType &&
-          lhsType->isArithmeticType()) {
-        Diag(PropertyLoc, diag::error_property_ivar_type)
-        << property->getDeclName() << Ivar->getDeclName();
-        // Fall thru - see previous comment
-      }
-      // __weak is explicit. So it works on Canonical type.
-      if (PropType.isObjCGCWeak() && !IvarType.isObjCGCWeak() &&
-          getLangOptions().getGCMode() != LangOptions::NonGC) {
-        Diag(PropertyLoc, diag::error_weak_property)
-        << property->getDeclName() << Ivar->getDeclName();
-        // Fall thru - see previous comment
-      }
-      if ((property->getType()->isObjCObjectPointerType() ||
-           PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
-           getLangOptions().getGCMode() != LangOptions::NonGC) {
-        Diag(PropertyLoc, diag::error_strong_property)
-        << property->getDeclName() << Ivar->getDeclName();
-        // Fall thru - see previous comment
-      }
-    }
-  } else if (PropertyIvar)
-      // @dynamic
-      Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
-  assert (property && "ActOnPropertyImplDecl - property declaration missing");
-  ObjCPropertyImplDecl *PIDecl =
-    ObjCPropertyImplDecl::Create(Context, CurContext, AtLoc, PropertyLoc,
-                                 property,
-                                 (Synthesize ?
-                                  ObjCPropertyImplDecl::Synthesize
-                                  : ObjCPropertyImplDecl::Dynamic),
-                                 Ivar);
-  if (IC) {
-    if (Synthesize)
-      if (ObjCPropertyImplDecl *PPIDecl =
-          IC->FindPropertyImplIvarDecl(PropertyIvar)) {
-        Diag(PropertyLoc, diag::error_duplicate_ivar_use)
-          << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier()
-          << PropertyIvar;
-        Diag(PPIDecl->getLocation(), diag::note_previous_use);
-      }
-
-    if (ObjCPropertyImplDecl *PPIDecl
-          = IC->FindPropertyImplDecl(PropertyId)) {
-      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
-      Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
-      return DeclPtrTy();
-    }
-    IC->addPropertyImplementation(PIDecl);
-  } else {
-    if (Synthesize)
-      if (ObjCPropertyImplDecl *PPIDecl =
-          CatImplClass->FindPropertyImplIvarDecl(PropertyIvar)) {
-        Diag(PropertyLoc, diag::error_duplicate_ivar_use)
-          << PropertyId << PPIDecl->getPropertyDecl()->getIdentifier()
-          << PropertyIvar;
-        Diag(PPIDecl->getLocation(), diag::note_previous_use);
-      }
-
-    if (ObjCPropertyImplDecl *PPIDecl =
-          CatImplClass->FindPropertyImplDecl(PropertyId)) {
-      Diag(PropertyLoc, diag::error_property_implemented) << PropertyId;
-      Diag(PPIDecl->getLocation(), diag::note_previous_declaration);
-      return DeclPtrTy();
-    }
-    CatImplClass->addPropertyImplementation(PIDecl);
-  }
-
-  return DeclPtrTy::make(PIDecl);
 }
 
