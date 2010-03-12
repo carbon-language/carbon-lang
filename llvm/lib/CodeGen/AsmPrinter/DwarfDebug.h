@@ -126,7 +126,8 @@ class DwarfDebug : public DwarfPrinter {
   //
   DbgScope *CurrentFnDbgScope;
   
-  /// DbgScopeMap - Tracks the scopes in the current function.
+  /// DbgScopeMap - Tracks the scopes in the current function.  Owns the
+  /// contained DbgScope*s.
   ///
   DenseMap<MDNode *, DbgScope *> DbgScopeMap;
 
@@ -135,11 +136,12 @@ class DwarfDebug : public DwarfPrinter {
   DenseMap<MDNode *, DbgScope *> ConcreteScopes;
 
   /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
-  /// not included DbgScopeMap.
+  /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
   DenseMap<MDNode *, DbgScope *> AbstractScopes;
   SmallVector<DbgScope *, 4>AbstractScopesList;
 
-  /// AbstractVariables - Collection on abstract variables.
+  /// AbstractVariables - Collection on abstract variables.  Owned by the
+  /// DbgScopes in AbstractScopes.
   DenseMap<MDNode *, DbgVariable *> AbstractVariables;
 
   /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
@@ -225,7 +227,7 @@ class DwarfDebug : public DwarfPrinter {
 
   /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
   /// information entry.
-  DIEEntry *createDIEEntry(DIE *Entry = NULL);
+  DIEEntry *createDIEEntry(DIE *Entry);
 
   /// addUInt - Add an unsigned integer attribute data and value.
   ///

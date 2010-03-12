@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -52,7 +53,7 @@ class CompileUnit {
 
   /// Die - Compile unit debug information entry.
   ///
-  OwningPtr<DIE> CUDie;
+  const OwningPtr<DIE> CUDie;
 
   /// IndexTyDie - An anonymous type for index type.  Owned by CUDie.
   DIE *IndexTyDie;
@@ -147,16 +148,16 @@ public:
 class DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
   unsigned FrameIndex;               // Variable frame index.
-  DbgVariable *AbstractVar;          // Abstract variable for this variable.
+  DbgVariable *const AbstractVar;    // Abstract variable for this variable.
   DIE *TheDIE;
 public:
-  DbgVariable(DIVariable V, unsigned I)
-    : Var(V), FrameIndex(I), AbstractVar(0), TheDIE(0)  {}
+  // AbsVar may be NULL.
+  DbgVariable(DIVariable V, unsigned I, DbgVariable *AbsVar)
+    : Var(V), FrameIndex(I), AbstractVar(AbsVar), TheDIE(0)  {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }
   unsigned getFrameIndex()           const { return FrameIndex; }
-  void setAbstractVariable(DbgVariable *V) { AbstractVar = V; }
   DbgVariable *getAbstractVariable() const { return AbstractVar; }
   void setDIE(DIE *D)                      { TheDIE = D; }
   DIE *getDIE()                      const { return TheDIE; }
@@ -175,8 +176,10 @@ class DbgScope {
   MCSymbol *EndLabel;                 // Label ID of the end of scope.
   const MachineInstr *LastInsn;       // Last instruction of this scope.
   const MachineInstr *FirstInsn;      // First instruction of this scope.
-  SmallVector<DbgScope *, 4> Scopes;  // Scopes defined in scope.
-  SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
+  // Scopes defined in scope.  Contents not owned.
+  SmallVector<DbgScope *, 4> Scopes;
+  // Variables declared in scope.  Contents owned.
+  SmallVector<DbgVariable *, 8> Variables;
 
   // Private state for dump()
   mutable unsigned IndentLevel;
@@ -197,8 +200,8 @@ public:
   MDNode *getScopeNode()         const { return Desc.getNode(); }
   MCSymbol *getStartLabel()      const { return StartLabel; }
   MCSymbol *getEndLabel()        const { return EndLabel; }
-  SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
-  SmallVector<DbgVariable *, 8> &getVariables() { return Variables; }
+  const SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
+  const SmallVector<DbgVariable *, 8> &getVariables() { return Variables; }
   void setStartLabel(MCSymbol *S) { StartLabel = S; }
   void setEndLabel(MCSymbol *E)   { EndLabel = E; }
   void setLastInsn(const MachineInstr *MI) { LastInsn = MI; }
@@ -221,14 +224,14 @@ public:
     assert (getFirstInsn() && "First instruction is missing!");
     
     // Use the end of last child scope as end of this scope.
-    SmallVector<DbgScope *, 4> &Scopes = getScopes();
+    const SmallVector<DbgScope *, 4> &Scopes = getScopes();
     const MachineInstr *LastInsn = getFirstInsn();
     unsigned LIndex = 0;
     if (Scopes.empty()) {
       assert (getLastInsn() && "Inner most scope does not have last insn!");
       return;
     }
-    for (SmallVector<DbgScope *, 4>::iterator SI = Scopes.begin(),
+    for (SmallVector<DbgScope *, 4>::const_iterator SI = Scopes.begin(),
            SE = Scopes.end(); SI != SE; ++SI) {
       DbgScope *DS = *SI;
       DS->fixInstructionMarkers(MIIndexMap);
@@ -280,8 +283,6 @@ void DbgScope::dump() const {
 #endif
 
 DbgScope::~DbgScope() {
-  for (unsigned i = 0, N = Scopes.size(); i < N; ++i)
-    delete Scopes[i];
   for (unsigned j = 0, M = Variables.size(); j < M; ++j)
     delete Variables[j];
 }
@@ -819,14 +820,13 @@ void DwarfDebug::addType(DIE *Entity, DIType Ty) {
     return;
   }
 
-  // Set up proxy.
-  Entry = createDIEEntry();
-  ModuleCU->insertDIEEntry(Ty.getNode(), Entry);
-
   // Construct type.
   DIE *Buffer = getOrCreateTypeDIE(Ty);
 
-  Entry->setEntry(Buffer);
+  // Set up proxy.
+  Entry = createDIEEntry(Buffer);
+  ModuleCU->insertDIEEntry(Ty.getNode(), Entry);
+
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
 }
 
@@ -1549,7 +1549,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   }
   
   // Add variables to scope.
-  SmallVector<DbgVariable *, 8> &Variables = Scope->getVariables();
+  const SmallVector<DbgVariable *, 8> &Variables = Scope->getVariables();
   for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
     DIE *VariableDIE = constructVariableDIE(Variables[i], Scope);
     if (VariableDIE)
@@ -1557,7 +1557,7 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   }
 
   // Add nested scopes.
-  SmallVector<DbgScope *, 4> &Scopes = Scope->getScopes();
+  const SmallVector<DbgScope *, 4> &Scopes = Scope->getScopes();
   for (unsigned j = 0, M = Scopes.size(); j < M; ++j) {
     // Define the Scope debug information entry.
     DIE *NestedDIE = constructScopeDIE(Scopes[j]);
@@ -1917,7 +1917,8 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
   if (!Scope)
     return NULL;
 
-  AbsDbgVariable = new DbgVariable(Var, FrameIdx);
+  AbsDbgVariable = new DbgVariable(Var, FrameIdx,
+                                   NULL /* No more-abstract variable*/);
   Scope->addVariable(AbsDbgVariable);
   AbstractVariables[Var.getNode()] = AbsDbgVariable;
   return AbsDbgVariable;
@@ -1944,11 +1945,9 @@ void DwarfDebug::collectVariableInfo() {
     if (!Scope)
       continue;
 
-    DbgVariable *RegVar = new DbgVariable(DV, VP.first);
+    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first, ScopeLoc);
+    DbgVariable *RegVar = new DbgVariable(DV, VP.first, AbsDbgVariable);
     Scope->addVariable(RegVar);
-    if (DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first,
-                                                           ScopeLoc))
-      RegVar->setAbstractVariable(AbsDbgVariable);
   }
 }
 
@@ -2067,9 +2066,9 @@ bool DwarfDebug::extractScopeInformation() {
   while (!WorkList.empty()) {
     DbgScope *S = WorkList.back(); WorkList.pop_back();
 
-    SmallVector<DbgScope *, 4> &Children = S->getScopes();
+    const SmallVector<DbgScope *, 4> &Children = S->getScopes();
     if (!Children.empty()) 
-      for (SmallVector<DbgScope *, 4>::iterator SI = Children.begin(),
+      for (SmallVector<DbgScope *, 4>::const_iterator SI = Children.begin(),
              SE = Children.end(); SI != SE; ++SI)
         WorkList.push_back(*SI);
 
@@ -2174,11 +2173,13 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   // Clear debug info
   CurrentFnDbgScope = NULL;
-  DbgScopeMap.clear();
+  DeleteContainerSeconds(DbgScopeMap);
   DbgScopeBeginMap.clear();
   DbgScopeEndMap.clear();
   ConcreteScopes.clear();
+  DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();
+  AbstractVariables.clear();
   Lines.clear();
   
   if (TimePassesIsEnabled)
