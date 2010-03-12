@@ -28,16 +28,14 @@ X86COFFMachineModuleInfo::~X86COFFMachineModuleInfo() {
 
 /// DecorateCygMingName - Query FunctionInfoMap and use this information for
 /// various name decorations for Cygwin and MingW.
-void X86COFFMachineModuleInfo::DecorateCygMingName(MCSymbol *&NameSym,
-                                                   MCContext &Ctx,
-                                                   const Function *F,
-                                                   const TargetData &TD) {
-  SmallString<128> Name(NameSym->getName().begin(), NameSym->getName().end());
-  
+MCSymbol *X86COFFMachineModuleInfo::DecorateCygMingName(MCSymbol *NameSym,
+                                                        MCContext &Ctx,
+                                                        const Function *F,
+                                                        const TargetData &TD) {
   // We don't want to decorate non-stdcall or non-fastcall functions right now
   CallingConv::ID CC = F->getCallingConv();
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
-    return;
+    return NameSym;
   
   unsigned ArgWords = 0;
   
@@ -55,6 +53,9 @@ void X86COFFMachineModuleInfo::DecorateCygMingName(MCSymbol *&NameSym,
   }
   
   const FunctionType *FT = F->getFunctionType();
+  
+  SmallString<128> Name(NameSym->getName().begin(), NameSym->getName().end());
+
   // "Pure" variadic functions do not receive @0 suffix.
   if (!FT->isVarArg() || FT->getNumParams() == 0 ||
       (FT->getNumParams() == 1 && F->hasStructRetAttr()))
@@ -67,5 +68,5 @@ void X86COFFMachineModuleInfo::DecorateCygMingName(MCSymbol *&NameSym,
       Name.insert(Name.begin(), '@');
   }
   
-  NameSym = Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Name.str());
 }

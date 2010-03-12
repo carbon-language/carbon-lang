@@ -61,10 +61,8 @@ MCSymbol *X86AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
   
   X86COFFMachineModuleInfo &COFFMMI =
     MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-  COFFMMI.DecorateCygMingName(Symb, OutContext, cast<Function>(GV),
-                              *TM.getTargetData());
-
-  return Symb;
+  return COFFMMI.DecorateCygMingName(Symb, OutContext, cast<Function>(GV),
+                                     *TM.getTargetData());
 }
 
 /// runOnMachineFunction - Emit the function body.
