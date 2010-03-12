@@ -343,6 +343,8 @@ void llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
     CI->setCallingConv(Fn->getCallingConv());
 }
 
+SimplifyFortifiedLibCalls::~SimplifyFortifiedLibCalls() { }
+
 bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   this->CI = CI;
   StringRef Name = CI->getCalledFunction()->getName();

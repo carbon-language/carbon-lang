@@ -106,6 +106,7 @@ namespace llvm {
     virtual bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp,
                             bool isString) const = 0;
   public:
+    virtual ~SimplifyFortifiedLibCalls();
     bool fold(CallInst *CI, const TargetData *TD);
   };
 }
