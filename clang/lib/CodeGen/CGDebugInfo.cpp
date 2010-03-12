@@ -104,7 +104,10 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
 void CGDebugInfo::CreateCompileUnit() {
 
   // Get absolute path name.
-  llvm::sys::Path AbsFileName(CGM.getCodeGenOpts().MainFileName);
+  std::string MainFileName = CGM.getCodeGenOpts().MainFileName;
+  if (MainFileName.empty())
+    MainFileName = "<unknown>";
+  llvm::sys::Path AbsFileName(MainFileName);
   AbsFileName.makeAbsolute();
 
   unsigned LangTag;
