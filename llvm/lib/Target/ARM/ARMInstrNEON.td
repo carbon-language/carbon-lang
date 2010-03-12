@@ -98,16 +98,6 @@ def NEONfmin      : SDNode<"ARMISD::FMIN", SDTARMFMAX>;
 // NEON operand definitions
 //===----------------------------------------------------------------------===//
 
-// addrmode_neonldstm := reg
-//
-/* TODO: Take advantage of vldm.
-def addrmode_neonldstm : Operand<i32>,
-                ComplexPattern<i32, 2, "SelectAddrModeNeonLdStM", []> {
-  let PrintMethod = "printAddrNeonLdStMOperand";
-  let MIOperandInfo = (ops GPR, i32imm);
-}
-*/
-
 def h8imm  : Operand<i8> {
   let PrintMethod = "printHex8ImmOperand";
 }
@@ -124,26 +114,6 @@ def h64imm : Operand<i64> {
 //===----------------------------------------------------------------------===//
 // NEON load / store instructions
 //===----------------------------------------------------------------------===//
-
-/* TODO: Take advantage of vldm.
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
-def VLDMD : NI<(outs),
-               (ins addrmode_neonldstm:$addr, reglist:$dst1, variable_ops),
-               IIC_fpLoadm, "vldm", "${addr:submode} ${addr:base}, $dst1", []> {
-  let Inst{27-25} = 0b110;
-  let Inst{20}    = 1;
-  let Inst{11-9}  = 0b101;
-}
-
-def VLDMS : NI<(outs),
-               (ins addrmode_neonldstm:$addr, reglist:$dst1, variable_ops),
-               IIC_fpLoadm, "vldm", "${addr:submode} ${addr:base}, $dst1", []> {
-  let Inst{27-25} = 0b110;
-  let Inst{20}    = 1;
-  let Inst{11-9}  = 0b101;
-}
-}
-*/
 
 // Use vldmia to load a Q register as a D register pair.
 def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
