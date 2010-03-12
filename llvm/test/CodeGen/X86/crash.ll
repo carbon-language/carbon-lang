@@ -33,3 +33,17 @@ if.then:                                          ; preds = %land.end
 if.end:                                           ; preds = %land.end
   ret void
 }
+
+; PR6577
+%pair = type { i64, double }
+
+define void @on4() {
+dependentGraph243.exit:
+  %subject19 = load %pair* undef                     ; <%1> [#uses=1]
+  %0 = extractvalue %pair %subject19, 1              ; <double> [#uses=2]
+  %1 = select i1 undef, double %0, double undef   ; <double> [#uses=1]
+  %2 = select i1 undef, double %1, double %0      ; <double> [#uses=1]
+  %3 = insertvalue %pair undef, double %2, 1         ; <%1> [#uses=1]
+  store %pair %3, %pair* undef
+  ret void
+}

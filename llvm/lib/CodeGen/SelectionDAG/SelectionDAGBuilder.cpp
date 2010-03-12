@@ -2185,7 +2185,8 @@ void SelectionDAGBuilder::visitSelect(User &I) {
 
   for (unsigned i = 0; i != NumValues; ++i)
     Values[i] = DAG.getNode(ISD::SELECT, getCurDebugLoc(),
-                            TrueVal.getNode()->getValueType(i), Cond,
+                          TrueVal.getNode()->getValueType(TrueVal.getResNo()+i),
+                            Cond,
                             SDValue(TrueVal.getNode(),
                                     TrueVal.getResNo() + i),
                             SDValue(FalseVal.getNode(),
