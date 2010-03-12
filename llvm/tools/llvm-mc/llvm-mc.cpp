@@ -270,8 +270,7 @@ static int AssembleInput(const char *ProgName) {
     IP.reset(TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out));
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
-    Str.reset(createAsmStreamer(Ctx, *Out, *MAI,
-                                TM->getTargetData()->isLittleEndian(),
+    Str.reset(createAsmStreamer(Ctx, *Out,TM->getTargetData()->isLittleEndian(),
                                 /*asmverbose*/true, IP.get(), CE.get(),
                                 ShowInst));
   } else {

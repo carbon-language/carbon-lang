@@ -299,8 +299,7 @@ class TargetAsmBackend;
   /// \param ShowInst - Whether to show the MCInst representation inline with
   /// the assembly.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                const MCAsmInfo &MAI, bool isLittleEndian,
-                                bool isVerboseAsm,
+                                bool isLittleEndian, bool isVerboseAsm,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
                                 bool ShowInst = false);

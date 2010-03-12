@@ -41,11 +41,10 @@ class MCAsmStreamer : public MCStreamer {
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
-                const MCAsmInfo &mai,
                 bool isLittleEndian, bool isVerboseAsm, MCInstPrinter *printer,
                 MCCodeEmitter *emitter, bool showInst)
-    : MCStreamer(Context), OS(os), MAI(mai), InstPrinter(printer),
-      Emitter(emitter), CommentStream(CommentToEmit),
+    : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
+      InstPrinter(printer), Emitter(emitter), CommentStream(CommentToEmit),
       IsLittleEndian(isLittleEndian), IsVerboseAsm(isVerboseAsm),
       ShowInst(showInst) {
     if (InstPrinter && IsVerboseAsm)
@@ -654,9 +653,9 @@ void MCAsmStreamer::Finish() {
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
-                                    const MCAsmInfo &MAI, bool isLittleEndian,
+                                    bool isLittleEndian,
                                     bool isVerboseAsm, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, bool ShowInst) {
-  return new MCAsmStreamer(Context, OS, MAI, isLittleEndian, isVerboseAsm,
+  return new MCAsmStreamer(Context, OS, isLittleEndian, isVerboseAsm,
                            IP, CE, ShowInst);
 }
