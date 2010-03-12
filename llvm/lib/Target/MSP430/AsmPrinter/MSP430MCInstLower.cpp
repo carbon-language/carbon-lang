@@ -20,6 +20,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallString.h"
@@ -32,7 +33,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case 0: break;
   }
 
-  return Printer.GetGlobalValueSymbol(MO.getGlobal());
+  return Printer.Mang->getSymbol(MO.getGlobal());
 }
 
 MCSymbol *MSP430MCInstLower::

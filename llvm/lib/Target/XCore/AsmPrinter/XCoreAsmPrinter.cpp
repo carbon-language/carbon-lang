@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -129,7 +130,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(GV, Mang,TM));
 
   
-  MCSymbol *GVSym = GetGlobalValueSymbol(GV);
+  MCSymbol *GVSym = Mang->getSymbol(GV);
   Constant *C = GV->getInitializer();
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
@@ -293,7 +294,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << *MO.getMBB()->getSymbol(OutContext);
     break;
   case MachineOperand::MO_GlobalAddress:
-    O << *GetGlobalValueSymbol(MO.getGlobal());
+    O << *Mang->getSymbol(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();

@@ -31,6 +31,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h" 
 #include "llvm/Target/TargetMachine.h"
@@ -281,7 +282,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     case MachineOperand::MO_GlobalAddress:
-      O << *GetGlobalValueSymbol(MO.getGlobal());
+      O << *Mang->getSymbol(MO.getGlobal());
       break;
 
     case MachineOperand::MO_ExternalSymbol:

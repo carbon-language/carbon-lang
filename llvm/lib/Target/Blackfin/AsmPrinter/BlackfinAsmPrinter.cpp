@@ -27,6 +27,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -85,7 +86,7 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << *MO.getMBB()->getSymbol(OutContext);
     return;
   case MachineOperand::MO_GlobalAddress:
-    O << *GetGlobalValueSymbol(MO.getGlobal());
+    O << *Mang->getSymbol(MO.getGlobal());
     printOffset(MO.getOffset());
     break;
   case MachineOperand::MO_ExternalSymbol:

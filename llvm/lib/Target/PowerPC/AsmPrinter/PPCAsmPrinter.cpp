@@ -203,7 +203,7 @@ namespace {
               MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
             if (StubSym.getPointer() == 0)
               StubSym = MachineModuleInfoImpl::
-                StubValueTy(GetGlobalValueSymbol(GV),!GV->hasInternalLinkage());
+                StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
             O << *Sym;
             return;
           }
@@ -303,10 +303,8 @@ namespace {
 
     void printTOCEntryLabel(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-
       assert(MO.getType() == MachineOperand::MO_GlobalAddress);
-
-      const MCSymbol *Sym = GetGlobalValueSymbol(MO.getGlobal());
+      const MCSymbol *Sym = Mang->getSymbol(MO.getGlobal());
 
       // Map symbol -> label of TOC entry.
       const MCSymbol *&TOCEntry = TOC[Sym];
@@ -431,7 +429,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
             .getGVStubEntry(SymToPrint);
         if (StubSym.getPointer() == 0)
           StubSym = MachineModuleInfoImpl::
-            StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
+            StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
       } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
                  GV->hasAvailableExternallyLinkage()) {
         SymToPrint = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
@@ -441,13 +439,12 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
                     getHiddenGVStubEntry(SymToPrint);
         if (StubSym.getPointer() == 0)
           StubSym = MachineModuleInfoImpl::
-            StubValueTy(GetGlobalValueSymbol(GV),
-                        !GV->hasInternalLinkage());
+            StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
       } else {
-        SymToPrint = GetGlobalValueSymbol(GV);
+        SymToPrint = Mang->getSymbol(GV);
       }
     } else {
-      SymToPrint = GetGlobalValueSymbol(GV);
+      SymToPrint = Mang->getSymbol(GV);
     }
     
     O << *SymToPrint;
@@ -791,8 +788,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
         MCSymbol *NLPSym = GetSymbolWithGlobalValueBase(*I, "$non_lazy_ptr");
         MachineModuleInfoImpl::StubValueTy &StubSym =
           MMIMacho.getGVStubEntry(NLPSym);
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(GetGlobalValueSymbol(*I), true);
+        StubSym = MachineModuleInfoImpl::StubValueTy(Mang->getSymbol(*I), true);
       }
     }
   }

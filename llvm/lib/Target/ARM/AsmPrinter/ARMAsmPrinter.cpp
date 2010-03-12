@@ -38,6 +38,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -198,7 +199,7 @@ namespace {
         bool isIndirect = Subtarget->isTargetDarwin() &&
           Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
         if (!isIndirect)
-          O << *GetGlobalValueSymbol(GV);
+          O << *Mang->getSymbol(GV);
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
           MCSymbol *Sym = GetSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
@@ -211,7 +212,7 @@ namespace {
                                         MMIMachO.getGVStubEntry(Sym);
           if (StubSym.getPointer() == 0)
             StubSym = MachineModuleInfoImpl::
-              StubValueTy(GetGlobalValueSymbol(GV), !GV->hasInternalLinkage());
+              StubValueTy(Mang->getSymbol(GV), !GV->hasInternalLinkage());
         }
       } else {
         assert(ACPV->isExtSymbol() && "unrecognized constant pool value");
@@ -316,7 +317,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
              (TF & ARMII::MO_HI16))
       O << ":upper16:";
-    O << *GetGlobalValueSymbol(GV);
+    O << *Mang->getSymbol(GV);
 
     printOffset(MO.getOffset());
 

@@ -29,6 +29,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -93,7 +94,7 @@ void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum){
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    O << *GetGlobalValueSymbol(GV);
+    O << *Mang->getSymbol(GV);
 
     // Assemble calls via PLT for externally visible symbols if PIC.
     if (TM.getRelocationModel() == Reloc::PIC_ &&
@@ -158,7 +159,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     printOffset(MO.getOffset());
     break;
   case MachineOperand::MO_GlobalAddress:
-    O << *GetGlobalValueSymbol(MO.getGlobal());
+    O << *Mang->getSymbol(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol: {
     O << *GetExternalSymbolSymbol(MO.getSymbolName());
