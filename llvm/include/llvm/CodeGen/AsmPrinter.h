@@ -316,7 +316,7 @@ namespace llvm {
 
     /// GetGlobalValueSymbol - Return the MCSymbol for the specified global
     /// value.
-    virtual MCSymbol *GetGlobalValueSymbol(const GlobalValue *GV) const;
+    MCSymbol *GetGlobalValueSymbol(const GlobalValue *GV) const;
 
     /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
     /// global value name as its base, with the specified suffix, and where the

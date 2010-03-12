@@ -53,10 +53,6 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
                                                                     OutContext);
 }
 
-MCSymbol *X86AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
-  return Mang->getSymbol(GV);
-}
-
 /// runOnMachineFunction - Emit the function body.
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
