@@ -549,12 +549,12 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
   return II;
 }
 
-IdentifierInfo* PTHManager::get(const char *NameStart, const char *NameEnd) {
+IdentifierInfo* PTHManager::get(llvm::StringRef Name) {
   PTHStringIdLookup& SL = *((PTHStringIdLookup*)StringIdLookup);
   // Double check our assumption that the last character isn't '\0'.
-  assert(NameEnd==NameStart || NameStart[NameEnd-NameStart-1] != '\0');
-  PTHStringIdLookup::iterator I = SL.find(std::make_pair(NameStart,
-                                                         NameEnd - NameStart));
+  assert(Name.empty() || Name.data()[Name.size()-1] != '\0');
+  PTHStringIdLookup::iterator I = SL.find(std::make_pair(Name.data(),
+                                                         Name.size()));
   if (I == SL.end()) // No identifier found?
     return 0;
 
@@ -662,7 +662,7 @@ public:
     CacheTy::iterator I = Cache.find(path);
 
     // If we don't get a hit in the PTH file just forward to 'stat'.
-    if (I == Cache.end()) 
+    if (I == Cache.end())
       return StatSysCallCache::stat(path, buf);
 
     const PTHStatData& Data = *I;

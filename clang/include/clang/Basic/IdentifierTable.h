@@ -18,6 +18,7 @@
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
@@ -236,9 +237,7 @@ public:
   ///  Unlike the version in IdentifierTable, this returns a pointer instead
   ///  of a reference.  If the pointer is NULL then the IdentifierInfo cannot
   ///  be found.
-  //
-  // FIXME: Move to StringRef API.
-  virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd) = 0;
+  virtual IdentifierInfo* get(llvm::StringRef Name) = 0;
 };
 
 /// \brief An abstract class used to resolve numerical identifier
@@ -292,7 +291,7 @@ public:
 
     // No entry; if we have an external lookup, look there first.
     if (ExternalLookup) {
-      II = ExternalLookup->get(NameStart, NameEnd);
+      II = ExternalLookup->get(llvm::StringRef(NameStart, NameEnd-NameStart));
       if (II) {
         // Cache in the StringMap for subsequent lookups.
         Entry.setValue(II);
@@ -533,7 +532,7 @@ struct DenseMapInfo<clang::Selector> {
     return LHS == RHS;
   }
 };
-  
+
 template <>
 struct isPodLike<clang::Selector> { static const bool value = true; };
 
