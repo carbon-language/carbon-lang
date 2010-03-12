@@ -73,7 +73,7 @@ namespace test0 {
   void declared_test();
 
   class Class {
-    static void member(); // expected-note {{declared private here}}
+    static void member(); // expected-note 2 {{declared private here}}
 
     friend class ClassFriend;
     friend class UndeclaredClassFriend;
@@ -106,6 +106,12 @@ namespace test0 {
   class UndeclaredClassFriend {
     void test() {
       Class::member();
+    }
+  };
+
+  class ClassNonFriend {
+    void test() {
+      Class::member(); // expected-error {{'member' is a private member of 'test0::Class'}}
     }
   };
 }
