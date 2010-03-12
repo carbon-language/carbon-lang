@@ -33,6 +33,7 @@ class CXXDestructorDecl;
 class CXXMethodDecl;
 class CXXRecordDecl;
 class CXXMemberLookupCriteria;
+class FriendDecl;
   
 /// \brief Represents any kind of function declaration, whether it is a
 /// concrete function or a function template.
@@ -299,6 +300,11 @@ class CXXRecordDecl : public RecordDecl {
     /// Definition - The declaration which defines this record.
     CXXRecordDecl *Definition;
 
+    /// FirstFriend - The first friend declaration in this class, or
+    /// null if there aren't any.  This is actually currently stored
+    /// in reverse order.
+    FriendDecl *FirstFriend;
+
   } *DefinitionData;
 
   struct DefinitionData &data() {
@@ -458,6 +464,13 @@ public:
   ctor_iterator ctor_end() const {
     return ctor_iterator(decls_end());
   }
+
+  /// An iterator over friend declarations.  All of these are defined
+  /// in DeclFriend.h.
+  class friend_iterator;
+  friend_iterator friend_begin() const;
+  friend_iterator friend_end() const;
+  void pushFriendDecl(FriendDecl *FD);
 
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.

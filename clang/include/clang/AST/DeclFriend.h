@@ -42,6 +42,9 @@ private:
   // The declaration that's a friend of this class.
   FriendUnion Friend;
 
+  // A pointer to the next friend in the sequence.
+  FriendDecl *NextFriend;
+
   // Location of the 'friend' specifier.
   SourceLocation FriendLoc;
 
@@ -49,10 +52,14 @@ private:
   // template specialization.
   bool WasSpecialization;
 
+  friend class CXXRecordDecl::friend_iterator;
+  friend class CXXRecordDecl;
+
   FriendDecl(DeclContext *DC, SourceLocation L, FriendUnion Friend,
              SourceLocation FriendL)
     : Decl(Decl::Friend, DC, L),
       Friend(Friend),
+      NextFriend(0),
       FriendLoc(FriendL),
       WasSpecialization(false) {
   }
@@ -89,6 +96,71 @@ public:
   static bool classof(const FriendDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == Decl::Friend; }
 };
+
+/// An iterator over the friend declarations of a class.
+class CXXRecordDecl::friend_iterator {
+  FriendDecl *Ptr;
+
+  friend class CXXRecordDecl;
+  explicit friend_iterator(FriendDecl *Ptr) : Ptr(Ptr) {}
+public:
+  friend_iterator() {}
+
+  typedef FriendDecl *value_type;
+  typedef FriendDecl *reference;
+  typedef FriendDecl *pointer;
+  typedef int difference_type;
+  typedef std::forward_iterator_tag iterator_category;
+
+  reference operator*() const { return Ptr; }
+
+  friend_iterator &operator++() {
+    assert(Ptr && "attempt to increment past end of friend list");
+    Ptr = Ptr->NextFriend;
+    return *this;
+  }
+
+  friend_iterator operator++(int) {
+    friend_iterator tmp = *this;
+    ++*this;
+    return tmp;
+  }
+
+  bool operator==(const friend_iterator &Other) const {
+    return Ptr == Other.Ptr;
+  }
+
+  bool operator!=(const friend_iterator &Other) const {
+    return Ptr != Other.Ptr;
+  }
+
+  friend_iterator &operator+=(difference_type N) {
+    assert(N >= 0 && "cannot rewind a CXXRecordDecl::friend_iterator");
+    while (N--)
+      ++*this;
+    return *this;
+  }
+
+  friend_iterator operator+(difference_type N) const {
+    friend_iterator tmp = *this;
+    tmp += N;
+    return tmp;
+  }
+};
+
+inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_begin() const {
+  return friend_iterator(data().FirstFriend);
+}
+
+inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_end() const {
+  return friend_iterator(0);
+}
+
+inline void CXXRecordDecl::pushFriendDecl(FriendDecl *FD) {
+  assert(FD->NextFriend == 0 && "friend already has next friend?");
+  FD->NextFriend = data().FirstFriend;
+  data().FirstFriend = FD;
+}
   
 }
 

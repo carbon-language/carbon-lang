@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclFriend.h"
 #include "clang/AST/ExprCXX.h"
 
 using namespace clang;
@@ -55,7 +56,7 @@ struct EffectiveContext {
 
   explicit EffectiveContext(DeclContext *DC) {
     if (isa<FunctionDecl>(DC)) {
-      Function = cast<FunctionDecl>(DC);
+      Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
       DC = Function->getDeclContext();
     } else
       Function = 0;
@@ -85,10 +86,34 @@ static CXXRecordDecl *FindDeclaringClass(NamedDecl *D) {
 static Sema::AccessResult GetFriendKind(Sema &S,
                                         const EffectiveContext &EC,
                                         const CXXRecordDecl *Class) {
+  // A class always has access to its own members.
   if (EC.isClass(Class))
     return Sema::AR_accessible;
 
-  // FIXME: implement
+  // Okay, check friends.
+  for (CXXRecordDecl::friend_iterator I = Class->friend_begin(),
+         E = Class->friend_end(); I != E; ++I) {
+    FriendDecl *Friend = *I;
+
+    if (Type *T = Friend->getFriendType()) {
+      if (EC.Record &&
+          S.Context.hasSameType(QualType(T, 0),
+                                S.Context.getTypeDeclType(EC.Record)))
+        return Sema::AR_accessible;
+    } else {
+      NamedDecl *D
+        = cast<NamedDecl>(Friend->getFriendDecl()->getCanonicalDecl());
+
+      // The decl pointers in EC have been canonicalized, so pointer
+      // equality is sufficient.
+      if (D == EC.Function || D == EC.Record)
+        return Sema::AR_accessible;
+    }
+
+    // FIXME: templates! templated contexts! dependent delay!
+  }
+
+  // That's it, give up.
   return Sema::AR_inaccessible;
 }
 

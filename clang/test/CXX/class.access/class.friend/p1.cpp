@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -faccess-control -verify %s
 
 // C++'0x [class.friend] p1:
 //   A friend of a class is a function or class that is given permission to use
@@ -59,4 +59,53 @@ namespace N {
     X::S2 x_s2; // expected-error{{no member named 'S2' in 'N::X'}}
     x.g2(); // expected-error{{no member named 'g2' in 'N::X'}}
   }
+}
+
+namespace test0 {
+  class ClassFriend {
+    void test();
+  };
+
+  class MemberFriend {
+    void test();
+  };
+
+  void declared_test();
+
+  class Class {
+    static void member(); // expected-note {{declared private here}}
+
+    friend class ClassFriend;
+    friend class UndeclaredClassFriend;
+
+    friend void undeclared_test();
+    friend void declared_test();
+    friend void MemberFriend::test();
+  };
+
+  void declared_test() {
+    Class::member();
+  }
+
+  void undeclared_test() {
+    Class::member();
+  }
+
+  void unfriended_test() {
+    Class::member(); // expected-error {{'member' is a private member of 'test0::Class'}}
+  }
+
+  void ClassFriend::test() {
+    Class::member();
+  }
+
+  void MemberFriend::test() {
+    Class::member();
+  }
+
+  class UndeclaredClassFriend {
+    void test() {
+      Class::member();
+    }
+  };
 }

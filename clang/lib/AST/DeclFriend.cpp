@@ -35,5 +35,7 @@ FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
   }
 #endif
 
-  return new (C) FriendDecl(DC, L, Friend, FriendL);
+  FriendDecl *FD = new (C) FriendDecl(DC, L, Friend, FriendL);
+  cast<CXXRecordDecl>(DC)->pushFriendDecl(FD);
+  return FD;
 }

@@ -33,7 +33,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialDestructor(true), ComputedVisibleConversions(false),
     Bases(0), NumBases(0), VBases(0), NumVBases(0),
-    Definition(D) {
+    Definition(D), FirstFriend(0) {
 }
 
 CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
