@@ -935,6 +935,7 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       .Case("sse42", SSE42)
       .Case("sse41", SSE41)
       .Case("ssse3", SSSE3)
+      .Case("sse3", SSE3)
       .Case("sse2", SSE2)
       .Case("sse", SSE1)
       .Case("mmx", MMX)
