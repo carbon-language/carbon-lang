@@ -1154,10 +1154,6 @@ private:
     bool isEmpty() const { return !NonVirtual && !VBaseOffsetOffset; }
   };
   
-  /// ReturnAdjustments - The return adjustments needed in this vtable.
-  llvm::SmallVector<std::pair<uint64_t, ReturnAdjustment>, 16> 
-    ReturnAdjustments;
-
   /// MethodInfo - Contains information about a method in a vtable.
   /// (Used for computing 'this' pointer adjustment thunks.
   struct MethodInfo {
@@ -1202,9 +1198,27 @@ private:
     bool isEmpty() const { return !NonVirtual && !VCallOffsetOffset; }
   };
   
-  /// ThisAdjustments - The 'this' pointer adjustments needed in this vtable.
-  llvm::SmallVector<std::pair<uint64_t, ThisAdjustment>, 16> 
-    ThisAdjustments;
+  /// ThunkInfo - The 'this' pointer adjustment as well as an optional return
+  /// adjustment for a thunk.
+  struct ThunkInfo {
+    /// This - The 'this' pointer adjustment.
+    ThisAdjustment This;
+    
+    /// Return - The return adjustment.
+    ReturnAdjustment Return;
+    
+    ThunkInfo() { }
+    
+    ThunkInfo(const ThisAdjustment &This, const ReturnAdjustment &Return)
+      : This(This), Return(Return) { }
+    
+    bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }    
+  };
+  
+  typedef llvm::DenseMap<uint64_t, ThunkInfo> ThunksInfoMapTy;
+  
+  /// Thunks - The thunks by vtable index in the vtable currently being built.
+  ThunksInfoMapTy Thunks;
 
   /// ComputeThisAdjustments - Compute the 'this' pointer adjustments for the
   /// part of the vtable we're currently building.
@@ -1340,8 +1354,6 @@ OverridesMethodInBases(const CXXMethodDecl *MD,
 }
 
 void VtableBuilder::ComputeThisAdjustments() {
-  std::map<uint64_t, ThisAdjustment> SortedThisAdjustments;
-  
   // Now go through the method info map and see if any of the methods need
   // 'this' pointer adjustments.
   for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
@@ -1385,21 +1397,16 @@ void VtableBuilder::ComputeThisAdjustments() {
                                                           ThisAdjustmentOffset);
 
     // Add it.
-    SortedThisAdjustments.insert(std::make_pair(VtableIndex, ThisAdjustment));
+    Thunks[VtableIndex].This = ThisAdjustment;
     
     if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
-      SortedThisAdjustments.insert(std::make_pair(VtableIndex + 1,
-                                                  ThisAdjustment));
+      Thunks[VtableIndex + 1].This = ThisAdjustment;
     }
   }
 
   /// Clear the method info map.
   MethodInfoMap.clear();
-  
-  // Add the sorted elements.
-  ThisAdjustments.append(SortedThisAdjustments.begin(),
-                         SortedThisAdjustments.end());
 }
 
 VtableBuilder::ReturnAdjustment 
@@ -1528,8 +1535,7 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
   } else {
     // Add the return adjustment if necessary.
     if (!ReturnAdjustment.isEmpty())
-      ReturnAdjustments.push_back(std::make_pair(Components.size(),
-                                                 ReturnAdjustment));
+      Thunks[Components.size()].Return = ReturnAdjustment;
 
     // Add the function.
     Components.push_back(VtableComponent::MakeFunction(MD));
@@ -1733,6 +1739,9 @@ VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
       }
     }
 
+    printf("method info for (%s, %llu)\n",
+           MD->getQualifiedNameAsString().c_str(),
+           Base.getBaseOffset() / 8);
     // Insert the method info for this method.
     MethodInfo MethodInfo(Base.getBaseOffset(), BaseOffsetInLayoutClass,
                           Components.size());
@@ -2023,8 +2032,6 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     AddressPointsByIndex.insert(std::make_pair(Index, Base));
   }
   
-  unsigned NextReturnAdjustmentIndex = 0;
-  unsigned NextThisAdjustmentIndex = 0;
   for (unsigned I = 0, E = Components.size(); I != E; ++I) {
     uint64_t Index = I;
 
@@ -2061,38 +2068,33 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       if (MD->isPure())
         Out << " [pure]";
 
-      // If this function pointer has a return adjustment, dump it.
-      if (NextReturnAdjustmentIndex < ReturnAdjustments.size() && 
-          ReturnAdjustments[NextReturnAdjustmentIndex].first == I) {
-        const ReturnAdjustment Adjustment = 
-          ReturnAdjustments[NextReturnAdjustmentIndex].second;
-        
-        Out << "\n       [return adjustment: ";
-        Out << Adjustment.NonVirtual << " non-virtual";
-        
-        if (Adjustment.VBaseOffsetOffset)
-          Out << ", " << Adjustment.VBaseOffsetOffset << " vbase offset offset";
+      ThunkInfo Thunk = Thunks.lookup(I);
+      if (!Thunk.isEmpty()) {
+        // If this function pointer has a return adjustment, dump it.
+        if (!Thunk.Return.isEmpty()) {
+          Out << "\n       [return adjustment: ";
+          Out << Thunk.Return.NonVirtual << " non-virtual";
+          
+          if (Thunk.Return.VBaseOffsetOffset) {
+            Out << ", " << Thunk.Return.VBaseOffsetOffset;
+            Out << " vbase offset offset";
+          }
 
-        Out << ']';
+          Out << ']';
+        }
 
-        NextReturnAdjustmentIndex++;
-      }
-      
-      // If this function pointer has a 'this' pointer adjustment, dump it.
-      if (NextThisAdjustmentIndex < ThisAdjustments.size() && 
-          ThisAdjustments[NextThisAdjustmentIndex].first == I) {
-        const ThisAdjustment Adjustment = 
-          ThisAdjustments[NextThisAdjustmentIndex].second;
-        
-        Out << "\n       [this adjustment: ";
-        Out << Adjustment.NonVirtual << " non-virtual";
+        // If this function pointer has a 'this' pointer adjustment, dump it.
+        if (!Thunk.This.isEmpty()) {
+          Out << "\n       [this adjustment: ";
+          Out << Thunk.This.NonVirtual << " non-virtual";
+          
+          if (Thunk.This.VCallOffsetOffset) {
+            Out << ", " << Thunk.This.VCallOffsetOffset;
+            Out << " vcall offset offset";
+          }
 
-        if (Adjustment.VCallOffsetOffset)
-          Out << ", " << Adjustment.VCallOffsetOffset << " vcall offset offset";
-
-        Out << ']';
-        
-        NextThisAdjustmentIndex++;
+          Out << ']';
+        }          
       }
 
       break;
@@ -2114,23 +2116,21 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       if (DD->isPure())
         Out << " [pure]";
 
-      // If this destructor has a 'this' pointer adjustment, dump it.
-      if (NextThisAdjustmentIndex < ThisAdjustments.size() && 
-          ThisAdjustments[NextThisAdjustmentIndex].first == I) {
-        const ThisAdjustment Adjustment = 
-          ThisAdjustments[NextThisAdjustmentIndex].second;
-        
-        Out << "\n       [this adjustment: ";
-        Out << Adjustment.NonVirtual << " non-virtual";
-
-        if (Adjustment.VCallOffsetOffset)
-          Out << ", " << Adjustment.VCallOffsetOffset << " vcall offset offset";
-
-        Out << ']';
-        
-        NextThisAdjustmentIndex++;
-      }
-
+      ThunkInfo Thunk = Thunks.lookup(I);
+      if (!Thunk.isEmpty()) {
+        // If this destructor has a 'this' pointer adjustment, dump it.
+        if (!Thunk.This.isEmpty()) {
+          Out << "\n       [this adjustment: ";
+          Out << Thunk.This.NonVirtual << " non-virtual";
+          
+          if (Thunk.This.VCallOffsetOffset) {
+            Out << ", " << Thunk.This.VCallOffsetOffset;
+            Out << " vcall offset offset";
+          }
+          
+          Out << ']';
+        }          
+      }        
 
       break;
     }
@@ -2187,7 +2187,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
   Out << '\n';
   
-  if (!isBuildingConstructorVtable()) {
+  if (!isBuildingConstructorVtable() && MostDerivedClass->getNumVBases()) {
     Out << "Virtual base offset offsets for '";
     Out << MostDerivedClass->getQualifiedNameAsString() << "'.\n";
     
