@@ -23,6 +23,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
@@ -54,7 +55,21 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
 
   SmallString<128> Name;
   
-  if (MO.isGlobal()) {
+  if (!MO.isGlobal()) {
+    assert(MO.isSymbol());
+    Name += AsmPrinter.MAI->getGlobalPrefix();
+    Name += MO.getSymbolName();
+  } else if (getSubtarget().isTargetCygMing() &&
+             isa<Function>(MO.getGlobal())) {
+    const GlobalValue *GV = MO.getGlobal();
+    MCSymbol *Sym = Mang->getSymbol(GV);
+    X86COFFMachineModuleInfo &COFFMMI = 
+    AsmPrinter.MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+    COFFMMI.DecorateCygMingName(Sym, Ctx, cast<Function>(GV),
+                                *AsmPrinter.TM.getTargetData());
+    Name.append(Sym->getName().begin(), Sym->getName().end());
+  } else {    
+    const GlobalValue *GV = MO.getGlobal();
     bool isImplicitlyPrivate = false;
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
@@ -62,18 +77,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
         MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       isImplicitlyPrivate = true;
     
-    const GlobalValue *GV = MO.getGlobal();
     Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
-  
-    if (getSubtarget().isTargetCygMing()) {
-      X86COFFMachineModuleInfo &COFFMMI = 
-        AsmPrinter.MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-      COFFMMI.DecorateCygMingName(Name, GV, *AsmPrinter.TM.getTargetData());
-    }
-  } else {
-    assert(MO.isSymbol());
-    Name += AsmPrinter.MAI->getGlobalPrefix();
-    Name += MO.getSymbolName();
   }
 
   // If the target flags on the operand changes the name of the symbol, do that

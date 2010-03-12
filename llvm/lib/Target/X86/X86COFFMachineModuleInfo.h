@@ -27,15 +27,16 @@ namespace llvm {
 class X86COFFMachineModuleInfo : public MachineModuleInfoImpl {
   StringSet<> CygMingStubs;
 public:
-  X86COFFMachineModuleInfo(const MachineModuleInfo &);
-  ~X86COFFMachineModuleInfo();
+  X86COFFMachineModuleInfo(const MachineModuleInfo &) {}
+  virtual ~X86COFFMachineModuleInfo();
 
-  void DecorateCygMingName(MCSymbol* &Name, MCContext &Ctx,
-                           const GlobalValue *GV, const TargetData &TD);
-  void DecorateCygMingName(SmallVectorImpl<char> &Name, const GlobalValue *GV,
-                           const TargetData &TD);
+  void DecorateCygMingName(MCSymbol *&Name, MCContext &Ctx,
+                           const Function *F, const TargetData &TD);
 
-  void addExternalFunction(const StringRef& Name);
+  void addExternalFunction(StringRef Name) {
+    CygMingStubs.insert(Name);
+  }
+    
   typedef StringSet<>::const_iterator stub_iterator;
   stub_iterator stub_begin() const { return CygMingStubs.begin(); }
   stub_iterator stub_end() const { return CygMingStubs.end(); }
