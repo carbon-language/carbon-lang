@@ -327,9 +327,8 @@ void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
     for (unsigned i = 0; i != Size; ++i)
       DF->getContents().push_back(uint8_t(AbsValue >> (i * 8)));
   } else {
-    DF->getFixups().push_back(MCAsmFixup(DF->getContents().size(),
-                                         *AddValueSymbols(Value),
-                                         MCFixup::getKindForSize(Size)));
+    DF->addFixup(MCAsmFixup(DF->getContents().size(), *AddValueSymbols(Value),
+                            MCFixup::getKindForSize(Size)));
     DF->getContents().resize(DF->getContents().size() + Size, 0);
   }
 }
@@ -388,9 +387,8 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
     DF = new MCDataFragment(CurSectionData);
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
-    DF->getFixups().push_back(MCAsmFixup(DF->getContents().size()+F.getOffset(),
-                                         *F.getValue(),
-                                         F.getKind()));
+    DF->addFixup(MCAsmFixup(DF->getContents().size()+F.getOffset(),
+                            *F.getValue(), F.getKind()));
   }
   DF->getContents().append(Code.begin(), Code.end());
 }

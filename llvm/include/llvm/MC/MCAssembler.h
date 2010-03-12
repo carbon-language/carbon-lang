@@ -162,6 +162,13 @@ public:
   /// @name Fixup Access
   /// @{
 
+  void addFixup(MCAsmFixup Fixup) {
+    // Enforce invariant that fixups are in offset order.
+    assert(Fixups.empty() || Fixup.Offset > Fixups.back().Offset &&
+           "Fixups must be added in order!");
+    Fixups.push_back(Fixup);
+  }
+
   std::vector<MCAsmFixup> &getFixups() { return Fixups; }
   const std::vector<MCAsmFixup> &getFixups() const { return Fixups; }
 
