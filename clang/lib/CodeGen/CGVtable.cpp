@@ -1739,9 +1739,6 @@ VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
       }
     }
 
-    printf("method info for (%s, %llu)\n",
-           MD->getQualifiedNameAsString().c_str(),
-           Base.getBaseOffset() / 8);
     // Insert the method info for this method.
     MethodInfo MethodInfo(Base.getBaseOffset(), BaseOffsetInLayoutClass,
                           Components.size());
