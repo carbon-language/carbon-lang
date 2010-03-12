@@ -523,10 +523,18 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         // L_foo$non_lazy_ptr:
         OutStreamer.EmitLabel(Stubs[i].first);
         // .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second.getPointer(),
+        MachineModuleInfoImpl::StubValueTy &MCSym = Stubs[i].second;
+        OutStreamer.EmitSymbolAttribute(MCSym.getPointer(),
                                         MCSA_IndirectSymbol);
         // .long 0
-        OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+        if (MCSym.getInt())
+          // External to current translation unit.
+          OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+        else
+          // Internal to current translation unit.
+          OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
+                                                        OutContext),
+                                4/*size*/, 0/*addrspace*/);
       }
       Stubs.clear();
       OutStreamer.AddBlankLine();
