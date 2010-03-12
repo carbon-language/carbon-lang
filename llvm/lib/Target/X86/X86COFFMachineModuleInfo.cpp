@@ -12,14 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86COFFMachineModuleInfo.h"
-#include "X86MachineFunctionInfo.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 
