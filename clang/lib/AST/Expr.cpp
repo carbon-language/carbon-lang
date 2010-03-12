@@ -788,6 +788,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
 
   switch (getStmtClass()) {
   default:
+    if (getType()->isVoidType())
+      return false;
     Loc = getExprLoc();
     R1 = getSourceRange();
     return true;
@@ -834,8 +836,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
         if (IE->getValue() == 0)
           return false;
 
-      return (BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
-              BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
+      return (BO->getLHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx) ||
+              BO->getRHS()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
     }
 
     if (BO->isAssignmentOp())
@@ -936,6 +938,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
       if (const Expr *E = dyn_cast<Expr>(CS->body_back()))
         return E->isUnusedResultAWarning(Loc, R1, R2, Ctx);
 
+    if (getType()->isVoidType())
+      return false;
     Loc = cast<StmtExpr>(this)->getLParenLoc();
     R1 = getSourceRange();
     return true;
@@ -949,6 +953,8 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     R1 = cast<CStyleCastExpr>(this)->getSubExpr()->getSourceRange();
     return true;
   case CXXFunctionalCastExprClass: {
+    if (getType()->isVoidType())
+      return false;
     const CastExpr *CE = cast<CastExpr>(this);
     
     // If this is a cast to void or a constructor conversion, check the operand.

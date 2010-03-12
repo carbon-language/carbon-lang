@@ -10,7 +10,7 @@ void f() {
   int(a)++; // expected-error {{expression is not assignable}}
   __extension__ int(a)++; // expected-error {{expression is not assignable}}
   __typeof(int)(a,5)<<a; // expected-error {{function-style cast to a builtin type can only take one argument}}
-  void(a), ++a; // expected-warning {{expression result unused}}
+  void(a), ++a;
   if (int(a)+1) {}
   for (int(a)+1;;) {} // expected-warning {{expression result unused}}
   a = sizeof(int()+1);

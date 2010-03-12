@@ -76,10 +76,6 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (!E)
     return;
 
-  // Ignore expressions that have void type.
-  if (E->getType()->isVoidType())
-    return;
-
   SourceLocation Loc;
   SourceRange R1, R2;
   if (!E->isUnusedResultAWarning(Loc, R1, R2, Context))
@@ -103,6 +99,9 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   }
       
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
+    if (E->getType()->isVoidType())
+      return;
+
     // If the callee has attribute pure, const, or warn_unused_result, warn with
     // a more specific message to make it clear what is happening.
     if (const Decl *FD = CE->getCalleeDecl()) {
