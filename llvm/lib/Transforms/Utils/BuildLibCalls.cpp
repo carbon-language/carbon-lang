@@ -342,3 +342,84 @@ void llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
   if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
     CI->setCallingConv(Fn->getCallingConv());
 }
+
+bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
+  this->CI = CI;
+  StringRef Name = CI->getCalledFunction()->getName();
+  BasicBlock *BB = CI->getParent();
+  IRBuilder<> B(CI->getParent()->getContext());
+
+  // Set the builder to the instruction after the call.
+  B.SetInsertPoint(BB, CI);
+
+  if (Name == "__memcpy_chk") {
+    if (isFoldable(4, 3, false)) {
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+                 1, B, TD);
+      replaceCall(CI->getOperand(1));
+      return true;
+    }
+    return false;
+  }
+
+  // Should be similar to memcpy.
+  if (Name == "__mempcpy_chk") {
+    return false;
+  }
+
+  if (Name == "__memmove_chk") {
+    if (isFoldable(4, 3, false)) {
+      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
+                  1, B, TD);
+      replaceCall(CI->getOperand(1));
+      return true;
+    }
+    return false;
+  }
+
+  if (Name == "__memset_chk") {
+    if (isFoldable(4, 3, false)) {
+      Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
+                                   false);
+      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
+      replaceCall(CI->getOperand(1));
+      return true;
+    }
+    return false;
+  }
+
+  if (Name == "__strcpy_chk" || Name == "__stpcpy_chk") {
+    // If a) we don't have any length information, or b) we know this will
+    // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
+    // st[rp]cpy_chk call which may fail at runtime if the size is too long.
+    // TODO: It might be nice to get a maximum length out of the possible
+    // string lengths for varying.
+    if (isFoldable(3, 2, true)) {
+      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD,
+                              Name.substr(2, 6));
+      replaceCall(Ret);
+      return true;
+    }
+    return false;
+  }
+
+  if (Name == "__strncpy_chk") {
+    if (isFoldable(4, 3, false)) {
+      Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
+                               CI->getOperand(3), B, TD);
+      replaceCall(Ret);
+      return true;
+    }
+    return false;
+  }
+
+  if (Name == "__strcat_chk") {
+    return false;
+  }
+
+  if (Name == "__strncat_chk") {
+    return false;
+  }
+
+  return false;
+}

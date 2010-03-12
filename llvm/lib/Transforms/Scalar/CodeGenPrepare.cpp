@@ -540,9 +540,22 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
   return MadeChange;
 }
 
+namespace {
+class CodeGenPrepareFortifiedLibCalls : public SimplifyFortifiedLibCalls {
+protected:
+  void replaceCall(Value *With) {
+    CI->replaceAllUsesWith(With);
+    CI->eraseFromParent();
+  }
+  bool isFoldable(unsigned SizeCIOp, unsigned, bool) const {
+    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(SizeCIOp)))
+      return SizeCI->isAllOnesValue();
+    return false;
+  }
+};
+} // end anonymous namespace
+
 bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
-  bool MadeChange = false;
-  
   // Lower all uses of llvm.objectsize.*
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
   if (II && II->getIntrinsicID() == Intrinsic::objectsize) {
@@ -561,102 +574,12 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   const TargetData *TD = TLI ? TLI->getTargetData() : 0;
   if (!TD) return false;
   
-  // Lower all default uses of _chk calls.  This is code very similar
-  // to the code in InstCombineCalls, but here we are only lowering calls
+  // Lower all default uses of _chk calls.  This is very similar
+  // to what InstCombineCalls does, but here we are only lowering calls
   // that have the default "don't know" as the objectsize.  Anything else
   // should be left alone.
-  StringRef Name = CI->getCalledFunction()->getName();
-  BasicBlock *BB = CI->getParent();
-  IRBuilder<> B(CI->getParent()->getContext());
-  
-  // Set the builder to the instruction after the call.
-  B.SetInsertPoint(BB, CI);
-
-  if (Name == "__memcpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    if (SizeCI->isAllOnesValue()) {
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-                 1, B, TD);
-      CI->replaceAllUsesWith(CI->getOperand(1));
-      CI->eraseFromParent();
-      return true;
-    }
-    return 0;
-  }
-
-  // Should be similar to memcpy.
-  if (Name == "__mempcpy_chk") {
-    return 0;
-  }
-
-  if (Name == "__memmove_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    if (SizeCI->isAllOnesValue()) {
-      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-                  1, B, TD);
-      CI->replaceAllUsesWith(CI->getOperand(1));
-      CI->eraseFromParent();
-      return true;
-    }
-    return 0;
-  }
-
-  if (Name == "__memset_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    if (SizeCI->isAllOnesValue()) {
-      Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
-                                   false);
-      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
-      CI->replaceAllUsesWith(CI->getOperand(1));
-      CI->eraseFromParent();
-      return true;
-    }
-    return 0;
-  }
-
-  if (Name == "__strcpy_chk" || Name == "__stpcpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeCI)
-      return 0;
-    if (SizeCI->isAllOnesValue()) {
-      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD,
-                              Name.substr(2, 6));
-      CI->replaceAllUsesWith(Ret);
-      CI->eraseFromParent();
-      return true;
-    }
-    return 0;
-  }
-
-  if (Name == "__strncpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    if (SizeCI->isAllOnesValue()) {
-      Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
-                               CI->getOperand(3), B, TD);
-      CI->replaceAllUsesWith(Ret);
-      CI->eraseFromParent();
-      return true;
-    }
-    return 0; 
-  }
-
-  if (Name == "__strcat_chk") {
-    return 0;
-  }
-
-  if (Name == "__strncat_chk") {
-    return 0;
-  }
-  
-  return MadeChange;
+  CodeGenPrepareFortifiedLibCalls Simplifier;
+  return Simplifier.fold(CI, TD);
 }
 //===----------------------------------------------------------------------===//
 // Memory Optimization

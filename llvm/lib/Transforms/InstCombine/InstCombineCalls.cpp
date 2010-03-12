@@ -751,117 +751,41 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   return true;
 }
 
+namespace {
+class InstCombineFortifiedLibCalls : public SimplifyFortifiedLibCalls {
+  InstCombiner *IC;
+protected:
+  void replaceCall(Value *With) {
+    NewInstruction = IC->ReplaceInstUsesWith(*CI, With);
+  }
+  bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp, bool isString) const {
+    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(SizeCIOp))) {
+      if (SizeCI->isAllOnesValue())
+        return true;
+      if (isString)
+        return SizeCI->getZExtValue() >=
+               GetStringLength(CI->getOperand(SizeArgOp));
+      if (ConstantInt *Arg = dyn_cast<ConstantInt>(CI->getOperand(SizeArgOp)))
+        return SizeCI->getZExtValue() <= Arg->getZExtValue();
+    }
+    return false;
+  }
+public:
+  InstCombineFortifiedLibCalls(InstCombiner *IC) : IC(IC), NewInstruction(0) { }
+  Instruction *NewInstruction;
+};
+} // end anonymous namespace
+
 // Try to fold some different type of calls here.
 // Currently we're only working with the checking functions, memcpy_chk, 
 // mempcpy_chk, memmove_chk, memset_chk, strcpy_chk, stpcpy_chk, strncpy_chk,
 // strcat_chk and strncat_chk.
 Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const TargetData *TD) {
   if (CI->getCalledFunction() == 0) return 0;
-  
-  StringRef Name = CI->getCalledFunction()->getName();
-  BasicBlock *BB = CI->getParent();
-  IRBuilder<> B(CI->getParent()->getContext());
-  
-  // Set the builder to the instruction after the call.
-  B.SetInsertPoint(BB, CI);
 
-  if (Name == "__memcpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeArg)
-      return 0;
-    if (SizeCI->isAllOnesValue() ||
-        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-                 1, B, TD);
-      return ReplaceInstUsesWith(*CI, CI->getOperand(1));
-    }
-    return 0;
-  }
-
-  // Should be similar to memcpy.
-  if (Name == "__mempcpy_chk") {
-    return 0;
-  }
-
-  if (Name == "__memmove_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeArg)
-      return 0;
-    if (SizeCI->isAllOnesValue() ||
-        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
-      EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-                  1, B, TD);
-      return ReplaceInstUsesWith(*CI, CI->getOperand(1));
-    }
-    return 0;
-  }
-
-  if (Name == "__memset_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeArg)
-      return 0;
-    if (SizeCI->isAllOnesValue() ||
-        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
-      Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
-                                   false);
-      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
-      return ReplaceInstUsesWith(*CI, CI->getOperand(1));
-    }
-    return 0;
-  }
-
-  if (Name == "__strcpy_chk" || Name == "__stpcpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeCI)
-      return 0;
-    // If a) we don't have any length information, or b) we know this will
-    // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
-    // st[rp]cpy_chk call which may fail at runtime if the size is too long.
-    // TODO: It might be nice to get a maximum length out of the possible
-    // string lengths for varying.
-    if (SizeCI->isAllOnesValue() ||
-      SizeCI->getZExtValue() >= GetStringLength(CI->getOperand(2))) {
-      Value *Ret = EmitStrCpy(CI->getOperand(1), CI->getOperand(2), B, TD,
-                              Name.substr(2, 6));
-      return ReplaceInstUsesWith(*CI, Ret);
-    }
-    return 0;
-  }
-
-  if (Name == "__strncpy_chk") {
-    ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getOperand(4));
-    if (!SizeCI)
-      return 0;
-    ConstantInt *SizeArg = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!SizeArg)
-      return 0;
-    if (SizeCI->isAllOnesValue() ||
-        SizeCI->getZExtValue() <= SizeArg->getZExtValue()) {
-      Value *Ret = EmitStrNCpy(CI->getOperand(1), CI->getOperand(2),
-                               CI->getOperand(3), B, TD);
-      return ReplaceInstUsesWith(*CI, Ret);
-    }
-    return 0; 
-  }
-
-  if (Name == "__strcat_chk") {
-    return 0;
-  }
-
-  if (Name == "__strncat_chk") {
-    return 0;
-  }
-
-  return 0;
+  InstCombineFortifiedLibCalls Simplifier(this);
+  Simplifier.fold(CI, TD);
+  return Simplifier.NewInstruction;
 }
 
 // visitCallSite - Improvements for call and invoke instructions.
