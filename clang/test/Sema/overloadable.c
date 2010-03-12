@@ -50,4 +50,13 @@ void test_promote(short* sp) {
   promote(sp); // expected-error{{call to unavailable function 'promote'}}
 }
 
-
+// PR6600
+typedef double Double;
+typedef Double DoubleVec __attribute__((vector_size(16)));
+typedef int Int;
+typedef Int IntVec __attribute__((vector_size(16)));
+double magnitude(DoubleVec) __attribute__((__overloadable__));
+double magnitude(IntVec) __attribute__((__overloadable__));
+double test_p6600(DoubleVec d) {
+  return magnitude(d) * magnitude(d);
+}

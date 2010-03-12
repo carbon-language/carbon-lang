@@ -4736,7 +4736,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return QualType();
   case Type::Vector:
     // FIXME: The merged type should be an ExtVector!
-    if (areCompatVectorTypes(LHS->getAs<VectorType>(), RHS->getAs<VectorType>()))
+    if (areCompatVectorTypes(LHSCan->getAs<VectorType>(),
+                             RHSCan->getAs<VectorType>()))
       return LHS;
     return QualType();
   case Type::ObjCInterface: {
