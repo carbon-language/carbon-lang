@@ -115,8 +115,8 @@ static void AddCXXOperatorKeyword(llvm::StringRef Keyword,
 
 /// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or
 /// "property".
-static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID,
-                           llvm::StringRef Name,
+static void AddObjCKeyword(llvm::StringRef Name,
+                           tok::ObjCKeywordKind ObjCID,
                            IdentifierTable &Table) {
   Table.get(Name).setObjCKeywordID(ObjCID);
 }
@@ -136,10 +136,10 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
     AddCXXOperatorKeyword(llvm::StringRef(#NAME), tok::ALIAS, *this);
 #define OBJC1_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC1)          \
-    AddObjCKeyword(tok::objc_##NAME, llvm::StringRef(#NAME), *this);
+    AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
 #define OBJC2_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC2)          \
-    AddObjCKeyword(tok::objc_##NAME, llvm::StringRef(#NAME), *this);
+    AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
 #include "clang/Basic/TokenKinds.def"
 }
 
