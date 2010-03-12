@@ -4249,9 +4249,10 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     CompoundStmt *Compound = isa<CXXTryStmt>(Body) ?
                                cast<CXXTryStmt>(Body)->getTryBlock() :
                                cast<CompoundStmt>(Body);
-    std::vector<Stmt*> Elements(Compound->body_begin(), Compound->body_end());
+    llvm::SmallVector<Stmt*, 64> Elements(Compound->body_begin(),
+                                          Compound->body_end());
     Elements.push_back(L);
-    Compound->setStmts(Context, &Elements[0], Elements.size());
+    Compound->setStmts(Context, Elements.data(), Elements.size());
   }
 
   if (Body) {
