@@ -411,6 +411,7 @@ void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
 void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
+  PD->setHasInheritedDefaultArg(Record[Idx++]);
 }
 
 void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {

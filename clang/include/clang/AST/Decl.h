@@ -809,12 +809,14 @@ class ParmVarDecl : public VarDecl {
   /// FIXME: Also can be paced into the bitfields in Decl.
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
+  bool HasInheritedDefaultArg : 1;
 
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
               StorageClass S, Expr *DefArg)
-  : VarDecl(DK, DC, L, Id, T, TInfo, S), objcDeclQualifier(OBJC_TQ_None) {
+  : VarDecl(DK, DC, L, Id, T, TInfo, S),
+    objcDeclQualifier(OBJC_TQ_None), HasInheritedDefaultArg(false) {
     setDefaultArg(DefArg);
   }
 
@@ -891,6 +893,14 @@ public:
   /// default argument is completed.
   void setUnparsedDefaultArg() {
     Init = (UnparsedDefaultArgument *)0;
+  }
+
+  bool hasInheritedDefaultArg() const {
+    return HasInheritedDefaultArg;
+  }
+
+  void setHasInheritedDefaultArg(bool I = true) {
+    HasInheritedDefaultArg = I;
   }
 
   QualType getOriginalType() const {

@@ -2176,6 +2176,7 @@ Decl *ASTNodeImporter::VisitParmVarDecl(ParmVarDecl *D) {
                                             Loc, Name.getAsIdentifierInfo(),
                                             T, TInfo, D->getStorageClass(),
                                             /*FIXME: Default argument*/ 0);
+  ToParm->setHasInheritedDefaultArg(D->hasInheritedDefaultArg());
   return Importer.Imported(D, ToParm);
 }
 
