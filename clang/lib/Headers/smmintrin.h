@@ -223,6 +223,29 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
                                                   __a[N];}))
 #endif /* __x86_64 */
 
+/* SSE4 128-bit Packed Integer Comparisons.  */
+static inline int __attribute__((__always_inline__, __nodebug__))
+_mm_testz_si128(__m128i __M, __m128i __V)
+{
+  return __builtin_ia32_ptestz128((__v2di)__M, (__v2di)__V);
+}
+
+static inline int __attribute__((__always_inline__, __nodebug__))
+_mm_testc_si128(__m128i __M, __m128i __V)
+{
+  return __builtin_ia32_ptestc128((__v2di)__M, (__v2di)__V);
+}
+
+static inline int __attribute__((__always_inline__, __nodebug__))
+_mm_testnzc_si128(__m128i __M, __m128i __V)
+{
+  return __builtin_ia32_ptestnzc128((__v2di)__M, (__v2di)__V);
+}
+
+#define _mm_test_all_ones(V) _mm_testc_si128((V), _mm_cmpeq_epi32((V), (V)))
+#define _mm_test_mix_ones_zeros(M, V) _mm_testnzc_si128((M), (V))
+#define _mm_test_all_zeros(M, V) _mm_testz_si128 ((V), (V))
+
 #endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */
