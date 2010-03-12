@@ -126,7 +126,7 @@ Path::isValid() const {
 }
 
 void Path::makeAbsolute() {
-  TCHAR  FullPath[MAX_PATH + 1] = {0}; 
+  TCHAR  FullPath[MAX_PATH + 1] = {0};
   LPTSTR FilePart = NULL;
 
   DWORD RetLength = ::GetFullPathNameA(path.c_str(),
@@ -161,7 +161,7 @@ Path::isAbsolute(const char *NameStart, unsigned NameLen) {
   }
 }
 
-bool 
+bool
 Path::isAbsolute() const {
   // FIXME: This does not handle correctly an absolute path starting from
   // a drive letter or in UNC format.
@@ -174,9 +174,9 @@ Path::isAbsolute() const {
     default:
       return path[0] == '/' || (path[1] == ':' && path[2] == '/');
   }
-} 
+}
 
-static Path *TempDirectory = NULL;
+static Path *TempDirectory;
 
 Path
 Path::GetTemporaryDirectory(std::string* ErrMsg) {
@@ -266,7 +266,7 @@ Path
 Path::GetCurrentDirectory() {
   char pathname[MAX_PATH];
   ::GetCurrentDirectoryA(MAX_PATH,pathname);
-  return Path(pathname);  
+  return Path(pathname);
 }
 
 /// GetMainExecutable - Return the path to the main executable, given the
@@ -448,7 +448,7 @@ Path::getDirectoryContents(std::set<Path>& result, std::string* ErrMsg) const {
     MakeErrMsg(ErrMsg, path + ": can't get status of file");
     return true;
   }
-    
+
   if (!(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
     if (ErrMsg)
       *ErrMsg = path + ": not a directory";
@@ -617,7 +617,7 @@ Path::createDirectoryOnDisk(bool create_parents, std::string* ErrMsg) {
       *next = 0;
       if (!CreateDirectory(pathname, NULL) &&
           GetLastError() != ERROR_ALREADY_EXISTS)
-          return MakeErrMsg(ErrMsg, 
+          return MakeErrMsg(ErrMsg,
             std::string(pathname) + ": Can't create directory: ");
       *next++ = '/';
     }
@@ -649,7 +649,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
     return true;
-    
+
   if (fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
     // If it doesn't exist, we're done.
     if (!exists())
@@ -706,7 +706,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
 
     pathname[lastchar] = 0;
     if (!RemoveDirectory(pathname))
-      return MakeErrMsg(ErrStr, 
+      return MakeErrMsg(ErrStr,
         std::string(pathname) + ": Can't destroy directory: ");
     return false;
   } else {
@@ -753,7 +753,7 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 bool
 Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (!MoveFileEx(path.c_str(), newName.c_str(), MOVEFILE_REPLACE_EXISTING))
-    return MakeErrMsg(ErrMsg, "Can't move '" + path + "' to '" + newName.path 
+    return MakeErrMsg(ErrMsg, "Can't move '" + path + "' to '" + newName.path
         + "': ");
   return false;
 }
@@ -764,7 +764,7 @@ Path::setStatusInfoOnDisk(const FileStatus &si, std::string *ErrMsg) const {
   if (!si.isFile) {
     return true;
   }
-  
+
   HANDLE h = CreateFile(path.c_str(),
                         FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES,
                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
