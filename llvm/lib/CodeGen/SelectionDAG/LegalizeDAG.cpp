@@ -1585,35 +1585,51 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
   DebugLoc dl = Node->getDebugLoc();
   SDValue Tmp1 = Node->getOperand(0);
   SDValue Tmp2 = Node->getOperand(1);
-  assert((Tmp2.getValueType() == MVT::f32 ||
-          Tmp2.getValueType() == MVT::f64) &&
-          "Ugly special-cased code!");
-  // Get the sign bit of the RHS.
+
+  // Get the sign bit of the RHS.  First obtain a value that has the same
+  // sign as the sign bit, i.e. negative if and only if the sign bit is 1.
   SDValue SignBit;
-  EVT IVT = Tmp2.getValueType() == MVT::f64 ? MVT::i64 : MVT::i32;
+  EVT FloatVT = Tmp2.getValueType();
+  EVT IVT = EVT::getIntegerVT(*DAG.getContext(), FloatVT.getSizeInBits());
   if (isTypeLegal(IVT)) {
+    // Convert to an integer with the same sign bit.
     SignBit = DAG.getNode(ISD::BIT_CONVERT, dl, IVT, Tmp2);
   } else {
-    assert(isTypeLegal(TLI.getPointerTy()) &&
-            (TLI.getPointerTy() == MVT::i32 || 
-            TLI.getPointerTy() == MVT::i64) &&
-            "Legal type for load?!");
-    SDValue StackPtr = DAG.CreateStackTemporary(Tmp2.getValueType());
-    SDValue StorePtr = StackPtr, LoadPtr = StackPtr;
+    // Store the float to memory, then load the sign part out as an integer.
+    MVT LoadTy = TLI.getPointerTy();
+    // First create a temporary that is aligned for both the load and store.
+    SDValue StackPtr = DAG.CreateStackTemporary(FloatVT, LoadTy);
+    // Then store the float to it.
     SDValue Ch =
-      DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StorePtr, NULL, 0,
+      DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StackPtr, NULL, 0,
                    false, false, 0);
-    if (Tmp2.getValueType() == MVT::f64 && TLI.isLittleEndian())
-      LoadPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(),
-                            LoadPtr, DAG.getIntPtrConstant(4));
-    SignBit = DAG.getExtLoad(ISD::SEXTLOAD, dl, TLI.getPointerTy(),
-                             Ch, LoadPtr, NULL, 0, MVT::i32,
-                             false, false, 0);
+    if (TLI.isBigEndian()) {
+      assert(FloatVT.isByteSized() && "Unsupported floating point type!");
+      // Load out a legal integer with the same sign bit as the float.
+      SignBit = DAG.getLoad(LoadTy, dl, Ch, StackPtr, NULL, 0, false, false, 0);
+    } else { // Little endian
+      SDValue LoadPtr = StackPtr;
+      // The float may be wider than the integer we are going to load.  Advance
+      // the pointer so that the loaded integer will contain the sign bit.
+      unsigned Strides = (FloatVT.getSizeInBits()-1)/LoadTy.getSizeInBits();
+      unsigned ByteOffset = (Strides * LoadTy.getSizeInBits()) / 8;
+      LoadPtr = DAG.getNode(ISD::ADD, dl, LoadPtr.getValueType(),
+                            LoadPtr, DAG.getIntPtrConstant(ByteOffset));
+      // Load a legal integer containing the sign bit.
+      SignBit = DAG.getLoad(LoadTy, dl, Ch, LoadPtr, NULL, 0, false, false, 0);
+      // Move the sign bit to the top bit of the loaded integer.
+      unsigned BitShift = LoadTy.getSizeInBits() -
+        (FloatVT.getSizeInBits() - 8 * ByteOffset);
+      assert(BitShift < LoadTy.getSizeInBits() && "Pointer advanced wrong?");
+      if (BitShift)
+        SignBit = DAG.getNode(ISD::SHL, dl, LoadTy, SignBit,
+                              DAG.getConstant(BitShift,TLI.getShiftAmountTy()));
+    }
   }
-  SignBit =
-      DAG.getSetCC(dl, TLI.getSetCCResultType(SignBit.getValueType()),
-                    SignBit, DAG.getConstant(0, SignBit.getValueType()),
-                    ISD::SETLT);
+  // Now get the sign bit proper, by seeing whether the value is negative.
+  SignBit = DAG.getSetCC(dl, TLI.getSetCCResultType(SignBit.getValueType()),
+                         SignBit, DAG.getConstant(0, SignBit.getValueType()),
+                         ISD::SETLT);
   // Get the absolute value of the result.
   SDValue AbsVal = DAG.getNode(ISD::FABS, dl, Tmp1.getValueType(), Tmp1);
   // Select between the nabs and abs value based on the sign bit of
