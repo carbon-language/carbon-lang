@@ -59,11 +59,6 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     assert(MO.isSymbol());
     Name += AsmPrinter.MAI->getGlobalPrefix();
     Name += MO.getSymbolName();
-  } else if (getSubtarget().isTargetCygMing() &&
-             isa<Function>(MO.getGlobal())) {
-    const GlobalValue *GV = MO.getGlobal();
-    MCSymbol *Sym = Mang->getSymbol(GV);
-    Name.append(Sym->getName().begin(), Sym->getName().end());
   } else {    
     const GlobalValue *GV = MO.getGlobal();
     bool isImplicitlyPrivate = false;
