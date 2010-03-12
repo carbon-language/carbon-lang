@@ -917,6 +917,8 @@ TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm) {
   } else if (Expr *Arg = OldParm->getDefaultArg())
     NewParm->setUninstantiatedDefaultArg(Arg);
 
+  NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
+
   SemaRef.CurrentInstantiationScope->InstantiatedLocal(OldParm, NewParm);
   return NewParm;
 }
