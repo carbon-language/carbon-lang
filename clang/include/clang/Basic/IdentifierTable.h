@@ -282,16 +282,16 @@ public:
 
   /// get - Return the identifier token info for the specified named identifier.
   ///
-  IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
+  IdentifierInfo &get(llvm::StringRef Name) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
-      HashTable.GetOrCreateValue(NameStart, NameEnd);
+      HashTable.GetOrCreateValue(Name);
 
     IdentifierInfo *II = Entry.getValue();
     if (II) return *II;
 
     // No entry; if we have an external lookup, look there first.
     if (ExternalLookup) {
-      II = ExternalLookup->get(llvm::StringRef(NameStart, NameEnd-NameStart));
+      II = ExternalLookup->get(Name);
       if (II) {
         // Cache in the StringMap for subsequent lookups.
         Entry.setValue(II);
@@ -311,8 +311,8 @@ public:
     return *II;
   }
 
-  IdentifierInfo &get(llvm::StringRef Name) {
-    return get(Name.begin(), Name.end());
+  IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
+    return get(llvm::StringRef(NameStart, NameEnd-NameStart));
   }
 
   IdentifierInfo &get(const char *Name, size_t NameLen) {
