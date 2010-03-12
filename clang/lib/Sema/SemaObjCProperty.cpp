@@ -38,106 +38,163 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                    (isReadWrite &&
                     !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
                     !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
+
   QualType T = GetTypeForDeclarator(FD.D, S);
   if (T->isReferenceType()) {
     Diag(AtLoc, diag::error_reference_property);
     return DeclPtrTy();
   }
-  Decl *ClassDecl = ClassCategory.getAs<Decl>();
-  ObjCInterfaceDecl *CCPrimary = 0; // continuation class's primary class
-                                    // May modify Attributes.
+  // Validate the attributes on the @property.
   CheckObjCPropertyAttributes(T, AtLoc, Attributes);
+
+  // Proceed with constructing the ObjCPropertDecls.
+  ObjCContainerDecl *ClassDecl =
+    cast<ObjCContainerDecl>(ClassCategory.getAs<Decl>());
+
   if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
-    if (CDecl->IsClassExtension()) {
-      // Diagnose if this property is already in continuation class.
-      DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
-      assert(DC && "ClassDecl is not a DeclContext");
-      DeclContext::lookup_result Found = DC->lookup(FD.D.getIdentifier());
-      if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
-        Diag(AtLoc, diag::err_duplicate_property);
-        Diag((*Found.first)->getLocation(), diag::note_property_declare);
-        return DeclPtrTy();
-      }
-      ObjCPropertyDecl *PDecl =
-        ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
-                                 FD.D.getIdentifier(), AtLoc, T);
-      DC->addDecl(PDecl);
+    if (CDecl->IsClassExtension())
+      return HandlePropertyInClassExtension(S, CDecl, AtLoc,
+                                            FD, GetterSel, SetterSel,
+                                            isAssign, isReadWrite,
+                                            Attributes,
+                                            isOverridingProperty, T,
+                                            MethodImplKind);
 
-      // This is a continuation class. property requires special
-      // handling.
-      if ((CCPrimary = CDecl->getClassInterface())) {
-        // Find the property in continuation class's primary class only.
-        IdentifierInfo *PropertyId = FD.D.getIdentifier();
-        if (ObjCPropertyDecl *PIDecl =
-            CCPrimary->FindPropertyVisibleInPrimaryClass(PropertyId)) {
-          // property 'PIDecl's readonly attribute will be over-ridden
-          // with continuation class's readwrite property attribute!
-          unsigned PIkind = PIDecl->getPropertyAttributes();
-          if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
-            unsigned retainCopyNonatomic =
-            (ObjCPropertyDecl::OBJC_PR_retain |
-             ObjCPropertyDecl::OBJC_PR_copy |
-             ObjCPropertyDecl::OBJC_PR_nonatomic);
-            if ((Attributes & retainCopyNonatomic) !=
-                (PIkind & retainCopyNonatomic)) {
-              Diag(AtLoc, diag::warn_property_attr_mismatch);
-              Diag(PIDecl->getLocation(), diag::note_property_declare);
-            }
-            DeclContext *DC = dyn_cast<DeclContext>(CCPrimary);
-            assert(DC && "ClassDecl is not a DeclContext");
-            DeclContext::lookup_result Found =
-            DC->lookup(PIDecl->getDeclName());
-            bool PropertyInPrimaryClass = false;
-            for (; Found.first != Found.second; ++Found.first)
-              if (isa<ObjCPropertyDecl>(*Found.first)) {
-                PropertyInPrimaryClass = true;
-                break;
-              }
-            if (!PropertyInPrimaryClass) {
-              // Protocol is not in the primary class. Must build one for it.
-              ObjCDeclSpec ProtocolPropertyODS;
-              // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind
-              // and ObjCPropertyDecl::PropertyAttributeKind have identical
-              // values.  Should consolidate both into one enum type.
-              ProtocolPropertyODS.
-                setPropertyAttributes((ObjCDeclSpec::ObjCPropertyAttributeKind)
-                                      PIkind);
+  return DeclPtrTy::make(CreatePropertyDecl(S, ClassDecl, AtLoc, FD,
+                                            GetterSel, SetterSel,
+                                            isAssign, isReadWrite,
+                                            Attributes, T, MethodImplKind));
+}
 
-              DeclPtrTy ProtocolPtrTy =
-                ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
-                              PIDecl->getGetterName(),
-                              PIDecl->getSetterName(),
-                              DeclPtrTy::make(CCPrimary), isOverridingProperty,
-                              MethodImplKind);
-              PIDecl = ProtocolPtrTy.getAs<ObjCPropertyDecl>();
-            }
-            PIDecl->makeitReadWriteAttribute();
-            if (Attributes & ObjCDeclSpec::DQ_PR_retain)
-              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
-            if (Attributes & ObjCDeclSpec::DQ_PR_copy)
-              PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
-            PIDecl->setSetterName(SetterSel);
-          } else {
-            Diag(AtLoc, diag::err_use_continuation_class)
-            << CCPrimary->getDeclName();
-            Diag(PIDecl->getLocation(), diag::note_property_declare);
-          }
-          *isOverridingProperty = true;
-          // Make sure setter decl is synthesized, and added to primary
-          // class's list.
-          ProcessPropertyDecl(PIDecl, CCPrimary);
-          return DeclPtrTy();
-        }
+Sema::DeclPtrTy
+Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
+                                     SourceLocation AtLoc, FieldDeclarator &FD,
+                                     Selector GetterSel, Selector SetterSel,
+                                     const bool isAssign,
+                                     const bool isReadWrite,
+                                     const unsigned Attributes,
+                                     bool *isOverridingProperty,
+                                     QualType T,
+                                     tok::ObjCKeywordKind MethodImplKind) {
 
-        // No matching property found in the primary class. Just fall thru
-        // and add property to continuation class's primary class.
-        ClassDecl = CCPrimary;
-      } else {
-        Diag(CDecl->getLocation(), diag::err_continuation_class);
-        *isOverridingProperty = true;
-        return DeclPtrTy();
-      }
+  // Diagnose if this property is already in continuation class.
+  DeclContext *DC = cast<DeclContext>(CDecl);
+
+  IdentifierInfo *PropertyId = FD.D.getIdentifier();
+  DeclContext::lookup_result Found = DC->lookup(PropertyId);
+  if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
+    Diag(AtLoc, diag::err_duplicate_property);
+    Diag((*Found.first)->getLocation(), diag::note_property_declare);
+    return DeclPtrTy();
+  }
+
+  // Create a new ObjCPropertyDecl with the DeclContext being
+  // the class extension.
+  ObjCPropertyDecl *PDecl =
+    ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
+                             PropertyId, AtLoc, T);
+  DC->addDecl(PDecl);
+
+  // We need to look in the @interface to see if the @property was
+  // already declared.
+  ObjCInterfaceDecl *CCPrimary = CDecl->getClassInterface();
+  if (!CCPrimary) {
+    Diag(CDecl->getLocation(), diag::err_continuation_class);
+    *isOverridingProperty = true;
+    return DeclPtrTy();
+  }
+
+  // Find the property in continuation class's primary class only.
+  ObjCPropertyDecl *PIDecl =
+    CCPrimary->FindPropertyVisibleInPrimaryClass(PropertyId);
+
+  if (!PIDecl) {
+    // No matching property found in the primary class. Just fall thru
+    // and add property to continuation class's primary class.
+    ObjCPropertyDecl *PDecl =
+      CreatePropertyDecl(S, CCPrimary, AtLoc,
+                         FD, GetterSel, SetterSel, isAssign, isReadWrite,
+                         Attributes, T, MethodImplKind);
+
+    // A case of continuation class adding a new property in the class. This
+    // is not what it was meant for. However, gcc supports it and so should we.
+    // Make sure setter/getters are declared here.
+    ProcessPropertyDecl(PDecl, CCPrimary);
+    return DeclPtrTy::make(PDecl);
+
+  }
+
+  // The property 'PIDecl's readonly attribute will be over-ridden
+  // with continuation class's readwrite property attribute!
+  unsigned PIkind = PIDecl->getPropertyAttributes();
+  if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
+    unsigned retainCopyNonatomic =
+    (ObjCPropertyDecl::OBJC_PR_retain |
+     ObjCPropertyDecl::OBJC_PR_copy |
+     ObjCPropertyDecl::OBJC_PR_nonatomic);
+    if ((Attributes & retainCopyNonatomic) !=
+        (PIkind & retainCopyNonatomic)) {
+      Diag(AtLoc, diag::warn_property_attr_mismatch);
+      Diag(PIDecl->getLocation(), diag::note_property_declare);
     }
+    DeclContext *DC = dyn_cast<DeclContext>(CCPrimary);
+    assert(DC && "ClassDecl is not a DeclContext");
+    DeclContext::lookup_result Found =
+    DC->lookup(PIDecl->getDeclName());
+    bool PropertyInPrimaryClass = false;
+    for (; Found.first != Found.second; ++Found.first)
+      if (isa<ObjCPropertyDecl>(*Found.first)) {
+        PropertyInPrimaryClass = true;
+        break;
+      }
+    if (!PropertyInPrimaryClass) {
+      // Protocol is not in the primary class. Must build one for it.
+      ObjCDeclSpec ProtocolPropertyODS;
+      // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind
+      // and ObjCPropertyDecl::PropertyAttributeKind have identical
+      // values.  Should consolidate both into one enum type.
+      ProtocolPropertyODS.
+      setPropertyAttributes((ObjCDeclSpec::ObjCPropertyAttributeKind)
+                            PIkind);
+
+      DeclPtrTy ProtocolPtrTy =
+        ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
+                      PIDecl->getGetterName(),
+                      PIDecl->getSetterName(),
+                      DeclPtrTy::make(CCPrimary), isOverridingProperty,
+                      MethodImplKind);
+      PIDecl = ProtocolPtrTy.getAs<ObjCPropertyDecl>();
+    }
+    PIDecl->makeitReadWriteAttribute();
+    if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+      PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
+    if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+      PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
+    PIDecl->setSetterName(SetterSel);
+  } else {
+    Diag(AtLoc, diag::err_use_continuation_class)
+      << CCPrimary->getDeclName();
+    Diag(PIDecl->getLocation(), diag::note_property_declare);
+  }
+  *isOverridingProperty = true;
+  // Make sure setter decl is synthesized, and added to primary class's list.
+  ProcessPropertyDecl(PIDecl, CCPrimary);
+  return DeclPtrTy();
+}
+
+ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
+                                           ObjCContainerDecl *CDecl,
+                                           SourceLocation AtLoc,
+                                           FieldDeclarator &FD,
+                                           Selector GetterSel,
+                                           Selector SetterSel,
+                                           const bool isAssign,
+                                           const bool isReadWrite,
+                                           const unsigned Attributes,
+                                           QualType T,
+                                           tok::ObjCKeywordKind MethodImplKind){
+
+  IdentifierInfo *PropertyId = FD.D.getIdentifier();
 
   // Issue a warning if property is 'assign' as default and its object, which is
   // gc'able conforms to NSCopying protocol
@@ -152,20 +209,18 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
           if (ObjCProtocolDecl* PNSCopying =
               LookupProtocol(&Context.Idents.get("NSCopying")))
             if (IDecl->ClassImplementsProtocol(PNSCopying, true))
-              Diag(AtLoc, diag::warn_implements_nscopying)
-              << FD.D.getIdentifier();
+              Diag(AtLoc, diag::warn_implements_nscopying) << PropertyId;
       }
     }
   if (T->isObjCInterfaceType())
     Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
 
-  DeclContext *DC = dyn_cast<DeclContext>(ClassDecl);
-  assert(DC && "ClassDecl is not a DeclContext");
+  DeclContext *DC = cast<DeclContext>(CDecl);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
                                                      FD.D.getIdentifierLoc(),
-                                                     FD.D.getIdentifier(),
-                                                     AtLoc, T);
-  DeclContext::lookup_result Found = DC->lookup(PDecl->getDeclName());
+                                                     PropertyId, AtLoc, T);
+
+  DeclContext::lookup_result Found = DC->lookup(PropertyId);
   if (Found.first != Found.second && isa<ObjCPropertyDecl>(*Found.first)) {
     Diag(PDecl->getLocation(), diag::err_duplicate_property);
     Diag((*Found.first)->getLocation(), diag::note_property_declare);
@@ -214,13 +269,8 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
     PDecl->setPropertyImplementation(ObjCPropertyDecl::Required);
   else if (MethodImplKind == tok::objc_optional)
     PDecl->setPropertyImplementation(ObjCPropertyDecl::Optional);
-  // A case of continuation class adding a new property in the class. This
-  // is not what it was meant for. However, gcc supports it and so should we.
-  // Make sure setter/getters are declared here.
-  if (CCPrimary)
-    ProcessPropertyDecl(PDecl, CCPrimary);
 
-  return DeclPtrTy::make(PDecl);
+  return PDecl;
 }
 
 

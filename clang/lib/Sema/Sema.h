@@ -1469,7 +1469,7 @@ public:
   void DiagnoseUnimplementedProperties(ObjCImplDecl* IMPDecl,
                                        ObjCContainerDecl *CDecl,
                                        const llvm::DenseSet<Selector>& InsMap);
-  
+
   /// CollectImmediateProperties - This routine collects all properties in
   /// the class and its conforming protocols; but not those it its super class.
   void CollectImmediateProperties(ObjCContainerDecl *CDecl,
@@ -1482,7 +1482,35 @@ public:
   
   ObjCIvarDecl *SynthesizeNewPropertyIvar(ObjCInterfaceDecl *IDecl,
                                           IdentifierInfo *NameII);
-  
+
+  /// Called by ActOnProperty to handle @property declarations in
+  ////  class extensions.
+  DeclPtrTy HandlePropertyInClassExtension(Scope *S,
+                                           ObjCCategoryDecl *CDecl,
+                                           SourceLocation AtLoc,
+                                           FieldDeclarator &FD,
+                                           Selector GetterSel,
+                                           Selector SetterSel,
+                                           const bool isAssign,
+                                           const bool isReadWrite,
+                                           const unsigned Attributes,
+                                           bool *isOverridingProperty,
+                                           QualType T,
+                                           tok::ObjCKeywordKind MethodImplKind);
+
+  /// Called by ActOnProperty and HandlePropertyInClassExtension to
+  ///  handle creating the ObjcPropertyDecl for a category or @interface.
+  ObjCPropertyDecl *CreatePropertyDecl(Scope *S,
+                                       ObjCContainerDecl *CDecl,
+                                       SourceLocation AtLoc,
+                                       FieldDeclarator &FD,
+                                       Selector GetterSel,
+                                       Selector SetterSel,
+                                       const bool isAssign,
+                                       const bool isReadWrite,
+                                       const unsigned Attributes, QualType T,
+                                       tok::ObjCKeywordKind MethodImplKind);
+
   /// AtomicPropertySetterGetterRules - This routine enforces the rule (via
   /// warning) when atomic property has one but not the other user-declared
   /// setter or getter.
