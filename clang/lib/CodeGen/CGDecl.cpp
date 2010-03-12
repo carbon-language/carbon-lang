@@ -473,68 +473,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       EnsureInsertPoint();
   }
 
-  if (Init) {
-    llvm::Value *Loc = DeclPtr;
-    if (isByRef)
-      Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
-                                    D.getNameAsString());
-
-    bool isVolatile =
-      getContext().getCanonicalType(D.getType()).isVolatileQualified();
-    
-    // If the initializer was a simple constant initializer, we can optimize it
-    // in various ways.
-    if (IsSimpleConstantInitializer) {
-      llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(),D.getType(),this);
-      assert(Init != 0 && "Wasn't a simple constant init?");
-      
-      llvm::Value *AlignVal = 
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
-            Align.getQuantity());
-      const llvm::Type *IntPtr =
-        llvm::IntegerType::get(VMContext, LLVMPointerWidth);
-      llvm::Value *SizeVal =
-        llvm::ConstantInt::get(IntPtr, 
-            getContext().getTypeSizeInChars(Ty).getQuantity());
-
-      const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
-      if (Loc->getType() != BP)
-        Loc = Builder.CreateBitCast(Loc, BP, "tmp");
-      
-      // If the initializer is all zeros, codegen with memset.
-      if (isa<llvm::ConstantAggregateZero>(Init)) {
-        llvm::Value *Zero =
-          llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 0);
-        Builder.CreateCall4(CGM.getMemSetFn(), Loc, Zero, SizeVal, AlignVal);
-      } else {
-        // Otherwise, create a temporary global with the initializer then 
-        // memcpy from the global to the alloca.
-        std::string Name = GetStaticDeclName(*this, D, ".");
-        llvm::GlobalVariable *GV =
-          new llvm::GlobalVariable(CGM.getModule(), Init->getType(), true,
-                                   llvm::GlobalValue::InternalLinkage,
-                                   Init, Name, 0, false, 0);
-        GV->setAlignment(Align.getQuantity());
-
-        llvm::Value *SrcPtr = GV;
-        if (SrcPtr->getType() != BP)
-          SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
-        
-        Builder.CreateCall4(CGM.getMemCpyFn(), Loc, SrcPtr, SizeVal, AlignVal);
-      }
-    } else if (Ty->isReferenceType()) {
-      RValue RV = EmitReferenceBindingToExpr(Init, /*IsInitializer=*/true);
-      EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
-    } else if (!hasAggregateLLVMType(Init->getType())) {
-      llvm::Value *V = EmitScalarExpr(Init);
-      EmitStoreOfScalar(V, Loc, isVolatile, D.getType());
-    } else if (Init->getType()->isAnyComplexType()) {
-      EmitComplexExprIntoAddr(Init, Loc, isVolatile);
-    } else {
-      EmitAggExpr(Init, Loc, isVolatile);
-    }
-  }
-
   if (isByRef) {
     const llvm::PointerType *PtrToInt8Ty = llvm::Type::getInt8PtrTy(VMContext);
 
@@ -593,6 +531,68 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     }
   }
 
+  if (Init) {
+    llvm::Value *Loc = DeclPtr;
+    if (isByRef)
+      Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
+                                    D.getNameAsString());
+    
+    bool isVolatile =
+    getContext().getCanonicalType(D.getType()).isVolatileQualified();
+    
+    // If the initializer was a simple constant initializer, we can optimize it
+    // in various ways.
+    if (IsSimpleConstantInitializer) {
+      llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(),D.getType(),this);
+      assert(Init != 0 && "Wasn't a simple constant init?");
+      
+      llvm::Value *AlignVal = 
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
+                             Align.getQuantity());
+      const llvm::Type *IntPtr =
+      llvm::IntegerType::get(VMContext, LLVMPointerWidth);
+      llvm::Value *SizeVal =
+      llvm::ConstantInt::get(IntPtr, 
+                             getContext().getTypeSizeInChars(Ty).getQuantity());
+      
+      const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
+      if (Loc->getType() != BP)
+        Loc = Builder.CreateBitCast(Loc, BP, "tmp");
+      
+      // If the initializer is all zeros, codegen with memset.
+      if (isa<llvm::ConstantAggregateZero>(Init)) {
+        llvm::Value *Zero =
+        llvm::ConstantInt::get(llvm::Type::getInt8Ty(VMContext), 0);
+        Builder.CreateCall4(CGM.getMemSetFn(), Loc, Zero, SizeVal, AlignVal);
+      } else {
+        // Otherwise, create a temporary global with the initializer then 
+        // memcpy from the global to the alloca.
+        std::string Name = GetStaticDeclName(*this, D, ".");
+        llvm::GlobalVariable *GV =
+        new llvm::GlobalVariable(CGM.getModule(), Init->getType(), true,
+                                 llvm::GlobalValue::InternalLinkage,
+                                 Init, Name, 0, false, 0);
+        GV->setAlignment(Align.getQuantity());
+        
+        llvm::Value *SrcPtr = GV;
+        if (SrcPtr->getType() != BP)
+          SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+        
+        Builder.CreateCall4(CGM.getMemCpyFn(), Loc, SrcPtr, SizeVal, AlignVal);
+      }
+    } else if (Ty->isReferenceType()) {
+      RValue RV = EmitReferenceBindingToExpr(Init, /*IsInitializer=*/true);
+      EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
+    } else if (!hasAggregateLLVMType(Init->getType())) {
+      llvm::Value *V = EmitScalarExpr(Init);
+      EmitStoreOfScalar(V, Loc, isVolatile, D.getType());
+    } else if (Init->getType()->isAnyComplexType()) {
+      EmitComplexExprIntoAddr(Init, Loc, isVolatile);
+    } else {
+      EmitAggExpr(Init, Loc, isVolatile);
+    }
+  }
+  
   // Handle CXX destruction of variables.
   QualType DtorTy(Ty);
   while (const ArrayType *Array = getContext().getAsArrayType(DtorTy))
