@@ -256,7 +256,7 @@ namespace PR6199 {
 
   struct B { operator A(); };
 
-  // CHECK: define void @_ZN6PR61992f2IiEENS_1AET_
+  // CHECK: define linkonce_odr void @_ZN6PR61992f2IiEENS_1AET_
   template<typename T> A f2(T) {
     B b;
     // CHECK: call void @_ZN6PR61991BcvNS_1AEEv

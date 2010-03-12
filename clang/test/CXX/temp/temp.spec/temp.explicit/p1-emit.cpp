@@ -12,10 +12,10 @@ T X<T>::member1;
 template<typename T>
 T X<T>::member2 = 17;
 
-// CHECK: @_ZN1XIiE7member1E = global i32 0
+// CHECK: @_ZN1XIiE7member1E = weak global i32 0
 template int X<int>::member1;
 
-// CHECK: @_ZN1XIiE7member2E = global i32 17
+// CHECK: @_ZN1XIiE7member2E = weak global i32 17
 template int X<int>::member2;
 
 // For implicit instantiation of 

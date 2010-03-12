@@ -6,19 +6,19 @@ template<typename T> struct A {
 
 // Explicit instantiations have external linkage.
 
-// CHECK: define void @_ZN1AIiE1gEv(
+// CHECK: define linkonce_odr void @_ZN1AIiE1gEv(
 template void A<int>::g();
 
-// CHECK: define void @_ZN1AIfE1fEf(
-// CHECK: define void @_ZN1AIfE1gEv(
+// CHECK: define linkonce_odr void @_ZN1AIfE1fEf(
+// CHECK: define linkonce_odr void @_ZN1AIfE1gEv(
 // FIXME: This should also emit the vtable.
 template struct A<float>;
 
-// CHECK: define void @_Z1fIiEvT_
+// CHECK: define linkonce_odr void @_Z1fIiEvT_
 template <typename T> void f(T) { }
 template void f<int>(int);
 
-// CHECK: define void @_Z1gIiEvT_
+// CHECK: define linkonce_odr void @_Z1gIiEvT_
 template <typename T> inline void g(T) { }
 template void g<int>(int);
 
