@@ -439,7 +439,7 @@ void LTOModule::lazyParseSymbols()
         
         // Use mangler to add GlobalPrefix to names to match linker names.
         MCContext Context(*_target->getMCAsmInfo());
-        Mangler mangler(Context);
+        Mangler mangler(Context, *_target->getTargetData());
 
         // add functions
         for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {

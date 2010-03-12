@@ -1734,7 +1734,7 @@ bool CWriter::doInitialization(Module &M) {
 #endif    
   TAsm = new CBEMCAsmInfo();
   TCtx = new MCContext(*TAsm);
-  Mang = new Mangler(*TCtx);
+  Mang = new Mangler(*TCtx, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have
   // an attribute added to their prototypes.
