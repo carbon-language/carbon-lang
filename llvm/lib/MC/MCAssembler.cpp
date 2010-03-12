@@ -1275,6 +1275,40 @@ void MCAssembler::Finish() {
       llvm::errs() << "assembler backend - pre-layout\n--\n";
       dump(); });
 
+  // Layout until everything fits.
+  while (LayoutOnce())
+    continue;
+
+  DEBUG_WITH_TYPE("mc-dump", {
+      llvm::errs() << "assembler backend - post-layout\n--\n";
+      dump(); });
+
+  // Write the object file.
+  MachObjectWriter MOW(OS);
+  MOW.WriteObject(*this);
+
+  OS.flush();
+}
+
+bool MCAssembler::FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF) {
+  // FIXME: Share layout object.
+  MCAsmLayout Layout(*this);
+
+  // Currently we only need to relax X86::reloc_pcrel_1byte.
+  if (unsigned(Fixup.Kind) != X86::reloc_pcrel_1byte)
+    return false;
+
+  // If we cannot resolve the fixup value, it requires relaxation.
+  MCValue Target;
+  uint64_t Value;
+  if (!EvaluateFixup(Layout, Fixup, DF, Target, Value))
+    return true;
+
+  // Otherwise, relax if the value is too big for a (signed) i8.
+  return int64_t(Value) != int64_t(int8_t(Value));
+}
+
+bool MCAssembler::LayoutOnce() {
   // Layout the concrete sections and fragments.
   uint64_t Address = 0;
   MCSectionData *Prev = 0;
@@ -1316,20 +1350,94 @@ void MCAssembler::Finish() {
     SD.setAddress(Address);
     LayoutSection(SD);
     Address += SD.getSize();
-
   }
 
-  DEBUG_WITH_TYPE("mc-dump", {
-      llvm::errs() << "assembler backend - post-layout\n--\n";
-      dump(); });
+  // Scan the fixups in order and relax any that don't fit.
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    MCSectionData &SD = *it;
 
-  // Write the object file.
-  MachObjectWriter MOW(OS);
-  MOW.WriteObject(*this);
+    for (MCSectionData::iterator it2 = SD.begin(),
+           ie2 = SD.end(); it2 != ie2; ++it2) {
+      MCDataFragment *DF = dyn_cast<MCDataFragment>(it2);
+      if (!DF)
+        continue;
 
-  OS.flush();
+      for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
+             ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
+        MCAsmFixup &Fixup = *it3;
+
+        // Check whether we need to relax this fixup.
+        if (!FixupNeedsRelaxation(Fixup, DF))
+          continue;
+
+        // Relax the instruction.
+        //
+        // FIXME: This is a huge temporary hack which just looks for x86
+        // branches; the only thing we need to relax on x86 is
+        // 'X86::reloc_pcrel_1byte'. Once we have MCInst fragments, this will be
+        // replaced by a TargetAsmBackend hook (most likely tblgen'd) to relax
+        // an individual MCInst.
+        SmallVectorImpl<char> &C = DF->getContents();
+        uint64_t PrevOffset = Fixup.Offset;
+        unsigned Amt = 0;
+
+          // jcc instructions
+        if (unsigned(C[Fixup.Offset-1]) >= 0x70 &&
+            unsigned(C[Fixup.Offset-1]) <= 0x7f) {
+          C[Fixup.Offset] = C[Fixup.Offset-1] + 0x10;
+          C[Fixup.Offset-1] = char(0x0f);
+          ++Fixup.Offset;
+          Amt = 4;
+
+          // jmp rel8
+        } else if (C[Fixup.Offset-1] == char(0xeb)) {
+          C[Fixup.Offset-1] = char(0xe9);
+          Amt = 3;
+
+        } else
+          llvm_unreachable("unknown 1 byte pcrel instruction!");
+
+        Fixup.Value = MCBinaryExpr::Create(
+          MCBinaryExpr::Sub, Fixup.Value,
+          MCConstantExpr::Create(3, getContext()),
+          getContext());
+        C.insert(C.begin() + Fixup.Offset, Amt, char(0));
+        Fixup.Kind = MCFixupKind(X86::reloc_pcrel_4byte);
+
+        // Update the remaining fixups, which have slid.
+        //
+        // FIXME: This is bad for performance, but will be eliminated by the
+        // move to MCInst specific fragments.
+        ++it3;
+        for (; it3 != ie3; ++it3)
+          it3->Offset += Amt;
+
+        // Update all the symbols for this fragment, which may have slid.
+        //
+        // FIXME: This is really really bad for performance, but will be
+        // eliminated by the move to MCInst specific fragments.
+        for (MCAssembler::symbol_iterator it = symbol_begin(),
+               ie = symbol_end(); it != ie; ++it) {
+          MCSymbolData &SD = *it;
+
+          if (it->getFragment() != DF)
+            continue;
+
+          if (SD.getOffset() > PrevOffset)
+            SD.setOffset(SD.getOffset() + Amt);
+        }
+
+        // Restart layout.
+        //
+        // FIXME: This is O(N^2), but will be eliminated once we have a smart
+        // MCAsmLayout object.
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
-
 
 // Debugging methods
 

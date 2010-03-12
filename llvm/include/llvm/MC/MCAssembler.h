@@ -621,10 +621,18 @@ private:
   unsigned SubsectionsViaSymbols : 1;
 
 private:
+  /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
+  /// (increased in size, in order to hold its value correctly).
+  bool FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF);
+
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
   /// \arg SD, and update the section size. The section file offset should
   /// already have been computed.
   void LayoutSection(MCSectionData &SD);
+
+  /// LayoutOnce - Perform one layout iteration and return true if any offsets
+  /// were adjusted.
+  bool LayoutOnce();
 
   // FIXME: Make protected once we factor out object writer classes.
 public:
