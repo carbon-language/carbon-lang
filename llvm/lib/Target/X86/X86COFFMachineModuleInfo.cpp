@@ -45,24 +45,19 @@ void X86COFFMachineModuleInfo::DecorateCygMingName(SmallVectorImpl<char> &Name,
     return;
 
   unsigned ArgWords = 0;
-  DenseMap<const Function*, unsigned>::const_iterator item = FnArgWords.find(F);
-  if (item == FnArgWords.end()) {
-    // Calculate arguments sizes
-    for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-         AI != AE; ++AI) {
-      const Type* Ty = AI->getType();
+  
+  // Calculate arguments sizes
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI) {
+    const Type *Ty = AI->getType();
 
-      // 'Dereference' type in case of byval parameter attribute
-      if (AI->hasByValAttr())
-        Ty = cast<PointerType>(Ty)->getElementType();
+    // 'Dereference' type in case of byval parameter attribute
+    if (AI->hasByValAttr())
+      Ty = cast<PointerType>(Ty)->getElementType();
 
-      // Size should be aligned to DWORD boundary
-      ArgWords += ((TD.getTypeAllocSize(Ty) + 3)/4)*4;
-    }
-
-    FnArgWords[F] = ArgWords;
-  } else
-    ArgWords = item->second;
+    // Size should be aligned to DWORD boundary
+    ArgWords += ((TD.getTypeAllocSize(Ty) + 3)/4)*4;
+  }
 
   const FunctionType *FT = F->getFunctionType();
   // "Pure" variadic functions do not receive @0 suffix.

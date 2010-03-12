@@ -26,7 +26,6 @@ namespace llvm {
 /// for X86 COFF targets.
 class X86COFFMachineModuleInfo : public MachineModuleInfoImpl {
   StringSet<> CygMingStubs;
-  DenseMap<const Function*, unsigned> FnArgWords;
 public:
   X86COFFMachineModuleInfo(const MachineModuleInfo &);
   ~X86COFFMachineModuleInfo();
