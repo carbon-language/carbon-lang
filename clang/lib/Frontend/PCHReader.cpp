@@ -2628,7 +2628,7 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
     IdentifiersLoaded[ID - 1]
-      = &PP->getIdentifierTable().get(Str, Str + StrLen);
+      = &PP->getIdentifierTable().get(Str, StrLen);
   }
 
   return IdentifiersLoaded[ID - 1];

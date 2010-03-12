@@ -311,6 +311,14 @@ public:
     return *II;
   }
 
+  IdentifierInfo &get(llvm::StringRef Name) {
+    return get(Name.begin(), Name.end());
+  }
+
+  IdentifierInfo &get(const char *Name, size_t NameLen) {
+    return get(llvm::StringRef(Name, NameLen));
+  }
+
   /// \brief Creates a new IdentifierInfo from the given string.
   ///
   /// This is a lower-level version of get() that requires that this
@@ -340,10 +348,6 @@ public:
   }
   IdentifierInfo &CreateIdentifierInfo(llvm::StringRef Name) {
     return CreateIdentifierInfo(Name.begin(), Name.end());
-  }
-
-  IdentifierInfo &get(llvm::StringRef Name) {
-    return get(Name.begin(), Name.end());
   }
 
   typedef HashTableTy::const_iterator iterator;
