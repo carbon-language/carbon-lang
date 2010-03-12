@@ -1693,7 +1693,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     DIEBlock *Block = new DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Block, 0, dwarf::DW_FORM_udata,
-             Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
+             Asm->Mang->getSymbol(DI_GV.getGlobal()));
     addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
     addUInt(VariableDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
     ModuleCU->addDie(VariableSpecDIE);
@@ -1701,7 +1701,7 @@ void DwarfDebug::constructGlobalVariableDIE(MDNode *N) {
     DIEBlock *Block = new DIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     addLabel(Block, 0, dwarf::DW_FORM_udata,
-             Asm->GetGlobalValueSymbol(DI_GV.getGlobal()));
+             Asm->Mang->getSymbol(DI_GV.getGlobal()));
     addBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
   }
   addToContextOwner(VariableDie, GVContext);
