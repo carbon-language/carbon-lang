@@ -1632,12 +1632,7 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
 /// GetGlobalValueSymbol - Return the MCSymbol for the specified global
 /// value.
 MCSymbol *AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
-  SmallString<60> NameStr;
-  Mang->getNameWithPrefix(NameStr, GV, false);
-  
-  if (!GV->hasPrivateLinkage())
-    return OutContext.GetOrCreateSymbol(NameStr.str());
-  return OutContext.GetOrCreateTemporarySymbol(NameStr.str());
+  return Mang->getSymbol(GV);
 }
 
 /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with

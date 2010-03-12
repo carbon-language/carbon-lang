@@ -179,3 +179,16 @@ std::string Mangler::getNameWithPrefix(const GlobalValue *GV,
   getNameWithPrefix(Buf, GV, isImplicitlyPrivate);
   return std::string(Buf.begin(), Buf.end());
 }
+
+/// getSymbol - Return the MCSymbol for the specified global value.  This
+/// symbol is the main label that is the address of the global.
+MCSymbol *Mangler::getSymbol(const GlobalValue *GV) {
+  SmallString<60> NameStr;
+  getNameWithPrefix(NameStr, GV, false);
+  if (!GV->hasPrivateLinkage())
+    return Context.GetOrCreateSymbol(NameStr.str());
+  
+  return Context.GetOrCreateTemporarySymbol(NameStr.str());
+}
+
+

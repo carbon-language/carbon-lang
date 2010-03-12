@@ -298,16 +298,7 @@ const MCExpr *TargetLoweringObjectFile::
 getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                MachineModuleInfo *MMI, unsigned Encoding,
                                MCStreamer &Streamer) const {
-  // FIXME: Use GetGlobalValueSymbol.
-  SmallString<128> Name;
-  Mang->getNameWithPrefix(Name, GV, false);
-  const MCSymbol *Sym;
-  
-  if (GV->hasPrivateLinkage())
-    Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
-  else
-    Sym = getContext().GetOrCreateSymbol(Name.str());
-
+  const MCSymbol *Sym = Mang->getSymbol(GV);
   return getExprForDwarfReference(Sym, Mang, MMI, Encoding, Streamer);
 }
 

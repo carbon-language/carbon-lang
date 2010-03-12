@@ -1,4 +1,4 @@
-//===-- llvm/Target/Mangler.h - Self-contained name mangler ----*- C++ -*-===//
+//===-- llvm/Target/Mangler.h - Self-contained name mangler -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,6 +24,7 @@ class Value;
 class GlobalValue;
 template <typename T> class SmallVectorImpl; 
 class MCContext;
+class MCSymbol;
 
 class Mangler {
 public:
@@ -34,7 +35,7 @@ public:
   };
 
 private:
-  const MCContext &Context;
+  MCContext &Context;
 
   /// AnonGlobalIDs - We need to give global values the same name every time
   /// they are mangled.  This keeps track of the number we give to anonymous
@@ -47,8 +48,13 @@ private:
   unsigned NextAnonGlobalID;
 
 public:
-  Mangler(const MCContext &context) : Context(context), NextAnonGlobalID(1) {}
+  Mangler(MCContext &context) : Context(context), NextAnonGlobalID(1) {}
 
+  /// getSymbol - Return the MCSymbol for the specified global value.  This
+  /// symbol is the main label that is the address of the global.
+  MCSymbol *getSymbol(const GlobalValue *GV);
+
+  
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't
   /// have a name, this fills in a unique name for the global.
