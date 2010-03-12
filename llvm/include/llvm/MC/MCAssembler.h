@@ -21,6 +21,7 @@
 
 namespace llvm {
 class raw_ostream;
+class MCAsmLayout;
 class MCAssembler;
 class MCContext;
 class MCExpr;
@@ -28,6 +29,7 @@ class MCFragment;
 class MCSection;
 class MCSectionData;
 class MCSymbol;
+class MCValue;
 class TargetAsmBackend;
 
 /// MCAsmFixup - Represent a fixed size region of bytes inside some fragment
@@ -623,6 +625,25 @@ private:
   /// \arg SD, and update the section size. The section file offset should
   /// already have been computed.
   void LayoutSection(MCSectionData &SD);
+
+  // FIXME: Make protected once we factor out object writer classes.
+public:
+  /// Evaluate a fixup to a relocatable expression and the value which should be
+  /// placed into the fixup.
+  ///
+  /// \param Layout The layout to use for evaluation.
+  /// \param Fixup The fixup to evaluate.
+  /// \param DF The fragment the fixup is inside.
+  /// \param Target [out] On return, the relocatable expression the fixup
+  /// evaluates to.
+  /// \param Value [out] On return, the value of the fixup as currently layed
+  /// out.
+  /// \return Whether the fixup value was fully resolved. This is true if the
+  /// \arg Value result is fixed, otherwise the value may change due to
+  /// relocation.
+  bool EvaluateFixup(const MCAsmLayout &Layout,
+                     MCAsmFixup &Fixup, MCDataFragment *DF,
+                     MCValue &Target, uint64_t &Value) const;
 
 public:
   /// Construct a new assembler instance.

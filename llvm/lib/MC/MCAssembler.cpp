@@ -24,6 +24,7 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetAsmBackend.h"
 
 // FIXME: Gross.
 #include "../Target/X86/X86FixupKinds.h"
@@ -471,19 +472,6 @@ public:
       Value2 = B_SD->getAddress();
     }
 
-    // The value which goes in the fixup is current value of the expression.
-    Fixup.FixedValue = Value - Value2 + Target.getConstant();
-    if (IsPCRel)
-      Fixup.FixedValue -= Address;
-
-    // If this fixup is a vanilla PC relative relocation for a local label, we
-    // don't need a relocation.
-    //
-    // FIXME: Implement proper atom support.
-    if (IsPCRel && Target.getSymA() && Target.getSymA()->isTemporary() &&
-        !Target.getSymB())
-      return;
-
     MachRelocationEntry MRE;
     MRE.Word0 = ((Address   <<  0) |
                  (Type      << 24) |
@@ -514,9 +502,10 @@ public:
     // FIXME: Share layout object.
     MCAsmLayout Layout(Asm);
 
+    // Evaluate the fixup; if the value was resolved, no relocation is needed.
     MCValue Target;
-    if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
-      llvm_report_error("expected relocatable expression");
+    if (Asm.EvaluateFixup(Layout, Fixup, &Fragment, Target, Fixup.FixedValue))
+      return;
 
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.
@@ -566,24 +555,6 @@ public:
 
       Type = RIT_Vanilla;
     }
-
-    // The value which goes in the fixup is current value of the expression.
-    Fixup.FixedValue = Value + Target.getConstant();
-    if (IsPCRel)
-      Fixup.FixedValue -= Address;
-
-    // If the target evaluates to a constant, we don't need a relocation. This
-    // occurs with absolutized expressions which are not resolved to constants
-    // until after relaxation.
-    if (Target.isAbsolute())
-      return;
-
-    // If this fixup is a vanilla PC relative relocation for a local label, we
-    // don't need a relocation.
-    //
-    // FIXME: Implement proper atom support.
-    if (IsPCRel && Target.getSymA() && Target.getSymA()->isTemporary())
-      return;
 
     // struct relocation_info (8 bytes)
     MachRelocationEntry MRE;
@@ -1008,6 +979,54 @@ MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
 }
 
 MCAssembler::~MCAssembler() {
+}
+
+bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
+                                MCDataFragment *DF,
+                                MCValue &Target, uint64_t &Value) const {
+  if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
+    llvm_report_error("expected relocatable expression");
+
+  // FIXME: How do non-scattered symbols work in ELF? I presume the linker
+  // doesn't support small relocations, but then under what criteria does the
+  // assembler allow symbol differences?
+
+  Value = Target.getConstant();
+
+  // FIXME: This "resolved" check isn't quite right. The assumption is that if
+  // we have a PCrel access to a temporary, then that temporary is in the same
+  // atom, and so the value is resolved. We need explicit atom's to implement
+  // this more precisely.
+  bool IsResolved = true, IsPCRel = isFixupKindPCRel(Fixup.Kind);
+  if (const MCSymbol *Symbol = Target.getSymA()) {
+    if (Symbol->isDefined())
+      Value += getSymbolData(*Symbol).getAddress();
+    else
+      IsResolved = false;
+
+    // With scattered symbols, we assume anything that isn't a PCrel temporary
+    // access can have an arbitrary value.
+    if (getBackend().hasScatteredSymbols() &&
+        (!IsPCRel || !Symbol->isTemporary()))
+      IsResolved = false;
+  }
+  if (const MCSymbol *Symbol = Target.getSymB()) {
+    if (Symbol->isDefined())
+      Value -= getSymbolData(*Symbol).getAddress();
+    else
+      IsResolved = false;
+
+    // With scattered symbols, we assume anything that isn't a PCrel temporary
+    // access can have an arbitrary value.
+    if (getBackend().hasScatteredSymbols() &&
+        (!IsPCRel || !Symbol->isTemporary()))
+      IsResolved = false;
+  }
+
+  if (IsPCRel)
+    Value -= DF->getOffset() + Fixup.Offset;
+
+  return IsResolved;
 }
 
 void MCAssembler::LayoutSection(MCSectionData &SD) {
