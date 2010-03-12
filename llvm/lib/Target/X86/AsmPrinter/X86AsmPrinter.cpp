@@ -54,25 +54,19 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
 }
 
 MCSymbol *X86AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
-  SmallString<60> NameStr;
-  Mang->getNameWithPrefix(NameStr, GV, false);
-  MCSymbol *Symb;
-  if (GV->hasPrivateLinkage())
-    Symb = OutContext.GetOrCreateTemporarySymbol(NameStr.str());
-  else
-    Symb = OutContext.GetOrCreateSymbol(NameStr.str());
+  MCSymbol *Symb = Mang->getSymbol(GV);
+  
+  if (!Subtarget->isTargetCygMing() || !isa<Function>(GV))
+    return Symb;
+  
+  X86COFFMachineModuleInfo &COFFMMI =
+    MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+  COFFMMI.DecorateCygMingName(Symb, OutContext, GV, *TM.getTargetData());
 
-  if (Subtarget->isTargetCygMing()) {
-    X86COFFMachineModuleInfo &COFFMMI =
-      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-    COFFMMI.DecorateCygMingName(Symb, OutContext, GV, *TM.getTargetData());
-
-    // Save function name for later type emission.
-    if (const Function *F = dyn_cast<Function>(GV))
-      if (F->isDeclaration())
-        COFFMMI.addExternalFunction(Symb->getName());
-
-  }
+  // Save function name for later type emission.
+  const Function *F = cast<Function>(GV);
+  if (F->isDeclaration())
+    COFFMMI.addExternalFunction(Symb->getName());
 
   return Symb;
 }
