@@ -14,6 +14,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
@@ -59,11 +60,10 @@ static bool NameNeedsEscaping(StringRef Str, const MCAsmInfo &MAI) {
 /// appendMangledName - Add the specified string in mangled form if it uses
 /// any unusual characters.
 static void appendMangledName(SmallVectorImpl<char> &OutName, StringRef Str,
-                              const MCAsmInfo *MAI) {
+                              const MCAsmInfo &MAI) {
   // The first character is not allowed to be a number unless the target
   // explicitly allows it.
-  if ((MAI == 0 || !MAI->doesAllowNameToStartWithDigit()) &&
-      Str[0] >= '0' && Str[0] <= '9') {
+  if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9') {
     MangleLetter(OutName, Str[0]);
     Str = Str.substr(1);
   }
@@ -100,6 +100,8 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
   
+  const MCAsmInfo &MAI = Context.getAsmInfo();
+  
   // If the global name is not led with \1, add the appropriate prefixes.
   if (Name[0] == '\1') {
     Name = Name.substr(1);
@@ -134,7 +136,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   // On systems that do not allow quoted names, we need to mangle most
   // strange characters.
   if (!MAI.doesAllowQuotesInName())
-    return appendMangledName(OutName, Name, &MAI);
+    return appendMangledName(OutName, Name, MAI);
   
   // Okay, the system allows quoted strings.  We can quote most anything, the
   // only characters that need escaping are " and \n.

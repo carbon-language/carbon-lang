@@ -23,7 +23,7 @@ class Twine;
 class Value;
 class GlobalValue;
 template <typename T> class SmallVectorImpl; 
-class MCAsmInfo;
+class MCContext;
 
 class Mangler {
 public:
@@ -34,7 +34,7 @@ public:
   };
 
 private:
-  const MCAsmInfo &MAI;
+  const MCContext &Context;
 
   /// AnonGlobalIDs - We need to give global values the same name every time
   /// they are mangled.  This keeps track of the number we give to anonymous
@@ -47,9 +47,7 @@ private:
   unsigned NextAnonGlobalID;
 
 public:
-  // Mangler ctor - if a prefix is specified, it will be prepended onto all
-  // symbols.
-  Mangler(const MCAsmInfo &mai) : MAI(mai), NextAnonGlobalID(1) {}
+  Mangler(const MCContext &context) : Context(context), NextAnonGlobalID(1) {}
 
   /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
   /// and the specified global variable's name.  If the global variable doesn't

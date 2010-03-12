@@ -1,4 +1,4 @@
-//===-LTOModule.cpp - LLVM Link Time Optimizer ----------------------------===//
+//===-- LTOModule.cpp - LLVM Link Time Optimizer --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -29,6 +29,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
@@ -437,7 +438,8 @@ void LTOModule::lazyParseSymbols()
         _symbolsParsed = true;
         
         // Use mangler to add GlobalPrefix to names to match linker names.
-        Mangler mangler(*_target->getMCAsmInfo());
+        MCContext Context(*_target->getMCAsmInfo());
+        Mangler mangler(Context);
 
         // add functions
         for (Module::iterator f = _module->begin(); f != _module->end(); ++f) {

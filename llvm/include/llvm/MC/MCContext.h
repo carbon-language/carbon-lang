@@ -48,7 +48,7 @@ namespace llvm {
     /// objects.
     BumpPtrAllocator Allocator;
   public:
-    MCContext(const MCAsmInfo &MAI);
+    explicit MCContext(const MCAsmInfo &MAI);
     ~MCContext();
     
     const MCAsmInfo &getAsmInfo() const { return MAI; }

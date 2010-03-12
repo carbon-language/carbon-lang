@@ -27,6 +27,17 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/SubtargetFeature.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetSelect.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -35,16 +46,6 @@
 #include "llvm/System/Host.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/Target/SubtargetFeature.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetSelect.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Config/config.h"
 #include <cstdlib>
 #include <unistd.h>
@@ -252,7 +253,8 @@ bool LTOCodeGenerator::assemble(const std::string& asmPath,
             args.push_back(arch);
         }
         // add -static to assembler command line when code model requires
-        if ( (_assemblerPath != NULL) && (_codeModel == LTO_CODEGEN_PIC_MODEL_STATIC) )
+        if ( (_assemblerPath != NULL) &&
+            (_codeModel == LTO_CODEGEN_PIC_MODEL_STATIC) )
             args.push_back("-static");
     }
     if ( needsCompilerOptions ) {
@@ -303,44 +305,44 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
 
         // construct LTModule, hand over ownership of module and target
         const std::string FeatureStr =
-            SubtargetFeatures::getDefaultSubtargetFeatures(llvm::Triple(Triple));
+           SubtargetFeatures::getDefaultSubtargetFeatures(llvm::Triple(Triple));
         _target = march->createTargetMachine(Triple, FeatureStr);
     }
     return false;
 }
 
-void LTOCodeGenerator::applyScopeRestrictions()
-{
-    if ( !_scopeRestrictionsDone ) {
-        Module* mergedModule = _linker.getModule();
+void LTOCodeGenerator::applyScopeRestrictions() {
+  if (_scopeRestrictionsDone) return;
+  Module *mergedModule = _linker.getModule();
 
-        // Start off with a verification pass.
-        PassManager passes;
-        passes.add(createVerifierPass());
+  // Start off with a verification pass.
+  PassManager passes;
+  passes.add(createVerifierPass());
 
-        // mark which symbols can not be internalized 
-        if ( !_mustPreserveSymbols.empty() ) {
-            Mangler mangler(*_target->getMCAsmInfo());
-            std::vector<const char*> mustPreserveList;
-            for (Module::iterator f = mergedModule->begin(), 
-                                        e = mergedModule->end(); f != e; ++f) {
-                if ( !f->isDeclaration() 
-                  && _mustPreserveSymbols.count(mangler.getNameWithPrefix(f)) )
-                  mustPreserveList.push_back(::strdup(f->getNameStr().c_str()));
-            }
-            for (Module::global_iterator v = mergedModule->global_begin(), 
-                                 e = mergedModule->global_end(); v !=  e; ++v) {
-                if ( !v->isDeclaration()
-                  && _mustPreserveSymbols.count(mangler.getNameWithPrefix(v)) )
-                  mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
-            }
-            passes.add(createInternalizePass(mustPreserveList));
-        }
-        // apply scope restrictions
-        passes.run(*mergedModule);
-        
-        _scopeRestrictionsDone = true;
+  // mark which symbols can not be internalized 
+  if (!_mustPreserveSymbols.empty()) {
+    MCContext Context(*_target->getMCAsmInfo());
+    Mangler mangler(Context);
+    std::vector<const char*> mustPreserveList;
+    for (Module::iterator f = mergedModule->begin(),
+         e = mergedModule->end(); f != e; ++f) {
+      if (!f->isDeclaration() &&
+          _mustPreserveSymbols.count(mangler.getNameWithPrefix(f)))
+        mustPreserveList.push_back(::strdup(f->getNameStr().c_str()));
     }
+    for (Module::global_iterator v = mergedModule->global_begin(), 
+         e = mergedModule->global_end(); v !=  e; ++v) {
+      if (v->isDeclaration() &&
+          _mustPreserveSymbols.count(mangler.getNameWithPrefix(v)))
+        mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
+    }
+    passes.add(createInternalizePass(mustPreserveList));
+  }
+  
+  // apply scope restrictions
+  passes.run(*mergedModule);
+  
+  _scopeRestrictionsDone = true;
 }
 
 /// Optimize merged modules using various IPO passes

@@ -36,6 +36,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -95,6 +96,7 @@ namespace {
     LoopInfo *LI;
     const Module *TheModule;
     const MCAsmInfo* TAsm;
+    MCContext *TCtx;
     const TargetData* TD;
     std::map<const Type *, std::string> TypeNames;
     std::map<const ConstantFP *, unsigned> FPConstantMap;
@@ -1731,7 +1733,8 @@ bool CWriter::doInitialization(Module &M) {
     TAsm = Match->createAsmInfo(Triple);
 #endif    
   TAsm = new CBEMCAsmInfo();
-  Mang = new Mangler(*TAsm);
+  TCtx = new MCContext(*TAsm);
+  Mang = new Mangler(*TCtx);
 
   // Keep track of which functions are static ctors/dtors so they can have
   // an attribute added to their prototypes.

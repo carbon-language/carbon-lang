@@ -101,14 +101,12 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T,
 
 // Set the default code model for the JIT for a generic target.
 // FIXME: Is small right here? or .is64Bit() ? Large : Small?
-void
-LLVMTargetMachine::setCodeModelForJIT() {
+void LLVMTargetMachine::setCodeModelForJIT() {
   setCodeModel(CodeModel::Small);
 }
 
 // Set the default code model for static compilation for a generic target.
-void
-LLVMTargetMachine::setCodeModelForStatic() {
+void LLVMTargetMachine::setCodeModelForStatic() {
   setCodeModel(CodeModel::Small);
 }
 
