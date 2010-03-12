@@ -23,7 +23,7 @@ echo "mkpatch: Generating differences on all directories"
 svn diff -x -u  >> "$NAME".patch.raw 2>&1 \
   autoconf docs utils include lib/System lib/Support lib/VMCore lib/AsmParser \
   lib/Bitcode lib/Analysis lib/Transforms lib/CodeGen lib/Target \
-  lib/ExecutionEngine lib/Linker \
+  lib/ExecutionEngine lib/Linker lib/MC \
   tools test unittests runtime projects examples Xcode
 
 echo "mkpatch: Removing cruft from the patch file"
