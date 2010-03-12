@@ -1626,12 +1626,6 @@ MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
    Twine(UID) + "_set_" + Twine(MBBID));
 }
 
-/// GetGlobalValueSymbol - Return the MCSymbol for the specified global
-/// value.
-MCSymbol *AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
-  return Mang->getSymbol(GV);
-}
-
 /// GetSymbolWithGlobalValueBase - Return the MCSymbol for a symbol with
 /// global value name as its base, with the specified suffix, and where the
 /// symbol is forced to have private linkage if ForcePrivate is true.
