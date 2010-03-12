@@ -204,7 +204,8 @@ class MCAlignFragment : public MCFragment {
   /// cannot be satisfied in this width then this fragment is ignored.
   unsigned MaxBytesToEmit;
 
-  /// EmitNops - true when aligning code and optimal nops to be used for filling
+  /// EmitNops - true when aligning code and optimal nops to be used for
+  /// filling.
   bool EmitNops;
 
 public:
@@ -704,8 +705,8 @@ public:
   /// @name Backend Data Access
   /// @{
 
-  MCSectionData &getSectionData(const MCSection &Section) {
-    MCSectionData *&Entry = SectionMap[&Section];
+  MCSectionData &getSectionData(const MCSection &Section) const {
+    MCSectionData *Entry = SectionMap.lookup(&Section);
     assert(Entry && "Missing section data!");
     return *Entry;
   }
@@ -721,8 +722,8 @@ public:
     return *Entry;
   }
 
-  MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
-    MCSymbolData *&Entry = SymbolMap[&Symbol];
+  MCSymbolData &getSymbolData(const MCSymbol &Symbol) const {
+    MCSymbolData *Entry = SymbolMap.lookup(&Symbol);
     assert(Entry && "Missing symbol data!");
     return *Entry;
   }

@@ -67,7 +67,7 @@ public:
   /// values. If not given, then only non-symbolic expressions will be
   /// evaluated.
   /// @result - True on success.
-  bool EvaluateAsAbsolute(int64_t &Res, MCAsmLayout *Layout = 0) const;
+  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout = 0) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).
@@ -75,13 +75,13 @@ public:
   /// @param Res - The relocatable value, if evaluation succeeds.
   /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
-  bool EvaluateAsRelocatable(MCValue &Res, MCAsmLayout *Layout = 0) const;
+  bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout = 0) const;
 
   /// @}
 
   static bool classof(const MCExpr *) { return true; }
 };
-  
+
 inline raw_ostream &operator<<(raw_ostream &OS, const MCExpr &E) {
   E.print(OS);
   return OS;
@@ -351,12 +351,12 @@ protected:
   MCTargetExpr() : MCExpr(Target) {}
   virtual ~MCTargetExpr() {}
 public:
-  
+
   virtual void PrintImpl(raw_ostream &OS) const = 0;
   virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
-                                         MCAsmLayout *Layout) const = 0;
+                                         const MCAsmLayout *Layout) const = 0;
 
-  
+
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;
   }

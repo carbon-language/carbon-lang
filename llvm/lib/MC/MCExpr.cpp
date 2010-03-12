@@ -145,7 +145,7 @@ void MCTargetExpr::Anchor() {}
 
 /* *** */
 
-bool MCExpr::EvaluateAsAbsolute(int64_t &Res, MCAsmLayout *Layout) const {
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const {
   MCValue Value;
   
   if (!EvaluateAsRelocatable(Value, Layout) || !Value.isAbsolute())
@@ -177,7 +177,8 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS, const MCSymbol *RHS_A,
   return true;
 }
 
-bool MCExpr::EvaluateAsRelocatable(MCValue &Res, MCAsmLayout *Layout) const {
+bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
+                                   const MCAsmLayout *Layout) const {
   switch (getKind()) {
   case Target:
     return cast<MCTargetExpr>(this)->EvaluateAsRelocatableImpl(Res, Layout);

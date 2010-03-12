@@ -28,7 +28,7 @@ public:
   MCAsmLayout(MCAssembler &_Assembler) : Assembler(_Assembler) {}
 
   /// Get the assembler object this is a layout for.
-  MCAssembler &getAssembler() { return Assembler; }
+  MCAssembler &getAssembler() const { return Assembler; }
 };
 
 } // end namespace llvm

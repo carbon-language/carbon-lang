@@ -37,7 +37,7 @@ void X86MCTargetExpr::PrintImpl(raw_ostream &OS) const {
 }
 
 bool X86MCTargetExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                                MCAsmLayout *Layout) const {
+                                              const MCAsmLayout *Layout) const {
   // FIXME: I don't know if this is right, it followed MCSymbolRefExpr.
   
   // Evaluate recursively if this is a variable.
