@@ -54,14 +54,7 @@ void X86AsmPrinter::PrintPICBaseSymbol() const {
 }
 
 MCSymbol *X86AsmPrinter::GetGlobalValueSymbol(const GlobalValue *GV) const {
-  MCSymbol *Symb = Mang->getSymbol(GV);
-  
-  if (!Subtarget->isTargetCygMing() || !isa<Function>(GV))
-    return Symb;
-  
-  return X86COFFMachineModuleInfo::
-    DecorateCygMingName(Symb, OutContext, cast<Function>(GV),
-                        *TM.getTargetData());
+  return Mang->getSymbol(GV);
 }
 
 /// runOnMachineFunction - Emit the function body.

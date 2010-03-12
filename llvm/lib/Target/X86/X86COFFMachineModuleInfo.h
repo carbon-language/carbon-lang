@@ -30,9 +30,6 @@ public:
   X86COFFMachineModuleInfo(const MachineModuleInfo &) {}
   virtual ~X86COFFMachineModuleInfo();
 
-  static MCSymbol *DecorateCygMingName(MCSymbol *Name, MCContext &Ctx,
-                                       const Function *F, const TargetData &TD);
-
   void addExternalFunction(StringRef Name) {
     CygMingStubs.insert(Name);
   }

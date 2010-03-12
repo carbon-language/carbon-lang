@@ -63,9 +63,6 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
              isa<Function>(MO.getGlobal())) {
     const GlobalValue *GV = MO.getGlobal();
     MCSymbol *Sym = Mang->getSymbol(GV);
-    Sym = X86COFFMachineModuleInfo::
-      DecorateCygMingName(Sym, Ctx, cast<Function>(GV),
-                          *AsmPrinter.TM.getTargetData());
     Name.append(Sym->getName().begin(), Sym->getName().end());
   } else {    
     const GlobalValue *GV = MO.getGlobal();

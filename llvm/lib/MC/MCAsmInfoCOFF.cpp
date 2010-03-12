@@ -35,4 +35,5 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   AbsoluteEHSectionOffsets = false;
   SupportsDebugInformation = true;
   DwarfSectionOffsetDirective = "\t.secrel32\t";
+  HasMicrosoftFastStdCallMangling = true;
 }

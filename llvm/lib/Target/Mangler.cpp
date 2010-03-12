@@ -12,9 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/Mangler.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
@@ -144,6 +147,26 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   return appendMangledQuotedName(OutName, Name);
 }
 
+/// AddFastCallStdCallSuffix - Microsoft fastcall and stdcall functions require
+/// a suffix on their name indicating the number of words of arguments they
+/// take.
+static void AddFastCallStdCallSuffix(SmallVectorImpl<char> &OutName,
+                                     const Function *F, const TargetData &TD) {
+  // Calculate arguments size total.
+  unsigned ArgWords = 0;
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI) {
+    const Type *Ty = AI->getType();
+    // 'Dereference' type in case of byval parameter attribute
+    if (AI->hasByValAttr())
+      Ty = cast<PointerType>(Ty)->getElementType();
+    // Size should be aligned to DWORD boundary
+    ArgWords += ((TD.getTypeAllocSize(Ty) + 3)/4)*4;
+  }
+  
+  raw_svector_ostream(OutName) << '@' << ArgWords;
+}
+
 
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
 /// and the specified global variable's name.  If the global variable doesn't
@@ -158,16 +181,43 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     PrefixTy = Mangler::LinkerPrivate;
   
   // If this global has a name, handle it simply.
-  if (GV->hasName())
-    return getNameWithPrefix(OutName, GV->getName(), PrefixTy);
+  if (GV->hasName()) {
+    getNameWithPrefix(OutName, GV->getName(), PrefixTy);
+  } else {
+    // Get the ID for the global, assigning a new one if we haven't got one
+    // already.
+    unsigned &ID = AnonGlobalIDs[GV];
+    if (ID == 0) ID = NextAnonGlobalID++;
   
-  // Get the ID for the global, assigning a new one if we haven't got one
-  // already.
-  unsigned &ID = AnonGlobalIDs[GV];
-  if (ID == 0) ID = NextAnonGlobalID++;
+    // Must mangle the global into a unique ID.
+    getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy);
+  }
   
-  // Must mangle the global into a unique ID.
-  getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy);
+  // If we are supposed to add a microsoft-style suffix for stdcall/fastcall,
+  // add it.
+  if (Context.getAsmInfo().hasMicrosoftFastStdCallMangling()) {
+    if (const Function *F = dyn_cast<Function>(GV)) {
+      CallingConv::ID CC = F->getCallingConv();
+    
+      // fastcall functions need to start with @.
+      // FIXME: This logic seems unlikely to be right.
+      if (CC == CallingConv::X86_FastCall) {
+        if (OutName[0] == '_')
+          OutName[0] = '@';
+        else
+          OutName.insert(OutName.begin(), '@');
+      }
+    
+      // fastcall and stdcall functions usually need @42 at the end to specify
+      // the argument info.
+      const FunctionType *FT = F->getFunctionType();
+      if ((CC == CallingConv::X86_FastCall || CC == CallingConv::X86_StdCall) &&
+          // "Pure" variadic functions do not receive @0 suffix.
+          (!FT->isVarArg() || FT->getNumParams() == 0 ||
+           (FT->getNumParams() == 1 && F->hasStructRetAttr())))
+        AddFastCallStdCallSuffix(OutName, F, TD);
+    }
+  }
 }
 
 /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix

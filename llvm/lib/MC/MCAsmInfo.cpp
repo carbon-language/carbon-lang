@@ -69,6 +69,7 @@ MCAsmInfo::MCAsmInfo() {
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
   DwarfSectionOffsetDirective = 0;
+  HasMicrosoftFastStdCallMangling = false;
 
   AsmTransCBE = 0;
 }

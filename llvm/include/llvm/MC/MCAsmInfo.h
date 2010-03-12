@@ -145,6 +145,11 @@ namespace llvm {
     /// which doesn't support the '.bss' directive only.
     bool UsesELFSectionDirectiveForBSS;      // Defaults to false.
     
+    /// HasMicrosoftFastStdCallMangling - True if this target uses microsoft
+    /// style mangling for functions with X86_StdCall/X86_FastCall calling
+    /// convention.
+    bool HasMicrosoftFastStdCallMangling;    // Defaults to false.
+    
     //===--- Alignment Information ----------------------------------------===//
 
     /// AlignDirective - The directive used to emit round up to an alignment
@@ -295,6 +300,10 @@ namespace llvm {
       return UsesELFSectionDirectiveForBSS;
     }
 
+    bool hasMicrosoftFastStdCallMangling() const {
+      return HasMicrosoftFastStdCallMangling;
+    }
+    
     // Accessors.
     //
     bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
