@@ -58,10 +58,9 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
         Diag((*Found.first)->getLocation(), diag::note_property_declare);
         return DeclPtrTy();
       }
-      ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
-                                                         FD.D.getIdentifierLoc(),
-                                                         FD.D.getIdentifier(),
-                                                         AtLoc, T);
+      ObjCPropertyDecl *PDecl =
+        ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
+                                 FD.D.getIdentifier(), AtLoc, T);
       DC->addDecl(PDecl);
 
       // This is a continuation class. property requires special
@@ -97,17 +96,19 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
             if (!PropertyInPrimaryClass) {
               // Protocol is not in the primary class. Must build one for it.
               ObjCDeclSpec ProtocolPropertyODS;
-              // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind and
-              // ObjCPropertyDecl::PropertyAttributeKind have identical values.
-              // Should consolidate both into one enum type.
-              ProtocolPropertyODS.setPropertyAttributes(
-                                                        (ObjCDeclSpec::ObjCPropertyAttributeKind)PIkind);
+              // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind
+              // and ObjCPropertyDecl::PropertyAttributeKind have identical
+              // values.  Should consolidate both into one enum type.
+              ProtocolPropertyODS.
+                setPropertyAttributes((ObjCDeclSpec::ObjCPropertyAttributeKind)
+                                      PIkind);
+
               DeclPtrTy ProtocolPtrTy =
-              ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
-                            PIDecl->getGetterName(),
-                            PIDecl->getSetterName(),
-                            DeclPtrTy::make(CCPrimary), isOverridingProperty,
-                            MethodImplKind);
+                ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
+                              PIDecl->getGetterName(),
+                              PIDecl->getSetterName(),
+                              DeclPtrTy::make(CCPrimary), isOverridingProperty,
+                              MethodImplKind);
               PIDecl = ProtocolPtrTy.getAs<ObjCPropertyDecl>();
             }
             PIDecl->makeitReadWriteAttribute();
@@ -530,7 +531,7 @@ Sema::MatchOneProtocolPropertiesInClass(Decl *CDecl,
         ObjCPropertyDecl *Pr = (*P);
         ObjCCategoryDecl::prop_iterator CP, CE;
         // Is this property already in  category's list of properties?
-        for (CP = CatDecl->prop_begin(), CE = CatDecl->prop_end(); CP != CE; ++CP)
+        for (CP = CatDecl->prop_begin(), CE = CatDecl->prop_end(); CP!=CE; ++CP)
           if ((*CP)->getIdentifier() == Pr->getIdentifier())
             break;
         if (CP != CE)
