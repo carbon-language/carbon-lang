@@ -50,25 +50,6 @@ DwarfException::~DwarfException() {
   delete ExceptionTimer;
 }
 
-/// CreateLabelDiff - Emit a label and subtract it from the expression we
-/// already have.  This is equivalent to emitting "foo - .", but we have to emit
-/// the label for "." directly.
-const MCExpr *DwarfException::CreateLabelDiff(const MCExpr *ExprRef,
-                                              const char *LabelName,
-                                              unsigned Index) {
-  SmallString<64> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-                            << LabelName << Asm->getFunctionNumber()
-                            << "_" << Index;
-  MCSymbol *DotSym = Asm->OutContext.GetOrCreateTemporarySymbol(Name.str());
-  Asm->OutStreamer.EmitLabel(DotSym);
-
-  return MCBinaryExpr::CreateSub(ExprRef,
-                                 MCSymbolRefExpr::Create(DotSym,
-                                                         Asm->OutContext),
-                                 Asm->OutContext);
-}
-
 /// EmitCIE - Emit a Common Information Entry (CIE). This holds information that
 /// is shared among many Frame Description Entries.  There is at least one CIE
 /// in every non-empty .debug_frame section.
