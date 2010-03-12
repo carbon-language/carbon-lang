@@ -812,7 +812,15 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       //   .indirect_symbol _foo
       MachineModuleInfoImpl::StubValueTy &MCSym = Stubs[i].second;
       OutStreamer.EmitSymbolAttribute(MCSym.getPointer(), MCSA_IndirectSymbol);
-      OutStreamer.EmitIntValue(0, isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
+
+      if (MCSym.getInt())
+        // External to current translation unit.
+        OutStreamer.EmitIntValue(0, isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
+      else
+        // Internal to current translation unit.
+        OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
+                                                      OutContext),
+                              isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
     }
 
     Stubs.clear();
