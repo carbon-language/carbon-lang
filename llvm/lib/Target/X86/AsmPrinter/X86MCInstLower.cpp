@@ -406,11 +406,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // For this, we want to print something like:
     //   MYGLOBAL + (. - PICBASE)
     // However, we can't generate a ".", so just emit a new label here and refer
-    // to it.  We know that this operand flag occurs at most once per function.
-    const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *DotSym = OutContext.GetOrCreateTemporarySymbol(Twine(Prefix)+
-                                                             "picbaseref" +
-                                                    Twine(getFunctionNumber()));
+    // to it.
+    MCSymbol *DotSym = OutContext.GetOrCreateTemporarySymbol();
     OutStreamer.EmitLabel(DotSym);
     
     // Now that we have emitted the label, lower the complex operand expression.

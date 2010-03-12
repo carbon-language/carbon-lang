@@ -15,7 +15,7 @@ entry:
 ; LINUX:	call	.L1$pb
 ; LINUX-NEXT: .L1$pb:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref1-.L1$pb),
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L1$pb),
 ; LINUX:	movl	dst@GOT(%eax),
 ; LINUX:	movl	ptr@GOT(%eax),
 ; LINUX:	movl	src@GOT(%eax),
@@ -37,7 +37,7 @@ entry:
 ; LINUX:	call	.L2$pb
 ; LINUX-NEXT: .L2$pb:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref2-.L2$pb), %eax
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L2$pb), %eax
 ; LINUX:	movl	dst2@GOT(%eax),
 ; LINUX:	movl	ptr2@GOT(%eax),
 ; LINUX:	movl	src2@GOT(%eax),
@@ -57,7 +57,7 @@ entry:
 ; LINUX-NEXT: 	call	.L3$pb
 ; LINUX-NEXT: .L3$pb:
 ; LINUX-NEXT: 	popl	%ebx
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref3-.L3$pb), %ebx
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L3$pb), %ebx
 ; LINUX: 	movl	$40, (%esp)
 ; LINUX: 	call	malloc@PLT
 ; LINUX: 	addl	$8, %esp
@@ -78,7 +78,7 @@ entry:
 ; LINUX: 	call	.L4$pb
 ; LINUX-NEXT: .L4$pb:
 ; LINUX: 	popl
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref4-.L4$pb),
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L4$pb),
 ; LINUX: 	movl	pfoo@GOT(%esi),
 ; LINUX: 	call	afoo@PLT
 ; LINUX: 	call	*
@@ -93,7 +93,7 @@ entry:
 ; LINUX: test5:
 ; LINUX: call	.L5$pb
 ; LINUX: popl	%ebx
-; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref5-.L5$pb), %ebx
+; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L5$pb), %ebx
 ; LINUX: call	foo@PLT
 }
 
@@ -115,7 +115,7 @@ entry:
 ; LINUX: 	call	.L6$pb
 ; LINUX-NEXT: .L6$pb:
 ; LINUX-NEXT: 	popl	%eax
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref6-.L6$pb), %eax
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L6$pb), %eax
 ; LINUX: 	leal	dst6@GOTOFF(%eax), %ecx
 ; LINUX: 	movl	%ecx, ptr6@GOTOFF(%eax)
 ; LINUX: 	movl	src6@GOTOFF(%eax), %ecx
@@ -136,7 +136,7 @@ entry:
 ; LINUX: test7:
 ; LINUX:    call .L7$pb
 ; LINUX: .L7$pb:
-; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref7-.L7$pb), 
+; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L7$pb), 
 ; LINUX:    fldl	.LCPI7_0@GOTOFF(
 }
 
@@ -188,7 +188,7 @@ bb12:
 ; LINUX: test8:
 ; LINUX:   call	.L8$pb
 ; LINUX: .L8$pb:
-; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref8-.L8$pb),
+; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L8$pb),
 ; LINUX:   addl	.LJTI8_0@GOTOFF(
 ; LINUX:   jmpl	*
 
