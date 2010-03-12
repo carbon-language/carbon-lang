@@ -4973,13 +4973,24 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
 
   Done = false;
   while (!Done) {
-    switch (*Str++) {
+    switch (char c = *Str++) {
       default: Done = true; --Str; break;
       case '*':
-        Type = Context.getPointerType(Type);
-        break;
       case '&':
-        Type = Context.getLValueReferenceType(Type);
+        {
+          // Both pointers and references can have their pointee types
+          // qualified with an address space.
+          char *End;
+          unsigned AddrSpace = strtoul(Str, &End, 10);
+          if (End != Str && AddrSpace != 0) {
+            Type = Context.getAddrSpaceQualType(Type, AddrSpace);
+            Str = End;
+          }
+        }
+        if (c == '*')
+          Type = Context.getPointerType(Type);
+        else
+          Type = Context.getLValueReferenceType(Type);
         break;
       // FIXME: There's no way to have a built-in with an rvalue ref arg.
       case 'C':
