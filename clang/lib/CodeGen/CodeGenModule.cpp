@@ -285,7 +285,8 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
       break;
 
     case TSK_ExplicitInstantiationDefinition:
-      return CodeGenModule::GVA_ExplicitTemplateInstantiation;
+      // FIXME: explicit instantiation definitions should use weak linkage
+      return CodeGenModule::GVA_StrongExternal;
 
     case TSK_ExplicitInstantiationDeclaration:
     case TSK_ImplicitInstantiation:
@@ -334,8 +335,7 @@ CodeGenModule::getFunctionLinkage(const FunctionDecl *D) {
     // In C99 mode, 'inline' functions are guaranteed to have a strong
     // definition somewhere else, so we can use available_externally linkage.
     return llvm::Function::AvailableExternallyLinkage;
-  } else if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation ||
-             Linkage == GVA_ExplicitTemplateInstantiation) {
+  } else if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation) {
     // In C++, the compiler has to emit a definition in every translation unit
     // that references the function.  We should use linkonce_odr because
     // a) if all references in this translation unit are optimized away, we
@@ -589,7 +589,6 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
 
     // static, static inline, always_inline, and extern inline functions can
     // always be deferred.  Normal inline functions can be deferred in C99/C++.
-    // Implicit template instantiations can also be deferred in C++.
     if (Linkage == GVA_Internal || Linkage == GVA_C99Inline ||
         Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
       return true;
@@ -1044,15 +1043,15 @@ GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
     switch (TSK) {
     case TSK_Undeclared:
     case TSK_ExplicitSpecialization:
-      return CodeGenModule::GVA_StrongExternal;
 
+      // FIXME: ExplicitInstantiationDefinition should be weak!
+    case TSK_ExplicitInstantiationDefinition:
+      return CodeGenModule::GVA_StrongExternal;
+      
     case TSK_ExplicitInstantiationDeclaration:
       llvm_unreachable("Variable should not be instantiated");
       // Fall through to treat this like any other instantiation.
         
-    case TSK_ExplicitInstantiationDefinition:
-      return CodeGenModule::GVA_ExplicitTemplateInstantiation;
-
     case TSK_ImplicitInstantiation:
       return CodeGenModule::GVA_TemplateInstantiation;      
     }
@@ -1172,8 +1171,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       GV->setLinkage(llvm::GlobalVariable::WeakODRLinkage);
     else
       GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
-  } else if (Linkage == GVA_TemplateInstantiation || 
-             Linkage == GVA_ExplicitTemplateInstantiation)
+  } else if (Linkage == GVA_TemplateInstantiation)
     GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);   
   else if (!getLangOptions().CPlusPlus && !CodeGenOpts.NoCommon &&
            !D->hasExternalStorage() && !D->getInit() &&
