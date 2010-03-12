@@ -474,8 +474,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   unsigned PredReg = 0;
   ARMCC::CondCodes Pred = llvm::getInstrPredicate(MI, PredReg);
   int Opcode = MI->getOpcode();
-  bool isAM4 = Opcode == ARM::LDM || Opcode == ARM::t2LDM ||
-    Opcode == ARM::STM || Opcode == ARM::t2STM;
+  bool isAM4 = (Opcode == ARM::LDM || Opcode == ARM::t2LDM ||
+                Opcode == ARM::STM || Opcode == ARM::t2STM);
 
   if (isAM4) {
     if (ARM_AM::getAM4WBFlag(MI->getOperand(1).getImm()))
@@ -624,14 +624,14 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned Bytes = getLSMultipleTransferSize(MI);
   int Opcode = MI->getOpcode();
   DebugLoc dl = MI->getDebugLoc();
-  bool isAM5 = Opcode == ARM::VLDRD || Opcode == ARM::VLDRS ||
-    Opcode == ARM::VSTRD || Opcode == ARM::VSTRS;
-  bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
+  bool isAM5 = (Opcode == ARM::VLDRD || Opcode == ARM::VLDRS ||
+                Opcode == ARM::VSTRD || Opcode == ARM::VSTRS);
+  bool isAM2 = (Opcode == ARM::LDR || Opcode == ARM::STR);
   if (isAM2 && ARM_AM::getAM2Offset(MI->getOperand(3).getImm()) != 0)
     return false;
-  else if (isAM5 && ARM_AM::getAM5Offset(MI->getOperand(2).getImm()) != 0)
+  if (isAM5 && ARM_AM::getAM5Offset(MI->getOperand(2).getImm()) != 0)
     return false;
-  else if (isT2i32Load(Opcode) || isT2i32Store(Opcode))
+  if (isT2i32Load(Opcode) || isT2i32Store(Opcode))
     if (MI->getOperand(2).getImm() != 0)
       return false;
 
@@ -648,33 +648,35 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned NewOpc = 0;
   // AM2 - 12 bits, thumb2 - 8 bits.
   unsigned Limit = isAM5 ? 0 : (isAM2 ? 0x1000 : 0x100);
+
+  // Try merging with the previous instruction.
   if (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
     if (isMatchingDecrement(PrevMBBI, Base, Bytes, Limit, Pred, PredReg)) {
       DoMerge = true;
       AddSub = ARM_AM::sub;
-      NewOpc = getPreIndexedLoadStoreOpcode(Opcode);
     } else if (!isAM5 &&
                isMatchingIncrement(PrevMBBI, Base, Bytes, Limit,Pred,PredReg)) {
       DoMerge = true;
-      NewOpc = getPreIndexedLoadStoreOpcode(Opcode);
     }
-    if (DoMerge)
+    if (DoMerge) {
+      NewOpc = getPreIndexedLoadStoreOpcode(Opcode);
       MBB.erase(PrevMBBI);
+    }
   }
 
+  // Try merging with the next instruction.
   if (!DoMerge && MBBI != MBB.end()) {
     MachineBasicBlock::iterator NextMBBI = llvm::next(MBBI);
     if (!isAM5 &&
         isMatchingDecrement(NextMBBI, Base, Bytes, Limit, Pred, PredReg)) {
       DoMerge = true;
       AddSub = ARM_AM::sub;
-      NewOpc = getPostIndexedLoadStoreOpcode(Opcode);
     } else if (isMatchingIncrement(NextMBBI, Base, Bytes, Limit,Pred,PredReg)) {
       DoMerge = true;
-      NewOpc = getPostIndexedLoadStoreOpcode(Opcode);
     }
     if (DoMerge) {
+      NewOpc = getPostIndexedLoadStoreOpcode(Opcode);
       if (NextMBBI == I) {
         Advance = true;
         ++I;
@@ -689,9 +691,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   bool isDPR = NewOpc == ARM::VLDMD || NewOpc == ARM::VSTMD;
   unsigned Offset = 0;
   if (isAM5)
-    Offset = ARM_AM::getAM5Opc((AddSub == ARM_AM::sub)
-                               ? ARM_AM::db
-                               : ARM_AM::ia, true, (isDPR ? 2 : 1));
+    Offset = ARM_AM::getAM5Opc(AddSub == ARM_AM::sub ? ARM_AM::db : ARM_AM::ia,
+                               true, (isDPR ? 2 : 1));
   else if (isAM2)
     Offset = ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift);
   else
