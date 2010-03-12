@@ -589,15 +589,28 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   APInt Offset = APInt(BitWidth,
                        TD->getIndexedOffset(Ptr->getType(),
                                             (Value**)Ops+1, NumOps-1));
+  Ptr = cast<Constant>(Ptr->stripPointerCasts());
 
   // If this is a GEP of a GEP, fold it all into a single GEP.
   while (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
     SmallVector<Value *, 4> NestedOps(GEP->op_begin()+1, GEP->op_end());
+
+    // Do not try the incorporate the sub-GEP if some index is not a number.
+    bool AllConstantInt = true;
+    for (unsigned i = 0, e = NestedOps.size(); i != e; ++i)
+      if (!isa<ConstantInt>(NestedOps[i])) {
+        AllConstantInt = false;
+        break;
+      }
+    if (!AllConstantInt)
+      break;
+
     Ptr = cast<Constant>(GEP->getOperand(0));
     Offset += APInt(BitWidth,
                     TD->getIndexedOffset(Ptr->getType(),
                                          (Value**)NestedOps.data(),
                                          NestedOps.size()));
+    Ptr = cast<Constant>(Ptr->stripPointerCasts());
   }
 
   // If the base value for this address is a literal integer value, fold the
@@ -611,7 +624,6 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   // we eliminate over-indexing of the notional static type array bounds.
   // This makes it easy to determine if the getelementptr is "inbounds".
   // Also, this helps GlobalOpt do SROA on GlobalVariables.
-  Ptr = cast<Constant>(Ptr->stripPointerCasts());
   const Type *Ty = Ptr->getType();
   SmallVector<Constant*, 32> NewIdxs;
   do {
