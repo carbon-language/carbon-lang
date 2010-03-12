@@ -63,10 +63,7 @@ public:
     /// Offset - the base offset of the overrider in the layout class.
     uint64_t Offset;
     
-    /// OldOffset - FIXME: Remove this.
-    int64_t OldOffset;
-    
-    OverriderInfo() : Method(0), Offset(0), OldOffset(0) { }
+    OverriderInfo() : Method(0), Offset(0) { }
   };
 
 private:
@@ -251,7 +248,6 @@ void FinalOverriders::AddOverriders(BaseSubobject Base,
     OverriderInfo& Overrider = OverridersMap[std::make_pair(Base, MD)];
     assert(!Overrider.Method && "Overrider should not exist yet!");
 
-    Overrider.OldOffset = Base.getBaseOffset();
     Overrider.Offset = OffsetInLayoutClass;
     Overrider.Method = MD;
   }
@@ -415,7 +411,6 @@ void FinalOverriders::PropagateOverrider(const CXXMethodDecl *OldMD,
 
       // Set the new overrider.
       Overrider.Offset = OverriderOffsetInLayoutClass;
-      Overrider.OldOffset = NewBase.getBaseOffset();
       Overrider.Method = NewMD;
       
       // And propagate it further.
@@ -559,7 +554,7 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base) {
 
     Out << "  " << MD->getQualifiedNameAsString() << " - (";
     Out << Overrider.Method->getQualifiedNameAsString();
-    Out << ", " << Overrider.OldOffset / 8 << ", " << Overrider.Offset / 8 << ')';
+    Out << ", " << ", " << Overrider.Offset / 8 << ')';
 
     AdjustmentOffsetsMapTy::const_iterator AI =
       ReturnAdjustments.find(std::make_pair(Base, MD));
