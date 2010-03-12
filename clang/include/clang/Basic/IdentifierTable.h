@@ -473,9 +473,7 @@ public:
     SelectorName = "set";
     SelectorName += Name->getName();
     SelectorName[3] = toupper(SelectorName[3]);
-    IdentifierInfo *SetterName =
-      &Idents.get(SelectorName.data(),
-                  SelectorName.data() + SelectorName.size());
+    IdentifierInfo *SetterName = &Idents.get(SelectorName);
     return SelTable.getUnarySelector(SetterName);
   }
 };

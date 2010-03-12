@@ -29,9 +29,7 @@ Selector GlobalSelector::getSelector(ASTContext &AST) const {
   for (unsigned i = 0, e = GlobSel.isUnarySelector() ? 1 : GlobSel.getNumArgs();
          i != e; ++i) {
     IdentifierInfo *GlobII = GlobSel.getIdentifierInfoForSlot(i);
-    IdentifierInfo *II =
-      &AST.Idents.get(GlobII->getNameStart(),
-                      GlobII->getNameStart() + GlobII->getLength());
+    IdentifierInfo *II = &AST.Idents.get(GlobII->getName());
     Ids.push_back(II);
   }
 
@@ -58,9 +56,7 @@ GlobalSelector GlobalSelector::get(Selector Sel, Program &Prog) {
   for (unsigned i = 0, e = Sel.isUnarySelector() ? 1 : Sel.getNumArgs();
          i != e; ++i) {
     IdentifierInfo *II = Sel.getIdentifierInfoForSlot(i);
-    IdentifierInfo *GlobII =
-      &ProgImpl.getIdents().get(II->getNameStart(),
-                                II->getNameStart() + II->getLength());
+    IdentifierInfo *GlobII = &ProgImpl.getIdents().get(II->getName());
     Ids.push_back(GlobII);
   }
 
