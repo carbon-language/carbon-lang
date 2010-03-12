@@ -1235,11 +1235,13 @@ private:
                                              BaseSubobject Derived) const;
 
   /// ComputeThisAdjustment - Compute the 'this' pointer adjustment for the
-  /// given virtual member function and the 'this' pointer adjustment base 
-  /// offset.
-  ThisAdjustment ComputeThisAdjustment(const CXXMethodDecl *MD,
-                                       BaseOffset Offset);
-  
+  /// given virtual member function, its offset in the layout class and its
+  /// final overrider.
+  ThisAdjustment 
+  ComputeThisAdjustment(const CXXMethodDecl *MD, 
+                        uint64_t BaseOffsetInLayoutClass,
+                        FinalOverriders::OverriderInfo Overrider);
+
   /// AddMethod - Add a single virtual member function to the vtable
   /// components vector.
   void AddMethod(const CXXMethodDecl *MD, ReturnAdjustment ReturnAdjustment);
@@ -1356,44 +1358,26 @@ void VtableBuilder::ComputeThisAdjustments() {
     const CXXMethodDecl *MD = I->first;
     const MethodInfo &MethodInfo = I->second;
 
+    // Ignore adjustments for unused function pointers.
+    uint64_t VtableIndex = MethodInfo.VtableIndex;
+    if (Components[VtableIndex].getKind() == 
+        VtableComponent::CK_UnusedFunctionPointer)
+      continue;
+    
     // Get the final overrider for this method.
     FinalOverriders::OverriderInfo Overrider =
       Overriders.getOverrider(BaseSubobject(MD->getParent(), 
                                             MethodInfo.BaseOffset), MD);
     
-    // Check if we need an adjustment.
-    if (Overrider.Offset == MethodInfo.BaseOffsetInLayoutClass)
+    ThisAdjustment ThisAdjustment =
+      ComputeThisAdjustment(MD, MethodInfo.BaseOffsetInLayoutClass, Overrider);
+
+    if (ThisAdjustment.isEmpty())
       continue;
-    
-    uint64_t VtableIndex = MethodInfo.VtableIndex;
-
-    // Ignore adjustments for pure virtual member functions.
-    if (Overrider.Method->isPure())
-      continue;
-
-    // Ignore adjustments for unused function pointers.
-    if (Components[VtableIndex].getKind() == 
-        VtableComponent::CK_UnusedFunctionPointer)
-      continue;
-
-    BaseSubobject OverriddenBaseSubobject(MD->getParent(),
-                                          MethodInfo.BaseOffsetInLayoutClass);
-    
-    BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
-                                         Overrider.Offset);
-
-    // Compute the adjustment offset.
-    BaseOffset ThisAdjustmentOffset =
-      ComputeThisAdjustmentBaseOffset(OverriddenBaseSubobject,
-                                      OverriderBaseSubobject);
-
-    // Then compute the adjustment itself.
-    ThisAdjustment ThisAdjustment = ComputeThisAdjustment(Overrider.Method,
-                                                          ThisAdjustmentOffset);
 
     // Add it.
     Thunks[VtableIndex].This = ThisAdjustment;
-    
+
     if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
       Thunks[VtableIndex + 1].This = ThisAdjustment;
@@ -1485,38 +1469,57 @@ VtableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   return BaseOffset();
 }
   
+VtableBuilder::ThisAdjustment 
+VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD, 
+                                     uint64_t BaseOffsetInLayoutClass,
+                                     FinalOverriders::OverriderInfo Overrider) {
+  // Check if we need an adjustment at all.
+  if (BaseOffsetInLayoutClass == Overrider.Offset)
+    return ThisAdjustment();
 
-VtableBuilder::ThisAdjustment
-VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
-                                     BaseOffset Offset) {
+  // Ignore adjustments for pure virtual member functions.
+  if (Overrider.Method->isPure())
+    return ThisAdjustment();
+  
+  BaseSubobject OverriddenBaseSubobject(MD->getParent(),
+                                        BaseOffsetInLayoutClass);
+  
+  BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
+                                       Overrider.Offset);
+  
+  // Compute the adjustment offset.
+  BaseOffset Offset = ComputeThisAdjustmentBaseOffset(OverriddenBaseSubobject,
+                                                      OverriderBaseSubobject);
+  if (Offset.isEmpty())
+    return ThisAdjustment();
+
   ThisAdjustment Adjustment;
   
-  if (!Offset.isEmpty()) {
-    if (Offset.VirtualBase) {
-      // Get the vcall offset map for this virtual base.
-      VCallOffsetMap &VCallOffsets = VCallOffsetsForVBases[Offset.VirtualBase];
-      
-      if (VCallOffsets.empty()) {
-        // We don't have vcall offsets for this virtual base, go ahead and
-        // build them.
-        VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, MostDerivedClass,
-                                           /*FinalOverriders=*/0,
-                                           BaseSubobject(Offset.VirtualBase, 0),                                           
-                                           /*BaseIsVirtual=*/true,
-                                           /*OffsetInLayoutClass=*/0);
-        
-        VCallOffsets = Builder.getVCallOffsets();
-      }
-      
-      Adjustment.VCallOffsetOffset = VCallOffsets.getVCallOffsetOffset(MD);
-    }
+  if (Offset.VirtualBase) {
+    // Get the vcall offset map for this virtual base.
+    VCallOffsetMap &VCallOffsets = VCallOffsetsForVBases[Offset.VirtualBase];
 
-    Adjustment.NonVirtual = Offset.NonVirtualOffset;
+    if (VCallOffsets.empty()) {
+      // We don't have vcall offsets for this virtual base, go ahead and
+      // build them.
+      VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, MostDerivedClass,
+                                         /*FinalOverriders=*/0,
+                                         BaseSubobject(Offset.VirtualBase, 0),                                           
+                                         /*BaseIsVirtual=*/true,
+                                         /*OffsetInLayoutClass=*/0);
+        
+      VCallOffsets = Builder.getVCallOffsets();
+    }
+      
+    Adjustment.VCallOffsetOffset = VCallOffsets.getVCallOffsetOffset(MD);
   }
+
+  // Set the non-virtual part of the adjustment.
+  Adjustment.NonVirtual = Offset.NonVirtualOffset;
   
   return Adjustment;
 }
-
+  
 void 
 VtableBuilder::AddMethod(const CXXMethodDecl *MD,
                          ReturnAdjustment ReturnAdjustment) {
