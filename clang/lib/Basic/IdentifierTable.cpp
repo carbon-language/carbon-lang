@@ -16,7 +16,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 
@@ -82,7 +81,7 @@ namespace {
 /// enabled in the specified langauge, set to 1 if it is an extension
 /// in the specified language, and set to 2 if disabled in the
 /// specified language.
-static void AddKeyword(llvm::StringRef Keyword,
+static void AddKeyword(const char *Keyword, unsigned KWLen,
                        tok::TokenKind TokenCode, unsigned Flags,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
   unsigned AddResult = 0;
@@ -98,27 +97,27 @@ static void AddKeyword(llvm::StringRef Keyword,
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;
 
-  IdentifierInfo &Info = Table.get(Keyword);
+  IdentifierInfo &Info = Table.get(Keyword, Keyword+KWLen);
   Info.setTokenID(TokenCode);
   Info.setIsExtensionToken(AddResult == 1);
 }
 
 /// AddCXXOperatorKeyword - Register a C++ operator keyword alternative
 /// representations.
-static void AddCXXOperatorKeyword(llvm::StringRef Keyword,
+static void AddCXXOperatorKeyword(const char *Keyword, unsigned KWLen,
                                   tok::TokenKind TokenCode,
                                   IdentifierTable &Table) {
-  IdentifierInfo &Info = Table.get(Keyword);
+  IdentifierInfo &Info = Table.get(Keyword, Keyword + KWLen);
   Info.setTokenID(TokenCode);
   Info.setIsCPlusPlusOperatorKeyword();
 }
 
 /// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or
 /// "property".
-static void AddObjCKeyword(llvm::StringRef Name,
-                           tok::ObjCKeywordKind ObjCID,
+static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID,
+                           const char *Name, unsigned NameLen,
                            IdentifierTable &Table) {
-  Table.get(Name).setObjCKeywordID(ObjCID);
+  Table.get(Name, Name+NameLen).setObjCKeywordID(ObjCID);
 }
 
 /// AddKeywords - Add all keywords to the symbol table.
@@ -126,20 +125,20 @@ static void AddObjCKeyword(llvm::StringRef Name,
 void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
   // Add keywords and tokens for the current language.
 #define KEYWORD(NAME, FLAGS) \
-  AddKeyword(llvm::StringRef(#NAME), tok::kw_ ## NAME,  \
+  AddKeyword(#NAME, strlen(#NAME), tok::kw_ ## NAME,  \
              FLAGS, LangOpts, *this);
 #define ALIAS(NAME, TOK, FLAGS) \
-  AddKeyword(llvm::StringRef(#NAME), tok::kw_ ## TOK,  \
+  AddKeyword(NAME, strlen(NAME), tok::kw_ ## TOK,  \
              FLAGS, LangOpts, *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
   if (LangOpts.CXXOperatorNames)          \
-    AddCXXOperatorKeyword(llvm::StringRef(#NAME), tok::ALIAS, *this);
+    AddCXXOperatorKeyword(#NAME, strlen(#NAME), tok::ALIAS, *this);
 #define OBJC1_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC1)          \
-    AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
+    AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
 #define OBJC2_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC2)          \
-    AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
+    AddObjCKeyword(tok::objc_##NAME, #NAME, strlen(#NAME), *this);
 #include "clang/Basic/TokenKinds.def"
 }
 
@@ -389,12 +388,12 @@ const char *clang::getOperatorSpelling(OverloadedOperatorKind Operator) {
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
     return 0;
-
+      
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
   case OO_##Name: return Spelling;
 #include "clang/Basic/OperatorKinds.def"
   }
-
+  
   return 0;
 }
 
