@@ -1658,6 +1658,11 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
         continue;
       CXXRecordDecl *BaseClassDecl =
           cast<CXXRecordDecl>(RT->getDecl());
+
+      // We don't know if a dependent type will have an implicit destructor.
+      if (BaseClassDecl->isDependentType())
+        continue;
+
       if (BaseClassDecl->hasTrivialDestructor())
         continue;
       CXXDestructorDecl *DD = BaseClassDecl->getDestructor(Context);
