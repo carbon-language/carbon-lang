@@ -12,6 +12,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/Verifier.h"
 #include "gtest/gtest.h"
 
@@ -21,9 +22,9 @@ namespace {
 TEST(VerifierTest, Branch_i1) {
   LLVMContext &C = getGlobalContext();
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), /*isVarArg=*/false);
-  Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage);
-  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
-  BasicBlock *Exit = BasicBlock::Create(C, "exit", F);
+  OwningPtr<Function> F(Function::Create(FTy, GlobalValue::ExternalLinkage));
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F.get());
+  BasicBlock *Exit = BasicBlock::Create(C, "exit", F.get());
   ReturnInst::Create(C, Exit);
 
   // To avoid triggering an assertion in BranchInst::Create, we first create
