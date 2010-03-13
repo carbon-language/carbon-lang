@@ -1024,7 +1024,7 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
   }
 
   if (IsPCRel)
-    Value -= DF->getOffset() + Fixup.Offset;
+    Value -= DF->getAddress() + Fixup.Offset;
 
   return IsResolved;
 }
