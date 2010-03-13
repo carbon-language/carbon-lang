@@ -1251,7 +1251,7 @@ def err_not_class_template_specialization : Error<
 def err_template_spec_needs_header : Error<
   "template specialization requires 'template<>'">;
 def err_template_spec_needs_template_parameters : Error<
-  "template specialization or definition requires a template parameter list"
+  "template specialization or definition requires a template parameter list "
   "corresponding to the nested type %0">;
 def err_template_param_list_matches_nontemplate : Error<
   "template parameter list matching the non-templated nested type %0 should "
