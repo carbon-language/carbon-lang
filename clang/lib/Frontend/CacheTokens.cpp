@@ -295,7 +295,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
     }
 
     if (Tok.is(tok::identifier)) {
-      Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+      PP.LookUpIdentifierInfo(Tok);
       EmitToken(Tok);
       continue;
     }
@@ -321,7 +321,6 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       }
 
       IdentifierInfo* II = PP.LookUpIdentifierInfo(Tok);
-      Tok.setIdentifierInfo(II);
       tok::PPKeywordKind K = II->getPPKeywordID();
 
       ParsingPreprocessorDirective = true;
@@ -344,7 +343,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
         L.setParsingPreprocessorDirective(false);
         assert(!Tok.isAtStartOfLine());
         if (Tok.is(tok::identifier))
-          Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
+          PP.LookUpIdentifierInfo(Tok);
 
         break;
       }

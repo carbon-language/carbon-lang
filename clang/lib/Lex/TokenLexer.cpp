@@ -325,7 +325,7 @@ void TokenLexer::Lex(Token &Tok) {
     // returned by PasteTokens, not the pasted token.
     if (PasteTokens(Tok))
       return;
-    
+
     TokenIsFromPaste = true;
   }
 
@@ -506,8 +506,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   if (Tok.is(tok::identifier)) {
     // Look up the identifier info for the token.  We disabled identifier lookup
     // by saying we're skipping contents, so we need to do this manually.
-    IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr);
-    Tok.setIdentifierInfo(II);
+    PP.LookUpIdentifierInfo(Tok, ResultTokStrPtr);
   }
   return false;
 }
