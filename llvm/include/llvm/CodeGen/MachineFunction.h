@@ -71,6 +71,7 @@ struct MachineFunctionInfo {
 class MachineFunction {
   Function *Fn;
   const TargetMachine &Target;
+  MCContext &Ctx;
 
   // RegInfo - Information about each register in use in the function.
   MachineRegisterInfo *RegInfo;
@@ -121,13 +122,16 @@ class MachineFunction {
   // The alignment of the function.
   unsigned Alignment;
 
-  MachineFunction(const MachineFunction &); // intentionally unimplemented
-  void operator=(const MachineFunction&);   // intentionally unimplemented
+  MachineFunction(const MachineFunction &); // DO NOT IMPLEMENT
+  void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
 
 public:
-  MachineFunction(Function *Fn, const TargetMachine &TM, unsigned FunctionNum);
+  MachineFunction(Function *Fn, const TargetMachine &TM, unsigned FunctionNum,
+                  MCContext &Ctx);
   ~MachineFunction();
 
+  MCContext &getContext() const { return Ctx; }
+  
   /// getFunction - Return the LLVM function that this machine code represents
   ///
   Function *getFunction() const { return Fn; }

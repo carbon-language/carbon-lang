@@ -29,7 +29,7 @@ using namespace llvm::dwarf;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 static RegisterPass<MachineModuleInfo>
-X("machinemoduleinfo", "Module Information");
+X("machinemoduleinfo", "Machine Module Information");
 char MachineModuleInfo::ID = 0;
 
 // Out of line virtual method.
@@ -37,15 +37,19 @@ MachineModuleInfoImpl::~MachineModuleInfoImpl() {}
 
 //===----------------------------------------------------------------------===//
 
-MachineModuleInfo::MachineModuleInfo()
-: ImmutablePass(&ID)
-, ObjFileMMI(0)
-, CurCallSite(0)
-, CallsEHReturn(0)
-, CallsUnwindInit(0)
-, DbgInfoAvailable(false) {
+MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
+: ImmutablePass(&ID), Context(MAI),
+  ObjFileMMI(0), CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0),
+  DbgInfoAvailable(false) {
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
+}
+
+MachineModuleInfo::MachineModuleInfo()
+: ImmutablePass(&ID), Context(*(MCAsmInfo*)0) {
+  assert(0 && "This MachineModuleInfo constructor should never be called, MMI "
+         "should always be explicitly constructed by LLVMTargetMachine");
+  abort();
 }
 
 MachineModuleInfo::~MachineModuleInfo() {

@@ -31,20 +31,18 @@
 #ifndef LLVM_CODEGEN_MACHINEMODULEINFO_H
 #define LLVM_CODEGEN_MACHINEMODULEINFO_H
 
-#include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Metadata.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/UniqueVector.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -52,7 +50,6 @@ namespace llvm {
 // Forward declarations.
 class Constant;
 class GlobalVariable;
-class MCSymbol;
 class MDNode;
 class MachineBasicBlock;
 class MachineFunction;
@@ -100,6 +97,9 @@ struct LandingPadInfo {
 /// schemes and reformated for specific use.
 ///
 class MachineModuleInfo : public ImmutablePass {
+  /// Context - This is the MCContext used for the entire code generator.
+  MCContext Context;
+  
   /// ObjFileMMI - This is the object-file-format-specific implementation of
   /// MachineModuleInfoImpl, which lets targets accumulate whatever info they
   /// want.
@@ -163,7 +163,8 @@ public:
     VariableDbgInfoMapTy;
   VariableDbgInfoMapTy VariableDbgInfo;
 
-  MachineModuleInfo();
+  MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
+  MachineModuleInfo(const MCAsmInfo &MAI);  // Real constructor.
   ~MachineModuleInfo();
   
   bool doInitialization();
@@ -172,6 +173,9 @@ public:
   /// EndFunction - Discard function meta information.
   ///
   void EndFunction();
+  
+  const MCContext &getContext() const { return Context; }
+  MCContext &getContext() { return Context; }
 
   /// getInfo - Keep track of various per-function pieces of information for
   /// backends that would like to do so.

@@ -31,8 +31,7 @@ namespace llvm {
   class VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
   public:
     explicit PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             MCContext &Ctx, MCStreamer &Streamer,
-                             const MCAsmInfo *T);
+                             MCStreamer &Streamer);
   private:
     virtual const char *getPassName() const {
       return "PIC16 Assembly Printer";

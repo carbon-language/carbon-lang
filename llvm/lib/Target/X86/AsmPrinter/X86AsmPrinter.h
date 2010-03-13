@@ -36,9 +36,8 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
  public:
   explicit X86AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                         MCContext &Ctx, MCStreamer &Streamer,
-                         const MCAsmInfo *T)
-    : AsmPrinter(O, TM, Ctx, Streamer, T) {
+                         MCStreamer &Streamer)
+    : AsmPrinter(O, TM, Streamer) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 

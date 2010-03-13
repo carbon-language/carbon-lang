@@ -55,12 +55,13 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 char AsmPrinter::ID = 0;
+
 AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
-                       MCContext &Ctx, MCStreamer &Streamer,
-                       const MCAsmInfo *T)
+                       MCStreamer &Streamer)
   : MachineFunctionPass(&ID), O(o),
-    TM(tm), MAI(T), TRI(tm.getRegisterInfo()),
-    OutContext(Ctx), OutStreamer(Streamer),
+    TM(tm), MAI(tm.getMCAsmInfo()), TRI(tm.getRegisterInfo()),
+    OutContext(Streamer.getContext()),
+    OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0), PrevDLT(NULL) {
   DW = 0; MMI = 0;
   VerboseAsm = Streamer.isVerboseAsm();
@@ -72,7 +73,6 @@ AsmPrinter::~AsmPrinter() {
     delete I->second;
   
   delete &OutStreamer;
-  delete &OutContext;
 }
 
 /// getFunctionNumber - Return a unique ID for the current function.
@@ -94,12 +94,16 @@ const MCSection *AsmPrinter::getCurrentSection() const {
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(AU);
+  AU.addRequired<MachineModuleInfo>();
   AU.addRequired<GCModuleInfo>();
   if (VerboseAsm)
     AU.addRequired<MachineLoopInfo>();
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  MMI->AnalyzeModule(M);
+
   // Initialize TargetLoweringObjectFile.
   const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
     .Initialize(OutContext, TM);
@@ -128,9 +132,6 @@ bool AsmPrinter::doInitialization(Module &M) {
       << '\n' << MAI->getCommentString()
       << " End of file scope inline assembly\n";
 
-  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  if (MMI)
-    MMI->AnalyzeModule(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
   if (DW)
     DW->BeginModule(&M, MMI, O, this, MAI);

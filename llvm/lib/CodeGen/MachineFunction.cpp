@@ -85,8 +85,8 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
 }
 
 MachineFunction::MachineFunction(Function *F, const TargetMachine &TM,
-                                 unsigned FunctionNum)
-  : Fn(F), Target(TM) {
+                                 unsigned FunctionNum, MCContext &ctx)
+  : Fn(F), Target(TM), Ctx(ctx) {
   if (TM.getRegisterInfo())
     RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
                   MachineRegisterInfo(*TM.getRegisterInfo());

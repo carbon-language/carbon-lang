@@ -61,9 +61,8 @@ namespace {
     uint64_t LabelID;
   public:
     explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                           MCContext &Ctx, MCStreamer &Streamer,
-                           const MCAsmInfo *T)
-      : AsmPrinter(O, TM, Ctx, Streamer, T),
+                           MCStreamer &Streamer)
+      : AsmPrinter(O, TM, Streamer),
         Subtarget(TM.getSubtarget<PPCSubtarget>()), LabelID(0) {}
 
     virtual const char *getPassName() const {
@@ -324,9 +323,8 @@ namespace {
   class PPCLinuxAsmPrinter : public PPCAsmPrinter {
   public:
     explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                MCContext &Ctx, MCStreamer &Streamer,
-                                const MCAsmInfo *T)
-      : PPCAsmPrinter(O, TM, Ctx, Streamer, T) {}
+                                MCStreamer &Streamer)
+      : PPCAsmPrinter(O, TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "Linux PPC Assembly Printer";
@@ -350,9 +348,8 @@ namespace {
     formatted_raw_ostream &OS;
   public:
     explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                                 MCContext &Ctx, MCStreamer &Streamer,
-                                 const MCAsmInfo *T)
-      : PPCAsmPrinter(O, TM, Ctx, Streamer, T), OS(O) {}
+                                 MCStreamer &Streamer)
+      : PPCAsmPrinter(O, TM, Streamer), OS(O) {}
 
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
@@ -858,13 +855,12 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 ///
 static AsmPrinter *createPPCAsmPrinterPass(formatted_raw_ostream &o,
                                            TargetMachine &tm,
-                                           MCContext &Ctx, MCStreamer &Streamer,
-                                           const MCAsmInfo *tai) {
+                                           MCStreamer &Streamer) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
   if (Subtarget->isDarwin())
-    return new PPCDarwinAsmPrinter(o, tm, Ctx, Streamer, tai);
-  return new PPCLinuxAsmPrinter(o, tm, Ctx, Streamer, tai);
+    return new PPCDarwinAsmPrinter(o, tm, Streamer);
+  return new PPCLinuxAsmPrinter(o, tm, Streamer);
 }
 
 // Force static initialization.

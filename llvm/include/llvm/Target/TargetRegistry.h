@@ -62,9 +62,7 @@ namespace llvm {
                                                   const std::string &Features);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(formatted_raw_ostream &OS,
                                             TargetMachine &TM,
-                                            MCContext &Ctx,
-                                            MCStreamer &Streamer,
-                                            const MCAsmInfo *MAI);
+                                            MCStreamer &Streamer);
     typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
                                                   const std::string &TT);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
@@ -235,13 +233,12 @@ namespace llvm {
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
-    /// takes ownership of the MCContext and MCStreamer objects but not the MAI.
+    /// takes ownership of the MCStreamer object.
     AsmPrinter *createAsmPrinter(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 MCContext &Ctx, MCStreamer &Streamer,
-                                 const MCAsmInfo *MAI) const {
+                                 MCStreamer &Streamer) const {
       if (!AsmPrinterCtorFn)
         return 0;
-      return AsmPrinterCtorFn(OS, TM, Ctx, Streamer, MAI);
+      return AsmPrinterCtorFn(OS, TM, Streamer);
     }
 
     const MCDisassembler *createMCDisassembler() const {
@@ -650,9 +647,8 @@ namespace llvm {
 
   private:
     static AsmPrinter *Allocator(formatted_raw_ostream &OS, TargetMachine &TM,
-                                 MCContext &Ctx, MCStreamer &Streamer,
-                                 const MCAsmInfo *MAI) {
-      return new AsmPrinterImpl(OS, TM, Ctx, Streamer, MAI);
+                                 MCStreamer &Streamer) {
+      return new AsmPrinterImpl(OS, TM, Streamer);
     }
   };
 

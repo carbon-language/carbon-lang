@@ -43,9 +43,8 @@ namespace {
   class MSP430AsmPrinter : public AsmPrinter {
   public:
     MSP430AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                     MCContext &Ctx, MCStreamer &Streamer,
-                     const MCAsmInfo *MAI)
-      : AsmPrinter(O, TM, Ctx, Streamer, MAI) {}
+                     MCStreamer &Streamer)
+      : AsmPrinter(O, TM, Streamer) {}
 
     virtual const char *getPassName() const {
       return "MSP430 Assembly Printer";
