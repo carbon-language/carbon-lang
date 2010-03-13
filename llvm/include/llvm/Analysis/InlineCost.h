@@ -152,7 +152,7 @@ namespace llvm {
       /// CountCodeReductionForConstant - Figure out an approximation for how
       /// many instructions will be constant folded if the specified value is
       /// constant.
-      unsigned CountCodeReductionForConstant(Value *V, CodeMetrics &M);
+      unsigned CountCodeReductionForConstant(Value *V);
 
       /// CountCodeReductionForAlloca - Figure out an approximation of how much
       /// smaller the function will be if it is inlined into a context where an

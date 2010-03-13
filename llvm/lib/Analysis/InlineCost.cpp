@@ -22,7 +22,7 @@ using namespace llvm;
 // instructions will be constant folded if the specified value is constant.
 //
 unsigned InlineCostAnalyzer::FunctionInfo::
-CountCodeReductionForConstant(Value *V, CodeMetrics &Metrics) {
+CountCodeReductionForConstant(Value *V) {
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (isa<BranchInst>(*UI) || isa<SwitchInst>(*UI)) {
@@ -71,7 +71,7 @@ CountCodeReductionForConstant(Value *V, CodeMetrics &Metrics) {
 
         // And any other instructions that use it which become constants
         // themselves.
-        Reduction += CountCodeReductionForConstant(&Inst, Metrics);
+        Reduction += CountCodeReductionForConstant(&Inst);
       }
     }
 
@@ -242,9 +242,8 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   // code can be eliminated if one of the arguments is a constant.
   ArgumentWeights.reserve(F->arg_size());
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
-    ArgumentWeights.
-      push_back(ArgInfo(CountCodeReductionForConstant(I, Metrics),
-                        CountCodeReductionForAlloca(I)));
+    ArgumentWeights.push_back(ArgInfo(CountCodeReductionForConstant(I),
+                                      CountCodeReductionForAlloca(I)));
 }
 
 // getInlineCost - The heuristic used to determine if we should inline the
