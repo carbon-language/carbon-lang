@@ -281,7 +281,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol(OutContext);
+    O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()

@@ -277,7 +277,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
 
     case MachineOperand::MO_MachineBasicBlock:
-      O << *MO.getMBB()->getSymbol(OutContext);
+      O << *MO.getMBB()->getSymbol();
       return;
 
     case MachineOperand::MO_GlobalAddress:

@@ -92,7 +92,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol(OutContext);
+    O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");

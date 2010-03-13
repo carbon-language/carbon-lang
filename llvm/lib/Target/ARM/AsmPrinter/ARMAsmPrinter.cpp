@@ -304,7 +304,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol(OutContext);
+    O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
@@ -890,16 +890,16 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
     if (UseSet && isNew) {
       O << "\t.set\t"
         << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB) << ','
-        << *MBB->getSymbol(OutContext) << '-' << *JTISymbol << '\n';
+        << *MBB->getSymbol() << '-' << *JTISymbol << '\n';
     }
 
     O << JTEntryDirective << ' ';
     if (UseSet)
       O << *GetARMSetPICJumpTableLabel2(JTI, MO2.getImm(), MBB);
     else if (TM.getRelocationModel() == Reloc::PIC_)
-      O << *MBB->getSymbol(OutContext) << '-' << *JTISymbol;
+      O << *MBB->getSymbol() << '-' << *JTISymbol;
     else
-      O << *MBB->getSymbol(OutContext);
+      O << *MBB->getSymbol();
 
     if (i != e-1)
       O << '\n';
@@ -931,9 +931,9 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
       O << MAI->getData16bitsDirective();
     
     if (ByteOffset || HalfWordOffset)
-      O << '(' << *MBB->getSymbol(OutContext) << "-" << *JTISymbol << ")/2";
+      O << '(' << *MBB->getSymbol() << "-" << *JTISymbol << ")/2";
     else
-      O << "\tb.w " << *MBB->getSymbol(OutContext);
+      O << "\tb.w " << *MBB->getSymbol();
 
     if (i != e-1)
       O << '\n';

@@ -82,7 +82,7 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol(OutContext);
+    O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_GlobalAddress:
     O << *Mang->getSymbol(MO.getGlobal());

@@ -276,7 +276,7 @@ printInlineJT(const MachineInstr *MI, int opNum, const std::string &directive)
     MachineBasicBlock *MBB = JTBBs[i];
     if (i > 0)
       O << ",";
-    O << *MBB->getSymbol(OutContext);
+    O << *MBB->getSymbol();
   }
 }
 
@@ -290,7 +290,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol(OutContext);
+    O << *MO.getMBB()->getSymbol();
     break;
   case MachineOperand::MO_GlobalAddress:
     O << *Mang->getSymbol(MO.getGlobal());

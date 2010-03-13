@@ -698,7 +698,7 @@ void AsmPrinter::EmitJumpTableInfo() {
         
         // .set LJTSet, LBB32-base
         const MCExpr *LHS =
-          MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
+          MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
         OutStreamer.EmitAssignment(GetJTSetSymbol(JTI, MBB->getNumber()),
                                 MCBinaryExpr::CreateSub(LHS, Base, OutContext));
       }
@@ -736,13 +736,13 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
   case MachineJumpTableInfo::EK_BlockAddress:
     // EK_BlockAddress - Each entry is a plain address of block, e.g.:
     //     .word LBB123
-    Value = MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
+    Value = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
     break;
   case MachineJumpTableInfo::EK_GPRel32BlockAddress: {
     // EK_GPRel32BlockAddress - Each entry is an address of block, encoded
     // with a relocation as gp-relative, e.g.:
     //     .gprel32 LBB123
-    MCSymbol *MBBSym = MBB->getSymbol(OutContext);
+    MCSymbol *MBBSym = MBB->getSymbol();
     OutStreamer.EmitGPRel32Value(MCSymbolRefExpr::Create(MBBSym, OutContext));
     return;
   }
@@ -766,7 +766,7 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
       break;
     }
     // Otherwise, use the difference as the jump table entry.
-    Value = MCSymbolRefExpr::Create(MBB->getSymbol(OutContext), OutContext);
+    Value = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
     const MCExpr *JTI = MCSymbolRefExpr::Create(GetJTISymbol(UID), OutContext);
     Value = MCBinaryExpr::CreateSub(Value, JTI, OutContext);
     break;
@@ -1500,7 +1500,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           ++OpNo;  // Skip over the ID number.
 
           if (Modifier[0] == 'l')  // labels are target independent
-            O << *MI->getOperand(OpNo).getMBB()->getSymbol(OutContext);
+            O << *MI->getOperand(OpNo).getMBB()->getSymbol();
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4) {
@@ -1756,7 +1756,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       PrintBasicBlockLoopComments(*MBB, LI, *this);
     }
 
-    OutStreamer.EmitLabel(MBB->getSymbol(OutContext));
+    OutStreamer.EmitLabel(MBB->getSymbol());
   }
 }
 

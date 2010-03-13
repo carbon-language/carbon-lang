@@ -206,7 +206,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
-      O << *MO.getMBB()->getSymbol(OutContext);
+      O << *MO.getMBB()->getSymbol();
       return;
 
     default:

@@ -214,7 +214,7 @@ void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol(OutContext);
+    O << *MO.getMBB()->getSymbol();
     return;
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:

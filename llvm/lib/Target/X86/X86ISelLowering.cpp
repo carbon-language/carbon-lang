@@ -1165,7 +1165,7 @@ X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
          Subtarget->isPICStyleGOT());
   // In 32-bit ELF systems, our jump table entries are formed with @GOTOFF
   // entries.
-  return X86MCTargetExpr::Create(MBB->getSymbol(Ctx),
+  return X86MCTargetExpr::Create(MBB->getSymbol(),
                                  X86MCTargetExpr::GOTOFF, Ctx);
 }
 

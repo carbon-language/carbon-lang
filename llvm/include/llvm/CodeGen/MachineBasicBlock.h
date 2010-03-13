@@ -21,7 +21,6 @@ namespace llvm {
 
 class BasicBlock;
 class MachineFunction;
-class MCContext;
 class MCSymbol;
 class StringRef;
 class raw_ostream;
@@ -352,7 +351,7 @@ public:
 
   /// getSymbol - Return the MCSymbol for this basic block.
   ///
-  MCSymbol *getSymbol(MCContext &Ctx) const;
+  MCSymbol *getSymbol() const;
   
 private:   // Methods used to maintain doubly linked list of blocks...
   friend struct ilist_traits<MachineBasicBlock>;

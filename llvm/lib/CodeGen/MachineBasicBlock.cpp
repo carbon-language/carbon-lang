@@ -41,9 +41,10 @@ MachineBasicBlock::~MachineBasicBlock() {
 
 /// getSymbol - Return the MCSymbol for this basic block.
 ///
-MCSymbol *MachineBasicBlock::getSymbol(MCContext &Ctx) const {
+MCSymbol *MachineBasicBlock::getSymbol() const {
   const MachineFunction *MF = getParent();
-  const char *Prefix = MF->getTarget().getMCAsmInfo()->getPrivateGlobalPrefix();
+  MCContext &Ctx = MF->getContext();
+  const char *Prefix = Ctx.getAsmInfo().getPrivateGlobalPrefix();
   return Ctx.GetOrCreateTemporarySymbol(Twine(Prefix) + "BB" +
                                         Twine(MF->getFunctionNumber()) + "_" +
                                         Twine(getNumber()));
