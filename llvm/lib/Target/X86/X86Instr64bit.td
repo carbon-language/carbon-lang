@@ -464,8 +464,8 @@ let neverHasSideEffects = 1 in {
 
 let Defs = [EFLAGS] in {
 
-def ADD64i32 : RI<0x05, RawFrm, (outs), (ins i32imm:$src),
-                  "add{q}\t{$src, %rax|%rax, $src}", []>;
+def ADD64i32 : RIi32<0x05, RawFrm, (outs), (ins i32imm:$src),
+                     "add{q}\t{$src, %rax|%rax, $src}", []>;
 
 let isTwoAddress = 1 in {
 let isConvertibleToThreeAddress = 1 in {
