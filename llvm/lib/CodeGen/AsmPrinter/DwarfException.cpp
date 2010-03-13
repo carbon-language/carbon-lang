@@ -221,12 +221,13 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
                                  EHFrameInfo.PersonalityIndex),
                       true, true);
 
+    MCSymbol *EHFuncBeginSym = getDWLabel("eh_func_begin", EHFrameInfo.Number);
 
     Asm->OutStreamer.AddComment("FDE initial location");
-    EmitReference(getDWLabel("eh_func_begin", EHFrameInfo.Number), FDEEncoding);
+    EmitReference(EHFuncBeginSym, FDEEncoding);
+    
     Asm->OutStreamer.AddComment("FDE address range");
-    EmitDifference(getDWLabel("eh_func_end", EHFrameInfo.Number),
-                   getDWLabel("eh_func_begin", EHFrameInfo.Number),
+    EmitDifference(getDWLabel("eh_func_end", EHFrameInfo.Number),EHFuncBeginSym,
                    SizeOfEncodedValue(FDEEncoding) == 4);
 
     // If there is a personality and landing pads then point to the language
@@ -246,6 +247,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     }
 
     // Indicate locations of function specific callee saved registers in frame.
+    // EHFuncBeginSym
     EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves,
                    true);
 

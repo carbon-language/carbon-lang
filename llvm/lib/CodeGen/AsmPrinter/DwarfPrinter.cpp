@@ -240,12 +240,12 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
 void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
                                   const std::vector<MachineMove> &Moves,
                                   bool isEH) {
-  int stackGrowth =
-    Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
-    TargetFrameInfo::StackGrowsUp ?
-    TD->getPointerSize() : -TD->getPointerSize();
-  bool IsLocal = BaseLabel && strcmp(BaseLabel, "label") == 0;
-
+  int stackGrowth = TD->getPointerSize();
+  if (Asm->TM.getFrameInfo()->getStackGrowthDirection() !=
+      TargetFrameInfo::StackGrowsUp)
+    stackGrowth *= -1;
+  
+  bool IsLocal = false;
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
     unsigned LabelID = Move.getLabelID();

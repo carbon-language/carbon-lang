@@ -2756,16 +2756,15 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
                     getTempLabel("section_debug_frame"), true, false);
 
   Asm->OutStreamer.AddComment("FDE initial location");
-  Asm->OutStreamer.EmitSymbolValue(getDWLabel("func_begin",
-                                              DebugFrameInfo.Number),
+  MCSymbol *FuncBeginSym = getDWLabel("func_begin", DebugFrameInfo.Number);
+  Asm->OutStreamer.EmitSymbolValue(FuncBeginSym,
                                    TD->getPointerSize(), 0/*AddrSpace*/);
   
   
-  
   Asm->OutStreamer.AddComment("FDE address range");
-  EmitDifference(getDWLabel("func_end", DebugFrameInfo.Number),
-                 getDWLabel("func_begin", DebugFrameInfo.Number));
+  EmitDifference(getDWLabel("func_end", DebugFrameInfo.Number), FuncBeginSym);
 
+  // FuncBeginSym.
   EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves,
                  false);
 
