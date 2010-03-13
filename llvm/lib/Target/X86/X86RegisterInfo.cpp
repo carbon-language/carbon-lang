@@ -938,10 +938,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   std::vector<MachineMove> &Moves = MMI->getFrameMoves();
   const TargetData *TD = MF.getTarget().getTargetData();
   uint64_t NumBytes = 0;
-  int stackGrowth =
-    (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
-     TargetFrameInfo::StackGrowsUp ?
-       TD->getPointerSize() : -TD->getPointerSize());
+  int stackGrowth = -TD->getPointerSize();
 
   if (HasFP) {
     // Calculate required stack adjustment.
@@ -978,8 +975,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       }
 
       // Change the rule for the FramePtr to be an "offset" rule.
-      MachineLocation FPDst(MachineLocation::VirtualFP,
-                            2 * stackGrowth);
+      MachineLocation FPDst(MachineLocation::VirtualFP, 2 * stackGrowth);
       MachineLocation FPSrc(FramePtr);
       Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
     }
