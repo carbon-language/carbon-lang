@@ -58,12 +58,13 @@ namespace ARMII {
     Size4Bytes    = 3,
     Size2Bytes    = 4,
 
-    // IndexMode - Unindex, pre-indexed, or post-indexed. Only valid for load
-    // and store ops
+    // IndexMode - Unindex, pre-indexed, or post-indexed are valid for load
+    // and store ops only.  Generic "updating" flag is used for ld/st multiple.
     IndexModeShift = 7,
     IndexModeMask  = 3 << IndexModeShift,
     IndexModePre   = 1,
     IndexModePost  = 2,
+    IndexModeUpd   = 3,
 
     //===------------------------------------------------------------------===//
     // Instruction encoding formats.

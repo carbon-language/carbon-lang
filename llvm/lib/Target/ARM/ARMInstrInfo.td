@@ -908,7 +908,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
   def LDM_RET : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                         reglist:$dsts, variable_ops),
-                       LdStMulFrm, IIC_Br,
+                       IndexModeUpd, LdStMulFrm, IIC_Br,
                        "ldm${addr:submode}${p}\t$addr, $dsts",
                        "$addr.addr = $wb", []>;
 
@@ -1347,24 +1347,26 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 def LDM : AXI4ld<(outs), (ins addrmode4:$addr, pred:$p,
-                          reglist:$dsts, variable_ops), LdStMulFrm, IIC_iLoadm,
+                          reglist:$dsts, variable_ops),
+                 IndexModeNone, LdStMulFrm, IIC_iLoadm,
                  "ldm${addr:submode}${p}\t$addr, $dsts", "", []>;
 
 def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$dsts, variable_ops),
-                     LdStMulFrm, IIC_iLoadm,
+                     IndexModeUpd, LdStMulFrm, IIC_iLoadm,
                      "ldm${addr:submode}${p}\t$addr, $dsts",
                      "$addr.addr = $wb", []>;
 } // mayLoad, hasExtraDefRegAllocReq
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 def STM : AXI4st<(outs), (ins addrmode4:$addr, pred:$p,
-                          reglist:$srcs, variable_ops), LdStMulFrm, IIC_iStorem,
+                          reglist:$srcs, variable_ops),
+                 IndexModeNone, LdStMulFrm, IIC_iStorem,
                  "stm${addr:submode}${p}\t$addr, $srcs", "", []>;
 
 def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$srcs, variable_ops),
-                     LdStMulFrm, IIC_iStorem,
+                     IndexModeUpd, LdStMulFrm, IIC_iStorem,
                      "stm${addr:submode}${p}\t$addr, $srcs",
                      "$addr.addr = $wb", []>;
 } // mayStore, hasExtraSrcRegAllocReq

@@ -925,19 +925,26 @@ static unsigned getAddrModeUPBits(unsigned Mode) {
   return Binary;
 }
 
-void ARMCodeEmitter::emitLoadStoreMultipleInstruction(
-                                                       const MachineInstr &MI) {
+void ARMCodeEmitter::emitLoadStoreMultipleInstruction(const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+  bool IsUpdating = (TID.TSFlags & ARMII::IndexModeMask) != 0;
+
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
+  // Skip operand 0 of an instruction with base register update.
+  unsigned OpIdx = 0;
+  if (IsUpdating)
+    ++OpIdx;
+
   // Set base address operand
-  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   // Set addressing mode by modifying bits U(23) and P(24)
-  const MachineOperand &MO = MI.getOperand(1);
+  const MachineOperand &MO = MI.getOperand(OpIdx++);
   Binary |= getAddrModeUPBits(ARM_AM::getAM4SubMode(MO.getImm()));
 
   // Set bit W(21)
@@ -945,7 +952,7 @@ void ARMCodeEmitter::emitLoadStoreMultipleInstruction(
     Binary |= 0x1 << ARMII::W_BitShift;
 
   // Set registers
-  for (unsigned i = 5, e = MI.getNumOperands(); i != e; ++i) {
+  for (unsigned i = OpIdx+2, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
       break;
@@ -1322,17 +1329,25 @@ void ARMCodeEmitter::emitVFPLoadStoreInstruction(const MachineInstr &MI) {
 
 void ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(
                                                        const MachineInstr &MI) {
+  const TargetInstrDesc &TID = MI.getDesc();
+  bool IsUpdating = (TID.TSFlags & ARMII::IndexModeMask) != 0;
+
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
+  // Skip operand 0 of an instruction with base register update.
+  unsigned OpIdx = 0;
+  if (IsUpdating)
+    ++OpIdx;
+
   // Set base address operand
-  Binary |= getMachineOpValue(MI, 0) << ARMII::RegRnShift;
+  Binary |= getMachineOpValue(MI, OpIdx++) << ARMII::RegRnShift;
 
   // Set addressing mode by modifying bits U(23) and P(24)
-  const MachineOperand &MO = MI.getOperand(1);
+  const MachineOperand &MO = MI.getOperand(OpIdx++);
   Binary |= getAddrModeUPBits(ARM_AM::getAM5SubMode(MO.getImm()));
 
   // Set bit W(21)
@@ -1340,11 +1355,11 @@ void ARMCodeEmitter::emitVFPLoadStoreMultipleInstruction(
     Binary |= 0x1 << ARMII::W_BitShift;
 
   // First register is encoded in Dd.
-  Binary |= encodeVFPRd(MI, 5);
+  Binary |= encodeVFPRd(MI, OpIdx+2);
 
   // Number of registers are encoded in offset field.
   unsigned NumRegs = 1;
-  for (unsigned i = 6, e = MI.getNumOperands(); i != e; ++i) {
+  for (unsigned i = OpIdx+3, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
       break;
