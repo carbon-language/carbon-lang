@@ -72,6 +72,14 @@ class GoogleTest(object):
             testName = os.path.join(namePrefix, testName)
 
         cmd = [testPath, '--gtest_filter=' + testName]
+        if litConfig.useValgrind:
+            valgrindArgs = ['valgrind', '-q',
+                            '--tool=memcheck', '--trace-children=yes',
+                            '--error-exitcode=123']
+            valgrindArgs.extend(litConfig.valgrindArgs)
+
+            cmd = valgrindArgs + cmd
+
         out, err, exitCode = TestRunner.executeCommand(
             cmd, env=test.config.environment)
             
