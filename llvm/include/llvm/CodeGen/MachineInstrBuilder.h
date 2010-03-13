@@ -131,6 +131,11 @@ public:
     MI->addOperand(MachineOperand::CreateMetadata(MD));
     return *this;
   }
+  
+  const MachineInstrBuilder &addSym(MCSymbol *Sym) const {
+    MI->addOperand(MachineOperand::CreateMCSymbol(Sym));
+    return *this;
+  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction
