@@ -324,10 +324,10 @@ namespace llvm {
 
     template<typename T>
     void MemoryTestHelper(int run) {
-      Module *M = makeLLVMModule();
+      OwningPtr<Module> M(makeLLVMModule());
       T *P = new T();
       PassManager Passes;
-      Passes.add(new TargetData(M));
+      Passes.add(new TargetData(M.get()));
       Passes.add(P);
       Passes.run(*M);
       T::finishedOK(run);
