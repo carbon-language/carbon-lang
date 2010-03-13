@@ -194,9 +194,7 @@ public:
   DbgScope *getParent()          const { return Parent; }
   void setParent(DbgScope *P)          { Parent = P; }
   DIDescriptor getDesc()         const { return Desc; }
-  MDNode *getInlinedAt()         const {
-    return InlinedAtLocation;
-  }
+  MDNode *getInlinedAt()         const { return InlinedAtLocation; }
   MDNode *getScopeNode()         const { return Desc.getNode(); }
   MCSymbol *getStartLabel()      const { return StartLabel; }
   MCSymbol *getEndLabel()        const { return EndLabel; }
@@ -292,9 +290,9 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
   : DwarfPrinter(OS, A, T), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
-    DIEValues(), StringPool(),
-    SectionSourceLines(), didInitial(false), shouldEmit(false),
+    DIEValues(), SectionSourceLines(), didInitial(false), shouldEmit(false),
     CurrentFnDbgScope(0), DebugTimer(0) {
+  NextStringPoolNumber = 0;
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
 }
@@ -304,6 +302,15 @@ DwarfDebug::~DwarfDebug() {
 
   delete DebugTimer;
 }
+
+MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
+  std::pair<MCSymbol*, unsigned> &Entry = StringPool[Str];
+  if (Entry.first) return Entry.first;
+
+  Entry.second = NextStringPoolNumber++;
+  return Entry.first = getDWLabel("string", Entry.second);
+}
+
 
 /// assignAbbrevNumber - Define a unique number for the abbreviation.
 ///
@@ -1421,9 +1428,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   } else
     I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
 
-  StringPool.insert(InlinedSP.getName());
-  StringPool.insert(getRealLinkageName(InlinedSP.getLinkageName()));
-
   DILocation DL(Scope->getInlinedAt());
   addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, ModuleCU->getID());
   addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
@@ -1879,9 +1883,6 @@ void DwarfDebug::endModule() {
   // Emit info into a debug pubtypes section.
   emitDebugPubTypes();
 
-  // Emit info into a debug str section.
-  emitDebugStr();
-
   // Emit info into a debug loc section.
   emitDebugLoc();
 
@@ -1897,6 +1898,9 @@ void DwarfDebug::endModule() {
   // Emit inline info.
   emitDebugInlineInfo();
 
+  // Emit info into a debug str section.
+  emitDebugStr();
+  
   delete ModuleCU;
   ModuleCU = NULL;  // Reset for the next Module, if any.
 
@@ -2863,14 +2867,23 @@ void DwarfDebug::emitDebugStr() {
   Asm->OutStreamer.SwitchSection(
                                 Asm->getObjFileLowering().getDwarfStrSection());
 
-  // For each of strings in the string pool.
-  for (unsigned StringID = 1, N = StringPool.size(); StringID <= N; ++StringID){
+  // Get all of the string pool entries and put them in an array by their ID so
+  // we can sort them.
+  SmallVector<std::pair<unsigned, 
+      StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
+  
+  for (StringMap<std::pair<MCSymbol*, unsigned> >::iterator
+       I = StringPool.begin(), E = StringPool.end(); I != E; ++I)
+    Entries.push_back(std::make_pair(I->second.second, &*I));
+  
+  array_pod_sort(Entries.begin(), Entries.end());
+  
+  for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
     // Emit a label for reference from debug information entries.
-    Asm->OutStreamer.EmitLabel(getDWLabel("string", StringID));
+    Asm->OutStreamer.EmitLabel(Entries[i].second->getValue().first);
     
     // Emit the string itself.
-    const std::string &String = StringPool[StringID];
-    Asm->OutStreamer.EmitBytes(StringRef(String.c_str(), String.size()+1), 0);
+    Asm->OutStreamer.EmitBytes(Entries[i].second->getKey(), 0/*addrspace*/);
   }
 }
 
@@ -2963,13 +2976,12 @@ void DwarfDebug::emitDebugInlineInfo() {
       Asm->OutStreamer.EmitBytes(Name, 0);
       Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
     } else 
-      EmitSectionOffset(getDWLabel("string",
-                                   StringPool.idFor(getRealLinkageName(LName))),
+      EmitSectionOffset(getStringPoolEntry(getRealLinkageName(LName)),
                         getTempLabel("section_str"), true);
 
     Asm->OutStreamer.AddComment("Function name");
-    EmitSectionOffset(getDWLabel("string", StringPool.idFor(Name)),
-                      getTempLabel("section_str"), false, true);
+    EmitSectionOffset(getStringPoolEntry(Name), getTempLabel("section_str"),
+                      false, true);
     EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),

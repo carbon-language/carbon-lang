@@ -102,9 +102,12 @@ class DwarfDebug : public DwarfPrinter {
   ///
   std::vector<DIEValue *> DIEValues;
 
-  /// StringPool - A UniqueVector of strings used by indirect references.
-  ///
-  UniqueVector<std::string> StringPool;
+  /// StringPool - A String->Symbol mapping of strings used by indirect
+  /// references.
+  StringMap<std::pair<MCSymbol*, unsigned> > StringPool;
+  unsigned NextStringPoolNumber;
+  
+  MCSymbol *getStringPoolEntry(StringRef Str);
 
   /// SectionMap - Provides a unique id per text section.
   ///
