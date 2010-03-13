@@ -459,6 +459,11 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
+void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
+  if (Subtarget->isTargetDarwin())
+    OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
+}
+
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
