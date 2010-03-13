@@ -95,7 +95,7 @@ std::string CIndexer::getClangResourcesPath() {
   return P.str();
 }
 
-static llvm::sys::Path GetTemporaryPath() {
+llvm::sys::Path CIndexer::getTemporaryPath() {
   // FIXME: This is lame; sys::Path should provide this function (in particular,
   // it should know how to find the temporary files dir).
   std::string Error;
@@ -107,7 +107,7 @@ static llvm::sys::Path GetTemporaryPath() {
   if (!TmpDir)
     TmpDir = "/tmp";
   llvm::sys::Path P(TmpDir);
-  P.appendComponent("remap");
+  P.appendComponent("CIndex");
   if (P.makeUnique(false, &Error))
     return llvm::sys::Path("");
 
@@ -123,7 +123,7 @@ bool clang::RemapFiles(unsigned num_unsaved_files,
                        std::vector<llvm::sys::Path> &TemporaryFiles) {
   for (unsigned i = 0; i != num_unsaved_files; ++i) {
     // Write the contents of this unsaved file into the temporary file.
-    llvm::sys::Path SavedFile(GetTemporaryPath());
+    llvm::sys::Path SavedFile(CIndexer::getTemporaryPath());
     if (SavedFile.empty())
       return true;
 

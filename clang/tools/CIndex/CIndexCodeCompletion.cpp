@@ -299,15 +299,11 @@ CXCodeCompleteResults *clang_codeComplete(CXIndex CIdx,
   argv.push_back(NULL);
 
   // Generate a temporary name for the code-completion results file.
-  char tmpFile[L_tmpnam];
-  char *tmpFileName = tmpnam(tmpFile);
-  llvm::sys::Path ResultsFile(tmpFileName);
+  llvm::sys::Path ResultsFile(CIndexer::getTemporaryPath());
   TemporaryFiles.push_back(ResultsFile);
 
   // Generate a temporary name for the diagnostics file.
-  char tmpFileResults[L_tmpnam];
-  char *tmpResultsFileName = tmpnam(tmpFileResults);
-  llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
+  llvm::sys::Path DiagnosticsFile(CIndexer::getTemporaryPath());
   TemporaryFiles.push_back(DiagnosticsFile);
 
   // Invoke 'clang'.

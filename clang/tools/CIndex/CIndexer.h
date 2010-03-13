@@ -64,6 +64,9 @@ public:
   
   /// \brief Get the path of the clang resource files.
   std::string getClangResourcesPath();
+
+  /// \brief Get an unique temporary filename.
+  static llvm::sys::Path getTemporaryPath();
 };
 
 namespace clang {
