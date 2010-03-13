@@ -697,15 +697,19 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     Offset = ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift);
   else
     Offset = AddSub == ARM_AM::sub ? -Bytes : Bytes;
-  if (isLd) {
-    if (isAM5)
-      // VLDMS, VLDMD
-      BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
-        .addReg(Base, getKillRegState(BaseKill))
-        .addImm(Offset).addImm(Pred).addReg(PredReg)
-        .addReg(Base, getDefRegState(true)) // WB base register
-        .addReg(MI->getOperand(0).getReg(), RegState::Define);
-    else if (isAM2)
+
+  if (isAM5) {
+    // VLDM[SD}, VSTM[SD]
+    MachineOperand &MO = MI->getOperand(0);
+    BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
+      .addReg(Base, getKillRegState(isLd ? BaseKill : false))
+      .addImm(Offset)
+      .addImm(Pred).addReg(PredReg)
+      .addReg(Base, getDefRegState(true)) // WB base register
+      .addReg(MO.getReg(), (isLd ? getDefRegState(true) :
+                            getKillRegState(MO.isKill())));
+  } else if (isLd) {
+    if (isAM2)
       // LDR_PRE, LDR_POST,
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc), MI->getOperand(0).getReg())
         .addReg(Base, RegState::Define)
@@ -717,13 +721,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
         .addReg(Base).addImm(Offset).addImm(Pred).addReg(PredReg);
   } else {
     MachineOperand &MO = MI->getOperand(0);
-    if (isAM5)
-      // VSTMS, VSTMD
-      BuildMI(MBB, MBBI, dl, TII->get(NewOpc)).addReg(Base).addImm(Offset)
-        .addImm(Pred).addReg(PredReg)
-        .addReg(Base, getDefRegState(true)) // WB base register
-        .addReg(MO.getReg(), getKillRegState(MO.isKill()));
-    else if (isAM2)
+    if (isAM2)
       // STR_PRE, STR_POST
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
         .addReg(MO.getReg(), getKillRegState(MO.isKill()))
