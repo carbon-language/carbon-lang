@@ -12,11 +12,9 @@ class Reader:
       else:
          self.file = open(path,'rb')
       self.isLSB = None
+      self.is64Bit = None
 
       self.string_table = None
-
-   def setLSB(self, isLSB):
-      self.isLSB = bool(isLSB)
 
    def tell(self):
       return self.file.tell()
@@ -42,6 +40,9 @@ class Reader:
       Value = struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
       return int(Value)
 
+   def read64(self):
+      return struct.unpack('><'[self.isLSB] + 'Q', self.read(8))[0]
+
    def registerStringTable(self, strings):
       if self.string_table is not None:
          raise ValueError,"%s: warning: multiple string tables" % sys.argv[0]
@@ -60,9 +61,13 @@ def dumpmacho(path, opts):
 
    magic = f.read(4)
    if magic == '\xFE\xED\xFA\xCE':
-      f.setLSB(False)
+      f.isLSB, f.is64Bit = False, False
    elif magic == '\xCE\xFA\xED\xFE':
-      f.setLSB(True)
+      f.isLSB, f.is64Bit = True, False
+   elif magic == '\xFE\xED\xFA\xCF':
+      f.isLSB, f.is64Bit = False, True
+   elif magic == '\xCF\xFA\xED\xFE':
+      f.isLSB, f.is64Bit = True, True
    else:
       raise ValueError,"Not a Mach-O object file: %r (bad magic)" % path
 
@@ -79,6 +84,9 @@ def dumpmacho(path, opts):
 
    print "('flag', %r)" % f.read32()
 
+   if f.is64Bit:
+      print "('reserved', %r)" % f.read32()
+
    start = f.tell()
 
    print "('load_commands', ["
@@ -87,7 +95,8 @@ def dumpmacho(path, opts):
    print "])"
 
    if f.tell() - start != loadCommandsSize:
-      raise ValueError,"%s: warning: invalid load commands size: %r" % (sys.argv[0], loadCommandsSize)
+      raise ValueError,"%s: warning: invalid load commands size: %r" % (
+         sys.argv[0], loadCommandsSize)
 
 def dumpLoadCommand(f, i, opts):
    start = f.tell()
@@ -99,28 +108,38 @@ def dumpLoadCommand(f, i, opts):
    print "  ('size', %r)" % cmdSize
 
    if cmd == 1:
-      dumpSegmentLoadCommand32(f, opts)
+      dumpSegmentLoadCommand(f, opts, False)
    elif cmd == 2:
       dumpSymtabCommand(f, opts)
    elif cmd == 11:
       dumpDysymtabCommand(f, opts)
+   elif cmd == 25:
+      dumpSegmentLoadCommand(f, opts, True)
    elif cmd == 27:
       import uuid
       print "  ('uuid', %s)" % uuid.UUID(bytes=f.read(16))
    else:
-      print >>sys.stderr,"%s: warning: unknown load command: %r" % (sys.argv[0], cmd)
+      print >>sys.stderr,"%s: warning: unknown load command: %r" % (
+         sys.argv[0], cmd)
       f.read(cmdSize - 8)
    print " ),"
 
    if f.tell() - start != cmdSize:
-      raise ValueError,"%s: warning: invalid load command size: %r" % (sys.argv[0], cmdSize)
+      raise ValueError,"%s: warning: invalid load command size: %r" % (
+         sys.argv[0], cmdSize)
 
-def dumpSegmentLoadCommand32(f, opts):
+def dumpSegmentLoadCommand(f, opts, is64Bit):
    print "  ('segment_name', %r)" % f.read(16) 
-   print "  ('vm_addr', %r)" % f.read32()
-   print "  ('vm_size', %r)" % f.read32()
-   print "  ('file_offset', %r)" % f.read32()
-   print "  ('file_size', %r)" % f.read32()
+   if is64Bit:
+      print "  ('vm_addr', %r)" % f.read64()
+      print "  ('vm_size', %r)" % f.read64()
+      print "  ('file_offset', %r)" % f.read64()
+      print "  ('file_size', %r)" % f.read64()
+   else:
+      print "  ('vm_addr', %r)" % f.read32()
+      print "  ('vm_size', %r)" % f.read32()
+      print "  ('file_offset', %r)" % f.read32()
+      print "  ('file_size', %r)" % f.read32()
    print "  ('maxprot', %r)" % f.read32()
    print "  ('initprot', %r)" % f.read32()
    numSections = f.read32()
@@ -129,7 +148,7 @@ def dumpSegmentLoadCommand32(f, opts):
 
    print "  ('sections', ["
    for i in range(numSections):
-      dumpSection32(f, i, opts)
+      dumpSection(f, i, opts, is64Bit)
    print "  ])"
 
 def dumpSymtabCommand(f, opts):
@@ -206,13 +225,18 @@ def dumpDysymtabCommand(f, opts):
       
    f.seek(prev_pos)
 
-def dumpSection32(f, i, opts):
+def dumpSection(f, i, opts, is64Bit):
    print "    # Section %r" % i
    print "   (('section_name', %r)" % f.read(16)
    print "    ('segment_name', %r)" % f.read(16)
-   print "    ('address', %r)" % f.read32()
-   size = f.read32()
-   print "    ('size', %r)" % size
+   if is64Bit:
+      print "    ('address', %r)" % f.read64()
+      size = f.read64()
+      print "    ('size', %r)" % size
+   else:
+      print "    ('address', %r)" % f.read32()
+      size = f.read32()
+      print "    ('size', %r)" % size
    offset = f.read32()
    print "    ('offset', %r)" % offset
    print "    ('alignment', %r)" % f.read32()   
@@ -223,6 +247,8 @@ def dumpSection32(f, i, opts):
    print "    ('flags', %#x)" % f.read32()
    print "    ('reserved1', %r)" % f.read32()
    print "    ('reserved2', %r)" % f.read32()
+   if is64Bit:
+      print "    ('reserved3', %r)" % f.read32()
    print "   ),"
 
    prev_pos = f.tell()
