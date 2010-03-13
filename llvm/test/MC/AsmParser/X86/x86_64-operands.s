@@ -5,4 +5,5 @@
 # CHECK: callq a
         callq a
 
-        
+# CHECK: leaq	-40(%rbp), %r15
+	leaq	-40(%rbp), %r15
