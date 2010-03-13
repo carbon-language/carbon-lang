@@ -142,7 +142,7 @@ static bool callIsSmall(const Function *F) {
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   ++NumBlocks;
-  unsigned NumInstsInThisBB = 0;
+  unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
     if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
@@ -196,7 +196,6 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
     }
 
     ++NumInsts;
-    ++NumInstsInThisBB;
   }
   
   if (isa<ReturnInst>(BB->getTerminator()))
@@ -211,7 +210,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
     NeverInline = true;
 
   // Remember NumInsts for this BB.
-  NumBBInsts[BB] = NumInstsInThisBB;
+  NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
 }
 
 /// analyzeFunction - Fill in the current structure with information gleaned
