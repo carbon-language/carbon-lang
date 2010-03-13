@@ -542,6 +542,15 @@ ParseInstruction(const StringRef &Name, SMLoc NameLoc,
     }
   }
 
+  // FIXME: Hack to handle recognizing s{hr,ar,hl}? $1.
+  if ((Name.startswith("shr") || Name.startswith("sar") ||
+       Name.startswith("shl")) &&
+      Operands.size() == 3 &&
+      static_cast<X86Operand*>(Operands[1])->isImm() &&
+      isa<MCConstantExpr>(static_cast<X86Operand*>(Operands[1])->getImm()) &&
+      cast<MCConstantExpr>(static_cast<X86Operand*>(Operands[1])->getImm())->getValue() == 1)
+    Operands.erase(Operands.begin() + 1);
+
   return false;
 }
 

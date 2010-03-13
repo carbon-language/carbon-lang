@@ -47,3 +47,6 @@ rdtscp
 
 // CHECK: addw	%ax, %ax                # encoding: [0x66,0x01,0xc0]
         addw %ax, %ax
+
+// CHECK: shrl	%eax                    # encoding: [0xd1,0xe8]
+        shrl $1, %eax
