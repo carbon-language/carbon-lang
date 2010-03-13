@@ -171,7 +171,7 @@ CINDEX_LINKAGE void clang_disposeString(CXString string);
  */
 CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                                          int displayDiagnostics);
-  
+
 /**
  * \brief Destroy the given index.
  *
@@ -297,7 +297,7 @@ CINDEX_LINKAGE CXSourceLocation clang_getLocation(CXTranslationUnit tu,
  * \brief Retrieve a NULL (invalid) source range.
  */
 CINDEX_LINKAGE CXSourceRange clang_getNullRange();
-  
+
 /**
  * \brief Retrieve a source range given the beginning and ending source
  * locations.
@@ -357,11 +357,11 @@ CINDEX_LINKAGE CXSourceLocation clang_getRangeEnd(CXSourceRange range);
  */
 enum CXDiagnosticSeverity {
   /**
-   * \brief A diagnostic that has been suppressed, e.g., by a command-line 
+   * \brief A diagnostic that has been suppressed, e.g., by a command-line
    * option.
    */
   CXDiagnostic_Ignored = 0,
-  
+
   /**
    * \brief This diagnostic is a note that should be attached to the
    * previous (non-note) diagnostic.
@@ -451,7 +451,7 @@ enum CXDiagnosticDisplayOptions {
    * diagnostic, also include information about source ranges in a
    * machine-parsable format.
    *
-   * This option corresponds to the clang flag 
+   * This option corresponds to the clang flag
    * \c -fdiagnostics-print-source-range-info.
    */
   CXDiagnostic_DisplaySourceRanges = 0x04
@@ -461,13 +461,13 @@ enum CXDiagnosticDisplayOptions {
  * \brief Format the given diagnostic in a manner that is suitable for display.
  *
  * This routine will format the given diagnostic to a string, rendering
- * the diagnostic according to the various options given. The 
- * \c clang_defaultDiagnosticDisplayOptions() function returns the set of 
+ * the diagnostic according to the various options given. The
+ * \c clang_defaultDiagnosticDisplayOptions() function returns the set of
  * options that most closely mimics the behavior of the clang compiler.
  *
  * \param Diagnostic The diagnostic to print.
  *
- * \param Options A set of options that control the diagnostic display, 
+ * \param Options A set of options that control the diagnostic display,
  * created by combining \c CXDiagnosticDisplayOptions values.
  *
  * \returns A new string containing for formatted diagnostic.
@@ -491,7 +491,7 @@ CINDEX_LINKAGE unsigned clang_defaultDiagnosticDisplayOptions(void);
 /**
  * \brief Determine the severity of the given diagnostic.
  */
-CINDEX_LINKAGE enum CXDiagnosticSeverity 
+CINDEX_LINKAGE enum CXDiagnosticSeverity
 clang_getDiagnosticSeverity(CXDiagnostic);
 
 /**
@@ -512,21 +512,21 @@ CINDEX_LINKAGE CXString clang_getDiagnosticSpelling(CXDiagnostic);
  * diagnostic.
  */
 CINDEX_LINKAGE unsigned clang_getDiagnosticNumRanges(CXDiagnostic);
-  
+
 /**
  * \brief Retrieve a source range associated with the diagnostic.
  *
  * A diagnostic's source ranges highlight important elements in the source
  * code. On the command line, Clang displays source ranges by
- * underlining them with '~' characters. 
+ * underlining them with '~' characters.
  *
  * \param Diagnostic the diagnostic whose range is being extracted.
  *
- * \param Range the zero-based index specifying which range to 
+ * \param Range the zero-based index specifying which range to
  *
  * \returns the requested source range.
  */
-CINDEX_LINKAGE CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diagnostic, 
+CINDEX_LINKAGE CXSourceRange clang_getDiagnosticRange(CXDiagnostic Diagnostic,
                                                       unsigned Range);
 
 /**
@@ -560,7 +560,7 @@ CINDEX_LINKAGE unsigned clang_getDiagnosticNumFixIts(CXDiagnostic Diagnostic);
  * \returns A string containing text that should be replace the source
  * code indicated by the \c ReplacementRange.
  */
-CINDEX_LINKAGE CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic, 
+CINDEX_LINKAGE CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic,
                                                  unsigned FixIt,
                                                CXSourceRange *ReplacementRange);
 
@@ -577,7 +577,7 @@ CINDEX_LINKAGE CXString clang_getDiagnosticFixIt(CXDiagnostic Diagnostic,
  *
  * @{
  */
-  
+
 /**
  * \brief Get the original translation unit source file name.
  */
@@ -625,22 +625,22 @@ CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                                          const char **clang_command_line_args,
                                          unsigned num_unsaved_files,
                                          struct CXUnsavedFile *unsaved_files);
- 
+
 /**
  * \brief Create a translation unit from an AST file (-emit-ast).
  */
-CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex, 
+CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(CXIndex,
                                              const char *ast_filename);
 
 /**
  * \brief Destroy the specified CXTranslationUnit object.
  */
 CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
- 
+
 /**
  * @}
  */
-  
+
 /**
  * \brief Describes the kind of entity that a cursor refers to.
  */
@@ -1083,6 +1083,47 @@ CINDEX_LINKAGE unsigned clang_visitChildren(CXCursor parent,
 CINDEX_LINKAGE CXString clang_getCursorUSR(CXCursor);
 
 /**
+ * \brief Construct a USR for a specified Objective-C class.
+ */
+CINDEX_LINKAGE CXString clang_constructUSR_ObjCClass(const char *class_name);
+
+/**
+ * \brief Construct a USR for a specified Objective-C category.
+ */
+CINDEX_LINKAGE CXString
+  clang_constructUSR_ObjCategory(const char *class_name,
+                                 const char *category_name);
+
+/**
+ * \brief Construct a USR for a specified Objective-C protocol.
+ */
+CINDEX_LINKAGE CXString
+  clang_constructUSR_ObjCProtocol(const char *protocol_name);
+
+
+/**
+ * \brief Construct a USR for a specified Objective-C instance variable and
+ *   the USR for its containing class.
+ */
+CINDEX_LINKAGE CXString clang_constructUSR_ObjCIvar(const char *name,
+                                                    CXString classUSR);
+
+/**
+ * \brief Construct a USR for a specified Objective-C method and
+ *   the USR for its containing class.
+ */
+CINDEX_LINKAGE CXString clang_constructUSR_ObjCMethod(const char *name,
+                                                      unsigned isInstanceMethod,
+                                                      CXString classUSR);
+
+/**
+ * \brief Construct a USR for a specified Objective-C property and the USR
+ *  for its containing class.
+ */
+CINDEX_LINKAGE CXString clang_constructUSR_ObjCProperty(const char *property,
+                                                        CXString classUSR);
+
+/**
  * \brief Retrieve a name for the entity referenced by this cursor.
  */
 CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
@@ -1157,22 +1198,22 @@ typedef enum CXTokenKind {
    * \brief A token that contains some kind of punctuation.
    */
   CXToken_Punctuation,
-  
+
   /**
    * \brief A language keyword.
    */
   CXToken_Keyword,
-  
+
   /**
    * \brief An identifier (that is not a keyword).
    */
   CXToken_Identifier,
-  
+
   /**
    * \brief A numeric, string, or character literal.
    */
   CXToken_Literal,
-  
+
   /**
    * \brief A comment.
    */
@@ -1191,7 +1232,7 @@ typedef struct {
  * \brief Determine the kind of the given token.
  */
 CINDEX_LINKAGE CXTokenKind clang_getTokenKind(CXToken);
-  
+
 /**
  * \brief Determine the spelling of the given token.
  *
@@ -1199,13 +1240,13 @@ CINDEX_LINKAGE CXTokenKind clang_getTokenKind(CXToken);
  * the text of an identifier or keyword.
  */
 CINDEX_LINKAGE CXString clang_getTokenSpelling(CXTranslationUnit, CXToken);
-  
+
 /**
  * \brief Retrieve the source location of the given token.
  */
-CINDEX_LINKAGE CXSourceLocation clang_getTokenLocation(CXTranslationUnit, 
+CINDEX_LINKAGE CXSourceLocation clang_getTokenLocation(CXTranslationUnit,
                                                        CXToken);
-  
+
 /**
  * \brief Retrieve a source range that covers the given token.
  */
@@ -1230,7 +1271,7 @@ CINDEX_LINKAGE CXSourceRange clang_getTokenExtent(CXTranslationUnit, CXToken);
  */
 CINDEX_LINKAGE void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
                                    CXToken **Tokens, unsigned *NumTokens);
-  
+
 /**
  * \brief Annotate the given set of tokens by providing cursors for each token
  * that can be mapped to a specific entity within the abstract syntax tree.
@@ -1264,17 +1305,17 @@ CINDEX_LINKAGE void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
 CINDEX_LINKAGE void clang_annotateTokens(CXTranslationUnit TU,
                                          CXToken *Tokens, unsigned NumTokens,
                                          CXCursor *Cursors);
-  
+
 /**
  * \brief Free the given set of tokens.
  */
-CINDEX_LINKAGE void clang_disposeTokens(CXTranslationUnit TU, 
+CINDEX_LINKAGE void clang_disposeTokens(CXTranslationUnit TU,
                                         CXToken *Tokens, unsigned NumTokens);
-  
+
 /**
  * @}
  */
-  
+
 /**
  * \defgroup CINDEX_DEBUG Debugging facilities
  *
@@ -1689,7 +1730,7 @@ void clang_disposeCodeCompleteResults(CXCodeCompleteResults *Results);
  * \brief Determine the number of diagnostics produced prior to the
  * location where code completion was performed.
  */
-CINDEX_LINKAGE 
+CINDEX_LINKAGE
 unsigned clang_codeCompleteGetNumDiagnostics(CXCodeCompleteResults *Results);
 
 /**
@@ -1701,7 +1742,7 @@ unsigned clang_codeCompleteGetNumDiagnostics(CXCodeCompleteResults *Results);
  * \returns the requested diagnostic. This diagnostic must be freed
  * via a call to \c clang_disposeDiagnostic().
  */
-CINDEX_LINKAGE 
+CINDEX_LINKAGE
 CXDiagnostic clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *Results,
                                              unsigned Index);
 
@@ -1726,10 +1767,10 @@ CINDEX_LINKAGE CXString clang_getClangVersion();
  * \brief Return a version string, suitable for showing to a user, but not
  *        intended to be parsed (the format is not guaranteed to be stable).
  */
- 
- 
+
+
  /**
-  * \brief Visitor invoked for each file in a translation unit 
+  * \brief Visitor invoked for each file in a translation unit
   *        (used with clang_getInclusions()).
   *
   * This visitor function will be invoked by clang_getInclusions() for each

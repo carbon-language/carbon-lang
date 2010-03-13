@@ -29,22 +29,76 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   bool IgnoreResults;
 public:
   USRGenerator(llvm::raw_ostream &out) : Out(out), IgnoreResults(false) {}
-  
+
   bool ignoreResults() const { return IgnoreResults; }
-  
+
+  // Visitation methods from generating USRs from AST elements.
   void VisitBlockDecl(BlockDecl *D);
   void VisitDeclContext(DeclContext *D);
   void VisitFieldDecl(FieldDecl *D);
   void VisitFunctionDecl(FunctionDecl *D);
   void VisitNamedDecl(NamedDecl *D);
   void VisitNamespaceDecl(NamespaceDecl *D);
-  void VisitObjCContainerDecl(ObjCContainerDecl *CD);  
+  void VisitObjCContainerDecl(ObjCContainerDecl *CD);
   void VisitObjCMethodDecl(ObjCMethodDecl *MD);
   void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
   void VisitTagDecl(TagDecl *D);
   void VisitTypedefDecl(TypedefDecl *D);
+
+
+  /// String generation methods used both by the visitation methods
+  /// and from other clients that want to directly generate USRs.  These
+  /// methods do not construct complete USRs (which incorporate the parents
+  /// of an AST element), but only the fragments concerning the AST element
+  /// itself.
+
+  /// Generate a USR fragment for a named declaration.  This does
+  /// not include the USR component for the parent.
+  void GenNamedDecl(llvm::StringRef name);
+
+  /// Generate a USR for an Objective-C class.
+  void GenObjCClass(llvm::StringRef cls);
+  /// Generate a USR for an Objective-C class category.
+  void GenObjCCategory(llvm::StringRef cls, llvm::StringRef cat);
+  /// Generate a USR fragment for an Objective-C instance variable.  The
+  /// complete USR can be created by concatenating the USR for the
+  /// encompassing class with this USR fragment.
+  void GenObjCIvar(llvm::StringRef ivar);
+  /// Generate a USR fragment for an Objective-C method.
+  void GenObjCMethod(llvm::StringRef sel, bool isInstanceMethod);
+  /// Generate a USR fragment for an Objective-C property.
+  void GenObjCProperty(llvm::StringRef prop);
+  /// Generate a USR for an Objective-C protocol.
+  void GenObjCProtocol(llvm::StringRef prot);
 };
+
+class StringUSRGenerator {
+private:
+  llvm::SmallString<1024> StrBuf;
+  llvm::raw_svector_ostream Out;
+  USRGenerator UG;
+public:
+  StringUSRGenerator()
+    : Out(StrBuf), UG(Out) {}
+
+  llvm::StringRef str() {
+    return Out.str();
+  }
+
+  USRGenerator* operator->() { return &UG; }
+
+  template <typename T>
+  llvm::raw_svector_ostream &operator<<(const T &x) {
+    Out << x;
+    return Out;
+  }
+};
+
 } // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// Generating USRs from ASTS.
+//===----------------------------------------------------------------------===//
 
 void USRGenerator::VisitBlockDecl(BlockDecl *D) {
   VisitDeclContext(D->getDeclContext());
@@ -76,8 +130,8 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
 void USRGenerator::VisitNamedDecl(NamedDecl *D) {
   VisitDeclContext(D->getDeclContext());
   const std::string &s = D->getNameAsString();
-//  assert(!s.empty());
-  Out << "@^" << s;
+  //  assert(!s.empty());
+  GenNamedDecl(s);
 }
 
 void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
@@ -87,8 +141,8 @@ void USRGenerator::VisitNamespaceDecl(NamespaceDecl *D) {
 
 void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Visit(cast<Decl>(D->getDeclContext()));
-  Out << (D->isInstanceMethod() ? "(im)" : "(cm)");
-  Out << DeclarationName(D->getSelector()).getAsString();
+  GenObjCMethod(DeclarationName(D->getSelector()).getAsString(),
+                D->isInstanceMethod());
 }
 
 void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
@@ -97,29 +151,29 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
       assert(false && "Invalid ObjC container.");
     case Decl::ObjCInterface:
     case Decl::ObjCImplementation:
-      Out << "objc(cs)" << D->getName();
+      GenObjCClass(D->getName());
       break;
     case Decl::ObjCCategory: {
       ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
-      Out << "objc(cy)" << CD->getClassInterface()->getName()
-      << '^' << CD->getName();
+      GenObjCCategory(CD->getClassInterface()->getName(),
+                      CD->getName());
       break;
     }
     case Decl::ObjCCategoryImpl: {
       ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
-      Out << "objc(cy)" << CD->getClassInterface()->getName()
-      << '^' << CD->getName();
+      GenObjCCategory(CD->getClassInterface()->getName(),
+                      CD->getName());
       break;
     }
     case Decl::ObjCProtocol:
-      Out << "objc(pl)" << cast<ObjCProtocolDecl>(D)->getName();
+      GenObjCProtocol(cast<ObjCProtocolDecl>(D)->getName());
       break;
   }
 }
 
 void USRGenerator::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   Visit(cast<Decl>(D->getDeclContext()));
-  Out << "(py)" << D->getName();
+  GenObjCProperty(D->getName());
 }
 
 void USRGenerator::VisitTagDecl(TagDecl *D) {
@@ -130,12 +184,12 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
     case TagDecl::TK_union:  Out << "@U^"; break;
     case TagDecl::TK_enum:   Out << "@E^"; break;
   }
-  
+
   // FIXME: Better support for anonymous structures and enums.
   const std::string &s = D->getNameAsString();
   if (s.empty()) {
     if (TypedefDecl *TD = D->getTypedefForAnonDecl())
-      Out << "^anontd^" << TD->getNameAsString();    
+      Out << "^anontd^" << TD->getNameAsString();
     else
       Out << "^anon";
   }
@@ -146,36 +200,104 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
 void USRGenerator::VisitTypedefDecl(TypedefDecl *D) {
   DeclContext *DC = D->getDeclContext();
   if (NamedDecl *DCN = dyn_cast<NamedDecl>(DC))
-    Visit(DCN);  
+    Visit(DCN);
   Out << "typedef@" << D->getName();
 }
 
-// FIXME: This is a skeleton implementation.  It will be overhauled.
-static CXString ConstructUSR(Decl *D) {
-  llvm::SmallString<1024> StrBuf;
-  {
-    llvm::raw_svector_ostream Out(StrBuf);
-    USRGenerator UG(Out);
-    UG.Visit(static_cast<Decl*>(D));
-    if (UG.ignoreResults())
-      return createCXString(NULL);
-  }
-  
-  if (StrBuf.empty())
-    return createCXString(NULL);
-  
-  // Return a copy of the string that must be disposed by the caller.
-  return createCXString(StrBuf.str(), true);
-}  
+//===----------------------------------------------------------------------===//
+// General purpose USR generation methods.
+//===----------------------------------------------------------------------===//
 
+void USRGenerator::GenNamedDecl(llvm::StringRef name) {
+  Out << "@^" << name;
+}
+
+void USRGenerator::GenObjCClass(llvm::StringRef cls) {
+  Out << "objc(cs)" << cls;
+}
+
+void USRGenerator::GenObjCCategory(llvm::StringRef cls, llvm::StringRef cat) {
+  Out << "objc(cy)" << cls << '^' << cat;
+}
+
+void USRGenerator::GenObjCIvar(llvm::StringRef ivar) {
+  GenNamedDecl(ivar);
+}
+
+void USRGenerator::GenObjCMethod(llvm::StringRef meth, bool isInstanceMethod) {
+  Out << (isInstanceMethod ? "(im)" : "(cm)") << meth;
+}
+
+void USRGenerator::GenObjCProperty(llvm::StringRef prop) {
+  Out << "(py)" << prop;
+}
+
+void USRGenerator::GenObjCProtocol(llvm::StringRef prot) {
+  Out << "objc(pl)" << prot;
+}
+
+//===----------------------------------------------------------------------===//
+// API hooks.
+//===----------------------------------------------------------------------===//
 
 extern "C" {
 
 CXString clang_getCursorUSR(CXCursor C) {
-  if (Decl *D = cxcursor::getCursorDecl(C))
-    return ConstructUSR(D);  
-  
-  return createCXString(NULL);
+  Decl *D = cxcursor::getCursorDecl(C);
+  if (!D)
+    return createCXString(NULL);
+
+  StringUSRGenerator SUG;
+  SUG->Visit(static_cast<Decl*>(D));
+
+  if (SUG->ignoreResults() || SUG.str().empty())
+    return createCXString(NULL);
+
+  // Return a copy of the string that must be disposed by the caller.
+  return createCXString(SUG.str(), true);
+}
+
+CXString clang_constructUSR_ObjCIvar(const char *name, CXString classUSR) {
+  StringUSRGenerator SUG;
+  SUG << clang_getCString(classUSR);
+  SUG->GenObjCIvar(name);
+  return createCXString(SUG.str(), true);
+}
+
+CXString clang_constructUSR_ObjCMethod(const char *name,
+                                       unsigned isInstanceMethod,
+                                       CXString classUSR) {
+  StringUSRGenerator SUG;
+  SUG << clang_getCString(classUSR);
+  SUG->GenObjCMethod(name, isInstanceMethod);
+  return createCXString(SUG.str(), true);
+}
+
+CXString clang_constructUSR_ObjCClass(const char *name) {
+  StringUSRGenerator SUG;
+  SUG->GenObjCClass(name);
+  return createCXString(SUG.str(), true);
+}
+
+CXString clang_constructUSR_ObjCProtocol(const char *name) {
+  StringUSRGenerator SUG;
+  SUG->GenObjCProtocol(name);
+  return createCXString(SUG.str(), true);
+}
+
+CXString clang_constructUSR_ObjCategory(const char *class_name,
+                                        const char *category_name) {
+  StringUSRGenerator SUG;
+  SUG->GenObjCCategory(class_name, category_name);
+  return createCXString(SUG.str(), true);
+}
+
+CXString clang_constructUSR_ObjCProperty(const char *property,
+                                         CXString classUSR) {
+  StringUSRGenerator SUG;
+  SUG << clang_getCString(classUSR);
+  SUG->GenObjCProperty(property);
+  return createCXString(SUG.str(), true);
 }
 
 } // end extern "C"
