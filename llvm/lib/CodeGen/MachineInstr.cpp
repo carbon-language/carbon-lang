@@ -15,6 +15,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/Metadata.h"
 #include "llvm/Type.h"
 #include "llvm/Value.h"
 #include "llvm/Assembly/Writer.h"
@@ -23,6 +24,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
@@ -35,7 +37,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Metadata.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -189,6 +190,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
            getOffset() == Other.getOffset();
   case MachineOperand::MO_BlockAddress:
     return getBlockAddress() == Other.getBlockAddress();
+  case MachineOperand::MO_MCSymbol:
+    return getMCSymbol() == Other.getMCSymbol();
   }
 }
 
@@ -290,6 +293,9 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << '<';
     WriteAsOperand(OS, getMetadata(), /*PrintType=*/false);
     OS << '>';
+    break;
+  case MachineOperand::MO_MCSymbol:
+    OS << "<MCSym=" << *getMCSymbol() << '>';
     break;
   default:
     llvm_unreachable("Unrecognized operand type");
@@ -1363,30 +1369,33 @@ MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
     const MachineOperand &MO = MI->getOperand(i);
     uint64_t Key = (uint64_t)MO.getType() << 32;
     switch (MO.getType()) {
-      default: break;
-      case MachineOperand::MO_Register:
-        if (MO.isDef() && MO.getReg() &&
-            TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-          continue;  // Skip virtual register defs.
-        Key |= MO.getReg();
-        break;
-      case MachineOperand::MO_Immediate:
-        Key |= MO.getImm();
-        break;
-      case MachineOperand::MO_FrameIndex:
-      case MachineOperand::MO_ConstantPoolIndex:
-      case MachineOperand::MO_JumpTableIndex:
-        Key |= MO.getIndex();
-        break;
-      case MachineOperand::MO_MachineBasicBlock:
-        Key |= DenseMapInfo<void*>::getHashValue(MO.getMBB());
-        break;
-      case MachineOperand::MO_GlobalAddress:
-        Key |= DenseMapInfo<void*>::getHashValue(MO.getGlobal());
-        break;
-      case MachineOperand::MO_BlockAddress:
-        Key |= DenseMapInfo<void*>::getHashValue(MO.getBlockAddress());
-        break;
+    default: break;
+    case MachineOperand::MO_Register:
+      if (MO.isDef() && MO.getReg() &&
+          TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+        continue;  // Skip virtual register defs.
+      Key |= MO.getReg();
+      break;
+    case MachineOperand::MO_Immediate:
+      Key |= MO.getImm();
+      break;
+    case MachineOperand::MO_FrameIndex:
+    case MachineOperand::MO_ConstantPoolIndex:
+    case MachineOperand::MO_JumpTableIndex:
+      Key |= MO.getIndex();
+      break;
+    case MachineOperand::MO_MachineBasicBlock:
+      Key |= DenseMapInfo<void*>::getHashValue(MO.getMBB());
+      break;
+    case MachineOperand::MO_GlobalAddress:
+      Key |= DenseMapInfo<void*>::getHashValue(MO.getGlobal());
+      break;
+    case MachineOperand::MO_BlockAddress:
+      Key |= DenseMapInfo<void*>::getHashValue(MO.getBlockAddress());
+      break;
+    case MachineOperand::MO_MCSymbol:
+      Key |= DenseMapInfo<void*>::getHashValue(MO.getMCSymbol());
+      break;
     }
     Key += ~(Key << 32);
     Key ^= (Key >> 22);

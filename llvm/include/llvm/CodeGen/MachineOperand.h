@@ -28,6 +28,7 @@ class MachineRegisterInfo;
 class MDNode;
 class TargetMachine;
 class raw_ostream;
+class MCSymbol;
   
 /// MachineOperand class - Representation of each machine instruction operand.
 ///
@@ -44,7 +45,8 @@ public:
     MO_ExternalSymbol,         ///< Name of external global symbol
     MO_GlobalAddress,          ///< Address of a global value
     MO_BlockAddress,           ///< Address of a basic block
-    MO_Metadata                ///< Metadata reference (for debug info)
+    MO_Metadata,               ///< Metadata reference (for debug info)
+    MO_MCSymbol                ///< MCSymbol reference (for debug/eh info)
   };
 
 private:
@@ -101,6 +103,7 @@ private:
     const ConstantFP *CFP;    // For MO_FPImmediate.
     int64_t ImmVal;           // For MO_Immediate.
     const MDNode *MD;         // For MO_Metadata.
+    MCSymbol *Sym;            // For MO_MCSymbol
 
     struct {                  // For MO_Register.
       unsigned RegNo;
@@ -167,6 +170,7 @@ public:
   bool isBlockAddress() const { return OpKind == MO_BlockAddress; }
   /// isMetadata - Tests if this is a MO_Metadata operand.
   bool isMetadata() const { return OpKind == MO_Metadata; }
+  bool isMCSymbol() const { return OpKind == MO_MCSymbol; }
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -314,6 +318,11 @@ public:
   BlockAddress *getBlockAddress() const {
     assert(isBlockAddress() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.BA;
+  }
+
+  MCSymbol *getMCSymbol() const {
+    assert(isMCSymbol() && "Wrong MachineOperand accessor");
+    return Contents.Sym;
   }
   
   /// getOffset - Return the offset from the symbol in this operand. This always
@@ -473,6 +482,12 @@ public:
     return Op;
   }
 
+  static MachineOperand CreateMCSymbol(MCSymbol *Sym) {
+    MachineOperand Op(MachineOperand::MO_MCSymbol);
+    Op.Contents.Sym = Sym;
+    return Op;
+  }
+  
   friend class MachineInstr;
   friend class MachineRegisterInfo;
 private:
