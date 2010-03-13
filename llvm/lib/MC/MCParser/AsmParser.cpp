@@ -138,15 +138,14 @@ const AsmToken &AsmParser::Lex() {
   return *tok;
 }
 
-bool AsmParser::Run() {
-  // Create the initial section.
+bool AsmParser::Run(bool NoInitialTextSection) {
+  // Create the initial section, if requested.
   //
-  // FIXME: Support -n.
   // FIXME: Target hook & command line option for initial section.
-  Out.SwitchSection(getMachOSection("__TEXT", "__text",
-                                    MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                                    0, SectionKind::getText()));
-
+  if (!NoInitialTextSection)
+    Out.SwitchSection(getMachOSection("__TEXT", "__text",
+                                      MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                      0, SectionKind::getText()));
 
   // Prime the lexer.
   Lex();

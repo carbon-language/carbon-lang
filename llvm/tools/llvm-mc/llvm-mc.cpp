@@ -84,6 +84,10 @@ static cl::opt<std::string>
 TripleName("triple", cl::desc("Target triple to assemble for, "
                               "see -version for available targets"));
 
+static cl::opt<bool>
+NoInitialTextSection("n", cl::desc(
+                   "Don't assume assembly file starts in the text section"));
+
 enum ActionType {
   AC_AsLex,
   AC_Assemble,
@@ -303,7 +307,7 @@ static int AssembleInput(const char *ProgName) {
 
   Parser.setTargetParser(*TAP.get());
 
-  int Res = Parser.Run();
+  int Res = Parser.Run(NoInitialTextSection);
   if (Out != &fouts())
     delete Out;
 
