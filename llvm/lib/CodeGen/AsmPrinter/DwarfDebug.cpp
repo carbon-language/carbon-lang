@@ -1321,25 +1321,25 @@ DbgScope *DwarfDebug::getOrCreateAbstractScope(MDNode *N) {
 /// If there are global variables in this scope then create and insert
 /// DIEs for these variables.
 DIE *DwarfDebug::updateSubprogramScopeDIE(MDNode *SPNode) {
-
  DIE *SPDie = ModuleCU->getDIE(SPNode);
- assert (SPDie && "Unable to find subprogram DIE!");
+ assert(SPDie && "Unable to find subprogram DIE!");
  DISubprogram SP(SPNode);
+  
  // There is not any need to generate specification DIE for a function
  // defined at compile unit level. If a function is defined inside another
  // function then gdb prefers the definition at top level and but does not
  // expect specification DIE in parent function. So avoid creating 
  // specification DIE for a function defined inside a function.
- if (SP.isDefinition() && !SP.getContext().isCompileUnit()
-     && !SP.getContext().isFile()
-     && !SP.getContext().isSubprogram()) {
+ if (SP.isDefinition() && !SP.getContext().isCompileUnit() &&
+     !SP.getContext().isFile() && !SP.getContext().isSubprogram()) {
    addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
-  // Add arguments. 
+   
+   // Add arguments. 
    DICompositeType SPTy = SP.getType();
    DIArray Args = SPTy.getTypeArray();
    unsigned SPTag = SPTy.getTag();
    if (SPTag == dwarf::DW_TAG_subroutine_type)
-     for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+     for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
        DIType ATy = DIType(DIType(Args.getElement(i).getNode()));
        addType(Arg, ATy);
@@ -2217,7 +2217,7 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
     Dir = DB.getDirectory();
     Fn = DB.getFilename();
   } else
-    assert (0 && "Unexpected scope info");
+    assert(0 && "Unexpected scope info");
 
   unsigned Src = GetOrCreateSourceID(Dir, Fn);
   unsigned ID = MMI->NextLabelID();
@@ -2733,8 +2733,8 @@ void DwarfDebug::emitCommonDebugFrame() {
 
 /// emitFunctionDebugFrame - Emit per function frame info into a debug frame
 /// section.
-void
-DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
+void DwarfDebug::
+emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
   if (!MAI->doesDwarfRequireFrameSection())
     return;
 
@@ -2743,11 +2743,13 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
                               Asm->getObjFileLowering().getDwarfFrameSection());
 
   Asm->OutStreamer.AddComment("Length of Frame Information Entry");
-  EmitDifference(getDWLabel("debug_frame_end", DebugFrameInfo.Number),
-                 getDWLabel("debug_frame_begin", DebugFrameInfo.Number), true);
+  MCSymbol *DebugFrameBegin =
+    getDWLabel("debug_frame_begin", DebugFrameInfo.Number);
+  MCSymbol *DebugFrameEnd =
+    getDWLabel("debug_frame_end", DebugFrameInfo.Number);
+  EmitDifference(DebugFrameEnd, DebugFrameBegin, true);
 
-  Asm->OutStreamer.EmitLabel(getDWLabel("debug_frame_begin",
-                                        DebugFrameInfo.Number));
+  Asm->OutStreamer.EmitLabel(DebugFrameBegin);
 
   Asm->OutStreamer.AddComment("FDE CIE offset");
   EmitSectionOffset(getTempLabel("debug_frame_common"),
@@ -2768,8 +2770,7 @@ DwarfDebug::emitFunctionDebugFrame(const FunctionDebugFrameInfo&DebugFrameInfo){
                  false);
 
   Asm->EmitAlignment(2, 0, 0, false);
-  Asm->OutStreamer.EmitLabel(getDWLabel("debug_frame_end",
-                                        DebugFrameInfo.Number));
+  Asm->OutStreamer.EmitLabel(DebugFrameEnd);
 }
 
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
