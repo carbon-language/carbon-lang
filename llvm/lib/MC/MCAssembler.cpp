@@ -400,7 +400,7 @@ public:
     assert(OS.tell() - Start == DysymtabLoadCommandSize);
   }
 
-  void WriteNlist32(MachSymbolData &MSD) {
+  void WriteNlist(MachSymbolData &MSD) {
     MCSymbolData &Data = *MSD.SymbolData;
     const MCSymbol &Symbol = Data.getSymbol();
     uint8_t Type = 0;
@@ -459,7 +459,10 @@ public:
     // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
     // value.
     Write16(Flags);
-    Write32(Address);
+    if (Is64Bit)
+      Write64(Address);
+    else
+      Write32(Address);
   }
 
   struct MachRelocationEntry {
@@ -874,7 +877,8 @@ public:
 
       // The string table is written after symbol table.
       uint64_t StringTableOffset =
-        SymbolTableOffset + NumSymTabSymbols * Nlist32Size;
+        SymbolTableOffset + NumSymTabSymbols * (Is64Bit ? Nlist64Size :
+                                                Nlist32Size);
       WriteSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
                              StringTableOffset, StringTable.size());
 
@@ -928,11 +932,11 @@ public:
 
       // Write the symbol table entries.
       for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
-        WriteNlist32(LocalSymbolData[i]);
+        WriteNlist(LocalSymbolData[i]);
       for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
-        WriteNlist32(ExternalSymbolData[i]);
+        WriteNlist(ExternalSymbolData[i]);
       for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
-        WriteNlist32(UndefinedSymbolData[i]);
+        WriteNlist(UndefinedSymbolData[i]);
 
       // Write the string table.
       OS << StringTable.str();

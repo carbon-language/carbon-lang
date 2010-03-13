@@ -187,8 +187,12 @@ def dumpNlist32(f, i, opts):
    print "    ('n_sect', %r)" % n_sect
    n_desc = f.read16()
    print "    ('n_desc', %r)" % n_desc
-   n_value = f.read32()
-   print "    ('n_value', %r)" % n_value
+   if f.is64Bit:
+      n_value = f.read64()
+      print "    ('n_value', %r)" % n_value
+   else:
+      n_value = f.read32()
+      print "    ('n_value', %r)" % n_value
    print "    ('_string', %r)" % f.getString(n_strx)
    print "   ),"
 
