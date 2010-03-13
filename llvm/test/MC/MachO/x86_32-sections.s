@@ -36,13 +36,9 @@
         .objc_class_vars
         .objc_instance_vars
         .objc_module_info
-
-// FIXME: These are aliases for __TEXT, __cstring which we don't properly unique
-//	yet.
-//        .objc_class_names
-//        .objc_meth_var_types
-//        .objc_meth_var_names
-        
+        .objc_class_names
+        .objc_meth_var_types
+        .objc_meth_var_names
         .objc_selector_strs
         .section __TEXT,__picsymbolstub4,symbol_stubs,none,16
 
