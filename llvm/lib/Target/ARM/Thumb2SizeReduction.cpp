@@ -334,8 +334,8 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     unsigned BaseReg = MI->getOperand(1).getReg();
     ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MI->getOperand(2).getImm());
     if (BaseReg == ARM::SP &&
-        (Entry.WideOpc == ARM::t2LDM_UPD && Mode == ARM_AM::ia) ||
-        (Entry.WideOpc == ARM::t2STM_UPD && Mode == ARM_AM::db)) {
+        ((Entry.WideOpc == ARM::t2LDM_UPD && Mode == ARM_AM::ia) ||
+         (Entry.WideOpc == ARM::t2STM_UPD && Mode == ARM_AM::db))) {
       Opc = Entry.NarrowOpc2; // tPOP or tPUSH
       OpNum = 3;
     } else if (!isARMLowRegister(BaseReg) || Mode != ARM_AM::ia) {
