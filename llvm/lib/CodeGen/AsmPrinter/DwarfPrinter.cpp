@@ -237,7 +237,7 @@ void DwarfPrinter::EmitSectionOffset(const MCSymbol *Label,
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
-void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+void DwarfPrinter::EmitFrameMoves(MCSymbol *BaseLabel,
                                   const std::vector<MachineMove> &Moves,
                                   bool isEH) {
   int stackGrowth = TD->getPointerSize();
@@ -245,7 +245,6 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
       TargetFrameInfo::StackGrowsUp)
     stackGrowth *= -1;
   
-  bool IsLocal = false;
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
     unsigned LabelID = Move.getLabelID();
@@ -258,13 +257,13 @@ void DwarfPrinter::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
     const MachineLocation &Src = Move.getSource();
 
     // Advance row if new location.
-    if (BaseLabel && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
-      EmitCFAByte(dwarf::DW_CFA_advance_loc4);
-      EmitDifference(getDWLabel("label", LabelID),
-                     getDWLabel(BaseLabel, BaseLabelID), true);
-      BaseLabelID = LabelID;
-      BaseLabel = "label";
-      IsLocal = true;
+    if (BaseLabel && LabelID) {
+      MCSymbol *ThisSym = getDWLabel("label", LabelID);
+      if (ThisSym != BaseLabel) {
+        EmitCFAByte(dwarf::DW_CFA_advance_loc4);
+        EmitDifference(ThisSym, BaseLabel, true);
+        BaseLabel = ThisSym;
+      }
     }
 
     // If advancing cfa.

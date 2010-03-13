@@ -2725,7 +2725,7 @@ void DwarfDebug::emitCommonDebugFrame() {
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
 
-  EmitFrameMoves(NULL, 0, Moves, false);
+  EmitFrameMoves(0, Moves, false);
 
   Asm->EmitAlignment(2, 0, 0, false);
   Asm->OutStreamer.EmitLabel(getTempLabel("debug_frame_common_end"));
@@ -2764,9 +2764,7 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
   Asm->OutStreamer.AddComment("FDE address range");
   EmitDifference(getDWLabel("func_end", DebugFrameInfo.Number), FuncBeginSym);
 
-  // FuncBeginSym.
-  EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves,
-                 false);
+  EmitFrameMoves(FuncBeginSym, DebugFrameInfo.Moves, false);
 
   Asm->EmitAlignment(2, 0, 0, false);
   Asm->OutStreamer.EmitLabel(DebugFrameEnd);

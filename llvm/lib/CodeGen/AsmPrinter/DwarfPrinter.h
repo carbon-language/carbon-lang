@@ -122,7 +122,7 @@ public:
   
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.
-  void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
+  void EmitFrameMoves(MCSymbol *BaseLabel,
                       const std::vector<MachineMove> &Moves, bool isEH);
 };
 

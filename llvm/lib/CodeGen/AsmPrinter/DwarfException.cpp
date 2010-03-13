@@ -150,7 +150,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // Indicate locations of general callee saved registers in frame.
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
-  EmitFrameMoves(NULL, 0, Moves, true);
+  EmitFrameMoves(0, Moves, true);
 
   // On Darwin the linker honors the alignment of eh_frame, which means it must
   // be 8-byte on 64-bit targets to match what gcc does.  Otherwise you get
@@ -247,9 +247,7 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
     }
 
     // Indicate locations of function specific callee saved registers in frame.
-    // EHFuncBeginSym
-    EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves,
-                   true);
+    EmitFrameMoves(EHFuncBeginSym, EHFrameInfo.Moves, true);
 
     // On Darwin the linker honors the alignment of eh_frame, which means it
     // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise you
