@@ -22,7 +22,7 @@ using namespace llvm;
 // instructions will be constant folded if the specified value is constant.
 //
 unsigned InlineCostAnalyzer::FunctionInfo::
-         CountCodeReductionForConstant(Value *V) {
+CountCodeReductionForConstant(Value *V, CodeMetrics &Metrics) {
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (isa<BranchInst>(*UI) || isa<SwitchInst>(*UI)) {
@@ -31,7 +31,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       const unsigned NumSucc = TI.getNumSuccessors();
       unsigned Instrs = 0;
       for (unsigned I = 0; I != NumSucc; ++I)
-        Instrs += TI.getSuccessor(I)->size();
+        Instrs += Metrics.NumBBInsts[TI.getSuccessor(I)];
       // We don't know which blocks will be eliminated, so use the average size.
       Reduction += InlineConstants::InstrCost*Instrs*(NumSucc-1)/NumSucc;
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
@@ -71,7 +71,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
 
         // And any other instructions that use it which become constants
         // themselves.
-        Reduction += CountCodeReductionForConstant(&Inst);
+        Reduction += CountCodeReductionForConstant(&Inst, Metrics);
       }
     }
 
@@ -142,7 +142,7 @@ static bool callIsSmall(const Function *F) {
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   ++NumBlocks;
-
+  unsigned NumInstsInThisBB = 0;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
     if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
@@ -196,6 +196,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
     }
 
     ++NumInsts;
+    ++NumInstsInThisBB;
   }
   
   if (isa<ReturnInst>(BB->getTerminator()))
@@ -208,6 +209,9 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   // function which is extremely undefined behavior.
   if (isa<IndirectBrInst>(BB->getTerminator()))
     NeverInline = true;
+
+  // Remember NumInsts for this BB.
+  NumBBInsts[BB] = NumInstsInThisBB;
 }
 
 /// analyzeFunction - Fill in the current structure with information gleaned
@@ -238,8 +242,9 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   // code can be eliminated if one of the arguments is a constant.
   ArgumentWeights.reserve(F->arg_size());
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
-    ArgumentWeights.push_back(ArgInfo(CountCodeReductionForConstant(I),
-                                      CountCodeReductionForAlloca(I)));
+    ArgumentWeights.
+      push_back(ArgInfo(CountCodeReductionForConstant(I, Metrics),
+                        CountCodeReductionForAlloca(I)));
 }
 
 // getInlineCost - The heuristic used to determine if we should inline the

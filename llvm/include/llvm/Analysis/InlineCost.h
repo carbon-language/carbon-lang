@@ -18,6 +18,7 @@
 #include <climits>
 #include <map>
 #include <vector>
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -41,6 +42,9 @@ namespace llvm {
     /// NumInsts, NumBlocks - Keep track of how large each function is, which
     /// is used to estimate the code size cost of inlining it.
     unsigned NumInsts, NumBlocks;
+
+    /// NumBBInsts - Keeps track of basic block code size estimates.
+    DenseMap<const BasicBlock *, unsigned> NumBBInsts;
 
     /// NumCalls - Keep track of the number of calls to 'big' functions.
     unsigned NumCalls;
@@ -148,7 +152,7 @@ namespace llvm {
       /// CountCodeReductionForConstant - Figure out an approximation for how
       /// many instructions will be constant folded if the specified value is
       /// constant.
-      unsigned CountCodeReductionForConstant(Value *V);
+      unsigned CountCodeReductionForConstant(Value *V, CodeMetrics &M);
 
       /// CountCodeReductionForAlloca - Figure out an approximation of how much
       /// smaller the function will be if it is inlined into a context where an
