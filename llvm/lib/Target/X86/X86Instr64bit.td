@@ -521,8 +521,8 @@ def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
 
 let Uses = [EFLAGS] in {
 
-def ADC64i32 : RI<0x15, RawFrm, (outs), (ins i32imm:$src),
-                  "adc{q}\t{$src, %rax|%rax, $src}", []>;
+def ADC64i32 : RIi32<0x15, RawFrm, (outs), (ins i32imm:$src),
+                     "adc{q}\t{$src, %rax|%rax, $src}", []>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
@@ -595,8 +595,8 @@ def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst),
                        (implicit EFLAGS)]>;
 } // isTwoAddress
 
-def SUB64i32 : RI<0x2D, RawFrm, (outs), (ins i32imm:$src),
-                  "sub{q}\t{$src, %rax|%rax, $src}", []>;
+def SUB64i32 : RIi32<0x2D, RawFrm, (outs), (ins i32imm:$src),
+                     "sub{q}\t{$src, %rax|%rax, $src}", []>;
 
 // Memory-Register Subtraction
 def SUB64mr  : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
@@ -642,8 +642,8 @@ def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst),
                       [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
 
-def SBB64i32 : RI<0x1D, RawFrm, (outs), (ins i32imm:$src),
-                  "sbb{q}\t{$src, %rax|%rax, $src}", []>;
+def SBB64i32 : RIi32<0x1D, RawFrm, (outs), (ins i32imm:$src),
+                     "sbb{q}\t{$src, %rax|%rax, $src}", []>;
 
 def SBB64mr  : RI<0x19, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
                   "sbb{q}\t{$src2, $dst|$dst, $src2}",
@@ -1048,8 +1048,8 @@ def NOT64m : RI<0xF7, MRM2m, (outs), (ins i64mem:$dst), "not{q}\t$dst",
                 [(store (not (loadi64 addr:$dst)), addr:$dst)]>;
 
 let Defs = [EFLAGS] in {
-def AND64i32 : RI<0x25, RawFrm, (outs), (ins i32imm:$src),
-                  "and{q}\t{$src, %rax|%rax, $src}", []>;
+def AND64i32 : RIi32<0x25, RawFrm, (outs), (ins i32imm:$src),
+                     "and{q}\t{$src, %rax|%rax, $src}", []>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
@@ -1188,8 +1188,8 @@ def XOR64i32 : RIi32<0x35, RawFrm, (outs), (ins i32imm:$src),
 
 // Integer comparison
 let Defs = [EFLAGS] in {
-def TEST64i32 : RI<0xa9, RawFrm, (outs), (ins i32imm:$src),
-                   "test{q}\t{$src, %rax|%rax, $src}", []>;
+def TEST64i32 : RIi32<0xa9, RawFrm, (outs), (ins i32imm:$src),
+                      "test{q}\t{$src, %rax|%rax, $src}", []>;
 let isCommutable = 1 in
 def TEST64rr : RI<0x85, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                   "test{q}\t{$src2, $src1|$src1, $src2}",
@@ -1211,8 +1211,8 @@ def TEST64mi32 : RIi32<0xF7, MRM0m, (outs),
                  (implicit EFLAGS)]>;
 
 
-def CMP64i32 : RI<0x3D, RawFrm, (outs), (ins i32imm:$src),
-                  "cmp{q}\t{$src, %rax|%rax, $src}", []>;
+def CMP64i32 : RIi32<0x3D, RawFrm, (outs), (ins i32imm:$src),
+                     "cmp{q}\t{$src, %rax|%rax, $src}", []>;
 def CMP64rr : RI<0x39, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
                  [(X86cmp GR64:$src1, GR64:$src2),
