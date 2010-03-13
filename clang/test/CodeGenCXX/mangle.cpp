@@ -250,26 +250,26 @@ void f() { __fill_a<int>(); }
 namespace Expressions {
 // Unary operators.
 
-// CHECK: define linkonce_odr void @_ZN11Expressions2f1ILi1EEEvPAplngT_Li2E_i
+// CHECK: define void @_ZN11Expressions2f1ILi1EEEvPAplngT_Li2E_i
 template <int i> void f1(int (*)[(-i) + 2]) { };
 template void f1<1>(int (*)[1]);
 
-// CHECK: define linkonce_odr void @_ZN11Expressions2f2ILi1EEEvPApsT__i
+// CHECK: define void @_ZN11Expressions2f2ILi1EEEvPApsT__i
 template <int i> void f2(int (*)[+i]) { };
 template void f2<1>(int (*)[1]);
 
 // Binary operators.
 
-// CHECK: define linkonce_odr void @_ZN11Expressions2f3ILi1EEEvPAplT_T__i
+// CHECK: define void @_ZN11Expressions2f3ILi1EEEvPAplT_T__i
 template <int i> void f3(int (*)[i+i]) { };
 template void f3<1>(int (*)[2]);
 
-// CHECK: define linkonce_odr void @_ZN11Expressions2f4ILi1EEEvPAplplLi2ET_T__i
+// CHECK: define void @_ZN11Expressions2f4ILi1EEEvPAplplLi2ET_T__i
 template <int i> void f4(int (*)[2 + i+i]) { };
 template void f4<1>(int (*)[4]);
 
 // The ternary operator.
-// CHECK: define linkonce_odr void @_ZN11Expressions2f4ILb1EEEvPAquT_Li1ELi2E_i
+// CHECK: define void @_ZN11Expressions2f4ILb1EEEvPAquT_Li1ELi2E_i
 template <bool b> void f4(int (*)[b ? 1 : 2]) { };
 template void f4<true>(int (*)[1]);
 }
@@ -305,7 +305,7 @@ template<typename T, typename = Policy<P, true> > class Alloc
   T *allocate(int, const void*) { return 0; }
 };
 
-// CHECK: define linkonce_odr i8* @_ZN6PR58615AllocIcNS_6PolicyINS_1PELb1EEEE8allocateEiPKv
+// CHECK: define i8* @_ZN6PR58615AllocIcNS_6PolicyINS_1PELb1EEEE8allocateEiPKv
 template class Alloc<char>;
 }
 
@@ -369,7 +369,7 @@ namespace test0 {
 namespace test1 {
   template<typename T> struct X { };
   template<template<class> class Y, typename T> void f(Y<T>) { }
-  // CHECK: define linkonce_odr void @_ZN5test11fINS_1XEiEEvT_IT0_E
+  // CHECK: define void @_ZN5test11fINS_1XEiEEvT_IT0_E
   template void f(X<int>);
 }
 
@@ -447,7 +447,7 @@ namespace test7 {
   void g(zed<&foo::bar>*)
   {}
 }
-// CHECK: define linkonce_odr void @_ZN5test81AILZNS_1B5valueEEE3incEv
+// CHECK: define void @_ZN5test81AILZNS_1B5valueEEE3incEv
 namespace test8 {
   template <int &counter> class A { void inc() { counter++; } };
   class B { static int value; };
