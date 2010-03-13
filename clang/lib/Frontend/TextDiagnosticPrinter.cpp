@@ -119,19 +119,19 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   }
 
   assert(StartColNo <= EndColNo && "Invalid range!");
-  
+
   // Pick the first non-whitespace column.
   while (StartColNo < SourceLine.size() &&
          (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
     ++StartColNo;
-  
+
   // Pick the last non-whitespace column.
   if (EndColNo > SourceLine.size())
     EndColNo = SourceLine.size();
   while (EndColNo-1 &&
          (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
     --EndColNo;
-  
+
   // If the start/end passed each other, then we are trying to highlight a range
   // that just exists in whitespace, which must be some sort of other bug.
   assert(StartColNo <= EndColNo && "Trying to highlight whitespace??");
@@ -300,10 +300,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       if (E.isMacroID()) E = SM.getImmediateSpellingLoc(E);
       Ranges[i] = SourceRange(S, E);
     }
-    
+
     // Get the pretty name, according to #line directives etc.
     PresumedLoc PLoc = SM.getPresumedLoc(Loc);
-    
+
     // If this diagnostic is not in the main file, print out the "included from"
     // lines.
     if (LastWarningLoc != PLoc.getIncludeLoc()) {
@@ -563,7 +563,7 @@ static unsigned findEndOfWord(unsigned Start,
 
   // We have the start of a balanced punctuation sequence (quotes,
   // parentheses, etc.). Determine the full sequence is.
-  llvm::SmallVector<char, 16> PunctuationEndStack;
+  llvm::SmallString<16> PunctuationEndStack;
   PunctuationEndStack.push_back(EndPunct);
   while (End < Length && !PunctuationEndStack.empty()) {
     if (Str[End] == PunctuationEndStack.back())
@@ -704,7 +704,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     if (DiagOpts->ShowLocation) {
       if (DiagOpts->ShowColors)
         OS.changeColor(savedColor, true);
-      
+
       // Emit a Visual Studio compatible line number syntax.
       if (LangOpts && LangOpts->Microsoft) {
         OS << PLoc.getFilename() << '(' << LineNo << ')';

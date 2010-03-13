@@ -379,7 +379,7 @@ void TokenLexer::Lex(Token &Tok) {
 /// are more ## after it, chomp them iteratively.  Return the result as Tok.
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
-  llvm::SmallVector<char, 128> Buffer;
+  llvm::SmallString<128> Buffer;
   const char *ResultTokStrPtr = 0;
   do {
     // Consume the ## operator.

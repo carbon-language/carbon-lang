@@ -52,7 +52,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
                            bool OwnsHeaders)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
-    Identifiers(opts, IILookup), BuiltinInfo(Target), CodeCompletionFile(0), 
+    Identifiers(opts, IILookup), BuiltinInfo(Target), CodeCompletionFile(0),
     CurPPLexer(0), CurDirLookup(0), Callbacks(0), MacroArgCache(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
@@ -80,7 +80,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 
   // We haven't read anything from the external source.
   ReadMacrosFromExternalSource = false;
-      
+
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
@@ -116,7 +116,7 @@ Preprocessor::~Preprocessor() {
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
     delete TokenLexerCache[i];
-  
+
   // Free any cached MacroArgs.
   for (MacroArgs *ArgList = MacroArgCache; ArgList; )
     ArgList = ArgList->deallocate();
@@ -198,30 +198,30 @@ void Preprocessor::PrintStats() {
              << NumFastTokenPaste << " on the fast path.\n";
 }
 
-Preprocessor::macro_iterator 
-Preprocessor::macro_begin(bool IncludeExternalMacros) const { 
-  if (IncludeExternalMacros && ExternalSource && 
+Preprocessor::macro_iterator
+Preprocessor::macro_begin(bool IncludeExternalMacros) const {
+  if (IncludeExternalMacros && ExternalSource &&
       !ReadMacrosFromExternalSource) {
     ReadMacrosFromExternalSource = true;
     ExternalSource->ReadDefinedMacros();
   }
-  
-  return Macros.begin(); 
+
+  return Macros.begin();
 }
 
-Preprocessor::macro_iterator 
-Preprocessor::macro_end(bool IncludeExternalMacros) const { 
-  if (IncludeExternalMacros && ExternalSource && 
+Preprocessor::macro_iterator
+Preprocessor::macro_end(bool IncludeExternalMacros) const {
+  if (IncludeExternalMacros && ExternalSource &&
       !ReadMacrosFromExternalSource) {
     ReadMacrosFromExternalSource = true;
     ExternalSource->ReadDefinedMacros();
   }
-  
-  return Macros.end(); 
+
+  return Macros.end();
 }
 
-bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File, 
-                                          unsigned TruncateAtLine, 
+bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
+                                          unsigned TruncateAtLine,
                                           unsigned TruncateAtColumn) {
   using llvm::MemoryBuffer;
 
@@ -242,7 +242,7 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
     for (; *Position; ++Position) {
       if (*Position != '\r' && *Position != '\n')
         continue;
-      
+
       // Eat \r\n or \n\r as a single line.
       if ((Position[1] == '\r' || Position[1] == '\n') &&
           Position[0] != Position[1])
@@ -251,13 +251,13 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
       break;
     }
   }
-  
+
   Position += TruncateAtColumn - 1;
-  
+
   // Truncate the buffer.
   if (Position < Buffer->getBufferEnd()) {
-    MemoryBuffer *TruncatedBuffer 
-      = MemoryBuffer::getMemBufferCopy(Buffer->getBufferStart(), Position, 
+    MemoryBuffer *TruncatedBuffer
+      = MemoryBuffer::getMemBufferCopy(Buffer->getBufferStart(), Position,
                                        Buffer->getBufferIdentifier());
     SourceMgr.overrideFileContents(File, TruncatedBuffer);
   }
@@ -446,7 +446,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   return TokStart.getFileLocWithOffset(PhysOffset);
 }
 
-SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc, 
+SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc,
                                                  unsigned Offset) {
   if (Loc.isInvalid() || !Loc.isFileID())
     return SourceLocation();
@@ -456,7 +456,7 @@ SourceLocation Preprocessor::getLocForEndOfToken(SourceLocation Loc,
     Len = Len - Offset;
   else
     return Loc;
-  
+
   return AdvanceToTokenCharacter(Loc, Len);
 }
 
@@ -519,7 +519,7 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
     II = getIdentifierInfo(llvm::StringRef(BufPtr, Identifier.getLength()));
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-    llvm::SmallVector<char, 64> IdentifierBuffer;
+    llvm::SmallString<64> IdentifierBuffer;
     llvm::StringRef CleanedStr = getSpelling(Identifier, IdentifierBuffer);
     II = getIdentifierInfo(CleanedStr);
   }

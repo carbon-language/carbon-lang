@@ -471,7 +471,7 @@ void Preprocessor::HandleDirective(Token &Result) {
   CurPPLexer->ParsingPreprocessorDirective = true;
 
   ++NumDirectives;
-  
+
   // We are about to read a token.  For the multiple-include optimization FA to
   // work, we have to remember if we had read any tokens *before* this
   // pp-directive.
@@ -964,7 +964,7 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
 /// false if the > was found, otherwise it returns true if it finds and consumes
 /// the EOM marker.
 bool Preprocessor::ConcatenateIncludeName(
-  llvm::SmallVector<char, 128> &FilenameBuffer) {
+  llvm::SmallString<128> &FilenameBuffer) {
   Token CurTok;
 
   Lex(CurTok);
@@ -1042,7 +1042,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     return;
   }
 
-  bool isAngled = 
+  bool isAngled =
     GetIncludeFilenameSpelling(FilenameTok.getLocation(), Filename);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
   // error.
@@ -1070,7 +1070,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
     Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
   }
-  
+
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
   if (!HeaderInfo.ShouldEnterIncludeFile(File, isImport))
@@ -1512,7 +1512,7 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
 
   IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
   MacroInfo *MI = getMacroInfo(MII);
-  
+
   if (CurPPLexer->getConditionalStackDepth() == 0) {
     // If the start of a top-level #ifdef and if the macro is not defined,
     // inform MIOpt that this might be the start of a proper include guard.

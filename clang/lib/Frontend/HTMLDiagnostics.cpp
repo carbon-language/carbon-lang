@@ -40,13 +40,13 @@ class HTMLDiagnostics : public PathDiagnosticClient {
   std::vector<const PathDiagnostic*> BatchedDiags;
 public:
   HTMLDiagnostics(const std::string& prefix, const Preprocessor &pp);
-  
+
   virtual ~HTMLDiagnostics() { FlushDiagnostics(NULL); }
-  
+
   virtual void FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade);
 
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
-  
+
   virtual llvm::StringRef getName() const {
     return "HTMLDiagnostics";
   }
@@ -108,7 +108,7 @@ HTMLDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade)
     ReportDiag(*D, FilesMade);
     delete D;
   }
-  
+
   BatchedDiags.clear();
 }
 
@@ -294,7 +294,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   llvm::raw_fd_ostream os(H.c_str(), ErrorMsg);
 
   if (!ErrorMsg.empty()) {
-    (llvm::errs() << "warning: could not create file '" << F.str() 
+    (llvm::errs() << "warning: could not create file '" << F.str()
                   << "'\n").flush();
     return;
   }
@@ -502,7 +502,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 }
 
 static void EmitAlphaCounter(llvm::raw_ostream& os, unsigned n) {
-  llvm::SmallVector<char, 10> buf;
+  llvm::SmallString<10> buf;
 
   do {
     unsigned x = n % ('z' - 'a');

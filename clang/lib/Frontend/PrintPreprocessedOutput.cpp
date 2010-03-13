@@ -61,7 +61,7 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
   if (MI.tokens_empty() || !MI.tokens_begin()->hasLeadingSpace())
     OS << ' ';
 
-  llvm::SmallVector<char, 128> SpellingBuffer;
+  llvm::SmallString<128> SpellingBuffer;
   for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
        I != E; ++I) {
     if (I->hasLeadingSpace())
