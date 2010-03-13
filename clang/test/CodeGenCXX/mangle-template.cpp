@@ -82,7 +82,7 @@ namespace test7 {
     X(U*, typename int_c<(meta<T>::value + meta<U>::value)>::type *) { }
   };
 
-  // CHECK: define void @_ZN5test71XIiEC1IdEEPT_PNS_5int_cIXplL_ZNS_4metaIiE5valueEEsrNS6_IS3_EE5valueEE4typeE
+  // CHECK: define weak_odr void @_ZN5test71XIiEC1IdEEPT_PNS_5int_cIXplL_ZNS_4metaIiE5valueEEsrNS6_IS3_EE5valueEE4typeE
   template X<int>::X(double*, float*);
 }
 
@@ -101,6 +101,6 @@ namespace test8 {
   template<typename T>
   void f(int_c<meta<T>::type::value>) { }
 
-  // CHECK: define void @_ZN5test81fIiEEvNS_5int_cIXsrNS_4metaIT_E4typeE5valueEEE
+  // CHECK: define weak_odr void @_ZN5test81fIiEEvNS_5int_cIXsrNS_4metaIT_E4typeE5valueEEE
   template void f<int>(int_c<sizeof(int)>);
 }

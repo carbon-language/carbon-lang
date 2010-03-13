@@ -30,15 +30,15 @@ namespace Casts {
 
   template <int N> T<N> f() { return T<N>(); }
   
-  // CHECK: define void @_ZN5Casts8implicitILj4EEEvPN9enable_ifIXleT_Li4EEvE4typeE
+  // CHECK: define weak_odr void @_ZN5Casts8implicitILj4EEEvPN9enable_ifIXleT_Li4EEvE4typeE
   template void implicit<4>(void*);
-  // CHECK: define void @_ZN5Casts6cstyleILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK: define weak_odr void @_ZN5Casts6cstyleILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void cstyle<4>(void*);
-  // CHECK: define void @_ZN5Casts10functionalILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK: define weak_odr void @_ZN5Casts10functionalILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void functional<4>(void*);
-  // CHECK: define void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK: define weak_odr void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void static_<4>(void*);
 
-  // CHECK: define i64 @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
+  // CHECK: define weak_odr i64 @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
   template T<6> f<6>();
 }
