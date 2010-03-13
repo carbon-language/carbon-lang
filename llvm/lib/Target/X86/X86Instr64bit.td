@@ -24,6 +24,7 @@ def i64i32imm  : Operand<i64>;
 // pc relative.
 def i64i32imm_pcrel : Operand<i64> {
   let PrintMethod = "print_pcrel_imm";
+  let ParserMatchClass = X86AbsMemAsmOperand;
 }
 
 
