@@ -311,6 +311,10 @@ static int AssembleInput(const char *ProgName) {
   if (Out != &fouts())
     delete Out;
 
+  // Delete output on errors.
+  if (Res && OutputFilename != "-")
+    sys::Path(OutputFilename).eraseFromDisk();
+
   return Res;
 }
 
