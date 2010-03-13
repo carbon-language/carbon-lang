@@ -87,6 +87,11 @@ void Type::destroy() const {
     pImpl->OpaqueTypes.erase(opaque_this);
   }
 
+  if (ForwardType && ForwardType->isAbstract()) {
+    ForwardType->dropRef();
+    ForwardType = NULL;
+  }
+
   // For all the other type subclasses, there is either no contained types or 
   // just one (all Sequentials). For Sequentials, the PATypeHandle is not
   // allocated past the type object, its included directly in the SequentialType
@@ -254,10 +259,12 @@ const Type *Type::getForwardedTypeInternal() const {
   // Yes, it is forwarded again.  First thing, add the reference to the new
   // forward type.
   if (RealForwardedType->isAbstract())
-    cast<DerivedType>(RealForwardedType)->addRef();
+    RealForwardedType->addRef();
 
   // Now drop the old reference.  This could cause ForwardType to get deleted.
-  cast<DerivedType>(ForwardType)->dropRef();
+  // ForwardType must be abstract because only abstract types can have their own
+  // ForwardTypes.
+  ForwardType->dropRef();
 
   // Return the updated type.
   ForwardType = RealForwardedType;
@@ -1142,8 +1149,8 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // Any PATypeHolders referring to this type will now automatically forward to
   // the type we are resolved to.
   ForwardType = NewType;
-  if (NewType->isAbstract())
-    cast<DerivedType>(NewType)->addRef();
+  if (ForwardType->isAbstract())
+    ForwardType->addRef();
 
   // Add a self use of the current type so that we don't delete ourself until
   // after the function exits.
