@@ -159,7 +159,6 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, get(ARM::tPUSH));
   AddDefaultPred(MIB);
-  MIB.addReg(0); // No write back.
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
     // Add the callee-saved register as live-in. It's killed at the spill.
@@ -182,7 +181,6 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(ARM::tPOP));
   AddDefaultPred(MIB);
-  MIB.addReg(0); // No write back.
 
   bool NumRegs = false;
   for (unsigned i = CSI.size(); i != 0; --i) {

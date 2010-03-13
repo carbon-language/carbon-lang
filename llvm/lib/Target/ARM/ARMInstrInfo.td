@@ -378,7 +378,7 @@ def am3offset : Operand<i32>,
 def addrmode4 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode4", []> {
   let PrintMethod = "printAddrMode4Operand";
-  let MIOperandInfo = (ops GPR, i32imm);
+  let MIOperandInfo = (ops GPR:$addr, i32imm);
 }
 
 // addrmode5 := reg +/- imm8*4
@@ -386,7 +386,7 @@ def addrmode4 : Operand<i32>,
 def addrmode5 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let PrintMethod = "printAddrMode5Operand";
-  let MIOperandInfo = (ops GPR, i32imm);
+  let MIOperandInfo = (ops GPR:$base, i32imm);
 }
 
 // addrmode6 := reg with optional writeback
@@ -906,10 +906,11 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
-  def LDM_RET : AXI4ld<(outs),
-                    (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-                    LdStMulFrm, IIC_Br, "ldm${addr:submode}${p}\t$addr, $wb",
-                    []>;
+  def LDM_RET : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+                                        reglist:$dsts, variable_ops),
+                       LdStMulFrm, IIC_Br,
+                       "ldm${addr:submode}${p}\t$addr, $dsts",
+                       "$addr.addr = $wb", []>;
 
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1,
@@ -1344,17 +1345,29 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb),
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
-def LDM : AXI4ld<(outs),
-               (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-               LdStMulFrm, IIC_iLoadm, "ldm${addr:submode}${p}\t$addr, $wb",
-               []>;
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+def LDM : AXI4ld<(outs), (ins addrmode4:$addr, pred:$p,
+                          reglist:$dsts, variable_ops), LdStMulFrm, IIC_iLoadm,
+                 "ldm${addr:submode}${p}\t$addr, $dsts", "", []>;
 
-let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-def STM : AXI4st<(outs),
-               (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-               LdStMulFrm, IIC_iStorem, "stm${addr:submode}${p}\t$addr, $wb",
-               []>;
+def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+                                      reglist:$dsts, variable_ops),
+                     LdStMulFrm, IIC_iLoadm,
+                     "ldm${addr:submode}${p}\t$addr, $dsts",
+                     "$addr.addr = $wb", []>;
+} // mayLoad, hasExtraDefRegAllocReq
+
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
+def STM : AXI4st<(outs), (ins addrmode4:$addr, pred:$p,
+                          reglist:$srcs, variable_ops), LdStMulFrm, IIC_iStorem,
+                 "stm${addr:submode}${p}\t$addr, $srcs", "", []>;
+
+def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+                                      reglist:$srcs, variable_ops),
+                     LdStMulFrm, IIC_iStorem,
+                     "stm${addr:submode}${p}\t$addr, $srcs",
+                     "$addr.addr = $wb", []>;
+} // mayStore, hasExtraSrcRegAllocReq
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

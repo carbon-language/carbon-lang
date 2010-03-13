@@ -290,8 +290,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
-def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$wb, variable_ops), IIC_Br,
-                   "pop${p}\t$wb", []>,
+def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops), IIC_Br,
+                   "pop${p}\t$dsts", []>,
                T1Misc<{1,1,0,?,?,?,?}>;
 
 let isCall = 1,
@@ -539,28 +539,37 @@ def tSpill : T1pIs<(outs), (ins tGPR:$src, t_addrmode_sp:$addr), IIC_iStorei,
 //
 
 // These requires base address to be written back or one of the loaded regs.
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 def tLDM : T1I<(outs),
-               (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
+               (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
                IIC_iLoadm,
-               "ldm${addr:submode}${p}\t$addr, $wb", []>,
+               "ldm${addr:submode}${p}\t$addr, $dsts", []>,
            T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
 
+def tLDM_UPD : T1It<(outs tGPR:$wb),
+                    (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
+                    IIC_iLoadm,
+                    "ldm${addr:submode}${p}\t$addr, $dsts",
+                    "$addr.addr = $wb", []>,
+               T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
+} // mayLoad, hasExtraDefRegAllocReq
+
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-def tSTM : T1I<(outs),
-               (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-               IIC_iStorem,
-               "stm${addr:submode}${p}\t$addr, $wb", []>,
+def tSTM_UPD : T1It<(outs tGPR:$wb),
+                    (ins addrmode4:$addr, pred:$p, reglist:$srcs, variable_ops),
+                    IIC_iStorem,
+                    "stm${addr:submode}${p}\t$addr, $srcs",
+                    "$addr.addr = $wb", []>,
            T1Encoding<{1,1,0,0,0,?}>; // A6.2 & A8.6.189
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
-def tPOP : T1I<(outs), (ins pred:$p, reglist:$wb, variable_ops), IIC_Br,
-               "pop${p}\t$wb", []>,
+def tPOP : T1I<(outs), (ins pred:$p, reglist:$dsts, variable_ops), IIC_Br,
+               "pop${p}\t$dsts", []>,
            T1Misc<{1,1,0,?,?,?,?}>;
 
 let mayStore = 1, Uses = [SP], Defs = [SP], hasExtraSrcRegAllocReq = 1 in
-def tPUSH : T1I<(outs), (ins pred:$p, reglist:$wb, variable_ops), IIC_Br,
-                "push${p}\t$wb", []>,
+def tPUSH : T1I<(outs), (ins pred:$p, reglist:$srcs, variable_ops), IIC_Br,
+                "push${p}\t$srcs", []>,
             T1Misc<{0,1,0,?,?,?,?}>;
 
 //===----------------------------------------------------------------------===//

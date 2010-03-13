@@ -853,17 +853,17 @@ class AI3stdpo<dag oops, dag iops, Format f, InstrItinClass itin,
 
 // addrmode4 instructions
 class AXI4ld<dag oops, dag iops, Format f, InstrItinClass itin,
-             string asm, list<dag> pattern>
+             string asm, string cstr, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
+       asm, cstr, pattern> {
   let Inst{20}    = 1; // L bit
   let Inst{22}    = 0; // S bit
   let Inst{27-25} = 0b100;
 }
 class AXI4st<dag oops, dag iops, Format f, InstrItinClass itin,
-             string asm, list<dag> pattern>
+             string asm, string cstr, list<dag> pattern>
   : XI<oops, iops, AddrMode4, Size4Bytes, IndexModeNone, f, itin,
-       asm, "", pattern> {
+       asm, cstr, pattern> {
   let Inst{20}    = 0; // L bit
   let Inst{22}    = 0; // S bit
   let Inst{27-25} = 0b100;
@@ -997,9 +997,9 @@ class T1JTI<dag oops, dag iops, InstrItinClass itin,
 
 // Two-address instructions
 class T1It<dag oops, dag iops, InstrItinClass itin,
-           string asm, list<dag> pattern>
+           string asm, string cstr, list<dag> pattern>
   : Thumb1I<oops, iops, AddrModeNone, Size2Bytes, itin, 
-            asm, "$lhs = $dst", pattern>;
+            asm, cstr, pattern>;
 
 // Thumb1 instruction that can either be predicated or set CPSR.
 class Thumb1sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
@@ -1196,6 +1196,10 @@ class T2Ix2<dag oops, dag iops, InstrItinClass itin,
           string opc, string asm, list<dag> pattern>
   : Thumb2I<oops, iops, AddrModeNone, Size8Bytes, itin, opc, asm, "", pattern>;
 
+// Two-address instructions
+class T2XIt<dag oops, dag iops, InstrItinClass itin,
+            string asm, string cstr, list<dag> pattern>
+  : Thumb2XI<oops, iops, AddrModeNone, Size4Bytes, itin, asm, cstr, pattern>;
 
 // T2Iidxldst - Thumb2 indexed load / store instructions.
 class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
@@ -1311,9 +1315,9 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
 
 // Load / store multiple
 class AXDI5<dag oops, dag iops, InstrItinClass itin,
-            string asm, list<dag> pattern>
+            string asm, string cstr, list<dag> pattern>
   : VFPXI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
-       VFPLdStMulFrm, itin, asm, "", pattern> {
+       VFPLdStMulFrm, itin, asm, cstr, pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-8}  = 0b1011;
@@ -1323,9 +1327,9 @@ class AXDI5<dag oops, dag iops, InstrItinClass itin,
 }
 
 class AXSI5<dag oops, dag iops, InstrItinClass itin,
-            string asm, list<dag> pattern>
+            string asm, string cstr, list<dag> pattern>
   : VFPXI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
-       VFPLdStMulFrm, itin, asm, "", pattern> {
+       VFPLdStMulFrm, itin, asm, cstr, pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
   let Inst{11-8}  = 0b1010;

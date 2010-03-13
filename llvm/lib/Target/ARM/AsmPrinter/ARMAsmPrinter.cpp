@@ -522,8 +522,10 @@ void ARMAsmPrinter::printAddrMode4Operand(const MachineInstr *MI, int Op,
     if (MO1.getReg() == ARM::SP) {
       // FIXME
       bool isLDM = (MI->getOpcode() == ARM::LDM ||
+                    MI->getOpcode() == ARM::LDM_UPD ||
                     MI->getOpcode() == ARM::LDM_RET ||
                     MI->getOpcode() == ARM::t2LDM ||
+                    MI->getOpcode() == ARM::t2LDM_UPD ||
                     MI->getOpcode() == ARM::t2LDM_RET);
       O << ARM_AM::getAMSubModeAltStr(Mode, isLDM);
     } else
@@ -816,11 +818,10 @@ void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int OpNum) {
 
 void ARMAsmPrinter::printRegisterList(const MachineInstr *MI, int OpNum) {
   O << "{";
-  // Always skip the first operand, it's the optional (and implicit writeback).
-  for (unsigned i = OpNum+1, e = MI->getNumOperands(); i != e; ++i) {
+  for (unsigned i = OpNum, e = MI->getNumOperands(); i != e; ++i) {
     if (MI->getOperand(i).isImplicit())
       continue;
-    if ((int)i != OpNum+1) O << ", ";
+    if ((int)i != OpNum) O << ", ";
     printOperand(MI, i);
   }
   O << "}";

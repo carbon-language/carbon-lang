@@ -1204,29 +1204,56 @@ defm t2PLI  : T2Ipl<1, 0, "pli">;
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
-def t2LDM : T2XI<(outs),
-                 (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-             IIC_iLoadm, "ldm${addr:submode}${p}${addr:wide}\t$addr, $wb", []> {
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
+                          reglist:$dsts, variable_ops), IIC_iLoadm,
+                 "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
   let Inst{22} = 0;
-  let Inst{21} = ?; // The W bit.
+  let Inst{21} = 0; // The W bit.
   let Inst{20} = 1; // Load
 }
 
-let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-def t2STM : T2XI<(outs),
-                 (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-            IIC_iStorem, "stm${addr:submode}${p}${addr:wide}\t$addr, $wb", []> {
+def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+                                       reglist:$dsts, variable_ops), IIC_iLoadm,
+                      "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts",
+                      "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
   let Inst{22} = 0;
-  let Inst{21} = ?; // The W bit.
+  let Inst{21} = 1; // The W bit.
+  let Inst{20} = 1; // Load
+}
+} // mayLoad, hasExtraDefRegAllocReq
+
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
+def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
+                          reglist:$srcs, variable_ops), IIC_iStorem,
+                 "stm${addr:submode}${p}${addr:wide}\t$addr, $srcs", []> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-25} = 0b00;
+  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
+  let Inst{22} = 0;
+  let Inst{21} = 0; // The W bit.
   let Inst{20} = 0; // Store
 }
+
+def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+                                       reglist:$srcs, variable_ops),
+                      IIC_iStorem,
+                      "stm${addr:submode}${p}${addr:wide}\t$addr, $srcs",
+                      "$addr.addr = $wb", []> {
+  let Inst{31-27} = 0b11101;
+  let Inst{26-25} = 0b00;
+  let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
+  let Inst{22} = 0;
+  let Inst{21} = 1; // The W bit.
+  let Inst{20} = 0; // Store
+}
+} // mayStore, hasExtraSrcRegAllocReq
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -2374,15 +2401,15 @@ let Defs =
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
-  def t2LDM_RET : T2XI<(outs),
-                    (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
-                    IIC_Br, "ldm${addr:submode}${p}${addr:wide}\t$addr, $wb",
-                    []> {
+  def t2LDM_RET : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
+                                         reglist:$dsts, variable_ops), IIC_Br,
+                        "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts",
+                        "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
   let Inst{24-23} = {?, ?}; // IA: '01', DB: '10'
   let Inst{22} = 0;
-  let Inst{21} = ?; // The W bit.
+  let Inst{21} = 1; // The W bit.
   let Inst{20} = 1; // Load
 }
 

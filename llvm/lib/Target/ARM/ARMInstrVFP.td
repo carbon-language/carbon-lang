@@ -77,33 +77,61 @@ def VSTRS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 //
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
-def VLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
+def VLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dsts,
                            variable_ops), IIC_fpLoadm,
-                  "vldm${addr:submode}${p}\t${addr:base}, $wb",
-                  []> {
+                  "vldm${addr:submode}${p}\t${addr:base}, $dsts", "", []> {
   let Inst{20} = 1;
 }
 
-def VLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
+def VLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dsts,
                            variable_ops), IIC_fpLoadm, 
-                  "vldm${addr:submode}${p}\t${addr:base}, $wb",
-                  []> {
+                  "vldm${addr:submode}${p}\t${addr:base}, $dsts", "", []> {
+  let Inst{20} = 1;
+}
+
+def VLDMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+                                       reglist:$dsts, variable_ops),
+                      IIC_fpLoadm,
+                      "vldm${addr:submode}${p}\t${addr:base}, $dsts",
+                      "$addr.base = $wb", []> {
+  let Inst{20} = 1;
+}
+
+def VLDMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+                                       reglist:$dsts, variable_ops),
+                      IIC_fpLoadm, 
+                      "vldm${addr:submode}${p}\t${addr:base}, $dsts",
+                      "$addr.base = $wb", []> {
   let Inst{20} = 1;
 }
 } // mayLoad, hasExtraDefRegAllocReq
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
-def VSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
+def VSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$srcs,
                            variable_ops), IIC_fpStorem,
-                 "vstm${addr:submode}${p}\t${addr:base}, $wb",
-                 []> {
+                  "vstm${addr:submode}${p}\t${addr:base}, $srcs", "", []> {
   let Inst{20} = 0;
 }
 
-def VSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
+def VSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$srcs,
                            variable_ops), IIC_fpStorem,
-                 "vstm${addr:submode}${p}\t${addr:base}, $wb",
-                 []> {
+                  "vstm${addr:submode}${p}\t${addr:base}, $srcs", "", []> {
+  let Inst{20} = 0;
+}
+
+def VSTMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+                                       reglist:$srcs, variable_ops),
+                      IIC_fpStorem,
+                      "vstm${addr:submode}${p}\t${addr:base}, $srcs",
+                      "$addr.base = $wb", []> {
+  let Inst{20} = 0;
+}
+
+def VSTMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
+                                       reglist:$srcs, variable_ops),
+                      IIC_fpStorem,
+                      "vstm${addr:submode}${p}\t${addr:base}, $srcs",
+                      "$addr.base = $wb", []> {
   let Inst{20} = 0;
 }
 } // mayStore, hasExtraSrcRegAllocReq
