@@ -437,7 +437,8 @@ public:
     GVA_C99Inline,
     GVA_CXXInline,
     GVA_StrongExternal,
-    GVA_TemplateInstantiation
+    GVA_TemplateInstantiation,
+    GVA_ExplicitTemplateInstantiation
   };
 
   llvm::GlobalVariable::LinkageTypes
