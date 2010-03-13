@@ -140,8 +140,14 @@ AsmToken AsmLexer::LexDigit() {
     StringRef Result(TokStart, CurPtr - TokStart);
     
     long long Value;
-    if (Result.getAsInteger(10, Value))
-      return ReturnError(TokStart, "Invalid decimal number");
+    if (Result.getAsInteger(10, Value)) {
+      // We have to handle minint_as_a_positive_value specially, because
+      // - minint_as_a_positive_value = minint and it is valid.
+      if (Result == "9223372036854775808")
+        Value = -9223372036854775808ULL;
+      else
+        return ReturnError(TokStart, "Invalid decimal number");
+    }
     return AsmToken(AsmToken::Integer, Result, Value);
   }
   
