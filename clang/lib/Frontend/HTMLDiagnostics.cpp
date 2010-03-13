@@ -502,19 +502,13 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 }
 
 static void EmitAlphaCounter(llvm::raw_ostream& os, unsigned n) {
-  llvm::SmallString<10> buf;
+  unsigned x = n % ('z' - 'a');
+  n /= 'z' - 'a';
 
-  do {
-    unsigned x = n % ('z' - 'a');
-    buf.push_back('a' + x);
-    n = n / ('z' - 'a');
-  } while (n);
+  if (n > 0)
+    EmitAlphaCounter(os, n);
 
-  assert(!buf.empty());
-
-  for (llvm::SmallVectorImpl<char>::reverse_iterator I=buf.rbegin(),
-       E=buf.rend(); I!=E; ++I)
-    os << *I;
+  os << char('a' + x);
 }
 
 unsigned HTMLDiagnostics::ProcessMacroPiece(llvm::raw_ostream& os,
