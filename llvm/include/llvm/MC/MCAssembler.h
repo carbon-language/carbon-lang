@@ -166,7 +166,7 @@ public:
 
   void addFixup(MCAsmFixup Fixup) {
     // Enforce invariant that fixups are in offset order.
-    assert(Fixups.empty() || Fixup.Offset > Fixups.back().Offset &&
+    assert((Fixups.empty() || Fixup.Offset > Fixups.back().Offset) &&
            "Fixups must be added in order!");
     Fixups.push_back(Fixup);
   }
