@@ -26,6 +26,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Host.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -76,9 +77,12 @@ IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
 
 static cl::opt<std::string>
+ArchName("arch", cl::desc("Target arch to assemble for, "
+                            "see -version for available targets"));
+
+static cl::opt<std::string>
 TripleName("triple", cl::desc("Target triple to assemble for, "
-                              "see -version for available targets"),
-           cl::init(LLVM_HOSTTRIPLE));
+                              "see -version for available targets"));
 
 enum ActionType {
   AC_AsLex,
@@ -98,6 +102,15 @@ Action(cl::desc("Action to perform:"),
                   clEnumValEnd));
 
 static const Target *GetTarget(const char *ProgName) {
+  // Figure out the target triple.
+  if (TripleName.empty())
+    TripleName = sys::getHostTriple();
+  if (!ArchName.empty()) {
+    llvm::Triple TT(TripleName);
+    TT.setArchName(ArchName);
+    TripleName = TT.str();
+  }
+
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
