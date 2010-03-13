@@ -29,6 +29,9 @@
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 
+// Needed to define L_TMPNAM on some systems.
+#include <cstdio>
+
 using namespace clang;
 using namespace clang::cxcursor;
 using namespace clang::cxstring;
@@ -1052,8 +1055,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
 
   // Generate a temporary name for the AST file.
   argv.push_back("-o");
-  llvm::sys::Path astTmpFile(CIndexer::getTemporaryPath());
-  argv.push_back(astTmpFile.c_str());
+  char astTmpFile[L_tmpnam];
+  argv.push_back(tmpnam(astTmpFile));
 
   // Remap any unsaved files to temporary files.
   std::vector<llvm::sys::Path> TemporaryFiles;
@@ -1084,7 +1087,9 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     }
 
   // Generate a temporary name for the diagnostics file.
-  llvm::sys::Path DiagnosticsFile(CIndexer::getTemporaryPath());
+  char tmpFileResults[L_tmpnam];
+  char *tmpResultsFileName = tmpnam(tmpFileResults);
+  llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
   TemporaryFiles.push_back(DiagnosticsFile);
   argv.push_back("-fdiagnostics-binary");
 
@@ -1113,7 +1118,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     Diags->Report(diag::err_fe_invoking) << AllArgs << ErrMsg;
   }
 
-  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile.str(), *Diags,
+  ASTUnit *ATU = ASTUnit::LoadFromPCHFile(astTmpFile, *Diags,
                                           CXXIdx->getOnlyLocalDecls(),
                                           RemappedFiles.data(),
                                           RemappedFiles.size(),
