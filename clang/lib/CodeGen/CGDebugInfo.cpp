@@ -777,9 +777,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   // A RD->getName() is not unique. However, the debug info descriptors 
   // are uniqued so use type name to ensure uniquness.
-  llvm::SmallString<256> FwdDeclName;
-  FwdDeclName.resize(256);
-  sprintf(&FwdDeclName[0], "fwd.type.%d", FwdDeclCount++);
+  llvm::SmallString<128> FwdDeclName;
+  llvm::raw_svector_ostream(FwdDeclName) << "fwd.type." << FwdDeclCount++;
   llvm::DIDescriptor FDContext = 
     getContextDescriptor(dyn_cast<Decl>(RD->getDeclContext()), Unit);
   llvm::DICompositeType FwdDecl =
