@@ -475,17 +475,8 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         continue;
       }
 
-      MCSymbol *BeginLabel;
-      if (MI->getOperand(0).isImm()) {
-        unsigned BeginLabelNo = MI->getOperand(0).getImm();
-        assert(BeginLabelNo && "Invalid label!");
-        BeginLabel = getDWLabel("label", BeginLabelNo);
-      } else {
-        BeginLabel = MI->getOperand(0).getMCSymbol();
-      }
-      
-
       // End of the previous try-range?
+      MCSymbol *BeginLabel = MI->getOperand(0).getMCSymbol();
       if (BeginLabel == LastLabel)
         SawPotentiallyThrowing = false;
 
