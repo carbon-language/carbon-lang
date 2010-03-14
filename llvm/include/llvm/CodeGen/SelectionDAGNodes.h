@@ -439,6 +439,12 @@ namespace ISD {
     //   5) ISD::CvtCode indicating the type of conversion to do
     CONVERT_RNDSAT,
 
+    // FP16_TO_FP32, FP32_TO_FP16 - These operators are used to perform
+    // promotions and truncation for half-precision (16 bit) floating
+    // numbers. We need special nodes since FP16 is a storage-only type with
+    // special semantics of operations.
+    FP16_TO_FP32, FP32_TO_FP16,
+
     // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     // FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     // FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR - Perform various unary floating

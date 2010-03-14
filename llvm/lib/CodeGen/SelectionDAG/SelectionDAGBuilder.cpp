@@ -4000,6 +4000,14 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::pow:
     visitPow(I);
     return 0;
+  case Intrinsic::convert_to_fp16:
+    setValue(&I, DAG.getNode(ISD::FP32_TO_FP16, dl,
+                             MVT::i16, getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::convert_from_fp16:
+    setValue(&I, DAG.getNode(ISD::FP16_TO_FP32, dl,
+                             MVT::f32, getValue(I.getOperand(1))));
+    return 0;
   case Intrinsic::pcmarker: {
     SDValue Tmp = getValue(I.getOperand(1));
     DAG.setRoot(DAG.getNode(ISD::PCMARKER, dl, MVT::Other, getRoot(), Tmp));
