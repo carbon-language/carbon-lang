@@ -228,7 +228,7 @@ public:
   
   /// addLandingPad - Add a new panding pad.  Returns the label ID for the 
   /// landing pad entry.
-  unsigned addLandingPad(MachineBasicBlock *LandingPad);
+  MCSymbol *addLandingPad(MachineBasicBlock *LandingPad);
   
   /// addPersonality - Provide the personality function for the exception
   /// information.

@@ -383,8 +383,7 @@ public:
                                   unsigned char TargetFlags = 0);
   SDValue getValueType(EVT);
   SDValue getRegister(unsigned Reg, EVT VT);
-  SDValue getLabel(unsigned Opcode, DebugLoc dl, SDValue Root,
-                   unsigned LabelID);
+  SDValue getEHLabel(DebugLoc dl, SDValue Root, MCSymbol *Label);
   SDValue getBlockAddress(BlockAddress *BA, EVT VT,
                           bool isTarget = false, unsigned char TargetFlags = 0);
 

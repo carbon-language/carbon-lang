@@ -705,6 +705,13 @@ void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     EmitCopyFromReg(Node, 0, IsClone, IsCloned, SrcReg, VRBaseMap);
     break;
   }
+  case ISD::EH_LABEL: {
+    MCSymbol *S = cast<EHLabelSDNode>(Node)->getLabel();
+    BuildMI(*MBB, InsertPos, Node->getDebugLoc(),
+            TII->get(TargetOpcode::EH_LABEL)).addSym(S);
+    break;
+  }
+      
   case ISD::INLINEASM: {
     unsigned NumOps = Node->getNumOperands();
     if (Node->getOperand(NumOps-1).getValueType() == MVT::Flag)

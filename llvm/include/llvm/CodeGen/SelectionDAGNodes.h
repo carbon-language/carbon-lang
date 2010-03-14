@@ -40,6 +40,7 @@ class MachineBasicBlock;
 class MachineConstantPoolValue;
 class SDNode;
 class Value;
+class MCSymbol;
 template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
@@ -2088,18 +2089,18 @@ public:
   }
 };
 
-class LabelSDNode : public SDNode {
+class EHLabelSDNode : public SDNode {
   SDUse Chain;
-  unsigned LabelID;
+  MCSymbol *Label;
   friend class SelectionDAG;
-  LabelSDNode(unsigned NodeTy, DebugLoc dl, SDValue ch, unsigned id)
-    : SDNode(NodeTy, dl, getSDVTList(MVT::Other)), LabelID(id) {
+  EHLabelSDNode(DebugLoc dl, SDValue ch, MCSymbol *L)
+    : SDNode(ISD::EH_LABEL, dl, getSDVTList(MVT::Other)), Label(L) {
     InitOperands(&Chain, ch);
   }
 public:
-  unsigned getLabelID() const { return LabelID; }
+  MCSymbol *getLabel() const { return Label; }
 
-  static bool classof(const LabelSDNode *) { return true; }
+  static bool classof(const EHLabelSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::EH_LABEL;
   }

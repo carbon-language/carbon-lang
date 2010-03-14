@@ -73,7 +73,7 @@ bool MachineModuleInfo::doFinalization() {
 /// getLabelSym - Turn a label ID into a symbol.
 MCSymbol *MachineModuleInfo::getLabelSym(unsigned ID) {
   return Context.GetOrCreateTemporarySymbol
-    (Twine(Context.getAsmInfo().getPrivateGlobalPrefix()) + "Label" +Twine(ID));
+    (Twine(Context.getAsmInfo().getPrivateGlobalPrefix()) + "label" +Twine(ID));
 }
 
 /// EndFunction - Discard function meta information.
@@ -139,12 +139,11 @@ void MachineModuleInfo::addInvoke(MachineBasicBlock *LandingPad,
 
 /// addLandingPad - Provide the label of a try LandingPad block.
 ///
-unsigned MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
-  unsigned LandingPadID = NextLabelID();
-  MCSymbol *LandingPadLabel = getLabelSym(LandingPadID);
+MCSymbol *MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
+  MCSymbol *LandingPadLabel = getLabelSym(NextLabelID());
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   LP.LandingPadLabel = LandingPadLabel;
-  return LandingPadID;
+  return LandingPadLabel;
 }
 
 /// addPersonality - Provide the personality function for the exception

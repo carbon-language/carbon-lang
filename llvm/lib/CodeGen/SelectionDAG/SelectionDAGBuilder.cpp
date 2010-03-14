@@ -4362,8 +4362,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   if (LandingPad && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
-    unsigned BeginLabelID = MMI->NextLabelID();
-    BeginLabel = MMI->getLabelSym(BeginLabelID);
+    BeginLabel = MMI->getLabelSym(MMI->NextLabelID());
 
     // For SjLj, keep track of which landing pads go with which invokes
     // so as to maintain the ordering of pads in the LSDA.
@@ -4377,8 +4376,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();
-    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                             getControlRoot(), BeginLabelID));
+    DAG.setRoot(DAG.getEHLabel(getCurDebugLoc(), getControlRoot(), BeginLabel));
   }
 
   // Check if target-independent constraints permit a tail call here.
@@ -4466,10 +4464,8 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   if (LandingPad && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
-    unsigned EndLabelID = MMI->NextLabelID();
-    MCSymbol *EndLabel = MMI->getLabelSym(EndLabelID);
-    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                             getRoot(), EndLabelID));
+    MCSymbol *EndLabel = MMI->getLabelSym(MMI->NextLabelID());
+    DAG.setRoot(DAG.getEHLabel(getCurDebugLoc(), getRoot(), EndLabel));
 
     // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);

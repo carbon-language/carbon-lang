@@ -111,8 +111,10 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
       MCE.emitWordBE(getBinaryCodeForInstr(MI));
       break;
     case TargetOpcode::DBG_LABEL:
-    case TargetOpcode::EH_LABEL:
       MCE.emitLabel(MMI->getLabelSym(MI.getOperand(0).getImm()));
+      break;
+    case TargetOpcode::EH_LABEL:
+      MCE.emitLabel(MI.getOperand(0).getMCSymbol());
       break;
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:

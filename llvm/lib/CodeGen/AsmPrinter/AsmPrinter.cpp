@@ -1553,7 +1553,12 @@ void AsmPrinter::printKill(const MachineInstr *MI) const {
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
-  MCSymbol *Sym = 
+  MCSymbol *Sym; 
+  
+  if (MI->getOperand(0).isMCSymbol())
+    Sym = MI->getOperand(0).getMCSymbol();
+  else
+    Sym =
     OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
                                  "label" + Twine(MI->getOperand(0).getImm()));
   OutStreamer.EmitLabel(Sym);

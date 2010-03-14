@@ -879,10 +879,10 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
     if (MMI && BB->isLandingPad()) {
       // Add a label to mark the beginning of the landing pad.  Deletion of the
       // landing pad can thus be detected via the MachineModuleInfo.
-      unsigned LabelID = MMI->addLandingPad(BB);
+      MCSymbol *Label = MMI->addLandingPad(BB);
 
       const TargetInstrDesc &II = TII.get(TargetOpcode::EH_LABEL);
-      BuildMI(BB, SDB->getCurDebugLoc(), II).addImm(LabelID);
+      BuildMI(BB, SDB->getCurDebugLoc(), II).addSym(Label);
 
       // Mark exception register as live in.
       unsigned Reg = TLI.getExceptionAddressRegister();
@@ -1517,14 +1517,6 @@ SDNode *SelectionDAGISel::Select_UNDEF(SDNode *N) {
   return CurDAG->SelectNodeTo(N, TargetOpcode::IMPLICIT_DEF,N->getValueType(0));
 }
 
-SDNode *SelectionDAGISel::Select_EH_LABEL(SDNode *N) {
-  SDValue Chain = N->getOperand(0);
-  unsigned C = cast<LabelSDNode>(N)->getLabelID();
-  SDValue Tmp = CurDAG->getTargetConstant(C, MVT::i32);
-  return CurDAG->SelectNodeTo(N, TargetOpcode::EH_LABEL,
-                              MVT::Other, Tmp, Chain);
-}
-
 /// GetVBR - decode a vbr encoding whose top bit is set.
 ALWAYS_INLINE static uint64_t
 GetVBR(uint64_t Val, const unsigned char *MatcherTable, unsigned &Idx) {
@@ -1651,7 +1643,8 @@ WalkChainUsers(SDNode *ChainedNode,
     
     if (User->getOpcode() == ISD::CopyToReg ||
         User->getOpcode() == ISD::CopyFromReg ||
-        User->getOpcode() == ISD::INLINEASM) {
+        User->getOpcode() == ISD::INLINEASM ||
+        User->getOpcode() == ISD::EH_LABEL) {
       // If their node ID got reset to -1 then they've already been selected.
       // Treat them like a MachineOpcode.
       if (User->getNodeId() == -1)
@@ -2055,6 +2048,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   case ISD::TokenFactor:
   case ISD::CopyFromReg:
   case ISD::CopyToReg:
+  case ISD::EH_LABEL:
     NodeToMatch->setNodeId(-1); // Mark selected.
     return 0;
   case ISD::AssertSext:
@@ -2063,7 +2057,6 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                                       NodeToMatch->getOperand(0));
     return 0;
   case ISD::INLINEASM: return Select_INLINEASM(NodeToMatch);
-  case ISD::EH_LABEL:  return Select_EH_LABEL(NodeToMatch);
   case ISD::UNDEF:     return Select_UNDEF(NodeToMatch);
   }
   

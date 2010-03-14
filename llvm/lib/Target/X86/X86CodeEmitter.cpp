@@ -603,10 +603,13 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
         llvm_report_error("JIT does not support inline asm!");
       break;
     case TargetOpcode::DBG_LABEL:
-    case TargetOpcode::EH_LABEL:
     case TargetOpcode::GC_LABEL:
       MCE.emitLabel(MMI->getLabelSym(MI.getOperand(0).getImm()));
       break;
+    case TargetOpcode::EH_LABEL:
+      MCE.emitLabel(MI.getOperand(0).getMCSymbol());
+      break;
+        
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
     case X86::FP_REG_KILL:

@@ -1314,23 +1314,22 @@ SDValue SelectionDAG::getRegister(unsigned RegNo, EVT VT) {
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getLabel(unsigned Opcode, DebugLoc dl,
-                               SDValue Root,
-                               unsigned LabelID) {
+SDValue SelectionDAG::getEHLabel(DebugLoc dl, SDValue Root, MCSymbol *Label) {
   FoldingSetNodeID ID;
   SDValue Ops[] = { Root };
-  AddNodeIDNode(ID, Opcode, getVTList(MVT::Other), &Ops[0], 1);
-  ID.AddInteger(LabelID);
+  AddNodeIDNode(ID, ISD::EH_LABEL, getVTList(MVT::Other), &Ops[0], 1);
+  ID.AddPointer(Label);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
-
-  SDNode *N = NodeAllocator.Allocate<LabelSDNode>();
-  new (N) LabelSDNode(Opcode, dl, Root, LabelID);
+  
+  SDNode *N = NodeAllocator.Allocate<EHLabelSDNode>();
+  new (N) EHLabelSDNode(dl, Root, Label);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
 }
+
 
 SDValue SelectionDAG::getBlockAddress(BlockAddress *BA, EVT VT,
                                       bool isTarget,
