@@ -436,7 +436,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
     }
     // Special handling for half-precision FP.
-    if (Subtarget->hasVFP3()) {
+    if (Subtarget->hasVFP3() && Subtarget->hasFP16()) {
       setOperationAction(ISD::FP16_TO_FP32, MVT::f32, Custom);
       setOperationAction(ISD::FP32_TO_FP16, MVT::i32, Custom);
     }

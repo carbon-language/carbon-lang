@@ -40,6 +40,8 @@ def FeatureNEON : SubtargetFeature<"neon", "ARMFPUType", "NEON",
                                    "Enable NEON instructions">;
 def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
                                      "Enable Thumb2 instructions">;
+def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
+                                     "Enable half-precision floating point">;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.

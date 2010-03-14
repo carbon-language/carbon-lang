@@ -66,6 +66,10 @@ protected:
   /// imms (including global addresses).
   bool UseMovt;
 
+  /// HasFP16 - True if subtarget supports half-precision FP (We support VFP+HF
+  /// only so far)
+  bool HasFP16;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -115,6 +119,8 @@ protected:
   bool hasNEON() const { return ARMFPUType >= NEON;  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
+
+  bool hasFP16() const { return HasFP16; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
