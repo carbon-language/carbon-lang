@@ -55,6 +55,10 @@ namespace llvm {
 
     /// @name Symbol Managment
     /// @{
+    
+    /// CreateTempSymbol - Create and return a new assembler temporary symbol
+    /// with a unique but unspecified name.
+    MCSymbol *CreateTempSymbol();
 
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @p Name.  If it exists, return it.  If not, create a forward

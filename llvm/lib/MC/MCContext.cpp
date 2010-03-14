@@ -37,9 +37,15 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
   return GetOrCreateSymbol(NameSV.str());
 }
 
+MCSymbol *MCContext::CreateTempSymbol() {
+  return GetOrCreateTemporarySymbol(Twine(MAI.getPrivateGlobalPrefix()) +
+                                    "tmp" + Twine(NextUniqueID++));
+}
+
 
 MCSymbol *MCContext::GetOrCreateTemporarySymbol(StringRef Name) {
   // If there is no name, create a new anonymous symbol.
+  // FIXME: Remove this.  This form of the method should always take a name.
   if (Name.empty())
     return GetOrCreateTemporarySymbol(Twine(MAI.getPrivateGlobalPrefix()) +
                                       "tmp" + Twine(NextUniqueID++));
