@@ -196,6 +196,11 @@ class PTHWriter {
     Out.write(Ptr, NumBytes);
   }
 
+  void EmitString(llvm::StringRef V) {
+    ::Emit16(Out, V.size());
+    EmitBuf(V.data(), V.size());
+  }
+
   /// EmitIdentifierTable - Emits two tables to the PTH file.  The first is
   ///  a hashtable mapping from identifier strings to persistent IDs.
   ///  The second is a straight table mapping from persistent IDs to string data
@@ -447,8 +452,7 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
 
   // Write the name of the MainFile.
   if (!MainFile.empty()) {
-    Emit16(MainFile.length());
-    EmitBuf(MainFile.data(), MainFile.length());
+  	EmitString(MainFile);
   } else {
     // String with 0 bytes.
     Emit16(0);
