@@ -1,7 +1,7 @@
 // Validate that we can assemble this file exactly like the platform
 // assembler.
 //
-// RUN: XFAIL: *
+// XFAIL: *
 // RUN: llvm-mc -filetype=obj -triple i386-unknown-unknown -o %t.mc.o %s
 // RUN: as -arch i386 -o %t.as.o %s
 // RUN: diff %t.mc.o %t.as.o
