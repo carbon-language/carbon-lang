@@ -450,6 +450,14 @@ def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
 def int_trap : Intrinsic<[llvm_void_ty]>,
                GCCBuiltin<"__builtin_trap">;
 
+// Intrisics to support half precision floating point format
+def int_convert_to_fp16   : Intrinsic<[llvm_i16_ty],
+                                      [llvm_float_ty]>,
+                            GCCBuiltin<"__gnu_f2h_ieee">;
+def int_convert_from_fp16 : Intrinsic<[llvm_float_ty],
+                                      [llvm_i16_ty]>,
+                            GCCBuiltin<"__gnu_h2f_ieee">;
+
 // These convert intrinsics are to support various conversions between
 // various types with rounding and saturation. NOTE: avoid using these
 // intrinsics as they might be removed sometime in the future and
