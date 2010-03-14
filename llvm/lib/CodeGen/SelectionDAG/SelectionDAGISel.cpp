@@ -715,12 +715,12 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   DEBUG(dbgs() << "Optimized legalized selection DAG:\n");
   DEBUG(CurDAG->dump());
 
-  if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
-
   if (OptLevel != CodeGenOpt::None) {
     ShrinkDemandedOps();
     ComputeLiveOutVRegInfo();
   }
+
+  if (ViewISelDAGs) CurDAG->viewGraph("isel input for " + BlockName);
 
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
