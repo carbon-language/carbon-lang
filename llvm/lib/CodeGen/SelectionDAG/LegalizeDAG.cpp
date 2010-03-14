@@ -851,6 +851,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::MERGE_VALUES:
   case ISD::EH_RETURN:
   case ISD::FRAME_TO_ARGS_OFFSET:
+  case ISD::FP16_TO_FP32:
+  case ISD::FP32_TO_FP16:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be expanded.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
@@ -2635,6 +2637,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::FREM:
     Results.push_back(ExpandFPLibCall(Node, RTLIB::REM_F32, RTLIB::REM_F64,
                                       RTLIB::REM_F80, RTLIB::REM_PPCF128));
+    break;
+  case ISD::FP16_TO_FP32:
+    Results.push_back(ExpandLibCall(RTLIB::FPEXT_F16_F32, Node, false));
+    break;
+  case ISD::FP32_TO_FP16:
+    Results.push_back(ExpandLibCall(RTLIB::FPROUND_F32_F16, Node, false));
     break;
   case ISD::ConstantFP: {
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);

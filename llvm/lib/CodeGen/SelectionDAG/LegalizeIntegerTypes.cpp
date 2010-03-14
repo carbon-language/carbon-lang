@@ -80,6 +80,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:  Res = PromoteIntRes_FP_TO_XINT(N); break;
 
+  case ISD::FP32_TO_FP16:Res = PromoteIntRes_FP32_TO_FP16(N); break;
+
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
@@ -321,6 +323,16 @@ SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
   // original operation was undefined anyway, so the assert is still correct.
   return DAG.getNode(N->getOpcode() == ISD::FP_TO_UINT ?
                      ISD::AssertZext : ISD::AssertSext, dl,
+                     NVT, Res, DAG.getValueType(N->getValueType(0)));
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_FP32_TO_FP16(SDNode *N) {
+  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue Res = DAG.getNode(N->getOpcode(), dl, NVT, N->getOperand(0));
+
+  return DAG.getNode(ISD::AssertZext, dl,
                      NVT, Res, DAG.getValueType(N->getValueType(0)));
 }
 
@@ -634,6 +646,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::STORE:        Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
                                                    OpNo); break;
   case ISD::TRUNCATE:     Res = PromoteIntOp_TRUNCATE(N); break;
+  case ISD::FP16_TO_FP32:
   case ISD::UINT_TO_FP:   Res = PromoteIntOp_UINT_TO_FP(N); break;
   case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
 
