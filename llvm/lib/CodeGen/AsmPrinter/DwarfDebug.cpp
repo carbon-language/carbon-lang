@@ -1972,7 +1972,7 @@ void DwarfDebug::endScope(const MachineInstr *MI) {
   if (I == DbgScopeEndMap.end())
     return;
 
-  MCSymbol *Label = getDWLabel("label", MMI->NextLabelID());
+  MCSymbol *Label = MMI->getLabelSym(MMI->NextLabelID());
   Asm->OutStreamer.EmitLabel(Label);
 
   SmallVector<DbgScope*, 2> &SD = I->second;
@@ -2220,7 +2220,7 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
     assert(0 && "Unexpected scope info");
 
   unsigned Src = GetOrCreateSourceID(Dir, Fn);
-  MCSymbol *Label = getDWLabel("label", MMI->NextLabelID());
+  MCSymbol *Label = MMI->getLabelSym(MMI->NextLabelID());
   Lines.push_back(SrcLineInfo(Line, Col, Src, Label));
 
   if (TimePassesIsEnabled)
