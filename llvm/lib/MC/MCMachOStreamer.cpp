@@ -184,7 +184,7 @@ void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 
   // FIXME: Lift context changes into super class.
   // FIXME: Set associated section.
-  Symbol->setValue(Value);
+  Symbol->setValue(AddValueSymbols(Value));
 }
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,

@@ -195,10 +195,11 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
       if (!Sym.getValue()->EvaluateAsRelocatable(Res, Layout))
         return false;
 
-      // Absolutize symbol differences when we have a layout object and the
-      // target requests it.
+      // Absolutize symbol differences between defined symbols when we have a
+      // layout object and the target requests it.
       if (Layout && Res.getSymB() &&
-          Layout->getAssembler().getBackend().hasAbsolutizedSet()) {
+          Layout->getAssembler().getBackend().hasAbsolutizedSet() &&
+          Res.getSymA()->isDefined() && Res.getSymB()->isDefined()) {
         MCSymbolData &A = Layout->getAssembler().getSymbolData(*Res.getSymA());
         MCSymbolData &B = Layout->getAssembler().getSymbolData(*Res.getSymB());
         Res = MCValue::get(+ A.getFragment()->getAddress() + A.getOffset()
