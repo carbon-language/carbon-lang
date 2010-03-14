@@ -307,7 +307,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       
   // The assembler backend wants to see branches in their small form and relax
   // them to their large form.  The JIT can only handle the large form because
-  // it does not do relaxation.  For now, translation the large form to the
+  // it does not do relaxation.  For now, translate the large form to the
   // small one here.
   case X86::JMP_4: OutMI.setOpcode(X86::JMP_1); break;
   case X86::JO_4:  OutMI.setOpcode(X86::JO_1); break;
