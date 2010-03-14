@@ -165,20 +165,8 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
   }
 
   // Actually remove the blocks now.
-  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i) {
-    MachineBasicBlock *MBB = DeadBlocks[i];
-    // If there are any labels in the basic block, unregister them from
-    // MachineModuleInfo.
-    if (MMI && !MBB->empty()) {
-      for (MachineBasicBlock::iterator I = MBB->begin(),
-             E = MBB->end(); I != E; ++I) {
-        if (I->isLabel())
-          // The label ID # is always operand #0, an immediate.
-          MMI->InvalidateLabel(I->getOperand(0).getImm());
-      }
-    }
-    MBB->eraseFromParent();
-  }
+  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
+    DeadBlocks[i]->eraseFromParent();
 
   // Cleanup PHI nodes.
   for (MachineFunction::iterator I = F.begin(), E = F.end(); I != E; ++I) {

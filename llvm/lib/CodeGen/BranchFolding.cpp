@@ -105,17 +105,6 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   while (!MBB->succ_empty())
     MBB->removeSuccessor(MBB->succ_end()-1);
 
-  // If there are any labels in the basic block, unregister them from
-  // MachineModuleInfo.
-  if (MMI && !MBB->empty()) {
-    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-         I != E; ++I) {
-      if (I->isLabel())
-        // The label ID # is always operand #0, an immediate.
-        MMI->InvalidateLabel(I->getOperand(0).getImm());
-    }
-  }
-
   // Remove the block.
   MF->erase(MBB);
 }

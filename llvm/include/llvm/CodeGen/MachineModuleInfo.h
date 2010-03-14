@@ -102,11 +102,8 @@ class MachineModuleInfo : public ImmutablePass {
   /// want.
   MachineModuleInfoImpl *ObjFileMMI;
 
-  // LabelIDList - One entry per assigned label.  Normally the entry is equal to
-  // the list index(+1).  If the entry is zero then the label has been deleted.
-  // Any other value indicates the label has been deleted by is mapped to
-  // another label.
-  std::vector<unsigned> LabelIDList;
+  /// NextLabelIDToReturn - Unique ID counter for labels.
+  unsigned NextLabelIDToReturn;
   
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug and exception handling consumers.
@@ -207,22 +204,11 @@ public:
   /// NextLabelID - Return the next unique label id.
   ///
   unsigned NextLabelID() {
-    unsigned ID = (unsigned)LabelIDList.size() + 1;
-    LabelIDList.push_back(ID);
-    return ID;
+    return NextLabelIDToReturn++;
   }
   
   /// getLabelSym - Turn a label ID into a symbol.
   MCSymbol *getLabelSym(unsigned ID);
-  
-  /// InvalidateLabel - Inhibit use of the specified label # from
-  /// MachineModuleInfo, for example because the code was deleted.
-  void InvalidateLabel(unsigned LabelID) {
-    // Remap to zero to indicate deletion.
-    assert(0 < LabelID && LabelID <= LabelIDList.size() &&
-           "Old label ID out of range.");
-    LabelIDList[LabelID - 1] = 0;
-  }
   
   /// getFrameMoves - Returns a reference to a list of moves done in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
