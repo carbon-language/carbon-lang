@@ -113,8 +113,9 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
   }
 
   // Install it as the requested FD
-  if (-1 == dup2(InFD, FD)) {
+  if (dup2(InFD, FD) == -1) {
     MakeErrMsg(ErrMsg, "Cannot dup2");
+    close(InFD);
     return true;
   }
   close(InFD);      // Close the original FD
