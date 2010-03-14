@@ -4362,7 +4362,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   if (LandingPad && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
-    BeginLabel = MMI->getLabelSym(MMI->NextLabelID());
+    BeginLabel = MMI->getContext().CreateTempSymbol();
 
     // For SjLj, keep track of which landing pads go with which invokes
     // so as to maintain the ordering of pads in the LSDA.
@@ -4464,7 +4464,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   if (LandingPad && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
-    MCSymbol *EndLabel = MMI->getLabelSym(MMI->NextLabelID());
+    MCSymbol *EndLabel = MMI->getContext().CreateTempSymbol();
     DAG.setRoot(DAG.getEHLabel(getCurDebugLoc(), getRoot(), EndLabel));
 
     // Inform MachineModuleInfo of range.

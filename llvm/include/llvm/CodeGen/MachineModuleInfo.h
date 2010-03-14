@@ -102,9 +102,6 @@ class MachineModuleInfo : public ImmutablePass {
   /// want.
   MachineModuleInfoImpl *ObjFileMMI;
 
-  /// NextLabelIDToReturn - Unique ID counter for labels.
-  unsigned NextLabelIDToReturn;
-  
   // FrameMoves - List of moves done by a function's prolog.  Used to construct
   // frame maps by debug and exception handling consumers.
   std::vector<MachineMove> FrameMoves;
@@ -201,21 +198,12 @@ public:
   bool callsUnwindInit() const { return CallsUnwindInit; }
   void setCallsUnwindInit(bool b) { CallsUnwindInit = b; }
   
-  /// NextLabelID - Return the next unique label id.
-  ///
-  unsigned NextLabelID() {
-    return NextLabelIDToReturn++;
-  }
-  
-  /// getLabelSym - Turn a label ID into a symbol.
-  MCSymbol *getLabelSym(unsigned ID);
-  
   /// getFrameMoves - Returns a reference to a list of moves done in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
   std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
   
-  //===-EH-----------------------------------------------------------------===//
+  //===- EH ---------------------------------------------------------------===//
 
   /// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
   /// specified MachineBasicBlock.

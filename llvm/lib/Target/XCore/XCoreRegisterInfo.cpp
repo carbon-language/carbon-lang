@@ -456,7 +456,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       std::vector<MachineMove> &Moves = MMI->getFrameMoves();
       
       // Show update of SP.
-      MCSymbol *FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      MCSymbol *FrameLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(FrameLabel);
       
       MachineLocation SPDst(MachineLocation::VirtualFP);
@@ -475,7 +475,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       MBB.addLiveIn(XCore::LR);
       
       if (emitFrameMoves) {
-        MCSymbol *SaveLRLabel = MMI->getLabelSym(MMI->NextLabelID());
+        MCSymbol *SaveLRLabel = MMI->getContext().CreateTempSymbol();
         BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(SaveLRLabel);
         MachineLocation CSDst(MachineLocation::VirtualFP, LRSpillOffset);
         MachineLocation CSSrc(XCore::LR);
@@ -491,7 +491,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // R10 is live-in. It is killed at the spill.
     MBB.addLiveIn(XCore::R10);
     if (emitFrameMoves) {
-      MCSymbol *SaveR10Label = MMI->getLabelSym(MMI->NextLabelID());
+      MCSymbol *SaveR10Label = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(SaveR10Label);
       MachineLocation CSDst(MachineLocation::VirtualFP, FPSpillOffset);
       MachineLocation CSSrc(XCore::R10);
@@ -503,7 +503,7 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       .addImm(0);
     if (emitFrameMoves) {
       // Show FP is now valid.
-      MCSymbol *FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      MCSymbol *FrameLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(FrameLabel);
       MachineLocation SPDst(FramePtr);
       MachineLocation SPSrc(MachineLocation::VirtualFP);

@@ -22,7 +22,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -41,7 +40,7 @@ MachineModuleInfoImpl::~MachineModuleInfoImpl() {}
 
 MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
 : ImmutablePass(&ID), Context(MAI),
-  ObjFileMMI(0), NextLabelIDToReturn(1), 
+  ObjFileMMI(0),
   CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0), DbgInfoAvailable(false){
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
@@ -68,12 +67,6 @@ bool MachineModuleInfo::doInitialization() {
 ///
 bool MachineModuleInfo::doFinalization() {
   return false;
-}
-
-/// getLabelSym - Turn a label ID into a symbol.
-MCSymbol *MachineModuleInfo::getLabelSym(unsigned ID) {
-  return Context.GetOrCreateTemporarySymbol
-    (Twine(Context.getAsmInfo().getPrivateGlobalPrefix()) + "label" +Twine(ID));
 }
 
 /// EndFunction - Discard function meta information.
@@ -140,7 +133,7 @@ void MachineModuleInfo::addInvoke(MachineBasicBlock *LandingPad,
 /// addLandingPad - Provide the label of a try LandingPad block.
 ///
 MCSymbol *MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
-  MCSymbol *LandingPadLabel = getLabelSym(NextLabelID());
+  MCSymbol *LandingPadLabel = Context.CreateTempSymbol();
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   LP.LandingPadLabel = LandingPadLabel;
   return LandingPadLabel;

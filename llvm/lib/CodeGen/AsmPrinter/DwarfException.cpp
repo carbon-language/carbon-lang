@@ -471,7 +471,6 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
       if (!MI->isLabel()) {
         if (MI->getDesc().isCall())
           SawPotentiallyThrowing |= !CallToNoUnwindFunction(MI);
-
         continue;
       }
 

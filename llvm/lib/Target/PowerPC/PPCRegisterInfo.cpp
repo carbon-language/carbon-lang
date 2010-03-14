@@ -1446,7 +1446,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // reverse order.
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer becomes valid.
-    FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+    FrameLabel = MMI->getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addSym(FrameLabel);
   
     // Show update of SP.
@@ -1487,7 +1487,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
 
     if (needsFrameMoves) {
-      ReadyLabel = MMI->getLabelSym(MMI->NextLabelID());
+      ReadyLabel = MMI->getContext().CreateTempSymbol();
 
       // Mark effective beginning of when frame pointer is ready.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addSym(ReadyLabel);

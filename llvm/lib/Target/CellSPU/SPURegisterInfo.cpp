@@ -452,7 +452,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     FrameSize = -(FrameSize + SPUFrameInfo::minStackSize());
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
-      FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      FrameLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addSym(FrameLabel);
     }
 
@@ -514,7 +514,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       }
 
       // Mark effective beginning of when frame pointer is ready.
-      MCSymbol *ReadyLabel = MMI->getLabelSym(MMI->NextLabelID());
+      MCSymbol *ReadyLabel = MMI->getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addSym(ReadyLabel);
 
       MachineLocation FPDst(SPU::R1);
@@ -530,9 +530,8 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
       dl = MBBI->getDebugLoc();
 
       // Insert terminator label
-      unsigned BranchLabelId = MMI->NextLabelID();
       BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL))
-        .addSym(MMI->getLabelSym(BranchLabelId));
+        .addSym(MMI->getContext().CreateTempSymbol());
     }
   }
 }
