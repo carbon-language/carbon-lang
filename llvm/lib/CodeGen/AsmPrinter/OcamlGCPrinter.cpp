@@ -15,8 +15,9 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/Module.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -138,8 +139,7 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
         llvm_report_error(Msg.str()); // Very rude!
       }
 
-      OS << AddressDirective
-        << MAI.getPrivateGlobalPrefix() << "label" << J->Num << '\n';
+      OS << AddressDirective << J->Label->getName() << '\n';
 
       AP.EmitInt16(FrameSize);
 
