@@ -1447,7 +1447,8 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer becomes valid.
     FrameLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addImm(FrameLabelId);
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL))
+      .addSym(MMI->getLabelSym(FrameLabelId));
   
     // Show update of SP.
     if (NegFrameSize) {
@@ -1490,7 +1491,8 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       ReadyLabelId = MMI->NextLabelID();
 
       // Mark effective beginning of when frame pointer is ready.
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addImm(ReadyLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL))
+        .addSym(MMI->getLabelSym(ReadyLabelId));
 
       MachineLocation FPDst(HasFP ? (isPPC64 ? PPC::X31 : PPC::R31) :
                                     (isPPC64 ? PPC::X1 : PPC::R1));

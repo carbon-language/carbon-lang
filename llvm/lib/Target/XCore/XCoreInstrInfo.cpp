@@ -430,7 +430,8 @@ bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                         it->getFrameIdx(), it->getRegClass());
     if (emitFrameMoves) {
       unsigned SaveLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL)).addImm(SaveLabelId);
+      BuildMI(MBB, MI, DL, get(XCore::DBG_LABEL))
+        .addSym(MMI->getLabelSym(SaveLabelId));
       XFI->getSpillLabels().push_back(
           std::pair<unsigned, CalleeSavedInfo>(SaveLabelId, *it));
     }

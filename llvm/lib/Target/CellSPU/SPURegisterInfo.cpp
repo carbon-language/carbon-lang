@@ -453,7 +453,8 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL))
+        .addSym(MMI->getLabelSym(FrameLabelId));
     }
 
     // Adjust stack pointer, spilling $lr -> 16($sp) and $sp -> -FrameSize($sp)
@@ -515,7 +516,8 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
 
       // Mark effective beginning of when frame pointer is ready.
       unsigned ReadyLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(ReadyLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL))
+        .addSym(MMI->getLabelSym(ReadyLabelId));
 
       MachineLocation FPDst(SPU::R1);
       MachineLocation FPSrc(MachineLocation::VirtualFP);
@@ -531,7 +533,8 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
 
       // Insert terminator label
       unsigned BranchLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL)).addImm(BranchLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(SPU::DBG_LABEL))
+        .addSym(MMI->getLabelSym(BranchLabelId));
     }
   }
 }

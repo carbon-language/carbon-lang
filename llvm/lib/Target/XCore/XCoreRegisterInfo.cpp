@@ -457,7 +457,8 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       
       // Show update of SP.
       unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
+        .addSym(MMI->getLabelSym(FrameLabelId));
       
       MachineLocation SPDst(MachineLocation::VirtualFP);
       MachineLocation SPSrc(MachineLocation::VirtualFP, -FrameSize * 4);
@@ -476,7 +477,8 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       
       if (emitFrameMoves) {
         unsigned SaveLRLabelId = MMI->NextLabelID();
-        BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(SaveLRLabelId);
+        BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
+          .addSym(MMI->getLabelSym(SaveLRLabelId));
         MachineLocation CSDst(MachineLocation::VirtualFP, LRSpillOffset);
         MachineLocation CSSrc(XCore::LR);
         MMI->getFrameMoves().push_back(MachineMove(SaveLRLabelId,
@@ -493,7 +495,8 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MBB.addLiveIn(XCore::R10);
     if (emitFrameMoves) {
       unsigned SaveR10LabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(SaveR10LabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
+        .addSym(MMI->getLabelSym(SaveR10LabelId));
       MachineLocation CSDst(MachineLocation::VirtualFP, FPSpillOffset);
       MachineLocation CSSrc(XCore::R10);
       MMI->getFrameMoves().push_back(MachineMove(SaveR10LabelId,
@@ -506,7 +509,8 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (emitFrameMoves) {
       // Show FP is now valid.
       unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
+        .addSym(MMI->getLabelSym(FrameLabelId));
       MachineLocation SPDst(FramePtr);
       MachineLocation SPSrc(MachineLocation::VirtualFP);
       MMI->getFrameMoves().push_back(MachineMove(FrameLabelId, SPDst, SPSrc));

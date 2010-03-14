@@ -960,7 +960,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
       unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
+        .addSym(MMI->getLabelSym(FrameLabelId));
 
       // Define the current CFA rule to use the provided offset.
       if (StackSize) {
@@ -988,7 +989,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
       unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
+        .addSym(MMI->getLabelSym(FrameLabelId));
 
       // Define the current CFA to use the EBP/RBP register.
       MachineLocation FPDst(FramePtr);
@@ -1028,7 +1030,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (!HasFP && needsFrameMoves) {
       // Mark callee-saved push instruction.
       unsigned LabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(LabelId);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
+        .addSym(MMI->getLabelSym(LabelId));
 
       // Define the current CFA rule to use the provided offset.
       unsigned Ptr = StackSize ?
@@ -1100,7 +1103,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if ((NumBytes || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
     unsigned LabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(LabelId);
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
+      .addSym(MMI->getLabelSym(LabelId));
 
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
