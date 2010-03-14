@@ -21,6 +21,7 @@ def SDTIntShiftDOp: SDTypeProfile<1, 3,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
                                    SDTCisInt<0>, SDTCisInt<3>]>;
 
+// FIXME: Should be modelled as returning i32
 def SDTX86CmpTest : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 
 def SDTX86Cmov    : SDTypeProfile<1, 4,
@@ -83,7 +84,6 @@ def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest>;
-
 def X86bt      : SDNode<"X86ISD::BT",       SDTX86CmpTest>;
 
 def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov>;

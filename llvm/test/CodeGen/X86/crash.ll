@@ -37,7 +37,7 @@ if.end:                                           ; preds = %land.end
 ; PR6577
 %pair = type { i64, double }
 
-define void @on4() {
+define void @test3() {
 dependentGraph243.exit:
   %subject19 = load %pair* undef                     ; <%1> [#uses=1]
   %0 = extractvalue %pair %subject19, 1              ; <double> [#uses=2]
@@ -47,3 +47,27 @@ dependentGraph243.exit:
   store %pair %3, %pair* undef
   ret void
 }
+
+; PR6605
+define i64 @test4(i8* %P) nounwind ssp {
+entry:
+  %tmp1 = load i8* %P                           ; <i8> [#uses=3]
+  %tobool = icmp eq i8 %tmp1, 0                   ; <i1> [#uses=1]
+  %tmp58 = sext i1 %tobool to i8                  ; <i8> [#uses=1]
+  %mul.i = and i8 %tmp58, %tmp1                   ; <i8> [#uses=1]
+  %conv6 = zext i8 %mul.i to i32                  ; <i32> [#uses=1]
+  %cmp = icmp ne i8 %tmp1, 1                      ; <i1> [#uses=1]
+  %conv11 = zext i1 %cmp to i32                   ; <i32> [#uses=1]
+  %call12 = tail call i32 @safe(i32 %conv11) nounwind ; <i32> [#uses=1]
+  %and = and i32 %conv6, %call12                  ; <i32> [#uses=1]
+  %tobool13 = icmp eq i32 %and, 0                 ; <i1> [#uses=1]
+  br i1 %tobool13, label %if.else, label %return
+
+if.else:                                          ; preds = %entry
+  br label %return
+
+return:                                           ; preds = %if.else, %entry
+  ret i64 undef
+}
+
+declare i32 @safe(i32)
