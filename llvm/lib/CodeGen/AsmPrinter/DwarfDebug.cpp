@@ -2615,7 +2615,8 @@ void DwarfDebug::emitDebugLines() {
     for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
       const SrcLineInfo &LineInfo = LineInfos[i];
       unsigned LabelID = LineInfo.getLabelID();
-      if (MMI->isLabelDeleted(LabelID)) continue;
+      MCSymbol *Label = getDWLabel("label", LabelID);
+      if (!Label->isDefined()) continue; // Not emitted, in dead code.
 
       if (LineInfo.getLine() == 0) continue;
 
@@ -2638,8 +2639,8 @@ void DwarfDebug::emitDebugLines() {
       Asm->EmitInt8(dwarf::DW_LNE_set_address); 
 
       Asm->OutStreamer.AddComment("Location label");
-      Asm->OutStreamer.EmitSymbolValue(getDWLabel("label", LabelID),
-                                       TD->getPointerSize(), 0/*AddrSpace*/);
+      Asm->OutStreamer.EmitSymbolValue(Label, TD->getPointerSize(),
+                                       0/*AddrSpace*/);
       
       // If change of source, then switch to the new source.
       if (Source != LineInfo.getSourceID()) {

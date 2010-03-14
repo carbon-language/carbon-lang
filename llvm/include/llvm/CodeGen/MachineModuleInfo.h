@@ -224,14 +224,6 @@ public:
     LabelIDList[LabelID - 1] = 0;
   }
   
-  /// isLabelDeleted - Return true if the label was deleted.
-  /// FIXME: This should eventually be eliminated and use the 'is emitted' bit
-  /// on MCSymbol.
-  bool isLabelDeleted(unsigned LabelID) const {
-    assert(LabelID <= LabelIDList.size() && "Debug label ID out of range.");
-    return LabelID == 0 || LabelIDList[LabelID - 1] == 0;
-  }
-  
   /// getFrameMoves - Returns a reference to a list of moves done in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.

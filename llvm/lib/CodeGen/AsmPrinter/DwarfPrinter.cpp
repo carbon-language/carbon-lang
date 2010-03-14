@@ -248,17 +248,17 @@ void DwarfPrinter::EmitFrameMoves(MCSymbol *BaseLabel,
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
     unsigned LabelID = Move.getLabelID();
-
     // Throw out move if the label is invalid.
-    if (LabelID && MMI->isLabelDeleted(LabelID))
-      continue;
+    if (LabelID == 0) continue;
+    MCSymbol *Label = getDWLabel("label", LabelID);
+    if (!Label->isDefined()) continue; // Not emitted, in dead code.
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();
 
     // Advance row if new location.
-    if (BaseLabel && LabelID) {
-      MCSymbol *ThisSym = getDWLabel("label", LabelID);
+    if (BaseLabel) {
+      MCSymbol *ThisSym = Label;
       if (ThisSym != BaseLabel) {
         EmitCFAByte(dwarf::DW_CFA_advance_loc4);
         EmitDifference(ThisSym, BaseLabel, true);
