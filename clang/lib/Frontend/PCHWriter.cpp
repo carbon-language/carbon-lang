@@ -710,12 +710,10 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
     unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
 
     llvm::sys::Path MainFilePath(MainFile->getName());
-    std::string MainFileName;
 
     MainFilePath.makeAbsolute();
-    MainFileName = MainFilePath.str();
 
-    const char *MainFileNameStr = MainFileName.c_str();
+    const char *MainFileNameStr = MainFilePath.c_str();
     MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
                                                       isysroot);
     RecordData Record;
@@ -1074,10 +1072,8 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->Entry->getName();
         llvm::sys::Path FilePath(Filename, strlen(Filename));
-        std::string FilenameStr;
         FilePath.makeAbsolute();
-        FilenameStr = FilePath.str();
-        Filename = FilenameStr.c_str();
+        Filename = FilePath.c_str();
 
         Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
         Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename);
