@@ -810,7 +810,7 @@ void DwarfException::EmitExceptionTable() {
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
       Asm->OutStreamer.AddComment("Region start");
-      EmitSectionOffset(EHFuncBeginSym, EndLabel, true);
+      EmitSectionOffset(BeginLabel, EHFuncBeginSym, true, true);
       
       Asm->OutStreamer.AddComment("Region length");
       EmitDifference(EndLabel, BeginLabel, true);
