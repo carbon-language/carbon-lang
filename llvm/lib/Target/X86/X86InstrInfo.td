@@ -297,6 +297,8 @@ def tls32addr : ComplexPattern<i32, 4, "SelectTLSADDRAddr",
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
+def HasCMov      : Predicate<"Subtarget->hasCMov()">;
+def NoCMov       : Predicate<"!Subtarget->hasCMov()">;
 def HasMMX       : Predicate<"Subtarget->hasMMX()">;
 def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
 def HasSSE2      : Predicate<"Subtarget->hasSSE2()">;
@@ -1213,19 +1215,7 @@ let isTwoAddress = 1 in {
 // Conditional moves
 let Uses = [EFLAGS] in {
 
-// X86 doesn't have 8-bit conditional moves. Use a customInserter to
-// emit control flow. An alternative to this is to mark i8 SELECT as Promote,
-// however that requires promoting the operands, and can induce additional
-// i8 register pressure. Note that CMOV_GR8 is conservatively considered to
-// clobber EFLAGS, because if one of the operands is zero, the expansion
-// could involve an xor.
-let usesCustomInserter = 1, isTwoAddress = 0, Defs = [EFLAGS] in
-def CMOV_GR8 : I<0, Pseudo,
-                 (outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cond),
-                 "#CMOV_GR8 PSEUDO!",
-                 [(set GR8:$dst, (X86cmov GR8:$src1, GR8:$src2,
-                                          imm:$cond, EFLAGS))]>;
-
+let Predicates = [HasCMov] in {
 let isCommutable = 1 in {
 def CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
@@ -1613,6 +1603,49 @@ def CMOVNO32rm : I<0x41, MRMSrcMem,       // if !overflow, GR32 = [mem32]
                    [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
                                     X86_COND_NO, EFLAGS))]>,
                   TB;
+} // Predicates = [HasCMov]
+
+// X86 doesn't have 8-bit conditional moves. Use a customInserter to
+// emit control flow. An alternative to this is to mark i8 SELECT as Promote,
+// however that requires promoting the operands, and can induce additional
+// i8 register pressure. Note that CMOV_GR8 is conservatively considered to
+// clobber EFLAGS, because if one of the operands is zero, the expansion
+// could involve an xor.
+let usesCustomInserter = 1, isTwoAddress = 0, Defs = [EFLAGS] in {
+def CMOV_GR8 : I<0, Pseudo,
+                 (outs GR8:$dst), (ins GR8:$src1, GR8:$src2, i8imm:$cond),
+                 "#CMOV_GR8 PSEUDO!",
+                 [(set GR8:$dst, (X86cmov GR8:$src1, GR8:$src2,
+                                          imm:$cond, EFLAGS))]>;
+
+let Predicates = [NoCMov] in {
+def CMOV_GR32 : I<0, Pseudo,
+                    (outs GR32:$dst), (ins GR32:$src1, GR32:$src2, i8imm:$cond),
+                    "#CMOV_GR32* PSEUDO!",
+                    [(set GR32:$dst,
+                      (X86cmov GR32:$src1, GR32:$src2, imm:$cond, EFLAGS))]>;
+def CMOV_GR16 : I<0, Pseudo,
+                    (outs GR16:$dst), (ins GR16:$src1, GR16:$src2, i8imm:$cond),
+                    "#CMOV_GR16* PSEUDO!",
+                    [(set GR16:$dst,
+                      (X86cmov GR16:$src1, GR16:$src2, imm:$cond, EFLAGS))]>;
+def CMOV_RFP32 : I<0, Pseudo,
+                    (outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2, i8imm:$cond),
+                    "#CMOV_RFP32 PSEUDO!",
+                    [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2, imm:$cond,
+                                                  EFLAGS))]>;
+def CMOV_RFP64 : I<0, Pseudo,
+                    (outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2, i8imm:$cond),
+                    "#CMOV_RFP64 PSEUDO!",
+                    [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2, imm:$cond,
+                                                  EFLAGS))]>;
+def CMOV_RFP80 : I<0, Pseudo,
+                    (outs RFP80:$dst), (ins RFP80:$src1, RFP80:$src2, i8imm:$cond),
+                    "#CMOV_RFP80 PSEUDO!",
+                    [(set RFP80:$dst, (X86cmov RFP80:$src1, RFP80:$src2, imm:$cond,
+                                                  EFLAGS))]>;
+} // Predicates = [NoCMov]
+} // UsesCustomInserter = 1, isTwoAddress = 0, Defs = [EFLAGS] 
 } // Uses = [EFLAGS]
 
 

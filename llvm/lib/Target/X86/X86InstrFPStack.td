@@ -350,20 +350,27 @@ def FBLDm    : FPI<0xDF, MRM4m, (outs), (ins f32mem:$src), "fbld\t$src">;
 def FBSTPm   : FPI<0xDF, MRM6m, (outs f32mem:$dst), (ins), "fbstp\t$dst">;
 
 // Floating point cmovs.
+class FpIf32CMov<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
+  FpI_<outs, ins, fp, pattern>, Requires<[FPStackf32, HasCMov]>;
+class FpIf64CMov<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
+  FpI_<outs, ins, fp, pattern>, Requires<[FPStackf64, HasCMov]>;
+
 multiclass FPCMov<PatLeaf cc> {
-  def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2),
+  def _Fp32  : FpIf32CMov<(outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2),
                        CondMovFP,
                      [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                         cc, EFLAGS))]>;
-  def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2),
+  def _Fp64  : FpIf64CMov<(outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2),
                        CondMovFP,
                      [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
                                         cc, EFLAGS))]>;
   def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, RFP80:$src2),
                      CondMovFP,
                      [(set RFP80:$dst, (X86cmov RFP80:$src1, RFP80:$src2,
-                                        cc, EFLAGS))]>;
+                                        cc, EFLAGS))]>,
+                                        Requires<[HasCMov]>;
 }
+
 let Uses = [EFLAGS], isTwoAddress = 1 in {
 defm CMOVB  : FPCMov<X86_COND_B>;
 defm CMOVBE : FPCMov<X86_COND_BE>;
@@ -375,6 +382,7 @@ defm CMOVNE : FPCMov<X86_COND_NE>;
 defm CMOVNP : FPCMov<X86_COND_NP>;
 }
 
+let Predicates = [HasCMov] in {
 // These are not factored because there's no clean way to pass DA/DB.
 def CMOVB_F  : FPI<0xC0, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovb\t{$op, %st(0)|%ST(0), $op}">, DA;
@@ -392,6 +400,7 @@ def CMOVNE_F : FPI<0xC8, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovne\t{$op, %st(0)|%ST(0), $op}">, DB;
 def CMOVNP_F : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovnu\t{$op, %st(0)|%ST(0), $op}">, DB;
+} // Predicates = [HasCMov]
 
 // Floating point loads & stores.
 let canFoldAsLoad = 1 in {
