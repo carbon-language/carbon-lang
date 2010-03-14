@@ -28,6 +28,7 @@ namespace llvm {
   
   class GCMetadataPrinter;
   class raw_ostream;
+  class MCAsmInfo;
   
   /// GCMetadataPrinterRegistry - The GC assembly printer registry uses all the
   /// defaults from Registry.

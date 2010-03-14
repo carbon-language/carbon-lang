@@ -1558,9 +1558,7 @@ void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
   if (MI->getOperand(0).isMCSymbol())
     Sym = MI->getOperand(0).getMCSymbol();
   else
-    Sym =
-    OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                                 "label" + Twine(MI->getOperand(0).getImm()));
+    Sym = MMI->getLabelSym(MI->getOperand(0).getImm());
   OutStreamer.EmitLabel(Sym);
 }
 

@@ -38,12 +38,10 @@
 #include "llvm/ADT/StringMap.h"
 
 namespace llvm {
-  
   class AsmPrinter;
   class GCStrategy;
   class Constant;
-  class MCAsmInfo;
-  
+  class MCSymbol;
   
   namespace GC {
     /// PointKind - The type of a collector-safe point.
@@ -60,9 +58,9 @@ namespace llvm {
   /// 
   struct GCPoint {
     GC::PointKind Kind; //< The kind of the safe point.
-    unsigned Num;       //< Usually a label.
+    MCSymbol *Label;    //< A label.
     
-    GCPoint(GC::PointKind K, unsigned N) : Kind(K), Num(N) {}
+    GCPoint(GC::PointKind K, MCSymbol *L) : Kind(K), Label(L) {}
   };
   
   /// GCRoot - Metadata for a pointer to an object managed by the garbage
@@ -123,8 +121,8 @@ namespace llvm {
     /// addSafePoint - Notes the existence of a safe point. Num is the ID of the
     /// label just prior to the safe point (if the code generator is using 
     /// MachineModuleInfo).
-    void addSafePoint(GC::PointKind Kind, unsigned Num) {
-      SafePoints.push_back(GCPoint(Kind, Num));
+    void addSafePoint(GC::PointKind Kind, MCSymbol *Label) {
+      SafePoints.push_back(GCPoint(Kind, Label));
     }
     
     /// getFrameSize/setFrameSize - Records the function's frame size.

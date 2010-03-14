@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GCMetadataPrinter.h"
-
+class MCAsmInfo;
 using namespace llvm;
 
 GCMetadataPrinter::GCMetadataPrinter() { }

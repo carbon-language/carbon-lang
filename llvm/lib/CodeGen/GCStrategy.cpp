@@ -71,9 +71,9 @@ namespace {
     
     void FindSafePoints(MachineFunction &MF);
     void VisitCallPoint(MachineBasicBlock::iterator MI);
-    unsigned InsertLabel(MachineBasicBlock &MBB, 
-                         MachineBasicBlock::iterator MI,
-                         DebugLoc DL) const;
+    MCSymbol *InsertLabel(MachineBasicBlock &MBB, 
+                          MachineBasicBlock::iterator MI,
+                          DebugLoc DL) const;
     
     void FindStackOffsets(MachineFunction &MF);
     
@@ -329,14 +329,11 @@ void MachineCodeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<GCModuleInfo>();
 }
 
-unsigned MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB, 
-                                     MachineBasicBlock::iterator MI,
-                                     DebugLoc DL) const {
-  unsigned Label = MMI->NextLabelID();
-  
-  BuildMI(MBB, MI, DL,
-          TII->get(TargetOpcode::GC_LABEL)).addImm(Label);
-  
+MCSymbol *MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB, 
+                                           MachineBasicBlock::iterator MI,
+                                           DebugLoc DL) const {
+  MCSymbol *Label = MMI->getLabelSym(MMI->NextLabelID());
+  BuildMI(MBB, MI, DL, TII->get(TargetOpcode::GC_LABEL)).addSym(Label);
   return Label;
 }
 
