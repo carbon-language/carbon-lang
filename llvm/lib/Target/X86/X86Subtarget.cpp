@@ -315,8 +315,13 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
 
   // If requesting codegen for X86-64, make sure that 64-bit features
   // are enabled.
-  if (Is64Bit)
+  if (Is64Bit) {
     HasX86_64 = true;
+
+    // All 64-bit cpus have cmov support.
+    HasCMov = true;
+  }
+    
 
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel
