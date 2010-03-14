@@ -31,7 +31,7 @@ private:
   int LRSpillSlot;
   int FPSpillSlot;
   int VarArgsFrameIndex;
-  std::vector<std::pair<unsigned, CalleeSavedInfo> > SpillLabels;
+  std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > SpillLabels;
 
 public:
   XCoreFunctionInfo() :
@@ -60,7 +60,7 @@ public:
   void setFPSpillSlot(int off) { FPSpillSlot = off; }
   int getFPSpillSlot() const { return FPSpillSlot; }
   
-  std::vector<std::pair<unsigned, CalleeSavedInfo> >&getSpillLabels() {
+  std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > &getSpillLabels() {
     return SpillLabels;
   }
 };

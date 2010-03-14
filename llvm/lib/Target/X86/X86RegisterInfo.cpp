@@ -797,7 +797,7 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
 }
 
 void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
-                                                unsigned LabelId,
+                                                MCSymbol *Label,
                                                 unsigned FramePtr) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
@@ -860,7 +860,7 @@ void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
 
     MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
     MachineLocation CSSrc(Reg);
-    Moves.push_back(MachineMove(LabelId, CSDst, CSSrc));
+    Moves.push_back(MachineMove(Label, CSDst, CSSrc));
   }
 }
 
@@ -959,26 +959,25 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
-      unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
-        .addSym(MMI->getLabelSym(FrameLabelId));
+      MCSymbol *FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(FrameLabel);
 
       // Define the current CFA rule to use the provided offset.
       if (StackSize) {
         MachineLocation SPDst(MachineLocation::VirtualFP);
         MachineLocation SPSrc(MachineLocation::VirtualFP, 2 * stackGrowth);
-        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+        Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
       } else {
         // FIXME: Verify & implement for FP
         MachineLocation SPDst(StackPtr);
         MachineLocation SPSrc(StackPtr, stackGrowth);
-        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+        Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
       }
 
       // Change the rule for the FramePtr to be an "offset" rule.
       MachineLocation FPDst(MachineLocation::VirtualFP, 2 * stackGrowth);
       MachineLocation FPSrc(FramePtr);
-      Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
+      Moves.push_back(MachineMove(FrameLabel, FPDst, FPSrc));
     }
 
     // Update EBP with the new base value...
@@ -988,14 +987,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
-      unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
-        .addSym(MMI->getLabelSym(FrameLabelId));
+      MCSymbol *FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(FrameLabel);
 
       // Define the current CFA to use the EBP/RBP register.
       MachineLocation FPDst(FramePtr);
       MachineLocation FPSrc(MachineLocation::VirtualFP);
-      Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
+      Moves.push_back(MachineMove(FrameLabel, FPDst, FPSrc));
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
@@ -1029,16 +1027,15 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (!HasFP && needsFrameMoves) {
       // Mark callee-saved push instruction.
-      unsigned LabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
-        .addSym(MMI->getLabelSym(LabelId));
+      MCSymbol *Label = MMI->getLabelSym(MMI->NextLabelID());
+      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(Label);
 
       // Define the current CFA rule to use the provided offset.
       unsigned Ptr = StackSize ?
         MachineLocation::VirtualFP : StackPtr;
       MachineLocation SPDst(Ptr);
       MachineLocation SPSrc(Ptr, StackOffset);
-      Moves.push_back(MachineMove(LabelId, SPDst, SPSrc));
+      Moves.push_back(MachineMove(Label, SPDst, SPSrc));
       StackOffset += stackGrowth;
     }
   }
@@ -1102,9 +1099,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if ((NumBytes || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
-    unsigned LabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL))
-      .addSym(MMI->getLabelSym(LabelId));
+    MCSymbol *Label = MMI->getLabelSym(MMI->NextLabelID());
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addSym(Label);
 
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
@@ -1112,18 +1108,18 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         MachineLocation SPDst(MachineLocation::VirtualFP);
         MachineLocation SPSrc(MachineLocation::VirtualFP,
                               -StackSize + stackGrowth);
-        Moves.push_back(MachineMove(LabelId, SPDst, SPSrc));
+        Moves.push_back(MachineMove(Label, SPDst, SPSrc));
       } else {
         // FIXME: Verify & implement for FP
         MachineLocation SPDst(StackPtr);
         MachineLocation SPSrc(StackPtr, stackGrowth);
-        Moves.push_back(MachineMove(LabelId, SPDst, SPSrc));
+        Moves.push_back(MachineMove(Label, SPDst, SPSrc));
       }
     }
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
     if (PushedRegs)
-      emitCalleeSavedFrameMoves(MF, LabelId, HasFP ? FramePtr : StackPtr);
+      emitCalleeSavedFrameMoves(MF, Label, HasFP ? FramePtr : StackPtr);
   }
 }
 

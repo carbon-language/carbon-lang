@@ -247,13 +247,9 @@ void DwarfPrinter::EmitFrameMoves(MCSymbol *BaseLabel,
   
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
-    MCSymbol *Label = 0;
-    unsigned LabelID = Move.getLabelID();
+    MCSymbol *Label = Move.getLabel();
     // Throw out move if the label is invalid.
-    if (LabelID) {
-      Label = getDWLabel("label", LabelID);
-      if (!Label->isDefined()) continue; // Not emitted, in dead code.
-    }
+    if (Label && !Label->isDefined()) continue; // Not emitted, in dead code.
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();

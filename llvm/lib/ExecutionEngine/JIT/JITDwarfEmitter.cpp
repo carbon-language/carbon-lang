@@ -68,32 +68,29 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
   unsigned PointerSize = TD->getPointerSize();
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
           PointerSize : -PointerSize;
-  bool IsLocal = false;
-  unsigned BaseLabelID = 0;
+  MCSymbol *BaseLabel = 0;
 
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
-    unsigned LabelID = Move.getLabelID();
-    MCSymbol *Label = LabelID ? MMI->getLabelSym(LabelID) : 0;
+    MCSymbol *Label = Move.getLabel();
     
     // Throw out move if the label is invalid.
     if (Label && !Label->isDefined())
       continue;
     
     intptr_t LabelPtr = 0;
-    if (LabelID) LabelPtr = JCE->getLabelAddress(Label);
+    if (Label) LabelPtr = JCE->getLabelAddress(Label);
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();
     
     // Advance row if new location.
-    if (BaseLabelPtr && LabelID && (BaseLabelID != LabelID || !IsLocal)) {
+    if (BaseLabelPtr && Label && BaseLabel != Label) {
       JCE->emitByte(dwarf::DW_CFA_advance_loc4);
       JCE->emitInt32(LabelPtr - BaseLabelPtr);
       
-      BaseLabelID = LabelID; 
+      BaseLabel = Label; 
       BaseLabelPtr = LabelPtr;
-      IsLocal = true;
     }
     
     // If advancing cfa.
@@ -712,21 +709,20 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
 
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
-    unsigned LabelID = Move.getLabelID();
-    MCSymbol *Label = LabelID ? MMI->getLabelSym(LabelID) : 0;
+    MCSymbol *Label = Move.getLabel();
     
     // Throw out move if the label is invalid.
     if (Label && !Label->isDefined())
       continue;
     
     intptr_t LabelPtr = 0;
-    if (LabelID) LabelPtr = JCE->getLabelAddress(Label);
+    if (Label) LabelPtr = JCE->getLabelAddress(Label);
 
     const MachineLocation &Dst = Move.getDestination();
     const MachineLocation &Src = Move.getSource();
     
     // Advance row if new location.
-    if (BaseLabelPtr && LabelID && (BaseLabelPtr != LabelPtr || !IsLocal)) {
+    if (BaseLabelPtr && Label && (BaseLabelPtr != LabelPtr || !IsLocal)) {
       FinalSize++;
       FinalSize += PointerSize;
       BaseLabelPtr = LabelPtr;

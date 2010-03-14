@@ -22,13 +22,13 @@
 #define LLVM_CODEGEN_MACHINELOCATION_H
 
 namespace llvm {
-
+  class MCSymbol;
+  
 class MachineLocation {
 private:
   bool IsRegister;                      // True if location is a register.
   unsigned Register;                    // gcc/gdb register number.
   int Offset;                           // Displacement if not register.
-
 public:
   enum {
     // The target register number for an abstract frame pointer. The value is
@@ -36,20 +36,11 @@ public:
     VirtualFP = ~0U
   };
   MachineLocation()
-  : IsRegister(false)
-  , Register(0)
-  , Offset(0)
-  {}
+  : IsRegister(false), Register(0), Offset(0) {}
   explicit MachineLocation(unsigned R)
-  : IsRegister(true)
-  , Register(R)
-  , Offset(0)
-  {}
+  : IsRegister(true), Register(R), Offset(0) {}
   MachineLocation(unsigned R, int O)
-  : IsRegister(false)
-  , Register(R)
-  , Offset(O)
-  {}
+  : IsRegister(false), Register(R), Offset(O) {}
   
   // Accessors
   bool isReg()           const { return IsRegister; }
@@ -74,29 +65,24 @@ public:
 #endif
 };
 
+/// MachineMove - This class represents the save or restore of a callee saved
+/// register that exception or debug info needs to know about.
 class MachineMove {
 private:
-  unsigned LabelID;                     // Label ID number for post-instruction
-                                        // address when result of move takes
-                                        // effect.
-  MachineLocation Destination;          // Move to location.
-  MachineLocation Source;               // Move from location.
+  /// Label - Symbol for post-instruction address when result of move takes
+  /// effect.
+  MCSymbol *Label;
   
+  // Move to & from location.
+  MachineLocation Destination, Source;
 public:
-  MachineMove()
-  : LabelID(0)
-  , Destination()
-  , Source()
-  {}
+  MachineMove() : Label(0) {}
 
-  MachineMove(unsigned ID, MachineLocation &D, MachineLocation &S)
-  : LabelID(ID)
-  , Destination(D)
-  , Source(S)
-  {}
+  MachineMove(MCSymbol *label, MachineLocation &D, MachineLocation &S)
+  : Label(label), Destination(D), Source(S) {}
   
   // Accessors
-  unsigned getLabelID()                   const { return LabelID; }
+  MCSymbol *getLabel()                    const { return Label; }
   const MachineLocation &getDestination() const { return Destination; }
   const MachineLocation &getSource()      const { return Source; }
 };

@@ -1287,7 +1287,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
        UnwindTablesMandatory;
   
   // Prepare for frame info.
-  unsigned FrameLabelId = 0;
+  MCSymbol *FrameLabel = 0;
 
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
@@ -1446,34 +1446,33 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // reverse order.
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer becomes valid.
-    FrameLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL))
-      .addSym(MMI->getLabelSym(FrameLabelId));
+    FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addSym(FrameLabel);
   
     // Show update of SP.
     if (NegFrameSize) {
       MachineLocation SPDst(MachineLocation::VirtualFP);
       MachineLocation SPSrc(MachineLocation::VirtualFP, NegFrameSize);
-      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+      Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
     } else {
       MachineLocation SP(isPPC64 ? PPC::X31 : PPC::R31);
-      Moves.push_back(MachineMove(FrameLabelId, SP, SP));
+      Moves.push_back(MachineMove(FrameLabel, SP, SP));
     }
     
     if (HasFP) {
       MachineLocation FPDst(MachineLocation::VirtualFP, FPOffset);
       MachineLocation FPSrc(isPPC64 ? PPC::X31 : PPC::R31);
-      Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
+      Moves.push_back(MachineMove(FrameLabel, FPDst, FPSrc));
     }
 
     if (MustSaveLR) {
       MachineLocation LRDst(MachineLocation::VirtualFP, LROffset);
       MachineLocation LRSrc(isPPC64 ? PPC::LR8 : PPC::LR);
-      Moves.push_back(MachineMove(FrameLabelId, LRDst, LRSrc));
+      Moves.push_back(MachineMove(FrameLabel, LRDst, LRSrc));
     }
   }
 
-  unsigned ReadyLabelId = 0;
+  MCSymbol *ReadyLabel = 0;
 
   // If there is a frame pointer, copy R1 into R31
   if (HasFP) {
@@ -1488,21 +1487,20 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
 
     if (needsFrameMoves) {
-      ReadyLabelId = MMI->NextLabelID();
+      ReadyLabel = MMI->getLabelSym(MMI->NextLabelID());
 
       // Mark effective beginning of when frame pointer is ready.
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL))
-        .addSym(MMI->getLabelSym(ReadyLabelId));
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::DBG_LABEL)).addSym(ReadyLabel);
 
       MachineLocation FPDst(HasFP ? (isPPC64 ? PPC::X31 : PPC::R31) :
                                     (isPPC64 ? PPC::X1 : PPC::R1));
       MachineLocation FPSrc(MachineLocation::VirtualFP);
-      Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
+      Moves.push_back(MachineMove(ReadyLabel, FPDst, FPSrc));
     }
   }
 
   if (needsFrameMoves) {
-    unsigned LabelId = HasFP ? ReadyLabelId : FrameLabelId;
+    MCSymbol *Label = HasFP ? ReadyLabel : FrameLabel;
 
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -1512,7 +1510,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
       if (Reg == PPC::LR || Reg == PPC::LR8 || Reg == PPC::RM) continue;
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);
-      Moves.push_back(MachineMove(LabelId, CSDst, CSSrc));
+      Moves.push_back(MachineMove(Label, CSDst, CSSrc));
     }
   }
 }

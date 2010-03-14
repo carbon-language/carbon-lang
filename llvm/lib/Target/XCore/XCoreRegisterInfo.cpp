@@ -456,18 +456,17 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       std::vector<MachineMove> &Moves = MMI->getFrameMoves();
       
       // Show update of SP.
-      unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
-        .addSym(MMI->getLabelSym(FrameLabelId));
+      MCSymbol *FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(FrameLabel);
       
       MachineLocation SPDst(MachineLocation::VirtualFP);
       MachineLocation SPSrc(MachineLocation::VirtualFP, -FrameSize * 4);
-      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+      Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc));
       
       if (LRSavedOnEntry) {
         MachineLocation CSDst(MachineLocation::VirtualFP, 0);
         MachineLocation CSSrc(XCore::LR);
-        Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
+        Moves.push_back(MachineMove(FrameLabel, CSDst, CSSrc));
       }
     }
     if (saveLR) {
@@ -476,13 +475,11 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       MBB.addLiveIn(XCore::LR);
       
       if (emitFrameMoves) {
-        unsigned SaveLRLabelId = MMI->NextLabelID();
-        BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
-          .addSym(MMI->getLabelSym(SaveLRLabelId));
+        MCSymbol *SaveLRLabel = MMI->getLabelSym(MMI->NextLabelID());
+        BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(SaveLRLabel);
         MachineLocation CSDst(MachineLocation::VirtualFP, LRSpillOffset);
         MachineLocation CSSrc(XCore::LR);
-        MMI->getFrameMoves().push_back(MachineMove(SaveLRLabelId,
-                                                   CSDst, CSSrc));
+        MMI->getFrameMoves().push_back(MachineMove(SaveLRLabel, CSDst, CSSrc));
       }
     }
   }
@@ -494,13 +491,11 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
     // R10 is live-in. It is killed at the spill.
     MBB.addLiveIn(XCore::R10);
     if (emitFrameMoves) {
-      unsigned SaveR10LabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
-        .addSym(MMI->getLabelSym(SaveR10LabelId));
+      MCSymbol *SaveR10Label = MMI->getLabelSym(MMI->NextLabelID());
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(SaveR10Label);
       MachineLocation CSDst(MachineLocation::VirtualFP, FPSpillOffset);
       MachineLocation CSSrc(XCore::R10);
-      MMI->getFrameMoves().push_back(MachineMove(SaveR10LabelId,
-                                                 CSDst, CSSrc));
+      MMI->getFrameMoves().push_back(MachineMove(SaveR10Label, CSDst, CSSrc));
     }
     // Set the FP from the SP.
     unsigned FramePtr = XCore::R10;
@@ -508,22 +503,21 @@ void XCoreRegisterInfo::emitPrologue(MachineFunction &MF) const {
       .addImm(0);
     if (emitFrameMoves) {
       // Show FP is now valid.
-      unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL))
-        .addSym(MMI->getLabelSym(FrameLabelId));
+      MCSymbol *FrameLabel = MMI->getLabelSym(MMI->NextLabelID());
+      BuildMI(MBB, MBBI, dl, TII.get(XCore::DBG_LABEL)).addSym(FrameLabel);
       MachineLocation SPDst(FramePtr);
       MachineLocation SPSrc(MachineLocation::VirtualFP);
-      MMI->getFrameMoves().push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+      MMI->getFrameMoves().push_back(MachineMove(FrameLabel, SPDst, SPSrc));
     }
   }
   
   if (emitFrameMoves) {
     // Frame moves for callee saved.
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-    std::vector<std::pair<unsigned, CalleeSavedInfo> >&SpillLabels =
+    std::vector<std::pair<MCSymbol*, CalleeSavedInfo> >&SpillLabels =
         XFI->getSpillLabels();
     for (unsigned I = 0, E = SpillLabels.size(); I != E; ++I) {
-      unsigned SpillLabel = SpillLabels[I].first;
+      MCSymbol *SpillLabel = SpillLabels[I].first;
       CalleeSavedInfo &CSI = SpillLabels[I].second;
       int Offset = MFI->getObjectOffset(CSI.getFrameIdx());
       unsigned Reg = CSI.getReg();
