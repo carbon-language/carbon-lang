@@ -562,13 +562,13 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
 
 //===----------------------------------------------------------------------===//
 
+namespace {
 class PTHIdKey {
 public:
   const IdentifierInfo* II;
   uint32_t FileOffset;
 };
 
-namespace {
 class PTHIdentifierTableTrait {
 public:
   typedef PTHIdKey* key_type;
