@@ -446,12 +446,25 @@ namespace {
 /// nodes from the worklist.
 class SDOPsWorkListRemover : public SelectionDAG::DAGUpdateListener {
   SmallVector<SDNode*, 128> &Worklist;
+  SmallPtrSet<SDNode*, 128> &InWorklist;
 public:
-  SDOPsWorkListRemover(SmallVector<SDNode*, 128> &wl) : Worklist(wl) {}
+  SDOPsWorkListRemover(SmallVector<SDNode*, 128> &wl,
+                       SmallPtrSet<SDNode*, 128> &inwl)
+    : Worklist(wl), InWorklist(inwl) {}
 
+  void RemoveFromWorklist(SDNode *N) {
+    if (!InWorklist.erase(N)) return;
+    
+    SmallVector<SDNode*, 128>::iterator I =
+    std::find(Worklist.begin(), Worklist.end(), N);
+    assert(I != Worklist.end() && "Not in worklist");
+    
+    *I = Worklist.back();
+    Worklist.pop_back();
+  }
+  
   virtual void NodeDeleted(SDNode *N, SDNode *E) {
-    Worklist.erase(std::remove(Worklist.begin(), Worklist.end(), N),
-                   Worklist.end());
+    RemoveFromWorklist(N);
   }
 
   virtual void NodeUpdated(SDNode *N) {
@@ -480,20 +493,20 @@ static bool TrivialTruncElim(SDValue Op,
 /// x+y to (VT)((SmallVT)x+(SmallVT)y) if the casts are free.
 void SelectionDAGISel::ShrinkDemandedOps() {
   SmallVector<SDNode*, 128> Worklist;
+  SmallPtrSet<SDNode*, 128> InWorklist;
 
   // Add all the dag nodes to the worklist.
   Worklist.reserve(CurDAG->allnodes_size());
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
-       E = CurDAG->allnodes_end(); I != E; ++I)
+       E = CurDAG->allnodes_end(); I != E; ++I) {
     Worklist.push_back(I);
-
-  APInt Mask;
-  APInt KnownZero;
-  APInt KnownOne;
+    InWorklist.insert(I);
+  }
 
   TargetLowering::TargetLoweringOpt TLO(*CurDAG, true);
   while (!Worklist.empty()) {
     SDNode *N = Worklist.pop_back_val();
+    InWorklist.erase(N);
 
     if (N->use_empty() && N != CurDAG->getRoot().getNode()) {
       CurDAG->DeleteNode(N);
@@ -501,49 +514,52 @@ void SelectionDAGISel::ShrinkDemandedOps() {
     }
 
     // Run ShrinkDemandedOp on scalar binary operations.
-    if (N->getNumValues() == 1 &&
-        N->getValueType(0).isSimple() && N->getValueType(0).isInteger()) {
-      unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
-      APInt Demanded = APInt::getAllOnesValue(BitWidth);
-      APInt KnownZero, KnownOne;
-      if (TLI.SimplifyDemandedBits(SDValue(N, 0), Demanded,
-                                   KnownZero, KnownOne, TLO) ||
-          (N->getOpcode() == ISD::TRUNCATE &&
-           TrivialTruncElim(SDValue(N, 0), TLO))) {
-        // Revisit the node.
-        Worklist.erase(std::remove(Worklist.begin(), Worklist.end(), N),
-                       Worklist.end());
-        Worklist.push_back(N);
+    if (N->getNumValues() != 1 ||
+        !N->getValueType(0).isSimple() || !N->getValueType(0).isInteger())
+      continue;
+    
+    unsigned BitWidth = N->getValueType(0).getScalarType().getSizeInBits();
+    APInt Demanded = APInt::getAllOnesValue(BitWidth);
+    APInt KnownZero, KnownOne;
+    if (!TLI.SimplifyDemandedBits(SDValue(N, 0), Demanded,
+                                  KnownZero, KnownOne, TLO) &&
+        (N->getOpcode() != ISD::TRUNCATE ||
+         !TrivialTruncElim(SDValue(N, 0), TLO)))
+      continue;
+    
+    // Revisit the node.
+    assert(!InWorklist.count(N) && "Already in worklist");
+    Worklist.push_back(N);
+    InWorklist.insert(N);
 
-        // Replace the old value with the new one.
-        DEBUG(errs() << "\nReplacing "; 
-              TLO.Old.getNode()->dump(CurDAG);
-              errs() << "\nWith: ";
-              TLO.New.getNode()->dump(CurDAG);
-              errs() << '\n');
+    // Replace the old value with the new one.
+    DEBUG(errs() << "\nShrinkDemandedOps replacing "; 
+          TLO.Old.getNode()->dump(CurDAG);
+          errs() << "\nWith: ";
+          TLO.New.getNode()->dump(CurDAG);
+          errs() << '\n');
 
-        Worklist.push_back(TLO.New.getNode());
+    if (InWorklist.insert(TLO.New.getNode()))
+      Worklist.push_back(TLO.New.getNode());
 
-        SDOPsWorkListRemover DeadNodes(Worklist);
-        CurDAG->ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &DeadNodes);
+    SDOPsWorkListRemover DeadNodes(Worklist, InWorklist);
+    CurDAG->ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &DeadNodes);
 
-        if (TLO.Old.getNode()->use_empty()) {
-          for (unsigned i = 0, e = TLO.Old.getNode()->getNumOperands();
-               i != e; ++i) {
-            SDNode *OpNode = TLO.Old.getNode()->getOperand(i).getNode(); 
-            if (OpNode->hasOneUse()) {
-              Worklist.erase(std::remove(Worklist.begin(), Worklist.end(),
-                                         OpNode), Worklist.end());
-              Worklist.push_back(OpNode);
-            }
-          }
-
-          Worklist.erase(std::remove(Worklist.begin(), Worklist.end(),
-                                     TLO.Old.getNode()), Worklist.end());
-          CurDAG->DeleteNode(TLO.Old.getNode());
-        }
+    if (!TLO.Old.getNode()->use_empty()) continue;
+        
+    for (unsigned i = 0, e = TLO.Old.getNode()->getNumOperands();
+         i != e; ++i) {
+      SDNode *OpNode = TLO.Old.getNode()->getOperand(i).getNode(); 
+      if (OpNode->hasOneUse()) {
+        // Add OpNode to the end of the list to revisit.
+        DeadNodes.RemoveFromWorklist(OpNode);
+        Worklist.push_back(OpNode);
+        InWorklist.insert(OpNode);
       }
     }
+
+    DeadNodes.RemoveFromWorklist(TLO.Old.getNode());
+    CurDAG->DeleteNode(TLO.Old.getNode());
   }
 }
 
