@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pre-RA-sched"
-#include "SDDbgValue.h"
+#include "SDNodeDbgValue.h"
 #include "ScheduleDAGSDNodes.h"
 #include "InstrEmitter.h"
 #include "llvm/CodeGen/SelectionDAG.h"

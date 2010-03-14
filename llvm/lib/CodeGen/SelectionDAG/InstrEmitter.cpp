@@ -15,7 +15,7 @@
 
 #define DEBUG_TYPE "instr-emitter"
 #include "InstrEmitter.h"
-#include "SDDbgValue.h"
+#include "SDNodeDbgValue.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

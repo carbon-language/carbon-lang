@@ -13,7 +13,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "SDNodeOrdering.h"
-#include "SDDbgValue.h"
+#include "SDNodeDbgValue.h"
 #include "llvm/Constants.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Function.h"

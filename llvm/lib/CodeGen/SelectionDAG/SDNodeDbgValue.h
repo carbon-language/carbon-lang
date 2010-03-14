@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/SDDbgValue.h - SD dbg_value handling--------*- C++ -*-===//
+//===-- llvm/CodeGen/SDNodeDbgValue.h - SelectionDAG dbg_value --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SDDBGVALUE_H
-#define LLVM_CODEGEN_SDDBGVALUE_H
+#ifndef LLVM_CODEGEN_SDNODEDBGVALUE_H
+#define LLVM_CODEGEN_SDNODEDBGVALUE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DebugLoc.h"
