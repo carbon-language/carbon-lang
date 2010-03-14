@@ -13,8 +13,7 @@ DIRS := driver CIndex c-index-test
 include $(LEVEL)/Makefile.config
 
 ifeq ($(OS), $(filter $(OS), Cygwin MingW))
-DIRS := $(filter $(DIRS), CIndex)
-DIRS := $(filter $(DIRS), c-index-test)
+DIRS := $(filter-out CIndex c-index-test, $(DIRS))
 endif
 
 include $(LEVEL)/Makefile.common
