@@ -234,6 +234,15 @@ def i8mem_NOREX : Operand<i64> {
   let ParserMatchClass = X86MemAsmOperand;
 }
 
+// Special i32mem for addresses of load folding tail calls. These are not
+// allowed to use callee-saved registers since they must be scheduled
+// after callee-saved register are popped.
+def i32mem_TC : Operand<i32> {
+  let PrintMethod = "printi32mem";
+  let MIOperandInfo = (ops GR32_TC, i8imm, GR32_TC, i32imm, i8imm);
+  let ParserMatchClass = X86MemAsmOperand;
+}
+
 def lea32mem : Operand<i32> {
   let PrintMethod = "printlea32mem";
   let MIOperandInfo = (ops GR32, i8imm, GR32_NOSP, i32imm);
@@ -696,30 +705,33 @@ def ENTER : I<0xC8, RawFrm, (outs), (ins i16imm:$len, i8imm:$lvl),
 // Tail call stuff.
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNdi : I<0, Pseudo, (outs), 
-                   (ins i32imm:$dst, i32imm:$offset, variable_ops),
-                 "#TC_RETURN $dst $offset",
-                 []>;
+  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
+              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
+              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
+              XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
+      Uses = [ESP] in {
+  def TCRETURNdi : I<0, Pseudo, (outs), 
+                     (ins i32imm_pcrel:$dst, i32imm:$offset, variable_ops),
+                   "#TC_RETURN $dst $offset", []>;
+  def TCRETURNri : I<0, Pseudo, (outs), 
+                     (ins GR32_TC:$dst, i32imm:$offset, variable_ops),
+                     "#TC_RETURN $dst $offset", []>;
+  def TCRETURNmi : I<0, Pseudo, (outs), 
+                     (ins i32mem_TC:$dst, i32imm:$offset, variable_ops),
+                     "#TC_RETURN $dst $offset", []>;
 
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-def TCRETURNri : I<0, Pseudo, (outs), 
-                   (ins GR32:$dst, i32imm:$offset, variable_ops),
-                 "#TC_RETURN $dst $offset",
-                 []>;
-
-// FIXME: The should be pseudo instructions that are lowered when going to
-// mcinst.
-let isCall = 1, isBranch = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPd : Ii32<0xE9, RawFrm, (outs),(ins i32imm_pcrel:$dst,variable_ops),
+  // FIXME: The should be pseudo instructions that are lowered when going to
+  // mcinst.
+  def TAILJMPd : Ii32<0xE9, RawFrm, (outs),
+                                    (ins i32imm_pcrel:$dst, variable_ops),
                  "jmp\t$dst  # TAILCALL",
                  []>;
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst, variable_ops), 
+  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32_TC:$dst, variable_ops), 
                    "jmp{l}\t{*}$dst  # TAILCALL",
                  []>;     
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem:$dst, variable_ops),
-                   "jmp\t{*}$dst  # TAILCALL", []>;
+  def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem_TC:$dst, variable_ops),
+                   "jmp{l}\t{*}$dst  # TAILCALL", []>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
@@ -1031,6 +1043,22 @@ def MOV16mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
 def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 [(store GR32:$src, addr:$dst)]>;
+
+/// Versions of MOV32rr, MOV32rm, and MOV32mr for i32mem_TC and GR32_TC.
+let neverHasSideEffects = 1 in
+def MOV32rr_TC : I<0x89, MRMDestReg, (outs GR32_TC:$dst), (ins GR32_TC:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>;
+
+let mayLoad = 1,
+    canFoldAsLoad = 1, isReMaterializable = 1 in
+def MOV32rm_TC : I<0x8B, MRMSrcMem, (outs GR32_TC:$dst), (ins i32mem_TC:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}",
+                []>;
+
+let mayStore = 1 in
+def MOV32mr_TC : I<0x89, MRMDestMem, (outs), (ins i32mem_TC:$dst, GR32_TC:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}",
+                []>;
 
 // Versions of MOV8rr, MOV8mr, and MOV8rm that use i8mem_NOREX and GR8_NOREX so
 // that they can be used for copying and storing h registers, which can't be
@@ -4294,14 +4322,21 @@ def : Pat<(store (i32 (X86Wrapper tblockaddress:$src)), addr:$dst),
 
 // Calls
 // tailcall stuff
-def : Pat<(X86tcret GR32:$dst, imm:$off),
-          (TCRETURNri GR32:$dst, imm:$off)>;
+def : Pat<(X86tcret GR32_TC:$dst, imm:$off),
+          (TCRETURNri GR32_TC:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
+
+def : Pat<(X86tcret (load addr:$dst), imm:$off),
+          (TCRETURNmi addr:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
 
 def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
-          (TCRETURNdi texternalsym:$dst, imm:$off)>;
+          (TCRETURNdi texternalsym:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
 
 def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
-          (TCRETURNdi texternalsym:$dst, imm:$off)>;
+          (TCRETURNdi texternalsym:$dst, imm:$off)>,
+	  Requires<[In32BitMode]>;
 
 // Normal calls, with various flavors of addresses.
 def : Pat<(X86call (i32 tglobaladdr:$dst)),

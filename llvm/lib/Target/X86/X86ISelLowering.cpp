@@ -2133,18 +2133,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                          OpFlags);
   }
 
-  if (isTailCall && !WasGlobalOrExternal) {
-    // Force the address into a (call preserved) caller-saved register since
-    // tailcall must happen after callee-saved registers are poped.
-    // FIXME: Give it a special register class that contains caller-saved
-    // register instead?
-    unsigned TCReg = Is64Bit ? X86::R11 : X86::EAX;
-    Chain = DAG.getCopyToReg(Chain,  dl,
-                             DAG.getRegister(TCReg, getPointerTy()),
-                             Callee,InFlag);
-    Callee = DAG.getRegister(TCReg, getPointerTy());
-  }
-
   // Returns a chain & a flag for retval copy to use.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   SmallVector<SDValue, 8> Ops;
@@ -2190,14 +2178,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         if (RVLocs[i].isRegLoc())
           MF.getRegInfo().addLiveOut(RVLocs[i].getLocReg());
     }
-
-    assert(((Callee.getOpcode() == ISD::Register &&
-               (cast<RegisterSDNode>(Callee)->getReg() == X86::EAX ||
-                cast<RegisterSDNode>(Callee)->getReg() == X86::R11)) ||
-              Callee.getOpcode() == ISD::TargetExternalSymbol ||
-              Callee.getOpcode() == ISD::TargetGlobalAddress) &&
-           "Expecting a global address, external symbol, or scratch register");
-
     return DAG.getNode(X86ISD::TC_RETURN, dl,
                        NodeTys, &Ops[0], Ops.size());
   }

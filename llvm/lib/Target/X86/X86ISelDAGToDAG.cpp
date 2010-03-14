@@ -349,17 +349,17 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
   return true;
 }
 
-/// MoveBelowCallSeqStart - Replace CALLSEQ_START operand with load's chain
-/// operand and move load below the call's chain operand.
-static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
-                                  SDValue Call, SDValue CallSeqStart) {
+/// MoveBelowCallOrigChain - Replace the original chain operand of the call with
+/// load's chain operand and move load below the call's chain operand.
+static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
+                                  SDValue Call, SDValue OrigChain) {
   SmallVector<SDValue, 8> Ops;
-  SDValue Chain = CallSeqStart.getOperand(0);
+  SDValue Chain = OrigChain.getOperand(0);
   if (Chain.getNode() == Load.getNode())
     Ops.push_back(Load.getOperand(0));
   else {
     assert(Chain.getOpcode() == ISD::TokenFactor &&
-           "Unexpected CallSeqStart chain operand");
+           "Unexpected chain operand");
     for (unsigned i = 0, e = Chain.getNumOperands(); i != e; ++i)
       if (Chain.getOperand(i).getNode() == Load.getNode())
         Ops.push_back(Load.getOperand(0));
@@ -371,9 +371,9 @@ static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
     Ops.clear();
     Ops.push_back(NewChain);
   }
-  for (unsigned i = 1, e = CallSeqStart.getNumOperands(); i != e; ++i)
-    Ops.push_back(CallSeqStart.getOperand(i));
-  CurDAG->UpdateNodeOperands(CallSeqStart, &Ops[0], Ops.size());
+  for (unsigned i = 1, e = OrigChain.getNumOperands(); i != e; ++i)
+    Ops.push_back(OrigChain.getOperand(i));
+  CurDAG->UpdateNodeOperands(OrigChain, &Ops[0], Ops.size());
   CurDAG->UpdateNodeOperands(Load, Call.getOperand(0),
                              Load.getOperand(1), Load.getOperand(2));
   Ops.clear();
@@ -386,7 +386,9 @@ static void MoveBelowCallSeqStart(SelectionDAG *CurDAG, SDValue Load,
 /// isCalleeLoad - Return true if call address is a load and it can be
 /// moved below CALLSEQ_START and the chains leading up to the call.
 /// Return the CALLSEQ_START by reference as a second output.
-static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
+/// In the case of a tail call, there isn't a callseq node between the call
+/// chain and the load.
+static bool isCalleeLoad(SDValue Callee, SDValue &Chain, bool HasCallSeq) {
   if (Callee.getNode() == Chain.getNode() || !Callee.hasOneUse())
     return false;
   LoadSDNode *LD = dyn_cast<LoadSDNode>(Callee.getNode());
@@ -397,12 +399,14 @@ static bool isCalleeLoad(SDValue Callee, SDValue &Chain) {
     return false;
 
   // Now let's find the callseq_start.
-  while (Chain.getOpcode() != ISD::CALLSEQ_START) {
+  while (HasCallSeq && Chain.getOpcode() != ISD::CALLSEQ_START) {
     if (!Chain.hasOneUse())
       return false;
     Chain = Chain.getOperand(0);
   }
-  
+
+  if (!Chain.getNumOperands())
+    return false;
   if (Chain.getOperand(0).getNode() == Callee.getNode())
     return true;
   if (Chain.getOperand(0).getOpcode() == ISD::TokenFactor &&
@@ -420,7 +424,9 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
        E = CurDAG->allnodes_end(); I != E; ) {
     SDNode *N = I++;  // Preincrement iterator to avoid invalidation issues.
 
-    if (OptLevel != CodeGenOpt::None && N->getOpcode() == X86ISD::CALL) {
+    if (OptLevel != CodeGenOpt::None &&
+        (N->getOpcode() == X86ISD::CALL ||
+         N->getOpcode() == X86ISD::TC_RETURN)) {
       /// Also try moving call address load from outside callseq_start to just
       /// before the call to allow it to be folded.
       ///
@@ -440,11 +446,12 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
       ///      \        /
       ///       \      /
       ///       [CALL]
+      bool HasCallSeq = N->getOpcode() == X86ISD::CALL;
       SDValue Chain = N->getOperand(0);
       SDValue Load  = N->getOperand(1);
-      if (!isCalleeLoad(Load, Chain))
+      if (!isCalleeLoad(Load, Chain, HasCallSeq))
         continue;
-      MoveBelowCallSeqStart(CurDAG, Load, SDValue(N, 0), Chain);
+      MoveBelowOrigChain(CurDAG, Load, SDValue(N, 0), Chain);
       ++NumLoadMoved;
       continue;
     }

@@ -20,7 +20,7 @@ define fastcc i32 @indirect_manyargs(i32(i32,i32,i32,i32,i32,i32,i32)* %target) 
 ;  CHECK: subq $8, %rsp
 ; Put the call target into R11, which won't be clobbered while restoring
 ; callee-saved registers and won't be used for passing arguments.
-;  CHECK: movq %rdi, %r11
+;  CHECK: movq %rdi, %rax
 ; Pass the stack argument.
 ;  CHECK: movl $7, 16(%rsp)
 ; Pass the register arguments, in the right registers.
@@ -33,7 +33,7 @@ define fastcc i32 @indirect_manyargs(i32(i32,i32,i32,i32,i32,i32,i32)* %target) 
 ; Adjust the stack to "return".
 ;  CHECK: addq $8, %rsp
 ; And tail-call to the target.
-;  CHECK: jmpq *%r11  # TAILCALL
+;  CHECK: jmpq *%rax  # TAILCALL
   %res = tail call fastcc i32 %target(i32 1, i32 2, i32 3, i32 4, i32 5,
                                       i32 6, i32 7)
   ret i32 %res
@@ -60,11 +60,11 @@ define fastcc i32 @direct_manyargs() {
 ; the jmp instruction.  Put it into R11, which won't be clobbered
 ; while restoring callee-saved registers and won't be used for passing
 ; arguments.
-;  CHECK: movabsq $manyargs_callee, %r11
+;  CHECK: movabsq $manyargs_callee, %rax
 ; Adjust the stack to "return".
 ;  CHECK: addq $8, %rsp
 ; And tail-call to the target.
-;  CHECK: jmpq *%r11  # TAILCALL
+;  CHECK: jmpq *%rax  # TAILCALL
   %res = tail call fastcc i32 @manyargs_callee(i32 1, i32 2, i32 3, i32 4,
                                                i32 5, i32 6, i32 7)
   ret i32 %res
