@@ -509,6 +509,12 @@ void SelectionDAGISel::ShrinkDemandedOps() {
     InWorklist.erase(N);
 
     if (N->use_empty() && N != CurDAG->getRoot().getNode()) {
+      // Deleting this node may make its operands dead, add them to the worklist
+      // if they aren't already there.
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+        if (InWorklist.insert(N->getOperand(i).getNode()))
+          Worklist.push_back(N->getOperand(i).getNode());
+      
       CurDAG->DeleteNode(N);
       continue;
     }

@@ -71,3 +71,22 @@ return:                                           ; preds = %if.else, %entry
 }
 
 declare i32 @safe(i32)
+
+; PR6607
+define fastcc void @test5(i32 %FUNC) nounwind {
+foo:
+  %0 = load i8* undef, align 1                    ; <i8> [#uses=3]
+  %1 = sext i8 %0 to i32                          ; <i32> [#uses=2]
+  %2 = zext i8 %0 to i32                          ; <i32> [#uses=1]
+  %tmp1.i5037 = urem i32 %2, 10                   ; <i32> [#uses=1]
+  %tmp.i5038 = icmp ugt i32 %tmp1.i5037, 15       ; <i1> [#uses=1]
+  %3 = zext i1 %tmp.i5038 to i8                   ; <i8> [#uses=1]
+  %4 = icmp slt i8 %0, %3                         ; <i1> [#uses=1]
+  %5 = add nsw i32 %1, 256                        ; <i32> [#uses=1]
+  %storemerge.i.i57 = select i1 %4, i32 %5, i32 %1 ; <i32> [#uses=1]
+  %6 = shl i32 %storemerge.i.i57, 16              ; <i32> [#uses=1]
+  %7 = sdiv i32 %6, -256                          ; <i32> [#uses=1]
+  %8 = trunc i32 %7 to i8                         ; <i8> [#uses=1]
+  store i8 %8, i8* undef, align 1
+  ret void
+}
