@@ -208,7 +208,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64_TC:$dst, variable_ops),
                      "jmp{q}\t{*}$dst  # TAILCALL", []>;
 
-  def TAILJMPm64 : I<0xff, MRM4m, (outs), (ins i64mem_TC:$dst, variable_ops),
+  def TAILJMPm64 : I<0xFF, MRM4m, (outs), (ins i64mem_TC:$dst, variable_ops),
                      "jmp{q}\t{*}$dst  # TAILCALL", []>;
 }
 
@@ -360,17 +360,17 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
 
 /// Versions of MOV64rr, MOV64rm, and MOV64mr for i64mem_TC and GR64_TC.
 let neverHasSideEffects = 1 in
-def MOV64rr_TC : I<0x89, MRMDestReg, (outs GR64_TC:$dst), (ins GR64_TC:$src),
+def MOV64rr_TC : RI<0x89, MRMDestReg, (outs GR64_TC:$dst), (ins GR64_TC:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}", []>;
 
 let mayLoad = 1,
     canFoldAsLoad = 1, isReMaterializable = 1 in
-def MOV64rm_TC : I<0x8B, MRMSrcMem, (outs GR64_TC:$dst), (ins i64mem_TC:$src),
+def MOV64rm_TC : RI<0x8B, MRMSrcMem, (outs GR64_TC:$dst), (ins i64mem_TC:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}",
                 []>;
 
 let mayStore = 1 in
-def MOV64mr_TC : I<0x89, MRMDestMem, (outs), (ins i64mem_TC:$dst, GR64_TC:$src),
+def MOV64mr_TC : RI<0x89, MRMDestMem, (outs), (ins i64mem_TC:$dst, GR64_TC:$src),
                 "mov{q}\t{$src, $dst|$dst, $src}",
                 []>;
 
