@@ -38,7 +38,7 @@ L2:                                               ; preds = %L3, %bb2
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
-; CHECK: ldap r11, .LBA3_foo_L5
+; CHECK: ldap r11, .Ltmp0
 ; CHECK: stw r11, dp[nextaddr]
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3

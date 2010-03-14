@@ -139,6 +139,11 @@ class MachineModuleInfo : public ImmutablePass {
   /// llvm.compiler.used.
   SmallPtrSet<const Function *, 32> UsedFunctions;
 
+  
+  /// AddrLabelSymbols - This map keeps track of which symbol is being used for
+  /// the specified basic block's address of label.
+  DenseMap<AssertingVH<BasicBlock>, MCSymbol*> AddrLabelSymbols;
+  
   bool CallsEHReturn;
   bool CallsUnwindInit;
  
@@ -202,6 +207,11 @@ public:
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
   std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
+  
+  /// getAddrLabelSymbol - Return the symbol to be used for the specified basic
+  /// block when its address is taken.  This cannot be its normal LBB label
+  /// because the block may be accessed outside its containing function.
+  MCSymbol *getAddrLabelSymbol(const BasicBlock *BB);
   
   //===- EH ---------------------------------------------------------------===//
 

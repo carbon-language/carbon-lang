@@ -1580,28 +1580,11 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BlockAddress *BA) const {
-  return GetBlockAddressSymbol(BA->getFunction(), BA->getBasicBlock());
+  return MMI->getAddrLabelSymbol(BA->getBasicBlock());
 }
 
-MCSymbol *AsmPrinter::GetBlockAddressSymbol(const Function *F,
-                                            const BasicBlock *BB) const {
-  assert(BB->hasName() &&
-         "Address of anonymous basic block not supported yet!");
-
-  // This code must use the function name itself, and not the function number,
-  // since it must be possible to generate the label name from within other
-  // functions.
-  SmallString<60> FnName;
-  Mang->getNameWithPrefix(FnName, F, false);
-
-  // FIXME: THIS IS BROKEN IF THE LLVM BASIC BLOCK DOESN'T HAVE A NAME!
-  SmallString<60> NameResult;
-  Mang->getNameWithPrefix(NameResult,
-                          StringRef("BA") + Twine((unsigned)FnName.size()) + 
-                          "_" + FnName.str() + "_" + BB->getName(), 
-                          Mangler::Private);
-
-  return OutContext.GetOrCreateTemporarySymbol(NameResult.str());
+MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BasicBlock *BB) const {
+  return MMI->getAddrLabelSymbol(BB);
 }
 
 /// GetCPISymbol - Return the symbol for the specified constant pool entry.
@@ -1730,7 +1713,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
     const BasicBlock *BB = MBB->getBasicBlock();
     if (VerboseAsm)
       OutStreamer.AddComment("Address Taken");
-    OutStreamer.EmitLabel(GetBlockAddressSymbol(BB->getParent(), BB));
+    OutStreamer.EmitLabel(GetBlockAddressSymbol(BB));
   }
 
   // Print the main label for the block.

@@ -337,8 +337,7 @@ namespace llvm {
     /// GetBlockAddressSymbol - Return the MCSymbol used to satisfy BlockAddress
     /// uses of the specified basic block.
     MCSymbol *GetBlockAddressSymbol(const BlockAddress *BA) const;
-    MCSymbol *GetBlockAddressSymbol(const Function *F,
-                                    const BasicBlock *BB) const;
+    MCSymbol *GetBlockAddressSymbol(const BasicBlock *BB) const;
 
     /// EmitBasicBlockStart - This method prints the label for the specified
     /// MachineBasicBlock, an alignment (if present) and a comment describing

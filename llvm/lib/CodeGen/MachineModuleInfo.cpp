@@ -104,6 +104,18 @@ void MachineModuleInfo::AnalyzeModule(Module &M) {
       UsedFunctions.insert(F);
 }
 
+/// getAddrLabelSymbol - Return the symbol to be used for the specified basic
+/// block when its address is taken.  This cannot be its normal LBB label
+/// because the block may be accessed outside its containing function.
+MCSymbol *MachineModuleInfo::getAddrLabelSymbol(const BasicBlock *BB) {
+  assert(BB->hasAddressTaken() &&
+         "Shouldn't get label for block without address taken");
+  MCSymbol *&Entry = AddrLabelSymbols[const_cast<BasicBlock*>(BB)];
+  if (Entry) return Entry;
+  return Entry = Context.CreateTempSymbol();
+}
+
+
 //===-EH-------------------------------------------------------------------===//
 
 /// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
