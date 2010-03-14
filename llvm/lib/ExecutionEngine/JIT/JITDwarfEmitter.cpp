@@ -316,8 +316,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
         continue;
       }
 
-      unsigned BeginLabelID = MI->getOperand(0).getImm();
-      MCSymbol *BeginLabel = MMI->getLabelSym(BeginLabelID);
+      MCSymbol *BeginLabel = MI->getOperand(0).getMCSymbol();
       assert(BeginLabel && "Invalid label!");
 
       if (BeginLabel == LastLabel)
@@ -898,9 +897,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
         continue;
       }
 
-      unsigned BeginLabelID = MI->getOperand(0).getImm();
-      assert(BeginLabelID && "Invalid label!");
-      MCSymbol *BeginLabel = MMI->getLabelSym(BeginLabelID);
+      MCSymbol *BeginLabel = MI->getOperand(0).getMCSymbol();
       
       if (BeginLabel == LastLabel)
         MayThrow = false;
