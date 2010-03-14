@@ -214,7 +214,7 @@ public:
     : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
 
   PTHMap &getPM() { return PM; }
-  void GeneratePTH(const std::string *MainFile = 0);
+  void GeneratePTH(const std::string &MainFile);
 };
 } // end anonymous namespace
 
@@ -435,7 +435,7 @@ Offset PTHWriter::EmitCachedSpellings() {
   return SpellingsOff;
 }
 
-void PTHWriter::GeneratePTH(const std::string *MainFile) {
+void PTHWriter::GeneratePTH(const std::string &MainFile) {
   // Generate the prologue.
   Out << "cfe-pth";
   Emit32(PTHManager::Version);
@@ -446,7 +446,7 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
     Emit32(0);
 
   // Write the name of the MainFile.
-  if (MainFile && !MainFile->empty()) {
+  if (!MainFile->empty()) {
     Emit16(MainFile->length());
     EmitBuf(MainFile->data(), MainFile->length());
   } else {
@@ -532,10 +532,8 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   const SourceManager &SrcMgr = PP.getSourceManager();
   const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());
   llvm::sys::Path MainFilePath(MainFile->getName());
-  std::string MainFileName;
 
   MainFilePath.makeAbsolute();
-  MainFileName = MainFilePath.str();
 
   // Create the PTHWriter.
   PTHWriter PW(*OS, PP);
@@ -552,7 +550,7 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
 
   // Generate the PTH file.
   PP.getFileManager().removeStatCache(StatCache);
-  PW.GeneratePTH(&MainFileName);
+  PW.GeneratePTH(MainFilePath.str());
 }
 
 //===----------------------------------------------------------------------===//
