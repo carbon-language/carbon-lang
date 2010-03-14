@@ -2220,13 +2220,12 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
     assert(0 && "Unexpected scope info");
 
   unsigned Src = GetOrCreateSourceID(Dir, Fn);
-  unsigned ID = MMI->NextLabelID();
-  Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
+  MCSymbol *Label = getDWLabel("label", MMI->NextLabelID());
+  Lines.push_back(SrcLineInfo(Line, Col, Src, Label));
 
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
 
-  MCSymbol *Label = getDWLabel("label", ID);
   Asm->OutStreamer.EmitLabel(Label);
   return Label;
 }
@@ -2614,8 +2613,7 @@ void DwarfDebug::emitDebugLines() {
     // Construct rows of the address, source, line, column matrix.
     for (unsigned i = 0, N = LineInfos.size(); i < N; ++i) {
       const SrcLineInfo &LineInfo = LineInfos[i];
-      unsigned LabelID = LineInfo.getLabelID();
-      MCSymbol *Label = getDWLabel("label", LabelID);
+      MCSymbol *Label = LineInfo.getLabel();
       if (!Label->isDefined()) continue; // Not emitted, in dead code.
 
       if (LineInfo.getLine() == 0) continue;

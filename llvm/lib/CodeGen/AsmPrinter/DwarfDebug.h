@@ -45,16 +45,16 @@ class SrcLineInfo {
   unsigned Line;                     // Source line number.
   unsigned Column;                   // Source column.
   unsigned SourceID;                 // Source ID number.
-  unsigned LabelID;                  // Label in code ID number.
+  MCSymbol *Label;                   // Label in code ID number.
 public:
-  SrcLineInfo(unsigned L, unsigned C, unsigned S, unsigned I)
-    : Line(L), Column(C), SourceID(S), LabelID(I) {}
+  SrcLineInfo(unsigned L, unsigned C, unsigned S, MCSymbol *label)
+    : Line(L), Column(C), SourceID(S), Label(label) {}
 
   // Accessors
   unsigned getLine() const { return Line; }
   unsigned getColumn() const { return Column; }
   unsigned getSourceID() const { return SourceID; }
-  unsigned getLabelID() const { return LabelID; }
+  MCSymbol *getLabel() const { return Label; }
 };
 
 class DwarfDebug : public DwarfPrinter {
