@@ -565,7 +565,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(EXT_VECTOR_DECLS);
   RECORD(COMMENT_RANGES);
   RECORD(VERSION_CONTROL_BRANCH_REVISION);
-  
+
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -712,13 +712,8 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
     llvm::sys::Path MainFilePath(MainFile->getName());
     std::string MainFileName;
 
-    if (!MainFilePath.isAbsolute()) {
-      llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-      P.appendComponent(MainFilePath.str());
-      MainFileName = P.str();
-    } else {
-      MainFileName = MainFilePath.str();
-    }
+    MainFilePath.makeAbsolute();
+    MainFileName = MainFilePath.str();
 
     const char *MainFileNameStr = MainFileName.c_str();
     MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr,
@@ -727,7 +722,7 @@ void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
     Record.push_back(pch::ORIGINAL_FILE_NAME);
     Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
   }
-  
+
   // Repository branch/version information.
   BitCodeAbbrev *RepoAbbrev = new BitCodeAbbrev();
   RepoAbbrev->Add(BitCodeAbbrevOp(pch::VERSION_CONTROL_BRANCH_REVISION));
@@ -758,9 +753,9 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
 
   Record.push_back(LangOpts.ObjC1);  // Objective-C 1 support enabled.
   Record.push_back(LangOpts.ObjC2);  // Objective-C 2 support enabled.
-  Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C 
+  Record.push_back(LangOpts.ObjCNonFragileABI);  // Objective-C
                                                  // modern abi enabled.
-  Record.push_back(LangOpts.ObjCNonFragileABI2); // Objective-C enhanced 
+  Record.push_back(LangOpts.ObjCNonFragileABI2); // Objective-C enhanced
                                                  // modern abi enabled.
 
   Record.push_back(LangOpts.PascalStrings);  // Allow Pascal strings
@@ -1048,7 +1043,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   for (unsigned I = 1, N = SourceMgr.sloc_entry_size(); I != N; ++I) {
     // Get this source location entry.
     const SrcMgr::SLocEntry *SLoc = &SourceMgr.getSLocEntry(I);
-    
+
     // Record the offset of this source-location entry.
     SLocEntryOffsets.push_back(Stream.GetCurrentBitNo());
 
@@ -1080,12 +1075,9 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         const char *Filename = Content->Entry->getName();
         llvm::sys::Path FilePath(Filename, strlen(Filename));
         std::string FilenameStr;
-        if (!FilePath.isAbsolute()) {
-          llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-          P.appendComponent(FilePath.str());
-          FilenameStr = P.str();
-          Filename = FilenameStr.c_str();
-        }
+        FilePath.makeAbsolute();
+        FilenameStr = FilePath.str();
+        Filename = FilenameStr.c_str();
 
         Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
         Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename);
@@ -1998,9 +1990,9 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Build a record containing all of the static unused functions in this file.
   RecordData UnusedStaticFuncs;
-  for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i) 
+  for (unsigned i=0, e = SemaRef.UnusedStaticFuncs.size(); i !=e; ++i)
     AddDeclRef(SemaRef.UnusedStaticFuncs[i], UnusedStaticFuncs);
-              
+
   // Build a record containing all of the locally-scoped external
   // declarations in this header file. Generally, this record will be
   // empty.
@@ -2063,7 +2055,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       WriteDecl(Context, DOT.getDecl());
   }
   Stream.ExitBlock();
-  
+
   WritePreprocessor(PP);
   WriteMethodPool(SemaRef);
   WriteIdentifierTable(PP);
@@ -2105,7 +2097,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing unused static functions.
   if (!UnusedStaticFuncs.empty())
     Stream.EmitRecord(pch::UNUSED_STATIC_FUNCS, UnusedStaticFuncs);
-  
+
   // Write the record containing locally-scoped external definitions.
   if (!LocallyScopedExternalDecls.empty())
     Stream.EmitRecord(pch::LOCALLY_SCOPED_EXTERNAL_DECLS,
@@ -2206,7 +2198,7 @@ void PCHWriter::AddTypeSourceInfo(TypeSourceInfo *TInfo, RecordData &Record) {
   AddTypeRef(TInfo->getType(), Record);
   TypeLocWriter TLW(*this, Record);
   for (TypeLoc TL = TInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
-    TLW.Visit(TL);  
+    TLW.Visit(TL);
 }
 
 void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
@@ -2227,14 +2219,14 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
       ID = NextTypeID++;
       DeclTypesToEmit.push(T);
     }
-    
+
     // Encode the type qualifiers in the type reference.
     Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
     return;
   }
 
   assert(!T.hasLocalQualifiers());
-  
+
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr())) {
     pch::TypeID ID = 0;
     switch (BT->getKind()) {

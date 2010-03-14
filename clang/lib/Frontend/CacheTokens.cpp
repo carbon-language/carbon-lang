@@ -534,13 +534,8 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   llvm::sys::Path MainFilePath(MainFile->getName());
   std::string MainFileName;
 
-  if (!MainFilePath.isAbsolute()) {
-    llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
-    P.appendComponent(MainFilePath.str());
-    MainFileName = P.str();
-  } else {
-    MainFileName = MainFilePath.str();
-  }
+  MainFilePath.makeAbsolute();
+  MainFileName = MainFilePath.str();
 
   // Create the PTHWriter.
   PTHWriter PW(*OS, PP);
