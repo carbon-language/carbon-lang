@@ -298,6 +298,7 @@ RecognizableInstr::filter_ret RecognizableInstr::filter() const {
      Name.find("_int") != Name.npos       ||
      Name.find("Int_") != Name.npos       ||
      Name.find("_NOREX") != Name.npos     ||
+     Name.find("_TC") != Name.npos     ||
      Name.find("EH_RETURN") != Name.npos  ||
      Name.find("V_SET") != Name.npos      ||
      Name.find("LOCK_") != Name.npos      ||

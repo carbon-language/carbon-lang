@@ -266,9 +266,11 @@ static int X86FlagFromOpName(FlagsConstantEmitter *flags,
   REG("GR16");
   REG("GR32");
   REG("GR32_NOREX");
+  REG("GR32_TC");
   REG("FR32");
   REG("RFP32");
   REG("GR64");
+  REG("GR64_TC");
   REG("FR64");
   REG("VR64");
   REG("RFP64");
@@ -284,11 +286,13 @@ static int X86FlagFromOpName(FlagsConstantEmitter *flags,
   MEM("i8mem_NOREX");
   MEM("i16mem");
   MEM("i32mem");
+  MEM("i32mem_TC");
   MEM("f32mem");
   MEM("ssmem");
   MEM("opaque32mem");
   MEM("opaque48mem");
   MEM("i64mem");
+  MEM("i64mem_TC");
   MEM("f64mem");
   MEM("sdmem");
   MEM("f80mem");
