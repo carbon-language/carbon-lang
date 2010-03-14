@@ -35,3 +35,10 @@ declare ppc_fp128 @"\01_sinl$LDBL128"(ppc_fp128) nounwind readonly
 declare ppc_fp128 @"\01_cosl$LDBL128"(ppc_fp128) nounwind readonly
 
 declare ppc_fp128 @llvm.pow.ppcf128(ppc_fp128, ppc_fp128) nounwind readonly
+
+declare ppc_fp128 @copysignl(ppc_fp128, ppc_fp128)
+
+define ppc_fp128 @cs(ppc_fp128 %from, ppc_fp128 %to) {
+  %tmp = call ppc_fp128 @copysignl(ppc_fp128 %from, ppc_fp128 %to)
+  ret ppc_fp128 %tmp
+}

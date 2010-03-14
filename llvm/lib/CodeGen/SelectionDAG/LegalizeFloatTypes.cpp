@@ -817,6 +817,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::FABS:       ExpandFloatRes_FABS(N, Lo, Hi); break;
   case ISD::FADD:       ExpandFloatRes_FADD(N, Lo, Hi); break;
   case ISD::FCEIL:      ExpandFloatRes_FCEIL(N, Lo, Hi); break;
+  case ISD::FCOPYSIGN:  ExpandFloatRes_FCOPYSIGN(N, Lo, Hi); break;
   case ISD::FCOS:       ExpandFloatRes_FCOS(N, Lo, Hi); break;
   case ISD::FDIV:       ExpandFloatRes_FDIV(N, Lo, Hi); break;
   case ISD::FEXP:       ExpandFloatRes_FEXP(N, Lo, Hi); break;
@@ -886,6 +887,17 @@ void DAGTypeLegalizer::ExpandFloatRes_FCEIL(SDNode *N,
   SDValue Call = LibCallify(GetFPLibCall(N->getValueType(0),
                                          RTLIB::CEIL_F32, RTLIB::CEIL_F64,
                                          RTLIB::CEIL_F80, RTLIB::CEIL_PPCF128),
+                            N, false);
+  GetPairElements(Call, Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FCOPYSIGN(SDNode *N,
+                                                SDValue &Lo, SDValue &Hi) {
+  SDValue Call = LibCallify(GetFPLibCall(N->getValueType(0),
+                                         RTLIB::COPYSIGN_F32,
+                                         RTLIB::COPYSIGN_F64,
+                                         RTLIB::COPYSIGN_F80,
+                                         RTLIB::COPYSIGN_PPCF128),
                             N, false);
   GetPairElements(Call, Lo, Hi);
 }

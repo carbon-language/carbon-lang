@@ -4639,7 +4639,7 @@ void SelectionDAGBuilder::visitCall(CallInst &I) {
     // can't be a library call.
     if (!F->hasLocalLinkage() && F->hasName()) {
       StringRef Name = F->getName();
-      if (Name == "copysign" || Name == "copysignf") {
+      if (Name == "copysign" || Name == "copysignf" || Name == "copysignl") {
         if (I.getNumOperands() == 3 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPointTy() &&
             I.getType() == I.getOperand(1)->getType() &&

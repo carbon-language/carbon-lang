@@ -458,6 +458,7 @@ private:
   void ExpandFloatRes_FABS      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FADD      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FCEIL     (SDNode *N, SDValue &Lo, SDValue &Hi);
+  void ExpandFloatRes_FCOPYSIGN (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FCOS      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FDIV      (SDNode *N, SDValue &Lo, SDValue &Hi);
   void ExpandFloatRes_FEXP      (SDNode *N, SDValue &Lo, SDValue &Hi);
