@@ -1826,7 +1826,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
         // switch.
         if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
           if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred))
-            return SimplifyCFG(BB) || 1;
+            return SimplifyCFG(BB) | true;
 
         // This block must be empty, except for the setcond inst, if it exists.
         // Ignore dbg intrinsics.
@@ -1860,7 +1860,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       // branches to us and one of our successors, fold the setcc into the
       // predecessor and use logical operations to pick the right destination.
       if (FoldBranchToCommonDest(BI))
-        return SimplifyCFG(BB) | 1;
+        return SimplifyCFG(BB) | true;
 
 
       // Scan predecessor blocks for conditional branches.
