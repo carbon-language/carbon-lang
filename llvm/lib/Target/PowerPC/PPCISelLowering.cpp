@@ -4217,7 +4217,7 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
 /// LowerINTRINSIC_WO_CHAIN - If this is an intrinsic that we want to custom
 /// lower, do it, otherwise return null.
 SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
-                                                     SelectionDAG &DAG) {
+                                                   SelectionDAG &DAG) {
   // If this is a lowered altivec predicate compare, CompareOpc is set to the
   // opcode number of the comparison.
   DebugLoc dl = Op.getDebugLoc();
@@ -4229,8 +4229,8 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   // If this is a non-dot comparison, make the VCMP node and we are done.
   if (!isDot) {
     SDValue Tmp = DAG.getNode(PPCISD::VCMP, dl, Op.getOperand(2).getValueType(),
-                                Op.getOperand(1), Op.getOperand(2),
-                                DAG.getConstant(CompareOpc, MVT::i32));
+                              Op.getOperand(1), Op.getOperand(2),
+                              DAG.getConstant(CompareOpc, MVT::i32));
     return DAG.getNode(ISD::BIT_CONVERT, dl, Op.getValueType(), Tmp);
   }
 
