@@ -454,7 +454,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
                      const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      const SmallVectorImpl<unsigned> &FirstActions) {
   // The end label of the previous invoke or nounwind try-range.
-  unsigned LastLabel = 0;
+  MCSymbol *LastLabel = 0;
 
   // Whether there is a potentially throwing instruction (currently this means
   // an ordinary call) between the end of the previous try-range and now.
@@ -475,8 +475,9 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         continue;
       }
 
-      unsigned BeginLabel = MI->getOperand(0).getImm();
-      assert(BeginLabel && "Invalid label!");
+      unsigned BeginLabelNo = MI->getOperand(0).getImm();
+      assert(BeginLabelNo && "Invalid label!");
+      MCSymbol *BeginLabel = getDWLabel("label", BeginLabelNo);
 
       // End of the previous try-range?
       if (BeginLabel == LastLabel)
@@ -580,7 +581,6 @@ void DwarfException::EmitExceptionTable() {
   const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
-  if (PadInfos.empty()) return;
 
   // Sort the landing pads in order of their type ids.  This is used to fold
   // duplicate actions.
@@ -605,7 +605,7 @@ void DwarfException::EmitExceptionTable() {
   for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
     const LandingPadInfo *LandingPad = LandingPads[i];
     for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
-      unsigned BeginLabel = LandingPad->BeginLabels[j];
+      MCSymbol *BeginLabel = LandingPad->BeginLabels[j];
       assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
       PadRange P = { i, j };
       PadMap[BeginLabel] = P;
@@ -790,45 +790,33 @@ void DwarfException::EmitExceptionTable() {
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
       const CallSiteEntry &S = *I;
-      const char *BeginTag;
-      unsigned BeginNumber;
-
-      if (!S.BeginLabel) {
-        BeginTag = "eh_func_begin";
-        BeginNumber = SubprogramCount;
-      } else {
-        BeginTag = "label";
-        BeginNumber = S.BeginLabel;
-      }
-
+      
+      MCSymbol *EHFuncBeginSym = getDWLabel("eh_func_begin", SubprogramCount);
+      
+      MCSymbol *BeginLabel = S.BeginLabel;
+      if (BeginLabel == 0)
+        BeginLabel = EHFuncBeginSym;
+      MCSymbol *EndLabel = S.EndLabel;
+      if (EndLabel == 0)
+        EndLabel = getDWLabel("eh_func_end", SubprogramCount);
+        
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
       Asm->OutStreamer.AddComment("Region start");
-      EmitSectionOffset(getDWLabel(BeginTag, BeginNumber),
-                        getDWLabel("eh_func_begin", SubprogramCount),
-                        true, true);
-
+      EmitSectionOffset(EHFuncBeginSym, EndLabel, true);
+      
       Asm->OutStreamer.AddComment("Region length");
-      if (!S.EndLabel)
-        EmitDifference(getDWLabel("eh_func_end", SubprogramCount),
-                       getDWLabel(BeginTag, BeginNumber),
-                       true);
-      else
-        EmitDifference(getDWLabel("label", S.EndLabel), 
-                       getDWLabel(BeginTag, BeginNumber), true);
+      EmitDifference(EndLabel, BeginLabel, true);
 
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
       Asm->OutStreamer.AddComment("Landing pad");
-      if (!S.PadLabel) {
+      if (!S.PadLabel)
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
-      } else {
-        EmitSectionOffset(getDWLabel("label", S.PadLabel),
-                          getDWLabel("eh_func_begin", SubprogramCount),
-                          true, true);
-      }
+      else
+        EmitSectionOffset(S.PadLabel, EHFuncBeginSym, true, true);
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
@@ -928,16 +916,11 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
   this->MF = MF;
   shouldEmitTable = shouldEmitMoves = false;
 
-  // Map all labels and get rid of any dead landing pads.
-  MMI->TidyLandingPads();
-
   // If any landing pads survive, we need an EH table.
-  if (!MMI->getLandingPads().empty())
-    shouldEmitTable = true;
+  shouldEmitTable = !MMI->getLandingPads().empty();
 
   // See if we need frame move info.
-  if (!MF->getFunction()->doesNotThrow() || UnwindTablesMandatory)
-    shouldEmitMoves = true;
+  shouldEmitMoves = !MF->getFunction()->doesNotThrow() || UnwindTablesMandatory;
 
   if (shouldEmitMoves || shouldEmitTable)
     // Assumes in correct section after the entry point.
@@ -959,7 +942,16 @@ void DwarfException::EndFunction() {
     ExceptionTimer->startTimer();
 
   Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_end", SubprogramCount));
-  EmitExceptionTable();
+
+  // Record if this personality index uses a landing pad.
+  bool HasLandingPad = !MMI->getLandingPads().empty();
+  UsesLSDA[MMI->getPersonalityIndex()] |= HasLandingPad;
+  
+  // Map all labels and get rid of any dead landing pads.
+  MMI->TidyLandingPads();
+
+  if (HasLandingPad)
+    EmitExceptionTable();
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   MCSymbol *FunctionEHSym =
@@ -973,9 +965,6 @@ void DwarfException::EndFunction() {
                                          !MMI->getLandingPads().empty(),
                                          MMI->getFrameMoves(),
                                          MF->getFunction()));
-
-  // Record if this personality index uses a landing pad.
-  UsesLSDA[MMI->getPersonalityIndex()] |= !MMI->getLandingPads().empty();
 
   if (TimePassesIsEnabled)
     ExceptionTimer->stopTimer();

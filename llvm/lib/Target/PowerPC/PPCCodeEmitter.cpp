@@ -30,6 +30,7 @@ namespace {
   class PPCCodeEmitter : public MachineFunctionPass {
     TargetMachine &TM;
     JITCodeEmitter &MCE;
+    MachineModuleInfo *MMI;
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineModuleInfo>();
@@ -87,7 +88,8 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
           MF.getTarget().getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
 
-  MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
+  MMI = &getAnalysis<MachineModuleInfo>();
+  MCE.setModuleInfo(MMI);
   do {
     MovePCtoLROffset = 0;
     MCE.startFunction(MF);
@@ -110,7 +112,7 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
       break;
     case TargetOpcode::DBG_LABEL:
     case TargetOpcode::EH_LABEL:
-      MCE.emitLabel(MI.getOperand(0).getImm());
+      MCE.emitLabel(MMI->getLabelSym(MI.getOperand(0).getImm()));
       break;
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:

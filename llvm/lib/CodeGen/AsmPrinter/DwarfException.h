@@ -111,13 +111,6 @@ class DwarfException : public DwarfPrinter {
   /// PadLT - Order landing pads lexicographically by type id.
   static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R);
 
-  struct KeyInfo {
-    static inline unsigned getEmptyKey() { return -1U; }
-    static inline unsigned getTombstoneKey() { return -2U; }
-    static unsigned getHashValue(const unsigned &Key) { return Key; }
-    static bool isEqual(unsigned LHS, unsigned RHS) { return LHS == RHS; }
-  };
-
   /// PadRange - Structure holding a try-range and the associated landing pad.
   struct PadRange {
     // The index of the landing pad.
@@ -126,7 +119,7 @@ class DwarfException : public DwarfPrinter {
     unsigned RangeIndex;
   };
 
-  typedef DenseMap<unsigned, PadRange, KeyInfo> RangeMapType;
+  typedef DenseMap<MCSymbol *, PadRange> RangeMapType;
 
   /// ActionEntry - Structure describing an entry in the actions table.
   struct ActionEntry {
@@ -138,11 +131,11 @@ class DwarfException : public DwarfPrinter {
   /// CallSiteEntry - Structure describing an entry in the call-site table.
   struct CallSiteEntry {
     // The 'try-range' is BeginLabel .. EndLabel.
-    unsigned BeginLabel; // zero indicates the start of the function.
-    unsigned EndLabel;   // zero indicates the end of the function.
+    MCSymbol *BeginLabel; // zero indicates the start of the function.
+    MCSymbol *EndLabel;   // zero indicates the end of the function.
 
     // The landing pad starts at PadLabel.
-    unsigned PadLabel;   // zero indicates that there is no landing pad.
+    MCSymbol *PadLabel;   // zero indicates that there is no landing pad.
     unsigned Action;
   };
 

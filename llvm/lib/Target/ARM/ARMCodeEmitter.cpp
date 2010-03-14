@@ -51,6 +51,7 @@ namespace {
     const ARMSubtarget        *Subtarget;
     TargetMachine             &TM;
     JITCodeEmitter            &MCE;
+    MachineModuleInfo *MMI;
     const std::vector<MachineConstantPoolEntry> *MCPEs;
     const std::vector<MachineJumpTableEntry> *MJTEs;
     bool IsPIC;
@@ -182,7 +183,8 @@ bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   if (MF.getJumpTableInfo()) MJTEs = &MF.getJumpTableInfo()->getJumpTables();
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
   JTI->Initialize(MF, IsPIC);
-  MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
+  MMI = &getAnalysis<MachineModuleInfo>();
+  MCE.setModuleInfo(MMI);
 
   do {
     DEBUG(errs() << "JITTing function '"
@@ -563,7 +565,7 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
   }
   case TargetOpcode::DBG_LABEL:
   case TargetOpcode::EH_LABEL:
-    MCE.emitLabel(MI.getOperand(0).getImm());
+    MCE.emitLabel(MMI->getLabelSym(MI.getOperand(0).getImm()));
     break;
   case TargetOpcode::IMPLICIT_DEF:
   case TargetOpcode::KILL:

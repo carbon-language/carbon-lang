@@ -77,18 +77,15 @@ protected:
 /// the current function.
 ///
 struct LandingPadInfo {
-  MachineBasicBlock *LandingPadBlock;   // Landing pad block.
-  SmallVector<unsigned, 1> BeginLabels; // Labels prior to invoke.
-  SmallVector<unsigned, 1> EndLabels;   // Labels after invoke.
-  unsigned LandingPadLabel;             // Label at beginning of landing pad.
-  Function *Personality;                // Personality function.
-  std::vector<int> TypeIds;             // List of type ids (filters negative)
+  MachineBasicBlock *LandingPadBlock;    // Landing pad block.
+  SmallVector<MCSymbol*, 1> BeginLabels; // Labels prior to invoke.
+  SmallVector<MCSymbol*, 1> EndLabels;   // Labels after invoke.
+  MCSymbol *LandingPadLabel;             // Label at beginning of landing pad.
+  Function *Personality;                 // Personality function.
+  std::vector<int> TypeIds;              // List of type ids (filters negative)
 
   explicit LandingPadInfo(MachineBasicBlock *MBB)
-  : LandingPadBlock(MBB)
-  , LandingPadLabel(0)
-  , Personality(NULL)  
-  {}
+    : LandingPadBlock(MBB), LandingPadLabel(0), Personality(0) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -121,7 +118,7 @@ class MachineModuleInfo : public ImmutablePass {
 
   // Map of invoke call site index values to associated begin EH_LABEL for
   // the current function.
-  DenseMap<unsigned, unsigned> CallSiteMap;
+  DenseMap<MCSymbol*, unsigned> CallSiteMap;
 
   // The current call site index being processed, if any. 0 if none.
   unsigned CurCallSite;
@@ -215,6 +212,9 @@ public:
     return ID;
   }
   
+  /// getLabelSym - Turn a label ID into a symbol.
+  MCSymbol *getLabelSym(unsigned ID);
+  
   /// InvalidateLabel - Inhibit use of the specified label # from
   /// MachineModuleInfo, for example because the code was deleted.
   void InvalidateLabel(unsigned LabelID) {
@@ -245,8 +245,8 @@ public:
 
   /// addInvoke - Provide the begin and end labels of an invoke style call and
   /// associate it with a try landing pad block.
-  void addInvoke(MachineBasicBlock *LandingPad, unsigned BeginLabel,
-                                                unsigned EndLabel);
+  void addInvoke(MachineBasicBlock *LandingPad,
+                 MCSymbol *BeginLabel, MCSymbol *EndLabel);
   
   /// addLandingPad - Add a new panding pad.  Returns the label ID for the 
   /// landing pad entry.
@@ -305,12 +305,12 @@ public:
   }
 
   /// setCallSiteBeginLabel - Map the begin label for a call site
-  void setCallSiteBeginLabel(unsigned BeginLabel, unsigned Site) {
+  void setCallSiteBeginLabel(MCSymbol *BeginLabel, unsigned Site) {
     CallSiteMap[BeginLabel] = Site;
   }
 
   /// getCallSiteBeginLabel - Get the call site number for a begin label
-  unsigned getCallSiteBeginLabel(unsigned BeginLabel) {
+  unsigned getCallSiteBeginLabel(MCSymbol *BeginLabel) {
     assert(CallSiteMap.count(BeginLabel) &&
            "Missing call site number for EH_LABEL!");
     return CallSiteMap[BeginLabel];

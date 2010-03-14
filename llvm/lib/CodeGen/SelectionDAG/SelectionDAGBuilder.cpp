@@ -4302,7 +4302,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
   const Type *RetTy = FTy->getReturnType();
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-  unsigned BeginLabel = 0, EndLabel = 0;
+  MCSymbol *BeginLabel = 0;
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
@@ -4362,7 +4362,8 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   if (LandingPad && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
-    BeginLabel = MMI->NextLabelID();
+    unsigned BeginLabelID = MMI->NextLabelID();
+    BeginLabel = MMI->getLabelSym(BeginLabelID);
 
     // For SjLj, keep track of which landing pads go with which invokes
     // so as to maintain the ordering of pads in the LSDA.
@@ -4377,7 +4378,7 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
     // this call might not return.
     (void)getRoot();
     DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                             getControlRoot(), BeginLabel));
+                             getControlRoot(), BeginLabelID));
   }
 
   // Check if target-independent constraints permit a tail call here.
@@ -4465,9 +4466,10 @@ void SelectionDAGBuilder::LowerCallTo(CallSite CS, SDValue Callee,
   if (LandingPad && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
-    EndLabel = MMI->NextLabelID();
+    unsigned EndLabelID = MMI->NextLabelID();
+    MCSymbol *EndLabel = MMI->getLabelSym(EndLabelID);
     DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getCurDebugLoc(),
-                             getRoot(), EndLabel));
+                             getRoot(), EndLabelID));
 
     // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);

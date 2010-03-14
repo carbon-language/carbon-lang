@@ -137,13 +137,6 @@ public:
   /// emitted.
   virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const;
 
-  /// emitLabel - Emits a label
-  virtual void emitLabel(uint64_t LabelID) = 0;
-
-  /// getLabelAddress - Return the address of the specified LabelID, only usable
-  /// after the LabelID has been emitted.
-  virtual uintptr_t getLabelAddress(uint64_t LabelID) const = 0;
-
   /// emitJumpTables - Emit all the jump tables for a given jump table info
   /// record to the appropriate section.
   virtual void emitJumpTables(MachineJumpTableInfo *MJTI) = 0;
