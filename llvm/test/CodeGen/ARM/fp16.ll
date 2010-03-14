@@ -1,5 +1,5 @@
 ; RUN: llc < %s | FileCheck %s
-; RUN: llc -mattr=+fp16,+vfp3 | FileCheck --check-prefix=CHECK-FP16 %s
+; RUN: llc -mattr=+vfp3,+fp16 < %s | FileCheck --check-prefix=CHECK-FP16 %s
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32"
 target triple = "armv7-eabi"
 
