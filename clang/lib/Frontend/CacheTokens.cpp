@@ -446,9 +446,9 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
     Emit32(0);
 
   // Write the name of the MainFile.
-  if (!MainFile->empty()) {
-    Emit16(MainFile->length());
-    EmitBuf(MainFile->data(), MainFile->length());
+  if (!MainFile.empty()) {
+    Emit16(MainFile.length());
+    EmitBuf(MainFile.data(), MainFile.length());
   } else {
     // String with 0 bytes.
     Emit16(0);
