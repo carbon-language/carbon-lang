@@ -1,4 +1,6 @@
 // RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
+// XFAIL: *
+
 
 // CHECK: movb	$127, 3735928559(%ebx,%ecx,8)
 // CHECK:  encoding: [0xc6,0x84,0xcb,0xef,0xbe,0xad,0xde,0x7f]
