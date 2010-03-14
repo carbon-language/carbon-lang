@@ -59,6 +59,8 @@ namespace llvm {
       FTOUI,        // FP to uint within a FP register.
       SITOF,        // sint to FP within a FP register.
       UITOF,        // uint to FP within a FP register.
+      F16_TO_F32,   // Half FP to single FP within a FP register.
+      F32_TO_F16,   // Single FP to half FP within a FP register.
 
       SRL_FLAG,     // V,Flag = srl_flag X -> srl X, 1 + save carry out.
       SRA_FLAG,     // V,Flag = sra_flag X -> sra X, 1 + save carry out.

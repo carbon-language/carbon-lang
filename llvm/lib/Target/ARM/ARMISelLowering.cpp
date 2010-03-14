@@ -426,12 +426,20 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FPOW,      MVT::f64, Expand);
   setOperationAction(ISD::FPOW,      MVT::f32, Expand);
 
-  // int <-> fp are custom expanded into bit_convert + ARMISD ops.
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
-    setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
-    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
-    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
-    setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+  // Various VFP goodness
+  if (!UseSoftFloat && !Subtarget->isThumb1Only()) {
+    // int <-> fp are custom expanded into bit_convert + ARMISD ops.
+    if (Subtarget->hasVFP2()) {
+      setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
+      setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
+      setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+    }
+    // Special handling for half-precision FP.
+    if (Subtarget->hasVFP3()) {
+      setOperationAction(ISD::FP16_TO_FP32, MVT::f32, Custom);
+      setOperationAction(ISD::FP32_TO_FP16, MVT::i32, Custom);
+    }
   }
 
   // We have target-specific dag combine patterns for the following nodes:
@@ -491,6 +499,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FTOUI:         return "ARMISD::FTOUI";
   case ARMISD::SITOF:         return "ARMISD::SITOF";
   case ARMISD::UITOF:         return "ARMISD::UITOF";
+  case ARMISD::F16_TO_F32:    return "ARMISD::F16_TO_F32";
+  case ARMISD::F32_TO_F16:    return "ARMISD::F32_TO_F16";
 
   case ARMISD::SRL_FLAG:      return "ARMISD::SRL_FLAG";
   case ARMISD::SRA_FLAG:      return "ARMISD::SRA_FLAG";
@@ -1972,8 +1982,21 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
-  unsigned Opc =
-    Op.getOpcode() == ISD::FP_TO_SINT ? ARMISD::FTOSI : ARMISD::FTOUI;
+  unsigned Opc;
+
+  switch (Op.getOpcode()) {
+  default:
+    assert(0 && "Invalid opcode!");
+  case ISD::FP32_TO_FP16:
+    Opc = ARMISD::F32_TO_F16;
+    break;
+  case ISD::FP_TO_SINT:
+    Opc = ARMISD::FTOSI;
+    break;
+  case ISD::FP_TO_UINT:
+    Opc = ARMISD::FTOUI;
+    break;
+  }
   Op = DAG.getNode(Opc, dl, MVT::f32, Op.getOperand(0));
   return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i32, Op);
 }
@@ -1981,8 +2004,21 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
 static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
-  unsigned Opc =
-    Op.getOpcode() == ISD::SINT_TO_FP ? ARMISD::SITOF : ARMISD::UITOF;
+  unsigned Opc;
+
+  switch (Op.getOpcode()) {
+  default:
+    assert(0 && "Invalid opcode!");
+  case ISD::FP16_TO_FP32:
+    Opc = ARMISD::F16_TO_F32;
+    break;
+  case ISD::SINT_TO_FP:
+    Opc = ARMISD::SITOF;
+    break;
+  case ISD::UINT_TO_FP:
+    Opc = ARMISD::UITOF;
+    break;
+  }
 
   Op = DAG.getNode(ISD::BIT_CONVERT, dl, MVT::f32, Op.getOperand(0));
   return DAG.getNode(Opc, dl, VT, Op);
@@ -3042,8 +3078,10 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG, Subtarget);
+  case ISD::FP16_TO_FP32:
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
+  case ISD::FP32_TO_FP16:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:    return LowerFP_TO_INT(Op, DAG);
   case ISD::FCOPYSIGN:     return LowerFCOPYSIGN(Op, DAG);
