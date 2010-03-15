@@ -39,7 +39,7 @@ class MCSectionELF : public MCSection {
 protected:
   MCSectionELF(StringRef Section, unsigned type, unsigned flags,
                SectionKind K, bool isExplicit)
-    : MCSection(K), SectionName(Section.str()), Type(type), Flags(flags), 
+    : MCSection(K), SectionName(Section), Type(type), Flags(flags), 
       IsExplicit(isExplicit) {}
 public:
   
