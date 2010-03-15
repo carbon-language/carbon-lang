@@ -474,6 +474,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fcatch-undefined-behavior");
   if (Opts.WritableStrings)
     Res.push_back("-fwritable-strings");
+  if (Opts.ConstStrings)
+    Res.push_back("-Wwrite-strings");
   if (!Opts.LaxVectorConversions)
     Res.push_back("-fno-lax-vector-conversions");
   if (Opts.AltiVec)
@@ -1162,6 +1164,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.PascalStrings = Args.hasArg(OPT_fpascal_strings);
   Opts.Microsoft = Args.hasArg(OPT_fms_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
+  Opts.ConstStrings = Args.hasArg(OPT_Wwrite_strings);
   if (Args.hasArg(OPT_fno_lax_vector_conversions))
     Opts.LaxVectorConversions = 0;
   if (Args.hasArg(OPT_fno_threadsafe_statics))

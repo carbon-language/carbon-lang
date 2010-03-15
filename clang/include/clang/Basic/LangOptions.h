@@ -44,6 +44,7 @@ public:
 
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned WritableStrings   : 1;  // Allow writable strings
+  unsigned ConstStrings      : 1;  // Add const qualifier to strings (-Wwrite-strings)
   unsigned LaxVectorConversions : 1;
   unsigned AltiVec           : 1;  // Support AltiVec-style vector initializers.
   unsigned Exceptions        : 1;  // Support exception handling.
@@ -129,7 +130,7 @@ public:
     HexFloats = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
-    CXXOperatorNames = PascalStrings = WritableStrings = 0;
+    CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = SjLjExceptions = Freestanding = NoBuiltin = 0;
     NeXTRuntime = 1;
     RTTI = 1;

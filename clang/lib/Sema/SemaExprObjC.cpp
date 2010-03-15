@@ -106,7 +106,7 @@ Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
     // which is an array type.
     StrTy = Context.CharTy;
     // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
-    if (getLangOptions().CPlusPlus)
+    if (getLangOptions().CPlusPlus || getLangOptions().ConstStrings)
       StrTy.addConst();
     StrTy = Context.getConstantArrayType(StrTy, llvm::APInt(32, Str.size()+1),
                                          ArrayType::Normal, 0);
