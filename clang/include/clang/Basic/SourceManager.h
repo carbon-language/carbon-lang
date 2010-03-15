@@ -30,7 +30,6 @@ namespace clang {
 class SourceManager;
 class FileManager;
 class FileEntry;
-class IdentifierTokenInfo;
 class LineTableInfo;
 
 /// SrcMgr - Public enums and private classes that are part of the
@@ -337,7 +336,7 @@ class SourceManager {
   void operator=(const SourceManager&);
 public:
   SourceManager()
-    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0), 
+    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
       NumBinaryProbes(0) {
     clearIDTables();
   }
@@ -678,7 +677,7 @@ public:
   void PrintStats() const;
 
   unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
-  
+
   // FIXME: Exposing this is a little gross; what we want is a good way
   //  to iterate the entries that were not defined in a PCH file (or
   //  any other external source).
@@ -692,8 +691,8 @@ public:
       ExternalSLocEntries->ReadSLocEntry(ID);
     return SLocEntryTable[ID];
   }
-  
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {    
+
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
     return getSLocEntry(FID.ID);
   }
 
