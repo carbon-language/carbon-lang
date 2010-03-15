@@ -2332,24 +2332,6 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
     if (SrcNames[I->first].first == 0)
       Pattern->error("Pattern has input without matching name in output: $" +
                      I->first);
-    
-#if 0
-    const std::vector<unsigned char> &SrcTypeVec =
-      SrcNames[I->first].first->getExtTypes();
-    const std::vector<unsigned char> &DstTypeVec =
-      I->second.first->getExtTypes();
-    if (SrcTypeVec == DstTypeVec) continue;
-    
-    std::string SrcType, DstType;
-    for (unsigned i = 0, e = SrcTypeVec.size(); i != e; ++i)
-      SrcType += ":" + GetTypeName(SrcTypeVec[i]);
-    for (unsigned i = 0, e = DstTypeVec.size(); i != e; ++i)
-      DstType += ":" + GetTypeName(DstTypeVec[i]);
-    
-    Pattern->error("Variable $" + I->first +
-                   " has different types in source (" + SrcType +
-                   ") and dest (" + DstType + ") pattern!");
-#endif
   }
   
   // Scan all of the named values in the source pattern, rejecting them if the
