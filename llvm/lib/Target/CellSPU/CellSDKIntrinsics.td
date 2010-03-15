@@ -205,10 +205,9 @@ def CellSDKnand:
 // Shift/rotate intrinsics:
 //===----------------------------------------------------------------------===//
 
-/* FIXME: These have (currently unenforced) type conflicts. */
 def CellSDKshli:
   Pat<(int_spu_si_shli (v4i32 VECREG:$rA), uimm7:$val),
-      (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
+      (SHLIv4i32 VECREG:$rA, (TO_IMM32 imm:$val))>;
 
 def CellSDKshlqbi:
   Pat<(int_spu_si_shlqbi VECREG:$rA, R32C:$rB),
@@ -216,7 +215,7 @@ def CellSDKshlqbi:
 
 def CellSDKshlqii:
   Pat<(int_spu_si_shlqbii VECREG:$rA, uimm7:$val),
-      (SHLQBIIv16i8 VECREG:$rA, uimm7:$val)>;
+      (SHLQBIIv16i8 VECREG:$rA, (TO_IMM32 imm:$val))>;
 
 def CellSDKshlqby:
   Pat<(int_spu_si_shlqby VECREG:$rA, R32C:$rB),
@@ -224,7 +223,8 @@ def CellSDKshlqby:
 
 def CellSDKshlqbyi:
   Pat<(int_spu_si_shlqbyi VECREG:$rA, uimm7:$val),
-      (SHLQBYIv16i8 VECREG:$rA, uimm7:$val)>;
+      (SHLQBYIv16i8 VECREG:$rA, (TO_IMM32 imm:$val))>;
+
           
 //===----------------------------------------------------------------------===//
 // Branch/compare intrinsics:

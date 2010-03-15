@@ -9,6 +9,17 @@
 // Cell SPU Instruction Operands:
 //===----------------------------------------------------------------------===//
 
+// TO_IMM32 - Convert an i8/i16 to i32.
+def TO_IMM32 : SDNodeXForm<imm, [{
+  return getI32Imm(N->getZExtValue());
+}]>;
+
+// TO_IMM16 - Convert an i8/i32 to i16.
+def TO_IMM16 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i16);
+}]>;
+
+
 def LO16 : SDNodeXForm<imm, [{
   unsigned val = N->getZExtValue();
   // Transformation function: get the low 16 bits.

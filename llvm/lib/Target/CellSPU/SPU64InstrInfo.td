@@ -155,8 +155,9 @@ multiclass CompareLogicalGreaterEqual64 {
 defm I64LGE: CompareLogicalGreaterEqual64;
 
 def : Pat<(setuge R64C:$rA, R64C:$rB), I64LGEr64.Fragment>;
-def : Pat<(setuge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
-                  I64LGEv2i64.Fragment>;
+def : Pat<(v2i64 (setuge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB))),
+          I64LGEv2i64.Fragment>;
+                  
 
 // i64 setult:
 def : I64SETCCNegCond<setult, I64LGEr64>;
@@ -233,8 +234,8 @@ multiclass CompareGreaterEqual64 {
 defm I64GE: CompareGreaterEqual64;
 
 def : Pat<(setge R64C:$rA, R64C:$rB), I64GEr64.Fragment>;
-def : Pat<(setge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB)),
-                  I64GEv2i64.Fragment>;
+def : Pat<(v2i64 (setge (v2i64 VECREG:$rA), (v2i64 VECREG:$rB))),
+          I64GEv2i64.Fragment>;
 
 // i64 setult:
 def : I64SETCCNegCond<setlt, I64GEr64>;
