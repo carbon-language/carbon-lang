@@ -70,53 +70,14 @@ Disable16Bit("disable-16bit", cl::Hidden,
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
 
-// FIXME: This is for a test.
-static cl::opt<bool>
-EnableX86EHTest("enable-x86-eh-test", cl::Hidden);
-
-namespace llvm {
-  class X86_test_MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
-  public:
-    virtual void Initialize(MCContext &Ctx, const TargetMachine &TM) {
-      TargetLoweringObjectFileMachO::Initialize(Ctx, TM);
-
-      // Exception Handling.
-      LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
-                                    SectionKind::getReadOnlyWithRel());
-    }
-
-    virtual unsigned getTTypeEncoding() const {
-      return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-    }
-  };
-
-  class X8664_test_MachoTargetObjectFile : public X8664_MachoTargetObjectFile {
-  public:
-    virtual void Initialize(MCContext &Ctx, const TargetMachine &TM) {
-      TargetLoweringObjectFileMachO::Initialize(Ctx, TM);
-
-      // Exception Handling.
-      LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
-                                    SectionKind::getReadOnlyWithRel());
-    }
-
-    virtual unsigned getTTypeEncoding() const {
-      return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-    }
-  };
-}
-
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   switch (TM.getSubtarget<X86Subtarget>().TargetType) {
   default: llvm_unreachable("unknown subtarget type");
   case X86Subtarget::isDarwin:
-    // FIXME: This is for an EH test.
-    if (EnableX86EHTest) {
-      if (TM.getSubtarget<X86Subtarget>().is64Bit())
-        return new X8664_test_MachoTargetObjectFile();
-      else
-        return new X86_test_MachoTargetObjectFile();
-    }
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      return new X8664_MachoTargetObjectFile();
+    else
+      return new X86_MachoTargetObjectFile();
 
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return new X8664_MachoTargetObjectFile();

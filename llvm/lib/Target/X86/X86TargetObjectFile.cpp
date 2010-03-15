@@ -12,11 +12,25 @@
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Dwarf.h"
 using namespace llvm;
 using namespace dwarf;
+
+void X86_MachoTargetObjectFile::Initialize(MCContext &Ctx,
+                                           const TargetMachine &TM) {
+  TargetLoweringObjectFileMachO::Initialize(Ctx, TM);
+
+  // Exception Handling.
+  LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
+                                SectionKind::getReadOnlyWithRel());
+}
+
+unsigned X86_MachoTargetObjectFile::getTTypeEncoding() const {
+  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+}
 
 const MCExpr *X8664_MachoTargetObjectFile::
 getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
