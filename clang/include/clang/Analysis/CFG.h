@@ -286,7 +286,8 @@ public:
   ///   constructed CFG belongs to the caller.
   static CFG* buildCFG(const Decl *D, Stmt* AST, ASTContext *C,
                        bool AddEHEdges = false,
-                       bool AddScopes = false);
+                       bool AddScopes = false /* NOT FULLY IMPLEMENTED.
+                                                 NOT READY FOR GENERAL USE. */);
 
   /// createBlock - Create a new block in the CFG.  The CFG owns the block;
   ///  the caller should not directly free it.
