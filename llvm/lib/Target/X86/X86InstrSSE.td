@@ -379,7 +379,7 @@ let Constraints = "$src1 = $dst" in
 def MOVSSrr : SSI<0x10, MRMSrcReg,
                   (outs VR128:$dst), (ins VR128:$src1, FR32:$src2),
                   "movss\t{$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst,
+                  [(set (v4f32 VR128:$dst),
                         (movl VR128:$src1, (scalar_to_vector FR32:$src2)))]>;
 
 // Extract the low 32-bit value from one vector and insert it into another.
@@ -1141,7 +1141,7 @@ let Constraints = "$src1 = $dst" in
 def MOVSDrr : SDI<0x10, MRMSrcReg,
                   (outs VR128:$dst), (ins VR128:$src1, FR64:$src2),
                   "movsd\t{$src2, $dst|$dst, $src2}",
-                  [(set VR128:$dst,
+                  [(set (v2f64 VR128:$dst),
                         (movl VR128:$src1, (scalar_to_vector FR64:$src2)))]>;
 
 // Extract the low 64-bit value from one vector and insert it into another.
