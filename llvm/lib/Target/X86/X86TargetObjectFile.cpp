@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86MCTargetExpr.h"
 #include "X86TargetObjectFile.h"
 #include "X86TargetMachine.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/ADT/SmallString.h"
@@ -29,7 +29,7 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
   if (Encoding & (DW_EH_PE_indirect | DW_EH_PE_pcrel)) {
     const MCSymbol *Sym = Mang->getSymbol(GV);
     const MCExpr *Res =
-      X86MCTargetExpr::Create(Sym, X86MCTargetExpr::GOTPCREL, getContext());
+      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
     const MCExpr *Four = MCConstantExpr::Create(4, getContext());
     return MCBinaryExpr::CreateAdd(Res, Four, getContext());
   }

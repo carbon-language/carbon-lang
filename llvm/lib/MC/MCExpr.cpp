@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCExpr.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -27,7 +28,8 @@ void MCExpr::print(raw_ostream &OS) const {
     return;
 
   case MCExpr::SymbolRef: {
-    const MCSymbol &Sym = cast<MCSymbolRefExpr>(*this).getSymbol();
+    const MCSymbolRefExpr &SRE = cast<MCSymbolRefExpr>(*this);
+    const MCSymbol &Sym = SRE.getSymbol();
     
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
@@ -35,6 +37,10 @@ void MCExpr::print(raw_ostream &OS) const {
       OS << '(' << Sym << ')';
     else
       OS << Sym;
+
+    if (SRE.getKind() != MCSymbolRefExpr::VK_None)
+      OS << '@' << MCSymbolRefExpr::getVariantKindName(SRE.getKind());
+
     return;
   }
 
@@ -127,19 +133,59 @@ const MCConstantExpr *MCConstantExpr::Create(int64_t Value, MCContext &Ctx) {
   return new (Ctx) MCConstantExpr(Value);
 }
 
+/* *** */
+
 const MCSymbolRefExpr *MCSymbolRefExpr::Create(const MCSymbol *Sym,
+                                               VariantKind Kind,
                                                MCContext &Ctx) {
-  return new (Ctx) MCSymbolRefExpr(Sym);
+  return new (Ctx) MCSymbolRefExpr(Sym, Kind);
 }
 
-const MCSymbolRefExpr *MCSymbolRefExpr::Create(StringRef Name, MCContext &Ctx) {
-  return Create(Ctx.GetOrCreateSymbol(Name), Ctx);
+const MCSymbolRefExpr *MCSymbolRefExpr::Create(StringRef Name, VariantKind Kind,
+                                               MCContext &Ctx) {
+  return Create(Ctx.GetOrCreateSymbol(Name), Kind, Ctx);
 }
 
 const MCSymbolRefExpr *MCSymbolRefExpr::CreateTemp(StringRef Name,
+                                                   VariantKind Kind,
                                                    MCContext &Ctx) {
-  return Create(Ctx.GetOrCreateTemporarySymbol(Name), Ctx);
+  return Create(Ctx.GetOrCreateTemporarySymbol(Name), Kind, Ctx);
 }
+
+StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
+  switch (Kind) {
+  default:
+  case VK_Invalid: return "<<invalid>>";
+  case VK_None: return "<<none>>";
+
+  case VK_GOT: return "GOT";
+  case VK_GOTOFF: return "GOTOFF";
+  case VK_GOTPCREL: return "GOTPCREL";
+  case VK_GOTTPOFF: return "GOTTPOFF";
+  case VK_INDNTPOFF: return "INDNTPOFF";
+  case VK_NTPOFF: return "NTPOFF";
+  case VK_PLT: return "PLT";
+  case VK_TLSGD: return "TLSGD";
+  case VK_TPOFF: return "TPOFF";
+  }
+}
+
+MCSymbolRefExpr::VariantKind
+MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
+  return StringSwitch<VariantKind>(Name)
+    .Case("GOT", VK_GOT)
+    .Case("GOTOFF", VK_GOTOFF)
+    .Case("GOTPCREL", VK_GOTPCREL)
+    .Case("GOTTPOFF", VK_GOTTPOFF)
+    .Case("INDNTPOFF", VK_INDNTPOFF)
+    .Case("NTPOFF", VK_NTPOFF)
+    .Case("PLT", VK_PLT)
+    .Case("TLSGD", VK_TLSGD)
+    .Case("TPOFF", VK_TPOFF)
+    .Default(VK_Invalid);
+}
+
+/* *** */
 
 void MCTargetExpr::Anchor() {}
 

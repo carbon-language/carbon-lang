@@ -16,7 +16,6 @@
 #include "X86AsmPrinter.h"
 #include "X86COFFMachineModuleInfo.h"
 #include "X86MCAsmInfo.h"
-#include "X86MCTargetExpr.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
@@ -142,7 +141,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
   const MCExpr *Expr = 0;
-  X86MCTargetExpr::VariantKind RefKind = X86MCTargetExpr::Invalid;
+  MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -153,15 +152,15 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_STUB:
     break;
       
-  case X86II::MO_TLSGD:     RefKind = X86MCTargetExpr::TLSGD; break;
-  case X86II::MO_GOTTPOFF:  RefKind = X86MCTargetExpr::GOTTPOFF; break;
-  case X86II::MO_INDNTPOFF: RefKind = X86MCTargetExpr::INDNTPOFF; break;
-  case X86II::MO_TPOFF:     RefKind = X86MCTargetExpr::TPOFF; break;
-  case X86II::MO_NTPOFF:    RefKind = X86MCTargetExpr::NTPOFF; break;
-  case X86II::MO_GOTPCREL:  RefKind = X86MCTargetExpr::GOTPCREL; break;
-  case X86II::MO_GOT:       RefKind = X86MCTargetExpr::GOT; break;
-  case X86II::MO_GOTOFF:    RefKind = X86MCTargetExpr::GOTOFF; break;
-  case X86II::MO_PLT:       RefKind = X86MCTargetExpr::PLT; break;
+  case X86II::MO_TLSGD:     RefKind = MCSymbolRefExpr::VK_TLSGD; break;
+  case X86II::MO_GOTTPOFF:  RefKind = MCSymbolRefExpr::VK_GOTTPOFF; break;
+  case X86II::MO_INDNTPOFF: RefKind = MCSymbolRefExpr::VK_INDNTPOFF; break;
+  case X86II::MO_TPOFF:     RefKind = MCSymbolRefExpr::VK_TPOFF; break;
+  case X86II::MO_NTPOFF:    RefKind = MCSymbolRefExpr::VK_NTPOFF; break;
+  case X86II::MO_GOTPCREL:  RefKind = MCSymbolRefExpr::VK_GOTPCREL; break;
+  case X86II::MO_GOT:       RefKind = MCSymbolRefExpr::VK_GOT; break;
+  case X86II::MO_GOTOFF:    RefKind = MCSymbolRefExpr::VK_GOTOFF; break;
+  case X86II::MO_PLT:       RefKind = MCSymbolRefExpr::VK_PLT; break;
   case X86II::MO_PIC_BASE_OFFSET:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
@@ -173,12 +172,8 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     break;
   }
   
-  if (Expr == 0) {
-    if (RefKind == X86MCTargetExpr::Invalid)
-      Expr = MCSymbolRefExpr::Create(Sym, Ctx);
-    else
-      Expr = X86MCTargetExpr::Create(Sym, RefKind, Ctx);
-  }
+  if (Expr == 0)
+    Expr = MCSymbolRefExpr::Create(Sym, RefKind, Ctx);
   
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::CreateAdd(Expr,

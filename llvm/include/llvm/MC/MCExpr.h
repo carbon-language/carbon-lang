@@ -121,27 +121,65 @@ public:
 /// assembler variable (defined constant), or constitute an implicit definition
 /// of the symbol as external.
 class MCSymbolRefExpr : public MCExpr {
+public:
+  enum VariantKind {
+    VK_None,
+    VK_Invalid,
+
+    VK_GOT,
+    VK_GOTOFF,
+    VK_GOTPCREL,
+    VK_GOTTPOFF,
+    VK_INDNTPOFF,
+    VK_NTPOFF,
+    VK_PLT,
+    VK_TLSGD,
+    VK_TPOFF
+  };
+
+private:
+  /// The symbol being referenced.
   const MCSymbol *Symbol;
 
-  explicit MCSymbolRefExpr(const MCSymbol *_Symbol)
-    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol) {}
+  /// The symbol reference modifier.
+  const VariantKind Kind;
+
+  explicit MCSymbolRefExpr(const MCSymbol *_Symbol, VariantKind _Kind)
+    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol), Kind(_Kind) {}
 
 public:
   /// @name Construction
   /// @{
 
-  static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx);
-  static const MCSymbolRefExpr *Create(StringRef Name, MCContext &Ctx);
+  static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx) {
+    return MCSymbolRefExpr::Create(Symbol, VK_None, Ctx);
+  }
+
+  static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, VariantKind Kind,
+                                       MCContext &Ctx);
+  static const MCSymbolRefExpr *Create(StringRef Name, VariantKind Kind,
+                                       MCContext &Ctx);
   
   /// CreateTemp - Create a reference to an assembler temporary label with the
   /// specified name.
-  static const MCSymbolRefExpr *CreateTemp(StringRef Name, MCContext &Ctx);
+  static const MCSymbolRefExpr *CreateTemp(StringRef Name, VariantKind Kind,
+                                           MCContext &Ctx);
 
   /// @}
   /// @name Accessors
   /// @{
 
   const MCSymbol &getSymbol() const { return *Symbol; }
+
+  VariantKind getKind() const { return Kind; }
+
+  /// @}
+  /// @name Static Utility Functions
+  /// @{
+
+  static StringRef getVariantKindName(VariantKind Kind);
+
+  static VariantKind getVariantKindForName(StringRef Name);
 
   /// @}
 

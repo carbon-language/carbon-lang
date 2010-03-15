@@ -262,19 +262,29 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::String:
   case AsmToken::Identifier: {
     // This is a symbol reference.
-    MCSymbol *Sym = CreateSymbol(getTok().getIdentifier());
+    std::pair<StringRef, StringRef> Split = getTok().getIdentifier().split('@');
+    MCSymbol *Sym = CreateSymbol(Split.first);
+
+    // Lookup the symbol variant if used.
+    MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+    if (Split.first.size() != getTok().getIdentifier().size())
+      Variant = MCSymbolRefExpr::getVariantKindForName(Split.second);
+
     EndLoc = Lexer.getLoc();
     Lex(); // Eat identifier.
 
     // If this is an absolute variable reference, substitute it now to preserve
     // semantics in the face of reassignment.
     if (Sym->getValue() && isa<MCConstantExpr>(Sym->getValue())) {
+      if (Variant)
+        return Error(EndLoc, "unexpected modified on variable reference");
+
       Res = Sym->getValue();
       return false;
     }
 
     // Otherwise create a symbol ref.
-    Res = MCSymbolRefExpr::Create(Sym, getContext());
+    Res = MCSymbolRefExpr::Create(Sym, Variant, getContext());
     return false;
   }
   case AsmToken::Integer:
