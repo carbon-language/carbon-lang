@@ -90,3 +90,28 @@ foo:
   store i8 %8, i8* undef, align 1
   ret void
 }
+
+
+;; Issues with referring to a label that gets RAUW'd later.
+define i32 @test6a() nounwind {
+entry:
+	%target = bitcast i8* blockaddress(@test6b, %test_label) to i8*
+
+	call i32 @test6b(i8* %target)
+
+	ret i32 0
+}
+
+define i32 @test6b(i8* %target) nounwind {
+entry:
+	indirectbr i8* %target, [label %test_label]
+
+test_label:
+; assume some code here...
+	br label %ret
+
+ret:
+	ret i32 -1
+}
+
+

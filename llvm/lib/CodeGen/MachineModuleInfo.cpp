@@ -36,6 +36,99 @@ char MachineModuleInfo::ID = 0;
 // Out of line virtual method.
 MachineModuleInfoImpl::~MachineModuleInfoImpl() {}
 
+namespace llvm {
+class MMIAddrLabelMapCallbackPtr : CallbackVH {
+  MMIAddrLabelMap *Map;
+public:
+  MMIAddrLabelMapCallbackPtr() : Map(0) {}
+  MMIAddrLabelMapCallbackPtr(Value *V) : CallbackVH(V), Map(0) {}
+  
+  void setMap(MMIAddrLabelMap *map) { Map = map; }
+  
+  virtual void deleted();
+  virtual void allUsesReplacedWith(Value *V2);
+};
+  
+class MMIAddrLabelMap {
+  MCContext &Context;
+  struct AddrLabelSymEntry {
+    MCSymbol *Sym;
+    unsigned Index;
+  };
+  
+  DenseMap<AssertingVH<BasicBlock>, AddrLabelSymEntry> AddrLabelSymbols;
+  
+  std::vector<MMIAddrLabelMapCallbackPtr> BBCallbacks;
+public:
+  
+  MMIAddrLabelMap(MCContext &context) : Context(context) {}
+  
+  MCSymbol *getAddrLabelSymbol(BasicBlock *BB);  
+  void UpdateForDeletedBlock(BasicBlock *BB);
+  void UpdateForRAUWBlock(BasicBlock *Old, BasicBlock *New);
+};
+}
+
+MCSymbol *MMIAddrLabelMap::getAddrLabelSymbol(BasicBlock *BB) {
+  assert(BB->hasAddressTaken() &&
+         "Shouldn't get label for block without address taken");
+  AddrLabelSymEntry &Entry = AddrLabelSymbols[BB];
+  
+  // If we already had an entry for this block, just return it.
+  if (Entry.Sym) return Entry.Sym;
+  
+  // Otherwise, this is a new entry, create a new symbol for it and add an
+  // entry to BBCallbacks so we can be notified if the BB is deleted or RAUWd.
+  BBCallbacks.push_back(BB);
+  BBCallbacks.back().setMap(this);
+  Entry.Index = BBCallbacks.size()-1;
+  return Entry.Sym = Context.CreateTempSymbol();
+}
+
+void MMIAddrLabelMap::UpdateForDeletedBlock(BasicBlock *BB) {
+  // If the block got deleted, there is no need for the symbol.  If the symbol
+  // was already emitted, we can just forget about it, otherwise we need to
+  // queue it up for later emission when the function is output.
+  AddrLabelSymEntry Entry = AddrLabelSymbols[BB];
+  AddrLabelSymbols.erase(BB);
+  assert(Entry.Sym && "Didn't have a symbol, why a callback?");
+  BBCallbacks[Entry.Index] = 0;  // Clear the callback.
+
+  if (Entry.Sym->isDefined())
+    return;
+  
+  // If the block is not yet defined, we need to emit it at the end of the
+  // function.
+  assert(0 && "Case not handled yet!");
+  abort();
+}
+
+void MMIAddrLabelMap::UpdateForRAUWBlock(BasicBlock *Old, BasicBlock *New) {
+  // Get the entry for the RAUW'd block and remove it from our map.
+  AddrLabelSymEntry OldEntry = AddrLabelSymbols[Old];
+  AddrLabelSymbols.erase(Old);
+  assert(OldEntry.Sym && "Didn't have a symbol, why a callback?");
+  
+  // If New is not address taken, just move our symbol over to it.
+  if (!AddrLabelSymbols.count(New)) {
+    BBCallbacks[OldEntry.Index] = New;    // Update the callback.
+    AddrLabelSymbols[New] = OldEntry;     // Set New's entry.
+  } else {
+    assert(0 && "Case not handled yet!");
+    abort();
+  }
+}
+
+
+void MMIAddrLabelMapCallbackPtr::deleted() {
+  Map->UpdateForDeletedBlock(cast<BasicBlock>(getValPtr()));
+}
+
+void MMIAddrLabelMapCallbackPtr::allUsesReplacedWith(Value *V2) {
+  Map->UpdateForRAUWBlock(cast<BasicBlock>(getValPtr()), cast<BasicBlock>(V2));
+}
+
+
 //===----------------------------------------------------------------------===//
 
 MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
@@ -44,6 +137,7 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI)
   CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0), DbgInfoAvailable(false){
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
+  AddrLabelSymbols = 0;
 }
 
 MachineModuleInfo::MachineModuleInfo()
@@ -55,17 +149,25 @@ MachineModuleInfo::MachineModuleInfo()
 
 MachineModuleInfo::~MachineModuleInfo() {
   delete ObjFileMMI;
+  
+  // FIXME: Why isn't doFinalization being called??
+  //assert(AddrLabelSymbols == 0 && "doFinalization not called");
+  delete AddrLabelSymbols;
+  AddrLabelSymbols = 0;
 }
 
 /// doInitialization - Initialize the state for a new module.
 ///
 bool MachineModuleInfo::doInitialization() {
+  assert(AddrLabelSymbols == 0 && "Improperly initialized");
   return false;
 }
 
 /// doFinalization - Tear down the state after completion of a module.
 ///
 bool MachineModuleInfo::doFinalization() {
+  delete AddrLabelSymbols;
+  AddrLabelSymbols = 0;
   return false;
 }
 
@@ -104,19 +206,21 @@ void MachineModuleInfo::AnalyzeModule(Module &M) {
       UsedFunctions.insert(F);
 }
 
+//===- Address of Block Management ----------------------------------------===//
+
+
 /// getAddrLabelSymbol - Return the symbol to be used for the specified basic
 /// block when its address is taken.  This cannot be its normal LBB label
 /// because the block may be accessed outside its containing function.
 MCSymbol *MachineModuleInfo::getAddrLabelSymbol(const BasicBlock *BB) {
-  assert(BB->hasAddressTaken() &&
-         "Shouldn't get label for block without address taken");
-  MCSymbol *&Entry = AddrLabelSymbols[const_cast<BasicBlock*>(BB)];
-  if (Entry) return Entry;
-  return Entry = Context.CreateTempSymbol();
+  // Lazily create AddrLabelSymbols.
+  if (AddrLabelSymbols == 0)
+    AddrLabelSymbols = new MMIAddrLabelMap(Context);
+  return AddrLabelSymbols->getAddrLabelSymbol(const_cast<BasicBlock*>(BB));
 }
 
 
-//===-EH-------------------------------------------------------------------===//
+//===- EH -----------------------------------------------------------------===//
 
 /// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
 /// specified MachineBasicBlock.

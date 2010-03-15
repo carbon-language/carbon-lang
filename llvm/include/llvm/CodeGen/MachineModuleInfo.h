@@ -88,6 +88,8 @@ struct LandingPadInfo {
     : LandingPadBlock(MBB), LandingPadLabel(0), Personality(0) {}
 };
 
+class MMIAddrLabelMap;
+  
 //===----------------------------------------------------------------------===//
 /// MachineModuleInfo - This class contains meta information specific to a
 /// module.  Queries can be made by different debugging and exception handling 
@@ -142,7 +144,7 @@ class MachineModuleInfo : public ImmutablePass {
   
   /// AddrLabelSymbols - This map keeps track of which symbol is being used for
   /// the specified basic block's address of label.
-  DenseMap<AssertingVH<BasicBlock>, MCSymbol*> AddrLabelSymbols;
+  MMIAddrLabelMap *AddrLabelSymbols;
   
   bool CallsEHReturn;
   bool CallsUnwindInit;
