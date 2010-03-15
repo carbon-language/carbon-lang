@@ -89,6 +89,19 @@ ObjCContainerDecl::getMethod(Selector Sel, bool isInstance) const {
   return 0;
 }
 
+ObjCPropertyDecl *
+ObjCPropertyDecl::findPropertyDecl(DeclContext *DC,
+                                   IdentifierInfo *propertyID) {
+
+  DeclContext::lookup_iterator I, E;
+  llvm::tie(I, E) = DC->lookup(propertyID);
+  for ( ; I != E; ++I)
+    if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(*I))
+      return PD;
+
+  return 0;
+}
+
 /// FindPropertyDeclaration - Finds declaration of the property given its name
 /// in 'PropertyId' and returns it. It returns 0, if not found.
 /// FIXME: Convert to DeclContext lookup...

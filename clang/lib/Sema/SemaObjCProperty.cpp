@@ -66,18 +66,6 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                                             Attributes, T, MethodImplKind));
 }
 
-static ObjCPropertyDecl *findPropertyDecl(DeclContext *DC,
-                                          IdentifierInfo *propertyID) {
-
-  DeclContext::lookup_iterator I, E;
-  llvm::tie(I, E) = DC->lookup(propertyID);
-  for ( ; I != E; ++I)
-    if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(*I))
-        return PD;
-
-  return 0;
-}
-
 Sema::DeclPtrTy
 Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
                                      SourceLocation AtLoc, FieldDeclarator &FD,
@@ -93,7 +81,8 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
   DeclContext *DC = cast<DeclContext>(CDecl);
   IdentifierInfo *PropertyId = FD.D.getIdentifier();
 
-  if (ObjCPropertyDecl *prevDecl = findPropertyDecl(DC, PropertyId)) {
+  if (ObjCPropertyDecl *prevDecl =
+        ObjCPropertyDecl::findPropertyDecl(DC, PropertyId)) {
     Diag(AtLoc, diag::err_duplicate_property);
     Diag(prevDecl->getLocation(), diag::note_property_declare);
     return DeclPtrTy();
@@ -231,7 +220,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
                                                      FD.D.getIdentifierLoc(),
                                                      PropertyId, AtLoc, T);
 
-  if (ObjCPropertyDecl *prevDecl = findPropertyDecl(DC, PropertyId)) {
+  if (ObjCPropertyDecl *prevDecl =
+        ObjCPropertyDecl::findPropertyDecl(DC, PropertyId)) {
     Diag(PDecl->getLocation(), diag::err_duplicate_property);
     Diag(prevDecl->getLocation(), diag::note_property_declare);
     PDecl->setInvalidDecl();
