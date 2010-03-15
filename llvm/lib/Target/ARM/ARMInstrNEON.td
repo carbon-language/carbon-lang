@@ -2708,7 +2708,7 @@ def : Pat<(v2f64 (insertelt QPR:$src1, DPR:$src2, imm:$src3)),
 
 def : Pat<(v2f32 (scalar_to_vector SPR:$src)),
           (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$src, arm_ssubreg_0)>;
-def : Pat<(v2f64 (scalar_to_vector DPR:$src)),
+def : Pat<(v2f64 (scalar_to_vector (f64 DPR:$src))),
           (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), DPR:$src, arm_dsubreg_0)>;
 def : Pat<(v4f32 (scalar_to_vector SPR:$src)),
           (INSERT_SUBREG (v4f32 (IMPLICIT_DEF)), SPR:$src, arm_ssubreg_0)>;
