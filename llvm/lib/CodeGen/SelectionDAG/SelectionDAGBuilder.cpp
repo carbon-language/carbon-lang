@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "isel"
+#include "SDNodeDbgValue.h"
 #include "SelectionDAGBuilder.h"
 #include "FunctionLoweringInfo.h"
 #include "llvm/ADT/BitVector.h"
@@ -3800,11 +3801,6 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::dbg_value: {
-    // FIXME: currently, we get here only if OptLevel != CodeGenOpt::None.
-    // The real handling of this intrinsic is in FastISel.
-    if (OptLevel != CodeGenOpt::None)
-      // FIXME: Variable debug info is not supported here.
-      return 0;
     DwarfWriter *DW = DAG.getDwarfWriter();
     if (!DW)
       return 0;
@@ -3813,9 +3809,36 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       return 0;
 
     MDNode *Variable = DI.getVariable();
+    uint64_t Offset = DI.getOffset();
     Value *V = DI.getValue();
     if (!V)
       return 0;
+
+    // Build an entry in DbgOrdering.  Debug info input nodes get an SDNodeOrder
+    // but do not always have a corresponding SDNode built.  The SDNodeOrder
+    // absolute, but not relative, values are different depending on whether
+    // debug info exists.
+    ++SDNodeOrder;
+    if (isa<ConstantInt>(V) || isa<ConstantFP>(V)) {
+      SDDbgValue* dv = new SDDbgValue(Variable, V, Offset, dl, SDNodeOrder);
+      DAG.RememberDbgInfo(dv);
+    } else {
+      SDValue &N = NodeMap[V];
+      if (N.getNode()) {
+        SDDbgValue *dv = new SDDbgValue(Variable, N.getNode(),
+                                        N.getResNo(), Offset, dl, SDNodeOrder);
+        DAG.AssignDbgInfo(N.getNode(), dv);
+      } else {
+        // We may expand this to cover more cases.  One case where we have no
+        // data available is an unreferenced parameter; we need this fallback.
+        SDDbgValue* dv = new SDDbgValue(Variable, 
+                                        UndefValue::get(V->getType()),
+                                        Offset, dl, SDNodeOrder);
+        DAG.RememberDbgInfo(dv);
+      }
+    }
+
+    // Build a debug info table entry.
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(V))
       V = BCI->getOperand(0);
     AllocaInst *AI = dyn_cast<AllocaInst>(V);
