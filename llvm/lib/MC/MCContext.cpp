@@ -23,18 +23,25 @@ MCContext::~MCContext() {
   // we don't need to free them here.
 }
 
-MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
+MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name, bool isTemporary) {
   assert(!Name.empty() && "Normal symbols cannot be unnamed!");
-  MCSymbol *&Entry = Symbols[Name];
-  if (Entry) return Entry;
+  
+  // Do the lookup and get the entire StringMapEntry.  We want access to the
+  // key if we are creating the entry.
+  StringMapEntry<MCSymbol*> &Entry = Symbols.GetOrCreateValue(Name);
+  if (Entry.getValue()) return Entry.getValue();
 
-  return Entry = new (*this) MCSymbol(Name, false);
+  // Ok, the entry doesn't already exist.  Have the MCSymbol object itself refer
+  // to the copy of the string that is embedded in the StringMapEntry.
+  MCSymbol *Result = new (*this) MCSymbol(Entry.getKey(), isTemporary);
+  Entry.setValue(Result);
+  return Result; 
 }
 
-MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
+MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name, bool isTemporary) {
   SmallString<128> NameSV;
   Name.toVector(NameSV);
-  return GetOrCreateSymbol(NameSV.str());
+  return GetOrCreateSymbol(NameSV.str(), isTemporary);
 }
 
 MCSymbol *MCContext::CreateTempSymbol() {
@@ -50,10 +57,7 @@ MCSymbol *MCContext::GetOrCreateTemporarySymbol(StringRef Name) {
     return GetOrCreateTemporarySymbol(Twine(MAI.getPrivateGlobalPrefix()) +
                                       "tmp" + Twine(NextUniqueID++));
   
-  // Otherwise create as usual.
-  MCSymbol *&Entry = Symbols[Name];
-  if (Entry) return Entry;
-  return Entry = new (*this) MCSymbol(Name, true);
+  return GetOrCreateSymbol(Name, true);
 }
 
 MCSymbol *MCContext::GetOrCreateTemporarySymbol(const Twine &Name) {

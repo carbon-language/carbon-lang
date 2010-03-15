@@ -14,9 +14,7 @@
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
 
-#include <string>
 #include "llvm/ADT/StringRef.h"
-#include "llvm/System/DataTypes.h"
 
 namespace llvm {
   class MCExpr;
@@ -38,8 +36,9 @@ namespace llvm {
     // FIXME: Use a PointerInt wrapper for this?
     static const MCSection *AbsolutePseudoSection;
 
-    /// Name - The name of the symbol.
-    std::string Name;
+    /// Name - The name of the symbol.  The referred-to string data is actually
+    /// held by the StringMap that lives in MCContext.
+    StringRef Name;
 
     /// Section - The section the symbol is defined in. This is null for
     /// undefined symbols, and the special AbsolutePseudoSection value for
@@ -56,14 +55,14 @@ namespace llvm {
     
   private:  // MCContext creates and uniques these.
     friend class MCContext;
-    MCSymbol(StringRef _Name, bool _IsTemporary)
-      : Name(_Name), Section(0), Value(0), IsTemporary(_IsTemporary) {}
+    MCSymbol(StringRef name, bool isTemporary)
+      : Name(name), Section(0), Value(0), IsTemporary(isTemporary) {}
 
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
     void operator=(const MCSymbol&); // DO NOT IMPLEMENT
   public:
     /// getName - Get the symbol name.
-    const std::string &getName() const { return Name; }
+    StringRef getName() const { return Name; }
 
     /// @name Symbol Type
     /// @{

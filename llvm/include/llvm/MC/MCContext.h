@@ -65,8 +65,8 @@ namespace llvm {
     /// reference and return it.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *GetOrCreateSymbol(StringRef Name);
-    MCSymbol *GetOrCreateSymbol(const Twine &Name);
+    MCSymbol *GetOrCreateSymbol(StringRef Name, bool isTemporary = false);
+    MCSymbol *GetOrCreateSymbol(const Twine &Name, bool isTemporary = false);
 
     /// GetOrCreateTemporarySymbol - Create a new assembler temporary symbol
     /// with the specified @p Name if it doesn't exist or return the existing
