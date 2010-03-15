@@ -308,9 +308,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker() && !Kind.isCommon() && !Kind.isBSS()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
-    SmallString<128> Name;
-    Name.append(Prefix, Prefix+strlen(Prefix));
-    Mang->getNameWithPrefix(Name, GV, false);
+    SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
+    MCSymbol *Sym = Mang->getSymbol(GV);
+    Name.append(Sym->getName().begin(), Sym->getName().end());
     return getELFSection(Name.str(), getELFSectionType(Name.str(), Kind),
                          getELFSectionFlags(Kind), Kind);
   }
@@ -406,24 +406,15 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 
     // Add information about the stub reference to ELFMMI so that the stub
     // gets emitted by the asmprinter.
-    MCSymbol *Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
-    MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(Sym);
+    MCSymbol *SSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+    MachineModuleInfoImpl::StubValueTy &StubSym = ELFMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
-
-      if (GV->hasPrivateLinkage())
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(getContext().GetOrCreateTemporarySymbol(Name.str()),
-                      false);
-      else
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(getContext().GetOrCreateSymbol(Name.str()),
-                      !GV->hasInternalLinkage());
+      MCSymbol *Sym = Mang->getSymbol(GV);
+      StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
     return TargetLoweringObjectFile::
-      getExprForDwarfReference(Sym, Mang, MMI,
+      getExprForDwarfReference(SSym, Mang, MMI,
                                Encoding & ~dwarf::DW_EH_PE_indirect, Streamer);
   }
 
@@ -744,9 +735,8 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
     // FIXME: ObjC metadata is currently emitted as internal symbols that have
     // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
     // this horrible hack can go away.
-    SmallString<64> Name;
-    Mang->getNameWithPrefix(Name, GV, false);
-    if (Name[0] == 'L' || Name[0] == 'l')
+    MCSymbol *Sym = Mang->getSymbol(GV);
+    if (Sym->getName()[0] == 'L' || Sym->getName()[0] == 'l')
       return false;
   }
 
@@ -769,24 +759,15 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 
     // Add information about the stub reference to MachOMMI so that the stub
     // gets emitted by the asmprinter.
-    MCSymbol *Sym = getContext().GetOrCreateTemporarySymbol(Name.str());
-    MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(Sym);
+    MCSymbol *SSym = getContext().GetOrCreateTemporarySymbol(Name.str());
+    MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(SSym);
     if (StubSym.getPointer() == 0) {
-      Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
-
-      if (GV->hasPrivateLinkage())
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(getContext().GetOrCreateTemporarySymbol(Name.str()),
-                      false);
-      else
-        StubSym = MachineModuleInfoImpl::
-          StubValueTy(getContext().GetOrCreateSymbol(Name.str()),
-                      !GV->hasInternalLinkage());
+      MCSymbol *Sym = Mang->getSymbol(GV);
+      StubSym = MachineModuleInfoImpl::StubValueTy(Sym, !GV->hasLocalLinkage());
     }
 
     return TargetLoweringObjectFile::
-      getExprForDwarfReference(Sym, Mang, MMI,
+      getExprForDwarfReference(SSym, Mang, MMI,
                                Encoding & ~dwarf::DW_EH_PE_indirect, Streamer);
   }
 
@@ -918,7 +899,8 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
-    Mang->getNameWithPrefix(Name, GV, false);
+    MCSymbol *Sym = Mang->getSymbol(GV);
+    Name.append(Sym->getName().begin(), Sym->getName().end());
     return getCOFFSection(Name.str(), false, Kind);
   }
 
