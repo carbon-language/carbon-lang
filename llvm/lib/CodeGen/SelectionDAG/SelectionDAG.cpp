@@ -2329,22 +2329,20 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
   // Constant fold unary operations with an integer constant operand.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.getNode())) {
     const APInt &Val = C->getAPIntValue();
-    unsigned BitWidth = VT.getSizeInBits();
     switch (Opcode) {
     default: break;
     case ISD::SIGN_EXTEND:
-      return getConstant(APInt(Val).sextOrTrunc(BitWidth), VT);
+      return getConstant(APInt(Val).sext(VT.getSizeInBits()), VT);
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::TRUNCATE:
-      return getConstant(APInt(Val).zextOrTrunc(BitWidth), VT);
+      return getConstant(APInt(Val).zextOrTrunc(VT.getSizeInBits()), VT);
     case ISD::UINT_TO_FP:
     case ISD::SINT_TO_FP: {
       const uint64_t zero[] = {0, 0};
-      // No compile time operations on this type.
-      if (VT==MVT::ppcf128)
-        break;
-      APFloat apf = APFloat(APInt(BitWidth, 2, zero));
+      // No compile time operations on ppcf128.
+      if (VT == MVT::ppcf128) break;
+      APFloat apf = APFloat(APInt(VT.getSizeInBits(), 2, zero));
       (void)apf.convertFromAPInt(Val,
                                  Opcode==ISD::SINT_TO_FP,
                                  APFloat::rmNearestTiesToEven);
