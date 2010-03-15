@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/System/Valgrind.h"
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;
@@ -37,6 +38,10 @@ void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   unsigned NewAddr = (intptr_t)New;
   unsigned OldAddr = (intptr_t)OldWord;
   *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
+
+  // X86 doesn't need to invalidate the processor cache, so just invalidate
+  // Valgrind's cache directly.
+  sys::ValgrindDiscardTranslations(Old, 5);
 }
 
 
@@ -393,8 +398,10 @@ X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
       *(intptr_t *)(RetAddr - 0xa) = NewVal;
       ((unsigned char*)RetAddr)[0] = (2 | (4 << 3) | (3 << 6));
     }
+    sys::ValgrindDiscardTranslations((void*)(RetAddr-0xc), 0xd);
 #else
     ((unsigned char*)RetAddr)[-1] = 0xE9;
+    sys::ValgrindDiscardTranslations((void*)(RetAddr-1), 5);
 #endif
   }
 

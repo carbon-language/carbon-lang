@@ -67,6 +67,7 @@ check_include_file(sys/wait.h HAVE_SYS_WAIT_H)
 check_include_file(termios.h HAVE_TERMIOS_H)
 check_include_file(unistd.h HAVE_UNISTD_H)
 check_include_file(utime.h HAVE_UTIME_H)
+check_include_file(valgrind/valgrind.h HAVE_VALGRIND_VALGRIND_H)
 check_include_file(windows.h HAVE_WINDOWS_H)
 
 # library checks
