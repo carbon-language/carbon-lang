@@ -23,7 +23,15 @@ namespace N {
         D d;
       }
     };
+
+    struct Y {
+      template<typename U> void f(U);      
+    };
   }
+
+  struct Y {
+    template<typename D> void f(D);
+  };
 }
 
 template<typename C> 
@@ -32,3 +40,14 @@ void N::M::X<C>::f(C, D) {
   C c;
   D d;
 }
+
+template<typename C>
+void N::M::Y::f(C) {
+  C c;
+}
+
+template<typename D> 
+void N::Y::f(D) {
+  D d;
+}
+

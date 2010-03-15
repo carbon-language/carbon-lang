@@ -603,8 +603,7 @@ static std::pair<DeclContext *, bool> findOuterContext(Scope *S) {
   for (Scope *OuterS = S->getParent(); OuterS; 
        OuterS = OuterS->getParent()) {
     if (OuterS->getEntity()) {
-      Lexical
-        = static_cast<DeclContext *>(OuterS->getEntity())->getPrimaryContext();
+      Lexical = static_cast<DeclContext *>(OuterS->getEntity());
       break;
     }
   }
@@ -722,8 +721,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       if (SearchAfterTemplateScope)
         OutsideOfTemplateParamDC = OuterCtx;
 
-      for (; Ctx && Ctx->getPrimaryContext() != OuterCtx; 
-           Ctx = Ctx->getLookupParent()) {
+      for (; Ctx && !Ctx->Equals(OuterCtx); Ctx = Ctx->getLookupParent()) {
         // We do not directly look into transparent contexts, since
         // those entities will be found in the nearest enclosing
         // non-transparent context.
@@ -2307,7 +2305,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     Entity = (DeclContext *)S->getEntity();
     DeclContext *OuterCtx = findOuterContext(S).first; // FIXME
     
-    for (DeclContext *Ctx = Entity; Ctx && Ctx->getPrimaryContext() != OuterCtx;
+    for (DeclContext *Ctx = Entity; Ctx && !Ctx->Equals(OuterCtx);
          Ctx = Ctx->getLookupParent()) {
       if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(Ctx)) {
         if (Method->isInstanceMethod()) {
