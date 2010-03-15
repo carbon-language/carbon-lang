@@ -131,10 +131,11 @@ void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
-  TD->setTypedefForAnonDecl(
-                    cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
   TD->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TD->setTagKeywordLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  // FIXME: maybe read optional qualifier and its range.
+  TD->setTypedefForAnonDecl(
+                    cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
 }
 
 void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
@@ -168,6 +169,7 @@ void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   TypeSourceInfo *TInfo = Reader.GetTypeSourceInfo(Record, Idx);
   if (TInfo)
     DD->setTypeSourceInfo(TInfo);
+  // FIXME: read optional qualifier and its range.
 }
 
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {

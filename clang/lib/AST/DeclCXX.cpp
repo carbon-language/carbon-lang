@@ -943,8 +943,7 @@ StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
 void StaticAssertDecl::Destroy(ASTContext& C) {
   AssertExpr->Destroy(C);
   Message->Destroy(C);
-  this->~StaticAssertDecl();
-  C.Deallocate((void *)this);
+  Decl::Destroy(C);
 }
 
 StaticAssertDecl::~StaticAssertDecl() {

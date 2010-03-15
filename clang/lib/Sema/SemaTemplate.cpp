@@ -697,6 +697,12 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
                                        RAngleLoc);
 }
 
+static void SetNestedNameSpecifier(TagDecl *T, const CXXScopeSpec &SS) {
+  if (SS.isSet())
+    T->setQualifierInfo(static_cast<NestedNameSpecifier*>(SS.getScopeRep()),
+                        SS.getRange());
+}
+
 Sema::DeclResult
 Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
@@ -864,6 +870,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                           PrevClassTemplate?
                             PrevClassTemplate->getTemplatedDecl() : 0,
                           /*DelayTypeCreation=*/true);
+  SetNestedNameSpecifier(NewClass, SS);
 
   ClassTemplateDecl *NewTemplate
     = ClassTemplateDecl::Create(Context, SemanticContext, NameLoc,
@@ -3491,6 +3498,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                        TemplateArgs,
                                                        CanonType,
                                                        PrevPartial);
+    SetNestedNameSpecifier(Partial, SS);
 
     if (PrevPartial) {
       ClassTemplate->getPartialSpecializations().RemoveNode(PrevPartial);
@@ -3547,6 +3555,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                 ClassTemplate,
                                                 Converted,
                                                 PrevDecl);
+    SetNestedNameSpecifier(Specialization, SS);
 
     if (PrevDecl) {
       ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
@@ -4328,6 +4337,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                                 TemplateNameLoc,
                                                 ClassTemplate,
                                                 Converted, PrevDecl);
+    SetNestedNameSpecifier(Specialization, SS);
 
     if (PrevDecl) {
       // Remove the previous declaration from the folding set, since we want

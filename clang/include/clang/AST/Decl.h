@@ -319,7 +319,19 @@ public:
 /// \brief Represents a ValueDecl that came out of a declarator.
 /// Contains type source information through TypeSourceInfo.
 class DeclaratorDecl : public ValueDecl {
-  TypeSourceInfo *DeclInfo;
+  // A struct representing both a TInfo and a syntactic qualifier,
+  // to be used for the (uncommon) case of out-of-line declarations.
+  struct ExtInfo {
+    TypeSourceInfo *TInfo;
+    NestedNameSpecifier *NNS;
+    SourceRange NNSRange;
+  };
+
+  llvm::PointerUnion<TypeSourceInfo*, ExtInfo*> DeclInfo;
+
+  bool hasExtInfo() const { return DeclInfo.is<ExtInfo*>(); }
+  ExtInfo *getExtInfo() { return DeclInfo.get<ExtInfo*>(); }
+  const ExtInfo *getExtInfo() const { return DeclInfo.get<ExtInfo*>(); }
 
 protected:
   DeclaratorDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -327,8 +339,29 @@ protected:
     : ValueDecl(DK, DC, L, N, T), DeclInfo(TInfo) {}
 
 public:
-  TypeSourceInfo *getTypeSourceInfo() const { return DeclInfo; }
-  void setTypeSourceInfo(TypeSourceInfo *TInfo) { DeclInfo = TInfo; }
+  virtual ~DeclaratorDecl();
+  virtual void Destroy(ASTContext &C);
+
+  TypeSourceInfo *getTypeSourceInfo() const {
+    return hasExtInfo()
+      ? DeclInfo.get<ExtInfo*>()->TInfo
+      : DeclInfo.get<TypeSourceInfo*>();
+  }
+  void setTypeSourceInfo(TypeSourceInfo *TI) {
+    if (hasExtInfo())
+      DeclInfo.get<ExtInfo*>()->TInfo = TI;
+    else
+      DeclInfo = TI;
+  }
+
+  NestedNameSpecifier *getQualifier() const {
+    return hasExtInfo() ? DeclInfo.get<ExtInfo*>()->NNS : 0;
+  }
+  SourceRange getQualifierRange() const {
+    return hasExtInfo() ? DeclInfo.get<ExtInfo*>()->NNSRange : SourceRange();
+  }
+  void setQualifierInfo(NestedNameSpecifier *Qualifier,
+                        SourceRange QualifierRange);
 
   SourceLocation getTypeSpecStartLoc() const;
 
@@ -1534,22 +1567,38 @@ private:
 
   /// IsEmbeddedInDeclarator - True if this tag declaration is
   /// "embedded" (i.e., defined or declared for the very first time)
-  /// in the syntax of a declarator,
+  /// in the syntax of a declarator.
   bool IsEmbeddedInDeclarator : 1;
-
-  /// TypedefForAnonDecl - If a TagDecl is anonymous and part of a typedef,
-  /// this points to the TypedefDecl. Used for mangling.
-  TypedefDecl *TypedefForAnonDecl;
 
   SourceLocation TagKeywordLoc;
   SourceLocation RBraceLoc;
 
+  // A struct representing syntactic qualifier info,
+  // to be used for the (uncommon) case of out-of-line declarations.
+  struct ExtInfo {
+    NestedNameSpecifier *NNS;
+    SourceRange NNSRange;
+  };
+
+  /// TypedefDeclOrQualifier - If the (out-of-line) tag declaration name
+  /// is qualified, it points to the qualifier info (nns and range);
+  /// otherwise, if the tag declaration is anonymous and it is part of
+  /// a typedef, it points to the TypedefDecl (used for mangling);
+  /// otherwise, it is a null (TypedefDecl) pointer.
+  llvm::PointerUnion<TypedefDecl*, ExtInfo*> TypedefDeclOrQualifier;
+
+  bool hasExtInfo() const { return TypedefDeclOrQualifier.is<ExtInfo*>(); }
+  ExtInfo *getExtInfo() { return TypedefDeclOrQualifier.get<ExtInfo*>(); }
+  const ExtInfo *getExtInfo() const {
+    return TypedefDeclOrQualifier.get<ExtInfo*>();
+  }
+
 protected:
-  TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-          IdentifierInfo *Id, TagDecl *PrevDecl,
-          SourceLocation TKL = SourceLocation())
-    : TypeDecl(DK, DC, L, Id), DeclContext(DK), TypedefForAnonDecl(0),
-      TagKeywordLoc(TKL) {
+  TagDecl(Kind DK, TagKind TK, DeclContext *DC,
+          SourceLocation L, IdentifierInfo *Id,
+          TagDecl *PrevDecl, SourceLocation TKL = SourceLocation())
+    : TypeDecl(DK, DC, L, Id), DeclContext(DK), TagKeywordLoc(TKL),
+      TypedefDeclOrQualifier((TypedefDecl*) 0) {
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
@@ -1561,6 +1610,8 @@ protected:
   virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
 
 public:
+  void Destroy(ASTContext &C);
+
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
     return redeclarable_base::redecls_begin();
@@ -1640,8 +1691,21 @@ public:
   bool isUnion()  const { return getTagKind() == TK_union; }
   bool isEnum()   const { return getTagKind() == TK_enum; }
 
-  TypedefDecl *getTypedefForAnonDecl() const { return TypedefForAnonDecl; }
-  void setTypedefForAnonDecl(TypedefDecl *TDD) { TypedefForAnonDecl = TDD; }
+  TypedefDecl *getTypedefForAnonDecl() const {
+    return hasExtInfo() ? 0 : TypedefDeclOrQualifier.get<TypedefDecl*>();
+  }
+  void setTypedefForAnonDecl(TypedefDecl *TDD) { TypedefDeclOrQualifier = TDD; }
+
+  NestedNameSpecifier *getQualifier() const {
+    return hasExtInfo() ? TypedefDeclOrQualifier.get<ExtInfo*>()->NNS : 0;
+  }
+  SourceRange getQualifierRange() const {
+    return hasExtInfo()
+      ? TypedefDeclOrQualifier.get<ExtInfo*>()->NNSRange
+      : SourceRange();
+  }
+  void setQualifierInfo(NestedNameSpecifier *Qualifier,
+                        SourceRange QualifierRange);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -97,11 +97,48 @@ namespace {
 
     TemplateParameterList *
       SubstTemplateParams(TemplateParameterList *List);
+
+    bool SubstQualifier(const DeclaratorDecl *OldDecl,
+                        DeclaratorDecl *NewDecl);
+    bool SubstQualifier(const TagDecl *OldDecl,
+                        TagDecl *NewDecl);
       
     bool InstantiateClassTemplatePartialSpecialization(
                                               ClassTemplateDecl *ClassTemplate,
                            ClassTemplatePartialSpecializationDecl *PartialSpec);
   };
+}
+
+bool TemplateDeclInstantiator::SubstQualifier(const DeclaratorDecl *OldDecl,
+                                              DeclaratorDecl *NewDecl) {
+  NestedNameSpecifier *OldQual = OldDecl->getQualifier();
+  if (!OldQual) return false;
+
+  SourceRange QualRange = OldDecl->getQualifierRange();
+
+  NestedNameSpecifier *NewQual
+    = SemaRef.SubstNestedNameSpecifier(OldQual, QualRange, TemplateArgs);
+  if (!NewQual)
+    return true;
+
+  NewDecl->setQualifierInfo(NewQual, QualRange);
+  return false;
+}
+
+bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
+                                              TagDecl *NewDecl) {
+  NestedNameSpecifier *OldQual = OldDecl->getQualifier();
+  if (!OldQual) return false;
+
+  SourceRange QualRange = OldDecl->getQualifierRange();
+
+  NestedNameSpecifier *NewQual
+    = SemaRef.SubstNestedNameSpecifier(OldQual, QualRange, TemplateArgs);
+  if (!NewQual)
+    return true;
+
+  NewDecl->setQualifierInfo(NewQual, QualRange);
+  return false;
 }
 
 // FIXME: Is this too simple?
@@ -286,6 +323,10 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setDeclaredInCondition(D->isDeclaredInCondition());
+
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(D, Var))
+    return 0;
 
   // If we are instantiating a static data member defined
   // out-of-line, the instantiation will have the same lexical
@@ -511,6 +552,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
                                     /*PrevDecl=*/0);
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
+  if (SubstQualifier(D, Enum)) return 0;
   Owner->addDecl(Enum);
   Enum->startDefinition();
 
@@ -610,6 +652,10 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
                             Pattern->getLocation(), Pattern->getIdentifier(),
                             Pattern->getTagKeywordLoc(), /*PrevDecl=*/ NULL,
                             /*DelayTypeCreation=*/true);
+
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(Pattern, RecordInst))
+    return 0;
 
   ClassTemplateDecl *Inst
     = ClassTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
@@ -745,6 +791,11 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
     = CXXRecordDecl::Create(SemaRef.Context, D->getTagKind(), Owner,
                             D->getLocation(), D->getIdentifier(),
                             D->getTagKeywordLoc(), PrevDecl);
+
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(D, Record))
+    return 0;
+
   Record->setImplicit(D->isImplicit());
   // FIXME: Check against AS_none is an ugly hack to work around the issue that
   // the tag decls introduced by friend class declarations don't have an access
@@ -818,6 +869,11 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                            D->getDeclName(), T, TInfo,
                            D->getStorageClass(),
                            D->isInlineSpecified(), D->hasWrittenPrototype());
+
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(D, Function))
+    return 0;
+
   Function->setLexicalDeclContext(Owner);
 
   // Attach the parameters
@@ -978,6 +1034,10 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                    D->getDeclName(), T, TInfo,
                                    D->isStatic(), D->isInlineSpecified());
   }
+
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(D, Method))
+    return 0;
 
   if (TemplateParams) {
     // Our resulting instantiation is actually a function template, since we
@@ -1508,6 +1568,10 @@ TemplateDeclInstantiator::InstantiateClassTemplatePartialSpecialization(
                                                      InstTemplateArgs,
                                                      CanonType,
                                                      0);
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(PartialSpec, InstPartialSpec))
+    return 0;
+
   InstPartialSpec->setInstantiatedFromMember(PartialSpec);
   InstPartialSpec->setTypeAsWritten(WrittenTy);
   

@@ -1592,6 +1592,12 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
                                       Name.getAsIdentifierInfo(),
                                       Importer.Import(D->getTagKeywordLoc()),
                                       0);
+  // Import the qualifier, if any.
+  if (D->getQualifier()) {
+    NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
+    SourceRange NNSRange = Importer.Import(D->getQualifierRange());
+    D2->setQualifierInfo(NNS, NNSRange);
+  }
   D2->setAccess(D->getAccess());
   D2->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, D2);
@@ -1733,6 +1739,12 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
                                     DC, Loc,
                                     Name.getAsIdentifierInfo(), 
                                     Importer.Import(D->getTagKeywordLoc()));
+    }
+    // Import the qualifier, if any.
+    if (D->getQualifier()) {
+      NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
+      SourceRange NNSRange = Importer.Import(D->getQualifierRange());
+      D2->setQualifierInfo(NNS, NNSRange);
     }
     D2->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDecl(D2);
@@ -1899,6 +1911,13 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                       Name, T, TInfo, D->getStorageClass(), 
                                       D->isInlineSpecified(),
                                       D->hasWrittenPrototype());
+  }
+
+  // Import the qualifier, if any.
+  if (D->getQualifier()) {
+    NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
+    SourceRange NNSRange = Importer.Import(D->getQualifierRange());
+    ToFunction->setQualifierInfo(NNS, NNSRange);
   }
   ToFunction->setAccess(D->getAccess());
   ToFunction->setLexicalDeclContext(LexicalDC);
@@ -2110,6 +2129,12 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   VarDecl *ToVar = VarDecl::Create(Importer.getToContext(), DC, Loc, 
                                    Name.getAsIdentifierInfo(), T, TInfo,
                                    D->getStorageClass());
+  // Import the qualifier, if any.
+  if (D->getQualifier()) {
+    NestedNameSpecifier *NNS = Importer.Import(D->getQualifier());
+    SourceRange NNSRange = Importer.Import(D->getQualifierRange());
+    ToVar->setQualifierInfo(NNS, NNSRange);
+  }
   ToVar->setAccess(D->getAccess());
   ToVar->setLexicalDeclContext(LexicalDC);
   Importer.Imported(D, ToVar);

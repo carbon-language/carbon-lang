@@ -1945,11 +1945,19 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II) {
     NewD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
                                 FD->getLocation(), DeclarationName(II),
                                 FD->getType(), FD->getTypeSourceInfo());
+    if (FD->getQualifier()) {
+      FunctionDecl *NewFD = cast<FunctionDecl>(NewD);
+      NewFD->setQualifierInfo(FD->getQualifier(), FD->getQualifierRange());
+    }
   } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
     NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),
                            VD->getLocation(), II,
                            VD->getType(), VD->getTypeSourceInfo(),
                            VD->getStorageClass());
+    if (VD->getQualifier()) {
+      VarDecl *NewVD = cast<VarDecl>(NewD);
+      NewVD->setQualifierInfo(VD->getQualifier(), VD->getQualifierRange());
+    }
   }
   return NewD;
 }

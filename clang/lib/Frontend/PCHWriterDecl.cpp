@@ -127,9 +127,10 @@ void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
   Record.push_back(D->isDefinition());
   Record.push_back(D->isEmbeddedInDeclarator());
-  Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
   Writer.AddSourceLocation(D->getRBraceLoc(), Record);
   Writer.AddSourceLocation(D->getTagKeywordLoc(), Record);
+  // FIXME: maybe write optional qualifier and its range.
+  Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
 }
 
 void PCHDeclWriter::VisitEnumDecl(EnumDecl *D) {
@@ -165,6 +166,7 @@ void PCHDeclWriter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 void PCHDeclWriter::VisitDeclaratorDecl(DeclaratorDecl *D) {
   VisitValueDecl(D);
   Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
+  // FIXME: write optional qualifier and its range.
 }
 
 void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
