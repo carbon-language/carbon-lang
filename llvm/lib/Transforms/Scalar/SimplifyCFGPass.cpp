@@ -244,7 +244,7 @@ static bool MergeEmptyReturnBlocks(Function &F) {
     // If the canonical return block has no PHI node, create one now.
     PHINode *RetBlockPHI = dyn_cast<PHINode>(RetBlock->begin());
     if (RetBlockPHI == 0) {
-      Value *InVal = cast<ReturnInst>(RetBlock->begin())->getOperand(0);
+      Value *InVal = cast<ReturnInst>(RetBlock->getTerminator())->getOperand(0);
       RetBlockPHI = PHINode::Create(Ret->getOperand(0)->getType(), "merge",
                                     &RetBlock->front());
       
