@@ -11,6 +11,7 @@
 #define LLVM_TARGET_TARGETASMBACKEND_H
 
 namespace llvm {
+class MCSection;
 class Target;
 
 /// TargetAsmBackend - Generic interface to target specific assembler backends.
@@ -50,6 +51,12 @@ public:
   /// Note that the assembler currently does not reason about atoms, instead it
   /// assumes all temporary symbols reside in the "current atom".
   virtual bool hasScatteredSymbols() const { return false; }
+
+  /// doesSectionRequireSymbols - Check whether the given section requires that
+  /// all symbols (even temporaries) have symbol table entries.
+  virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
+    return false;
+  }
 };
 
 } // End llvm namespace

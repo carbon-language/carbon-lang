@@ -674,7 +674,10 @@ public:
       const MCSymbol &Symbol = it->getSymbol();
 
       // Ignore assembler temporaries.
-      if (it->getSymbol().isTemporary())
+      if (it->getSymbol().isTemporary() &&
+          (!it->getFragment() ||
+           !Asm.getBackend().doesSectionRequireSymbols(
+             it->getFragment()->getParent()->getSection())))
         continue;
 
       if (!it->isExternal() && !Symbol.isUndefined())
@@ -710,7 +713,10 @@ public:
       const MCSymbol &Symbol = it->getSymbol();
 
       // Ignore assembler temporaries.
-      if (it->getSymbol().isTemporary())
+      if (it->getSymbol().isTemporary() &&
+          (!it->getFragment() ||
+           !Asm.getBackend().doesSectionRequireSymbols(
+             it->getFragment()->getParent()->getSection())))
         continue;
 
       if (it->isExternal() || Symbol.isUndefined())
