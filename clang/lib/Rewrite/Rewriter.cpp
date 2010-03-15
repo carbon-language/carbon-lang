@@ -18,6 +18,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstdio>
 using namespace clang;
 
 void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {

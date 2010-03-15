@@ -21,6 +21,7 @@
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <string>
+#include <cstdio>
 
 using namespace clang;
 using namespace SrcMgr;

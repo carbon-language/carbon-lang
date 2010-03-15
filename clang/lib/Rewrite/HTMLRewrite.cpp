@@ -22,6 +22,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cstdio>
 using namespace clang;
 
 
