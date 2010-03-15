@@ -361,6 +361,8 @@ class DwarfDebug : public DwarfPrinter {
   /// findAbstractVariable - Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, unsigned FrameIdx, 
                                     DILocation &Loc);
+  DbgVariable *findAbstractVariable(DIVariable &Var, const MachineInstr *MI,
+                                    DILocation &Loc);
 
   /// updateSubprogramScopeDIE - Find DIE for the given subprogram and 
   /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.

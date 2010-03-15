@@ -1309,6 +1309,8 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
   if (!MAI || !DW || !MAI->doesSupportDebugInformation()
       || !DW->ShouldEmitDwarfDebug())
     return;
+  if (MI->getOpcode() == TargetOpcode::DBG_VALUE)
+    return;
   DebugLoc DL = MI->getDebugLoc();
   if (DL.isUnknown())
     return;

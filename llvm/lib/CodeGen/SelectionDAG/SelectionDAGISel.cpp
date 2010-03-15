@@ -368,8 +368,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 static void SetDebugLoc(unsigned MDDbgKind, Instruction *I,
                         SelectionDAGBuilder *SDB,
                         FastISel *FastIS, MachineFunction *MF) {
-  if (isa<DbgInfoIntrinsic>(I)) return;
-  
   if (MDNode *Dbg = I->getMetadata(MDDbgKind)) {
     DILocation DILoc(Dbg);
     DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());

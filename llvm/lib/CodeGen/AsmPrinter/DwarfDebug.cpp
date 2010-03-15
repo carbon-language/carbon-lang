@@ -148,16 +148,21 @@ public:
 class DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
   unsigned FrameIndex;               // Variable frame index.
+  const MachineInstr *DbgValueMInsn; // DBG_VALUE
   DbgVariable *const AbstractVar;    // Abstract variable for this variable.
   DIE *TheDIE;
 public:
   // AbsVar may be NULL.
   DbgVariable(DIVariable V, unsigned I, DbgVariable *AbsVar)
-    : Var(V), FrameIndex(I), AbstractVar(AbsVar), TheDIE(0)  {}
+    : Var(V), FrameIndex(I), DbgValueMInsn(0), AbstractVar(AbsVar), TheDIE(0) {}
+  DbgVariable(DIVariable V, const MachineInstr *MI, DbgVariable *AbsVar)
+    : Var(V), FrameIndex(0), DbgValueMInsn(MI), AbstractVar(AbsVar), TheDIE(0)
+    {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }
   unsigned getFrameIndex()           const { return FrameIndex; }
+  const MachineInstr *getDbgValue()  const { return DbgValueMInsn; }
   DbgVariable *getAbstractVariable() const { return AbstractVar; }
   void setDIE(DIE *D)                      { TheDIE = D; }
   DIE *getDIE()                      const { return TheDIE; }
@@ -1493,17 +1498,41 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
 
   // Add variable address.
   if (!Scope->isAbstractScope()) {
-    MachineLocation Location;
-    unsigned FrameReg;
-    int Offset = RI->getFrameIndexReference(*MF, DV->getFrameIndex(), FrameReg);
-    Location.set(FrameReg, Offset);
-
-    if (VD.hasComplexAddress())
-      addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-    else if (VD.isBlockByrefVariable())
-      addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
-    else
-      addAddress(VariableDie, dwarf::DW_AT_location, Location);
+    // Check if variable is described by DBG_VALUE instruction.
+    if (const MachineInstr *DbgValueInsn = DV->getDbgValue()) {
+      if (DbgValueInsn->getNumOperands() == 3) {
+        // FIXME : Handle getNumOperands != 3 
+        if (DbgValueInsn->getOperand(0).getType() 
+            == MachineOperand::MO_Register
+            && DbgValueInsn->getOperand(0).getReg()) {
+          MachineLocation Location;
+          Location.set(DbgValueInsn->getOperand(0).getReg());
+          addAddress(VariableDie, dwarf::DW_AT_location, Location);
+        } else if (DbgValueInsn->getOperand(0).getType() == 
+                   MachineOperand::MO_Immediate) {
+          DIEBlock *Block = new DIEBlock();
+          unsigned Imm = DbgValueInsn->getOperand(0).getImm();
+          addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
+          addBlock(VariableDie, dwarf::DW_AT_const_value, 0, Block);
+        } else {
+          //FIXME : Handle other operand types.
+          delete VariableDie;
+          return NULL;
+        }
+      } 
+    } else {
+      MachineLocation Location;
+      unsigned FrameReg;
+      int Offset = RI->getFrameIndexReference(*MF, DV->getFrameIndex(), FrameReg);
+      Location.set(FrameReg, Offset);
+      
+      if (VD.hasComplexAddress())
+        addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+      else if (VD.isBlockByrefVariable())
+        addBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+      else
+        addAddress(VariableDie, dwarf::DW_AT_location, Location);
+    }
   }
 
   if (Tag == dwarf::DW_TAG_formal_parameter && VD.getType().isArtificial())
@@ -1928,6 +1957,27 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
   return AbsDbgVariable;
 }
 
+/// findAbstractVariable - Find abstract variable, if any, associated with Var.
+/// FIXME : Refactor findAbstractVariable.
+DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
+                                              const MachineInstr *MI,
+                                              DILocation &ScopeLoc) {
+
+  DbgVariable *AbsDbgVariable = AbstractVariables.lookup(Var.getNode());
+  if (AbsDbgVariable)
+    return AbsDbgVariable;
+
+  DbgScope *Scope = AbstractScopes.lookup(ScopeLoc.getScope().getNode());
+  if (!Scope)
+    return NULL;
+
+  AbsDbgVariable = new DbgVariable(Var, MI, 
+                                   NULL /* No more-abstract variable*/);
+  Scope->addVariable(AbsDbgVariable);
+  AbstractVariables[Var.getNode()] = AbsDbgVariable;
+  return AbsDbgVariable;
+}
+
 /// collectVariableInfo - Populate DbgScope entries with variables' info.
 void DwarfDebug::collectVariableInfo() {
   if (!MMI) return;
@@ -1952,6 +2002,43 @@ void DwarfDebug::collectVariableInfo() {
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.first, ScopeLoc);
     DbgVariable *RegVar = new DbgVariable(DV, VP.first, AbsDbgVariable);
     Scope->addVariable(RegVar);
+  }
+
+  // Collect variable information from DBG_VALUE machine instructions;
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+       I != E; ++I) {
+    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+         II != IE; ++II) {
+      const MachineInstr *MInsn = II;
+      if (MInsn->getOpcode() != TargetOpcode::DBG_VALUE)
+        continue;
+      // FIXME : Lift this restriction.
+      if (MInsn->getNumOperands() != 3)
+        continue;
+      DIVariable DV((MDNode*)(MInsn->getOperand(MInsn->getNumOperands() - 1).getMetadata()));
+      if (DV.getTag() == dwarf::DW_TAG_arg_variable)  {
+        // FIXME Handle inlined subroutine arguments.
+        DbgVariable *ArgVar = new DbgVariable(DV, MInsn, NULL);
+        CurrentFnDbgScope->addVariable(ArgVar);
+        continue;
+      }
+
+      DebugLoc DL = MInsn->getDebugLoc();
+      if (DL.isUnknown()) continue;
+      DILocation ScopeLoc = MF->getDILocation(DL);
+      DbgScope *Scope =
+        ConcreteScopes.lookup(ScopeLoc.getOrigLocation().getNode());
+      if (!Scope)
+        Scope = DbgScopeMap.lookup(ScopeLoc.getScope().getNode());
+      // If variable scope is not found then skip this variable.
+      if (!Scope)
+        continue;
+
+      DbgVariable *AbsDbgVariable = findAbstractVariable(DV, MInsn,
+                                                         ScopeLoc);
+      DbgVariable *RegVar = new DbgVariable(DV, MInsn, AbsDbgVariable);
+      Scope->addVariable(RegVar);
+    }
   }
 }
 
@@ -2022,6 +2109,8 @@ bool DwarfDebug::extractScopeInformation() {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
+      // FIXME : Remove DBG_VALUE check.
+      if (MInsn->getOpcode() == TargetOpcode::DBG_VALUE) continue;
       MIIndexMap[MInsn] = MIIndex++;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown()) continue;
@@ -2042,6 +2131,8 @@ bool DwarfDebug::extractScopeInformation() {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
+      // FIXME : Remove DBG_VALUE check.
+      if (MInsn->getOpcode() == TargetOpcode::DBG_VALUE) continue;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown())  continue;
       DILocation DLT = MF->getDILocation(DL);
