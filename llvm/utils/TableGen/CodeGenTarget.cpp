@@ -184,16 +184,16 @@ void CodeGenTarget::ReadRegisterClasses() const {
   RegisterClasses.assign(RegClasses.begin(), RegClasses.end());
 }
 
-std::vector<unsigned char> CodeGenTarget::getRegisterVTs(Record *R) const {
-  std::vector<unsigned char> Result;
+std::vector<MVT::SimpleValueType> CodeGenTarget::
+getRegisterVTs(Record *R) const {
+  std::vector<MVT::SimpleValueType> Result;
   const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
   for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
     const CodeGenRegisterClass &RC = RegisterClasses[i];
     for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
       if (R == RC.Elements[ei]) {
         const std::vector<MVT::SimpleValueType> &InVTs = RC.getValueTypes();
-        for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
-          Result.push_back(InVTs[i]);
+        Result.insert(Result.end(), InVTs.begin(), InVTs.end());
       }
     }
   }

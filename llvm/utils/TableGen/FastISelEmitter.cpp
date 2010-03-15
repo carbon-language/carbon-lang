@@ -73,10 +73,9 @@ struct OperandsSignature {
       if (!Op->getPredicateFns().empty())
         return false;
       // For now, filter out any operand with multiple values.
-      if (Op->getExtTypes().size() != 1)
-        return false;
+      assert(Op->hasTypeSet() && "Type infererence not done?");
       // For now, all the operands must have the same type.
-      if (Op->getTypeNum(0) != VT)
+      if (Op->getType() != VT)
         return false;
       if (!Op->isLeaf()) {
         if (Op->getOperator()->getName() == "imm") {
@@ -296,10 +295,10 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
 
     Record *InstPatOp = InstPatNode->getOperator();
     std::string OpcodeName = getOpcodeName(InstPatOp, CGP);
-    MVT::SimpleValueType RetVT = InstPatNode->getTypeNum(0);
+    MVT::SimpleValueType RetVT = InstPatNode->getType();
     MVT::SimpleValueType VT = RetVT;
     if (InstPatNode->getNumChildren())
-      VT = InstPatNode->getChild(0)->getTypeNum(0);
+      VT = InstPatNode->getChild(0)->getType();
 
     // For now, filter out instructions which just set a register to
     // an Operand or an immediate, like MOV32ri.

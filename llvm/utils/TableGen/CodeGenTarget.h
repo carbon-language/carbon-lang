@@ -167,7 +167,7 @@ public:
 
   /// getRegisterVTs - Find the union of all possible SimpleValueTypes for the
   /// specified physical register.
-  std::vector<unsigned char> getRegisterVTs(Record *R) const;
+  std::vector<MVT::SimpleValueType> getRegisterVTs(Record *R) const;
   
   const std::vector<MVT::SimpleValueType> &getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();
