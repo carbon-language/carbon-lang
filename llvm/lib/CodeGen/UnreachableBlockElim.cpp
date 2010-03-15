@@ -58,13 +58,25 @@ FunctionPass *llvm::createUnreachableBlockEliminationPass() {
   return new UnreachableBlockElim();
 }
 
+static void MarkReachableFrom(BasicBlock *BB, 
+                              SmallPtrSet<BasicBlock*, 8> &Reachable) {
+  for (df_ext_iterator<BasicBlock*, SmallPtrSet<BasicBlock*, 8> > I =
+       df_ext_begin(BB, Reachable), E = df_ext_end(BB, Reachable); I != E; ++I)
+    ; // Mark all reachable blocks.
+}
+
 bool UnreachableBlockElim::runOnFunction(Function &F) {
   SmallPtrSet<BasicBlock*, 8> Reachable;
 
   // Mark all reachable blocks.
-  for (df_ext_iterator<Function*, SmallPtrSet<BasicBlock*, 8> > I =
-       df_ext_begin(&F, Reachable), E = df_ext_end(&F, Reachable); I != E; ++I)
-    /* Mark all reachable blocks */;
+  MarkReachableFrom(&F.getEntryBlock(), Reachable);
+  
+  // Mark any address-taken blocks.  We don't want codegen to delete these
+  // because the address may already be referenced by another function and the
+  // label may be referenced.
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (I->hasAddressTaken() && !Reachable.count(I))
+      MarkReachableFrom(I, Reachable);
 
   // Loop over all dead blocks, remembering them and deleting all instructions
   // in them.
