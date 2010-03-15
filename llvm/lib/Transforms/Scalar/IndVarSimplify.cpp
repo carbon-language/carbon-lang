@@ -43,6 +43,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/Dominators.h"
@@ -555,6 +556,9 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     // undefined behavior: LoopSimplify guarantees that the preheader
     // dominates the exit block.
     if (I->mayHaveSideEffects() || I->mayReadFromMemory())
+      continue;
+    // Skip debug info intrinsics.
+    if (isa<DbgInfoIntrinsic>(I))
       continue;
     // Don't sink static AllocaInsts out of the entry block, which would
     // turn them into dynamic allocas!
