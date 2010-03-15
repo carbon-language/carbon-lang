@@ -1328,7 +1328,7 @@ public:
   }
 
   /// Lookup a property by name in the specified DeclContext.
-  static ObjCPropertyDecl *findPropertyDecl(DeclContext *DC,
+  static ObjCPropertyDecl *findPropertyDecl(const DeclContext *DC,
                                             IdentifierInfo *propertyID);
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
