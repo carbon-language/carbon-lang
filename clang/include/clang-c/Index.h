@@ -1091,7 +1091,7 @@ CINDEX_LINKAGE CXString clang_constructUSR_ObjCClass(const char *class_name);
  * \brief Construct a USR for a specified Objective-C category.
  */
 CINDEX_LINKAGE CXString
-  clang_constructUSR_ObjCategory(const char *class_name,
+  clang_constructUSR_ObjCCategory(const char *class_name,
                                  const char *category_name);
 
 /**

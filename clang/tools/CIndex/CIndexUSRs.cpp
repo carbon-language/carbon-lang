@@ -285,7 +285,7 @@ CXString clang_constructUSR_ObjCProtocol(const char *name) {
   return createCXString(SUG.str(), true);
 }
 
-CXString clang_constructUSR_ObjCategory(const char *class_name,
+CXString clang_constructUSR_ObjCCategory(const char *class_name,
                                         const char *category_name) {
   StringUSRGenerator SUG;
   SUG->GenObjCCategory(class_name, category_name);
