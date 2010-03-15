@@ -151,10 +151,12 @@ public:
       return StringRef(SectionName, 16);
     return StringRef(SectionName);
   }
-  
+
   unsigned getTypeAndAttributes() const { return TypeAndAttributes; }
   unsigned getStubSize() const { return Reserved2; }
-  
+
+  unsigned getType() const { return TypeAndAttributes & SECTION_TYPE; }
+
   /// ParseSectionSpecifier - Parse the section specifier indicated by "Spec".
   /// This is a string that can appear after a .section directive in a mach-o
   /// flavored .s file.  If successful, this fills in the specified Out
@@ -165,7 +167,7 @@ public:
                                            StringRef &Section,   // Out.
                                            unsigned  &TAA,       // Out.
                                            unsigned  &StubSize); // Out.
-  
+
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
                                     raw_ostream &OS) const;
 };

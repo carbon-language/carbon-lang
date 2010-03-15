@@ -52,8 +52,7 @@ static uint64_t WriteNopData(uint64_t Count, MachObjectWriter &MOW);
 static bool isVirtualSection(const MCSection &Section) {
   // FIXME: Lame.
   const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
-  unsigned Type = SMO.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
-  return (Type == MCSectionMachO::S_ZEROFILL);
+  return (SMO.getType() == MCSectionMachO::S_ZEROFILL);
 }
 
 static unsigned getFixupKindLog2Size(unsigned Kind) {
@@ -615,9 +614,7 @@ public:
       const MCSectionMachO &Section =
         static_cast<const MCSectionMachO&>(it->SectionData->getSection());
 
-      unsigned Type =
-        Section.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
-      if (Type != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
+      if (Section.getType() != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
         continue;
 
       Asm.getOrCreateSymbolData(*it->Symbol);
@@ -630,10 +627,8 @@ public:
       const MCSectionMachO &Section =
         static_cast<const MCSectionMachO&>(it->SectionData->getSection());
 
-      unsigned Type =
-        Section.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
-      if (Type != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
-          Type != MCSectionMachO::S_SYMBOL_STUBS)
+      if (Section.getType() != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
+          Section.getType() != MCSectionMachO::S_SYMBOL_STUBS)
         continue;
 
       // Set the symbol type to undefined lazy, but only on construction.
@@ -911,9 +906,7 @@ public:
         // special handling.
         const MCSectionMachO &Section =
           static_cast<const MCSectionMachO&>(it->SectionData->getSection());
-        unsigned Type =
-          Section.getTypeAndAttributes() & MCSectionMachO::SECTION_TYPE;
-        if (Type == MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS) {
+        if (Section.getType() == MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS) {
           // If this symbol is defined and internal, mark it as such.
           if (it->Symbol->isDefined() &&
               !Asm.getSymbolData(*it->Symbol).isExternal()) {
