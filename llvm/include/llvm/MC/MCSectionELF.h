@@ -21,7 +21,9 @@ namespace llvm {
 /// MCSectionELF - This represents a section on linux, lots of unix variants
 /// and some bare metal systems.
 class MCSectionELF : public MCSection {
-  std::string SectionName;
+  /// SectionName - This is the name of the section.  The referenced memory is
+  /// owned by TargetLoweringObjectFileELF's ELFUniqueMap.
+  StringRef SectionName;
   
   /// Type - This is the sh_type field of a section, drawn from the enums below.
   unsigned Type;
@@ -163,10 +165,7 @@ public:
     TARGET_INDEP_SHF     = FIRST_TARGET_DEP_FLAG-1U
   };
 
-  StringRef getSectionName() const {
-    return StringRef(SectionName);
-  }
-  
+  StringRef getSectionName() const { return SectionName; }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   

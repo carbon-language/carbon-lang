@@ -53,11 +53,13 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)UniquingMap;
 
   // Do the lookup, if we have a hit, return it.
-  const MCSectionELF *&Entry = Map[Section];
-  if (Entry) return Entry;
+  StringMapEntry<const MCSectionELF*> &Entry = Map.GetOrCreateValue(Section);
+  if (Entry.getValue()) return Entry.getValue();
 
-  return Entry = MCSectionELF::Create(Section, Type, Flags, Kind, IsExplicit,
-                                      getContext());
+  MCSectionELF *Result = MCSectionELF::Create(Entry.getKey(), Type, Flags, Kind,
+                                              IsExplicit, getContext());
+  Entry.setValue(Result);
+  return Result;
 }
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,

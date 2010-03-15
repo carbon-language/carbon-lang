@@ -42,6 +42,8 @@ namespace llvm {
   };
 
   class MCSectionCOFF : public MCSection {
+    // FIXME: This memory is leaked because MCSectionCOFF is bump pointer
+    // allocated and this never gets freed.
     std::string Name;
     
     /// IsDirective - This is true if the section name is a directive, not
