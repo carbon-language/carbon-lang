@@ -24,18 +24,6 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 };
 
-// FIXME: This subclass isn't 100% necessary. It will become obsolete once we
-//        can place all LSDAs into the TEXT section. See
-//        <rdar://problem/6804645>.
-class ARMMachOTargetObjectFile : public TargetLoweringObjectFileMachO {
-public:
-  ARMMachOTargetObjectFile() : TargetLoweringObjectFileMachO() {}
-
-  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
-
-  virtual unsigned getTTypeEncoding() const;
-};
-
 } // end namespace llvm
 
 #endif

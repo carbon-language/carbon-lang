@@ -37,7 +37,6 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
@@ -74,11 +73,6 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   switch (TM.getSubtarget<X86Subtarget>().TargetType) {
   default: llvm_unreachable("unknown subtarget type");
   case X86Subtarget::isDarwin:
-    if (TM.getSubtarget<X86Subtarget>().is64Bit())
-      return new X8664_MachoTargetObjectFile();
-    else
-      return new X86_MachoTargetObjectFile();
-
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return new X8664_MachoTargetObjectFile();
     return new TargetLoweringObjectFileMachO();

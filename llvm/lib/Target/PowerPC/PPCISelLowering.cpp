@@ -16,7 +16,6 @@
 #include "PPCPerfectShuffle.h"
 #include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
-#include "PPCTargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -60,7 +59,7 @@ cl::desc("enable preincrement load/store generation on PPC (experimental)"),
 
 static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
   if (TM.getSubtargetImpl()->isDarwin())
-    return new PPCMachOTargetObjectFile();
+    return new TargetLoweringObjectFileMachO();
 
   return new TargetLoweringObjectFileELF();
 }

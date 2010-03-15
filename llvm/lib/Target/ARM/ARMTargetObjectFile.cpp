@@ -10,7 +10,6 @@
 #include "ARMTargetObjectFile.h"
 #include "ARMSubtarget.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
@@ -34,21 +33,4 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
                     MCSectionELF::SHF_WRITE | MCSectionELF::SHF_ALLOC,
                     SectionKind::getDataRel());
   }
-}
-
-//===----------------------------------------------------------------------===//
-//                              Mach-O Target
-//===----------------------------------------------------------------------===//
-
-void ARMMachOTargetObjectFile::Initialize(MCContext &Ctx,
-                                          const TargetMachine &TM) {
-  TargetLoweringObjectFileMachO::Initialize(Ctx, TM);
-
-  // Exception Handling.
-  LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
-                                SectionKind::getReadOnlyWithRel());
-}
-
-unsigned ARMMachOTargetObjectFile::getTTypeEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
 }
