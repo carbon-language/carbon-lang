@@ -2332,7 +2332,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     switch (Opcode) {
     default: break;
     case ISD::SIGN_EXTEND:
-      return getConstant(APInt(Val).sext(VT.getSizeInBits()), VT);
+      return getConstant(APInt(Val).sextOrTrunc(VT.getSizeInBits()), VT);
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND:
     case ISD::TRUNCATE:
