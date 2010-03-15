@@ -1135,6 +1135,12 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     // Objective C++: We're able to convert from a pointer to an
     // interface to a pointer to a different interface.
     if (Context.canAssignObjCInterfaces(ToObjCPtr, FromObjCPtr)) {
+      const ObjCInterfaceType* LHS = ToObjCPtr->getInterfaceType();
+      const ObjCInterfaceType* RHS = FromObjCPtr->getInterfaceType();
+      if (getLangOptions().CPlusPlus && LHS && RHS &&
+          !ToObjCPtr->getPointeeType().isAtLeastAsQualifiedAs(
+                                                FromObjCPtr->getPointeeType()))
+        return false;
       ConvertedType = ToType;
       return true;
     }

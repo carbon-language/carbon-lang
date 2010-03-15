@@ -24,3 +24,15 @@ void RandomFunc(CFMDRef theDict, const void *key, const void *value);
     RandomFunc((CFMDRef)dict, key, objects[3]);
 }
 @end
+
+@interface I
+- (void) Meth : (I*) Arg;
+@end
+
+void Func (I* arg);  // expected-note {{candidate function not viable: no known conversion from 'I const *' to 'I *' for 1st argument}}
+
+void foo(const I *p, I* sel) {
+  [sel Meth : p];	// expected-error {{incompatible type sending 'I const *', expected 'I *'}}
+  Func(p);		// expected-error {{no matching function for call to 'Func'}}
+}
+
