@@ -120,7 +120,7 @@ static bool callIsSmall(const Function *F) {
   StringRef Name = F->getName();
   
   // These will all likely lower to a single selection DAG node.
-  if (Name == "copysign" || Name == "copysignf" ||
+  if (Name == "copysign" || Name == "copysignf" || Name == "copysignl" ||
       Name == "fabs" || Name == "fabsf" || Name == "fabsl" ||
       Name == "sin" || Name == "sinf" || Name == "sinl" ||
       Name == "cos" || Name == "cosf" || Name == "cosl" ||
