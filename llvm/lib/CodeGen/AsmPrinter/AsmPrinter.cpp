@@ -307,6 +307,16 @@ void AsmPrinter::EmitFunctionHeader() {
   // do their wild and crazy things as required.
   EmitFunctionEntryLabel();
   
+  // If the function had address-taken blocks that got deleted, then we have
+  // references to the dangling symbols.  Emit them at the start of the function
+  // so that we don't get references to undefined symbols.
+  std::vector<MCSymbol*> DeadBlockSyms;
+  MMI->takeDeletedSymbolsForFunction(F, DeadBlockSyms);
+  for (unsigned i = 0, e = DeadBlockSyms.size(); i != e; ++i) {
+    OutStreamer.AddComment("Address taken block that was later removed");
+    OutStreamer.EmitLabel(DeadBlockSyms[i]);
+  }
+  
   // Add some workaround for linkonce linkage on Cygwin\MinGW.
   if (MAI->getLinkOnceDirective() != 0 &&
       (F->hasLinkOnceLinkage() || F->hasWeakLinkage()))

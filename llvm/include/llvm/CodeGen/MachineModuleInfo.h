@@ -214,6 +214,14 @@ public:
   /// block when its address is taken.  This cannot be its normal LBB label
   /// because the block may be accessed outside its containing function.
   MCSymbol *getAddrLabelSymbol(const BasicBlock *BB);
+
+  /// takeDeletedSymbolsForFunction - If the specified function has had any
+  /// references to address-taken blocks generated, but the block got deleted,
+  /// return the symbol now so we can emit it.  This prevents emitting a
+  /// reference to a symbol that has no definition.
+  void takeDeletedSymbolsForFunction(const Function *F, 
+                                     std::vector<MCSymbol*> &Result);
+
   
   //===- EH ---------------------------------------------------------------===//
 
