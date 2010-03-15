@@ -159,22 +159,21 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
 
 /// FindPropertyVisibleInPrimaryClass - Finds declaration of the property
 /// with name 'PropertyId' in the primary class; including those in protocols
-/// (direct or indirect) used by the promary class.
-/// FIXME: Convert to DeclContext lookup...
+/// (direct or indirect) used by the primary class.
 ///
 ObjCPropertyDecl *
-ObjCContainerDecl::FindPropertyVisibleInPrimaryClass(
+ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
                                             IdentifierInfo *PropertyId) const {
-  assert(isa<ObjCInterfaceDecl>(this) && "FindPropertyVisibleInPrimaryClass");
-  for (prop_iterator I = prop_begin(), E = prop_end(); I != E; ++I)
-    if ((*I)->getIdentifier() == PropertyId)
-      return *I;
-  const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this);
+  if (ObjCPropertyDecl *PD =
+      ObjCPropertyDecl::findPropertyDecl(cast<DeclContext>(this), PropertyId))
+    return PD;
+
   // Look through protocols.
-  for (ObjCInterfaceDecl::protocol_iterator I = OID->protocol_begin(),
-       E = OID->protocol_end(); I != E; ++I)
+  for (ObjCInterfaceDecl::protocol_iterator
+        I = protocol_begin(), E = protocol_end(); I != E; ++I)
     if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
       return P;
+
   return 0;
 }
 

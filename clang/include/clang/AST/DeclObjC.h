@@ -381,8 +381,6 @@ public:
   ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
 
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
-  ObjCPropertyDecl *FindPropertyVisibleInPrimaryClass(
-                                            IdentifierInfo *PropertyId) const;
 
   // Marks the end of the container.
   SourceRange getAtEndRange() const {
@@ -535,7 +533,10 @@ public:
   }
 
   ObjCCategoryDecl* getClassExtension() const;
-  
+
+  ObjCPropertyDecl
+    *FindPropertyVisibleInPrimaryClass(IdentifierInfo *PropertyId) const;
+
   /// isSuperClassOf - Return true if this class is the specified class or is a
   /// super class of the specified interface class.
   bool isSuperClassOf(const ObjCInterfaceDecl *I) const {
