@@ -78,7 +78,8 @@ private:
 public:
   MachineMove() : Label(0) {}
 
-  MachineMove(MCSymbol *label, MachineLocation &D, MachineLocation &S)
+  MachineMove(MCSymbol *label, const MachineLocation &D,
+              const MachineLocation &S)
   : Label(label), Destination(D), Source(S) {}
   
   // Accessors
