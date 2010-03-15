@@ -4449,6 +4449,9 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       break;
     }
   }
+  if (StringRef("{cc}").equals_lower(Constraint))
+    return std::make_pair(0U, ARM::CCRRegisterClass);
+
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
 
