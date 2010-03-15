@@ -6619,16 +6619,16 @@ LLVM</a>.</p>
 
 <div class="doc_text">
 
-<p>Half precision floating point is storage-only format. This means that it is
-   an encoding (typically for density in memory) but typically does not support
-   computation in the format.</p>
+<p>Half precision floating point is a storage-only format. This means that it is
+   a dense encoding (in memory) but does not support computation in the
+   format.</p>
    
-<p>This means that you code must first load the half-precision floating point
+<p>This means that code must first load the half-precision floating point
    value as an i16, then convert it to float with <a
    href="#int_convert_from_fp16"><tt>llvm.convert.from.fp16</tt></a>.
    Computation can then be performed on the float value (including extending to
-   double etc).  When the value is ready to be stored back to memory, this is
-   done by converting to float if needed, then converting to i16 with
+   double etc).  To store the value back to memory, it is first converted to
+   float if needed, then converted to i16 with
    <a href="#int_convert_to_fp16"><tt>llvm.convert.to.fp16</tt></a>, then
    storing as an i16 value.</p>
 </div>
@@ -6657,7 +6657,7 @@ LLVM</a>.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.convert.to.fp16</tt>' intrinsic function performs
    a conversion from single precision floating point format to half precision
-   floating point format. The return value is just an <tt>i16</tt> which
+   floating point format. The return value is an <tt>i16</tt> which
    contains the converted number.</p>
 
 <h5>Examples:</h5>
@@ -6691,7 +6691,7 @@ LLVM</a>.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.convert.from.fp16</tt>' intrinsic function performs a
-   conversion from half single precision floating point format to signgle
+   conversion from half single precision floating point format to single
    precision floating point format. The input half-float value is represented by
    an <tt>i16</tt> value.</p>
 
