@@ -165,7 +165,17 @@ RewriteBuffer &Rewriter::getEditBuffer(FileID FID) {
     return I->second;
   I = RewriteBuffers.insert(I, std::make_pair(FID, RewriteBuffer()));
 
-  std::pair<const char*, const char*> MB = SourceMgr->getBufferData(FID);
+  llvm::StringRef FileName;
+  std::string ErrorStr;
+  
+  std::pair<const char*, const char*> MB
+    = SourceMgr->getBufferData(FID, FileName, ErrorStr);
+  if (!MB.first) {
+    // FIXME: Add a diagnostic object somewhere?
+    fprintf(stderr, "error: cannot open file '%s': %s\n", 
+            FileName.str().c_str(), ErrorStr.c_str());
+  }
+  
   I->second.Initialize(MB.first, MB.second);
 
   return I->second;

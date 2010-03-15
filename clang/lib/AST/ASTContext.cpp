@@ -423,10 +423,14 @@ namespace {
 /// (which requires a < after the Doxygen-comment delimiter). Otherwise,
 /// we only return true when we find a non-member comment.
 static bool
-isDoxygenComment(SourceManager &SourceMgr, SourceRange Comment,
-                 bool Member = false) {
+isDoxygenComment(SourceManager &SourceMgr, Diagnostic &Diags,
+                 SourceRange Comment, bool Member = false) {
   const char *BufferStart
-    = SourceMgr.getBufferData(SourceMgr.getFileID(Comment.getBegin())).first;
+    = SourceMgr.getBufferData(SourceMgr.getFileID(Comment.getBegin()), 
+                              Diags).first;
+  if (!BufferStart)
+    return false;
+  
   const char *Start = BufferStart + SourceMgr.getFileOffset(Comment.getBegin());
   const char* End = BufferStart + SourceMgr.getFileOffset(Comment.getEnd());
 
@@ -444,7 +448,7 @@ isDoxygenComment(SourceManager &SourceMgr, SourceRange Comment,
 
 /// \brief Retrieve the comment associated with the given declaration, if
 /// it has one.
-const char *ASTContext::getCommentForDecl(const Decl *D) {
+const char *ASTContext::getCommentForDecl(const Decl *D, Diagnostic &Diags) {
   if (!D)
     return 0;
 
@@ -489,12 +493,14 @@ const char *ASTContext::getCommentForDecl(const Decl *D) {
   std::pair<FileID, unsigned> DeclStartDecomp
     = SourceMgr.getDecomposedLoc(DeclStartLoc);
   const char *FileBufferStart
-    = SourceMgr.getBufferData(DeclStartDecomp.first).first;
-
+    = SourceMgr.getBufferData(DeclStartDecomp.first, Diags).first;
+  if (!FileBufferStart)
+    return 0;
+  
   // First check whether we have a comment for a member.
   if (LastComment != Comments.end() &&
       !isa<TagDecl>(D) && !isa<NamespaceDecl>(D) &&
-      isDoxygenComment(SourceMgr, *LastComment, true)) {
+      isDoxygenComment(SourceMgr, Diags, *LastComment, true)) {
     std::pair<FileID, unsigned> LastCommentEndDecomp
       = SourceMgr.getDecomposedLoc(LastComment->getEnd());
     if (DeclStartDecomp.first == LastCommentEndDecomp.first &&
@@ -526,7 +532,7 @@ const char *ASTContext::getCommentForDecl(const Decl *D) {
     return 0;
 
   // Check that we actually have a Doxygen comment.
-  if (!isDoxygenComment(SourceMgr, *LastComment))
+  if (!isDoxygenComment(SourceMgr, Diags, *LastComment))
     return 0;
 
   // Compute the starting line for the declaration and for the end of the
@@ -561,7 +567,7 @@ const char *ASTContext::getCommentForDecl(const Decl *D) {
     }
 
     // If this comment is not a Doxygen comment, we're done.
-    if (!isDoxygenComment(SourceMgr, *FirstComment)) {
+    if (!isDoxygenComment(SourceMgr, Diags, *FirstComment)) {
       ++FirstComment;
       break;
     }

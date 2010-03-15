@@ -706,7 +706,11 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
 
 void RewriteObjC::RewriteInclude() {
   SourceLocation LocStart = SM->getLocForStartOfFile(MainFileID);
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
+  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID, 
+                                                                  Diags);
+  if (!MainBuf.first)
+    return;
+  
   const char *MainBufStart = MainBuf.first;
   const char *MainBufEnd = MainBuf.second;
   size_t ImportLen = strlen("import");
@@ -731,7 +735,11 @@ void RewriteObjC::RewriteInclude() {
 }
 
 void RewriteObjC::RewriteTabs() {
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
+  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID,
+                                                                  Diags);
+  if (!MainBuf.first)
+    return;
+  
   const char *MainBufStart = MainBuf.first;
   const char *MainBufEnd = MainBuf.second;
 
@@ -973,7 +981,10 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
 }
 
 void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
+  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID,
+                                                                  Diags);
+  if (!MainBuf.first)
+    return;
 
   SourceLocation LocStart = PDecl->getLocStart();
 

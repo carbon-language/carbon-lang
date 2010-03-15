@@ -43,8 +43,18 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   // Include the whole end token in the range.
   EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr(), R.getLangOpts());
 
+  llvm::StringRef FileName;
+  std::string ErrorStr;
+  const char *BufferStart = SM.getBufferData(FID, FileName, ErrorStr).first;
+  if (!BufferStart) {
+    // FIXME: Add a diagnostic object somewhere?
+    fprintf(stderr, "error: cannot open file '%s': %s\n", 
+            FileName.str().c_str(), ErrorStr.c_str());
+    return;
+  }
+  
   HighlightRange(R.getEditBuffer(FID), BOffset, EOffset,
-                 SM.getBufferData(FID).first, StartTag, EndTag);
+                 BufferStart, StartTag, EndTag);
 }
 
 /// HighlightRange - This is the same as the above method, but takes

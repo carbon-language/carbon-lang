@@ -17,21 +17,68 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
 #include <cassert>
 
 namespace llvm {
 class MemoryBuffer;
+class StringRef;
 }
 
 namespace clang {
 
+class Diagnostic;
 class SourceManager;
 class FileManager;
 class FileEntry;
 class LineTableInfo;
-
+  
+/// \brief Class used as a return value by operations that return an
+/// \c llvm::MemoryBuffer.
+///
+/// Since not all source-manager routines that return buffers are guaranteed
+/// to succeed, 
+class BufferResult {
+  struct FailureData;
+  llvm::PointerUnion<const llvm::MemoryBuffer *, FailureData *> Data;
+  
+  // Cannot copy buffer result structures
+  BufferResult &operator=(const BufferResult &Other);
+  
+public:
+  BufferResult(const BufferResult &Other);
+  BufferResult(const llvm::MemoryBuffer *Buffer) : Data(Buffer) { }
+  BufferResult(const char *FileName, llvm::StringRef ErrorStr,
+               const llvm::MemoryBuffer *Buffer = 0);
+  ~BufferResult();
+  
+  // \brief Determine whether there was any failure when finding this buffer.
+  bool isInvalid() const;
+  
+  /// \brief Retrieve the memory buffer that this result refers to. If an
+  /// error occurs, emits a diagnostic via the given diagnostics object and
+  /// may return NULL.
+  const llvm::MemoryBuffer *getBuffer(Diagnostic &Diags) const;
+  
+  /// \brief Retrieve the memory buffer that this result refers to. If an error
+  /// occurs, provides the file name and a non-empty error string to indicate 
+  /// what failed, and may return NULL.
+  const llvm::MemoryBuffer *getBuffer(llvm::StringRef &FileName, 
+                                      std::string &Error) const;
+  
+  // FIXME: TEMPORARY! Allows a buffer result to be interpreted as a buffer,
+  // which is very unsafe (but is used throughout Clang). Note that this will
+  // spit a diagnostic to standard error before returning the buffer.
+  operator const llvm::MemoryBuffer *() const;
+  
+  // FIXME: TEMPORARY! Allows a buffer result to be interpreted like a smart
+  // pointer to a buffer, which is very unsafe. Note that this will emit a
+  // diagnostic to standard error before returning the buffer.
+  const llvm::MemoryBuffer * operator->() const { return *this; }
+};
+  
 /// SrcMgr - Public enums and private classes that are part of the
 /// SourceManager implementation.
 ///
@@ -68,10 +115,8 @@ namespace SrcMgr {
     /// if SourceLineCache is non-null.
     unsigned NumLines;
 
-    /// getBuffer - Returns the memory buffer for the associated content.  If
-    /// there is an error opening this buffer the first time, this manufactures
-    /// a temporary buffer and returns a non-empty error string.
-    const llvm::MemoryBuffer *getBuffer(std::string *ErrorStr = 0) const;
+    /// getBuffer - Returns the memory buffer for the associated content. 
+    BufferResult getBuffer() const;
 
     /// getSize - Returns the size of the content encapsulated by this
     ///  ContentCache. This can be the size of the source file or the size of an
@@ -407,7 +452,7 @@ public:
                                         unsigned Offset = 0);
 
   /// \brief Retrieve the memory buffer associated with the given file.
-  const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File);
+  BufferResult getMemoryBufferForFile(const FileEntry *File);
 
   /// \brief Override the contents of the given source file by providing an
   /// already-allocated buffer.
@@ -428,8 +473,8 @@ public:
   /// getBuffer - Return the buffer for the specified FileID. If there is an
   /// error opening this buffer the first time, this manufactures a temporary
   /// buffer and returns a non-empty error string.
-  const llvm::MemoryBuffer *getBuffer(FileID FID, std::string *Error = 0) const{
-    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Error);
+  BufferResult getBuffer(FileID FID) const{
+    return getSLocEntry(FID).getFile().getContentCache()->getBuffer();
   }
 
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
@@ -439,8 +484,21 @@ public:
 
   /// getBufferData - Return a pointer to the start and end of the source buffer
   /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData(FileID FID) const;
+  ///
+  /// If an error occurs while reading in the file, provides the file name 
+  /// and a non-empty error string and returns a pair of NULL pointers.
+  std::pair<const char*, const char*> getBufferData(FileID FID,
+                                                    llvm::StringRef &FileName,
+                                                    std::string &Error) const;
 
+  /// getBufferData - Return a pointer to the start and end of the source buffer
+  /// data for the specified FileID.
+  /// 
+  /// If an error occurs while reading in the file, emits a diagnostic to the
+  /// given \c Diagnostic object and returns a pair of NULL pointers.
+  std::pair<const char*, const char*> getBufferData(FileID FID, 
+                                                    Diagnostic &Diags) const;
+  
 
   //===--------------------------------------------------------------------===//
   // SourceLocation manipulation methods.

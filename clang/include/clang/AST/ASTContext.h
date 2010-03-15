@@ -40,6 +40,7 @@ namespace clang {
   class ASTRecordLayout;
   class BlockExpr;
   class CharUnits;
+  class Diagnostic;
   class Expr;
   class ExternalASTSource;
   class IdentifierTable;
@@ -356,7 +357,7 @@ public:
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
 
-  const char *getCommentForDecl(const Decl *D);
+  const char *getCommentForDecl(const Decl *D, Diagnostic &Diags);
 
   // Builtin Types.
   CanQualType VoidTy;

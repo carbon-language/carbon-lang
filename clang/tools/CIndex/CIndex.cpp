@@ -2043,7 +2043,10 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   std::pair<FileID, unsigned> LocInfo
     = CXXUnit->getSourceManager().getDecomposedLoc(Loc);
   std::pair<const char *,const char *> Buffer
-    = CXXUnit->getSourceManager().getBufferData(LocInfo.first);
+    = CXXUnit->getSourceManager().getBufferData(LocInfo.first,
+                                  CXXUnit->getPreprocessor().getDiagnostics());
+  if (!Buffer.first)
+    return createCXString("");
 
   return createCXString(llvm::StringRef(Buffer.first+LocInfo.second,
                                         CXTok.int_data[2]));
@@ -2096,7 +2099,11 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
 
   // Create a lexer
   std::pair<const char *,const char *> Buffer
-    = SourceMgr.getBufferData(BeginLocInfo.first);
+    = SourceMgr.getBufferData(BeginLocInfo.first, 
+                              CXXUnit->getPreprocessor().getDiagnostics());
+  if (!Buffer.first)
+    return;
+  
   Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
             CXXUnit->getASTContext().getLangOptions(),
             Buffer.first, Buffer.first + BeginLocInfo.second, Buffer.second);
@@ -2125,12 +2132,16 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
       CXTok.int_data[0] = CXToken_Literal;
       CXTok.ptr_data = (void *)Tok.getLiteralData();
     } else if (Tok.is(tok::identifier)) {
-      // Lookup the identifier to determine whether we have a
+      // Lookup the identifier to determine whether we have a keyword.
       std::pair<FileID, unsigned> LocInfo
         = SourceMgr.getDecomposedLoc(Tok.getLocation());
-      const char *StartPos
-        = CXXUnit->getSourceManager().getBufferData(LocInfo.first).first +
-          LocInfo.second;
+      std::pair<const char *, const char *> Buf
+        = CXXUnit->getSourceManager().getBufferData(LocInfo.first,
+                                  CXXUnit->getPreprocessor().getDiagnostics());
+      if (!Buf.first)
+        return;
+      
+      const char *StartPos= Buf.first + LocInfo.second;
       IdentifierInfo *II
         = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok, StartPos);
       CXTok.int_data[0] = II->getTokenID() == tok::identifier?

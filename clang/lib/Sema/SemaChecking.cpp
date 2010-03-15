@@ -60,7 +60,10 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     std::pair<FileID, unsigned> LocInfo =
       SourceMgr.getDecomposedLoc(StrTokSpellingLoc);
     std::pair<const char *,const char *> Buffer =
-      SourceMgr.getBufferData(LocInfo.first);
+      SourceMgr.getBufferData(LocInfo.first, Diags);
+    if (!Buffer.first)
+      return StrTokSpellingLoc;
+      
     const char *StrData = Buffer.first+LocInfo.second;
 
     // Create a langops struct and enable trigraphs.  This is sufficient for
