@@ -329,12 +329,6 @@ class CXXRecordDecl : public RecordDecl {
   llvm::PointerUnion<ClassTemplateDecl*, MemberSpecializationInfo*>
     TemplateOrInstantiation;
   
-  void getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
-          const llvm::SmallPtrSet<CanQualType, 8> &TopConversionsTypeSet,
-          const llvm::SmallPtrSet<CanQualType, 8> &HiddenConversionTypes);
-  void collectConversionFunctions(
-    llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) const;
-  
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id,
@@ -559,14 +553,6 @@ public:
   /// in current class; including conversion function templates.
   const UnresolvedSetImpl *getVisibleConversionFunctions();
 
-  /// addVisibleConversionFunction - Add a new conversion function to the
-  /// list of visible conversion functions.
-  void addVisibleConversionFunction(CXXConversionDecl *ConvDecl);
-  
-  /// \brief Add a new conversion function template to the list of visible
-  /// conversion functions.
-  void addVisibleConversionFunction(FunctionTemplateDecl *ConvDecl);
-  
   /// addConversionFunction - Add a new conversion function to the
   /// list of conversion functions.
   void addConversionFunction(CXXConversionDecl *ConvDecl);

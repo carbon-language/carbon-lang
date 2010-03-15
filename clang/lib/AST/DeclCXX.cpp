@@ -318,105 +318,128 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   data().PlainOldData = false;
 }
 
-void
-CXXRecordDecl::collectConversionFunctions(
-                 llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) const
-{
-  const UnresolvedSetImpl *Cs = getConversionFunctions();
-  for (UnresolvedSetImpl::iterator I = Cs->begin(), E = Cs->end();
-         I != E; ++I) {
-    NamedDecl *TopConv = *I;
-    CanQualType TConvType;
-    if (FunctionTemplateDecl *TConversionTemplate =
-        dyn_cast<FunctionTemplateDecl>(TopConv))
-      TConvType = 
-        getASTContext().getCanonicalType(
-                    TConversionTemplate->getTemplatedDecl()->getResultType());
-    else 
-      TConvType = 
-        getASTContext().getCanonicalType(
-                      cast<CXXConversionDecl>(TopConv)->getConversionType());
-    ConversionsTypeSet.insert(TConvType);
-  }  
+static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
+  QualType T;
+  if (FunctionTemplateDecl *ConvTemp = dyn_cast<FunctionTemplateDecl>(Conv))
+    T = ConvTemp->getTemplatedDecl()->getResultType();
+  else 
+    T = cast<CXXConversionDecl>(Conv)->getConversionType();
+  return Context.getCanonicalType(T);
 }
 
-/// getNestedVisibleConversionFunctions - imports unique conversion 
-/// functions from base classes into the visible conversion function
-/// list of the class 'RD'. This is a private helper method.
-/// TopConversionsTypeSet is the set of conversion functions of the class
-/// we are interested in. HiddenConversionTypes is set of conversion functions
-/// of the immediate derived class which  hides the conversion functions found 
-/// in current class.
-void
-CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
-                const llvm::SmallPtrSet<CanQualType, 8> &TopConversionsTypeSet,                               
-                const llvm::SmallPtrSet<CanQualType, 8> &HiddenConversionTypes) 
-{
-  bool inTopClass = (RD == this);
-  QualType ClassType = getASTContext().getTypeDeclType(this);
-  if (const RecordType *Record = ClassType->getAs<RecordType>()) {
-    const UnresolvedSetImpl *Cs
-      = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
-    
-    for (UnresolvedSetImpl::iterator I = Cs->begin(), E = Cs->end();
-           I != E; ++I) {
-      NamedDecl *Conv = *I;
-      // Only those conversions not exact match of conversions in current
-      // class are candidateconversion routines.
-      CanQualType ConvType;
-      if (FunctionTemplateDecl *ConversionTemplate = 
-            dyn_cast<FunctionTemplateDecl>(Conv))
-        ConvType = 
-          getASTContext().getCanonicalType(
-                      ConversionTemplate->getTemplatedDecl()->getResultType());
-      else
-        ConvType = 
-          getASTContext().getCanonicalType(
-                          cast<CXXConversionDecl>(Conv)->getConversionType());
-      // We only add conversion functions found in the base class if they
-      // are not hidden by those found in HiddenConversionTypes which are
-      // the conversion functions in its derived class.
-      if (inTopClass || 
-          (!TopConversionsTypeSet.count(ConvType) && 
-           !HiddenConversionTypes.count(ConvType)) ) {
-        if (FunctionTemplateDecl *ConversionTemplate =
-              dyn_cast<FunctionTemplateDecl>(Conv))
-          RD->addVisibleConversionFunction(ConversionTemplate);
+/// Collect the visible conversions of a base class.
+///
+/// \param Base a base class of the class we're considering
+/// \param InVirtual whether this base class is a virtual base (or a base
+///   of a virtual base)
+/// \param Access the access along the inheritance path to this base
+/// \param ParentHiddenTypes the conversions provided by the inheritors
+///   of this base
+/// \param Output the set to which to add conversions from non-virtual bases
+/// \param VOutput the set to which to add conversions from virtual bases
+/// \param HiddenVBaseCs the set of conversions which were hidden in a
+///   virtual base along some inheritance path
+static void CollectVisibleConversions(ASTContext &Context,
+                                      CXXRecordDecl *Record,
+                                      bool InVirtual,
+                                      AccessSpecifier Access,
+                  const llvm::SmallPtrSet<CanQualType, 8> &ParentHiddenTypes,
+                                      UnresolvedSetImpl &Output,
+                                      UnresolvedSetImpl &VOutput,
+                           llvm::SmallPtrSet<NamedDecl*, 8> &HiddenVBaseCs) {
+  // The set of types which have conversions in this class or its
+  // subclasses.  As an optimization, we don't copy the derived set
+  // unless it might change.
+  const llvm::SmallPtrSet<CanQualType, 8> *HiddenTypes = &ParentHiddenTypes;
+  llvm::SmallPtrSet<CanQualType, 8> HiddenTypesBuffer;
+
+  // Collect the direct conversions and figure out which conversions
+  // will be hidden in the subclasses.
+  UnresolvedSetImpl &Cs = *Record->getConversionFunctions();
+  if (!Cs.empty()) {
+    HiddenTypesBuffer = ParentHiddenTypes;
+    HiddenTypes = &HiddenTypesBuffer;
+
+    for (UnresolvedSetIterator I = Cs.begin(), E = Cs.end(); I != E; ++I) {
+      bool Hidden =
+        !HiddenTypesBuffer.insert(GetConversionType(Context, I.getDecl()));
+
+      // If this conversion is hidden and we're in a virtual base,
+      // remember that it's hidden along some inheritance path.
+      if (Hidden && InVirtual)
+        HiddenVBaseCs.insert(cast<NamedDecl>(I.getDecl()->getCanonicalDecl()));
+
+      // If this conversion isn't hidden, add it to the appropriate output.
+      else if (!Hidden) {
+        AccessSpecifier IAccess
+          = CXXRecordDecl::MergeAccess(Access, I.getAccess());
+
+        if (InVirtual)
+          VOutput.addDecl(I.getDecl(), IAccess);
         else
-          RD->addVisibleConversionFunction(cast<CXXConversionDecl>(Conv));
+          Output.addDecl(I.getDecl(), IAccess);
       }
     }
   }
 
-  if (getNumBases() == 0 && getNumVBases() == 0)
-    return;
+  // Collect information recursively from any base classes.
+  for (CXXRecordDecl::base_class_iterator
+         I = Record->bases_begin(), E = Record->bases_end(); I != E; ++I) {
+    const RecordType *RT = I->getType()->getAs<RecordType>();
+    if (!RT) continue;
 
-  llvm::SmallPtrSet<CanQualType, 8> ConversionFunctions;
-  if (!inTopClass)
-    collectConversionFunctions(ConversionFunctions);
+    AccessSpecifier BaseAccess
+      = CXXRecordDecl::MergeAccess(Access, I->getAccessSpecifier());
+    bool BaseInVirtual = InVirtual || I->isVirtual();
 
-  for (CXXRecordDecl::base_class_iterator VBase = vbases_begin(),
-       E = vbases_end(); VBase != E; ++VBase) {
-    if (const RecordType *RT = VBase->getType()->getAs<RecordType>()) {
-      CXXRecordDecl *VBaseClassDecl
-        = cast<CXXRecordDecl>(RT->getDecl());
-      VBaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                    TopConversionsTypeSet,
-                    (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
-    }
+    CXXRecordDecl *Base = cast<CXXRecordDecl>(RT->getDecl());
+    CollectVisibleConversions(Context, Base, BaseInVirtual, BaseAccess,
+                              *HiddenTypes, Output, VOutput, HiddenVBaseCs);
   }
-  for (CXXRecordDecl::base_class_iterator Base = bases_begin(),
-       E = bases_end(); Base != E; ++Base) {
-    if (Base->isVirtual())
-      continue;
-    if (const RecordType *RT = Base->getType()->getAs<RecordType>()) {
-      CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(RT->getDecl());
+}
 
-      BaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                    TopConversionsTypeSet,
-                    (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
-    }
+/// Collect the visible conversions of a class.
+///
+/// This would be extremely straightforward if it weren't for virtual
+/// bases.  It might be worth special-casing that, really.
+static void CollectVisibleConversions(ASTContext &Context,
+                                      CXXRecordDecl *Record,
+                                      UnresolvedSetImpl &Output) {
+  // The collection of all conversions in virtual bases that we've
+  // found.  These will be added to the output as long as they don't
+  // appear in the hidden-conversions set.
+  UnresolvedSet<8> VBaseCs;
+  
+  // The set of conversions in virtual bases that we've determined to
+  // be hidden.
+  llvm::SmallPtrSet<NamedDecl*, 8> HiddenVBaseCs;
+
+  // The set of types hidden by classes derived from this one.
+  llvm::SmallPtrSet<CanQualType, 8> HiddenTypes;
+
+  // Go ahead and collect the direct conversions and add them to the
+  // hidden-types set.
+  UnresolvedSetImpl &Cs = *Record->getConversionFunctions();
+  Output.append(Cs.begin(), Cs.end());
+  for (UnresolvedSetIterator I = Cs.begin(), E = Cs.end(); I != E; ++I)
+    HiddenTypes.insert(GetConversionType(Context, I.getDecl()));
+
+  // Recursively collect conversions from base classes.
+  for (CXXRecordDecl::base_class_iterator
+         I = Record->bases_begin(), E = Record->bases_end(); I != E; ++I) {
+    const RecordType *RT = I->getType()->getAs<RecordType>();
+    if (!RT) continue;
+
+    CollectVisibleConversions(Context, cast<CXXRecordDecl>(RT->getDecl()),
+                              I->isVirtual(), I->getAccessSpecifier(),
+                              HiddenTypes, Output, VBaseCs, HiddenVBaseCs);
+  }
+
+  // Add any unhidden conversions provided by virtual bases.
+  for (UnresolvedSetIterator I = VBaseCs.begin(), E = VBaseCs.end();
+         I != E; ++I) {
+    if (!HiddenVBaseCs.count(cast<NamedDecl>(I.getDecl()->getCanonicalDecl())))
+      Output.addDecl(I.getDecl(), I.getAccess());
   }
 }
 
@@ -429,37 +452,27 @@ const UnresolvedSetImpl *CXXRecordDecl::getVisibleConversionFunctions() {
   // If visible conversion list is already evaluated, return it.
   if (data().ComputedVisibleConversions)
     return &data().VisibleConversions;
-  llvm::SmallPtrSet<CanQualType, 8> TopConversionsTypeSet;
-  collectConversionFunctions(TopConversionsTypeSet);
-  getNestedVisibleConversionFunctions(this, TopConversionsTypeSet,
-                                      TopConversionsTypeSet);
+  CollectVisibleConversions(getASTContext(), this, data().VisibleConversions);
   data().ComputedVisibleConversions = true;
   return &data().VisibleConversions;
-}
-
-void CXXRecordDecl::addVisibleConversionFunction(
-                                          CXXConversionDecl *ConvDecl) {
-  assert(!ConvDecl->getDescribedFunctionTemplate() &&
-         "Conversion function templates should cast to FunctionTemplateDecl.");
-  data().VisibleConversions.addDecl(ConvDecl);
-}
-
-void CXXRecordDecl::addVisibleConversionFunction(
-                                          FunctionTemplateDecl *ConvDecl) {
-  assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
-         "Function template is not a conversion function template");
-  data().VisibleConversions.addDecl(ConvDecl);
 }
 
 void CXXRecordDecl::addConversionFunction(CXXConversionDecl *ConvDecl) {
   assert(!ConvDecl->getDescribedFunctionTemplate() &&
          "Conversion function templates should cast to FunctionTemplateDecl.");
+  assert(ConvDecl->getDeclContext() == this &&
+         "conversion function does not belong to this record");
+
+  // We intentionally don't use the decl's access here because it
+  // hasn't been set yet.  That's really just a misdesign in Sema.
   data().Conversions.addDecl(ConvDecl);
 }
 
 void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
   assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
          "Function template is not a conversion function template");
+  assert(ConvDecl->getDeclContext() == this &&
+         "conversion function does not belong to this record");
   data().Conversions.addDecl(ConvDecl);
 }
 
