@@ -1556,13 +1556,6 @@ void AsmPrinter::printLabelInst(const MachineInstr *MI) const {
   OutStreamer.EmitLabel(MI->getOperand(0).getMCSymbol());
 }
 
-void AsmPrinter::printLabel(unsigned Id) const {
-  MCSymbol *Sym = 
-    OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                                          "label" + Twine(Id));
-  OutStreamer.EmitLabel(Sym);
-}
-
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
 /// override this to format as appropriate.

@@ -305,10 +305,6 @@ namespace llvm {
                        unsigned ForcedAlignBits = 0,
                        bool UseFillExpr = true) const;
 
-    /// printLabel - This method prints a local label used by debug and
-    /// exception handling tables.
-    void printLabel(unsigned Id) const;
-
     /// printDeclare - This method prints a local variable declaration used by
     /// debug tables.
     void printDeclare(const MachineInstr *MI) const;
