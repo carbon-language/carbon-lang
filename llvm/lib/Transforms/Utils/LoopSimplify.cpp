@@ -41,6 +41,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
@@ -290,6 +291,9 @@ ReprocessLoop:
       bool AllInvariant = true;
       for (BasicBlock::iterator I = ExitingBlock->begin(); &*I != BI; ) {
         Instruction *Inst = I++;
+        // Skip debug info intrinsics.
+        if (isa<DbgInfoIntrinsic>(Inst))
+          continue;
         if (Inst == CI)
           continue;
         if (!L->makeLoopInvariant(Inst, Changed,
