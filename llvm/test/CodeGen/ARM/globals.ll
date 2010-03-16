@@ -41,7 +41,7 @@ define i32 @test1() {
 ; DarwinPIC: _test1:
 ; DarwinPIC: 	ldr r0, LCPI1_0
 ; DarwinPIC: LPC1_0:
-; DarwinPIC:    ldr r0, [pc, +r0]
+; DarwinPIC:    ldr r0, [pc, r0]
 ; DarwinPIC:    ldr r0, [r0]
 ; DarwinPIC:    bx lr
 
@@ -63,7 +63,7 @@ define i32 @test1() {
 	
 ; LinuxPIC: .LPC1_0:
 ; LinuxPIC: 	add r0, pc, r0
-; LinuxPIC: 	ldr r0, [r1, +r0]
+; LinuxPIC: 	ldr r0, [r1, r0]
 ; LinuxPIC: 	ldr r0, [r0]
 ; LinuxPIC: 	bx lr
 

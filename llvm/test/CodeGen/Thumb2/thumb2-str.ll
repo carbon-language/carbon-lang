@@ -9,7 +9,7 @@ define i32 @f1(i32 %a, i32* %v) {
 
 define i32 @f2(i32 %a, i32* %v) {
 ; CHECK: f2:
-; CHECK: str.w r0, [r1, #+4092]
+; CHECK: str.w r0, [r1, #4092]
         %tmp2 = getelementptr i32* %v, i32 1023
         store i32 %a, i32* %tmp2
         ret i32 %a

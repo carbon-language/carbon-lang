@@ -31,6 +31,7 @@
 #include "OptParserEmitter.h"
 #include "Record.h"
 #include "RegisterInfoEmitter.h"
+#include "RISCDisassemblerEmitter.h"
 #include "SubtargetEmitter.h"
 #include "TGParser.h"
 #include "llvm/Support/CommandLine.h"
@@ -48,6 +49,7 @@ enum ActionType {
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
   GenInstrEnums, GenInstrs, GenAsmWriter, GenAsmMatcher,
+  GenRISCDisassembler,
   GenDisassembler,
   GenCallingConv,
   GenClangDiagsDefs,
@@ -84,6 +86,9 @@ namespace {
                                "Generate calling convention descriptions"),
                     clEnumValN(GenAsmWriter, "gen-asm-writer",
                                "Generate assembly writer"),
+                    clEnumValN(GenRISCDisassembler, "gen-risc-disassembler",
+                               "Generate disassembler for fixed instruction"
+                               " length"),
                     clEnumValN(GenDisassembler, "gen-disassembler",
                                "Generate disassembler"),
                     clEnumValN(GenAsmMatcher, "gen-asm-matcher",
@@ -228,6 +233,9 @@ int main(int argc, char **argv) {
       break;
     case GenAsmWriter:
       AsmWriterEmitter(Records).run(*Out);
+      break;
+    case GenRISCDisassembler:
+      RISCDisassemblerEmitter(Records).run(*Out);
       break;
     case GenAsmMatcher:
       AsmMatcherEmitter(Records).run(*Out);

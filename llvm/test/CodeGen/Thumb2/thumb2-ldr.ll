@@ -11,7 +11,7 @@ entry:
 define i32 @f2(i32* %v) {
 entry:
 ; CHECK: f2:
-; CHECK: ldr.w r0, [r0, #+4092]
+; CHECK: ldr.w r0, [r0, #4092]
         %tmp2 = getelementptr i32* %v, i32 1023
         %tmp = load i32* %tmp2
         ret i32 %tmp

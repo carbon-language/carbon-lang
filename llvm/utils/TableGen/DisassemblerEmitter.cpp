@@ -12,6 +12,8 @@
 #include "Record.h"
 #include "X86DisassemblerTables.h"
 #include "X86RecognizableInstr.h"
+#include "RISCDisassemblerEmitter.h"
+
 using namespace llvm;
 using namespace llvm::X86Disassembler;
 
@@ -123,6 +125,12 @@ void DisassemblerEmitter::run(raw_ostream &OS) {
     Tables.emit(OS);
     return;
   }
+
+  // Fixed-instruction-length targets use a common disassembler.
+  if (Target.getName() == "ARM") {
+    RISCDisassemblerEmitter(Records).run(OS);
+    return;
+  }  
 
   throw TGError(Target.getTargetRecord()->getLoc(),
                 "Unable to generate disassembler for this target");

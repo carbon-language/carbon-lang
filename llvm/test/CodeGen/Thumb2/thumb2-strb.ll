@@ -9,7 +9,7 @@ define i8 @f1(i8 %a, i8* %v) {
 
 define i8 @f2(i8 %a, i8* %v) {
 ; CHECK: f2:
-; CHECK: strb.w r0, [r1, #+4092]
+; CHECK: strb.w r0, [r1, #4092]
         %tmp2 = getelementptr i8* %v, i32 4092
         store i8 %a, i8* %tmp2
         ret i8 %a
