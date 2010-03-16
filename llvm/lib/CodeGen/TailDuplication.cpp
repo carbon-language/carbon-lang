@@ -495,7 +495,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     if (InstrCount == MaxDuplicateCount) return false;
     // Remember if we saw a call.
     if (I->getDesc().isCall()) HasCall = true;
-    if (!I->isPHI())
+    if (!I->isPHI() && !I->isDebugValue())
       InstrCount += 1;
   }
   // Heuristically, don't tail-duplicate calls if it would expand code size,
