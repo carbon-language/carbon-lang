@@ -268,13 +268,17 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
 void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  const MCOperand &MO3 = MI->getOperand(OpNum+2);
   
-  O << "[" << getRegisterName(MO1.getReg());
-  if (MO2.getImm()) {
-    // FIXME: Both darwin as and GNU as violate ARM docs here.
-    O << ", :" << MO2.getImm();
+  // FIXME: No support yet for specifying alignment.
+  O << '[' << getRegisterName(MO1.getReg()) << ']';
+  
+  if (ARM_AM::getAM6WBFlag(MO3.getImm())) {
+    if (MO2.getReg() == 0)
+      O << '!';
+    else
+      O << ", " << getRegisterName(MO2.getReg());
   }
-  O << "]";
 }
 
 void ARMInstPrinter::printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
