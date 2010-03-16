@@ -909,7 +909,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
   def LDM_RET : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                         reglist:$dsts, variable_ops),
                        IndexModeUpd, LdStMulFrm, IIC_Br,
-                       "ldm${addr:submode}${p}\t$addr, $dsts",
+                       "ldm${addr:submode}${p}\t$addr!, $dsts",
                        "$addr.addr = $wb", []>;
 
 // On non-Darwin platforms R9 is callee-saved.
@@ -1354,7 +1354,7 @@ def LDM : AXI4ld<(outs), (ins addrmode4:$addr, pred:$p,
 def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$dsts, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iLoadm,
-                     "ldm${addr:submode}${p}\t$addr, $dsts",
+                     "ldm${addr:submode}${p}\t$addr!, $dsts",
                      "$addr.addr = $wb", []>;
 } // mayLoad, hasExtraDefRegAllocReq
 
@@ -1367,7 +1367,7 @@ def STM : AXI4st<(outs), (ins addrmode4:$addr, pred:$p,
 def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$srcs, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iStorem,
-                     "stm${addr:submode}${p}\t$addr, $srcs",
+                     "stm${addr:submode}${p}\t$addr!, $srcs",
                      "$addr.addr = $wb", []>;
 } // mayStore, hasExtraSrcRegAllocReq
 

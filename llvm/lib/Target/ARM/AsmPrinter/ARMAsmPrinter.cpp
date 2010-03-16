@@ -524,8 +524,6 @@ void ARMAsmPrinter::printAddrMode4Operand(const MachineInstr *MI, int Op,
       O << ".w";
   } else {
     printOperand(MI, Op);
-    if (ARM_AM::getAM4WBFlag(MO2.getImm()))
-      O << "!";
   }
 }
 

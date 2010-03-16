@@ -232,8 +232,6 @@ void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
       O << ".w";
   } else {
     printOperand(MI, OpNum);
-    if (ARM_AM::getAM4WBFlag(MO2.getImm()))
-      O << "!";
   }
 }
 

@@ -549,7 +549,7 @@ def tLDM : T1I<(outs),
 def tLDM_UPD : T1It<(outs tGPR:$wb),
                     (ins addrmode4:$addr, pred:$p, reglist:$dsts, variable_ops),
                     IIC_iLoadm,
-                    "ldm${addr:submode}${p}\t$addr, $dsts",
+                    "ldm${addr:submode}${p}\t$addr!, $dsts",
                     "$addr.addr = $wb", []>,
                T1Encoding<{1,1,0,0,1,?}>; // A6.2 & A8.6.53
 } // mayLoad, hasExtraDefRegAllocReq
@@ -558,7 +558,7 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 def tSTM_UPD : T1It<(outs tGPR:$wb),
                     (ins addrmode4:$addr, pred:$p, reglist:$srcs, variable_ops),
                     IIC_iStorem,
-                    "stm${addr:submode}${p}\t$addr, $srcs",
+                    "stm${addr:submode}${p}\t$addr!, $srcs",
                     "$addr.addr = $wb", []>,
            T1Encoding<{1,1,0,0,0,?}>; // A6.2 & A8.6.189
 

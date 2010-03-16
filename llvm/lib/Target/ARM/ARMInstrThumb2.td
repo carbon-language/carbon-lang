@@ -1218,7 +1218,7 @@ def t2LDM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
 
 def t2LDM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$dsts, variable_ops), IIC_iLoadm,
-                      "ldm${addr:submode}${p}${addr:wide}\t$addr, $dsts",
+                      "ldm${addr:submode}${p}${addr:wide}\t$addr!, $dsts",
                       "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;
@@ -1244,7 +1244,7 @@ def t2STM : T2XI<(outs), (ins addrmode4:$addr, pred:$p,
 def t2STM_UPD : T2XIt<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IIC_iStorem,
-                      "stm${addr:submode}${p}${addr:wide}\t$addr, $srcs",
+                      "stm${addr:submode}${p}${addr:wide}\t$addr!, $srcs",
                       "$addr.addr = $wb", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-25} = 0b00;

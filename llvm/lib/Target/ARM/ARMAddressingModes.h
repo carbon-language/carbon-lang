@@ -463,20 +463,13 @@ namespace ARM_AM {
   //    IB - Increment before
   //    DA - Decrement after
   //    DB - Decrement before
-  //
-  // If the 4th bit (writeback)is set, then the base register is updated after
-  // the memory transfer.
 
   static inline AMSubMode getAM4SubMode(unsigned Mode) {
     return (AMSubMode)(Mode & 0x7);
   }
 
-  static inline unsigned getAM4ModeImm(AMSubMode SubMode, bool WB = false) {
-    return (int)SubMode | ((int)WB << 3);
-  }
-
-  static inline bool getAM4WBFlag(unsigned Mode) {
-    return (Mode >> 3) & 1;
+  static inline unsigned getAM4ModeImm(AMSubMode SubMode) {
+    return (int)SubMode;
   }
 
   //===--------------------------------------------------------------------===//

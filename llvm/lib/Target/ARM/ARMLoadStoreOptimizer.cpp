@@ -505,7 +505,6 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       if (MI->getOperand(i).getReg() == Base)
         return false;
     }
-    assert(!ARM_AM::getAM4WBFlag(MI->getOperand(1).getImm()));
     Mode = ARM_AM::getAM4SubMode(MI->getOperand(1).getImm());
   } else {
     // VLDM{D|S}, VSTM{D|S} addressing mode 5 ops.
@@ -573,7 +572,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
     .addReg(Base, getKillRegState(BaseKill));
   if (isAM4) {
     // [t2]LDM_UPD, [t2]STM_UPD
-    MIB.addImm(ARM_AM::getAM4ModeImm(Mode, true))
+    MIB.addImm(ARM_AM::getAM4ModeImm(Mode))
       .addImm(Pred).addReg(PredReg);
   } else {
     // VLDM[SD}_UPD, VSTM[SD]_UPD
