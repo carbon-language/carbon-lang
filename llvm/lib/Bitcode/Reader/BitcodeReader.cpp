@@ -293,8 +293,6 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
       } else if (ConstantStruct *UserCS = dyn_cast<ConstantStruct>(UserC)) {
         NewC = ConstantStruct::get(Context, &NewOps[0], NewOps.size(),
                                          UserCS->getType()->isPacked());
-      } else if (ConstantUnion *UserCU = dyn_cast<ConstantUnion>(UserC)) {
-        NewC = ConstantUnion::get(UserCU->getType(), NewOps[0]);
       } else if (isa<ConstantVector>(UserC)) {
         NewC = ConstantVector::get(&NewOps[0], NewOps.size());
       } else {
@@ -1017,11 +1015,6 @@ bool BitcodeReader::ParseConstants() {
           Elts.push_back(ValueList.getConstantFwdRef(Record[i],
                                                      STy->getElementType(i)));
         V = ConstantStruct::get(STy, Elts);
-      } else if (const UnionType *UnTy = dyn_cast<UnionType>(CurTy)) {
-        uint64_t Index = Record[0];
-        Constant *Val = ValueList.getConstantFwdRef(Record[1],
-                                        UnTy->getElementType(Index));
-        V = ConstantUnion::get(UnTy, Val);
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(CurTy)) {
         const Type *EltTy = ATy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
