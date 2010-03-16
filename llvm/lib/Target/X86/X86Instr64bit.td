@@ -202,7 +202,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
                        (ins i64mem_TC:$dst, i32imm:$offset, variable_ops),
                        "#TC_RETURN $dst $offset", []>;
 
-  def TAILJMPd64 : Ii32<0xE9, RawFrm, (outs),
+  def TAILJMPd64 : Ii32PCRel<0xE9, RawFrm, (outs),
                                       (ins i64i32imm_pcrel:$dst, variable_ops),
                    "jmp\t$dst  # TAILCALL", []>;
   def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins GR64_TC:$dst, variable_ops),
