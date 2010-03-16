@@ -232,8 +232,9 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
     return false;
 
   // Load the actual file's contents.
-  const MemoryBuffer *Buffer = SourceMgr.getMemoryBufferForFile(File);
-  if (!Buffer)
+  bool Invalid = false;
+  const MemoryBuffer *Buffer = SourceMgr.getMemoryBufferForFile(File, &Invalid);
+  if (Invalid)
     return true;
 
   // Find the byte position of the truncation point.
