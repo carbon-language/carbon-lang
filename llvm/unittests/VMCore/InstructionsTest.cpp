@@ -50,16 +50,27 @@ TEST(InstructionsTest, BranchInst) {
   // Mandatory BranchInst
   const BranchInst* b0 = BranchInst::Create(bb0);
 
+  EXPECT_TRUE(b0->isUnconditional());
+  EXPECT_FALSE(b0->isConditional());
+  EXPECT_EQ(b0->getNumSuccessors(), 1U);
+
   // check num operands
   EXPECT_EQ(b0->getNumOperands(), 1U);
 
   EXPECT_NE(b0->op_begin(), b0->op_end());
+  EXPECT_EQ(b0->op_begin() + 1, b0->op_end());
+
+  EXPECT_EQ(b0->op_begin() + 1, b0->op_end());
 
   const IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
 
   // Conditional BranchInst
   BranchInst* b1 = BranchInst::Create(bb0, bb1, One);
+
+  EXPECT_FALSE(b1->isUnconditional());
+  EXPECT_TRUE(b1->isConditional());
+  EXPECT_EQ(b1->getNumSuccessors(), 2U);
 
   // check num operands
   EXPECT_EQ(b1->getNumOperands(), 3U);
@@ -70,16 +81,19 @@ TEST(InstructionsTest, BranchInst) {
   EXPECT_NE(b, b1->op_end());
   EXPECT_EQ(*b, One);
   EXPECT_EQ(b1->getOperand(0), One);
+  EXPECT_EQ(b1->getCondition(), One);
   ++b;
 
   // check ELSE
   EXPECT_EQ(*b, bb1);
   EXPECT_EQ(b1->getOperand(1), bb1);
+  EXPECT_EQ(b1->getSuccessor(1), bb1);
   ++b;
 
   // check THEN
   EXPECT_EQ(*b, bb0);
   EXPECT_EQ(b1->getOperand(2), bb0);
+  EXPECT_EQ(b1->getSuccessor(0), bb0);
   ++b;
 
   EXPECT_EQ(b, b1->op_end());
@@ -96,6 +110,7 @@ TEST(InstructionsTest, BranchInst) {
   // check THEN
   EXPECT_EQ(*c, bb1);
   EXPECT_EQ(b1->getOperand(0), bb1);
+  EXPECT_EQ(b1->getSuccessor(0), bb1);
   ++c;
 
   EXPECT_EQ(c, b1->op_end());
