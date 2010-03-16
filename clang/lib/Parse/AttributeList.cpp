@@ -54,7 +54,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   if (AttrName.startswith("__") && AttrName.endswith("__"))
     AttrName = AttrName.substr(2, AttrName.size() - 4);
 
-  // FIXME: Hand generating this is neither smart nor efficient.
   return llvm::StringSwitch<AttributeList::Kind>(AttrName)
     .Case("weak", AT_weak)
     .Case("weakref", AT_weakref)
@@ -93,6 +92,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("dllimport", AT_dllimport)
     .Case("dllexport", AT_dllexport)
     .Case("may_alias", IgnoredAttribute) // FIXME: TBAA
+    .Case("gcc_tdiag", IgnoredAttribute) // GCC diagnostics type checking.
     .Case("base_check", AT_base_check)
     .Case("deprecated", AT_deprecated)
     .Case("visibility", AT_visibility)
