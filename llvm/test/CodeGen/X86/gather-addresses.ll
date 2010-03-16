@@ -1,4 +1,5 @@
 ; RUN: llc -march=x86-64 < %s | FileCheck %s
+; rdar://7398554
 
 ; When doing vector gather-scatter index calculation with 32-bit indices,
 ; bounce the vector off of cache rather than shuffling each individual
