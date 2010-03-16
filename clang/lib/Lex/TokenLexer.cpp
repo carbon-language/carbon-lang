@@ -396,12 +396,17 @@ bool TokenLexer::PasteTokens(Token &Tok) {
 
     // Get the spelling of the LHS token in Buffer.
     const char *BufPtr = &Buffer[0];
-    unsigned LHSLen = PP.getSpelling(Tok, BufPtr);
+    bool Invalid = false;
+    unsigned LHSLen = PP.getSpelling(Tok, BufPtr, &Invalid);
     if (BufPtr != &Buffer[0])   // Really, we want the chars in Buffer!
       memcpy(&Buffer[0], BufPtr, LHSLen);
-
+    if (Invalid)
+      return true;
+    
     BufPtr = &Buffer[LHSLen];
-    unsigned RHSLen = PP.getSpelling(RHS, BufPtr);
+    unsigned RHSLen = PP.getSpelling(RHS, BufPtr, &Invalid);
+    if (Invalid)
+      return true;
     if (BufPtr != &Buffer[LHSLen])   // Really, we want the chars in Buffer!
       memcpy(&Buffer[LHSLen], BufPtr, RHSLen);
 

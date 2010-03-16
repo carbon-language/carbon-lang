@@ -208,24 +208,31 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
     if (Tok.is(tok::string_literal) ||       // "foo"
         Tok.is(tok::wide_string_literal) ||  // L"foo"
         Tok.is(tok::char_constant)) {        // 'x' and L'x'.
-      std::string Str = Lexer::Stringify(PP.getSpelling(Tok));
-      Result.append(Str.begin(), Str.end());
+      bool Invalid = false;
+      std::string TokStr = PP.getSpelling(Tok, &Invalid);
+      if (!Invalid) {
+        std::string Str = Lexer::Stringify(TokStr);
+        Result.append(Str.begin(), Str.end());
+      }
     } else {
       // Otherwise, just append the token.  Do some gymnastics to get the token
       // in place and avoid copies where possible.
       unsigned CurStrLen = Result.size();
       Result.resize(CurStrLen+Tok.getLength());
       const char *BufPtr = &Result[CurStrLen];
-      unsigned ActualTokLen = PP.getSpelling(Tok, BufPtr);
+      bool Invalid = false;
+      unsigned ActualTokLen = PP.getSpelling(Tok, BufPtr, &Invalid);
 
-      // If getSpelling returned a pointer to an already uniqued version of the
-      // string instead of filling in BufPtr, memcpy it onto our string.
-      if (BufPtr != &Result[CurStrLen])
-        memcpy(&Result[CurStrLen], BufPtr, ActualTokLen);
+      if (!Invalid) {
+        // If getSpelling returned a pointer to an already uniqued version of
+        // the string instead of filling in BufPtr, memcpy it onto our string.
+        if (BufPtr != &Result[CurStrLen])
+          memcpy(&Result[CurStrLen], BufPtr, ActualTokLen);
 
-      // If the token was dirty, the spelling may be shorter than the token.
-      if (ActualTokLen != Tok.getLength())
-        Result.resize(CurStrLen+ActualTokLen);
+        // If the token was dirty, the spelling may be shorter than the token.
+        if (ActualTokLen != Tok.getLength())
+          Result.resize(CurStrLen+ActualTokLen);
+      }
     }
   }
 

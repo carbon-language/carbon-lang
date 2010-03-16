@@ -542,9 +542,13 @@ static bool EvaluateHasIncludeCommon(bool &Result, Token &Tok,
     return false;
 
   case tok::angle_string_literal:
-  case tok::string_literal:
-    Filename = PP.getSpelling(Tok, FilenameBuffer);
+  case tok::string_literal: {
+    bool Invalid = false;
+    Filename = PP.getSpelling(Tok, FilenameBuffer, &Invalid);
+    if (Invalid)
+      return false;
     break;
+  }
 
   case tok::less:
     // This could be a <foo/bar.h> file coming from a macro expansion.  In this

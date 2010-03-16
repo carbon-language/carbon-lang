@@ -71,7 +71,11 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
 
   IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
   if (II == 0) {
-    std::string Spelling = getSpelling(MacroNameTok);
+    bool Invalid = false;
+    std::string Spelling = getSpelling(MacroNameTok, &Invalid);
+    if (Invalid)
+      return;
+    
     const IdentifierInfo &Info = Identifiers.get(Spelling);
     if (Info.isCPlusPlusOperatorKeyword())
       // C++ 2.5p2: Alternative tokens behave the same as its primary token
@@ -619,8 +623,11 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
   llvm::SmallString<64> IntegerBuffer;
   IntegerBuffer.resize(DigitTok.getLength());
   const char *DigitTokBegin = &IntegerBuffer[0];
-  unsigned ActualLength = PP.getSpelling(DigitTok, DigitTokBegin);
-
+  bool Invalid = false;
+  unsigned ActualLength = PP.getSpelling(DigitTok, DigitTokBegin, &Invalid);
+  if (Invalid)
+    return true;
+  
   // Verify that we have a simple digit-sequence, and compute the value.  This
   // is always a simple digit string computed in decimal, so we do this manually
   // here.
@@ -905,8 +912,12 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   // Verify that there is nothing after the string, other than EOM.
   CheckEndOfDirective("ident");
 
-  if (Callbacks)
-    Callbacks->Ident(Tok.getLocation(), getSpelling(StrTok));
+  if (Callbacks) {
+    bool Invalid = false;
+    std::string Str = getSpelling(StrTok, &Invalid);
+    if (!Invalid)
+      Callbacks->Ident(Tok.getLocation(), Str);
+  }
 }
 
 //===----------------------------------------------------------------------===//

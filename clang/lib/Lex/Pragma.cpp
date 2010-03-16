@@ -287,7 +287,10 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
 
   // Reserve a buffer to get the spelling.
   llvm::SmallString<128> FilenameBuffer;
-  llvm::StringRef Filename = getSpelling(FilenameTok, FilenameBuffer);
+  bool Invalid = false;
+  llvm::StringRef Filename = getSpelling(FilenameTok, FilenameBuffer, &Invalid);
+  if (Invalid)
+    return;
 
   bool isAngled =
     GetIncludeFilenameSpelling(FilenameTok.getLocation(), Filename);

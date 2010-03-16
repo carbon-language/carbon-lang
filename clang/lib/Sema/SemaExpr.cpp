@@ -1751,7 +1751,10 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
 
 Sema::OwningExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
-  llvm::StringRef ThisTok = PP.getSpelling(Tok, CharBuffer);
+  bool Invalid = false;
+  llvm::StringRef ThisTok = PP.getSpelling(Tok, CharBuffer, &Invalid);
+  if (Invalid)
+    return ExprError();
 
   CharLiteralParser Literal(ThisTok.begin(), ThisTok.end(), Tok.getLocation(),
                             PP);
@@ -1789,7 +1792,10 @@ Action::OwningExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   const char *ThisTokBegin = &IntegerBuffer[0];
 
   // Get the spelling of the token, which eliminates trigraphs, etc.
-  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
+  bool Invalid = false;
+  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin, &Invalid);
+  if (Invalid)
+    return ExprError();
 
   NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength,
                                Tok.getLocation(), PP);

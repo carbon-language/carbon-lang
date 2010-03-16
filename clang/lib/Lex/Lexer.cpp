@@ -1037,7 +1037,11 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
 
   // If this BCPL-style comment is in a macro definition, transmogrify it into
   // a C-style block comment.
-  std::string Spelling = PP->getSpelling(Result);
+  bool Invalid = false;
+  std::string Spelling = PP->getSpelling(Result, &Invalid);
+  if (Invalid)
+    return true;
+  
   assert(Spelling[0] == '/' && Spelling[1] == '/' && "Not bcpl comment?");
   Spelling[1] = '*';   // Change prefix to "/*".
   Spelling += "*/";    // add suffix.

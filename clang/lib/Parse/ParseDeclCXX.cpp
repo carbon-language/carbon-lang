@@ -167,7 +167,10 @@ Parser::DeclPtrTy Parser::ParseLinkage(ParsingDeclSpec &DS,
   assert(Tok.is(tok::string_literal) && "Not a string literal!");
   llvm::SmallString<8> LangBuffer;
   // LangBuffer is guaranteed to be big enough.
-  llvm::StringRef Lang = PP.getSpelling(Tok, LangBuffer);
+  bool Invalid = false;
+  llvm::StringRef Lang = PP.getSpelling(Tok, LangBuffer, &Invalid);
+  if (Invalid)
+    return DeclPtrTy();
 
   SourceLocation Loc = ConsumeStringToken();
 
