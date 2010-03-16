@@ -1643,29 +1643,14 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     Constructor->setNumBaseOrMemberInitializers(NumInitializers);
     CXXBaseOrMemberInitializer **baseOrMemberInitializers =
       new (Context) CXXBaseOrMemberInitializer*[NumInitializers];
-
+    memcpy(baseOrMemberInitializers, AllToInit.data(),
+           NumInitializers * sizeof(CXXBaseOrMemberInitializer*));
     Constructor->setBaseOrMemberInitializers(baseOrMemberInitializers);
-    for (unsigned Idx = 0; Idx < NumInitializers; ++Idx) {
-      CXXBaseOrMemberInitializer *Member = AllToInit[Idx];
-      baseOrMemberInitializers[Idx] = Member;
-      if (!Member->isBaseInitializer())
-        continue;
-      const Type *BaseType = Member->getBaseClass();
-      const RecordType *RT = BaseType->getAs<RecordType>();
-      if (!RT)
-        continue;
-      CXXRecordDecl *BaseClassDecl =
-          cast<CXXRecordDecl>(RT->getDecl());
 
-      // We don't know if a dependent type will have an implicit destructor.
-      if (BaseClassDecl->isDependentType())
-        continue;
-
-      if (BaseClassDecl->hasTrivialDestructor())
-        continue;
-      CXXDestructorDecl *DD = BaseClassDecl->getDestructor(Context);
-      MarkDeclarationReferenced(Constructor->getLocation(), DD);
-    }
+    // Constructors implicitly reference the base and member
+    // destructors.
+    MarkBaseAndMemberDestructorsReferenced(Constructor->getLocation(),
+                                           Constructor->getParent());
   }
 
   return HadError;
@@ -1848,9 +1833,10 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
 }
 
 void
-Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
-  // Ignore dependent destructors.
-  if (Destructor->isDependentContext())
+Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
+                                             CXXRecordDecl *ClassDecl) {
+  // Ignore dependent contexts.
+  if (ClassDecl->isDependentContext())
     return;
 
   // FIXME: all the access-control diagnostics are positioned on the
@@ -1858,8 +1844,6 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
   // user might reasonably want to know why the destructor is being
   // emitted, and we currently don't say.
   
-  CXXRecordDecl *ClassDecl = Destructor->getParent();
-
   // Non-static data members.
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
@@ -1881,8 +1865,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
                             << Field->getDeclName()
                             << FieldType);
 
-    MarkDeclarationReferenced(Destructor->getLocation(),
-                              const_cast<CXXDestructorDecl*>(Dtor));
+    MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
   }
 
   llvm::SmallPtrSet<const RecordType *, 8> DirectVirtualBases;
@@ -1910,8 +1893,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
                             << Base->getType()
                             << Base->getSourceRange());
     
-    MarkDeclarationReferenced(Destructor->getLocation(),
-                              const_cast<CXXDestructorDecl*>(Dtor));
+    MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
   }
   
   // Virtual bases.
@@ -1935,8 +1917,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
                           PartialDiagnostic(diag::err_access_dtor_vbase)
                             << VBase->getType());
 
-    MarkDeclarationReferenced(Destructor->getLocation(),
-                              const_cast<CXXDestructorDecl*>(Dtor));
+    MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
   }
 }
 
@@ -3819,7 +3800,8 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   DeclContext *PreviousContext = CurContext;
   CurContext = Destructor;
 
-  MarkBaseAndMemberDestructorsReferenced(Destructor);
+  MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
+                                         Destructor->getParent());
 
   // FIXME: If CheckDestructor fails, we should emit a note about where the
   // implicit destructor was needed.

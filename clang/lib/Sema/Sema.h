@@ -2473,10 +2473,11 @@ public:
                                    bool IsImplicitConstructor,
                                    bool AnyErrors);
 
-  /// MarkBaseAndMemberDestructorsReferenced - Given a destructor decl,
-  /// mark all its non-trivial member and base destructor declarations
-  /// as referenced.
-  void MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor);
+  /// MarkBaseAndMemberDestructorsReferenced - Given a record decl,
+  /// mark all the non-trivial destructors of its members and bases as
+  /// referenced.
+  void MarkBaseAndMemberDestructorsReferenced(SourceLocation Loc,
+                                              CXXRecordDecl *Record);
 
   /// ClassesWithUnmarkedVirtualMembers - Contains record decls whose virtual
   /// members need to be marked as referenced at the end of the translation

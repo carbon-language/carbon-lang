@@ -4281,7 +4281,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
       DiagnoseInvalidJumps(Body);
 
     if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
-      MarkBaseAndMemberDestructorsReferenced(Destructor);
+      MarkBaseAndMemberDestructorsReferenced(Destructor->getLocation(),
+                                             Destructor->getParent());
     
     // If any errors have occurred, clear out any temporaries that may have
     // been leftover. This ensures that these temporaries won't be picked up for
