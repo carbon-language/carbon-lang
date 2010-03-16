@@ -282,11 +282,19 @@ bool Preprocessor::isCodeCompletionFile(SourceLocation FileLoc) const {
 /// UCNs, etc.
 std::string Preprocessor::getSpelling(const Token &Tok,
                                       const SourceManager &SourceMgr,
-                                      const LangOptions &Features) {
+                                      const LangOptions &Features, 
+                                      bool *Invalid) {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
 
   // If this token contains nothing interesting, return it directly.
-  const char* TokStart = SourceMgr.getCharacterData(Tok.getLocation());
+  bool CharDataInvalid = false;
+  const char* TokStart = SourceMgr.getCharacterData(Tok.getLocation(), 
+                                                    &CharDataInvalid);
+  if (Invalid)
+    *Invalid = CharDataInvalid;
+  if (CharDataInvalid)
+    return std::string();
+
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
 
@@ -310,8 +318,8 @@ std::string Preprocessor::getSpelling(const Token &Tok,
 /// after trigraph expansion and escaped-newline folding.  In particular, this
 /// wants to get the true, uncanonicalized, spelling of things like digraphs
 /// UCNs, etc.
-std::string Preprocessor::getSpelling(const Token &Tok) const {
-  return getSpelling(Tok, SourceMgr, Features);
+std::string Preprocessor::getSpelling(const Token &Tok, bool *Invalid) const {
+  return getSpelling(Tok, SourceMgr, Features, Invalid);
 }
 
 /// getSpelling - This method is used to get the spelling of a token into a
@@ -325,7 +333,7 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
 /// copy).  The caller is not allowed to modify the returned buffer pointer
 /// if an internal buffer is returned.
 unsigned Preprocessor::getSpelling(const Token &Tok,
-                                   const char *&Buffer) const {
+                                   const char *&Buffer, bool *Invalid) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
 
   // If this token is an identifier, just return the string from the identifier
@@ -341,8 +349,16 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   if (Tok.isLiteral())
     TokStart = Tok.getLiteralData();
 
-  if (TokStart == 0)
-    TokStart = SourceMgr.getCharacterData(Tok.getLocation());
+  if (TokStart == 0) {
+    bool CharDataInvalid = false;
+    TokStart = SourceMgr.getCharacterData(Tok.getLocation(), &CharDataInvalid);
+    if (Invalid)
+      *Invalid = CharDataInvalid;
+    if (CharDataInvalid) {
+      Buffer = "";
+      return 0;
+    }
+  }
 
   // If this token contains nothing interesting, return it directly.
   if (!Tok.needsCleaning()) {
@@ -368,7 +384,8 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
 /// SmallVector. Note that the returned StringRef may not point to the
 /// supplied buffer if a copy can be avoided.
 llvm::StringRef Preprocessor::getSpelling(const Token &Tok,
-                                    llvm::SmallVectorImpl<char> &Buffer) const {
+                                          llvm::SmallVectorImpl<char> &Buffer,
+                                          bool *Invalid) const {
   // Try the fast path.
   if (const IdentifierInfo *II = Tok.getIdentifierInfo())
     return II->getName();
@@ -378,7 +395,7 @@ llvm::StringRef Preprocessor::getSpelling(const Token &Tok,
     Buffer.resize(Tok.getLength());
 
   const char *Ptr = Buffer.data();
-  unsigned Len = getSpelling(Tok, Ptr);
+  unsigned Len = getSpelling(Tok, Ptr, Invalid);
   return llvm::StringRef(Ptr, Len);
 }
 

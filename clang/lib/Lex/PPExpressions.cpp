@@ -170,7 +170,12 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     return true;
   case tok::numeric_constant: {
     llvm::SmallString<64> IntegerBuffer;
-    llvm::StringRef Spelling = PP.getSpelling(PeekTok, IntegerBuffer);
+    bool NumberInvalid = false;
+    llvm::StringRef Spelling = PP.getSpelling(PeekTok, IntegerBuffer, 
+                                              &NumberInvalid);
+    if (NumberInvalid)
+      return true; // a diagnostic was already reported
+
     NumericLiteralParser Literal(Spelling.begin(), Spelling.end(),
                                  PeekTok.getLocation(), PP);
     if (Literal.hadError)
@@ -216,7 +221,10 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   }
   case tok::char_constant: {   // 'x'
     llvm::SmallString<32> CharBuffer;
-    llvm::StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer);
+    bool CharInvalid = false;
+    llvm::StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer, &CharInvalid);
+    if (CharInvalid)
+      return true;
 
     CharLiteralParser Literal(ThisTok.begin(), ThisTok.end(),
                               PeekTok.getLocation(), PP);

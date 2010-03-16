@@ -457,10 +457,11 @@ SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
 }
 
 const llvm::MemoryBuffer *
-SourceManager::getMemoryBufferForFile(const FileEntry *File) {
+SourceManager::getMemoryBufferForFile(const FileEntry *File,
+                                      bool *Invalid) {
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(File);
   assert(IR && "getOrCreateContentCache() cannot return NULL");
-  return IR->getBuffer(Diag);
+  return IR->getBuffer(Diag, Invalid);
 }
 
 bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
@@ -701,21 +702,34 @@ SourceManager::getInstantiationRange(SourceLocation Loc) const {
 
 /// getCharacterData - Return a pointer to the start of the specified location
 /// in the appropriate MemoryBuffer.
-const char *SourceManager::getCharacterData(SourceLocation SL) const {
+const char *SourceManager::getCharacterData(SourceLocation SL,
+                                            bool *Invalid) const {
   // Note that this is a hot function in the getSpelling() path, which is
   // heavily used by -E mode.
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(SL);
 
   // Note that calling 'getBuffer()' may lazily page in a source file.
-  return getSLocEntry(LocInfo.first).getFile().getContentCache()
-              ->getBuffer(Diag)->getBufferStart() + LocInfo.second;
+  bool CharDataInvalid = false;
+  const llvm::MemoryBuffer *Buffer
+    = getSLocEntry(LocInfo.first).getFile().getContentCache()->getBuffer(Diag, 
+                                                              &CharDataInvalid);
+  if (Invalid)
+    *Invalid = CharDataInvalid;
+  return Buffer->getBufferStart() + (CharDataInvalid? 0 : LocInfo.second);
 }
 
 
 /// getColumnNumber - Return the column # for the specified file position.
 /// this is significantly cheaper to compute than the line number.
-unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos) const {
-  const char *Buf = getBuffer(FID)->getBufferStart();
+unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
+                                        bool *Invalid) const {
+  bool MyInvalid = false;
+  const char *Buf = getBuffer(FID, &MyInvalid)->getBufferStart();
+  if (Invalid)
+    *Invalid = MyInvalid;
+
+  if (MyInvalid)
+    return 1;
 
   unsigned LineStart = FilePos;
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
@@ -723,27 +737,30 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos) const {
   return FilePos-LineStart+1;
 }
 
-unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc) const {
+unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc,
+                                                bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
-  return getColumnNumber(LocInfo.first, LocInfo.second);
+  return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
-unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
+unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
+                                                     bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
-  return getColumnNumber(LocInfo.first, LocInfo.second);
+  return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
-
-
 
 static DISABLE_INLINE void ComputeLineNumbers(Diagnostic &Diag,
                                               ContentCache* FI,
-                                              llvm::BumpPtrAllocator &Alloc);
+                                              llvm::BumpPtrAllocator &Alloc,
+                                              bool &Invalid);
 static void ComputeLineNumbers(Diagnostic &Diag, ContentCache* FI, 
-                               llvm::BumpPtrAllocator &Alloc){
+                               llvm::BumpPtrAllocator &Alloc, bool &Invalid) {
   // Note that calling 'getBuffer()' may lazily page in the file.
-  const MemoryBuffer *Buffer = FI->getBuffer(Diag);
+  const MemoryBuffer *Buffer = FI->getBuffer(Diag, &Invalid);
+  if (Invalid)
+    return;
 
   // Find the file offsets of all of the *physical* source lines.  This does
   // not look at trigraphs, escaped newlines, or anything else tricky.
@@ -789,7 +806,8 @@ static void ComputeLineNumbers(Diagnostic &Diag, ContentCache* FI,
 /// for the position indicated.  This requires building and caching a table of
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
-unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
+unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos, 
+                                      bool *Invalid) const {
   ContentCache *Content;
   if (LastLineNoFileIDQuery == FID)
     Content = LastLineNoContentCache;
@@ -799,8 +817,15 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
 
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
-  if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Diag, Content, ContentCacheAlloc);
+  if (Content->SourceLineCache == 0) {
+    bool MyInvalid = false;
+    ComputeLineNumbers(Diag, Content, ContentCacheAlloc, MyInvalid);
+    if (Invalid)
+      *Invalid = MyInvalid;
+    if (MyInvalid)
+      return 1;
+  } else if (Invalid)
+    *Invalid = false;
 
   // Okay, we know we have a line number table.  Do a binary search to find the
   // line number that this character position lands on.
@@ -886,12 +911,14 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
   return LineNo;
 }
 
-unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc) const {
+unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc, 
+                                                   bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
-unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc) const {
+unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc, 
+                                              bool *Invalid) const {
   if (Loc.isInvalid()) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
@@ -931,10 +958,11 @@ SourceManager::getFileCharacteristic(SourceLocation Loc) const {
 /// Return the filename or buffer identifier of the buffer the location is in.
 /// Note that this name does not respect #line directives.  Use getPresumedLoc
 /// for normal clients.
-const char *SourceManager::getBufferName(SourceLocation Loc) const {
+const char *SourceManager::getBufferName(SourceLocation Loc, 
+                                         bool *Invalid) const {
   if (Loc.isInvalid()) return "<invalid loc>";
 
-  return getBuffer(getFileID(Loc))->getBufferIdentifier();
+  return getBuffer(getFileID(Loc), Invalid)->getBufferIdentifier();
 }
 
 
@@ -1014,8 +1042,12 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
 
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
-  if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Diag, Content, ContentCacheAlloc);
+  if (Content->SourceLineCache == 0) {
+    bool MyInvalid = false;
+    ComputeLineNumbers(Diag, Content, ContentCacheAlloc, MyInvalid);
+    if (MyInvalid)
+      return SourceLocation();
+  }
 
   // Find the first file ID that corresponds to the given file.
   FileID FirstFID;

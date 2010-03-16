@@ -417,7 +417,11 @@ public:
                                         unsigned Offset = 0);
 
   /// \brief Retrieve the memory buffer associated with the given file.
-  const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File);
+  ///
+  /// \param Invalid If non-NULL, will be set \c true if an error
+  /// occurs while retrieving the memory buffer.
+  const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File,
+                                                   bool *Invalid = 0);
 
   /// \brief Override the contents of the given source file by providing an
   /// already-allocated buffer.
@@ -438,8 +442,9 @@ public:
   /// getBuffer - Return the buffer for the specified FileID. If there is an
   /// error opening this buffer the first time, this manufactures a temporary
   /// buffer and returns a non-empty error string.
-  const llvm::MemoryBuffer *getBuffer(FileID FID) const {
-    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Diag);
+  const llvm::MemoryBuffer *getBuffer(FileID FID, bool *Invalid = 0) const {
+    return getSLocEntry(FID).getFile().getContentCache()->getBuffer(Diag,
+                                                                    Invalid);
   }
 
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
@@ -571,31 +576,37 @@ public:
 
   /// getCharacterData - Return a pointer to the start of the specified location
   /// in the appropriate spelling MemoryBuffer.
-  const char *getCharacterData(SourceLocation SL) const;
+  ///
+  /// \param Invalid If non-NULL, will be set \c true if an error occurs.
+  const char *getCharacterData(SourceLocation SL, bool *Invalid = 0) const;
 
   /// getColumnNumber - Return the column # for the specified file position.
   /// This is significantly cheaper to compute than the line number.  This
   /// returns zero if the column number isn't known.  This may only be called on
   /// a file sloc, so you must choose a spelling or instantiation location
   /// before calling this method.
-  unsigned getColumnNumber(FileID FID, unsigned FilePos) const;
-  unsigned getSpellingColumnNumber(SourceLocation Loc) const;
-  unsigned getInstantiationColumnNumber(SourceLocation Loc) const;
+  unsigned getColumnNumber(FileID FID, unsigned FilePos, 
+                           bool *Invalid = 0) const;
+  unsigned getSpellingColumnNumber(SourceLocation Loc,
+                                   bool *Invalid = 0) const;
+  unsigned getInstantiationColumnNumber(SourceLocation Loc,
+                                        bool *Invalid = 0) const;
 
 
   /// getLineNumber - Given a SourceLocation, return the spelling line number
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
-  unsigned getLineNumber(FileID FID, unsigned FilePos) const;
+  unsigned getLineNumber(FileID FID, unsigned FilePos, bool *Invalid = 0) const;
 
-  unsigned getInstantiationLineNumber(SourceLocation Loc) const;
-  unsigned getSpellingLineNumber(SourceLocation Loc) const;
+  unsigned getInstantiationLineNumber(SourceLocation Loc, 
+                                      bool *Invalid = 0) const;
+  unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
 
   /// Return the filename or buffer identifier of the buffer the location is in.
   /// Note that this name does not respect #line directives.  Use getPresumedLoc
   /// for normal clients.
-  const char *getBufferName(SourceLocation Loc) const;
+  const char *getBufferName(SourceLocation Loc, bool *Invalid = 0) const;
 
   /// getFileCharacteristic - return the file characteristic of the specified
   /// source location, indicating whether this is a normal file, a system

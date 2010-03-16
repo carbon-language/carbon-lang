@@ -547,7 +547,9 @@ public:
   /// after trigraph expansion and escaped-newline folding.  In particular, this
   /// wants to get the true, uncanonicalized, spelling of things like digraphs
   /// UCNs, etc.
-  std::string getSpelling(const Token &Tok) const;
+  ///
+  /// \param Invalid If non-NULL, will be set \c true if an error occurs.
+  std::string getSpelling(const Token &Tok, bool *Invalid = 0) const;
 
   /// getSpelling() - Return the 'spelling' of the Tok token.  The spelling of a
   /// token is the characters used to represent the token in the source file
@@ -556,7 +558,8 @@ public:
   /// UCNs, etc.
   static std::string getSpelling(const Token &Tok,
                                  const SourceManager &SourceMgr,
-                                 const LangOptions &Features);
+                                 const LangOptions &Features, 
+                                 bool *Invalid = 0);
 
   /// getSpelling - This method is used to get the spelling of a token into a
   /// preallocated buffer, instead of as an std::string.  The caller is required
@@ -568,17 +571,20 @@ public:
   /// to point to a constant buffer with the data already in it (avoiding a
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
-  unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
+  unsigned getSpelling(const Token &Tok, const char *&Buffer, 
+                       bool *Invalid = 0) const;
 
   /// getSpelling - This method is used to get the spelling of a token into a
   /// SmallVector. Note that the returned StringRef may not point to the
   /// supplied buffer if a copy can be avoided.
   llvm::StringRef getSpelling(const Token &Tok,
-                              llvm::SmallVectorImpl<char> &Buffer) const;
+                              llvm::SmallVectorImpl<char> &Buffer, 
+                              bool *Invalid = 0) const;
 
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
-  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok) const {
+  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok, 
+                                                   bool *Invalid = 0) const {
     assert(Tok.is(tok::numeric_constant) &&
            Tok.getLength() == 1 && "Called on unsupported token");
     assert(!Tok.needsCleaning() && "Token can't need cleaning with length 1");
