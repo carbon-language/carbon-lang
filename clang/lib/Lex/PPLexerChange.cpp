@@ -80,8 +80,7 @@ bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
   }
   
   // Get the MemoryBuffer for this FID, if it fails, we fail.
-  const llvm::MemoryBuffer *InputFile
-    = getSourceManager().getBuffer(FID).getBuffer(getDiagnostics());
+  const llvm::MemoryBuffer *InputFile = getSourceManager().getBuffer(FID);
   if (!InputFile)
     return true;
   

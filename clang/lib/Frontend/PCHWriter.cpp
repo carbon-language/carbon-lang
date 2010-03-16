@@ -1089,7 +1089,8 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         // We add one to the size so that we capture the trailing NULL
         // that is required by llvm::MemoryBuffer::getMemBuffer (on
         // the reader side).
-        const llvm::MemoryBuffer *Buffer = Content->getBuffer();
+        const llvm::MemoryBuffer *Buffer
+          = Content->getBuffer(PP.getDiagnostics());
         const char *Name = Buffer->getBufferIdentifier();
         Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record,
                                   llvm::StringRef(Name, strlen(Name) + 1));

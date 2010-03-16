@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <string>
 #include <cstring>
-#include <cstdio>
 
 using namespace clang;
 using namespace SrcMgr;
@@ -31,75 +30,6 @@ using llvm::MemoryBuffer;
 //===----------------------------------------------------------------------===//
 // SourceManager Helper Classes
 //===----------------------------------------------------------------------===//
-
-struct BufferResult::FailureData {
-  const llvm::MemoryBuffer *Buffer;
-  const char *FileName;
-  std::string ErrorStr;  
-};
-
-BufferResult::BufferResult(const BufferResult &Other) {
-  if (const llvm::MemoryBuffer *Buffer
-                        = Other.Data.dyn_cast<const llvm::MemoryBuffer *>()) {
-    Data = Buffer;
-    return;
-  }
-  
-  Data = new FailureData(*Other.Data.get<FailureData *>());
-}
-
-BufferResult::BufferResult(const char *FileName, llvm::StringRef ErrorStr,
-                           const llvm::MemoryBuffer *Buffer) {
-  FailureData *FD = new FailureData;
-  FD->FileName = FileName;
-  FD->ErrorStr = ErrorStr;
-  FD->Buffer = Buffer;
-  Data = FD;
-}
-
-BufferResult::~BufferResult() {
-  if (FailureData *FD = Data.dyn_cast<FailureData *>())
-    delete FD;
-}
-
-bool BufferResult::isInvalid() const {
-  return Data.is<FailureData *>();
-}
-
-const llvm::MemoryBuffer *BufferResult::getBuffer(Diagnostic &Diags) const {
-  llvm::StringRef FileName;
-  std::string ErrorMsg;
-  const llvm::MemoryBuffer *Result = getBuffer(FileName, ErrorMsg);
-  if (!ErrorMsg.empty()) {
-    Diags.Report(diag::err_cannot_open_file)
-      << FileName << ErrorMsg;
-  }
-  return Result;
-}
-
-const llvm::MemoryBuffer *BufferResult::getBuffer(llvm::StringRef &FileName, 
-                                                  std::string &Error) const {
-  if (const llvm::MemoryBuffer *Buffer
-                                  = Data.dyn_cast<const llvm::MemoryBuffer *>())
-    return Buffer;
- 
-  FailureData *Fail = Data.get<FailureData *>();
-  FileName = Fail->FileName;
-  Error = Fail->ErrorStr;
-  return Fail->Buffer;
-}
-
-BufferResult::operator const llvm::MemoryBuffer *() const {
-  llvm::StringRef FileName;
-  std::string ErrorMsg;
-  const llvm::MemoryBuffer *Result = getBuffer(FileName, ErrorMsg);
-  if (!ErrorMsg.empty()) {
-    fprintf(stderr, "error: cannot open file '%s': %s\n",
-            FileName.str().c_str(), ErrorMsg.c_str());
-  }
-  
-  return Result;
-}
 
 ContentCache::~ContentCache() {
   delete Buffer;
@@ -128,7 +58,11 @@ void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
   Buffer = B;
 }
 
-BufferResult ContentCache::getBuffer() const {
+const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
+                                                  bool *Invalid) const {
+  if (Invalid)
+    *Invalid = false;
+      
   // Lazily create the Buffer for ContentCaches that wrap files.
   if (!Buffer && Entry) {
     std::string ErrorStr;
@@ -152,17 +86,23 @@ BufferResult ContentCache::getBuffer() const {
       char *Ptr = const_cast<char*>(Buffer->getBufferStart());
       for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
         Ptr[i] = FillStr[i % FillStr.size()];
-      return BufferResult(Entry->getName(), ErrorStr, Buffer);
+      Diag.Report(diag::err_cannot_open_file)
+        << Entry->getName() << ErrorStr;
+      if (Invalid)
+        *Invalid = true;
     } else {
       // Check that the file's size and modification time is the same as 
       // in the file entry (which may have come from a stat cache).
-      // FIXME: Make these strings localizable.
       if (FileInfo.st_size != Entry->getSize()) {
-        ErrorStr = "file has changed size since it was originally read";
-        return BufferResult(Entry->getName(), ErrorStr, Buffer);
+        Diag.Report(diag::err_file_size_changed)
+          << Entry->getName() << (unsigned)Entry->getSize() 
+          << (unsigned)FileInfo.st_size;
+        if (Invalid)
+          *Invalid = true;
       } else if (FileInfo.st_mtime != Entry->getModificationTime()) {
-        ErrorStr = "file has been modified since it was originally read";
-        return BufferResult(Entry->getName(), ErrorStr, Buffer);
+        Diag.Report(diag::err_file_modified) << Entry->getName();
+        if (Invalid)
+          *Invalid = true;
       }
     }
   }
@@ -516,10 +456,11 @@ SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
   return SourceLocation::getMacroLoc(NextOffset-(TokLength+1));
 }
 
-BufferResult SourceManager::getMemoryBufferForFile(const FileEntry *File) {
+const llvm::MemoryBuffer *
+SourceManager::getMemoryBufferForFile(const FileEntry *File) {
   const SrcMgr::ContentCache *IR = getOrCreateContentCache(File);
   assert(IR && "getOrCreateContentCache() cannot return NULL");
-  return IR->getBuffer();
+  return IR->getBuffer(Diag);
 }
 
 bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
@@ -537,7 +478,7 @@ SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   if (Invalid)
     *Invalid = false;
   
-  const llvm::MemoryBuffer *Buf = getBuffer(FID).getBuffer(Diag);
+  const llvm::MemoryBuffer *Buf = getBuffer(FID);
   if (!Buf) {
     if (*Invalid)
       *Invalid = true;
@@ -767,7 +708,7 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
 
   // Note that calling 'getBuffer()' may lazily page in a source file.
   return getSLocEntry(LocInfo.first).getFile().getContentCache()
-              ->getBuffer()->getBufferStart() + LocInfo.second;
+              ->getBuffer(Diag)->getBufferStart() + LocInfo.second;
 }
 
 
@@ -796,11 +737,13 @@ unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc) const {
 
 
 
-static DISABLE_INLINE void ComputeLineNumbers(ContentCache* FI,
+static DISABLE_INLINE void ComputeLineNumbers(Diagnostic &Diag,
+                                              ContentCache* FI,
                                               llvm::BumpPtrAllocator &Alloc);
-static void ComputeLineNumbers(ContentCache* FI, llvm::BumpPtrAllocator &Alloc){
+static void ComputeLineNumbers(Diagnostic &Diag, ContentCache* FI, 
+                               llvm::BumpPtrAllocator &Alloc){
   // Note that calling 'getBuffer()' may lazily page in the file.
-  const MemoryBuffer *Buffer = FI->getBuffer();
+  const MemoryBuffer *Buffer = FI->getBuffer(Diag);
 
   // Find the file offsets of all of the *physical* source lines.  This does
   // not look at trigraphs, escaped newlines, or anything else tricky.
@@ -857,7 +800,7 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos) const {
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
   if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Content, ContentCacheAlloc);
+    ComputeLineNumbers(Diag, Content, ContentCacheAlloc);
 
   // Okay, we know we have a line number table.  Do a binary search to find the
   // line number that this character position lands on.
@@ -1015,7 +958,7 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   // before the MemBuffer as this will avoid unnecessarily paging in the
   // MemBuffer.
   const char *Filename =
-    C->Entry ? C->Entry->getName() : C->getBuffer()->getBufferIdentifier();
+    C->Entry ? C->Entry->getName() : C->getBuffer(Diag)->getBufferIdentifier();
   unsigned LineNo = getLineNumber(LocInfo.first, LocInfo.second);
   unsigned ColNo  = getColumnNumber(LocInfo.first, LocInfo.second);
   SourceLocation IncludeLoc = FI.getIncludeLoc();
@@ -1072,7 +1015,7 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
   if (Content->SourceLineCache == 0)
-    ComputeLineNumbers(Content, ContentCacheAlloc);
+    ComputeLineNumbers(Diag, Content, ContentCacheAlloc);
 
   // Find the first file ID that corresponds to the given file.
   FileID FirstFID;
@@ -1101,15 +1044,15 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     return SourceLocation();
 
   if (Line > Content->NumLines) {
-    unsigned Size = Content->getBuffer()->getBufferSize();
+    unsigned Size = Content->getBuffer(Diag)->getBufferSize();
     if (Size > 0)
       --Size;
     return getLocForStartOfFile(FirstFID).getFileLocWithOffset(Size);
   }
 
   unsigned FilePos = Content->SourceLineCache[Line - 1];
-  const char *Buf = Content->getBuffer()->getBufferStart() + FilePos;
-  unsigned BufLength = Content->getBuffer()->getBufferEnd() - Buf;
+  const char *Buf = Content->getBuffer(Diag)->getBufferStart() + FilePos;
+  unsigned BufLength = Content->getBuffer(Diag)->getBufferEnd() - Buf;
   unsigned i = 0;
 
   // Check that the given column is valid.

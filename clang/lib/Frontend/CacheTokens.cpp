@@ -474,7 +474,7 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
     if (!P.isAbsolute())
       continue;
 
-    const llvm::MemoryBuffer *B = C.getBuffer();
+    const llvm::MemoryBuffer *B = C.getBuffer(PP.getDiagnostics());
     if (!B) continue;
 
     FileID FID = SM.createFileID(FE, SourceLocation(), SrcMgr::C_User);
