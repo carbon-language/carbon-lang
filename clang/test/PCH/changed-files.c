@@ -1,5 +1,6 @@
 const char *s0 = m0;
 int s1 = m1;
+const char *s2 = m0;
 
 // RUN: echo '#define m0 ""' > %t.h
 // RUN: %clang_cc1 -emit-pch -o %t.h.pch %t.h

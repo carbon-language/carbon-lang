@@ -32,14 +32,14 @@ using llvm::MemoryBuffer;
 //===----------------------------------------------------------------------===//
 
 ContentCache::~ContentCache() {
-  delete Buffer;
+  delete Buffer.getPointer();
 }
 
 /// getSizeBytesMapped - Returns the number of bytes actually mapped for
 ///  this ContentCache.  This can be 0 if the MemBuffer was not actually
 ///  instantiated.
 unsigned ContentCache::getSizeBytesMapped() const {
-  return Buffer ? Buffer->getBufferSize() : 0;
+  return Buffer.getPointer() ? Buffer.getPointer()->getBufferSize() : 0;
 }
 
 /// getSize - Returns the size of the content encapsulated by this ContentCache.
@@ -47,15 +47,16 @@ unsigned ContentCache::getSizeBytesMapped() const {
 ///  scratch buffer.  If the ContentCache encapsulates a source file, that
 ///  file is not lazily brought in from disk to satisfy this query.
 unsigned ContentCache::getSize() const {
-  return Buffer ? (unsigned) Buffer->getBufferSize()
-                : (unsigned) Entry->getSize();
+  return Buffer.getPointer() ? (unsigned) Buffer.getPointer()->getBufferSize()
+                             : (unsigned) Entry->getSize();
 }
 
 void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B) {
-  assert(B != Buffer);
+  assert(B != Buffer.getPointer());
   
-  delete Buffer;
-  Buffer = B;
+  delete Buffer.getPointer();
+  Buffer.setPointer(B);
+  Buffer.setInt(false);
 }
 
 const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
@@ -64,12 +65,13 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
     *Invalid = false;
       
   // Lazily create the Buffer for ContentCaches that wrap files.
-  if (!Buffer && Entry) {
+  if (!Buffer.getPointer() && Entry) {
     std::string ErrorStr;
     struct stat FileInfo;
-    Buffer = MemoryBuffer::getFile(Entry->getName(), &ErrorStr,
-                                   Entry->getSize(), &FileInfo);
-
+    Buffer.setPointer(MemoryBuffer::getFile(Entry->getName(), &ErrorStr,
+                                            Entry->getSize(), &FileInfo));
+    Buffer.setInt(false);
+    
     // If we were unable to open the file, then we are in an inconsistent
     // situation where the content cache referenced a file which no longer
     // exists. Most likely, we were using a stat cache with an invalid entry but
@@ -80,16 +82,16 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
     // currently handle returning a null entry here. Ideally we should detect
     // that we are in an inconsistent situation and error out as quickly as
     // possible.
-    if (!Buffer) {
+    if (!Buffer.getPointer()) {
       const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
-      Buffer = MemoryBuffer::getNewMemBuffer(Entry->getSize(), "<invalid>");
-      char *Ptr = const_cast<char*>(Buffer->getBufferStart());
+      Buffer.setPointer(MemoryBuffer::getNewMemBuffer(Entry->getSize(), 
+                                                      "<invalid>"));
+      char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
       for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
         Ptr[i] = FillStr[i % FillStr.size()];
       Diag.Report(diag::err_cannot_open_file)
         << Entry->getName() << ErrorStr;
-      if (Invalid)
-        *Invalid = true;
+      Buffer.setInt(true);
     } else {
       // Check that the file's size and modification time is the same as 
       // in the file entry (which may have come from a stat cache).
@@ -97,17 +99,18 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         Diag.Report(diag::err_file_size_changed)
           << Entry->getName() << (unsigned)Entry->getSize() 
           << (unsigned)FileInfo.st_size;
-        if (Invalid)
-          *Invalid = true;
+        Buffer.setInt(true);
       } else if (FileInfo.st_mtime != Entry->getModificationTime()) {
         Diag.Report(diag::err_file_modified) << Entry->getName();
-        if (Invalid)
-          *Invalid = true;
+        Buffer.setInt(true);
       }
     }
   }
   
-  return Buffer;
+  if (Invalid)
+    *Invalid = Buffer.getInt();
+  
+  return Buffer.getPointer();
 }
 
 unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {

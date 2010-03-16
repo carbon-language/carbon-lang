@@ -17,6 +17,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
@@ -54,7 +55,8 @@ namespace SrcMgr {
   class ContentCache {
     /// Buffer - The actual buffer containing the characters from the input
     /// file.  This is owned by the ContentCache object.
-    mutable const llvm::MemoryBuffer *Buffer;
+    /// The bit indicates whether the buffer is invalid.
+    mutable llvm::PointerIntPair<const llvm::MemoryBuffer *, 1, bool> Buffer;
 
   public:
     /// Reference to the file entry.  This reference does not own
@@ -92,8 +94,9 @@ namespace SrcMgr {
     unsigned getSizeBytesMapped() const;
 
     void setBuffer(const llvm::MemoryBuffer *B) {
-      assert(!Buffer && "MemoryBuffer already set.");
-      Buffer = B;
+      assert(!Buffer.getPointer() && "MemoryBuffer already set.");
+      Buffer.setPointer(B);
+      Buffer.setInt(false);
     }
 
     /// \brief Replace the existing buffer (which will be deleted)
@@ -101,17 +104,19 @@ namespace SrcMgr {
     void replaceBuffer(const llvm::MemoryBuffer *B);
 
     ContentCache(const FileEntry *Ent = 0)
-      : Buffer(0), Entry(Ent), SourceLineCache(0), NumLines(0) {}
+      : Buffer(0, false), Entry(Ent), SourceLineCache(0), NumLines(0) {}
 
     ~ContentCache();
 
     /// The copy ctor does not allow copies where source object has either
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     ///  is not transfered, so this is a logical error.
-    ContentCache(const ContentCache &RHS) : Buffer(0), SourceLineCache(0) {
+    ContentCache(const ContentCache &RHS) 
+      : Buffer(0, false), SourceLineCache(0) 
+    {
       Entry = RHS.Entry;
 
-      assert (RHS.Buffer == 0 && RHS.SourceLineCache == 0
+      assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0
               && "Passed ContentCache object cannot own a buffer.");
 
       NumLines = RHS.NumLines;
