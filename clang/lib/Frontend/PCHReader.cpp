@@ -300,8 +300,10 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
   return false;
 }
 
-void PCHValidator::ReadHeaderFileInfo(const HeaderFileInfo &HFI) {
-  PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
+void PCHValidator::ReadHeaderFileInfo(const HeaderFileInfo &HFI,
+                                      unsigned ID) {
+  PP.getHeaderSearchInfo().setHeaderFileInfoForUID(HFI, ID);
+  ++NumHeaderInfos;
 }
 
 void PCHValidator::ReadCounter(unsigned Value) {
@@ -850,17 +852,6 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
         return Failure;
       break;
 
-    case pch::SM_HEADER_FILE_INFO: {
-      HeaderFileInfo HFI;
-      HFI.isImport = Record[0];
-      HFI.DirInfo = Record[1];
-      HFI.NumIncludes = Record[2];
-      HFI.ControllingMacroID = Record[3];
-      if (Listener)
-        Listener->ReadHeaderFileInfo(HFI);
-      break;
-    }
-
     case pch::SM_SLOC_FILE_ENTRY:
     case pch::SM_SLOC_BUFFER_ENTRY:
     case pch::SM_SLOC_INSTANTIATION_ENTRY:
@@ -918,6 +909,14 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
       const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile())
         .setHasLineDirectives();
 
+    // Reconstruct header-search information for this file.
+    HeaderFileInfo HFI;
+    HFI.isImport = Record[4];
+    HFI.DirInfo = Record[5];
+    HFI.NumIncludes = Record[6];
+    HFI.ControllingMacroID = Record[7];
+    if (Listener)
+      Listener->ReadHeaderFileInfo(HFI, File->getUID());
     break;
   }
 

@@ -573,7 +573,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SM_SLOC_BUFFER_BLOB);
   RECORD(SM_SLOC_INSTANTIATION_ENTRY);
   RECORD(SM_LINE_TABLE);
-  RECORD(SM_HEADER_FILE_INFO);
 
   // Preprocessor Block.
   BLOCK(PREPROCESSOR_BLOCK);
@@ -918,6 +917,11 @@ static unsigned CreateSLocFileAbbrev(llvm::BitstreamWriter &Stream) {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Include location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // Characteristic
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Line directives
+  // HeaderFileInfo fields.
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // isImport
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // DirInfo
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // NumIncludes
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // ControllingMacro
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
   return Stream.EmitAbbrev(Abbrev);
 }
@@ -1019,20 +1023,6 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     Stream.EmitRecord(pch::SM_LINE_TABLE, Record);
   }
 
-  // Write out entries for all of the header files we know about.
-  HeaderSearch &HS = PP.getHeaderSearchInfo();
-  Record.clear();
-  for (HeaderSearch::header_file_iterator I = HS.header_file_begin(),
-                                          E = HS.header_file_end();
-       I != E; ++I) {
-    Record.push_back(I->isImport);
-    Record.push_back(I->DirInfo);
-    Record.push_back(I->NumIncludes);
-    AddIdentifierRef(I->ControllingMacro, Record);
-    Stream.EmitRecord(pch::SM_HEADER_FILE_INFO, Record);
-    Record.clear();
-  }
-
   // Write out the source location entry table. We skip the first
   // entry, which is always the same dummy entry.
   std::vector<uint32_t> SLocEntryOffsets;
@@ -1068,6 +1058,16 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       if (Content->Entry) {
         // The source location entry is a file. The blob associated
         // with this entry is the file name.
+
+        // Emit header-search information associated with this file.
+        HeaderFileInfo HFI;
+        HeaderSearch &HS = PP.getHeaderSearchInfo();
+        if (Content->Entry->getUID() < HS.header_file_size())
+          HFI = HS.header_file_begin()[Content->Entry->getUID()];
+        Record.push_back(HFI.isImport);
+        Record.push_back(HFI.DirInfo);
+        Record.push_back(HFI.NumIncludes);
+        AddIdentifierRef(HFI.ControllingMacro, Record);
 
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->Entry->getName();

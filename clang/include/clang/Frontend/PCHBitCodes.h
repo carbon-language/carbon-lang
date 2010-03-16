@@ -245,10 +245,7 @@ namespace clang {
       SM_SLOC_INSTANTIATION_ENTRY = 4,
       /// \brief Describes the SourceManager's line table, with
       /// information about #line directives.
-      SM_LINE_TABLE = 5,
-      /// \brief Describes one header file info [isImport, DirInfo, NumIncludes]
-      /// ControllingMacro is optional.
-      SM_HEADER_FILE_INFO = 6
+      SM_LINE_TABLE = 5
     };
 
     /// \brief Record types used within a preprocessor block.

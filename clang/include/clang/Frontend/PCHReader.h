@@ -106,7 +106,7 @@ public:
   }
 
   /// \brief Receives a HeaderFileInfo entry.
-  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI) {}
+  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID) {}
 
   /// \brief Receives __COUNTER__ value.
   virtual void ReadCounter(unsigned Value) {}
@@ -130,7 +130,7 @@ public:
                                     FileID PCHBufferID,
                                     llvm::StringRef OriginalFileName,
                                     std::string &SuggestedPredefines);
-  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI);
+  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID);
   virtual void ReadCounter(unsigned Value);
 };
 

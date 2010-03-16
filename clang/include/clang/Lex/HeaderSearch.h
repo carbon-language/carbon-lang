@@ -214,9 +214,10 @@ public:
 
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
 
-  typedef std::vector<HeaderFileInfo>::iterator header_file_iterator;
-  header_file_iterator header_file_begin() { return FileInfo.begin(); }
-  header_file_iterator header_file_end() { return FileInfo.end(); }
+  typedef std::vector<HeaderFileInfo>::const_iterator header_file_iterator;
+  header_file_iterator header_file_begin() const { return FileInfo.begin(); }
+  header_file_iterator header_file_end() const { return FileInfo.end(); }
+  unsigned header_file_size() const { return FileInfo.size(); }
 
   // Used by PCHReader.
   void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
