@@ -99,18 +99,36 @@ namespace test2 {
 
 // Implicit destructor calls.
 namespace test3 {
-  class A{
+  class A {
   private:
     ~A(); // expected-note 3 {{declared private here}}
     static A foo;
   };
 
-  A a; // expected-error {{'~A' is a private member}}
+  A a; // expected-error {{variable of type 'test3::A' has private destructor}}
   A A::foo;
 
-  void foo(A param) { // expected-error {{'~A' is a private member}}
-    A local; // expected-error {{'~A' is a private member}}
+  void foo(A param) { // expected-error {{variable of type 'test3::A' has private destructor}}
+    A local; // expected-error {{variable of type 'test3::A' has private destructor}}
   }
+
+  template <unsigned N> class Base { ~Base(); }; // expected-note 4 {{declared private here}}
+  class Base2 : virtual Base<2> { ~Base2(); }; // expected-note {{declared private here}}
+  class Base3 : virtual Base<3> { public: ~Base3(); };
+
+  // These don't cause diagnostics because we don't need the destructor.
+  class Derived0 : Base<0> { ~Derived0(); };
+  class Derived1 : Base<1> { };
+
+  class Derived2 : // expected-error {{inherited virtual base class 'Base<2>' has private destructor}} \
+                   // expected-error {{inherited virtual base class 'Base<3>' has private destructor}}
+    Base<0>,  // expected-error {{base class 'Base<0>' has private destructor}}
+    virtual Base<1>, // expected-error {{base class 'Base<1>' has private destructor}}
+    Base2, // expected-error {{base class 'test3::Base2' has private destructor}}
+    virtual Base3
+  {
+    ~Derived2() {}
+  };
 }
 
 // Conversion functions.

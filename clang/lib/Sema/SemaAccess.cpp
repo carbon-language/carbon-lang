@@ -255,18 +255,11 @@ static void DiagnoseInaccessibleMember(Sema &S, SourceLocation Loc,
   NamedDecl *D = Entity.getTargetDecl();
   CXXRecordDecl *DeclaringClass = FindDeclaringClass(D);
 
-  if (isa<CXXConstructorDecl>(D)) {
-    unsigned DiagID = (Access == AS_protected ? diag::err_access_ctor_protected
-                                              : diag::err_access_ctor_private);
-    S.Diag(Loc, DiagID)
-      << S.Context.getTypeDeclType(DeclaringClass);
-  } else {
-    unsigned DiagID = (Access == AS_protected ? diag::err_access_protected
-                                              : diag::err_access_private);
-    S.Diag(Loc, DiagID)
-      << D->getDeclName()
-      << S.Context.getTypeDeclType(DeclaringClass);
-  }
+  S.Diag(Loc, Entity.getDiag())
+    << (Access == AS_protected)
+    << D->getDeclName()
+    << S.Context.getTypeDeclType(NamingClass)
+    << S.Context.getTypeDeclType(DeclaringClass);
   DiagnoseAccessPath(S, EC, NamingClass, DeclaringClass, D, Access);
 }
 
@@ -274,39 +267,25 @@ static void DiagnoseInaccessibleMember(Sema &S, SourceLocation Loc,
 static void DiagnoseInaccessibleBase(Sema &S, SourceLocation Loc,
                                      const EffectiveContext &EC,
                                      AccessSpecifier Access,
-                                     const Sema::AccessedEntity &Entity,
-                                     Sema::AccessDiagnosticsKind ADK) {
-  if (ADK == Sema::ADK_covariance) {
-    S.Diag(Loc, diag::err_covariant_return_inaccessible_base)
-      << S.Context.getTypeDeclType(Entity.getDerivedClass())
-      << S.Context.getTypeDeclType(Entity.getBaseClass())
-      << (Access == AS_protected);
-  } else if (Entity.getKind() == Sema::AccessedEntity::BaseToDerivedConversion) {
-    S.Diag(Loc, diag::err_downcast_from_inaccessible_base)
-      << S.Context.getTypeDeclType(Entity.getDerivedClass())
-      << S.Context.getTypeDeclType(Entity.getBaseClass())
-      << (Access == AS_protected);
-  } else {
-    S.Diag(Loc, diag::err_upcast_to_inaccessible_base)
-      << S.Context.getTypeDeclType(Entity.getDerivedClass())
-      << S.Context.getTypeDeclType(Entity.getBaseClass())
-      << (Access == AS_protected);
-  }
+                                     const Sema::AccessedEntity &Entity) {
+  S.Diag(Loc, Entity.getDiag())
+    << (Access == AS_protected)
+    << DeclarationName()
+    << S.Context.getTypeDeclType(Entity.getDerivedClass())
+    << S.Context.getTypeDeclType(Entity.getBaseClass());
   DiagnoseAccessPath(S, EC, Entity.getDerivedClass(),
                      Entity.getBaseClass(), 0, Access);
 }
 
-static void DiagnoseBadAccess(Sema &S,
-                              SourceLocation Loc,
+static void DiagnoseBadAccess(Sema &S, SourceLocation Loc,
                               const EffectiveContext &EC,
                               CXXRecordDecl *NamingClass,
                               AccessSpecifier Access,
-                              const Sema::AccessedEntity &Entity,
-                              Sema::AccessDiagnosticsKind ADK) {
+                              const Sema::AccessedEntity &Entity) {
   if (Entity.isMemberAccess())
     DiagnoseInaccessibleMember(S, Loc, EC, NamingClass, Access, Entity);
   else
-    DiagnoseInaccessibleBase(S, Loc, EC, Access, Entity, ADK);
+    DiagnoseInaccessibleBase(S, Loc, EC, Access, Entity);
 }
 
 
@@ -369,8 +348,7 @@ static void TryElevateAccess(Sema &S,
 static Sema::AccessResult CheckEffectiveAccess(Sema &S,
                                                const EffectiveContext &EC,
                                                SourceLocation Loc,
-                                         Sema::AccessedEntity const &Entity,
-                                         Sema::AccessDiagnosticsKind ADK) {
+                                         Sema::AccessedEntity const &Entity) {
   AccessSpecifier Access = Entity.getAccess();
   assert(Access != AS_public);
 
@@ -378,14 +356,14 @@ static Sema::AccessResult CheckEffectiveAccess(Sema &S,
   while (NamingClass->isAnonymousStructOrUnion())
     // This should be guaranteed by the fact that the decl has
     // non-public access.  If not, we should make it guaranteed!
-    NamingClass = cast<CXXRecordDecl>(NamingClass);
+    NamingClass = cast<CXXRecordDecl>(NamingClass->getParent());
 
   if (!EC.Record) {
     TryElevateAccess(S, EC, Entity, Access);
     if (Access == AS_public) return Sema::AR_accessible;
 
-    if (ADK != Sema::ADK_quiet)
-      DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity, ADK);
+    if (!Entity.isQuiet())
+      DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity);
     return Sema::AR_inaccessible;
   }
 
@@ -418,15 +396,13 @@ static Sema::AccessResult CheckEffectiveAccess(Sema &S,
   }
     
   // Okay, that's it, reject it.
-  if (ADK != Sema::ADK_quiet)
-    DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity, ADK);
+  if (!Entity.isQuiet())
+    DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity);
   return Sema::AR_inaccessible;
 }
 
 static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
-                                      const Sema::AccessedEntity &Entity,
-                                      Sema::AccessDiagnosticsKind ADK
-                                        = Sema::ADK_normal) {
+                                      const Sema::AccessedEntity &Entity) {
   // If the access path is public, it's accessible everywhere.
   if (Entity.getAccess() == AS_public)
     return Sema::AR_accessible;
@@ -436,14 +412,13 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   // can actually change our effective context for the purposes of
   // access control.
   if (S.CurContext->isFileContext() && S.ParsingDeclDepth) {
-    assert(ADK == Sema::ADK_normal && "delaying abnormal access check");
     S.DelayedDiagnostics.push_back(
         Sema::DelayedDiagnostic::makeAccess(Loc, Entity));
     return Sema::AR_delayed;
   }
 
   return CheckEffectiveAccess(S, EffectiveContext(S.CurContext),
-                              Loc, Entity, ADK);
+                              Loc, Entity);
 }
 
 void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
@@ -451,18 +426,23 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
   // declaration.
   EffectiveContext EC(Ctx->getDeclContext());
 
-  if (CheckEffectiveAccess(*this, EC, DD.Loc, DD.AccessData, ADK_normal))
+  if (CheckEffectiveAccess(*this, EC, DD.Loc, DD.getAccessData()))
     DD.Triggered = true;
 }
 
 Sema::AccessResult Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
                                                      NamedDecl *D,
                                                      AccessSpecifier Access) {
-  if (!getLangOptions().AccessControl || !E->getNamingClass())
+  if (!getLangOptions().AccessControl ||
+      !E->getNamingClass() ||
+      Access == AS_public)
     return AR_accessible;
 
-  return CheckAccess(*this, E->getNameLoc(),
-                 AccessedEntity::makeMember(E->getNamingClass(), Access, D));
+  AccessedEntity Entity(AccessedEntity::Member,
+                        E->getNamingClass(), Access, D);
+  Entity.setDiag(diag::err_access) << E->getSourceRange();
+
+  return CheckAccess(*this, E->getNameLoc(), Entity);
 }
 
 /// Perform access-control checking on a previously-unresolved member
@@ -470,56 +450,73 @@ Sema::AccessResult Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
 Sema::AccessResult Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
                                                      NamedDecl *D,
                                                      AccessSpecifier Access) {
-  if (!getLangOptions().AccessControl)
+  if (!getLangOptions().AccessControl ||
+      Access == AS_public)
     return AR_accessible;
 
-  return CheckAccess(*this, E->getMemberLoc(),
-                 AccessedEntity::makeMember(E->getNamingClass(), Access, D));
+  AccessedEntity Entity(AccessedEntity::Member,
+                        E->getNamingClass(), Access, D);
+  Entity.setDiag(diag::err_access) << E->getSourceRange();
+
+  return CheckAccess(*this, E->getMemberLoc(), Entity);
 }
 
 Sema::AccessResult Sema::CheckDestructorAccess(SourceLocation Loc,
-                                               const RecordType *RT) {
+                                               CXXDestructorDecl *Dtor,
+                                               const PartialDiagnostic &PDiag) {
   if (!getLangOptions().AccessControl)
     return AR_accessible;
 
-  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(RT->getDecl());
-  CXXDestructorDecl *Dtor = NamingClass->getDestructor(Context);
-
+  // There's never a path involved when checking implicit destructor access.
   AccessSpecifier Access = Dtor->getAccess();
   if (Access == AS_public)
     return AR_accessible;
 
-  return CheckAccess(*this, Loc,
-                 AccessedEntity::makeMember(NamingClass, Access, Dtor));
+  CXXRecordDecl *NamingClass = Dtor->getParent();
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Access, Dtor);
+  Entity.setDiag(PDiag); // TODO: avoid copy
+
+  return CheckAccess(*this, Loc, Entity);
 }
 
 /// Checks access to a constructor.
 Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
                                   CXXConstructorDecl *Constructor,
                                   AccessSpecifier Access) {
-  if (!getLangOptions().AccessControl)
+  if (!getLangOptions().AccessControl ||
+      Access == AS_public)
     return AR_accessible;
 
   CXXRecordDecl *NamingClass = Constructor->getParent();
-  return CheckAccess(*this, UseLoc,
-                 AccessedEntity::makeMember(NamingClass, Access, Constructor));
+  AccessedEntity Entity(AccessedEntity::Member,
+                        NamingClass, Access, Constructor);
+  Entity.setDiag(diag::err_access_ctor);
+
+  return CheckAccess(*this, UseLoc, Entity);
 }
 
 /// Checks access to an overloaded member operator, including
 /// conversion operators.
 Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
                                                    Expr *ObjectExpr,
+                                                   Expr *ArgExpr,
                                                    NamedDecl *MemberOperator,
                                                    AccessSpecifier Access) {
-  if (!getLangOptions().AccessControl)
+  if (!getLangOptions().AccessControl ||
+      Access == AS_public)
     return AR_accessible;
 
   const RecordType *RT = ObjectExpr->getType()->getAs<RecordType>();
   assert(RT && "found member operator but object expr not of record type");
   CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(RT->getDecl());
 
-  return CheckAccess(*this, OpLoc,
-            AccessedEntity::makeMember(NamingClass, Access, MemberOperator));
+  AccessedEntity Entity(AccessedEntity::Member,
+                        NamingClass, Access, MemberOperator);
+  Entity.setDiag(diag::err_access)
+    << ObjectExpr->getSourceRange()
+    << (ArgExpr ? ArgExpr->getSourceRange() : SourceRange());
+
+  return CheckAccess(*this, OpLoc, Entity);
 }
 
 /// Checks access for a hierarchy conversion.
@@ -532,31 +529,29 @@ Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
 ///     context had no special privileges
 /// \param ADK controls the kind of diagnostics that are used
 Sema::AccessResult Sema::CheckBaseClassAccess(SourceLocation AccessLoc,
-                                              bool IsBaseToDerived,
                                               QualType Base,
                                               QualType Derived,
                                               const CXXBasePath &Path,
+                                              unsigned DiagID,
                                               bool ForceCheck,
-                                              bool ForceUnprivileged,
-                                              AccessDiagnosticsKind ADK) {
+                                              bool ForceUnprivileged) {
   if (!ForceCheck && !getLangOptions().AccessControl)
     return AR_accessible;
 
   if (Path.Access == AS_public)
     return AR_accessible;
 
-  // TODO: preserve the information about which types exactly were used.
   CXXRecordDecl *BaseD, *DerivedD;
   BaseD = cast<CXXRecordDecl>(Base->getAs<RecordType>()->getDecl());
   DerivedD = cast<CXXRecordDecl>(Derived->getAs<RecordType>()->getDecl());
-  AccessedEntity Entity = AccessedEntity::makeBaseClass(IsBaseToDerived,
-                                                        BaseD, DerivedD,
-                                                        Path.Access);
+
+  AccessedEntity Entity(AccessedEntity::Base, BaseD, DerivedD, Path.Access);
+  if (DiagID)
+    Entity.setDiag(DiagID) << Derived << Base;
 
   if (ForceUnprivileged)
-    return CheckEffectiveAccess(*this, EffectiveContext(),
-                                AccessLoc, Entity, ADK);
-  return CheckAccess(*this, AccessLoc, Entity, ADK);
+    return CheckEffectiveAccess(*this, EffectiveContext(), AccessLoc, Entity);
+  return CheckAccess(*this, AccessLoc, Entity);
 }
 
 /// Checks access to all the declarations in the given result set.
@@ -565,9 +560,13 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
          && "performing access check without access control");
   assert(R.getNamingClass() && "performing access check without naming class");
 
-  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    if (I.getAccess() != AS_public)
-      CheckAccess(*this, R.getNameLoc(),
-                  AccessedEntity::makeMember(R.getNamingClass(),
-                                             I.getAccess(), *I));
+  for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
+    if (I.getAccess() != AS_public) {
+      AccessedEntity Entity(AccessedEntity::Member,
+                            R.getNamingClass(), I.getAccess(), *I);
+      Entity.setDiag(diag::err_access);
+
+      CheckAccess(*this, R.getNameLoc(), Entity);
+    }
+  }
 }

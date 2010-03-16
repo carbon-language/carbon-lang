@@ -720,7 +720,7 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths) {
 /// if there is an error.
 bool
 Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
-                                   AccessDiagnosticsKind ADK,
+                                   unsigned InaccessibleBaseID,
                                    unsigned AmbigiousBaseConvID,
                                    SourceLocation Loc, SourceRange Range,
                                    DeclarationName Name) {
@@ -736,15 +736,12 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   (void)DerivationOkay;
   
   if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
-    if (ADK == ADK_quiet)
+    if (!InaccessibleBaseID)
       return false;
 
     // Check that the base class can be accessed.
-    switch (CheckBaseClassAccess(Loc, /*IsBaseToDerived*/ false,
-                                 Base, Derived, Paths.front(),
-                                 /*force*/ false,
-                                 /*unprivileged*/ false,
-                                 ADK)) {
+    switch (CheckBaseClassAccess(Loc, Base, Derived, Paths.front(),
+                                 InaccessibleBaseID)) {
     case AR_accessible: return false;
     case AR_inaccessible: return true;
     case AR_dependent: return false;
@@ -780,7 +777,8 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                    SourceLocation Loc, SourceRange Range,
                                    bool IgnoreAccess) {
   return CheckDerivedToBaseConversion(Derived, Base,
-                                      IgnoreAccess ? ADK_quiet : ADK_normal,
+                                      IgnoreAccess ? 0
+                                       : diag::err_upcast_to_inaccessible_base,
                                       diag::err_ambiguous_derived_to_base_conv,
                                       Loc, Range, DeclarationName());
 }
@@ -1854,6 +1852,11 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
   // Ignore dependent destructors.
   if (Destructor->isDependentContext())
     return;
+
+  // FIXME: all the access-control diagnostics are positioned on the
+  // field/base declaration.  That's probably good; that said, the
+  // user might reasonably want to know why the destructor is being
+  // emitted, and we currently don't say.
   
   CXXRecordDecl *ClassDecl = Destructor->getParent();
 
@@ -1872,25 +1875,41 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
     if (FieldClassDecl->hasTrivialDestructor())
       continue;
 
-    const CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(Context);
+    CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(Context);
+    CheckDestructorAccess(Field->getLocation(), Dtor,
+                          PartialDiagnostic(diag::err_access_dtor_field)
+                            << Field->getDeclName()
+                            << FieldType);
+
     MarkDeclarationReferenced(Destructor->getLocation(),
                               const_cast<CXXDestructorDecl*>(Dtor));
   }
 
+  llvm::SmallPtrSet<const RecordType *, 8> DirectVirtualBases;
+
   // Bases.
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
-    // Ignore virtual bases.
+    // Bases are always records in a well-formed non-dependent class.
+    const RecordType *RT = Base->getType()->getAs<RecordType>();
+
+    // Remember direct virtual bases.
     if (Base->isVirtual())
-      continue;
+      DirectVirtualBases.insert(RT);
 
     // Ignore trivial destructors.
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
+
+    CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
+
+    // FIXME: caret should be on the start of the class name
+    CheckDestructorAccess(Base->getSourceRange().getBegin(), Dtor,
+                          PartialDiagnostic(diag::err_access_dtor_base)
+                            << Base->getType()
+                            << Base->getSourceRange());
     
-    const CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
     MarkDeclarationReferenced(Destructor->getLocation(),
                               const_cast<CXXDestructorDecl*>(Dtor));
   }
@@ -1898,13 +1917,24 @@ Sema::MarkBaseAndMemberDestructorsReferenced(CXXDestructorDecl *Destructor) {
   // Virtual bases.
   for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+
+    // Bases are always records in a well-formed non-dependent class.
+    const RecordType *RT = VBase->getType()->getAs<RecordType>();
+
+    // Ignore direct virtual bases.
+    if (DirectVirtualBases.count(RT))
+      continue;
+
     // Ignore trivial destructors.
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
+    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
-    
-    const CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
+
+    CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
+    CheckDestructorAccess(ClassDecl->getLocation(), Dtor,
+                          PartialDiagnostic(diag::err_access_dtor_vbase)
+                            << VBase->getType());
+
     MarkDeclarationReferenced(Destructor->getLocation(),
                               const_cast<CXXDestructorDecl*>(Dtor));
   }
@@ -4062,7 +4092,10 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
       !ClassDecl->hasTrivialDestructor()) {
     CXXDestructorDecl *Destructor = ClassDecl->getDestructor(Context);
     MarkDeclarationReferenced(VD->getLocation(), Destructor);
-    CheckDestructorAccess(VD->getLocation(), Record);
+    CheckDestructorAccess(VD->getLocation(), Destructor,
+                          PartialDiagnostic(diag::err_access_dtor_var)
+                            << VD->getDeclName()
+                            << VD->getType());
   }
 }
 
@@ -5725,7 +5758,8 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
     }
 
     // Check if we the conversion from derived to base is valid.
-    if (CheckDerivedToBaseConversion(NewClassTy, OldClassTy, ADK_covariance,
+    if (CheckDerivedToBaseConversion(NewClassTy, OldClassTy,
+                      diag::err_covariant_return_inaccessible_base,
                       diag::err_covariant_return_ambiguous_derived_to_base_conv,
                       // FIXME: Should this point to the return type?
                       New->getLocation(), SourceRange(), New->getDeclName())) {

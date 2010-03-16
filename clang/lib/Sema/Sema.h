@@ -300,60 +300,38 @@ public:
   /// \brief The set of static functions seen so far that have not been used.
   std::vector<FunctionDecl*> UnusedStaticFuncs;
   
-  /// An enum describing the kind of diagnostics to use when checking
-  /// access.
-  enum AccessDiagnosticsKind {
-    /// Suppress diagnostics.
-    ADK_quiet,
-
-    /// Use the normal diagnostics.
-    ADK_normal,
-
-    /// Use the diagnostics appropriate for checking a covariant
-    /// return type.
-    ADK_covariance
-  };
-
   class AccessedEntity {
   public:
-    enum Kind {
-      /// A member declaration found through lookup.  The target is the
-      /// member.
-      Member,
+    /// A member declaration found through lookup.  The target is the
+    /// member.
+    enum MemberNonce { Member };
 
-      /// A base-to-derived conversion.  The target is the base class.
-      BaseToDerivedConversion,
+    /// A hierarchy (base-to-derived or derived-to-base) conversion.
+    /// The target is the base class.
+    enum BaseNonce { Base };
 
-      /// A derived-to-base conversion.  The target is the base class.
-      DerivedToBaseConversion
-    };
+    bool isMemberAccess() const { return IsMember; }
 
-    bool isMemberAccess() const { return K == Member; }
-
-    static AccessedEntity makeMember(CXXRecordDecl *NamingClass,
-                                     AccessSpecifier Access,
-                                     NamedDecl *Target) {
-      AccessedEntity E;
-      E.K = Member;
-      E.Access = Access;
-      E.Target = Target;
-      E.NamingClass = NamingClass;
-      return E;
+    AccessedEntity(MemberNonce _,
+                   CXXRecordDecl *NamingClass,
+                   AccessSpecifier Access,
+                   NamedDecl *Target)
+      : Access(Access), IsMember(true), 
+        Target(Target), NamingClass(NamingClass),
+        Diag(0) {
     }
 
-    static AccessedEntity makeBaseClass(bool BaseToDerived,
-                                        CXXRecordDecl *BaseClass,
-                                        CXXRecordDecl *DerivedClass,
-                                        AccessSpecifier Access) {
-      AccessedEntity E;
-      E.K = BaseToDerived ? BaseToDerivedConversion : DerivedToBaseConversion;
-      E.Access = Access;
-      E.Target = BaseClass;
-      E.NamingClass = DerivedClass;
-      return E;
+    AccessedEntity(BaseNonce _,
+                   CXXRecordDecl *BaseClass,
+                   CXXRecordDecl *DerivedClass,
+                   AccessSpecifier Access)
+      : Access(Access), IsMember(false),
+        Target(BaseClass), NamingClass(DerivedClass),
+        Diag(0) {
     }
 
-    Kind getKind() const { return Kind(K); }
+    bool isQuiet() const { return Diag.getDiagID() == 0; }
+
     AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
 
     // These apply to member decls...
@@ -364,11 +342,32 @@ public:
     CXXRecordDecl *getBaseClass() const { return cast<CXXRecordDecl>(Target); }
     CXXRecordDecl *getDerivedClass() const { return NamingClass; }
 
+    /// Sets a diagnostic to be performed.  The diagnostic is given
+    /// four (additional) arguments:
+    ///   %0 - 0 if the entity was private, 1 if protected
+    ///   %1 - the DeclarationName of the entity
+    ///   %2 - the TypeDecl type of the naming class
+    ///   %3 - the TypeDecl type of the declaring class
+    void setDiag(const PartialDiagnostic &PDiag) {
+      assert(isQuiet() && "partial diagnostic already defined");
+      Diag = PDiag;
+    }
+    PartialDiagnostic &setDiag(unsigned DiagID) {
+      assert(isQuiet() && "partial diagnostic already defined");
+      assert(DiagID && "creating null diagnostic");
+      Diag = PartialDiagnostic(DiagID);
+      return Diag;
+    }
+    const PartialDiagnostic &getDiag() const {
+      return Diag;
+    }
+
   private:
-    unsigned K : 2;
     unsigned Access : 2;
+    bool IsMember;
     NamedDecl *Target;
     CXXRecordDecl *NamingClass;    
+    PartialDiagnostic Diag;
   };
 
   struct DelayedDiagnostic {
@@ -384,8 +383,15 @@ public:
       struct { NamedDecl *Decl; } DeprecationData;
 
       /// Access control.
-      AccessedEntity AccessData;
+      char AccessData[sizeof(AccessedEntity)];
     };
+
+    void destroy() {
+      switch (Kind) {
+      case Access: getAccessData().~AccessedEntity(); break;
+      case Deprecation: break;
+      }
+    }
 
     static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
                                              NamedDecl *D) {
@@ -403,10 +409,16 @@ public:
       DD.Kind = Access;
       DD.Triggered = false;
       DD.Loc = Loc;
-      DD.AccessData = Entity;
+      new (&DD.getAccessData()) AccessedEntity(Entity);
       return DD;
     }
 
+    AccessedEntity &getAccessData() {
+      return *reinterpret_cast<AccessedEntity*>(AccessData);
+    }
+    const AccessedEntity &getAccessData() const {
+      return *reinterpret_cast<const AccessedEntity*>(AccessData);
+    }
   };
 
   /// \brief The stack of diagnostics that were delayed due to being
@@ -2566,7 +2578,7 @@ public:
                                     SourceLocation Loc, SourceRange Range,
                                     bool IgnoreAccess = false);
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
-                                    AccessDiagnosticsKind ADK,
+                                    unsigned InaccessibleBaseID,
                                     unsigned AmbigiousBaseConvID,
                                     SourceLocation Loc, SourceRange Range,
                                     DeclarationName Name);
@@ -2614,18 +2626,19 @@ public:
                                       CXXConstructorDecl *D,
                                       AccessSpecifier Access);
   AccessResult CheckDestructorAccess(SourceLocation Loc,
-                                     const RecordType *Record);
+                                     CXXDestructorDecl *Dtor,
+                                     const PartialDiagnostic &PDiag);
   AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
                                          Expr *ObjectExpr,
+                                         Expr *ArgExpr,
                                          NamedDecl *D,
                                          AccessSpecifier Access);
   AccessResult CheckBaseClassAccess(SourceLocation AccessLoc,
-                                    bool IsBaseToDerived,
                                     QualType Base, QualType Derived,
                                     const CXXBasePath &Path,
+                                    unsigned DiagID,
                                     bool ForceCheck = false,
-                                    bool ForceUnprivileged = false,
-                                    AccessDiagnosticsKind ADK = ADK_normal);
+                                    bool ForceUnprivileged = false);
                             
   void CheckLookupAccess(const LookupResult &R);
 

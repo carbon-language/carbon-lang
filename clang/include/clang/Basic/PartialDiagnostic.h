@@ -69,6 +69,10 @@ class PartialDiagnostic {
     CodeModificationHint CodeModificationHints[MaxCodeModificationHints];    
   };
 
+  // NOTE: Sema assumes that PartialDiagnostic is location-invariant
+  // in the sense that its bits can be safely memcpy'ed and destructed
+  // in the new location.
+
   /// DiagID - The diagnostic ID.
   mutable unsigned DiagID;
   

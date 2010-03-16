@@ -294,12 +294,12 @@ bool Sema::CheckExceptionSpecSubset(
         continue;
 
       // Do this check from a context without privileges.
-      switch (CheckBaseClassAccess(SourceLocation(), false,
+      switch (CheckBaseClassAccess(SourceLocation(),
                                    CanonicalSuperT, CanonicalSubT,
                                    Paths.front(),
+                                   /*Diagnostic*/ 0,
                                    /*ForceCheck*/ true,
-                                   /*ForceUnprivileged*/ true,
-                                   ADK_quiet)) {
+                                   /*ForceUnprivileged*/ true)) {
       case AR_accessible: break;
       case AR_inaccessible: continue;
       case AR_dependent:

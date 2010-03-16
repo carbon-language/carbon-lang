@@ -428,11 +428,25 @@ def err_deep_exception_specs_differ : Error<
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
   "%0 redeclared with '%1' access">;
-def err_access_private : Error<"%0 is a private member of %1">;
-def err_access_ctor_private : Error<"calling a private constructor of %0">;
-// Say something about the context for these?
-def err_access_protected : Error<"%0 is a protected member of %1">;
-def err_access_ctor_protected : Error<"calling a protected constructor of %0">;
+def err_access :
+    Error<"%1 is a %select{private|protected}0 member of %3">,
+    NoSFINAE;
+def err_access_ctor :
+    Error<"calling a %select{private|protected}0 constructor of class %2">,
+    NoSFINAE;
+def err_access_dtor_base :
+    Error<"base class %0 has %select{private|protected}1 destructor">,
+    NoSFINAE;
+def err_access_dtor_vbase :
+    Error<"inherited virtual base class %0 has "
+    "%select{private|protected}1 destructor">,
+    NoSFINAE;
+def err_access_dtor_field :
+    Error<"field of type %1 has %select{private|protected}2 destructor">,
+    NoSFINAE;
+def err_access_dtor_var :
+    Error<"variable of type %1 has %select{private|protected}2 destructor">,
+    NoSFINAE;
 def note_previous_access_declaration : Note<
   "previously declared '%1' here">;
 def err_access_outside_class : Error<

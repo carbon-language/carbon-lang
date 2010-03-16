@@ -1411,8 +1411,9 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   }
 
   if (!IgnoreBaseAccess)
-    CheckBaseClassAccess(From->getExprLoc(), /*BaseToDerived*/ true,
-                         FromClass, ToClass, Paths.front());
+    CheckBaseClassAccess(From->getExprLoc(), FromClass, ToClass,
+                         Paths.front(),
+                         diag::err_downcast_from_inaccessible_base);
 
   // Must be a base to derived member conversion.
   Kind = CastExpr::CK_BaseToDerivedMemberPointer;
@@ -5548,7 +5549,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 
       // Convert the arguments.
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
-        CheckMemberOperatorAccess(OpLoc, Args[0], Method, Best->getAccess());
+        CheckMemberOperatorAccess(OpLoc, Args[0], 0, Method, Best->getAccess());
 
         if (PerformObjectArgumentInitialization(Input, /*Qualifier=*/0, Method))
           return ExprError();
@@ -5732,7 +5733,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         // Convert the arguments.
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
           // Best->Access is only meaningful for class members.
-          CheckMemberOperatorAccess(OpLoc, Args[0], Method, Best->getAccess());
+          CheckMemberOperatorAccess(OpLoc, Args[0], Args[1], Method,
+                                    Best->getAccess());
 
           OwningExprResult Arg1
             = PerformCopyInitialization(
@@ -5906,7 +5908,8 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         // We matched an overloaded operator. Build a call to that
         // operator.
 
-        CheckMemberOperatorAccess(LLoc, Args[0], FnDecl, Best->getAccess());
+        CheckMemberOperatorAccess(LLoc, Args[0], Args[1], FnDecl,
+                                  Best->getAccess());
 
         // Convert the arguments.
         CXXMethodDecl *Method = cast<CXXMethodDecl>(FnDecl);
@@ -6275,7 +6278,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       = cast<CXXConversionDecl>(
                          Best->Conversions[0].UserDefined.ConversionFunction);
 
-    CheckMemberOperatorAccess(LParenLoc, Object, Conv, Best->getAccess());
+    CheckMemberOperatorAccess(LParenLoc, Object, 0, Conv, Best->getAccess());
 
     // We selected one of the surrogate functions that converts the
     // object parameter to a function pointer. Perform the conversion
@@ -6290,7 +6293,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                          CommaLocs, RParenLoc).release();
   }
 
-  CheckMemberOperatorAccess(LParenLoc, Object,
+  CheckMemberOperatorAccess(LParenLoc, Object, 0,
                             Best->Function, Best->getAccess());
 
   // We found an overloaded operator(). Build a CXXOperatorCallExpr

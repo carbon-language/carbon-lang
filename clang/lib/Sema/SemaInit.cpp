@@ -3401,7 +3401,7 @@ InitializationSequence::Perform(Sema &S,
         // Build a call to the conversion function.
         CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
 
-        S.CheckMemberOperatorAccess(Kind.getLocation(), CurInitExpr,
+        S.CheckMemberOperatorAccess(Kind.getLocation(), CurInitExpr, 0,
                                     Conversion, FnAccess);
         
         // FIXME: Should we move this initialization into a separate 

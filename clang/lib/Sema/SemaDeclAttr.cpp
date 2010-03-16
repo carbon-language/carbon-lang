@@ -2038,6 +2038,8 @@ void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
   assert(SavedIndex <= DelayedDiagnostics.size() &&
          "saved index is out of bounds");
 
+  unsigned E = DelayedDiagnostics.size();
+
   // We only want to actually emit delayed diagnostics when we
   // successfully parsed a decl.
   Decl *D = Ctx ? Ctx.getAs<Decl>() : 0;
@@ -2048,7 +2050,7 @@ void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
     // only the declarator pops will be passed decls.  This is correct;
     // we really do need to consider delayed diagnostics from the decl spec
     // for each of the different declarations.
-    for (unsigned I = 0, E = DelayedDiagnostics.size(); I != E; ++I) {
+    for (unsigned I = 0; I != E; ++I) {
       if (DelayedDiagnostics[I].Triggered)
         continue;
 
@@ -2063,6 +2065,10 @@ void Sema::PopParsingDeclaration(ParsingDeclStackState S, DeclPtrTy Ctx) {
       }
     }
   }
+
+  // Destroy all the delayed diagnostics we're about to pop off.
+  for (unsigned I = SavedIndex; I != E; ++I)
+    DelayedDiagnostics[I].destroy();
 
   DelayedDiagnostics.set_size(SavedIndex);
 }
