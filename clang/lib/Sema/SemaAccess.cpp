@@ -495,6 +495,23 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
   return CheckAccess(*this, UseLoc, Entity);
 }
 
+/// Checks direct (i.e. non-inherited) access to an arbitrary class
+/// member.
+Sema::AccessResult Sema::CheckDirectMemberAccess(SourceLocation UseLoc,
+                                                 NamedDecl *Target,
+                                           const PartialDiagnostic &Diag) {
+  AccessSpecifier Access = Target->getAccess();
+  if (!getLangOptions().AccessControl ||
+      Access == AS_public)
+    return AR_accessible;
+
+  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(Target->getDeclContext());
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Access, Target);
+  Entity.setDiag(Diag);
+  return CheckAccess(*this, UseLoc, Entity);
+}
+                                           
+
 /// Checks access to an overloaded member operator, including
 /// conversion operators.
 Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,

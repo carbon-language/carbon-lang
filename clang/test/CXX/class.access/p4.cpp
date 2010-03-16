@@ -183,3 +183,40 @@ namespace test4 {
   Private test1(Derived4 &d) { return d; }
   Public test2(Derived4 &d) { return d; }
 }
+
+// Implicit copy assignment operator uses.
+namespace test5 {
+  class A {
+    void operator=(const A &); // expected-note 2 {{declared private here}}
+  };
+
+  class Test1 { A a; }; // expected-error {{field of type 'test5::A' has private copy assignment operator}}
+  void test1() {
+    Test1 a;
+    a = Test1();
+  }
+
+  class Test2 : A {}; // expected-error {{base class 'test5::A' has private copy assignment operator}}
+  void test2() {
+    Test2 a;
+    a = Test2();
+  }
+}
+
+// Implicit copy constructor uses.
+namespace test6 {
+  class A {
+    public: A();
+    private: A(const A &); // expected-note 2 {{declared private here}}
+  };
+
+  class Test1 { A a; }; // expected-error {{field of type 'test6::A' has private copy constructor}}
+  void test1(const Test1 &t) {
+    Test1 a = t;
+  }
+
+  class Test2 : A {}; // expected-error {{base class 'test6::A' has private copy constructor}}
+  void test2(const Test2 &t) {
+    Test2 a = t;
+  }
+}

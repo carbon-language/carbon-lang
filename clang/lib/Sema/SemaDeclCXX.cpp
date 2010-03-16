@@ -3862,8 +3862,14 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXMethodDecl *BaseAssignOpMethod =
           getAssignOperatorMethod(CurrentLocation, MethodDecl->getParamDecl(0), 
-                                  BaseClassDecl))
+                                  BaseClassDecl)) {
+      CheckDirectMemberAccess(Base->getSourceRange().getBegin(),
+                              BaseAssignOpMethod,
+                              PartialDiagnostic(diag::err_access_assign_base)
+                                << Base->getType());
+
       MarkDeclarationReferenced(CurrentLocation, BaseAssignOpMethod);
+    }
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field) {
@@ -3875,8 +3881,14 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXMethodDecl *FieldAssignOpMethod =
           getAssignOperatorMethod(CurrentLocation, MethodDecl->getParamDecl(0), 
-                                  FieldClassDecl))
+                                  FieldClassDecl)) {
+        CheckDirectMemberAccess(Field->getLocation(),
+                                FieldAssignOpMethod,
+                                PartialDiagnostic(diag::err_access_assign_field)
+                                  << Field->getDeclName() << Field->getType());
+
         MarkDeclarationReferenced(CurrentLocation, FieldAssignOpMethod);
+      }
     } else if (FieldType->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign)
       << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
@@ -3951,8 +3963,14 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXConstructorDecl *BaseCopyCtor =
-        BaseClassDecl->getCopyConstructor(Context, TypeQuals))
+        BaseClassDecl->getCopyConstructor(Context, TypeQuals)) {
+      CheckDirectMemberAccess(Base->getSourceRange().getBegin(),
+                              BaseCopyCtor,
+                              PartialDiagnostic(diag::err_access_copy_base)
+                                << Base->getType());
+
       MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
+    }
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end();
@@ -3964,8 +3982,14 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXConstructorDecl *FieldCopyCtor =
-          FieldClassDecl->getCopyConstructor(Context, TypeQuals))
+          FieldClassDecl->getCopyConstructor(Context, TypeQuals)) {
+        CheckDirectMemberAccess(Field->getLocation(),
+                                FieldCopyCtor,
+                                PartialDiagnostic(diag::err_access_copy_field)
+                                  << Field->getDeclName() << Field->getType());
+
         MarkDeclarationReferenced(CurrentLocation, FieldCopyCtor);
+      }
     }
   }
   CopyConstructor->setUsed();

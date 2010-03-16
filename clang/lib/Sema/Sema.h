@@ -2628,6 +2628,9 @@ public:
   AccessResult CheckDestructorAccess(SourceLocation Loc,
                                      CXXDestructorDecl *Dtor,
                                      const PartialDiagnostic &PDiag);
+  AccessResult CheckDirectMemberAccess(SourceLocation Loc,
+                                       NamedDecl *D,
+                                       const PartialDiagnostic &PDiag);
   AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
                                          Expr *ObjectExpr,
                                          Expr *ArgExpr,

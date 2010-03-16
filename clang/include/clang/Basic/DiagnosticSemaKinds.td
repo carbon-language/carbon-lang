@@ -447,6 +447,20 @@ def err_access_dtor_field :
 def err_access_dtor_var :
     Error<"variable of type %1 has %select{private|protected}2 destructor">,
     NoSFINAE;
+def err_access_assign_field :
+    Error<"field of type %1 has %select{private|protected}2 copy assignment"
+          " operator">,
+    NoSFINAE;
+def err_access_assign_base :
+    Error<"base class %0 has %select{private|protected}1 copy assignment"
+          " operator">,
+    NoSFINAE;
+def err_access_copy_field :
+    Error<"field of type %1 has %select{private|protected}2 copy constructor">,
+    NoSFINAE;
+def err_access_copy_base :
+    Error<"base class %0 has %select{private|protected}1 copy constructor">,
+    NoSFINAE;
 def note_previous_access_declaration : Note<
   "previously declared '%1' here">;
 def err_access_outside_class : Error<
