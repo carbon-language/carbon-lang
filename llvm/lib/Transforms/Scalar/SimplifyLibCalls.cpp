@@ -1408,7 +1408,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
-          setDoesNotCapture(F, 1);
         } else if (Name == "strcpy" ||
                    Name == "stpcpy" ||
                    Name == "strcat" ||
