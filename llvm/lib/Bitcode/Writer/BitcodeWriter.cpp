@@ -808,10 +808,24 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       else if (isCStr7)
         AbbrevToUse = CString7Abbrev;
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
-               isa<ConstantUnion>(C) || isa<ConstantVector>(V)) {
+               isa<ConstantVector>(V)) {
       Code = bitc::CST_CODE_AGGREGATE;
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
+      AbbrevToUse = AggregateAbbrev;
+    } else if (isa<ConstantUnion>(C)) {
+      Code = bitc::CST_CODE_AGGREGATE;
+
+      // Unions only have one entry but we must send type along with it.
+      const Type *EntryKind = C->getOperand(0)->getType();
+
+      const UnionType *UnTy = cast<UnionType>(C->getType());
+      int UnionIndex = UnTy->getElementTypeIndex(EntryKind);
+      assert(UnionIndex != -1 && "Constant union contains invalid entry");
+
+      Record.push_back(UnionIndex);
+      Record.push_back(VE.getValueID(C->getOperand(0)));
+
       AbbrevToUse = AggregateAbbrev;
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       switch (CE->getOpcode()) {
