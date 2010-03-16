@@ -27,7 +27,7 @@ define i32 @test3() {
 ; DARWIN: sub.w sp, sp, #805306368
 ; DARWIN: sub sp, #20
 ; LINUX: test3:
-; LINUX: stmfd   sp!, {r4, r7, r11, lr}
+; LINUX: stmdb   sp!, {r4, r7, r11, lr}
 ; LINUX: sub.w sp, sp, #805306368
 ; LINUX: sub sp, #16
     %retval = alloca i32, align 4

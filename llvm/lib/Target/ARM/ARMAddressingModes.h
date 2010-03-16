@@ -78,16 +78,6 @@ namespace ARM_AM {
     }
   }
 
-  static inline const char *getAMSubModeAltStr(AMSubMode Mode, bool isLD) {
-    switch (Mode) {
-    default: assert(0 && "Unknown addressing sub-mode!");
-    case ARM_AM::ia: return isLD ? "fd" : "ea";
-    case ARM_AM::ib: return isLD ? "ed" : "fa";
-    case ARM_AM::da: return isLD ? "fa" : "ed";
-    case ARM_AM::db: return isLD ? "ea" : "fd";
-    }
-  }
-
   /// rotr32 - Rotate a 32-bit unsigned value right by a specified # bits.
   ///
   static inline unsigned rotr32(unsigned Val, unsigned Amt) {

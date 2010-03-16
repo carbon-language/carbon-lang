@@ -12,10 +12,10 @@
 define weak arm_aapcs_vfpcc i32 @_ZNKSs7compareERKSs(%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %this, %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %__str) {
 ; CHECK: _ZNKSs7compareERKSs:
 ; CHECK:	it ne
-; CHECK-NEXT: ldmfdne.w
+; CHECK-NEXT: ldmiane.w
 ; CHECK-NEXT: itt eq
 ; CHECK-NEXT: subeq.w
-; CHECK-NEXT: ldmfdeq.w
+; CHECK-NEXT: ldmiaeq.w
 entry:
   %0 = tail call arm_aapcs_vfpcc  i32 @_ZNKSs4sizeEv(%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %this) ; <i32> [#uses=3]
   %1 = tail call arm_aapcs_vfpcc  i32 @_ZNKSs4sizeEv(%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* %__str) ; <i32> [#uses=3]

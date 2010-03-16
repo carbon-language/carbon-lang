@@ -24,7 +24,7 @@ define i32 @t2() {
 define i32 @t3() {
 ; CHECK: t3:
 ; CHECK: ldmib
-; CHECK: ldmfd sp!
+; CHECK: ldmia sp!
         %tmp = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 1)            ; <i32> [#uses=1]
         %tmp3 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 2)           ; <i32> [#uses=1]
         %tmp5 = load i32* getelementptr ([0 x i32]* @X, i32 0, i32 3)           ; <i32> [#uses=1]
