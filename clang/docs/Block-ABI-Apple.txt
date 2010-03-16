@@ -1,6 +1,6 @@
 Block Implementation Specification
 
-Copyright 2008-2009 Apple, Inc.
+Copyright 2008-2010 Apple, Inc.
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -76,7 +76,7 @@ switch (flags & (3<<29)) {
   case (0<<29):  <unused>    , error
   case (1<<29):      10.6.ABI, no signature field available
   case (2<<29): post-10.6.ABI, regular calling convention, presence of signature field
-  case (3<<29): post-10.6.ABI, street calling convention, presence of signature field,
+  case (3<<29): post-10.6.ABI, stret calling convention, presence of signature field,
 }
 
 The following discussions are presented as 10.6.ABI otherwise.
