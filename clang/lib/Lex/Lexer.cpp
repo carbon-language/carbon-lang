@@ -163,7 +163,6 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
   // Now that the lexer is created, change the start/end locations so that we
   // just lex the subsection of the file that we want.  This is lexing from a
   // scratch buffer.
-  bool Invalid = false;
   const char *StrData = SM.getCharacterData(SpellingLoc);
 
   L->BufferPtr = StrData;
