@@ -141,7 +141,7 @@ static void ProcessFailure(sys::Path ProgPath, const char** Args) {
   for (const char **Arg = Args; *Arg; ++Arg)
     OS << " " << *Arg;
   OS << "\n";
-
+  
   // Rerun the compiler, capturing any error messages to print them.
   sys::Path ErrorFilename("bugpoint.program_error_messages");
   std::string ErrMsg;
@@ -352,7 +352,8 @@ AbstractInterpreter *AbstractInterpreter::createCustom(
 //
 GCC::FileType LLC::OutputCode(const std::string &Bitcode, 
                               sys::Path &OutputAsmFile) {
-  sys::Path uniqueFile(Bitcode+".llc.s");
+  const char *Suffix = (UseIntegratedAssembler ? ".llc.o" : ".llc.s");
+  sys::Path uniqueFile(Bitcode + Suffix);
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
     errs() << "Error making unique filename: " << ErrMsg << "\n";
@@ -360,18 +361,23 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
   }
   OutputAsmFile = uniqueFile;
   std::vector<const char *> LLCArgs;
-  LLCArgs.push_back (LLCPath.c_str());
+  LLCArgs.push_back(LLCPath.c_str());
 
   // Add any extra LLC args.
   for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
     LLCArgs.push_back(ToolArgs[i].c_str());
 
-  LLCArgs.push_back ("-o");
-  LLCArgs.push_back (OutputAsmFile.c_str()); // Output to the Asm file
-  LLCArgs.push_back (Bitcode.c_str());      // This is the input bitcode
+  LLCArgs.push_back("-o");
+  LLCArgs.push_back(OutputAsmFile.c_str()); // Output to the Asm file
+  LLCArgs.push_back(Bitcode.c_str());      // This is the input bitcode
+  
+  if (UseIntegratedAssembler)
+    LLCArgs.push_back("-filetype=obj");
+  
   LLCArgs.push_back (0);
 
-  outs() << "<llc>"; outs().flush();
+  outs() << (UseIntegratedAssembler ? "<llc-ia>" : "<llc>");
+  outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
           errs() << " " << LLCArgs[i];
@@ -381,7 +387,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
                             sys::Path(), sys::Path(), sys::Path()))
     ProcessFailure(sys::Path(LLCPath), &LLCArgs[0]);
 
-  return GCC::AsmFile;                              
+  return UseIntegratedAssembler ? GCC::ObjectFile : GCC::AsmFile;
 }
 
 void LLC::compileProgram(const std::string &Bitcode) {
@@ -400,7 +406,7 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
                         unsigned MemoryLimit) {
 
   sys::Path OutputAsmFile;
-  OutputCode(Bitcode, OutputAsmFile);
+  GCC::FileType FileKind = OutputCode(Bitcode, OutputAsmFile);
   FileRemover OutFileRemover(OutputAsmFile, !SaveTemps);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
@@ -408,7 +414,7 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
   GCCArgs.insert(GCCArgs.end(), gccArgs.begin(), gccArgs.end());
 
   // Assuming LLC worked, compile the result with GCC and run it.
-  return gcc->ExecuteProgram(OutputAsmFile.str(), Args, GCC::AsmFile,
+  return gcc->ExecuteProgram(OutputAsmFile.str(), Args, FileKind,
                              InputFile, OutputFile, GCCArgs,
                              Timeout, MemoryLimit);
 }
@@ -418,7 +424,8 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
 LLC *AbstractInterpreter::createLLC(const char *Argv0,
                                     std::string &Message,
                                     const std::vector<std::string> *Args,
-                                    const std::vector<std::string> *GCCArgs) {
+                                    const std::vector<std::string> *GCCArgs,
+                                    bool UseIntegratedAssembler) {
   std::string LLCPath =
     FindExecutable("llc", Argv0, (void *)(intptr_t)&createLLC).str();
   if (LLCPath.empty()) {
@@ -432,7 +439,7 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
     errs() << Message << "\n";
     exit(1);
   }
-  return new LLC(LLCPath, gcc, Args, GCCArgs);
+  return new LLC(LLCPath, gcc, Args, GCCArgs, UseIntegratedAssembler);
 }
 
 //===---------------------------------------------------------------------===//
@@ -605,17 +612,14 @@ CBE *AbstractInterpreter::createCBE(const char *Argv0,
 // GCC abstraction
 //
 
-static bool
-IsARMArchitecture(std::vector<std::string> Args)
-{
+static bool IsARMArchitecture(std::vector<std::string> Args) {
   for (std::vector<std::string>::const_iterator
          I = Args.begin(), E = Args.end(); I != E; ++I) {
     StringRef S(*I);
     if (!S.equals_lower("-arch")) {
       ++I;
-      if (I != E && !S.substr(0, strlen("arm")).equals_lower("arm")) {
+      if (I != E && !S.substr(0, strlen("arm")).equals_lower("arm"))
         return true;
-      }
     }
   }
 
@@ -634,26 +638,33 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   GCCArgs.push_back(GCCPath.c_str());
 
+  if (TargetTriple.getArch() == Triple::x86)
+    GCCArgs.push_back("-m32");
+
   for (std::vector<std::string>::const_iterator
          I = gccArgs.begin(), E = gccArgs.end(); I != E; ++I)
     GCCArgs.push_back(I->c_str());
 
   // Specify -x explicitly in case the extension is wonky
-  GCCArgs.push_back("-x");
-  if (fileType == CFile) {
-    GCCArgs.push_back("c");
-    GCCArgs.push_back("-fno-strict-aliasing");
-  } else {
-    GCCArgs.push_back("assembler");
+  if (fileType != ObjectFile) {
+    GCCArgs.push_back("-x");
+    if (fileType == CFile) {
+      GCCArgs.push_back("c");
+      GCCArgs.push_back("-fno-strict-aliasing");
+    } else {
+      GCCArgs.push_back("assembler");
 
-    // For ARM architectures we don't want this flag. bugpoint isn't
-    // explicitly told what architecture it is working on, so we get
-    // it from gcc flags
-    if ((TargetTriple.getOS() == Triple::Darwin) &&
-        !IsARMArchitecture(ArgsForGCC))
-      GCCArgs.push_back("-force_cpusubtype_ALL");
+      // For ARM architectures we don't want this flag. bugpoint isn't
+      // explicitly told what architecture it is working on, so we get
+      // it from gcc flags
+      if ((TargetTriple.getOS() == Triple::Darwin) &&
+          !IsARMArchitecture(ArgsForGCC))
+        GCCArgs.push_back("-force_cpusubtype_ALL");
+    }
   }
-  GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
+  
+  GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename.
+  
   GCCArgs.push_back("-x");
   GCCArgs.push_back("none");
   GCCArgs.push_back("-o");
@@ -765,13 +776,18 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   
   GCCArgs.push_back(GCCPath.c_str());
 
+  if (TargetTriple.getArch() == Triple::x86)
+    GCCArgs.push_back("-m32");
+
   for (std::vector<std::string>::const_iterator
          I = gccArgs.begin(), E = gccArgs.end(); I != E; ++I)
     GCCArgs.push_back(I->c_str());
 
   // Compile the C/asm file into a shared object
-  GCCArgs.push_back("-x");
-  GCCArgs.push_back(fileType == AsmFile ? "assembler" : "c");
+  if (fileType != ObjectFile) {
+    GCCArgs.push_back("-x");
+    GCCArgs.push_back(fileType == AsmFile ? "assembler" : "c");
+  }
   GCCArgs.push_back("-fno-strict-aliasing");
   GCCArgs.push_back(InputFile.c_str());   // Specify the input filename.
   GCCArgs.push_back("-x");

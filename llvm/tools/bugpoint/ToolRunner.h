@@ -58,7 +58,7 @@ class GCC {
     if (GCCArgs) gccArgs = *GCCArgs;
   }
 public:
-  enum FileType { AsmFile, CFile };
+  enum FileType { AsmFile, ObjectFile, CFile };
 
   static GCC *create(std::string &Message,
                      const std::vector<std::string> *Args);
@@ -101,7 +101,8 @@ public:
                         const std::vector<std::string> *GCCArgs = 0);
   static LLC *createLLC(const char *Argv0, std::string &Message,
                         const std::vector<std::string> *Args = 0,
-                        const std::vector<std::string> *GCCArgs = 0);
+                        const std::vector<std::string> *GCCArgs = 0,
+                        bool UseIntegratedAssembler = false);
 
   static AbstractInterpreter* createLLI(const char *Argv0, std::string &Message,
                                         const std::vector<std::string> *Args=0);
@@ -195,11 +196,14 @@ class LLC : public AbstractInterpreter {
   std::vector<std::string> ToolArgs; // Extra args to pass to LLC.
   std::vector<std::string> gccArgs;  // Extra args to pass to GCC.
   GCC *gcc;
+  bool UseIntegratedAssembler;
 public:
   LLC(const std::string &llcPath, GCC *Gcc,
       const std::vector<std::string> *Args,
-      const std::vector<std::string> *GCCArgs)
-    : LLCPath(llcPath), gcc(Gcc) {
+      const std::vector<std::string> *GCCArgs,
+      bool useIntegratedAssembler)
+    : LLCPath(llcPath), gcc(Gcc),
+      UseIntegratedAssembler(useIntegratedAssembler) {
     ToolArgs.clear();
     if (Args) ToolArgs = *Args;
     if (GCCArgs) gccArgs = *GCCArgs;

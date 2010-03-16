@@ -28,7 +28,7 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE, CBE_bug, LLC_Safe, Custom
+    AutoPick, RunLLI, RunJIT, RunLLC, RunLLCIA, RunCBE, CBE_bug, LLC_Safe,Custom
   };
 
   cl::opt<double>
@@ -45,6 +45,8 @@ namespace {
                                        "Execute with the interpreter"),
                             clEnumValN(RunJIT, "run-jit", "Execute with JIT"),
                             clEnumValN(RunLLC, "run-llc", "Compile with LLC"),
+                            clEnumValN(RunLLCIA, "run-llc-ia",
+                                  "Compile with LLC with integrated assembler"),
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
                             clEnumValN(CBE_bug,"cbe-bug", "Find CBE bugs"),
                             clEnumValN(LLC_Safe, "llc-safe", "Use LLC for all"),
@@ -168,9 +170,11 @@ bool BugDriver::initializeExecutionEnvironment() {
                                                  &ToolArgv);
     break;
   case RunLLC:
+  case RunLLCIA:
   case LLC_Safe:
     Interpreter = AbstractInterpreter::createLLC(getToolName(), Message,
-                                                 &ToolArgv, &GCCToolArgv);
+                                                 &ToolArgv, &GCCToolArgv,
+                                                 InterpreterSel == RunLLCIA);
     break;
   case RunJIT:
     Interpreter = AbstractInterpreter::createJIT(getToolName(), Message,
@@ -244,10 +248,12 @@ bool BugDriver::initializeExecutionEnvironment() {
     }
     break;
   case RunLLC:
+  case RunLLCIA:
     SafeToolArgs.push_back("--relocation-model=pic");
     SafeInterpreter = AbstractInterpreter::createLLC(Path.c_str(), Message,
                                                      &SafeToolArgs,
-                                                     &GCCToolArgv);
+                                                     &GCCToolArgv,
+                                                SafeInterpreterSel == RunLLCIA);
     break;
   case RunCBE:
     SafeInterpreter = AbstractInterpreter::createCBE(Path.c_str(), Message,
