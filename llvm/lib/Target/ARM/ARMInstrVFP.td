@@ -94,7 +94,7 @@ def VLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dsts,
 def VLDMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IndexModeUpd, IIC_fpLoadm,
-                      "vldm${addr:submode}${p}\t${addr:base}, $dsts",
+                      "vldm${addr:submode}${p}\t${addr:base}!, $dsts",
                       "$addr.base = $wb", []> {
   let Inst{20} = 1;
 }
@@ -102,7 +102,7 @@ def VLDMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
 def VLDMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                                        reglist:$dsts, variable_ops),
                       IndexModeUpd, IIC_fpLoadm, 
-                      "vldm${addr:submode}${p}\t${addr:base}, $dsts",
+                      "vldm${addr:submode}${p}\t${addr:base}!, $dsts",
                       "$addr.base = $wb", []> {
   let Inst{20} = 1;
 }
@@ -124,7 +124,7 @@ def VSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$srcs,
 def VSTMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IndexModeUpd, IIC_fpStorem,
-                      "vstm${addr:submode}${p}\t${addr:base}, $srcs",
+                      "vstm${addr:submode}${p}\t${addr:base}!, $srcs",
                       "$addr.base = $wb", []> {
   let Inst{20} = 0;
 }
@@ -132,7 +132,7 @@ def VSTMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
 def VSTMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                                        reglist:$srcs, variable_ops),
                       IndexModeUpd, IIC_fpStorem,
-                      "vstm${addr:submode}${p}\t${addr:base}, $srcs",
+                      "vstm${addr:submode}${p}\t${addr:base}!, $srcs",
                       "$addr.base = $wb", []> {
   let Inst{20} = 0;
 }

@@ -253,7 +253,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
         .addImm(ARM_AM::getAM4ModeImm(Mode)).addImm(Pred).addReg(PredReg)
     : BuildMI(MBB, MBBI, dl, TII->get(Opcode))
         .addReg(Base, getKillRegState(BaseKill))
-        .addImm(ARM_AM::getAM5Opc(Mode, false, isDPR ? NumRegs<<1 : NumRegs))
+        .addImm(ARM_AM::getAM5Opc(Mode, isDPR ? NumRegs<<1 : NumRegs))
         .addImm(Pred).addReg(PredReg);
   for (unsigned i = 0; i != NumRegs; ++i)
     MIB = MIB.addReg(Regs[i].first, getDefRegState(isDef)
@@ -508,7 +508,6 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
     Mode = ARM_AM::getAM4SubMode(MI->getOperand(1).getImm());
   } else {
     // VLDM{D|S}, VSTM{D|S} addressing mode 5 ops.
-    assert(!ARM_AM::getAM5WBFlag(MI->getOperand(1).getImm()));
     Mode = ARM_AM::getAM5SubMode(MI->getOperand(1).getImm());
     Offset = ARM_AM::getAM5Offset(MI->getOperand(1).getImm());
   }
@@ -576,7 +575,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       .addImm(Pred).addReg(PredReg);
   } else {
     // VLDM[SD}_UPD, VSTM[SD]_UPD
-    MIB.addImm(ARM_AM::getAM5Opc(Mode, true, Offset))
+    MIB.addImm(ARM_AM::getAM5Opc(Mode, Offset))
       .addImm(Pred).addReg(PredReg);
   }
   // Transfer the rest of operands.
@@ -708,7 +707,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned Offset = 0;
   if (isAM5)
     Offset = ARM_AM::getAM5Opc(AddSub == ARM_AM::sub ? ARM_AM::db : ARM_AM::ia,
-                               true, (isDPR ? 2 : 1));
+                               (isDPR ? 2 : 1));
   else if (isAM2)
     Offset = ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift);
   else

@@ -484,9 +484,9 @@ namespace ARM_AM {
   // operation in bit 8 and the immediate in bits 0-7.
   //
   // This is also used for FP load/store multiple ops. The second operand
-  // encodes the writeback mode in bit 8 and the number of registers (or 2
-  // times the number of registers for DPR ops) in bits 0-7. In addition,
-  // bits 9-11 encode one of the following two sub-modes:
+  // encodes the number of registers (or 2 times the number of registers
+  // for DPR ops) in bits 0-7. In addition, bits 8-10 encode one of the
+  // following two sub-modes:
   //
   //    IA - Increment after
   //    DB - Decrement before
@@ -505,17 +505,13 @@ namespace ARM_AM {
 
   /// getAM5Opc - This function encodes the addrmode5 opc field for VLDM and
   /// VSTM instructions.
-  static inline unsigned getAM5Opc(AMSubMode SubMode, bool WB,
-                                   unsigned char Offset) {
+  static inline unsigned getAM5Opc(AMSubMode SubMode, unsigned char Offset) {
     assert((SubMode == ia || SubMode == db) &&
            "Illegal addressing mode 5 sub-mode!");
-    return ((int)SubMode << 9) | ((int)WB << 8) | Offset;
+    return ((int)SubMode << 8) | Offset;
   }
   static inline AMSubMode getAM5SubMode(unsigned AM5Opc) {
-    return (AMSubMode)((AM5Opc >> 9) & 0x7);
-  }
-  static inline bool getAM5WBFlag(unsigned AM5Opc) {
-    return ((AM5Opc >> 8) & 1);
+    return (AMSubMode)((AM5Opc >> 8) & 0x7);
   }
 
   //===--------------------------------------------------------------------===//

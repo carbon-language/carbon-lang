@@ -252,8 +252,6 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
   } else if (Modifier && strcmp(Modifier, "base") == 0) {
     // Used for FSTM{D|S} and LSTM{D|S} operations.
     O << getRegisterName(MO1.getReg());
-    if (ARM_AM::getAM5WBFlag(MO2.getImm()))
-      O << "!";
     return;
   }
   
