@@ -671,9 +671,10 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   
   // Live-out (of the function) registers contain return values of the function,
   // so we need to make sure they are alive at return time.
-  bool BBEndsInReturn = !MBB.empty() && MBB.back().getDesc().isReturn();
-  if (BBEndsInReturn) {
-    MachineInstr* Ret = &MBB.back();
+  MachineBasicBlock::iterator Ret = MBB.getFirstTerminator();
+  bool BBEndsInReturn = (Ret != MBB.end() && Ret->getDesc().isReturn());
+
+  if (BBEndsInReturn)
     for (MachineRegisterInfo::liveout_iterator
          I = MF->getRegInfo().liveout_begin(),
          E = MF->getRegInfo().liveout_end(); I != E; ++I)
@@ -681,7 +682,6 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
         Ret->addOperand(MachineOperand::CreateReg(*I, false, true));
         LastUseDef[*I] = std::make_pair(Ret, Ret->getNumOperands()-1);
       }
-  }
   
   // Finally, loop over the final use/def of each reg 
   // in the block and determine if it is dead.
