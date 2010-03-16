@@ -214,8 +214,10 @@ void test20() {
 // radr://7438948
 void test21() {
   int a[7]; // expected-note {{declared at}}
+  __block int b[10]; // expected-note {{declared at}}
   a[1] = 1;
   ^{
     (void)a[1]; // expected-error {{cannot refer to declaration with an array type inside block}}
+    (void)b[1]; // expected-error {{cannot refer to declaration with an array type inside block}}
   }();
 }
