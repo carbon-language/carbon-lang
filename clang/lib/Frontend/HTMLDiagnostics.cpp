@@ -439,10 +439,10 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     {
       FullSourceLoc L = MP->getLocation().asLocation().getInstantiationLoc();
       assert(L.isFileID());
-      std::pair<const char*, const char*> BufferInfo = L.getBufferData();
-      const char* MacroName = L.getDecomposedLoc().second + BufferInfo.first;
-      Lexer rawLexer(L, PP.getLangOptions(), BufferInfo.first,
-                     MacroName, BufferInfo.second);
+      llvm::StringRef BufferInfo = L.getBufferData();
+      const char* MacroName = L.getDecomposedLoc().second + BufferInfo.data();
+      Lexer rawLexer(L, PP.getLangOptions(), BufferInfo.begin(),
+                     MacroName, BufferInfo.end());
 
       Token TheTok;
       rawLexer.LexFromRawLexer(TheTok);

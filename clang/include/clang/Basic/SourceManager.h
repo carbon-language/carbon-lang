@@ -452,9 +452,9 @@ public:
     return getSLocEntry(FID).getFile().getContentCache()->Entry;
   }
 
-  /// getBufferData - Return a pointer to the start and end of the source buffer
-  /// data for the specified FileID.
-  /// 
+  /// getBufferData - Return a StringRef to the source buffer data for the
+  /// specified FileID.
+  ///
   /// \param FID The file ID whose contents will be returned.
   /// \param Invalid If non-NULL, will be set true if an error occurred.
   llvm::StringRef getBufferData(FileID FID, bool *Invalid = 0) const;

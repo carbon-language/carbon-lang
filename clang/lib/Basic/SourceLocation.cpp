@@ -115,9 +115,8 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   return SrcMgr->getBuffer(SrcMgr->getFileID(*this));
 }
 
-std::pair<const char*, const char*> FullSourceLoc::getBufferData() const {
-  const llvm::MemoryBuffer *Buf = getBuffer();
-  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
+llvm::StringRef FullSourceLoc::getBufferData() const {
+  return getBuffer()->getBuffer();
 }
 
 std::pair<FileID, unsigned> FullSourceLoc::getDecomposedLoc() const {

@@ -20,6 +20,7 @@
 namespace llvm {
   class MemoryBuffer;
   class raw_ostream;
+  class StringRef;
   template <typename T> struct DenseMapInfo;
   template <typename T> struct isPodLike;
 }
@@ -209,9 +210,9 @@ public:
 
   const llvm::MemoryBuffer* getBuffer() const;
 
-  /// getBufferData - Return a pointer to the start and end of the source buffer
-  /// data for the specified FileID.
-  std::pair<const char*, const char*> getBufferData() const;
+  /// getBufferData - Return a StringRef to the source buffer data for the
+  /// specified FileID.
+  llvm::StringRef getBufferData() const;
 
   /// getDecomposedLoc - Decompose the specified location into a raw FileID +
   /// Offset pair.  The first element is the FileID, the second is the
