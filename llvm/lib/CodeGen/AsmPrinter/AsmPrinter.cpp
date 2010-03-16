@@ -1709,16 +1709,19 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   if (unsigned Align = MBB->getAlignment())
     EmitAlignment(Log2_32(Align));
 
-  // If the block has its address taken, emit a special label to satisfy
-  // references to the block. This is done so that we don't need to
-  // remember the number of this label, and so that we can make
-  // forward references to labels without knowing what their numbers
-  // will be.
+  // If the block has its address taken, emit any labels that were used to
+  // reference the block.  It is possible that there is more than one label
+  // here, because multiple LLVM BB's may have been RAUW'd to this block after
+  // the references were generated.
   if (MBB->hasAddressTaken()) {
     const BasicBlock *BB = MBB->getBasicBlock();
     if (VerboseAsm)
-      OutStreamer.AddComment("Address Taken");
-    OutStreamer.EmitLabel(GetBlockAddressSymbol(BB));
+      OutStreamer.AddComment("Block address taken");
+    
+    std::vector<MCSymbol*> Syms = MMI->getAddrLabelSymbolToEmit(BB);
+
+    for (unsigned i = 0, e = Syms.size(); i != e; ++i)
+      OutStreamer.EmitLabel(Syms[i]);
   }
 
   // Print the main label for the block.

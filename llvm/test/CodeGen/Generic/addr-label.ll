@@ -37,3 +37,22 @@ test_label:
 ret:
         ret i32 -1
 }
+
+; Issues with a BB that gets RAUW'd to another one after references are
+; generated.
+define void @test3(i8** %P, i8** %Q) nounwind {
+entry:
+  store i8* blockaddress(@test3b, %test_label), i8** %P
+  store i8* blockaddress(@test3b, %ret), i8** %Q
+  ret void
+}
+
+define i32 @test3b() nounwind {
+entry:
+	br label %test_label
+test_label:
+	br label %ret
+ret:
+	ret i32 -1
+}
+
