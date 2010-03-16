@@ -671,7 +671,8 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   
   // Live-out (of the function) registers contain return values of the function,
   // so we need to make sure they are alive at return time.
-  if (!MBB.empty() && MBB.back().getDesc().isReturn()) {
+  bool BBEndsInReturn = !MBB.empty() && MBB.back().getDesc().isReturn();
+  if (BBEndsInReturn) {
     MachineInstr* Ret = &MBB.back();
     for (MachineRegisterInfo::liveout_iterator
          I = MF->getRegInfo().liveout_begin(),
@@ -696,7 +697,10 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
     bool usedOutsideBlock = isPhysReg ? false :   
           UsedInMultipleBlocks.test(MO.getReg() -  
                                     TargetRegisterInfo::FirstVirtualRegister);
-    if (!isPhysReg && !usedOutsideBlock) {
+
+    // If the machine BB ends in a return instruction, then the value isn't used
+    // outside of the BB.
+    if (!isPhysReg && (!usedOutsideBlock || BBEndsInReturn)) {
       // DBG_VALUE complicates this:  if the only refs of a register outside
       // this block are DBG_VALUE, we can't keep the reg live just for that,
       // as it will cause the reg to be spilled at the end of this block when
@@ -704,7 +708,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // happens.
       bool UsedByDebugValueOnly = false;
       for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
-           UE = MRI.reg_end(); UI != UE; ++UI)
+             UE = MRI.reg_end(); UI != UE; ++UI) {
         // Two cases:
         // - used in another block
         // - used in the same block before it is defined (loop)
@@ -714,6 +718,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
             UsedByDebugValueOnly = true;
             continue;
           }
+
           // A non-DBG_VALUE use means we can leave DBG_VALUE uses alone.
           UsedInMultipleBlocks.set(MO.getReg() - 
                                    TargetRegisterInfo::FirstVirtualRegister);
@@ -721,6 +726,8 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
           UsedByDebugValueOnly = false;
           break;
         }
+      }
+
       if (UsedByDebugValueOnly)
         for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
              UE = MRI.reg_end(); UI != UE; ++UI)
@@ -730,16 +737,16 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
             UI.getOperand().setReg(0U);
     }
   
-    // Physical registers and those that are not live-out of the block
-    // are killed/dead at their last use/def within this block.
-    if (isPhysReg || !usedOutsideBlock) {
+    // Physical registers and those that are not live-out of the block are
+    // killed/dead at their last use/def within this block.
+    if (isPhysReg || !usedOutsideBlock || BBEndsInReturn)
       if (MO.isUse()) {
         // Don't mark uses that are tied to defs as kills.
         if (!MI->isRegTiedToDefOperand(idx))
           MO.setIsKill(true);
-      } else
+      } else {
         MO.setIsDead(true);
-    }
+      }
   }
 }
 
