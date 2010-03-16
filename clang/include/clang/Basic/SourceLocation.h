@@ -206,7 +206,7 @@ public:
   unsigned getSpellingLineNumber() const;
   unsigned getSpellingColumnNumber() const;
 
-  const char *getCharacterData() const;
+  const char *getCharacterData(bool *Invalid = 0) const;
 
   const llvm::MemoryBuffer* getBuffer(bool *Invalid = 0) const;
 

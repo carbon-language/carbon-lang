@@ -105,9 +105,9 @@ bool FullSourceLoc::isInSystemHeader() const {
   return SrcMgr->isInSystemHeader(*this);
 }
 
-const char *FullSourceLoc::getCharacterData() const {
+const char *FullSourceLoc::getCharacterData(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getCharacterData(*this);
+  return SrcMgr->getCharacterData(*this, Invalid);
 }
 
 const llvm::MemoryBuffer* FullSourceLoc::getBuffer(bool *Invalid) const {

@@ -595,7 +595,7 @@ public:
 
     // Otherwise, fall back on getCharacterData, which is slower, but always
     // works.
-    return *SourceMgr.getCharacterData(Tok.getLocation());
+    return *SourceMgr.getCharacterData(Tok.getLocation(), Invalid);
   }
 
   /// CreateString - Plop the specified string into a scratch buffer and set the

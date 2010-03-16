@@ -428,10 +428,11 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // Figure out how many physical characters away the specified instantiation
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
-  const char *TokPtr = SourceMgr.getCharacterData(TokStart);
+  bool Invalid = false;
+  const char *TokPtr = SourceMgr.getCharacterData(TokStart, &Invalid);
 
   // If they request the first char of the token, we're trivially done.
-  if (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr))
+  if (Invalid || (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr)))
     return TokStart;
 
   unsigned PhysOffset = 0;

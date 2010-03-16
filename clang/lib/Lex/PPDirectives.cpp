@@ -204,7 +204,12 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // to spell an i/e in a strange way that is another letter.  Skipping this
     // allows us to avoid looking up the identifier info for #define/#undef and
     // other common directives.
-    const char *RawCharData = SourceMgr.getCharacterData(Tok.getLocation());
+    bool Invalid = false;
+    const char *RawCharData = SourceMgr.getCharacterData(Tok.getLocation(),
+                                                         &Invalid);
+    if (Invalid)
+      return;
+    
     char FirstChar = RawCharData[0];
     if (FirstChar >= 'a' && FirstChar <= 'z' &&
         FirstChar != 'i' && FirstChar != 'e') {
