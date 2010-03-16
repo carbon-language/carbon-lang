@@ -724,8 +724,8 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
 
   // FIXME: The should be pseudo instructions that are lowered when going to
   // mcinst.
-  def TAILJMPd : Ii32<0xE9, RawFrm, (outs),
-                                    (ins i32imm_pcrel:$dst, variable_ops),
+  def TAILJMPd : Ii32PCRel<0xE9, RawFrm, (outs),
+                           (ins i32imm_pcrel:$dst, variable_ops),
                  "jmp\t$dst  # TAILCALL",
                  []>;
   def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32_TC:$dst, variable_ops), 
