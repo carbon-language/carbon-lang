@@ -22,7 +22,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cstdio>
 using namespace clang;
 
 
@@ -44,15 +43,10 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
   // Include the whole end token in the range.
   EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr(), R.getLangOpts());
 
-  llvm::StringRef FileName;
-  std::string ErrorStr;
-  const char *BufferStart = SM.getBufferData(FID, FileName, ErrorStr).first;
-  if (!BufferStart) {
-    // FIXME: Add a diagnostic object somewhere?
-    fprintf(stderr, "error: cannot open file '%s': %s\n", 
-            FileName.str().c_str(), ErrorStr.c_str());
+  bool Invalid = false;
+  const char *BufferStart = SM.getBufferData(FID, &Invalid).first;
+  if (Invalid)
     return;
-  }
   
   HighlightRange(R.getEditBuffer(FID), BOffset, EOffset,
                  BufferStart, StartTag, EndTag);

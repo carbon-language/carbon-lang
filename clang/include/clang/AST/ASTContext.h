@@ -357,7 +357,7 @@ public:
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
 
-  const char *getCommentForDecl(const Decl *D, Diagnostic &Diags);
+  const char *getCommentForDecl(const Decl *D);
 
   // Builtin Types.
   CanQualType VoidTy;

@@ -18,7 +18,6 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cstdio>
 using namespace clang;
 
 void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
@@ -166,17 +165,7 @@ RewriteBuffer &Rewriter::getEditBuffer(FileID FID) {
     return I->second;
   I = RewriteBuffers.insert(I, std::make_pair(FID, RewriteBuffer()));
 
-  llvm::StringRef FileName;
-  std::string ErrorStr;
-  
-  std::pair<const char*, const char*> MB
-    = SourceMgr->getBufferData(FID, FileName, ErrorStr);
-  if (!MB.first) {
-    // FIXME: Add a diagnostic object somewhere?
-    fprintf(stderr, "error: cannot open file '%s': %s\n", 
-            FileName.str().c_str(), ErrorStr.c_str());
-  }
-  
+  std::pair<const char*, const char*> MB = SourceMgr->getBufferData(FID);
   I->second.Initialize(MB.first, MB.second);
 
   return I->second;

@@ -121,7 +121,7 @@ public:
   };
   friend class ConcurrencyCheck;
   
-  ASTUnit(bool MainFileIsAST);
+  ASTUnit(Diagnostic &Diag, bool MainFileIsAST);
   ~ASTUnit();
 
   bool isMainFileAST() const { return MainFileIsAST; }

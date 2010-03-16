@@ -185,7 +185,7 @@ void CompilerInstance::createFileManager() {
 // Source Manager
 
 void CompilerInstance::createSourceManager() {
-  SourceMgr.reset(new SourceManager());
+  SourceMgr.reset(new SourceManager(getDiagnostics()));
 }
 
 // Preprocessor

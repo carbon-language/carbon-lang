@@ -439,9 +439,10 @@ bool TokenLexer::PasteTokens(Token &Tok) {
       SourceManager &SourceMgr = PP.getSourceManager();
       FileID LocFileID = SourceMgr.getFileID(ResultTokLoc);
 
+      bool Invalid = false;
       const char *ScratchBufStart
-        = SourceMgr.getBufferData(LocFileID, PP.getDiagnostics()).first;
-      if (!ScratchBufStart)
+        = SourceMgr.getBufferData(LocFileID, &Invalid).first;
+      if (Invalid)
         return false;
 
       // Make a lexer to lex this string from.  Lex just this one token.

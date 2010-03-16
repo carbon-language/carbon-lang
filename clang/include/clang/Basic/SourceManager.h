@@ -321,6 +321,9 @@ public:
 /// location indicates where the expanded token came from and the instantiation
 /// location specifies where it was expanded.
 class SourceManager {
+  /// \brief Diagnostic object.
+  Diagnostic &Diag;
+  
   mutable llvm::BumpPtrAllocator ContentCacheAlloc;
 
   /// FileInfos - Memoized information about all of the files tracked by this
@@ -380,8 +383,8 @@ class SourceManager {
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);
 public:
-  SourceManager()
-    : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
+  SourceManager(Diagnostic &Diag)
+    : Diag(Diag), ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
       NumBinaryProbes(0) {
     clearIDTables();
   }
@@ -484,20 +487,11 @@ public:
 
   /// getBufferData - Return a pointer to the start and end of the source buffer
   /// data for the specified FileID.
-  ///
-  /// If an error occurs while reading in the file, provides the file name 
-  /// and a non-empty error string and returns a pair of NULL pointers.
-  std::pair<const char*, const char*> getBufferData(FileID FID,
-                                                    llvm::StringRef &FileName,
-                                                    std::string &Error) const;
-
-  /// getBufferData - Return a pointer to the start and end of the source buffer
-  /// data for the specified FileID.
   /// 
-  /// If an error occurs while reading in the file, emits a diagnostic to the
-  /// given \c Diagnostic object and returns a pair of NULL pointers.
-  std::pair<const char*, const char*> getBufferData(FileID FID, 
-                                                    Diagnostic &Diags) const;
+  /// \param FID The file ID whose contents will be returned.
+  /// \param Invalid If non-NULL, will be set true if an error occurred.
+  std::pair<const char*, const char*> getBufferData(FileID FID,
+                                                    bool *Invalid = 0) const;
   
 
   //===--------------------------------------------------------------------===//

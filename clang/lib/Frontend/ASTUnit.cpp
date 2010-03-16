@@ -35,8 +35,9 @@
 #include "llvm/System/Path.h"
 using namespace clang;
 
-ASTUnit::ASTUnit(bool _MainFileIsAST)
-  : MainFileIsAST(_MainFileIsAST), ConcurrencyCheckValue(CheckUnlocked) {
+ASTUnit::ASTUnit(Diagnostic &Diag, bool _MainFileIsAST)
+  : SourceMgr(Diag), MainFileIsAST(_MainFileIsAST), 
+    ConcurrencyCheckValue(CheckUnlocked) {
 }
 ASTUnit::~ASTUnit() {
   ConcurrencyCheckValue = CheckLocked;
@@ -146,7 +147,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics) {
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
+  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(Diags, true));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
 
@@ -311,7 +312,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
          "FIXME: AST inputs not yet supported here!");
 
   // Create the AST unit.
-  AST.reset(new ASTUnit(false));
+  AST.reset(new ASTUnit(Diags, false));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
 

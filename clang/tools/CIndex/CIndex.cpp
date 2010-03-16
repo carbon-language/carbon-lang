@@ -1133,7 +1133,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
     // We failed to load the ASTUnit, but we can still deserialize the
     // diagnostics and emit them.
     FileManager FileMgr;
-    SourceManager SourceMgr;
+    Diagnostic Diag;
+    SourceManager SourceMgr(Diag);
     // FIXME: Faked LangOpts!
     LangOptions LangOpts;
     llvm::SmallVector<StoredDiagnostic, 4> Diags;
@@ -2042,10 +2043,10 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   SourceLocation Loc = SourceLocation::getFromRawEncoding(CXTok.int_data[1]);
   std::pair<FileID, unsigned> LocInfo
     = CXXUnit->getSourceManager().getDecomposedLoc(Loc);
+  bool Invalid = false;
   std::pair<const char *,const char *> Buffer
-    = CXXUnit->getSourceManager().getBufferData(LocInfo.first,
-                                  CXXUnit->getPreprocessor().getDiagnostics());
-  if (!Buffer.first)
+    = CXXUnit->getSourceManager().getBufferData(LocInfo.first, &Invalid);
+  if (Invalid)
     return createCXString("");
 
   return createCXString(llvm::StringRef(Buffer.first+LocInfo.second,
@@ -2098,11 +2099,9 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
     return;
 
   // Create a lexer
+  bool Invalid = false;
   std::pair<const char *,const char *> Buffer
-    = SourceMgr.getBufferData(BeginLocInfo.first, 
-                              CXXUnit->getPreprocessor().getDiagnostics());
-  if (!Buffer.first)
-    return;
+    = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
   
   Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
             CXXUnit->getASTContext().getLangOptions(),
@@ -2135,10 +2134,10 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
       // Lookup the identifier to determine whether we have a keyword.
       std::pair<FileID, unsigned> LocInfo
         = SourceMgr.getDecomposedLoc(Tok.getLocation());
+      bool Invalid = false;
       std::pair<const char *, const char *> Buf
-        = CXXUnit->getSourceManager().getBufferData(LocInfo.first,
-                                  CXXUnit->getPreprocessor().getDiagnostics());
-      if (!Buf.first)
+        = CXXUnit->getSourceManager().getBufferData(LocInfo.first, &Invalid);
+      if (Invalid)
         return;
       
       const char *StartPos= Buf.first + LocInfo.second;

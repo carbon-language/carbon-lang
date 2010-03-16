@@ -59,9 +59,10 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     // Re-lex the token to get its length and original spelling.
     std::pair<FileID, unsigned> LocInfo =
       SourceMgr.getDecomposedLoc(StrTokSpellingLoc);
+    bool Invalid = false;
     std::pair<const char *,const char *> Buffer =
-      SourceMgr.getBufferData(LocInfo.first, Diags);
-    if (!Buffer.first)
+      SourceMgr.getBufferData(LocInfo.first, &Invalid);
+    if (Invalid)
       return StrTokSpellingLoc;
       
     const char *StrData = Buffer.first+LocInfo.second;

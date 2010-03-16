@@ -330,14 +330,13 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   unsigned FileOffset = LocInfo.second;
 
   // Get information about the buffer it points into.
-  llvm::StringRef ErrorFileName;
-  std::string ErrorStr;
+  bool Invalid = false;
   std::pair<const char*, const char*> BufferInfo = SM.getBufferData(FID, 
-                                                                  ErrorFileName,
-                                                                    ErrorStr);
-  const char *BufStart = BufferInfo.first;
-  if (!BufStart)
+                                                                    &Invalid);
+  if (Invalid)
     return;
+  
+  const char *BufStart = BufferInfo.first;
   
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   unsigned CaretEndColNo

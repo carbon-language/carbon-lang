@@ -229,12 +229,10 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   // the token this macro expanded to.
   Loc = SM.getInstantiationLoc(Loc);
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
-  llvm::StringRef FileName;
-  std::string ErrorStr;
+  bool Invalid = false;
   std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first,
-                                                                 FileName,
-                                                                 ErrorStr);
-  if (!Buffer.first)
+                                                                 &Invalid);
+  if (Invalid)
     return 0;
   
   const char *StrData = Buffer.first+LocInfo.second;

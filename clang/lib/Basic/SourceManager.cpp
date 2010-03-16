@@ -21,6 +21,7 @@
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <string>
+#include <cstring>
 #include <cstdio>
 
 using namespace clang;
@@ -532,19 +533,17 @@ bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
 }
 
 std::pair<const char*, const char*>
-SourceManager::getBufferData(FileID FID, llvm::StringRef &FileName,
-                             std::string &Error) const {
-  const llvm::MemoryBuffer *Buf = getBuffer(FID).getBuffer(FileName, Error);
-  if (!Error.empty())
-    return std::make_pair((const char *)0, (const char *)0);
-  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
-}
-
-std::pair<const char*, const char*>
-SourceManager::getBufferData(FileID FID, Diagnostic &Diags) const {
-  const llvm::MemoryBuffer *Buf = getBuffer(FID).getBuffer(Diags);
-  if (!Buf)
-    return std::make_pair((const char *)0, (const char *)0);
+SourceManager::getBufferData(FileID FID, bool *Invalid) const {
+  if (Invalid)
+    *Invalid = false;
+  
+  const llvm::MemoryBuffer *Buf = getBuffer(FID).getBuffer(Diag);
+  if (!Buf) {
+    if (*Invalid)
+      *Invalid = true;
+    const char *FakeText = "";
+    return std::make_pair(FakeText, FakeText + strlen(FakeText));
+  }
   return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
 }
 
