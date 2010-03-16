@@ -222,7 +222,6 @@ void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
 
 void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
                                            const char *Modifier) {
-  const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
   ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
   if (Modifier && strcmp(Modifier, "submode") == 0) {
