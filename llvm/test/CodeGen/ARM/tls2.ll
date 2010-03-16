@@ -7,7 +7,7 @@
 
 define i32 @f() {
 ; CHECK-NONPIC: f:
-; CHECK-NONPIC: ldr {{r.}}, [pc, {{r.}}]
+; CHECK-NONPIC: ldr {{r.}}, [pc, +{{r.}}]
 ; CHECK-NONPIC: i(gottpoff)
 ; CHECK-PIC: f:
 ; CHECK-PIC: __tls_get_addr
@@ -18,7 +18,7 @@ entry:
 
 define i32* @g() {
 ; CHECK-NONPIC: g:
-; CHECK-NONPIC: ldr {{r.}}, [pc, {{r.}}]
+; CHECK-NONPIC: ldr {{r.}}, [pc, +{{r.}}]
 ; CHECK-NONPIC: i(gottpoff)
 ; CHECK-PIC: g:
 ; CHECK-PIC: __tls_get_addr

@@ -1614,11 +1614,6 @@ $(ObjDir)/%GenIntrinsics.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) intrinsics information with tblgen"
 	$(Verb) $(TableGen) -gen-tgt-intrinsic -o $(call SYSPATH, $@) $<
 
-$(ObjDir)/ARMDisassemblerTables.inc.tmp : ARM.td $(ObjDir)/.dir
-	$(Echo) "Building ARM disassembly tables with tblgen"
-	$(Verb) $(TableGen) -gen-risc-disassembler -o $(call SYSPATH, $@) $<
-
-
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
 

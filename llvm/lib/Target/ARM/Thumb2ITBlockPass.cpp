@@ -78,16 +78,14 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
       DebugLoc ndl = NMI->getDebugLoc();
       unsigned NPredReg = 0;
       ARMCC::CondCodes NCC = getPredicate(NMI, NPredReg);
-      if (NCC == CC || NCC == OCC)
-        Mask |= (NCC & 1) << Pos;
-      else
+      if (NCC == OCC) {
+        Mask |= (1 << Pos);
+      } else if (NCC != CC)
         break;
       --Pos;
       ++MBBI;
     }
     Mask |= (1 << Pos);
-    // Tag along (firstcond[0] << 4) with the mask.
-    Mask |= (CC & 1) << 4;
     MIB.addImm(Mask);
     Modified = true;
     ++NumITs;

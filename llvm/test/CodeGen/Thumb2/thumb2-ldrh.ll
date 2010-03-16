@@ -11,7 +11,7 @@ entry:
 define i16 @f2(i16* %v) {
 entry:
 ; CHECK: f2:
-; CHECK: ldrh.w r0, [r0, #2046]
+; CHECK: ldrh.w r0, [r0, #+2046]
         %tmp2 = getelementptr i16* %v, i16 1023
         %tmp = load i16* %tmp2
         ret i16 %tmp

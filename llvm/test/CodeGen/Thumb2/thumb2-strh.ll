@@ -9,7 +9,7 @@ define i16 @f1(i16 %a, i16* %v) {
 
 define i16 @f2(i16 %a, i16* %v) {
 ; CHECK: f2:
-; CHECK: strh.w r0, [r1, #4092]
+; CHECK: strh.w r0, [r1, #+4092]
         %tmp2 = getelementptr i16* %v, i32 2046
         store i16 %a, i16* %tmp2
         ret i16 %a
