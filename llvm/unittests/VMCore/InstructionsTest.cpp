@@ -31,6 +31,10 @@ TEST(InstructionsTest, ReturnInst) {
   EXPECT_EQ(r1->getOperand(0), One);
   ++b;
   EXPECT_EQ(b, r1->op_end());
+
+  // clean up
+  delete r0;
+  delete r1;
 }
 
 }  // end anonymous namespace
