@@ -110,7 +110,7 @@ AttributeList *Parser::ParseGNUAttributes(SourceLocation *EndLoc) {
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = ConsumeToken();
 
-      // check if we have a "paramterized" attribute
+      // check if we have a "parameterized" attribute
       if (Tok.is(tok::l_paren)) {
         ConsumeParen(); // ignore the left paren loc for now
 

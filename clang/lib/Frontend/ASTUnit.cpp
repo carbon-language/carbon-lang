@@ -83,7 +83,7 @@ public:
     return false;
   }
 
-  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI) {
+  virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID) {
     HSI.setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
   }
 
