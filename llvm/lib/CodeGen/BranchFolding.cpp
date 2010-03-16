@@ -1143,22 +1143,6 @@ ReoptimizeBlock:
           !IsBetterFallthrough(PriorTBB, MBB))
         DoTransform = false;
 
-      // We don't want to do this transformation if we have control flow like:
-      //   br cond BB2
-      // BB1:
-      //   ..
-      //   jmp BBX
-      // BB2:
-      //   ..
-      //   ret
-      //
-      // In this case, we could actually be moving the return block *into* a
-      // loop!
-      if (DoTransform && !MBB->succ_empty() &&
-          (!PriorTBB->canFallThrough() || PriorTBB->empty()))
-        DoTransform = false;
-
-
       if (DoTransform) {
         // Reverse the branch so we will fall through on the previous true cond.
         SmallVector<MachineOperand, 4> NewPriorCond(PriorCond);
