@@ -243,8 +243,9 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
     BaseKill = true;  // New base is always killed right its use.
   }
 
-  bool isDPR = Opcode == ARM::VLDRD || Opcode == ARM::VSTRD;
-  bool isDef = isi32Load(Opcode) || Opcode == ARM::VLDRS || Opcode == ARM::VLDRD;
+  bool isDPR = (Opcode == ARM::VLDRD || Opcode == ARM::VSTRD);
+  bool isDef = (isi32Load(Opcode) || Opcode == ARM::VLDRS ||
+                Opcode == ARM::VLDRD);
   Opcode = getLoadStoreMultipleOpcode(Opcode);
   MachineInstrBuilder MIB = (isAM4)
     ? BuildMI(MBB, MBBI, dl, TII->get(Opcode))
