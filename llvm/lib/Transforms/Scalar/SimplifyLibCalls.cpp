@@ -1400,6 +1400,15 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
+        } else if (Name == "strchr" ||
+                   Name == "strrchr") {
+          if (FTy->getNumParams() != 2 ||
+              !FTy->getParamType(0)->isPointerTy() ||
+              !FTy->getParamType(1)->isIntegerTy())
+            continue;
+          setOnlyReadsMemory(F);
+          setDoesNotThrow(F);
+          setDoesNotCapture(F, 1);
         } else if (Name == "strcpy" ||
                    Name == "stpcpy" ||
                    Name == "strcat" ||
@@ -1428,7 +1437,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         } else if (Name == "strcmp" ||
                    Name == "strspn" ||
                    Name == "strncmp" ||
-                   Name ==" strcspn" ||
+                   Name == "strcspn" ||
                    Name == "strcoll" ||
                    Name == "strcasecmp" ||
                    Name == "strncasecmp") {
