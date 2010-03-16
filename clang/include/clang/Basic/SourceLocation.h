@@ -208,11 +208,11 @@ public:
 
   const char *getCharacterData() const;
 
-  const llvm::MemoryBuffer* getBuffer() const;
+  const llvm::MemoryBuffer* getBuffer(bool *Invalid = 0) const;
 
   /// getBufferData - Return a StringRef to the source buffer data for the
   /// specified FileID.
-  llvm::StringRef getBufferData() const;
+  llvm::StringRef getBufferData(bool *Invalid = 0) const;
 
   /// getDecomposedLoc - Decompose the specified location into a raw FileID +
   /// Offset pair.  The first element is the FileID, the second is the

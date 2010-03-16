@@ -110,13 +110,13 @@ const char *FullSourceLoc::getCharacterData() const {
   return SrcMgr->getCharacterData(*this);
 }
 
-const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
+const llvm::MemoryBuffer* FullSourceLoc::getBuffer(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getBuffer(SrcMgr->getFileID(*this));
+  return SrcMgr->getBuffer(SrcMgr->getFileID(*this), Invalid);
 }
 
-llvm::StringRef FullSourceLoc::getBufferData() const {
-  return getBuffer()->getBuffer();
+llvm::StringRef FullSourceLoc::getBufferData(bool *Invalid) const {
+  return getBuffer(Invalid)->getBuffer();
 }
 
 std::pair<FileID, unsigned> FullSourceLoc::getDecomposedLoc() const {

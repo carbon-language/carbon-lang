@@ -475,15 +475,14 @@ bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
 }
 
 llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
+  bool MyInvalid = false;
+  const llvm::MemoryBuffer *Buf = getBuffer(FID, &MyInvalid);
   if (Invalid)
-    *Invalid = false;
-  
-  const llvm::MemoryBuffer *Buf = getBuffer(FID);
-  if (!Buf) {
-    if (*Invalid)
-      *Invalid = true;
+    *Invalid = MyInvalid;
+
+  if (MyInvalid)
     return "";
-  }
+  
   return Buf->getBuffer();
 }
 
