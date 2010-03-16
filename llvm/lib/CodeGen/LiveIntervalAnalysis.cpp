@@ -141,7 +141,7 @@ void LiveIntervals::printInstrs(raw_ostream &OS) const {
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
       if (mii->isDebugValue())
-        OS << SlotIndex::getEmptyKey() << '\t' << *mii;
+        OS << "    \t" << *mii;
       else
         OS << getInstructionIndex(mii) << '\t' << *mii;
     }
@@ -583,6 +583,16 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
   // be considered a livein.
   MachineBasicBlock::iterator mi = MBB->begin();
+  MachineBasicBlock::iterator E = MBB->end();
+  // Skip over DBG_VALUE at the start of the MBB.
+  if (mi != E && mi->isDebugValue()) {
+    while (++mi != E && mi->isDebugValue())
+      ;
+    if (mi == E)
+      // MBB is empty except for DBG_VALUE's.
+      return;
+  }
+
   SlotIndex baseIndex = MIIdx;
   SlotIndex start = baseIndex;
   if (getInstructionFromIndex(baseIndex) == 0)
@@ -591,12 +601,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   SlotIndex end = baseIndex;
   bool SeenDefUse = false;
 
-  MachineBasicBlock::iterator E = MBB->end();  
   while (mi != E) {
-    while (mi != E && mi->isDebugValue())
-      ++mi;
-    if (mi == E)
-      break;
     if (mi->killsRegister(interval.reg, tri_)) {
       DEBUG(dbgs() << " killed");
       end = baseIndex.getDefIndex();
@@ -613,10 +618,11 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       break;
     }
 
-    ++mi;
-    if (mi != E && !mi->isDebugValue()) {
+    while (++mi != E && mi->isDebugValue())
+      // Skip over DBG_VALUE.
+      ;
+    if (mi != E)
       baseIndex = indexes_->getNextNonNullIndex(baseIndex);
-    }
   }
 
   // Live-in register might not be used at all.
