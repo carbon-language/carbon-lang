@@ -112,8 +112,8 @@ namespace test3 {
     A local; // expected-error {{variable of type 'test3::A' has private destructor}}
   }
 
-  template <unsigned N> class Base { ~Base(); }; // expected-note 4 {{declared private here}}
-  class Base2 : virtual Base<2> { ~Base2(); }; // expected-note {{declared private here}}
+  template <unsigned N> class Base { ~Base(); }; // expected-note 8 {{declared private here}}
+  class Base2 : virtual Base<2> { ~Base2(); }; // expected-note 2 {{declared private here}}
   class Base3 : virtual Base<3> { public: ~Base3(); };
 
   // These don't cause diagnostics because we don't need the destructor.
@@ -129,6 +129,15 @@ namespace test3 {
   {
     ~Derived2() {}
   };
+
+  class Derived3 : // expected-error {{inherited virtual base class 'Base<2>' has private destructor}} \
+                   // expected-error {{inherited virtual base class 'Base<3>' has private destructor}}
+    Base<0>,  // expected-error {{base class 'Base<0>' has private destructor}}
+    virtual Base<1>, // expected-error {{base class 'Base<1>' has private destructor}}
+    Base2, // expected-error {{base class 'test3::Base2' has private destructor}}
+    virtual Base3
+  {};
+  Derived3 d3;
 }
 
 // Conversion functions.

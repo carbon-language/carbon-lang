@@ -3819,45 +3819,8 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   DeclContext *PreviousContext = CurContext;
   CurContext = Destructor;
 
-  // C++ [class.dtor] p5
-  // Before the implicitly-declared default destructor for a class is
-  // implicitly defined, all the implicitly-declared default destructors
-  // for its base class and its non-static data members shall have been
-  // implicitly defined.
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
-       E = ClassDecl->bases_end(); Base != E; ++Base) {
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (!BaseClassDecl->hasTrivialDestructor()) {
-      if (CXXDestructorDecl *BaseDtor =
-          const_cast<CXXDestructorDecl*>(BaseClassDecl->getDestructor(Context)))
-        MarkDeclarationReferenced(CurrentLocation, BaseDtor);
-      else
-        assert(false &&
-               "DefineImplicitDestructor - missing dtor in a base class");
-    }
-  }
+  MarkBaseAndMemberDestructorsReferenced(Destructor);
 
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field) {
-    QualType FieldType = Context.getCanonicalType((*Field)->getType());
-    if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-      FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (!FieldClassDecl->hasTrivialDestructor()) {
-        if (CXXDestructorDecl *FieldDtor =
-            const_cast<CXXDestructorDecl*>(
-                                        FieldClassDecl->getDestructor(Context)))
-          MarkDeclarationReferenced(CurrentLocation, FieldDtor);
-        else
-          assert(false &&
-          "DefineImplicitDestructor - missing dtor in class of a data member");
-      }
-    }
-  }
-  
   // FIXME: If CheckDestructor fails, we should emit a note about where the
   // implicit destructor was needed.
   if (CheckDestructor(Destructor)) {

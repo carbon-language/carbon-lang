@@ -36,10 +36,10 @@ struct Base {
 
 template<typename T>
 struct Derived : Base<T> {
-  virtual void foo() { } // expected-note {{in instantiation of member function 'Base<int>::~Base' requested here}}
+  virtual void foo() { }
 };
 
-template struct Derived<int>;
+template struct Derived<int>; // expected-note {{in instantiation of member function 'Base<int>::~Base' requested here}}
 
 template<typename T>
 struct HasOutOfLineKey {
