@@ -183,6 +183,7 @@ def err_objc_no_attributes_on_category : Error<
 def err_objc_missing_end : Error<"missing @end">;
 def warn_objc_protocol_qualifier_missing_id : Warning<
   "protocol qualifiers without 'id' is archaic">;
+def err_objc_unknown_at : Error<"expected an Objective-C directive after '@'">;
 
 def err_objc_illegal_visibility_spec : Error<
   "illegal visibility specification">;

@@ -375,6 +375,10 @@ void Parser::ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
       AtEnd.setBegin(AtLoc);
       AtEnd.setEnd(Tok.getLocation());
       break;
+    } else if (DirectiveKind == tok::objc_not_keyword) {
+      Diag(Tok, diag::err_objc_unknown_at);
+      SkipUntil(tok::semi);
+      continue;
     }
 
     // Eat the identifier.
