@@ -227,7 +227,7 @@ class VLD3D<bits<4> op7_4, string OpcodeStr, string Dt>
 class VLD3WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0101,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD3,
-          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3\\}, $addr",
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3\\}, $addr!",
           "$addr.addr = $wb", []>;
 
 def  VLD3d8   : VLD3D<0b0000, "vld3", "8">;
@@ -259,7 +259,7 @@ class VLD4WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0001,op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD4,
-          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
+          OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr!",
           "$addr.addr = $wb", []>;
 
 def  VLD4d8   : VLD4D<0b0000, "vld4", "8">;
@@ -447,7 +447,7 @@ class VST3D<bits<4> op7_4, string OpcodeStr, string Dt>
 class VST3WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0101,op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
-          OpcodeStr, Dt, "\\{$src1, $src2, $src3\\}, $addr",
+          OpcodeStr, Dt, "\\{$src1, $src2, $src3\\}, $addr!",
           "$addr.addr = $wb", []>;
 
 def  VST3d8   : VST3D<0b0000, "vst3", "8">;
@@ -477,7 +477,7 @@ class VST4D<bits<4> op7_4, string OpcodeStr, string Dt>
 class VST4WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0001,op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
-          IIC_VST, OpcodeStr, Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
+          IIC_VST, OpcodeStr, Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr!",
           "$addr.addr = $wb", []>;
 
 def  VST4d8   : VST4D<0b0000, "vst4", "8">;
