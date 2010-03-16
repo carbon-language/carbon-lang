@@ -165,7 +165,7 @@ void JITDebugRegisterer::RegisterFunction(const Function *F, DebugInfo &I) {
 
 void JITDebugRegisterer::UnregisterFunctionInternal(
     RegisteredFunctionsMap::iterator I) {
-  jit_code_entry *JITCodeEntry = I->second.second;
+  jit_code_entry *&JITCodeEntry = I->second.second;
 
   // Acquire the lock and do the unregistration.
   {
@@ -189,6 +189,9 @@ void JITDebugRegisterer::UnregisterFunctionInternal(
     __jit_debug_descriptor.relevant_entry = JITCodeEntry;
     __jit_debug_register_code();
   }
+
+  delete JITCodeEntry;
+  JITCodeEntry = NULL;
 
   // Free the ELF file in memory.
   std::string &Buffer = I->second.first;
