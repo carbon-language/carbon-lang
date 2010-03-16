@@ -20,7 +20,7 @@
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
-//                          FixedNumOperands Trait Class
+//                          FixedNumOperand Trait Class
 //===----------------------------------------------------------------------===//
 
 /// FixedNumOperandTraits - determine the allocation regime of the Use array
@@ -51,8 +51,11 @@ struct FixedNumOperandTraits {
 };
 
 //===----------------------------------------------------------------------===//
-//                          OptionalOperands Trait Class
+//                          OptionalOperand Trait Class
 //===----------------------------------------------------------------------===//
+
+/// OptionalOperandTraits - when the number of operands may change at runtime.
+/// Naturally it may only decrease, because the allocations may not change.
 
 template <unsigned ARITY = 1>
 struct OptionalOperandTraits : public FixedNumOperandTraits<ARITY> {

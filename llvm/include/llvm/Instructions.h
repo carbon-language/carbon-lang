@@ -1984,7 +1984,7 @@ public:
 };
 
 template <>
-struct OperandTraits<ReturnInst> : public OptionalOperandTraits<> {
+struct OperandTraits<ReturnInst> : public VariadicOperandTraits<> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ReturnInst, Value)

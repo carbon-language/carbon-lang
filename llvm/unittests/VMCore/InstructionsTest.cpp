@@ -14,12 +14,12 @@
 namespace llvm {
 namespace {
 
-TEST(InstructionsTest, ReturnInst_0) {
+TEST(InstructionsTest, ReturnInst) {
   LLVMContext &C(getGlobalContext());
 
-  // reproduction recipe for PR6589
+  // test for PR6589
   const ReturnInst* r0 = ReturnInst::Create(C);
-  EXPECT_NE(r0->op_begin(), r0->op_end());
+  EXPECT_EQ(r0->op_begin(), r0->op_end());
 }
 
 }  // end anonymous namespace
