@@ -430,7 +430,10 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
   for (; I!=End; ++I)
     QualName += *I + "::";
 
-  QualName += getNameAsString();
+  if (getDeclName())
+    QualName += getNameAsString();
+  else
+    QualName += "<anonymous>";
 
   return QualName;
 }

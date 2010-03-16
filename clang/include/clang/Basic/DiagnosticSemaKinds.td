@@ -107,7 +107,16 @@ def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
-  
+
+def warn_decl_shadow :
+  Warning<"declaration shadows a %select{"
+          "local variable|"
+          "variable in %2|"
+          "static data member of %2|"
+          "field of %2|"
+          "global built-in function}1">,
+  InGroup<Shadow>, DefaultIgnore;
+
 // C++ using declarations
 def err_using_requires_qualname : Error<
   "using declaration requires a qualified name">;

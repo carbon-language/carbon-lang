@@ -2403,6 +2403,9 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     NewVD->addAttr(::new (Context) AsmLabelAttr(Context, SE->getString()));
   }
 
+  // Diagnose shadowed variables before filtering for scope.
+  DiagnoseShadow(NewVD, Previous);
+
   // Don't consider existing declarations that are in a different
   // scope and are out-of-semantic-context declarations (if the new
   // declaration has linkage).
@@ -2452,6 +2455,65 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     RegisterLocallyScopedExternCDecl(NewVD, Previous, S);
 
   return NewVD;
+}
+
+/// \brief Diagnose variable or built-in function shadowing.
+///
+/// This method is called as soon as a NamedDecl materializes to check
+/// if it shadows another local or global variable, or a built-in function.
+///
+/// For performance reasons, the lookup results are reused from the calling
+/// context.
+///
+/// \param D variable decl to diagnose. Must be a variable.
+/// \param R cached previous lookup of \p D.
+///
+void Sema::DiagnoseShadow(NamedDecl* D, const LookupResult& R) {
+  assert(D->getKind() == Decl::Var && "Expecting variable.");
+
+  // Return if warning is ignored.
+  if (Diags.getDiagnosticLevel(diag::warn_decl_shadow) == Diagnostic::Ignored)
+    return;
+
+  // Return if not local decl.
+  if (!D->getDeclContext()->isFunctionOrMethod())
+    return;
+
+  DeclarationName Name = D->getDeclName();
+
+  // Return if lookup has no result.
+  if (R.getResultKind() != LookupResult::Found) {
+    // Emit warning for built-in shadowing.
+    if (Name.getAsIdentifierInfo() &&
+        Name.getAsIdentifierInfo()->getBuiltinID())
+      Diag(D->getLocation(), diag::warn_decl_shadow)
+        << Name
+        << 4 // global builtin
+        << Context.getTranslationUnitDecl();
+    return;
+  }
+
+  // Return if not variable decl.
+  NamedDecl* ShadowedDecl = R.getFoundDecl();
+  if (!isa<VarDecl>(ShadowedDecl) && !isa<FieldDecl>(ShadowedDecl))
+    return;
+
+  // Determine kind of declaration.
+  DeclContext *DC = ShadowedDecl->getDeclContext();
+  unsigned Kind;
+  if (isa<RecordDecl>(DC)) {
+    if (isa<FieldDecl>(ShadowedDecl))
+      Kind = 3; // field
+    else
+      Kind = 2; // static data member
+  } else if (DC->isFileContext())
+    Kind = 1; // global
+  else
+    Kind = 0; // local
+
+  // Emit warning and note.
+  Diag(D->getLocation(), diag::warn_decl_shadow) << Name << Kind << DC;
+  Diag(ShadowedDecl->getLocation(), diag::note_previous_declaration);
 }
 
 /// \brief Perform semantic checking on a newly-created variable
