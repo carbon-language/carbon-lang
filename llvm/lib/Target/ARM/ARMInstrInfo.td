@@ -1355,7 +1355,9 @@ def LDM_UPD : AXI4ld<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$dsts, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iLoadm,
                      "ldm${addr:submode}${p}\t$addr!, $dsts",
-                     "$addr.addr = $wb", []>;
+                     "$addr.addr = $wb", []> {
+  let Inst{21} = 1; // wback
+}
 } // mayLoad, hasExtraDefRegAllocReq
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
@@ -1368,7 +1370,9 @@ def STM_UPD : AXI4st<(outs GPR:$wb), (ins addrmode4:$addr, pred:$p,
                                       reglist:$srcs, variable_ops),
                      IndexModeUpd, LdStMulFrm, IIC_iStorem,
                      "stm${addr:submode}${p}\t$addr!, $srcs",
-                     "$addr.addr = $wb", []>;
+                     "$addr.addr = $wb", []> {
+  let Inst{21} = 1; // wback
+}
 } // mayStore, hasExtraSrcRegAllocReq
 
 //===----------------------------------------------------------------------===//

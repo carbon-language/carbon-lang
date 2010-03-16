@@ -96,6 +96,7 @@ def VLDMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                       IndexModeUpd, IIC_fpLoadm,
                       "vldm${addr:submode}${p}\t${addr:base}!, $dsts",
                       "$addr.base = $wb", []> {
+  let Inst{21} = 1; // wback
   let Inst{20} = 1;
 }
 
@@ -104,6 +105,7 @@ def VLDMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                       IndexModeUpd, IIC_fpLoadm, 
                       "vldm${addr:submode}${p}\t${addr:base}!, $dsts",
                       "$addr.base = $wb", []> {
+  let Inst{21} = 1; // wback
   let Inst{20} = 1;
 }
 } // mayLoad, hasExtraDefRegAllocReq
@@ -126,6 +128,7 @@ def VSTMD_UPD : AXDI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                       IndexModeUpd, IIC_fpStorem,
                       "vstm${addr:submode}${p}\t${addr:base}!, $srcs",
                       "$addr.base = $wb", []> {
+  let Inst{21} = 1; // wback
   let Inst{20} = 0;
 }
 
@@ -134,6 +137,7 @@ def VSTMS_UPD : AXSI5<(outs GPR:$wb), (ins addrmode5:$addr, pred:$p,
                       IndexModeUpd, IIC_fpStorem,
                       "vstm${addr:submode}${p}\t${addr:base}!, $srcs",
                       "$addr.base = $wb", []> {
+  let Inst{21} = 1; // wback
   let Inst{20} = 0;
 }
 } // mayStore, hasExtraSrcRegAllocReq
