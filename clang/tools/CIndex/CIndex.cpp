@@ -2101,6 +2101,8 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
   bool Invalid = false;
   llvm::StringRef Buffer
     = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
+  if (Invalid)
+    return;
   
   Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
             CXXUnit->getASTContext().getLangOptions(),
