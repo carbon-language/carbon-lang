@@ -60,12 +60,11 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     std::pair<FileID, unsigned> LocInfo =
       SourceMgr.getDecomposedLoc(StrTokSpellingLoc);
     bool Invalid = false;
-    std::pair<const char *,const char *> Buffer =
-      SourceMgr.getBufferData(LocInfo.first, &Invalid);
+    llvm::StringRef Buffer = SourceMgr.getBufferData(LocInfo.first, &Invalid);
     if (Invalid)
       return StrTokSpellingLoc;
       
-    const char *StrData = Buffer.first+LocInfo.second;
+    const char *StrData = Buffer.data()+LocInfo.second;
 
     // Create a langops struct and enable trigraphs.  This is sufficient for
     // relexing tokens.
@@ -73,8 +72,8 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     LangOpts.Trigraphs = true;
 
     // Create a lexer starting at the beginning of this token.
-    Lexer TheLexer(StrTokSpellingLoc, LangOpts, Buffer.first, StrData,
-                   Buffer.second);
+    Lexer TheLexer(StrTokSpellingLoc, LangOpts, Buffer.begin(), StrData,
+                   Buffer.end());
     Token TheTok;
     TheLexer.LexFromRawLexer(TheTok);
 

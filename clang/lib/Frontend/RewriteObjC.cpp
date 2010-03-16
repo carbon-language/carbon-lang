@@ -706,9 +706,9 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
 
 void RewriteObjC::RewriteInclude() {
   SourceLocation LocStart = SM->getLocForStartOfFile(MainFileID);
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID); 
-  const char *MainBufStart = MainBuf.first;
-  const char *MainBufEnd = MainBuf.second;
+  llvm::StringRef MainBuf = SM->getBufferData(MainFileID);
+  const char *MainBufStart = MainBuf.begin();
+  const char *MainBufEnd = MainBuf.end();
   size_t ImportLen = strlen("import");
 
   // Loop over the whole file, looking for includes.
@@ -731,9 +731,9 @@ void RewriteObjC::RewriteInclude() {
 }
 
 void RewriteObjC::RewriteTabs() {
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
-  const char *MainBufStart = MainBuf.first;
-  const char *MainBufEnd = MainBuf.second;
+  llvm::StringRef MainBuf = SM->getBufferData(MainFileID);
+  const char *MainBufStart = MainBuf.begin();
+  const char *MainBufEnd = MainBuf.end();
 
   // Loop over the whole file, looking for tabs.
   for (const char *BufPtr = MainBufStart; BufPtr != MainBufEnd; ++BufPtr) {
@@ -973,7 +973,6 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
 }
 
 void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
   SourceLocation LocStart = PDecl->getLocStart();
 
   // FIXME: handle protocol headers that are declared across multiple lines.

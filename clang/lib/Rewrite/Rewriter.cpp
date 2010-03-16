@@ -165,8 +165,8 @@ RewriteBuffer &Rewriter::getEditBuffer(FileID FID) {
     return I->second;
   I = RewriteBuffers.insert(I, std::make_pair(FID, RewriteBuffer()));
 
-  std::pair<const char*, const char*> MB = SourceMgr->getBufferData(FID);
-  I->second.Initialize(MB.first, MB.second);
+  llvm::StringRef MB = SourceMgr->getBufferData(FID);
+  I->second.Initialize(MB.begin(), MB.end());
 
   return I->second;
 }

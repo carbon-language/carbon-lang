@@ -441,7 +441,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
 
       bool Invalid = false;
       const char *ScratchBufStart
-        = SourceMgr.getBufferData(LocFileID, &Invalid).first;
+        = SourceMgr.getBufferData(LocFileID, &Invalid).data();
       if (Invalid)
         return false;
 

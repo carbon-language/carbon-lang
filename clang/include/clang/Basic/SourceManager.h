@@ -457,9 +457,8 @@ public:
   /// 
   /// \param FID The file ID whose contents will be returned.
   /// \param Invalid If non-NULL, will be set true if an error occurred.
-  std::pair<const char*, const char*> getBufferData(FileID FID,
-                                                    bool *Invalid = 0) const;
-  
+  llvm::StringRef getBufferData(FileID FID, bool *Invalid = 0) const;
+
 
   //===--------------------------------------------------------------------===//
   // SourceLocation manipulation methods.

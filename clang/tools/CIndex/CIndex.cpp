@@ -2044,13 +2044,12 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   std::pair<FileID, unsigned> LocInfo
     = CXXUnit->getSourceManager().getDecomposedLoc(Loc);
   bool Invalid = false;
-  std::pair<const char *,const char *> Buffer
+  llvm::StringRef Buffer
     = CXXUnit->getSourceManager().getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
     return createCXString("");
 
-  return createCXString(llvm::StringRef(Buffer.first+LocInfo.second,
-                                        CXTok.int_data[2]));
+  return createCXString(Buffer.substr(LocInfo.second, CXTok.int_data[2]));
 }
 
 CXSourceLocation clang_getTokenLocation(CXTranslationUnit TU, CXToken CXTok) {
@@ -2100,16 +2099,16 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
 
   // Create a lexer
   bool Invalid = false;
-  std::pair<const char *,const char *> Buffer
+  llvm::StringRef Buffer
     = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
   
   Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
             CXXUnit->getASTContext().getLangOptions(),
-            Buffer.first, Buffer.first + BeginLocInfo.second, Buffer.second);
+            Buffer.begin(), Buffer.data() + BeginLocInfo.second, Buffer.end());
   Lex.SetCommentRetentionState(true);
 
   // Lex tokens until we hit the end of the range.
-  const char *EffectiveBufferEnd = Buffer.first + EndLocInfo.second;
+  const char *EffectiveBufferEnd = Buffer.data() + EndLocInfo.second;
   llvm::SmallVector<CXToken, 32> CXTokens;
   Token Tok;
   do {
@@ -2135,12 +2134,12 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
       std::pair<FileID, unsigned> LocInfo
         = SourceMgr.getDecomposedLoc(Tok.getLocation());
       bool Invalid = false;
-      std::pair<const char *, const char *> Buf
+      llvm::StringRef Buf
         = CXXUnit->getSourceManager().getBufferData(LocInfo.first, &Invalid);
       if (Invalid)
         return;
       
-      const char *StartPos= Buf.first + LocInfo.second;
+      const char *StartPos = Buf.data() + LocInfo.second;
       IdentifierInfo *II
         = CXXUnit->getPreprocessor().LookUpIdentifierInfo(Tok, StartPos);
       CXTok.int_data[0] = II->getTokenID() == tok::identifier?

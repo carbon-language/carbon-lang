@@ -428,7 +428,7 @@ isDoxygenComment(SourceManager &SourceMgr, SourceRange Comment,
   bool Invalid = false;
   const char *BufferStart
     = SourceMgr.getBufferData(SourceMgr.getFileID(Comment.getBegin()), 
-                              &Invalid).first;
+                              &Invalid).data();
   if (Invalid)
     return false;
   
@@ -495,7 +495,7 @@ const char *ASTContext::getCommentForDecl(const Decl *D) {
     = SourceMgr.getDecomposedLoc(DeclStartLoc);
   bool Invalid = false;
   const char *FileBufferStart
-    = SourceMgr.getBufferData(DeclStartDecomp.first, &Invalid).first;
+    = SourceMgr.getBufferData(DeclStartDecomp.first, &Invalid).data();
   if (Invalid)
     return 0;
   

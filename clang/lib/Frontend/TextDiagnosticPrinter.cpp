@@ -331,13 +331,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
   // Get information about the buffer it points into.
   bool Invalid = false;
-  std::pair<const char*, const char*> BufferInfo = SM.getBufferData(FID, 
-                                                                    &Invalid);
+  const char *BufStart = SM.getBufferData(FID, &Invalid).data();
   if (Invalid)
     return;
-  
-  const char *BufStart = BufferInfo.first;
-  
+
   unsigned ColNo = SM.getColumnNumber(FID, FileOffset);
   unsigned CaretEndColNo
     = ColNo + Lexer::MeasureTokenLength(Loc, SM, *LangOpts);

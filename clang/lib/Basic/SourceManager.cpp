@@ -474,8 +474,7 @@ bool SourceManager::overrideFileContents(const FileEntry *SourceFile,
   return false;
 }
 
-std::pair<const char*, const char*>
-SourceManager::getBufferData(FileID FID, bool *Invalid) const {
+llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   if (Invalid)
     *Invalid = false;
   
@@ -483,10 +482,9 @@ SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   if (!Buf) {
     if (*Invalid)
       *Invalid = true;
-    const char *FakeText = "";
-    return std::make_pair(FakeText, FakeText + strlen(FakeText));
+    return "";
   }
-  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
+  return Buf->getBuffer();
 }
 
 //===----------------------------------------------------------------------===//

@@ -230,18 +230,17 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   Loc = SM.getInstantiationLoc(Loc);
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   bool Invalid = false;
-  std::pair<const char *,const char *> Buffer = SM.getBufferData(LocInfo.first,
-                                                                 &Invalid);
+  llvm::StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
     return 0;
-  
-  const char *StrData = Buffer.first+LocInfo.second;
+
+  const char *StrData = Buffer.data()+LocInfo.second;
 
   if (isWhitespace(StrData[0]))
     return 0;
 
   // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(Loc, LangOpts, Buffer.first, StrData, Buffer.second);
+  Lexer TheLexer(Loc, LangOpts, Buffer.begin(), StrData, Buffer.end());
   TheLexer.SetCommentRetentionState(true);
   Token TheTok;
   TheLexer.LexFromRawLexer(TheTok);
