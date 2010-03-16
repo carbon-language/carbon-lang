@@ -19,6 +19,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -2335,7 +2336,11 @@ void GRExprEngine::VisitDeclStmt(DeclStmt *DS, ExplodedNode *Pred,
   ExplodedNodeSet Tmp;
 
   if (InitEx) {
-    if (VD->getType()->isReferenceType())
+    if (const CXXConstructExpr *E = dyn_cast<CXXConstructExpr>(InitEx)) {
+      VisitCXXConstructExpr(E, GetState(Pred)->getLValue(VD,
+                                       Pred->getLocationContext()), Pred, Dst);
+      return;
+    } else if (VD->getType()->isReferenceType())
       VisitLValue(InitEx, Pred, Tmp);
     else
       Visit(InitEx, Pred, Tmp);
@@ -2826,7 +2831,8 @@ void GRExprEngine::VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred,
                                     ExplodedNodeSet & Dst) {
   // Get the this object region from StoreManager.
   const MemRegion *R =
-    ValMgr.getRegionManager().getCXXThisRegion(TE->getType(),
+    ValMgr.getRegionManager().getCXXThisRegion(
+                                  getContext().getCanonicalType(TE->getType()),
                                                Pred->getLocationContext());
 
   const GRState *state = GetState(Pred);
@@ -3126,6 +3132,78 @@ void GRExprEngine::CreateCXXTemporaryObject(Expr *Ex, ExplodedNode *Pred,
   }
 }
 
+void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
+                                         ExplodedNode *Pred,
+                                         ExplodedNodeSet &Dst) {
+
+  const CXXConstructorDecl *CD = E->getConstructor();
+  assert(CD);
+
+  if (!CD->isThisDeclarationADefinition())
+    // FIXME: invalidate the object.
+    return;
+
+  
+  // Evaluate other arguments.
+  CXXConstructExpr::arg_iterator AB 
+    = const_cast<CXXConstructExpr*>(E)->arg_begin();
+  CXXConstructExpr::arg_iterator AE 
+    = const_cast<CXXConstructExpr*>(E)->arg_end();
+  llvm::SmallVector<CallExprWLItem, 20> WorkList;
+  WorkList.reserve(AE - AB);
+  WorkList.push_back(CallExprWLItem(AB, Pred));
+  ExplodedNodeSet ArgsEvaluated;
+  const FunctionProtoType *Proto = CD->getType()->getAs<FunctionProtoType>();
+
+  while (!WorkList.empty()) {
+    CallExprWLItem Item = WorkList.back();
+    WorkList.pop_back();
+
+    if (Item.I == AE) {
+      ArgsEvaluated.insert(Item.N);
+      continue;
+    }
+
+    // Evaluate the argument.
+    ExplodedNodeSet Tmp;
+    const unsigned ParamIdx = Item.I - AB;
+
+    bool VisitAsLvalue = false;
+
+    if (ParamIdx < Proto->getNumArgs())
+      VisitAsLvalue = Proto->getArgType(ParamIdx)->isReferenceType();
+
+    if (VisitAsLvalue)
+      VisitLValue(*Item.I, Item.N, Tmp);
+    else
+      Visit(*Item.I, Item.N, Tmp);
+
+    ++(Item.I);
+
+    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
+      WorkList.push_back(CallExprWLItem(Item.I, *NI));
+  }
+  // The callee stack frame context used to create the 'this' parameter region.
+  const StackFrameContext *SFC = AMgr.getStackFrame(CD, 
+                                                    Pred->getLocationContext(),
+                                   E, Builder->getBlock(), Builder->getIndex());
+
+  Type *T = CD->getParent()->getTypeForDecl();
+  QualType PT = getContext().getPointerType(QualType(T,0));
+  const CXXThisRegion *ThisR = ValMgr.getRegionManager().getCXXThisRegion(PT,
+                                                                          SFC);
+
+  CallEnter Loc(E, CD, Pred->getLocationContext());
+  for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
+                                 NE = ArgsEvaluated.end(); NI != NE; ++NI) {
+    const GRState *state = GetState(*NI);
+    // Setup 'this' region.
+    state = state->bindLoc(loc::MemRegionVal(ThisR), Dest);
+    ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
+    if (N)
+      Dst.Add(N);
+  }
+}
 //===----------------------------------------------------------------------===//
 // Checker registration/lookup.
 //===----------------------------------------------------------------------===//

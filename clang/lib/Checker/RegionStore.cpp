@@ -22,6 +22,8 @@
 #include "clang/Analysis/Support/Optional.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/ExprCXX.h"
 
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -1841,18 +1843,29 @@ Store RegionStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
 GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
                                                StackFrameContext const *frame) {
   FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
-  CallExpr const *CE = cast<CallExpr>(frame->getCallSite());
-
   FunctionDecl::param_const_iterator PI = FD->param_begin();
-
-  CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
-
-  // Copy the arg expression value to the arg variables.
   Store store = state->getStore();
-  for (; AI != AE; ++AI, ++PI) {
-    SVal ArgVal = state->getSVal(*AI);
-    store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
-  }
+
+  if (CallExpr const *CE = dyn_cast<CallExpr>(frame->getCallSite())) {
+    CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
+
+    // Copy the arg expression value to the arg variables.
+    for (; AI != AE; ++AI, ++PI) {
+      SVal ArgVal = state->getSVal(*AI);
+      store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI,frame)),ArgVal);
+    }
+  } else if (const CXXConstructExpr *CE = 
+               dyn_cast<CXXConstructExpr>(frame->getCallSite())) {
+    CXXConstructExpr::const_arg_iterator AI = CE->arg_begin(), 
+      AE = CE->arg_end();
+
+    // Copy the arg expression value to the arg variables.
+    for (; AI != AE; ++AI, ++PI) {
+      SVal ArgVal = state->getSVal(*AI);
+      store = Bind(store, ValMgr.makeLoc(MRMgr.getVarRegion(*PI,frame)),ArgVal);
+    }
+  } else
+    assert(0 && "Unhandled call expression.");
 
   return state->makeWithStore(store);
 }

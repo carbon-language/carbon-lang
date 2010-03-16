@@ -347,7 +347,10 @@ protected:
 
   void VisitCXXThisExpr(CXXThisExpr *TE, ExplodedNode *Pred, 
                         ExplodedNodeSet & Dst);
-
+  
+  void VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
+                             ExplodedNode *Pred,
+                             ExplodedNodeSet &Dst);
   /// Create a C++ temporary object for an rvalue.
   void CreateCXXTemporaryObject(Expr *Ex, ExplodedNode *Pred, 
                                 ExplodedNodeSet &Dst);
