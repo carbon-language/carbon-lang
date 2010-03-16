@@ -1027,6 +1027,15 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     return;
   }
 
+  if (const ConstantUnion *CU = dyn_cast<ConstantUnion>(CV)) {
+    Out << "{ ";
+    TypePrinter.print(CU->getOperand(0)->getType(), Out);
+    Out << ' ';
+    WriteAsOperandInternal(Out, CU->getOperand(0), &TypePrinter, Machine);
+    Out << " }";
+    return;
+  }
+  
   if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     const Type *ETy = CP->getType()->getElementType();
     assert(CP->getNumOperands() > 0 &&
