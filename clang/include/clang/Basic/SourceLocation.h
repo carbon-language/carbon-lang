@@ -200,11 +200,11 @@ public:
   FullSourceLoc getInstantiationLoc() const;
   FullSourceLoc getSpellingLoc() const;
 
-  unsigned getInstantiationLineNumber() const;
-  unsigned getInstantiationColumnNumber() const;
+  unsigned getInstantiationLineNumber(bool *Invalid = 0) const;
+  unsigned getInstantiationColumnNumber(bool *Invalid = 0) const;
 
-  unsigned getSpellingLineNumber() const;
-  unsigned getSpellingColumnNumber() const;
+  unsigned getSpellingLineNumber(bool *Invalid = 0) const;
+  unsigned getSpellingColumnNumber(bool *Invalid = 0) const;
 
   const char *getCharacterData(bool *Invalid = 0) const;
 

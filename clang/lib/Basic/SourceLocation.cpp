@@ -80,24 +80,24 @@ FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
 }
 
-unsigned FullSourceLoc::getInstantiationLineNumber() const {
+unsigned FullSourceLoc::getInstantiationLineNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationLineNumber(*this);
+  return SrcMgr->getInstantiationLineNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getInstantiationColumnNumber() const {
+unsigned FullSourceLoc::getInstantiationColumnNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationColumnNumber(*this);
+  return SrcMgr->getInstantiationColumnNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getSpellingLineNumber() const {
+unsigned FullSourceLoc::getSpellingLineNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getSpellingLineNumber(*this);
+  return SrcMgr->getSpellingLineNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getSpellingColumnNumber() const {
+unsigned FullSourceLoc::getSpellingColumnNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getSpellingColumnNumber(*this);
+  return SrcMgr->getSpellingColumnNumber(*this, Invalid);
 }
 
 bool FullSourceLoc::isInSystemHeader() const {
