@@ -54,26 +54,26 @@ public:
   void printBitfieldInvMaskImmOperand(const MCInst *MI, unsigned OpNum);
 
   void printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum);
-  void printThumbITMask(const MCInst *MI, unsigned OpNum) {}
-  void printThumbAddrModeRROperand(const MCInst *MI, unsigned OpNum) {}
+  void printThumbITMask(const MCInst *MI, unsigned OpNum);
+  void printThumbAddrModeRROperand(const MCInst *MI, unsigned OpNum);
   void printThumbAddrModeRI5Operand(const MCInst *MI, unsigned OpNum,
-                                    unsigned Scale) {}
-  void printThumbAddrModeS1Operand(const MCInst *MI, unsigned OpNum) {}
-  void printThumbAddrModeS2Operand(const MCInst *MI, unsigned OpNum) {}
-  void printThumbAddrModeS4Operand(const MCInst *MI, unsigned OpNum) {}
-  void printThumbAddrModeSPOperand(const MCInst *MI, unsigned OpNum) {}
+                                    unsigned Scale);
+  void printThumbAddrModeS1Operand(const MCInst *MI, unsigned OpNum);
+  void printThumbAddrModeS2Operand(const MCInst *MI, unsigned OpNum);
+  void printThumbAddrModeS4Operand(const MCInst *MI, unsigned OpNum);
+  void printThumbAddrModeSPOperand(const MCInst *MI, unsigned OpNum);
   
-  void printT2SOOperand(const MCInst *MI, unsigned OpNum) {}
-  void printT2AddrModeImm12Operand(const MCInst *MI, unsigned OpNum) {}
-  void printT2AddrModeImm8Operand(const MCInst *MI, unsigned OpNum) {}
-  void printT2AddrModeImm8s4Operand(const MCInst *MI, unsigned OpNum) {}
-  void printT2AddrModeImm8OffsetOperand(const MCInst *MI, unsigned OpNum) {}
-  void printT2AddrModeImm8s4OffsetOperand(const MCInst *MI, unsigned OpNum) {}
-  void printT2AddrModeSoRegOperand(const MCInst *MI, unsigned OpNum) {}
+  void printT2SOOperand(const MCInst *MI, unsigned OpNum);
+  void printT2AddrModeImm12Operand(const MCInst *MI, unsigned OpNum);
+  void printT2AddrModeImm8Operand(const MCInst *MI, unsigned OpNum);
+  void printT2AddrModeImm8s4Operand(const MCInst *MI, unsigned OpNum);
+  void printT2AddrModeImm8OffsetOperand(const MCInst *MI, unsigned OpNum);
+  void printT2AddrModeImm8s4OffsetOperand(const MCInst *MI, unsigned OpNum);
+  void printT2AddrModeSoRegOperand(const MCInst *MI, unsigned OpNum);
   
-  void printCPSOptionOperand(const MCInst *MI, unsigned OpNum) {}
-  void printMSRMaskOperand(const MCInst *MI, unsigned OpNum) {}
-  void printNegZeroOperand(const MCInst *MI, unsigned OpNum) {}
+  void printCPSOptionOperand(const MCInst *MI, unsigned OpNum);
+  void printMSRMaskOperand(const MCInst *MI, unsigned OpNum);
+  void printNegZeroOperand(const MCInst *MI, unsigned OpNum);
   void printPredicateOperand(const MCInst *MI, unsigned OpNum);
   void printMandatoryPredicateOperand(const MCInst *MI, unsigned OpNum);
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum);
@@ -82,10 +82,10 @@ public:
                           const char *Modifier);
   void printJTBlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printJT2BlockOperand(const MCInst *MI, unsigned OpNum) {}
-  void printTBAddrMode(const MCInst *MI, unsigned OpNum) {}
+  void printTBAddrMode(const MCInst *MI, unsigned OpNum);
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum);
-  void printVFPf32ImmOperand(const MCInst *MI, int OpNum) {}
-  void printVFPf64ImmOperand(const MCInst *MI, int OpNum) {}
+  void printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum);
+  void printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum);
   void printHex8ImmOperand(const MCInst *MI, int OpNum) {}
   void printHex16ImmOperand(const MCInst *MI, int OpNum) {}
   void printHex32ImmOperand(const MCInst *MI, int OpNum) {}
