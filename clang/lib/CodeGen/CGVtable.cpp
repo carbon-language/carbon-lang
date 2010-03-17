@@ -19,6 +19,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
+#include <algorithm>
 #include <cstdio>
 
 using namespace clang;
@@ -1147,6 +1148,12 @@ private:
     ReturnAdjustment() : NonVirtual(0), VBaseOffsetOffset(0) { }
     
     bool isEmpty() const { return !NonVirtual && !VBaseOffsetOffset; }
+
+    friend bool operator==(const ReturnAdjustment &LHS, 
+                           const ReturnAdjustment &RHS) {
+      return LHS.NonVirtual == RHS.NonVirtual && 
+        LHS.VBaseOffsetOffset == RHS.VBaseOffsetOffset;
+    }
   };
   
   /// MethodInfo - Contains information about a method in a vtable.
@@ -1191,6 +1198,12 @@ private:
     ThisAdjustment() : NonVirtual(0), VCallOffsetOffset(0) { }
 
     bool isEmpty() const { return !NonVirtual && !VCallOffsetOffset; }
+
+    friend bool operator==(const ThisAdjustment &LHS, 
+                           const ThisAdjustment &RHS) {
+      return LHS.NonVirtual == RHS.NonVirtual && 
+        LHS.VCallOffsetOffset == RHS.VCallOffsetOffset;
+    }
   };
   
   /// ThunkInfo - The 'this' pointer adjustment as well as an optional return
@@ -1206,8 +1219,12 @@ private:
     
     ThunkInfo(const ThisAdjustment &This, const ReturnAdjustment &Return)
       : This(This), Return(Return) { }
-    
-    bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }    
+  
+    friend bool operator==(const ThunkInfo &LHS, const ThunkInfo &RHS) {
+      return LHS.This == RHS.This && LHS.Return == RHS.Return;
+    }
+
+    bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
   };
   
   typedef llvm::DenseMap<uint64_t, ThunkInfo> ThunksInfoMapTy;
@@ -1215,6 +1232,15 @@ private:
   /// Thunks - The thunks by vtable index in the vtable currently being built.
   ThunksInfoMapTy Thunks;
 
+  typedef llvm::DenseMap<const CXXMethodDecl *,
+                         llvm::SmallVector<ThunkInfo, 1> > ThunksForMethodMapTy;
+  
+  /// ThunksPerMethod - The thunks for a given method.
+  ThunksForMethodMapTy ThunksForMethod;
+  
+  /// AddThunk - Add a thunk for the given method.
+  void AddThunk(const CXXMethodDecl *MD, ThunkInfo &Thunk);
+  
   /// ComputeThisAdjustments - Compute the 'this' pointer adjustments for the
   /// part of the vtable we're currently building.
   void ComputeThisAdjustments();
@@ -1329,6 +1355,17 @@ public:
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
 };
+
+void VtableBuilder::AddThunk(const CXXMethodDecl *MD, ThunkInfo &Thunk) {
+  llvm::SmallVector<ThunkInfo, 1> &ThunksVector = ThunksForMethod[MD];
+  
+  // Check if we have this thunk already.
+  if (std::find(ThunksVector.begin(), ThunksVector.end(), Thunk) != 
+      ThunksVector.end())
+    return;
+  
+  ThunksVector.push_back(Thunk);
+}
 
 /// OverridesMethodInBases - Checks whether whether this virtual member 
 /// function overrides a member function in any of the given bases.
