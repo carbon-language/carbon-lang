@@ -16,7 +16,6 @@
 namespace clang {
 
 class Diagnostic;
-class SourceMgr;
 class TextDiagnosticBuffer;
 
 /// VerifyDiagnosticsClient - Create a diagnostic client which will use markers
