@@ -44,7 +44,9 @@ public:
   }
 
   SVal ArrayToPointer(Loc Array);
-  Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
+  Store RemoveDeadBindings(Store store, Stmt* Loc, 
+                           const StackFrameContext *LCtx,
+                           SymbolReaper& SymReaper,
                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
     return store;
   }

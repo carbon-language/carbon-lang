@@ -481,7 +481,9 @@ void GRExprEngine::ProcessStmt(CFGElement CE, GRStmtNodeBuilder& builder) {
   SymbolReaper SymReaper(BasePred->getLocationContext(), SymMgr);
 
   CleanedState = AMgr.shouldPurgeDead()
-    ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, SymReaper)
+    ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, 
+                         BasePred->getLocationContext()->getCurrentStackFrame(),
+                                  SymReaper)
     : EntryNode->getState();
 
   // Process any special transfer function for dead symbols.

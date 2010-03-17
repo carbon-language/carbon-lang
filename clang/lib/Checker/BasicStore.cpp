@@ -72,7 +72,9 @@ public:
 
   /// RemoveDeadBindings - Scans a BasicStore of 'state' for dead values.
   ///  It updatees the GRState object in place with the values removed.
-  Store RemoveDeadBindings(Store store, Stmt* Loc, SymbolReaper& SymReaper,
+  Store RemoveDeadBindings(Store store, Stmt* Loc, 
+                           const StackFrameContext *LCtx,
+                           SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
@@ -250,6 +252,7 @@ Store BasicStoreManager::Remove(Store store, Loc loc) {
 }
 
 Store BasicStoreManager::RemoveDeadBindings(Store store, Stmt* Loc,
+                                            const StackFrameContext *LCtx,
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
