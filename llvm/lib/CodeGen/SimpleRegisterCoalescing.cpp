@@ -1682,19 +1682,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         // density, do not join them, instead mark the physical register as its
         // allocation preference.
         LiveInterval &JoinVInt = SrcIsPhys ? DstInt : SrcInt;
-        LiveInterval &JoinPInt = SrcIsPhys ? SrcInt : DstInt;
         unsigned JoinVReg = SrcIsPhys ? DstReg : SrcReg;
         unsigned JoinPReg = SrcIsPhys ? SrcReg : DstReg;
-
-        // Don't join with physregs that have a ridiculous number of live
-        // ranges. The data structure performance is really bad when that
-        // happens.
-        if (JoinPInt.ranges.size() > 1000) {
-          mri_->setRegAllocationHint(JoinVInt.reg, 0, JoinPReg);
-          ++numAborts;
-          DEBUG(dbgs() << "\tPhysical register too complicated, abort!\n");
-          return false;
-        }
 
         const TargetRegisterClass *RC = mri_->getRegClass(JoinVReg);
         unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
@@ -2170,7 +2159,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   // Update the liveintervals of sub-registers.
   if (TargetRegisterInfo::isPhysicalRegister(LHS.reg))
     for (const unsigned *AS = tri_->getSubRegisters(LHS.reg); *AS; ++AS)
-      li_->getOrCreateInterval(*AS).MergeInClobberRanges(*li_, LHS,
+      li_->getOrCreateInterval(*AS).MergeInClobberRanges(*li_, RHS,
                                                     li_->getVNInfoAllocator());
 
   return true;
