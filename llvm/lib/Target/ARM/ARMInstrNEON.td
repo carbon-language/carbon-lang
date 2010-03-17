@@ -213,10 +213,7 @@ def  VLD2q32  : VLD2Q<0b1000, "vld2", "32">;
 class VLD2Ddbl<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b1001,op7_4, (outs DPR:$dst1, DPR:$dst2),
           (ins addrmode6:$addr), IIC_VLD2,
-          OpcodeStr, Dt, "\\{$dst1, $dst2\\}, $addr", "", []> {
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+          OpcodeStr, Dt, "\\{$dst1, $dst2\\}, $addr", "", []>;
 
 def  VLD2d8D  : VLD2Ddbl<0b0000, "vld2", "8">;
 def  VLD2d16D : VLD2Ddbl<0b0100, "vld2", "16">;
@@ -231,10 +228,7 @@ class VLD3WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b10,0b0101,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD3,
           OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3\\}, $addr",
-          "$addr.addr = $wb", []> {
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+          "$addr.addr = $wb", []>;
 
 def  VLD3d8   : VLD3D<0b0000, "vld3", "8">;
 def  VLD3d16  : VLD3D<0b0100, "vld3", "16">;
@@ -266,10 +260,7 @@ class VLD4WB<bits<4> op7_4, string OpcodeStr, string Dt>
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD4,
           OpcodeStr, Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
-          "$addr.addr = $wb", []> {
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+          "$addr.addr = $wb", []>;
 
 def  VLD4d8   : VLD4D<0b0000, "vld4", "8">;
 def  VLD4d16  : VLD4D<0b0100, "vld4", "16">;
@@ -306,28 +297,12 @@ def VLD2LNd16 : VLD2LN<0b0101, "vld2", "16"> { let Inst{5} = 0; }
 def VLD2LNd32 : VLD2LN<0b1001, "vld2", "32"> { let Inst{6} = 0; }
 
 // vld2 to double-spaced even registers.
-def VLD2LNq16a: VLD2LN<0b0101, "vld2", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VLD2LNq32a: VLD2LN<0b1001, "vld2", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VLD2LNq16a: VLD2LN<0b0101, "vld2", "16"> { let Inst{5} = 1; }
+def VLD2LNq32a: VLD2LN<0b1001, "vld2", "32"> { let Inst{6} = 1; }
 
 // vld2 to double-spaced odd registers.
-def VLD2LNq16b: VLD2LN<0b0101, "vld2", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VLD2LNq32b: VLD2LN<0b1001, "vld2", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VLD2LNq16b: VLD2LN<0b0101, "vld2", "16"> { let Inst{5} = 1; }
+def VLD2LNq32b: VLD2LN<0b1001, "vld2", "32"> { let Inst{6} = 1; }
 
 //   VLD3LN   : Vector Load (single 3-element structure to one lane)
 class VLD3LN<bits<4> op11_8, string OpcodeStr, string Dt>
@@ -343,11 +318,7 @@ def VLD3LNd16 : VLD3LN<0b0110, "vld3", "16"> { let Inst{5-4} = 0b00; }
 def VLD3LNd32 : VLD3LN<0b1010, "vld3", "32"> { let Inst{6-4} = 0b000; }
 
 // vld3 to double-spaced even registers.
-def VLD3LNq16a: VLD3LN<0b0110, "vld3", "16"> {
-  let Inst{5-4} = 0b10;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VLD3LNq16a: VLD3LN<0b0110, "vld3", "16"> { let Inst{5-4} = 0b10; }
 def VLD3LNq32a: VLD3LN<0b1010, "vld3", "32"> { let Inst{6-4} = 0b100; }
 
 // vld3 to double-spaced odd registers.
@@ -369,28 +340,12 @@ def VLD4LNd16 : VLD4LN<0b0111, "vld4", "16"> { let Inst{5} = 0; }
 def VLD4LNd32 : VLD4LN<0b1011, "vld4", "32"> { let Inst{6} = 0; }
 
 // vld4 to double-spaced even registers.
-def VLD4LNq16a: VLD4LN<0b0111, "vld4", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VLD4LNq32a: VLD4LN<0b1011, "vld4", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VLD4LNq16a: VLD4LN<0b0111, "vld4", "16"> { let Inst{5} = 1; }
+def VLD4LNq32a: VLD4LN<0b1011, "vld4", "32"> { let Inst{6} = 1; }
 
 // vld4 to double-spaced odd registers.
-def VLD4LNq16b: VLD4LN<0b0111, "vld4", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VLD4LNq32b: VLD4LN<0b1011, "vld4", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VLD4LNq16b: VLD4LN<0b0111, "vld4", "16"> { let Inst{5} = 1; }
+def VLD4LNq32b: VLD4LN<0b1011, "vld4", "32"> { let Inst{6} = 1; }
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
@@ -478,10 +433,7 @@ def  VST2q32  : VST2Q<0b1000, "vst2", "32">;
 class VST2Ddbl<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0, 0b00, 0b1001, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
-          OpcodeStr, Dt, "\\{$src1, $src2\\}, $addr", "", []> {
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+          OpcodeStr, Dt, "\\{$src1, $src2\\}, $addr", "", []>;
 
 def  VST2d8D  : VST2Ddbl<0b0000, "vst2", "8">;
 def  VST2d16D : VST2Ddbl<0b0100, "vst2", "16">;
@@ -496,10 +448,7 @@ class VST3WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0101,op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
           OpcodeStr, Dt, "\\{$src1, $src2, $src3\\}, $addr",
-          "$addr.addr = $wb", []> {
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+          "$addr.addr = $wb", []>;
 
 def  VST3d8   : VST3D<0b0000, "vst3", "8">;
 def  VST3d16  : VST3D<0b0100, "vst3", "16">;
@@ -529,10 +478,7 @@ class VST4WB<bits<4> op7_4, string OpcodeStr, string Dt>
   : NLdSt<0,0b00,0b0001,op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST, OpcodeStr, Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
-          "$addr.addr = $wb", []> {
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+          "$addr.addr = $wb", []>;
 
 def  VST4d8   : VST4D<0b0000, "vst4", "8">;
 def  VST4d16  : VST4D<0b0100, "vst4", "16">;
@@ -569,28 +515,12 @@ def VST2LNd16 : VST2LN<0b0101, "vst2", "16"> { let Inst{5} = 0; }
 def VST2LNd32 : VST2LN<0b1001, "vst2", "32"> { let Inst{6} = 0; }
 
 // vst2 to double-spaced even registers.
-def VST2LNq16a: VST2LN<0b0101, "vst2", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VST2LNq32a: VST2LN<0b1001, "vst2", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VST2LNq16a: VST2LN<0b0101, "vst2", "16"> { let Inst{5} = 1; }
+def VST2LNq32a: VST2LN<0b1001, "vst2", "32"> { let Inst{6} = 1; }
 
 // vst2 to double-spaced odd registers.
-def VST2LNq16b: VST2LN<0b0101, "vst2", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VST2LNq32b: VST2LN<0b1001, "vst2", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VST2LNq16b: VST2LN<0b0101, "vst2", "16"> { let Inst{5} = 1; }
+def VST2LNq32b: VST2LN<0b1001, "vst2", "32"> { let Inst{6} = 1; }
 
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
 class VST3LN<bits<4> op11_8, string OpcodeStr, string Dt>
@@ -605,28 +535,12 @@ def VST3LNd16 : VST3LN<0b0110, "vst3", "16"> { let Inst{5-4} = 0b00; }
 def VST3LNd32 : VST3LN<0b1010, "vst3", "32"> { let Inst{6-4} = 0b000; }
 
 // vst3 to double-spaced even registers.
-def VST3LNq16a: VST3LN<0b0110, "vst3", "16"> {
-  let Inst{5-4} = 0b10;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VST3LNq32a: VST3LN<0b1010, "vst3", "32"> {
-  let Inst{6-4} = 0b100;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VST3LNq16a: VST3LN<0b0110, "vst3", "16"> { let Inst{5-4} = 0b10; }
+def VST3LNq32a: VST3LN<0b1010, "vst3", "32"> { let Inst{6-4} = 0b100; }
 
 // vst3 to double-spaced odd registers.
-def VST3LNq16b: VST3LN<0b0110, "vst3", "16"> {
-  let Inst{5-4} = 0b10;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VST3LNq32b: VST3LN<0b1010, "vst3", "32"> {
-  let Inst{6-4} = 0b100;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VST3LNq16b: VST3LN<0b0110, "vst3", "16"> { let Inst{5-4} = 0b10; }
+def VST3LNq32b: VST3LN<0b1010, "vst3", "32"> { let Inst{6-4} = 0b100; }
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
 class VST4LN<bits<4> op11_8, string OpcodeStr, string Dt>
@@ -642,28 +556,12 @@ def VST4LNd16 : VST4LN<0b0111, "vst4", "16"> { let Inst{5} = 0; }
 def VST4LNd32 : VST4LN<0b1011, "vst4", "32"> { let Inst{6} = 0; }
 
 // vst4 to double-spaced even registers.
-def VST4LNq16a: VST4LN<0b0111, "vst4", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VST4LNq32a: VST4LN<0b1011, "vst4", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VST4LNq16a: VST4LN<0b0111, "vst4", "16"> { let Inst{5} = 1; }
+def VST4LNq32a: VST4LN<0b1011, "vst4", "32"> { let Inst{6} = 1; }
 
 // vst4 to double-spaced odd registers.
-def VST4LNq16b: VST4LN<0b0111, "vst4", "16"> {
-  let Inst{5} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
-def VST4LNq32b: VST4LN<0b1011, "vst4", "32"> {
-  let Inst{6} = 1;
-  let NSF    = VLDSTLaneDblFrm;       // For disassembly.
-  let NSForm = VLDSTLaneDblFrm.Value; // For disassembly.
-}
+def VST4LNq16b: VST4LN<0b0111, "vst4", "16"> { let Inst{5} = 1; }
+def VST4LNq32b: VST4LN<0b1011, "vst4", "32"> { let Inst{6} = 1; }
 
 } // mayStore = 1, hasExtraSrcRegAllocReq = 1
 
@@ -770,18 +668,12 @@ class N2VDShuffle<bits<2> op19_18, bits<5> op11_7, string OpcodeStr, string Dt>
   : N2V<0b11, 0b11, op19_18, 0b10, op11_7, 0, 0, (outs DPR:$dst1, DPR:$dst2),
         (ins DPR:$src1, DPR:$src2), IIC_VPERMD, 
         OpcodeStr, Dt, "$dst1, $dst2",
-        "$src1 = $dst1, $src2 = $dst2", []> {
-  let NSF    = NVectorShuffleFrm;       // For disassembly.
-  let NSForm = NVectorShuffleFrm.Value; // For disassembly.
-}
+        "$src1 = $dst1, $src2 = $dst2", []>;
 class N2VQShuffle<bits<2> op19_18, bits<5> op11_7,
                   InstrItinClass itin, string OpcodeStr, string Dt>
   : N2V<0b11, 0b11, op19_18, 0b10, op11_7, 1, 0, (outs QPR:$dst1, QPR:$dst2),
         (ins QPR:$src1, QPR:$src2), itin, OpcodeStr, Dt, "$dst1, $dst2",
-        "$src1 = $dst1, $src2 = $dst2", []> {
-  let NSF    = NVectorShuffleFrm;       // For disassembly.
-  let NSForm = NVectorShuffleFrm.Value; // For disassembly.
-}
+        "$src1 = $dst1, $src2 = $dst2", []>;
 
 // Basic 3-register operations: single-, double- and quad-register.
 class N3VS<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -823,8 +715,6 @@ class N3VDSL<bits<2> op21_20, bits<4> op11_8,
               (Ty (ShOp (Ty DPR:$src1),
                         (Ty (NEONvduplane (Ty DPR_VFP2:$src2), imm:$lane)))))]>{
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 class N3VDSL16<bits<2> op21_20, bits<4> op11_8, 
                string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
@@ -835,8 +725,6 @@ class N3VDSL16<bits<2> op21_20, bits<4> op11_8,
               (Ty (ShOp (Ty DPR:$src1),
                         (Ty (NEONvduplane (Ty DPR_8:$src2), imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 
 class N3VQ<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -868,8 +756,6 @@ class N3VQSL<bits<2> op21_20, bits<4> op11_8,
                            (ResTy (NEONvduplane (OpTy DPR_VFP2:$src2),
                                                 imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 class N3VQSL16<bits<2> op21_20, bits<4> op11_8, string OpcodeStr, string Dt,
                ValueType ResTy, ValueType OpTy, SDNode ShOp>
@@ -881,8 +767,6 @@ class N3VQSL16<bits<2> op21_20, bits<4> op11_8, string OpcodeStr, string Dt,
                            (ResTy (NEONvduplane (OpTy DPR_8:$src2),
                                                 imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 
 // Basic 3-register intrinsics, both double- and quad-register.
@@ -905,8 +789,6 @@ class N3VDIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                          (Ty (NEONvduplane (Ty DPR_VFP2:$src2),
                                            imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 class N3VDIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                   string OpcodeStr, string Dt, ValueType Ty, Intrinsic IntOp>
@@ -918,8 +800,6 @@ class N3VDIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                          (Ty (NEONvduplane (Ty DPR_8:$src2),
                                            imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 
 class N3VQInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -942,8 +822,6 @@ class N3VQIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                             (ResTy (NEONvduplane (OpTy DPR_VFP2:$src2),
                                                  imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 class N3VQIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                   string OpcodeStr, string Dt,
@@ -956,8 +834,6 @@ class N3VQIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                             (ResTy (NEONvduplane (OpTy DPR_8:$src2),
                                                  imm:$lane)))))]> {
   let isCommutable = 0;
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
 }
 
 // Multiply-Add/Sub operations: single-, double- and quad-register.
@@ -988,10 +864,7 @@ class N3VDMulOpSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
               (Ty (ShOp (Ty DPR:$src1),
                         (Ty (MulOp DPR:$src2,
                                    (Ty (NEONvduplane (Ty DPR_VFP2:$src3),
-                                                     imm:$lane)))))))]> {
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
-}
+                                                     imm:$lane)))))))]>;
 class N3VDMulOpSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                     string OpcodeStr, string Dt,
                     ValueType Ty, SDNode MulOp, SDNode ShOp>
@@ -1003,10 +876,7 @@ class N3VDMulOpSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
               (Ty (ShOp (Ty DPR:$src1),
                         (Ty (MulOp DPR:$src2,
                                    (Ty (NEONvduplane (Ty DPR_8:$src3),
-                                                     imm:$lane)))))))]> {
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
-}
+                                                     imm:$lane)))))))]>;
 
 class N3VQMulOp<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
                 InstrItinClass itin, string OpcodeStr, string Dt, ValueType Ty,
@@ -1027,10 +897,7 @@ class N3VQMulOpSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
               (ResTy (ShOp (ResTy QPR:$src1),
                            (ResTy (MulOp QPR:$src2,
                                    (ResTy (NEONvduplane (OpTy DPR_VFP2:$src3),
-                                                        imm:$lane)))))))]> {
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
-}
+                                                        imm:$lane)))))))]>;
 class N3VQMulOpSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                     string OpcodeStr, string Dt,
                     ValueType ResTy, ValueType OpTy,
@@ -1043,10 +910,7 @@ class N3VQMulOpSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
               (ResTy (ShOp (ResTy QPR:$src1),
                            (ResTy (MulOp QPR:$src2,
                                    (ResTy (NEONvduplane (OpTy DPR_8:$src3),
-                                                        imm:$lane)))))))]> {
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
-}
+                                                        imm:$lane)))))))]>;
 
 // Neon 3-argument intrinsics, both double- and quad-register.
 // The destination register is also used as the first source operand register.
@@ -1132,10 +996,7 @@ class N3VLIntSL<bit op24, bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
         [(set (ResTy QPR:$dst),
               (ResTy (IntOp (OpTy DPR:$src1),
                             (OpTy (NEONvduplane (OpTy DPR_VFP2:$src2),
-                                                imm:$lane)))))]> {
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
-}
+                                                imm:$lane)))))]>;
 class N3VLIntSL16<bit op24, bits<2> op21_20, bits<4> op11_8,
                   InstrItinClass itin, string OpcodeStr, string Dt,
                   ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
@@ -1145,10 +1006,7 @@ class N3VLIntSL16<bit op24, bits<2> op21_20, bits<4> op11_8,
         [(set (ResTy QPR:$dst),
               (ResTy (IntOp (OpTy DPR:$src1),
                             (OpTy (NEONvduplane (OpTy DPR_8:$src2),
-                                                imm:$lane)))))]> {
-  let NSF    = NVdVnVmImmMulScalarFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmMulScalarFrm.Value; // For disassembly.
-}
+                                                imm:$lane)))))]>;
 
 // Wide 3-register intrinsics.
 class N3VWInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
@@ -1197,10 +1055,6 @@ class N2VQPLInt2<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         OpcodeStr, Dt, "$dst, $src2", "$src1 = $dst",
         [(set QPR:$dst, (ResTy (IntOp (ResTy QPR:$src1), (OpTy QPR:$src2))))]>;
 
-// This is a big let * in block to mark these instructions NVectorShiftFrm to
-// help the disassembler.
-let NSF = NVectorShiftFrm, NSForm = NVectorShiftFrm.Value in {
-
 // Shift by immediate,
 // both double- and quad-register.
 class N2VDSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
@@ -1217,6 +1071,16 @@ class N2VQSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
            (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), itin,
            OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set QPR:$dst, (Ty (OpNode (Ty QPR:$src), (i32 imm:$SIMM))))]>;
+
+// Long shift by immediate.
+class N2VLSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
+             string OpcodeStr, string Dt,
+             ValueType ResTy, ValueType OpTy, SDNode OpNode>
+  : N2VImm<op24, op23, op11_8, op7, op6, op4,
+           (outs QPR:$dst), (ins DPR:$src, i32imm:$SIMM), IIC_VSHLiD,
+           OpcodeStr, Dt, "$dst, $src, $SIMM", "",
+           [(set QPR:$dst, (ResTy (OpNode (OpTy DPR:$src),
+                                          (i32 imm:$SIMM))))]>;
 
 // Narrow shift by immediate.
 class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
@@ -1260,26 +1124,8 @@ class N2VQShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
            OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
            [(set QPR:$dst, (Ty (ShOp QPR:$src1, QPR:$src2, (i32 imm:$SIMM))))]>;
 
-} // End of "let NSF = NVectorShiftFrm, ..."
-
-// Long shift by immediate.
-class N2VLSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
-             string OpcodeStr, string Dt,
-             ValueType ResTy, ValueType OpTy, SDNode OpNode>
-  : N2VImm<op24, op23, op11_8, op7, op6, op4,
-           (outs QPR:$dst), (ins DPR:$src, i32imm:$SIMM), IIC_VSHLiD,
-           OpcodeStr, Dt, "$dst, $src, $SIMM", "",
-           [(set QPR:$dst, (ResTy (OpNode (OpTy DPR:$src),
-                                          (i32 imm:$SIMM))))]> {
-  // This has a different interpretation of the shift amount encoding than
-  // NVectorShiftFrm.
-  let NSF    = NVectorShift2Frm;       // For disassembly.
-  let NSForm = NVectorShift2Frm.Value; // For disassembly.
-}
-
 // Convert, with fractional bits immediate,
 // both double- and quad-register.
-let NSF = NVdVmImmVCVTFrm, NSForm = NVdVmImmVCVTFrm.Value in {
 class N2VCvtD<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
               string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
               Intrinsic IntOp>
@@ -1294,7 +1140,6 @@ class N2VCvtQ<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
            (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), IIC_VUNAQ, 
            OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src), (i32 imm:$SIMM))))]>;
-}
 
 //===----------------------------------------------------------------------===//
 // Multiclasses
@@ -1505,60 +1350,6 @@ multiclass N3VInt_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
                       v2i64, v2i64, IntOp, Commutable>;
 }
 
-// Same as N3VInt_QHSD, except they're for Vector Shift (Register) Instructions.
-// D:Vd M:Vm N:Vn (notice that M:Vm is the first operand)
-// This helps the disassembler.
-let NSF = NVdVnVmImmVectorShiftFrm, NSForm = NVdVnVmImmVectorShiftFrm.Value in {
-multiclass N3VInt_HS2<bit op24, bit op23, bits<4> op11_8, bit op4,
-                     InstrItinClass itinD16, InstrItinClass itinD32,
-                     InstrItinClass itinQ16, InstrItinClass itinQ32,
-                     string OpcodeStr, string Dt,
-                     Intrinsic IntOp, bit Commutable = 0> {
-  // 64-bit vector types.
-  def v4i16 : N3VDInt<op24, op23, 0b01, op11_8, op4, itinD16,
-                      OpcodeStr, !strconcat(Dt, "16"),
-                      v4i16, v4i16, IntOp, Commutable>;
-  def v2i32 : N3VDInt<op24, op23, 0b10, op11_8, op4, itinD32,
-                      OpcodeStr, !strconcat(Dt, "32"),
-                      v2i32, v2i32, IntOp, Commutable>;
-
-  // 128-bit vector types.
-  def v8i16 : N3VQInt<op24, op23, 0b01, op11_8, op4, itinQ16,
-                      OpcodeStr, !strconcat(Dt, "16"),
-                      v8i16, v8i16, IntOp, Commutable>;
-  def v4i32 : N3VQInt<op24, op23, 0b10, op11_8, op4, itinQ32,
-                      OpcodeStr, !strconcat(Dt, "32"),
-                      v4i32, v4i32, IntOp, Commutable>;
-}
-multiclass N3VInt_QHS2<bit op24, bit op23, bits<4> op11_8, bit op4,
-                      InstrItinClass itinD16, InstrItinClass itinD32,
-                      InstrItinClass itinQ16, InstrItinClass itinQ32,
-                      string OpcodeStr, string Dt,
-                      Intrinsic IntOp, bit Commutable = 0>
-  : N3VInt_HS2<op24, op23, op11_8, op4, itinD16, itinD32, itinQ16, itinQ32,
-              OpcodeStr, Dt, IntOp, Commutable> {
-  def v8i8  : N3VDInt<op24, op23, 0b00, op11_8, op4, itinD16,
-                      OpcodeStr, !strconcat(Dt, "8"),
-                      v8i8, v8i8, IntOp, Commutable>;
-  def v16i8 : N3VQInt<op24, op23, 0b00, op11_8, op4, itinQ16,
-                      OpcodeStr, !strconcat(Dt, "8"),
-                      v16i8, v16i8, IntOp, Commutable>;
-}
-multiclass N3VInt_QHSD2<bit op24, bit op23, bits<4> op11_8, bit op4,
-                       InstrItinClass itinD16, InstrItinClass itinD32,
-                       InstrItinClass itinQ16, InstrItinClass itinQ32,
-                       string OpcodeStr, string Dt,
-                       Intrinsic IntOp, bit Commutable = 0>
-  : N3VInt_QHS2<op24, op23, op11_8, op4, itinD16, itinD32, itinQ16, itinQ32,
-               OpcodeStr, Dt, IntOp, Commutable> {
-  def v1i64 : N3VDInt<op24, op23, 0b11, op11_8, op4, itinD32,
-                      OpcodeStr, !strconcat(Dt, "64"),
-                      v1i64, v1i64, IntOp, Commutable>;
-  def v2i64 : N3VQInt<op24, op23, 0b11, op11_8, op4, itinQ32,
-                      OpcodeStr, !strconcat(Dt, "64"),
-                      v2i64, v2i64, IntOp, Commutable>;
-}
-}
 
 // Neon Narrowing 3-register vector intrinsics,
 //   source operand element sizes of 16, 32 and 64 bits:
@@ -1828,47 +1619,6 @@ multiclass N2VSh_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
                              // imm6 = xxxxxx
 }
 
-// Same as N2VSh_QHSD, except the instructions have a differnt interpretation of
-// the shift amount.  This helps the disassembler.
-let NSF = NVectorShift2Frm, NSForm = NVectorShift2Frm.Value in {
-multiclass N2VSh_QHSD2<bit op24, bit op23, bits<4> op11_8, bit op4,
-                      InstrItinClass itin, string OpcodeStr, string Dt,
-                      SDNode OpNode> {
-  // 64-bit vector types.
-  def v8i8  : N2VDSh<op24, op23, op11_8, 0, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "8"), v8i8, OpNode> {
-    let Inst{21-19} = 0b001; // imm6 = 001xxx
-  }
-  def v4i16 : N2VDSh<op24, op23, op11_8, 0, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "16"), v4i16, OpNode> {
-    let Inst{21-20} = 0b01;  // imm6 = 01xxxx
-  }
-  def v2i32 : N2VDSh<op24, op23, op11_8, 0, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "32"), v2i32, OpNode> {
-    let Inst{21} = 0b1;      // imm6 = 1xxxxx
-  }
-  def v1i64 : N2VDSh<op24, op23, op11_8, 1, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "64"), v1i64, OpNode>;
-                             // imm6 = xxxxxx
-
-  // 128-bit vector types.
-  def v16i8 : N2VQSh<op24, op23, op11_8, 0, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "8"), v16i8, OpNode> {
-    let Inst{21-19} = 0b001; // imm6 = 001xxx
-  }
-  def v8i16 : N2VQSh<op24, op23, op11_8, 0, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "16"), v8i16, OpNode> {
-    let Inst{21-20} = 0b01;  // imm6 = 01xxxx
-  }
-  def v4i32 : N2VQSh<op24, op23, op11_8, 0, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "32"), v4i32, OpNode> {
-    let Inst{21} = 0b1;      // imm6 = 1xxxxx
-  }
-  def v2i64 : N2VQSh<op24, op23, op11_8, 1, op4, itin,
-                     OpcodeStr, !strconcat(Dt, "64"), v2i64, OpNode>;
-                             // imm6 = xxxxxx
-}
-}
 
 // Neon Shift-Accumulate vector operations,
 //   element sizes of 8, 16, 32 and 64 bits:
@@ -1947,47 +1697,6 @@ multiclass N2VShIns_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
   def v2i64 : N2VQShIns<op24, op23, op11_8, 1, op4,
                         OpcodeStr, "64", v2i64, ShOp>;
                              // imm6 = xxxxxx
-}
-
-// Same as N2VShIns_QHSD, except the instructions have a differnt interpretation
-// of the shift amount.  This helps the disassembler.
-let NSF = NVectorShift2Frm, NSForm = NVectorShift2Frm.Value in {
-multiclass N2VShIns_QHSD2<bit op24, bit op23, bits<4> op11_8, bit op4,
-                         string OpcodeStr, SDNode ShOp> {
-  // 64-bit vector types.
-  def v8i8  : N2VDShIns<op24, op23, op11_8, 0, op4,
-                        OpcodeStr, "8", v8i8, ShOp> {
-    let Inst{21-19} = 0b001; // imm6 = 001xxx
-  }
-  def v4i16 : N2VDShIns<op24, op23, op11_8, 0, op4,
-                        OpcodeStr, "16", v4i16, ShOp> {
-    let Inst{21-20} = 0b01;  // imm6 = 01xxxx
-  }
-  def v2i32 : N2VDShIns<op24, op23, op11_8, 0, op4,
-                        OpcodeStr, "32", v2i32, ShOp> {
-    let Inst{21} = 0b1;      // imm6 = 1xxxxx
-  }
-  def v1i64 : N2VDShIns<op24, op23, op11_8, 1, op4,
-                        OpcodeStr, "64", v1i64, ShOp>;
-                             // imm6 = xxxxxx
-
-  // 128-bit vector types.
-  def v16i8 : N2VQShIns<op24, op23, op11_8, 0, op4,
-                        OpcodeStr, "8", v16i8, ShOp> {
-    let Inst{21-19} = 0b001; // imm6 = 001xxx
-  }
-  def v8i16 : N2VQShIns<op24, op23, op11_8, 0, op4,
-                        OpcodeStr, "16", v8i16, ShOp> {
-    let Inst{21-20} = 0b01;  // imm6 = 01xxxx
-  }
-  def v4i32 : N2VQShIns<op24, op23, op11_8, 0, op4,
-                        OpcodeStr, "32", v4i32, ShOp> {
-    let Inst{21} = 0b1;      // imm6 = 1xxxxx
-  }
-  def v2i64 : N2VQShIns<op24, op23, op11_8, 1, op4,
-                        OpcodeStr, "64", v2i64, ShOp>;
-                             // imm6 = xxxxxx
-}
 }
 
 // Neon Shift Long operations,
@@ -2620,21 +2329,18 @@ def VRSQRTSfq : N3VQInt<0, 0, 0b10, 0b1111, 1,
 // Vector Shifts.
 
 //   VSHL     : Vector Shift
-defm VSHLs    : N3VInt_QHSD2<0,0, 0b0100, 0, IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ,
-                             IIC_VSHLiQ, "vshl", "s", int_arm_neon_vshifts, 0>;
-defm VSHLu    : N3VInt_QHSD2<1,0, 0b0100, 0, IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ,
-                             IIC_VSHLiQ, "vshl", "u", int_arm_neon_vshiftu, 0>;
+defm VSHLs    : N3VInt_QHSD<0, 0, 0b0100, 0, IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ,
+                            IIC_VSHLiQ, "vshl", "s", int_arm_neon_vshifts, 0>;
+defm VSHLu    : N3VInt_QHSD<1, 0, 0b0100, 0, IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ,
+                            IIC_VSHLiQ, "vshl", "u", int_arm_neon_vshiftu, 0>;
 //   VSHL     : Vector Shift Left (Immediate)
-//   (disassembly note: this has a different interpretation of the shift amont)
-defm VSHLi    : N2VSh_QHSD2<0, 1, 0b0101, 1, IIC_VSHLiD, "vshl", "i", NEONvshl>;
+defm VSHLi    : N2VSh_QHSD<0, 1, 0b0101, 1, IIC_VSHLiD, "vshl", "i", NEONvshl>;
 //   VSHR     : Vector Shift Right (Immediate)
 defm VSHRs    : N2VSh_QHSD<0, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "s", NEONvshrs>;
 defm VSHRu    : N2VSh_QHSD<1, 1, 0b0000, 1, IIC_VSHLiD, "vshr", "u", NEONvshru>;
 
 //   VSHLL    : Vector Shift Left Long
-//   (disassembly note: this has a different interpretation of the shift amont)
 defm VSHLLs   : N2VLSh_QHS<0, 1, 0b1010, 0, 0, 1, "vshll", "s", NEONvshlls>;
-//   (disassembly note: this has a different interpretation of the shift amont)
 defm VSHLLu   : N2VLSh_QHS<1, 1, 0b1010, 0, 0, 1, "vshll", "u", NEONvshllu>;
 
 //   VSHLL    : Vector Shift Left Long (with maximum shift count)
@@ -2644,8 +2350,6 @@ class N2VLShMax<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
   : N2VLSh<op24, op23, op11_8, op7, op6, op4, OpcodeStr, Dt,
            ResTy, OpTy, OpNode> {
   let Inst{21-16} = op21_16;
-  let NSF    = NVdVmImmVSHLLFrm;       // For disassembly.
-  let NSForm = NVdVmImmVSHLLFrm.Value; // For disassembly.
 }
 def  VSHLLi8  : N2VLShMax<1, 1, 0b110010, 0b0011, 0, 0, 0, "vshll", "i8",
                           v8i16, v8i8, NEONvshlli>;
@@ -2659,10 +2363,10 @@ defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",
                            NEONvshrn>;
 
 //   VRSHL    : Vector Rounding Shift
-defm VRSHLs   : N3VInt_QHSD2<0,0,0b0101,0,IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
-                             IIC_VSHLi4Q,"vrshl", "s", int_arm_neon_vrshifts,0>;
-defm VRSHLu   : N3VInt_QHSD2<1,0,0b0101,0,IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
-                             IIC_VSHLi4Q,"vrshl", "u", int_arm_neon_vrshiftu,0>;
+defm VRSHLs   : N3VInt_QHSD<0,0,0b0101,0, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
+                            IIC_VSHLi4Q, "vrshl", "s", int_arm_neon_vrshifts,0>;
+defm VRSHLu   : N3VInt_QHSD<1,0,0b0101,0, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
+                            IIC_VSHLi4Q, "vrshl", "u", int_arm_neon_vrshiftu,0>;
 //   VRSHR    : Vector Rounding Shift Right
 defm VRSHRs   : N2VSh_QHSD<0,1,0b0010,1, IIC_VSHLi4D, "vrshr", "s", NEONvrshrs>;
 defm VRSHRu   : N2VSh_QHSD<1,1,0b0010,1, IIC_VSHLi4D, "vrshr", "u", NEONvrshru>;
@@ -2672,18 +2376,15 @@ defm VRSHRN   : N2VNSh_HSD<0, 1, 0b1000, 0, 1, 1, IIC_VSHLi4D, "vrshrn", "i",
                            NEONvrshrn>;
 
 //   VQSHL    : Vector Saturating Shift
-defm VQSHLs   : N3VInt_QHSD2<0,0,0b0100,1,IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
-                             IIC_VSHLi4Q, "vqshl", "s", int_arm_neon_vqshifts,0>;
-defm VQSHLu   : N3VInt_QHSD2<1,0,0b0100,1,IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
-                             IIC_VSHLi4Q, "vqshl", "u", int_arm_neon_vqshiftu,0>;
+defm VQSHLs   : N3VInt_QHSD<0,0,0b0100,1, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
+                            IIC_VSHLi4Q, "vqshl", "s", int_arm_neon_vqshifts,0>;
+defm VQSHLu   : N3VInt_QHSD<1,0,0b0100,1, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
+                            IIC_VSHLi4Q, "vqshl", "u", int_arm_neon_vqshiftu,0>;
 //   VQSHL    : Vector Saturating Shift Left (Immediate)
-//   (disassembly note: this has a different interpretation of the shift amont)
-defm VQSHLsi  : N2VSh_QHSD2<0,1,0b0111,1, IIC_VSHLi4D, "vqshl", "s", NEONvqshls>;
-//   (disassembly note: this has a different interpretation of the shift amont)
-defm VQSHLui  : N2VSh_QHSD2<1,1,0b0111,1, IIC_VSHLi4D, "vqshl", "u", NEONvqshlu>;
+defm VQSHLsi  : N2VSh_QHSD<0,1,0b0111,1, IIC_VSHLi4D, "vqshl", "s", NEONvqshls>;
+defm VQSHLui  : N2VSh_QHSD<1,1,0b0111,1, IIC_VSHLi4D, "vqshl", "u", NEONvqshlu>;
 //   VQSHLU   : Vector Saturating Shift Left (Immediate, Unsigned)
-//   (disassembly note: this has a different interpretation of the shift amont)
-defm VQSHLsu  : N2VSh_QHSD2<1,1,0b0110,1, IIC_VSHLi4D, "vqshlu","s",NEONvqshlsu>;
+defm VQSHLsu  : N2VSh_QHSD<1,1,0b0110,1, IIC_VSHLi4D, "vqshlu","s",NEONvqshlsu>;
 
 //   VQSHRN   : Vector Saturating Shift Right and Narrow
 defm VQSHRNs  : N2VNSh_HSD<0, 1, 0b1001, 0, 0, 1, IIC_VSHLi4D, "vqshrn", "s",
@@ -2696,12 +2397,12 @@ defm VQSHRUN  : N2VNSh_HSD<1, 1, 0b1000, 0, 0, 1, IIC_VSHLi4D, "vqshrun", "s",
                            NEONvqshrnsu>;
 
 //   VQRSHL   : Vector Saturating Rounding Shift
-defm VQRSHLs  : N3VInt_QHSD2<0,0,0b0101,1, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
-                             IIC_VSHLi4Q, "vqrshl", "s",
-                             int_arm_neon_vqrshifts, 0>;
-defm VQRSHLu  : N3VInt_QHSD2<1,0,0b0101,1, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
-                             IIC_VSHLi4Q, "vqrshl", "u",
-                             int_arm_neon_vqrshiftu, 0>;
+defm VQRSHLs  : N3VInt_QHSD<0,0,0b0101,1, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
+                            IIC_VSHLi4Q, "vqrshl", "s",
+                            int_arm_neon_vqrshifts, 0>;
+defm VQRSHLu  : N3VInt_QHSD<1,0,0b0101,1, IIC_VSHLi4D, IIC_VSHLi4D, IIC_VSHLi4Q,
+                            IIC_VSHLi4Q, "vqrshl", "u",
+                            int_arm_neon_vqrshiftu, 0>;
 
 //   VQRSHRN  : Vector Saturating Rounding Shift Right and Narrow
 defm VQRSHRNs : N2VNSh_HSD<0, 1, 0b1001, 0, 1, 1, IIC_VSHLi4D, "vqrshrn", "s",
@@ -2721,8 +2422,7 @@ defm VRSRAs   : N2VShAdd_QHSD<0, 1, 0b0011, 1, "vrsra", "s", NEONvrshrs>;
 defm VRSRAu   : N2VShAdd_QHSD<1, 1, 0b0011, 1, "vrsra", "u", NEONvrshru>;
 
 //   VSLI     : Vector Shift Left and Insert
-//   (disassembly note: this has a different interpretation of the shift amont)
-defm VSLI     : N2VShIns_QHSD2<1, 1, 0b0101, 1, "vsli", NEONvsli>;
+defm VSLI     : N2VShIns_QHSD<1, 1, 0b0101, 1, "vsli", NEONvsli>;
 //   VSRI     : Vector Shift Right and Insert
 defm VSRI     : N2VShIns_QHSD<1, 1, 0b0100, 1, "vsri", NEONvsri>;
 
@@ -2818,13 +2518,10 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 
 //   VMOV     : Vector Move (Register)
 
-// Mark these instructions as 2-register instructions to help the disassembler.
-let NSF = NVdVmImmFrm, NSForm = NVdVmImmFrm.Value in {
 def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
                     IIC_VMOVD, "vmov", "$dst, $src", "", []>;
 def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
                     IIC_VMOVD, "vmov", "$dst, $src", "", []>;
-}
 
 //   VMOV     : Vector Move (Immediate)
 
@@ -3065,7 +2762,6 @@ def  VDUPfq   : NVDup<0b11101010, 0b1011, 0b00, (outs QPR:$dst), (ins GPR:$src),
 
 //   VDUP     : Vector Duplicate Lane (from scalar to all elements)
 
-let NSF = NVdVmImmVDupLaneFrm, NSForm = NVdVmImmVDupLaneFrm.Value in {
 class VDUPLND<bits<2> op19_18, bits<2> op17_16,
               string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, op19_18, op17_16, 0b11000, 0, 0,
@@ -3079,7 +2775,6 @@ class VDUPLNQ<bits<2> op19_18, bits<2> op17_16, string OpcodeStr, string Dt,
         (outs QPR:$dst), (ins DPR:$src, nohash_imm:$lane), IIC_VMOVD,
         OpcodeStr, Dt, "$dst, $src[$lane]", "",
         [(set QPR:$dst, (ResTy (NEONvduplane (OpTy DPR:$src), imm:$lane)))]>;
-}
 
 // Inst{19-16} is partially specified depending on the element size.
 
@@ -3148,37 +2843,24 @@ defm VMOVLu   : N2VLInt_QHS<0b11,0b10100,0,1, "vmovl", "u",
 
 // Vector Conversions.
 
-let NSF = NVdVmImmVCVTFrm, NSForm = NVdVmImmVCVTFrm.Value in {
-class N2VDX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
-           bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
-           string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
-  : N2VD<op24_23, op21_20, op19_18, op17_16, op11_7, op4, OpcodeStr, Dt,
-         ResTy, OpTy, OpNode>;
-class N2VQX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
-           bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
-           string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
-  : N2VQ<op24_23, op21_20, op19_18, op17_16, op11_7, op4, OpcodeStr, Dt,
-         ResTy, OpTy, OpNode>;
-}
-
 //   VCVT     : Vector Convert Between Floating-Point and Integers
-def  VCVTf2sd : N2VDX<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32",
-                      v2i32, v2f32, fp_to_sint>;
-def  VCVTf2ud : N2VDX<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32",
-                      v2i32, v2f32, fp_to_uint>;
-def  VCVTs2fd : N2VDX<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
-                      v2f32, v2i32, sint_to_fp>;
-def  VCVTu2fd : N2VDX<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
-                      v2f32, v2i32, uint_to_fp>;
+def  VCVTf2sd : N2VD<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32",
+                     v2i32, v2f32, fp_to_sint>;
+def  VCVTf2ud : N2VD<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32",
+                     v2i32, v2f32, fp_to_uint>;
+def  VCVTs2fd : N2VD<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
+                     v2f32, v2i32, sint_to_fp>;
+def  VCVTu2fd : N2VD<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
+                     v2f32, v2i32, uint_to_fp>;
 
-def  VCVTf2sq : N2VQX<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32",
-                      v4i32, v4f32, fp_to_sint>;
-def  VCVTf2uq : N2VQX<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32",
-                      v4i32, v4f32, fp_to_uint>;
-def  VCVTs2fq : N2VQX<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
-                      v4f32, v4i32, sint_to_fp>;
-def  VCVTu2fq : N2VQX<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
-                      v4f32, v4i32, uint_to_fp>;
+def  VCVTf2sq : N2VQ<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32",
+                     v4i32, v4f32, fp_to_sint>;
+def  VCVTf2uq : N2VQ<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32",
+                     v4i32, v4f32, fp_to_uint>;
+def  VCVTs2fq : N2VQ<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
+                     v4f32, v4i32, sint_to_fp>;
+def  VCVTu2fq : N2VQ<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
+                     v4f32, v4i32, uint_to_fp>;
 
 //   VCVT     : Vector Convert Between Floating-Point and Fixed-Point.
 def VCVTf2xsd : N2VCvtD<0, 1, 0b1111, 0, 1, "vcvt", "s32.f32",
@@ -3263,8 +2945,6 @@ def VREV16q8  : VREV16Q<0b00, "vrev16", "8", v16i8>;
 
 //   VEXT     : Vector Extract
 
-let NSF    = NVdVnVmImmVectorExtractFrm,
-    NSForm = NVdVnVmImmVectorExtractFrm.Value in {
 class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
   : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$dst),
         (ins DPR:$lhs, DPR:$rhs, i32imm:$index), IIC_VEXTD,
@@ -3278,7 +2958,6 @@ class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
         OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
         [(set QPR:$dst, (Ty (NEONvext (Ty QPR:$lhs),
                                       (Ty QPR:$rhs), imm:$index)))]>;
-}
 
 def VEXTd8  : VEXTd<"vext", "8",  v8i8>;
 def VEXTd16 : VEXTd<"vext", "16", v4i16>;
@@ -3321,8 +3000,6 @@ def  VZIPq16  : N2VQShuffle<0b01, 0b00011, IIC_VPERMQ3, "vzip", "16">;
 def  VZIPq32  : N2VQShuffle<0b10, 0b00011, IIC_VPERMQ3, "vzip", "32">;
 
 // Vector Table Lookup and Table Extension.
-
-let NSF = VTBLFrm, NSForm = VTBLFrm.Value in {
 
 //   VTBL     : Vector Table Lookup
 def  VTBL1
@@ -3379,8 +3056,6 @@ def  VTBX4
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx4 DPR:$orig, DPR:$tbl1,
                                DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
 } // hasExtraSrcRegAllocReq = 1
-
-} // End of "let NSF = VTBLFrm, ..."
 
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math

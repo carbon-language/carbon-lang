@@ -1464,29 +1464,6 @@ class AVConv5I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops,
 // ARM NEON Instruction templates.
 //
 
-// NSFormat specifies further details of a NEON instruction.  This is used by
-// the disassembler to classify NEONFrm instructions for disassembly purpose.
-class NSFormat<bits<5> val> {
-  bits<5> Value = val;
-}
-def NSFormatNone               : NSFormat<0>;
-def VLDSTLaneFrm               : NSFormat<1>;
-def VLDSTLaneDblFrm            : NSFormat<2>;
-def VLDSTRQFrm                 : NSFormat<3>;
-def NVdImmFrm                  : NSFormat<4>;
-def NVdVmImmFrm                : NSFormat<5>;
-def NVdVmImmVCVTFrm            : NSFormat<6>;
-def NVdVmImmVDupLaneFrm        : NSFormat<7>;
-def NVdVmImmVSHLLFrm           : NSFormat<8>;
-def NVectorShuffleFrm          : NSFormat<9>;
-def NVectorShiftFrm            : NSFormat<10>;
-def NVectorShift2Frm           : NSFormat<11>;
-def NVdVnVmImmFrm              : NSFormat<12>;
-def NVdVnVmImmVectorShiftFrm   : NSFormat<13>;
-def NVdVnVmImmVectorExtractFrm : NSFormat<14>;
-def NVdVnVmImmMulScalarFrm     : NSFormat<15>;
-def VTBLFrm                    : NSFormat<16>;
-
 class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
             string opc, string dt, string asm, string cstr, list<dag> pattern>
   : InstARM<am, Size4Bytes, im, NEONFrm, NeonDomain, cstr, itin> {
@@ -1497,8 +1474,6 @@ class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
                      !strconcat("\t", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
-  NSFormat NSF = NSFormatNone;         // For disassembly.
-  bits<5> NSForm = NSFormatNone.Value; // For disassembly.
 }
 
 // Same as NeonI except it does not have a "data type" specifier.
@@ -1510,8 +1485,6 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
   let AsmString = !strconcat(!strconcat(opc, "${p}"), !strconcat("\t", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
-  NSFormat NSF = NSFormatNone;         // For disassembly.
-  bits<5> NSForm = NSFormatNone.Value; // For disassembly.
 }
 
 class NI<dag oops, dag iops, InstrItinClass itin, string opc, string asm,
@@ -1524,8 +1497,6 @@ class NI4<dag oops, dag iops, InstrItinClass itin, string opc,
           string asm, list<dag> pattern>
   : NeonXI<oops, iops, AddrMode4, IndexModeNone, itin, opc, asm, "",
           pattern> {
-  let NSF    = VLDSTRQFrm;       // For disassembly.
-  let NSForm = VLDSTRQFrm.Value; // For disassembly.
 }
 
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
@@ -1538,8 +1509,6 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{21-20} = op21_20;
   let Inst{11-8} = op11_8;
   let Inst{7-4} = op7_4;
-  let NSF    = VLDSTLaneFrm;       // For disassembly.
-  let NSForm = VLDSTLaneFrm.Value; // For disassembly.
 }
 
 class NDataI<dag oops, dag iops, InstrItinClass itin,
@@ -1569,8 +1538,6 @@ class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
   let Inst{6} = op6;
   let Inst{5} = op5;
   let Inst{4} = op4;
-  let NSF    = NVdImmFrm;       // For disassembly.
-  let NSForm = NVdImmFrm.Value; // For disassembly.
 }
 
 // NEON 2 vector register format.
@@ -1586,8 +1553,6 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
   let Inst{11-7} = op11_7;
   let Inst{6} = op6;
   let Inst{4} = op4;
-  let NSF    = NVdVmImmFrm;       // For disassembly.
-  let NSForm = NVdVmImmFrm.Value; // For disassembly.
 }
 
 // Same as N2V except it doesn't have a datatype suffix.
@@ -1603,8 +1568,6 @@ class N2VX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
   let Inst{11-7} = op11_7;
   let Inst{6} = op6;
   let Inst{4} = op4;
-  let NSF    = NVdVmImmFrm;       // For disassembly.
-  let NSForm = NVdVmImmFrm.Value; // For disassembly.
 }
 
 // NEON 2 vector register with immediate.
@@ -1618,8 +1581,6 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
   let Inst{7} = op7;
   let Inst{6} = op6;
   let Inst{4} = op4;
-  let NSF    = NVdVmImmFrm;       // For disassembly.
-  let NSForm = NVdVmImmFrm.Value; // For disassembly.
 }
 
 // NEON 3 vector register format.
@@ -1633,8 +1594,6 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{11-8} = op11_8;
   let Inst{6} = op6;
   let Inst{4} = op4;
-  let NSF    = NVdVnVmImmFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmFrm.Value; // For disassembly.
 }
 
 // Same as N3VX except it doesn't have a data type suffix.
@@ -1648,8 +1607,6 @@ class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4
   let Inst{11-8} = op11_8;
   let Inst{6} = op6;
   let Inst{4} = op4;
-  let NSF    = NVdVnVmImmFrm;       // For disassembly.
-  let NSForm = NVdVnVmImmFrm.Value; // For disassembly.
 }
 
 // NEON VMOVs between scalar and core registers.
