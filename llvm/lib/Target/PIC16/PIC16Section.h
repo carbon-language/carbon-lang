@@ -45,7 +45,7 @@ namespace llvm {
     
     PIC16Section(const StringRef &name, SectionKind K, const std::string &addr, 
                  int color)
-      : MCSection(K), Name(name), Address(addr), Color(color) {
+      : MCSection(K), Name(name), Address(addr), Color(color), Size(0) {
     }
     
   public:
