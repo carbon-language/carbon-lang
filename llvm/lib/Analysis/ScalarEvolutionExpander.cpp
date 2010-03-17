@@ -232,7 +232,9 @@ static bool FactorOutConstant(const SCEV *&S,
       const SCEVConstant *FC = cast<SCEVConstant>(Factor);
       if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
         if (!C->getValue()->getValue().srem(FC->getValue()->getValue())) {
-          SmallVector<const SCEV *, 4> NewMulOps(M->op_begin(), M->op_end());
+          const SmallVectorImpl<const SCEV *> &MOperands = M->getOperands();
+          SmallVector<const SCEV *, 4> NewMulOps(MOperands.begin(),
+                                                 MOperands.end());
           NewMulOps[0] =
             SE.getConstant(C->getValue()->getValue().sdiv(
                                                    FC->getValue()->getValue()));
@@ -247,7 +249,9 @@ static bool FactorOutConstant(const SCEV *&S,
         const SCEV *Remainder = SE.getIntegerSCEV(0, SOp->getType());
         if (FactorOutConstant(SOp, Remainder, Factor, SE, TD) &&
             Remainder->isZero()) {
-          SmallVector<const SCEV *, 4> NewMulOps(M->op_begin(), M->op_end());
+          const SmallVectorImpl<const SCEV *> &MOperands = M->getOperands();
+          SmallVector<const SCEV *, 4> NewMulOps(MOperands.begin(),
+                                                 MOperands.end());
           NewMulOps[i] = SOp;
           S = SE.getMulExpr(NewMulOps);
           return true;
@@ -293,11 +297,13 @@ static void SimplifyAddOperands(SmallVectorImpl<const SCEV *> &Ops,
                     SE.getAddExpr(NoAddRecs);
   // If it returned an add, use the operands. Otherwise it simplified
   // the sum into a single value, so just use that.
-  Ops.clear();
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Sum))
-    Ops.insert(Ops.end(), Add->op_begin(), Add->op_begin());
-  else if (!Sum->isZero())
-    Ops.push_back(Sum);
+    Ops = Add->getOperands();
+  else {
+    Ops.clear();
+    if (!Sum->isZero())
+      Ops.push_back(Sum);
+  }
   // Then append the addrecs.
   Ops.insert(Ops.end(), AddRecs.begin(), AddRecs.end());
 }
@@ -1054,9 +1060,10 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   if (CanonicalIV &&
       SE.getTypeSizeInBits(CanonicalIV->getType()) >
       SE.getTypeSizeInBits(Ty)) {
-    SmallVector<const SCEV *, 4> NewOps(S->getNumOperands());
-    for (unsigned i = 0, e = S->getNumOperands(); i != e; ++i)
-      NewOps[i] = SE.getAnyExtendExpr(S->op_begin()[i], CanonicalIV->getType());
+    const SmallVectorImpl<const SCEV *> &Ops = S->getOperands();
+    SmallVector<const SCEV *, 4> NewOps(Ops.size());
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+      NewOps[i] = SE.getAnyExtendExpr(Ops[i], CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(NewOps, S->getLoop()));
     BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
@@ -1071,7 +1078,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
   // {X,+,F} --> X + {0,+,F}
   if (!S->getStart()->isZero()) {
-    SmallVector<const SCEV *, 4> NewOps(S->op_begin(), S->op_end());
+    const SmallVectorImpl<const SCEV *> &SOperands = S->getOperands();
+    SmallVector<const SCEV *, 4> NewOps(SOperands.begin(), SOperands.end());
     NewOps[0] = SE.getIntegerSCEV(0, Ty);
     const SCEV *Rest = SE.getAddRecExpr(NewOps, L);
 

@@ -180,27 +180,25 @@ namespace llvm {
   ///
   class SCEVNAryExpr : public SCEV {
   protected:
-    // Since SCEVs are immutable, ScalarEvolution allocates operand
-    // arrays with its SCEVAllocator, so this class just needs a simple
-    // pointer rather than a more elaborate vector-like data structure.
-    // This also avoids the need for a non-trivial destructor.
-    const SCEV *const *Operands;
-    size_t NumOperands;
+    SmallVector<const SCEV *, 8> Operands;
 
     SCEVNAryExpr(const FoldingSetNodeID &ID,
-                 enum SCEVTypes T, const SCEV *const *O, size_t N)
-      : SCEV(ID, T), Operands(O), NumOperands(N) {}
+                 enum SCEVTypes T, const SmallVectorImpl<const SCEV *> &ops)
+      : SCEV(ID, T), Operands(ops.begin(), ops.end()) {}
 
   public:
-    size_t getNumOperands() const { return NumOperands; }
+    unsigned getNumOperands() const { return (unsigned)Operands.size(); }
     const SCEV *getOperand(unsigned i) const {
-      assert(i < NumOperands && "Operand index out of range!");
+      assert(i < Operands.size() && "Operand index out of range!");
       return Operands[i];
     }
 
-    typedef const SCEV *const *op_iterator;
-    op_iterator op_begin() const { return Operands; }
-    op_iterator op_end() const { return Operands + NumOperands; }
+    const SmallVectorImpl<const SCEV *> &getOperands() const {
+      return Operands;
+    }
+    typedef SmallVectorImpl<const SCEV *>::const_iterator op_iterator;
+    op_iterator op_begin() const { return Operands.begin(); }
+    op_iterator op_end() const { return Operands.end(); }
 
     virtual bool isLoopInvariant(const Loop *L) const {
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
@@ -264,8 +262,8 @@ namespace llvm {
   protected:
     SCEVCommutativeExpr(const FoldingSetNodeID &ID,
                         enum SCEVTypes T,
-                        const SCEV *const *O, size_t N)
-      : SCEVNAryExpr(ID, T, O, N) {}
+                        const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVNAryExpr(ID, T, ops) {}
 
   public:
     virtual const char *getOperationStr() const = 0;
@@ -290,8 +288,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVAddExpr(const FoldingSetNodeID &ID,
-                const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scAddExpr, O, N) {
+                const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scAddExpr, ops) {
     }
 
   public:
@@ -318,8 +316,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVMulExpr(const FoldingSetNodeID &ID,
-                const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scMulExpr, O, N) {
+                const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scMulExpr, ops) {
     }
 
   public:
@@ -392,9 +390,9 @@ namespace llvm {
     const Loop *L;
 
     SCEVAddRecExpr(const FoldingSetNodeID &ID,
-                   const SCEV *const *O, size_t N, const Loop *l)
-      : SCEVNAryExpr(ID, scAddRecExpr, O, N), L(l) {
-      for (size_t i = 0, e = NumOperands; i != e; ++i)
+                   const SmallVectorImpl<const SCEV *> &ops, const Loop *l)
+      : SCEVNAryExpr(ID, scAddRecExpr, ops), L(l) {
+      for (size_t i = 0, e = Operands.size(); i != e; ++i)
         assert(Operands[i]->isLoopInvariant(l) &&
                "Operands of AddRec must be loop-invariant!");
     }
@@ -474,8 +472,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVSMaxExpr(const FoldingSetNodeID &ID,
-                 const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scSMaxExpr, O, N) {
+                 const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scSMaxExpr, ops) {
       // Max never overflows.
       setHasNoUnsignedWrap(true);
       setHasNoSignedWrap(true);
@@ -499,8 +497,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVUMaxExpr(const FoldingSetNodeID &ID,
-                 const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scUMaxExpr, O, N) {
+                 const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scUMaxExpr, ops) {
       // Max never overflows.
       setHasNoUnsignedWrap(true);
       setHasNoSignedWrap(true);
