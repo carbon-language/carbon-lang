@@ -17,6 +17,7 @@
 
 #include "llvm/System/DataTypes.h"
 #include <set>
+#include <cassert>
 
 namespace llvm {
 
