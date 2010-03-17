@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Clang - C++ Compatibility</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
+  <style type="text/css">
+</style>
+</head>
+<body>
+
+<!--#include virtual="menu.html.incl"-->
+
+<div id="content">
+
+<!-- ======================================================================= -->
+<h1>Clang's C++ Compatibility</h1>
+<!-- ======================================================================= -->
+
+<ul>
+<li><a href="#intro">Introduction</a></li>
+<li><a href="#vla">Variable-length arrays</a></li>
+<li><a href="#init_static_const">Initialization of non-integral static const data members within a class definition</a></li>
+<li><a href="#dep_lookup">Dependent name lookup into dependent bases of class templates</a></li>
+<li><a href="#default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</a></li>
+</ul>
+
+<!-- ======================================================================= -->
+<h2 id="intro">Introduction</h2>
+<!-- ======================================================================= -->
+
+<p>Clang strives to strictly conform to the C++ standard.  That means
+it will reject invalid C++ code that another compiler may accept.
+This page helps you decide whether a Clang error message means a
+C++-conformance bug in your code and how you can fix it.</p>
+
+<!-- ======================================================================= -->
+<h2 id="vla">Variable-length arrays</h2>
+<!-- ======================================================================= -->
+
+<p>GCC allows an array's size to be determined at run time. This,
+however, is not standard C++. Furthermore, it is a potential security
+hole as an incorrect array size may overflow the stack. If Clang tells
+you <tt>"variable length arrays are not permitted in C++"</tt>, here
+are some ways in which you can fix it:</p>
+
+<ol>
+<li>replace it with a fixed-size array if you can determine a
+    reasonable upper bound at compile time; sometimes this is as
+    simple as changing <tt>int size = ...;</tt> to <tt>const int size
+    = ...;</tt> (if the definition of <tt>size</tt> is a compile-time
+    integral constant);</li>
+<li>use an <tt>std::string</tt> instead of a <tt>char []</tt>;</li>
+<li>use <tt>std::vector</tt> or some other suitable container type;
+    or</li>
+<li>allocate the array on the heap instead using <tt>new Type[]</tt> -
+    just remember to <tt>delete[]</t> it.</li>
+</ol>
+
+<!-- ======================================================================= -->
+<h2 id="init_static_const">Initialization of non-integral static const data members within a class definition</h2>
+<!-- ======================================================================= -->
+
+The following code is ill-formed in C++'03:
+
+<pre>
+class SomeClass {
+ public:
+  static const double SomeConstant = 0.5;
+};
+
+const double SomeClass::SomeConstant;
+</pre>
+
+Clang errors with something similar to:
+
+<pre>
+.../your_file.h:42:42: error: 'SomeConstant' can only be initialized if it is a static const integral data member
+  static const double SomeConstant = 0.5;
+                      ^              ~~~
+</pre>
+
+Only <i>integral</i> constant expressions are allowed as initializers
+within the class definition. See C++'03 [class.static.data] p4 for the
+details of this restriction.  The fix here is straightforward: move
+the initializer to the definition of the static data member, which
+must exist outside of the class definition:
+
+<pre>
+class SomeClass {
+ public:
+  static const double SomeConstant;
+};
+
+const double SomeClass::SomeConstant<b> = 0.5</b>;
+</pre>
+
+<!-- ======================================================================= -->
+<h2 id="dep_lookup">Dependent name lookup into dependent bases of class templates</h2>
+<!-- ======================================================================= -->
+
+Some versions of GCC accept the following invalid code:
+
+<pre>
+template &lt;typename T&gt;
+class Base {
+ public:
+  void DoThis(T x) {}
+
+  static void DoThat(T x) {}
+};
+
+template &lt;typename T&gt;
+class Derived : public Base&lt;T&gt; {
+ public:
+  void Work(T x) {
+    DoThis(x);  // Invalid!
+    DoThat(x);  // Invalid!
+  }
+};
+
+void Test() {
+  Derived&lt;int&gt; d;
+  d.Work(42);
+}
+</pre>
+
+Clang correctly rejects it with the following errors:
+
+<pre>
+my_file.cpp:13:5: error: use of undeclared identifier 'DoThis'
+    DoThis(x);
+    ^
+    this-&gt;
+my_file.cpp:20:5: note: in instantiation of member function 'Derived&lt;int&gt;::Work' requested here
+  d.Work(42);
+    ^
+my_file.cpp:4:8: note: must qualify identifier to find this declaration in dependent base class
+  void DoThis(T x) {}
+       ^
+my_file.cpp:14:5: error: use of undeclared identifier 'DoThat'
+    DoThat(x);
+    ^
+    this-&gt;
+my_file.cpp:6:15: note: must qualify identifier to find this declaration in dependent base class
+  static void DoThat(T x) {}
+</pre>
+
+The reason the code is invalid is that in
+class <tt>Derived&lt;T&gt;</tt>, the base class type <tt>Base&lt;T&gt;</tt>
+depends on the template argument <tt>T</tt> (hence it's called a dependent base
+class in C++ jargon), and C++ doesn't look at the members of a
+dependent base class when resolving unqualified calls like <tt>DoThis(x)</tt>
+and <tt>DoThat(x)</tt> (see [temp.dep] p3 for details). The fix, as Clang tells
+you, is to prefix the calls with <tt>this-&gt;</tt>:
+
+<pre>
+...
+template &lt;typename T&gt;
+class Derived : public Base&lt;T&gt; {
+ public:
+  void Work(T x) {
+    <b>this-&gt;</b>DoThis(x);
+    <b>this-&gt;</b>DoThat(x);
+  }
+};
+...
+</pre>
+
+Alternatively, since DoThat() is a static method, you can also write
+
+<pre>
+  void Work(T x) {
+    <b>this-&gt;</b>DoThis(x);
+    <b>Base&lt;T&gt;</b>::DoThat(x);
+  }
+</pre>
+
+<!-- ======================================================================= -->
+<h2 id="default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</h2>
+<!-- ======================================================================= -->
+
+If a <tt>class</tt> or <tt>struct</tt> has no user-defined default
+constructor, C++ doesn't allow you to default construct a <tt>const</tt>
+instance of it like this ([dcl.init], p9):
+
+<pre>
+class Foo {
+ public:
+  // The compiler-supplied default constructor works fine, so we
+  // don't bother with defining one.
+  ...
+};
+
+void Bar() {
+  const Foo foo;  // Error!
+  ...
+}
+</pre>
+
+To fix this, you can define a default constructor for the class:
+
+<pre>
+class Foo {
+ public:
+  Foo() {}
+  ...
+};
+
+void Bar() {
+  const Foo foo;  // Now the compiler is happy.
+  ...
+}
+</pre>
+
+</div>
+</body>
+</html>

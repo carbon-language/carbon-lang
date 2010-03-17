@@ -796,6 +796,13 @@ ask on the mailing list about how you can help.</p>
 
 <p>Note that released Clang compilers will refuse to even try to use clang to compile C++ code unless you pass the <tt>-ccc-clang-cxx</tt> option to the driver. To turn on Clang's C++ support, please pass that flag. Clang compilers built from the Subversion trunk enable C++ support by default, and do not require the <tt>-ccc-clang-cxx</tt> flag.</p>
  
+<p>Clang strives to strictly conform to the C++ standard.  That means
+it will reject invalid C++ code that another compiler may accept.  If
+Clang reports errors in your code, please check
+the <a href="http://clang.llvm.org/cxx_compatibility.html">C++
+Compatibility</a> page to see whether they are C++-conformance bugs
+and how you can fix them.</p>
+
 <!-- ======================================================================= -->
 <h2 id="objcxx">Objective C++ Language Features</h2>
 <!-- ======================================================================= -->
