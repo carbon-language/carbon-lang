@@ -549,7 +549,8 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   // Lex through the entire file.  This will populate SourceManager with
   // all of the header information.
   Token Tok;
-  PP.EnterMainSourceFile();
+  if (PP.EnterMainSourceFile())
+    return;
   do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
 
   // Generate the PTH file.

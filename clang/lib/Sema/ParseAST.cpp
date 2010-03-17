@@ -44,7 +44,8 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
 
   Sema S(PP, Ctx, *Consumer, CompleteTranslationUnit, CompletionConsumer);
   Parser P(PP, S);
-  PP.EnterMainSourceFile();
+  if (PP.EnterMainSourceFile())
+    return;
 
   // Initialize the parser.
   P.Initialize();

@@ -350,7 +350,7 @@ public:
 
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
-  void EnterMainSourceFile();
+  bool EnterMainSourceFile();
 
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.  Return true
