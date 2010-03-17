@@ -60,7 +60,8 @@ current one.  To see the release notes for a specific release, please see the
 <a href="http://llvm.org/releases/">releases page</a>.</p>
 
 
-<p>FIXME: llvm.org moved to new server, mention new logo.</p>
+<p>FIXME: llvm.org moved to new server, mention new logo, Ted and Doug new code
+   owners.</p>
 
 </div>
  
@@ -72,6 +73,7 @@ Almost dead code.
   llvm/Analysis/PointerTracking.h => Edwin wants this, consider for 2.8.
   ABCD, SCCVN, GEPSplitterPass
   MSIL backend?
+  lib/Transforms/Utils/SSI.cpp  -> ABCD depends on it.
 -->
  
    
@@ -84,8 +86,6 @@ Almost dead code.
   loop dependence analysis
   ELF Writer?  How stable?
   <li>PostRA scheduler improvements, ARM adoption (David Goodwin).</li>
-  2.7 supports the GDB 7.0 jit interfaces for debug info.
-  2.7 eliminates ADT/iterator.h
  -->
 
  <!-- for announcement email:
@@ -94,8 +94,7 @@ Almost dead code.
  compiler_rt
  KLEE web page at klee.llvm.org
  Many new papers added to /pubs/
-   Mention gcc plugin.
-
+ Mention gcc plugin.
    -->
 
 <!-- *********************************************************************** -->
@@ -129,6 +128,7 @@ development.  Here we include updates on these subprojects.
 
 <ul>
 <li>...</li>
+include a link to cxx_compatibility.html
 </ul>
 </div>
 
@@ -460,16 +460,30 @@ MC encoding and disassembler apis.
 Optimal Edge Profiling?
 Instcombine is now a library, has its own IRBuilder to simplify itself.
 New llvm/Support/Regex.h API.  FileCheck now does regex's
+Many subtle pointer invalidation bugs in Callgraph have been fixed and it now uses asserting value handles.
+MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
+Various tools like llc and opt now read either .ll or .bc files as input.
+Malloc and free instructions got removed.
+compiler-rt support for ARM.
+completely llvm-gcc NEON support.
+Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
+JIT debug information with GDB 7.0
+New CodeGen Level LICM And CSE (did it make 2.7?)
+CMake can now run tests, what other improvements?
+ARM/Thumb register scavenging improvements?
+New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
+  changed jump threading, GVN, etc to use it which simplified them and speed
+  them up.
 
-
-
-
+CondProp pass removed (functionality merged into jump threading).
 AndersAA got removed (from 2.7 or mainline?)
+PredSimplify, LoopVR, GVNPRE got removed.
 LLVM command line tools now overwrite their output, before they would only do this with -f.
 DOUT removed, use DEBUG(errs() instead.
 Much stuff converted to use raw_ostream instead of std::ostream.
 TargetAsmInfo renamed to MCAsmInfo
 llvm/ADT/iterator.h gone.
+
 
 </div>
 
