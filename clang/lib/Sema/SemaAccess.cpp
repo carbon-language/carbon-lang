@@ -52,7 +52,7 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 
 namespace {
 struct EffectiveContext {
-  EffectiveContext() : Record(0), Function(0) {}
+  EffectiveContext() : Function(0) {}
 
   explicit EffectiveContext(DeclContext *DC) {
     if (isa<FunctionDecl>(DC)) {
@@ -60,18 +60,28 @@ struct EffectiveContext {
       DC = Function->getDeclContext();
     } else
       Function = 0;
-    
-    if (isa<CXXRecordDecl>(DC))
-      Record = cast<CXXRecordDecl>(DC)->getCanonicalDecl();
-    else
-      Record = 0;
+
+    // C++ [class.access.nest]p1:
+    //   A nested class is a member and as such has the same access
+    //   rights as any other member.
+    // C++ [class.access]p2:
+    //   A member of a class can also access all the names to which
+    //   the class has access.
+    // This implies that the privileges of nesting are transitive.
+    while (isa<CXXRecordDecl>(DC)) {
+      CXXRecordDecl *Record = cast<CXXRecordDecl>(DC)->getCanonicalDecl();
+      Records.push_back(Record);
+      DC = Record->getDeclContext();
+    }
   }
 
-  bool isClass(const CXXRecordDecl *R) const {
-    return R->getCanonicalDecl() == Record;
+  bool includesClass(const CXXRecordDecl *R) const {
+    R = R->getCanonicalDecl();
+    return std::find(Records.begin(), Records.end(), R)
+             != Records.end();
   }
 
-  CXXRecordDecl *Record;
+  llvm::SmallVector<CXXRecordDecl*, 4> Records;
   FunctionDecl *Function;
 };
 }
@@ -87,8 +97,10 @@ static Sema::AccessResult GetFriendKind(Sema &S,
                                         const EffectiveContext &EC,
                                         const CXXRecordDecl *Class) {
   // A class always has access to its own members.
-  if (EC.isClass(Class))
+  if (EC.includesClass(Class))
     return Sema::AR_accessible;
+
+  Sema::AccessResult OnFailure = Sema::AR_inaccessible;
 
   // Okay, check friends.
   for (CXXRecordDecl::friend_iterator I = Class->friend_begin(),
@@ -96,17 +108,21 @@ static Sema::AccessResult GetFriendKind(Sema &S,
     FriendDecl *Friend = *I;
 
     if (Type *T = Friend->getFriendType()) {
-      if (EC.Record &&
-          S.Context.hasSameType(QualType(T, 0),
-                                S.Context.getTypeDeclType(EC.Record)))
-        return Sema::AR_accessible;
+      CanQualType CT = T->getCanonicalTypeUnqualified();
+      if (const RecordType *RT = CT->getAs<RecordType>())
+        if (EC.includesClass(cast<CXXRecordDecl>(RT->getDecl())))
+          return Sema::AR_accessible;
     } else {
       NamedDecl *D
         = cast<NamedDecl>(Friend->getFriendDecl()->getCanonicalDecl());
 
       // The decl pointers in EC have been canonicalized, so pointer
       // equality is sufficient.
-      if (D == EC.Function || D == EC.Record)
+      if (D == EC.Function)
+        return Sema::AR_accessible;
+
+      if (isa<CXXRecordDecl>(D) &&
+          EC.includesClass(cast<CXXRecordDecl>(D)))
         return Sema::AR_accessible;
     }
 
@@ -114,7 +130,7 @@ static Sema::AccessResult GetFriendKind(Sema &S,
   }
 
   // That's it, give up.
-  return Sema::AR_inaccessible;
+  return OnFailure;
 }
 
 /// Finds the best path from the naming class to the declaring class,
@@ -350,51 +366,38 @@ static Sema::AccessResult CheckEffectiveAccess(Sema &S,
                                                SourceLocation Loc,
                                          Sema::AccessedEntity const &Entity) {
   AccessSpecifier Access = Entity.getAccess();
-  assert(Access != AS_public);
+  assert(Access != AS_public && "called for public access!");
 
+  // Find a non-anonymous naming class.  For records with access,
+  // there should always be one of these.
   CXXRecordDecl *NamingClass = Entity.getNamingClass();
   while (NamingClass->isAnonymousStructOrUnion())
-    // This should be guaranteed by the fact that the decl has
-    // non-public access.  If not, we should make it guaranteed!
     NamingClass = cast<CXXRecordDecl>(NamingClass->getParent());
 
-  if (!EC.Record) {
-    TryElevateAccess(S, EC, Entity, Access);
-    if (Access == AS_public) return Sema::AR_accessible;
-
-    if (!Entity.isQuiet())
-      DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity);
-    return Sema::AR_inaccessible;
-  }
-
-  // White-list accesses from within the declaring class.
-  if (Access != AS_none && EC.isClass(NamingClass))
+  // White-list accesses from classes with privileges equivalent to the
+  // naming class --- but only if the access path isn't forbidden
+  // (i.e. an access of a private member from a subclass).
+  if (Access != AS_none && EC.includesClass(NamingClass))
     return Sema::AR_accessible;
-  
-  // If the access is worse than 'protected', try to promote to it using
-  // friend declarations.
-  bool TriedElevation = false;
-  if (Access != AS_protected) {
-    TryElevateAccess(S, EC, Entity, Access);
-    if (Access == AS_public) return Sema::AR_accessible;
-    TriedElevation = true;
-  }
+
+  // Try to elevate access.
+  // FIXME: delay if elevation was dependent?
+  // TODO: on some code, it might be better to do the protected check
+  // without trying to elevate first.
+  TryElevateAccess(S, EC, Entity, Access);
+  if (Access == AS_public) return Sema::AR_accessible;
 
   // Protected access.
   if (Access == AS_protected) {
     // FIXME: implement [class.protected]p1
-    if (EC.Record->isDerivedFrom(NamingClass))
-      return Sema::AR_accessible;
+    for (llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator
+           I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I)
+      if ((*I)->isDerivedFrom(NamingClass))
+        return Sema::AR_accessible;
 
-    // FIXME: delay dependent classes
+    // FIXME: delay if we can't decide class derivation yet.
   }
 
-  // We're about to reject;  one last chance to promote access.
-  if (!TriedElevation) {
-    TryElevateAccess(S, EC, Entity, Access);
-    if (Access == AS_public) return Sema::AR_accessible;
-  }
-    
   // Okay, that's it, reject it.
   if (!Entity.isQuiet())
     DiagnoseBadAccess(S, Loc, EC, NamingClass, Access, Entity);
