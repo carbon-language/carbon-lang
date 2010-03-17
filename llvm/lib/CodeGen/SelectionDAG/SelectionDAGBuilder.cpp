@@ -4282,6 +4282,9 @@ isInTailCallPosition(CallSite CS, Attributes CalleeRetAttr,
          --BBI) {
       if (&*BBI == I)
         break;
+      // Debug info intrinsic does not intefer during tail call optimization.
+      if (isa<DbgInfoIntrinsic>(BBI))
+        continue;
       if (BBI->mayHaveSideEffects() || BBI->mayReadFromMemory() ||
           !BBI->isSafeToSpeculativelyExecute())
         return false;
