@@ -23,7 +23,8 @@
 <li><a href="#intro">Introduction</a></li>
 <li><a href="#vla">Variable-length arrays</a></li>
 <li><a href="#init_static_const">Initialization of non-integral static const data members within a class definition</a></li>
-<li><a href="#dep_lookup">Dependent name lookup into dependent bases of class templates</a></li>
+<li><a href="#dep_lookup">Unqualified lookup in templates</a></li>
+<li><a href="#dep_lookup_bases">Unqualified lookup into dependent bases of class templates</a></li>
 <li><a href="#default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</a></li>
 </ul>
 
@@ -97,86 +98,109 @@ class SomeClass {
 const double SomeClass::SomeConstant<b> = 0.5</b>;
 </pre>
 
+Note that the forthcoming C++0x standard will allow this.
+
 <!-- ======================================================================= -->
-<h2 id="dep_lookup">Dependent name lookup into dependent bases of class templates</h2>
+<h2 id="dep_lookup">Unqualified lookup in templates</h2>
 <!-- ======================================================================= -->
 
 Some versions of GCC accept the following invalid code:
 
 <pre>
-template &lt;typename T&gt;
-class Base {
- public:
-  void DoThis(T x) {}
+template &lt;typename T&gt; struct Foo {
+  void Work(T x) {
+    func(x);
+  }
+};
+...
+void func(int x);
+...
+template struct Foo&lt;int&gt;; // or anything else that instantiates Foo&lt;int&gt;::Work
+</pre>
 
+The standard says that unqualified names like <tt>func</tt> are looked up
+when the template is defined, not when it's instantiated.  Since
+<tt>void func(int)</tt> was not declared yet when <tt>Foo</tt> was
+defined, it's not considered.  The fix is usually to
+declare <tt>func</tt> before <tt>Foo</tt>.
+
+<p>This is complicated by <i>argument-dependent lookup</i> (ADL),
+which is done when unqualified names are called as functions,
+like <tt>func(x)</tt> above.  The standard says that ADL is performed
+in both places if any of the arguments are type-dependent, like
+<tt>x</tt> is in this example.  However, ADL does nothing for builtin
+types like <tt>int</tt>, so the example is still invalid.  See
+[basic.lookup.argdep] for more information.
+
+<!-- ======================================================================= -->
+<h2 id="dep_lookup_bases">Unqualified lookup into dependent bases of class templates</h2>
+<!-- ======================================================================= -->
+
+Some versions of GCC accept the following invalid code:
+
+<pre>
+template &lt;typename T&gt; struct Base {
+  void DoThis(T x) {}
   static void DoThat(T x) {}
 };
 
-template &lt;typename T&gt;
-class Derived : public Base&lt;T&gt; {
- public:
+template &lt;typename T&gt; struct Derived : public Base&lt;T&gt; {
   void Work(T x) {
     DoThis(x);  // Invalid!
     DoThat(x);  // Invalid!
   }
 };
-
-void Test() {
-  Derived&lt;int&gt; d;
-  d.Work(42);
-}
 </pre>
 
-Clang correctly rejects it with the following errors:
+Clang correctly rejects it with the following errors
+(when <tt>Derived</tt> is eventually instantiated):
 
 <pre>
-my_file.cpp:13:5: error: use of undeclared identifier 'DoThis'
+my_file.cpp:8:5: error: use of undeclared identifier 'DoThis'
     DoThis(x);
     ^
     this-&gt;
-my_file.cpp:20:5: note: in instantiation of member function 'Derived&lt;int&gt;::Work' requested here
-  d.Work(42);
-    ^
-my_file.cpp:4:8: note: must qualify identifier to find this declaration in dependent base class
+my_file.cpp:2:8: note: must qualify identifier to find this declaration in dependent base class
   void DoThis(T x) {}
        ^
-my_file.cpp:14:5: error: use of undeclared identifier 'DoThat'
+my_file.cpp:9:5: error: use of undeclared identifier 'DoThat'
     DoThat(x);
     ^
     this-&gt;
-my_file.cpp:6:15: note: must qualify identifier to find this declaration in dependent base class
+my_file.cpp:3:15: note: must qualify identifier to find this declaration in dependent base class
   static void DoThat(T x) {}
 </pre>
 
-The reason the code is invalid is that in
-class <tt>Derived&lt;T&gt;</tt>, the base class type <tt>Base&lt;T&gt;</tt>
-depends on the template argument <tt>T</tt> (hence it's called a dependent base
-class in C++ jargon), and C++ doesn't look at the members of a
-dependent base class when resolving unqualified calls like <tt>DoThis(x)</tt>
-and <tt>DoThat(x)</tt> (see [temp.dep] p3 for details). The fix, as Clang tells
-you, is to prefix the calls with <tt>this-&gt;</tt>:
+Like we said <a href="#dep_lookup">above</a>, unqualified names like
+<tt>DoThis</tt> and <tt>DoThat</tt> are looked up when the template
+<tt>Derived</tt> is defined, not when it's instantiated.  When we look
+up a name used in a class, we usually look into the base classes.
+However, we can't look into the base class <tt>Base&lt;T&gt;</tt>
+because its type depends on the template argument <tt>T</tt>, so the
+standard says we should just ignore it.  See [temp.dep]p3 for details.
+
+<p>The fix, as Clang tells you, is to tell the compiler that we want a
+class member by prefixing the calls with <tt>this-&gt;</tt>:
 
 <pre>
-...
-template &lt;typename T&gt;
-class Derived : public Base&lt;T&gt; {
- public:
   void Work(T x) {
     <b>this-&gt;</b>DoThis(x);
     <b>this-&gt;</b>DoThat(x);
   }
-};
-...
 </pre>
 
-Alternatively, since DoThat() is a static method, you can also write
+Alternatively, you can tell the compiler exactly where to look:
 
 <pre>
   void Work(T x) {
-    <b>this-&gt;</b>DoThis(x);
+    <b>Base&lt;T&gt;</b>::DoThis(x);
     <b>Base&lt;T&gt;</b>::DoThat(x);
   }
 </pre>
+
+This works whether the methods are static or not, but be careful:
+if <tt>DoThis</tt> is virtual, calling it this way will bypass virtual
+dispatch!
 
 <!-- ======================================================================= -->
 <h2 id="default_init_const">Default initialization of const variable of a class type requires user-defined default constructor</h2>
