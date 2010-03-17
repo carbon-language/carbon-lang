@@ -39,11 +39,12 @@ ifeq ($(HOST_OS),Darwin)
                          -Wl,-seg1addr -Wl,0xE0000000 
 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
+    # Path is /Developer/usr/local/lib for now; will use an rpath-based mechanism soon
     DARWIN_VERS := $(shell echo $(TARGET_TRIPLE) | sed 's/.*darwin\([0-9]*\).*/\1/')
     ifneq ($(DARWIN_VERS),8)
        LLVMLibsOptions    := $(LLVMLibsOptions)  \
                             -no-undefined -Wl,-install_name \
-                            -Wl,"@executable_path/../lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
+                            -Wl,"/Developer/usr/local/lib/lib$(LIBRARYNAME)$(SHLIBEXT)"
     endif
 endif
 
