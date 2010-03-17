@@ -51,13 +51,16 @@ href="http://llvm.org/releases/">LLVM releases web site</a>.</p>
 <p>For more information about LLVM, including information about the latest
 release, please check out the <a href="http://llvm.org/">main LLVM
 web site</a>.  If you have questions or comments, the <a
-href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM Developer's Mailing
-List</a> is a good place to send them.</p>
+href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM Developer's
+Mailing List</a> is a good place to send them.</p>
 
 <p>Note that if you are reading this file from a Subversion checkout or the
 main LLVM web page, this document applies to the <i>next</i> release, not the
 current one.  To see the release notes for a specific release, please see the
 <a href="http://llvm.org/releases/">releases page</a>.</p>
+
+
+<p>FIXME: llvm.org moved to new server, mention new logo.</p>
 
 </div>
  
@@ -441,6 +444,33 @@ in this section.
 <li>...</li>
 </ul>
 
+Extensible metadata solid.
+
+Debug info improvements: using metadata instead of llvm.dbg global variables.
+This brings several enhancements including improved compile times.
+
+New instruction selector.
+GHC Haskell ABI/ calling conv support.
+Pre-Alpha support for unions in IR.
+New InlineHint and StackAlignment function attributes
+Code generator MC'ized except for debug info and EH.
+New SCEV AA pass: -scev-aa
+Inliner reuses arrays allocas when inlining multiple callers to reduce stack usage.
+MC encoding and disassembler apis.
+Optimal Edge Profiling?
+Instcombine is now a library, has its own IRBuilder to simplify itself.
+New llvm/Support/Regex.h API.  FileCheck now does regex's
+
+
+
+
+AndersAA got removed (from 2.7 or mainline?)
+LLVM command line tools now overwrite their output, before they would only do this with -f.
+DOUT removed, use DEBUG(errs() instead.
+Much stuff converted to use raw_ostream instead of std::ostream.
+TargetAsmInfo renamed to MCAsmInfo
+llvm/ADT/iterator.h gone.
+
 </div>
 
 <!--=========================================================================-->
@@ -757,7 +787,8 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <li>The MSIL, Alpha, SPU, MIPS, PIC16, Blackfin, MSP430 and SystemZ backends are
     experimental.</li>
 <li>The <tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
-    supported value for this option.  The ELF writer is experimental.</li>
+    supported value for this option.  The MachO writer is experimental, and
+    works much better in mainline SVN.</li>
 </ul>
 
 </div>
@@ -888,7 +919,7 @@ appropriate nops inserted to ensure restartability.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="c-fe">Known problems with the llvm-gcc C front-end</a>
+  <a name="c-fe">Known problems with the llvm-gcc C and C++ front-end</a>
 </div>
 
 <div class="doc_text">
@@ -901,24 +932,6 @@ appropriate nops inserted to ensure restartability.</li>
 
 <p>If you run into GCC extensions which are not supported, please let us know.
 </p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="c++-fe">Known problems with the llvm-gcc C++ front-end</a>
-</div>
-
-<div class="doc_text">
-
-<p>The C++ front-end is considered to be fully
-tested and works for a number of non-trivial programs, including LLVM
-itself, Qt, Mozilla, etc.</p>
-
-<ul>
-<li>Exception handling works well on the X86 and PowerPC targets. Currently
-  only Linux and Darwin targets are supported (both 32 and 64 bit).</li>
-</ul>
 
 </div>
 
