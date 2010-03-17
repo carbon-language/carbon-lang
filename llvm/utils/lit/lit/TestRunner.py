@@ -252,6 +252,18 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
         except:
             return (Test.FAIL, "Tcl 'exec' parse error on: %r" % ln)
 
+    if litConfig.useValgrind:
+        valgrindArgs = ['valgrind', '-q',
+                        '--tool=memcheck', '--trace-children=yes',
+                        '--error-exitcode=123']
+        valgrindArgs.extend(litConfig.valgrindArgs)
+        for pipeline in cmds:
+            if pipeline.commands:
+                # Only valgrind the first command in each pipeline, to avoid
+                # valgrinding things like grep, not, and FileCheck.
+                cmd = pipeline.commands[0]
+                cmd.args = valgrindArgs + cmd.args
+
     cmd = cmds[0]
     for c in cmds[1:]:
         cmd = ShUtil.Seq(cmd, '&&', c)
