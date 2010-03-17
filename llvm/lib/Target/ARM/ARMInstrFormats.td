@@ -15,8 +15,8 @@
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
 // code emitter.
-class Format<bits<5> val> {
-  bits<5> Value = val;
+class Format<bits<6> val> {
+  bits<6> Value = val;
 }
 
 def Pseudo        : Format<0>;
@@ -183,7 +183,7 @@ class InstTemplate<AddrMode am, SizeFlagVal sz, IndexMode im,
   bits<2> IndexModeBits = IM.Value;
   
   Format F = f;
-  bits<5> Form = F.Value;
+  bits<6> Form = F.Value;
 
   Domain D = d;
   bits<2> Dom = D.Value;
