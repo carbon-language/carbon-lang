@@ -464,13 +464,19 @@ compiler-rt support for ARM.
 completely llvm-gcc NEON support.
 Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
 JIT debug information with GDB 7.0
-New CodeGen Level LICM And CSE (did it make 2.7?)
+New CodeGen Level CSE
 CMake can now run tests, what other improvements?
-ARM/Thumb register scavenging improvements?
+ARM/Thumb using reg scavenging for stack object address materialization (PEI).
 New SSAUpdater and MachineSSAUpdater classes for unstructured ssa updating,
   changed jump threading, GVN, etc to use it which simplified them and speed
   them up.
 Combiner-AA improvements, why not on by default?
+Pre-regalloc tail duplication
+x86 sibcall optimization
+New LSR with full strength reduction mode
+The most awesome sext / zext optimization pass. ?
+
+
 
 CondProp pass removed (functionality merged into jump threading).
 AndersAA got removed (from 2.7 or mainline?)
