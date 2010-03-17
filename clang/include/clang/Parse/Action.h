@@ -727,8 +727,16 @@ public:
 
   /// ActOnTagFinishDefinition - Invoked once we have finished parsing
   /// the definition of a tag (enumeration, class, struct, or union).
+  ///
+  /// The scope is the scope of the tag definition.
   virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl,
                                         SourceLocation RBraceLoc) { }
+
+  /// ActOnTagDefinitionError - Invoked if there's an unrecoverable
+  /// error parsing the definition of a tag.
+  ///
+  /// The scope is the scope of the tag definition.
+  virtual void ActOnTagDefinitionError(Scope *S, DeclPtrTy TagDecl) { }
 
   virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
                                       DeclPtrTy LastEnumConstant,

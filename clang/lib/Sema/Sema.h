@@ -939,6 +939,10 @@ public:
   virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl,
                                         SourceLocation RBraceLoc);
 
+  /// ActOnTagDefinitionError - Invoked when there was an unrecoverable
+  /// error parsing the definition of a tag.
+  virtual void ActOnTagDefinitionError(Scope *S, DeclPtrTy TagDecl);
+
   EnumConstantDecl *CheckEnumConstant(EnumDecl *Enum,
                                       EnumConstantDecl *LastEnumConst,
                                       SourceLocation IdLoc,

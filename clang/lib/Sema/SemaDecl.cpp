@@ -5118,6 +5118,18 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
   Consumer.HandleTagDeclDefinition(Tag);
 }
 
+void Sema::ActOnTagDefinitionError(Scope *S, DeclPtrTy TagD) {
+  AdjustDeclIfTemplate(TagD);
+  TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+
+  Tag->setInvalidDecl();
+
+  if (isa<CXXRecordDecl>(Tag))
+    FieldCollector->FinishClass();
+
+  PopDeclContext();  
+}
+
 // Note that FieldName may be null for anonymous bitfields.
 bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
                           QualType FieldTy, const Expr *BitWidth,

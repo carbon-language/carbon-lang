@@ -1520,6 +1520,9 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
     if (!Tok.is(tok::l_brace)) {
       Diag(Tok, diag::err_expected_lbrace_after_base_specifiers);
+
+      if (TagDecl)
+        Actions.ActOnTagDefinitionError(CurScope, TagDecl);
       return;
     }
   }
@@ -1596,11 +1599,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     ParseLexedMethodDefs(getCurrentClass());
   }
 
+  Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
+
   // Leave the class scope.
   ParsingDef.Pop();
   ClassScope.Exit();
-
-  Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
 }
 
 /// ParseConstructorInitializer - Parse a C++ constructor initializer,
