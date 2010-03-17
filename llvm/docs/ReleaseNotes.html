@@ -310,8 +310,6 @@ handling.--> </p>
 
 <div class="doc_text">
 <p>
-Need update.
-<!--
 <a href="http://pure-lang.googlecode.com/">Pure</a>
 is an algebraic/functional programming language based on term rewriting.
 Programs are collections of equations which are used to evaluate expressions in
@@ -321,9 +319,9 @@ built-in list and matrix support (including list and matrix comprehensions) and
 an easy-to-use C interface. The interpreter uses LLVM as a backend to
  JIT-compile Pure programs to fast native code.</p>
 
-<p>Pure versions ??? and later have been tested and are known to work with
-LLVM 2.7 (and continue to work with older LLVM releases >= 2.3 as well).
---></p>
+<p>Pure versions 0.43 and later have been tested and are known to work with
+LLVM 2.7 (and continue to work with older LLVM releases >= 2.5).</p>
+
 </div>
 
 
@@ -354,13 +352,11 @@ fully featured as the original DMD compiler from DigitalMars.-->
 
 <div class="doc_text">
 <p>
-Need update.
-<!--
 <a href="http://code.roadsend.com/rphp">Roadsend PHP</a> (rphp) is an open
 source implementation of the PHP programming 
 language that uses LLVM for its optimizer, JIT and static compiler. This is a 
 reimplementation of an earlier project that is now based on LLVM.
---> </p>
+</p>
 </div>
 
 <!--=========================================================================-->
@@ -767,13 +763,7 @@ listed by component.  If you run into a problem, please check the <a
 href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
 there isn't already one.</p>
 
-<ul>
-<li>The llvm-gcc bootstrap will fail with some versions of binutils (e.g. 2.15)
-    with a message of "<tt><a href="http://llvm.org/PR5004">Error: can not do 8
-    byte pc-relative relocation</a></tt>" when building C++ code.  We intend to
-    fix this on mainline, but a workaround is to upgrade to binutils 2.17 or
-    later.</li>
-    
+<ul>    
 <li>LLVM will not correctly compile on Solaris and/or OpenSolaris
 using the stock GCC 3.x.x series 'out the box',
 See: <a href="GettingStarted.html#brokengcc">Broken versions of GCC and other tools</a>.
