@@ -106,11 +106,10 @@ if [ "x$RC_ProjectName" = "xllvmCore_EmbeddedHosted" ]; then
   # Try to use the platform llvm-gcc. Fall back to gcc if it's not available.
   for prog in gcc g++ ; do
     P=$DIR/bin/arm-apple-darwin$DARWIN_VERS-${prog}
-# FIXME: Uncomment once llvm-gcc works for this
-#    T=`xcrun -find llvm-${prog}`
-#    if [ "x$T" = "x" ] ; then
+    T=`xcrun -find llvm-${prog}`
+    if [ "x$T" = "x" ] ; then
       T=`xcrun -sdk $SDKROOT -find ${prog}`
-#    fi
+    fi
     echo '#!/bin/sh' > $P || exit 1
     echo 'exec '$T' -arch armv6 -isysroot '${SDKROOT}' "$@"' >> $P || exit 1
     chmod a+x $P || exit 1
