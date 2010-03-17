@@ -2531,8 +2531,8 @@ void DwarfDebug::emitDebugInfo() {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(dwarf::DWARF_VERSION);
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-  EmitSectionOffset(getTempLabel("abbrev_begin"),getTempLabel("section_abbrev"),
-                    true, false);
+  EmitSectionOffset(getTempLabel("abbrev_begin"),getTempLabel("section_abbrev"), 
+                    true);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(TD->getPointerSize());
 
@@ -2842,8 +2842,8 @@ emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
   Asm->OutStreamer.EmitLabel(DebugFrameBegin);
 
   Asm->OutStreamer.AddComment("FDE CIE offset");
-  EmitSectionOffset(getTempLabel("debug_frame_common"),
-                    getTempLabel("section_debug_frame"), true, false);
+  EmitSectionOffset(getTempLabel("debug_frame_common"), 
+                    getTempLabel("section_debug_frame"), true);
 
   Asm->OutStreamer.AddComment("FDE initial location");
   MCSymbol *FuncBeginSym = getDWLabel("func_begin", DebugFrameInfo.Number);
@@ -2878,8 +2878,7 @@ void DwarfDebug::emitDebugPubNames() {
 
   Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
   EmitSectionOffset(getDWLabel("info_begin", ModuleCU->getID()), 
-                    getTempLabel("section_info"),
-                    true, false);
+                    getTempLabel("section_info"), true);
 
   Asm->OutStreamer.AddComment("Compilation Unit Length");
   EmitDifference(getDWLabel("info_end", ModuleCU->getID()),
@@ -2920,7 +2919,7 @@ void DwarfDebug::emitDebugPubTypes() {
 
   Asm->OutStreamer.AddComment("Offset of Compilation ModuleCU Info");
   EmitSectionOffset(getDWLabel("info_begin", ModuleCU->getID()),
-                    getTempLabel("section_info"), true, false);
+                    getTempLabel("section_info"), true);
 
   Asm->OutStreamer.AddComment("Compilation ModuleCU Length");
   EmitDifference(getDWLabel("info_end", ModuleCU->getID()),
@@ -3068,8 +3067,8 @@ void DwarfDebug::emitDebugInlineInfo() {
                         getTempLabel("section_str"), true);
 
     Asm->OutStreamer.AddComment("Function name");
-    EmitSectionOffset(getStringPoolEntry(Name), getTempLabel("section_str"),
-                      false, true);
+    EmitSectionOffset(getStringPoolEntry(Name), getTempLabel("section_str"), 
+                      true);
     EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
