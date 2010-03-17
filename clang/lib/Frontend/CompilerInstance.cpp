@@ -109,12 +109,11 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
                               Diagnostic &Diags) {
   std::string ErrorInfo;
-  llvm::raw_ostream *OS =
-    new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo);
+  llvm::OwningPtr<llvm::raw_ostream> OS(
+    new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo));
   if (!ErrorInfo.empty()) {
     Diags.Report(diag::err_fe_unable_to_open_logfile)
                  << DiagOpts.DumpBuildInformation << ErrorInfo;
-    delete OS;
     return;
   }
 
@@ -125,7 +124,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
 
   // Chain in a diagnostic client which will log the diagnostics.
   DiagnosticClient *Logger =
-    new TextDiagnosticPrinter(*OS, DiagOpts, /*OwnsOutputStream=*/true);
+    new TextDiagnosticPrinter(*OS.take(), DiagOpts, /*OwnsOutputStream=*/true);
   Diags.setClient(new ChainedDiagnosticClient(Diags.getClient(), Logger));
 }
 
