@@ -332,7 +332,7 @@ void MachineCodeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 MCSymbol *MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB, 
                                            MachineBasicBlock::iterator MI,
                                            DebugLoc DL) const {
-  MCSymbol *Label = MBB.getParent()->getContext().GetOrCreateTemporarySymbol();
+  MCSymbol *Label = MBB.getParent()->getContext().CreateTempSymbol();
   BuildMI(MBB, MI, DL, TII->get(TargetOpcode::GC_LABEL)).addSym(Label);
   return Label;
 }

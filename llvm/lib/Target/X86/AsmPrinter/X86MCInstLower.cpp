@@ -427,7 +427,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     //   MYGLOBAL + (. - PICBASE)
     // However, we can't generate a ".", so just emit a new label here and refer
     // to it.
-    MCSymbol *DotSym = OutContext.GetOrCreateTemporarySymbol();
+    MCSymbol *DotSym = OutContext.CreateTempSymbol();
     OutStreamer.EmitLabel(DotSym);
     
     // Now that we have emitted the label, lower the complex operand expression.

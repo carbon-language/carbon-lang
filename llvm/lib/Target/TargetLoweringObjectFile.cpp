@@ -317,7 +317,7 @@ getExprForDwarfReference(const MCSymbol *Sym, Mangler *Mang,
   case dwarf::DW_EH_PE_pcrel: {
     // Emit a label to the streamer for the current position.  This gives us
     // .-foo addressing.
-    MCSymbol *PCSym = getContext().GetOrCreateTemporarySymbol();
+    MCSymbol *PCSym = getContext().CreateTempSymbol();
     Streamer.EmitLabel(PCSym);
     const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
     return MCBinaryExpr::CreateSub(Res, PC, getContext());

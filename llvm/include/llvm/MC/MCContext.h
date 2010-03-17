@@ -73,9 +73,10 @@ namespace llvm {
     /// one if it does.
     ///
     /// @param Name - The symbol name, for debugging purposes only, temporary
-    /// symbols do not surive assembly. If non-empty the name must be unique
-    /// across all symbols.
-    MCSymbol *GetOrCreateTemporarySymbol(StringRef Name = "");
+    /// symbols do not surive assembly.
+    MCSymbol *GetOrCreateTemporarySymbol(StringRef Name) {
+      return GetOrCreateSymbol(Name, true);
+    }
     MCSymbol *GetOrCreateTemporarySymbol(const Twine &Name);
 
     /// LookupSymbol - Get the symbol for \p Name, or null.
