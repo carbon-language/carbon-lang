@@ -131,20 +131,6 @@ namespace ARM_AM {
     return (Imm >> 8) * 2;
   }
 
-  /// getSOImmValOneRotate - Try to handle Imm with an immediate shifter
-  /// operand, computing the rotate amount to use.  If this immediate value
-  /// cannot be handled with a single shifter-op, return 0.
-  static inline unsigned getSOImmValOneRotate(unsigned Imm) {
-    // A5.2.4 Constants with multiple encodings
-    // The lowest unsigned value of rotation wins!
-    for (unsigned R = 1; R <= 15; ++R)
-      if ((Imm & rotr32(~255U, 2*R)) == 0)
-        return 2*R;
-
-    // Failed to find a suitable rotate amount.
-    return 0;
-  }
-
   /// getSOImmValRotate - Try to handle Imm with an immediate shifter operand,
   /// computing the rotate amount to use.  If this immediate value cannot be
   /// handled with a single shifter-op, determine a good rotate amount that will
@@ -197,7 +183,7 @@ namespace ARM_AM {
     // of zero.
     if ((Arg & ~255U) == 0) return Arg;
 
-    unsigned RotAmt = getSOImmValOneRotate(Arg);
+    unsigned RotAmt = getSOImmValRotate(Arg);
 
     // If this cannot be handled with a single shifter_op, bail out.
     if (rotr32(~255U, RotAmt) & Arg)
