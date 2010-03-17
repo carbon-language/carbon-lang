@@ -169,8 +169,7 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
     SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
 
   // Configure our handling of diagnostics.
-  if (ProcessWarningOptions(*Diags, Opts))
-    return 0;
+  ProcessWarningOptions(*Diags, Opts);
 
   return Diags.take();
 }
