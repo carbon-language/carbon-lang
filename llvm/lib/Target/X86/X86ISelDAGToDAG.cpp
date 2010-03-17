@@ -140,6 +140,21 @@ namespace {
 }
 
 namespace {
+  class X86ISelListener : public SelectionDAG::DAGUpdateListener {
+    SmallSet<SDNode*, 4> Deletes;
+  public:
+    explicit X86ISelListener() {}
+    virtual void NodeDeleted(SDNode *N, SDNode *E) {
+      Deletes.insert(N);
+    }
+    virtual void NodeUpdated(SDNode *N) {
+      // Ignore updates.
+    }
+    bool IsDeleted(SDNode *N) {
+      return Deletes.count(N);
+    }
+  };
+
   //===--------------------------------------------------------------------===//
   /// ISel - X86 specific code to select X86 machine instructions for
   /// SelectionDAG operations.
@@ -187,6 +202,7 @@ namespace {
     bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
+                                 X86ISelListener &DeadNodes,
                                  unsigned Depth);
     bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
     bool SelectAddr(SDNode *Op, SDValue N, SDValue &Base,
@@ -651,7 +667,8 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
-  if (MatchAddressRecursively(N, AM, 0))
+  X86ISelListener DeadNodes;
+  if (MatchAddressRecursively(N, AM, DeadNodes, 0))
     return true;
 
   // Post-processing: Convert lea(,%reg,2) to lea(%reg,%reg), which has
@@ -680,6 +697,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
 }
 
 bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
+                                              X86ISelListener &DeadNodes,
                                               unsigned Depth) {
   bool is64Bit = Subtarget->is64Bit();
   DebugLoc dl = N.getDebugLoc();
@@ -845,7 +863,11 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
 
     // Test if the LHS of the sub can be folded.
     X86ISelAddressMode Backup = AM;
-    if (MatchAddressRecursively(N.getNode()->getOperand(0), AM, Depth+1)) {
+    if (MatchAddressRecursively(N.getNode()->getOperand(0), AM,
+                                DeadNodes, Depth+1) ||
+        // If it is successful but the recursive update causes N to be deleted,
+        // then it's not safe to continue.
+        DeadNodes.IsDeleted(N.getNode())) {
       AM = Backup;
       break;
     }
@@ -854,6 +876,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
       AM = Backup;
       break;
     }
+
     int Cost = 0;
     SDValue RHS = N.getNode()->getOperand(1);
     // If the RHS involves a register with multiple uses, this
@@ -907,13 +930,33 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
 
   case ISD::ADD: {
     X86ISelAddressMode Backup = AM;
-    if (!MatchAddressRecursively(N.getNode()->getOperand(0), AM, Depth+1) &&
-        !MatchAddressRecursively(N.getNode()->getOperand(1), AM, Depth+1))
-      return false;
+    if (!MatchAddressRecursively(N.getNode()->getOperand(0), AM,
+                                 DeadNodes, Depth+1)) {
+      if (DeadNodes.IsDeleted(N.getNode()))
+        // If it is successful but the recursive update causes N to be deleted,
+        // then it's not safe to continue.
+        return true;
+      if (!MatchAddressRecursively(N.getNode()->getOperand(1), AM,
+                                   DeadNodes, Depth+1))
+        // If it is successful but the recursive update causes N to be deleted,
+        // then it's not safe to continue.
+        return DeadNodes.IsDeleted(N.getNode());
+    }
+
+    // Try again after commuting the operands.
     AM = Backup;
-    if (!MatchAddressRecursively(N.getNode()->getOperand(1), AM, Depth+1) &&
-        !MatchAddressRecursively(N.getNode()->getOperand(0), AM, Depth+1))
-      return false;
+    if (!MatchAddressRecursively(N.getNode()->getOperand(1), AM,
+                                 DeadNodes, Depth+1)) {
+      if (DeadNodes.IsDeleted(N.getNode()))
+        // If it is successful but the recursive update causes N to be deleted,
+        // then it's not safe to continue.
+        return true;
+      if (!MatchAddressRecursively(N.getNode()->getOperand(0), AM,
+                                   DeadNodes, Depth+1))
+        // If it is successful but the recursive update causes N to be deleted,
+        // then it's not safe to continue.
+        return DeadNodes.IsDeleted(N.getNode());
+    }
     AM = Backup;
 
     // If we couldn't fold both operands into the address at the same time,
@@ -935,16 +978,19 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       X86ISelAddressMode Backup = AM;
       uint64_t Offset = CN->getSExtValue();
+
+      // Check to see if the LHS & C is zero.
+      if (!CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue()))
+        break;
+
       // Start with the LHS as an addr mode.
-      if (!MatchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
+      if (!MatchAddressRecursively(N.getOperand(0), AM, DeadNodes, Depth+1) &&
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
           (!is64Bit ||
            X86::isOffsetSuitableForCodeModel(AM.Disp + Offset, M,
-                                             AM.hasSymbolicDisplacement())) &&
-          // Check to see if the LHS & C is zero.
-          CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
+                                             AM.hasSymbolicDisplacement()))) {
         AM.Disp += Offset;
         return false;
       }
@@ -1015,7 +1061,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
           CurDAG->RepositionNode(N.getNode(), Shl.getNode());
           Shl.getNode()->setNodeId(N.getNode()->getNodeId());
         }
-        CurDAG->ReplaceAllUsesWith(N, Shl);
+        CurDAG->ReplaceAllUsesWith(N, Shl, &DeadNodes);
         AM.IndexReg = And;
         AM.Scale = (1 << ScaleLog);
         return false;
@@ -1066,7 +1112,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
       NewSHIFT.getNode()->setNodeId(N.getNode()->getNodeId());
     }
 
-    CurDAG->ReplaceAllUsesWith(N, NewSHIFT);
+    CurDAG->ReplaceAllUsesWith(N, NewSHIFT, &DeadNodes);
     
     AM.Scale = 1 << ShiftCst;
     AM.IndexReg = NewAND;
