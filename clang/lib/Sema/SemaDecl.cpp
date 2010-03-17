@@ -2482,16 +2482,8 @@ void Sema::DiagnoseShadow(NamedDecl* D, const LookupResult& R) {
   DeclarationName Name = D->getDeclName();
 
   // Return if lookup has no result.
-  if (R.getResultKind() != LookupResult::Found) {
-    // Emit warning for built-in shadowing.
-    if (Name.getAsIdentifierInfo() &&
-        Name.getAsIdentifierInfo()->getBuiltinID())
-      Diag(D->getLocation(), diag::warn_decl_shadow)
-        << Name
-        << 4 // global builtin
-        << Context.getTranslationUnitDecl();
+  if (R.getResultKind() != LookupResult::Found)
     return;
-  }
 
   // Return if not variable decl.
   NamedDecl* ShadowedDecl = R.getFoundDecl();

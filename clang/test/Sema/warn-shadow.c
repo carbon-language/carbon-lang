@@ -16,5 +16,5 @@ void foo() {
     }
   }
 
-  int __sync_fetch_and_add; // expected-warning {{declaration shadows a global built-in function}}
+  int sin; // okay; 'sin' has not been declared, even though it's a builtin.
 }

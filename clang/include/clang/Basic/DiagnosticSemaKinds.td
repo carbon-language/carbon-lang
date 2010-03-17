@@ -113,8 +113,7 @@ def warn_decl_shadow :
           "local variable|"
           "variable in %2|"
           "static data member of %2|"
-          "field of %2|"
-          "global built-in function}1">,
+          "field of %2}1">,
   InGroup<Shadow>, DefaultIgnore;
 
 // C++ using declarations
