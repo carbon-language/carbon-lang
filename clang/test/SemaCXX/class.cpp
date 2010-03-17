@@ -118,3 +118,21 @@ struct S
   void S::f() {} // expected-error {{class member cannot be redeclared}} expected-note {{previous declaration}} expected-note {{previous definition}}
   void f() {} // expected-error {{class member cannot be redeclared}} expected-error {{redefinition}}
 };
+
+// Don't crash on this bogus code.
+namespace pr6629 {
+  // TODO: most of these errors are spurious
+  template<class T1, class T2> struct foo :
+    bogus<foo<T1,T2> > // expected-error {{unknown template name 'bogus'}} \
+                       // BOGUS expected-error {{expected '{' after base class list}} \
+                       // BOGUS expected-error {{expected ';' after struct}} \
+                       // BOGUS expected-error {{expected unqualified-id}} \
+  { };
+
+  template<> struct foo<unknown,unknown> { // why isn't there an error here?
+    template <typename U1, typename U2> struct bar {
+      typedef bar type;
+      static const int value = 0;
+    };
+  };
+}
