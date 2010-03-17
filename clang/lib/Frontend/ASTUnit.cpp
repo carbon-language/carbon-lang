@@ -293,8 +293,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
                                                Clang.getTargetOpts()));
   if (!Clang.hasTarget()) {
-    Clang.takeSourceManager();
-    Clang.takeFileManager();
     Clang.takeDiagnosticClient();
     Clang.takeDiagnostics();
     return 0;
