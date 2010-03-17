@@ -1161,6 +1161,8 @@ public:
   /// Compatibility predicates used to check assignment expressions.
   bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
 
+  bool typesAreBlockPointerCompatible(QualType, QualType); 
+
   bool isObjCIdType(QualType T) const {
     return T == ObjCIdTypedefType;
   }
@@ -1179,13 +1181,16 @@ public:
                                const ObjCObjectPointerType *RHSOPT);
   bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
                                const ObjCInterfaceType *RHS);
+  bool canAssignObjCInterfacesInBlockPointer(
+                                          const ObjCObjectPointerType *LHSOPT,
+                                          const ObjCObjectPointerType *RHSOPT);
   bool areComparableObjCPointerTypes(QualType LHS, QualType RHS);
   QualType areCommonBaseCompatible(const ObjCObjectPointerType *LHSOPT,
                                    const ObjCObjectPointerType *RHSOPT);
   
   // Functions for calculating composite types
-  QualType mergeTypes(QualType, QualType);
-  QualType mergeFunctionTypes(QualType, QualType);
+  QualType mergeTypes(QualType, QualType, bool OfBlockPointer=false);
+  QualType mergeFunctionTypes(QualType, QualType, bool OfBlockPointer=false);
 
   /// UsualArithmeticConversionsType - handles the various conversions
   /// that are common to binary operators (C99 6.3.1.8, C++ [expr]p9)

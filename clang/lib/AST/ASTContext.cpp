@@ -4315,6 +4315,41 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
   return false;
 }
 
+/// canAssignObjCInterfacesInBlockPointer - This routine is specifically written
+/// for providing type-safty for objective-c pointers used to pass/return 
+/// arguments in block literals. When passed as arguments, passing 'A*' where
+/// 'id' is expected is not OK. Passing 'Sub *" where 'Super *" is expected is
+/// not OK. For the return type, the opposite is not OK.
+bool ASTContext::canAssignObjCInterfacesInBlockPointer(
+                                         const ObjCObjectPointerType *LHSOPT,
+                                         const ObjCObjectPointerType *RHSOPT) {
+  if (RHSOPT->isObjCBuiltinType())
+    return true;
+  
+  if (LHSOPT->isObjCBuiltinType()) {
+    return RHSOPT->isObjCBuiltinType() || RHSOPT->isObjCQualifiedIdType();
+  }
+  
+  if (LHSOPT->isObjCQualifiedIdType() || RHSOPT->isObjCQualifiedIdType())
+    return ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
+                                             QualType(RHSOPT,0),
+                                             false);
+  
+  const ObjCInterfaceType* LHS = LHSOPT->getInterfaceType();
+  const ObjCInterfaceType* RHS = RHSOPT->getInterfaceType();
+  if (LHS && RHS)  { // We have 2 user-defined types.
+    if (LHS != RHS) {
+      if (LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
+        return false;
+      if (RHS->getDecl()->isSuperClassOf(LHS->getDecl()))
+        return true;
+    }
+    else
+      return true;
+  }
+  return false;
+}
+
 /// getIntersectionOfProtocols - This routine finds the intersection of set
 /// of protocols inherited from two distinct objective-c pointer objects.
 /// It is used to build composite qualifier list of the composite type of
@@ -4451,7 +4486,12 @@ bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
   return !mergeTypes(LHS, RHS).isNull();
 }
 
-QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
+bool ASTContext::typesAreBlockPointerCompatible(QualType LHS, QualType RHS) {
+  return !mergeTypes(LHS, RHS, true).isNull();
+}
+
+QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs, 
+                                        bool OfBlockPointer) {
   const FunctionType *lbase = lhs->getAs<FunctionType>();
   const FunctionType *rbase = rhs->getAs<FunctionType>();
   const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
@@ -4460,7 +4500,11 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   bool allRTypes = true;
 
   // Check return type
-  QualType retType = mergeTypes(lbase->getResultType(), rbase->getResultType());
+  QualType retType;
+  if (OfBlockPointer)
+    retType = mergeTypes(rbase->getResultType(), lbase->getResultType(), true);
+  else
+   retType = mergeTypes(lbase->getResultType(), rbase->getResultType());
   if (retType.isNull()) return QualType();
   if (getCanonicalType(retType) != getCanonicalType(lbase->getResultType()))
     allLTypes = false;
@@ -4500,7 +4544,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     for (unsigned i = 0; i < lproto_nargs; i++) {
       QualType largtype = lproto->getArgType(i).getUnqualifiedType();
       QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
-      QualType argtype = mergeTypes(largtype, rargtype);
+      QualType argtype = mergeTypes(largtype, rargtype, OfBlockPointer);
       if (argtype.isNull()) return QualType();
       types.push_back(argtype);
       if (getCanonicalType(argtype) != getCanonicalType(largtype))
@@ -4554,7 +4598,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
   return getFunctionNoProtoType(retType, NoReturn, lcc);
 }
 
-QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
+QualType ASTContext::mergeTypes(QualType LHS, QualType RHS, 
+                                bool OfBlockPointer) {
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression
   // designates the object or function denoted by the reference, and the
@@ -4681,7 +4726,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     // Merge two block pointer types, while trying to preserve typedef info
     QualType LHSPointee = LHS->getAs<BlockPointerType>()->getPointeeType();
     QualType RHSPointee = RHS->getAs<BlockPointerType>()->getPointeeType();
-    QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
+    QualType ResultType = mergeTypes(LHSPointee, RHSPointee, OfBlockPointer);
     if (ResultType.isNull()) return QualType();
     if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
       return LHS;
@@ -4732,7 +4777,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
                                   ArrayType::ArraySizeModifier(), 0);
   }
   case Type::FunctionNoProto:
-    return mergeFunctionTypes(LHS, RHS);
+    return mergeFunctionTypes(LHS, RHS, OfBlockPointer);
   case Type::Record:
   case Type::Enum:
     return QualType();
@@ -4761,12 +4806,19 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return QualType();
   }
   case Type::ObjCObjectPointer: {
+    if (OfBlockPointer) {
+      if (canAssignObjCInterfacesInBlockPointer(
+                                          LHS->getAs<ObjCObjectPointerType>(),
+                                          RHS->getAs<ObjCObjectPointerType>()))
+      return LHS;
+      return QualType();
+    }
     if (canAssignObjCInterfaces(LHS->getAs<ObjCObjectPointerType>(),
                                 RHS->getAs<ObjCObjectPointerType>()))
       return LHS;
 
     return QualType();
-  }
+    }
   }
 
   return QualType();

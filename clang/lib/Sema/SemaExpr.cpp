@@ -4579,7 +4579,11 @@ Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
   if (lhptee.getLocalCVRQualifiers() != rhptee.getLocalCVRQualifiers())
     ConvTy = CompatiblePointerDiscardsQualifiers;
 
-  if (!Context.typesAreCompatible(lhptee, rhptee))
+  if (!getLangOptions().CPlusPlus) {
+    if (!Context.typesAreBlockPointerCompatible(lhsType, rhsType))
+      return IncompatibleBlockPointer;
+  }
+  else if (!Context.typesAreCompatible(lhptee, rhptee))
     return IncompatibleBlockPointer;
   return ConvTy;
 }
