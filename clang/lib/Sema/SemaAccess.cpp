@@ -93,6 +93,88 @@ static CXXRecordDecl *FindDeclaringClass(NamedDecl *D) {
   return DeclaringClass;
 }
 
+static Sema::AccessResult MatchesFriend(Sema &S,
+                                        const EffectiveContext &EC,
+                                        const CXXRecordDecl *Friend) {
+  // FIXME: close matches becuse of dependency
+  if (EC.includesClass(Friend))
+    return Sema::AR_accessible;
+
+  return Sema::AR_inaccessible;
+}
+
+static Sema::AccessResult MatchesFriend(Sema &S,
+                                        const EffectiveContext &EC,
+                                        FriendDecl *Friend) {
+  if (Type *T = Friend->getFriendType()) {
+    CanQualType CT = T->getCanonicalTypeUnqualified();
+    if (const RecordType *RT = CT->getAs<RecordType>())
+      return MatchesFriend(S, EC, cast<CXXRecordDecl>(RT->getDecl()));
+
+    // TODO: we can fail early for a lot of type classes.
+    if (T->isDependentType())
+      return Sema::AR_dependent;
+
+    return Sema::AR_inaccessible;
+  }
+
+  NamedDecl *D
+    = cast<NamedDecl>(Friend->getFriendDecl()->getCanonicalDecl());
+
+  // FIXME: declarations with dependent or templated scope.
+
+  // For class templates, we want to check whether any of the records
+  // are possible specializations of the template.
+  if (isa<ClassTemplateDecl>(D)) {
+    for (llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator
+           I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I) {
+      CXXRecordDecl *Record = *I;
+      ClassTemplateDecl *CTD;
+
+      // A specialization of the template...
+      if (isa<ClassTemplateSpecializationDecl>(Record)) {
+        CTD = cast<ClassTemplateSpecializationDecl>(Record)
+                ->getSpecializedTemplate();
+
+      // ... or the template pattern itself.
+      } else {
+        CTD = Record->getDescribedClassTemplate();
+      }
+
+      if (CTD && D == CTD->getCanonicalDecl())
+        return Sema::AR_accessible;
+    }
+
+    return Sema::AR_inaccessible;
+  }
+
+  // Same thing for function templates.
+  if (isa<FunctionTemplateDecl>(D)) {
+    if (!EC.Function) return Sema::AR_inaccessible;
+
+    FunctionTemplateDecl *FTD = EC.Function->getPrimaryTemplate();
+    if (!FTD)
+      FTD = EC.Function->getDescribedFunctionTemplate();
+
+    if (FTD && D == FTD->getCanonicalDecl())
+      return Sema::AR_accessible;
+      
+    return Sema::AR_inaccessible;
+  }
+
+  // Friend functions.  FIXME: close matches due to dependency.
+  // 
+  // The decl pointers in EC have been canonicalized, so pointer
+  // equality is sufficient.
+  if (D == EC.Function)
+    return Sema::AR_accessible;
+
+  if (isa<CXXRecordDecl>(D))
+    return MatchesFriend(S, EC, cast<CXXRecordDecl>(D));
+
+  return Sema::AR_inaccessible;
+}
+
 static Sema::AccessResult GetFriendKind(Sema &S,
                                         const EffectiveContext &EC,
                                         const CXXRecordDecl *Class) {
@@ -107,26 +189,20 @@ static Sema::AccessResult GetFriendKind(Sema &S,
          E = Class->friend_end(); I != E; ++I) {
     FriendDecl *Friend = *I;
 
-    if (Type *T = Friend->getFriendType()) {
-      CanQualType CT = T->getCanonicalTypeUnqualified();
-      if (const RecordType *RT = CT->getAs<RecordType>())
-        if (EC.includesClass(cast<CXXRecordDecl>(RT->getDecl())))
-          return Sema::AR_accessible;
-    } else {
-      NamedDecl *D
-        = cast<NamedDecl>(Friend->getFriendDecl()->getCanonicalDecl());
+    switch (MatchesFriend(S, EC, Friend)) {
+    case Sema::AR_accessible:
+      return Sema::AR_accessible;
 
-      // The decl pointers in EC have been canonicalized, so pointer
-      // equality is sufficient.
-      if (D == EC.Function)
-        return Sema::AR_accessible;
+    case Sema::AR_inaccessible:
+      break;
 
-      if (isa<CXXRecordDecl>(D) &&
-          EC.includesClass(cast<CXXRecordDecl>(D)))
-        return Sema::AR_accessible;
+    case Sema::AR_dependent:
+      OnFailure = Sema::AR_dependent;
+      break;
+
+    case Sema::AR_delayed:
+      llvm_unreachable("cannot get delayed answer from MatchesFriend");
     }
-
-    // FIXME: templates! templated contexts! dependent delay!
   }
 
   // That's it, give up.

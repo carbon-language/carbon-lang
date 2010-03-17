@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only %s
+// RUN: %clang_cc1 -faccess-control -verify -emit-llvm-only %s
 
 template <typename T> struct Num {
   T value_;
@@ -53,4 +53,35 @@ int calc2() {
   Num<int>::Rep<char> n = (char) 10;
   Num<int> result = x * n;
   return result.get();
+}
+
+// Reduced from GNU <locale>
+namespace test1 {
+  class A {
+    bool b; // expected-note {{declared private here}}
+    template <typename T> friend bool has(const A&);
+  };
+  template <typename T> bool has(const A &x) {
+    return x.b;
+  }
+  template <typename T> bool hasnot(const A &x) {
+    return x.b; // expected-error {{'b' is a private member of 'test1::A'}}
+  }
+}
+
+namespace test2 {
+  class A {
+    bool b; // expected-note {{declared private here}}
+    template <typename T> friend class HasChecker;
+  };
+  template <typename T> class HasChecker {
+    bool check(A *a) {
+      return a->b;
+    }
+  };
+  template <typename T> class HasNotChecker {
+    bool check(A *a) {
+      return a->b; // expected-error {{'b' is a private member of 'test2::A'}}
+    }
+  };
 }
