@@ -107,14 +107,13 @@ void BinaryDiagnosticSerializer::HandleDiagnostic(Diagnostic::Level DiagLevel,
 
 static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, char **argv,
-                              llvm::OwningPtr<DiagnosticClient> &DiagClient) {
+                              Diagnostic &Diags) {
   std::string ErrorInfo;
   llvm::raw_ostream *OS =
     new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo);
   if (!ErrorInfo.empty()) {
-    // FIXME: Do not fail like this.
-    llvm::errs() << "error opening -dump-build-information file '"
-                 << DiagOpts.DumpBuildInformation << "', option ignored!\n";
+    Diags.Report(diag::err_fe_unable_to_open_logfile)
+                 << DiagOpts.DumpBuildInformation << ErrorInfo;
     delete OS;
     return;
   }
@@ -127,7 +126,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   // Chain in a diagnostic client which will log the diagnostics.
   DiagnosticClient *Logger =
     new TextDiagnosticPrinter(*OS, DiagOpts, /*OwnsOutputStream=*/true);
-  DiagClient.reset(new ChainedDiagnosticClient(DiagClient.take(), Logger));
+  Diags.setClient(new ChainedDiagnosticClient(Diags.getClient(), Logger));
 }
 
 void CompilerInstance::createDiagnostics(int Argc, char **Argv) {
@@ -165,11 +164,11 @@ Diagnostic *CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
   if (Opts.VerifyDiagnostics)
     DiagClient.reset(new VerifyDiagnosticsClient(*Diags, DiagClient.take()));
 
+  Diags->setClient(DiagClient.take());
   if (!Opts.DumpBuildInformation.empty())
-    SetUpBuildDumpLog(Opts, Argc, Argv, DiagClient);
+    SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
 
   // Configure our handling of diagnostics.
-  Diags->setClient(DiagClient.take());
   if (ProcessWarningOptions(*Diags, Opts))
     return 0;
 
