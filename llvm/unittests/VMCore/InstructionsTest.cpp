@@ -11,6 +11,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/STLExtras.h"
 #include "gtest/gtest.h"
 
 namespace llvm {
@@ -60,7 +61,7 @@ TEST(InstructionsTest, BranchInst) {
   EXPECT_NE(b0->op_begin(), b0->op_end());
   EXPECT_EQ(b0->op_begin() + 1, b0->op_end());
 
-  EXPECT_EQ(b0->op_begin() + 1, b0->op_end());
+  EXPECT_EQ(next(b0->op_begin()), b0->op_end());
 
   const IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
