@@ -39,8 +39,8 @@ static SmartMutex<true> SignalsMutex;
 /// InterruptFunction - The function to call if ctrl-c is pressed.
 static void (*InterruptFunction)() = 0;
 
-static std::vector<sys::Path> *FilesToRemove = 0;
-static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
+static std::vector<sys::Path> FilesToRemove;
+static std::vector<std::pair<void(*)(void*), void*> > CallBacksToRun;
 
 // IntSigs - Signals that may interrupt the program at any time.
 static const int IntSigs[] = {
@@ -126,11 +126,10 @@ static RETSIGTYPE SignalHandler(int Sig) {
   sigprocmask(SIG_UNBLOCK, &SigMask, 0);
 
   SignalsMutex.acquire();
-  if (FilesToRemove != 0)
-    while (!FilesToRemove->empty()) {
-      FilesToRemove->back().eraseFromDisk(true);
-      FilesToRemove->pop_back();
-    }
+  while (!FilesToRemove.empty()) {
+    FilesToRemove.back().eraseFromDisk(true);
+    FilesToRemove.pop_back();
+  }
 
   if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
     if (InterruptFunction) {
@@ -149,9 +148,8 @@ static RETSIGTYPE SignalHandler(int Sig) {
   SignalsMutex.release();
 
   // Otherwise if it is a fault (like SEGV) run any handler.
-  if (CallBacksToRun)
-    for (unsigned i = 0, e = CallBacksToRun->size(); i != e; ++i)
-      (*CallBacksToRun)[i].first((*CallBacksToRun)[i].second);
+  for (unsigned i = 0, e = CallBacksToRun.size(); i != e; ++i)
+    CallBacksToRun[i].first(CallBacksToRun[i].second);
 }
 
 
@@ -167,10 +165,7 @@ void llvm::sys::SetInterruptFunction(void (*IF)()) {
 bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
                                    std::string* ErrMsg) {
   SignalsMutex.acquire();
-  if (FilesToRemove == 0)
-    FilesToRemove = new std::vector<sys::Path>();
-
-  FilesToRemove->push_back(Filename);
+  FilesToRemove.push_back(Filename);
 
   SignalsMutex.release();
 
@@ -182,9 +177,7 @@ bool llvm::sys::RemoveFileOnSignal(const sys::Path &Filename,
 /// to the process.  The handler can have a cookie passed to it to identify
 /// what instance of the handler it is.
 void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
-  if (CallBacksToRun == 0)
-    CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
-  CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
+  CallBacksToRun.push_back(std::make_pair(FnPtr, Cookie));
   RegisterHandlers();
 }
 
