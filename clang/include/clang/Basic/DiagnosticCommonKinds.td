@@ -65,9 +65,6 @@ def err_target_invalid_feature : Error<"invalid target feature '%0'">;
 
 // Source manager
 def err_cannot_open_file : Error<"cannot open file '%0': %1">, DefaultFatal;
-def err_file_size_changed : Error<
-  "size of file '%0' changed since it was first processed (from %1 to %2)">, 
-  DefaultFatal;
 def err_file_modified : Error<
   "file '%0' modified since it was first processed">, DefaultFatal;
   

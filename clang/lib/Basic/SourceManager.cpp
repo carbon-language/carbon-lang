@@ -92,18 +92,12 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
       Diag.Report(diag::err_cannot_open_file)
         << Entry->getName() << ErrorStr;
       Buffer.setInt(true);
-    } else {
+    } else if (FileInfo.st_size != Entry->getSize() ||
+               FileInfo.st_mtime != Entry->getModificationTime()) {
       // Check that the file's size and modification time is the same as 
       // in the file entry (which may have come from a stat cache).
-      if (FileInfo.st_size != Entry->getSize()) {
-        Diag.Report(diag::err_file_size_changed)
-          << Entry->getName() << (unsigned)Entry->getSize() 
-          << (unsigned)FileInfo.st_size;
-        Buffer.setInt(true);
-      } else if (FileInfo.st_mtime != Entry->getModificationTime()) {
-        Diag.Report(diag::err_file_modified) << Entry->getName();
-        Buffer.setInt(true);
-      }
+      Diag.Report(diag::err_file_modified) << Entry->getName();
+      Buffer.setInt(true);
     }
   }
   
