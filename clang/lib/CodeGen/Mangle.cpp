@@ -469,8 +469,26 @@ void CXXNameMangler::mangleUnresolvedScope(NestedNameSpecifier *Qualifier) {
     mangleName(Qualifier->getAsNamespace());
     break;
   case NestedNameSpecifier::TypeSpec:
-  case NestedNameSpecifier::TypeSpecWithTemplate:
-    mangleType(QualType(Qualifier->getAsType(), 0));
+  case NestedNameSpecifier::TypeSpecWithTemplate: {
+    const Type *QTy = Qualifier->getAsType();
+
+    if (const TemplateSpecializationType *TST =
+        dyn_cast<TemplateSpecializationType>(QTy)) {
+      if (!mangleSubstitution(QualType(TST, 0))) {
+        TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
+        assert(TD && "FIXME: Support dependent template names");
+        mangleTemplatePrefix(TD);
+        TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
+        mangleTemplateArgs(*TemplateParameters, TST->getArgs(),
+                           TST->getNumArgs());
+        addSubstitution(QualType(TST, 0));
+      }
+    } else {
+      // We use the QualType mangle type variant here because it handles
+      // substitutions.
+      mangleType(QualType(QTy, 0));
+    }
+  }
     break;
   case NestedNameSpecifier::Identifier:
     // Member expressions can have these without prefixes.
@@ -1144,29 +1162,8 @@ void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
 void CXXNameMangler::mangleType(const TypenameType *T) {
   // Typename types are always nested
   Out << 'N';
-
-  const Type *QTy = T->getQualifier()->getAsType();
-  if (const TemplateSpecializationType *TST =
-        dyn_cast<TemplateSpecializationType>(QTy)) {
-    if (!mangleSubstitution(QualType(TST, 0))) {
-      TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
-      assert(TD && "FIXME: Support dependent template names");
-      mangleTemplatePrefix(TD);
-      TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
-      mangleTemplateArgs(*TemplateParameters, TST->getArgs(),
-                         TST->getNumArgs());
-      addSubstitution(QualType(TST, 0));
-    }
-  } else if (const TemplateTypeParmType *TTPT =
-              dyn_cast<TemplateTypeParmType>(QTy)) {
-    // We use the QualType mangle type variant here because it handles
-    // substitutions.
-    mangleType(QualType(TTPT, 0));
-  } else
-    assert(false && "Unhandled type!");
-
+  mangleUnresolvedScope(T->getQualifier());
   mangleSourceName(T->getIdentifier());
-
   Out << 'E';
 }
 

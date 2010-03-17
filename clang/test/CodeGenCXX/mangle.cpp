@@ -453,3 +453,18 @@ namespace test8 {
   class B { static int value; };
   template class A<B::value>;
 }
+// CHECK: declare void @_ZN5test91fIiNS_3barEEEvRKNT0_3baz1XE
+namespace test9 {
+  template<class T>
+  struct foo {
+    typedef T X;
+  };
+  struct bar {
+    typedef foo<int> baz;
+  };
+  template <class zaz, class zed>
+  void f(const typename zed::baz::X&);
+  void g() {
+    f<int, bar>( 0);
+  }
+}
