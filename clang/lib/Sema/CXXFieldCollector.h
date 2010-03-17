@@ -58,7 +58,10 @@ public:
   }
 
   /// getCurNumField - The number of fields added to the currently parsed class.
-  size_t getCurNumFields() const { return FieldCount.back(); }
+  size_t getCurNumFields() const {
+    assert(!FieldCount.empty() && "no currently-parsed class");
+    return FieldCount.back();
+  }
 
   /// getCurFields - Pointer to array of fields added to the currently parsed
   /// class.

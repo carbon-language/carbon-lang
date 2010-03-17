@@ -5113,11 +5113,11 @@ void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
 void Sema::ActOnTagDefinitionError(Scope *S, DeclPtrTy TagD) {
   AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
-
   Tag->setInvalidDecl();
 
-  if (isa<CXXRecordDecl>(Tag))
-    FieldCollector->FinishClass();
+  // We're undoing ActOnTagStartDefinition here, not
+  // ActOnStartCXXMemberDeclarations, so we don't have to mess with
+  // the FieldCollector.
 
   PopDeclContext();  
 }
