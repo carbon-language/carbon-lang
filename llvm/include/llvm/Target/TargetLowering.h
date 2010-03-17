@@ -307,7 +307,7 @@ public:
   /// intrinsic will need to map to a MemIntrinsicNode (touches memory). If
   /// this is the case, it returns true and store the intrinsic
   /// information into the IntrinsicInfo that was passed to the function.
-  typedef struct IntrinsicInfo { 
+  struct IntrinsicInfo { 
     unsigned     opc;         // target opcode
     EVT          memVT;       // memory VT
     const Value* ptrVal;      // value representing memory location
@@ -316,9 +316,9 @@ public:
     bool         vol;         // is volatile?
     bool         readMem;     // reads memory?
     bool         writeMem;    // writes memory?
-  } IntrinisicInfo;
+  };
 
-  virtual bool getTgtMemIntrinsic(IntrinsicInfo& Info,
+  virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
                                   CallInst &I, unsigned Intrinsic) {
     return false;
   }
