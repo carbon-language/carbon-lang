@@ -237,7 +237,7 @@ height="369">
 <p>LLVM debugging information has been carefully designed to make it possible
    for the optimizer to optimize the program and debugging information without
    necessarily having to know anything about debugging information.  In
-   particular, te use of metadadta avoids duplicated dubgging information from
+   particular, the use of metadata avoids duplicated debugging information from
    the beginning, and the global dead code elimination pass automatically 
    deletes debugging information for a function if it decides to delete the 
    function. </p>
@@ -370,7 +370,7 @@ height="369">
 </pre>
 </div>
 
-<p>These descriptors contain informations for a file. Global variables and top
+<p>These descriptors contain information for a file. Global variables and top
    level functions would be defined using this context.k File descriptors also
    provide context for source line correspondence. </p>
 
@@ -967,7 +967,7 @@ call void @llvm.dbg.declare({ }* %2, metadata !12), !dbg !14
 </pre>
 </div>
 
-<p>Here <tt>!14</tt> indicates that <tt>Z</tt> is declaread at line number 5 and
+<p>Here <tt>!14</tt> indicates that <tt>Z</tt> is declared at line number 5 and
    column number 9 inside of lexical scope <tt>!13</tt>. The lexical scope
    itself resides inside of lexical scope <tt>!1</tt> described above.</p>
 
