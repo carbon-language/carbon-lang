@@ -126,12 +126,12 @@ public:
   // Only allow allocation of Stmts using the allocator in ASTContext
   // or by doing a placement new.
   void* operator new(size_t bytes, ASTContext& C,
-                     unsigned alignment = 16) throw() {
+                     unsigned alignment = 8) throw() {
     return ::operator new(bytes, C, alignment);
   }
 
   void* operator new(size_t bytes, ASTContext* C,
-                     unsigned alignment = 16) throw() {
+                     unsigned alignment = 8) throw() {
     return ::operator new(bytes, *C, alignment);
   }
 
