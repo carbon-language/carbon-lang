@@ -25,11 +25,10 @@ public:
 class DarwinX86AsmBackend : public X86AsmBackend {
 public:
   DarwinX86AsmBackend(const Target &T)
-    : X86AsmBackend(T) {}
-
-  virtual bool hasAbsolutizedSet() const { return true; }
-
-  virtual bool hasScatteredSymbols() const { return true; }
+    : X86AsmBackend(T) {
+    HasAbsolutizedSet = true;
+    HasScatteredSymbols = true;
+  }
 };
 
 class DarwinX86_32AsmBackend : public DarwinX86AsmBackend {
@@ -41,7 +40,9 @@ public:
 class DarwinX86_64AsmBackend : public DarwinX86AsmBackend {
 public:
   DarwinX86_64AsmBackend(const Target &T)
-    : DarwinX86AsmBackend(T) {}
+    : DarwinX86AsmBackend(T) {
+    HasReliableSymbolDifference = true;
+  }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
     // Temporary labels in the string literals sections require symbols. The

@@ -11,7 +11,10 @@
 using namespace llvm;
 
 TargetAsmBackend::TargetAsmBackend(const Target &T)
-  : TheTarget(T)
+  : TheTarget(T),
+    HasAbsolutizedSet(false),
+    HasReliableSymbolDifference(false),
+    HasScatteredSymbols(false)
 {
 }
 

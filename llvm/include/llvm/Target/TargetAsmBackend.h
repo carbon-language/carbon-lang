@@ -24,6 +24,10 @@ protected: // Can only create subclasses.
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
 
+  unsigned HasAbsolutizedSet : 1;
+  unsigned HasReliableSymbolDifference : 1;
+  unsigned HasScatteredSymbols : 1;
+
 public:
   virtual ~TargetAsmBackend();
 
@@ -40,7 +44,21 @@ public:
   /// value of L0 - L1. This distinction is only relevant for platforms that
   /// support scattered symbols, since in the absence of scattered symbols (a -
   /// b) cannot change after assembly.
-  virtual bool hasAbsolutizedSet() const { return false; }
+  bool hasAbsolutizedSet() const { return HasAbsolutizedSet; }
+
+  /// hasReliableSymbolDifference - Check whether this target implements
+  /// accurate relocations for differences between symbols. If not, differences
+  /// between symbols will always be relocatable expressions and any references
+  /// to temporary symbols will be assumed to be in the same atom, unless they
+  /// reside in a different section.
+  ///
+  /// This should always be true (since it results in fewer relocations with no
+  /// loss of functionality), but is currently supported as a way to maintain
+  /// exact object compatibility with Darwin 'as' (on non-x86_64). It should
+  /// eventually should be eliminated. See also \see hasAbsolutizedSet.
+  bool hasReliableSymbolDifference() const {
+    return HasReliableSymbolDifference;
+  }
 
   /// hasScatteredSymbols - Check whether this target supports scattered
   /// symbols. If so, the assembler should assume that atoms can be scattered by
@@ -50,7 +68,7 @@ public:
   ///
   /// Note that the assembler currently does not reason about atoms, instead it
   /// assumes all temporary symbols reside in the "current atom".
-  virtual bool hasScatteredSymbols() const { return false; }
+  bool hasScatteredSymbols() const { return HasScatteredSymbols; }
 
   /// doesSectionRequireSymbols - Check whether the given section requires that
   /// all symbols (even temporaries) have symbol table entries.
