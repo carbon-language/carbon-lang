@@ -491,6 +491,11 @@ class AsmParser {
   // class.  Generated AsmParser classes are always prefixed with the target
   // name.
   string AsmParserClassName  = "AsmParser";
+
+  // AsmParserInstCleanup - If non-empty, this is the name of a custom function on the
+  // AsmParser class to call on every matched instruction. This can be used to
+  // perform target specific instruction post-processing.
+  string AsmParserInstCleanup  = "";
  
   // Variant - AsmParsers can be of multiple different variants.  Variants are
   // used to support targets that need to parser multiple formats for the 

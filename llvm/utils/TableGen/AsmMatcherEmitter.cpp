@@ -998,7 +998,7 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
 
   // Start the unified conversion function.
 
-  CvtOS << "static bool ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
+  CvtOS << "static void ConvertToMCInst(ConversionKind Kind, MCInst &Inst, "
         << "unsigned Opcode,\n"
         << "                      const SmallVectorImpl<MCParsedAsmOperand*"
         << "> &Operands) {\n";
@@ -1155,13 +1155,12 @@ static void EmitConvertToMCInst(CodeGenTarget &Target,
       }
     }
 
-    CvtOS << "    break;\n";
+    CvtOS << "    return;\n";
   }
 
   // Finish the convert function.
 
   CvtOS << "  }\n";
-  CvtOS << "  return false;\n";
   CvtOS << "}\n\n";
 
   // Finish the enum, and drop the convert function after it.
@@ -1634,8 +1633,15 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "      continue;\n";
   }
   OS << "\n";
-  OS << "    return ConvertToMCInst(it->ConvertFn, Inst, "
-     << "it->Opcode, Operands);\n";
+  OS << "    ConvertToMCInst(it->ConvertFn, Inst, it->Opcode, Operands);\n";
+
+  // Call the post-processing function, if used.
+  std::string InsnCleanupFn =
+    AsmParser->getValueAsString("AsmParserInstCleanup");
+  if (!InsnCleanupFn.empty())
+    OS << "    " << InsnCleanupFn << "(Inst);\n";
+
+  OS << "    return false;\n";
   OS << "  }\n\n";
 
   OS << "  return true;\n";
