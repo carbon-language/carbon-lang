@@ -229,7 +229,7 @@ class I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
         list<dag> pattern>
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString   = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
@@ -257,7 +257,7 @@ class sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
          list<dag> pattern>
   : InstARM<am, sz, im, f, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p, cc_out:$s));
+  let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
   let AsmString   = !strconcat(opc, !strconcat("${p}${s}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
@@ -1007,8 +1007,8 @@ class Thumb1sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                InstrItinClass itin,
                string opc, string asm, string cstr, list<dag> pattern>
   : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
-  let OutOperandList = !con(oops, (ops s_cc_out:$s));
-  let InOperandList = !con(iops, (ops pred:$p));
+  let OutOperandList = !con(oops, (outs s_cc_out:$s));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${s}${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb1Only];
@@ -1030,7 +1030,7 @@ class Thumb1pI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                string opc, string asm, string cstr, list<dag> pattern>
   : InstThumb<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb1Only];
@@ -1109,7 +1109,7 @@ class Thumb2I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
               string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
@@ -1125,7 +1125,7 @@ class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
                string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, IndexModeNone, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p, cc_out:$s));
+  let InOperandList = !con(iops, (ins pred:$p, cc_out:$s));
   let AsmString   = !strconcat(opc, !strconcat("${s}${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
@@ -1209,7 +1209,7 @@ class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
                  string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, Size4Bytes, im, ThumbFrm, GenericDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
@@ -1265,7 +1265,7 @@ class VFPI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
            string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, im, f, VFPDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString   = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [HasVFP2];
@@ -1468,7 +1468,7 @@ class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
             string opc, string dt, string asm, string cstr, list<dag> pattern>
   : InstARM<am, Size4Bytes, im, NEONFrm, NeonDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(
                      !strconcat(!strconcat(opc, "${p}"), !strconcat(".", dt)),
                      !strconcat("\t", asm));
@@ -1481,7 +1481,7 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
             string opc, string asm, string cstr, list<dag> pattern>
   : InstARM<am, Size4Bytes, im, NEONFrm, NeonDomain, cstr, itin> {
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(!strconcat(opc, "${p}"), !strconcat("\t", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
@@ -1621,7 +1621,7 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let Inst{4} = 1;
 
   let OutOperandList = oops;
-  let InOperandList = !con(iops, (ops pred:$p));
+  let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(
                      !strconcat(!strconcat(opc, "${p}"), !strconcat(".", dt)),
                      !strconcat("\t", asm));
