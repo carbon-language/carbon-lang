@@ -314,22 +314,15 @@ SourceRange cxcursor::getCursorPreprocessingDirective(CXCursor C) {
                                       reinterpret_cast<uintptr_t> (C.data[1])));
 }
 
-CXCursor cxcursor::MakeMacroInstantiationCursor(SourceRange Range, 
+CXCursor cxcursor::MakeMacroInstantiationCursor(MacroInstantiation *MI, 
                                                 ASTUnit *TU) {
-  CXCursor C = { CXCursor_MacroInstantiation, 
-                 { reinterpret_cast<void *>(Range.getBegin().getRawEncoding()),
-                   reinterpret_cast<void *>(Range.getEnd().getRawEncoding()),
-                   TU }
-               };
+  CXCursor C = { CXCursor_MacroInstantiation, { MI, 0, TU } };
   return C;
 }
 
-SourceRange cxcursor::getCursorMacroInstantiation(CXCursor C) {
+MacroInstantiation *cxcursor::getCursorMacroInstantiation(CXCursor C) {
   assert(C.kind == CXCursor_MacroInstantiation);
-  return SourceRange(SourceLocation::getFromRawEncoding(
-                                      reinterpret_cast<uintptr_t> (C.data[0])),
-                     SourceLocation::getFromRawEncoding(
-                                      reinterpret_cast<uintptr_t> (C.data[1])));
+  return static_cast<MacroInstantiation *>(C.data[0]);
 }
 
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {

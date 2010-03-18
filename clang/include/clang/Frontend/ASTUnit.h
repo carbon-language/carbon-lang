@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_ASTUNIT_H
 #define LLVM_CLANG_FRONTEND_ASTUNIT_H
 
+#include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "clang/Basic/FileManager.h"
@@ -53,7 +54,8 @@ class ASTUnit {
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
-
+  llvm::OwningPtr<PreprocessingRecord> Preprocessing;
+  
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
   llvm::OwningPtr<CompilerInvocation> Invocation;
@@ -135,6 +137,12 @@ public:
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
+  const PreprocessingRecord &getPreprocessingRecord() const { 
+    return *Preprocessing.get(); 
+  }
+  PreprocessingRecord &getPreprocessingRecord() { return *Preprocessing.get(); }
+  bool hasPreprocessingRecord() { return Preprocessing.get() != 0; }
+    
   const FileManager &getFileManager() const { return FileMgr; }
         FileManager &getFileManager()       { return FileMgr; }
 
@@ -204,7 +212,8 @@ public:
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
                                              bool OnlyLocalDecls = false,
-                                             bool CaptureDiagnostics = false);
+                                             bool CaptureDiagnostics = false,
+                                         bool WantPreprocessingRecord = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -227,7 +236,8 @@ public:
                                       bool OnlyLocalDecls = false,
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
-                                      bool CaptureDiagnostics = false);
+                                      bool CaptureDiagnostics = false,
+                                      bool WantPreprocessingRecord = false);
 };
 
 } // namespace clang

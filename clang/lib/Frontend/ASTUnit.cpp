@@ -278,7 +278,8 @@ public:
 ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
                                              bool OnlyLocalDecls,
-                                             bool CaptureDiagnostics) {
+                                             bool CaptureDiagnostics,
+                                             bool WantPreprocessingRecord) {
   // Create the compiler instance to use for building the AST.
   CompilerInstance Clang;
   llvm::OwningPtr<ASTUnit> AST;
@@ -328,6 +329,15 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   // Create the preprocessor.
   Clang.createPreprocessor();
 
+  // If the ASTUnit was requested to store information about preprocessing,
+  // create storage for that information and attach an appropriate callback to 
+  // populate that storage.
+  if (WantPreprocessingRecord) {
+    AST->Preprocessing.reset(new PreprocessingRecord);
+    Clang.getPreprocessor().addPPCallbacks(
+                          new PopulatePreprocessingRecord(*AST->Preprocessing));
+  }
+      
   Act.reset(new TopLevelDeclTrackerAction(*AST));
   if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
                            /*IsAST=*/false))
@@ -367,7 +377,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool OnlyLocalDecls,
                                       RemappedFile *RemappedFiles,
                                       unsigned NumRemappedFiles,
-                                      bool CaptureDiagnostics) {
+                                      bool CaptureDiagnostics,
+                                      bool WantPreprocessingRecord) {
   llvm::SmallVector<const char *, 16> Args;
   Args.push_back("<clang>"); // FIXME: Remove dummy argument.
   Args.insert(Args.end(), ArgBegin, ArgEnd);
@@ -419,5 +430,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
 
   CI->getFrontendOpts().DisableFree = true;
   return LoadFromCompilerInvocation(CI.take(), Diags, OnlyLocalDecls,
-                                    CaptureDiagnostics);
+                                    CaptureDiagnostics, 
+                                    WantPreprocessingRecord);
 }

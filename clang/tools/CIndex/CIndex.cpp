@@ -1008,7 +1008,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    CXXIdx->getOnlyLocalDecls(),
                                    RemappedFiles.data(),
                                    RemappedFiles.size(),
-                                   /*CaptureDiagnostics=*/true));
+                                   /*CaptureDiagnostics=*/true,
+                                   /*WantPreprocessingRecord=*/true));
 
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
@@ -1438,6 +1439,10 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return createCXString("");
   }
 
+  if (C.kind == CXCursor_MacroInstantiation)
+    return createCXString(getCursorMacroInstantiation(C)->getName()
+                                                           ->getNameStart());
+
   if (clang_isDeclaration(C.kind))
     return getDeclSpelling(getCursorDecl(C));
 
@@ -1656,7 +1661,8 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   }
 
   if (C.kind == CXCursor_MacroInstantiation) {
-    SourceLocation L = cxcursor::getCursorMacroInstantiation(C).getBegin();
+    SourceLocation L
+      = cxcursor::getCursorMacroInstantiation(C)->getSourceRange().getBegin();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
   
@@ -1717,7 +1723,7 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
   }
 
   if (C.kind == CXCursor_MacroInstantiation) {
-    SourceRange R = cxcursor::getCursorMacroInstantiation(C);
+    SourceRange R = cxcursor::getCursorMacroInstantiation(C)->getSourceRange();
     return cxloc::translateSourceRange(getCursorContext(C), R);
   }
   
@@ -2030,15 +2036,35 @@ void clang_enableStackTraces(void) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// IgnoringDiagClient - This is a diagnostic client that just ignores all
-/// diags.
-class IgnoringDiagClient : public DiagnosticClient {
-  void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                        const DiagnosticInfo &Info) {
-    // Just ignore it.
-  }
-};
+  class ComparePreprocessedEntityLocation {
+    SourceManager &SM;
+
+  public:
+    explicit ComparePreprocessedEntityLocation(SourceManager &SM) : SM(SM) { }
+
+    bool operator()(const PreprocessedEntity *Entity, SourceLocation Loc) {
+      return SM.isBeforeInTranslationUnit(Entity->getSourceRange().getEnd(), 
+                                          Loc);
+    }
+
+    bool operator()(SourceLocation Loc, const PreprocessedEntity *Entity) {
+      return SM.isBeforeInTranslationUnit(Loc, 
+                                          Entity->getSourceRange().getBegin());
+    }
+
+    bool operator()(const PreprocessedEntity *Entity, SourceRange R) {
+      return SM.isBeforeInTranslationUnit(Entity->getSourceRange().getEnd(), 
+                                          R.getBegin());
+    }
+
+    bool operator()(SourceRange R, const PreprocessedEntity *Entity) {
+      return SM.isBeforeInTranslationUnit(R.getEnd(), 
+                                          Entity->getSourceRange().getBegin());
+    }
+  };
 }
+
+
 
 /* CXToken layout:
  *   int_data[0]: a CXTokenKind
@@ -2298,13 +2324,13 @@ void clang_annotateTokens(CXTranslationUnit TU,
   if (RelexOkay) {
     Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
               CXXUnit->getASTContext().getLangOptions(),
-              Buffer.begin(), Buffer.data() + BeginLocInfo.second, Buffer.end());
+              Buffer.begin(), Buffer.data() + BeginLocInfo.second, 
+              Buffer.end());
     Lex.SetCommentRetentionState(true);
     
     // Lex tokens in raw mode until we hit the end of the range, to avoid 
     // entering #includes or expanding macros.
     std::vector<Token> TokenStream;
-    Preprocessor &PP = CXXUnit->getPreprocessor();
     while (true) {
       Token Tok;
       Lex.LexFromRawLexer(Tok);
@@ -2339,84 +2365,30 @@ void clang_annotateTokens(CXTranslationUnit TU,
         continue;
       }
       
-      // If this is a ## token, change its kind to unknown so that
-      // repreprocessing it will not produce an error.
-      if (Tok.is(tok::hashhash))
-        Tok.setKind(tok::unknown);
-      
-      // If this raw token is an identifier, the raw lexer won't have
-      // looked up the corresponding identifier info for it.  Do this
-      // now so that it will be macro expanded when we re-preprocess
-      // it.
-      if (Tok.is(tok::identifier)) {
-        // Change the kind of this identifier to the appropriate token kind, e.g.
-        // turning "for" into a keyword.
-        Tok.setKind(PP.LookUpIdentifierInfo(Tok)->getTokenID());
-      }
-      
-      TokenStream.push_back(Tok);
-      
       if (Tok.is(tok::eof))
         break;
     }
+  }
+   
+  if (CXXUnit->hasPreprocessingRecord()) {
+    PreprocessingRecord &PPRec = CXXUnit->getPreprocessingRecord();
+    std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+      Entities = std::equal_range(PPRec.begin(), PPRec.end(), RegionOfInterest,
+                                  ComparePreprocessedEntityLocation(SourceMgr));
+    for (; Entities.first != Entities.second; ++Entities.first) {
+      PreprocessedEntity *Entity = *Entities.first;
+      if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(Entity)) {
+        SourceLocation Loc = MI->getSourceRange().getBegin();
+        if (Loc.isFileID()) {
+          Annotated[Loc.getRawEncoding()]
+            = MakeMacroInstantiationCursor(MI, CXXUnit);
+        }
 
-    // Temporarily change the diagnostics object so that we ignore any
-    // generated diagnostics from this pass.
-    IgnoringDiagClient TmpDC;
-    Diagnostic TmpDiags(&TmpDC);
-    Diagnostic *OldDiags = &PP.getDiagnostics();
-    PP.setDiagnostics(TmpDiags);
-
-    // Inform the preprocessor that we don't want comments.
-    PP.SetCommentRetentionState(false, false);
-    
-    // Enter the tokens we just lexed.  This will cause them to be macro expanded
-    // but won't enter sub-files (because we removed #'s).
-    PP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
-
-    // Lex all the tokens.
-    Token Tok;
-    PP.Lex(Tok);
-    while (Tok.isNot(tok::eof)) {
-      // Ignore non-macro tokens.
-      if (!Tok.getLocation().isMacroID()) {
-        PP.Lex(Tok);
         continue;
       }
 
-      // Okay, we have the first token of a macro expansion. Keep
-      // track of the range of the macro expansion.
-      std::pair<SourceLocation, SourceLocation> LLoc =
-        SourceMgr.getInstantiationRange(Tok.getLocation());
-
-      // Ignore tokens whose instantiation location was not the main file.
-      if (SourceMgr.getFileID(LLoc.first) != BeginLocInfo.first) {
-        PP.Lex(Tok);
-        continue;
-      }
-
-      assert(SourceMgr.getFileID(LLoc.second) == BeginLocInfo.first &&
-             "Start and end of expansion must be in the same ultimate file!");
-
-      // Okay, eat this token, getting the next one.
-      PP.Lex(Tok);
-
-      // Skip all the rest of the tokens that are part of this macro
-      // instantiation.  It would be really nice to pop up a window with all the
-      // spelling of the tokens or something.
-      while (!Tok.is(tok::eof) &&
-             SourceMgr.getInstantiationLoc(Tok.getLocation()) == LLoc.first)
-        PP.Lex(Tok);
-
-      CXCursor Cursor
-        = cxcursor::MakeMacroInstantiationCursor(SourceRange(LLoc.first, 
-                                                             LLoc.second), 
-                                                 CXXUnit);
-      Annotated[LLoc.first.getRawEncoding()] = Cursor;
+      // FIXME: expose other preprocessed entities.
     }
-
-    // Restore diagnostics object back to its own thing.
-    PP.setDiagnostics(*OldDiags);
   }
   
   for (unsigned I = 0; I != NumTokens; ++I) {

@@ -25,6 +25,7 @@ class ASTUnit;
 class Attr;
 class Decl;
 class Expr;
+class MacroInstantiation;
 class NamedDecl;
 class ObjCInterfaceDecl;
 class ObjCProtocolDecl;
@@ -80,11 +81,11 @@ CXCursor MakePreprocessingDirectiveCursor(SourceRange Range, ASTUnit *TU);
 SourceRange getCursorPreprocessingDirective(CXCursor C);
 
 /// \brief Create a macro instantiation cursor.
-CXCursor MakeMacroInstantiationCursor(SourceRange Range, ASTUnit *TU);
+CXCursor MakeMacroInstantiationCursor(MacroInstantiation *, ASTUnit *TU);
 
 /// \brief Unpack a given macro instantiation cursor to retrieve its
 /// source range.
-SourceRange getCursorMacroInstantiation(CXCursor C);
+MacroInstantiation *getCursorMacroInstantiation(CXCursor C);
 
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
