@@ -221,3 +221,15 @@ namespace test6 {
     Test2 a = t;
   }
 }
+
+// Redeclaration lookups are not accesses.
+namespace test7 {
+  class A {
+    int private_member;
+  };
+  class B : A {
+    int foo(int private_member) {
+      return 0;
+    }
+  };
+}

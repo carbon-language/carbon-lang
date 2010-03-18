@@ -3950,7 +3950,11 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   // Check for redeclaration of parameters, e.g. int foo(int x, int x);
   IdentifierInfo *II = D.getIdentifier();
   if (II) {
-    if (NamedDecl *PrevDecl = LookupSingleName(S, II, LookupOrdinaryName)) {
+    LookupResult R(*this, II, D.getIdentifierLoc(), LookupOrdinaryName,
+                   ForRedeclaration);
+    LookupName(R, S);
+    if (R.isSingleResult()) {
+      NamedDecl *PrevDecl = R.getFoundDecl();
       if (PrevDecl->isTemplateParameter()) {
         // Maybe we will complain about the shadowed template parameter.
         DiagnoseTemplateParameterShadow(D.getIdentifierLoc(), PrevDecl);
