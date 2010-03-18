@@ -45,3 +45,9 @@ void test_uninit_neg() {
   test_unit_aux2(v2.x + v1.y); // no-warning
 }
 
+extern void test_uninit_struct_arg_aux(struct TestUninit arg);
+void test_uninit_struct_arg() {
+  struct TestUninit x;
+  test_uninit_struct_arg_aux(x); // expected-warning{{Passed-by-value struct argument contains uninitialized data (e.g., field: 'x')}}
+}
+
