@@ -253,7 +253,7 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
             return (Test.FAIL, "Tcl 'exec' parse error on: %r" % ln)
 
     if litConfig.useValgrind:
-        valgrindArgs = ['valgrind', '-q',
+        valgrindArgs = ['valgrind', '-q', '--run-libc-freeres=no',
                         '--tool=memcheck', '--trace-children=yes',
                         '--error-exitcode=123']
         valgrindArgs.extend(litConfig.valgrindArgs)
@@ -339,7 +339,7 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
         if litConfig.useValgrind:
             # FIXME: Running valgrind on sh is overkill. We probably could just
             # run on clang with no real loss.
-            valgrindArgs = ['valgrind', '-q',
+            valgrindArgs = ['valgrind', '-q', '--run-libc-freeres=no',
                             '--tool=memcheck', '--trace-children=yes',
                             '--error-exitcode=123']
             valgrindArgs.extend(litConfig.valgrindArgs)

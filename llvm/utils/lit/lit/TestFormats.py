@@ -73,7 +73,7 @@ class GoogleTest(object):
 
         cmd = [testPath, '--gtest_filter=' + testName]
         if litConfig.useValgrind:
-            valgrindArgs = ['valgrind', '-q',
+            valgrindArgs = ['valgrind', '-q', '--run-libc-freeres=no',
                             '--tool=memcheck', '--trace-children=yes',
                             '--error-exitcode=123']
             valgrindArgs.extend(litConfig.valgrindArgs)
