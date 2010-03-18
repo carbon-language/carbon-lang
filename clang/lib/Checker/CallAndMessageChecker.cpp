@@ -44,6 +44,9 @@ public:
   bool EvalNilReceiver(CheckerContext &C, const ObjCMessageExpr *ME);
 
 private:
+  bool PreVisitProcessArg(CheckerContext &C, const Expr *Ex,
+                          const char *BT_desc, BugType *&BT);
+
   void EmitBadCall(BugType *BT, CheckerContext &C, const CallExpr *CE);
   void EmitNilReceiverBug(CheckerContext &C, const ObjCMessageExpr *ME,
                           ExplodedNode *N);
@@ -51,10 +54,9 @@ private:
   void HandleNilReceiver(CheckerContext &C, const GRState *state,
                          const ObjCMessageExpr *ME);
 
-  void LazyInit_BT_call_arg() {
-    if (!BT_call_arg)
-      BT_call_arg = new BuiltinBug("Pass-by-value argument in function call"
-                                   " is undefined");
+  void LazyInit_BT(const char *desc, BugType *&BT) {
+    if (!BT)
+      BT = new BuiltinBug(desc);
   }
 };
 } // end anonymous namespace
@@ -73,6 +75,114 @@ void CallAndMessageChecker::EmitBadCall(BugType *BT, CheckerContext &C,
   R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                        bugreporter::GetCalleeExpr(N));
   C.EmitReport(R);
+}
+
+bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
+                                               const Expr *Ex,
+                                               const char *BT_desc,
+                                               BugType *&BT) {
+
+  const SVal &V = C.getState()->getSVal(Ex);
+
+  if (V.isUndef()) {
+    if (ExplodedNode *N = C.GenerateSink()) {
+      LazyInit_BT(BT_desc, BT);
+
+      // Generate a report for this bug.
+      EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName(), N);
+      R->addRange(Ex->getSourceRange());
+      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Ex);
+      C.EmitReport(R);
+    }
+    return true;
+  }
+
+  if (const nonloc::LazyCompoundVal *LV =
+        dyn_cast<nonloc::LazyCompoundVal>(&V)) {
+
+    class FindUninitializedField {
+    public:
+      llvm::SmallVector<const FieldDecl *, 10> FieldChain;
+    private:
+      ASTContext &C;
+      StoreManager &StoreMgr;
+      MemRegionManager &MrMgr;
+      Store store;
+    public:
+      FindUninitializedField(ASTContext &c, StoreManager &storeMgr,
+                             MemRegionManager &mrMgr, Store s)
+      : C(c), StoreMgr(storeMgr), MrMgr(mrMgr), store(s) {}
+
+      bool Find(const TypedRegion *R) {
+        QualType T = R->getValueType(C);
+        if (const RecordType *RT = T->getAsStructureType()) {
+          const RecordDecl *RD = RT->getDecl()->getDefinition();
+          assert(RD && "Referred record has no definition");
+          for (RecordDecl::field_iterator I =
+               RD->field_begin(), E = RD->field_end(); I!=E; ++I) {
+            const FieldRegion *FR = MrMgr.getFieldRegion(*I, R);
+            FieldChain.push_back(*I);
+            T = (*I)->getType();
+            if (T->getAsStructureType()) {
+              if (Find(FR))
+                return true;
+            }
+            else {
+              const SVal &V = StoreMgr.Retrieve(store, loc::MemRegionVal(FR));
+              if (V.isUndef())
+                return true;
+            }
+            FieldChain.pop_back();
+          }
+        }
+
+        return false;
+      }
+    };
+
+    const LazyCompoundValData *D = LV->getCVData();
+    FindUninitializedField F(C.getASTContext(),
+                             C.getState()->getStateManager().getStoreManager(),
+                             C.getValueManager().getRegionManager(),
+                             D->getStore());
+
+    if (F.Find(D->getRegion())) {
+      if (ExplodedNode *N = C.GenerateSink()) {
+        LazyInit_BT(BT_desc, BT);
+        llvm::SmallString<512> Str;
+        llvm::raw_svector_ostream os(Str);
+        os << "Passed-by-value struct argument contains uninitialized data";
+
+        if (F.FieldChain.size() == 1)
+          os << " (e.g., field: '" << F.FieldChain[0]->getNameAsString()
+             << "')";
+        else {
+          os << " (e.g., via the field chain: '";
+          bool first = true;
+          for (llvm::SmallVectorImpl<const FieldDecl *>::iterator
+               DI = F.FieldChain.begin(), DE = F.FieldChain.end(); DI!=DE;++DI){
+            if (first)
+              first = false;
+            else
+              os << '.';
+            os << (*DI)->getNameAsString();
+          }
+          os << "')";
+        }
+
+        // Generate a report for this bug.
+        EnhancedBugReport *R = new EnhancedBugReport(*BT, os.str(), N);
+        R->addRange(Ex->getSourceRange());
+
+        // FIXME: enhance track back for uninitialized value for arbitrary
+        // memregions
+        C.EmitReport(R);
+      }
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C,
@@ -97,105 +207,11 @@ void CallAndMessageChecker::PreVisitCallExpr(CheckerContext &C,
   }
 
   for (CallExpr::const_arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-       I != E; ++I) {
-    const SVal &V = C.getState()->getSVal(*I);
-    if (V.isUndef()) {
-      if (ExplodedNode *N = C.GenerateSink()) {
-        LazyInit_BT_call_arg();
-
-        // Generate a report for this bug.
-        EnhancedBugReport *R = new EnhancedBugReport(*BT_call_arg,
-                                                     BT_call_arg->getName(), N);
-        R->addRange((*I)->getSourceRange());
-        R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, *I);
-        C.EmitReport(R);
-        return;
-      }
-    }
-    if (const nonloc::LazyCompoundVal *LV =
-          dyn_cast<nonloc::LazyCompoundVal>(&V)) {
-      const LazyCompoundValData *D = LV->getCVData();
-
-      class FindUninitializedField {
-      public:
-        llvm::SmallVector<const FieldDecl *, 10> FieldChain;
-      private:
-        ASTContext &C;
-        StoreManager &StoreMgr;
-        MemRegionManager &MrMgr;
-        Store store;
-      public:
-        FindUninitializedField(ASTContext &c, StoreManager &storeMgr,
-                               MemRegionManager &mrMgr, Store s)
-          : C(c), StoreMgr(storeMgr), MrMgr(mrMgr), store(s) {}
-
-        bool Find(const TypedRegion *R) {
-          QualType T = R->getValueType(C);
-          if (const RecordType *RT = T->getAsStructureType()) {
-            const RecordDecl *RD = RT->getDecl()->getDefinition();
-            assert(RD && "Referred record has no definition");
-            for (RecordDecl::field_iterator I =
-                  RD->field_begin(), E = RD->field_end(); I!=E; ++I) {
-              const FieldRegion *FR = MrMgr.getFieldRegion(*I, R);
-              FieldChain.push_back(*I);
-              T = (*I)->getType();
-              if (T->getAsStructureType()) {
-                if (Find(FR))
-                  return true;
-              }
-              else {
-                const SVal &V = StoreMgr.Retrieve(store, loc::MemRegionVal(FR));
-                if (V.isUndef())
-                  return true;
-              }
-              FieldChain.pop_back();
-            }
-          }
-
-          return false;
-        }
-      };
-
-      FindUninitializedField F(C.getASTContext(),
-                               C.getState()->getStateManager().getStoreManager(),
-                               C.getValueManager().getRegionManager(),
-                               D->getStore());
-
-      if (F.Find(D->getRegion())) {
-        if (ExplodedNode *N = C.GenerateSink()) {
-          LazyInit_BT_call_arg();
-          llvm::SmallString<512> Str;
-          llvm::raw_svector_ostream os(Str);
-          os << "Passed-by-value struct argument contains uninitialized data";
-
-          if (F.FieldChain.size() == 1)
-            os << " (e.g., field: '" << F.FieldChain[0]->getNameAsString() << "')";
-          else {
-            os << " (e.g., via the field chain: '";
-            bool first = true;
-            for (llvm::SmallVectorImpl<const FieldDecl *>::iterator
-                 DI = F.FieldChain.begin(), DE = F.FieldChain.end(); DI!=DE;++DI){
-              if (first)
-                first = false;
-              else
-                os << '.';
-              os << (*DI)->getNameAsString();
-            }
-            os << "')";
-          }
-
-          // Generate a report for this bug.
-          EnhancedBugReport *R =
-            new EnhancedBugReport(*BT_call_arg, os.str(), N);
-          R->addRange((*I)->getSourceRange());
-
-          // FIXME: enhance track back for uninitialized value for arbitrary
-          // memregions
-          C.EmitReport(R);
-        }
-      }
-    }
-  }
+       I != E; ++I)
+    if (PreVisitProcessArg(C, *I,
+                           "Pass-by-value argument in function call is"
+                           " undefined", BT_call_arg))
+      return;
 }
 
 void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
@@ -221,23 +237,11 @@ void CallAndMessageChecker::PreVisitObjCMessageExpr(CheckerContext &C,
 
   // Check for any arguments that are uninitialized/undefined.
   for (ObjCMessageExpr::const_arg_iterator I = ME->arg_begin(),
-         E = ME->arg_end(); I != E; ++I) {
-    if (state->getSVal(*I).isUndef()) {
-      if (ExplodedNode *N = C.GenerateSink()) {
-        if (!BT_msg_arg)
-          BT_msg_arg =
-            new BuiltinBug("Pass-by-value argument in message expression"
-                           " is undefined");
-        // Generate a report for this bug.
-        EnhancedBugReport *R = new EnhancedBugReport(*BT_msg_arg,
-                                                     BT_msg_arg->getName(), N);
-        R->addRange((*I)->getSourceRange());
-        R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, *I);
-        C.EmitReport(R);
+         E = ME->arg_end(); I != E; ++I)
+    if (PreVisitProcessArg(C, *I,
+                           "Pass-by-value argument in message expression "
+                           "is undefined", BT_msg_arg))
         return;
-      }
-    }
-  }
 }
 
 bool CallAndMessageChecker::EvalNilReceiver(CheckerContext &C,

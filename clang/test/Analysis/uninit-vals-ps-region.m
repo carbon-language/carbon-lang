@@ -51,3 +51,12 @@ void test_uninit_struct_arg() {
   test_uninit_struct_arg_aux(x); // expected-warning{{Passed-by-value struct argument contains uninitialized data (e.g., field: 'x')}}
 }
 
+@interface Foo
+- (void) passVal:(struct TestUninit)arg;
+@end
+void testFoo(Foo *o) {
+  struct TestUninit x;
+  [o passVal:x]; // expected-warning{{Passed-by-value struct argument contains uninitialized data (e.g., field: 'x')}}
+}
+
+
