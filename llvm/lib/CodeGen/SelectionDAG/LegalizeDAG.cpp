@@ -851,8 +851,6 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   case ISD::MERGE_VALUES:
   case ISD::EH_RETURN:
   case ISD::FRAME_TO_ARGS_OFFSET:
-  case ISD::FP16_TO_FP32:
-  case ISD::FP32_TO_FP16:
     // These operations lie about being legal: when they claim to be legal,
     // they should actually be expanded.
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));

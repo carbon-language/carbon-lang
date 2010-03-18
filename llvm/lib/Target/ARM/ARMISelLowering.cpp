@@ -436,9 +436,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
     }
     // Special handling for half-precision FP.
-    if (Subtarget->hasVFP3() && Subtarget->hasFP16()) {
-      setOperationAction(ISD::FP16_TO_FP32, MVT::f32, Custom);
-      setOperationAction(ISD::FP32_TO_FP16, MVT::i32, Custom);
+    if (!Subtarget->hasFP16()) {
+      setOperationAction(ISD::FP16_TO_FP32, MVT::f32, Expand);
+      setOperationAction(ISD::FP32_TO_FP16, MVT::i32, Expand);
     }
   }
 
@@ -499,8 +499,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FTOUI:         return "ARMISD::FTOUI";
   case ARMISD::SITOF:         return "ARMISD::SITOF";
   case ARMISD::UITOF:         return "ARMISD::UITOF";
-  case ARMISD::F16_TO_F32:    return "ARMISD::F16_TO_F32";
-  case ARMISD::F32_TO_F16:    return "ARMISD::F32_TO_F16";
 
   case ARMISD::SRL_FLAG:      return "ARMISD::SRL_FLAG";
   case ARMISD::SRA_FLAG:      return "ARMISD::SRA_FLAG";
@@ -1987,9 +1985,6 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
     assert(0 && "Invalid opcode!");
-  case ISD::FP32_TO_FP16:
-    Opc = ARMISD::F32_TO_F16;
-    break;
   case ISD::FP_TO_SINT:
     Opc = ARMISD::FTOSI;
     break;
@@ -2009,9 +2004,6 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default:
     assert(0 && "Invalid opcode!");
-  case ISD::FP16_TO_FP32:
-    Opc = ARMISD::F16_TO_F32;
-    break;
   case ISD::SINT_TO_FP:
     Opc = ARMISD::SITOF;
     break;
@@ -3078,10 +3070,8 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::VASTART:       return LowerVASTART(Op, DAG, VarArgsFrameIndex);
   case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG, Subtarget);
-  case ISD::FP16_TO_FP32:
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
-  case ISD::FP32_TO_FP16:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:    return LowerFP_TO_INT(Op, DAG);
   case ISD::FCOPYSIGN:     return LowerFCOPYSIGN(Op, DAG);
