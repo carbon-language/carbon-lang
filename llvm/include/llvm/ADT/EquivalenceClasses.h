@@ -16,8 +16,8 @@
 #define LLVM_ADT_EQUIVALENCECLASSES_H
 
 #include "llvm/System/DataTypes.h"
-#include <set>
 #include <cassert>
+#include <set>
 
 namespace llvm {
 
