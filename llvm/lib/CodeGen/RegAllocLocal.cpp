@@ -739,7 +739,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   
     // Physical registers and those that are not live-out of the block are
     // killed/dead at their last use/def within this block.
-    if (isPhysReg || !usedOutsideBlock || BBEndsInReturn)
+    if (isPhysReg || !usedOutsideBlock || BBEndsInReturn) {
       if (MO.isUse()) {
         // Don't mark uses that are tied to defs as kills.
         if (!MI->isRegTiedToDefOperand(idx))
@@ -747,6 +747,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       } else {
         MO.setIsDead(true);
       }
+    }
   }
 }
 
