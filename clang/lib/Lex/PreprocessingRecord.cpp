@@ -26,12 +26,14 @@ void PopulatePreprocessingRecord::MacroExpands(const Token &Id,
   Record.addPreprocessedEntity(
                         new (Record) MacroInstantiation(Id.getIdentifierInfo(),
                                                        Id.getLocation(),
-                                                      MI->getDefinitionLoc()));
+                                                        MacroDefinitions[MI]));
 }
 
 void PopulatePreprocessingRecord::MacroDefined(const IdentifierInfo *II, 
                                                const MacroInfo *MI) {
   SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
-  Record.addPreprocessedEntity(
-                  new (Record) MacroDefinition(II, MI->getDefinitionLoc(), R));
+  MacroDefinition *Def
+    = new (Record) MacroDefinition(II, MI->getDefinitionLoc(), R);
+  MacroDefinitions[MI] = Def;
+  Record.addPreprocessedEntity(Def);
 }

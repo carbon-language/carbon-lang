@@ -1765,6 +1765,11 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     return clang_getNullCursor();
   }
 
+  if (C.kind == CXCursor_MacroInstantiation) {
+    if (MacroDefinition *Def = getCursorMacroInstantiation(C)->getDefinition())
+      return MakeMacroDefinitionCursor(Def, CXXUnit);
+  }
+
   if (!clang_isReference(C.kind))
     return clang_getNullCursor();
 
@@ -1802,6 +1807,9 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     C = clang_getCursorReferenced(C);
     WasReference = true;
   }
+
+  if (C.kind == CXCursor_MacroInstantiation)
+    return clang_getCursorReferenced(C);
 
   if (!clang_isDeclaration(C.kind))
     return clang_getNullCursor();

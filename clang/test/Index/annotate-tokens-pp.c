@@ -32,14 +32,14 @@ int BAR STILL_NOTHING;
 // CHECK: Identifier: "X" [4:22 - 4:23] preprocessing directive=
 // CHECK: Punctuation: "##" [4:23 - 4:25] preprocessing directive=
 // CHECK: Identifier: "Y" [4:25 - 4:26] preprocessing directive=
-// CHECK: Identifier: "NOTHING" [5:1 - 5:8] macro instantiation=NOTHING
+// CHECK: Identifier: "NOTHING" [5:1 - 5:8] macro instantiation=NOTHING:1:9
 // CHECK: Punctuation: "(" [5:8 - 5:9]
 // CHECK: Identifier: "more" [5:9 - 5:13]
 // CHECK: Punctuation: "," [5:13 - 5:14]
 // CHECK: Identifier: "junk" [5:14 - 5:18]
 // CHECK: Punctuation: ")" [5:18 - 5:19]
 // CHECK: Keyword: "float" [5:20 - 5:25]
-// CHECK: Identifier: "WIBBLE" [5:26 - 5:32] macro instantiation=WIBBLE
+// CHECK: Identifier: "WIBBLE" [5:26 - 5:32] macro instantiation=WIBBLE:4:9
 // CHECK: Punctuation: "(" [5:32 - 5:33]
 // CHECK: Keyword: "int" [5:33 - 5:36]
 // CHECK: Punctuation: "," [5:36 - 5:37]
@@ -47,8 +47,8 @@ int BAR STILL_NOTHING;
 // CHECK: Punctuation: ")" [5:43 - 5:44]
 // CHECK: Punctuation: ";" [5:44 - 5:45]
 // CHECK: Keyword: "int" [6:1 - 6:4]
-// CHECK: Identifier: "BAR" [6:5 - 6:8] macro instantiation=BAR
-// CHECK: Identifier: "STILL_NOTHING" [6:9 - 6:22] macro instantiation=STILL_NOTHING
+// CHECK: Identifier: "BAR" [6:5 - 6:8] macro instantiation=BAR:3:9
+// CHECK: Identifier: "STILL_NOTHING" [6:9 - 6:22] macro instantiation=STILL_NOTHING:2:9
 // CHECK: Punctuation: ";" [6:22 - 6:23]
 // CHECK: Punctuation: "#" [7:1 - 7:2] preprocessing directive=
 // CHECK: Identifier: "include" [7:2 - 7:9] preprocessing directive=

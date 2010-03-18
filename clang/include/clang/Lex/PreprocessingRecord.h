@@ -16,6 +16,7 @@
 
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
@@ -34,6 +35,8 @@ void operator delete(void* ptr, clang::PreprocessingRecord& PR,
                      unsigned) throw();
 
 namespace clang {
+  class MacroDefinition;
+
   /// \brief Base class that describes a preprocessed entity, which may be a
   /// preprocessor directive or macro instantiation.
   class PreprocessedEntity {
@@ -108,22 +111,20 @@ namespace clang {
     /// \brief The name of the macro being instantiation.
     IdentifierInfo *Name;
     
-    /// \brief The location of the definition of the macro being instantiated.
-    SourceLocation DefinitionLocation;
+    /// \brief The definition of this macro.
+    MacroDefinition *Definition;
     
   public:
     MacroInstantiation(IdentifierInfo *Name, SourceRange Range,
-                       SourceLocation DefinitionLocation)
+                       MacroDefinition *Definition)
       : PreprocessedEntity(MacroInstantiationKind, Range), Name(Name), 
-        DefinitionLocation(DefinitionLocation) { }
+        Definition(Definition) { }
     
     /// \brief The name of the macro being instantiated.
     IdentifierInfo *getName() const { return Name; }
     
-    /// \brief The location of the definition of the macro being instantiated.
-    /// FIXME: Could we just provide MacroInfo pointers instead, by teaching
-    /// the preprocessor to hold on to them when we care to keep them around?
-    SourceLocation getDefinitionLocation() const { return DefinitionLocation; }
+    /// \brief The definition of the macro being instantiated.
+    MacroDefinition *getDefinition() const { return Definition; }
 
     // Implement isa/cast/dyncast/etc.
     static bool classof(const PreprocessedEntity *PE) {
@@ -212,6 +213,9 @@ namespace clang {
     /// \brief The preprocessing record this action will populate.
     PreprocessingRecord &Record;
     
+    /// \brief Mapping from MacroInfo structures to their definitions.
+    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
+
   public:
     explicit PopulatePreprocessingRecord(PreprocessingRecord &Record)
       : Record(Record) { }
