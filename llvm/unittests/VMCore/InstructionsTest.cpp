@@ -59,7 +59,7 @@ TEST(InstructionsTest, BranchInst) {
   EXPECT_EQ(b0->getNumOperands(), 1U);
 
   EXPECT_NE(b0->op_begin(), b0->op_end());
-  EXPECT_EQ(b0->op_begin() + 1, b0->op_end());
+  EXPECT_EQ(next(b0->op_begin()), b0->op_end());
 
   EXPECT_EQ(next(b0->op_begin()), b0->op_end());
 
