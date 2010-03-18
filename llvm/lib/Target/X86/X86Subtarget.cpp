@@ -366,12 +366,3 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   if (StackAlignment)
     stackAlignment = StackAlignment;
 }
-
-bool X86Subtarget::enablePostRAScheduler(
-            CodeGenOpt::Level OptLevel,
-            TargetSubtarget::AntiDepBreakMode& Mode,
-            RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtarget::ANTIDEP_CRITICAL;
-  CriticalPathRCs.clear();
-  return OptLevel >= CodeGenOpt::Aggressive;
-}

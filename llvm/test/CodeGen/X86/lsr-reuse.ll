@@ -8,10 +8,10 @@ target triple = "x86_64-unknown-unknown"
 
 ; CHECK: full_me_0:
 ; CHECK: movsd   (%rsi), %xmm0
-; CHECK: addq    $8, %rsi
 ; CHECK: mulsd   (%rdx), %xmm0
-; CHECK: addq    $8, %rdx
 ; CHECK: movsd   %xmm0, (%rdi)
+; CHECK: addq    $8, %rsi
+; CHECK: addq    $8, %rdx
 ; CHECK: addq    $8, %rdi
 ; CHECK: decq    %rcx
 ; CHECK: jne
@@ -53,10 +53,10 @@ return:
 ; CHECK: mulsd   -2048(%rdx), %xmm0
 ; CHECK: movsd   %xmm0, -2048(%rdi)
 ; CHECK: movsd   (%rsi), %xmm0
-; CHECK: addq    $8, %rsi
 ; CHECK: divsd   (%rdx), %xmm0
-; CHECK: addq    $8, %rdx
 ; CHECK: movsd   %xmm0, (%rdi)
+; CHECK: addq    $8, %rsi
+; CHECK: addq    $8, %rdx
 ; CHECK: addq    $8, %rdi
 ; CHECK: decq    %rcx
 ; CHECK: jne
@@ -99,10 +99,10 @@ return:
 ; CHECK: mulsd   (%rdx), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi)
 ; CHECK: movsd   -2048(%rsi), %xmm0
-; CHECK: addq    $8, %rsi
 ; CHECK: divsd   -2048(%rdx), %xmm0
-; CHECK: addq    $8, %rdx
 ; CHECK: movsd   %xmm0, -2048(%rdi)
+; CHECK: addq    $8, %rsi
+; CHECK: addq    $8, %rdx
 ; CHECK: addq    $8, %rdi
 ; CHECK: decq    %rcx
 ; CHECK: jne
@@ -144,10 +144,10 @@ return:
 ; CHECK: mulsd   (%rdx), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi)
 ; CHECK: movsd   -4096(%rsi), %xmm0
-; CHECK: addq    $8, %rsi
 ; CHECK: divsd   -4096(%rdx), %xmm0
-; CHECK: addq    $8, %rdx
 ; CHECK: movsd   %xmm0, -4096(%rdi)
+; CHECK: addq    $8, %rsi
+; CHECK: addq    $8, %rdx
 ; CHECK: addq    $8, %rdi
 ; CHECK: decq    %rcx
 ; CHECK: jne
@@ -310,10 +310,10 @@ return:
 ; CHECK: addsd   (%rsi), %xmm0
 ; CHECK: movsd   %xmm0, (%rdx)
 ; CHECK: movsd   40(%rdi), %xmm0
-; CHECK: addq    $8, %rdi
 ; CHECK: subsd   40(%rsi), %xmm0
-; CHECK: addq    $8, %rsi
 ; CHECK: movsd   %xmm0, 40(%rdx)
+; CHECK: addq    $8, %rdi
+; CHECK: addq    $8, %rsi
 ; CHECK: addq    $8, %rdx
 ; CHECK: decq    %rcx
 ; CHECK: jne
