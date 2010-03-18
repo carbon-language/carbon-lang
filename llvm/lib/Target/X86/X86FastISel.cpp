@@ -1166,6 +1166,21 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::stackprotector: {
+    // Emit code inline code to store the stack guard onto the stack.
+    EVT PtrTy = TLI.getPointerTy();
+
+    Value *Op1 = I.getOperand(1); // The guard's value.
+    AllocaInst *Slot = cast<AllocaInst>(I.getOperand(2));
+
+    // Grab the frame index.
+    X86AddressMode AM;
+    if (!X86SelectAddress(Slot, AM)) return false;
+    
+    X86FastEmitStore(PtrTy, Op1, AM);
+    UpdateValueMap(&I, getRegForValue(Op1));
+    return true;
+  }
   case Intrinsic::objectsize: {
     ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(2));
     const Type *Ty = I.getCalledFunction()->getReturnType();
