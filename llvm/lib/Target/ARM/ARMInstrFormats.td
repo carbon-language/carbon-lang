@@ -71,7 +71,7 @@ class UnaryDP    { bit isUnaryDataProc = 1; }
 class Xform16Bit { bit canXformTo16Bit = 1; }
 
 //===----------------------------------------------------------------------===//
-// ARM Instruction flags.  These need to match ARMInstrInfo.h.
+// ARM Instruction flags.  These need to match ARMBaseInstrInfo.h.
 //
 
 // Addressing mode.
