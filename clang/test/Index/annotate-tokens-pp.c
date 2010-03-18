@@ -16,7 +16,7 @@ int BAR STILL_NOTHING;
 // CHECK: Identifier: "honk" [2:31 - 2:35] preprocessing directive=
 // CHECK: Punctuation: "," [2:35 - 2:36] preprocessing directive=
 // CHECK: Identifier: "warble" [2:36 - 2:42] preprocessing directive=
-// CHECK: Punctuation: ")" [2:42 - 2:43] preprocessing directive=
+// CHECK: Punctuation: ")" [2:42 - 2:43] preprocesggsing directive=
 // CHECK: Punctuation: "#" [3:1 - 3:2] preprocessing directive=
 // CHECK: Identifier: "define" [3:2 - 3:8] preprocessing directive=
 // CHECK: Identifier: "BAR" [3:9 - 3:12] macro definition=BAR

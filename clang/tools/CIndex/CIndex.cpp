@@ -2066,22 +2066,22 @@ namespace {
   public:
     explicit ComparePreprocessedEntityLocation(SourceManager &SM) : SM(SM) { }
 
-    bool operator()(const PreprocessedEntity *Entity, SourceLocation Loc) {
+    bool operator()(const PreprocessedEntity *Entity, SourceLocation Loc) const{
       return SM.isBeforeInTranslationUnit(Entity->getSourceRange().getEnd(), 
                                           Loc);
     }
 
-    bool operator()(SourceLocation Loc, const PreprocessedEntity *Entity) {
+    bool operator()(SourceLocation Loc, const PreprocessedEntity *Entity) const{
       return SM.isBeforeInTranslationUnit(Loc, 
                                           Entity->getSourceRange().getBegin());
     }
 
-    bool operator()(const PreprocessedEntity *Entity, SourceRange R) {
+    bool operator()(const PreprocessedEntity *Entity, SourceRange R) const {
       return SM.isBeforeInTranslationUnit(Entity->getSourceRange().getEnd(), 
                                           R.getBegin());
     }
 
-    bool operator()(SourceRange R, const PreprocessedEntity *Entity) {
+    bool operator()(SourceRange R, const PreprocessedEntity *Entity) const {
       return SM.isBeforeInTranslationUnit(R.getEnd(), 
                                           Entity->getSourceRange().getBegin());
     }
