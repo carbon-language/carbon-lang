@@ -123,6 +123,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasExtraDefRegAllocReq = R->getValueAsBit("hasExtraDefRegAllocReq");
   hasOptionalDef = false;
   isVariadic = false;
+  ImplicitDefs = R->getValueAsListOfDefs("Defs");
+  ImplicitUses = R->getValueAsListOfDefs("Uses");
 
   if (neverHasSideEffects + hasSideEffects > 1)
     throw R->getName() + ": multiple conflicting side-effect flags set!";

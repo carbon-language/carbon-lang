@@ -114,6 +114,10 @@ namespace llvm {
     /// type (which is a record).
     std::vector<OperandInfo> OperandList;
 
+    /// ImplicitDefs/ImplicitUses - These are lists of registers that are
+    /// implicitly defined and used by the instruction.
+    std::vector<Record*> ImplicitDefs, ImplicitUses;
+
     // Various boolean values we track for the instruction.
     bool isReturn;
     bool isBranch;
