@@ -22,7 +22,7 @@
 
 // FIXME: Updates to this file must also update CMakeLists.txt and VER.
 /// \brief Clang minor version
-#define CLANG_VERSION_MINOR 1
+#define CLANG_VERSION_MINOR 5
 
 /// \brief Clang patchlevel version
 // #define CLANG_VERSION_PATCHLEVEL 1
