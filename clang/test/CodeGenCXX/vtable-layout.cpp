@@ -887,8 +887,8 @@ class E : virtual C { };
 // CHECK-NEXT:        -- (Test21::E, 8) vtable address --
 // CHECK-NEXT:   15 | [unused] void Test21::F::f()
 //
-// CHECK:      Virtual base offset offsets for 'Test21::F'.
-// CHECK-NEXT:   Test21::A | -32
+// CHECK:      Virtual base offset offsets for 'Test21::F' (5 entries).
+// CHECK-NEXT:    Test21::A | -32
 // CHECK-NEXT:    Test21::B | -40
 // CHECK-NEXT:    Test21::C | -48
 // CHECK-NEXT:    Test21::D | -56

@@ -1233,10 +1233,11 @@ private:
   ThunksInfoMapTy Thunks;
 
   typedef llvm::DenseMap<const CXXMethodDecl *,
-                         llvm::SmallVector<ThunkInfo, 1> > ThunksForMethodMapTy;
+                         llvm::SmallVector<ThunkInfo, 1> > MethodThunksMapTy;
   
-  /// ThunksPerMethod - The thunks for a given method.
-  ThunksForMethodMapTy ThunksForMethod;
+  /// MethodThunks - A map that contains all the thunks needed for all methods
+  /// in the vtable currently being built.
+  MethodThunksMapTy MethodThunks;
   
   /// AddThunk - Add a thunk for the given method.
   void AddThunk(const CXXMethodDecl *MD, ThunkInfo &Thunk);
@@ -1357,7 +1358,10 @@ public:
 };
 
 void VtableBuilder::AddThunk(const CXXMethodDecl *MD, ThunkInfo &Thunk) {
-  llvm::SmallVector<ThunkInfo, 1> &ThunksVector = ThunksForMethod[MD];
+  if (isBuildingConstructorVtable())
+    return;
+
+  llvm::SmallVector<ThunkInfo, 1> &ThunksVector = MethodThunks[MD];
   
   // Check if we have this thunk already.
   if (std::find(ThunksVector.begin(), ThunksVector.end(), Thunk) != 
@@ -1419,6 +1423,8 @@ void VtableBuilder::ComputeThisAdjustments() {
       // Add an adjustment for the deleting destructor as well.
       Thunks[VtableIndex + 1].This = ThisAdjustment;
     }
+    
+    AddThunk(Overrider.Method, Thunks[VtableIndex]);
   }
 
   /// Clear the method info map.
@@ -2219,20 +2225,25 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
   Out << '\n';
   
-  if (!isBuildingConstructorVtable() && MostDerivedClass->getNumVBases()) {
-    Out << "Virtual base offset offsets for '";
-    Out << MostDerivedClass->getQualifiedNameAsString() << "'.\n";
-    
+  if (isBuildingConstructorVtable())
+    return;
+  
+  if (MostDerivedClass->getNumVBases()) {
     // We store the virtual base class names and their offsets in a map to get
     // a stable order.
-    std::map<std::string, int64_t> ClassNamesAndOffsets;
 
+    std::map<std::string, int64_t> ClassNamesAndOffsets;
     for (VBaseOffsetOffsetsMapTy::const_iterator I = VBaseOffsetOffsets.begin(),
          E = VBaseOffsetOffsets.end(); I != E; ++I) {
       std::string ClassName = I->first->getQualifiedNameAsString();
       int64_t OffsetOffset = I->second;
       ClassNamesAndOffsets.insert(std::make_pair(ClassName, OffsetOffset));
     }
+    
+    Out << "Virtual base offset offsets for '";
+    Out << MostDerivedClass->getQualifiedNameAsString() << "' (";
+    Out << ClassNamesAndOffsets.size();
+    Out << (ClassNamesAndOffsets.size() == 1 ? " entry" : " entries") << ").\n";
 
     for (std::map<std::string, int64_t>::const_iterator I =
          ClassNamesAndOffsets.begin(), E = ClassNamesAndOffsets.end(); 
@@ -2240,6 +2251,52 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       Out << "   " << I->first << " | " << I->second << '\n';
 
     Out << "\n";
+  }
+  
+  if (!MethodThunks.empty()) {
+    
+    // We store the method names in a map to get a stable order.
+    std::map<std::string, const CXXMethodDecl *> MethodNamesAndDecls;
+    
+    for (MethodThunksMapTy::const_iterator I = MethodThunks.begin(), 
+         E = MethodThunks.end(); I != E; ++I) {
+      const CXXMethodDecl *MD = I->first;
+      std::string MethodName = 
+        PredefinedExpr::ComputeName(PredefinedExpr::PrettyFunctionNoVirtual,
+                                    MD);
+      
+      MethodNamesAndDecls.insert(std::make_pair(MethodName, MD));
+    }
+
+    for (std::map<std::string, const CXXMethodDecl *>::const_iterator I =
+         MethodNamesAndDecls.begin(), E = MethodNamesAndDecls.end(); 
+         I != E; ++I) {
+      const std::string &MethodName = I->first;
+      const CXXMethodDecl *MD = I->second;
+      const llvm::SmallVector<ThunkInfo, 1> &ThunksVector = MethodThunks[MD];
+
+      Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
+      Out << (ThunksVector.size() == 1 ? " entry" : " entries") << ").\n";
+      
+      for (unsigned I = 0, E = ThunksVector.size(); I != E; ++I) {
+        const ThunkInfo &Thunk = ThunksVector[I];
+
+        Out << llvm::format("%4d | ", I);
+        
+        // If this function pointer has a 'this' pointer adjustment, dump it.
+        if (!Thunk.This.isEmpty()) {
+          Out << "this: ";
+          Out << Thunk.This.NonVirtual << " nv";
+          
+          if (Thunk.This.VCallOffsetOffset) {
+            Out << ", " << Thunk.This.VCallOffsetOffset;
+            Out << " v";
+          }
+        }
+        
+        Out << '\n';
+      }
+    }
   }
 }
   
