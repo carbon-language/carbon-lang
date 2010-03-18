@@ -1177,8 +1177,8 @@ bool X86FastISel::X86VisitIntrinsicCall(IntrinsicInst &I) {
     X86AddressMode AM;
     if (!X86SelectAddress(Slot, AM)) return false;
     
-    X86FastEmitStore(PtrTy, Op1, AM);
-    UpdateValueMap(&I, getRegForValue(Op1));
+    if (!X86FastEmitStore(PtrTy, Op1, AM)) return false;
+    
     return true;
   }
   case Intrinsic::objectsize: {
