@@ -56,16 +56,16 @@ class MfcForm<bits<6> opcode, bits<16> fc, string asmstr, InstrItinClass itin>
         : InstAlpha<opcode, asmstr, itin> {    
   bits<5> Ra;
 
-  let OutOperandList = (ops GPRC:$RA);
-  let InOperandList = (ops);
+  let OutOperandList = (outs GPRC:$RA);
+  let InOperandList = (ins);
   let Inst{25-21} = Ra;
   let Inst{20-16} = 0;
   let Inst{15-0} = fc;
 }
 class MfcPForm<bits<6> opcode, bits<16> fc, string asmstr, InstrItinClass itin> 
         : InstAlpha<opcode, asmstr, itin> {    
-  let OutOperandList = (ops);
-  let InOperandList = (ops);
+  let OutOperandList = (outs);
+  let InOperandList = (ins);
   let Inst{25-21} = 0;
   let Inst{20-16} = 0;
   let Inst{15-0} = fc;
@@ -77,7 +77,7 @@ class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, InstrItinClass 
   bits<5> Rb;
   bits<14> disp;
 
-  let OutOperandList = (ops);
+  let OutOperandList = (outs);
   let InOperandList = OL;
 
   let Inst{25-21} = Ra;
@@ -92,7 +92,7 @@ class MbrpForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, list<dag> patt
   bits<5> Rb;
   bits<14> disp;
 
-  let OutOperandList = (ops);
+  let OutOperandList = (outs);
   let InOperandList = OL;
 
   let Inst{25-21} = Ra;
@@ -107,7 +107,7 @@ def target : Operand<OtherVT> {}
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
 class BFormN<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
    : InstAlpha<opcode, asmstr, itin> {
-  let OutOperandList = (ops);
+  let OutOperandList = (outs);
   let InOperandList = OL;
   bits<64> Opc; //dummy
   bits<5> Ra;
@@ -122,8 +122,8 @@ let isBranch = 1, isTerminator = 1 in
 class BFormD<bits<6> opcode, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OutOperandList = (ops);
-  let InOperandList = (ops target:$DISP);
+  let OutOperandList = (outs);
+  let InOperandList = (ins target:$DISP);
   bits<5> Ra;
   bits<21> disp;
 
@@ -250,7 +250,7 @@ class FPForm<bits<6> opcode, bits<11> fun, string asmstr, list<dag> pattern, Ins
 //3.3.5
 class PALForm<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
     : InstAlpha<opcode, asmstr, itin> {
-  let OutOperandList = (ops);
+  let OutOperandList = (outs);
   let InOperandList = OL;
   bits<26> Function;
 
