@@ -384,7 +384,7 @@ TEST_F(SmallVectorTest, ConstVectorTest) {
 // Direct array access.
 TEST_F(SmallVectorTest, DirectVectorTest) {
   EXPECT_EQ(0u, theVector.size());
-  EXPECT_EQ(4u, theVector.capacity());
+  EXPECT_LE(4u, theVector.capacity());
   EXPECT_EQ(0, Constructable::getNumConstructorCalls());
   theVector.end()[0] = 1;
   theVector.end()[1] = 2;
