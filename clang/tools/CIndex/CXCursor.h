@@ -78,7 +78,14 @@ CXCursor MakePreprocessingDirectiveCursor(SourceRange Range, ASTUnit *TU);
 
 /// \brief Unpack a given preprocessing directive to retrieve its source range.
 SourceRange getCursorPreprocessingDirective(CXCursor C);
-  
+
+/// \brief Create a macro instantiation cursor.
+CXCursor MakeMacroInstantiationCursor(SourceRange Range, ASTUnit *TU);
+
+/// \brief Unpack a given macro instantiation cursor to retrieve its
+/// source range.
+SourceRange getCursorMacroInstantiation(CXCursor C);
+
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
 Stmt *getCursorStmt(CXCursor Cursor);

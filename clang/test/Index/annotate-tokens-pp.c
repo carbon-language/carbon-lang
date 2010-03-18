@@ -1,6 +1,6 @@
 #define BAR baz
-#define WIBBLE(X, Y)
-WIBBLE(int, float)
+#define WIBBLE(X, Y) X##Y
+float WIBBLE(int, float);
 int BAR;
 #include "foo.h"
 
@@ -17,14 +17,15 @@ int BAR;
 // CHECK: Punctuation: "," [2:17 - 2:18] preprocessing directive=
 // CHECK: Identifier: "Y" [2:19 - 2:20] preprocessing directive=
 // CHECK: Punctuation: ")" [2:20 - 2:21] preprocessing directive=
-// CHECK: Identifier: "WIBBLE" [3:1 - 3:7]
-// CHECK: Punctuation: "(" [3:7 - 3:8]
-// CHECK: Keyword: "int" [3:8 - 3:11]
-// CHECK: Punctuation: "," [3:11 - 3:12]
-// CHECK: Keyword: "float" [3:13 - 3:18]
-// CHECK: Punctuation: ")" [3:18 - 3:19]
+// CHECK: Identifier: "WIBBLE" [3:7 - 3:13] macro instantiation=
+// CHECK: Punctuation: "(" [3:13 - 3:14]
+// CHECK: Keyword: "int" [3:14 - 3:17]
+// CHECK: Punctuation: "," [3:17 - 3:18]
+// CHECK: Keyword: "float" [3:19 - 3:24]
+// CHECK: Punctuation: ")" [3:24 - 3:25]
+// CHECK: Punctuation: ";" [3:25 - 3:26]
 // CHECK: Keyword: "int" [4:1 - 4:4]
-// CHECK: Identifier: "BAR" [4:5 - 4:8]
+// CHECK: Identifier: "BAR" [4:5 - 4:8] macro instantiation=
 // CHECK: Punctuation: ";" [4:8 - 4:9]
 // CHECK: Punctuation: "#" [5:1 - 5:2] preprocessing directive=
 // CHECK: Identifier: "include" [5:2 - 5:9] preprocessing directive=

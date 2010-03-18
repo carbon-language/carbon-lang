@@ -1522,6 +1522,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
      return createCXString("attribute(iboutlet)");
   case CXCursor_PreprocessingDirective:
     return createCXString("preprocessing directive");
+  case CXCursor_MacroInstantiation:
+    return createCXString("macro instantiation");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
@@ -1652,6 +1654,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     SourceLocation L = cxcursor::getCursorPreprocessingDirective(C).getBegin();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
+
+  if (C.kind == CXCursor_MacroInstantiation) {
+    SourceLocation L = cxcursor::getCursorMacroInstantiation(C).getBegin();
+    return cxloc::translateSourceLocation(getCursorContext(C), L);
+  }
   
   if (!getCursorDecl(C))
     return clang_getNullLocation();
@@ -1706,6 +1713,11 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
 
   if (C.kind == CXCursor_PreprocessingDirective) {
     SourceRange R = cxcursor::getCursorPreprocessingDirective(C);
+    return cxloc::translateSourceRange(getCursorContext(C), R);
+  }
+
+  if (C.kind == CXCursor_MacroInstantiation) {
+    SourceRange R = cxcursor::getCursorMacroInstantiation(C);
     return cxloc::translateSourceRange(getCursorContext(C), R);
   }
   
@@ -2017,6 +2029,17 @@ void clang_enableStackTraces(void) {
 // Token-based Operations.
 //===----------------------------------------------------------------------===//
 
+namespace {
+/// IgnoringDiagClient - This is a diagnostic client that just ignores all
+/// diags.
+class IgnoringDiagClient : public DiagnosticClient {
+  void HandleDiagnostic(Diagnostic::Level DiagLevel,
+                        const DiagnosticInfo &Info) {
+    // Just ignore it.
+  }
+};
+}
+
 /* CXToken layout:
  *   int_data[0]: a CXTokenKind
  *   int_data[1]: starting token location
@@ -2281,9 +2304,8 @@ void clang_annotateTokens(CXTranslationUnit TU,
     // Lex tokens in raw mode until we hit the end of the range, to avoid 
     // entering #includes or expanding macros.
     std::vector<Token> TokenStream;
-    const char *EffectiveBufferEnd = Buffer.data() + EndLocInfo.second;
     Preprocessor &PP = CXXUnit->getPreprocessor();
-    while (Lex.getBufferLocation() <= EffectiveBufferEnd) {
+    while (true) {
       Token Tok;
       Lex.LexFromRawLexer(Tok);
       
@@ -2311,23 +2333,21 @@ void clang_annotateTokens(CXTranslationUnit TU,
           Annotated[Locations[I].getRawEncoding()] = Cursor;
         }
         
-        if (Tok.is(tok::eof))
-          break;
-        
         if (Tok.isAtStartOfLine())
           goto reprocess;
         
         continue;
       }
       
-      // If this is a ## token, change its kind to unknown so that repreprocessing
-      // it will not produce an error.
+      // If this is a ## token, change its kind to unknown so that
+      // repreprocessing it will not produce an error.
       if (Tok.is(tok::hashhash))
         Tok.setKind(tok::unknown);
       
-      // If this raw token is an identifier, the raw lexer won't have looked up
-      // the corresponding identifier info for it.  Do this now so that it will be
-      // macro expanded when we re-preprocess it.
+      // If this raw token is an identifier, the raw lexer won't have
+      // looked up the corresponding identifier info for it.  Do this
+      // now so that it will be macro expanded when we re-preprocess
+      // it.
       if (Tok.is(tok::identifier)) {
         // Change the kind of this identifier to the appropriate token kind, e.g.
         // turning "for" into a keyword.
@@ -2336,9 +2356,67 @@ void clang_annotateTokens(CXTranslationUnit TU,
       
       TokenStream.push_back(Tok);
       
-      if (Tok.is(tok::eof)) 
+      if (Tok.is(tok::eof))
         break;
     }
+
+    // Temporarily change the diagnostics object so that we ignore any
+    // generated diagnostics from this pass.
+    IgnoringDiagClient TmpDC;
+    Diagnostic TmpDiags(&TmpDC);
+    Diagnostic *OldDiags = &PP.getDiagnostics();
+    PP.setDiagnostics(TmpDiags);
+
+    // Inform the preprocessor that we don't want comments.
+    PP.SetCommentRetentionState(false, false);
+    
+    // Enter the tokens we just lexed.  This will cause them to be macro expanded
+    // but won't enter sub-files (because we removed #'s).
+    PP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
+
+    // Lex all the tokens.
+    Token Tok;
+    PP.Lex(Tok);
+    while (Tok.isNot(tok::eof)) {
+      // Ignore non-macro tokens.
+      if (!Tok.getLocation().isMacroID()) {
+        PP.Lex(Tok);
+        continue;
+      }
+
+      // Okay, we have the first token of a macro expansion. Keep
+      // track of the range of the macro expansion.
+      std::pair<SourceLocation, SourceLocation> LLoc =
+        SourceMgr.getInstantiationRange(Tok.getLocation());
+
+      // Ignore tokens whose instantiation location was not the main file.
+      if (SourceMgr.getFileID(LLoc.first) != BeginLocInfo.first) {
+        PP.Lex(Tok);
+        continue;
+      }
+
+      assert(SourceMgr.getFileID(LLoc.second) == BeginLocInfo.first &&
+             "Start and end of expansion must be in the same ultimate file!");
+
+      // Okay, eat this token, getting the next one.
+      PP.Lex(Tok);
+
+      // Skip all the rest of the tokens that are part of this macro
+      // instantiation.  It would be really nice to pop up a window with all the
+      // spelling of the tokens or something.
+      while (!Tok.is(tok::eof) &&
+             SourceMgr.getInstantiationLoc(Tok.getLocation()) == LLoc.first)
+        PP.Lex(Tok);
+
+      CXCursor Cursor
+        = cxcursor::MakeMacroInstantiationCursor(SourceRange(LLoc.first, 
+                                                             LLoc.second), 
+                                                 CXXUnit);
+      Annotated[LLoc.first.getRawEncoding()] = Cursor;
+    }
+
+    // Restore diagnostics object back to its own thing.
+    PP.setDiagnostics(*OldDiags);
   }
   
   for (unsigned I = 0; I != NumTokens; ++I) {

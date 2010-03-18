@@ -800,9 +800,9 @@ enum CXCursorKind {
      
   /* Preprocessing */
   CXCursor_PreprocessingDirective        = 500,
-  
+  CXCursor_MacroInstantiation            = 501,
   CXCursor_FirstPreprocessing            = CXCursor_PreprocessingDirective,
-  CXCursor_LastPreprocessing             = CXCursor_PreprocessingDirective
+  CXCursor_LastPreprocessing             = CXCursor_MacroInstantiation
 };
 
 /**
