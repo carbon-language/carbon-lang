@@ -15,8 +15,8 @@ typedef struct NSSize {
 
 void foo() { 
         Foo *f;
-        f.size.width = 2.2; // expected-error {{cannot assign to a sub-structure of an ivar using property assignment syntax}}
-	f.size.inner.dim = 200; // expected-error {{cannot assign to a sub-structure of an ivar using property assignment syntax}}
+        f.size.width = 2.2; // expected-error {{expression is not assignable using property assignment syntax}}
+	f.size.inner.dim = 200; // expected-error {{expression is not assignable using property assignment syntax}}
 }
 
 // radar 7628953
@@ -28,7 +28,7 @@ void foo() {
 
 @implementation Gorf
 - (void)MyView_sharedInit {
-    self.size.width = 2.2; // expected-error {{cannot assign to a sub-structure returned via a getter using property assignment syntax}}
+    self.size.width = 2.2; // expected-error {{expression is not assignable using property assignment syntax}}
 }
 - (NSSize)size {}
 @end

@@ -150,7 +150,6 @@ public:
     LV_InvalidExpression,
     LV_MemberFunction,
     LV_SubObjCPropertySetting,
-    LV_SubObjCPropertyGetterSetting,
     LV_ClassTemporary
   };
   isLvalueResult isLvalue(ASTContext &Ctx) const;
@@ -182,7 +181,6 @@ public:
     MLV_NoSetterProperty,
     MLV_MemberFunction,
     MLV_SubObjCPropertySetting,
-    MLV_SubObjCPropertyGetterSetting,
     MLV_ClassTemporary
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,

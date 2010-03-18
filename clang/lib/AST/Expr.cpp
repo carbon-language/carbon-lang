@@ -1104,11 +1104,11 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     if (m->isArrow())
       return LV_Valid;
     Expr *BaseExp = m->getBase();
-    if (BaseExp->getStmtClass() == ObjCPropertyRefExprClass)
+    if (BaseExp->getStmtClass() == ObjCPropertyRefExprClass ||
+        BaseExp->getStmtClass() == ObjCImplicitSetterGetterRefExprClass)
           return LV_SubObjCPropertySetting;
     return 
-      (BaseExp->getStmtClass() == ObjCImplicitSetterGetterRefExprClass) ?
-       LV_SubObjCPropertyGetterSetting : BaseExp->isLvalue(Ctx);        
+       BaseExp->isLvalue(Ctx);        
   }
   case UnaryOperatorClass:
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
@@ -1324,8 +1324,6 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
     return MLV_InvalidExpression;
   case LV_MemberFunction: return MLV_MemberFunction;
   case LV_SubObjCPropertySetting: return MLV_SubObjCPropertySetting;
-  case LV_SubObjCPropertyGetterSetting: 
-    return MLV_SubObjCPropertyGetterSetting;
   case LV_ClassTemporary:
     return MLV_ClassTemporary;
   }
