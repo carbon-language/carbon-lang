@@ -1163,12 +1163,14 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     } else if (!InstInfo.ImplicitDefs.empty()) {
       // If the instruction has implicit defs, the first one defines the result
       // type.
-      assert(InstInfo.ImplicitDefs[0]->isSubClassOf("Register"));
       Record *FirstImplicitDef = InstInfo.ImplicitDefs[0];
+      assert(FirstImplicitDef->isSubClassOf("Register"));
       const std::vector<MVT::SimpleValueType> &RegVTs = 
         CDP.getTargetInfo().getRegisterVTs(FirstImplicitDef);
-      if (!RegVTs.empty())
+      if (RegVTs.size() == 1)
         ResultType = EEVT::TypeSet(RegVTs);
+      else
+        ResultType = EEVT::TypeSet(MVT::isVoid, TP);
     } else {
       // Otherwise, the instruction produces no value result.
       // FIXME: Model "no result" different than "one result that is void"

@@ -698,7 +698,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     // occur in patterns like (mul:i8 AL:i8, GR8:i8:$src).
     for (unsigned i = 0, e = PhysRegInputs.size(); i != e; ++i)
       AddMatcher(new EmitCopyToRegMatcher(PhysRegInputs[i].second,
-                                                  PhysRegInputs[i].first));
+                                          PhysRegInputs[i].first));
     // Even if the node has no other flag inputs, the resultant node must be
     // flagged to the CopyFromReg nodes we just generated.
     TreeHasInFlag = true;
@@ -708,12 +708,11 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   // Determine the result types.
   SmallVector<MVT::SimpleValueType, 4> ResultVTs;
-  if (NumResults != 0 && N->getType() != MVT::isVoid) {
+  if (N->getType() != MVT::isVoid) {
     // FIXME2: If the node has multiple results, we should add them.  For now,
     // preserve existing behavior?!
     ResultVTs.push_back(N->getType());
   }
-
   
   // If this is the root instruction of a pattern that has physical registers in
   // its result pattern, add output VTs for them.  For example, X86 has:
@@ -721,9 +720,18 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   // This also handles implicit results like:
   //   (implicit EFLAGS)
   if (isRoot && Pattern.getDstRegs().size() != 0) {
-    for (unsigned i = 0; i != Pattern.getDstRegs().size(); ++i)
-      if (Pattern.getDstRegs()[i]->isSubClassOf("Register"))
-        ResultVTs.push_back(getRegisterValueType(Pattern.getDstRegs()[i], CGT));
+    // If the root came from an implicit def in the instruction handling stuff,
+    // don't re-add it.
+    Record *HandledReg = 0;
+    if (NumResults == 0 && N->getType() != MVT::isVoid &&
+        !II.ImplicitDefs.empty())
+      HandledReg = II.ImplicitDefs[0];
+    
+    for (unsigned i = 0; i != Pattern.getDstRegs().size(); ++i) {
+      Record *Reg = Pattern.getDstRegs()[i];
+      if (!Reg->isSubClassOf("Register") || Reg == HandledReg) continue;
+      ResultVTs.push_back(getRegisterValueType(Reg, CGT));
+    }
   }
 
   // FIXME2: Instead of using the isVariadic flag on the instruction, we should
