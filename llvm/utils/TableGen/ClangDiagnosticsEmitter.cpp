@@ -34,7 +34,7 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
     OS << "__" << ComponentName << "START = DIAG_START_" << ComponentName
        << ",\n";
     OS << "#undef " << ComponentName << "START\n";
-    OS << "#endif\n";
+    OS << "#endif\n\n";
   }
 
   const std::vector<Record*> &Diags =
