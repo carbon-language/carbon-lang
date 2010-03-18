@@ -130,8 +130,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   DagInit *DI = R->getValueAsDag("OutOperandList");
 
   if (DefInit *Init = dynamic_cast<DefInit*>(DI->getOperator())) {
-    if (Init->getDef()->getName() != "ops" &&
-        Init->getDef()->getName() != "outs")
+    if (Init->getDef()->getName() != "outs")
       throw R->getName() + ": invalid def name for output list: use 'outs'";
   } else
     throw R->getName() + ": invalid output list: use 'outs'";
@@ -140,8 +139,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     
   DagInit *IDI = R->getValueAsDag("InOperandList");
   if (DefInit *Init = dynamic_cast<DefInit*>(IDI->getOperator())) {
-    if (Init->getDef()->getName() != "ops" &&
-        Init->getDef()->getName() != "ins")
+    if (Init->getDef()->getName() != "ins")
       throw R->getName() + ": invalid def name for input list: use 'ins'";
   } else
     throw R->getName() + ": invalid input list: use 'ins'";
