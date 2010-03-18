@@ -137,17 +137,9 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
       Diag(AtLoc, diag::warn_property_attr_mismatch);
       Diag(PIDecl->getLocation(), diag::note_property_declare);
     }
-    DeclContext *DC = dyn_cast<DeclContext>(CCPrimary);
-    assert(DC && "ClassDecl is not a DeclContext");
-    DeclContext::lookup_result Found =
-    DC->lookup(PIDecl->getDeclName());
-    bool PropertyInPrimaryClass = false;
-    for (; Found.first != Found.second; ++Found.first)
-      if (isa<ObjCPropertyDecl>(*Found.first)) {
-        PropertyInPrimaryClass = true;
-        break;
-      }
-    if (!PropertyInPrimaryClass) {
+    DeclContext *DC = cast<DeclContext>(CCPrimary);
+    if (!ObjCPropertyDecl::findPropertyDecl(DC,
+                                 PIDecl->getDeclName().getAsIdentifierInfo())) {
       // Protocol is not in the primary class. Must build one for it.
       ObjCDeclSpec ProtocolPropertyODS;
       // FIXME. Assuming that ObjCDeclSpec::ObjCPropertyAttributeKind
