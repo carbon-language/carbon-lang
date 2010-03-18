@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -19,10 +20,12 @@ void MCValue::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     return;
   }
 
-  OS << *getSymA();
+  getSymA()->print(OS);
 
-  if (getSymB())
-    OS << " - " << *getSymB();
+  if (getSymB()) {
+    OS << " - ";
+    getSymB()->print(OS);
+  }
 
   if (getConstant())
     OS << " + " << getConstant();

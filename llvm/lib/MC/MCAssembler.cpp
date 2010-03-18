@@ -478,7 +478,7 @@ public:
     unsigned Type = RIT_Vanilla;
 
     // See <reloc.h>.
-    const MCSymbol *A = Target.getSymA();
+    const MCSymbol *A = &Target.getSymA()->getSymbol();
     MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
     if (!A_SD->getFragment())
@@ -488,11 +488,11 @@ public:
     uint32_t Value = A_SD->getAddress();
     uint32_t Value2 = 0;
 
-    if (const MCSymbol *B = Target.getSymB()) {
-      MCSymbolData *B_SD = &Asm.getSymbolData(*B);
+    if (const MCSymbolRefExpr *B = Target.getSymB()) {
+      MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
       if (!B_SD->getFragment())
-        llvm_report_error("symbol '" + B->getName() +
+        llvm_report_error("symbol '" + B->getSymbol().getName() +
                           "' can not be undefined in a subtraction expression");
 
       // Select the appropriate difference relocation type.
@@ -545,7 +545,7 @@ public:
     if (IsPCRel)
       Offset += 1 << Log2Size;
     if (Target.getSymB() ||
-        (Target.getSymA() && !Target.getSymA()->isUndefined() &&
+        (Target.getSymA() && !Target.getSymA()->getSymbol().isUndefined() &&
          Offset))
       return ComputeScatteredRelocationInfo(Asm, Fragment, Fixup, Target,
                                             Relocs);
@@ -565,7 +565,7 @@ public:
       Type = RIT_Vanilla;
       Value = 0;
     } else {
-      const MCSymbol *Symbol = Target.getSymA();
+      const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
       MCSymbolData *SD = &Asm.getSymbolData(*Symbol);
 
       if (Symbol->isUndefined()) {
@@ -1033,28 +1033,28 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
   // atom, and so the value is resolved. We need explicit atom's to implement
   // this more precisely.
   bool IsResolved = true, IsPCRel = isFixupKindPCRel(Fixup.Kind);
-  if (const MCSymbol *Symbol = Target.getSymA()) {
-    if (Symbol->isDefined())
-      Value += getSymbolData(*Symbol).getAddress();
+  if (const MCSymbolRefExpr *A = Target.getSymA()) {
+    if (A->getSymbol().isDefined())
+      Value += getSymbolData(A->getSymbol()).getAddress();
     else
       IsResolved = false;
 
     // With scattered symbols, we assume anything that isn't a PCrel temporary
     // access can have an arbitrary value.
     if (getBackend().hasScatteredSymbols() &&
-        (!IsPCRel || !Symbol->isTemporary()))
+        (!IsPCRel || !A->getSymbol().isTemporary()))
       IsResolved = false;
   }
-  if (const MCSymbol *Symbol = Target.getSymB()) {
-    if (Symbol->isDefined())
-      Value -= getSymbolData(*Symbol).getAddress();
+  if (const MCSymbolRefExpr *B = Target.getSymB()) {
+    if (B->getSymbol().isDefined())
+      Value -= getSymbolData(B->getSymbol()).getAddress();
     else
       IsResolved = false;
 
     // With scattered symbols, we assume anything that isn't a PCrel temporary
     // access can have an arbitrary value.
     if (getBackend().hasScatteredSymbols() &&
-        (!IsPCRel || !Symbol->isTemporary()))
+        (!IsPCRel || !B->getSymbol().isTemporary()))
       IsResolved = false;
   }
 
