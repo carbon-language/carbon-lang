@@ -2085,6 +2085,20 @@ namespace {
       return SM.isBeforeInTranslationUnit(R.getEnd(), 
                                           Entity->getSourceRange().getBegin());
     }
+    
+    bool operator()(const PreprocessedEntity *Entity1,
+                    const PreprocessedEntity *Entity2) const {
+      return SM.isBeforeInTranslationUnit(Entity1->getSourceRange().getEnd(),
+                                          Entity2->getSourceRange().getBegin());
+    }
+    
+    bool operator()(SourceRange R1, SourceRange R2) const {
+      return SM.isBeforeInTranslationUnit(R1.getEnd(), R2.getBegin());
+    }
+    
+    bool operator()(SourceLocation Loc1, SourceLocation Loc2) const {
+      return SM.isBeforeInTranslationUnit(Loc1, Loc2);
+    }
   };
 }
 
