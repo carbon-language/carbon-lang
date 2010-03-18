@@ -25,6 +25,7 @@ class ASTUnit;
 class Attr;
 class Decl;
 class Expr;
+class MacroDefinition;
 class MacroInstantiation;
 class NamedDecl;
 class ObjCInterfaceDecl;
@@ -79,6 +80,13 @@ CXCursor MakePreprocessingDirectiveCursor(SourceRange Range, ASTUnit *TU);
 
 /// \brief Unpack a given preprocessing directive to retrieve its source range.
 SourceRange getCursorPreprocessingDirective(CXCursor C);
+
+/// \brief Create a macro definition cursor.
+CXCursor MakeMacroDefinitionCursor(MacroDefinition *, ASTUnit *TU);
+
+/// \brief Unpack a given macro definition cursor to retrieve its
+/// source range.
+MacroDefinition *getCursorMacroDefinition(CXCursor C);
 
 /// \brief Create a macro instantiation cursor.
 CXCursor MakeMacroInstantiationCursor(MacroInstantiation *, ASTUnit *TU);

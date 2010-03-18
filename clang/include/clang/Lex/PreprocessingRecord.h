@@ -162,14 +162,14 @@ namespace clang {
         Location(Location) { }
     
     /// \brief Retrieve the name of the macro being defined.
-    const IdentifierInfo *getMacroName() const { return Name; }
+    const IdentifierInfo *getName() const { return Name; }
     
     /// \brief Retrieve the location of the macro name in the definition.
     SourceLocation getLocation() const { return Location; }
     
     // Implement isa/cast/dyncast/etc.
-    static bool classof(const PreprocessingDirective *PD) {
-      return PD->getKind() == MacroDefinitionKind;
+    static bool classof(const PreprocessedEntity *PE) {
+      return PE->getKind() == MacroDefinitionKind;
     }
     static bool classof(const MacroDefinition *) { return true; }
   };

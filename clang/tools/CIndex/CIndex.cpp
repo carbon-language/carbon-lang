@@ -1443,6 +1443,10 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return createCXString(getCursorMacroInstantiation(C)->getName()
                                                            ->getNameStart());
 
+  if (C.kind == CXCursor_MacroDefinition)
+    return createCXString(getCursorMacroDefinition(C)->getName()
+                                                           ->getNameStart());
+
   if (clang_isDeclaration(C.kind))
     return getDeclSpelling(getCursorDecl(C));
 
@@ -1527,6 +1531,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
      return createCXString("attribute(iboutlet)");
   case CXCursor_PreprocessingDirective:
     return createCXString("preprocessing directive");
+  case CXCursor_MacroDefinition:
+    return createCXString("macro definition");
   case CXCursor_MacroInstantiation:
     return createCXString("macro instantiation");
   }
@@ -1665,6 +1671,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       = cxcursor::getCursorMacroInstantiation(C)->getSourceRange().getBegin();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
+
+  if (C.kind == CXCursor_MacroDefinition) {
+    SourceLocation L = cxcursor::getCursorMacroDefinition(C)->getLocation();
+    return cxloc::translateSourceLocation(getCursorContext(C), L);
+  }
   
   if (!getCursorDecl(C))
     return clang_getNullLocation();
@@ -1724,6 +1735,11 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
 
   if (C.kind == CXCursor_MacroInstantiation) {
     SourceRange R = cxcursor::getCursorMacroInstantiation(C)->getSourceRange();
+    return cxloc::translateSourceRange(getCursorContext(C), R);
+  }
+
+  if (C.kind == CXCursor_MacroDefinition) {
+    SourceRange R = cxcursor::getCursorMacroDefinition(C)->getSourceRange();
     return cxloc::translateSourceRange(getCursorContext(C), R);
   }
   
@@ -2387,7 +2403,15 @@ void clang_annotateTokens(CXTranslationUnit TU,
         continue;
       }
 
-      // FIXME: expose other preprocessed entities.
+      if (MacroDefinition *MD = dyn_cast<MacroDefinition>(Entity)) {
+        SourceLocation Loc = MD->getLocation();
+        if (Loc.isFileID()) {
+          Annotated[Loc.getRawEncoding()] 
+            = MakeMacroDefinitionCursor(MD, CXXUnit);
+        }
+
+        continue;
+      }
     }
   }
   

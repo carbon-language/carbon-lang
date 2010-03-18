@@ -10,7 +10,7 @@ int BAR STILL_NOTHING;
 // RUN: c-index-test -test-annotate-tokens=%s:2:1:9:1 -I%S/Inputs %s | FileCheck %s
 // CHECK: Punctuation: "#" [2:1 - 2:2] preprocessing directive=
 // CHECK: Identifier: "define" [2:2 - 2:8] preprocessing directive=
-// CHECK: Identifier: "STILL_NOTHING" [2:9 - 2:22] preprocessing directive=
+// CHECK: Identifier: "STILL_NOTHING" [2:9 - 2:22] macro definition=STILL_NOTHING
 // CHECK: Identifier: "NOTHING" [2:23 - 2:30] preprocessing directive=
 // CHECK: Punctuation: "(" [2:30 - 2:31] preprocessing directive=
 // CHECK: Identifier: "honk" [2:31 - 2:35] preprocessing directive=
@@ -19,11 +19,11 @@ int BAR STILL_NOTHING;
 // CHECK: Punctuation: ")" [2:42 - 2:43] preprocessing directive=
 // CHECK: Punctuation: "#" [3:1 - 3:2] preprocessing directive=
 // CHECK: Identifier: "define" [3:2 - 3:8] preprocessing directive=
-// CHECK: Identifier: "BAR" [3:9 - 3:12] preprocessing directive=
+// CHECK: Identifier: "BAR" [3:9 - 3:12] macro definition=BAR
 // CHECK: Identifier: "baz" [3:13 - 3:16] preprocessing directive=
 // CHECK: Punctuation: "#" [4:1 - 4:2] preprocessing directive=
 // CHECK: Identifier: "define" [4:2 - 4:8] preprocessing directive=
-// CHECK: Identifier: "WIBBLE" [4:9 - 4:15] preprocessing directive=
+// CHECK: Identifier: "WIBBLE" [4:9 - 4:15] macro definition=WIBBLE
 // CHECK: Punctuation: "(" [4:15 - 4:16] preprocessing directive=
 // CHECK: Identifier: "X" [4:16 - 4:17] preprocessing directive=
 // CHECK: Punctuation: "," [4:17 - 4:18] preprocessing directive=
