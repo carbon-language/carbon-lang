@@ -1145,8 +1145,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     CodeGenInstruction &InstInfo =
       CDP.getTargetInfo().getInstruction(getOperator()->getName());
     // Apply the result type to the node
-    if (NumResults == 0 ||
-        InstInfo.NumDefs == 0) {
+    if (InstInfo.NumDefs == 0) { // # of elements in (outs) list
       MadeChange = UpdateNodeType(MVT::isVoid, TP);
     } else {
       Record *ResultNode = Inst.getResult(0);
