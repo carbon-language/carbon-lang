@@ -193,7 +193,7 @@ inline void *operator new(size_t Size, llvm::BumpPtrAllocator &Allocator) {
 #endif
   };
   return Allocator.Allocate(Size, std::min((size_t)llvm::NextPowerOf2(Size),
-                                           (size_t)offsetof(S, x)));
+                                           offsetof(S, x)));
 }
 
 #endif // LLVM_SUPPORT_ALLOCATOR_H
