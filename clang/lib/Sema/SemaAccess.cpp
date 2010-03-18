@@ -591,6 +591,24 @@ Sema::AccessResult Sema::CheckDirectMemberAccess(SourceLocation UseLoc,
 }
                                            
 
+/// Checks access to an overloaded operator new or delete.
+Sema::AccessResult Sema::CheckAllocationAccess(SourceLocation OpLoc,
+                                               SourceRange PlacementRange,
+                                               CXXRecordDecl *NamingClass,
+                                               NamedDecl *Fn,
+                                               AccessSpecifier Access) {
+  if (!getLangOptions().AccessControl ||
+      !NamingClass ||
+      Access == AS_public)
+    return AR_accessible;
+
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Access, Fn);
+  Entity.setDiag(diag::err_access)
+    << PlacementRange;
+
+  return CheckAccess(*this, OpLoc, Entity);
+}
+
 /// Checks access to an overloaded member operator, including
 /// conversion operators.
 Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,

@@ -233,3 +233,20 @@ namespace test7 {
     }
   };
 }
+
+// Ignored operator new and delete overloads are not 
+namespace test8 {
+  typedef __typeof__(sizeof(int)) size_t;
+
+  class A {
+    void *operator new(size_t s);
+    void operator delete(void *p);
+  public:
+    void *operator new(size_t s, int n);
+    void operator delete(void *p, int n);
+  };
+
+  void test() {
+    new (2) A();
+  }
+}

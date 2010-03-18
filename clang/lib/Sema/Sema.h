@@ -2628,6 +2628,11 @@ public:
   AccessResult CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
                                            NamedDecl *D,
                                            AccessSpecifier Access);
+  AccessResult CheckAllocationAccess(SourceLocation OperatorLoc,
+                                     SourceRange PlacementRange,
+                                     CXXRecordDecl *NamingClass,
+                                     NamedDecl *Allocator,
+                                     AccessSpecifier Access);
   AccessResult CheckConstructorAccess(SourceLocation Loc,
                                       CXXConstructorDecl *D,
                                       AccessSpecifier Access);
