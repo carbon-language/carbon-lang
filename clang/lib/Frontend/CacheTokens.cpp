@@ -272,7 +272,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
   // Pad 0's so that we emit tokens to a 4-byte alignment.
   // This speed up reading them back in.
   Pad(Out, 4);
-  Offset off = (Offset) Out.tell();
+  Offset TokenOff = (Offset) Out.tell();
 
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
@@ -418,7 +418,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
   Emit32(PPCond.size());
 
   for (unsigned i = 0, e = PPCond.size(); i!=e; ++i) {
-    Emit32(PPCond[i].first - off);
+    Emit32(PPCond[i].first - TokenOff);
     uint32_t x = PPCond[i].second;
     assert(x != 0 && "PPCond entry not backpatched.");
     // Emit zero for #endifs.  This allows us to do checking when
@@ -426,7 +426,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
     Emit32(x == i ? 0 : x);
   }
 
-  return PTHEntry(off, PPCondOff);
+  return PTHEntry(TokenOff, PPCondOff);
 }
 
 Offset PTHWriter::EmitCachedSpellings() {
@@ -452,7 +452,7 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
 
   // Write the name of the MainFile.
   if (!MainFile.empty()) {
-  	EmitString(MainFile);
+    EmitString(MainFile);
   } else {
     // String with 0 bytes.
     Emit16(0);
