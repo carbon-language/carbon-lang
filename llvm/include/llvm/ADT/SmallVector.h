@@ -61,7 +61,7 @@ protected:
 #ifdef __GNUC__
     char X __attribute__((aligned));
 #else
-    union U {
+    union {
       double D;
       long double LD;
       long long L;
