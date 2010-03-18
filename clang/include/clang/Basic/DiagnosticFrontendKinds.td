@@ -51,10 +51,12 @@ def err_fe_unable_to_read_pch_file : Error<
     "unable to read PCH file: '%0'">;
 def err_fe_not_a_pch_file : Error<
     "input is not a PCH file: '%0'">;
+def err_fe_pch_malformed : Error<
+    "malformed or corrupted PCH file: '%0'">, DefaultFatal;
 def err_fe_pch_malformed_block : Error<
-    "malformed block record in PCH file: '%0'">;
+    "malformed block record in PCH file: '%0'">, DefaultFatal;
 def err_fe_pch_error_at_end_block : Error<
-    "error at end of module block in PCH file: '%0'">;
+    "error at end of module block in PCH file: '%0'">, DefaultFatal;
 def err_fe_unable_to_open_output : Error<
     "unable to open output file '%0': '%1'">;
 def err_fe_unable_to_open_logfile : Error<

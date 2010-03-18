@@ -132,6 +132,9 @@ public:
                                     std::string &SuggestedPredefines);
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI, unsigned ID);
   virtual void ReadCounter(unsigned Value);
+
+private:
+  void Error(const char *Msg);
 };
 
 /// \brief Reads a precompiled head containing the contents of a
@@ -154,7 +157,7 @@ class PCHReader
     public ExternalSLocEntrySource {
 public:
   enum PCHReadResult { Success, Failure, IgnorePCH };
-
+  friend class PCHValidator;
 private:
   /// \ brief The receiver of some callbacks invoked by PCHReader.
   llvm::OwningPtr<PCHReaderListener> Listener;
@@ -472,7 +475,7 @@ private:
   ///
   /// This routine should only be used for fatal errors that have to
   /// do with non-routine failures (e.g., corrupted PCH file).
-  bool Error(const char *Msg);
+  void Error(const char *Msg);
 
   PCHReader(const PCHReader&); // do not implement
   PCHReader &operator=(const PCHReader &); // do not implement
@@ -789,6 +792,10 @@ private:
   llvm::BitstreamCursor &Cursor;
   uint64_t Offset;
 };
+
+inline void PCHValidator::Error(const char *Msg) {
+  Reader.Error(Msg);
+}
 
 } // end namespace clang
 

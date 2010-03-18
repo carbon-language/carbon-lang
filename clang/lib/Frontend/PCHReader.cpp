@@ -150,7 +150,10 @@ bool PCHValidator::ReadPredefinesBuffer(llvm::StringRef PCHPredef,
   std::pair<llvm::StringRef,llvm::StringRef> Split =
     llvm::StringRef(PP.getPredefines()).split(PCHInclude.str());
   llvm::StringRef Left =  Split.first, Right = Split.second;
-  assert(Left != PP.getPredefines() && "Missing PCH include entry!");
+  if (Left == PP.getPredefines()) {
+    Error("Missing PCH include entry!");
+    return true;
+  }
 
   // If the predefines is equal to the joined left and right halves, we're done!
   if (Left.size() + Right.size() == PCHPredef.size() &&
@@ -603,10 +606,8 @@ public:
 typedef OnDiskChainedHashTable<PCHIdentifierLookupTrait>
   PCHIdentifierLookupTable;
 
-bool PCHReader::Error(const char *Msg) {
-  unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Fatal, Msg);
-  Diag(DiagID);
-  return true;
+void PCHReader::Error(const char *Msg) {
+  Diag(diag::err_fe_pch_malformed) << Msg;
 }
 
 /// \brief Check the contents of the predefines buffer against the
@@ -927,8 +928,12 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     Record.clear();
     unsigned RecCode
       = SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen);
-    assert(RecCode == pch::SM_SLOC_BUFFER_BLOB && "Ill-formed PCH file");
-    (void)RecCode;
+
+    if (RecCode != pch::SM_SLOC_BUFFER_BLOB) {
+      Error("PCH record has invalid code");
+      return Failure;
+    }
+
     llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBuffer(BlobStart,
                                          BlobStart + BlobLen - 1,
@@ -1583,29 +1588,44 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     Context->setObjCFastEnumerationStateType(GetType(FastEnum));
   if (unsigned File = SpecialTypes[pch::SPECIAL_TYPE_FILE]) {
     QualType FileType = GetType(File);
-    assert(!FileType.isNull() && "FILE type is NULL");
+    if (FileType.isNull()) {
+      Error("FILE type is NULL");
+      return;
+    }
     if (const TypedefType *Typedef = FileType->getAs<TypedefType>())
       Context->setFILEDecl(Typedef->getDecl());
     else {
       const TagType *Tag = FileType->getAs<TagType>();
-      assert(Tag && "Invalid FILE type in PCH file");
+      if (!Tag) {
+        Error("Invalid FILE type in PCH file");
+        return;
+      }
       Context->setFILEDecl(Tag->getDecl());
     }
   }
   if (unsigned Jmp_buf = SpecialTypes[pch::SPECIAL_TYPE_jmp_buf]) {
     QualType Jmp_bufType = GetType(Jmp_buf);
-    assert(!Jmp_bufType.isNull() && "jmp_bug type is NULL");
+    if (Jmp_bufType.isNull()) {
+      Error("jmp_bug type is NULL");
+      return;
+    }
     if (const TypedefType *Typedef = Jmp_bufType->getAs<TypedefType>())
       Context->setjmp_bufDecl(Typedef->getDecl());
     else {
       const TagType *Tag = Jmp_bufType->getAs<TagType>();
-      assert(Tag && "Invalid jmp_bug type in PCH file");
+      if (!Tag) {
+        Error("Invalid jmp_bug type in PCH file");
+        return;
+      }
       Context->setjmp_bufDecl(Tag->getDecl());
     }
   }
   if (unsigned Sigjmp_buf = SpecialTypes[pch::SPECIAL_TYPE_sigjmp_buf]) {
     QualType Sigjmp_bufType = GetType(Sigjmp_buf);
-    assert(!Sigjmp_bufType.isNull() && "sigjmp_buf type is NULL");
+    if (Sigjmp_bufType.isNull()) {
+      Error("sigjmp_buf type is NULL");
+      return;
+    }
     if (const TypedefType *Typedef = Sigjmp_bufType->getAs<TypedefType>())
       Context->setsigjmp_bufDecl(Typedef->getDecl());
     else {
@@ -1822,45 +1842,65 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   unsigned Code = DeclsCursor.ReadCode();
   switch ((pch::TypeCode)DeclsCursor.ReadRecord(Code, Record)) {
   case pch::TYPE_EXT_QUAL: {
-    assert(Record.size() == 2 &&
-           "Incorrect encoding of extended qualifier type");
+    if (Record.size() != 2) {
+      Error("Incorrect encoding of extended qualifier type");
+      return QualType();
+    }
     QualType Base = GetType(Record[0]);
     Qualifiers Quals = Qualifiers::fromOpaqueValue(Record[1]);
     return Context->getQualifiedType(Base, Quals);
   }
 
   case pch::TYPE_COMPLEX: {
-    assert(Record.size() == 1 && "Incorrect encoding of complex type");
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of complex type");
+      return QualType();
+    }
     QualType ElemType = GetType(Record[0]);
     return Context->getComplexType(ElemType);
   }
 
   case pch::TYPE_POINTER: {
-    assert(Record.size() == 1 && "Incorrect encoding of pointer type");
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of pointer type");
+      return QualType();
+    }
     QualType PointeeType = GetType(Record[0]);
     return Context->getPointerType(PointeeType);
   }
 
   case pch::TYPE_BLOCK_POINTER: {
-    assert(Record.size() == 1 && "Incorrect encoding of block pointer type");
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of block pointer type");
+      return QualType();
+    }
     QualType PointeeType = GetType(Record[0]);
     return Context->getBlockPointerType(PointeeType);
   }
 
   case pch::TYPE_LVALUE_REFERENCE: {
-    assert(Record.size() == 1 && "Incorrect encoding of lvalue reference type");
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of lvalue reference type");
+      return QualType();
+    }
     QualType PointeeType = GetType(Record[0]);
     return Context->getLValueReferenceType(PointeeType);
   }
 
   case pch::TYPE_RVALUE_REFERENCE: {
-    assert(Record.size() == 1 && "Incorrect encoding of rvalue reference type");
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of rvalue reference type");
+      return QualType();
+    }
     QualType PointeeType = GetType(Record[0]);
     return Context->getRValueReferenceType(PointeeType);
   }
 
   case pch::TYPE_MEMBER_POINTER: {
-    assert(Record.size() == 1 && "Incorrect encoding of member pointer type");
+    if (Record.size() != 1) {
+      Error("Incorrect encoding of member pointer type");
+      return QualType();
+    }
     QualType PointeeType = GetType(Record[0]);
     QualType ClassType = GetType(Record[1]);
     return Context->getMemberPointerType(PointeeType, ClassType.getTypePtr());
@@ -1956,7 +1996,10 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
              cast<UnresolvedUsingTypenameDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_TYPEDEF:
-    assert(Record.size() == 1 && "incorrect encoding of typedef type");
+    if (Record.size() != 1) {
+      Error("incorrect encoding of typedef type");
+      return QualType();
+    }
     return Context->getTypeDeclType(cast<TypedefDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_TYPEOF_EXPR:
@@ -1975,15 +2018,24 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getDecltypeType(ReadTypeExpr());
 
   case pch::TYPE_RECORD:
-    assert(Record.size() == 1 && "incorrect encoding of record type");
+    if (Record.size() != 1) {
+      Error("incorrect encoding of record type");
+      return QualType();
+    }
     return Context->getTypeDeclType(cast<RecordDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ENUM:
-    assert(Record.size() == 1 && "incorrect encoding of enum type");
+    if (Record.size() != 1) {
+      Error("incorrect encoding of enum type");
+      return QualType();
+    }
     return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
   case pch::TYPE_ELABORATED: {
-    assert(Record.size() == 2 && "incorrect encoding of elaborated type");
+    if (Record.size() != 2) {
+      Error("incorrect encoding of elaborated type");
+      return QualType();
+    }
     unsigned Tag = Record[1];
     return Context->getElaboratedType(GetType(Record[0]),
                                       (ElaboratedType::TagKind) Tag);
@@ -2328,8 +2380,12 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
                                   llvm::SmallVectorImpl<pch::DeclID> &Decls) {
   assert(DC->hasExternalLexicalStorage() &&
          "DeclContext has no lexical decls in storage");
+
   uint64_t Offset = DeclContextOffsets[DC].first;
-  assert(Offset && "DeclContext has no lexical decls in storage");
+  if (Offset == 0) {
+    Error("DeclContext has no lexical decls in storage");
+    return true;
+  }
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this context.
@@ -2341,8 +2397,10 @@ bool PCHReader::ReadDeclsLexicallyInContext(DeclContext *DC,
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  (void)RecCode;
-  assert(RecCode == pch::DECL_CONTEXT_LEXICAL && "Expected lexical block");
+  if (RecCode != pch::DECL_CONTEXT_LEXICAL) {
+    Error("Expected lexical block");
+    return true;
+  }
 
   // Load all of the declaration IDs
   Decls.clear();
@@ -2356,7 +2414,10 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
   uint64_t Offset = DeclContextOffsets[DC].second;
-  assert(Offset && "DeclContext has no visible decls in storage");
+  if (Offset == 0) {
+    Error("DeclContext has no visible decls in storage");
+    return true;
+  }
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this context.
@@ -2368,8 +2429,11 @@ bool PCHReader::ReadDeclsVisibleInContext(DeclContext *DC,
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
   unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  (void)RecCode;
-  assert(RecCode == pch::DECL_CONTEXT_VISIBLE && "Expected visible block");
+  if (RecCode != pch::DECL_CONTEXT_VISIBLE) {
+    Error("Expected visible block");
+    return true;
+  }
+
   if (Record.size() == 0)
     return false;
 
