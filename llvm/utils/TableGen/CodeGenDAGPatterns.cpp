@@ -1136,33 +1136,46 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   
   if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst = CDP.getInstruction(getOperator());
-    bool MadeChange = false;
     unsigned NumResults = Inst.getNumResults();
-    
     assert(NumResults <= 1 &&
            "Only supports zero or one result instrs!");
 
     CodeGenInstruction &InstInfo =
       CDP.getTargetInfo().getInstruction(getOperator()->getName());
+    
+    EEVT::TypeSet ResultType;
+    
     // Apply the result type to the node
-    if (InstInfo.NumDefs == 0) { // # of elements in (outs) list
-      MadeChange = UpdateNodeType(MVT::isVoid, TP);
-    } else {
+    if (InstInfo.NumDefs != 0) { // # of elements in (outs) list
       Record *ResultNode = Inst.getResult(0);
       
       if (ResultNode->isSubClassOf("PointerLikeRegClass")) {
-        MadeChange = UpdateNodeType(MVT::iPTR, TP);
+        ResultType = EEVT::TypeSet(MVT::iPTR, TP);
       } else if (ResultNode->getName() == "unknown") {
         // Nothing to do.
       } else {
         assert(ResultNode->isSubClassOf("RegisterClass") &&
                "Operands should be register classes!");
-
         const CodeGenRegisterClass &RC = 
           CDP.getTargetInfo().getRegisterClass(ResultNode);
-        MadeChange = UpdateNodeType(RC.getValueTypes(), TP);
+        ResultType = RC.getValueTypes();
       }
+    } else if (!InstInfo.ImplicitDefs.empty()) {
+      // If the instruction has implicit defs, the first one defines the result
+      // type.
+      assert(InstInfo.ImplicitDefs[0]->isSubClassOf("Register"));
+      Record *FirstImplicitDef = InstInfo.ImplicitDefs[0];
+      const std::vector<MVT::SimpleValueType> &RegVTs = 
+        CDP.getTargetInfo().getRegisterVTs(FirstImplicitDef);
+      if (!RegVTs.empty())
+        ResultType = EEVT::TypeSet(RegVTs);
+    } else {
+      // Otherwise, the instruction produces no value result.
+      // FIXME: Model "no result" different than "one result that is void"
+      ResultType = EEVT::TypeSet(MVT::isVoid, TP);
     }
+    
+    bool MadeChange = UpdateNodeType(ResultType, TP);
     
     // If this is an INSERT_SUBREG, constrain the source and destination VTs to
     // be the same.
@@ -2451,14 +2464,19 @@ void CodeGenDAGPatterns::ParsePatterns() {
       InferredAllResultTypes =
         Result->InferAllTypes(&Pattern->getNamedNodesMap());
 
+      IterateInference = false;
+      
       // Apply the type of the result to the source pattern.  This helps us
       // resolve cases where the input type is known to be a pointer type (which
       // is considered resolved), but the result knows it needs to be 32- or
       // 64-bits.  Infer the other way for good measure.
-      IterateInference = Pattern->getTree(0)->
-        UpdateNodeType(Result->getTree(0)->getExtType(), *Result);
-      IterateInference |= Result->getTree(0)->
-        UpdateNodeType(Pattern->getTree(0)->getExtType(), *Result);
+      if (!Result->getTree(0)->getExtType().isVoid() &&
+          !Pattern->getTree(0)->getExtType().isVoid()) {
+        IterateInference = Pattern->getTree(0)->
+          UpdateNodeType(Result->getTree(0)->getExtType(), *Result);
+        IterateInference |= Result->getTree(0)->
+          UpdateNodeType(Pattern->getTree(0)->getExtType(), *Result);
+      }
       
       // If our iteration has converged and the input pattern's types are fully
       // resolved but the result pattern is not fully resolved, we may have a
@@ -2473,7 +2491,6 @@ void CodeGenDAGPatterns::ParsePatterns() {
           !InferredAllResultTypes)
         IterateInference = ForceArbitraryInstResultType(Result->getTree(0),
                                                         *Result);
-      
     } while (IterateInference);
     
     // Verify that we inferred enough types that we can do something with the

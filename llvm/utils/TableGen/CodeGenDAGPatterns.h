@@ -88,6 +88,10 @@ namespace EEVT {
       return TypeVec;
     }
     
+    bool isVoid() const {
+      return TypeVec.size() == 1 && TypeVec[0] == MVT::isVoid;
+    }
+    
     /// hasIntegerTypes - Return true if this TypeSet contains any integer value
     /// types.
     bool hasIntegerTypes() const;
