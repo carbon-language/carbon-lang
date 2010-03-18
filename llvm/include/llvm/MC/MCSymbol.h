@@ -28,8 +28,7 @@ namespace llvm {
   ///
   /// If the symbol is defined/emitted into the current translation unit, the
   /// Section member is set to indicate what section it lives in.  Otherwise, if
-  /// it is a reference to an external entity, it has a null section.  
-  /// 
+  /// it is a reference to an external entity, it has a null section.
   class MCSymbol {
     // Special sentinal value for the absolute pseudo section.
     //
@@ -52,7 +51,7 @@ namespace llvm {
     /// typically does not survive in the .o file's symbol table.  Usually
     /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
-    
+
   private:  // MCContext creates and uniques these.
     friend class MCContext;
     MCSymbol(StringRef name, bool isTemporary)
@@ -83,6 +82,12 @@ namespace llvm {
       return Section != 0;
     }
 
+    /// isInSection - Check if this symbol is defined in some section (i.e., it
+    /// is defined but not absolute).
+    bool isInSection() const {
+      return isDefined() && !isAbsolute();
+    }
+
     /// isUndefined - Check if this symbol undefined (i.e., implicitly defined).
     bool isUndefined() const {
       return !isDefined();
@@ -96,7 +101,7 @@ namespace llvm {
     /// getSection - Get the section associated with a defined, non-absolute
     /// symbol.
     const MCSection &getSection() const {
-      assert(!isUndefined() && !isAbsolute() && "Invalid accessor!");
+      assert(isInSection() && "Invalid accessor!");
       return *Section;
     }
 
