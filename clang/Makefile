@@ -27,7 +27,7 @@ clean::
 	@ $(MAKE) -C test clean
 
 tags::
-	$(Verb) etags `find . -type f -name \*.h | grep -v /lib/Headers | grep -v /test/` `find . -type f -name \*.cpp | grep -v /lib/Headers | grep -v /test/`
+	$(Verb) etags `find . -type f -name '*.h' -or -name '*.cpp' | grep -v /lib/Headers | grep -v /test/`
 
 cscope.files:
 	find tools lib include -name '*.cpp' \
