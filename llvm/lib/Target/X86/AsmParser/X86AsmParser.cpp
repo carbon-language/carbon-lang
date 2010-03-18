@@ -29,6 +29,9 @@ struct X86Operand;
 class X86ATTAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
 
+protected:
+  unsigned Is64Bit : 1;
+
 private:
   MCAsmParser &getParser() const { return Parser; }
 
@@ -44,6 +47,8 @@ private:
   X86Operand *ParseMemOperand();
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
+
+  void InstructionCleanup(MCInst &Inst);
 
   /// @name Auto-generated Match Functions
   /// {  
@@ -62,7 +67,23 @@ public:
 
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
-  
+ 
+class X86_32ATTAsmParser : public X86ATTAsmParser {
+public:
+  X86_32ATTAsmParser(const Target &T, MCAsmParser &_Parser)
+    : X86ATTAsmParser(T, _Parser) {
+    Is64Bit = false;
+  }
+};
+
+class X86_64ATTAsmParser : public X86ATTAsmParser {
+public:
+  X86_64ATTAsmParser(const Target &T, MCAsmParser &_Parser)
+    : X86ATTAsmParser(T, _Parser) {
+    Is64Bit = true;
+  }
+};
+
 } // end anonymous namespace
 
 /// @name Auto-generated Match Functions
@@ -586,12 +607,30 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   return false;
 }
 
+// FIXME: Custom X86 cleanup function to implement a temporary hack to handle
+// matching INCL/DECL correctly for x86_64. This needs to be replaced by a
+// proper mechanism for supporting (ambiguous) feature dependent instructions.
+void X86ATTAsmParser::InstructionCleanup(MCInst &Inst) {
+  if (!Is64Bit) return;
+
+  switch (Inst.getOpcode()) {
+  case X86::DEC16r: Inst.setOpcode(X86::DEC64_16r); break;
+  case X86::DEC16m: Inst.setOpcode(X86::DEC64_16m); break;
+  case X86::DEC32r: Inst.setOpcode(X86::DEC64_32r); break;
+  case X86::DEC32m: Inst.setOpcode(X86::DEC64_32m); break;
+  case X86::INC16r: Inst.setOpcode(X86::INC64_16r); break;
+  case X86::INC16m: Inst.setOpcode(X86::INC64_16m); break;
+  case X86::INC32r: Inst.setOpcode(X86::INC64_32r); break;
+  case X86::INC32m: Inst.setOpcode(X86::INC64_32m); break;
+  }
+}
+
 extern "C" void LLVMInitializeX86AsmLexer();
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
-  RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
-  RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
+  RegisterAsmParser<X86_32ATTAsmParser> X(TheX86_32Target);
+  RegisterAsmParser<X86_64ATTAsmParser> Y(TheX86_64Target);
   LLVMInitializeX86AsmLexer();
 }
 
