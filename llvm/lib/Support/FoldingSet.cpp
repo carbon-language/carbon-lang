@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
@@ -130,6 +131,15 @@ bool FoldingSetNodeID::operator==(const FoldingSetNodeID &RHS)const{
   return memcmp(&Bits[0], &RHS.Bits[0], Bits.size()*sizeof(Bits[0])) == 0;
 }
 
+/// Intern - Copy this node's data to a memory region allocated from the
+/// given allocator and return a FoldingSetNodeIDRef describing the
+/// interned data.
+FoldingSetNodeIDRef
+FoldingSetNodeID::Intern(BumpPtrAllocator &Allocator) const {
+  unsigned *New = Allocator.Allocate<unsigned>(Bits.size());
+  std::uninitialized_copy(Bits.begin(), Bits.end(), New);
+  return FoldingSetNodeIDRef(New, Bits.size());
+}
 
 //===----------------------------------------------------------------------===//
 /// Helper functions for FoldingSetImpl.

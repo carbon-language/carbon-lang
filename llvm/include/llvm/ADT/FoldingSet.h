@@ -23,6 +23,7 @@
 namespace llvm {
   class APFloat;
   class APInt;
+  class BumpPtrAllocator;
 
 /// This folding set used for two purposes:
 ///   1. Given information about a node we want to create, look up the unique
@@ -198,6 +199,23 @@ template<typename T> struct FoldingSetTrait {
 };
 
 //===--------------------------------------------------------------------===//
+/// FoldingSetNodeIDRef - This class describes a reference to an interned
+/// FoldingSetNodeID, which can be a useful to store node id data rather
+/// than using plain FoldingSetNodeIDs, since the 32-element SmallVector
+/// is often much larger than necessary, and the possibility of heap
+/// allocation means it requires a non-trivial destructor call.
+class FoldingSetNodeIDRef {
+  unsigned* Data;
+  size_t Size;
+public:
+  FoldingSetNodeIDRef() : Data(0), Size(0) {}
+  FoldingSetNodeIDRef(unsigned *D, size_t S) : Data(D), Size(S) {}
+
+  unsigned *getData() const { return Data; }
+  size_t getSize() const { return Size; }
+};
+
+//===--------------------------------------------------------------------===//
 /// FoldingSetNodeID - This class is used to gather all the unique data bits of
 /// a node.  When all the bits are gathered this class is used to produce a
 /// hash value for the node.
@@ -210,11 +228,8 @@ class FoldingSetNodeID {
 public:
   FoldingSetNodeID() {}
 
-  /// getRawData - Return the ith entry in the Bits data.
-  ///
-  unsigned getRawData(unsigned i) const {
-    return Bits[i];
-  }
+  FoldingSetNodeID(FoldingSetNodeIDRef Ref)
+    : Bits(Ref.getData(), Ref.getData() + Ref.getSize()) {}
 
   /// Add* - Add various data types to Bit data.
   ///
@@ -242,6 +257,11 @@ public:
   /// operator== - Used to compare two nodes to each other.
   ///
   bool operator==(const FoldingSetNodeID &RHS) const;
+
+  /// Intern - Copy this node's data to a memory region allocated from the
+  /// given allocator and return a FoldingSetNodeIDRef describing the
+  /// interned data.
+  FoldingSetNodeIDRef Intern(BumpPtrAllocator &Allocator) const;
 };
 
 // Convenience type to hide the implementation of the folding set.

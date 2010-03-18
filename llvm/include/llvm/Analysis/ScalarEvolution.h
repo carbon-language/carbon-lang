@@ -49,7 +49,11 @@ namespace llvm {
   /// are opaque objects that the client is not allowed to do much with
   /// directly.
   ///
-  class SCEV : public FastFoldingSetNode {
+  class SCEV : public FoldingSetNode {
+    /// FastID - A reference to an Interned FoldingSetNodeID for this node.
+    /// The ScalarEvolution's BumpPtrAllocator holds the data.
+    FoldingSetNodeIDRef FastID;
+
     // The SCEV baseclass this node corresponds to
     const unsigned short SCEVType;
 
@@ -64,10 +68,13 @@ namespace llvm {
   protected:
     virtual ~SCEV();
   public:
-    explicit SCEV(const FoldingSetNodeID &ID, unsigned SCEVTy) :
-      FastFoldingSetNode(ID), SCEVType(SCEVTy), SubclassData(0) {}
+    explicit SCEV(const FoldingSetNodeIDRef ID, unsigned SCEVTy) :
+      FastID(ID), SCEVType(SCEVTy), SubclassData(0) {}
 
     unsigned getSCEVType() const { return SCEVType; }
+
+    /// Profile - FoldingSet support.
+    void Profile(FoldingSetNodeID& ID) { ID = FastID; }
 
     /// isLoopInvariant - Return true if the value of this SCEV is unchanging in
     /// the specified loop.
