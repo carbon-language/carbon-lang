@@ -127,30 +127,37 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   if (neverHasSideEffects + hasSideEffects > 1)
     throw R->getName() + ": multiple conflicting side-effect flags set!";
 
-  DagInit *DI = R->getValueAsDag("OutOperandList");
+  DagInit *OutDI = R->getValueAsDag("OutOperandList");
 
-  if (DefInit *Init = dynamic_cast<DefInit*>(DI->getOperator())) {
+  if (DefInit *Init = dynamic_cast<DefInit*>(OutDI->getOperator())) {
     if (Init->getDef()->getName() != "outs")
       throw R->getName() + ": invalid def name for output list: use 'outs'";
   } else
     throw R->getName() + ": invalid output list: use 'outs'";
     
-  NumDefs = DI->getNumArgs();
+  NumDefs = OutDI->getNumArgs();
     
-  DagInit *IDI = R->getValueAsDag("InOperandList");
-  if (DefInit *Init = dynamic_cast<DefInit*>(IDI->getOperator())) {
+  DagInit *InDI = R->getValueAsDag("InOperandList");
+  if (DefInit *Init = dynamic_cast<DefInit*>(InDI->getOperator())) {
     if (Init->getDef()->getName() != "ins")
       throw R->getName() + ": invalid def name for input list: use 'ins'";
   } else
     throw R->getName() + ": invalid input list: use 'ins'";
     
-  DI = (DagInit*)(new BinOpInit(BinOpInit::CONCAT,
-                                DI, IDI, new DagRecTy))->Fold(R, 0);
-
   unsigned MIOperandNo = 0;
   std::set<std::string> OperandNames;
-  for (unsigned i = 0, e = DI->getNumArgs(); i != e; ++i) {
-    DefInit *Arg = dynamic_cast<DefInit*>(DI->getArg(i));
+  for (unsigned i = 0, e = InDI->getNumArgs()+OutDI->getNumArgs(); i != e; ++i){
+    Init *ArgInit;
+    std::string ArgName;
+    if (i < NumDefs) {
+      ArgInit = OutDI->getArg(i);
+      ArgName = OutDI->getArgName(i);
+    } else {
+      ArgInit = InDI->getArg(i-NumDefs);
+      ArgName = InDI->getArgName(i-NumDefs);
+    }
+    
+    DefInit *Arg = dynamic_cast<DefInit*>(ArgInit);
     if (!Arg)
       throw "Illegal operand for the '" + R->getName() + "' instruction!";
 
@@ -187,14 +194,14 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
             "' in '" + R->getName() + "' instruction!";
 
     // Check that the operand has a name and that it's unique.
-    if (DI->getArgName(i).empty())
+    if (ArgName.empty())
       throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
         " has no name!";
-    if (!OperandNames.insert(DI->getArgName(i)).second)
+    if (!OperandNames.insert(ArgName).second)
       throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
         " has the same name as a previous operand!";
 
-    OperandList.push_back(OperandInfo(Rec, DI->getArgName(i), PrintMethod,
+    OperandList.push_back(OperandInfo(Rec, ArgName, PrintMethod,
                                       MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }
