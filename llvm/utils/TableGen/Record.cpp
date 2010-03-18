@@ -646,18 +646,8 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     if (LHSs && RHSs) {
       DefInit *LOp = dynamic_cast<DefInit*>(LHSs->getOperator());
       DefInit *ROp = dynamic_cast<DefInit*>(RHSs->getOperator());
-      if (LOp->getDef() != ROp->getDef()) {
-        bool LIsOps =
-          LOp->getDef()->getName() == "outs" ||
-          LOp->getDef()->getName() != "ins" ||
-          LOp->getDef()->getName() != "defs";
-        bool RIsOps =
-          ROp->getDef()->getName() == "outs" ||
-          ROp->getDef()->getName() != "ins" ||
-          ROp->getDef()->getName() != "defs";
-        if (!LIsOps || !RIsOps)
-          throw "Concated Dag operators do not match!";
-      }
+      if (LOp == 0 || ROp == 0 || LOp->getDef() != ROp->getDef())
+        throw "Concated Dag operators do not match!";
       std::vector<Init*> Args;
       std::vector<std::string> ArgNames;
       for (unsigned i = 0, e = LHSs->getNumArgs(); i != e; ++i) {
