@@ -18,7 +18,7 @@ $(RecursiveTargets)::
 endif
 
 test::
-	@ $(MAKE) -C test 
+	@ $(MAKE) -C test
 
 report::
 	@ $(MAKE) -C test report
@@ -27,7 +27,8 @@ clean::
 	@ $(MAKE) -C test clean
 
 tags::
-	$(Verb) etags `find . -type f -name '*.h' -or -name '*.cpp' | grep -v /lib/Headers | grep -v /test/`
+	$(Verb) etags `find . -type f -name '*.h' -or -name '*.cpp' | \
+	  grep -v /lib/Headers | grep -v /test/`
 
 cscope.files:
 	find tools lib include -name '*.cpp' \
