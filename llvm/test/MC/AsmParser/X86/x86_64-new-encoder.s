@@ -32,8 +32,13 @@ addq $-424, %rax
 
 // CHECK: movq	_foo@GOTPCREL(%rip), %rax
 // CHECK:  encoding: [0x48,0x8b,0x05,A,A,A,A]
-// CHECK:  fixup A - offset: 3, value: _foo@GOTPCREL, kind: reloc_riprel_4byte_movq_load
+// CHECK:  fixup A - offset: 3, value: _foo@GOTPCREL-4, kind: reloc_riprel_4byte_movq_load
 movq _foo@GOTPCREL(%rip), %rax
+
+// CHECK: movq	_foo@GOTPCREL(%rip), %r14
+// CHECK:  encoding: [0x4c,0x8b,0x35,A,A,A,A]
+// CHECK:  fixup A - offset: 3, value: _foo@GOTPCREL-4, kind: reloc_riprel_4byte_movq_load
+movq _foo@GOTPCREL(%rip), %r14
 
 
 // CHECK: movq	(%r13,%rax,8), %r13
