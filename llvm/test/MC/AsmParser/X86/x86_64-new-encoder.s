@@ -35,3 +35,7 @@ addq $-424, %rax
 // CHECK:  fixup A - offset: 3, value: _foo@GOTPCREL, kind: reloc_riprel_4byte_movq_load
 movq _foo@GOTPCREL(%rip), %rax
 
+
+// CHECK: movq	(%r13,%rax,8), %r13
+// CHECK:  encoding: [0x4d,0x8b,0x6c,0xc5,0x00]
+movq 0x00(%r13,%rax,8),%r13

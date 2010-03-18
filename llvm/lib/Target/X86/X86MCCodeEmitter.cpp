@@ -278,7 +278,10 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
     // Emit the normal disp32 encoding.
     EmitByte(ModRMByte(2, RegOpcodeField, 4), CurByte, OS);
     ForceDisp32 = true;
-  } else if (Disp.getImm() == 0 && BaseReg != X86::EBP) {
+  } else if (Disp.getImm() == 0 &&
+             // Base reg can't be anything that ends up with '5' as the base
+             // reg, it is the magic [*] nomenclature that indicates no base.
+             BaseRegNo != N86::EBP) {
     // Emit no displacement ModR/M byte
     EmitByte(ModRMByte(0, RegOpcodeField, 4), CurByte, OS);
   } else if (isDisp8(Disp.getImm())) {
