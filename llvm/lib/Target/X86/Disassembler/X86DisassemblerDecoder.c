@@ -1355,8 +1355,8 @@ int decodeInstruction(struct InternalInstruction* insn,
   
   insn->length = insn->readerCursor - insn->startLocation;
   
-  dbgprintf(insn, "Read from 0x%llx to 0x%llx: length %llu",
-          startLoc, insn->readerCursor, insn->length);
+  dbgprintf(insn, "Read from 0x%llx to 0x%llx: length %zu",
+            startLoc, insn->readerCursor, insn->length);
     
   if (insn->length > 15)
     dbgprintf(insn, "Instruction exceeds 15-byte limit");
