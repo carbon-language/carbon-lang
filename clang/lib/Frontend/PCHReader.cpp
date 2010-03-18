@@ -902,6 +902,11 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
+    if (Record.size() < 8) {
+      Error("source location entry is incorrect");
+      return Failure;
+    }
+
     FileID FID = SourceMgr.createFileID(File,
                                 SourceLocation::getFromRawEncoding(Record[1]),
                                        (SrcMgr::CharacteristicKind)Record[2],
