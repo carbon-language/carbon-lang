@@ -56,4 +56,11 @@ public:
 
 }
 
+template<class AllocatorType, class T, size_t Size, size_t Align>
+inline void *operator new(size_t,
+                          llvm::RecyclingAllocator<AllocatorType,
+                                                   T, Size, Align> &Allocator) {
+  return Allocator.Allocate();
+}
+
 #endif

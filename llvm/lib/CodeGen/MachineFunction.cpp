@@ -88,18 +88,15 @@ MachineFunction::MachineFunction(Function *F, const TargetMachine &TM,
                                  unsigned FunctionNum, MCContext &ctx)
   : Fn(F), Target(TM), Ctx(ctx) {
   if (TM.getRegisterInfo())
-    RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
-                  MachineRegisterInfo(*TM.getRegisterInfo());
+    RegInfo = new (Allocator) MachineRegisterInfo(*TM.getRegisterInfo());
   else
     RegInfo = 0;
   MFInfo = 0;
-  FrameInfo = new (Allocator.Allocate<MachineFrameInfo>())
-                  MachineFrameInfo(*TM.getFrameInfo());
+  FrameInfo = new (Allocator) MachineFrameInfo(*TM.getFrameInfo());
   if (Fn->hasFnAttr(Attribute::StackAlignment))
     FrameInfo->setMaxAlignment(Attribute::getStackAlignmentFromAttrs(
         Fn->getAttributes().getFnAttributes()));
-  ConstantPool = new (Allocator.Allocate<MachineConstantPool>())
-                     MachineConstantPool(TM.getTargetData());
+  ConstantPool = new (Allocator) MachineConstantPool(TM.getTargetData());
   Alignment = TM.getTargetLowering()->getFunctionAlignment(F);
   FunctionNumber = FunctionNum;
   JumpTableInfo = 0;
@@ -132,7 +129,7 @@ MachineJumpTableInfo *MachineFunction::
 getOrCreateJumpTableInfo(unsigned EntryKind) {
   if (JumpTableInfo) return JumpTableInfo;
   
-  JumpTableInfo = new (Allocator.Allocate<MachineJumpTableInfo>())
+  JumpTableInfo = new (Allocator)
     MachineJumpTableInfo((MachineJumpTableInfo::JTEntryKind)EntryKind);
   return JumpTableInfo;
 }
@@ -229,14 +226,13 @@ MachineMemOperand *
 MachineFunction::getMachineMemOperand(const Value *v, unsigned f,
                                       int64_t o, uint64_t s,
                                       unsigned base_alignment) {
-  return new (Allocator.Allocate<MachineMemOperand>())
-             MachineMemOperand(v, f, o, s, base_alignment);
+  return new (Allocator) MachineMemOperand(v, f, o, s, base_alignment);
 }
 
 MachineMemOperand *
 MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
                                       int64_t Offset, uint64_t Size) {
-  return new (Allocator.Allocate<MachineMemOperand>())
+  return new (Allocator)
              MachineMemOperand(MMO->getValue(), MMO->getFlags(),
                                int64_t(uint64_t(MMO->getOffset()) +
                                        uint64_t(Offset)),

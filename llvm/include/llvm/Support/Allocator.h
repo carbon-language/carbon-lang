@@ -15,9 +15,12 @@
 #define LLVM_SUPPORT_ALLOCATOR_H
 
 #include "llvm/Support/AlignOf.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/System/DataTypes.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <cstddef>
 
 namespace llvm {
 
@@ -174,5 +177,23 @@ public:
 };
 
 }  // end namespace llvm
+
+inline void *operator new(size_t Size, llvm::BumpPtrAllocator &Allocator) {
+  struct S {
+    char c;
+#ifdef __GNUC__
+    char x __attribute__((aligned));
+#else
+    union {
+      double D;
+      long double LD;
+      long long L;
+      void *P;
+    } x;
+#endif
+  };
+  return Allocator.Allocate(Size, std::min(llvm::NextPowerOf2(Size),
+                                           offsetof(S, x)));
+}
 
 #endif // LLVM_SUPPORT_ALLOCATOR_H
