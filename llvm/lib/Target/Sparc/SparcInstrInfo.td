@@ -527,11 +527,11 @@ let Uses = [O0, O1, O2, O3, O4, O5],
   def JMPLrr : F3_1<2, 0b111000,
                     (outs), (ins MEMrr:$ptr),
                     "call $ptr",
-                    [(call  ADDRrr:$ptr)]>;
+                    [(call ADDRrr:$ptr)]>;
   def JMPLri : F3_2<2, 0b111000,
                     (outs), (ins MEMri:$ptr),
                     "call $ptr",
-                    [(call  ADDRri:$ptr)]>;
+                    [(call ADDRri:$ptr)]>;
 }
 
 // Section B.28 - Read State Register Instructions
