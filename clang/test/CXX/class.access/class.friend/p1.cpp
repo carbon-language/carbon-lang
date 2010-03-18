@@ -115,3 +115,37 @@ namespace test0 {
     }
   };
 }
+
+// Make sure that friends have access to inherited protected members.
+namespace test2 {
+  struct X;
+
+  class ilist_half_node {
+    friend struct ilist_walker_bad;
+    X *Prev;
+  protected:
+    X *getPrev() { return Prev; }
+  };
+
+  class ilist_node : private ilist_half_node { // expected-note {{declared private here}} expected-note {{constrained by private inheritance here}}
+    friend struct ilist_walker;
+    X *Next;
+    X *getNext() { return Next; } // expected-note {{declared private here}}
+  };
+
+  struct X : ilist_node {};
+
+  struct ilist_walker {
+    static X *getPrev(X *N) { return N->getPrev(); }
+    static X *getNext(X *N) { return N->getNext(); }
+  };  
+
+  struct ilist_walker_bad {
+    static X *getPrev(X *N) { return N->getPrev(); } // \
+    // expected-error {{'getPrev' is a private member of 'test2::ilist_half_node'}} \
+    // expected-error {{cannot cast 'test2::X' to its private base class 'test2::ilist_half_node'}}
+
+    static X *getNext(X *N) { return N->getNext(); } // \
+    // expected-error {{'getNext' is a private member of 'test2::ilist_node'}}
+  };  
+}

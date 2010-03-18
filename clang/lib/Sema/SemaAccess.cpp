@@ -212,11 +212,14 @@ static Sema::AccessResult GetFriendKind(Sema &S,
 /// Finds the best path from the naming class to the declaring class,
 /// taking friend declarations into account.
 ///
+/// \param FinalAccess the access of the "final step", or AS_none if
+///   there is no final step.
 /// \return null if friendship is dependent
 static CXXBasePath *FindBestPath(Sema &S,
                                  const EffectiveContext &EC,
                                  CXXRecordDecl *Derived,
                                  CXXRecordDecl *Base,
+                                 AccessSpecifier FinalAccess,
                                  CXXBasePaths &Paths) {
   // Derive the paths to the desired base.
   bool isDerived = Derived->isDerivedFrom(Base, Paths);
@@ -225,28 +228,43 @@ static CXXBasePath *FindBestPath(Sema &S,
 
   CXXBasePath *BestPath = 0;
 
+  assert(FinalAccess != AS_none && "forbidden access after declaring class");
+
   // Derive the friend-modified access along each path.
   for (CXXBasePaths::paths_iterator PI = Paths.begin(), PE = Paths.end();
          PI != PE; ++PI) {
 
     // Walk through the path backwards.
-    AccessSpecifier PathAccess = AS_public;
+    AccessSpecifier PathAccess = FinalAccess;
     CXXBasePath::iterator I = PI->end(), E = PI->begin();
     while (I != E) {
       --I;
 
+      assert(PathAccess != AS_none);
+
+      // If the declaration is a private member of a base class, there
+      // is no level of friendship in derived classes that can make it
+      // accessible.
+      if (PathAccess == AS_private) {
+        PathAccess = AS_none;
+        break;
+      }
+
       AccessSpecifier BaseAccess = I->Base->getAccessSpecifier();
       if (BaseAccess != AS_public) {
         switch (GetFriendKind(S, EC, I->Class)) {
-        case Sema::AR_inaccessible: break;
-        case Sema::AR_accessible: BaseAccess = AS_public; break;
-        case Sema::AR_dependent: return 0;
+        case Sema::AR_inaccessible:
+          PathAccess = CXXRecordDecl::MergeAccess(BaseAccess, PathAccess);
+          break;
+        case Sema::AR_accessible:
+          PathAccess = AS_public;
+          break;
+        case Sema::AR_dependent:
+          return 0;
         case Sema::AR_delayed:
           llvm_unreachable("friend resolution is never delayed"); break;
         }
       }
-
-      PathAccess = CXXRecordDecl::MergeAccess(BaseAccess, PathAccess);
     }
 
     // Note that we modify the path's Access field to the
@@ -291,7 +309,8 @@ static void DiagnoseAccessPath(Sema &S,
   }
 
   CXXBasePaths Paths;
-  CXXBasePath &Path = *FindBestPath(S, EC, NamingClass, DeclaringClass, Paths);
+  CXXBasePath &Path = *FindBestPath(S, EC, NamingClass, DeclaringClass,
+                                    AS_public, Paths);
 
   CXXBasePath::iterator I = Path.end(), E = Path.begin();
   while (I != E) {
@@ -396,7 +415,7 @@ static void TryElevateAccess(Sema &S,
   CXXRecordDecl *NamingClass = Entity.getNamingClass();
 
   // Adjust the declaration of the referred entity.
-  AccessSpecifier DeclAccess = AS_none;
+  AccessSpecifier DeclAccess = AS_public;
   if (Entity.isMemberAccess()) {
     NamedDecl *Target = Entity.getTargetDecl();
 
@@ -421,17 +440,15 @@ static void TryElevateAccess(Sema &S,
   // Append the declaration's access if applicable.
   CXXBasePaths Paths;
   CXXBasePath *Path = FindBestPath(S, EC, Entity.getNamingClass(),
-                                   DeclaringClass, Paths);
+                                   DeclaringClass, DeclAccess, Paths);
   if (!Path) {
     // FIXME: delay dependent friendship
     return;
   }
 
-  // Grab the access along the best path.
+  // Grab the access along the best path (note that this includes the
+  // final-step access).
   AccessSpecifier NewAccess = Path->Access;
-  if (Entity.isMemberAccess())
-    NewAccess = CXXRecordDecl::MergeAccess(NewAccess, DeclAccess);
-  
   assert(NewAccess <= Access && "access along best path worse than direct?");
   Access = NewAccess;
 }

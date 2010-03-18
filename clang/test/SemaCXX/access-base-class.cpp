@@ -63,13 +63,14 @@ namespace T6 {
   
   class A {};
   
-  class B : private A { // expected-note {{declared private here}}
+  class B : private A { // expected-note {{declared private here}} expected-note {{constrained by private inheritance here}}
     void f(C* c);
   };
   
   class C : public B { 
     void f(C *c) {
-      A* a = c; // expected-error {{cannot cast 'T6::C' to its private base class 'T6::A'}}
+      A* a = c; // expected-error {{cannot cast 'T6::C' to its private base class 'T6::A'}} \
+                // expected-error {{'A' is a private member of 'T6::A'}}
     }
   };
   

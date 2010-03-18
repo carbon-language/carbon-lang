@@ -1176,7 +1176,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // FIXME: support using declarations!
   QualType SubobjectType;
   int SubobjectNumber = 0;
-  AccessSpecifier SubobjectAccess = AS_private;
+  AccessSpecifier SubobjectAccess = AS_none;
   for (CXXBasePaths::paths_iterator Path = Paths.begin(), PathEnd = Paths.end();
        Path != PathEnd; ++Path) {
     const CXXBasePathElement &PathElement = Path->back();

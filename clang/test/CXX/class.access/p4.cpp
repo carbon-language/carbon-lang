@@ -250,3 +250,15 @@ namespace test8 {
     new (2) A();
   }
 }
+
+// Don't silently upgrade forbidden-access paths to private.
+namespace test9 {
+  class A {
+    public: static int x;
+  };
+  class B : private A { // expected-note {{constrained by private inheritance here}}
+  };
+  class C : public B {
+    static int getX() { return x; } // expected-error {{'x' is a private member of 'test9::A'}}
+  };
+}
