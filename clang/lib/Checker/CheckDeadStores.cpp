@@ -220,16 +220,25 @@ public:
               if (E->isConstantInitializer(Ctx))
                 return;
 
-              // Special case: check for initializations from constant
-              //  variables.
-              //
-              //  e.g. extern const int MyConstant;
-              //       int x = MyConstant;
-              //
               if (DeclRefExpr *DRE=dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
-                if (VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+                if (VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+                  // Special case: check for initialization from constant
+                  //  variables.
+                  //
+                  //  e.g. extern const int MyConstant;
+                  //       int x = MyConstant;
+                  //
                   if (VD->hasGlobalStorage() &&
-                      VD->getType().isConstQualified()) return;
+                      VD->getType().isConstQualified())
+                    return;
+                  // Special case: check for initialization from scalar
+                  //  parameters.  This is often a form of defensive
+                  //  programming.  Non-scalars are still an error since
+                  //  because it more likely represents an actual algorithmic
+                  //  bug.
+                  if (isa<ParmVarDecl>(VD) && VD->getType()->isScalarType())
+                    return;
+                }
 
               Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }

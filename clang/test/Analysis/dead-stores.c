@@ -1,18 +1,18 @@
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
-// RUN: %clang_cc1 -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=basic -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=basic -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
+// RUN: %clang_cc1 -Wunused-variable -analyze -analyzer-experimental-internal-checks -analyzer-check-objc-mem -analyzer-store=region -analyzer-constraints=range -analyzer-check-dead-stores -fblocks -verify -Wno-unreachable-code -analyzer-opt-analyze-nested-blocks %s
 
 void f1() {
-  int k, y;
+  int k, y; // expected-warning{{unused variable 'k'}} expected-warning{{unused variable 'y'}}
   int abc=1;
-  long idx=abc+3*5; // expected-warning {{never read}}
+  long idx=abc+3*5; // expected-warning {{never read}} expected-warning{{unused variable 'idx'}}
 }
 
 void f2(void *b) {
  char *c = (char*)b; // no-warning
- char *d = b+1; // expected-warning {{never read}}
+ char *d = b+1; // expected-warning {{never read}} expected-warning{{unused variable 'd'}}
  printf("%s", c); // expected-warning{{implicitly declaring C library function 'printf' with type 'int (char const *, ...)'}} \
  // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
 }
@@ -40,7 +40,7 @@ void f4(int k) {
 void f5() {
 
   int x = 4; // no-warning
-  int *p = &x; // expected-warning{{never read}}
+  int *p = &x; // expected-warning{{never read}} expected-warning{{unused variable 'p'}}
 
 }
 
@@ -105,12 +105,19 @@ int f11b() {
 }
 
 int f12a(int y) {
-  int x = y;  // expected-warning{{never read}}
+  int x = y;  // expected-warning{{unused variable 'x'}}
   return 1;
 }
 int f12b(int y) {
   int x __attribute__((unused)) = y;  // no-warning
   return 1;
+}
+int f12c(int y) {
+  // Allow initialiation of scalar variables by parameters as a form of
+  // defensive programming.
+  int x = y;  // no-warning
+  x = 1;
+  return x;
 }
 
 // Filed with PR 2630.  This code should produce no warnings.
@@ -138,7 +145,7 @@ int f14(int count) {
 // Test case for <rdar://problem/6248086>
 void f15(unsigned x, unsigned y) {
   int count = x * y;   // no-warning
-  int z[count];
+  int z[count]; // expected-warning{{unused variable 'z'}}
 }
 
 int f16(int x) {
@@ -367,7 +374,7 @@ void f23(int argc, char **argv) {
 }
 
 void f23_pos(int argc, char **argv) {
-  int shouldLog = (argc > 1); // expected-warning{{Value stored to 'shouldLog' during its initialization is never read}}
+  int shouldLog = (argc > 1); // expected-warning{{Value stored to 'shouldLog' during its initialization is never read}} expected-warning{{unused variable 'shouldLog'}}
   ^{ 
      f23_aux("I did too use it!\n");
   }();  
@@ -377,7 +384,7 @@ void f24_A(int y) {
   // FIXME: One day this should be reported as dead since 'z = x + y' is dead.
   int x = (y > 2); // no-warning
   ^ {
-      int z = x + y; // expected-warning{{Value stored to 'z' during its initialization is never read}}
+      int z = x + y; // expected-warning{{Value stored to 'z' during its initialization is never read}} expected-warning{{unused variable 'z'}}
   }();  
 }
 
