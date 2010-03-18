@@ -650,39 +650,49 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   if (SrcRC == ARM::tGPRRegisterClass)
     SrcRC = ARM::GPRRegisterClass;
 
-  if (DestRC != SrcRC) {
-    if (DestRC->getSize() != SrcRC->getSize())
-      return false;
+  // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies.
+  if (DestRC == ARM::DPR_8RegisterClass)
+    DestRC = ARM::DPR_VFP2RegisterClass;
+  if (SrcRC == ARM::DPR_8RegisterClass)
+    SrcRC = ARM::DPR_VFP2RegisterClass;
 
-    // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies.
-    // Allow QPR / QPR_VFP2 / QPR_8 cross-class copies.
-    if (DestRC->getSize() != 8 && DestRC->getSize() != 16)
-      return false;
-  }
+  // Allow QPR / QPR_VFP2 / QPR_8 cross-class copies.
+  if (DestRC == ARM::QPR_VFP2RegisterClass ||
+      DestRC == ARM::QPR_8RegisterClass)
+    DestRC = ARM::QPRRegisterClass;
+  if (SrcRC == ARM::QPR_VFP2RegisterClass ||
+      SrcRC == ARM::QPR_8RegisterClass)
+    SrcRC = ARM::QPRRegisterClass;
+
+  // Disallow copies of unequal sizes.
+  if (DestRC != SrcRC && DestRC->getSize() != SrcRC->getSize())
+    return false;
 
   if (DestRC == ARM::GPRRegisterClass) {
-    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr),
-                                        DestReg).addReg(SrcReg)));
-  } else if (DestRC == ARM::SPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VMOVS), DestReg)
-                   .addReg(SrcReg));
-  } else if (DestRC == ARM::DPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VMOVD), DestReg)
-                   .addReg(SrcReg));
-  } else if (DestRC == ARM::DPR_VFP2RegisterClass ||
-             DestRC == ARM::DPR_8RegisterClass ||
-             SrcRC == ARM::DPR_VFP2RegisterClass ||
-             SrcRC == ARM::DPR_8RegisterClass) {
-    // Always use neon reg-reg move if source or dest is NEON-only regclass.
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VMOVDneon),
-                           DestReg).addReg(SrcReg));
-  } else if (DestRC == ARM::QPRRegisterClass ||
-             DestRC == ARM::QPR_VFP2RegisterClass ||
-             DestRC == ARM::QPR_8RegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VMOVQ),
-                           DestReg).addReg(SrcReg));
+    if (SrcRC == ARM::SPRRegisterClass)
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VMOVRS), DestReg)
+                     .addReg(SrcReg));
+    else
+      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr),
+                                          DestReg).addReg(SrcReg)));
   } else {
-    return false;
+    unsigned Opc;
+
+    if (DestRC == ARM::SPRRegisterClass)
+      Opc = (SrcRC == ARM::GPRRegisterClass ? ARM::VMOVSR : ARM::VMOVS);
+    else if (DestRC == ARM::DPRRegisterClass)
+      Opc = ARM::VMOVD;
+    else if (DestRC == ARM::DPR_VFP2RegisterClass ||
+             SrcRC == ARM::DPR_VFP2RegisterClass)
+      // Always use neon reg-reg move if source or dest is NEON-only regclass.
+      Opc = ARM::VMOVDneon;
+    else if (DestRC == ARM::QPRRegisterClass)
+      Opc = ARM::VMOVQ;
+    else
+      return false;
+
+    AddDefaultPred(BuildMI(MBB, I, DL, get(Opc), DestReg)
+                   .addReg(SrcReg));
   }
 
   return true;
