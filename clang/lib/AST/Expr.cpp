@@ -227,7 +227,12 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     llvm::raw_svector_ostream Out(Name);
     Out << (MD->isInstanceMethod() ? '-' : '+');
     Out << '[';
-    Out << MD->getClassInterface()->getNameAsString();
+
+    // For incorrect code, there might not be an ObjCInterfaceDecl.  Do
+    // a null check to avoid a crash.
+    if (const ObjCInterfaceDecl *ID = MD->getClassInterface())
+      Out << ID->getNameAsString();
+
     if (const ObjCCategoryImplDecl *CID =
         dyn_cast<ObjCCategoryImplDecl>(MD->getDeclContext())) {
       Out << '(';
