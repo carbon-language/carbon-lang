@@ -1518,8 +1518,10 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("UnexposedAttr");
   case CXCursor_IBActionAttr:
       return createCXString("attribute(ibaction)");
-    case CXCursor_IBOutletAttr:
-      return createCXString("attribute(iboutlet)");
+  case CXCursor_IBOutletAttr:
+     return createCXString("attribute(iboutlet)");
+  case CXCursor_PreprocessingDirective:
+    return createCXString("preprocessing directive");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
@@ -1590,6 +1592,10 @@ unsigned clang_isTranslationUnit(enum CXCursorKind K) {
   return K == CXCursor_TranslationUnit;
 }
 
+unsigned clang_isPreprocessing(enum CXCursorKind K) {
+  return K >= CXCursor_FirstPreprocessing && K <= CXCursor_LastPreprocessing;
+}
+  
 unsigned clang_isUnexposed(enum CXCursorKind K) {
   switch (K) {
     case CXCursor_UnexposedDecl:
@@ -1642,6 +1648,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return cxloc::translateSourceLocation(getCursorContext(C),
                                    getLocationFromExpr(getCursorExpr(C)));
 
+  if (C.kind == CXCursor_PreprocessingDirective) {
+    SourceLocation L = cxcursor::getCursorPreprocessingDirective(C).getBegin();
+    return cxloc::translateSourceLocation(getCursorContext(C), L);
+  }
+  
   if (!getCursorDecl(C))
     return clang_getNullLocation();
 
@@ -1693,6 +1704,11 @@ CXSourceRange clang_getCursorExtent(CXCursor C) {
     return cxloc::translateSourceRange(getCursorContext(C),
                                 getCursorStmt(C)->getSourceRange());
 
+  if (C.kind == CXCursor_PreprocessingDirective) {
+    SourceRange R = cxcursor::getCursorPreprocessingDirective(C);
+    return cxloc::translateSourceRange(getCursorContext(C), R);
+  }
+  
   if (!getCursorDecl(C))
     return clang_getNullRange();
 
@@ -2216,7 +2232,8 @@ void clang_annotateTokens(CXTranslationUnit TU,
 
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
-  // Annotate all of the source locations in the region of interest that map
+  // Annotate all of the source locations in the region of interest that map to
+  // a specific cursor.
   SourceRange RegionOfInterest;
   RegionOfInterest.setBegin(
         cxloc::translateSourceLocation(clang_getTokenLocation(TU, Tokens[0])));
@@ -2224,23 +2241,114 @@ void clang_annotateTokens(CXTranslationUnit TU,
     = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
                                                      Tokens[NumTokens - 1]));
   RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
-  // FIXME: Would be great to have a "hint" cursor, then walk from that
-  // hint cursor upward until we find a cursor whose source range encloses
-  // the region of interest, rather than starting from the translation unit.
+  
   AnnotateTokensData Annotated;
   CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
   CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &Annotated,
                             Decl::MaxPCHLevel, RegionOfInterest);
   AnnotateVis.VisitChildren(Parent);
 
+  // Look for macro instantiations and preprocessing directives in the 
+  // source range containing the annotated tokens. We do this by re-lexing the
+  // tokens in the source range.
+  SourceManager &SourceMgr = CXXUnit->getSourceManager();
+  std::pair<FileID, unsigned> BeginLocInfo
+    = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
+  std::pair<FileID, unsigned> EndLocInfo
+    = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
+  
+  bool RelexOkay = true;
+  
+  // Cannot re-tokenize across files.
+  if (BeginLocInfo.first != EndLocInfo.first)
+    RelexOkay = false;
+  
+  llvm::StringRef Buffer;
+  if (RelexOkay) {
+    // Create a lexer
+    bool Invalid = false;
+    Buffer = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
+    if (Invalid)
+      RelexOkay = false;
+  }
+    
+  if (RelexOkay) {
+    Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
+              CXXUnit->getASTContext().getLangOptions(),
+              Buffer.begin(), Buffer.data() + BeginLocInfo.second, Buffer.end());
+    Lex.SetCommentRetentionState(true);
+    
+    // Lex tokens in raw mode until we hit the end of the range, to avoid 
+    // entering #includes or expanding macros.
+    std::vector<Token> TokenStream;
+    const char *EffectiveBufferEnd = Buffer.data() + EndLocInfo.second;
+    Preprocessor &PP = CXXUnit->getPreprocessor();
+    while (Lex.getBufferLocation() <= EffectiveBufferEnd) {
+      Token Tok;
+      Lex.LexFromRawLexer(Tok);
+      
+    reprocess:
+      if (Tok.is(tok::hash) && Tok.isAtStartOfLine()) {
+        // We have found a preprocessing directive. Gobble it up so that we
+        // don't see it while preprocessing these tokens later, but keep track of
+        // all of the token locations inside this preprocessing directive so that
+        // we can annotate them appropriately.
+        //
+        // FIXME: Some simple tests here could identify macro definitions and
+        // #undefs, to provide specific cursor kinds for those.
+        std::vector<SourceLocation> Locations;
+        do {
+          Locations.push_back(Tok.getLocation());
+          Lex.LexFromRawLexer(Tok);        
+        } while (!Tok.isAtStartOfLine() && !Tok.is(tok::eof));
+        
+        using namespace cxcursor;
+        CXCursor Cursor
+          = MakePreprocessingDirectiveCursor(SourceRange(Locations.front(),
+                                                         Locations.back()),
+                                             CXXUnit);
+        for (unsigned I = 0, N = Locations.size(); I != N; ++I) {
+          Annotated[Locations[I].getRawEncoding()] = Cursor;
+        }
+        
+        if (Tok.is(tok::eof))
+          break;
+        
+        if (Tok.isAtStartOfLine())
+          goto reprocess;
+        
+        continue;
+      }
+      
+      // If this is a ## token, change its kind to unknown so that repreprocessing
+      // it will not produce an error.
+      if (Tok.is(tok::hashhash))
+        Tok.setKind(tok::unknown);
+      
+      // If this raw token is an identifier, the raw lexer won't have looked up
+      // the corresponding identifier info for it.  Do this now so that it will be
+      // macro expanded when we re-preprocess it.
+      if (Tok.is(tok::identifier)) {
+        // Change the kind of this identifier to the appropriate token kind, e.g.
+        // turning "for" into a keyword.
+        Tok.setKind(PP.LookUpIdentifierInfo(Tok)->getTokenID());
+      }
+      
+      TokenStream.push_back(Tok);
+      
+      if (Tok.is(tok::eof)) 
+        break;
+    }
+  }
+  
   for (unsigned I = 0; I != NumTokens; ++I) {
     // Determine whether we saw a cursor at this token's location.
     AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
     if (Pos == Annotated.end())
       continue;
-
+    
     Cursors[I] = Pos->second;
-  }
+  }  
 }
 
 void clang_disposeTokens(CXTranslationUnit TU,

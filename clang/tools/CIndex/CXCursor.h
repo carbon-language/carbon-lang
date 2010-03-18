@@ -73,6 +73,12 @@ CXCursor MakeCursorTypeRef(TypeDecl *Type, SourceLocation Loc, ASTUnit *TU);
 /// and optionally the location where the reference occurred.
 std::pair<TypeDecl *, SourceLocation> getCursorTypeRef(CXCursor C);
 
+/// \brief Create a preprocessing directive cursor.
+CXCursor MakePreprocessingDirectiveCursor(SourceRange Range, ASTUnit *TU);
+
+/// \brief Unpack a given preprocessing directive to retrieve its source range.
+SourceRange getCursorPreprocessingDirective(CXCursor C);
+  
 Decl *getCursorDecl(CXCursor Cursor);
 Expr *getCursorExpr(CXCursor Cursor);
 Stmt *getCursorStmt(CXCursor Cursor);
