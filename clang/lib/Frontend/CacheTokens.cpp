@@ -164,11 +164,12 @@ public:
 } // end anonymous namespace
 
 typedef OnDiskChainedHashTableGenerator<FileEntryPTHEntryInfo> PTHMap;
-typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
-typedef llvm::StringMap<OffsetOpt, llvm::BumpPtrAllocator> CachedStrsTy;
 
 namespace {
 class PTHWriter {
+  typedef llvm::DenseMap<const IdentifierInfo*,uint32_t> IDMap;
+  typedef llvm::StringMap<OffsetOpt, llvm::BumpPtrAllocator> CachedStrsTy;
+
   IDMap IM;
   llvm::raw_fd_ostream& Out;
   Preprocessor& PP;
