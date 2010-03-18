@@ -127,27 +127,27 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   if (neverHasSideEffects + hasSideEffects > 1)
     throw R->getName() + ": multiple conflicting side-effect flags set!";
 
-  DagInit *DI;
-  try {
-    DI = R->getValueAsDag("OutOperandList");
-  } catch (...) {
-    // Error getting operand list, just ignore it (sparcv9).
-    AsmString.clear();
-    OperandList.clear();
-    return;
-  }
-  NumDefs = DI->getNumArgs();
+  DagInit *DI = R->getValueAsDag("OutOperandList");
 
-  DagInit *IDI;
-  try {
-    IDI = R->getValueAsDag("InOperandList");
-  } catch (...) {
-    // Error getting operand list, just ignore it (sparcv9).
-    AsmString.clear();
-    OperandList.clear();
-    return;
-  }
-  DI = (DagInit*)(new BinOpInit(BinOpInit::CONCAT, DI, IDI, new DagRecTy))->Fold(R, 0);
+  if (DefInit *Init = dynamic_cast<DefInit*>(DI->getOperator())) {
+    if (Init->getDef()->getName() != "ops" &&
+        Init->getDef()->getName() != "outs")
+      throw R->getName() + ": invalid def name for output list: use 'outs'";
+  } else
+    throw R->getName() + ": invalid output list: use 'outs'";
+    
+  NumDefs = DI->getNumArgs();
+    
+  DagInit *IDI = R->getValueAsDag("InOperandList");
+  if (DefInit *Init = dynamic_cast<DefInit*>(IDI->getOperator())) {
+    if (Init->getDef()->getName() != "ops" &&
+        Init->getDef()->getName() != "ins")
+      throw R->getName() + ": invalid def name for input list: use 'ins'";
+  } else
+    throw R->getName() + ": invalid input list: use 'ins'";
+    
+  DI = (DagInit*)(new BinOpInit(BinOpInit::CONCAT,
+                                DI, IDI, new DagRecTy))->Fold(R, 0);
 
   unsigned MIOperandNo = 0;
   std::set<std::string> OperandNames;

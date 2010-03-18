@@ -105,7 +105,8 @@ namespace llvm {
           MINumOperands(MINO), MIOperandInfo(MIOI) {}
     };
 
-    /// NumDefs - Number of def operands declared.
+    /// NumDefs - Number of def operands declared, this is the number of
+    /// elements in the instruction's (outs) list.
     ///
     unsigned NumDefs;
 
