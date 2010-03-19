@@ -1010,6 +1010,44 @@ MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
 MCAssembler::~MCAssembler() {
 }
 
+static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
+                                                const MCAsmFixup &Fixup,
+                                                const MCDataFragment *DF,
+                                                const MCValue Target,
+                                                const MCSection *BaseSection) {
+  // The effective fixup address is
+  //     addr(atom(A)) + offset(A)
+  //   - addr(atom(B)) - offset(B)
+  //   - addr(<base symbol>) + <fixup offset from base symbol>
+  // and the offsets are not relocatable, so the fixup is fully resolved when
+  //  addr(atom(A)) - addr(atom(B)) - addr(<base symbol>)) == 0.
+  //
+  // The simple (Darwin, except on x86_64) way of dealing with this was to
+  // assume that any reference to a temporary symbol *must* be a temporary
+  // symbol in the same atom, unless the sections differ. Therefore, any PCrel
+  // relocation to a temporary symbol (in the same section) is fully
+  // resolved. This also works in conjunction with absolutized .set, which
+  // requires the compiler to use .set to absolutize the differences between
+  // symbols which the compiler knows to be assembly time constants, so we don't
+  // need to worry about consider symbol differences fully resolved.
+
+  // Non-relative fixups are only resolved if constant.
+  if (!BaseSection)
+    return Target.isAbsolute();
+
+  // Otherwise, relative fixups are only resolved if not a difference and the
+  // target is a temporary in the same section.
+  if (Target.isAbsolute() || Target.getSymB())
+    return false;
+
+  const MCSymbol *A = &Target.getSymA()->getSymbol();
+  if (!A->isTemporary() || !A->isInSection() ||
+      &A->getSection() != BaseSection)
+    return false;
+
+  return true;
+}
+
 bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
   // Non-temporary labels should always be visible to the linker.
   if (!SD->getSymbol().isTemporary())
@@ -1036,21 +1074,11 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
 
   Value = Target.getConstant();
 
-  // FIXME: This "resolved" check isn't quite right. The assumption is that if
-  // we have a PCrel access to a temporary, then that temporary is in the same
-  // atom, and so the value is resolved. We need explicit atom's to implement
-  // this more precisely.
   bool IsResolved = true, IsPCRel = isFixupKindPCRel(Fixup.Kind);
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     if (A->getSymbol().isDefined())
       Value += getSymbolData(A->getSymbol()).getAddress();
     else
-      IsResolved = false;
-
-    // With scattered symbols, we assume anything that isn't a PCrel temporary
-    // access can have an arbitrary value.
-    if (getBackend().hasScatteredSymbols() &&
-        (!IsPCRel || !A->getSymbol().isTemporary()))
       IsResolved = false;
   }
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
@@ -1058,12 +1086,21 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
       Value -= getSymbolData(B->getSymbol()).getAddress();
     else
       IsResolved = false;
+  }
 
-    // With scattered symbols, we assume anything that isn't a PCrel temporary
-    // access can have an arbitrary value.
-    if (getBackend().hasScatteredSymbols() &&
-        (!IsPCRel || !B->getSymbol().isTemporary()))
-      IsResolved = false;
+  // If we are using scattered symbols, determine whether this value is actually
+  // resolved; scattering may cause atoms to move.
+  if (IsResolved && getBackend().hasScatteredSymbols()) {
+    if (getBackend().hasReliableSymbolDifference()) {
+      llvm_report_error("FIXME: Not yet implemented");
+    } else {
+      const MCSection *BaseSection = 0;
+      if (IsPCRel)
+        BaseSection = &DF->getParent()->getSection();
+
+      IsResolved = isScatteredFixupFullyResolvedSimple(*this, Fixup, DF, Target,
+                                                       BaseSection);
+    }
   }
 
   if (IsPCRel)
