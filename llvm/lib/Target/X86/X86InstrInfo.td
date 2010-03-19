@@ -4785,44 +4785,6 @@ def : Pat<(parallel (X86add_flag GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-/*
-// Memory-Register Addition with EFLAGS result
-def : Pat<(parallel (store (X86add_flag (loadi8 addr:$dst), GR8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD8mr addr:$dst, GR8:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi16 addr:$dst), GR16:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD16mr addr:$dst, GR16:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi32 addr:$dst), GR32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD32mr addr:$dst, GR32:$src2)>;
-
-// Memory-Integer Addition with EFLAGS result
-def : Pat<(parallel (store (X86add_flag (loadi8 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD8mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi16 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD16mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi32 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD32mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi16 addr:$dst), i16immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD16mi8 addr:$dst, i16immSExt8:$src2)>;
-def : Pat<(parallel (store (X86add_flag (loadi32 addr:$dst), i32immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (ADD32mi8 addr:$dst, i32immSExt8:$src2)>;
-*/
-
 // Register-Register Subtraction with EFLAGS result
 def : Pat<(parallel (X86sub_flag GR8:$src1, GR8:$src2),
                     (implicit EFLAGS)),
@@ -4861,44 +4823,6 @@ def : Pat<(parallel (X86sub_flag GR16:$src1, i16immSExt8:$src2),
 def : Pat<(parallel (X86sub_flag GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
-
-/*
-// Memory-Register Subtraction with EFLAGS result
-def : Pat<(parallel (store (X86sub_flag (loadi8 addr:$dst), GR8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB8mr addr:$dst, GR8:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi16 addr:$dst), GR16:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB16mr addr:$dst, GR16:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi32 addr:$dst), GR32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB32mr addr:$dst, GR32:$src2)>;
-
-// Memory-Integer Subtraction with EFLAGS result
-def : Pat<(parallel (store (X86sub_flag (loadi8 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB8mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi16 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB16mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi32 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB32mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi16 addr:$dst), i16immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB16mi8 addr:$dst, i16immSExt8:$src2)>;
-def : Pat<(parallel (store (X86sub_flag (loadi32 addr:$dst), i32immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (SUB32mi8 addr:$dst, i32immSExt8:$src2)>;
-*/
 
 // Register-Register Signed Integer Multiply with EFLAGS result
 def : Pat<(parallel (X86smul_flag GR16:$src1, GR16:$src2),
@@ -4958,40 +4882,18 @@ def : Pat<(parallel (X86smul_flag GR32:$src1, 2),
 // INC and DEC with EFLAGS result. Note that these do not set CF.
 def : Pat<(parallel (X86inc_flag GR8:$src), (implicit EFLAGS)),
           (INC8r GR8:$src)>;
-          /*
-def : Pat<(parallel (store (i8 (X86inc_flag (loadi8 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (INC8m addr:$dst)>;
-          */
 def : Pat<(parallel (X86dec_flag GR8:$src), (implicit EFLAGS)),
           (DEC8r GR8:$src)>;
-/*def : Pat<(parallel (store (i8 (X86dec_flag (loadi8 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (DEC8m addr:$dst)>;*/
 
 def : Pat<(parallel (X86inc_flag GR16:$src), (implicit EFLAGS)),
           (INC16r GR16:$src)>, Requires<[In32BitMode]>;
-/*
-def : Pat<(parallel (store (i16 (X86inc_flag (loadi16 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (INC16m addr:$dst)>, Requires<[In32BitMode]>;*/
 def : Pat<(parallel (X86dec_flag GR16:$src), (implicit EFLAGS)),
           (DEC16r GR16:$src)>, Requires<[In32BitMode]>;
-/*
-def : Pat<(parallel (store (i16 (X86dec_flag (loadi16 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (DEC16m addr:$dst)>, Requires<[In32BitMode]>;*/
 
 def : Pat<(parallel (X86inc_flag GR32:$src), (implicit EFLAGS)),
           (INC32r GR32:$src)>, Requires<[In32BitMode]>;
-/*def : Pat<(parallel (store (i32 (X86inc_flag (loadi32 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (INC32m addr:$dst)>, Requires<[In32BitMode]>;*/
 def : Pat<(parallel (X86dec_flag GR32:$src), (implicit EFLAGS)),
           (DEC32r GR32:$src)>, Requires<[In32BitMode]>;
-/*def : Pat<(parallel (store (i32 (X86dec_flag (loadi32 addr:$dst))), addr:$dst),
-                    (implicit EFLAGS)),
-          (DEC32m addr:$dst)>, Requires<[In32BitMode]>;*/
 
 // Register-Register Or with EFLAGS result
 def : Pat<(parallel (X86or_flag GR8:$src1, GR8:$src2),
@@ -5031,43 +4933,6 @@ def : Pat<(parallel (X86or_flag GR16:$src1, i16immSExt8:$src2),
 def : Pat<(parallel (X86or_flag GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (OR32ri8 GR32:$src1, i32immSExt8:$src2)>;
-/*
-// Memory-Register Or with EFLAGS result
-def : Pat<(parallel (store (X86or_flag (loadi8 addr:$dst), GR8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR8mr addr:$dst, GR8:$src2)>;
-def : Pat<(parallel (store (X86or_flag (loadi16 addr:$dst), GR16:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR16mr addr:$dst, GR16:$src2)>;
-def : Pat<(parallel (store (X86or_flag (loadi32 addr:$dst), GR32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR32mr addr:$dst, GR32:$src2)>;
-
-// Memory-Integer Or with EFLAGS result
-def : Pat<(parallel (store (X86or_flag (loadi8 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR8mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86or_flag (loadi16 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR16mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86or_flag (loadi32 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR32mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86or_flag (loadi16 addr:$dst), i16immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR16mi8 addr:$dst, i16immSExt8:$src2)>;
-def : Pat<(parallel (store (X86or_flag (loadi32 addr:$dst), i32immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (OR32mi8 addr:$dst, i32immSExt8:$src2)>;
-          */
 
 // Register-Register XOr with EFLAGS result
 def : Pat<(parallel (X86xor_flag GR8:$src1, GR8:$src2),
@@ -5108,44 +4973,6 @@ def : Pat<(parallel (X86xor_flag GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (XOR32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-/*
-// Memory-Register XOr with EFLAGS result
-def : Pat<(parallel (store (X86xor_flag (loadi8 addr:$dst), GR8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR8mr addr:$dst, GR8:$src2)>;
-def : Pat<(parallel (store (X86xor_flag (loadi16 addr:$dst), GR16:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR16mr addr:$dst, GR16:$src2)>;
-def : Pat<(parallel (store (X86xor_flag (loadi32 addr:$dst), GR32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR32mr addr:$dst, GR32:$src2)>;
-
-// Memory-Integer XOr with EFLAGS result
-def : Pat<(parallel (store (X86xor_flag (loadi8 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR8mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86xor_flag (loadi16 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR16mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86xor_flag (loadi32 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR32mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86xor_flag (loadi16 addr:$dst), i16immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR16mi8 addr:$dst, i16immSExt8:$src2)>;
-def : Pat<(parallel (store (X86xor_flag (loadi32 addr:$dst), i32immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (XOR32mi8 addr:$dst, i32immSExt8:$src2)>;
-*/
-
 // Register-Register And with EFLAGS result
 def : Pat<(parallel (X86and_flag GR8:$src1, GR8:$src2),
                     (implicit EFLAGS)),
@@ -5184,44 +5011,6 @@ def : Pat<(parallel (X86and_flag GR16:$src1, i16immSExt8:$src2),
 def : Pat<(parallel (X86and_flag GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)),
           (AND32ri8 GR32:$src1, i32immSExt8:$src2)>;
-
-/*
-// Memory-Register And with EFLAGS result
-def : Pat<(parallel (store (X86and_flag (loadi8 addr:$dst), GR8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND8mr addr:$dst, GR8:$src2)>;
-def : Pat<(parallel (store (X86and_flag (loadi16 addr:$dst), GR16:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND16mr addr:$dst, GR16:$src2)>;
-def : Pat<(parallel (store (X86and_flag (loadi32 addr:$dst), GR32:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND32mr addr:$dst, GR32:$src2)>;
-
-// Memory-Integer And with EFLAGS result
-def : Pat<(parallel (store (X86and_flag (loadi8 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND8mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86and_flag (loadi16 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND16mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86and_flag (loadi32 addr:$dst), imm:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND32mi addr:$dst, imm:$src2)>;
-def : Pat<(parallel (store (X86and_flag (loadi16 addr:$dst), i16immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND16mi8 addr:$dst, i16immSExt8:$src2)>;
-def : Pat<(parallel (store (X86and_flag (loadi32 addr:$dst), i32immSExt8:$src2),
-                           addr:$dst),
-                    (implicit EFLAGS)),
-          (AND32mi8 addr:$dst, i32immSExt8:$src2)>;
-*/
 
 // -disable-16bit support.
 def : Pat<(truncstorei16 (i16 imm:$src), addr:$dst),
