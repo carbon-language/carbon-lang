@@ -17,7 +17,7 @@ void test() {
   switch (s) {} // expected-error {{statement requires expression of integer type ('struct S' invalid)}}
 
   while (struct S {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{no viable conversion}} expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}} expected-note{{candidate constructor (the implicit copy constructor)}}
-  while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{no viable conversion}} expected-error {{value of type 'struct <anonymous>' is not contextually convertible to 'bool'}} expected-note{{candidate constructor (the implicit copy constructor)}}
+  while (struct {} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{no viable conversion}} expected-error {{not contextually convertible to 'bool'}} expected-note{{candidate constructor (the implicit copy constructor)}}
   switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize}} \
   // expected-warning{{enumeration value 'E' not handled in switch}}
 

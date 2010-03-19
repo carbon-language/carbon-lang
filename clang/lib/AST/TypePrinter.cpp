@@ -18,6 +18,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -412,10 +413,12 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
     return;
 
   std::string Buffer;
+  bool HasKindDecoration = false;
 
   // We don't print tags unless this is an elaborated type.
   // In C, we just assume every RecordType is an elaborated type.
   if (!Policy.LangOpts.CPlusPlus && !D->getTypedefForAnonDecl()) {
+    HasKindDecoration = true;
     Buffer += D->getKindName();
     Buffer += ' ';
   }
@@ -425,15 +428,31 @@ void TypePrinter::PrintTag(TagDecl *D, std::string &InnerString) {
     // this will always be empty.
     AppendScope(D->getDeclContext(), Buffer);
 
-  const char *ID;
   if (const IdentifierInfo *II = D->getIdentifier())
-    ID = II->getNameStart();
+    Buffer += II->getNameStart();
   else if (TypedefDecl *Typedef = D->getTypedefForAnonDecl()) {
     assert(Typedef->getIdentifier() && "Typedef without identifier?");
-    ID = Typedef->getIdentifier()->getNameStart();
-  } else
-    ID = "<anonymous>";
-  Buffer += ID;
+    Buffer += Typedef->getIdentifier()->getNameStart();
+  } else {
+    // Make an unambiguous representation for anonymous types, e.g.
+    //   <anonymous enum at /usr/include/string.h:120:9>
+    llvm::raw_string_ostream OS(Buffer);
+    OS << "<anonymous";
+
+    // Suppress the redundant tag keyword if we just printed one.
+    // We don't have to worry about ElaboratedTypes here because you can't
+    // refer to an anonymous type with one.
+    if (!HasKindDecoration)
+      OS << " " << D->getKindName();
+
+    PresumedLoc PLoc = D->getASTContext().getSourceManager().getPresumedLoc(
+      D->getLocation());
+    OS << " at " << PLoc.getFilename()
+       << ':' << PLoc.getLine()
+       << ':' << PLoc.getColumn()
+       << '>';
+    OS.flush();
+  }
 
   // If this is a class template specialization, print the template
   // arguments.

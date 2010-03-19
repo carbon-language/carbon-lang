@@ -1889,16 +1889,16 @@ def err_stmtexpr_file_scope : Error<
   "statement expression not allowed at file scope">;
 def warn_mixed_sign_comparison : Warning<
   "comparison of integers of different signs: %0 and %1">,
-  InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
+  InGroup<SignCompare>, DefaultIgnore;
 def warn_mixed_sign_conditional : Warning<
   "operands of ? are integers of different signs: %0 and %1">,
-  InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
+  InGroup<SignCompare>, DefaultIgnore;
 def warn_lunsigned_always_true_comparison : Warning<
   "comparison of unsigned expression %0 is always %1">,
-  InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
+  InGroup<SignCompare>, DefaultIgnore;
 def warn_runsigned_always_true_comparison : Warning<
   "comparison of %0 unsigned expression is always %1">,
-  InGroup<DiagGroup<"sign-compare">>, DefaultIgnore;
+  InGroup<SignCompare>, DefaultIgnore;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a nonstatic member function">;

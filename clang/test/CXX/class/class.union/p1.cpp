@@ -46,25 +46,25 @@ union U1 {
 
 union U2 {
   struct {
-    Virtual v; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy constructor}}
+    Virtual v; // expected-note {{because type 'U2::<anonymous struct}}
   } m1; // expected-error {{union member 'm1' has a non-trivial copy constructor}}
   struct {
-    VirtualBase vbase; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy constructor}}
+    VirtualBase vbase; // expected-note {{because type 'U2::<anonymous struct}}
   } m2; // expected-error {{union member 'm2' has a non-trivial copy constructor}}
   struct {
-    Ctor ctor; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial constructor}}
+    Ctor ctor; // expected-note {{because type 'U2::<anonymous struct}}
   } m3; // expected-error {{union member 'm3' has a non-trivial constructor}}
   struct {
-    Ctor2 ctor2; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial constructor}}
+    Ctor2 ctor2; // expected-note {{because type 'U2::<anonymous struct}}
   } m3a; // expected-error {{union member 'm3a' has a non-trivial constructor}}
   struct {
-    CopyCtor copyctor; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy constructor}}
+    CopyCtor copyctor; // expected-note {{because type 'U2::<anonymous struct}}
   } m4; // expected-error {{union member 'm4' has a non-trivial copy constructor}}
   struct {
-    CopyAssign copyassign; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial copy assignment operator}}
+    CopyAssign copyassign; // expected-note {{because type 'U2::<anonymous struct}}
   } m5; // expected-error {{union member 'm5' has a non-trivial copy assignment operator}}
   struct {
-    Dtor dtor; // expected-note {{because type 'U2::<anonymous>' has a member with a non-trivial destructor}}
+    Dtor dtor; // expected-note {{because type 'U2::<anonymous struct}}
   } m6; // expected-error {{union member 'm6' has a non-trivial destructor}}
   struct {
     Okay okay;
