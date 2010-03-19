@@ -288,65 +288,39 @@ void CodeGenTarget::ReadInstructions() const {
   }
 }
 
+static const CodeGenInstruction *
+GetInstByName(const char *Name,
+              const std::map<std::string, CodeGenInstruction> &Insts) {
+  std::map<std::string, CodeGenInstruction>::const_iterator
+    I = Insts.find(Name);
+  if (I == Insts.end())
+    throw std::string("Could not find '") + Name + "' instruction!";
+  return &I->second;
+}
+
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
 void CodeGenTarget::
 getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
                                                  &NumberedInstructions) {
-  std::map<std::string, CodeGenInstruction>::const_iterator I;
-  I = getInstructions().find("PHI");
-  if (I == Instructions.end()) throw "Could not find 'PHI' instruction!";
-  const CodeGenInstruction *PHI = &I->second;
+  const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
   
-  I = getInstructions().find("INLINEASM");
-  if (I == Instructions.end()) throw "Could not find 'INLINEASM' instruction!";
-  const CodeGenInstruction *INLINEASM = &I->second;
-  
-  I = getInstructions().find("DBG_LABEL");
-  if (I == Instructions.end()) throw "Could not find 'DBG_LABEL' instruction!";
-  const CodeGenInstruction *DBG_LABEL = &I->second;
-  
-  I = getInstructions().find("EH_LABEL");
-  if (I == Instructions.end()) throw "Could not find 'EH_LABEL' instruction!";
-  const CodeGenInstruction *EH_LABEL = &I->second;
-  
-  I = getInstructions().find("GC_LABEL");
-  if (I == Instructions.end()) throw "Could not find 'GC_LABEL' instruction!";
-  const CodeGenInstruction *GC_LABEL = &I->second;
-  
-  I = getInstructions().find("KILL");
-  if (I == Instructions.end()) throw "Could not find 'KILL' instruction!";
-  const CodeGenInstruction *KILL = &I->second;
-  
-  I = getInstructions().find("EXTRACT_SUBREG");
-  if (I == Instructions.end()) 
-    throw "Could not find 'EXTRACT_SUBREG' instruction!";
-  const CodeGenInstruction *EXTRACT_SUBREG = &I->second;
-  
-  I = getInstructions().find("INSERT_SUBREG");
-  if (I == Instructions.end()) 
-    throw "Could not find 'INSERT_SUBREG' instruction!";
-  const CodeGenInstruction *INSERT_SUBREG = &I->second;
-  
-  I = getInstructions().find("IMPLICIT_DEF");
-  if (I == Instructions.end())
-    throw "Could not find 'IMPLICIT_DEF' instruction!";
-  const CodeGenInstruction *IMPLICIT_DEF = &I->second;
-  
-  I = getInstructions().find("SUBREG_TO_REG");
-  if (I == Instructions.end())
-    throw "Could not find 'SUBREG_TO_REG' instruction!";
-  const CodeGenInstruction *SUBREG_TO_REG = &I->second;
-
-  I = getInstructions().find("COPY_TO_REGCLASS");
-  if (I == Instructions.end())
-    throw "Could not find 'COPY_TO_REGCLASS' instruction!";
-  const CodeGenInstruction *COPY_TO_REGCLASS = &I->second;
-
-  I = getInstructions().find("DBG_VALUE");
-  if (I == Instructions.end())
-    throw "Could not find 'DBG_VALUE' instruction!";
-  const CodeGenInstruction *DBG_VALUE = &I->second;
+  const CodeGenInstruction *PHI = GetInstByName("PHI", Insts);
+  const CodeGenInstruction *INLINEASM = GetInstByName("INLINEASM", Insts);
+  const CodeGenInstruction *DBG_LABEL = GetInstByName("DBG_LABEL", Insts);
+  const CodeGenInstruction *EH_LABEL = GetInstByName("EH_LABEL", Insts);
+  const CodeGenInstruction *GC_LABEL = GetInstByName("GC_LABEL", Insts);
+  const CodeGenInstruction *KILL = GetInstByName("KILL", Insts);
+  const CodeGenInstruction *EXTRACT_SUBREG =
+    GetInstByName("EXTRACT_SUBREG", Insts);
+  const CodeGenInstruction *INSERT_SUBREG =
+    GetInstByName("INSERT_SUBREG", Insts);
+  const CodeGenInstruction *IMPLICIT_DEF = GetInstByName("IMPLICIT_DEF", Insts);
+  const CodeGenInstruction *SUBREG_TO_REG =
+    GetInstByName("SUBREG_TO_REG", Insts);
+  const CodeGenInstruction *COPY_TO_REGCLASS =
+    GetInstByName("COPY_TO_REGCLASS", Insts);
+  const CodeGenInstruction *DBG_VALUE = GetInstByName("DBG_VALUE", Insts);
 
   // Print out the rest of the instructions now.
   NumberedInstructions.push_back(PHI);
