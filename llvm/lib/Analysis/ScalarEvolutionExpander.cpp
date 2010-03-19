@@ -1240,6 +1240,15 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
   return LHS;
 }
 
+Value *SCEVExpander::expandCodeFor(const SCEV *SH, const Type *Ty,
+                                   Instruction *I) {
+  BasicBlock::iterator IP = I;
+  while (isInsertedInstruction(IP) || isa<DbgInfoIntrinsic>(IP))
+    ++IP;
+  Builder.SetInsertPoint(IP->getParent(), IP);
+  return expandCodeFor(SH, Ty);
+}
+
 Value *SCEVExpander::expandCodeFor(const SCEV *SH, const Type *Ty) {
   // Expand the code for this SCEV.
   Value *V = expand(SH);
@@ -1278,9 +1287,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
       // there) so that it is guaranteed to dominate any user inside the loop.
       if (L && S->hasComputableLoopEvolution(L) && L != PostIncLoop)
         InsertPt = L->getHeader()->getFirstNonPHI();
-      while (isa<DbgInfoIntrinsic>(InsertPt))
-        InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
-      while (isInsertedInstruction(InsertPt))
+      while (isInsertedInstruction(InsertPt) || isa<DbgInfoIntrinsic>(InsertPt))
         InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
       break;
     }
@@ -1316,7 +1323,8 @@ void SCEVExpander::rememberInstruction(Value *I) {
   // subsequently inserted code will be dominated.
   if (Builder.GetInsertPoint() == I) {
     BasicBlock::iterator It = cast<Instruction>(I);
-    do { ++It; } while (isInsertedInstruction(It));
+    do { ++It; } while (isInsertedInstruction(It) ||
+                        isa<DbgInfoIntrinsic>(It));
     Builder.SetInsertPoint(Builder.GetInsertBlock(), It);
   }
 }
@@ -1324,7 +1332,7 @@ void SCEVExpander::rememberInstruction(Value *I) {
 void SCEVExpander::restoreInsertPoint(BasicBlock *BB, BasicBlock::iterator I) {
   // If we acquired more instructions since the old insert point was saved,
   // advance past them.
-  while (isInsertedInstruction(I)) ++I;
+  while (isInsertedInstruction(I) || isa<DbgInfoIntrinsic>(I)) ++I;
 
   Builder.SetInsertPoint(BB, I);
 }

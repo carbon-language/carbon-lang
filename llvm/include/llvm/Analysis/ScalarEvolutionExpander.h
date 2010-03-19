@@ -79,12 +79,7 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(const SCEV *SH, const Type *Ty, Instruction *I) {
-      BasicBlock::iterator IP = I;
-      while (isInsertedInstruction(IP)) ++IP;
-      Builder.SetInsertPoint(IP->getParent(), IP);
-      return expandCodeFor(SH, Ty);
-    }
+    Value *expandCodeFor(const SCEV *SH, const Type *Ty, Instruction *I);
 
     /// setIVIncInsertPos - Set the current IV increment loop and position.
     void setIVIncInsertPos(const Loop *L, Instruction *Pos) {
