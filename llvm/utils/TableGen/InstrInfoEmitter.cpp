@@ -149,7 +149,7 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
   const CodeGenTarget &Target = CDP.getTargetInfo();
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
        E = Target.inst_end(); II != E; ++II) {
-    std::vector<std::string> OperandInfo = GetOperandInfo(**II);
+    std::vector<std::string> OperandInfo = GetOperandInfo(II->second);
     unsigned &N = OperandInfoIDs[OperandInfo];
     if (N != 0) continue;
     
@@ -214,7 +214,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   // Emit all of the instruction's implicit uses and defs.
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
          E = Target.inst_end(); II != E; ++II) {
-    Record *Inst = (*II)->TheDef;
+    Record *Inst = II->second.TheDef;
     std::vector<Record*> Uses = Inst->getValueAsListOfDefs("Uses");
     if (!Uses.empty()) {
       unsigned &IL = EmittedLists[Uses];

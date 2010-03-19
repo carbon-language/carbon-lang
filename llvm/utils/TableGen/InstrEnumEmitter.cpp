@@ -29,8 +29,8 @@ void InstrEnumEmitter::run(raw_ostream &OS) {
   std::string Namespace;
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(), 
        E = Target.inst_end(); II != E; ++II) {
-    if ((*II)->Namespace != "TargetOpcode") {
-      Namespace = (*II)->Namespace;
+    if (II->second.Namespace != "TargetOpcode") {
+      Namespace = II->second.Namespace;
       break;
     }
   }
