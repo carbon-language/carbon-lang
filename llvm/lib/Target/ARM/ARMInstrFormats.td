@@ -33,28 +33,28 @@ def LdMiscFrm     : Format<8>;
 def StMiscFrm     : Format<9>;
 def LdStMulFrm    : Format<10>;
 
-def LdStExFrm     : Format<28>;
+def LdStExFrm     : Format<11>;
 
-def ArithMiscFrm  : Format<11>;
-def ExtFrm        : Format<12>;
+def ArithMiscFrm  : Format<12>;
+def ExtFrm        : Format<13>;
 
-def VFPUnaryFrm   : Format<13>;
-def VFPBinaryFrm  : Format<14>;
-def VFPConv1Frm   : Format<15>;
-def VFPConv2Frm   : Format<16>;
-def VFPConv3Frm   : Format<17>;
-def VFPConv4Frm   : Format<18>;
-def VFPConv5Frm   : Format<19>;
-def VFPLdStFrm    : Format<20>;
-def VFPLdStMulFrm : Format<21>;
-def VFPMiscFrm    : Format<22>;
+def VFPUnaryFrm   : Format<14>;
+def VFPBinaryFrm  : Format<15>;
+def VFPConv1Frm   : Format<16>;
+def VFPConv2Frm   : Format<17>;
+def VFPConv3Frm   : Format<18>;
+def VFPConv4Frm   : Format<19>;
+def VFPConv5Frm   : Format<20>;
+def VFPLdStFrm    : Format<21>;
+def VFPLdStMulFrm : Format<22>;
+def VFPMiscFrm    : Format<23>;
 
-def ThumbFrm      : Format<23>;
+def ThumbFrm      : Format<24>;
 
-def NEONFrm       : Format<24>;
-def NEONGetLnFrm  : Format<25>;
-def NEONSetLnFrm  : Format<26>;
-def NEONDupFrm    : Format<27>;
+def NEONFrm       : Format<25>;
+def NEONGetLnFrm  : Format<26>;
+def NEONSetLnFrm  : Format<27>;
+def NEONDupFrm    : Format<28>;
 
 def MiscFrm       : Format<29>;
 def ThumbMiscFrm  : Format<30>;
