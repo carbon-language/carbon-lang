@@ -103,8 +103,9 @@ MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
 /* *** */
 
 MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
-                         raw_ostream &_OS)
-  : Context(_Context), Backend(_Backend), OS(_OS), SubsectionsViaSymbols(false)
+                         MCCodeEmitter &_Emitter, raw_ostream &_OS)
+  : Context(_Context), Backend(_Backend), Emitter(_Emitter),
+    OS(_OS), SubsectionsViaSymbols(false)
 {
 }
 

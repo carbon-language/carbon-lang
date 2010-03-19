@@ -45,7 +45,6 @@ class MCMachOStreamer : public MCStreamer {
 
 private:
   MCAssembler Assembler;
-  MCCodeEmitter *Emitter;
   MCSectionData *CurSectionData;
 
 private:
@@ -61,7 +60,7 @@ private:
 public:
   MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &_OS, MCCodeEmitter *_Emitter)
-    : MCStreamer(Context), Assembler(Context, TAB, _OS), Emitter(_Emitter),
+    : MCStreamer(Context), Assembler(Context, TAB, *_Emitter, _OS),
       CurSectionData(0) {}
   ~MCMachOStreamer() {}
 
@@ -370,15 +369,12 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
     if (Inst.getOperand(i).isExpr())
       AddValueSymbols(Inst.getOperand(i).getExpr());
 
-  if (!Emitter)
-    llvm_unreachable("no code emitter available!");
-
   CurSectionData->setHasInstructions(true);
 
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  Emitter->EncodeInstruction(Inst, VecOS, Fixups);
+  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
   VecOS.flush();
 
   // Add the fixups and data.

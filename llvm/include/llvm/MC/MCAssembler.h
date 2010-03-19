@@ -24,6 +24,7 @@ class raw_ostream;
 class MCAsmLayout;
 class MCAssembler;
 class MCContext;
+class MCCodeEmitter;
 class MCExpr;
 class MCFragment;
 class MCObjectWriter;
@@ -598,6 +599,8 @@ private:
 
   TargetAsmBackend &Backend;
 
+  MCCodeEmitter &Emitter;
+
   raw_ostream &OS;
 
   iplist<MCSectionData> Sections;
@@ -683,12 +686,15 @@ public:
   // concrete and require clients to pass in a target like object. The other
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
-  MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend, raw_ostream &OS);
+  MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
+              MCCodeEmitter &_Emitter, raw_ostream &OS);
   ~MCAssembler();
 
   MCContext &getContext() const { return Context; }
 
   TargetAsmBackend &getBackend() const { return Backend; }
+
+  MCCodeEmitter &getEmitter() const { return Emitter; }
 
   /// Finish - Do final processing and write the object to the output stream.
   void Finish();
