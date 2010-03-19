@@ -1,4 +1,4 @@
-//===- lib/MC/MCObjetWriter.cpp - MCObjetWriter implementation ------------===//
+//===- lib/MC/MCObjectWriter.cpp - MCObjectWriter implementation ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
