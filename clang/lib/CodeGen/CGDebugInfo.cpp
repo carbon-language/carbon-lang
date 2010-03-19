@@ -105,15 +105,18 @@ void CGDebugInfo::CreateCompileUnit() {
 
   // Get absolute path name.
   SourceManager &SM = CGM.getContext().getSourceManager();
-  std::string MainFileName;  
-  if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID()))
-    MainFileName = MainFile->getName();
-  else if (CGM.getCodeGenOpts().MainFileName.empty())
+  std::string MainFileName = CGM.getCodeGenOpts().MainFileName;
+  if (MainFileName.empty())
     MainFileName = "<unknown>";
-  else
-    MainFileName = CGM.getCodeGenOpts().MainFileName;
+
   llvm::sys::Path AbsFileName(MainFileName);
   AbsFileName.makeAbsolute();
+
+  std::string MainFileDir;
+  if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID()))
+    MainFileDir = MainFile->getDir()->getName();
+  else
+    MainFileDir = AbsFileName.getDirname();
 
   unsigned LangTag;
   const LangOptions &LO = CGM.getLangOptions();
@@ -143,7 +146,7 @@ void CGDebugInfo::CreateCompileUnit() {
 
   // Create new compile unit.
   TheCU = DebugFactory.CreateCompileUnit(
-    LangTag, AbsFileName.getLast(), AbsFileName.getDirname(), Producer, true,
+    LangTag, AbsFileName.getLast(), MainFileDir, Producer, true,
     LO.Optimize, CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers);
 }
 
