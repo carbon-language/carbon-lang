@@ -185,6 +185,7 @@ public:
 
   /// getInstructions - Return all of the instructions defined for this target.
   ///
+private:
   const std::map<std::string, CodeGenInstruction> &getInstructions() const {
     if (Instructions.empty()) ReadInstructions();
     return Instructions;
@@ -193,7 +194,6 @@ public:
     if (Instructions.empty()) ReadInstructions();
     return Instructions;
   }
-private:
   CodeGenInstruction &getInstruction(const std::string &Name) const {
     const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
     assert(Insts.count(Name) && "Not an instruction!");

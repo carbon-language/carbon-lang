@@ -2362,11 +2362,11 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
 
 
 void CodeGenDAGPatterns::InferInstructionFlags() {
-  std::map<std::string, CodeGenInstruction> &InstrDescs =
-    Target.getInstructions();
-  for (std::map<std::string, CodeGenInstruction>::iterator
-         II = InstrDescs.begin(), E = InstrDescs.end(); II != E; ++II) {
-    CodeGenInstruction &InstInfo = II->second;
+  std::vector<const CodeGenInstruction*> Instructions;
+  Target.getInstructionsByEnumValue(Instructions);
+  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
+    CodeGenInstruction &InstInfo =
+      const_cast<CodeGenInstruction &>(*Instructions[i]);
     // Determine properties of the instruction from its pattern.
     bool MayStore, MayLoad, HasSideEffects;
     InferFromPattern(InstInfo, MayStore, MayLoad, HasSideEffects, *this);

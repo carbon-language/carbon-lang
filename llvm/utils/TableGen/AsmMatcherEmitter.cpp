@@ -844,19 +844,20 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
   std::set<std::string> SingletonRegisterNames;
-  for (std::map<std::string, CodeGenInstruction>::const_iterator 
-         it = Target.getInstructions().begin(), 
-         ie = Target.getInstructions().end(); 
-       it != ie; ++it) {
-    const CodeGenInstruction &CGI = it->second;
+  
+  std::vector<const CodeGenInstruction*> InstrList;
+  Target.getInstructionsByEnumValue(InstrList);
+  
+  for (unsigned i = 0, e = InstrList.size(); i != e; ++i) {
+    const CodeGenInstruction &CGI = *InstrList[i];
 
-    if (!StringRef(it->first).startswith(MatchPrefix))
+    if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
       continue;
 
-    OwningPtr<InstructionInfo> II(new InstructionInfo);
+    OwningPtr<InstructionInfo> II(new InstructionInfo());
     
-    II->InstrName = it->first;
-    II->Instr = &it->second;
+    II->InstrName = CGI.TheDef->getName();
+    II->Instr = &CGI;
     II->AsmString = FlattenVariants(CGI.AsmString, 0);
 
     // Remove comments from the asm string.
@@ -869,7 +870,7 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
     TokenizeAsmString(II->AsmString, II->Tokens);
 
     // Ignore instructions which shouldn't be matched.
-    if (!IsAssemblerInstruction(it->first, CGI, II->Tokens))
+    if (!IsAssemblerInstruction(CGI.TheDef->getName(), CGI, II->Tokens))
       continue;
 
     // Collect singleton registers, if used.
