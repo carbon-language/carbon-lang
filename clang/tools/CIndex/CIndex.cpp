@@ -1541,6 +1541,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("UnexposedStmt");
   case CXCursor_InvalidFile:
       return createCXString("InvalidFile");
+  case CXCursor_InvalidCode:
+    return createCXString("InvalidCode");
   case CXCursor_NoDeclFound:
       return createCXString("NoDeclFound");
   case CXCursor_NotImplemented:
