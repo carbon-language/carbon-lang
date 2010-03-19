@@ -1957,10 +1957,12 @@ class InstAnalyzer {
   bool &mayStore;
   bool &mayLoad;
   bool &HasSideEffects;
+  bool &IsVariadic;
 public:
   InstAnalyzer(const CodeGenDAGPatterns &cdp,
-               bool &maystore, bool &mayload, bool &hse)
-    : CDP(cdp), mayStore(maystore), mayLoad(mayload), HasSideEffects(hse){
+               bool &maystore, bool &mayload, bool &hse, bool &isv)
+    : CDP(cdp), mayStore(maystore), mayLoad(mayload), HasSideEffects(hse),
+      IsVariadic(isv) {
   }
 
   /// Analyze - Analyze the specified instruction, returning true if the
@@ -2009,6 +2011,7 @@ private:
     if (OpInfo.hasProperty(SDNPMayStore)) mayStore = true;
     if (OpInfo.hasProperty(SDNPMayLoad)) mayLoad = true;
     if (OpInfo.hasProperty(SDNPSideEffect)) HasSideEffects = true;
+    if (OpInfo.hasProperty(SDNPVariadic)) IsVariadic = true;
 
     if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
       // If this is an intrinsic, analyze it.
@@ -2028,12 +2031,13 @@ private:
 
 static void InferFromPattern(const CodeGenInstruction &Inst,
                              bool &MayStore, bool &MayLoad,
-                             bool &HasSideEffects,
+                             bool &HasSideEffects, bool &IsVariadic,
                              const CodeGenDAGPatterns &CDP) {
-  MayStore = MayLoad = HasSideEffects = false;
+  MayStore = MayLoad = HasSideEffects = IsVariadic = false;
 
   bool HadPattern =
-    InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects).Analyze(Inst.TheDef);
+    InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects, IsVariadic)
+    .Analyze(Inst.TheDef);
 
   // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
   if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
@@ -2071,6 +2075,9 @@ static void InferFromPattern(const CodeGenInstruction &Inst,
               "which already inferred this.\n", Inst.TheDef->getName().c_str());
     HasSideEffects = true;
   }
+  
+  if (Inst.isVariadic)
+    IsVariadic = true;  // Can warn if we want.
 }
 
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
@@ -2377,11 +2384,13 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     CodeGenInstruction &InstInfo =
       const_cast<CodeGenInstruction &>(*Instructions[i]);
     // Determine properties of the instruction from its pattern.
-    bool MayStore, MayLoad, HasSideEffects;
-    InferFromPattern(InstInfo, MayStore, MayLoad, HasSideEffects, *this);
+    bool MayStore, MayLoad, HasSideEffects, IsVariadic;
+    InferFromPattern(InstInfo, MayStore, MayLoad, HasSideEffects, IsVariadic,
+                     *this);
     InstInfo.mayStore = MayStore;
     InstInfo.mayLoad = MayLoad;
     InstInfo.hasSideEffects = HasSideEffects;
+    InstInfo.isVariadic = IsVariadic;
   }
 }
 

@@ -734,12 +734,12 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     }
   }
 
-  // FIXME2: Instead of using the isVariadic flag on the instruction, we should
-  // have an SDNP that indicates variadicism.  The TargetInstrInfo isVariadic
-  // property should be inferred from this when an instruction has a pattern.
+  // If this is the root of the pattern and the pattern we're matching includes
+  // a node that is variadic, mark the generated node as variadic so that it
+  // gets the excess operands from the input DAG.
   int NumFixedArityOperands = -1;
-  if (N->NodeHasProperty(SDNPVariadic, CGP) ||
-      (isRoot && II.isVariadic))
+  if (isRoot &&
+      (Pattern.getSrcPattern()->NodeHasProperty(SDNPVariadic, CGP)))
     NumFixedArityOperands = Pattern.getSrcPattern()->getNumChildren();
   
   // If this is the root node and any of the nodes matched nodes in the input
