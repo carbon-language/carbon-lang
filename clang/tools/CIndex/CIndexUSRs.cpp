@@ -155,14 +155,30 @@ void USRGenerator::VisitObjCContainerDecl(ObjCContainerDecl *D) {
       break;
     case Decl::ObjCCategory: {
       ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
-      GenObjCCategory(CD->getClassInterface()->getName(),
-                      CD->getName());
+      ObjCInterfaceDecl *ID = CD->getClassInterface();
+      if (!ID) {
+        // Handle invalid code where the @interface might not
+        // have been specified.
+        // FIXME: We should be able to generate this USR even if the
+        // @interface isn't available.
+        IgnoreResults = true;
+        return;
+      }
+      GenObjCCategory(ID->getName(), CD->getName());
       break;
     }
     case Decl::ObjCCategoryImpl: {
       ObjCCategoryImplDecl *CD = cast<ObjCCategoryImplDecl>(D);
-      GenObjCCategory(CD->getClassInterface()->getName(),
-                      CD->getName());
+      ObjCInterfaceDecl *ID = CD->getClassInterface();
+      if (!ID) {
+        // Handle invalid code where the @interface might not
+        // have been specified.
+        // FIXME: We should be able to generate this USR even if the
+        // @interface isn't available.
+        IgnoreResults = true;
+        return;
+      }
+      GenObjCCategory(ID->getName(), CD->getName());
       break;
     }
     case Decl::ObjCProtocol:
@@ -251,7 +267,7 @@ CXString clang_getCursorUSR(CXCursor C) {
   SUG->Visit(static_cast<Decl*>(D));
 
   if (SUG->ignoreResults() || SUG.str().empty())
-    return createCXString(NULL);
+    return createCXString("");
 
   // Return a copy of the string that must be disposed by the caller.
   return createCXString(SUG.str(), true);

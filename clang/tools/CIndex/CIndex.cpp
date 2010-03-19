@@ -621,9 +621,10 @@ bool CursorVisitor::VisitObjCImplDecl(ObjCImplDecl *D) {
 }
 
 bool CursorVisitor::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
-  if (Visit(MakeCursorObjCClassRef(D->getCategoryDecl()->getClassInterface(),
-                                   D->getLocation(), TU)))
-    return true;
+  // 'ID' could be null when dealing with invalid code.
+  if (ObjCInterfaceDecl *ID = D->getClassInterface())
+    if (Visit(MakeCursorObjCClassRef(ID, D->getLocation(), TU)))
+      return true;
 
   return VisitObjCImplDecl(D);
 }

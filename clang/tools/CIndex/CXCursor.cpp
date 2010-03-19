@@ -266,7 +266,10 @@ cxcursor::getCursorObjCProtocolRef(CXCursor C) {
 CXCursor cxcursor::MakeCursorObjCClassRef(ObjCInterfaceDecl *Class, 
                                           SourceLocation Loc, 
                                           ASTUnit *TU) {
-  assert(Class && TU && "Invalid arguments!");
+  // 'Class' can be null for invalid code.
+  if (!Class)
+    return MakeCXCursorInvalid(CXCursor_InvalidCode);
+  assert(TU && "Invalid arguments!");
   void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
   CXCursor C = { CXCursor_ObjCClassRef, { Class, RawLoc, TU } };
   return C;    

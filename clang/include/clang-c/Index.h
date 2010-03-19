@@ -728,7 +728,8 @@ enum CXCursorKind {
   CXCursor_InvalidFile                   = 70,
   CXCursor_NoDeclFound                   = 71,
   CXCursor_NotImplemented                = 72,
-  CXCursor_LastInvalid                   = 72,
+  CXCursor_InvalidCode                   = 73,
+  CXCursor_LastInvalid                   = CXCursor_InvalidCode,
 
   /* Expressions */
   CXCursor_FirstExpr                     = 100,

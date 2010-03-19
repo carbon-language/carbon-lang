@@ -743,7 +743,10 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryDecl() const {
-  return getClassInterface()->FindCategoryDeclaration(getIdentifier());
+  // The class interface might be NULL if we are working with invalid code.
+  if (const ObjCInterfaceDecl *ID = getClassInterface())
+    return ID->FindCategoryDeclaration(getIdentifier());
+  return 0;
 }
 
 
