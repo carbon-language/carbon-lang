@@ -30,6 +30,9 @@ using namespace llvm;
 
 static unsigned NextReg(unsigned Reg) {
   switch (Reg) {
+  default:
+    assert(0 && "Unexpected register enum");
+
   case ARM::D0:
     return ARM::D1;
   case ARM::D1:
@@ -92,9 +95,6 @@ static unsigned NextReg(unsigned Reg) {
     return ARM::D30;
   case ARM::D30:
     return ARM::D31;
-
-  default:
-    assert(0 && "Unexpected register enum");
   }
 }
 
@@ -212,8 +212,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       O << getRegisterName(Reg);
     }
   } else if (Op.isImm()) {
-    bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    assert(isCallOp ||
+    assert((Modifier && !strcmp(Modifier, "call")) ||
            ((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported"));
     O << '#' << Op.getImm();
   } else {
