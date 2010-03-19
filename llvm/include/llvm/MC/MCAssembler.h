@@ -26,6 +26,7 @@ class MCAssembler;
 class MCContext;
 class MCExpr;
 class MCFragment;
+class MCObjectWriter;
 class MCSection;
 class MCSectionData;
 class MCSymbol;
@@ -618,6 +619,23 @@ private:
   unsigned SubsectionsViaSymbols : 1;
 
 private:
+  /// Evaluate a fixup to a relocatable expression and the value which should be
+  /// placed into the fixup.
+  ///
+  /// \param Layout The layout to use for evaluation.
+  /// \param Fixup The fixup to evaluate.
+  /// \param DF The fragment the fixup is inside.
+  /// \param Target [out] On return, the relocatable expression the fixup
+  /// evaluates to.
+  /// \param Value [out] On return, the value of the fixup as currently layed
+  /// out.
+  /// \return Whether the fixup value was fully resolved. This is true if the
+  /// \arg Value result is fixed, otherwise the value may change due to
+  /// relocation.
+  bool EvaluateFixup(const MCAsmLayout &Layout,
+                     MCAsmFixup &Fixup, MCDataFragment *DF,
+                     MCValue &Target, uint64_t &Value) const;
+
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
   bool FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF);
@@ -631,7 +649,6 @@ private:
   /// were adjusted.
   bool LayoutOnce();
 
-  // FIXME: Make protected once we factor out object writer classes.
 public:
   /// Find the symbol which defines the atom containing given address, inside
   /// the given section, or null if there is no such symbol.
@@ -652,22 +669,10 @@ public:
   /// defining a separate atom.
   bool isSymbolLinkerVisible(const MCSymbolData *SD) const;
 
-  /// Evaluate a fixup to a relocatable expression and the value which should be
-  /// placed into the fixup.
-  ///
-  /// \param Layout The layout to use for evaluation.
-  /// \param Fixup The fixup to evaluate.
-  /// \param DF The fragment the fixup is inside.
-  /// \param Target [out] On return, the relocatable expression the fixup
-  /// evaluates to.
-  /// \param Value [out] On return, the value of the fixup as currently layed
-  /// out.
-  /// \return Whether the fixup value was fully resolved. This is true if the
-  /// \arg Value result is fixed, otherwise the value may change due to
-  /// relocation.
-  bool EvaluateFixup(const MCAsmLayout &Layout,
-                     MCAsmFixup &Fixup, MCDataFragment *DF,
-                     MCValue &Target, uint64_t &Value) const;
+  /// Emit the section contents using the given object writer.
+  //
+  // FIXME: Should MCAssembler always have a reference to the object writer?
+  void WriteSectionData(const MCSectionData *Section, MCObjectWriter *OW) const;
 
 public:
   /// Construct a new assembler instance.

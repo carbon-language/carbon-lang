@@ -11,6 +11,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
@@ -42,10 +43,6 @@ STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 // object file, which may truncate it. We should detect that truncation where
 // invalid and report errors back.
 
-class MCObjectWriter;
-static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
-                          MCObjectWriter *MOW);
-
 /// isVirtualSection - Check if this is a section which does not actually exist
 /// in the object file.
 static bool isVirtualSection(const MCSection &Section) {
@@ -76,105 +73,6 @@ static bool isFixupKindPCRel(unsigned Kind) {
   case X86::reloc_riprel_4byte:
     return true;
   }
-}
-
-class MCObjectWriter {
-  MCObjectWriter(const MCObjectWriter &); // DO NOT IMPLEMENT
-  void operator=(const MCObjectWriter &); // DO NOT IMPLEMENT
-
-protected:
-  raw_ostream &OS;
-
-  unsigned IsLittleEndian : 1;
-
-protected: // Can only create subclasses.
-  MCObjectWriter(raw_ostream &_OS, bool _IsLittleEndian)
-    : OS(_OS), IsLittleEndian(_IsLittleEndian) {}
-  virtual ~MCObjectWriter();
-
-public:
-
-  bool isLittleEndian() { return IsLittleEndian; }
-
-  raw_ostream &getStream() { return OS; }
-
-  /// @name Binary Output Methods
-  /// @{
-
-  void Write8(uint8_t Value) {
-    OS << char(Value);
-  }
-
-  void WriteLE16(uint16_t Value) {
-    Write8(uint8_t(Value >> 0));
-    Write8(uint8_t(Value >> 8));
-  }
-
-  void WriteLE32(uint32_t Value) {
-    WriteLE16(uint16_t(Value >> 0));
-    WriteLE16(uint16_t(Value >> 16));
-  }
-
-  void WriteLE64(uint64_t Value) {
-    WriteLE32(uint32_t(Value >> 0));
-    WriteLE32(uint32_t(Value >> 32));
-  }
-
-  void WriteBE16(uint16_t Value) {
-    Write8(uint8_t(Value >> 8));
-    Write8(uint8_t(Value >> 0));
-  }
-
-  void WriteBE32(uint32_t Value) {
-    WriteBE16(uint16_t(Value >> 16));
-    WriteBE16(uint16_t(Value >> 0));
-  }
-
-  void WriteBE64(uint64_t Value) {
-    WriteBE32(uint32_t(Value >> 32));
-    WriteBE32(uint32_t(Value >> 0));
-  }
-
-  void Write16(uint16_t Value) {
-    if (IsLittleEndian)
-      WriteLE16(Value);
-    else
-      WriteBE16(Value);
-  }
-
-  void Write32(uint32_t Value) {
-    if (IsLittleEndian)
-      WriteLE32(Value);
-    else
-      WriteBE32(Value);
-  }
-
-  void Write64(uint64_t Value) {
-    if (IsLittleEndian)
-      WriteLE64(Value);
-    else
-      WriteBE64(Value);
-  }
-
-  void WriteZeros(unsigned N) {
-    const char Zeros[16] = { 0 };
-
-    for (unsigned i = 0, e = N / 16; i != e; ++i)
-      OS << StringRef(Zeros, 16);
-
-    OS << StringRef(Zeros, N % 16);
-  }
-
-  void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
-    OS << Str;
-    if (ZeroFillSize)
-      WriteZeros(ZeroFillSize - Str.size());
-  }
-
-  /// @}
-};
-
-MCObjectWriter::~MCObjectWriter() {
 }
 
 class MachObjectWriter : public MCObjectWriter {
@@ -362,8 +260,9 @@ public:
     assert(OS.tell() - Start == SegmentLoadCommandSize);
   }
 
-  void WriteSection(const MCSectionData &SD, uint64_t FileOffset,
-                    uint64_t RelocationsStart, unsigned NumRelocations) {
+  void WriteSection(const MCAssembler &Asm, const MCSectionData &SD,
+                    uint64_t FileOffset, uint64_t RelocationsStart,
+                    unsigned NumRelocations) {
     // The offset is unused for virtual sections.
     if (isVirtualSection(SD.getSection())) {
       assert(SD.getFileSize() == 0 && "Invalid file size!");
@@ -527,7 +426,8 @@ public:
       Write32(Address);
   }
 
-  void RecordScatteredRelocation(MCAssembler &Asm, MCFragment &Fragment,
+  void RecordScatteredRelocation(const MCAssembler &Asm,
+                                 const MCFragment &Fragment,
                                  const MCAsmFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
@@ -584,9 +484,10 @@ public:
     Relocations[Fragment.getParent()].push_back(MRE);
   }
 
-  void RecordRelocation(MCAssembler &Asm, MCDataFragment &Fragment,
-                        const MCAsmFixup &Fixup, MCValue Target,
-                        uint64_t &FixedValue) {
+  virtual void RecordRelocation(const MCAssembler &Asm,
+                                const MCDataFragment &Fragment,
+                                const MCAsmFixup &Fixup, MCValue Target,
+                                uint64_t &FixedValue) {
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
@@ -629,7 +530,7 @@ public:
         //
         // FIXME: O(N)
         Index = 1;
-        MCAssembler::iterator it = Asm.begin(), ie = Asm.end();
+        MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         for (; it != ie; ++it, ++Index)
           if (&*it == SD->getFragment()->getParent())
             break;
@@ -807,7 +708,7 @@ public:
       StringTable += '\x00';
   }
 
-  void ExecutePostLayoutBinding(MCAssembler &Asm) {
+  virtual void ExecutePostLayoutBinding(MCAssembler &Asm) {
     // Create symbol data for any indirect symbols.
     BindIndirectSymbols(Asm);
 
@@ -816,7 +717,7 @@ public:
                        UndefinedSymbolData);
   }
 
-  void WriteObject(const MCAssembler &Asm) {
+  virtual void WriteObject(const MCAssembler &Asm) {
     unsigned NumSections = Asm.size();
 
     // The section data starts after the header, the segment load command (and
@@ -916,7 +817,7 @@ public:
     // Write the actual section data.
     for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it)
-      WriteFileData(OS, *it, this);
+      Asm.WriteSectionData(it, this);
 
     // Write the extra padding.
     WriteZeros(SectionDataPadding);
@@ -1357,10 +1258,9 @@ static uint64_t WriteNopData(uint64_t Count, MCObjectWriter *OW) {
   return Count;
 }
 
-/// WriteFileData - Write the \arg F data to the output file.
-static void WriteFileData(raw_ostream &OS, const MCFragment &F,
-                          MCObjectWriter *OW) {
-  uint64_t Start = OS.tell();
+/// WriteFragmentData - Write the \arg F data to the output file.
+static void WriteFragmentData(const MCFragment &F, MCObjectWriter *OW) {
+  uint64_t Start = OW->getStream().tell();
   (void) Start;
 
   ++EmittedFragments;
@@ -1402,7 +1302,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   }
 
   case MCFragment::FT_Data: {
-    OS << cast<MCDataFragment>(F).getContents().str();
+    OW->WriteBytes(cast<MCDataFragment>(F).getContents().str());
     break;
   }
 
@@ -1436,30 +1336,29 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   }
   }
 
-  assert(OS.tell() - Start == F.getFileSize());
+  assert(OW->getStream().tell() - Start == F.getFileSize());
 }
 
-/// WriteFileData - Write the \arg SD data to the output file.
-static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
-                          MCObjectWriter *OW) {
+void MCAssembler::WriteSectionData(const MCSectionData *SD,
+                                   MCObjectWriter *OW) const {
   // Ignore virtual sections.
-  if (isVirtualSection(SD.getSection())) {
-    assert(SD.getFileSize() == 0);
+  if (isVirtualSection(SD->getSection())) {
+    assert(SD->getFileSize() == 0);
     return;
   }
 
-  uint64_t Start = OS.tell();
+  uint64_t Start = OW->getStream().tell();
   (void) Start;
 
-  for (MCSectionData::const_iterator it = SD.begin(),
-         ie = SD.end(); it != ie; ++it)
-    WriteFileData(OS, *it, OW);
+  for (MCSectionData::const_iterator it = SD->begin(),
+         ie = SD->end(); it != ie; ++it)
+    WriteFragmentData(*it, OW);
 
   // Add section padding.
-  assert(SD.getFileSize() >= SD.getSize() && "Invalid section sizes!");
-  OW->WriteZeros(SD.getFileSize() - SD.getSize());
+  assert(SD->getFileSize() >= SD->getSize() && "Invalid section sizes!");
+  OW->WriteZeros(SD->getFileSize() - SD->getSize());
 
-  assert(OS.tell() - Start == SD.getFileSize());
+  assert(OW->getStream().tell() - Start == SD->getFileSize());
 }
 
 void MCAssembler::Finish() {

@@ -12,6 +12,7 @@ add_llvm_library(LLVMMC
   MCInstPrinter.cpp
   MCMachOStreamer.cpp
   MCNullStreamer.cpp
+  MCObjectWriter.cpp
   MCSection.cpp
   MCSectionELF.cpp
   MCSectionMachO.cpp
