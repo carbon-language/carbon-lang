@@ -165,19 +165,21 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     new llvm::GlobalAlias(AliasType, Linkage, "", Aliasee, &getModule());
 
   // Switch any previous uses to the alias.
-  const char *MangledName = getMangledName(AliasDecl);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  MangleBuffer MangledName;
+  getMangledName(MangledName, AliasDecl);
+  llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
     assert(Entry->isDeclaration() && "definition already exists for alias");
     assert(Entry->getType() == AliasType &&
            "declaration exists with different type");
+    Alias->takeName(Entry);
     Entry->replaceAllUsesWith(Alias);
     Entry->eraseFromParent();
+  } else {
+    Alias->setName(MangledName.getString());
   }
-  Entry = Alias;
 
   // Finally, set up the alias with its proper name and attributes.
-  Alias->setName(MangledName);
   SetCommonAttributes(AliasDecl.getDecl(), Alias);
 
   return false;
@@ -214,8 +216,9 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
 llvm::GlobalValue *
 CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                                        CXXCtorType Type) {
-  const char *Name = getMangledCXXCtorName(D, Type);
-  if (llvm::GlobalValue *V = GlobalDeclMap[Name])
+  MangleBuffer Name;
+  getMangledCXXCtorName(Name, D, Type);
+  if (llvm::GlobalValue *V = GetGlobalValue(Name))
     return V;
 
   const FunctionProtoType *FPT = D->getType()->getAs<FunctionProtoType>();
@@ -226,13 +229,10 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *D,
                       GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
 }
 
-const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
-                                                 CXXCtorType Type) {
-  llvm::SmallString<256> Name;
-  getMangleContext().mangleCXXCtor(D, Type, Name);
-
-  Name += '\0';
-  return UniqueMangledName(Name.begin(), Name.end());
+void CodeGenModule::getMangledCXXCtorName(MangleBuffer &Name,
+                                          const CXXConstructorDecl *D,
+                                          CXXCtorType Type) {
+  getMangleContext().mangleCXXCtor(D, Type, Name.getBuffer());
 }
 
 void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
@@ -279,8 +279,9 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
 llvm::GlobalValue *
 CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
-  const char *Name = getMangledCXXDtorName(D, Type);
-  if (llvm::GlobalValue *V = GlobalDeclMap[Name])
+  MangleBuffer Name;
+  getMangledCXXDtorName(Name, D, Type);
+  if (llvm::GlobalValue *V = GetGlobalValue(Name))
     return V;
 
   const llvm::FunctionType *FTy =
@@ -290,13 +291,10 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *D,
                       GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(D, Type)));
 }
 
-const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
-                                                 CXXDtorType Type) {
-  llvm::SmallString<256> Name;
-  getMangleContext().mangleCXXDtor(D, Type, Name);
-
-  Name += '\0';
-  return UniqueMangledName(Name.begin(), Name.end());
+void CodeGenModule::getMangledCXXDtorName(MangleBuffer &Name,
+                                          const CXXDestructorDecl *D,
+                                          CXXDtorType Type) {
+  getMangleContext().mangleCXXDtor(D, Type, Name.getBuffer());
 }
 
 llvm::Constant *
@@ -470,12 +468,10 @@ CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
                                           OutName);
   else
     getMangleContext().mangleThunk(MD, ThisAdjustment, OutName);
-  OutName += '\0';
-  const char* Name = UniqueMangledName(OutName.begin(), OutName.end());
 
   // Get function for mangled name
   const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
-  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
+  return GetOrCreateLLVMFunction(OutName, Ty, GlobalDecl());
 }
 
 llvm::Constant *
@@ -484,10 +480,8 @@ CodeGenModule::GetAddrOfCovariantThunk(GlobalDecl GD,
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   // Compute mangled name
-  llvm::SmallString<256> OutName;
-  getMangleContext().mangleCovariantThunk(MD, Adjustment, OutName);
-  OutName += '\0';
-  const char* Name = UniqueMangledName(OutName.begin(), OutName.end());
+  llvm::SmallString<256> Name;
+  getMangleContext().mangleCovariantThunk(MD, Adjustment, Name);
 
   // Get function for mangled name
   const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
@@ -528,9 +522,6 @@ void CodeGenModule::BuildThunksForVirtual(GlobalDecl GD) {
         llvm::Constant *SubExpr =
             cast<llvm::ConstantExpr>(FnConst)->getOperand(0);
         llvm::Function *OldFn = cast<llvm::Function>(SubExpr);
-        std::string Name = OldFn->getNameStr();
-        GlobalDeclMap.erase(UniqueMangledName(Name.data(),
-                                              Name.data() + Name.size() + 1));
         llvm::Constant *NewFnConst;
         if (!ReturnAdjustment.isEmpty())
           NewFnConst = GetAddrOfCovariantThunk(GD, CoAdj);

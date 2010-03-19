@@ -21,10 +21,8 @@
 #include "CGCXX.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
-
-namespace llvm {
-  template<typename T> class SmallVectorImpl;
-}
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallString.h"
 
 namespace clang {
   class ASTContext;
@@ -37,6 +35,33 @@ namespace clang {
 namespace CodeGen {
   class CovariantThunkAdjustment;
   class ThunkAdjustment;
+
+/// MangleBuffer - a convenient class for storing a name which is
+/// either the result of a mangling or is a constant string with
+/// external memory ownership.
+class MangleBuffer {
+public:
+  void setString(llvm::StringRef Ref) {
+    String = Ref;
+  }
+
+  llvm::SmallVectorImpl<char> &getBuffer() {
+    return Buffer;
+  }
+
+  llvm::StringRef getString() const {
+    if (!String.empty()) return String;
+    return Buffer.str();
+  }
+
+  operator llvm::StringRef() const {
+    return getString();
+  }
+
+private:
+  llvm::StringRef String;
+  llvm::SmallString<256> Buffer;
+};
    
 /// MangleContext - Context for tracking state which persists across multiple
 /// calls to the C++ name mangler.

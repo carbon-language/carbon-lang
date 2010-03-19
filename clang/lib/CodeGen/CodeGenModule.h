@@ -73,7 +73,7 @@ namespace CodeGen {
   class CodeGenFunction;
   class CGDebugInfo;
   class CGObjCRuntime;
-
+  class MangleBuffer;
   
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
@@ -103,38 +103,16 @@ class CodeGenModule : public BlockModule {
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
 
-  /// GlobalDeclMap - Mapping of decl names (represented as unique
-  /// character pointers from either the identifier table or the set
-  /// of mangled names) to global variables we have already
-  /// emitted. Note that the entries in this map are the actual
-  /// globals and therefore may not be of the same type as the decl,
-  /// they should be bitcasted on retrieval. Also note that the
-  /// globals are keyed on their source mangled name, not the global name
-  /// (which may change with attributes such as asm-labels).  The key
-  /// to this map should be generated using getMangledName().
-  ///
-  /// Note that this map always lines up exactly with the contents of the LLVM
-  /// IR symbol table, but this is quicker to query since it is doing uniqued
-  /// pointer lookups instead of full string lookups.
-  llvm::DenseMap<const char*, llvm::GlobalValue*> GlobalDeclMap;
-
   // WeakRefReferences - A set of references that have only been seen via
   // a weakref so far. This is used to remove the weak of the reference if we ever
   // see a direct reference or a definition.
   llvm::SmallPtrSet<llvm::GlobalValue*, 10> WeakRefReferences;
 
-  /// \brief Contains the strings used for mangled names.
-  ///
-  /// FIXME: Eventually, this should map from the semantic/canonical
-  /// declaration for each global entity to its mangled name (if it
-  /// has one).
-  llvm::StringSet<> MangledNames;
-
   /// DeferredDecls - This contains all the decls which have definitions but
   /// which are deferred for emission and therefore should only be output if
   /// they are actually used.  If a decl is in this, then it is known to have
-  /// not been referenced yet.  The key to this map is a uniqued mangled name.
-  llvm::DenseMap<const char*, GlobalDecl> DeferredDecls;
+  /// not been referenced yet.
+  llvm::StringMap<GlobalDecl> DeferredDecls;
 
   /// DeferredDeclsToEmit - This is a list of deferred decls which we have seen
   /// that *are* actually referenced.  These get code generated when the module
@@ -346,11 +324,11 @@ public:
   /// CreateRuntimeFunction - Create a new runtime function with the specified
   /// type and name.
   llvm::Constant *CreateRuntimeFunction(const llvm::FunctionType *Ty,
-                                        const char *Name);
+                                        llvm::StringRef Name);
   /// CreateRuntimeVariable - Create a new runtime global variable with the
   /// specified type and name.
   llvm::Constant *CreateRuntimeVariable(const llvm::Type *Ty,
-                                        const char *Name);
+                                        llvm::StringRef Name);
 
   void UpdateCompletedType(const TagDecl *TD) {
     // Make sure that this type is translated.
@@ -422,13 +400,14 @@ public:
                               AttributeListType &PAL,
                               unsigned &CallingConv);
 
-  const char *getMangledName(const GlobalDecl &D);
-
-  const char *getMangledName(const NamedDecl *ND);
-  const char *getMangledCXXCtorName(const CXXConstructorDecl *D,
-                                    CXXCtorType Type);
-  const char *getMangledCXXDtorName(const CXXDestructorDecl *D,
-                                    CXXDtorType Type);
+  void getMangledName(MangleBuffer &Buffer, GlobalDecl D);
+  void getMangledName(MangleBuffer &Buffer, const NamedDecl *ND);
+  void getMangledCXXCtorName(MangleBuffer &Buffer,
+                             const CXXConstructorDecl *D,
+                             CXXCtorType Type);
+  void getMangledCXXDtorName(MangleBuffer &Buffer,
+                             const CXXDestructorDecl *D,
+                             CXXDtorType Type);
 
   void EmitTentativeDefinition(const VarDecl *D);
 
@@ -456,14 +435,12 @@ public:
   std::vector<const CXXRecordDecl*> DeferredVtables;
 
 private:
-  /// UniqueMangledName - Unique a name by (if necessary) inserting it into the
-  /// MangledNames string map.
-  const char *UniqueMangledName(const char *NameStart, const char *NameEnd);
+  llvm::GlobalValue *GetGlobalValue(llvm::StringRef Ref);
 
-  llvm::Constant *GetOrCreateLLVMFunction(const char *MangledName,
+  llvm::Constant *GetOrCreateLLVMFunction(llvm::StringRef MangledName,
                                           const llvm::Type *Ty,
                                           GlobalDecl D);
-  llvm::Constant *GetOrCreateLLVMGlobal(const char *MangledName,
+  llvm::Constant *GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D);
 
@@ -492,7 +469,7 @@ private:
 
   void EmitGlobalFunctionDefinition(GlobalDecl GD);
   void EmitGlobalVarDefinition(const VarDecl *D);
-  void EmitAliasDefinition(const ValueDecl *D);
+  void EmitAliasDefinition(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
 
   // C++ related functions.

@@ -163,15 +163,15 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
   }
 }
 
-const char *CodeGenModule::getMangledName(const GlobalDecl &GD) {
+void CodeGenModule::getMangledName(MangleBuffer &Buffer, GlobalDecl GD) {
   const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
 
   if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
-    return getMangledCXXCtorName(D, GD.getCtorType());
+    return getMangledCXXCtorName(Buffer, D, GD.getCtorType());
   if (const CXXDestructorDecl *D = dyn_cast<CXXDestructorDecl>(ND))
-    return getMangledCXXDtorName(D, GD.getDtorType());
+    return getMangledCXXDtorName(Buffer, D, GD.getDtorType());
 
-  return getMangledName(ND);
+  return getMangledName(Buffer, ND);
 }
 
 /// \brief Retrieves the mangled name for the given declaration.
@@ -180,23 +180,19 @@ const char *CodeGenModule::getMangledName(const GlobalDecl &GD) {
 /// const char* containing the mangled name.  Otherwise, returns
 /// the unmangled name.
 ///
-const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
+void CodeGenModule::getMangledName(MangleBuffer &Buffer,
+                                   const NamedDecl *ND) {
   if (!getMangleContext().shouldMangleDeclName(ND)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
-    return ND->getNameAsCString();
+    Buffer.setString(ND->getNameAsCString());
+    return;
   }
 
-  llvm::SmallString<256> Name;
-  getMangleContext().mangleName(ND, Name);
-  Name += '\0';
-  return UniqueMangledName(Name.begin(), Name.end());
+  getMangleContext().mangleName(ND, Buffer.getBuffer());
 }
 
-const char *CodeGenModule::UniqueMangledName(const char *NameStart,
-                                             const char *NameEnd) {
-  assert(*(NameEnd - 1) == '\0' && "Mangled name must be null terminated!");
-
-  return MangledNames.GetOrCreateValue(NameStart, NameEnd).getKeyData();
+llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {
+  return getModule().getNamedValue(Name);
 }
 
 /// AddGlobalCtor - Add a function to the list that will be called before
@@ -505,11 +501,12 @@ void CodeGenModule::EmitDeferred() {
     GlobalDecl D = DeferredDeclsToEmit.back();
     DeferredDeclsToEmit.pop_back();
 
-    // The mangled name for the decl must have been emitted in GlobalDeclMap.
     // Look it up to see if it was defined with a stronger definition (e.g. an
     // extern inline function with a strong function redefinition).  If so,
     // just ignore the deferred decl.
-    llvm::GlobalValue *CGRef = GlobalDeclMap[getMangledName(D)];
+    MangleBuffer Name;
+    getMangledName(Name, D);
+    llvm::GlobalValue *CGRef = GetGlobalValue(Name);
     assert(CGRef && "Deferred decl wasn't referenced?");
 
     if (!CGRef->isDeclaration())
@@ -644,18 +641,14 @@ llvm::Constant *CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
 
   const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(VD->getType());
 
-  // Unique the name through the identifier table.
-  const char *AliaseeName =
-    getContext().Idents.get(AA->getAliasee()).getNameStart();
-
   // See if there is already something with the target's name in the module.
-  llvm::GlobalValue *Entry = GlobalDeclMap[AliaseeName];
+  llvm::GlobalValue *Entry = GetGlobalValue(AA->getAliasee());
 
   llvm::Constant *Aliasee;
   if (isa<llvm::FunctionType>(DeclTy))
-    Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, GlobalDecl());
+    Aliasee = GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GlobalDecl());
   else
-    Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
+    Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy), 0);
   if (!Entry) {
     llvm::GlobalValue* F = cast<llvm::GlobalValue>(Aliasee);
@@ -676,7 +669,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // If this is an alias definition (which otherwise looks like a declaration)
   // emit it now.
   if (Global->hasAttr<AliasAttr>())
-    return EmitAliasDefinition(Global);
+    return EmitAliasDefinition(GD);
 
   // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
@@ -696,8 +689,9 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   if (MayDeferGeneration(Global)) {
     // If the value has already been used, add it directly to the
     // DeferredDeclsToEmit list.
-    const char *MangledName = getMangledName(GD);
-    if (GlobalDeclMap.count(MangledName))
+    MangleBuffer MangledName;
+    getMangledName(MangledName, GD);
+    if (GetGlobalValue(MangledName))
       DeferredDeclsToEmit.push_back(GD);
     else {
       // Otherwise, remember that we saw a deferred decl with this name.  The
@@ -753,11 +747,12 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
 ///
 /// If D is non-null, it specifies a decl that correspond to this.  This is used
 /// to set the attributes on the function when it is first created.
-llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
-                                                       const llvm::Type *Ty,
-                                                       GlobalDecl D) {
+llvm::Constant *
+CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
+                                       const llvm::Type *Ty,
+                                       GlobalDecl D) {
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
     if (WeakRefReferences.count(Entry)) {
       const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl());
@@ -786,17 +781,15 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
   }
   llvm::Function *F = llvm::Function::Create(cast<llvm::FunctionType>(Ty),
                                              llvm::Function::ExternalLinkage,
-                                             "", &getModule());
-  F->setName(MangledName);
+                                             MangledName, &getModule());
+  assert(F->getName() == MangledName && "name was uniqued!");
   if (D.getDecl())
     SetFunctionAttributes(D, F, IsIncompleteFunction);
-  Entry = F;
 
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
-  llvm::DenseMap<const char*, GlobalDecl>::iterator DDI =
-    DeferredDecls.find(MangledName);
+  llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
@@ -839,16 +832,16 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
   // If there was no specific requested type, just convert it now.
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
-  return GetOrCreateLLVMFunction(getMangledName(GD), Ty, GD);
+  MangleBuffer MangledName;
+  getMangledName(MangledName, GD);
+  return GetOrCreateLLVMFunction(MangledName, Ty, GD);
 }
 
 /// CreateRuntimeFunction - Create a new runtime function with the specified
 /// type and name.
 llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
-                                     const char *Name) {
-  // Convert Name to be a uniqued string from the IdentifierInfo table.
-  Name = getContext().Idents.get(Name).getNameStart();
+                                     llvm::StringRef Name) {
   return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl());
 }
 
@@ -870,11 +863,12 @@ static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D) {
 ///
 /// If D is non-null, it specifies a decl that correspond to this.  This is used
 /// to set the attributes on the global when it is first created.
-llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
-                                                     const llvm::PointerType*Ty,
-                                                     const VarDecl *D) {
+llvm::Constant *
+CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
+                                     const llvm::PointerType *Ty,
+                                     const VarDecl *D) {
   // Lookup the entry, lazily creating it if necessary.
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
+  llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
     if (WeakRefReferences.count(Entry)) {
       if (D && !D->hasAttr<WeakAttr>())
@@ -893,8 +887,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.
-  llvm::DenseMap<const char*, GlobalDecl>::iterator DDI =
-    DeferredDecls.find(MangledName);
+  llvm::StringMap<GlobalDecl>::iterator DDI = DeferredDecls.find(MangledName);
   if (DDI != DeferredDecls.end()) {
     // Move the potentially referenced deferred decl to the DeferredDeclsToEmit
     // list, and remove it from DeferredDecls (since we don't need it anymore).
@@ -905,9 +898,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(getModule(), Ty->getElementType(), false,
                              llvm::GlobalValue::ExternalLinkage,
-                             0, "", 0,
+                             0, MangledName, 0,
                              false, Ty->getAddressSpace());
-  GV->setName(MangledName);
 
   // Handle things which are present even on external declarations.
   if (D) {
@@ -926,7 +918,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
     GV->setThreadLocal(D->isThreadSpecified());
   }
 
-  return Entry = GV;
+  return GV;
 }
 
 
@@ -943,16 +935,17 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
 
   const llvm::PointerType *PTy =
     llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
-  return GetOrCreateLLVMGlobal(getMangledName(D), PTy, D);
+
+  MangleBuffer MangledName;
+  getMangledName(MangledName, D);
+  return GetOrCreateLLVMGlobal(MangledName, PTy, D);
 }
 
 /// CreateRuntimeVariable - Create a new runtime global variable with the
 /// specified type and name.
 llvm::Constant *
 CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
-                                     const char *Name) {
-  // Convert Name to be a uniqued string from the IdentifierInfo table.
-  Name = getContext().Idents.get(Name).getNameStart();
+                                     llvm::StringRef Name) {
   return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0);
 }
 
@@ -963,8 +956,9 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
     // If we have not seen a reference to this variable yet, place it
     // into the deferred declarations table to be emitted if needed
     // later.
-    const char *MangledName = getMangledName(D);
-    if (GlobalDeclMap.count(MangledName) == 0) {
+    MangleBuffer MangledName;
+    getMangledName(MangledName, D);
+    if (!GetGlobalValue(MangledName)) {
       DeferredDecls[MangledName] = D;
       return;
     }
@@ -1133,12 +1127,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       GV->getType()->getElementType() != InitType ||
       GV->getType()->getAddressSpace() != ASTTy.getAddressSpace()) {
 
-    // Remove the old entry from GlobalDeclMap so that we'll create a new one.
-    GlobalDeclMap.erase(getMangledName(D));
+    // Move the old entry aside so that we'll create a new one.
+    Entry->setName(llvm::StringRef());
 
     // Make a new global with the correct type, this is now guaranteed to work.
     GV = cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, InitType));
-    GV->takeName(cast<llvm::GlobalValue>(Entry));
 
     // Replace all uses of the old global with the new global
     llvm::Constant *NewPtrForOldDecl =
@@ -1296,11 +1289,10 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     //
     // This happens if there is a prototype for a function
     // (e.g. "int f()") and then a definition of a different type
-    // (e.g. "int f(int x)").  Start by making a new function of the
-    // correct type, RAUW, then steal the name.
-    GlobalDeclMap.erase(getMangledName(D));
+    // (e.g. "int f(int x)").  Move the old function aside so that it
+    // doesn't interfere with GetAddrOfFunction.
+    OldFn->setName(llvm::StringRef());
     llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(GD, Ty));
-    NewFn->takeName(OldFn);
 
     // If this is an implementation of a function without a prototype, try to
     // replace any existing uses of the function (which may be calls) with uses
@@ -1336,23 +1328,29 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     AddGlobalDtor(Fn, DA->getPriority());
 }
 
-void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
+void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
+  const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
   const AliasAttr *AA = D->getAttr<AliasAttr>();
   assert(AA && "Not an alias?");
 
-  const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
+  MangleBuffer MangledName;
+  getMangledName(MangledName, GD);
 
-  // Unique the name through the identifier table.
-  const char *AliaseeName =
-    getContext().Idents.get(AA->getAliasee()).getNameStart();
+  // If there is a definition in the module, then it wins over the alias.
+  // This is dubious, but allow it to be safe.  Just ignore the alias.
+  llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
+  if (Entry && !Entry->isDeclaration())
+    return;
+
+  const llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
 
   // Create a reference to the named value.  This ensures that it is emitted
   // if a deferred decl.
   llvm::Constant *Aliasee;
   if (isa<llvm::FunctionType>(DeclTy))
-    Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, GlobalDecl());
+    Aliasee = GetOrCreateLLVMFunction(AA->getAliasee(), DeclTy, GlobalDecl());
   else
-    Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
+    Aliasee = GetOrCreateLLVMGlobal(AA->getAliasee(),
                                     llvm::PointerType::getUnqual(DeclTy), 0);
 
   // Create the new alias itself, but don't set a name yet.
@@ -1361,18 +1359,9 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
                           llvm::Function::ExternalLinkage,
                           "", Aliasee, &getModule());
 
-  // See if there is already something with the alias' name in the module.
-  const char *MangledName = getMangledName(D);
-  llvm::GlobalValue *&Entry = GlobalDeclMap[MangledName];
-
-  if (Entry && !Entry->isDeclaration()) {
-    // If there is a definition in the module, then it wins over the alias.
-    // This is dubious, but allow it to be safe.  Just ignore the alias.
-    GA->eraseFromParent();
-    return;
-  }
-
   if (Entry) {
+    assert(Entry->isDeclaration());
+
     // If there is a declaration in the module, then we had an extern followed
     // by the alias, as in:
     //   extern int test6();
@@ -1380,15 +1369,14 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
     //   int test6() __attribute__((alias("test7")));
     //
     // Remove it and replace uses of it with the alias.
+    GA->takeName(Entry);
 
     Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
                                                           Entry->getType()));
     Entry->eraseFromParent();
+  } else {
+    GA->setName(MangledName.getString());
   }
-
-  // Now we know that there is no conflict, set the name.
-  Entry = GA;
-  GA->setName(MangledName);
 
   // Set attributes which are particular to an alias; this is a
   // specialization of the attributes which may be set on a global
@@ -1426,8 +1414,6 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
   const llvm::FunctionType *Ty =
     cast<llvm::FunctionType>(getTypes().ConvertType(FD->getType()));
 
-  // Unique the name through the identifier table.
-  Name = getContext().Idents.get(Name).getNameStart();
   return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl(FD));
 }
 

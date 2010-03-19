@@ -569,13 +569,13 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     isa<CXXConstructorDecl>(Method) || isa<CXXDestructorDecl>(Method);
   
   llvm::StringRef MethodName = getFunctionName(Method);
-  llvm::StringRef MethodLinkageName;
   llvm::DIType MethodTy = getOrCreateMethodType(Method, Unit);
   
   // Since a single ctor/dtor corresponds to multiple functions, it doesn't
   // make sense to give a single ctor/dtor a linkage name.
+  MangleBuffer MethodLinkageName;
   if (!IsCtorOrDtor)
-    MethodLinkageName = CGM.getMangledName(Method);
+    CGM.getMangledName(MethodLinkageName, Method);
 
   SourceManager &SM = CGM.getContext().getSourceManager();
 
@@ -1307,7 +1307,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
                                     CGBuilderTy &Builder) {
 
   llvm::StringRef Name;
-  llvm::StringRef LinkageName;
+  MangleBuffer LinkageName;
 
   const Decl *D = GD.getDecl();
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -1326,11 +1326,11 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     if (!Name.empty() && Name[0] == '\01')
       Name = Name.substr(1);
     // Use mangled name as linkage name for c/c++ functions.
-    LinkageName = CGM.getMangledName(GD);
+    CGM.getMangledName(LinkageName, GD);
   } else {
     // Use llvm function name as linkage name.
     Name = Fn->getName();
-    LinkageName = Name;
+    LinkageName.setString(Name);
     if (!Name.empty() && Name[0] == '\01')
       Name = Name.substr(1);
   }
