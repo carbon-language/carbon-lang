@@ -490,15 +490,12 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       OverloadedVTs.push_back(VT);
       isOverloaded |= true;
     }
-    
     IS.RetVTs.push_back(VT);
     IS.RetTypeDefs.push_back(TyEl);
   }
-  
-  if (IS.RetVTs.size() == 1 && IS.RetVTs[0] == MVT::isVoid) {
-    IS.RetVTs.pop_back();
-    IS.RetTypeDefs.pop_back();
-  }
+
+  if (IS.RetVTs.size() == 0)
+    throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
 
   // Parse the list of parameter types.
   TypeList = R->getValueAsListInit("ParamTypes");
