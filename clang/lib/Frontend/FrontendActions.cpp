@@ -23,6 +23,18 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
+// Custom Actions
+//===----------------------------------------------------------------------===//
+
+ASTConsumer *InitOnlyAction::CreateASTConsumer(CompilerInstance &CI,
+                                               llvm::StringRef InFile) {
+  return new ASTConsumer();
+}
+
+void InitOnlyAction::ExecuteAction() {
+}
+
+//===----------------------------------------------------------------------===//
 // AST Consumer Actions
 //===----------------------------------------------------------------------===//
 

@@ -36,6 +36,7 @@ namespace frontend {
     GeneratePCH,            ///< Generate pre-compiled header.
     GeneratePTH,            ///< Generate pre-tokenized header.
     InheritanceView,        ///< View C++ inheritance for a specified class.
+    InitOnly,               ///< Only execute frontend initialization.
     ParseNoop,              ///< Parse with noop callbacks.
     ParsePrintCallbacks,    ///< Parse and print each callback.
     ParseSyntaxOnly,        ///< Parse and perform semantic analysis.
@@ -71,9 +72,6 @@ public:
   unsigned DebugCodeCompletionPrinter : 1; ///< Use the debug printer for code
                                            /// completion results.
   unsigned DisableFree : 1;                ///< Disable memory freeing on exit.
-  unsigned EmptyInputOnly : 1;             ///< Force input files to be treated
-                                           /// as if they were empty, for timing
-                                           /// the frontend startup.
   unsigned RelocatablePCH : 1;             ///< When generating PCH files,
                                            /// instruct the PCH writer to create
                                            /// relocatable PCH files.
@@ -117,7 +115,6 @@ public:
   FrontendOptions() {
     DebugCodeCompletionPrinter = 1;
     DisableFree = 0;
-    EmptyInputOnly = 0;
     ProgramAction = frontend::ParseSyntaxOnly;
     ActionName = "";
     RelocatablePCH = 0;

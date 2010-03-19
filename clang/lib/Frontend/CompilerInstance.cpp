@@ -429,12 +429,7 @@ bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
                                                SourceManager &SourceMgr,
                                                const FrontendOptions &Opts) {
   // Figure out where to get and map in the main file.
-  if (Opts.EmptyInputOnly) {
-    const char *EmptyStr = "";
-    llvm::MemoryBuffer *SB =
-      llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<empty input>");
-    SourceMgr.createMainFileIDForMemBuffer(SB);
-  } else if (InputFile != "-") {
+  if (InputFile != "-") {
     const FileEntry *File = FileMgr.getFile(InputFile);
     if (File) SourceMgr.createMainFileID(File, SourceLocation());
     if (SourceMgr.getMainFileID().isInvalid()) {

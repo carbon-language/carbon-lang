@@ -288,6 +288,7 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::FixIt:                  return "-fixit";
   case frontend::GeneratePCH:            return "-emit-pch";
   case frontend::GeneratePTH:            return "-emit-pth";
+  case frontend::InitOnly:               return "-init-only";
   case frontend::ParseNoop:              return "-parse-noop";
   case frontend::ParsePrintCallbacks:    return "-parse-print-callbacks";
   case frontend::ParseSyntaxOnly:        return "-fsyntax-only";
@@ -310,8 +311,6 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-no-code-completion-debug-printer");
   if (Opts.DisableFree)
     Res.push_back("-disable-free");
-  if (Opts.EmptyInputOnly)
-    Res.push_back("-empty-input-only");
   if (Opts.RelocatablePCH)
     Res.push_back("-relocatable-pch");
   if (Opts.ShowHelp)
@@ -878,6 +877,8 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
       Opts.ProgramAction = frontend::GeneratePCH; break;
     case OPT_emit_pth:
       Opts.ProgramAction = frontend::GeneratePTH; break;
+    case OPT_init_only:
+      Opts.ProgramAction = frontend::InitOnly; break;
     case OPT_parse_noop:
       Opts.ProgramAction = frontend::ParseNoop; break;
     case OPT_parse_print_callbacks:
@@ -915,7 +916,6 @@ ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args, Diagnostic &Diags) {
   Opts.DebugCodeCompletionPrinter =
     !Args.hasArg(OPT_no_code_completion_debug_printer);
   Opts.DisableFree = Args.hasArg(OPT_disable_free);
-  Opts.EmptyInputOnly = Args.hasArg(OPT_empty_input_only);
 
   Opts.FixItLocations.clear();
   for (arg_iterator it = Args.filtered_begin(OPT_fixit_at),

@@ -74,6 +74,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case GeneratePCH:            return new GeneratePCHAction();
   case GeneratePTH:            return new GeneratePTHAction();
   case InheritanceView:        return new InheritanceViewAction();
+  case InitOnly:               return new InitOnlyAction();
   case ParseNoop:              return new ParseOnlyAction();
   case ParsePrintCallbacks:    return new PrintParseAction();
   case ParseSyntaxOnly:        return new SyntaxOnlyAction();

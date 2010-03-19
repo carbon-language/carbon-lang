@@ -227,8 +227,6 @@ def code_completion_macros : Flag<"-code-completion-macros">,
   HelpText<"Include macros in code-completion results">;
 def disable_free : Flag<"-disable-free">,
   HelpText<"Disable freeing of memory on exit">;
-def empty_input_only : Flag<"-empty-input-only">,
-  HelpText<"Force running on an empty input file">;
 def help : Flag<"-help">,
   HelpText<"Print this help text">;
 def _help : Flag<"--help">, Alias<help>;
@@ -262,6 +260,8 @@ def analyze : Flag<"-analyze">,
   HelpText<"Run static analysis engine">;
 def dump_tokens : Flag<"-dump-tokens">,
   HelpText<"Run preprocessor, dump internal rep of tokens">;
+def init_only : Flag<"-init-only">,
+  HelpText<"Only execute frontend initialization">;
 def parse_noop : Flag<"-parse-noop">,
   HelpText<"Run parser with noop callbacks (for timings)">;
 def fsyntax_only : Flag<"-fsyntax-only">,
