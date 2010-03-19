@@ -411,7 +411,7 @@ FileID SourceManager::createFileID(const ContentCache *File,
       = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
     SLocEntryLoaded[PreallocatedID] = true;
     FileID FID = FileID::get(PreallocatedID);
-    return LastFileIDLookup = FID;
+    return FID;
   }
 
   SLocEntryTable.push_back(SLocEntry::get(NextOffset,

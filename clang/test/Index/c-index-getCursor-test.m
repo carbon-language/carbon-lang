@@ -52,6 +52,12 @@ int main (int argc, const char * argv[]) {
   main(someEnum, (const char **)bee);
 }
 
+#define CONCAT(X, Y) X##Y
+
+void f() {
+   int CONCAT(my,_var);
+}
+
 // CHECK: [1:1 - 3:1] Invalid Cursor => NoDeclFound
 // CHECK: [3:1 - 7:1] ObjCInterfaceDecl=Foo:3:12
 // CHECK: [7:1 - 7:7] ObjCInstanceMethodDecl=foo:7:1
