@@ -562,15 +562,13 @@ def UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
 def UCOM_Fpr80 : FpI_  <(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                         []>;  // FPSW = cmp ST(0) with ST(i)
                         
+// CC = ST(0) cmp ST(i)
 def UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
-                  [(X86cmp RFP32:$lhs, RFP32:$rhs),
-                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
+                  [(set EFLAGS, (X86cmp RFP32:$lhs, RFP32:$rhs))]>;
 def UCOM_FpIr64: FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
-                  [(X86cmp RFP64:$lhs, RFP64:$rhs),
-                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
+                  [(set EFLAGS, (X86cmp RFP64:$lhs, RFP64:$rhs))]>;
 def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
-                  [(X86cmp RFP80:$lhs, RFP80:$rhs),
-                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
+                  [(set EFLAGS, (X86cmp RFP80:$lhs, RFP80:$rhs))]>;
 }
 
 let Defs = [EFLAGS], Uses = [ST0] in {

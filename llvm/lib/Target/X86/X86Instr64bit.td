@@ -1227,57 +1227,51 @@ def TEST64i32 : RIi32<0xa9, RawFrm, (outs), (ins i32imm:$src),
 let isCommutable = 1 in
 def TEST64rr : RI<0x85, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                   "test{q}\t{$src2, $src1|$src1, $src2}",
-                  [(X86cmp (and GR64:$src1, GR64:$src2), 0),
-                   (implicit EFLAGS)]>;
+                  [(set EFLAGS, (X86cmp (and GR64:$src1, GR64:$src2), 0))]>;
 def TEST64rm : RI<0x85, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
                   "test{q}\t{$src2, $src1|$src1, $src2}",
-                  [(X86cmp (and GR64:$src1, (loadi64 addr:$src2)), 0),
-                   (implicit EFLAGS)]>;
+                  [(set EFLAGS, (X86cmp (and GR64:$src1, (loadi64 addr:$src2)),
+                    0))]>;
 def TEST64ri32 : RIi32<0xF7, MRM0r, (outs),
                                         (ins GR64:$src1, i64i32imm:$src2),
                        "test{q}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR64:$src1, i64immSExt32:$src2), 0),
-                      (implicit EFLAGS)]>;
+                     [(set EFLAGS, (X86cmp (and GR64:$src1, i64immSExt32:$src2),
+                      0))]>;
 def TEST64mi32 : RIi32<0xF7, MRM0m, (outs),
                                         (ins i64mem:$src1, i64i32imm:$src2),
                        "test{q}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (and (loadi64 addr:$src1), i64immSExt32:$src2), 0),
-                 (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp (and (loadi64 addr:$src1),
+                                           i64immSExt32:$src2), 0))]>;
 
 
 def CMP64i32 : RIi32<0x3D, RawFrm, (outs), (ins i32imm:$src),
                      "cmp{q}\t{$src, %rax|%rax, $src}", []>;
 def CMP64rr : RI<0x39, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp GR64:$src1, GR64:$src2),
-                  (implicit EFLAGS)]>;
+                 [(set EFLAGS, (X86cmp GR64:$src1, GR64:$src2))]>;
 def CMP64mrmrr : RI<0x3B, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
                     "cmp{q}\t{$src2, $src1|$src1, $src2}", []>;
 def CMP64mr : RI<0x39, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (loadi64 addr:$src1), GR64:$src2),
-                   (implicit EFLAGS)]>;
+                 [(set EFLAGS, (X86cmp (loadi64 addr:$src1), GR64:$src2))]>;
 def CMP64rm : RI<0x3B, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp GR64:$src1, (loadi64 addr:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set EFLAGS, (X86cmp GR64:$src1, (loadi64 addr:$src2)))]>;
 def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                     "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp GR64:$src1, i64immSExt8:$src2),
-                     (implicit EFLAGS)]>;
+                    [(set EFLAGS, (X86cmp GR64:$src1, i64immSExt8:$src2))]>;
 def CMP64ri32 : RIi32<0x81, MRM7r, (outs), (ins GR64:$src1, i64i32imm:$src2),
                       "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                      [(X86cmp GR64:$src1, i64immSExt32:$src2),
-                       (implicit EFLAGS)]>;
+                      [(set EFLAGS, (X86cmp GR64:$src1, i64immSExt32:$src2))]>;
 def CMP64mi8 : RIi8<0x83, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                     "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (loadi64 addr:$src1), i64immSExt8:$src2),
-                     (implicit EFLAGS)]>;
+                    [(set EFLAGS, (X86cmp (loadi64 addr:$src1),
+                                          i64immSExt8:$src2))]>;
 def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
                                        (ins i64mem:$src1, i64i32imm:$src2),
                       "cmp{q}\t{$src2, $src1|$src1, $src2}",
-                      [(X86cmp (loadi64 addr:$src1), i64immSExt32:$src2),
-                       (implicit EFLAGS)]>;
+                      [(set EFLAGS, (X86cmp (loadi64 addr:$src1),
+                                            i64immSExt32:$src2))]>;
 } // Defs = [EFLAGS]
 
 // Bit tests.
@@ -1285,8 +1279,7 @@ def CMP64mi32 : RIi32<0x81, MRM7m, (outs),
 let Defs = [EFLAGS] in {
 def BT64rr : RI<0xA3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                "bt{q}\t{$src2, $src1|$src1, $src2}",
-               [(X86bt GR64:$src1, GR64:$src2),
-                (implicit EFLAGS)]>, TB;
+               [(set EFLAGS, (X86bt GR64:$src1, GR64:$src2))]>, TB;
 
 // Unlike with the register+register form, the memory+register form of the
 // bt instruction does not ignore the high bits of the index. From ISel's
@@ -1300,15 +1293,14 @@ def BT64mr : RI<0xA3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 
 def BT64ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
-                [(X86bt GR64:$src1, i64immSExt8:$src2),
-                 (implicit EFLAGS)]>, TB;
+                [(set EFLAGS, (X86bt GR64:$src1, i64immSExt8:$src2))]>, TB;
 // Note that these instructions don't need FastBTMem because that
 // only applies when the other operand is in a register. When it's
 // an immediate, bt is still fast.
 def BT64mi8 : Ii8<0xBA, MRM4m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
-                [(X86bt (loadi64 addr:$src1), i64immSExt8:$src2),
-                 (implicit EFLAGS)]>, TB;
+                [(set EFLAGS, (X86bt (loadi64 addr:$src1),
+                                     i64immSExt8:$src2))]>, TB;
 
 def BTC64rr : RI<0xBB, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "btc{q}\t{$src2, $src1|$src1, $src2}", []>, TB;
@@ -1938,7 +1930,7 @@ def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
 // Comparisons.
 
 // TEST R,R is smaller than CMP R,0
-def : Pat<(parallel (X86cmp GR64:$src1, 0), (implicit EFLAGS)),
+def : Pat<(X86cmp GR64:$src1, 0),
           (TEST64rr GR64:$src1, GR64:$src1)>;
 
 // Conditional moves with folded loads with operands swapped and conditions

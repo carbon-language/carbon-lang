@@ -21,8 +21,7 @@ def SDTIntShiftDOp: SDTypeProfile<1, 3,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
                                    SDTCisInt<0>, SDTCisInt<3>]>;
 
-// FIXME: Should be modelled as returning i32
-def SDTX86CmpTest : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDTX86CmpTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>, SDTCisSameAs<1, 2>]>;
 
 def SDTX86Cmov    : SDTypeProfile<1, 4,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
@@ -3200,17 +3199,16 @@ let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMSrcReg, (outs),  (ins GR8:$src1, GR8:$src2),
                      "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and_su GR8:$src1, GR8:$src2), 0),
-                      (implicit EFLAGS)]>;
+                     [(set EFLAGS, (X86cmp (and_su GR8:$src1, GR8:$src2), 0))]>;
 def TEST16rr : I<0x85, MRMSrcReg, (outs),  (ins GR16:$src1, GR16:$src2),
                      "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and_su GR16:$src1, GR16:$src2), 0),
-                      (implicit EFLAGS)]>,
+                     [(set EFLAGS, (X86cmp (and_su GR16:$src1, GR16:$src2),
+                      0))]>,
                  OpSize;
 def TEST32rr : I<0x85, MRMSrcReg, (outs),  (ins GR32:$src1, GR32:$src2),
                      "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and_su GR32:$src1, GR32:$src2), 0),
-                      (implicit EFLAGS)]>;
+                     [(set EFLAGS, (X86cmp (and_su GR32:$src1, GR32:$src2),
+                      0))]>;
 }
 
 def TEST8i8  : Ii8<0xA8, RawFrm, (outs), (ins i8imm:$src),
@@ -3222,48 +3220,46 @@ def TEST32i32 : Ii32<0xA9, RawFrm, (outs), (ins i32imm:$src),
 
 def TEST8rm  : I<0x84, MRMSrcMem, (outs),  (ins GR8 :$src1, i8mem :$src2),
                      "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0),
-                      (implicit EFLAGS)]>;
+                     [(set EFLAGS, (X86cmp (and GR8:$src1, (loadi8 addr:$src2)),
+                       0))]>;
 def TEST16rm : I<0x85, MRMSrcMem, (outs),  (ins GR16:$src1, i16mem:$src2),
                      "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR16:$src1, (loadi16 addr:$src2)), 0),
-                      (implicit EFLAGS)]>, OpSize;
+                     [(set EFLAGS, (X86cmp (and GR16:$src1,
+                                         (loadi16 addr:$src2)), 0))]>, OpSize;
 def TEST32rm : I<0x85, MRMSrcMem, (outs),  (ins GR32:$src1, i32mem:$src2),
                      "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp (and GR32:$src1, (loadi32 addr:$src2)), 0),
-                      (implicit EFLAGS)]>;
+                     [(set EFLAGS, (X86cmp (and GR32:$src1,
+                                                (loadi32 addr:$src2)), 0))]>;
 
 def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
                     (outs),  (ins GR8:$src1, i8imm:$src2),
                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and_su GR8:$src1, imm:$src2), 0),
-                     (implicit EFLAGS)]>;
+                    [(set EFLAGS, (X86cmp (and_su GR8:$src1, imm:$src2), 0))]>;
 def TEST16ri : Ii16<0xF7, MRM0r,                     // flags = GR16 & imm16
                     (outs),  (ins GR16:$src1, i16imm:$src2),
                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and_su GR16:$src1, imm:$src2), 0),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set EFLAGS, (X86cmp (and_su GR16:$src1, imm:$src2), 0))]>,
+                    OpSize;
 def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
                     (outs),  (ins GR32:$src1, i32imm:$src2),
                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and_su GR32:$src1, imm:$src2), 0),
-                     (implicit EFLAGS)]>;
+                    [(set EFLAGS, (X86cmp (and_su GR32:$src1, imm:$src2), 0))]>;
 
 def TEST8mi  : Ii8 <0xF6, MRM0m,                   // flags = [mem8]  & imm8
                     (outs), (ins i8mem:$src1, i8imm:$src2),
                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and (loadi8 addr:$src1), imm:$src2), 0),
-                     (implicit EFLAGS)]>;
+                    [(set EFLAGS, (X86cmp (and (loadi8 addr:$src1), imm:$src2),
+                     0))]>;
 def TEST16mi : Ii16<0xF7, MRM0m,                   // flags = [mem16] & imm16
                     (outs), (ins i16mem:$src1, i16imm:$src2),
                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and (loadi16 addr:$src1), imm:$src2), 0),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set EFLAGS, (X86cmp (and (loadi16 addr:$src1), imm:$src2),
+                     0))]>, OpSize;
 def TEST32mi : Ii32<0xF7, MRM0m,                   // flags = [mem32] & imm32
                     (outs), (ins i32mem:$src1, i32imm:$src2),
                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0),
-                     (implicit EFLAGS)]>;
+                    [(set EFLAGS, (X86cmp (and (loadi32 addr:$src1), imm:$src2),
+                     0))]>;
 } // Defs = [EFLAGS]
 
 
@@ -3477,45 +3473,41 @@ def CMP32i32 : Ii32<0x3D, RawFrm, (outs), (ins i32imm:$src),
 def CMP8rr  : I<0x38, MRMDestReg,
                 (outs), (ins GR8 :$src1, GR8 :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR8:$src1, GR8:$src2), (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp GR8:$src1, GR8:$src2))]>;
 def CMP16rr : I<0x39, MRMDestReg,
                 (outs), (ins GR16:$src1, GR16:$src2),
                 "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR16:$src1, GR16:$src2), (implicit EFLAGS)]>, OpSize;
+                [(set EFLAGS, (X86cmp GR16:$src1, GR16:$src2))]>, OpSize;
 def CMP32rr : I<0x39, MRMDestReg,
                 (outs), (ins GR32:$src1, GR32:$src2),
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR32:$src1, GR32:$src2), (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp GR32:$src1, GR32:$src2))]>;
 def CMP8mr  : I<0x38, MRMDestMem,
                 (outs), (ins i8mem :$src1, GR8 :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (loadi8 addr:$src1), GR8:$src2),
-                 (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp (loadi8 addr:$src1), GR8:$src2))]>;
 def CMP16mr : I<0x39, MRMDestMem,
                 (outs), (ins i16mem:$src1, GR16:$src2),
                 "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (loadi16 addr:$src1), GR16:$src2),
-                 (implicit EFLAGS)]>, OpSize;
+                [(set EFLAGS, (X86cmp (loadi16 addr:$src1), GR16:$src2))]>,
+                 OpSize;
 def CMP32mr : I<0x39, MRMDestMem,
                 (outs), (ins i32mem:$src1, GR32:$src2),
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (loadi32 addr:$src1), GR32:$src2),
-                 (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp (loadi32 addr:$src1), GR32:$src2))]>;
 def CMP8rm  : I<0x3A, MRMSrcMem,
                 (outs), (ins GR8 :$src1, i8mem :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR8:$src1, (loadi8 addr:$src2)),
-                 (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp GR8:$src1, (loadi8 addr:$src2)))]>;
 def CMP16rm : I<0x3B, MRMSrcMem,
                 (outs), (ins GR16:$src1, i16mem:$src2),
                 "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR16:$src1, (loadi16 addr:$src2)),
-                 (implicit EFLAGS)]>, OpSize;
+                [(set EFLAGS, (X86cmp GR16:$src1, (loadi16 addr:$src2)))]>,
+                 OpSize;
 def CMP32rm : I<0x3B, MRMSrcMem,
                 (outs), (ins GR32:$src1, i32mem:$src2),
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR32:$src1, (loadi32 addr:$src2)),
-                 (implicit EFLAGS)]>;
+                [(set EFLAGS, (X86cmp GR32:$src1, (loadi32 addr:$src2)))]>;
 
 // These are alternate spellings for use by the disassembler, we mark them as
 // code gen only to ensure they aren't matched by the assembler.
@@ -3531,51 +3523,47 @@ let isCodeGenOnly = 1 in {
 def CMP8ri  : Ii8<0x80, MRM7r,
                   (outs), (ins GR8:$src1, i8imm:$src2),
                   "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                  [(X86cmp GR8:$src1, imm:$src2), (implicit EFLAGS)]>;
+                  [(set EFLAGS, (X86cmp GR8:$src1, imm:$src2))]>;
 def CMP16ri : Ii16<0x81, MRM7r,
                    (outs), (ins GR16:$src1, i16imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set EFLAGS, (X86cmp GR16:$src1, imm:$src2))]>, OpSize;
 def CMP32ri : Ii32<0x81, MRM7r,
                    (outs), (ins GR32:$src1, i32imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR32:$src1, imm:$src2), (implicit EFLAGS)]>;
+                   [(set EFLAGS, (X86cmp GR32:$src1, imm:$src2))]>;
 def CMP8mi  : Ii8 <0x80, MRM7m,
                    (outs), (ins i8mem :$src1, i8imm :$src2),
                    "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi8 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)]>;
+                   [(set EFLAGS, (X86cmp (loadi8 addr:$src1), imm:$src2))]>;
 def CMP16mi : Ii16<0x81, MRM7m,
                    (outs), (ins i16mem:$src1, i16imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi16 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set EFLAGS, (X86cmp (loadi16 addr:$src1), imm:$src2))]>,
+                   OpSize;
 def CMP32mi : Ii32<0x81, MRM7m,
                    (outs), (ins i32mem:$src1, i32imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi32 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)]>;
+                   [(set EFLAGS, (X86cmp (loadi32 addr:$src1), imm:$src2))]>;
 def CMP16ri8 : Ii8<0x83, MRM7r,
                    (outs), (ins GR16:$src1, i16i8imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set EFLAGS, (X86cmp GR16:$src1, i16immSExt8:$src2))]>,
+                    OpSize;
 def CMP16mi8 : Ii8<0x83, MRM7m,
                    (outs), (ins i16mem:$src1, i16i8imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi16 addr:$src1), i16immSExt8:$src2),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set EFLAGS, (X86cmp (loadi16 addr:$src1),
+                                         i16immSExt8:$src2))]>, OpSize;
 def CMP32mi8 : Ii8<0x83, MRM7m,
                    (outs), (ins i32mem:$src1, i32i8imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi32 addr:$src1), i32immSExt8:$src2),
-                    (implicit EFLAGS)]>;
+                   [(set EFLAGS, (X86cmp (loadi32 addr:$src1),
+                                         i32immSExt8:$src2))]>;
 def CMP32ri8 : Ii8<0x83, MRM7r,
                    (outs), (ins GR32:$src1, i32i8imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)]>;
+                   [(set EFLAGS, (X86cmp GR32:$src1, i32immSExt8:$src2))]>;
 } // Defs = [EFLAGS]
 
 // Bit tests.
@@ -3583,12 +3571,10 @@ def CMP32ri8 : Ii8<0x83, MRM7r,
 let Defs = [EFLAGS] in {
 def BT16rr : I<0xA3, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                "bt{w}\t{$src2, $src1|$src1, $src2}",
-               [(X86bt GR16:$src1, GR16:$src2),
-                (implicit EFLAGS)]>, OpSize, TB;
+               [(set EFLAGS, (X86bt GR16:$src1, GR16:$src2))]>, OpSize, TB;
 def BT32rr : I<0xA3, MRMDestReg, (outs), (ins GR32:$src1, GR32:$src2),
                "bt{l}\t{$src2, $src1|$src1, $src2}",
-               [(X86bt GR32:$src1, GR32:$src2),
-                (implicit EFLAGS)]>, TB;
+               [(set EFLAGS, (X86bt GR32:$src1, GR32:$src2))]>, TB;
 
 // Unlike with the register+register form, the memory+register form of the
 // bt instruction does not ignore the high bits of the index. From ISel's
@@ -3610,23 +3596,22 @@ def BT32mr : I<0xA3, MRMDestMem, (outs), (ins i32mem:$src1, GR32:$src2),
 
 def BT16ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR16:$src1, i16i8imm:$src2),
                 "bt{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86bt GR16:$src1, i16immSExt8:$src2),
-                 (implicit EFLAGS)]>, OpSize, TB;
+                [(set EFLAGS, (X86bt GR16:$src1, i16immSExt8:$src2))]>,
+                OpSize, TB;
 def BT32ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR32:$src1, i32i8imm:$src2),
                 "bt{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86bt GR32:$src1, i32immSExt8:$src2),
-                 (implicit EFLAGS)]>, TB;
+                [(set EFLAGS, (X86bt GR32:$src1, i32immSExt8:$src2))]>, TB;
 // Note that these instructions don't need FastBTMem because that
 // only applies when the other operand is in a register. When it's
 // an immediate, bt is still fast.
 def BT16mi8 : Ii8<0xBA, MRM4m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
                 "bt{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86bt (loadi16 addr:$src1), i16immSExt8:$src2),
-                 (implicit EFLAGS)]>, OpSize, TB;
+                [(set EFLAGS, (X86bt (loadi16 addr:$src1), i16immSExt8:$src2))
+                 ]>, OpSize, TB;
 def BT32mi8 : Ii8<0xBA, MRM4m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
                 "bt{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86bt (loadi32 addr:$src1), i32immSExt8:$src2),
-                 (implicit EFLAGS)]>, TB;
+                [(set EFLAGS, (X86bt (loadi32 addr:$src1), i32immSExt8:$src2))
+                 ]>, TB;
 
 def BTC16rr : I<0xBB, MRMDestReg, (outs), (ins GR16:$src1, GR16:$src2),
                 "btc{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize, TB;
@@ -4401,11 +4386,11 @@ def : Pat<(subc GR32:$src1, i32immSExt8:$src2),
 // Comparisons.
 
 // TEST R,R is smaller than CMP R,0
-def : Pat<(parallel (X86cmp GR8:$src1, 0), (implicit EFLAGS)),
+def : Pat<(X86cmp GR8:$src1, 0),
           (TEST8rr GR8:$src1, GR8:$src1)>;
-def : Pat<(parallel (X86cmp GR16:$src1, 0), (implicit EFLAGS)),
+def : Pat<(X86cmp GR16:$src1, 0),
           (TEST16rr GR16:$src1, GR16:$src1)>;
-def : Pat<(parallel (X86cmp GR32:$src1, 0), (implicit EFLAGS)),
+def : Pat<(X86cmp GR32:$src1, 0),
           (TEST32rr GR32:$src1, GR32:$src1)>;
 
 // Conditional moves with folded loads with operands swapped and conditions
