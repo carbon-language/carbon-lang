@@ -44,3 +44,7 @@ movq _foo@GOTPCREL(%rip), %r14
 // CHECK: movq	(%r13,%rax,8), %r13
 // CHECK:  encoding: [0x4d,0x8b,0x6c,0xc5,0x00]
 movq 0x00(%r13,%rax,8),%r13
+
+// CHECK: testq	%rax, %rbx
+// CHECK:  encoding: [0x48,0x85,0xd8]
+testq %rax, %rbx

@@ -1225,7 +1225,7 @@ let Defs = [EFLAGS] in {
 def TEST64i32 : RIi32<0xa9, RawFrm, (outs), (ins i32imm:$src),
                       "test{q}\t{$src, %rax|%rax, $src}", []>;
 let isCommutable = 1 in
-def TEST64rr : RI<0x85, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
+def TEST64rr : RI<0x85, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
                   "test{q}\t{$src2, $src1|$src1, $src2}",
                   [(set EFLAGS, (X86cmp (and GR64:$src1, GR64:$src2), 0))]>;
 def TEST64rm : RI<0x85, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
