@@ -2045,6 +2045,11 @@ void Sema::CheckSignCompare(Expr *lex, Expr *rex, SourceLocation OpLoc,
     if (!tmp.isNull()) rt = tmp;
   }
 
+  if (const EnumType *E = lt->getAs<EnumType>())
+    lt = E->getDecl()->getPromotionType();
+  if (const EnumType *E = rt->getAs<EnumType>())
+    rt = E->getDecl()->getPromotionType();
+
   // The rule is that the signed operand becomes unsigned, so isolate the
   // signed operand.
   Expr *signedOperand = lex, *unsignedOperand = rex;

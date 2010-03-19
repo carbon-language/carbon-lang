@@ -154,8 +154,8 @@ void test()
   i1 = i1 ? i1 : ir1;
   int *pi1 = i1 ? &i1 : 0;
   pi1 = i1 ? 0 : &i1;
-  i1 = i1 ? i1 : EVal; // expected-warning {{operands of ? are integers of different signs}} ??
-  i1 = i1 ? EVal : i1; // expected-warning {{operands of ? are integers of different signs}} ??
+  i1 = i1 ? i1 : EVal;
+  i1 = i1 ? EVal : i1;
   d1 = i1 ? 'c' : 4.0;
   d1 = i1 ? 4.0 : 'c';
   Base *pb = i1 ? (Base*)0 : (Derived*)0;
@@ -191,7 +191,7 @@ void test()
   test0 = test0 ? (short) 10 : test0;
 
   test0 = test0 ? EVal : test0;
-  test0 = test0 ? EVal : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? EVal : (int) test0;
 
   // Note the thing that this does not test: since DR446, various situations
   // *must* create a separate temporary copy of class objects. This can only
