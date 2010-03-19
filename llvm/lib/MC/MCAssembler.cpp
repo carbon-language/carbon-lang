@@ -43,14 +43,6 @@ STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 // object file, which may truncate it. We should detect that truncation where
 // invalid and report errors back.
 
-/// isVirtualSection - Check if this is a section which does not actually exist
-/// in the object file.
-static bool isVirtualSection(const MCSection &Section) {
-  // FIXME: Lame.
-  const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
-  return (SMO.getType() == MCSectionMachO::S_ZEROFILL);
-}
-
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
   default: llvm_unreachable("invalid fixup kind!");
@@ -264,7 +256,7 @@ public:
                     uint64_t FileOffset, uint64_t RelocationsStart,
                     unsigned NumRelocations) {
     // The offset is unused for virtual sections.
-    if (isVirtualSection(SD.getSection())) {
+    if (Asm.getBackend().isVirtualSection(SD.getSection())) {
       assert(SD.getFileSize() == 0 && "Invalid file size!");
       FileOffset = 0;
     }
@@ -748,7 +740,7 @@ public:
 
       VMSize = std::max(VMSize, SD.getAddress() + SD.getSize());
 
-      if (isVirtualSection(SD.getSection()))
+      if (Asm.getBackend().isVirtualSection(SD.getSection()))
         continue;
 
       SectionDataSize = std::max(SectionDataSize,
@@ -776,7 +768,7 @@ public:
       std::vector<MachRelocationEntry> &Relocs = Relocations[it];
       unsigned NumRelocs = Relocs.size();
       uint64_t SectionStart = SectionDataStart + it->getAddress();
-      WriteSection(*it, SectionStart, RelocTableEnd, NumRelocs);
+      WriteSection(Asm, *it, SectionStart, RelocTableEnd, NumRelocs);
       RelocTableEnd += NumRelocs * RelocationInfoSize;
     }
 
@@ -1194,7 +1186,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 
   // Set the section sizes.
   SD.setSize(Address - SD.getAddress());
-  if (isVirtualSection(SD.getSection()))
+  if (getBackend().isVirtualSection(SD.getSection()))
     SD.setFileSize(0);
   else
     SD.setFileSize(Address - SD.getAddress());
@@ -1342,7 +1334,7 @@ static void WriteFragmentData(const MCFragment &F, MCObjectWriter *OW) {
 void MCAssembler::WriteSectionData(const MCSectionData *SD,
                                    MCObjectWriter *OW) const {
   // Ignore virtual sections.
-  if (isVirtualSection(SD->getSection())) {
+  if (getBackend().isVirtualSection(SD->getSection())) {
     assert(SD->getFileSize() == 0);
     return;
   }
@@ -1444,7 +1436,7 @@ bool MCAssembler::LayoutOnce() {
     MCSectionData &SD = *it;
 
     // Skip virtual sections.
-    if (isVirtualSection(SD.getSection()))
+    if (getBackend().isVirtualSection(SD.getSection()))
       continue;
 
     // Align this section if necessary by adding padding bytes to the previous
@@ -1467,7 +1459,7 @@ bool MCAssembler::LayoutOnce() {
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSectionData &SD = *it;
 
-    if (!isVirtualSection(SD.getSection()))
+    if (!getBackend().isVirtualSection(SD.getSection()))
       continue;
 
     // Align this section if necessary by adding padding bytes to the previous

@@ -11,6 +11,7 @@
 #include "X86.h"
 #include "X86FixupKinds.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
@@ -48,12 +49,32 @@ public:
   }
 };
 
+class ELFX86AsmBackend : public X86AsmBackend {
+public:
+  ELFX86AsmBackend(const Target &T)
+    : X86AsmBackend(T) {
+    HasAbsolutizedSet = true;
+    HasScatteredSymbols = true;
+  }
+
+  bool isVirtualSection(const MCSection &Section) const {
+    const MCSectionELF &SE = static_cast<const MCSectionELF&>(Section);
+    return SE.getType() == MCSectionELF::SHT_NOBITS;;
+  }
+};
+
 class DarwinX86AsmBackend : public X86AsmBackend {
 public:
   DarwinX86AsmBackend(const Target &T)
     : X86AsmBackend(T) {
     HasAbsolutizedSet = true;
     HasScatteredSymbols = true;
+  }
+
+  bool isVirtualSection(const MCSection &Section) const {
+    const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
+    return (SMO.getType() == MCSectionMachO::S_ZEROFILL ||
+            SMO.getType() == MCSectionMachO::S_GB_ZEROFILL);
   }
 };
 
@@ -92,7 +113,7 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   case Triple::Darwin:
     return new DarwinX86_32AsmBackend(T);
   default:
-    return new X86AsmBackend(T);
+    return new ELFX86AsmBackend(T);
   }
 }
 
@@ -102,6 +123,6 @@ TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
   case Triple::Darwin:
     return new DarwinX86_64AsmBackend(T);
   default:
-    return new X86AsmBackend(T);
+    return new ELFX86AsmBackend(T);
   }
 }
