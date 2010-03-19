@@ -538,24 +538,27 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
 }
 
 /// getOperandNum - Return the node corresponding to operand #OpNo in tree
-/// N, which has NumResults results.
-TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
-                                                 TreePatternNode *N,
-                                                 unsigned NumResults) const {
-  assert(NumResults <= 1 &&
-         "We only work with nodes with zero or one result so far!");
+/// N, and the result number in ResNo.
+static TreePatternNode *getOperandNum(unsigned OpNo, TreePatternNode *N,
+                                      const SDNodeInfo &NodeInfo,
+                                      unsigned &ResNo) {
+  unsigned NumResults = NodeInfo.getNumResults();
+  if (OpNo < NumResults) {
+    ResNo = OpNo;
+    return N;
+  }
   
-  if (OpNo >= (NumResults + N->getNumChildren())) {
-    errs() << "Invalid operand number " << OpNo << " ";
+  OpNo -= NumResults;
+  
+  if (OpNo >= N->getNumChildren()) {
+    errs() << "Invalid operand number in type constraint " 
+           << (OpNo+NumResults) << " ";
     N->dump();
     errs() << '\n';
     exit(1);
   }
 
-  if (OpNo < NumResults)
-    return N;  // FIXME: need value #
-  else
-    return N->getChild(OpNo-NumResults);
+  return N->getChild(OpNo);
 }
 
 /// ApplyTypeConstraint - Given a node in a pattern, apply this type
@@ -565,11 +568,6 @@ TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
 bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
                                            const SDNodeInfo &NodeInfo,
                                            TreePattern &TP) const {
-  unsigned NumResults = NodeInfo.getNumResults();
-  unsigned ResNo = 0; // TODO: Set to the result # we're working with.
-  assert(NumResults <= 1 &&
-         "We only work with nodes with zero or one result so far!");
-  
   // Check that the number of operands is sane.  Negative operands -> varargs.
   if (NodeInfo.getNumOperands() >= 0) {
     if (N->getNumChildren() != (unsigned)NodeInfo.getNumOperands())
@@ -577,7 +575,8 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
                itostr(NodeInfo.getNumOperands()) + " operands!");
   }
 
-  TreePatternNode *NodeToApply = getOperandNum(OperandNo, N, NumResults);
+  unsigned ResNo = 0; // The result number being referenced.
+  TreePatternNode *NodeToApply = getOperandNum(OperandNo, N, NodeInfo, ResNo);
   
   switch (ConstraintType) {
   default: assert(0 && "Unknown constraint type!");
@@ -597,9 +596,9 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     // Require it to be one of the legal vector VTs.
     return NodeToApply->getExtType(ResNo).EnforceVector(TP);
   case SDTCisSameAs: {
-    unsigned OResNo = 0; // FIXME: getOperandNum should return pair.
+    unsigned OResNo = 0;
     TreePatternNode *OtherNode =
-      getOperandNum(x.SDTCisSameAs_Info.OtherOperandNum, N, NumResults);
+      getOperandNum(x.SDTCisSameAs_Info.OtherOperandNum, N, NodeInfo, OResNo);
     return NodeToApply->UpdateNodeType(OResNo, OtherNode->getExtType(ResNo),TP)|
            OtherNode->UpdateNodeType(ResNo,NodeToApply->getExtType(OResNo),TP);
   }
@@ -616,9 +615,10 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     if (!isInteger(VT))
       TP.error(N->getOperator()->getName() + " VT operand must be integer!");
     
-    unsigned OResNo = 0; // FIXME: getOperandNum should return pair.
+    unsigned OResNo = 0;
     TreePatternNode *OtherNode =
-      getOperandNum(x.SDTCisVTSmallerThanOp_Info.OtherOperandNum, N,NumResults);
+      getOperandNum(x.SDTCisVTSmallerThanOp_Info.OtherOperandNum, N, NodeInfo,
+                    OResNo);
     
     // It must be integer.
     bool MadeChange = OtherNode->getExtType(OResNo).EnforceInteger(TP);
@@ -630,16 +630,18 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     return MadeChange;
   }
   case SDTCisOpSmallerThanOp: {
-    unsigned BResNo = 0; // FIXME: getOperandNum should return pair.
+    unsigned BResNo = 0;
     TreePatternNode *BigOperand =
-      getOperandNum(x.SDTCisOpSmallerThanOp_Info.BigOperandNum, N, NumResults);
+      getOperandNum(x.SDTCisOpSmallerThanOp_Info.BigOperandNum, N, NodeInfo,
+                    BResNo);
     return NodeToApply->getExtType(ResNo).
                   EnforceSmallerThan(BigOperand->getExtType(BResNo), TP);
   }
   case SDTCisEltOfVec: {
-    unsigned VResNo = 0; // FIXME: getOperandNum should return pair.
+    unsigned VResNo = 0;
     TreePatternNode *VecOperand =
-      getOperandNum(x.SDTCisEltOfVec_Info.OtherOperandNum, N, NumResults);
+      getOperandNum(x.SDTCisEltOfVec_Info.OtherOperandNum, N, NodeInfo,
+                    VResNo);
     if (VecOperand->hasTypeSet(VResNo)) {
       if (!isVector(VecOperand->getType(VResNo)))
         TP.error(N->getOperator()->getName() + " VT operand must be a vector!");

@@ -182,11 +182,6 @@ struct SDTypeConstraint {
   /// exception.
   bool ApplyTypeConstraint(TreePatternNode *N, const SDNodeInfo &NodeInfo,
                            TreePattern &TP) const;
-  
-  /// getOperandNum - Return the node corresponding to operand #OpNo in tree
-  /// N, which has NumResults results.
-  TreePatternNode *getOperandNum(unsigned OpNo, TreePatternNode *N,
-                                 unsigned NumResults) const;
 };
 
 /// SDNodeInfo - One of these records is created for each SDNode instance in
