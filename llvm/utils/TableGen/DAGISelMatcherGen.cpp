@@ -738,7 +738,8 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   // have an SDNP that indicates variadicism.  The TargetInstrInfo isVariadic
   // property should be inferred from this when an instruction has a pattern.
   int NumFixedArityOperands = -1;
-  if (isRoot && II.isVariadic)
+  if (N->NodeHasProperty(SDNPVariadic, CGP) ||
+      (isRoot && II.isVariadic))
     NumFixedArityOperands = Pattern.getSrcPattern()->getNumChildren();
   
   // If this is the root node and any of the nodes matched nodes in the input

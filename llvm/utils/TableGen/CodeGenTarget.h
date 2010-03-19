@@ -43,7 +43,8 @@ enum SDNP {
   SDNPMayLoad,
   SDNPMayStore,
   SDNPSideEffect,
-  SDNPMemOperand
+  SDNPMemOperand,
+  SDNPVariadic
 };
 
 /// getValueType - Return the MVT::SimpleValueType that the specified TableGen

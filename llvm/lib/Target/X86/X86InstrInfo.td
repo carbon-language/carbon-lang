@@ -119,12 +119,12 @@ def X86AtomSwap64 : SDNode<"X86ISD::ATOMSWAP64_DAG", SDTX86atomicBinary,
                         [SDNPHasChain, SDNPMayStore, 
                          SDNPMayLoad, SDNPMemOperand]>;
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
-                        [SDNPHasChain, SDNPOptInFlag]>;
+                        [SDNPHasChain, SDNPOptInFlag, SDNPVariadic]>;
 
 def X86vastart_save_xmm_regs :
                  SDNode<"X86ISD::VASTART_SAVE_XMM_REGS",
                         SDT_X86VASTART_SAVE_XMM_REGS,
-                        [SDNPHasChain]>;
+                        [SDNPHasChain, SDNPVariadic]>;
 
 def X86callseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
@@ -134,7 +134,8 @@ def X86callseq_end :
                         [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;       
 
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
-                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
+                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag,
+                         SDNPVariadic]>;
 
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore]>;
@@ -157,7 +158,7 @@ def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
                         [SDNPHasChain]>;
 
 def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET, 
-                        [SDNPHasChain,  SDNPOptInFlag]>;
+                        [SDNPHasChain,  SDNPOptInFlag, SDNPVariadic]>;
 
 def X86add_flag  : SDNode<"X86ISD::ADD",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;

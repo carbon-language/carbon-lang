@@ -219,6 +219,7 @@ def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
 def SDNPMayLoad     : SDNodeProperty;   // May read memory, sets 'mayLoad'.
 def SDNPSideEffect  : SDNodeProperty;   // Sets 'HasUnmodelledSideEffects'.
 def SDNPMemOperand  : SDNodeProperty;   // Touches memory, has assoc MemOperand
+def SDNPVariadic    : SDNodeProperty;   // Node has variable arguments.
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
