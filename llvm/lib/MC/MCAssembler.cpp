@@ -1048,6 +1048,52 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
   return true;
 }
 
+static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
+                                          const MCAsmFixup &Fixup,
+                                          const MCDataFragment *DF,
+                                          const MCValue Target,
+                                          const MCSymbolData *BaseSymbol) {
+  // The effective fixup address is
+  //     addr(atom(A)) + offset(A)
+  //   - addr(atom(B)) - offset(B)
+  //   - addr(BaseSymbol) + <fixup offset from base symbol>
+  // and the offsets are not relocatable, so the fixup is fully resolved when
+  //  addr(atom(A)) - addr(atom(B)) - addr(BaseSymbol) == 0.
+  //
+  // Note that "false" is almost always conservatively correct (it means we emit
+  // a relocation which is unnecessary), except when it would force us to emit a
+  // relocation which the target cannot encode.
+
+  const MCSymbolData *A_Base = 0, *B_Base = 0;
+  if (const MCSymbolRefExpr *A = Target.getSymA()) {
+    // Modified symbol references cannot be resolved.
+    if (A->getKind() != MCSymbolRefExpr::VK_None)
+      return false;
+
+    A_Base = Asm.getAtom(&Asm.getSymbolData(A->getSymbol()));
+    if (!A_Base)
+      return false;
+  }
+
+  if (const MCSymbolRefExpr *B = Target.getSymB()) {
+    // Modified symbol references cannot be resolved.
+    if (B->getKind() != MCSymbolRefExpr::VK_None)
+      return false;
+
+    B_Base = Asm.getAtom(&Asm.getSymbolData(B->getSymbol()));
+    if (!B_Base)
+      return false;
+  }
+
+  // If there is no base, A and B have to be the same atom for this fixup to be
+  // fully resolved.
+  if (!BaseSymbol)
+    return A_Base == B_Base;
+
+  // Otherwise, B must be missing and A must be the base.
+  return !B_Base && BaseSymbol == A_Base;
+}
+
 bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
   // Non-temporary labels should always be visible to the linker.
   if (!SD->getSymbol().isTemporary())
@@ -1128,7 +1174,19 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
   // resolved; scattering may cause atoms to move.
   if (IsResolved && getBackend().hasScatteredSymbols()) {
     if (getBackend().hasReliableSymbolDifference()) {
-      llvm_report_error("FIXME: Not yet implemented");
+      // If this is a PCrel relocation, find the base atom (identified by its
+      // symbol) that the fixup value is relative to.
+      const MCSymbolData *BaseSymbol = 0;
+      if (IsPCRel) {
+        BaseSymbol = getAtomForAddress(
+          DF->getParent(), DF->getAddress() + Fixup.Offset);
+        if (!BaseSymbol)
+          IsResolved = false;
+      }
+
+      if (IsResolved)
+        IsResolved = isScatteredFixupFullyResolved(*this, Fixup, DF, Target,
+                                                   BaseSymbol);
     } else {
       const MCSection *BaseSection = 0;
       if (IsPCRel)
