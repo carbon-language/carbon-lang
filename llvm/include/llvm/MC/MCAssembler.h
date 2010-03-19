@@ -636,6 +636,12 @@ private:
 
   // FIXME: Make protected once we factor out object writer classes.
 public:
+  /// Check whether a particular symbol is visible to the linker and is required
+  /// in the symbol table, or whether it can be discarded by the assembler. This
+  /// also effects whether the assembler treats the label as potentially
+  /// defining a separate atom.
+  bool isSymbolLinkerVisible(const MCSymbolData *SD) const;
+
   /// Evaluate a fixup to a relocatable expression and the value which should be
   /// placed into the fixup.
   ///

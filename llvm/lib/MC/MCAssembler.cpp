@@ -673,11 +673,8 @@ public:
            ie = Asm.symbol_end(); it != ie; ++it) {
       const MCSymbol &Symbol = it->getSymbol();
 
-      // Ignore assembler temporaries.
-      if (it->getSymbol().isTemporary() &&
-          (!it->getFragment() ||
-           !Asm.getBackend().doesSectionRequireSymbols(
-             it->getFragment()->getParent()->getSection())))
+      // Ignore non-linker visible symbols.
+      if (!Asm.isSymbolLinkerVisible(it))
         continue;
 
       if (!it->isExternal() && !Symbol.isUndefined())
@@ -712,11 +709,8 @@ public:
            ie = Asm.symbol_end(); it != ie; ++it) {
       const MCSymbol &Symbol = it->getSymbol();
 
-      // Ignore assembler temporaries.
-      if (it->getSymbol().isTemporary() &&
-          (!it->getFragment() ||
-           !Asm.getBackend().doesSectionRequireSymbols(
-             it->getFragment()->getParent()->getSection())))
+      // Ignore non-linker visible symbols.
+      if (!Asm.isSymbolLinkerVisible(it))
         continue;
 
       if (it->isExternal() || Symbol.isUndefined())
@@ -1014,6 +1008,20 @@ MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
 }
 
 MCAssembler::~MCAssembler() {
+}
+
+bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
+  // Non-temporary labels should always be visible to the linker.
+  if (!SD->getSymbol().isTemporary())
+    return true;
+
+  // Absolute temporary labels are never visible.
+  if (!SD->getFragment())
+    return false;
+
+  // Otherwise, check if the section requires symbols even for temporary labels.
+  return getBackend().doesSectionRequireSymbols(
+    SD->getFragment()->getParent()->getSection());
 }
 
 bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
