@@ -75,7 +75,7 @@ static unsigned getResultPatternCost(TreePatternNode *P,
   Record *Op = P->getOperator();
   if (Op->isSubClassOf("Instruction")) {
     Cost++;
-    CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op->getName());
+    CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op);
     if (II.usesCustomInserter)
       Cost += 10;
   }

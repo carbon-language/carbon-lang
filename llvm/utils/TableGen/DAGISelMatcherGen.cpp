@@ -627,7 +627,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
                                SmallVectorImpl<unsigned> &OutputOps) {
   Record *Op = N->getOperator();
   const CodeGenTarget &CGT = CGP.getTargetInfo();
-  CodeGenInstruction &II = CGT.getInstruction(Op->getName());
+  CodeGenInstruction &II = CGT.getInstruction(Op);
   const DAGInstruction &Inst = CGP.getInstruction(Op);
   
   // If we can, get the pattern for the instruction we're generating.  We derive

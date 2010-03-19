@@ -193,12 +193,15 @@ public:
     if (Instructions.empty()) ReadInstructions();
     return Instructions;
   }
-
+private:
   CodeGenInstruction &getInstruction(const std::string &Name) const {
     const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
     assert(Insts.count(Name) && "Not an instruction!");
     return const_cast<CodeGenInstruction&>(Insts.find(Name)->second);
   }
+public:
+  
+  CodeGenInstruction &getInstruction(const Record *InstRec) const;  
 
   typedef std::map<std::string,
                    CodeGenInstruction>::const_iterator inst_iterator;

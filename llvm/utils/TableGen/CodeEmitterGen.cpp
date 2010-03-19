@@ -156,7 +156,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
     const std::vector<RecordVal> &Vals = R->getValues();
-    CodeGenInstruction &CGI = Target.getInstruction(InstName);
+    CodeGenInstruction &CGI = Target.getInstruction(R);
     
     // Loop over all of the fields in the instruction, determining which are the
     // operands to the instruction.

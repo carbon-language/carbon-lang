@@ -138,6 +138,12 @@ Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
 }
 
+
+CodeGenInstruction &CodeGenTarget::getInstruction(const Record *InstRec) const {
+  return getInstruction(InstRec->getName());
+}
+
+
 /// getAsmParser - Return the AssemblyParser definition for this target.
 ///
 Record *CodeGenTarget::getAsmParser() const {

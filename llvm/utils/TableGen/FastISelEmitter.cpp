@@ -254,7 +254,7 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     Record *Op = Dst->getOperator();
     if (!Op->isSubClassOf("Instruction"))
       continue;
-    CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op->getName());
+    CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op);
     if (II.OperandList.empty())
       continue;
 

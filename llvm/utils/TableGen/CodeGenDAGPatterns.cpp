@@ -1141,7 +1141,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
            "Only supports zero or one result instrs!");
 
     CodeGenInstruction &InstInfo =
-      CDP.getTargetInfo().getInstruction(getOperator()->getName());
+      CDP.getTargetInfo().getInstruction(getOperator());
     
     EEVT::TypeSet ResultType;
     
@@ -2083,7 +2083,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
       std::vector<Record*> Results;
       std::vector<Record*> Operands;
       
-      CodeGenInstruction &InstInfo =Target.getInstruction(Instrs[i]->getName());
+      CodeGenInstruction &InstInfo = Target.getInstruction(Instrs[i]);
 
       if (InstInfo.OperandList.size() != 0) {
         if (InstInfo.NumDefs == 0) {
@@ -2150,7 +2150,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
     // Parse the operands list from the (ops) list, validating it.
     assert(I->getArgList().empty() && "Args list should still be empty here!");
-    CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]->getName());
+    CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]);
 
     // Check that all of the results occur first in the list.
     std::vector<Record*> Results;
