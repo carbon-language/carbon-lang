@@ -58,14 +58,6 @@ public:
 
   virtual ~ExternalASTSource();
 
-  /// \brief Reads the source ranges that correspond to comments from
-  /// an external AST source.
-  ///
-  /// \param Comments the contents of this vector will be
-  /// replaced with the sorted set of source ranges corresponding to
-  /// comments in the source code.
-  virtual void ReadComments(std::vector<SourceRange> &Comments) = 0;
-
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
   virtual QualType GetType(uint32_t ID) = 0;

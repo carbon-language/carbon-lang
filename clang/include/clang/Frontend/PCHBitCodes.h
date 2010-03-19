@@ -215,9 +215,7 @@ namespace clang {
       /// generate the precompiled header.
       ORIGINAL_FILE_NAME = 19,
 
-      /// \brief Record code for the sorted array of source ranges where
-      /// comments were encountered in the source code.
-      COMMENT_RANGES = 20,
+      /// Record #20 intentionally left blank.
       
       /// \brief Record code for the version control branch and revision
       /// information of the compiler used to build this PCH file.

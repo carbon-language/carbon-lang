@@ -399,8 +399,3 @@ BlockScopeInfo *Sema::getCurBlock() {
   
   return dyn_cast<BlockScopeInfo>(FunctionScopes.back());  
 }
-
-void Sema::ActOnComment(SourceRange Comment) {
-  Context.Comments.push_back(Comment);
-}
-

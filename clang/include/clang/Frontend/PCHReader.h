@@ -310,12 +310,6 @@ private:
   /// preprocessing record.
   unsigned NumPreallocatedPreprocessingEntities;
       
-  /// \brief A sorted array of source ranges containing comments.
-  SourceRange *Comments;
-
-  /// \brief The number of source ranges in the Comments array.
-  unsigned NumComments;
-
   /// \brief The set of external definitions stored in the the PCH
   /// file.
   llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
@@ -565,14 +559,6 @@ public:
       
   /// \brief Read preprocessed entities into the 
   virtual void ReadPreprocessedEntities();
-
-  /// \brief Reads the source ranges that correspond to comments from
-  /// an external AST source.
-  ///
-  /// \param Comments the contents of this vector will be
-  /// replaced with the sorted set of source ranges corresponding to
-  /// comments in the source code.
-  virtual void ReadComments(std::vector<SourceRange> &Comments);
 
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.

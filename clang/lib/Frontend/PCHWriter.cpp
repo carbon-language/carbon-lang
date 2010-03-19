@@ -564,7 +564,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SOURCE_LOCATION_PRELOADS);
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
-  RECORD(COMMENT_RANGES);
   RECORD(VERSION_CONTROL_BRANCH_REVISION);
   RECORD(UNUSED_STATIC_FUNCS);
   RECORD(MACRO_DEFINITION_OFFSETS);
@@ -1304,24 +1303,6 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
                               (const char *)&MacroDefinitionOffsets.front(),
                               MacroDefinitionOffsets.size() * sizeof(uint32_t));
   }
-}
-
-void PCHWriter::WriteComments(ASTContext &Context) {
-  using namespace llvm;
-
-  if (Context.Comments.empty())
-    return;
-
-  BitCodeAbbrev *CommentAbbrev = new BitCodeAbbrev();
-  CommentAbbrev->Add(BitCodeAbbrevOp(pch::COMMENT_RANGES));
-  CommentAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-  unsigned CommentCode = Stream.EmitAbbrev(CommentAbbrev);
-
-  RecordData Record;
-  Record.push_back(pch::COMMENT_RANGES);
-  Stream.EmitRecordWithBlob(CommentCode, Record,
-                            (const char*)&Context.Comments[0],
-                            Context.Comments.size() * sizeof(SourceRange));
 }
 
 //===----------------------------------------------------------------------===//
@@ -2088,7 +2069,6 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls, isysroot);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
-  WriteComments(Context);
   // Write the record of special types.
   Record.clear();
 

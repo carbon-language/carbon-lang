@@ -328,7 +328,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
-    NumPreallocatedPreprocessingEntities(0), Comments(0), NumComments(0), 
+    NumPreallocatedPreprocessingEntities(0),  
     isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), NumStatementsRead(0),
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
@@ -346,7 +346,7 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
     TotalNumSelectors(0), MacroDefinitionOffsets(0), 
-    NumPreallocatedPreprocessingEntities(0), Comments(0), NumComments(0), 
+    NumPreallocatedPreprocessingEntities(0),  
     isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), NumStatementsRead(0),
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
@@ -1503,11 +1503,6 @@ PCHReader::ReadPCHBlock() {
       MaybeAddSystemRootToFilename(OriginalFileName);
       break;
 
-    case pch::COMMENT_RANGES:
-      Comments = (SourceRange *)BlobStart;
-      NumComments = BlobLen / sizeof(SourceRange);
-      break;
-
     case pch::VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
       llvm::StringRef PCHBranch(BlobStart, BlobLen);
@@ -1936,12 +1931,6 @@ bool PCHReader::ParseLanguageOptions(
 
 void PCHReader::ReadPreprocessedEntities() {
   ReadDefinedMacros();
-}
-
-void PCHReader::ReadComments(std::vector<SourceRange> &Comments) {
-  Comments.resize(NumComments);
-  std::copy(this->Comments, this->Comments + NumComments,
-            Comments.begin());
 }
 
 /// \brief Read and return the type at the given offset.
