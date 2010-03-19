@@ -37,7 +37,7 @@ class TargetAsmBackend;
 /// MCAsmFixup - Represent a fixed size region of bytes inside some fragment
 /// which needs to be rewritten. This region will either be rewritten by the
 /// assembler or cause a relocation entry to be generated.
-struct MCAsmFixup {
+class MCAsmFixup {
   /// Offset - The offset inside the fragment which needs to be rewritten.
   uint64_t Offset;
 
