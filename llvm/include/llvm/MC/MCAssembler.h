@@ -636,6 +636,19 @@ private:
 
   // FIXME: Make protected once we factor out object writer classes.
 public:
+  /// Find the symbol which defines the atom containing given address, inside
+  /// the given section, or null if there is no such symbol.
+  //
+  // FIXME: Eliminate this, it is very slow.
+  const MCSymbolData *getAtomForAddress(const MCSectionData *Section,
+                                        uint64_t Address) const;
+
+  /// Find the symbol which defines the atom containing the given symbol, or
+  /// null if there is no such symbol.
+  //
+  // FIXME: Eliminate this, it is very slow.
+  const MCSymbolData *getAtom(const MCSymbolData *Symbol) const;
+
   /// Check whether a particular symbol is visible to the linker and is required
   /// in the symbol table, or whether it can be discarded by the assembler. This
   /// also effects whether the assembler treats the label as potentially

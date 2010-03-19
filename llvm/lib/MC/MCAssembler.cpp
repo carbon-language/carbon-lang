@@ -1062,6 +1062,42 @@ bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
     SD->getFragment()->getParent()->getSection());
 }
 
+const MCSymbolData *MCAssembler::getAtomForAddress(const MCSectionData *Section,
+                                                   uint64_t Address) const {
+  const MCSymbolData *Best = 0;
+  for (MCAssembler::const_symbol_iterator it = symbol_begin(),
+         ie = symbol_end(); it != ie; ++it) {
+    // Ignore non-linker visible symbols.
+    if (!isSymbolLinkerVisible(it))
+      continue;
+
+    // Ignore symbols not in the same section.
+    if (!it->getFragment() || it->getFragment()->getParent() != Section)
+      continue;
+
+    // Otherwise, find the closest symbol preceding this address (ties are
+    // resolved in favor of the last defined symbol).
+    if (it->getAddress() <= Address &&
+        (!Best || it->getAddress() >= Best->getAddress()))
+      Best = it;
+  }
+
+  return Best;
+}
+
+const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
+  // Linker visible symbols define atoms.
+  if (isSymbolLinkerVisible(SD))
+    return SD;
+
+  // Absolute and undefined symbols have no defining atom.
+  if (!SD->getFragment())
+    return 0;
+
+  // Otherwise, search by address.
+  return getAtomForAddress(SD->getFragment()->getParent(), SD->getAddress());
+}
+
 bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
                                 MCDataFragment *DF,
                                 MCValue &Target, uint64_t &Value) const {
