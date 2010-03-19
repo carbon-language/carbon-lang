@@ -7756,41 +7756,38 @@
 // CHECK: 	ptest 	%xmm5, %xmm5
         	ptest	%xmm5,%xmm5
 
-// CHECK: 	crc32 	3735928559(%ebx,%ecx,8), %ecx
-        	crc32	0xdeadbeef(%ebx,%ecx,8),%ecx
+// CHECK: 	crc32b 	%bl, %eax
+                crc32b %bl, %eax
 
-// CHECK: 	crc32 	69, %ecx
-        	crc32	0x45,%ecx
+// CHECK: 	crc32b 	4(%ebx), %eax
+                crc32b 4(%ebx), %eax
 
-// CHECK: 	crc32 	32493, %ecx
-        	crc32	0x7eed,%ecx
+// CHECK: 	crc32w 	%bx, %eax
+                crc32w %bx, %eax
 
-// CHECK: 	crc32 	3133065982, %ecx
-        	crc32	0xbabecafe,%ecx
+// CHECK: 	crc32w 	4(%ebx), %eax
+                crc32w 4(%ebx), %eax
 
-// CHECK: 	crc32 	305419896, %ecx
-        	crc32	0x12345678,%ecx
+// CHECK: 	crc32l 	%ebx, %eax
+                crc32l %ebx, %eax
 
-// CHECK: 	crc32 	%ecx, %ecx
-        	crc32	%ecx,%ecx
+// CHECK: 	crc32l 	4(%ebx), %eax
+                crc32l 4(%ebx), %eax
 
-// CHECK: 	crc32 	%ecx, %ecx
-        	crc32	%ecx,%ecx
+// CHECK: 	crc32l 	3735928559(%ebx,%ecx,8), %ecx
+                crc32l 0xdeadbeef(%ebx,%ecx,8),%ecx
 
-// CHECK: 	crc32 	3735928559(%ebx,%ecx,8), %ecx
-        	crc32	0xdeadbeef(%ebx,%ecx,8),%ecx
+// CHECK: 	crc32l 	69, %ecx
+                crc32l 0x45,%ecx
 
-// CHECK: 	crc32 	69, %ecx
-        	crc32	0x45,%ecx
+// CHECK: 	crc32l 	32493, %ecx
+                crc32l 0x7eed,%ecx
 
-// CHECK: 	crc32 	32493, %ecx
-        	crc32	0x7eed,%ecx
+// CHECK: 	crc32l 	3133065982, %ecx
+                crc32l 0xbabecafe,%ecx
 
-// CHECK: 	crc32 	3133065982, %ecx
-        	crc32	0xbabecafe,%ecx
-
-// CHECK: 	crc32 	305419896, %ecx
-        	crc32	0x12345678,%ecx
+// CHECK: 	crc32l 	%ecx, %ecx
+                crc32l %ecx,%ecx
 
 // CHECK: 	pcmpgtq	3735928559(%ebx,%ecx,8), %xmm5
         	pcmpgtq	0xdeadbeef(%ebx,%ecx,8),%xmm5

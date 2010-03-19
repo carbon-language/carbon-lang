@@ -549,3 +549,14 @@
         	ptest	0xdeadbeef(%ebx,%ecx,8),%xmm5
         	ptest	%xmm5,%xmm5
         	pcmpgtq	%xmm5,%xmm5
+        	crc32b	%bl, %eax
+        	crc32b	4(%ebx), %eax
+        	crc32w	%bx, %eax
+        	crc32w	4(%ebx), %eax
+        	crc32l	%ebx, %eax
+        	crc32l	4(%ebx), %eax
+        	crc32l	0xdeadbeef(%ebx,%ecx,8),%ecx
+        	crc32l	0x45,%ecx
+        	crc32l	0x7eed,%ecx
+        	crc32l	0xbabecafe,%ecx
+        	crc32l	%ecx,%ecx
