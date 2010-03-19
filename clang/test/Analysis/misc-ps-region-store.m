@@ -888,3 +888,25 @@ char *rdar_7242010(int count, char **y) {
   return y[0]; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7770737>
+//===----------------------------------------------------------------------===//
+
+struct rdar_7770737_s { intptr_t p; };
+void rdar_7770737_aux(struct rdar_7770737_s *p);
+int rdar_7770737(void)
+{ 
+  int x;
+
+  // Previously 'f' was not properly invalidated, causing the use of
+  // an uninitailized value below.
+  struct rdar_7770737_s f = { .p = (intptr_t)&x };
+  rdar_7770737_aux(&f);
+  return x; // no-warning
+}
+int rdar_7770737_pos(void)
+{
+  int x;
+  struct rdar_7770737_s f = { .p = (intptr_t)&x };
+  return x; // expected-warning{{Undefined or garbage value returned to caller}}
+}
