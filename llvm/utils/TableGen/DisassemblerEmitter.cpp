@@ -108,8 +108,8 @@ void DisassemblerEmitter::run(raw_ostream &OS) {
   if (Target.getName() == "X86") {
     DisassemblerTables Tables;
   
-    std::vector<const CodeGenInstruction*> numberedInstructions;
-    Target.getInstructionsByEnumValue(numberedInstructions);
+    const std::vector<const CodeGenInstruction*> &numberedInstructions =
+      Target.getInstructionsByEnumValue();
     
     for (unsigned i = 0, e = numberedInstructions.size(); i != e; ++i)
       RecognizableInstr::processInstr(Tables, *numberedInstructions[i], i);

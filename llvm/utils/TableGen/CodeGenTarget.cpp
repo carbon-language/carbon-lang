@@ -300,11 +300,8 @@ GetInstByName(const char *Name,
 
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
-void CodeGenTarget::
-getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
-                                                 &NumberedInstructions) {
+void CodeGenTarget::ComputeInstrsByEnum() {
   const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
-  
   const CodeGenInstruction *PHI = GetInstByName("PHI", Insts);
   const CodeGenInstruction *INLINEASM = GetInstByName("INLINEASM", Insts);
   const CodeGenInstruction *DBG_LABEL = GetInstByName("DBG_LABEL", Insts);
@@ -323,18 +320,18 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   const CodeGenInstruction *DBG_VALUE = GetInstByName("DBG_VALUE", Insts);
 
   // Print out the rest of the instructions now.
-  NumberedInstructions.push_back(PHI);
-  NumberedInstructions.push_back(INLINEASM);
-  NumberedInstructions.push_back(DBG_LABEL);
-  NumberedInstructions.push_back(EH_LABEL);
-  NumberedInstructions.push_back(GC_LABEL);
-  NumberedInstructions.push_back(KILL);
-  NumberedInstructions.push_back(EXTRACT_SUBREG);
-  NumberedInstructions.push_back(INSERT_SUBREG);
-  NumberedInstructions.push_back(IMPLICIT_DEF);
-  NumberedInstructions.push_back(SUBREG_TO_REG);
-  NumberedInstructions.push_back(COPY_TO_REGCLASS);
-  NumberedInstructions.push_back(DBG_VALUE);
+  InstrsByEnum.push_back(PHI);
+  InstrsByEnum.push_back(INLINEASM);
+  InstrsByEnum.push_back(DBG_LABEL);
+  InstrsByEnum.push_back(EH_LABEL);
+  InstrsByEnum.push_back(GC_LABEL);
+  InstrsByEnum.push_back(KILL);
+  InstrsByEnum.push_back(EXTRACT_SUBREG);
+  InstrsByEnum.push_back(INSERT_SUBREG);
+  InstrsByEnum.push_back(IMPLICIT_DEF);
+  InstrsByEnum.push_back(SUBREG_TO_REG);
+  InstrsByEnum.push_back(COPY_TO_REGCLASS);
+  InstrsByEnum.push_back(DBG_VALUE);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
     if (&II->second != PHI &&
         &II->second != INLINEASM &&
@@ -348,7 +345,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
         &II->second != SUBREG_TO_REG &&
         &II->second != COPY_TO_REGCLASS &&
         &II->second != DBG_VALUE)
-      NumberedInstructions.push_back(&II->second);
+      InstrsByEnum.push_back(&II->second);
 }
 
 

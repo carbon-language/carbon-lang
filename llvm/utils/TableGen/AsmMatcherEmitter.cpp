@@ -845,8 +845,8 @@ void AsmMatcherInfo::BuildInfo(CodeGenTarget &Target) {
   // singleton register classes.
   std::set<std::string> SingletonRegisterNames;
   
-  std::vector<const CodeGenInstruction*> InstrList;
-  Target.getInstructionsByEnumValue(InstrList);
+  const std::vector<const CodeGenInstruction*> &InstrList =
+    Target.getInstructionsByEnumValue();
   
   for (unsigned i = 0, e = InstrList.size(); i != e; ++i) {
     const CodeGenInstruction &CGI = *InstrList[i];

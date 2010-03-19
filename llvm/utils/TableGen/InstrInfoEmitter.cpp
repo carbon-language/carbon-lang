@@ -244,8 +244,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   //
   OS << "\nstatic const TargetInstrDesc " << TargetName
      << "Insts[] = {\n";
-  std::vector<const CodeGenInstruction*> NumberedInstructions;
-  Target.getInstructionsByEnumValue(NumberedInstructions);
+  const std::vector<const CodeGenInstruction*> &NumberedInstructions =
+    Target.getInstructionsByEnumValue();
 
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i)
     emitRecord(*NumberedInstructions[i], i, InstrInfo, EmittedLists,

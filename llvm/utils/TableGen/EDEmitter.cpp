@@ -549,8 +549,8 @@ static void X86ExtractSemantics(FlagsConstantEmitter &instFlags,
 /// @arg target     - The CodeGenTarget to use as a source of instructions
 static void populateInstInfo(CompoundConstantEmitter &infoArray,
                              CodeGenTarget &target) {
-  std::vector<const CodeGenInstruction*> numberedInstructions;
-  target.getInstructionsByEnumValue(numberedInstructions);
+  const std::vector<const CodeGenInstruction*> &numberedInstructions =
+    target.getInstructionsByEnumValue();
   
   unsigned int index;
   unsigned int numInstructions = numberedInstructions.size();

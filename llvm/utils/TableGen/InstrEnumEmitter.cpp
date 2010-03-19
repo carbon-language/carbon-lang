@@ -40,8 +40,8 @@ void InstrEnumEmitter::run(raw_ostream &OS) {
     exit(1);
   }
 
-  std::vector<const CodeGenInstruction*> NumberedInstructions;
-  Target.getInstructionsByEnumValue(NumberedInstructions);
+  const std::vector<const CodeGenInstruction*> &NumberedInstructions =
+    Target.getInstructionsByEnumValue();
 
   OS << "namespace " << Namespace << " {\n";
   OS << "  enum {\n";

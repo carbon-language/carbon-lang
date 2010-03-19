@@ -2362,8 +2362,8 @@ void CodeGenDAGPatterns::AddPatternToMatch(const TreePattern *Pattern,
 
 
 void CodeGenDAGPatterns::InferInstructionFlags() {
-  std::vector<const CodeGenInstruction*> Instructions;
-  Target.getInstructionsByEnumValue(Instructions);
+  const std::vector<const CodeGenInstruction*> &Instructions =
+    Target.getInstructionsByEnumValue();
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     CodeGenInstruction &InstInfo =
       const_cast<CodeGenInstruction &>(*Instructions[i]);

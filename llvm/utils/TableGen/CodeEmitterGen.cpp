@@ -86,8 +86,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
   EmitSourceFileHeader("Machine Code Emitter", o);
   std::string Namespace = Insts[0]->getValueAsString("Namespace") + "::";
   
-  std::vector<const CodeGenInstruction*> NumberedInstructions;
-  Target.getInstructionsByEnumValue(NumberedInstructions);
+  const std::vector<const CodeGenInstruction*> &NumberedInstructions =
+    Target.getInstructionsByEnumValue();
 
   // Emit function declaration
   o << "unsigned " << Target.getName() << "CodeEmitter::"
@@ -95,7 +95,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
   // Emit instruction base values
   o << "  static const unsigned InstBits[] = {\n";
-  for (std::vector<const CodeGenInstruction*>::iterator
+  for (std::vector<const CodeGenInstruction*>::const_iterator
           IN = NumberedInstructions.begin(),
           EN = NumberedInstructions.end();
        IN != EN; ++IN) {

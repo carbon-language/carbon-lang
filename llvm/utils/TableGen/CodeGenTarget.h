@@ -70,6 +70,8 @@ class CodeGenTarget {
   void ReadRegisterClasses() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
+  
+  std::vector<const CodeGenInstruction*> InstrsByEnum;
 public:
   CodeGenTarget();
 
@@ -210,13 +212,18 @@ public:
 
   /// getInstructionsByEnumValue - Return all of the instructions defined by the
   /// target, ordered by their enum value.
-  void getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
-                                                &NumberedInstructions);
+  const std::vector<const CodeGenInstruction*> &getInstructionsByEnumValue() {
+    if (InstrsByEnum.empty()) ComputeInstrsByEnum();
+    return InstrsByEnum;
+  }
 
 
   /// isLittleEndianEncoding - are instruction bit patterns defined as  [0..n]?
   ///
   bool isLittleEndianEncoding() const;
+  
+private:
+  void ComputeInstrsByEnum();
 };
 
 /// ComplexPattern - ComplexPattern info, corresponding to the ComplexPattern
