@@ -1134,8 +1134,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   
   if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst = CDP.getInstruction(getOperator());
-    unsigned NumResults = Inst.getNumResults();
-    assert(NumResults <= 1 &&
+    assert(Inst.getNumResults() <= 1 &&
            "Only supports zero or one result instrs!");
 
     CodeGenInstruction &InstInfo =
