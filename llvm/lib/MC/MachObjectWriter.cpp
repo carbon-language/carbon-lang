@@ -192,6 +192,8 @@ public:
     : Writer(_Writer), OS(Writer->getStream()), Is64Bit(_Is64Bit) {
   }
 
+  virtual ~MachObjectWriterImpl() {}
+
   void Write8(uint8_t Value) { Writer->Write8(Value); }
   void Write16(uint16_t Value) { Writer->Write16(Value); }
   void Write32(uint32_t Value) { Writer->Write32(Value); }
