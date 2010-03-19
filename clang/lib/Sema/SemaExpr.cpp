@@ -4592,8 +4592,18 @@ Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
 /// for assignment compatibility.
 Sema::AssignConvertType
 Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
-  if (lhsType->isObjCBuiltinType() || rhsType->isObjCBuiltinType())
+  if (lhsType->isObjCBuiltinType()) {
+    // Class is not compatible with ObjC object pointers.
+    if (lhsType->isObjCClassType() && !rhsType->isObjCBuiltinType())
+      return IncompatiblePointer;
     return Compatible;
+  }
+  if (rhsType->isObjCBuiltinType()) {
+    // Class is not compatible with ObjC object pointers.
+    if (rhsType->isObjCClassType() && !lhsType->isObjCBuiltinType())
+      return IncompatiblePointer;
+    return Compatible;
+  }
   QualType lhptee =
   lhsType->getAs<ObjCObjectPointerType>()->getPointeeType();
   QualType rhptee =

@@ -35,7 +35,7 @@ int main()
      warning, unless done from an 'id'.  */
   obj_c = obj;    /* Ok */
   obj_c = obj_cp; // // expected-warning {{incompatible pointer types assigning 'MyOtherClass *', expected 'MyClass *'}}
-  obj_c = obj_C;
+  obj_c = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class', expected 'MyClass *'}}
 
   /* Assigning to an 'id<MyProtocol>' variable should generate a
      warning if done from a 'MyClass *' (which doesn't implement
@@ -44,7 +44,7 @@ int main()
   obj_p = obj;    /* Ok */
   obj_p = obj_c;  // expected-warning {{incompatible type assigning 'MyClass *', expected 'id<MyProtocol>'}}
   obj_p = obj_cp; /* Ok  */
-  obj_p = obj_C;  // Ok
+  obj_p = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class', expected 'id<MyProtocol>'}}
 
   /* Assigning to a 'MyOtherClass *' variable should always generate
      a warning, unless done from an 'id' or an 'id<MyProtocol>' (since
@@ -52,7 +52,7 @@ int main()
   obj_cp = obj;    /* Ok */
   obj_cp = obj_c;  // expected-warning {{incompatible pointer types assigning 'MyClass *', expected 'MyOtherClass *'}}
   obj_cp = obj_p;  /* Ok */
-  obj_cp = obj_C;
+  obj_cp = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class', expected 'MyOtherClass *'}}
 
   /* Any comparison involving an 'id' must be without warnings.  */
   if (obj == obj_p) foo() ;  /* Ok  */ /*Bogus warning here in 2.95.4*/

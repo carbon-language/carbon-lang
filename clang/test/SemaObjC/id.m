@@ -9,7 +9,8 @@ void foo() {
   // Test assignment compatibility of Class and id.  No warning should be
   // produced.
   // rdar://6770142 - Class and id<foo> are compatible.
-  S = T; T = S;
+  S = T; // expected-warning {{incompatible pointer types assigning 'Class', expected 'id<Foo>'}}
+  T = S; // expected-warning {{incompatible pointer types assigning 'id<Foo>', expected 'Class'}}
   R = T; T = R;
   R = S; S = R;
 }
