@@ -401,11 +401,12 @@ void Pattern::PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
     }
   }
 
-  if (Best != StringRef::npos && BestQuality < 50) {
-    // Print the "possible intended match here" line if we found something
-    // reasonable.
-    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data() + Best),
-                    "possible intended match here", "note");
+  // Print the "possible intended match here" line if we found something
+  // reasonable and not equal to what we showed in the "scanning from here"
+  // line.
+  if (Best && Best != StringRef::npos && BestQuality < 50) {
+      SM.PrintMessage(SMLoc::getFromPointer(Buffer.data() + Best),
+                      "possible intended match here", "note");
 
     // FIXME: If we wanted to be really friendly we would show why the match
     // failed, as it can be hard to spot simple one character differences.
