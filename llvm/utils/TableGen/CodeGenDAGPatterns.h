@@ -54,7 +54,7 @@ namespace EEVT {
   ///    Vector has one concrete type: The type is completely known.
   ///
   class TypeSet {
-    SmallVector<MVT::SimpleValueType, 2> TypeVec;
+    SmallVector<MVT::SimpleValueType, 4> TypeVec;
   public:
     TypeSet() {}
     TypeSet(MVT::SimpleValueType VT, TreePattern &TP);
@@ -136,8 +136,11 @@ namespace EEVT {
     
   private:
     /// FillWithPossibleTypes - Set to all legal types and return true, only
-    /// valid on completely unknown type sets
-    bool FillWithPossibleTypes(TreePattern &TP);
+    /// valid on completely unknown type sets.  If Pred is non-null, only MVTs
+    /// that pass the predicate are added.
+    bool FillWithPossibleTypes(TreePattern &TP,
+                               bool (*Pred)(MVT::SimpleValueType) = 0,
+                               const char *PredicateName = 0);
   };
 }
 

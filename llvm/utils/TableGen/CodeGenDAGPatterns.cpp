@@ -28,13 +28,14 @@ using namespace llvm;
 static inline bool isInteger(MVT::SimpleValueType VT) {
   return EVT(VT).isInteger();
 }
-
 static inline bool isFloatingPoint(MVT::SimpleValueType VT) {
   return EVT(VT).isFloatingPoint();
 }
-
 static inline bool isVector(MVT::SimpleValueType VT) {
   return EVT(VT).isVector();
+}
+static inline bool isScalar(MVT::SimpleValueType VT) {
+  return !EVT(VT).isVector();
 }
 
 EEVT::TypeSet::TypeSet(MVT::SimpleValueType VT, TreePattern &TP) {
@@ -67,9 +68,28 @@ EEVT::TypeSet::TypeSet(const std::vector<MVT::SimpleValueType> &VTList) {
 
 /// FillWithPossibleTypes - Set to all legal types and return true, only valid
 /// on completely unknown type sets.
-bool EEVT::TypeSet::FillWithPossibleTypes(TreePattern &TP) {
+bool EEVT::TypeSet::FillWithPossibleTypes(TreePattern &TP,
+                                          bool (*Pred)(MVT::SimpleValueType),
+                                          const char *PredicateName) {
   assert(isCompletelyUnknown());
-  *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
+  const std::vector<MVT::SimpleValueType> &LegalTypes = 
+    TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
+  
+  for (unsigned i = 0, e = LegalTypes.size(); i != e; ++i)
+    if (Pred == 0 || Pred(LegalTypes[i]))
+      TypeVec.push_back(LegalTypes[i]);
+
+  // If we have nothing that matches the predicate, bail out.
+  if (TypeVec.empty())
+    TP.error("Type inference contradiction found, no " +
+             std::string(PredicateName) + " types found");  
+  // No need to sort with one element.
+  if (TypeVec.size() == 1) return true;
+
+  // Remove duplicates.
+  array_pod_sort(TypeVec.begin(), TypeVec.end());
+  TypeVec.erase(std::unique(TypeVec.begin(), TypeVec.end()), TypeVec.end());
+  
   return true;
 }
 
@@ -205,86 +225,84 @@ bool EEVT::TypeSet::MergeInTypeInfo(const EEVT::TypeSet &InVT, TreePattern &TP){
 
 /// EnforceInteger - Remove all non-integer types from this set.
 bool EEVT::TypeSet::EnforceInteger(TreePattern &TP) {
-  TypeSet InputSet(*this);
-  bool MadeChange = false;
-  
   // If we know nothing, then get the full set.
   if (TypeVec.empty())
-    MadeChange = FillWithPossibleTypes(TP);
-  
+    return FillWithPossibleTypes(TP, isInteger, "integer");
   if (!hasFloatingPointTypes())
-    return MadeChange;
+    return false;
+
+  TypeSet InputSet(*this);
   
   // Filter out all the fp types.
   for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (isFloatingPoint(TypeVec[i]))
+    if (!isInteger(TypeVec[i]))
       TypeVec.erase(TypeVec.begin()+i--);
   
   if (TypeVec.empty())
     TP.error("Type inference contradiction found, '" +
              InputSet.getName() + "' needs to be integer");
-  return MadeChange;
+  return true;
 }
 
 /// EnforceFloatingPoint - Remove all integer types from this set.
 bool EEVT::TypeSet::EnforceFloatingPoint(TreePattern &TP) {
-  TypeSet InputSet(*this);
-  bool MadeChange = false;
-  
   // If we know nothing, then get the full set.
   if (TypeVec.empty())
-    MadeChange = FillWithPossibleTypes(TP);
-  
+    return FillWithPossibleTypes(TP, isFloatingPoint, "floating point");
+
   if (!hasIntegerTypes())
-    return MadeChange;
+    return false;
+
+  TypeSet InputSet(*this);
   
   // Filter out all the fp types.
   for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (isInteger(TypeVec[i]))
+    if (!isFloatingPoint(TypeVec[i]))
       TypeVec.erase(TypeVec.begin()+i--);
   
   if (TypeVec.empty())
     TP.error("Type inference contradiction found, '" +
              InputSet.getName() + "' needs to be floating point");
-  return MadeChange;
+  return true;
 }
 
 /// EnforceScalar - Remove all vector types from this.
 bool EEVT::TypeSet::EnforceScalar(TreePattern &TP) {
-  TypeSet InputSet(*this);
-  bool MadeChange = false;
-  
   // If we know nothing, then get the full set.
   if (TypeVec.empty())
-    MadeChange = FillWithPossibleTypes(TP);
-  
+    return FillWithPossibleTypes(TP, isScalar, "scalar");
+
   if (!hasVectorTypes())
-    return MadeChange;
+    return false;
+
+  TypeSet InputSet(*this);
   
   // Filter out all the vector types.
   for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (isVector(TypeVec[i]))
+    if (!isScalar(TypeVec[i]))
       TypeVec.erase(TypeVec.begin()+i--);
   
   if (TypeVec.empty())
     TP.error("Type inference contradiction found, '" +
              InputSet.getName() + "' needs to be scalar");
-  return MadeChange;
+  return true;
 }
 
 /// EnforceVector - Remove all vector types from this.
 bool EEVT::TypeSet::EnforceVector(TreePattern &TP) {
+  // If we know nothing, then get the full set.
+  if (TypeVec.empty())
+    return FillWithPossibleTypes(TP, isVector, "vector");
+
   TypeSet InputSet(*this);
   bool MadeChange = false;
   
-  // If we know nothing, then get the full set.
-  if (TypeVec.empty())
-    MadeChange = FillWithPossibleTypes(TP);
-  
   // Filter out all the scalar types.
   for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (!isVector(TypeVec[i]))
+    if (!isVector(TypeVec[i])) {
       TypeVec.erase(TypeVec.begin()+i--);
+      MadeChange = true;
+    }
   
   if (TypeVec.empty())
     TP.error("Type inference contradiction found, '" +
@@ -384,7 +402,7 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(MVT::SimpleValueType VT,
   
   // If we know nothing, then get the full set.
   if (TypeVec.empty())
-    MadeChange = FillWithPossibleTypes(TP);
+    MadeChange = FillWithPossibleTypes(TP, isVector, "vector");
   
   // Filter out all the non-vector types and types which don't have the right
   // element type.
