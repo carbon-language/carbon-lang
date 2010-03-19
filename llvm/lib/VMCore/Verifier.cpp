@@ -1623,10 +1623,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     MDNode *MD = cast<MDNode>(CI.getOperand(1));
     Assert1(MD->getNumOperands() == 1,
                 "invalid llvm.dbg.declare intrinsic call 2", &CI);
-    if (MD->getOperand(0))
-      if (Constant *C = dyn_cast<Constant>(MD->getOperand(0)))
-        Assert1(C && !isa<ConstantPointerNull>(C),
-                "invalid llvm.dbg.declare intrinsic call 3", &CI);
   } break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
