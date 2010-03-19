@@ -2167,7 +2167,7 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVector<SDValue, 16>& LdChain,
       } else
         return LdOp;
     } else {
-      unsigned NumElts = WidenWidth / LdWidth;
+      unsigned NumElts = WidenWidth / NewVTWidth;
       EVT NewVecVT = EVT::getVectorVT(*DAG.getContext(), NewVT, NumElts);
       SDValue VecOp = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, NewVecVT, LdOp);
       return DAG.getNode(ISD::BIT_CONVERT, dl, WidenVT, VecOp);

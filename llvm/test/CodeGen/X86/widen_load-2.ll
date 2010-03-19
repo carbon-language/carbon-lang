@@ -153,3 +153,27 @@ define void @add31i8(%i8vec31* nocapture sret %ret, %i8vec31* %ap, %i8vec31* %bp
 	store %i8vec31 %x, %i8vec31* %ret, align 16
 	ret void
 }
+
+
+%i8vec3pack = type { <3 x i8>, i8 }
+define %i8vec3pack  @rot() nounwind {
+; CHECK: shrb
+entry:
+  %X = alloca %i8vec3pack, align 4
+  %rot = alloca %i8vec3pack, align 4
+  %result = alloca %i8vec3pack, align 4
+  %storetmp = bitcast %i8vec3pack* %X to <3 x i8>*
+  store <3 x i8> <i8 -98, i8 -98, i8 -98>, <3 x i8>* %storetmp
+  %storetmp1 = bitcast %i8vec3pack* %rot to <3 x i8>*
+  store <3 x i8> <i8 1, i8 1, i8 1>, <3 x i8>* %storetmp1
+  %tmp = load %i8vec3pack* %X
+  %extractVec = extractvalue %i8vec3pack %tmp, 0
+  %tmp2 = load %i8vec3pack* %rot
+  %extractVec3 = extractvalue %i8vec3pack %tmp2, 0
+  %shr = lshr <3 x i8> %extractVec, %extractVec3
+  %storetmp4 = bitcast %i8vec3pack* %result to <3 x i8>*
+  store <3 x i8> %shr, <3 x i8>* %storetmp4
+  %tmp5 = load %i8vec3pack* %result
+  ret %i8vec3pack %tmp5
+}
+
