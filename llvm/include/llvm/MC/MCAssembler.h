@@ -590,6 +590,8 @@ public:
   typedef SymbolDataListType::const_iterator const_symbol_iterator;
   typedef SymbolDataListType::iterator symbol_iterator;
 
+  typedef std::vector<IndirectSymbolData>::const_iterator
+    const_indirect_symbol_iterator;
   typedef std::vector<IndirectSymbolData>::iterator indirect_symbol_iterator;
 
 private:
@@ -742,8 +744,14 @@ public:
   indirect_symbol_iterator indirect_symbol_begin() {
     return IndirectSymbols.begin();
   }
+  const_indirect_symbol_iterator indirect_symbol_begin() const {
+    return IndirectSymbols.begin();
+  }
 
   indirect_symbol_iterator indirect_symbol_end() {
+    return IndirectSymbols.end();
+  }
+  const_indirect_symbol_iterator indirect_symbol_end() const {
     return IndirectSymbols.end();
   }
 

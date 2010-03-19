@@ -778,23 +778,28 @@ public:
       StringTable += '\x00';
   }
 
-  void WriteObject(MCAssembler &Asm) {
-    unsigned NumSections = Asm.size();
-
+  void ExecutePostLayoutBinding(MCAssembler &Asm) {
     // Create symbol data for any indirect symbols.
     BindIndirectSymbols(Asm);
 
-    // Compute symbol table information.
-    SmallString<256> StringTable;
-    std::vector<MachSymbolData> LocalSymbolData;
-    std::vector<MachSymbolData> ExternalSymbolData;
-    std::vector<MachSymbolData> UndefinedSymbolData;
-    unsigned NumSymbols = Asm.symbol_size();
+    // Compute symbol table information and bind symbol indices.
+    ComputeSymbolTable(Asm, StringTable, LocalSymbolData, ExternalSymbolData,
+                       UndefinedSymbolData);
 
-    // No symbol table command is written if there are no symbols.
-    if (NumSymbols)
-      ComputeSymbolTable(Asm, StringTable, LocalSymbolData, ExternalSymbolData,
-                         UndefinedSymbolData);
+    // Compute relocations.
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it) {
+      MCSectionData &SD = *it;
+      for (MCSectionData::iterator it2 = SD.begin(),
+             ie2 = SD.end(); it2 != ie2; ++it2)
+        if (MCDataFragment *DF = dyn_cast<MCDataFragment>(&*it2))
+          for (unsigned i = 0, e = DF->fixup_size(); i != e; ++i)
+            ComputeRelocationInfo(Asm, *DF, DF->getFixups()[i]);
+    }
+  }
+
+  void WriteObject(const MCAssembler &Asm) {
+    unsigned NumSections = Asm.size();
 
     // The section data starts after the header, the segment load command (and
     // section headers) and the symbol table.
@@ -804,6 +809,8 @@ public:
       SegmentLoadCommand32Size + NumSections * Section32Size;
 
     // Add the symbol table load command sizes, if used.
+    unsigned NumSymbols = LocalSymbolData.size() + ExternalSymbolData.size() +
+      UndefinedSymbolData.size();
     if (NumSymbols) {
       NumLoadCommands += 2;
       LoadCommandsSize += SymtabLoadCommandSize + DysymtabLoadCommandSize;
@@ -816,9 +823,9 @@ public:
     uint64_t SectionDataSize = 0;
     uint64_t SectionDataFileSize = 0;
     uint64_t VMSize = 0;
-    for (MCAssembler::iterator it = Asm.begin(),
+    for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it) {
-      MCSectionData &SD = *it;
+      const MCSectionData &SD = *it;
 
       VMSize = std::max(VMSize, SD.getAddress() + SD.getSize());
 
@@ -843,19 +850,9 @@ public:
     WriteSegmentLoadCommand(NumSections, VMSize,
                             SectionDataStart, SectionDataSize);
 
-    for (MCAssembler::iterator it = Asm.begin(),
-           ie = Asm.end(); it != ie; ++it) {
-      MCSectionData &SD = *it;
-      for (MCSectionData::iterator it2 = SD.begin(),
-             ie2 = SD.end(); it2 != ie2; ++it2)
-        if (MCDataFragment *DF = dyn_cast<MCDataFragment>(&*it2))
-          for (unsigned i = 0, e = DF->fixup_size(); i != e; ++i)
-            ComputeRelocationInfo(Asm, *DF, DF->getFixups()[i]);
-    }
-
     // ... and then the section headers.
     uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
-    for (MCAssembler::iterator it = Asm.begin(),
+    for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it) {
       std::vector<MachRelocationEntry> &Relocs = Relocations[it];
       unsigned NumRelocs = Relocs.size();
@@ -899,14 +896,15 @@ public:
     }
 
     // Write the actual section data.
-    for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
+    for (MCAssembler::const_iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it)
       WriteFileData(OS, *it, *this);
 
     // Write the extra padding.
     WriteZeros(SectionDataPadding);
 
     // Write the relocation entries.
-    for (MCAssembler::iterator it = Asm.begin(),
+    for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it) {
       // Write the section relocation entries, in reverse order to match 'as'
       // (approximately, the exact algorithm is more complicated than this).
@@ -920,7 +918,7 @@ public:
     // Write the symbol table data, if used.
     if (NumSymbols) {
       // Write the indirect symbol entries.
-      for (MCAssembler::indirect_symbol_iterator
+      for (MCAssembler::const_indirect_symbol_iterator
              it = Asm.indirect_symbol_begin(),
              ie = Asm.indirect_symbol_end(); it != ie; ++it) {
         // Indirect symbols in the non lazy symbol pointer section have some
@@ -1478,11 +1476,15 @@ void MCAssembler::Finish() {
       llvm::errs() << "assembler backend - post-layout\n--\n";
       dump(); });
 
-  // Write the object file.
-  //
   // FIXME: Factor out MCObjectWriter.
   bool Is64Bit = StringRef(getBackend().getTarget().getName()) == "x86-64";
   MachObjectWriter MOW(OS, Is64Bit);
+
+  // Allow the object writer a chance to perform post-layout binding (for
+  // example, to set the index fields in the symbol data).
+  MOW.ExecutePostLayoutBinding(*this);
+
+  // Write the object file.
   MOW.WriteObject(*this);
 
   OS.flush();
