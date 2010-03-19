@@ -425,11 +425,31 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
         if (Visit(MakeCXCursor(*it, CXXUnit), true))
           return true;
       }
-    } else {
-      return VisitDeclContext(
-                            CXXUnit->getASTContext().getTranslationUnitDecl());
-    }
+    } else if (VisitDeclContext(
+                            CXXUnit->getASTContext().getTranslationUnitDecl()))
+      return true;
 
+    // Walk the preprocessing record.
+    if (CXXUnit->hasPreprocessingRecord()) {
+      // FIXME: Once we have the ability to deserialize a preprocessing record,
+      // do so.
+      PreprocessingRecord &PPRec = CXXUnit->getPreprocessingRecord();
+      for (PreprocessingRecord::iterator E = PPRec.begin(), EEnd = PPRec.end();
+           E != EEnd; ++E) {
+        if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
+          if (Visit(MakeMacroInstantiationCursor(MI, CXXUnit)))
+            return true;
+          continue;
+        }
+        
+        if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
+          if (Visit(MakeMacroDefinitionCursor(MD, CXXUnit)))
+            return true;
+          
+          continue;
+        }
+      }
+    }
     return false;
   }
 
@@ -2059,51 +2079,6 @@ void clang_enableStackTraces(void) {
 // Token-based Operations.
 //===----------------------------------------------------------------------===//
 
-namespace {
-  class ComparePreprocessedEntityLocation {
-    SourceManager &SM;
-
-  public:
-    explicit ComparePreprocessedEntityLocation(SourceManager &SM) : SM(SM) { }
-
-    bool operator()(const PreprocessedEntity *Entity, SourceLocation Loc) const{
-      return SM.isBeforeInTranslationUnit(Entity->getSourceRange().getEnd(), 
-                                          Loc);
-    }
-
-    bool operator()(SourceLocation Loc, const PreprocessedEntity *Entity) const{
-      return SM.isBeforeInTranslationUnit(Loc, 
-                                          Entity->getSourceRange().getBegin());
-    }
-
-    bool operator()(const PreprocessedEntity *Entity, SourceRange R) const {
-      return SM.isBeforeInTranslationUnit(Entity->getSourceRange().getEnd(), 
-                                          R.getBegin());
-    }
-
-    bool operator()(SourceRange R, const PreprocessedEntity *Entity) const {
-      return SM.isBeforeInTranslationUnit(R.getEnd(), 
-                                          Entity->getSourceRange().getBegin());
-    }
-    
-    bool operator()(const PreprocessedEntity *Entity1,
-                    const PreprocessedEntity *Entity2) const {
-      return SM.isBeforeInTranslationUnit(Entity1->getSourceRange().getEnd(),
-                                          Entity2->getSourceRange().getBegin());
-    }
-    
-    bool operator()(SourceRange R1, SourceRange R2) const {
-      return SM.isBeforeInTranslationUnit(R1.getEnd(), R2.getBegin());
-    }
-    
-    bool operator()(SourceLocation Loc1, SourceLocation Loc2) const {
-      return SM.isBeforeInTranslationUnit(Loc1, Loc2);
-    }
-  };
-}
-
-
-
 /* CXToken layout:
  *   int_data[0]: a CXTokenKind
  *   int_data[1]: starting token location
@@ -2293,6 +2268,8 @@ enum CXChildVisitResult AnnotateTokensVisitor(CXCursor cursor,
       return CXChildVisit_Recurse;
 
     // Okay: we can annotate the location of this expression
+  } else if (clang_isPreprocessing(cursor.kind)) {
+    // We can always annotate a preprocessing directive/macro instantiation.
   } else {
     // Nothing to annotate
     return CXChildVisit_Recurse;
@@ -2319,47 +2296,32 @@ void clang_annotateTokens(CXTranslationUnit TU,
 
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
 
-  // Annotate all of the source locations in the region of interest that map to
-  // a specific cursor.
+  // Determine the region of interest, which contains all of the tokens.
   SourceRange RegionOfInterest;
   RegionOfInterest.setBegin(
         cxloc::translateSourceLocation(clang_getTokenLocation(TU, Tokens[0])));
   SourceLocation End
-    = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
-                                                     Tokens[NumTokens - 1]));
+  = cxloc::translateSourceLocation(clang_getTokenLocation(TU,
+                                                        Tokens[NumTokens - 1]));
   RegionOfInterest.setEnd(CXXUnit->getPreprocessor().getLocForEndOfToken(End));
-  
-  AnnotateTokensData Annotated;
-  CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
-  CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &Annotated,
-                            Decl::MaxPCHLevel, RegionOfInterest);
-  AnnotateVis.VisitChildren(Parent);
 
-  // Look for macro instantiations and preprocessing directives in the 
-  // source range containing the annotated tokens. We do this by re-lexing the
-  // tokens in the source range.
+  // A mapping from the source locations found when re-lexing or traversing the
+  // region of interest to the corresponding cursors.
+  AnnotateTokensData Annotated;
+
+  // Relex the tokens within the source range to look for preprocessing 
+  // directives.
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
   std::pair<FileID, unsigned> BeginLocInfo
     = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
   std::pair<FileID, unsigned> EndLocInfo
     = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
   
-  bool RelexOkay = true;
-  
-  // Cannot re-tokenize across files.
-  if (BeginLocInfo.first != EndLocInfo.first)
-    RelexOkay = false;
-  
   llvm::StringRef Buffer;
-  if (RelexOkay) {
-    // Create a lexer
-    bool Invalid = false;
-    Buffer = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
-    if (Invalid)
-      RelexOkay = false;
-  }
-    
-  if (RelexOkay) {
+  bool Invalid = false;
+  if (BeginLocInfo.first == EndLocInfo.first &&
+      ((Buffer = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid)),true) &&
+      !Invalid) {
     Lexer Lex(SourceMgr.getLocForStartOfFile(BeginLocInfo.first),
               CXXUnit->getASTContext().getLangOptions(),
               Buffer.begin(), Buffer.data() + BeginLocInfo.second, 
@@ -2368,7 +2330,6 @@ void clang_annotateTokens(CXTranslationUnit TU,
     
     // Lex tokens in raw mode until we hit the end of the range, to avoid 
     // entering #includes or expanding macros.
-    std::vector<Token> TokenStream;
     while (true) {
       Token Tok;
       Lex.LexFromRawLexer(Tok);
@@ -2407,35 +2368,13 @@ void clang_annotateTokens(CXTranslationUnit TU,
         break;
     }
   }
-   
-  if (CXXUnit->hasPreprocessingRecord()) {
-    PreprocessingRecord &PPRec = CXXUnit->getPreprocessingRecord();
-    std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
-      Entities = std::equal_range(PPRec.begin(), PPRec.end(), RegionOfInterest,
-                                  ComparePreprocessedEntityLocation(SourceMgr));
-    for (; Entities.first != Entities.second; ++Entities.first) {
-      PreprocessedEntity *Entity = *Entities.first;
-      if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(Entity)) {
-        SourceLocation Loc = MI->getSourceRange().getBegin();
-        if (Loc.isFileID()) {
-          Annotated[Loc.getRawEncoding()]
-            = MakeMacroInstantiationCursor(MI, CXXUnit);
-        }
-
-        continue;
-      }
-
-      if (MacroDefinition *MD = dyn_cast<MacroDefinition>(Entity)) {
-        SourceLocation Loc = MD->getLocation();
-        if (Loc.isFileID()) {
-          Annotated[Loc.getRawEncoding()] 
-            = MakeMacroDefinitionCursor(MD, CXXUnit);
-        }
-
-        continue;
-      }
-    }
-  }
+  
+  // Annotate all of the source locations in the region of interest that map to
+  // a specific cursor.  
+  CXCursor Parent = clang_getTranslationUnitCursor(CXXUnit);
+  CursorVisitor AnnotateVis(CXXUnit, AnnotateTokensVisitor, &Annotated,
+                            Decl::MaxPCHLevel, RegionOfInterest);
+  AnnotateVis.VisitChildren(Parent);
   
   for (unsigned I = 0; I != NumTokens; ++I) {
     // Determine whether we saw a cursor at this token's location.
