@@ -1133,16 +1133,14 @@ class XSBHInst<dag OOL, dag IOL, list<dag> pattern>:
       "xsbh\t$rDst, $rSrc",
       IntegerOp, pattern>;
 
-class XSBHVecInst<ValueType vectype>:
-    XSBHInst<(outs VECREG:$rDst), (ins VECREG:$rSrc),
-      [(set (v8i16 VECREG:$rDst), (sext (vectype VECREG:$rSrc)))]>;
-
 class XSBHInRegInst<RegisterClass rclass, list<dag> pattern>:
     XSBHInst<(outs rclass:$rDst), (ins rclass:$rSrc),
              pattern>;
 
 multiclass ExtendByteHalfword {
-  def v16i8:     XSBHVecInst<v8i16>;
+  def v16i8:     XSBHInst<(outs VECREG:$rDst), (ins VECREG:$rSrc),
+                          [
+                  /*(set (v8i16 VECREG:$rDst), (sext (v8i16 VECREG:$rSrc)))*/]>;
   def r8:        XSBHInst<(outs R16C:$rDst), (ins R8C:$rSrc),
                           [(set R16C:$rDst, (sext R8C:$rSrc))]>;
   def r16:       XSBHInRegInst<R16C,
@@ -1200,8 +1198,8 @@ class XSWDInst<dag OOL, dag IOL, list<dag> pattern>:
       
 class XSWDVecInst<ValueType in_vectype, ValueType out_vectype>:
     XSWDInst<(outs VECREG:$rDst), (ins VECREG:$rSrc),
-             [(set (out_vectype VECREG:$rDst),
-                   (sext (out_vectype VECREG:$rSrc)))]>;
+             [/*(set (out_vectype VECREG:$rDst),
+                   (sext (out_vectype VECREG:$rSrc)))*/]>;
       
 class XSWDRegInst<RegisterClass in_rclass, RegisterClass out_rclass>:
     XSWDInst<(outs out_rclass:$rDst), (ins in_rclass:$rSrc),
@@ -4146,7 +4144,7 @@ def CFSif32 :
 def FESDvec :
     RRForm_1<0b00011101110, (outs VECREG:$rT), (ins VECREG:$rA),
       "fesd\t$rT, $rA", SPrecFP,
-      [(set (v2f64 VECREG:$rT), (fextend (v4f32 VECREG:$rA)))]>;
+      [/*(set (v2f64 VECREG:$rT), (fextend (v4f32 VECREG:$rA)))*/]>;
 
 def FESDf32 :
     RRForm_1<0b00011101110, (outs R64FP:$rT), (ins R32FP:$rA),
