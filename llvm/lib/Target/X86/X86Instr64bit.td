@@ -511,6 +511,14 @@ def ADD64rr    : RI<0x01, MRMDestReg, (outs GR64:$dst),
                     [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
                      (implicit EFLAGS)]>;
 
+// These are alternate spellings for use by the disassembler, we mark them as
+// code gen only to ensure they aren't matched by the assembler.
+let isCodeGenOnly = 1 in {
+  def ADD64rr_alt  : RI<0x03, MRMSrcReg, (outs GR64:$dst), 
+                       (ins GR64:$src1, GR64:$src2),
+                       "add{l}\t{$src2, $dst|$dst, $src2}", []>;
+}
+
 // Register-Integer Addition
 def ADD64ri8  : RIi8<0x83, MRM0r, (outs GR64:$dst), 
                      (ins GR64:$src1, i64i8imm:$src2),
@@ -530,12 +538,6 @@ def ADD64rm     : RI<0x03, MRMSrcMem, (outs GR64:$dst),
                      "add{q}\t{$src2, $dst|$dst, $src2}",
                      [(set GR64:$dst, (add GR64:$src1, (load addr:$src2))),
                       (implicit EFLAGS)]>;
-
-// Register-Register Addition - Equivalent to the normal rr form (ADD64rr), but
-//   differently encoded.
-def ADD64mrmrr  : RI<0x03, MRMSrcReg, (outs GR64:$dst), 
-                     (ins GR64:$src1, GR64:$src2),
-                     "add{l}\t{$src2, $dst|$dst, $src2}", []>;
 
 } // isTwoAddress
 
@@ -1249,8 +1251,14 @@ def CMP64i32 : RIi32<0x3D, RawFrm, (outs), (ins i32imm:$src),
 def CMP64rr : RI<0x39, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
                  [(set EFLAGS, (X86cmp GR64:$src1, GR64:$src2))]>;
-def CMP64mrmrr : RI<0x3B, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
-                    "cmp{q}\t{$src2, $src1|$src1, $src2}", []>;
+
+// These are alternate spellings for use by the disassembler, we mark them as
+// code gen only to ensure they aren't matched by the assembler.
+let isCodeGenOnly = 1 in {
+  def CMP64mrmrr : RI<0x3B, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
+                      "cmp{q}\t{$src2, $src1|$src1, $src2}", []>;
+}
+
 def CMP64mr : RI<0x39, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
                  [(set EFLAGS, (X86cmp (loadi64 addr:$src1), GR64:$src2))]>;
