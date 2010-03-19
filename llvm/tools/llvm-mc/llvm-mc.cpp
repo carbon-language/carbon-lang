@@ -318,13 +318,9 @@ static int AssembleInput(const char *ProgName) {
 }
 
 static int DisassembleInput(const char *ProgName) {
-  std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
-  if (TheTarget == 0) {
-    errs() << ProgName << ": error: unable to get target for '" << TripleName
-    << "', see --version and --triple.\n";
+  const Target *TheTarget = GetTarget(ProgName);
+  if (!TheTarget)
     return 0;
-  }
   
   std::string ErrorMessage;
   
