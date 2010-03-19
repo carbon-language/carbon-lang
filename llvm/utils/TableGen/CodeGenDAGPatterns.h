@@ -41,11 +41,6 @@ namespace llvm {
 /// arbitrary integer, floating-point, and vector types, so only an unknown
 /// value is needed.
 namespace EEVT {
-  enum DAGISelGenValueType {
-    // FIXME: Remove EEVT::isUnknown!
-    isUnknown  = MVT::LAST_VALUETYPE
-  };
-  
   /// TypeSet - This is either empty if it's completely unknown, or holds a set
   /// of types.  It is used during type inference because register classes can
   /// have multiple possible types and we don't know which one they get until
@@ -212,8 +207,8 @@ public:
   
   /// getKnownType - If the type constraints on this node imply a fixed type
   /// (e.g. all stores return void, etc), then return it as an
-  /// MVT::SimpleValueType.  Otherwise, return EEVT::isUnknown.
-  unsigned getKnownType() const;
+  /// MVT::SimpleValueType.  Otherwise, return MVT::Other.
+  MVT::SimpleValueType getKnownType() const;
   
   /// hasProperty - Return true if this node has the specified property.
   ///

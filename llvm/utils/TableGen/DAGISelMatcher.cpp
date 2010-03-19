@@ -357,14 +357,13 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   // ISD::STORE will never be true at the same time a check for Type i32 is.
   if (const CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(M)) {
     // FIXME: What result is this referring to?
-    unsigned NodeType;
+    MVT::SimpleValueType NodeType;
     if (getOpcode().getNumResults() == 0)
       NodeType = MVT::isVoid;
     else
       NodeType = getOpcode().getKnownType();
-    if (NodeType != EEVT::isUnknown)
-      return TypesAreContradictory((MVT::SimpleValueType)NodeType,
-                                   CT->getType());
+    if (NodeType != MVT::Other)
+      return TypesAreContradictory(NodeType, CT->getType());
   }
   
   return false;

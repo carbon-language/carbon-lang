@@ -25,8 +25,6 @@ using namespace llvm;
 //  EEVT::TypeSet Implementation
 //===----------------------------------------------------------------------===//
 
-// FIXME: Remove EEVT::isUnknown!
-
 static inline bool isInteger(MVT::SimpleValueType VT) {
   return EVT(VT).isInteger();
 }
@@ -97,7 +95,7 @@ bool EEVT::TypeSet::hasVectorTypes() const {
 
 
 std::string EEVT::TypeSet::getName() const {
-  if (TypeVec.empty()) return "isUnknown";
+  if (TypeVec.empty()) return "<empty>";
   
   std::string Result;
     
@@ -678,8 +676,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
 
 /// getKnownType - If the type constraints on this node imply a fixed type
 /// (e.g. all stores return void, etc), then return it as an
-/// MVT::SimpleValueType.  Otherwise, return EEVT::isUnknown.
-unsigned SDNodeInfo::getKnownType() const {
+/// MVT::SimpleValueType.  Otherwise, return EEVT::Other.
+MVT::SimpleValueType SDNodeInfo::getKnownType() const {
   unsigned NumResults = getNumResults();
   assert(NumResults <= 1 &&
          "We only work with nodes with zero or one result so far!");
@@ -697,7 +695,7 @@ unsigned SDNodeInfo::getKnownType() const {
       return MVT::iPTR;
     }
   }
-  return EEVT::isUnknown;
+  return MVT::Other;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1185,7 +1183,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= UpdateNodeType(getChild(0)->getExtType(), TP);
       MadeChange |= getChild(0)->UpdateNodeType(getExtType(), TP);
     }
-    
 
     unsigned ChildNo = 0;
     for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
