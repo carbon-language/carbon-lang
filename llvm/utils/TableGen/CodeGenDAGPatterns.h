@@ -133,6 +133,11 @@ namespace EEVT {
     
     bool operator!=(const TypeSet &RHS) const { return TypeVec != RHS.TypeVec; }
     bool operator==(const TypeSet &RHS) const { return TypeVec == RHS.TypeVec; }
+    
+  private:
+    /// FillWithPossibleTypes - Set to all legal types and return true, only
+    /// valid on completely unknown type sets
+    bool FillWithPossibleTypes(TreePattern &TP);
   };
 }
 

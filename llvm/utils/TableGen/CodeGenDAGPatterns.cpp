@@ -65,6 +65,13 @@ EEVT::TypeSet::TypeSet(const std::vector<MVT::SimpleValueType> &VTList) {
   TypeVec.erase(std::unique(TypeVec.begin(), TypeVec.end()), TypeVec.end());
 }
 
+/// FillWithPossibleTypes - Set to all legal types and return true, only valid
+/// on completely unknown type sets.
+bool EEVT::TypeSet::FillWithPossibleTypes(TreePattern &TP) {
+  assert(isCompletelyUnknown());
+  *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
+  return true;
+}
 
 /// hasIntegerTypes - Return true if this TypeSet contains iAny or an
 /// integer value type.
@@ -202,10 +209,8 @@ bool EEVT::TypeSet::EnforceInteger(TreePattern &TP) {
   bool MadeChange = false;
   
   // If we know nothing, then get the full set.
-  if (TypeVec.empty()) {
-    *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
-    MadeChange = true;
-  }
+  if (TypeVec.empty())
+    MadeChange = FillWithPossibleTypes(TP);
   
   if (!hasFloatingPointTypes())
     return MadeChange;
@@ -227,10 +232,8 @@ bool EEVT::TypeSet::EnforceFloatingPoint(TreePattern &TP) {
   bool MadeChange = false;
   
   // If we know nothing, then get the full set.
-  if (TypeVec.empty()) {
-    *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
-    MadeChange = true;
-  }
+  if (TypeVec.empty())
+    MadeChange = FillWithPossibleTypes(TP);
   
   if (!hasIntegerTypes())
     return MadeChange;
@@ -252,10 +255,8 @@ bool EEVT::TypeSet::EnforceScalar(TreePattern &TP) {
   bool MadeChange = false;
   
   // If we know nothing, then get the full set.
-  if (TypeVec.empty()) {
-    *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
-    MadeChange = true;
-  }
+  if (TypeVec.empty())
+    MadeChange = FillWithPossibleTypes(TP);
   
   if (!hasVectorTypes())
     return MadeChange;
@@ -277,10 +278,8 @@ bool EEVT::TypeSet::EnforceVector(TreePattern &TP) {
   bool MadeChange = false;
   
   // If we know nothing, then get the full set.
-  if (TypeVec.empty()) {
-    *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
-    MadeChange = true;
-  }
+  if (TypeVec.empty())
+    MadeChange = FillWithPossibleTypes(TP);
   
   // Filter out all the scalar types.
   for (unsigned i = 0; i != TypeVec.size(); ++i)
@@ -294,11 +293,38 @@ bool EEVT::TypeSet::EnforceVector(TreePattern &TP) {
 }
 
 
+
 /// EnforceSmallerThan - 'this' must be a smaller VT than Other.  Update
 /// this an other based on this information.
 bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   // Both operands must be integer or FP, but we don't care which.
   bool MadeChange = false;
+  
+  if (isCompletelyUnknown())
+    MadeChange = FillWithPossibleTypes(TP);
+
+  if (Other.isCompletelyUnknown())
+    MadeChange = Other.FillWithPossibleTypes(TP);
+    
+  // If one side is known to be integer or known to be FP but the other side has
+  // no information, get at least the type integrality info in there.
+  if (!hasFloatingPointTypes())
+    MadeChange |= Other.EnforceInteger(TP);
+  else if (!hasIntegerTypes())
+    MadeChange |= Other.EnforceFloatingPoint(TP);
+  if (!Other.hasFloatingPointTypes())
+    MadeChange |= EnforceInteger(TP);
+  else if (!Other.hasIntegerTypes())
+    MadeChange |= EnforceFloatingPoint(TP);
+  
+  assert(!isCompletelyUnknown() && !Other.isCompletelyUnknown() &&
+         "Should have a type list now");
+  
+  // If one contains vectors but the other doesn't pull vectors out.
+  if (!hasVectorTypes())
+    MadeChange |= Other.EnforceScalar(TP);
+  if (!hasVectorTypes())
+    MadeChange |= EnforceScalar(TP);
   
   // This code does not currently handle nodes which have multiple types,
   // where some types are integer, and some are fp.  Assert that this is not
@@ -306,60 +332,47 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
   assert(!(hasIntegerTypes() && hasFloatingPointTypes()) &&
          !(Other.hasIntegerTypes() && Other.hasFloatingPointTypes()) &&
          "SDTCisOpSmallerThanOp does not handle mixed int/fp types!");
-  // If one side is known to be integer or known to be FP but the other side has
-  // no information, get at least the type integrality info in there.
-  if (hasIntegerTypes())
-    MadeChange |= Other.EnforceInteger(TP);
-  else if (hasFloatingPointTypes())
-    MadeChange |= Other.EnforceFloatingPoint(TP);
-  if (Other.hasIntegerTypes())
-    MadeChange |= EnforceInteger(TP);
-  else if (Other.hasFloatingPointTypes())
-    MadeChange |= EnforceFloatingPoint(TP);
   
-  assert(!isCompletelyUnknown() && !Other.isCompletelyUnknown() &&
-         "Should have a type list now");
+  // Okay, find the smallest type from the current set and remove it from the
+  // largest set.
+  MVT::SimpleValueType Smallest = TypeVec[0];
+  for (unsigned i = 1, e = TypeVec.size(); i != e; ++i)
+    if (TypeVec[i] < Smallest)
+      Smallest = TypeVec[i];
   
-  // If one contains vectors but the other doesn't pull vectors out.
-  if (!hasVectorTypes() && Other.hasVectorTypes())
-    MadeChange |= Other.EnforceScalar(TP);
-  if (hasVectorTypes() && !Other.hasVectorTypes())
-    MadeChange |= EnforceScalar(TP);
+  // If this is the only type in the large set, the constraint can never be
+  // satisfied.
+  if (Other.TypeVec.size() == 1 && Other.TypeVec[0] == Smallest)
+    TP.error("Type inference contradiction found, '" +
+             Other.getName() + "' has nothing larger than '" + getName() +"'!");
   
-  // FIXME: This is a bone-headed way to do this.
+  SmallVector<MVT::SimpleValueType, 2>::iterator TVI =
+    std::find(Other.TypeVec.begin(), Other.TypeVec.end(), Smallest);
+  if (TVI != Other.TypeVec.end()) {
+    Other.TypeVec.erase(TVI);
+    MadeChange = true;
+  }
   
-  // Get the set of legal VTs and filter it based on the known integrality.
-  const CodeGenTarget &CGT = TP.getDAGPatterns().getTargetInfo();
-  TypeSet LegalVTs = CGT.getLegalValueTypes();
-
-  // TODO: If one or the other side is known to be a specific VT, we could prune
-  // LegalVTs.
-  if (hasIntegerTypes())
-    LegalVTs.EnforceInteger(TP);
-  else if (hasFloatingPointTypes())
-    LegalVTs.EnforceFloatingPoint(TP);
-  else
-    return MadeChange;
+  // Okay, find the largest type in the Other set and remove it from the
+  // current set.
+  MVT::SimpleValueType Largest = Other.TypeVec[0];
+  for (unsigned i = 1, e = Other.TypeVec.size(); i != e; ++i)
+    if (Other.TypeVec[i] > Largest)
+      Largest = Other.TypeVec[i];
   
-  switch (LegalVTs.TypeVec.size()) {
-  case 0: assert(0 && "No legal VTs?");
-  default:         // Too many VT's to pick from.
-    // TODO: If the biggest type in LegalVTs is in this set, we could remove it.
-    // If one or the other side is known to be a specific VT, we could prune
-    // LegalVTs.
-    return MadeChange;
-  case 1: 
-    // Only one VT of this flavor.  Cannot ever satisfy the constraints.
-    return MergeInTypeInfo(MVT::Other, TP);  // throw
-  case 2:
-    // If we have exactly two possible types, the little operand must be the
-    // small one, the big operand should be the big one.  This is common with 
-    // float/double for example.
-    assert(LegalVTs.TypeVec[0] < LegalVTs.TypeVec[1] && "Should be sorted!");
-    MadeChange |= MergeInTypeInfo(LegalVTs.TypeVec[0], TP);
-    MadeChange |= Other.MergeInTypeInfo(LegalVTs.TypeVec[1], TP);
-    return MadeChange;
-  }    
+  // If this is the only type in the small set, the constraint can never be
+  // satisfied.
+  if (TypeVec.size() == 1 && TypeVec[0] == Largest)
+    TP.error("Type inference contradiction found, '" +
+             getName() + "' has nothing smaller than '" + Other.getName()+"'!");
+  
+  TVI = std::find(TypeVec.begin(), TypeVec.end(), Largest);
+  if (TVI != TypeVec.end()) {
+    TypeVec.erase(TVI);
+    MadeChange = true;
+  }
+  
+  return MadeChange;
 }
 
 /// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
@@ -370,10 +383,8 @@ bool EEVT::TypeSet::EnforceVectorEltTypeIs(MVT::SimpleValueType VT,
   bool MadeChange = false;
   
   // If we know nothing, then get the full set.
-  if (TypeVec.empty()) {
-    *this = TP.getDAGPatterns().getTargetInfo().getLegalValueTypes();
-    MadeChange = true;
-  }
+  if (TypeVec.empty())
+    MadeChange = FillWithPossibleTypes(TP);
   
   // Filter out all the non-vector types and types which don't have the right
   // element type.
