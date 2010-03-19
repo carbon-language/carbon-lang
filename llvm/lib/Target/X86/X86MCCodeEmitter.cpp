@@ -43,10 +43,10 @@ public:
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[] = {
-      { "reloc_pcrel_4byte", 0, 4 * 8 },
-      { "reloc_pcrel_1byte", 0, 1 * 8 },
-      { "reloc_riprel_4byte", 0, 4 * 8 },
-      { "reloc_riprel_4byte_movq_load", 0, 4 * 8 }
+      { "reloc_pcrel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_pcrel_1byte", 0, 1 * 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_riprel_4byte", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel },
+      { "reloc_riprel_4byte_movq_load", 0, 4 * 8, MCFixupKindInfo::FKF_IsPCRel }
     };
     
     if (Kind < FirstTargetFixupKind)

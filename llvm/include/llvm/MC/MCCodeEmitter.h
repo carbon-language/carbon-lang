@@ -22,6 +22,12 @@ template<typename T> class SmallVectorImpl;
 
 /// MCFixupKindInfo - Target independent information on a fixup kind.
 struct MCFixupKindInfo {
+  enum FixupKindFlags {
+    /// Is this fixup kind PCrelative. This is used by the assembler backend to
+    /// evaluate fixup values in a target independent manner when possible.
+    FKF_IsPCRel = (1 << 0)
+  };
+
   /// A target specific name for the fixup kind. The names will be unique for
   /// distinct kinds on any given target.
   const char *Name;
@@ -36,6 +42,9 @@ struct MCFixupKindInfo {
   /// The number of bits written by this fixup. The bits are assumed to be
   /// contiguous.
   unsigned TargetSize;
+
+  /// Flags describing additional information on this fixup kind.
+  unsigned Flags;
 };
 
 /// MCCodeEmitter - Generic instruction encoding interface.

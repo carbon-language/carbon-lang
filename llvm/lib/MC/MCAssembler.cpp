@@ -10,6 +10,7 @@
 #define DEBUG_TYPE "assembler"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
@@ -36,17 +37,6 @@ STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 // what is a 64-bit assembler value used for computation into a value in the
 // object file, which may truncate it. We should detect that truncation where
 // invalid and report errors back.
-
-static bool isFixupKindPCRel(unsigned Kind) {
-  switch (Kind) {
-  default:
-    return false;
-  case X86::reloc_pcrel_1byte:
-  case X86::reloc_pcrel_4byte:
-  case X86::reloc_riprel_4byte:
-    return true;
-  }
-}
 
 /* *** */
 
@@ -258,7 +248,9 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
 
   Value = Target.getConstant();
 
-  bool IsResolved = true, IsPCRel = isFixupKindPCRel(Fixup.Kind);
+  bool IsPCRel =
+    Emitter.getFixupKindInfo(Fixup.Kind).Flags & MCFixupKindInfo::FKF_IsPCRel;
+  bool IsResolved = true;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     if (A->getSymbol().isDefined())
       Value += getSymbolData(A->getSymbol()).getAddress();
