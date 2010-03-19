@@ -68,12 +68,12 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
 }
 
 BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
-                     unsigned timeout, unsigned memlimit,
+                     unsigned timeout, unsigned memlimit, bool use_valgrind,
                      LLVMContext& ctxt)
   : Context(ctxt), ToolName(toolname), ReferenceOutputFile(OutputFile),
     Program(0), Interpreter(0), SafeInterpreter(0), gcc(0),
     run_as_child(as_child), run_find_bugs(find_bugs), Timeout(timeout), 
-    MemoryLimit(memlimit)  {}
+    MemoryLimit(memlimit), UseValgrind(use_valgrind) {}
 
 
 /// ParseInputFile - Given a bitcode or assembly input filename, parse and

@@ -55,6 +55,7 @@ class BugDriver {
   bool run_find_bugs;
   unsigned Timeout;
   unsigned MemoryLimit;
+  bool UseValgrind;
 
   // FIXME: sort out public/private distinctions...
   friend class ReducePassList;
@@ -62,7 +63,8 @@ class BugDriver {
 
 public:
   BugDriver(const char *toolname, bool as_child, bool find_bugs,
-            unsigned timeout, unsigned memlimit, LLVMContext& ctxt);
+            unsigned timeout, unsigned memlimit, bool use_valgrind,
+            LLVMContext& ctxt);
 
   const char *getToolName() const { return ToolName; }
 

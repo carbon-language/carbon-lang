@@ -45,8 +45,6 @@ namespace {
   // ChildOutput - This option captures the name of the child output file that
   // is set up by the parent bugpoint process
   cl::opt<std::string> ChildOutput("child-output", cl::ReallyHidden);
-  cl::opt<bool> UseValgrind("enable-valgrind",
-                            cl::desc("Run optimizations through valgrind"));
 }
 
 /// writeProgramToFile - This writes the current "Program" to the named bitcode
