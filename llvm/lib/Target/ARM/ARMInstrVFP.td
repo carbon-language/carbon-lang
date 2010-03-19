@@ -21,6 +21,10 @@ def SDT_VMOVDRR :
 SDTypeProfile<1, 2, [SDTCisVT<0, f64>, SDTCisVT<1, i32>,
                      SDTCisSameAs<1, 2>]>;
 
+def arm_ftoui  : SDNode<"ARMISD::FTOUI",  SDT_FTOI>;
+def arm_ftosi  : SDNode<"ARMISD::FTOSI",  SDT_FTOI>;
+def arm_sitof  : SDNode<"ARMISD::SITOF",  SDT_ITOF>;
+def arm_uitof  : SDNode<"ARMISD::UITOF",  SDT_ITOF>;
 def arm_fmstat : SDNode<"ARMISD::FMSTAT", SDTNone, [SDNPInFlag,SDNPOutFlag]>;
 def arm_cmpfp  : SDNode<"ARMISD::CMPFP",  SDT_ARMCmp, [SDNPOutFlag]>;
 def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0",SDT_CMPFP0, [SDNPOutFlag]>;
@@ -259,17 +263,15 @@ def VCVTBSH : ASuI<0b11101, 0b11, 0b0010, 0b01, 0, (outs SPR:$dst), (ins SPR:$a)
                  /* FIXME */ IIC_fpCVTDS, "vcvtb", ".f32.f16\t$dst, $a",
                  [/* For disassembly only; pattern left blank */]>;
 
-def : VFPPat<(f32_to_f16 SPR:$a),
-             (i32 (COPY_TO_REGCLASS (VCVTBSH SPR:$a), GPR))>,
-             Requires<[HasVFP3, HasFP16]>;
+def : ARMPat<(f32_to_f16 SPR:$a),
+             (i32 (COPY_TO_REGCLASS (VCVTBSH SPR:$a), GPR))>;
 
 def VCVTBHS : ASuI<0b11101, 0b11, 0b0011, 0b01, 0, (outs SPR:$dst), (ins SPR:$a),
                  /* FIXME */ IIC_fpCVTDS, "vcvtb", ".f16.f32\t$dst, $a",
                  [/* For disassembly only; pattern left blank */]>;
 
-def : VFPPat<(f16_to_f32 GPR:$a),
-             (VCVTBHS (COPY_TO_REGCLASS GPR:$a, SPR))>,
-             Requires<[HasVFP3, HasFP16]>;
+def : ARMPat<(f16_to_f32 GPR:$a),
+             (VCVTBHS (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
 def VCVTTSH : ASuI<0b11101, 0b11, 0b0010, 0b11, 0, (outs SPR:$dst), (ins SPR:$a),
                  /* FIXME */ IIC_fpCVTDS, "vcvtt", ".f32.f16\t$dst, $a",
@@ -361,44 +363,30 @@ def VMOVSRR : AVConv5I<0b11000100, 0b1010,
 def VSITOD : AVConv1I<0b11101, 0b11, 0b1000, 0b1011,
                  (outs DPR:$dst), (ins SPR:$a),
                  IIC_fpCVTID, "vcvt", ".f64.s32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set DPR:$dst, (f64 (arm_sitof SPR:$a)))]> {
   let Inst{7} = 1; // s32
 }
-
-def : VFPPat<(f64 (sint_to_fp GPR:$a)),
-             (VSITOD (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
 def VSITOS : AVConv1In<0b11101, 0b11, 0b1000, 0b1010,
                  (outs SPR:$dst),(ins SPR:$a),
                  IIC_fpCVTIS, "vcvt", ".f32.s32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (arm_sitof SPR:$a))]> {
   let Inst{7} = 1; // s32
 }
-
-def : VFPPat<(f32 (sint_to_fp GPR:$a)),
-             (VSITOS (COPY_TO_REGCLASS GPR:$a, SPR))>,
-      Requires<[DontUseNEONForFP, HasVFP2]>;
 
 def VUITOD : AVConv1I<0b11101, 0b11, 0b1000, 0b1011,
                  (outs DPR:$dst), (ins SPR:$a),
                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set DPR:$dst, (f64 (arm_uitof SPR:$a)))]> {
   let Inst{7} = 0; // u32
 }
-
-def : VFPPat<(f64 (uint_to_fp GPR:$a)),
-             (VUITOD (COPY_TO_REGCLASS GPR:$a, SPR))>;
 
 def VUITOS : AVConv1In<0b11101, 0b11, 0b1000, 0b1010,
                  (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpCVTIS, "vcvt", ".f32.u32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (arm_uitof SPR:$a))]> {
   let Inst{7} = 0; // u32
 }
-
-def : VFPPat<(f32 (uint_to_fp GPR:$a)),
-             (VUITOS (COPY_TO_REGCLASS GPR:$a, SPR))>,
-      Requires<[DontUseNEONForFP, HasVFP2]>;
 
 // FP to Int:
 // Always set Z bit in the instruction, i.e. "round towards zero" variants.
@@ -406,44 +394,30 @@ def : VFPPat<(f32 (uint_to_fp GPR:$a)),
 def VTOSIZD : AVConv1I<0b11101, 0b11, 0b1101, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  IIC_fpCVTDI, "vcvt", ".s32.f64\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (arm_ftosi (f64 DPR:$a)))]> {
   let Inst{7} = 1; // Z bit
 }
-
-def : VFPPat<(i32 (fp_to_sint (f64 DPR:$a))),
-             (COPY_TO_REGCLASS (VTOSIZD DPR:$a), GPR)>;
 
 def VTOSIZS : AVConv1In<0b11101, 0b11, 0b1101, 0b1010,
                         (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpCVTSI, "vcvt", ".s32.f32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (arm_ftosi SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
-
-def : VFPPat<(i32 (fp_to_sint SPR:$a)),
-             (COPY_TO_REGCLASS (VTOSIZS SPR:$a), GPR)>,
-      Requires<[DontUseNEONForFP, HasVFP2]>;
 
 def VTOUIZD : AVConv1I<0b11101, 0b11, 0b1100, 0b1011,
                        (outs SPR:$dst), (ins DPR:$a),
                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (arm_ftoui (f64 DPR:$a)))]> {
   let Inst{7} = 1; // Z bit
 }
-
-def : VFPPat<(i32 (fp_to_uint (f64 DPR:$a))),
-             (COPY_TO_REGCLASS (VTOUIZD DPR:$a), GPR)>;
 
 def VTOUIZS : AVConv1In<0b11101, 0b11, 0b1100, 0b1010,
                         (outs SPR:$dst), (ins SPR:$a),
                  IIC_fpCVTSI, "vcvt", ".u32.f32\t$dst, $a",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(set SPR:$dst, (arm_ftoui SPR:$a))]> {
   let Inst{7} = 1; // Z bit
 }
-
-def : VFPPat<(i32 (fp_to_uint SPR:$a)),
-             (COPY_TO_REGCLASS (VTOUIZS SPR:$a), GPR)>,
-      Requires<[DontUseNEONForFP, HasVFP2]>;
 
 // And the Z bit '0' variants, i.e. use the rounding mode specified by FPSCR.
 // For disassembly only.

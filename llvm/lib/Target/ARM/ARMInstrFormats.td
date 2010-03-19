@@ -937,9 +937,6 @@ class ARMV5TEPat<dag pattern, dag result> : Pat<pattern, result> {
 class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM, HasV6];
 }
-class VFPPat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [HasVFP2];
-}
 
 //===----------------------------------------------------------------------===//
 //

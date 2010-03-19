@@ -3139,44 +3139,25 @@ def VMINfd_sfp : N3V<0, 0, 0b00, 0b1111, 0, 0, (outs DPR_VFP2:$dst),
 def : N3VSPat<NEONfmin, VMINfd_sfp>;
 
 // Vector Convert between single-precision FP and integer
-
-class NVCVTFIPat<SDNode OpNode, NeonI Inst>
- : NEONFPPat<(i32 (OpNode SPR:$a)),
-             (i32 (EXTRACT_SUBREG
-                    (v2i32 (Inst
-                             (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
-                                            SPR:$a,
-                                            arm_ssubreg_0))),
-                    arm_ssubreg_0))>;
-
-class NVCVTIFPat<SDNode OpNode, NeonI Inst>
- : NEONFPPat<(f32 (OpNode GPR:$a)),
-             (f32 (EXTRACT_SUBREG
-                    (v2f32 (Inst
-                             (INSERT_SUBREG (v2i32 (IMPLICIT_DEF)),
-                                            (i32 (COPY_TO_REGCLASS GPR:$a, SPR)),
-                                            arm_ssubreg_0))),
-                    arm_ssubreg_0))>;
-
 let neverHasSideEffects = 1 in
 def  VCVTf2sd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01110, 0, "vcvt", "s32.f32",
                          v2i32, v2f32, fp_to_sint>;
-def : NVCVTFIPat<fp_to_sint, VCVTf2sd_sfp>;
+def : N2VSPat<arm_ftosi, f32, v2f32, VCVTf2sd_sfp>;
 
 let neverHasSideEffects = 1 in
 def  VCVTf2ud_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01111, 0, "vcvt", "u32.f32",
                          v2i32, v2f32, fp_to_uint>;
-def : NVCVTFIPat<fp_to_uint, VCVTf2ud_sfp>;
+def : N2VSPat<arm_ftoui, f32, v2f32, VCVTf2ud_sfp>;
 
 let neverHasSideEffects = 1 in
 def  VCVTs2fd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
                          v2f32, v2i32, sint_to_fp>;
-def : NVCVTIFPat<sint_to_fp, VCVTs2fd_sfp>;
+def : N2VSPat<arm_sitof, f32, v2i32, VCVTs2fd_sfp>;
 
 let neverHasSideEffects = 1 in
 def  VCVTu2fd_sfp : N2VS<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
                          v2f32, v2i32, uint_to_fp>;
-def : NVCVTIFPat<uint_to_fp, VCVTu2fd_sfp>;
+def : N2VSPat<arm_uitof, f32, v2i32, VCVTu2fd_sfp>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
