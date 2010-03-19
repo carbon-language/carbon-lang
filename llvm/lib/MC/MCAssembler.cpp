@@ -42,10 +42,9 @@ STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 // object file, which may truncate it. We should detect that truncation where
 // invalid and report errors back.
 
+class MCObjectWriter;
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
-                          MachObjectWriter &MOW);
-
-static uint64_t WriteNopData(uint64_t Count, MachObjectWriter &MOW);
+                          MCObjectWriter *MOW);
 
 /// isVirtualSection - Check if this is a section which does not actually exist
 /// in the object file.
@@ -79,7 +78,106 @@ static bool isFixupKindPCRel(unsigned Kind) {
   }
 }
 
-class MachObjectWriter {
+class MCObjectWriter {
+  MCObjectWriter(const MCObjectWriter &); // DO NOT IMPLEMENT
+  void operator=(const MCObjectWriter &); // DO NOT IMPLEMENT
+
+protected:
+  raw_ostream &OS;
+
+  unsigned IsLittleEndian : 1;
+
+protected: // Can only create subclasses.
+  MCObjectWriter(raw_ostream &_OS, bool _IsLittleEndian)
+    : OS(_OS), IsLittleEndian(_IsLittleEndian) {}
+  virtual ~MCObjectWriter();
+
+public:
+
+  bool isLittleEndian() { return IsLittleEndian; }
+
+  raw_ostream &getStream() { return OS; }
+
+  /// @name Binary Output Methods
+  /// @{
+
+  void Write8(uint8_t Value) {
+    OS << char(Value);
+  }
+
+  void WriteLE16(uint16_t Value) {
+    Write8(uint8_t(Value >> 0));
+    Write8(uint8_t(Value >> 8));
+  }
+
+  void WriteLE32(uint32_t Value) {
+    WriteLE16(uint16_t(Value >> 0));
+    WriteLE16(uint16_t(Value >> 16));
+  }
+
+  void WriteLE64(uint64_t Value) {
+    WriteLE32(uint32_t(Value >> 0));
+    WriteLE32(uint32_t(Value >> 32));
+  }
+
+  void WriteBE16(uint16_t Value) {
+    Write8(uint8_t(Value >> 8));
+    Write8(uint8_t(Value >> 0));
+  }
+
+  void WriteBE32(uint32_t Value) {
+    WriteBE16(uint16_t(Value >> 16));
+    WriteBE16(uint16_t(Value >> 0));
+  }
+
+  void WriteBE64(uint64_t Value) {
+    WriteBE32(uint32_t(Value >> 32));
+    WriteBE32(uint32_t(Value >> 0));
+  }
+
+  void Write16(uint16_t Value) {
+    if (IsLittleEndian)
+      WriteLE16(Value);
+    else
+      WriteBE16(Value);
+  }
+
+  void Write32(uint32_t Value) {
+    if (IsLittleEndian)
+      WriteLE32(Value);
+    else
+      WriteBE32(Value);
+  }
+
+  void Write64(uint64_t Value) {
+    if (IsLittleEndian)
+      WriteLE64(Value);
+    else
+      WriteBE64(Value);
+  }
+
+  void WriteZeros(unsigned N) {
+    const char Zeros[16] = { 0 };
+
+    for (unsigned i = 0, e = N / 16; i != e; ++i)
+      OS << StringRef(Zeros, 16);
+
+    OS << StringRef(Zeros, N % 16);
+  }
+
+  void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
+    OS << Str;
+    if (ZeroFillSize)
+      WriteZeros(ZeroFillSize - Str.size());
+  }
+
+  /// @}
+};
+
+MCObjectWriter::~MCObjectWriter() {
+}
+
+class MachObjectWriter : public MCObjectWriter {
   // See <mach-o/loader.h>.
   enum {
     Header_Magic32 = 0xFEEDFACE,
@@ -166,9 +264,7 @@ class MachObjectWriter {
     }
   };
 
-  raw_ostream &OS;
   unsigned Is64Bit : 1;
-  unsigned IsLSB : 1;
 
   /// @name Relocation Data
   /// @{
@@ -192,63 +288,9 @@ class MachObjectWriter {
   /// @}
 
 public:
-  MachObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool _IsLSB = true)
-    : OS(_OS), Is64Bit(_Is64Bit), IsLSB(_IsLSB) {
+  MachObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool _IsLittleEndian = true)
+    : MCObjectWriter(_OS, _IsLittleEndian), Is64Bit(_Is64Bit) {
   }
-
-  /// @name Helper Methods
-  /// @{
-
-  void Write8(uint8_t Value) {
-    OS << char(Value);
-  }
-
-  void Write16(uint16_t Value) {
-    if (IsLSB) {
-      Write8(uint8_t(Value >> 0));
-      Write8(uint8_t(Value >> 8));
-    } else {
-      Write8(uint8_t(Value >> 8));
-      Write8(uint8_t(Value >> 0));
-    }
-  }
-
-  void Write32(uint32_t Value) {
-    if (IsLSB) {
-      Write16(uint16_t(Value >> 0));
-      Write16(uint16_t(Value >> 16));
-    } else {
-      Write16(uint16_t(Value >> 16));
-      Write16(uint16_t(Value >> 0));
-    }
-  }
-
-  void Write64(uint64_t Value) {
-    if (IsLSB) {
-      Write32(uint32_t(Value >> 0));
-      Write32(uint32_t(Value >> 32));
-    } else {
-      Write32(uint32_t(Value >> 32));
-      Write32(uint32_t(Value >> 0));
-    }
-  }
-
-  void WriteZeros(unsigned N) {
-    const char Zeros[16] = { 0 };
-
-    for (unsigned i = 0, e = N / 16; i != e; ++i)
-      OS << StringRef(Zeros, 16);
-
-    OS << StringRef(Zeros, N % 16);
-  }
-
-  void WriteString(StringRef Str, unsigned ZeroFillSize = 0) {
-    OS << Str;
-    if (ZeroFillSize)
-      WriteZeros(ZeroFillSize - Str.size());
-  }
-
-  /// @}
 
   void WriteHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
                    bool SubsectionsViaSymbols) {
@@ -300,7 +342,7 @@ public:
     Write32(SegmentLoadCommandSize +
             NumSections * (Is64Bit ? Section64Size : Section32Size));
 
-    WriteString("", 16);
+    WriteBytes("", 16);
     if (Is64Bit) {
       Write64(0); // vmaddr
       Write64(VMSize); // vmsize
@@ -337,8 +379,8 @@ public:
     // FIXME: cast<> support!
     const MCSectionMachO &Section =
       static_cast<const MCSectionMachO&>(SD.getSection());
-    WriteString(Section.getSectionName(), 16);
-    WriteString(Section.getSegmentName(), 16);
+    WriteBytes(Section.getSectionName(), 16);
+    WriteBytes(Section.getSegmentName(), 16);
     if (Is64Bit) {
       Write64(SD.getAddress()); // address
       Write64(SD.getSize()); // size
@@ -874,7 +916,7 @@ public:
     // Write the actual section data.
     for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it)
-      WriteFileData(OS, *it, *this);
+      WriteFileData(OS, *it, this);
 
     // Write the extra padding.
     WriteZeros(SectionDataPadding);
@@ -1262,7 +1304,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 /// the \arg Count is more than the maximum optimal nops.
 ///
 /// FIXME this is X86 32-bit specific and should move to a better place.
-static uint64_t WriteNopData(uint64_t Count, MachObjectWriter &MOW) {
+static uint64_t WriteNopData(uint64_t Count, MCObjectWriter *OW) {
   static const uint8_t Nops[16][16] = {
     // nop
     {0x90},
@@ -1310,14 +1352,14 @@ static uint64_t WriteNopData(uint64_t Count, MachObjectWriter &MOW) {
     return 0;
 
   for (uint64_t i = 0; i < Count; i++)
-    MOW.Write8 (uint8_t(Nops[Count - 1][i]));
+    OW->Write8(uint8_t(Nops[Count - 1][i]));
 
   return Count;
 }
 
 /// WriteFileData - Write the \arg F data to the output file.
 static void WriteFileData(raw_ostream &OS, const MCFragment &F,
-                          MachObjectWriter &MOW) {
+                          MCObjectWriter *OW) {
   uint64_t Start = OS.tell();
   (void) Start;
 
@@ -1342,7 +1384,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     // the Count bytes.  Then if that did not fill any bytes or there are any
     // bytes left to fill use the the Value and ValueSize to fill the rest.
     if (AF.getEmitNops()) {
-      uint64_t NopByteCount = WriteNopData(Count, MOW);
+      uint64_t NopByteCount = WriteNopData(Count, OW);
       Count -= NopByteCount;
     }
 
@@ -1350,10 +1392,10 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
       switch (AF.getValueSize()) {
       default:
         assert(0 && "Invalid size!");
-      case 1: MOW.Write8 (uint8_t (AF.getValue())); break;
-      case 2: MOW.Write16(uint16_t(AF.getValue())); break;
-      case 4: MOW.Write32(uint32_t(AF.getValue())); break;
-      case 8: MOW.Write64(uint64_t(AF.getValue())); break;
+      case 1: OW->Write8 (uint8_t (AF.getValue())); break;
+      case 2: OW->Write16(uint16_t(AF.getValue())); break;
+      case 4: OW->Write32(uint32_t(AF.getValue())); break;
+      case 8: OW->Write64(uint64_t(AF.getValue())); break;
       }
     }
     break;
@@ -1370,10 +1412,10 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
       switch (FF.getValueSize()) {
       default:
         assert(0 && "Invalid size!");
-      case 1: MOW.Write8 (uint8_t (FF.getValue())); break;
-      case 2: MOW.Write16(uint16_t(FF.getValue())); break;
-      case 4: MOW.Write32(uint32_t(FF.getValue())); break;
-      case 8: MOW.Write64(uint64_t(FF.getValue())); break;
+      case 1: OW->Write8 (uint8_t (FF.getValue())); break;
+      case 2: OW->Write16(uint16_t(FF.getValue())); break;
+      case 4: OW->Write32(uint32_t(FF.getValue())); break;
+      case 8: OW->Write64(uint64_t(FF.getValue())); break;
       }
     }
     break;
@@ -1383,7 +1425,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
     for (uint64_t i = 0, e = OF.getFileSize(); i != e; ++i)
-      MOW.Write8(uint8_t(OF.getValue()));
+      OW->Write8(uint8_t(OF.getValue()));
 
     break;
   }
@@ -1399,7 +1441,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
 
 /// WriteFileData - Write the \arg SD data to the output file.
 static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
-                          MachObjectWriter &MOW) {
+                          MCObjectWriter *OW) {
   // Ignore virtual sections.
   if (isVirtualSection(SD.getSection())) {
     assert(SD.getFileSize() == 0);
@@ -1411,11 +1453,11 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 
   for (MCSectionData::const_iterator it = SD.begin(),
          ie = SD.end(); it != ie; ++it)
-    WriteFileData(OS, *it, MOW);
+    WriteFileData(OS, *it, OW);
 
   // Add section padding.
   assert(SD.getFileSize() >= SD.getSize() && "Invalid section sizes!");
-  MOW.WriteZeros(SD.getFileSize() - SD.getSize());
+  OW->WriteZeros(SD.getFileSize() - SD.getSize());
 
   assert(OS.tell() - Start == SD.getFileSize());
 }
@@ -1442,6 +1484,8 @@ void MCAssembler::Finish() {
   MOW.ExecutePostLayoutBinding(*this);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
+  //
+  // FIXME: Share layout object.
   MCAsmLayout Layout(*this);
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     for (MCSectionData::iterator it2 = it->begin(),
