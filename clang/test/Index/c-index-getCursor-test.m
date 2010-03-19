@@ -57,6 +57,7 @@ int main (int argc, const char * argv[]) {
 void f() {
    int CONCAT(my,_var);
 }
+#undef CONCAT
 
 // CHECK: [1:1 - 3:1] Invalid Cursor => NoDeclFound
 // CHECK: [3:1 - 7:1] ObjCInterfaceDecl=Foo:3:12

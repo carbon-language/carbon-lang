@@ -253,10 +253,11 @@ namespace clang {
     
     /// \brief Retrieve the macro definition that corresponds to the given
     /// \c MacroInfo.
-    MacroDefinition *findMacroDefinition(MacroInfo *MI);
+    MacroDefinition *findMacroDefinition(const MacroInfo *MI);
     
     virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
     virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
+    virtual void MacroUndefined(const IdentifierInfo *II, const MacroInfo *MI);
   };
 } // end namespace clang
 

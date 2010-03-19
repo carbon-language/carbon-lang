@@ -92,7 +92,7 @@ void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro,
   MacroDefinitions[Macro] = MD;
 }
 
-MacroDefinition *PreprocessingRecord::findMacroDefinition(MacroInfo *MI) {
+MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
   llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
     = MacroDefinitions.find(MI);
   if (Pos == MacroDefinitions.end())
@@ -102,10 +102,11 @@ MacroDefinition *PreprocessingRecord::findMacroDefinition(MacroInfo *MI) {
 }
 
 void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI) {
-  PreprocessedEntities.push_back(
+  if (MacroDefinition *Def = findMacroDefinition(MI))
+    PreprocessedEntities.push_back(
                        new (*this) MacroInstantiation(Id.getIdentifierInfo(),
                                                       Id.getLocation(),
-                                                      MacroDefinitions[MI]));
+                                                      Def));
 }
 
 void PreprocessingRecord::MacroDefined(const IdentifierInfo *II, 
@@ -115,5 +116,13 @@ void PreprocessingRecord::MacroDefined(const IdentifierInfo *II,
     = new (*this) MacroDefinition(II, MI->getDefinitionLoc(), R);
   MacroDefinitions[MI] = Def;
   PreprocessedEntities.push_back(Def);
+}
+
+void PreprocessingRecord::MacroUndefined(const IdentifierInfo *II, 
+                                         const MacroInfo *MI) {
+  llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
+    = MacroDefinitions.find(MI);
+  if (Pos != MacroDefinitions.end())
+    MacroDefinitions.erase(Pos);
 }
 
