@@ -454,7 +454,10 @@ public:
       /// Always a FunctionDecl.
       /// For conversion decls, the naming class is the source type.
       /// For construct decls, the naming class is the target type.
-      DeclAccessPair Function;
+      struct {
+        FunctionDecl *Function;
+        DeclAccessPair FoundDecl;
+      } Function;
       
       /// \brief When Kind = SK_ConversionSequence, the implicit conversion
       /// sequence 
@@ -622,7 +625,7 @@ public:
   /// \brief Add a new step invoking a conversion function, which is either
   /// a constructor or a conversion function.
   void AddUserConversionStep(FunctionDecl *Function,
-                             AccessSpecifier Access,
+                             DeclAccessPair FoundDecl,
                              QualType T);
   
   /// \brief Add a new step that performs a qualification conversion to the

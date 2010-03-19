@@ -2007,7 +2007,8 @@ void InitializationSequence::AddAddressOverloadResolutionStep(
   S.Kind = SK_ResolveAddressOfOverloadedFunction;
   S.Type = Function->getType();
   // Access is currently ignored for these.
-  S.Function = DeclAccessPair::make(Function, AccessSpecifier(0));
+  S.Function.Function = Function;
+  S.Function.FoundDecl = DeclAccessPair::make(Function, AS_none);
   Steps.push_back(S);
 }
 
@@ -2028,12 +2029,13 @@ void InitializationSequence::AddReferenceBindingStep(QualType T,
 }
 
 void InitializationSequence::AddUserConversionStep(FunctionDecl *Function,
-                                                   AccessSpecifier Access,
+                                                   DeclAccessPair FoundDecl,
                                                    QualType T) {
   Step S;
   S.Kind = SK_UserConversion;
   S.Type = T;
-  S.Function = DeclAccessPair::make(Function, Access);
+  S.Function.Function = Function;
+  S.Function.FoundDecl = FoundDecl;
   Steps.push_back(S);
 }
 
@@ -2071,7 +2073,8 @@ InitializationSequence::AddConstructorInitializationStep(
   Step S;
   S.Kind = SK_ConstructorInitialization;
   S.Type = T;
-  S.Function = DeclAccessPair::make(Constructor, Access);
+  S.Function.Function = Constructor;
+  S.Function.FoundDecl = DeclAccessPair::make(Constructor, Access);
   Steps.push_back(S);
 }
 
@@ -2198,25 +2201,26 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     DeclContext::lookup_iterator Con, ConEnd;
     for (llvm::tie(Con, ConEnd) = T1RecordDecl->lookup(ConstructorName);
          Con != ConEnd; ++Con) {
+      NamedDecl *D = *Con;
+      DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+
       // Find the constructor (which may be a template).
       CXXConstructorDecl *Constructor = 0;
-      FunctionTemplateDecl *ConstructorTmpl
-        = dyn_cast<FunctionTemplateDecl>(*Con);
+      FunctionTemplateDecl *ConstructorTmpl = dyn_cast<FunctionTemplateDecl>(D);
       if (ConstructorTmpl)
         Constructor = cast<CXXConstructorDecl>(
                                          ConstructorTmpl->getTemplatedDecl());
       else
-        Constructor = cast<CXXConstructorDecl>(*Con);
+        Constructor = cast<CXXConstructorDecl>(D);
       
       if (!Constructor->isInvalidDecl() &&
           Constructor->isConvertingConstructor(AllowExplicit)) {
         if (ConstructorTmpl)
-          S.AddTemplateOverloadCandidate(ConstructorTmpl,
-                                         ConstructorTmpl->getAccess(),
+          S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
                                          &Initializer, 1, CandidateSet);
         else
-          S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+          S.AddOverloadCandidate(Constructor, FoundDecl,
                                  &Initializer, 1, CandidateSet);
       }
     }    
@@ -2257,11 +2261,11 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       if ((AllowExplicit || !Conv->isExplicit()) &&
           (AllowRValues || Conv->getConversionType()->isLValueReferenceType())){
         if (ConvTemplate)
-          S.AddTemplateConversionCandidate(ConvTemplate, I.getAccess(),
+          S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                            ActingDC, Initializer,
                                            ToType, CandidateSet);
         else
-          S.AddConversionCandidate(Conv, I.getAccess(), ActingDC,
+          S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
                                    Initializer, ToType, CandidateSet);
       }
     }
@@ -2284,7 +2288,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     T2 = cv1T1;
 
   // Add the user-defined conversion step.
-  Sequence.AddUserConversionStep(Function, Best->getAccess(),
+  Sequence.AddUserConversionStep(Function, Best->FoundDecl,
                                  T2.getNonReferenceType());
 
   // Determine whether we need to perform derived-to-base or 
@@ -2574,25 +2578,26 @@ static void TryConstructorInitialization(Sema &S,
   DeclContext::lookup_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = DestRecordDecl->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
+    NamedDecl *D = *Con;
+    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+
     // Find the constructor (which may be a template).
     CXXConstructorDecl *Constructor = 0;
-    FunctionTemplateDecl *ConstructorTmpl
-      = dyn_cast<FunctionTemplateDecl>(*Con);
+    FunctionTemplateDecl *ConstructorTmpl = dyn_cast<FunctionTemplateDecl>(D);
     if (ConstructorTmpl)
       Constructor = cast<CXXConstructorDecl>(
                                            ConstructorTmpl->getTemplatedDecl());
     else
-      Constructor = cast<CXXConstructorDecl>(*Con);
+      Constructor = cast<CXXConstructorDecl>(D);
     
     if (!Constructor->isInvalidDecl() &&
         (AllowExplicit || !Constructor->isExplicit())) {
       if (ConstructorTmpl)
-        S.AddTemplateOverloadCandidate(ConstructorTmpl,
-                                       ConstructorTmpl->getAccess(),
+        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                        /*ExplicitArgs*/ 0,
                                        Args, NumArgs, CandidateSet);
       else
-        S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+        S.AddOverloadCandidate(Constructor, FoundDecl,
                                Args, NumArgs, CandidateSet);
     }
   }    
@@ -2623,11 +2628,11 @@ static void TryConstructorInitialization(Sema &S,
   // Add the constructor initialization step. Any cv-qualification conversion is
   // subsumed by the initialization.
   if (Kind.getKind() == InitializationKind::IK_Copy) {
-    Sequence.AddUserConversionStep(Best->Function, Best->getAccess(), DestType);
+    Sequence.AddUserConversionStep(Best->Function, Best->FoundDecl, DestType);
   } else {
     Sequence.AddConstructorInitializationStep(
                                       cast<CXXConstructorDecl>(Best->Function), 
-                                      Best->getAccess(),
+                                      Best->FoundDecl.getAccess(),
                                       DestType);
   }
 }
@@ -2744,25 +2749,27 @@ static void TryUserDefinedConversion(Sema &S,
     DeclContext::lookup_iterator Con, ConEnd;
     for (llvm::tie(Con, ConEnd) = DestRecordDecl->lookup(ConstructorName);
          Con != ConEnd; ++Con) {
+      NamedDecl *D = *Con;
+      DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+
       // Find the constructor (which may be a template).
       CXXConstructorDecl *Constructor = 0;
       FunctionTemplateDecl *ConstructorTmpl
-        = dyn_cast<FunctionTemplateDecl>(*Con);
+        = dyn_cast<FunctionTemplateDecl>(D);
       if (ConstructorTmpl)
         Constructor = cast<CXXConstructorDecl>(
                                            ConstructorTmpl->getTemplatedDecl());
       else
-        Constructor = cast<CXXConstructorDecl>(*Con);
+        Constructor = cast<CXXConstructorDecl>(D);
       
       if (!Constructor->isInvalidDecl() &&
           Constructor->isConvertingConstructor(AllowExplicit)) {
         if (ConstructorTmpl)
-          S.AddTemplateOverloadCandidate(ConstructorTmpl,
-                                         ConstructorTmpl->getAccess(),
+          S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
                                          &Initializer, 1, CandidateSet);
         else
-          S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+          S.AddOverloadCandidate(Constructor, FoundDecl,
                                  &Initializer, 1, CandidateSet);
       }
     }    
@@ -2799,11 +2806,11 @@ static void TryUserDefinedConversion(Sema &S,
         
         if (AllowExplicit || !Conv->isExplicit()) {
           if (ConvTemplate)
-            S.AddTemplateConversionCandidate(ConvTemplate, I.getAccess(),
+            S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
                                              ActingDC, Initializer, DestType,
                                              CandidateSet);
           else
-            S.AddConversionCandidate(Conv, I.getAccess(), ActingDC,
+            S.AddConversionCandidate(Conv, I.getPair(), ActingDC,
                                      Initializer, DestType, CandidateSet);
         }
       }
@@ -2825,13 +2832,13 @@ static void TryUserDefinedConversion(Sema &S,
   if (isa<CXXConstructorDecl>(Function)) {
     // Add the user-defined conversion step. Any cv-qualification conversion is
     // subsumed by the initialization.
-    Sequence.AddUserConversionStep(Function, Best->getAccess(), DestType);
+    Sequence.AddUserConversionStep(Function, Best->FoundDecl, DestType);
     return;
   }
 
   // Add the user-defined conversion step that calls the conversion function.
   QualType ConvType = Function->getResultType().getNonReferenceType();
-  Sequence.AddUserConversionStep(Function, Best->getAccess(), ConvType);
+  Sequence.AddUserConversionStep(Function, Best->FoundDecl, ConvType);
 
   // If the conversion following the call to the conversion function is 
   // interesting, add it as a separate step.
@@ -3135,8 +3142,10 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
     if (!Constructor || Constructor->isInvalidDecl() ||
         !Constructor->isCopyConstructor())
       continue;
-    
-    S.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+
+    DeclAccessPair FoundDecl
+      = DeclAccessPair::make(Constructor, Constructor->getAccess());
+    S.AddOverloadCandidate(Constructor, FoundDecl,
                            &CurInitExpr, 1, CandidateSet);
   }    
   
@@ -3169,6 +3178,10 @@ static Sema::OwningExprResult CopyIfRequiredForEntity(Sema &S,
       << Best->Function->isDeleted();
     return S.ExprError();
   }
+
+  S.CheckConstructorAccess(Loc,
+                           cast<CXXConstructorDecl>(Best->Function),
+                           Best->FoundDecl.getAccess());
 
   CurInit.release();
   return S.BuildCXXConstructExpr(Loc, CurInitExpr->getType(),
@@ -3303,7 +3316,7 @@ InitializationSequence::Perform(Sema &S,
       // initializer to reflect that choice.
       // Access control was done in overload resolution.
       CurInit = S.FixOverloadedFunctionReference(move(CurInit),
-                              cast<FunctionDecl>(Step->Function.getDecl()));
+                                                 Step->Function.Function);
       break;
         
     case SK_CastDerivedToBaseRValue:
@@ -3367,8 +3380,8 @@ InitializationSequence::Perform(Sema &S,
       // or a conversion function.
       CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
       bool IsCopy = false;
-      FunctionDecl *Fn = cast<FunctionDecl>(Step->Function.getDecl());
-      AccessSpecifier FnAccess = Step->Function.getAccess();
+      FunctionDecl *Fn = Step->Function.Function;
+      DeclAccessPair FoundFn = Step->Function.FoundDecl;
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Fn)) {
         // Build a call to the selected constructor.
         ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
@@ -3390,7 +3403,8 @@ InitializationSequence::Perform(Sema &S,
         if (CurInit.isInvalid())
           return S.ExprError();
 
-        S.CheckConstructorAccess(Kind.getLocation(), Constructor, FnAccess);
+        S.CheckConstructorAccess(Kind.getLocation(), Constructor,
+                                 FoundFn.getAccess());
         
         CastKind = CastExpr::CK_ConstructorConversion;
         QualType Class = S.Context.getTypeDeclType(Constructor->getParent());
@@ -3402,7 +3416,7 @@ InitializationSequence::Perform(Sema &S,
         CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
 
         S.CheckMemberOperatorAccess(Kind.getLocation(), CurInitExpr, 0,
-                                    Conversion, FnAccess);
+                                    FoundFn);
         
         // FIXME: Should we move this initialization into a separate 
         // derived-to-base conversion? I believe the answer is "no", because
@@ -3469,7 +3483,7 @@ InitializationSequence::Perform(Sema &S,
 
     case SK_ConstructorInitialization: {
       CXXConstructorDecl *Constructor
-        = cast<CXXConstructorDecl>(Step->Function.getDecl());
+        = cast<CXXConstructorDecl>(Step->Function.Function);
 
       // Build a call to the selected constructor.
       ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(S);
@@ -3506,7 +3520,8 @@ InitializationSequence::Perform(Sema &S,
         return S.ExprError();
 
       // Only check access if all of that succeeded.
-      S.CheckConstructorAccess(Loc, Constructor, Step->Function.getAccess());
+      S.CheckConstructorAccess(Loc, Constructor,
+                               Step->Function.FoundDecl.getAccess());
       
       bool Elidable 
         = cast<CXXConstructExpr>((Expr *)CurInit.get())->isElidable();
@@ -3972,7 +3987,8 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
       break;
       
     case SK_UserConversion:
-      OS << "user-defined conversion via " << S->Function->getNameAsString();
+      OS << "user-defined conversion via "
+         << S->Function.Function->getNameAsString();
       break;
       
     case SK_QualificationConversionRValue:

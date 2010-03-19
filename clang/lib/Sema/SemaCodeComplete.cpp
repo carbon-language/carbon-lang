@@ -2253,7 +2253,8 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
         Results.push_back(ResultCandidate(FDecl));
       else
         // FIXME: access?
-        AddOverloadCandidate(FDecl, AS_none, Args, NumArgs, CandidateSet,
+        AddOverloadCandidate(FDecl, DeclAccessPair::make(FDecl, AS_none),
+                             Args, NumArgs, CandidateSet,
                              false, false, /*PartialOverloading*/ true);
     }
   }

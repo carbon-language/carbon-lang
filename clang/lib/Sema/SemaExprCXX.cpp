@@ -921,7 +921,9 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   }
 
   FoundDelete.suppressDiagnostics();
-  UnresolvedSet<4> Matches;
+
+  llvm::SmallVector<std::pair<DeclAccessPair,FunctionDecl*>, 2> Matches;
+
   if (NumPlaceArgs > 0) {
     // C++ [expr.new]p20:
     //   A declaration of a placement deallocation function matches the
@@ -964,7 +966,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
         Fn = cast<FunctionDecl>((*D)->getUnderlyingDecl());
 
       if (Context.hasSameType(Fn->getType(), ExpectedFunctionType))
-        Matches.addDecl(Fn, D.getAccess());
+        Matches.push_back(std::make_pair(D.getPair(), Fn));
     }
   } else {
     // C++ [expr.new]p20:
@@ -975,7 +977,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
          D != DEnd; ++D) {
       if (FunctionDecl *Fn = dyn_cast<FunctionDecl>((*D)->getUnderlyingDecl()))
         if (isNonPlacementDeallocationFunction(Fn))
-          Matches.addDecl(D.getDecl(), D.getAccess());
+          Matches.push_back(std::make_pair(D.getPair(), Fn));
     }
   }
 
@@ -984,7 +986,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   //   function, that function will be called; otherwise, no
   //   deallocation function will be called.
   if (Matches.size() == 1) {
-    OperatorDelete = cast<FunctionDecl>(Matches[0]->getUnderlyingDecl());
+    OperatorDelete = Matches[0].second;
 
     // C++0x [expr.new]p20:
     //   If the lookup finds the two-parameter form of a usual
@@ -1001,7 +1003,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
         << DeleteName;
     } else {
       CheckAllocationAccess(StartLoc, Range, FoundDelete.getNamingClass(),
-                            Matches[0].getDecl(), Matches[0].getAccess());
+                            Matches[0].first);
     }
   }
 
@@ -1033,18 +1035,18 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
        Alloc != AllocEnd; ++Alloc) {
     // Even member operator new/delete are implicitly treated as
     // static, so don't use AddMemberCandidate.
+    NamedDecl *D = (*Alloc)->getUnderlyingDecl();
 
-    if (FunctionTemplateDecl *FnTemplate = 
-          dyn_cast<FunctionTemplateDecl>((*Alloc)->getUnderlyingDecl())) {
-      AddTemplateOverloadCandidate(FnTemplate, Alloc.getAccess(),
+    if (FunctionTemplateDecl *FnTemplate = dyn_cast<FunctionTemplateDecl>(D)) {
+      AddTemplateOverloadCandidate(FnTemplate, Alloc.getPair(),
                                    /*ExplicitTemplateArgs=*/0, Args, NumArgs,
                                    Candidates,
                                    /*SuppressUserConversions=*/false);
       continue;
     }
 
-    FunctionDecl *Fn = cast<FunctionDecl>((*Alloc)->getUnderlyingDecl());
-    AddOverloadCandidate(Fn, Alloc.getAccess(), Args, NumArgs, Candidates,
+    FunctionDecl *Fn = cast<FunctionDecl>(D);
+    AddOverloadCandidate(Fn, Alloc.getPair(), Args, NumArgs, Candidates,
                          /*SuppressUserConversions=*/false);
   }
 
@@ -1066,8 +1068,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
         return true;
     }
     Operator = FnDecl;
-    CheckAllocationAccess(StartLoc, Range, R.getNamingClass(),
-                          FnDecl, Best->getAccess());
+    CheckAllocationAccess(StartLoc, Range, R.getNamingClass(), Best->FoundDecl);
     return false;
   }
 

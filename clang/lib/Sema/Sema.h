@@ -321,6 +321,14 @@ public:
         Diag(0) {
     }
 
+    AccessedEntity(MemberNonce _,
+                   CXXRecordDecl *NamingClass,
+                   DeclAccessPair FoundDecl)
+      : Access(FoundDecl.getAccess()), IsMember(true), 
+        Target(FoundDecl.getDecl()), NamingClass(NamingClass),
+        Diag(0) {
+    }
+
     AccessedEntity(BaseNonce _,
                    CXXRecordDecl *BaseClass,
                    CXXRecordDecl *DerivedClass,
@@ -1131,12 +1139,12 @@ public:
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
 
   void AddOverloadCandidate(NamedDecl *Function,
-                            AccessSpecifier Access,
+                            DeclAccessPair FoundDecl,
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet &CandidateSet);
 
   void AddOverloadCandidate(FunctionDecl *Function,
-                            AccessSpecifier Access,
+                            DeclAccessPair FoundDecl,
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions = false,
@@ -1146,20 +1154,21 @@ public:
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
                              bool SuppressUserConversions = false);
-  void AddMethodCandidate(NamedDecl *Decl, AccessSpecifier Access,
+  void AddMethodCandidate(DeclAccessPair FoundDecl,
                           QualType ObjectType,
                           Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversion = false,
                           bool ForceRValue = false);
-  void AddMethodCandidate(CXXMethodDecl *Method, AccessSpecifier Access,
+  void AddMethodCandidate(CXXMethodDecl *Method,
+                          DeclAccessPair FoundDecl,
                           CXXRecordDecl *ActingContext, QualType ObjectType,
                           Expr **Args, unsigned NumArgs,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversions = false,
                           bool ForceRValue = false);
   void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
-                                  AccessSpecifier Access,
+                                  DeclAccessPair FoundDecl,
                                   CXXRecordDecl *ActingContext,
                          const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                   QualType ObjectType,
@@ -1168,24 +1177,24 @@ public:
                                   bool SuppressUserConversions = false,
                                   bool ForceRValue = false);
   void AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
-                                    AccessSpecifier Access,
+                                    DeclAccessPair FoundDecl,
                       const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet,
                                     bool SuppressUserConversions = false,
                                     bool ForceRValue = false);
   void AddConversionCandidate(CXXConversionDecl *Conversion,
-                              AccessSpecifier Access,
+                              DeclAccessPair FoundDecl,
                               CXXRecordDecl *ActingContext,
                               Expr *From, QualType ToType,
                               OverloadCandidateSet& CandidateSet);
   void AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
-                                      AccessSpecifier Access,
+                                      DeclAccessPair FoundDecl,
                                       CXXRecordDecl *ActingContext,
                                       Expr *From, QualType ToType,
                                       OverloadCandidateSet &CandidateSet);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
-                             AccessSpecifier Access,
+                             DeclAccessPair FoundDecl,
                              CXXRecordDecl *ActingContext,
                              const FunctionProtoType *Proto,
                              QualType ObjectTy, Expr **Args, unsigned NumArgs,
@@ -2623,16 +2632,13 @@ public:
                                 AccessSpecifier LexicalAS);
 
   AccessResult CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
-                                           NamedDecl *D,
-                                           AccessSpecifier Access);
+                                           DeclAccessPair FoundDecl);
   AccessResult CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
-                                           NamedDecl *D,
-                                           AccessSpecifier Access);
+                                           DeclAccessPair FoundDecl);
   AccessResult CheckAllocationAccess(SourceLocation OperatorLoc,
                                      SourceRange PlacementRange,
                                      CXXRecordDecl *NamingClass,
-                                     NamedDecl *Allocator,
-                                     AccessSpecifier Access);
+                                     DeclAccessPair FoundDecl);
   AccessResult CheckConstructorAccess(SourceLocation Loc,
                                       CXXConstructorDecl *D,
                                       AccessSpecifier Access);
@@ -2645,8 +2651,7 @@ public:
   AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
                                          Expr *ObjectExpr,
                                          Expr *ArgExpr,
-                                         NamedDecl *D,
-                                         AccessSpecifier Access);
+                                         DeclAccessPair FoundDecl);
   AccessResult CheckBaseClassAccess(SourceLocation AccessLoc,
                                     QualType Base, QualType Derived,
                                     const CXXBasePath &Path,

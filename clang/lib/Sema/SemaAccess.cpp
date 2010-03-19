@@ -527,15 +527,13 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
 }
 
 Sema::AccessResult Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
-                                                     NamedDecl *D,
-                                                     AccessSpecifier Access) {
+                                                     DeclAccessPair Found) {
   if (!getLangOptions().AccessControl ||
       !E->getNamingClass() ||
-      Access == AS_public)
+      Found.getAccess() == AS_public)
     return AR_accessible;
 
-  AccessedEntity Entity(AccessedEntity::Member,
-                        E->getNamingClass(), Access, D);
+  AccessedEntity Entity(AccessedEntity::Member, E->getNamingClass(), Found);
   Entity.setDiag(diag::err_access) << E->getSourceRange();
 
   return CheckAccess(*this, E->getNameLoc(), Entity);
@@ -544,14 +542,12 @@ Sema::AccessResult Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,
 /// Perform access-control checking on a previously-unresolved member
 /// access which has now been resolved to a member.
 Sema::AccessResult Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
-                                                     NamedDecl *D,
-                                                     AccessSpecifier Access) {
+                                                     DeclAccessPair Found) {
   if (!getLangOptions().AccessControl ||
-      Access == AS_public)
+      Found.getAccess() == AS_public)
     return AR_accessible;
 
-  AccessedEntity Entity(AccessedEntity::Member,
-                        E->getNamingClass(), Access, D);
+  AccessedEntity Entity(AccessedEntity::Member, E->getNamingClass(), Found);
   Entity.setDiag(diag::err_access) << E->getSourceRange();
 
   return CheckAccess(*this, E->getMemberLoc(), Entity);
@@ -569,7 +565,8 @@ Sema::AccessResult Sema::CheckDestructorAccess(SourceLocation Loc,
     return AR_accessible;
 
   CXXRecordDecl *NamingClass = Dtor->getParent();
-  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Access, Dtor);
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass,
+                        DeclAccessPair::make(Dtor, Access));
   Entity.setDiag(PDiag); // TODO: avoid copy
 
   return CheckAccess(*this, Loc, Entity);
@@ -584,8 +581,8 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
     return AR_accessible;
 
   CXXRecordDecl *NamingClass = Constructor->getParent();
-  AccessedEntity Entity(AccessedEntity::Member,
-                        NamingClass, Access, Constructor);
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass,
+                        DeclAccessPair::make(Constructor, Access));
   Entity.setDiag(diag::err_access_ctor);
 
   return CheckAccess(*this, UseLoc, Entity);
@@ -602,7 +599,8 @@ Sema::AccessResult Sema::CheckDirectMemberAccess(SourceLocation UseLoc,
     return AR_accessible;
 
   CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(Target->getDeclContext());
-  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Access, Target);
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass,
+                        DeclAccessPair::make(Target, Access));
   Entity.setDiag(Diag);
   return CheckAccess(*this, UseLoc, Entity);
 }
@@ -612,14 +610,13 @@ Sema::AccessResult Sema::CheckDirectMemberAccess(SourceLocation UseLoc,
 Sema::AccessResult Sema::CheckAllocationAccess(SourceLocation OpLoc,
                                                SourceRange PlacementRange,
                                                CXXRecordDecl *NamingClass,
-                                               NamedDecl *Fn,
-                                               AccessSpecifier Access) {
+                                               DeclAccessPair Found) {
   if (!getLangOptions().AccessControl ||
       !NamingClass ||
-      Access == AS_public)
+      Found.getAccess() == AS_public)
     return AR_accessible;
 
-  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Access, Fn);
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Found);
   Entity.setDiag(diag::err_access)
     << PlacementRange;
 
@@ -631,18 +628,16 @@ Sema::AccessResult Sema::CheckAllocationAccess(SourceLocation OpLoc,
 Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
                                                    Expr *ObjectExpr,
                                                    Expr *ArgExpr,
-                                                   NamedDecl *MemberOperator,
-                                                   AccessSpecifier Access) {
+                                                   DeclAccessPair Found) {
   if (!getLangOptions().AccessControl ||
-      Access == AS_public)
+      Found.getAccess() == AS_public)
     return AR_accessible;
 
   const RecordType *RT = ObjectExpr->getType()->getAs<RecordType>();
   assert(RT && "found member operator but object expr not of record type");
   CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(RT->getDecl());
 
-  AccessedEntity Entity(AccessedEntity::Member,
-                        NamingClass, Access, MemberOperator);
+  AccessedEntity Entity(AccessedEntity::Member, NamingClass, Found);
   Entity.setDiag(diag::err_access)
     << ObjectExpr->getSourceRange()
     << (ArgExpr ? ArgExpr->getSourceRange() : SourceRange());
@@ -694,7 +689,8 @@ void Sema::CheckLookupAccess(const LookupResult &R) {
   for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I) {
     if (I.getAccess() != AS_public) {
       AccessedEntity Entity(AccessedEntity::Member,
-                            R.getNamingClass(), I.getAccess(), *I);
+                            R.getNamingClass(),
+                            I.getPair());
       Entity.setDiag(diag::err_access);
 
       CheckAccess(*this, R.getNameLoc(), Entity);

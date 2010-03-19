@@ -18,6 +18,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/UnresolvedSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -450,6 +451,11 @@ namespace clang {
     /// function pointer or reference (C++ [over.call.object]).
     FunctionDecl *Function;
 
+    /// FoundDecl - The original declaration that was looked up /
+    /// invented / otherwise found, together with its access.
+    /// Might be a UsingShadowDecl or a FunctionTemplateDecl.
+    DeclAccessPair FoundDecl;
+
     // BuiltinTypes - Provides the return and parameter types of a
     // built-in overload candidate. Only valid when Function is NULL.
     struct {
@@ -485,14 +491,6 @@ namespace clang {
     /// FailureKind - The reason why this candidate is not viable.
     /// Actually an OverloadFailureKind.
     unsigned char FailureKind;
-
-    /// PathAccess - The 'path access' to the given function/conversion.
-    /// Actually an AccessSpecifier.
-    unsigned Access;
-
-    AccessSpecifier getAccess() const {
-      return AccessSpecifier(Access);
-    }
 
     /// A structure used to record information about a failed
     /// template argument deduction.

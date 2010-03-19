@@ -4204,6 +4204,8 @@ static void AddConstructorInitializationCandidates(Sema &SemaRef,
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = ClassDecl->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
+    DeclAccessPair FoundDecl = DeclAccessPair::make(*Con, (*Con)->getAccess());
+
     // Find the constructor (which may be a template).
     CXXConstructorDecl *Constructor = 0;
     FunctionTemplateDecl *ConstructorTmpl= dyn_cast<FunctionTemplateDecl>(*Con);
@@ -4220,12 +4222,11 @@ static void AddConstructorInitializationCandidates(Sema &SemaRef,
         ((Kind.getKind() == InitializationKind::IK_Default) && 
          Constructor->isDefaultConstructor())) {
       if (ConstructorTmpl)
-        SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl,
-                                             ConstructorTmpl->getAccess(),
+        SemaRef.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                              /*ExplicitArgs*/ 0,
                                              Args, NumArgs, CandidateSet);
       else
-        SemaRef.AddOverloadCandidate(Constructor, Constructor->getAccess(),
+        SemaRef.AddOverloadCandidate(Constructor, FoundDecl,
                                      Args, NumArgs, CandidateSet);
     }
   }
@@ -4535,10 +4536,10 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       if (Conv->getConversionType()->isLValueReferenceType() &&
           (AllowExplicit || !Conv->isExplicit())) {
         if (ConvTemplate)
-          AddTemplateConversionCandidate(ConvTemplate, I.getAccess(), ActingDC,
+          AddTemplateConversionCandidate(ConvTemplate, I.getPair(), ActingDC,
                                          Init, DeclType, CandidateSet);
         else
-          AddConversionCandidate(Conv, I.getAccess(), ActingDC, Init,
+          AddConversionCandidate(Conv, I.getPair(), ActingDC, Init,
                                  DeclType, CandidateSet);
       }
     }
