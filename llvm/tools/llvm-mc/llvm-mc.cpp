@@ -278,18 +278,17 @@ static int AssembleInput(const char *ProgName) {
     return 1;
   }
 
-  OwningPtr<MCInstPrinter> IP;
   OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
   OwningPtr<TargetAsmBackend> TAB;
 
   if (FileType == OFT_AssemblyFile) {
-    IP.reset(TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out));
+    MCInstPrinter *IP =
+      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out);
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     Str.reset(createAsmStreamer(Ctx, *Out,TM->getTargetData()->isLittleEndian(),
-                                /*asmverbose*/true, IP.get(), CE.get(),
-                                ShowInst));
+                                /*asmverbose*/true, IP, CE.get(), ShowInst));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));

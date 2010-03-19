@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -29,7 +30,7 @@ namespace {
 class MCAsmStreamer : public MCStreamer {
   formatted_raw_ostream &OS;
   const MCAsmInfo &MAI;
-  MCInstPrinter *InstPrinter;
+  OwningPtr<MCInstPrinter> InstPrinter;
   MCCodeEmitter *Emitter;
   
   SmallString<128> CommentToEmit;

@@ -291,7 +291,8 @@ class TargetAsmBackend;
   /// assembler.
   ///
   /// \param InstPrint - If given, the instruction printer to use. If not given
-  /// the MCInst representation will be printed.
+  /// the MCInst representation will be printed.  This method takes ownership of
+  /// InstPrint.
   ///
   /// \param CE - If given, a code emitter to use to show the instruction
   /// encoding inline with the assembly.
