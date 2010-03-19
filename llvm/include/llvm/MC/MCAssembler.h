@@ -38,6 +38,7 @@ class TargetAsmBackend;
 /// which needs to be rewritten. This region will either be rewritten by the
 /// assembler or cause a relocation entry to be generated.
 class MCAsmFixup {
+public:
   /// Offset - The offset inside the fragment which needs to be rewritten.
   uint64_t Offset;
 
