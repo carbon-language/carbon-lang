@@ -120,18 +120,14 @@ const std::string &CodeGenTarget::getName() const {
 }
 
 std::string CodeGenTarget::getInstNamespace() const {
-  std::string InstNS;
-
   for (inst_iterator i = inst_begin(), e = inst_end(); i != e; ++i) {
-    InstNS = i->second.Namespace;
-
-    // Make sure not to pick up "TargetInstrInfo" by accidentally getting
+    // Make sure not to pick up "TargetOpcode" by accidentally getting
     // the namespace off the PHI instruction or something.
-    if (InstNS != "TargetInstrInfo")
-      break;
+    if ((*i)->Namespace != "TargetOpcode")
+      return (*i)->Namespace;
   }
 
-  return InstNS;
+  return "";
 }
 
 Record *CodeGenTarget::getInstructionSet() const {
@@ -300,7 +296,7 @@ GetInstByName(const char *Name,
 
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
-void CodeGenTarget::ComputeInstrsByEnum() {
+void CodeGenTarget::ComputeInstrsByEnum() const {
   const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
   const CodeGenInstruction *PHI = GetInstByName("PHI", Insts);
   const CodeGenInstruction *INLINEASM = GetInstByName("INLINEASM", Insts);
@@ -332,20 +328,25 @@ void CodeGenTarget::ComputeInstrsByEnum() {
   InstrsByEnum.push_back(SUBREG_TO_REG);
   InstrsByEnum.push_back(COPY_TO_REGCLASS);
   InstrsByEnum.push_back(DBG_VALUE);
-  for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
-    if (&II->second != PHI &&
-        &II->second != INLINEASM &&
-        &II->second != DBG_LABEL &&
-        &II->second != EH_LABEL &&
-        &II->second != GC_LABEL &&
-        &II->second != KILL &&
-        &II->second != EXTRACT_SUBREG &&
-        &II->second != INSERT_SUBREG &&
-        &II->second != IMPLICIT_DEF &&
-        &II->second != SUBREG_TO_REG &&
-        &II->second != COPY_TO_REGCLASS &&
-        &II->second != DBG_VALUE)
-      InstrsByEnum.push_back(&II->second);
+  
+  for (std::map<std::string, CodeGenInstruction>::const_iterator
+       I = Insts.begin(), E = Insts.end(); I != E; ++I) {
+    const CodeGenInstruction *CGI = &I->second;
+  
+    if (CGI != PHI &&
+        CGI != INLINEASM &&
+        CGI != DBG_LABEL &&
+        CGI != EH_LABEL &&
+        CGI != GC_LABEL &&
+        CGI != KILL &&
+        CGI != EXTRACT_SUBREG &&
+        CGI != INSERT_SUBREG &&
+        CGI != IMPLICIT_DEF &&
+        CGI != SUBREG_TO_REG &&
+        CGI != COPY_TO_REGCLASS &&
+        CGI != DBG_VALUE)
+      InstrsByEnum.push_back(CGI);
+  }
 }
 
 

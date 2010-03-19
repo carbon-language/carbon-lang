@@ -71,7 +71,7 @@ class CodeGenTarget {
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
   
-  std::vector<const CodeGenInstruction*> InstrsByEnum;
+  mutable std::vector<const CodeGenInstruction*> InstrsByEnum;
 public:
   CodeGenTarget();
 
@@ -205,25 +205,25 @@ public:
   
   CodeGenInstruction &getInstruction(const Record *InstRec) const;  
 
-  typedef std::map<std::string,
-                   CodeGenInstruction>::const_iterator inst_iterator;
-  inst_iterator inst_begin() const { return getInstructions().begin(); }
-  inst_iterator inst_end() const { return Instructions.end(); }
-
   /// getInstructionsByEnumValue - Return all of the instructions defined by the
   /// target, ordered by their enum value.
-  const std::vector<const CodeGenInstruction*> &getInstructionsByEnumValue() {
+  const std::vector<const CodeGenInstruction*> &
+  getInstructionsByEnumValue() const {
     if (InstrsByEnum.empty()) ComputeInstrsByEnum();
     return InstrsByEnum;
   }
 
-
+  typedef std::vector<const CodeGenInstruction*>::const_iterator inst_iterator;
+  inst_iterator inst_begin() const{return getInstructionsByEnumValue().begin();}
+  inst_iterator inst_end() const { return getInstructionsByEnumValue().end(); }
+  
+  
   /// isLittleEndianEncoding - are instruction bit patterns defined as  [0..n]?
   ///
   bool isLittleEndianEncoding() const;
   
 private:
-  void ComputeInstrsByEnum();
+  void ComputeInstrsByEnum() const;
 };
 
 /// ComplexPattern - ComplexPattern info, corresponding to the ComplexPattern
