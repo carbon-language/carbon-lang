@@ -15,7 +15,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/MC/MachObjectWriter.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -541,12 +541,13 @@ void MCAssembler::Finish() {
       dump(); });
 
   // FIXME: Factor out MCObjectWriter.
-  bool Is64Bit = StringRef(getBackend().getTarget().getName()) == "x86-64";
-  MachObjectWriter MOW(OS, Is64Bit);
+  llvm::OwningPtr<MCObjectWriter> Writer(getBackend().createObjectWriter(OS));
+  if (!Writer)
+    llvm_report_error("unable to create object writer!");
 
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
-  MOW.ExecutePostLayoutBinding(*this);
+  Writer->ExecutePostLayoutBinding(*this);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
   //
@@ -570,7 +571,7 @@ void MCAssembler::Finish() {
           // The fixup was unresolved, we need a relocation. Inform the object
           // writer of the relocation, and give it an opportunity to adjust the
           // fixup value if need be.
-          MOW.RecordRelocation(*this, *DF, Fixup, Target, FixedValue);
+          Writer->RecordRelocation(*this, *DF, Fixup, Target, FixedValue);
         }
 
         getBackend().ApplyFixup(Fixup, *DF, FixedValue);
@@ -579,8 +580,7 @@ void MCAssembler::Finish() {
   }
 
   // Write the object file.
-  MOW.WriteObject(*this);
-
+  Writer->WriteObject(*this);
   OS.flush();
 }
 

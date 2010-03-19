@@ -15,8 +15,10 @@
 namespace llvm {
 class MCAsmFixup;
 class MCDataFragment;
+class MCObjectWriter;
 class MCSection;
 class Target;
+class raw_ostream;
 
 /// TargetAsmBackend - Generic interface to target specific assembler backends.
 class TargetAsmBackend {
@@ -36,6 +38,10 @@ public:
   virtual ~TargetAsmBackend();
 
   const Target &getTarget() const { return TheTarget; }
+
+  /// createObjectWriter - Create a new MCObjectWriter instance for use by the
+  /// assembler backend to emit the final object file.
+  virtual MCObjectWriter *createObjectWriter(raw_ostream &OS) const = 0;
 
   /// hasAbsolutizedSet - Check whether this target "absolutizes"
   /// assignments. That is, given code like:

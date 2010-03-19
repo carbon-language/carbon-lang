@@ -13,6 +13,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MachObjectWriter.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
@@ -57,6 +58,10 @@ public:
     HasScatteredSymbols = true;
   }
 
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    return 0;
+  }
+
   bool isVirtualSection(const MCSection &Section) const {
     const MCSectionELF &SE = static_cast<const MCSectionELF&>(Section);
     return SE.getType() == MCSectionELF::SHT_NOBITS;;
@@ -82,6 +87,10 @@ class DarwinX86_32AsmBackend : public DarwinX86AsmBackend {
 public:
   DarwinX86_32AsmBackend(const Target &T)
     : DarwinX86AsmBackend(T) {}
+
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    return new MachObjectWriter(OS, /*Is64Bit=*/false);
+  }
 };
 
 class DarwinX86_64AsmBackend : public DarwinX86AsmBackend {
@@ -89,6 +98,10 @@ public:
   DarwinX86_64AsmBackend(const Target &T)
     : DarwinX86AsmBackend(T) {
     HasReliableSymbolDifference = true;
+  }
+
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    return new MachObjectWriter(OS, /*Is64Bit=*/true);
   }
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
