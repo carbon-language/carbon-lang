@@ -31,6 +31,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Pragma.h"
+#include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
@@ -627,3 +628,47 @@ bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
 }
 
 CommentHandler::~CommentHandler() { }
+
+namespace {
+  /// \brief Preprocessor callback action used to populate a preprocessing
+  /// record.
+  class PopulatePreprocessingRecord : public PPCallbacks {
+    /// \brief The preprocessing record this action will populate.
+    PreprocessingRecord &Record;
+    
+    /// \brief Mapping from MacroInfo structures to their definitions.
+    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
+    
+  public:
+    explicit PopulatePreprocessingRecord(PreprocessingRecord &Record)
+    : Record(Record) { }
+    
+    virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
+    virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
+  };  
+}
+
+void PopulatePreprocessingRecord::MacroExpands(const Token &Id, 
+                                               const MacroInfo* MI) {
+  Record.addPreprocessedEntity(
+                       new (Record) MacroInstantiation(Id.getIdentifierInfo(),
+                                                       Id.getLocation(),
+                                                       MacroDefinitions[MI]));
+}
+
+void PopulatePreprocessingRecord::MacroDefined(const IdentifierInfo *II, 
+                                               const MacroInfo *MI) {
+  SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
+  MacroDefinition *Def
+  = new (Record) MacroDefinition(II, MI->getDefinitionLoc(), R);
+  MacroDefinitions[MI] = Def;
+  Record.addPreprocessedEntity(Def);
+}
+
+void Preprocessor::createPreprocessingRecord() {
+  if (Record)
+    return;
+  
+  Record.reset(new PreprocessingRecord);
+  addPPCallbacks(new PopulatePreprocessingRecord(*Record));
+}

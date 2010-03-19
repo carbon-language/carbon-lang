@@ -224,6 +224,9 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
     PP->setPTHManager(PTHMgr);
   }
 
+  if (PPOpts.DetailedRecord)
+    PP->createPreprocessingRecord();
+  
   InitializePreprocessor(*PP, PPOpts, HSOpts, FEOpts);
 
   // Handle generating dependencies, if requested.

@@ -43,7 +43,8 @@ class ScratchBuffer;
 class TargetInfo;
 class PPCallbacks;
 class DirectoryLookup;
-
+class PreprocessingRecord;
+  
 /// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
@@ -209,6 +210,13 @@ class Preprocessor {
   unsigned NumCachedTokenLexers;
   TokenLexer *TokenLexerCache[TokenLexerCacheSize];
 
+  /// \brief A record of the macro definitions and instantiations that
+  /// occurred during preprocessing. 
+  ///
+  /// This is an optional side structure that can be enabled with
+  /// \c createPreprocessingRecord() prior to preprocessing.
+  llvm::OwningPtr<PreprocessingRecord> Record;
+  
 private:  // Cached tokens state.
   typedef llvm::SmallVector<Token, 1> CachedTokensTy;
 
@@ -348,6 +356,14 @@ public:
   /// It is an error to remove a handler that has not been registered.
   void RemoveCommentHandler(CommentHandler *Handler);
 
+  /// \brief Retrieve the preprocessing record, or NULL if there is no
+  /// preprocessing record.
+  PreprocessingRecord *getPreprocessingRecord() const { return Record.get(); }
+  
+  /// \brief Create a new preprocessing record, which will keep track of 
+  /// all macro expansions, macro definitions, etc.
+  void createPreprocessingRecord();
+  
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
   bool EnterMainSourceFile();

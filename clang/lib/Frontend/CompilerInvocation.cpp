@@ -575,6 +575,8 @@ static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
   }
   if (!Opts.UsePredefines)
     Res.push_back("-undef");
+  if (Opts.DetailedRecord)
+    Res.push_back("-detailed-preprocessing-record");
   if (!Opts.ImplicitPCHInclude.empty()) {
     Res.push_back("-include-pch");
     Res.push_back(Opts.ImplicitPCHInclude);
@@ -1232,7 +1234,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   else
     Opts.TokenCache = Opts.ImplicitPTHInclude;
   Opts.UsePredefines = !Args.hasArg(OPT_undef);
-
+  Opts.DetailedRecord = Args.hasArg(OPT_detailed_preprocessing_record);
   // Add macros from the command line.
   for (arg_iterator it = Args.filtered_begin(OPT_D, OPT_U),
          ie = Args.filtered_end(); it != ie; ++it) {

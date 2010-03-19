@@ -448,7 +448,9 @@ def U : JoinedOrSeparate<"-U">, MetaVarName<"<macro>">,
   HelpText<"Undefine the specified macro">;
 def undef : Flag<"-undef">, MetaVarName<"<macro>">,
   HelpText<"undef all system defines">;
-
+def detailed_preprocessing_record : Flag<"-detailed-preprocessing-record">,
+  HelpText<"include a detailed record of preprocessing actions">;
+  
 //===----------------------------------------------------------------------===//
 // Preprocessed Output Options
 //===----------------------------------------------------------------------===//

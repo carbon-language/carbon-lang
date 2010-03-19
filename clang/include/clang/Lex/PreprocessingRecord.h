@@ -14,10 +14,7 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSINGRECORD_H
 #define LLVM_CLANG_LEX_PREPROCESSINGRECORD_H
 
-#include "clang/Lex/PPCallbacks.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
@@ -206,24 +203,6 @@ namespace clang {
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);
   };
-  
-  /// \brief Preprocessor callback action used to populate a preprocessing
-  /// record.
-  class PopulatePreprocessingRecord : public PPCallbacks {
-    /// \brief The preprocessing record this action will populate.
-    PreprocessingRecord &Record;
-    
-    /// \brief Mapping from MacroInfo structures to their definitions.
-    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
-
-  public:
-    explicit PopulatePreprocessingRecord(PreprocessingRecord &Record)
-      : Record(Record) { }
-    
-    virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
-    virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
-  };
-  
 } // end namespace clang
 
 inline void* operator new(size_t bytes, clang::PreprocessingRecord& PR,

@@ -234,6 +234,9 @@ public:
   ///
   /// \param isysroot if non-NULL, write a relocatable PCH file whose headers
   /// are relative to the given system root.
+  ///
+  /// \param PPRec Record of the preprocessing actions that occurred while
+  /// preprocessing this file, e.g., macro instantiations
   void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const char* isysroot);
 

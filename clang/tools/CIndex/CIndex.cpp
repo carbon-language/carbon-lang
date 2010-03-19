@@ -430,11 +430,11 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
       return true;
 
     // Walk the preprocessing record.
-    if (CXXUnit->hasPreprocessingRecord()) {
+    if (PreprocessingRecord *PPRec
+                       = CXXUnit->getPreprocessor().getPreprocessingRecord()) {
       // FIXME: Once we have the ability to deserialize a preprocessing record,
       // do so.
-      PreprocessingRecord &PPRec = CXXUnit->getPreprocessingRecord();
-      for (PreprocessingRecord::iterator E = PPRec.begin(), EEnd = PPRec.end();
+      for (PreprocessingRecord::iterator E = PPRec->begin(),EEnd = PPRec->end();
            E != EEnd; ++E) {
         if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
           if (Visit(MakeMacroInstantiationCursor(MI, CXXUnit)))
@@ -1014,7 +1014,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
       Args.push_back(source_filename);
     Args.insert(Args.end(), command_line_args,
                 command_line_args + num_command_line_args);
-
+    Args.push_back("-Xclang");
+    Args.push_back("-detailed-preprocessing-record");
     unsigned NumErrors = Diags->getNumErrors();
 
 #ifdef USE_CRASHTRACER
@@ -1028,8 +1029,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                    CXXIdx->getOnlyLocalDecls(),
                                    RemappedFiles.data(),
                                    RemappedFiles.size(),
-                                   /*CaptureDiagnostics=*/true,
-                                   /*WantPreprocessingRecord=*/true));
+                                   /*CaptureDiagnostics=*/true));
 
     // FIXME: Until we have broader testing, just drop the entire AST if we
     // encountered an error.
@@ -1113,6 +1113,9 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
   llvm::sys::Path DiagnosticsFile(tmpResultsFileName);
   TemporaryFiles.push_back(DiagnosticsFile);
   argv.push_back("-fdiagnostics-binary");
+
+  argv.push_back("-Xclang");
+  argv.push_back("-detailed-preprocessing-record");
 
   // Add the null terminator.
   argv.push_back(NULL);

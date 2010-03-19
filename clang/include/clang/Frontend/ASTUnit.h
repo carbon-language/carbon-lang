@@ -54,7 +54,6 @@ class ASTUnit {
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
-  llvm::OwningPtr<PreprocessingRecord> Preprocessing;
   
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
@@ -137,12 +136,6 @@ public:
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
-  const PreprocessingRecord &getPreprocessingRecord() const { 
-    return *Preprocessing.get(); 
-  }
-  PreprocessingRecord &getPreprocessingRecord() { return *Preprocessing.get(); }
-  bool hasPreprocessingRecord() { return Preprocessing.get() != 0; }
-    
   const FileManager &getFileManager() const { return FileMgr; }
         FileManager &getFileManager()       { return FileMgr; }
 
@@ -212,8 +205,7 @@ public:
   static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              Diagnostic &Diags,
                                              bool OnlyLocalDecls = false,
-                                             bool CaptureDiagnostics = false,
-                                         bool WantPreprocessingRecord = false);
+                                             bool CaptureDiagnostics = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -236,8 +228,7 @@ public:
                                       bool OnlyLocalDecls = false,
                                       RemappedFile *RemappedFiles = 0,
                                       unsigned NumRemappedFiles = 0,
-                                      bool CaptureDiagnostics = false,
-                                      bool WantPreprocessingRecord = false);
+                                      bool CaptureDiagnostics = false);
 };
 
 } // namespace clang
