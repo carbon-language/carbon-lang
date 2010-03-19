@@ -21,6 +21,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
@@ -565,7 +566,9 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(EXT_VECTOR_DECLS);
   RECORD(COMMENT_RANGES);
   RECORD(VERSION_CONTROL_BRANCH_REVISION);
-
+  RECORD(UNUSED_STATIC_FUNCS);
+  RECORD(MACRO_DEFINITION_OFFSETS);
+  
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -579,7 +582,9 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(PP_MACRO_OBJECT_LIKE);
   RECORD(PP_MACRO_FUNCTION_LIKE);
   RECORD(PP_TOKEN);
-
+  RECORD(PP_MACRO_INSTANTIATION);
+  RECORD(PP_MACRO_DEFINITION);
+  
   // Decls and Types block.
   BLOCK(DECLTYPES_BLOCK);
   RECORD(TYPE_EXT_QUAL);
@@ -1174,6 +1179,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
 
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
+  PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     // FIXME: This emits macros in hash table order, we should do it in a stable
@@ -1203,6 +1209,12 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
            I != E; ++I)
         AddIdentifierRef(*I, Record);
     }
+    
+    // If we have a detailed preprocessing record, record the macro definition
+    // ID that corresponds to this macro.
+    if (PPRec)
+      Record.push_back(getMacroDefinitionID(PPRec->findMacroDefinition(MI)));
+    
     Stream.EmitRecord(Code, Record);
     Record.clear();
 
@@ -1230,7 +1242,68 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     }
     ++NumMacros;
   }
+  
+  // If the preprocessor has a preprocessing record, emit it.
+  unsigned NumPreprocessingRecords = 0;
+  if (PPRec) {
+    for (PreprocessingRecord::iterator E = PPRec->begin(), EEnd = PPRec->end();
+         E != EEnd; ++E) {
+      Record.clear();
+      
+      if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
+        Record.push_back(NumPreprocessingRecords++);
+        AddSourceLocation(MI->getSourceRange().getBegin(), Record);
+        AddSourceLocation(MI->getSourceRange().getEnd(), Record);
+        AddIdentifierRef(MI->getName(), Record);
+        Record.push_back(getMacroDefinitionID(MI->getDefinition()));
+        Stream.EmitRecord(pch::PP_MACRO_INSTANTIATION, Record);
+        continue;
+      }
+      
+      if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
+        // Record this macro definition's location.
+        pch::IdentID ID = getMacroDefinitionID(MD);
+        if (ID != MacroDefinitionOffsets.size()) {
+          if (ID > MacroDefinitionOffsets.size())
+            MacroDefinitionOffsets.resize(ID + 1);
+          
+          MacroDefinitionOffsets[ID] = Stream.GetCurrentBitNo();            
+        } else
+          MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
+        
+        Record.push_back(NumPreprocessingRecords++);
+        Record.push_back(ID);
+        AddSourceLocation(MD->getSourceRange().getBegin(), Record);
+        AddSourceLocation(MD->getSourceRange().getEnd(), Record);
+        AddIdentifierRef(MD->getName(), Record);
+        AddSourceLocation(MD->getLocation(), Record);
+        Stream.EmitRecord(pch::PP_MACRO_DEFINITION, Record);
+        continue;
+      }
+    }
+  }
+  
   Stream.ExitBlock();
+  
+  // Write the offsets table for the preprocessing record.
+  if (NumPreprocessingRecords > 0) {
+    // Write the offsets table for identifier IDs.
+    using namespace llvm;
+    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(pch::MACRO_DEFINITION_OFFSETS));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of records
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macro defs
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned MacroDefOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
+    
+    Record.clear();
+    Record.push_back(pch::MACRO_DEFINITION_OFFSETS);
+    Record.push_back(NumPreprocessingRecords);
+    Record.push_back(MacroDefinitionOffsets.size());
+    Stream.EmitRecordWithBlob(MacroDefOffsetAbbrev, Record,
+                              (const char *)&MacroDefinitionOffsets.front(),
+                              MacroDefinitionOffsets.size() * sizeof(uint32_t));
+  }
 }
 
 void PCHWriter::WriteComments(ASTContext &Context) {
@@ -2009,7 +2082,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Write the remaining PCH contents.
   RecordData Record;
-  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
+  Stream.EnterSubblock(pch::PCH_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot);
   WriteLanguageOptions(Context.getLangOptions());
   if (StatCalls && !isysroot)
@@ -2146,6 +2219,16 @@ pch::IdentID PCHWriter::getIdentifierRef(const IdentifierInfo *II) {
   pch::IdentID &ID = IdentifierIDs[II];
   if (ID == 0)
     ID = IdentifierIDs.size();
+  return ID;
+}
+
+pch::IdentID PCHWriter::getMacroDefinitionID(MacroDefinition *MD) {
+  if (MD == 0)
+    return 0;
+  
+  pch::IdentID &ID = MacroDefinitions[MD];
+  if (ID == 0)
+    ID = MacroDefinitions.size();
   return ID;
 }
 

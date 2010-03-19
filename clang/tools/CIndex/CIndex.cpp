@@ -158,31 +158,12 @@ static RangeComparisonResult RangeCompare(SourceManager &SM,
 CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
                                           const LangOptions &LangOpts,
                                           SourceRange R) {
-  // FIXME: This is largely copy-paste from
-  // TextDiagnosticPrinter::HighlightRange.  When it is clear that this is what
-  // we want the two routines should be refactored.
-
   // We want the last character in this location, so we will adjust the
-  // instantiation location accordingly.
-
-  // If the location is from a macro instantiation, get the end of the
-  // instantiation range.
+  // location accordingly.
+  // FIXME: How do do this with a macro instantiation location?
   SourceLocation EndLoc = R.getEnd();
-  SourceLocation InstLoc = SM.getInstantiationLoc(EndLoc);
-  if (EndLoc.isMacroID())
-    InstLoc = SM.getInstantiationRange(EndLoc).second;
-
-  // Measure the length token we're pointing at, so we can adjust the physical
-  // location in the file to point at the last character.
-  //
-  // FIXME: This won't cope with trigraphs or escaped newlines well. For that,
-  // we actually need a preprocessor, which isn't currently available
-  // here. Eventually, we'll switch the pointer data of
-  // CXSourceLocation/CXSourceRange to a translation unit (CXXUnit), so that the
-  // preprocessor will be available here. At that point, we can use
-  // Preprocessor::getLocForEndOfToken().
-  if (InstLoc.isValid()) {
-    unsigned Length = Lexer::MeasureTokenLength(InstLoc, SM, LangOpts);
+  if (!EndLoc.isInvalid() && EndLoc.isFileID()) {
+    unsigned Length = Lexer::MeasureTokenLength(EndLoc, SM, LangOpts);
     EndLoc = EndLoc.getFileLocWithOffset(Length);
   }
 
@@ -434,7 +415,11 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
                        = CXXUnit->getPreprocessor().getPreprocessingRecord()) {
       // FIXME: Once we have the ability to deserialize a preprocessing record,
       // do so.
-      for (PreprocessingRecord::iterator E = PPRec->begin(),EEnd = PPRec->end();
+      bool OnlyLocalDecls
+        = !CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls();
+      for (PreprocessingRecord::iterator 
+             E = PPRec->begin(OnlyLocalDecls), 
+             EEnd = PPRec->end(OnlyLocalDecls);
            E != EEnd; ++E) {
         if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
           if (Visit(MakeMacroInstantiationCursor(MI, CXXUnit)))

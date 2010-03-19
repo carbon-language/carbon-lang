@@ -17,8 +17,79 @@
 
 using namespace clang;
 
+ExternalPreprocessingRecordSource::~ExternalPreprocessingRecordSource() { }
+
+void PreprocessingRecord::MaybeLoadPreallocatedEntities() const {
+  if (!ExternalSource || LoadedPreallocatedEntities)
+    return;
+  
+  LoadedPreallocatedEntities = true;
+  ExternalSource->ReadPreprocessedEntities();
+}
+
+PreprocessingRecord::PreprocessingRecord()
+  : ExternalSource(0), NumPreallocatedEntities(0), 
+    LoadedPreallocatedEntities(false)
+{
+}
+
+PreprocessingRecord::iterator 
+PreprocessingRecord::begin(bool OnlyLocalEntities) {
+  if (OnlyLocalEntities)
+    return PreprocessedEntities.begin() + NumPreallocatedEntities;
+  
+  MaybeLoadPreallocatedEntities();
+  return PreprocessedEntities.begin();
+}
+
+PreprocessingRecord::iterator PreprocessingRecord::end(bool OnlyLocalEntities) {
+  if (!OnlyLocalEntities)
+    MaybeLoadPreallocatedEntities();
+  
+  return PreprocessedEntities.end();
+}
+
+PreprocessingRecord::const_iterator 
+PreprocessingRecord::begin(bool OnlyLocalEntities) const {
+  if (OnlyLocalEntities)
+    return PreprocessedEntities.begin() + NumPreallocatedEntities;
+  
+  MaybeLoadPreallocatedEntities();
+  return PreprocessedEntities.begin();
+}
+
+PreprocessingRecord::const_iterator 
+PreprocessingRecord::end(bool OnlyLocalEntities) const {
+  if (!OnlyLocalEntities)
+    MaybeLoadPreallocatedEntities();
+  
+  return PreprocessedEntities.end();
+}
+
 void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
   PreprocessedEntities.push_back(Entity);
+}
+
+void PreprocessingRecord::SetExternalSource(
+                                    ExternalPreprocessingRecordSource &Source,
+                                            unsigned NumPreallocatedEntities) {
+  assert(!ExternalSource &&
+         "Preprocessing record already has an external source");
+  ExternalSource = &Source;
+  this->NumPreallocatedEntities = NumPreallocatedEntities;
+  PreprocessedEntities.insert(PreprocessedEntities.begin(), 
+                              NumPreallocatedEntities, 0);
+}
+
+void PreprocessingRecord::SetPreallocatedEntity(unsigned Index, 
+                                                PreprocessedEntity *Entity) {
+  assert(Index < NumPreallocatedEntities &&"Out-of-bounds preallocated entity");
+  PreprocessedEntities[Index] = Entity;
+}
+
+void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro, 
+                                                  MacroDefinition *MD) {
+  MacroDefinitions[Macro] = MD;
 }
 
 MacroDefinition *PreprocessingRecord::findMacroDefinition(MacroInfo *MI) {
@@ -45,3 +116,4 @@ void PreprocessingRecord::MacroDefined(const IdentifierInfo *II,
   MacroDefinitions[MI] = Def;
   PreprocessedEntities.push_back(Def);
 }
+

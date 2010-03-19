@@ -21,6 +21,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/OnDiskHashTable.h"
@@ -326,8 +327,9 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), Comments(0), NumComments(0), isysroot(isysroot),
-    NumStatHits(0), NumStatMisses(0),
+    TotalNumSelectors(0), MacroDefinitionOffsets(0), 
+    NumPreallocatedPreprocessingEntities(0), Comments(0), NumComments(0), 
+    isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), NumStatementsRead(0),
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
     NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
@@ -343,8 +345,9 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), Comments(0), NumComments(0), isysroot(isysroot),
-    NumStatHits(0), NumStatMisses(0),
+    TotalNumSelectors(0), MacroDefinitionOffsets(0), 
+    NumPreallocatedPreprocessingEntities(0), Comments(0), NumComments(0), 
+    isysroot(isysroot), NumStatHits(0), NumStatMisses(0),
     NumSLocEntriesRead(0), NumStatementsRead(0),
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
     NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
@@ -1047,12 +1050,14 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
       MacroInfo *MI = PP->AllocateMacroInfo(Loc);
       MI->setIsUsed(isUsed);
 
+      unsigned NextIndex = 3;
       if (RecType == pch::PP_MACRO_FUNCTION_LIKE) {
         // Decode function-like macro info.
         bool isC99VarArgs = Record[3];
         bool isGNUVarArgs = Record[4];
         MacroArgs.clear();
         unsigned NumArgs = Record[5];
+        NextIndex = 6 + NumArgs;
         for (unsigned i = 0; i != NumArgs; ++i)
           MacroArgs.push_back(DecodeIdentifierInfo(Record[6+i]));
 
@@ -1070,6 +1075,13 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
       Macro = MI;
+      
+      if (NextIndex + 1 == Record.size() && PP->getPreprocessingRecord()) {
+        // We have a macro definition. Load it now.
+        PP->getPreprocessingRecord()->RegisterMacroDefinition(Macro,
+                                        getMacroDefinition(Record[NextIndex]));
+      }
+      
       ++NumMacrosRead;
       break;
     }
@@ -1089,6 +1101,64 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
       Tok.setFlag((Token::TokenFlags)Record[4]);
       Macro->AddTokenToBody(Tok);
       break;
+    }
+        
+    case pch::PP_MACRO_INSTANTIATION: {
+      // If we already have a macro, that means that we've hit the end
+      // of the definition of the macro we were looking for. We're
+      // done.
+      if (Macro)
+        return;
+      
+      if (!PP->getPreprocessingRecord()) {
+        Error("missing preprocessing record in PCH file");
+        return;
+      }
+        
+      PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
+      if (PPRec.getPreprocessedEntity(Record[0]))
+        return;
+
+      MacroInstantiation *MI
+        = new (PPRec) MacroInstantiation(DecodeIdentifierInfo(Record[3]),
+                               SourceRange(
+                                 SourceLocation::getFromRawEncoding(Record[1]),
+                                 SourceLocation::getFromRawEncoding(Record[2])),
+                                         getMacroDefinition(Record[4]));
+      PPRec.SetPreallocatedEntity(Record[0], MI);
+      return;
+    }
+
+    case pch::PP_MACRO_DEFINITION: {
+      // If we already have a macro, that means that we've hit the end
+      // of the definition of the macro we were looking for. We're
+      // done.
+      if (Macro)
+        return;
+      
+      if (!PP->getPreprocessingRecord()) {
+        Error("missing preprocessing record in PCH file");
+        return;
+      }
+      
+      PreprocessingRecord &PPRec = *PP->getPreprocessingRecord();
+      if (PPRec.getPreprocessedEntity(Record[0]))
+        return;
+        
+      if (Record[1] >= MacroDefinitionsLoaded.size()) {
+        Error("out-of-bounds macro definition record");
+        return;
+      }
+
+      MacroDefinition *MD
+        = new (PPRec) MacroDefinition(DecodeIdentifierInfo(Record[4]),
+                                SourceLocation::getFromRawEncoding(Record[5]),
+                              SourceRange(
+                                SourceLocation::getFromRawEncoding(Record[2]),
+                                SourceLocation::getFromRawEncoding(Record[3])));
+      PPRec.SetPreallocatedEntity(Record[0], MD);
+      MacroDefinitionsLoaded[Record[1]] = MD;
+      return;
     }
   }
   }
@@ -1139,14 +1209,30 @@ void PCHReader::ReadDefinedMacros() {
 
     case pch::PP_MACRO_OBJECT_LIKE:
     case pch::PP_MACRO_FUNCTION_LIKE:
-        DecodeIdentifierInfo(Record[0]);
+      DecodeIdentifierInfo(Record[0]);
       break;
 
     case pch::PP_TOKEN:
       // Ignore tokens.
       break;
+        
+    case pch::PP_MACRO_INSTANTIATION:
+    case pch::PP_MACRO_DEFINITION:
+      // Read the macro record.
+      ReadMacroRecord(Cursor.GetCurrentBitNo());
+      break;
     }
   }
+}
+
+MacroDefinition *PCHReader::getMacroDefinition(pch::IdentID ID) {
+  if (ID == 0 || ID >= MacroDefinitionsLoaded.size())
+    return 0;
+  
+  if (!MacroDefinitionsLoaded[ID])
+    ReadMacroRecord(MacroDefinitionOffsets[ID]);
+    
+  return MacroDefinitionsLoaded[ID];
 }
 
 /// \brief If we are loading a relocatable PCH file, and the filename is
@@ -1431,6 +1517,19 @@ PCHReader::ReadPCHBlock() {
       }
       break;
     }
+        
+    case pch::MACRO_DEFINITION_OFFSETS:
+      MacroDefinitionOffsets = (const uint32_t *)BlobStart;
+      if (PP) {
+        if (!PP->getPreprocessingRecord())
+          PP->createPreprocessingRecord();
+        PP->getPreprocessingRecord()->SetExternalSource(*this, Record[0]);
+      } else {
+        NumPreallocatedPreprocessingEntities = Record[0];
+      }
+       
+      MacroDefinitionsLoaded.resize(Record[1]);
+      break;
     }
   }
   Error("premature end of bitstream in PCH file");
@@ -1560,6 +1659,18 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     InitializeContext(*Context);
 
   return Success;
+}
+
+void PCHReader::setPreprocessor(Preprocessor &pp) {
+  PP = &pp;
+  
+  if (NumPreallocatedPreprocessingEntities) {
+    if (!PP->getPreprocessingRecord())
+      PP->createPreprocessingRecord();
+    PP->getPreprocessingRecord()->SetExternalSource(*this, 
+                                          NumPreallocatedPreprocessingEntities);
+    NumPreallocatedPreprocessingEntities = 0;
+  }
 }
 
 void PCHReader::InitializeContext(ASTContext &Ctx) {
@@ -1821,6 +1932,10 @@ bool PCHReader::ParseLanguageOptions(
   }
 
   return false;
+}
+
+void PCHReader::ReadPreprocessedEntities() {
+  ReadDefinedMacros();
 }
 
 void PCHReader::ReadComments(std::vector<SourceRange> &Comments) {

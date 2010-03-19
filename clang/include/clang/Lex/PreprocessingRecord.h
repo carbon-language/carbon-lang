@@ -173,7 +173,18 @@ namespace clang {
     }
     static bool classof(const MacroDefinition *) { return true; }
   };
+  
+  /// \brief An abstract class that should be subclassed by any external source
+  /// of preprocessing record entries.
+  class ExternalPreprocessingRecordSource {
+  public:
+    virtual ~ExternalPreprocessingRecordSource();
     
+    /// \brief Read any preallocated preprocessed entities from the external
+    /// source.
+    virtual void ReadPreprocessedEntities() = 0;
+  };
+  
   /// \brief A record of the steps taken while preprocessing a source file,
   /// including the various preprocessing directives processed, macros 
   /// instantiated, etc.
@@ -188,7 +199,21 @@ namespace clang {
     /// \brief Mapping from MacroInfo structures to their definitions.
     llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
 
+    /// \brief External source of preprocessed entities.
+    ExternalPreprocessingRecordSource *ExternalSource;
+    
+    /// \brief The number of preallocated entities (that are known to the
+    /// external source).
+    unsigned NumPreallocatedEntities;
+    
+    /// \brief Whether we have already loaded all of the preallocated entities.
+    mutable bool LoadedPreallocatedEntities;
+    
+    void MaybeLoadPreallocatedEntities() const ;
+    
   public:
+    PreprocessingRecord();
+    
     /// \brief Allocate memory in the preprocessing record.
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return BumpAlloc.Allocate(Size, Align);
@@ -200,13 +225,31 @@ namespace clang {
     // Iteration over the preprocessed entities.
     typedef std::vector<PreprocessedEntity *>::iterator iterator;
     typedef std::vector<PreprocessedEntity *>::const_iterator const_iterator;
-    iterator begin() { return PreprocessedEntities.begin(); }
-    iterator end() { return PreprocessedEntities.end(); }
-    const_iterator begin() const { return PreprocessedEntities.begin(); }
-    const_iterator end() const { return PreprocessedEntities.end(); }
+    iterator begin(bool OnlyLocalEntities = false);
+    iterator end(bool OnlyLocalEntities = false);
+    const_iterator begin(bool OnlyLocalEntities = false) const;
+    const_iterator end(bool OnlyLocalEntities = false) const;
     
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);
+    
+    /// \brief Set the external source for preprocessed entities.
+    void SetExternalSource(ExternalPreprocessingRecordSource &Source,
+                           unsigned NumPreallocatedEntities);
+    
+    /// \brief Set the preallocated entry at the given index to the given
+    /// preprocessed entity.
+    void SetPreallocatedEntity(unsigned Index, PreprocessedEntity *Entity);
+
+    /// \brief Register a new macro definition.
+    void RegisterMacroDefinition(MacroInfo *Macro, MacroDefinition *MD);
+                           
+    /// \brief Retrieve the preprocessed entity at the given index.
+    PreprocessedEntity *getPreprocessedEntity(unsigned Index) {
+      assert(Index < PreprocessedEntities.size() &&
+             "Out-of-bounds preprocessed entity");
+      return PreprocessedEntities[Index];
+    }
     
     /// \brief Retrieve the macro definition that corresponds to the given
     /// \c MacroInfo.

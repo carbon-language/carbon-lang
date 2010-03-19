@@ -21,6 +21,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
+#include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceManager.h"
@@ -53,6 +54,7 @@ class Decl;
 class DeclContext;
 class GotoStmt;
 class LabelStmt;
+class MacroDefinition;
 class NamedDecl;
 class Preprocessor;
 class Sema;
@@ -151,6 +153,7 @@ private:
 /// actually required will be de-serialized.
 class PCHReader
   : public ExternalPreprocessorSource,
+    public ExternalPreprocessingRecordSource,
     public ExternalSemaSource,
     public IdentifierInfoLookup,
     public ExternalIdentifierLookup,
@@ -296,6 +299,17 @@ private:
   /// been loaded.
   llvm::SmallVector<Selector, 16> SelectorsLoaded;
 
+  /// \brief Offsets of all of the macro definitions in the preprocessing
+  /// record in the PCH file.
+  const uint32_t *MacroDefinitionOffsets;
+      
+  /// \brief The macro definitions we have already loaded.
+  llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
+      
+  /// \brief The number of preallocated preprocessing entities in the
+  /// preprocessing record.
+  unsigned NumPreallocatedPreprocessingEntities;
+      
   /// \brief A sorted array of source ranges containing comments.
   SourceRange *Comments;
 
@@ -527,9 +541,7 @@ public:
   }
 
   /// \brief Set the Preprocessor to use.
-  void setPreprocessor(Preprocessor &pp) {
-    PP = &pp;
-  }
+  void setPreprocessor(Preprocessor &pp);
 
   /// \brief Sets and initializes the given Context.
   void InitializeContext(ASTContext &Context);
@@ -550,6 +562,9 @@ public:
   /// which contains a (typically-empty) subset of the predefines
   /// build prior to including the precompiled header.
   const std::string &getSuggestedPredefines() { return SuggestedPredefines; }
+      
+  /// \brief Read preprocessed entities into the 
+  virtual void ReadPreprocessedEntities();
 
   /// \brief Reads the source ranges that correspond to comments from
   /// an external AST source.
@@ -727,6 +742,9 @@ public:
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
 
+  /// \brief Retrieve the macro definition with the given ID.
+  MacroDefinition *getMacroDefinition(pch::IdentID ID);
+      
   /// \brief Retrieve the AST context that this PCH reader
   /// supplements.
   ASTContext *getContext() { return Context; }

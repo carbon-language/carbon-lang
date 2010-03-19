@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -emit-pch -x objective-c %s -o %t.ast
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fblocks -emit-pch -x objective-c %s -detailed-preprocessing-record -o %t.ast
 // RUN: c-index-test -test-file-scan %t.ast %s | FileCheck %s
 @interface Foo 
 {
@@ -161,3 +161,7 @@ void f() {
 // CHECK: [52:33 - 52:36] DeclRefExpr=bee:45:8
 // CHECK: [52:36 - 52:37] CallExpr=main:44:5
 // CHECK: [52:37 - 53:2] UnexposedStmt=
+// CHECK: [55:9 - 55:26] macro definition=CONCAT
+// CHECK: [57:6 - 57:10] FunctionDecl=f:57:6 (Definition)
+// CHECK: [58:4 - 58:8] VarDecl=my_var:58:8 (Definition)
+// CHECK: [58:8 - 58:14] macro instantiation=CONCAT:55:9

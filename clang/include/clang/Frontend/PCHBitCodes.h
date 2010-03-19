@@ -224,8 +224,11 @@ namespace clang {
       VERSION_CONTROL_BRANCH_REVISION = 21,
       
       /// \brief Record code for the array of unused static functions.
-      UNUSED_STATIC_FUNCS = 22
+      UNUSED_STATIC_FUNCS = 22,
       
+      /// \brief Record code for the table of offsets to macro definition
+      /// entries in the preprocessing record.
+      MACRO_DEFINITION_OFFSETS = 23
     };
 
     /// \brief Record types used within a source manager block.
@@ -264,7 +267,14 @@ namespace clang {
 
       /// \brief Describes one token.
       /// [PP_TOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
-      PP_TOKEN = 3
+      PP_TOKEN = 3,
+
+      /// \brief Describes a macro instantiation within the preprocessing 
+      /// record.
+      PP_MACRO_INSTANTIATION = 4,
+      
+      /// \brief Describes a macro definition within the preprocessing record.
+      PP_MACRO_DEFINITION = 5
     };
 
     /// \defgroup PCHAST Precompiled header AST constants
