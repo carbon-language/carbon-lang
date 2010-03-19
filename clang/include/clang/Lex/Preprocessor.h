@@ -215,7 +215,7 @@ class Preprocessor {
   ///
   /// This is an optional side structure that can be enabled with
   /// \c createPreprocessingRecord() prior to preprocessing.
-  llvm::OwningPtr<PreprocessingRecord> Record;
+  PreprocessingRecord *Record;
   
 private:  // Cached tokens state.
   typedef llvm::SmallVector<Token, 1> CachedTokensTy;
@@ -358,7 +358,7 @@ public:
 
   /// \brief Retrieve the preprocessing record, or NULL if there is no
   /// preprocessing record.
-  PreprocessingRecord *getPreprocessingRecord() const { return Record.get(); }
+  PreprocessingRecord *getPreprocessingRecord() const { return Record; }
   
   /// \brief Create a new preprocessing record, which will keep track of 
   /// all macro expansions, macro definitions, etc.

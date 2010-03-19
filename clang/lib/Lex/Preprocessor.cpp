@@ -54,7 +54,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
     SourceMgr(SM), HeaderInfo(Headers), ExternalSource(0),
     Identifiers(opts, IILookup), BuiltinInfo(Target), CodeCompletionFile(0),
-    CurPPLexer(0), CurDirLookup(0), Callbacks(0), MacroArgCache(0) {
+    CurPPLexer(0), CurDirLookup(0), Callbacks(0), MacroArgCache(0), Record(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
   OwnsHeaderSearch = OwnsHeaders;
@@ -629,46 +629,10 @@ bool Preprocessor::HandleComment(Token &result, SourceRange Comment) {
 
 CommentHandler::~CommentHandler() { }
 
-namespace {
-  /// \brief Preprocessor callback action used to populate a preprocessing
-  /// record.
-  class PopulatePreprocessingRecord : public PPCallbacks {
-    /// \brief The preprocessing record this action will populate.
-    PreprocessingRecord &Record;
-    
-    /// \brief Mapping from MacroInfo structures to their definitions.
-    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
-    
-  public:
-    explicit PopulatePreprocessingRecord(PreprocessingRecord &Record)
-    : Record(Record) { }
-    
-    virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
-    virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
-  };  
-}
-
-void PopulatePreprocessingRecord::MacroExpands(const Token &Id, 
-                                               const MacroInfo* MI) {
-  Record.addPreprocessedEntity(
-                       new (Record) MacroInstantiation(Id.getIdentifierInfo(),
-                                                       Id.getLocation(),
-                                                       MacroDefinitions[MI]));
-}
-
-void PopulatePreprocessingRecord::MacroDefined(const IdentifierInfo *II, 
-                                               const MacroInfo *MI) {
-  SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
-  MacroDefinition *Def
-  = new (Record) MacroDefinition(II, MI->getDefinitionLoc(), R);
-  MacroDefinitions[MI] = Def;
-  Record.addPreprocessedEntity(Def);
-}
-
 void Preprocessor::createPreprocessingRecord() {
   if (Record)
     return;
   
-  Record.reset(new PreprocessingRecord);
-  addPPCallbacks(new PopulatePreprocessingRecord(*Record));
+  Record = new PreprocessingRecord;
+  addPPCallbacks(Record);
 }

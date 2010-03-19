@@ -14,7 +14,9 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSINGRECORD_H
 #define LLVM_CLANG_LEX_PREPROCESSINGRECORD_H
 
+#include "clang/Lex/PPCallbacks.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
@@ -175,7 +177,7 @@ namespace clang {
   /// \brief A record of the steps taken while preprocessing a source file,
   /// including the various preprocessing directives processed, macros 
   /// instantiated, etc.
-  class PreprocessingRecord {
+  class PreprocessingRecord : public PPCallbacks {
     /// \brief Allocator used to store preprocessing objects.
     llvm::BumpPtrAllocator BumpAlloc;
 
@@ -183,6 +185,9 @@ namespace clang {
     /// were seen.
     std::vector<PreprocessedEntity *> PreprocessedEntities;
     
+    /// \brief Mapping from MacroInfo structures to their definitions.
+    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
+
   public:
     /// \brief Allocate memory in the preprocessing record.
     void *Allocate(unsigned Size, unsigned Align = 8) {
@@ -202,6 +207,13 @@ namespace clang {
     
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);
+    
+    /// \brief Retrieve the macro definition that corresponds to the given
+    /// \c MacroInfo.
+    MacroDefinition *findMacroDefinition(MacroInfo *MI);
+    
+    virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
+    virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI);
   };
 } // end namespace clang
 
