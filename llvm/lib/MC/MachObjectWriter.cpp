@@ -34,6 +34,7 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   case FK_Data_2: return 1;
   case X86::reloc_pcrel_4byte:
   case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_movq_load:
   case FK_Data_4: return 2;
   case FK_Data_8: return 3;
   }
@@ -46,8 +47,14 @@ static bool isFixupKindPCRel(unsigned Kind) {
   case X86::reloc_pcrel_1byte:
   case X86::reloc_pcrel_4byte:
   case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_movq_load:
     return true;
   }
+}
+
+static bool isFixupKindRIPRel(unsigned Kind) {
+  return Kind == X86::reloc_riprel_4byte ||
+    Kind == X86::reloc_riprel_4byte_movq_load;
 }
 
 namespace {
@@ -123,6 +130,19 @@ class MachObjectWriterImpl {
     RIT_Difference          = 2,
     RIT_PreboundLazyPointer = 3,
     RIT_LocalDifference     = 4
+  };
+
+  /// X86_64 uses its own relocation types.
+  enum RelocationInfoTypeX86_64 {
+    RIT_X86_64_Unsigned   = 0,
+    RIT_X86_64_Signed     = 1,
+    RIT_X86_64_Branch     = 2,
+    RIT_X86_64_GOTLoad    = 3,
+    RIT_X86_64_GOT        = 4,
+    RIT_X86_64_Subtractor = 5,
+    RIT_X86_64_Signed1    = 6,
+    RIT_X86_64_Signed2    = 7,
+    RIT_X86_64_Signed4    = 8
   };
 
   /// MachSymbolData - Helper struct for containing some precomputed information
@@ -417,6 +437,194 @@ public:
       Write32(Address);
   }
 
+  void RecordX86_64Relocation(const MCAssembler &Asm,
+                              const MCDataFragment &Fragment,
+                              const MCAsmFixup &Fixup, MCValue Target,
+                              uint64_t &FixedValue) {
+    unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
+    unsigned IsRIPRel = isFixupKindRIPRel(Fixup.Kind);
+    unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
+
+    // See <reloc.h>.
+    uint32_t Address = Fragment.getOffset() + Fixup.Offset;
+    int64_t Value = 0;
+    unsigned Index = 0;
+    unsigned IsExtern = 0;
+    unsigned Type = 0;
+
+    Value = Target.getConstant();
+
+    if (IsPCRel) {
+      // Compensate for the relocation offset, Darwin x86_64 relocations only
+      // have the addend and appear to have attempted to define it to be the
+      // actual expression addend without the PCrel bias. However, instructions
+      // with data following the relocation are not accomodated for (see comment
+      // below regarding SIGNED{1,2,4}), so it isn't exactly that either.
+      Value += 1 << Log2Size;
+    }
+
+    if (Target.isAbsolute()) { // constant
+      // SymbolNum of 0 indicates the absolute section.
+      Type = RIT_X86_64_Unsigned;
+      Index = 0;
+
+      // FIXME: I believe this is broken, I don't think the linker can
+      // understand it. I think it would require a local relocation, but I'm not
+      // sure if that would work either. The official way to get an absolute
+      // PCrel relocation is to use an absolute symbol (which we don't support
+      // yet).
+      if (IsPCRel) {
+        IsExtern = 1;
+        Type = RIT_X86_64_Branch;
+      }
+    } else if (Target.getSymB()) { // A - B + constant
+      const MCSymbol *A = &Target.getSymA()->getSymbol();
+      MCSymbolData &A_SD = Asm.getSymbolData(*A);
+      const MCSymbolData *A_Base = Asm.getAtom(&A_SD);
+
+      const MCSymbol *B = &Target.getSymB()->getSymbol();
+      MCSymbolData &B_SD = Asm.getSymbolData(*B);
+      const MCSymbolData *B_Base = Asm.getAtom(&B_SD);
+
+      // Neither symbol can be modified.
+      if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
+          Target.getSymB()->getKind() != MCSymbolRefExpr::VK_None)
+        llvm_report_error("unsupported relocation of modified symbol");
+
+      // We don't support PCrel relocations of differences. Darwin 'as' doesn't
+      // implement most of these correctly.
+      if (IsPCRel)
+        llvm_report_error("unsupported pc-relative relocation of difference");
+
+      // We don't currently support any situation where one or both of the
+      // symbols would require a local relocation. This is almost certainly
+      // unused and may not be possible to encode correctly.
+      if (!A_Base || !B_Base)
+        llvm_report_error("unsupported local relocations in difference");
+
+      // Darwin 'as' doesn't emit correct relocations for this (it ends up with
+      // a single SIGNED relocation); reject it for now.
+      if (A_Base == B_Base)
+        llvm_report_error("unsupported relocation with identical base");
+
+      Value += A_SD.getAddress() - A_Base->getAddress();
+      Value -= B_SD.getAddress() - B_Base->getAddress();
+
+      Index = A_Base->getIndex();
+      IsExtern = 1;
+      Type = RIT_X86_64_Unsigned;
+
+      MachRelocationEntry MRE;
+      MRE.Word0 = Address;
+      MRE.Word1 = ((Index     <<  0) |
+                   (IsPCRel   << 24) |
+                   (Log2Size  << 25) |
+                   (IsExtern  << 27) |
+                   (Type      << 28));
+      Relocations[Fragment.getParent()].push_back(MRE);
+
+      Index = B_Base->getIndex();
+      IsExtern = 1;
+      Type = RIT_X86_64_Subtractor;
+    } else {
+      const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
+      MCSymbolData &SD = Asm.getSymbolData(*Symbol);
+      const MCSymbolData *Base = Asm.getAtom(&SD);
+
+      // x86_64 almost always uses external relocations, except when there is no
+      // symbol to use as a base address (a local symbol with no preceeding
+      // non-local symbol).
+      if (Base) {
+        Index = Base->getIndex();
+        IsExtern = 1;
+
+        // Add the local offset, if needed.
+        if (Base != &SD)
+          Value += SD.getAddress() - Base->getAddress();
+      } else {
+        // The index is the section ordinal.
+        //
+        // FIXME: O(N)
+        Index = 1;
+        MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
+        for (; it != ie; ++it, ++Index)
+          if (&*it == SD.getFragment()->getParent())
+            break;
+        assert(it != ie && "Unable to find section index!");
+        IsExtern = 0;
+        Value += SD.getAddress();
+
+        if (IsPCRel)
+          Value -= Address + (1 << Log2Size);
+      }
+
+      MCSymbolRefExpr::VariantKind Modifier = Target.getSymA()->getKind();
+      if (IsPCRel) {
+        if (IsRIPRel) {
+          if (Modifier == MCSymbolRefExpr::VK_GOTPCREL) {
+            // x86_64 distinguishes movq foo@GOTPCREL so that the linker can
+            // rewrite the movq to an leaq at link time if the symbol ends up in
+            // the same linkage unit.
+            if (unsigned(Fixup.Kind) == X86::reloc_riprel_4byte_movq_load)
+              Type = RIT_X86_64_GOTLoad;
+            else
+              Type = RIT_X86_64_GOT;
+          } else if (Modifier != MCSymbolRefExpr::VK_None)
+            llvm_report_error("unsupported symbol modifier in relocation");
+          else
+            Type = RIT_X86_64_Signed;
+        } else {
+          if (Modifier != MCSymbolRefExpr::VK_None)
+            llvm_report_error("unsupported symbol modifier in branch "
+                              "relocation");
+
+          Type = RIT_X86_64_Branch;
+        }
+
+        // The Darwin x86_64 relocation format has a problem where it cannot
+        // encode an address (L<foo> + <constant>) which is outside the atom
+        // containing L<foo>. Generally, this shouldn't occur but it does happen
+        // when we have a RIPrel instruction with data following the relocation
+        // entry (e.g., movb $012, L0(%rip)). Even with the PCrel adjustment
+        // Darwin x86_64 uses, the offset is still negative and the linker has
+        // no way to recognize this.
+        //
+        // To work around this, Darwin uses several special relocation types to
+        // indicate the offsets. However, the specification or implementation of
+        // these seems to also be incomplete; they should adjust the addend as
+        // well based on the actual encoded instruction (the additional bias),
+        // but instead appear to just look at the final offset.
+        if (IsRIPRel) {
+          switch (-(Target.getConstant() + (1 << Log2Size))) {
+          case 1: Type = RIT_X86_64_Signed1; break;
+          case 2: Type = RIT_X86_64_Signed2; break;
+          case 4: Type = RIT_X86_64_Signed4; break;
+          }
+        }
+      } else {
+        if (Modifier == MCSymbolRefExpr::VK_GOT)
+          Type = RIT_X86_64_GOT;
+        else if (Modifier != MCSymbolRefExpr::VK_None)
+          llvm_report_error("unsupported symbol modifier in relocation");
+        else
+          Type = RIT_X86_64_Unsigned;
+      }
+    }
+
+    // x86_64 always writes custom values into the fixups.
+    FixedValue = Value;
+
+    // struct relocation_info (8 bytes)
+    MachRelocationEntry MRE;
+    MRE.Word0 = Address;
+    MRE.Word1 = ((Index     <<  0) |
+                 (IsPCRel   << 24) |
+                 (Log2Size  << 25) |
+                 (IsExtern  << 27) |
+                 (Type      << 28));
+    Relocations[Fragment.getParent()].push_back(MRE);
+  }
+
   void RecordScatteredRelocation(const MCAssembler &Asm,
                                  const MCFragment &Fragment,
                                  const MCAsmFixup &Fixup, MCValue Target,
@@ -479,6 +687,11 @@ public:
                                 const MCDataFragment &Fragment,
                                 const MCAsmFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue) {
+    if (Is64Bit) {
+      RecordX86_64Relocation(Asm, Fragment, Fixup, Target, FixedValue);
+      return;
+    }
+
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
