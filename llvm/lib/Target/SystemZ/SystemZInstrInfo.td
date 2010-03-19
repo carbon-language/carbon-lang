@@ -47,7 +47,7 @@ def SDT_Address             : SDTypeProfile<1, 1,
 def SystemZretflag : SDNode<"SystemZISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInFlag]>;
 def SystemZcall    : SDNode<"SystemZISD::CALL", SDT_SystemZCall,
-                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
+                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag, SDNPVariadic]>;
 def SystemZcallseq_start :
                  SDNode<"ISD::CALLSEQ_START", SDT_SystemZCallSeqStart,
                         [SDNPHasChain, SDNPOutFlag]>;

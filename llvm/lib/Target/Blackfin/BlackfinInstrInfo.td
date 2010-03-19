@@ -29,7 +29,8 @@ def BfinCallseqEnd   : SDNode<"ISD::CALLSEQ_END",   SDT_BfinCallSeqEnd,
 
 def SDT_BfinCall  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 def BfinCall      : SDNode<"BFISD::CALL", SDT_BfinCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                            SDNPVariadic]>;
 
 def BfinRet: SDNode<"BFISD::RET_FLAG", SDTNone,
                     [SDNPHasChain, SDNPOptInFlag]>;

@@ -111,9 +111,11 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeqEnd,
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
 def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
-                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                             SDNPVariadic]>;
 def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                            SDNPVariadic]>;
 def PPCnop : SDNode<"PPCISD::NOP", SDT_PPCnop, [SDNPInFlag, SDNPOutFlag]>;
 def PPCload   : SDNode<"PPCISD::LOAD", SDTypeProfile<1, 1, []>,
                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
@@ -124,16 +126,18 @@ def PPCtoc_restore : SDNode<"PPCISD::TOC_RESTORE", SDTypeProfile<0, 0, []>,
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCbctrl_Darwin  : SDNode<"PPCISD::BCTRL_Darwin", SDTNone,
-                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                               SDNPVariadic]>;
 
 def PPCbctrl_SVR4  : SDNode<"PPCISD::BCTRL_SVR4", SDTNone,
-                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                             SDNPVariadic]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
-                           [SDNPHasChain, SDNPOptInFlag]>;
+                           [SDNPHasChain, SDNPOptInFlag, SDNPVariadic]>;
 
 def PPCtc_return : SDNode<"PPCISD::TC_RETURN", SDT_PPCTC_ret,
-                        [SDNPHasChain,  SDNPOptInFlag]>;
+                        [SDNPHasChain,  SDNPOptInFlag, SDNPVariadic]>;
 
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;

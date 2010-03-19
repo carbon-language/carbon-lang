@@ -62,11 +62,14 @@ def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeqEnd,
                               [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def ARMcall          : SDNode<"ARMISD::CALL", SDT_ARMcall,
-                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                               SDNPVariadic]>;
 def ARMcall_pred    : SDNode<"ARMISD::CALL_PRED", SDT_ARMcall,
-                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                               SDNPVariadic]>;
 def ARMcall_nolink   : SDNode<"ARMISD::CALL_NOLINK", SDT_ARMcall,
-                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                               SDNPVariadic]>;
 
 def ARMretflag       : SDNode<"ARMISD::RET_FLAG", SDTNone,
                               [SDNPHasChain, SDNPOptInFlag]>;

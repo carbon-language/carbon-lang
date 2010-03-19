@@ -16,7 +16,8 @@
 //
 
 def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
-                      [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+                      [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
+                       SDNPVariadic]>;
 
 def imm_neg_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
