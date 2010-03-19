@@ -411,7 +411,14 @@ def main():
         gSiteConfigName = '%s.site.cfg' % opts.configPrefix
 
     if opts.numThreads is None:
-        opts.numThreads = Util.detectCPUs()
+# Python <2.5 has a race condition causing lit to always fail with numThreads>1
+# http://bugs.python.org/issue1731717
+# I haven't seen this bug occur with 2.5.2 and later, so only enable multiple
+# threads by default there.
+       if sys.hexversion >= 0x2050200:
+               opts.numThreads = Util.detectCPUs()
+       else:
+               opts.numThreads = 1
 
     inputs = args
 
