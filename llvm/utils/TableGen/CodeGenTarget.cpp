@@ -123,7 +123,7 @@ std::string CodeGenTarget::getInstNamespace() const {
   std::string InstNS;
 
   for (inst_iterator i = inst_begin(), e = inst_end(); i != e; ++i) {
-    InstNS = i->second.Namespace;
+    InstNS = (*i)->Namespace;
 
     // Make sure not to pick up "TargetInstrInfo" by accidentally getting
     // the namespace off the PHI instruction or something.
@@ -300,7 +300,7 @@ GetInstByName(const char *Name,
 
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
-void CodeGenTarget::ComputeInstrsByEnum() {
+void CodeGenTarget::ComputeInstrsByEnum() const {
   const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
   const CodeGenInstruction *PHI = GetInstByName("PHI", Insts);
   const CodeGenInstruction *INLINEASM = GetInstByName("INLINEASM", Insts);
@@ -333,19 +333,19 @@ void CodeGenTarget::ComputeInstrsByEnum() {
   InstrsByEnum.push_back(COPY_TO_REGCLASS);
   InstrsByEnum.push_back(DBG_VALUE);
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
-    if (&II->second != PHI &&
-        &II->second != INLINEASM &&
-        &II->second != DBG_LABEL &&
-        &II->second != EH_LABEL &&
-        &II->second != GC_LABEL &&
-        &II->second != KILL &&
-        &II->second != EXTRACT_SUBREG &&
-        &II->second != INSERT_SUBREG &&
-        &II->second != IMPLICIT_DEF &&
-        &II->second != SUBREG_TO_REG &&
-        &II->second != COPY_TO_REGCLASS &&
-        &II->second != DBG_VALUE)
-      InstrsByEnum.push_back(&II->second);
+    if (*II != PHI &&
+        *II != INLINEASM &&
+        *II != DBG_LABEL &&
+        *II != EH_LABEL &&
+        *II != GC_LABEL &&
+        *II != KILL &&
+        *II != EXTRACT_SUBREG &&
+        *II != INSERT_SUBREG &&
+        *II != IMPLICIT_DEF &&
+        *II != SUBREG_TO_REG &&
+        *II != COPY_TO_REGCLASS &&
+        *II != DBG_VALUE)
+      InstrsByEnum.push_back(*II);
 }
 
 
