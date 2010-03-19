@@ -9,6 +9,8 @@
 
 #include "llvm/Target/TargetAsmBackend.h"
 #include "X86.h"
+#include "X86FixupKinds.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
@@ -16,10 +18,34 @@ using namespace llvm;
 
 namespace {
 
+static unsigned getFixupKindLog2Size(unsigned Kind) {
+  switch (Kind) {
+  default: assert(0 && "invalid fixup kind!");
+  case X86::reloc_pcrel_1byte:
+  case FK_Data_1: return 0;
+  case FK_Data_2: return 1;
+  case X86::reloc_pcrel_4byte:
+  case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_movq_load:
+  case FK_Data_4: return 2;
+  case FK_Data_8: return 3;
+  }
+}
+
 class X86AsmBackend : public TargetAsmBackend {
 public:
   X86AsmBackend(const Target &T)
     : TargetAsmBackend(T) {}
+
+  void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF,
+                  uint64_t Value) const {
+    unsigned Size = 1 << getFixupKindLog2Size(Fixup.Kind);
+
+    assert(Fixup.Offset + Size <= DF.getContents().size() &&
+           "Invalid fixup offset!");
+    for (unsigned i = 0; i != Size; ++i)
+      DF.getContents()[Fixup.Offset + i] = uint8_t(Value >> (i * 8));
+  }
 };
 
 class DarwinX86AsmBackend : public X86AsmBackend {

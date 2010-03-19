@@ -930,17 +930,6 @@ public:
       OS << StringTable.str();
     }
   }
-
-  void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF,
-                  uint64_t FixedValue) {
-    unsigned Size = 1 << getFixupKindLog2Size(Fixup.Kind);
-
-    // FIXME: Endianness assumption.
-    assert(Fixup.Offset + Size <= DF.getContents().size() &&
-           "Invalid fixup offset!");
-    for (unsigned i = 0; i != Size; ++i)
-      DF.getContents()[Fixup.Offset + i] = uint8_t(FixedValue >> (i * 8));
-  }
 };
 
 /* *** */
@@ -1475,7 +1464,7 @@ void MCAssembler::Finish() {
           MOW.RecordRelocation(*this, *DF, Fixup, Target, FixedValue);
         }
 
-        MOW.ApplyFixup(Fixup, *DF, FixedValue);
+        getBackend().ApplyFixup(Fixup, *DF, FixedValue);
       }
     }
   }

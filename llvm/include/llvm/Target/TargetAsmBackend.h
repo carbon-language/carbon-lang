@@ -10,7 +10,11 @@
 #ifndef LLVM_TARGET_TARGETASMBACKEND_H
 #define LLVM_TARGET_TARGETASMBACKEND_H
 
+#include "llvm/System/DataTypes.h"
+
 namespace llvm {
+class MCAsmFixup;
+class MCDataFragment;
 class MCSection;
 class Target;
 
@@ -75,6 +79,12 @@ public:
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
     return false;
   }
+
+  /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
+  /// data fragment, at the offset specified by the fixup and following the
+  /// fixup kind as appropriate.
+  virtual void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &Fragment,
+                          uint64_t Value) const = 0;
 };
 
 } // End llvm namespace
