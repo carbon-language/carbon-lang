@@ -409,8 +409,10 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   // need to do a type check.  Emit the check, apply the tyep to NodeNoTypes and
   // reinfer any correlated types.
   bool DoTypeCheck = false;
-  if (NodeNoTypes->getExtType() != N->getExtType()) {
-    NodeNoTypes->setType(N->getExtType());
+  if (NodeNoTypes->getNumTypes() != 0 &&
+      NodeNoTypes->getExtType(0) != N->getExtType(0)) {
+    assert(NodeNoTypes->getNumTypes() == 1 && "FIXME: Handle multiple results");
+    NodeNoTypes->setType(0, N->getExtType(0));
     InferPossibleTypes();
     DoTypeCheck = true;
   }
@@ -442,8 +444,10 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
     AddMatcher(new CheckPredicateMatcher(N->getPredicateFns()[i]));
   
-  if (DoTypeCheck)
-    AddMatcher(new CheckTypeMatcher(N->getType()));
+  if (DoTypeCheck) {
+    assert(N->getNumTypes() == 1);
+    AddMatcher(new CheckTypeMatcher(N->getType(0)));
+  }
 }
 
 /// EmitMatcherCode - Generate the code that matches the predicate of this
@@ -567,7 +571,7 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
   assert(N->isLeaf() && "Must be a leaf");
   
   if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
-    AddMatcher(new EmitIntegerMatcher(II->getValue(), N->getType()));
+    AddMatcher(new EmitIntegerMatcher(II->getValue(), N->getType(0)));
     ResultOps.push_back(NextRecordedOperandNo++);
     return;
   }
@@ -575,13 +579,13 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
   // If this is an explicit register reference, handle it.
   if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
     if (DI->getDef()->isSubClassOf("Register")) {
-      AddMatcher(new EmitRegisterMatcher(DI->getDef(), N->getType()));
+      AddMatcher(new EmitRegisterMatcher(DI->getDef(), N->getType(0)));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
     
     if (DI->getDef()->getName() == "zero_reg") {
-      AddMatcher(new EmitRegisterMatcher(0, N->getType()));
+      AddMatcher(new EmitRegisterMatcher(0, N->getType(0)));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
@@ -708,10 +712,11 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   // Determine the result types.
   SmallVector<MVT::SimpleValueType, 4> ResultVTs;
-  if (N->getType() != MVT::isVoid) {
+  if (N->getNumTypes()) {
     // FIXME2: If the node has multiple results, we should add them.  For now,
     // preserve existing behavior?!
-    ResultVTs.push_back(N->getType());
+    assert(N->getNumTypes() == 1);
+    ResultVTs.push_back(N->getType(0));
   }
   
   // If this is the root instruction of a pattern that has physical registers in
@@ -723,7 +728,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     // If the root came from an implicit def in the instruction handling stuff,
     // don't re-add it.
     Record *HandledReg = 0;
-    if (NumResults == 0 && N->getType() != MVT::isVoid &&
+    if (NumResults == 0 && N->getNumTypes() != 0 &&
         !II.ImplicitDefs.empty())
       HandledReg = II.ImplicitDefs[0];
     

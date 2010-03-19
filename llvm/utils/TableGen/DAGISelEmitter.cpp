@@ -25,7 +25,6 @@ using namespace llvm;
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
 static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
-  assert(P->hasTypeSet() && "Not a valid pattern node to size!");
   unsigned Size = 3;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
   // e.g. (set R32:$dst, 0).
@@ -49,7 +48,8 @@ static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
   // Count children in the count if they are also nodes.
   for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
     TreePatternNode *Child = P->getChild(i);
-    if (!Child->isLeaf() && Child->getType() != MVT::Other)
+    if (!Child->isLeaf() && Child->getNumTypes() &&
+        Child->getType(0) != MVT::Other)
       Size += getPatternSize(Child, CGP);
     else if (Child->isLeaf()) {
       if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
