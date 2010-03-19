@@ -802,17 +802,17 @@ CPP
 CXX
 CXXFLAGS
 CCC'
-ac_subdirs_all='projects/sample
+ac_subdirs_all='projects/llvm-gcc
+projects/test-suite
+projects/llvm-test
+projects/poolalloc
+projects/llvm-poolalloc
+projects/sample
 projects/privbracket
 projects/llvm-stacker
-projects/llvm-test
-projects/test-suite
 projects/llvm-reopt
-projects/llvm-gcc
 projects/llvm-java
 projects/llvm-tv
-projects/llvm-poolalloc
-projects/poolalloc
 projects/safecode
 projects/llvm-kernel'
 
@@ -1951,6 +1951,33 @@ echo "$as_me: error: Already configured in ${srcdir}" >&2;}
   fi
 fi
 
+
+
+if test -d ${srcdir}/projects/llvm-gcc ; then
+  subdirs="$subdirs projects/llvm-gcc"
+
+fi
+
+if test -d ${srcdir}/projects/test-suite ; then
+  subdirs="$subdirs projects/test-suite"
+
+fi
+
+if test -d ${srcdir}/projects/llvm-test ; then
+  subdirs="$subdirs projects/llvm-test"
+
+fi
+
+if test -d ${srcdir}/projects/poolalloc ; then
+  subdirs="$subdirs projects/poolalloc"
+
+fi
+
+if test -d ${srcdir}/projects/llvm-poolalloc ; then
+  subdirs="$subdirs projects/llvm-poolalloc"
+
+fi
+
 for i in `ls ${srcdir}/projects`
 do
   if test -d ${srcdir}/projects/${i} ; then
@@ -1962,24 +1989,12 @@ do
  ;;
       llvm-stacker) subdirs="$subdirs projects/llvm-stacker"
  ;;
-      # llvm-test is the old name of the test-suite, kept here for backwards
-      # compatibility
-      llvm-test)    subdirs="$subdirs projects/llvm-test"
- ;;
-      test-suite)   subdirs="$subdirs projects/test-suite"
- ;;
       llvm-reopt)   subdirs="$subdirs projects/llvm-reopt"
 ;;
-      llvm-gcc)     subdirs="$subdirs projects/llvm-gcc"
-  ;;
       llvm-java)    subdirs="$subdirs projects/llvm-java"
  ;;
       llvm-tv)      subdirs="$subdirs projects/llvm-tv"
    ;;
-      llvm-poolalloc) subdirs="$subdirs projects/llvm-poolalloc"
- ;;
-      poolalloc)    subdirs="$subdirs projects/poolalloc"
- ;;
       safecode)     subdirs="$subdirs projects/safecode"
  ;;
       llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
@@ -11136,7 +11151,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11139 "configure"
+#line 11154 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
