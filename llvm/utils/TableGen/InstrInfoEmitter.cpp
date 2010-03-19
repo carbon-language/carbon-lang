@@ -39,16 +39,10 @@ static void PrintBarriers(std::vector<Record*> &Barriers,
 // Instruction Itinerary Information.
 //===----------------------------------------------------------------------===//
 
-struct RecordNameComparator {
-  bool operator()(const Record *Rec1, const Record *Rec2) const {
-    return Rec1->getName() < Rec2->getName();
-  }
-};
-
 void InstrInfoEmitter::GatherItinClasses() {
   std::vector<Record*> DefList =
   Records.getAllDerivedDefinitions("InstrItinClass");
-  std::sort(DefList.begin(), DefList.end(), RecordNameComparator());
+  std::sort(DefList.begin(), DefList.end(), LessRecord());
   
   for (unsigned i = 0, N = DefList.size(); i < N; i++)
     ItinClassMap[DefList[i]->getName()] = i;

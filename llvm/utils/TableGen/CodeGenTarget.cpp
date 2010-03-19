@@ -135,11 +135,6 @@ Record *CodeGenTarget::getInstructionSet() const {
 }
 
 
-CodeGenInstruction &CodeGenTarget::getInstruction(const Record *InstRec) const {
-  return getInstruction(InstRec->getName());
-}
-
-
 /// getAsmParser - Return the AssemblyParser definition for this target.
 ///
 Record *CodeGenTarget::getAsmParser() const {
@@ -279,25 +274,37 @@ void CodeGenTarget::ReadInstructions() const {
 
   for (unsigned i = 0, e = Insts.size(); i != e; ++i) {
     std::string AsmStr = Insts[i]->getValueAsString(InstFormatName);
-    Instructions.insert(std::make_pair(Insts[i]->getName(),
-                                       CodeGenInstruction(Insts[i], AsmStr)));
+    Instructions[Insts[i]] = new CodeGenInstruction(Insts[i], AsmStr);
   }
 }
 
 static const CodeGenInstruction *
 GetInstByName(const char *Name,
-              const std::map<std::string, CodeGenInstruction> &Insts) {
-  std::map<std::string, CodeGenInstruction>::const_iterator
-    I = Insts.find(Name);
-  if (I == Insts.end())
+              const DenseMap<const Record*, CodeGenInstruction*> &Insts) {
+  const Record *Rec = Records.getDef(Name);
+  
+  DenseMap<const Record*, CodeGenInstruction*>::const_iterator
+    I = Insts.find(Rec);
+  if (Rec == 0 || I == Insts.end())
     throw std::string("Could not find '") + Name + "' instruction!";
-  return &I->second;
+  return I->second;
+}
+
+namespace {
+/// SortInstByName - Sorting predicate to sort instructions by name.
+///
+struct SortInstByName {
+  bool operator()(const CodeGenInstruction *Rec1,
+                  const CodeGenInstruction *Rec2) const {
+    return Rec1->TheDef->getName() < Rec2->TheDef->getName();
+  }
+};
 }
 
 /// getInstructionsByEnumValue - Return all of the instructions defined by the
 /// target, ordered by their enum value.
 void CodeGenTarget::ComputeInstrsByEnum() const {
-  const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
+  const DenseMap<const Record*, CodeGenInstruction*> &Insts = getInstructions();
   const CodeGenInstruction *PHI = GetInstByName("PHI", Insts);
   const CodeGenInstruction *INLINEASM = GetInstByName("INLINEASM", Insts);
   const CodeGenInstruction *DBG_LABEL = GetInstByName("DBG_LABEL", Insts);
@@ -329,10 +336,11 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
   InstrsByEnum.push_back(COPY_TO_REGCLASS);
   InstrsByEnum.push_back(DBG_VALUE);
   
-  for (std::map<std::string, CodeGenInstruction>::const_iterator
-       I = Insts.begin(), E = Insts.end(); I != E; ++I) {
-    const CodeGenInstruction *CGI = &I->second;
+  unsigned EndOfPredefines = InstrsByEnum.size();
   
+  for (DenseMap<const Record*, CodeGenInstruction*>::const_iterator
+       I = Insts.begin(), E = Insts.end(); I != E; ++I) {
+    const CodeGenInstruction *CGI = I->second;
     if (CGI != PHI &&
         CGI != INLINEASM &&
         CGI != DBG_LABEL &&
@@ -347,6 +355,11 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
         CGI != DBG_VALUE)
       InstrsByEnum.push_back(CGI);
   }
+  
+  // All of the instructions are now in random order based on the map iteration.
+  // Sort them by name.
+  std::sort(InstrsByEnum.begin()+EndOfPredefines, InstrsByEnum.end(),
+            SortInstByName());
 }
 
 

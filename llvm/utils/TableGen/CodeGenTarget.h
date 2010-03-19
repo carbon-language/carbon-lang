@@ -17,11 +17,11 @@
 #ifndef CODEGEN_TARGET_H
 #define CODEGEN_TARGET_H
 
-#include "llvm/Support/raw_ostream.h"
 #include "CodeGenRegisters.h"
 #include "CodeGenInstruction.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/DenseMap.h"
 #include <algorithm>
-#include <map>
 
 namespace llvm {
 
@@ -62,7 +62,7 @@ std::string getQualifiedName(const Record *R);
 class CodeGenTarget {
   Record *TargetRec;
 
-  mutable std::map<std::string, CodeGenInstruction> Instructions;
+  mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
   mutable std::vector<CodeGenRegister> Registers;
   mutable std::vector<CodeGenRegisterClass> RegisterClasses;
   mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
@@ -185,25 +185,20 @@ public:
     return false;    
   }
 
-  /// getInstructions - Return all of the instructions defined for this target.
-  ///
 private:
-  const std::map<std::string, CodeGenInstruction> &getInstructions() const {
+  DenseMap<const Record*, CodeGenInstruction*> &getInstructions() const {
     if (Instructions.empty()) ReadInstructions();
     return Instructions;
-  }
-  std::map<std::string, CodeGenInstruction> &getInstructions() {
-    if (Instructions.empty()) ReadInstructions();
-    return Instructions;
-  }
-  CodeGenInstruction &getInstruction(const std::string &Name) const {
-    const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
-    assert(Insts.count(Name) && "Not an instruction!");
-    return const_cast<CodeGenInstruction&>(Insts.find(Name)->second);
   }
 public:
   
-  CodeGenInstruction &getInstruction(const Record *InstRec) const;  
+  CodeGenInstruction &getInstruction(const Record *InstRec) const {
+    if (Instructions.empty()) ReadInstructions();
+    DenseMap<const Record*, CodeGenInstruction*>::iterator I =
+      Instructions.find(InstRec);
+    assert(I != Instructions.end() && "Not an instruction");
+    return *I->second;
+  }
 
   /// getInstructionsByEnumValue - Return all of the instructions defined by the
   /// target, ordered by their enum value.

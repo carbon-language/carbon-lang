@@ -15,14 +15,14 @@
 #ifndef CODEGEN_DAGPATTERNS_H
 #define CODEGEN_DAGPATTERNS_H
 
-#include <set>
-#include <algorithm>
-#include <vector>
-
 #include "CodeGenTarget.h"
 #include "CodeGenIntrinsics.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
 
 namespace llvm {
   class Record;
