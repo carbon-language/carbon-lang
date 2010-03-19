@@ -170,6 +170,27 @@ class MachObjectWriter {
   unsigned Is64Bit : 1;
   unsigned IsLSB : 1;
 
+  /// @name Relocation Data
+  /// @{
+
+  struct MachRelocationEntry {
+    uint32_t Word0;
+    uint32_t Word1;
+  };
+
+  llvm::DenseMap<const MCSectionData*,
+                 std::vector<MachRelocationEntry> > Relocations;
+
+  /// @}
+  /// @name Symbol Table Data
+
+  SmallString<256> StringTable;
+  std::vector<MachSymbolData> LocalSymbolData;
+  std::vector<MachSymbolData> ExternalSymbolData;
+  std::vector<MachSymbolData> UndefinedSymbolData;
+
+  /// @}
+
 public:
   MachObjectWriter(raw_ostream &_OS, bool _Is64Bit, bool _IsLSB = true)
     : OS(_OS), Is64Bit(_Is64Bit), IsLSB(_IsLSB) {
@@ -464,14 +485,9 @@ public:
       Write32(Address);
   }
 
-  struct MachRelocationEntry {
-    uint32_t Word0;
-    uint32_t Word1;
-  };
-  void ComputeScatteredRelocationInfo(MCAssembler &Asm, MCFragment &Fragment,
-                                      MCAsmFixup &Fixup,
-                                      const MCValue &Target,
-                                     std::vector<MachRelocationEntry> &Relocs) {
+  void RecordScatteredRelocation(MCAssembler &Asm, MCFragment &Fragment,
+                                 const MCAsmFixup &Fixup, MCValue Target,
+                                 uint64_t &FixedValue) {
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
@@ -504,15 +520,7 @@ public:
       Value2 = B_SD->getAddress();
     }
 
-    MachRelocationEntry MRE;
-    MRE.Word0 = ((Address   <<  0) |
-                 (Type      << 24) |
-                 (Log2Size  << 28) |
-                 (IsPCRel   << 30) |
-                 RF_Scattered);
-    MRE.Word1 = Value;
-    Relocs.push_back(MRE);
-
+    // Relocations are written out in reverse order, so the PAIR comes first.
     if (Type == RIT_Difference || Type == RIT_LocalDifference) {
       MachRelocationEntry MRE;
       MRE.Word0 = ((0         <<  0) |
@@ -521,23 +529,24 @@ public:
                    (IsPCRel   << 30) |
                    RF_Scattered);
       MRE.Word1 = Value2;
-      Relocs.push_back(MRE);
+      Relocations[Fragment.getParent()].push_back(MRE);
     }
+
+    MachRelocationEntry MRE;
+    MRE.Word0 = ((Address   <<  0) |
+                 (Type      << 24) |
+                 (Log2Size  << 28) |
+                 (IsPCRel   << 30) |
+                 RF_Scattered);
+    MRE.Word1 = Value;
+    Relocations[Fragment.getParent()].push_back(MRE);
   }
 
-  void ComputeRelocationInfo(MCAssembler &Asm, MCDataFragment &Fragment,
-                             MCAsmFixup &Fixup,
-                             std::vector<MachRelocationEntry> &Relocs) {
+  void RecordRelocation(MCAssembler &Asm, MCDataFragment &Fragment,
+                        const MCAsmFixup &Fixup, MCValue Target,
+                        uint64_t &FixedValue) {
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
-
-    // FIXME: Share layout object.
-    MCAsmLayout Layout(Asm);
-
-    // Evaluate the fixup; if the value was resolved, no relocation is needed.
-    MCValue Target;
-    if (Asm.EvaluateFixup(Layout, Fixup, &Fragment, Target, Fixup.FixedValue))
-      return;
 
     // If this is a difference or a defined symbol plus an offset, then we need
     // a scattered relocation entry.
@@ -546,9 +555,10 @@ public:
       Offset += 1 << Log2Size;
     if (Target.getSymB() ||
         (Target.getSymA() && !Target.getSymA()->getSymbol().isUndefined() &&
-         Offset))
-      return ComputeScatteredRelocationInfo(Asm, Fragment, Fixup, Target,
-                                            Relocs);
+         Offset)) {
+      RecordScatteredRelocation(Asm, Fragment, Fixup, Target, FixedValue);
+      return;
+    }
 
     // See <reloc.h>.
     uint32_t Address = Fragment.getOffset() + Fixup.Offset;
@@ -596,7 +606,20 @@ public:
                  (Log2Size  << 25) |
                  (IsExtern  << 27) |
                  (Type      << 28));
-    Relocs.push_back(MRE);
+    Relocations[Fragment.getParent()].push_back(MRE);
+  }
+
+  void ComputeRelocationInfo(MCAssembler &Asm, MCDataFragment &Fragment,
+                             MCAsmFixup &Fixup) {
+    // FIXME: Share layout object.
+    MCAsmLayout Layout(Asm);
+
+    // Evaluate the fixup; if the value was resolved, no relocation is needed.
+    MCValue Target;
+    if (Asm.EvaluateFixup(Layout, Fixup, &Fragment, Target, Fixup.FixedValue))
+      return;
+
+    RecordRelocation(Asm, Fragment, Fixup, Target, Fixup.FixedValue);
   }
 
   void BindIndirectSymbols(MCAssembler &Asm) {
@@ -820,32 +843,24 @@ public:
     WriteSegmentLoadCommand(NumSections, VMSize,
                             SectionDataStart, SectionDataSize);
 
-    // ... and then the section headers.
-    //
-    // We also compute the section relocations while we do this. Note that
-    // computing relocation info will also update the fixup to have the correct
-    // value; this will overwrite the appropriate data in the fragment when it
-    // is written.
-    std::vector<MachRelocationEntry> RelocInfos;
-    uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
     for (MCAssembler::iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it) {
       MCSectionData &SD = *it;
-
-      // The assembler writes relocations in the reverse order they were seen.
-      //
-      // FIXME: It is probably more complicated than this.
-      unsigned NumRelocsStart = RelocInfos.size();
-      for (MCSectionData::reverse_iterator it2 = SD.rbegin(),
-             ie2 = SD.rend(); it2 != ie2; ++it2)
+      for (MCSectionData::iterator it2 = SD.begin(),
+             ie2 = SD.end(); it2 != ie2; ++it2)
         if (MCDataFragment *DF = dyn_cast<MCDataFragment>(&*it2))
           for (unsigned i = 0, e = DF->fixup_size(); i != e; ++i)
-            ComputeRelocationInfo(Asm, *DF, DF->getFixups()[e - i - 1],
-                                  RelocInfos);
+            ComputeRelocationInfo(Asm, *DF, DF->getFixups()[i]);
+    }
 
-      unsigned NumRelocs = RelocInfos.size() - NumRelocsStart;
-      uint64_t SectionStart = SectionDataStart + SD.getAddress();
-      WriteSection(SD, SectionStart, RelocTableEnd, NumRelocs);
+    // ... and then the section headers.
+    uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it) {
+      std::vector<MachRelocationEntry> &Relocs = Relocations[it];
+      unsigned NumRelocs = Relocs.size();
+      uint64_t SectionStart = SectionDataStart + it->getAddress();
+      WriteSection(*it, SectionStart, RelocTableEnd, NumRelocs);
       RelocTableEnd += NumRelocs * RelocationInfoSize;
     }
 
@@ -891,9 +906,15 @@ public:
     WriteZeros(SectionDataPadding);
 
     // Write the relocation entries.
-    for (unsigned i = 0, e = RelocInfos.size(); i != e; ++i) {
-      Write32(RelocInfos[i].Word0);
-      Write32(RelocInfos[i].Word1);
+    for (MCAssembler::iterator it = Asm.begin(),
+           ie = Asm.end(); it != ie; ++it) {
+      // Write the section relocation entries, in reverse order to match 'as'
+      // (approximately, the exact algorithm is more complicated than this).
+      std::vector<MachRelocationEntry> &Relocs = Relocations[it];
+      for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
+        Write32(Relocs[e - i - 1].Word0);
+        Write32(Relocs[e - i - 1].Word1);
+      }
     }
 
     // Write the symbol table data, if used.
