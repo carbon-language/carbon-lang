@@ -609,19 +609,6 @@ public:
     Relocations[Fragment.getParent()].push_back(MRE);
   }
 
-  void ComputeRelocationInfo(MCAssembler &Asm, MCDataFragment &Fragment,
-                             MCAsmFixup &Fixup) {
-    // FIXME: Share layout object.
-    MCAsmLayout Layout(Asm);
-
-    // Evaluate the fixup; if the value was resolved, no relocation is needed.
-    MCValue Target;
-    if (Asm.EvaluateFixup(Layout, Fixup, &Fragment, Target, Fixup.FixedValue))
-      return;
-
-    RecordRelocation(Asm, Fragment, Fixup, Target, Fixup.FixedValue);
-  }
-
   void BindIndirectSymbols(MCAssembler &Asm) {
     // This is the point where 'as' creates actual symbols for indirect symbols
     // (in the following two passes). It would be easier for us to do this
@@ -785,17 +772,6 @@ public:
     // Compute symbol table information and bind symbol indices.
     ComputeSymbolTable(Asm, StringTable, LocalSymbolData, ExternalSymbolData,
                        UndefinedSymbolData);
-
-    // Compute relocations.
-    for (MCAssembler::iterator it = Asm.begin(),
-           ie = Asm.end(); it != ie; ++it) {
-      MCSectionData &SD = *it;
-      for (MCSectionData::iterator it2 = SD.begin(),
-             ie2 = SD.end(); it2 != ie2; ++it2)
-        if (MCDataFragment *DF = dyn_cast<MCDataFragment>(&*it2))
-          for (unsigned i = 0, e = DF->fixup_size(); i != e; ++i)
-            ComputeRelocationInfo(Asm, *DF, DF->getFixups()[i]);
-    }
   }
 
   void WriteObject(const MCAssembler &Asm) {
@@ -955,14 +931,15 @@ public:
     }
   }
 
-  void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF) {
+  void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &DF,
+                  uint64_t FixedValue) {
     unsigned Size = 1 << getFixupKindLog2Size(Fixup.Kind);
 
     // FIXME: Endianness assumption.
     assert(Fixup.Offset + Size <= DF.getContents().size() &&
            "Invalid fixup offset!");
     for (unsigned i = 0; i != Size; ++i)
-      DF.getContents()[Fixup.Offset + i] = uint8_t(Fixup.FixedValue >> (i * 8));
+      DF.getContents()[Fixup.Offset + i] = uint8_t(FixedValue >> (i * 8));
   }
 };
 
@@ -1394,15 +1371,6 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
   }
 
   case MCFragment::FT_Data: {
-    MCDataFragment &DF = cast<MCDataFragment>(F);
-
-    // Apply the fixups.
-    //
-    // FIXME: Move elsewhere.
-    for (MCDataFragment::const_fixup_iterator it = DF.fixup_begin(),
-           ie = DF.fixup_end(); it != ie; ++it)
-      MOW.ApplyFixup(*it, DF);
-
     OS << cast<MCDataFragment>(F).getContents().str();
     break;
   }
@@ -1483,6 +1451,34 @@ void MCAssembler::Finish() {
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
   MOW.ExecutePostLayoutBinding(*this);
+
+  // Evaluate and apply the fixups, generating relocation entries as necessary.
+  MCAsmLayout Layout(*this);
+  for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
+    for (MCSectionData::iterator it2 = it->begin(),
+           ie2 = it->end(); it2 != ie2; ++it2) {
+      MCDataFragment *DF = dyn_cast<MCDataFragment>(it2);
+      if (!DF)
+        continue;
+
+      for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
+             ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
+        MCAsmFixup &Fixup = *it3;
+
+        // Evaluate the fixup.
+        MCValue Target;
+        uint64_t FixedValue;
+        if (!EvaluateFixup(Layout, Fixup, DF, Target, FixedValue)) {
+          // The fixup was unresolved, we need a relocation. Inform the object
+          // writer of the relocation, and give it an opportunity to adjust the
+          // fixup value if need be.
+          MOW.RecordRelocation(*this, *DF, Fixup, Target, FixedValue);
+        }
+
+        MOW.ApplyFixup(Fixup, *DF, FixedValue);
+      }
+    }
+  }
 
   // Write the object file.
   MOW.WriteObject(*this);

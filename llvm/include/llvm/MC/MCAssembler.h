@@ -45,14 +45,9 @@ struct MCAsmFixup {
   /// Kind - The fixup kind.
   MCFixupKind Kind;
 
-  /// FixedValue - The value to replace the fix up by.
-  //
-  // FIXME: This should not be here.
-  uint64_t FixedValue;
-
 public:
   MCAsmFixup(uint64_t _Offset, const MCExpr &_Value, MCFixupKind _Kind)
-    : Offset(_Offset), Value(&_Value), Kind(_Kind), FixedValue(0) {}
+    : Offset(_Offset), Value(&_Value), Kind(_Kind) {}
 };
 
 class MCFragment : public ilist_node<MCFragment> {
