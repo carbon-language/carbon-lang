@@ -379,3 +379,52 @@ void clang::bugreporter::registerFindLastStore(BugReporterContext& BRC,
 
   BRC.addVisitor(new FindLastStoreBRVisitor(V, R));
 }
+
+
+namespace {
+class NilReceiverVisitor : public BugReporterVisitor {
+public:
+  NilReceiverVisitor() {}
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    static int x = 0;
+    ID.AddPointer(&x);
+  }
+
+  PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *PrevN,
+                                 BugReporterContext& BRC) {
+
+    const PostStmt *P = N->getLocationAs<PostStmt>();
+    if (!P)
+      return 0;
+    const ObjCMessageExpr *ME = P->getStmtAs<ObjCMessageExpr>();
+    if (!ME)
+      return 0;
+    const Expr *Receiver = ME->getReceiver();
+    if (!Receiver)
+      return 0;
+    const GRState *state = N->getState();
+    const SVal &V = state->getSVal(Receiver);
+    const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
+    if (!DV)
+      return 0;
+    state = state->Assume(*DV, true);
+    if (state)
+      return 0;
+
+    // The receiver was nil, and hence the method was skipped.
+    // Register a BugReporterVisitor to issue a message telling us how
+    // the receiver was null.
+    bugreporter::registerTrackNullOrUndefValue(BRC, Receiver, N);
+    // Issue a message saying that the method was skipped.
+    PathDiagnosticLocation L(Receiver, BRC.getSourceManager());
+    return new PathDiagnosticEventPiece(L, "No method actually called "
+                                           "because the receiver is nil");
+  }
+};
+} // end anonymous namespace
+
+void clang::bugreporter::registerNilReceiverVisitor(BugReporterContext &BRC) {
+  BRC.addVisitor(new NilReceiverVisitor());
+}
