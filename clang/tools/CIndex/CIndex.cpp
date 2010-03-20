@@ -234,6 +234,10 @@ public:
   }
 
   bool Visit(CXCursor Cursor, bool CheckedRegionOfInterest = false);
+  
+  std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+    getPreprocessedEntities();
+
   bool VisitChildren(CXCursor Parent);
 
   // Declaration visitors
@@ -352,6 +356,48 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   return false;
 }
 
+std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+CursorVisitor::getPreprocessedEntities() {
+  PreprocessingRecord &PPRec
+    = *TU->getPreprocessor().getPreprocessingRecord();
+  
+  bool OnlyLocalDecls
+    = !TU->isMainFileAST() && TU->getOnlyLocalDecls();
+  
+  // There is no region of interest; we have to walk everything.
+  if (RegionOfInterest.isInvalid())
+    return std::make_pair(PPRec.begin(OnlyLocalDecls),
+                          PPRec.end(OnlyLocalDecls));
+
+  // Find the file in which the region of interest lands.
+  SourceManager &SM = TU->getSourceManager();
+  std::pair<FileID, unsigned> Begin
+    = SM.getDecomposedInstantiationLoc(RegionOfInterest.getBegin());
+  std::pair<FileID, unsigned> End
+    = SM.getDecomposedInstantiationLoc(RegionOfInterest.getEnd());
+  
+  // The region of interest spans files; we have to walk everything.
+  if (Begin.first != End.first)
+    return std::make_pair(PPRec.begin(OnlyLocalDecls),
+                          PPRec.end(OnlyLocalDecls));
+    
+  ASTUnit::PreprocessedEntitiesByFileMap &ByFileMap
+    = TU->getPreprocessedEntitiesByFile();
+  if (ByFileMap.empty()) {
+    // Build the mapping from files to sets of preprocessed entities.
+    for (PreprocessingRecord::iterator E = PPRec.begin(OnlyLocalDecls),
+                                    EEnd = PPRec.end(OnlyLocalDecls);
+         E != EEnd; ++E) {
+      std::pair<FileID, unsigned> P
+        = SM.getDecomposedInstantiationLoc((*E)->getSourceRange().getBegin());
+      ByFileMap[P.first].push_back(*E);
+    }
+  }
+
+  return std::make_pair(ByFileMap[Begin.first].begin(), 
+                        ByFileMap[Begin.first].end());
+}
+
 /// \brief Visit the children of the given cursor.
 ///
 /// \returns true if the visitation should be aborted, false if it
@@ -415,15 +461,12 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
                        = CXXUnit->getPreprocessor().getPreprocessingRecord()) {
       // FIXME: Once we have the ability to deserialize a preprocessing record,
       // do so.
-      bool OnlyLocalDecls
-        = !CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls();
-      for (PreprocessingRecord::iterator 
-             E = PPRec->begin(OnlyLocalDecls), 
-             EEnd = PPRec->end(OnlyLocalDecls);
-           E != EEnd; ++E) {
+      PreprocessingRecord::iterator E, EEnd;
+      for (llvm::tie(E, EEnd) = getPreprocessedEntities(); E != EEnd; ++E) {
         if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
           if (Visit(MakeMacroInstantiationCursor(MI, CXXUnit)))
             return true;
+          
           continue;
         }
         
