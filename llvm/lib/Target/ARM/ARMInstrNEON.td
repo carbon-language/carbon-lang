@@ -763,6 +763,21 @@ def VST2LNq32 : VST2LN<0b1001, "32"> { let Inst{6} = 1; }
 def VST2LNq16odd : VST2LN<0b0101, "16"> { let Inst{5} = 1; }
 def VST2LNq32odd : VST2LN<0b1001, "32"> { let Inst{6} = 1; }
 
+// ...with address register writeback:
+class VST2LNWB<bits<4> op11_8, string Dt>
+  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, nohash_imm:$lane), IIC_VST, "vst2", Dt,
+          "\\{$src1[$lane], $src2[$lane]\\}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VST2LNd8_UPD  : VST2LNWB<0b0001, "8">;
+def VST2LNd16_UPD : VST2LNWB<0b0101, "16"> { let Inst{5} = 0; }
+def VST2LNd32_UPD : VST2LNWB<0b1001, "32"> { let Inst{6} = 0; }
+
+def VST2LNq16_UPD : VST2LNWB<0b0101, "16"> { let Inst{5} = 1; }
+def VST2LNq32_UPD : VST2LNWB<0b1001, "32"> { let Inst{6} = 1; }
+
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
 class VST3LN<bits<4> op11_8, string Dt>
   : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs),
@@ -781,6 +796,22 @@ def VST3LNq32 : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
 // ...alternate versions to be allocated odd register numbers:
 def VST3LNq16odd : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
 def VST3LNq32odd : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+
+// ...with address register writeback:
+class VST3LNWB<bits<4> op11_8, string Dt>
+  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, DPR:$src3, nohash_imm:$lane),
+          IIC_VST, "vst3", Dt,
+          "\\{$src1[$lane], $src2[$lane], $src3[$lane]\\}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VST3LNd8_UPD  : VST3LNWB<0b0010, "8"> { let Inst{4} = 0; }
+def VST3LNd16_UPD : VST3LNWB<0b0110, "16"> { let Inst{5-4} = 0b00; }
+def VST3LNd32_UPD : VST3LNWB<0b1010, "32"> { let Inst{6-4} = 0b000; }
+
+def VST3LNq16_UPD : VST3LNWB<0b0110, "16"> { let Inst{5-4} = 0b10; }
+def VST3LNq32_UPD : VST3LNWB<0b1010, "32"> { let Inst{6-4} = 0b100; }
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
 class VST4LN<bits<4> op11_8, string Dt>
@@ -801,6 +832,22 @@ def VST4LNq32 : VST4LN<0b1011, "32"> { let Inst{6} = 1; }
 // ...alternate versions to be allocated odd register numbers:
 def VST4LNq16odd : VST4LN<0b0111, "16"> { let Inst{5} = 1; }
 def VST4LNq32odd : VST4LN<0b1011, "32"> { let Inst{6} = 1; }
+
+// ...with address register writeback:
+class VST4LNWB<bits<4> op11_8, string Dt>
+  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4, nohash_imm:$lane),
+          IIC_VST, "vst4", Dt,
+  "\\{$src1[$lane], $src2[$lane], $src3[$lane], $src4[$lane]\\}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VST4LNd8_UPD  : VST4LNWB<0b0011, "8">;
+def VST4LNd16_UPD : VST4LNWB<0b0111, "16"> { let Inst{5} = 0; }
+def VST4LNd32_UPD : VST4LNWB<0b1011, "32"> { let Inst{6} = 0; }
+
+def VST4LNq16_UPD : VST4LNWB<0b0111, "16"> { let Inst{5} = 1; }
+def VST4LNq32_UPD : VST4LNWB<0b1011, "32"> { let Inst{6} = 1; }
 
 } // mayStore = 1, hasExtraSrcRegAllocReq = 1
 
