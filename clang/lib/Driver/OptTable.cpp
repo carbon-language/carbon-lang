@@ -167,11 +167,13 @@ Option *OptTable::CreateOption(unsigned id) const {
   if (info.Flags & RenderAsInput)
     Opt->setNoOptAsInput(true);
   if (info.Flags & RenderJoined) {
-    assert(info.Kind == Option::SeparateClass && "Invalid option.");
+    assert((info.Kind == Option::JoinedOrSeparateClass ||
+            info.Kind == Option::SeparateClass) && "Invalid option.");
     Opt->setForceJoinedRender(true);
   }
   if (info.Flags & RenderSeparate) {
-    assert(info.Kind == Option::JoinedClass && "Invalid option.");
+    assert((info.Kind == Option::JoinedOrSeparateClass ||
+            info.Kind == Option::JoinedClass) && "Invalid option.");
     Opt->setForceSeparateRender(true);
   }
   if (info.Flags & Unsupported)

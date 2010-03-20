@@ -10,6 +10,7 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Option.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang::driver;
@@ -155,14 +156,12 @@ SeparateArg::SeparateArg(const Option *Opt, unsigned Index, unsigned _NumValues,
 void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
   if (getOption().hasForceJoinedRender()) {
     assert(getNumValues() == 1 && "Cannot force joined render with > 1 args.");
-    // FIXME: Avoid std::string.
-    std::string Joined(getOption().getName());
-    Joined += Args.getArgString(getIndex());
-    Output.push_back(Args.MakeArgString(Joined.c_str()));
+    Output.push_back(Args.MakeArgString(llvm::StringRef(getOption().getName()) +
+                                        getValue(Args, 0)));
   } else {
     Output.push_back(Args.getArgString(getIndex()));
     for (unsigned i = 0; i < NumValues; ++i)
-      Output.push_back(Args.getArgString(getIndex() + 1 + i));
+      Output.push_back(getValue(Args, i));
   }
 }
 
