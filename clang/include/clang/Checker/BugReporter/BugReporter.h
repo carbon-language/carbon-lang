@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ImmutableSet.h"
+#include "llvm/ADT/ImmutableList.h"
 #include <list>
 
 namespace clang {
@@ -385,16 +386,19 @@ public:
 
 class BugReporterContext {
   GRBugReporter &BR;
-  std::vector<BugReporterVisitor*> Callbacks;
+  // Not the most efficient data structure, but we use an ImmutableList for the
+  // Callbacks because it is safe to make additions to list during iteration.
+  llvm::ImmutableList<BugReporterVisitor*>::Factory F;
+  llvm::ImmutableList<BugReporterVisitor*> Callbacks;
 public:
-  BugReporterContext(GRBugReporter& br) : BR(br) {}
+  BugReporterContext(GRBugReporter& br) : BR(br), Callbacks(F.GetEmptyList()) {}
   virtual ~BugReporterContext();
 
   void addVisitor(BugReporterVisitor* visitor) {
-    if (visitor) Callbacks.push_back(visitor);
+    if (visitor) Callbacks = F.Add(visitor, Callbacks);
   }
 
-  typedef std::vector<BugReporterVisitor*>::iterator visitor_iterator;
+  typedef llvm::ImmutableList<BugReporterVisitor*>::iterator visitor_iterator;
   visitor_iterator visitor_begin() { return Callbacks.begin(); }
   visitor_iterator visitor_end() { return Callbacks.end(); }
 
