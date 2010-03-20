@@ -401,6 +401,21 @@ def VLD2LNq32 : VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
 def VLD2LNq16odd : VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
 def VLD2LNq32odd : VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
 
+// ...with address register writeback:
+class VLD2LNWB<bits<4> op11_8, string Dt>
+  : NLdSt<1, 0b10, op11_8, {?,?,?,?}, (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, nohash_imm:$lane), IIC_VLD2, "vld2", Dt,
+          "\\{$dst1[$lane], $dst2[$lane]\\}, $addr",
+          "$src1 = $dst1, $src2 = $dst2, $addr.addr = $wb", []>;
+
+def VLD2LNd8_UPD  : VLD2LNWB<0b0001, "8">;
+def VLD2LNd16_UPD : VLD2LNWB<0b0101, "16"> { let Inst{5} = 0; }
+def VLD2LNd32_UPD : VLD2LNWB<0b1001, "32"> { let Inst{6} = 0; }
+
+def VLD2LNq16_UPD : VLD2LNWB<0b0101, "16"> { let Inst{5} = 1; }
+def VLD2LNq32_UPD : VLD2LNWB<0b1001, "32"> { let Inst{6} = 1; }
+
 //   VLD3LN   : Vector Load (single 3-element structure to one lane)
 class VLD3LN<bits<4> op11_8, string Dt>
   : NLdSt<1, 0b10, op11_8, {?,?,?,?}, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
@@ -420,6 +435,24 @@ def VLD3LNq32 : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
 // ...alternate versions to be allocated odd register numbers:
 def VLD3LNq16odd : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
 def VLD3LNq32odd : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+
+// ...with address register writeback:
+class VLD3LNWB<bits<4> op11_8, string Dt>
+  : NLdSt<1, 0b10, op11_8, {?,?,?,?},
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, DPR:$src3, nohash_imm:$lane),
+          IIC_VLD3, "vld3", Dt,
+          "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane]\\}, $addr",
+          "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $addr.addr = $wb",
+          []>;
+
+def VLD3LNd8_UPD  : VLD3LNWB<0b0010, "8"> { let Inst{4} = 0; }
+def VLD3LNd16_UPD : VLD3LNWB<0b0110, "16"> { let Inst{5-4} = 0b00; }
+def VLD3LNd32_UPD : VLD3LNWB<0b1010, "32"> { let Inst{6-4} = 0b000; }
+
+def VLD3LNq16_UPD : VLD3LNWB<0b0110, "16"> { let Inst{5-4} = 0b10; }
+def VLD3LNq32_UPD : VLD3LNWB<0b1010, "32"> { let Inst{6-4} = 0b100; }
 
 //   VLD4LN   : Vector Load (single 4-element structure to one lane)
 class VLD4LN<bits<4> op11_8, string Dt>
@@ -441,6 +474,24 @@ def VLD4LNq32 : VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
 // ...alternate versions to be allocated odd register numbers:
 def VLD4LNq16odd : VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
 def VLD4LNq32odd : VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
+
+// ...with address register writeback:
+class VLD4LNWB<bits<4> op11_8, string Dt>
+  : NLdSt<1, 0b10, op11_8, {?,?,?,?},
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4, nohash_imm:$lane),
+          IIC_VLD4, "vld4", Dt,
+"\\{$dst1[$lane], $dst2[$lane], $dst3[$lane], $dst4[$lane]\\}, $addr",
+"$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4, $addr.addr = $wb",
+          []>;
+
+def VLD4LNd8_UPD  : VLD4LNWB<0b0011, "8">;
+def VLD4LNd16_UPD : VLD4LNWB<0b0111, "16"> { let Inst{5} = 0; }
+def VLD4LNd32_UPD : VLD4LNWB<0b1011, "32"> { let Inst{6} = 0; }
+
+def VLD4LNq16_UPD : VLD4LNWB<0b0111, "16"> { let Inst{5} = 1; }
+def VLD4LNq32_UPD : VLD4LNWB<0b1011, "32"> { let Inst{6} = 1; }
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
