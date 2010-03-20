@@ -459,11 +459,11 @@ static void translateInstruction(MCInst &mcInst,
   }
 }
 
-static const MCDisassembler *createX86_32Disassembler(const Target &T) {
+static MCDisassembler *createX86_32Disassembler(const Target &T) {
   return new X86Disassembler::X86_32Disassembler;
 }
 
-static const MCDisassembler *createX86_64Disassembler(const Target &T) {
+static MCDisassembler *createX86_64Disassembler(const Target &T) {
   return new X86Disassembler::X86_64Disassembler;
 }
 

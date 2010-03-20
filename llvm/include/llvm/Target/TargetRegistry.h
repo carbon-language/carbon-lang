@@ -55,7 +55,7 @@ namespace llvm {
 
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
-    typedef const MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
+    typedef MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
                                                 StringRef TT);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
@@ -68,7 +68,7 @@ namespace llvm {
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCAsmInfo &MAI);
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,MCAsmParser &P);
-    typedef const MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
+    typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
                                                   const MCAsmInfo &MAI,
@@ -184,7 +184,7 @@ namespace llvm {
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
-    const MCAsmInfo *createAsmInfo(StringRef Triple) const {
+    MCAsmInfo *createAsmInfo(StringRef Triple) const {
       if (!AsmInfoCtorFn)
         return 0;
       return AsmInfoCtorFn(*this, Triple);
@@ -241,7 +241,7 @@ namespace llvm {
       return AsmPrinterCtorFn(OS, TM, Streamer);
     }
 
-    const MCDisassembler *createMCDisassembler() const {
+    MCDisassembler *createMCDisassembler() const {
       if (!MCDisassemblerCtorFn)
         return 0;
       return MCDisassemblerCtorFn(*this);
@@ -529,7 +529,7 @@ namespace llvm {
       TargetRegistry::RegisterAsmInfo(T, &Allocator);
     }
   private:
-    static const MCAsmInfo *Allocator(const Target &T, StringRef TT) {
+    static MCAsmInfo *Allocator(const Target &T, StringRef TT) {
       return new MCAsmInfoImpl(T, TT);
     }
 
