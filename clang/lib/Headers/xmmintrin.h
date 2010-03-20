@@ -30,6 +30,7 @@
 
 #include <mmintrin.h>
 
+typedef int __v4si __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef float __m128 __attribute__((__vector_size__(16)));
 
@@ -150,28 +151,24 @@ _mm_max_ps(__m128 a, __m128 b)
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_and_ps(__m128 a, __m128 b)
 {
-  typedef int __v4si __attribute__((__vector_size__(16)));
   return (__m128)((__v4si)a & (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_andnot_ps(__m128 a, __m128 b)
 {
-  typedef int __v4si __attribute__((__vector_size__(16)));
   return (__m128)(~(__v4si)a & (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_or_ps(__m128 a, __m128 b)
 {
-  typedef int __v4si __attribute__((__vector_size__(16)));
   return (__m128)((__v4si)a | (__v4si)b);
 }
 
 static inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_xor_ps(__m128 a, __m128 b)
 {
-  typedef int __v4si __attribute__((__vector_size__(16)));
   return (__m128)((__v4si)a ^ (__v4si)b);
 }
 

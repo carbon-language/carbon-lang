@@ -33,7 +33,6 @@
 typedef double __m128d __attribute__((__vector_size__(16)));
 typedef long long __m128i __attribute__((__vector_size__(16)));
 
-typedef int __v4si __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
 
