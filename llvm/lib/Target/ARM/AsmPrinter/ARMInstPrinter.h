@@ -48,6 +48,7 @@ public:
   void printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
                              const char *Modifier = 0);
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum);
+  void printAddrMode6OffsetOperand(const MCInst *MI, unsigned OpNum);
   void printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
                               const char *Modifier = 0);
 

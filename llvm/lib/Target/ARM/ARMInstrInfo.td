@@ -285,7 +285,7 @@ def pclabel : Operand<i32> {
 
 // shifter_operand operands: so_reg and so_imm.
 def so_reg : Operand<i32>,    // reg reg imm
-            ComplexPattern<i32, 3, "SelectShifterOperandReg",
+             ComplexPattern<i32, 3, "SelectShifterOperandReg",
                             [shl,srl,sra,rotr]> {
   let PrintMethod = "printSORegOperand";
   let MIOperandInfo = (ops GPR, GPR, i32imm);
@@ -395,9 +395,14 @@ def addrmode5 : Operand<i32>,
 // addrmode6 := reg with optional writeback
 //
 def addrmode6 : Operand<i32>,
-                ComplexPattern<i32, 4, "SelectAddrMode6", []> {
+                ComplexPattern<i32, 2, "SelectAddrMode6", []> {
   let PrintMethod = "printAddrMode6Operand";
-  let MIOperandInfo = (ops GPR:$addr, GPR:$upd, i32imm, i32imm);
+  let MIOperandInfo = (ops GPR:$addr, i32imm);
+}
+
+def am6offset : Operand<i32> {
+  let PrintMethod = "printAddrMode6OffsetOperand";
+  let MIOperandInfo = (ops GPR);
 }
 
 // addrmodepc := pc + reg
