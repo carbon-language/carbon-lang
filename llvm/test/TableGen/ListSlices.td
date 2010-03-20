@@ -1,4 +1,5 @@
 // RUN: tblgen %s
+// XFAIL: vg_leak
 
 def A {
   list<int> B = [10, 20, 30, 4, 1, 1231, 20];

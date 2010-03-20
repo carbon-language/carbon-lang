@@ -362,6 +362,9 @@ def main():
     group.add_option("", "--vg", dest="useValgrind",
                      help="Run tests under valgrind",
                      action="store_true", default=False)
+    group.add_option("", "--vg-leak", dest="valgrindLeakCheck",
+                     help="Check for memory leaks under valgrind",
+                     action="store_true", default=False)
     group.add_option("", "--vg-arg", dest="valgrindArgs", metavar="ARG",
                      help="Specify an extra argument for valgrind",
                      type=str, action="append", default=[])
@@ -436,6 +439,7 @@ def main():
                                     path = opts.path,
                                     quiet = opts.quiet,
                                     useValgrind = opts.useValgrind,
+                                    valgrindLeakCheck = opts.valgrindLeakCheck,
                                     valgrindArgs = opts.valgrindArgs,
                                     useTclAsSh = opts.useTclAsSh,
                                     noExecute = opts.noExecute,

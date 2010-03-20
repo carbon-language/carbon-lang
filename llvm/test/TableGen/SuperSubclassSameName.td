@@ -1,4 +1,5 @@
 // RUN: tblgen < %s
+// XFAIL: vg_leak
 // Test for template arguments that have the same name as superclass template
 // arguments.
 

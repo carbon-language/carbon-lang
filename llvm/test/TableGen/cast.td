@@ -1,4 +1,5 @@
 // RUN: tblgen %s | grep {add_ps} | count 3
+// XFAIL: vg_leak
 
 class ValueType<int size, int value> {
   int Size = size;

@@ -1,4 +1,5 @@
 // RUN: tblgen %s
+// XFAIL: vg_leak
 class x {
   field bits<32> A;
 }

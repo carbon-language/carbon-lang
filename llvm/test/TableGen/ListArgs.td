@@ -1,4 +1,5 @@
 // RUN: tblgen %s
+// XFAIL: vg_leak
 
 class B<list<int> v> {
   list<int> vals = v;

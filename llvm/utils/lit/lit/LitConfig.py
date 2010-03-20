@@ -15,7 +15,7 @@ class LitConfig:
     import Util as util
 
     def __init__(self, progname, path, quiet,
-                 useValgrind, valgrindArgs,
+                 useValgrind, valgrindLeakCheck, valgrindArgs,
                  useTclAsSh,
                  noExecute, debug, isWindows,
                  params):
@@ -25,7 +25,8 @@ class LitConfig:
         self.path = list(map(str, path))
         self.quiet = bool(quiet)
         self.useValgrind = bool(useValgrind)
-        self.valgrindArgs = list(valgrindArgs)
+        self.valgrindLeakCheck = bool(valgrindLeakCheck)
+        self.valgrindUserArgs = list(valgrindArgs)
         self.useTclAsSh = bool(useTclAsSh)
         self.noExecute = noExecute
         self.debug = debug
@@ -35,6 +36,19 @@ class LitConfig:
 
         self.numErrors = 0
         self.numWarnings = 0
+
+        self.valgrindArgs = []
+        self.valgrindTriple = ""
+        if self.useValgrind:
+            self.valgrindTriple = "-vg"
+            self.valgrindArgs = ['valgrind', '-q', '--run-libc-freeres=no',
+                                 '--tool=memcheck', '--trace-children=yes',
+                                 '--error-exitcode=123']
+            if self.valgrindLeakCheck:
+                self.valgrindTriple += "_leak"
+                self.valgrindArgs.append('--leak-check=full')
+            self.valgrindArgs.extend(self.valgrindUserArgs)
+
 
     def load_config(self, config, path):
         """load_config(config, path) - Load a config object from an alternate

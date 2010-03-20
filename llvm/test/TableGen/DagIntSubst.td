@@ -1,4 +1,5 @@
 // RUN: tblgen %s | grep {dag d = (X 13)}
+// XFAIL: vg_leak
 def X;
 
 class C<int N> {

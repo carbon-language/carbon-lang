@@ -1,4 +1,5 @@
 // RUN: tblgen %s
+// XFAIL: vg_leak
 
 // Make sure there is no collision between XX and XX.
 def S;
