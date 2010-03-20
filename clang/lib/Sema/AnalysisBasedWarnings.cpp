@@ -15,6 +15,7 @@
 
 #include "Sema.h"
 #include "AnalysisBasedWarnings.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtObjC.h"
@@ -325,6 +326,12 @@ void clang::sema::AnalysisBasedWarnings::IssueWarnings(const Decl *D,
   
   assert(BlockTy.isNull() || isa<BlockDecl>(D));
   
+  // Do not do any analysis for declarations in system headers if we are
+  // going to just ignore them.
+  if (S.getDiagnostics().getSuppressSystemWarnings() &&
+      S.SourceMgr.isInSystemHeader(D->getLocation()))
+    return;
+
   // We avoid doing analysis-based warnings when there are errors for
   // two reasons:
   // (1) The CFGs often can't be constructed (if the body is invalid), so
