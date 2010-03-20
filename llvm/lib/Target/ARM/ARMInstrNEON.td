@@ -524,6 +524,28 @@ def  VST1qf   : VST1Q<0b1000, "32", v4f32>;
 def  VST1q64  : VST1Q<0b1100, "64", v2i64>;
 } // hasExtraSrcRegAllocReq
 
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
+
+// ...with address register writeback:
+class VST1DWB<bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, 0b0111, op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr, DPR:$src), IIC_VST,
+          "vst1", Dt, "\\{$src\\}, $addr", "$addr.addr = $wb", []>;
+class VST1QWB<bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, 0b1010, op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr, QPR:$src), IIC_VST,
+          "vst1", Dt, "${src:dregpair}, $addr", "$addr.addr = $wb", []>;
+
+def VST1d8_UPD  : VST1DWB<0b0000, "8">;
+def VST1d16_UPD : VST1DWB<0b0100, "16">;
+def VST1d32_UPD : VST1DWB<0b1000, "32">;
+def VST1d64_UPD : VST1DWB<0b1100, "64">;
+
+def VST1q8_UPD  : VST1QWB<0b0000, "8">;
+def VST1q16_UPD : VST1QWB<0b0100, "16">;
+def VST1q32_UPD : VST1QWB<0b1000, "32">;
+def VST1q64_UPD : VST1QWB<0b1100, "64">;
+
 // These (dreg triple/quadruple) are for disassembly only.
 class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
@@ -546,7 +568,31 @@ def  VST1d16Q : VST1D4<0b0100, "16">;
 def  VST1d32Q : VST1D4<0b1000, "32">;
 //   VST1d64Q : implemented as VST4d64
 
-let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
+// ...with address register writeback:
+class VST1D3WB<bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, 0b0110, op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, DPR:$src3),
+          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr",
+          "$addr.addr = $wb",
+          [/* For disassembly only; pattern left blank */]>;
+class VST1D4WB<bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, 0b0010, op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr,
+           DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
+          "$addr.addr = $wb",
+          [/* For disassembly only; pattern left blank */]>;
+
+def VST1d8T_UPD  : VST1D3WB<0b0000, "8">;
+def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
+def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
+//  VST1d64T_UPD : implemented as VST3d64_UPD
+
+def VST1d8Q_UPD  : VST1D4WB<0b0000, "8">;
+def VST1d16Q_UPD : VST1D4WB<0b0100, "16">;
+def VST1d32Q_UPD : VST1D4WB<0b1000, "32">;
+//  VST1d64Q_UPD : implemented as VST4d64_UPD
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<bits<4> op7_4, string Dt>
