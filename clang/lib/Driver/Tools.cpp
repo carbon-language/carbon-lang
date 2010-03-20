@@ -655,6 +655,12 @@ static std::string getEffectiveClangTriple(const Driver &D,
   } else {
     const toolchains::Darwin &DarwinTC(
       reinterpret_cast<const toolchains::Darwin&>(TC));
+
+    // If the target isn't initialized (e.g., an unknown Darwin platform, return
+    // the default triple).
+    if (!DarwinTC.isTargetInitialized())
+      return Triple.getTriple();
+    
     unsigned Version[3];
     DarwinTC.getTargetVersion(Version);
 

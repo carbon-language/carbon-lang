@@ -96,6 +96,8 @@ public:
     return TargetIsIPhoneOS;
   }
 
+  bool isTargetInitialized() const { return TargetInitialized; }
+
   void getTargetVersion(unsigned (&Res)[3]) const {
     assert(TargetInitialized && "Target not initialized!");
     Res[0] = TargetVersion[0];
