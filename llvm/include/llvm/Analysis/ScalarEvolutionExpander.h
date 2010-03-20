@@ -104,6 +104,13 @@ namespace llvm {
     /// is useful for late optimization passes.
     void disableCanonicalMode() { CanonicalMode = false; }
 
+    /// clearInsertPoint - Clear the current insertion point. This is useful
+    /// if the instruction that had been serving as the insertion point may
+    /// have been deleted.
+    void clearInsertPoint() {
+      Builder.ClearInsertionPoint();
+    }
+
   private:
     LLVMContext &getContext() const { return SE.getContext(); }
 

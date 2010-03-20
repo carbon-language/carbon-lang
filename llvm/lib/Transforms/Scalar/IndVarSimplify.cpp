@@ -307,6 +307,10 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
       }
     }
   }
+
+  // The insertion point instruction may have been deleted; clear it out
+  // so that the rewriter doesn't trip over it later.
+  Rewriter.clearInsertPoint();
 }
 
 void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
