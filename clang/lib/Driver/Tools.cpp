@@ -1118,6 +1118,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_threadsafe_statics))
     CmdArgs.push_back("-fno-threadsafe-statics");
 
+  // -fuse-cxa-atexit is default.
+  if (!Args.hasFlag(options::OPT_fuse_cxa_atexit,
+                    options::OPT_fno_use_cxa_atexit))
+    CmdArgs.push_back("-fno-use-cxa-atexit");
+
   // -fms-extensions=0 is default.
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32))

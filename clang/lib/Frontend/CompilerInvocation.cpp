@@ -154,6 +154,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-mcode-model");
     Res.push_back(Opts.CodeModel);
   }
+  if (!Opts.CXAAtExit)
+    Res.push_back("-fno-use-cxa-atexit");
+  if (Opts.CXXCtorDtorAliases)
+    Res.push_back("-mconstructor-aliases");
   if (!Opts.DebugPass.empty()) {
     Res.push_back("-mdebug-pass");
     Res.push_back(Opts.DebugPass);
@@ -180,8 +184,6 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-mrelocation-model");
     Res.push_back(Opts.RelocationModel);
   }
-  if (Opts.CXXCtorDtorAliases)
-    Res.push_back("-mconstructor-aliases");
   if (!Opts.VerifyModule)
     Res.push_back("-disable-llvm-verifier");
 }
@@ -784,6 +786,8 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.UnrollLoops = (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
+  Opts.CXAAtExit = !Args.hasArg(OPT_fno_use_cxa_atexit);
+  Opts.CXXCtorDtorAliases = Args.hasArg(OPT_mconstructor_aliases);
   Opts.CodeModel = getLastArgValue(Args, OPT_mcode_model);
   Opts.DebugPass = getLastArgValue(Args, OPT_mdebug_pass);
   Opts.DisableFPElim = Args.hasArg(OPT_mdisable_fp_elim);
@@ -794,7 +798,6 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args,
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = getLastArgValue(Args, OPT_mrelocation_model, "pic");
-  Opts.CXXCtorDtorAliases = Args.hasArg(OPT_mconstructor_aliases);
 
   Opts.MainFileName = getLastArgValue(Args, OPT_main_file_name);
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);

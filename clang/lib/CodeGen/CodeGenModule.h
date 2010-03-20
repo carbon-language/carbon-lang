@@ -138,9 +138,13 @@ class CodeGenModule : public BlockModule {
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::Constant*> ConstantStringMap;
 
-  /// CXXGlobalInits - Variables with global initializers that need to run
+  /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
   std::vector<llvm::Constant*> CXXGlobalInits;
+
+  /// CXXGlobalDtors - Global destructor functions and arguments that need to
+  /// run on termination.
+  std::vector<std::pair<llvm::Constant*,llvm::Constant*> > CXXGlobalDtors;
 
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
@@ -321,6 +325,10 @@ public:
 
   void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
 
+  /// AddCXXDtorEntry - Add a destructor and object to add to the C++ global
+  /// destructor function.
+  void AddCXXDtorEntry(llvm::Constant *DtorFn, llvm::Constant *Object);
+
   /// CreateRuntimeFunction - Create a new runtime function with the specified
   /// type and name.
   llvm::Constant *CreateRuntimeFunction(const llvm::FunctionType *Ty,
@@ -496,8 +504,11 @@ private:
   /// a C++ destructor Decl.
   void EmitCXXDestructor(const CXXDestructorDecl *D, CXXDtorType Type);
 
-  /// EmitCXXGlobalInitFunc - Emit a function that initializes C++ globals.
+  /// EmitCXXGlobalInitFunc - Emit the function that initializes C++ globals.
   void EmitCXXGlobalInitFunc();
+
+  /// EmitCXXGlobalDtorFunc - Emit the function that destroys C++ globals.
+  void EmitCXXGlobalDtorFunc();
 
   void EmitCXXGlobalVarDeclInitFunc(const VarDecl *D);
 

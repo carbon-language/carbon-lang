@@ -355,10 +355,12 @@ def fno_elide_constructors : Flag<"-fno-elide-constructors">,
   HelpText<"Disable C++ copy constructor elision">;
 def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">,
   HelpText<"Disallow implicit conversions between vectors with a different number of elements or different element types">;
-def fno_signed_char : Flag<"-fno-signed-char">,
-  HelpText<"Char is unsigned">;
 def fno_operator_names : Flag<"-fno-operator-names">,
   HelpText<"Do not treat C++ operator name keywords as synonyms for operators">;
+def fno_signed_char : Flag<"-fno-signed-char">,
+  HelpText<"Char is unsigned">;
+def fno_use_cxa_atexit : Flag<"-fno-use-cxa-atexit">,
+  HelpText<"Don't use __cxa_atexit for calling destructors">;
 def fconstant_string_class : Separate<"-fconstant-string-class">,
   MetaVarName<"<class name>">,
   HelpText<"Specify the class to use for constant Objective-C string objects.">;

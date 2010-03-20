@@ -30,6 +30,9 @@ public:
   };
 
   unsigned AsmVerbose        : 1; /// -dA, -fverbose-asm.
+  unsigned CXAAtExit         : 1; /// Use __cxa_atexit for calling destructors.
+  unsigned CXXCtorDtorAliases: 1; /// Emit complete ctors/dtors as linker
+                                  /// aliases to base ctors when possible.
   unsigned DebugInfo         : 1; /// Should generate deubg info (-g).
   unsigned DisableFPElim     : 1; /// Set when -fomit-frame-pointer is enabled.
   unsigned DisableLLVMOpts   : 1; /// Don't run any optimizations, for use in
@@ -53,8 +56,6 @@ public:
   unsigned UnwindTables      : 1; /// Emit unwind tables.
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
-  unsigned CXXCtorDtorAliases: 1; /// Emit complete ctors/dtors as linker
-                                  /// aliases to base ctors when possible.
 
   /// The code model to use (-mcmodel).
   std::string CodeModel;
@@ -86,6 +87,8 @@ public:
 public:
   CodeGenOptions() {
     AsmVerbose = 0;
+    CXAAtExit = 1;
+    CXXCtorDtorAliases = 0;
     DebugInfo = 0;
     DisableFPElim = 0;
     DisableLLVMOpts = 0;
@@ -103,7 +106,6 @@ public:
     UnrollLoops = 0;
     UnwindTables = 0;
     VerifyModule = 1;
-    CXXCtorDtorAliases = 0;
 
     Inlining = NoInlining;
     RelocationModel = "pic";

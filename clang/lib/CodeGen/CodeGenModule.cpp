@@ -81,6 +81,7 @@ void CodeGenModule::createObjCRuntime() {
 void CodeGenModule::Release() {
   EmitDeferred();
   EmitCXXGlobalInitFunc();
+  EmitCXXGlobalDtorFunc();
   if (Runtime)
     if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
