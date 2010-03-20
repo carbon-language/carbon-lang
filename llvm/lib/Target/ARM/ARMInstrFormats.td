@@ -59,6 +59,8 @@ def NEONDupFrm    : Format<28>;
 def MiscFrm       : Format<29>;
 def ThumbMiscFrm  : Format<30>;
 
+def NLdStFrm      : Format<31>;
+
 // Misc flags.
 
 // the instruction has a Rn register operand.
@@ -1464,9 +1466,10 @@ class AVConv5I<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops,
 // ARM NEON Instruction templates.
 //
 
-class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
-            string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : InstARM<am, Size4Bytes, im, NEONFrm, NeonDomain, cstr, itin> {
+class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
+            InstrItinClass itin, string opc, string dt, string asm, string cstr,
+            list<dag> pattern>
+  : InstARM<am, Size4Bytes, im, f, NeonDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(
@@ -1502,8 +1505,8 @@ class NI4<dag oops, dag iops, InstrItinClass itin, string opc,
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
             dag oops, dag iops, InstrItinClass itin,
             string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, opc, dt, asm, cstr,
-          pattern> {
+  : NeonI<oops, iops, AddrMode6, IndexModeNone, NLdStFrm, itin, opc, dt, asm,
+          cstr, pattern> {
   let Inst{31-24} = 0b11110100;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
@@ -1513,7 +1516,7 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
 
 class NDataI<dag oops, dag iops, InstrItinClass itin,
              string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NeonI<oops, iops, AddrModeNone, IndexModeNone, itin, opc, dt, asm,
+  : NeonI<oops, iops, AddrModeNone, IndexModeNone, NEONFrm, itin, opc, dt, asm,
          cstr, pattern> {
   let Inst{31-25} = 0b1111001;
 }
