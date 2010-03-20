@@ -253,21 +253,45 @@ def  VLD2q8   : VLD2Q<0b0000, "8">;
 def  VLD2q16  : VLD2Q<0b0100, "16">;
 def  VLD2q32  : VLD2Q<0b1000, "32">;
 
+// ...with address register writeback:
+class VLD2DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b10, op11_8, op7_4, (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD2,
+          "vld2", Dt, "\\{$dst1, $dst2\\}, $addr",
+          "$addr.addr = $wb", []>;
+class VLD2QWB<bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b10, 0b0011, op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD2,
+          "vld2", Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VLD2d8_UPD  : VLD2DWB<0b1000, 0b0000, "8">;
+def VLD2d16_UPD : VLD2DWB<0b1000, 0b0100, "16">;
+def VLD2d32_UPD : VLD2DWB<0b1000, 0b1000, "32">;
+def VLD2d64_UPD : NLdSt<0,0b10,0b1010,0b1100,
+                        (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
+                        (ins addrmode6:$addr), IIC_VLD1,
+                        "vld1", "64", "\\{$dst1, $dst2\\}, $addr",
+                        "$addr.addr = $wb", []>;
+
+def VLD2q8_UPD  : VLD2QWB<0b0000, "8">;
+def VLD2q16_UPD : VLD2QWB<0b0100, "16">;
+def VLD2q32_UPD : VLD2QWB<0b1000, "32">;
+
 // ...with double-spaced registers (for disassembly only):
 def VLD2b8      : VLD2D<0b1001, 0b0000, "8">;
 def VLD2b16     : VLD2D<0b1001, 0b0100, "16">;
 def VLD2b32     : VLD2D<0b1001, 0b1000, "32">;
+def VLD2b8_UPD  : VLD2DWB<0b1001, 0b0000, "8">;
+def VLD2b16_UPD : VLD2DWB<0b1001, 0b0100, "16">;
+def VLD2b32_UPD : VLD2DWB<0b1001, 0b1000, "32">;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdSt<0, 0b10, op11_8, op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr), IIC_VLD3,
           "vld3", Dt, "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
-class VLD3WB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0101,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
-          (ins addrmode6:$addr), IIC_VLD3,
-          "vld3", Dt, "\\{$dst1, $dst2, $dst3\\}, $addr",
-          "$addr.addr = $wb", []>;
 
 def  VLD3d8   : VLD3D<0b0100, 0b0000, "8">;
 def  VLD3d16  : VLD3D<0b0100, 0b0100, "16">;
@@ -277,20 +301,35 @@ def  VLD3d64  : NLdSt<0,0b10,0b0110,0b1100,
                       (ins addrmode6:$addr), IIC_VLD1,
                       "vld1", "64", "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
 
-// ...with double-spaced registers:
+// ...with address register writeback:
+class VLD3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b10, op11_8, op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD3,
+          "vld3", Dt, "\\{$dst1, $dst2, $dst3\\}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VLD3d8_UPD  : VLD3DWB<0b0100, 0b0000, "8">;
+def VLD3d16_UPD : VLD3DWB<0b0100, 0b0100, "16">;
+def VLD3d32_UPD : VLD3DWB<0b0100, 0b1000, "32">;
+def VLD3d64_UPD : NLdSt<0,0b10,0b0110,0b1100,
+                        (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
+                        (ins addrmode6:$addr), IIC_VLD1,
+                        "vld1", "64", "\\{$dst1, $dst2, $dst3\\}, $addr",
+                        "$addr.addr = $wb", []>;
+
+// ...with double-spaced registers (non-updating versions for disassembly only):
 def VLD3q8      : VLD3D<0b0101, 0b0000, "8">;
 def VLD3q16     : VLD3D<0b0101, 0b0100, "16">;
 def VLD3q32     : VLD3D<0b0101, 0b1000, "32">;
+def VLD3q8_UPD  : VLD3DWB<0b0101, 0b0000, "8">;
+def VLD3q16_UPD : VLD3DWB<0b0101, 0b0100, "16">;
+def VLD3q32_UPD : VLD3DWB<0b0101, 0b1000, "32">;
 
-// vld3 to double-spaced even registers.
-def VLD3q8_UPD  : VLD3WB<0b0000, "8">;
-def VLD3q16_UPD : VLD3WB<0b0100, "16">;
-def VLD3q32_UPD : VLD3WB<0b1000, "32">;
-
-// vld3 to double-spaced odd registers.
-def VLD3q8odd_UPD  : VLD3WB<0b0000, "8">;
-def VLD3q16odd_UPD : VLD3WB<0b0100, "16">;
-def VLD3q32odd_UPD : VLD3WB<0b1000, "32">;
+// ...alternate versions to be allocated odd register numbers:
+def VLD3q8odd_UPD  : VLD3DWB<0b0101, 0b0000, "8">;
+def VLD3q16odd_UPD : VLD3DWB<0b0101, 0b0100, "16">;
+def VLD3q32odd_UPD : VLD3DWB<0b0101, 0b1000, "32">;
 
 //   VLD4     : Vector Load (multiple 4-element structures)
 class VLD4D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -298,12 +337,6 @@ class VLD4D<bits<4> op11_8, bits<4> op7_4, string Dt>
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr), IIC_VLD4,
           "vld4", Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "", []>;
-class VLD4WB<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0001,op7_4,
-          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
-          (ins addrmode6:$addr), IIC_VLD4,
-          "vld4", Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
-          "$addr.addr = $wb", []>;
 
 def  VLD4d8   : VLD4D<0b0000, 0b0000, "8">;
 def  VLD4d16  : VLD4D<0b0000, 0b0100, "16">;
@@ -314,20 +347,37 @@ def  VLD4d64  : NLdSt<0,0b10,0b0010,0b1100,
                       "vld1", "64", "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
                       "", []>;
 
-// ...with double-spaced registers:
+// ...with address register writeback:
+class VLD4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b10, op11_8, op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD4,
+          "vld4", Dt, "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VLD4d8_UPD  : VLD4DWB<0b0000, 0b0000, "8">;
+def VLD4d16_UPD : VLD4DWB<0b0000, 0b0100, "16">;
+def VLD4d32_UPD : VLD4DWB<0b0000, 0b1000, "32">;
+def VLD4d64_UPD : NLdSt<0,0b10,0b0010,0b1100,
+                        (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4,
+                         GPR:$wb),
+                        (ins addrmode6:$addr), IIC_VLD1,
+                        "vld1", "64",
+                        "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
+                        "$addr.addr = $wb", []>;
+
+// ...with double-spaced registers (non-updating versions for disassembly only):
 def VLD4q8      : VLD4D<0b0001, 0b0000, "8">;
 def VLD4q16     : VLD4D<0b0001, 0b0100, "16">;
 def VLD4q32     : VLD4D<0b0001, 0b1000, "32">;
+def VLD4q8_UPD  : VLD4DWB<0b0001, 0b0000, "8">;
+def VLD4q16_UPD : VLD4DWB<0b0001, 0b0100, "16">;
+def VLD4q32_UPD : VLD4DWB<0b0001, 0b1000, "32">;
 
-// vld4 to double-spaced even registers.
-def VLD4q8_UPD  : VLD4WB<0b0000, "8">;
-def VLD4q16_UPD : VLD4WB<0b0100, "16">;
-def VLD4q32_UPD : VLD4WB<0b1000, "32">;
-
-// vld4 to double-spaced odd registers.
-def VLD4q8odd_UPD  : VLD4WB<0b0000, "8">;
-def VLD4q16odd_UPD : VLD4WB<0b0100, "16">;
-def VLD4q32odd_UPD : VLD4WB<0b1000, "32">;
+// ...alternate versions to be allocated odd register numbers:
+def VLD4q8odd_UPD  : VLD4DWB<0b0001, 0b0000, "8">;
+def VLD4q16odd_UPD : VLD4DWB<0b0001, 0b0100, "16">;
+def VLD4q32odd_UPD : VLD4DWB<0b0001, 0b1000, "32">;
 
 //   VLD1LN   : Vector Load (single element to one lane)
 //   FIXME: Not yet implemented.
