@@ -188,7 +188,7 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
 // These (dreg triple/quadruple) are for disassembly only.
 class VLD1D3<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b10, 0b0110, op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+  : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
           "\\{$dst1, $dst2, $dst3\\}, $addr", "",
           [/* For disassembly only; pattern left blank */]>;
@@ -201,12 +201,12 @@ class VLD1D4<bits<4> op7_4, string Dt>
 def  VLD1d8T  : VLD1D3<0b0000, "8">;
 def  VLD1d16T : VLD1D3<0b0100, "16">;
 def  VLD1d32T : VLD1D3<0b1000, "32">;
-//def  VLD1d64T : VLD1D3<0b1100, "64">;
+//   VLD1d64T : implemented as VLD3d64
 
 def  VLD1d8Q  : VLD1D4<0b0000, "8">;
 def  VLD1d16Q : VLD1D4<0b0100, "16">;
 def  VLD1d32Q : VLD1D4<0b1000, "32">;
-//def  VLD1d64Q : VLD1D4<0b1100, "64">;
+//   VLD1d64Q : implemented as VLD4d64
 
 // ...with address register writeback:
 class VLD1D3WB<bits<4> op7_4, string Dt>
@@ -429,8 +429,8 @@ def  VST1q64  : VST1Q<0b1100, "64", v2i64>;
 // These (dreg triple/quadruple) are for disassembly only.
 class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
-          "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr", "",
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
+          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr", "",
           [/* For disassembly only; pattern left blank */]>;
 class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
@@ -441,13 +441,12 @@ class VST1D4<bits<4> op7_4, string Dt>
 def  VST1d8T  : VST1D3<0b0000, "8">;
 def  VST1d16T : VST1D3<0b0100, "16">;
 def  VST1d32T : VST1D3<0b1000, "32">;
-//def  VST1d64T : VST1D3<0b1100, "64">;
+//   VST1d64T : implemented as VST3d64
 
 def  VST1d8Q  : VST1D4<0b0000, "8">;
 def  VST1d16Q : VST1D4<0b0100, "16">;
 def  VST1d32Q : VST1D4<0b1000, "32">;
-//def  VST1d64Q : VST1D4<0b1100, "64">;
-
+//   VST1d64Q : implemented as VST4d64
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 
