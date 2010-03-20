@@ -152,7 +152,7 @@ static int AsLexInput(const char *ProgName) {
   if (!TheTarget)
     return 1;
 
-  const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
+  llvm::OwningPtr<MCAsmInfo> MAI((MCAsmInfo*) TheTarget->createAsmInfo(TripleName));
   assert(MAI && "Unable to create target asm info!");
 
   AsmLexer Lexer(*MAI);
@@ -260,7 +260,7 @@ static int AssembleInput(const char *ProgName) {
   SrcMgr.setIncludeDirs(IncludeDirs);
   
   
-  const MCAsmInfo *MAI = TheTarget->createAsmInfo(TripleName);
+  llvm::OwningPtr<MCAsmInfo> MAI((MCAsmInfo*) TheTarget->createAsmInfo(TripleName));
   assert(MAI && "Unable to create target asm info!");
   
   MCContext Ctx(*MAI);
