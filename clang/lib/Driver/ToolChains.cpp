@@ -394,9 +394,9 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
       // this. Perhaps put under -pedantic?
       if (getTriple().getArch() == llvm::Triple::arm ||
           getTriple().getArch() == llvm::Triple::thumb)
-        OSXVersion = 0;
+        OSXTarget = 0;
       else
-        iPhoneVersion = 0;
+        iPhoneOSTarget = 0;
     }
 
     if (OSXTarget) {
