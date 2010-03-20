@@ -595,19 +595,19 @@ def VST1d32Q_UPD : VST1D4WB<0b1000, "32">;
 //  VST1d64Q_UPD : implemented as VST4d64_UPD
 
 //   VST2     : Vector Store (multiple 2-element structures)
-class VST2D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b1000,op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
-          "vst2", Dt, "\\{$src1, $src2\\}, $addr", "", []>;
+class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, op11_8, op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2),
+          IIC_VST, "vst2", Dt, "\\{$src1, $src2\\}, $addr", "", []>;
 class VST2Q<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b0011,op7_4, (outs),
+  : NLdSt<0, 0b00, 0b0011, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST, "vst2", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
           "", []>;
 
-def  VST2d8   : VST2D<0b0000, "8">;
-def  VST2d16  : VST2D<0b0100, "16">;
-def  VST2d32  : VST2D<0b1000, "32">;
+def  VST2d8   : VST2D<0b1000, 0b0000, "8">;
+def  VST2d16  : VST2D<0b1000, 0b0100, "16">;
+def  VST2d32  : VST2D<0b1000, 0b1000, "32">;
 def  VST2d64  : NLdSt<0,0b00,0b1010,0b1100, (outs),
                       (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
                       "vst1", "64", "\\{$src1, $src2\\}, $addr", "", []>;
@@ -616,19 +616,14 @@ def  VST2q8   : VST2Q<0b0000, "8">;
 def  VST2q16  : VST2Q<0b0100, "16">;
 def  VST2q32  : VST2Q<0b1000, "32">;
 
-// These (double-spaced dreg pair) are for disassembly only.
-class VST2Ddbl<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, 0b1001, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
-          "vst2", Dt, "\\{$src1, $src2\\}, $addr", "", []>;
-
-def  VST2d8D  : VST2Ddbl<0b0000, "8">;
-def  VST2d16D : VST2Ddbl<0b0100, "16">;
-def  VST2d32D : VST2Ddbl<0b1000, "32">;
+// ...with double-spaced registers (for disassembly only):
+def VST2b8      : VST2D<0b1001, 0b0000, "8">;
+def VST2b16     : VST2D<0b1001, 0b0100, "16">;
+def VST2b32     : VST2D<0b1001, 0b1000, "32">;
 
 //   VST3     : Vector Store (multiple 3-element structures)
-class VST3D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b0100,op7_4, (outs),
+class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
           "vst3", Dt, "\\{$src1, $src2, $src3\\}, $addr", "", []>;
 class VST3WB<bits<4> op7_4, string Dt>
@@ -637,13 +632,18 @@ class VST3WB<bits<4> op7_4, string Dt>
           "vst3", Dt, "\\{$src1, $src2, $src3\\}, $addr",
           "$addr.addr = $wb", []>;
 
-def  VST3d8   : VST3D<0b0000, "8">;
-def  VST3d16  : VST3D<0b0100, "16">;
-def  VST3d32  : VST3D<0b1000, "32">;
+def  VST3d8   : VST3D<0b0100, 0b0000, "8">;
+def  VST3d16  : VST3D<0b0100, 0b0100, "16">;
+def  VST3d32  : VST3D<0b0100, 0b1000, "32">;
 def  VST3d64  : NLdSt<0,0b00,0b0110,0b1100, (outs),
                       (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
                       IIC_VST,
                       "vst1", "64", "\\{$src1, $src2, $src3\\}, $addr", "", []>;
+
+// ...with double-spaced registers:
+def VST3q8      : VST3D<0b0101, 0b0000, "8">;
+def VST3q16     : VST3D<0b0101, 0b0100, "16">;
+def VST3q32     : VST3D<0b0101, 0b1000, "32">;
 
 // vst3 to double-spaced even registers.
 def VST3q8_UPD  : VST3WB<0b0000, "8">;
@@ -656,8 +656,8 @@ def VST3q16odd_UPD : VST3WB<0b0100, "16">;
 def VST3q32odd_UPD : VST3WB<0b1000, "32">;
 
 //   VST4     : Vector Store (multiple 4-element structures)
-class VST4D<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b0000,op7_4, (outs),
+class VST4D<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST, "vst4", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
           "", []>;
@@ -667,14 +667,19 @@ class VST4WB<bits<4> op7_4, string Dt>
           IIC_VST, "vst4", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr",
           "$addr.addr = $wb", []>;
 
-def  VST4d8   : VST4D<0b0000, "8">;
-def  VST4d16  : VST4D<0b0100, "16">;
-def  VST4d32  : VST4D<0b1000, "32">;
+def  VST4d8   : VST4D<0b0000, 0b0000, "8">;
+def  VST4d16  : VST4D<0b0000, 0b0100, "16">;
+def  VST4d32  : VST4D<0b0000, 0b1000, "32">;
 def  VST4d64  : NLdSt<0,0b00,0b0010,0b1100, (outs),
                       (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
                        DPR:$src4), IIC_VST,
                       "vst1", "64", "\\{$src1, $src2, $src3, $src4\\}, $addr",
                       "", []>;
+
+// ...with double-spaced registers:
+def VST4q8      : VST4D<0b0001, 0b0000, "8">;
+def VST4q16     : VST4D<0b0001, 0b0100, "16">;
+def VST4q32     : VST4D<0b0001, 0b1000, "32">;
 
 // vst4 to double-spaced even registers.
 def VST4q8_UPD  : VST4WB<0b0000, "8">;
