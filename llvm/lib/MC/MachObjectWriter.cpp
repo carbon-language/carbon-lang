@@ -192,8 +192,6 @@ public:
     : Writer(_Writer), OS(Writer->getStream()), Is64Bit(_Is64Bit) {
   }
 
-  virtual ~MachObjectWriterImpl() {}
-
   void Write8(uint8_t Value) { Writer->Write8(Value); }
   void Write16(uint16_t Value) { Writer->Write16(Value); }
   void Write32(uint32_t Value) { Writer->Write32(Value); }
@@ -685,10 +683,9 @@ public:
     Relocations[Fragment.getParent()].push_back(MRE);
   }
 
-  virtual void RecordRelocation(const MCAssembler &Asm,
-                                const MCDataFragment &Fragment,
-                                const MCAsmFixup &Fixup, MCValue Target,
-                                uint64_t &FixedValue) {
+  void RecordRelocation(const MCAssembler &Asm, const MCDataFragment &Fragment,
+                        const MCAsmFixup &Fixup, MCValue Target,
+                        uint64_t &FixedValue) {
     if (Is64Bit) {
       RecordX86_64Relocation(Asm, Fragment, Fixup, Target, FixedValue);
       return;
@@ -914,7 +911,7 @@ public:
       StringTable += '\x00';
   }
 
-  virtual void ExecutePostLayoutBinding(MCAssembler &Asm) {
+  void ExecutePostLayoutBinding(MCAssembler &Asm) {
     // Create symbol data for any indirect symbols.
     BindIndirectSymbols(Asm);
 
@@ -923,7 +920,7 @@ public:
                        UndefinedSymbolData);
   }
 
-  virtual void WriteObject(const MCAssembler &Asm) {
+  void WriteObject(const MCAssembler &Asm) {
     unsigned NumSections = Asm.size();
 
     // The section data starts after the header, the segment load command (and
