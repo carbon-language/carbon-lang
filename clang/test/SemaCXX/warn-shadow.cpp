@@ -36,3 +36,9 @@ class A {
     char *data; // expected-warning {{declaration shadows a static data member of 'A'}}
   }
 };
+
+// TODO: this should warn, <rdar://problem/5018057>
+class B : A {
+  int data;
+  static int field;
+};

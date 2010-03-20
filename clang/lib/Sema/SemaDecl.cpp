@@ -2404,7 +2404,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   // Diagnose shadowed variables before filtering for scope.
-  DiagnoseShadow(NewVD, Previous);
+  if (!D.getCXXScopeSpec().isSet())
+    DiagnoseShadow(S, D, Previous);
 
   // Don't consider existing declarations that are in a different
   // scope and are out-of-semantic-context declarations (if the new
@@ -2465,46 +2466,61 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 /// For performance reasons, the lookup results are reused from the calling
 /// context.
 ///
-/// \param D variable decl to diagnose. Must be a variable.
-/// \param R cached previous lookup of \p D.
+/// \param S the scope in which the shadowing name is being declared
+/// \param R the lookup of the name
 ///
-void Sema::DiagnoseShadow(NamedDecl* D, const LookupResult& R) {
-  assert(D->getKind() == Decl::Var && "Expecting variable.");
-
+void Sema::DiagnoseShadow(Scope *S, Declarator &D,
+                          const LookupResult& R) {
   // Return if warning is ignored.
   if (Diags.getDiagnosticLevel(diag::warn_decl_shadow) == Diagnostic::Ignored)
     return;
 
-  // Return if not local decl.
-  if (!D->getDeclContext()->isFunctionOrMethod())
+  // Don't diagnose declarations at file scope.  The scope might not
+  // have a DeclContext if (e.g.) we're parsing a function prototype.
+  DeclContext *NewDC = static_cast<DeclContext*>(S->getEntity());
+  if (NewDC && NewDC->isFileContext())
     return;
-
-  DeclarationName Name = D->getDeclName();
-
-  // Return if lookup has no result.
+  
+  // Only diagnose if we're shadowing an unambiguous field or variable.
   if (R.getResultKind() != LookupResult::Found)
     return;
 
-  // Return if not variable decl.
   NamedDecl* ShadowedDecl = R.getFoundDecl();
   if (!isa<VarDecl>(ShadowedDecl) && !isa<FieldDecl>(ShadowedDecl))
     return;
 
-  // Determine kind of declaration.
-  DeclContext *DC = ShadowedDecl->getDeclContext();
+  DeclContext *OldDC = ShadowedDecl->getDeclContext();
+
+  // Only warn about certain kinds of shadowing for class members.
+  if (NewDC && NewDC->isRecord()) {
+    // In particular, don't warn about shadowing non-class members.
+    if (!OldDC->isRecord())
+      return;
+
+    // TODO: should we warn about static data members shadowing
+    // static data members from base classes?
+    
+    // TODO: don't diagnose for inaccessible shadowed members.
+    // This is hard to do perfectly because we might friend the
+    // shadowing context, but that's just a false negative.
+  }
+
+  // Determine what kind of declaration we're shadowing.
   unsigned Kind;
-  if (isa<RecordDecl>(DC)) {
+  if (isa<RecordDecl>(OldDC)) {
     if (isa<FieldDecl>(ShadowedDecl))
       Kind = 3; // field
     else
       Kind = 2; // static data member
-  } else if (DC->isFileContext())
+  } else if (OldDC->isFileContext())
     Kind = 1; // global
   else
     Kind = 0; // local
 
+  DeclarationName Name = R.getLookupName();
+
   // Emit warning and note.
-  Diag(D->getLocation(), diag::warn_decl_shadow) << Name << Kind << DC;
+  Diag(R.getNameLoc(), diag::warn_decl_shadow) << Name << Kind << OldDC;
   Diag(ShadowedDecl->getLocation(), diag::note_previous_declaration);
 }
 
@@ -3968,6 +3984,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
         II = 0;
         D.SetIdentifier(0, D.getIdentifierLoc());
         D.setInvalidType(true);
+      } else {
+        DiagnoseShadow(S, D, R);
       }
     }
   }
