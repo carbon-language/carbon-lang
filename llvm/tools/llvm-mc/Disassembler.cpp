@@ -47,8 +47,8 @@ public:
 };
 }
 
-static bool PrintInsts(const llvm::MCDisassembler &DisAsm,
-                      llvm::MCInstPrinter &Printer, const ByteArrayTy &Bytes,
+static bool PrintInsts(const MCDisassembler &DisAsm,
+                      MCInstPrinter &Printer, const ByteArrayTy &Bytes,
                       SourceMgr &SM) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
@@ -77,24 +77,23 @@ static bool PrintInsts(const llvm::MCDisassembler &DisAsm,
 }
 
 int Disassembler::disassemble(const Target &T, const std::string &Triple,
-                                 MemoryBuffer &Buffer) {
+                              MemoryBuffer &Buffer) {
   // Set up disassembler.
-  llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));
+  OwningPtr<const MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));
   
   if (!AsmInfo) {
     errs() << "error: no assembly info for target " << Triple << "\n";
     return -1;
   }
   
-  llvm::OwningPtr<const llvm::MCDisassembler> DisAsm(T.createMCDisassembler());
+  OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler());
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;
   }
   
-  llvm::MCInstPrinter *InstPrinter = T.createMCInstPrinter(0, *AsmInfo, outs());
-  
-  if (!InstPrinter) {
+  OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(0, *AsmInfo, outs()));
+  if (!IP) {
     errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;
   }
@@ -151,7 +150,7 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
   }
   
   if (!ByteArray.empty())
-    ErrorOccurred |= PrintInsts(*DisAsm, *InstPrinter, ByteArray, SM);
+    ErrorOccurred |= PrintInsts(*DisAsm, *IP, ByteArray, SM);
     
   return ErrorOccurred;
 }
