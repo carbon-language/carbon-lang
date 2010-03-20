@@ -14,7 +14,7 @@
 #include "Sema.h"
 #include "SemaInit.h"
 #include "Lookup.h"
-#include "clang/Analysis/AnalysisContext.h"
+#include "AnalysisBasedWarnings.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -7003,9 +7003,10 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     return ExprError();
   }
 
-  AnalysisContext AC(BSI->TheDecl);
-  CheckFallThroughForBlock(BlockTy, BSI->TheDecl->getBody(), AC);
-  CheckUnreachable(AC);
+  // Issue any analysis-based warnings.
+  sema::AnalysisBasedWarnings W(*this);
+  W.IssueWarnings(BSI->TheDecl, BlockTy);
+
   Expr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy,
                                          BSI->hasBlockDeclRefExprs);
   PopFunctionOrBlockScope();

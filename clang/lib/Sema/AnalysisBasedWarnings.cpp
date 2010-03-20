@@ -1,0 +1,362 @@
+//=- AnalysisBasedWarnings.cpp - Sema warnings based on libAnalysis -*- C++ -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines analysis_warnings::[Policy,Executor].
+// Together they are used by Sema to issue warnings based on inexpensive
+// static analysis algorithms in libAnalysis.
+//
+//===----------------------------------------------------------------------===//
+
+#include "Sema.h"
+#include "AnalysisBasedWarnings.h"
+#include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtCXX.h"
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/CFG.h"
+#include "clang/Analysis/Analyses/ReachableCode.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/Support/Casting.h"
+#include <queue>
+
+using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Unreachable code analysis.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  class UnreachableCodeHandler : public reachable_code::Callback {
+    Sema &S;
+  public:
+    UnreachableCodeHandler(Sema &s) : S(s) {}
+
+    void HandleUnreachable(SourceLocation L, SourceRange R1, SourceRange R2) {
+      S.Diag(L, diag::warn_unreachable) << R1 << R2;
+    }
+  };
+}
+
+/// CheckUnreachable - Check for unreachable code.
+static void CheckUnreachable(Sema &S, AnalysisContext &AC) {
+  UnreachableCodeHandler UC(S);
+  reachable_code::FindUnreachableCode(AC, UC);
+}
+
+//===----------------------------------------------------------------------===//
+// Check for missing return value.
+//===----------------------------------------------------------------------===//
+
+enum ControlFlowKind { NeverFallThrough = 0, MaybeFallThrough = 1,
+  AlwaysFallThrough = 2, NeverFallThroughOrReturn = 3 };
+
+/// CheckFallThrough - Check that we don't fall off the end of a
+/// Statement that should return a value.
+///
+/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThrough iff we might or might not fall off the end,
+/// NeverFallThroughOrReturn iff we never fall off the end of the statement or
+/// return.  We assume NeverFallThrough iff we never fall off the end of the
+/// statement but we may return.  We assume that functions not marked noreturn
+/// will return.
+static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
+  CFG *cfg = AC.getCFG();
+  if (cfg == 0)
+    // FIXME: This should be NeverFallThrough
+    return NeverFallThroughOrReturn;
+
+  // The CFG leaves in dead things, and we don't want the dead code paths to
+  // confuse us, so we mark all live things first.
+  std::queue<CFGBlock*> workq;
+  llvm::BitVector live(cfg->getNumBlockIDs());
+  unsigned count = reachable_code::ScanReachableFromBlock(cfg->getEntry(),
+                                                          live);
+
+  bool AddEHEdges = AC.getAddEHEdges();
+  if (!AddEHEdges && count != cfg->getNumBlockIDs())
+    // When there are things remaining dead, and we didn't add EH edges
+    // from CallExprs to the catch clauses, we have to go back and
+    // mark them as live.
+    for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
+      CFGBlock &b = **I;
+      if (!live[b.getBlockID()]) {
+        if (b.pred_begin() == b.pred_end()) {
+          if (b.getTerminator() && isa<CXXTryStmt>(b.getTerminator()))
+            // When not adding EH edges from calls, catch clauses
+            // can otherwise seem dead.  Avoid noting them as dead.
+            count += reachable_code::ScanReachableFromBlock(b, live);
+          continue;
+        }
+      }
+    }
+
+  // Now we know what is live, we check the live precessors of the exit block
+  // and look for fall through paths, being careful to ignore normal returns,
+  // and exceptional paths.
+  bool HasLiveReturn = false;
+  bool HasFakeEdge = false;
+  bool HasPlainEdge = false;
+  bool HasAbnormalEdge = false;
+  for (CFGBlock::pred_iterator I=cfg->getExit().pred_begin(),
+       E = cfg->getExit().pred_end();
+       I != E;
+       ++I) {
+    CFGBlock& B = **I;
+    if (!live[B.getBlockID()])
+      continue;
+    if (B.size() == 0) {
+      if (B.getTerminator() && isa<CXXTryStmt>(B.getTerminator())) {
+        HasAbnormalEdge = true;
+        continue;
+      }
+
+      // A labeled empty statement, or the entry block...
+      HasPlainEdge = true;
+      continue;
+    }
+    Stmt *S = B[B.size()-1];
+    if (isa<ReturnStmt>(S)) {
+      HasLiveReturn = true;
+      continue;
+    }
+    if (isa<ObjCAtThrowStmt>(S)) {
+      HasFakeEdge = true;
+      continue;
+    }
+    if (isa<CXXThrowExpr>(S)) {
+      HasFakeEdge = true;
+      continue;
+    }
+    if (const AsmStmt *AS = dyn_cast<AsmStmt>(S)) {
+      if (AS->isMSAsm()) {
+        HasFakeEdge = true;
+        HasLiveReturn = true;
+        continue;
+      }
+    }
+    if (isa<CXXTryStmt>(S)) {
+      HasAbnormalEdge = true;
+      continue;
+    }
+
+    bool NoReturnEdge = false;
+    if (CallExpr *C = dyn_cast<CallExpr>(S)) {
+      if (B.succ_begin()[0] != &cfg->getExit()) {
+        HasAbnormalEdge = true;
+        continue;
+      }
+      Expr *CEE = C->getCallee()->IgnoreParenCasts();
+      if (CEE->getType().getNoReturnAttr()) {
+        NoReturnEdge = true;
+        HasFakeEdge = true;
+      } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+        ValueDecl *VD = DRE->getDecl();
+        if (VD->hasAttr<NoReturnAttr>()) {
+          NoReturnEdge = true;
+          HasFakeEdge = true;
+        }
+      }
+    }
+    // FIXME: Add noreturn message sends.
+    if (NoReturnEdge == false)
+      HasPlainEdge = true;
+  }
+  if (!HasPlainEdge) {
+    if (HasLiveReturn)
+      return NeverFallThrough;
+    return NeverFallThroughOrReturn;
+  }
+  if (HasAbnormalEdge || HasFakeEdge || HasLiveReturn)
+    return MaybeFallThrough;
+  // This says AlwaysFallThrough for calls to functions that are not marked
+  // noreturn, that don't return.  If people would like this warning to be more
+  // accurate, such functions should be marked as noreturn.
+  return AlwaysFallThrough;
+}
+
+struct CheckFallThroughDiagnostics {
+  unsigned diag_MaybeFallThrough_HasNoReturn;
+  unsigned diag_MaybeFallThrough_ReturnsNonVoid;
+  unsigned diag_AlwaysFallThrough_HasNoReturn;
+  unsigned diag_AlwaysFallThrough_ReturnsNonVoid;
+  unsigned diag_NeverFallThroughOrReturn;
+  bool funMode;
+  
+  static CheckFallThroughDiagnostics MakeForFunction() {
+    CheckFallThroughDiagnostics D;
+    D.diag_MaybeFallThrough_HasNoReturn =
+      diag::warn_falloff_noreturn_function;
+    D.diag_MaybeFallThrough_ReturnsNonVoid =
+      diag::warn_maybe_falloff_nonvoid_function;
+    D.diag_AlwaysFallThrough_HasNoReturn =
+      diag::warn_falloff_noreturn_function;
+    D.diag_AlwaysFallThrough_ReturnsNonVoid =
+      diag::warn_falloff_nonvoid_function;
+    D.diag_NeverFallThroughOrReturn =
+      diag::warn_suggest_noreturn_function;
+    D.funMode = true;
+    return D;
+  }
+  
+  static CheckFallThroughDiagnostics MakeForBlock() {
+    CheckFallThroughDiagnostics D;
+    D.diag_MaybeFallThrough_HasNoReturn =
+      diag::err_noreturn_block_has_return_expr;
+    D.diag_MaybeFallThrough_ReturnsNonVoid =
+      diag::err_maybe_falloff_nonvoid_block;
+    D.diag_AlwaysFallThrough_HasNoReturn =
+      diag::err_noreturn_block_has_return_expr;
+    D.diag_AlwaysFallThrough_ReturnsNonVoid =
+      diag::err_falloff_nonvoid_block;
+    D.diag_NeverFallThroughOrReturn =
+      diag::warn_suggest_noreturn_block;
+    D.funMode = false;
+    return D;
+  }
+  
+  bool checkDiagnostics(Diagnostic &D, bool ReturnsVoid,
+                        bool HasNoReturn) const {
+    if (funMode) {
+      return (D.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
+              == Diagnostic::Ignored || ReturnsVoid)
+        && (D.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr)
+              == Diagnostic::Ignored || !HasNoReturn)
+        && (D.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
+              == Diagnostic::Ignored || !ReturnsVoid);
+    }
+    
+    // For blocks.
+    return  ReturnsVoid && !HasNoReturn
+            && (D.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
+                == Diagnostic::Ignored || !ReturnsVoid);
+  }
+};
+
+/// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
+/// function that should return a value.  Check that we don't fall off the end
+/// of a noreturn function.  We assume that functions and blocks not marked
+/// noreturn will return.
+static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
+                                    QualType BlockTy,
+                                    const CheckFallThroughDiagnostics& CD,
+                                    AnalysisContext &AC) {
+
+  bool ReturnsVoid = false;
+  bool HasNoReturn = false;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    ReturnsVoid = FD->getResultType()->isVoidType();
+    HasNoReturn = FD->hasAttr<NoReturnAttr>() ||
+                  FD->getType()->getAs<FunctionType>()->getNoReturnAttr();
+  }
+  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    ReturnsVoid = MD->getResultType()->isVoidType();
+    HasNoReturn = MD->hasAttr<NoReturnAttr>();
+  }
+  else if (isa<BlockDecl>(D)) {
+    if (const FunctionType *FT = 
+          BlockTy->getPointeeType()->getAs<FunctionType>()) {
+      if (FT->getResultType()->isVoidType())
+        ReturnsVoid = true;
+      if (FT->getNoReturnAttr())
+        HasNoReturn = true;
+    }
+  }
+
+  Diagnostic &Diags = S.getDiagnostics();
+
+  // Short circuit for compilation speed.
+  if (CD.checkDiagnostics(Diags, ReturnsVoid, HasNoReturn))
+      return;
+  
+  // FIXME: Function try block
+  if (const CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
+    switch (CheckFallThrough(AC)) {
+      case MaybeFallThrough:
+        if (HasNoReturn)
+          S.Diag(Compound->getRBracLoc(),
+                 CD.diag_MaybeFallThrough_HasNoReturn);
+        else if (!ReturnsVoid)
+          S.Diag(Compound->getRBracLoc(),
+                 CD.diag_MaybeFallThrough_ReturnsNonVoid);
+        break;
+      case AlwaysFallThrough:
+        if (HasNoReturn)
+          S.Diag(Compound->getRBracLoc(),
+                 CD.diag_AlwaysFallThrough_HasNoReturn);
+        else if (!ReturnsVoid)
+          S.Diag(Compound->getRBracLoc(),
+                 CD.diag_AlwaysFallThrough_ReturnsNonVoid);
+        break;
+      case NeverFallThroughOrReturn:
+        if (ReturnsVoid && !HasNoReturn)
+          S.Diag(Compound->getLBracLoc(),
+                 CD.diag_NeverFallThroughOrReturn);
+        break;
+      case NeverFallThrough:
+        break;
+    }
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// AnalysisBasedWarnings - Worker object used by Sema to execute analysis-based
+//  warnings on a function, method, or block.
+//===----------------------------------------------------------------------===//
+
+clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s) : S(s) {
+  Diagnostic &D = S.getDiagnostics();
+
+  enableCheckFallThrough = 1;
+
+  enableCheckUnreachable = (unsigned)
+    (D.getDiagnosticLevel(diag::warn_unreachable) != Diagnostic::Ignored);
+}
+
+void clang::sema::AnalysisBasedWarnings::IssueWarnings(const Decl *D,
+                                                       QualType BlockTy) {
+  
+  assert(BlockTy.isNull() || isa<BlockDecl>(D));
+  
+  // We avoid doing analysis-based warnings when there are errors for
+  // two reasons:
+  // (1) The CFGs often can't be constructed (if the body is invalid), so
+  //     don't bother trying.
+  // (2) The code already has problems; running the analysis just takes more
+  //     time.
+  if (S.getDiagnostics().hasErrorOccurred())
+      return;
+  
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // For function templates, class templates and member function templates
+    // we'll do the analysis at instantiation time.
+    if (FD->isDependentContext())
+      return;
+  }
+
+  const Stmt *Body = D->getBody();
+  assert(Body);
+
+  // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
+  // explosion for destrutors that can result and the compile time hit.
+  AnalysisContext AC(D, false);
+
+  // Warning: check missing 'return'
+  if (enableCheckFallThrough) {
+    const CheckFallThroughDiagnostics &CD =
+      (isa<BlockDecl>(D) ? CheckFallThroughDiagnostics::MakeForBlock()
+                         : CheckFallThroughDiagnostics::MakeForFunction());
+    CheckFallThroughForBody(S, D, Body, BlockTy, CD, AC);
+  }
+
+  // Warning: check for unreachable code
+  if (enableCheckUnreachable)
+    CheckUnreachable(S, AC);
+}

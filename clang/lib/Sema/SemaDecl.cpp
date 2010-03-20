@@ -14,7 +14,7 @@
 #include "Sema.h"
 #include "SemaInit.h"
 #include "Lookup.h"
-#include "clang/Analysis/AnalysisContext.h"
+#include "AnalysisBasedWarnings.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -4259,9 +4259,6 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Decl *dcl = D.getAs<Decl>();
   Stmt *Body = BodyArg.takeAs<Stmt>();
 
-  // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
-  // explosion for destrutors that can result and the compile time hit.
-  AnalysisContext AC(dcl, false);
   FunctionDecl *FD = 0;
   FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(dcl);
   if (FunTmpl)
@@ -4269,14 +4266,16 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   else
     FD = dyn_cast_or_null<FunctionDecl>(dcl);
 
+  sema::AnalysisBasedWarnings W(*this);
+
   if (FD) {
     FD->setBody(Body);
-    if (FD->isMain())
+    if (FD->isMain()) {
       // C and C++ allow for main to automagically return 0.
       // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
       FD->setHasImplicitReturnZero(true);
-    else
-      CheckFallThroughForFunctionDef(FD, Body, AC);
+      W.disableCheckFallThrough();
+    }
 
     if (!FD->isInvalidDecl())
       DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
@@ -4288,9 +4287,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody(Body);
-    CheckFallThroughForFunctionDef(MD, Body, AC);
     MD->setEndLoc(Body->getLocEnd());
-
     if (!MD->isInvalidDecl())
       DiagnoseUnusedParameters(MD->param_begin(), MD->param_end());
   } else {
@@ -4343,16 +4340,14 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   }
 
   if (Body) {
-    CheckUnreachable(AC);
-
     // C++ constructors that have function-try-blocks can't have return
     // statements in the handlers of that block. (C++ [except.handle]p14)
     // Verify this.
     if (FD && isa<CXXConstructorDecl>(FD) && isa<CXXTryStmt>(Body))
       DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
     
-  // Verify that that gotos and switch cases don't jump into scopes illegally.
-  // Verify that that gotos and switch cases don't jump into scopes illegally.
+    // Verify that that gotos and switch cases don't jump into scopes illegally.
+    // Verify that that gotos and switch cases don't jump into scopes illegally.
     if (FunctionNeedsScopeChecking() && !hasAnyErrorsInThisFunction())
       DiagnoseInvalidJumps(Body);
 
@@ -4365,7 +4360,20 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     // deletion in some later function.
     if (PP.getDiagnostics().hasErrorOccurred())
       ExprTemporaries.clear();
-    
+    else if (!isa<FunctionTemplateDecl>(dcl)) {
+      // Since the body is valid, issue any analysis-based warnings that are
+      // enabled.
+      QualType ResultType;
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(dcl)) {
+        ResultType = FD->getResultType();
+      }
+      else {
+        ObjCMethodDecl *MD = cast<ObjCMethodDecl>(dcl);
+        ResultType = MD->getResultType();
+      }
+      W.IssueWarnings(dcl);
+    }
+
     assert(ExprTemporaries.empty() && "Leftover temporaries in function");
   }
   
