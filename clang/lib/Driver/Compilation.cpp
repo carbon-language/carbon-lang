@@ -61,10 +61,21 @@ void Compilation::PrintJob(llvm::raw_ostream &OS, const Job &J,
     OS << " \"" << C->getExecutable() << '"';
     for (ArgStringList::const_iterator it = C->getArguments().begin(),
            ie = C->getArguments().end(); it != ie; ++it) {
-      if (Quote)
-        OS << " \"" << *it << '"';
-      else
-        OS << ' ' << *it;
+      OS << ' ';
+      if (!Quote) {
+        OS << *it;
+        continue;
+      }
+
+      // Quote the argument and escape shell special characters; this isn't
+      // really complete but is good enough.
+      OS << '"';
+      for (const char *s = *it; *s; ++s) {
+        if (*s == '"' || *s == '\\' || *s == '$')
+          OS << '\\';
+        OS << *s;
+      }
+      OS << '"';
     }
     OS << Terminator;
   } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
