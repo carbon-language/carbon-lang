@@ -25,17 +25,47 @@ using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
 
+static void EmitMemoryBarrier(CodeGenFunction &CGF,
+                              bool LoadLoad, bool LoadStore,
+                              bool StoreLoad, bool StoreStore,
+                              bool Device) {
+  Value *True = llvm::ConstantInt::getTrue(CGF.getLLVMContext());
+  Value *False = llvm::ConstantInt::getFalse(CGF.getLLVMContext());
+  Value *C[5] = { LoadLoad ? True : False,
+                  LoadStore ? True : False,
+                  StoreLoad ? True : False,
+                  StoreStore  ? True : False,
+                  Device ? True : False };
+  CGF.Builder.CreateCall(CGF.CGM.getIntrinsic(Intrinsic::memory_barrier),
+                         C, C + 5);
+}
+
+// The atomic builtins are also full memory barriers. This is a utility for
+// wrapping a call to the builtins with memory barriers.
+static Value *EmitCallWithBarrier(CodeGenFunction &CGF, Value *Fn,
+                                  Value **ArgBegin, Value **ArgEnd) {
+  // FIXME: We need a target hook for whether this applies to device memory or
+  // not.
+  bool Device = true;
+
+  // Create barriers both before and after the call.
+  EmitMemoryBarrier(CGF, true, true, true, true, Device);
+  Value *Result = CGF.Builder.CreateCall(Fn, ArgBegin, ArgEnd);
+  EmitMemoryBarrier(CGF, true, true, true, true, Device);
+  return Result;
+}
+
 /// Utility to insert an atomic instruction based on Instrinsic::ID
 /// and the expression node.
-static RValue EmitBinaryAtomic(CodeGenFunction& CGF,
+static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
                                Intrinsic::ID Id, const CallExpr *E) {
+  Value *Args[2] = { CGF.EmitScalarExpr(E->getArg(0)),
+                     CGF.EmitScalarExpr(E->getArg(1)) };
   const llvm::Type *ResType[2];
   ResType[0] = CGF.ConvertType(E->getType());
   ResType[1] = CGF.ConvertType(E->getArg(0)->getType());
   Value *AtomF = CGF.CGM.getIntrinsic(Id, ResType, 2);
-  return RValue::get(CGF.Builder.CreateCall2(AtomF,
-                                             CGF.EmitScalarExpr(E->getArg(0)),
-                                             CGF.EmitScalarExpr(E->getArg(1))));
+  return RValue::get(EmitCallWithBarrier(CGF, AtomF, Args, Args + 2));
 }
 
 /// Utility to insert an atomic instruction based Instrinsic::ID and
@@ -48,15 +78,14 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction& CGF,
   ResType[0] = CGF.ConvertType(E->getType());
   ResType[1] = CGF.ConvertType(E->getArg(0)->getType());
   Value *AtomF = CGF.CGM.getIntrinsic(Id, ResType, 2);
-  Value *Ptr = CGF.EmitScalarExpr(E->getArg(0));
-  Value *Operand = CGF.EmitScalarExpr(E->getArg(1));
-  Value *Result = CGF.Builder.CreateCall2(AtomF, Ptr, Operand);
+  Value *Args[2] = { CGF.EmitScalarExpr(E->getArg(0)),
+                     CGF.EmitScalarExpr(E->getArg(1)) };
+  Value *Result = EmitCallWithBarrier(CGF, AtomF, Args, Args + 2);
 
   if (Id == Intrinsic::atomic_load_nand)
     Result = CGF.Builder.CreateNot(Result);
 
-
-  return RValue::get(CGF.Builder.CreateBinOp(Op, Result, Operand));
+  return RValue::get(CGF.Builder.CreateBinOp(Op, Result, Args[1]));
 }
 
 static llvm::ConstantInt *getInt32(llvm::LLVMContext &Context, int32_t Value) {
@@ -585,33 +614,31 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_val_compare_and_swap_2:
   case Builtin::BI__sync_val_compare_and_swap_4:
   case Builtin::BI__sync_val_compare_and_swap_8:
-  case Builtin::BI__sync_val_compare_and_swap_16:
-  {
+  case Builtin::BI__sync_val_compare_and_swap_16: {
     const llvm::Type *ResType[2];
     ResType[0]= ConvertType(E->getType());
     ResType[1] = ConvertType(E->getArg(0)->getType());
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
-    return RValue::get(Builder.CreateCall3(AtomF,
-                                           EmitScalarExpr(E->getArg(0)),
-                                           EmitScalarExpr(E->getArg(1)),
-                                           EmitScalarExpr(E->getArg(2))));
+    Value *Args[3] = { EmitScalarExpr(E->getArg(0)),
+                       EmitScalarExpr(E->getArg(1)),
+                       EmitScalarExpr(E->getArg(2)) };
+    return RValue::get(EmitCallWithBarrier(*this, AtomF, Args, Args + 3));
   }
 
   case Builtin::BI__sync_bool_compare_and_swap_1:
   case Builtin::BI__sync_bool_compare_and_swap_2:
   case Builtin::BI__sync_bool_compare_and_swap_4:
   case Builtin::BI__sync_bool_compare_and_swap_8:
-  case Builtin::BI__sync_bool_compare_and_swap_16:
-  {
+  case Builtin::BI__sync_bool_compare_and_swap_16: {
     const llvm::Type *ResType[2];
     ResType[0]= ConvertType(E->getArg(1)->getType());
     ResType[1] = llvm::PointerType::getUnqual(ResType[0]);
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
     Value *OldVal = EmitScalarExpr(E->getArg(1));
-    Value *PrevVal = Builder.CreateCall3(AtomF,
-                                        EmitScalarExpr(E->getArg(0)),
-                                        OldVal,
-                                        EmitScalarExpr(E->getArg(2)));
+    Value *Args[3] = { EmitScalarExpr(E->getArg(0)),
+                       OldVal,
+                       EmitScalarExpr(E->getArg(2)) };
+    Value *PrevVal = EmitCallWithBarrier(*this, AtomF, Args, Args + 3);
     Value *Result = Builder.CreateICmpEQ(PrevVal, OldVal);
     // zext bool to int.
     return RValue::get(Builder.CreateZExt(Result, ConvertType(E->getType())));
@@ -623,6 +650,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_lock_test_and_set_8:
   case Builtin::BI__sync_lock_test_and_set_16:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
+
   case Builtin::BI__sync_lock_release_1:
   case Builtin::BI__sync_lock_release_2:
   case Builtin::BI__sync_lock_release_4:
@@ -638,10 +666,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
 
   case Builtin::BI__sync_synchronize: {
-    Value *C[5];
-    C[0] = C[1] = C[2] = C[3] = llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 1);
-    C[4] = llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), 0);
-    Builder.CreateCall(CGM.getIntrinsic(Intrinsic::memory_barrier), C, C + 5);
+    // We assume like gcc appears to, that this only applies to cached memory.
+    EmitMemoryBarrier(*this, true, true, true, true, false);
     return RValue::get(0);
   }
 
