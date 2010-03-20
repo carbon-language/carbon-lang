@@ -21,4 +21,8 @@
 #include <tmmintrin.h>
 #  endif
 
+#  if defined(__SSE4_1__)
+#include <smmintrin.h>
+#  endif
+
 #endif
