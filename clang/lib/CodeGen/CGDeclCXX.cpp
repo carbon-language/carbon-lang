@@ -64,7 +64,7 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
         llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
       DeclPtr = llvm::Constant::getNullValue(Int8PtrTy);
      } else
-      DtorFn = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete);                                
+      DtorFn = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete);
 
     CGF.EmitCXXGlobalDtorRegistration(DtorFn, DeclPtr);
   }
@@ -89,9 +89,8 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
                    "global variable that binds reference to a non-lvalue");
 }
 
-void
-CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
-                                               llvm::Constant *DeclPtr) {
+void CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
+                                                    llvm::Constant *DeclPtr) {
   const llvm::Type *Int8PtrTy = 
     llvm::Type::getInt8Ty(VMContext)->getPointerTo();
 
@@ -124,8 +123,7 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
   Builder.CreateCall(AtExitFn, &Args[0], llvm::array_endof(Args));
 }
 
-void
-CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
+void CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
   const llvm::FunctionType *FTy
     = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                               false);
@@ -135,13 +133,18 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D) {
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            "__cxx_global_var_init", &TheModule);
 
-  CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D);
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
+                SourceLocation());
+
+  llvm::Constant *DeclPtr = CGM.GetAddrOfGlobalVar(D);
+  EmitCXXGlobalVarDeclInit(*D, DeclPtr);
+
+  FinishFunction();
 
   CXXGlobalInits.push_back(Fn);
 }
 
-void
-CodeGenModule::EmitCXXGlobalInitFunc() {
+void CodeGenModule::EmitCXXGlobalInitFunc() {
   if (CXXGlobalInits.empty())
     return;
 
@@ -155,33 +158,15 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            "__cxx_global_initialization", &TheModule);
 
-  CodeGenFunction(*this).GenerateCXXGlobalInitFunc(Fn,
-                                                   &CXXGlobalInits[0],
-                                                   CXXGlobalInits.size());
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
+                SourceLocation());
+
+  for (unsigned i = 0, e = CXXGlobalInits.size(); i != e; ++i)
+    Builder.CreateCall(CXXGlobalInits[i]);
+
+  FinishFunction();
+
   AddGlobalCtor(Fn);
-}
-
-void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
-                                                       const VarDecl *D) {
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
-
-  llvm::Constant *DeclPtr = CGM.GetAddrOfGlobalVar(D);
-  EmitCXXGlobalVarDeclInit(*D, DeclPtr);
-
-  FinishFunction();
-}
-
-void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
-                                                llvm::Constant **Decls,
-                                                unsigned NumDecls) {
-  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
-                SourceLocation());
-
-  for (unsigned i = 0; i != NumDecls; ++i)
-    Builder.CreateCall(Decls[i]);
-
-  FinishFunction();
 }
 
 static llvm::Constant *getGuardAcquireFn(CodeGenFunction &CGF) {
