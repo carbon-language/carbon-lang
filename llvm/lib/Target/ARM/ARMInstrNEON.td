@@ -283,14 +283,14 @@ def VLD3q16     : VLD3D<0b0101, 0b0100, "16">;
 def VLD3q32     : VLD3D<0b0101, 0b1000, "32">;
 
 // vld3 to double-spaced even registers.
-def  VLD3q8a  : VLD3WB<0b0000, "8">;
-def  VLD3q16a : VLD3WB<0b0100, "16">;
-def  VLD3q32a : VLD3WB<0b1000, "32">;
+def VLD3q8_UPD  : VLD3WB<0b0000, "8">;
+def VLD3q16_UPD : VLD3WB<0b0100, "16">;
+def VLD3q32_UPD : VLD3WB<0b1000, "32">;
 
 // vld3 to double-spaced odd registers.
-def  VLD3q8b  : VLD3WB<0b0000, "8">;
-def  VLD3q16b : VLD3WB<0b0100, "16">;
-def  VLD3q32b : VLD3WB<0b1000, "32">;
+def VLD3q8odd_UPD  : VLD3WB<0b0000, "8">;
+def VLD3q16odd_UPD : VLD3WB<0b0100, "16">;
+def VLD3q32odd_UPD : VLD3WB<0b1000, "32">;
 
 //   VLD4     : Vector Load (multiple 4-element structures)
 class VLD4D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -320,14 +320,14 @@ def VLD4q16     : VLD4D<0b0001, 0b0100, "16">;
 def VLD4q32     : VLD4D<0b0001, 0b1000, "32">;
 
 // vld4 to double-spaced even registers.
-def  VLD4q8a  : VLD4WB<0b0000, "8">;
-def  VLD4q16a : VLD4WB<0b0100, "16">;
-def  VLD4q32a : VLD4WB<0b1000, "32">;
+def VLD4q8_UPD  : VLD4WB<0b0000, "8">;
+def VLD4q16_UPD : VLD4WB<0b0100, "16">;
+def VLD4q32_UPD : VLD4WB<0b1000, "32">;
 
 // vld4 to double-spaced odd registers.
-def  VLD4q8b  : VLD4WB<0b0000, "8">;
-def  VLD4q16b : VLD4WB<0b0100, "16">;
-def  VLD4q32b : VLD4WB<0b1000, "32">;
+def VLD4q8odd_UPD  : VLD4WB<0b0000, "8">;
+def VLD4q16odd_UPD : VLD4WB<0b0100, "16">;
+def VLD4q32odd_UPD : VLD4WB<0b1000, "32">;
 
 //   VLD1LN   : Vector Load (single element to one lane)
 //   FIXME: Not yet implemented.
@@ -345,12 +345,12 @@ def VLD2LNd16 : VLD2LN<0b0101, "16"> { let Inst{5} = 0; }
 def VLD2LNd32 : VLD2LN<0b1001, "32"> { let Inst{6} = 0; }
 
 // vld2 to double-spaced even registers.
-def VLD2LNq16a: VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VLD2LNq32a: VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VLD2LNq16 : VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
+def VLD2LNq32 : VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
 
 // vld2 to double-spaced odd registers.
-def VLD2LNq16b: VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VLD2LNq32b: VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VLD2LNq16odd : VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
+def VLD2LNq32odd : VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
 
 //   VLD3LN   : Vector Load (single 3-element structure to one lane)
 class VLD3LN<bits<4> op11_8, string Dt>
@@ -366,12 +366,12 @@ def VLD3LNd16 : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b00; }
 def VLD3LNd32 : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b000; }
 
 // vld3 to double-spaced even registers.
-def VLD3LNq16a: VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VLD3LNq32a: VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VLD3LNq16 : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
+def VLD3LNq32 : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
 
 // vld3 to double-spaced odd registers.
-def VLD3LNq16b: VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VLD3LNq32b: VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VLD3LNq16odd : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
+def VLD3LNq32odd : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
 
 //   VLD4LN   : Vector Load (single 4-element structure to one lane)
 class VLD4LN<bits<4> op11_8, string Dt>
@@ -388,12 +388,12 @@ def VLD4LNd16 : VLD4LN<0b0111, "16"> { let Inst{5} = 0; }
 def VLD4LNd32 : VLD4LN<0b1011, "32"> { let Inst{6} = 0; }
 
 // vld4 to double-spaced even registers.
-def VLD4LNq16a: VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VLD4LNq32a: VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VLD4LNq16 : VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
+def VLD4LNq32 : VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
 
 // vld4 to double-spaced odd registers.
-def VLD4LNq16b: VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VLD4LNq32b: VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VLD4LNq16odd : VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
+def VLD4LNq32odd : VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
@@ -503,14 +503,14 @@ def  VST3d64  : NLdSt<0,0b00,0b0110,0b1100, (outs),
                       "vst1", "64", "\\{$src1, $src2, $src3\\}, $addr", "", []>;
 
 // vst3 to double-spaced even registers.
-def  VST3q8a  : VST3WB<0b0000, "8">;
-def  VST3q16a : VST3WB<0b0100, "16">;
-def  VST3q32a : VST3WB<0b1000, "32">;
+def VST3q8_UPD  : VST3WB<0b0000, "8">;
+def VST3q16_UPD : VST3WB<0b0100, "16">;
+def VST3q32_UPD : VST3WB<0b1000, "32">;
 
 // vst3 to double-spaced odd registers.
-def  VST3q8b  : VST3WB<0b0000, "8">;
-def  VST3q16b : VST3WB<0b0100, "16">;
-def  VST3q32b : VST3WB<0b1000, "32">;
+def VST3q8odd_UPD  : VST3WB<0b0000, "8">;
+def VST3q16odd_UPD : VST3WB<0b0100, "16">;
+def VST3q32odd_UPD : VST3WB<0b1000, "32">;
 
 //   VST4     : Vector Store (multiple 4-element structures)
 class VST4D<bits<4> op7_4, string Dt>
@@ -534,14 +534,14 @@ def  VST4d64  : NLdSt<0,0b00,0b0010,0b1100, (outs),
                       "", []>;
 
 // vst4 to double-spaced even registers.
-def  VST4q8a  : VST4WB<0b0000, "8">;
-def  VST4q16a : VST4WB<0b0100, "16">;
-def  VST4q32a : VST4WB<0b1000, "32">;
+def VST4q8_UPD  : VST4WB<0b0000, "8">;
+def VST4q16_UPD : VST4WB<0b0100, "16">;
+def VST4q32_UPD : VST4WB<0b1000, "32">;
 
 // vst4 to double-spaced odd registers.
-def  VST4q8b  : VST4WB<0b0000, "8">;
-def  VST4q16b : VST4WB<0b0100, "16">;
-def  VST4q32b : VST4WB<0b1000, "32">;
+def VST4q8odd_UPD  : VST4WB<0b0000, "8">;
+def VST4q16odd_UPD : VST4WB<0b0100, "16">;
+def VST4q32odd_UPD : VST4WB<0b1000, "32">;
 
 //   VST1LN   : Vector Store (single element from one lane)
 //   FIXME: Not yet implemented.
@@ -559,12 +559,12 @@ def VST2LNd16 : VST2LN<0b0101, "16"> { let Inst{5} = 0; }
 def VST2LNd32 : VST2LN<0b1001, "32"> { let Inst{6} = 0; }
 
 // vst2 to double-spaced even registers.
-def VST2LNq16a: VST2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VST2LNq32a: VST2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VST2LNq16 : VST2LN<0b0101, "16"> { let Inst{5} = 1; }
+def VST2LNq32 : VST2LN<0b1001, "32"> { let Inst{6} = 1; }
 
 // vst2 to double-spaced odd registers.
-def VST2LNq16b: VST2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VST2LNq32b: VST2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VST2LNq16odd : VST2LN<0b0101, "16"> { let Inst{5} = 1; }
+def VST2LNq32odd : VST2LN<0b1001, "32"> { let Inst{6} = 1; }
 
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
 class VST3LN<bits<4> op11_8, string Dt>
@@ -579,12 +579,12 @@ def VST3LNd16 : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b00; }
 def VST3LNd32 : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b000; }
 
 // vst3 to double-spaced even registers.
-def VST3LNq16a: VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VST3LNq32a: VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VST3LNq16 : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
+def VST3LNq32 : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
 
 // vst3 to double-spaced odd registers.
-def VST3LNq16b: VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VST3LNq32b: VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VST3LNq16odd : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
+def VST3LNq32odd : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
 class VST4LN<bits<4> op11_8, string Dt>
@@ -600,12 +600,12 @@ def VST4LNd16 : VST4LN<0b0111, "16"> { let Inst{5} = 0; }
 def VST4LNd32 : VST4LN<0b1011, "32"> { let Inst{6} = 0; }
 
 // vst4 to double-spaced even registers.
-def VST4LNq16a: VST4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VST4LNq32a: VST4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VST4LNq16 : VST4LN<0b0111, "16"> { let Inst{5} = 1; }
+def VST4LNq32 : VST4LN<0b1011, "32"> { let Inst{6} = 1; }
 
 // vst4 to double-spaced odd registers.
-def VST4LNq16b: VST4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VST4LNq32b: VST4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VST4LNq16odd : VST4LN<0b0111, "16"> { let Inst{5} = 1; }
+def VST4LNq32odd : VST4LN<0b1011, "32"> { let Inst{6} = 1; }
 
 } // mayStore = 1, hasExtraSrcRegAllocReq = 1
 

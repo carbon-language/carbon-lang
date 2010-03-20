@@ -64,16 +64,16 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     NumRegs = 4;
     return true;
 
-  case ARM::VLD2LNq16a:
-  case ARM::VLD2LNq32a:
+  case ARM::VLD2LNq16:
+  case ARM::VLD2LNq32:
     FirstOpnd = 0;
     NumRegs = 2;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VLD2LNq16b:
-  case ARM::VLD2LNq32b:
+  case ARM::VLD2LNq16odd:
+  case ARM::VLD2LNq32odd:
     FirstOpnd = 0;
     NumRegs = 2;
     Offset = 1;
@@ -91,34 +91,34 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     NumRegs = 3;
     return true;
 
-  case ARM::VLD3q8a:
-  case ARM::VLD3q16a:
-  case ARM::VLD3q32a:
+  case ARM::VLD3q8_UPD:
+  case ARM::VLD3q16_UPD:
+  case ARM::VLD3q32_UPD:
     FirstOpnd = 0;
     NumRegs = 3;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VLD3q8b:
-  case ARM::VLD3q16b:
-  case ARM::VLD3q32b:
+  case ARM::VLD3q8odd_UPD:
+  case ARM::VLD3q16odd_UPD:
+  case ARM::VLD3q32odd_UPD:
     FirstOpnd = 0;
     NumRegs = 3;
     Offset = 1;
     Stride = 2;
     return true;
 
-  case ARM::VLD3LNq16a:
-  case ARM::VLD3LNq32a:
+  case ARM::VLD3LNq16:
+  case ARM::VLD3LNq32:
     FirstOpnd = 0;
     NumRegs = 3;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VLD3LNq16b:
-  case ARM::VLD3LNq32b:
+  case ARM::VLD3LNq16odd:
+  case ARM::VLD3LNq32odd:
     FirstOpnd = 0;
     NumRegs = 3;
     Offset = 1;
@@ -136,34 +136,34 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     NumRegs = 4;
     return true;
 
-  case ARM::VLD4q8a:
-  case ARM::VLD4q16a:
-  case ARM::VLD4q32a:
+  case ARM::VLD4q8_UPD:
+  case ARM::VLD4q16_UPD:
+  case ARM::VLD4q32_UPD:
     FirstOpnd = 0;
     NumRegs = 4;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VLD4q8b:
-  case ARM::VLD4q16b:
-  case ARM::VLD4q32b:
+  case ARM::VLD4q8odd_UPD:
+  case ARM::VLD4q16odd_UPD:
+  case ARM::VLD4q32odd_UPD:
     FirstOpnd = 0;
     NumRegs = 4;
     Offset = 1;
     Stride = 2;
     return true;
 
-  case ARM::VLD4LNq16a:
-  case ARM::VLD4LNq32a:
+  case ARM::VLD4LNq16:
+  case ARM::VLD4LNq32:
     FirstOpnd = 0;
     NumRegs = 4;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VLD4LNq16b:
-  case ARM::VLD4LNq32b:
+  case ARM::VLD4LNq16odd:
+  case ARM::VLD4LNq32odd:
     FirstOpnd = 0;
     NumRegs = 4;
     Offset = 1;
@@ -188,16 +188,16 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     NumRegs = 4;
     return true;
 
-  case ARM::VST2LNq16a:
-  case ARM::VST2LNq32a:
+  case ARM::VST2LNq16:
+  case ARM::VST2LNq32:
     FirstOpnd = 4;
     NumRegs = 2;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VST2LNq16b:
-  case ARM::VST2LNq32b:
+  case ARM::VST2LNq16odd:
+  case ARM::VST2LNq32odd:
     FirstOpnd = 4;
     NumRegs = 2;
     Offset = 1;
@@ -215,34 +215,34 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     NumRegs = 3;
     return true;
 
-  case ARM::VST3q8a:
-  case ARM::VST3q16a:
-  case ARM::VST3q32a:
+  case ARM::VST3q8_UPD:
+  case ARM::VST3q16_UPD:
+  case ARM::VST3q32_UPD:
     FirstOpnd = 5;
     NumRegs = 3;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VST3q8b:
-  case ARM::VST3q16b:
-  case ARM::VST3q32b:
+  case ARM::VST3q8odd_UPD:
+  case ARM::VST3q16odd_UPD:
+  case ARM::VST3q32odd_UPD:
     FirstOpnd = 5;
     NumRegs = 3;
     Offset = 1;
     Stride = 2;
     return true;
 
-  case ARM::VST3LNq16a:
-  case ARM::VST3LNq32a:
+  case ARM::VST3LNq16:
+  case ARM::VST3LNq32:
     FirstOpnd = 4;
     NumRegs = 3;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VST3LNq16b:
-  case ARM::VST3LNq32b:
+  case ARM::VST3LNq16odd:
+  case ARM::VST3LNq32odd:
     FirstOpnd = 4;
     NumRegs = 3;
     Offset = 1;
@@ -260,34 +260,34 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
     NumRegs = 4;
     return true;
 
-  case ARM::VST4q8a:
-  case ARM::VST4q16a:
-  case ARM::VST4q32a:
+  case ARM::VST4q8_UPD:
+  case ARM::VST4q16_UPD:
+  case ARM::VST4q32_UPD:
     FirstOpnd = 5;
     NumRegs = 4;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VST4q8b:
-  case ARM::VST4q16b:
-  case ARM::VST4q32b:
+  case ARM::VST4q8odd_UPD:
+  case ARM::VST4q16odd_UPD:
+  case ARM::VST4q32odd_UPD:
     FirstOpnd = 5;
     NumRegs = 4;
     Offset = 1;
     Stride = 2;
     return true;
 
-  case ARM::VST4LNq16a:
-  case ARM::VST4LNq32a:
+  case ARM::VST4LNq16:
+  case ARM::VST4LNq32:
     FirstOpnd = 4;
     NumRegs = 4;
     Offset = 0;
     Stride = 2;
     return true;
 
-  case ARM::VST4LNq16b:
-  case ARM::VST4LNq32b:
+  case ARM::VST4LNq16odd:
+  case ARM::VST4LNq32odd:
     FirstOpnd = 4;
     NumRegs = 4;
     Offset = 1;

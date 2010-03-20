@@ -1859,37 +1859,45 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     case Intrinsic::arm_neon_vld3: {
       unsigned DOpcodes[] = { ARM::VLD3d8, ARM::VLD3d16,
                               ARM::VLD3d32, ARM::VLD3d64 };
-      unsigned QOpcodes0[] = { ARM::VLD3q8a, ARM::VLD3q16a, ARM::VLD3q32a };
-      unsigned QOpcodes1[] = { ARM::VLD3q8b, ARM::VLD3q16b, ARM::VLD3q32b };
+      unsigned QOpcodes0[] = { ARM::VLD3q8_UPD,
+                               ARM::VLD3q16_UPD,
+                               ARM::VLD3q32_UPD };
+      unsigned QOpcodes1[] = { ARM::VLD3q8odd_UPD,
+                               ARM::VLD3q16odd_UPD,
+                               ARM::VLD3q32odd_UPD };
       return SelectVLD(N, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld4: {
       unsigned DOpcodes[] = { ARM::VLD4d8, ARM::VLD4d16,
                               ARM::VLD4d32, ARM::VLD4d64 };
-      unsigned QOpcodes0[] = { ARM::VLD4q8a, ARM::VLD4q16a, ARM::VLD4q32a };
-      unsigned QOpcodes1[] = { ARM::VLD4q8b, ARM::VLD4q16b, ARM::VLD4q32b };
+      unsigned QOpcodes0[] = { ARM::VLD4q8_UPD,
+                               ARM::VLD4q16_UPD,
+                               ARM::VLD4q32_UPD };
+      unsigned QOpcodes1[] = { ARM::VLD4q8odd_UPD,
+                               ARM::VLD4q16odd_UPD,
+                               ARM::VLD4q32odd_UPD };
       return SelectVLD(N, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld2lane: {
       unsigned DOpcodes[] = { ARM::VLD2LNd8, ARM::VLD2LNd16, ARM::VLD2LNd32 };
-      unsigned QOpcodes0[] = { ARM::VLD2LNq16a, ARM::VLD2LNq32a };
-      unsigned QOpcodes1[] = { ARM::VLD2LNq16b, ARM::VLD2LNq32b };
+      unsigned QOpcodes0[] = { ARM::VLD2LNq16, ARM::VLD2LNq32 };
+      unsigned QOpcodes1[] = { ARM::VLD2LNq16odd, ARM::VLD2LNq32odd };
       return SelectVLDSTLane(N, true, 2, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld3lane: {
       unsigned DOpcodes[] = { ARM::VLD3LNd8, ARM::VLD3LNd16, ARM::VLD3LNd32 };
-      unsigned QOpcodes0[] = { ARM::VLD3LNq16a, ARM::VLD3LNq32a };
-      unsigned QOpcodes1[] = { ARM::VLD3LNq16b, ARM::VLD3LNq32b };
+      unsigned QOpcodes0[] = { ARM::VLD3LNq16, ARM::VLD3LNq32 };
+      unsigned QOpcodes1[] = { ARM::VLD3LNq16odd, ARM::VLD3LNq32odd };
       return SelectVLDSTLane(N, true, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld4lane: {
       unsigned DOpcodes[] = { ARM::VLD4LNd8, ARM::VLD4LNd16, ARM::VLD4LNd32 };
-      unsigned QOpcodes0[] = { ARM::VLD4LNq16a, ARM::VLD4LNq32a };
-      unsigned QOpcodes1[] = { ARM::VLD4LNq16b, ARM::VLD4LNq32b };
+      unsigned QOpcodes0[] = { ARM::VLD4LNq16, ARM::VLD4LNq32 };
+      unsigned QOpcodes1[] = { ARM::VLD4LNq16odd, ARM::VLD4LNq32odd };
       return SelectVLDSTLane(N, true, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
@@ -1903,37 +1911,45 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     case Intrinsic::arm_neon_vst3: {
       unsigned DOpcodes[] = { ARM::VST3d8, ARM::VST3d16,
                               ARM::VST3d32, ARM::VST3d64 };
-      unsigned QOpcodes0[] = { ARM::VST3q8a, ARM::VST3q16a, ARM::VST3q32a };
-      unsigned QOpcodes1[] = { ARM::VST3q8b, ARM::VST3q16b, ARM::VST3q32b };
+      unsigned QOpcodes0[] = { ARM::VST3q8_UPD,
+                               ARM::VST3q16_UPD,
+                               ARM::VST3q32_UPD };
+      unsigned QOpcodes1[] = { ARM::VST3q8odd_UPD,
+                               ARM::VST3q16odd_UPD,
+                               ARM::VST3q32odd_UPD };
       return SelectVST(N, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst4: {
       unsigned DOpcodes[] = { ARM::VST4d8, ARM::VST4d16,
                               ARM::VST4d32, ARM::VST4d64 };
-      unsigned QOpcodes0[] = { ARM::VST4q8a, ARM::VST4q16a, ARM::VST4q32a };
-      unsigned QOpcodes1[] = { ARM::VST4q8b, ARM::VST4q16b, ARM::VST4q32b };
+      unsigned QOpcodes0[] = { ARM::VST4q8_UPD,
+                               ARM::VST4q16_UPD,
+                               ARM::VST4q32_UPD };
+      unsigned QOpcodes1[] = { ARM::VST4q8odd_UPD,
+                               ARM::VST4q16odd_UPD,
+                               ARM::VST4q32odd_UPD };
       return SelectVST(N, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst2lane: {
       unsigned DOpcodes[] = { ARM::VST2LNd8, ARM::VST2LNd16, ARM::VST2LNd32 };
-      unsigned QOpcodes0[] = { ARM::VST2LNq16a, ARM::VST2LNq32a };
-      unsigned QOpcodes1[] = { ARM::VST2LNq16b, ARM::VST2LNq32b };
+      unsigned QOpcodes0[] = { ARM::VST2LNq16, ARM::VST2LNq32 };
+      unsigned QOpcodes1[] = { ARM::VST2LNq16odd, ARM::VST2LNq32odd };
       return SelectVLDSTLane(N, false, 2, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst3lane: {
       unsigned DOpcodes[] = { ARM::VST3LNd8, ARM::VST3LNd16, ARM::VST3LNd32 };
-      unsigned QOpcodes0[] = { ARM::VST3LNq16a, ARM::VST3LNq32a };
-      unsigned QOpcodes1[] = { ARM::VST3LNq16b, ARM::VST3LNq32b };
+      unsigned QOpcodes0[] = { ARM::VST3LNq16, ARM::VST3LNq32 };
+      unsigned QOpcodes1[] = { ARM::VST3LNq16odd, ARM::VST3LNq32odd };
       return SelectVLDSTLane(N, false, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst4lane: {
       unsigned DOpcodes[] = { ARM::VST4LNd8, ARM::VST4LNd16, ARM::VST4LNd32 };
-      unsigned QOpcodes0[] = { ARM::VST4LNq16a, ARM::VST4LNq32a };
-      unsigned QOpcodes1[] = { ARM::VST4LNq16b, ARM::VST4LNq32b };
+      unsigned QOpcodes0[] = { ARM::VST4LNq16, ARM::VST4LNq32 };
+      unsigned QOpcodes1[] = { ARM::VST4LNq16odd, ARM::VST4LNq32odd };
       return SelectVLDSTLane(N, false, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
     }
