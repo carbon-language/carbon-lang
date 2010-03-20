@@ -457,8 +457,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
       return true;
 
     // Walk the preprocessing record.
-    if (PreprocessingRecord *PPRec
-                       = CXXUnit->getPreprocessor().getPreprocessingRecord()) {
+    if (CXXUnit->getPreprocessor().getPreprocessingRecord()) {
       // FIXME: Once we have the ability to deserialize a preprocessing record,
       // do so.
       PreprocessingRecord::iterator E, EEnd;
