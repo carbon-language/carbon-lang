@@ -159,6 +159,33 @@ def  VLD1q32  : VLD1Q<0b1000, "32", v4i32>;
 def  VLD1qf   : VLD1Q<0b1000, "32", v4f32>;
 def  VLD1q64  : VLD1Q<0b1100, "64", v2i64>;
 
+let mayLoad = 1 in {
+
+// ...with address register writeback:
+class VLD1DWB<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD1,
+          "vld1", Dt, "\\{$dst\\}, $addr",
+          "$addr.addr = $wb", []>;
+class VLD1QWB<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b1010,op7_4, (outs QPR:$dst, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD1,
+          "vld1", Dt, "${dst:dregpair}, $addr",
+          "$addr.addr = $wb", []>;
+
+def VLD1d8_UPD  : VLD1DWB<0b0000, "8">;
+def VLD1d16_UPD : VLD1DWB<0b0100, "16">;
+def VLD1d32_UPD : VLD1DWB<0b1000, "32">;
+def VLD1d64_UPD : VLD1DWB<0b1100, "64">;
+
+def VLD1q8_UPD  : VLD1QWB<0b0000, "8">;
+def VLD1q16_UPD : VLD1QWB<0b0100, "16">;
+def VLD1q32_UPD : VLD1QWB<0b1000, "32">;
+def VLD1q64_UPD : VLD1QWB<0b1100, "64">;
+} // mayLoad = 1
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+
 // These (dreg triple/quadruple) are for disassembly only.
 class VLD1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b10, 0b0110, op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
@@ -181,8 +208,28 @@ def  VLD1d16Q : VLD1D4<0b0100, "16">;
 def  VLD1d32Q : VLD1D4<0b1000, "32">;
 //def  VLD1d64Q : VLD1D4<0b1100, "64">;
 
+// ...with address register writeback:
+class VLD1D3WB<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
+          "\\{$dst1, $dst2, $dst3\\}, $addr", "$addr.addr = $wb",
+          [/* For disassembly only; pattern left blank */]>;
+class VLD1D4WB<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b0010,op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
+          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "$addr.addr = $wb",
+          [/* For disassembly only; pattern left blank */]>;
 
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
+def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
+def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
+//  VLD1d64T_UPD : implemented as VLD3d64_UPD
+
+def VLD1d8Q_UPD  : VLD1D4WB<0b0000, "8">;
+def VLD1d16Q_UPD : VLD1D4WB<0b0100, "16">;
+def VLD1d32Q_UPD : VLD1D4WB<0b1000, "32">;
+//  VLD1d64Q_UPD : implemented as VLD4d64_UPD
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<bits<4> op7_4, string Dt>
