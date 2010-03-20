@@ -83,6 +83,9 @@ public:
   /// Name to use when calling the generic gcc.
   std::string CCCGenericGCCName;
 
+  /// The file to log CC_PRINT_OPTIONS output to, if enabled.
+  const char *CCPrintOptionsFilename;
+
   /// Whether the driver should follow g++ like behavior.
   unsigned CCCIsCXX : 1;
 
@@ -91,6 +94,10 @@ public:
 
   /// Only print tool bindings, don't build any jobs.
   unsigned CCCPrintBindings : 1;
+
+  /// Set CC_PRINT_OPTIONS mode, which is like -v but logs the commands to
+  /// CCPrintOptionsFilename or to stderr.
+  unsigned CCPrintOptions : 1;
 
 private:
   /// Whether to check that input files exist when constructing compilation

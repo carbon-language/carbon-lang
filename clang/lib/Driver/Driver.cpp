@@ -51,10 +51,10 @@ Driver::Driver(llvm::StringRef _Name, llvm::StringRef _Dir,
     DefaultImageName(_DefaultImageName),
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
-    CCCGenericGCCName("gcc"), CCCIsCXX(false), CCCEcho(false),
-    CCCPrintBindings(false), CheckInputsExist(true), CCCUseClang(true),
-    CCCUseClangCXX(true), CCCUseClangCPP(true), CCCUsePCH(true),
-    SuppressMissingInputWarning(false) {
+    CCCGenericGCCName("gcc"), CCPrintOptionsFilename(0), CCCIsCXX(false),
+    CCCEcho(false), CCCPrintBindings(false), CCPrintOptions(false),
+    CheckInputsExist(true), CCCUseClang(true), CCCUseClangCXX(true),
+    CCCUseClangCPP(true), CCCUsePCH(true), SuppressMissingInputWarning(false) {
   if (IsProduction) {
     // In a "production" build, only use clang on architectures we expect to
     // work, and don't use clang C++.

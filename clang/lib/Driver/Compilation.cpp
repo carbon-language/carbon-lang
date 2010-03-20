@@ -134,8 +134,34 @@ int Compilation::ExecuteCommand(const Command &C,
   std::copy(C.getArguments().begin(), C.getArguments().end(), Argv+1);
   Argv[C.getArguments().size() + 1] = 0;
 
-  if (getDriver().CCCEcho || getArgs().hasArg(options::OPT_v))
-    PrintJob(llvm::errs(), C, "\n", false);
+  if (getDriver().CCCEcho || getDriver().CCPrintOptions ||
+      getArgs().hasArg(options::OPT_v)) {
+    llvm::raw_ostream *OS = &llvm::errs();
+
+    // Follow gcc implementation of CC_PRINT_OPTIONS; we could also cache the
+    // output stream.
+    if (getDriver().CCPrintOptions && getDriver().CCPrintOptionsFilename) {
+      std::string Error;
+      OS = new llvm::raw_fd_ostream(getDriver().CCPrintOptionsFilename,
+                                    Error,
+                                    llvm::raw_fd_ostream::F_Append);
+      if (!Error.empty()) {
+        getDriver().Diag(clang::diag::err_drv_cc_print_options_failure)
+          << Error;
+        FailingCommand = &C;
+        delete OS;
+        return 1;
+      }
+    }
+
+    if (getDriver().CCPrintOptions)
+      *OS << "[Logging clang options]";
+
+    PrintJob(*OS, C, "\n", /*Quote=*/getDriver().CCPrintOptions);
+
+    if (OS != &llvm::errs())
+      delete OS;
+  }
 
   std::string Error;
   int Res =

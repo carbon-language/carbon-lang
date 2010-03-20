@@ -218,6 +218,11 @@ int main(int argc, const char **argv) {
 
   llvm::OwningPtr<Compilation> C;
 
+  // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
+  TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
+  if (TheDriver.CCPrintOptions)
+    TheDriver.CCPrintOptionsFilename = ::getenv("CC_PRINT_OPTIONS_FILE");
+
   // Handle QA_OVERRIDE_GCC3_OPTIONS and CCC_ADD_ARGS, used for editing a
   // command line behind the scenes.
   std::set<std::string> SavedStrings;
