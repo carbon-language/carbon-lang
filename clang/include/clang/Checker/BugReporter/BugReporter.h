@@ -467,8 +467,6 @@ void registerTrackNullOrUndefValue(BugReporterContext& BRC, const void *stmt,
 void registerFindLastStore(BugReporterContext& BRC, const void *memregion,
                            const ExplodedNode *N);
 
-void registerNilReceiverVisitor(BugReporterContext &BRC);
-
 
 } // end namespace clang::bugreporter
 

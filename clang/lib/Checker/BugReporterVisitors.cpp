@@ -103,6 +103,7 @@ public:
       const ExplodedNode *Node = N, *Last = NULL;
 
       for ( ; Node ; Last = Node, Node = Node->getFirstPred()) {
+
         if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
           if (const PostStmt *P = Node->getLocationAs<PostStmt>())
             if (const DeclStmt *DS = P->getStmtAs<DeclStmt>())
@@ -247,6 +248,7 @@ public:
     // Check if in the previous state it was feasible for this constraint
     // to *not* be true.
     if (PrevN->getState()->Assume(Constraint, !Assumption)) {
+
       isSatisfied = true;
 
       // As a sanity check, make sure that the negation of the constraint
@@ -257,8 +259,8 @@ public:
 
       // We found the transition point for the constraint.  We now need to
       // pretty-print the constraint. (work-in-progress)
-      llvm::SmallString<256> sbuf;
-      llvm::raw_svector_ostream os(sbuf);
+      std::string sbuf;
+      llvm::raw_string_ostream os(sbuf);
 
       if (isa<Loc>(Constraint)) {
         os << "Assuming pointer value is ";
@@ -362,49 +364,4 @@ void clang::bugreporter::registerFindLastStore(BugReporterContext& BRC,
     return;
 
   BRC.addVisitor(new FindLastStoreBRVisitor(V, R));
-}
-
-namespace {
-class NilReceiverVisitor : public BugReporterVisitor {
-public:
-  NilReceiverVisitor() {}
-
-  PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
-                                 const ExplodedNode *PrevN,
-                                 BugReporterContext& BRC) {
-
-    const PostStmt *P = N->getLocationAs<PostStmt>();
-    if (!P)
-      return 0;
-    const ObjCMessageExpr *ME = P->getStmtAs<ObjCMessageExpr>();
-    if (!ME)
-      return 0;
-    const Expr *Receiver = ME->getReceiver();
-    if (!Receiver)
-      return 0;
-    const GRState *state = N->getState();
-    const SVal &V = state->getSVal(Receiver);
-    const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
-    if (!DV)
-      return 0;
-
-    state = state->Assume(*DV, true);
-    if (state)
-      return 0;
-
-    // The receiver was nil, and hence the method was skipped.
-    // Register a BugReporterVisitor to issue a message telling us how
-    // the receiver was null.
-    bugreporter::registerTrackNullOrUndefValue(BRC, Receiver, N);
-
-    //Issue a message saying that the method was skipped.
-    PathDiagnosticLocation L(Receiver, BRC.getSourceManager());
-    return new PathDiagnosticEventPiece(L, "No method actually called "
-                                           "because the receiver is nil");
-  }
-};
-} // end anonymous namespace
-
-void clang::bugreporter::registerNilReceiverVisitor(BugReporterContext &BRC) {
-  BRC.addVisitor(new NilReceiverVisitor());
 }
