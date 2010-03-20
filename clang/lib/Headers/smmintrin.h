@@ -337,6 +337,118 @@ _mm_packus_epi32(__m128i __V1, __m128i __V2)
 /* SSE4 Multiple Packed Sums of Absolute Difference.  */
 #define _mm_mpsadbw_epu8(X, Y, M) __builtin_ia32_mpsadbw128((X), (Y), (M))
 
+/* These definitions are normally in nmmintrin.h, but gcc puts them in here
+   so we'll do the same.  */
+#ifdef __SSE4_2__
+
+/* These specify the type of data that we're comparing.  */
+#define _SIDD_UBYTE_OPS                 0x00
+#define _SIDD_UWORD_OPS                 0x01
+#define _SIDD_SBYTE_OPS                 0x02
+#define _SIDD_SWORD_OPS                 0x03
+
+/* These specify the type of comparison operation.  */
+#define _SIDD_CMP_EQUAL_ANY             0x00
+#define _SIDD_CMP_RANGES                0x04
+#define _SIDD_CMP_EQUAL_EACH            0x08
+#define _SIDD_CMP_EQUAL_ORDERED         0x0c
+
+/* These macros specify the polarity of the operation.  */
+#define _SIDD_POSITIVE_POLARITY         0x00
+#define _SIDD_NEGATIVE_POLARITY         0x10
+#define _SIDD_MASKED_POSITIVE_POLARITY  0x20
+#define _SIDD_MASKED_NEGATIVE_POLARITY  0x30
+
+/* These macros are used in _mm_cmpXstri() to specify the return.  */
+#define _SIDD_LEAST_SIGNIFICANT         0x00
+#define _SIDD_MOST_SIGNIFICANT          0x40
+
+/* These macros are used in _mm_cmpXstri() to specify the return.  */
+#define _SIDD_BIT_MASK                  0x00
+#define _SIDD_UNIT_MASK                 0x40
+
+/* SSE4.2 Packed Comparison Intrinsics.  */
+#define _mm_cmpistrm(A, B, M) __builtin_ia32_pcmpistrm128((A), (B), (M))
+#define _mm_cmpistri(A, B, M) __builtin_ia32_pcmpistri128((A), (B), (M))
+
+#define _mm_cmpestrm(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpestrm128((A), (LA), (B), (LB), (M))
+#define _mm_cmpestri(X, LX, Y, LY, M) \
+     __builtin_ia32_pcmpestri128((A), (LA), (B), (LB), (M))
+     
+/* SSE4.2 Packed Comparison Intrinsics and EFlag Reading.  */
+#define _mm_cmpistra(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpistria128((A), (LA), (B), (LB), (M))
+#define _mm_cmpistrc(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpistric128((A), (LA), (B), (LB), (M))
+#define _mm_cmpistro(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpistrio128((A), (LA), (B), (LB), (M))
+#define _mm_cmpistrs(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpistris128((A), (LA), (B), (LB), (M))
+#define _mm_cmpistrz(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpistriz128((A), (LA), (B), (LB), (M))
+
+#define _mm_cmpestra(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpestria128((A), (LA), (B), (LB), (M))
+#define _mm_cmpestrc(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpestric128((A), (LA), (B), (LB), (M))
+#define _mm_cmpestro(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpestrio128((A), (LA), (B), (LB), (M))
+#define _mm_cmpestrs(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpestris128((A), (LA), (B), (LB), (M))
+#define _mm_cmpestrz(A, LA, B, LB, M) \
+     __builtin_ia32_pcmpestriz128((A), (LA), (B), (LB), (M))
+
+/* SSE4.2 Compare Packed Data -- Greater Than.  */
+static inline __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_cmpgt_epi64(__m128i __V1, __m128i __V2)
+{
+  return __builtin_ia32_pcmpgtq((__v2di)__V1, (__v2di)__V2);
+}
+
+/* SSE4.2 Accumulate CRC32.  */
+static inline unsigned int __attribute__((__always_inline__, __nodebug__))
+_mm_crc32_u8(unsigned int __C, unsigned char __D)
+{
+  return __builtin_ia32_crc32qi(__C, __D);
+}
+
+static inline unsigned int __attribute__((__always_inline__, __nodebug__))
+_mm_crc32_u16(unsigned int __C, unsigned short __D)
+{
+  return __builtin_ia32_crc32hi(__C, __D);
+}
+
+static inline unsigned int __attribute__((__always_inline__, __nodebug__))
+_mm_crc32_u32(unsigned int __C, unsigned int __D)
+{
+  return __builtin_ia32_crc32si(__C, __D);
+}
+
+#ifdef __x86_64__
+static inline unsigned long long __attribute__((__always_inline__, __nodebug__))
+_mm_crc32_u64(unsigned long long __C, unsigned long long __D)
+{
+  return __builtin_ia32_crc32di(__C, __D);
+}
+#endif /* __x86_64__ */
+
+/* SSE4.2 Population Count.  */
+static inline int __attribute__((__always_inline__, __nodebug__))
+_mm_popcnt_u32(unsigned int __A)
+{
+  return __builtin_popcount(__A);
+}
+
+#ifdef __x86_64__
+static inline long long __attribute__((__always_inline__, __nodebug__))
+_mm_popcnt_u64(unsigned long long __A)
+{
+  return __builtin_popcountll(__A);
+}
+#endif /* __x86_64__ */
+
+#endif /* __SSE4_2__ */
 #endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */
