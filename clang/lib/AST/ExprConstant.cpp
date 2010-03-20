@@ -406,27 +406,34 @@ APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (!EvaluatePointer(PExp, ResultLValue, Info))
     return APValue();
 
-  llvm::APSInt AdditionalOffset(32);
+  llvm::APSInt AdditionalOffset;
   if (!EvaluateInteger(IExp, AdditionalOffset, Info))
     return APValue();
 
-  QualType PointeeType = PExp->getType()->getAs<PointerType>()->getPointeeType();
-  CharUnits SizeOfPointee;
+  // Compute the new offset in the appropriate width.
+
+  QualType PointeeType =
+    PExp->getType()->getAs<PointerType>()->getPointeeType();
+  llvm::APSInt SizeOfPointee(AdditionalOffset);
 
   // Explicitly handle GNU void* and function pointer arithmetic extensions.
   if (PointeeType->isVoidType() || PointeeType->isFunctionType())
-    SizeOfPointee = CharUnits::One();
+    SizeOfPointee = 1;
   else
-    SizeOfPointee = Info.Ctx.getTypeSizeInChars(PointeeType);
+    SizeOfPointee = Info.Ctx.getTypeSizeInChars(PointeeType).getQuantity();
 
-  CharUnits Offset = ResultLValue.getLValueOffset();
-
+  llvm::APSInt Offset(AdditionalOffset);
+  Offset = ResultLValue.getLValueOffset().getQuantity();
   if (E->getOpcode() == BinaryOperator::Add)
-    Offset += AdditionalOffset.getLimitedValue() * SizeOfPointee;
+    Offset += AdditionalOffset * SizeOfPointee;
   else
-    Offset -= AdditionalOffset.getLimitedValue() * SizeOfPointee;
+    Offset -= AdditionalOffset * SizeOfPointee;
 
-  return APValue(ResultLValue.getLValueBase(), Offset);
+  // Sign extend prior to converting back to a char unit.
+  if (Offset.getBitWidth() < 64)
+    Offset.extend(64);
+  return APValue(ResultLValue.getLValueBase(),
+                 CharUnits::fromQuantity(Offset.getLimitedValue()));
 }
 
 APValue PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
