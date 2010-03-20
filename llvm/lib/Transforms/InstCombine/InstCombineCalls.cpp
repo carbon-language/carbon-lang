@@ -820,7 +820,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       
       // We cannot remove an invoke, because it would change the CFG, just
       // change the callee to a null pointer.
-      cast<InvokeInst>(OldCall)->setOperand(0,
+      cast<InvokeInst>(OldCall)->setCalledFunction(
                                     Constant::getNullValue(CalleeF->getType()));
       return 0;
     }

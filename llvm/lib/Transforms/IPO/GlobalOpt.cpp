@@ -622,12 +622,12 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V,
         return false;  // Storing the value.
       }
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
-      if (CI->getOperand(0) != V) {
+      if (CI->getCalledValue() != V) {
         //cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(*UI)) {
-      if (II->getOperand(0) != V) {
+      if (II->getCalledValue() != V) {
         //cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }

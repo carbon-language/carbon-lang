@@ -2516,6 +2516,11 @@ public:
   const Value *getCalledValue() const { return getOperand(0); }
         Value *getCalledValue()       { return getOperand(0); }
 
+  /// setCalledFunction - Set the function called.
+  void setCalledFunction(Value* Fn) {
+    Op<0>() = Fn;
+  }
+
   // get*Dest - Return the destination basic blocks...
   BasicBlock *getNormalDest() const {
     return cast<BasicBlock>(getOperand(1));
