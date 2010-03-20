@@ -1155,19 +1155,24 @@ namespace {
   };
 }
 
-/// MergeReturnIntoLDM - If this is a exit BB, try merging the return op
-/// (bx lr) into the preceeding stack restore so it directly restore the value
-/// of LR into pc.
-///   ldmfd sp!, {r7, lr}
+/// MergeReturnIntoLDM - If this is a exit BB, try merging the return ops
+/// ("bx lr" and "mov pc, lr") into the preceeding stack restore so it
+/// directly restore the value of LR into pc.
+///   ldmfd sp!, {..., lr}
 ///   bx lr
+/// or
+///   ldmfd sp!, {..., lr}
+///   mov pc, lr
 /// =>
-///   ldmfd sp!, {r7, pc}
+///   ldmfd sp!, {..., pc}
 bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
   if (MBB.empty()) return false;
 
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   if (MBBI != MBB.begin() &&
-      (MBBI->getOpcode() == ARM::BX_RET || MBBI->getOpcode() == ARM::tBX_RET)) {
+      (MBBI->getOpcode() == ARM::BX_RET ||
+       MBBI->getOpcode() == ARM::tBX_RET ||
+       MBBI->getOpcode() == ARM::MOVPCLR)) {
     MachineInstr *PrevMI = prior(MBBI);
     if (PrevMI->getOpcode() == ARM::LDM_UPD ||
         PrevMI->getOpcode() == ARM::t2LDM_UPD) {
