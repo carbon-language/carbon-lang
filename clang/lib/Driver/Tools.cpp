@@ -692,6 +692,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfoList &Inputs,
                          const ArgList &Args,
                          const char *LinkingOutput) const {
+  bool KernelOrKext = Args.hasArg(options::OPT_mkernel,
+                                  options::OPT_fapple_kext);
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
@@ -876,7 +878,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.hasFlag(options::OPT_fasynchronous_unwind_tables,
                  options::OPT_fno_asynchronous_unwind_tables,
                  getToolChain().IsUnwindTablesDefault() &&
-                 !Args.hasArg(options::OPT_mkernel));
+                 !KernelOrKext);
   if (Args.hasFlag(options::OPT_funwind_tables, options::OPT_fno_unwind_tables,
                    AsynchronousUnwindTables))
     CmdArgs.push_back("-munwind-tables");
@@ -1035,10 +1037,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  // -fhosted is default.
+  if (KernelOrKext || Args.hasFlag(options::OPT_ffreestanding,
+                                   options::OPT_fhosted,
+                                   false))
+    CmdArgs.push_back("-ffreestanding");
+
   // Forward -f (flag) options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_fcatch_undefined_behavior);
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
-  Args.AddLastArg(CmdArgs, options::OPT_ffreestanding);
   Args.AddLastArg(CmdArgs, options::OPT_fheinous_gnu_extensions);
 
   // -flax-vector-conversions is default.
@@ -1105,7 +1112,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fsjlj-exceptions");
 
   // -frtti is default.
-  if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
+  if (KernelOrKext ||
+      !Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
   // -fsigned-char is default.
@@ -1119,8 +1127,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-threadsafe-statics");
 
   // -fuse-cxa-atexit is default.
-  if (!Args.hasFlag(options::OPT_fuse_cxa_atexit,
-                    options::OPT_fno_use_cxa_atexit))
+  if (KernelOrKext || !Args.hasFlag(options::OPT_fuse_cxa_atexit,
+                                    options::OPT_fno_use_cxa_atexit))
     CmdArgs.push_back("-fno-use-cxa-atexit");
 
   // -fms-extensions=0 is default.
