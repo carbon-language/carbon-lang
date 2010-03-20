@@ -36,6 +36,21 @@ BugReporterContext::~BugReporterContext() {
     if ((*I)->isOwnedByReporterContext()) delete *I;
 }
 
+void BugReporterContext::addVisitor(BugReporterVisitor* visitor) {
+  if (!visitor)
+    return;
+
+  llvm::FoldingSetNodeID ID;
+  visitor->Profile(ID);
+  void *InsertPos;
+
+  if (CallbacksSet.FindNodeOrInsertPos(ID, InsertPos))
+    return;
+
+  CallbacksSet.InsertNode(visitor, InsertPos);
+  Callbacks = F.Add(visitor, Callbacks);
+}
+
 //===----------------------------------------------------------------------===//
 // Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//

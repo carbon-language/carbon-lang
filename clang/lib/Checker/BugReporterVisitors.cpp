@@ -92,6 +92,13 @@ public:
   FindLastStoreBRVisitor(SVal v, const MemRegion *r)
   : R(r), V(v), satisfied(false), StoreSite(0) {}
 
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+    static int tag = 0;
+    ID.AddPointer(&tag);
+    ID.AddPointer(R);
+    ID.Add(V);
+  }
+
   PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
                                  BugReporterContext& BRC) {
@@ -129,8 +136,8 @@ public:
       return NULL;
 
     satisfied = true;
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
+    llvm::SmallString<256> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
 
     if (const PostStmt *PS = N->getLocationAs<PostStmt>()) {
       if (const DeclStmt *DS = PS->getStmtAs<DeclStmt>()) {
@@ -238,6 +245,13 @@ class TrackConstraintBRVisitor : public BugReporterVisitor {
 public:
   TrackConstraintBRVisitor(DefinedSVal constraint, bool assumption)
   : Constraint(constraint), Assumption(assumption), isSatisfied(false) {}
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    static int tag = 0;
+    ID.AddPointer(&tag);
+    ID.AddBoolean(Assumption);
+    ID.Add(Constraint);
+  }
 
   PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
