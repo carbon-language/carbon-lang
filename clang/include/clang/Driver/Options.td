@@ -393,7 +393,7 @@ def iwithprefix : JoinedOrSeparate<"-iwithprefix">, Group<clang_i_Group>;
 def iwithsysroot : JoinedOrSeparate<"-iwithsysroot">, Group<i_Group>;
 def i : Joined<"-i">, Group<i_Group>;
 def keep__private__externs : Flag<"-keep_private_externs">;
-def l : JoinedOrSeparate<"-l">, Flags<[LinkerInput]>;
+def l : JoinedOrSeparate<"-l">, Flags<[LinkerInput, RenderJoined]>;
 def m32 : Flag<"-m32">, Group<m_Group>, Flags<[DriverOption]>;
 def m3dnowa : Flag<"-m3dnowa">, Group<m_x86_Features_Group>;
 def m3dnow : Flag<"-m3dnow">, Group<m_x86_Features_Group>;
