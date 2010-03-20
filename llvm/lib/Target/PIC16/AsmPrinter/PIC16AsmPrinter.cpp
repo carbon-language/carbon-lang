@@ -184,7 +184,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       // by any chance, as we do not link in those as .bc lib. So these calls
       // are always external and it is safe to emit an extern.
       if (PAN::isMemIntrinsic(Sym->getName()))
-        LibcallDecls.push_back(createESName(Sym->getName()));
+        LibcallDecls.insert(Sym->getName());
 
       O << *Sym;
       break;
@@ -199,7 +199,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
           Printname = PAN::Rename(Sname);
         }
         // Record these decls, we need to print them in asm as extern.
-        LibcallDecls.push_back(createESName(Printname));
+        LibcallDecls.insert(Printname);
       }
 
       O << Printname;
@@ -221,18 +221,6 @@ void PIC16AsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
   O << PIC16CondCodeToString((PIC16CC::CondCodes)CC);
 }
 
-// This function is used to sort the decls list.
-// should return true if s1 should come before s2.
-static bool is_before(const char *s1, const char *s2) {
-  return strcmp(s1, s2) <= 0;
-}
-
-// This is used by list::unique below. 
-// unique will filter out duplicates if it knows them.
-static bool is_duplicate(const char *s1, const char *s2) {
-  return !strcmp(s1, s2);
-}
-
 /// printLibcallDecls - print the extern declarations for compiler 
 /// intrinsics.
 ///
@@ -241,12 +229,9 @@ void PIC16AsmPrinter::printLibcallDecls() {
   if (LibcallDecls.empty()) return;
 
   O << MAI->getCommentString() << "External decls for libcalls - BEGIN." <<"\n";
-  // Remove duplicate entries.
-  LibcallDecls.sort(is_before);
-  LibcallDecls.unique(is_duplicate);
 
-  for (std::list<const char*>::const_iterator I = LibcallDecls.begin(); 
-       I != LibcallDecls.end(); I++) {
+  for (std::set<std::string>::const_iterator I = LibcallDecls.begin(),
+       E = LibcallDecls.end(); I != E; I++) {
     O << MAI->getExternDirective() << *I << "\n";
   }
   O << MAI->getCommentString() << "External decls for libcalls - END." <<"\n";

@@ -25,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachine.h"
 #include <list>
+#include <set>
 #include <string>
 
 namespace llvm {
@@ -80,7 +81,7 @@ namespace llvm {
     PIC16TargetLowering *PTLI;
     PIC16DbgInfo DbgInfo;
     const PIC16MCAsmInfo *PMAI;
-    std::list<const char *> LibcallDecls; // List of extern decls.
+    std::set<std::string> LibcallDecls; // Sorted & uniqued set of extern decls.
     std::vector<const GlobalVariable *> ExternalVarDecls;
     std::vector<const GlobalVariable *> ExternalVarDefs;
   };
