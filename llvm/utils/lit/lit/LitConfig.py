@@ -47,6 +47,9 @@ class LitConfig:
             if self.valgrindLeakCheck:
                 self.valgrindTriple += "_leak"
                 self.valgrindArgs.append('--leak-check=full')
+            else:
+                # The default is 'summary'.
+                self.valgrindArgs.append('--leak-check=no')
             self.valgrindArgs.extend(self.valgrindUserArgs)
 
 
