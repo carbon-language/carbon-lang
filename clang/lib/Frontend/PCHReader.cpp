@@ -905,8 +905,15 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
-    if (Record.size() < 8) {
+    if (Record.size() < 10) {
       Error("source location entry is incorrect");
+      return Failure;
+    }
+
+    if ((off_t)Record[4] != File->getSize() ||
+        (time_t)Record[5] != File->getModificationTime()) {
+      Diag(diag::err_fe_pch_file_modified)
+        << Filename;
       return Failure;
     }
 
@@ -920,10 +927,10 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
 
     // Reconstruct header-search information for this file.
     HeaderFileInfo HFI;
-    HFI.isImport = Record[4];
-    HFI.DirInfo = Record[5];
-    HFI.NumIncludes = Record[6];
-    HFI.ControllingMacroID = Record[7];
+    HFI.isImport = Record[6];
+    HFI.DirInfo = Record[7];
+    HFI.NumIncludes = Record[8];
+    HFI.ControllingMacroID = Record[9];
     if (Listener)
       Listener->ReadHeaderFileInfo(HFI, File->getUID());
     break;

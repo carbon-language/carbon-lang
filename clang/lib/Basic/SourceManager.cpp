@@ -93,8 +93,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
         << Entry->getName() << ErrorStr;
       Buffer.setInt(true);
     } else if (FileInfo.st_size != Entry->getSize() ||
-               FileInfo.st_mtime != Entry->getModificationTime() ||
-               FileInfo.st_ino != Entry->getInode()) {
+               FileInfo.st_mtime != Entry->getModificationTime()) {
       // Check that the file's size, modification time, and inode are
       // the same as in the file entry (which may have come from a
       // stat cache).
