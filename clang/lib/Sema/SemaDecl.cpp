@@ -5261,6 +5261,10 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   FieldDecl *NewFD
     = CheckFieldDecl(II, T, TInfo, Record, Loc, Mutable, BitWidth, TSSL,
                      AS, PrevDecl, &D);
+
+  if (NewFD->isInvalidDecl())
+    Record->setInvalidDecl();
+
   if (NewFD->isInvalidDecl() && PrevDecl) {
     // Don't introduce NewFD into scope; there's already something
     // with the same name in the same scope.

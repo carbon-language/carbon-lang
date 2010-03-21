@@ -1942,6 +1942,16 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   if (diag == 0)
     return true;
 
+  const TagType *Tag = 0;
+  if (const RecordType *Record = T->getAs<RecordType>())
+    Tag = Record;
+  else if (const EnumType *Enum = T->getAs<EnumType>())
+    Tag = Enum;
+
+  // Avoid diagnosing invalid decls as incomplete.
+  if (Tag && Tag->getDecl()->isInvalidDecl())
+    return true;
+
   // We have an incomplete type. Produce a diagnostic.
   Diag(Loc, PD) << T;
 
@@ -1950,13 +1960,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     Diag(Note.first, Note.second);
     
   // If the type was a forward declaration of a class/struct/union
-  // type, produce
-  const TagType *Tag = 0;
-  if (const RecordType *Record = T->getAs<RecordType>())
-    Tag = Record;
-  else if (const EnumType *Enum = T->getAs<EnumType>())
-    Tag = Enum;
-
+  // type, produce a note.
   if (Tag && !Tag->getDecl()->isInvalidDecl())
     Diag(Tag->getDecl()->getLocation(),
          Tag->isBeingDefined() ? diag::note_type_being_defined
