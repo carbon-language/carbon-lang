@@ -1653,7 +1653,7 @@ InferAllTypes(const StringMap<SmallVector<TreePatternNode*,1> > *InNamedTypes) {
               continue;
           }
           
-          assert(Nodes[i]->getNumTypes() == 1 &
+          assert(Nodes[i]->getNumTypes() == 1 &&
                  InNodes[0]->getNumTypes() == 1 &&
                  "FIXME: cannot name multiple result nodes yet");
           MadeChange |= Nodes[i]->UpdateNodeType(0, InNodes[0]->getExtType(0),
@@ -1666,7 +1666,7 @@ InferAllTypes(const StringMap<SmallVector<TreePatternNode*,1> > *InNamedTypes) {
       if (I->second.size() > 1) {
         for (unsigned i = 0, e = Nodes.size()-1; i != e; ++i) {
           TreePatternNode *N1 = Nodes[i], *N2 = Nodes[i+1];
-          assert(N1->getNumTypes() == 1 & N2->getNumTypes() == 1 &&
+          assert(N1->getNumTypes() == 1 && N2->getNumTypes() == 1 &&
                  "FIXME: cannot name multiple result nodes yet");
           
           MadeChange |= N1->UpdateNodeType(0, N2->getExtType(0), *this);
