@@ -31,6 +31,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1639,11 +1640,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // Save a copy of the virtual register live interval. We'll manually
   // merge this into the "real" physical register live interval this is
   // coalesced with.
-  LiveInterval *SavedLI = 0;
+  OwningPtr<LiveInterval> SavedLI;
   if (RealDstReg)
-    SavedLI = li_->dupInterval(&SrcInt);
+    SavedLI.reset(li_->dupInterval(&SrcInt));
   else if (RealSrcReg)
-    SavedLI = li_->dupInterval(&DstInt);
+    SavedLI.reset(li_->dupInterval(&DstInt));
 
   // Check if it is necessary to propagate "isDead" property.
   if (!isExtSubReg && !isInsSubReg && !isSubRegToReg) {
@@ -1853,7 +1854,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // Manually deleted the live interval copy.
   if (SavedLI) {
     SavedLI->clear();
-    delete SavedLI;
+    SavedLI.reset();
   }
 
   // If resulting interval has a preference that no longer fits because of subreg
