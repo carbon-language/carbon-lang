@@ -6,5 +6,5 @@ ocaml_lib ~extern:true "llvm_executionengine";;
 ocaml_lib ~extern:true "llvm_target";;
 ocaml_lib ~extern:true "llvm_scalar_opts";;
 
-flag ["link"; "ocaml"; "g++"] (S[A"-cc"; A"g++"]);;
+flag ["link"; "ocaml"; "g++"] (S[A"-cc"; A"g++"; A"-cclib"; A"-rdynamic"]);;
 dep ["link"; "ocaml"; "use_bindings"] ["bindings.o"];;
