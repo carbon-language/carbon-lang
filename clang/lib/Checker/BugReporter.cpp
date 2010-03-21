@@ -44,8 +44,10 @@ void BugReporterContext::addVisitor(BugReporterVisitor* visitor) {
   visitor->Profile(ID);
   void *InsertPos;
 
-  if (CallbacksSet.FindNodeOrInsertPos(ID, InsertPos))
+  if (CallbacksSet.FindNodeOrInsertPos(ID, InsertPos)) {
+    delete visitor;
     return;
+  }
 
   CallbacksSet.InsertNode(visitor, InsertPos);
   Callbacks = F.Add(visitor, Callbacks);
