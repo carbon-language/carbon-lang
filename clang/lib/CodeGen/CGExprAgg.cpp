@@ -500,10 +500,6 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   llvm::Value *Val = DestPtr;
 
-  if (!Val) {
-    // Create a temporary variable.
-    Val = CGF.CreateMemTemp(E->getType(), "tmp");
-  }
   CGF.EmitCXXExprWithTemporaries(E, Val, VolatileDest, IsInitializer);
 }
 

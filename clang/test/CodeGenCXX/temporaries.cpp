@@ -288,3 +288,16 @@ void g() {
 }
 
 }
+
+namespace PR6648 {
+  struct B {
+    ~B();
+  };
+  B foo;
+  struct D;
+  D& zed(B);
+  void foobar() {
+    // CHECK: call %"struct.PR6648::D"* @_ZN6PR66483zedENS_1BE
+    zed(foo);
+  }
+}
