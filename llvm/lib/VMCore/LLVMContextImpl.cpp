@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
-#include "llvm/Metadata.h"
 
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
   : TheTrueVal(0), TheFalseVal(0),

@@ -21,6 +21,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Metadata.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/APFloat.h"
@@ -35,8 +36,6 @@ namespace llvm {
 
 class ConstantInt;
 class ConstantFP;
-class MDString;
-class MDNode;
 class LLVMContext;
 class Type;
 class Value;
