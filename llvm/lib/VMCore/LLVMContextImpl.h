@@ -135,6 +135,8 @@ public:
   
   DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
   ConstantUniqueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
+
+  ConstantUniqueMap<InlineAsmKeyType, PointerType, InlineAsm> InlineAsms;
   
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
@@ -224,6 +226,7 @@ public:
     AggZeroConstants.freeConstants();
     NullPtrConstants.freeConstants();
     UndefValueConstants.freeConstants();
+    InlineAsms.freeConstants();
     for (IntMapTy::iterator I = IntConstants.begin(), E = IntConstants.end(); 
          I != E; ++I) {
       if (I->second->use_empty())

@@ -24,8 +24,17 @@ namespace llvm {
 class PointerType;
 class FunctionType;
 class Module;
+struct InlineAsmKeyType;
+template<class ValType, class TypeClass, class ConstantClass, bool HasLargeKey>
+class ConstantUniqueMap;
+template<class ConstantClass, class TypeClass, class ValType>
+struct ConstantCreator;
 
 class InlineAsm : public Value {
+  friend struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType>;
+  friend class ConstantUniqueMap<InlineAsmKeyType, PointerType, InlineAsm,
+                                 false>;
+
   InlineAsm(const InlineAsm &);             // do not implement
   void operator=(const InlineAsm&);         // do not implement
 
@@ -33,10 +42,14 @@ class InlineAsm : public Value {
   bool HasSideEffects;
   bool IsAlignStack;
   
-  InlineAsm(const FunctionType *Ty, StringRef AsmString,
-            StringRef Constraints, bool hasSideEffects,
-            bool isAlignStack = false);
+  InlineAsm(const PointerType *Ty, const std::string &AsmString,
+            const std::string &Constraints, bool hasSideEffects,
+            bool isAlignStack);
   virtual ~InlineAsm();
+
+  /// When the ConstantUniqueMap merges two types and makes two InlineAsms
+  /// identical, it destroys one of them with this method.
+  void destroyConstant();
 public:
 
   /// InlineAsm::get - Return the specified uniqued inline asm string.
