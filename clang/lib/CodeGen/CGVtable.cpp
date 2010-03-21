@@ -1240,7 +1240,7 @@ private:
   MethodThunksMapTy MethodThunks;
   
   /// AddThunk - Add a thunk for the given method.
-  void AddThunk(const CXXMethodDecl *MD, ThunkInfo &Thunk);
+  void AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk);
   
   /// ComputeThisAdjustments - Compute the 'this' pointer adjustments for the
   /// part of the vtable we're currently building.
@@ -1357,7 +1357,7 @@ public:
   void dumpLayout(llvm::raw_ostream&);
 };
 
-void VtableBuilder::AddThunk(const CXXMethodDecl *MD, ThunkInfo &Thunk) {
+void VtableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
   if (isBuildingConstructorVtable())
     return;
 
