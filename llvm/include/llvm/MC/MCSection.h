@@ -42,9 +42,8 @@ namespace llvm {
   };
 
   class MCSectionCOFF : public MCSection {
-    // FIXME: This memory is leaked because MCSectionCOFF is bump pointer
-    // allocated and this never gets freed.
-    std::string Name;
+    // The memory for this string is stored in the same MCContext as *this.
+    StringRef Name;
     
     /// IsDirective - This is true if the section name is a directive, not
     /// something that should be printed with ".section".
@@ -61,7 +60,7 @@ namespace llvm {
     static MCSectionCOFF *Create(StringRef Name, bool IsDirective, 
                                  SectionKind K, MCContext &Ctx);
 
-    const std::string &getName() const { return Name; }
+    StringRef getName() const { return Name; }
     bool isDirective() const { return IsDirective; }
     
     virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
