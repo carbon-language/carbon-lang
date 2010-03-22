@@ -5889,7 +5889,7 @@ static bool needsVtable(CXXMethodDecl *MD, ASTContext &Context) {
     break;
 
   case TSK_ExplicitInstantiationDeclaration:
-    return false;
+    return true; //FIXME: This looks wrong.
 
   case TSK_ExplicitInstantiationDefinition:
     // This is method of a explicit instantiation; mark all of the virtual
