@@ -796,6 +796,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("plist");
 
+    // Disable the presentation of standard compiler warnings when
+    // using --analyze.  We only want to show static analyzer diagnostics
+    // or frontend errors.
+    CmdArgs.push_back("-w");
+
     // Add -Xanalyzer arguments when running as analyzer.
     Args.AddAllArgValues(CmdArgs, options::OPT_Xanalyzer);
   }
