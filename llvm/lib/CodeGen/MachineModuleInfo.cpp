@@ -44,6 +44,10 @@ public:
   MMIAddrLabelMapCallbackPtr() : Map(0) {}
   MMIAddrLabelMapCallbackPtr(Value *V) : CallbackVH(V), Map(0) {}
   
+  void setPtr(BasicBlock *BB) {
+    ValueHandleBase::operator=(BB);
+  }
+    
   void setMap(MMIAddrLabelMap *map) { Map = map; }
   
   virtual void deleted();
@@ -209,7 +213,7 @@ void MMIAddrLabelMap::UpdateForRAUWBlock(BasicBlock *Old, BasicBlock *New) {
 
   // If New is not address taken, just move our symbol over to it.
   if (NewEntry.Symbols.isNull()) {
-    BBCallbacks[OldEntry.Index] = New;    // Update the callback.
+    BBCallbacks[OldEntry.Index].setPtr(New);    // Update the callback.
     NewEntry = OldEntry;     // Set New's entry.
     return;
   }

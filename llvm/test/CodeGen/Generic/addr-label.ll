@@ -56,3 +56,26 @@ ret:
 	ret i32 -1
 }
 
+
+; PR6673
+
+define i64 @test4a() {
+	%target = bitcast i8* blockaddress(@test4b, %usermain) to i8*
+	%ret = call i64 @test4b(i8* %target)
+
+	ret i64 %ret
+}
+
+define i64 @test4b(i8* %Code) {
+entry:
+	indirectbr i8* %Code, [label %usermain]
+usermain:
+	br label %label_line_0
+
+label_line_0:
+	br label %label_line_1
+
+label_line_1:
+	%target = ptrtoint i8* blockaddress(@test4b, %label_line_0) to i64
+	ret i64 %target
+}
