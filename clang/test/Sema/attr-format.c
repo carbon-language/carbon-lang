@@ -68,3 +68,7 @@ void __attribute__((format(printf, 1, 0)))
 foo2(const char *fmt, va_list va) {
   xx_vprintf(foo(fmt), va);
 }
+
+// PR6542
+extern void gcc_format (const char *, ...)
+  __attribute__ ((__format__(__gcc_tdiag__, 1, 2)));

@@ -1115,6 +1115,7 @@ enum FormatAttrKind {
   NSStringFormat,
   StrftimeFormat,
   SupportedFormat,
+  IgnoredFormat,
   InvalidFormat
 };
 
@@ -1136,6 +1137,9 @@ static FormatAttrKind getFormatAttrKind(llvm::StringRef Format) {
       Format == "zcmn_err")
     return SupportedFormat;
 
+  if (Format == "gcc_tdiag")
+    return IgnoredFormat;
+  
   return InvalidFormat;
 }
 
@@ -1171,6 +1175,10 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   // Check for supported formats.
   FormatAttrKind Kind = getFormatAttrKind(Format);
+  
+  if (Kind == IgnoredFormat)
+    return;
+  
   if (Kind == InvalidFormat) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
       << "format" << Attr.getParameterName()->getName();
