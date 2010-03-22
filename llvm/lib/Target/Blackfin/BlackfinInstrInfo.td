@@ -610,8 +610,7 @@ def MOVE_ncccc : F1<(outs NotCC:$cc), (ins JustCC:$sb),
                     "cc = !cc;", []>;
 
 def MOVECC_zext : F1<(outs D:$dst), (ins JustCC:$cc),
-                      "$dst = $cc;",
-                     [/*(set D:$dst, (zext JustCC:$cc))*/]>;
+                      "$dst = $cc;", []>;
 
 def MOVENCC_z : F1<(outs D:$dst), (ins NotCC:$cc),
                    "$dst = cc;", []>;
@@ -859,17 +858,5 @@ def : Pat<(BfinCall (i32 tglobaladdr:$dst)),
           (CALLa tglobaladdr:$dst)>;
 def : Pat<(BfinCall (i32 texternalsym:$dst)),
           (CALLa texternalsym:$dst)>;
-
-//def : Pat<(sext JustCC:$cc),
-//          (NEG (MOVECC_zext JustCC:$cc))>;
-//def : Pat<(anyext JustCC:$cc),
-//          (MOVECC_zext JustCC:$cc)>;
-def : Pat<(i16 (zext JustCC:$cc)),
-          (EXTRACT_SUBREG (MOVECC_zext JustCC:$cc), bfin_subreg_lo16)>;
-def : Pat<(i16 (sext JustCC:$cc)),
-          (EXTRACT_SUBREG (NEG (MOVECC_zext JustCC:$cc)), bfin_subreg_lo16)>;
-def : Pat<(i16 (anyext JustCC:$cc)),
-          (EXTRACT_SUBREG (MOVECC_zext JustCC:$cc), bfin_subreg_lo16)>;
-
 def : Pat<(i16 (trunc D:$src)),
           (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS D:$src, D)), bfin_subreg_lo16)>;
