@@ -1840,7 +1840,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
     case Intrinsic::arm_neon_vld3: {
       unsigned DOpcodes[] = { ARM::VLD3d8, ARM::VLD3d16,
-                              ARM::VLD3d32, ARM::VLD3d64 };
+                              ARM::VLD3d32, ARM::VLD1d64T };
       unsigned QOpcodes0[] = { ARM::VLD3q8_UPD,
                                ARM::VLD3q16_UPD,
                                ARM::VLD3q32_UPD };
@@ -1852,7 +1852,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
     case Intrinsic::arm_neon_vld4: {
       unsigned DOpcodes[] = { ARM::VLD4d8, ARM::VLD4d16,
-                              ARM::VLD4d32, ARM::VLD4d64 };
+                              ARM::VLD4d32, ARM::VLD1d64Q };
       unsigned QOpcodes0[] = { ARM::VLD4q8_UPD,
                                ARM::VLD4q16_UPD,
                                ARM::VLD4q32_UPD };
@@ -1892,7 +1892,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
     case Intrinsic::arm_neon_vst3: {
       unsigned DOpcodes[] = { ARM::VST3d8, ARM::VST3d16,
-                              ARM::VST3d32, ARM::VST3d64 };
+                              ARM::VST3d32, ARM::VST1d64T };
       unsigned QOpcodes0[] = { ARM::VST3q8_UPD,
                                ARM::VST3q16_UPD,
                                ARM::VST3q32_UPD };
@@ -1904,7 +1904,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
     case Intrinsic::arm_neon_vst4: {
       unsigned DOpcodes[] = { ARM::VST4d8, ARM::VST4d16,
-                              ARM::VST4d32, ARM::VST4d64 };
+                              ARM::VST4d32, ARM::VST1d64Q };
       unsigned QOpcodes0[] = { ARM::VST4q8_UPD,
                                ARM::VST4q16_UPD,
                                ARM::VST4q32_UPD };

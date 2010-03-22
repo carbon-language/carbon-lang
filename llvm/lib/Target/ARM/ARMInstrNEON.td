@@ -199,12 +199,12 @@ class VLD1D4<bits<4> op7_4, string Dt>
 def  VLD1d8T  : VLD1D3<0b0000, "8">;
 def  VLD1d16T : VLD1D3<0b0100, "16">;
 def  VLD1d32T : VLD1D3<0b1000, "32">;
-def  VLD3d64  : VLD1D3<0b1100, "64">;
+def  VLD1d64T : VLD1D3<0b1100, "64">;
 
 def  VLD1d8Q  : VLD1D4<0b0000, "8">;
 def  VLD1d16Q : VLD1D4<0b0100, "16">;
 def  VLD1d32Q : VLD1D4<0b1000, "32">;
-def  VLD4d64  : VLD1D4<0b1100, "64">;
+def  VLD1d64Q : VLD1D4<0b1100, "64">;
 
 // ...with address register writeback:
 class VLD1D3WB<bits<4> op7_4, string Dt>
@@ -221,12 +221,12 @@ class VLD1D4WB<bits<4> op7_4, string Dt>
 def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
 def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
 def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
-def VLD3d64_UPD  : VLD1D3WB<0b1100, "64">;
+def VLD3d64T_UPD : VLD1D3WB<0b1100, "64">;
 
 def VLD1d8Q_UPD  : VLD1D4WB<0b0000, "8">;
 def VLD1d16Q_UPD : VLD1D4WB<0b0100, "16">;
 def VLD1d32Q_UPD : VLD1D4WB<0b1000, "32">;
-def VLD4d64_UPD  : VLD1D4WB<0b1100, "64">;
+def VLD1d64Q_UPD : VLD1D4WB<0b1100, "64">;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -536,12 +536,12 @@ class VST1D4<bits<4> op7_4, string Dt>
 def  VST1d8T  : VST1D3<0b0000, "8">;
 def  VST1d16T : VST1D3<0b0100, "16">;
 def  VST1d32T : VST1D3<0b1000, "32">;
-def  VST3d64  : VST1D3<0b1100, "64">;
+def  VST1d64T : VST1D3<0b1100, "64">;
 
 def  VST1d8Q  : VST1D4<0b0000, "8">;
 def  VST1d16Q : VST1D4<0b0100, "16">;
 def  VST1d32Q : VST1D4<0b1000, "32">;
-def  VST4d64  : VST1D4<0b1100, "64">;
+def  VST1d64Q : VST1D4<0b1100, "64">;
 
 // ...with address register writeback:
 class VST1D3WB<bits<4> op7_4, string Dt>
@@ -560,12 +560,12 @@ class VST1D4WB<bits<4> op7_4, string Dt>
 def VST1d8T_UPD  : VST1D3WB<0b0000, "8">;
 def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
 def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
-def VST3d64_UPD  : VST1D3WB<0b1100, "64">;
+def VST1d64T_UPD : VST1D3WB<0b1100, "64">;
 
 def VST1d8Q_UPD  : VST1D4WB<0b0000, "8">;
 def VST1d16Q_UPD : VST1D4WB<0b0100, "16">;
 def VST1d32Q_UPD : VST1D4WB<0b1000, "32">;
-def VST4d64_UPD  : VST1D4WB<0b1100, "64">;
+def VST1d64Q_UPD : VST1D4WB<0b1100, "64">;
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt>
