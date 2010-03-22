@@ -204,7 +204,7 @@ def VLD1d64T     : VLD1D3<0b1100, "64">;
 def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
 def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
 def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
-def VLD3d64T_UPD : VLD1D3WB<0b1100, "64">;
+def VLD1d64T_UPD : VLD1D3WB<0b1100, "64">;
 
 // ...with 4 registers (some of these are only for the disassembler):
 class VLD1D4<bits<4> op7_4, string Dt>
