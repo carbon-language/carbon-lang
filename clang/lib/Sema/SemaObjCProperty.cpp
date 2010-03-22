@@ -93,6 +93,11 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
   ObjCPropertyDecl *PDecl =
     ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
                              PropertyId, AtLoc, T);
+  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
+  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
+
   DC->addDecl(PDecl);
 
   // We need to look in the @interface to see if the @property was
