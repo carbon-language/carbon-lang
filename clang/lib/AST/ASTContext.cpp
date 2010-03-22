@@ -858,34 +858,22 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
   }
 }
 
-unsigned ASTContext::CountProtocolSynthesizedIvars(const ObjCProtocolDecl *PD) {
-  unsigned count = 0;
-  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(),
-       E = PD->prop_end(); I != E; ++I)
-    if ((*I)->getPropertyIvarDecl())
+unsigned ASTContext::CountNonClassIvars(const ObjCInterfaceDecl *OI) {
+  unsigned count = 0;  
+  // Count ivars declared in class extension.
+  if (const ObjCCategoryDecl *CDecl = OI->getClassExtension()) {
+    for (ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
+         E = CDecl->ivar_end(); I != E; ++I) {
       ++count;
-
-  // Also look into nested protocols.
-  for (ObjCProtocolDecl::protocol_iterator P = PD->protocol_begin(),
-       E = PD->protocol_end(); P != E; ++P)
-    count += CountProtocolSynthesizedIvars(*P);
-  return count;
-}
-
-unsigned ASTContext::CountSynthesizedIvars(const ObjCInterfaceDecl *OI) {
-  unsigned count = 0;
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
-       E = OI->prop_end(); I != E; ++I) {
-    if ((*I)->getPropertyIvarDecl())
+    }
+  }
+  
+  // Count ivar defined in this class's implementation.  This
+  // includes synthesized ivars.
+  if (ObjCImplementationDecl *ImplDecl = OI->getImplementation())
+    for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
+         E = ImplDecl->ivar_end(); I != E; ++I)
       ++count;
-  }
-  // Also look into interface's protocol list for properties declared
-  // in the protocol and whose ivars are synthesized.
-  for (ObjCInterfaceDecl::protocol_iterator P = OI->protocol_begin(),
-       PE = OI->protocol_end(); P != PE; ++P) {
-    ObjCProtocolDecl *PD = (*P);
-    count += CountProtocolSynthesizedIvars(PD);
-  }
   return count;
 }
 
@@ -966,7 +954,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
   // Add in synthesized ivar count if laying out an implementation.
   if (Impl) {
-    unsigned SynthCount = CountSynthesizedIvars(D);
+    unsigned SynthCount = CountNonClassIvars(D);
     // If there aren't any sythesized ivars then reuse the interface
     // entry. Note we can't cache this because we simply free all
     // entries later; however we shouldn't look up implementations
