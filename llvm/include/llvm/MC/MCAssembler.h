@@ -606,12 +606,12 @@ private:
   /// \arg Value result is fixed, otherwise the value may change due to
   /// relocation.
   bool EvaluateFixup(const MCAsmLayout &Layout,
-                     MCAsmFixup &Fixup, MCDataFragment *DF,
+                     const MCAsmFixup &Fixup, const MCFragment *DF,
                      MCValue &Target, uint64_t &Value) const;
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF,
+  bool FixupNeedsRelaxation(const MCAsmFixup &Fixup, const MCFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   /// LayoutSection - Assign offsets and sizes to the fragments in the section

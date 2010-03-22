@@ -234,8 +234,8 @@ const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
   return getAtomForAddress(SD->getFragment()->getParent(), SD->getAddress());
 }
 
-bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
-                                MCDataFragment *DF,
+bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
+                                const MCAsmFixup &Fixup, const MCFragment *DF,
                                 MCValue &Target, uint64_t &Value) const {
   if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
     llvm_report_error("expected relocatable expression");
@@ -584,7 +584,8 @@ void MCAssembler::Finish() {
   OS.flush();
 }
 
-bool MCAssembler::FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF,
+bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
+                                       const MCFragment *DF,
                                        const MCAsmLayout &Layout) const {
   // Currently we only need to relax X86::reloc_pcrel_1byte.
   if (unsigned(Fixup.Kind) != X86::reloc_pcrel_1byte)
