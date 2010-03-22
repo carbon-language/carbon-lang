@@ -222,6 +222,8 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ArgToStringFn = DummyArgToStringFn;
   ArgToStringCookie = 0;
 
+  DelayedDiagID = 0;
+
   // Set all mappings to 'unset'.
   DiagMappings BlankDiags(diag::DIAG_UPPER_LIMIT/2, 0);
   DiagMappingsStack.push_back(BlankDiags);
@@ -287,6 +289,23 @@ const char *Diagnostic::getDescription(unsigned DiagID) const {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->Description;
   return CustomDiagInfo->getDescription(DiagID);
+}
+
+void Diagnostic::SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1,
+                                      llvm::StringRef Arg2) {
+  if (DelayedDiagID)
+    return;
+
+  DelayedDiagID = DiagID;
+  DelayedDiagArg1 = Arg1;
+  DelayedDiagArg1 = Arg2;
+}
+
+void Diagnostic::ReportDelayed() {
+  Report(DelayedDiagID) << DelayedDiagArg1 << DelayedDiagArg2;
+  DelayedDiagID = 0;
+  DelayedDiagArg1.clear();
+  DelayedDiagArg2.clear();
 }
 
 /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
@@ -530,6 +549,34 @@ bool Diagnostic::ProcessDiag() {
   CurDiagID = ~0U;
 
   return true;
+}
+
+bool DiagnosticBuilder::Emit() {
+  // If DiagObj is null, then its soul was stolen by the copy ctor
+  // or the user called Emit().
+  if (DiagObj == 0) return false;
+
+  // When emitting diagnostics, we set the final argument count into
+  // the Diagnostic object.
+  DiagObj->NumDiagArgs = NumArgs;
+  DiagObj->NumDiagRanges = NumRanges;
+  DiagObj->NumCodeModificationHints = NumCodeModificationHints;
+
+  // Process the diagnostic, sending the accumulated information to the
+  // DiagnosticClient.
+  bool Emitted = DiagObj->ProcessDiag();
+
+  // Clear out the current diagnostic object.
+  DiagObj->Clear();
+
+  // If there was a delayed diagnostic, emit it now.
+  if (DiagObj->DelayedDiagID)
+    DiagObj->ReportDelayed();
+
+  // This diagnostic is dead.
+  DiagObj = 0;
+
+  return Emitted;
 }
 
 

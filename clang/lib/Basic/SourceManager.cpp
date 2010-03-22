@@ -89,15 +89,26 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
       char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
       for (unsigned i = 0, e = Entry->getSize(); i != e; ++i)
         Ptr[i] = FillStr[i % FillStr.size()];
-      Diag.Report(diag::err_cannot_open_file)
-        << Entry->getName() << ErrorStr;
+
+      if (Diag.isDiagnosticInFlight())
+        Diag.SetDelayedDiagnostic(diag::err_cannot_open_file, 
+                                  Entry->getName(), ErrorStr);
+      else 
+        Diag.Report(diag::err_cannot_open_file)
+          << Entry->getName() << ErrorStr;
+
       Buffer.setInt(true);
     } else if (FileInfo.st_size != Entry->getSize() ||
                FileInfo.st_mtime != Entry->getModificationTime()) {
       // Check that the file's size, modification time, and inode are
       // the same as in the file entry (which may have come from a
       // stat cache).
-      Diag.Report(diag::err_file_modified) << Entry->getName();
+      if (Diag.isDiagnosticInFlight())
+        Diag.SetDelayedDiagnostic(diag::err_file_modified, 
+                                  Entry->getName());
+      else 
+        Diag.Report(diag::err_file_modified) << Entry->getName();
+
       Buffer.setInt(true);
     }
   }

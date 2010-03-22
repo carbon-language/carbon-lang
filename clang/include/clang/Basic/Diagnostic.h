@@ -234,6 +234,18 @@ private:
                                   void *Cookie);
   void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
+
+  /// \brief ID of the "delayed" diagnostic, which is a (typically
+  /// fatal) diagnostic that had to be delayed because it was found
+  /// while emitting another diagnostic.
+  unsigned DelayedDiagID;
+
+  /// \brief First string argument for the delayed diagnostic.
+  std::string DelayedDiagArg1;
+
+  /// \brief Second string argument for the delayed diagnostic.
+  std::string DelayedDiagArg2;
+
 public:
   explicit Diagnostic(DiagnosticClient *client = 0);
   ~Diagnostic();
@@ -400,10 +412,41 @@ public:
   inline DiagnosticBuilder Report(FullSourceLoc Pos, unsigned DiagID);
   inline DiagnosticBuilder Report(unsigned DiagID);
 
+  /// \brief Determine whethere there is already a diagnostic in flight.
+  bool isDiagnosticInFlight() const { return CurDiagID != 0; }
+
+  /// \brief Set the "delayed" diagnostic that will be emitted once
+  /// the current diagnostic completes.
+  ///
+  ///  If a diagnostic is already in-flight but the front end must
+  ///  report a problem (e.g., with an inconsistent file system
+  ///  state), this routine sets a "delayed" diagnostic that will be
+  ///  emitted after the current diagnostic completes. This should
+  ///  only be used for fatal errors detected at inconvenient
+  ///  times. If emitting a delayed diagnostic causes a second delayed
+  ///  diagnostic to be introduced, that second delayed diagnostic
+  ///  will be ignored.
+  ///
+  /// \param DiagID The ID of the diagnostic being delayed.
+  ///
+  /// \param Arg1 A string argument that will be provided to the
+  /// diagnostic. A copy of this string will be stored in the
+  /// Diagnostic object itself.
+  ///
+  /// \param Arg2 A string argument that will be provided to the
+  /// diagnostic. A copy of this string will be stored in the
+  /// Diagnostic object itself.
+  void SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1 = "",
+                            llvm::StringRef Arg2 = "");
+  
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
 
 private:
+  /// \brief Report the delayed diagnostic.
+  void ReportDelayed();
+
+
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
   /// if the field is completely uninitialized.
@@ -543,29 +586,7 @@ public:
   ///
   /// \returns true if a diagnostic was emitted, false if the
   /// diagnostic was suppressed.
-  bool Emit() {
-    // If DiagObj is null, then its soul was stolen by the copy ctor
-    // or the user called Emit().
-    if (DiagObj == 0) return false;
-
-    // When emitting diagnostics, we set the final argument count into
-    // the Diagnostic object.
-    DiagObj->NumDiagArgs = NumArgs;
-    DiagObj->NumDiagRanges = NumRanges;
-    DiagObj->NumCodeModificationHints = NumCodeModificationHints;
-
-    // Process the diagnostic, sending the accumulated information to the
-    // DiagnosticClient.
-    bool Emitted = DiagObj->ProcessDiag();
-
-    // Clear out the current diagnostic object.
-    DiagObj->Clear();
-
-    // This diagnostic is dead.
-    DiagObj = 0;
-
-    return Emitted;
-  }
+  bool Emit();
 
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
