@@ -1423,12 +1423,35 @@ void VtableBuilder::ComputeThisAdjustments() {
       // Add an adjustment for the deleting destructor as well.
       Thunks[VtableIndex + 1].This = ThisAdjustment;
     }
-    
-    AddThunk(Overrider.Method, Thunks[VtableIndex]);
   }
 
   /// Clear the method info map.
   MethodInfoMap.clear();
+  
+  if (isBuildingConstructorVtable()) {
+    // We don't need to store thunk information for construction vtables.
+    return;
+  }
+
+  for (ThunksInfoMapTy::const_iterator I = Thunks.begin(), E = Thunks.end();
+       I != E; ++I) {
+    const VtableComponent &Component = Components[I->first];
+    const ThunkInfo &Thunk = I->second;
+    
+    switch (Component.getKind()) {
+    default:
+      llvm_unreachable("Unexpected vtable component kind!");
+    case VtableComponent::CK_FunctionPointer:
+      AddThunk(Component.getFunctionDecl(), Thunk);
+      break;
+    case VtableComponent::CK_CompleteDtorPointer:
+      AddThunk(Component.getDestructorDecl(), Thunk);
+      break;
+    case VtableComponent::CK_DeletingDtorPointer:
+      // We've already added the thunk when we saw the complete dtor pointer.
+      break;
+    }
+  }
 }
 
 VtableBuilder::ReturnAdjustment 
