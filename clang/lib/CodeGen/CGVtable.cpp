@@ -1154,6 +1154,15 @@ private:
       return LHS.NonVirtual == RHS.NonVirtual && 
         LHS.VBaseOffsetOffset == RHS.VBaseOffsetOffset;
     }
+    
+    friend bool operator<(const ReturnAdjustment &LHS,
+                          const ReturnAdjustment &RHS) {
+      if (LHS.NonVirtual < RHS.NonVirtual)
+        return true;
+      
+      return LHS.NonVirtual == RHS.NonVirtual && 
+        LHS.VBaseOffsetOffset < RHS.VBaseOffsetOffset;
+    }
   };
   
   /// MethodInfo - Contains information about a method in a vtable.
@@ -1204,6 +1213,16 @@ private:
       return LHS.NonVirtual == RHS.NonVirtual && 
         LHS.VCallOffsetOffset == RHS.VCallOffsetOffset;
     }
+    
+    friend bool operator<(const ThisAdjustment &LHS,
+                          const ThisAdjustment &RHS) {
+      if (LHS.NonVirtual < RHS.NonVirtual)
+        return true;
+      
+      return LHS.NonVirtual == RHS.NonVirtual && 
+        LHS.VCallOffsetOffset < RHS.VCallOffsetOffset;
+    }
+    
   };
   
   /// ThunkInfo - The 'this' pointer adjustment as well as an optional return
@@ -1224,6 +1243,13 @@ private:
       return LHS.This == RHS.This && LHS.Return == RHS.Return;
     }
 
+    friend bool operator<(const ThunkInfo &LHS, const ThunkInfo &RHS) {
+      if (LHS.This < RHS.This)
+        return true;
+      
+      return LHS.This == RHS.This && LHS.Return < RHS.Return;
+    }
+    
     bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
   };
   
@@ -2296,7 +2322,9 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
          I != E; ++I) {
       const std::string &MethodName = I->first;
       const CXXMethodDecl *MD = I->second;
-      const llvm::SmallVector<ThunkInfo, 1> &ThunksVector = MethodThunks[MD];
+
+      llvm::SmallVector<ThunkInfo, 1> ThunksVector = MethodThunks[MD];
+      std::sort(ThunksVector.begin(), ThunksVector.end());
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
       Out << (ThunksVector.size() == 1 ? " entry" : " entries") << ").\n";
