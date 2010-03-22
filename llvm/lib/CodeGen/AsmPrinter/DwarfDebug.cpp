@@ -1656,15 +1656,19 @@ void DwarfDebug::constructCompileUnit(MDNode *N) {
   unsigned ID = GetOrCreateSourceID(Dir, FN);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  // DW_AT_stmt_list is a offset of line number information for this
-  // compile unit in debug_line section. It is always zero when only one
-  // compile unit is emitted in one object file.
-  addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
   addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
             DIUnit.getProducer());
   addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,
           DIUnit.getLanguage());
   addString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
+  addLabel(Die, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+           getTempLabel("text_begin"));
+  addLabel(Die, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
+           getTempLabel("text_end"));
+  // DW_AT_stmt_list is a offset of line number information for this
+  // compile unit in debug_line section. It is always zero when only one
+  // compile unit is emitted in one object file.
+  addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
 
   if (!Dir.empty())
     addString(Die, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string, Dir);
