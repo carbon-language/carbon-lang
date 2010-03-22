@@ -528,7 +528,8 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
   MachineInstr *DefMI = Def->getInstr();
   int DefIdx = DefMI->findRegisterDefOperandIdx(Reg);
   if (DefIdx != -1) {
-    int DefCycle = InstrItins.getOperandCycle(DefMI->getDesc().getSchedClass(), DefIdx);
+    int DefCycle = InstrItins.getOperandCycle(DefMI->getDesc().getSchedClass(),
+                                              DefIdx);
     if (DefCycle >= 0) {
       MachineInstr *UseMI = Use->getInstr();
       const unsigned UseClass = UseMI->getDesc().getSchedClass();
