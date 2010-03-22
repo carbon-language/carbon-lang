@@ -1384,8 +1384,8 @@ public:
 };
 
 void VtableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
-  if (isBuildingConstructorVtable())
-    return;
+  assert(!isBuildingConstructorVtable() && 
+         "Can't add thunks for construction vtable");
 
   llvm::SmallVector<ThunkInfo, 1> &ThunksVector = MethodThunks[MD];
   
@@ -1436,6 +1436,10 @@ void VtableBuilder::ComputeThisAdjustments() {
       Overriders.getOverrider(BaseSubobject(MD->getParent(), 
                                             MethodInfo.BaseOffset), MD);
     
+    // Check if we need an adjustment at all.
+    if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset)
+      continue;
+
     ThisAdjustment ThisAdjustment =
       ComputeThisAdjustment(MD, MethodInfo.BaseOffsetInLayoutClass, Overrider);
 
@@ -1463,20 +1467,24 @@ void VtableBuilder::ComputeThisAdjustments() {
        I != E; ++I) {
     const VtableComponent &Component = Components[I->first];
     const ThunkInfo &Thunk = I->second;
+    const CXXMethodDecl *MD;
     
     switch (Component.getKind()) {
     default:
       llvm_unreachable("Unexpected vtable component kind!");
     case VtableComponent::CK_FunctionPointer:
-      AddThunk(Component.getFunctionDecl(), Thunk);
+      MD = Component.getFunctionDecl();
       break;
     case VtableComponent::CK_CompleteDtorPointer:
-      AddThunk(Component.getDestructorDecl(), Thunk);
+      MD = Component.getDestructorDecl();
       break;
     case VtableComponent::CK_DeletingDtorPointer:
       // We've already added the thunk when we saw the complete dtor pointer.
-      break;
+      continue;
     }
+
+    if (MD->getParent() == MostDerivedClass)
+      AddThunk(MD, Thunk);
   }
 }
 
@@ -1565,10 +1573,6 @@ VtableBuilder::ThisAdjustment
 VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD, 
                                      uint64_t BaseOffsetInLayoutClass,
                                      FinalOverriders::OverriderInfo Overrider) {
-  // Check if we need an adjustment at all.
-  if (BaseOffsetInLayoutClass == Overrider.Offset)
-    return ThisAdjustment();
-
   // Ignore adjustments for pure virtual member functions.
   if (Overrider.Method->isPure())
     return ThisAdjustment();
@@ -1825,6 +1829,24 @@ VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         
         MethodInfoMap.insert(std::make_pair(MD, MethodInfo));
         MethodInfoMap.erase(OverriddenMD);
+        
+        // If the overridden method exists in a virtual base class or a direct
+        // or indirect base class of a virtual base class, we need to emit a
+        // thunk if we ever have a class hierarchy where the base class is not
+        // a primary base in the complete object.
+        if (!isBuildingConstructorVtable() && OverriddenMD != MD) {
+          // Compute the this adjustment.
+          ThisAdjustment ThisAdjustment =
+            ComputeThisAdjustment(OverriddenMD, BaseOffsetInLayoutClass,
+                                  Overrider);
+
+          if (ThisAdjustment.VCallOffsetOffset) {
+            // This is a virtual thunk, add it.
+            AddThunk(Overrider.Method, 
+                     ThunkInfo(ThisAdjustment, ReturnAdjustment()));
+          }
+        }
+
         continue;
       }
     }
@@ -2360,6 +2382,9 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         
         Out << '\n';
       }
+      
+      Out << '\n';
+
     }
   }
 }
