@@ -2508,31 +2508,32 @@ public:
   /// indirect function invocation.
   ///
   Function *getCalledFunction() const {
-    return dyn_cast<Function>(Op<-3>());
+    return dyn_cast<Function>(getOperand(0));
   }
 
   /// getCalledValue - Get a pointer to the function that is invoked by this
   /// instruction
-  const Value *getCalledValue() const { return Op<-3>(); }
-        Value *getCalledValue()       { return Op<-3>(); }
+  const Value *getCalledValue() const { return getOperand(0); }
+        Value *getCalledValue()       { return getOperand(0); }
 
   /// setCalledFunction - Set the function called.
   void setCalledFunction(Value* Fn) {
-    Op<-3>() = Fn;
+    Op<0>() = Fn;
   }
 
   // get*Dest - Return the destination basic blocks...
   BasicBlock *getNormalDest() const {
-    return cast<BasicBlock>(Op<-2>());
+    return cast<BasicBlock>(getOperand(1));
   }
   BasicBlock *getUnwindDest() const {
-    return cast<BasicBlock>(Op<-1>());
+    return cast<BasicBlock>(getOperand(2));
   }
   void setNormalDest(BasicBlock *B) {
-    Op<-2>() = reinterpret_cast<Value*>(B);
+    setOperand(1, (Value*)B);
   }
+
   void setUnwindDest(BasicBlock *B) {
-    Op<-1>() = reinterpret_cast<Value*>(B);
+    setOperand(2, (Value*)B);
   }
 
   BasicBlock *getSuccessor(unsigned i) const {
@@ -2542,7 +2543,7 @@ public:
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < 2 && "Successor # out of range for invoke!");
-    *(&Op<-2>() + idx) = reinterpret_cast<Value*>(NewSucc);
+    setOperand(idx+1, (Value*)NewSucc);
   }
 
   unsigned getNumSuccessors() const { return 2; }
@@ -2555,7 +2556,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-
 private:
   virtual BasicBlock *getSuccessorV(unsigned idx) const;
   virtual unsigned getNumSuccessorsV() const;
