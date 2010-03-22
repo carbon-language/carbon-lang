@@ -118,7 +118,7 @@ def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;
 def _HASH_HASH_HASH : Flag<"-###">, Flags<[DriverOption]>,
     HelpText<"Print the commands to run for this compilation">;
 def A : JoinedOrSeparate<"-A">;
-def B : JoinedOrSeparate<"-B">, Flags<[Unsupported]>;
+def B : JoinedOrSeparate<"-B">;
 def CC : Flag<"-CC">;
 def C : Flag<"-C">;
 def D : JoinedOrSeparate<"-D">, Group<CompileOnly_Group>;
