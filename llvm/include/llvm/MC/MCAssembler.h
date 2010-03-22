@@ -99,12 +99,6 @@ public:
   MCSectionData *getParent() const { return Parent; }
   void setParent(MCSectionData *Value) { Parent = Value; }
 
-  // FIXME: This should be abstract, fix sentinel.
-  virtual uint64_t getMaxFileSize() const {
-    assert(0 && "Invalid getMaxFileSize call!");
-    return 0;
-  }
-
   /// @name Assembler Backend Support
   /// @{
   //
@@ -116,10 +110,7 @@ public:
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
     return FileSize;
   }
-  void setFileSize(uint64_t Value) {
-    assert(Value <= getMaxFileSize() && "Invalid file size!");
-    FileSize = Value;
-  }
+  void setFileSize(uint64_t Value) { FileSize = Value; }
 
   uint64_t getOffset() const {
     assert(Offset != ~UINT64_C(0) && "File offset not set!");
@@ -149,10 +140,6 @@ public:
 
   /// @name Accessors
   /// @{
-
-  uint64_t getMaxFileSize() const {
-    return Contents.size();
-  }
 
   SmallString<32> &getContents() { return Contents; }
   const SmallString<32> &getContents() const { return Contents; }
@@ -219,10 +206,6 @@ public:
   /// @name Accessors
   /// @{
 
-  uint64_t getMaxFileSize() const {
-    return std::max(Alignment - 1, MaxBytesToEmit);
-  }
-
   unsigned getAlignment() const { return Alignment; }
 
   int64_t getValue() const { return Value; }
@@ -262,10 +245,6 @@ public:
   /// @name Accessors
   /// @{
 
-  uint64_t getMaxFileSize() const {
-    return ValueSize * Count;
-  }
-
   int64_t getValue() const { return Value; }
 
   unsigned getValueSize() const { return ValueSize; }
@@ -297,11 +276,6 @@ public:
   /// @name Accessors
   /// @{
 
-  uint64_t getMaxFileSize() const {
-    // FIXME: This doesn't make much sense.
-    return ~UINT64_C(0);
-  }
-
   const MCExpr &getOffset() const { return *Offset; }
 
   uint8_t getValue() const { return Value; }
@@ -332,11 +306,6 @@ public:
 
   /// @name Accessors
   /// @{
-
-  uint64_t getMaxFileSize() const {
-    // FIXME: This also doesn't make much sense, this method is misnamed.
-    return ~UINT64_C(0);
-  }
 
   uint64_t getSize() const { return Size; }
 

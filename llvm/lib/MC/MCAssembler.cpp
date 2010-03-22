@@ -320,9 +320,14 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
     }
 
     case MCFragment::FT_Data:
-    case MCFragment::FT_Fill:
-      F.setFileSize(F.getMaxFileSize());
+      F.setFileSize(cast<MCDataFragment>(F).getContents().size());
       break;
+
+    case MCFragment::FT_Fill: {
+      MCFillFragment &FF = cast<MCFillFragment>(F);
+      F.setFileSize(FF.getValueSize() * FF.getCount());
+      break;
+    }
 
     case MCFragment::FT_Org: {
       MCOrgFragment &OF = cast<MCOrgFragment>(F);
