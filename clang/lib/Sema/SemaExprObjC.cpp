@@ -289,7 +289,10 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
 
   IdentifierInfo *receiverNamePtr = &receiverName;
   ObjCInterfaceDecl *IFace = getObjCInterfaceDecl(receiverNamePtr);
-
+  if (!IFace) {
+    Diag(receiverNameLoc, diag::err_expected_ident_or_lparen);
+    return ExprError();
+  }
   // Search for a declared property first.
 
   Selector Sel = PP.getSelectorTable().getNullarySelector(&propertyName);
