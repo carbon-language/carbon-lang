@@ -190,46 +190,43 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 class VLD1D3<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3\\}, $addr", "",
-          [/* For disassembly only; pattern left blank */]>;
+          "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
 class VLD1D4<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "",
-          [/* For disassembly only; pattern left blank */]>;
+          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "", []>;
 
 def  VLD1d8T  : VLD1D3<0b0000, "8">;
 def  VLD1d16T : VLD1D3<0b0100, "16">;
 def  VLD1d32T : VLD1D3<0b1000, "32">;
-//   VLD1d64T : implemented as VLD3d64
+def  VLD3d64  : VLD1D3<0b1100, "64">;
 
 def  VLD1d8Q  : VLD1D4<0b0000, "8">;
 def  VLD1d16Q : VLD1D4<0b0100, "16">;
 def  VLD1d32Q : VLD1D4<0b1000, "32">;
-//   VLD1d64Q : implemented as VLD4d64
+def  VLD4d64  : VLD1D4<0b1100, "64">;
 
 // ...with address register writeback:
 class VLD1D3WB<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3\\}, $addr$offset", "$addr.addr = $wb",
-          [/* For disassembly only; pattern left blank */]>;
+          "\\{$dst1, $dst2, $dst3\\}, $addr$offset", "$addr.addr = $wb", []>;
 class VLD1D4WB<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0010,op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1, "vld1", Dt,
           "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr$offset", "$addr.addr = $wb",
-          [/* For disassembly only; pattern left blank */]>;
+          []>;
 
 def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
 def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
 def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
-//  VLD1d64T_UPD : implemented as VLD3d64_UPD
+def VLD3d64_UPD  : VLD1D3WB<0b1100, "64">;
 
 def VLD1d8Q_UPD  : VLD1D4WB<0b0000, "8">;
 def VLD1d16Q_UPD : VLD1D4WB<0b0100, "16">;
 def VLD1d32Q_UPD : VLD1D4WB<0b1000, "32">;
-//  VLD1d64Q_UPD : implemented as VLD4d64_UPD
+def VLD4d64_UPD  : VLD1D4WB<0b1100, "64">;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -296,10 +293,6 @@ class VLD3D<bits<4> op11_8, bits<4> op7_4, string Dt>
 def  VLD3d8   : VLD3D<0b0100, 0b0000, "8">;
 def  VLD3d16  : VLD3D<0b0100, 0b0100, "16">;
 def  VLD3d32  : VLD3D<0b0100, 0b1000, "32">;
-def  VLD3d64  : NLdSt<0,0b10,0b0110,0b1100,
-                      (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
-                      (ins addrmode6:$addr), IIC_VLD1,
-                      "vld1", "64", "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
 
 // ...with address register writeback:
 class VLD3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -312,11 +305,6 @@ class VLD3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
 def VLD3d8_UPD  : VLD3DWB<0b0100, 0b0000, "8">;
 def VLD3d16_UPD : VLD3DWB<0b0100, 0b0100, "16">;
 def VLD3d32_UPD : VLD3DWB<0b0100, 0b1000, "32">;
-def VLD3d64_UPD : NLdSt<0,0b10,0b0110,0b1100,
-                        (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
-                        (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1,
-                        "vld1", "64", "\\{$dst1, $dst2, $dst3\\}, $addr$offset",
-                        "$addr.addr = $wb", []>;
 
 // ...with double-spaced registers (non-updating versions for disassembly only):
 def VLD3q8      : VLD3D<0b0101, 0b0000, "8">;
@@ -341,11 +329,6 @@ class VLD4D<bits<4> op11_8, bits<4> op7_4, string Dt>
 def  VLD4d8   : VLD4D<0b0000, 0b0000, "8">;
 def  VLD4d16  : VLD4D<0b0000, 0b0100, "16">;
 def  VLD4d32  : VLD4D<0b0000, 0b1000, "32">;
-def  VLD4d64  : NLdSt<0,0b10,0b0010,0b1100,
-                      (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
-                      (ins addrmode6:$addr), IIC_VLD1,
-                      "vld1", "64", "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr",
-                      "", []>;
 
 // ...with address register writeback:
 class VLD4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -358,13 +341,6 @@ class VLD4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
 def VLD4d8_UPD  : VLD4DWB<0b0000, 0b0000, "8">;
 def VLD4d16_UPD : VLD4DWB<0b0000, 0b0100, "16">;
 def VLD4d32_UPD : VLD4DWB<0b0000, 0b1000, "32">;
-def VLD4d64_UPD : NLdSt<0,0b10,0b0010,0b1100,
-                        (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4,
-                         GPR:$wb),
-                        (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1,
-                        "vld1", "64",
-                        "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr$offset",
-                        "$addr.addr = $wb", []>;
 
 // ...with double-spaced registers (non-updating versions for disassembly only):
 def VLD4q8      : VLD4D<0b0001, 0b0000, "8">;
@@ -550,23 +526,22 @@ def VST1q64_UPD : VST1QWB<0b1100, "64">;
 class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
-          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr", "",
-          [/* For disassembly only; pattern left blank */]>;
+          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr", "", []>;
 class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr", "",
-          [/* For disassembly only; pattern left blank */]>;
+          []>;
 
 def  VST1d8T  : VST1D3<0b0000, "8">;
 def  VST1d16T : VST1D3<0b0100, "16">;
 def  VST1d32T : VST1D3<0b1000, "32">;
-//   VST1d64T : implemented as VST3d64
+def  VST3d64  : VST1D3<0b1100, "64">;
 
 def  VST1d8Q  : VST1D4<0b0000, "8">;
 def  VST1d16Q : VST1D4<0b0100, "16">;
 def  VST1d32Q : VST1D4<0b1000, "32">;
-//   VST1d64Q : implemented as VST4d64
+def  VST4d64  : VST1D4<0b1100, "64">;
 
 // ...with address register writeback:
 class VST1D3WB<bits<4> op7_4, string Dt>
@@ -574,25 +549,23 @@ class VST1D3WB<bits<4> op7_4, string Dt>
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3),
           IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr$offset",
-          "$addr.addr = $wb",
-          [/* For disassembly only; pattern left blank */]>;
+          "$addr.addr = $wb", []>;
 class VST1D4WB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
           IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr$offset",
-          "$addr.addr = $wb",
-          [/* For disassembly only; pattern left blank */]>;
+          "$addr.addr = $wb", []>;
 
 def VST1d8T_UPD  : VST1D3WB<0b0000, "8">;
 def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
 def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
-//  VST1d64T_UPD : implemented as VST3d64_UPD
+def VST3d64_UPD  : VST1D3WB<0b1100, "64">;
 
 def VST1d8Q_UPD  : VST1D4WB<0b0000, "8">;
 def VST1d16Q_UPD : VST1D4WB<0b0100, "16">;
 def VST1d32Q_UPD : VST1D4WB<0b1000, "32">;
-//  VST1d64Q_UPD : implemented as VST4d64_UPD
+def VST4d64_UPD  : VST1D4WB<0b1100, "64">;
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -659,10 +632,6 @@ class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>
 def  VST3d8   : VST3D<0b0100, 0b0000, "8">;
 def  VST3d16  : VST3D<0b0100, 0b0100, "16">;
 def  VST3d32  : VST3D<0b0100, 0b1000, "32">;
-def  VST3d64  : NLdSt<0,0b00,0b0110,0b1100, (outs),
-                      (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
-                      IIC_VST,
-                      "vst1", "64", "\\{$src1, $src2, $src3\\}, $addr", "", []>;
 
 // ...with address register writeback:
 class VST3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -675,11 +644,6 @@ class VST3DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
 def VST3d8_UPD  : VST3DWB<0b0100, 0b0000, "8">;
 def VST3d16_UPD : VST3DWB<0b0100, 0b0100, "16">;
 def VST3d32_UPD : VST3DWB<0b0100, 0b1000, "32">;
-def VST3d64_UPD : NLdSt<0,0b00,0b0110,0b1100, (outs GPR:$wb),
-                      (ins addrmode6:$addr, am6offset:$offset,
-                       DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
-                      "vst1", "64", "\\{$src1, $src2, $src3\\}, $addr$offset",
-                      "$addr.addr = $wb", []>;
 
 // ...with double-spaced registers (non-updating versions for disassembly only):
 def VST3q8      : VST3D<0b0101, 0b0000, "8">;
@@ -704,11 +668,6 @@ class VST4D<bits<4> op11_8, bits<4> op7_4, string Dt>
 def  VST4d8   : VST4D<0b0000, 0b0000, "8">;
 def  VST4d16  : VST4D<0b0000, 0b0100, "16">;
 def  VST4d32  : VST4D<0b0000, 0b1000, "32">;
-def  VST4d64  : NLdSt<0,0b00,0b0010,0b1100, (outs),
-                      (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
-                       DPR:$src4), IIC_VST,
-                      "vst1", "64", "\\{$src1, $src2, $src3, $src4\\}, $addr",
-                      "", []>;
 
 // ...with address register writeback:
 class VST4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -721,12 +680,6 @@ class VST4DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
 def VST4d8_UPD  : VST4DWB<0b0000, 0b0000, "8">;
 def VST4d16_UPD : VST4DWB<0b0000, 0b0100, "16">;
 def VST4d32_UPD : VST4DWB<0b0000, 0b1000, "32">;
-def VST4d64_UPD : NLdSt<0,0b00,0b0010,0b1100, (outs GPR:$wb),
-                      (ins addrmode6:$addr, am6offset:$offset,
-                       DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST,
-                      "vst1", "64",
-                      "\\{$src1, $src2, $src3, $src4\\}, $addr$offset",
-                      "$addr.addr = $wb", []>;
 
 // ...with double-spaced registers (non-updating versions for disassembly only):
 def VST4q8      : VST4D<0b0001, 0b0000, "8">;
