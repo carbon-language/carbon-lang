@@ -57,6 +57,15 @@ private:
     return 0;
   }
 
+  /// Get a data fragment to write into, creating a new one if the current
+  /// fragment is not a data fragment.
+  MCDataFragment *getOrCreateDataFragment() const {
+    MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
+    if (!F)
+      F = new MCDataFragment(CurSectionData);
+    return F;
+  }
+
 public:
   MCMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
                   raw_ostream &_OS, MCCodeEmitter *_Emitter)
@@ -150,11 +159,11 @@ void MCMachOStreamer::SwitchSection(const MCSection *Section) {
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
-  // FIXME: We should also use offsets into Fill fragments.
-  MCDataFragment *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
-  if (!F)
-    F = new MCDataFragment(CurSectionData);
-
+  // FIXME: This is wasteful, we don't necessarily need to create a data
+  // fragment. Instead, we should mark the symbol as pointing into the data
+  // fragment if it exists, otherwise we should just queue the label and set its
+  // fragment pointer when we emit the next fragment.
+  MCDataFragment *F = getOrCreateDataFragment();
   MCSymbolData &SD = Assembler.getOrCreateSymbolData(*Symbol);
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
   SD.setFragment(F);
@@ -307,17 +316,12 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 }
 
 void MCMachOStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
-  MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
-  if (!DF)
-    DF = new MCDataFragment(CurSectionData);
-  DF->getContents().append(Data.begin(), Data.end());
+  getOrCreateDataFragment()->getContents().append(Data.begin(), Data.end());
 }
 
 void MCMachOStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                                 unsigned AddrSpace) {
-  MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
-  if (!DF)
-    DF = new MCDataFragment(CurSectionData);
+  MCDataFragment *DF = getOrCreateDataFragment();
 
   // Avoid fixups when possible.
   int64_t AbsValue;
@@ -349,7 +353,7 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                         unsigned MaxBytesToEmit) {
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
-  // FIXME the 0x90 is the default x86 1 byte nop opcode.
+  // FIXME: The 0x90 is the default x86 1 byte nop opcode.
   new MCAlignFragment(ByteAlignment, 0x90, 1, MaxBytesToEmit,
                       true /* EmitNops */, CurSectionData);
 
@@ -378,9 +382,7 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   VecOS.flush();
 
   // Add the fixups and data.
-  MCDataFragment *DF = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
-  if (!DF)
-    DF = new MCDataFragment(CurSectionData);
+  MCDataFragment *DF = getOrCreateDataFragment();
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
     DF->addFixup(MCAsmFixup(DF->getContents().size()+F.getOffset(),
