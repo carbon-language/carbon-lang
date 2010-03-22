@@ -754,12 +754,8 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
       Operator->getName() == "parallel")
     return 0;  // All return nothing.
   
-  if (Operator->isSubClassOf("Intrinsic")) {
-    unsigned NumRes = CDP.getIntrinsic(Operator).IS.RetVTs.size();
-    if (NumRes == 1 && CDP.getIntrinsic(Operator).IS.RetVTs[0] == MVT::isVoid)
-      return 0;
-    return NumRes;
-  }
+  if (Operator->isSubClassOf("Intrinsic"))
+    return CDP.getIntrinsic(Operator).IS.RetVTs.size();
   
   if (Operator->isSubClassOf("SDNode"))
     return CDP.getSDNodeInfo(Operator).getNumResults();
@@ -1210,8 +1206,6 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     // Apply the result type to the node.
     unsigned NumRetVTs = Int->IS.RetVTs.size();
     unsigned NumParamVTs = Int->IS.ParamVTs.size();
-    if (NumRetVTs == 1 && Int->IS.RetVTs[0] == MVT::isVoid)
-      NumRetVTs = 0;
     
     for (unsigned i = 0, e = NumRetVTs; i != e; ++i)
       MadeChange |= UpdateNodeType(i, Int->IS.RetVTs[i], TP);
@@ -1591,7 +1585,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
 
     // If this intrinsic returns void, it must have side-effects and thus a
     // chain.
-    if (Int.IS.RetVTs[0] == MVT::isVoid) {
+    if (Int.IS.RetVTs.empty()) {
       Operator = getDAGPatterns().get_intrinsic_void_sdnode();
     } else if (Int.ModRef != CodeGenIntrinsic::NoMem) {
       // Has side-effects, requires chain.

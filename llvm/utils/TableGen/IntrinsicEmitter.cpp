@@ -172,10 +172,11 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
 static void EmitTypeGenerate(raw_ostream &OS,
                              const std::vector<Record*> &ArgTypes,
                              unsigned &ArgNo) {
-  if (ArgTypes.size() == 1) {
-    EmitTypeGenerate(OS, ArgTypes.front(), ArgNo);
-    return;
-  }
+  if (ArgTypes.empty())
+    return EmitTypeForValueType(OS, MVT::isVoid);
+  
+  if (ArgTypes.size() == 1)
+    return EmitTypeGenerate(OS, ArgTypes.front(), ArgNo);
 
   OS << "StructType::get(Context, ";
 
@@ -251,11 +252,11 @@ namespace {
       unsigned RHSSize = RHSVec->size();
       unsigned LHSSize = LHSVec->size();
 
-      do {
+      for (; i != LHSSize; ++i) {
         if (i == RHSSize) return false;  // RHS is shorter than LHS.
         if ((*LHSVec)[i] != (*RHSVec)[i])
           return (*LHSVec)[i]->getName() < (*RHSVec)[i]->getName();
-      } while (++i != LHSSize);
+      }
 
       if (i != RHSSize) return true;
 
