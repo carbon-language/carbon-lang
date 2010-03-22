@@ -104,7 +104,6 @@ MCAssembler::~MCAssembler() {
 
 static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
                                                 const MCAsmFixup &Fixup,
-                                                const MCDataFragment *DF,
                                                 const MCValue Target,
                                                 const MCSection *BaseSection) {
   // The effective fixup address is
@@ -142,7 +141,6 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
 
 static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
                                           const MCAsmFixup &Fixup,
-                                          const MCDataFragment *DF,
                                           const MCValue Target,
                                           const MCSymbolData *BaseSymbol) {
   // The effective fixup address is
@@ -279,14 +277,14 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
       }
 
       if (IsResolved)
-        IsResolved = isScatteredFixupFullyResolved(*this, Fixup, DF, Target,
+        IsResolved = isScatteredFixupFullyResolved(*this, Fixup, Target,
                                                    BaseSymbol);
     } else {
       const MCSection *BaseSection = 0;
       if (IsPCRel)
         BaseSection = &DF->getParent()->getSection();
 
-      IsResolved = isScatteredFixupFullyResolvedSimple(*this, Fixup, DF, Target,
+      IsResolved = isScatteredFixupFullyResolvedSimple(*this, Fixup, Target,
                                                        BaseSection);
     }
   }
