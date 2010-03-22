@@ -153,7 +153,7 @@ namespace llvm {
     unsigned getOffset() const { return Offset; }
     unsigned getSize() const { return Size; }
     const std::vector<DIE *> &getChildren() const { return Children; }
-    SmallVector<DIEValue*, 32> &getValues() { return Values; }
+    const SmallVector<DIEValue*, 32> &getValues() const { return Values; }
     DIE *getParent() const { return Parent; }
     void setTag(unsigned Tag) { Abbrev.setTag(Tag); }
     void setOffset(unsigned O) { Offset = O; }
@@ -171,8 +171,10 @@ namespace llvm {
     unsigned getSiblingOffset() const { return Offset + Size; }
 
     /// addSiblingOffset - Add a sibling offset field to the front of the DIE.
+    /// The caller is responsible for deleting the return value at or after the
+    /// same time it destroys this DIE.
     ///
-    void addSiblingOffset();
+    DIEValue *addSiblingOffset();
 
     /// addChild - Add a child to the DIE.
     ///

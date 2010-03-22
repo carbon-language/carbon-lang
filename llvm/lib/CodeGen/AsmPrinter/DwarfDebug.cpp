@@ -2351,7 +2351,8 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
   const std::vector<DIE *> &Children = Die->getChildren();
 
   // If not last sibling and has children then add sibling offset attribute.
-  if (!Last && !Children.empty()) Die->addSiblingOffset();
+  if (!Last && !Children.empty())
+    DIEValues.push_back(Die->addSiblingOffset());
 
   // Record the abbreviation.
   assignAbbrevNumber(Die->getAbbrev());
@@ -2465,7 +2466,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
                                 dwarf::TagString(Abbrev->getTag()));
   EmitULEB128(AbbrevNumber);
 
-  SmallVector<DIEValue*, 32> &Values = Die->getValues();
+  const SmallVector<DIEValue*, 32> &Values = Die->getValues();
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
 
   // Emit the DIE attribute values.
