@@ -30,67 +30,67 @@
 
 #include <emmintrin.h>
 
-static inline __m128i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_lddqu_si128(__m128i const *p)
 {
   return (__m128i)__builtin_ia32_lddqu((char const *)p);
 }
 
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_addsub_ps(__m128 a, __m128 b)
 {
   return __builtin_ia32_addsubps(a, b);
 }
 
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_hadd_ps(__m128 a, __m128 b)
 {
   return __builtin_ia32_haddps(a, b);
 }
 
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_hsub_ps(__m128 a, __m128 b)
 {
   return __builtin_ia32_hsubps(a, b);
 }
 
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_movehdup_ps(__m128 a)
 {
   return __builtin_shufflevector(a, a, 1, 1, 3, 3);
 }
 
-static inline __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_moveldup_ps(__m128 a)
 {
   return __builtin_shufflevector(a, a, 0, 0, 2, 2);
 }
 
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_addsub_pd(__m128d a, __m128d b)
 {
   return __builtin_ia32_addsubpd(a, b);
 }
 
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_hadd_pd(__m128d a, __m128d b)
 {
   return __builtin_ia32_haddpd(a, b);
 }
 
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_hsub_pd(__m128d a, __m128d b)
 {
   return __builtin_ia32_hsubpd(a, b);
 }
 
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loaddup_pd(double const *dp)
 {
   return (__m128d){ *dp, *dp };
 }
 
-static inline __m128d __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_movedup_pd(__m128d a)
 {
   return __builtin_shufflevector(a, a, 0, 0);
@@ -104,13 +104,13 @@ _mm_movedup_pd(__m128d a)
 #define _MM_GET_DENORMALS_ZERO_MODE() (_mm_getcsr() & _MM_DENORMALS_ZERO_MASK)
 #define _MM_SET_DENORMALS_ZERO_MODE(x) (_mm_setcsr((_mm_getcsr() & ~_MM_DENORMALS_ZERO_MASK) | (x)))
 
-static inline void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
 _mm_monitor(void const *p, unsigned extensions, unsigned hints)
 {
   __builtin_ia32_monitor((void *)p, extensions, hints);
 }
 
-static inline void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
 _mm_mwait(unsigned extensions, unsigned hints)
 {
   __builtin_ia32_mwait(extensions, hints);
