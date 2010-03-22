@@ -667,8 +667,6 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
         Diag(ClsIvar->getLocation(), diag::note_previous_definition);
         continue;
       }
-      if (ImplIvar->getAccessControl() != ObjCIvarDecl::Private)
-        Diag(ImplIvar->getLocation(), diag::err_non_private_ivar_declaration); 
       // Instance ivar to Implementation's DeclContext.
       ImplIvar->setLexicalDeclContext(ImpDecl);
       IDecl->makeDeclVisibleInContext(ImplIvar, false);

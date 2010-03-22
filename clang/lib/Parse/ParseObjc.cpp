@@ -1236,7 +1236,7 @@ Parser::DeclPtrTy Parser::ParseObjCAtImplementationDeclaration(
 
   if (Tok.is(tok::l_brace)) // we have ivars
     ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/, 
-                                    tok::objc_protected, atLoc);
+                                    tok::objc_private, atLoc);
   ObjCImpDecl = ImplClsType;
   PendingObjCImpDecl.push_back(ObjCImpDecl);
   
