@@ -123,7 +123,7 @@ Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
 /// EmitMemMove - Emit a call to the memmove function to the builder.  This
 /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
 Value *llvm::EmitMemMove(Value *Dst, Value *Src, Value *Len,
-					               unsigned Align, IRBuilder<> &B, const TargetData *TD) {
+                         unsigned Align, IRBuilder<> &B, const TargetData *TD) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   const Type *Ty = TD->getIntPtrType(Context);
