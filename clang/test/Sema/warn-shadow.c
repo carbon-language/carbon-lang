@@ -43,3 +43,8 @@ void test3(void) {
 
 void test4(int i) { // expected-warning {{declaration shadows a variable in the global scope}}
 }
+
+// Don't warn about shadowing for function declarations.
+void test5(int i);
+void test6(void (*f)(int i)) {}
+void test7(void *context, void (*callback)(void *context)) {}

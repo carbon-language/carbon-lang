@@ -2405,7 +2405,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // Diagnose shadowed variables before filtering for scope.
   if (!D.getCXXScopeSpec().isSet())
-    DiagnoseShadow(S, D, Previous);
+    CheckShadow(S, NewVD, Previous);
 
   // Don't consider existing declarations that are in a different
   // scope and are out-of-semantic-context declarations (if the new
@@ -2458,19 +2458,16 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   return NewVD;
 }
 
-/// \brief Diagnose variable or built-in function shadowing.
+/// \brief Diagnose variable or built-in function shadowing.  Implements
+/// -Wshadow.
 ///
-/// This method is called as soon as a NamedDecl materializes to check
-/// if it shadows another local or global variable, or a built-in function.
-///
-/// For performance reasons, the lookup results are reused from the calling
-/// context.
+/// This method is called whenever a VarDecl is added to a "useful"
+/// scope.
 ///
 /// \param S the scope in which the shadowing name is being declared
 /// \param R the lookup of the name
 ///
-void Sema::DiagnoseShadow(Scope *S, Declarator &D,
-                          const LookupResult& R) {
+void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
   // Return if warning is ignored.
   if (Diags.getDiagnosticLevel(diag::warn_decl_shadow) == Diagnostic::Ignored)
     return;
@@ -2522,6 +2519,14 @@ void Sema::DiagnoseShadow(Scope *S, Declarator &D,
   // Emit warning and note.
   Diag(R.getNameLoc(), diag::warn_decl_shadow) << Name << Kind << OldDC;
   Diag(ShadowedDecl->getLocation(), diag::note_previous_declaration);
+}
+
+/// \brief Check -Wshadow without the advantage of a previous lookup.
+void Sema::CheckShadow(Scope *S, VarDecl *D) {
+  LookupResult R(*this, D->getDeclName(), D->getLocation(),
+                 Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  LookupName(R, S);
+  CheckShadow(S, D, R);
 }
 
 /// \brief Perform semantic checking on a newly-created variable
@@ -3984,8 +3989,6 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
         II = 0;
         D.SetIdentifier(0, D.getIdentifierLoc());
         D.setInvalidType(true);
-      } else {
-        DiagnoseShadow(S, D, R);
       }
     }
   }
@@ -4213,14 +4216,21 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   // Check the validity of our function parameters
   CheckParmsForFunctionDef(FD);
 
+  bool ShouldCheckShadow =
+    Diags.getDiagnosticLevel(diag::warn_decl_shadow) != Diagnostic::Ignored;
+
   // Introduce our parameters into the function scope
   for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
     Param->setOwningFunction(FD);
 
     // If this has an identifier, add it to the scope stack.
-    if (Param->getIdentifier() && FnBodyScope)
+    if (Param->getIdentifier() && FnBodyScope) {
+      if (ShouldCheckShadow)
+        CheckShadow(FnBodyScope, Param);
+
       PushOnScopeChains(Param, FnBodyScope);
+    }
   }
 
   // Checking attributes of current function definition

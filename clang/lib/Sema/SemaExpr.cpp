@@ -6905,13 +6905,21 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
                                CurBlock->Params.size());
   CurBlock->TheDecl->setIsVariadic(CurBlock->isVariadic);
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
+
+  bool ShouldCheckShadow =
+    Diags.getDiagnosticLevel(diag::warn_decl_shadow) != Diagnostic::Ignored;
+
   for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
          E = CurBlock->TheDecl->param_end(); AI != E; ++AI) {
     (*AI)->setOwningFunction(CurBlock->TheDecl);
 
     // If this has an identifier, add it to the scope stack.
-    if ((*AI)->getIdentifier())
+    if ((*AI)->getIdentifier()) {
+      if (ShouldCheckShadow)
+        CheckShadow(CurBlock->TheScope, *AI);
+
       PushOnScopeChains(*AI, CurBlock->TheScope);
+    }
   }
 
   // Check for a valid sentinel attribute on this block.
