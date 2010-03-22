@@ -2306,14 +2306,27 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 
         Out << llvm::format("%4d | ", I);
         
+        // If this function pointer has a return pointer adjustment, dump it.
+        if (!Thunk.Return.isEmpty()) {
+          Out << "return adjustment: " << Thunk.This.NonVirtual;
+          Out << " non-virtual";
+          if (Thunk.Return.VBaseOffsetOffset) {
+            Out << ", " << Thunk.Return.VBaseOffsetOffset;
+            Out << " vbase offset offset";
+          }
+
+          if (!Thunk.This.isEmpty())
+            Out << "\n       ";
+        }
+
         // If this function pointer has a 'this' pointer adjustment, dump it.
         if (!Thunk.This.isEmpty()) {
-          Out << "this: ";
-          Out << Thunk.This.NonVirtual << " nv";
+          Out << "this adjustment: ";
+          Out << Thunk.This.NonVirtual << " non-virtual";
           
           if (Thunk.This.VCallOffsetOffset) {
             Out << ", " << Thunk.This.VCallOffsetOffset;
-            Out << " v";
+            Out << " vcall offset offset";
           }
         }
         
