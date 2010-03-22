@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -41,6 +42,22 @@ void MCInst::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     getOperand(i).print(OS, MAI);
   }
   OS << ">";
+}
+
+void MCInst::dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI,
+                         const MCInstPrinter *Printer,
+                         StringRef Separator) const {
+  OS << "<MCInst #" << getOpcode();
+
+  // Show the instruction opcode name if we have access to a printer.
+  if (Printer)
+    OS << ' ' << Printer->getOpcodeName(getOpcode());
+
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    OS << Separator;
+    getOperand(i).print(OS, MAI);
+  }
+  OS << ">\n";
 }
 
 void MCInst::dump() const {

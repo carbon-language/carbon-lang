@@ -17,11 +17,13 @@
 #define LLVM_MC_MCINST_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/System/DataTypes.h"
 
 namespace llvm {
 class raw_ostream;
 class MCAsmInfo;
+class MCInstPrinter;
 class MCExpr;
 
 /// MCOperand - Instances of this class represent operands of the MCInst class.
@@ -125,6 +127,13 @@ public:
 
   void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
+
+  /// \brief Dump the MCInst as prettily as possible using the additional MC
+  /// structures, if given. Operators are separated by the \arg Separator
+  /// string.
+  void dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI = 0,
+                   const MCInstPrinter *Printer = 0,
+                   StringRef Separator = " ") const;
 };
 
 

@@ -623,24 +623,10 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
     AddEncodingComment(Inst);
 
   // Show the MCInst if enabled.
-  if (ShowInst) {
-    raw_ostream &OS = GetCommentOS();
-    OS << "<MCInst #" << Inst.getOpcode();
-    
-    StringRef InstName;
-    if (InstPrinter)
-      InstName = InstPrinter->getOpcodeName(Inst.getOpcode());
-    if (!InstName.empty())
-      OS << ' ' << InstName;
-    
-    for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
-      OS << "\n  ";
-      Inst.getOperand(i).print(OS, &MAI);
-    }
-    OS << ">\n";
-  }
+  if (ShowInst)
+    Inst.dump_pretty(GetCommentOS(), &MAI, InstPrinter.get(), "\n ");
   
-  // If we have an AsmPrinter, use that to print, otherwise dump the MCInst.
+  // If we have an AsmPrinter, use that to print, otherwise print the MCInst.
   if (InstPrinter)
     InstPrinter->printInst(&Inst);
   else
