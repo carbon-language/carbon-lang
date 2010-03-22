@@ -186,31 +186,31 @@ def VLD1q64_UPD : VLD1QWB<0b1100, "64">;
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
-// These (dreg triple/quadruple) are for disassembly only.
+// ...with 3 registers (some of these are only for the disassembler):
 class VLD1D3<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
           "\\{$dst1, $dst2, $dst3\\}, $addr", "", []>;
-class VLD1D4<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
-          (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
-          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "", []>;
-
-def  VLD1d8T  : VLD1D3<0b0000, "8">;
-def  VLD1d16T : VLD1D3<0b0100, "16">;
-def  VLD1d32T : VLD1D3<0b1000, "32">;
-def  VLD1d64T : VLD1D3<0b1100, "64">;
-
-def  VLD1d8Q  : VLD1D4<0b0000, "8">;
-def  VLD1d16Q : VLD1D4<0b0100, "16">;
-def  VLD1d32Q : VLD1D4<0b1000, "32">;
-def  VLD1d64Q : VLD1D4<0b1100, "64">;
-
-// ...with address register writeback:
 class VLD1D3WB<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1, "vld1", Dt,
           "\\{$dst1, $dst2, $dst3\\}, $addr$offset", "$addr.addr = $wb", []>;
+
+def VLD1d8T      : VLD1D3<0b0000, "8">;
+def VLD1d16T     : VLD1D3<0b0100, "16">;
+def VLD1d32T     : VLD1D3<0b1000, "32">;
+def VLD1d64T     : VLD1D3<0b1100, "64">;
+
+def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
+def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
+def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
+def VLD3d64T_UPD : VLD1D3WB<0b1100, "64">;
+
+// ...with 4 registers (some of these are only for the disassembler):
+class VLD1D4<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b0010,op7_4,(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$addr), IIC_VLD1, "vld1", Dt,
+          "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr", "", []>;
 class VLD1D4WB<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0010,op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
@@ -218,10 +218,10 @@ class VLD1D4WB<bits<4> op7_4, string Dt>
           "\\{$dst1, $dst2, $dst3, $dst4\\}, $addr$offset", "$addr.addr = $wb",
           []>;
 
-def VLD1d8T_UPD  : VLD1D3WB<0b0000, "8">;
-def VLD1d16T_UPD : VLD1D3WB<0b0100, "16">;
-def VLD1d32T_UPD : VLD1D3WB<0b1000, "32">;
-def VLD3d64T_UPD : VLD1D3WB<0b1100, "64">;
+def VLD1d8Q      : VLD1D4<0b0000, "8">;
+def VLD1d16Q     : VLD1D4<0b0100, "16">;
+def VLD1d32Q     : VLD1D4<0b1000, "32">;
+def VLD1d64Q     : VLD1D4<0b1100, "64">;
 
 def VLD1d8Q_UPD  : VLD1D4WB<0b0000, "8">;
 def VLD1d16Q_UPD : VLD1D4WB<0b0100, "16">;
@@ -522,34 +522,34 @@ def VST1q16_UPD : VST1QWB<0b0100, "16">;
 def VST1q32_UPD : VST1QWB<0b1000, "32">;
 def VST1q64_UPD : VST1QWB<0b1100, "64">;
 
-// These (dreg triple/quadruple) are for disassembly only.
+// ...with 3 registers (some of these are only for the disassembler):
 class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
           IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr", "", []>;
-class VST1D4<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
-          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
-          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr", "",
-          []>;
-
-def  VST1d8T  : VST1D3<0b0000, "8">;
-def  VST1d16T : VST1D3<0b0100, "16">;
-def  VST1d32T : VST1D3<0b1000, "32">;
-def  VST1d64T : VST1D3<0b1100, "64">;
-
-def  VST1d8Q  : VST1D4<0b0000, "8">;
-def  VST1d16Q : VST1D4<0b0100, "16">;
-def  VST1d32Q : VST1D4<0b1000, "32">;
-def  VST1d64Q : VST1D4<0b1100, "64">;
-
-// ...with address register writeback:
 class VST1D3WB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3),
           IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3\\}, $addr$offset",
           "$addr.addr = $wb", []>;
+
+def VST1d8T      : VST1D3<0b0000, "8">;
+def VST1d16T     : VST1D3<0b0100, "16">;
+def VST1d32T     : VST1D3<0b1000, "32">;
+def VST1d64T     : VST1D3<0b1100, "64">;
+
+def VST1d8T_UPD  : VST1D3WB<0b0000, "8">;
+def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
+def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
+def VST1d64T_UPD : VST1D3WB<0b1100, "64">;
+
+// ...with 4 registers (some of these are only for the disassembler):
+class VST1D4<bits<4> op7_4, string Dt>
+  : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr", "",
+          []>;
 class VST1D4WB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
@@ -557,10 +557,10 @@ class VST1D4WB<bits<4> op7_4, string Dt>
           IIC_VST, "vst1", Dt, "\\{$src1, $src2, $src3, $src4\\}, $addr$offset",
           "$addr.addr = $wb", []>;
 
-def VST1d8T_UPD  : VST1D3WB<0b0000, "8">;
-def VST1d16T_UPD : VST1D3WB<0b0100, "16">;
-def VST1d32T_UPD : VST1D3WB<0b1000, "32">;
-def VST1d64T_UPD : VST1D3WB<0b1100, "64">;
+def VST1d8Q      : VST1D4<0b0000, "8">;
+def VST1d16Q     : VST1D4<0b0100, "16">;
+def VST1d32Q     : VST1D4<0b1000, "32">;
+def VST1d64Q     : VST1D4<0b1100, "64">;
 
 def VST1d8Q_UPD  : VST1D4WB<0b0000, "8">;
 def VST1d16Q_UPD : VST1D4WB<0b0100, "16">;
