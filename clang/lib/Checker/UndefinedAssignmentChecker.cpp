@@ -53,27 +53,43 @@ void UndefinedAssignmentChecker::PreVisitBind(CheckerContext &C,
   if (!N)
     return;
 
+  const char *str = "Assigned value is garbage or undefined";
+
   if (!BT)
-    BT = new BuiltinBug("Assigned value is garbage or undefined");
+    BT = new BuiltinBug(str);
 
   // Generate a report for this bug.
-  EnhancedBugReport *R = new EnhancedBugReport(*BT, BT->getName(), N);
+  const Expr *ex = 0;
 
-  if (AssignE) {
-    const Expr *ex = 0;
+  while (AssignE) {
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(AssignE)) {
+      if (B->isCompoundAssignmentOp()) {
+        const GRState *state = C.getState();
+        if (state->getSVal(B->getLHS()).isUndef()) {
+          str = "The left expression of the compound assignment is an "
+                "uninitialized value. The computed value will also be garbage";
+          ex = B->getLHS();
+          break;
+        }
+      }
 
-    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(AssignE))
       ex = B->getRHS();
-    else if (const DeclStmt *DS = dyn_cast<DeclStmt>(AssignE)) {
+      break;
+    }
+
+    if (const DeclStmt *DS = dyn_cast<DeclStmt>(AssignE)) {
       const VarDecl* VD = dyn_cast<VarDecl>(DS->getSingleDecl());
       ex = VD->getInit();
     }
-    if (ex) {
-      R->addRange(ex->getSourceRange());
-      R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, ex);
-    }
+
+    break;
   }
 
+  EnhancedBugReport *R = new EnhancedBugReport(*BT, str, N);
+  if (ex) {
+    R->addRange(ex->getSourceRange());
+    R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, ex);
+  }
   C.EmitReport(R);
-}  
+}
 

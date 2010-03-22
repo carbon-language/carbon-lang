@@ -59,4 +59,11 @@ void testFoo(Foo *o) {
   [o passVal:x]; // expected-warning{{Passed-by-value struct argument contains uninitialized data (e.g., field: 'x')}}
 }
 
+// Test case from <rdar://problem/7780304>.  That shows an uninitialized value
+// being used in the LHS of a compound assignment.
+void rdar_7780304() {
+  typedef struct s_r7780304 { int x; } s_r7780304;
+  s_r7780304 b;
+  b.x |= 1; // expected-warning{{The left expression of the compound assignment is an uninitialized value. The computed value will also be garbage}}
+}
 
