@@ -200,6 +200,8 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   // It's illegal to emit pop instruction without operands.
   if (NumRegs)
     MBB.insert(MI, &*MIB);
+  else
+    MF.DeleteMachineInstr(MIB);
 
   return true;
 }
