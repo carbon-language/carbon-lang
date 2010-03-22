@@ -248,48 +248,47 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         unsigned DataLatency = SU->Latency;
         for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
           SUnit *UseSU = UseList[i];
-          if (UseSU != SU) {
-            unsigned LDataLatency = DataLatency;
-            // Optionally add in a special extra latency for nodes that
-            // feed addresses.
-            // TODO: Do this for register aliases too.
-            // TODO: Perhaps we should get rid of
-            // SpecialAddressLatency and just move this into
-            // adjustSchedDependency for the targets that care about
-            // it.
-            if (SpecialAddressLatency != 0 && !UnitLatencies) {
-              MachineInstr *UseMI = UseSU->getInstr();
-              const TargetInstrDesc &UseTID = UseMI->getDesc();
-              int RegUseIndex = UseMI->findRegisterUseOperandIdx(Reg);
-              assert(RegUseIndex >= 0 && "UseMI doesn's use register!");
-              if ((UseTID.mayLoad() || UseTID.mayStore()) &&
-                  (unsigned)RegUseIndex < UseTID.getNumOperands() &&
-                  UseTID.OpInfo[RegUseIndex].isLookupPtrRegClass())
-                LDataLatency += SpecialAddressLatency;
-            }
-            // Adjust the dependence latency using operand def/use
-            // information (if any), and then allow the target to
-            // perform its own adjustments.
-            const SDep& dep = SDep(SU, SDep::Data, LDataLatency, Reg);
-            if (!UnitLatencies) {
-              ComputeOperandLatency(SU, UseSU, (SDep &)dep);
-              ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
-            }
-            UseSU->addPred(dep);
+          if (UseSU == SU)
+            continue;
+          unsigned LDataLatency = DataLatency;
+          // Optionally add in a special extra latency for nodes that
+          // feed addresses.
+          // TODO: Do this for register aliases too.
+          // TODO: Perhaps we should get rid of
+          // SpecialAddressLatency and just move this into
+          // adjustSchedDependency for the targets that care about it.
+          if (SpecialAddressLatency != 0 && !UnitLatencies) {
+            MachineInstr *UseMI = UseSU->getInstr();
+            const TargetInstrDesc &UseTID = UseMI->getDesc();
+            int RegUseIndex = UseMI->findRegisterUseOperandIdx(Reg);
+            assert(RegUseIndex >= 0 && "UseMI doesn's use register!");
+            if ((UseTID.mayLoad() || UseTID.mayStore()) &&
+                (unsigned)RegUseIndex < UseTID.getNumOperands() &&
+                UseTID.OpInfo[RegUseIndex].isLookupPtrRegClass())
+              LDataLatency += SpecialAddressLatency;
           }
+          // Adjust the dependence latency using operand def/use
+          // information (if any), and then allow the target to
+          // perform its own adjustments.
+          const SDep& dep = SDep(SU, SDep::Data, LDataLatency, Reg);
+          if (!UnitLatencies) {
+            ComputeOperandLatency(SU, UseSU, (SDep &)dep);
+            ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
+          }
+          UseSU->addPred(dep);
         }
         for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
           std::vector<SUnit *> &UseList = Uses[*Alias];
           for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
             SUnit *UseSU = UseList[i];
-            if (UseSU != SU) {
-              const SDep& dep = SDep(SU, SDep::Data, DataLatency, *Alias);
-              if (!UnitLatencies) {
-                ComputeOperandLatency(SU, UseSU, (SDep &)dep);
-                ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
-              }
-              UseSU->addPred(dep);
+            if (UseSU == SU)
+              continue;
+            const SDep& dep = SDep(SU, SDep::Data, DataLatency, *Alias);
+            if (!UnitLatencies) {
+              ComputeOperandLatency(SU, UseSU, (SDep &)dep);
+              ST.adjustSchedDependency(SU, UseSU, (SDep &)dep);
             }
+            UseSU->addPred(dep);
           }
         }
 
