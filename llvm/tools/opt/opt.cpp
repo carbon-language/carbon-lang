@@ -424,9 +424,9 @@ int main(int argc, char **argv) {
   if (TD)
     Passes.add(TD);
 
-  FunctionPassManager *FPasses = NULL;
+  OwningPtr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-    FPasses = new FunctionPassManager(M.get());
+    FPasses.reset(new FunctionPassManager(M.get()));
     if (TD)
       FPasses->add(new TargetData(*TD));
   }
