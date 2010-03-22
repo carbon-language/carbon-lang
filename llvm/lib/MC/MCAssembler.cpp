@@ -297,8 +297,8 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout, MCAsmFixup &Fixup,
   return IsResolved;
 }
 
-void MCAssembler::LayoutSection(MCSectionData &SD) {
-  MCAsmLayout Layout(*this);
+void MCAssembler::LayoutSection(MCSectionData &SD,
+                                MCAsmLayout &Layout) {
   uint64_t Address = SD.getAddress();
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
@@ -533,14 +533,14 @@ void MCAssembler::Finish() {
       dump(); });
 
   // Layout until everything fits.
-  while (LayoutOnce())
+  MCAsmLayout Layout(*this);
+  while (LayoutOnce(Layout))
     continue;
 
   DEBUG_WITH_TYPE("mc-dump", {
       llvm::errs() << "assembler backend - post-layout\n--\n";
       dump(); });
 
-  // FIXME: Factor out MCObjectWriter.
   llvm::OwningPtr<MCObjectWriter> Writer(getBackend().createObjectWriter(OS));
   if (!Writer)
     llvm_report_error("unable to create object writer!");
@@ -550,9 +550,6 @@ void MCAssembler::Finish() {
   Writer->ExecutePostLayoutBinding(*this);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
-  //
-  // FIXME: Share layout object.
-  MCAsmLayout Layout(*this);
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
@@ -584,10 +581,8 @@ void MCAssembler::Finish() {
   OS.flush();
 }
 
-bool MCAssembler::FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF) {
-  // FIXME: Share layout object.
-  MCAsmLayout Layout(*this);
-
+bool MCAssembler::FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF,
+                                       const MCAsmLayout &Layout) const {
   // Currently we only need to relax X86::reloc_pcrel_1byte.
   if (unsigned(Fixup.Kind) != X86::reloc_pcrel_1byte)
     return false;
@@ -602,7 +597,7 @@ bool MCAssembler::FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF) {
   return int64_t(Value) != int64_t(int8_t(Value));
 }
 
-bool MCAssembler::LayoutOnce() {
+bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
   // Layout the concrete sections and fragments.
   uint64_t Address = 0;
   MCSectionData *Prev = 0;
@@ -623,7 +618,7 @@ bool MCAssembler::LayoutOnce() {
 
     // Layout the section fragments and its size.
     SD.setAddress(Address);
-    LayoutSection(SD);
+    LayoutSection(SD, Layout);
     Address += SD.getFileSize();
 
     Prev = &SD;
@@ -642,7 +637,7 @@ bool MCAssembler::LayoutOnce() {
       Address += Pad;
 
     SD.setAddress(Address);
-    LayoutSection(SD);
+    LayoutSection(SD, Layout);
     Address += SD.getSize();
   }
 
@@ -661,7 +656,7 @@ bool MCAssembler::LayoutOnce() {
         MCAsmFixup &Fixup = *it3;
 
         // Check whether we need to relax this fixup.
-        if (!FixupNeedsRelaxation(Fixup, DF))
+        if (!FixupNeedsRelaxation(Fixup, DF, Layout))
           continue;
 
         // Relax the instruction.

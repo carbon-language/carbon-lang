@@ -642,16 +642,17 @@ private:
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF);
+  bool FixupNeedsRelaxation(MCAsmFixup &Fixup, MCDataFragment *DF,
+                            const MCAsmLayout &Layout) const;
 
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
   /// \arg SD, and update the section size. The section file offset should
   /// already have been computed.
-  void LayoutSection(MCSectionData &SD);
+  void LayoutSection(MCSectionData &SD, MCAsmLayout &Layout);
 
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
-  bool LayoutOnce();
+  bool LayoutOnce(MCAsmLayout &Layout);
 
 public:
   /// Find the symbol which defines the atom containing given address, inside
