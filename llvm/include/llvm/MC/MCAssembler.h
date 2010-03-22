@@ -16,6 +16,7 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/System/DataTypes.h"
 #include <vector> // FIXME: Shouldn't be needed.
 
@@ -37,6 +38,8 @@ class TargetAsmBackend;
 /// MCAsmFixup - Represent a fixed size region of bytes inside some fragment
 /// which needs to be rewritten. This region will either be rewritten by the
 /// assembler or cause a relocation entry to be generated.
+//
+// FIXME: This should probably just be merged with MCFixup.
 class MCAsmFixup {
 public:
   /// Offset - The offset inside the fragment which needs to be rewritten.
@@ -59,9 +62,10 @@ class MCFragment : public ilist_node<MCFragment> {
 
 public:
   enum FragmentType {
-    FT_Data,
     FT_Align,
+    FT_Data,
     FT_Fill,
+    FT_Inst,
     FT_Org,
     FT_ZeroFill
   };
@@ -145,7 +149,6 @@ public:
   const SmallString<32> &getContents() const { return Contents; }
 
   /// @}
-
   /// @name Fixup Access
   /// @{
 
@@ -173,6 +176,39 @@ public:
     return F->getKind() == MCFragment::FT_Data;
   }
   static bool classof(const MCDataFragment *) { return true; }
+
+  virtual void dump();
+};
+
+class MCInstFragment : public MCFragment {
+  /// Inst - The instruction this is a fragment for.
+  MCInst Inst;
+
+  /// InstSize - The size of the currently encoded instruction.
+  unsigned InstSize;
+
+public:
+  MCInstFragment(MCInst _Inst, unsigned _InstSize, MCSectionData *SD = 0)
+    : MCFragment(FT_Inst, SD), Inst(_Inst), InstSize(_InstSize) {}
+
+  /// @name Accessors
+  /// @{
+
+  unsigned getInstSize() const { return InstSize; }
+
+  const MCInst &getInst() const { return Inst; }
+
+  void setInst(MCInst Inst, unsigned InstSize) {
+    this->Inst = Inst;
+    this->InstSize = InstSize;
+  }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_Inst;
+  }
+  static bool classof(const MCInstFragment *) { return true; }
 
   virtual void dump();
 };
@@ -622,6 +658,9 @@ private:
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
   bool LayoutOnce(MCAsmLayout &Layout);
+
+  /// FinishLayout - Finalize a layout, including fragment lowering.
+  void FinishLayout(MCAsmLayout &Layout);
 
 public:
   /// Find the symbol which defines the atom containing given address, inside

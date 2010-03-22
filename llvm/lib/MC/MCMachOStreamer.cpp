@@ -375,6 +375,9 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
 
   CurSectionData->setHasInstructions(true);
 
+  // FIXME-PERF: Common case is that we don't need to relax, encode directly
+  // onto the data fragments buffers.
+
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);

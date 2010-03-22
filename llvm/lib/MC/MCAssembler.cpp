@@ -327,6 +327,10 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
       break;
     }
 
+    case MCFragment::FT_Inst:
+      F.setFileSize(cast<MCInstFragment>(F).getInstSize());
+      break;
+
     case MCFragment::FT_Org: {
       MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
@@ -471,7 +475,9 @@ static void WriteFragmentData(const MCFragment &F, MCObjectWriter *OW) {
   }
 
   case MCFragment::FT_Data: {
-    OW->WriteBytes(cast<MCDataFragment>(F).getContents().str());
+    MCDataFragment &DF = cast<MCDataFragment>(F);
+    assert(DF.getFileSize() == DF.getContents().size() && "Invalid size!");
+    OW->WriteBytes(DF.getContents().str());
     break;
   }
 
@@ -489,6 +495,10 @@ static void WriteFragmentData(const MCFragment &F, MCObjectWriter *OW) {
     }
     break;
   }
+
+  case MCFragment::FT_Inst:
+    llvm_unreachable("unexpected inst fragment after lowering");
+    break;
 
   case MCFragment::FT_Org: {
     MCOrgFragment &OF = cast<MCOrgFragment>(F);
@@ -541,7 +551,14 @@ void MCAssembler::Finish() {
     continue;
 
   DEBUG_WITH_TYPE("mc-dump", {
-      llvm::errs() << "assembler backend - post-layout\n--\n";
+      llvm::errs() << "assembler backend - post-relaxation\n--\n";
+      dump(); });
+
+  // Finalize the layout, including fragment lowering.
+  FinishLayout(Layout);
+
+  DEBUG_WITH_TYPE("mc-dump", {
+      llvm::errs() << "assembler backend - final-layout\n--\n";
       dump(); });
 
   llvm::OwningPtr<MCObjectWriter> Writer(getBackend().createObjectWriter(OS));
@@ -722,14 +739,62 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
 
         // Restart layout.
         //
-        // FIXME: This is O(N^2), but will be eliminated once we have a smart
-        // MCAsmLayout object.
+        // FIXME-PERF: This is O(N^2), but will be eliminated once we have a
+        // smart MCAsmLayout object.
         return true;
       }
     }
   }
 
   return false;
+}
+
+void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
+  // Lower out any instruction fragments, to simplify the fixup application and
+  // output.
+  //
+  // FIXME-PERF: We don't have to do this, but the assumption is that it is
+  // cheap (we will mostly end up eliminating fragments and appending on to data
+  // fragments), so the extra complexity downstream isn't worth it. Evaluate
+  // this assumption.
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    MCSectionData &SD = *it;
+
+    for (MCSectionData::iterator it2 = SD.begin(),
+           ie2 = SD.end(); it2 != ie2; ++it2) {
+      MCInstFragment *IF = dyn_cast<MCInstFragment>(it2);
+      if (!IF)
+        continue;
+
+      // Create a new data fragment for the instruction.
+      //
+      // FIXME: Reuse previous data fragment if possible.
+      MCDataFragment *DF = new MCDataFragment();
+      SD.getFragmentList().insert(it2, DF);
+
+      // Update the data fragments layout data.
+      DF->setOffset(IF->getOffset());
+      DF->setFileSize(IF->getInstSize());
+
+      // Encode the final instruction.
+      SmallVector<MCFixup, 4> Fixups;
+      raw_svector_ostream VecOS(DF->getContents());
+      getEmitter().EncodeInstruction(IF->getInst(), VecOS, Fixups);
+
+      // Copy over the fixups.
+      //
+      // FIXME-PERF: Encode fixups directly into the data fragment as well.
+      for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+        MCFixup &F = Fixups[i];
+        DF->addFixup(MCAsmFixup(DF->getContents().size()+F.getOffset(),
+                                *F.getValue(), F.getKind()));
+      }
+
+      // Delete the instruction fragment and update the iterator.
+      SD.getFragmentList().erase(IF);
+      it2 = DF;
+    }
+  }
 }
 
 // Debugging methods
@@ -798,6 +863,17 @@ void MCFillFragment::dump() {
   OS << "\n       ";
   OS << " Value:" << getValue() << " ValueSize:" << getValueSize()
      << " Count:" << getCount() << ">";
+}
+
+void MCInstFragment::dump() {
+  raw_ostream &OS = llvm::errs();
+
+  OS << "<MCInstFragment ";
+  this->MCFragment::dump();
+  OS << "\n       ";
+  OS << " Inst:";
+  getInst().dump_pretty(OS);
+  OS << ">";
 }
 
 void MCOrgFragment::dump() {
