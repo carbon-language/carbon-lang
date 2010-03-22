@@ -386,16 +386,6 @@ void DwarfDebug::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
   Die->addValue(Attribute, Form, Value);
 }
 
-/// addSectionOffset - Add a section offset label attribute data and value.
-///
-void DwarfDebug::addSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
-                                  const MCSymbol *Label,const MCSymbol *Section,
-                                  bool isEH) {
-  DIEValue *Value = new DIESectionOffset(Label, Section, isEH);
-  DIEValues.push_back(Value);
-  Die->addValue(Attribute, Form, Value);
-}
-
 /// addDelta - Add a label delta attribute data and value.
 ///
 void DwarfDebug::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
@@ -1666,10 +1656,10 @@ void DwarfDebug::constructCompileUnit(MDNode *N) {
   unsigned ID = GetOrCreateSourceID(Dir, FN);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  // FIXME: Why getting the delta between two identical labels??
-  addSectionOffset(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
-                   getTempLabel("section_line"), getTempLabel("section_line"),
-                   false);
+  // DW_AT_stmt_list is a offset of line number information for this
+  // compile unit in debug_line section. It is always zero when only one
+  // compile unit is emitted in one object file.
+  addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
   addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
             DIUnit.getProducer());
   addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,

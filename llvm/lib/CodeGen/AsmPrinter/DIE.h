@@ -330,38 +330,6 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
-  /// DIESectionOffset - A section offset DIE.
-  ///
-  class DIESectionOffset : public DIEValue {
-    const MCSymbol *Label;
-    const MCSymbol *Section;
-    bool IsEH : 1;
-  public:
-    DIESectionOffset(const MCSymbol *Lab, const MCSymbol *Sec,
-                     bool isEH = false)
-      : DIEValue(isSectionOffset), Label(Lab), Section(Sec),
-        IsEH(isEH) {}
-
-    /// EmitValue - Emit section offset.
-    ///
-    virtual void EmitValue(DwarfPrinter *D, unsigned Form) const;
-
-    /// SizeOf - Determine size of section offset value in bytes.
-    ///
-    virtual unsigned SizeOf(const TargetData *TD, unsigned Form) const;
-
-    // Implement isa/cast/dyncast.
-    static bool classof(const DIESectionOffset *)  { return true; }
-    static bool classof(const DIEValue *D) {
-      return D->getType() == isSectionOffset;
-    }
-
-#ifndef NDEBUG
-    virtual void print(raw_ostream &O);
-#endif
-  };
-
-  //===--------------------------------------------------------------------===//
   /// DIEDelta - A simple label difference DIE.
   ///
   class DIEDelta : public DIEValue {

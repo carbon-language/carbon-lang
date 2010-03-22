@@ -278,31 +278,6 @@ void DIELabel::print(raw_ostream &O) {
 #endif
 
 //===----------------------------------------------------------------------===//
-// DIESectionOffset Implementation
-//===----------------------------------------------------------------------===//
-
-/// EmitValue - Emit delta value.
-///
-void DIESectionOffset::EmitValue(DwarfPrinter *D, unsigned Form) const {
-  bool IsSmall = Form == dwarf::DW_FORM_data4;
-  D->EmitSectionOffset(Label, Section, IsSmall, IsEH);
-}
-
-/// SizeOf - Determine size of delta value in bytes.
-///
-unsigned DIESectionOffset::SizeOf(const TargetData *TD, unsigned Form) const {
-  if (Form == dwarf::DW_FORM_data4) return 4;
-  return TD->getPointerSize();
-}
-
-#ifndef NDEBUG
-void DIESectionOffset::print(raw_ostream &O) {
-  O << "Off: " << Label->getName() << "-" << Section->getName()
-    << "-" << IsEH;
-}
-#endif
-
-//===----------------------------------------------------------------------===//
 // DIEDelta Implementation
 //===----------------------------------------------------------------------===//
 
