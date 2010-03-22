@@ -297,8 +297,8 @@ void Diagnostic::SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1,
     return;
 
   DelayedDiagID = DiagID;
-  DelayedDiagArg1 = Arg1;
-  DelayedDiagArg1 = Arg2;
+  DelayedDiagArg1 = Arg1.str();
+  DelayedDiagArg2 = Arg2.str();
 }
 
 void Diagnostic::ReportDelayed() {
@@ -567,10 +567,11 @@ bool DiagnosticBuilder::Emit() {
   bool Emitted = DiagObj->ProcessDiag();
 
   // Clear out the current diagnostic object.
+  unsigned DiagID = DiagObj->CurDiagID;
   DiagObj->Clear();
 
   // If there was a delayed diagnostic, emit it now.
-  if (DiagObj->DelayedDiagID)
+  if (DiagObj->DelayedDiagID && DiagObj->DelayedDiagID != DiagID)
     DiagObj->ReportDelayed();
 
   // This diagnostic is dead.
