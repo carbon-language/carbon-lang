@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
+#include <algorithm>
 
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
   : TheTrueVal(0), TheFalseVal(0),
@@ -34,10 +35,32 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
   OpaqueTypes.insert(AlwaysOpaqueTy);
 }
 
+namespace {
+struct DropReferences {
+  // Takes the value_type of a ConstantUniqueMap's internal map, whose 'second'
+  // is a Constant*.
+  template<typename PairT>
+  void operator()(const PairT &P) {
+    P.second->dropAllReferences();
+  }
+};
+}
+
 LLVMContextImpl::~LLVMContextImpl() {
+  std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
+                DropReferences());
+  std::for_each(ArrayConstants.map_begin(), ArrayConstants.map_end(),
+                DropReferences());
+  std::for_each(StructConstants.map_begin(), StructConstants.map_end(),
+                DropReferences());
+  std::for_each(UnionConstants.map_begin(), UnionConstants.map_end(),
+                DropReferences());
+  std::for_each(VectorConstants.map_begin(), VectorConstants.map_end(),
+                DropReferences());
   ExprConstants.freeConstants();
   ArrayConstants.freeConstants();
   StructConstants.freeConstants();
+  UnionConstants.freeConstants();
   VectorConstants.freeConstants();
   AggZeroConstants.freeConstants();
   NullPtrConstants.freeConstants();
@@ -45,13 +68,11 @@ LLVMContextImpl::~LLVMContextImpl() {
   InlineAsms.freeConstants();
   for (IntMapTy::iterator I = IntConstants.begin(), E = IntConstants.end(); 
        I != E; ++I) {
-    if (I->second->use_empty())
-      delete I->second;
+    delete I->second;
   }
   for (FPMapTy::iterator I = FPConstants.begin(), E = FPConstants.end(); 
        I != E; ++I) {
-    if (I->second->use_empty())
-      delete I->second;
+    delete I->second;
   }
   AlwaysOpaqueTy->dropRef();
   for (OpaqueTypesTy::iterator I = OpaqueTypes.begin(), E = OpaqueTypes.end();

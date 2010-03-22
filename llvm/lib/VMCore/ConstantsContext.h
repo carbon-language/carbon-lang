@@ -600,8 +600,8 @@ public:
   void freeConstants() {
     for (typename MapTy::iterator I=Map.begin(), E=Map.end();
          I != E; ++I) {
-      if (I->second->use_empty())
-        delete I->second;
+      // Asserts that use_empty().
+      delete I->second;
     }
   }
     

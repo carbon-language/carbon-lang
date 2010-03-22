@@ -65,6 +65,7 @@ public:
   BugDriver(const char *toolname, bool as_child, bool find_bugs,
             unsigned timeout, unsigned memlimit, bool use_valgrind,
             LLVMContext& ctxt);
+  ~BugDriver();
 
   const char *getToolName() const { return ToolName; }
 

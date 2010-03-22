@@ -75,6 +75,10 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
     run_as_child(as_child), run_find_bugs(find_bugs), Timeout(timeout), 
     MemoryLimit(memlimit), UseValgrind(use_valgrind) {}
 
+BugDriver::~BugDriver() {
+  delete Program;
+}
+
 
 /// ParseInputFile - Given a bitcode or assembly input filename, parse and
 /// return it, or return null if not possible.
