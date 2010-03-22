@@ -10,8 +10,8 @@ add_clang_library(clangDriver
   DriverOptions.cpp
   HostInfo.cpp
   Job.cpp
-  OptTable.cpp
   Option.cpp
+  OptTable.cpp
   Phases.cpp
   Tool.cpp
   ToolChain.cpp

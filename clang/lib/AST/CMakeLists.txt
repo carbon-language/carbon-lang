@@ -9,6 +9,7 @@ add_clang_library(clangAST
   AttrImpl.cpp
   CXXInheritance.cpp
   Decl.cpp
+  DeclarationName.cpp
   DeclBase.cpp
   DeclCXX.cpp
   DeclFriend.cpp
@@ -16,10 +17,9 @@ add_clang_library(clangAST
   DeclObjC.cpp
   DeclPrinter.cpp
   DeclTemplate.cpp
-  DeclarationName.cpp
   Expr.cpp
-  ExprCXX.cpp
   ExprConstant.cpp
+  ExprCXX.cpp
   FullExpr.cpp
   InheritViz.cpp
   NestedNameSpecifier.cpp
