@@ -17,7 +17,7 @@
 namespace llvm {
 class MCAsmFixup;
 class MCAssembler;
-class MCDataFragment;
+class MCFragment;
 class MCValue;
 class raw_ostream;
 
@@ -31,7 +31,7 @@ public:
   virtual void ExecutePostLayoutBinding(MCAssembler &Asm);
 
   virtual void RecordRelocation(const MCAssembler &Asm,
-                                const MCDataFragment &Fragment,
+                                const MCFragment *Fragment,
                                 const MCAsmFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue);
 

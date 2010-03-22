@@ -17,7 +17,7 @@
 namespace llvm {
 class MCAsmFixup;
 class MCAssembler;
-class MCDataFragment;
+class MCFragment;
 class MCValue;
 class raw_ostream;
 
@@ -69,7 +69,7 @@ public:
   /// information about the relocation so that it can be emitted during
   /// WriteObject().
   virtual void RecordRelocation(const MCAssembler &Asm,
-                                const MCDataFragment &Fragment,
+                                const MCFragment *Fragment,
                                 const MCAsmFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue) = 0;
 

@@ -438,7 +438,7 @@ public:
   }
 
   void RecordX86_64Relocation(const MCAssembler &Asm,
-                              const MCDataFragment &Fragment,
+                              const MCFragment *Fragment,
                               const MCAsmFixup &Fixup, MCValue Target,
                               uint64_t &FixedValue) {
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
@@ -446,7 +446,7 @@ public:
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
     // See <reloc.h>.
-    uint32_t Address = Fragment.getOffset() + Fixup.Offset;
+    uint32_t Address = Fragment->getOffset() + Fixup.Offset;
     int64_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -521,7 +521,7 @@ public:
                    (Log2Size  << 25) |
                    (IsExtern  << 27) |
                    (Type      << 28));
-      Relocations[Fragment.getParent()].push_back(MRE);
+      Relocations[Fragment->getParent()].push_back(MRE);
 
       Index = B_Base->getIndex();
       IsExtern = 1;
@@ -622,14 +622,14 @@ public:
                  (Log2Size  << 25) |
                  (IsExtern  << 27) |
                  (Type      << 28));
-    Relocations[Fragment.getParent()].push_back(MRE);
+    Relocations[Fragment->getParent()].push_back(MRE);
   }
 
   void RecordScatteredRelocation(const MCAssembler &Asm,
-                                 const MCFragment &Fragment,
+                                 const MCFragment *Fragment,
                                  const MCAsmFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
-    uint32_t Address = Fragment.getOffset() + Fixup.Offset;
+    uint32_t Address = Fragment->getOffset() + Fixup.Offset;
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned Type = RIT_Vanilla;
@@ -670,7 +670,7 @@ public:
                    (IsPCRel   << 30) |
                    RF_Scattered);
       MRE.Word1 = Value2;
-      Relocations[Fragment.getParent()].push_back(MRE);
+      Relocations[Fragment->getParent()].push_back(MRE);
     }
 
     MachRelocationEntry MRE;
@@ -680,10 +680,10 @@ public:
                  (IsPCRel   << 30) |
                  RF_Scattered);
     MRE.Word1 = Value;
-    Relocations[Fragment.getParent()].push_back(MRE);
+    Relocations[Fragment->getParent()].push_back(MRE);
   }
 
-  void RecordRelocation(const MCAssembler &Asm, const MCDataFragment &Fragment,
+  void RecordRelocation(const MCAssembler &Asm, const MCFragment *Fragment,
                         const MCAsmFixup &Fixup, MCValue Target,
                         uint64_t &FixedValue) {
     if (Is64Bit) {
@@ -707,7 +707,7 @@ public:
     }
 
     // See <reloc.h>.
-    uint32_t Address = Fragment.getOffset() + Fixup.Offset;
+    uint32_t Address = Fragment->getOffset() + Fixup.Offset;
     uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -752,7 +752,7 @@ public:
                  (Log2Size  << 25) |
                  (IsExtern  << 27) |
                  (Type      << 28));
-    Relocations[Fragment.getParent()].push_back(MRE);
+    Relocations[Fragment->getParent()].push_back(MRE);
   }
 
   void BindIndirectSymbols(MCAssembler &Asm) {
@@ -1097,7 +1097,7 @@ void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm) {
 }
 
 void MachObjectWriter::RecordRelocation(const MCAssembler &Asm,
-                                        const MCDataFragment &Fragment,
+                                        const MCFragment *Fragment,
                                         const MCAsmFixup &Fixup, MCValue Target,
                                         uint64_t &FixedValue) {
   ((MachObjectWriterImpl*) Impl)->RecordRelocation(Asm, Fragment, Fixup,

@@ -573,7 +573,7 @@ void MCAssembler::Finish() {
           // The fixup was unresolved, we need a relocation. Inform the object
           // writer of the relocation, and give it an opportunity to adjust the
           // fixup value if need be.
-          Writer->RecordRelocation(*this, *DF, Fixup, Target, FixedValue);
+          Writer->RecordRelocation(*this, DF, Fixup, Target, FixedValue);
         }
 
         getBackend().ApplyFixup(Fixup, *DF, FixedValue);
