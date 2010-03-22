@@ -437,6 +437,20 @@ public:
       Write32(Address);
   }
 
+  // FIXME: We really need to improve the relocation validation. Basically, we
+  // want to implement a separate computation which evaluates the relocation
+  // entry as the linker would, and verifies that the resultant fixup value is
+  // exactly what the encoder wanted. This will catch several classes of
+  // problems:
+  //
+  //  - Relocation entry bugs, the two algorithms are unlikely to have the same
+  //    exact bug.
+  //
+  //  - Relaxation issues, where we forget to relax something.
+  //
+  //  - Input errors, where something cannot be correctly encoded. 'as' allows
+  //    these through in many cases.
+
   void RecordX86_64Relocation(const MCAssembler &Asm,
                               const MCFragment *Fragment,
                               const MCAsmFixup &Fixup, MCValue Target,
