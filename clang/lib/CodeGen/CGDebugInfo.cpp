@@ -112,6 +112,10 @@ void CGDebugInfo::CreateCompileUnit() {
   llvm::sys::Path AbsFileName(MainFileName);
   AbsFileName.makeAbsolute();
 
+  // The main file name provided via the "-main-file-name" option contains just
+  // the file name itself with no path information. This file name may have had
+  // a relative path, so we look into the actual file entry for the main
+  // file to determine the real absolute path for the file.
   std::string MainFileDir;
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID()))
     MainFileDir = MainFile->getDir()->getName();
