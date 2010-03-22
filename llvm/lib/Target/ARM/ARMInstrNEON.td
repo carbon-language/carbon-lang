@@ -383,62 +383,62 @@ def VLD4q32odd_UPD : VLD4DWB<0b0001, 0b1000, "32">;
 //   FIXME: Not yet implemented.
 
 //   VLD2LN   : Vector Load (single 2-element structure to one lane)
-class VLD2LN<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b10, op11_8, {?,?,?,?}, (outs DPR:$dst1, DPR:$dst2),
+class VLD2LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$dst1, DPR:$dst2),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VLD2, "vld2", Dt, "\\{$dst1[$lane], $dst2[$lane]\\}, $addr",
           "$src1 = $dst1, $src2 = $dst2", []>;
 
-def VLD2LNd8  : VLD2LN<0b0001, "8">;
-def VLD2LNd16 : VLD2LN<0b0101, "16"> { let Inst{5} = 0; }
-def VLD2LNd32 : VLD2LN<0b1001, "32"> { let Inst{6} = 0; }
+def VLD2LNd8  : VLD2LN<0b0001, {?,?,?,?}, "8">;
+def VLD2LNd16 : VLD2LN<0b0101, {?,?,0,?}, "16">;
+def VLD2LNd32 : VLD2LN<0b1001, {?,0,?,?}, "32">;
 
 // ...with double-spaced registers:
-def VLD2LNq16 : VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VLD2LNq32 : VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VLD2LNq16 : VLD2LN<0b0101, {?,?,1,?}, "16">;
+def VLD2LNq32 : VLD2LN<0b1001, {?,1,?,?}, "32">;
 
 // ...alternate versions to be allocated odd register numbers:
-def VLD2LNq16odd : VLD2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VLD2LNq32odd : VLD2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VLD2LNq16odd : VLD2LN<0b0101, {?,?,1,?}, "16">;
+def VLD2LNq32odd : VLD2LN<0b1001, {?,1,?,?}, "32">;
 
 // ...with address register writeback:
-class VLD2LNWB<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b10, op11_8, {?,?,?,?}, (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
+class VLD2LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, nohash_imm:$lane), IIC_VLD2, "vld2", Dt,
           "\\{$dst1[$lane], $dst2[$lane]\\}, $addr$offset",
           "$src1 = $dst1, $src2 = $dst2, $addr.addr = $wb", []>;
 
-def VLD2LNd8_UPD  : VLD2LNWB<0b0001, "8">;
-def VLD2LNd16_UPD : VLD2LNWB<0b0101, "16"> { let Inst{5} = 0; }
-def VLD2LNd32_UPD : VLD2LNWB<0b1001, "32"> { let Inst{6} = 0; }
+def VLD2LNd8_UPD  : VLD2LNWB<0b0001, {?,?,?,?}, "8">;
+def VLD2LNd16_UPD : VLD2LNWB<0b0101, {?,?,0,?}, "16">;
+def VLD2LNd32_UPD : VLD2LNWB<0b1001, {?,0,?,?}, "32">;
 
-def VLD2LNq16_UPD : VLD2LNWB<0b0101, "16"> { let Inst{5} = 1; }
-def VLD2LNq32_UPD : VLD2LNWB<0b1001, "32"> { let Inst{6} = 1; }
+def VLD2LNq16_UPD : VLD2LNWB<0b0101, {?,?,1,?}, "16">;
+def VLD2LNq32_UPD : VLD2LNWB<0b1001, {?,1,?,?}, "32">;
 
 //   VLD3LN   : Vector Load (single 3-element structure to one lane)
-class VLD3LN<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b10, op11_8, {?,?,?,?}, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+class VLD3LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
           nohash_imm:$lane), IIC_VLD3, "vld3", Dt,
           "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane]\\}, $addr",
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3", []>;
 
-def VLD3LNd8  : VLD3LN<0b0010, "8"> { let Inst{4} = 0; }
-def VLD3LNd16 : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b00; }
-def VLD3LNd32 : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b000; }
+def VLD3LNd8  : VLD3LN<0b0010, {?,?,?,0}, "8">;
+def VLD3LNd16 : VLD3LN<0b0110, {?,?,0,0}, "16">;
+def VLD3LNd32 : VLD3LN<0b1010, {?,0,0,0}, "32">;
 
 // ...with double-spaced registers:
-def VLD3LNq16 : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VLD3LNq32 : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VLD3LNq16 : VLD3LN<0b0110, {?,?,1,0}, "16">;
+def VLD3LNq32 : VLD3LN<0b1010, {?,1,0,0}, "32">;
 
 // ...alternate versions to be allocated odd register numbers:
-def VLD3LNq16odd : VLD3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VLD3LNq32odd : VLD3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VLD3LNq16odd : VLD3LN<0b0110, {?,?,1,0}, "16">;
+def VLD3LNq32odd : VLD3LN<0b1010, {?,1,0,0}, "32">;
 
 // ...with address register writeback:
-class VLD3LNWB<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b10, op11_8, {?,?,?,?},
+class VLD3LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3, nohash_imm:$lane),
@@ -447,37 +447,37 @@ class VLD3LNWB<bits<4> op11_8, string Dt>
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $addr.addr = $wb",
           []>;
 
-def VLD3LNd8_UPD  : VLD3LNWB<0b0010, "8"> { let Inst{4} = 0; }
-def VLD3LNd16_UPD : VLD3LNWB<0b0110, "16"> { let Inst{5-4} = 0b00; }
-def VLD3LNd32_UPD : VLD3LNWB<0b1010, "32"> { let Inst{6-4} = 0b000; }
+def VLD3LNd8_UPD  : VLD3LNWB<0b0010, {?,?,?,0}, "8">;
+def VLD3LNd16_UPD : VLD3LNWB<0b0110, {?,?,0,0}, "16">;
+def VLD3LNd32_UPD : VLD3LNWB<0b1010, {?,0,0,0}, "32">;
 
-def VLD3LNq16_UPD : VLD3LNWB<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VLD3LNq32_UPD : VLD3LNWB<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VLD3LNq16_UPD : VLD3LNWB<0b0110, {?,?,1,0}, "16">;
+def VLD3LNq32_UPD : VLD3LNWB<0b1010, {?,1,0,0}, "32">;
 
 //   VLD4LN   : Vector Load (single 4-element structure to one lane)
-class VLD4LN<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b10, op11_8, {?,?,?,?},
+class VLD4LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
           nohash_imm:$lane), IIC_VLD4, "vld4", Dt,
           "\\{$dst1[$lane], $dst2[$lane], $dst3[$lane], $dst4[$lane]\\}, $addr",
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []>;
 
-def VLD4LNd8  : VLD4LN<0b0011, "8">;
-def VLD4LNd16 : VLD4LN<0b0111, "16"> { let Inst{5} = 0; }
-def VLD4LNd32 : VLD4LN<0b1011, "32"> { let Inst{6} = 0; }
+def VLD4LNd8  : VLD4LN<0b0011, {?,?,?,?}, "8">;
+def VLD4LNd16 : VLD4LN<0b0111, {?,?,0,?}, "16">;
+def VLD4LNd32 : VLD4LN<0b1011, {?,0,?,?}, "32">;
 
 // ...with double-spaced registers:
-def VLD4LNq16 : VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VLD4LNq32 : VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VLD4LNq16 : VLD4LN<0b0111, {?,?,1,?}, "16">;
+def VLD4LNq32 : VLD4LN<0b1011, {?,1,?,?}, "32">;
 
 // ...alternate versions to be allocated odd register numbers:
-def VLD4LNq16odd : VLD4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VLD4LNq32odd : VLD4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VLD4LNq16odd : VLD4LN<0b0111, {?,?,1,?}, "16">;
+def VLD4LNq32odd : VLD4LN<0b1011, {?,1,?,?}, "32">;
 
 // ...with address register writeback:
-class VLD4LNWB<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b10, op11_8, {?,?,?,?},
+class VLD4LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b10, op11_8, op7_4,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4, nohash_imm:$lane),
@@ -486,12 +486,12 @@ class VLD4LNWB<bits<4> op11_8, string Dt>
 "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4, $addr.addr = $wb",
           []>;
 
-def VLD4LNd8_UPD  : VLD4LNWB<0b0011, "8">;
-def VLD4LNd16_UPD : VLD4LNWB<0b0111, "16"> { let Inst{5} = 0; }
-def VLD4LNd32_UPD : VLD4LNWB<0b1011, "32"> { let Inst{6} = 0; }
+def VLD4LNd8_UPD  : VLD4LNWB<0b0011, {?,?,?,?}, "8">;
+def VLD4LNd16_UPD : VLD4LNWB<0b0111, {?,?,0,?}, "16">;
+def VLD4LNd32_UPD : VLD4LNWB<0b1011, {?,0,?,?}, "32">;
 
-def VLD4LNq16_UPD : VLD4LNWB<0b0111, "16"> { let Inst{5} = 1; }
-def VLD4LNq32_UPD : VLD4LNWB<0b1011, "32"> { let Inst{6} = 1; }
+def VLD4LNq16_UPD : VLD4LNWB<0b0111, {?,?,1,?}, "16">;
+def VLD4LNq32_UPD : VLD4LNWB<0b1011, {?,1,?,?}, "32">;
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
@@ -745,109 +745,109 @@ def VST4q32odd_UPD : VST4DWB<0b0001, 0b1000, "32">;
 //   FIXME: Not yet implemented.
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
-class VST2LN<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs),
+class VST2LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VST, "vst2", Dt, "\\{$src1[$lane], $src2[$lane]\\}, $addr",
           "", []>;
 
-def VST2LNd8  : VST2LN<0b0001, "8">;
-def VST2LNd16 : VST2LN<0b0101, "16"> { let Inst{5} = 0; }
-def VST2LNd32 : VST2LN<0b1001, "32"> { let Inst{6} = 0; }
+def VST2LNd8  : VST2LN<0b0001, {?,?,?,?}, "8">;
+def VST2LNd16 : VST2LN<0b0101, {?,?,0,?}, "16">;
+def VST2LNd32 : VST2LN<0b1001, {?,0,?,?}, "32">;
 
 // ...with double-spaced registers:
-def VST2LNq16 : VST2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VST2LNq32 : VST2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VST2LNq16 : VST2LN<0b0101, {?,?,1,?}, "16">;
+def VST2LNq32 : VST2LN<0b1001, {?,1,?,?}, "32">;
 
 // ...alternate versions to be allocated odd register numbers:
-def VST2LNq16odd : VST2LN<0b0101, "16"> { let Inst{5} = 1; }
-def VST2LNq32odd : VST2LN<0b1001, "32"> { let Inst{6} = 1; }
+def VST2LNq16odd : VST2LN<0b0101, {?,?,1,?}, "16">;
+def VST2LNq32odd : VST2LN<0b1001, {?,1,?,?}, "32">;
 
 // ...with address register writeback:
-class VST2LNWB<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs GPR:$wb),
+class VST2LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, nohash_imm:$lane), IIC_VST, "vst2", Dt,
           "\\{$src1[$lane], $src2[$lane]\\}, $addr$offset",
           "$addr.addr = $wb", []>;
 
-def VST2LNd8_UPD  : VST2LNWB<0b0001, "8">;
-def VST2LNd16_UPD : VST2LNWB<0b0101, "16"> { let Inst{5} = 0; }
-def VST2LNd32_UPD : VST2LNWB<0b1001, "32"> { let Inst{6} = 0; }
+def VST2LNd8_UPD  : VST2LNWB<0b0001, {?,?,?,?}, "8">;
+def VST2LNd16_UPD : VST2LNWB<0b0101, {?,?,0,?}, "16">;
+def VST2LNd32_UPD : VST2LNWB<0b1001, {?,0,?,?}, "32">;
 
-def VST2LNq16_UPD : VST2LNWB<0b0101, "16"> { let Inst{5} = 1; }
-def VST2LNq32_UPD : VST2LNWB<0b1001, "32"> { let Inst{6} = 1; }
+def VST2LNq16_UPD : VST2LNWB<0b0101, {?,?,1,?}, "16">;
+def VST2LNq32_UPD : VST2LNWB<0b1001, {?,1,?,?}, "32">;
 
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
-class VST3LN<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs),
+class VST3LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
            nohash_imm:$lane), IIC_VST, "vst3", Dt,
           "\\{$src1[$lane], $src2[$lane], $src3[$lane]\\}, $addr", "", []>;
 
-def VST3LNd8  : VST3LN<0b0010, "8"> { let Inst{4} = 0; }
-def VST3LNd16 : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b00; }
-def VST3LNd32 : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b000; }
+def VST3LNd8  : VST3LN<0b0010, {?,?,?,0}, "8">;
+def VST3LNd16 : VST3LN<0b0110, {?,?,0,0}, "16">;
+def VST3LNd32 : VST3LN<0b1010, {?,0,0,0}, "32">;
 
 // ...with double-spaced registers:
-def VST3LNq16 : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VST3LNq32 : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VST3LNq16 : VST3LN<0b0110, {?,?,1,0}, "16">;
+def VST3LNq32 : VST3LN<0b1010, {?,1,0,0}, "32">;
 
 // ...alternate versions to be allocated odd register numbers:
-def VST3LNq16odd : VST3LN<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VST3LNq32odd : VST3LN<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VST3LNq16odd : VST3LN<0b0110, {?,?,1,0}, "16">;
+def VST3LNq32odd : VST3LN<0b1010, {?,1,0,0}, "32">;
 
 // ...with address register writeback:
-class VST3LNWB<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs GPR:$wb),
+class VST3LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3, nohash_imm:$lane),
           IIC_VST, "vst3", Dt,
           "\\{$src1[$lane], $src2[$lane], $src3[$lane]\\}, $addr$offset",
           "$addr.addr = $wb", []>;
 
-def VST3LNd8_UPD  : VST3LNWB<0b0010, "8"> { let Inst{4} = 0; }
-def VST3LNd16_UPD : VST3LNWB<0b0110, "16"> { let Inst{5-4} = 0b00; }
-def VST3LNd32_UPD : VST3LNWB<0b1010, "32"> { let Inst{6-4} = 0b000; }
+def VST3LNd8_UPD  : VST3LNWB<0b0010, {?,?,?,0}, "8">;
+def VST3LNd16_UPD : VST3LNWB<0b0110, {?,?,0,0}, "16">;
+def VST3LNd32_UPD : VST3LNWB<0b1010, {?,0,0,0}, "32">;
 
-def VST3LNq16_UPD : VST3LNWB<0b0110, "16"> { let Inst{5-4} = 0b10; }
-def VST3LNq32_UPD : VST3LNWB<0b1010, "32"> { let Inst{6-4} = 0b100; }
+def VST3LNq16_UPD : VST3LNWB<0b0110, {?,?,1,0}, "16">;
+def VST3LNq32_UPD : VST3LNWB<0b1010, {?,1,0,0}, "32">;
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
-class VST4LN<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs),
+class VST4LN<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
            nohash_imm:$lane), IIC_VST, "vst4", Dt,
           "\\{$src1[$lane], $src2[$lane], $src3[$lane], $src4[$lane]\\}, $addr",
           "", []>;
 
-def VST4LNd8  : VST4LN<0b0011, "8">;
-def VST4LNd16 : VST4LN<0b0111, "16"> { let Inst{5} = 0; }
-def VST4LNd32 : VST4LN<0b1011, "32"> { let Inst{6} = 0; }
+def VST4LNd8  : VST4LN<0b0011, {?,?,?,?}, "8">;
+def VST4LNd16 : VST4LN<0b0111, {?,?,0,?}, "16">;
+def VST4LNd32 : VST4LN<0b1011, {?,0,?,?}, "32">;
 
 // ...with double-spaced registers:
-def VST4LNq16 : VST4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VST4LNq32 : VST4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VST4LNq16 : VST4LN<0b0111, {?,?,1,?}, "16">;
+def VST4LNq32 : VST4LN<0b1011, {?,1,?,?}, "32">;
 
 // ...alternate versions to be allocated odd register numbers:
-def VST4LNq16odd : VST4LN<0b0111, "16"> { let Inst{5} = 1; }
-def VST4LNq32odd : VST4LN<0b1011, "32"> { let Inst{6} = 1; }
+def VST4LNq16odd : VST4LN<0b0111, {?,?,1,?}, "16">;
+def VST4LNq32odd : VST4LN<0b1011, {?,1,?,?}, "32">;
 
 // ...with address register writeback:
-class VST4LNWB<bits<4> op11_8, string Dt>
-  : NLdSt<1, 0b00, op11_8, {?,?,?,?}, (outs GPR:$wb),
+class VST4LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+  : NLdSt<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
           (ins addrmode6:$addr, am6offset:$offset,
            DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4, nohash_imm:$lane),
           IIC_VST, "vst4", Dt,
   "\\{$src1[$lane], $src2[$lane], $src3[$lane], $src4[$lane]\\}, $addr$offset",
           "$addr.addr = $wb", []>;
 
-def VST4LNd8_UPD  : VST4LNWB<0b0011, "8">;
-def VST4LNd16_UPD : VST4LNWB<0b0111, "16"> { let Inst{5} = 0; }
-def VST4LNd32_UPD : VST4LNWB<0b1011, "32"> { let Inst{6} = 0; }
+def VST4LNd8_UPD  : VST4LNWB<0b0011, {?,?,?,?}, "8">;
+def VST4LNd16_UPD : VST4LNWB<0b0111, {?,?,0,?}, "16">;
+def VST4LNd32_UPD : VST4LNWB<0b1011, {?,0,?,?}, "32">;
 
-def VST4LNq16_UPD : VST4LNWB<0b0111, "16"> { let Inst{5} = 1; }
-def VST4LNq32_UPD : VST4LNWB<0b1011, "32"> { let Inst{6} = 1; }
+def VST4LNq16_UPD : VST4LNWB<0b0111, {?,?,1,?}, "16">;
+def VST4LNq32_UPD : VST4LNWB<0b1011, {?,1,?,?}, "32">;
 
 } // mayStore = 1, hasExtraSrcRegAllocReq = 1
 
