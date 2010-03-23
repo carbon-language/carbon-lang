@@ -60,7 +60,7 @@ def MiscFrm       : Format<29>;
 def ThumbMiscFrm  : Format<30>;
 
 def NLdStFrm                : Format<31>;
-def NVdImmFrm               : Format<32>;
+def N1RegModImmFrm          : Format<32>;
 def NVdVmImmFrm             : Format<33>;
 def NVdVmVCVTFrm            : Format<34>;
 
@@ -1538,7 +1538,7 @@ class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
                dag oops, dag iops, InstrItinClass itin,
                string opc, string dt, string asm, string cstr,
                list<dag> pattern>
-  : NDataI<oops, iops, NVdImmFrm, itin, opc, dt, asm, cstr, pattern> {
+  : NDataI<oops, iops, N1RegModImmFrm, itin, opc, dt, asm, cstr, pattern> {
   let Inst{23} = op23;
   let Inst{21-19} = op21_19;
   let Inst{11-8} = op11_8;
