@@ -59,8 +59,9 @@ def NEONDupFrm    : Format<28>;
 def MiscFrm       : Format<29>;
 def ThumbMiscFrm  : Format<30>;
 
-def NLdStFrm      : Format<31>;
-def NVdImmFrm     : Format<32>;
+def NLdStFrm                : Format<31>;
+def NVdImmFrm               : Format<32>;
+def NVdVmImmFrm             : Format<33>;
 
 // Misc flags.
 
@@ -1487,9 +1488,10 @@ class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
 }
 
 // Same as NeonI except it does not have a "data type" specifier.
-class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
-             string opc, string asm, string cstr, list<dag> pattern>
-  : InstARM<am, Size4Bytes, im, NEONFrm, NeonDomain, cstr, itin> {
+class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
+             InstrItinClass itin, string opc, string asm, string cstr,
+             list<dag> pattern>
+  : InstARM<am, Size4Bytes, im, f, NeonDomain, cstr, itin> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(!strconcat(opc, "${p}"), !strconcat("\t", asm));
@@ -1499,7 +1501,7 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, InstrItinClass itin,
 
 class NI<dag oops, dag iops, InstrItinClass itin, string opc, string asm,
          list<dag> pattern>
-  : NeonXI<oops, iops, AddrModeNone, IndexModeNone, itin, opc, asm, "",
+  : NeonXI<oops, iops, AddrModeNone, IndexModeNone, NEONFrm, itin, opc, asm, "",
            pattern> {
 }
 
@@ -1522,9 +1524,9 @@ class NDataI<dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{31-25} = 0b1111001;
 }
 
-class NDataXI<dag oops, dag iops, InstrItinClass itin,
+class NDataXI<dag oops, dag iops, Format f, InstrItinClass itin,
               string opc, string asm, string cstr, list<dag> pattern>
-  : NeonXI<oops, iops, AddrModeNone, IndexModeNone, itin, opc, asm,
+  : NeonXI<oops, iops, AddrModeNone, IndexModeNone, f, itin, opc, asm,
            cstr, pattern> {
   let Inst{31-25} = 0b1111001;
 }
@@ -1550,7 +1552,7 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
           bits<5> op11_7, bit op6, bit op4,
           dag oops, dag iops, InstrItinClass itin,
           string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, NEONFrm, itin, opc, dt, asm, cstr, pattern> {
+  : NDataI<oops, iops, NVdVmImmFrm, itin, opc, dt, asm, cstr, pattern> {
   let Inst{24-23} = op24_23;
   let Inst{21-20} = op21_20;
   let Inst{19-18} = op19_18;
@@ -1565,7 +1567,7 @@ class N2VX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
            bits<5> op11_7, bit op6, bit op4,
            dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, string cstr, list<dag> pattern>
-  : NDataXI<oops, iops, itin, opc, asm, cstr, pattern> {
+  : NDataXI<oops, iops, NVdVmImmFrm, itin, opc, asm, cstr, pattern> {
   let Inst{24-23} = op24_23;
   let Inst{21-20} = op21_20;
   let Inst{19-18} = op19_18;
@@ -1606,7 +1608,7 @@ class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
            bit op4,
            dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, string cstr, list<dag> pattern>
-  : NDataXI<oops, iops, itin, opc, asm, cstr, pattern> {
+  : NDataXI<oops, iops, NEONFrm, itin, opc, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
