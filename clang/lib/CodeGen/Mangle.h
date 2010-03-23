@@ -28,11 +28,14 @@ namespace clang {
   class ASTContext;
   class CXXConstructorDecl;
   class CXXDestructorDecl;
+  class CXXMethodDecl;
   class FunctionDecl;
   class NamedDecl;
   class VarDecl;
 
 namespace CodeGen {
+  class ThisAdjustment;
+  class ThunkInfo;
   class CovariantThunkAdjustment;
   class ThunkAdjustment;
 
@@ -94,8 +97,14 @@ public:
   void mangleThunk(const FunctionDecl *FD, 
                    const ThunkAdjustment &ThisAdjustment,
                    llvm::SmallVectorImpl<char> &);
+  void mangleThunk(const CXXMethodDecl *MD,
+                   const ThunkInfo &Thunk,
+                   llvm::SmallVectorImpl<char> &);
   void mangleCXXDtorThunk(const CXXDestructorDecl *D, CXXDtorType Type,
                           const ThunkAdjustment &ThisAdjustment,
+                          llvm::SmallVectorImpl<char> &);
+  void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
+                          const ThisAdjustment &ThisAdjustment,
                           llvm::SmallVectorImpl<char> &);
   void mangleCovariantThunk(const FunctionDecl *FD, 
                             const CovariantThunkAdjustment& Adjustment,

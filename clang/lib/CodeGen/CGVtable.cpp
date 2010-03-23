@@ -3650,9 +3650,27 @@ CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   return GV;
 }
 
+llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
+                                              const ThunkInfo &Thunk) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
+  // Compute the mangled name.
+  llvm::SmallString<256> Name;
+  if (const CXXDestructorDecl* DD = dyn_cast<CXXDestructorDecl>(MD))
+    getMangleContext().mangleCXXDtorThunk(DD, GD.getDtorType(), Thunk.This,
+                                          Name);
+  else
+    getMangleContext().mangleThunk(MD, Thunk, Name);
+  
+  const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
+  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
+}
+
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 {
-  // FIXME: Implement this!
+  llvm::Constant *ThunkFn = CGM.GetAddrOfThunk(GD, Thunk);
+  
+  (void)ThunkFn;
 }
 
 void CodeGenVTables::EmitThunks(GlobalDecl GD)

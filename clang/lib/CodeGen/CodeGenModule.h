@@ -225,6 +225,9 @@ public:
   /// for the given type.
   llvm::Constant *GetAddrOfRTTIDescriptor(QualType Ty);
 
+  /// GetAddrOfThunk - Get the address of the thunk for the given global decl.
+  llvm::Constant *GetAddrOfThunk(GlobalDecl GD, const ThunkInfo &Thunk);
+
   llvm::Constant *GetAddrOfThunk(GlobalDecl GD,
                                  const ThunkAdjustment &ThisAdjustment);
   llvm::Constant *GetAddrOfCovariantThunk(GlobalDecl GD,
