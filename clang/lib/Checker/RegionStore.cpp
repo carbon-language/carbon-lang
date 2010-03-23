@@ -1044,7 +1044,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
   }
 #endif
 
-  if (RTy->isStructureType())
+  if (RTy->isStructureType() || RTy->isClassType())
     return RetrieveStruct(store, R);
 
   // FIXME: Handle unions.
@@ -1337,8 +1337,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
 
 SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
   QualType T = R->getValueType(getContext());
-  assert(T->isStructureType());
-  assert(T->getAsStructureType()->getDecl()->isDefinition());
+  assert(T->isStructureType() || T->isClassType());
   return ValMgr.makeLazyCompoundVal(store, R);
 }
 

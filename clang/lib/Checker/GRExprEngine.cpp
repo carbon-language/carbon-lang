@@ -1333,6 +1333,20 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
     state = state->set<ReturnExpr>(0);
   }
 
+  // Bind the constructed object value to CXXConstructExpr.
+  if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(CE)) {
+    const CXXThisRegion *ThisR = getCXXThisRegion(CCE, LocCtx);
+    // We might not have 'this' region in the binding if we didn't inline
+    // the ctor call.
+    SVal ThisV = state->getSVal(ThisR);
+    loc::MemRegionVal *V = dyn_cast<loc::MemRegionVal>(&ThisV);
+    if (V) {
+      SVal ObjVal = state->getSVal(V->getRegion());
+      assert(isa<nonloc::LazyCompoundVal>(ObjVal));
+      state = state->BindExpr(CCE, ObjVal);
+    }
+  }
+
   B.GenerateNode(state);
 }
 
@@ -3198,10 +3212,7 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
                                                     Pred->getLocationContext(),
                                    E, Builder->getBlock(), Builder->getIndex());
 
-  Type *T = CD->getParent()->getTypeForDecl();
-  QualType PT = getContext().getPointerType(QualType(T,0));
-  const CXXThisRegion *ThisR = ValMgr.getRegionManager().getCXXThisRegion(PT,
-                                                                          SFC);
+  const CXXThisRegion *ThisR = getCXXThisRegion(E, SFC);
 
   CallEnter Loc(E, CD, Pred->getLocationContext());
   for (ExplodedNodeSet::iterator NI = ArgsEvaluated.begin(),
@@ -3213,6 +3224,13 @@ void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
     if (N)
       Dst.Add(N);
   }
+}
+
+const CXXThisRegion *GRExprEngine::getCXXThisRegion(const CXXConstructExpr *E,
+                                                 const StackFrameContext *SFC) {
+  Type *T = E->getConstructor()->getParent()->getTypeForDecl();
+  QualType PT = getContext().getPointerType(QualType(T,0));
+  return ValMgr.getRegionManager().getCXXThisRegion(PT, SFC);
 }
 //===----------------------------------------------------------------------===//
 // Checker registration/lookup.
