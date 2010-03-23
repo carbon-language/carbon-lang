@@ -621,7 +621,7 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 
   assert(((NumArgs == FTy->getNumParams()) ||
           (FTy->isVarArg() && NumArgs > FTy->getNumParams())) &&
-         "Calling a function with bad signature");
+         "Invoking a function with bad signature");
 
   for (unsigned i = 0, e = NumArgs; i != e; i++) {
     assert((i >= FTy->getNumParams() || 
