@@ -149,6 +149,11 @@
 		90FD6D85103C3D49005F5B73 /* SelectorMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6D7A103C3D49005F5B73 /* SelectorMap.cpp */; };
 		90FD6DB6103D977E005F5B73 /* index-test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90FD6DB5103D977E005F5B73 /* index-test.cpp */; };
 		BDF87CF70FD746F300BBF872 /* SemaTemplateDeduction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */; };
+		BF89C3E211595818001C2D68 /* AnalysisBasedWarnings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */; };
+		BF89C3E91159594A001C2D68 /* SemaObjCProperty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3E81159594A001C2D68 /* SemaObjCProperty.cpp */; };
+		BF89C3F911595A01001C2D68 /* SemaType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3F811595A01001C2D68 /* SemaType.cpp */; };
+		BF89C3FB11595A37001C2D68 /* SemaCodeComplete.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3FA11595A37001C2D68 /* SemaCodeComplete.cpp */; };
+		BF89C3FD11595A5D001C2D68 /* SemaExceptionSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF89C3FC11595A5D001C2D68 /* SemaExceptionSpec.cpp */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
@@ -618,6 +623,15 @@
 		90FD6D91103C3D80005F5B73 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = clang/Frontend/Utils.h; sourceTree = "<group>"; };
 		90FD6DB5103D977E005F5B73 /* index-test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "index-test.cpp"; path = "tools/index-test/index-test.cpp"; sourceTree = "<group>"; };
 		BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateDeduction.cpp; path = lib/Sema/SemaTemplateDeduction.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		BF89C3E0115957FF001C2D68 /* AnalysisBasedWarnings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnalysisBasedWarnings.h; path = lib/Sema/AnalysisBasedWarnings.h; sourceTree = "<group>"; };
+		BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisBasedWarnings.cpp; path = lib/Sema/AnalysisBasedWarnings.cpp; sourceTree = "<group>"; };
+		BF89C3E311595835001C2D68 /* Lookup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Lookup.h; path = lib/Sema/Lookup.h; sourceTree = "<group>"; };
+		BF89C3E411595855001C2D68 /* SemaInit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaInit.h; path = lib/Sema/SemaInit.h; sourceTree = "<group>"; };
+		BF89C3E5115958A1001C2D68 /* TargetAttributesSema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TargetAttributesSema.h; path = lib/Sema/TargetAttributesSema.h; sourceTree = "<group>"; };
+		BF89C3E81159594A001C2D68 /* SemaObjCProperty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaObjCProperty.cpp; path = lib/Sema/SemaObjCProperty.cpp; sourceTree = "<group>"; };
+		BF89C3F811595A01001C2D68 /* SemaType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaType.cpp; path = lib/Sema/SemaType.cpp; sourceTree = "<group>"; };
+		BF89C3FA11595A37001C2D68 /* SemaCodeComplete.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaCodeComplete.cpp; path = lib/Sema/SemaCodeComplete.cpp; sourceTree = "<group>"; };
+		BF89C3FC11595A5D001C2D68 /* SemaExceptionSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaExceptionSpec.cpp; path = lib/Sema/SemaExceptionSpec.cpp; sourceTree = "<group>"; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = lib/Parse/ParseExprCXX.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1257,29 +1271,36 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */,
+				BF89C3E0115957FF001C2D68 /* AnalysisBasedWarnings.h */,
 				35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */,
 				1A6B6CD110693FC900BB4A8F /* CodeCompleteConsumer.cpp */,
 				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
 				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
 				DECB6D640F9AE26600F5FBC7 /* JumpDiagnostics.cpp */,
+				BF89C3E311595835001C2D68 /* Lookup.h */,
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
 				1A701B630F7C8FE400FEC4D1 /* SemaAccess.cpp */,
 				DEB07AC70F4A427E00F5A2BE /* SemaAttr.cpp */,
 				DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */,
+				BF89C3FA11595A37001C2D68 /* SemaCodeComplete.cpp */,
 				35E194670ECB82FB00F21733 /* SemaCXXScopeSpec.cpp */,
 				DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */,
 				DE22BCF10E14197E0094DC60 /* SemaDeclAttr.cpp */,
 				35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */,
 				DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */,
+				BF89C3FC11595A5D001C2D68 /* SemaExceptionSpec.cpp */,
 				DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */,
 				DE47999B0D2EBE1A00706D2D /* SemaExprObjC.cpp */,
 				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
+				BF89C3E411595855001C2D68 /* SemaInit.h */,
 				3599299A0DE2425300A8A33E /* SemaInit.cpp */,
 				357EA27C0F2526F300439B60 /* SemaLookup.cpp */,
 				1A6B6CD210693FC900BB4A8F /* SemaCodeComplete.cpp */,
 				35E194680ECB82FB00F21733 /* SemaCXXCast.cpp */,
+				BF89C3E81159594A001C2D68 /* SemaObjCProperty.cpp */,
 				35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */,
 				35585DBF0EAFBC4500D0A97A /* SemaOverload.h */,
 				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
@@ -1288,7 +1309,9 @@
 				BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */,
 				35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */,
 				1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */,
+				BF89C3F811595A01001C2D68 /* SemaType.cpp */,
 				1AE4EE3B103B89CA00888A23 /* TreeTransform.h */,
+				BF89C3E5115958A1001C2D68 /* TargetAttributesSema.h */,
 			);
 			name = Sema;
 			sourceTree = "<group>";
@@ -1997,6 +2020,11 @@
 				1A621C4511111D61009E6834 /* CIndexUSRs.cpp in Sources */,
 				1A621C4611111D61009E6834 /* CXCursor.cpp in Sources */,
 				1A96785211486FDC00F24372 /* RecordLayout.cpp in Sources */,
+				BF89C3E211595818001C2D68 /* AnalysisBasedWarnings.cpp in Sources */,
+				BF89C3E91159594A001C2D68 /* SemaObjCProperty.cpp in Sources */,
+				BF89C3F911595A01001C2D68 /* SemaType.cpp in Sources */,
+				BF89C3FB11595A37001C2D68 /* SemaCodeComplete.cpp in Sources */,
+				BF89C3FD11595A5D001C2D68 /* SemaExceptionSpec.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
