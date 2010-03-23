@@ -194,6 +194,12 @@ void MCTargetExpr::Anchor() {}
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout *Layout) const {
   MCValue Value;
 
+  // Fast path constants.
+  if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(this)) {
+    Res = CE->getValue();
+    return true;
+  }
+
   if (!EvaluateAsRelocatable(Value, Layout) || !Value.isAbsolute())
     return false;
 
