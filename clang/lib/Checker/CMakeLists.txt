@@ -2,6 +2,7 @@ set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangChecker
   AdjustedReturnValueChecker.cpp
+  AggExprVisitor.cpp
   ArrayBoundChecker.cpp
   AttrNonNullChecker.cpp
   BasicConstraintManager.cpp
