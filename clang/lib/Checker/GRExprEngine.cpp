@@ -3138,6 +3138,10 @@ void GRExprEngine::CreateCXXTemporaryObject(Expr *Ex, ExplodedNode *Pred,
 void GRExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
                                          ExplodedNode *Pred,
                                          ExplodedNodeSet &Dst) {
+  if (E->isElidable()) {
+    VisitAggExpr(E->getArg(0), Dest, Pred, Dst);
+    return;
+  }
 
   const CXXConstructorDecl *CD = E->getConstructor();
   assert(CD);

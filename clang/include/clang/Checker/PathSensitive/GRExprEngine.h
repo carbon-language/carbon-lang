@@ -216,7 +216,7 @@ public:
                          const GRState* St,
                          ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                          const void *tag = 0);
-protected:
+
   /// CheckerVisit - Dispatcher for performing checker-specific logic
   ///  at specific statements.
   void CheckerVisit(Stmt *S, ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
@@ -351,6 +351,9 @@ protected:
   void VisitCXXConstructExpr(const CXXConstructExpr *E, SVal Dest,
                              ExplodedNode *Pred,
                              ExplodedNodeSet &Dst);
+  void VisitAggExpr(const Expr *E, SVal Dest, ExplodedNode *Pred,
+                    ExplodedNodeSet &Dst);
+
   /// Create a C++ temporary object for an rvalue.
   void CreateCXXTemporaryObject(Expr *Ex, ExplodedNode *Pred, 
                                 ExplodedNodeSet &Dst);
