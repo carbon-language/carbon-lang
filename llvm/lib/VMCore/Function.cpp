@@ -400,8 +400,8 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys,
 #include "llvm/Intrinsics.gen"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
-  /// hasAddressTaken - returns true if there are any uses of this function
-  /// other than direct calls or invokes to it.
+/// hasAddressTaken - returns true if there are any uses of this function
+/// other than direct calls or invokes to it.
 bool Function::hasAddressTaken() const {
   for (Value::use_const_iterator I = use_begin(), E = use_end(); I != E; ++I) {
     if (I.getOperandNo() != 0 ||

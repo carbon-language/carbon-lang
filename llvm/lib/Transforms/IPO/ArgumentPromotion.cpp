@@ -623,6 +623,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   SmallVector<Value*, 16> Args;
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(F->use_back());
+    assert(CS.getCalledFunction() == F);
     Instruction *Call = CS.getInstruction();
     const AttrListPtr &CallPAL = CS.getAttributes();
 
@@ -660,7 +661,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
         // Non-dead argument: insert GEPs and loads as appropriate.
         ScalarizeTable &ArgIndices = ScalarizedElements[I];
         // Store the Value* version of the indices in here, but declare it now
-        // for reuse
+        // for reuse.
         std::vector<Value*> Ops;
         for (ScalarizeTable::iterator SI = ArgIndices.begin(),
                E = ArgIndices.end(); SI != E; ++SI) {
@@ -677,10 +678,10 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
                     Type::getInt32Ty(F->getContext()) : 
                     Type::getInt64Ty(F->getContext()));
               Ops.push_back(ConstantInt::get(IdxTy, *II));
-              // Keep track of the type we're currently indexing
+              // Keep track of the type we're currently indexing.
               ElTy = cast<CompositeType>(ElTy)->getTypeAtIndex(*II);
             }
-            // And create a GEP to extract those indices
+            // And create a GEP to extract those indices.
             V = GetElementPtrInst::Create(V, Ops.begin(), Ops.end(),
                                           V->getName()+".idx", Call);
             Ops.clear();
@@ -694,7 +695,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     if (ExtraArgHack)
       Args.push_back(Constant::getNullValue(Type::getInt32Ty(F->getContext())));
 
-    // Push any varargs arguments on the list
+    // Push any varargs arguments on the list.
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
       if (Attributes Attrs = CallPAL.getParamAttributes(ArgIndex))
