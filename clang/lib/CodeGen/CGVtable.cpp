@@ -1135,36 +1135,6 @@ private:
   /// AddressPoints - Address points for the vtable being built.
   CodeGenVTables::AddressPointsMapTy AddressPoints;
 
-  /// ReturnAdjustment - A return adjustment.
-  struct ReturnAdjustment {
-    /// NonVirtual - The non-virtual adjustment from the derived object to its
-    /// nearest virtual base.
-    int64_t NonVirtual;
-    
-    /// VBaseOffsetOffset - The offset (in bytes), relative to the address point 
-    /// of the virtual base class offset.
-    int64_t VBaseOffsetOffset;
-    
-    ReturnAdjustment() : NonVirtual(0), VBaseOffsetOffset(0) { }
-    
-    bool isEmpty() const { return !NonVirtual && !VBaseOffsetOffset; }
-
-    friend bool operator==(const ReturnAdjustment &LHS, 
-                           const ReturnAdjustment &RHS) {
-      return LHS.NonVirtual == RHS.NonVirtual && 
-        LHS.VBaseOffsetOffset == RHS.VBaseOffsetOffset;
-    }
-    
-    friend bool operator<(const ReturnAdjustment &LHS,
-                          const ReturnAdjustment &RHS) {
-      if (LHS.NonVirtual < RHS.NonVirtual)
-        return true;
-      
-      return LHS.NonVirtual == RHS.NonVirtual && 
-        LHS.VBaseOffsetOffset < RHS.VBaseOffsetOffset;
-    }
-  };
-  
   /// MethodInfo - Contains information about a method in a vtable.
   /// (Used for computing 'this' pointer adjustment thunks.
   struct MethodInfo {
@@ -1193,37 +1163,6 @@ private:
   /// MethodInfoMap - The information for all methods in the vtable we're
   /// currently building.
   MethodInfoMapTy MethodInfoMap;
-  
-  /// ThisAdjustment - A 'this' pointer adjustment thunk.
-  struct ThisAdjustment {
-    /// NonVirtual - The non-virtual adjustment from the derived object to its
-    /// nearest virtual base.
-    int64_t NonVirtual;
-
-    /// VCallOffsetOffset - The offset (in bytes), relative to the address point,
-    /// of the virtual call offset.
-    int64_t VCallOffsetOffset;
-    
-    ThisAdjustment() : NonVirtual(0), VCallOffsetOffset(0) { }
-
-    bool isEmpty() const { return !NonVirtual && !VCallOffsetOffset; }
-
-    friend bool operator==(const ThisAdjustment &LHS, 
-                           const ThisAdjustment &RHS) {
-      return LHS.NonVirtual == RHS.NonVirtual && 
-        LHS.VCallOffsetOffset == RHS.VCallOffsetOffset;
-    }
-    
-    friend bool operator<(const ThisAdjustment &LHS,
-                          const ThisAdjustment &RHS) {
-      if (LHS.NonVirtual < RHS.NonVirtual)
-        return true;
-      
-      return LHS.NonVirtual == RHS.NonVirtual && 
-        LHS.VCallOffsetOffset < RHS.VCallOffsetOffset;
-    }
-    
-  };
   
   /// ThunkInfo - The 'this' pointer adjustment as well as an optional return
   /// adjustment for a thunk.
@@ -1489,8 +1428,7 @@ void VtableBuilder::ComputeThisAdjustments() {
   }
 }
 
-VtableBuilder::ReturnAdjustment 
-VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
+ReturnAdjustment VtableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
   ReturnAdjustment Adjustment;
   
   if (!Offset.isEmpty()) {
@@ -1570,7 +1508,7 @@ VtableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   return BaseOffset();
 }
   
-VtableBuilder::ThisAdjustment 
+ThisAdjustment 
 VtableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD, 
                                      uint64_t BaseOffsetInLayoutClass,
                                      FinalOverriders::OverriderInfo Overrider) {
