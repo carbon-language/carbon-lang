@@ -141,6 +141,7 @@ def VLD1q_UPD
 } // mayLoad = 1
 
 // Use vstmia to store a Q register as a D register pair.
+// This is equivalent to VSTMD except that it has a Q register operand.
 def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
                 "vstmia", "$addr, ${src:dregpair}",
                 [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
@@ -150,6 +151,20 @@ def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
   let Inst{20}    = 0;
   let Inst{11-8}  = 0b1011;
 }
+
+let mayStore = 1 in {
+// Use vst1 to store a Q register as a D register pair.
+// This alternative to VSTRQ allows an alignment to be specified.
+// This is equivalent to VST1q64 except that it has a Q register operand.
+def VST1q
+  : NLdSt<0,0b00,0b1010,0b1100, (outs), (ins addrmode6:$addr, QPR:$src),
+          IIC_VST, "vst1", "64", "${src:dregpair}, $addr", "", []>;
+def VST1q_UPD
+  : NLdSt<0,0b00,0b1010,0b1100, (outs GPR:$wb),
+          (ins addrmode6:$addr, am6offset:$offset, QPR:$src),
+          IIC_VST, "vst1", "64", "{$src:dregpair}, $addr$offset",
+          "$addr.addr = $wb", []>;
+} // mayStore = 1
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
@@ -477,31 +492,26 @@ def VLD4LNq32_UPD : VLD4LNWB<0b1011, {?,1,?,?}, "32">;
 //   FIXME: Not yet implemented.
 } // mayLoad = 1, hasExtraDefRegAllocReq = 1
 
-//   VST1     : Vector Store (multiple single elements)
-class VST1D<bits<4> op7_4, string Dt, ValueType Ty>
-  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$addr, DPR:$src), IIC_VST,
-          "vst1", Dt, "\\{$src\\}, $addr", "",
-          [(int_arm_neon_vst1 addrmode6:$addr, (Ty DPR:$src))]>;
-class VST1Q<bits<4> op7_4, string Dt, ValueType Ty>
-  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$addr, QPR:$src), IIC_VST,
-          "vst1", Dt, "${src:dregpair}, $addr", "",
-          [(int_arm_neon_vst1 addrmode6:$addr, (Ty QPR:$src))]>;
-
-let hasExtraSrcRegAllocReq = 1 in {
-def  VST1d8   : VST1D<0b0000, "8",  v8i8>;
-def  VST1d16  : VST1D<0b0100, "16", v4i16>;
-def  VST1d32  : VST1D<0b1000, "32", v2i32>;
-def  VST1df   : VST1D<0b1000, "32", v2f32>;
-def  VST1d64  : VST1D<0b1100, "64", v1i64>;
-
-def  VST1q8   : VST1Q<0b0000, "8",  v16i8>;
-def  VST1q16  : VST1Q<0b0100, "16", v8i16>;
-def  VST1q32  : VST1Q<0b1000, "32", v4i32>;
-def  VST1qf   : VST1Q<0b1000, "32", v4f32>;
-def  VST1q64  : VST1Q<0b1100, "64", v2i64>;
-} // hasExtraSrcRegAllocReq
-
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
+
+//   VST1     : Vector Store (multiple single elements)
+class VST1D<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$addr, DPR:$src), IIC_VST,
+          "vst1", Dt, "\\{$src\\}, $addr", "", []>;
+class VST1Q<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b00,0b1010,op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
+          "vst1", Dt, "\\{$src1, $src2\\}, $addr", "", []>;
+
+def  VST1d8   : VST1D<0b0000, "8">;
+def  VST1d16  : VST1D<0b0100, "16">;
+def  VST1d32  : VST1D<0b1000, "32">;
+def  VST1d64  : VST1D<0b1100, "64">;
+
+def  VST1q8   : VST1Q<0b0000, "8">;
+def  VST1q16  : VST1Q<0b0100, "16">;
+def  VST1q32  : VST1Q<0b1000, "32">;
+def  VST1q64  : VST1Q<0b1100, "64">;
 
 // ...with address register writeback:
 class VST1DWB<bits<4> op7_4, string Dt>
@@ -582,9 +592,6 @@ class VST2Q<bits<4> op7_4, string Dt>
 def  VST2d8   : VST2D<0b1000, 0b0000, "8">;
 def  VST2d16  : VST2D<0b1000, 0b0100, "16">;
 def  VST2d32  : VST2D<0b1000, 0b1000, "32">;
-def  VST2d64  : NLdSt<0,0b00,0b1010,0b1100, (outs),
-                      (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
-                      "vst1", "64", "\\{$src1, $src2\\}, $addr", "", []>;
 
 def  VST2q8   : VST2Q<0b0000, "8">;
 def  VST2q16  : VST2Q<0b0100, "16">;
@@ -606,11 +613,6 @@ class VST2QWB<bits<4> op7_4, string Dt>
 def VST2d8_UPD  : VST2DWB<0b1000, 0b0000, "8">;
 def VST2d16_UPD : VST2DWB<0b1000, 0b0100, "16">;
 def VST2d32_UPD : VST2DWB<0b1000, 0b1000, "32">;
-def VST2d64_UPD : NLdSt<0,0b00,0b1010,0b1100, (outs GPR:$wb),
-                        (ins addrmode6:$addr, am6offset:$offset,
-                         DPR:$src1, DPR:$src2), IIC_VST,
-                        "vst1", "64", "\\{$src1, $src2\\}, $addr$offset",
-                        "$addr.addr = $wb", []>;
 
 def VST2q8_UPD  : VST2QWB<0b0000, "8">;
 def VST2q16_UPD : VST2QWB<0b0100, "16">;

@@ -738,7 +738,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
             RC == ARM::QPR_VFP2RegisterClass) && "Unknown regclass!");
     // FIXME: Neon instructions should support predicates
     if (Align >= 16 && (getRegisterInfo().canRealignStack(MF))) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q64))
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q))
                      .addFrameIndex(FI).addImm(128)
                      .addMemOperand(MMO)
                      .addReg(SrcReg, getKillRegState(isKill)));

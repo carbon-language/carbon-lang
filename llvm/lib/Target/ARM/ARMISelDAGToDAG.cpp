@@ -132,9 +132,9 @@ private:
                     unsigned *QOpcodes0, unsigned *QOpcodes1);
 
   /// SelectVST - Select NEON store intrinsics.  NumVecs should
-  /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
+  /// be 1, 2, 3 or 4.  The opcode arrays specify the instructions used for
   /// stores of D registers and even subregs and odd subregs of Q registers.
-  /// For NumVecs == 2, QOpcodes1 is not used.
+  /// For NumVecs <= 2, QOpcodes1 is not used.
   SDNode *SelectVST(SDNode *N, unsigned NumVecs, unsigned *DOpcodes,
                     unsigned *QOpcodes0, unsigned *QOpcodes1);
 
@@ -1048,7 +1048,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   case MVT::v4f32:
   case MVT::v4i32: OpcodeIndex = 2; break;
   case MVT::v2i64: OpcodeIndex = 3;
-    assert(NumVecs == 1 && "v2i64 type only supported for VLD1/VST1");
+    assert(NumVecs == 1 && "v2i64 type only supported for VLD1");
     break;
   }
 
@@ -1112,7 +1112,7 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
 SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
                                    unsigned *DOpcodes, unsigned *QOpcodes0,
                                    unsigned *QOpcodes1) {
-  assert(NumVecs >=2 && NumVecs <= 4 && "VST NumVecs out-of-range");
+  assert(NumVecs >=1 && NumVecs <= 4 && "VST NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
@@ -1137,6 +1137,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   case MVT::v8i16: OpcodeIndex = 1; break;
   case MVT::v4f32:
   case MVT::v4i32: OpcodeIndex = 2; break;
+  case MVT::v2i64: OpcodeIndex = 3;
+    assert(NumVecs == 1 && "v2i64 type only supported for VST1");
+    break;
   }
 
   SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
@@ -1157,9 +1160,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
-  if (NumVecs == 2) {
-    // Quad registers are directly supported for VST2,
-    // storing 2 pairs of D regs.
+  if (NumVecs <= 2) {
+    // Quad registers are directly supported for VST1 and VST2,
+    // storing pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
       Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
@@ -1170,7 +1173,8 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, unsigned NumVecs,
     Ops.push_back(Pred);
     Ops.push_back(Reg0); // predicate register
     Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 9);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(),
+                                  5 + 2 * NumVecs);
   }
 
   // Otherwise, quad registers are stored with two separate instructions,
@@ -1894,9 +1898,17 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       return SelectVLDSTLane(N, true, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
+    case Intrinsic::arm_neon_vst1: {
+      unsigned DOpcodes[] = { ARM::VST1d8, ARM::VST1d16,
+                              ARM::VST1d32, ARM::VST1d64 };
+      unsigned QOpcodes[] = { ARM::VST1q8, ARM::VST1q16,
+                              ARM::VST1q32, ARM::VST1q64 };
+      return SelectVST(N, 1, DOpcodes, QOpcodes, 0);
+    }
+
     case Intrinsic::arm_neon_vst2: {
       unsigned DOpcodes[] = { ARM::VST2d8, ARM::VST2d16,
-                              ARM::VST2d32, ARM::VST2d64 };
+                              ARM::VST2d32, ARM::VST1q64 };
       unsigned QOpcodes[] = { ARM::VST2q8, ARM::VST2q16, ARM::VST2q32 };
       return SelectVST(N, 2, DOpcodes, QOpcodes, 0);
     }
