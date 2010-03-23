@@ -492,7 +492,8 @@ void CodeGenModule::BuildThunksForVirtual(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) 
-    GD = GlobalDecl(DD, GD.getDtorType());
+    GD = GlobalDecl(cast<CXXDestructorDecl>(DD->getCanonicalDecl()),
+                    GD.getDtorType());
   else
     GD = MD->getCanonicalDecl();
   
