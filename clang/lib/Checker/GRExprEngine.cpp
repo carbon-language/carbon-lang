@@ -1329,6 +1329,8 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
   if (ReturnedExpr) {
     SVal RetVal = state->getSVal(ReturnedExpr);
     state = state->BindExpr(CE, RetVal);
+    // Clear the return expr GDM.
+    state = state->set<ReturnExpr>(0);
   }
 
   B.GenerateNode(state);
@@ -2909,7 +2911,8 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt *RS, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
   ExplodedNodeSet Src;
   if (Expr *RetE = RS->getRetValue()) {
-    // Record the returned expression in the state.
+    // Record the returned expression in the state. It will be used in
+    // ProcessCallExit to bind the return value to the call expr.
     {
       static int Tag = 0;
       SaveAndRestore<const void *> OldTag(Builder->Tag, &Tag);
