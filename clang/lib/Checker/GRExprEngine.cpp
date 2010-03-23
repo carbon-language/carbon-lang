@@ -944,10 +944,11 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
 // Block entrance.  (Update counters).
 //===----------------------------------------------------------------------===//
 
-bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, const GRState*,
+bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
                                         GRBlockCounter BC) {
 
-  return BC.getNumVisited(B->getBlockID()) < 3;
+  return BC.getNumVisited(Pred->getLocationContext()->getCurrentStackFrame(), 
+                          B->getBlockID()) < 3;
 }
 
 //===----------------------------------------------------------------------===//

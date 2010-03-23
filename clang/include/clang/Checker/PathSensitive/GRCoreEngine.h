@@ -82,7 +82,7 @@ class GRCoreEngine {
 
   void ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder);
 
-  bool ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
+  bool ProcessBlockEntrance(CFGBlock* Blk, const ExplodedNode *Pred,
                             GRBlockCounter BC);
 
 
@@ -174,7 +174,9 @@ public:
   GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
 
   unsigned getCurrentBlockCount() const {
-    return getBlockCounter().getNumVisited(B.getBlockID());
+    return getBlockCounter().getNumVisited(
+                            Pred->getLocationContext()->getCurrentStackFrame(),
+                                           B.getBlockID());
   }
 
   ExplodedNode* generateNode(PostStmt PP,const GRState* St,ExplodedNode* Pred) {
@@ -434,7 +436,9 @@ public:
   }
 
   unsigned getCurrentBlockCount() const {
-    return getBlockCounter().getNumVisited(B.getBlockID());
+    return getBlockCounter().getNumVisited(
+                            Pred->getLocationContext()->getCurrentStackFrame(),
+                                           B.getBlockID());
   }
 
   ExplodedNode* generateNode(const GRState* State, const void *tag = 0,

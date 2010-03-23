@@ -47,7 +47,7 @@ public:
   /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue
   ///  exploring the given path, and false otherwise.
-  virtual bool ProcessBlockEntrance(CFGBlock* B, const GRState* St,
+  virtual bool ProcessBlockEntrance(CFGBlock* B, const ExplodedNode *Pred,
                                     GRBlockCounter BC) = 0;
 
   /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor

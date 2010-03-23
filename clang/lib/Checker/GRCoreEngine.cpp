@@ -126,9 +126,9 @@ void GRCoreEngine::ProcessStmt(CFGElement E, GRStmtNodeBuilder& Builder) {
   SubEngine.ProcessStmt(E, Builder);
 }
 
-bool GRCoreEngine::ProcessBlockEntrance(CFGBlock* Blk, const GRState* State,
+bool GRCoreEngine::ProcessBlockEntrance(CFGBlock* Blk, const ExplodedNode *Pred,
                                         GRBlockCounter BC) {
-  return SubEngine.ProcessBlockEntrance(Blk, State, BC);
+  return SubEngine.ProcessBlockEntrance(Blk, Pred, BC);
 }
 
 void GRCoreEngine::ProcessBranch(Stmt* Condition, Stmt* Terminator,
@@ -256,7 +256,7 @@ void GRCoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
 
   // FIXME: Should we allow ProcessBlockEntrance to also manipulate state?
 
-  if (ProcessBlockEntrance(Blk, Pred->State, WList->getBlockCounter()))
+  if (ProcessBlockEntrance(Blk, Pred, WList->getBlockCounter()))
     GenerateNode(BlockEntrance(Blk, Pred->getLocationContext()), Pred->State, Pred);
 }
 
@@ -265,7 +265,9 @@ void GRCoreEngine::HandleBlockEntrance(const BlockEntrance& L,
 
   // Increment the block counter.
   GRBlockCounter Counter = WList->getBlockCounter();
-  Counter = BCounterFactory.IncrementCount(Counter, L.getBlock()->getBlockID());
+  Counter = BCounterFactory.IncrementCount(Counter, 
+                             Pred->getLocationContext()->getCurrentStackFrame(),
+                                           L.getBlock()->getBlockID());
   WList->setBlockCounter(Counter);
 
   // Process the entrance of the block.
