@@ -82,7 +82,7 @@ Module::Endianness Module::getEndianness() const {
   
   while (!temp.empty()) {
     StringRef token = DataLayout;
-    tie(token, temp) = getToken(DataLayout, "-");
+    tie(token, temp) = getToken(temp, "-");
     
     if (token[0] == 'e') {
       ret = LittleEndian;
