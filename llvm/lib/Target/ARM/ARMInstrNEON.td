@@ -115,19 +115,20 @@ def h64imm : Operand<i64> {
 // NEON load / store instructions
 //===----------------------------------------------------------------------===//
 
-// Use vldmia to load a Q register as a D register pair.
-// This is equivalent to VLDMD except that it has a Q register operand.
-def VLDMQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
-                "vldmia", "$addr, ${dst:dregpair}",
-                [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]> {
-  let Inst{27-25} = 0b110;
-  let Inst{24}    = 0; // P bit
-  let Inst{23}    = 1; // U bit
-  let Inst{20}    = 1;
-  let Inst{11-8}  = 0b1011;
-}
-
 let mayLoad = 1 in {
+// Use vldmia to load a Q register as a D register pair.
+// This is equivalent to VLDMD except that it has a Q register operand
+// instead of a pair of D registers.
+def VLDMQ
+  : AXDI5<(outs QPR:$dst), (ins addrmode5:$addr, pred:$p),
+          IndexModeNone, IIC_fpLoadm,
+          "vldm${addr:submode}${p}\t${addr:base}, ${dst:dregpair}", "", []>;
+def VLDMQ_UPD
+  : AXDI5<(outs QPR:$dst, GPR:$wb), (ins addrmode5:$addr, pred:$p),
+          IndexModeUpd, IIC_fpLoadm,
+          "vldm${addr:submode}${p}\t${addr:base}!, ${dst:dregpair}",
+          "$addr.base = $wb", []>;
+
 // Use vld1 to load a Q register as a D register pair.
 // This alternative to VLDMQ allows an alignment to be specified.
 // This is equivalent to VLD1q64 except that it has a Q register operand.
@@ -140,19 +141,20 @@ def VLD1q_UPD
           "${dst:dregpair}, $addr$offset", "$addr.addr = $wb", []>;
 } // mayLoad = 1
 
-// Use vstmia to store a Q register as a D register pair.
-// This is equivalent to VSTMD except that it has a Q register operand.
-def VSTMQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
-                "vstmia", "$addr, ${src:dregpair}",
-                [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
-  let Inst{27-25} = 0b110;
-  let Inst{24}    = 0; // P bit
-  let Inst{23}    = 1; // U bit
-  let Inst{20}    = 0;
-  let Inst{11-8}  = 0b1011;
-}
-
 let mayStore = 1 in {
+// Use vstmia to store a Q register as a D register pair.
+// This is equivalent to VSTMD except that it has a Q register operand
+// instead of a pair of D registers.
+def VSTMQ
+  : AXDI5<(outs), (ins QPR:$src, addrmode5:$addr, pred:$p),
+          IndexModeNone, IIC_fpStorem,
+          "vstm${addr:submode}${p}\t${addr:base}, ${src:dregpair}", "", []>;
+def VSTMQ_UPD
+  : AXDI5<(outs GPR:$wb), (ins QPR:$src, addrmode5:$addr, pred:$p),
+          IndexModeUpd, IIC_fpStorem,
+          "vstm${addr:submode}${p}\t${addr:base}!, ${src:dregpair}",
+          "$addr.base = $wb", []>;
+
 // Use vst1 to store a Q register as a D register pair.
 // This alternative to VSTMQ allows an alignment to be specified.
 // This is equivalent to VST1q64 except that it has a Q register operand.

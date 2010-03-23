@@ -745,7 +745,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     } else {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ)).
                      addReg(SrcReg, getKillRegState(isKill))
-                     .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+                     .addFrameIndex(FI)
+                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
+                     .addMemOperand(MMO));
     }
   }
 }
@@ -793,7 +795,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addMemOperand(MMO));
     } else {
       AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
-                     .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+                     .addFrameIndex(FI)
+                     .addImm(ARM_AM::getAM5Opc(ARM_AM::ia, 4))
+                     .addMemOperand(MMO));
     }
   }
 }
