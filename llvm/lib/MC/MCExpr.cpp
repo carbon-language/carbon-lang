@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "mcexpr"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
@@ -18,6 +20,12 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
+
+namespace {
+namespace stats {
+STATISTIC(MCExprEvaluate, "Number of MCExpr evaluations");
+}
+}
 
 void MCExpr::print(raw_ostream &OS) const {
   switch (getKind()) {
@@ -231,6 +239,8 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS,const MCSymbolRefExpr *RHS_A,
 
 bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    const MCAsmLayout *Layout) const {
+  ++stats::MCExprEvaluate;
+
   switch (getKind()) {
   case Target:
     return cast<MCTargetExpr>(this)->EvaluateAsRelocatableImpl(Res, Layout);

@@ -28,7 +28,15 @@
 #include <vector>
 using namespace llvm;
 
+namespace {
+namespace stats {
+STATISTIC(RelaxedInstructions, "Number of relaxed instructions");
+STATISTIC(RelaxationSteps, "Number of assembler layout and relaxation steps");
 STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
+STATISTIC(EvaluateFixup, "Number of evaluated fixups");
+STATISTIC(ObjectBytes, "Number of emitted object file bytes");
+}
+}
 
 // FIXME FIXME FIXME: There are number of places in this file where we convert
 // what is a 64-bit assembler value used for computation into a value in the
@@ -234,6 +242,8 @@ const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
 bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
                                 const MCAsmFixup &Fixup, const MCFragment *DF,
                                 MCValue &Target, uint64_t &Value) const {
+  ++stats::EvaluateFixup;
+
   if (!Fixup.Value->EvaluateAsRelocatable(Target, &Layout))
     llvm_report_error("expected relocatable expression");
 
@@ -376,7 +386,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCFragment &F,
   uint64_t Start = OW->getStream().tell();
   (void) Start;
 
-  ++EmittedFragments;
+  ++stats::EmittedFragments;
 
   // FIXME: Embed in fragments instead?
   switch (F.getKind()) {
@@ -505,6 +515,7 @@ void MCAssembler::Finish() {
       llvm::errs() << "assembler backend - final-layout\n--\n";
       dump(); });
 
+  uint64_t StartOffset = OS.tell();
   llvm::OwningPtr<MCObjectWriter> Writer(getBackend().createObjectWriter(OS));
   if (!Writer)
     llvm_report_error("unable to create object writer!");
@@ -543,6 +554,8 @@ void MCAssembler::Finish() {
   // Write the object file.
   Writer->WriteObject(*this);
   OS.flush();
+
+  stats::ObjectBytes += OS.tell() - StartOffset;
 }
 
 bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
@@ -575,6 +588,8 @@ bool MCAssembler::FragmentNeedsRelaxation(const MCInstFragment *IF,
 }
 
 bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
+  ++stats::RelaxationSteps;
+
   // Layout the concrete sections and fragments.
   uint64_t Address = 0;
   MCSectionData *Prev = 0;
@@ -628,6 +643,8 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
       MCInstFragment *IF = dyn_cast<MCInstFragment>(it2);
       if (!IF || !FragmentNeedsRelaxation(IF, Layout))
         continue;
+
+      ++stats::RelaxedInstructions;
 
       // FIXME-PERF: We could immediately lower out instructions if we can tell
       // they are fully resolved, to avoid retesting on later passes.
