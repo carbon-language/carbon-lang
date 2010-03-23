@@ -1268,19 +1268,8 @@ Value *SCEVExpander::expand(const SCEV *S) {
        L = L->getParentLoop())
     if (S->isLoopInvariant(L)) {
       if (!L) break;
-      if (BasicBlock *Preheader = L->getLoopPreheader()) {
+      if (BasicBlock *Preheader = L->getLoopPreheader())
         InsertPt = Preheader->getTerminator();
-        BasicBlock::iterator IP = InsertPt;
-        // Back past any debug info instructions.  Sometimes we inserted
-        // something earlier before debug info but after any real instructions.
-        // This should behave the same as if debug info was not present.
-        while (IP != Preheader->begin()) {
-          --IP;
-          if (!isa<DbgInfoIntrinsic>(IP))
-            break;
-          InsertPt = IP;
-        }
-      }
     } else {
       // If the SCEV is computable at this level, insert it into the header
       // after the PHIs (and after any other instructions that we've inserted
