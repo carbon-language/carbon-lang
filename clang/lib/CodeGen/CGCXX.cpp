@@ -489,11 +489,17 @@ CodeGenModule::GetAddrOfCovariantThunk(GlobalDecl GD,
 }
 
 void CodeGenModule::BuildThunksForVirtual(GlobalDecl GD) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+
+  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) 
+    GD = GlobalDecl(DD, GD.getDtorType());
+  else
+    GD = MD->getCanonicalDecl();
+  
   CodeGenVTables::AdjustmentVectorTy *AdjPtr = getVTables().getAdjustments(GD);
   if (!AdjPtr)
     return;
   CodeGenVTables::AdjustmentVectorTy &Adj = *AdjPtr;
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   for (unsigned i = 0; i < Adj.size(); i++) {
     GlobalDecl OGD = Adj[i].first;
     const CXXMethodDecl *OMD = cast<CXXMethodDecl>(OGD.getDecl());

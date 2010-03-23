@@ -214,11 +214,6 @@ public:
 
   AdjustmentVectorTy *getAdjustments(GlobalDecl GD);
 
-  /// getVtableAddressPoint - returns the address point of the vtable for the
-  /// given record decl.
-  /// FIXME: This should return a list of address points.
-  uint64_t getVtableAddressPoint(const CXXRecordDecl *RD);
-  
   llvm::GlobalVariable *getVtable(const CXXRecordDecl *RD);
   
   /// CtorVtableInfo - Information about a constructor vtable.

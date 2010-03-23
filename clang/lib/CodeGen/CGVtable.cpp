@@ -3662,13 +3662,6 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
-uint64_t CodeGenVTables::getVtableAddressPoint(const CXXRecordDecl *RD) {
-  uint64_t AddressPoint = 
-    (*(*(CGM.getVTables().AddressPoints[RD]))[RD])[std::make_pair(RD, 0)];
-  
-  return AddressPoint;
-}
-
 llvm::GlobalVariable *
 CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                                bool GenerateDefinition,
@@ -3754,21 +3747,6 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
                           /*IsVirtual=*/false,
                           AddressPoints);
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
-
-  for (CXXRecordDecl::method_iterator i = RD->method_begin(),
-	 e = RD->method_end(); i != e; ++i) {
-    if (!(*i)->isVirtual())
-      continue;
-    if(!(*i)->hasInlineBody() && !(*i)->isImplicit())
-      continue;
-
-    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(*i)) {
-      CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Complete));
-      CGM.BuildThunksForVirtual(GlobalDecl(DD, Dtor_Deleting));
-    } else {
-      CGM.BuildThunksForVirtual(GlobalDecl(*i));
-    }
-  }
 }
 
 llvm::GlobalVariable *CodeGenVTables::getVtable(const CXXRecordDecl *RD) {
@@ -3792,6 +3770,10 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
   if (!RD->isDynamicClass())
     return;
   
+  // Check if we need to emit thunks for this function.
+  if (MD->isVirtual())
+    CGM.BuildThunksForVirtual(GD);
+
   // Get the key function.
   const CXXMethodDecl *KeyFunction = CGM.getContext().getKeyFunction(RD);
   

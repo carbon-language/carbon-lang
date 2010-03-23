@@ -714,20 +714,9 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
                                  Context.getSourceManager(),
                                  "Generating code for declaration");
   
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+  if (isa<CXXMethodDecl>(D))
     getVTables().EmitVTableRelatedData(GD);
-    if (MD->isVirtual() && MD->isOutOfLine() &&
-        (!isa<CXXDestructorDecl>(D) || GD.getDtorType() != Dtor_Base)) {
-      if (isa<CXXDestructorDecl>(D)) {
-        GlobalDecl CanonGD(cast<CXXDestructorDecl>(D->getCanonicalDecl()),
-                           GD.getDtorType());
-        BuildThunksForVirtual(CanonGD);
-      } else {
-        BuildThunksForVirtual(MD->getCanonicalDecl());
-      }
-    }
-  }
-  
+
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());
   else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
@@ -758,7 +747,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
     if (WeakRefReferences.count(Entry)) {
       const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl());
       if (FD && !FD->hasAttr<WeakAttr>())
-	Entry->setLinkage(llvm::Function::ExternalLinkage);
+        Entry->setLinkage(llvm::Function::ExternalLinkage);
 
       WeakRefReferences.erase(Entry);
     }
@@ -873,7 +862,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
   if (Entry) {
     if (WeakRefReferences.count(Entry)) {
       if (D && !D->hasAttr<WeakAttr>())
-	Entry->setLinkage(llvm::Function::ExternalLinkage);
+        Entry->setLinkage(llvm::Function::ExternalLinkage);
 
       WeakRefReferences.erase(Entry);
     }
