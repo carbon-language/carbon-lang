@@ -869,6 +869,7 @@ class N2V2<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
 }
 
 // Basic 2-register operations: single-, double- and quad-register.
+// This is used for NVdVmVCVTFrm form.
 class N2VS<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
