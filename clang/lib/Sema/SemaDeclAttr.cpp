@@ -1137,7 +1137,8 @@ static FormatAttrKind getFormatAttrKind(llvm::StringRef Format) {
       Format == "zcmn_err")
     return SupportedFormat;
 
-  if (Format == "gcc_tdiag")
+  if (Format == "gcc_diag" || Format == "gcc_cdiag" ||
+      Format == "gcc_cxxdiag" || Format == "gcc_tdiag")
     return IgnoredFormat;
   
   return InvalidFormat;

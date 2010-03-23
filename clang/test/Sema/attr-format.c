@@ -71,4 +71,10 @@ foo2(const char *fmt, va_list va) {
 
 // PR6542
 extern void gcc_format (const char *, ...)
+  __attribute__ ((__format__(__gcc_diag__, 1, 2)));
+extern void gcc_cformat (const char *, ...)
+  __attribute__ ((__format__(__gcc_cdiag__, 1, 2)));
+extern void gcc_cxxformat (const char *, ...)
+  __attribute__ ((__format__(__gcc_cxxdiag__, 1, 2)));
+extern void gcc_tformat (const char *, ...)
   __attribute__ ((__format__(__gcc_tdiag__, 1, 2)));
