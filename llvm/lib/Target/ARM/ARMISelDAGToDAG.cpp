@@ -124,10 +124,10 @@ private:
   /// SelectDYN_ALLOC - Select dynamic alloc for Thumb.
   SDNode *SelectDYN_ALLOC(SDNode *N);
 
-  /// SelectVLD - Select NEON load intrinsics.  NumVecs should
-  /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
+  /// SelectVLD - Select NEON load intrinsics.  NumVecs should be
+  /// 1, 2, 3 or 4.  The opcode arrays specify the instructions used for
   /// loads of D registers and even subregs and odd subregs of Q registers.
-  /// For NumVecs == 2, QOpcodes1 is not used.
+  /// For NumVecs <= 2, QOpcodes1 is not used.
   SDNode *SelectVLD(SDNode *N, unsigned NumVecs, unsigned *DOpcodes,
                     unsigned *QOpcodes0, unsigned *QOpcodes1);
 
@@ -1022,7 +1022,7 @@ static EVT GetNEONSubregVT(EVT VT) {
 SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
                                    unsigned *DOpcodes, unsigned *QOpcodes0,
                                    unsigned *QOpcodes1) {
-  assert(NumVecs >=2 && NumVecs <= 4 && "VLD NumVecs out-of-range");
+  assert(NumVecs >= 1 && NumVecs <= 4 && "VLD NumVecs out-of-range");
   DebugLoc dl = N->getDebugLoc();
 
   SDValue MemAddr, Align;
@@ -1047,6 +1047,9 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   case MVT::v8i16: OpcodeIndex = 1; break;
   case MVT::v4f32:
   case MVT::v4i32: OpcodeIndex = 2; break;
+  case MVT::v2i64: OpcodeIndex = 3;
+    assert(NumVecs == 1 && "v2i64 type only supported for VLD1/VST1");
+    break;
   }
 
   SDValue Pred = CurDAG->getTargetConstant(14, MVT::i32);
@@ -1060,15 +1063,15 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, unsigned NumVecs,
   }
 
   EVT RegVT = GetNEONSubregVT(VT);
-  if (NumVecs == 2) {
-    // Quad registers are directly supported for VLD2,
-    // loading 2 pairs of D regs.
+  if (NumVecs <= 2) {
+    // Quad registers are directly supported for VLD1 and VLD2,
+    // loading pairs of D regs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
     const SDValue Ops[] = { MemAddr, Align, Pred, Reg0, Chain };
-    std::vector<EVT> ResTys(4, VT);
+    std::vector<EVT> ResTys(2 * NumVecs, RegVT);
     ResTys.push_back(MVT::Other);
     SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 5);
-    Chain = SDValue(VLd, 4);
+    Chain = SDValue(VLd, 2 * NumVecs);
 
     // Combine the even and odd subregs to produce the result.
     for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
@@ -1831,9 +1834,17 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     default:
       break;
 
+    case Intrinsic::arm_neon_vld1: {
+      unsigned DOpcodes[] = { ARM::VLD1d8, ARM::VLD1d16,
+                              ARM::VLD1d32, ARM::VLD1d64 };
+      unsigned QOpcodes[] = { ARM::VLD1q8, ARM::VLD1q16,
+                              ARM::VLD1q32, ARM::VLD1q64 };
+      return SelectVLD(N, 1, DOpcodes, QOpcodes, 0);
+    }
+
     case Intrinsic::arm_neon_vld2: {
       unsigned DOpcodes[] = { ARM::VLD2d8, ARM::VLD2d16,
-                              ARM::VLD2d32, ARM::VLD2d64 };
+                              ARM::VLD2d32, ARM::VLD1q64 };
       unsigned QOpcodes[] = { ARM::VLD2q8, ARM::VLD2q16, ARM::VLD2q32 };
       return SelectVLD(N, 2, DOpcodes, QOpcodes, 0);
     }

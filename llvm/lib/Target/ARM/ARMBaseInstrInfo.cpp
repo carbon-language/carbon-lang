@@ -788,7 +788,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
             RC == ARM::QPR_8RegisterClass) && "Unknown regclass!");
     if (Align >= 16
         && (getRegisterInfo().canRealignStack(MF))) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64), DestReg)
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q), DestReg)
                      .addFrameIndex(FI).addImm(128)
                      .addMemOperand(MMO));
     } else {

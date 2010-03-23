@@ -116,6 +116,7 @@ def h64imm : Operand<i64> {
 //===----------------------------------------------------------------------===//
 
 // Use vldmia to load a Q register as a D register pair.
+// This is equivalent to VLDMD except that it has a Q register operand.
 def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
                 "vldmia", "$addr, ${dst:dregpair}",
                 [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]> {
@@ -125,6 +126,19 @@ def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
   let Inst{20}    = 1;
   let Inst{11-8}  = 0b1011;
 }
+
+let mayLoad = 1 in {
+// Use vld1 to load a Q register as a D register pair.
+// This alternative to VLDRQ allows an alignment to be specified.
+// This is equivalent to VLD1q64 except that it has a Q register operand.
+def VLD1q
+  : NLdSt<0,0b10,0b1010,0b1100, (outs QPR:$dst), (ins addrmode6:$addr),
+          IIC_VLD1, "vld1", "64", "${dst:dregpair}, $addr", "", []>;
+def VLD1q_UPD
+  : NLdSt<0,0b10,0b1010,0b1100, (outs QPR:$dst, GPR:$wb),
+          (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1, "vld1", "64",
+          "${dst:dregpair}, $addr$offset", "$addr.addr = $wb", []>;
+} // mayLoad = 1
 
 // Use vstmia to store a Q register as a D register pair.
 def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
@@ -137,29 +151,27 @@ def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
   let Inst{11-8}  = 0b1011;
 }
 
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
+
 //   VLD1     : Vector Load (multiple single elements)
-class VLD1D<bits<4> op7_4, string Dt, ValueType Ty>
-  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst), (ins addrmode6:$addr), IIC_VLD1,
-          "vld1", Dt, "\\{$dst\\}, $addr", "",
-          [(set DPR:$dst, (Ty (int_arm_neon_vld1 addrmode6:$addr)))]>;
-class VLD1Q<bits<4> op7_4, string Dt, ValueType Ty>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs QPR:$dst), (ins addrmode6:$addr), IIC_VLD1,
-          "vld1", Dt, "${dst:dregpair}, $addr", "",
-          [(set QPR:$dst, (Ty (int_arm_neon_vld1 addrmode6:$addr)))]>;
+class VLD1D<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst),
+          (ins addrmode6:$addr), IIC_VLD1,
+          "vld1", Dt, "\\{$dst\\}, $addr", "", []>;
+class VLD1Q<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b10,0b1010,op7_4, (outs DPR:$dst1, DPR:$dst2),
+          (ins addrmode6:$addr), IIC_VLD1,
+          "vld1", Dt, "\\{$dst1, $dst2\\}, $addr", "", []>;
 
-def  VLD1d8   : VLD1D<0b0000, "8",  v8i8>;
-def  VLD1d16  : VLD1D<0b0100, "16", v4i16>;
-def  VLD1d32  : VLD1D<0b1000, "32", v2i32>;
-def  VLD1df   : VLD1D<0b1000, "32", v2f32>;
-def  VLD1d64  : VLD1D<0b1100, "64", v1i64>;
+def  VLD1d8   : VLD1D<0b0000, "8">;
+def  VLD1d16  : VLD1D<0b0100, "16">;
+def  VLD1d32  : VLD1D<0b1000, "32">;
+def  VLD1d64  : VLD1D<0b1100, "64">;
 
-def  VLD1q8   : VLD1Q<0b0000, "8",  v16i8>;
-def  VLD1q16  : VLD1Q<0b0100, "16", v8i16>;
-def  VLD1q32  : VLD1Q<0b1000, "32", v4i32>;
-def  VLD1qf   : VLD1Q<0b1000, "32", v4f32>;
-def  VLD1q64  : VLD1Q<0b1100, "64", v2i64>;
-
-let mayLoad = 1 in {
+def  VLD1q8   : VLD1Q<0b0000, "8">;
+def  VLD1q16  : VLD1Q<0b0100, "16">;
+def  VLD1q32  : VLD1Q<0b1000, "32">;
+def  VLD1q64  : VLD1Q<0b1100, "64">;
 
 // ...with address register writeback:
 class VLD1DWB<bits<4> op7_4, string Dt>
@@ -182,9 +194,6 @@ def VLD1q8_UPD  : VLD1QWB<0b0000, "8">;
 def VLD1q16_UPD : VLD1QWB<0b0100, "16">;
 def VLD1q32_UPD : VLD1QWB<0b1000, "32">;
 def VLD1q64_UPD : VLD1QWB<0b1100, "64">;
-} // mayLoad = 1
-
-let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
 // ...with 3 registers (some of these are only for the disassembler):
 class VLD1D3<bits<4> op7_4, string Dt>
@@ -242,9 +251,6 @@ class VLD2Q<bits<4> op7_4, string Dt>
 def  VLD2d8   : VLD2D<0b1000, 0b0000, "8">;
 def  VLD2d16  : VLD2D<0b1000, 0b0100, "16">;
 def  VLD2d32  : VLD2D<0b1000, 0b1000, "32">;
-def  VLD2d64  : NLdSt<0,0b10,0b1010,0b1100, (outs DPR:$dst1, DPR:$dst2),
-                      (ins addrmode6:$addr), IIC_VLD1,
-                      "vld1", "64", "\\{$dst1, $dst2\\}, $addr", "", []>;
 
 def  VLD2q8   : VLD2Q<0b0000, "8">;
 def  VLD2q16  : VLD2Q<0b0100, "16">;
@@ -266,11 +272,6 @@ class VLD2QWB<bits<4> op7_4, string Dt>
 def VLD2d8_UPD  : VLD2DWB<0b1000, 0b0000, "8">;
 def VLD2d16_UPD : VLD2DWB<0b1000, 0b0100, "16">;
 def VLD2d32_UPD : VLD2DWB<0b1000, 0b1000, "32">;
-def VLD2d64_UPD : NLdSt<0,0b10,0b1010,0b1100,
-                        (outs DPR:$dst1, DPR:$dst2, GPR:$wb),
-                        (ins addrmode6:$addr, am6offset:$offset), IIC_VLD1,
-                        "vld1", "64", "\\{$dst1, $dst2\\}, $addr$offset",
-                        "$addr.addr = $wb", []>;
 
 def VLD2q8_UPD  : VLD2QWB<0b0000, "8">;
 def VLD2q16_UPD : VLD2QWB<0b0100, "16">;
