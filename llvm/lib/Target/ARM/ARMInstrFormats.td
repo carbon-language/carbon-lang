@@ -62,6 +62,7 @@ def ThumbMiscFrm  : Format<30>;
 def NLdStFrm                : Format<31>;
 def NVdImmFrm               : Format<32>;
 def NVdVmImmFrm             : Format<33>;
+def NVdVmVCVTFrm            : Format<34>;
 
 // Misc flags.
 
