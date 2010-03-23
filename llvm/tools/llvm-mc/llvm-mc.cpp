@@ -56,6 +56,7 @@ OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
 
 enum OutputFileType {
+  OFT_Null,
   OFT_AssemblyFile,
   OFT_ObjectFile
 };
@@ -65,6 +66,8 @@ FileType("filetype", cl::init(OFT_AssemblyFile),
   cl::values(
        clEnumValN(OFT_AssemblyFile, "asm",
                   "Emit an assembly ('.s') file"),
+       clEnumValN(OFT_Null, "null",
+                  "Don't emit anything (for timing purposes)"),
        clEnumValN(OFT_ObjectFile, "obj",
                   "Emit a native object ('.o') file"),
        clEnumValEnd));
@@ -289,6 +292,8 @@ static int AssembleInput(const char *ProgName) {
       CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     Str.reset(createAsmStreamer(Ctx, *Out,TM->getTargetData()->isLittleEndian(),
                                 /*asmverbose*/true, IP, CE.get(), ShowInst));
+  } else if (FileType == OFT_Null) {
+    Str.reset(createNullStreamer(Ctx));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
