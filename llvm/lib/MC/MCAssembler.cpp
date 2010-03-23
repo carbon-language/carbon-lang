@@ -25,9 +25,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 
-// FIXME: Gross.
-#include "../Target/X86/X86FixupKinds.h"
-
 #include <vector>
 using namespace llvm;
 
@@ -551,10 +548,6 @@ void MCAssembler::Finish() {
 bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
                                        const MCFragment *DF,
                                        const MCAsmLayout &Layout) const {
-  // Currently we only need to relax X86::reloc_pcrel_1byte.
-  if (unsigned(Fixup.Kind) != X86::reloc_pcrel_1byte)
-    return false;
-
   // If we cannot resolve the fixup value, it requires relaxation.
   MCValue Target;
   uint64_t Value;
@@ -563,6 +556,22 @@ bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
 
   // Otherwise, relax if the value is too big for a (signed) i8.
   return int64_t(Value) != int64_t(int8_t(Value));
+}
+
+bool MCAssembler::FragmentNeedsRelaxation(const MCInstFragment *IF,
+                                          const MCAsmLayout &Layout) const {
+  // If this inst doesn't ever need relaxation, ignore it. This occurs when we
+  // are intentionally pushing out inst fragments, or because we relaxed a
+  // previous instruction to one that doesn't need relaxation.
+  if (!getBackend().MayNeedRelaxation(IF->getInst(), IF->getFixups()))
+    return false;
+
+  for (MCInstFragment::const_fixup_iterator it = IF->fixup_begin(),
+         ie = IF->fixup_end(); it != ie; ++it)
+    if (FixupNeedsRelaxation(*it, IF, Layout))
+      return true;
+
+  return false;
 }
 
 bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
@@ -609,87 +618,50 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
     Address += SD.getSize();
   }
 
-  // Scan the fixups in order and relax any that don't fit.
+  // Scan for fragments that need relaxation.
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSectionData &SD = *it;
 
     for (MCSectionData::iterator it2 = SD.begin(),
            ie2 = SD.end(); it2 != ie2; ++it2) {
-      MCDataFragment *DF = dyn_cast<MCDataFragment>(it2);
-      if (!DF)
+      // Check if this is an instruction fragment that needs relaxation.
+      MCInstFragment *IF = dyn_cast<MCInstFragment>(it2);
+      if (!IF || !FragmentNeedsRelaxation(IF, Layout))
         continue;
 
-      for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
-             ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
-        MCAsmFixup &Fixup = *it3;
+      // FIXME-PERF: We could immediately lower out instructions if we can tell
+      // they are fully resolved, to avoid retesting on later passes.
 
-        // Check whether we need to relax this fixup.
-        if (!FixupNeedsRelaxation(Fixup, DF, Layout))
-          continue;
+      // Relax the fragment.
 
-        // Relax the instruction.
-        //
-        // FIXME: This is a huge temporary hack which just looks for x86
-        // branches; the only thing we need to relax on x86 is
-        // 'X86::reloc_pcrel_1byte'. Once we have MCInst fragments, this will be
-        // replaced by a TargetAsmBackend hook (most likely tblgen'd) to relax
-        // an individual MCInst.
-        SmallVectorImpl<char> &C = DF->getContents();
-        uint64_t PrevOffset = Fixup.Offset;
-        unsigned Amt = 0;
+      MCInst Relaxed;
+      getBackend().RelaxInstruction(IF, Relaxed);
 
-          // jcc instructions
-        if (unsigned(C[Fixup.Offset-1]) >= 0x70 &&
-            unsigned(C[Fixup.Offset-1]) <= 0x7f) {
-          C[Fixup.Offset] = C[Fixup.Offset-1] + 0x10;
-          C[Fixup.Offset-1] = char(0x0f);
-          ++Fixup.Offset;
-          Amt = 4;
+      // Encode the new instruction.
+      //
+      // FIXME-PERF: If it matters, we could let the target do this. It can
+      // probably do so more efficiently in many cases.
+      SmallVector<MCFixup, 4> Fixups;
+      SmallString<256> Code;
+      raw_svector_ostream VecOS(Code);
+      getEmitter().EncodeInstruction(Relaxed, VecOS, Fixups);
+      VecOS.flush();
 
-          // jmp rel8
-        } else if (C[Fixup.Offset-1] == char(0xeb)) {
-          C[Fixup.Offset-1] = char(0xe9);
-          Amt = 3;
-
-        } else
-          llvm_unreachable("unknown 1 byte pcrel instruction!");
-
-        Fixup.Value = MCBinaryExpr::Create(
-          MCBinaryExpr::Sub, Fixup.Value,
-          MCConstantExpr::Create(3, getContext()),
-          getContext());
-        C.insert(C.begin() + Fixup.Offset, Amt, char(0));
-        Fixup.Kind = MCFixupKind(X86::reloc_pcrel_4byte);
-
-        // Update the remaining fixups, which have slid.
-        //
-        // FIXME: This is bad for performance, but will be eliminated by the
-        // move to MCInst specific fragments.
-        ++it3;
-        for (; it3 != ie3; ++it3)
-          it3->Offset += Amt;
-
-        // Update all the symbols for this fragment, which may have slid.
-        //
-        // FIXME: This is really really bad for performance, but will be
-        // eliminated by the move to MCInst specific fragments.
-        for (MCAssembler::symbol_iterator it = symbol_begin(),
-               ie = symbol_end(); it != ie; ++it) {
-          MCSymbolData &SD = *it;
-
-          if (it->getFragment() != DF)
-            continue;
-
-          if (SD.getOffset() > PrevOffset)
-            SD.setOffset(SD.getOffset() + Amt);
-        }
-
-        // Restart layout.
-        //
-        // FIXME-PERF: This is O(N^2), but will be eliminated once we have a
-        // smart MCAsmLayout object.
-        return true;
+      // Update the instruction fragment.
+      IF->setInst(Relaxed);
+      IF->getCode() = Code;
+      IF->getFixups().clear();
+      for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+        MCFixup &F = Fixups[i];
+        IF->getFixups().push_back(MCAsmFixup(F.getOffset(), *F.getValue(),
+                                             F.getKind()));
       }
+
+      // Restart layout.
+      //
+      // FIXME-PERF: This is O(N^2), but will be eliminated once we have a
+      // smart MCAsmLayout object.
+      return true;
     }
   }
 

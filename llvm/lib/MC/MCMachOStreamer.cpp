@@ -18,6 +18,8 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmBackend.h"
+
 using namespace llvm;
 
 namespace {
@@ -389,6 +391,32 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
     MCFixup &F = Fixups[i];
     AsmFixups.push_back(MCAsmFixup(F.getOffset(), *F.getValue(),
                                    F.getKind()));
+  }
+
+  // See if we might need to relax this instruction, if so it needs its own
+  // fragment.
+  //
+  // FIXME-PERF: Support target hook to do a fast path that avoids the encoder,
+  // when we can immediately tell that we will get something which might need
+  // relaxation (and compute its size).
+  //
+  // FIXME-PERF: We should also be smart about immediately relaxing instructions
+  // which we can already show will never possibly fit (we can also do a very
+  // good job of this before we do the first relaxation pass, because we have
+  // total knowledge about undefined symbols at that point). Even now, though,
+  // we can do a decent job, especially on Darwin where scattering means that we
+  // are going to often know that we can never fully resolve a fixup.
+  if (Assembler.getBackend().MayNeedRelaxation(Inst, AsmFixups)) {
+    MCInstFragment *IF = new MCInstFragment(Inst, CurSectionData);
+
+    // Add the fixups and data.
+    //
+    // FIXME: Revisit this design decision when relaxation is done, we may be
+    // able to get away with not storing any extra data in the MCInst.
+    IF->getCode() = Code;
+    IF->getFixups() = AsmFixups;
+
+    return;
   }
 
   // Add the fixups and data.
