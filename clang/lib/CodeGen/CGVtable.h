@@ -126,7 +126,7 @@ template <> struct isPodLike<clang::CodeGen::BaseSubobject> {
 namespace clang {
 namespace CodeGen {
 
-class CGVtableInfo {
+class CodeGenVTables {
 public:
   typedef std::vector<std::pair<GlobalDecl, ThunkAdjustment> >
       AdjustmentVectorTy;
@@ -187,7 +187,7 @@ private:
                                     const CXXRecordDecl *RD);
 
 public:
-  CGVtableInfo(CodeGenModule &CGM)
+  CodeGenVTables(CodeGenModule &CGM)
     : CGM(CGM) { }
 
   /// needsVTTParameter - Return whether the given global decl needs a VTT

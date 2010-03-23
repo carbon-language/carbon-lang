@@ -47,7 +47,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo()),
-    MangleCtx(C), VtableInfo(*this), Runtime(0),
+    MangleCtx(C), VTables(*this), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),
     VMContext(M.getContext()) {
 
@@ -495,7 +495,7 @@ void CodeGenModule::EmitDeferred() {
     if (!DeferredVtables.empty()) {
       const CXXRecordDecl *RD = DeferredVtables.back();
       DeferredVtables.pop_back();
-      getVtableInfo().GenerateClassData(getVtableLinkage(RD), RD);
+      getVTables().GenerateClassData(getVtableLinkage(RD), RD);
       continue;
     }
 
@@ -715,7 +715,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
                                  "Generating code for declaration");
   
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    getVtableInfo().MaybeEmitVtable(GD);
+    getVTables().MaybeEmitVtable(GD);
     if (MD->isVirtual() && MD->isOutOfLine() &&
         (!isa<CXXDestructorDecl>(D) || GD.getDtorType() != Dtor_Base)) {
       if (isa<CXXDestructorDecl>(D)) {

@@ -525,7 +525,7 @@ public:
 
   void InitializeVtablePtrsRecursive(const CXXRecordDecl *ClassDecl,
                                      llvm::Constant *Vtable,
-                                     CGVtableInfo::AddrSubMap_t& AddressPoints,
+                                    CodeGenVTables::AddrSubMap_t& AddressPoints,
                                      llvm::Value *ThisPtr,
                                      uint64_t Offset);
 

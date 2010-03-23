@@ -333,8 +333,7 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   llvm::Value *FuncPtr;
   
   if (MD->isVirtual()) {
-    int64_t Index = 
-      CGF.CGM.getVtableInfo().getMethodVtableIndex(MD);
+    int64_t Index = CGF.CGM.getVTables().getMethodVtableIndex(MD);
     
     // Itanium C++ ABI 2.3:
     //   For a non-virtual function, this field is a simple function pointer. 

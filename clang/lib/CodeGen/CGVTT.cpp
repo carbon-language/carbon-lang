@@ -29,7 +29,7 @@ class VTTBuilder {
   /// BLayout - Layout for the most derived class that this vtable is being
   /// built for.
   const ASTRecordLayout &BLayout;
-  CGVtableInfo::AddrMap_t &AddressPoints;
+  CodeGenVTables::AddrMap_t &AddressPoints;
   // vtbl - A pointer to the vtable for Class.
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
@@ -54,13 +54,13 @@ class VTTBuilder {
     llvm::Constant *&CtorVtable = CtorVtables[Base];
     if (!CtorVtable) {
       // Build the vtable.
-      CGVtableInfo::CtorVtableInfo Info
-        = CGM.getVtableInfo().getCtorVtable(Class, Base, BaseIsVirtual);
+      CodeGenVTables::CtorVtableInfo Info
+        = CGM.getVTables().getCtorVtable(Class, Base, BaseIsVirtual);
       
       CtorVtable = Info.Vtable;
       
       // Add the address points for this base.
-      for (CGVtableInfo::AddressPointsMapTy::const_iterator I =
+      for (CodeGenVTables::AddressPointsMapTy::const_iterator I =
            Info.AddressPoints.begin(), E = Info.AddressPoints.end(); 
            I != E; ++I) {
         uint64_t &AddressPoint = 
@@ -263,12 +263,12 @@ public:
              CodeGenModule &cgm, bool GenerateDefinition)
     : Inits(inits), Class(c), CGM(cgm),
       BLayout(cgm.getContext().getASTRecordLayout(c)),
-      AddressPoints(*cgm.getVtableInfo().AddressPoints[c]),
+      AddressPoints(*cgm.getVTables().AddressPoints[c]),
       VMContext(cgm.getModule().getContext()),
       GenerateDefinition(GenerateDefinition) {
     
     // First comes the primary virtual table pointer for the complete class...
-    ClassVtbl = GenerateDefinition ? CGM.getVtableInfo().getVtable(Class) : 0;
+    ClassVtbl = GenerateDefinition ? CGM.getVTables().getVtable(Class) : 0;
 
     llvm::Constant *Init = BuildVtablePtr(ClassVtbl, Class, Class, 0);
     Inits.push_back(Init);
@@ -293,9 +293,9 @@ public:
 }
 
 llvm::GlobalVariable *
-CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
-                          bool GenerateDefinition,
-                          const CXXRecordDecl *RD) {
+CodeGenVTables::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
+                            bool GenerateDefinition,
+                            const CXXRecordDecl *RD) {
   // Only classes that have virtual bases need a VTT.
   if (RD->getNumVBases() == 0)
     return 0;
@@ -336,8 +336,8 @@ CGVtableInfo::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
   return GV;
 }
 
-CGVtableInfo::CtorVtableInfo 
-CGVtableInfo::getCtorVtable(const CXXRecordDecl *RD, 
+CodeGenVTables::CtorVtableInfo 
+CodeGenVTables::getCtorVtable(const CXXRecordDecl *RD, 
                             const BaseSubobject &Base, bool BaseIsVirtual) {
   CtorVtableInfo Info;
   
@@ -348,14 +348,12 @@ CGVtableInfo::getCtorVtable(const CXXRecordDecl *RD,
   return Info;
 }
 
-llvm::GlobalVariable *CGVtableInfo::getVTT(const CXXRecordDecl *RD) {
+llvm::GlobalVariable *CodeGenVTables::getVTT(const CXXRecordDecl *RD) {
   return GenerateVTT(llvm::GlobalValue::ExternalLinkage, 
                      /*GenerateDefinition=*/false, RD);
-  
 }
 
-
-bool CGVtableInfo::needsVTTParameter(GlobalDecl GD) {
+bool CodeGenVTables::needsVTTParameter(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   
   // We don't have any virtual bases, just return early.
@@ -373,8 +371,8 @@ bool CGVtableInfo::needsVTTParameter(GlobalDecl GD) {
   return false;
 }
 
-uint64_t CGVtableInfo::getSubVTTIndex(const CXXRecordDecl *RD, 
-                                      const CXXRecordDecl *Base) {
+uint64_t CodeGenVTables::getSubVTTIndex(const CXXRecordDecl *RD, 
+                                        const CXXRecordDecl *Base) {
   ClassPairTy ClassPair(RD, Base);
 
   SubVTTIndiciesTy::iterator I = 

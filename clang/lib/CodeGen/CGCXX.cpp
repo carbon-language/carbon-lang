@@ -489,10 +489,10 @@ CodeGenModule::GetAddrOfCovariantThunk(GlobalDecl GD,
 }
 
 void CodeGenModule::BuildThunksForVirtual(GlobalDecl GD) {
-  CGVtableInfo::AdjustmentVectorTy *AdjPtr = getVtableInfo().getAdjustments(GD);
+  CodeGenVTables::AdjustmentVectorTy *AdjPtr = getVTables().getAdjustments(GD);
   if (!AdjPtr)
     return;
-  CGVtableInfo::AdjustmentVectorTy &Adj = *AdjPtr;
+  CodeGenVTables::AdjustmentVectorTy &Adj = *AdjPtr;
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   for (unsigned i = 0; i < Adj.size(); i++) {
     GlobalDecl OGD = Adj[i].first;
@@ -618,17 +618,17 @@ llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                   const llvm::Type *Ty) {
   MD = MD->getCanonicalDecl();
-  uint64_t VtableIndex = CGM.getVtableInfo().getMethodVtableIndex(MD);
+  uint64_t VTableIndex = CGM.getVTables().getMethodVtableIndex(MD);
   
-  return ::BuildVirtualCall(*this, VtableIndex, This, Ty);
+  return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }
 
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type, 
                                   llvm::Value *&This, const llvm::Type *Ty) {
   DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
-  uint64_t VtableIndex = 
-    CGM.getVtableInfo().getMethodVtableIndex(GlobalDecl(DD, Type));
+  uint64_t VTableIndex = 
+    CGM.getVTables().getMethodVtableIndex(GlobalDecl(DD, Type));
 
-  return ::BuildVirtualCall(*this, VtableIndex, This, Ty);
+  return ::BuildVirtualCall(*this, VTableIndex, This, Ty);
 }

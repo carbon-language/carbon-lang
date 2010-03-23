@@ -279,7 +279,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn) {
       Args.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
       
       // Check if we need a VTT parameter as well.
-      if (CGVtableInfo::needsVTTParameter(GD)) {
+      if (CodeGenVTables::needsVTTParameter(GD)) {
         // FIXME: The comment about using a fake decl above applies here too.
         QualType T = getContext().getPointerType(getContext().VoidPtrTy);
         CXXVTTDecl = 

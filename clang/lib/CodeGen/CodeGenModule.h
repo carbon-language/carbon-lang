@@ -93,8 +93,8 @@ class CodeGenModule : public BlockModule {
   CodeGenTypes Types;
   MangleContext MangleCtx;
 
-  /// VtableInfo - Holds information about C++ vtables.
-  CGVtableInfo VtableInfo;
+  /// VTables - Holds information about C++ vtables.
+  CodeGenVTables VTables;
   
   CGObjCRuntime* Runtime;
   CGDebugInfo* DebugInfo;
@@ -181,7 +181,7 @@ public:
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   MangleContext &getMangleContext() { return MangleCtx; }
-  CGVtableInfo &getVtableInfo() { return VtableInfo; }
+  CodeGenVTables &getVTables() { return VTables; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }

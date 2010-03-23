@@ -98,7 +98,7 @@ CodeGenModule::ComputeThunkAdjustment(const CXXRecordDecl *ClassDecl,
   }
   if (VBase)
     VirtualOffset = 
-      getVtableInfo().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
+      getVTables().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
   
   uint64_t Offset = 
     ComputeNonVirtualBaseClassOffset(getContext(), Paths.front(), Start);
@@ -471,7 +471,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
 /// GetVTTParameter - Return the VTT parameter that should be passed to a
 /// base constructor/destructor with virtual bases.
 static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
-  if (!CGVtableInfo::needsVTTParameter(GD)) {
+  if (!CodeGenVTables::needsVTTParameter(GD)) {
     // This constructor/destructor does not need a VTT parameter.
     return 0;
   }
@@ -486,21 +486,21 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD) {
   // If the record matches the base, this is the complete ctor/dtor
   // variant calling the base variant in a class with virtual bases.
   if (RD == Base) {
-    assert(!CGVtableInfo::needsVTTParameter(CGF.CurGD) &&
+    assert(!CodeGenVTables::needsVTTParameter(CGF.CurGD) &&
            "doing no-op VTT offset in base dtor/ctor?");
     SubVTTIndex = 0;
   } else {
-    SubVTTIndex = CGF.CGM.getVtableInfo().getSubVTTIndex(RD, Base);
+    SubVTTIndex = CGF.CGM.getVTables().getSubVTTIndex(RD, Base);
     assert(SubVTTIndex != 0 && "Sub-VTT index must be greater than zero!");
   }
   
-  if (CGVtableInfo::needsVTTParameter(CGF.CurGD)) {
+  if (CodeGenVTables::needsVTTParameter(CGF.CurGD)) {
     // A VTT parameter was passed to the constructor, use it.
     VTT = CGF.LoadCXXVTT();
     VTT = CGF.Builder.CreateConstInBoundsGEP1_64(VTT, SubVTTIndex);
   } else {
     // We're the complete constructor, so get the VTT by name.
-    VTT = CGF.CGM.getVtableInfo().getVTT(RD);
+    VTT = CGF.CGM.getVTables().getVTT(RD);
     VTT = CGF.Builder.CreateConstInBoundsGEP2_64(VTT, 0, SubVTTIndex);
   }
 
@@ -1474,7 +1474,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
     QualType VoidPP = getContext().getPointerType(getContext().VoidPtrTy);
     DelegateArgs.push_back(std::make_pair(RValue::get(VTT), VoidPP));
 
-    if (CGVtableInfo::needsVTTParameter(CurGD)) {
+    if (CodeGenVTables::needsVTTParameter(CurGD)) {
       assert(I != E && "cannot skip vtt parameter, already done with args");
       assert(I->second == VoidPP && "skipping parameter not of vtt type");
       ++I;
@@ -1541,7 +1541,7 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
   VTablePtr = Builder.CreateLoad(VTablePtr, "vtable");
 
   int64_t VBaseOffsetOffset = 
-    CGM.getVtableInfo().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
+    CGM.getVTables().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
   
   llvm::Value *VBaseOffsetPtr = 
     Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetOffset, "vbase.offset.ptr");
@@ -1560,9 +1560,9 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->isDynamicClass())
     return;
 
-  llvm::Constant *Vtable = CGM.getVtableInfo().getVtable(ClassDecl);
-  CGVtableInfo::AddrSubMap_t& AddressPoints =
-      *(*CGM.getVtableInfo().AddressPoints[ClassDecl])[ClassDecl];
+  llvm::Constant *VTable = CGM.getVTables().getVtable(ClassDecl);
+  CodeGenVTables::AddrSubMap_t& AddressPoints =
+      *(*CGM.getVTables().AddressPoints[ClassDecl])[ClassDecl];
   llvm::Value *ThisPtr = LoadCXXThis();
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
 
@@ -1573,18 +1573,18 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
     uint64_t Offset = Layout.getVBaseClassOffset(BaseClassDecl);
-    InitializeVtablePtrsRecursive(BaseClassDecl, Vtable, AddressPoints,
+    InitializeVtablePtrsRecursive(BaseClassDecl, VTable, AddressPoints,
                                   ThisPtr, Offset);
   }
 
   // Store address points for non-virtual bases and current class
-  InitializeVtablePtrsRecursive(ClassDecl, Vtable, AddressPoints, ThisPtr, 0);
+  InitializeVtablePtrsRecursive(ClassDecl, VTable, AddressPoints, ThisPtr, 0);
 }
 
 void CodeGenFunction::InitializeVtablePtrsRecursive(
         const CXXRecordDecl *ClassDecl,
         llvm::Constant *Vtable,
-        CGVtableInfo::AddrSubMap_t& AddressPoints,
+        CodeGenVTables::AddrSubMap_t& AddressPoints,
         llvm::Value *ThisPtr,
         uint64_t Offset) {
   if (!ClassDecl->isDynamicClass())

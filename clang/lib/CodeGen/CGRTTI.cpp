@@ -760,7 +760,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
     // subobject. For a virtual base, this is the offset in the virtual table of
     // the virtual base offset for the virtual base referenced (negative).
     if (Base->isVirtual())
-      OffsetFlags = CGM.getVtableInfo().getVirtualBaseOffsetOffset(RD, BaseDecl);
+      OffsetFlags = CGM.getVTables().getVirtualBaseOffsetOffset(RD, BaseDecl);
     else {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       OffsetFlags = Layout.getBaseClassOffset(BaseDecl) / 8;
