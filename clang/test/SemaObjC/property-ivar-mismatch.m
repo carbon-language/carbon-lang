@@ -3,12 +3,12 @@
 
 @interface Test4 
 {
-   char ivar;
+   char ivar; // expected-note{{ivar is declared here}}
 }
 @property int prop;
 @end
 
 @implementation Test4
-@synthesize prop = ivar;  // expected-error {{type of property 'prop' does not match type of ivar 'ivar'}}
+@synthesize prop = ivar;  // expected-error {{type of property 'prop' ('int') does not match type of ivar 'ivar' ('char')}}
 @end
 

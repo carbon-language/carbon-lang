@@ -348,7 +348,7 @@ def error_synthesized_ivar_yet_not_supported : Error<
   " (need to declare %0 explicitly)">;
 
 def error_property_ivar_type : Error<
-  "type of property %0 does not match type of ivar %1">;
+  "type of property %0 (%1) does not match type of ivar %2 (%3)">;
 def error_ivar_in_superclass_use : Error<
   "property %0 attempting to use ivar %1 declared in super class %2">;
 def error_weak_property : Error<
@@ -530,6 +530,7 @@ def err_implicit_object_parameter_init : Error<
   "of type %1">;
 
 def note_field_decl : Note<"member is declared here">;
+def note_ivar_decl : Note<"ivar is declared here">;
 def note_bitfield_decl : Note<"bit-field is declared here">;
 def note_previous_decl : Note<"%0 declared here">;
 def note_member_synthesized_at : Note<

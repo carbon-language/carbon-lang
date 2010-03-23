@@ -383,7 +383,9 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     if (PropType != IvarType) {
       if (CheckAssignmentConstraints(PropType, IvarType) != Compatible) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
-        << property->getDeclName() << Ivar->getDeclName();
+          << property->getDeclName() << PropType
+          << Ivar->getDeclName() << IvarType;
+        Diag(Ivar->getLocation(), diag::note_ivar_decl);
         // Note! I deliberately want it to fall thru so, we have a
         // a property implementation and to avoid future warnings.
       }
@@ -396,7 +398,9 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       if (lhsType != rhsType &&
           lhsType->isArithmeticType()) {
         Diag(PropertyLoc, diag::error_property_ivar_type)
-        << property->getDeclName() << Ivar->getDeclName();
+          << property->getDeclName() << PropType
+          << Ivar->getDeclName() << IvarType;
+        Diag(Ivar->getLocation(), diag::note_ivar_decl);
         // Fall thru - see previous comment
       }
       // __weak is explicit. So it works on Canonical type.
