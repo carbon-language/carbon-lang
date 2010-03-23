@@ -39,7 +39,8 @@ private:
   Sema &S;
   Policy DefaultPolicy;
 
-  llvm::DenseMap<const FunctionDecl*, unsigned> VisitedFD;
+  enum VisitFlag { NotVisited = 0, Visited = 1, Pending = 2 };
+  llvm::DenseMap<const FunctionDecl*, VisitFlag> VisitedFD;
 
 public:
   AnalysisBasedWarnings(Sema &s);

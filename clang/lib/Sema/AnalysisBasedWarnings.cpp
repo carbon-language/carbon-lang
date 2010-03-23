@@ -353,8 +353,14 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
 
     // Only analyze 'static inline' functions when explicitly asked.
     if (!analyzeStaticInline && FD->isInlineSpecified() &&
-        FD->getStorageClass() == FunctionDecl::Static)
-      return;
+        FD->getStorageClass() == FunctionDecl::Static) {
+      FD = FD->getCanonicalDecl();
+      VisitFlag &visitFlag = VisitedFD[FD];
+      if (visitFlag == Pending)
+        visitFlag = Visited;
+      else
+        return;
+    }
   }
 
   const Stmt *Body = D->getBody();
@@ -397,18 +403,26 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
             if (const DeclRefExpr *DR =
                 dyn_cast<DeclRefExpr>(CE->getCallee()->IgnoreParenCasts()))
               if (const FunctionDecl *calleeD =
-                  dyn_cast<FunctionDecl>(DR->getDecl()))
+                  dyn_cast<FunctionDecl>(DR->getDecl())) {
+                calleeD = calleeD->getCanonicalDecl();
                 if (calleeD->isInlineSpecified() &&
                     calleeD->getStorageClass() == FunctionDecl::Static) {
                   // Have we analyzed this static inline function before?
-                  unsigned &visited = VisitedFD[calleeD];
-                  if (!visited) {
+                  VisitFlag &visitFlag = VisitedFD[calleeD];
+                  if (visitFlag == NotVisited) {
                     // Mark the callee visited prior to analyzing it
                     // so we terminate in case of recursion.
-                    visited = 1;
-                    IssueWarnings(DefaultPolicy, calleeD, QualType(), true);
+                    if (calleeD->getBody()) {
+                      visitFlag = Visited;
+                      IssueWarnings(DefaultPolicy, calleeD, QualType(), true);
+                    }
+                    else {
+                      // Delay warnings until we encounter the definition.
+                      visitFlag = Pending;
+                    }
                   }
                 }
+              }
       }
     }
   }
