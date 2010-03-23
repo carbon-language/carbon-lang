@@ -553,22 +553,26 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     // New instructions were inserted at the end of the preheader.
     if (isa<PHINode>(I))
       break;
+
     // Don't move instructions which might have side effects, since the side
-    // effects need to complete before instructions inside the loop.  Also
-    // don't move instructions which might read memory, since the loop may
-    // modify memory. Note that it's okay if the instruction might have
-    // undefined behavior: LoopSimplify guarantees that the preheader
-    // dominates the exit block.
+    // effects need to complete before instructions inside the loop.  Also don't
+    // move instructions which might read memory, since the loop may modify
+    // memory. Note that it's okay if the instruction might have undefined
+    // behavior: LoopSimplify guarantees that the preheader dominates the exit
+    // block.
     if (I->mayHaveSideEffects() || I->mayReadFromMemory())
       continue;
+
     // Skip debug info intrinsics.
     if (isa<DbgInfoIntrinsic>(I))
       continue;
+
     // Don't sink static AllocaInsts out of the entry block, which would
     // turn them into dynamic allocas!
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (AI->isStaticAlloca())
         continue;
+
     // Determine if there is a use in or before the loop (direct or
     // otherwise).
     bool UsedInLoop = false;
@@ -585,19 +589,29 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
         break;
       }
     }
+
     // If there is, the def must remain in the preheader.
     if (UsedInLoop)
       continue;
+
     // Otherwise, sink it to the exit block.
     Instruction *ToMove = I;
     bool Done = false;
-    if (I != Preheader->begin())
-      --I;
-    else
+
+    if (I != Preheader->begin()) {
+      // Skip debug info intrinsics.
+      do {
+        --I;
+      } while (isa<DbgInfoIntrinsic>(I) && I != Preheader->begin());
+
+      if (isa<DbgInfoIntrinsic>(I) && I == Preheader->begin())
+        Done = true;
+    } else {
       Done = true;
+    }
+
     ToMove->moveBefore(InsertPt);
-    if (Done)
-      break;
+    if (Done) break;
     InsertPt = ToMove;
   }
 }
