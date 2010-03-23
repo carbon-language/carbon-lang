@@ -773,22 +773,14 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
       SD.getFragmentList().insert(it2, DF);
 
       // Update the data fragments layout data.
+      DF->setParent(IF->getParent());
       DF->setOffset(IF->getOffset());
       DF->setFileSize(IF->getInstSize());
 
-      // Encode the final instruction.
-      SmallVector<MCFixup, 4> Fixups;
-      raw_svector_ostream VecOS(DF->getContents());
-      getEmitter().EncodeInstruction(IF->getInst(), VecOS, Fixups);
-
-      // Copy over the fixups.
-      //
-      // FIXME-PERF: Encode fixups directly into the data fragment as well.
-      for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
-        MCFixup &F = Fixups[i];
-        DF->addFixup(MCAsmFixup(DF->getContents().size()+F.getOffset(),
-                                *F.getValue(), F.getKind()));
-      }
+      // Copy in the data and the fixups.
+      DF->getContents().append(IF->getCode().begin(), IF->getCode().end());
+      for (unsigned i = 0, e = IF->getFixups().size(); i != e; ++i)
+        DF->getFixups().push_back(IF->getFixups()[i]);
 
       // Delete the instruction fragment and update the iterator.
       SD.getFragmentList().erase(IF);

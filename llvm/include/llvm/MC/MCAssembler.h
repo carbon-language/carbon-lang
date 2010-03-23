@@ -180,28 +180,57 @@ public:
   virtual void dump();
 };
 
+// FIXME: This current incarnation of MCInstFragment doesn't make much sense, as
+// it is almost entirely a duplicate of MCDataFragment. If we decide to stick
+// with this approach (as opposed to making MCInstFragment a very light weight
+// object with just the MCInst and a code size, then we should just change
+// MCDataFragment to have an optional MCInst at its end.
 class MCInstFragment : public MCFragment {
   /// Inst - The instruction this is a fragment for.
   MCInst Inst;
 
   /// InstSize - The size of the currently encoded instruction.
-  unsigned InstSize;
+  SmallString<8> Code;
+
+  /// Fixups - The list of fixups in this fragment.
+  SmallVector<MCAsmFixup, 1> Fixups;
 
 public:
-  MCInstFragment(MCInst _Inst, unsigned _InstSize, MCSectionData *SD = 0)
-    : MCFragment(FT_Inst, SD), Inst(_Inst), InstSize(_InstSize) {}
+  typedef SmallVectorImpl<MCAsmFixup>::const_iterator const_fixup_iterator;
+  typedef SmallVectorImpl<MCAsmFixup>::iterator fixup_iterator;
+
+public:
+  MCInstFragment(MCInst _Inst, MCSectionData *SD = 0)
+    : MCFragment(FT_Inst, SD), Inst(_Inst) {
+  }
 
   /// @name Accessors
   /// @{
 
-  unsigned getInstSize() const { return InstSize; }
+  SmallVectorImpl<char> &getCode() { return Code; }
+  const SmallVectorImpl<char> &getCode() const { return Code; }
 
+  unsigned getInstSize() const { return Code.size(); }
+
+  MCInst &getInst() { return Inst; }
   const MCInst &getInst() const { return Inst; }
 
-  void setInst(MCInst Inst, unsigned InstSize) {
-    this->Inst = Inst;
-    this->InstSize = InstSize;
-  }
+  void setInst(MCInst Value) { Inst = Value; }
+
+  /// @}
+  /// @name Fixup Access
+  /// @{
+
+  SmallVectorImpl<MCAsmFixup> &getFixups() { return Fixups; }
+  const SmallVectorImpl<MCAsmFixup> &getFixups() const { return Fixups; }
+
+  fixup_iterator fixup_begin() { return Fixups.begin(); }
+  const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
+
+  fixup_iterator fixup_end() {return Fixups.end();}
+  const_fixup_iterator fixup_end() const {return Fixups.end();}
+
+  size_t fixup_size() const { return Fixups.size(); }
 
   /// @}
 
