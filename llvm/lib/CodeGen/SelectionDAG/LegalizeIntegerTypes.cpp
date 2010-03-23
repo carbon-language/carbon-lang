@@ -1021,7 +1021,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       Hi = InL;
     } else if (Amt == 1 &&
                TLI.isOperationLegalOrCustom(ISD::ADDC,
-                                            TLI.getTypeToTransformTo(*DAG.getContext(), NVT))) {
+                                            TLI.getTypeToExpandTo(*DAG.getContext(), NVT))) {
       // Emit this X << 1 as X+X.
       SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
       SDValue LoOps[2] = { InL, InL };
@@ -1263,8 +1263,7 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   bool hasCarry =
     TLI.isOperationLegalOrCustom(N->getOpcode() == ISD::ADD ?
                                    ISD::ADDC : ISD::SUBC,
-                                 TLI.getTypeToTransformTo(*DAG.getContext(),
-                                                          NVT));
+                                 TLI.getTypeToExpandTo(*DAG.getContext(), NVT));
 
   if (hasCarry) {
     SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
