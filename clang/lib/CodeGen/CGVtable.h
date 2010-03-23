@@ -255,6 +255,16 @@ private:
   SavedAdjustmentsTy SavedAdjustments;
   llvm::DenseSet<const CXXRecordDecl*> SavedAdjustmentRecords;
 
+  typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
+  typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
+  
+  /// Thunks - Contains all thunks that a given method decl will need.
+  ThunksMapTy Thunks;
+
+  /// ClassesWithKnownThunkStatus - Contains all the classes for which we know
+  /// whether their virtual member functions have thunks or not.
+  llvm::DenseSet<const CXXRecordDecl *> ClassesWithKnownThunkStatus;
+  
   typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesTy;
   SubVTTIndiciesTy SubVTTIndicies;
 
@@ -274,6 +284,9 @@ private:
                                     bool GenerateDefinition,
                                     const CXXRecordDecl *RD);
 
+  /// EmitThunk - Emit a single thunk.
+  void EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk);
+  
   /// EmitThunks - Emit the associated thunks for the given global decl.
   void EmitThunks(GlobalDecl GD);
   

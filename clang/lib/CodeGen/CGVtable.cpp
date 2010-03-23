@@ -1291,6 +1291,14 @@ public:
     LayoutVtable();
   }
 
+  ThunksMapTy::const_iterator thunks_begin() const {
+    return Thunks.begin();
+  }
+
+  ThunksMapTy::const_iterator thunks_end() const {
+    return Thunks.end();
+  }
+
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
 };
@@ -3642,9 +3650,55 @@ CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   return GV;
 }
 
+void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
+{
+  // FIXME: Implement this!
+}
+
 void CodeGenVTables::EmitThunks(GlobalDecl GD)
 {
-  CGM.BuildThunksForVirtual(GD);
+  // FIXME: We use the -fdump-vtable-layouts flag to trigger the new thunk
+  // building code for now.
+  if (!CGM.getLangOptions().DumpVtableLayouts) {
+    CGM.BuildThunksForVirtual(GD);
+    return;
+  }
+
+  const CXXMethodDecl *MD = 
+    cast<CXXMethodDecl>(GD.getDecl())->getCanonicalDecl();
+
+  // We don't need to generate thunks for the base destructor.
+  if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
+    return;
+
+  const CXXRecordDecl *RD = MD->getParent();
+  
+  ThunksMapTy::const_iterator I = Thunks.find(MD);
+  if (I == Thunks.end()) {
+    // We did not find a thunk for this method. Check if we've collected thunks
+    // for this record.
+    if (!ClassesWithKnownThunkStatus.insert(RD).second) {
+      // This member function doesn't have any associated thunks.
+      return;
+    }
+    
+    // Use the vtable builder to build thunks for this class.
+    VtableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
+
+    // Add the known thunks.
+    Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
+  
+    // Look for the thunk again.
+    I = Thunks.find(MD);
+    if (I == Thunks.end()) {
+      // Looks like this function doesn't have any associated thunks after all.
+      return;
+    }
+  }
+  
+  const ThunkInfoVectorTy &ThunkInfoVector = I->second;
+  for (unsigned I = 0, E = ThunkInfoVector.size(); I != E; ++I)
+    EmitThunk(GD, ThunkInfoVector[I]);
 }
 
 void 
