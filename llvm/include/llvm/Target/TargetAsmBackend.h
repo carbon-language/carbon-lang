@@ -15,6 +15,8 @@
 namespace llvm {
 class MCAsmFixup;
 class MCDataFragment;
+class MCInst;
+class MCInstFragment;
 class MCObjectWriter;
 class MCSection;
 class Target;
@@ -95,6 +97,11 @@ public:
   /// fixup kind as appropriate.
   virtual void ApplyFixup(const MCAsmFixup &Fixup, MCDataFragment &Fragment,
                           uint64_t Value) const = 0;
+
+  /// RelaxInstruction - Relax the instruction in the given fragment to the next
+  /// wider instruction.
+  virtual void RelaxInstruction(const MCInstFragment *IF,
+                                MCInst &Res) const = 0;
 };
 
 } // End llvm namespace

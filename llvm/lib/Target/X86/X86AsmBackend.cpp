@@ -10,10 +10,13 @@
 #include "llvm/Target/TargetAsmBackend.h"
 #include "X86.h"
 #include "X86FixupKinds.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
@@ -48,7 +51,54 @@ public:
     for (unsigned i = 0; i != Size; ++i)
       DF.getContents()[Fixup.Offset + i] = uint8_t(Value >> (i * 8));
   }
+
+  void RelaxInstruction(const MCInstFragment *IF, MCInst &Res) const;
 };
+
+static unsigned getRelaxedOpcode(unsigned Op) {
+  switch (Op) {
+  default:
+    return Op;
+
+  case X86::JAE_1: return X86::JAE_4;
+  case X86::JA_1:  return X86::JA_4;
+  case X86::JBE_1: return X86::JBE_4;
+  case X86::JB_1:  return X86::JB_4;
+  case X86::JE_1:  return X86::JE_4;
+  case X86::JGE_1: return X86::JGE_4;
+  case X86::JG_1:  return X86::JG_4;
+  case X86::JLE_1: return X86::JLE_4;
+  case X86::JL_1:  return X86::JL_4;
+  case X86::JMP_1: return X86::JMP_4;
+  case X86::JNE_1: return X86::JNE_4;
+  case X86::JNO_1: return X86::JNO_4;
+  case X86::JNP_1: return X86::JNP_4;
+  case X86::JNS_1: return X86::JNS_4;
+  case X86::JO_1:  return X86::JO_4;
+  case X86::JP_1:  return X86::JP_4;
+  case X86::JS_1:  return X86::JS_4;
+  }
+}
+
+// FIXME: Can tblgen help at all here to verify there aren't other instructions
+// we can relax?
+void X86AsmBackend::RelaxInstruction(const MCInstFragment *IF,
+                                     MCInst &Res) const {
+  // The only relaxations X86 does is from a 1byte pcrel to a 4byte pcrel.
+  unsigned RelaxedOp = getRelaxedOpcode(IF->getInst().getOpcode());
+
+  if (RelaxedOp == IF->getInst().getOpcode()) {
+    SmallString<256> Tmp;
+    raw_svector_ostream OS(Tmp);
+    IF->getInst().dump_pretty(OS);
+    llvm_report_error("unexpected instruction to relax: " + OS.str());
+  }
+
+  Res = IF->getInst();
+  Res.setOpcode(RelaxedOp);
+}
+
+/* *** */
 
 class ELFX86AsmBackend : public X86AsmBackend {
 public:
