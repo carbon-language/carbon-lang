@@ -22,7 +22,6 @@ PARALLEL_DIRS := opt llvm-as llvm-dis \
                  lli llvm-extract \
                  bugpoint llvm-bcanalyzer llvm-stub \
                  llvm-mc llvmc
-                 
 
 # Let users override the set of tools to build from the command line.
 ifdef ONLY_TOOLS
@@ -38,7 +37,7 @@ ifeq ($(ENABLE_PIC),1)
   # No support for dynamic libraries on windows targets.
   ifneq ($(TARGET_OS), $(filter $(TARGET_OS), Cygwin MingW))
     PARALLEL_DIRS += edis
-    
+
     # gold only builds if binutils is around.  It requires "lto" to build before
     # it so it is added to DIRS.
     ifdef BINUTILS_INCDIR
@@ -51,6 +50,11 @@ endif
 
 # Only build edis if X86 target support is enabled.
 ifeq ($(filter $(TARGETS_TO_BUILD), X86),)
+  PARALLEL_DIRS := $(filter-out edis, $(PARALLEL_DIRS))
+endif
+
+# Don't build edis if we explicitly disabled it.
+ifneq ($(DISABLE_EDIS),1)
   PARALLEL_DIRS := $(filter-out edis, $(PARALLEL_DIRS))
 endif
 
