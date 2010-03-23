@@ -1604,7 +1604,7 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{4} = op4;
 }
 
-// Same as N3VX except it doesn't have a data type suffix.
+// Same as N3V except it doesn't have a data type suffix.
 class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
            bit op4,
            dag oops, dag iops, InstrItinClass itin,
