@@ -996,34 +996,49 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 ///
 static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
                                      bool NotRegisters, TreePattern &TP) {
-  assert(ResNo == 0 && "FIXME: Unhandled result number");
-  
   // Check to see if this is a register or a register class.
   if (R->isSubClassOf("RegisterClass")) {
+    assert(ResNo == 0 && "Regclass ref only has one result!");
     if (NotRegisters) 
       return EEVT::TypeSet(); // Unknown.
     const CodeGenTarget &T = TP.getDAGPatterns().getTargetInfo();
     return EEVT::TypeSet(T.getRegisterClass(R).getValueTypes());
-  } else if (R->isSubClassOf("PatFrag")) {
+  }
+  
+  if (R->isSubClassOf("PatFrag")) {
+    assert(ResNo == 0 && "FIXME: PatFrag with multiple results?");
     // Pattern fragment types will be resolved when they are inlined.
     return EEVT::TypeSet(); // Unknown.
-  } else if (R->isSubClassOf("Register")) {
+  }
+  
+  if (R->isSubClassOf("Register")) {
+    assert(ResNo == 0 && "Registers only produce one result!");
     if (NotRegisters) 
       return EEVT::TypeSet(); // Unknown.
     const CodeGenTarget &T = TP.getDAGPatterns().getTargetInfo();
     return EEVT::TypeSet(T.getRegisterVTs(R));
-  } else if (R->isSubClassOf("ValueType") || R->isSubClassOf("CondCode")) {
+  }
+  
+  if (R->isSubClassOf("ValueType") || R->isSubClassOf("CondCode")) {
+    assert(ResNo == 0 && "This node only has one result!");
     // Using a VTSDNode or CondCodeSDNode.
     return EEVT::TypeSet(MVT::Other, TP);
-  } else if (R->isSubClassOf("ComplexPattern")) {
+  }
+  
+  if (R->isSubClassOf("ComplexPattern")) {
+    assert(ResNo == 0 && "FIXME: ComplexPattern with multiple results?");
     if (NotRegisters) 
       return EEVT::TypeSet(); // Unknown.
    return EEVT::TypeSet(TP.getDAGPatterns().getComplexPattern(R).getValueType(),
                          TP);
-  } else if (R->isSubClassOf("PointerLikeRegClass")) {
+  }
+  if (R->isSubClassOf("PointerLikeRegClass")) {
+    assert(ResNo == 0 && "Regclass can only have one result!");
     return EEVT::TypeSet(MVT::iPTR, TP);
-  } else if (R->getName() == "node" || R->getName() == "srcvalue" ||
-             R->getName() == "zero_reg") {
+  }
+  
+  if (R->getName() == "node" || R->getName() == "srcvalue" ||
+      R->getName() == "zero_reg") {
     // Placeholder.
     return EEVT::TypeSet(); // Unknown.
   }
