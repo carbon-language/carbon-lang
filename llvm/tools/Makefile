@@ -54,7 +54,7 @@ ifeq ($(filter $(TARGETS_TO_BUILD), X86),)
 endif
 
 # Don't build edis if we explicitly disabled it.
-ifneq ($(DISABLE_EDIS),1)
+ifeq ($(DISABLE_EDIS),1)
   PARALLEL_DIRS := $(filter-out edis, $(PARALLEL_DIRS))
 endif
 
