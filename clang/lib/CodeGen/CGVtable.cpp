@@ -3669,8 +3669,40 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 {
   llvm::Constant *ThunkFn = CGM.GetAddrOfThunk(GD, Thunk);
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   
-  (void)ThunkFn;
+  // Strip off a bitcast if we got one back.
+  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(ThunkFn)) {
+    assert(CE->getOpcode() == llvm::Instruction::BitCast);
+    ThunkFn = CE->getOperand(0);
+  }
+  
+  const llvm::Type *ThunkFnTy =
+    cast<llvm::GlobalValue>(ThunkFn)->getType()->getElementType();
+
+  // There's already a declaration with the same name, check if it has the same
+  // type or if we need to replace it.
+  if (ThunkFnTy != CGM.getTypes().GetFunctionTypeForVtable(MD)) {
+    llvm::GlobalValue *OldThunkFn = cast<llvm::GlobalValue>(ThunkFn);
+    
+    // If the types mismatch then we have to rewrite the definition.
+    assert(OldThunkFn->isDeclaration() &&
+           "Shouldn't replace non-declaration");
+
+    // Remove the name from the old thunk function and get a new thunk.
+    OldThunkFn->setName(llvm::StringRef());
+    ThunkFn = CGM.GetAddrOfThunk(GD, Thunk);
+    
+    // If needed, replace the old thunk with a bitcast.
+    if (!OldThunkFn->use_empty()) {
+      llvm::Constant *NewPtrForOldDecl =
+        llvm::ConstantExpr::getBitCast(ThunkFn, OldThunkFn->getType());
+      OldThunkFn->replaceAllUsesWith(NewPtrForOldDecl);
+    }
+    
+    // Remove the old thunk.
+    OldThunkFn->eraseFromParent();
+  }
 }
 
 void CodeGenVTables::EmitThunks(GlobalDecl GD)

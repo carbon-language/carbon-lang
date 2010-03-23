@@ -341,7 +341,7 @@ public:
   // have, as well as the vtable itself if the global decl is the key function.
   void EmitVTableRelatedData(GlobalDecl GD);
 
-  /// GenerateClassData - Generate all the class data requires to be generated
+  /// GenerateClassData - Generate all the class data required to be generated
   /// upon definition of a KeyFunction.  This includes the vtable, the
   /// rtti data structure and the VTT.
   ///
