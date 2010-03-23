@@ -1932,87 +1932,6 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
     SetBaseOrMemberInitializers(Constructor, 0, 0, false, false);
 }
 
-namespace {
-  /// PureVirtualMethodCollector - traverses a class and its superclasses
-  /// and determines if it has any pure virtual methods.
-  class PureVirtualMethodCollector {
-    ASTContext &Context;
-
-  public:
-    typedef llvm::SmallVector<const CXXMethodDecl*, 8> MethodList;
-
-  private:
-    MethodList Methods;
-
-    void Collect(const CXXRecordDecl* RD, MethodList& Methods);
-
-  public:
-    PureVirtualMethodCollector(ASTContext &Ctx, const CXXRecordDecl* RD)
-      : Context(Ctx) {
-
-      MethodList List;
-      Collect(RD, List);
-
-      // Copy the temporary list to methods, and make sure to ignore any
-      // null entries.
-      for (size_t i = 0, e = List.size(); i != e; ++i) {
-        if (List[i])
-          Methods.push_back(List[i]);
-      }
-    }
-
-    bool empty() const { return Methods.empty(); }
-
-    MethodList::const_iterator methods_begin() { return Methods.begin(); }
-    MethodList::const_iterator methods_end() { return Methods.end(); }
-  };
-
-  void PureVirtualMethodCollector::Collect(const CXXRecordDecl* RD,
-                                           MethodList& Methods) {
-    // First, collect the pure virtual methods for the base classes.
-    for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
-         BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base) {
-      if (const RecordType *RT = Base->getType()->getAs<RecordType>()) {
-        const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
-        if (BaseDecl && BaseDecl->isAbstract())
-          Collect(BaseDecl, Methods);
-      }
-    }
-
-    // Next, zero out any pure virtual methods that this class overrides.
-    typedef llvm::SmallPtrSet<const CXXMethodDecl*, 4> MethodSetTy;
-
-    MethodSetTy OverriddenMethods;
-    size_t MethodsSize = Methods.size();
-
-    for (RecordDecl::decl_iterator i = RD->decls_begin(), e = RD->decls_end();
-         i != e; ++i) {
-      // Traverse the record, looking for methods.
-      if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
-        // If the method is pure virtual, add it to the methods vector.
-        if (MD->isPure())
-          Methods.push_back(MD);
-
-        // Record all the overridden methods in our set.
-        for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
-             E = MD->end_overridden_methods(); I != E; ++I) {
-          // Keep track of the overridden methods.
-          OverriddenMethods.insert(*I);
-        }
-      }
-    }
-
-    // Now go through the methods and zero out all the ones we know are
-    // overridden.
-    for (size_t i = 0, e = MethodsSize; i != e; ++i) {
-      if (OverriddenMethods.count(Methods[i]))
-        Methods[i] = 0;
-    }
-
-  }
-}
-
-
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
                                   unsigned DiagID, AbstractDiagSelID SelID,
                                   const CXXRecordDecl *CurrentRD) {
@@ -2066,14 +1985,32 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
   if (PureVirtualClassDiagSet && PureVirtualClassDiagSet->count(RD))
     return true;
 
-  PureVirtualMethodCollector Collector(Context, RD);
+  CXXFinalOverriderMap FinalOverriders;
+  RD->getFinalOverriders(FinalOverriders);
 
-  for (PureVirtualMethodCollector::MethodList::const_iterator I =
-       Collector.methods_begin(), E = Collector.methods_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
+  for (CXXFinalOverriderMap::iterator M = FinalOverriders.begin(), 
+                                   MEnd = FinalOverriders.end();
+       M != MEnd; 
+       ++M) {
+    for (OverridingMethods::iterator SO = M->second.begin(), 
+                                  SOEnd = M->second.end();
+         SO != SOEnd; ++SO) {
+      // C++ [class.abstract]p4:
+      //   A class is abstract if it contains or inherits at least one
+      //   pure virtual function for which the final overrider is pure
+      //   virtual.
 
-    Diag(MD->getLocation(), diag::note_pure_virtual_function) <<
-      MD->getDeclName();
+      // 
+      if (SO->second.size() != 1)
+        continue;
+
+      if (!SO->second.front().Method->isPure())
+        continue;
+
+      Diag(SO->second.front().Method->getLocation(), 
+           diag::note_pure_virtual_function) 
+        << SO->second.front().Method->getDeclName();
+    }
   }
 
   if (!PureVirtualClassDiagSet)
@@ -2162,15 +2099,71 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   for (UnresolvedSetIterator I = Convs->begin(), E = Convs->end(); I != E; ++I)
     Convs->setAccess(I, (*I)->getAccess());
 
-  if (!Record->isAbstract()) {
-    // Collect all the pure virtual methods and see if this is an abstract
-    // class after all.
-    PureVirtualMethodCollector Collector(Context, Record);
-    if (!Collector.empty())
-      Record->setAbstract(true);
+  // Determine whether we need to check for final overriders. We do
+  // this either when there are virtual base classes (in which case we
+  // may end up finding multiple final overriders for a given virtual
+  // function) or any of the base classes is abstract (in which case
+  // we might detect that this class is abstract).
+  bool CheckFinalOverriders = false;
+  if (Record->isPolymorphic() && !Record->isInvalidDecl() &&
+      !Record->isDependentType()) {
+    if (Record->getNumVBases())
+      CheckFinalOverriders = true;
+    else if (!Record->isAbstract()) {
+      for (CXXRecordDecl::base_class_const_iterator B = Record->bases_begin(),
+                                                 BEnd = Record->bases_end();
+           B != BEnd; ++B) {
+        CXXRecordDecl *BaseDecl 
+          = cast<CXXRecordDecl>(B->getType()->getAs<RecordType>()->getDecl());
+        if (BaseDecl->isAbstract()) {
+          CheckFinalOverriders = true; 
+          break;
+        }
+      }
+    }
   }
 
-  if (Record->isAbstract())
+  if (CheckFinalOverriders) {
+    CXXFinalOverriderMap FinalOverriders;
+    Record->getFinalOverriders(FinalOverriders);
+
+    for (CXXFinalOverriderMap::iterator M = FinalOverriders.begin(), 
+                                     MEnd = FinalOverriders.end();
+         M != MEnd; ++M) {
+      for (OverridingMethods::iterator SO = M->second.begin(), 
+                                    SOEnd = M->second.end();
+           SO != SOEnd; ++SO) {
+        assert(SO->second.size() > 0 && 
+               "All virtual functions have overridding virtual functions");
+        if (SO->second.size() == 1) {
+          // C++ [class.abstract]p4:
+          //   A class is abstract if it contains or inherits at least one
+          //   pure virtual function for which the final overrider is pure
+          //   virtual.
+          if (SO->second.front().Method->isPure())
+            Record->setAbstract(true);
+          continue;
+        }
+
+        // C++ [class.virtual]p2:
+        //   In a derived class, if a virtual member function of a base
+        //   class subobject has more than one final overrider the
+        //   program is ill-formed.
+        Diag(Record->getLocation(), diag::err_multiple_final_overriders)
+          << (NamedDecl *)M->first << Record;
+        Diag(M->first->getLocation(), diag::note_overridden_virtual_function);
+        for (OverridingMethods::overriding_iterator OM = SO->second.begin(), 
+                                                 OMEnd = SO->second.end();
+             OM != OMEnd; ++OM)
+          Diag(OM->Method->getLocation(), diag::note_final_overrider)
+            << (NamedDecl *)M->first << OM->Method->getParent();
+        
+        Record->setInvalidDecl();
+      }
+    }
+  }
+
+  if (Record->isAbstract() && !Record->isInvalidDecl())
     (void)AbstractClassUsageDiagnoser(*this, Record);
 }
 

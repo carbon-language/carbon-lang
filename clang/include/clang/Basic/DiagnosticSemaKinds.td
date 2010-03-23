@@ -391,7 +391,11 @@ def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}0 type %1 is an abstract class">;
 def err_allocation_of_abstract_type : Error<
   "allocation of an object of abstract type %0">;
-  
+
+def err_multiple_final_overriders : Error<
+  "virtual function %q0 has more than one final overrider in %1">; 
+def note_final_overrider : Note<"final overrider of %q0 in %1">;
+
 def err_type_defined_in_type_specifier : Error<
   "%0 can not be defined in a type specifier">;
 def err_type_defined_in_result_type : Error<

@@ -416,3 +416,240 @@ FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier,
   
   return false;
 }
+
+void OverridingMethods::add(unsigned OverriddenSubobject, 
+                            UniqueVirtualMethod Overriding) {
+  llvm::SmallVector<UniqueVirtualMethod, 4> &SubobjectOverrides
+    = Overrides[OverriddenSubobject];
+  if (std::find(SubobjectOverrides.begin(), SubobjectOverrides.end(), 
+                Overriding) == SubobjectOverrides.end())
+    SubobjectOverrides.push_back(Overriding);
+}
+
+void OverridingMethods::add(const OverridingMethods &Other) {
+  for (const_iterator I = Other.begin(), IE = Other.end(); I != IE; ++I) {
+    for (overriding_const_iterator M = I->second.begin(), 
+                                MEnd = I->second.end();
+         M != MEnd; 
+         ++M)
+      add(I->first, *M);
+  }
+}
+
+void OverridingMethods::replaceAll(UniqueVirtualMethod Overriding) {
+  for (iterator I = begin(), IEnd = end(); I != IEnd; ++I) {
+    I->second.clear();
+    I->second.push_back(Overriding);
+  }
+}
+
+
+namespace {
+  class FinalOverriderCollector {
+    /// \brief The number of subobjects of a given class type that
+    /// occur within the class hierarchy.
+    llvm::DenseMap<const CXXRecordDecl *, unsigned> SubobjectCount;
+
+    /// \brief Overriders for each virtual base subobject.
+    llvm::DenseMap<const CXXRecordDecl *, CXXFinalOverriderMap *> VirtualOverriders;
+
+    CXXFinalOverriderMap FinalOverriders;
+
+  public:
+    ~FinalOverriderCollector();
+
+    void Collect(const CXXRecordDecl *RD, bool VirtualBase,
+                 const CXXRecordDecl *InVirtualSubobject,
+                 CXXFinalOverriderMap &Overriders);
+  };
+}
+
+void FinalOverriderCollector::Collect(const CXXRecordDecl *RD, 
+                                      bool VirtualBase,
+                                      const CXXRecordDecl *InVirtualSubobject,
+                                      CXXFinalOverriderMap &Overriders) {
+  unsigned SubobjectNumber = 0;
+  if (!VirtualBase)
+    SubobjectNumber
+      = ++SubobjectCount[cast<CXXRecordDecl>(RD->getCanonicalDecl())];
+
+  for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
+         BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base) {
+    if (const RecordType *RT = Base->getType()->getAs<RecordType>()) {
+      const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
+      if (!BaseDecl->isPolymorphic())
+        continue;
+
+      if (Overriders.empty() && !Base->isVirtual()) {
+        // There are no other overriders of virtual member functions,
+        // so let the base class fill in our overriders for us.
+        Collect(BaseDecl, false, InVirtualSubobject, Overriders);
+        continue;
+      }
+
+      // Collect all of the overridders from the base class subobject
+      // and merge them into the set of overridders for this class.
+      // For virtual base classes, populate or use the cached virtual
+      // overrides so that we do not walk the virtual base class (and
+      // its base classes) more than once.
+      CXXFinalOverriderMap ComputedBaseOverriders;
+      CXXFinalOverriderMap *BaseOverriders = &ComputedBaseOverriders;
+      if (Base->isVirtual()) {
+        CXXFinalOverriderMap *&MyVirtualOverriders = VirtualOverriders[BaseDecl];
+        if (!MyVirtualOverriders) {
+          MyVirtualOverriders = new CXXFinalOverriderMap;
+          Collect(BaseDecl, true, BaseDecl, *MyVirtualOverriders);
+        }
+
+        BaseOverriders = MyVirtualOverriders;
+      } else
+        Collect(BaseDecl, false, InVirtualSubobject, ComputedBaseOverriders);
+
+      // Merge the overriders from this base class into our own set of
+      // overriders.
+      for (CXXFinalOverriderMap::iterator OM = BaseOverriders->begin(), 
+                               OMEnd = BaseOverriders->end();
+           OM != OMEnd;
+           ++OM) {
+        const CXXMethodDecl *CanonOM
+          = cast<CXXMethodDecl>(OM->first->getCanonicalDecl());
+        Overriders[CanonOM].add(OM->second);
+      }
+    }
+  }
+
+  for (CXXRecordDecl::method_iterator M = RD->method_begin(), 
+                                   MEnd = RD->method_end();
+       M != MEnd;
+       ++M) {
+    // We only care about virtual methods.
+    if (!M->isVirtual())
+      continue;
+
+    CXXMethodDecl *CanonM = cast<CXXMethodDecl>(M->getCanonicalDecl());
+
+    if (CanonM->begin_overridden_methods()
+                                       == CanonM->end_overridden_methods()) {
+      // This is a new virtual function that does not override any
+      // other virtual function. Add it to the map of virtual
+      // functions for which we are tracking overridders. 
+
+      // C++ [class.virtual]p2:
+      //   For convenience we say that any virtual function overrides itself.
+      Overriders[CanonM].add(SubobjectNumber,
+                             UniqueVirtualMethod(CanonM, SubobjectNumber,
+                                                 InVirtualSubobject));
+      continue;
+    }
+
+    // This virtual method overrides other virtual methods, so it does
+    // not add any new slots into the set of overriders. Instead, we
+    // replace entries in the set of overriders with the new
+    // overrider. To do so, we dig down to the original virtual
+    // functions using data recursion and update all of the methods it
+    // overrides.
+    typedef std::pair<CXXMethodDecl::method_iterator, 
+                      CXXMethodDecl::method_iterator> OverriddenMethods;
+    llvm::SmallVector<OverriddenMethods, 4> Stack;
+    Stack.push_back(std::make_pair(CanonM->begin_overridden_methods(),
+                                   CanonM->end_overridden_methods()));
+    while (!Stack.empty()) {
+      OverriddenMethods OverMethods = Stack.back();
+      Stack.pop_back();
+
+      for (; OverMethods.first != OverMethods.second; ++OverMethods.first) {
+        const CXXMethodDecl *CanonOM
+          = cast<CXXMethodDecl>((*OverMethods.first)->getCanonicalDecl());
+        if (CanonOM->begin_overridden_methods()
+                                       == CanonOM->end_overridden_methods()) {
+          // C++ [class.virtual]p2:
+          //   A virtual member function C::vf of a class object S is
+          //   a final overrider unless the most derived class (1.8)
+          //   of which S is a base class subobject (if any) declares
+          //   or inherits another member function that overrides vf.
+          //
+          // Treating this object like the most derived class, we
+          // replace any overrides from base classes with this
+          // overriding virtual function.
+          Overriders[CanonOM].replaceAll(
+                                 UniqueVirtualMethod(CanonM, SubobjectNumber,
+                                                     InVirtualSubobject));
+          continue;
+        } 
+
+        // Continue recursion to the methods that this virtual method
+        // overrides.
+        Stack.push_back(std::make_pair(CanonOM->begin_overridden_methods(),
+                                       CanonOM->end_overridden_methods()));
+      }
+    }
+  }
+}
+
+FinalOverriderCollector::~FinalOverriderCollector() {
+  for (llvm::DenseMap<const CXXRecordDecl *, CXXFinalOverriderMap *>::iterator
+         VO = VirtualOverriders.begin(), VOEnd = VirtualOverriders.end();
+       VO != VOEnd; 
+       ++VO)
+    delete VO->second;
+}
+
+void 
+CXXRecordDecl::getFinalOverriders(CXXFinalOverriderMap &FinalOverriders) const {
+  FinalOverriderCollector Collector;
+  Collector.Collect(this, false, 0, FinalOverriders);
+
+  // Weed out any final overriders that come from virtual base class
+  // subobjects that were hidden by other subobjects along any path.
+  // This is the final-overrider variant of C++ [class.member.lookup]p10.
+  for (CXXFinalOverriderMap::iterator OM = FinalOverriders.begin(), 
+                           OMEnd = FinalOverriders.end();
+       OM != OMEnd;
+       ++OM) {
+    for (OverridingMethods::iterator SO = OM->second.begin(), 
+                                  SOEnd = OM->second.end();
+         SO != SOEnd; 
+         ++SO) {
+      llvm::SmallVector<UniqueVirtualMethod, 4> &Overriding = SO->second;
+      if (Overriding.size() < 2)
+        continue;
+
+      for (llvm::SmallVector<UniqueVirtualMethod, 4>::iterator 
+             Pos = Overriding.begin(), PosEnd = Overriding.end();
+           Pos != PosEnd;
+           /* increment in loop */) {
+        if (!Pos->InVirtualSubobject) {
+          ++Pos;
+          continue;
+        }
+
+        // We have an overriding method in a virtual base class
+        // subobject (or non-virtual base class subobject thereof);
+        // determine whether there exists an other overriding method
+        // in a base class subobject that hides the virtual base class
+        // subobject.
+        bool Hidden = false;
+        for (llvm::SmallVector<UniqueVirtualMethod, 4>::iterator
+               OP = Overriding.begin(), OPEnd = Overriding.end();
+             OP != OPEnd && !Hidden; 
+             ++OP) {
+          if (Pos == OP)
+            continue;
+
+          if (OP->Method->getParent()->isVirtuallyDerivedFrom(
+                         const_cast<CXXRecordDecl *>(Pos->InVirtualSubobject)))
+            Hidden = true;
+        }
+
+        if (Hidden) {
+          // The current overriding function is hidden by another
+          // overriding function; remove this one.
+          Pos = Overriding.erase(Pos);
+          PosEnd = Overriding.end();
+        } else {
+          ++Pos;
+        }
+      }
+    }
+  }
+}

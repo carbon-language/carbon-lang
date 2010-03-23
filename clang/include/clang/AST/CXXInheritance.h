@@ -19,6 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeOrdering.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <list>
 #include <map>
@@ -227,6 +228,137 @@ public:
   /// object.
   void swap(CXXBasePaths &Other);
 };
+
+/// \brief Uniquely identifies a virtual method within a class
+/// hierarchy by the method itself and a class subobject number.
+struct UniqueVirtualMethod {
+  UniqueVirtualMethod() : Method(0), Subobject(0), InVirtualSubobject(0) { }
+
+  UniqueVirtualMethod(CXXMethodDecl *Method, unsigned Subobject,
+                      const CXXRecordDecl *InVirtualSubobject)
+    : Method(Method), Subobject(Subobject), 
+      InVirtualSubobject(InVirtualSubobject) { }
+
+  /// \brief The overriding virtual method.
+  CXXMethodDecl *Method;
+
+  /// \brief The subobject in which the overriding virtual method
+  /// resides.
+  unsigned Subobject;
+
+  /// \brief The virtual base class subobject of which this overridden
+  /// virtual method is a part. Note that this records the closest
+  /// derived virtual base class subobject.
+  const CXXRecordDecl *InVirtualSubobject;
+
+  friend bool operator==(const UniqueVirtualMethod &X,
+                         const UniqueVirtualMethod &Y) {
+    return X.Method == Y.Method && X.Subobject == Y.Subobject &&
+      X.InVirtualSubobject == Y.InVirtualSubobject;
+  }
+
+  friend bool operator!=(const UniqueVirtualMethod &X,
+                         const UniqueVirtualMethod &Y) {
+    return !(X == Y);
+  }
+};
+
+/// \brief The set of methods that override a given virtual method in
+/// each subobject where it occurs.
+///
+/// The first part of the pair is the subobject in which the
+/// overridden virtual function occurs, while the second part of the
+/// pair is the virtual method that overrides it (including the
+/// subobject in which that virtual function occurs).
+class OverridingMethods {
+  llvm::DenseMap<unsigned, llvm::SmallVector<UniqueVirtualMethod, 4> > 
+    Overrides;
+
+public:
+  // Iterate over the set of subobjects that have overriding methods.
+  typedef llvm::DenseMap<unsigned, llvm::SmallVector<UniqueVirtualMethod, 4> >
+            ::iterator iterator;
+  typedef llvm::DenseMap<unsigned, llvm::SmallVector<UniqueVirtualMethod, 4> >
+            ::const_iterator const_iterator;
+  iterator begin() { return Overrides.begin(); }
+  const_iterator begin() const { return Overrides.begin(); }
+  iterator end() { return Overrides.end(); }
+  const_iterator end() const { return Overrides.end(); }
+  unsigned size() const { return Overrides.size(); }
+
+  // Iterate over the set of overriding virtual methods in a given
+  // subobject.
+  typedef llvm::SmallVector<UniqueVirtualMethod, 4>::iterator 
+    overriding_iterator;
+  typedef llvm::SmallVector<UniqueVirtualMethod, 4>::const_iterator
+    overriding_const_iterator;
+
+  // Add a new overriding method for a particular subobject.
+  void add(unsigned OverriddenSubobject, UniqueVirtualMethod Overriding);
+
+  // Add all of the overriding methods from "other" into overrides for
+  // this method. Used when merging the overrides from multiple base
+  // class subobjects.
+  void add(const OverridingMethods &Other);
+
+  // Replace all overriding virtual methods in all subobjects with the
+  // given virtual method.
+  void replaceAll(UniqueVirtualMethod Overriding);
+};
+
+/// \brief A mapping from each virtual member function to its set of
+/// final overriders.
+///
+/// Within a class hierarchy for a given derived class, each virtual
+/// member function in that hierarchy has one or more "final
+/// overriders" (C++ [class.virtual]p2). A final overrider for a
+/// virtual function "f" is the virtual function that will actually be
+/// invoked when dispatching a call to "f" through the
+/// vtable. Well-formed classes have a single final overrider for each
+/// virtual function; in abstract classes, the final overrider for at
+/// least one virtual function is a pure virtual function. Due to
+/// multiple, virtual inheritance, it is possible for a class to have
+/// more than one final overrider. Athough this is an error (per C++
+/// [class.virtual]p2), it is not considered an error here: the final
+/// overrider map can represent multiple final overriders for a
+/// method, and it is up to the client to determine whether they are
+/// problem. For example, the following class \c D has two final
+/// overriders for the virtual function \c A::f(), one in \c C and one
+/// in \c D:
+///
+/// \code
+///   struct A { virtual void f(); };
+///   struct B : virtual A { virtual void f(); };
+///   struct C : virtual A { virtual void f(); };
+///   struct D : B, C { };
+/// \endcode
+///
+/// This data structure contaings a mapping from every virtual
+/// function *that does not override an existing virtual function* and
+/// in every subobject where that virtual function occurs to the set
+/// of virtual functions that override it. Thus, the same virtual
+/// function \c A::f can actually occur in multiple subobjects of type
+/// \c A due to multiple inheritance, and may be overriden by
+/// different virtual functions in each, as in the following example:
+///
+/// \code
+///   struct A { virtual void f(); };
+///   struct B : A { virtual void f(); };
+///   struct C : A { virtual void f(); };
+///   struct D : B, C { };
+/// \endcode
+///
+/// Unlike in the previous example, where the virtual functions \c
+/// B::f and \c C::f both overrode \c A::f in the same subobject of
+/// type \c A, in this example the two virtual functions both override
+/// \c A::f but in *different* subobjects of type A. This is
+/// represented by numbering the subobjects in which the overridden
+/// and the overriding virtual member functions are located. Subobject
+/// 0 represents the virtua base class subobject of that type, while
+/// subobject numbers greater than 0 refer to non-virtual base class
+/// subobjects of that type.
+class CXXFinalOverriderMap 
+  : public llvm::DenseMap<const CXXMethodDecl *, OverridingMethods> { };
   
 } // end namespace clang
 
