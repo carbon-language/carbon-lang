@@ -715,7 +715,7 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
 
       // Create a new data fragment for the instruction.
       //
-      // FIXME: Reuse previous data fragment if possible.
+      // FIXME-PERF: Reuse previous data fragment if possible.
       MCDataFragment *DF = new MCDataFragment();
       SD.getFragmentList().insert(it2, DF);
 

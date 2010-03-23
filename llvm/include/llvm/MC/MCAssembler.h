@@ -679,6 +679,10 @@ private:
   bool FixupNeedsRelaxation(const MCAsmFixup &Fixup, const MCFragment *DF,
                             const MCAsmLayout &Layout) const;
 
+  /// Check whether the given fragment needs relaxation.
+  bool FragmentNeedsRelaxation(const MCInstFragment *IF,
+                               const MCAsmLayout &Layout) const;
+
   /// LayoutSection - Assign offsets and sizes to the fragments in the section
   /// \arg SD, and update the section size. The section file offset should
   /// already have been computed.

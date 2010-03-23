@@ -383,12 +383,19 @@ void MCMachOStreamer::EmitInstruction(const MCInst &Inst) {
   Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
   VecOS.flush();
 
-  // Add the fixups and data.
-  MCDataFragment *DF = getOrCreateDataFragment();
+  // FIXME: Eliminate this copy.
+  SmallVector<MCAsmFixup, 4> AsmFixups;
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
-    DF->addFixup(MCAsmFixup(DF->getContents().size()+F.getOffset(),
-                            *F.getValue(), F.getKind()));
+    AsmFixups.push_back(MCAsmFixup(F.getOffset(), *F.getValue(),
+                                   F.getKind()));
+  }
+
+  // Add the fixups and data.
+  MCDataFragment *DF = getOrCreateDataFragment();
+  for (unsigned i = 0, e = AsmFixups.size(); i != e; ++i) {
+    AsmFixups[i].Offset += DF->getContents().size();
+    DF->addFixup(AsmFixups[i]);
   }
   DF->getContents().append(Code.begin(), Code.end());
 }

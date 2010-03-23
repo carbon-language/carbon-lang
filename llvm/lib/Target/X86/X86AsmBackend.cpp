@@ -12,6 +12,7 @@
 #include "X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MachObjectWriter.h"
@@ -52,6 +53,9 @@ public:
       DF.getContents()[Fixup.Offset + i] = uint8_t(Value >> (i * 8));
   }
 
+  bool MayNeedRelaxation(const MCInst &Inst,
+                         const SmallVectorImpl<MCAsmFixup> &Fixups) const;
+
   void RelaxInstruction(const MCInstFragment *IF, MCInst &Res) const;
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
@@ -80,6 +84,20 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   case X86::JP_1:  return X86::JP_4;
   case X86::JS_1:  return X86::JS_4;
   }
+}
+
+bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst,
+                              const SmallVectorImpl<MCAsmFixup> &Fixups) const {
+  // Check for a 1byte pcrel fixup, and enforce that we would know how to relax
+  // this instruction.
+  for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+    if (unsigned(Fixups[i].Kind) == X86::reloc_pcrel_1byte) {
+      assert(getRelaxedOpcode(Inst.getOpcode()) != Inst.getOpcode());
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // FIXME: Can tblgen help at all here to verify there aren't other instructions
