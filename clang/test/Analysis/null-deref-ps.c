@@ -26,7 +26,7 @@ int f2(struct foo_struct* p) {
   if (p)
     p->x = 1;
     
-  return p->x++; // expected-warning{{Dereference of null pointer}}
+  return p->x++; // expected-warning{{Field access results in a dereference of a null pointer (loaded from variable 'p')}}
 }
 
 int f3(char* x) {
@@ -57,7 +57,7 @@ int f4(int *p) {
     return 1;
     
   int *q = (int*) x;
-  return *q; // expected-warning{{Dereference of null pointer loaded from variable 'q'}}
+  return *q; // expected-warning{{Dereference of null pointer (loaded from variable 'q')}}
 }
 
 int f4_b() {

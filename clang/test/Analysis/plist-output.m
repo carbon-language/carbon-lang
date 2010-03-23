@@ -124,7 +124,7 @@ void test_null_field(void) {
 // CHECK:        <array>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>5</integer>
-// CHECK:          <key>col</key><integer>3</integer>
+// CHECK:          <key>col</key><integer>4</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
@@ -135,12 +135,12 @@ void test_null_field(void) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>location</key>
@@ -262,7 +262,7 @@ void test_null_field(void) {
 // CHECK:        <array>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>11</integer>
-// CHECK:          <key>col</key><integer>3</integer>
+// CHECK:          <key>col</key><integer>4</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
@@ -273,12 +273,12 @@ void test_null_field(void) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>location</key>
@@ -400,7 +400,7 @@ void test_null_field(void) {
 // CHECK:        <array>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>18</integer>
-// CHECK:          <key>col</key><integer>3</integer>
+// CHECK:          <key>col</key><integer>4</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
@@ -411,12 +411,12 @@ void test_null_field(void) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Dereference of null pointer loaded from variable &apos;q&apos;</string>
+// CHECK:      <string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Dereference of null pointer loaded from variable &apos;q&apos;</string>
+// CHECK: <string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Dereference of null pointer loaded from variable &apos;q&apos;</string>
+// CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>location</key>
@@ -538,7 +538,7 @@ void test_null_field(void) {
 // CHECK:        <array>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>23</integer>
-// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>col</key><integer>6</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
@@ -549,12 +549,12 @@ void test_null_field(void) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>location</key>
@@ -710,7 +710,7 @@ void test_null_field(void) {
 // CHECK:        <array>
 // CHECK:         <dict>
 // CHECK:          <key>line</key><integer>30</integer>
-// CHECK:          <key>col</key><integer>5</integer>
+// CHECK:          <key>col</key><integer>6</integer>
 // CHECK:          <key>file</key><integer>0</integer>
 // CHECK:         </dict>
 // CHECK:         <dict>
@@ -721,12 +721,12 @@ void test_null_field(void) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:      <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK: <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Dereference of null pointer loaded from variable &apos;p&apos;</string>
+// CHECK:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK:    <key>category</key><string>Logic error</string>
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>location</key>

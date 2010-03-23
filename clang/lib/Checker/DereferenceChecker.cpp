@@ -29,9 +29,9 @@ public:
   DereferenceChecker() : BT_null(0), BT_undef(0) {}
   static void *getTag() { static int tag = 0; return &tag; }
   void VisitLocation(CheckerContext &C, const Stmt *S, SVal location);
-  
+
   std::pair<ExplodedNode * const*, ExplodedNode * const*>
-  getImplicitNodes() const {    
+  getImplicitNodes() const {
     return std::make_pair(ImplicitNullDerefNodes.data(),
                           ImplicitNullDerefNodes.data() +
                           ImplicitNullDerefNodes.size());
@@ -59,7 +59,7 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
     if (ExplodedNode *N = C.GenerateSink()) {
       if (!BT_undef)
         BT_undef = new BuiltinBug("Dereference of undefined pointer value");
-      
+
       EnhancedBugReport *report =
         new EnhancedBugReport(*BT_undef, BT_undef->getDescription(), N);
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
@@ -68,31 +68,32 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
     }
     return;
   }
-  
+
   DefinedOrUnknownSVal location = cast<DefinedOrUnknownSVal>(l);
-  
-  // Check for null dereferences.  
+
+  // Check for null dereferences.
   if (!isa<Loc>(location))
     return;
-  
+
   const GRState *state = C.getState();
   const GRState *notNullState, *nullState;
   llvm::tie(notNullState, nullState) = state->Assume(location);
-  
+
   // The explicit NULL case.
   if (nullState) {
-    if (!notNullState) {    
+    if (!notNullState) {
       // Generate an error node.
       ExplodedNode *N = C.GenerateSink(nullState);
       if (!N)
         return;
-      
+
       // We know that 'location' cannot be non-null.  This is what
-      // we call an "explicit" null dereference.        
+      // we call an "explicit" null dereference.
       if (!BT_null)
         BT_null = new BuiltinBug("Dereference of null pointer");
-      
+
       llvm::SmallString<100> buf;
+      llvm::SmallVector<SourceRange, 2> Ranges;
 
       switch (S->getStmtClass()) {
         case Stmt::UnaryOperatorClass: {
@@ -101,10 +102,26 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
           if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(SU)) {
             if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
               llvm::raw_svector_ostream os(buf);
-              os << "Dereference of null pointer loaded from variable '"
-                 << VD->getName() << '\'';
+              os << "Dereference of null pointer (loaded from variable '"
+                 << VD->getName() << "')";
+              Ranges.push_back(DR->getSourceRange());
             }
           }
+          break;
+        }
+        case Stmt::MemberExprClass: {
+          const MemberExpr *M = cast<MemberExpr>(S);
+          if (M->isArrow())
+            if (DeclRefExpr *DR =
+                dyn_cast<DeclRefExpr>(M->getBase()->IgnoreParenCasts())) {
+              if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+                llvm::raw_svector_ostream os(buf);
+                os << "Field access results in a dereference of a null pointer "
+                      "(loaded from variable '" << VD->getName() << "')";
+                Ranges.push_back(M->getBase()->getSourceRange());
+              }
+            }
+          break;
         }
         default:
           break;
@@ -117,19 +134,23 @@ void DereferenceChecker::VisitLocation(CheckerContext &C, const Stmt *S,
 
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                                 bugreporter::GetDerefExpr(N));
-      
+
+      for (llvm::SmallVectorImpl<SourceRange>::iterator
+            I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
+        report->addRange(*I);
+
       C.EmitReport(report);
       return;
     }
     else {
       // Otherwise, we have the case where the location could either be
       // null or not-null.  Record the error node as an "implicit" null
-      // dereference.      
+      // dereference.
       if (ExplodedNode *N = C.GenerateSink(nullState))
         ImplicitNullDerefNodes.push_back(N);
     }
   }
-  
+
   // From this point forward, we know that the location is not null.
   C.addTransition(notNullState);
 }

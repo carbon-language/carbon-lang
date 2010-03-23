@@ -15,6 +15,6 @@ void f2() {
   }
   if (x == 2) {
     int *p = 0;
-    *p = 3; // expected-warning{{Dereference of null pointer loaded from variable}}
+    *p = 3; // expected-warning{{Dereference of null pointer (loaded from variable 'p')}}
   }
 }
