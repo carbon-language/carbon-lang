@@ -188,8 +188,9 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
   // Find the instruction that kills SavedReg.
   MachineInstr *KillMI = NULL;
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SavedReg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
+  for (MachineRegisterInfo::use_nodbg_iterator
+         UI = MRI->use_nodbg_begin(SavedReg),
+         UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
     if (!UseMO.isKill())
       continue;
@@ -280,8 +281,8 @@ TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
                                          MachineInstr *MI, MachineInstr *DefMI,
                                          MachineBasicBlock *MBB, unsigned Loc) {
   bool OtherUse = false;
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
+  for (MachineRegisterInfo::use_nodbg_iterator UI = MRI->use_nodbg_begin(Reg),
+         UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
     MachineInstr *UseMI = UseMO.getParent();
     MachineBasicBlock *UseMBB = UseMI->getParent();
@@ -927,6 +928,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         mi = nmi;
         continue;
       }
+
       const TargetInstrDesc &TID = mi->getDesc();
       bool FirstTied = true;
 
@@ -1101,7 +1103,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   // Some remat'ed instructions are dead.
   int VReg = ReMatRegs.find_first();
   while (VReg != -1) {
-    if (MRI->use_empty(VReg)) {
+    if (MRI->use_nodbg_empty(VReg)) {
       MachineInstr *DefMI = MRI->getVRegDef(VReg);
       DefMI->eraseFromParent();
     }
