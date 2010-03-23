@@ -992,8 +992,10 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
 /// a few instructions in each direction it assumes it's not safe.
 static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I) {
+  MachineBasicBlock::iterator E = MBB.end();
+
   // It's always safe to clobber EFLAGS at the end of a block.
-  if (I == MBB.end())
+  if (I == E)
     return true;
 
   // For compile time consideration, if we are not able to determine the
@@ -1017,20 +1019,28 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
       // This instruction defines EFLAGS, no need to look any further.
       return true;
     ++Iter;
+    // Skip over DBG_VALUE.
+    while (Iter != E && Iter->isDebugValue())
+      ++Iter;
 
     // If we make it to the end of the block, it's safe to clobber EFLAGS.
-    if (Iter == MBB.end())
+    if (Iter == E)
       return true;
   }
 
+  MachineBasicBlock::iterator B = MBB.begin();
   Iter = I;
   for (unsigned i = 0; i < 4; ++i) {
     // If we make it to the beginning of the block, it's safe to clobber
     // EFLAGS iff EFLAGS is not live-in.
-    if (Iter == MBB.begin())
+    if (Iter == B)
       return !MBB.isLiveIn(X86::EFLAGS);
 
     --Iter;
+    // Skip over DBG_VALUE.
+    while (Iter != B && Iter->isDebugValue())
+      --Iter;
+
     bool SawKill = false;
     for (unsigned j = 0, e = Iter->getNumOperands(); j != e; ++j) {
       MachineOperand &MO = Iter->getOperand(j);
