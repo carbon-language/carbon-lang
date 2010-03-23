@@ -44,6 +44,12 @@ public:
                            SrcMgr::CharacteristicKind FileType) {
   }
 
+
+  /// EndOfMainFile - This callback is invoked when the end of the main file is
+  /// reach, no subsequent callbacks will be made.
+  virtual void EndOfMainFile() {
+  }
+
   /// Ident - This callback is invoked when a #ident or #sccs directive is read.
   ///
   virtual void Ident(SourceLocation Loc, const std::string &str) {
@@ -88,6 +94,11 @@ public:
                            SrcMgr::CharacteristicKind FileType) {
     First->FileChanged(Loc, Reason, FileType);
     Second->FileChanged(Loc, Reason, FileType);
+  }
+
+  virtual void EndOfMainFile() {
+    First->EndOfMainFile();
+    Second->EndOfMainFile();
   }
 
   virtual void Ident(SourceLocation Loc, const std::string &str) {

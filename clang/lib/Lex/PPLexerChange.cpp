@@ -255,6 +255,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       if (!I->second->isUsed())
         Diag(I->second->getDefinitionLoc(), diag::pp_macro_not_used);
   }
+
   return true;
 }
 

@@ -169,6 +169,10 @@ void FrontendAction::EndSourceFile() {
       CI.setASTContext(0);
   }
 
+  // Inform the preprocessor we are done.
+  if (CI.hasPreprocessor())
+    CI.getPreprocessor().EndSourceFile();
+
   if (CI.getFrontendOpts().ShowStats) {
     llvm::errs() << "\nSTATISTICS FOR '" << getCurrentFile() << "':\n";
     CI.getPreprocessor().PrintStats();

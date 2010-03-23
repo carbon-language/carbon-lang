@@ -519,6 +519,11 @@ bool Preprocessor::EnterMainSourceFile() {
   return EnterSourceFile(FID, 0, ErrorStr);
 }
 
+void Preprocessor::EndSourceFile() {
+  // Notify the client that we reached the end of the source file.
+  if (Callbacks)
+    Callbacks->EndOfMainFile();
+}
 
 //===----------------------------------------------------------------------===//
 // Lexer Event Handling.

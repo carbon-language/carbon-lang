@@ -368,6 +368,10 @@ public:
   /// which implicitly adds the builtin defines etc.
   bool EnterMainSourceFile();
 
+  /// EndSourceFile - Inform the preprocessor callbacks that processing is
+  /// complete.
+  void EndSourceFile();
+
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.  Return true
   /// and fill in ErrorStr with the error information on failure.
