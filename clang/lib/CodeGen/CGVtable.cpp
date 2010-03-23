@@ -1253,18 +1253,18 @@ private:
     bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
   };
   
-  typedef llvm::DenseMap<uint64_t, ThunkInfo> ThunksInfoMapTy;
+  typedef llvm::DenseMap<uint64_t, ThunkInfo> VtableThunksMapTy;
   
   /// VTableThunks - The thunks by vtable index in the vtable currently being 
   /// built.
-  ThunksInfoMapTy VTableThunks;
+  VtableThunksMapTy VTableThunks;
 
-  typedef llvm::DenseMap<const CXXMethodDecl *,
-                         llvm::SmallVector<ThunkInfo, 1> > MethodThunksMapTy;
+  typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
+  typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
   
   /// Thunks - A map that contains all the thunks needed for all methods in the
   /// most derived class for which the vtable is currently being built.
-  MethodThunksMapTy Thunks;
+  ThunksMapTy Thunks;
   
   /// AddThunk - Add a thunk for the given method.
   void AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk);
@@ -1464,7 +1464,7 @@ void VtableBuilder::ComputeThisAdjustments() {
     return;
   }
 
-  for (ThunksInfoMapTy::const_iterator I = VTableThunks.begin(),
+  for (VtableThunksMapTy::const_iterator I = VTableThunks.begin(),
        E = VTableThunks.end(); I != E; ++I) {
     const VtableComponent &Component = Components[I->first];
     const ThunkInfo &Thunk = I->second;
@@ -2329,7 +2329,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     // We store the method names in a map to get a stable order.
     std::map<std::string, const CXXMethodDecl *> MethodNamesAndDecls;
     
-    for (MethodThunksMapTy::const_iterator I = Thunks.begin(), E = Thunks.end();
+    for (ThunksMapTy::const_iterator I = Thunks.begin(), E = Thunks.end();
          I != E; ++I) {
       const CXXMethodDecl *MD = I->first;
       std::string MethodName = 
@@ -2345,7 +2345,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       const std::string &MethodName = I->first;
       const CXXMethodDecl *MD = I->second;
 
-      llvm::SmallVector<ThunkInfo, 1> ThunksVector = Thunks[MD];
+      ThunkInfoVectorTy ThunksVector = Thunks[MD];
       std::sort(ThunksVector.begin(), ThunksVector.end());
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
@@ -3732,6 +3732,11 @@ CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   return GV;
 }
 
+void CodeGenVTables::EmitThunks(GlobalDecl GD)
+{
+  CGM.BuildThunksForVirtual(GD);
+}
+
 void 
 CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
                                   const CXXRecordDecl *RD) {
@@ -3771,7 +3776,7 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
   
   // Check if we need to emit thunks for this function.
   if (MD->isVirtual())
-    CGM.BuildThunksForVirtual(GD);
+    EmitThunks(GD);
 
   // Get the key function.
   const CXXMethodDecl *KeyFunction = CGM.getContext().getKeyFunction(RD);
@@ -3791,3 +3796,4 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
   else
     GenerateClassData(CGM.getVtableLinkage(RD), RD);
 }
+

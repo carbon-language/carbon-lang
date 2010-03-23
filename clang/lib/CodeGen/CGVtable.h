@@ -186,6 +186,9 @@ private:
                                     bool GenerateDefinition,
                                     const CXXRecordDecl *RD);
 
+  /// EmitThunks - Emit the associated thunks for the given global decl.
+  void EmitThunks(GlobalDecl GD);
+  
 public:
   CodeGenVTables(CodeGenModule &CGM)
     : CGM(CGM) { }
