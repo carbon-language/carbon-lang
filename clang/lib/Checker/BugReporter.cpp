@@ -1139,12 +1139,9 @@ void EdgeBuilder::addContext(const Stmt *S) {
 static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                             PathDiagnosticBuilder &PDB,
                                             const ExplodedNode *N) {
-
-
   EdgeBuilder EB(PD, PDB);
 
-  const ExplodedNode* NextNode = N->pred_empty()
-                                        ? NULL : *(N->pred_begin());
+  const ExplodedNode* NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
   while (NextNode) {
     N = NextNode;
     NextNode = GetPredecessorNode(N);
