@@ -117,17 +117,15 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
                                         MachineBasicBlock::const_iterator I,
                                         MachineBasicBlock::const_iterator E) {
   unsigned LookAheadLeft = 5;
-  while (LookAheadLeft--) {
+  while (LookAheadLeft) {
     if (I == E)
       // Reached end of block, register is obviously dead.
       return true;
 
-    if (I->isDebugValue()) {
-      // These must not count against the limit.
-      ++LookAheadLeft;
+    // Skip over dbg_value's.
+    while (I->isDebugValue())
       ++I;
-      continue;
-    }
+
     bool SeenDef = false;
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = I->getOperand(i);
@@ -143,6 +141,8 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
       // See a def of Reg (or an alias) before encountering any use, it's 
       // trivially dead.
       return true;
+
+    --LookAheadLeft;
     ++I;
   }
   return false;
