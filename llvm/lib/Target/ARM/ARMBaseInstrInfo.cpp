@@ -743,7 +743,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addMemOperand(MMO)
                      .addReg(SrcReg, getKillRegState(isKill)));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRQ)).
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQ)).
                      addReg(SrcReg, getKillRegState(isKill))
                      .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
     }
@@ -792,7 +792,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      .addFrameIndex(FI).addImm(128)
                      .addMemOperand(MMO));
     } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg)
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQ), DestReg)
                      .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
     }
   }

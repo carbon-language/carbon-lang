@@ -117,7 +117,7 @@ def h64imm : Operand<i64> {
 
 // Use vldmia to load a Q register as a D register pair.
 // This is equivalent to VLDMD except that it has a Q register operand.
-def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
+def VLDMQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
                 "vldmia", "$addr, ${dst:dregpair}",
                 [(set QPR:$dst, (v2f64 (load addrmode4:$addr)))]> {
   let Inst{27-25} = 0b110;
@@ -129,7 +129,7 @@ def VLDRQ : NI4<(outs QPR:$dst), (ins addrmode4:$addr), IIC_fpLoadm,
 
 let mayLoad = 1 in {
 // Use vld1 to load a Q register as a D register pair.
-// This alternative to VLDRQ allows an alignment to be specified.
+// This alternative to VLDMQ allows an alignment to be specified.
 // This is equivalent to VLD1q64 except that it has a Q register operand.
 def VLD1q
   : NLdSt<0,0b10,0b1010,0b1100, (outs QPR:$dst), (ins addrmode6:$addr),
@@ -142,7 +142,7 @@ def VLD1q_UPD
 
 // Use vstmia to store a Q register as a D register pair.
 // This is equivalent to VSTMD except that it has a Q register operand.
-def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
+def VSTMQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
                 "vstmia", "$addr, ${src:dregpair}",
                 [(store (v2f64 QPR:$src), addrmode4:$addr)]> {
   let Inst{27-25} = 0b110;
@@ -154,7 +154,7 @@ def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr), IIC_fpStorem,
 
 let mayStore = 1 in {
 // Use vst1 to store a Q register as a D register pair.
-// This alternative to VSTRQ allows an alignment to be specified.
+// This alternative to VSTMQ allows an alignment to be specified.
 // This is equivalent to VST1q64 except that it has a Q register operand.
 def VST1q
   : NLdSt<0,0b00,0b1010,0b1100, (outs), (ins addrmode6:$addr, QPR:$src),
