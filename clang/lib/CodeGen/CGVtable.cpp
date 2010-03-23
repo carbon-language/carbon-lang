@@ -1164,34 +1164,6 @@ private:
   /// currently building.
   MethodInfoMapTy MethodInfoMap;
   
-  /// ThunkInfo - The 'this' pointer adjustment as well as an optional return
-  /// adjustment for a thunk.
-  struct ThunkInfo {
-    /// This - The 'this' pointer adjustment.
-    ThisAdjustment This;
-    
-    /// Return - The return adjustment.
-    ReturnAdjustment Return;
-    
-    ThunkInfo() { }
-    
-    ThunkInfo(const ThisAdjustment &This, const ReturnAdjustment &Return)
-      : This(This), Return(Return) { }
-  
-    friend bool operator==(const ThunkInfo &LHS, const ThunkInfo &RHS) {
-      return LHS.This == RHS.This && LHS.Return == RHS.Return;
-    }
-
-    friend bool operator<(const ThunkInfo &LHS, const ThunkInfo &RHS) {
-      if (LHS.This < RHS.This)
-        return true;
-      
-      return LHS.This == RHS.This && LHS.Return < RHS.Return;
-    }
-    
-    bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
-  };
-  
   typedef llvm::DenseMap<uint64_t, ThunkInfo> VtableThunksMapTy;
   
   /// VTableThunks - The thunks by vtable index in the vtable currently being 
