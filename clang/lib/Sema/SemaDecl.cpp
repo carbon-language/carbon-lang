@@ -2131,7 +2131,8 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       << D.getCXXScopeSpec().getRange();
     D.setInvalidType();
     // Pretend we didn't see the scope specifier.
-    DC = 0;
+    DC = CurContext;
+    Previous.clear();
   }
 
   if (getLangOptions().CPlusPlus) {
