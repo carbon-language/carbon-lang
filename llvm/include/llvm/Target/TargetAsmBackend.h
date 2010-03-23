@@ -102,6 +102,13 @@ public:
   /// wider instruction.
   virtual void RelaxInstruction(const MCInstFragment *IF,
                                 MCInst &Res) const = 0;
+
+  /// WriteNopData - Write an (optimal) nop sequence of Count bytes to the given
+  /// output. If the target cannot generate such a sequence, it should return an
+  /// error.
+  ///
+  /// \return - True on success.
+  virtual bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const = 0;
 };
 
 } // End llvm namespace

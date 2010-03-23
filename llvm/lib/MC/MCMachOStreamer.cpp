@@ -353,8 +353,7 @@ void MCMachOStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                         unsigned MaxBytesToEmit) {
   if (MaxBytesToEmit == 0)
     MaxBytesToEmit = ByteAlignment;
-  // FIXME: The 0x90 is the default x86 1 byte nop opcode.
-  new MCAlignFragment(ByteAlignment, 0x90, 1, MaxBytesToEmit,
+  new MCAlignFragment(ByteAlignment, 0, 1, MaxBytesToEmit,
                       true /* EmitNops */, CurSectionData);
 
   // Update the maximum alignment on the current section if necessary.

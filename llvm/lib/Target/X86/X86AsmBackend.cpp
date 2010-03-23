@@ -53,6 +53,8 @@ public:
   }
 
   void RelaxInstruction(const MCInstFragment *IF, MCInst &Res) const;
+
+  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
 };
 
 static unsigned getRelaxedOpcode(unsigned Op) {
@@ -96,6 +98,67 @@ void X86AsmBackend::RelaxInstruction(const MCInstFragment *IF,
 
   Res = IF->getInst();
   Res.setOpcode(RelaxedOp);
+}
+
+/// WriteNopData - Write optimal nops to the output file for the \arg Count
+/// bytes.  This returns the number of bytes written.  It may return 0 if
+/// the \arg Count is more than the maximum optimal nops.
+///
+/// FIXME this is X86 32-bit specific and should move to a better place.
+bool X86AsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+  static const uint8_t Nops[16][16] = {
+    // nop
+    {0x90},
+    // xchg %ax,%ax
+    {0x66, 0x90},
+    // nopl (%[re]ax)
+    {0x0f, 0x1f, 0x00},
+    // nopl 0(%[re]ax)
+    {0x0f, 0x1f, 0x40, 0x00},
+    // nopl 0(%[re]ax,%[re]ax,1)
+    {0x0f, 0x1f, 0x44, 0x00, 0x00},
+    // nopw 0(%[re]ax,%[re]ax,1)
+    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
+    // nopl 0L(%[re]ax)
+    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
+    // nopl 0L(%[re]ax,%[re]ax,1)
+    {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
+    // nopw 0L(%[re]ax,%[re]ax,1)
+    {0x66, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
+    // nopw %cs:0L(%[re]ax,%[re]ax,1)
+    {0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
+    // nopl 0(%[re]ax,%[re]ax,1)
+    // nopw 0(%[re]ax,%[re]ax,1)
+    {0x0f, 0x1f, 0x44, 0x00, 0x00,
+     0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
+    // nopw 0(%[re]ax,%[re]ax,1)
+    // nopw 0(%[re]ax,%[re]ax,1)
+    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00,
+     0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
+    // nopw 0(%[re]ax,%[re]ax,1)
+    // nopl 0L(%[re]ax) */
+    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00,
+     0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
+    // nopl 0L(%[re]ax)
+    // nopl 0L(%[re]ax)
+    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00,
+     0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
+    // nopl 0L(%[re]ax)
+    // nopl 0L(%[re]ax,%[re]ax,1)
+    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00,
+     0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00}
+  };
+
+  // Write an optimal sequence for the first 15 bytes.
+  uint64_t OptimalCount = (Count < 16) ? Count : 15;
+  for (uint64_t i = 0, e = OptimalCount; i != e; i++)
+    OW->Write8(Nops[OptimalCount - 1][i]);
+
+  // Finish with single byte nops.
+  for (uint64_t i = OptimalCount, e = Count; i != e; ++i)
+   OW->Write8(0x90);
+
+  return true;
 }
 
 /* *** */

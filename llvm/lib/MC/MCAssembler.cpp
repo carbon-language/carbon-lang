@@ -373,66 +373,9 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
     SD.setFileSize(Address - SD.getAddress());
 }
 
-/// WriteNopData - Write optimal nops to the output file for the \arg Count
-/// bytes.  This returns the number of bytes written.  It may return 0 if
-/// the \arg Count is more than the maximum optimal nops.
-///
-/// FIXME this is X86 32-bit specific and should move to a better place.
-static uint64_t WriteNopData(uint64_t Count, MCObjectWriter *OW) {
-  static const uint8_t Nops[16][16] = {
-    // nop
-    {0x90},
-    // xchg %ax,%ax
-    {0x66, 0x90},
-    // nopl (%[re]ax)
-    {0x0f, 0x1f, 0x00},
-    // nopl 0(%[re]ax)
-    {0x0f, 0x1f, 0x40, 0x00},
-    // nopl 0(%[re]ax,%[re]ax,1)
-    {0x0f, 0x1f, 0x44, 0x00, 0x00},
-    // nopw 0(%[re]ax,%[re]ax,1)
-    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
-    // nopl 0L(%[re]ax)
-    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
-    // nopl 0L(%[re]ax,%[re]ax,1)
-    {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-    // nopw 0L(%[re]ax,%[re]ax,1)
-    {0x66, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-    // nopw %cs:0L(%[re]ax,%[re]ax,1)
-    {0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-    // nopl 0(%[re]ax,%[re]ax,1)
-    // nopw 0(%[re]ax,%[re]ax,1)
-    {0x0f, 0x1f, 0x44, 0x00, 0x00,
-     0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
-    // nopw 0(%[re]ax,%[re]ax,1)
-    // nopw 0(%[re]ax,%[re]ax,1)
-    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00,
-     0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
-    // nopw 0(%[re]ax,%[re]ax,1)
-    // nopl 0L(%[re]ax) */
-    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00,
-     0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
-    // nopl 0L(%[re]ax)
-    // nopl 0L(%[re]ax)
-    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00,
-     0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
-    // nopl 0L(%[re]ax)
-    // nopl 0L(%[re]ax,%[re]ax,1)
-    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00,
-     0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00}
-  };
-
-  if (Count > 15)
-    return 0;
-
-  for (uint64_t i = 0; i < Count; i++)
-    OW->Write8(uint8_t(Nops[Count - 1][i]));
-
-  return Count;
-}
-
 /// WriteFragmentData - Write the \arg F data to the output file.
-static void WriteFragmentData(const MCFragment &F, MCObjectWriter *OW) {
+static void WriteFragmentData(const MCAssembler &Asm, const MCFragment &F,
+                              MCObjectWriter *OW) {
   uint64_t Start = OW->getStream().tell();
   (void) Start;
 
@@ -456,11 +399,15 @@ static void WriteFragmentData(const MCFragment &F, MCObjectWriter *OW) {
     // See if we are aligning with nops, and if so do that first to try to fill
     // the Count bytes.  Then if that did not fill any bytes or there are any
     // bytes left to fill use the the Value and ValueSize to fill the rest.
+    // If we are aligning with nops, ask that target to emit the right data.
     if (AF.getEmitNops()) {
-      uint64_t NopByteCount = WriteNopData(Count, OW);
-      Count -= NopByteCount;
+      if (!Asm.getBackend().WriteNopData(Count, OW))
+        llvm_report_error("unable to write nop sequence of " +
+                          Twine(Count) + " bytes");
+      break;
     }
 
+    // Otherwise, write out in multiples of the value size.
     for (uint64_t i = 0; i != Count; ++i) {
       switch (AF.getValueSize()) {
       default:
@@ -531,7 +478,7 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
 
   for (MCSectionData::const_iterator it = SD->begin(),
          ie = SD->end(); it != ie; ++it)
-    WriteFragmentData(*it, OW);
+    WriteFragmentData(*this, *it, OW);
 
   // Add section padding.
   assert(SD->getFileSize() >= SD->getSize() && "Invalid section sizes!");
