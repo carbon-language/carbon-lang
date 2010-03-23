@@ -3784,7 +3784,7 @@ llvm::GlobalVariable *CodeGenVTables::getVtable(const CXXRecordDecl *RD) {
   return Vtable;
 }
 
-void CodeGenVTables::MaybeEmitVtable(GlobalDecl GD) {
+void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const CXXRecordDecl *RD = MD->getParent();
 

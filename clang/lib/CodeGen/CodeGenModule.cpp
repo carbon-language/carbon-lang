@@ -715,7 +715,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
                                  "Generating code for declaration");
   
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    getVTables().MaybeEmitVtable(GD);
+    getVTables().EmitVTableRelatedData(GD);
     if (MD->isVirtual() && MD->isOutOfLine() &&
         (!isa<CXXDestructorDecl>(D) || GD.getDtorType() != Dtor_Base)) {
       if (isa<CXXDestructorDecl>(D)) {

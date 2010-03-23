@@ -238,7 +238,9 @@ public:
   
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   
-  void MaybeEmitVtable(GlobalDecl GD);
+  // EmitVTableRelatedData - Will emit any thunks that the global decl might
+  // have, as well as the vtable itself if the global decl is the key function.
+  void EmitVTableRelatedData(GlobalDecl GD);
 
   /// GenerateClassData - Generate all the class data requires to be generated
   /// upon definition of a KeyFunction.  This includes the vtable, the
