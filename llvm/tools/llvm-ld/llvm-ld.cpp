@@ -130,8 +130,9 @@ static std::string progname;
 /// Inputs:
 ///  Message  - The message to print to standard error.
 ///
-static void PrintAndExit(const std::string &Message, int errcode = 1) {
+static void PrintAndExit(const std::string &Message, Module *M, int errcode = 1) {
   errs() << progname << ": " << Message << "\n";
+  delete M;
   llvm_shutdown();
   exit(errcode);
 }
@@ -234,7 +235,7 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
   raw_fd_ostream Out(FileName.c_str(), ErrorInfo,
                      raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty())
-    PrintAndExit(ErrorInfo);
+    PrintAndExit(ErrorInfo, M);
 
   // Ensure that the bitcode file gets removed from the disk if we get a
   // terminating signal.
@@ -408,7 +409,7 @@ static int GenerateNative(const std::string &OutputFilename,
 
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
 /// bitcode file for the program.
-static void EmitShellScript(char **argv) {
+static void EmitShellScript(char **argv, Module *M) {
   if (Verbose)
     outs() << "Emitting Shell Script\n";
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -419,10 +420,10 @@ static void EmitShellScript(char **argv) {
   sys::Path llvmstub = FindExecutable("llvm-stub.exe", argv[0],
                                       (void *)(intptr_t)&Optimize);
   if (llvmstub.isEmpty())
-    PrintAndExit("Could not find llvm-stub.exe executable!");
+    PrintAndExit("Could not find llvm-stub.exe executable!", M);
 
   if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg))
-    PrintAndExit(ErrMsg);
+    PrintAndExit(ErrMsg, M);
 
   return;
 #endif
@@ -431,7 +432,7 @@ static void EmitShellScript(char **argv) {
   std::string ErrorInfo;
   raw_fd_ostream Out2(OutputFilename.c_str(), ErrorInfo);
   if (!ErrorInfo.empty())
-    PrintAndExit(ErrorInfo);
+    PrintAndExit(ErrorInfo, M);
 
   Out2 << "#!/bin/sh\n";
   // Allow user to setenv LLVMINTERP if lli is not in their PATH.
@@ -601,13 +602,13 @@ int main(int argc, char **argv, char **envp) {
           prog = sys::Program::FindProgramByName(*I);
           if (prog.isEmpty())
             PrintAndExit(std::string("Optimization program '") + *I +
-              "' is not found or not executable.");
+                         "' is not found or not executable.", Composite.get());
         }
         // Get the program arguments
         sys::Path tmp_output("opt_result");
         std::string ErrMsg;
         if (tmp_output.createTemporaryFileOnDisk(true, &ErrMsg))
-          PrintAndExit(ErrMsg);
+          PrintAndExit(ErrMsg, Composite.get());
 
         const char* args[4];
         args[0] = I->c_str();
@@ -619,11 +620,12 @@ int main(int argc, char **argv, char **envp) {
             sys::Path target(BitcodeOutputFilename);
             target.eraseFromDisk();
             if (tmp_output.renamePathOnDisk(target, &ErrMsg))
-              PrintAndExit(ErrMsg, 2);
+              PrintAndExit(ErrMsg, Composite.get(), 2);
           } else
-            PrintAndExit("Post-link optimization output is not bitcode");
+            PrintAndExit("Post-link optimization output is not bitcode",
+                         Composite.get());
         } else {
-          PrintAndExit(ErrMsg);
+          PrintAndExit(ErrMsg, Composite.get());
         }
       }
     }
@@ -645,21 +647,21 @@ int main(int argc, char **argv, char **envp) {
       sys::Path llc = FindExecutable("llc", argv[0],
                                      (void *)(intptr_t)&Optimize);
       if (llc.isEmpty())
-        PrintAndExit("Failed to find llc");
+        PrintAndExit("Failed to find llc", Composite.get());
 
       sys::Path gcc = sys::Program::FindProgramByName("gcc");
       if (gcc.isEmpty())
-        PrintAndExit("Failed to find gcc");
+        PrintAndExit("Failed to find gcc", Composite.get());
 
       // Generate an assembly language file for the bitcode.
       std::string ErrMsg;
       if (0 != GenerateAssembly(AssemblyFile.str(), BitcodeOutputFilename,
           llc, ErrMsg))
-        PrintAndExit(ErrMsg);
+        PrintAndExit(ErrMsg, Composite.get());
 
       if (0 != GenerateNative(OutputFilename, AssemblyFile.str(),
                               NativeLinkItems, gcc, envp, ErrMsg))
-        PrintAndExit(ErrMsg);
+        PrintAndExit(ErrMsg, Composite.get());
 
       // Remove the assembly language file.
       AssemblyFile.eraseFromDisk();
@@ -675,39 +677,39 @@ int main(int argc, char **argv, char **envp) {
       sys::Path llc = FindExecutable("llc", argv[0],
                                      (void *)(intptr_t)&Optimize);
       if (llc.isEmpty())
-        PrintAndExit("Failed to find llc");
+        PrintAndExit("Failed to find llc", Composite.get());
 
       sys::Path gcc = sys::Program::FindProgramByName("gcc");
       if (gcc.isEmpty())
-        PrintAndExit("Failed to find gcc");
+        PrintAndExit("Failed to find gcc", Composite.get());
 
       // Generate an assembly language file for the bitcode.
       std::string ErrMsg;
       if (GenerateCFile(CFile.str(), BitcodeOutputFilename, llc, ErrMsg))
-        PrintAndExit(ErrMsg);
+        PrintAndExit(ErrMsg, Composite.get());
 
       if (GenerateNative(OutputFilename, CFile.str(), 
                          NativeLinkItems, gcc, envp, ErrMsg))
-        PrintAndExit(ErrMsg);
+        PrintAndExit(ErrMsg, Composite.get());
 
       // Remove the assembly language file.
       CFile.eraseFromDisk();
 
     } else {
-      EmitShellScript(argv);
+      EmitShellScript(argv, Composite.get());
     }
 
     // Make the script executable...
     std::string ErrMsg;
     if (sys::Path(OutputFilename).makeExecutableOnDisk(&ErrMsg))
-      PrintAndExit(ErrMsg);
+      PrintAndExit(ErrMsg, Composite.get());
 
     // Make the bitcode file readable and directly executable in LLEE as well
     if (sys::Path(BitcodeOutputFilename).makeExecutableOnDisk(&ErrMsg))
-      PrintAndExit(ErrMsg);
+      PrintAndExit(ErrMsg, Composite.get());
 
     if (sys::Path(BitcodeOutputFilename).makeReadableOnDisk(&ErrMsg))
-      PrintAndExit(ErrMsg);
+      PrintAndExit(ErrMsg, Composite.get());
   }
 
   // Graceful exit
