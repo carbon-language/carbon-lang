@@ -31,13 +31,13 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 #define CALLSITE_DELEGATE_GETTER(METHOD) \
-  Instruction *II(getInstruction());     \
+  Instruction *II = getInstruction();    \
   return isCall()                        \
     ? cast<CallInst>(II)->METHOD         \
     : cast<InvokeInst>(II)->METHOD
 
 #define CALLSITE_DELEGATE_SETTER(METHOD) \
-  Instruction *II(getInstruction());     \
+  Instruction *II = getInstruction();    \
   if (isCall())                          \
     cast<CallInst>(II)->METHOD;          \
   else                                   \
@@ -66,6 +66,17 @@ bool CallSite::paramHasAttr(uint16_t i, Attributes attr) const {
 uint16_t CallSite::getParamAlignment(uint16_t i) const {
   CALLSITE_DELEGATE_GETTER(getParamAlignment(i));
 }
+
+/// @brief Return true if the call should not be inlined.
+bool CallSite::isNoInline() const {
+  CALLSITE_DELEGATE_GETTER(isNoInline());
+}
+
+void CallSite::setIsNoInline(bool Value) {
+  CALLSITE_DELEGATE_GETTER(setIsNoInline(Value));
+}
+
+
 bool CallSite::doesNotAccessMemory() const {
   CALLSITE_DELEGATE_GETTER(doesNotAccessMemory());
 }

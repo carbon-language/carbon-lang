@@ -229,7 +229,9 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
   const Function *CalledFunc = CS.getCalledFunction();
   if (CalledFunc == 0 ||          // Can't inline external function or indirect
       CalledFunc->isDeclaration() || // call, or call to a vararg function!
-      CalledFunc->getFunctionType()->isVarArg()) return false;
+      CalledFunc->getFunctionType()->isVarArg() ||
+      CS.isNoInline())            // Call site is marked noinline.
+    return false;
 
 
   // If the call to the callee is not a tail call, we must clear the 'tail'
