@@ -108,7 +108,7 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
 
 
 /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
-/// expects that the size has type 'intptr_t' and Dst/Src are pointers.
+/// expects that Len has type 'intptr_t' and Dst/Src are pointers.
 Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
                         unsigned Align, IRBuilder<> &B, const TargetData *TD) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
@@ -118,6 +118,30 @@ Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
   Src = CastToCStr(Src, B);
   return B.CreateCall4(MemCpy, Dst, Src, Len,
                        ConstantInt::get(B.getInt32Ty(), Align));
+}
+
+/// EmitMemCpyChk - Emit a call to the __memcpy_chk function to the builder.
+/// This expects that the Len and ObjSize have type 'intptr_t' and Dst/Src
+/// are pointers.
+Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
+                           IRBuilder<> &B, const TargetData *TD) {
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
+  AttributeWithIndex AWI;
+  AWI = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
+  LLVMContext &Context = B.GetInsertBlock()->getContext();
+  Value *MemCpy = M->getOrInsertFunction("__memcpy_chk",
+                                         AttrListPtr::get(&AWI, 1),
+                                         B.getInt8PtrTy(),
+                                         B.getInt8PtrTy(),
+                                         B.getInt8PtrTy(),
+                                         TD->getIntPtrType(Context),
+                                         TD->getIntPtrType(Context), NULL);
+  Dst = CastToCStr(Dst, B);
+  Src = CastToCStr(Src, B);
+  CallInst *CI = B.CreateCall4(MemCpy, Dst, Src, Len, ObjSize);
+  if (const Function *F = dyn_cast<Function>(MemCpy->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+  return CI;
 }
 
 /// EmitMemMove - Emit a call to the memmove function to the builder.  This
