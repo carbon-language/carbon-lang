@@ -21,14 +21,14 @@ let TargetPrefix = "bfin", isTarget = 1 in {
 
 // Execute csync instruction with workarounds
 def int_bfin_csync : GCCBuiltin<"__builtin_bfin_csync">,
-        Intrinsic<[llvm_void_ty]>;
+        Intrinsic<[]>;
 
 // Execute ssync instruction with workarounds
 def int_bfin_ssync : GCCBuiltin<"__builtin_bfin_ssync">,
-        Intrinsic<[llvm_void_ty]>;
+        Intrinsic<[]>;
 
 // Execute idle instruction with workarounds
 def int_bfin_idle : GCCBuiltin<"__builtin_bfin_idle">,
-        Intrinsic<[llvm_void_ty]>;
+        Intrinsic<[]>;
 
 }

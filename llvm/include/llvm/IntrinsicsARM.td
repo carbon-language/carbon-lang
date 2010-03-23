@@ -344,31 +344,31 @@ let TargetPrefix = "arm" in {
                                         [IntrReadArgMem]>;
 
   // Interleaving vector stores from N-element structures.
-  def int_arm_neon_vst1 : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst1 : Intrinsic<[],
                                     [llvm_ptr_ty, llvm_anyvector_ty],
                                     [IntrWriteArgMem]>;
-  def int_arm_neon_vst2 : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst2 : Intrinsic<[],
                                     [llvm_ptr_ty, llvm_anyvector_ty,
                                      LLVMMatchType<0>], [IntrWriteArgMem]>;
-  def int_arm_neon_vst3 : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst3 : Intrinsic<[],
                                     [llvm_ptr_ty, llvm_anyvector_ty,
                                      LLVMMatchType<0>, LLVMMatchType<0>],
                                      [IntrWriteArgMem]>;
-  def int_arm_neon_vst4 : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst4 : Intrinsic<[],
                                     [llvm_ptr_ty, llvm_anyvector_ty,
                                      LLVMMatchType<0>, LLVMMatchType<0>,
                                      LLVMMatchType<0>], [IntrWriteArgMem]>;
 
   // Vector store N-element structure from one lane.
-  def int_arm_neon_vst2lane : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst2lane : Intrinsic<[],
                                         [llvm_ptr_ty, llvm_anyvector_ty,
                                          LLVMMatchType<0>, llvm_i32_ty],
                                         [IntrWriteArgMem]>;
-  def int_arm_neon_vst3lane : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst3lane : Intrinsic<[],
                                         [llvm_ptr_ty, llvm_anyvector_ty,
                                          LLVMMatchType<0>, LLVMMatchType<0>,
                                          llvm_i32_ty], [IntrWriteArgMem]>;
-  def int_arm_neon_vst4lane : Intrinsic<[llvm_void_ty],
+  def int_arm_neon_vst4lane : Intrinsic<[],
                                         [llvm_ptr_ty, llvm_anyvector_ty,
                                          LLVMMatchType<0>, LLVMMatchType<0>,
                                          LLVMMatchType<0>, llvm_i32_ty],

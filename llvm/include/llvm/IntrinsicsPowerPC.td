@@ -18,17 +18,17 @@
 // Non-altivec intrinsics.
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   // dcba/dcbf/dcbi/dcbst/dcbt/dcbz/dcbzl(PPC970) instructions.
-  def int_ppc_dcba  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbf  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbi  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbst : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbt  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbtst: Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbz  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
-  def int_ppc_dcbzl : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcba  : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbf  : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbi  : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbst : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbt  : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbtst: Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbz  : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
+  def int_ppc_dcbzl : Intrinsic<[], [llvm_ptr_ty], [IntrWriteMem]>;
 
   // sync instruction
-  def int_ppc_sync : Intrinsic<[llvm_void_ty], [], [IntrWriteMem]>;
+  def int_ppc_sync : Intrinsic<[], [], [IntrWriteMem]>;
 }
 
 
@@ -86,23 +86,23 @@ class PowerPC_Vec_WWW_Intrinsic<string GCCIntSuffix>
 let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   // Data Stream Control.
   def int_ppc_altivec_dss : GCCBuiltin<"__builtin_altivec_dss">,
-              Intrinsic<[llvm_void_ty], [llvm_i32_ty], [IntrWriteMem]>;
+              Intrinsic<[], [llvm_i32_ty], [IntrWriteMem]>;
   def int_ppc_altivec_dssall : GCCBuiltin<"__builtin_altivec_dssall">,
-              Intrinsic<[llvm_void_ty], [], [IntrWriteMem]>;
+              Intrinsic<[], [], [IntrWriteMem]>;
   def int_ppc_altivec_dst : GCCBuiltin<"__builtin_altivec_dst">,
-              Intrinsic<[llvm_void_ty],
+              Intrinsic<[],
                         [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_dstt : GCCBuiltin<"__builtin_altivec_dstt">,
-              Intrinsic<[llvm_void_ty],
+              Intrinsic<[],
                         [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_dstst : GCCBuiltin<"__builtin_altivec_dstst">,
-              Intrinsic<[llvm_void_ty],
+              Intrinsic<[],
                         [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_dststt : GCCBuiltin<"__builtin_altivec_dststt">,
-              Intrinsic<[llvm_void_ty],
+              Intrinsic<[],
                         [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty],
                         [IntrWriteMem]>;
 
@@ -110,7 +110,7 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_mfvscr : GCCBuiltin<"__builtin_altivec_mfvscr">,
               Intrinsic<[llvm_v8i16_ty], [], [IntrReadMem]>;
   def int_ppc_altivec_mtvscr : GCCBuiltin<"__builtin_altivec_mtvscr">,
-              Intrinsic<[llvm_void_ty], [llvm_v4i32_ty], [IntrWriteMem]>;
+              Intrinsic<[], [llvm_v4i32_ty], [IntrWriteMem]>;
 
 
   // Loads.  These don't map directly to GCC builtins because they represent the
@@ -129,19 +129,19 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   // Stores.  These don't map directly to GCC builtins because they represent the
   // source address with a single pointer.
   def int_ppc_altivec_stvx :
-              Intrinsic<[llvm_void_ty], [llvm_v4i32_ty, llvm_ptr_ty],
+              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_stvxl :
-              Intrinsic<[llvm_void_ty], [llvm_v4i32_ty, llvm_ptr_ty],
+              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_stvebx :
-              Intrinsic<[llvm_void_ty], [llvm_v16i8_ty, llvm_ptr_ty],
+              Intrinsic<[], [llvm_v16i8_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_stvehx :
-              Intrinsic<[llvm_void_ty], [llvm_v8i16_ty, llvm_ptr_ty],
+              Intrinsic<[], [llvm_v8i16_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
   def int_ppc_altivec_stvewx :
-              Intrinsic<[llvm_void_ty], [llvm_v4i32_ty, llvm_ptr_ty],
+              Intrinsic<[], [llvm_v4i32_ty, llvm_ptr_ty],
                         [IntrWriteMem]>;
 
   // Comparisons setting a vector.

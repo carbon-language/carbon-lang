@@ -176,19 +176,19 @@ class GCCBuiltin<string name> {
 //===--------------- Variable Argument Handling Intrinsics ----------------===//
 //
 
-def int_vastart : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [], "llvm.va_start">;
-def int_vacopy  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty, llvm_ptr_ty], [],
+def int_vastart : Intrinsic<[], [llvm_ptr_ty], [], "llvm.va_start">;
+def int_vacopy  : Intrinsic<[], [llvm_ptr_ty, llvm_ptr_ty], [],
                             "llvm.va_copy">;
-def int_vaend   : Intrinsic<[llvm_void_ty], [llvm_ptr_ty], [], "llvm.va_end">;
+def int_vaend   : Intrinsic<[], [llvm_ptr_ty], [], "llvm.va_end">;
 
 //===------------------- Garbage Collection Intrinsics --------------------===//
 //
-def int_gcroot  : Intrinsic<[llvm_void_ty],
+def int_gcroot  : Intrinsic<[],
                             [llvm_ptrptr_ty, llvm_ptr_ty]>;
 def int_gcread  : Intrinsic<[llvm_ptr_ty],
                             [llvm_ptr_ty, llvm_ptrptr_ty],
                             [IntrReadArgMem]>;
-def int_gcwrite : Intrinsic<[llvm_void_ty],
+def int_gcwrite : Intrinsic<[],
                             [llvm_ptr_ty, llvm_ptr_ty, llvm_ptrptr_ty],
                             [IntrWriteArgMem, NoCapture<1>, NoCapture<2>]>;
 
@@ -201,37 +201,37 @@ def int_frameaddress  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
 // model their dependencies on allocas.
 def int_stacksave     : Intrinsic<[llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_save">;
-def int_stackrestore  : Intrinsic<[llvm_void_ty], [llvm_ptr_ty]>,
+def int_stackrestore  : Intrinsic<[], [llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_restore">;
 
 // IntrWriteArgMem is more pessimistic than strictly necessary for prefetch,
 // however it does conveniently prevent the prefetch from being reordered
 // with respect to nearby accesses to the same memory.
-def int_prefetch      : Intrinsic<[llvm_void_ty],
+def int_prefetch      : Intrinsic<[],
                                   [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty],
                                   [IntrWriteArgMem, NoCapture<0>]>;
-def int_pcmarker      : Intrinsic<[llvm_void_ty], [llvm_i32_ty]>;
+def int_pcmarker      : Intrinsic<[], [llvm_i32_ty]>;
 
 def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
 
 // Stack Protector Intrinsic - The stackprotector intrinsic writes the stack
 // guard to the correct place on the stack frame.
-def int_stackprotector : Intrinsic<[llvm_void_ty],
+def int_stackprotector : Intrinsic<[],
                                    [llvm_ptr_ty, llvm_ptrptr_ty],
                                    [IntrWriteMem]>;
 
 //===------------------- Standard C Library Intrinsics --------------------===//
 //
 
-def int_memcpy  : Intrinsic<[llvm_void_ty],
+def int_memcpy  : Intrinsic<[],
                              [llvm_ptr_ty, llvm_ptr_ty, llvm_anyint_ty,
                               llvm_i32_ty],
                             [IntrWriteArgMem, NoCapture<0>, NoCapture<1>]>;
-def int_memmove : Intrinsic<[llvm_void_ty],
+def int_memmove : Intrinsic<[],
                             [llvm_ptr_ty, llvm_ptr_ty, llvm_anyint_ty,
                              llvm_i32_ty],
                             [IntrWriteArgMem, NoCapture<0>, NoCapture<1>]>;
-def int_memset  : Intrinsic<[llvm_void_ty],
+def int_memset  : Intrinsic<[],
                             [llvm_ptr_ty, llvm_i8_ty, llvm_anyint_ty,
                              llvm_i32_ty],
                             [IntrWriteArgMem, NoCapture<0>]>;
@@ -255,9 +255,9 @@ let Properties = [IntrReadMem] in {
 
 // NOTE: these are internal interfaces.
 def int_setjmp     : Intrinsic<[llvm_i32_ty],  [llvm_ptr_ty]>;
-def int_longjmp    : Intrinsic<[llvm_void_ty], [llvm_ptr_ty, llvm_i32_ty]>;
+def int_longjmp    : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty]>;
 def int_sigsetjmp  : Intrinsic<[llvm_i32_ty] , [llvm_ptr_ty, llvm_i32_ty]>;
-def int_siglongjmp : Intrinsic<[llvm_void_ty], [llvm_ptr_ty, llvm_i32_ty]>;
+def int_siglongjmp : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty]>;
 
 // Internal interface for object size checking
 def int_objectsize : Intrinsic<[llvm_anyint_ty], [llvm_ptr_ty, llvm_i1_ty],
@@ -282,9 +282,9 @@ let Properties = [IntrNoMem] in {
 // optimizers can change them aggressively.  Special handling needed in a few
 // places.
 let Properties = [IntrNoMem] in {
-  def int_dbg_declare      : Intrinsic<[llvm_void_ty],
+  def int_dbg_declare      : Intrinsic<[],
                                        [llvm_metadata_ty, llvm_metadata_ty]>;
-  def int_dbg_value  	   : Intrinsic<[llvm_void_ty],
+  def int_dbg_value  	   : Intrinsic<[],
                                        [llvm_metadata_ty, llvm_i64_ty,
                                         llvm_metadata_ty]>;
 }
@@ -297,24 +297,24 @@ def int_eh_selector  : Intrinsic<[llvm_i32_ty],
 
 def int_eh_typeid_for : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty]>;
 
-def int_eh_return_i32 : Intrinsic<[llvm_void_ty], [llvm_i32_ty, llvm_ptr_ty]>;
-def int_eh_return_i64 : Intrinsic<[llvm_void_ty], [llvm_i64_ty, llvm_ptr_ty]>;
+def int_eh_return_i32 : Intrinsic<[], [llvm_i32_ty, llvm_ptr_ty]>;
+def int_eh_return_i64 : Intrinsic<[], [llvm_i64_ty, llvm_ptr_ty]>;
 
-def int_eh_unwind_init: Intrinsic<[llvm_void_ty]>,
+def int_eh_unwind_init: Intrinsic<[]>,
                         GCCBuiltin<"__builtin_unwind_init">;
 
 def int_eh_dwarf_cfa  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty]>;
 
 let Properties = [IntrNoMem] in {
   def int_eh_sjlj_setjmp  : Intrinsic<[llvm_i32_ty],  [llvm_ptr_ty]>;
-  def int_eh_sjlj_longjmp : Intrinsic<[llvm_void_ty], [llvm_ptr_ty]>;
+  def int_eh_sjlj_longjmp : Intrinsic<[], [llvm_ptr_ty]>;
   def int_eh_sjlj_lsda    : Intrinsic<[llvm_ptr_ty]>;
-  def int_eh_sjlj_callsite: Intrinsic<[llvm_void_ty], [llvm_i32_ty]>;
+  def int_eh_sjlj_callsite: Intrinsic<[], [llvm_i32_ty]>;
 }
 
 //===---------------- Generic Variable Attribute Intrinsics----------------===//
 //
-def int_var_annotation : Intrinsic<[llvm_void_ty],
+def int_var_annotation : Intrinsic<[],
                                    [llvm_ptr_ty, llvm_ptr_ty,
                                     llvm_ptr_ty, llvm_i32_ty],
                                    [], "llvm.var.annotation">;
@@ -361,7 +361,7 @@ def int_umul_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
 
 //===------------------------- Atomic Intrinsics --------------------------===//
 //
-def int_memory_barrier : Intrinsic<[llvm_void_ty],
+def int_memory_barrier : Intrinsic<[],
                                    [llvm_i1_ty, llvm_i1_ty,
                                     llvm_i1_ty, llvm_i1_ty, llvm_i1_ty], []>,
                                     GCCBuiltin<"__builtin_llvm_memory_barrier">;
@@ -429,16 +429,16 @@ def int_atomic_load_umax : Intrinsic<[llvm_anyint_ty],
 
 //===------------------------- Memory Use Markers -------------------------===//
 //
-def int_lifetime_start  : Intrinsic<[llvm_void_ty],
+def int_lifetime_start  : Intrinsic<[],
                                     [llvm_i64_ty, llvm_ptr_ty],
                                     [IntrWriteArgMem, NoCapture<1>]>;
-def int_lifetime_end    : Intrinsic<[llvm_void_ty],
+def int_lifetime_end    : Intrinsic<[],
                                     [llvm_i64_ty, llvm_ptr_ty],
                                     [IntrWriteArgMem, NoCapture<1>]>;
 def int_invariant_start : Intrinsic<[llvm_descriptor_ty],
                                     [llvm_i64_ty, llvm_ptr_ty],
                                     [IntrReadArgMem, NoCapture<1>]>;
-def int_invariant_end   : Intrinsic<[llvm_void_ty],
+def int_invariant_end   : Intrinsic<[],
                                     [llvm_descriptor_ty, llvm_i64_ty,
                                      llvm_ptr_ty],
                                     [IntrWriteArgMem, NoCapture<2>]>;
@@ -447,7 +447,7 @@ def int_invariant_end   : Intrinsic<[llvm_void_ty],
 //
 def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
                      GCCBuiltin<"__builtin_flt_rounds">;
-def int_trap : Intrinsic<[llvm_void_ty]>,
+def int_trap : Intrinsic<[]>,
                GCCBuiltin<"__builtin_trap">;
 
 // Intrisics to support half precision floating point format
