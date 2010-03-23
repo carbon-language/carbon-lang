@@ -766,7 +766,7 @@ protected:
         return SizeCI->getZExtValue() >=
                GetStringLength(CI->getOperand(SizeArgOp));
       if (ConstantInt *Arg = dyn_cast<ConstantInt>(CI->getOperand(SizeArgOp)))
-        return SizeCI->getZExtValue() <= Arg->getZExtValue();
+        return SizeCI->getZExtValue() >= Arg->getZExtValue();
     }
     return false;
   }
