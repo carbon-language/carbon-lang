@@ -4389,13 +4389,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   Def = cast_or_null<ClassTemplateSpecializationDecl>(
                                        Specialization->getDefinition());
   if (Def) {
-    TemplateSpecializationKind Old_TSK = Def->getTemplateSpecializationKind();
-
-    // Fix a TSK_ExplicitInstantiationDeclaration followed by a
-    // TSK_ExplicitInstantiationDefinition
-    if (Old_TSK == TSK_ExplicitInstantiationDeclaration &&
-        TSK == TSK_ExplicitInstantiationDefinition)
-      Def->setTemplateSpecializationKind(TSK);
+    Def->setTemplateSpecializationKind(TSK);
 
     InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
   }

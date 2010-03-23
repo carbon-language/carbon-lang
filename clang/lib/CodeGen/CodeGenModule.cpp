@@ -310,8 +310,17 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   //   instantiated when used so that the body can be considered for 
   //   inlining, but that no out-of-line copy of the inline function would be
   //   generated in the translation unit. -- end note ]
-  if (FD->getTemplateSpecializationKind() 
-                                       == TSK_ExplicitInstantiationDeclaration)
+
+  // We check the specialization kind of the class for implicit methods.
+  // They have a TSK_Undeclared specialization kind.
+  TemplateSpecializationKind TSK;
+  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD);
+  if (MD && MD->isImplicit())
+    TSK = MD->getParent()->getTemplateSpecializationKind();
+  else
+    TSK = FD->getTemplateSpecializationKind();
+
+  if (TSK == TSK_ExplicitInstantiationDeclaration)
     return CodeGenModule::GVA_C99Inline;
   
   return CodeGenModule::GVA_CXXInline;
