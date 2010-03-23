@@ -1255,15 +1255,16 @@ private:
   
   typedef llvm::DenseMap<uint64_t, ThunkInfo> ThunksInfoMapTy;
   
-  /// Thunks - The thunks by vtable index in the vtable currently being built.
-  ThunksInfoMapTy Thunks;
+  /// VTableThunks - The thunks by vtable index in the vtable currently being 
+  /// built.
+  ThunksInfoMapTy VTableThunks;
 
   typedef llvm::DenseMap<const CXXMethodDecl *,
                          llvm::SmallVector<ThunkInfo, 1> > MethodThunksMapTy;
   
-  /// MethodThunks - A map that contains all the thunks needed for all methods
-  /// in the vtable currently being built.
-  MethodThunksMapTy MethodThunks;
+  /// Thunks - A map that contains all the thunks needed for all methods in the
+  /// most derived class for which the vtable is currently being built.
+  MethodThunksMapTy Thunks;
   
   /// AddThunk - Add a thunk for the given method.
   void AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk);
@@ -1387,7 +1388,7 @@ void VtableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
   assert(!isBuildingConstructorVtable() && 
          "Can't add thunks for construction vtable");
 
-  llvm::SmallVector<ThunkInfo, 1> &ThunksVector = MethodThunks[MD];
+  llvm::SmallVector<ThunkInfo, 1> &ThunksVector = Thunks[MD];
   
   // Check if we have this thunk already.
   if (std::find(ThunksVector.begin(), ThunksVector.end(), Thunk) != 
@@ -1447,11 +1448,11 @@ void VtableBuilder::ComputeThisAdjustments() {
       continue;
 
     // Add it.
-    Thunks[VtableIndex].This = ThisAdjustment;
+    VTableThunks[VtableIndex].This = ThisAdjustment;
 
     if (isa<CXXDestructorDecl>(MD)) {
       // Add an adjustment for the deleting destructor as well.
-      Thunks[VtableIndex + 1].This = ThisAdjustment;
+      VTableThunks[VtableIndex + 1].This = ThisAdjustment;
     }
   }
 
@@ -1463,8 +1464,8 @@ void VtableBuilder::ComputeThisAdjustments() {
     return;
   }
 
-  for (ThunksInfoMapTy::const_iterator I = Thunks.begin(), E = Thunks.end();
-       I != E; ++I) {
+  for (ThunksInfoMapTy::const_iterator I = VTableThunks.begin(),
+       E = VTableThunks.end(); I != E; ++I) {
     const VtableComponent &Component = Components[I->first];
     const ThunkInfo &Thunk = I->second;
     const CXXMethodDecl *MD;
@@ -1629,7 +1630,7 @@ VtableBuilder::AddMethod(const CXXMethodDecl *MD,
   } else {
     // Add the return adjustment if necessary.
     if (!ReturnAdjustment.isEmpty())
-      Thunks[Components.size()].Return = ReturnAdjustment;
+      VTableThunks[Components.size()].Return = ReturnAdjustment;
 
     // Add the function.
     Components.push_back(VtableComponent::MakeFunction(MD));
@@ -2177,7 +2178,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       if (MD->isPure())
         Out << " [pure]";
 
-      ThunkInfo Thunk = Thunks.lookup(I);
+      ThunkInfo Thunk = VTableThunks.lookup(I);
       if (!Thunk.isEmpty()) {
         // If this function pointer has a return adjustment, dump it.
         if (!Thunk.Return.isEmpty()) {
@@ -2225,7 +2226,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       if (DD->isPure())
         Out << " [pure]";
 
-      ThunkInfo Thunk = Thunks.lookup(I);
+      ThunkInfo Thunk = VTableThunks.lookup(I);
       if (!Thunk.isEmpty()) {
         // If this destructor has a 'this' pointer adjustment, dump it.
         if (!Thunk.This.isEmpty()) {
@@ -2324,13 +2325,12 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     Out << "\n";
   }
   
-  if (!MethodThunks.empty()) {
-    
+  if (!Thunks.empty()) {
     // We store the method names in a map to get a stable order.
     std::map<std::string, const CXXMethodDecl *> MethodNamesAndDecls;
     
-    for (MethodThunksMapTy::const_iterator I = MethodThunks.begin(), 
-         E = MethodThunks.end(); I != E; ++I) {
+    for (MethodThunksMapTy::const_iterator I = Thunks.begin(), E = Thunks.end();
+         I != E; ++I) {
       const CXXMethodDecl *MD = I->first;
       std::string MethodName = 
         PredefinedExpr::ComputeName(PredefinedExpr::PrettyFunctionNoVirtual,
@@ -2345,7 +2345,7 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
       const std::string &MethodName = I->first;
       const CXXMethodDecl *MD = I->second;
 
-      llvm::SmallVector<ThunkInfo, 1> ThunksVector = MethodThunks[MD];
+      llvm::SmallVector<ThunkInfo, 1> ThunksVector = Thunks[MD];
       std::sort(ThunksVector.begin(), ThunksVector.end());
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
@@ -3638,7 +3638,6 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                      BaseSubobject(RD, 0),                                           
                                      /*BaseIsVirtual=*/false,
                                      /*OffsetInLayoutClass=*/0);
-  
 
   for (VCallAndVBaseOffsetBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
        Builder.getVBaseOffsetOffsets().begin(), 
