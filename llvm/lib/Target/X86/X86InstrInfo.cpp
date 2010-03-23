@@ -665,9 +665,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 
   // Remove ambiguous entries.
   assert(AmbEntries.empty() && "Duplicated entries in unfolding maps?");
-
-  if (TM.getSubtarget<X86Subtarget>().hasSSE2())
-    populateSSEInstrDomainTable();
 }
 
 bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,

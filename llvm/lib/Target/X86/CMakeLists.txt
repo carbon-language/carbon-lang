@@ -15,7 +15,6 @@ tablegen(X86GenCallingConv.inc -gen-callingconv)
 tablegen(X86GenSubtarget.inc -gen-subtarget)
 
 set(sources
-  SSEDomainFix.cpp
   X86AsmBackend.cpp
   X86CodeEmitter.cpp
   X86COFFMachineModuleInfo.cpp

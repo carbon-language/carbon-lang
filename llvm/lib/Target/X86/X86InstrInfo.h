@@ -486,9 +486,6 @@ class X86InstrInfo : public TargetInstrInfoImpl {
   /// MemOp2RegOpTable - Load / store unfolding opcode map.
   ///
   DenseMap<unsigned*, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
-
-  /// SSEInstrDomainTable - Map SSE opcodes to execution domain info.
-  DenseMap<unsigned, unsigned> SSEInstrDomainTable;
   
 public:
   explicit X86InstrInfo(X86TargetMachine &tm);
@@ -719,14 +716,6 @@ public:
   ///
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
 
-  /// Some SSE instructions come in variants for three domains.
-  enum SSEDomain { PackedInt, PackedSingle, PackedDouble, NotSSEDomain };
-
-  /// GetSSEDomain - Return the SSE execution domain of MI, or NotSSEDomain for
-  /// unknown instructions. If the instruction has equivalents for other domain,
-  /// equiv points to a list of opcodes index by domain.
-  SSEDomain GetSSEDomain(const MachineInstr *MI, const unsigned *&equiv) const;
-
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,
                                               MachineFunction::iterator &MFI,
@@ -743,9 +732,6 @@ private:
   /// operand and follow operands form a reference to the stack frame.
   bool isFrameOperand(const MachineInstr *MI, unsigned int Op,
                       int &FrameIndex) const;
-
-  // Implemented in SSEDomainFix.cpp
-  void populateSSEInstrDomainTable();
 };
 
 } // End llvm namespace
