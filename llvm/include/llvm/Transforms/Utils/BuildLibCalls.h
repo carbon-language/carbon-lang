@@ -49,6 +49,9 @@ namespace llvm {
   Value *EmitMemCpy(Value *Dst, Value *Src, Value *Len,
                     unsigned Align, IRBuilder<> &B, const TargetData *TD);
 
+  /// EmitMemCpyChk - Emit a call to the __memcpy_chk function to the builder.
+  /// This expects that the Len and ObjSize have type 'intptr_t' and Dst/Src
+  /// are pointers.
   Value *EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                        IRBuilder<> &B, const TargetData *TD);
 
