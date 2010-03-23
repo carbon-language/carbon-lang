@@ -3805,17 +3805,7 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
     return;
 
   TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();
-
-
-  // The reason we have TSK_ExplicitInstantiationDeclaration in here (but not
-  // in  Sema::MaybeMarkVirtualMembersReferenced) is for the case
-  // template<> void stdio_sync_filebuf<wchar_t>::xsgetn() {
-  // }
-  // extern template class stdio_sync_filebuf<wchar_t>;
-  // Since we are called after the extern declaration is seen.
-
-  if (kind == TSK_ImplicitInstantiation ||
-      kind == TSK_ExplicitInstantiationDeclaration)
+  if (kind == TSK_ImplicitInstantiation)
     CGM.DeferredVtables.push_back(RD);
   else
     GenerateClassData(CGM.getVtableLinkage(RD), RD);
