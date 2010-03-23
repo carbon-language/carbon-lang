@@ -268,27 +268,6 @@ public:
     return MVT(MVT::Other); // Not reached
   }
 
-  /// getTypeToExpandTo - For types supported by the target, this is an
-  /// identity function.  For types that must be expanded (i.e. integer types
-  /// that are larger than the largest integer register or illegal floating
-  /// point types), this returns the largest legal type it will be expanded to.
-  EVT getTypeToExpandTo(LLVMContext &Context, EVT VT) const {
-    assert(!VT.isVector());
-    while (true) {
-      switch (getTypeAction(Context, VT)) {
-      case Legal:
-        return VT;
-      case Expand:
-        VT = getTypeToTransformTo(Context, VT);
-        break;
-      default:
-        assert(false && "Type is not legal nor is it to be expanded!");
-        return VT;
-      }
-    }
-    return VT;
-  }
-
   /// getVectorTypeBreakdown - Vector types are broken down into some number of
   /// legal first class types.  For example, EVT::v8f32 maps to 2 EVT::v4f32
   /// with Altivec or SSE1, or 8 promoted EVT::f64 values with the X86 FP stack.
