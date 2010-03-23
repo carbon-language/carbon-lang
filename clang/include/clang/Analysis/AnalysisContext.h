@@ -33,7 +33,7 @@ class ParentMap;
 class ImplicitParamDecl;
 class LocationContextManager;
 class StackFrameContext;
-  
+
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
@@ -41,6 +41,7 @@ class AnalysisContext {
 
   // AnalysisContext owns the following data.
   CFG *cfg;
+  bool builtCFG;
   LiveVariables *liveness;
   ParentMap *PM;
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
@@ -48,8 +49,8 @@ class AnalysisContext {
   bool AddEHEdges;
 public:
   AnalysisContext(const Decl *d, bool addehedges = false)
-    : D(d), cfg(0), liveness(0), PM(0), ReferencedBlockVars(0),
-      AddEHEdges(addehedges) {}
+    : D(d), cfg(0), builtCFG(false), liveness(0), PM(0),
+      ReferencedBlockVars(0), AddEHEdges(addehedges) {}
 
   ~AnalysisContext();
 
@@ -69,7 +70,7 @@ public:
 
   std::pair<referenced_decls_iterator, referenced_decls_iterator>
     getReferencedBlockVars(const BlockDecl *BD);
-  
+
   /// Return the ImplicitParamDecl* associated with 'self' if this
   /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
   const ImplicitParamDecl *getSelfDecl() const;
@@ -82,7 +83,7 @@ public:
   ~AnalysisContextManager();
 
   AnalysisContext *getContext(const Decl *D);
-  
+
   // Discard all previously created AnalysisContexts.
   void clear();
 };
@@ -103,7 +104,7 @@ protected:
 
 public:
   virtual ~LocationContext();
-  
+
   ContextKind getKind() const { return Kind; }
 
   AnalysisContext *getAnalysisContext() const { return Ctx; }
@@ -120,14 +121,14 @@ public:
     return getAnalysisContext()->getLiveVariables();
   }
 
-  ParentMap &getParentMap() const { 
+  ParentMap &getParentMap() const {
     return getAnalysisContext()->getParentMap();
   }
 
   const ImplicitParamDecl *getSelfDecl() const {
     return Ctx->getSelfDecl();
   }
-  
+
   const StackFrameContext *getCurrentStackFrame() const;
   const StackFrameContext *
     getStackFrameForDeclContext(const DeclContext *DC) const;
@@ -157,7 +158,7 @@ class StackFrameContext : public LocationContext {
   friend class LocationContextManager;
   StackFrameContext(AnalysisContext *ctx, const LocationContext *parent,
                     const Stmt *s, const CFGBlock *blk, unsigned idx)
-    : LocationContext(StackFrame, ctx, parent), CallSite(s), Block(blk), 
+    : LocationContext(StackFrame, ctx, parent), CallSite(s), Block(blk),
       Index(idx) {}
 
 public:
@@ -170,9 +171,9 @@ public:
   unsigned getIndex() const { return Index; }
 
   void Profile(llvm::FoldingSetNodeID &ID);
-  
+
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
-                      const LocationContext *parent, const Stmt *s, 
+                      const LocationContext *parent, const Stmt *s,
                       const CFGBlock *blk, unsigned idx) {
     ProfileCommon(ID, StackFrame, ctx, parent, s);
     ID.AddPointer(blk);
@@ -186,7 +187,7 @@ public:
 
 class ScopeContext : public LocationContext {
   const Stmt *Enter;
-  
+
   friend class LocationContextManager;
   ScopeContext(AnalysisContext *ctx, const LocationContext *parent,
                const Stmt *s)
@@ -229,7 +230,7 @@ public:
                       const LocationContext *parent, const BlockDecl *bd) {
     ProfileCommon(ID, Block, ctx, parent, bd);
   }
-  
+
   static bool classof(const LocationContext* Ctx) {
     return Ctx->getKind() == Block;
   }
@@ -239,7 +240,7 @@ class LocationContextManager {
   llvm::FoldingSet<LocationContext> Contexts;
 public:
   ~LocationContextManager();
-  
+
   const StackFrameContext *getStackFrame(AnalysisContext *ctx,
                                          const LocationContext *parent,
                                          const Stmt *s, const CFGBlock *blk,
@@ -248,7 +249,7 @@ public:
   const ScopeContext *getScope(AnalysisContext *ctx,
                                const LocationContext *parent,
                                const Stmt *s);
-  
+
   /// Discard all previously created LocationContext objects.
   void clear();
 private:

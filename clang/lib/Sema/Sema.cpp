@@ -132,7 +132,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     GlobalNewDeleteDeclared(false), 
     CompleteTranslationUnit(CompleteTranslationUnit),
     NumSFINAEErrors(0), NonInstantiationEntries(0), 
-    CurrentInstantiationScope(0), TyposCorrected(0)
+    CurrentInstantiationScope(0), TyposCorrected(0),
+    AnalysisWarnings(*this)
 {
   TUScope = 0;
   if (getLangOptions().CPlusPlus)

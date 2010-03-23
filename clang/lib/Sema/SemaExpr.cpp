@@ -7012,8 +7012,9 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   }
 
   // Issue any analysis-based warnings.
-  sema::AnalysisBasedWarnings W(*this);
-  W.IssueWarnings(BSI->TheDecl, BlockTy);
+  const sema::AnalysisBasedWarnings::Policy &WP =
+    AnalysisWarnings.getDefaultPolicy();
+  AnalysisWarnings.IssueWarnings(WP, BSI->TheDecl, BlockTy);
 
   Expr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy,
                                          BSI->hasBlockDeclRefExprs);

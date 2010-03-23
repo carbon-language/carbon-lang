@@ -14,7 +14,6 @@
 #include "Sema.h"
 #include "SemaInit.h"
 #include "Lookup.h"
-#include "AnalysisBasedWarnings.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -4276,7 +4275,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   else
     FD = dyn_cast_or_null<FunctionDecl>(dcl);
 
-  sema::AnalysisBasedWarnings W(*this);
+  sema::AnalysisBasedWarnings::Policy WP = AnalysisWarnings.getDefaultPolicy();
 
   if (FD) {
     FD->setBody(Body);
@@ -4284,7 +4283,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
       // C and C++ allow for main to automagically return 0.
       // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
       FD->setHasImplicitReturnZero(true);
-      W.disableCheckFallThrough();
+      WP.disableCheckFallThrough();
     }
 
     if (!FD->isInvalidDecl())
@@ -4381,7 +4380,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
         ObjCMethodDecl *MD = cast<ObjCMethodDecl>(dcl);
         ResultType = MD->getResultType();
       }
-      W.IssueWarnings(dcl);
+      AnalysisWarnings.IssueWarnings(WP, dcl);
     }
 
     assert(ExprTemporaries.empty() && "Leftover temporaries in function");

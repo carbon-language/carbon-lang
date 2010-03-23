@@ -19,6 +19,7 @@
 #include "CXXFieldCollector.h"
 #include "SemaOverload.h"
 #include "SemaTemplate.h"
+#include "AnalysisBasedWarnings.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/Decl.h"
@@ -298,7 +299,7 @@ public:
 
   /// \brief The set of static functions seen so far that have not been used.
   std::vector<FunctionDecl*> UnusedStaticFuncs;
-  
+
   class AccessedEntity {
   public:
     /// A member declaration found through lookup.  The target is the
@@ -3541,6 +3542,9 @@ public:
 
   /// \brief The number of typos corrected by CorrectTypo.
   unsigned TyposCorrected;
+
+  /// \brief Worker object for performing CFG-based warnings.
+  sema::AnalysisBasedWarnings AnalysisWarnings;
 
   /// \brief An entity for which implicit template instantiation is required.
   ///

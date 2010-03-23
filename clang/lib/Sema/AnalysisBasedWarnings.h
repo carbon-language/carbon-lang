@@ -14,22 +14,43 @@
 #ifndef LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 #define LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 
-namespace clang { namespace sema {
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseMap.h"
+
+namespace clang {
+
+class Sema;
+
+namespace sema {
 
 class AnalysisBasedWarnings {
-  Sema &S;
-  // The warnings to run.
-  unsigned enableCheckFallThrough : 1;
-  unsigned enableCheckUnreachable : 1;
-  
 public:
+  class Policy {
+    friend class AnalysisBasedWarnings;
+    // The warnings to run.
+    unsigned enableCheckFallThrough : 1;
+    unsigned enableCheckUnreachable : 1;
+  public:
+    Policy();
+    void disableCheckFallThrough() { enableCheckFallThrough = 0; }
+  };
 
+private:
+  Sema &S;
+  Policy DefaultPolicy;
+
+  llvm::DenseMap<const FunctionDecl*, unsigned> VisitedFD;
+
+public:
   AnalysisBasedWarnings(Sema &s);
-  void IssueWarnings(const Decl *D, QualType BlockTy = QualType());
-  
-  void disableCheckFallThrough() { enableCheckFallThrough = 0; }
+
+  Policy getDefaultPolicy() { return DefaultPolicy; }
+
+  void IssueWarnings(Policy P, const Decl *D, QualType BlockTy = QualType(),
+                     const bool analyzeStaticInline = false);
+
 };
-  
+
 }} // end namespace clang::sema
 
 #endif

@@ -222,3 +222,17 @@ void test32() {
 void test33() {
   if (j) while (1) { }
 }
+
+// Test that 'static inline' functions are only analyzed for CFG-based warnings
+// when they are used.
+static inline int si_has_missing_return() {} // no-warning
+static inline int si_has_missing_return_2() {}; // expected-warning{{control reaches end of non-void function}}
+static inline int si_has_missing_return_3(int x) {
+  if (x)
+   return si_has_missing_return_3(x+1);
+} // expected-warning{{control may reach end of non-void function}}
+
+int test_static_inline(int x) {
+  return x ? si_has_missing_return_2() : si_has_missing_return_3(x);
+}
+
