@@ -1091,6 +1091,9 @@ public:
   typedef llvm::SmallSetVector<const CXXRecordDecl *, 8> 
     PrimaryBasesSetVectorTy;
   
+  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
+    VBaseOffsetOffsetsMapTy;
+
 private:
   /// VTables - Global vtable information.
   CodeGenVTables &VTables;
@@ -1122,9 +1125,6 @@ private:
   /// bases in this vtable.
   llvm::DenseMap<const CXXRecordDecl *, VCallOffsetMap> VCallOffsetsForVBases;
 
-  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
-    VBaseOffsetOffsetsMapTy;
-  
   /// VBaseOffsetOffsets - Contains the offsets of the virtual base offsets for
   /// the most derived class.
   VBaseOffsetOffsetsMapTy VBaseOffsetOffsets;
@@ -1299,6 +1299,24 @@ public:
     return Thunks.end();
   }
 
+  const VBaseOffsetOffsetsMapTy &getVBaseOffsetOffsets() const {
+    return VBaseOffsetOffsets;
+  }
+
+  /// getNumVTableComponents - Return the number of components in the vtable
+  /// currently built.
+  uint64_t getNumVTableComponents() const {
+    return Components.size();
+  }
+
+  const uint64_t *vtable_components_data_begin() {
+    return reinterpret_cast<const uint64_t *>(Components.begin());
+  }
+  
+  const uint64_t *vtable_components_data_end() {
+    return reinterpret_cast<const uint64_t *>(Components.end());
+  }
+  
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
 };
@@ -3874,32 +3892,65 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
 
   const CXXRecordDecl *RD = MD->getParent();
   
+  // Compute VTable related info for this class.
+  ComputeVTableRelatedInformation(RD);
+  
   ThunksMapTy::const_iterator I = Thunks.find(MD);
   if (I == Thunks.end()) {
-    // We did not find a thunk for this method. Check if we've collected thunks
-    // for this record.
-    if (!ClassesWithKnownThunkStatus.insert(RD).second) {
-      // This member function doesn't have any associated thunks.
-      return;
-    }
-    
-    // Use the vtable builder to build thunks for this class.
-    VtableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
-
-    // Add the known thunks.
-    Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
-  
-    // Look for the thunk again.
-    I = Thunks.find(MD);
-    if (I == Thunks.end()) {
-      // Looks like this function doesn't have any associated thunks after all.
-      return;
-    }
+    // We did not find a thunk for this method.
+    return;
   }
-  
+
   const ThunkInfoVectorTy &ThunkInfoVector = I->second;
   for (unsigned I = 0, E = ThunkInfoVector.size(); I != E; ++I)
     EmitThunk(GD, ThunkInfoVector[I]);
+}
+
+void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
+  uint64_t *&LayoutData = VTableLayoutMap[RD];
+  
+  // Check if we've computed this information before.
+  if (LayoutData)
+    return;
+      
+  VtableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
+
+  // Add the VTable layout.
+  uint64_t NumVTableComponents = Builder.getNumVTableComponents();
+  LayoutData = new uint64_t[NumVTableComponents + 1];
+
+  // Store the number of components.
+  LayoutData[0] = NumVTableComponents;
+
+  // Store the components.
+  std::copy(Builder.vtable_components_data_begin(),
+            Builder.vtable_components_data_end(),
+            &LayoutData[1]);
+
+  // Add the known thunks.
+  Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
+  
+  // If we don't have the vbase information for this class, insert it.
+  // getVirtualBaseOffsetOffset will compute it separately without computing
+  // the rest of the vtable related information.
+  if (!RD->getNumVBases())
+    return;
+  
+  const RecordType *VBaseRT = 
+    RD->vbases_begin()->getType()->getAs<RecordType>();
+  const CXXRecordDecl *VBase = cast<CXXRecordDecl>(VBaseRT->getDecl());
+  
+  if (VirtualBaseClassOffsetOffsets.count(std::make_pair(RD, VBase)))
+    return;
+  
+  for (VtableBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
+       Builder.getVBaseOffsetOffsets().begin(), 
+       E = Builder.getVBaseOffsetOffsets().end(); I != E; ++I) {
+    // Insert all types.
+    ClassPairTy ClassPair(RD, I->first);
+    
+    VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
+  }
 }
 
 void 
@@ -3923,8 +3974,11 @@ llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   CGM.getMangleContext().mangleCXXVtable(RD, OutName);
   llvm::StringRef Name = OutName.str();
 
+  ComputeVTableRelatedInformation(RD);
+  
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  llvm::ArrayType *ArrayType = llvm::ArrayType::get(Int8PtrTy, 0);
+  llvm::ArrayType *ArrayType = 
+    llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
   
   llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(Name);
   if (GV) {

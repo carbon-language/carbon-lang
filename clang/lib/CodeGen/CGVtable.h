@@ -260,11 +260,21 @@ private:
   
   /// Thunks - Contains all thunks that a given method decl will need.
   ThunksMapTy Thunks;
-
-  /// ClassesWithKnownThunkStatus - Contains all the classes for which we know
-  /// whether their virtual member functions have thunks or not.
-  llvm::DenseSet<const CXXRecordDecl *> ClassesWithKnownThunkStatus;
   
+  typedef llvm::DenseMap<const CXXRecordDecl *, uint64_t *> VTableLayoutMapTy;
+  
+  /// VTableLayoutMap - Stores the vtable layout for all record decls.
+  /// The layout is stored as an array of 64-bit integers, where the first
+  /// integer is the number of vtable entries in the layout, and the subsequent
+  /// integers are the vtable components.
+  VTableLayoutMapTy VTableLayoutMap;
+
+  uint64_t getNumVTableComponents(const CXXRecordDecl *RD) const {
+    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
+    
+    return VTableLayoutMap.lookup(RD)[0];
+  }
+
   typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesTy;
   SubVTTIndiciesTy SubVTTIndicies;
 
@@ -290,6 +300,11 @@ private:
   /// EmitThunks - Emit the associated thunks for the given global decl.
   void EmitThunks(GlobalDecl GD);
   
+  /// ComputeVTableRelatedInformation - Compute and store all vtable related
+  /// information (vtable layout, vbase offset offsets, thunks etc) for the
+  /// given record decl.
+  void ComputeVTableRelatedInformation(const CXXRecordDecl *RD);
+
 public:
   CodeGenVTables(CodeGenModule &CGM)
     : CGM(CGM) { }
