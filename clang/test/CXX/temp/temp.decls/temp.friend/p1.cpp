@@ -95,7 +95,7 @@ namespace test3 {
     friend class User<bool>;
     friend bool transform<>(Bool, bool);
 
-    bool value; // expected-note {{declared private here}}
+    bool value; // expected-note 2 {{declared private here}}
   };
 
   template <class T> class User {
@@ -105,13 +105,13 @@ namespace test3 {
   };
 
   template <class T> T transform(Bool b, T value) {
-    if (b.value)
+    if (b.value) // expected-error {{'value' is a private member of 'test3::Bool'}}
       return value;
     return value + 1;
   }
 
   template bool transform(Bool, bool);
-  template int transform(Bool, int);
+  template int transform(Bool, int); // expected-note {{requested here}}
 
   template class User<bool>;
   template class User<int>; // expected-note {{requested here}}

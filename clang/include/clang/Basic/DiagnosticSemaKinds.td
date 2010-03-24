@@ -1256,6 +1256,8 @@ def err_template_spec_decl_function_scope : Error<
   "explicit specialization of %0 in function scope">;
 def err_template_spec_decl_class_scope : Error<
   "explicit specialization of %0 in class scope">;
+def err_template_spec_decl_friend : Error<
+  "cannot declare an explicit specialization in a friend">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "

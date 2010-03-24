@@ -2918,6 +2918,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else {
       // This is a function template specialization.
       isFunctionTemplateSpecialization = true;
+
+      // C++0x [temp.expl.spec]p20 forbids "template<> void foo(int);".
+      if (isFriend && isFunctionTemplateSpecialization) {
+        SourceRange Range = TemplateParams->getSourceRange();
+        Diag(D.getIdentifierLoc(), diag::err_template_spec_decl_friend)
+          << Name << Range << CodeModificationHint::CreateRemoval(Range);
+      }
     }
 
     // FIXME: Free this memory properly.
@@ -3100,6 +3107,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << CodeModificationHint::CreateInsertion(
                                    D.getDeclSpec().getSourceRange().getBegin(),
                                                  "template<> ");
+      isFunctionTemplateSpecialization = true;
+    } else {
+      // "friend void foo<>(int);" is an implicit specialization decl.
       isFunctionTemplateSpecialization = true;
     }
   }

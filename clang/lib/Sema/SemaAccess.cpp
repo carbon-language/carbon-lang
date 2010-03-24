@@ -53,10 +53,11 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 
 namespace {
 struct EffectiveContext {
-  EffectiveContext() : Function(0), Dependent(false) {}
+  EffectiveContext() : Inner(0), Function(0), Dependent(false) {}
 
-  explicit EffectiveContext(DeclContext *DC) {
-    Dependent = DC->isDependentContext();
+  explicit EffectiveContext(DeclContext *DC)
+    : Inner(DC),
+      Dependent(DC->isDependentContext()) {
 
     if (isa<FunctionDecl>(DC)) {
       Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
@@ -86,14 +87,15 @@ struct EffectiveContext {
              != Records.end();
   }
 
-  DeclContext *getPrimaryContext() const {
-    assert((Function || !Records.empty()) && "context has no primary context");
-    if (Function) return Function;
-    return Records[0];
+  /// Retrieves the innermost "useful" context.  Can be null if we're
+  /// doing access-control without privileges.
+  DeclContext *getInnerContext() const {
+    return Inner;
   }
 
   typedef llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator record_iterator;
 
+  DeclContext *Inner;
   llvm::SmallVector<CXXRecordDecl*, 4> Records;
   FunctionDecl *Function;
   bool Dependent;
@@ -636,7 +638,7 @@ static void DelayAccess(Sema &S,
                         SourceLocation Loc,
                         const Sema::AccessedEntity &Entity) {
   assert(EC.isDependent() && "delaying non-dependent access");
-  DeclContext *DC = EC.getPrimaryContext();
+  DeclContext *DC = EC.getInnerContext();
   assert(DC->isDependentContext() && "delaying non-dependent access");
   DependentDiagnostic::Create(S.Context, DC, DependentDiagnostic::Access,
                               Loc,

@@ -3961,9 +3961,14 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   
   // FIXME: Check if the prior specialization has a point of instantiation.
   // If so, we have run afoul of .
+
+  // If this is a friend declaration, then we're not really declaring
+  // an explicit specialization.
+  bool isFriend = (FD->getFriendObjectKind() != Decl::FOK_None);
   
   // Check the scope of this explicit specialization.
-  if (CheckTemplateSpecializationScope(*this, 
+  if (!isFriend &&
+      CheckTemplateSpecializationScope(*this, 
                                        Specialization->getPrimaryTemplate(),
                                        Specialization, FD->getLocation(), 
                                        false))
@@ -3980,7 +3985,8 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   assert(SpecInfo && "Function template specialization info missing?");
 
   bool SuppressNew = false;
-  if (CheckSpecializationInstantiationRedecl(FD->getLocation(),
+  if (!isFriend &&
+      CheckSpecializationInstantiationRedecl(FD->getLocation(),
                                              TSK_ExplicitSpecialization,
                                              Specialization,
                                    SpecInfo->getTemplateSpecializationKind(),
@@ -3990,7 +3996,8 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   
   // Mark the prior declaration as an explicit specialization, so that later
   // clients know that this is an explicit specialization.
-  SpecInfo->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
+  if (!isFriend)
+    SpecInfo->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
   
   // Turn the given function declaration into a function template
   // specialization, with the template arguments from the previous
@@ -3999,7 +4006,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                          new (Context) TemplateArgumentList(
                              *Specialization->getTemplateSpecializationArgs()), 
                                         /*InsertPos=*/0, 
-                                        TSK_ExplicitSpecialization);
+                                    SpecInfo->getTemplateSpecializationKind());
   
   // The "previous declaration" for this function template specialization is
   // the prior function template specialization.
