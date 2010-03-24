@@ -607,7 +607,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (FnRetTy->isReferenceType()) {
     // If this function returns a reference, take the address of the expression
     // rather than the value.
-    Builder.CreateStore(EmitLValue(RV).getAddress(), ReturnValue);
+    RValue Result = EmitReferenceBindingToExpr(RV, false);
+    Builder.CreateStore(Result.getScalarVal(), ReturnValue);
   } else if (!hasAggregateLLVMType(RV->getType())) {
     Builder.CreateStore(EmitScalarExpr(RV), ReturnValue);
   } else if (RV->getType()->isAnyComplexType()) {
