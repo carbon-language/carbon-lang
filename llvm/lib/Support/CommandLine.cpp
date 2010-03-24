@@ -676,8 +676,8 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
          << " positional arguments: See: " << argv[0] << " -help\n";
 
     ErrorParsing = true;
-  } else if (!HasUnlimitedPositionals
-             && PositionalVals.size() > PositionalOpts.size()) {
+  } else if (!HasUnlimitedPositionals &&
+             PositionalVals.size() > PositionalOpts.size()) {
     errs() << ProgramName
          << ": Too many positional arguments specified!\n"
          << "Can specify at most " << PositionalOpts.size()

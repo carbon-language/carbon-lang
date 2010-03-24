@@ -64,8 +64,7 @@ DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
           cl::location(DebugOnlyOptLoc), cl::ValueRequired);
 
 // Signal handlers - dump debug output on termination.
-static void debug_user_sig_handler(void *Cookie)
-{
+static void debug_user_sig_handler(void *Cookie) {
   // This is a bit sneaky.  Since this is under #ifndef NDEBUG, we
   // know that debug mode is enabled and dbgs() really is a
   // circular_raw_ostream.  If NDEBUG is defined, then dbgs() ==

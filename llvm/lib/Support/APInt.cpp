@@ -702,15 +702,14 @@ static inline uint32_t hashword(const uint64_t *k64, size_t length)
   a = b = c = 0xdeadbeef + (((uint32_t)length)<<2);
 
   /*------------------------------------------------- handle most of the key */
-  while (length > 3)
-    {
-      a += k[0];
-      b += k[1];
-      c += k[2];
-      mix(a,b,c);
-      length -= 3;
-      k += 3;
-    }
+  while (length > 3) {
+    a += k[0];
+    b += k[1];
+    c += k[2];
+    mix(a,b,c);
+    length -= 3;
+    k += 3;
+  }
 
   /*------------------------------------------- handle the last 3 uint32_t's */
   switch (length) {                  /* all the case statements fall through */
@@ -2065,8 +2064,8 @@ void APInt::fromString(unsigned numbits, const StringRef& str, uint8_t radix) {
   assert((slen <= numbits || radix != 2) && "Insufficient bit width");
   assert(((slen-1)*3 <= numbits || radix != 8) && "Insufficient bit width");
   assert(((slen-1)*4 <= numbits || radix != 16) && "Insufficient bit width");
-  assert((((slen-1)*64)/22 <= numbits || radix != 10)
-         && "Insufficient bit width");
+  assert((((slen-1)*64)/22 <= numbits || radix != 10) &&
+         "Insufficient bit width");
 
   // Allocate memory
   if (!isSingleWord())
@@ -2229,7 +2228,7 @@ namespace {
   static inline integerPart
   lowBitMask(unsigned int bits)
   {
-    assert (bits != 0 && bits <= integerPartWidth);
+    assert(bits != 0 && bits <= integerPartWidth);
 
     return ~(integerPart) 0 >> (integerPartWidth - bits);
   }
@@ -2306,10 +2305,10 @@ APInt::tcSet(integerPart *dst, integerPart part, unsigned int parts)
 {
   unsigned int i;
 
-  assert (parts > 0);
+  assert(parts > 0);
 
   dst[0] = part;
-  for(i = 1; i < parts; i++)
+  for (i = 1; i < parts; i++)
     dst[i] = 0;
 }
 
@@ -2319,7 +2318,7 @@ APInt::tcAssign(integerPart *dst, const integerPart *src, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     dst[i] = src[i];
 }
 
@@ -2329,7 +2328,7 @@ APInt::tcIsZero(const integerPart *src, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     if (src[i])
       return false;
 
@@ -2340,8 +2339,8 @@ APInt::tcIsZero(const integerPart *src, unsigned int parts)
 int
 APInt::tcExtractBit(const integerPart *parts, unsigned int bit)
 {
-  return(parts[bit / integerPartWidth]
-         & ((integerPart) 1 << bit % integerPartWidth)) != 0;
+  return (parts[bit / integerPartWidth] &
+          ((integerPart) 1 << bit % integerPartWidth)) != 0;
 }
 
 /* Set the given bit of a bignum. */
@@ -2366,7 +2365,7 @@ APInt::tcLSB(const integerPart *parts, unsigned int n)
 {
   unsigned int i, lsb;
 
-  for(i = 0; i < n; i++) {
+  for (i = 0; i < n; i++) {
       if (parts[i] != 0) {
           lsb = partLSB(parts[i]);
 
@@ -2385,13 +2384,13 @@ APInt::tcMSB(const integerPart *parts, unsigned int n)
   unsigned int msb;
 
   do {
-      --n;
+    --n;
 
-      if (parts[n] != 0) {
-          msb = partMSB(parts[n]);
+    if (parts[n] != 0) {
+      msb = partMSB(parts[n]);
 
-          return msb + n * integerPartWidth;
-      }
+      return msb + n * integerPartWidth;
+    }
   } while (n);
 
   return -1U;
@@ -2408,7 +2407,7 @@ APInt::tcExtract(integerPart *dst, unsigned int dstCount,const integerPart *src,
   unsigned int firstSrcPart, dstParts, shift, n;
 
   dstParts = (srcBits + integerPartWidth - 1) / integerPartWidth;
-  assert (dstParts <= dstCount);
+  assert(dstParts <= dstCount);
 
   firstSrcPart = srcLSB / integerPartWidth;
   tcAssign (dst, src + firstSrcPart, dstParts);
@@ -2443,7 +2442,7 @@ APInt::tcAdd(integerPart *dst, const integerPart *rhs,
 
   assert(c <= 1);
 
-  for(i = 0; i < parts; i++) {
+  for (i = 0; i < parts; i++) {
     integerPart l;
 
     l = dst[i];
@@ -2468,7 +2467,7 @@ APInt::tcSubtract(integerPart *dst, const integerPart *rhs,
 
   assert(c <= 1);
 
-  for(i = 0; i < parts; i++) {
+  for (i = 0; i < parts; i++) {
     integerPart l;
 
     l = dst[i];
@@ -2518,7 +2517,7 @@ APInt::tcMultiplyPart(integerPart *dst, const integerPart *src,
   /* N loops; minimum of dstParts and srcParts.  */
   n = dstParts < srcParts ? dstParts: srcParts;
 
-  for(i = 0; i < n; i++) {
+  for (i = 0; i < n; i++) {
     integerPart low, mid, high, srcPart;
 
       /* [ LOW, HIGH ] = MULTIPLIER * SRC[i] + DST[i] + CARRY.
@@ -2583,7 +2582,7 @@ APInt::tcMultiplyPart(integerPart *dst, const integerPart *src,
        non-zero.  This is true if any remaining src parts are non-zero
        and the multiplier is non-zero.  */
     if (multiplier)
-      for(; i < srcParts; i++)
+      for (; i < srcParts; i++)
         if (src[i])
           return 1;
 
@@ -2608,7 +2607,7 @@ APInt::tcMultiply(integerPart *dst, const integerPart *lhs,
   overflow = 0;
   tcSet(dst, 0, parts);
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     overflow |= tcMultiplyPart(&dst[i], lhs, rhs[i], 0, parts,
                                parts - i, true);
 
@@ -2634,7 +2633,7 @@ APInt::tcFullMultiply(integerPart *dst, const integerPart *lhs,
 
     tcSet(dst, 0, rhsParts);
 
-    for(n = 0; n < lhsParts; n++)
+    for (n = 0; n < lhsParts; n++)
       tcMultiplyPart(&dst[n], rhs, lhs[n], 0, rhsParts, rhsParts + 1, true);
 
     n = lhsParts + rhsParts;
@@ -2678,7 +2677,7 @@ APInt::tcDivide(integerPart *lhs, const integerPart *rhs,
 
   /* Loop, subtracting SRHS if REMAINDER is greater and adding that to
      the total.  */
-  for(;;) {
+  for (;;) {
       int compare;
 
       compare = tcCompare(remainder, srhs, parts);
@@ -2746,7 +2745,7 @@ APInt::tcShiftRight(integerPart *dst, unsigned int parts, unsigned int count)
 
     /* Perform the shift.  This leaves the most significant COUNT bits
        of the result at zero.  */
-    for(i = 0; i < parts; i++) {
+    for (i = 0; i < parts; i++) {
       integerPart part;
 
       if (i + jump >= parts) {
@@ -2771,7 +2770,7 @@ APInt::tcAnd(integerPart *dst, const integerPart *rhs, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     dst[i] &= rhs[i];
 }
 
@@ -2781,7 +2780,7 @@ APInt::tcOr(integerPart *dst, const integerPart *rhs, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     dst[i] |= rhs[i];
 }
 
@@ -2791,7 +2790,7 @@ APInt::tcXor(integerPart *dst, const integerPart *rhs, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     dst[i] ^= rhs[i];
 }
 
@@ -2801,7 +2800,7 @@ APInt::tcComplement(integerPart *dst, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     dst[i] = ~dst[i];
 }
 
@@ -2830,7 +2829,7 @@ APInt::tcIncrement(integerPart *dst, unsigned int parts)
 {
   unsigned int i;
 
-  for(i = 0; i < parts; i++)
+  for (i = 0; i < parts; i++)
     if (++dst[i] != 0)
       break;
 

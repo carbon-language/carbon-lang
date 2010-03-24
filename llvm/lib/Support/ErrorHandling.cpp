@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines an API for error handling, it supersedes cerr+abort(), and 
+// This file defines an API for error handling, it supersedes cerr+abort(), and
 // cerr+exit() style error handling.
 // Callbacks can be registered for these errors through this API.
 //===----------------------------------------------------------------------===//
@@ -57,7 +57,7 @@ void llvm_report_error(const Twine &reason) {
   exit(1);
 }
 
-void llvm_unreachable_internal(const char *msg, const char *file, 
+void llvm_unreachable_internal(const char *msg, const char *file,
                                unsigned line) {
   // This code intentionally doesn't call the ErrorHandler callback, because
   // llvm_unreachable is intended to be used to indicate "impossible"
@@ -71,4 +71,3 @@ void llvm_unreachable_internal(const char *msg, const char *file,
   abort();
 }
 }
-
