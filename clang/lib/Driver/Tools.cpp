@@ -948,6 +948,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-g");
 
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
+  Args.AddLastArg(CmdArgs, options::OPT_nostdincxx);
   Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);
 
   // Pass the path to compiler resource files.
@@ -1706,6 +1707,7 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
   if (!Args.hasArg(options::OPT_Q))
     CmdArgs.push_back("-quiet");
   Args.AddAllArgs(CmdArgs, options::OPT_nostdinc);
+  Args.AddAllArgs(CmdArgs, options::OPT_nostdincxx);
   Args.AddLastArg(CmdArgs, options::OPT_v);
   Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
   Args.AddLastArg(CmdArgs, options::OPT_P);

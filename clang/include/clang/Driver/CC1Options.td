@@ -407,6 +407,8 @@ def fwritable_strings : Flag<"-fwritable-strings">,
 
 def nostdinc : Flag<"-nostdinc">,
   HelpText<"Disable standard #include directories">;
+def nostdincxx : Flag<"-nostdinc++">,
+  HelpText<"Disable standard #include directories for the C++ standard library">;
 def nobuiltininc : Flag<"-nobuiltininc">,
   HelpText<"Disable builtin #include directories">;
 def F : JoinedOrSeparate<"-F">, MetaVarName<"<directory>">,

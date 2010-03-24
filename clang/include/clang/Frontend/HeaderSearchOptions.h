@@ -71,13 +71,17 @@ public:
   /// Include the system standard include search directories.
   unsigned UseStandardIncludes : 1;
 
+  /// Include the system standard C++ library include search directories.
+  unsigned UseStandardCXXIncludes : 1;
+
   /// Whether header search information should be output as for -v.
   unsigned Verbose : 1;
 
 public:
   HeaderSearchOptions(llvm::StringRef _Sysroot = "/")
     : Sysroot(_Sysroot), UseBuiltinIncludes(true),
-      UseStandardIncludes(true), Verbose(false) {}
+      UseStandardIncludes(true), UseStandardCXXIncludes(true),
+      Verbose(false) {}
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.
   void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,

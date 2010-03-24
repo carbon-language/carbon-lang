@@ -436,6 +436,8 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
   }
   if (!Opts.UseStandardIncludes)
     Res.push_back("-nostdinc");
+  if (!Opts.UseStandardCXXIncludes)
+    Res.push_back("-nostdinc++");
   if (Opts.Verbose)
     Res.push_back("-v");
 }
@@ -1014,6 +1016,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.Verbose = Args.hasArg(OPT_v);
   Opts.UseBuiltinIncludes = !Args.hasArg(OPT_nobuiltininc);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
+  Opts.UseStandardCXXIncludes = !Args.hasArg(OPT_nostdincxx);
   Opts.ResourceDir = getLastArgValue(Args, OPT_resource_dir);
 
   // Add -I... and -F... options in order.

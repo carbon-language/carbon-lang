@@ -82,7 +82,8 @@ public:
   /// AddDefaultSystemIncludePaths - Adds the default system include paths so
   ///  that e.g. stdio.h is found.
   void AddDefaultSystemIncludePaths(const LangOptions &Lang,
-                                    const llvm::Triple &triple);
+                                    const llvm::Triple &triple,
+                                    bool UseStandardCXXIncludes);
 
   /// Realize - Merges all search path lists into one list and send it to
   /// HeaderSearch.
@@ -594,8 +595,9 @@ void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &tripl
 }
 
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
-                                                    const llvm::Triple &triple) {
-  if (Lang.CPlusPlus)
+                                                    const llvm::Triple &triple,
+                                                  bool UseStandardCXXIncludes) {
+  if (Lang.CPlusPlus && UseStandardCXXIncludes)
     AddDefaultCPlusPlusIncludePaths(triple);
 
   AddDefaultCIncludePaths(triple);
@@ -765,7 +767,8 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
   }
 
   if (HSOpts.UseStandardIncludes)
-    Init.AddDefaultSystemIncludePaths(Lang, Triple);
+    Init.AddDefaultSystemIncludePaths(Lang, Triple, 
+                                      HSOpts.UseStandardCXXIncludes);
 
   Init.Realize();
 }
