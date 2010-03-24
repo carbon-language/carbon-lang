@@ -37,3 +37,21 @@ namespace PR6457 {
   };
   B<int> b;
 }
+
+namespace PR6657 {
+  struct X
+  {
+    X (int, int) { }
+  };
+
+  template <typename>
+  void f0()
+  {
+    X x = X(0, 0);
+  }
+
+  void f1()
+  {
+    f0<int>();
+  }
+}

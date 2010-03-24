@@ -286,17 +286,19 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
   }
 
   if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init)) {
-    if (InstantiateInitializationArguments(S,
-                                           Construct->getArgs(),
-                                           Construct->getNumArgs(),
-                                           TemplateArgs,
-                                           CommaLocs, NewArgs))
-      return true;
+    if (!isa<CXXTemporaryObjectExpr>(Construct)) {
+      if (InstantiateInitializationArguments(S,
+                                             Construct->getArgs(),
+                                             Construct->getNumArgs(),
+                                             TemplateArgs,
+                                             CommaLocs, NewArgs))
+        return true;
 
-    // FIXME: Fake locations!
-    LParenLoc = S.PP.getLocForEndOfToken(Init->getLocStart());
-    RParenLoc = CommaLocs.empty()? LParenLoc : CommaLocs.back();
-    return false;
+      // FIXME: Fake locations!
+      LParenLoc = S.PP.getLocForEndOfToken(Init->getLocStart());
+      RParenLoc = CommaLocs.empty()? LParenLoc : CommaLocs.back();
+      return false;
+    }
   }
  
   Sema::OwningExprResult Result = S.SubstExpr(Init, TemplateArgs);
