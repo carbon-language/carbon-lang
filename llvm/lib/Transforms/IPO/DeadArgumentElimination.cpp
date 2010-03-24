@@ -72,7 +72,7 @@ namespace {
       }
 
       std::string getDescription() const {
-        return std::string((IsArg ? "Argument #" : "Return value #")) 
+        return std::string((IsArg ? "Argument #" : "Return value #"))
                + utostr(Idx) + " of function " + F->getNameStr();
       }
     };
@@ -196,7 +196,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but doesn't have isVarArg set.
   const FunctionType *FTy = Fn.getFunctionType();
-  
+
   std::vector<const Type*> Params(FTy->param_begin(), FTy->param_end());
   FunctionType *NFTy = FunctionType::get(FTy->getReturnType(),
                                                 Params, false);
@@ -225,7 +225,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       SmallVector<AttributeWithIndex, 8> AttributesVec;
       for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
         AttributesVec.push_back(PAL.getSlot(i));
-      if (Attributes FnAttrs = PAL.getFnAttributes()) 
+      if (Attributes FnAttrs = PAL.getFnAttributes())
         AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
       PAL = AttrListPtr::get(AttributesVec.begin(), AttributesVec.end());
     }
@@ -312,7 +312,7 @@ DAE::Liveness DAE::MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses) {
 /// it at 0.
 DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
                              unsigned RetValNum) {
-    Value *V = *U;
+    User *V = *U;
     if (ReturnInst *RI = dyn_cast<ReturnInst>(V)) {
       // The value is returned from a function. It's only live when the
       // function's return value is live. We use RetValNum here, for the case
@@ -347,7 +347,7 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
       Function *F = CS.getCalledFunction();
       if (F) {
         // Used in a direct call.
-  
+
         // Find the argument number. We know for sure that this use is an
         // argument, since if it was the function argument this would be an
         // indirect call and the we know can't be looking at a value of the
@@ -358,8 +358,8 @@ DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
           // The value is passed in through a vararg! Must be live.
           return Live;
 
-        assert(CS.getArgument(ArgNo) 
-               == CS.getInstruction()->getOperand(U.getOperandNo()) 
+        assert(CS.getArgument(ArgNo)
+               == CS.getInstruction()->getOperand(U.getOperandNo())
                && "Argument is not where we expected it");
 
         // Value passed to a normal call. It's only live when the corresponding
@@ -599,7 +599,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   const Type *RetTy = FTy->getReturnType();
   const Type *NRetTy = NULL;
   unsigned RetCount = NumRetVals(F);
-  
+
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
@@ -656,7 +656,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   if (NRetTy == Type::getVoidTy(F->getContext()))
     RAttrs &= ~Attribute::typeIncompatible(NRetTy);
   else
-    assert((RAttrs & Attribute::typeIncompatible(NRetTy)) == 0 
+    assert((RAttrs & Attribute::typeIncompatible(NRetTy)) == 0
            && "Return attributes no longer compatible?");
 
   if (RAttrs)
@@ -686,7 +686,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     }
   }
 
-  if (FnAttrs != Attribute::None) 
+  if (FnAttrs != Attribute::None)
     AttributesVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
   // Reconstruct the AttributesList based on the vector we constructed.
@@ -805,7 +805,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           while (isa<PHINode>(IP)) ++IP;
           InsertPt = IP;
         }
-          
+
         // We used to return a struct. Instead of doing smart stuff with all the
         // uses of this struct, we will just rebuild it using
         // extract/insertvalue chaining and let instcombine clean that up.
@@ -929,7 +929,7 @@ bool DAE::runOnModule(Module &M) {
   DEBUG(dbgs() << "DAE - Determining liveness\n");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     SurveyFunction(*I);
-  
+
   // Now, remove all dead arguments and return values from each function in
   // turn
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
