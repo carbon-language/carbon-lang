@@ -2282,8 +2282,8 @@ defm VCGEs    : N3V_QHS<0, 0, 0b0011, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
                         IIC_VBINi4Q, "vcge", "s", NEONvcge, 0>;
 defm VCGEu    : N3V_QHS<1, 0, 0b0011, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q, 
                         IIC_VBINi4Q, "vcge", "u", NEONvcgeu, 0>;
-def  VCGEfd   : N3VD<1,0,0b00,0b1110,0, IIC_VBIND, "vcge", "f32",
-                     v2i32, v2f32, NEONvcge, 0>;
+def  VCGEfd   : N3VD<1,0,0b00,0b1110,0, IIC_VBIND, "vcge", "f32", v2i32, v2f32,
+                     NEONvcge, 0>;
 def  VCGEfq   : N3VQ<1,0,0b00,0b1110,0, IIC_VBINQ, "vcge", "f32", v4i32, v4f32,
                      NEONvcge, 0>;
 // For disassembly only.
