@@ -408,13 +408,13 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   // If N and NodeNoTypes don't agree on a type, then this is a case where we
   // need to do a type check.  Emit the check, apply the tyep to NodeNoTypes and
   // reinfer any correlated types.
-  bool DoTypeCheck = false;
-  if (NodeNoTypes->getNumTypes() != 0 &&
-      NodeNoTypes->getExtType(0) != N->getExtType(0)) {
-    assert(NodeNoTypes->getNumTypes() == 1 && "FIXME: Handle multiple results");
-    NodeNoTypes->setType(0, N->getExtType(0));
+  SmallVector<unsigned, 2> ResultsToTypeCheck;
+  
+  for (unsigned i = 0, e = NodeNoTypes->getNumTypes(); i != e; ++i) {
+    if (NodeNoTypes->getExtType(i) == N->getExtType(i)) continue;
+    NodeNoTypes->setType(i, N->getExtType(i));
     InferPossibleTypes();
-    DoTypeCheck = true;
+    ResultsToTypeCheck.push_back(i);
   }
   
   // If this node has a name associated with it, capture it in VariableMap. If
@@ -444,10 +444,9 @@ void MatcherGen::EmitMatchCode(const TreePatternNode *N,
   for (unsigned i = 0, e = N->getPredicateFns().size(); i != e; ++i)
     AddMatcher(new CheckPredicateMatcher(N->getPredicateFns()[i]));
   
-  if (DoTypeCheck) {
-    assert(N->getNumTypes() == 1);
-    AddMatcher(new CheckTypeMatcher(N->getType(0)));
-  }
+  for (unsigned i = 0, e = ResultsToTypeCheck.size(); i != e; ++i)
+    AddMatcher(new CheckTypeMatcher(N->getType(ResultsToTypeCheck[i]),
+                                    ResultsToTypeCheck[i]));
 }
 
 /// EmitMatcherCode - Generate the code that matches the predicate of this

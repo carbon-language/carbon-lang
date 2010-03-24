@@ -296,9 +296,11 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     if (!InstPatNode) continue;
     if (InstPatNode->isLeaf()) continue;
 
+    // Ignore multiple result nodes for now.
+    if (InstPatNode->getNumTypes() > 1) continue;
+    
     Record *InstPatOp = InstPatNode->getOperator();
     std::string OpcodeName = getOpcodeName(InstPatOp, CGP);
-    assert(InstPatNode->getNumTypes() <= 1);
     MVT::SimpleValueType RetVT = MVT::isVoid;
     if (InstPatNode->getNumTypes()) RetVT = InstPatNode->getType(0);
     MVT::SimpleValueType VT = RetVT;

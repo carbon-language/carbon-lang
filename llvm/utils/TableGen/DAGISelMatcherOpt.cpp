@@ -48,8 +48,9 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
         New = new RecordChildMatcher(MC->getChildNo(), RM->getWhatFor(),
                                      RM->getResultNo());
     
-    if (CheckTypeMatcher *CT= dyn_cast<CheckTypeMatcher>(MC->getNext()))
-      if (MC->getChildNo() < 8)  // Only have CheckChildType0...7
+    if (CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(MC->getNext()))
+      if (MC->getChildNo() < 8 &&  // Only have CheckChildType0...7
+          CT->getResNo() == 0)     // CheckChildType checks res #0
         New = new CheckChildTypeMatcher(MC->getChildNo(), CT->getType());
     
     if (New) {
@@ -420,10 +421,12 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
       CheckTypeMatcher *CTM =
         cast_or_null<CheckTypeMatcher>(FindNodeWithKind(NewOptionsToMatch[i],
                                                         Matcher::CheckType));
-      if (CTM == 0 || 
+      if (CTM == 0 ||
           // iPTR checks could alias any other case without us knowing, don't
           // bother with them.
           CTM->getType() == MVT::iPTR ||
+          // SwitchType only works for result #0.
+          CTM->getResNo() != 0 ||
           // If the CheckType isn't at the start of the list, see if we can move
           // it there.
           !CTM->canMoveBefore(NewOptionsToMatch[i])) {
@@ -488,7 +491,7 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
       MatcherPtr.reset(new SwitchTypeMatcher(&Cases[0], Cases.size()));
     } else {
       // If we factored and ended up with one case, create it now.
-      MatcherPtr.reset(new CheckTypeMatcher(Cases[0].first));
+      MatcherPtr.reset(new CheckTypeMatcher(Cases[0].first, 0));
       MatcherPtr->setNext(Cases[0].second);
     }
     return;

@@ -147,7 +147,8 @@ void SwitchOpcodeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
 
 
 void CheckTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
-  OS.indent(indent) << "CheckType " << getEnumName(Type) << '\n';
+  OS.indent(indent) << "CheckType " << getEnumName(Type) << ", ResNo="
+    << ResNo << '\n';
 }
 
 void SwitchTypeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
@@ -356,12 +357,11 @@ bool CheckOpcodeMatcher::isContradictoryImpl(const Matcher *M) const {
   // different, then we know they contradict.  For example, a check for
   // ISD::STORE will never be true at the same time a check for Type i32 is.
   if (const CheckTypeMatcher *CT = dyn_cast<CheckTypeMatcher>(M)) {
-    // FIXME: What result is this referring to?
-    MVT::SimpleValueType NodeType;
-    if (getOpcode().getNumResults() == 0)
-      NodeType = MVT::isVoid;
-    else
-      NodeType = getOpcode().getKnownType();
+    // If checking for a result the opcode doesn't have, it can't match.
+    if (CT->getResNo() >= getOpcode().getNumResults())
+      return true;
+    
+    MVT::SimpleValueType NodeType = getOpcode().getKnownType(CT->getResNo());
     if (NodeType != MVT::Other)
       return TypesAreContradictory(NodeType, CT->getType());
   }

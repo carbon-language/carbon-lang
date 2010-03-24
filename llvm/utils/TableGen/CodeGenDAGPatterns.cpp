@@ -713,10 +713,11 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
 /// getKnownType - If the type constraints on this node imply a fixed type
 /// (e.g. all stores return void, etc), then return it as an
 /// MVT::SimpleValueType.  Otherwise, return EEVT::Other.
-MVT::SimpleValueType SDNodeInfo::getKnownType() const {
+MVT::SimpleValueType SDNodeInfo::getKnownType(unsigned ResNo) const {
   unsigned NumResults = getNumResults();
   assert(NumResults <= 1 &&
          "We only work with nodes with zero or one result so far!");
+  assert(ResNo == 0 && "Only handles single result nodes so far");
   
   for (unsigned i = 0, e = TypeConstraints.size(); i != e; ++i) {
     // Make sure that this applies to the correct node result.

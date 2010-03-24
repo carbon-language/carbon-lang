@@ -211,7 +211,7 @@ public:
   /// getKnownType - If the type constraints on this node imply a fixed type
   /// (e.g. all stores return void, etc), then return it as an
   /// MVT::SimpleValueType.  Otherwise, return MVT::Other.
-  MVT::SimpleValueType getKnownType() const;
+  MVT::SimpleValueType getKnownType(unsigned ResNo) const;
   
   /// hasProperty - Return true if this node has the specified property.
   ///
