@@ -4721,23 +4721,17 @@ def : Pat<(i32 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
 
 // (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 let AddedComplexity = 5 in { // Try this before the selecting to OR
-def : Pat<(parallel (or_is_add GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR16:$src1, imm:$src2),
           (ADD16ri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (or_is_add GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR32:$src1, imm:$src2),
           (ADD32ri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (or_is_add GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR16:$src1, i16immSExt8:$src2),
           (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (or_is_add GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR32:$src1, i32immSExt8:$src2),
           (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
-def : Pat<(parallel (or_is_add GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR16:$src1, GR16:$src2),
           (ADD16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (or_is_add GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR32:$src1, GR32:$src2),
           (ADD32rr GR32:$src1, GR32:$src2)>;
 } // AddedComplexity
 
