@@ -68,7 +68,7 @@ def err_designator_into_flexible_array_member : Error<
 def note_flexible_array_member : Note<
   "initialized flexible array member %0 is here">;
 def ext_flexible_array_init : Extension<
-  "flexible array initialization is a GNU extension">;
+  "flexible array initialization is a GNU extension">, InGroup<GNU>;
 
 // Declarations.
 def ext_vla : Extension<
@@ -1672,7 +1672,7 @@ def err_field_declared_as_function : Error<"field %0 declared as a function">;
 def err_field_incomplete : Error<"field has incomplete type %0">;
 def ext_variable_sized_type_in_struct : ExtWarn<
   "field %0 with variable sized type %1 not at the end of a struct or class is"
-  " a GNU extension">;
+  " a GNU extension">, InGroup<GNU>;
 
 def err_flexible_array_empty_struct : Error<
   "flexible array %0 not allowed in otherwise empty struct">;
@@ -2330,7 +2330,8 @@ def warn_typecheck_cond_pointer_integer_mismatch : ExtWarn<
 def err_typecheck_choose_expr_requires_constant : Error<
   "'__builtin_choose_expr' requires a constant expression">;
 def ext_typecheck_expression_not_constant_but_accepted : Extension<
-  "expression is not a constant, but is accepted as one by GNU extensions">;
+  "expression is not a constant, but is accepted as one by GNU extensions">, 
+  InGroup<GNU>;
 def warn_unused_expr : Warning<"expression result unused">,
   InGroup<UnusedValue>;
 def warn_unused_property_expr : Warning<
@@ -2422,9 +2423,9 @@ def err_in_class_initializer_non_constant : Error<
 
 // C++ anonymous unions and GNU anonymous structs/unions
 def ext_anonymous_union : Extension<
-  "anonymous unions are a GNU extension in C">;
+  "anonymous unions are a GNU extension in C">, InGroup<GNU>;
 def ext_anonymous_struct : Extension<
-  "anonymous structs are a GNU extension">;
+  "anonymous structs are a GNU extension">, InGroup<GNU>;
 def err_anonymous_union_not_static : Error<
   "anonymous unions at namespace or global scope must be declared 'static'">;
 def err_anonymous_union_with_storage_spec : Error<

@@ -50,22 +50,26 @@ def ext_enumerator_list_comma : Extension<
   "feature">;
 
 def ext_gnu_indirect_goto : Extension<
-  "use of GNU indirect-goto extension">;
+  "use of GNU indirect-goto extension">, InGroup<GNU>;
 def ext_gnu_address_of_label : Extension<
-  "use of GNU address-of-label extension">;
+  "use of GNU address-of-label extension">, InGroup<GNU>;
 def ext_gnu_statement_expr : Extension<
-  "use of GNU statement expression extension">;
+  "use of GNU statement expression extension">, InGroup<GNU>;
 def ext_gnu_conditional_expr : Extension<
-  "use of GNU ?: expression extension, eliding middle term">;
+  "use of GNU ?: expression extension, eliding middle term">, InGroup<GNU>;
 def ext_gnu_empty_initializer : Extension<
-  "use of GNU empty initializer extension">;
-def ext_gnu_array_range : Extension<"use of GNU array range extension">;
+  "use of GNU empty initializer extension">, InGroup<GNU>;
+def ext_gnu_array_range : Extension<"use of GNU array range extension">, 
+  InGroup<GNUDesignator>;
 def ext_gnu_missing_equal_designator : ExtWarn<
-  "use of GNU 'missing =' extension in designator">;
+  "use of GNU 'missing =' extension in designator">, 
+  InGroup<GNUDesignator>;
 def err_expected_equal_designator : Error<"expected '=' or another designator">;
 def ext_gnu_old_style_field_designator : ExtWarn<
-  "use of GNU old-style field designator extension">;
-def ext_gnu_case_range : Extension<"use of GNU case range extension">;
+  "use of GNU old-style field designator extension">, 
+  InGroup<GNUDesignator>;
+def ext_gnu_case_range : Extension<"use of GNU case range extension">,
+  InGroup<GNU>;
 
 // Generic errors.
 def err_parse_error : Error<"parse error">;
