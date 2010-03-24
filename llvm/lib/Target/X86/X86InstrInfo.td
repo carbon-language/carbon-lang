@@ -1698,8 +1698,8 @@ let isTwoAddress = 0 in {
 let Defs = [EFLAGS] in {
 let CodeSize = 2 in
 def INC8r  : I<0xFE, MRM0r, (outs GR8 :$dst), (ins GR8 :$src), "inc{b}\t$dst",
-               [(set GR8:$dst, (add GR8:$src, 1)),
-                (implicit EFLAGS)]>;
+               [(set GR8:$dst, EFLAGS, (X86inc_flag GR8:$src))]>;
+
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
 def INC16r : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src), 
                "inc{w}\t$dst",
@@ -4875,8 +4875,8 @@ def : Pat<(parallel (X86smul_flag GR32:$src1, 2),
 }
 
 // INC and DEC with EFLAGS result. Note that these do not set CF.
-def : Pat<(parallel (X86inc_flag GR8:$src), (implicit EFLAGS)),
-          (INC8r GR8:$src)>;
+def : Pat<(add GR8:$src, 1), (INC8r GR8:$src)>;
+
 def : Pat<(parallel (X86dec_flag GR8:$src), (implicit EFLAGS)),
           (DEC8r GR8:$src)>;
 
