@@ -40,11 +40,17 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sstream>
 using namespace llvm;
+
+static cl::opt<bool>
+aggressiveV7IfConvert("arm-aggressive-v7-ifcvt", cl::Hidden,
+                      cl::desc("Enable more liberal if-converstion for v7"),
+                      cl::init(false));
 
 static bool CC_ARM_APCS_Custom_f64(unsigned &ValNo, EVT &ValVT, EVT &LocVT,
                                    CCValAssign::LocInfo &LocInfo,
@@ -456,6 +462,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     // Generic (and overly aggressive) if-conversion limits.
     setIfCvtBlockSizeLimit(10);
     setIfCvtDupBlockSizeLimit(2);
+  } else if (aggressiveV7IfConvert && Subtarget->hasV7Ops()) {
+    setIfCvtBlockSizeLimit(3);
+    setIfCvtDupBlockSizeLimit(1);
   } else if (Subtarget->hasV6Ops()) {
     setIfCvtBlockSizeLimit(2);
     setIfCvtDupBlockSizeLimit(1);
