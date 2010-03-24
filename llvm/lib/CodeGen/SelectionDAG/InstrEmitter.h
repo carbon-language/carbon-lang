@@ -117,7 +117,7 @@ public:
     if (Node->isMachineOpcode())
       EmitMachineNode(Node, IsClone, IsCloned, VRBaseMap, EM);
     else
-      EmitSpecialNode(Node, IsClone, IsCloned, VRBaseMap, EM);
+      EmitSpecialNode(Node, IsClone, IsCloned, VRBaseMap);
   }
 
   /// getBlock - Return the current basic block.
@@ -135,8 +135,7 @@ private:
                        DenseMap<SDValue, unsigned> &VRBaseMap,
                        DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
   void EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
-                       DenseMap<SDValue, unsigned> &VRBaseMap,
-                       DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
+                       DenseMap<SDValue, unsigned> &VRBaseMap);
 };
 
 }
