@@ -3666,6 +3666,178 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
   return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
 }
 
+static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
+                                          llvm::Value *Ptr,
+                                          int64_t NonVirtualAdjustment,
+                                          int64_t VirtualAdjustment) {
+  if (!NonVirtualAdjustment && !VirtualAdjustment)
+    return Ptr;
+
+  const llvm::Type *Int8PtrTy = 
+    llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  
+  llvm::Value *V = CGF.Builder.CreateBitCast(Ptr, Int8PtrTy);
+
+  if (NonVirtualAdjustment) {
+    // Do the non-virtual adjustment.
+    V = CGF.Builder.CreateConstInBoundsGEP1_64(V, NonVirtualAdjustment);
+  }
+
+  if (VirtualAdjustment) {
+    const llvm::Type *PtrDiffTy = 
+      CGF.ConvertType(CGF.getContext().getPointerDiffType());
+
+    // Do the virtual adjustment.
+    llvm::Value *VTablePtrPtr = 
+      CGF.Builder.CreateBitCast(V, Int8PtrTy->getPointerTo());
+    
+    llvm::Value *VTablePtr = CGF.Builder.CreateLoad(VTablePtrPtr);
+  
+    llvm::Value *OffsetPtr =
+      CGF.Builder.CreateConstInBoundsGEP1_64(VTablePtr, VirtualAdjustment);
+    
+    OffsetPtr = CGF.Builder.CreateBitCast(OffsetPtr, PtrDiffTy->getPointerTo());
+    
+    // Load the adjustment offset from the vtable.
+    llvm::Value *Offset = CGF.Builder.CreateLoad(OffsetPtr);
+    
+    // Adjust our pointer.
+    V = CGF.Builder.CreateInBoundsGEP(V, Offset);
+  }
+
+  // Cast back to the original type.
+  return CGF.Builder.CreateBitCast(V, Ptr->getType());
+}
+
+void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
+                                    const ThunkInfo &Thunk) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  QualType ResultType = FPT->getResultType();
+  QualType ThisType = MD->getThisType(getContext());
+
+  FunctionArgList FunctionArgs;
+
+  // FIXME: It would be nice if more of this code could be shared with 
+  // CodeGenFunction::GenerateCode.
+
+  // Create the implicit 'this' parameter declaration.
+  CXXThisDecl = ImplicitParamDecl::Create(getContext(), 0,
+                                          MD->getLocation(),
+                                          &getContext().Idents.get("this"),
+                                          ThisType);
+
+  // Add the 'this' parameter.
+  FunctionArgs.push_back(std::make_pair(CXXThisDecl, CXXThisDecl->getType()));
+
+  // Add the rest of the parameters.
+  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
+       E = MD->param_end(); I != E; ++I) {
+    ParmVarDecl *Param = *I;
+    
+    FunctionArgs.push_back(std::make_pair(Param, Param->getType()));
+  }
+  
+  StartFunction(GlobalDecl(), ResultType, Fn, FunctionArgs, SourceLocation());
+
+  // Adjust the 'this' pointer if necessary.
+  llvm::Value *AdjustedThisPtr = 
+    PerformTypeAdjustment(*this, LoadCXXThis(), 
+                          Thunk.This.NonVirtual, 
+                          Thunk.This.VCallOffsetOffset);
+  
+  CallArgList CallArgs;
+  
+  // Add our adjusted 'this' pointer.
+  CallArgs.push_back(std::make_pair(RValue::get(AdjustedThisPtr), ThisType));
+
+  // Add the rest of the parameters.
+  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
+       E = MD->param_end(); I != E; ++I) {
+    ParmVarDecl *Param = *I;
+    QualType ArgType = Param->getType();
+    
+    // FIXME: Declaring a DeclRefExpr on the stack is kinda icky.
+    DeclRefExpr ArgExpr(Param, ArgType.getNonReferenceType(), SourceLocation());
+    CallArgs.push_back(std::make_pair(EmitCallArg(&ArgExpr, ArgType), ArgType));
+  }
+
+  // Get our callee.
+  const llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                   FPT->isVariadic());
+  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
+
+  const CGFunctionInfo &FnInfo = 
+    CGM.getTypes().getFunctionInfo(ResultType, CallArgs, FPT->getCallConv(), 
+                                   FPT->getNoReturnAttr());
+  
+  // Now emit our call.
+  RValue RV = EmitCall(FnInfo, Callee, ReturnValueSlot(), CallArgs, MD);
+  
+  if (!Thunk.Return.isEmpty()) {
+    // Emit the return adjustment.
+    bool NullCheckValue = !ResultType->isReferenceType();
+    
+    llvm::BasicBlock *AdjustNull = 0;
+    llvm::BasicBlock *AdjustNotNull = 0;
+    llvm::BasicBlock *AdjustEnd = 0;
+    
+    llvm::Value *ReturnValue = RV.getScalarVal();
+
+    if (NullCheckValue) {
+      AdjustNull = createBasicBlock("adjust.null");
+      AdjustNotNull = createBasicBlock("adjust.notnull");
+      AdjustEnd = createBasicBlock("adjust.end");
+    
+      llvm::Value *IsNull = Builder.CreateIsNull(ReturnValue);
+      Builder.CreateCondBr(IsNull, AdjustNull, AdjustNotNull);
+      EmitBlock(AdjustNotNull);
+    }
+    
+    ReturnValue = PerformTypeAdjustment(*this, ReturnValue, 
+                                        Thunk.Return.NonVirtual, 
+                                        Thunk.Return.VBaseOffsetOffset);
+    
+    if (NullCheckValue) {
+      Builder.CreateBr(AdjustEnd);
+      EmitBlock(AdjustNull);
+      Builder.CreateBr(AdjustEnd);
+      EmitBlock(AdjustEnd);
+    
+      llvm::PHINode *PHI = Builder.CreatePHI(ReturnValue->getType());
+      PHI->reserveOperandSpace(2);
+      PHI->addIncoming(ReturnValue, AdjustNotNull);
+      PHI->addIncoming(llvm::Constant::getNullValue(ReturnValue->getType()), 
+                       AdjustNull);
+      ReturnValue = PHI;
+    }
+    
+    RV = RValue::get(ReturnValue);
+  }
+
+  if (!ResultType->isVoidType())
+    EmitReturnOfRValue(RV, ResultType);
+
+  FinishFunction();
+
+  // Destroy the 'this' declaration.
+  CXXThisDecl->Destroy(getContext());
+  
+  // Set the right linkage.
+  llvm::GlobalValue::LinkageTypes ThunkLinkage;
+  
+  if (CGM.getFunctionLinkage(MD) == llvm::Function::InternalLinkage)
+    ThunkLinkage = llvm::Function::InternalLinkage;
+  else
+    ThunkLinkage = llvm::Function::WeakAnyLinkage;
+  
+  Fn->setLinkage(ThunkLinkage);
+  
+  // Set the right visibility.
+  CGM.setGlobalVisibility(Fn, MD);
+}
+
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 {
   llvm::Constant *Entry = CGM.GetAddrOfThunk(GD, Thunk);
@@ -3701,6 +3873,10 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
     // Remove the old thunk.
     OldThunkFn->eraseFromParent();
   }
+
+  // Actually generate the thunk body.
+  llvm::Function *ThunkFn = cast<llvm::Function>(Entry);
+  CodeGenFunction(CGM).GenerateThunk(ThunkFn, GD, Thunk);
 }
 
 void CodeGenVTables::EmitThunks(GlobalDecl GD)

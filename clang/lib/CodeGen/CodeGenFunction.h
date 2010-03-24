@@ -510,7 +510,9 @@ public:
   llvm::Value *DynamicTypeAdjust(llvm::Value *V, 
                                  const ThunkAdjustment &Adjustment);
 
-  /// GenerateThunk - Generate a thunk for the given method
+  /// GenerateThunk - Generate a thunk for the given method.
+  void GenerateThunk(llvm::Function *Fn, GlobalDecl GD, const ThunkInfo &Thunk);
+  
   llvm::Constant *GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
                                 bool Extern, 
                                 const ThunkAdjustment &ThisAdjustment);
