@@ -431,15 +431,16 @@ public:
   /// for basic block A and B. If there is no such block then return NULL.
   NodeT *findNearestCommonDominator(NodeT *A, NodeT *B) {
 
-    assert (!this->isPostDominator()
-            && "This is not implemented for post dominators");
     assert (A->getParent() == B->getParent()
             && "Two blocks are not in same function");
 
-    // If either A or B is a entry block then it is nearest common dominator.
-    NodeT &Entry  = A->getParent()->front();
-    if (A == &Entry || B == &Entry)
-      return &Entry;
+    // If either A or B is a entry block then it is nearest common dominator
+    // (for forward-dominators).
+    if (!this->isPostDominator()) {
+      NodeT &Entry  = A->getParent()->front();
+      if (A == &Entry || B == &Entry)
+        return &Entry;
+    }
 
     // If B dominates A then B is nearest common dominator.
     if (dominates(B, A))
