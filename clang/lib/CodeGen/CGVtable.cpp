@@ -3881,13 +3881,6 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 
 void CodeGenVTables::EmitThunks(GlobalDecl GD)
 {
-  // FIXME: We use the -fdump-vtable-layouts flag to trigger the new thunk
-  // building code for now.
-  if (!CGM.getLangOptions().DumpVtableLayouts) {
-    CGM.BuildThunksForVirtual(GD);
-    return;
-  }
-
   const CXXMethodDecl *MD = 
     cast<CXXMethodDecl>(GD.getDecl())->getCanonicalDecl();
 
