@@ -627,22 +627,15 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       TP.error(N->getOperator()->getName() + " expects a VT operand!");
     MVT::SimpleValueType VT =
      getValueType(static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef());
-    if (!isInteger(VT))
-      TP.error(N->getOperator()->getName() + " VT operand must be integer!");
+    
+    EEVT::TypeSet TypeListTmp(VT, TP);
     
     unsigned OResNo = 0;
     TreePatternNode *OtherNode =
       getOperandNum(x.SDTCisVTSmallerThanOp_Info.OtherOperandNum, N, NodeInfo,
                     OResNo);
-    
-    // It must be integer.
-    bool MadeChange = OtherNode->getExtType(OResNo).EnforceInteger(TP);
 
-    // This doesn't try to enforce any information on the OtherNode, it just
-    // validates it when information is determined.
-    if (OtherNode->hasTypeSet(OResNo) && OtherNode->getType(OResNo) <= VT)
-      OtherNode->UpdateNodeType(OResNo, MVT::Other, TP);  // Throw an error.
-    return MadeChange;
+    return TypeListTmp.EnforceSmallerThan(OtherNode->getExtType(OResNo), TP);
   }
   case SDTCisOpSmallerThanOp: {
     unsigned BResNo = 0;
