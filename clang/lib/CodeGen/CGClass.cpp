@@ -1560,7 +1560,7 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->isDynamicClass())
     return;
 
-  llvm::Constant *VTable = CGM.getVTables().getAddrOfVTable(ClassDecl);
+  llvm::Constant *VTable = CGM.getVTables().GetAddrOfVTable(ClassDecl);
   const CodeGenVTables::AddrSubMap_t& AddressPoints =
     CGM.getVTables().getAddressPoints(ClassDecl);
 

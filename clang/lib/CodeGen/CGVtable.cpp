@@ -3918,7 +3918,7 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
 }
 
-llvm::Constant *CodeGenVTables::getAddrOfVTable(const CXXRecordDecl *RD) {
+llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   CGM.getMangleContext().mangleCXXVtable(RD, OutName);
   llvm::StringRef Name = OutName.str();
@@ -3926,7 +3926,7 @@ llvm::Constant *CodeGenVTables::getAddrOfVTable(const CXXRecordDecl *RD) {
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = llvm::ArrayType::get(Int8PtrTy, 0);
   
-  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(Name);
   if (GV) {
     if (!GV->isDeclaration() || GV->getType()->getElementType() == ArrayType)
       return GV;

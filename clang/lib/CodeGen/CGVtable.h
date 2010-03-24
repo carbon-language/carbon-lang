@@ -316,8 +316,8 @@ public:
   int64_t getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                      const CXXRecordDecl *VBase);
 
-  /// getAddrOfVTable - Get the address of the vtable for the given record decl.
-  llvm::Constant *getAddrOfVTable(const CXXRecordDecl *RD);
+  /// GetAddrOfVTable - Get the address of the vtable for the given record decl.
+  llvm::Constant *GetAddrOfVTable(const CXXRecordDecl *RD);
 
   /// CtorVtableInfo - Information about a constructor vtable.
   struct CtorVtableInfo {
