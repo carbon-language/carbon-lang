@@ -62,7 +62,6 @@ def ThumbMiscFrm  : Format<30>;
 def NLdStFrm            : Format<31>;
 def N1RegModImmFrm      : Format<32>;
 def N2RegFrm            : Format<33>;
-def NVCVTFrm            : Format<34>;
 
 // Misc flags.
 
