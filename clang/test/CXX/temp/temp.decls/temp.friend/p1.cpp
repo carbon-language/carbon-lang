@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -faccess-control -verify -emit-llvm-only %s
-
 template <typename T> struct Num {
   T value_;
 
@@ -116,4 +115,15 @@ namespace test3 {
   template class User<bool>;
   template class User<int>; // expected-note {{requested here}}
 
+}
+
+namespace Dependent {
+  template<typename T, typename Traits> class X;
+  template<typename T, typename Traits> 
+  X<T, Traits> operator+(const X<T, Traits>&, const T*);
+
+  template<typename T, typename Traits> class X {
+    typedef typename Traits::value_type value_type;
+    friend X operator+<>(const X&, const value_type*);
+  };
 }

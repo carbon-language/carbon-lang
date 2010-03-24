@@ -3130,10 +3130,17 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   }
 
   if (isFunctionTemplateSpecialization) {
-      if (CheckFunctionTemplateSpecialization(NewFD,
-                               (HasExplicitTemplateArgs ? &TemplateArgs : 0),
-                                              Previous))
-        NewFD->setInvalidDecl();
+    if (isFriend && NewFD->getType()->isDependentType()) {
+      // FIXME: When we see a friend of a function template
+      // specialization with a dependent type, we can't match it now;
+      // for now, we just drop it, until we have a reasonable way to
+      // represent the parsed-but-not-matched friend function template
+      // specialization in the AST.
+      return 0;
+    } else if (CheckFunctionTemplateSpecialization(NewFD,
+                                   (HasExplicitTemplateArgs ? &TemplateArgs : 0),
+                                                 Previous))
+      NewFD->setInvalidDecl();
   } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD) &&
              CheckMemberSpecialization(NewFD, Previous))
     NewFD->setInvalidDecl();
