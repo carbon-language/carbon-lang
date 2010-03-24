@@ -411,7 +411,8 @@ static CharUnits CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   return CalculateCookiePadding(Ctx, E->getAllocatedType());
 }
 
-static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF, 
+static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
+                                        CodeGenFunction &CGF, 
                                         const CXXNewExpr *E,
                                         llvm::Value *& NumElements) {
   QualType Type = E->getAllocatedType();
@@ -432,6 +433,15 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     
     NumElements = 
       llvm::ConstantInt::get(SizeTy, Result.Val.getInt().getZExtValue());
+    while (const ArrayType *AType = Context.getAsArrayType(Type)) {
+      const llvm::ArrayType *llvmAType =
+        cast<llvm::ArrayType>(CGF.ConvertType(Type));
+      NumElements =
+        CGF.Builder.CreateMul(NumElements, 
+                              llvm::ConstantInt::get(
+                                        SizeTy, llvmAType->getNumElements()));
+      Type = AType->getElementType();
+    }
     
     return llvm::ConstantInt::get(SizeTy, AllocSize.getQuantity());
   }
@@ -444,6 +454,16 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     CGF.Builder.CreateMul(NumElements, 
                           llvm::ConstantInt::get(SizeTy, 
                                                  TypeSize.getQuantity()));
+  
+  while (const ArrayType *AType = Context.getAsArrayType(Type)) {
+    const llvm::ArrayType *llvmAType =
+      cast<llvm::ArrayType>(CGF.ConvertType(Type));
+    NumElements =
+      CGF.Builder.CreateMul(NumElements, 
+                            llvm::ConstantInt::get(
+                                          SizeTy, llvmAType->getNumElements()));
+    Type = AType->getElementType();
+  }
 
   // And add the cookie padding if necessary.
   if (!CookiePadding.isZero())
@@ -504,7 +524,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   QualType SizeTy = getContext().getSizeType();
 
   llvm::Value *NumElements = 0;
-  llvm::Value *AllocSize = EmitCXXNewAllocSize(*this, E, NumElements);
+  llvm::Value *AllocSize = EmitCXXNewAllocSize(getContext(),
+                                               *this, E, NumElements);
   
   NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));
 
@@ -590,10 +611,20 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
                                                 CookiePadding.getQuantity());
   }
   
-  NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
-
-  EmitNewInitializer(*this, E, NewPtr, NumElements);
-
+  if (AllocType->isArrayType()) {
+    while (const ArrayType *AType = getContext().getAsArrayType(AllocType))
+      AllocType = AType->getElementType();
+    NewPtr = 
+      Builder.CreateBitCast(NewPtr, 
+                          ConvertType(getContext().getPointerType(AllocType)));
+    EmitNewInitializer(*this, E, NewPtr, NumElements);
+    NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
+  }
+  else {
+    NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
+    EmitNewInitializer(*this, E, NewPtr, NumElements);
+  }
+  
   if (NullCheckResult) {
     Builder.CreateBr(NewEnd);
     NewNotNull = Builder.GetInsertBlock();
