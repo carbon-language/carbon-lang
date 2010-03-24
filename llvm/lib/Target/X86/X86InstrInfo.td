@@ -28,8 +28,9 @@ def SDTX86Cmov    : SDTypeProfile<1, 4,
                                    SDTCisVT<3, i8>, SDTCisVT<4, i32>]>;
 
 // Unary and binary operator instructions that set EFLAGS as a side-effect.
-def SDTUnaryArithWithFlags  : SDTypeProfile<1, 1,
-                                            [SDTCisInt<0>]>;
+def SDTUnaryArithWithFlags : SDTypeProfile<2, 1,
+                                           [SDTCisInt<0>, SDTCisVT<1, i32>]>;
+
 def SDTBinaryArithWithFlags : SDTypeProfile<1, 2,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisSameAs<0, 2>,
@@ -167,6 +168,7 @@ def X86smul_flag : SDNode<"X86ISD::SMUL", SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 def X86umul_flag : SDNode<"X86ISD::UMUL", SDTUnaryArithWithFlags,
                           [SDNPCommutative]>;
+                          
 def X86inc_flag  : SDNode<"X86ISD::INC",  SDTUnaryArithWithFlags>;
 def X86dec_flag  : SDNode<"X86ISD::DEC",  SDTUnaryArithWithFlags>;
 def X86or_flag   : SDNode<"X86ISD::OR",   SDTBinaryArithWithFlags,
