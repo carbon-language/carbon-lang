@@ -265,6 +265,7 @@ void clang::LoadSerializedDiagnostics(const llvm::sys::Path &DiagnosticsPath,
     }
     
     SourceMgr.overrideFileContents(File, Buffer);
+    SourceMgr.createFileID(File, SourceLocation(), SrcMgr::C_User);
   }
 
   // Parse the diagnostics, emitting them one by one until we've
