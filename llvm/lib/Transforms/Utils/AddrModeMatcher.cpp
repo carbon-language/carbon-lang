@@ -440,8 +440,9 @@ static bool FindAllMemoryUses(Instruction *I,
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
-      if (UI.getOperandNo() == 0) return true; // Storing addr, not into addr.
-      MemoryUses.push_back(std::make_pair(SI, UI.getOperandNo()));
+      unsigned opNo = UI.getOperandNo();
+      if (opNo == 0) return true; // Storing addr, not into addr.
+      MemoryUses.push_back(std::make_pair(SI, opNo));
       continue;
     }
     
