@@ -262,3 +262,24 @@ namespace test9 {
     static int getX() { return x; } // expected-error {{'x' is a private member of 'test9::A'}}
   };
 }
+
+namespace test10 {
+  class A {
+    enum {
+      value = 10 // expected-note {{declared private here}}
+    };
+    friend class C;
+  };
+
+  class B {
+    enum {
+      value = A::value // expected-error {{'value' is a private member of 'test10::A'}}
+    };
+  };
+
+  class C {
+    enum {
+      value = A::value
+    };
+  };
+}

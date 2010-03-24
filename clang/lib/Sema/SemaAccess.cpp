@@ -59,6 +59,9 @@ struct EffectiveContext {
     : Inner(DC),
       Dependent(DC->isDependentContext()) {
 
+    if (isa<EnumDecl>(DC))
+      DC = cast<EnumDecl>(DC)->getDeclContext();
+
     if (isa<FunctionDecl>(DC)) {
       Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
       DC = Function->getDeclContext();
@@ -103,7 +106,14 @@ struct EffectiveContext {
 }
 
 static CXXRecordDecl *FindDeclaringClass(NamedDecl *D) {
-  CXXRecordDecl *DeclaringClass = cast<CXXRecordDecl>(D->getDeclContext());
+  DeclContext *DC = D->getDeclContext();
+
+  // This can only happen at top: enum decls only "publish" their
+  // immediate members.
+  if (isa<EnumDecl>(DC))
+    DC = cast<EnumDecl>(DC)->getDeclContext();
+
+  CXXRecordDecl *DeclaringClass = cast<CXXRecordDecl>(DC);
   while (DeclaringClass->isAnonymousStructOrUnion())
     DeclaringClass = cast<CXXRecordDecl>(DeclaringClass->getDeclContext());
   return DeclaringClass;
