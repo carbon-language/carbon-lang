@@ -31,10 +31,10 @@ def SDTX86Cmov    : SDTypeProfile<1, 4,
 def SDTUnaryArithWithFlags : SDTypeProfile<2, 1,
                                            [SDTCisInt<0>, SDTCisVT<1, i32>]>;
 
-def SDTBinaryArithWithFlags : SDTypeProfile<1, 2,
-                                            [SDTCisSameAs<0, 1>,
-                                             SDTCisSameAs<0, 2>,
-                                             SDTCisInt<0>]>;
+def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
+                                            [SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<0, 3>,
+                                             SDTCisInt<0>, SDTCisVT<1, i32>]>;
 def SDTX86BrCond  : SDTypeProfile<0, 3,
                                   [SDTCisVT<0, OtherVT>,
                                    SDTCisVT<1, i8>, SDTCisVT<2, i32>]>;
