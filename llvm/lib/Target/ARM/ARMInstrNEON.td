@@ -2778,10 +2778,13 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 
 //   VMOV     : Vector Move (Register)
 
+// Mark these as 2-register instructions to help the disassembler.
+let F = N2RegFrm, Form = N2RegFrm.Value in {
 def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$dst), (ins DPR:$src),
-                    IIC_VMOVD, "vmov", "$dst, $src", "", []>;
+                     IIC_VMOVD, "vmov", "$dst, $src", "", []>;
 def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$dst), (ins QPR:$src),
-                    IIC_VMOVD, "vmov", "$dst, $src", "", []>;
+                     IIC_VMOVD, "vmov", "$dst, $src", "", []>;
+}
 
 //   VMOV     : Vector Move (Immediate)
 
