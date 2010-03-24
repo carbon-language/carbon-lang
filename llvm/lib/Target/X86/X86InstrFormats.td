@@ -286,7 +286,7 @@ class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   SS42AI = SSE 4.2 instructions with TA prefix
 class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE42]>;
+      : Ii8<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE42]>;
 
 // X86-64 Instruction templates...
 //

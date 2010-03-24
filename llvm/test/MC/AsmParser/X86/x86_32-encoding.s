@@ -9905,3 +9905,11 @@
 // CHECK: crc32l 	%ecx, %ecx
 // CHECK:  encoding: [0xf2,0x0f,0x38,0xf1,0xc9]
                 crc32l %ecx,%ecx
+
+// CHECK: pcmpistrm	$125, %xmm1, %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x3a,0x62,0xd1,0x7d]
+                pcmpistrm $125, %xmm1, %xmm2
+
+// CHECK: pcmpistrm	$125, (%edx,%eax,4), %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x3a,0x62,0x14,0x82,0x7d]
+                pcmpistrm $125, (%edx,%eax,4), %xmm2
