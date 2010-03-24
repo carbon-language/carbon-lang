@@ -24,6 +24,8 @@
 
 namespace clang {
 
+class DependentDiagnostic;
+
 /// StoredDeclsList - This is an array of decls optimized a common case of only
 /// containing one entry.
 struct StoredDeclsList {
@@ -258,8 +260,29 @@ public:
   }
 };
 
-typedef llvm::DenseMap<DeclarationName, StoredDeclsList> StoredDeclsMap;
+class StoredDeclsMap
+  : public llvm::DenseMap<DeclarationName, StoredDeclsList> {
 
+public:
+  static void DestroyAll(StoredDeclsMap *Map, bool Dependent);
+
+private:
+  friend class ASTContext; // walks the chain deleting these
+  friend class DeclContext;
+  llvm::PointerIntPair<StoredDeclsMap*, 1> Previous;
+};
+
+class DependentStoredDeclsMap : public StoredDeclsMap {
+public:
+  DependentStoredDeclsMap() : FirstDiagnostic(0) {}
+  ~DependentStoredDeclsMap();
+
+private:
+  friend class DependentDiagnostic;
+  friend class DeclContext; // iterates over diagnostics
+
+  DependentDiagnostic *FirstDiagnostic;
+};
 
 } // end namespace clang
 

@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/DependentDiagnostic.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeLoc.h"
@@ -1839,6 +1840,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   ActOnFinishFunctionBody(DeclPtrTy::make(Function), move(Body),
                           /*IsInstantiation=*/true);
 
+  PerformDependentDiagnostics(PatternDecl, TemplateArgs);
+
   CurContext = PreviousContext;
 
   DeclGroupRef DG(Function);
@@ -2473,5 +2476,19 @@ void Sema::PerformPendingImplicitInstantiations(bool LocalOnly) {
                                           "definition");
 
     InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true);
+  }
+}
+
+void Sema::PerformDependentDiagnostics(const DeclContext *Pattern,
+                       const MultiLevelTemplateArgumentList &TemplateArgs) {
+  for (DeclContext::ddiag_iterator I = Pattern->ddiag_begin(),
+         E = Pattern->ddiag_end(); I != E; ++I) {
+    DependentDiagnostic *DD = *I;
+
+    switch (DD->getKind()) {
+    case DependentDiagnostic::Access:
+      HandleDependentAccessCheck(*DD, TemplateArgs);
+      break;
+    }
   }
 }

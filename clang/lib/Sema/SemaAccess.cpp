@@ -17,6 +17,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclFriend.h"
+#include "clang/AST/DependentDiagnostic.h"
 #include "clang/AST/ExprCXX.h"
 
 using namespace clang;
@@ -52,9 +53,11 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 
 namespace {
 struct EffectiveContext {
-  EffectiveContext() : Function(0) {}
+  EffectiveContext() : Function(0), Dependent(false) {}
 
   explicit EffectiveContext(DeclContext *DC) {
+    Dependent = DC->isDependentContext();
+
     if (isa<FunctionDecl>(DC)) {
       Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
       DC = Function->getDeclContext();
@@ -75,14 +78,25 @@ struct EffectiveContext {
     }
   }
 
+  bool isDependent() const { return Dependent; }
+
   bool includesClass(const CXXRecordDecl *R) const {
     R = R->getCanonicalDecl();
     return std::find(Records.begin(), Records.end(), R)
              != Records.end();
   }
 
+  DeclContext *getPrimaryContext() const {
+    assert((Function || !Records.empty()) && "context has no primary context");
+    if (Function) return Function;
+    return Records[0];
+  }
+
+  typedef llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator record_iterator;
+
   llvm::SmallVector<CXXRecordDecl*, 4> Records;
   FunctionDecl *Function;
+  bool Dependent;
 };
 }
 
@@ -93,86 +107,232 @@ static CXXRecordDecl *FindDeclaringClass(NamedDecl *D) {
   return DeclaringClass;
 }
 
+static bool MightInstantiateTo(Sema &S, DeclContext *Context,
+                               DeclContext *Friend) {
+  if (Friend == Context)
+    return true;
+
+  assert(!Friend->isDependentContext() &&
+         "can't handle friends with dependent contexts here");
+
+  if (!Context->isDependentContext())
+    return false;
+
+  if (Friend->isFileContext())
+    return false;
+
+  // TODO: this is very conservative
+  return true;
+}
+
+// Asks whether the type in 'context' can ever instantiate to the type
+// in 'friend'.
+static bool MightInstantiateTo(Sema &S, CanQualType Context, CanQualType Friend) {
+  if (Friend == Context)
+    return true;
+
+  if (!Friend->isDependentType() && !Context->isDependentType())
+    return false;
+
+  // TODO: this is very conservative.
+  return true;
+}
+
+static bool MightInstantiateTo(Sema &S,
+                               FunctionDecl *Context,
+                               FunctionDecl *Friend) {
+  if (Context->getDeclName() != Friend->getDeclName())
+    return false;
+
+  if (!MightInstantiateTo(S,
+                          Context->getDeclContext(),
+                          Friend->getDeclContext()))
+    return false;
+
+  CanQual<FunctionProtoType> FriendTy
+    = S.Context.getCanonicalType(Friend->getType())
+         ->getAs<FunctionProtoType>();
+  CanQual<FunctionProtoType> ContextTy
+    = S.Context.getCanonicalType(Context->getType())
+         ->getAs<FunctionProtoType>();
+
+  // There isn't any way that I know of to add qualifiers
+  // during instantiation.
+  if (FriendTy.getQualifiers() != ContextTy.getQualifiers())
+    return false;
+
+  if (FriendTy->getNumArgs() != ContextTy->getNumArgs())
+    return false;
+
+  if (!MightInstantiateTo(S,
+                          ContextTy->getResultType(),
+                          FriendTy->getResultType()))
+    return false;
+
+  for (unsigned I = 0, E = FriendTy->getNumArgs(); I != E; ++I)
+    if (!MightInstantiateTo(S,
+                            ContextTy->getArgType(I),
+                            FriendTy->getArgType(I)))
+      return false;
+
+  return true;
+}
+
+static bool MightInstantiateTo(Sema &S,
+                               FunctionTemplateDecl *Context,
+                               FunctionTemplateDecl *Friend) {
+  return MightInstantiateTo(S,
+                            Context->getTemplatedDecl(),
+                            Friend->getTemplatedDecl());
+}
+
 static Sema::AccessResult MatchesFriend(Sema &S,
                                         const EffectiveContext &EC,
                                         const CXXRecordDecl *Friend) {
-  // FIXME: close matches becuse of dependency
   if (EC.includesClass(Friend))
     return Sema::AR_accessible;
+
+  if (EC.isDependent()) {
+    CanQualType FriendTy
+      = S.Context.getCanonicalType(S.Context.getTypeDeclType(Friend));
+
+    for (EffectiveContext::record_iterator
+           I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I) {
+      CanQualType ContextTy
+        = S.Context.getCanonicalType(S.Context.getTypeDeclType(*I));
+      if (MightInstantiateTo(S, ContextTy, FriendTy))
+        return Sema::AR_dependent;
+    }
+  }
 
   return Sema::AR_inaccessible;
 }
 
 static Sema::AccessResult MatchesFriend(Sema &S,
                                         const EffectiveContext &EC,
-                                        FriendDecl *Friend) {
-  if (Type *T = Friend->getFriendType()) {
-    CanQualType CT = T->getCanonicalTypeUnqualified();
-    if (const RecordType *RT = CT->getAs<RecordType>())
-      return MatchesFriend(S, EC, cast<CXXRecordDecl>(RT->getDecl()));
+                                        CanQualType Friend) {
+  if (const RecordType *RT = Friend->getAs<RecordType>())
+    return MatchesFriend(S, EC, cast<CXXRecordDecl>(RT->getDecl()));
 
-    // TODO: we can fail early for a lot of type classes.
-    if (T->isDependentType())
-      return Sema::AR_dependent;
+  // TODO: we can do better than this
+  if (Friend->isDependentType())
+    return Sema::AR_dependent;
 
-    return Sema::AR_inaccessible;
+  return Sema::AR_inaccessible;
+}
+
+/// Determines whether the given friend class template matches
+/// anything in the effective context.
+static Sema::AccessResult MatchesFriend(Sema &S,
+                                        const EffectiveContext &EC,
+                                        ClassTemplateDecl *Friend) {
+  Sema::AccessResult OnFailure = Sema::AR_inaccessible;
+
+  for (llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator
+         I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I) {
+    CXXRecordDecl *Record = *I;
+
+    // Check whether the friend is the template of a class in the
+    // context chain.  To do that, we need to figure out whether the
+    // current class has a template:
+    ClassTemplateDecl *CTD;
+
+    // A specialization of the template...
+    if (isa<ClassTemplateSpecializationDecl>(Record)) {
+      CTD = cast<ClassTemplateSpecializationDecl>(Record)
+        ->getSpecializedTemplate();
+
+    // ... or the template pattern itself.
+    } else {
+      CTD = Record->getDescribedClassTemplate();
+      if (!CTD) continue;
+    }
+
+    // It's a match.
+    if (Friend == CTD->getCanonicalDecl())
+      return Sema::AR_accessible;
+
+    // If the template names don't match, it can't be a dependent
+    // match.  This isn't true in C++0x because of template aliases.
+    if (!S.LangOpts.CPlusPlus0x && CTD->getDeclName() != Friend->getDeclName())
+      continue;
+
+    // If the class's context can't instantiate to the friend's
+    // context, it can't be a dependent match.
+    if (!MightInstantiateTo(S, CTD->getDeclContext(),
+                            Friend->getDeclContext()))
+      continue;
+
+    // Otherwise, it's a dependent match.
+    OnFailure = Sema::AR_dependent;
   }
 
-  NamedDecl *D
-    = cast<NamedDecl>(Friend->getFriendDecl()->getCanonicalDecl());
+  return OnFailure;
+}
+
+/// Determines whether the given friend function matches anything in
+/// the effective context.
+static Sema::AccessResult MatchesFriend(Sema &S,
+                                        const EffectiveContext &EC,
+                                        FunctionDecl *Friend) {
+  if (!EC.Function)
+    return Sema::AR_inaccessible;
+
+  if (Friend == EC.Function)
+    return Sema::AR_accessible;
+
+  if (EC.isDependent() && MightInstantiateTo(S, EC.Function, Friend))
+    return Sema::AR_dependent;
+
+  return Sema::AR_inaccessible;
+}
+
+/// Determines whether the given friend function template matches
+/// anything in the effective context.
+static Sema::AccessResult MatchesFriend(Sema &S,
+                                        const EffectiveContext &EC,
+                                        FunctionTemplateDecl *Friend) {
+  if (!EC.Function) return Sema::AR_inaccessible;
+
+  FunctionTemplateDecl *FTD = EC.Function->getPrimaryTemplate();
+  if (!FTD)
+    FTD = EC.Function->getDescribedFunctionTemplate();
+  if (!FTD)
+    return Sema::AR_inaccessible;
+
+  if (Friend == FTD->getCanonicalDecl())
+    return Sema::AR_accessible;
+
+  if (MightInstantiateTo(S, FTD, Friend))
+    return Sema::AR_dependent;
+
+  return Sema::AR_inaccessible;
+}
+
+/// Determines whether the given friend declaration matches anything
+/// in the effective context.
+static Sema::AccessResult MatchesFriend(Sema &S,
+                                        const EffectiveContext &EC,
+                                        FriendDecl *FriendD) {
+  if (Type *T = FriendD->getFriendType())
+    return MatchesFriend(S, EC, T->getCanonicalTypeUnqualified());
+
+  NamedDecl *Friend
+    = cast<NamedDecl>(FriendD->getFriendDecl()->getCanonicalDecl());
 
   // FIXME: declarations with dependent or templated scope.
 
-  // For class templates, we want to check whether any of the records
-  // are possible specializations of the template.
-  if (isa<ClassTemplateDecl>(D)) {
-    for (llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator
-           I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I) {
-      CXXRecordDecl *Record = *I;
-      ClassTemplateDecl *CTD;
+  if (isa<ClassTemplateDecl>(Friend))
+    return MatchesFriend(S, EC, cast<ClassTemplateDecl>(Friend));
 
-      // A specialization of the template...
-      if (isa<ClassTemplateSpecializationDecl>(Record)) {
-        CTD = cast<ClassTemplateSpecializationDecl>(Record)
-                ->getSpecializedTemplate();
+  if (isa<FunctionTemplateDecl>(Friend))
+    return MatchesFriend(S, EC, cast<FunctionTemplateDecl>(Friend));
 
-      // ... or the template pattern itself.
-      } else {
-        CTD = Record->getDescribedClassTemplate();
-      }
+  if (isa<CXXRecordDecl>(Friend))
+    return MatchesFriend(S, EC, cast<CXXRecordDecl>(Friend));
 
-      if (CTD && D == CTD->getCanonicalDecl())
-        return Sema::AR_accessible;
-    }
-
-    return Sema::AR_inaccessible;
-  }
-
-  // Same thing for function templates.
-  if (isa<FunctionTemplateDecl>(D)) {
-    if (!EC.Function) return Sema::AR_inaccessible;
-
-    FunctionTemplateDecl *FTD = EC.Function->getPrimaryTemplate();
-    if (!FTD)
-      FTD = EC.Function->getDescribedFunctionTemplate();
-
-    if (FTD && D == FTD->getCanonicalDecl())
-      return Sema::AR_accessible;
-      
-    return Sema::AR_inaccessible;
-  }
-
-  // Friend functions.  FIXME: close matches due to dependency.
-  // 
-  // The decl pointers in EC have been canonicalized, so pointer
-  // equality is sufficient.
-  if (D == EC.Function)
-    return Sema::AR_accessible;
-
-  if (isa<CXXRecordDecl>(D))
-    return MatchesFriend(S, EC, cast<CXXRecordDecl>(D));
-
-  return Sema::AR_inaccessible;
+  assert(isa<FunctionDecl>(Friend) && "unknown friend decl kind");
+  return MatchesFriend(S, EC, cast<FunctionDecl>(Friend));
 }
 
 static Sema::AccessResult GetFriendKind(Sema &S,
@@ -230,6 +390,8 @@ static CXXBasePath *FindBestPath(Sema &S,
 
   assert(FinalAccess != AS_none && "forbidden access after declaring class");
 
+  bool AnyDependent = false;
+
   // Derive the friend-modified access along each path.
   for (CXXBasePaths::paths_iterator PI = Paths.begin(), PE = Paths.end();
          PI != PE; ++PI) {
@@ -260,7 +422,8 @@ static CXXBasePath *FindBestPath(Sema &S,
           PathAccess = AS_public;
           break;
         case Sema::AR_dependent:
-          return 0;
+          AnyDependent = true;
+          goto Next;
         case Sema::AR_delayed:
           llvm_unreachable("friend resolution is never delayed"); break;
         }
@@ -272,8 +435,22 @@ static CXXBasePath *FindBestPath(Sema &S,
     if (BestPath == 0 || PathAccess < BestPath->Access) {
       BestPath = &*PI;
       BestPath->Access = PathAccess;
+
+      // Short-circuit if we found a public path.
+      if (BestPath->Access == AS_public)
+        return BestPath;
     }
+
+  Next: ;
   }
+
+  assert((!BestPath || BestPath->Access != AS_public) &&
+         "fell out of loop with public path");
+
+  // We didn't find a public path, but at least one path was subject
+  // to dependent friendship, so delay the check.
+  if (AnyDependent)
+    return 0;
 
   return BestPath;
 }
@@ -402,7 +579,9 @@ static void DiagnoseBadAccess(Sema &S, SourceLocation Loc,
 
 /// Try to elevate access using friend declarations.  This is
 /// potentially quite expensive.
-static void TryElevateAccess(Sema &S,
+///
+/// \return true if elevation was dependent
+static bool TryElevateAccess(Sema &S,
                              const EffectiveContext &EC,
                              const Sema::AccessedEntity &Entity,
                              AccessSpecifier &Access) {
@@ -424,14 +603,14 @@ static void TryElevateAccess(Sema &S,
       switch (GetFriendKind(S, EC, DeclaringClass)) {
       case Sema::AR_accessible: DeclAccess = AS_public; break;
       case Sema::AR_inaccessible: break;
-      case Sema::AR_dependent: /* FIXME: delay dependent friendship */ return;
+      case Sema::AR_dependent: return true;
       case Sema::AR_delayed: llvm_unreachable("friend status is never delayed");
       }
     }
 
     if (DeclaringClass == NamingClass) {
       Access = DeclAccess;
-      return;
+      return false;
     }
   }
 
@@ -441,16 +620,31 @@ static void TryElevateAccess(Sema &S,
   CXXBasePaths Paths;
   CXXBasePath *Path = FindBestPath(S, EC, Entity.getNamingClass(),
                                    DeclaringClass, DeclAccess, Paths);
-  if (!Path) {
-    // FIXME: delay dependent friendship
-    return;
-  }
+  if (!Path)
+    return true;
 
   // Grab the access along the best path (note that this includes the
   // final-step access).
   AccessSpecifier NewAccess = Path->Access;
   assert(NewAccess <= Access && "access along best path worse than direct?");
   Access = NewAccess;
+  return false;
+}
+
+static void DelayAccess(Sema &S,
+                        const EffectiveContext &EC,
+                        SourceLocation Loc,
+                        const Sema::AccessedEntity &Entity) {
+  assert(EC.isDependent() && "delaying non-dependent access");
+  DeclContext *DC = EC.getPrimaryContext();
+  assert(DC->isDependentContext() && "delaying non-dependent access");
+  DependentDiagnostic::Create(S.Context, DC, DependentDiagnostic::Access,
+                              Loc,
+                              Entity.isMemberAccess(),
+                              Entity.getAccess(),
+                              Entity.getTargetDecl(),
+                              Entity.getNamingClass(),
+                              Entity.getDiag());
 }
 
 /// Checks access to an entity from the given effective context.
@@ -474,10 +668,13 @@ static Sema::AccessResult CheckEffectiveAccess(Sema &S,
     return Sema::AR_accessible;
 
   // Try to elevate access.
-  // FIXME: delay if elevation was dependent?
   // TODO: on some code, it might be better to do the protected check
   // without trying to elevate first.
-  TryElevateAccess(S, EC, Entity, Access);
+  if (TryElevateAccess(S, EC, Entity, Access)) {
+    DelayAccess(S, EC, Loc, Entity);
+    return Sema::AR_dependent;
+  }
+
   if (Access == AS_public) return Sema::AR_accessible;
 
   // Protected access.
@@ -524,6 +721,35 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx) {
 
   if (CheckEffectiveAccess(*this, EC, DD.Loc, DD.getAccessData()))
     DD.Triggered = true;
+}
+
+void Sema::HandleDependentAccessCheck(const DependentDiagnostic &DD,
+                        const MultiLevelTemplateArgumentList &TemplateArgs) {
+  SourceLocation Loc = DD.getAccessLoc();
+  AccessSpecifier Access = DD.getAccess();
+
+  Decl *NamingD = FindInstantiatedDecl(Loc, DD.getAccessNamingClass(),
+                                       TemplateArgs);
+  if (!NamingD) return;
+  Decl *TargetD = FindInstantiatedDecl(Loc, DD.getAccessTarget(),
+                                       TemplateArgs);
+  if (!TargetD) return;
+
+  if (DD.isAccessToMember()) {
+    AccessedEntity Entity(AccessedEntity::Member,
+                          cast<CXXRecordDecl>(NamingD),
+                          Access,
+                          cast<NamedDecl>(TargetD));
+    Entity.setDiag(DD.getDiagnostic());
+    CheckAccess(*this, Loc, Entity);
+  } else {
+    AccessedEntity Entity(AccessedEntity::Base,
+                          cast<CXXRecordDecl>(TargetD),
+                          cast<CXXRecordDecl>(NamingD),
+                          Access);
+    Entity.setDiag(DD.getDiagnostic());
+    CheckAccess(*this, Loc, Entity);
+  }
 }
 
 Sema::AccessResult Sema::CheckUnresolvedLookupAccess(UnresolvedLookupExpr *E,

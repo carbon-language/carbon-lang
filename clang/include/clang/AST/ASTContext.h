@@ -57,6 +57,7 @@ namespace clang {
   class ObjCIvarRefExpr;
   class ObjCPropertyDecl;
   class RecordDecl;
+  class StoredDeclsMap;
   class TagDecl;
   class TemplateTypeParmDecl;
   class TranslationUnitDecl;
@@ -1272,9 +1273,8 @@ private:
   // FIXME: This currently contains the set of StoredDeclMaps used
   // by DeclContext objects.  This probably should not be in ASTContext,
   // but we include it here so that ASTContext can quickly deallocate them.
-  std::vector<void*> SDMs; 
+  llvm::PointerIntPair<StoredDeclsMap*,1> LastSDM;
   friend class DeclContext;
-  void *CreateStoredDeclsMap();
   void ReleaseDeclContextMaps();
 };
   

@@ -2648,8 +2648,12 @@ public:
                                     unsigned DiagID,
                                     bool ForceCheck = false,
                                     bool ForceUnprivileged = false);
-                            
   void CheckLookupAccess(const LookupResult &R);
+
+  void HandleDependentAccessCheck(const DependentDiagnostic &DD,
+                         const MultiLevelTemplateArgumentList &TemplateArgs);
+  void PerformDependentDiagnostics(const DeclContext *Pattern,
+                        const MultiLevelTemplateArgumentList &TemplateArgs);
 
   void HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *Ctx);
 

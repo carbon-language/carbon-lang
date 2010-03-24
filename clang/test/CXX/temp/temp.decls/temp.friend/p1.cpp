@@ -85,3 +85,35 @@ namespace test2 {
     }
   };
 }
+
+namespace test3 {
+  class Bool;
+  template <class T> class User;
+  template <class T> T transform(class Bool, T);
+
+  class Bool {
+    friend class User<bool>;
+    friend bool transform<>(Bool, bool);
+
+    bool value; // expected-note {{declared private here}}
+  };
+
+  template <class T> class User {
+    static T compute(Bool b) {
+      return b.value; // expected-error {{'value' is a private member of 'test3::Bool'}}
+    }
+  };
+
+  template <class T> T transform(Bool b, T value) {
+    if (b.value)
+      return value;
+    return value + 1;
+  }
+
+  template bool transform(Bool, bool);
+  template int transform(Bool, int);
+
+  template class User<bool>;
+  template class User<int>; // expected-note {{requested here}}
+
+}

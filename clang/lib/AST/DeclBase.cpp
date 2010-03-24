@@ -18,6 +18,7 @@
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/DependentDiagnostic.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
@@ -481,7 +482,7 @@ DeclContext::~DeclContext() {
   // FIXME: Currently ~ASTContext will delete the StoredDeclsMaps because
   // ~DeclContext() is not guaranteed to be called when ASTContext uses
   // a BumpPtrAllocator.
-  // delete static_cast<StoredDeclsMap*>(LookupPtr);
+  // delete LookupPtr;
 }
 
 void DeclContext::DestroyDecls(ASTContext &C) {
@@ -516,9 +517,15 @@ bool DeclContext::isDependentContext() const {
     if (Record->getDescribedClassTemplate())
       return true;
 
-  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this))
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this)) {
     if (Function->getDescribedFunctionTemplate())
       return true;
+
+    // Friend function declarations are dependent if their *lexical*
+    // context is dependent.
+    if (cast<Decl>(this)->getFriendObjectKind())
+      return getLexicalParent()->isDependentContext();
+  }
 
   return getParent() && getParent()->isDependentContext();
 }
@@ -666,9 +673,7 @@ DeclContext::LoadVisibleDeclsFromExternalStorage() const {
   // Load the declaration IDs for all of the names visible in this
   // context.
   assert(!LookupPtr && "Have a lookup map before de-serialization?");
-  StoredDeclsMap *Map =
-    (StoredDeclsMap*) getParentASTContext().CreateStoredDeclsMap();
-  LookupPtr = Map;
+  StoredDeclsMap *Map = CreateStoredDeclsMap(getParentASTContext());
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
     (*Map)[Decls[I].Name].setFromDeclIDs(Decls[I].Declarations);
   }
@@ -727,10 +732,9 @@ void DeclContext::removeDecl(Decl *D) {
   if (isa<NamedDecl>(D)) {
     NamedDecl *ND = cast<NamedDecl>(D);
 
-    void *OpaqueMap = getPrimaryContext()->LookupPtr;
-    if (!OpaqueMap) return;
+    StoredDeclsMap *Map = getPrimaryContext()->LookupPtr;
+    if (!Map) return;
 
-    StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(OpaqueMap);
     StoredDeclsMap::iterator Pos = Map->find(ND->getDeclName());
     assert(Pos != Map->end() && "no lookup entry for decl");
     Pos->second.remove(ND);
@@ -808,9 +812,8 @@ DeclContext::lookup(DeclarationName Name) {
       return lookup_result(0, 0);
   }
 
-  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(LookupPtr);
-  StoredDeclsMap::iterator Pos = Map->find(Name);
-  if (Pos == Map->end())
+  StoredDeclsMap::iterator Pos = LookupPtr->find(Name);
+  if (Pos == LookupPtr->end())
     return lookup_result(0, 0);
   return Pos->second.getLookupResult(getParentASTContext());
 }
@@ -878,12 +881,11 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   ASTContext *C = 0;
   if (!LookupPtr) {
     C = &getParentASTContext();
-    LookupPtr = (StoredDeclsMap*) C->CreateStoredDeclsMap();
+    CreateStoredDeclsMap(*C);
   }
 
   // Insert this declaration into the map.
-  StoredDeclsMap &Map = *static_cast<StoredDeclsMap*>(LookupPtr);
-  StoredDeclsList &DeclNameEntries = Map[D->getDeclName()];
+  StoredDeclsList &DeclNameEntries = (*LookupPtr)[D->getDeclName()];
   if (DeclNameEntries.isNull()) {
     DeclNameEntries.setOnlyValue(D);
     return;
@@ -952,13 +954,74 @@ void StoredDeclsList::materializeDecls(ASTContext &Context) {
 // Creation and Destruction of StoredDeclsMaps.                               //
 //===----------------------------------------------------------------------===//
 
-void *ASTContext::CreateStoredDeclsMap() {
-  StoredDeclsMap *M = new StoredDeclsMap();
-  SDMs.push_back(M);
+StoredDeclsMap *DeclContext::CreateStoredDeclsMap(ASTContext &C) const {
+  assert(!LookupPtr && "context already has a decls map");
+  assert(getPrimaryContext() == this &&
+         "creating decls map on non-primary context");
+
+  StoredDeclsMap *M;
+  bool Dependent = isDependentContext();
+  if (Dependent)
+    M = new DependentStoredDeclsMap();
+  else
+    M = new StoredDeclsMap();
+  M->Previous = C.LastSDM;
+  C.LastSDM = llvm::PointerIntPair<StoredDeclsMap*,1>(M, Dependent);
+  LookupPtr = M;
   return M;
 }
 
 void ASTContext::ReleaseDeclContextMaps() {
-  for (std::vector<void*>::iterator I = SDMs.begin(), E = SDMs.end(); I!=E; ++I)
-    delete (StoredDeclsMap*) *I;
+  // It's okay to delete DependentStoredDeclsMaps via a StoredDeclsMap
+  // pointer because the subclass doesn't add anything that needs to
+  // be deleted.
+  
+  StoredDeclsMap::DestroyAll(LastSDM.getPointer(), LastSDM.getInt());
+}
+
+void StoredDeclsMap::DestroyAll(StoredDeclsMap *Map, bool Dependent) {
+  while (Map) {
+    // Advance the iteration before we invalidate memory.
+    llvm::PointerIntPair<StoredDeclsMap*,1> Next = Map->Previous;
+
+    if (Dependent)
+      delete static_cast<DependentStoredDeclsMap*>(Map);
+    else
+      delete Map;
+
+    Map = Next.getPointer();
+    Dependent = Next.getInt();
+  }
+}
+
+DependentStoredDeclsMap::~DependentStoredDeclsMap() {
+  // Kill off the dependent diagnostics.  They don't need to be
+  // deleted, but they do need to be destructed.
+  DependentDiagnostic *CurD = FirstDiagnostic;
+  while (CurD) {
+    DependentDiagnostic *NextD = CurD->NextDiagnostic;
+    CurD->~DependentDiagnostic();
+    CurD = NextD;
+  }
+}
+
+DependentDiagnostic *DependentDiagnostic::Create(ASTContext &C,
+                                                 DeclContext *Parent,
+                                           const PartialDiagnostic &PDiag) {
+  assert(Parent->isDependentContext()
+         && "cannot iterate dependent diagnostics of non-dependent context");
+  Parent = Parent->getPrimaryContext();
+  if (!Parent->LookupPtr)
+    Parent->CreateStoredDeclsMap(C);
+
+  DependentStoredDeclsMap *Map
+    = static_cast<DependentStoredDeclsMap*>(Parent->LookupPtr);
+
+  DependentDiagnostic *DD = new (C) DependentDiagnostic(PDiag);
+
+  // TODO: Maybe we shouldn't reverse the order during insertion.
+  DD->NextDiagnostic = Map->FirstDiagnostic;
+  Map->FirstDiagnostic = DD;
+
+  return DD;
 }
