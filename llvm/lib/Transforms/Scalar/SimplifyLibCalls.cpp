@@ -49,12 +49,9 @@ protected:
   Function *Caller;
   const TargetData *TD;
   LLVMContext* Context;
-  bool OptChkCall;  // True if it's optimizing a *_chk libcall.
 public:
-  LibCallOptimization() : OptChkCall(false) { }
+  LibCallOptimization() { }
   virtual ~LibCallOptimization() {}
-
-  void setOptChkCall(bool c) { OptChkCall = c; }
 
   /// CallOptimizer - This pure virtual method is implemented by base classes to
   /// do various optimizations.  If this returns null then no transformation was
@@ -353,6 +350,10 @@ struct StrNCmpOpt : public LibCallOptimization {
 // 'strcpy' Optimizations
 
 struct StrCpyOpt : public LibCallOptimization {
+  bool OptChkCall;  // True if it's optimizing a __strcpy_chk libcall.
+
+  StrCpyOpt(bool c) : OptChkCall(c) {}
+
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     // Verify the "strcpy" function prototype.
     unsigned NumParams = OptChkCall ? 3 : 2;
@@ -1188,8 +1189,7 @@ namespace {
     bool Modified;  // This is only used by doInitialization.
   public:
     static char ID; // Pass identification
-    SimplifyLibCalls() : FunctionPass(&ID) {}
-
+    SimplifyLibCalls() : FunctionPass(&ID), StrCpy(false), StrCpyChk(true) {}
     void InitOptimizations();
     bool runOnFunction(Function &F);
 
@@ -1240,7 +1240,6 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["memset"] = &MemSet;
 
   // _chk variants of String and Memory LibCall Optimizations.
-  StrCpyChk.setOptChkCall(true);
   Optimizations["__strcpy_chk"] = &StrCpyChk;
 
   // Math Library Optimizations
