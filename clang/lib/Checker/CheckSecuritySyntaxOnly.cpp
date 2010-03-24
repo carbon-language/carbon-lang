@@ -36,7 +36,7 @@ class WalkAST : public StmtVisitor<WalkAST> {
   IdentifierInfo *II_random;
   enum { num_setids = 6 };
   IdentifierInfo *II_setid[num_setids];
-  
+
   const bool CheckRand;
 
 public:
@@ -214,8 +214,8 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
   const DeclRefExpr *drCond = vdLHS == drInc->getDecl() ? drLHS : drRHS;
 
   llvm::SmallVector<SourceRange, 2> ranges;
-  std::string sbuf;
-  llvm::raw_string_ostream os(sbuf);
+  llvm::SmallString<256> sbuf;
+  llvm::raw_svector_ostream os(sbuf);
 
   os << "Variable '" << drCond->getDecl()->getNameAsCString()
      << "' with floating point type '" << drCond->getType().getAsString()
@@ -315,7 +315,7 @@ void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
   const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FD->getType());
   if(!FPT)
     return;
-  
+
   // Verify that the funcion takes a single argument.
   if (FPT->getNumArgs() != 1)
     return;
@@ -385,20 +385,18 @@ void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Issue a warning.
-  std::string buf1;
-  llvm::raw_string_ostream os1(buf1);
+  llvm::SmallString<256> buf1;
+  llvm::raw_svector_ostream os1(buf1);
   os1 << "'" << FD->getNameAsString() << "' is a poor random number generator";
 
-  std::string buf2;
-  llvm::raw_string_ostream os2(buf2);
+  llvm::SmallString<256> buf2;
+  llvm::raw_svector_ostream os2(buf2);
   os2 << "Function '" << FD->getNameAsString()
       << "' is obsolete because it implements a poor random number generator."
       << "  Use 'arc4random' instead";
 
   SourceRange R = CE->getCallee()->getSourceRange();
-
-  BR.EmitBasicReport(os1.str(), "Security", os2.str(),
-                     CE->getLocStart(), &R, 1);
+  BR.EmitBasicReport(os1.str(), "Security", os2.str(),CE->getLocStart(), &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -424,8 +422,7 @@ void WalkAST::CheckCall_random(const CallExpr *CE, const FunctionDecl *FD) {
                      "Security",
                      "The 'random' function produces a sequence of values that "
                      "an adversary may be able to predict.  Use 'arc4random' "
-                     "instead",
-                     CE->getLocStart(), &R, 1);
+                     "instead", CE->getLocStart(), &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -473,22 +470,20 @@ void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
       return;
 
   // Issue a warning.
-  std::string buf1;
-  llvm::raw_string_ostream os1(buf1);
+  llvm::SmallString<256> buf1;
+  llvm::raw_svector_ostream os1(buf1);
   os1 << "Return value is not checked in call to '" << FD->getNameAsString()
      << "'";
 
-  std::string buf2;
-  llvm::raw_string_ostream os2(buf2);
+  llvm::SmallString<256> buf2;
+  llvm::raw_svector_ostream os2(buf2);
   os2 << "The return value from the call to '" << FD->getNameAsString()
       << "' is not checked.  If an error occurs in '"
       << FD->getNameAsString()
       << "', the following code may execute with unexpected privileges";
 
   SourceRange R = CE->getCallee()->getSourceRange();
-
-  BR.EmitBasicReport(os1.str(), "Security", os2.str(),
-                     CE->getLocStart(), &R, 1);
+  BR.EmitBasicReport(os1.str(), "Security", os2.str(),CE->getLocStart(), &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
