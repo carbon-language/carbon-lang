@@ -153,4 +153,5 @@ void f0(s1 a) { s1 b = a; }
 // CHECK: alloca
 // CHECK: store
 // CHECK: load
+// CHECK: ret
 const int &f2() { return 0; }
