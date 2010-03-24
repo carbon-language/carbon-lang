@@ -3613,14 +3613,26 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
   return SDValue();
 }
 
+/// EltsFromConsecutiveLoads - Given the initializing elements 'Elts' of a 
+/// vector of type 'VT', see if the elements can be replaced by a single large 
+/// load which has the same value as a build_vector whose operands are 'elts'.
+///
+/// Example: <load i32 *a, load i32 *a+4, undef, undef> -> zextload a
+/// 
+/// FIXME: we'd also like to handle the case where the last elements are zero
+/// rather than undef via VZEXT_LOAD, but we do not detect that case today.
+/// There's even a handy isZeroNode for that purpose.
 static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
                                         DebugLoc &dl, SelectionDAG &DAG) {
   EVT EltVT = VT.getVectorElementType();
   unsigned NumElems = Elts.size();
   
-  // FIXME: check for zeroes
   LoadSDNode *LDBase = NULL;
   unsigned LastLoadedElt = -1U;
+  
+  // For each element in the initializer, see if we've found a load or an undef.
+  // If we don't find an initial load element, or later load elements are 
+  // non-consecutive, bail out.
   for (unsigned i = 0; i < NumElems; ++i) {
     SDValue Elt = Elts[i];
     
@@ -3642,7 +3654,10 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
       return SDValue();
     LastLoadedElt = i;
   }
-                                       
+
+  // If we have found an entire vector of loads and undefs, then return a large
+  // load of the entire vector width starting at the base pointer.  If we found
+  // consecutive loads for the low half, generate a vzext_load node.
   if (LastLoadedElt == NumElems - 1) {
     if (DAG.InferPtrAlignment(LDBase->getBasePtr()) >= 16)
       return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
