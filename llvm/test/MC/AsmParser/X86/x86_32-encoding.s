@@ -9913,3 +9913,51 @@
 // CHECK: pcmpistrm	$125, (%edx,%eax,4), %xmm2
 // CHECK:  encoding: [0x66,0x0f,0x3a,0x62,0x14,0x82,0x7d]
                 pcmpistrm $125, (%edx,%eax,4), %xmm2
+
+// CHECK: aesimc	%xmm0, %xmm1
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdb,0xc8]
+                aesimc %xmm0,%xmm1
+
+// CHECK: aesimc	(%eax), %xmm1
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdb,0x08]
+                aesimc (%eax),%xmm1
+
+// CHECK: aesenc	%xmm1, %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdc,0xd1]
+                aesenc %xmm1,%xmm2
+
+// CHECK: aesenc	4(%ebx), %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdc,0x53,0x04]
+                aesenc 4(%ebx),%xmm2
+
+// CHECK: aesenclast	%xmm3, %xmm4
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdd,0xe3]
+                aesenclast %xmm3,%xmm4
+
+// CHECK: aesenclast	4(%edx,%edi), %xmm4
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdd,0x64,0x3a,0x04]
+                aesenclast 4(%edx,%edi),%xmm4
+
+// CHECK: aesdec	%xmm5, %xmm6
+// CHECK:  encoding: [0x66,0x0f,0x38,0xde,0xf5]
+                aesdec %xmm5,%xmm6
+
+// CHECK: aesdec	4(%ecx,%eax,8), %xmm6
+// CHECK:  encoding: [0x66,0x0f,0x38,0xde,0x74,0xc1,0x04]
+                aesdec 4(%ecx,%eax,8),%xmm6
+
+// CHECK: aesdeclast	%xmm7, %xmm0
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdf,0xc7]
+                aesdeclast %xmm7,%xmm0
+
+// CHECK: aesdeclast	3405691582, %xmm0
+// CHECK:  encoding: [0x66,0x0f,0x38,0xdf,0x05,0xbe,0xba,0xfe,0xca]
+                aesdeclast 0xcafebabe,%xmm0
+
+// CHECK: aeskeygenassist	$125, %xmm1, %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0xd1,0x7d]
+                aeskeygenassist $125, %xmm1, %xmm2
+
+// CHECK: aeskeygenassist	$125, (%edx,%eax,4), %xmm2
+// CHECK:  encoding: [0x66,0x0f,0x3a,0xdf,0x14,0x82,0x7d]
+                aeskeygenassist $125, (%edx,%eax,4), %xmm2
