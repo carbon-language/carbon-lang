@@ -328,16 +328,15 @@ void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
   // Verify that the argument is a 'char*'.
   if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
     return;
-  
+
   // Issue a waring.
   SourceRange R = CE->getCallee()->getSourceRange();
   BR.EmitBasicReport("Potential insecure temporary file in call 'mktemp'",
 		     "Security",
 		     "Call to function 'mktemp' is insecure as it always "
-		     "creates or uses insecure temporary file",
+		     "creates or uses insecure temporary file.  Use 'mkstemp' instead",
 		     CE->getLocStart(), &R, 1);
 }
-
 
 //===----------------------------------------------------------------------===//
 // Check: Linear congruent random number generators should not be used
