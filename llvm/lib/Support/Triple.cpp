@@ -189,7 +189,7 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
   return Triple::UnknownArch;
 }
 
-// Returns architecture name that is unsderstood by the target assembler.
+// Returns architecture name that is understood by the target assembler.
 const char *Triple::getArchNameForAssembler() {
   if (getOS() != Triple::Darwin && getVendor() != Triple::Apple)
     return NULL;
