@@ -116,12 +116,12 @@ public:
       return true;
 
     SmallPtrSet<NodeT *, 4> OtherChildren;
-    for(iterator I = Other->begin(), E = Other->end(); I != E; ++I) {
+    for (iterator I = Other->begin(), E = Other->end(); I != E; ++I) {
       NodeT *Nd = (*I)->getBlock();
       OtherChildren.insert(Nd);
     }
 
-    for(iterator I = begin(), E = end(); I != E; ++I) {
+    for (iterator I = begin(), E = end(); I != E; ++I) {
       NodeT *N = (*I)->getBlock();
       if (OtherChildren.count(N) == 0)
         return true;
@@ -240,8 +240,9 @@ protected:
   template<class N, class GraphT>
   void Split(DominatorTreeBase<typename GraphT::NodeType>& DT,
              typename GraphT::NodeType* NewBB) {
-    assert(std::distance(GraphT::child_begin(NewBB), GraphT::child_end(NewBB)) == 1
-           && "NewBB should have a single successor!");
+    assert(std::distance(GraphT::child_begin(NewBB),
+                         GraphT::child_end(NewBB)) == 1 &&
+           "NewBB should have a single successor!");
     typename GraphT::NodeType* NewBBSucc = *GraphT::child_begin(NewBB);
 
     std::vector<typename GraphT::NodeType*> PredBlocks;
@@ -374,8 +375,8 @@ public:
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
   bool isReachableFromEntry(NodeT* A) {
-    assert (!this->isPostDominator()
-            && "This is not implemented for post dominators");
+    assert(!this->isPostDominator() &&
+           "This is not implemented for post dominators");
     return dominates(&A->getParent()->front(), A);
   }
 
@@ -393,8 +394,9 @@ public:
     // Compare the result of the tree walk and the dfs numbers, if expensive
     // checks are enabled.
 #ifdef XDEBUG
-    assert(!DFSInfoValid
-           || (dominatedBySlowTreeWalk(A, B) == B->DominatedBy(A)));
+    assert((!DFSInfoValid ||
+            (dominatedBySlowTreeWalk(A, B) == B->DominatedBy(A))) &&
+           "Tree walk disagrees with dfs numbers!");
 #endif
 
     if (DFSInfoValid)
@@ -430,14 +432,13 @@ public:
   /// findNearestCommonDominator - Find nearest common dominator basic block
   /// for basic block A and B. If there is no such block then return NULL.
   NodeT *findNearestCommonDominator(NodeT *A, NodeT *B) {
-
-    assert (A->getParent() == B->getParent()
-            && "Two blocks are not in same function");
+    assert(A->getParent() == B->getParent() &&
+           "Two blocks are not in same function");
 
     // If either A or B is a entry block then it is nearest common dominator
     // (for forward-dominators).
     if (!this->isPostDominator()) {
-      NodeT &Entry  = A->getParent()->front();
+      NodeT &Entry = A->getParent()->front();
       if (A == &Entry || B == &Entry)
         return &Entry;
     }
@@ -464,7 +465,7 @@ public:
 
     // Walk NodeB immediate dominators chain and find common dominator node.
     DomTreeNodeBase<NodeT> *IDomB = NodeB->getIDom();
-    while(IDomB) {
+    while (IDomB) {
       if (NodeADoms.count(IDomB) != 0)
         return IDomB->getBlock();
 
@@ -509,8 +510,8 @@ public:
   /// children list. Deletes dominator node associated with basic block BB.
   void eraseNode(NodeT *BB) {
     DomTreeNodeBase<NodeT> *Node = getNode(BB);
-    assert (Node && "Removing node that isn't in dominator tree.");
-    assert (Node->getChildren().empty() && "Node is not a leaf node.");
+    assert(Node && "Removing node that isn't in dominator tree.");
+    assert(Node->getChildren().empty() && "Node is not a leaf node.");
 
       // Remove node from immediate dominator's children list.
     DomTreeNodeBase<NodeT> *IDom = Node->getIDom();
@@ -953,7 +954,7 @@ public:
         return true;
     }
 
-    if(!tmpSet.empty())
+    if (!tmpSet.empty())
       // There are nodes that are in DS2 but not in DS1.
       return true;
 
