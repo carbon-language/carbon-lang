@@ -118,13 +118,13 @@ bool MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
                                         MachineBasicBlock::const_iterator E) {
   unsigned LookAheadLeft = 5;
   while (LookAheadLeft) {
+    // Skip over dbg_value's.
+    while (I != E && I->isDebugValue())
+      ++I;
+
     if (I == E)
       // Reached end of block, register is obviously dead.
       return true;
-
-    // Skip over dbg_value's.
-    while (I->isDebugValue())
-      ++I;
 
     bool SeenDef = false;
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
