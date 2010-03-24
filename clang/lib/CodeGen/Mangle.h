@@ -34,8 +34,8 @@ namespace clang {
   class VarDecl;
 
 namespace CodeGen {
-  class ThisAdjustment;
-  class ThunkInfo;
+  struct ThisAdjustment;
+  struct ThunkInfo;
   class CovariantThunkAdjustment;
   class ThunkAdjustment;
 
