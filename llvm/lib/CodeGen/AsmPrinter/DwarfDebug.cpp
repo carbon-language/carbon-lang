@@ -447,8 +447,8 @@ void DwarfDebug::addSourceLine(DIE *Die, const DISubprogram *SP) {
   unsigned Line = SP->getLineNumber();
   if (!SP->getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(SP->getContext().getDirectory(),
-                                        SP->getContext().getFilename());
+  unsigned FileID = GetOrCreateSourceID(SP->getDirectory(),
+                                        SP->getFilename());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
