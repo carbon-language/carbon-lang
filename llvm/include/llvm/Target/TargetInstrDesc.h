@@ -204,6 +204,16 @@ public:
     return ImplicitUses;
   }
   
+  /// getNumImplicitUses - Return the number of implicit uses this instruction
+  /// has.
+  unsigned getNumImplicitUses() const {
+    if (ImplicitUses == 0) return 0;
+    unsigned i = 0;
+    for (; ImplicitUses[i]; ++i) /*empty*/;
+    return i;
+  }
+  
+  
   /// getImplicitDefs - Return a list of registers that are potentially
   /// written by any instance of this machine instruction.  For example, on X86,
   /// many instructions implicitly set the flags register.  In this case, they
@@ -216,6 +226,15 @@ public:
   /// This method returns null if the instruction has no implicit defs.
   const unsigned *getImplicitDefs() const {
     return ImplicitDefs;
+  }
+  
+  /// getNumImplicitDefs - Return the number of implicit defs this instruction
+  /// has.
+  unsigned getNumImplicitDefs() const {
+    if (ImplicitDefs == 0) return 0;
+    unsigned i = 0;
+    for (; ImplicitDefs[i]; ++i) /*empty*/;
+    return i;
   }
   
   /// hasImplicitUseOfPhysReg - Return true if this instruction implicitly
