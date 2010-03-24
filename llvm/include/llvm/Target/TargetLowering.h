@@ -469,29 +469,6 @@ public:
        getIndexedStoreAction(IdxMode, VT) == Custom);
   }
 
-  /// getConvertAction - Return how the conversion should be treated:
-  /// either it is legal, needs to be promoted to a larger size, needs to be
-  /// expanded to some other code sequence, or the target has a custom expander
-  /// for it.
-  LegalizeAction
-  getConvertAction(EVT FromVT, EVT ToVT) const {
-    assert((unsigned)FromVT.getSimpleVT().SimpleTy <
-              array_lengthof(ConvertActions) &&
-           (unsigned)ToVT.getSimpleVT().SimpleTy <
-              sizeof(ConvertActions[0])*4 &&
-           "Table isn't big enough!");
-    return (LegalizeAction)((ConvertActions[FromVT.getSimpleVT().SimpleTy] >>
-                             (2*ToVT.getSimpleVT().SimpleTy)) & 3);
-  }
-
-  /// isConvertLegal - Return true if the specified conversion is legal
-  /// on this target.
-  bool isConvertLegal(EVT FromVT, EVT ToVT) const {
-    return isTypeLegal(FromVT) && isTypeLegal(ToVT) &&
-      (getConvertAction(FromVT, ToVT) == Legal ||
-       getConvertAction(FromVT, ToVT) == Custom);
-  }
-
   /// getCondCodeAction - Return how the condition code should be treated:
   /// either it is legal, needs to be expanded to some other code sequence,
   /// or the target has a custom expander for it.
@@ -1035,17 +1012,6 @@ protected:
     IndexedModeActions[(unsigned)VT.SimpleTy][1][IdxMode] = (uint8_t)Action;
   }
   
-  /// setConvertAction - Indicate that the specified conversion does or does
-  /// not work with the with specified type and indicate what to do about it.
-  void setConvertAction(MVT FromVT, MVT ToVT,
-                        LegalizeAction Action) {
-    assert((unsigned)FromVT.SimpleTy < array_lengthof(ConvertActions) &&
-           (unsigned)ToVT.SimpleTy < MVT::LAST_VALUETYPE &&
-           "Table isn't big enough!");
-    ConvertActions[FromVT.SimpleTy] &= ~(uint64_t(3UL)  << ToVT.SimpleTy*2);
-    ConvertActions[FromVT.SimpleTy] |= (uint64_t)Action << ToVT.SimpleTy*2;
-  }
-
   /// setCondCodeAction - Indicate that the specified condition code is or isn't
   /// supported on the target and indicate what to do about it.
   void setCondCodeAction(ISD::CondCode CC, MVT VT,
@@ -1674,13 +1640,6 @@ private:
   /// represents the various modes for load store.
   uint8_t IndexedModeActions[MVT::LAST_VALUETYPE][2][ISD::LAST_INDEXED_MODE];
   
-  /// ConvertActions - For each conversion from source type to destination type,
-  /// keep a LegalizeAction that indicates how instruction selection should
-  /// deal with the conversion.
-  /// Currently, this is used only for floating->floating conversions
-  /// (FP_EXTEND and FP_ROUND).
-  uint64_t ConvertActions[MVT::LAST_VALUETYPE];
-
   /// CondCodeActions - For each condition code (ISD::CondCode) keep a
   /// LegalizeAction that indicates how instruction selection should
   /// deal with the condition code.
