@@ -1159,6 +1159,12 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   DeclContext *PreviousContext = CurContext;
   CurContext = Instantiation;
 
+  // If this is an instantiation of a local class, merge this local
+  // instantiation scope with the enclosing scope. Otherwise, every
+  // instantiation of a class has its own local instantiation scope.
+  bool MergeWithParentScope = !Instantiation->isDefinedOutsideFunctionOrMethod();
+  Sema::LocalInstantiationScope Scope(*this, MergeWithParentScope);
+
   // Start the definition of this instantiation.
   Instantiation->startDefinition();
 
