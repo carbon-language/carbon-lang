@@ -15,6 +15,8 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/TypeLoc.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -94,6 +96,7 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
 }
 
 bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
+  bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
   if (!CheckEquivalentExceptionSpec(diag::err_mismatched_exception_spec,
                                     diag::note_previous_declaration,
@@ -101,12 +104,13 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                     Old->getLocation(),
                                     New->getType()->getAs<FunctionProtoType>(),
                                     New->getLocation(),
+                                    &MissingExceptionSpecification,
                                     &MissingEmptyExceptionSpecification))
     return false;
 
   // The failure was something other than an empty exception
   // specification; return an error.
-  if (!MissingEmptyExceptionSpecification)
+  if (!MissingExceptionSpecification && !MissingEmptyExceptionSpecification)
     return true;
 
   // The new function declaration is only missing an empty exception
@@ -117,8 +121,10 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   // to many libc functions as an optimization. Unfortunately, that
   // optimization isn't permitted by the C++ standard, so we're forced
   // to work around it here.
-  if (isa<FunctionProtoType>(New->getType()) &&
-      Context.getSourceManager().isInSystemHeader(Old->getLocation()) &&
+  if (MissingEmptyExceptionSpecification &&
+      isa<FunctionProtoType>(New->getType()) &&
+      (Old->getLocation().isInvalid() ||
+       Context.getSourceManager().isInSystemHeader(Old->getLocation())) &&
       Old->isExternC()) {
     const FunctionProtoType *NewProto 
       = cast<FunctionProtoType>(New->getType());
@@ -132,6 +138,88 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                                NewProto->getCallConv());
     New->setType(NewType);
     return false;
+  }
+
+  if (MissingExceptionSpecification && isa<FunctionProtoType>(New->getType())) {
+    const FunctionProtoType *NewProto 
+      = cast<FunctionProtoType>(New->getType());
+    const FunctionProtoType *OldProto
+      = Old->getType()->getAs<FunctionProtoType>();
+
+    // Update the type of the function with the appropriate exception
+    // specification.
+    QualType NewType = Context.getFunctionType(NewProto->getResultType(),
+                                               NewProto->arg_type_begin(),
+                                               NewProto->getNumArgs(),
+                                               NewProto->isVariadic(),
+                                               NewProto->getTypeQuals(),
+                                               OldProto->hasExceptionSpec(),
+                                               OldProto->hasAnyExceptionSpec(),
+                                               OldProto->getNumExceptions(),
+                                               OldProto->exception_begin(),
+                                               NewProto->getNoReturnAttr(),
+                                               NewProto->getCallConv());
+    New->setType(NewType);
+
+    // If exceptions are disabled, suppress the warning about missing
+    // exception specifications for new and delete operators.
+    if (!getLangOptions().Exceptions) {
+      switch (New->getDeclName().getCXXOverloadedOperator()) {
+      case OO_New:
+      case OO_Array_New:
+      case OO_Delete:
+      case OO_Array_Delete:
+        if (New->getDeclContext()->isTranslationUnit())
+          return false;
+        break;
+
+      default:
+        break;
+      }
+    } 
+
+    // Warn about the lack of exception specification.
+    llvm::SmallString<128> ExceptionSpecString;
+    llvm::raw_svector_ostream OS(ExceptionSpecString);
+    OS << "throw(";
+    bool OnFirstException = true;
+    for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
+                                            EEnd = OldProto->exception_end();
+         E != EEnd;
+         ++E) {
+      if (OnFirstException)
+        OnFirstException = false;
+      else
+        OS << ", ";
+      
+      OS << E->getAsString(Context.PrintingPolicy);
+    }
+    OS << ")";
+    OS.flush();
+
+    SourceLocation AfterParenLoc;
+    if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
+      TypeLoc TL = TSInfo->getTypeLoc();
+      if (const FunctionTypeLoc *FTLoc = dyn_cast<FunctionTypeLoc>(&TL))
+        AfterParenLoc = PP.getLocForEndOfToken(FTLoc->getRParenLoc());
+    }
+
+    if (AfterParenLoc.isInvalid())
+      Diag(New->getLocation(), diag::warn_missing_exception_specification)
+        << New << OS.str();
+    else {
+      // FIXME: This will get more complicated with C++0x
+      // late-specified return types.
+      Diag(New->getLocation(), diag::warn_missing_exception_specification)
+        << New << OS.str()
+        << CodeModificationHint::CreateInsertion(AfterParenLoc,
+                                                 " " + OS.str().str());
+    }
+
+    if (!Old->getLocation().isInvalid())
+      Diag(Old->getLocation(), diag::note_previous_declaration);
+
+    return false;    
   }
 
   Diag(New->getLocation(), diag::err_mismatched_exception_spec);
@@ -155,11 +243,17 @@ bool Sema::CheckEquivalentExceptionSpec(
 /// exception specifications. Exception specifications are equivalent if
 /// they allow exactly the same set of exception types. It does not matter how
 /// that is achieved. See C++ [except.spec]p2.
-bool Sema::CheckEquivalentExceptionSpec(
-    const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
-    const FunctionProtoType *Old, SourceLocation OldLoc,
-    const FunctionProtoType *New, SourceLocation NewLoc,
-    bool *MissingEmptyExceptionSpecification) {
+bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID, 
+                                        const PartialDiagnostic & NoteID,
+                                        const FunctionProtoType *Old, 
+                                        SourceLocation OldLoc,
+                                        const FunctionProtoType *New, 
+                                        SourceLocation NewLoc,
+                                        bool *MissingExceptionSpecification,
+                                     bool *MissingEmptyExceptionSpecification)  {
+  if (MissingExceptionSpecification)
+    *MissingExceptionSpecification = false;
+
   if (MissingEmptyExceptionSpecification)
     *MissingEmptyExceptionSpecification = false;
 
@@ -168,13 +262,20 @@ bool Sema::CheckEquivalentExceptionSpec(
   if (OldAny && NewAny)
     return false;
   if (OldAny || NewAny) {
-    if (MissingEmptyExceptionSpecification && Old->hasExceptionSpec() && 
-        !Old->hasAnyExceptionSpec() && Old->getNumExceptions() == 0 && 
+    if (MissingExceptionSpecification && Old->hasExceptionSpec() &&
         !New->hasExceptionSpec()) {
-      // The old type has a throw() exception specification and the
-      // new type has no exception specification, and the caller asked
-      // to handle this itself.
-      *MissingEmptyExceptionSpecification = true;
+      // The old type has an exception specification of some sort, but
+      // the new type does not.
+      *MissingExceptionSpecification = true;
+
+      if (MissingEmptyExceptionSpecification && 
+          !Old->hasAnyExceptionSpec() && Old->getNumExceptions() == 0) {
+        // The old type has a throw() exception specification and the
+        // new type has no exception specification, and the caller asked
+        // to handle this itself.
+        *MissingEmptyExceptionSpecification = true;
+      }
+
       return true;
     }
 

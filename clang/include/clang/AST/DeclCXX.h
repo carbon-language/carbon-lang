@@ -941,7 +941,7 @@ public:
     
     return (CD->begin_overridden_methods() != CD->end_overridden_methods());
   }
-  
+
   /// \brief Determine whether this is a usual deallocation function
   /// (C++ [basic.stc.dynamic.deallocation]p2), which is an overloaded
   /// delete or delete[] operator with a particular signature.

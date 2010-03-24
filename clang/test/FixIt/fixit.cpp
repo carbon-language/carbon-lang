@@ -37,3 +37,6 @@ protected:
 class B : public A {
   A::foo; // expected-warning{{access declarations are deprecated}}
 };
+
+void f() throw();
+void f(); // expected-warning{{missing exception specification}}
