@@ -45,6 +45,24 @@ STATISTIC(ObjectBytes, "Number of emitted object file bytes");
 
 /* *** */
 
+uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
+  return F->getAddress();
+}
+
+uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
+  return SD->getAddress();
+}
+
+uint64_t MCAsmLayout::getSectionAddress(const MCSectionData *SD) const {
+  return SD->getAddress();
+}
+
+void MCAsmLayout::setSectionAddress(MCSectionData *SD, uint64_t Value) {
+  SD->setAddress(Value);
+}
+
+/* *** */
+
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 }
 
@@ -145,6 +163,7 @@ static bool isScatteredFixupFullyResolvedSimple(const MCAssembler &Asm,
 }
 
 static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
+                                          const MCAsmLayout &Layout,
                                           const MCAsmFixup &Fixup,
                                           const MCValue Target,
                                           const MCSymbolData *BaseSymbol) {
@@ -165,7 +184,7 @@ static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
     if (A->getKind() != MCSymbolRefExpr::VK_None)
       return false;
 
-    A_Base = Asm.getAtom(&Asm.getSymbolData(A->getSymbol()));
+    A_Base = Asm.getAtom(Layout, &Asm.getSymbolData(A->getSymbol()));
     if (!A_Base)
       return false;
   }
@@ -175,7 +194,7 @@ static bool isScatteredFixupFullyResolved(const MCAssembler &Asm,
     if (B->getKind() != MCSymbolRefExpr::VK_None)
       return false;
 
-    B_Base = Asm.getAtom(&Asm.getSymbolData(B->getSymbol()));
+    B_Base = Asm.getAtom(Layout, &Asm.getSymbolData(B->getSymbol()));
     if (!B_Base)
       return false;
   }
@@ -203,9 +222,13 @@ bool MCAssembler::isSymbolLinkerVisible(const MCSymbolData *SD) const {
     SD->getFragment()->getParent()->getSection());
 }
 
-const MCSymbolData *MCAssembler::getAtomForAddress(const MCSectionData *Section,
+// FIXME-PERF: This routine is really slow.
+const MCSymbolData *MCAssembler::getAtomForAddress(const MCAsmLayout &Layout,
+                                                   const MCSectionData *Section,
                                                    uint64_t Address) const {
   const MCSymbolData *Best = 0;
+  uint64_t BestAddress = 0;
+
   for (MCAssembler::const_symbol_iterator it = symbol_begin(),
          ie = symbol_end(); it != ie; ++it) {
     // Ignore non-linker visible symbols.
@@ -218,15 +241,19 @@ const MCSymbolData *MCAssembler::getAtomForAddress(const MCSectionData *Section,
 
     // Otherwise, find the closest symbol preceding this address (ties are
     // resolved in favor of the last defined symbol).
-    if (it->getAddress() <= Address &&
-        (!Best || it->getAddress() >= Best->getAddress()))
+    uint64_t SymbolAddress = Layout.getSymbolAddress(it);
+    if (SymbolAddress <= Address && (!Best || SymbolAddress >= BestAddress)) {
       Best = it;
+      BestAddress = SymbolAddress;
+    }
   }
 
   return Best;
 }
 
-const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
+// FIXME-PERF: This routine is really slow.
+const MCSymbolData *MCAssembler::getAtom(const MCAsmLayout &Layout,
+                                         const MCSymbolData *SD) const {
   // Linker visible symbols define atoms.
   if (isSymbolLinkerVisible(SD))
     return SD;
@@ -236,7 +263,8 @@ const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
     return 0;
 
   // Otherwise, search by address.
-  return getAtomForAddress(SD->getFragment()->getParent(), SD->getAddress());
+  return getAtomForAddress(Layout, SD->getFragment()->getParent(),
+                           Layout.getSymbolAddress(SD));
 }
 
 bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
@@ -258,13 +286,13 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   bool IsResolved = true;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     if (A->getSymbol().isDefined())
-      Value += getSymbolData(A->getSymbol()).getAddress();
+      Value += Layout.getSymbolAddress(&getSymbolData(A->getSymbol()));
     else
       IsResolved = false;
   }
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
     if (B->getSymbol().isDefined())
-      Value -= getSymbolData(B->getSymbol()).getAddress();
+      Value -= Layout.getSymbolAddress(&getSymbolData(B->getSymbol()));
     else
       IsResolved = false;
   }
@@ -278,13 +306,13 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
       const MCSymbolData *BaseSymbol = 0;
       if (IsPCRel) {
         BaseSymbol = getAtomForAddress(
-          DF->getParent(), DF->getAddress() + Fixup.Offset);
+          Layout, DF->getParent(), Layout.getFragmentAddress(DF)+Fixup.Offset);
         if (!BaseSymbol)
           IsResolved = false;
       }
 
       if (IsResolved)
-        IsResolved = isScatteredFixupFullyResolved(*this, Fixup, Target,
+        IsResolved = isScatteredFixupFullyResolved(*this, Layout, Fixup, Target,
                                                    BaseSymbol);
     } else {
       const MCSection *BaseSection = 0;
@@ -297,19 +325,19 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   }
 
   if (IsPCRel)
-    Value -= DF->getAddress() + Fixup.Offset;
+    Value -= Layout.getFragmentAddress(DF) + Fixup.Offset;
 
   return IsResolved;
 }
 
 void MCAssembler::LayoutSection(MCSectionData &SD,
                                 MCAsmLayout &Layout) {
-  uint64_t Address = SD.getAddress();
+  uint64_t Address, StartAddress = Address = Layout.getSectionAddress(&SD);
 
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
 
-    F.setOffset(Address - SD.getAddress());
+    F.setOffset(Address - StartAddress);
 
     // Evaluate fragment size.
     switch (F.getKind()) {
@@ -361,7 +389,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
       // Align the fragment offset; it is safe to adjust the offset freely since
       // this is only in virtual sections.
       Address = RoundUpToAlignment(Address, ZFF.getAlignment());
-      F.setOffset(Address - SD.getAddress());
+      F.setOffset(Address - StartAddress);
 
       // FIXME: This is misnamed.
       F.setFileSize(ZFF.getSize());
@@ -373,11 +401,11 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
   }
 
   // Set the section sizes.
-  SD.setSize(Address - SD.getAddress());
+  SD.setSize(Address - StartAddress);
   if (getBackend().isVirtualSection(SD.getSection()))
     SD.setFileSize(0);
   else
-    SD.setFileSize(Address - SD.getAddress());
+    SD.setFileSize(Address - StartAddress);
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -543,7 +571,7 @@ void MCAssembler::Finish() {
           // The fixup was unresolved, we need a relocation. Inform the object
           // writer of the relocation, and give it an opportunity to adjust the
           // fixup value if need be.
-          Writer->RecordRelocation(*this, DF, Fixup, Target, FixedValue);
+          Writer->RecordRelocation(*this, Layout, DF, Fixup, Target,FixedValue);
         }
 
         getBackend().ApplyFixup(Fixup, *DF, FixedValue);
@@ -552,7 +580,7 @@ void MCAssembler::Finish() {
   }
 
   // Write the object file.
-  Writer->WriteObject(*this);
+  Writer->WriteObject(*this, Layout);
   OS.flush();
 
   stats::ObjectBytes += OS.tell() - StartOffset;
@@ -609,7 +637,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
     }
 
     // Layout the section fragments and its size.
-    SD.setAddress(Address);
+    Layout.setSectionAddress(&SD, Address);
     LayoutSection(SD, Layout);
     Address += SD.getFileSize();
 
@@ -628,7 +656,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
     if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment()))
       Address += Pad;
 
-    SD.setAddress(Address);
+    Layout.setSectionAddress(&SD, Address);
     LayoutSection(SD, Layout);
     Address += SD.getSize();
   }

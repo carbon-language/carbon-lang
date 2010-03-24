@@ -31,11 +31,12 @@ public:
   virtual void ExecutePostLayoutBinding(MCAssembler &Asm);
 
   virtual void RecordRelocation(const MCAssembler &Asm,
+                                const MCAsmLayout &Layout,
                                 const MCFragment *Fragment,
                                 const MCAsmFixup &Fixup, MCValue Target,
                                 uint64_t &FixedValue);
 
-  virtual void WriteObject(const MCAssembler &Asm);
+  virtual void WriteObject(const MCAssembler &Asm, const MCAsmLayout &Layout);
 };
 
 } // End llvm namespace

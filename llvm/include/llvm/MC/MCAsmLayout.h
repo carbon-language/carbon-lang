@@ -12,6 +12,9 @@
 
 namespace llvm {
 class MCAssembler;
+class MCFragment;
+class MCSectionData;
+class MCSymbolData;
 
 /// Encapsulates the layout of an assembly file at a particular point in time.
 ///
@@ -29,6 +32,14 @@ public:
 
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
+
+  uint64_t getFragmentAddress(const MCFragment *F) const;
+
+  uint64_t getSectionAddress(const MCSectionData *SD) const;
+
+  uint64_t getSymbolAddress(const MCSymbolData *SD) const;
+
+  void setSectionAddress(MCSectionData *SD, uint64_t Value);
 };
 
 } // end namespace llvm

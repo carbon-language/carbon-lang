@@ -268,8 +268,8 @@ bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
           Layout->getAssembler().getSymbolData(Res.getSymA()->getSymbol());
         MCSymbolData &B =
           Layout->getAssembler().getSymbolData(Res.getSymB()->getSymbol());
-        Res = MCValue::get(+ A.getFragment()->getAddress() + A.getOffset()
-                           - B.getFragment()->getAddress() - B.getOffset()
+        Res = MCValue::get(+ Layout->getSymbolAddress(&A) + A.getOffset()
+                           - Layout->getSymbolAddress(&B) - B.getOffset()
                            + Res.getConstant());
       }
 
