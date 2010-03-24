@@ -394,24 +394,39 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 }
 
 /// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
-/// whose element is VT.
-bool EEVT::TypeSet::EnforceVectorEltTypeIs(MVT::SimpleValueType VT,
+/// whose element is specified by VTOperand.
+bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
                                            TreePattern &TP) {
-  TypeSet InputSet(*this);
+  // "This" must be a vector and "VTOperand" must be a scalar.
   bool MadeChange = false;
+  MadeChange |= EnforceVector(TP);
+  MadeChange |= VTOperand.EnforceScalar(TP);
+
+  // If we know the vector type, it forces the scalar to agree.
+  if (isConcrete()) {
+    EVT IVT = getConcrete();
+    IVT = IVT.getVectorElementType();
+    return MadeChange | 
+      VTOperand.MergeInTypeInfo(IVT.getSimpleVT().SimpleTy, TP);
+  }
+
+  // If the scalar type is known, filter out vector types whose element types
+  // disagree.
+  if (!VTOperand.isConcrete())
+    return MadeChange;
   
-  // If we know nothing, then get the full set.
-  if (TypeVec.empty())
-    MadeChange = FillWithPossibleTypes(TP, isVector, "vector");
+  MVT::SimpleValueType VT = VTOperand.getConcrete();
   
-  // Filter out all the non-vector types and types which don't have the right
-  // element type.
-  for (unsigned i = 0; i != TypeVec.size(); ++i)
-    if (!isVector(TypeVec[i]) ||
-        EVT(TypeVec[i]).getVectorElementType().getSimpleVT().SimpleTy != VT) {
+  TypeSet InputSet(*this);
+  
+  // Filter out all the types which don't have the right element type.
+  for (unsigned i = 0; i != TypeVec.size(); ++i) {
+    assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
+    if (EVT(TypeVec[i]).getVectorElementType().getSimpleVT().SimpleTy != VT) {
       TypeVec.erase(TypeVec.begin()+i--);
       MadeChange = true;
     }
+  }
   
   if (TypeVec.empty())  // FIXME: Really want an SMLoc here!
     TP.error("Type inference contradiction found, forcing '" +
@@ -642,22 +657,11 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     TreePatternNode *VecOperand =
       getOperandNum(x.SDTCisEltOfVec_Info.OtherOperandNum, N, NodeInfo,
                     VResNo);
-    if (VecOperand->hasTypeSet(VResNo)) {
-      if (!isVector(VecOperand->getType(VResNo)))
-        TP.error(N->getOperator()->getName() + " VT operand must be a vector!");
-      EVT IVT = VecOperand->getType(VResNo);
-      IVT = IVT.getVectorElementType();
-      return NodeToApply->UpdateNodeType(ResNo, IVT.getSimpleVT().SimpleTy, TP);
-    }
     
-    if (NodeToApply->hasTypeSet(ResNo) &&
-        VecOperand->getExtType(VResNo).hasVectorTypes()){
-      // Filter vector types out of VecOperand that don't have the right element
-      // type.
-      return VecOperand->getExtType(VResNo).
-        EnforceVectorEltTypeIs(NodeToApply->getType(ResNo), TP);
-    }
-    return false;
+    // Filter vector types out of VecOperand that don't have the right element
+    // type.
+    return VecOperand->getExtType(VResNo).
+      EnforceVectorEltTypeIs(NodeToApply->getExtType(ResNo), TP);
   }
   }  
   return false;

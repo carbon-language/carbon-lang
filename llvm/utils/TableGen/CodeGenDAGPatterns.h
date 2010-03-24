@@ -129,7 +129,7 @@ namespace EEVT {
     
     /// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
     /// whose element is VT.
-    bool EnforceVectorEltTypeIs(MVT::SimpleValueType VT, TreePattern &TP);
+    bool EnforceVectorEltTypeIs(EEVT::TypeSet &VT, TreePattern &TP);
     
     bool operator!=(const TypeSet &RHS) const { return TypeVec != RHS.TypeVec; }
     bool operator==(const TypeSet &RHS) const { return TypeVec == RHS.TypeVec; }
