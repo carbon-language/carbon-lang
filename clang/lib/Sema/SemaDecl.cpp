@@ -5850,7 +5850,7 @@ void Sema::ActOnFields(Scope* S,
     } else if (ObjCCategoryDecl *CDecl = 
                 dyn_cast<ObjCCategoryDecl>(EnclosingDecl)) {
       if (!LangOpts.ObjCNonFragileABI2 || !CDecl->IsClassExtension())
-        Diag(LBrac, diag::err_misplaced_ivar);
+        Diag(LBrac, diag::err_misplaced_ivar) << CDecl->IsClassExtension();
       else {
         // FIXME. Class extension does not have a LocEnd field.
         // CDecl->setLocEnd(RBrac);
