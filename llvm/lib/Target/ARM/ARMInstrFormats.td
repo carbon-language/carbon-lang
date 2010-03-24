@@ -1369,6 +1369,20 @@ class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{4} = op4;
 }
 
+// Double precision, binary, VML[AS] (for additional predicate)
+class ADbI_vmlX<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
+           dag iops, InstrItinClass itin, string opc, string asm,
+           list<dag> pattern>
+  : VFPAI<oops, iops, VFPBinaryFrm, itin, opc, asm, pattern> {
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{11-8}  = 0b1011;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
+  list<Predicate> Predicates = [HasVFP2, UseVMLx];
+}
+
+
 // Single precision, unary
 class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
            bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,

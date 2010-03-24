@@ -140,6 +140,8 @@ def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
 def UseMovt   : Predicate<"Subtarget->useMovt()">;
 def DontUseMovt : Predicate<"!Subtarget->useMovt()">;
 
+def UseVMLx   : Predicate<"Subtarget->useVMLx()">;
+
 //===----------------------------------------------------------------------===//
 // ARM Flag Definitions.
 

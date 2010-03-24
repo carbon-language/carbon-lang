@@ -545,7 +545,7 @@ def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
 // FP FMA Operations.
 //
 
-def VMLAD : ADbI<0b11100, 0b00, 0, 0,
+def VMLAD : ADbI_vmlX<0b11100, 0b00, 0, 0,
                 (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 IIC_fpMAC64, "vmla", ".f64\t$dst, $a, $b",
                 [(set DPR:$dst, (fadd (fmul DPR:$a, DPR:$b),
@@ -558,7 +558,7 @@ def VMLAS : ASbIn<0b11100, 0b00, 0, 0,
                  [(set SPR:$dst, (fadd (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
                  RegConstraint<"$dstin = $dst">;
 
-def VNMLSD : ADbI<0b11100, 0b01, 0, 0,
+def VNMLSD : ADbI_vmlX<0b11100, 0b01, 0, 0,
                 (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                 IIC_fpMAC64, "vnmls", ".f64\t$dst, $a, $b",
                 [(set DPR:$dst, (fsub (fmul DPR:$a, DPR:$b),
@@ -571,7 +571,7 @@ def VNMLSS : ASbI<0b11100, 0b01, 0, 0,
                 [(set SPR:$dst, (fsub (fmul SPR:$a, SPR:$b), SPR:$dstin))]>,
                 RegConstraint<"$dstin = $dst">;
 
-def VMLSD : ADbI<0b11100, 0b00, 1, 0,
+def VMLSD : ADbI_vmlX<0b11100, 0b00, 1, 0,
                  (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  IIC_fpMAC64, "vmls", ".f64\t$dst, $a, $b",
              [(set DPR:$dst, (fadd (fneg (fmul DPR:$a, DPR:$b)),
@@ -589,7 +589,7 @@ def : Pat<(fsub DPR:$dstin, (fmul DPR:$a, (f64 DPR:$b))),
 def : Pat<(fsub SPR:$dstin, (fmul SPR:$a, SPR:$b)),
           (VMLSS SPR:$dstin, SPR:$a, SPR:$b)>, Requires<[DontUseNEONForFP]>;
 
-def VNMLAD : ADbI<0b11100, 0b01, 1, 0,
+def VNMLAD : ADbI_vmlX<0b11100, 0b01, 1, 0,
                  (outs DPR:$dst), (ins DPR:$dstin, DPR:$a, DPR:$b),
                  IIC_fpMAC64, "vnmla", ".f64\t$dst, $a, $b",
              [(set DPR:$dst, (fsub (fneg (fmul DPR:$a, DPR:$b)),
