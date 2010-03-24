@@ -224,18 +224,26 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   // NextNamespace points to the next extended declaration.
   // OrigNamespace points to the original namespace declaration.
   // OrigNamespace of the first namespace decl points to itself.
-  NamespaceDecl *OrigNamespace, *NextNamespace;
+  NamespaceDecl *NextNamespace;
 
-  // The (most recently entered) anonymous namespace inside this
-  // namespace.
-  NamespaceDecl *AnonymousNamespace;
+  /// \brief A pointer to either the original namespace definition for
+  /// this namespace (if the boolean value is false) or the anonymous
+  /// namespace that lives just inside this namespace (if the boolean
+  /// value is true).
+  ///
+  /// We can combine these two notions because the anonymous namespace
+  /// must only be stored in one of the namespace declarations (so all
+  /// of the namespace declarations can find it). We therefore choose
+  /// the original namespace declaration, since all of the namespace
+  /// declarations have a link directly to it; the original namespace
+  /// declaration itself only needs to know that it is the original
+  /// namespace declaration (which the boolean indicates).
+  llvm::PointerIntPair<NamespaceDecl *, 1, bool> OrigOrAnonNamespace;
 
   NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
-    : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace) {
-    OrigNamespace = this;
-    NextNamespace = 0;
-    AnonymousNamespace = 0;
-  }
+    : NamedDecl(Namespace, DC, L, Id), DeclContext(Namespace),
+      NextNamespace(0), OrigOrAnonNamespace(0, true) { }
+
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id);
@@ -258,22 +266,33 @@ public:
   void setNextNamespace(NamespaceDecl *ND) { NextNamespace = ND; }
 
   NamespaceDecl *getOriginalNamespace() const {
-    return OrigNamespace;
+    if (OrigOrAnonNamespace.getInt())
+      return const_cast<NamespaceDecl *>(this);
+
+    return OrigOrAnonNamespace.getPointer();
   }
-  void setOriginalNamespace(NamespaceDecl *ND) { OrigNamespace = ND; }
+
+  void setOriginalNamespace(NamespaceDecl *ND) { 
+    if (ND != this) {
+      OrigOrAnonNamespace.setPointer(ND);
+      OrigOrAnonNamespace.setInt(false);
+    }
+  }
 
   NamespaceDecl *getAnonymousNamespace() const {
-    return AnonymousNamespace;
+    return getOriginalNamespace()->OrigOrAnonNamespace.getPointer();
   }
 
   void setAnonymousNamespace(NamespaceDecl *D) {
     assert(!D || D->isAnonymousNamespace());
     assert(!D || D->getParent() == this);
-    AnonymousNamespace = D;
+    getOriginalNamespace()->OrigOrAnonNamespace.setPointer(D);
   }
 
-  virtual NamespaceDecl *getCanonicalDecl() { return OrigNamespace; }
-  const NamespaceDecl *getCanonicalDecl() const { return OrigNamespace; }
+  virtual NamespaceDecl *getCanonicalDecl() { return getOriginalNamespace(); }
+  const NamespaceDecl *getCanonicalDecl() const { 
+    return getOriginalNamespace(); 
+  }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), RBracLoc);

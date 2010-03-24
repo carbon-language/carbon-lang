@@ -68,3 +68,25 @@ namespace foo {
 static foo::x  test1;  // ok
 
 static foo::X  test2;  // typo: expected-error {{no type named 'X' in}}
+
+namespace PR6620 {
+  namespace numeric {
+    namespace op {
+      struct greater {};
+    }
+    namespace {
+      extern op::greater const greater;
+    }
+  }
+
+  namespace numeric {
+    namespace {
+      op::greater const greater = op::greater();
+    }
+
+    template<typename T, typename U>
+    int f(T& l, U& r)
+    { numeric::greater(l, r); }
+
+  }
+}

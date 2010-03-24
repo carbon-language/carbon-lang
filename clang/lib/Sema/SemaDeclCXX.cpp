@@ -2955,7 +2955,6 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   } else {
     // Anonymous namespaces.
     assert(Namespc->isAnonymousNamespace());
-    CurContext->addDecl(Namespc);
 
     // Link the anonymous namespace into its parent.
     NamespaceDecl *PrevDecl;
@@ -2976,6 +2975,8 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       Namespc->setOriginalNamespace(PrevDecl->getOriginalNamespace());
       PrevDecl->setNextNamespace(Namespc);
     }
+
+    CurContext->addDecl(Namespc);
 
     // C++ [namespace.unnamed]p1.  An unnamed-namespace-definition
     //   behaves as if it were replaced by
