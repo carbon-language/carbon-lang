@@ -2921,9 +2921,24 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       // C++0x [temp.expl.spec]p20 forbids "template<> void foo(int);".
       if (isFriend && isFunctionTemplateSpecialization) {
-        SourceRange Range = TemplateParams->getSourceRange();
+        // We want to remove the "template<>", found here.
+        SourceRange RemoveRange = TemplateParams->getSourceRange();
+
+        // If we remove the template<> and the name is not a
+        // template-id, we're actually silently creating a problem:
+        // the friend declaration will refer to an untemplated decl,
+        // and clearly the user wants a template specialization.  So
+        // we need to insert '<>' after the name.
+        SourceLocation InsertLoc;
+        if (D.getName().getKind() != UnqualifiedId::IK_TemplateId) {
+          InsertLoc = D.getName().getSourceRange().getEnd();
+          InsertLoc = PP.getLocForEndOfToken(InsertLoc);
+        }
+
         Diag(D.getIdentifierLoc(), diag::err_template_spec_decl_friend)
-          << Name << Range << CodeModificationHint::CreateRemoval(Range);
+          << Name << RemoveRange
+          << CodeModificationHint::CreateRemoval(RemoveRange)
+          << CodeModificationHint::CreateInsertion(InsertLoc, "<>");
       }
     }
 
