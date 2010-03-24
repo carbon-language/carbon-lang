@@ -1717,7 +1717,8 @@ static bool AddressIsTaken(const GlobalValue *GV) {
         return true;  // Storing addr of GV.
     } else if (isa<InvokeInst>(U) || isa<CallInst>(U)) {
       // Make sure we are calling the function, not passing the address.
-      if (UI.getOperandNo() != 0)
+      CallSite CS((Instruction*)U);
+      if (!CS.isCallee(UI))
         return true;
     } else if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (LI->isVolatile())

@@ -676,17 +676,13 @@ void Verifier::visitFunction(Function &F) {
               "blockaddress may not be used with the entry block!", Entry);
     }
   }
-  
+ 
   // If this function is actually an intrinsic, verify that it is only used in
   // direct call/invokes, never having its "address taken".
   if (F.getIntrinsicID()) {
-    for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E;++UI){
-      User *U = cast<User>(UI);
-      if ((isa<CallInst>(U) || isa<InvokeInst>(U)) && UI.getOperandNo() == 0)
-        continue;  // Direct calls/invokes are ok.
-      
+    const User *U;
+    if (F.hasAddressTaken(&U))
       Assert1(0, "Invalid user of intrinsic instruction!", U); 
-    }
   }
 }
 
@@ -1483,7 +1479,7 @@ void Verifier::visitInstruction(Instruction &I) {
                 "Instruction does not dominate all uses!", Op, &I);
       }
     } else if (isa<InlineAsm>(I.getOperand(i))) {
-      Assert1(i == 0 && (isa<CallInst>(I) || isa<InvokeInst>(I)),
+      Assert1((i == 0 && isa<CallInst>(I)) || (i + 3 == e && isa<InvokeInst>(I)),
               "Cannot take the address of an inline asm!", &I);
     }
   }

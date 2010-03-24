@@ -409,8 +409,11 @@ public:
   void dropAllReferences();
 
   /// hasAddressTaken - returns true if there are any uses of this function
-  /// other than direct calls or invokes to it.
-  bool hasAddressTaken() const;
+  /// other than direct calls or invokes to it. Optionally passes back the
+  /// offending user for diagnostic purposes.
+  ///
+  bool hasAddressTaken(const User** = 0) const;
+
 private:
   // Shadow Value::setValueSubclassData with a private forwarding method so that
   // subclasses cannot accidentally use it.
