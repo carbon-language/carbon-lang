@@ -3668,22 +3668,20 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
 
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 {
-  llvm::Constant *ThunkFn = CGM.GetAddrOfThunk(GD, Thunk);
+  llvm::Constant *Entry = CGM.GetAddrOfThunk(GD, Thunk);
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   
   // Strip off a bitcast if we got one back.
-  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(ThunkFn)) {
+  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
     assert(CE->getOpcode() == llvm::Instruction::BitCast);
-    ThunkFn = CE->getOperand(0);
+    Entry = CE->getOperand(0);
   }
   
-  const llvm::Type *ThunkFnTy =
-    cast<llvm::GlobalValue>(ThunkFn)->getType()->getElementType();
-
   // There's already a declaration with the same name, check if it has the same
   // type or if we need to replace it.
-  if (ThunkFnTy != CGM.getTypes().GetFunctionTypeForVtable(MD)) {
-    llvm::GlobalValue *OldThunkFn = cast<llvm::GlobalValue>(ThunkFn);
+  if (cast<llvm::GlobalValue>(Entry)->getType()->getElementType() != 
+      CGM.getTypes().GetFunctionTypeForVtable(MD)) {
+    llvm::GlobalValue *OldThunkFn = cast<llvm::GlobalValue>(Entry);
     
     // If the types mismatch then we have to rewrite the definition.
     assert(OldThunkFn->isDeclaration() &&
@@ -3691,12 +3689,12 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk)
 
     // Remove the name from the old thunk function and get a new thunk.
     OldThunkFn->setName(llvm::StringRef());
-    ThunkFn = CGM.GetAddrOfThunk(GD, Thunk);
+    Entry = CGM.GetAddrOfThunk(GD, Thunk);
     
     // If needed, replace the old thunk with a bitcast.
     if (!OldThunkFn->use_empty()) {
       llvm::Constant *NewPtrForOldDecl =
-        llvm::ConstantExpr::getBitCast(ThunkFn, OldThunkFn->getType());
+        llvm::ConstantExpr::getBitCast(Entry, OldThunkFn->getType());
       OldThunkFn->replaceAllUsesWith(NewPtrForOldDecl);
     }
     
