@@ -2181,14 +2181,11 @@ def : Pat<(store (shld (loadi64 addr:$dst), (i8 imm:$amt1),
 
 // (or x1, x2) -> (add x1, x2) if two operands are known not to share bits.
 let AddedComplexity = 5 in {  // Try this before the selecting to OR
-def : Pat<(parallel (or_is_add GR64:$src1, i64immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR64:$src1, i64immSExt8:$src2),
           (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
-def : Pat<(parallel (or_is_add GR64:$src1, i64immSExt32:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR64:$src1, i64immSExt32:$src2),
           (ADD64ri32 GR64:$src1, i64immSExt32:$src2)>;
-def : Pat<(parallel (or_is_add GR64:$src1, GR64:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or_is_add GR64:$src1, GR64:$src2),
           (ADD64rr GR64:$src1, GR64:$src2)>;
 } // AddedComplexity
 
