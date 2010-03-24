@@ -1560,9 +1560,10 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->isDynamicClass())
     return;
 
-  llvm::Constant *VTable = CGM.getVTables().getVtable(ClassDecl);
-  CodeGenVTables::AddrSubMap_t& AddressPoints =
-      *(*CGM.getVTables().AddressPoints[ClassDecl])[ClassDecl];
+  llvm::Constant *VTable = CGM.getVTables().getAddrOfVTable(ClassDecl);
+  const CodeGenVTables::AddrSubMap_t& AddressPoints =
+    CGM.getVTables().getAddressPoints(ClassDecl);
+
   llvm::Value *ThisPtr = LoadCXXThis();
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
 
@@ -1584,7 +1585,7 @@ void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
 void CodeGenFunction::InitializeVtablePtrsRecursive(
         const CXXRecordDecl *ClassDecl,
         llvm::Constant *Vtable,
-        CodeGenVTables::AddrSubMap_t& AddressPoints,
+        const CodeGenVTables::AddrSubMap_t& AddressPoints,
         llvm::Value *ThisPtr,
         uint64_t Offset) {
   if (!ClassDecl->isDynamicClass())
@@ -1607,7 +1608,8 @@ void CodeGenFunction::InitializeVtablePtrsRecursive(
   // Compute the address point
   assert(AddressPoints.count(std::make_pair(ClassDecl, Offset)) &&
          "Missing address point for class");
-  uint64_t AddressPoint = AddressPoints[std::make_pair(ClassDecl, Offset)];
+  uint64_t AddressPoint = 
+    AddressPoints.lookup(std::make_pair(ClassDecl, Offset));
   llvm::Value *VtableAddressPoint =
       Builder.CreateConstInBoundsGEP2_64(Vtable, 0, AddressPoint);
 

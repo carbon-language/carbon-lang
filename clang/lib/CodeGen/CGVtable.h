@@ -222,12 +222,16 @@ public:
   typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
   typedef llvm::DenseMap<CtorVtable_t, int64_t> AddrSubMap_t;
   typedef llvm::DenseMap<const CXXRecordDecl *, AddrSubMap_t *> AddrMap_t;
-  llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
 
   typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
 
+  const CodeGenVTables::AddrSubMap_t& getAddressPoints(const CXXRecordDecl *RD);
+
+  llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
+
 private:
   CodeGenModule &CGM;
+
 
   /// MethodVtableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
@@ -312,8 +316,9 @@ public:
   int64_t getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                      const CXXRecordDecl *VBase);
 
-  llvm::GlobalVariable *getVtable(const CXXRecordDecl *RD);
-  
+  /// getAddrOfVTable - Get the address of the vtable for the given record decl.
+  llvm::Constant *getAddrOfVTable(const CXXRecordDecl *RD);
+
   /// CtorVtableInfo - Information about a constructor vtable.
   struct CtorVtableInfo {
     /// Vtable - The vtable itself.

@@ -268,7 +268,7 @@ public:
       GenerateDefinition(GenerateDefinition) {
     
     // First comes the primary virtual table pointer for the complete class...
-    ClassVtbl = GenerateDefinition ? CGM.getVTables().getVtable(Class) : 0;
+    ClassVtbl = GenerateDefinition ? CGM.getVTables().getAddrOfVTable(Class) :0;
 
     llvm::Constant *Init = BuildVtablePtr(ClassVtbl, Class, Class, 0);
     Inits.push_back(Init);

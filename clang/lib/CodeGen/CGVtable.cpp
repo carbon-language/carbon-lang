@@ -3551,6 +3551,19 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
+const CodeGenVTables::AddrSubMap_t &
+CodeGenVTables::getAddressPoints(const CXXRecordDecl *RD) {
+  if (!AddressPoints[RD]) {
+    AddressPointsMapTy AddressPoints;
+    OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
+    
+    b.GenerateVtableForBase(RD, 0);
+    b.GenerateVtableForVBases(RD, 0);
+  }
+  
+  return *(*AddressPoints[RD])[RD];
+}
+
 llvm::GlobalVariable *
 CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                                bool GenerateDefinition,
@@ -3583,8 +3596,7 @@ CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
   llvm::StringRef Name = OutName.str();
 
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
-  if (GV == 0 || CGM.getVTables().AddressPoints[LayoutClass] == 0 || 
-      GV->isDeclaration()) {
+  if (GV == 0 || GV->isDeclaration()) {
     OldVtableBuilder b(RD, LayoutClass, Offset, CGM, GenerateDefinition,
                        AddressPoints);
 
@@ -3906,17 +3918,26 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
 }
 
-llvm::GlobalVariable *CodeGenVTables::getVtable(const CXXRecordDecl *RD) {
-  llvm::GlobalVariable *Vtable = Vtables.lookup(RD);
-  
-  if (!Vtable) {
-    AddressPointsMapTy AddressPoints;
-    Vtable = GenerateVtable(llvm::GlobalValue::ExternalLinkage, 
-                            /*GenerateDefinition=*/false, RD, RD, 0,
-                            /*IsVirtual=*/false, AddressPoints);
-  }
+llvm::Constant *CodeGenVTables::getAddrOfVTable(const CXXRecordDecl *RD) {
+  llvm::SmallString<256> OutName;
+  CGM.getMangleContext().mangleCXXVtable(RD, OutName);
+  llvm::StringRef Name = OutName.str();
 
-  return Vtable;
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::ArrayType *ArrayType = llvm::ArrayType::get(Int8PtrTy, 0);
+  
+  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
+  if (GV) {
+    if (!GV->isDeclaration() || GV->getType()->getElementType() == ArrayType)
+      return GV;
+  
+    return llvm::ConstantExpr::getBitCast(GV, ArrayType->getPointerTo());
+  }
+  
+  GV = new llvm::GlobalVariable(CGM.getModule(), ArrayType, /*isConstant=*/true,
+                                llvm::GlobalValue::ExternalLinkage, 0, Name);
+
+  return GV;
 }
 
 void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
