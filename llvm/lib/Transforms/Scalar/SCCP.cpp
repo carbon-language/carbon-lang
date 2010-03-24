@@ -1705,28 +1705,30 @@ ModulePass *llvm::createIPSCCPPass() {
 }
 
 
-static bool AddressIsTaken(GlobalValue *GV) {
+static bool AddressIsTaken(const GlobalValue *GV) {
   // Delete any dead constantexpr klingons.
   GV->removeDeadConstantUsers();
 
-  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end();
-       UI != E; ++UI)
-    if (StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
+  for (Value::use_const_iterator UI = GV->use_begin(), E = GV->use_end();
+       UI != E; ++UI) {
+    const User *U = *UI;
+    if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getOperand(0) == GV || SI->isVolatile())
         return true;  // Storing addr of GV.
-    } else if (isa<InvokeInst>(*UI) || isa<CallInst>(*UI)) {
+    } else if (isa<InvokeInst>(U) || isa<CallInst>(U)) {
       // Make sure we are calling the function, not passing the address.
       if (UI.getOperandNo() != 0)
         return true;
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+    } else if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (LI->isVolatile())
         return true;
-    } else if (isa<BlockAddress>(*UI)) {
+    } else if (isa<BlockAddress>(U)) {
       // blockaddress doesn't take the address of the function, it takes addr
       // of label.
     } else {
       return true;
     }
+  }
   return false;
 }
 
