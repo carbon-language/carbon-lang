@@ -85,8 +85,10 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
 void LiveIntervals::releaseMemory() {
   // Free the live intervals themselves.
   for (DenseMap<unsigned, LiveInterval*>::iterator I = r2iMap_.begin(),
-       E = r2iMap_.end(); I != E; ++I)
+       E = r2iMap_.end(); I != E; ++I) {
+    I->second->clear();
     delete I->second;
+  }
   
   r2iMap_.clear();
 
