@@ -395,8 +395,21 @@ namespace llvm {
     }
     unsigned isArtificial() const    { return getUnsignedField(14); }
 
-    StringRef getFilename() const    { return getCompileUnit().getFilename();}
-    StringRef getDirectory() const   { return getCompileUnit().getDirectory();}
+    StringRef getFilename() const    { 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getCompileUnit().getFilename();
+
+      DIFile F = getFieldAs<DIFile>(6); 
+      return F.getFilename();
+    }
+
+    StringRef getDirectory() const   { 
+      if (getVersion() == llvm::LLVMDebugVersion7)
+        return getCompileUnit().getFilename();
+
+      DIFile F = getFieldAs<DIFile>(6); 
+      return F.getDirectory();
+    }
 
     /// Verify - Verify that a subprogram descriptor is well formed.
     bool Verify() const;
