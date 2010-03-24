@@ -113,12 +113,7 @@ public:
   ///
   void EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
                 DenseMap<SDValue, unsigned> &VRBaseMap,
-                DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
-    if (Node->isMachineOpcode())
-      EmitMachineNode(Node, IsClone, IsCloned, VRBaseMap, EM);
-    else
-      EmitSpecialNode(Node, IsClone, IsCloned, VRBaseMap);
-  }
+                DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
 
   /// getBlock - Return the current basic block.
   MachineBasicBlock *getBlock() { return MBB; }
@@ -129,13 +124,6 @@ public:
   /// InstrEmitter - Construct an InstrEmitter and set it to start inserting
   /// at the given position in the given block.
   InstrEmitter(MachineBasicBlock *mbb, MachineBasicBlock::iterator insertpos);
-  
-private:
-  void EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
-                       DenseMap<SDValue, unsigned> &VRBaseMap,
-                       DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
-  void EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
-                       DenseMap<SDValue, unsigned> &VRBaseMap);
 };
 
 }
