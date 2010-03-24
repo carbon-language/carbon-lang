@@ -304,6 +304,23 @@ void LookupResult::configure() {
                  SemaRef.getLangOptions().CPlusPlus,
                  isForRedeclaration());
   IsAcceptableFn = getResultFilter(LookupKind);
+
+  // If we're looking for one of the allocation or deallocation
+  // operators, make sure that the implicitly-declared new and delete
+  // operators can be found.
+  if (!isForRedeclaration()) {
+    switch (Name.getCXXOverloadedOperator()) {
+    case OO_New:
+    case OO_Delete:
+    case OO_Array_New:
+    case OO_Array_Delete:
+      SemaRef.DeclareGlobalNewDelete();
+      break;
+
+    default:
+      break;
+    }
+  }
 }
 
 // Necessary because CXXBasePaths is not complete in Sema.h
