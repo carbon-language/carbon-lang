@@ -3515,34 +3515,6 @@ uint64_t CodeGenVTables::getMethodVtableIndex(GlobalDecl GD) {
   return I->second;
 }
 
-CodeGenVTables::AdjustmentVectorTy*
-CodeGenVTables::getAdjustments(GlobalDecl GD) {
-  SavedAdjustmentsTy::iterator I = SavedAdjustments.find(GD);
-  if (I != SavedAdjustments.end())
-    return &I->second;
-
-  const CXXRecordDecl *RD = cast<CXXRecordDecl>(GD.getDecl()->getDeclContext());
-  if (!SavedAdjustmentRecords.insert(RD).second)
-    return 0;
-
-  AddressPointsMapTy AddressPoints;
-  OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
-  D1(printf("vtable %s\n", RD->getNameAsCString()));
-  b.GenerateVtableForBase(RD);
-  b.GenerateVtableForVBases(RD);
-
-  for (OldVtableBuilder::SavedAdjustmentsVectorTy::iterator
-       i = b.getSavedAdjustments().begin(),
-       e = b.getSavedAdjustments().end(); i != e; i++)
-    SavedAdjustments[i->first].push_back(i->second);
-
-  I = SavedAdjustments.find(GD);
-  if (I != SavedAdjustments.end())
-    return &I->second;
-
-  return 0;
-}
-
 int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
                                                    const CXXRecordDecl *VBase) {
   ClassPairTy ClassPair(RD, VBase);

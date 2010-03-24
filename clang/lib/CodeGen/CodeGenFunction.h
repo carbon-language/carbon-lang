@@ -504,23 +504,9 @@ public:
   /// legal to call this function even if there is no current insertion point.
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
-  /// DynamicTypeAdjust - Do the non-virtual and virtual adjustments on an
-  /// object pointer to alter the dynamic type of the pointer.  Used by
-  /// GenerateCovariantThunk for building thunks.
-  llvm::Value *DynamicTypeAdjust(llvm::Value *V, 
-                                 const ThunkAdjustment &Adjustment);
-
   /// GenerateThunk - Generate a thunk for the given method.
   void GenerateThunk(llvm::Function *Fn, GlobalDecl GD, const ThunkInfo &Thunk);
   
-  llvm::Constant *GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
-                                bool Extern, 
-                                const ThunkAdjustment &ThisAdjustment);
-  llvm::Constant *
-  GenerateCovariantThunk(llvm::Function *Fn, GlobalDecl GD,
-                         bool Extern,
-                         const CovariantThunkAdjustment &Adjustment);
-
   void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type);
 
   void InitializeVtablePtrs(const CXXRecordDecl *ClassDecl);

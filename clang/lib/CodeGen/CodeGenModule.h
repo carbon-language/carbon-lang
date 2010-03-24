@@ -232,20 +232,9 @@ public:
                                  const ThunkAdjustment &ThisAdjustment);
   llvm::Constant *GetAddrOfCovariantThunk(GlobalDecl GD,
                                 const CovariantThunkAdjustment &ThisAdjustment);
-  void BuildThunksForVirtual(GlobalDecl GD);
-  void BuildThunksForVirtualRecursive(GlobalDecl GD, GlobalDecl BaseOGD);
 
   /// GetWeakRefReference - Get a reference to the target of VD.
   llvm::Constant *GetWeakRefReference(const ValueDecl *VD);
-
-  /// BuildThunk - Build a thunk for the given method.
-  llvm::Constant *BuildThunk(GlobalDecl GD, bool Extern, 
-                             const ThunkAdjustment &ThisAdjustment);
-
-  /// BuildCoVariantThunk - Build a thunk for the given method
-  llvm::Constant *
-  BuildCovariantThunk(const GlobalDecl &GD, bool Extern,
-                      const CovariantThunkAdjustment &Adjustment);
 
   /// GetNonVirtualBaseClassOffset - Returns the offset from a derived class to 
   /// its base class. Returns null if the offset is 0. 

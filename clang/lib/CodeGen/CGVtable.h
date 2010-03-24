@@ -251,10 +251,6 @@ private:
   /// pointers in the vtable for a given record decl.
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
 
-  typedef llvm::DenseMap<GlobalDecl, AdjustmentVectorTy> SavedAdjustmentsTy;
-  SavedAdjustmentsTy SavedAdjustments;
-  llvm::DenseSet<const CXXRecordDecl*> SavedAdjustmentRecords;
-
   typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
   
@@ -315,8 +311,6 @@ public:
   /// base.
   int64_t getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                      const CXXRecordDecl *VBase);
-
-  AdjustmentVectorTy *getAdjustments(GlobalDecl GD);
 
   llvm::GlobalVariable *getVtable(const CXXRecordDecl *RD);
   
