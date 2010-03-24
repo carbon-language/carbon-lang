@@ -3613,6 +3613,54 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
   return SDValue();
 }
 
+static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
+                                        DebugLoc &dl, SelectionDAG &DAG) {
+  EVT EltVT = VT.getVectorElementType();
+  unsigned NumElems = Elts.size();
+  
+  // FIXME: check for zeroes
+  LoadSDNode *LDBase = NULL;
+  unsigned LastLoadedElt = -1U;
+  for (unsigned i = 0; i < NumElems; ++i) {
+    SDValue Elt = Elts[i];
+    
+    if (!Elt.getNode() ||
+        (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.getNode())))
+      return SDValue();
+    if (!LDBase) {
+      if (Elt.getNode()->getOpcode() == ISD::UNDEF)
+        return SDValue();
+      LDBase = cast<LoadSDNode>(Elt.getNode());
+      LastLoadedElt = i;
+      continue;
+    }
+    if (Elt.getOpcode() == ISD::UNDEF)
+      continue;
+
+    LoadSDNode *LD = cast<LoadSDNode>(Elt);
+    if (!DAG.isConsecutiveLoad(LD, LDBase, EltVT.getSizeInBits()/8, i))
+      return SDValue();
+    LastLoadedElt = i;
+  }
+                                       
+  if (LastLoadedElt == NumElems - 1) {
+    if (DAG.InferPtrAlignment(LDBase->getBasePtr()) >= 16)
+      return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
+                         LDBase->getSrcValue(), LDBase->getSrcValueOffset(),
+                         LDBase->isVolatile(), LDBase->isNonTemporal(), 0);
+    return DAG.getLoad(VT, dl, LDBase->getChain(), LDBase->getBasePtr(),
+                       LDBase->getSrcValue(), LDBase->getSrcValueOffset(),
+                       LDBase->isVolatile(), LDBase->isNonTemporal(),
+                       LDBase->getAlignment());
+  } else if (NumElems == 4 && LastLoadedElt == 1) {
+    SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
+    SDValue Ops[] = { LDBase->getChain(), LDBase->getBasePtr() };
+    SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
+    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, ResNode);
+  }
+  return SDValue();
+}
+
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
@@ -3841,14 +3889,18 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return DAG.getVectorShuffle(VT, dl, V[0], V[1], &MaskVec[0]);
   }
 
-  if (Values.size() > 2) {
-    // If we have SSE 4.1, Expand into a number of inserts unless the number of
-    // values to be inserted is equal to the number of elements, in which case
-    // use the unpack code below in the hopes of matching the consecutive elts
-    // load merge pattern for shuffles.
-    // FIXME: We could probably just check that here directly.
-    if (Values.size() < NumElems && VT.getSizeInBits() == 128 &&
-        getSubtarget()->hasSSE41()) {
+  if (Values.size() > 1 && VT.getSizeInBits() == 128) {
+    // Check for a build vector of consecutive loads.
+    for (unsigned i = 0; i < NumElems; ++i)
+      V[i] = Op.getOperand(i);
+    
+    // Check for elements which are consecutive loads.
+    SDValue LD = EltsFromConsecutiveLoads(VT, V, dl, DAG);
+    if (LD.getNode())
+      return LD;
+    
+    // For SSE 4.1, use inserts into undef.  
+    if (getSubtarget()->hasSSE41()) {
       V[0] = DAG.getUNDEF(VT);
       for (unsigned i = 0; i < NumElems; ++i)
         if (Op.getOperand(i).getOpcode() != ISD::UNDEF)
@@ -3856,7 +3908,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
                              Op.getOperand(i), DAG.getIntPtrConstant(i));
       return V[0];
     }
-    // Expand into a number of unpckl*.
+    
+    // Otherwise, expand into a number of unpckl*
     // e.g. for v4f32
     //   Step 1: unpcklps 0, 2 ==> X: <?, ?, 2, 0>
     //         : unpcklps 1, 3 ==> Y: <?, ?, 3, 1>
@@ -3871,7 +3924,6 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     }
     return V[0];
   }
-
   return SDValue();
 }
 
@@ -8797,83 +8849,24 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
   return TargetLowering::isGAPlusOffset(N, GA, Offset);
 }
 
-static bool EltsFromConsecutiveLoads(ShuffleVectorSDNode *N, unsigned NumElems,
-                                     EVT EltVT, LoadSDNode *&LDBase,
-                                     unsigned &LastLoadedElt,
-                                     SelectionDAG &DAG, MachineFrameInfo *MFI,
-                                     const TargetLowering &TLI) {
-  LDBase = NULL;
-  LastLoadedElt = -1U;
-  for (unsigned i = 0; i < NumElems; ++i) {
-    if (N->getMaskElt(i) < 0) {
-      if (!LDBase)
-        return false;
-      continue;
-    }
-
-    SDValue Elt = DAG.getShuffleScalarElt(N, i);
-    if (!Elt.getNode() ||
-        (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.getNode())))
-      return false;
-    if (!LDBase) {
-      if (Elt.getNode()->getOpcode() == ISD::UNDEF)
-        return false;
-      LDBase = cast<LoadSDNode>(Elt.getNode());
-      LastLoadedElt = i;
-      continue;
-    }
-    if (Elt.getOpcode() == ISD::UNDEF)
-      continue;
-
-    LoadSDNode *LD = cast<LoadSDNode>(Elt);
-    if (!DAG.isConsecutiveLoad(LD, LDBase, EltVT.getSizeInBits()/8, i))
-      return false;
-    LastLoadedElt = i;
-  }
-  return true;
-}
-
 /// PerformShuffleCombine - Combine a vector_shuffle that is equal to
 /// build_vector load1, load2, load3, load4, <0, 1, 2, 3> into a 128-bit load
 /// if the load addresses are consecutive, non-overlapping, and in the right
-/// order.  In the case of v2i64, it will see if it can rewrite the
-/// shuffle to be an appropriate build vector so it can take advantage of
-// performBuildVectorCombine.
+/// order.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      const TargetLowering &TLI) {
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
-  EVT EltVT = VT.getVectorElementType();
   ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
-  unsigned NumElems = VT.getVectorNumElements();
 
   if (VT.getSizeInBits() != 128)
     return SDValue();
 
-  // Try to combine a vector_shuffle into a 128-bit load.
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-  LoadSDNode *LD = NULL;
-  unsigned LastLoadedElt;
-  if (!EltsFromConsecutiveLoads(SVN, NumElems, EltVT, LD, LastLoadedElt, DAG,
-                                MFI, TLI))
-    return SDValue();
-
-  if (LastLoadedElt == NumElems - 1) {
-    if (DAG.InferPtrAlignment(LD->getBasePtr()) >= 16)
-      return DAG.getLoad(VT, dl, LD->getChain(), LD->getBasePtr(),
-                         LD->getSrcValue(), LD->getSrcValueOffset(),
-                         LD->isVolatile(), LD->isNonTemporal(), 0);
-    return DAG.getLoad(VT, dl, LD->getChain(), LD->getBasePtr(),
-                       LD->getSrcValue(), LD->getSrcValueOffset(),
-                       LD->isVolatile(), LD->isNonTemporal(),
-                       LD->getAlignment());
-  } else if (NumElems == 4 && LastLoadedElt == 1) {
-    SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
-    SDValue Ops[] = { LD->getChain(), LD->getBasePtr() };
-    SDValue ResNode = DAG.getNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2);
-    return DAG.getNode(ISD::BIT_CONVERT, dl, VT, ResNode);
-  }
-  return SDValue();
+  SmallVector<SDValue, 16> Elts;
+  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
+    Elts.push_back(DAG.getShuffleScalarElt(SVN, i));
+  
+  return EltsFromConsecutiveLoads(VT, Elts, dl, DAG);
 }
 
 /// PerformShuffleCombine - Detect vector gather/scatter index generation
