@@ -66,5 +66,10 @@ int main()
   if (obj_C == j) foo() ; // expected-warning {{comparison of distinct pointer types ('Class' and 'int *')}}
   if (j == obj_C) foo() ; // expected-warning {{comparison of distinct pointer types ('int *' and 'Class')}}
 
+  Class bar1 = Nil;
+  Class <MyProtocol> bar = Nil;
+  bar = bar1;
+  bar1 = bar;
+
   return 0;
 }

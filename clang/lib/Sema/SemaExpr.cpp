@@ -4594,13 +4594,15 @@ Sema::AssignConvertType
 Sema::CheckObjCPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   if (lhsType->isObjCBuiltinType()) {
     // Class is not compatible with ObjC object pointers.
-    if (lhsType->isObjCClassType() && !rhsType->isObjCBuiltinType())
+    if (lhsType->isObjCClassType() && !rhsType->isObjCBuiltinType() &&
+        !rhsType->isObjCQualifiedClassType())
       return IncompatiblePointer;
     return Compatible;
   }
   if (rhsType->isObjCBuiltinType()) {
     // Class is not compatible with ObjC object pointers.
-    if (rhsType->isObjCClassType() && !lhsType->isObjCBuiltinType())
+    if (rhsType->isObjCClassType() && !lhsType->isObjCBuiltinType() &&
+        !lhsType->isObjCQualifiedClassType())
       return IncompatiblePointer;
     return Compatible;
   }
