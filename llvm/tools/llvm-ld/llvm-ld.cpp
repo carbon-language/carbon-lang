@@ -243,9 +243,6 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
 
   // Write it out
   WriteBitcodeToFile(M, Out);
-
-  // Close the bitcode file.
-  Out.close();
 }
 
 /// GenerateAssembly - generates a native assembly language source file from the
@@ -471,7 +468,6 @@ static void EmitShellScript(char **argv, Module *M) {
       Out2 << "    -load=" << FullLibraryPath.str() << " \\\n";
   }
   Out2 << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
-  Out2.close();
 }
 
 // BuildLinkItems -- This function generates a LinkItemList for the LinkItems
