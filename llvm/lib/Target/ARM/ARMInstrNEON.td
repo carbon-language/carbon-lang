@@ -853,7 +853,7 @@ def SubReg_i32_lane : SDNodeXForm<imm, [{
 // Instruction Classes
 //===----------------------------------------------------------------------===//
 
-// Same as N2V except that it doesn't pass a default NVdVmImmFrm to NDataI.
+// Same as N2V except that it doesn't pass a default N2RegFrm to NDataI.
 class N2V2<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
           bits<5> op11_7, bit op6, bit op4,
           dag oops, dag iops, Format f, InstrItinClass itin,
@@ -869,24 +869,24 @@ class N2V2<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
 }
 
 // Basic 2-register operations: single-, double- and quad-register.
-// This is used for NVdVmVCVTFrm form.
+// This is used for NVCVTFrm form.
 class N2VS<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
   : N2V2<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4,
-         (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), NVdVmVCVTFrm,
+         (outs DPR_VFP2:$dst), (ins DPR_VFP2:$src), NVCVTFrm,
          IIC_VUNAD, OpcodeStr, Dt, "$dst, $src", "", []>;
 class N2VD<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
   : N2V2<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4, (outs DPR:$dst),
-         (ins DPR:$src), NVdVmVCVTFrm, IIC_VUNAD, OpcodeStr, Dt,"$dst, $src","",
+         (ins DPR:$src), NVCVTFrm, IIC_VUNAD, OpcodeStr, Dt,"$dst, $src","",
          [(set DPR:$dst, (ResTy (OpNode (OpTy DPR:$src))))]>;
 class N2VQ<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op4, string OpcodeStr,
            string Dt, ValueType ResTy, ValueType OpTy, SDNode OpNode>
   : N2V2<op24_23, op21_20, op19_18, op17_16, op11_7, 1, op4, (outs QPR:$dst),
-         (ins QPR:$src), NVdVmVCVTFrm, IIC_VUNAQ, OpcodeStr, Dt,"$dst, $src","",
+         (ins QPR:$src), NVCVTFrm, IIC_VUNAQ, OpcodeStr, Dt,"$dst, $src","",
          [(set QPR:$dst, (ResTy (OpNode (OpTy QPR:$src))))]>;
 
 // Basic 2-register intrinsics, both double- and quad-register.

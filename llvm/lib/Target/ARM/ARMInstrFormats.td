@@ -59,10 +59,10 @@ def NEONDupFrm    : Format<28>;
 def MiscFrm       : Format<29>;
 def ThumbMiscFrm  : Format<30>;
 
-def NLdStFrm                : Format<31>;
-def N1RegModImmFrm          : Format<32>;
-def NVdVmImmFrm             : Format<33>;
-def NVdVmVCVTFrm            : Format<34>;
+def NLdStFrm            : Format<31>;
+def N1RegModImmFrm      : Format<32>;
+def N2RegFrm            : Format<33>;
+def NVCVTFrm            : Format<34>;
 
 // Misc flags.
 
@@ -1553,7 +1553,7 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
           bits<5> op11_7, bit op6, bit op4,
           dag oops, dag iops, InstrItinClass itin,
           string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, NVdVmImmFrm, itin, opc, dt, asm, cstr, pattern> {
+  : NDataI<oops, iops, N2RegFrm, itin, opc, dt, asm, cstr, pattern> {
   let Inst{24-23} = op24_23;
   let Inst{21-20} = op21_20;
   let Inst{19-18} = op19_18;
@@ -1568,7 +1568,7 @@ class N2VX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
            bits<5> op11_7, bit op6, bit op4,
            dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, string cstr, list<dag> pattern>
-  : NDataXI<oops, iops, NVdVmImmFrm, itin, opc, asm, cstr, pattern> {
+  : NDataXI<oops, iops, N2RegFrm, itin, opc, asm, cstr, pattern> {
   let Inst{24-23} = op24_23;
   let Inst{21-20} = op21_20;
   let Inst{19-18} = op19_18;
