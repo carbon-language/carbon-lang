@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+sse3 -stats |& not grep {machine-licm}
+; RUN: llc < %s -march=x86-64 -mattr=+sse3 -stats |& grep {2 machine-licm}
 ; rdar://6627786
 
 target triple = "x86_64-apple-darwin10.0"

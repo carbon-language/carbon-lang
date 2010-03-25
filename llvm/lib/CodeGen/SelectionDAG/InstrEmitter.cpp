@@ -578,13 +578,16 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   const TargetInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
   unsigned NodeOperands = CountOperands(Node);
-  bool HasPhysRegOuts = (NumResults > II.getNumDefs()) &&
-                        II.getImplicitDefs() != 0;
+  bool HasPhysRegOuts = NumResults > II.getNumDefs() && II.getImplicitDefs()!=0;
 #ifndef NDEBUG
   unsigned NumMIOperands = NodeOperands + NumResults;
-  assert((II.getNumOperands() == NumMIOperands ||
-          HasPhysRegOuts || II.isVariadic()) &&
-         "#operands for dag node doesn't match .td file!"); 
+  if (II.isVariadic())
+    assert(NumMIOperands >= II.getNumOperands() &&
+           "Too few operands for a variadic node!");
+  else
+    assert(NumMIOperands >= II.getNumOperands() &&
+           NumMIOperands <= II.getNumOperands()+II.getNumImplicitDefs() &&
+           "#operands for dag node doesn't match .td file!");
 #endif
 
   // Create the new machine instruction.
@@ -632,6 +635,18 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
         MI->addRegisterDead(Reg, TRI);
     }
   }
+  
+  // If the instruction has implicit defs and the node doesn't, mark the
+  // implicit def as dead.  If the node has any flag outputs, we don't do this
+  // because we don't know what implicit defs are being used by flagged nodes.
+  if (Node->getValueType(Node->getNumValues()-1) != MVT::Flag &&
+      // FIXME: This is a terrible hackaround for a liveintervals bug.
+      II.getNumImplicitDefs() < 8)
+    if (const unsigned *IDList = II.getImplicitDefs()) {
+      for (unsigned i = NumResults, e = II.getNumDefs()+II.getNumImplicitDefs();
+           i != e; ++i)
+        MI->addRegisterDead(IDList[i-II.getNumDefs()], TRI);
+    }
   return;
 }
 
