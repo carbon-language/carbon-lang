@@ -1,4 +1,4 @@
-
+//===----------------------------------------------------------------------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -1704,13 +1704,12 @@ def INC8r  : I<0xFE, MRM0r, (outs GR8 :$dst), (ins GR8 :$src), "inc{b}\t$dst",
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
 def INC16r : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src), 
                "inc{w}\t$dst",
-               [(set GR16:$dst, (add GR16:$src, 1)),
-                (implicit EFLAGS)]>,
+               [(set GR16:$dst, EFLAGS, (X86inc_flag GR16:$src))]>,
              OpSize, Requires<[In32BitMode]>;
 def INC32r : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src), 
                "inc{l}\t$dst",
-               [(set GR32:$dst, (add GR32:$src, 1)),
-                (implicit EFLAGS)]>, Requires<[In32BitMode]>;
+               [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src))]>,
+             Requires<[In32BitMode]>;
 }
 let isTwoAddress = 0, CodeSize = 2 in {
   def INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst), "inc{b}\t$dst",
@@ -1728,18 +1727,16 @@ let isTwoAddress = 0, CodeSize = 2 in {
 
 let CodeSize = 2 in
 def DEC8r  : I<0xFE, MRM1r, (outs GR8 :$dst), (ins GR8 :$src), "dec{b}\t$dst",
-               [(set GR8:$dst, (add GR8:$src, -1)),
-                (implicit EFLAGS)]>;
+               [(set GR8:$dst, EFLAGS, (X86dec_flag GR8:$src))]>;
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {   // Can xform into LEA.
 def DEC16r : I<0x48, AddRegFrm, (outs GR16:$dst), (ins GR16:$src), 
                "dec{w}\t$dst",
-               [(set GR16:$dst, (add GR16:$src, -1)),
-                (implicit EFLAGS)]>,
+               [(set GR16:$dst, EFLAGS, (X86dec_flag GR16:$src))]>,
              OpSize, Requires<[In32BitMode]>;
 def DEC32r : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src), 
                "dec{l}\t$dst",
-               [(set GR32:$dst, (add GR32:$src, -1)),
-                (implicit EFLAGS)]>, Requires<[In32BitMode]>;
+               [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src))]>,
+             Requires<[In32BitMode]>;
 }
 
 let isTwoAddress = 0, CodeSize = 2 in {
@@ -1760,21 +1757,20 @@ let isTwoAddress = 0, CodeSize = 2 in {
 // Logical operators...
 let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
-def AND8rr   : I<0x20, MRMDestReg,
-                (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
-                "and{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (and GR8:$src1, GR8:$src2)),
-                 (implicit EFLAGS)]>;
-def AND16rr  : I<0x21, MRMDestReg,
-                 (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                 "and{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (and GR16:$src1, GR16:$src2)),
-                  (implicit EFLAGS)]>, OpSize;
-def AND32rr  : I<0x21, MRMDestReg, 
-                 (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                 "and{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (and GR32:$src1, GR32:$src2)),
-                  (implicit EFLAGS)]>;
+def AND8rr  : I<0x20, MRMDestReg,
+               (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
+               "and{b}\t{$src2, $dst|$dst, $src2}",
+               [(set GR8:$dst, EFLAGS, (X86and_flag GR8:$src1, GR8:$src2))]>;
+def AND16rr : I<0x21, MRMDestReg,
+                (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
+                "and{w}\t{$src2, $dst|$dst, $src2}",
+                [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
+                                                      GR16:$src2))]>, OpSize;
+def AND32rr : I<0x21, MRMDestReg, 
+                (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                "and{l}\t{$src2, $dst|$dst, $src2}",
+                [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
+                                                      GR32:$src2))]>;
 }
 
 // AND instructions with the destination register in REG and the source register
@@ -1791,45 +1787,46 @@ def AND32rr_REV : I<0x23, MRMSrcReg, (outs GR32:$dst),
 def AND8rm   : I<0x22, MRMSrcMem, 
                  (outs GR8 :$dst), (ins GR8 :$src1, i8mem :$src2),
                  "and{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (and GR8:$src1, (loadi8 addr:$src2))),
-                 (implicit EFLAGS)]>;
+                [(set GR8:$dst, EFLAGS, (X86and_flag GR8:$src1,
+                                                     (loadi8 addr:$src2)))]>;
 def AND16rm  : I<0x23, MRMSrcMem, 
                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                  "and{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (and GR16:$src1, (loadi16 addr:$src2))),
-                 (implicit EFLAGS)]>, OpSize;
+                [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
+                                                      (loadi16 addr:$src2)))]>,
+               OpSize;
 def AND32rm  : I<0x23, MRMSrcMem,
                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                  "and{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (and GR32:$src1, (loadi32 addr:$src2))),
-                 (implicit EFLAGS)]>;
+                [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
+                                                      (loadi32 addr:$src2)))]>;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (outs GR8 :$dst), (ins GR8 :$src1, i8imm :$src2),
                    "and{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, (and GR8:$src1, imm:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR8:$dst, EFLAGS, (X86and_flag GR8:$src1,
+                                                        imm:$src2))]>;
 def AND16ri  : Ii16<0x81, MRM4r, 
                     (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                     "and{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (and GR16:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
+                                                          imm:$src2))]>, OpSize;
 def AND32ri  : Ii32<0x81, MRM4r, 
                     (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
                     "and{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (and GR32:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
+                                                          imm:$src2))]>;
 def AND16ri8 : Ii8<0x83, MRM4r, 
                    (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
                    "and{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (and GR16:$src1, i16immSExt8:$src2)),
-                    (implicit EFLAGS)]>,
+                   [(set GR16:$dst, EFLAGS, (X86and_flag GR16:$src1,
+                                                         i16immSExt8:$src2))]>,
                    OpSize;
 def AND32ri8 : Ii8<0x83, MRM4r, 
                    (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                    "and{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (and GR32:$src1, i32immSExt8:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR32:$dst, EFLAGS, (X86and_flag GR32:$src1,
+                                                         i32immSExt8:$src2))]>;
 
 let isTwoAddress = 0 in {
   def AND8mr   : I<0x20, MRMDestMem,
@@ -1890,18 +1887,16 @@ let isCommutable = 1 in {   // X = OR Y, Z   --> X = OR Z, Y
 def OR8rr    : I<0x08, MRMDestReg, (outs GR8 :$dst), 
                  (ins GR8 :$src1, GR8 :$src2),
                  "or{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (or GR8:$src1, GR8:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR8:$dst, EFLAGS, (X86or_flag GR8:$src1, GR8:$src2))]>;
 def OR16rr   : I<0x09, MRMDestReg, (outs GR16:$dst), 
                  (ins GR16:$src1, GR16:$src2),
                  "or{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (or GR16:$src1, GR16:$src2)),
-                  (implicit EFLAGS)]>, OpSize;
+                 [(set GR16:$dst, EFLAGS, (X86or_flag GR16:$src1,GR16:$src2))]>,
+               OpSize;
 def OR32rr   : I<0x09, MRMDestReg, (outs GR32:$dst), 
                  (ins GR32:$src1, GR32:$src2),
                  "or{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (or GR32:$src1, GR32:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, EFLAGS, (X86or_flag GR32:$src1,GR32:$src2))]>;
 }
 
 // OR instructions with the destination register in REG and the source register
@@ -1915,48 +1910,48 @@ def OR32rr_REV : I<0x0B, MRMSrcReg, (outs GR32:$dst),
                    (ins GR32:$src1, GR32:$src2),
                    "or{l}\t{$src2, $dst|$dst, $src2}", []>;
                   
-def OR8rm    : I<0x0A, MRMSrcMem , (outs GR8 :$dst), 
+def OR8rm    : I<0x0A, MRMSrcMem, (outs GR8 :$dst), 
                  (ins GR8 :$src1, i8mem :$src2),
                  "or{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (or GR8:$src1, (load addr:$src2))),
-                 (implicit EFLAGS)]>;
-def OR16rm   : I<0x0B, MRMSrcMem , (outs GR16:$dst), 
+                [(set GR8:$dst, EFLAGS, (X86or_flag GR8:$src1,
+                                                    (load addr:$src2)))]>;
+def OR16rm   : I<0x0B, MRMSrcMem, (outs GR16:$dst), 
                  (ins GR16:$src1, i16mem:$src2),
                  "or{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (or GR16:$src1, (load addr:$src2))),
-                 (implicit EFLAGS)]>, OpSize;
-def OR32rm   : I<0x0B, MRMSrcMem , (outs GR32:$dst), 
+                [(set GR16:$dst, EFLAGS, (X86or_flag GR16:$src1,
+                                                     (load addr:$src2)))]>,
+               OpSize;
+def OR32rm   : I<0x0B, MRMSrcMem, (outs GR32:$dst), 
                  (ins GR32:$src1, i32mem:$src2),
                  "or{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (or GR32:$src1, (load addr:$src2))),
-                 (implicit EFLAGS)]>;
+                [(set GR32:$dst, EFLAGS, (X86or_flag GR32:$src1,
+                                                     (load addr:$src2)))]>;
 
 def OR8ri    : Ii8 <0x80, MRM1r, (outs GR8 :$dst), 
                     (ins GR8 :$src1, i8imm:$src2),
                     "or{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (or GR8:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR8:$dst,EFLAGS, (X86or_flag GR8:$src1, imm:$src2))]>;
 def OR16ri   : Ii16<0x81, MRM1r, (outs GR16:$dst), 
                     (ins GR16:$src1, i16imm:$src2),
                     "or{w}\t{$src2, $dst|$dst, $src2}", 
-                    [(set GR16:$dst, (or GR16:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set GR16:$dst, EFLAGS, (X86or_flag GR16:$src1,
+                                                        imm:$src2))]>, OpSize;
 def OR32ri   : Ii32<0x81, MRM1r, (outs GR32:$dst), 
                     (ins GR32:$src1, i32imm:$src2),
                     "or{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (or GR32:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR32:$dst, EFLAGS, (X86or_flag GR32:$src1,
+                                                         imm:$src2))]>;
 
 def OR16ri8  : Ii8<0x83, MRM1r, (outs GR16:$dst), 
                    (ins GR16:$src1, i16i8imm:$src2),
                    "or{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (or GR16:$src1, i16immSExt8:$src2)),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set GR16:$dst, EFLAGS, (X86or_flag GR16:$src1,
+                                                i16immSExt8:$src2))]>, OpSize;
 def OR32ri8  : Ii8<0x83, MRM1r, (outs GR32:$dst), 
                    (ins GR32:$src1, i32i8imm:$src2),
                    "or{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (or GR32:$src1, i32immSExt8:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR32:$dst, EFLAGS, (X86or_flag GR32:$src1,
+                                                        i32immSExt8:$src2))]>;
 let isTwoAddress = 0 in {
   def OR8mr  : I<0x08, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src),
                  "or{b}\t{$src, $dst|$dst, $src}",
@@ -2006,18 +2001,18 @@ let isCommutable = 1 in { // X = XOR Y, Z --> X = XOR Z, Y
   def XOR8rr   : I<0x30, MRMDestReg,
                    (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
                    "xor{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, (xor GR8:$src1, GR8:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR8:$dst, EFLAGS, (X86xor_flag GR8:$src1,
+                                                        GR8:$src2))]>;
   def XOR16rr  : I<0x31, MRMDestReg, 
                    (outs GR16:$dst), (ins GR16:$src1, GR16:$src2), 
                    "xor{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (xor GR16:$src1, GR16:$src2)),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set GR16:$dst, EFLAGS, (X86xor_flag GR16:$src1,
+                                                         GR16:$src2))]>, OpSize;
   def XOR32rr  : I<0x31, MRMDestReg, 
                    (outs GR32:$dst), (ins GR32:$src1, GR32:$src2), 
                    "xor{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (xor GR32:$src1, GR32:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR32:$dst, EFLAGS, (X86xor_flag GR32:$src1,
+                                                         GR32:$src2))]>;
 } // isCommutable = 1
 
 // XOR instructions with the destination register in REG and the source register
@@ -2031,49 +2026,48 @@ def XOR32rr_REV : I<0x33, MRMSrcReg, (outs GR32:$dst),
                     (ins GR32:$src1, GR32:$src2),
                    "xor{l}\t{$src2, $dst|$dst, $src2}", []>;
 
-def XOR8rm   : I<0x32, MRMSrcMem , 
+def XOR8rm   : I<0x32, MRMSrcMem, 
                  (outs GR8 :$dst), (ins GR8:$src1, i8mem :$src2), 
                  "xor{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (xor GR8:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
-def XOR16rm  : I<0x33, MRMSrcMem , 
+                 [(set GR8:$dst, EFLAGS, (X86xor_flag GR8:$src1,
+                                                      (load addr:$src2)))]>;
+def XOR16rm  : I<0x33, MRMSrcMem, 
                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2), 
                  "xor{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (xor GR16:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>,
+                 [(set GR16:$dst, EFLAGS, (X86xor_flag GR16:$src1,
+                                                       (load addr:$src2)))]>,
                  OpSize;
-def XOR32rm  : I<0x33, MRMSrcMem , 
+def XOR32rm  : I<0x33, MRMSrcMem, 
                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2), 
                  "xor{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (xor GR32:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, EFLAGS, (X86xor_flag GR32:$src1,
+                                                       (load addr:$src2)))]>;
 
-def XOR8ri   : Ii8<0x80, MRM6r, 
-                   (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2), 
-                   "xor{b}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR8:$dst, (xor GR8:$src1, imm:$src2)),
-                    (implicit EFLAGS)]>;
-def XOR16ri  : Ii16<0x81, MRM6r, 
-                    (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2), 
-                    "xor{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (xor GR16:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>, OpSize;
+def XOR8ri  : Ii8<0x80, MRM6r, 
+                  (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2), 
+                  "xor{b}\t{$src2, $dst|$dst, $src2}",
+                  [(set GR8:$dst, EFLAGS, (X86xor_flag GR8:$src1, imm:$src2))]>;
+def XOR16ri : Ii16<0x81, MRM6r, 
+                   (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2), 
+                   "xor{w}\t{$src2, $dst|$dst, $src2}",
+                   [(set GR16:$dst, EFLAGS, (X86xor_flag GR16:$src1,
+                                                         imm:$src2))]>, OpSize;
 def XOR32ri  : Ii32<0x81, MRM6r, 
                     (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2), 
                     "xor{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (xor GR32:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR32:$dst, EFLAGS, (X86xor_flag GR32:$src1,
+                                                          imm:$src2))]>;
 def XOR16ri8 : Ii8<0x83, MRM6r, 
                    (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
                    "xor{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (xor GR16:$src1, i16immSExt8:$src2)),
-                    (implicit EFLAGS)]>,
+                   [(set GR16:$dst, EFLAGS, (X86xor_flag GR16:$src1,
+                                                         i16immSExt8:$src2))]>,
                    OpSize;
 def XOR32ri8 : Ii8<0x83, MRM6r, 
                    (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                    "xor{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (xor GR32:$src1, i32immSExt8:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR32:$dst, EFLAGS, (X86xor_flag GR32:$src1,
+                                                         i32immSExt8:$src2))]>;
 
 let isTwoAddress = 0 in {
   def XOR8mr   : I<0x30, MRMDestMem,
@@ -2120,12 +2114,12 @@ let isTwoAddress = 0 in {
                  [(store (xor (load addr:$dst), i32immSExt8:$src), addr:$dst),
                   (implicit EFLAGS)]>;
                   
-  def XOR8i8 : Ii8 <0x34, RawFrm, (outs), (ins i8imm:$src),
-                   "xor{b}\t{$src, %al|%al, $src}", []>;
-  def XOR16i16 : Ii16 <0x35, RawFrm, (outs), (ins i16imm:$src),
-                        "xor{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
-  def XOR32i32 : Ii32 <0x35, RawFrm, (outs), (ins i32imm:$src),
-                        "xor{l}\t{$src, %eax|%eax, $src}", []>;
+  def XOR8i8   : Ii8 <0x34, RawFrm, (outs), (ins i8imm:$src),
+                      "xor{b}\t{$src, %al|%al, $src}", []>;
+  def XOR16i16 : Ii16<0x35, RawFrm, (outs), (ins i16imm:$src),
+                      "xor{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def XOR32i32 : Ii32<0x35, RawFrm, (outs), (ins i32imm:$src),
+                      "xor{l}\t{$src, %eax|%eax, $src}", []>;
 } // isTwoAddress = 0
 } // Defs = [EFLAGS]
 
@@ -4878,137 +4872,88 @@ def : Pat<(parallel (X86smul_flag GR32:$src1, 2),
           (ADD32rr GR32:$src1, GR32:$src1)>;
 }
 
-// INC and DEC with EFLAGS result. Note that these do not set CF.
-def : Pat<(add GR8:$src, 1), (INC8r GR8:$src)>;
+// Patterns for nodes that do not produce flags, for instructions that do.
 
-def : Pat<(parallel (X86dec_flag GR8:$src), (implicit EFLAGS)),
-          (DEC8r GR8:$src)>;
+// Increment reg.
+def : Pat<(add GR8:$src ,  1), (INC8r  GR8:$src)>;
+def : Pat<(add GR16:$src,  1), (INC16r GR16:$src)>, Requires<[In32BitMode]>;
+def : Pat<(add GR32:$src,  1), (INC32r GR32:$src)>, Requires<[In32BitMode]>;
 
-def : Pat<(parallel (X86inc_flag GR16:$src), (implicit EFLAGS)),
-          (INC16r GR16:$src)>, Requires<[In32BitMode]>;
-def : Pat<(parallel (X86dec_flag GR16:$src), (implicit EFLAGS)),
-          (DEC16r GR16:$src)>, Requires<[In32BitMode]>;
+// Decrement reg.
+def : Pat<(add GR8:$src , -1), (DEC8r  GR8:$src)>;
+def : Pat<(add GR16:$src, -1), (DEC16r GR16:$src)>, Requires<[In32BitMode]>;
+def : Pat<(add GR32:$src, -1), (DEC32r GR32:$src)>, Requires<[In32BitMode]>;
 
-def : Pat<(parallel (X86inc_flag GR32:$src), (implicit EFLAGS)),
-          (INC32r GR32:$src)>, Requires<[In32BitMode]>;
-def : Pat<(parallel (X86dec_flag GR32:$src), (implicit EFLAGS)),
-          (DEC32r GR32:$src)>, Requires<[In32BitMode]>;
+// or reg/reg.
+def : Pat<(or GR8 :$src1, GR8 :$src2), (OR8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(or GR16:$src1, GR16:$src2), (OR16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(or GR32:$src1, GR32:$src2), (OR32rr GR32:$src1, GR32:$src2)>;
 
-// Register-Register Or with EFLAGS result
-def : Pat<(parallel (X86or_flag GR8:$src1, GR8:$src2),
-                    (implicit EFLAGS)),
-          (OR8rr GR8:$src1, GR8:$src2)>;
-def : Pat<(parallel (X86or_flag GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
-          (OR16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (X86or_flag GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
-          (OR32rr GR32:$src1, GR32:$src2)>;
-
-// Register-Memory Or with EFLAGS result
-def : Pat<(parallel (X86or_flag GR8:$src1, (loadi8 addr:$src2)),
-                    (implicit EFLAGS)),
+// or reg/mem
+def : Pat<(or GR8:$src1, (loadi8 addr:$src2)),
           (OR8rm GR8:$src1, addr:$src2)>;
-def : Pat<(parallel (X86or_flag GR16:$src1, (loadi16 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(or GR16:$src1, (loadi16 addr:$src2)),
           (OR16rm GR16:$src1, addr:$src2)>;
-def : Pat<(parallel (X86or_flag GR32:$src1, (loadi32 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(or GR32:$src1, (loadi32 addr:$src2)),
           (OR32rm GR32:$src1, addr:$src2)>;
 
-// Register-Integer Or with EFLAGS result
-def : Pat<(parallel (X86or_flag GR8:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (OR8ri GR8:$src1, imm:$src2)>;
-def : Pat<(parallel (X86or_flag GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (OR16ri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (X86or_flag GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (OR32ri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (X86or_flag GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+// or reg/imm
+def : Pat<(or GR8:$src1 , imm:$src2), (OR8ri  GR8 :$src1, imm:$src2)>;
+def : Pat<(or GR16:$src1, imm:$src2), (OR16ri GR16:$src1, imm:$src2)>;
+def : Pat<(or GR32:$src1, imm:$src2), (OR32ri GR32:$src1, imm:$src2)>;
+def : Pat<(or GR16:$src1, i16immSExt8:$src2),
           (OR16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86or_flag GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(or GR32:$src1, i32immSExt8:$src2),
           (OR32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-// Register-Register XOr with EFLAGS result
-def : Pat<(parallel (X86xor_flag GR8:$src1, GR8:$src2),
-                    (implicit EFLAGS)),
-          (XOR8rr GR8:$src1, GR8:$src2)>;
-def : Pat<(parallel (X86xor_flag GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
-          (XOR16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (X86xor_flag GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
-          (XOR32rr GR32:$src1, GR32:$src2)>;
+// xor reg/reg
+def : Pat<(xor GR8 :$src1, GR8 :$src2), (XOR8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(xor GR16:$src1, GR16:$src2), (XOR16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(xor GR32:$src1, GR32:$src2), (XOR32rr GR32:$src1, GR32:$src2)>;
 
-// Register-Memory XOr with EFLAGS result
-def : Pat<(parallel (X86xor_flag GR8:$src1, (loadi8 addr:$src2)),
-                    (implicit EFLAGS)),
+// xor reg/mem
+def : Pat<(xor GR8:$src1, (loadi8 addr:$src2)),
           (XOR8rm GR8:$src1, addr:$src2)>;
-def : Pat<(parallel (X86xor_flag GR16:$src1, (loadi16 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(xor GR16:$src1, (loadi16 addr:$src2)),
           (XOR16rm GR16:$src1, addr:$src2)>;
-def : Pat<(parallel (X86xor_flag GR32:$src1, (loadi32 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(xor GR32:$src1, (loadi32 addr:$src2)),
           (XOR32rm GR32:$src1, addr:$src2)>;
 
-// Register-Integer XOr with EFLAGS result
-def : Pat<(parallel (X86xor_flag GR8:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+// xor reg/imm
+def : Pat<(xor GR8:$src1, imm:$src2),
           (XOR8ri GR8:$src1, imm:$src2)>;
-def : Pat<(parallel (X86xor_flag GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(xor GR16:$src1, imm:$src2),
           (XOR16ri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (X86xor_flag GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(xor GR32:$src1, imm:$src2),
           (XOR32ri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (X86xor_flag GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(xor GR16:$src1, i16immSExt8:$src2),
           (XOR16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86xor_flag GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(xor GR32:$src1, i32immSExt8:$src2),
           (XOR32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-// Register-Register And with EFLAGS result
-def : Pat<(parallel (X86and_flag GR8:$src1, GR8:$src2),
-                    (implicit EFLAGS)),
-          (AND8rr GR8:$src1, GR8:$src2)>;
-def : Pat<(parallel (X86and_flag GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
-          (AND16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (X86and_flag GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
-          (AND32rr GR32:$src1, GR32:$src2)>;
+// and reg/reg
+def : Pat<(and GR8 :$src1, GR8 :$src2), (AND8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(and GR16:$src1, GR16:$src2), (AND16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(and GR32:$src1, GR32:$src2), (AND32rr GR32:$src1, GR32:$src2)>;
 
-// Register-Memory And with EFLAGS result
-def : Pat<(parallel (X86and_flag GR8:$src1, (loadi8 addr:$src2)),
-                    (implicit EFLAGS)),
+// and reg/mem
+def : Pat<(and GR8:$src1, (loadi8 addr:$src2)),
           (AND8rm GR8:$src1, addr:$src2)>;
-def : Pat<(parallel (X86and_flag GR16:$src1, (loadi16 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(and GR16:$src1, (loadi16 addr:$src2)),
           (AND16rm GR16:$src1, addr:$src2)>;
-def : Pat<(parallel (X86and_flag GR32:$src1, (loadi32 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(and GR32:$src1, (loadi32 addr:$src2)),
           (AND32rm GR32:$src1, addr:$src2)>;
 
-// Register-Integer And with EFLAGS result
-def : Pat<(parallel (X86and_flag GR8:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+// and reg/imm
+def : Pat<(and GR8:$src1, imm:$src2),
           (AND8ri GR8:$src1, imm:$src2)>;
-def : Pat<(parallel (X86and_flag GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(and GR16:$src1, imm:$src2),
           (AND16ri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (X86and_flag GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(and GR32:$src1, imm:$src2),
           (AND32ri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (X86and_flag GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(and GR16:$src1, i16immSExt8:$src2),
           (AND16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86and_flag GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(and GR32:$src1, i32immSExt8:$src2),
           (AND32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
 // -disable-16bit support.
