@@ -247,7 +247,7 @@ public:
              CodeGenModule &cgm, bool GenerateDefinition)
     : Inits(inits), Class(c), CGM(cgm),
       BLayout(cgm.getContext().getASTRecordLayout(c)),
-      AddressPoints(*cgm.getVTables().AddressPoints[c]),
+      AddressPoints(*cgm.getVTables().OldAddressPoints[c]),
       VMContext(cgm.getModule().getContext()),
       GenerateDefinition(GenerateDefinition) {
     

@@ -225,7 +225,8 @@ public:
 
   const CodeGenVTables::AddrSubMap_t& getAddressPoints(const CXXRecordDecl *RD);
 
-  llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
+  // FIXME: Remove this.
+  llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> OldAddressPoints;
 
 private:
   CodeGenModule &CGM;
@@ -269,7 +270,10 @@ private:
 
   typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, 
                                    BaseSubobject>, uint64_t> AddressPointsMapTy;
-
+  
+  /// Address points - Vtable address points.
+  AddressPointsMapTy AddressPoints;
+  
   uint64_t getNumVTableComponents(const CXXRecordDecl *RD) const {
     assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
     

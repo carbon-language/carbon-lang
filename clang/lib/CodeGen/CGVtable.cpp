@@ -1093,6 +1093,9 @@ public:
   
   typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
     VBaseOffsetOffsetsMapTy;
+  
+  typedef llvm::DenseMap<BaseSubobject, uint64_t> 
+    AddressPointsMapTy;
 
 private:
   /// VTables - Global vtable information.
@@ -1131,8 +1134,6 @@ private:
   
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
-
-  typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
 
   /// AddressPoints - Address points for the vtable being built.
   AddressPointsMapTy AddressPoints;
@@ -1311,14 +1312,22 @@ public:
     return Components.size();
   }
 
-  const uint64_t *vtable_components_data_begin() {
+  const uint64_t *vtable_components_data_begin() const {
     return reinterpret_cast<const uint64_t *>(Components.begin());
   }
   
-  const uint64_t *vtable_components_data_end() {
+  const uint64_t *vtable_components_data_end() const {
     return reinterpret_cast<const uint64_t *>(Components.end());
   }
   
+  AddressPointsMapTy::const_iterator address_points_begin() const {
+    return AddressPoints.begin();
+  }
+
+  AddressPointsMapTy::const_iterator address_points_end() const {
+    return AddressPoints.end();
+  }
+
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
 };
@@ -2481,7 +2490,7 @@ private:
   static llvm::DenseMap<CtorVtable_t, int64_t>&
   AllocAddressPoint(CodeGenModule &cgm, const CXXRecordDecl *l,
                     const CXXRecordDecl *c) {
-    CodeGenVTables::AddrMap_t *&oref = cgm.getVTables().AddressPoints[l];
+    CodeGenVTables::AddrMap_t *&oref = cgm.getVTables().OldAddressPoints[l];
     if (oref == 0)
       oref = new CodeGenVTables::AddrMap_t;
 
@@ -3575,7 +3584,7 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
 
 const CodeGenVTables::AddrSubMap_t &
 CodeGenVTables::getAddressPoints(const CXXRecordDecl *RD) {
-  if (!AddressPoints[RD]) {
+  if (!OldAddressPoints[RD]) {
     OldVtableBuilder::AddressPointsMapTy AddressPoints;
     OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
     
@@ -3583,7 +3592,7 @@ CodeGenVTables::getAddressPoints(const CXXRecordDecl *RD) {
     b.GenerateVtableForVBases(RD, 0);
   }
   
-  return *(*AddressPoints[RD])[RD];
+  return *(*OldAddressPoints[RD])[RD];
 }
 
 llvm::GlobalVariable *
@@ -3933,6 +3942,19 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
 
   // Add the known thunks.
   Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
+  
+  // Add the address points.
+  for (VtableBuilder::AddressPointsMapTy::const_iterator I =
+       Builder.address_points_begin(), E = Builder.address_points_end();
+       I != E; ++I) {
+    
+    uint64_t &AddressPoint = AddressPoints[std::make_pair(RD, I->first)];
+    
+    // Check if we already have the address points for this base.
+    assert(!AddressPoint && "Address point already exists for this base!");
+    
+    AddressPoint = I->second;
+  }
   
   // If we don't have the vbase information for this class, insert it.
   // getVirtualBaseOffsetOffset will compute it separately without computing
