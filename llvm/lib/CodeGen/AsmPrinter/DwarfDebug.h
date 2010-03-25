@@ -141,6 +141,9 @@ class DwarfDebug : public DwarfPrinter {
   /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
   /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
   DenseMap<MDNode *, DbgScope *> AbstractScopes;
+
+  /// AbstractScopesList - Tracks abstract scopes constructed while processing
+  /// a function. This list is cleared during endFunction().
   SmallVector<DbgScope *, 4>AbstractScopesList;
 
   /// AbstractVariables - Collection on abstract variables.  Owned by the
