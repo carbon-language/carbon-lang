@@ -1941,6 +1941,7 @@ let Constraints = "$src1 = $dst" in {
 
 //===---------------------------------------------------------------------===//
 // SSE integer instructions
+let ExeDomain = SSEPackedInt in {
 
 // Move Instructions
 let neverHasSideEffects = 1 in
@@ -2049,6 +2050,7 @@ multiclass PDI_binop_rm_v2i64<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 
 } // Constraints = "$src1 = $dst"
+} // ExeDomain = SSEPackedInt
 
 // 128-bit Integer Arithmetic
 
@@ -2111,7 +2113,8 @@ defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                int_x86_sse2_psra_d, int_x86_sse2_psrai_d>;
 
 // 128-bit logical shifts.
-let Constraints = "$src1 = $dst", neverHasSideEffects = 1 in {
+let Constraints = "$src1 = $dst", neverHasSideEffects = 1,
+    ExeDomain = SSEPackedInt in {
   def PSLLDQri : PDIi8<0x73, MRM7r,
                        (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
                        "pslldq\t{$src2, $dst|$dst, $src2}", []>;
@@ -2145,7 +2148,7 @@ defm PAND : PDI_binop_rm_v2i64<0xDB, "pand", and, 1>;
 defm POR  : PDI_binop_rm_v2i64<0xEB, "por" , or , 1>;
 defm PXOR : PDI_binop_rm_v2i64<0xEF, "pxor", xor, 1>;
 
-let Constraints = "$src1 = $dst" in {
+let Constraints = "$src1 = $dst", ExeDomain = SSEPackedInt in {
   def PANDNrr : PDI<0xDF, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "pandn\t{$src2, $dst|$dst, $src2}",
@@ -2198,6 +2201,8 @@ def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
 defm PACKSSWB : PDI_binop_rm_int<0x63, "packsswb", int_x86_sse2_packsswb_128>;
 defm PACKSSDW : PDI_binop_rm_int<0x6B, "packssdw", int_x86_sse2_packssdw_128>;
 defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128>;
+
+let ExeDomain = SSEPackedInt in {
 
 // Shuffle and unpack instructions
 let AddedComplexity = 5 in {
@@ -2375,10 +2380,13 @@ def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
                      "maskmovdqu\t{$mask, $src|$src, $mask}",
                      [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, RDI)]>;
 
+} // ExeDomain = SSEPackedInt
+
 // Non-temporal stores
 def MOVNTPDmr_Int : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                         "movntpd\t{$src, $dst|$dst, $src}",
                         [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
+let ExeDomain = SSEPackedInt in
 def MOVNTDQmr_Int : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                         "movntdq\t{$src, $dst|$dst, $src}",
                         [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
@@ -2392,6 +2400,7 @@ def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntpd\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore(v2f64 VR128:$src), addr:$dst)]>;
 
+let ExeDomain = SSEPackedInt in
 def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntdq\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
