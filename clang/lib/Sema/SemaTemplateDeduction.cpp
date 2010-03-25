@@ -987,13 +987,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
       Decl *Param
         = const_cast<NamedDecl *>(
                                 Partial->getTemplateParameters()->getParam(I));
-      if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
-        Info.Param = TTP;
-      else if (NonTypeTemplateParmDecl *NTTP
-                 = dyn_cast<NonTypeTemplateParmDecl>(Param))
-        Info.Param = NTTP;
-      else
-        Info.Param = cast<TemplateTemplateParmDecl>(Param);
+      Info.Param = makeTemplateParameter(Param);
       return TDK_Incomplete;
     }
 
@@ -1010,6 +1004,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   // verify that the instantiated template arguments are both valid
   // and are equivalent to the template arguments originally provided
   // to the class template.
+  Sema::LocalInstantiationScope InstScope(*this);
   ClassTemplateDecl *ClassTemplate = Partial->getSpecializedTemplate();
   const TemplateArgumentLoc *PartialTemplateArgs
     = Partial->getTemplateArgsAsWritten();
@@ -1458,6 +1453,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
   // The types of the parameters from which we will perform template argument
   // deduction.
+  Sema::LocalInstantiationScope InstScope(*this);
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
   llvm::SmallVector<TemplateArgument, 4> Deduced;
@@ -1612,6 +1608,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   QualType FunctionType = Function->getType();
 
   // Substitute any explicit template arguments.
+  Sema::LocalInstantiationScope InstScope(*this);
   llvm::SmallVector<TemplateArgument, 4> Deduced;
   llvm::SmallVector<QualType, 4> ParamTypes;
   if (ExplicitTemplateArgs) {
@@ -1739,6 +1736,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // modulo the various allowed differences.
 
   // Finish template argument deduction.
+  Sema::LocalInstantiationScope InstScope(*this);
   FunctionDecl *Spec = 0;
   TemplateDeductionResult Result
     = FinishTemplateArgumentDeduction(FunctionTemplate, Deduced, Spec, Info);

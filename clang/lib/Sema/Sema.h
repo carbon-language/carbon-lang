@@ -3487,15 +3487,27 @@ public:
     /// \brief Whether we have already exited this scope.
     bool Exited;
 
+    /// \brief Whether this scope is temporary, meaning that we should
+    /// remove any additions we make once we exit this
+    /// scope. Temporary scopes are always combined with their outer
+    /// scopes.
+    bool Temporary;
+
+    /// \brief List of the declarations that we have added into this
+    /// temporary scope. They will be removed when we exit the
+    /// temporary scope.
+    llvm::SmallVector<const Decl *, 4> AddedTemporaryDecls;
+
     // This class is non-copyable
     LocalInstantiationScope(const LocalInstantiationScope &);
     LocalInstantiationScope &operator=(const LocalInstantiationScope &);
 
   public:
-    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
+    LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false,
+                            bool Temporary = false)
       : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope), 
-        Exited(false) {
-      if (!CombineWithOuterScope)
+        Exited(false), Temporary(Temporary) {
+      if (!CombineWithOuterScope && !Temporary)
         SemaRef.CurrentInstantiationScope = this;
       else
         assert(SemaRef.CurrentInstantiationScope && 
@@ -3503,8 +3515,11 @@ public:
     }
 
     ~LocalInstantiationScope() {
-      if (!Exited)
+      if (!Exited) {
         SemaRef.CurrentInstantiationScope = Outer;
+        for (unsigned I = 0, N = AddedTemporaryDecls.size(); I != N; ++I)
+          LocalDecls.erase(AddedTemporaryDecls[I]);
+      }
     }
 
     /// \brief Exit this local instantiation scope early.
@@ -3537,6 +3552,10 @@ public:
     void InstantiatedLocal(const Decl *D, Decl *Inst) {
       Decl *&Stored = LocalDecls[D];
       assert((!Stored || Stored == Inst) && "Already instantiated this local");
+
+      if (Temporary && !Stored)
+        AddedTemporaryDecls.push_back(D);
+
       Stored = Inst;
     }
   };

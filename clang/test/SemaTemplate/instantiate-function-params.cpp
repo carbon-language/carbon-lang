@@ -31,3 +31,14 @@ template < typename TT > struct ForwardIterator                              : I
 };
 typedef instantiate< &requirement_<void(*)(ForwardIterator<char*> x)>::failed> boost_concept_checkX; // expected-error{{no member named}} \
 // expected-note 6{{in instantiation}}
+
+template<typename T> struct X0 { };
+template<typename R, typename A1> struct X0<R(A1 param)> { };
+
+template<typename T, typename A1, typename A2>
+void instF0(X0<T(A1)> x0a, X0<T(A2)> x0b) {
+  X0<T(A1)> x0c;
+  X0<T(A2)> x0d;
+}
+
+template void instF0<int, int, float>(X0<int(int)>, X0<int(float)>);

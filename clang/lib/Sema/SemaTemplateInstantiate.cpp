@@ -873,8 +873,11 @@ TemplateInstantiator::TransformFunctionTypeParams(FunctionProtoTypeLoc TL,
                                   llvm::SmallVectorImpl<QualType> &PTypes,
                                llvm::SmallVectorImpl<ParmVarDecl*> &PVars) {
   // Create a local instantiation scope for the parameters.
-  Sema::LocalInstantiationScope
-    Scope(SemaRef, SemaRef.CurrentInstantiationScope != 0);
+  // FIXME: When we implement the C++0x late-specified return type, 
+  // we will need to move this scope out to the function type itself.
+  bool IsTemporaryScope = (SemaRef.CurrentInstantiationScope != 0);
+  Sema::LocalInstantiationScope Scope(SemaRef, IsTemporaryScope, 
+                                      IsTemporaryScope);
 
   if (TreeTransform<TemplateInstantiator>::
         TransformFunctionTypeParams(TL, PTypes, PVars))
