@@ -1999,6 +1999,11 @@ do
  ;;
       llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
  ;;
+      llvm-gcc)       ;;
+      test-suite)     ;;
+      llvm-test)      ;;
+      poolalloc)      ;;
+      llvm-poolalloc) ;;
       *)
         { echo "$as_me:$LINENO: WARNING: Unknown project (${i}) won't be configured automatically" >&5
 echo "$as_me: WARNING: Unknown project (${i}) won't be configured automatically" >&2;}
@@ -11151,7 +11156,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11154 "configure"
+#line 11159 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

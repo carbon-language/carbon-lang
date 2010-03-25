@@ -110,6 +110,11 @@ do
       llvm-tv)      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       safecode)     AC_CONFIG_SUBDIRS([projects/safecode]) ;;
       llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
+      llvm-gcc)       ;;
+      test-suite)     ;;
+      llvm-test)      ;;
+      poolalloc)      ;;
+      llvm-poolalloc) ;;
       *)
         AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
         ;;
