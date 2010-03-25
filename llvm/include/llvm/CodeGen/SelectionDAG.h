@@ -65,7 +65,7 @@ private:
 /// DbgValMap.
 class SDDbgInfo {
   SmallVector<SDDbgValue*, 32> DbgValues;
-  DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgVblMap;
+  DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgValMap;
 
   void operator=(const SDDbgInfo&);   // Do not implement.
   SDDbgInfo(const SDDbgInfo&);   // Do not implement.
@@ -74,12 +74,12 @@ public:
 
   void add(SDDbgValue *V, const SDNode *Node = 0) {
     if (Node)
-      DbgVblMap[Node].push_back(V);
+      DbgValMap[Node].push_back(V);
     DbgValues.push_back(V);
   }
 
   void clear() {
-    DbgVblMap.clear();
+    DbgValMap.clear();
     DbgValues.clear();
   }
 
@@ -88,7 +88,7 @@ public:
   }
 
   SmallVector<SDDbgValue*,2> &getSDDbgValues(const SDNode *Node) {
-    return DbgVblMap[Node];
+    return DbgValMap[Node];
   }
 
   typedef SmallVector<SDDbgValue*,32>::iterator DbgIterator;
