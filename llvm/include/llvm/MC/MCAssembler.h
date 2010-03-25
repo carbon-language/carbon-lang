@@ -651,10 +651,11 @@ private:
   bool FragmentNeedsRelaxation(const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
-  /// LayoutSection - Assign offsets and sizes to the fragments in the section
-  /// \arg SD, and update the section size. The section file offset should
-  /// already have been computed.
-  void LayoutSection(MCSectionData &SD, MCAsmLayout &Layout);
+  /// LayoutSection - Assign the section the given \arg StartAddress, and then
+  /// assign offsets and sizes to the fragments in the section \arg SD, and
+  /// update the section size.
+  void LayoutSection(MCSectionData &SD, MCAsmLayout &Layout,
+                     uint64_t StartAddress);
 
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.

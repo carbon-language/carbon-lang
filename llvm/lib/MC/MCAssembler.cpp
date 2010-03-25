@@ -365,9 +365,11 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
 }
 
 void MCAssembler::LayoutSection(MCSectionData &SD,
-                                MCAsmLayout &Layout) {
-  uint64_t Address, StartAddress = Address = Layout.getSectionAddress(&SD);
+                                MCAsmLayout &Layout,
+                                uint64_t StartAddress) {
+  Layout.setSectionAddress(&SD, StartAddress);
 
+  uint64_t Address = StartAddress;
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
 
@@ -690,8 +692,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
     }
 
     // Layout the section fragments and its size.
-    Layout.setSectionAddress(&SD, Address);
-    LayoutSection(SD, Layout);
+    LayoutSection(SD, Layout, Address);
     Address += Layout.getSectionFileSize(&SD);
 
     Prev = &SD;
@@ -709,8 +710,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
     if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment()))
       Address += Pad;
 
-    Layout.setSectionAddress(&SD, Address);
-    LayoutSection(SD, Layout);
+    LayoutSection(SD, Layout, Address);
     Address += Layout.getSectionSize(&SD);
   }
 
