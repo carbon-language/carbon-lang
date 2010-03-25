@@ -63,6 +63,7 @@ def NLdStFrm       : Format<31>;
 def N1RegModImmFrm : Format<32>;
 def N2RegFrm       : Format<33>;
 def NVCVTFrm       : Format<34>;
+def NVDupLnFrm     : Format<35>;
 
 // Misc flags.
 
@@ -1671,7 +1672,7 @@ class NVDup<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
 class NVDupLane<bits<4> op19_16, bit op6, dag oops, dag iops,
                 InstrItinClass itin, string opc, string dt, string asm,
                 list<dag> pattern>
-  : NDataI<oops, iops, NEONFrm, itin, opc, dt, asm, "", pattern> {
+  : NDataI<oops, iops, NVDupLnFrm, itin, opc, dt, asm, "", pattern> {
   let Inst{24-23} = 0b11;
   let Inst{21-20} = 0b11;
   let Inst{19-16} = op19_16;
