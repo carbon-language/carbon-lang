@@ -87,8 +87,9 @@ private:
   /// initialized.
   uint64_t Offset;
 
-  /// FileSize - The file size of this section. This is ~0 until initialized.
-  uint64_t FileSize;
+  /// EffectiveSize - The compute size of this section. This is ~0 until
+  /// initialized.
+  uint64_t EffectiveSize;
 
   /// @}
 
@@ -104,25 +105,6 @@ public:
 
   MCSectionData *getParent() const { return Parent; }
   void setParent(MCSectionData *Value) { Parent = Value; }
-
-  /// @name Assembler Backend Support
-  /// @{
-  //
-  // FIXME: This could all be kept private to the assembler implementation.
-
-  uint64_t getFileSize() const {
-    assert(FileSize != ~UINT64_C(0) && "File size not set!");
-    return FileSize;
-  }
-  void setFileSize(uint64_t Value) { FileSize = Value; }
-
-  uint64_t getOffset() const {
-    assert(Offset != ~UINT64_C(0) && "File offset not set!");
-    return Offset;
-  }
-  void setOffset(uint64_t Value) { Offset = Value; }
-
-  /// @}
 
   static bool classof(const MCFragment *O) { return true; }
 
@@ -711,7 +693,8 @@ public:
   /// Emit the section contents using the given object writer.
   //
   // FIXME: Should MCAssembler always have a reference to the object writer?
-  void WriteSectionData(const MCSectionData *Section, MCObjectWriter *OW) const;
+  void WriteSectionData(const MCSectionData *Section, const MCAsmLayout &Layout,
+                        MCObjectWriter *OW) const;
 
 public:
   /// Construct a new assembler instance.

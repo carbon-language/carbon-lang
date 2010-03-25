@@ -47,7 +47,25 @@ STATISTIC(ObjectBytes, "Number of emitted object file bytes");
 
 uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
   assert(F->getParent() && "Missing section()!");
-  return getSectionAddress(F->getParent()) + F->getOffset();
+  return getSectionAddress(F->getParent()) + getFragmentOffset(F);
+}
+
+uint64_t MCAsmLayout::getFragmentEffectiveSize(const MCFragment *F) const {
+  assert(F->EffectiveSize != ~UINT64_C(0) && "Address not set!");
+  return F->EffectiveSize;
+}
+
+void MCAsmLayout::setFragmentEffectiveSize(MCFragment *F, uint64_t Value) {
+  F->EffectiveSize = Value;
+}
+
+uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
+  assert(F->Offset != ~UINT64_C(0) && "Address not set!");
+  return F->Offset;
+}
+
+void MCAsmLayout::setFragmentOffset(MCFragment *F, uint64_t Value) {
+  F->Offset = Value;
 }
 
 uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
@@ -72,7 +90,7 @@ MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
   : Kind(_Kind),
     Parent(_Parent),
-    FileSize(~UINT64_C(0))
+    EffectiveSize(~UINT64_C(0))
 {
   if (Parent)
     Parent->getFragmentList().push_back(this);
@@ -335,33 +353,33 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
 
-    F.setOffset(Address - StartAddress);
+    uint64_t FragmentOffset = Address - StartAddress;
+    Layout.setFragmentOffset(&F, FragmentOffset);
 
     // Evaluate fragment size.
+    uint64_t EffectiveSize = 0;
     switch (F.getKind()) {
     case MCFragment::FT_Align: {
       MCAlignFragment &AF = cast<MCAlignFragment>(F);
 
-      uint64_t Size = OffsetToAlignment(Address, AF.getAlignment());
-      if (Size > AF.getMaxBytesToEmit())
-        AF.setFileSize(0);
-      else
-        AF.setFileSize(Size);
+      EffectiveSize = OffsetToAlignment(Address, AF.getAlignment());
+      if (EffectiveSize > AF.getMaxBytesToEmit())
+        EffectiveSize = 0;
       break;
     }
 
     case MCFragment::FT_Data:
-      F.setFileSize(cast<MCDataFragment>(F).getContents().size());
+      EffectiveSize = cast<MCDataFragment>(F).getContents().size();
       break;
 
     case MCFragment::FT_Fill: {
       MCFillFragment &FF = cast<MCFillFragment>(F);
-      F.setFileSize(FF.getValueSize() * FF.getCount());
+      EffectiveSize = FF.getValueSize() * FF.getCount();
       break;
     }
 
     case MCFragment::FT_Inst:
-      F.setFileSize(cast<MCInstFragment>(F).getInstSize());
+      EffectiveSize = cast<MCInstFragment>(F).getInstSize();
       break;
 
     case MCFragment::FT_Org: {
@@ -372,12 +390,12 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
         llvm_report_error("expected assembly-time absolute expression");
 
       // FIXME: We need a way to communicate this error.
-      int64_t Offset = TargetLocation - F.getOffset();
+      int64_t Offset = TargetLocation - FragmentOffset;
       if (Offset < 0)
         llvm_report_error("invalid .org offset '" + Twine(TargetLocation) +
-                          "' (at offset '" + Twine(F.getOffset()) + "'");
+                          "' (at offset '" + Twine(FragmentOffset) + "'");
 
-      F.setFileSize(Offset);
+      EffectiveSize = Offset;
       break;
     }
 
@@ -386,16 +404,18 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
 
       // Align the fragment offset; it is safe to adjust the offset freely since
       // this is only in virtual sections.
+      //
+      // FIXME: We shouldn't be doing this here.
       Address = RoundUpToAlignment(Address, ZFF.getAlignment());
-      F.setOffset(Address - StartAddress);
+      Layout.setFragmentOffset(&F, Address - StartAddress);
 
-      // FIXME: This is misnamed.
-      F.setFileSize(ZFF.getSize());
+      EffectiveSize = ZFF.getSize();
       break;
     }
     }
 
-    Address += F.getFileSize();
+    Layout.setFragmentEffectiveSize(&F, EffectiveSize);
+    Address += EffectiveSize;
   }
 
   // Set the section sizes.
@@ -407,27 +427,28 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
-static void WriteFragmentData(const MCAssembler &Asm, const MCFragment &F,
-                              MCObjectWriter *OW) {
+static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                              const MCFragment &F, MCObjectWriter *OW) {
   uint64_t Start = OW->getStream().tell();
   (void) Start;
 
   ++stats::EmittedFragments;
 
   // FIXME: Embed in fragments instead?
+  uint64_t FragmentSize = Layout.getFragmentEffectiveSize(&F);
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
     MCAlignFragment &AF = cast<MCAlignFragment>(F);
-    uint64_t Count = AF.getFileSize() / AF.getValueSize();
+    uint64_t Count = FragmentSize / AF.getValueSize();
 
     // FIXME: This error shouldn't actually occur (the front end should emit
     // multiple .align directives to enforce the semantics it wants), but is
     // severe enough that we want to report it. How to handle this?
-    if (Count * AF.getValueSize() != AF.getFileSize())
+    if (Count * AF.getValueSize() != FragmentSize)
       llvm_report_error("undefined .align directive, value size '" +
                         Twine(AF.getValueSize()) +
                         "' is not a divisor of padding size '" +
-                        Twine(AF.getFileSize()) + "'");
+                        Twine(FragmentSize) + "'");
 
     // See if we are aligning with nops, and if so do that first to try to fill
     // the Count bytes.  Then if that did not fill any bytes or there are any
@@ -456,7 +477,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCFragment &F,
 
   case MCFragment::FT_Data: {
     MCDataFragment &DF = cast<MCDataFragment>(F);
-    assert(DF.getFileSize() == DF.getContents().size() && "Invalid size!");
+    assert(FragmentSize == DF.getContents().size() && "Invalid size!");
     OW->WriteBytes(DF.getContents().str());
     break;
   }
@@ -483,7 +504,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCFragment &F,
   case MCFragment::FT_Org: {
     MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
-    for (uint64_t i = 0, e = OF.getFileSize(); i != e; ++i)
+    for (uint64_t i = 0, e = FragmentSize; i != e; ++i)
       OW->Write8(uint8_t(OF.getValue()));
 
     break;
@@ -495,10 +516,11 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCFragment &F,
   }
   }
 
-  assert(OW->getStream().tell() - Start == F.getFileSize());
+  assert(OW->getStream().tell() - Start == FragmentSize);
 }
 
 void MCAssembler::WriteSectionData(const MCSectionData *SD,
+                                   const MCAsmLayout &Layout,
                                    MCObjectWriter *OW) const {
   // Ignore virtual sections.
   if (getBackend().isVirtualSection(SD->getSection())) {
@@ -511,7 +533,7 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
 
   for (MCSectionData::const_iterator it = SD->begin(),
          ie = SD->end(); it != ie; ++it)
-    WriteFragmentData(*this, *it, OW);
+    WriteFragmentData(*this, Layout, *it, OW);
 
   // Add section padding.
   assert(SD->getFileSize() >= SD->getSize() && "Invalid section sizes!");
@@ -735,9 +757,11 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
       SD.getFragmentList().insert(it2, DF);
 
       // Update the data fragments layout data.
+      //
+      // FIXME: Add MCAsmLayout utility for this.
       DF->setParent(IF->getParent());
-      DF->setOffset(IF->getOffset());
-      DF->setFileSize(IF->getInstSize());
+      Layout.setFragmentOffset(DF, Layout.getFragmentOffset(IF));
+      Layout.setFragmentEffectiveSize(DF, Layout.getFragmentEffectiveSize(IF));
 
       // Copy in the data and the fixups.
       DF->getContents().append(IF->getCode().begin(), IF->getCode().end());
@@ -767,7 +791,7 @@ void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCFragment " << (void*) this << " Offset:" << Offset
-     << " FileSize:" << FileSize;
+     << " EffectiveSize:" << EffectiveSize;
 
   OS << ">";
 }

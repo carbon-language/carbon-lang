@@ -461,7 +461,7 @@ public:
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
 
     // See <reloc.h>.
-    uint32_t Address = Fragment->getOffset() + Fixup.Offset;
+    uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
     int64_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -645,7 +645,7 @@ public:
                                  const MCFragment *Fragment,
                                  const MCAsmFixup &Fixup, MCValue Target,
                                  uint64_t &FixedValue) {
-    uint32_t Address = Fragment->getOffset() + Fixup.Offset;
+    uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
     unsigned IsPCRel = isFixupKindPCRel(Fixup.Kind);
     unsigned Log2Size = getFixupKindLog2Size(Fixup.Kind);
     unsigned Type = RIT_Vanilla;
@@ -723,7 +723,7 @@ public:
     }
 
     // See <reloc.h>.
-    uint32_t Address = Fragment->getOffset() + Fixup.Offset;
+    uint32_t Address = Layout.getFragmentOffset(Fragment) + Fixup.Offset;
     uint32_t Value = 0;
     unsigned Index = 0;
     unsigned IsExtern = 0;
@@ -1036,7 +1036,7 @@ public:
     // Write the actual section data.
     for (MCAssembler::const_iterator it = Asm.begin(),
            ie = Asm.end(); it != ie; ++it)
-      Asm.WriteSectionData(it, Writer);
+      Asm.WriteSectionData(it, Layout, Writer);
 
     // Write the extra padding.
     WriteZeros(SectionDataPadding);

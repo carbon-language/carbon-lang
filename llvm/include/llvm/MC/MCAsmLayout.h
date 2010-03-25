@@ -35,6 +35,12 @@ public:
 
   uint64_t getFragmentAddress(const MCFragment *F) const;
 
+  uint64_t getFragmentEffectiveSize(const MCFragment *F) const;
+  void setFragmentEffectiveSize(MCFragment *F, uint64_t Value);
+
+  uint64_t getFragmentOffset(const MCFragment *F) const;
+  void setFragmentOffset(MCFragment *F, uint64_t Value);
+
   uint64_t getSectionAddress(const MCSectionData *SD) const;
 
   uint64_t getSymbolAddress(const MCSymbolData *SD) const;
