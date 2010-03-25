@@ -79,7 +79,10 @@ private:
   USRGenerator UG;
 public:
   StringUSRGenerator()
-    : Out(StrBuf), UG(Out) {}
+    : Out(StrBuf), UG(Out) {
+    // Add the USR space prefix.
+    Out << "c:";      
+  }
 
   llvm::StringRef str() {
     return Out.str();
@@ -266,16 +269,22 @@ CXString clang_getCursorUSR(CXCursor C) {
   StringUSRGenerator SUG;
   SUG->Visit(static_cast<Decl*>(D));
 
-  if (SUG->ignoreResults() || SUG.str().empty())
+  if (SUG->ignoreResults())
     return createCXString("");
 
   // Return a copy of the string that must be disposed by the caller.
   return createCXString(SUG.str(), true);
 }
 
+static inline llvm::StringRef extractUSRSuffix(llvm::StringRef s) {
+  if (!(s.size() >= 2 && s[0] == 'c' && s[1] == ':'))
+    return "";
+  return s.substr(2);
+}
+  
 CXString clang_constructUSR_ObjCIvar(const char *name, CXString classUSR) {
   StringUSRGenerator SUG;
-  SUG << clang_getCString(classUSR);
+  SUG << extractUSRSuffix(clang_getCString(classUSR));
   SUG->GenObjCIvar(name);
   return createCXString(SUG.str(), true);
 }
@@ -284,7 +293,7 @@ CXString clang_constructUSR_ObjCMethod(const char *name,
                                        unsigned isInstanceMethod,
                                        CXString classUSR) {
   StringUSRGenerator SUG;
-  SUG << clang_getCString(classUSR);
+  SUG << extractUSRSuffix(clang_getCString(classUSR));
   SUG->GenObjCMethod(name, isInstanceMethod);
   return createCXString(SUG.str(), true);
 }
@@ -302,7 +311,7 @@ CXString clang_constructUSR_ObjCProtocol(const char *name) {
 }
 
 CXString clang_constructUSR_ObjCCategory(const char *class_name,
-                                        const char *category_name) {
+                                         const char *category_name) {
   StringUSRGenerator SUG;
   SUG->GenObjCCategory(class_name, category_name);
   return createCXString(SUG.str(), true);
@@ -311,7 +320,7 @@ CXString clang_constructUSR_ObjCCategory(const char *class_name,
 CXString clang_constructUSR_ObjCProperty(const char *property,
                                          CXString classUSR) {
   StringUSRGenerator SUG;
-  SUG << clang_getCString(classUSR);
+  SUG << extractUSRSuffix(clang_getCString(classUSR));
   SUG->GenObjCProperty(property);
   return createCXString(SUG.str(), true);
 }
