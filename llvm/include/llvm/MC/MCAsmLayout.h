@@ -33,6 +33,11 @@ public:
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
 
+  /// \brief Update the layout because a fragment has been resized. The
+  /// fragments size should have already been updated, the \arg SlideAmount is
+  /// the delta from the old size.
+  void UpdateForSlide(MCFragment *F, int SlideAmount);
+
   /// @name Fragment Layout Data
   /// @{
 

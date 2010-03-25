@@ -580,6 +580,8 @@ struct IndirectSymbolData {
 };
 
 class MCAssembler {
+  friend class MCAsmLayout;
+
 public:
   typedef iplist<MCSectionData> SectionDataListType;
   typedef iplist<MCSymbolData> SymbolDataListType;

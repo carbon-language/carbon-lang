@@ -45,6 +45,39 @@ STATISTIC(ObjectBytes, "Number of emitted object file bytes");
 
 /* *** */
 
+void MCAsmLayout::UpdateForSlide(MCFragment *F, int SlideAmount) {
+  // We shouldn't have to do anything special to support negative slides, and it
+  // is a perfectly valid thing to do as long as other parts of the system are
+  // can guarantee convergence.
+  assert(SlideAmount >= 0 && "Negative slides not yet supported");
+
+  // Update the layout by simply recomputing the layout for the entire
+  // file. This is trivially correct, but very slow.
+  //
+  // FIXME-PERF: This is O(N^2), but will be eliminated once we get smarter.
+
+  // Layout the concrete sections and fragments.
+  MCAssembler &Asm = getAssembler();
+  uint64_t Address = 0;
+  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
+    // Skip virtual sections.
+    if (Asm.getBackend().isVirtualSection(it->getSection()))
+      continue;
+
+    // Layout the section fragments and its size.
+    Address = Asm.LayoutSection(*it, *this, Address);
+  }
+
+  // Layout the virtual sections.
+  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
+    if (!Asm.getBackend().isVirtualSection(it->getSection()))
+      continue;
+
+    // Layout the section fragments and its size.
+    Address = Asm.LayoutSection(*it, *this, Address);
+  }
+}
+
 uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
   assert(F->getParent() && "Missing section()!");
   return getSectionAddress(F->getParent()) + getFragmentOffset(F);
@@ -716,6 +749,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
   }
 
   // Scan for fragments that need relaxation.
+  bool WasRelaxed = false;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSectionData &SD = *it;
 
@@ -747,6 +781,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
       VecOS.flush();
 
       // Update the instruction fragment.
+      int SlideAmount = Code.size() - IF->getInstSize();
       IF->setInst(Relaxed);
       IF->getCode() = Code;
       IF->getFixups().clear();
@@ -756,15 +791,13 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
                                              F.getKind()));
       }
 
-      // Restart layout.
-      //
-      // FIXME-PERF: This is O(N^2), but will be eliminated once we have a
-      // smart MCAsmLayout object.
-      return true;
+      // Update the layout, and remember that we relaxed.
+      Layout.UpdateForSlide(IF, SlideAmount);
+      WasRelaxed = true;
     }
   }
 
-  return false;
+  return WasRelaxed;
 }
 
 void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
