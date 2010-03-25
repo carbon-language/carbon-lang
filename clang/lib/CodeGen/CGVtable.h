@@ -274,6 +274,15 @@ private:
   /// Address points - Vtable address points.
   AddressPointsMapTy AddressPoints;
   
+  typedef llvm::SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
+    VTableThunksTy;
+  
+  typedef llvm::DenseMap<const CXXRecordDecl *, VTableThunksTy>
+    VTableThunksMapTy;
+  
+  /// VTableThunksMap - Contains thunks needed by vtables.
+  VTableThunksMapTy VTableThunksMap;
+  
   uint64_t getNumVTableComponents(const CXXRecordDecl *RD) const {
     assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
     
@@ -310,6 +319,15 @@ private:
   /// given record decl.
   void ComputeVTableRelatedInformation(const CXXRecordDecl *RD);
 
+  /// CreateVTableInitializer - Create a vtable initializer for the given record
+  /// decl.
+  /// \param Components - The vtable components; this is really an array of
+  /// VTableComponents.
+  llvm::Constant *CreateVTableInitializer(const CXXRecordDecl *RD,
+                                          const uint64_t *Components, 
+                                          unsigned NumComponents,
+                                          const VTableThunksTy &VTableThunks);
+                                          
 public:
   CodeGenVTables(CodeGenModule &CGM)
     : CGM(CGM) { }

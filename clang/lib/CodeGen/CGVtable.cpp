@@ -1328,6 +1328,14 @@ public:
     return AddressPoints.end();
   }
 
+  VtableThunksMapTy::const_iterator vtable_thunks_begin() const {
+    return VTableThunks.begin();
+  }
+
+  VtableThunksMapTy::const_iterator vtable_thunks_end() const {
+    return VTableThunks.end();
+  }
+
   /// dumpLayout - Dump the vtable layout.
   void dumpLayout(llvm::raw_ostream&);
 };
@@ -3995,6 +4003,72 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
 }
 
+llvm::Constant *
+CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
+                                        const uint64_t *Components, 
+                                        unsigned NumComponents,
+                                        const VTableThunksTy &VTableThunks) {
+  llvm::SmallVector<llvm::Constant *, 64> Inits;
+
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  
+  for (unsigned I = 0; I != NumComponents; ++I) {
+    // FIXME: Better value.
+    llvm::Constant *Init = llvm::Constant::getNullValue(Int8PtrTy);
+    
+    Inits.push_back(Init);
+  }
+  
+  llvm::ArrayType *ArrayType = llvm::ArrayType::get(Int8PtrTy, NumComponents);
+  return llvm::ConstantArray::get(ArrayType, Inits.data(), Inits.size());
+}
+
+/// GetGlobalVariable - Will return a global variable of the given type. 
+/// If a variable with a different type already exists then a new variable
+/// with the right type will be created.
+/// FIXME: We should move this to CodeGenModule and rename it to something 
+/// better and then use it in CGVTT and CGRTTI. 
+static llvm::GlobalVariable *
+GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
+                  const llvm::Type *Ty,
+                  llvm::GlobalValue::LinkageTypes Linkage) {
+
+  llvm::GlobalVariable *GV = Module.getNamedGlobal(Name);
+  llvm::GlobalVariable *OldGV = 0;
+  
+  if (GV) {
+    // Check if the variable has the right type.
+    if (GV->getType()->getElementType() == Ty) {
+      // Set the correct linkage.
+      GV->setLinkage(Linkage);
+      return GV;
+    }
+
+    assert(GV->isDeclaration() && "Declaration has wrong type!");
+    
+    OldGV = GV;
+  }
+  
+  // Create a new variable.
+  GV = new llvm::GlobalVariable(Module, Ty, /*isConstant=*/true,
+                                Linkage, 0, Name);
+  
+  if (OldGV) {
+    // Replace occurrences of the old variable if needed.
+    GV->takeName(OldGV);
+   
+    if (!OldGV->use_empty()) {
+      llvm::Constant *NewPtrForOldDecl =
+        llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+      OldGV->replaceAllUsesWith(NewPtrForOldDecl);
+    }
+
+    OldGV->eraseFromParent();
+  }
+  
+  return GV;
+}
+
 llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   CGM.getMangleContext().mangleCXXVtable(RD, OutName);
@@ -4025,28 +4099,63 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                                            const BaseSubobject &Base, 
                                            bool BaseIsVirtual, 
                                            AddressPointsMapTy& AddressPoints) {
+  if (!CGM.getLangOptions().DumpVtableLayouts) {
+    llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPoints;
   
-  llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPoints;
+    llvm::GlobalVariable *VTable =
+      GenerateVtable(llvm::GlobalValue::InternalLinkage,
+                     /*GenerateDefinition=*/true,
+                     RD, Base.getBase(), Base.getBaseOffset(),
+                     BaseIsVirtual, VTableAddressPoints);
   
-  llvm::GlobalVariable *VTable =
-    GenerateVtable(llvm::GlobalValue::InternalLinkage,
-                   /*GenerateDefinition=*/true,
-                   RD, Base.getBase(), Base.getBaseOffset(),
-                   BaseIsVirtual, VTableAddressPoints);
+    // Add the address points for this base.
+    for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I =
+         VTableAddressPoints.begin(), E = VTableAddressPoints.end();
+         I != E; ++I) {
+    
+      uint64_t &AddressPoint = 
+        AddressPoints[std::make_pair(Base.getBase(), I->first)];
+    
+      // Check if we already have the address points for this base.
+      assert(!AddressPoint && "Address point already exists for this base!");
+    
+      AddressPoint = I->second;
+    }
   
-  // Add the address points for this base.
-  for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I =
-       VTableAddressPoints.begin(), E = VTableAddressPoints.end();
-       I != E; ++I) {
-    
-    uint64_t &AddressPoint = 
-      AddressPoints[std::make_pair(Base.getBase(), I->first)];
-    
-    // Check if we already have the address points for this base.
-    assert(!AddressPoint && "Address point already exists for this base!");
-    
-    AddressPoint = I->second;
+    return VTable;
   }
+  
+  VtableBuilder Builder(*this, Base.getBase(), Base.getBaseOffset(), 
+                        /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
+
+  Builder.dumpLayout(llvm::errs());
+
+  // Get the mangled construction vtable name.
+  llvm::SmallString<256> OutName;
+  CGM.getMangleContext().mangleCXXCtorVtable(RD, Base.getBaseOffset() / 8, 
+                                             Base.getBase(), OutName);
+  llvm::StringRef Name = OutName.str();
+
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::ArrayType *ArrayType = 
+    llvm::ArrayType::get(Int8PtrTy, Builder.getNumVTableComponents());
+
+  // Create the variable that will hold the construction vtable.
+  llvm::GlobalVariable *VTable = 
+    GetGlobalVariable(CGM.getModule(), Name, ArrayType, 
+                      llvm::GlobalValue::InternalLinkage);
+
+  // Add the thunks.
+  VTableThunksTy VTableThunks;
+  VTableThunks.append(Builder.vtable_thunks_begin(),
+                      Builder.vtable_thunks_end());
+
+  // Create and set the initializer.
+  llvm::Constant *Init = 
+    CreateVTableInitializer(Base.getBase(), 
+                            Builder.vtable_components_data_begin(), 
+                            Builder.getNumVTableComponents(), VTableThunks);
+  VTable->setInitializer(Init);
   
   return VTable;
 }
