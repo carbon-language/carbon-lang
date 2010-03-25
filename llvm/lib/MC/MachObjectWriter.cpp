@@ -276,11 +276,10 @@ public:
                     const MCSectionData &SD, uint64_t FileOffset,
                     uint64_t RelocationsStart, unsigned NumRelocations) {
     uint64_t SectionSize = Layout.getSectionSize(&SD);
-    uint64_t SectionFileSize = Layout.getSectionFileSize(&SD);
 
     // The offset is unused for virtual sections.
     if (Asm.getBackend().isVirtualSection(SD.getSection())) {
-      assert(SectionFileSize == 0 && "Invalid file size!");
+      assert(Layout.getSectionFileSize(&SD) == 0 && "Invalid file size!");
       FileOffset = 0;
     }
 
