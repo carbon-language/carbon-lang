@@ -43,6 +43,15 @@ def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
 def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
                                      "Enable half-precision floating point">;
 
+// Some processors have multiply-accumulate instructions that don't
+// play nicely with other VFP instructions, and it's generally better
+// to just not use them.
+// FIXME: Currently, this is only flagged for Cortex-A8. It may be true for
+// others as well. We should do more benchmarking and confirm one way or
+// the other.
+def HasSlowVMLx   : SubtargetFeature<"vmlx", "SlowVMLx", "true",
+                                     "Disable VFP MAC instructions">;
+
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
 //
@@ -106,7 +115,7 @@ def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
 
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON]>;
+                [ArchV7A, FeatureThumb2, FeatureNEON, HasSlowVMLx]>;
 def : ProcNoItin<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//

@@ -50,9 +50,9 @@ protected:
   /// determine if NEON should actually be used.
   bool UseNEONForSinglePrecisionFP;
 
-  /// UseVMLx - If the VFP2 instructions are available, indicates whether
-  /// the VML[AS] instructions should be used.
-  bool UseVMLx;
+  /// SlowVMLx - If the VFP2 instructions are available, indicates whether
+  /// the VML[AS] instructions are slow (if so, don't use them).
+  bool SlowVMLx;
 
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
   bool IsThumb;
@@ -123,7 +123,7 @@ protected:
   bool hasNEON() const { return ARMFPUType >= NEON;  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
-  bool useVMLx() const {return hasVFP2() && UseVMLx; }
+  bool useVMLx() const {return hasVFP2() && !SlowVMLx; }
 
   bool hasFP16() const { return HasFP16; }
 
