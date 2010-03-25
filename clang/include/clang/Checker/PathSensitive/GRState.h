@@ -302,6 +302,8 @@ public:
   template<typename T>
   const GRState *remove(typename GRStateTrait<T>::key_type K,
                         typename GRStateTrait<T>::context_type C) const;
+  template <typename T>
+  const GRState *remove() const;
 
   template<typename T>
   const GRState *set(typename GRStateTrait<T>::data_type D) const;
@@ -464,6 +466,7 @@ public:
 
   // Methods that manipulate the GDM.
   const GRState* addGDM(const GRState* St, void* Key, void* Data);
+  const GRState *removeGDM(const GRState *state, void *Key);
 
   // Methods that query & manipulate the Store.
 
@@ -528,6 +531,10 @@ public:
      GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Remove(st->get<T>(), K, C)));
   }
 
+  template <typename T>
+  const GRState *remove(const GRState *st) {
+    return removeGDM(st, GRStateTrait<T>::GDMIndex());
+  }
 
   void* FindGDMContext(void* index,
                        void* (*CreateContext)(llvm::BumpPtrAllocator&),
@@ -700,6 +707,11 @@ template<typename T>
 const GRState *GRState::remove(typename GRStateTrait<T>::key_type K,
                                typename GRStateTrait<T>::context_type C) const {
   return getStateManager().remove<T>(this, K, C);
+}
+
+template <typename T>
+const GRState *GRState::remove() const {
+  return getStateManager().remove<T>(this);
 }
 
 template<typename T>

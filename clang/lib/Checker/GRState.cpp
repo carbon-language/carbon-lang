@@ -227,6 +227,18 @@ const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
   return getPersistentState(NewSt);
 }
 
+const GRState *GRStateManager::removeGDM(const GRState *state, void *Key) {
+  GRState::GenericDataMap OldM = state->getGDM();
+  GRState::GenericDataMap NewM = GDMFactory.Remove(OldM, Key);
+
+  if (NewM == OldM)
+    return state;
+
+  GRState NewState = *state;
+  NewState.GDM = NewM;
+  return getPersistentState(NewState);
+}
+
 //===----------------------------------------------------------------------===//
 // Utility.
 //===----------------------------------------------------------------------===//

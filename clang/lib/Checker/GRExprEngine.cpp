@@ -1330,7 +1330,7 @@ void GRExprEngine::ProcessCallExit(GRCallExitNodeBuilder &B) {
     SVal RetVal = state->getSVal(ReturnedExpr);
     state = state->BindExpr(CE, RetVal);
     // Clear the return expr GDM.
-    state = state->set<ReturnExpr>(0);
+    state = state->remove<ReturnExpr>();
   }
 
   // Bind the constructed object value to CXXConstructExpr.
