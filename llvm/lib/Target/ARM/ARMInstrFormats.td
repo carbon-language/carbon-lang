@@ -1515,12 +1515,6 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
   list<Predicate> Predicates = [HasNEON];
 }
 
-class NI<dag oops, dag iops, InstrItinClass itin, string opc, string asm,
-         list<dag> pattern>
-  : NeonXI<oops, iops, AddrModeNone, IndexModeNone, NEONFrm, itin, opc, asm, "",
-           pattern> {
-}
-
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
             dag oops, dag iops, InstrItinClass itin,
             string opc, string dt, string asm, string cstr, list<dag> pattern>
