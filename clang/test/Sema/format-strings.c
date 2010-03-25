@@ -238,3 +238,16 @@ void test_positional_arguments() {
   printf("%2$*8$d", (int) 2, (int) 3); // expected-warning{{specified field width is missing a matching 'int' argument}}
 }
 
+// PR 6697 - Handle format strings where the data argument is not adjacent to the format string
+void myprintf_PR_6697(const char *format, int x, ...) __attribute__((__format__(printf,1, 3)));
+void test_pr_6697() {
+  myprintf_PR_6697("%s\n", 1, "foo"); // no-warning
+  myprintf_PR_6697("%s\n", 1, (int)0); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
+  // FIXME: Not everything should clearly support positional arguments,
+  // but we need a way to identify those cases.
+  myprintf_PR_6697("%1$s\n", 1, "foo"); // no-warning
+  myprintf_PR_6697("%2$s\n", 1, "foo"); // expected-warning{{data argument position '2' exceeds the number of data arguments (1)}}
+  myprintf_PR_6697("%18$s\n", 1, "foo"); // expected-warning{{data argument position '18' exceeds the number of data arguments (1)}}
+  myprintf_PR_6697("%1$s\n", 1, (int) 0); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
+}
+

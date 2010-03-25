@@ -2594,6 +2594,9 @@ def warn_printf_missing_format_string : Warning<
 def warn_printf_conversion_argument_type_mismatch : Warning<
   "conversion specifies type %0 but the argument has type %1">,
   InGroup<Format>;
+def warn_printf_positional_arg_exceeds_data_args : Warning <
+  "data argument position '%0' exceeds the number of data arguments (%1)">,
+  InGroup<Format>;
 def warn_printf_zero_positional_specifier : Warning<
   "position arguments in format strings start counting at 1 (not 0)">,
   InGroup<Format>;
