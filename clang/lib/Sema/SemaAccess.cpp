@@ -330,8 +330,8 @@ static Sema::AccessResult MatchesFriend(Sema &S,
 static Sema::AccessResult MatchesFriend(Sema &S,
                                         const EffectiveContext &EC,
                                         FriendDecl *FriendD) {
-  if (Type *T = FriendD->getFriendType())
-    return MatchesFriend(S, EC, T->getCanonicalTypeUnqualified());
+  if (TypeSourceInfo *T = FriendD->getFriendType())
+    return MatchesFriend(S, EC, T->getType()->getCanonicalTypeUnqualified());
 
   NamedDecl *Friend
     = cast<NamedDecl>(FriendD->getFriendDecl()->getCanonicalDecl());

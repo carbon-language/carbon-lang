@@ -1238,7 +1238,7 @@ public:
 ///   template <typename U> friend class Foo<T>::Nested; // friend template
 class FriendTemplateDecl : public Decl {
 public:
-  typedef llvm::PointerUnion<NamedDecl*,Type*> FriendUnion;
+  typedef llvm::PointerUnion<NamedDecl*,TypeSourceInfo*> FriendUnion;
 
 private:
   // The number of template parameters;  always non-zero.
@@ -1277,8 +1277,8 @@ public:
   /// If this friend declaration names a templated type (or
   /// a dependent member type of a templated type), return that
   /// type;  otherwise return null.
-  Type *getFriendType() const {
-    return Friend.dyn_cast<Type*>();
+  TypeSourceInfo *getFriendType() const {
+    return Friend.dyn_cast<TypeSourceInfo*>();
   }
 
   /// If this friend declaration names a templated function (or

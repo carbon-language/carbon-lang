@@ -480,13 +480,17 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
 
   // Handle friend type expressions by simply substituting template
   // parameters into the pattern type.
-  if (Type *Ty = D->getFriendType()) {
-    QualType T = SemaRef.SubstType(QualType(Ty,0), TemplateArgs,
-                                   D->getLocation(), DeclarationName());
-    if (T.isNull()) return 0;
+  if (TypeSourceInfo *Ty = D->getFriendType()) {
+    TypeSourceInfo *InstTy = 
+      SemaRef.SubstType(Ty, TemplateArgs,
+                        D->getLocation(), DeclarationName());
+    if (!InstTy) return 0;
 
-    assert(getLangOptions().CPlusPlus0x || T->isRecordType());
-    FU = T.getTypePtr();
+    // This assertion is valid because the source type was necessarily
+    // an elaborated-type-specifier with a record tag.
+    assert(getLangOptions().CPlusPlus0x || InstTy->getType()->isRecordType());
+
+    FU = InstTy;
 
   // Handle everything else by appropriate substitution.
   } else {

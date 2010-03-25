@@ -3644,7 +3644,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   if (TUK == TUK_Friend) {
     FriendDecl *Friend = FriendDecl::Create(Context, CurContext,
                                             TemplateNameLoc,
-                                            WrittenTy->getType().getTypePtr(),
+                                            WrittenTy,
                                             /*FIXME:*/KWLoc);
     Friend->setAccess(AS_public);
     CurContext->addDecl(Friend);

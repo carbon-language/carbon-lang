@@ -5372,7 +5372,8 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   // friend templates because ActOnTag never produces a ClassTemplateDecl
   // for a TUK_Friend.
   Declarator TheDeclarator(DS, Declarator::MemberContext);
-  QualType T = GetTypeForDeclarator(TheDeclarator, S);
+  TypeSourceInfo *TSI;
+  QualType T = GetTypeForDeclarator(TheDeclarator, S, &TSI);
   if (TheDeclarator.isInvalidType())
     return DeclPtrTy();
 
@@ -5437,16 +5438,20 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   // deadline.  It's also a very silly restriction that seriously
   // affects inner classes and which nobody else seems to implement;
   // thus we never diagnose it, not even in -pedantic.
+  //
+  // But note that we could warn about it: it's always useless to
+  // friend one of your own members (it's not, however, worthless to
+  // friend a member of an arbitrary specialization of your template).
 
   Decl *D;
   if (TempParams.size())
     D = FriendTemplateDecl::Create(Context, CurContext, Loc,
                                    TempParams.size(),
                                  (TemplateParameterList**) TempParams.release(),
-                                   T.getTypePtr(),
+                                   TSI,
                                    DS.getFriendSpecLoc());
   else
-    D = FriendDecl::Create(Context, CurContext, Loc, T.getTypePtr(),
+    D = FriendDecl::Create(Context, CurContext, Loc, TSI,
                            DS.getFriendSpecLoc());
   D->setAccess(AS_public);
   CurContext->addDecl(D);

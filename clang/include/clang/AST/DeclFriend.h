@@ -36,7 +36,7 @@ namespace clang {
 /// The semantic context of a friend decl is its declaring class.
 class FriendDecl : public Decl {
 public:
-  typedef llvm::PointerUnion<NamedDecl*,Type*> FriendUnion;
+  typedef llvm::PointerUnion<NamedDecl*,TypeSourceInfo*> FriendUnion;
 
 private:
   // The declaration that's a friend of this class.
@@ -73,8 +73,8 @@ public:
   /// possibly dependent) type, return the type;  otherwise
   /// return null.  This is used only for C++0x's unelaborated
   /// friend type declarations.
-  Type *getFriendType() const {
-    return Friend.dyn_cast<Type*>();
+  TypeSourceInfo *getFriendType() const {
+    return Friend.dyn_cast<TypeSourceInfo*>();
   }
 
   /// If this friend declaration doesn't name an unelaborated
