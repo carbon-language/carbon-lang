@@ -337,7 +337,7 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
                                         IntInit *ShiftInt, raw_ostream &OS) {
   if (Val == 0 || ShiftInt == 0)
     throw std::string("Illegal value or shift amount in TargetInfo*!");
-  RecordVal *RV = R->getValue(Val->getValue());
+  RecordVal *RV = R->getDottedValue(Val->getValue());
   int Shift = ShiftInt->getValue();
 
   if (RV == 0 || RV->getValue() == 0) {

@@ -587,7 +587,7 @@ let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
 
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
-    hasCtrlDep = 1, FPForm = SpecialFP, FPFormBits = SpecialFP.Value in {
+    hasCtrlDep = 1, FPForm = SpecialFP in {
   def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
                     "ret",
                     [(X86retflag 0)]>;

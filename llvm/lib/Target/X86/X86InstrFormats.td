@@ -111,7 +111,6 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   Format Form = f;
   bits<6> FormBits = Form.Value;
   ImmType ImmT = i;
-  bits<3> ImmTypeBits = ImmT.Value;
 
   dag OutOperandList = outs;
   dag InOperandList = ins;
@@ -125,12 +124,10 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
 
   bits<4> Prefix = 0;       // Which prefix byte does this inst have?
   bit hasREX_WPrefix  = 0;  // Does this inst requires the REX.W prefix?
-  FPFormat FPForm;          // What flavor of FP instruction is this?
-  bits<3> FPFormBits = 0;
+  FPFormat FPForm = NotFP;  // What flavor of FP instruction is this?
   bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
   bits<2> SegOvrBits = 0;   // Segment override prefix.
-  Domain Dom = d;
-  bits<2> DomainBits = Dom.Value;
+  Domain ExeDomain = d;
 }
 
 class I<bits<8> o, Format f, dag outs, dag ins, string asm,
@@ -179,7 +176,7 @@ class FPI<bits<8> o, Format F, dag outs, dag ins, string asm>
 // FpI_ - Floating Point Psuedo Instruction template. Not Predicated.
 class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern>
   : X86Inst<0, Pseudo, NoImm, outs, ins, ""> {
-  let FPForm = fp; let FPFormBits = FPForm.Value;
+  let FPForm = fp;
   let Pattern = pattern;
 }
 
