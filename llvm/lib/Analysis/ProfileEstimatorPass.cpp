@@ -398,7 +398,7 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
     for (Function::const_iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
       const BasicBlock *BB = &(*FI);
       BlockInformation[&F][BB] = 0;
-      pred_const_iterator predi = pred_begin(BB), prede = pred_end(BB);
+      const_pred_iterator predi = pred_begin(BB), prede = pred_end(BB);
       if (predi == prede) {
         Edge e = getEdge(0,BB);
         setEdgeWeight(e,0);

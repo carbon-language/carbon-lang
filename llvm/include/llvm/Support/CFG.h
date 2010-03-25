@@ -67,15 +67,15 @@ public:
 
 typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
 typedef PredIterator<const BasicBlock,
-                     Value::const_use_iterator> pred_const_iterator;
+                     Value::const_use_iterator> const_pred_iterator;
 
 inline pred_iterator pred_begin(BasicBlock *BB) { return pred_iterator(BB); }
-inline pred_const_iterator pred_begin(const BasicBlock *BB) {
-  return pred_const_iterator(BB);
+inline const_pred_iterator pred_begin(const BasicBlock *BB) {
+  return const_pred_iterator(BB);
 }
 inline pred_iterator pred_end(BasicBlock *BB) { return pred_iterator(BB, true);}
-inline pred_const_iterator pred_end(const BasicBlock *BB) {
-  return pred_const_iterator(BB, true);
+inline const_pred_iterator pred_end(const BasicBlock *BB) {
+  return const_pred_iterator(BB, true);
 }
 
 
@@ -268,7 +268,7 @@ template <> struct GraphTraits<Inverse<BasicBlock*> > {
 
 template <> struct GraphTraits<Inverse<const BasicBlock*> > {
   typedef const BasicBlock NodeType;
-  typedef pred_const_iterator ChildIteratorType;
+  typedef const_pred_iterator ChildIteratorType;
   static NodeType *getEntryNode(Inverse<const BasicBlock*> G) {
     return G.Graph;
   }

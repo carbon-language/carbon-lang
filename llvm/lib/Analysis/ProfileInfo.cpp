@@ -67,7 +67,7 @@ ProfileInfoT<Function,BasicBlock>::getExecutionCount(const BasicBlock *BB) {
 
   double Count = MissingValue;
 
-  pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
+  const_pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
 
   // Are there zero predecessors of this block?
   if (PI == PE) {
@@ -508,7 +508,7 @@ bool ProfileInfoT<Function,BasicBlock>::
   // have no value
   double incount = 0;
   SmallSet<const BasicBlock*,8> pred_visited;
-  pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
+  const_pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
   if (bbi==bbe) {
     Edge e = getEdge(0,BB);
     incount += readEdgeOrRemember(e, getEdgeWeight(e) ,edgetocalc,uncalculated);
@@ -582,7 +582,7 @@ bool ProfileInfoT<Function,BasicBlock>::EstimateMissingEdges(const BasicBlock *B
   double inWeight = 0;
   std::set<Edge> inMissing;
   std::set<const BasicBlock*> ProcessedPreds;
-  pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
+  const_pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
   if (bbi == bbe) {
     readEdge(this,getEdge(0,BB),inWeight,inMissing);
   }
@@ -639,7 +639,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
 //         FI != FE; ++FI) {
 //      const BasicBlock* BB = &(*FI);
 //      {
-//        pred_const_iterator NBB = pred_begin(BB), End = pred_end(BB);
+//        const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);
 //        if (NBB == End) {
 //          setEdgeWeight(getEdge(0,BB),0);
 //        }
@@ -779,7 +779,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
       // Calculate incoming flow.
       double iw = 0; unsigned inmissing = 0; unsigned incount = 0; unsigned invalid = 0;
       std::set<const BasicBlock *> Processed;
-      for (pred_const_iterator NBB = pred_begin(BB), End = pred_end(BB);
+      for (const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);
            NBB != End; ++NBB) {
         if (Processed.insert(*NBB).second) {
           Edge e = getEdge(*NBB, BB);
@@ -869,7 +869,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
         if (getEdgeWeight(e) == MissingValue) {
           double iw = 0;
           std::set<const BasicBlock *> Processed;
-          for (pred_const_iterator NBB = pred_begin(BB), End = pred_end(BB);
+          for (const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);
                NBB != End; ++NBB) {
             if (Processed.insert(*NBB).second) {
               Edge e = getEdge(*NBB, BB);
@@ -893,7 +893,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
       const BasicBlock *Dest;
       Path P;
       bool BackEdgeFound = false;
-      for (pred_const_iterator NBB = pred_begin(BB), End = pred_end(BB);
+      for (const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);
            NBB != End; ++NBB) {
         Dest = GetPath(BB, *NBB, P, GetPathToDest | GetPathWithNewEdges);
         if (Dest == *NBB) {
@@ -935,7 +935,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
         // Calculate incoming flow.
         double iw = 0;
         std::set<const BasicBlock *> Processed;
-        for (pred_const_iterator NBB = pred_begin(BB), End = pred_end(BB);
+        for (const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);
              NBB != End; ++NBB) {
           if (Processed.insert(*NBB).second) {
             Edge e = getEdge(*NBB, BB);
@@ -965,7 +965,7 @@ void ProfileInfoT<Function,BasicBlock>::repair(const Function *F) {
     while(FI != FE && !FoundPath) {
       const BasicBlock *BB = *FI; ++FI;
 
-      for (pred_const_iterator NBB = pred_begin(BB), End = pred_end(BB);
+      for (const_pred_iterator NBB = pred_begin(BB), End = pred_end(BB);
            NBB != End; ++NBB) {
         Edge e = getEdge(*NBB,BB);
         double w = getEdgeWeight(e);

@@ -119,7 +119,7 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
        bbi != bbe; ++bbi) {
     recurseBasicBlock(*bbi);
   }
-  for (pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
+  for (const_pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
        bbi != bbe; ++bbi) {
     recurseBasicBlock(*bbi);
   }

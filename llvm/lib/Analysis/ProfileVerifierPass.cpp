@@ -96,8 +96,8 @@ namespace llvm {
     double inWeight = 0;
     int inCount = 0;
     std::set<const BType*> ProcessedPreds;
-    for ( pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
-          bbi != bbe; ++bbi ) {
+    for (const_pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
+         bbi != bbe; ++bbi ) {
       if (ProcessedPreds.insert(*bbi).second) {
         typename ProfileInfoT<FType, BType>::Edge E = PI->getEdge(*bbi,BB);
         double EdgeWeight = PI->getEdgeWeight(E);
@@ -242,7 +242,7 @@ namespace llvm {
 
     // Read predecessors.
     std::set<const BType*> ProcessedPreds;
-    pred_const_iterator bpi = pred_begin(BB), bpe = pred_end(BB);
+    const_pred_iterator bpi = pred_begin(BB), bpe = pred_end(BB);
     // If there are none, check for (0,BB) edge.
     if (bpi == bpe) {
       DI.inWeight += ReadOrAssert(PI->getEdge(0,BB));

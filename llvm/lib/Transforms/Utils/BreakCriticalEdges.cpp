@@ -94,7 +94,7 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
   if (TI->getNumSuccessors() == 1) return false;
 
   const BasicBlock *Dest = TI->getSuccessor(SuccNum);
-  pred_const_iterator I = pred_begin(Dest), E = pred_end(Dest);
+  const_pred_iterator I = pred_begin(Dest), E = pred_end(Dest);
 
   // If there is more than one predecessor, this is a critical edge...
   assert(I != E && "No preds, but we have an edge to the block?");

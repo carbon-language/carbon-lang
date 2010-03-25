@@ -1681,7 +1681,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     // Output predecessors for the block...
     Out.PadToColumn(50);
     Out << ";";
-    pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    const_pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
 
     if (PI == PE) {
       Out << " No predecessors!";
