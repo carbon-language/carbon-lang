@@ -636,6 +636,10 @@ public:
                            reinterpret_cast<uintptr_t>(MD));                           
   }
 
+  static VtableComponent getFromOpaqueInteger(uint64_t I) {
+    return VtableComponent(I);
+  }
+
   /// getKind - Get the kind of this vtable component.
   Kind getKind() const {
     return (Kind)(Value & 0x7);
@@ -725,6 +729,9 @@ private:
     return static_cast<uintptr_t>(Value & ~7ULL);
   }
   
+  explicit VtableComponent(uint64_t Value)
+    : Value(Value) { }
+
   /// The kind is stored in the lower 3 bits of the value. For offsets, we
   /// make use of the facts that classes can't be larger than 2^55 bytes,
   /// so we store the offset in the lower part of the 61 bytes that remain.
@@ -4012,9 +4019,77 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
 
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   
+  const llvm::Type *PtrDiffTy = 
+    CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
+
+  QualType ClassType = CGM.getContext().getTagDeclType(RD);
+  llvm::Constant *RTTI = CGM.GetAddrOfRTTIDescriptor(ClassType);
+  
+  unsigned NextVTableThunkIndex = 0;
+  
   for (unsigned I = 0; I != NumComponents; ++I) {
-    // FIXME: Better value.
-    llvm::Constant *Init = llvm::Constant::getNullValue(Int8PtrTy);
+    VtableComponent Component = 
+      VtableComponent::getFromOpaqueInteger(Components[I]);
+
+    llvm::Constant *Init = 0;
+
+    switch (Component.getKind()) {
+    case VtableComponent::CK_VCallOffset:
+      Init = llvm::ConstantInt::get(PtrDiffTy, Component.getVCallOffset());
+      Init = llvm::ConstantExpr::getIntToPtr(Init, Int8PtrTy);
+      break;
+    case VtableComponent::CK_VBaseOffset:
+      Init = llvm::ConstantInt::get(PtrDiffTy, Component.getVBaseOffset());
+      Init = llvm::ConstantExpr::getIntToPtr(Init, Int8PtrTy);
+      break;
+    case VtableComponent::CK_OffsetToTop:
+      Init = llvm::ConstantInt::get(PtrDiffTy, Component.getOffsetToTop());
+      Init = llvm::ConstantExpr::getIntToPtr(Init, Int8PtrTy);
+      break;
+    case VtableComponent::CK_RTTI:
+      Init = llvm::ConstantExpr::getBitCast(RTTI, Int8PtrTy);
+      break;
+    case VtableComponent::CK_FunctionPointer:
+    case VtableComponent::CK_CompleteDtorPointer:
+    case VtableComponent::CK_DeletingDtorPointer: {
+      GlobalDecl GD;
+      
+      // Get the right global decl.
+      switch (Component.getKind()) {
+      default:
+        llvm_unreachable("Unexpected vtable component kind");
+      case VtableComponent::CK_FunctionPointer:
+        GD = Component.getFunctionDecl();
+        break;
+      case VtableComponent::CK_CompleteDtorPointer:
+        GD = GlobalDecl(Component.getDestructorDecl(), Dtor_Complete);
+        break;
+      case VtableComponent::CK_DeletingDtorPointer:
+        GD = GlobalDecl(Component.getDestructorDecl(), Dtor_Deleting);
+        break;
+      }
+
+      // Check if we should use a thunk.
+      if (NextVTableThunkIndex < VTableThunks.size() &&
+          VTableThunks[NextVTableThunkIndex].first == I) {
+        const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
+        
+        Init = CGM.GetAddrOfThunk(GD, Thunk);
+      } else {
+        const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+        const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
+        
+        Init = CGM.GetAddrOfFunction(GD, Ty);
+      }
+      
+      Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
+      break;
+    }
+
+    case VtableComponent::CK_UnusedFunctionPointer:
+      Init = llvm::ConstantExpr::getNullValue(Int8PtrTy);
+      break;
+    };
     
     Inits.push_back(Init);
   }
@@ -4128,7 +4203,24 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   VtableBuilder Builder(*this, Base.getBase(), Base.getBaseOffset(), 
                         /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
 
-  Builder.dumpLayout(llvm::errs());
+  // Dump the vtable layout if necessary.
+  if (CGM.getLangOptions().DumpVtableLayouts)
+    Builder.dumpLayout(llvm::errs());
+
+  // Add the address points.
+  for (VtableBuilder::AddressPointsMapTy::const_iterator I =
+       Builder.address_points_begin(), E = Builder.address_points_end();
+       I != E; ++I) {
+    uint64_t &AddressPoint = 
+    AddressPoints[std::make_pair(Base.getBase(), I->first)];
+
+#if 0
+    // FIXME: Figure out why this assert fires.
+    // Check if we already have the address points for this base.
+    assert(!AddressPoint && "Address point already exists for this base!");
+#endif
+    AddressPoint = I->second;
+  }
 
   // Get the mangled construction vtable name.
   llvm::SmallString<256> OutName;
