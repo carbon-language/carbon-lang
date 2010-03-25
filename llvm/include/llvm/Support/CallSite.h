@@ -76,6 +76,10 @@ public:
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   uint16_t getParamAlignment(uint16_t i) const;
 
+  /// @brief Return true if the call should not be inlined.
+  bool isNoInline() const;
+  void setIsNoInline(bool Value = true);
+  
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const;
   void setDoesNotAccessMemory(bool doesNotAccessMemory = true);

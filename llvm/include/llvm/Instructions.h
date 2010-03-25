@@ -971,6 +971,13 @@ public:
   unsigned getParamAlignment(unsigned i) const {
     return AttributeList.getParamAlignment(i);
   }
+  
+  /// @brief Return true if the call should not be inlined.
+  bool isNoInline() const { return paramHasAttr(~0, Attribute::NoInline); }
+  void setIsNoInline(bool Value) {
+    if (Value) addAttribute(~0, Attribute::NoInline);
+    else removeAttribute(~0, Attribute::NoInline);
+  }
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
@@ -2456,6 +2463,13 @@ public:
     return AttributeList.getParamAlignment(i);
   }
 
+  /// @brief Return true if the call should not be inlined.
+  bool isNoInline() const { return paramHasAttr(~0, Attribute::NoInline); }
+  void setIsNoInline(bool Value) {
+    if (Value) addAttribute(~0, Attribute::NoInline);
+    else removeAttribute(~0, Attribute::NoInline);
+  }
+  
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
     return paramHasAttr(~0, Attribute::ReadNone);

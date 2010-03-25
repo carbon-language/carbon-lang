@@ -255,9 +255,11 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   Function *Caller = TheCall->getParent()->getParent();
 
   // Don't inline functions which can be redefined at link-time to mean
-  // something else.  Don't inline functions marked noinline.
+  // something else.  Don't inline functions marked noinline or call sites
+  // marked noinline.
   if (Callee->mayBeOverridden() ||
-      Callee->hasFnAttr(Attribute::NoInline) || NeverInline.count(Callee))
+      Callee->hasFnAttr(Attribute::NoInline) || NeverInline.count(Callee) ||
+      CS.isNoInline())
     return llvm::InlineCost::getNever();
 
   // InlineCost - This value measures how good of an inline candidate this call
