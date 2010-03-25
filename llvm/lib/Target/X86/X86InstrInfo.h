@@ -398,7 +398,10 @@ namespace X86II {
     FS          = 1 << SegOvrShift,
     GS          = 2 << SegOvrShift,
 
-    // Bits 22 -> 23 are unused
+    // Execution domain for SSE instructions in bits 22, 23.
+    // 0 in bits 22-23 means normal, non-SSE instruction. See SSEDomain below.
+    SSEDomainShift = 22,
+
     OpcodeShift   = 24,
     OpcodeMask    = 0xFF << OpcodeShift
   };
@@ -486,7 +489,7 @@ class X86InstrInfo : public TargetInstrInfoImpl {
   /// MemOp2RegOpTable - Load / store unfolding opcode map.
   ///
   DenseMap<unsigned*, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
-  
+
 public:
   explicit X86InstrInfo(X86TargetMachine &tm);
 
@@ -715,6 +718,15 @@ public:
   /// initialize the register in the function entry block, if necessary.
   ///
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
+
+  /// Some SSE instructions come in variants for three domains.
+  enum SSEDomain { NotSSEDomain, PackedInt, PackedSingle, PackedDouble };
+
+  /// GetSSEDomain - Return the SSE execution domain of MI, or NotSSEDomain for
+  /// unknown instructions. If the instruction has equivalents for other
+  /// domains, equiv points to a list of opcodes for [PackedInt, PackedSingle,
+  /// PackedDouble].
+  SSEDomain GetSSEDomain(const MachineInstr *MI, const unsigned *&equiv) const;
 
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,

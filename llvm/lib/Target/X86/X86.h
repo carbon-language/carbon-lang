@@ -41,6 +41,10 @@ FunctionPass *createX86ISelDag(X86TargetMachine &TM,
 ///
 FunctionPass *createX86FloatingPointStackifierPass();
 
+/// createSSEDomainFixPass - This pass twiddles SSE opcodes to prevent domain
+/// crossings.
+FunctionPass *createSSEDomainFixPass();
+
 /// createX87FPRegKillInserterPass - This function returns a pass which
 /// inserts FP_REG_KILL instructions where needed.
 ///
