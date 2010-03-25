@@ -4336,8 +4336,6 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     Body->Destroy(Context);
     return DeclPtrTy();
   }
-  if (!IsInstantiation)
-    PopDeclContext();
 
   // Verify and clean out per-function state.
 
@@ -4419,6 +4417,9 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
     assert(ExprTemporaries.empty() && "Leftover temporaries in function");
   }
   
+  if (!IsInstantiation)
+    PopDeclContext();
+
   PopFunctionOrBlockScope();
   
   // If any errors have occurred, clear out any temporaries that may have

@@ -283,3 +283,15 @@ namespace test10 {
     };
   };
 }
+
+namespace test11 {
+  class A {
+    protected: virtual ~A();
+  };
+
+  class B : public A {
+    ~B();
+  };
+
+  B::~B() {};
+}
