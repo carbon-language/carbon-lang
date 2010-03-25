@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -faccess-control -verify -emit-llvm-only %s
+
+namespace test0 {
 template <typename T> struct Num {
   T value_;
 
@@ -52,6 +54,7 @@ int calc2() {
   Num<int>::Rep<char> n = (char) 10;
   Num<int> result = x * n;
   return result.get();
+}
 }
 
 // Reduced from GNU <locale>
@@ -149,4 +152,29 @@ namespace Dependent {
     typedef typename Traits::value_type value_type;
     friend X operator+<>(const X&, const value_type*);
   };
+}
+
+namespace test7 {
+  template <class T> class A { // expected-note {{previous definition is here}}
+    friend class B;
+    int x; // expected-note {{declared private here}}
+  };
+
+  class B {
+    int foo(A<int> &a) {
+      return a.x;
+    }
+  };
+
+  class C {
+    int foo(A<int> &a) {
+      return a.x; // expected-error {{'x' is a private member of 'test7::A<int>'}}
+    }
+  };
+
+  // This shouldn't crash.
+  template <class T> class D {
+    friend class A; // expected-error {{redefinition of 'A' as different kind of symbol}}
+  };
+  template class D<int>;
 }

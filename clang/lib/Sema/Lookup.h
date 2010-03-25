@@ -397,6 +397,12 @@ public:
     configure();
   }
 
+  /// \brief Change this lookup's redeclaration kind.
+  void setRedeclarationKind(Sema::RedeclarationKind RK) {
+    Redecl = RK;
+    configure();
+  }
+
   void print(llvm::raw_ostream &);
 
   /// Suppress the diagnostics that would normally fire because of this

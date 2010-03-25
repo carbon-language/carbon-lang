@@ -4774,6 +4774,79 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     }
   }
 
+  // If we didn't find a previous declaration, and this is a reference
+  // (or friend reference), move to the correct scope.  In C++, we
+  // also need to do a redeclaration lookup there, just in case
+  // there's a shadow friend decl.
+  if (Name && Previous.empty() &&
+      (TUK == TUK_Reference || TUK == TUK_Friend)) {
+    if (Invalid) goto CreateNewDecl;
+    assert(SS.isEmpty());
+
+    if (TUK == TUK_Reference) {
+      // C++ [basic.scope.pdecl]p5:
+      //   -- for an elaborated-type-specifier of the form
+      //
+      //          class-key identifier
+      //
+      //      if the elaborated-type-specifier is used in the
+      //      decl-specifier-seq or parameter-declaration-clause of a
+      //      function defined in namespace scope, the identifier is
+      //      declared as a class-name in the namespace that contains
+      //      the declaration; otherwise, except as a friend
+      //      declaration, the identifier is declared in the smallest
+      //      non-class, non-function-prototype scope that contains the
+      //      declaration.
+      //
+      // C99 6.7.2.3p8 has a similar (but not identical!) provision for
+      // C structs and unions.
+      //
+      // It is an error in C++ to declare (rather than define) an enum
+      // type, including via an elaborated type specifier.  We'll
+      // diagnose that later; for now, declare the enum in the same
+      // scope as we would have picked for any other tag type.
+      //
+      // GNU C also supports this behavior as part of its incomplete
+      // enum types extension, while GNU C++ does not.
+      //
+      // Find the context where we'll be declaring the tag.
+      // FIXME: We would like to maintain the current DeclContext as the
+      // lexical context,
+      while (SearchDC->isRecord())
+        SearchDC = SearchDC->getParent();
+
+      // Find the scope where we'll be declaring the tag.
+      while (S->isClassScope() ||
+             (getLangOptions().CPlusPlus &&
+              S->isFunctionPrototypeScope()) ||
+             ((S->getFlags() & Scope::DeclScope) == 0) ||
+             (S->getEntity() &&
+              ((DeclContext *)S->getEntity())->isTransparentContext()))
+        S = S->getParent();
+    } else {
+      assert(TUK == TUK_Friend);
+      // C++ [namespace.memdef]p3:
+      //   If a friend declaration in a non-local class first declares a
+      //   class or function, the friend class or function is a member of
+      //   the innermost enclosing namespace.
+      SearchDC = SearchDC->getEnclosingNamespaceContext();
+
+      // Look up through our scopes until we find one with an entity which
+      // matches our declaration context.
+      while (S->getEntity() &&
+             ((DeclContext *)S->getEntity())->getPrimaryContext() != SearchDC) {
+        S = S->getParent();
+        assert(S && "No enclosing scope matching the enclosing namespace.");
+      }
+    }
+
+    // In C++, look for a shadow friend decl.
+    if (getLangOptions().CPlusPlus) {
+      Previous.setRedeclarationKind(ForRedeclaration);
+      LookupQualifiedName(Previous, SearchDC);
+    }
+  }
+
   if (!Previous.empty()) {
     assert(Previous.isSingleResult());
     NamedDecl *PrevDecl = Previous.getFoundDecl();
@@ -4871,7 +4944,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     } else {
       // PrevDecl is a namespace, template, or anything else
       // that lives in the IDNS_Tag identifier namespace.
-      if (isDeclInScope(PrevDecl, SearchDC, S)) {
+      if (TUK == TUK_Reference || TUK == TUK_Friend ||
+          isDeclInScope(PrevDecl, SearchDC, S)) {
         // The tag name clashes with a namespace name, issue an error and
         // recover by making this tag be anonymous.
         Diag(NameLoc, diag::err_redefinition_different_kind) << Name;
@@ -4884,60 +4958,6 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // new scope, so clear out the previous declaration.
         Previous.clear();
       }
-    }
-  } else if (TUK == TUK_Reference && SS.isEmpty() && Name) {
-    // C++ [basic.scope.pdecl]p5:
-    //   -- for an elaborated-type-specifier of the form
-    //
-    //          class-key identifier
-    //
-    //      if the elaborated-type-specifier is used in the
-    //      decl-specifier-seq or parameter-declaration-clause of a
-    //      function defined in namespace scope, the identifier is
-    //      declared as a class-name in the namespace that contains
-    //      the declaration; otherwise, except as a friend
-    //      declaration, the identifier is declared in the smallest
-    //      non-class, non-function-prototype scope that contains the
-    //      declaration.
-    //
-    // C99 6.7.2.3p8 has a similar (but not identical!) provision for
-    // C structs and unions.
-    //
-    // It is an error in C++ to declare (rather than define) an enum
-    // type, including via an elaborated type specifier.  We'll
-    // diagnose that later; for now, declare the enum in the same
-    // scope as we would have picked for any other tag type.
-    //
-    // GNU C also supports this behavior as part of its incomplete
-    // enum types extension, while GNU C++ does not.
-    //
-    // Find the context where we'll be declaring the tag.
-    // FIXME: We would like to maintain the current DeclContext as the
-    // lexical context,
-    while (SearchDC->isRecord())
-      SearchDC = SearchDC->getParent();
-
-    // Find the scope where we'll be declaring the tag.
-    while (S->isClassScope() ||
-           (getLangOptions().CPlusPlus && S->isFunctionPrototypeScope()) ||
-           ((S->getFlags() & Scope::DeclScope) == 0) ||
-           (S->getEntity() &&
-            ((DeclContext *)S->getEntity())->isTransparentContext()))
-      S = S->getParent();
-
-  } else if (TUK == TUK_Friend && SS.isEmpty() && Name) {
-    // C++ [namespace.memdef]p3:
-    //   If a friend declaration in a non-local class first declares a
-    //   class or function, the friend class or function is a member of
-    //   the innermost enclosing namespace.
-    SearchDC = SearchDC->getEnclosingNamespaceContext();
-
-    // Look up through our scopes until we find one with an entity which
-    // matches our declaration context.
-    while (S->getEntity() &&
-           ((DeclContext *)S->getEntity())->getPrimaryContext() != SearchDC) {
-      S = S->getParent();
-      assert(S && "No enclosing scope matching the enclosing namespace.");
     }
   }
 
@@ -5055,7 +5075,7 @@ CreateNewDecl:
     New->setObjectOfFriendDecl(/* PreviouslyDeclared = */ !Previous.empty());
 
   // Set the access specifier.
-  if (!Invalid && TUK != TUK_Friend)
+  if (!Invalid && SearchDC->isRecord())
     SetMemberAccessSpecifier(New, PrevDecl, AS);
 
   if (TUK == TUK_Definition)
@@ -5068,13 +5088,11 @@ CreateNewDecl:
     if (PrevDecl)
       New->setAccess(PrevDecl->getAccess());
 
-    // Friend tag decls are visible in fairly strange ways.
-    if (!CurContext->isDependentContext()) {
-      DeclContext *DC = New->getDeclContext()->getLookupContext();
-      DC->makeDeclVisibleInContext(New, /* Recoverable = */ false);
+    DeclContext *DC = New->getDeclContext()->getLookupContext();
+    DC->makeDeclVisibleInContext(New, /* Recoverable = */ false);
+    if (Name) // can be null along some error paths
       if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
         PushOnScopeChains(New, EnclosingScope, /* AddToContext = */ false);
-    }
   } else if (Name) {
     S = getNonFieldDeclScope(S);
     PushOnScopeChains(New, S);
