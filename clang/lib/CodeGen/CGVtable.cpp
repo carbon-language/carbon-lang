@@ -1132,8 +1132,10 @@ private:
   /// Components - The components of the vtable being built.
   llvm::SmallVector<VtableComponent, 64> Components;
 
+  typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
+
   /// AddressPoints - Address points for the vtable being built.
-  CodeGenVTables::AddressPointsMapTy AddressPoints;
+  AddressPointsMapTy AddressPoints;
 
   /// MethodInfo - Contains information about a method in a vtable.
   /// (Used for computing 'this' pointer adjustment thunks.
@@ -2070,8 +2072,8 @@ void VtableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   // Since an address point can be shared by multiple subobjects, we use an
   // STL multimap.
   std::multimap<uint64_t, BaseSubobject> AddressPointsByIndex;
-  for (CodeGenVTables::AddressPointsMapTy::const_iterator I = 
-       AddressPoints.begin(), E = AddressPoints.end(); I != E; ++I) {
+  for (AddressPointsMapTy::const_iterator I = AddressPoints.begin(), 
+       E = AddressPoints.end(); I != E; ++I) {
     const BaseSubobject& Base = I->first;
     uint64_t Index = I->second;
     
@@ -2335,6 +2337,8 @@ public:
   typedef std::vector<std::pair<GlobalDecl,
                                 std::pair<GlobalDecl, ThunkAdjustment> > >
       SavedAdjustmentsVectorTy;
+  typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
+  
 private:
   
   // VtableComponents - The components of the vtable being built.
@@ -2468,7 +2472,7 @@ private:
   llvm::DenseMap<CtorVtable_t, int64_t> &subAddressPoints;
 
   /// AddressPoints - Address points for this vtable.
-  CodeGenVTables::AddressPointsMapTy& AddressPoints;
+  AddressPointsMapTy& AddressPoints;
   
   typedef CXXRecordDecl::method_iterator method_iter;
   const uint32_t LLVMPointerWidth;
@@ -2692,7 +2696,7 @@ private:
 public:
   OldVtableBuilder(const CXXRecordDecl *MostDerivedClass,
                 const CXXRecordDecl *l, uint64_t lo, CodeGenModule &cgm,
-                  bool build, CodeGenVTables::AddressPointsMapTy& AddressPoints)
+                  bool build, AddressPointsMapTy& AddressPoints)
     : BuildVtable(build), MostDerivedClass(MostDerivedClass), LayoutClass(l),
       LayoutOffset(lo), BLayout(cgm.getContext().getASTRecordLayout(l)),
       rtti(0), VMContext(cgm.getModule().getContext()),CGM(cgm),
@@ -3572,7 +3576,7 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
 const CodeGenVTables::AddrSubMap_t &
 CodeGenVTables::getAddressPoints(const CXXRecordDecl *RD) {
   if (!AddressPoints[RD]) {
-    AddressPointsMapTy AddressPoints;
+    OldVtableBuilder::AddressPointsMapTy AddressPoints;
     OldVtableBuilder b(RD, RD, 0, CGM, false, AddressPoints);
     
     b.GenerateVtableForBase(RD, 0);
@@ -3588,7 +3592,7 @@ CodeGenVTables::GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                                const CXXRecordDecl *LayoutClass,
                                const CXXRecordDecl *RD, uint64_t Offset,
                                bool IsVirtual,
-                               AddressPointsMapTy& AddressPoints) {
+                       llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints) {
   if (GenerateDefinition) {
     if (LayoutClass == RD) {
       assert(!IsVirtual && 
@@ -3962,7 +3966,7 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
     return;
   }
   
-  AddressPointsMapTy AddressPoints;
+  llvm::DenseMap<BaseSubobject, uint64_t> AddressPoints;
   Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
                           /*IsVirtual=*/false,
                           AddressPoints);
@@ -3992,6 +3996,37 @@ llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
                                 llvm::GlobalValue::ExternalLinkage, 0, Name);
 
   return GV;
+}
+
+llvm::GlobalVariable *
+CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD, 
+                                           const BaseSubobject &Base, 
+                                           bool BaseIsVirtual, 
+                                           AddressPointsMapTy& AddressPoints) {
+  
+  llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPoints;
+  
+  llvm::GlobalVariable *VTable =
+    GenerateVtable(llvm::GlobalValue::InternalLinkage,
+                   /*GenerateDefinition=*/true,
+                   RD, Base.getBase(), Base.getBaseOffset(),
+                   BaseIsVirtual, VTableAddressPoints);
+  
+  // Add the address points for this base.
+  for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I =
+       VTableAddressPoints.begin(), E = VTableAddressPoints.end();
+       I != E; ++I) {
+    
+    uint64_t &AddressPoint = 
+      AddressPoints[std::make_pair(Base.getBase(), I->first)];
+    
+    // Check if we already have the address points for this base.
+    assert(!AddressPoint && "Address point already exists for this base!");
+    
+    AddressPoint = I->second;
+  }
+  
+  return VTable;
 }
 
 void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {

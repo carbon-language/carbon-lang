@@ -223,8 +223,6 @@ public:
   typedef llvm::DenseMap<CtorVtable_t, int64_t> AddrSubMap_t;
   typedef llvm::DenseMap<const CXXRecordDecl *, AddrSubMap_t *> AddrMap_t;
 
-  typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
-
   const CodeGenVTables::AddrSubMap_t& getAddressPoints(const CXXRecordDecl *RD);
 
   llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> AddressPoints;
@@ -269,6 +267,9 @@ private:
   /// integers are the vtable components.
   VTableLayoutMapTy VTableLayoutMap;
 
+  typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, 
+                                   BaseSubobject>, uint64_t> AddressPointsMapTy;
+
   uint64_t getNumVTableComponents(const CXXRecordDecl *RD) const {
     assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
     
@@ -288,7 +289,7 @@ private:
   GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
                  bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
                  const CXXRecordDecl *RD, uint64_t Offset, bool IsVirtual,
-                 AddressPointsMapTy& AddressPoints);
+                 llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints);
 
   llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
                                     bool GenerateDefinition,
@@ -334,20 +335,12 @@ public:
   /// GetAddrOfVTable - Get the address of the vtable for the given record decl.
   llvm::Constant *GetAddrOfVTable(const CXXRecordDecl *RD);
 
-  /// CtorVtableInfo - Information about a constructor vtable.
-  struct CtorVtableInfo {
-    /// Vtable - The vtable itself.
-    llvm::GlobalVariable *Vtable;
-  
-    /// AddressPoints - The address points in this constructor vtable.
-    AddressPointsMapTy AddressPoints;
-    
-    CtorVtableInfo() : Vtable(0) { }
-  };
-  
-  CtorVtableInfo getCtorVtable(const CXXRecordDecl *RD, 
-                               const BaseSubobject &Base,
-                               bool BaseIsVirtual);
+  /// GenerateConstructionVTable - Generate a construction vtable for the given 
+  /// base subobject.
+  llvm::GlobalVariable *
+  GenerateConstructionVTable(const CXXRecordDecl *RD, const BaseSubobject &Base, 
+                             bool BaseIsVirtual, 
+                             AddressPointsMapTy& AddressPoints);
   
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   

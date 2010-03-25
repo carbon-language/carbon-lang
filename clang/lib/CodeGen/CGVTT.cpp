@@ -53,26 +53,10 @@ class VTTBuilder {
 
     llvm::Constant *&CtorVtable = CtorVtables[Base];
     if (!CtorVtable) {
-      // Build the vtable.
-      CodeGenVTables::CtorVtableInfo Info
-        = CGM.getVTables().getCtorVtable(Class, Base, BaseIsVirtual);
-      
-      CtorVtable = Info.Vtable;
-      
-      // Add the address points for this base.
-      for (CodeGenVTables::AddressPointsMapTy::const_iterator I =
-           Info.AddressPoints.begin(), E = Info.AddressPoints.end(); 
-           I != E; ++I) {
-        uint64_t &AddressPoint = 
-          CtorVtableAddressPoints[std::make_pair(Base.getBase(), I->first)];
-        
-        // Check if we already have the address points for this base.
-        if (AddressPoint)
-          break;
-
-        // Otherwise, insert it.
-        AddressPoint = I->second;
-      }      
+      // Get the vtable.
+      CtorVtable = 
+        CGM.getVTables().GenerateConstructionVTable(Class, Base, BaseIsVirtual, 
+                                                    CtorVtableAddressPoints);
     }
     
     return CtorVtable;
@@ -334,18 +318,6 @@ CodeGenVTables::GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
   }
   
   return GV;
-}
-
-CodeGenVTables::CtorVtableInfo 
-CodeGenVTables::getCtorVtable(const CXXRecordDecl *RD, 
-                            const BaseSubobject &Base, bool BaseIsVirtual) {
-  CtorVtableInfo Info;
-  
-  Info.Vtable = GenerateVtable(llvm::GlobalValue::InternalLinkage,
-                               /*GenerateDefinition=*/true,
-                               RD, Base.getBase(), Base.getBaseOffset(),
-                               BaseIsVirtual, Info.AddressPoints);
-  return Info;
 }
 
 llvm::GlobalVariable *CodeGenVTables::getVTT(const CXXRecordDecl *RD) {
