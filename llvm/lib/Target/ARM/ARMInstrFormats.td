@@ -1666,6 +1666,19 @@ class NVDup<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   : NVLaneOp<opcod1, opcod2, opcod3, oops, iops, NEONDupFrm, itin,
              opc, dt, asm, pattern>;
 
+// Vector Duplicate Lane (from scalar to all elements)
+class NVDupLane<bits<4> op19_16, bit op6, dag oops, dag iops,
+                InstrItinClass itin, string opc, string dt, string asm,
+                list<dag> pattern>
+  : NDataI<oops, iops, NEONFrm, itin, opc, dt, asm, "", pattern> {
+  let Inst{24-23} = 0b11;
+  let Inst{21-20} = 0b11;
+  let Inst{19-16} = op19_16;
+  let Inst{11-7} = 0b11000;
+  let Inst{6} = op6;
+  let Inst{4} = 0;
+}
+
 // NEONFPPat - Same as Pat<>, but requires that the compiler be using NEON
 // for single-precision FP.
 class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
