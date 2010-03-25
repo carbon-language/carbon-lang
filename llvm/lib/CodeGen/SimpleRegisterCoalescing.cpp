@@ -1640,8 +1640,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   else if (RealSrcReg)
     SavedLI.reset(li_->dupInterval(&DstInt));
 
-  // Check if it is necessary to propagate "isDead" property.
   if (!isExtSubReg && !isInsSubReg && !isSubRegToReg) {
+    // Check if it is necessary to propagate "isDead" property.
     MachineOperand *mopd = CopyMI->findRegisterDefOperand(DstReg, false);
     bool isDead = mopd->isDead();
 
@@ -1690,16 +1690,15 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // been modified, so we can use this information below to update aliases.
   bool Swapped = false;
   // If SrcInt is implicitly defined, it's safe to coalesce.
-  bool isEmpty = SrcInt.empty();
-  if (isEmpty && !CanCoalesceWithImpDef(CopyMI, DstInt, SrcInt)) {
-    // Only coalesce an empty interval (defined by implicit_def) with
-    // another interval which has a valno defined by the CopyMI and the CopyMI
-    // is a kill of the implicit def.
-    DEBUG(dbgs() << "Not profitable!\n");
-    return false;
-  }
-
-  if (!isEmpty && !JoinIntervals(DstInt, SrcInt, Swapped)) {
+  if (SrcInt.empty()) {
+    if (!CanCoalesceWithImpDef(CopyMI, DstInt, SrcInt)) {
+      // Only coalesce an empty interval (defined by implicit_def) with
+      // another interval which has a valno defined by the CopyMI and the CopyMI
+      // is a kill of the implicit def.
+      DEBUG(dbgs() << "Not profitable!\n");
+      return false;
+    }
+  } else if (!JoinIntervals(DstInt, SrcInt, Swapped)) {
     // Coalescing failed.
 
     // If definition of source is defined by trivial computation, try
