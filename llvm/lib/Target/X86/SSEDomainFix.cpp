@@ -87,6 +87,7 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
       MachineInstr *MI = I;
       const unsigned *equiv = 0;
       X86InstrInfo::SSEDomain domain = TII->GetSSEDomain(MI, equiv);
+      (void) domain;
       DEBUG(dbgs() << "-isd"[domain] << (equiv ? "* " : "  ") << *MI);
     }
   }
