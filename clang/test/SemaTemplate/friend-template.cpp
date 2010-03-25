@@ -74,12 +74,16 @@ namespace test3 {
   template<typename T>
   class X3 {
     template<typename U, U Value> friend struct X2a;
-    template<typename U, T Value> friend struct X2b;
+
+    // FIXME: the redeclaration note ends up here because redeclaration
+    // lookup ends up finding the friend target from X3<int>.
+    template<typename U, T Value> friend struct X2b; // expected-error {{template non-type parameter has a different type 'long' in template redeclaration}} \
+      // expected-note {{previous non-type template parameter with type 'int' is here}}
   };
 
   X3<int> x3i; // okay
 
-  X3<long> x3l; // FIXME: should cause an instantiation-time failure
+  X3<long> x3l; // expected-note {{in instantiation}}
 }
 
 // PR5716
