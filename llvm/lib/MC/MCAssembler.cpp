@@ -568,6 +568,18 @@ void MCAssembler::Finish() {
       llvm::errs() << "assembler backend - pre-layout\n--\n";
       dump(); });
 
+  // Assign section and fragment ordinals, all subsequent backend code is
+  // responsible for updating these in place.
+  unsigned SectionIndex = 0;
+  unsigned FragmentIndex = 0;
+  for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
+    it->setOrdinal(SectionIndex++);
+
+    for (MCSectionData::iterator it2 = it->begin(),
+           ie2 = it->end(); it2 != ie2; ++it2)
+      it2->setOrdinal(FragmentIndex++);
+  }
+
   // Layout until everything fits.
   MCAsmLayout Layout(*this);
   while (LayoutOnce(Layout))
@@ -781,6 +793,7 @@ void MCAssembler::FinishLayout(MCAsmLayout &Layout) {
       //
       // FIXME: Add MCAsmLayout utility for this.
       DF->setParent(IF->getParent());
+      DF->setOrdinal(IF->getOrdinal());
       Layout.setFragmentOffset(DF, Layout.getFragmentOffset(IF));
       Layout.setFragmentEffectiveSize(DF, Layout.getFragmentEffectiveSize(IF));
 

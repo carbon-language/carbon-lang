@@ -91,6 +91,10 @@ private:
   /// initialized.
   uint64_t EffectiveSize;
 
+  /// Ordinal - The global index of this fragment. This is the index across all
+  /// sections, not just the parent section.
+  unsigned Ordinal;
+
   /// @}
 
 protected:
@@ -105,6 +109,9 @@ public:
 
   MCSectionData *getParent() const { return Parent; }
   void setParent(MCSectionData *Value) { Parent = Value; }
+
+  unsigned getOrdinal() const { return Ordinal; }
+  void setOrdinal(unsigned Value) { Ordinal = Value; }
 
   static bool classof(const MCFragment *O) { return true; }
 
@@ -390,6 +397,9 @@ private:
   iplist<MCFragment> Fragments;
   const MCSection *Section;
 
+  /// Ordinal - The section index in the assemblers section list.
+  unsigned Ordinal;
+
   /// Alignment - The maximum alignment seen in this section.
   unsigned Alignment;
 
@@ -428,6 +438,9 @@ public:
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
 
+  unsigned getOrdinal() const { return Ordinal; }
+  void setOrdinal(unsigned Value) { Ordinal = Value; }
+
   /// @name Fragment Access
   /// @{
 
@@ -451,6 +464,8 @@ public:
   bool empty() const { return Fragments.empty(); }
 
   void dump();
+
+  /// @}
 };
 
 // FIXME: Same concerns as with SectionData.
