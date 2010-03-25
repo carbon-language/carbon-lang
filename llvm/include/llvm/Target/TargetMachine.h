@@ -192,7 +192,7 @@ public:
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
                                    CodeGenOpt::Level,
-                                   bool DisableVerify = true) {
+                                   bool = true) {
     return true;
   }
 
@@ -205,7 +205,7 @@ public:
   virtual bool addPassesToEmitMachineCode(PassManagerBase &,
                                           JITCodeEmitter &,
                                           CodeGenOpt::Level,
-                                          bool DisableVerify = true) {
+                                          bool = true) {
     return true;
   }
 
@@ -216,7 +216,7 @@ public:
   virtual bool addPassesToEmitWholeFile(PassManager &, formatted_raw_ostream &,
                                         CodeGenFileType,
                                         CodeGenOpt::Level,
-                                        bool DisableVerify = true) {
+                                        bool = true) {
     return true;
   }
 };
