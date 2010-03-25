@@ -75,7 +75,7 @@ static OptionalAmount ParseAmount(const char *&Beg, const char *E) {
     char c = *I;
     if (c >= '0' && c <= '9') {
       hasDigits = true;
-      accumulator += (accumulator * 10) + (c - '0');
+      accumulator = (accumulator * 10) + (c - '0');
       continue;
     }
 
