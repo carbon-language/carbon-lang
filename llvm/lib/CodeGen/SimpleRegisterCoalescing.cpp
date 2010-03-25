@@ -2800,7 +2800,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           if (MO.isDead())
             continue;
           if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
-              !mri_->use_empty(Reg)) {
+              !mri_->use_nodbg_empty(Reg)) {
             isDead = false;
             break;
           }

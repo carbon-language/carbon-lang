@@ -74,7 +74,7 @@ bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
          E = ImpDefs.end(); I != E; ++I) {
     MachineInstr *DefMI = *I;
     unsigned DefReg = DefMI->getOperand(0).getReg();
-    if (MRI->use_empty(DefReg))
+    if (MRI->use_nodbg_empty(DefReg))
       DefMI->eraseFromParent();
   }
 
