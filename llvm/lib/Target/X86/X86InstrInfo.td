@@ -325,6 +325,7 @@ def FarData      : Predicate<"TM.getCodeModel() != CodeModel::Small &&"
 def NearData     : Predicate<"TM.getCodeModel() == CodeModel::Small ||"
                              "TM.getCodeModel() == CodeModel::Kernel">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
+def IsNotPIC     : Predicate<"TM.getRelocationModel() != Reloc::PIC_">;
 def OptForSize   : Predicate<"OptForSize">;
 def OptForSpeed  : Predicate<"!OptForSize">;
 def FastBTMem    : Predicate<"!Subtarget->isBTMemSlow()">;
@@ -4346,9 +4347,12 @@ def : Pat<(X86tcret GR32_TC:$dst, imm:$off),
           (TCRETURNri GR32_TC:$dst, imm:$off)>,
 	  Requires<[In32BitMode]>;
 
+// FIXME: This is disabled for 32-bit PIC mode because the global base
+// register which is part of the address mode may be assigned a 
+// callee-saved register.
 def : Pat<(X86tcret (load addr:$dst), imm:$off),
           (TCRETURNmi addr:$dst, imm:$off)>,
-	  Requires<[In32BitMode]>;
+	  Requires<[In32BitMode, IsNotPIC]>;
 
 def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
           (TCRETURNdi texternalsym:$dst, imm:$off)>,
