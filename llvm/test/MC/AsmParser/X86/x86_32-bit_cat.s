@@ -7806,3 +7806,39 @@
 
 // CHECK: 	pcmpgtq	%xmm5, %xmm5
         	pcmpgtq	%xmm5,%xmm5
+
+// CHECK: 	aesimc	%xmm0, %xmm1
+                aesimc %xmm0,%xmm1
+
+// CHECK: 	aesimc	(%eax), %xmm1
+                aesimc (%eax),%xmm1
+
+// CHECK: 	aesenc	%xmm1, %xmm2
+                aesenc %xmm1,%xmm2
+
+// CHECK: 	aesenc	4(%ebx), %xmm2
+                aesenc 4(%ebx),%xmm2
+
+// CHECK: 	aesenclast	%xmm3, %xmm4
+                aesenclast %xmm3,%xmm4
+
+// CHECK: 	aesenclast	4(%edx,%edi), %xmm4
+                aesenclast 4(%edx,%edi),%xmm4
+
+// CHECK: 	aesdec	%xmm5, %xmm6
+                aesdec %xmm5,%xmm6
+
+// CHECK: 	aesdec	4(%ecx,%eax,8), %xmm6
+                aesdec 4(%ecx,%eax,8),%xmm6
+
+// CHECK: 	aesdeclast	%xmm7, %xmm0
+                aesdeclast %xmm7,%xmm0
+
+// CHECK: 	aesdeclast	3405691582, %xmm0
+                aesdeclast 0xcafebabe,%xmm0
+
+// CHECK: 	aeskeygenassist	$125, %xmm1, %xmm2
+                aeskeygenassist $125, %xmm1, %xmm2
+
+// CHECK: 	aeskeygenassist	$125, (%edx,%eax,4), %xmm2
+                aeskeygenassist $125, (%edx,%eax,4), %xmm2
