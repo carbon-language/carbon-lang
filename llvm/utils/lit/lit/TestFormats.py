@@ -90,8 +90,9 @@ class FileBasedTest(object):
                             litConfig, localConfig):
         source_path = testSuite.getSourcePath(path_in_suite)
         for filename in os.listdir(source_path):
-            # Ignore dot files.
-            if filename.startswith('.'):
+            # Ignore dot files and excluded tests.
+            if (filename.startswith('.') or
+                filename in localConfig.excludes):
                 continue
 
             filepath = os.path.join(source_path, filename)
