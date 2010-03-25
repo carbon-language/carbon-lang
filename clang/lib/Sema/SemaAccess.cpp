@@ -429,7 +429,7 @@ static CXXBasePath *FindBestPath(Sema &S,
       }
 
       AccessSpecifier BaseAccess = I->Base->getAccessSpecifier();
-      if (BaseAccess != AS_public) {
+      if (BaseAccess != AS_public || PathAccess != AS_public) {
         switch (GetFriendKind(S, EC, I->Class)) {
         case Sema::AR_inaccessible:
           PathAccess = CXXRecordDecl::MergeAccess(BaseAccess, PathAccess);

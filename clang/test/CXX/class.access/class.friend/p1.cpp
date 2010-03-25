@@ -149,3 +149,19 @@ namespace test2 {
     // expected-error {{'getNext' is a private member of 'test2::ilist_node'}}
   };  
 }
+
+namespace test3 {
+  class A { protected: int x; }; // expected-note {{declared protected here}}
+
+  class B : public A {
+    friend int foo(B*);
+  };
+
+  int foo(B *p) {
+    return p->x;
+  }
+
+  int foo(const B *p) {
+    return p->x; // expected-error {{'x' is a protected member of 'test3::A'}}
+  }
+}
