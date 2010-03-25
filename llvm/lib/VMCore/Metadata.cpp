@@ -248,6 +248,7 @@ Value *MDNode::getOperand(unsigned i) const {
 void MDNode::Profile(FoldingSetNodeID &ID) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     ID.AddPointer(getOperand(i));
+  ID.AddBoolean(isFunctionLocal());
 }
 
 void MDNode::setIsNotUniqued() {
