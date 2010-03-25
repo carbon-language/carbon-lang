@@ -201,7 +201,12 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     EmitReturnOfRValue(RV, PD->getType());
   } else {
     LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
-    if (hasAggregateLLVMType(Ivar->getType())) {
+    if (Ivar->getType()->isAnyComplexType()) {
+      ComplexPairTy Pair = LoadComplexFromAddr(LV.getAddress(),
+                                               LV.isVolatileQualified());
+      StoreComplexToAddr(Pair, ReturnValue, LV.isVolatileQualified());
+    }
+    else if (hasAggregateLLVMType(Ivar->getType())) {
       EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
     } else {
       CodeGenTypes &Types = CGM.getTypes();

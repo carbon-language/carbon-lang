@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -emit-llvm -o - %s | FileCheck -check-prefix LP64 %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10  -fobjc-nonfragile-abi -emit-llvm -o - %s | FileCheck -check-prefix LP64 %s
 // rdar: // 7351147
 
 @interface A
@@ -15,3 +15,18 @@ void f0(A *a) {
 
 // CHECK-LP64: internal global [13 x i8] c"COMPLEX_PROP
 // CHECK-LP64: internal global [17 x i8] c"setCOMPLEX_PROP
+
+// rdar: // 7351147
+@interface B
+@property (assign) _Complex float f_complex_ivar;
+@end
+
+@implementation B
+
+@synthesize f_complex_ivar = _f_complex_ivar;
+-(void) unary_f_complex: (_Complex float) a0 {
+  self.f_complex_ivar = a0;
+}
+
+@end
+
