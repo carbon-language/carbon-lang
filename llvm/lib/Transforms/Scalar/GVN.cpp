@@ -1004,18 +1004,18 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
   
   // If the load and store are to the exact same address, they should have been
   // a must alias.  AA must have gotten confused.
-  // FIXME: Study to see if/when this happens.
-  if (LoadOffset == StoreOffset) {
+  // FIXME: Study to see if/when this happens.  One case is forwarding a memset
+  // to a load from the base of the memset.
 #if 0
+  if (LoadOffset == StoreOffset) {
     dbgs() << "STORE/LOAD DEP WITH COMMON POINTER MISSED:\n"
     << "Base       = " << *StoreBase << "\n"
     << "Store Ptr  = " << *WritePtr << "\n"
     << "Store Offs = " << StoreOffset << "\n"
     << "Load Ptr   = " << *LoadPtr << "\n";
     abort();
-#endif
-    return -1;
   }
+#endif
   
   // If the load and store don't overlap at all, the store doesn't provide
   // anything to the load.  In this case, they really don't alias at all, AA
@@ -1031,11 +1031,11 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
   
   
   bool isAAFailure = false;
-  if (StoreOffset < LoadOffset) {
+  if (StoreOffset < LoadOffset)
     isAAFailure = StoreOffset+int64_t(StoreSize) <= LoadOffset;
-  } else {
+  else
     isAAFailure = LoadOffset+int64_t(LoadSize) <= StoreOffset;
-  }
+
   if (isAAFailure) {
 #if 0
     dbgs() << "STORE LOAD DEP WITH COMMON BASE:\n"

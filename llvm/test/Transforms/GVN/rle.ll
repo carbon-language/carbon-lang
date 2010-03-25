@@ -531,4 +531,16 @@ out:
 }
 
 
+; PR6642
+define i32 @memset_to_load() nounwind readnone {
+entry:
+  %x = alloca [256 x i32], align 4                ; <[256 x i32]*> [#uses=2]
+  %tmp = bitcast [256 x i32]* %x to i8*           ; <i8*> [#uses=1]
+  call void @llvm.memset.i64(i8* %tmp, i8 0, i64 1024, i32 4)
+  %arraydecay = getelementptr inbounds [256 x i32]* %x, i32 0, i32 0 ; <i32*>
+  %tmp1 = load i32* %arraydecay                   ; <i32> [#uses=1]
+  ret i32 %tmp1
+; CHECK: @memset_to_load
+; CHECK: ret i32 0
+}
 
