@@ -57,6 +57,8 @@ public:
 };
 
 class MCFragment : public ilist_node<MCFragment> {
+  friend class MCAsmLayout;
+
   MCFragment(const MCFragment&);     // DO NOT IMPLEMENT
   void operator=(const MCFragment&); // DO NOT IMPLEMENT
 
@@ -107,8 +109,6 @@ public:
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
-
-  uint64_t getAddress() const;
 
   uint64_t getFileSize() const {
     assert(FileSize != ~UINT64_C(0) && "File size not set!");
@@ -390,6 +390,8 @@ public:
 // we anticipate the fast path being through an MCAssembler, the only reason to
 // keep it out is for API abstraction.
 class MCSectionData : public ilist_node<MCSectionData> {
+  friend class MCAsmLayout;
+
   MCSectionData(const MCSectionData&);  // DO NOT IMPLEMENT
   void operator=(const MCSectionData&); // DO NOT IMPLEMENT
 
@@ -469,12 +471,6 @@ public:
   //
   // FIXME: This could all be kept private to the assembler implementation.
 
-  uint64_t getAddress() const {
-    assert(Address != ~UINT64_C(0) && "Address not set!");
-    return Address;
-  }
-  void setAddress(uint64_t Value) { Address = Value; }
-
   uint64_t getSize() const {
     assert(Size != ~UINT64_C(0) && "File size not set!");
     return Size;
@@ -548,11 +544,6 @@ public:
 
   uint64_t getOffset() const { return Offset; }
   void setOffset(uint64_t Value) { Offset = Value; }
-
-  uint64_t getAddress() const {
-    assert(getFragment() && "Invalid getAddress() on undefined symbol!");
-    return getFragment()->getAddress() + getOffset();
-  }
 
   /// @}
   /// @name Symbol Attributes

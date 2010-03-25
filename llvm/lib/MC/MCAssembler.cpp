@@ -46,19 +46,22 @@ STATISTIC(ObjectBytes, "Number of emitted object file bytes");
 /* *** */
 
 uint64_t MCAsmLayout::getFragmentAddress(const MCFragment *F) const {
-  return F->getAddress();
+  assert(F->getParent() && "Missing section()!");
+  return getSectionAddress(F->getParent()) + F->getOffset();
 }
 
 uint64_t MCAsmLayout::getSymbolAddress(const MCSymbolData *SD) const {
-  return SD->getAddress();
+  assert(SD->getFragment() && "Invalid getAddress() on undefined symbol!");
+  return getFragmentAddress(SD->getFragment()) + SD->getOffset();
 }
 
 uint64_t MCAsmLayout::getSectionAddress(const MCSectionData *SD) const {
-  return SD->getAddress();
+  assert(SD->Address != ~UINT64_C(0) && "Address not set!");
+  return SD->Address;
 }
 
 void MCAsmLayout::setSectionAddress(MCSectionData *SD, uint64_t Value) {
-  SD->setAddress(Value);
+  SD->Address = Value;
 }
 
 /* *** */
@@ -76,11 +79,6 @@ MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
 }
 
 MCFragment::~MCFragment() {
-}
-
-uint64_t MCFragment::getAddress() const {
-  assert(getParent() && "Missing Section!");
-  return getParent()->getAddress() + Offset;
 }
 
 /* *** */
