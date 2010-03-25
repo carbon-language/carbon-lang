@@ -49,8 +49,14 @@ def FeatureFP16   : SubtargetFeature<"fp16", "HasFP16", "true",
 // FIXME: Currently, this is only flagged for Cortex-A8. It may be true for
 // others as well. We should do more benchmarking and confirm one way or
 // the other.
-def HasSlowVMLx   : SubtargetFeature<"vmlx", "SlowVMLx", "true",
-                                     "Disable VFP MAC instructions">;
+def FeatureHasSlowVMLx   : SubtargetFeature<"vmlx", "SlowVMLx", "true",
+                                            "Disable VFP MAC instructions">;
+// Some processors benefit from using NEON instructions for scalar
+// single-precision FP operations.
+def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
+                                        "true",
+                                        "Use NEON for single precision FP">;
+
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -115,7 +121,8 @@ def : Processor<"arm1156t2f-s",    ARMV6Itineraries,
 
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON, HasSlowVMLx]>;
+                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureHasSlowVMLx,
+                 FeatureNEONForFP]>;
 def : ProcNoItin<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//

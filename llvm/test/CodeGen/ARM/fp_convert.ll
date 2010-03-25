@@ -1,6 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=1 | FileCheck %s -check-prefix=NEON
-; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=0 | FileCheck %s -check-prefix=VFP2
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=VFP2
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=NEON
 ; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=VFP2
 

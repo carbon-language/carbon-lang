@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+neon -arm-use-neon-fp
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mcpu=cortex-a8
 ; rdar://7117307
 
 	%struct.Hosp = type { i32, i32, i32, %struct.List, %struct.List, %struct.List, %struct.List }
