@@ -247,6 +247,7 @@ public:
              QualType t)
     : SymExpr(SymSymKind), LHS(lhs), Op(op), RHS(rhs), T(t) {}
 
+  BinaryOperator::Opcode getOpcode() const { return Op; }
   const SymExpr *getLHS() const { return LHS; }
   const SymExpr *getRHS() const { return RHS; }
 
