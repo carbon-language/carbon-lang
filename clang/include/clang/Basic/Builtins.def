@@ -397,13 +397,6 @@ BUILTIN(__sync_fetch_and_xor_4, "ii*i.", "n")
 BUILTIN(__sync_fetch_and_xor_8, "LLiLLi*LLi.", "n")
 BUILTIN(__sync_fetch_and_xor_16, "LLLiLLLi*LLLi.", "n")
 
-BUILTIN(__sync_fetch_and_nand, "v.", "")
-BUILTIN(__sync_fetch_and_nand_1, "cc*c.", "n")
-BUILTIN(__sync_fetch_and_nand_2, "ss*s.", "n")
-BUILTIN(__sync_fetch_and_nand_4, "ii*i.", "n")
-BUILTIN(__sync_fetch_and_nand_8, "LLiLLi*LLi.", "n")
-BUILTIN(__sync_fetch_and_nand_16, "LLLiLLLi*LLLi.", "n")
-
 
 BUILTIN(__sync_add_and_fetch, "v.", "")
 BUILTIN(__sync_add_and_fetch_1, "cc*c.", "n")
@@ -439,14 +432,6 @@ BUILTIN(__sync_xor_and_fetch_2, "ss*s.", "n")
 BUILTIN(__sync_xor_and_fetch_4, "ii*i.", "n")
 BUILTIN(__sync_xor_and_fetch_8, "LLiLLi*LLi.", "n")
 BUILTIN(__sync_xor_and_fetch_16, "LLLiLLLi*LLLi.", "n")
-
-BUILTIN(__sync_nand_and_fetch, "v.", "")
-BUILTIN(__sync_nand_and_fetch_1, "cc*c.", "n")
-BUILTIN(__sync_nand_and_fetch_2, "ss*s.", "n")
-BUILTIN(__sync_nand_and_fetch_4, "ii*i.", "n")
-BUILTIN(__sync_nand_and_fetch_8, "LLiLLi*LLi.", "n")
-BUILTIN(__sync_nand_and_fetch_16, "LLLiLLLi*LLLi.", "n")
-
 
 BUILTIN(__sync_bool_compare_and_swap, "v.", "")
 BUILTIN(__sync_bool_compare_and_swap_1, "bcD*cc.", "n")

@@ -81,10 +81,6 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction& CGF,
   Value *Args[2] = { CGF.EmitScalarExpr(E->getArg(0)),
                      CGF.EmitScalarExpr(E->getArg(1)) };
   Value *Result = EmitCallWithBarrier(CGF, AtomF, Args, Args + 2);
-
-  if (Id == Intrinsic::atomic_load_nand)
-    Result = CGF.Builder.CreateNot(Result);
-
   return RValue::get(CGF.Builder.CreateBinOp(Op, Result, Args[1]));
 }
 
@@ -550,12 +546,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_fetch_and_xor_8:
   case Builtin::BI__sync_fetch_and_xor_16:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
-  case Builtin::BI__sync_fetch_and_nand_1:
-  case Builtin::BI__sync_fetch_and_nand_2:
-  case Builtin::BI__sync_fetch_and_nand_4:
-  case Builtin::BI__sync_fetch_and_nand_8:
-  case Builtin::BI__sync_fetch_and_nand_16:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_nand, E);
 
   // Clang extensions: not overloaded yet.
   case Builtin::BI__sync_fetch_and_min:
@@ -602,13 +592,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_xor_and_fetch_16:
     return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_xor, E,
                                 llvm::Instruction::Xor);
-  case Builtin::BI__sync_nand_and_fetch_1:
-  case Builtin::BI__sync_nand_and_fetch_2:
-  case Builtin::BI__sync_nand_and_fetch_4:
-  case Builtin::BI__sync_nand_and_fetch_8:
-  case Builtin::BI__sync_nand_and_fetch_16:
-    return EmitBinaryAtomicPost(*this, Intrinsic::atomic_load_nand, E,
-                                llvm::Instruction::And);
 
   case Builtin::BI__sync_val_compare_and_swap_1:
   case Builtin::BI__sync_val_compare_and_swap_2:
