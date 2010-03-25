@@ -635,7 +635,6 @@ struct D : virtual B, virtual C { virtual void f(); };
 // CHECK-NEXT:    9 | vcall_offset (-8)
 // CHECK-NEXT:   10 | offset_to_top (-8)
 // CHECK-NEXT:   11 | Test17::E RTTI
-// CHECK-NEXT:        -- (Test17::A, 8) vtable address --
 // CHECK-NEXT:        -- (Test17::C, 8) vtable address --
 // CHECK-NEXT:   12 | void Test17::E::f()
 // CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
@@ -693,7 +692,6 @@ struct C : A, B {
 // CHECK-NEXT:   19 | vcall_offset (-16)
 // CHECK-NEXT:   20 | offset_to_top (-16)
 // CHECK-NEXT:   21 | Test18::D RTTI
-// CHECK-NEXT:        -- (Test18::A, 16) vtable address --
 // CHECK-NEXT:        -- (Test18::B, 16) vtable address --
 // CHECK-NEXT:   22 | void Test18::D::f()
 // CHECK-NEXT:        [this adjustment: -8 non-virtual, -32 vcall offset offset]
@@ -725,7 +723,6 @@ struct C : A, B {
 // CHECK-NEXT:    9 | vcall_offset (0)
 // CHECK-NEXT:   10 | offset_to_top (-8)
 // CHECK-NEXT:   11 | Test18::C RTTI
-// CHECK-NEXT:        -- (Test18::A, 16) vtable address --
 // CHECK-NEXT:        -- (Test18::B, 16) vtable address --
 // CHECK-NEXT:   12 | void Test18::B::f()
 // CHECK-NEXT:   13 | [unused] void Test18::C::g()
@@ -745,7 +742,6 @@ struct C : A, B {
 // CHECK-NEXT:    2 | vcall_offset (0)
 // CHECK-NEXT:    3 | offset_to_top (0)
 // CHECK-NEXT:    4 | Test18::B RTTI
-// CHECK-NEXT:        -- (Test18::A, 16) vtable address --
 // CHECK-NEXT:        -- (Test18::B, 16) vtable address --
 // CHECK-NEXT:    5 | void Test18::B::f()
 // CHECK-NEXT:    6 | [unused] void Test18::A::g()
@@ -881,9 +877,6 @@ class E : virtual C { };
 // CHECK-NEXT:   12 | vcall_offset (-8)
 // CHECK-NEXT:   13 | offset_to_top (-8)
 // CHECK-NEXT:   14 | Test21::F RTTI
-// CHECK-NEXT:        -- (Test21::A, 8) vtable address --
-// CHECK-NEXT:        -- (Test21::B, 8) vtable address --
-// CHECK-NEXT:        -- (Test21::C, 8) vtable address --
 // CHECK-NEXT:        -- (Test21::E, 8) vtable address --
 // CHECK-NEXT:   15 | [unused] void Test21::F::f()
 //
@@ -1012,7 +1005,6 @@ struct C : virtual A { };
 // CHECK-NEXT:    6 | vcall_offset (-8)
 // CHECK-NEXT:    7 | offset_to_top (-8)
 // CHECK-NEXT:    8 | Test24::D RTTI
-// CHECK-NEXT:        -- (Test24::A, 8) vtable address --
 // CHECK-NEXT:        -- (Test24::C, 8) vtable address --
 // CHECK-NEXT:    9 | [unused] void Test24::D::f()
 
@@ -1030,14 +1022,13 @@ struct C : virtual A { };
 // CHECK-NEXT:    1 | vcall_offset (-8)
 // CHECK-NEXT:    2 | offset_to_top (0)
 // CHECK-NEXT:    3 | Test24::C RTTI
-// CHECK-NEXT:        -- (Test24::A, 8) vtable address --
 // CHECK-NEXT:        -- (Test24::C, 8) vtable address --
 // CHECK-NEXT:    4 | [unused] void Test24::A::f()
 // CHECK-NEXT:    5 | vcall_offset (0)
-// CHECK-NEXT: 6 | offset_to_top (8)
-// CHECK-NEXT: 7 | Test24::C RTTI
-// CHECK-NEXT:     -- (Test24::A, 0) vtable address --
-// CHECK-NEXT: 8 | void Test24::A::f()
+// CHECK-NEXT:    6 | offset_to_top (8)
+// CHECK-NEXT:    7 | Test24::C RTTI
+// CHECK-NEXT:        -- (Test24::A, 0) vtable address --
+// CHECK-NEXT:    8 | void Test24::A::f()
 struct D : B, C {
   virtual void f();
 };
@@ -1071,7 +1062,6 @@ struct B : virtual V { };
 // CHECK-NEXT:    8 | offset_to_top (-8)
 // CHECK-NEXT:    9 | Test25::C RTTI
 // CHECK-NEXT:        -- (Test25::B, 8) vtable address --
-// CHECK-NEXT:        -- (Test25::V, 8) vtable address --
 // CHECK-NEXT:   10 | [unused] void Test25::V::f()
 
 // CHECK:      Construction vtable for ('Test25::A', 0) in 'Test25::C' (5 entries).
@@ -1089,7 +1079,6 @@ struct B : virtual V { };
 // CHECK-NEXT:    2 | offset_to_top (0)
 // CHECK-NEXT:    3 | Test25::B RTTI
 // CHECK-NEXT:        -- (Test25::B, 8) vtable address --
-// CHECK-NEXT:        -- (Test25::V, 8) vtable address --
 // CHECK-NEXT:    4 | [unused] void Test25::V::f()
 // CHECK-NEXT:    5 | vcall_offset (0)
 // CHECK-NEXT:    6 | offset_to_top (8)

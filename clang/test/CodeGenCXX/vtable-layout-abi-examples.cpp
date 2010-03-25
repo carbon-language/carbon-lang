@@ -178,7 +178,6 @@ struct C : virtual public A { int j; };
 // CHECK-NEXT:    7 | vcall_offset (-16)
 // CHECK-NEXT:    8 | offset_to_top (-16)
 // CHECK-NEXT:    9 | Test2::D RTTI
-// CHECK-NEXT:        -- (Test2::A, 16) vtable address --
 // CHECK-NEXT:        -- (Test2::C, 16) vtable address --
 // CHECK-NEXT:   10 | [unused] void Test2::A::f()
 struct D : public B, public C {

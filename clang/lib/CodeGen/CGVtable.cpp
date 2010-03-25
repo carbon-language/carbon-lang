@@ -1900,20 +1900,32 @@ VtableBuilder::LayoutPrimaryAndSecondaryVtables(BaseSubobject Base,
   // Compute 'this' pointer adjustments.
   ComputeThisAdjustments();
 
-  // Record the address point.
-  AddressPoints.insert(std::make_pair(BaseSubobject(Base.getBase(),
-                                                    OffsetInLayoutClass),
-                                      AddressPoint));
-  
-  // Record the address points for all primary bases.
-  for (PrimaryBasesSetVectorTy::const_iterator I = PrimaryBases.begin(),
-       E = PrimaryBases.end(); I != E; ++I) {
-    const CXXRecordDecl *BaseDecl = *I;
+  // Add all address points.
+  const CXXRecordDecl *RD = Base.getBase();
+  while (true) {
+    AddressPoints.insert(std::make_pair(BaseSubobject(RD, OffsetInLayoutClass),
+                                        AddressPoint));
+
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
     
-    // We know that all the primary bases have the same offset as the base
-    // subobject.
-    BaseSubobject PrimaryBase(BaseDecl, OffsetInLayoutClass);
-    AddressPoints.insert(std::make_pair(PrimaryBase, AddressPoint));
+    if (!PrimaryBase)
+      break;
+    
+    if (Layout.getPrimaryBaseWasVirtual()) {
+      // Check if this virtual primary base is a primary base in the layout
+      // class. If it's not, we don't want to add it.
+      const ASTRecordLayout &LayoutClassLayout =
+        Context.getASTRecordLayout(LayoutClass);
+
+      if (LayoutClassLayout.getVBaseClassOffset(PrimaryBase) !=
+          OffsetInLayoutClass) {
+        // We don't want to add this class (or any of its primary bases).
+        break;
+      }
+    }
+
+    RD = PrimaryBase;
   }
 
   bool BaseIsMorallyVirtual = BaseIsVirtual;
