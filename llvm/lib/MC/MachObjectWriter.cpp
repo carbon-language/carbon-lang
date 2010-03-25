@@ -559,15 +559,8 @@ public:
         if (Base != &SD)
           Value += Layout.getSymbolAddress(&SD) - Layout.getSymbolAddress(Base);
       } else {
-        // The index is the section ordinal.
-        //
-        // FIXME: O(N)
-        Index = 1;
-        MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
-        for (; it != ie; ++it, ++Index)
-          if (&*it == SD.getFragment()->getParent())
-            break;
-        assert(it != ie && "Unable to find section index!");
+        // The index is the section ordinal (1-based).
+        Index = SD.getFragment()->getParent()->getOrdinal() + 1;
         IsExtern = 0;
         Value += Layout.getSymbolAddress(&SD);
 
@@ -747,15 +740,8 @@ public:
         Index = SD->getIndex();
         Value = 0;
       } else {
-        // The index is the section ordinal.
-        //
-        // FIXME: O(N)
-        Index = 1;
-        MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
-        for (; it != ie; ++it, ++Index)
-          if (&*it == SD->getFragment()->getParent())
-            break;
-        assert(it != ie && "Unable to find section index!");
+        // The index is the section ordinal (1-based).
+        Index = SD->getFragment()->getParent()->getOrdinal() + 1;
         Value = Layout.getSymbolAddress(SD);
       }
 
