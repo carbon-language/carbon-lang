@@ -389,6 +389,28 @@ public:
   /// the diagnostic, this returns null.
   static const char *getWarningOptionForDiag(unsigned DiagID);
 
+  /// \brief Enumeration describing how the the emission of a diagnostic should
+  /// be treated when it occurs during C++ template argument deduction.
+  enum SFINAEResponse {
+    /// \brief The diagnostic should not be reported, but it should cause
+    /// template argument deduction to fail.
+    ///
+    /// The vast majority of errors that occur during template argument 
+    /// deduction fall into this category.
+    SFINAE_SubstitutionFailure,
+    
+    /// \brief The diagnostic should be suppressed entirely.
+    ///
+    /// Warnings generally fall into this category.
+    SFINAE_Suppress,
+    
+    /// \brief The diagnostic should be reported.
+    ///
+    /// The diagnostic should be reported. Various fatal errors (e.g., 
+    /// template instantiation depth exceeded) fall into this category.
+    SFINAE_Report
+  };
+  
   /// \brief Determines whether the given built-in diagnostic ID is
   /// for an error that is suppressed if it occurs during C++ template
   /// argument deduction.
@@ -397,7 +419,7 @@ public:
   /// deduction fails but no diagnostic is emitted. Certain classes of
   /// errors, such as those errors that involve C++ access control,
   /// are not SFINAE errors.
-  static bool isBuiltinSFINAEDiag(unsigned DiagID);
+  static SFINAEResponse getDiagnosticSFINAEResponse(unsigned DiagID);
 
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by

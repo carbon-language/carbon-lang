@@ -610,19 +610,7 @@ public:
   };
 
   /// \brief Emit a diagnostic.
-  SemaDiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) {
-    if (isSFINAEContext() && Diagnostic::isBuiltinSFINAEDiag(DiagID)) {
-      // If we encountered an error during template argument
-      // deduction, and that error is one of the SFINAE errors,
-      // suppress the diagnostic.
-      ++NumSFINAEErrors;
-      Diags.setLastDiagnosticIgnored();
-      return SemaDiagnosticBuilder(*this);
-    }
-
-    DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
-    return SemaDiagnosticBuilder(DB, *this, DiagID);
-  }
+  SemaDiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
   /// \brief Emit a partial diagnostic.
   SemaDiagnosticBuilder Diag(SourceLocation Loc, const PartialDiagnostic& PD);

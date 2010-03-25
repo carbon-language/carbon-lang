@@ -124,10 +124,20 @@ const char *Diagnostic::getWarningOptionForDiag(unsigned DiagID) {
   return 0;
 }
 
-bool Diagnostic::isBuiltinSFINAEDiag(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->SFINAE && Info->Class == CLASS_ERROR;
-  return false;
+Diagnostic::SFINAEResponse 
+Diagnostic::getDiagnosticSFINAEResponse(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID)) {
+    if (!Info->SFINAE)
+      return SFINAE_Report;
+
+    if (Info->Class == CLASS_ERROR)
+      return SFINAE_SubstitutionFailure;
+    
+    // Suppress notes, warnings, and extensions;
+    return SFINAE_Suppress;
+  }
+  
+  return SFINAE_Report;
 }
 
 /// getDiagClass - Return the class field of the diagnostic.

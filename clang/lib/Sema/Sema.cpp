@@ -348,6 +348,30 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
   }
 }
 
+Sema::SemaDiagnosticBuilder Sema::Diag(SourceLocation Loc, unsigned DiagID) {
+  if (isSFINAEContext()) {
+    switch (Diagnostic::getDiagnosticSFINAEResponse(DiagID)) {
+    case Diagnostic::SFINAE_Report:
+      // Fall through; we'll report the diagnostic below.
+      break;
+
+    case Diagnostic::SFINAE_SubstitutionFailure:
+      // Count this failure so that we know that template argument deduction
+      // has failed.
+      ++NumSFINAEErrors;
+      // Fall through
+        
+    case Diagnostic::SFINAE_Suppress:
+      // Suppress this diagnostic.
+      Diags.setLastDiagnosticIgnored();
+      return SemaDiagnosticBuilder(*this);
+    }
+  }
+  
+  DiagnosticBuilder DB = Diags.Report(FullSourceLoc(Loc, SourceMgr), DiagID);
+  return SemaDiagnosticBuilder(DB, *this, DiagID);
+}
+
 Sema::SemaDiagnosticBuilder
 Sema::Diag(SourceLocation Loc, const PartialDiagnostic& PD) {
   SemaDiagnosticBuilder Builder(Diag(Loc, PD.getDiagID()));
