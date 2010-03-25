@@ -500,17 +500,21 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
 
     // Hack to make this work almost well pending a rewrite.
     if (ND->getDeclContext()->isRecord()) {
-      // FIXME: Hack to avoid crashing when incorrectly trying to instantiate
-      // templated friend declarations. This doesn't produce a correct AST;
-      // however this is sufficient for some AST analysis. The real solution
-      // must be put in place during the pending rewrite. See PR5848.
-      return 0;
+      if (!ND->getDeclContext()->isDependentContext()) {
+        NewND = SemaRef.FindInstantiatedDecl(D->getLocation(), ND, 
+                                             TemplateArgs);
+      } else {
+        // FIXME: Hack to avoid crashing when incorrectly trying to instantiate
+        // templated friend declarations. This doesn't produce a correct AST;
+        // however this is sufficient for some AST analysis. The real solution
+        // must be put in place during the pending rewrite. See PR5848.
+        return 0;
+      }
     } else if (D->wasSpecialization()) {
       // Totally egregious hack to work around PR5866
       return 0;
-    } else {
+    } else
       NewND = Visit(ND);
-    }
     if (!NewND) return 0;
 
     FU = cast<NamedDecl>(NewND);
@@ -637,8 +641,6 @@ namespace {
 }
 
 Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
-  bool isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
-
   // Create a local instantiation scope for this class template, which
   // will contain the instantiations of the template parameters.
   Sema::LocalInstantiationScope Scope(SemaRef);
@@ -648,95 +650,32 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     return NULL;
 
   CXXRecordDecl *Pattern = D->getTemplatedDecl();
-
-  // Instantiate the qualifier.  We have to do this first in case
-  // we're a friend declaration, because if we are then we need to put
-  // the new declaration in the appropriate context.
-  NestedNameSpecifier *Qualifier = Pattern->getQualifier();
-  if (Qualifier) {
-    Qualifier = SemaRef.SubstNestedNameSpecifier(Qualifier,
-                                                 Pattern->getQualifierRange(),
-                                                 TemplateArgs);
-    if (!Qualifier) return 0;
-  }
-
-  CXXRecordDecl *PrevDecl = 0;
-  ClassTemplateDecl *PrevClassTemplate = 0;
-
-  // If this isn't a friend, then it's a member template, in which
-  // case we just want to build the instantiation in the
-  // specialization.  If it is a friend, we want to build it in
-  // the appropriate context.
-  DeclContext *DC = Owner;
-  if (isFriend) {
-    if (Qualifier) {
-      CXXScopeSpec SS;
-      SS.setScopeRep(Qualifier);
-      SS.setRange(Pattern->getQualifierRange());
-      DC = SemaRef.computeDeclContext(SS);
-      if (!DC) return 0;
-    } else {
-      DC = SemaRef.FindInstantiatedContext(Pattern->getLocation(),
-                                           Pattern->getDeclContext(),
-                                           TemplateArgs);
-    }
-
-    // Look for a previous declaration of the template in the owning
-    // context.
-    LookupResult R(SemaRef, Pattern->getDeclName(), Pattern->getLocation(),
-                   Sema::LookupOrdinaryName, Sema::ForRedeclaration);
-    SemaRef.LookupQualifiedName(R, DC);
-
-    if (R.isSingleResult()) {
-      PrevClassTemplate = R.getAsSingle<ClassTemplateDecl>();
-      if (PrevClassTemplate)
-        PrevDecl = PrevClassTemplate->getTemplatedDecl();
-    }
-
-    if (!PrevClassTemplate && Qualifier) {
-      SemaRef.Diag(Pattern->getLocation(), diag::err_not_tag_in_scope)
-        << Pattern->getDeclName() << Pattern->getQualifierRange();
-      return 0;
-    }
-
-    if (PrevClassTemplate && 
-        !SemaRef.TemplateParameterListsAreEqual(InstParams,
-                                  PrevClassTemplate->getTemplateParameters(),
-                                                /*Complain=*/true,
-                                                Sema::TPL_TemplateMatch))
-      return 0;
-  }
-
   CXXRecordDecl *RecordInst
-    = CXXRecordDecl::Create(SemaRef.Context, Pattern->getTagKind(), DC,
+    = CXXRecordDecl::Create(SemaRef.Context, Pattern->getTagKind(), Owner,
                             Pattern->getLocation(), Pattern->getIdentifier(),
-                            Pattern->getTagKeywordLoc(), PrevDecl,
+                            Pattern->getTagKeywordLoc(), /*PrevDecl=*/ NULL,
                             /*DelayTypeCreation=*/true);
 
-  if (Qualifier)
-    RecordInst->setQualifierInfo(Qualifier, Pattern->getQualifierRange());
+  // Substitute the nested name specifier, if any.
+  if (SubstQualifier(Pattern, RecordInst))
+    return 0;
 
   ClassTemplateDecl *Inst
-    = ClassTemplateDecl::Create(SemaRef.Context, DC, D->getLocation(),
-                                D->getIdentifier(), InstParams, RecordInst,
-                                PrevClassTemplate);
+    = ClassTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                D->getIdentifier(), InstParams, RecordInst, 0);
   RecordInst->setDescribedClassTemplate(Inst);
-  if (isFriend) {
-    Inst->setObjectOfFriendDecl(PrevClassTemplate != 0);
-    // TODO: do we want to track the instantiation progeny of this
-    // friend target decl?
-  } else {
+  if (D->getFriendObjectKind())
+    Inst->setObjectOfFriendDecl(true);
+  else
     Inst->setAccess(D->getAccess());
-    Inst->setInstantiatedFromMemberTemplate(D);
-  }
+  Inst->setInstantiatedFromMemberTemplate(D);
   
   // Trigger creation of the type for the instantiation.
   SemaRef.Context.getInjectedClassNameType(RecordInst,
                   Inst->getInjectedClassNameSpecialization(SemaRef.Context));
   
   // Finish handling of friends.
-  if (isFriend) {
-    DC->makeDeclVisibleInContext(Inst, /*Recoverable*/ false);
+  if (Inst->getFriendObjectKind()) {
     return Inst;
   }
   

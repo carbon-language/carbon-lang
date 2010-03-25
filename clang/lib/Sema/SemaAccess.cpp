@@ -240,13 +240,13 @@ static Sema::AccessResult MatchesFriend(Sema &S,
                                         ClassTemplateDecl *Friend) {
   Sema::AccessResult OnFailure = Sema::AR_inaccessible;
 
-  // Check whether the friend is the template of a class in the
-  // context chain.
   for (llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator
          I = EC.Records.begin(), E = EC.Records.end(); I != E; ++I) {
     CXXRecordDecl *Record = *I;
 
-    // Figure out whether the current class has a template:
+    // Check whether the friend is the template of a class in the
+    // context chain.  To do that, we need to figure out whether the
+    // current class has a template:
     ClassTemplateDecl *CTD;
 
     // A specialization of the template...
@@ -263,10 +263,6 @@ static Sema::AccessResult MatchesFriend(Sema &S,
     // It's a match.
     if (Friend == CTD->getCanonicalDecl())
       return Sema::AR_accessible;
-
-    // If the context isn't dependent, it can't be a dependent match.
-    if (!EC.isDependent())
-      continue;
 
     // If the template names don't match, it can't be a dependent
     // match.  This isn't true in C++0x because of template aliases.
