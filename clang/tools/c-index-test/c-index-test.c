@@ -202,14 +202,14 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
   unsigned display_opts = CXDiagnostic_DisplaySourceLocation
     | CXDiagnostic_DisplayColumn | CXDiagnostic_DisplaySourceRanges;
   unsigned i, num_fixits;
-  
+
   if (clang_getDiagnosticSeverity(Diagnostic) == CXDiagnostic_Ignored)
     return;
 
   Msg = clang_formatDiagnostic(Diagnostic, display_opts);
   fprintf(stderr, "%s\n", clang_getCString(Msg));
   clang_disposeString(Msg);
-  
+
   clang_getInstantiationLocation(clang_getDiagnosticLocation(Diagnostic),
                                  &file, 0, 0, 0);
   if (!file)
@@ -223,7 +223,7 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
     CXSourceLocation end = clang_getRangeEnd(range);
     unsigned start_line, start_column, end_line, end_column;
     CXFile start_file, end_file;
-    clang_getInstantiationLocation(start, &start_file, &start_line, 
+    clang_getInstantiationLocation(start, &start_file, &start_line,
                                    &start_column, 0);
     clang_getInstantiationLocation(end, &end_file, &end_line, &end_column, 0);
     if (clang_equalLocations(start, end)) {
@@ -979,6 +979,177 @@ int perform_token_annotation(int argc, const char **argv) {
 }
 
 /******************************************************************************/
+/* USR printing.                                                              */
+/******************************************************************************/
+
+static int insufficient_usr(const char *kind, const char *usage) {
+  fprintf(stderr, "USR for '%s' requires: %s\n", kind, usage);
+  return 1;
+}
+
+static unsigned isUSR(const char *s) {
+  return s[0] == 'c' && s[1] == ':';
+}
+
+static int not_usr(const char *s, const char *arg) {
+  fprintf(stderr, "'%s' argument ('%s') is not a USR\n", s, arg);
+  return 1;
+}
+
+static void print_usr(CXString usr) {
+  const char *s = clang_getCString(usr);
+  printf("%s\n", s);
+  clang_disposeString(usr);
+}
+
+static void display_usrs() {
+  fprintf(stderr, "-print-usrs options:\n"
+        " ObjCCategory <class name> <category name>\n"
+        " ObjCClass <class name>\n"
+        " ObjCIvar <ivar name> <class USR>\n"
+        " ObjCMethod <selector> [0=class method|1=instance method] "
+            "<class USR>\n"
+          " ObjCProperty <property name> <class USR>\n"
+          " ObjCProtocol <protocol name>\n");
+}
+
+int print_usrs(const char **I, const char **E) {
+  while (I != E) {
+    const char *kind = *I;
+    unsigned len = strlen(kind);
+    switch (len) {
+      case 8:
+        if (memcmp(kind, "ObjCIvar", 8) == 0) {
+          if (I + 2 >= E)
+            return insufficient_usr(kind, "<ivar name> <class USR>");
+          if (!isUSR(I[2]))
+            return not_usr("<class USR>", I[2]);
+          else {
+            CXString x;
+            x.Spelling = I[2];
+            x.MustFreeString = 0;
+            print_usr(clang_constructUSR_ObjCIvar(I[1], x));
+          }
+
+          I += 3;
+          continue;
+        }
+        break;
+      case 9:
+        if (memcmp(kind, "ObjCClass", 9) == 0) {
+          if (I + 1 >= E)
+            return insufficient_usr(kind, "<class name>");
+          print_usr(clang_constructUSR_ObjCClass(I[1]));
+          I += 2;
+          continue;
+        }
+        break;
+      case 10:
+        if (memcmp(kind, "ObjCMethod", 10) == 0) {
+          if (I + 3 >= E)
+            return insufficient_usr(kind, "<method selector> "
+                "[0=class method|1=instance method] <class USR>");
+          if (!isUSR(I[3]))
+            return not_usr("<class USR>", I[3]);
+          else {
+            CXString x;
+            x.Spelling = I[3];
+            x.MustFreeString = 0;
+            print_usr(clang_constructUSR_ObjCMethod(I[1], atoi(I[2]), x));
+          }
+          I += 4;
+          continue;
+        }
+        break;
+      case 12:
+        if (memcmp(kind, "ObjCCategory", 12) == 0) {
+          if (I + 2 >= E)
+            return insufficient_usr(kind, "<class name> <category name>");
+          print_usr(clang_constructUSR_ObjCCategory(I[1], I[2]));
+          I += 3;
+          continue;
+        }
+        if (memcmp(kind, "ObjCProtocol", 12) == 0) {
+          if (I + 1 >= E)
+            return insufficient_usr(kind, "<protocol name>");
+          print_usr(clang_constructUSR_ObjCProtocol(I[1]));
+          I += 2;
+          continue;
+        }
+        if (memcmp(kind, "ObjCProperty", 12) == 0) {
+          if (I + 2 >= E)
+            return insufficient_usr(kind, "<property name> <class USR>");
+          if (!isUSR(I[2]))
+            return not_usr("<class USR>", I[2]);
+          else {
+            CXString x;
+            x.Spelling = I[2];
+            x.MustFreeString = 0;
+            print_usr(clang_constructUSR_ObjCProperty(I[1], x));
+          }
+          I += 3;
+          continue;
+        }
+        break;
+      default:
+        break;
+    }
+    break;
+  }
+
+  if (I != E) {
+    fprintf(stderr, "Invalid USR kind: %s\n", *I);
+    display_usrs();
+    return 1;
+  }
+  return 0;
+}
+
+int print_usrs_file(const char *file_name) {
+  char line[2048];
+  const char *args[128];
+  unsigned numChars = 0;
+
+  FILE *fp = fopen(file_name, "r");
+  if (!fp) {
+    fprintf(stderr, "error: cannot open '%s'\n", file_name);
+    return 1;
+  }
+
+  /* This code is not really all that safe, but it works fine for testing. */
+  while (!feof(fp)) {
+    char c = fgetc(fp);
+    if (c == '\n') {
+      unsigned i = 0;
+      const char *s = 0;
+
+      if (numChars == 0)
+        continue;
+
+      line[numChars] = '\0';
+      numChars = 0;
+
+      if (line[0] == '/' && line[1] == '/')
+        continue;
+
+      s = strtok(line, " ");
+      while (s) {
+        args[i] = s;
+        ++i;
+        s = strtok(0, " ");
+      }
+      if (print_usrs(&args[0], &args[i]))
+        return 1;
+    }
+    else
+      line[numChars++] = c;
+  }
+
+  fclose(fp);
+  return 0;
+}
+
+/******************************************************************************/
 /* Command line processing.                                                   */
 /******************************************************************************/
 
@@ -1006,7 +1177,9 @@ static void print_usage(void) {
     "       c-index-test -test-annotate-tokens=<range> {<args>}*\n"
     "       c-index-test -test-inclusion-stack-source {<args>}*\n"
     "       c-index-test -test-inclusion-stack-tu <AST file>\n"
-    "       c-index-test -test-print-linkage-source {<args>}*\n\n"
+    "       c-index-test -test-print-linkage-source {<args>}*\n"
+    "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
+    "       c-index-test -print-usr-file <file>\n\n"
     " <symbol filter> values:\n%s",
     "   all - load all symbols, including those from PCH\n"
     "   local - load all symbols except those in PCH\n"
@@ -1049,6 +1222,16 @@ int main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-linkage-source") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all", PrintLinkage,
                                     NULL);
+  else if (argc > 1 && strcmp(argv[1], "-print-usr") == 0) {
+    if (argc > 2)
+      return print_usrs(argv + 2, argv + argc);
+    else {
+      display_usrs();
+      return 1;
+    }
+  }
+  else if (argc > 2 && strcmp(argv[1], "-print-usr-file") == 0)
+    return print_usrs_file(argv[2]);
 
   print_usage();
   return 1;
