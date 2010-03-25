@@ -621,8 +621,8 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     return TC_Failed;
   }
 
-  // FIXME: Similar to CheckReferenceInit, we actually need more AST annotation
-  // than nothing.
+  // FIXME: We should probably have an AST node for lvalue-to-rvalue 
+  // conversions.
   return TC_Success;
 }
 

@@ -2048,28 +2048,26 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
 /// handles the reference binding specially.
 static bool ConvertForConditional(Sema &Self, Expr *&E,
                                   const ImplicitConversionSequence &ICS) {
-  if (ICS.isStandard() && ICS.Standard.ReferenceBinding) {
-    assert(ICS.Standard.DirectBinding &&
+  if ((ICS.isStandard() && ICS.Standard.ReferenceBinding) ||
+      (ICS.isUserDefined() && ICS.UserDefined.After.ReferenceBinding)) {
+    assert(((ICS.isStandard() && ICS.Standard.DirectBinding) ||
+            (ICS.isUserDefined() && ICS.UserDefined.After.DirectBinding)) &&
            "TryClassUnification should never generate indirect ref bindings");
-    // FIXME: CheckReferenceInit should be able to reuse the ICS instead of
-    // redoing all the work.
-    return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
-                                        TargetType(ICS)),
-                                   /*FIXME:*/E->getLocStart(),
-                                   /*SuppressUserConversions=*/false,
-                                   /*AllowExplicit=*/false,
-                                   /*ForceRValue=*/false);
+    InitializedEntity Entity 
+      = InitializedEntity::InitializeTemporary(
+                         Self.Context.getLValueReferenceType(TargetType(ICS)));
+    InitializationKind Kind = InitializationKind::CreateCopy(E->getLocStart(),
+                                                             SourceLocation());
+    InitializationSequence InitSeq(Self, Entity, Kind, &E, 1);
+    Sema::OwningExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
+                                      Sema::MultiExprArg(Self, (void **)&E, 1));
+    if (Result.isInvalid())
+      return true;
+    
+    E = Result.takeAs<Expr>();
+    return false;
   }
-  if (ICS.isUserDefined() && ICS.UserDefined.After.ReferenceBinding) {
-    assert(ICS.UserDefined.After.DirectBinding &&
-           "TryClassUnification should never generate indirect ref bindings");
-    return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
-                                        TargetType(ICS)),
-                                   /*FIXME:*/E->getLocStart(),
-                                   /*SuppressUserConversions=*/false,
-                                   /*AllowExplicit=*/false,
-                                   /*ForceRValue=*/false);
-  }
+  
   if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, Sema::AA_Converting))
     return true;
   return false;
