@@ -292,6 +292,7 @@ protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
     // PS3 PPU defines.
+    Builder.defineMacro("__PPC__");
     Builder.defineMacro("__PPU__");
     Builder.defineMacro("__CELLOS_LV2__");
     Builder.defineMacro("__ELF__");
