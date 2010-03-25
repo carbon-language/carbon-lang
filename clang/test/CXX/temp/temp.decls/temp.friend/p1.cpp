@@ -114,7 +114,21 @@ namespace test3 {
 
   template class User<bool>;
   template class User<int>; // expected-note {{requested here}}
+}
 
+namespace test4 {
+  template <class T> class A {
+    template <class T0> friend class B;
+    bool foo(const A<T> *) const;
+  };
+
+  template <class T> class B {
+    bool bar(const A<T> *a, const A<T> *b) {
+      return a->foo(b);
+    }
+  };
+
+  template class B<int>;
 }
 
 namespace Dependent {
