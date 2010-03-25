@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o - | FileCheck %s
+// RUN: %llvmgcc %s -m64 -S -o - | FileCheck %s
 // Bitfield references must not touch memory outside of the enclosing
 // struct.   Radar 7639995
 typedef signed char BOOL;
