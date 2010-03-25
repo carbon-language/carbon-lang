@@ -875,7 +875,7 @@ class N2VQ<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
 
 // Basic 2-register intrinsics, both double- and quad-register.
 class N2VDInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
-              bits<2> op17_16, bits<5> op11_7, bit op4, 
+              bits<2> op17_16, bits<5> op11_7, bit op4,
               InstrItinClass itin, string OpcodeStr, string Dt,
               ValueType ResTy, ValueType OpTy, Intrinsic IntOp>
   : N2V<op24_23, op21_20, op19_18, op17_16, op11_7, 0, op4, (outs DPR:$dst),
@@ -1305,14 +1305,14 @@ class N2VDSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
              InstrItinClass itin, string OpcodeStr, string Dt,
              ValueType Ty, SDNode OpNode>
   : N2VImm<op24, op23, op11_8, op7, 0, op4,
-           (outs DPR:$dst), (ins DPR:$src, i32imm:$SIMM), itin,
+           (outs DPR:$dst), (ins DPR:$src, i32imm:$SIMM), N2RegFrm, itin,
            OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set DPR:$dst, (Ty (OpNode (Ty DPR:$src), (i32 imm:$SIMM))))]>;
 class N2VQSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
              InstrItinClass itin, string OpcodeStr, string Dt,
              ValueType Ty, SDNode OpNode>
   : N2VImm<op24, op23, op11_8, op7, 1, op4,
-           (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), itin,
+           (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), N2RegFrm, itin,
            OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set QPR:$dst, (Ty (OpNode (Ty QPR:$src), (i32 imm:$SIMM))))]>;
 
@@ -1321,8 +1321,8 @@ class N2VLSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              string OpcodeStr, string Dt,
              ValueType ResTy, ValueType OpTy, SDNode OpNode>
   : N2VImm<op24, op23, op11_8, op7, op6, op4,
-           (outs QPR:$dst), (ins DPR:$src, i32imm:$SIMM), IIC_VSHLiD,
-           OpcodeStr, Dt, "$dst, $src, $SIMM", "",
+           (outs QPR:$dst), (ins DPR:$src, i32imm:$SIMM), N2RegFrm,
+           IIC_VSHLiD, OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set QPR:$dst, (ResTy (OpNode (OpTy DPR:$src),
                                           (i32 imm:$SIMM))))]>;
 
@@ -1331,7 +1331,7 @@ class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              InstrItinClass itin, string OpcodeStr, string Dt,
              ValueType ResTy, ValueType OpTy, SDNode OpNode>
   : N2VImm<op24, op23, op11_8, op7, op6, op4,
-           (outs DPR:$dst), (ins QPR:$src, i32imm:$SIMM), itin,
+           (outs DPR:$dst), (ins QPR:$src, i32imm:$SIMM), N2RegFrm, itin,
            OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set DPR:$dst, (ResTy (OpNode (OpTy QPR:$src),
                                           (i32 imm:$SIMM))))]>;
@@ -1341,14 +1341,14 @@ class N2VNSh<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 class N2VDShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
   : N2VImm<op24, op23, op11_8, op7, 0, op4, (outs DPR:$dst),
-           (ins DPR:$src1, DPR:$src2, i32imm:$SIMM), IIC_VPALiD, 
+           (ins DPR:$src1, DPR:$src2, i32imm:$SIMM), N2RegFrm, IIC_VPALiD,
            OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
            [(set DPR:$dst, (Ty (add DPR:$src1,
                                 (Ty (ShOp DPR:$src2, (i32 imm:$SIMM))))))]>;
 class N2VQShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
   : N2VImm<op24, op23, op11_8, op7, 1, op4, (outs QPR:$dst),
-           (ins QPR:$src1, QPR:$src2, i32imm:$SIMM), IIC_VPALiD, 
+           (ins QPR:$src1, QPR:$src2, i32imm:$SIMM), N2RegFrm, IIC_VPALiD,
            OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
            [(set QPR:$dst, (Ty (add QPR:$src1,
                                 (Ty (ShOp QPR:$src2, (i32 imm:$SIMM))))))]>;
@@ -1358,13 +1358,13 @@ class N2VQShAdd<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
 class N2VDShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
   : N2VImm<op24, op23, op11_8, op7, 0, op4, (outs DPR:$dst),
-           (ins DPR:$src1, DPR:$src2, i32imm:$SIMM), IIC_VSHLiD, 
+           (ins DPR:$src1, DPR:$src2, i32imm:$SIMM), N2RegFrm, IIC_VSHLiD,
            OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
            [(set DPR:$dst, (Ty (ShOp DPR:$src1, DPR:$src2, (i32 imm:$SIMM))))]>;
 class N2VQShIns<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
                 string OpcodeStr, string Dt, ValueType Ty, SDNode ShOp>
   : N2VImm<op24, op23, op11_8, op7, 1, op4, (outs QPR:$dst),
-           (ins QPR:$src1, QPR:$src2, i32imm:$SIMM), IIC_VSHLiQ, 
+           (ins QPR:$src1, QPR:$src2, i32imm:$SIMM), N2RegFrm, IIC_VSHLiQ,
            OpcodeStr, Dt, "$dst, $src2, $SIMM", "$src1 = $dst",
            [(set QPR:$dst, (Ty (ShOp QPR:$src1, QPR:$src2, (i32 imm:$SIMM))))]>;
 
@@ -1374,15 +1374,15 @@ class N2VCvtD<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
               string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
               Intrinsic IntOp>
   : N2VImm<op24, op23, op11_8, op7, 0, op4,
-           (outs DPR:$dst), (ins DPR:$src, i32imm:$SIMM), IIC_VUNAD, 
-           OpcodeStr, Dt, "$dst, $src, $SIMM", "",
+           (outs DPR:$dst), (ins DPR:$src, i32imm:$SIMM), NVCVTFrm,
+           IIC_VUNAD, OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set DPR:$dst, (ResTy (IntOp (OpTy DPR:$src), (i32 imm:$SIMM))))]>;
 class N2VCvtQ<bit op24, bit op23, bits<4> op11_8, bit op7, bit op4,
               string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
               Intrinsic IntOp>
   : N2VImm<op24, op23, op11_8, op7, 1, op4,
-           (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), IIC_VUNAQ, 
-           OpcodeStr, Dt, "$dst, $src, $SIMM", "",
+           (outs QPR:$dst), (ins QPR:$src, i32imm:$SIMM), NVCVTFrm,
+           IIC_VUNAQ, OpcodeStr, Dt, "$dst, $src, $SIMM", "",
            [(set QPR:$dst, (ResTy (IntOp (OpTy QPR:$src), (i32 imm:$SIMM))))]>;
 
 //===----------------------------------------------------------------------===//

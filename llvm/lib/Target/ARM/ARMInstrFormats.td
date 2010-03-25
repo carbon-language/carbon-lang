@@ -59,9 +59,10 @@ def NEONDupFrm    : Format<28>;
 def MiscFrm       : Format<29>;
 def ThumbMiscFrm  : Format<30>;
 
-def NLdStFrm            : Format<31>;
-def N1RegModImmFrm      : Format<32>;
-def N2RegFrm            : Format<33>;
+def NLdStFrm       : Format<31>;
+def N1RegModImmFrm : Format<32>;
+def N2RegFrm       : Format<33>;
+def NVCVTFrm       : Format<34>;
 
 // Misc flags.
 
@@ -1593,9 +1594,9 @@ class N2VX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
 
 // NEON 2 vector register with immediate.
 class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
-             dag oops, dag iops, InstrItinClass itin,
+             dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, NEONFrm, itin, opc, dt, asm, cstr, pattern> {
+  : NDataI<oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{11-8} = op11_8;
