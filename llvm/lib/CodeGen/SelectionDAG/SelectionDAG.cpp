@@ -598,8 +598,10 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
   // Remove the ordering of this node.
   Ordering->remove(N);
 
-  // And its entry in the debug info table, if any.
-  DbgInfo->remove(N);
+  // If any of the SDDbgValue nodes refer to this SDNode, invalidate them.
+  SmallVector<SDDbgValue*, 2> &DbgVals = DbgInfo->getSDDbgValues(N);
+  for (unsigned i = 0, e = DbgVals.size(); i != e; ++i)
+    DbgVals[i]->setIsInvalidated();
 }
 
 /// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
@@ -811,6 +813,7 @@ void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
 SelectionDAG::~SelectionDAG() {
   allnodes_clear();
   delete Ordering;
+  DbgInfo->clear();
   delete DbgInfo;
 }
 
@@ -5241,24 +5244,12 @@ unsigned SelectionDAG::GetOrdering(const SDNode *SD) const {
   return Ordering->getOrder(SD);
 }
 
-/// AssignDbgInfo - Assign debug info to the SDNode.
-void SelectionDAG::AssignDbgInfo(SDNode* SD, SDDbgValue* db) {
-  assert(SD && "Trying to assign dbg info to a null node!");
-  DbgInfo->add(SD, db);
-  SD->setHasDebugValue(true);
-}
-
-/// RememberDbgInfo - Remember debug info which is not assigned to an SDNode.
-void SelectionDAG::RememberDbgInfo(SDDbgValue* db) {
-  DbgInfo->add(db);
-}
-
-/// GetDbgInfo - Get the debug info, if any, for the SDNode.
-SDDbgValue* SelectionDAG::GetDbgInfo(const SDNode *SD) {
-  assert(SD && "Trying to get the order of a null node!");
-  if (SD->getHasDebugValue())
-    return DbgInfo->getSDDbgValue(SD);
-  return 0;
+/// AddDbgValue - Add a dbg_value SDNode. If SD is non-null that means the
+/// value is produced by SD.
+void SelectionDAG::AddDbgValue(SDDbgValue *DB, SDNode *SD) {
+  DbgInfo->add(DB, SD);
+  if (SD)
+    SD->setHasDebugValue(true);
 }
 
 //===----------------------------------------------------------------------===//

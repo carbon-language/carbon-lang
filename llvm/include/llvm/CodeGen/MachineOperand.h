@@ -285,6 +285,11 @@ public:
     IsEarlyClobber = Val;
   }
 
+  void setIsDebug(bool Val = true) {
+    assert(isReg() && IsDef && "Wrong MachineOperand accessor");
+    IsDebug = Val;
+  }
+
   //===--------------------------------------------------------------------===//
   // Accessors for various operand types.
   //===--------------------------------------------------------------------===//

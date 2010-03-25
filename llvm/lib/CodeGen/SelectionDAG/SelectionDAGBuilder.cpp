@@ -3825,20 +3825,20 @@ SelectionDAGBuilder::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     ++SDNodeOrder;
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V)) {
       SDDbgValue* dv = new SDDbgValue(Variable, V, Offset, dl, SDNodeOrder);
-      DAG.RememberDbgInfo(dv);
+      DAG.AddDbgValue(dv);
     } else {
       SDValue &N = NodeMap[V];
       if (N.getNode()) {
         SDDbgValue *dv = new SDDbgValue(Variable, N.getNode(),
                                         N.getResNo(), Offset, dl, SDNodeOrder);
-        DAG.AssignDbgInfo(N.getNode(), dv);
+        DAG.AddDbgValue(dv, N.getNode());
       } else {
         // We may expand this to cover more cases.  One case where we have no
         // data available is an unreferenced parameter; we need this fallback.
         SDDbgValue* dv = new SDDbgValue(Variable, 
                                         UndefValue::get(V->getType()),
                                         Offset, dl, SDNodeOrder);
-        DAG.RememberDbgInfo(dv);
+        DAG.AddDbgValue(dv);
       }
     }
 

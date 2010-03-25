@@ -64,7 +64,8 @@ class InstrEmitter {
   void AddRegisterOperand(MachineInstr *MI, SDValue Op,
                           unsigned IIOpNum,
                           const TargetInstrDesc *II,
-                          DenseMap<SDValue, unsigned> &VRBaseMap);
+                          DenseMap<SDValue, unsigned> &VRBaseMap,
+                          bool IsDebug = false);
 
   /// AddOperand - Add the specified operand to the specified machine instr.  II
   /// specifies the instruction information for the node, and IIOpNum is the
@@ -73,7 +74,8 @@ class InstrEmitter {
   void AddOperand(MachineInstr *MI, SDValue Op,
                   unsigned IIOpNum,
                   const TargetInstrDesc *II,
-                  DenseMap<SDValue, unsigned> &VRBaseMap);
+                  DenseMap<SDValue, unsigned> &VRBaseMap,
+                  bool IsDebug = false);
 
   /// EmitSubregNode - Generate machine code for subreg nodes.
   ///
@@ -98,16 +100,12 @@ public:
   /// MachineInstr.
   static unsigned CountOperands(SDNode *Node);
 
-  /// EmitDbgValue - Generate any debug info that refers to this Node.  Constant
-  /// dbg_value is not handled here.
-  void EmitDbgValue(SDNode *Node,
-                    DenseMap<SDValue, unsigned> &VRBaseMap,
-                    SDDbgValue* sd);
-
-
-  /// EmitDbgValue - Generate a constant DBG_VALUE.  No node is involved.
-  void EmitDbgValue(SDDbgValue* sd,
-                DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
+  /// EmitDbgValue - Generate machine instruction for a dbg_value node.
+  ///
+  MachineInstr *EmitDbgValue(SDDbgValue *SD,
+                          MachineBasicBlock *InsertBB,
+                          DenseMap<SDValue, unsigned> &VRBaseMap,
+                          DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
 
   /// EmitNode - Generate machine code for a node and needed dependencies.
   ///

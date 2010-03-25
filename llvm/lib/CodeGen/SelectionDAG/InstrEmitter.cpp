@@ -264,7 +264,8 @@ void
 InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
                                  unsigned IIOpNum,
                                  const TargetInstrDesc *II,
-                                 DenseMap<SDValue, unsigned> &VRBaseMap) {
+                                 DenseMap<SDValue, unsigned> &VRBaseMap,
+                                 bool IsDebug) {
   assert(Op.getValueType() != MVT::Other &&
          Op.getValueType() != MVT::Flag &&
          "Chain and flag operands should occur at end of operand list!");
@@ -295,7 +296,11 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     }
   }
 
-  MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
+  MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef,
+                                           false/*isImp*/, false/*isKill*/,
+                                           false/*isDead*/, false/*isUndef*/,
+                                           false/*isEarlyClobber*/,
+                                           0/*SubReg*/, IsDebug));
 }
 
 /// AddOperand - Add the specified operand to the specified machine instr.  II
@@ -305,9 +310,10 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
 void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
                               unsigned IIOpNum,
                               const TargetInstrDesc *II,
-                              DenseMap<SDValue, unsigned> &VRBaseMap) {
+                              DenseMap<SDValue, unsigned> &VRBaseMap,
+                              bool IsDebug) {
   if (Op.isMachineOpcode()) {
-    AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap);
+    AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap, IsDebug);
   } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateImm(C->getSExtValue()));
   } else if (ConstantFPSDNode *F = dyn_cast<ConstantFPSDNode>(Op)) {
@@ -356,7 +362,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Flag &&
            "Chain and flag operands should occur at end of operand list!");
-    AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap);
+    AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap, IsDebug);
   }
 }
 
@@ -498,75 +504,48 @@ InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
   assert(isNew && "Node emitted out of order - early");
 }
 
-/// EmitDbgValue - Generate any debug info that refers to this Node.  Constant
-/// dbg_value is not handled here.
-void
-InstrEmitter::EmitDbgValue(SDNode *Node,
-                           DenseMap<SDValue, unsigned> &VRBaseMap,
-                           SDDbgValue *sd) {
-  if (!Node->getHasDebugValue())
-    return;
-  if (!sd)
-    return;
-  assert(sd->getKind() == SDDbgValue::SDNODE);
-  unsigned VReg = getVR(SDValue(sd->getSDNode(), sd->getResNo()), VRBaseMap);
-  const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
-  DebugLoc DL = sd->getDebugLoc();
-  MachineInstr *MI;
-  if (VReg) {
-    MI = BuildMI(*MF, DL, II).addReg(VReg, RegState::Debug).
-                              addImm(sd->getOffset()).
-                              addMetadata(sd->getMDPtr());
-  } else {
-    // Insert an Undef so we can see what we dropped.
-    MI = BuildMI(*MF, DL, II).addReg(0U).addImm(sd->getOffset()).
-                                    addMetadata(sd->getMDPtr());
-  }
-  MBB->insert(InsertPos, MI);
-}
-
-/// EmitDbgValue - Generate debug info that does not refer to a SDNode.
-void
-InstrEmitter::EmitDbgValue(SDDbgValue *sd,
+/// EmitDbgValue - Generate machine instruction for a dbg_value node.
+///
+MachineInstr *InstrEmitter::EmitDbgValue(SDDbgValue *SD,
+                                         MachineBasicBlock *InsertBB,
+                                         DenseMap<SDValue, unsigned> &VRBaseMap,
                          DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
-  if (!sd)
-    return;
+  uint64_t Offset = SD->getOffset();
+  MDNode* MDPtr = SD->getMDPtr();
+  DebugLoc DL = SD->getDebugLoc();
+
   const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
-  uint64_t Offset = sd->getOffset();
-  MDNode* mdPtr = sd->getMDPtr();
-  SDDbgValue::DbgValueKind kind = sd->getKind();
-  DebugLoc DL = sd->getDebugLoc();
-  MachineInstr* MI;
-  if (kind == SDDbgValue::CONST) {
-    Value *V = sd->getConst();
+  MachineInstrBuilder MIB = BuildMI(*MF, DL, II);
+  if (SD->getKind() == SDDbgValue::SDNODE) {
+    AddOperand(&*MIB, SDValue(SD->getSDNode(), SD->getResNo()),
+               (*MIB).getNumOperands(), &II, VRBaseMap, true /*IsDebug*/);
+  } else if (SD->getKind() == SDDbgValue::CONST) {
+    Value *V = SD->getConst();
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      MI = BuildMI(*MF, DL, II).addImm(CI->getZExtValue()).
-                                     addImm(Offset).addMetadata(mdPtr);
+      MIB.addImm(CI->getSExtValue());
     } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
-      MI = BuildMI(*MF, DL, II).addFPImm(CF).
-                                     addImm(Offset).addMetadata(mdPtr);
+      MIB.addFPImm(CF);
     } else {
       // Could be an Undef.  In any case insert an Undef so we can see what we
       // dropped.
-      MI = BuildMI(*MF, DL, II).addReg(0U).
-                                       addImm(Offset).addMetadata(mdPtr);
+      MIB.addReg(0U);
     }
-  } else if (kind == SDDbgValue::FRAMEIX) {
-    unsigned FrameIx = sd->getFrameIx();
+  } else if (SD->getKind() == SDDbgValue::FRAMEIX) {
+    unsigned FrameIx = SD->getFrameIx();
     // Stack address; this needs to be lowered in target-dependent fashion.
     // FIXME test that the target supports this somehow; if not emit Undef.
     // Create a pseudo for EmitInstrWithCustomInserter's consumption.
-    MI = BuildMI(*MF, DL, II).addImm(FrameIx).
-                                   addImm(Offset).addMetadata(mdPtr);
-    MBB = TLI->EmitInstrWithCustomInserter(MI, MBB, EM);
-    InsertPos = MBB->end();
-    return;
+    MIB.addImm(FrameIx).addImm(Offset).addMetadata(MDPtr);
+    abort();
+    TLI->EmitInstrWithCustomInserter(&*MIB, InsertBB, EM);
+    return 0;
   } else {
     // Insert an Undef so we can see what we dropped.
-    MI = BuildMI(*MF, DL, II).addReg(0U).
-                                     addImm(Offset).addMetadata(mdPtr);
+    MIB.addReg(0U);
   }
-  MBB->insert(InsertPos, MI);
+
+  MIB.addImm(Offset).addMetadata(MDPtr);
+  return &*MIB;
 }
 
 /// EmitNode - Generate machine code for a node and needed dependencies.
