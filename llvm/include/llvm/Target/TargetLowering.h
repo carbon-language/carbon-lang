@@ -967,7 +967,7 @@ protected:
   }
   
   /// setLoadExtAction - Indicate that the specified load with extension does
-  /// not work with the with specified type and indicate what to do about it.
+  /// not work with the specified type and indicate what to do about it.
   void setLoadExtAction(unsigned ExtType, MVT VT,
                       LegalizeAction Action) {
     assert((unsigned)VT.SimpleTy*2 < 63 &&
@@ -978,7 +978,7 @@ protected:
   }
   
   /// setTruncStoreAction - Indicate that the specified truncating store does
-  /// not work with the with specified type and indicate what to do about it.
+  /// not work with the specified type and indicate what to do about it.
   void setTruncStoreAction(MVT ValVT, MVT MemVT,
                            LegalizeAction Action) {
     assert((unsigned)ValVT.SimpleTy < array_lengthof(TruncStoreActions) &&
@@ -989,7 +989,7 @@ protected:
   }
 
   /// setIndexedLoadAction - Indicate that the specified indexed load does or
-  /// does not work with the with specified type and indicate what to do abort
+  /// does not work with the specified type and indicate what to do abort
   /// it. NOTE: All indexed mode loads are initialized to Expand in
   /// TargetLowering.cpp
   void setIndexedLoadAction(unsigned IdxMode, MVT VT,
@@ -1001,7 +1001,7 @@ protected:
   }
   
   /// setIndexedStoreAction - Indicate that the specified indexed store does or
-  /// does not work with the with specified type and indicate what to do about
+  /// does not work with the specified type and indicate what to do about
   /// it. NOTE: All indexed mode stores are initialized to Expand in
   /// TargetLowering.cpp
   void setIndexedStoreAction(unsigned IdxMode, MVT VT,

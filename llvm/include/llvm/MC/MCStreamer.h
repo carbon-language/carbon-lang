@@ -88,7 +88,7 @@ class TargetAsmBackend;
     /// @name Symbol & Section Management
     /// @{
     
-    /// getCurrentSection - Return the current seciton that the streamer is
+    /// getCurrentSection - Return the current section that the streamer is
     /// emitting code to.
     const MCSection *getCurrentSection() const { return CurSection; }
 
