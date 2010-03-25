@@ -67,7 +67,7 @@ public:
 
 typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
 typedef PredIterator<const BasicBlock,
-                     Value::use_const_iterator> pred_const_iterator;
+                     Value::const_use_iterator> pred_const_iterator;
 
 inline pred_iterator pred_begin(BasicBlock *BB) { return pred_iterator(BB); }
 inline pred_const_iterator pred_begin(const BasicBlock *BB) {

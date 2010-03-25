@@ -61,8 +61,8 @@ void GlobalValue::Dematerialize() {
 /// that want to check to see if a global is unused, but don't want to deal
 /// with potentially dead constants hanging off of the globals.
 void GlobalValue::removeDeadConstantUsers() const {
-  Value::use_const_iterator I = use_begin(), E = use_end();
-  Value::use_const_iterator LastNonDeadUser = E;
+  Value::const_use_iterator I = use_begin(), E = use_end();
+  Value::const_use_iterator LastNonDeadUser = E;
   while (I != E) {
     if (const Constant *User = dyn_cast<Constant>(*I)) {
       if (!removeDeadUsersOfConstant(User)) {

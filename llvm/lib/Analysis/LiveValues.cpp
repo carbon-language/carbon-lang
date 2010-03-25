@@ -125,7 +125,7 @@ LiveValues::Memo &LiveValues::compute(const Value *V) {
   bool LiveOutOfDefBB = false;
 
   // Examine each use of the value.
-  for (Value::use_const_iterator I = V->use_begin(), E = V->use_end();
+  for (Value::const_use_iterator I = V->use_begin(), E = V->use_end();
        I != E; ++I) {
     const User *U = *I;
     const BasicBlock *UseBB = cast<Instruction>(U)->getParent();

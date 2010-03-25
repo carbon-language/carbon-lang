@@ -283,7 +283,7 @@ bool Instruction::isSameOperationAs(const Instruction *I) const {
 /// specified block.  Note that PHI nodes are considered to evaluate their
 /// operands in the corresponding predecessor block.
 bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
-  for (use_const_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
+  for (const_use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
     // PHI nodes uses values in the corresponding predecessor block.  For other
     // instructions, just check to see whether the parent of the use matches up.
     const PHINode *PN = dyn_cast<PHINode>(*UI);

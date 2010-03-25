@@ -49,7 +49,7 @@ bool llvm::PointerMayBeCaptured(const Value *V,
   SmallSet<Use*, Threshold> Visited;
   int Count = 0;
 
-  for (Value::use_const_iterator UI = V->use_begin(), UE = V->use_end();
+  for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
        UI != UE; ++UI) {
     // If there are lots of uses, conservatively say that the value
     // is captured to avoid taking too much compile time.

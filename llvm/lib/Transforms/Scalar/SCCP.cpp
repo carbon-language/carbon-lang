@@ -1709,7 +1709,7 @@ static bool AddressIsTaken(const GlobalValue *GV) {
   // Delete any dead constantexpr klingons.
   GV->removeDeadConstantUsers();
 
-  for (Value::use_const_iterator UI = GV->use_begin(), E = GV->use_end();
+  for (Value::const_use_iterator UI = GV->use_begin(), E = GV->use_end();
        UI != E; ++UI) {
     const User *U = *UI;
     if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {

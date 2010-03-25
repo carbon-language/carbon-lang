@@ -1899,7 +1899,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
       const Value *V = U->getValue();
       if (const Instruction *Inst = dyn_cast<Instruction>(V))
         if (L->contains(Inst)) continue;
-      for (Value::use_const_iterator UI = V->use_begin(), UE = V->use_end();
+      for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
            UI != UE; ++UI) {
         const Instruction *UserInst = dyn_cast<Instruction>(*UI);
         // Ignore non-instructions.

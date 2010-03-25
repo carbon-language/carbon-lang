@@ -160,7 +160,7 @@ bool Constant::canTrap() const {
 /// isConstantUsed - Return true if the constant has users other than constant
 /// exprs and other dangling things.
 bool Constant::isConstantUsed() const {
-  for (use_const_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
+  for (const_use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
     const Constant *UC = dyn_cast<Constant>(*UI);
     if (UC == 0 || isa<GlobalValue>(UC))
       return true;

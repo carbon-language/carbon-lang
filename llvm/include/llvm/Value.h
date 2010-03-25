@@ -157,13 +157,13 @@ public:
   // Methods for handling the chain of uses of this Value.
   //
   typedef value_use_iterator<User>       use_iterator;
-  typedef value_use_iterator<const User> use_const_iterator;
+  typedef value_use_iterator<const User> const_use_iterator;
 
   bool               use_empty() const { return UseList == 0; }
   use_iterator       use_begin()       { return use_iterator(UseList); }
-  use_const_iterator use_begin() const { return use_const_iterator(UseList); }
+  const_use_iterator use_begin() const { return const_use_iterator(UseList); }
   use_iterator       use_end()         { return use_iterator(0);   }
-  use_const_iterator use_end()   const { return use_const_iterator(0);   }
+  const_use_iterator use_end()   const { return const_use_iterator(0);   }
   User              *use_back()        { return *use_begin(); }
   const User        *use_back()  const { return *use_begin(); }
 
@@ -172,7 +172,7 @@ public:
   /// traversing the whole use list.
   ///
   bool hasOneUse() const {
-    use_const_iterator I = use_begin(), E = use_end();
+    const_use_iterator I = use_begin(), E = use_end();
     if (I == E) return false;
     return ++I == E;
   }

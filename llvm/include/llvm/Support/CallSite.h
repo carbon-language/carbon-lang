@@ -196,7 +196,7 @@ public:
   bool isCallee(Value::use_iterator UI) const {
     return getCallee() == &UI.getUse();
   }
-  bool isCallee(Value::use_const_iterator UI) const {
+  bool isCallee(Value::const_use_iterator UI) const {
     return getCallee() == &UI.getUse();
   }
 private:

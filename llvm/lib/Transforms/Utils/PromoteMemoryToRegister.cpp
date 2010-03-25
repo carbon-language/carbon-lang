@@ -68,7 +68,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // assignments to subsections of the memory unit.
 
   // Only allow direct and non-volatile loads and stores...
-  for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
+  for (Value::const_use_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI)     // Loop over all of the uses of the alloca
     if (const LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
       if (LI->isVolatile())
