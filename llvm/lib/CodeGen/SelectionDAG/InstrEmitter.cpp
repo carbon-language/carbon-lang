@@ -617,9 +617,10 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
     // specific inserter which may returns a new basic block.
     MBB = TLI->EmitInstrWithCustomInserter(MI, MBB, EM);
     InsertPos = MBB->end();
-  } else {
-    MBB->insert(InsertPos, MI);
+    return;
   }
+  
+  MBB->insert(InsertPos, MI);
 
   // Additional results must be an physical register def.
   if (HasPhysRegOuts) {
