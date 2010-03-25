@@ -449,8 +449,6 @@ static void ProcessSourceNode(SDNode *N, SelectionDAG *DAG,
       continue;
     unsigned DVOrder = DVs[i]->getOrder();
     if (DVOrder == ++Order) {
-      // FIXME: If the source node with next higher order is scheduled before
-      // this could end up generating funky debug info.
       MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], BB, VRBaseMap, EM);
       Orders.push_back(std::make_pair(DVOrder, DbgMI));
       BB->insert(InsertPos, DbgMI);
