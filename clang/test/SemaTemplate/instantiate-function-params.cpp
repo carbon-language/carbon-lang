@@ -42,3 +42,16 @@ void instF0(X0<T(A1)> x0a, X0<T(A2)> x0b) {
 }
 
 template void instF0<int, int, float>(X0<int(int)>, X0<int(float)>);
+
+template<typename R, typename A1, R (*ptr)(A1)> struct FuncPtr { };
+template<typename A1, int (*ptr)(A1)> struct FuncPtr<int, A1, ptr> { };
+
+template<typename R, typename A1> R unary_func(A1);
+
+template<typename R, typename A1, typename A2>
+void use_func_ptr() {
+  FuncPtr<R, A1, &unary_func<R, A1> > fp1;
+  FuncPtr<R, A2, &unary_func<R, A2> > fp2;
+};
+
+template void use_func_ptr<int, float, double>();
