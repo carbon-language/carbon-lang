@@ -275,9 +275,12 @@ public:
   void WriteSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
                     const MCSectionData &SD, uint64_t FileOffset,
                     uint64_t RelocationsStart, unsigned NumRelocations) {
+    uint64_t SectionSize = Layout.getSectionSize(&SD);
+    uint64_t SectionFileSize = Layout.getSectionFileSize(&SD);
+
     // The offset is unused for virtual sections.
     if (Asm.getBackend().isVirtualSection(SD.getSection())) {
-      assert(SD.getFileSize() == 0 && "Invalid file size!");
+      assert(SectionFileSize == 0 && "Invalid file size!");
       FileOffset = 0;
     }
 
@@ -294,10 +297,10 @@ public:
     WriteBytes(Section.getSegmentName(), 16);
     if (Is64Bit) {
       Write64(Layout.getSectionAddress(&SD)); // address
-      Write64(SD.getSize()); // size
+      Write64(SectionSize); // size
     } else {
       Write32(Layout.getSectionAddress(&SD)); // address
-      Write32(SD.getSize()); // size
+      Write32(SectionSize); // size
     }
     Write32(FileOffset);
 
@@ -965,15 +968,16 @@ public:
            ie = Asm.end(); it != ie; ++it) {
       const MCSectionData &SD = *it;
       uint64_t Address = Layout.getSectionAddress(&SD);
+      uint64_t Size = Layout.getSectionSize(&SD);
+      uint64_t FileSize = Layout.getSectionFileSize(&SD);
 
-      VMSize = std::max(VMSize, Address + SD.getSize());
+      VMSize = std::max(VMSize, Address + Size);
 
       if (Asm.getBackend().isVirtualSection(SD.getSection()))
         continue;
 
-      SectionDataSize = std::max(SectionDataSize, Address + SD.getSize());
-      SectionDataFileSize = std::max(SectionDataFileSize,
-                                     Address + SD.getFileSize());
+      SectionDataSize = std::max(SectionDataSize, Address + Size);
+      SectionDataFileSize = std::max(SectionDataFileSize, Address + FileSize);
     }
 
     // The section data is padded to 4 bytes.

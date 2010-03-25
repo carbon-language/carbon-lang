@@ -425,6 +425,9 @@ public:
   unsigned getAlignment() const { return Alignment; }
   void setAlignment(unsigned Value) { Alignment = Value; }
 
+  bool hasInstructions() const { return HasInstructions; }
+  void setHasInstructions(bool Value) { HasInstructions = Value; }
+
   /// @name Fragment Access
   /// @{
 
@@ -446,29 +449,6 @@ public:
   size_t size() const { return Fragments.size(); }
 
   bool empty() const { return Fragments.empty(); }
-
-  /// @}
-  /// @name Assembler Backend Support
-  /// @{
-  //
-  // FIXME: This could all be kept private to the assembler implementation.
-
-  uint64_t getSize() const {
-    assert(Size != ~UINT64_C(0) && "File size not set!");
-    return Size;
-  }
-  void setSize(uint64_t Value) { Size = Value; }
-
-  uint64_t getFileSize() const {
-    assert(FileSize != ~UINT64_C(0) && "File size not set!");
-    return FileSize;
-  }
-  void setFileSize(uint64_t Value) { FileSize = Value; }
-
-  bool hasInstructions() const { return HasInstructions; }
-  void setHasInstructions(bool Value) { HasInstructions = Value; }
-
-  /// @}
 
   void dump();
 };

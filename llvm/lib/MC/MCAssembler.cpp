@@ -82,6 +82,24 @@ void MCAsmLayout::setSectionAddress(MCSectionData *SD, uint64_t Value) {
   SD->Address = Value;
 }
 
+uint64_t MCAsmLayout::getSectionSize(const MCSectionData *SD) const {
+  assert(SD->Size != ~UINT64_C(0) && "File size not set!");
+  return SD->Size;
+}
+void MCAsmLayout::setSectionSize(MCSectionData *SD, uint64_t Value) {
+  SD->Size = Value;
+}
+
+uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
+  assert(SD->FileSize != ~UINT64_C(0) && "File size not set!");
+  return SD->FileSize;
+}
+void MCAsmLayout::setSectionFileSize(MCSectionData *SD, uint64_t Value) {
+  SD->FileSize = Value;
+}
+
+  /// @}
+
 /* *** */
 
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
@@ -419,11 +437,11 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
   }
 
   // Set the section sizes.
-  SD.setSize(Address - StartAddress);
+  Layout.setSectionSize(&SD, Address - StartAddress);
   if (getBackend().isVirtualSection(SD.getSection()))
-    SD.setFileSize(0);
+    Layout.setSectionFileSize(&SD, 0);
   else
-    SD.setFileSize(Address - StartAddress);
+    Layout.setSectionFileSize(&SD, Address - StartAddress);
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -522,9 +540,12 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 void MCAssembler::WriteSectionData(const MCSectionData *SD,
                                    const MCAsmLayout &Layout,
                                    MCObjectWriter *OW) const {
+  uint64_t SectionSize = Layout.getSectionSize(SD);
+  uint64_t SectionFileSize = Layout.getSectionFileSize(SD);
+
   // Ignore virtual sections.
   if (getBackend().isVirtualSection(SD->getSection())) {
-    assert(SD->getFileSize() == 0);
+    assert(SectionFileSize == 0 && "Invalid size for section!");
     return;
   }
 
@@ -536,10 +557,10 @@ void MCAssembler::WriteSectionData(const MCSectionData *SD,
     WriteFragmentData(*this, Layout, *it, OW);
 
   // Add section padding.
-  assert(SD->getFileSize() >= SD->getSize() && "Invalid section sizes!");
-  OW->WriteZeros(SD->getFileSize() - SD->getSize());
+  assert(SectionFileSize >= SectionSize && "Invalid section sizes!");
+  OW->WriteZeros(SectionFileSize - SectionSize);
 
-  assert(OW->getStream().tell() - Start == SD->getFileSize());
+  assert(OW->getStream().tell() - Start == SectionFileSize);
 }
 
 void MCAssembler::Finish() {
@@ -652,14 +673,14 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
     // section.
     if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment())) {
       assert(Prev && "Missing prev section!");
-      Prev->setFileSize(Prev->getFileSize() + Pad);
+      Layout.setSectionFileSize(Prev, Layout.getSectionFileSize(Prev) + Pad);
       Address += Pad;
     }
 
     // Layout the section fragments and its size.
     Layout.setSectionAddress(&SD, Address);
     LayoutSection(SD, Layout);
-    Address += SD.getFileSize();
+    Address += Layout.getSectionFileSize(&SD);
 
     Prev = &SD;
   }
@@ -678,7 +699,7 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
 
     Layout.setSectionAddress(&SD, Address);
     LayoutSection(SD, Layout);
-    Address += SD.getSize();
+    Address += Layout.getSectionSize(&SD);
   }
 
   // Scan for fragments that need relaxation.
