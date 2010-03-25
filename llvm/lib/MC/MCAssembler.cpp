@@ -364,9 +364,29 @@ bool MCAssembler::EvaluateFixup(const MCAsmLayout &Layout,
   return IsResolved;
 }
 
-void MCAssembler::LayoutSection(MCSectionData &SD,
-                                MCAsmLayout &Layout,
-                                uint64_t StartAddress) {
+uint64_t MCAssembler::LayoutSection(MCSectionData &SD,
+                                    MCAsmLayout &Layout,
+                                    uint64_t StartAddress) {
+  bool IsVirtual = getBackend().isVirtualSection(SD.getSection());
+
+  // Align this section if necessary by adding padding bytes to the previous
+  // section. It is safe to adjust this out-of-band, because no symbol or
+  // fragment is allowed to point past the end of the section at any time.
+  if (uint64_t Pad = OffsetToAlignment(StartAddress, SD.getAlignment())) {
+    // Unless this section is virtual (where we are allowed to adjust the offset
+    // freely), the padding goes in the previous section.
+    if (!IsVirtual) {
+      // Find the previous non-virtual section.
+      iterator it = &SD;
+      assert(it != begin() && "Invalid initial section address!");
+      for (--it; getBackend().isVirtualSection(it->getSection()); --it) ;
+      Layout.setSectionFileSize(&*it, Layout.getSectionFileSize(&*it) + Pad);
+    }
+
+    StartAddress += Pad;
+  }
+
+  // Set the aligned section address.
   Layout.setSectionAddress(&SD, StartAddress);
 
   uint64_t Address = StartAddress;
@@ -440,10 +460,12 @@ void MCAssembler::LayoutSection(MCSectionData &SD,
 
   // Set the section sizes.
   Layout.setSectionSize(&SD, Address - StartAddress);
-  if (getBackend().isVirtualSection(SD.getSection()))
+  if (IsVirtual)
     Layout.setSectionFileSize(&SD, 0);
   else
     Layout.setSectionFileSize(&SD, Address - StartAddress);
+
+  return Address;
 }
 
 /// WriteFragmentData - Write the \arg F data to the output file.
@@ -675,43 +697,22 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
 
   // Layout the concrete sections and fragments.
   uint64_t Address = 0;
-  MCSectionData *Prev = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    MCSectionData &SD = *it;
-
     // Skip virtual sections.
-    if (getBackend().isVirtualSection(SD.getSection()))
+    if (getBackend().isVirtualSection(it->getSection()))
       continue;
 
-    // Align this section if necessary by adding padding bytes to the previous
-    // section.
-    if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment())) {
-      assert(Prev && "Missing prev section!");
-      Layout.setSectionFileSize(Prev, Layout.getSectionFileSize(Prev) + Pad);
-      Address += Pad;
-    }
-
     // Layout the section fragments and its size.
-    LayoutSection(SD, Layout, Address);
-    Address += Layout.getSectionFileSize(&SD);
-
-    Prev = &SD;
+    Address = LayoutSection(*it, Layout, Address);
   }
 
   // Layout the virtual sections.
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    MCSectionData &SD = *it;
-
-    if (!getBackend().isVirtualSection(SD.getSection()))
+    if (!getBackend().isVirtualSection(it->getSection()))
       continue;
 
-    // Align this section if necessary by adding padding bytes to the previous
-    // section.
-    if (uint64_t Pad = OffsetToAlignment(Address, it->getAlignment()))
-      Address += Pad;
-
-    LayoutSection(SD, Layout, Address);
-    Address += Layout.getSectionSize(&SD);
+    // Layout the section fragments and its size.
+    Address = LayoutSection(*it, Layout, Address);
   }
 
   // Scan for fragments that need relaxation.

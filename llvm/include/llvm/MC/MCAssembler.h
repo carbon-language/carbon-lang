@@ -654,8 +654,11 @@ private:
   /// LayoutSection - Assign the section the given \arg StartAddress, and then
   /// assign offsets and sizes to the fragments in the section \arg SD, and
   /// update the section size.
-  void LayoutSection(MCSectionData &SD, MCAsmLayout &Layout,
-                     uint64_t StartAddress);
+  ///
+  /// \return The address at the end of the section, for use in laying out the
+  /// succeeding section.
+  uint64_t LayoutSection(MCSectionData &SD, MCAsmLayout &Layout,
+                         uint64_t StartAddress);
 
   /// LayoutOnce - Perform one layout iteration and return true if any offsets
   /// were adjusted.
