@@ -165,6 +165,8 @@ public:
   // (dynamic) type.
   static CanQual<T> CreateUnsafe(QualType Other);
 
+  void dump() const { Stored.dump(); }
+
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(getAsOpaquePtr());
   }
