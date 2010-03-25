@@ -75,6 +75,8 @@ public:
       CurSectionData(0) {}
   ~MCMachOStreamer() {}
 
+  MCAssembler &getAssembler() { return Assembler; }
+
   const MCExpr *AddValueSymbols(const MCExpr *Value) {
     switch (Value->getKind()) {
     case MCExpr::Target: assert(0 && "Can't handle target exprs yet!");
@@ -433,6 +435,10 @@ void MCMachOStreamer::Finish() {
 }
 
 MCStreamer *llvm::createMachOStreamer(MCContext &Context, TargetAsmBackend &TAB,
-                                      raw_ostream &OS, MCCodeEmitter *CE) {
-  return new MCMachOStreamer(Context, TAB, OS, CE);
+                                      raw_ostream &OS, MCCodeEmitter *CE,
+                                      bool RelaxAll) {
+  MCMachOStreamer *S = new MCMachOStreamer(Context, TAB, OS, CE);
+  if (RelaxAll)
+    S->getAssembler().setRelaxAll(true);
+  return S;
 }

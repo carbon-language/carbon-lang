@@ -55,6 +55,9 @@ static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
 
+static cl::opt<bool>
+RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
+
 enum OutputFileType {
   OFT_Null,
   OFT_AssemblyFile,
@@ -298,7 +301,7 @@ static int AssembleInput(const char *ProgName) {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM, Ctx));
     TAB.reset(TheTarget->createAsmBackend(TripleName));
-    Str.reset(createMachOStreamer(Ctx, *TAB, *Out, CE.get()));
+    Str.reset(createMachOStreamer(Ctx, *TAB, *Out, CE.get(), RelaxAll));
   }
 
   AsmParser Parser(SrcMgr, Ctx, *Str.get(), *MAI);

@@ -624,6 +624,7 @@ private:
 
   std::vector<IndirectSymbolData> IndirectSymbols;
 
+  unsigned RelaxAll : 1;
   unsigned SubsectionsViaSymbols : 1;
 
 private:
@@ -726,6 +727,9 @@ public:
   void setSubsectionsViaSymbols(bool Value) {
     SubsectionsViaSymbols = Value;
   }
+
+  bool getRelaxAll() const { return RelaxAll; }
+  void setRelaxAll(bool Value) { RelaxAll = Value; }
 
   /// @name Section List Access
   /// @{

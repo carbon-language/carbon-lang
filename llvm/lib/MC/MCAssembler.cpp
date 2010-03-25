@@ -19,9 +19,9 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 
@@ -30,11 +30,13 @@ using namespace llvm;
 
 namespace {
 namespace stats {
-STATISTIC(RelaxedInstructions, "Number of relaxed instructions");
-STATISTIC(RelaxationSteps, "Number of assembler layout and relaxation steps");
 STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
 STATISTIC(EvaluateFixup, "Number of evaluated fixups");
+STATISTIC(FragmentLayouts, "Number of fragment layouts");
 STATISTIC(ObjectBytes, "Number of emitted object file bytes");
+STATISTIC(RelaxationSteps, "Number of assembler layout and relaxation steps");
+STATISTIC(RelaxedInstructions, "Number of relaxed instructions");
+STATISTIC(SectionLayouts, "Number of section layouts");
 }
 }
 
@@ -185,7 +187,7 @@ MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
 MCAssembler::MCAssembler(MCContext &_Context, TargetAsmBackend &_Backend,
                          MCCodeEmitter &_Emitter, raw_ostream &_OS)
   : Context(_Context), Backend(_Backend), Emitter(_Emitter),
-    OS(_OS), SubsectionsViaSymbols(false)
+    OS(_OS), RelaxAll(false), SubsectionsViaSymbols(false)
 {
 }
 
@@ -402,6 +404,8 @@ uint64_t MCAssembler::LayoutSection(MCSectionData &SD,
                                     uint64_t StartAddress) {
   bool IsVirtual = getBackend().isVirtualSection(SD.getSection());
 
+  ++stats::SectionLayouts;
+
   // Align this section if necessary by adding padding bytes to the previous
   // section. It is safe to adjust this out-of-band, because no symbol or
   // fragment is allowed to point past the end of the section at any time.
@@ -425,6 +429,8 @@ uint64_t MCAssembler::LayoutSection(MCSectionData &SD,
   uint64_t Address = StartAddress;
   for (MCSectionData::iterator it = SD.begin(), ie = SD.end(); it != ie; ++it) {
     MCFragment &F = *it;
+
+    ++stats::FragmentLayouts;
 
     uint64_t FragmentOffset = Address - StartAddress;
     Layout.setFragmentOffset(&F, FragmentOffset);
@@ -699,6 +705,9 @@ void MCAssembler::Finish() {
 bool MCAssembler::FixupNeedsRelaxation(const MCAsmFixup &Fixup,
                                        const MCFragment *DF,
                                        const MCAsmLayout &Layout) const {
+  if (getRelaxAll())
+    return true;
+
   // If we cannot resolve the fixup value, it requires relaxation.
   MCValue Target;
   uint64_t Value;
@@ -791,8 +800,11 @@ bool MCAssembler::LayoutOnce(MCAsmLayout &Layout) {
                                              F.getKind()));
       }
 
-      // Update the layout, and remember that we relaxed.
-      Layout.UpdateForSlide(IF, SlideAmount);
+      // Update the layout, and remember that we relaxed. If we are relaxing
+      // everything, we can skip this step since nothing will depend on updating
+      // the values.
+      if (!getRelaxAll())
+        Layout.UpdateForSlide(IF, SlideAmount);
       WasRelaxed = true;
     }
   }
