@@ -1207,12 +1207,12 @@ def err_template_arg_not_ice : Error<
 def err_template_arg_not_convertible : Error<
   "non-type template argument of type %0 cannot be converted to a value "
   "of type %1">;
-def err_template_arg_negative : Error<
-  "non-type template argument provides negative value '%0' for unsigned "
-  "template parameter of type %1">;
-def err_template_arg_too_large : Error<
-  "non-type template argument value '%0' is too large for template "
-  "parameter of type %1">;
+def warn_template_arg_negative : Warning<
+  "non-type template argument with value '%0' converted to '%1' for unsigned "
+  "template parameter of type %2">;
+def warn_template_arg_too_large : Warning<
+  "non-type template argument value '%0' truncated to '%1' for "
+  "template parameter of type %2">;
 def err_template_arg_no_ref_bind : Error<
   "non-type template parameter of reference type %0 cannot bind to template "
   "argument of type %1">;
@@ -1379,7 +1379,7 @@ def note_default_function_arg_instantiation_here : Note<
   "for '%0' required here">;
 def note_explicit_template_arg_substitution_here : Note<
   "while substituting explicitly-specified template arguments into function "
-  "template %f, here">;
+  "template %0, here">;
 def note_function_template_deduction_instantiation_here : Note<
   "while substituting deduced template arguments into function template %0, "
   "here">;
