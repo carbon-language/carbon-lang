@@ -1888,7 +1888,9 @@ CheckNodePredicate(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 ALWAYS_INLINE static bool
 CheckOpcode(const unsigned char *MatcherTable, unsigned &MatcherIndex,
             SDNode *N) {
-  return N->getOpcode() == MatcherTable[MatcherIndex++];
+  uint16_t Opc = MatcherTable[MatcherIndex++];
+  Opc |= (unsigned short)MatcherTable[MatcherIndex++] << 8;
+  return N->getOpcode() == Opc;
 }
 
 ALWAYS_INLINE static bool
@@ -2142,7 +2144,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (CaseSize == 0) break;
 
       // Get the opcode, add the index to the table.
-      unsigned Opc = MatcherTable[Idx++];
+      uint16_t Opc = MatcherTable[Idx++];
+      Opc |= (unsigned short)MatcherTable[Idx++] << 8;
       if (Opc >= OpcodeOffset.size())
         OpcodeOffset.resize((Opc+1)*2);
       OpcodeOffset[Opc] = Idx;
@@ -2298,8 +2301,11 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
           CaseSize = GetVBR(CaseSize, MatcherTable, MatcherIndex);
         if (CaseSize == 0) break;
 
+        uint16_t Opc = MatcherTable[MatcherIndex++];
+        Opc |= (unsigned short)MatcherTable[MatcherIndex++] << 8;
+
         // If the opcode matches, then we will execute this case.
-        if (CurNodeOpcode == MatcherTable[MatcherIndex++])
+        if (CurNodeOpcode == Opc)
           break;
       
         // Otherwise, skip over this case.

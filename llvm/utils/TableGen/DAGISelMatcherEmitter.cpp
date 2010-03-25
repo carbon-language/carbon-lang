@@ -255,9 +255,9 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   }
 
   case Matcher::CheckOpcode:
-    OS << "OPC_CheckOpcode, "
-       << cast<CheckOpcodeMatcher>(N)->getOpcode().getEnumName() << ",\n";
-    return 2;
+    OS << "OPC_CheckOpcode, TARGET_OPCODE("
+       << cast<CheckOpcodeMatcher>(N)->getOpcode().getEnumName() << "),\n";
+    return 3;
       
   case Matcher::SwitchOpcode:
   case Matcher::SwitchType: {
@@ -315,16 +315,17 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       CurrentIdx += EmitVBRValue(ChildSize, OS);
       
       OS << ' ';
-      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
-        OS << SOM->getCaseOpcode(i).getEnumName();
-      else
-        OS << getEnumName(cast<SwitchTypeMatcher>(N)->getCaseType(i));
-      OS << ',';
+      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N)) {
+        OS << "TARGET_OPCODE(" << SOM->getCaseOpcode(i).getEnumName() << "),";
+        CurrentIdx += 2;
+      } else {
+        OS << getEnumName(cast<SwitchTypeMatcher>(N)->getCaseType(i)) << ',';
+        ++CurrentIdx;
+      }
       
       if (!OmitComments)
-        OS << "// ->" << CurrentIdx+ChildSize+1;
+        OS << "// ->" << CurrentIdx+ChildSize;
       OS << '\n';
-      ++CurrentIdx;
       OS << TmpBuf.str();
       CurrentIdx += ChildSize;
     }
