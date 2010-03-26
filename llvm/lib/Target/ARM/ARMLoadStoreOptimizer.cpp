@@ -341,6 +341,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   unsigned PReg = PMO.getReg();
   unsigned PRegNum = PMO.isUndef() ? UINT_MAX
     : ARMRegisterInfo::getRegisterNumbering(PReg);
+  unsigned Count = 1;
 
   for (unsigned i = SIndex+1, e = MemOps.size(); i != e; ++i) {
     int NewOffset = MemOps[i].Offset;
@@ -350,11 +351,14 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
       : ARMRegisterInfo::getRegisterNumbering(Reg);
     // AM4 - register numbers in ascending order.
     // AM5 - consecutive register numbers in ascending order.
+    //       Can only do up to 16 double-word registers per insn.
     if (Reg != ARM::SP &&
         NewOffset == Offset + (int)Size &&
-        ((isAM4 && RegNum > PRegNum) || RegNum == PRegNum+1)) {
+        ((isAM4 && RegNum > PRegNum)
+         || ((Size < 8 || Count < 16) && RegNum == PRegNum+1))) {
       Offset += Size;
       PRegNum = RegNum;
+      ++Count;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
       MergeOpsUpdate(MBB, MemOps, SIndex, i, insertAfter, SOffset,
