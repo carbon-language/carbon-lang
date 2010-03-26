@@ -1601,6 +1601,13 @@ void CodeGenFunction::InitializeVtablePtrs(BaseSubobject Base,
     
     CXXRecordDecl *BaseDecl
       = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    // We don't need to initialize vtable pointers for primary bases, unless
+    // they're virtual.
+    if (!Layout.getPrimaryBaseWasVirtual() &&
+        Layout.getPrimaryBase() == BaseDecl)
+      continue;
+
     uint64_t BaseOffset = Base.getBaseOffset() + 
       Layout.getBaseClassOffset(BaseDecl);
     
