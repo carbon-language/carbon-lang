@@ -1664,7 +1664,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       if (JoinPInt.ranges.size() > 1000) {
         mri_->setRegAllocationHint(JoinVInt.reg, 0, JoinPReg);
         ++numAborts;
-        DEBUG(dbgs() << "\tPhysical register too complicated, abort!\n");
+        DEBUG(dbgs()
+              << "\tPhysical register live interval too complicated, abort!\n");
         return false;
       }
 
@@ -1675,6 +1676,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       if (Length > Threshold &&
           (((float)std::distance(mri_->use_nodbg_begin(JoinVReg),
                                  mri_->use_nodbg_end()) / Length) < Ratio)) {
+        // Before giving up coalescing, if definition of source is defined by
+        // trivial computation, try rematerializing it.
+        if (ReMaterializeTrivialDef(SrcInt, DstReg, DstSubIdx, CopyMI))
+          return true;
+
         mri_->setRegAllocationHint(JoinVInt.reg, 0, JoinPReg);
         ++numAborts;
         DEBUG(dbgs() << "\tMay tie down a physical register, abort!\n");

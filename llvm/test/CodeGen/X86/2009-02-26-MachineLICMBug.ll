@@ -1,5 +1,7 @@
 ; RUN: llc < %s -march=x86-64 -mattr=+sse3 -stats |& grep {2 machine-licm}
+; RUN: llc < %s -march=x86-64 -mattr=+sse3 | FileCheck %s
 ; rdar://6627786
+; rdar://7792037
 
 target triple = "x86_64-apple-darwin10.0"
 	%struct.Key = type { i64 }
@@ -11,6 +13,13 @@ entry:
 	br label %bb4
 
 bb4:		; preds = %bb.i, %bb26, %bb4, %entry
+; CHECK: %bb4
+; CHECK: xorb
+; CHECK: callq
+; CHECK: movq
+; CHECK: xorl
+; CHECK: xorb
+
 	%0 = call i32 (...)* @xxGetOffsetForCode(i32 undef) nounwind		; <i32> [#uses=0]
 	%ins = or i64 %p, 2097152		; <i64> [#uses=1]
 	%1 = call i32 (...)* @xxCalculateMidType(%struct.Key* %desc, i32 0) nounwind		; <i32> [#uses=1]
