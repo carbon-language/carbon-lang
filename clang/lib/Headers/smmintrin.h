@@ -110,7 +110,7 @@ _mm_blend_epi16 (__m128i __V1, __m128i __V2, const int __M)
 static __inline__  __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_mullo_epi32 (__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pmulld128((__v4si)__V1, (__v4si)__V2);
+  return (__m128i) ((__v4si)__V1 * (__v4si)__V2);
 }
 
 static __inline__  __m128i __attribute__((__always_inline__, __nodebug__))
