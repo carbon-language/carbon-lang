@@ -1,4 +1,4 @@
-GXX := llvm-g++-4.2
+GXX := g++-4.2
 CLANGXX := clang++
 
 all: one

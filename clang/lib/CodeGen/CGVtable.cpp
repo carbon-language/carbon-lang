@@ -4186,16 +4186,6 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                                       const BaseSubobject &Base, 
                                       bool BaseIsVirtual, 
                                       VTableAddressPointsMapTy& AddressPoints) {
-  if (!CGM.getLangOptions().DumpVtableLayouts) {
-    llvm::GlobalVariable *VTable =
-      GenerateVtable(llvm::GlobalValue::InternalLinkage,
-                     /*GenerateDefinition=*/true,
-                     RD, Base.getBase(), Base.getBaseOffset(),
-                     BaseIsVirtual, AddressPoints);
-  
-    return VTable;
-  }
-  
   VtableBuilder Builder(*this, Base.getBase(), Base.getBaseOffset(), 
                         /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
 
