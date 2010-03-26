@@ -48,6 +48,27 @@ namespace clang {
 
 using namespace clang;
 
+/// \brief Compare two APSInts, extending and switching the sign as
+/// necessary to compare their values regardless of underlying type.
+static bool hasSameExtendedValue(llvm::APSInt X, llvm::APSInt Y) {
+  if (Y.getBitWidth() > X.getBitWidth())
+    X.extend(Y.getBitWidth());
+  else if (Y.getBitWidth() < X.getBitWidth())
+    Y.extend(X.getBitWidth());
+
+  // If there is a signedness mismatch, correct it.
+  if (X.isSigned() != Y.isSigned()) {
+    // If the signed value is negative, then the values cannot be the same.
+    if ((Y.isSigned() && Y.isNegative()) || (X.isSigned() && X.isNegative()))
+      return false;
+
+    Y.setIsSigned(true);
+    X.setIsSigned(true);
+  }
+
+  return X == Y;
+}
+
 static Sema::TemplateDeductionResult
 DeduceTemplateArguments(Sema &S,
                         TemplateParameterList *TemplateParams,
@@ -74,47 +95,30 @@ static NonTypeTemplateParmDecl *getDeducedParameterFromExpr(Expr *E) {
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(Sema &S,
                               NonTypeTemplateParmDecl *NTTP,
-                              llvm::APSInt Value,
+                              llvm::APSInt Value, QualType ValueType,
                               Sema::TemplateDeductionInfo &Info,
                               llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
 
   if (Deduced[NTTP->getIndex()].isNull()) {
-    QualType T = NTTP->getType();
-
-    // FIXME: Make sure we didn't overflow our data type!
-    unsigned AllowedBits = S.Context.getTypeSize(T);
-    if (Value.getBitWidth() != AllowedBits)
-      Value.extOrTrunc(AllowedBits);
-    Value.setIsSigned(T->isSignedIntegerType());
-
-    Deduced[NTTP->getIndex()] = TemplateArgument(Value, T);
+    Deduced[NTTP->getIndex()] = TemplateArgument(Value, ValueType);
     return Sema::TDK_Success;
   }
 
-  assert(Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Integral);
-
-  // If the template argument was previously deduced to a negative value,
-  // then our deduction fails.
-  const llvm::APSInt *PrevValuePtr = Deduced[NTTP->getIndex()].getAsIntegral();
-  if (PrevValuePtr->isNegative()) {
+  if (Deduced[NTTP->getIndex()].getKind() != TemplateArgument::Integral) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = TemplateArgument(Value, NTTP->getType());
-    return Sema::TDK_Inconsistent;
+    Info.SecondArg = TemplateArgument(Value, ValueType);
+    return Sema::TDK_Inconsistent;    
   }
 
-  llvm::APSInt PrevValue = *PrevValuePtr;
-  if (Value.getBitWidth() > PrevValue.getBitWidth())
-    PrevValue.zext(Value.getBitWidth());
-  else if (Value.getBitWidth() < PrevValue.getBitWidth())
-    Value.zext(PrevValue.getBitWidth());
-
-  if (Value != PrevValue) {
+  // Extent the smaller of the two values.
+  llvm::APSInt PrevValue = *Deduced[NTTP->getIndex()].getAsIntegral();
+  if (!hasSameExtendedValue(PrevValue, Value)) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = TemplateArgument(Value, NTTP->getType());
+    Info.SecondArg = TemplateArgument(Value, ValueType);
     return Sema::TDK_Inconsistent;
   }
 
@@ -137,8 +141,7 @@ DeduceNonTypeTemplateArgument(Sema &S,
          "Expression template argument must be type- or value-dependent.");
 
   if (Deduced[NTTP->getIndex()].isNull()) {
-    // FIXME: Clone the Value?
-    Deduced[NTTP->getIndex()] = TemplateArgument(Value);
+    Deduced[NTTP->getIndex()] = TemplateArgument(Value->Retain());
     return Sema::TDK_Success;
   }
 
@@ -569,7 +572,8 @@ DeduceTemplateArguments(Sema &S,
       if (const ConstantArrayType *ConstantArrayArg
             = dyn_cast<ConstantArrayType>(ArrayArg)) {
         llvm::APSInt Size(ConstantArrayArg->getSize());
-        return DeduceNonTypeTemplateArgument(S, NTTP, Size,
+        return DeduceNonTypeTemplateArgument(S, NTTP, Size, 
+                                             S.Context.getSizeType(),
                                              Info, Deduced);
       }
       if (const DependentSizedArrayType *DependentArrayArg
@@ -816,8 +820,7 @@ DeduceTemplateArguments(Sema &S,
 
   case TemplateArgument::Integral:
     if (Arg.getKind() == TemplateArgument::Integral) {
-      // FIXME: Zero extension + sign checking here?
-      if (*Param.getAsIntegral() == *Arg.getAsIntegral())
+      if (hasSameExtendedValue(*Param.getAsIntegral(), *Arg.getAsIntegral()))
         return Sema::TDK_Success;
 
       Info.FirstArg = Param;
@@ -840,9 +843,9 @@ DeduceTemplateArguments(Sema &S,
     if (NonTypeTemplateParmDecl *NTTP
           = getDeducedParameterFromExpr(Param.getAsExpr())) {
       if (Arg.getKind() == TemplateArgument::Integral)
-        // FIXME: Sign problems here
         return DeduceNonTypeTemplateArgument(S, NTTP,
                                              *Arg.getAsIntegral(),
+                                             Arg.getIntegralType(),
                                              Info, Deduced);
       if (Arg.getKind() == TemplateArgument::Expression)
         return DeduceNonTypeTemplateArgument(S, NTTP, Arg.getAsExpr(),
