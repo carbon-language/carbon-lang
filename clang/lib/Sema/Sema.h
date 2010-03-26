@@ -2486,7 +2486,8 @@ public:
   
   /// MarkVirtualMembersReferenced - Will mark all virtual members of the given
   /// CXXRecordDecl referenced.
-  void MarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD);
+  void MarkVirtualMembersReferenced(SourceLocation Loc,
+                                    const CXXRecordDecl *RD);
 
   /// ProcessPendingClassesWithUnmarkedVirtualMembers - Will process classes 
   /// that might need to have their virtual members marked as referenced.

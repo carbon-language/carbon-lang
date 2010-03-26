@@ -5944,7 +5944,8 @@ bool Sema::ProcessPendingClassesWithUnmarkedVirtualMembers() {
   return true;
 }
 
-void Sema::MarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD) {
+void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,
+                                        const CXXRecordDecl *RD) {
   for (CXXRecordDecl::method_iterator i = RD->method_begin(), 
        e = RD->method_end(); i != e; ++i) {
     CXXMethodDecl *MD = *i;
@@ -5953,5 +5954,20 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc, CXXRecordDecl *RD) {
     //   [...] A virtual member function is used if it is not pure. [...]
     if (MD->isVirtual() && !MD->isPure())
       MarkDeclarationReferenced(Loc, MD);
+  }
+
+  // Only classes that have virtual bases need a VTT.
+  if (RD->getNumVBases() == 0)
+    return;
+
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+           e = RD->bases_end(); i != e; ++i) {
+    const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (i->isVirtual())
+      continue;
+    if (Base->getNumVBases() == 0)
+      continue;
+    MarkVirtualMembersReferenced(Loc, Base);
   }
 }
