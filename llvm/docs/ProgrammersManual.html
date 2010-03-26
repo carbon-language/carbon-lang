@@ -1977,9 +1977,9 @@ for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i
 </pre>
 </div>
 
-Note that dereferencing a <tt>Value::use_iterator</tt> is not a very cheap
+<p>Note that dereferencing a <tt>Value::use_iterator</tt> is not a very cheap
 operation. Instead of performing <tt>*i</tt> above several times, consider
-doing it only once in the loop body and reusing its result.
+doing it only once in the loop body and reusing its result.</p>
 
 <p>Alternatively, it's common to have an instance of the <a
 href="/doxygen/classllvm_1_1User.html">User Class</a> and need to know what
@@ -2001,12 +2001,13 @@ for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) 
 </div>
 
 <p>Declaring objects as <tt>const</tt> is an important tool of enforcing
-mutation free algorithms (such as analyses etc.). For this purpose above
+mutation free algorithms (such as analyses, etc.). For this purpose above
 iterators come in constant flavors as <tt>Value::const_use_iterator</tt>
 and <tt>Value::const_op_iterator</tt>.  They automatically arise when
 calling <tt>use/op_begin()</tt> on <tt>const Value*</tt>s or
 <tt>const User*</tt>s respectively.  Upon dereferencing, they return
-<tt>const Use*</tt>s. Otherwise the above patterns remain unchanged.
+<tt>const Use*</tt>s. Otherwise the above patterns remain unchanged.</p>
+
 </div>
 
 <!--_______________________________________________________________________-->
