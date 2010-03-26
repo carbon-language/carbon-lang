@@ -490,6 +490,9 @@ static bool HandleCommonNoReturnAttr(Decl *d, const AttributeList &Attr,
 }
 
 static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // NOTE: We don't add the attribute to a FunctionDecl because the noreturn
+  //  trait will be part of the function's type.
+
   // Don't apply as a decl attribute to ValueDecl.
   // FIXME: probably ought to diagnose this.
   if (isa<ValueDecl>(d))
