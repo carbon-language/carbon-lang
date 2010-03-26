@@ -8,19 +8,19 @@
 //===----------------------------------------------------------------------===//
 //
 // This pass mulches exception handling code into a form adapted to code
-// generation.  Required if using dwarf exception handling.
+// generation. Required if using dwarf exception handling.
 //
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dwarfehprepare"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -39,6 +39,15 @@ namespace {
 
     // The eh.exception intrinsic.
     Function *ExceptionValueIntrinsic;
+
+    // The eh.selector intrinsic.
+    Function *SelectorIntrinsic;
+
+    // _Unwind_Resume_or_Rethrow call.
+    Constant *URoR;
+
+    // The EH language-specific catch-all type.
+    GlobalVariable *EHCatchAllValue;
 
     // _Unwind_Resume or the target equivalent.
     Constant *RewindFunction;
@@ -67,18 +76,77 @@ namespace {
     Instruction *CreateValueLoad(BasicBlock *BB);
 
     /// CreateReadOfExceptionValue - Return the result of the eh.exception
-    /// intrinsic by calling the intrinsic if in a landing pad, or loading
-    /// it from the exception value variable otherwise.
+    /// intrinsic by calling the intrinsic if in a landing pad, or loading it
+    /// from the exception value variable otherwise.
     Instruction *CreateReadOfExceptionValue(BasicBlock *BB) {
       return LandingPads.count(BB) ?
         CreateExceptionValueCall(BB) : CreateValueLoad(BB);
+    }
+
+    /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow"
+    /// calls. The "unwind" part of these invokes jump to a landing pad within
+    /// the current function. This is a candidate to merge the selector
+    /// associated with the URoR invoke with the one from the URoR's landing
+    /// pad.
+    bool HandleURoRInvokes();
+
+    /// FindSelectorAndURoR - Find the eh.selector call and URoR call associated
+    /// with the eh.exception call. This recursively looks past instructions
+    /// which don't change the EH pointer value, like casts or PHI nodes.
+    bool FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
+                             SmallPtrSet<IntrinsicInst*, 8> &SelCalls);
+      
+    /// DoMem2RegPromotion - Take an alloca call and promote it from memory to a
+    /// register.
+    bool DoMem2RegPromotion(Value *V) {
+      AllocaInst *AI = dyn_cast<AllocaInst>(V);
+      if (!AI || !isAllocaPromotable(AI)) return false;
+
+      // Turn the alloca into a register.
+      std::vector<AllocaInst*> Allocas(1, AI);
+      PromoteMemToReg(Allocas, *DT, *DF);
+      return true;
+    }
+
+    /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
+    bool PromoteStoreInst(StoreInst *SI) {
+      if (!SI || !DT || !DF) return false;
+      if (DoMem2RegPromotion(SI->getOperand(1)))
+        return true;
+      return false;
+    }
+
+    /// PromoteEHPtrStore - Promote the storing of an EH pointer into a
+    /// register. This should get rid of the store and subsequent loads.
+    bool PromoteEHPtrStore(IntrinsicInst *II) {
+      if (!DT || !DF) return false;
+
+      bool Changed = false;
+      StoreInst *SI;
+
+      while (1) {
+        SI = 0;
+        for (Value::use_iterator
+               I = II->use_begin(), E = II->use_end(); I != E; ++I) {
+          SI = dyn_cast<StoreInst>(I);
+          if (SI) break;
+        }
+
+        if (!PromoteStoreInst(SI))
+          break;
+
+        Changed = true;
+      }
+
+      return false;
     }
 
   public:
     static char ID; // Pass identification, replacement for typeid.
     DwarfEHPrepare(const TargetLowering *tli, bool fast) :
       FunctionPass(&ID), TLI(tli), CompileFast(fast),
-      ExceptionValueIntrinsic(0), RewindFunction(0) {}
+      ExceptionValueIntrinsic(0), SelectorIntrinsic(0),
+      URoR(0), EHCatchAllValue(0), RewindFunction(0) {}
 
     virtual bool runOnFunction(Function &Fn);
 
@@ -103,6 +171,144 @@ char DwarfEHPrepare::ID = 0;
 
 FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli, bool fast) {
   return new DwarfEHPrepare(tli, fast);
+}
+
+/// FindSelectorAndURoR - Find the eh.selector call associated with the
+/// eh.exception call. And indicate if there is a URoR "invoke" associated with
+/// the eh.exception call. This recursively looks past instructions which don't
+/// change the EH pointer value, like casts or PHI nodes.
+bool
+DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
+                                    SmallPtrSet<IntrinsicInst*, 8> &SelCalls) {
+  SmallPtrSet<PHINode*, 32> SeenPHIs;
+  bool Changed = false;
+
+ restart:
+  for (Value::use_iterator
+         I = Inst->use_begin(), E = Inst->use_end(); I != E; ++I) {
+    Instruction *II = dyn_cast<Instruction>(I);
+    if (!II || II->getParent()->getParent() != F) continue;
+    
+    if (IntrinsicInst *Sel = dyn_cast<IntrinsicInst>(II)) {
+      if (Sel->getIntrinsicID() == Intrinsic::eh_selector)
+        SelCalls.insert(Sel);
+    } else if (InvokeInst *Invoke = dyn_cast<InvokeInst>(II)) {
+      if (Invoke->getCalledFunction() == URoR)
+        URoRInvoke = true;
+    } else if (CastInst *CI = dyn_cast<CastInst>(II)) {
+      Changed |= FindSelectorAndURoR(CI, URoRInvoke, SelCalls);
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
+      if (!PromoteStoreInst(SI)) continue;
+      Changed = true;
+      SeenPHIs.clear();
+      goto restart;             // Uses may have changed, restart loop.
+    } else if (PHINode *PN = dyn_cast<PHINode>(II)) {
+      if (SeenPHIs.insert(PN))
+        // Don't process a PHI node more than once.
+        Changed |= FindSelectorAndURoR(PN, URoRInvoke, SelCalls);
+    }
+  }
+
+  return Changed;
+}
+
+/// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" calls. The
+/// "unwind" part of these invokes jump to a landing pad within the current
+/// function. This is a candidate to merge the selector associated with the URoR
+/// invoke with the one from the URoR's landing pad.
+bool DwarfEHPrepare::HandleURoRInvokes() {
+  if (!EHCatchAllValue) {
+    EHCatchAllValue =
+      F->getParent()->getNamedGlobal(".llvm.eh.catch.all.value");
+    if (!EHCatchAllValue) return false;
+  }
+
+  if (!URoR) {
+    URoR = F->getParent()->getFunction("_Unwind_Resume_or_Rethrow");
+    if (!URoR) return false;
+  }
+
+  if (!ExceptionValueIntrinsic) {
+    ExceptionValueIntrinsic =
+      Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_exception);
+    if (!ExceptionValueIntrinsic) return false;
+  }
+
+  if (!SelectorIntrinsic) {
+    SelectorIntrinsic =
+      Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_selector);
+    if (!SelectorIntrinsic) return false;
+  }
+
+  bool Changed = false;
+  SmallPtrSet<IntrinsicInst*, 32> SelsToConvert;
+
+  for (Value::use_iterator
+         I = ExceptionValueIntrinsic->use_begin(),
+         E = ExceptionValueIntrinsic->use_end(); I != E; ++I) {
+    IntrinsicInst *EHPtr = dyn_cast<IntrinsicInst>(I);
+    if (!EHPtr || EHPtr->getParent()->getParent() != F) continue;
+
+    Changed |= PromoteEHPtrStore(EHPtr);
+
+    bool URoRInvoke = false;
+    SmallPtrSet<IntrinsicInst*, 8> SelCalls;
+    Changed |= FindSelectorAndURoR(EHPtr, URoRInvoke, SelCalls);
+
+    if (URoRInvoke) {
+      // This EH pointer is being used by an invoke of an URoR instruction and
+      // an eh.selector intrinsic call. If the eh.selector is a 'clean-up', we
+      // need to convert it to a 'catch-all'.
+      for (SmallPtrSet<IntrinsicInst*, 8>::iterator
+             SI = SelCalls.begin(), SE = SelCalls.end(); SI != SE; ++SI) {
+        IntrinsicInst *II = *SI;
+        unsigned NumOps = II->getNumOperands();
+
+        if (NumOps <= 4) {
+          bool IsCleanUp = (NumOps == 3);
+
+          if (!IsCleanUp)
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(3)))
+              IsCleanUp = (CI->getZExtValue() == 0);
+
+          if (IsCleanUp)
+            SelsToConvert.insert(II);
+        }
+      }
+    }
+  }
+
+  if (!SelsToConvert.empty()) {
+    // Convert all clean-up eh.selectors, which are associated with "invokes" of
+    // URoR calls, into catch-all eh.selectors.
+    Changed = true;
+
+    for (SmallPtrSet<IntrinsicInst*, 8>::iterator
+           SI = SelsToConvert.begin(), SE = SelsToConvert.end();
+         SI != SE; ++SI) {
+      IntrinsicInst *II = *SI;
+      SmallVector<Value*, 8> Args;
+
+      // Use the exception object pointer and the personality function
+      // from the original selector.
+      Args.push_back(II->getOperand(1)); // Exception object pointer.
+      Args.push_back(II->getOperand(2)); // Personality function.
+      Args.push_back(EHCatchAllValue->getInitializer()); // Catch-all indicator.
+
+      CallInst *NewSelector =
+        CallInst::Create(SelectorIntrinsic, Args.begin(), Args.end(),
+                         "eh.sel.catch.all", II);
+
+      NewSelector->setTailCall(II->isTailCall());
+      NewSelector->setAttributes(II->getAttributes());
+      NewSelector->setCallingConv(II->getCallingConv());
+
+      II->replaceAllUsesWith(NewSelector);
+      II->eraseFromParent();
+    }
+  }
+
+  return Changed;
 }
 
 /// NormalizeLandingPads - Normalize and discover landing pads, noting them
@@ -421,6 +627,8 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   // Turn any stack temporaries into registers if possible.
   if (!CompileFast)
     Changed |= PromoteStackTemporaries();
+
+  Changed |= HandleURoRInvokes();
 
   LandingPads.clear();
 
