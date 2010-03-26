@@ -1896,23 +1896,6 @@ QualType Sema::CheckPointerToMemberOperands(
   return Result;
 }
 
-/// \brief Get the target type of a standard or user-defined conversion.
-static QualType TargetType(const ImplicitConversionSequence &ICS) {
-  switch (ICS.getKind()) {
-  case ImplicitConversionSequence::StandardConversion:
-    return ICS.Standard.getToType(2);
-  case ImplicitConversionSequence::UserDefinedConversion:
-    return ICS.UserDefined.After.getToType(2);
-  case ImplicitConversionSequence::AmbiguousConversion:
-    return ICS.Ambiguous.getToType();
-
-  case ImplicitConversionSequence::EllipsisConversion:
-  case ImplicitConversionSequence::BadConversion:
-    llvm_unreachable("function not valid for ellipsis or bad conversions");
-  }
-  return QualType(); // silence warnings
-}
-
 /// \brief Try to convert a type to another according to C++0x 5.16p3.
 ///
 /// This is part of the parameter validation for the ? operator. If either
