@@ -169,56 +169,14 @@ class VTTBuilder {
     }
   }
 
-  /// BuiltVTT - Add the VTT to Inits.  Offset is the offset in bits to the
-  /// currnet object we're working on.
-  void BuildVTT(const CXXRecordDecl *RD, uint64_t Offset, bool BaseIsVirtual) {
-    // Itanium C++ ABI 2.6.2:
-    //   An array of virtual table addresses, called the VTT, is declared for 
-    //   each class type that has indirect or direct virtual base classes.
-    if (RD->getNumVBases() == 0)
-      return;
+  /// LayoutVTT - Will lay out the VTT for the given subobject, including any
+  /// secondary VTTs, secondary virtual pointers and virtual VTTs.
+  void LayoutVTT(BaseSubobject Base, bool BaseIsVirtual);
 
-    // Remember the sub-VTT index.
-    SubVTTIndicies[RD] = Inits.size();
-
-    llvm::Constant *Vtable;
-    const CXXRecordDecl *VtableClass;
-
-    // First comes the primary virtual table pointer...
-    Vtable = getCtorVtable(BaseSubobject(RD, Offset), 
-                           /*IsVirtual=*/BaseIsVirtual);
-    VtableClass = RD;
-    
-    llvm::Constant *Init = BuildVtablePtr(Vtable, VtableClass, RD, Offset);
-    Inits.push_back(Init);
-
-    // then the secondary VTTs....
-    SecondaryVTTs(RD, Offset);
-
-    // Make sure to clear the set of seen virtual bases.
-    SeenVBasesInSecondary.clear();
-
-    // and last the secondary vtable pointers.
-    Secondary(RD, Vtable, VtableClass, Offset, false);
-  }
-
-  /// SecondaryVTTs - Add the secondary VTTs to Inits.  The secondary VTTs are
-  /// built from each direct non-virtual proper base that requires a VTT in
-  /// declaration order.
-  void SecondaryVTTs(const CXXRecordDecl *RD, uint64_t Offset) {
-    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-           e = RD->bases_end(); i != e; ++i) {
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (i->isVirtual())
-        continue;
-      const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-      uint64_t BaseOffset = Offset + Layout.getBaseClassOffset(Base);
-      
-      BuildVTT(Base, BaseOffset, /*BaseIsVirtual=*/false);
-    }
-  }
-
+  /// LayoutSecondaryVTTs - Lay out the secondary VTTs of the given base 
+  /// subobject.
+  void LayoutSecondaryVTTs(BaseSubobject Base);
+  
   /// VirtualVTTs - Add the VTT for each proper virtual base in inheritance
   /// graph preorder.
   void VirtualVTTs(const CXXRecordDecl *RD) {
@@ -229,7 +187,8 @@ class VTTBuilder {
       if (i->isVirtual() && !SeenVBase.count(Base)) {
         SeenVBase.insert(Base);
         uint64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        BuildVTT(Base, BaseOffset, /*BaseIsVirtual=*/true);
+        
+        LayoutVTT(BaseSubobject(Base, BaseOffset), /*BaseIsVirtual=*/true);
       }
       VirtualVTTs(Base);
     }
@@ -251,7 +210,7 @@ public:
     Inits.push_back(Init);
     
     // then the secondary VTTs...
-    SecondaryVTTs(Class, 0);
+    LayoutSecondaryVTTs(BaseSubobject(Class, 0));
 
     // Make sure to clear the set of seen virtual bases.
     SeenVBasesInSecondary.clear();
@@ -267,6 +226,62 @@ public:
     return SubVTTIndicies;
   }
 };
+  
+void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
+  const CXXRecordDecl *RD = Base.getBase();
+
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    
+    // Don't layout virtual bases.
+    if (I->isVirtual())
+        continue;
+
+    const CXXRecordDecl *BaseDecl =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+    uint64_t BaseOffset = Base.getBaseOffset() + 
+      Layout.getBaseClassOffset(BaseDecl);
+   
+    // Layout the VTT for this base.
+    LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/false);
+  }
+}
+
+void VTTBuilder::LayoutVTT(BaseSubobject Base, bool BaseIsVirtual) {
+  const CXXRecordDecl *RD = Base.getBase();
+
+  // Itanium C++ ABI 2.6.2:
+  //   An array of virtual table addresses, called the VTT, is declared for 
+  //   each class type that has indirect or direct virtual base classes.
+  if (RD->getNumVBases() == 0)
+    return;
+  
+  // Remember the sub-VTT index.
+  SubVTTIndicies[RD] = Inits.size();
+
+  llvm::Constant *Vtable;
+  const CXXRecordDecl *VtableClass;
+
+  // First comes the primary virtual table pointer...
+  Vtable = getCtorVtable(Base, /*IsVirtual=*/BaseIsVirtual);
+  VtableClass = RD;
+  
+  llvm::Constant *Init = BuildVtablePtr(Vtable, VtableClass, RD, 
+                                        Base.getBaseOffset());
+  Inits.push_back(Init);
+
+  // then the secondary VTTs....
+  LayoutSecondaryVTTs(Base);
+
+  // Make sure to clear the set of seen virtual bases.
+  SeenVBasesInSecondary.clear();
+
+  // and last the secondary vtable pointers.
+  Secondary(RD, Vtable, VtableClass, Base.getBaseOffset(), false);
+}
+  
 }
 
 llvm::GlobalVariable *

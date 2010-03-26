@@ -138,7 +138,7 @@ private:
   
   /// AddOverriders - Add the final overriders for this base subobject to the
   /// map of final overriders.  
-  void AddOverriders(BaseSubobject Base,uint64_t OffsetInLayoutClass,
+  void AddOverriders(BaseSubobject Base, uint64_t OffsetInLayoutClass,
                      SubobjectOffsetsMapTy &Offsets);
 
   /// PropagateOverrider - Propagate the NewMD overrider to all the functions 
