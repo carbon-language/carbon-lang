@@ -302,3 +302,14 @@ entry:
 }
 
 declare double @bar6(...)
+
+define void @t19() alignstack(32) nounwind {
+entry:
+; CHECK: t19:
+; CHECK: andl $-32
+; CHECK: call {{_?}}foo
+  tail call void @foo() nounwind
+  ret void
+}
+
+declare void @foo()
