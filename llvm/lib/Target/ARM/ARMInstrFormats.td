@@ -66,6 +66,7 @@ def NVCVTFrm       : Format<34>;
 def NVDupLnFrm     : Format<35>;
 def N2RegVShLFrm   : Format<36>;
 def N2RegVShRFrm   : Format<37>;
+def N3RegFrm       : Format<38>;
 
 // Misc flags.
 
@@ -1606,7 +1607,7 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
           dag oops, dag iops, InstrItinClass itin,
           string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, NEONFrm, itin, opc, dt, asm, cstr, pattern> {
+  : NDataI<oops, iops, N3RegFrm, itin, opc, dt, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
@@ -1620,7 +1621,7 @@ class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
            bit op4,
            dag oops, dag iops, InstrItinClass itin,
            string opc, string asm, string cstr, list<dag> pattern>
-  : NDataXI<oops, iops, NEONFrm, itin, opc, asm, cstr, pattern> {
+  : NDataXI<oops, iops, N3RegFrm, itin, opc, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
