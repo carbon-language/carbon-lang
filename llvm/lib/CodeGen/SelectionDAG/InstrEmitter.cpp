@@ -640,9 +640,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   // If the instruction has implicit defs and the node doesn't, mark the
   // implicit def as dead.  If the node has any flag outputs, we don't do this
   // because we don't know what implicit defs are being used by flagged nodes.
-  if (Node->getValueType(Node->getNumValues()-1) != MVT::Flag &&
-      // FIXME: This is a terrible hackaround for a liveintervals bug.
-      II.getNumImplicitDefs() < 8)
+  if (Node->getValueType(Node->getNumValues()-1) != MVT::Flag)
     if (const unsigned *IDList = II.getImplicitDefs()) {
       for (unsigned i = NumResults, e = II.getNumDefs()+II.getNumImplicitDefs();
            i != e; ++i)
