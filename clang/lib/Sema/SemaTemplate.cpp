@@ -2554,39 +2554,38 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       IntegerType = Context.getCanonicalType(Enum->getDecl()->getIntegerType());
 
     if (!Arg->isValueDependent()) {
-      llvm::APSInt OldValue = Value;
-      
-      // Coerce the template argument's value to the value it will have 
-      // based on the template parameter's type.
-      unsigned AllowedBits = Context.getTypeSize(IntegerType);
-      Value.setIsSigned(IntegerType->isSignedIntegerType());
-      if (Value.getBitWidth() != AllowedBits)
-        Value.extOrTrunc(AllowedBits);
-
-      // Complain if an unsigned parameter received a negative value.
+      // Check that an unsigned parameter does not receive a negative
+      // value.
       if (IntegerType->isUnsignedIntegerType()
-          && (OldValue.isSigned() && OldValue.isNegative())) {
-        Diag(Arg->getSourceRange().getBegin(), diag::warn_template_arg_negative)
-          << OldValue.toString(10) << Value.toString(10) << Param->getType()
+          && (Value.isSigned() && Value.isNegative())) {
+        Diag(Arg->getSourceRange().getBegin(), diag::err_template_arg_negative)
+          << Value.toString(10) << Param->getType()
           << Arg->getSourceRange();
         Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
       }
 
-      // Complain if we overflowed the template parameter's type.
+      // Check that we don't overflow the template parameter type.
+      unsigned AllowedBits = Context.getTypeSize(IntegerType);
       unsigned RequiredBits;
       if (IntegerType->isUnsignedIntegerType())
-        RequiredBits = OldValue.getActiveBits();
-      else if (OldValue.isUnsigned())
-        RequiredBits = OldValue.getActiveBits() + 1;
+        RequiredBits = Value.getActiveBits();
+      else if (Value.isUnsigned())
+        RequiredBits = Value.getActiveBits() + 1;
       else
-        RequiredBits = OldValue.getMinSignedBits();
+        RequiredBits = Value.getMinSignedBits();
       if (RequiredBits > AllowedBits) {
         Diag(Arg->getSourceRange().getBegin(),
-             diag::warn_template_arg_too_large)
-          << OldValue.toString(10) << Value.toString(10) << Param->getType()
+             diag::err_template_arg_too_large)
+          << Value.toString(10) << Param->getType()
           << Arg->getSourceRange();
         Diag(Param->getLocation(), diag::note_template_param_here);
+        return true;
       }
+
+      if (Value.getBitWidth() != AllowedBits)
+        Value.extOrTrunc(AllowedBits);
+      Value.setIsSigned(IntegerType->isSignedIntegerType());
     }
 
     // Add the value of this argument to the list of converted

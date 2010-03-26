@@ -97,21 +97,21 @@ template<unsigned char C> struct Overflow; // expected-note{{template parameter 
 
 Overflow<5> *overflow1; // okay
 Overflow<255> *overflow2; // okay
-Overflow<256> *overflow3; // expected-warning{{non-type template argument value '256' truncated to '0' for template parameter of type 'unsigned char'}}
+Overflow<256> *overflow3; // expected-error{{non-type template argument value '256' is too large for template parameter of type 'unsigned char'}}
 
 
 template<unsigned> struct Signedness; // expected-note{{template parameter is declared here}}
 Signedness<10> *signedness1; // okay
-Signedness<-10> *signedness2; // expected-warning{{non-type template argument with value '-10' converted to '4294967286' for unsigned template parameter of type 'unsigned int'}}
+Signedness<-10> *signedness2; // expected-error{{non-type template argument provides negative value '-10' for unsigned template parameter of type 'unsigned int'}}
 
 template<signed char C> struct SignedOverflow; // expected-note 3 {{template parameter is declared here}}
 SignedOverflow<1> *signedoverflow1;
 SignedOverflow<-1> *signedoverflow2;
 SignedOverflow<-128> *signedoverflow3;
-SignedOverflow<-129> *signedoverflow4; // expected-warning{{non-type template argument value '-129' truncated to '127' for template parameter of type 'signed char'}}
+SignedOverflow<-129> *signedoverflow4; // expected-error{{non-type template argument value '-129' is too large for template parameter of type 'signed char'}}
 SignedOverflow<127> *signedoverflow5;
-SignedOverflow<128> *signedoverflow6; // expected-warning{{non-type template argument value '128' truncated to '-128' for template parameter of type 'signed char'}}
-SignedOverflow<(unsigned char)128> *signedoverflow7; // expected-warning{{non-type template argument value '128' truncated to '-128' for template parameter of type 'signed char'}}
+SignedOverflow<128> *signedoverflow6; // expected-error{{non-type template argument value '128' is too large for template parameter of type 'signed char'}}
+SignedOverflow<(unsigned char)128> *signedoverflow7; // expected-error{{non-type template argument value '128' is too large for template parameter of type 'signed char'}}
 
 // Check canonicalization of template arguments.
 template<int (*)(int, int)> struct FuncPtr0;
