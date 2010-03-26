@@ -43,7 +43,7 @@ define i32 @t2(i32 %x, i32 %y) nounwind ssp {
 ; X32: cmpl
 ; X32: sete
 ; X32-NOT: xor
-; X32: je
+; X32: jne
 
 ; X64: t2:
 ; X64: testl
@@ -51,7 +51,7 @@ define i32 @t2(i32 %x, i32 %y) nounwind ssp {
 ; X64: testl
 ; X64: sete
 ; X64-NOT: xor
-; X64: je
+; X64: jne
 entry:
   %0 = icmp eq i32 %x, 0                          ; <i1> [#uses=1]
   %1 = icmp eq i32 %y, 0                          ; <i1> [#uses=1]

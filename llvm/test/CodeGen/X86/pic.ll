@@ -194,10 +194,10 @@ bb12:
 
 ; LINUX: .LJTI8_0:
 ; LINUX:   .long	 .LBB8_2@GOTOFF
-; LINUX:   .long	 .LBB8_2@GOTOFF
-; LINUX:   .long	 .LBB8_7@GOTOFF
-; LINUX:   .long	 .LBB8_3@GOTOFF
-; LINUX:   .long	 .LBB8_7@GOTOFF
+; LINUX:   .long	 .LBB8_8@GOTOFF
+; LINUX:   .long	 .LBB8_14@GOTOFF
+; LINUX:   .long	 .LBB8_9@GOTOFF
+; LINUX:   .long	 .LBB8_10@GOTOFF
 }
 
 declare void @foo1(...)

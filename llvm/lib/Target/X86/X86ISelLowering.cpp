@@ -2301,8 +2301,9 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // Look for obvious safe cases to perform tail call optimization that does not
   // requite ABI changes. This is what gcc calls sibcall.
 
-  // Do not sibcall optimize vararg calls for now.
-  if (isVarArg)
+  // Do not sibcall optimize vararg calls unless the call site is not passing any
+  // arguments.
+  if (isVarArg && !Outs.empty())
     return false;
 
   // Also avoid sibcall optimization if either caller or callee uses struct

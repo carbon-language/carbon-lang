@@ -271,3 +271,34 @@ entry:
 }
 
 declare double @bar4()
+
+; rdar://6283267
+define void @t17() nounwind ssp {
+entry:
+; 32: t17:
+; 32: jmp {{_?}}bar5
+
+; 64: t17:
+; 64: xorb %al, %al
+; 64: jmp {{_?}}bar5
+  tail call void (...)* @bar5() nounwind
+  ret void
+}
+
+declare void @bar5(...)
+
+; rdar://7774847
+define void @t18() nounwind ssp {
+entry:
+; 32: t18:
+; 32: call {{_?}}bar6
+; 32: fstp %st(0)
+
+; 64: t18:
+; 64: xorb %al, %al
+; 64: jmp {{_?}}bar6
+  %0 = tail call double (...)* @bar6() nounwind
+  ret void
+}
+
+declare double @bar6(...)
