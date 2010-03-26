@@ -1268,6 +1268,7 @@ CFDateRef returnsRetainedCFDate()  {
 //===----------------------------------------------------------------------===//
 
 void panic() __attribute__((noreturn));
+void panic_not_in_hardcoded_list() __attribute__((noreturn));
 
 void test_panic_negative() {
   signed z = 1;
@@ -1291,9 +1292,13 @@ void test_panic_pos_2(int x) {
   signed z = 1;
   CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // no-warning
   if (x)
-    panic();  
-  if (!x)
     panic();
+  if (!x) {
+    // This showed up in <rdar://problem/7796563>, where we silently missed checking
+    // the function type for noreturn.  "panic()" is a hard-coded known panic function
+    // that isn't always noreturn.
+    panic_not_in_hardcoded_list();
+  }
 }
 
 //===----------------------------------------------------------------------===//
