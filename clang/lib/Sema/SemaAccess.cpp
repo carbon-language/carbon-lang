@@ -319,7 +319,7 @@ static Sema::AccessResult MatchesFriend(Sema &S,
   if (Friend == FTD->getCanonicalDecl())
     return Sema::AR_accessible;
 
-  if (MightInstantiateTo(S, FTD, Friend))
+  if (EC.isDependent() && MightInstantiateTo(S, FTD, Friend))
     return Sema::AR_dependent;
 
   return Sema::AR_inaccessible;

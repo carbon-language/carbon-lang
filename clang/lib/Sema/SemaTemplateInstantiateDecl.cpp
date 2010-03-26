@@ -904,8 +904,15 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   // Check whether there is already a function template specialization for
   // this declaration.
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
+
+  bool isFriend;
+  if (FunctionTemplate)
+    isFriend = (FunctionTemplate->getFriendObjectKind() != Decl::FOK_None);
+  else
+    isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
+
   void *InsertPos = 0;
-  if (FunctionTemplate && !TemplateParams) {
+  if (!isFriend && FunctionTemplate && !TemplateParams) {
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID,
                              TemplateArgs.getInnermost().getFlatArgumentList(),
@@ -933,14 +940,29 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     return 0;
   QualType T = TInfo->getType();
 
+  NestedNameSpecifier *Qualifier = D->getQualifier();
+  if (Qualifier) {
+    Qualifier = SemaRef.SubstNestedNameSpecifier(Qualifier,
+                                                 D->getQualifierRange(),
+                                                 TemplateArgs);
+    if (!Qualifier) return 0;
+  }
+
   // If we're instantiating a local function declaration, put the result
   // in the owner;  otherwise we need to find the instantiated context.
   DeclContext *DC;
   if (D->getDeclContext()->isFunctionOrMethod())
     DC = Owner;
-  else
+  else if (isFriend && Qualifier) {
+    CXXScopeSpec SS;
+    SS.setScopeRep(Qualifier);
+    SS.setRange(D->getQualifierRange());
+    DC = SemaRef.computeDeclContext(SS);
+    if (!DC) return 0;
+  } else {
     DC = SemaRef.FindInstantiatedContext(D->getLocation(), D->getDeclContext(), 
                                          TemplateArgs);
+  }
 
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
@@ -948,9 +970,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                            D->getStorageClass(),
                            D->isInlineSpecified(), D->hasWrittenPrototype());
 
-  // Substitute the nested name specifier, if any.
-  if (SubstQualifier(D, Function))
-    return 0;
+  if (Qualifier)
+    Function->setQualifierInfo(Qualifier, D->getQualifierRange());
 
   Function->setLexicalDeclContext(Owner);
 
@@ -974,17 +995,28 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     // which means substituting int for T, but leaving "f" as a friend function
     // template.
     // Build the function template itself.
-    FunctionTemplate = FunctionTemplateDecl::Create(SemaRef.Context, Owner,
+    FunctionTemplate = FunctionTemplateDecl::Create(SemaRef.Context, DC,
                                                     Function->getLocation(),
                                                     Function->getDeclName(),
                                                     TemplateParams, Function);
     Function->setDescribedFunctionTemplate(FunctionTemplate);
     FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
+
+    if (isFriend && D->isThisDeclarationADefinition()) {
+      // TODO: should we remember this connection regardless of whether
+      // the friend declaration provided a body?
+      FunctionTemplate->setInstantiatedFromMemberTemplate(
+                                           D->getDescribedFunctionTemplate());
+    }
   } else if (FunctionTemplate) {
     // Record this function template specialization.
     Function->setFunctionTemplateSpecialization(FunctionTemplate,
                                                 &TemplateArgs.getInnermost(),
                                                 InsertPos);
+  } else if (isFriend && D->isThisDeclarationADefinition()) {
+    // TODO: should we remember this connection regardless of whether
+    // the friend declaration provided a body?
+    Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
   }
     
   if (InitFunctionInstantiation(Function, D))
@@ -1016,9 +1048,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
   // If the original function was part of a friend declaration,
   // inherit its namespace state and add it to the owner.
-  NamedDecl *FromFriendD 
-      = TemplateParams? cast<NamedDecl>(D->getDescribedFunctionTemplate()) : D;
-  if (FromFriendD->getFriendObjectKind()) {
+  if (isFriend) {
     NamedDecl *ToFriendD = 0;
     NamedDecl *PrevDecl;
     if (TemplateParams) {
@@ -1029,11 +1059,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       PrevDecl = Function->getPreviousDeclaration();
     }
     ToFriendD->setObjectOfFriendDecl(PrevDecl != NULL);
-    if (!Owner->isDependentContext() && !PrevDecl)
-      DC->makeDeclVisibleInContext(ToFriendD, /* Recoverable = */ false);
-
-    if (!TemplateParams)
-      Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
+    DC->makeDeclVisibleInContext(ToFriendD, /*Recoverable=*/ false);
   }
 
   return Function;

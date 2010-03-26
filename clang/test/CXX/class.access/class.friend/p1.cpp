@@ -165,3 +165,18 @@ namespace test3 {
     return p->x; // expected-error {{'x' is a protected member of 'test3::A'}}
   }
 }
+
+namespace test4 {
+  template <class T> class Holder {
+    T object;
+    friend bool operator==(Holder &a, Holder &b) {
+      return a.object == b.object; // expected-error {{invalid operands to binary expression}}
+    }
+  };
+
+  struct Inequal {};
+  bool test() {
+    Holder<Inequal> a, b;
+    return a == b; // expected-note {{requested here}}
+  }
+}

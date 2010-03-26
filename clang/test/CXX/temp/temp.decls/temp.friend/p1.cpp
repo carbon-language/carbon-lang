@@ -178,3 +178,16 @@ namespace test7 {
   };
   template class D<int>;
 }
+
+namespace test8 {
+  template <class N> class A {
+    static int x;
+    template <class T> friend void foo();
+  };
+  template class A<int>;
+
+  template <class T> void foo() {
+    A<int>::x = 0;
+  }
+  template void foo<int>();
+}
