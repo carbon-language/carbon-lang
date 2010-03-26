@@ -435,7 +435,7 @@ public:
   inline DiagnosticBuilder Report(unsigned DiagID);
 
   /// \brief Determine whethere there is already a diagnostic in flight.
-  bool isDiagnosticInFlight() const { return CurDiagID != 0; }
+  bool isDiagnosticInFlight() const { return CurDiagID != ~0U; }
 
   /// \brief Set the "delayed" diagnostic that will be emitted once
   /// the current diagnostic completes.
