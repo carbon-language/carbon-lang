@@ -59,3 +59,7 @@ extern int func (void) __asm__ ("FUNC");
 int func(void) {
   return 42;
 }
+
+// CHECK: @_Z4foo9Dv4_f
+typedef __attribute__(( vector_size(16) )) float float4;
+void __attribute__((__overloadable__)) foo9(float4 f) {}

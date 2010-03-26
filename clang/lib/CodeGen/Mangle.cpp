@@ -1136,15 +1136,20 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
 }
 
 // GNU extension: vector types
+// <type>        ::= <vector-type>
+// <vector-type> ::= Dv <positive dimension number> _ <element type>
+//               ::= Dv [<dimension expression>] _ <element type>
 void CXXNameMangler::mangleType(const VectorType *T) {
-  Out << "U8__vector";
+  Out << "Dv" << T->getNumElements() << '_';
   mangleType(T->getElementType());
 }
 void CXXNameMangler::mangleType(const ExtVectorType *T) {
   mangleType(static_cast<const VectorType*>(T));
 }
 void CXXNameMangler::mangleType(const DependentSizedExtVectorType *T) {
-  Out << "U8__vector";
+  Out << "Dv";
+  mangleExpression(T->getSizeExpr());
+  Out << '_';
   mangleType(T->getElementType());
 }
 
