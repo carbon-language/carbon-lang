@@ -239,11 +239,20 @@ public:
   /// starting with "Dest", constructing elements into it as needed.
   template<typename It1, typename It2>
   static void uninitialized_copy(It1 I, It1 E, It2 Dest) {
-    // Use memcpy for PODs: std::uninitialized_copy optimizes to memmove, memcpy
-    // is better.
-    memcpy(&*Dest, &*I, (E-I)*sizeof(T));
+    // Arbitrary iterator types; just use the basic implementation.
+    std::uninitialized_copy(I, E, Dest);
   }
-  
+
+  /// uninitialized_copy - Copy the range [I, E) onto the uninitialized memory
+  /// starting with "Dest", constructing elements into it as needed.
+  template<typename T1, typename T2>
+  static void uninitialized_copy(T1 *I, T1 *E, T2 *Dest) {
+    // Use memcpy for PODs iterated by pointers (which includes SmallVector
+    // iterators): std::uninitialized_copy optimizes to memmove, but we can
+    // use memcpy here.
+    memcpy(Dest, I, (E-I)*sizeof(T));
+  }
+
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
   void grow(size_t MinSize = 0) {
@@ -501,10 +510,13 @@ public:
     this->uninitialized_copy(I, OldEnd, this->end()-NumOverwritten);
     
     // Replace the overwritten part.
-    std::copy(From, From+NumOverwritten, I);
+    for (; NumOverwritten > 0; --NumOverwritten) {
+      *I = *From;
+      ++I; ++From;
+    }
     
     // Insert the non-overwritten middle part.
-    this->uninitialized_copy(From+NumOverwritten, To, OldEnd);
+    this->uninitialized_copy(From, To, OldEnd);
     return I;
   }
   

@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"
 #include "llvm/ADT/SmallVector.h"
 #include <stdarg.h>
+#include <list>
 
 using namespace llvm;
 
@@ -397,6 +398,11 @@ TEST_F(SmallVectorTest, DirectVectorTest) {
   EXPECT_EQ(2, theVector[1].getValue());
   EXPECT_EQ(3, theVector[2].getValue());
   EXPECT_EQ(4, theVector[3].getValue());
+}
+
+TEST_F(SmallVectorTest, IteratorTest) {
+  std::list<int> L;
+  theVector.insert(theVector.end(), L.begin(), L.end());
 }
 
 }
