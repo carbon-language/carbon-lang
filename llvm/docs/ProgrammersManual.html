@@ -1845,8 +1845,8 @@ void printNextInstruction(Instruction* inst) {
 
 <p>Unfortunately, these implicit conversions come at a cost; they prevent
 these iterators from conforming to standard iterator conventions, and thus
-from being usable with standard algorithms and containers. For example, it
-prevents the following code, where <tt>B</tt> is a <tt>BasicBlock</tt>,
+from being usable with standard algorithms and containers. For example, they
+prevent the following code, where <tt>B</tt> is a <tt>BasicBlock</tt>,
 from compiling:</p>
 
 <div class="doc_code">
@@ -1856,7 +1856,7 @@ from compiling:</p>
 </div>
 
 <p>Because of this, these implicit conversions may be removed some day,
-and <tt>operator*</tt> changed to return a pointer instead of a reference.
+and <tt>operator*</tt> changed to return a pointer instead of a reference.</p>
 
 </div>
 
