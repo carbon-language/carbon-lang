@@ -35,3 +35,9 @@ b: M_0(5)(4)(3)(2)(1);
 
 // CHECK: a: 2 + M_0(3)(4)(5);
 // CHECK: b: 4 + 4 + 3 + 2 + 1 + M_0(3)(2)(1);
+
+#define n(v) v
+#define l m
+#define m l a
+c: n(m) X
+// CHECK: c: m a X

@@ -258,10 +258,13 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
                                        InstantiationEnd,Identifier.getLength());
     Identifier.setLocation(Loc);
 
-    // If this is #define X X, we must mark the result as unexpandible.
-    if (IdentifierInfo *NewII = Identifier.getIdentifierInfo())
-      if (getMacroInfo(NewII) == MI)
-        Identifier.setFlag(Token::DisableExpand);
+    // If this is a disabled macro or #define X X, we must mark the result as
+    // unexpandable.
+    if (IdentifierInfo *NewII = Identifier.getIdentifierInfo()) {
+      if (MacroInfo *NewMI = getMacroInfo(NewII))
+        if (!NewMI->isEnabled() || NewMI == MI)
+          Identifier.setFlag(Token::DisableExpand);
+    }
 
     // Since this is not an identifier token, it can't be macro expanded, so
     // we're done.
