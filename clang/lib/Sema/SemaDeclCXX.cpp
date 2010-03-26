@@ -1433,7 +1433,11 @@ Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                                   bool AnyErrors) {
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Constructor->getDeclContext());
+  CXXRecordDecl *ClassDecl
+    = cast<CXXRecordDecl>(Constructor->getDeclContext())->getDefinition();
+  if (!ClassDecl)
+    return true;
+  
   llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
   llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
   bool HasDependentBaseInit = false;

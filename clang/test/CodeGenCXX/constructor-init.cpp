@@ -80,3 +80,24 @@ void f() {
   // CHECK-NOT: call void @_ZN1AIsED1Ev
   // CHECK: ret void
 }
+
+template<typename T>
+struct X {
+  X(const X &);
+
+  T *start;
+  T *end;
+};
+
+template<typename T> struct X;
+
+// Make sure that the instantiated constructor initializes start and
+// end properly.
+// CHECK: define linkonce_odr void @_ZN1XIiEC2ERKS0_
+// CHECK: {{store.*null}}
+// CHECK: {{store.*null}}
+// CHECK: ret
+template<typename T>
+X<T>::X(const X &other) : start(0), end(0) { }
+
+X<int> get_X(X<int> x) { return x; }
