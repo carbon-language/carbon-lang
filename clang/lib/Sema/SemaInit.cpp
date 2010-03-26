@@ -2001,6 +2001,40 @@ void InitializationSequence::Step::Destroy() {
   }
 }
 
+bool InitializationSequence::isDirectReferenceBinding() const {
+  return getKind() == ReferenceBinding && Steps.back().Kind == SK_BindReference;
+}
+
+bool InitializationSequence::isAmbiguous() const {
+  if (getKind() != FailedSequence)
+    return false;
+  
+  switch (getFailureKind()) {
+  case FK_TooManyInitsForReference:
+  case FK_ArrayNeedsInitList:
+  case FK_ArrayNeedsInitListOrStringLiteral:
+  case FK_AddressOfOverloadFailed: // FIXME: Could do better
+  case FK_NonConstLValueReferenceBindingToTemporary:
+  case FK_NonConstLValueReferenceBindingToUnrelated:
+  case FK_RValueReferenceBindingToLValue:
+  case FK_ReferenceInitDropsQualifiers:
+  case FK_ReferenceInitFailed:
+  case FK_ConversionFailed:
+  case FK_TooManyInitsForScalar:
+  case FK_ReferenceBindingToInitList:
+  case FK_InitListBadDestinationType:
+  case FK_DefaultInitOfConst:
+    return false;
+    
+  case FK_ReferenceInitOverloadFailed:
+  case FK_UserConversionOverloadFailed:
+  case FK_ConstructorOverloadFailed:
+    return FailedOverloadResult == OR_Ambiguous;
+  }
+  
+  return false;
+}
+
 void InitializationSequence::AddAddressOverloadResolutionStep(
                                                       FunctionDecl *Function) {
   Step S;

@@ -599,6 +599,13 @@ public:
   step_iterator step_begin() const { return Steps.begin(); }
   step_iterator step_end()   const { return Steps.end(); }
 
+  /// \brief Determine whether this initialization is a direct reference 
+  /// binding (C++ [dcl.init.ref]).
+  bool isDirectReferenceBinding() const;
+  
+  /// \brief Determine whether this initialization failed due to an ambiguity.
+  bool isAmbiguous() const;
+  
   /// \brief Add a new step in the initialization that resolves the address
   /// of an overloaded function to a specific function declaration.
   ///

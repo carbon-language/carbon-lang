@@ -1913,11 +1913,17 @@ static QualType TargetType(const ImplicitConversionSequence &ICS) {
 /// This is part of the parameter validation for the ? operator. If either
 /// value operand is a class type, the two operands are attempted to be
 /// converted to each other. This function does the conversion in one direction.
-/// It emits a diagnostic and returns true only if it finds an ambiguous
-/// conversion.
+/// It returns true if the program is ill-formed and has already been diagnosed
+/// as such.
 static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
                                 SourceLocation QuestionLoc,
-                                ImplicitConversionSequence &ICS) {
+                                bool &HaveConversion,
+                                QualType &ToType) {
+  HaveConversion = false;
+  ToType = To->getType();
+  
+  InitializationKind Kind = InitializationKind::CreateCopy(To->getLocStart(), 
+                                                           SourceLocation());
   // C++0x 5.16p3
   //   The process for determining whether an operand expression E1 of type T1
   //   can be converted to match an operand expression E2 of type T2 is defined
@@ -1927,22 +1933,18 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
     //   E1 can be converted to match E2 if E1 can be implicitly converted to
     //   type "lvalue reference to T2", subject to the constraint that in the
     //   conversion the reference must bind directly to E1.
-    if (!Self.CheckReferenceInit(From,
-                            Self.Context.getLValueReferenceType(To->getType()),
-                                 To->getLocStart(),
-                                 /*SuppressUserConversions=*/false,
-                                 /*AllowExplicit=*/false,
-                                 /*ForceRValue=*/false,
-                                 &ICS))
-    {
-      assert((ICS.isStandard() || ICS.isUserDefined()) &&
-             "expected a definite conversion");
-      bool DirectBinding =
-        ICS.isStandard() ? ICS.Standard.DirectBinding
-                         : ICS.UserDefined.After.DirectBinding;
-      if (DirectBinding)
-        return false;
+    QualType T = Self.Context.getLValueReferenceType(ToType);
+    InitializedEntity Entity = InitializedEntity::InitializeTemporary(T);
+    
+    InitializationSequence InitSeq(Self, Entity, Kind, &From, 1);
+    if (InitSeq.isDirectReferenceBinding()) {
+      ToType = T;
+      HaveConversion = true;
+      return false;
     }
+    
+    if (InitSeq.isAmbiguous())
+      return InitSeq.Diagnose(Self, Entity, Kind, &From, 1);
   }
 
   //   -- If E2 is an rvalue, or if the conversion above cannot be done:
@@ -1952,47 +1954,46 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
   QualType TTy = To->getType();
   const RecordType *FRec = FTy->getAs<RecordType>();
   const RecordType *TRec = TTy->getAs<RecordType>();
-  bool FDerivedFromT = FRec && TRec && Self.IsDerivedFrom(FTy, TTy);
-  if (FRec && TRec && (FRec == TRec ||
-        FDerivedFromT || Self.IsDerivedFrom(TTy, FTy))) {
+  bool FDerivedFromT = FRec && TRec && FRec != TRec && 
+                       Self.IsDerivedFrom(FTy, TTy);
+  if (FRec && TRec && 
+      (FRec == TRec || FDerivedFromT || Self.IsDerivedFrom(TTy, FTy))) {
     //         E1 can be converted to match E2 if the class of T2 is the
     //         same type as, or a base class of, the class of T1, and
     //         [cv2 > cv1].
     if (FRec == TRec || FDerivedFromT) {
       if (TTy.isAtLeastAsQualifiedAs(FTy)) {
-        // Could still fail if there's no copy constructor.
-        // FIXME: Is this a hard error then, or just a conversion failure? The
-        // standard doesn't say.
-        ICS = Self.TryCopyInitialization(From, TTy,
-                                         /*SuppressUserConversions=*/false,
-                                         /*ForceRValue=*/false,
-                                         /*InOverloadResolution=*/false);
-      } else {
-        ICS.setBad(BadConversionSequence::bad_qualifiers, From, TTy);
-      }
-    } else {
-      // Can't implicitly convert FTy to a derived class TTy.
-      // TODO: more specific error for this.
-      ICS.setBad(BadConversionSequence::no_conversion, From, TTy);
+        InitializedEntity Entity = InitializedEntity::InitializeTemporary(TTy);
+        InitializationSequence InitSeq(Self, Entity, Kind, &From, 1);
+        if (InitSeq.getKind() != InitializationSequence::FailedSequence) {
+          HaveConversion = true;
+          return false;
+        }
+        
+        if (InitSeq.isAmbiguous())
+          return InitSeq.Diagnose(Self, Entity, Kind, &From, 1);
+      } 
     }
-  } else {
-    //     -- Otherwise: E1 can be converted to match E2 if E1 can be
-    //        implicitly converted to the type that expression E2 would have
-    //        if E2 were converted to an rvalue.
-    // First find the decayed type.
-    if (TTy->isFunctionType())
-      TTy = Self.Context.getPointerType(TTy);
-    else if (TTy->isArrayType())
-      TTy = Self.Context.getArrayDecayedType(TTy);
-
-    // Now try the implicit conversion.
-    // FIXME: This doesn't detect ambiguities.
-    ICS = Self.TryImplicitConversion(From, TTy,
-                                     /*SuppressUserConversions=*/false,
-                                     /*AllowExplicit=*/false,
-                                     /*ForceRValue=*/false,
-                                     /*InOverloadResolution=*/false);
+    
+    return false;
   }
+  
+  //     -- Otherwise: E1 can be converted to match E2 if E1 can be
+  //        implicitly converted to the type that expression E2 would have
+  //        if E2 were converted to an rvalue.
+  // First find the decayed type.
+  if (TTy->isFunctionType())
+    TTy = Self.Context.getPointerType(TTy);
+  else if (TTy->isArrayType())
+    TTy = Self.Context.getArrayDecayedType(TTy);
+  
+  InitializedEntity Entity = InitializedEntity::InitializeTemporary(TTy);
+  InitializationSequence InitSeq(Self, Entity, Kind, &From, 1);
+  HaveConversion = InitSeq.getKind() != InitializationSequence::FailedSequence;  
+  ToType = TTy;
+  if (InitSeq.isAmbiguous())
+    return InitSeq.Diagnose(Self, Entity, Kind, &From, 1);
+
   return false;
 }
 
@@ -2041,35 +2042,17 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
 
 /// \brief Perform an "extended" implicit conversion as returned by
 /// TryClassUnification.
-///
-/// TryClassUnification generates ICSs that include reference bindings.
-/// PerformImplicitConversion is not suitable for this; it chokes if the
-/// second part of a standard conversion is ICK_DerivedToBase. This function
-/// handles the reference binding specially.
-static bool ConvertForConditional(Sema &Self, Expr *&E,
-                                  const ImplicitConversionSequence &ICS) {
-  if ((ICS.isStandard() && ICS.Standard.ReferenceBinding) ||
-      (ICS.isUserDefined() && ICS.UserDefined.After.ReferenceBinding)) {
-    assert(((ICS.isStandard() && ICS.Standard.DirectBinding) ||
-            (ICS.isUserDefined() && ICS.UserDefined.After.DirectBinding)) &&
-           "TryClassUnification should never generate indirect ref bindings");
-    InitializedEntity Entity 
-      = InitializedEntity::InitializeTemporary(
-                         Self.Context.getLValueReferenceType(TargetType(ICS)));
-    InitializationKind Kind = InitializationKind::CreateCopy(E->getLocStart(),
-                                                             SourceLocation());
-    InitializationSequence InitSeq(Self, Entity, Kind, &E, 1);
-    Sema::OwningExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
-                                      Sema::MultiExprArg(Self, (void **)&E, 1));
-    if (Result.isInvalid())
-      return true;
-    
-    E = Result.takeAs<Expr>();
-    return false;
-  }
-  
-  if (Self.PerformImplicitConversion(E, TargetType(ICS), ICS, Sema::AA_Converting))
+static bool ConvertForConditional(Sema &Self, Expr *&E, QualType T) {
+  InitializedEntity Entity = InitializedEntity::InitializeTemporary(T);
+  InitializationKind Kind = InitializationKind::CreateCopy(E->getLocStart(),
+                                                           SourceLocation());
+  InitializationSequence InitSeq(Self, Entity, Kind, &E, 1);
+  Sema::OwningExprResult Result = InitSeq.Perform(Self, Entity, Kind, 
+                                    Sema::MultiExprArg(Self, (void **)&E, 1));
+  if (Result.isInvalid())
     return true;
+  
+  E = Result.takeAs<Expr>();
   return false;
 }
 
@@ -2137,17 +2120,17 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   //   Otherwise, if the second and third operand have different types, and
   //   either has (cv) class type, and attempt is made to convert each of those
   //   operands to the other.
-  if (Context.getCanonicalType(LTy) != Context.getCanonicalType(RTy) &&
+  if (!Context.hasSameType(LTy, RTy) && 
       (LTy->isRecordType() || RTy->isRecordType())) {
     ImplicitConversionSequence ICSLeftToRight, ICSRightToLeft;
     // These return true if a single direction is already ambiguous.
-    if (TryClassUnification(*this, LHS, RHS, QuestionLoc, ICSLeftToRight))
+    QualType L2RType, R2LType;
+    bool HaveL2R, HaveR2L;
+    if (TryClassUnification(*this, LHS, RHS, QuestionLoc, HaveL2R, L2RType))
       return QualType();
-    if (TryClassUnification(*this, RHS, LHS, QuestionLoc, ICSRightToLeft))
+    if (TryClassUnification(*this, RHS, LHS, QuestionLoc, HaveR2L, R2LType))
       return QualType();
-
-    bool HaveL2R = !ICSLeftToRight.isBad();
-    bool HaveR2L = !ICSRightToLeft.isBad();
+    
     //   If both can be converted, [...] the program is ill-formed.
     if (HaveL2R && HaveR2L) {
       Diag(QuestionLoc, diag::err_conditional_ambiguous)
@@ -2159,11 +2142,11 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     //   the chosen operand and the converted operands are used in place of the
     //   original operands for the remainder of this section.
     if (HaveL2R) {
-      if (ConvertForConditional(*this, LHS, ICSLeftToRight))
+      if (ConvertForConditional(*this, LHS, L2RType))
         return QualType();
       LTy = LHS->getType();
     } else if (HaveR2L) {
-      if (ConvertForConditional(*this, RHS, ICSRightToLeft))
+      if (ConvertForConditional(*this, RHS, R2LType))
         return QualType();
       RTy = RHS->getType();
     }
