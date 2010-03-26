@@ -166,6 +166,18 @@ namespace test3 {
   }
 }
 
+namespace test3a {
+  class A { protected: int x; };
+
+  class B : public A {
+    friend int foo(B*);
+  };
+
+  int foo(B * const p) {
+    return p->x;
+  }
+}
+
 namespace test4 {
   template <class T> class Holder {
     T object;
