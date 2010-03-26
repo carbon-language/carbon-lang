@@ -3253,18 +3253,18 @@ def VREV16q8  : VREV16Q<0b00, "vrev16", "8", v16i8>;
 //   VEXT     : Vector Extract
 
 class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
-  : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$dst),
-        (ins DPR:$lhs, DPR:$rhs, i32imm:$index), IIC_VEXTD,
-        OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
-        [(set DPR:$dst, (Ty (NEONvext (Ty DPR:$lhs),
-                                      (Ty DPR:$rhs), imm:$index)))]>;
+  : N3Vf<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$dst),
+         (ins DPR:$lhs, DPR:$rhs, i32imm:$index), NVExtFrm,
+         IIC_VEXTD, OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
+         [(set DPR:$dst, (Ty (NEONvext (Ty DPR:$lhs),
+                                       (Ty DPR:$rhs), imm:$index)))]>;
 
 class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
-  : N3V<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$dst),
-        (ins QPR:$lhs, QPR:$rhs, i32imm:$index), IIC_VEXTQ,
-        OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
-        [(set QPR:$dst, (Ty (NEONvext (Ty QPR:$lhs),
-                                      (Ty QPR:$rhs), imm:$index)))]>;
+  : N3Vf<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$dst),
+         (ins QPR:$lhs, QPR:$rhs, i32imm:$index), NVExtFrm,
+         IIC_VEXTQ, OpcodeStr, Dt, "$dst, $lhs, $rhs, $index", "",
+         [(set QPR:$dst, (Ty (NEONvext (Ty QPR:$lhs),
+                                       (Ty QPR:$rhs), imm:$index)))]>;
 
 def VEXTd8  : VEXTd<"vext", "8",  v8i8>;
 def VEXTd16 : VEXTd<"vext", "16", v4i16>;
