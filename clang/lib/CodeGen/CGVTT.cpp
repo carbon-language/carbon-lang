@@ -34,6 +34,8 @@ class VTTBuilder {
   llvm::Constant *ClassVtbl;
   llvm::LLVMContext &VMContext;
 
+  typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
+
   /// SeenVBasesInSecondary - The seen virtual bases when building the 
   /// secondary virtual pointers.
   llvm::SmallPtrSet<const CXXRecordDecl *, 32> SeenVBasesInSecondary;
@@ -169,31 +171,19 @@ class VTTBuilder {
     }
   }
 
-  /// LayoutVTT - Will lay out the VTT for the given subobject, including any
-  /// secondary VTTs, secondary virtual pointers and virtual VTTs.
-  void LayoutVTT(BaseSubobject Base, bool BaseIsVirtual);
-
   /// LayoutSecondaryVTTs - Lay out the secondary VTTs of the given base 
   /// subobject.
   void LayoutSecondaryVTTs(BaseSubobject Base);
   
-  /// VirtualVTTs - Add the VTT for each proper virtual base in inheritance
-  /// graph preorder.
-  void VirtualVTTs(const CXXRecordDecl *RD) {
-    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
-           e = RD->bases_end(); i != e; ++i) {
-      const CXXRecordDecl *Base =
-        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-      if (i->isVirtual() && !SeenVBase.count(Base)) {
-        SeenVBase.insert(Base);
-        uint64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
-        
-        LayoutVTT(BaseSubobject(Base, BaseOffset), /*BaseIsVirtual=*/true);
-      }
-      VirtualVTTs(Base);
-    }
-  }
-
+  /// LayoutVirtualVTTs - Lay out the VTTs for the virtual base classes of the
+  /// given record decl.
+  void LayoutVirtualVTTs(const CXXRecordDecl *RD,
+                         VisitedVirtualBasesSetTy &VBases);
+  
+  /// LayoutVTT - Will lay out the VTT for the given subobject, including any
+  /// secondary VTTs, secondary virtual pointers and virtual VTTs.
+  void LayoutVTT(BaseSubobject Base, bool BaseIsVirtual);
+  
 public:
   VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
              CodeGenModule &cgm, bool GenerateDefinition)
@@ -219,7 +209,8 @@ public:
     Secondary(Class, ClassVtbl, Class, 0, false);
 
     // and last, the virtual VTTs.
-    VirtualVTTs(Class);
+    VisitedVirtualBasesSetTy VBases;
+    LayoutVirtualVTTs(Class, VBases);
   }
   
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> &getSubVTTIndicies() {
@@ -246,6 +237,36 @@ void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
    
     // Layout the VTT for this base.
     LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/false);
+  }
+}
+
+/// LayoutVirtualVTTs - Lay out the VTTs for the virtual base classes of the
+/// given record decl.
+void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
+                                   VisitedVirtualBasesSetTy &VBases) {
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    const CXXRecordDecl *BaseDecl = 
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    // Check if this is a virtual base.
+    if (I->isVirtual()) {
+      // Check if we've seen this base before.
+      if (!VBases.insert(BaseDecl))
+        continue;
+    
+      const ASTRecordLayout &MostDerivedClassLayout =
+        CGM.getContext().getASTRecordLayout(Class);
+      uint64_t BaseOffset = 
+        MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
+      
+      LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/true);
+    }
+    
+    // We only need to layout virtual VTTs for this base if it actually has
+    // virtual bases.
+    if (BaseDecl->getNumVBases())
+      LayoutVirtualVTTs(BaseDecl, VBases);
   }
 }
 
