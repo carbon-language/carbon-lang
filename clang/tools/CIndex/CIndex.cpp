@@ -1078,9 +1078,8 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
         // stderr and stdout in the file system, all with different buffers
         // but writing to the same device.
         fflush(stderr);
-#endif        
+#endif
       }
-      return 0;
     }
 
     return Unit.take();
