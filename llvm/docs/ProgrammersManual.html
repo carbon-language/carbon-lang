@@ -1960,11 +1960,11 @@ for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i
     errs() &lt;&lt; *Inst &lt;&lt; "\n";
   }
 </pre>
-Note that dereferencing a <tt>Value::use_iterator</tt is not a very cheap
+</div>
+
+Note that dereferencing a <tt>Value::use_iterator</tt> is not a very cheap
 operation. Instead of performing <tt>*i</tt> above several times, consider
 doing it only once in the loop body and reusing its result.
-
-</div>
 
 <p>Alternatively, it's common to have an instance of the <a
 href="/doxygen/classllvm_1_1User.html">User Class</a> and need to know what
