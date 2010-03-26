@@ -292,8 +292,19 @@ private:
     return VTableLayoutMap.lookup(RD)[0];
   }
 
-  typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesTy;
-  SubVTTIndiciesTy SubVTTIndicies;
+  typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesMapTy;
+  
+  /// SubVTTIndicies - Contains indices into the various sub-VTTs.
+  SubVTTIndiciesMapTy SubVTTIndicies;
+
+   
+  typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, 
+                                   BaseSubobject>, uint64_t>
+    SecondaryVirtualPointerIndicesMapTy;
+
+  /// SecondaryVirtualPointerIndices - Contains the secondary virtual pointer
+  /// indices.
+  SecondaryVirtualPointerIndicesMapTy SecondaryVirtualPointerIndices;
 
   /// getNumVirtualFunctionPointers - Return the number of virtual function
   /// pointers in the vtable for a given record decl.
@@ -344,6 +355,11 @@ public:
   /// given record decl.
   uint64_t getSubVTTIndex(const CXXRecordDecl *RD, const CXXRecordDecl *Base);
   
+  /// getSecondaryVirtualPointerIndex - Return the index in the VTT where the
+  /// virtual pointer for the given subobject is located.
+  uint64_t getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
+                                           BaseSubobject Base);
+
   /// getMethodVtableIndex - Return the index (relative to the vtable address
   /// point) where the function pointer for the given virtual function is
   /// stored.

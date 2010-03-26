@@ -44,9 +44,13 @@ class VTTBuilder {
   typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
 
   /// SubVTTIndicies - The sub-VTT indices for the bases of the most derived
-  /// class whose VTT is being built.
+  /// class.
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> SubVTTIndicies;
-  
+
+  /// SecondaryVirtualPointerIndices - The secondary virtual pointer indices of
+  /// all subobjects of the most derived class.
+  llvm::DenseMap<BaseSubobject, uint64_t> SecondaryVirtualPointerIndices;
+
   /// GenerateDefinition - Whether the VTT builder should generate LLVM IR for
   /// the VTT.
   bool GenerateDefinition;
@@ -107,15 +111,25 @@ class VTTBuilder {
 public:
   VTTBuilder(CodeGenModule &CGM, const CXXRecordDecl *MostDerivedClass,
              bool GenerateDefinition);
-  
-  llvm::DenseMap<const CXXRecordDecl *, uint64_t> &getSubVTTIndicies() {
-    return SubVTTIndicies;
-  }
-  
+
   // getVTTComponents - Returns a reference to the VTT components.
   const VTTComponentsVectorTy &getVTTComponents() const {
     return VTTComponents;
   }
+  
+  /// getSubVTTIndicies - Returns a reference to the sub-VTT indices.
+  const llvm::DenseMap<const CXXRecordDecl *, uint64_t> &
+  getSubVTTIndicies() const {
+    return SubVTTIndicies;
+  }
+  
+  /// getSecondaryVirtualPointerIndices - Returns a reference to the secondary
+  /// virtual pointer indices.
+  const llvm::DenseMap<BaseSubobject, uint64_t> &
+  getSecondaryVirtualPointerIndices() const {
+    return SecondaryVirtualPointerIndices;
+  }
+
 };
 
 VTTBuilder::VTTBuilder(CodeGenModule &CGM,
@@ -420,14 +434,13 @@ uint64_t CodeGenVTables::getSubVTTIndex(const CXXRecordDecl *RD,
                                         const CXXRecordDecl *Base) {
   ClassPairTy ClassPair(RD, Base);
 
-  SubVTTIndiciesTy::iterator I = 
-    SubVTTIndicies.find(ClassPair);
+  SubVTTIndiciesMapTy::iterator I = SubVTTIndicies.find(ClassPair);
   if (I != SubVTTIndicies.end())
     return I->second;
   
   VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
 
-  for (llvm::DenseMap<const CXXRecordDecl *, uint64_t>::iterator I =
+  for (llvm::DenseMap<const CXXRecordDecl *, uint64_t>::const_iterator I =
        Builder.getSubVTTIndicies().begin(), 
        E = Builder.getSubVTTIndicies().end(); I != E; ++I) {
     // Insert all indices.
@@ -441,3 +454,31 @@ uint64_t CodeGenVTables::getSubVTTIndex(const CXXRecordDecl *RD,
   
   return I->second;
 }
+
+uint64_t 
+CodeGenVTables::getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
+                                                BaseSubobject Base) {
+  SecondaryVirtualPointerIndicesMapTy::iterator I =
+    SecondaryVirtualPointerIndices.find(std::make_pair(RD, Base));
+
+  if (I != SecondaryVirtualPointerIndices.end())
+    return I->second;
+
+  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
+
+  // Insert all secondary vpointer indices.
+  for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I = 
+       Builder.getSecondaryVirtualPointerIndices().begin(),
+       E = Builder.getSecondaryVirtualPointerIndices().end(); I != E; ++I) {
+    std::pair<const CXXRecordDecl *, BaseSubobject> Pair =
+      std::make_pair(RD, I->first);
+    
+    SecondaryVirtualPointerIndices.insert(std::make_pair(Pair, I->second));
+  }
+
+  I = SecondaryVirtualPointerIndices.find(std::make_pair(RD, Base));
+  assert(I != SecondaryVirtualPointerIndices.end() && "Did not find index!");
+  
+  return I->second;
+}
+
