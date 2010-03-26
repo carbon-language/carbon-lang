@@ -101,14 +101,14 @@ namespace test2 {
 namespace test3 {
   class A {
   private:
-    ~A(); // expected-note 3 {{declared private here}}
+    ~A(); // expected-note 2 {{declared private here}}
     static A foo;
   };
 
   A a; // expected-error {{variable of type 'test3::A' has private destructor}}
   A A::foo;
 
-  void foo(A param) { // expected-error {{variable of type 'test3::A' has private destructor}}
+  void foo(A param) { // okay
     A local; // expected-error {{variable of type 'test3::A' has private destructor}}
   }
 

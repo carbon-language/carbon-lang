@@ -78,3 +78,8 @@ namespace PR6421 {
     }
   };
 }
+
+namespace PR6709 {
+  template<class T> class X { T v; ~X() { ++*v; } };
+  void a(X<int> x) {}
+}
