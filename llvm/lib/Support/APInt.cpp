@@ -1382,8 +1382,8 @@ APInt APInt::sqrt() const {
   // libc sqrt function which will probably use a hardware sqrt computation.
   // This should be faster than the algorithm below.
   if (magnitude < 52) {
-#ifdef _MSC_VER
-    // Amazingly, VC++ doesn't have round().
+#if defined( _MSC_VER ) || defined(_MINIX)
+    // Amazingly, VC++ and Minix don't have round().
     return APInt(BitWidth,
                  uint64_t(::sqrt(double(isSingleWord()?VAL:pVal[0]))) + 0.5);
 #else
