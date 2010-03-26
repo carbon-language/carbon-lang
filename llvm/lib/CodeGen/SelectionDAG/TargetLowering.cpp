@@ -186,11 +186,13 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPROUND_PPCF128_F32] = "__trunctfsf2";
   Names[RTLIB::FPROUND_F80_F64] = "__truncxfdf2";
   Names[RTLIB::FPROUND_PPCF128_F64] = "__trunctfdf2";
-  Names[RTLIB::FPTOSINT_F32_I8] = "__fixsfi8";
-  Names[RTLIB::FPTOSINT_F32_I16] = "__fixsfi16";
+  Names[RTLIB::FPTOSINT_F32_I8] = "__fixsfqi";
+  Names[RTLIB::FPTOSINT_F32_I16] = "__fixsfhi";
   Names[RTLIB::FPTOSINT_F32_I32] = "__fixsfsi";
   Names[RTLIB::FPTOSINT_F32_I64] = "__fixsfdi";
   Names[RTLIB::FPTOSINT_F32_I128] = "__fixsfti";
+  Names[RTLIB::FPTOSINT_F64_I8] = "__fixdfqi";
+  Names[RTLIB::FPTOSINT_F64_I16] = "__fixdfhi";
   Names[RTLIB::FPTOSINT_F64_I32] = "__fixdfsi";
   Names[RTLIB::FPTOSINT_F64_I64] = "__fixdfdi";
   Names[RTLIB::FPTOSINT_F64_I128] = "__fixdfti";
@@ -200,11 +202,13 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOSINT_PPCF128_I32] = "__fixtfsi";
   Names[RTLIB::FPTOSINT_PPCF128_I64] = "__fixtfdi";
   Names[RTLIB::FPTOSINT_PPCF128_I128] = "__fixtfti";
-  Names[RTLIB::FPTOUINT_F32_I8] = "__fixunssfi8";
-  Names[RTLIB::FPTOUINT_F32_I16] = "__fixunssfi16";
+  Names[RTLIB::FPTOUINT_F32_I8] = "__fixunssfqi";
+  Names[RTLIB::FPTOUINT_F32_I16] = "__fixunssfhi";
   Names[RTLIB::FPTOUINT_F32_I32] = "__fixunssfsi";
   Names[RTLIB::FPTOUINT_F32_I64] = "__fixunssfdi";
   Names[RTLIB::FPTOUINT_F32_I128] = "__fixunssfti";
+  Names[RTLIB::FPTOUINT_F64_I8] = "__fixunsdfqi";
+  Names[RTLIB::FPTOUINT_F64_I16] = "__fixunsdfhi";
   Names[RTLIB::FPTOUINT_F64_I32] = "__fixunsdfsi";
   Names[RTLIB::FPTOUINT_F64_I64] = "__fixunsdfdi";
   Names[RTLIB::FPTOUINT_F64_I128] = "__fixunsdfti";
@@ -314,6 +318,10 @@ RTLIB::Libcall RTLIB::getFPTOSINT(EVT OpVT, EVT RetVT) {
     if (RetVT == MVT::i128)
       return FPTOSINT_F32_I128;
   } else if (OpVT == MVT::f64) {
+    if (RetVT == MVT::i8)
+      return FPTOSINT_F64_I8;
+    if (RetVT == MVT::i16)
+      return FPTOSINT_F64_I16;
     if (RetVT == MVT::i32)
       return FPTOSINT_F64_I32;
     if (RetVT == MVT::i64)
@@ -353,6 +361,10 @@ RTLIB::Libcall RTLIB::getFPTOUINT(EVT OpVT, EVT RetVT) {
     if (RetVT == MVT::i128)
       return FPTOUINT_F32_I128;
   } else if (OpVT == MVT::f64) {
+    if (RetVT == MVT::i8)
+      return FPTOUINT_F64_I8;
+    if (RetVT == MVT::i16)
+      return FPTOUINT_F64_I16;
     if (RetVT == MVT::i32)
       return FPTOUINT_F64_I32;
     if (RetVT == MVT::i64)
