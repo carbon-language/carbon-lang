@@ -1556,71 +1556,76 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
   return VBaseOffset;
 }
 
-void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *ClassDecl) {
-  if (!ClassDecl->isDynamicClass())
+void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *RD) {
+  if (!RD->isDynamicClass())
     return;
 
-  llvm::Constant *VTable = CGM.getVTables().GetAddrOfVTable(ClassDecl);
-  const CodeGenVTables::AddrSubMap_t& AddressPoints =
-    CGM.getVTables().getAddressPoints(ClassDecl);
+  // Get the VTable.
+  llvm::Constant *VTable = CGM.getVTables().GetAddrOfVTable(RD);
+  
+  // Store address points for the current class and its non-virtual bases.
+  InitializeVtablePtrs(BaseSubobject(RD, 0), VTable, RD);
+  
+  if (!RD->getNumVBases())
+    return;
 
-  llvm::Value *ThisPtr = LoadCXXThis();
-  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
 
-  // Store address points for virtual bases
-  for (CXXRecordDecl::base_class_const_iterator I = 
-       ClassDecl->vbases_begin(), E = ClassDecl->vbases_end(); I != E; ++I) {
-    const CXXBaseSpecifier &Base = *I;
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
-    uint64_t Offset = Layout.getVBaseClassOffset(BaseClassDecl);
-    InitializeVtablePtrsRecursive(BaseClassDecl, VTable, AddressPoints,
-                                  ThisPtr, Offset);
+  // Store address points for virtual basess.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(), 
+       E = RD->vbases_end(); I != E; ++I) {
+    CXXRecordDecl *BaseDecl
+      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    uint64_t BaseOffset = Layout.getVBaseClassOffset(BaseDecl);
+    InitializeVtablePtrs(BaseSubobject(BaseDecl, BaseOffset), VTable, RD);
   }
-
-  // Store address points for non-virtual bases and current class
-  InitializeVtablePtrsRecursive(ClassDecl, VTable, AddressPoints, ThisPtr, 0);
 }
 
-void CodeGenFunction::InitializeVtablePtrsRecursive(
-        const CXXRecordDecl *ClassDecl,
-        llvm::Constant *Vtable,
-        const CodeGenVTables::AddrSubMap_t& AddressPoints,
-        llvm::Value *ThisPtr,
-        uint64_t Offset) {
-  if (!ClassDecl->isDynamicClass())
+void CodeGenFunction::InitializeVtablePtrs(BaseSubobject Base, 
+                                           llvm::Constant *VTable,
+                                           const CXXRecordDecl *VTableClass) {
+  const CXXRecordDecl *RD = Base.getBase();
+  
+  // Ignore classes without a vtable pointer.
+  if (!RD->isDynamicClass())
     return;
+  
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
 
-  // Store address points for non-virtual bases
-  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
-  for (CXXRecordDecl::base_class_const_iterator I = 
-       ClassDecl->bases_begin(), E = ClassDecl->bases_end(); I != E; ++I) {
-    const CXXBaseSpecifier &Base = *I;
-    if (Base.isVirtual())
+  // Store address points for non-virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(), 
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
       continue;
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
-    uint64_t NewOffset = Offset + Layout.getBaseClassOffset(BaseClassDecl);
-    InitializeVtablePtrsRecursive(BaseClassDecl, Vtable, AddressPoints,
-                                  ThisPtr, NewOffset);
+    
+    CXXRecordDecl *BaseDecl
+      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    uint64_t BaseOffset = Base.getBaseOffset() + 
+      Layout.getBaseClassOffset(BaseDecl);
+    
+    InitializeVtablePtrs(BaseSubobject(BaseDecl, BaseOffset), 
+                         VTable, VTableClass);
   }
-
-  // Compute the address point
-  assert(AddressPoints.count(std::make_pair(ClassDecl, Offset)) &&
-         "Missing address point for class");
+  
+  // Compute the address point.
+  const CodeGenVTables::AddrSubMap_t& AddressPoints =
+    CGM.getVTables().getAddressPoints(VTableClass);
+  
   uint64_t AddressPoint = 
-    AddressPoints.lookup(std::make_pair(ClassDecl, Offset));
-  llvm::Value *VtableAddressPoint =
-      Builder.CreateConstInBoundsGEP2_64(Vtable, 0, AddressPoint);
+    AddressPoints.lookup(std::make_pair(Base.getBase(), Base.getBaseOffset()));
+  llvm::Value *VTableAddressPoint =
+      Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
 
-  // Compute the address to store the address point
+  // Compute where to store the address point.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  llvm::Value *VtableField = Builder.CreateBitCast(ThisPtr, Int8PtrTy);
-  VtableField = Builder.CreateConstInBoundsGEP1_64(VtableField, Offset/8);
+  llvm::Value *VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
+  VTableField = 
+    Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
+  
+  // Finally, store the address point.
   const llvm::Type *AddressPointPtrTy =
-      VtableAddressPoint->getType()->getPointerTo();
-  VtableField = Builder.CreateBitCast(VtableField, AddressPointPtrTy);
-
-  // Store address point
-  Builder.CreateStore(VtableAddressPoint, VtableField);
+    VTableAddressPoint->getType()->getPointerTo();
+  VTableField = Builder.CreateBitCast(VTableField, AddressPointPtrTy);
+  Builder.CreateStore(VTableAddressPoint, VTableField);
 }
