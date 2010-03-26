@@ -19,16 +19,21 @@ using namespace CodeGen;
 #define D1(x)
 
 namespace {
+
+/// VTT builder - Class for building VTT layout information.
 class VTTBuilder {
+  /// MostDerivedClass - The most derived class for which we're building this
+  /// vtable.
+  const CXXRecordDecl *MostDerivedClass;
+
   /// Inits - The list of values built for the VTT.
   std::vector<llvm::Constant *> &Inits;
-  /// Class - The most derived class that this vtable is being built for.
-  const CXXRecordDecl *Class;
+  
+  /// MostDerivedClassLayout - the AST record layout of the most derived class.
+  const ASTRecordLayout &MostDerivedClassLayout;
+
   CodeGenModule &CGM;  // Per-module state.
-  llvm::SmallSet<const CXXRecordDecl *, 32> SeenVBase;
-  /// BLayout - Layout for the most derived class that this vtable is being
-  /// built for.
-  const ASTRecordLayout &BLayout;
+
   CodeGenVTables::AddrMap_t &AddressPoints;
   // vtbl - A pointer to the vtable for Class.
   llvm::Constant *ClassVtbl;
@@ -57,7 +62,8 @@ class VTTBuilder {
     if (!CtorVtable) {
       // Get the vtable.
       CtorVtable = 
-        CGM.getVTables().GenerateConstructionVTable(Class, Base, BaseIsVirtual, 
+        CGM.getVTables().GenerateConstructionVTable(MostDerivedClass, 
+                                                    Base, BaseIsVirtual, 
                                                     CtorVtableAddressPoints);
     }
     
@@ -75,7 +81,7 @@ class VTTBuilder {
 
     uint64_t AddressPoint;
     
-    if (VtableClass != Class) {
+    if (VtableClass != MostDerivedClass) {
       // We have a ctor vtable, look for the address point in the ctor vtable
       // address points.
       AddressPoint = 
@@ -144,13 +150,13 @@ class VTTBuilder {
         const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
         BaseOffset = Offset + Layout.getBaseClassOffset(Base);
       } else
-        BaseOffset = BLayout.getVBaseClassOffset(Base);
+        BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(Base);
       llvm::Constant *subvtbl = vtbl;
       const CXXRecordDecl *subVtblClass = VtblClass;
       if ((Base->getNumVBases() || BaseMorallyVirtual)
           && !NonVirtualPrimaryBase) {
         llvm::Constant *init;
-        if (BaseMorallyVirtual || VtblClass == Class)
+        if (BaseMorallyVirtual || VtblClass == MostDerivedClass)
           init = BuildVtablePtr(vtbl, VtblClass, Base, BaseOffset);
         else {
           init = getCtorVtable(BaseSubobject(Base, BaseOffset), i->isVirtual());
@@ -158,7 +164,7 @@ class VTTBuilder {
           subvtbl = init;
           subVtblClass = Base;
           
-          init = BuildVtablePtr(init, Class, Base, BaseOffset);
+          init = BuildVtablePtr(init, MostDerivedClass, Base, BaseOffset);
         }
 
         Inits.push_back(init);
@@ -185,32 +191,37 @@ class VTTBuilder {
   void LayoutVTT(BaseSubobject Base, bool BaseIsVirtual);
   
 public:
-  VTTBuilder(std::vector<llvm::Constant *> &inits, const CXXRecordDecl *c,
+  VTTBuilder(std::vector<llvm::Constant *> &inits, 
+             const CXXRecordDecl *MostDerivedClass,
              CodeGenModule &cgm, bool GenerateDefinition)
-    : Inits(inits), Class(c), CGM(cgm),
-      BLayout(cgm.getContext().getASTRecordLayout(c)),
-      AddressPoints(*cgm.getVTables().OldAddressPoints[c]),
+    : MostDerivedClass(MostDerivedClass), 
+     Inits(inits), 
+  MostDerivedClassLayout(cgm.getContext().getASTRecordLayout(MostDerivedClass)),
+      CGM(cgm),
+      AddressPoints(*cgm.getVTables().OldAddressPoints[MostDerivedClass]),
       VMContext(cgm.getModule().getContext()),
       GenerateDefinition(GenerateDefinition) {
     
     // First comes the primary virtual table pointer for the complete class...
-    ClassVtbl = GenerateDefinition ? CGM.getVTables().GetAddrOfVTable(Class) :0;
+    ClassVtbl = GenerateDefinition ? 
+          CGM.getVTables().GetAddrOfVTable(MostDerivedClass) :0;
 
-    llvm::Constant *Init = BuildVtablePtr(ClassVtbl, Class, Class, 0);
+    llvm::Constant *Init = BuildVtablePtr(ClassVtbl, MostDerivedClass, 
+                                          MostDerivedClass, 0);
     Inits.push_back(Init);
     
     // then the secondary VTTs...
-    LayoutSecondaryVTTs(BaseSubobject(Class, 0));
+    LayoutSecondaryVTTs(BaseSubobject(MostDerivedClass, 0));
 
     // Make sure to clear the set of seen virtual bases.
     SeenVBasesInSecondary.clear();
 
     // then the secondary vtable pointers...
-    Secondary(Class, ClassVtbl, Class, 0, false);
+    Secondary(MostDerivedClass, ClassVtbl, MostDerivedClass, 0, false);
 
     // and last, the virtual VTTs.
     VisitedVirtualBasesSetTy VBases;
-    LayoutVirtualVTTs(Class, VBases);
+    LayoutVirtualVTTs(MostDerivedClass, VBases);
   }
   
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> &getSubVTTIndicies() {
@@ -255,8 +266,6 @@ void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
       if (!VBases.insert(BaseDecl))
         continue;
     
-      const ASTRecordLayout &MostDerivedClassLayout =
-        CGM.getContext().getASTRecordLayout(Class);
       uint64_t BaseOffset = 
         MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       
