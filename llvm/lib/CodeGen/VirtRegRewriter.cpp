@@ -572,6 +572,9 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
 static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
                         BitVector &RegKills,
                         std::vector<MachineOperand*> &KillOps) {
+  // These do not affect kill info at all.
+  if (MI.isDebugValue())
+    return;
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || MO.isUndef())
