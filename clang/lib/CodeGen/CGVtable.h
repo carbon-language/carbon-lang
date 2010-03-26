@@ -271,9 +271,12 @@ private:
   typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, 
                                    BaseSubobject>, uint64_t> AddressPointsMapTy;
   
-  /// Address points - Vtable address points.
+  /// Address points - Address points for all vtables.
   AddressPointsMapTy AddressPoints;
-  
+
+  /// VTableAddressPointsMapTy - Address points for a single vtable.
+  typedef llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPointsMapTy;
+
   typedef llvm::SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
     VTableThunksTy;
   
@@ -327,7 +330,7 @@ private:
                                           const uint64_t *Components, 
                                           unsigned NumComponents,
                                           const VTableThunksTy &VTableThunks);
-                                          
+
 public:
   CodeGenVTables(CodeGenModule &CGM)
     : CGM(CGM) { }
@@ -362,7 +365,7 @@ public:
   llvm::GlobalVariable *
   GenerateConstructionVTable(const CXXRecordDecl *RD, const BaseSubobject &Base, 
                              bool BaseIsVirtual, 
-                             AddressPointsMapTy& AddressPoints);
+                             VTableAddressPointsMapTy& AddressPoints);
   
   llvm::GlobalVariable *getVTT(const CXXRecordDecl *RD);
   

@@ -4183,31 +4183,15 @@ llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
 
 llvm::GlobalVariable *
 CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD, 
-                                           const BaseSubobject &Base, 
-                                           bool BaseIsVirtual, 
-                                           AddressPointsMapTy& AddressPoints) {
+                                      const BaseSubobject &Base, 
+                                      bool BaseIsVirtual, 
+                                      VTableAddressPointsMapTy& AddressPoints) {
   if (!CGM.getLangOptions().DumpVtableLayouts) {
-    llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPoints;
-  
     llvm::GlobalVariable *VTable =
       GenerateVtable(llvm::GlobalValue::InternalLinkage,
                      /*GenerateDefinition=*/true,
                      RD, Base.getBase(), Base.getBaseOffset(),
-                     BaseIsVirtual, VTableAddressPoints);
-  
-    // Add the address points for this base.
-    for (llvm::DenseMap<BaseSubobject, uint64_t>::const_iterator I =
-         VTableAddressPoints.begin(), E = VTableAddressPoints.end();
-         I != E; ++I) {
-    
-      uint64_t &AddressPoint = 
-        AddressPoints[std::make_pair(Base.getBase(), I->first)];
-    
-      // Check if we already have the address points for this base.
-      assert(!AddressPoint && "Address point already exists for this base!");
-    
-      AddressPoint = I->second;
-    }
+                     BaseIsVirtual, AddressPoints);
   
     return VTable;
   }
@@ -4220,19 +4204,8 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
     Builder.dumpLayout(llvm::errs());
 
   // Add the address points.
-  for (VtableBuilder::AddressPointsMapTy::const_iterator I =
-       Builder.address_points_begin(), E = Builder.address_points_end();
-       I != E; ++I) {
-    uint64_t &AddressPoint = 
-    AddressPoints[std::make_pair(Base.getBase(), I->first)];
-
-#if 0
-    // FIXME: Figure out why this assert fires.
-    // Check if we already have the address points for this base.
-    assert(!AddressPoint && "Address point already exists for this base!");
-#endif
-    AddressPoint = I->second;
-  }
+  AddressPoints.insert(Builder.address_points_begin(),
+                       Builder.address_points_end());
 
   // Get the mangled construction vtable name.
   llvm::SmallString<256> OutName;
