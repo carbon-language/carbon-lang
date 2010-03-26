@@ -67,6 +67,7 @@ def NVDupLnFrm     : Format<35>;
 def N2RegVShLFrm   : Format<36>;
 def N2RegVShRFrm   : Format<37>;
 def N3RegFrm       : Format<38>;
+def N3RegVShFrm    : Format<39>;
 
 // Misc flags.
 
@@ -1603,11 +1604,11 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
   let Inst{4} = op4;
 }
 
-// NEON 3 vector register format.
-class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
-          dag oops, dag iops, InstrItinClass itin,
-          string opc, string dt, string asm, string cstr, list<dag> pattern>
-  : NDataI<oops, iops, N3RegFrm, itin, opc, dt, asm, cstr, pattern> {
+// NEON 3 vector register template, which requires a Format argument.
+class N3Vf<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,bit op4,
+           dag oops, dag iops, Format f, InstrItinClass itin,
+           string opc, string dt, string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
   let Inst{21-20} = op21_20;
@@ -1615,6 +1616,13 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{6} = op6;
   let Inst{4} = op4;
 }
+
+// NEON 3 vector register format.
+class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
+          dag oops, dag iops, InstrItinClass itin,
+          string opc, string dt, string asm, string cstr, list<dag> pattern>
+  : N3Vf<op24, op23, op21_20, op11_8, op6, op4, oops, iops, N3RegFrm, itin,
+         opc, dt, asm, cstr, pattern>;
 
 // Same as N3V except it doesn't have a data type suffix.
 class N3VX<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
