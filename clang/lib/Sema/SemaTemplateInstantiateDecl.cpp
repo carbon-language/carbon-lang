@@ -840,16 +840,18 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   assert(InstTemplate && 
          "VisitFunctionDecl/CXXMethodDecl didn't create a template!");
 
+  bool isFriend = (InstTemplate->getFriendObjectKind() != Decl::FOK_None);
+
   // Link the instantiation back to the pattern *unless* this is a
   // non-definition friend declaration.
   if (!InstTemplate->getInstantiatedFromMemberTemplate() &&
-      !(InstTemplate->getFriendObjectKind() &&
-        !D->getTemplatedDecl()->isThisDeclarationADefinition()))
+      !(isFriend && !D->getTemplatedDecl()->isThisDeclarationADefinition()))
     InstTemplate->setInstantiatedFromMemberTemplate(D);
   
-  // Add non-friends into the owner.
-  if (!InstTemplate->getFriendObjectKind())
+  // Make declarations visible in the appropriate context.
+  if (!isFriend)
     Owner->addDecl(InstTemplate);
+
   return InstTemplate;
 }
 
@@ -973,7 +975,13 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   if (Qualifier)
     Function->setQualifierInfo(Qualifier, D->getQualifierRange());
 
-  Function->setLexicalDeclContext(Owner);
+  DeclContext *LexicalDC = Owner;
+  if (!isFriend && D->isOutOfLine()) {
+    assert(D->getDeclContext()->isFileContext());
+    LexicalDC = D->getDeclContext();
+  }
+
+  Function->setLexicalDeclContext(LexicalDC);
 
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
@@ -1000,7 +1008,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                                     Function->getDeclName(),
                                                     TemplateParams, Function);
     Function->setDescribedFunctionTemplate(FunctionTemplate);
-    FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
+
+    FunctionTemplate->setLexicalDeclContext(LexicalDC);
 
     if (isFriend && D->isThisDeclarationADefinition()) {
       // TODO: should we remember this connection regardless of whether

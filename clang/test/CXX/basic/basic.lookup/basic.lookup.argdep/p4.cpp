@@ -40,3 +40,15 @@ namespace Test {
     D::D() + D::D(); // expected-error {{ invalid operands to binary expression ('D::D' and 'D::D') }}
   }
 }
+
+// PR6716
+namespace test1 {
+  template <class T> class A {
+    template <class U> friend void foo(A &, U); // expected-note {{not viable: 1st argument ('A<int> const') would lose const qualifier}}
+  };
+
+  void test() {
+    const A<int> a;
+    foo(a, 10); // expected-error {{no matching function for call to 'foo'}}
+  }
+}
