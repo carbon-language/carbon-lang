@@ -198,3 +198,18 @@ void test()
   // *must* create a separate temporary copy of class objects. This can only
   // be properly tested at runtime, though.
 }
+
+namespace PR6595 {
+  struct String {
+    String(const char *);
+    operator const char*() const;
+  };
+
+  void f(bool Cond, String S) {
+    (void)(Cond? S : "");
+    (void)(Cond? "" : S);
+    const char a[1] = {'a'};
+    (void)(Cond? S : a);
+    (void)(Cond? a : S);
+  }
+}

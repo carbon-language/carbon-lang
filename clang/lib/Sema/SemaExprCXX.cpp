@@ -1934,7 +1934,8 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
   //   can be converted to match an operand expression E2 of type T2 is defined
   //   as follows:
   //   -- If E2 is an lvalue:
-  if (To->isLvalue(Self.Context) == Expr::LV_Valid) {
+  bool ToIsLvalue = (To->isLvalue(Self.Context) == Expr::LV_Valid);
+  if (ToIsLvalue) {
     //   E1 can be converted to match E2 if E1 can be implicitly converted to
     //   type "lvalue reference to T2", subject to the constraint that in the
     //   conversion the reference must bind directly to E1.
@@ -1985,12 +1986,13 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
   
   //     -- Otherwise: E1 can be converted to match E2 if E1 can be
   //        implicitly converted to the type that expression E2 would have
-  //        if E2 were converted to an rvalue.
-  // First find the decayed type.
-  if (TTy->isFunctionType())
-    TTy = Self.Context.getPointerType(TTy);
-  else if (TTy->isArrayType())
-    TTy = Self.Context.getArrayDecayedType(TTy);
+  //        if E2 were converted to an rvalue (or the type it has, if E2 is 
+  //        an rvalue).
+  //
+  // This actually refers very narrowly to the lvalue-to-rvalue conversion, not
+  // to the array-to-pointer or function-to-pointer conversions.
+  if (!TTy->getAs<TagType>())
+    TTy = TTy.getUnqualifiedType();
   
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(TTy);
   InitializationSequence InitSeq(Self, Entity, Kind, &From, 1);
