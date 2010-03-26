@@ -50,3 +50,33 @@ namespace test1 {
     Registry<int>::node node(0);
   }
 }
+
+// Redeclarations during explicit instantiations.
+namespace test2 {
+  template <typename T> class A {
+    class Foo;
+    class Foo {
+      int foo();
+    };
+  };
+  template class A<int>;
+
+  template <typename T> class B {
+    class Foo;
+    class Foo {
+      typedef int X;
+    };
+    typename Foo::X x;
+    class Foo;
+  };
+  template class B<int>;
+
+  template <typename T> class C {
+    class Foo;
+    class Foo;
+  };
+  template <typename T> class C<T>::Foo {
+    int x;
+  };
+  template class C<int>;
+}

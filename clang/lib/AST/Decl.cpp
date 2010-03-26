@@ -1413,10 +1413,8 @@ void TagDecl::startDefinition() {
     CXXRecordDecl *D = cast<CXXRecordDecl>(this);
     struct CXXRecordDecl::DefinitionData *Data = 
       new (getASTContext()) struct CXXRecordDecl::DefinitionData(D);
-    do {
-      D->DefinitionData = Data;
-      D = cast_or_null<CXXRecordDecl>(D->getPreviousDeclaration());
-    } while (D);
+    for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
+      cast<CXXRecordDecl>(*I)->DefinitionData = Data;
   }
 }
 
