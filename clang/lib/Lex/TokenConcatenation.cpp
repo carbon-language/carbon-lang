@@ -85,7 +85,7 @@ TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
   TokenInfo[tok::star        ] |= aci_avoid_equal;           // *=
   TokenInfo[tok::exclaim     ] |= aci_avoid_equal;           // !=
   TokenInfo[tok::lessless    ] |= aci_avoid_equal;           // <<=
-  TokenInfo[tok::greaterequal] |= aci_avoid_equal;           // >>=
+  TokenInfo[tok::greatergreater] |= aci_avoid_equal;         // >>=
   TokenInfo[tok::caret       ] |= aci_avoid_equal;           // ^=
   TokenInfo[tok::equal       ] |= aci_avoid_equal;           // ==
 }

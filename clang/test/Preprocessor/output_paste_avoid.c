@@ -24,3 +24,7 @@ E: test(str)
 // Should expand to L "str" not L"str"
 // CHECK: E: L "str"
 
+// Should avoid producing >>=.
+#define equal =
+F: >>equal
+// CHECK: F: >> =
