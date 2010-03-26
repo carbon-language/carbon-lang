@@ -1211,14 +1211,14 @@ and erasing, but does not support iteration.</p>
 
 <div class="doc_text">
 
-<p>SmallPtrSet has all the advantages of SmallSet (and a SmallSet of pointers is 
-transparently implemented with a SmallPtrSet), but also supports iterators.  If
+<p>SmallPtrSet has all the advantages of <tt>SmallSet</tt> (and a <tt>SmallSet</tt> of pointers is 
+transparently implemented with a <tt>SmallPtrSet</tt>), but also supports iterators.  If
 more than 'N' insertions are performed, a single quadratically
 probed hash table is allocated and grows as needed, providing extremely
 efficient access (constant time insertion/deleting/queries with low constant
 factors) and is very stingy with malloc traffic.</p>
 
-<p>Note that, unlike std::set, the iterators of SmallPtrSet are invalidated
+<p>Note that, unlike <tt>std::set</tt>, the iterators of <tt>SmallPtrSet</tt> are invalidated
 whenever an insertion occurs.  Also, the values visited by the iterators are not
 visited in sorted order.</p>
 
@@ -1960,6 +1960,10 @@ for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i
     errs() &lt;&lt; *Inst &lt;&lt; "\n";
   }
 </pre>
+Note that dereferencing a <tt>Value::use_iterator</tt is not a very cheap
+operation. Instead of performing <tt>*i</tt> above several times, consider
+doing it only once in the loop body and reusing its result.
+
 </div>
 
 <p>Alternatively, it's common to have an instance of the <a
@@ -1981,11 +1985,13 @@ for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) 
 </pre>
 </div>
 
-<!--
-  def-use chains ("finding all users of"): Value::use_begin/use_end
-  use-def chains ("finding all values used"): User::op_begin/op_end [op=operand]
--->
-
+<p>Declaring objects as <tt>const</tt> is an important tool of enforcing
+mutation free algorithms (such as analyses etc.). For this purpose above
+iterators come in constant flavors as <tt>Value::const_use_iterator</tt>
+and <tt>Value::const_op_iterator</tt>.  They automatically arise when
+calling <tt>use/op_begin()</tt> on <tt>const Value*</tt>s or
+<tt>const User*</tt>s respectively.  Upon dereferencing, they return
+<tt>const Use*</tt>s. Otherwise the above patterns remain unchanged.
 </div>
 
 <!--_______________________________________________________________________-->
