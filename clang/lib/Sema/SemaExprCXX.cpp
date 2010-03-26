@@ -1062,10 +1062,15 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // Watch out for variadic allocator function.
     unsigned NumArgsInFnDecl = FnDecl->getNumParams();
     for (unsigned i = 0; (i < NumArgs && i < NumArgsInFnDecl); ++i) {
-      if (PerformCopyInitialization(Args[i],
-                                    FnDecl->getParamDecl(i)->getType(),
-                                    AA_Passing))
+      OwningExprResult Result
+        = PerformCopyInitialization(InitializedEntity::InitializeParameter(
+                                                       FnDecl->getParamDecl(i)),
+                                    SourceLocation(),
+                                    Owned(Args[i]->Retain()));
+      if (Result.isInvalid())
         return true;
+      
+      Args[i] = Result.takeAs<Expr>();
     }
     Operator = FnDecl;
     CheckAllocationAccess(StartLoc, Range, R.getNamingClass(), Best->FoundDecl);

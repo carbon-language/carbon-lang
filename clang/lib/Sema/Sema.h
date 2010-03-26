@@ -1101,9 +1101,6 @@ public:
                         bool SuppressUserConversions, bool ForceRValue,
                         bool InOverloadResolution);
   
-  bool PerformCopyInitialization(Expr *&From, QualType ToType,
-                                 AssignmentAction Action, bool Elidable = false);
-
   OwningExprResult PerformCopyInitialization(const InitializedEntity &Entity,
                                              SourceLocation EqualLoc,
                                              OwningExprResult Init);

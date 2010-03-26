@@ -2201,44 +2201,6 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
   }
 }
 
-/// PerformCopyInitialization - Copy-initialize an object of type @p ToType with
-/// the expression @p From. Returns true (and emits a diagnostic) if there was
-/// an error, returns false if the initialization succeeded. Elidable should
-/// be true when the copy may be elided (C++ 12.8p15). Overload resolution works
-/// differently in C++0x for this case.
-bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
-                                     AssignmentAction Action, bool Elidable) {
-  if (!getLangOptions().CPlusPlus) {
-    // In C, argument passing is the same as performing an assignment.
-    QualType FromType = From->getType();
-
-    AssignConvertType ConvTy =
-      CheckSingleAssignmentConstraints(ToType, From);
-    if (ConvTy != Compatible &&
-        CheckTransparentUnionArgumentConstraints(ToType, From) == Compatible)
-      ConvTy = Compatible;
-
-    return DiagnoseAssignmentResult(ConvTy, From->getLocStart(), ToType,
-                                    FromType, From, Action);
-  }
-
-  if (ToType->isReferenceType())
-    return CheckReferenceInit(From, ToType,
-                              /*FIXME:*/From->getLocStart(),
-                              /*SuppressUserConversions=*/false,
-                              /*AllowExplicit=*/false,
-                              /*ForceRValue=*/false);
-
-  if (!PerformImplicitConversion(From, ToType, Action,
-                                 /*AllowExplicit=*/false, Elidable))
-    return false;
-  if (!DiagnoseMultipleUserDefinedConversion(From, ToType))
-    return Diag(From->getSourceRange().getBegin(),
-                diag::err_typecheck_convert_incompatible)
-      << ToType << From->getType() << Action << From->getSourceRange();
-  return true;
-}
-
 /// TryObjectArgumentInitialization - Try to initialize the object
 /// parameter of the given member function (@c Method) from the
 /// expression @p From.
