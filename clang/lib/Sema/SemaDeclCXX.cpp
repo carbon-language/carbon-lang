@@ -3736,8 +3736,10 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace, so don't create a new one.
+      // FIXME: At some point, we'll want to create the (redundant)
+      // declaration to maintain better source information.
       if (!R.isAmbiguous() && !R.empty() &&
-          AD->getNamespace() == getNamespaceDecl(R.getFoundDecl()))
+          AD->getNamespace()->Equals(getNamespaceDecl(R.getFoundDecl())))
         return DeclPtrTy();
     }
 

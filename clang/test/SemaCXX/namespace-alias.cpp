@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-namespace N { };
+namespace N { struct X { }; };
 
 namespace A = N;
 
@@ -83,3 +83,11 @@ namespace K {
     KC::func(); // expected-error {{undeclared identifier 'KC'}}
   }
 }
+
+// PR6341
+namespace A = N;
+namespace N { }
+namespace A = N;
+
+A::X nx;
+
