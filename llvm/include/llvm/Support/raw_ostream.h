@@ -89,6 +89,7 @@ public:
 
   /// has_error - Return the value of the flag in this raw_ostream indicating
   /// whether an output error has been encountered.
+  /// This doesn't implicitly flush any pending output.
   bool has_error() const {
     return Error;
   }
