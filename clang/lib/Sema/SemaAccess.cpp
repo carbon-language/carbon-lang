@@ -53,32 +53,38 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 
 namespace {
 struct EffectiveContext {
-  EffectiveContext() : Inner(0), Function(0), Dependent(false) {}
+  EffectiveContext() : Inner(0), Dependent(false) {}
 
   explicit EffectiveContext(DeclContext *DC)
     : Inner(DC),
       Dependent(DC->isDependentContext()) {
-
-    if (isa<EnumDecl>(DC))
-      DC = cast<EnumDecl>(DC)->getDeclContext();
-
-    if (isa<FunctionDecl>(DC)) {
-      Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
-      DC = Function->getDeclContext();
-    } else
-      Function = 0;
 
     // C++ [class.access.nest]p1:
     //   A nested class is a member and as such has the same access
     //   rights as any other member.
     // C++ [class.access]p2:
     //   A member of a class can also access all the names to which
-    //   the class has access.
-    // This implies that the privileges of nesting are transitive.
-    while (isa<CXXRecordDecl>(DC)) {
-      CXXRecordDecl *Record = cast<CXXRecordDecl>(DC)->getCanonicalDecl();
-      Records.push_back(Record);
-      DC = Record->getDeclContext();
+    //   the class has access.  A local class of a member function
+    //   may access the same names that the member function itself
+    //   may access.
+    // This almost implies that the privileges of nesting are transitive.
+    // Technically it says nothing about the local classes of non-member
+    // functions (which can gain privileges through friendship), but we
+    // take that as an oversight.
+    while (true) {
+      if (isa<CXXRecordDecl>(DC)) {
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC)->getCanonicalDecl();
+        Records.push_back(Record);
+        DC = Record->getDeclContext();
+      } else if (isa<FunctionDecl>(DC)) {
+        FunctionDecl *Function = cast<FunctionDecl>(DC)->getCanonicalDecl();
+        Functions.push_back(Function);
+        DC = Function->getDeclContext();
+      } else if (DC->isFileContext()) {
+        break;
+      } else {
+        DC = DC->getParent();
+      }
     }
   }
 
@@ -99,8 +105,8 @@ struct EffectiveContext {
   typedef llvm::SmallVectorImpl<CXXRecordDecl*>::const_iterator record_iterator;
 
   DeclContext *Inner;
+  llvm::SmallVector<FunctionDecl*, 4> Functions;
   llvm::SmallVector<CXXRecordDecl*, 4> Records;
-  FunctionDecl *Function;
   bool Dependent;
 };
 }
@@ -291,16 +297,18 @@ static Sema::AccessResult MatchesFriend(Sema &S,
 static Sema::AccessResult MatchesFriend(Sema &S,
                                         const EffectiveContext &EC,
                                         FunctionDecl *Friend) {
-  if (!EC.Function)
-    return Sema::AR_inaccessible;
+  Sema::AccessResult OnFailure = Sema::AR_inaccessible;
 
-  if (Friend == EC.Function)
-    return Sema::AR_accessible;
+  for (llvm::SmallVectorImpl<FunctionDecl*>::const_iterator
+         I = EC.Functions.begin(), E = EC.Functions.end(); I != E; ++I) {
+    if (Friend == *I)
+      return Sema::AR_accessible;
 
-  if (EC.isDependent() && MightInstantiateTo(S, EC.Function, Friend))
-    return Sema::AR_dependent;
+    if (EC.isDependent() && MightInstantiateTo(S, *I, Friend))
+      OnFailure = Sema::AR_dependent;
+  }
 
-  return Sema::AR_inaccessible;
+  return OnFailure;
 }
 
 /// Determines whether the given friend function template matches
@@ -308,21 +316,29 @@ static Sema::AccessResult MatchesFriend(Sema &S,
 static Sema::AccessResult MatchesFriend(Sema &S,
                                         const EffectiveContext &EC,
                                         FunctionTemplateDecl *Friend) {
-  if (!EC.Function) return Sema::AR_inaccessible;
+  if (EC.Functions.empty()) return Sema::AR_inaccessible;
 
-  FunctionTemplateDecl *FTD = EC.Function->getPrimaryTemplate();
-  if (!FTD)
-    FTD = EC.Function->getDescribedFunctionTemplate();
-  if (!FTD)
-    return Sema::AR_inaccessible;
+  Sema::AccessResult OnFailure = Sema::AR_inaccessible;
 
-  if (Friend == FTD->getCanonicalDecl())
-    return Sema::AR_accessible;
+  for (llvm::SmallVectorImpl<FunctionDecl*>::const_iterator
+         I = EC.Functions.begin(), E = EC.Functions.end(); I != E; ++I) {
 
-  if (EC.isDependent() && MightInstantiateTo(S, FTD, Friend))
-    return Sema::AR_dependent;
+    FunctionTemplateDecl *FTD = (*I)->getPrimaryTemplate();
+    if (!FTD)
+      FTD = (*I)->getDescribedFunctionTemplate();
+    if (!FTD)
+      continue;
 
-  return Sema::AR_inaccessible;
+    FTD = FTD->getCanonicalDecl();
+
+    if (Friend == FTD)
+      return Sema::AR_accessible;
+
+    if (EC.isDependent() && MightInstantiateTo(S, FTD, Friend))
+      OnFailure = Sema::AR_dependent;
+  }
+
+  return OnFailure;
 }
 
 /// Determines whether the given friend declaration matches anything

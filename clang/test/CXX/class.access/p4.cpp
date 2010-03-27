@@ -295,3 +295,17 @@ namespace test11 {
 
   B::~B() {};
 }
+
+namespace test12 {
+  class A {
+    int x;
+
+    void foo() {
+      class Local {
+        int foo(A *a) {
+          return a->x;
+        }
+      };
+    }
+  };
+}
