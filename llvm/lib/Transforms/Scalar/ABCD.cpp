@@ -78,10 +78,10 @@ class ABCD : public FunctionPass {
   class Bound {
    public:
     Bound(APInt v, bool upper) : value(v), upper_bound(upper) {}
-    Bound(const Bound *b, int cnst)
-      : value(b->value - cnst), upper_bound(b->upper_bound) {}
-    Bound(const Bound *b, const APInt &cnst)
-      : value(b->value - cnst), upper_bound(b->upper_bound) {}
+    Bound(const Bound &b, int cnst)
+      : value(b.value - cnst), upper_bound(b.upper_bound) {}
+    Bound(const Bound &b, const APInt &cnst)
+      : value(b.value - cnst), upper_bound(b.upper_bound) {}
 
     /// Test if Bound is an upper bound
     bool isUpperBound() const { return upper_bound; }
@@ -90,15 +90,15 @@ class ABCD : public FunctionPass {
     int32_t getBitWidth() const { return value.getBitWidth(); }
 
     /// Creates a Bound incrementing the one received
-    static Bound *createIncrement(const Bound *b) {
-      return new Bound(b->isUpperBound() ? b->value+1 : b->value-1,
-                       b->upper_bound);
+    static Bound createIncrement(const Bound &b) {
+      return Bound(b.isUpperBound() ? b.value+1 : b.value-1,
+                   b.upper_bound);
     }
 
     /// Creates a Bound decrementing the one received
-    static Bound *createDecrement(const Bound *b) {
-      return new Bound(b->isUpperBound() ? b->value-1 : b->value+1,
-                       b->upper_bound);
+    static Bound createDecrement(const Bound &b) {
+      return Bound(b.isUpperBound() ? b.value-1 : b.value+1,
+                   b.upper_bound);
     }
 
     /// Test if two bounds are equal
@@ -110,36 +110,31 @@ class ABCD : public FunctionPass {
     }
 
     /// Test if val is less than or equal to Bound b
-    static bool leq(APInt val, const Bound *b) {
-      if (!b) return false;
-      return b->isUpperBound() ? val.sle(b->value) : val.sge(b->value);
+    static bool leq(APInt val, const Bound &b) {
+      return b.isUpperBound() ? val.sle(b.value) : val.sge(b.value);
     }
 
     /// Test if Bound a is less then or equal to Bound
-    static bool leq(const Bound *a, const Bound *b) {
-      if (!a || !b) return false;
-
-      assert(a->isUpperBound() == b->isUpperBound());
-      return a->isUpperBound() ? a->value.sle(b->value) :
-                                 a->value.sge(b->value);
+    static bool leq(const Bound &a, const Bound &b) {
+      assert(a.isUpperBound() == b.isUpperBound());
+      return a.isUpperBound() ? a.value.sle(b.value) :
+                                a.value.sge(b.value);
     }
 
     /// Test if Bound a is less then Bound b
-    static bool lt(const Bound *a, const Bound *b) {
-      if (!a || !b) return false;
-
-      assert(a->isUpperBound() == b->isUpperBound());
-      return a->isUpperBound() ? a->value.slt(b->value) :
-                                 a->value.sgt(b->value);
+    static bool lt(const Bound &a, const Bound &b) {
+      assert(a.isUpperBound() == b.isUpperBound());
+      return a.isUpperBound() ? a.value.slt(b.value) :
+                                a.value.sgt(b.value);
     }
 
     /// Test if Bound b is greater then or equal val
-    static bool geq(const Bound *b, APInt val) {
+    static bool geq(const Bound &b, APInt val) {
       return leq(val, b);
     }
 
     /// Test if Bound a is greater then or equal Bound b
-    static bool geq(const Bound *a, const Bound *b) {
+    static bool geq(const Bound &a, const Bound &b) {
       return leq(b, a);
     }
 
@@ -164,25 +159,25 @@ class ABCD : public FunctionPass {
      }
 
     /// Returns the max false
-    Bound *getFalse() const { return max_false.get(); }
+    const Bound *getFalse() const { return max_false.get(); }
 
     /// Returns the min true
-    Bound *getTrue() const { return min_true.get(); }
+    const Bound *getTrue() const { return min_true.get(); }
 
     /// Returns the min reduced
-    Bound *getReduced() const { return min_reduced.get(); }
+    const Bound *getReduced() const { return min_reduced.get(); }
 
     /// Return the stored result for this bound
-    ProveResult getResult(const Bound *bound) const;
+    ProveResult getResult(const Bound &bound) const;
 
     /// Stores a false found
-    void addFalse(const Bound *bound);
+    void addFalse(const Bound &bound);
 
     /// Stores a true found
-    void addTrue(const Bound *bound);
+    void addTrue(const Bound &bound);
 
     /// Stores a Reduced found
-    void addReduced(const Bound *bound);
+    void addReduced(const Bound &bound);
 
     /// Clears redundant reduced
     /// If a min_true is smaller than a min_reduced then the min_reduced
@@ -206,27 +201,27 @@ class ABCD : public FunctionPass {
   public:
     /// Test if there is true result stored from b to a
     /// that is less then the bound
-    bool hasTrue(Value *b, const Bound *bound) const {
-      Bound *trueBound = map.lookup(b).getTrue();
-      return trueBound && Bound::leq(trueBound, bound);
+    bool hasTrue(Value *b, const Bound &bound) const {
+      const Bound *trueBound = map.lookup(b).getTrue();
+      return trueBound && Bound::leq(*trueBound, bound);
     }
 
     /// Test if there is false result stored from b to a
     /// that is less then the bound
-    bool hasFalse(Value *b, const Bound *bound) const {
-      Bound *falseBound = map.lookup(b).getFalse();
-      return falseBound && Bound::leq(falseBound, bound);
+    bool hasFalse(Value *b, const Bound &bound) const {
+      const Bound *falseBound = map.lookup(b).getFalse();
+      return falseBound && Bound::leq(*falseBound, bound);
     }
 
     /// Test if there is reduced result stored from b to a
     /// that is less then the bound
-    bool hasReduced(Value *b, const Bound *bound) const {
-      Bound *reducedBound = map.lookup(b).getReduced();
-      return reducedBound && Bound::leq(reducedBound, bound);
+    bool hasReduced(Value *b, const Bound &bound) const {
+      const Bound *reducedBound = map.lookup(b).getReduced();
+      return reducedBound && Bound::leq(*reducedBound, bound);
     }
 
     /// Returns the stored bound for b
-    ProveResult getBoundResult(Value *b, const Bound *bound) {
+    ProveResult getBoundResult(Value *b, const Bound &bound) {
       return map[b].getResult(bound);
     }
 
@@ -241,7 +236,7 @@ class ABCD : public FunctionPass {
     }
 
     /// Stores the bound found
-    void updateBound(Value *b, const Bound *bound, const ProveResult res);
+    void updateBound(Value *b, const Bound &bound, const ProveResult res);
 
   private:
     // Maps a nod in the graph with its results found.
@@ -439,7 +434,7 @@ class ABCD : public FunctionPass {
   ProveResult prove(Value *a, Value *b, const Bound &bound, unsigned level);
 
   /// Updates the distance value for a and b
-  void updateMemDistance(Value *a, Value *b, const Bound *bound, unsigned level,
+  void updateMemDistance(Value *a, Value *b, const Bound &bound, unsigned level,
                          meet_function meet);
 
   InequalityGraph inequality_graph;
@@ -879,21 +874,21 @@ ABCD::ProveResult ABCD::prove(Value *a, Value *b, const Bound &bound,
                               unsigned level) {
   // if (C[b-a<=e] == True for some e <= bound
   // Same or stronger difference was already proven
-  if (mem_result.hasTrue(b, &bound))
+  if (mem_result.hasTrue(b, bound))
     return True;
 
   // if (C[b-a<=e] == False for some e >= bound
   // Same or weaker difference was already disproved
-  if (mem_result.hasFalse(b, &bound))
+  if (mem_result.hasFalse(b, bound))
     return False;
 
   // if (C[b-a<=e] == Reduced for some e <= bound
   // b is on a cycle that was reduced for same or stronger difference
-  if (mem_result.hasReduced(b, &bound))
+  if (mem_result.hasReduced(b, bound))
     return Reduced;
 
   // traversal reached the source vertex
-  if (a == b && Bound::geq(&bound, APInt(bound.getBitWidth(), 0, true)))
+  if (a == b && Bound::geq(bound, APInt(bound.getBitWidth(), 0, true)))
     return True;
 
   // if b has no predecessor then fail
@@ -902,7 +897,7 @@ ABCD::ProveResult ABCD::prove(Value *a, Value *b, const Bound &bound,
 
   // a cycle was encountered
   if (active.count(b)) {
-    if (Bound::leq(active.lookup(b), &bound))
+    if (Bound::leq(*active.lookup(b), bound))
       return Reduced; // a "harmless" cycle
 
     return False; // an amplifying cycle
@@ -914,18 +909,18 @@ ABCD::ProveResult ABCD::prove(Value *a, Value *b, const Bound &bound,
   // Test if a Value is a Phi. If it is a PHINode with more than 1 incoming
   // value, then it is a phi, if it has 1 incoming value it is a sigma.
   if (PN && PN->getNumIncomingValues() > 1)
-    updateMemDistance(a, b, &bound, level, min);
+    updateMemDistance(a, b, bound, level, min);
   else
-    updateMemDistance(a, b, &bound, level, max);
+    updateMemDistance(a, b, bound, level, max);
 
   active.erase(b);
 
-  ABCD::ProveResult res = mem_result.getBoundResult(b, &bound);
+  ABCD::ProveResult res = mem_result.getBoundResult(b, bound);
   return res;
 }
 
 /// Updates the distance value for a and b
-void ABCD::updateMemDistance(Value *a, Value *b, const Bound *bound,
+void ABCD::updateMemDistance(Value *a, Value *b, const Bound &bound,
                              unsigned level, meet_function meet) {
   ABCD::ProveResult res = (meet == max) ? False : True;
 
@@ -938,10 +933,10 @@ void ABCD::updateMemDistance(Value *a, Value *b, const Bound *bound,
       break;
     }
     Edge *in = *begin;
-    if (in->isUpperBound() == bound->isUpperBound()) {
+    if (in->isUpperBound() == bound.isUpperBound()) {
       Value *succ = in->getVertex();
       res = meet(res, prove(a, succ, Bound(bound, in->getValue()),
-                 level+1));
+                            level+1));
     }
   }
 
@@ -949,53 +944,53 @@ void ABCD::updateMemDistance(Value *a, Value *b, const Bound *bound,
 }
 
 /// Return the stored result for this bound
-ABCD::ProveResult ABCD::MemoizedResultChart::getResult(const Bound *bound)const{
-  if (max_false && Bound::leq(bound, max_false.get()))
+ABCD::ProveResult ABCD::MemoizedResultChart::getResult(const Bound &bound)const{
+  if (max_false && Bound::leq(bound, *max_false))
     return False;
-  if (min_true && Bound::leq(min_true.get(), bound))
+  if (min_true && Bound::leq(*min_true, bound))
     return True;
-  if (min_reduced && Bound::leq(min_reduced.get(), bound))
+  if (min_reduced && Bound::leq(*min_reduced, bound))
     return Reduced;
   return False;
 }
 
 /// Stores a false found
-void ABCD::MemoizedResultChart::addFalse(const Bound *bound) {
-  if (!max_false || Bound::leq(max_false.get(), bound))
-    max_false.reset(new Bound(*bound));
+void ABCD::MemoizedResultChart::addFalse(const Bound &bound) {
+  if (!max_false || Bound::leq(*max_false, bound))
+    max_false.reset(new Bound(bound));
 
   if (Bound::eq(max_false.get(), min_reduced.get()))
-    min_reduced.reset(Bound::createIncrement(min_reduced.get()));
+    min_reduced.reset(new Bound(Bound::createIncrement(*min_reduced)));
   if (Bound::eq(max_false.get(), min_true.get()))
-    min_true.reset(Bound::createIncrement(min_true.get()));
+    min_true.reset(new Bound(Bound::createIncrement(*min_true)));
   if (Bound::eq(min_reduced.get(), min_true.get()))
     min_reduced.reset();
   clearRedundantReduced();
 }
 
 /// Stores a true found
-void ABCD::MemoizedResultChart::addTrue(const Bound *bound) {
-  if (!min_true || Bound::leq(bound, min_true.get()))
-    min_true.reset(new Bound(*bound));
+void ABCD::MemoizedResultChart::addTrue(const Bound &bound) {
+  if (!min_true || Bound::leq(bound, *min_true))
+    min_true.reset(new Bound(bound));
 
   if (Bound::eq(min_true.get(), min_reduced.get()))
-    min_reduced.reset(Bound::createDecrement(min_reduced.get()));
+    min_reduced.reset(new Bound(Bound::createDecrement(*min_reduced)));
   if (Bound::eq(min_true.get(), max_false.get()))
-    max_false.reset(Bound::createDecrement(max_false.get()));
+    max_false.reset(new Bound(Bound::createDecrement(*max_false)));
   if (Bound::eq(max_false.get(), min_reduced.get()))
     min_reduced.reset();
   clearRedundantReduced();
 }
 
 /// Stores a Reduced found
-void ABCD::MemoizedResultChart::addReduced(const Bound *bound) {
-  if (!min_reduced || Bound::leq(bound, min_reduced.get()))
-    min_reduced.reset(new Bound(*bound));
+void ABCD::MemoizedResultChart::addReduced(const Bound &bound) {
+  if (!min_reduced || Bound::leq(bound, *min_reduced))
+    min_reduced.reset(new Bound(bound));
 
   if (Bound::eq(min_reduced.get(), min_true.get()))
-    min_true.reset(Bound::createIncrement(min_true.get()));
+    min_true.reset(new Bound(Bound::createIncrement(*min_true)));
   if (Bound::eq(min_reduced.get(), max_false.get()))
-    max_false.reset(Bound::createDecrement(max_false.get()));
+    max_false.reset(new Bound(Bound::createDecrement(*max_false)));
 }
 
 /// Clears redundant reduced
@@ -1003,14 +998,14 @@ void ABCD::MemoizedResultChart::addReduced(const Bound *bound) {
 /// is unnecessary and then removed. It also works for min_reduced
 /// begin smaller than max_false.
 void ABCD::MemoizedResultChart::clearRedundantReduced() {
-  if (min_true && min_reduced && Bound::lt(min_true.get(), min_reduced.get()))
+  if (min_true && min_reduced && Bound::lt(*min_true, *min_reduced))
     min_reduced.reset();
-  if (max_false && min_reduced && Bound::lt(min_reduced.get(), max_false.get()))
+  if (max_false && min_reduced && Bound::lt(*min_reduced, *max_false))
     min_reduced.reset();
 }
 
 /// Stores the bound found
-void ABCD::MemoizedResult::updateBound(Value *b, const Bound *bound,
+void ABCD::MemoizedResult::updateBound(Value *b, const Bound &bound,
                                        const ProveResult res) {
   if (res == False) {
     map[b].addFalse(bound);
