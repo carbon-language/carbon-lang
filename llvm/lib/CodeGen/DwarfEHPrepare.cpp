@@ -83,6 +83,11 @@ namespace {
         CreateExceptionValueCall(BB) : CreateValueLoad(BB);
     }
 
+    /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still
+    /// use the ".llvm.eh.catch.all.value" call need to convert to using it's
+    /// initializer instead.
+    void CleanupSelectors();
+
     /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow"
     /// calls. The "unwind" part of these invokes jump to a landing pad within
     /// the current function. This is a candidate to merge the selector
@@ -212,6 +217,24 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
   return Changed;
 }
 
+/// CleanupSelectors - Any remaining eh.selector intrinsic calls which still use
+/// the ".llvm.eh.catch.all.value" call need to convert to using it's
+/// initializer instead.
+void DwarfEHPrepare::CleanupSelectors() {
+  for (Value::use_iterator
+         I = SelectorIntrinsic->use_begin(),
+         E = SelectorIntrinsic->use_end(); I != E; ++I) {
+    IntrinsicInst *Sel = dyn_cast<IntrinsicInst>(I);
+    if (!Sel || Sel->getParent()->getParent() != F) continue;
+
+    // Index of the ".llvm.eh.catch.all.value" variable.
+    unsigned OpIdx = Sel->getNumOperands() - 1;
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(Sel->getOperand(OpIdx));
+    if (GV != EHCatchAllValue) continue;
+    Sel->setOperand(OpIdx, EHCatchAllValue->getInitializer());
+  }
+}
+
 /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" calls. The
 /// "unwind" part of these invokes jump to a landing pad within the current
 /// function. This is a candidate to merge the selector associated with the URoR
@@ -223,21 +246,27 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     if (!EHCatchAllValue) return false;
   }
 
+  if (!SelectorIntrinsic) {
+    SelectorIntrinsic =
+      Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_selector);
+    if (!SelectorIntrinsic) return false;
+  }
+
   if (!URoR) {
     URoR = F->getParent()->getFunction("_Unwind_Resume_or_Rethrow");
-    if (!URoR) return false;
+    if (!URoR) {
+      CleanupSelectors();
+      return false;
+    }
   }
 
   if (!ExceptionValueIntrinsic) {
     ExceptionValueIntrinsic =
       Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_exception);
-    if (!ExceptionValueIntrinsic) return false;
-  }
-
-  if (!SelectorIntrinsic) {
-    SelectorIntrinsic =
-      Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_selector);
-    if (!SelectorIntrinsic) return false;
+    if (!ExceptionValueIntrinsic) {
+      CleanupSelectors();
+      return false;
+    }
   }
 
   bool Changed = false;
@@ -308,6 +337,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     }
   }
 
+  CleanupSelectors();
   return Changed;
 }
 
