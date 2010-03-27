@@ -1812,7 +1812,7 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   // adding a chain) and the input could have flags and chains as well.
   // In this case we need to shifting the operands down.
   // FIXME: This is a horrible hack and broken in obscure cases, no worse
-  // than the old isel though.  We should sink this into MorphNodeTo.
+  // than the old isel though.
   int OldFlagResultNo = -1, OldChainResultNo = -1;
 
   unsigned NTMNumResults = Node->getNumValues();
@@ -2184,6 +2184,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         
         FailIndex = MatcherIndex+NumToSkip;
         
+        unsigned MatcherIndexOfPredicate = MatcherIndex;
+        (void)MatcherIndexOfPredicate; // silence warning.
+        
         // If we can't evaluate this predicate without pushing a scope (e.g. if
         // it is a 'MoveParent') or if the predicate succeeds on this node, we
         // push the scope and evaluate the full predicate chain.
@@ -2193,8 +2196,9 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         if (!Result)
           break;
         
-        DEBUG(errs() << "  Skipped scope entry at index " << MatcherIndex
-              << " continuing at " << FailIndex << "\n");
+        DEBUG(errs() << "  Skipped scope entry (due to false predicate) at "
+                     << "index " << MatcherIndexOfPredicate
+                     << ", continuing at " << FailIndex << "\n");
 
         
         // Otherwise, we know that this case of the Scope is guaranteed to fail,
@@ -2656,7 +2660,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         // after (parallel) on input patterns are removed.  This would also
         // allow us to stop encoding #results in OPC_CompleteMatch's table
         // entry.
-        if (NodeToMatch->getNumValues() <= i ||
+        if (i >= NodeToMatch->getNumValues() ||
             NodeToMatch->getValueType(i) == MVT::Other ||
             NodeToMatch->getValueType(i) == MVT::Flag)
           break;
