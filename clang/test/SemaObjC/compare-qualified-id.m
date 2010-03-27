@@ -5,7 +5,7 @@ typedef unsigned int NSUInteger;
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
-@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end
+@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end // expected-note {{method definition for 'copyWithZone:' not found}}
 @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone; @end
 @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
 @interface NSObject <NSObject> {} @end
@@ -15,7 +15,7 @@ typedef struct {} NSFastEnumerationState;
 @interface NSMutableDictionary : NSDictionary  - (void)removeObjectForKey:(id)aKey; @end
 extern NSString * const NSTaskDidTerminateNotification;
 
-@interface XCPropertyExpansionContext : NSObject <NSCopying> {
+@interface XCPropertyExpansionContext : NSObject <NSCopying> { // expected-note {{required for direct or indirect protocol 'NSCopying'}}
   NSMutableDictionary * _propNamesToPropValuesCache;
 } @end
 
@@ -23,8 +23,7 @@ extern NSString * const NSTaskDidTerminateNotification;
 - (NSString *)evaluateAsStringInContext:(XCPropertyExpansionContext *)context withNestingState:(const void *)state;
 @end
 
-@implementation XCPropertyExpansionContext	// expected-warning {{method definition for 'copyWithZone:' not found}} \
-						// expected-warning {{incomplete implementation}}
+@implementation XCPropertyExpansionContext // expected-warning {{incomplete implementation}}
 - (NSString *)expandedValueForProperty:(NSString *)property {
   id <XCPropertyValues> cachedValueNode = [_propNamesToPropValuesCache objectForKey:property]; // expected-warning {{method '-objectForKey:' not found (return type defaults to 'id')}}
   if (cachedValueNode == ((void *)0)) { }

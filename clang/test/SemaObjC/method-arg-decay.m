@@ -56,7 +56,7 @@ PBXFindMatchContains,     PBXFindMatchStartsWith,     PBXFindMatchWholeWords,   
 @interface PBXProjectModule : PBXModule <PBXFindableText> {
 }
 @end @class PBXBookmark;
-@protocol PBXSelectionTarget - (NSObject <PBXSelectionTarget> *) performAction:(id)action withSelection:(NSArray *)selection;
+@protocol PBXSelectionTarget - (NSObject <PBXSelectionTarget> *) performAction:(id)action withSelection:(NSArray *)selection; // expected-note {{method definition for 'performAction:withSelection:' not found}}
 @end @class XCPropertyDictionary, XCPropertyCondition, XCPropertyConditionSet, XCMutablePropertyConditionSet;
 extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExposedModulesOnly);
 @interface NSString (StringUtilities) - (NSString *) trimToLength:(NSInteger)length preserveRange:(NSRange)range;
@@ -67,14 +67,12 @@ extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExpos
 @interface XCExtendedTabView : NSTabView <XCDockViewHeader> {
 }
 @end     @class PBXProjectDocument, PBXFileReference, PBXModule, XCWindowTool;
-@interface XCPerspectiveModule : PBXProjectModule <PBXSelectionTarget> {
+@interface XCPerspectiveModule : PBXProjectModule <PBXSelectionTarget> { // expected-note {{required for direct or indirect protocol 'PBXSelectionTarget'}}
   XCExtendedTabView *_perspectivesTabView;
 }
-- (PBXModule *) moduleForTab:(NSTabViewItem *)item;
+- (PBXModule *) moduleForTab:(NSTabViewItem *)item; // expected-note {{method definition for 'moduleForTab:' not found}}
 @end  
-@implementation XCPerspectiveModule    // expected-warning {{method definition for 'moduleForTab:' not found}}	\
-					// expected-warning {{method definition for 'performAction:withSelection:' not found}} \
-					// expected-warning {{incomplete implementation}}
+@implementation XCPerspectiveModule // expected-warning {{incomplete implementation}}
 + (void) openForProjectDocument:(PBXProjectDocument *)projectDocument {
 }
 - (PBXModule *) type:(Class)type inPerspective:(id)perspectiveIdentifer  matchingFunction:(BOOL (void *, void *))comparator usingData:(void *)data {

@@ -5,8 +5,8 @@ typedef struct _NSRange { } NSRange;
 @class PBXFileReference;
 
 @interface PBXDocBookmark
-+ alloc;
-- autorelease;
++ alloc;	// expected-note {{{{method definition for 'alloc' not found}}
+- autorelease;	// expected-note {{{{method definition for 'autorelease' not found}}
 @end
 
 // GCC allows pointer expressions in integer constant expressions.
@@ -14,7 +14,7 @@ struct {
   char control[((int)(char *)2)];
 } xx;
 
-@implementation PBXDocBookmark  // expected-warning {{incomplete implementation}} expected-warning {{method definition for 'autorelease' not found}} expected-warning {{method definition for 'alloc' not found}}
+@implementation PBXDocBookmark  // expected-warning {{incomplete implementation}}
 
 + (id)bookmarkWithFileReference:(PBXFileReference *)fileRef gylphRange:(NSRange)range anchor:(NSString *)htmlAnchor
 {

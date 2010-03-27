@@ -724,7 +724,8 @@ void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
     Diag(ImpLoc, diag::warn_incomplete_impl);
     IncompleteImpl = true;
   }
-  Diag(ImpLoc, diag::warn_undef_method_impl) << method->getDeclName();
+  Diag(method->getLocation(), diag::note_undef_method_impl) 
+    << method->getDeclName();
 }
 
 void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
@@ -806,8 +807,11 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             // uses the protocol.
             ObjCMethodDecl *MethodInClass =
             IDecl->lookupInstanceMethod(method->getSelector());
-            if (!MethodInClass || !MethodInClass->isSynthesized())
+            if (!MethodInClass || !MethodInClass->isSynthesized()) {
               WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
+              Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
+                PDecl->getDeclName();
+            }
           }
     }
   // check unimplemented class methods
@@ -817,8 +821,11 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
     ObjCMethodDecl *method = *I;
     if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
         !ClsMap.count(method->getSelector()) &&
-        (!Super || !Super->lookupClassMethod(method->getSelector())))
+        (!Super || !Super->lookupClassMethod(method->getSelector()))) {
       WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
+      Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
+        PDecl->getDeclName();
+    }
   }
   // Check on this protocols's referenced protocols, recursively.
   for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),

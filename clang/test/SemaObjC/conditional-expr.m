@@ -21,10 +21,10 @@
 @end
 
 @interface DTFilterOutputStream2
-- nextOutputStream;
+- nextOutputStream; // expected-note {{{{method definition for 'nextOutputStream' not found}}
 @end
 
-@implementation DTFilterOutputStream2 // expected-warning {{incomplete implementation}} expected-warning {{method definition for 'nextOutputStream' not found}}
+@implementation DTFilterOutputStream2 // expected-warning {{incomplete implementation}}
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
   self = nextOutputStream; // expected-warning {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream2 *'}}
