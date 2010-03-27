@@ -281,8 +281,17 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
 GlobalVariable *llvm::ExtractTypeInfo(Value *V) {
   V = V->stripPointerCasts();
   GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
-  assert ((GV || isa<ConstantPointerNull>(V)) &&
-          "TypeInfo must be a global variable or NULL");
+
+  if (GV && GV->getName() == ".llvm.eh.catch.all.value") {
+    assert(GV->hasInitializer() &&
+           "The EH catch-all value must have an initializer");
+    Value *Init = GV->getInitializer();
+    GV = dyn_cast<GlobalVariable>(Init);
+    if (!GV) V = cast<ConstantPointerNull>(Init);
+  }
+
+  assert((GV || isa<ConstantPointerNull>(V)) &&
+         "TypeInfo must be a global variable or NULL");
   return GV;
 }
 
