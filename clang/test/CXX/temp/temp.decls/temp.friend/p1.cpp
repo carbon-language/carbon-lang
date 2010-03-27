@@ -191,3 +191,28 @@ namespace test8 {
   }
   template void foo<int>();
 }
+
+namespace test9 {
+  template <class T> class A {
+    class B; class C;
+
+    int foo(B *b) {
+      return b->x;
+    }
+
+    int foo(C *c) {
+      return c->x; // expected-error {{'x' is a private member}}
+    }
+
+    class B {
+      int x;
+      friend int A::foo(B*);
+    };
+
+    class C {
+      int x; // expected-note {{declared private here}}
+    };
+  };
+
+  template class A<int>; // expected-note {{in instantiation}}
+}

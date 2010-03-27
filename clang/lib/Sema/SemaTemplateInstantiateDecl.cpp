@@ -503,13 +503,7 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     Decl *NewND;
 
     // Hack to make this work almost well pending a rewrite.
-    if (ND->getDeclContext()->isRecord()) {
-      // FIXME: Hack to avoid crashing when incorrectly trying to instantiate
-      // templated friend declarations. This doesn't produce a correct AST;
-      // however this is sufficient for some AST analysis. The real solution
-      // must be put in place during the pending rewrite. See PR5848.
-      return 0;
-    } else if (D->wasSpecialization()) {
+    if (D->wasSpecialization()) {
       // Totally egregious hack to work around PR5866
       return 0;
     } else {
@@ -906,15 +900,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   // Check whether there is already a function template specialization for
   // this declaration.
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
-
-  bool isFriend;
-  if (FunctionTemplate)
-    isFriend = (FunctionTemplate->getFriendObjectKind() != Decl::FOK_None);
-  else
-    isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
-
   void *InsertPos = 0;
-  if (!isFriend && FunctionTemplate && !TemplateParams) {
+  if (FunctionTemplate && !TemplateParams) {
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID,
                              TemplateArgs.getInnermost().getFlatArgumentList(),
@@ -929,6 +916,12 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     if (Info)
       return Info->Function;
   }
+
+  bool isFriend;
+  if (FunctionTemplate)
+    isFriend = (FunctionTemplate->getFriendObjectKind() != Decl::FOK_None);
+  else
+    isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
 
   bool MergeWithParentScope = (TemplateParams != 0) ||
     !(isa<Decl>(Owner) && 
@@ -1098,6 +1091,12 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       return Info->Function;
   }
 
+  bool isFriend;
+  if (FunctionTemplate)
+    isFriend = (FunctionTemplate->getFriendObjectKind() != Decl::FOK_None);
+  else
+    isFriend = (D->getFriendObjectKind() != Decl::FOK_None);
+
   bool MergeWithParentScope = (TemplateParams != 0) ||
     !(isa<Decl>(Owner) && 
       cast<Decl>(Owner)->isDefinedOutsideFunctionOrMethod());
@@ -1110,8 +1109,31 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     return 0;
   QualType T = TInfo->getType();
 
+  NestedNameSpecifier *Qualifier = D->getQualifier();
+  if (Qualifier) {
+    Qualifier = SemaRef.SubstNestedNameSpecifier(Qualifier,
+                                                 D->getQualifierRange(),
+                                                 TemplateArgs);
+    if (!Qualifier) return 0;
+  }
+
+  DeclContext *DC = Owner;
+  if (isFriend) {
+    if (Qualifier) {
+      CXXScopeSpec SS;
+      SS.setScopeRep(Qualifier);
+      SS.setRange(D->getQualifierRange());
+      DC = SemaRef.computeDeclContext(SS);
+    } else {
+      DC = SemaRef.FindInstantiatedContext(D->getLocation(),
+                                           D->getDeclContext(),
+                                           TemplateArgs);
+    }
+    if (!DC) return 0;
+  }
+
   // Build the instantiated method declaration.
-  CXXRecordDecl *Record = cast<CXXRecordDecl>(Owner);
+  CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
   CXXMethodDecl *Method = 0;
 
   DeclarationName Name = D->getDeclName();
@@ -1148,9 +1170,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                    D->isStatic(), D->isInlineSpecified());
   }
 
-  // Substitute the nested name specifier, if any.
-  if (SubstQualifier(D, Method))
-    return 0;
+  if (Qualifier)
+    Method->setQualifierInfo(Qualifier, D->getQualifierRange());
 
   if (TemplateParams) {
     // Our resulting instantiation is actually a function template, since we
@@ -1170,7 +1191,10 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                                     Method->getLocation(),
                                                     Method->getDeclName(),
                                                     TemplateParams, Method);
-    if (D->isOutOfLine())
+    if (isFriend) {
+      FunctionTemplate->setLexicalDeclContext(Owner);
+      FunctionTemplate->setObjectOfFriendDecl(true);
+    } else if (D->isOutOfLine())
       FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
     Method->setDescribedFunctionTemplate(FunctionTemplate);
   } else if (FunctionTemplate) {
@@ -1178,7 +1202,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     Method->setFunctionTemplateSpecialization(FunctionTemplate,
                                               &TemplateArgs.getInnermost(),
                                               InsertPos);
-  } else {
+  } else if (!isFriend) {
     // Record that this is an instantiation of a member function.
     Method->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
   }
@@ -1186,7 +1210,10 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   // If we are instantiating a member function defined
   // out-of-line, the instantiation will have the same lexical
   // context (which will be a namespace scope) as the template.
-  if (D->isOutOfLine())
+  if (isFriend) {
+    Method->setLexicalDeclContext(Owner);
+    Method->setObjectOfFriendDecl(true);
+  } else if (D->isOutOfLine())
     Method->setLexicalDeclContext(D->getLexicalDeclContext());
 
   // Attach the parameters
@@ -1200,8 +1227,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   LookupResult Previous(SemaRef, Name, SourceLocation(),
                         Sema::LookupOrdinaryName, Sema::ForRedeclaration);
 
-  if (!FunctionTemplate || TemplateParams) {
-    SemaRef.LookupQualifiedName(Previous, Owner);
+  if (!FunctionTemplate || TemplateParams || isFriend) {
+    SemaRef.LookupQualifiedName(Previous, Record);
 
     // In C++, the previous declaration we find might be a tag type
     // (class or enum). In this case, the new declaration will hide the
@@ -1221,9 +1248,19 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
 
   Method->setAccess(D->getAccess());
 
-  if (!FunctionTemplate && (!Method->isInvalidDecl() || Previous.empty()) &&
-      !Method->getFriendObjectKind())
-    Owner->addDecl(Method);
+  if (FunctionTemplate) {
+    // If there's a function template, let our caller handle it.
+  } else if (Method->isInvalidDecl() && !Previous.empty()) {
+    // Don't hide a (potentially) valid declaration with an invalid one.
+  } else {
+    NamedDecl *DeclToAdd = (TemplateParams
+                            ? cast<NamedDecl>(FunctionTemplate)
+                            : Method);
+    if (isFriend)
+      Record->makeDeclVisibleInContext(DeclToAdd);
+    else
+      Owner->addDecl(DeclToAdd);
+  }
 
   return Method;
 }

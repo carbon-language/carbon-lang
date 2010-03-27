@@ -2998,13 +2998,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
            "previously-undeclared friend function being created "
            "in a non-namespace context");
 
+    // For now, claim that the objects have no previous declaration.
     if (FunctionTemplate) {
-      FunctionTemplate->setObjectOfFriendDecl(
-                                   /* PreviouslyDeclared= */ !Previous.empty());
+      FunctionTemplate->setObjectOfFriendDecl(false);
       FunctionTemplate->setAccess(AS_public);
+    } else {
+      NewFD->setObjectOfFriendDecl(false);
     }
-    else
-      NewFD->setObjectOfFriendDecl(/* PreviouslyDeclared= */ !Previous.empty());
 
     NewFD->setAccess(AS_public);
   }
@@ -3153,6 +3153,17 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   assert((NewFD->isInvalidDecl() || !Redeclaration ||
           Previous.getResultKind() != LookupResult::FoundOverloaded) &&
          "previous declaration set still overloaded");
+
+  if (isFriend && Redeclaration) {
+    AccessSpecifier Access = NewFD->getPreviousDeclaration()->getAccess();
+    if (FunctionTemplate) {
+      FunctionTemplate->setObjectOfFriendDecl(true);
+      FunctionTemplate->setAccess(Access);
+    } else {
+      NewFD->setObjectOfFriendDecl(true);
+    }
+    NewFD->setAccess(Access);
+  }
 
   // If we have a function template, check the template parameter
   // list. This will check and merge default template arguments.
