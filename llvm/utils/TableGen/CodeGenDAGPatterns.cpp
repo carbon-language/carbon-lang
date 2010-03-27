@@ -775,10 +775,9 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
   
   if (Operator->isSubClassOf("Instruction")) {
     CodeGenInstruction &InstInfo = CDP.getTargetInfo().getInstruction(Operator);
-    
-    // FIXME: Handle implicit defs right.
-    if (InstInfo.NumDefs != 0)
-      return 1;     // FIXME: Handle inst results right!
+
+    // FIXME: Should allow access to all the results here.
+    unsigned NumDefsToAdd = InstInfo.NumDefs ? 1 : 0;
     
     if (!InstInfo.ImplicitDefs.empty()) {
       // Add on one implicit def if it has a resolvable type.
@@ -787,9 +786,9 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
       const std::vector<MVT::SimpleValueType> &RegVTs = 
       CDP.getTargetInfo().getRegisterVTs(FirstImplicitDef);
       if (RegVTs.size() == 1)
-        return 1;
+        return NumDefsToAdd+1;
     }
-    return 0;
+    return NumDefsToAdd;
   }
   
   if (Operator->isSubClassOf("SDNodeXForm"))
@@ -1250,21 +1249,20 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   
   if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst = CDP.getInstruction(getOperator());
-    unsigned ResNo = 0;
-    assert(Inst.getNumResults() <= 1 &&
-           "FIXME: Only supports zero or one result instrs!");
-
     CodeGenInstruction &InstInfo =
       CDP.getTargetInfo().getInstruction(getOperator());
     
-    EEVT::TypeSet ResultType;
-    
-    // Apply the result type to the node
-    if (InstInfo.NumDefs != 0) { // # of elements in (outs) list
-      Record *ResultNode = Inst.getResult(0);
+    bool MadeChange = false;
+
+    // Apply the result types to the node, these come from the things in the
+    // (outs) list of the instruction.
+    // FIXME: Cap at one result so far.
+    unsigned NumResultsToAdd = InstInfo.NumDefs ? 1 : 0;
+    for (unsigned ResNo = 0; ResNo != NumResultsToAdd; ++ResNo) {
+      Record *ResultNode = Inst.getResult(ResNo);
       
       if (ResultNode->isSubClassOf("PointerLikeRegClass")) {
-        ResultType = EEVT::TypeSet(MVT::iPTR, TP);
+        MadeChange |= UpdateNodeType(ResNo, MVT::iPTR, TP);
       } else if (ResultNode->getName() == "unknown") {
         // Nothing to do.
       } else {
@@ -1272,25 +1270,22 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
                "Operands should be register classes!");
         const CodeGenRegisterClass &RC = 
           CDP.getTargetInfo().getRegisterClass(ResultNode);
-        ResultType = RC.getValueTypes();
+        MadeChange |= UpdateNodeType(ResNo, RC.getValueTypes(), TP);
       }
-    } else if (!InstInfo.ImplicitDefs.empty()) {
-      // If the instruction has implicit defs, the first one defines the result
-      // type.
+    }
+    
+    // If the instruction has implicit defs, we apply the first one as a result.
+    // FIXME: This sucks, it should apply all implicit defs.
+    if (!InstInfo.ImplicitDefs.empty()) {
+      unsigned ResNo = NumResultsToAdd;
+      
       Record *FirstImplicitDef = InstInfo.ImplicitDefs[0];
       assert(FirstImplicitDef->isSubClassOf("Register"));
       const std::vector<MVT::SimpleValueType> &RegVTs = 
         CDP.getTargetInfo().getRegisterVTs(FirstImplicitDef);
       if (RegVTs.size() == 1)   // FIXME: Generalize.
-        ResultType = EEVT::TypeSet(RegVTs);
-    } else {
-      // Otherwise, the instruction produces no value result.
+        MadeChange |= UpdateNodeType(ResNo, EEVT::TypeSet(RegVTs), TP);
     }
-    
-    bool MadeChange = false;
-    
-    if (!ResultType.isCompletelyUnknown())
-      MadeChange |= UpdateNodeType(ResNo, ResultType, TP);
     
     // If this is an INSERT_SUBREG, constrain the source and destination VTs to
     // be the same.
@@ -1319,17 +1314,17 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       
       MVT::SimpleValueType VT;
       TreePatternNode *Child = getChild(ChildNo++);
-      assert(Child->getNumTypes() == 1 && "Unknown case?");
+      unsigned ChildResNo = 0;  // Instructions always use res #0 of their op.
       
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC = 
           CDP.getTargetInfo().getRegisterClass(OperandNode);
-        MadeChange |= Child->UpdateNodeType(0, RC.getValueTypes(), TP);
+        MadeChange |= Child->UpdateNodeType(ChildResNo, RC.getValueTypes(), TP);
       } else if (OperandNode->isSubClassOf("Operand")) {
         VT = getValueType(OperandNode->getValueAsDef("Type"));
-        MadeChange |= Child->UpdateNodeType(0, VT, TP);
+        MadeChange |= Child->UpdateNodeType(ChildResNo, VT, TP);
       } else if (OperandNode->isSubClassOf("PointerLikeRegClass")) {
-        MadeChange |= Child->UpdateNodeType(0, MVT::iPTR, TP);
+        MadeChange |= Child->UpdateNodeType(ChildResNo, MVT::iPTR, TP);
       } else if (OperandNode->getName() == "unknown") {
         // Nothing to do.
       } else {

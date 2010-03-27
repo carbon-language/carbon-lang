@@ -687,9 +687,19 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
       continue;
     }
     
+    const TreePatternNode *Child = N->getChild(ChildNo);
+    
     // Otherwise this is a normal operand or a predicate operand without
     // 'execute always'; emit it.
-    EmitResultOperand(N->getChild(ChildNo), InstOps);
+    unsigned BeforeAddingNumOps = InstOps.size();
+    EmitResultOperand(Child, InstOps);
+    assert(InstOps.size() > BeforeAddingNumOps && "Didn't add any operands");
+    
+    // If the operand is an instruction and it produced multiple results, just
+    // take the first one.
+    if (!Child->isLeaf() && Child->getOperator()->isSubClassOf("Instruction"))
+      InstOps.resize(BeforeAddingNumOps+1);
+    
     ++ChildNo;
   }
   
@@ -711,12 +721,8 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   
   // Determine the result types.
   SmallVector<MVT::SimpleValueType, 4> ResultVTs;
-  if (N->getNumTypes()) {
-    // FIXME2: If the node has multiple results, we should add them.  For now,
-    // preserve existing behavior?!
-    assert(N->getNumTypes() == 1);
-    ResultVTs.push_back(N->getType(0));
-  }
+  for (unsigned i = 0, e = N->getNumTypes(); i != e; ++i)
+    ResultVTs.push_back(N->getType(i));
   
   // If this is the root instruction of a pattern that has physical registers in
   // its result pattern, add output VTs for them.  For example, X86 has:
@@ -727,7 +733,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     // If the root came from an implicit def in the instruction handling stuff,
     // don't re-add it.
     Record *HandledReg = 0;
-    if (NumResults == 0 && N->getNumTypes() != 0 &&
+    if (N->getNumTypes() != 0 &&
         !II.ImplicitDefs.empty())
       HandledReg = II.ImplicitDefs[0];
     
@@ -762,6 +768,9 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   bool NodeHasMemRefs =
     isRoot && Pattern.getSrcPattern()->TreeHasProperty(SDNPMemOperand, CGP);
 
+  assert((!ResultVTs.empty() || TreeHasOutFlag || NodeHasChain) &&
+         "Node has no result");
+  
   AddMatcher(new EmitNodeMatcher(II.Namespace+"::"+II.TheDef->getName(),
                                  ResultVTs.data(), ResultVTs.size(),
                                  InstOps.data(), InstOps.size(),
