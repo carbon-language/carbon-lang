@@ -3867,14 +3867,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   CXXThisDecl->Destroy(getContext());
   
   // Set the right linkage.
-  llvm::GlobalValue::LinkageTypes ThunkLinkage;
-  
-  if (CGM.getFunctionLinkage(MD) == llvm::Function::InternalLinkage)
-    ThunkLinkage = llvm::Function::InternalLinkage;
-  else
-    ThunkLinkage = llvm::Function::WeakAnyLinkage;
-  
-  Fn->setLinkage(ThunkLinkage);
+  Fn->setLinkage(CGM.getFunctionLinkage(MD));
   
   // Set the right visibility.
   CGM.setGlobalVisibility(Fn, MD);

@@ -18,7 +18,7 @@ struct C : A, B {
   virtual void f();
 };
 
-// CHECK: define weak void @_ZThn8_N5Test11C1fEv(
+// CHECK: define void @_ZThn8_N5Test11C1fEv(
 void C::f() { }
 
 }
@@ -36,7 +36,7 @@ struct B : virtual A {
   virtual void f();
 };
 
-// CHECK: define weak void @_ZTv0_n24_N5Test21B1fEv(
+// CHECK: define void @_ZTv0_n24_N5Test21B1fEv(
 void B::f() { }
 
 }
@@ -58,7 +58,7 @@ struct B : A {
   virtual V2 *f();
 };
 
-// CHECK: define weak %{{.*}}* @_ZTch0_v0_n24_N5Test31B1fEv(
+// CHECK: define %{{.*}}* @_ZTch0_v0_n24_N5Test31B1fEv(
 V2 *B::f() { return 0; }
 
 }
@@ -81,10 +81,13 @@ struct __attribute__((visibility("protected"))) C : A, B {
   virtual void f();
 };
 
-// CHECK: define weak protected void @_ZThn8_N5Test41C1fEv(
+// CHECK: define protected void @_ZThn8_N5Test41C1fEv(
 void C::f() { }
 
 }
+
+// This is from Test5:
+// CHECK: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
 
 // Check that the thunk gets internal linkage.
 namespace {
@@ -114,3 +117,21 @@ void f() {
   
   c.f();
 }
+
+namespace Test5 {
+
+// Check that the thunk for 'B::f' gets the same linkage as the function itself.
+struct A {
+  virtual void f();
+};
+
+struct B : virtual A {
+  virtual void f() { }
+};
+
+void f(B b) {
+  b.f();
+}
+}
+
+
