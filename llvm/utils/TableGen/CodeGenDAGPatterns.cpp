@@ -748,8 +748,7 @@ TreePatternNode::~TreePatternNode() {
 
 static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
   if (Operator->getName() == "set" ||
-      Operator->getName() == "implicit" ||
-      Operator->getName() == "parallel")
+      Operator->getName() == "implicit")
     return 0;  // All return nothing.
   
   if (Operator->isSubClassOf("Intrinsic"))
@@ -1184,8 +1183,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     return MadeChange;
   }
   
-  if (getOperator()->getName() == "implicit" ||
-      getOperator()->getName() == "parallel") {
+  if (getOperator()->getName() == "implicit") {
     assert(getNumTypes() == 0 && "Node doesn't produce a value");
 
     bool MadeChange = false;
@@ -1529,8 +1527,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       !Operator->isSubClassOf("SDNodeXForm") &&
       !Operator->isSubClassOf("Intrinsic") &&
       Operator->getName() != "set" &&
-      Operator->getName() != "implicit" &&
-      Operator->getName() != "parallel")
+      Operator->getName() != "implicit")
     error("Unrecognized node '" + Operator->getName() + "'!");
   
   //  Check to see if this is something that is illegal in an input pattern.
@@ -2549,37 +2546,7 @@ void CodeGenDAGPatterns::ParsePatterns() {
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
     Record *CurPattern = Patterns[i];
     DagInit *Tree = CurPattern->getValueAsDag("PatternToMatch");
-    DefInit *OpDef = dynamic_cast<DefInit*>(Tree->getOperator());
-    Record *Operator = OpDef->getDef();
-    TreePattern *Pattern;
-    if (Operator->getName() != "parallel")
-      Pattern = new TreePattern(CurPattern, Tree, true, *this);
-    else {
-      std::vector<Init*> Values;
-      RecTy *ListTy = 0;
-      for (unsigned j = 0, ee = Tree->getNumArgs(); j != ee; ++j) {
-        Values.push_back(Tree->getArg(j));
-        TypedInit *TArg = dynamic_cast<TypedInit*>(Tree->getArg(j));
-        if (TArg == 0) {
-          errs() << "In dag: " << Tree->getAsString();
-          errs() << " --  Untyped argument in pattern\n";
-          assert(0 && "Untyped argument in pattern");
-        }
-        if (ListTy != 0) {
-          ListTy = resolveTypes(ListTy, TArg->getType());
-          if (ListTy == 0) {
-            errs() << "In dag: " << Tree->getAsString();
-            errs() << " --  Incompatible types in pattern arguments\n";
-            assert(0 && "Incompatible types in pattern arguments");
-          }
-        }
-        else {
-          ListTy = TArg->getType();
-        }
-      }
-      ListInit *LI = new ListInit(Values, new ListRecTy(ListTy));
-      Pattern = new TreePattern(CurPattern, LI, true, *this);
-    }
+    TreePattern *Pattern = new TreePattern(CurPattern, Tree, true, *this);
 
     // Inline pattern fragments into it.
     Pattern->InlinePatternFragments();
