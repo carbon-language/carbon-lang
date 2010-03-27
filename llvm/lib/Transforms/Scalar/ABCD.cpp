@@ -27,6 +27,7 @@
 
 #define DEBUG_TYPE "abcd"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Constants.h"
@@ -152,29 +153,36 @@ class ABCD : public FunctionPass {
   /// minimum true and minimum reduced results are stored
   class MemoizedResultChart {
    public:
-     MemoizedResultChart()
-       : max_false(NULL), min_true(NULL), min_reduced(NULL) {}
+     MemoizedResultChart() {}
+     MemoizedResultChart(const MemoizedResultChart &other) {
+       if (other.max_false)
+         max_false.reset(new Bound(*other.max_false));
+       if (other.min_true)
+         min_true.reset(new Bound(*other.min_true));
+       if (other.min_reduced)
+         min_reduced.reset(new Bound(*other.min_reduced));
+     }
 
     /// Returns the max false
-    Bound *getFalse() const { return max_false; }
+    Bound *getFalse() const { return max_false.get(); }
 
     /// Returns the min true
-    Bound *getTrue() const { return min_true; }
+    Bound *getTrue() const { return min_true.get(); }
 
     /// Returns the min reduced
-    Bound *getReduced() const { return min_reduced; }
+    Bound *getReduced() const { return min_reduced.get(); }
 
     /// Return the stored result for this bound
     ProveResult getResult(const Bound *bound) const;
 
     /// Stores a false found
-    void addFalse(Bound *bound);
+    void addFalse(const Bound *bound);
 
     /// Stores a true found
-    void addTrue(Bound *bound);
+    void addTrue(const Bound *bound);
 
     /// Stores a Reduced found
-    void addReduced(Bound *bound);
+    void addReduced(const Bound *bound);
 
     /// Clears redundant reduced
     /// If a min_true is smaller than a min_reduced then the min_reduced
@@ -183,13 +191,13 @@ class ABCD : public FunctionPass {
     void clearRedundantReduced();
 
     void clear() {
-      delete max_false;
-      delete min_true;
-      delete min_reduced;
+      max_false.reset();
+      min_true.reset();
+      min_reduced.reset();
     }
 
   private:
-    Bound *max_false, *min_true, *min_reduced;
+    OwningPtr<Bound> max_false, min_true, min_reduced;
   };
 
   /// This class stores the result found for a node of the graph,
@@ -218,7 +226,7 @@ class ABCD : public FunctionPass {
     }
 
     /// Returns the stored bound for b
-    ProveResult getBoundResult(Value *b, Bound *bound) {
+    ProveResult getBoundResult(Value *b, const Bound *bound) {
       return map[b].getResult(bound);
     }
 
@@ -233,7 +241,7 @@ class ABCD : public FunctionPass {
     }
 
     /// Stores the bound found
-    void updateBound(Value *b, Bound *bound, const ProveResult res);
+    void updateBound(Value *b, const Bound *bound, const ProveResult res);
 
   private:
     // Maps a nod in the graph with its results found.
@@ -428,15 +436,15 @@ class ABCD : public FunctionPass {
   bool demandProve(Value *a, Value *b, int c, bool upper_bound);
 
   /// Prove that distance between b and a is <= bound
-  ProveResult prove(Value *a, Value *b, Bound *bound, unsigned level);
+  ProveResult prove(Value *a, Value *b, const Bound &bound, unsigned level);
 
   /// Updates the distance value for a and b
-  void updateMemDistance(Value *a, Value *b, Bound *bound, unsigned level,
+  void updateMemDistance(Value *a, Value *b, const Bound *bound, unsigned level,
                          meet_function meet);
 
   InequalityGraph inequality_graph;
   MemoizedResult mem_result;
-  DenseMap<Value*, Bound*> active;
+  DenseMap<Value*, const Bound*> active;
   SmallPtrSet<Value*, 16> created;
   SmallVector<PHINode *, 16> phis_to_remove;
 };
@@ -857,7 +865,7 @@ PHINode *ABCD::findSigma(BasicBlock *BB, Instruction *I) {
 /// This implementation works on any kind of inequality branch.
 bool ABCD::demandProve(Value *a, Value *b, int c, bool upper_bound) {
   int32_t width = cast<IntegerType>(a->getType())->getBitWidth();
-  Bound *bound = new Bound(APInt(width, c), upper_bound);
+  Bound bound(APInt(width, c), upper_bound);
 
   mem_result.clear();
   active.clear();
@@ -867,58 +875,58 @@ bool ABCD::demandProve(Value *a, Value *b, int c, bool upper_bound) {
 }
 
 /// Prove that distance between b and a is <= bound
-ABCD::ProveResult ABCD::prove(Value *a, Value *b, Bound *bound,
+ABCD::ProveResult ABCD::prove(Value *a, Value *b, const Bound &bound,
                               unsigned level) {
   // if (C[b-a<=e] == True for some e <= bound
   // Same or stronger difference was already proven
-  if (mem_result.hasTrue(b, bound))
+  if (mem_result.hasTrue(b, &bound))
     return True;
 
   // if (C[b-a<=e] == False for some e >= bound
   // Same or weaker difference was already disproved
-  if (mem_result.hasFalse(b, bound))
+  if (mem_result.hasFalse(b, &bound))
     return False;
 
   // if (C[b-a<=e] == Reduced for some e <= bound
   // b is on a cycle that was reduced for same or stronger difference
-  if (mem_result.hasReduced(b, bound))
+  if (mem_result.hasReduced(b, &bound))
     return Reduced;
 
   // traversal reached the source vertex
-  if (a == b && Bound::geq(bound, APInt(bound->getBitWidth(), 0, true)))
+  if (a == b && Bound::geq(&bound, APInt(bound.getBitWidth(), 0, true)))
     return True;
 
   // if b has no predecessor then fail
-  if (!inequality_graph.hasEdge(b, bound->isUpperBound()))
+  if (!inequality_graph.hasEdge(b, bound.isUpperBound()))
     return False;
 
   // a cycle was encountered
   if (active.count(b)) {
-    if (Bound::leq(active.lookup(b), bound))
+    if (Bound::leq(active.lookup(b), &bound))
       return Reduced; // a "harmless" cycle
 
     return False; // an amplifying cycle
   }
 
-  active[b] = bound;
+  active[b] = &bound;
   PHINode *PN = dyn_cast<PHINode>(b);
 
   // Test if a Value is a Phi. If it is a PHINode with more than 1 incoming
   // value, then it is a phi, if it has 1 incoming value it is a sigma.
   if (PN && PN->getNumIncomingValues() > 1)
-    updateMemDistance(a, b, bound, level, min);
+    updateMemDistance(a, b, &bound, level, min);
   else
-    updateMemDistance(a, b, bound, level, max);
+    updateMemDistance(a, b, &bound, level, max);
 
   active.erase(b);
 
-  ABCD::ProveResult res = mem_result.getBoundResult(b, bound);
+  ABCD::ProveResult res = mem_result.getBoundResult(b, &bound);
   return res;
 }
 
 /// Updates the distance value for a and b
-void ABCD::updateMemDistance(Value *a, Value *b, Bound *bound, unsigned level,
-                             meet_function meet) {
+void ABCD::updateMemDistance(Value *a, Value *b, const Bound *bound,
+                             unsigned level, meet_function meet) {
   ABCD::ProveResult res = (meet == max) ? False : True;
 
   SmallPtrSet<Edge *, 16> Edges = inequality_graph.getEdges(b);
@@ -932,7 +940,7 @@ void ABCD::updateMemDistance(Value *a, Value *b, Bound *bound, unsigned level,
     Edge *in = *begin;
     if (in->isUpperBound() == bound->isUpperBound()) {
       Value *succ = in->getVertex();
-      res = meet(res, prove(a, succ, new Bound(bound, in->getValue()),
+      res = meet(res, prove(a, succ, Bound(bound, in->getValue()),
                  level+1));
     }
   }
@@ -942,52 +950,52 @@ void ABCD::updateMemDistance(Value *a, Value *b, Bound *bound, unsigned level,
 
 /// Return the stored result for this bound
 ABCD::ProveResult ABCD::MemoizedResultChart::getResult(const Bound *bound)const{
-  if (max_false && Bound::leq(bound, max_false))
+  if (max_false && Bound::leq(bound, max_false.get()))
     return False;
-  if (min_true && Bound::leq(min_true, bound))
+  if (min_true && Bound::leq(min_true.get(), bound))
     return True;
-  if (min_reduced && Bound::leq(min_reduced, bound))
+  if (min_reduced && Bound::leq(min_reduced.get(), bound))
     return Reduced;
   return False;
 }
 
 /// Stores a false found
-void ABCD::MemoizedResultChart::addFalse(Bound *bound) {
-  if (!max_false || Bound::leq(max_false, bound))
-    max_false = bound;
+void ABCD::MemoizedResultChart::addFalse(const Bound *bound) {
+  if (!max_false || Bound::leq(max_false.get(), bound))
+    max_false.reset(new Bound(*bound));
 
-  if (Bound::eq(max_false, min_reduced))
-    min_reduced = Bound::createIncrement(min_reduced);
-  if (Bound::eq(max_false, min_true))
-    min_true = Bound::createIncrement(min_true);
-  if (Bound::eq(min_reduced, min_true))
-    min_reduced = NULL;
+  if (Bound::eq(max_false.get(), min_reduced.get()))
+    min_reduced.reset(Bound::createIncrement(min_reduced.get()));
+  if (Bound::eq(max_false.get(), min_true.get()))
+    min_true.reset(Bound::createIncrement(min_true.get()));
+  if (Bound::eq(min_reduced.get(), min_true.get()))
+    min_reduced.reset();
   clearRedundantReduced();
 }
 
 /// Stores a true found
-void ABCD::MemoizedResultChart::addTrue(Bound *bound) {
-  if (!min_true || Bound::leq(bound, min_true))
-    min_true = bound;
+void ABCD::MemoizedResultChart::addTrue(const Bound *bound) {
+  if (!min_true || Bound::leq(bound, min_true.get()))
+    min_true.reset(new Bound(*bound));
 
-  if (Bound::eq(min_true, min_reduced))
-    min_reduced = Bound::createDecrement(min_reduced);
-  if (Bound::eq(min_true, max_false))
-    max_false = Bound::createDecrement(max_false);
-  if (Bound::eq(max_false, min_reduced))
-    min_reduced = NULL;
+  if (Bound::eq(min_true.get(), min_reduced.get()))
+    min_reduced.reset(Bound::createDecrement(min_reduced.get()));
+  if (Bound::eq(min_true.get(), max_false.get()))
+    max_false.reset(Bound::createDecrement(max_false.get()));
+  if (Bound::eq(max_false.get(), min_reduced.get()))
+    min_reduced.reset();
   clearRedundantReduced();
 }
 
 /// Stores a Reduced found
-void ABCD::MemoizedResultChart::addReduced(Bound *bound) {
-  if (!min_reduced || Bound::leq(bound, min_reduced))
-    min_reduced = bound;
+void ABCD::MemoizedResultChart::addReduced(const Bound *bound) {
+  if (!min_reduced || Bound::leq(bound, min_reduced.get()))
+    min_reduced.reset(new Bound(*bound));
 
-  if (Bound::eq(min_reduced, min_true))
-    min_true = Bound::createIncrement(min_true);
-  if (Bound::eq(min_reduced, max_false))
-    max_false = Bound::createDecrement(max_false);
+  if (Bound::eq(min_reduced.get(), min_true.get()))
+    min_true.reset(Bound::createIncrement(min_true.get()));
+  if (Bound::eq(min_reduced.get(), max_false.get()))
+    max_false.reset(Bound::createDecrement(max_false.get()));
 }
 
 /// Clears redundant reduced
@@ -995,14 +1003,14 @@ void ABCD::MemoizedResultChart::addReduced(Bound *bound) {
 /// is unnecessary and then removed. It also works for min_reduced
 /// begin smaller than max_false.
 void ABCD::MemoizedResultChart::clearRedundantReduced() {
-  if (min_true && min_reduced && Bound::lt(min_true, min_reduced))
-    min_reduced = NULL;
-  if (max_false && min_reduced && Bound::lt(min_reduced, max_false))
-    min_reduced = NULL;
+  if (min_true && min_reduced && Bound::lt(min_true.get(), min_reduced.get()))
+    min_reduced.reset();
+  if (max_false && min_reduced && Bound::lt(min_reduced.get(), max_false.get()))
+    min_reduced.reset();
 }
 
 /// Stores the bound found
-void ABCD::MemoizedResult::updateBound(Value *b, Bound *bound,
+void ABCD::MemoizedResult::updateBound(Value *b, const Bound *bound,
                                        const ProveResult res) {
   if (res == False) {
     map[b].addFalse(bound);
