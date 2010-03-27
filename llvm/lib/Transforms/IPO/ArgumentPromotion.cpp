@@ -687,7 +687,11 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
             Ops.clear();
             AA.copyValue(OrigLoad->getOperand(0), V);
           }
-          Args.push_back(new LoadInst(V, V->getName()+".val", Call));
+          // Since we're replacing a load make sure we take the alignment
+          // of the previous load.
+          LoadInst *newLoad = new LoadInst(V, V->getName()+".val", Call);
+          newLoad->setAlignment(OrigLoad->getAlignment());
+          Args.push_back(newLoad);
           AA.copyValue(OrigLoad, Args.back());
         }
       }
