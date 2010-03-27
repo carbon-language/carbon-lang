@@ -148,7 +148,7 @@ public:
   };
   
   /// BuildTypeInfo - Build the RTTI type info struct for the given type.
-  llvm::Constant *BuildTypeInfo(QualType Ty);
+  llvm::Constant *BuildTypeInfo(QualType Ty, bool Force = false);
 };
 }
 
@@ -445,6 +445,7 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
   default: assert(0 && "Unhandled type!");
 
   // GCC treats vector types as fundamental types.
+  case Type::Builtin:
   case Type::Vector:
   case Type::ExtVector:
     // abi::__fundamental_type_info.
@@ -511,7 +512,7 @@ void RTTIBuilder::BuildVtablePointer(const Type *Ty) {
   Fields.push_back(Vtable);
 }
 
-llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
+llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // We want to operate on the canonical type.
   Ty = CGM.getContext().getCanonicalType(Ty);
 
@@ -525,7 +526,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
     return llvm::ConstantExpr::getBitCast(OldGV, Int8PtrTy);
   
   // Check if there is already an external RTTI descriptor for this type.
-  if (ShouldUseExternalRTTIDescriptor(Ty))
+  if (!Force && ShouldUseExternalRTTIDescriptor(Ty))
     return GetAddrOfExternalRTTIDescriptor(Ty);
 
   llvm::GlobalVariable::LinkageTypes Linkage = getTypeInfoLinkage(Ty);
@@ -538,11 +539,9 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty) {
   
   switch (Ty->getTypeClass()) {
   default: assert(false && "Unhandled type class!");
-  case Type::Builtin:
-    assert(false && "Builtin type info must be in the standard library!");
-    break;
 
   // GCC treats vector types as fundamental types.
+  case Type::Builtin:
   case Type::Vector:
   case Type::ExtVector:
     // Itanium C++ ABI 2.9.5p4:
@@ -853,4 +852,62 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty) {
   }
   
   return RTTIBuilder(*this).BuildTypeInfo(Ty);
+}
+
+// Try to find the magic class __cxxabiv1::__fundamental_type_info. If
+// exists and has a destructor, we will emit the typeinfo for the fundamental
+// types. This is the same behaviour as GCC.
+static CXXRecordDecl *FindMagicClass(ASTContext &AC) {
+  const IdentifierInfo &NamespaceII = AC.Idents.get("__cxxabiv1");
+  DeclarationName NamespaceDN = AC.DeclarationNames.getIdentifier(&NamespaceII);
+  TranslationUnitDecl *TUD = AC.getTranslationUnitDecl();
+  DeclContext::lookup_result NamespaceLookup = TUD->lookup(NamespaceDN);
+  if (NamespaceLookup.first == NamespaceLookup.second)
+    return NULL;
+  const NamespaceDecl *Namespace =
+    dyn_cast<NamespaceDecl>(*NamespaceLookup.first);
+  if (!Namespace)
+    return NULL;
+
+  const IdentifierInfo &ClassII = AC.Idents.get("__fundamental_type_info");
+  DeclarationName ClassDN =  AC.DeclarationNames.getIdentifier(&ClassII);
+  DeclContext::lookup_const_result ClassLookup =  Namespace->lookup(ClassDN);
+  if (ClassLookup.first == ClassLookup.second)
+    return NULL;
+  CXXRecordDecl *Class = dyn_cast<CXXRecordDecl>(*ClassLookup.first);
+
+  if (Class->hasDefinition() && Class->isDynamicClass() &&
+      Class->getDestructor(AC))
+    return Class;
+
+  return NULL;
+}
+
+void CodeGenModule::EmitFundamentalRTTIDescriptor(QualType Type) {
+  QualType PointerType = Context.getPointerType(Type);
+  QualType PointerTypeConst = Context.getPointerType(Type.withConst());
+  RTTIBuilder(*this).BuildTypeInfo(Type, true);
+  RTTIBuilder(*this).BuildTypeInfo(PointerType, true);
+  RTTIBuilder(*this).BuildTypeInfo(PointerTypeConst, true);
+}
+
+void CodeGenModule::EmitFundamentalRTTIDescriptors() {
+  CXXRecordDecl *RD = FindMagicClass(getContext());
+  if (!RD)
+    return;
+
+  getVTables().GenerateClassData(getVtableLinkage(RD), RD);
+
+  QualType FundamentalTypes[] = { Context.VoidTy, Context.Char32Ty,
+                                  Context.Char16Ty, Context.UnsignedLongLongTy,
+                                  Context.LongLongTy, Context.WCharTy,
+                                  Context.UnsignedShortTy, Context.ShortTy,
+                                  Context.UnsignedLongTy, Context.LongTy,
+                                  Context.UnsignedIntTy, Context.IntTy,
+                                  Context.UnsignedCharTy, Context.FloatTy,
+                                  Context.LongDoubleTy, Context.DoubleTy,
+                                  Context.CharTy, Context.BoolTy,
+                                  Context.SignedCharTy };
+  for (unsigned i = 0; i < sizeof(FundamentalTypes)/sizeof(QualType); ++i)
+    EmitFundamentalRTTIDescriptor(FundamentalTypes[i]);
 }

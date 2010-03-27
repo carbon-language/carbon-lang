@@ -515,6 +515,14 @@ private:
 
   void EmitAnnotations(void);
 
+  /// EmitFundamentalRTTIDescriptor - Emit the RTTI descriptors for the
+  /// given type.
+  void EmitFundamentalRTTIDescriptor(QualType Type);
+
+  /// EmitFundamentalRTTIDescriptors - Emit the RTTI descriptors for the
+  /// builtin types.
+  void EmitFundamentalRTTIDescriptors();
+
   /// EmitDeferred - Emit any needed decls for which code generation
   /// was deferred.
   void EmitDeferred(void);
