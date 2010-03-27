@@ -611,7 +611,7 @@ int main(int argc, char **argv, char **envp) {
         args[2] = tmp_output.c_str();
         args[3] = 0;
         if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0,0, &ErrMsg)) {
-          if (tmp_output.isBitcodeFile() || tmp_output.isBitcodeFile()) {
+          if (tmp_output.isBitcodeFile()) {
             sys::Path target(BitcodeOutputFilename);
             target.eraseFromDisk();
             if (tmp_output.renamePathOnDisk(target, &ErrMsg))
