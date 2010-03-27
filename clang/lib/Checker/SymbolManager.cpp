@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Checker/PathSensitive/SymbolManager.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Checker/PathSensitive/MemRegion.h"
-#include "clang/Analysis/AnalysisContext.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;

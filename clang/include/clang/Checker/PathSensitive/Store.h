@@ -18,9 +18,6 @@
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "clang/Checker/PathSensitive/ValueManager.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 

@@ -15,17 +15,12 @@
 #ifndef LLVM_CLANG_ANALYSIS_BUGREPORTER
 #define LLVM_CLANG_ANALYSIS_BUGREPORTER
 
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Checker/BugReporter/BugType.h"
-#include "clang/Checker/PathSensitive/ExplodedGraph.h"
 #include "clang/Checker/PathSensitive/GRState.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/ImmutableSet.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallString.h"
 #include <list>
 
 namespace clang {
@@ -35,6 +30,8 @@ class PathDiagnosticPiece;
 class PathDiagnosticClient;
 class ASTContext;
 class Diagnostic;
+class ExplodedNode;
+class ExplodedGraph;
 class BugReporter;
 class BugReporterContext;
 class GRExprEngine;

@@ -10,9 +10,10 @@
 //  This file defined the Environment and EnvironmentManager classes.
 //
 //===----------------------------------------------------------------------===//
+
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/Checker/PathSensitive/GRState.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "llvm/ADT/ImmutableMap.h"
 
 using namespace clang;
 

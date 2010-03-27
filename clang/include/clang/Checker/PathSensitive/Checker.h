@@ -14,21 +14,15 @@
 
 #ifndef LLVM_CLANG_ANALYSIS_CHECKER
 #define LLVM_CLANG_ANALYSIS_CHECKER
+
 #include "clang/Analysis/Support/SaveAndRestore.h"
-#include "clang/Checker/PathSensitive/GRCoreEngine.h"
-#include "clang/Checker/PathSensitive/GRState.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/AST/ExprCXX.h"
-#include "clang/AST/ExprObjC.h"
-#include "clang/AST/StmtCXX.h"
-#include "clang/AST/StmtObjC.h"
 
 //===----------------------------------------------------------------------===//
 // Checker interface.
 //===----------------------------------------------------------------------===//
 
 namespace clang {
-  class GRExprEngine;
 
 class CheckerContext {
   ExplodedNodeSet &Dst;

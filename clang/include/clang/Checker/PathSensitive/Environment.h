@@ -18,11 +18,8 @@
 // typedefs.
 #include "clang/Checker/PathSensitive/Store.h"
 
-#include "llvm/ADT/ImmutableMap.h"
-#include "llvm/ADT/SmallVector.h"
 #include "clang/Checker/PathSensitive/SVals.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/ImmutableMap.h"
 
 namespace clang {
 

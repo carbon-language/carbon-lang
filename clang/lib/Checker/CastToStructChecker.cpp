@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "GRExprEngineInternalChecks.h"
 

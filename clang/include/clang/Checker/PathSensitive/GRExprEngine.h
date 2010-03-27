@@ -16,7 +16,6 @@
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE
 
-#include "clang/Checker/PathSensitive/AnalysisManager.h"
 #include "clang/Checker/PathSensitive/GRSubEngine.h"
 #include "clang/Checker/PathSensitive/GRCoreEngine.h"
 #include "clang/Checker/PathSensitive/GRState.h"
@@ -28,11 +27,9 @@
 #include "clang/AST/ExprCXX.h"
 
 namespace clang {
-
-  class PathDiagnosticClient;
-  class Diagnostic;
-  class ObjCForCollectionStmt;
-  class Checker;
+class AnalysisManager;
+class Checker;
+class ObjCForCollectionStmt;
 
 class GRExprEngine : public GRSubEngine {
   AnalysisManager &AMgr;

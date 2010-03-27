@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/AST/ParentMap.h"
 #include "GRExprEngineInternalChecks.h"
+#include "clang/AST/ParentMap.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Checker/BugReporter/BugType.h"
+#include "clang/Checker/PathSensitive/CheckerVisitor.h"
 
 using namespace clang;
 

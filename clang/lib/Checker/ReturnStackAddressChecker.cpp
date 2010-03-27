@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
+#include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"

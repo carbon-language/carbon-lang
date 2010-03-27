@@ -20,6 +20,7 @@ namespace clang {
 class Stmt;
 class CFGBlock;
 class CFGElement;
+class ExplodedNode;
 class GRState;
 class GRStateManager;
 class GRBlockCounter;

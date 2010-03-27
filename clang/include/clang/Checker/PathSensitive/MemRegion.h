@@ -18,17 +18,15 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Checker/PathSensitive/SymbolManager.h"
 #include "clang/Checker/PathSensitive/SVals.h"
-#include "clang/AST/ASTContext.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/ImmutableList.h"
-#include "llvm/ADT/ImmutableMap.h"
-#include "llvm/Support/Allocator.h"
 #include <string>
 
-namespace llvm { class raw_ostream; }
+namespace llvm {
+class BumpPtrAllocator;
+class raw_ostream;
+}
 
 namespace clang {
 

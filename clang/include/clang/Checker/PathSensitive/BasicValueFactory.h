@@ -16,7 +16,6 @@
 #ifndef LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
 #define LLVM_CLANG_ANALYSIS_BASICVALUEFACTORY_H
 
-#include "clang/Checker/PathSensitive/SymbolManager.h"
 #include "clang/Checker/PathSensitive/SVals.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/FoldingSet.h"

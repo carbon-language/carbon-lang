@@ -12,11 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "clang/Checker/PathSensitive/GRStateTrait.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "GRExprEngineInternalChecks.h"
+#include "clang/Checker/PathSensitive/CheckerVisitor.h"
+#include "clang/Checker/BugReporter/BugType.h"
+#include "llvm/ADT/StringSwitch.h"
 #include <fcntl.h>
 
 using namespace clang;

@@ -15,16 +15,18 @@
 #ifndef LLVM_CLANG_ANALYSIS_GRTF
 #define LLVM_CLANG_ANALYSIS_GRTF
 
-#include "clang/Checker/PathSensitive/SVals.h"
-#include "clang/Checker/PathSensitive/GRCoreEngine.h"
 #include "clang/Checker/PathSensitive/GRState.h"
+#include "clang/Checker/PathSensitive/SVals.h"
 #include <vector>
 
 namespace clang {
-
+class ExplodedNode;
+class ExplodedNodeSet;
+class GREndPathNodeBuilder;
 class GRExprEngine;
-class ObjCMessageExpr;
+class GRStmtNodeBuilder;
 class GRStmtNodeBuilderRef;
+class ObjCMessageExpr;
 
 class GRTransferFuncs {
 public:

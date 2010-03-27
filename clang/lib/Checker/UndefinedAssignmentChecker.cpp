@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRExprEngineInternalChecks.h"
+#include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/PathSensitive/CheckerVisitor.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
 
 using namespace clang;
 

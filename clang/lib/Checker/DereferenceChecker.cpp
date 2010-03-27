@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "GRExprEngineInternalChecks.h"
+#include "clang/Checker/BugReporter/BugType.h"
 #include "clang/Checker/Checkers/DereferenceChecker.h"
 #include "clang/Checker/PathSensitive/Checker.h"
 #include "clang/Checker/PathSensitive/GRExprEngine.h"
-#include "clang/Checker/BugReporter/BugReporter.h"
-#include "GRExprEngineInternalChecks.h"
 
 using namespace clang;
 

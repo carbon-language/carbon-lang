@@ -13,10 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/AnalysisContext.h"
 #include "clang/Checker/PathSensitive/MemRegion.h"
+#include "clang/Analysis/AnalysisContext.h"
+#include "clang/Analysis/Support/BumpVector.h"
 #include "clang/AST/CharUnits.h"
-#include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;

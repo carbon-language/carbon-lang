@@ -17,17 +17,8 @@
 #define LLVM_CLANG_ANALYSIS_GRAPICHECKS
 
 #include "clang/Checker/PathSensitive/GRAuditor.h"
-#include "clang/Checker/PathSensitive/GRState.h"
 
 namespace clang {
-
-class Diagnostic;
-class BugReporter;
-class ASTContext;
-class GRExprEngine;
-class PathDiagnosticClient;
-class ExplodedGraph;
-
 
 class GRSimpleAPICheck : public GRAuditor {
 public:
