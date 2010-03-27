@@ -61,9 +61,9 @@ EEVT::TypeSet::TypeSet(const std::vector<MVT::SimpleValueType> &VTList) {
     assert(VTList[0] != MVT::iAny && VTList[0] != MVT::vAny &&
            VTList[0] != MVT::fAny);
   
-  // Remove duplicates.
+  // Verify no duplicates.
   array_pod_sort(TypeVec.begin(), TypeVec.end());
-  TypeVec.erase(std::unique(TypeVec.begin(), TypeVec.end()), TypeVec.end());
+  assert(std::unique(TypeVec.begin(), TypeVec.end()) == TypeVec.end());
 }
 
 /// FillWithPossibleTypes - Set to all legal types and return true, only valid

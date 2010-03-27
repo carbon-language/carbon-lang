@@ -18,6 +18,7 @@
 #include "CodeGenIntrinsics.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
 using namespace llvm;
@@ -194,6 +195,10 @@ getRegisterVTs(Record *R) const {
       }
     }
   }
+  
+  // Remove duplicates.
+  array_pod_sort(Result.begin(), Result.end());
+  Result.erase(std::unique(Result.begin(), Result.end()), Result.end());
   return Result;
 }
 
