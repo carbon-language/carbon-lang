@@ -277,7 +277,7 @@ class ABCD : public FunctionPass {
     bool hasEdge(Value *V, bool upper) const;
 
     /// Returns all edges pointed by vertex V
-    SmallPtrSet<Edge *, 16> getEdges(Value *V) const {
+    SmallVector<Edge, 16> getEdges(Value *V) const {
       return graph.lookup(V);
     }
 
@@ -295,13 +295,7 @@ class ABCD : public FunctionPass {
     }
 
   private:
-    DenseMap<Value *, SmallPtrSet<Edge *, 16> > graph;
-
-    /// Adds a Node to the graph.
-    DenseMap<Value *, SmallPtrSet<Edge *, 16> >::iterator addNode(Value *V) {
-      SmallPtrSet<Edge *, 16> p;
-      return graph.insert(std::make_pair(V, p)).first;
-    }
+    DenseMap<Value *, SmallVector<Edge, 16> > graph;
 
     /// Prints the header of the dot file
     void printHeader(raw_ostream &OS, Function &F) const;
@@ -318,7 +312,7 @@ class ABCD : public FunctionPass {
     void printVertex(raw_ostream &OS, Value *source) const;
 
     /// Prints the edge to the dot file
-    void printEdge(raw_ostream &OS, Value *source, Edge *edge) const;
+    void printEdge(raw_ostream &OS, Value *source, const Edge &edge) const;
 
     void printName(raw_ostream &OS, Value *info) const;
   };
@@ -924,18 +918,18 @@ void ABCD::updateMemDistance(Value *a, Value *b, const Bound &bound,
                              unsigned level, meet_function meet) {
   ABCD::ProveResult res = (meet == max) ? False : True;
 
-  SmallPtrSet<Edge *, 16> Edges = inequality_graph.getEdges(b);
-  SmallPtrSet<Edge *, 16>::iterator begin = Edges.begin(), end = Edges.end();
+  SmallVector<Edge, 16> Edges = inequality_graph.getEdges(b);
+  SmallVector<Edge, 16>::iterator begin = Edges.begin(), end = Edges.end();
 
   for (; begin != end ; ++begin) {
     if (((res >= Reduced) && (meet == max)) ||
        ((res == False) && (meet == min))) {
       break;
     }
-    Edge *in = *begin;
-    if (in->isUpperBound() == bound.isUpperBound()) {
-      Value *succ = in->getVertex();
-      res = meet(res, prove(a, succ, Bound(bound, in->getValue()),
+    const Edge &in = *begin;
+    if (in.isUpperBound() == bound.isUpperBound()) {
+      Value *succ = in.getVertex();
+      res = meet(res, prove(a, succ, Bound(bound, in.getValue()),
                             level+1));
     }
   }
@@ -1023,19 +1017,17 @@ void ABCD::InequalityGraph::addEdge(Value *V_to, Value *V_from,
   assert(cast<IntegerType>(V_from->getType())->getBitWidth() ==
          value.getBitWidth());
 
-  DenseMap<Value *, SmallPtrSet<Edge *, 16> >::iterator from;
-  from = addNode(V_from);
-  from->second.insert(new Edge(V_to, value, upper));
+  graph[V_from].push_back(Edge(V_to, value, upper));
 }
 
 /// Test if there is any edge from V in the upper direction
 bool ABCD::InequalityGraph::hasEdge(Value *V, bool upper) const {
-  SmallPtrSet<Edge *, 16> it = graph.lookup(V);
+  SmallVector<Edge, 16> it = graph.lookup(V);
 
-  SmallPtrSet<Edge *, 16>::iterator begin = it.begin();
-  SmallPtrSet<Edge *, 16>::iterator end = it.end();
+  SmallVector<Edge, 16>::iterator begin = it.begin();
+  SmallVector<Edge, 16>::iterator end = it.end();
   for (; begin != end; ++begin) {
-    if ((*begin)->isUpperBound() == upper) {
+    if (begin->isUpperBound() == upper) {
       return true;
     }
   }
@@ -1052,18 +1044,18 @@ void ABCD::InequalityGraph::printHeader(raw_ostream &OS, Function &F) const {
 
 /// Prints the body of the dot file
 void ABCD::InequalityGraph::printBody(raw_ostream &OS) const {
-  DenseMap<Value *, SmallPtrSet<Edge *, 16> >::const_iterator begin =
+  DenseMap<Value *, SmallVector<Edge, 16> >::const_iterator begin =
       graph.begin(), end = graph.end();
 
   for (; begin != end ; ++begin) {
-    SmallPtrSet<Edge *, 16>::iterator begin_par =
+    SmallVector<Edge, 16>::const_iterator begin_par =
         begin->second.begin(), end_par = begin->second.end();
     Value *source = begin->first;
 
     printVertex(OS, source);
 
     for (; begin_par != end_par ; ++begin_par) {
-      Edge *edge = *begin_par;
+      const Edge &edge = *begin_par;
       printEdge(OS, source, edge);
     }
   }
@@ -1082,10 +1074,10 @@ void ABCD::InequalityGraph::printVertex(raw_ostream &OS, Value *source) const {
 
 /// Prints the edge to the dot file
 void ABCD::InequalityGraph::printEdge(raw_ostream &OS, Value *source,
-                                      Edge *edge) const {
-  Value *dest = edge->getVertex();
-  APInt value = edge->getValue();
-  bool upper = edge->isUpperBound();
+                                      const Edge &edge) const {
+  Value *dest = edge.getVertex();
+  APInt value = edge.getValue();
+  bool upper = edge.isUpperBound();
 
   OS << "\"";
   printName(OS, source);
