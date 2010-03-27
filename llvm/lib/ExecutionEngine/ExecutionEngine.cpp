@@ -66,10 +66,39 @@ ExecutionEngine::~ExecutionEngine() {
     delete Modules[i];
 }
 
+namespace {
+// This class automatically deletes the memory block when the GlobalVariable is
+// destroyed.
+class GVMemoryBlock : public CallbackVH {
+  GVMemoryBlock(const GlobalVariable *GV)
+    : CallbackVH(const_cast<GlobalVariable*>(GV)) {}
+
+public:
+  // Returns the address the GlobalVariable should be written into.  The
+  // GVMemoryBlock object prefixes that.
+  static char *Create(const GlobalVariable *GV, const TargetData& TD) {
+    const Type *ElTy = GV->getType()->getElementType();
+    size_t GVSize = (size_t)TD.getTypeAllocSize(ElTy);
+    void *RawMemory = ::operator new(
+      TargetData::RoundUpAlignment(sizeof(GVMemoryBlock),
+                                   TD.getPreferredAlignment(GV))
+      + GVSize);
+    new(RawMemory) GVMemoryBlock(GV);
+    return static_cast<char*>(RawMemory) + sizeof(GVMemoryBlock);
+  }
+
+  virtual void deleted() {
+    // We allocated with operator new and with some extra memory hanging off the
+    // end, so don't just delete this.  I'm not sure if this is actually
+    // required.
+    this->~GVMemoryBlock();
+    ::operator delete(this);
+  }
+};
+}  // anonymous namespace
+
 char* ExecutionEngine::getMemoryForGV(const GlobalVariable* GV) {
-  const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getTypeAllocSize(ElTy);
-  return new char[GVSize];
+  return GVMemoryBlock::Create(GV, *getTargetData());
 }
 
 /// removeModule - Remove a Module from the list of modules.
