@@ -2686,21 +2686,20 @@ let isCommutable = 1 in {   // X = ADD Y, Z   --> X = ADD Z, Y
 def ADD8rr    : I<0x00, MRMDestReg, (outs GR8 :$dst),
                                     (ins GR8 :$src1, GR8 :$src2),
                   "add{b}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR8:$dst, (add GR8:$src1, GR8:$src2)),
-                   (implicit EFLAGS)]>;
+                  [(set GR8:$dst, EFLAGS, (X86add_flag GR8:$src1, GR8:$src2))]>;
 
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 // Register-Register Addition
 def ADD16rr  : I<0x01, MRMDestReg, (outs GR16:$dst),
                                    (ins GR16:$src1, GR16:$src2),
                  "add{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (add GR16:$src1, GR16:$src2)),
-                  (implicit EFLAGS)]>, OpSize;
+                 [(set GR16:$dst, EFLAGS, (X86add_flag GR16:$src1,
+                                                       GR16:$src2))]>, OpSize;
 def ADD32rr  : I<0x01, MRMDestReg, (outs GR32:$dst),
                                    (ins GR32:$src1, GR32:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (add GR32:$src1, GR32:$src2)),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, EFLAGS, (X86add_flag GR32:$src1,
+                                                       GR32:$src2))]>;
 } // end isConvertibleToThreeAddress
 } // end isCommutable
 
@@ -2719,47 +2718,47 @@ let isCodeGenOnly = 1 in {
 def ADD8rm   : I<0x02, MRMSrcMem, (outs GR8 :$dst),
                                   (ins GR8 :$src1, i8mem :$src2),
                  "add{b}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR8:$dst, (add GR8:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
+                 [(set GR8:$dst, EFLAGS, (X86add_flag GR8:$src1,
+                                                      (load addr:$src2)))]>;
 def ADD16rm  : I<0x03, MRMSrcMem, (outs GR16:$dst),
                                   (ins GR16:$src1, i16mem:$src2),
                  "add{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (add GR16:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>, OpSize;
+                 [(set GR16:$dst, EFLAGS, (X86add_flag GR16:$src1,
+                                                  (load addr:$src2)))]>, OpSize;
 def ADD32rm  : I<0x03, MRMSrcMem, (outs GR32:$dst),
                                   (ins GR32:$src1, i32mem:$src2),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (add GR32:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>;
+                 [(set GR32:$dst, EFLAGS, (X86add_flag GR32:$src1,
+                                                       (load addr:$src2)))]>;
                   
 // Register-Integer Addition
 def ADD8ri    : Ii8<0x80, MRM0r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
                     "add{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (add GR8:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR8:$dst, EFLAGS,
+                          (X86add_flag GR8:$src1, imm:$src2))]>;
 
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
 // Register-Integer Addition
 def ADD16ri  : Ii16<0x81, MRM0r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "add{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (add GR16:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set GR16:$dst, EFLAGS,
+                          (X86add_flag GR16:$src1, imm:$src2))]>, OpSize;
 def ADD32ri  : Ii32<0x81, MRM0r, (outs GR32:$dst),
                                  (ins GR32:$src1, i32imm:$src2),
                     "add{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (add GR32:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR32:$dst, EFLAGS, 
+                          (X86add_flag GR32:$src1, imm:$src2))]>;
 def ADD16ri8 : Ii8<0x83, MRM0r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (add GR16:$src1, i16immSExt8:$src2)),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set GR16:$dst, EFLAGS,
+                         (X86add_flag GR16:$src1, i16immSExt8:$src2))]>, OpSize;
 def ADD32ri8 : Ii8<0x83, MRM0r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (add GR32:$src1, i32immSExt8:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR32:$dst, EFLAGS,
+                         (X86add_flag GR32:$src1, i32immSExt8:$src2))]>;
 }
 
 let isTwoAddress = 0 in {
@@ -2907,16 +2906,16 @@ let isTwoAddress = 0 in {
 // Register-Register Subtraction
 def SUB8rr  : I<0x28, MRMDestReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                 "sub{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (sub GR8:$src1, GR8:$src2)),
-                 (implicit EFLAGS)]>;
+                [(set GR8:$dst, EFLAGS,
+                      (X86sub_flag GR8:$src1, GR8:$src2))]>;
 def SUB16rr : I<0x29, MRMDestReg, (outs GR16:$dst), (ins GR16:$src1,GR16:$src2),
                 "sub{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (sub GR16:$src1, GR16:$src2)),
-                 (implicit EFLAGS)]>, OpSize;
+                [(set GR16:$dst, EFLAGS,
+                      (X86sub_flag GR16:$src1, GR16:$src2))]>, OpSize;
 def SUB32rr : I<0x29, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
                 "sub{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (sub GR32:$src1, GR32:$src2)),
-                 (implicit EFLAGS)]>;
+                [(set GR32:$dst, EFLAGS,
+                      (X86sub_flag GR32:$src1, GR32:$src2))]>;
 
 def SUB8rr_REV : I<0x2A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>;
@@ -2931,45 +2930,45 @@ def SUB32rr_REV : I<0x2B, MRMSrcReg, (outs GR32:$dst),
 def SUB8rm  : I<0x2A, MRMSrcMem, (outs GR8 :$dst),
                                  (ins GR8 :$src1, i8mem :$src2),
                 "sub{b}\t{$src2, $dst|$dst, $src2}",
-                [(set GR8:$dst, (sub GR8:$src1, (load addr:$src2))),
-                 (implicit EFLAGS)]>;
+                [(set GR8:$dst, EFLAGS,
+                      (X86sub_flag GR8:$src1, (load addr:$src2)))]>;
 def SUB16rm : I<0x2B, MRMSrcMem, (outs GR16:$dst),
                                  (ins GR16:$src1, i16mem:$src2),
                 "sub{w}\t{$src2, $dst|$dst, $src2}",
-                [(set GR16:$dst, (sub GR16:$src1, (load addr:$src2))),
-                 (implicit EFLAGS)]>, OpSize;
+                [(set GR16:$dst, EFLAGS,
+                      (X86sub_flag GR16:$src1, (load addr:$src2)))]>, OpSize;
 def SUB32rm : I<0x2B, MRMSrcMem, (outs GR32:$dst),
                                  (ins GR32:$src1, i32mem:$src2),
                 "sub{l}\t{$src2, $dst|$dst, $src2}",
-                [(set GR32:$dst, (sub GR32:$src1, (load addr:$src2))),
-                 (implicit EFLAGS)]>;
+                [(set GR32:$dst, EFLAGS,
+                      (X86sub_flag GR32:$src1, (load addr:$src2)))]>;
 
 // Register-Integer Subtraction
 def SUB8ri   : Ii8 <0x80, MRM5r, (outs GR8:$dst),
                                  (ins GR8:$src1, i8imm:$src2),
                     "sub{b}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR8:$dst, (sub GR8:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR8:$dst, EFLAGS,
+                          (X86sub_flag GR8:$src1, imm:$src2))]>;
 def SUB16ri  : Ii16<0x81, MRM5r, (outs GR16:$dst),
                                  (ins GR16:$src1, i16imm:$src2),
                     "sub{w}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR16:$dst, (sub GR16:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>, OpSize;
+                    [(set GR16:$dst, EFLAGS,
+                          (X86sub_flag GR16:$src1, imm:$src2))]>, OpSize;
 def SUB32ri  : Ii32<0x81, MRM5r, (outs GR32:$dst),
                                  (ins GR32:$src1, i32imm:$src2),
                     "sub{l}\t{$src2, $dst|$dst, $src2}",
-                    [(set GR32:$dst, (sub GR32:$src1, imm:$src2)),
-                     (implicit EFLAGS)]>;
+                    [(set GR32:$dst, EFLAGS,
+                          (X86sub_flag GR32:$src1, imm:$src2))]>;
 def SUB16ri8 : Ii8<0x83, MRM5r, (outs GR16:$dst),
                                 (ins GR16:$src1, i16i8imm:$src2),
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (sub GR16:$src1, i16immSExt8:$src2)),
-                    (implicit EFLAGS)]>, OpSize;
+                   [(set GR16:$dst, EFLAGS,
+                         (X86sub_flag GR16:$src1, i16immSExt8:$src2))]>, OpSize;
 def SUB32ri8 : Ii8<0x83, MRM5r, (outs GR32:$dst),
                                 (ins GR32:$src1, i32i8imm:$src2),
                    "sub{l}\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (sub GR32:$src1, i32immSExt8:$src2)),
-                    (implicit EFLAGS)]>;
+                   [(set GR32:$dst, EFLAGS,
+                         (X86sub_flag GR32:$src1, i32immSExt8:$src2))]>;
 
 let isTwoAddress = 0 in {
   // Memory-Register Subtraction
@@ -3118,25 +3117,26 @@ let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
 // Register-Register Signed Integer Multiply
 def IMUL16rr : I<0xAF, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1,GR16:$src2),
                  "imul{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (mul GR16:$src1, GR16:$src2)),
-                  (implicit EFLAGS)]>, TB, OpSize;
+                 [(set GR16:$dst, EFLAGS,
+                       (X86smul_flag GR16:$src1, GR16:$src2))]>, TB, OpSize;
 def IMUL32rr : I<0xAF, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1,GR32:$src2),
                  "imul{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (mul GR32:$src1, GR32:$src2)),
-                  (implicit EFLAGS)]>, TB;
+                 [(set GR32:$dst, EFLAGS,
+                       (X86smul_flag GR32:$src1, GR32:$src2))]>, TB;
 }
 
 // Register-Memory Signed Integer Multiply
 def IMUL16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst),
                                   (ins GR16:$src1, i16mem:$src2),
                  "imul{w}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR16:$dst, (mul GR16:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>, TB, OpSize;
+                 [(set GR16:$dst, EFLAGS,
+                       (X86smul_flag GR16:$src1, (load addr:$src2)))]>,
+               TB, OpSize;
 def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst), 
                  (ins GR32:$src1, i32mem:$src2),
                  "imul{l}\t{$src2, $dst|$dst, $src2}",
-                 [(set GR32:$dst, (mul GR32:$src1, (load addr:$src2))),
-                  (implicit EFLAGS)]>, TB;
+                 [(set GR32:$dst, EFLAGS,
+                       (X86smul_flag GR32:$src1, (load addr:$src2)))]>, TB;
 } // Defs = [EFLAGS]
 } // end Two Address instructions
 
@@ -3146,47 +3146,49 @@ let Defs = [EFLAGS] in {
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16
                       (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, (mul GR16:$src1, imm:$src2)),
-                       (implicit EFLAGS)]>, OpSize;
+                      [(set GR16:$dst, EFLAGS, 
+                            (X86smul_flag GR16:$src1, imm:$src2))]>, OpSize;
 def IMUL32rri  : Ii32<0x69, MRMSrcReg,                      // GR32 = GR32*I32
                       (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
                       "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR32:$dst, (mul GR32:$src1, imm:$src2)),
-                       (implicit EFLAGS)]>;
+                      [(set GR32:$dst, EFLAGS,
+                            (X86smul_flag GR32:$src1, imm:$src2))]>;
 def IMUL16rri8 : Ii8<0x6B, MRMSrcReg,                       // GR16 = GR16*I8
                      (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR16:$dst, (mul GR16:$src1, i16immSExt8:$src2)),
-                      (implicit EFLAGS)]>, OpSize;
+                     [(set GR16:$dst, EFLAGS,
+                           (X86smul_flag GR16:$src1, i16immSExt8:$src2))]>,
+                 OpSize;
 def IMUL32rri8 : Ii8<0x6B, MRMSrcReg,                       // GR32 = GR32*I8
                      (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR32:$dst, (mul GR32:$src1, i32immSExt8:$src2)),
-                      (implicit EFLAGS)]>;
+                     [(set GR32:$dst, EFLAGS,
+                           (X86smul_flag GR32:$src1, i32immSExt8:$src2))]>;
 
 // Memory-Integer Signed Integer Multiply
 def IMUL16rmi  : Ii16<0x69, MRMSrcMem,                     // GR16 = [mem16]*I16
                       (outs GR16:$dst), (ins i16mem:$src1, i16imm:$src2),
                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, (mul (load addr:$src1), imm:$src2)),
-                       (implicit EFLAGS)]>, OpSize;
+                      [(set GR16:$dst, EFLAGS,
+                            (X86smul_flag (load addr:$src1), imm:$src2))]>,
+                 OpSize;
 def IMUL32rmi  : Ii32<0x69, MRMSrcMem,                     // GR32 = [mem32]*I32
                       (outs GR32:$dst), (ins i32mem:$src1, i32imm:$src2),
                       "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR32:$dst, (mul (load addr:$src1), imm:$src2)),
-                       (implicit EFLAGS)]>;
+                      [(set GR32:$dst, EFLAGS,
+                            (X86smul_flag (load addr:$src1), imm:$src2))]>;
 def IMUL16rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR16 = [mem16]*I8
                      (outs GR16:$dst), (ins i16mem:$src1, i16i8imm :$src2),
                      "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR16:$dst, (mul (load addr:$src1),
-                                       i16immSExt8:$src2)),
-                      (implicit EFLAGS)]>, OpSize;
+                     [(set GR16:$dst, EFLAGS,
+                           (X86smul_flag (load addr:$src1),
+                                         i16immSExt8:$src2))]>, OpSize;
 def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
                      (outs GR32:$dst), (ins i32mem:$src1, i32i8imm: $src2),
                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     [(set GR32:$dst, (mul (load addr:$src1),
-                                           i32immSExt8:$src2)),
-                      (implicit EFLAGS)]>;
+                     [(set GR32:$dst, EFLAGS,
+                           (X86smul_flag (load addr:$src1),
+                                         i32immSExt8:$src2))]>;
 } // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
@@ -4739,126 +4741,83 @@ def : Pat<(or_is_add GR32:$src1, GR32:$src2),
 // EFLAGS-defining Patterns
 //===----------------------------------------------------------------------===//
 
-// Register-Register Addition with EFLAGS result
-def : Pat<(parallel (X86add_flag GR8:$src1, GR8:$src2),
-                    (implicit EFLAGS)),
-          (ADD8rr GR8:$src1, GR8:$src2)>;
-def : Pat<(parallel (X86add_flag GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
-          (ADD16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (X86add_flag GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
-          (ADD32rr GR32:$src1, GR32:$src2)>;
+// add reg, reg
+def : Pat<(add GR8 :$src1, GR8 :$src2), (ADD8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(add GR16:$src1, GR16:$src2), (ADD16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(add GR32:$src1, GR32:$src2), (ADD32rr GR32:$src1, GR32:$src2)>;
 
-// Register-Memory Addition with EFLAGS result
-def : Pat<(parallel (X86add_flag GR8:$src1, (loadi8 addr:$src2)),
-                    (implicit EFLAGS)),
+// add reg, mem
+def : Pat<(add GR8:$src1, (loadi8 addr:$src2)),
           (ADD8rm GR8:$src1, addr:$src2)>;
-def : Pat<(parallel (X86add_flag GR16:$src1, (loadi16 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(add GR16:$src1, (loadi16 addr:$src2)),
           (ADD16rm GR16:$src1, addr:$src2)>;
-def : Pat<(parallel (X86add_flag GR32:$src1, (loadi32 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(add GR32:$src1, (loadi32 addr:$src2)),
           (ADD32rm GR32:$src1, addr:$src2)>;
 
-// Register-Integer Addition with EFLAGS result
-def : Pat<(parallel (X86add_flag GR8:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (ADD8ri GR8:$src1, imm:$src2)>;
-def : Pat<(parallel (X86add_flag GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (ADD16ri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (X86add_flag GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
-          (ADD32ri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (X86add_flag GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+// add reg, imm
+def : Pat<(add GR8 :$src1, imm:$src2), (ADD8ri  GR8:$src1 , imm:$src2)>;
+def : Pat<(add GR16:$src1, imm:$src2), (ADD16ri GR16:$src1, imm:$src2)>;
+def : Pat<(add GR32:$src1, imm:$src2), (ADD32ri GR32:$src1, imm:$src2)>;
+def : Pat<(add GR16:$src1, i16immSExt8:$src2),
           (ADD16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86add_flag GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(add GR32:$src1, i32immSExt8:$src2),
           (ADD32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-// Register-Register Subtraction with EFLAGS result
-def : Pat<(parallel (X86sub_flag GR8:$src1, GR8:$src2),
-                    (implicit EFLAGS)),
-          (SUB8rr GR8:$src1, GR8:$src2)>;
-def : Pat<(parallel (X86sub_flag GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
-          (SUB16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (X86sub_flag GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
-          (SUB32rr GR32:$src1, GR32:$src2)>;
+// sub reg, reg
+def : Pat<(sub GR8 :$src1, GR8 :$src2), (SUB8rr  GR8 :$src1, GR8 :$src2)>;
+def : Pat<(sub GR16:$src1, GR16:$src2), (SUB16rr GR16:$src1, GR16:$src2)>;
+def : Pat<(sub GR32:$src1, GR32:$src2), (SUB32rr GR32:$src1, GR32:$src2)>;
 
-// Register-Memory Subtraction with EFLAGS result
-def : Pat<(parallel (X86sub_flag GR8:$src1, (loadi8 addr:$src2)),
-                    (implicit EFLAGS)),
+// sub reg, mem
+def : Pat<(sub GR8:$src1, (loadi8 addr:$src2)),
           (SUB8rm GR8:$src1, addr:$src2)>;
-def : Pat<(parallel (X86sub_flag GR16:$src1, (loadi16 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(sub GR16:$src1, (loadi16 addr:$src2)),
           (SUB16rm GR16:$src1, addr:$src2)>;
-def : Pat<(parallel (X86sub_flag GR32:$src1, (loadi32 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(sub GR32:$src1, (loadi32 addr:$src2)),
           (SUB32rm GR32:$src1, addr:$src2)>;
 
-// Register-Integer Subtraction with EFLAGS result
-def : Pat<(parallel (X86sub_flag GR8:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+// sub reg, imm
+def : Pat<(sub GR8:$src1, imm:$src2),
           (SUB8ri GR8:$src1, imm:$src2)>;
-def : Pat<(parallel (X86sub_flag GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(sub GR16:$src1, imm:$src2),
           (SUB16ri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (X86sub_flag GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(sub GR32:$src1, imm:$src2),
           (SUB32ri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (X86sub_flag GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(sub GR16:$src1, i16immSExt8:$src2),
           (SUB16ri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86sub_flag GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(sub GR32:$src1, i32immSExt8:$src2),
           (SUB32ri8 GR32:$src1, i32immSExt8:$src2)>;
 
-// Register-Register Signed Integer Multiply with EFLAGS result
-def : Pat<(parallel (X86smul_flag GR16:$src1, GR16:$src2),
-                    (implicit EFLAGS)),
+// mul reg, reg
+def : Pat<(mul GR16:$src1, GR16:$src2),
           (IMUL16rr GR16:$src1, GR16:$src2)>;
-def : Pat<(parallel (X86smul_flag GR32:$src1, GR32:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul GR32:$src1, GR32:$src2),
           (IMUL32rr GR32:$src1, GR32:$src2)>;
 
-// Register-Memory Signed Integer Multiply with EFLAGS result
-def : Pat<(parallel (X86smul_flag GR16:$src1, (loadi16 addr:$src2)),
-                    (implicit EFLAGS)),
+// mul reg, mem
+def : Pat<(mul GR16:$src1, (loadi16 addr:$src2)),
           (IMUL16rm GR16:$src1, addr:$src2)>;
-def : Pat<(parallel (X86smul_flag GR32:$src1, (loadi32 addr:$src2)),
-                    (implicit EFLAGS)),
+def : Pat<(mul GR32:$src1, (loadi32 addr:$src2)),
           (IMUL32rm GR32:$src1, addr:$src2)>;
 
-// Register-Integer Signed Integer Multiply with EFLAGS result
-def : Pat<(parallel (X86smul_flag GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+// mul reg, imm
+def : Pat<(mul GR16:$src1, imm:$src2),
           (IMUL16rri GR16:$src1, imm:$src2)>;
-def : Pat<(parallel (X86smul_flag GR32:$src1, imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul GR32:$src1, imm:$src2),
           (IMUL32rri GR32:$src1, imm:$src2)>;
-def : Pat<(parallel (X86smul_flag GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul GR16:$src1, i16immSExt8:$src2),
           (IMUL16rri8 GR16:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86smul_flag GR32:$src1, i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul GR32:$src1, i32immSExt8:$src2),
           (IMUL32rri8 GR32:$src1, i32immSExt8:$src2)>;
 
-// Memory-Integer Signed Integer Multiply with EFLAGS result
-def : Pat<(parallel (X86smul_flag (loadi16 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)),
+// reg = mul mem, imm
+def : Pat<(mul (loadi16 addr:$src1), imm:$src2),
           (IMUL16rmi addr:$src1, imm:$src2)>;
-def : Pat<(parallel (X86smul_flag (loadi32 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul (loadi32 addr:$src1), imm:$src2),
           (IMUL32rmi addr:$src1, imm:$src2)>;
-def : Pat<(parallel (X86smul_flag (loadi16 addr:$src1), i16immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul (loadi16 addr:$src1), i16immSExt8:$src2),
           (IMUL16rmi8 addr:$src1, i16immSExt8:$src2)>;
-def : Pat<(parallel (X86smul_flag (loadi32 addr:$src1), i32immSExt8:$src2),
-                    (implicit EFLAGS)),
+def : Pat<(mul (loadi32 addr:$src1), i32immSExt8:$src2),
           (IMUL32rmi8 addr:$src1, i32immSExt8:$src2)>;
 
 // Optimize multiply by 2 with EFLAGS result.
