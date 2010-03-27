@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenInstruction.h"
+#include "CodeGenTarget.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
@@ -294,3 +295,22 @@ CodeGenInstruction::ParseOperandName(const std::string &Op,
   // Otherwise, didn't find it!
   throw TheDef->getName() + ": unknown suboperand name in '" + Op + "'";
 }
+
+
+/// HasOneImplicitDefWithKnownVT - If the instruction has at least one
+/// implicit def and it has a known VT, return the VT, otherwise return
+/// MVT::Other.
+MVT::SimpleValueType CodeGenInstruction::
+HasOneImplicitDefWithKnownVT(const CodeGenTarget &TargetInfo) const {
+  if (ImplicitDefs.empty()) return MVT::Other;
+  
+  // Check to see if the first implicit def has a resolvable type.
+  Record *FirstImplicitDef = ImplicitDefs[0];
+  assert(FirstImplicitDef->isSubClassOf("Register"));
+  const std::vector<MVT::SimpleValueType> &RegVTs = 
+    TargetInfo.getRegisterVTs(FirstImplicitDef);
+  if (RegVTs.size() == 1)
+    return RegVTs[0];
+  return MVT::Other;
+}
+

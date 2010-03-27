@@ -733,8 +733,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
     // If the root came from an implicit def in the instruction handling stuff,
     // don't re-add it.
     Record *HandledReg = 0;
-    if (N->getNumTypes() != 0 &&
-        !II.ImplicitDefs.empty())
+    if (II.HasOneImplicitDefWithKnownVT(CGT) != MVT::Other)
       HandledReg = II.ImplicitDefs[0];
     
     for (unsigned i = 0; i != Pattern.getDstRegs().size(); ++i) {

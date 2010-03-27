@@ -779,15 +779,9 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
     // FIXME: Should allow access to all the results here.
     unsigned NumDefsToAdd = InstInfo.NumDefs ? 1 : 0;
     
-    if (!InstInfo.ImplicitDefs.empty()) {
-      // Add on one implicit def if it has a resolvable type.
-      Record *FirstImplicitDef = InstInfo.ImplicitDefs[0];
-      assert(FirstImplicitDef->isSubClassOf("Register"));
-      const std::vector<MVT::SimpleValueType> &RegVTs = 
-      CDP.getTargetInfo().getRegisterVTs(FirstImplicitDef);
-      if (RegVTs.size() == 1)
-        return NumDefsToAdd+1;
-    }
+    // Add on one implicit def if it has a resolvable type.
+    if (InstInfo.HasOneImplicitDefWithKnownVT(CDP.getTargetInfo()) !=MVT::Other)
+      ++NumDefsToAdd;
     return NumDefsToAdd;
   }
   
@@ -1279,12 +1273,13 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     if (!InstInfo.ImplicitDefs.empty()) {
       unsigned ResNo = NumResultsToAdd;
       
-      Record *FirstImplicitDef = InstInfo.ImplicitDefs[0];
-      assert(FirstImplicitDef->isSubClassOf("Register"));
-      const std::vector<MVT::SimpleValueType> &RegVTs = 
-        CDP.getTargetInfo().getRegisterVTs(FirstImplicitDef);
-      if (RegVTs.size() == 1)   // FIXME: Generalize.
-        MadeChange |= UpdateNodeType(ResNo, EEVT::TypeSet(RegVTs), TP);
+      // FIXME: Generalize to multiple possible types and multiple possible
+      // ImplicitDefs.
+      MVT::SimpleValueType VT =
+        InstInfo.HasOneImplicitDefWithKnownVT(CDP.getTargetInfo());
+      
+      if (VT != MVT::Other)
+        MadeChange |= UpdateNodeType(ResNo, VT, TP);
     }
     
     // If this is an INSERT_SUBREG, constrain the source and destination VTs to

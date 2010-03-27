@@ -22,6 +22,7 @@
 namespace llvm {
   class Record;
   class DagInit;
+  class CodeGenTarget;
 
   class CodeGenInstruction {
   public:
@@ -183,6 +184,12 @@ namespace llvm {
     /// non-empty name.  If the instruction does not have an operand with the
     /// specified name, throw an exception.
     unsigned getOperandNamed(const std::string &Name) const;
+    
+    /// HasOneImplicitDefWithKnownVT - If the instruction has at least one
+    /// implicit def and it has a known VT, return the VT, otherwise return
+    /// MVT::Other.
+    MVT::SimpleValueType 
+      HasOneImplicitDefWithKnownVT(const CodeGenTarget &TargetInfo) const;
   };
 }
 
