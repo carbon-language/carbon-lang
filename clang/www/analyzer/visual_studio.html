@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Using the Analyzer with Visual Studio 2010</title>
+  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <script type="text/javascript" src="scripts/menu.js"></script>
+  <script type="text/javascript" src="scripts/dbtree.js"></script>  
+</head>
+<body>
+
+<div id="page">
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+
+<h1>clangify2010: Using the Analyzer with Visual Studio 2010</h1>
+
+<p>The Clang Static Analyzer has only limited support right now for Visual
+Studio users. Some users might find the <tt>Clangify2010.py</tt> script useful
+(described below) for analyzing their projects. It does not provide the same
+functionality as <tt>scan-build</tt> (for example, it does not actually build
+Visual Studio projects to analyze source files nor does it have a UI for viewing
+results) but some users may still find it useful.</p>
+
+<p>We <b>encourage anyone</b> who is interested in developing
+support/integration of the Clang Static Analyzer with Visual Studio to <b>get
+involved</b> in <a href="http://clang.llvm.org/">clang development</a>.</p>
+
+<h3>Important Caveats</h3>
+
+<ul>
+  <li>Clang doesn't support all Microsoft extensions implemented in Visual C/C++.</li>
+  <li>The Clang Static Analyzer currently has <b>very remedial and
+  experimental</b> support for analyzing C++ code. It will frequently
+  crash.</li>
+  <li><tt>clangify2010.py</tt> strives to be as easy to read and modify as possible. If it
+does not quite suit your needs, you can always tweak it to make it work the way
+you want it to work.</li>
+  <li><b>This script is provided as-is</b>.  Currently no technical support
+      is available until we have someone to champion the development of the static
+      analyzer on Windows.</li>
+</ul>
+
+<h3>Requirements</h3>
+
+<ul>
+<li>You have a C or C++ Visual Studio 2010 project.</li>
+<li>You have <b>Python 3.x</b> (get the latest version <a
+href="http://python.org/download/">here</a>) in your <tt>PATH</tt>.</li>
+<li>You have clang + llvm (get the latest version <a
+href="http://clang.llvm.org/get_started.html">here</a>) in your <tt>PATH</tt>.
+<li>Your project does not have automatically generated intermediate files as
+part of the build step. You can possibly work around this limitation by adding a
+custom pre_analysis function to <tt>Clangify2010.py</tt>.</li>
+<li>The source files in your project all take the same compiler flags.</li>
+</ul>
+
+<h2>Usage</h2>
+
+<h3>Step 1: Download the script</h3>
+
+<p>Assuming you have met all of the above requirements, you should first
+download and copy <tt><a
+href="/downloads/clangify2010.py">clangify2010.py</a></tt> to wherever your
+project resides. Alternatively you can put the script in a global location and
+add it to your <tt>PATH</tt>.</p>
+
+<h3>Step 2: Running the script</h3>
+
+<p>Once you have obtained <tt>clangify2010.py</tt> say you have a project file
+called <tt>Foo.vcxproj</tt>, holding 300 .cpp files. To run the analyzer on all
+these files, just type the following at the Windows command prompt:</p>
+
+<pre class="code_example">
+clangify2010.py Foo.vcxproj
+</pre>
+
+<p><tt>clangify2010.py</tt> will automatically scan your project file for all
+your C++ files and hand them off to the Clang Static Analyzer for analysis..
+Additionally, you could run the script as a post-build step to your project.</p>
+
+</div>
+</div>
+</body>
+</html>
+
