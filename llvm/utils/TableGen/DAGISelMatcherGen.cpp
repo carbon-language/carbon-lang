@@ -729,7 +729,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   //   (set AL, (mul ...))
   // This also handles implicit results like:
   //   (implicit EFLAGS)
-  if (isRoot && Pattern.getDstRegs().size() != 0) {
+  if (isRoot && !Pattern.getDstRegs().empty()) {
     // If the root came from an implicit def in the instruction handling stuff,
     // don't re-add it.
     Record *HandledReg = 0;
@@ -837,33 +837,35 @@ void MatcherGen::EmitResultCode() {
 
   // At this point, we have however many values the result pattern produces.
   // However, the input pattern might not need all of these.  If there are
-  // excess values at the end (such as condition codes etc) just lop them off.
-  // This doesn't need to worry about flags or chains, just explicit results.
+  // excess values at the end (such as implicit defs of condition codes etc)
+  // just lop them off.  This doesn't need to worry about flags or chains, just
+  // explicit results.
   //
-  // FIXME2: This doesn't work because there is currently no way to get an
-  // accurate count of the # results the source pattern sets.  This is because
-  // of the "parallel" construct in X86 land, which looks like this:
-  //
-  //def : Pat<(parallel (X86and_flag GR8:$src1, GR8:$src2),
-  //           (implicit EFLAGS)),
-  //  (AND8rr GR8:$src1, GR8:$src2)>;
-  //
-  // This idiom means to match the two-result node X86and_flag (which is
-  // declared as returning a single result, because we can't match multi-result
-  // nodes yet).  In this case, we would have to know that the input has two
-  // results.  However, mul8r is modelled exactly the same way, but without
-  // implicit defs included.  The fix is to support multiple results directly
-  // and eliminate 'parallel'.
-  //
-  // FIXME2: When this is fixed, we should revert the terrible hack in the
-  // OPC_EmitNode code in the interpreter.
-#if 0
-  const TreePatternNode *Src = Pattern.getSrcPattern();
-  unsigned NumSrcResults = Src->getTypeNum(0) != MVT::isVoid ? 1 : 0;
-  NumSrcResults += Pattern.getDstRegs().size();
+  unsigned NumSrcResults = Pattern.getSrcPattern()->getNumTypes();
+  
+  // If the pattern also has (implicit) results, count them as well.
+  if (!Pattern.getDstRegs().empty()) {
+    // If the root came from an implicit def in the instruction handling stuff,
+    // don't re-add it.
+    Record *HandledReg = 0;
+    const TreePatternNode *DstPat = Pattern.getDstPattern();
+    if (!DstPat->isLeaf() &&DstPat->getOperator()->isSubClassOf("Instruction")){
+      const CodeGenTarget &CGT = CGP.getTargetInfo();
+      CodeGenInstruction &II = CGT.getInstruction(DstPat->getOperator());
+
+      if (II.HasOneImplicitDefWithKnownVT(CGT) != MVT::Other)
+        HandledReg = II.ImplicitDefs[0];
+    }
+    
+    for (unsigned i = 0; i != Pattern.getDstRegs().size(); ++i) {
+      Record *Reg = Pattern.getDstRegs()[i];
+      if (!Reg->isSubClassOf("Register") || Reg == HandledReg) continue;
+      ++NumSrcResults;
+    }
+  }    
+  
   assert(Ops.size() >= NumSrcResults && "Didn't provide enough results");
   Ops.resize(NumSrcResults);
-#endif
 
   // If the matched pattern covers nodes which define a flag result, emit a node
   // that tells the matcher about them so that it can update their results.
