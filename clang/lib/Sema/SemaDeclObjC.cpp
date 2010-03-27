@@ -769,7 +769,14 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                    bool& IncompleteImpl,
                                    const llvm::DenseSet<Selector> &InsMap,
                                    const llvm::DenseSet<Selector> &ClsMap,
-                                   ObjCInterfaceDecl *IDecl) {
+                                   ObjCContainerDecl *CDecl) {
+  ObjCInterfaceDecl *IDecl;
+  if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl))
+    IDecl = C->getClassInterface();
+  else
+    IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl);
+  assert (IDecl && "CheckProtocolMethodDefs - IDecl is null");
+  
   ObjCInterfaceDecl *Super = IDecl->getSuperClass();
   ObjCInterfaceDecl *NSIDecl = 0;
   if (getLangOptions().NeXTRuntime) {
@@ -809,7 +816,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             IDecl->lookupInstanceMethod(method->getSelector());
             if (!MethodInClass || !MethodInClass->isSynthesized()) {
               WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
-              Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
+              Diag(CDecl->getLocation(), diag::note_required_for_protocol_at) <<
                 PDecl->getDeclName();
             }
           }
@@ -955,7 +962,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
       for (ObjCCategoryDecl::protocol_iterator PI = C->protocol_begin(),
            E = C->protocol_end(); PI != E; ++PI)
         CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
-                                InsMap, ClsMap, C->getClassInterface());
+                                InsMap, ClsMap, CDecl);
       // Report unimplemented properties in the category as well.
       // When reporting on missing setter/getters, do not report when
       // setter/getter is implemented in category's primary class 

@@ -1452,7 +1452,7 @@ public:
                                bool& IncompleteImpl,
                                const llvm::DenseSet<Selector> &InsMap,
                                const llvm::DenseSet<Selector> &ClsMap,
-                               ObjCInterfaceDecl *IDecl);
+                               ObjCContainerDecl *CDecl);
 
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface.
