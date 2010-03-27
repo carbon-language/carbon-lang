@@ -783,6 +783,7 @@ sub RunBuildCommand {
   my $IgnoreErrors = shift;
   my $Cmd = $Args->[0];
   my $CCAnalyzer = shift;
+  my $CXXAnalyzer = shift;
   
   # Get only the part of the command after the last '/'.
   if ($Cmd =~ /\/([^\/]+)$/) {
@@ -809,12 +810,12 @@ sub RunBuildCommand {
       $ENV{"CCC_CXX"} = $1;      
     }        
     shift @$Args;
-    unshift @$Args, $CCAnalyzer;
+    unshift @$Args, $CXXAnalyzer;
   }
   elsif ($IgnoreErrors) {
     if ($Cmd eq "make" or $Cmd eq "gmake") {
       AddIfNotPresent($Args, "CC=$CCAnalyzer");
-      AddIfNotPresent($Args, "CXX=$CCAnalyzer");
+      AddIfNotPresent($Args, "CXX=$CXXAnalyzer");
       AddIfNotPresent($Args,"-k");
       AddIfNotPresent($Args,"-i");
     }
@@ -845,7 +846,8 @@ sub RunBuildCommand {
     
     # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
     # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
-    # when linking such files.
+    # (via c++-analyzer) when linking such files.
+    $ENV{"LDPLUSPLUS"} = $CXXAnalyzer;
   }
   
   return (system(@$Args) >> 8);
@@ -1232,9 +1234,8 @@ if (defined $OutputFormat) {
   $ENV{'CCC_ANALYZER_OUTPUT_FORMAT'} = $OutputFormat;
 }
 
-
 # Run the build.
-my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
+my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd, $CmdCXX);
 
 if (defined $OutputFormat) {
   if ($OutputFormat =~ /plist/) {
