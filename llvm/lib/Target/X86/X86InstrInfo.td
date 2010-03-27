@@ -4822,13 +4822,8 @@ def : Pat<(mul (loadi32 addr:$src1), i32immSExt8:$src2),
 
 // Optimize multiply by 2 with EFLAGS result.
 let AddedComplexity = 2 in {
-def : Pat<(parallel (X86smul_flag GR16:$src1, 2),
-                    (implicit EFLAGS)),
-          (ADD16rr GR16:$src1, GR16:$src1)>;
-
-def : Pat<(parallel (X86smul_flag GR32:$src1, 2),
-                    (implicit EFLAGS)),
-          (ADD32rr GR32:$src1, GR32:$src1)>;
+def : Pat<(X86smul_flag GR16:$src1, 2), (ADD16rr GR16:$src1, GR16:$src1)>;
+def : Pat<(X86smul_flag GR32:$src1, 2), (ADD32rr GR32:$src1, GR32:$src1)>;
 }
 
 // Patterns for nodes that do not produce flags, for instructions that do.
