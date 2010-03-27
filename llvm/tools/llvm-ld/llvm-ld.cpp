@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -123,6 +124,10 @@ static cl::opt<std::string> CO9("m", cl::Hidden,
 /// This is just for convenience so it doesn't have to be passed around
 /// everywhere.
 static std::string progname;
+
+/// FileRemover objects to clean up output files in the event of an error.
+static FileRemover OutputRemover;
+static FileRemover BitcodeOutputRemover;
 
 /// PrintAndExit - Prints a message to standard error and exits with error code
 ///
@@ -235,10 +240,6 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
                      raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty())
     PrintAndExit(ErrorInfo, M);
-
-  // Ensure that the bitcode file gets removed from the disk if we get a
-  // terminating signal.
-  sys::RemoveFileOnSignal(sys::Path(FileName));
 
   // Write it out
   WriteBitcodeToFile(M, Out);
@@ -582,7 +583,16 @@ int main(int argc, char **argv, char **envp) {
     if (!LinkAsLibrary) BitcodeOutputFilename += ".bc";
   }
 
+  // Arrange for the bitcode output file to be deleted on any errors.
+  BitcodeOutputRemover = FileRemover(sys::Path(BitcodeOutputFilename));
+  sys::RemoveFileOnSignal(sys::Path(BitcodeOutputFilename));
+
+  // Generate the bitcode output.
   GenerateBitcode(Composite.get(), BitcodeOutputFilename);
+
+  // Arrange for the output file to be deleted on any errors.
+  OutputRemover = FileRemover(sys::Path(OutputFilename));
+  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   // If we are not linking a library, generate either a native executable
   // or a JIT shell script, depending upon what the user wants.
@@ -636,7 +646,6 @@ int main(int argc, char **argv, char **envp) {
 
       // Mark the output files for removal if we get an interrupt.
       sys::RemoveFileOnSignal(AssemblyFile);
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
       sys::Path llc = FindExecutable("llc", argv[0],
@@ -666,7 +675,6 @@ int main(int argc, char **argv, char **envp) {
 
       // Mark the output files for removal if we get an interrupt.
       sys::RemoveFileOnSignal(CFile);
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
       sys::Path llc = FindExecutable("llc", argv[0],
@@ -706,6 +714,10 @@ int main(int argc, char **argv, char **envp) {
     if (sys::Path(BitcodeOutputFilename).makeReadableOnDisk(&ErrMsg))
       PrintAndExit(ErrMsg, Composite.get());
   }
+
+  // Operations which may fail are now complete.
+  OutputRemover.releaseFile();
+  BitcodeOutputRemover.releaseFile();
 
   // Graceful exit
   return 0;
