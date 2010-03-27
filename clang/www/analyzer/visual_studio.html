@@ -17,7 +17,7 @@
 <h1>clangify2010: Using the Analyzer with Visual Studio 2010</h1>
 
 <p>The Clang Static Analyzer has only limited support right now for Visual
-Studio users. Some users might find the <tt>Clangify2010.py</tt> script useful
+Studio users. Some users might find the <tt>clangify2010.py</tt> script useful
 (described below) for analyzing their projects. It does not provide the same
 functionality as <tt>scan-build</tt> (for example, it does not actually build
 Visual Studio projects to analyze source files nor does it have a UI for viewing
@@ -52,7 +52,7 @@ href="http://python.org/download/">here</a>) in your <tt>PATH</tt>.</li>
 href="http://clang.llvm.org/get_started.html">here</a>) in your <tt>PATH</tt>.
 <li>Your project does not have automatically generated intermediate files as
 part of the build step. You can possibly work around this limitation by adding a
-custom pre_analysis function to <tt>Clangify2010.py</tt>.</li>
+custom pre_analysis function to <tt>clangify2010.py</tt>.</li>
 <li>The source files in your project all take the same compiler flags.</li>
 </ul>
 
