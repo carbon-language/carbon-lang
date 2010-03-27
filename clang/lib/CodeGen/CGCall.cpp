@@ -623,8 +623,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     const ABIArgInfo &AI = it->info;
     unsigned Attributes = 0;
 
-    if (ParamType.isRestrictQualified())
-      Attributes |= llvm::Attribute::NoAlias;
+    // 'restrict' -> 'noalias' is done in EmitFunctionProlog when we
+    // have the corresponding parameter variable.  It doesn't make
+    // sense to do it here because parameters are so fucked up.
 
     switch (AI.getKind()) {
     case ABIArgInfo::Coerce:
@@ -749,6 +750,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         V = CreateMemTemp(Ty);
         Builder.CreateStore(AI, V);
       } else {
+        if (Arg->getType().isRestrictQualified())
+          AI->addAttr(llvm::Attribute::NoAlias);
+
         if (!getContext().typesAreCompatible(Ty, Arg->getType())) {
           // This must be a promotion, for something like
           // "void a(x) short x; {..."
