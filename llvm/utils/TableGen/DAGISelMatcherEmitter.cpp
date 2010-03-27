@@ -280,10 +280,14 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     // For each case we emit the size, then the opcode, then the matcher.
     for (unsigned i = 0, e = NumCases; i != e; ++i) {
       const Matcher *Child;
-      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
+      unsigned IdxSize;
+      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N)) {
         Child = SOM->getCaseMatcher(i);
-      else
+        IdxSize = 2;  // size of opcode in table is 2 bytes.
+      } else {
         Child = cast<SwitchTypeMatcher>(N)->getCaseMatcher(i);
+        IdxSize = 1;  // size of type in table is 1 byte.
+      }
       
       // We need to encode the opcode and the offset of the case code before
       // emitting the case code.  Handle this by buffering the output into a
@@ -299,7 +303,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
         TmpBuf.clear();
         raw_svector_ostream OS(TmpBuf);
         formatted_raw_ostream FOS(OS);
-        ChildSize = EmitMatcherList(Child, Indent+1, CurrentIdx+VBRSize+1, FOS);
+        ChildSize = EmitMatcherList(Child, Indent+1, CurrentIdx+VBRSize+IdxSize,
+                                    FOS);
       } while (GetVBRSize(ChildSize) != VBRSize);
       
       assert(ChildSize != 0 && "Should not have a zero-sized child!");
@@ -315,14 +320,13 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
       CurrentIdx += EmitVBRValue(ChildSize, OS);
       
       OS << ' ';
-      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N)) {
+      if (const SwitchOpcodeMatcher *SOM = dyn_cast<SwitchOpcodeMatcher>(N))
         OS << "TARGET_OPCODE(" << SOM->getCaseOpcode(i).getEnumName() << "),";
-        CurrentIdx += 2;
-      } else {
+      else
         OS << getEnumName(cast<SwitchTypeMatcher>(N)->getCaseType(i)) << ',';
-        ++CurrentIdx;
-      }
-      
+
+      CurrentIdx += IdxSize;
+
       if (!OmitComments)
         OS << "// ->" << CurrentIdx+ChildSize;
       OS << '\n';
