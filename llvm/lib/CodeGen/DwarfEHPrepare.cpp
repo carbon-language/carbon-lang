@@ -86,7 +86,7 @@ namespace {
     /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still
     /// use the ".llvm.eh.catch.all.value" call need to convert to using it's
     /// initializer instead.
-    void CleanupSelectors();
+    bool CleanupSelectors();
 
     /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow"
     /// calls. The "unwind" part of these invokes jump to a landing pad within
@@ -220,7 +220,8 @@ DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
 /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still use
 /// the ".llvm.eh.catch.all.value" call need to convert to using it's
 /// initializer instead.
-void DwarfEHPrepare::CleanupSelectors() {
+bool DwarfEHPrepare::CleanupSelectors() {
+  bool Changed = false;
   for (Value::use_iterator
          I = SelectorIntrinsic->use_begin(),
          E = SelectorIntrinsic->use_end(); I != E; ++I) {
@@ -232,7 +233,10 @@ void DwarfEHPrepare::CleanupSelectors() {
     GlobalVariable *GV = dyn_cast<GlobalVariable>(Sel->getOperand(OpIdx));
     if (GV != EHCatchAllValue) continue;
     Sel->setOperand(OpIdx, EHCatchAllValue->getInitializer());
+    Changed = true;
   }
+
+  return Changed;
 }
 
 /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" calls. The
@@ -254,19 +258,13 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
 
   if (!URoR) {
     URoR = F->getParent()->getFunction("_Unwind_Resume_or_Rethrow");
-    if (!URoR) {
-      CleanupSelectors();
-      return false;
-    }
+    if (!URoR) return CleanupSelectors();
   }
 
   if (!ExceptionValueIntrinsic) {
     ExceptionValueIntrinsic =
       Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_exception);
-    if (!ExceptionValueIntrinsic) {
-      CleanupSelectors();
-      return false;
-    }
+    if (!ExceptionValueIntrinsic) return CleanupSelectors();
   }
 
   bool Changed = false;
@@ -337,7 +335,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     }
   }
 
-  CleanupSelectors();
+  Changed |= CleanupSelectors();
   return Changed;
 }
 
