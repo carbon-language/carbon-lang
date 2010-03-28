@@ -605,20 +605,7 @@ let AddedComplexity = 10 in {
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
                   VR64:$src2)),
           (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV_bc))),
-                  VR64:$src2)),
-          (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
-                  VR64:$src2)),
-          (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
-
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
-                  (load addr:$src2))),
-          (MMX_PANDNrm VR64:$src1, addr:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV_bc))),
-                  (load addr:$src2))),
-          (MMX_PANDNrm VR64:$src1, addr:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
                   (load addr:$src2))),
           (MMX_PANDNrm VR64:$src1, addr:$src2)>;
 
