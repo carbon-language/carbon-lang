@@ -2733,19 +2733,22 @@ defm VQABS    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01110, 0,
 
 // Vector Negate.
 
-def vneg      : PatFrag<(ops node:$in), (sub immAllZerosV, node:$in)>;
-def vneg_conv : PatFrag<(ops node:$in), (sub immAllZerosV_bc, node:$in)>;
+def vneg   : PatFrag<(ops node:$in), (sub immAllZerosV, node:$in)>;
+def vneg8  : PatFrag<(ops node:$in),
+                     (sub (bitconvert (v8i8 immAllZerosV)), node:$in)>;
+def vneg16 : PatFrag<(ops node:$in),
+                     (sub (bitconvert (v16i8 immAllZerosV)), node:$in)>;
 
 class VNEGD<bits<2> size, string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, size, 0b01, 0b00111, 0, 0, (outs DPR:$dst), (ins DPR:$src),
         IIC_VSHLiD, OpcodeStr, Dt, "$dst, $src", "",
-        [(set DPR:$dst, (Ty (vneg DPR:$src)))]>;
+        [(set DPR:$dst, (Ty (vneg8 DPR:$src)))]>;
 class VNEGQ<bits<2> size, string OpcodeStr, string Dt, ValueType Ty>
   : N2V<0b11, 0b11, size, 0b01, 0b00111, 1, 0, (outs QPR:$dst), (ins QPR:$src),
         IIC_VSHLiD, OpcodeStr, Dt, "$dst, $src", "",
-        [(set QPR:$dst, (Ty (vneg QPR:$src)))]>;
+        [(set QPR:$dst, (Ty (vneg16 QPR:$src)))]>;
 
-//   VNEG     : Vector Negate
+//   VNEG     : Vector Negate (integer)
 def  VNEGs8d  : VNEGD<0b00, "vneg", "s8", v8i8>;
 def  VNEGs16d : VNEGD<0b01, "vneg", "s16", v4i16>;
 def  VNEGs32d : VNEGD<0b10, "vneg", "s32", v2i32>;
@@ -2763,12 +2766,12 @@ def  VNEGf32q : N2V<0b11, 0b11, 0b10, 0b01, 0b01111, 1, 0,
                     "vneg", "f32", "$dst, $src", "",
                     [(set QPR:$dst, (v4f32 (fneg QPR:$src)))]>;
 
-def : Pat<(v8i8 (vneg_conv DPR:$src)), (VNEGs8d DPR:$src)>;
-def : Pat<(v4i16 (vneg_conv DPR:$src)), (VNEGs16d DPR:$src)>;
-def : Pat<(v2i32 (vneg_conv DPR:$src)), (VNEGs32d DPR:$src)>;
-def : Pat<(v16i8 (vneg_conv QPR:$src)), (VNEGs8q QPR:$src)>;
-def : Pat<(v8i16 (vneg_conv QPR:$src)), (VNEGs16q QPR:$src)>;
-def : Pat<(v4i32 (vneg_conv QPR:$src)), (VNEGs32q QPR:$src)>;
+def : Pat<(v8i8  (vneg8  DPR:$src)), (VNEGs8d DPR:$src)>;
+def : Pat<(v4i16 (vneg8  DPR:$src)), (VNEGs16d DPR:$src)>;
+def : Pat<(v2i32 (vneg8  DPR:$src)), (VNEGs32d DPR:$src)>;
+def : Pat<(v16i8 (vneg16 QPR:$src)), (VNEGs8q QPR:$src)>;
+def : Pat<(v8i16 (vneg16 QPR:$src)), (VNEGs16q QPR:$src)>;
+def : Pat<(v4i32 (vneg16 QPR:$src)), (VNEGs32q QPR:$src)>;
 
 //   VQNEG    : Vector Saturating Negate
 defm VQNEG    : N2VInt_QHS<0b11, 0b11, 0b00, 0b01111, 0, 
