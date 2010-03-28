@@ -555,8 +555,11 @@ public:
 
   /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
   ///
-  QualType getFunctionNoProtoType(QualType ResultTy, bool NoReturn = false,
-                                  CallingConv CallConv = CC_Default);
+  QualType getFunctionNoProtoType(QualType ResultTy, bool NoReturn,
+                                  CallingConv CallConv);
+  QualType getFunctionNoProtoType(QualType ResultTy) {
+    return getFunctionNoProtoType(ResultTy, false, CC_Default);
+  }
 
   /// getFunctionType - Return a normal function type with a typed argument
   /// list.  isVariadic indicates whether the argument list includes '...'.
