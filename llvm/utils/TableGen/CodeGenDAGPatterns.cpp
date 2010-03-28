@@ -1591,6 +1591,40 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
   return Result;
 }
 
+/// SimplifyTree - See if we can simplify this tree to eliminate something that
+/// will never match in favor of something obvious that will.  This is here
+/// strictly as a convenience to target authors because it allows them to write
+/// more type generic things and have useless type casts fold away.
+///
+/// This returns true if any change is made.
+static bool SimplifyTree(TreePatternNode *&N) {
+  if (N->isLeaf())
+    return false;
+
+  // If we have a bitconvert with a resolved type and if the source and
+  // destination types are the same, then the bitconvert is useless, remove it.
+  if (N->getOperator()->getName() == "bitconvert" &&
+      N->getNumChildren() > 0 && // FIXME
+      N->getExtType(0).isConcrete() &&
+      N->getExtType(0) == N->getChild(0)->getExtType(0) &&
+      N->getName().empty()) {
+    N = N->getChild(0);
+    SimplifyTree(N);
+    return true;
+  }
+
+  // Walk all children.
+  bool MadeChange = false;
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = N->getChild(i);
+    MadeChange |= SimplifyTree(Child);
+    N->setChild(i, Child);
+  }
+  return MadeChange;
+}
+
+
+
 /// InferAllTypes - Infer/propagate as many types throughout the expression
 /// patterns as possible.  Return true if all types are inferred, false
 /// otherwise.  Throw an exception if a type contradiction is found.
@@ -1602,8 +1636,10 @@ InferAllTypes(const StringMap<SmallVector<TreePatternNode*,1> > *InNamedTypes) {
   bool MadeChange = true;
   while (MadeChange) {
     MadeChange = false;
-    for (unsigned i = 0, e = Trees.size(); i != e; ++i)
+    for (unsigned i = 0, e = Trees.size(); i != e; ++i) {
       MadeChange |= Trees[i]->ApplyTypeConstraints(*this, false);
+      MadeChange |= SimplifyTree(Trees[i]);
+    }
 
     // If there are constraints on our named nodes, apply them.
     for (StringMap<SmallVector<TreePatternNode*,1> >::iterator 

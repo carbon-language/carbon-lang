@@ -1,12 +1,16 @@
-; RUN: llc < %s -o - -march=x86 -mattr=+mmx | grep paddq | count 2
-; RUN: llc < %s -o - -march=x86 -mattr=+mmx | grep movq | count 2
+; RUN: llc < %s -o - -march=x86 -mattr=+mmx | FileCheck %s
 
-define <1 x i64> @unsigned_add3(<1 x i64>* %a, <1 x i64>* %b, i32 %count) {
+define <1 x i64> @unsigned_add3(<1 x i64>* %a, <1 x i64>* %b, i32 %count) nounwind {
 entry:
 	%tmp2942 = icmp eq i32 %count, 0		; <i1> [#uses=1]
 	br i1 %tmp2942, label %bb31, label %bb26
 
 bb26:		; preds = %bb26, %entry
+
+; CHECK:  movq	({{.*}},8), %mm
+; CHECK:  paddq	({{.*}},8), %mm
+; CHECK:  paddq	%mm{{[0-7]}}, %mm
+
 	%i.037.0 = phi i32 [ 0, %entry ], [ %tmp25, %bb26 ]		; <i32> [#uses=3]
 	%sum.035.0 = phi <1 x i64> [ zeroinitializer, %entry ], [ %tmp22, %bb26 ]		; <<1 x i64>> [#uses=1]
 	%tmp13 = getelementptr <1 x i64>* %b, i32 %i.037.0		; <<1 x i64>*> [#uses=1]
