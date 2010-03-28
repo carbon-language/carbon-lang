@@ -3198,8 +3198,6 @@ def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
 
 // Set lowest element and zero upper elements.
 let AddedComplexity = 15 in
-def : Pat<(v2f64 (movl immAllZerosV_bc, VR128:$src)),
-          (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 
