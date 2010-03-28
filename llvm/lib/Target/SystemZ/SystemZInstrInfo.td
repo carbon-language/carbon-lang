@@ -31,7 +31,8 @@ class SDTCisI64<int OpNum> : SDTCisVT<OpNum, i64>;
 def SDT_SystemZCall         : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SDT_SystemZCallSeqStart : SDCallSeqStart<[SDTCisI64<0>]>;
 def SDT_SystemZCallSeqEnd   : SDCallSeqEnd<[SDTCisI64<0>, SDTCisI64<1>]>;
-def SDT_CmpTest             : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDT_CmpTest             : SDTypeProfile<1, 2, [SDTCisI64<0>,
+                                                   SDTCisSameAs<1, 2>]>;
 def SDT_BrCond              : SDTypeProfile<0, 3,
                                            [SDTCisVT<0, OtherVT>,
                                             SDTCisI8<1>, SDTCisVT<2, i64>]>;
@@ -980,100 +981,89 @@ let Defs = [PSW] in {
 def CMP32rr : RRI<0x19,
                   (outs), (ins GR32:$src1, GR32:$src2),
                   "cr\t$src1, $src2",
-                  [(SystemZcmp GR32:$src1, GR32:$src2), 
-                   (implicit PSW)]>;
+                  [(set PSW, (SystemZcmp GR32:$src1, GR32:$src2))]>; 
 def CMP64rr : RREI<0xB920,
                    (outs), (ins GR64:$src1, GR64:$src2),
                    "cgr\t$src1, $src2",
-                   [(SystemZcmp GR64:$src1, GR64:$src2), 
-                    (implicit PSW)]>;
+                   [(set PSW, (SystemZcmp GR64:$src1, GR64:$src2))]>;
 
 def CMP32ri   : RILI<0xC2D,
                      (outs), (ins GR32:$src1, s32imm:$src2),
                      "cfi\t$src1, $src2",
-                     [(SystemZcmp GR32:$src1, imm:$src2), 
-                      (implicit PSW)]>;
+                     [(set PSW, (SystemZcmp GR32:$src1, imm:$src2))]>;
 def CMP64ri32 : RILI<0xC2C,
                      (outs), (ins GR64:$src1, s32imm64:$src2),
                      "cgfi\t$src1, $src2",
-                     [(SystemZcmp GR64:$src1, i64immSExt32:$src2),
-                      (implicit PSW)]>;
+                     [(set PSW, (SystemZcmp GR64:$src1, i64immSExt32:$src2))]>;
 
 def CMP32rm : RXI<0x59,
                   (outs), (ins GR32:$src1, rriaddr12:$src2),
                   "c\t$src1, $src2",
-                  [(SystemZcmp GR32:$src1, (load rriaddr12:$src2)),
-                   (implicit PSW)]>;
+                  [(set PSW, (SystemZcmp GR32:$src1, (load rriaddr12:$src2)))]>;
 def CMP32rmy : RXYI<0xE359,
                     (outs), (ins GR32:$src1, rriaddr:$src2),
                     "cy\t$src1, $src2",
-                    [(SystemZcmp GR32:$src1, (load rriaddr:$src2)),
-                     (implicit PSW)]>;
+                    [(set PSW, (SystemZcmp GR32:$src1, (load rriaddr:$src2)))]>;
 def CMP64rm  : RXYI<0xE320,
                     (outs), (ins GR64:$src1, rriaddr:$src2),
                     "cg\t$src1, $src2",
-                    [(SystemZcmp GR64:$src1, (load rriaddr:$src2)),
-                     (implicit PSW)]>;
+                    [(set PSW, (SystemZcmp GR64:$src1, (load rriaddr:$src2)))]>;
 
 def UCMP32rr : RRI<0x15,
                    (outs), (ins GR32:$src1, GR32:$src2),
                    "clr\t$src1, $src2",
-                   [(SystemZucmp GR32:$src1, GR32:$src2),
-                    (implicit PSW)]>;
+                   [(set PSW, (SystemZucmp GR32:$src1, GR32:$src2))]>;
 def UCMP64rr : RREI<0xB921,
                     (outs), (ins GR64:$src1, GR64:$src2),
                     "clgr\t$src1, $src2",
-                    [(SystemZucmp GR64:$src1, GR64:$src2), 
-                     (implicit PSW)]>;
+                    [(set PSW, (SystemZucmp GR64:$src1, GR64:$src2))]>;
 
 def UCMP32ri   : RILI<0xC2F,
                       (outs), (ins GR32:$src1, i32imm:$src2),
                       "clfi\t$src1, $src2",
-                      [(SystemZucmp GR32:$src1, imm:$src2),
-                       (implicit PSW)]>;
+                      [(set PSW, (SystemZucmp GR32:$src1, imm:$src2))]>;
 def UCMP64ri32 : RILI<0xC2E,
                       (outs), (ins GR64:$src1, i64i32imm:$src2),
                       "clgfi\t$src1, $src2",
-                      [(SystemZucmp GR64:$src1, i64immZExt32:$src2),
-                       (implicit PSW)]>;
+                      [(set PSW,(SystemZucmp GR64:$src1, i64immZExt32:$src2))]>;
 
 def UCMP32rm  : RXI<0x55,
                     (outs), (ins GR32:$src1, rriaddr12:$src2),
                     "cl\t$src1, $src2",
-                    [(SystemZucmp GR32:$src1, (load rriaddr12:$src2)),
-                     (implicit PSW)]>;
+                    [(set PSW, (SystemZucmp GR32:$src1,
+                                            (load rriaddr12:$src2)))]>;
 def UCMP32rmy : RXYI<0xE355,
                      (outs), (ins GR32:$src1, rriaddr:$src2),
                      "cly\t$src1, $src2",
-                     [(SystemZucmp GR32:$src1, (load rriaddr:$src2)),
-                      (implicit PSW)]>;
+                     [(set PSW, (SystemZucmp GR32:$src1,
+                                             (load rriaddr:$src2)))]>;
 def UCMP64rm  : RXYI<0xE351,
                      (outs), (ins GR64:$src1, rriaddr:$src2),
                      "clg\t$src1, $src2",
-                     [(SystemZucmp GR64:$src1, (load rriaddr:$src2)),
-                      (implicit PSW)]>;
+                     [(set PSW, (SystemZucmp GR64:$src1,
+                                             (load rriaddr:$src2)))]>;
 
 def CMPSX64rr32  : RREI<0xB930,
                         (outs), (ins GR64:$src1, GR32:$src2),
                         "cgfr\t$src1, $src2",
-                        [(SystemZucmp GR64:$src1, (sext GR32:$src2)),
-                         (implicit PSW)]>;
+                        [(set PSW, (SystemZucmp GR64:$src1,
+                                                (sext GR32:$src2)))]>;
 def UCMPZX64rr32 : RREI<0xB931,
                         (outs), (ins GR64:$src1, GR32:$src2),
                         "clgfr\t$src1, $src2",
-                        [(SystemZucmp GR64:$src1, (zext GR32:$src2)),
-                         (implicit PSW)]>;
+                        [(set PSW, (SystemZucmp GR64:$src1,
+                                                (zext GR32:$src2)))]>;
 
 def CMPSX64rm32   : RXYI<0xE330,
                          (outs), (ins GR64:$src1, rriaddr:$src2),
                          "cgf\t$src1, $src2",
-                         [(SystemZucmp GR64:$src1, (sextloadi64i32 rriaddr:$src2)),
-                          (implicit PSW)]>;
+                         [(set PSW, (SystemZucmp GR64:$src1,
+                                             (sextloadi64i32 rriaddr:$src2)))]>;
 def UCMPZX64rm32  : RXYI<0xE331,
                          (outs), (ins GR64:$src1, rriaddr:$src2),
                          "clgf\t$src1, $src2",
-                         [(SystemZucmp GR64:$src1, (zextloadi64i32 rriaddr:$src2)),
-                          (implicit PSW)]>;
+                         [(set PSW, (SystemZucmp GR64:$src1,
+                                             (zextloadi64i32 rriaddr:$src2)))]>;
 
 // FIXME: Add other crazy ucmp forms
 

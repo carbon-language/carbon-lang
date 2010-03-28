@@ -316,19 +316,19 @@ def FBCONVF64   : Pseudo<(outs FP64:$dst), (ins GR64:$src),
 let Defs = [PSW] in {
 def FCMP32rr : Pseudo<(outs), (ins FP32:$src1, FP32:$src2),
                       "cebr\t$src1, $src2",
-                      [(SystemZcmp FP32:$src1, FP32:$src2), (implicit PSW)]>;
+                      [(set PSW, (SystemZcmp FP32:$src1, FP32:$src2))]>;
 def FCMP64rr : Pseudo<(outs), (ins FP64:$src1, FP64:$src2),
                       "cdbr\t$src1, $src2",
-                      [(SystemZcmp FP64:$src1, FP64:$src2), (implicit PSW)]>;
+                      [(set PSW, (SystemZcmp FP64:$src1, FP64:$src2))]>;
 
 def FCMP32rm : Pseudo<(outs), (ins FP32:$src1, rriaddr12:$src2),
                       "ceb\t$src1, $src2",
-                      [(SystemZcmp FP32:$src1, (load rriaddr12:$src2)),
-                       (implicit PSW)]>;
+                      [(set PSW, (SystemZcmp FP32:$src1,
+                                             (load rriaddr12:$src2)))]>;
 def FCMP64rm : Pseudo<(outs), (ins FP64:$src1, rriaddr12:$src2),
                       "cdb\t$src1, $src2",
-                      [(SystemZcmp FP64:$src1, (load rriaddr12:$src2)),
-                       (implicit PSW)]>;
+                      [(set PSW, (SystemZcmp FP64:$src1,
+                                             (load rriaddr12:$src2)))]>;
 } // Defs = [PSW]
 
 //===----------------------------------------------------------------------===//
