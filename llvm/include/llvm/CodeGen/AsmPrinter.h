@@ -47,6 +47,7 @@ namespace llvm {
   class MCSection;
   class MCStreamer;
   class MCSymbol;
+  class MDNode;
   class DwarfWriter;
   class Mangler;
   class MCAsmInfo;
@@ -137,6 +138,9 @@ namespace llvm {
     mutable unsigned Counter;
     mutable unsigned SetCounter;
     
+    // Private state for processDebugLoc()
+    mutable const MDNode *PrevDLT;
+
   protected:
     explicit AsmPrinter(formatted_raw_ostream &o, TargetMachine &TM,
                         MCStreamer &Streamer);

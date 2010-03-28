@@ -184,10 +184,6 @@ class DwarfDebug : public DwarfPrinter {
   /// function.
   DenseMap<CompileUnit *, unsigned> CompileUnitOffsets;
 
-  /// Previous instruction's location information. This is used to determine
-  /// label location to indicate scope boundries in dwarf debug info.
-  mutable const MDNode *PrevDILoc;
-
   /// DebugTimer - Timer for the Dwarf debug writer.
   Timer *DebugTimer;
   
@@ -546,8 +542,8 @@ public:
   /// collectVariableInfo - Populate DbgScope entries with variables' info.
   void collectVariableInfo();
 
-  /// beginScope - Process beginning of a scope.
-  void beginScope(const MachineInstr *MI);
+  /// beginScope - Process beginning of a scope starting at Label.
+  void beginScope(const MachineInstr *MI, MCSymbol *Label);
 
   /// endScope - Prcess end of a scope.
   void endScope(const MachineInstr *MI);

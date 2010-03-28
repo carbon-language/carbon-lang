@@ -62,7 +62,7 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
     TM(tm), MAI(tm.getMCAsmInfo()), TRI(tm.getRegisterInfo()),
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
-    LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
+    LastMI(0), LastFn(0), Counter(~0U), SetCounter(0), PrevDLT(NULL) {
   DW = 0; MMI = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
@@ -1337,12 +1337,25 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
   if (!MAI || !DW || !MAI->doesSupportDebugInformation()
       || !DW->ShouldEmitDwarfDebug())
     return;
+  if (MI->getOpcode() == TargetOpcode::DBG_VALUE)
+    return;
+  DebugLoc DL = MI->getDebugLoc();
+  if (DL.isUnknown())
+    return;
+  DILocation CurDLT = MF->getDILocation(DL);
+  if (!CurDLT.getScope().Verify())
+    return;
 
-  if (!BeforePrintingInsn)
+  if (!BeforePrintingInsn) {
     // After printing instruction
     DW->EndScope(MI);
-  else
-    DW->BeginScope(MI);
+  } else if (CurDLT.getNode() != PrevDLT) {
+    MCSymbol *L = DW->RecordSourceLine(CurDLT.getLineNumber(), 
+                                       CurDLT.getColumnNumber(),
+                                       CurDLT.getScope().getNode());
+    DW->BeginScope(MI, L);
+    PrevDLT = CurDLT.getNode();
+  }
 }
 
 

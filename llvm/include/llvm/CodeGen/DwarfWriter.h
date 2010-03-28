@@ -83,11 +83,19 @@ public:
   ///
   void EndFunction(const MachineFunction *MF);
 
+  /// RecordSourceLine - Register a source line with debug info. Returns the
+  /// unique label that was emitted and which provides correspondence to
+  /// the source line list.
+  MCSymbol *RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
+
+  /// getRecordSourceLineCount - Count source lines.
+  unsigned getRecordSourceLineCount();
+
   /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
   /// be emitted.
   bool ShouldEmitDwarfDebug() const;
 
-  void BeginScope(const MachineInstr *MI);
+  void BeginScope(const MachineInstr *MI, MCSymbol *Label);
   void EndScope(const MachineInstr *MI);
 };
 

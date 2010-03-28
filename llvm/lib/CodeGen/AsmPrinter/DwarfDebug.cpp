@@ -296,7 +296,7 @@ DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
   : DwarfPrinter(OS, A, T), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
     DIEValues(), SectionSourceLines(), didInitial(false), shouldEmit(false),
-    CurrentFnDbgScope(0), PrevDILoc(0), DebugTimer(0) {
+    CurrentFnDbgScope(0), DebugTimer(0) {
   NextStringPoolNumber = 0;
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer");
@@ -2036,49 +2036,19 @@ void DwarfDebug::collectVariableInfo() {
   }
 }
 
-/// beginScope - Process beginning of a scope.
-void DwarfDebug::beginScope(const MachineInstr *MI) {
-  if (MI->getOpcode() == TargetOpcode::DBG_VALUE)
-    return;
-
-  DebugLoc DL = MI->getDebugLoc();
-  if (DL.isUnknown())
-    return;
-  DILocation DILoc = MF->getDILocation(DL);
-  if (!DILoc.getScope().Verify())
-    return;
-
-  if(DILoc.getNode() == PrevDILoc)
-    return;
-
+/// beginScope - Process beginning of a scope starting at Label.
+void DwarfDebug::beginScope(const MachineInstr *MI, MCSymbol *Label) {
   InsnToDbgScopeMapTy::iterator I = DbgScopeBeginMap.find(MI);
   if (I == DbgScopeBeginMap.end())
     return;
-
-  MCSymbol *Label = recordSourceLine(DILoc.getLineNumber(),
-                                     DILoc.getColumnNumber(),
-                                     DILoc.getScope().getNode());
-
   ScopeVector &SD = I->second;
   for (ScopeVector::iterator SDI = SD.begin(), SDE = SD.end();
        SDI != SDE; ++SDI)
     (*SDI)->setStartLabel(Label);
-
-  PrevDILoc = DILoc.getNode();
 }
 
 /// endScope - Process end of a scope.
 void DwarfDebug::endScope(const MachineInstr *MI) {
-  if (MI->getOpcode() == TargetOpcode::DBG_VALUE)
-    return;
-
-  DebugLoc DL = MI->getDebugLoc();
-  if (DL.isUnknown())
-    return;
-  DILocation DILoc = MF->getDILocation(DL);
-  if (!DILoc.getScope().Verify())
-    return;
-  
   InsnToDbgScopeMapTy::iterator I = DbgScopeEndMap.find(MI);
   if (I == DbgScopeEndMap.end())
     return;
