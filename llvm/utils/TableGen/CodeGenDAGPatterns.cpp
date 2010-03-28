@@ -1490,11 +1490,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     Init *II = BI->convertInitializerTo(new IntRecTy());
     if (II == 0 || !dynamic_cast<IntInit*>(II))
       error("Bits value must be constants!");
-
-    if (!OpName.empty())
-      error("Constant int argument should not have a name!");
-
-    return new TreePatternNode(dynamic_cast<IntInit*>(II), 1);
+    return ParseTreePattern(II, OpName);
   }
 
   DagInit *Dag = dynamic_cast<DagInit*>(TheInit);
@@ -1534,9 +1530,28 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     error("Unrecognized node '" + Operator->getName() + "'!");
   
   //  Check to see if this is something that is illegal in an input pattern.
-  if (isInputPattern && (Operator->isSubClassOf("Instruction") ||
-                         Operator->isSubClassOf("SDNodeXForm")))
-    error("Cannot use '" + Operator->getName() + "' in an input pattern!");
+  if (isInputPattern) {
+    if (Operator->isSubClassOf("Instruction") ||
+        Operator->isSubClassOf("SDNodeXForm"))
+      error("Cannot use '" + Operator->getName() + "' in an input pattern!");
+  } else {
+    if (Operator->isSubClassOf("Intrinsic"))
+      error("Cannot use '" + Operator->getName() + "' in an output pattern!");
+    
+    if (Operator->isSubClassOf("SDNode") &&
+        Operator->getName() != "imm" &&
+        Operator->getName() != "fpimm" &&
+        Operator->getName() != "tglobaltlsaddr" &&
+        Operator->getName() != "tconstpool" &&
+        Operator->getName() != "tjumptable" &&
+        Operator->getName() != "tframeindex" &&
+        Operator->getName() != "texternalsym" &&
+        Operator->getName() != "tblockaddress" &&
+        Operator->getName() != "tglobaladdr" &&
+        Operator->getName() != "bb" &&
+        Operator->getName() != "vt")
+      error("Cannot use '" + Operator->getName() + "' in an output pattern!");
+  }
   
   std::vector<TreePatternNode*> Children;
 
