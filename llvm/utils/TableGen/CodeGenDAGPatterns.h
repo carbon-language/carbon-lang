@@ -272,7 +272,7 @@ public:
   ~TreePatternNode();
   
   const std::string &getName() const { return Name; }
-  void setName(const std::string &N) { Name = N; }
+  void setName(StringRef N) { Name.assign(N.begin(), N.end()); }
   
   bool isLeaf() const { return Val != 0; }
   
@@ -510,7 +510,7 @@ public:
   void dump() const;
   
 private:
-  TreePatternNode *ParseTreePattern(DagInit *DI);
+  TreePatternNode *ParseTreePattern(Init *DI, StringRef OpName);
   void ComputeNamedNodes();
   void ComputeNamedNodes(TreePatternNode *N);
 };

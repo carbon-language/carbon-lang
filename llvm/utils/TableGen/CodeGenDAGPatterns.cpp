@@ -1421,13 +1421,13 @@ TreePattern::TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
                          CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
   isInputPattern = isInput;
   for (unsigned i = 0, e = RawPat->getSize(); i != e; ++i)
-    Trees.push_back(ParseTreePattern((DagInit*)RawPat->getElement(i)));
+    Trees.push_back(ParseTreePattern(RawPat->getElement(i), ""));
 }
 
 TreePattern::TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
                          CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
   isInputPattern = isInput;
-  Trees.push_back(ParseTreePattern(Pat));
+  Trees.push_back(ParseTreePattern(Pat, ""));
 }
 
 TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
@@ -1455,7 +1455,53 @@ void TreePattern::ComputeNamedNodes(TreePatternNode *N) {
 }
 
 
-TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
+TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
+  if (DefInit *DI = dynamic_cast<DefInit*>(TheInit)) {
+    Record *R = DI->getDef();
+    
+    // Direct reference to a leaf DagNode or PatFrag?  Turn it into a
+    // TreePatternNode if its own.  For example:
+    ///   (foo GPR, imm) -> (foo GPR, (imm))
+    if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag"))
+      return ParseTreePattern(new DagInit(DI, "",
+                          std::vector<std::pair<Init*, std::string> >()),
+                              OpName);
+    
+    // Input argument?
+    TreePatternNode *Res = new TreePatternNode(DI, 1);
+    if (R->getName() == "node") {
+      if (OpName.empty())
+        error("'node' argument requires a name to match with operand list");
+      Args.push_back(OpName);
+    }
+
+    Res->setName(OpName);
+    return Res;
+  }
+  
+  if (IntInit *II = dynamic_cast<IntInit*>(TheInit)) {
+    if (!OpName.empty())
+      error("Constant int argument should not have a name!");
+    return new TreePatternNode(II, 1);
+  }
+  
+  if (BitsInit *BI = dynamic_cast<BitsInit*>(TheInit)) {
+    // Turn this into an IntInit.
+    Init *II = BI->convertInitializerTo(new IntRecTy());
+    if (II == 0 || !dynamic_cast<IntInit*>(II))
+      error("Bits value must be constants!");
+
+    if (!OpName.empty())
+      error("Constant int argument should not have a name!");
+
+    return new TreePatternNode(dynamic_cast<IntInit*>(II), 1);
+  }
+
+  DagInit *Dag = dynamic_cast<DagInit*>(TheInit);
+  if (!Dag) {
+    TheInit->dump();
+    error("Pattern has unexpected init kind!");
+  }
   DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
   if (!OpDef) error("Pattern has unexpected operator type!");
   Record *Operator = OpDef->getDef();
@@ -1466,50 +1512,14 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     if (Dag->getNumArgs() != 1)
       error("Type cast only takes one operand!");
     
-    Init *Arg = Dag->getArg(0);
-    TreePatternNode *New;
-    if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
-      Record *R = DI->getDef();
-      if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
-        Dag->setArg(0, new DagInit(DI, "",
-                                std::vector<std::pair<Init*, std::string> >()));
-        return ParseTreePattern(Dag);
-      }
-      
-      // Input argument?
-      if (R->getName() == "node") {
-        if (Dag->getArgName(0).empty())
-          error("'node' argument requires a name to match with operand list");
-        Args.push_back(Dag->getArgName(0));
-      }
-      
-      New = new TreePatternNode(DI, 1);
-    } else if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
-      New = ParseTreePattern(DI);
-    } else if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
-      New = new TreePatternNode(II, 1);
-      if (!Dag->getArgName(0).empty())
-        error("Constant int argument should not have a name!");
-    } else if (BitsInit *BI = dynamic_cast<BitsInit*>(Arg)) {
-      // Turn this into an IntInit.
-      Init *II = BI->convertInitializerTo(new IntRecTy());
-      if (II == 0 || !dynamic_cast<IntInit*>(II))
-        error("Bits value must be constants!");
-      
-      New = new TreePatternNode(dynamic_cast<IntInit*>(II), 1);
-      if (!Dag->getArgName(0).empty())
-        error("Constant int argument should not have a name!");
-    } else {
-      Arg->dump();
-      error("Unknown leaf value for tree pattern!");
-      return 0;
-    }
+    TreePatternNode *New = ParseTreePattern(Dag->getArg(0), Dag->getArgName(0));
     
     // Apply the type cast.
     assert(New->getNumTypes() == 1 && "FIXME: Unhandled");
     New->UpdateNodeType(0, getValueType(Operator), *this);
-    if (New->getNumChildren() == 0)
-      New->setName(Dag->getArgName(0));
+    
+    if (!OpName.empty())
+      error("ValueType cast should not have a name!");
     return New;
   }
   
@@ -1529,55 +1539,10 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     error("Cannot use '" + Operator->getName() + "' in an input pattern!");
   
   std::vector<TreePatternNode*> Children;
-  
-  for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i) {
-    Init *Arg = Dag->getArg(i);
-    if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
-      Children.push_back(ParseTreePattern(DI));
-      if (Children.back()->getName().empty())
-        Children.back()->setName(Dag->getArgName(i));
-    } else if (DefInit *DefI = dynamic_cast<DefInit*>(Arg)) {
-      Record *R = DefI->getDef();
-      // Direct reference to a leaf DagNode or PatFrag?  Turn it into a
-      // TreePatternNode if its own.
-      if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
-        Dag->setArg(i, new DagInit(DefI, "",
-                              std::vector<std::pair<Init*, std::string> >()));
-        --i;  // Revisit this node...
-      } else {
-        TreePatternNode *Node = new TreePatternNode(DefI, 1);
-        Node->setName(Dag->getArgName(i));
-        Children.push_back(Node);
-        
-        // Input argument?
-        if (R->getName() == "node") {
-          if (Dag->getArgName(i).empty())
-            error("'node' argument requires a name to match with operand list");
-          Args.push_back(Dag->getArgName(i));
-        }
-      }
-    } else if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
-      TreePatternNode *Node = new TreePatternNode(II, 1);
-      if (!Dag->getArgName(i).empty())
-        error("Constant int argument should not have a name!");
-      Children.push_back(Node);
-    } else if (BitsInit *BI = dynamic_cast<BitsInit*>(Arg)) {
-      // Turn this into an IntInit.
-      Init *II = BI->convertInitializerTo(new IntRecTy());
-      if (II == 0 || !dynamic_cast<IntInit*>(II))
-        error("Bits value must be constants!");
-      
-      TreePatternNode *Node = new TreePatternNode(dynamic_cast<IntInit*>(II),1);
-      if (!Dag->getArgName(i).empty())
-        error("Constant int argument should not have a name!");
-      Children.push_back(Node);
-    } else {
-      errs() << '"';
-      Arg->dump();
-      errs() << "\": ";
-      error("Unknown leaf value for tree pattern!");
-    }
-  }
+
+  // Parse all the operands.
+  for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i)
+    Children.push_back(ParseTreePattern(Dag->getArg(i), Dag->getArgName(i)));
   
   // If the operator is an intrinsic, then this is just syntactic sugar for for
   // (intrinsic_* <number>, ..children..).  Pick the right intrinsic node, and 
@@ -1588,15 +1553,13 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
 
     // If this intrinsic returns void, it must have side-effects and thus a
     // chain.
-    if (Int.IS.RetVTs.empty()) {
+    if (Int.IS.RetVTs.empty())
       Operator = getDAGPatterns().get_intrinsic_void_sdnode();
-    } else if (Int.ModRef != CodeGenIntrinsic::NoMem) {
+    else if (Int.ModRef != CodeGenIntrinsic::NoMem)
       // Has side-effects, requires chain.
       Operator = getDAGPatterns().get_intrinsic_w_chain_sdnode();
-    } else {
-      // Otherwise, no chain.
+    else // Otherwise, no chain.
       Operator = getDAGPatterns().get_intrinsic_wo_chain_sdnode();
-    }
     
     TreePatternNode *IIDNode = new TreePatternNode(new IntInit(IID), 1);
     Children.insert(Children.begin(), IIDNode);
@@ -1604,7 +1567,12 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
   
   unsigned NumResults = GetNumNodeResults(Operator, CDP);
   TreePatternNode *Result = new TreePatternNode(Operator, Children, NumResults);
-  Result->setName(Dag->getName());
+  Result->setName(OpName);
+  
+  if (!Dag->getName().empty()) {
+    assert(Result->getName().empty());
+    Result->setName(Dag->getName());
+  }
   return Result;
 }
 
