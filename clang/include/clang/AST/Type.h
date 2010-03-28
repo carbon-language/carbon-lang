@@ -1755,7 +1755,7 @@ class FunctionType : public Type {
 protected:
   FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
                unsigned typeQuals, QualType Canonical, bool Dependent,
-               bool noReturn = false, CallingConv callConv = CC_Default)
+               bool noReturn, CallingConv callConv)
     : Type(tc, Canonical, Dependent),
       SubClassData(SubclassInfo), TypeQuals(typeQuals), NoReturn(noReturn),
       CallConv(callConv), ResultType(res) {}
