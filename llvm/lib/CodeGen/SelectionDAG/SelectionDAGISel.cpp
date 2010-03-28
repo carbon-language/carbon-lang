@@ -61,6 +61,7 @@
 using namespace llvm;
 
 STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
+STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
 
 static cl::opt<bool>
 EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
@@ -2198,7 +2199,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         DEBUG(errs() << "  Skipped scope entry (due to false predicate) at "
                      << "index " << MatcherIndexOfPredicate
                      << ", continuing at " << FailIndex << "\n");
-
+        ++NumDAGIselRetries;
         
         // Otherwise, we know that this case of the Scope is guaranteed to fail,
         // move to the next case.
@@ -2719,6 +2720,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     // another child to try in the current 'Scope', otherwise pop it until we
     // find a case to check.
     DEBUG(errs() << "  Match failed at index " << CurrentOpcodeIndex << "\n");
+    ++NumDAGIselRetries;
     while (1) {
       if (MatchScopes.empty()) {
         CannotYetSelect(NodeToMatch);
