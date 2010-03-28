@@ -2687,14 +2687,10 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         assert(ResSlot < RecordedNodes.size() && "Invalid CheckSame");
         SDValue Res = RecordedNodes[ResSlot];
         
-        // FIXME2: Eliminate this horrible hack by fixing the 'Gen' program
-        // after (parallel) on input patterns are removed.  This would also
-        // allow us to stop encoding #results in OPC_CompleteMatch's table
-        // entry.
-        if (i >= NodeToMatch->getNumValues() ||
-            NodeToMatch->getValueType(i) == MVT::Other ||
-            NodeToMatch->getValueType(i) == MVT::Flag)
-          break;
+        assert(i < NodeToMatch->getNumValues() &&
+               NodeToMatch->getValueType(i) != MVT::Other &&
+               NodeToMatch->getValueType(i) != MVT::Flag &&
+               "Invalid number of results to complete!");
         assert((NodeToMatch->getValueType(i) == Res.getValueType() ||
                 NodeToMatch->getValueType(i) == MVT::iPTR ||
                 Res.getValueType() == MVT::iPTR ||
