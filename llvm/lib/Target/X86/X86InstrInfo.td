@@ -64,8 +64,6 @@ def SDT_X86VASTART_SAVE_XMM_REGS : SDTypeProfile<0, -1, [SDTCisVT<0, i8>,
                                                          SDTCisVT<1, iPTR>,
                                                          SDTCisVT<2, iPTR>]>;
 
-def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
-
 def SDTX86Void    : SDTypeProfile<0, 0, []>;
 
 def SDTX86Wrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
@@ -138,9 +136,9 @@ def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag,
                          SDNPVariadic]>;
 
-def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
+def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86Void,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore]>;
-def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
+def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86Void,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag, SDNPMayStore,
                          SDNPMayLoad]>;
 
