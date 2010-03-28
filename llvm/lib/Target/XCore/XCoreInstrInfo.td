@@ -32,7 +32,7 @@ def XCoreBranchLink     : SDNode<"XCoreISD::BL",SDT_XCoreBranchLink,
                             [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag,
                              SDNPVariadic]>;
 
-def XCoreRetsp       : SDNode<"XCoreISD::RETSP", SDTNone,
+def XCoreRetsp       : SDNode<"XCoreISD::RETSP", SDTBrind,
                          [SDNPHasChain, SDNPOptInFlag]>;
 
 def SDT_XCoreBR_JT    : SDTypeProfile<0, 2,
