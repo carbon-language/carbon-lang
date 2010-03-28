@@ -26,8 +26,9 @@
 // Floating Point Compare and Branch
 def SDT_MipsFPBrcond : SDTypeProfile<0, 3, [SDTCisSameAs<0, 2>, SDTCisInt<0>,
                                      SDTCisVT<1, OtherVT>]>;
-def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<0>, 
-                                  SDTCisInt<2>]>;
+def SDT_MipsFPCmp : SDTypeProfile<1, 3, [SDTCisVT<0, i32>,
+                                         SDTCisSameAs<1, 2>, SDTCisFP<1>, 
+                                         SDTCisInt<3>]>;
 def SDT_MipsFPSelectCC : SDTypeProfile<1, 4, [SDTCisInt<1>, SDTCisInt<4>,
                                   SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>]>;
 
@@ -244,12 +245,13 @@ def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 /// Floating Point Compare
 let hasDelaySlot = 1, Defs=[FCR31] in {
   def FCMP_S32 : FCC<0x0, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
-      "c.$cc.s $fs, $ft", [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc), 
-      (implicit FCR31)]>;
+      "c.$cc.s $fs, $ft",
+        [(set FCR31, (MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc))]>; 
   
   def FCMP_D32 : FCC<0x1, (outs), (ins AFGR64:$fs, AFGR64:$ft, condcode:$cc),
-      "c.$cc.d $fs, $ft", [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc),
-      (implicit FCR31)]>, Requires<[In32BitMode]>;
+      "c.$cc.d $fs, $ft",
+       [(set FCR31, (MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc))]>,
+      Requires<[In32BitMode]>;
 }
 
 //===----------------------------------------------------------------------===//
