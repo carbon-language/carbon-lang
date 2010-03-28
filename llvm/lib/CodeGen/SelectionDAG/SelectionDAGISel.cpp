@@ -1614,8 +1614,9 @@ UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
       CurDAG->ReplaceAllUsesOfValueWith(SDValue(FRN, FRN->getNumValues()-1),
                                         InputFlag, &ISU);
       
-      // If the node became dead, delete it.
-      if (FRN->use_empty())
+      // If the node became dead and we haven't already seen it, delete it.
+      if (FRN->use_empty() &&
+          !std::count(NowDeadNodes.begin(), NowDeadNodes.end(), FRN))
         NowDeadNodes.push_back(FRN);
     }
   }
