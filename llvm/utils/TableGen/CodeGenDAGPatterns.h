@@ -199,6 +199,9 @@ public:
   SDNodeInfo(Record *R);  // Parse the specified record.
   
   unsigned getNumResults() const { return NumResults; }
+  
+  /// getNumOperands - This is the number of operands required or -1 if
+  /// variadic.
   int getNumOperands() const { return NumOperands; }
   Record *getRecord() const { return Def; }
   const std::string &getEnumName() const { return EnumName; }

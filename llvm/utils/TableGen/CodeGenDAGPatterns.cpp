@@ -586,13 +586,6 @@ static TreePatternNode *getOperandNum(unsigned OpNo, TreePatternNode *N,
 bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
                                            const SDNodeInfo &NodeInfo,
                                            TreePattern &TP) const {
-  // Check that the number of operands is sane.  Negative operands -> varargs.
-  if (NodeInfo.getNumOperands() >= 0) {
-    if (N->getNumChildren() != (unsigned)NodeInfo.getNumOperands())
-      TP.error(N->getOperator()->getName() + " node requires exactly " +
-               itostr(NodeInfo.getNumOperands()) + " operands!");
-  }
-
   unsigned ResNo = 0; // The result number being referenced.
   TreePatternNode *NodeToApply = getOperandNum(OperandNo, N, NodeInfo, ResNo);
   
@@ -1238,6 +1231,12 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   if (getOperator()->isSubClassOf("SDNode")) {
     const SDNodeInfo &NI = CDP.getSDNodeInfo(getOperator());
     
+    // Check that the number of operands is sane.  Negative operands -> varargs.
+    if (NI.getNumOperands() >= 0 &&
+        getNumChildren() != (unsigned)NI.getNumOperands())
+      TP.error(getOperator()->getName() + " node requires exactly " +
+               itostr(NI.getNumOperands()) + " operands!");
+    
     bool MadeChange = NI.ApplyTypeConstraints(this, TP);
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
@@ -1469,7 +1468,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     
     // Input argument?
     TreePatternNode *Res = new TreePatternNode(DI, 1);
-    if (R->getName() == "node") {
+    if (R->getName() == "node" && !OpName.empty()) {
       if (OpName.empty())
         error("'node' argument requires a name to match with operand list");
       Args.push_back(OpName);
