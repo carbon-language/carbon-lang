@@ -690,7 +690,7 @@ CodeGenFunction::SynthesizeCXXCopyConstructor(const FunctionArgList &Args) {
     }
   }
 
-  InitializeVTablePointers(ClassDecl);
+  InitializeVtablePtrs(ClassDecl);
 }
 
 /// SynthesizeCXXCopyAssignment - Implicitly define copy assignment operator.
@@ -1010,7 +1010,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
       MemberInitializers.push_back(Member);
   }
 
-  InitializeVTablePointers(ClassDecl);
+  InitializeVtablePtrs(ClassDecl);
 
   for (unsigned I = 0, E = MemberInitializers.size(); I != E; ++I) {
     assert(LiveTemporaries.empty() &&
@@ -1060,7 +1060,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   // Otherwise, we're in the base variant, so we need to ensure the
   // vtable ptrs are right before emitting the body.
   } else {
-    InitializeVTablePointers(Dtor->getParent());
+    InitializeVtablePtrs(Dtor->getParent());
   }
 
   // Emit the body of the statement.
@@ -1584,66 +1584,59 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   Builder.CreateStore(VTableAddressPoint, VTableField);
 }
 
-void
-CodeGenFunction::InitializeVTablePointers(BaseSubobject Base, 
-                                          bool BaseIsMorallyVirtual,
-                                          bool BaseIsNonVirtualPrimaryBase,
-                                          llvm::Constant *VTable,
-                                          const CXXRecordDecl *VTableClass,
-                                          VisitedVirtualBasesSetTy& VBases) {
-  // If this base is a non-virtual primary base the address point has already
-  // been set.
-  if (true || !BaseIsNonVirtualPrimaryBase) {
-    // Initialize the vtable pointer for this base.
-    InitializeVTablePointer(Base, BaseIsMorallyVirtual, VTable, VTableClass);
-  }
-  
-  const CXXRecordDecl *RD = Base.getBase();
-
-  // Traverse bases.
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(), 
-       E = RD->bases_end(); I != E; ++I) {
-    CXXRecordDecl *BaseDecl
-      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
-    
-    uint64_t BaseOffset;
-
-    if (I->isVirtual()) {
-      // Check if we've visited this virtual base before.
-      if (!VBases.insert(BaseDecl))
-        continue;
-
-      const ASTRecordLayout &Layout = 
-        getContext().getASTRecordLayout(VTableClass);
-
-      BaseIsMorallyVirtual = true;
-      BaseIsNonVirtualPrimaryBase = false;
-      
-      BaseOffset = Layout.getVBaseClassOffset(BaseDecl);
-    } else {
-      const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
-
-      BaseOffset = Base.getBaseOffset() + Layout.getBaseClassOffset(BaseDecl);
-      BaseIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
-    }
-    
-    InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset), 
-                             BaseIsMorallyVirtual, BaseIsNonVirtualPrimaryBase, 
-                             VTable, VTableClass, VBases);
-  }
-}
-
-void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
+void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *RD) {
   if (!RD->isDynamicClass())
     return;
 
   // Get the VTable.
   llvm::Constant *VTable = CGM.getVTables().GetAddrOfVTable(RD);
+  
+  // Store address points for the current class and its non-virtual bases.
+  InitializeVtablePtrs(BaseSubobject(RD, 0), VTable, RD);
+  
+  if (!RD->getNumVBases())
+    return;
 
-  // Initialize the vtable pointers for this class and all of its bases.
-  VisitedVirtualBasesSetTy VBases;
-  InitializeVTablePointers(BaseSubobject(RD, 0),
-                           /*BaseIsMorallyVirtual=*/false, 
-                           /*BaseIsNonVirtualPrimaryBase=*/false, 
-                           VTable, RD, VBases);
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+
+  // Store address points for virtual basess.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(), 
+       E = RD->vbases_end(); I != E; ++I) {
+    CXXRecordDecl *BaseDecl
+      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    uint64_t BaseOffset = Layout.getVBaseClassOffset(BaseDecl);
+    InitializeVtablePtrs(BaseSubobject(BaseDecl, BaseOffset), VTable, RD);
+  }
+}
+
+void CodeGenFunction::InitializeVtablePtrs(BaseSubobject Base, 
+                                           llvm::Constant *VTable,
+                                           const CXXRecordDecl *VTableClass) {
+  const CXXRecordDecl *RD = Base.getBase();
+  
+  // Ignore classes without a vtable pointer.
+  if (!RD->isDynamicClass())
+    return;
+  
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
+
+  // Store address points for non-virtual bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(), 
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+    
+    CXXRecordDecl *BaseDecl
+      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    uint64_t BaseOffset = Base.getBaseOffset() + 
+      Layout.getBaseClassOffset(BaseDecl);
+    
+    InitializeVtablePtrs(BaseSubobject(BaseDecl, BaseOffset), 
+                         VTable, VTableClass);
+  }
+
+  // FIXME: BaseIsMorallyVirtual is not correct here.
+  InitializeVTablePointer(Base, /*BaseIsMorallyVirtual=*/false, VTable, 
+                          VTableClass);
 }
