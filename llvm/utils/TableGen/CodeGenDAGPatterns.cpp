@@ -1604,7 +1604,6 @@ static bool SimplifyTree(TreePatternNode *&N) {
   // If we have a bitconvert with a resolved type and if the source and
   // destination types are the same, then the bitconvert is useless, remove it.
   if (N->getOperator()->getName() == "bitconvert" &&
-      N->getNumChildren() > 0 && // FIXME
       N->getExtType(0).isConcrete() &&
       N->getExtType(0) == N->getChild(0)->getExtType(0) &&
       N->getName().empty()) {

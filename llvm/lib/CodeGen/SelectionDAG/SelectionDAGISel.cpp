@@ -1809,7 +1809,7 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
   // It is possible we're using MorphNodeTo to replace a node with no
   // normal results with one that has a normal result (or we could be
   // adding a chain) and the input could have flags and chains as well.
-  // In this case we need to shifting the operands down.
+  // In this case we need to shift the operands down.
   // FIXME: This is a horrible hack and broken in obscure cases, no worse
   // than the old isel though.
   int OldFlagResultNo = -1, OldChainResultNo = -1;
