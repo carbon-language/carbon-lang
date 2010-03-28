@@ -1592,8 +1592,9 @@ UpdateChainsAndFlags(SDNode *NodeToMatch, SDValue InputChain,
       assert(ChainVal.getValueType() == MVT::Other && "Not a chain?");
       CurDAG->ReplaceAllUsesOfValueWith(ChainVal, InputChain, &ISU);
       
-      // If the node became dead, delete it.
-      if (ChainNode->use_empty())
+      // If the node became dead and we haven't already seen it, delete it.
+      if (ChainNode->use_empty() &&
+          !std::count(NowDeadNodes.begin(), NowDeadNodes.end(), ChainNode))
         NowDeadNodes.push_back(ChainNode);
     }
   }
