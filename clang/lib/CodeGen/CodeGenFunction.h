@@ -519,11 +519,13 @@ public:
                                const CXXRecordDecl *VTableClass);
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
+  void InitializeVTablePointers(BaseSubobject Base, bool BaseIsMorallyVirtual,
+                                bool BaseIsNonVirtualPrimaryBase,
+                                llvm::Constant *VTable,
+                                const CXXRecordDecl *VTableClass,
+                                VisitedVirtualBasesSetTy& VBases);
 
-  void InitializeVtablePtrs(BaseSubobject Base, llvm::Constant *VTable,
-                            const CXXRecordDecl *VTableClass);
-
-  void InitializeVtablePtrs(const CXXRecordDecl *ClassDecl);
+  void InitializeVTablePointers(const CXXRecordDecl *ClassDecl);
 
 
   void SynthesizeCXXCopyConstructor(const FunctionArgList &Args);
