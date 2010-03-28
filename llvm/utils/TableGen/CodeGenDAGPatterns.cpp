@@ -524,6 +524,9 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
   if (R->isSubClassOf("SDTCisVT")) {
     ConstraintType = SDTCisVT;
     x.SDTCisVT_Info.VT = getValueType(R->getValueAsDef("VT"));
+    if (x.SDTCisVT_Info.VT == MVT::isVoid)
+      throw TGError(R->getLoc(), "Cannot use 'Void' as type to SDTCisVT");
+      
   } else if (R->isSubClassOf("SDTCisPtrTy")) {
     ConstraintType = SDTCisPtrTy;
   } else if (R->isSubClassOf("SDTCisInt")) {
