@@ -2337,6 +2337,12 @@ defm VTST     : N3V_QHS<0, 0, 0b1000, 1, IIC_VBINi4D, IIC_VBINi4D, IIC_VBINi4Q,
 
 // Vector Bitwise Operations.
 
+def vnot8 : PatFrag<(ops node:$in),
+                    (xor node:$in, (bitconvert (v8i8 immAllOnesV)))>;
+def vnot16 : PatFrag<(ops node:$in),
+                     (xor node:$in, (bitconvert (v16i8 immAllOnesV)))>;
+
+
 //   VAND     : Vector Bitwise AND
 def  VANDd    : N3VDX<0, 0, 0b00, 0b0001, 1, IIC_VBINiD, "vand",
                       v2i32, v2i32, and, 1>;
@@ -2360,36 +2366,36 @@ def  VBICd    : N3VX<0, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),
                      (ins DPR:$src1, DPR:$src2), N3RegFrm, IIC_VBINiD,
                      "vbic", "$dst, $src1, $src2", "",
                      [(set DPR:$dst, (v2i32 (and DPR:$src1,
-                                                 (vnot_conv DPR:$src2))))]>;
+                                                 (vnot8 DPR:$src2))))]>;
 def  VBICq    : N3VX<0, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
                      (ins QPR:$src1, QPR:$src2), N3RegFrm, IIC_VBINiQ,
                      "vbic", "$dst, $src1, $src2", "",
                      [(set QPR:$dst, (v4i32 (and QPR:$src1,
-                                                 (vnot_conv QPR:$src2))))]>;
+                                                 (vnot16 QPR:$src2))))]>;
 
 //   VORN     : Vector Bitwise OR NOT
 def  VORNd    : N3VX<0, 0, 0b11, 0b0001, 0, 1, (outs DPR:$dst),
                      (ins DPR:$src1, DPR:$src2), N3RegFrm, IIC_VBINiD,
                      "vorn", "$dst, $src1, $src2", "",
                      [(set DPR:$dst, (v2i32 (or DPR:$src1,
-                                                (vnot_conv DPR:$src2))))]>;
+                                                (vnot8 DPR:$src2))))]>;
 def  VORNq    : N3VX<0, 0, 0b11, 0b0001, 1, 1, (outs QPR:$dst),
                      (ins QPR:$src1, QPR:$src2), N3RegFrm, IIC_VBINiQ,
                      "vorn", "$dst, $src1, $src2", "",
                      [(set QPR:$dst, (v4i32 (or QPR:$src1,
-                                                (vnot_conv QPR:$src2))))]>;
+                                                (vnot16 QPR:$src2))))]>;
 
 //   VMVN     : Vector Bitwise NOT
 def  VMVNd    : N2VX<0b11, 0b11, 0b00, 0b00, 0b01011, 0, 0,
                      (outs DPR:$dst), (ins DPR:$src), IIC_VSHLiD,
                      "vmvn", "$dst, $src", "",
-                     [(set DPR:$dst, (v2i32 (vnot DPR:$src)))]>;
+                     [(set DPR:$dst, (v2i32 (vnot8 DPR:$src)))]>;
 def  VMVNq    : N2VX<0b11, 0b11, 0b00, 0b00, 0b01011, 1, 0,
                      (outs QPR:$dst), (ins QPR:$src), IIC_VSHLiD,
                      "vmvn", "$dst, $src", "",
-                     [(set QPR:$dst, (v4i32 (vnot QPR:$src)))]>;
-def : Pat<(v2i32 (vnot_conv DPR:$src)), (VMVNd DPR:$src)>;
-def : Pat<(v4i32 (vnot_conv QPR:$src)), (VMVNq QPR:$src)>;
+                     [(set QPR:$dst, (v4i32 (vnot16 QPR:$src)))]>;
+def : Pat<(v2i32 (vnot8 DPR:$src)), (VMVNd DPR:$src)>;
+def : Pat<(v4i32 (vnot16 QPR:$src)), (VMVNq QPR:$src)>;
 
 //   VBSL     : Vector Bitwise Select
 def  VBSLd    : N3VX<1, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),
@@ -2398,14 +2404,14 @@ def  VBSLd    : N3VX<1, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),
                      "vbsl", "$dst, $src2, $src3", "$src1 = $dst",
                      [(set DPR:$dst,
                        (v2i32 (or (and DPR:$src2, DPR:$src1),
-                                  (and DPR:$src3, (vnot_conv DPR:$src1)))))]>;
+                                  (and DPR:$src3, (vnot8 DPR:$src1)))))]>;
 def  VBSLq    : N3VX<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
                      (ins QPR:$src1, QPR:$src2, QPR:$src3),
                      N3RegFrm, IIC_VCNTiQ,
                      "vbsl", "$dst, $src2, $src3", "$src1 = $dst",
                      [(set QPR:$dst,
                        (v4i32 (or (and QPR:$src2, QPR:$src1),
-                                  (and QPR:$src3, (vnot_conv QPR:$src1)))))]>;
+                                  (and QPR:$src3, (vnot16 QPR:$src1)))))]>;
 
 //   VBIF     : Vector Bitwise Insert if False
 //              like VBSL but with: "vbif $dst, $src3, $src1", "$src2 = $dst",
