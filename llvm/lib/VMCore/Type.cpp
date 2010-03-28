@@ -57,6 +57,11 @@ void AbstractTypeUser::setType(Value *V, const Type *NewTy) {
 /// need for a std::vector to be used in the Type class itself. 
 /// @brief Type destruction function
 void Type::destroy() const {
+  // Nothing calls getForwardedType from here on.
+  if (ForwardType && ForwardType->isAbstract()) {
+    ForwardType->dropRef();
+    ForwardType = NULL;
+  }
 
   // Structures and Functions allocate their contained types past the end of
   // the type object itself. These need to be destroyed differently than the
@@ -85,11 +90,6 @@ void Type::destroy() const {
   } else if (const OpaqueType *opaque_this = dyn_cast<OpaqueType>(this)) {
     LLVMContextImpl *pImpl = this->getContext().pImpl;
     pImpl->OpaqueTypes.erase(opaque_this);
-  }
-
-  if (ForwardType && ForwardType->isAbstract()) {
-    ForwardType->dropRef();
-    ForwardType = NULL;
   }
 
   // For all the other type subclasses, there is either no contained types or 
