@@ -1206,6 +1206,9 @@ def err_template_arg_not_integral_or_enumeral : Error<
 def err_template_arg_not_ice : Error<
   "non-type template argument of type %0 is not an integral constant "
   "expression">;
+def err_deduced_non_type_template_arg_type_mismatch : Error<
+  "deduced non-type template argument does not have the same type as the "
+  "its corresponding template parameter (%0 vs %1)">;
 def err_template_arg_not_convertible : Error<
   "non-type template argument of type %0 cannot be converted to a value "
   "of type %1">;
@@ -1585,6 +1588,8 @@ def err_typecheck_invalid_restrict_invalid_pointee : Error<
   "pointer to function type %0 may not be 'restrict' qualified">;
 def ext_typecheck_zero_array_size : Extension<
   "zero size arrays are an extension">;
+def err_typecheck_zero_array_size : Error<
+  "zero-length arrays are not permitted in C++">;
 def err_at_least_one_initializer_needed_to_size_array : Error<
   "at least one initializer value required to size array">;
 def err_array_size_non_int : Error<"size of array has non-integer type %0">;

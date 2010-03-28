@@ -680,8 +680,11 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       return QualType();
     }
     if (ConstVal == 0) {
-      // GCC accepts zero sized static arrays.
-      Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size)
+      // GCC accepts zero sized static arrays. We allow them when
+      // we're not in a SFINAE context.
+      Diag(ArraySize->getLocStart(), 
+           isSFINAEContext()? diag::err_typecheck_zero_array_size
+                            : diag::ext_typecheck_zero_array_size)
         << ArraySize->getSourceRange();
     }
     T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);

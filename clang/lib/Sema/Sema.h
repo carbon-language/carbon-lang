@@ -2862,12 +2862,29 @@ public:
                                           Decl *Param,
                                       TemplateArgumentListBuilder &Converted);
 
+  /// \brief Specifies the context in which a particular template
+  /// argument is being checked.
+  enum CheckTemplateArgumentKind {
+    /// \brief The template argument was specified in the code or was
+    /// instantiated with some deduced template arguments.
+    CTAK_Specified,
+
+    /// \brief The template argument was deduced via template argument
+    /// deduction.
+    CTAK_Deduced,
+
+    /// \brief The template argument was deduced from an array bound
+    /// via template argument deduction.
+    CTAK_DeducedFromArrayBound
+  };
+
   bool CheckTemplateArgument(NamedDecl *Param,
                              const TemplateArgumentLoc &Arg,
                              TemplateDecl *Template,
                              SourceLocation TemplateLoc,
                              SourceLocation RAngleLoc,
-                             TemplateArgumentListBuilder &Converted);
+                             TemplateArgumentListBuilder &Converted,
+                             CheckTemplateArgumentKind CTAK = CTAK_Specified);
   
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
@@ -2887,9 +2904,18 @@ public:
                                             TemplateArgument &Converted);
   bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                              QualType InstantiatedParamType, Expr *&Arg,
-                             TemplateArgument &Converted);
+                             TemplateArgument &Converted,
+                             CheckTemplateArgumentKind CTAK = CTAK_Specified);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param, 
                              const TemplateArgumentLoc &Arg);
+
+  OwningExprResult 
+  BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
+                                          QualType ParamType,
+                                          SourceLocation Loc);
+  OwningExprResult 
+  BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
+                                              SourceLocation Loc);
   
   /// \brief Enumeration describing how template parameter lists are compared
   /// for equality.
@@ -3112,14 +3138,15 @@ public:
   TemplateDeductionResult
   SubstituteExplicitTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                         const TemplateArgumentListInfo &ExplicitTemplateArgs,
-                            llvm::SmallVectorImpl<TemplateArgument> &Deduced,
+                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                  llvm::SmallVectorImpl<QualType> &ParamTypes,
                                       QualType *FunctionType,
                                       TemplateDeductionInfo &Info);
 
   TemplateDeductionResult
   FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
-                             llvm::SmallVectorImpl<TemplateArgument> &Deduced,
+                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                                  unsigned NumExplicitlySpecified,
                                   FunctionDecl *&Specialization,
                                   TemplateDeductionInfo &Info);
 

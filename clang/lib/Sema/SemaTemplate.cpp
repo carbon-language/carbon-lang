@@ -1897,7 +1897,8 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
                                  TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation RAngleLoc,
-                                 TemplateArgumentListBuilder &Converted) {
+                                 TemplateArgumentListBuilder &Converted,
+                                 CheckTemplateArgumentKind CTAK) {
   // Check template type parameters.
   if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
     return CheckTemplateTypeArgument(TTP, Arg, Converted);
@@ -1937,7 +1938,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     case TemplateArgument::Expression: {
       Expr *E = Arg.getArgument().getAsExpr();
       TemplateArgument Result;
-      if (CheckTemplateArgument(NTTP, NTTPType, E, Result))
+      if (CheckTemplateArgument(NTTP, NTTPType, E, Result, CTAK))
         return true;
       
       Converted.Append(Result);
@@ -2478,7 +2479,8 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
 /// If no error was detected, Converted receives the converted template argument.
 bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                  QualType InstantiatedParamType, Expr *&Arg,
-                                 TemplateArgument &Converted) {
+                                 TemplateArgument &Converted,
+                                 CheckTemplateArgumentKind CTAK) {
   SourceLocation StartLoc = Arg->getSourceRange().getBegin();
 
   // If either the parameter has a dependent type or the argument is
@@ -2525,17 +2527,27 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return true;
     }
 
-    // FIXME: We need some way to more easily get the unqualified form
-    // of the types without going all the way to the
-    // canonical type.
-    if (Context.getCanonicalType(ParamType).getCVRQualifiers())
-      ParamType = Context.getCanonicalType(ParamType).getUnqualifiedType();
-    if (Context.getCanonicalType(ArgType).getCVRQualifiers())
-      ArgType = Context.getCanonicalType(ArgType).getUnqualifiedType();
+    // From here on out, all we care about are the unqualified forms
+    // of the parameter and argument types.
+    ParamType = ParamType.getUnqualifiedType();
+    ArgType = ArgType.getUnqualifiedType();
 
     // Try to convert the argument to the parameter's type.
     if (Context.hasSameType(ParamType, ArgType)) {
       // Okay: no conversion necessary
+    } else if (CTAK == CTAK_Deduced) {
+      // C++ [temp.deduct.type]p17:
+      //   If, in the declaration of a function template with a non-type
+      //   template-parameter, the non-type template- parameter is used
+      //   in an expression in the function parameter-list and, if the
+      //   corresponding template-argument is deduced, the
+      //   template-argument type shall match the type of the
+      //   template-parameter exactly, except that a template-argument
+      //   deduced from an array bound may be of any integral type.
+      Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
+        << ArgType << ParamType;
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return true;      
     } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
                !ParamType->isEnumeralType()) {
       // This is an integral promotion or conversion.
@@ -2837,6 +2849,112 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
                                          TPL_TemplateTemplateArgumentMatch,
                                          Arg.getLocation());
 }
+
+/// \brief Given a non-type template argument that refers to a
+/// declaration and the type of its corresponding non-type template
+/// parameter, produce an expression that properly refers to that
+/// declaration.
+Sema::OwningExprResult 
+Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
+                                              QualType ParamType,
+                                              SourceLocation Loc) {
+  assert(Arg.getKind() == TemplateArgument::Declaration &&
+         "Only declaration template arguments permitted here");
+  ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
+
+  if (VD->getDeclContext()->isRecord() && 
+      (isa<CXXMethodDecl>(VD) || isa<FieldDecl>(VD))) {
+    // If the value is a class member, we might have a pointer-to-member.
+    // Determine whether the non-type template template parameter is of
+    // pointer-to-member type. If so, we need to build an appropriate
+    // expression for a pointer-to-member, since a "normal" DeclRefExpr
+    // would refer to the member itself.
+    if (ParamType->isMemberPointerType()) {
+      QualType ClassType
+        = Context.getTypeDeclType(cast<RecordDecl>(VD->getDeclContext()));
+      NestedNameSpecifier *Qualifier
+        = NestedNameSpecifier::Create(Context, 0, false, ClassType.getTypePtr());
+      CXXScopeSpec SS;
+      SS.setScopeRep(Qualifier);
+      OwningExprResult RefExpr = BuildDeclRefExpr(VD, 
+                                           VD->getType().getNonReferenceType(), 
+                                                  Loc,
+                                                  &SS);
+      if (RefExpr.isInvalid())
+        return ExprError();
+      
+      RefExpr = CreateBuiltinUnaryOp(Loc, UnaryOperator::AddrOf, move(RefExpr));
+      assert(!RefExpr.isInvalid() &&
+             Context.hasSameType(((Expr*) RefExpr.get())->getType(),
+                                 ParamType));
+      return move(RefExpr);
+    }
+  }
+  
+  QualType T = VD->getType().getNonReferenceType();
+  if (ParamType->isPointerType()) {
+    // C++03 [temp.arg.nontype]p5:
+    //  - For a non-type template-parameter of type pointer to
+    //    object, qualification conversions and the array-to-pointer
+    //    conversion are applied.
+    //  - For a non-type template-parameter of type pointer to
+    //    function, only the function-to-pointer conversion is
+    //    applied.
+    OwningExprResult RefExpr = BuildDeclRefExpr(VD, T, Loc);
+    if (RefExpr.isInvalid())
+      return ExprError();
+    
+    // Decay functions and arrays.
+    Expr *RefE = (Expr *)RefExpr.get();
+    DefaultFunctionArrayConversion(RefE);
+    if (RefE != RefExpr.get()) {
+      RefExpr.release();
+      RefExpr = Owned(RefE);
+    }
+    
+    // Qualification conversions.
+    RefExpr.release();
+    ImpCastExprToType(RefE, ParamType.getUnqualifiedType(), CastExpr::CK_NoOp);
+    return Owned(RefE);
+  }
+
+  // If the non-type template parameter has reference type, qualify the
+  // resulting declaration reference with the extra qualifiers on the
+  // type that the reference refers to.
+  if (const ReferenceType *TargetRef = ParamType->getAs<ReferenceType>())
+    T = Context.getQualifiedType(T, TargetRef->getPointeeType().getQualifiers());
+    
+  return BuildDeclRefExpr(VD, T, Loc);
+}
+
+/// \brief Construct a new expression that refers to the given
+/// integral template argument with the given source-location
+/// information.
+///
+/// This routine takes care of the mapping from an integral template
+/// argument (which may have any integral type) to the appropriate
+/// literal value.
+Sema::OwningExprResult 
+Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
+                                                  SourceLocation Loc) {
+  assert(Arg.getKind() == TemplateArgument::Integral &&
+         "Operation is only value for integral template arguments");
+  QualType T = Arg.getIntegralType();
+  if (T->isCharType() || T->isWideCharType())
+    return Owned(new (Context) CharacterLiteral(
+                                             Arg.getAsIntegral()->getZExtValue(),
+                                             T->isWideCharType(),
+                                             T,
+                                             Loc));
+  if (T->isBooleanType())
+    return Owned(new (Context) CXXBoolLiteralExpr(
+                                            Arg.getAsIntegral()->getBoolValue(),
+                                            T,
+                                            Loc));
+
+  return Owned(new (Context) IntegerLiteral(*Arg.getAsIntegral(), T, Loc));
+}
+
 
 /// \brief Determine whether the given template parameter lists are
 /// equivalent.

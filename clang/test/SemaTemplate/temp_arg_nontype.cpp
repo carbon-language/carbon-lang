@@ -171,3 +171,12 @@ namespace pr6249 {
   int h();
   template int f<int, h>();
 }
+
+namespace PR6723 {
+  template<unsigned char C> void f(int (&a)[C]); // expected-note 2{{candidate template ignored}}
+  void g() {
+    int arr512[512];
+    f(arr512); // expected-error{{no matching function for call}}
+    f<512>(arr512); // expected-error{{no matching function for call}}
+  }
+}

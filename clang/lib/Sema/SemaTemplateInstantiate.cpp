@@ -745,101 +745,13 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
                                             DeclarationName());
     assert(!TargetType.isNull() && "type substitution failed for param type");
     assert(!TargetType->isDependentType() && "param type still dependent");
-
-    if (VD->getDeclContext()->isRecord() && 
-        (isa<CXXMethodDecl>(VD) || isa<FieldDecl>(VD))) {
-      // If the value is a class member, we might have a pointer-to-member.
-      // Determine whether the non-type template template parameter is of
-      // pointer-to-member type. If so, we need to build an appropriate
-      // expression for a pointer-to-member, since a "normal" DeclRefExpr
-      // would refer to the member itself.
-      if (TargetType->isMemberPointerType()) {
-        QualType ClassType
-          = SemaRef.Context.getTypeDeclType(
-                                        cast<RecordDecl>(VD->getDeclContext()));
-        NestedNameSpecifier *Qualifier
-          = NestedNameSpecifier::Create(SemaRef.Context, 0, false,
-                                        ClassType.getTypePtr());
-        CXXScopeSpec SS;
-        SS.setScopeRep(Qualifier);
-        OwningExprResult RefExpr 
-          = SemaRef.BuildDeclRefExpr(VD, 
-                                     VD->getType().getNonReferenceType(), 
-                                     E->getLocation(), 
-                                     &SS);
-        if (RefExpr.isInvalid())
-          return SemaRef.ExprError();
-
-        RefExpr = SemaRef.CreateBuiltinUnaryOp(E->getLocation(), 
-                                               UnaryOperator::AddrOf, 
-                                               move(RefExpr));
-        assert(!RefExpr.isInvalid() &&
-               SemaRef.Context.hasSameType(((Expr*) RefExpr.get())->getType(),
-                                           TargetType));
-        return move(RefExpr);
-      }
-    }
-
-    QualType T = VD->getType().getNonReferenceType();
-
-    if (TargetType->isPointerType()) {
-      // C++03 [temp.arg.nontype]p5:
-      //  - For a non-type template-parameter of type pointer to
-      //    object, qualification conversions and the array-to-pointer
-      //    conversion are applied.
-      //  - For a non-type template-parameter of type pointer to
-      //    function, only the function-to-pointer conversion is
-      //    applied.
-
-      OwningExprResult RefExpr
-        = SemaRef.BuildDeclRefExpr(VD, T, E->getLocation());
-      if (RefExpr.isInvalid())
-        return SemaRef.ExprError();
-
-      // Decay functions and arrays.
-      Expr *RefE = (Expr *)RefExpr.get();
-      SemaRef.DefaultFunctionArrayConversion(RefE);
-      if (RefE != RefExpr.get()) {
-        RefExpr.release();
-        RefExpr = SemaRef.Owned(RefE);
-      }
-
-      // Qualification conversions.
-      RefExpr.release();
-      SemaRef.ImpCastExprToType(RefE, TargetType.getUnqualifiedType(),
-                                CastExpr::CK_NoOp);
-      return SemaRef.Owned(RefE);
-    }
-
-    // If the non-type template parameter has reference type, qualify the
-    // resulting declaration reference with the extra qualifiers on the
-    // type that the reference refers to.
-    if (const ReferenceType *TargetRef = TargetType->getAs<ReferenceType>())
-      T = SemaRef.Context.getQualifiedType(T, 
-                                  TargetRef->getPointeeType().getQualifiers());
-    
-    return SemaRef.BuildDeclRefExpr(VD, T, E->getLocation());
+    return SemaRef.BuildExpressionFromDeclTemplateArgument(Arg,
+                                                           TargetType,
+                                                           E->getLocation());
   }
 
-  assert(Arg.getKind() == TemplateArgument::Integral);
-  QualType T = Arg.getIntegralType();
-  if (T->isCharType() || T->isWideCharType())
-    return SemaRef.Owned(new (SemaRef.Context) CharacterLiteral(
-                                              Arg.getAsIntegral()->getZExtValue(),
-                                              T->isWideCharType(),
-                                              T,
-                                              E->getSourceRange().getBegin()));
-  if (T->isBooleanType())
-    return SemaRef.Owned(new (SemaRef.Context) CXXBoolLiteralExpr(
-                                            Arg.getAsIntegral()->getBoolValue(),
-                                            T,
-                                            E->getSourceRange().getBegin()));
-
-  assert(Arg.getAsIntegral()->getBitWidth() == SemaRef.Context.getIntWidth(T));
-  return SemaRef.Owned(new (SemaRef.Context) IntegerLiteral(
-                                                *Arg.getAsIntegral(),
-                                                T,
-                                                E->getSourceRange().getBegin()));
+  return SemaRef.BuildExpressionFromIntegralTemplateArgument(Arg, 
+                                                E->getSourceRange().getBegin());
 }
                                                    
 

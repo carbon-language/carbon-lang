@@ -99,6 +99,40 @@ namespace clang {
     /// template specialization to a function template.
     TPOC_Other
   };
+
+  /// \brief Captures a template argument whose value has been deduced
+  /// via c++ template argument deduction.
+  class DeducedTemplateArgument : public TemplateArgument {
+    /// \brief For a non-type template argument, whether the value was
+    /// deduced from an array bound.
+    bool DeducedFromArrayBound;
+
+  public:
+    DeducedTemplateArgument()
+      : TemplateArgument(), DeducedFromArrayBound(false) { }
+
+    DeducedTemplateArgument(const TemplateArgument &Arg,
+                            bool DeducedFromArrayBound = false)
+      : TemplateArgument(Arg), DeducedFromArrayBound(DeducedFromArrayBound) { }
+
+    /// \brief Construct an integral non-type template argument that
+    /// has been deduced, possible from an array bound.
+    DeducedTemplateArgument(const llvm::APSInt &Value,
+                            QualType ValueType,
+                            bool DeducedFromArrayBound)
+      : TemplateArgument(Value, ValueType), 
+        DeducedFromArrayBound(DeducedFromArrayBound) { }
+
+    /// \brief For a non-type template argument, determine whether the
+    /// template argument was deduced from an array bound.
+    bool wasDeducedFromArrayBound() const { return DeducedFromArrayBound; }
+
+    /// \brief Specify whether the given non-type template argument
+    /// was deduced from an array bound.
+    void setDeducedFromArrayBound(bool Deduced) {
+      DeducedFromArrayBound = Deduced;
+    }
+  };
 }
 
 #endif // LLVM_CLANG_SEMA_TEMPLATE_H
