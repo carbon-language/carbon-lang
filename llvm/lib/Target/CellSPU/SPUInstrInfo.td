@@ -1268,7 +1268,12 @@ multiclass BitwiseAnd
 
 defm AND : BitwiseAnd;
 
-// N.B.: vnot_conv is one of those special target selection pattern fragments,
+
+def vnot_cell_conv : PatFrag<(ops node:$in),
+                             (xor node:$in, (bitconvert (v4i32 immAllOnesV)))>;
+
+// N.B.: vnot_cell_conv is one of those special target selection pattern
+// fragments,
 // in which we expect there to be a bit_convert on the constant. Bear in mind
 // that llvm translates "not <reg>" to "xor <reg>, -1" (or in this case, a
 // constant -1 vector.)
@@ -1301,7 +1306,7 @@ multiclass AndComplement
   def r8:   ANDCRegInst<R8C>;
 
   // Sometimes, the xor pattern has a bitcast constant:
-  def v16i8_conv: ANDCVecInst<v16i8, vnot_conv>;
+  def v16i8_conv: ANDCVecInst<v16i8, vnot_cell_conv>;
 }
 
 defm ANDC : AndComplement;
@@ -1934,7 +1939,7 @@ multiclass SelectBits
   def v16i8: SELBVecInst<v16i8>;
   def v8i16: SELBVecInst<v8i16>;
   def v4i32: SELBVecInst<v4i32>;
-  def v2i64: SELBVecInst<v2i64, vnot_conv>;
+  def v2i64: SELBVecInst<v2i64, vnot_cell_conv>;
 
   def r128:  SELBRegInst<GPRC>;
   def r64:   SELBRegInst<R64C>;
