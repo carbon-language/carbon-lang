@@ -139,7 +139,7 @@ CodeGenFunction::GetAddressOfBaseOfCompleteClass(llvm::Value *This,
   V = Builder.CreateBitCast(V, ConvertType(Base)->getPointerTo());
 
   return V;
-}                                      
+}
 
 llvm::Value *
 CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
@@ -1556,6 +1556,34 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
   return VBaseOffset;
 }
 
+void
+CodeGenFunction::InitializeVTablePointer(BaseSubobject Base, 
+                                         bool BaseIsMorallyVirtual,
+                                         llvm::Constant *VTable,
+                                         const CXXRecordDecl *VTableClass) {
+  
+  // Compute the address point.
+  const CodeGenVTables::AddrSubMap_t& AddressPoints =
+    CGM.getVTables().getAddressPoints(VTableClass);
+  
+  uint64_t AddressPoint = 
+    AddressPoints.lookup(std::make_pair(Base.getBase(), Base.getBaseOffset()));
+  llvm::Value *VTableAddressPoint =
+      Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
+
+  // Compute where to store the address point.
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Value *VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
+  VTableField = 
+    Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
+  
+  // Finally, store the address point.
+  const llvm::Type *AddressPointPtrTy =
+    VTableAddressPoint->getType()->getPointerTo();
+  VTableField = Builder.CreateBitCast(VTableField, AddressPointPtrTy);
+  Builder.CreateStore(VTableAddressPoint, VTableField);
+}
+
 void CodeGenFunction::InitializeVtablePtrs(const CXXRecordDecl *RD) {
   if (!RD->isDynamicClass())
     return;
@@ -1607,25 +1635,8 @@ void CodeGenFunction::InitializeVtablePtrs(BaseSubobject Base,
     InitializeVtablePtrs(BaseSubobject(BaseDecl, BaseOffset), 
                          VTable, VTableClass);
   }
-  
-  // Compute the address point.
-  const CodeGenVTables::AddrSubMap_t& AddressPoints =
-    CGM.getVTables().getAddressPoints(VTableClass);
-  
-  uint64_t AddressPoint = 
-    AddressPoints.lookup(std::make_pair(Base.getBase(), Base.getBaseOffset()));
-  llvm::Value *VTableAddressPoint =
-      Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
 
-  // Compute where to store the address point.
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  llvm::Value *VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
-  VTableField = 
-    Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
-  
-  // Finally, store the address point.
-  const llvm::Type *AddressPointPtrTy =
-    VTableAddressPoint->getType()->getPointerTo();
-  VTableField = Builder.CreateBitCast(VTableField, AddressPointPtrTy);
-  Builder.CreateStore(VTableAddressPoint, VTableField);
+  // FIXME: BaseIsMorallyVirtual is not correct here.
+  InitializeVTablePointer(Base, /*BaseIsMorallyVirtual=*/false, VTable, 
+                          VTableClass);
 }

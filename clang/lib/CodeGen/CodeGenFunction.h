@@ -509,10 +509,22 @@ public:
   
   void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type);
 
-  void InitializeVtablePtrs(const CXXRecordDecl *ClassDecl);
+  /// InitializeVTablePointer - Initialize the vtable pointer of the given
+  /// subobject.
+  ///
+  /// \param BaseIsMorallyVirtual - Whether the base subobject is a virtual base
+  /// or a direct or indirect base of a virtual base.
+  void InitializeVTablePointer(BaseSubobject Base, bool BaseIsMorallyVirtual,
+                               llvm::Constant *VTable,
+                               const CXXRecordDecl *VTableClass);
+
+  typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
 
   void InitializeVtablePtrs(BaseSubobject Base, llvm::Constant *VTable,
                             const CXXRecordDecl *VTableClass);
+
+  void InitializeVtablePtrs(const CXXRecordDecl *ClassDecl);
+
 
   void SynthesizeCXXCopyConstructor(const FunctionArgList &Args);
   void SynthesizeCXXCopyAssignment(const FunctionArgList &Args);
