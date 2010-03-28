@@ -842,9 +842,6 @@ void SelectionDAGISel::DoInstructionSelection() {
   DEBUG(errs() << "===== Instruction selection ends:\n");
 
   PostprocessISelDAG();
-  
-  // FIXME: This shouldn't be needed, remove it.
-  CurDAG->RemoveDeadNodes();
 }
 
 
