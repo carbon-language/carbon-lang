@@ -73,27 +73,14 @@ void DwarfWriter::EndFunction(const MachineFunction *MF) {
     MMI->EndFunction();
 }
 
-/// RecordSourceLine - Register a source line with debug info. Returns the
-/// unique label that was emitted and which provides correspondence to
-/// the source line list.
-MCSymbol *DwarfWriter::RecordSourceLine(unsigned Line, unsigned Col, 
-                                        MDNode *Scope) {
-  return DD->recordSourceLine(Line, Col, Scope);
-}
-
-/// getRecordSourceLineCount - Count source lines.
-unsigned DwarfWriter::getRecordSourceLineCount() {
-  return DD->getSourceLineCount();
-}
-
 /// ShouldEmitDwarfDebug - Returns true if Dwarf debugging declarations should
 /// be emitted.
 bool DwarfWriter::ShouldEmitDwarfDebug() const {
   return DD && DD->ShouldEmitDwarfDebug();
 }
 
-void DwarfWriter::BeginScope(const MachineInstr *MI, MCSymbol *L) {
-  DD->beginScope(MI, L);
+void DwarfWriter::BeginScope(const MachineInstr *MI) {
+  DD->beginScope(MI);
 }
 void DwarfWriter::EndScope(const MachineInstr *MI) {
   DD->endScope(MI);
