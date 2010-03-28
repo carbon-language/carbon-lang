@@ -136,6 +136,8 @@ public:
     OPC_EmitRegister,
     OPC_EmitConvertToTarget,
     OPC_EmitMergeInputChains,
+    OPC_EmitMergeInputChains1_0,
+    OPC_EmitMergeInputChains1_1,
     OPC_EmitCopyToReg,
     OPC_EmitNodeXForm,
     OPC_EmitNode,

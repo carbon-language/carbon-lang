@@ -449,6 +449,13 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   case Matcher::EmitMergeInputChains: {
     const EmitMergeInputChainsMatcher *MN =
       cast<EmitMergeInputChainsMatcher>(N);
+    
+    // Handle the specialized forms OPC_EmitMergeInputChains1_0 and 1_1.
+    if (MN->getNumNodes() == 1 && MN->getNode(0) < 2) {
+      OS << "OPC_EmitMergeInputChains1_" << MN->getNode(0) << ",\n";
+      return 1;
+    }
+    
     OS << "OPC_EmitMergeInputChains, " << MN->getNumNodes() << ", ";
     for (unsigned i = 0, e = MN->getNumNodes(); i != e; ++i)
       OS << MN->getNode(i) << ", ";

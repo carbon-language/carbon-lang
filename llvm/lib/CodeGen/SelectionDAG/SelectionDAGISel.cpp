@@ -2440,6 +2440,35 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
     }
         
+    case OPC_EmitMergeInputChains1_0:    // OPC_EmitMergeInputChains, 1, 0
+    case OPC_EmitMergeInputChains1_1: {  // OPC_EmitMergeInputChains, 1, 1
+      // These are space-optimized forms of OPC_EmitMergeInputChains.
+      assert(InputChain.getNode() == 0 &&
+             "EmitMergeInputChains should be the first chain producing node");
+      assert(ChainNodesMatched.empty() &&
+             "Should only have one EmitMergeInputChains per match");
+      
+      // Read all of the chained nodes.
+      unsigned RecNo = Opcode == OPC_EmitMergeInputChains1_1;
+      assert(RecNo < RecordedNodes.size() && "Invalid CheckSame");
+      ChainNodesMatched.push_back(RecordedNodes[RecNo].getNode());
+        
+      // FIXME: What if other value results of the node have uses not matched
+      // by this pattern?
+      if (ChainNodesMatched.back() != NodeToMatch &&
+          !RecordedNodes[RecNo].hasOneUse()) {
+        ChainNodesMatched.clear();
+        break;
+      }
+      
+      // Merge the input chains if they are not intra-pattern references.
+      InputChain = HandleMergeInputChains(ChainNodesMatched, CurDAG);
+      
+      if (InputChain.getNode() == 0)
+        break;  // Failed to merge.
+      continue;
+    }
+        
     case OPC_EmitMergeInputChains: {
       assert(InputChain.getNode() == 0 &&
              "EmitMergeInputChains should be the first chain producing node");
