@@ -52,6 +52,27 @@ namespace {
                    cl::Hidden, cl::location(getLibSupportInfoOutputFilename()));
 }
 
+// GetLibSupportInfoOutputFile - Return a file stream to print our output on.
+raw_ostream *llvm::GetLibSupportInfoOutputFile() {
+  std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
+  if (LibSupportInfoOutputFilename.empty())
+    return &errs();
+  if (LibSupportInfoOutputFilename == "-")
+    return &outs();
+  
+  std::string Error;
+  raw_ostream *Result = new raw_fd_ostream(LibSupportInfoOutputFilename.c_str(),
+                                           Error, raw_fd_ostream::F_Append);
+  if (Error.empty())
+    return Result;
+  
+  errs() << "Error opening info-output-file '"
+    << LibSupportInfoOutputFilename << " for appending!\n";
+  delete Result;
+  return &errs();
+}
+
+
 static TimerGroup *DefaultTimerGroup = 0;
 static TimerGroup *getDefaultTimerGroup() {
   TimerGroup *tmp = DefaultTimerGroup;
@@ -271,27 +292,6 @@ NamedRegionTimer::NamedRegionTimer(const std::string &Name,
 //   TimerGroup Implementation
 //===----------------------------------------------------------------------===//
 
-// GetLibSupportInfoOutputFile - Return a file stream to print our output on.
-raw_ostream *llvm::GetLibSupportInfoOutputFile() {
-  std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
-  if (LibSupportInfoOutputFilename.empty())
-    return &errs();
-  if (LibSupportInfoOutputFilename == "-")
-    return &outs();
-
-  std::string Error;
-  raw_ostream *Result = new raw_fd_ostream(LibSupportInfoOutputFilename.c_str(),
-                                           Error, raw_fd_ostream::F_Append);
-  if (Error.empty())
-    return Result;
-
-  errs() << "Error opening info-output-file '"
-         << LibSupportInfoOutputFilename << " for appending!\n";
-  delete Result;
-  return &errs();
-}
-
-
 void TimerGroup::removeTimer() {
   sys::SmartScopedLock<true> L(*TimerLock);
   if (--NumTimers != 0 || TimersToPrint.empty())
@@ -326,7 +326,6 @@ void TimerGroup::removeTimer() {
     // TOTAL line to make the percentages make sense.
     if (this != DefaultTimerGroup) {
       *OutStream << "  Total Execution Time: ";
-
       *OutStream << format("%5.4f", Total.getProcessTime()) << " seconds (";
       *OutStream << format("%5.4f", Total.getWallTime()) << " wall clock)\n";
     }
