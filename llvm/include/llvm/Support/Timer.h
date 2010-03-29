@@ -16,7 +16,6 @@
 #define LLVM_SUPPORT_TIMER_H
 
 #include "llvm/System/DataTypes.h"
-#include "llvm/System/Mutex.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -39,8 +38,6 @@ class Timer {
   double UserTime;       // User time elapsed
   double SystemTime;     // System time elapsed
   ssize_t MemUsed;       // Memory allocated (in bytes)
-  size_t PeakMem;        // Peak memory used
-  size_t PeakMemBase;    // Temporary for peak memory calculation.
   std::string Name;      // The name of this time variable.
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
@@ -54,7 +51,6 @@ private:
   double getProcessTime() const { return UserTime+SystemTime; }
   double getWallTime() const { return Elapsed; }
   ssize_t getMemUsed() const { return MemUsed; }
-  size_t getPeakMem() const { return PeakMem; }
 public:
   std::string getName() const { return Name; }
 
@@ -76,12 +72,6 @@ public:
   /// stopTimer - Stop the timer.
   ///
   void stopTimer();
-
-  /// addPeakMemoryMeasurement - This method should be called whenever memory
-  /// usage needs to be checked.  It adds a peak memory measurement to the
-  /// currently active timers, which will be printed when the timer group prints
-  ///
-  static void addPeakMemoryMeasurement();
 
   /// print - Print the current timer to standard error, and reset the "Started"
   /// flag.

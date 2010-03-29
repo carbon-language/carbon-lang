@@ -11,15 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Format.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/Process.h"
-#include <algorithm>
-#include <functional>
 #include <map>
 using namespace llvm;
 
@@ -76,13 +75,13 @@ static TimerGroup *getDefaultTimerGroup() {
 //===----------------------------------------------------------------------===//
 
 Timer::Timer(const std::string &N)
-  : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), PeakMem(0), Name(N),
+  : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), Name(N),
     Started(false), TG(getDefaultTimerGroup()) {
   TG->addTimer();
 }
 
 Timer::Timer(const std::string &N, TimerGroup &tg)
-  : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), PeakMem(0), Name(N),
+  : Elapsed(0), UserTime(0), SystemTime(0), MemUsed(0), Name(N),
     Started(false), TG(&tg) {
   TG->addTimer();
 }
@@ -154,7 +153,6 @@ void Timer::startTimer() {
   UserTime   -= TR.UserTime;
   SystemTime -= TR.SystemTime;
   MemUsed    -= TR.MemUsed;
-  PeakMemBase = TR.MemUsed;
 }
 
 void Timer::stopTimer() {
@@ -179,7 +177,6 @@ void Timer::sum(const Timer &T) {
   UserTime   += T.UserTime;
   SystemTime += T.SystemTime;
   MemUsed    += T.MemUsed;
-  PeakMem    += T.PeakMem;
 }
 
 const Timer &Timer::operator=(const Timer &T) {
@@ -187,24 +184,10 @@ const Timer &Timer::operator=(const Timer &T) {
   UserTime = T.UserTime;
   SystemTime = T.SystemTime;
   MemUsed = T.MemUsed;
-  PeakMem = T.PeakMem;
-  PeakMemBase = T.PeakMemBase;
   Name = T.Name;
   Started = T.Started;
   assert(TG == T.TG && "Can only assign timers in the same TimerGroup!");
   return *this;
-}
-
-
-/// addPeakMemoryMeasurement - This method should be called whenever memory
-/// usage needs to be checked.  It adds a peak memory measurement to the
-/// currently active timers, which will be printed when the timer group prints
-///
-void Timer::addPeakMemoryMeasurement() {
-  size_t MemUsed = getMemUsage();
-  for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
-         E = ActiveTimers->end(); I != E; ++I)
-    (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
 }
 
 
@@ -231,12 +214,6 @@ void Timer::print(const Timer &Total, raw_ostream &OS) {
   if (Total.MemUsed)
     OS << format("%9lld", (long long)MemUsed) << "  ";
 
-  if (Total.PeakMem) {
-    if (PeakMem)
-      OS << format("%9lld", (long long)PeakMem) << "  ";
-    else
-      OS << "           ";
-  }
   OS << Name << "\n";
   
   Started = false;  // Once printed, don't print again
@@ -364,8 +341,6 @@ void TimerGroup::removeTimer() {
     *OutStream << "   ---Wall Time---";
     if (Total.getMemUsed())
       *OutStream << "  ---Mem---";
-    if (Total.getPeakMem())
-      *OutStream << "  -PeakMem-";
     *OutStream << "  --- Name ---\n";
 
     // Loop through all of the timing data, printing it out.
