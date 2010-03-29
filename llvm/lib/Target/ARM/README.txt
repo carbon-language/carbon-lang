@@ -12,6 +12,9 @@ Reimplement 'select' in terms of 'SEL'.
 
 A few ARMv6T2 ops should be pattern matched: BFI, SBFX, and UBFX
 
+Interesting optimization for PIC codegen on arm-linux:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43129
+
 //===---------------------------------------------------------------------===//
 
 Crazy idea:  Consider code that uses lots of 8-bit or 16-bit values.  By the
