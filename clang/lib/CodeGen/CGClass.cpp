@@ -1561,14 +1561,38 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
                                          bool BaseIsMorallyVirtual,
                                          llvm::Constant *VTable,
                                          const CXXRecordDecl *VTableClass) {
+  const CXXRecordDecl *RD = Base.getBase();
+
   // Compute the address point.
-  const CodeGenVTables::AddrSubMap_t& AddressPoints =
-    CGM.getVTables().getAddressPoints(VTableClass);
+  llvm::Value *VTableAddressPoint;
   
-  uint64_t AddressPoint = 
-    AddressPoints.lookup(std::make_pair(Base.getBase(), Base.getBaseOffset()));
-  llvm::Value *VTableAddressPoint =
+  // FIXME: Always use the new vtable code once we know it works.
+  bool UseNewVTableCode = CGM.getLangOptions().DumpVtableLayouts;
+  
+  // Check if we need to use a vtable from the VTT.
+  if (UseNewVTableCode && CodeGenVTables::needsVTTParameter(CurGD) &&
+      (RD->getNumVBases() || BaseIsMorallyVirtual)) {
+    // Get the secondary vpointer index.
+    uint64_t VirtualPointerIndex = 
+     CGM.getVTables().getSecondaryVirtualPointerIndex(VTableClass, Base);
+    
+    /// Load the VTT.
+    llvm::Value *VTT = LoadCXXVTT();
+    if (VirtualPointerIndex)
+      VTT = Builder.CreateConstInBoundsGEP1_64(VTT, VirtualPointerIndex);
+
+    // And load the address point from the VTT.
+    VTableAddressPoint = Builder.CreateLoad(VTT);
+  } else {
+    const CodeGenVTables::AddrSubMap_t& AddressPoints =
+      CGM.getVTables().getAddressPoints(VTableClass);
+  
+    uint64_t AddressPoint = 
+      AddressPoints.lookup(std::make_pair(Base.getBase(),
+                                          Base.getBaseOffset()));
+    VTableAddressPoint =
       Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
+  }
 
   // Compute where to store the address point.
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
