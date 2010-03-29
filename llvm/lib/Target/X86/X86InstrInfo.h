@@ -722,11 +722,12 @@ public:
   /// Some SSE instructions come in variants for three domains.
   enum SSEDomain { NotSSEDomain, PackedInt, PackedSingle, PackedDouble };
 
-  /// GetSSEDomain - Return the SSE execution domain of MI, or NotSSEDomain for
-  /// unknown instructions. If the instruction has equivalents for other
-  /// domains, equiv points to a list of opcodes for [PackedInt, PackedSingle,
-  /// PackedDouble].
-  SSEDomain GetSSEDomain(const MachineInstr *MI, const unsigned *&equiv) const;
+  /// GetSSEDomain - Return the SSE execution domain of MI as the first element,
+  /// and a bitmask of possible arguments to SetSSEDomain ase the second.
+  std::pair<uint16_t, uint16_t> GetSSEDomain(const MachineInstr *MI) const;
+
+  /// SetSSEDomain - Set the SSEDomain of MI.
+  void SetSSEDomain(MachineInstr *MI, unsigned Domain) const;
 
 private:
   MachineInstr * convertToThreeAddressWithLEA(unsigned MIOpc,

@@ -3659,45 +3659,49 @@ unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   return GlobalBaseReg;
 }
 
-X86InstrInfo::SSEDomain X86InstrInfo::GetSSEDomain(const MachineInstr *MI,
-                                                 const unsigned *&equiv) const {
-  // These are the replaceable SSE instructions. Some of these have Int variants
-  // that we don't include here. We don't want to replace instructions selected
-  // by intrinsics.
-  static const unsigned ReplaceableInstrs[][3] = {
-    //PackedInt          PackedSingle     PackedDouble
-    { X86::MOVDQAmr,     X86::MOVAPSmr,   X86::MOVAPDmr   },
-    { X86::MOVDQArm,     X86::MOVAPSrm,   X86::MOVAPDrm   },
-    { X86::MOVDQArr,     X86::MOVAPSrr,   X86::MOVAPDrr   },
-    { X86::MOVDQUmr,     X86::MOVUPSmr,   X86::MOVUPDmr   },
-    { X86::MOVDQUrm,     X86::MOVUPSrm,   X86::MOVUPDrm   },
-    { X86::MOVNTDQmr,    X86::MOVNTPSmr,  X86::MOVNTPDmr  },
-    { X86::PANDNrm,      X86::ANDNPSrm,   X86::ANDNPDrm   },
-    { X86::PANDNrr,      X86::ANDNPSrr,   X86::ANDNPDrr   },
-    { X86::PANDrm,       X86::ANDPSrm,    X86::ANDPDrm    },
-    { X86::PANDrr,       X86::ANDPSrr,    X86::ANDPDrr    },
-    { X86::PORrm,        X86::ORPSrm,     X86::ORPDrm     },
-    { X86::PORrr,        X86::ORPSrr,     X86::ORPDrr     },
-    { X86::PUNPCKHQDQrm, X86::UNPCKHPSrm, X86::UNPCKHPDrm },
-    { X86::PUNPCKHQDQrr, X86::UNPCKHPSrr, X86::UNPCKHPDrr },
-    { X86::PUNPCKLQDQrm, X86::UNPCKLPSrm, X86::UNPCKLPDrm },
-    { X86::PUNPCKLQDQrr, X86::UNPCKLPSrr, X86::UNPCKLPDrr },
-    { X86::PXORrm,       X86::XORPSrm,    X86::XORPDrm    },
-    { X86::PXORrr,       X86::XORPSrr,    X86::XORPDrr    },
-  };
+// These are the replaceable SSE instructions. Some of these have Int variants
+// that we don't include here. We don't want to replace instructions selected
+// by intrinsics.
+static const unsigned ReplaceableInstrs[][3] = {
+  //PackedInt       PackedSingle     PackedDouble
+  { X86::MOVDQAmr,  X86::MOVAPSmr,   X86::MOVAPDmr  },
+  { X86::MOVDQArm,  X86::MOVAPSrm,   X86::MOVAPDrm  },
+  { X86::MOVDQArr,  X86::MOVAPSrr,   X86::MOVAPDrr  },
+  { X86::MOVDQUmr,  X86::MOVUPSmr,   X86::MOVUPDmr  },
+  { X86::MOVDQUrm,  X86::MOVUPSrm,   X86::MOVUPDrm  },
+  { X86::MOVNTDQmr, X86::MOVNTPSmr,  X86::MOVNTPDmr },
+  { X86::PANDNrm,   X86::ANDNPSrm,   X86::ANDNPDrm  },
+  { X86::PANDNrr,   X86::ANDNPSrr,   X86::ANDNPDrr  },
+  { X86::PANDrm,    X86::ANDPSrm,    X86::ANDPDrm   },
+  { X86::PANDrr,    X86::ANDPSrr,    X86::ANDPDrr   },
+  { X86::PORrm,     X86::ORPSrm,     X86::ORPDrm    },
+  { X86::PORrr,     X86::ORPSrr,     X86::ORPDrr    },
+  { X86::PXORrm,    X86::XORPSrm,    X86::XORPDrm   },
+  { X86::PXORrr,    X86::XORPSrr,    X86::XORPDrr   },
+};
 
-  const SSEDomain domain =
-    SSEDomain((MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3);
-  if (domain == NotSSEDomain)
-    return domain;
+// FIXME: Some shuffle and unpack instructions have equivalents in different
+// domains, but they require a bit more work than just switching opcodes.
 
-  // Linear search FTW!
-  const unsigned opc = MI->getOpcode();
+static const unsigned *lookup(unsigned opcode, unsigned domain) {
   for (unsigned i = 0, e = array_lengthof(ReplaceableInstrs); i != e; ++i)
-    if (ReplaceableInstrs[i][domain-1] == opc) {
-      equiv = ReplaceableInstrs[i];
-      return domain;
-    }
-  equiv = 0;
-  return domain;
+    if (ReplaceableInstrs[i][domain-1] == opcode)
+      return ReplaceableInstrs[i];
+  return 0;
+}
+
+std::pair<uint16_t, uint16_t>
+X86InstrInfo::GetSSEDomain(const MachineInstr *MI) const {
+  uint16_t domain = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
+  return std::make_pair(domain, domain != NotSSEDomain &&
+                                lookup(MI->getOpcode(), domain) ? 0xe : 0);
+}
+
+void X86InstrInfo::SetSSEDomain(MachineInstr *MI, unsigned Domain) const {
+  assert(Domain>0 && Domain<4 && "Invalid execution domain");
+  uint16_t dom = (MI->getDesc().TSFlags >> X86II::SSEDomainShift) & 3;
+  assert(dom && "Not an SSE instruction");
+  const unsigned *table = lookup(MI->getOpcode(), dom);
+  assert(table && "Cannot change domain");
+  MI->setDesc(get(table[Domain-1]));
 }
