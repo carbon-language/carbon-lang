@@ -6,7 +6,9 @@
 
 @union1 = constant union { i32, i8 } { i32 4 }
 @union2 = constant union { i32, i8 } insertvalue(union { i32, i8 } undef, i32 4, 0)
+@union3 = common global %union.anon zeroinitializer, align 8 
 
 define void @"Unions" () {
   ret void
 }
+

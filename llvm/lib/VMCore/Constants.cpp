@@ -59,6 +59,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
+  case Type::UnionTyID:
   case Type::ArrayTyID:
   case Type::VectorTyID:
     return ConstantAggregateZero::get(Ty);
@@ -944,7 +945,8 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
 //                      Factory Function Implementation
 
 ConstantAggregateZero* ConstantAggregateZero::get(const Type* Ty) {
-  assert((Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()) &&
+  assert((Ty->isStructTy() || Ty->isUnionTy()
+         || Ty->isArrayTy() || Ty->isVectorTy()) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
