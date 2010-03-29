@@ -56,6 +56,35 @@ static void CheckCodeGenerationOptions(const Driver &D, const ArgList &Args) {
         << A->getAsString(Args) << "-static";
 }
 
+// Quote target names for inclusion in GNU Make dependency files.
+// Only the characters '$', '#', ' ', '\t' are quoted.
+static void QuoteTarget(llvm::StringRef Target,
+                        llvm::SmallVectorImpl<char> &Res) {
+  for (unsigned i = 0, e = Target.size(); i != e; ++i) {
+    switch (Target[i]) {
+    case ' ':
+    case '\t':
+      // Escape the preceding backslashes
+      for (int j = i - 1; j >= 0 && Target[j] == '\\'; --j)
+        Res.push_back('\\');
+
+      // Escape the space/tab
+      Res.push_back('\\');
+      break;
+    case '$':
+      Res.push_back('$');
+      break;
+    case '#':
+      Res.push_back('\\');
+      break;
+    default:
+      break;
+    }
+
+    Res.push_back(Target[i]);
+  }
+}
+
 void Clang::AddPreprocessingOptions(const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
@@ -91,9 +120,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
     CmdArgs.push_back("-dependency-file");
     CmdArgs.push_back(DepFile);
 
-    // Add an -MT option if the user didn't specify their own.
-    //
-    // FIXME: This should use -MQ, when we support it.
+    // Add a default target if one wasn't specified.
     if (!Args.hasArg(options::OPT_MT) && !Args.hasArg(options::OPT_MQ)) {
       const char *DepTarget;
 
@@ -114,7 +141,9 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       }
 
       CmdArgs.push_back("-MT");
-      CmdArgs.push_back(DepTarget);
+      llvm::SmallString<128> Quoted;
+      QuoteTarget(DepTarget, Quoted);
+      CmdArgs.push_back(Args.MakeArgString(Quoted));
     }
 
     if (A->getOption().matches(options::OPT_M) ||
@@ -123,7 +152,25 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_MP);
-  Args.AddAllArgs(CmdArgs, options::OPT_MT);
+
+  // Convert all -MQ <target> args to -MT <quoted target>
+  for (arg_iterator it = Args.filtered_begin(options::OPT_MT,
+                                             options::OPT_MQ),
+         ie = Args.filtered_end(); it != ie; ++it) {
+
+    it->claim();
+
+    if (it->getOption().matches(options::OPT_MQ)) {
+      CmdArgs.push_back("-MT");
+      llvm::SmallString<128> Quoted;
+      QuoteTarget(it->getValue(Args), Quoted);
+      CmdArgs.push_back(Args.MakeArgString(Quoted));
+
+    // -MT flag - no change
+    } else {
+      it->render(Args, CmdArgs);
+    }
+  }
 
   // Add -i* options, and automatically translate to
   // -include-pch/-include-pth for transparent PCH support. It's
@@ -930,7 +977,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Arg *Unsupported;
   if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
-      (Unsupported = Args.getLastArg(options::OPT_MQ)) ||
       (Unsupported = Args.getLastArg(options::OPT_iframework)) ||
       (Unsupported = Args.getLastArg(options::OPT_fshort_enums)))
     D.Diag(clang::diag::err_drv_clang_unsupported)
