@@ -19,12 +19,15 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/System/DataTypes.h"
+#include <cassert>
 
 namespace clang {
 
 class DeclarationName;
   
 class PartialDiagnostic {
+public:
   struct Storage {
     Storage() : NumDiagArgs(0), NumDiagRanges(0), NumCodeModificationHints(0) {
     }
@@ -69,7 +72,6 @@ class PartialDiagnostic {
     CodeModificationHint CodeModificationHints[MaxCodeModificationHints];    
   };
 
-public:
   /// \brief An allocator for Storage objects, which uses a small cache to 
   /// objects, used to reduce malloc()/free() traffic for partial diagnostics.
   class StorageAllocator {
@@ -126,8 +128,10 @@ private:
     
     if (Allocator)
       DiagStorage = Allocator->Allocate();
-    else
+    else {
+      assert(Allocator != reinterpret_cast<StorageAllocator *>(~uintptr_t(0)));
       DiagStorage = new Storage;
+    }
     return DiagStorage;
   }
   
@@ -137,7 +141,7 @@ private:
     
     if (Allocator)
       Allocator->Deallocate(DiagStorage);
-    else
+    else if (Allocator != reinterpret_cast<StorageAllocator *>(~uintptr_t(0)))
       delete DiagStorage;
     DiagStorage = 0;
   }
@@ -189,6 +193,14 @@ public:
     }
   }
 
+  PartialDiagnostic(const PartialDiagnostic &Other, Storage *DiagStorage) 
+    : DiagID(Other.DiagID), DiagStorage(DiagStorage), 
+      Allocator(reinterpret_cast<StorageAllocator *>(~uintptr_t(0)))
+  {
+    if (Other.DiagStorage)
+      *this->DiagStorage = *Other.DiagStorage;
+  }
+  
   PartialDiagnostic &operator=(const PartialDiagnostic &Other) {
     DiagID = Other.DiagID;
     if (Other.DiagStorage) {
@@ -234,6 +246,8 @@ public:
     this->DiagID = DiagID;
     freeStorage();
   }
+  
+  bool hasStorage() const { return DiagStorage != 0; }
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              QualType T) {
@@ -285,4 +299,4 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   
 
 }  // end namespace clang
-#endif 
+#endif

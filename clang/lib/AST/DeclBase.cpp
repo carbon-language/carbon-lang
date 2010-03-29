@@ -994,17 +994,6 @@ void StoredDeclsMap::DestroyAll(StoredDeclsMap *Map, bool Dependent) {
   }
 }
 
-DependentStoredDeclsMap::~DependentStoredDeclsMap() {
-  // Kill off the dependent diagnostics.  They don't need to be
-  // deleted, but they do need to be destructed.
-  DependentDiagnostic *CurD = FirstDiagnostic;
-  while (CurD) {
-    DependentDiagnostic *NextD = CurD->NextDiagnostic;
-    CurD->~DependentDiagnostic();
-    CurD = NextD;
-  }
-}
-
 DependentDiagnostic *DependentDiagnostic::Create(ASTContext &C,
                                                  DeclContext *Parent,
                                            const PartialDiagnostic &PDiag) {
@@ -1017,9 +1006,13 @@ DependentDiagnostic *DependentDiagnostic::Create(ASTContext &C,
   DependentStoredDeclsMap *Map
     = static_cast<DependentStoredDeclsMap*>(Parent->LookupPtr);
 
-  // FIXME: Allocate the copy of the PartialDiagnostic via the ASTContext's
+  // Allocate the copy of the PartialDiagnostic via the ASTContext's
   // BumpPtrAllocator, rather than the ASTContext itself.
-  DependentDiagnostic *DD = new (C) DependentDiagnostic(PDiag);
+  PartialDiagnostic::Storage *DiagStorage = 0;
+  if (PDiag.hasStorage())
+    DiagStorage = new (C) PartialDiagnostic::Storage;
+  
+  DependentDiagnostic *DD = new (C) DependentDiagnostic(PDiag, DiagStorage);
 
   // TODO: Maybe we shouldn't reverse the order during insertion.
   DD->NextDiagnostic = Map->FirstDiagnostic;

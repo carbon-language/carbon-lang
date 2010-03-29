@@ -275,7 +275,6 @@ private:
 class DependentStoredDeclsMap : public StoredDeclsMap {
 public:
   DependentStoredDeclsMap() : FirstDiagnostic(0) {}
-  ~DependentStoredDeclsMap();
 
 private:
   friend class DependentDiagnostic;
