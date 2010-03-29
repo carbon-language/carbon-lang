@@ -84,7 +84,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     C.Deallocate(data().Bases);
 
   // The set of seen virtual base types.
-  llvm::SmallPtrSet<QualType, 8> SeenVBaseTypes;
+  llvm::SmallPtrSet<CanQualType, 8> SeenVBaseTypes;
   
   // The virtual bases of this class.
   llvm::SmallVector<const CXXBaseSpecifier *, 8> VBases;
@@ -107,13 +107,13 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
           BaseClassDecl->vbases_begin(),
          E = BaseClassDecl->vbases_end(); VBase != E; ++VBase) {
       // Add this base if it's not already in the list.
-      if (SeenVBaseTypes.insert(VBase->getType()))
+      if (SeenVBaseTypes.insert(C.getCanonicalType(VBase->getType())))
         VBases.push_back(VBase);
     }
 
     if (Base->isVirtual()) {
       // Add this base if it's not already in the list.
-      if (SeenVBaseTypes.insert(BaseType))
+      if (SeenVBaseTypes.insert(C.getCanonicalType(BaseType)))
           VBases.push_back(Base);
     }
 

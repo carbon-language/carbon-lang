@@ -23,3 +23,26 @@ struct C : virtual A {
 // CHECK: define void @_ZN1CC1Eb(%struct.B* %this, i1 zeroext)
 // CHECK: define void @_ZN1CC2Eb(%struct.B* %this, i8** %vtt, i1 zeroext)
 C::C(bool) { }
+
+// PR6251
+namespace PR6251 {
+
+// Test that we don't call the A<char> constructor twice.
+
+template<typename T>
+struct A { A(); };
+
+struct B : virtual A<char> { };
+struct C : virtual A<char> { };
+
+struct D : B, C  {
+  D();
+};
+
+// CHECK: define void @_ZN6PR62511DC1Ev
+// CHECK: call void @_ZN6PR62511AIcEC2Ev
+// CHECK-NOT: call void @_ZN6PR62511AIcEC2Ev
+// CHECK: ret void
+D::D() { }
+
+}
