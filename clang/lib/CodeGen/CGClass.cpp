@@ -1584,12 +1584,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
     // And load the address point from the VTT.
     VTableAddressPoint = Builder.CreateLoad(VTT);
   } else {
-    const CodeGenVTables::AddrSubMap_t& AddressPoints =
-      CGM.getVTables().getAddressPoints(VTableClass);
-  
-    uint64_t AddressPoint = 
-      AddressPoints.lookup(std::make_pair(Base.getBase(),
-                                          Base.getBaseOffset()));
+    uint64_t AddressPoint = CGM.getVTables().getAddressPoint(Base, VTableClass);
     VTableAddressPoint =
       Builder.CreateConstInBoundsGEP2_64(VTable, 0, AddressPoint);
   }

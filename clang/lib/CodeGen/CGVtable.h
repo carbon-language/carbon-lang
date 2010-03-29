@@ -373,6 +373,10 @@ public:
   int64_t getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
                                      const CXXRecordDecl *VBase);
 
+  /// getAddressPoint - Get the address point of the given subobject in the
+  /// class decl.
+  uint64_t getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD);
+  
   /// GetAddrOfVTable - Get the address of the vtable for the given record decl.
   llvm::Constant *GetAddrOfVTable(const CXXRecordDecl *RD);
 
