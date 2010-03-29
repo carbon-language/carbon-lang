@@ -166,7 +166,7 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
                                   const CXXRecordDecl *VTableClass,
                                   const AddressPointsMapTy& AddressPoints) {
   // Store the vtable pointer index if we're generating the primary VTT.
-  if (Base.getBase() == MostDerivedClass) {
+  if (VTableClass == MostDerivedClass) {
     assert(!SecondaryVirtualPointerIndices.count(Base) &&
            "A virtual pointer index already exists for this base subobject!");
     SecondaryVirtualPointerIndices[Base] = VTTComponents.size();
