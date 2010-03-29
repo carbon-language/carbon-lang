@@ -4049,6 +4049,8 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
   
   unsigned NextVTableThunkIndex = 0;
   
+  llvm::Constant* PureVirtualFn = 0;
+
   for (unsigned I = 0; I != NumComponents; ++I) {
     VtableComponent Component = 
       VtableComponent::getFromOpaqueInteger(Components[I]);
@@ -4091,22 +4093,37 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
         break;
       }
 
-      // Check if we should use a thunk.
-      if (NextVTableThunkIndex < VTableThunks.size() &&
-          VTableThunks[NextVTableThunkIndex].first == I) {
-        const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
+      if (cast<CXXMethodDecl>(GD.getDecl())->isPure()) {
+        // We have a pure virtual member function.
+        if (!PureVirtualFn) {
+          const llvm::FunctionType *Ty = 
+            llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()), 
+                                    /*isVarArg=*/false);
+          PureVirtualFn = 
+            CGM.CreateRuntimeFunction(Ty, "__cxa_pure_virtual");
+          PureVirtualFn = llvm::ConstantExpr::getBitCast(PureVirtualFn, 
+                                                         Int8PtrTy);
+        }
         
-        Init = CGM.GetAddrOfThunk(GD, Thunk);
-        
-        NextVTableThunkIndex++;
+        Init = PureVirtualFn;
       } else {
-        const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-        const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
+        // Check if we should use a thunk.
+        if (NextVTableThunkIndex < VTableThunks.size() &&
+            VTableThunks[NextVTableThunkIndex].first == I) {
+          const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
         
-        Init = CGM.GetAddrOfFunction(GD, Ty);
+          Init = CGM.GetAddrOfThunk(GD, Thunk);
+        
+          NextVTableThunkIndex++;
+        } else {
+          const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+          const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
+        
+          Init = CGM.GetAddrOfFunction(GD, Ty);
+        }
+
+        Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
       }
-      
-      Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
       break;
     }
 
@@ -4137,11 +4154,8 @@ GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
   
   if (GV) {
     // Check if the variable has the right type.
-    if (GV->getType()->getElementType() == Ty) {
-      // Set the correct linkage.
-      GV->setLinkage(Linkage);
+    if (GV->getType()->getElementType() == Ty)
       return GV;
-    }
 
     assert(GV->isDeclaration() && "Declaration has wrong type!");
     
@@ -4221,6 +4235,9 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
     CreateVTableInitializer(RD, getVTableComponentsData(RD),
                             getNumVTableComponents(RD), Thunks);
   VTable->setInitializer(Init);
+  
+  // Set the correct linkage.
+  VTable->setLinkage(Linkage);
 }
 
 llvm::GlobalVariable *
