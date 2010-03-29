@@ -4212,6 +4212,9 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   VTableThunks.append(Builder.vtable_thunks_begin(),
                       Builder.vtable_thunks_end());
 
+  // Sort them.
+  std::sort(VTableThunks.begin(), VTableThunks.end());
+
   // Create and set the initializer.
   llvm::Constant *Init = 
     CreateVTableInitializer(Base.getBase(), 
