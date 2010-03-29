@@ -34,6 +34,7 @@ class FunctionLoweringInfo;
 class MachineConstantPoolValue;
 class MachineFunction;
 class MachineModuleInfo;
+class MDNode;
 class SDNodeOrdering;
 class SDDbgValue;
 class TargetLowering;
@@ -766,6 +767,15 @@ public:
   /// else return NULL.
   SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs,
                           const SDValue *Ops, unsigned NumOps);
+
+  /// getDbgValue - Creates a SDDbgValue node.
+  ///
+  SDDbgValue *getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R, uint64_t Off,
+                          DebugLoc DL, unsigned O);
+  SDDbgValue *getDbgValue(MDNode *MDPtr, Value *C, uint64_t Off,
+                          DebugLoc DL, unsigned O);
+  SDDbgValue *getDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
+                          DebugLoc DL, unsigned O);
 
   /// DAGUpdateListener - Clients of various APIs that cause global effects on
   /// the DAG can optionally implement this interface.  This allows the clients

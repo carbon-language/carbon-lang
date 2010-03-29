@@ -842,6 +842,7 @@ void SelectionDAG::clear() {
   Root = getEntryNode();
   delete Ordering;
   Ordering = new SDNodeOrdering();
+  DbgInfo->clear();
   delete DbgInfo;
   DbgInfo = new SDDbgInfo();
 }
@@ -4847,6 +4848,26 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
       return E;
   }
   return NULL;
+}
+
+/// getDbgValue - Creates a SDDbgValue node.
+///
+SDDbgValue *
+SelectionDAG::getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R, uint64_t Off,
+                          DebugLoc DL, unsigned O) {
+  return new (Allocator) SDDbgValue(MDPtr, N, R, Off, DL, O);
+}
+
+SDDbgValue *
+SelectionDAG::getDbgValue(MDNode *MDPtr, Value *C, uint64_t Off,
+                          DebugLoc DL, unsigned O) {
+  return new (Allocator) SDDbgValue(MDPtr, C, Off, DL, O);
+}
+
+SDDbgValue *
+SelectionDAG::getDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
+                          DebugLoc DL, unsigned O) {
+  return new (Allocator) SDDbgValue(MDPtr, FI, Off, DL, O);
 }
 
 namespace {
