@@ -1777,12 +1777,11 @@ void DwarfDebug::constructSubprogramDIE(MDNode *N) {
 void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
   this->M = M;
 
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
   if (!MAI->doesSupportDebugInformation())
     return;
 
+  TimeRegion Timer(DebugTimer);
+  
   DebugInfoFinder DbgFinder;
   DbgFinder.processModule(*M);
 
@@ -1830,9 +1829,6 @@ void DwarfDebug::beginModule(Module *M, MachineModuleInfo *mmi) {
 
   // Emit initial sections
   emitInitial();
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
 
 /// endModule - Emit all Dwarf sections that should come after the content.
@@ -1841,8 +1837,7 @@ void DwarfDebug::endModule() {
   if (!ModuleCU)
     return;
 
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
+  TimeRegion Timer(DebugTimer);
 
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (SmallPtrSet<DIE *, 4>::iterator AI = InlinedSubprogramDIEs.begin(),
@@ -1926,9 +1921,6 @@ void DwarfDebug::endModule() {
   
   delete ModuleCU;
   ModuleCU = NULL;  // Reset for the next Module, if any.
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
 
 /// findAbstractVariable - Find abstract variable, if any, associated with Var.
@@ -2229,12 +2221,10 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   this->MF = MF;
 
   if (!ShouldEmitDwarfDebug()) return;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
   if (!extractScopeInformation())
     return;
+  
+  TimeRegion Timer(DebugTimer);
 
   collectVariableInfo();
 
@@ -2258,20 +2248,15 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     
     recordSourceLine(Line, Col, DLT.getScope().getNode());
   }
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
 
 /// endFunction - Gather and emit post-function debug information.
 ///
 void DwarfDebug::endFunction(const MachineFunction *MF) {
   if (!ShouldEmitDwarfDebug()) return;
-
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  if (DbgScopeMap.empty())
-    return;
+  if (DbgScopeMap.empty()) return;
+  
+  TimeRegion Timer(DebugTimer);
 
   if (CurrentFnDbgScope) {
     // Define end label for subprogram.
@@ -2309,9 +2294,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   AbstractScopesList.clear();
   AbstractVariables.clear();
   Lines.clear();
-  
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
 }
 
 /// recordSourceLine - Register a source line with debug info. Returns the
@@ -2321,8 +2303,7 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
   if (!MMI)
     return 0;
 
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
+  TimeRegion Timer(DebugTimer);
 
   StringRef Dir;
   StringRef Fn;
@@ -2347,9 +2328,6 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
   MCSymbol *Label = MMI->getContext().CreateTempSymbol();
   Lines.push_back(SrcLineInfo(Line, Col, Src, Label));
 
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
   Asm->OutStreamer.EmitLabel(Label);
   return Label;
 }
@@ -2361,15 +2339,8 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, MDNode *S) {
 /// well.
 unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
                                          const std::string &FileName) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  unsigned SrcId = GetOrCreateSourceID(DirName.c_str(), FileName.c_str());
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return SrcId;
+  TimeRegion Timer(DebugTimer);
+  return GetOrCreateSourceID(DirName.c_str(), FileName.c_str());
 }
 
 //===----------------------------------------------------------------------===//
