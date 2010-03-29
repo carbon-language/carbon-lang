@@ -1803,8 +1803,9 @@ VtableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
             ComputeThisAdjustment(OverriddenMD, BaseOffsetInLayoutClass,
                                   Overrider);
 
-          if (ThisAdjustment.VCallOffsetOffset) {
-            // This is a virtual thunk, add it.
+          if (ThisAdjustment.VCallOffsetOffset &&
+              Overrider.Method->getParent() == MostDerivedClass) {
+            // This is a virtual thunk for the most derived class, add it.
             AddThunk(Overrider.Method, 
                      ThunkInfo(ThisAdjustment, ReturnAdjustment()));
           }
