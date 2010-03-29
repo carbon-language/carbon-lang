@@ -1401,8 +1401,15 @@ void VtableBuilder::ComputeThisAdjustments() {
                                             MethodInfo.BaseOffset), MD);
     
     // Check if we need an adjustment at all.
-    if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset)
-      continue;
+    if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset) {
+      // When a return thunk is needed by a derived class that overrides a
+      // virtual base, gcc uses a virtual 'this' adjustment as well. 
+      // While the thunk itself might be needed by vtables in subclasses or
+      // in construction vtables, there doesn't seem to be a reason for using
+      // the thunk in this vtable. Still, we do so to match gcc.
+      if (VTableThunks.lookup(VtableIndex).Return.isEmpty())
+        continue;
+    }
 
     ThisAdjustment ThisAdjustment =
       ComputeThisAdjustment(MD, MethodInfo.BaseOffsetInLayoutClass, Overrider);

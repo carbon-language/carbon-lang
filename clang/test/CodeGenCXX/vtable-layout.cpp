@@ -1273,3 +1273,33 @@ struct E : D {
 void E::e() { }
 
 }
+
+namespace Test29 {
+
+// Test that the covariant return thunk for B::f will have a virtual 'this' adjustment,
+// matching gcc.
+
+struct V1 { };
+struct V2 : virtual V1 { };
+
+struct A {
+  virtual V1 *f();
+};
+
+// CHECK:      Vtable for 'Test29::B' (6 entries).
+// CHECK-NEXT:    0 | vbase_offset (0)
+// CHECK-NEXT:    1 | vcall_offset (0)
+// CHECK-NEXT:    2 | offset_to_top (0)
+// CHECK-NEXT:    3 | Test29::B RTTI
+// CHECK-NEXT:        -- (Test29::A, 0) vtable address --
+// CHECK-NEXT:        -- (Test29::B, 0) vtable address --
+// CHECK-NEXT:    4 | Test29::V2 *Test29::B::f()
+// CHECK-NEXT:        [return adjustment: 0 non-virtual, -24 vbase offset offset]
+// CHECK-NEXT:        [this adjustment: 0 non-virtual, -24 vcall offset offset]
+// CHECK-NEXT:    5 | Test29::V2 *Test29::B::f()
+struct B : virtual A {
+  virtual V2 *f();
+};
+V2 *B::f() { return 0; }
+
+}
