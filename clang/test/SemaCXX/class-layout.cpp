@@ -48,6 +48,13 @@ struct H : G { };
 
 SA(6, sizeof(H) == 1);
 
+struct I {
+  char b;
+  int a;
+} __attribute__((packed));
+
+SA(6_1, sizeof(I) == 5);
+
 // PR5580
 namespace PR5580 {
 

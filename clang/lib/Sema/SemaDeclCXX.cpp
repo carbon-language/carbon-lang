@@ -2174,7 +2174,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                              DeclPtrTy TagDecl,
                                              SourceLocation LBrac,
-                                             SourceLocation RBrac) {
+                                             SourceLocation RBrac,
+                                             AttributeList *AttrList) {
   if (!TagDecl)
     return;
 
@@ -2182,7 +2183,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
 
   ActOnFields(S, RLoc, TagDecl,
               (DeclPtrTy*)FieldCollector->getCurFields(),
-              FieldCollector->getCurNumFields(), LBrac, RBrac, 0);
+              FieldCollector->getCurNumFields(), LBrac, RBrac, AttrList);
 
   CheckCompletedCXXClass(
                       dyn_cast_or_null<CXXRecordDecl>(TagDecl.getAs<Decl>()));

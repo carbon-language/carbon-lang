@@ -37,6 +37,14 @@ struct __attribute__((packed)) packed_fas {
 extern int d1[sizeof(struct packed_fas) == 1 ? 1 : -1];
 extern int d2[__alignof(struct packed_fas) == 1 ? 1 : -1];
 
+struct packed_after_fas {
+    char a;
+    int b[];
+} __attribute__((packed));
+
+extern int d1_2[sizeof(struct packed_after_fas) == 1 ? 1 : -1];
+extern int d2_2[__alignof(struct packed_after_fas) == 1 ? 1 : -1];
+
 // Alignment
 
 struct __attribute__((aligned(8))) as1 {

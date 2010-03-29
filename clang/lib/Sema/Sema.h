@@ -2502,7 +2502,8 @@ public:
   virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
                                                  DeclPtrTy TagDecl,
                                                  SourceLocation LBrac,
-                                                 SourceLocation RBrac);
+                                                 SourceLocation RBrac,
+                                                 AttributeList *AttrList);
 
   virtual void ActOnReenterTemplateScope(Scope *S, DeclPtrTy Template);
   virtual void ActOnStartDelayedMemberDeclarations(Scope *S,

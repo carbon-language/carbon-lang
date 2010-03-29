@@ -1579,10 +1579,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   // If attributes exist after class contents, parse them.
   llvm::OwningPtr<AttributeList> AttrList;
   if (Tok.is(tok::kw___attribute))
-    AttrList.reset(ParseGNUAttributes()); // FIXME: where should I put them?
+    AttrList.reset(ParseGNUAttributes());
 
   Actions.ActOnFinishCXXMemberSpecification(CurScope, RecordLoc, TagDecl,
-                                            LBraceLoc, RBraceLoc);
+                                            LBraceLoc, RBraceLoc,
+                                            AttrList.get());
 
   // C++ 9.2p2: Within the class member-specification, the class is regarded as
   // complete within function bodies, default arguments,
