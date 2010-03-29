@@ -69,12 +69,6 @@ def X86pcmpgtw : SDNode<"X86ISD::PCMPGTW", SDTIntBinOp>;
 def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
 def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
 
-def X86aesimc          : SDNode<"X86ISD::AESIMC",          SDTIntBinOp>;
-def X86aesenc          : SDNode<"X86ISD::AESENC",          SDTIntBinOp>;
-def X86aesenclast      : SDNode<"X86ISD::AESENCLAST",      SDTIntBinOp>;
-def X86aesdec          : SDNode<"X86ISD::AESDEC",          SDTIntBinOp>;
-def X86aesdeclast      : SDNode<"X86ISD::AESDECLAST",      SDTIntBinOp>;
-
 def SDTX86CmpPTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
                                           SDTCisVT<1, v4f32>,
                                           SDTCisVT<2, v4f32>]>;
@@ -3841,25 +3835,25 @@ defm AESDEC          : SS42I_binop_rm_int<0xDE, "aesdec",
 defm AESDECLAST      : SS42I_binop_rm_int<0xDF, "aesdeclast",
                        int_x86_sse42_aesdeclast>;
 
-def : Pat<(v2i64 (X86aesimc VR128:$src1, VR128:$src2)),
+def : Pat<(v2i64 (int_x86_sse42_aesimc VR128:$src1, VR128:$src2)),
           (AESIMCrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v2i64 (X86aesimc VR128:$src1, (memop addr:$src2))),
+def : Pat<(v2i64 (int_x86_sse42_aesimc VR128:$src1, (memop addr:$src2))),
           (AESIMCrm VR128:$src1, addr:$src2)>;
-def : Pat<(v2i64 (X86aesenc VR128:$src1, VR128:$src2)),
+def : Pat<(v2i64 (int_x86_sse42_aesenc VR128:$src1, VR128:$src2)),
           (AESENCrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v2i64 (X86aesenc VR128:$src1, (memop addr:$src2))),
+def : Pat<(v2i64 (int_x86_sse42_aesenc VR128:$src1, (memop addr:$src2))),
           (AESENCrm VR128:$src1, addr:$src2)>;
-def : Pat<(v2i64 (X86aesenclast VR128:$src1, VR128:$src2)),
+def : Pat<(v2i64 (int_x86_sse42_aesenclast VR128:$src1, VR128:$src2)),
           (AESENCLASTrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v2i64 (X86aesenclast VR128:$src1, (memop addr:$src2))),
+def : Pat<(v2i64 (int_x86_sse42_aesenclast VR128:$src1, (memop addr:$src2))),
           (AESENCLASTrm VR128:$src1, addr:$src2)>;
-def : Pat<(v2i64 (X86aesdec VR128:$src1, VR128:$src2)),
+def : Pat<(v2i64 (int_x86_sse42_aesdec VR128:$src1, VR128:$src2)),
           (AESDECrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v2i64 (X86aesdec VR128:$src1, (memop addr:$src2))),
+def : Pat<(v2i64 (int_x86_sse42_aesdec VR128:$src1, (memop addr:$src2))),
           (AESDECrm VR128:$src1, addr:$src2)>;
-def : Pat<(v2i64 (X86aesdeclast VR128:$src1, VR128:$src2)),
+def : Pat<(v2i64 (int_x86_sse42_aesdeclast VR128:$src1, VR128:$src2)),
           (AESDECLASTrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v2i64 (X86aesdeclast VR128:$src1, (memop addr:$src2))),
+def : Pat<(v2i64 (int_x86_sse42_aesdeclast VR128:$src1, (memop addr:$src2))),
           (AESDECLASTrm VR128:$src1, addr:$src2)>;
 
 def AESKEYGENASSIST128rr : SS42AI<0xDF, MRMSrcReg, (outs),
