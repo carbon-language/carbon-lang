@@ -65,23 +65,23 @@ def HI16 : SDNodeXForm<imm, [{
 //===----------------------------------------------------------------------===//
 
 def imm3  : PatLeaf<(imm), [{return isInt<3>(N->getSExtValue());}]>;
-def uimm3 : PatLeaf<(imm), [{return isUint<3>(N->getZExtValue());}]>;
-def uimm4 : PatLeaf<(imm), [{return isUint<4>(N->getZExtValue());}]>;
-def uimm5 : PatLeaf<(imm), [{return isUint<5>(N->getZExtValue());}]>;
+def uimm3 : PatLeaf<(imm), [{return isUInt<3>(N->getZExtValue());}]>;
+def uimm4 : PatLeaf<(imm), [{return isUInt<4>(N->getZExtValue());}]>;
+def uimm5 : PatLeaf<(imm), [{return isUInt<5>(N->getZExtValue());}]>;
 
 def uimm5m2 : PatLeaf<(imm), [{
     uint64_t value = N->getZExtValue();
-    return value % 2 == 0 && isUint<5>(value);
+    return value % 2 == 0 && isUInt<5>(value);
 }]>;
 
 def uimm6m4 : PatLeaf<(imm), [{
     uint64_t value = N->getZExtValue();
-    return value % 4 == 0 && isUint<6>(value);
+    return value % 4 == 0 && isUInt<6>(value);
 }]>;
 
 def imm7   : PatLeaf<(imm), [{return isInt<7>(N->getSExtValue());}]>;
 def imm16  : PatLeaf<(imm), [{return isInt<16>(N->getSExtValue());}]>;
-def uimm16 : PatLeaf<(imm), [{return isUint<16>(N->getZExtValue());}]>;
+def uimm16 : PatLeaf<(imm), [{return isUInt<16>(N->getZExtValue());}]>;
 
 def ximm16 : PatLeaf<(imm), [{
     int64_t value = N->getSExtValue();

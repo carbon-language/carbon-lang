@@ -164,7 +164,7 @@ void BlackfinRegisterInfo::loadConstant(MachineBasicBlock &MBB,
     return;
   }
 
-  if (isUint<16>(value)) {
+  if (isUInt<16>(value)) {
     BuildMI(MBB, I, DL, TII.get(BF::LOADuimm16), Reg).addImm(value);
     return;
   }
@@ -255,13 +255,13 @@ BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(FIPos==1 && "Bad frame index operand");
     MI.getOperand(FIPos).ChangeToRegister(BaseReg, false);
     MI.getOperand(FIPos+1).setImm(Offset);
-    if (isUint<6>(Offset)) {
+    if (isUInt<6>(Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32p_uimm6m4
                          : BF::LOAD32p_uimm6m4));
       return 0;
     }
-    if (BaseReg == BF::FP && isUint<7>(-Offset)) {
+    if (BaseReg == BF::FP && isUInt<7>(-Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32fp_nimm7m4
                          : BF::LOAD32fp_nimm7m4));

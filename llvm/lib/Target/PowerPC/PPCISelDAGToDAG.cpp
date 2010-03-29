@@ -470,11 +470,11 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
     if (CC == ISD::SETEQ || CC == ISD::SETNE) {
       if (isInt32Immediate(RHS, Imm)) {
         // SETEQ/SETNE comparison with 16-bit immediate, fold it.
-        if (isUInt16(Imm))
+        if (isUInt<16>(Imm))
           return SDValue(CurDAG->getMachineNode(PPC::CMPLWI, dl, MVT::i32, LHS,
                                                 getI32Imm(Imm & 0xFFFF)), 0);
         // If this is a 16-bit signed immediate, fold it.
-        if (isInt16((int)Imm))
+        if (isInt<16>((int)Imm))
           return SDValue(CurDAG->getMachineNode(PPC::CMPWI, dl, MVT::i32, LHS,
                                                 getI32Imm(Imm & 0xFFFF)), 0);
         
@@ -494,7 +494,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
       }
       Opc = PPC::CMPLW;
     } else if (ISD::isUnsignedIntSetCC(CC)) {
-      if (isInt32Immediate(RHS, Imm) && isUInt16(Imm))
+      if (isInt32Immediate(RHS, Imm) && isUInt<16>(Imm))
         return SDValue(CurDAG->getMachineNode(PPC::CMPLWI, dl, MVT::i32, LHS,
                                               getI32Imm(Imm & 0xFFFF)), 0);
       Opc = PPC::CMPLW;
@@ -511,11 +511,11 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
     if (CC == ISD::SETEQ || CC == ISD::SETNE) {
       if (isInt64Immediate(RHS.getNode(), Imm)) {
         // SETEQ/SETNE comparison with 16-bit immediate, fold it.
-        if (isUInt16(Imm))
+        if (isUInt<16>(Imm))
           return SDValue(CurDAG->getMachineNode(PPC::CMPLDI, dl, MVT::i64, LHS,
                                                 getI32Imm(Imm & 0xFFFF)), 0);
         // If this is a 16-bit signed immediate, fold it.
-        if (isInt16(Imm))
+        if (isInt<16>(Imm))
           return SDValue(CurDAG->getMachineNode(PPC::CMPDI, dl, MVT::i64, LHS,
                                                 getI32Imm(Imm & 0xFFFF)), 0);
         
@@ -528,7 +528,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
         //   xoris r0,r3,0x1234
         //   cmpldi cr0,r0,0x5678
         //   beq cr0,L6
-        if (isUInt32(Imm)) {
+        if (isUInt<32>(Imm)) {
           SDValue Xor(CurDAG->getMachineNode(PPC::XORIS8, dl, MVT::i64, LHS,
                                              getI64Imm(Imm >> 16)), 0);
           return SDValue(CurDAG->getMachineNode(PPC::CMPLDI, dl, MVT::i64, Xor,
@@ -537,7 +537,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
       }
       Opc = PPC::CMPLD;
     } else if (ISD::isUnsignedIntSetCC(CC)) {
-      if (isInt64Immediate(RHS.getNode(), Imm) && isUInt16(Imm))
+      if (isInt64Immediate(RHS.getNode(), Imm) && isUInt<16>(Imm))
         return SDValue(CurDAG->getMachineNode(PPC::CMPLDI, dl, MVT::i64, LHS,
                                               getI64Imm(Imm & 0xFFFF)), 0);
       Opc = PPC::CMPLD;
@@ -761,12 +761,12 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       unsigned Shift = 0;
       
       // If it can't be represented as a 32 bit value.
-      if (!isInt32(Imm)) {
+      if (!isInt<32>(Imm)) {
         Shift = CountTrailingZeros_64(Imm);
         int64_t ImmSh = static_cast<uint64_t>(Imm) >> Shift;
         
         // If the shifted value fits 32 bits.
-        if (isInt32(ImmSh)) {
+        if (isInt<32>(ImmSh)) {
           // Go with the shifted value.
           Imm = ImmSh;
         } else {
@@ -785,7 +785,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
       unsigned Hi = (Imm >> 16) & 0xFFFF;
       
       // Simple value.
-      if (isInt16(Imm)) {
+      if (isInt<16>(Imm)) {
        // Just the Lo bits.
         Result = CurDAG->getMachineNode(PPC::LI8, dl, MVT::i64, getI32Imm(Lo));
       } else if (Lo) {

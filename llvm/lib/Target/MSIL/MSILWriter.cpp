@@ -424,7 +424,7 @@ void MSILWriter::printPtrLoad(uint64_t N) {
   case Module::Pointer32:
     printSimpleInstruction("ldc.i4",utostr(N).c_str());
     // FIXME: Need overflow test?
-    if (!isUInt32(N)) {
+    if (!isUInt<32>(N)) {
       errs() << "Value = " << utostr(N) << '\n';
       llvm_unreachable("32-bit pointer overflowed");
     }

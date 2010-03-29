@@ -2424,7 +2424,7 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
 bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
                                        bool hasSymbolicDisplacement) {
   // Offset should fit into 32 bit immediate field.
-  if (!isInt32(Offset))
+  if (!isInt<32>(Offset))
     return false;
 
   // If we don't have a symbolic displacement - we don't have any extra

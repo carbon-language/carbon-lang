@@ -58,7 +58,7 @@ namespace {
   bool
   isI32IntU10Immediate(ConstantSDNode *CN)
   {
-    return isUint<10>(CN->getSExtValue());
+    return isUInt<10>(CN->getSExtValue());
   }
 
   //! ConstantSDNode predicate for i16 sign-extended, 10-bit immediate values
@@ -80,7 +80,7 @@ namespace {
   bool
   isI16IntU10Immediate(ConstantSDNode *CN)
   {
-    return isUint<10>((short) CN->getZExtValue());
+    return isUInt<10>((short) CN->getZExtValue());
   }
 
   //! SDNode predicate for i16 sign-extended, 10-bit immediate values

@@ -512,7 +512,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       MachineInstr *MI = I;
       DebugLoc dl = MI->getDebugLoc();
 
-      if (isInt16(CalleeAmt)) {
+      if (isInt<16>(CalleeAmt)) {
         BuildMI(MBB, I, dl, TII.get(ADDIInstr), StackReg).addReg(StackReg).
           addImm(CalleeAmt);
       } else {
@@ -596,7 +596,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   else
     Reg = PPC::R0;
   
-  if (MaxAlign < TargetAlign && isInt16(FrameSize)) {
+  if (MaxAlign < TargetAlign && isInt<16>(FrameSize)) {
     BuildMI(MBB, II, dl, TII.get(PPC::ADDI), Reg)
       .addReg(PPC::R31)
       .addImm(FrameSize);
@@ -798,7 +798,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // clear can be encoded.  This is extremely uncommon, because normally you
   // only "std" to a stack slot that is at least 4-byte aligned, but it can
   // happen in invalid code.
-  if (isInt16(Offset) && (!isIXAddr || (Offset & 3) == 0)) {
+  if (isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0)) {
     if (isIXAddr)
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
     MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
@@ -1375,8 +1375,9 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (!isPPC64) {
     // PPC32.
     if (ALIGN_STACK && MaxAlign > TargetAlign) {
-      assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
-      assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
+      assert(isPowerOf2_32(MaxAlign) && isInt<16>(MaxAlign) &&
+             "Invalid alignment!");
+      assert(isInt<16>(NegFrameSize) && "Unhandled stack size and alignment!");
 
       BuildMI(MBB, MBBI, dl, TII.get(PPC::RLWINM), PPC::R0)
         .addReg(PPC::R1)
@@ -1390,7 +1391,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::R1)
         .addReg(PPC::R1)
         .addReg(PPC::R0);
-    } else if (isInt16(NegFrameSize)) {
+    } else if (isInt<16>(NegFrameSize)) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STWU), PPC::R1)
         .addReg(PPC::R1)
         .addImm(NegFrameSize)
@@ -1408,8 +1409,9 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   } else {    // PPC64.
     if (ALIGN_STACK && MaxAlign > TargetAlign) {
-      assert(isPowerOf2_32(MaxAlign)&&isInt16(MaxAlign)&&"Invalid alignment!");
-      assert(isInt16(NegFrameSize) && "Unhandled stack size and alignment!");
+      assert(isPowerOf2_32(MaxAlign) && isInt<16>(MaxAlign) &&
+             "Invalid alignment!");
+      assert(isInt<16>(NegFrameSize) && "Unhandled stack size and alignment!");
 
       BuildMI(MBB, MBBI, dl, TII.get(PPC::RLDICL), PPC::X0)
         .addReg(PPC::X1)
@@ -1422,7 +1424,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::X1)
         .addReg(PPC::X1)
         .addReg(PPC::X0);
-    } else if (isInt16(NegFrameSize)) {
+    } else if (isInt<16>(NegFrameSize)) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STDU), PPC::X1)
         .addReg(PPC::X1)
         .addImm(NegFrameSize / 4)
@@ -1591,7 +1593,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
       // enabled (=> hasFastCall()==true) the fastcc call might contain a tail
       // call which invalidates the stack pointer value in SP(0). So we use the
       // value of R31 in this case.
-      if (FI->hasFastCall() && isInt16(FrameSize)) {
+      if (FI->hasFastCall() && isInt<16>(FrameSize)) {
         assert(hasFP(MF) && "Expecting a valid the frame pointer.");
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
           .addReg(PPC::R31).addImm(FrameSize);
@@ -1605,7 +1607,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
           .addReg(PPC::R1)
           .addReg(PPC::R31)
           .addReg(PPC::R0);
-      } else if (isInt16(FrameSize) &&
+      } else if (isInt<16>(FrameSize) &&
                  (!ALIGN_STACK || TargetAlign >= MaxAlign) &&
                  !MFI->hasVarSizedObjects()) {
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
@@ -1615,7 +1617,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
           .addImm(0).addReg(PPC::R1);
       }
     } else {
-      if (FI->hasFastCall() && isInt16(FrameSize)) {
+      if (FI->hasFastCall() && isInt<16>(FrameSize)) {
         assert(hasFP(MF) && "Expecting a valid the frame pointer.");
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
           .addReg(PPC::X31).addImm(FrameSize);
@@ -1629,7 +1631,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
           .addReg(PPC::X1)
           .addReg(PPC::X31)
           .addReg(PPC::X0);
-      } else if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+      } else if (isInt<16>(FrameSize) && TargetAlign >= MaxAlign &&
             !MFI->hasVarSizedObjects()) {
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
            .addReg(PPC::X1).addImm(FrameSize);
@@ -1678,7 +1680,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
      unsigned LISInstr = isPPC64 ? PPC::LIS8 : PPC::LIS;
      unsigned ORIInstr = isPPC64 ? PPC::ORI8 : PPC::ORI;
 
-     if (CallerAllocatedAmt && isInt16(CallerAllocatedAmt)) {
+     if (CallerAllocatedAmt && isInt<16>(CallerAllocatedAmt)) {
        BuildMI(MBB, MBBI, dl, TII.get(ADDIInstr), StackReg)
          .addReg(StackReg).addImm(CallerAllocatedAmt);
      } else {

@@ -130,7 +130,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         }
 
         // If this branch is in range, ignore it.
-        if (isInt16(BranchSize)) {
+        if (isInt<16>(BranchSize)) {
           MBBStartOffset += 4;
           continue;
         }
