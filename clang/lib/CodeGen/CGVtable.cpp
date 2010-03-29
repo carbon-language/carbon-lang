@@ -4080,6 +4080,8 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
         const ThunkInfo &Thunk = VTableThunks[NextVTableThunkIndex].second;
         
         Init = CGM.GetAddrOfThunk(GD, Thunk);
+        
+        NextVTableThunkIndex++;
       } else {
         const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
         const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVtable(MD);
