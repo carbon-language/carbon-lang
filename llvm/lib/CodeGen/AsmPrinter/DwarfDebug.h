@@ -150,6 +150,12 @@ class DwarfDebug : public DwarfPrinter {
   /// DbgScopes in AbstractScopes.
   DenseMap<MDNode *, DbgVariable *> AbstractVariables;
 
+  /// DbgValueStartMap - Tracks starting scope of variable DIEs.
+  /// If the scope of an object begins sometime after the low pc value for the 
+  /// scope most closely enclosing the object, the object entry may have a 
+  /// DW_AT_start_scope attribute.
+  DenseMap<const MachineInstr *, DbgVariable *> DbgValueStartMap;
+
   /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
   /// (at the end of the module) as DW_AT_inline.
   SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;
