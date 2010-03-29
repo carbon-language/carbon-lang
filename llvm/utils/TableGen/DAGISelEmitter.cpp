@@ -102,7 +102,6 @@ void DAGISelEmitter::EmitPredicateFunctions(raw_ostream &OS) {
   OS << "\n\n";
 }
 
-
 namespace {
 // PatternSortingPredicate - return true if we prefer to match LHS before RHS.
 // In particular, we want to match maximal patterns first and lowest cost within
@@ -112,6 +111,19 @@ struct PatternSortingPredicate {
   CodeGenDAGPatterns &CGP;
   
   bool operator()(const PatternToMatch *LHS, const PatternToMatch *RHS) {
+    const TreePatternNode *LHSSrc = LHS->getSrcPattern();
+    const TreePatternNode *RHSSrc = RHS->getSrcPattern();
+    
+    if (LHSSrc->getNumTypes() != 0 && RHSSrc->getNumTypes() != 0 &&
+        LHSSrc->getType(0) != RHSSrc->getType(0)) {
+      MVT::SimpleValueType V1 = LHSSrc->getType(0), V2 = RHSSrc->getType(0);
+      if (MVT(V1).isVector() != MVT(V2).isVector())
+        return MVT(V2).isVector();
+      
+      if (MVT(V1).isFloatingPoint() != MVT(V2).isFloatingPoint())
+        return MVT(V2).isFloatingPoint();
+    }
+    
     // Otherwise, if the patterns might both match, sort based on complexity,
     // which means that we prefer to match patterns that cover more nodes in the
     // input over nodes that cover fewer.
@@ -167,8 +179,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
 
   // We want to process the matches in order of minimal cost.  Sort the patterns
   // so the least cost one is at the start.
-  std::stable_sort(Patterns.begin(), Patterns.end(),
-                   PatternSortingPredicate(CGP));
+  std::sort(Patterns.begin(), Patterns.end(), PatternSortingPredicate(CGP));
   
   
   // Convert each variant of each pattern into a Matcher.
