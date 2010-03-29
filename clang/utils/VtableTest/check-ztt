@@ -7,9 +7,9 @@ N_STRUCTS=300
 let i=1;
 while [ $i != $N_STRUCTS ]; do
   sed -n "/^__ZTT.*s$i:/,/\.[sg][el]/p" test-clang.s |
-    grep -v '\.[sg][el]' | sed 's/(\([0-9][0-9]*\))/\1/' >test-clang-ztt
+    grep -v '\.[sg][el]' | sed -e 's/[()]//g' -e '/^$/d'  >test-clang-ztt
   sed -n "/^__ZTT.*s$i:/,/\.[sg][el]/p" test-gcc.s |
-    grep -v '\.[sg][el]' | sed 's/(\([0-9][0-9]*\))/\1/' >test-gcc-ztt
+    grep -v '\.[sg][el]' | sed -e 's/[()]//g' -e 's/ + /+/'  >test-gcc-ztt
   diff -U3 test-gcc-ztt test-clang-ztt
   if [ $? != 0 ]; then
      echo "FAIL: s$i VTT"
