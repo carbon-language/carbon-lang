@@ -483,7 +483,7 @@ New llvm/Support/Regex.h API.  FileCheck now does regex's
 Many subtle pointer invalidation bugs in Callgraph have been fixed and it now uses asserting value handles.
 MC Disassembler (with blog post), MCInstPrinter.  Many X86 backend and AsmPrinter simplifications
 Various tools like llc and opt now read either .ll or .bc files as input.
-Malloc and free instructions got removed.
+Malloc and free instructions got removed, along with LowerAllocations pass.
 compiler-rt support for ARM.
 completely llvm-gcc NEON support.
 Can transcode from GAS to intel syntax with "llvm-mc foo.s -output-asm-variant=1"
@@ -505,6 +505,7 @@ The ARM backend now has good support for ARMv4 backend (tested on StrongARM
 
 
 
+Defaults to RTTI off, packagers should build with make REQUIRE_RTTI=1.
 CondProp pass removed (functionality merged into jump threading).
 AndersAA got removed (from 2.7 or mainline?)
 PredSimplify, LoopVR, GVNPRE got removed.
