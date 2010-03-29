@@ -52,7 +52,6 @@ class CGDebugInfo {
   unsigned FwdDeclCount;
   
   /// TypeCache - Cache of previously constructed Types.
-  // FIXME: Eliminate this map.  Be careful of iterator invalidation.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
 
   bool BlockLiteralGenericSet;
