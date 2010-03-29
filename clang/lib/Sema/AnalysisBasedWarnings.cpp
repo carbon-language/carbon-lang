@@ -154,7 +154,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
         continue;
       }
       Expr *CEE = C->getCallee()->IgnoreParenCasts();
-      if (CEE->getType().getNoReturnAttr()) {
+      if (CEE->getType()->getNoReturnAttr()) {
         NoReturnEdge = true;
         HasFakeEdge = true;
       } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {

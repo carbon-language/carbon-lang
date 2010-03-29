@@ -1144,11 +1144,11 @@ static QualType getNoReturnCallConvType(ASTContext& Context, QualType T,
 }
 
 QualType ASTContext::getNoReturnType(QualType T, bool AddNoReturn) {
-  return getNoReturnCallConvType(*this, T, AddNoReturn, T.getCallConv());
+  return getNoReturnCallConvType(*this, T, AddNoReturn, T->getCallConv());
 }
 
 QualType ASTContext::getCallConvType(QualType T, CallingConv CallConv) {
-  return getNoReturnCallConvType(*this, T, T.getNoReturnAttr(), CallConv);
+  return getNoReturnCallConvType(*this, T, T->getNoReturnAttr(), CallConv);
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex

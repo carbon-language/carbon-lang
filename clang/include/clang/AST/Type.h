@@ -678,14 +678,6 @@ public:
     return getObjCGCAttr() == Qualifiers::Strong;
   }
 
-  /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
-  /// false otherwise.
-  bool getNoReturnAttr() const;
-
-  /// getCallConv - Returns the calling convention of the type if the type
-  /// is a function type, CC_Default otherwise.
-  CallingConv getCallConv() const;
-
 private:
   // These methods are implemented in a separate translation unit;
   // "static"-ize them to avoid creating temporary QualTypes in the
@@ -945,6 +937,14 @@ public:
   /// getPointeeType - If this is a pointer, ObjC object pointer, or block
   /// pointer, this returns the respective pointee.
   QualType getPointeeType() const;
+
+  /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
+  /// false otherwise.
+  bool getNoReturnAttr() const;
+
+  /// getCallConv - Returns the calling convention of the type if the type
+  /// is a function type, CC_Default otherwise.
+  CallingConv getCallConv() const;
 
   /// getUnqualifiedDesugaredType() - Return the specified type with
   /// any "sugar" removed from the type, removing any typedefs,
@@ -2938,12 +2938,11 @@ inline Qualifiers::GC QualType::getObjCGCAttr() const {
 
   /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
   /// false otherwise.
-inline bool QualType::getNoReturnAttr() const {
-  QualType CT = getTypePtr()->getCanonicalTypeInternal();
-  if (const PointerType *PT = getTypePtr()->getAs<PointerType>()) {
+inline bool Type::getNoReturnAttr() const {
+  if (const PointerType *PT = getAs<PointerType>()) {
     if (const FunctionType *FT = PT->getPointeeType()->getAs<FunctionType>())
       return FT->getNoReturnAttr();
-  } else if (const FunctionType *FT = getTypePtr()->getAs<FunctionType>())
+  } else if (const FunctionType *FT = getAs<FunctionType>())
     return FT->getNoReturnAttr();
 
   return false;
@@ -2951,19 +2950,19 @@ inline bool QualType::getNoReturnAttr() const {
 
 /// getCallConv - Returns the calling convention of the type if the type
 /// is a function type, CC_Default otherwise.
-inline CallingConv QualType::getCallConv() const {
-  if (const PointerType *PT = getTypePtr()->getAs<PointerType>())
-    return PT->getPointeeType().getCallConv();
-  else if (const ReferenceType *RT = getTypePtr()->getAs<ReferenceType>())
-    return RT->getPointeeType().getCallConv();
+inline CallingConv Type::getCallConv() const {
+  if (const PointerType *PT = getAs<PointerType>())
+    return PT->getPointeeType()->getCallConv();
+  else if (const ReferenceType *RT = getAs<ReferenceType>())
+    return RT->getPointeeType()->getCallConv();
   else if (const MemberPointerType *MPT =
-           getTypePtr()->getAs<MemberPointerType>())
-    return MPT->getPointeeType().getCallConv();
+           getAs<MemberPointerType>())
+    return MPT->getPointeeType()->getCallConv();
   else if (const BlockPointerType *BPT =
-           getTypePtr()->getAs<BlockPointerType>()) {
+           getAs<BlockPointerType>()) {
     if (const FunctionType *FT = BPT->getPointeeType()->getAs<FunctionType>())
       return FT->getCallConv();
-  } else if (const FunctionType *FT = getTypePtr()->getAs<FunctionType>())
+  } else if (const FunctionType *FT = getAs<FunctionType>())
     return FT->getCallConv();
 
   return CC_Default;

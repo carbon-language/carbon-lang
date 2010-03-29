@@ -37,7 +37,7 @@ void NoReturnFunctionChecker::PostVisitCallExpr(CheckerContext &C,
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
 
-  bool BuildSinks = Callee->getType().getNoReturnAttr();
+  bool BuildSinks = Callee->getType()->getNoReturnAttr();
 
   if (!BuildSinks) {
     SVal L = state->getSVal(Callee);
