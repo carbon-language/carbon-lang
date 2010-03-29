@@ -1645,6 +1645,8 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
       continue;
 
     uint64_t BaseOffset;
+    bool BaseDeclIsMorallyVirtual = BaseIsMorallyVirtual;
+    bool BaseDeclIsNonVirtualPrimaryBase;
 
     if (I->isVirtual()) {
       // Check if we've visited this virtual base before.
@@ -1654,19 +1656,19 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
       const ASTRecordLayout &Layout = 
         getContext().getASTRecordLayout(VTableClass);
 
-      BaseIsMorallyVirtual = true;
-      BaseIsNonVirtualPrimaryBase = false;
-      
       BaseOffset = Layout.getVBaseClassOffset(BaseDecl);
+      BaseDeclIsMorallyVirtual = true;
+      BaseDeclIsNonVirtualPrimaryBase = false;
     } else {
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
 
       BaseOffset = Base.getBaseOffset() + Layout.getBaseClassOffset(BaseDecl);
-      BaseIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
+      BaseDeclIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
     }
     
     InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset), 
-                             BaseIsMorallyVirtual, BaseIsNonVirtualPrimaryBase, 
+                             BaseDeclIsMorallyVirtual, 
+                             BaseDeclIsNonVirtualPrimaryBase, 
                              VTable, VTableClass, VBases);
   }
 }
