@@ -40,54 +40,27 @@ class Timer {
   double SystemTime;     // System time elapsed
   ssize_t MemUsed;       // Memory allocated (in bytes)
   size_t PeakMem;        // Peak memory used
-  size_t PeakMemBase;    // Temporary for peak calculation...
-  std::string Name;      // The name of this time variable
+  size_t PeakMemBase;    // Temporary for peak memory calculation.
+  std::string Name;      // The name of this time variable.
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
-  mutable sys::SmartMutex<true> Lock; // Mutex for the contents of this Timer.
 public:
   explicit Timer(const std::string &N);
   Timer(const std::string &N, TimerGroup &tg);
   Timer(const Timer &T);
   ~Timer();
 
+private:
   double getProcessTime() const { return UserTime+SystemTime; }
   double getWallTime() const { return Elapsed; }
   ssize_t getMemUsed() const { return MemUsed; }
   size_t getPeakMem() const { return PeakMem; }
+public:
   std::string getName() const { return Name; }
 
-  const Timer &operator=(const Timer &T) {
-    if (&T < this) {
-      T.Lock.acquire();
-      Lock.acquire();
-    } else {
-      Lock.acquire();
-      T.Lock.acquire();
-    }
-    
-    Elapsed = T.Elapsed;
-    UserTime = T.UserTime;
-    SystemTime = T.SystemTime;
-    MemUsed = T.MemUsed;
-    PeakMem = T.PeakMem;
-    PeakMemBase = T.PeakMemBase;
-    Name = T.Name;
-    Started = T.Started;
-    assert(TG == T.TG && "Can only assign timers in the same TimerGroup!");
-    
-    if (&T < this) {
-      T.Lock.release();
-      Lock.release();
-    } else {
-      Lock.release();
-      T.Lock.release();
-    }
-    
-    return *this;
-  }
-
-  // operator< - Allow sorting...
+  const Timer &operator=(const Timer &T);
+  
+  // operator< - Allow sorting.
   bool operator<(const Timer &T) const {
     // Sort by Wall Time elapsed, as it is the only thing really accurate
     return Elapsed < T.Elapsed;

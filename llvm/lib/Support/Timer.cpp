@@ -147,7 +147,6 @@ static TimeRecord getTimeRecord(bool Start) {
 static ManagedStatic<std::vector<Timer*> > ActiveTimers;
 
 void Timer::startTimer() {
-  sys::SmartScopedLock<true> L(*TimerLock);
   Started = true;
   ActiveTimers->push_back(this);
   TimeRecord TR = getTimeRecord(true);
@@ -159,7 +158,6 @@ void Timer::startTimer() {
 }
 
 void Timer::stopTimer() {
-  sys::SmartScopedLock<true> L(*TimerLock);
   TimeRecord TR = getTimeRecord(false);
   Elapsed    += TR.Elapsed;
   UserTime   += TR.UserTime;
@@ -184,14 +182,26 @@ void Timer::sum(const Timer &T) {
   PeakMem    += T.PeakMem;
 }
 
+const Timer &Timer::operator=(const Timer &T) {
+  Elapsed = T.Elapsed;
+  UserTime = T.UserTime;
+  SystemTime = T.SystemTime;
+  MemUsed = T.MemUsed;
+  PeakMem = T.PeakMem;
+  PeakMemBase = T.PeakMemBase;
+  Name = T.Name;
+  Started = T.Started;
+  assert(TG == T.TG && "Can only assign timers in the same TimerGroup!");
+  return *this;
+}
+
+
 /// addPeakMemoryMeasurement - This method should be called whenever memory
 /// usage needs to be checked.  It adds a peak memory measurement to the
 /// currently active timers, which will be printed when the timer group prints
 ///
 void Timer::addPeakMemoryMeasurement() {
-  sys::SmartScopedLock<true> L(*TimerLock);
   size_t MemUsed = getMemUsage();
-
   for (std::vector<Timer*>::iterator I = ActiveTimers->begin(),
          E = ActiveTimers->end(); I != E; ++I)
     (*I)->PeakMem = std::max((*I)->PeakMem, MemUsed-(*I)->PeakMemBase);
@@ -208,7 +218,6 @@ static void printVal(double Val, double Total, raw_ostream &OS) {
 }
 
 void Timer::print(const Timer &Total, raw_ostream &OS) {
-  sys::SmartScopedLock<true> L(*TimerLock);
   if (Total.UserTime)
     printVal(UserTime, Total.UserTime, OS);
   if (Total.SystemTime)
@@ -219,13 +228,13 @@ void Timer::print(const Timer &Total, raw_ostream &OS) {
   
   OS << "  ";
   
-  if (Total.MemUsed) {
+  if (Total.MemUsed)
     OS << format("%9lld", (long long)MemUsed) << "  ";
-  }
+
   if (Total.PeakMem) {
-    if (PeakMem) {
+    if (PeakMem)
       OS << format("%9lld", (long long)PeakMem) << "  ";
-    } else
+    else
       OS << "           ";
   }
   OS << Name << "\n";
@@ -286,14 +295,12 @@ NamedRegionTimer::NamedRegionTimer(const std::string &Name,
 //===----------------------------------------------------------------------===//
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.
-raw_ostream *
-llvm::GetLibSupportInfoOutputFile() {
+raw_ostream *llvm::GetLibSupportInfoOutputFile() {
   std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
   if (LibSupportInfoOutputFilename.empty())
     return &errs();
   if (LibSupportInfoOutputFilename == "-")
     return &outs();
-
 
   std::string Error;
   raw_ostream *Result = new raw_fd_ostream(LibSupportInfoOutputFilename.c_str(),
@@ -373,7 +380,7 @@ void TimerGroup::removeTimer() {
 
   TimersToPrint.clear();
 
-  if (OutStream != &errs() && OutStream != &outs() && OutStream != &dbgs())
+  if (OutStream != &errs() && OutStream != &outs())
     delete OutStream;   // Close the file.
 }
 
