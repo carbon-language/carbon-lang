@@ -1565,12 +1565,9 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
 
   // Compute the address point.
   llvm::Value *VTableAddressPoint;
-  
-  // FIXME: Always use the new vtable code once we know it works.
-  bool UseNewVTableCode = CGM.getLangOptions().DumpVtableLayouts;
-  
+
   // Check if we need to use a vtable from the VTT.
-  if (UseNewVTableCode && CodeGenVTables::needsVTTParameter(CurGD) &&
+  if (CodeGenVTables::needsVTTParameter(CurGD) &&
       (RD->getNumVBases() || BaseIsMorallyVirtual)) {
     // Get the secondary vpointer index.
     uint64_t VirtualPointerIndex = 
@@ -1592,8 +1589,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   // Compute where to store the address point.
   llvm::Value *VTableField;
   
-  if (UseNewVTableCode && 
-      CodeGenVTables::needsVTTParameter(CurGD) && BaseIsMorallyVirtual) {
+  if (CodeGenVTables::needsVTTParameter(CurGD) && BaseIsMorallyVirtual) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
     VTableField = GetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD, 
