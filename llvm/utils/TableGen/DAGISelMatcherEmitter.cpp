@@ -32,6 +32,7 @@ OmitComments("omit-comments", cl::desc("Do not generate comments"),
 
 namespace {
 class MatcherTableEmitter {
+  const CodeGenDAGPatterns &CGP;
   StringMap<unsigned> NodePredicateMap, PatternPredicateMap;
   std::vector<std::string> NodePredicates, PatternPredicates;
 
@@ -43,13 +44,12 @@ class MatcherTableEmitter {
   std::vector<Record*> NodeXForms;
 
 public:
-  MatcherTableEmitter() {}
+  MatcherTableEmitter(const CodeGenDAGPatterns &cgp) : CGP(cgp) {}
 
   unsigned EmitMatcherList(const Matcher *N, unsigned Indent,
                            unsigned StartIdx, formatted_raw_ostream &OS);
   
-  void EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
-                              formatted_raw_ostream &OS);
+  void EmitPredicateFunctions(formatted_raw_ostream &OS);
   
   void EmitHistogram(const Matcher *N, formatted_raw_ostream &OS);
 private:
@@ -521,7 +521,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
 
       if (const MorphNodeToMatcher *SNT = dyn_cast<MorphNodeToMatcher>(N)) {
         OS.PadToColumn(Indent*2) << "// Src: "
-          << *SNT->getPattern().getSrcPattern() << '\n';
+          << *SNT->getPattern().getSrcPattern() << " - Complexity = " 
+          << SNT->getPattern().getPatternComplexity(CGP) << '\n';
         OS.PadToColumn(Indent*2) << "// Dst: "
           << *SNT->getPattern().getDstPattern() << '\n';
       }
@@ -548,7 +549,8 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     OS << '\n';
     if (!OmitComments) {
       OS.PadToColumn(Indent*2) << "// Src: "
-        << *CM->getPattern().getSrcPattern() << '\n';
+        << *CM->getPattern().getSrcPattern() << " - Complexity = " 
+        << CM->getPattern().getPatternComplexity(CGP) << '\n';
       OS.PadToColumn(Indent*2) << "// Dst: "
         << *CM->getPattern().getDstPattern();
     }
@@ -579,8 +581,7 @@ EmitMatcherList(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   return Size;
 }
 
-void MatcherTableEmitter::EmitPredicateFunctions(const CodeGenDAGPatterns &CGP,
-                                                 formatted_raw_ostream &OS) {
+void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   // Emit pattern predicates.
   if (!PatternPredicates.empty()) {
     OS << "bool CheckPatternPredicate(unsigned PredNo) const {\n";
@@ -774,7 +775,7 @@ void llvm::EmitMatcherTable(const Matcher *TheMatcher,
   OS << "// The main instruction selector code.\n";
   OS << "SDNode *SelectCode(SDNode *N) {\n";
 
-  MatcherTableEmitter MatcherEmitter;
+  MatcherTableEmitter MatcherEmitter(CGP);
 
   OS << "  // Opcodes are emitted as 2 bytes, TARGET_OPCODE handles this.\n";
   OS << "  #define TARGET_OPCODE(X) X & 255, unsigned(X) >> 8\n";
@@ -789,5 +790,5 @@ void llvm::EmitMatcherTable(const Matcher *TheMatcher,
   OS << '\n';
   
   // Next up, emit the function for node and pattern predicates:
-  MatcherEmitter.EmitPredicateFunctions(CGP, OS);
+  MatcherEmitter.EmitPredicateFunctions(OS);
 }

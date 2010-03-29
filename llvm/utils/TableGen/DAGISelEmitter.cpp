@@ -21,49 +21,6 @@ using namespace llvm;
 // DAGISelEmitter Helper methods
 //
 
-/// getPatternSize - Return the 'size' of this pattern.  We want to match large
-/// patterns before small ones.  This is used to determine the size of a
-/// pattern.
-static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
-  unsigned Size = 3;  // The node itself.
-  // If the root node is a ConstantSDNode, increases its size.
-  // e.g. (set R32:$dst, 0).
-  if (P->isLeaf() && dynamic_cast<IntInit*>(P->getLeafValue()))
-    Size += 2;
-
-  // FIXME: This is a hack to statically increase the priority of patterns
-  // which maps a sub-dag to a complex pattern. e.g. favors LEA over ADD.
-  // Later we can allow complexity / cost for each pattern to be (optionally)
-  // specified. To get best possible pattern match we'll need to dynamically
-  // calculate the complexity of all patterns a dag can potentially map to.
-  const ComplexPattern *AM = P->getComplexPatternInfo(CGP);
-  if (AM)
-    Size += AM->getNumOperands() * 3;
-
-  // If this node has some predicate function that must match, it adds to the
-  // complexity of this node.
-  if (!P->getPredicateFns().empty())
-    ++Size;
-  
-  // Count children in the count if they are also nodes.
-  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
-    TreePatternNode *Child = P->getChild(i);
-    if (!Child->isLeaf() && Child->getNumTypes() &&
-        Child->getType(0) != MVT::Other)
-      Size += getPatternSize(Child, CGP);
-    else if (Child->isLeaf()) {
-      if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
-        Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
-      else if (Child->getComplexPatternInfo(CGP))
-        Size += getPatternSize(Child, CGP);
-      else if (!Child->getPredicateFns().empty())
-        ++Size;
-    }
-  }
-  
-  return Size;
-}
-
 /// getResultPatternCost - Compute the number of instructions for this pattern.
 /// This is a temporary hack.  We should really include the instruction
 /// latencies in this calculation.
@@ -145,6 +102,7 @@ void DAGISelEmitter::EmitPredicateFunctions(raw_ostream &OS) {
   OS << "\n\n";
 }
 
+
 namespace {
 // PatternSortingPredicate - return true if we prefer to match LHS before RHS.
 // In particular, we want to match maximal patterns first and lowest cost within
@@ -153,12 +111,12 @@ struct PatternSortingPredicate {
   PatternSortingPredicate(CodeGenDAGPatterns &cgp) : CGP(cgp) {}
   CodeGenDAGPatterns &CGP;
   
-  bool operator()(const PatternToMatch *LHS,
-                  const PatternToMatch *RHS) {
-    unsigned LHSSize = getPatternSize(LHS->getSrcPattern(), CGP);
-    unsigned RHSSize = getPatternSize(RHS->getSrcPattern(), CGP);
-    LHSSize += LHS->getAddedComplexity();
-    RHSSize += RHS->getAddedComplexity();
+  bool operator()(const PatternToMatch *LHS, const PatternToMatch *RHS) {
+    // Otherwise, if the patterns might both match, sort based on complexity,
+    // which means that we prefer to match patterns that cover more nodes in the
+    // input over nodes that cover fewer.
+    unsigned LHSSize = LHS->getPatternComplexity(CGP);
+    unsigned RHSSize = RHS->getPatternComplexity(CGP);
     if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
     if (LHSSize < RHSSize) return false;
     
@@ -173,7 +131,8 @@ struct PatternSortingPredicate {
     if (LHSPatSize < RHSPatSize) return true;
     if (LHSPatSize > RHSPatSize) return false;
     
-    // Sort based on the UID of the pattern, giving us a deterministic ordering.
+    // Sort based on the UID of the pattern, giving us a deterministic ordering
+    // if all other sorting conditions fail.
     assert(LHS == RHS || LHS->ID != RHS->ID);
     return LHS->ID < RHS->ID;
   }

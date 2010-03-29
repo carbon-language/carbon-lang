@@ -491,6 +491,59 @@ void DumpDepVars(MultipleUseVarSet &DepVars) {
 // PatternToMatch implementation
 //
 
+
+/// getPatternSize - Return the 'size' of this pattern.  We want to match large
+/// patterns before small ones.  This is used to determine the size of a
+/// pattern.
+static unsigned getPatternSize(const TreePatternNode *P,
+                               const CodeGenDAGPatterns &CGP) {
+  unsigned Size = 3;  // The node itself.
+  // If the root node is a ConstantSDNode, increases its size.
+  // e.g. (set R32:$dst, 0).
+  if (P->isLeaf() && dynamic_cast<IntInit*>(P->getLeafValue()))
+    Size += 2;
+  
+  // FIXME: This is a hack to statically increase the priority of patterns
+  // which maps a sub-dag to a complex pattern. e.g. favors LEA over ADD.
+  // Later we can allow complexity / cost for each pattern to be (optionally)
+  // specified. To get best possible pattern match we'll need to dynamically
+  // calculate the complexity of all patterns a dag can potentially map to.
+  const ComplexPattern *AM = P->getComplexPatternInfo(CGP);
+  if (AM)
+    Size += AM->getNumOperands() * 3;
+  
+  // If this node has some predicate function that must match, it adds to the
+  // complexity of this node.
+  if (!P->getPredicateFns().empty())
+    ++Size;
+  
+  // Count children in the count if they are also nodes.
+  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = P->getChild(i);
+    if (!Child->isLeaf() && Child->getNumTypes() &&
+        Child->getType(0) != MVT::Other)
+      Size += getPatternSize(Child, CGP);
+    else if (Child->isLeaf()) {
+      if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
+        Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
+      else if (Child->getComplexPatternInfo(CGP))
+        Size += getPatternSize(Child, CGP);
+      else if (!Child->getPredicateFns().empty())
+        ++Size;
+    }
+  }
+  
+  return Size;
+}
+
+/// Compute the complexity metric for the input pattern.  This roughly
+/// corresponds to the number of nodes that are covered.
+unsigned PatternToMatch::
+getPatternComplexity(const CodeGenDAGPatterns &CGP) const {
+  return getPatternSize(getSrcPattern(), CGP) + getAddedComplexity();
+}
+
+
 /// getPredicateCheck - Return a single string containing all of this
 /// pattern's predicates concatenated with "&&" operators.
 ///

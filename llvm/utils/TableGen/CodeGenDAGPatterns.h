@@ -598,6 +598,10 @@ public:
   unsigned         getAddedComplexity() const { return AddedComplexity; }
 
   std::string getPredicateCheck() const;
+  
+  /// Compute the complexity metric for the input pattern.  This roughly
+  /// corresponds to the number of nodes that are covered.
+  unsigned getPatternComplexity(const CodeGenDAGPatterns &CGP) const;
 };
 
 // Deterministic comparison of Record*.
