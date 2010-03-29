@@ -88,63 +88,18 @@ namespace {
     /// initializer instead.
     bool CleanupSelectors();
 
+    /// FindAllCleanupSelectors - Find all eh.selector calls that are clean-ups.
+    void FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels);
+
+    /// FindAllURoRInvokes - Find all URoR invokes in the function.
+    void FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes);
+
     /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow"
     /// calls. The "unwind" part of these invokes jump to a landing pad within
     /// the current function. This is a candidate to merge the selector
     /// associated with the URoR invoke with the one from the URoR's landing
     /// pad.
     bool HandleURoRInvokes();
-
-    /// FindSelectorAndURoR - Find the eh.selector call and URoR call associated
-    /// with the eh.exception call. This recursively looks past instructions
-    /// which don't change the EH pointer value, like casts or PHI nodes.
-    bool FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
-                             SmallPtrSet<IntrinsicInst*, 8> &SelCalls);
-      
-    /// DoMem2RegPromotion - Take an alloca call and promote it from memory to a
-    /// register.
-    bool DoMem2RegPromotion(Value *V) {
-      AllocaInst *AI = dyn_cast<AllocaInst>(V);
-      if (!AI || !isAllocaPromotable(AI)) return false;
-
-      // Turn the alloca into a register.
-      std::vector<AllocaInst*> Allocas(1, AI);
-      PromoteMemToReg(Allocas, *DT, *DF);
-      return true;
-    }
-
-    /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
-    bool PromoteStoreInst(StoreInst *SI) {
-      if (!SI || !DT || !DF) return false;
-      if (DoMem2RegPromotion(SI->getOperand(1)))
-        return true;
-      return false;
-    }
-
-    /// PromoteEHPtrStore - Promote the storing of an EH pointer into a
-    /// register. This should get rid of the store and subsequent loads.
-    bool PromoteEHPtrStore(IntrinsicInst *II) {
-      if (!DT || !DF) return false;
-
-      bool Changed = false;
-      StoreInst *SI;
-
-      while (1) {
-        SI = 0;
-        for (Value::use_iterator
-               I = II->use_begin(), E = II->use_end(); I != E; ++I) {
-          SI = dyn_cast<StoreInst>(I);
-          if (SI) break;
-        }
-
-        if (!PromoteStoreInst(SI))
-          break;
-
-        Changed = true;
-      }
-
-      return false;
-    }
 
   public:
     static char ID; // Pass identification, replacement for typeid.
@@ -178,49 +133,51 @@ FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli, bool fast) {
   return new DwarfEHPrepare(tli, fast);
 }
 
-/// FindSelectorAndURoR - Find the eh.selector call associated with the
-/// eh.exception call. And indicate if there is a URoR "invoke" associated with
-/// the eh.exception call. This recursively looks past instructions which don't
-/// change the EH pointer value, like casts or PHI nodes.
-bool
-DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
-                                    SmallPtrSet<IntrinsicInst*, 8> &SelCalls) {
-  SmallPtrSet<PHINode*, 32> SeenPHIs;
-  bool Changed = false;
-
- restart:
+/// FindAllCleanupSelectors - Find all eh.selector calls that are clean-ups.
+void DwarfEHPrepare::
+FindAllCleanupSelectors(SmallPtrSet<IntrinsicInst*, 32> &Sels) {
   for (Value::use_iterator
-         I = Inst->use_begin(), E = Inst->use_end(); I != E; ++I) {
-    Instruction *II = dyn_cast<Instruction>(I);
-    if (!II || II->getParent()->getParent() != F) continue;
-    
-    if (IntrinsicInst *Sel = dyn_cast<IntrinsicInst>(II)) {
-      if (Sel->getIntrinsicID() == Intrinsic::eh_selector)
-        SelCalls.insert(Sel);
-    } else if (InvokeInst *Invoke = dyn_cast<InvokeInst>(II)) {
-      if (Invoke->getCalledFunction() == URoR)
-        URoRInvoke = true;
-    } else if (CastInst *CI = dyn_cast<CastInst>(II)) {
-      Changed |= FindSelectorAndURoR(CI, URoRInvoke, SelCalls);
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
-      if (!PromoteStoreInst(SI)) continue;
-      Changed = true;
-      SeenPHIs.clear();
-      goto restart;             // Uses may have changed, restart loop.
-    } else if (PHINode *PN = dyn_cast<PHINode>(II)) {
-      if (SeenPHIs.insert(PN))
-        // Don't process a PHI node more than once.
-        Changed |= FindSelectorAndURoR(PN, URoRInvoke, SelCalls);
-    }
-  }
+         I = SelectorIntrinsic->use_begin(),
+         E = SelectorIntrinsic->use_end(); I != E; ++I) {
+    IntrinsicInst *SI = cast<IntrinsicInst>(I);
+    if (!SI || SI->getParent()->getParent() != F) continue;
 
-  return Changed;
+    unsigned NumOps = SI->getNumOperands();
+    if (NumOps > 4) continue;
+    bool IsCleanUp = (NumOps == 3);
+
+    if (!IsCleanUp)
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(SI->getOperand(3)))
+        IsCleanUp = (CI->getZExtValue() == 0);
+
+    if (IsCleanUp)
+      Sels.insert(SI);
+  }
+}
+
+/// FindAllURoRInvokes - Find all URoR invokes in the function.
+void DwarfEHPrepare::
+FindAllURoRInvokes(SmallPtrSet<InvokeInst*, 32> &URoRInvokes) {
+  for (Value::use_iterator
+         I = URoR->use_begin(),
+         E = URoR->use_end(); I != E; ++I) {
+    if (InvokeInst *II = dyn_cast<InvokeInst>(I))
+      URoRInvokes.insert(II);
+  }
 }
 
 /// CleanupSelectors - Any remaining eh.selector intrinsic calls which still use
 /// the ".llvm.eh.catch.all.value" call need to convert to using it's
 /// initializer instead.
 bool DwarfEHPrepare::CleanupSelectors() {
+  if (!EHCatchAllValue) return false;
+
+  if (!SelectorIntrinsic) {
+    SelectorIntrinsic =
+      Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_selector);
+    if (!SelectorIntrinsic) return false;
+  }
+
   bool Changed = false;
   for (Value::use_iterator
          I = SelectorIntrinsic->use_begin(),
@@ -244,6 +201,8 @@ bool DwarfEHPrepare::CleanupSelectors() {
 /// function. This is a candidate to merge the selector associated with the URoR
 /// invoke with the one from the URoR's landing pad.
 bool DwarfEHPrepare::HandleURoRInvokes() {
+  if (!DT) return CleanupSelectors(); // We require DominatorTree information.
+
   if (!EHCatchAllValue) {
     EHCatchAllValue =
       F->getParent()->getNamedGlobal(".llvm.eh.catch.all.value");
@@ -261,49 +220,27 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
     if (!URoR) return CleanupSelectors();
   }
 
-  if (!ExceptionValueIntrinsic) {
-    ExceptionValueIntrinsic =
-      Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_exception);
-    if (!ExceptionValueIntrinsic) return CleanupSelectors();
-  }
+  SmallPtrSet<IntrinsicInst*, 32> Sels;
+  SmallPtrSet<InvokeInst*, 32> URoRInvokes;
+  FindAllCleanupSelectors(Sels);
+  FindAllURoRInvokes(URoRInvokes);
 
-  bool Changed = false;
   SmallPtrSet<IntrinsicInst*, 32> SelsToConvert;
 
-  for (Value::use_iterator
-         I = ExceptionValueIntrinsic->use_begin(),
-         E = ExceptionValueIntrinsic->use_end(); I != E; ++I) {
-    IntrinsicInst *EHPtr = dyn_cast<IntrinsicInst>(I);
-    if (!EHPtr || EHPtr->getParent()->getParent() != F) continue;
-
-    Changed |= PromoteEHPtrStore(EHPtr);
-
-    bool URoRInvoke = false;
-    SmallPtrSet<IntrinsicInst*, 8> SelCalls;
-    Changed |= FindSelectorAndURoR(EHPtr, URoRInvoke, SelCalls);
-
-    if (URoRInvoke) {
-      // This EH pointer is being used by an invoke of an URoR instruction and
-      // an eh.selector intrinsic call. If the eh.selector is a 'clean-up', we
-      // need to convert it to a 'catch-all'.
-      for (SmallPtrSet<IntrinsicInst*, 8>::iterator
-             SI = SelCalls.begin(), SE = SelCalls.end(); SI != SE; ++SI) {
-        IntrinsicInst *II = *SI;
-        unsigned NumOps = II->getNumOperands();
-
-        if (NumOps <= 4) {
-          bool IsCleanUp = (NumOps == 3);
-
-          if (!IsCleanUp)
-            if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(3)))
-              IsCleanUp = (CI->getZExtValue() == 0);
-
-          if (IsCleanUp)
-            SelsToConvert.insert(II);
-        }
+  for (SmallPtrSet<IntrinsicInst*, 32>::iterator
+         SI = Sels.begin(), SE = Sels.end(); SI != SE; ++SI) {
+    const BasicBlock *SelBB = (*SI)->getParent();
+    for (SmallPtrSet<InvokeInst*, 32>::iterator
+           UI = URoRInvokes.begin(), UE = URoRInvokes.end(); UI != UE; ++UI) {
+      const BasicBlock *URoRBB = (*UI)->getParent();
+      if (SelBB == URoRBB || DT->dominates(SelBB, URoRBB)) {
+        SelsToConvert.insert(*SI);
+        break;
       }
     }
   }
+
+  bool Changed = false;
 
   if (!SelsToConvert.empty()) {
     // Convert all clean-up eh.selectors, which are associated with "invokes" of
