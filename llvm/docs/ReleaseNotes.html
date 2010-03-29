@@ -175,13 +175,23 @@ implementation of the CLI) using LLVM for static and just-in-time
 compilation.</p>
 
 <p>
-VMKit version ?? builds with LLVM 2.7 and you can find it on its
-<a href="http://vmkit.llvm.org/releases/">web page</a>. The release includes
-bug fixes, cleanup and new features. The major changes are:</p>
+With the release of LLVM 2.7, VMKit has shifted to a great framework for writing
+virtual machines. VMKit now offers precise and efficient garbage collection with
+multi-threading support, thanks to the MMTk memory management toolkit, as well
+as just in time and ahead of time compilation with LLVM.  The major changes in
+VMKit 0.27 are:</p>
 
 <ul>
 
-<li>...</li>
+<li>Garbage collection: VMKit now uses the MMTk toolkit for garbage collectors.
+  The first collector to be ported is the MarkSweep collector, which is precise,
+  and drastically improves the performance of VMKit.</li>
+<li>Line number information in the JVM: by using the debug metadata of LLVM, the
+ JVM now supports precise line number information, useful when printing a stack
+ trace.</li>
+<li>Interface calls in the JVM: we implemented a variant of the Interface Method
+  Table technique for interface calls in the JVM.
+</li>
 
 </ul>
 </div>
