@@ -1337,6 +1337,11 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
 
     if (Ops.LHS->getType()->isFPOrFPVectorTy())
       return Builder.CreateFSub(Ops.LHS, Ops.RHS, "sub");
+
+    // Signed integer overflow is undefined behavior.
+    if (Ops.Ty->isSignedIntegerType())
+      return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");
+
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }
 
