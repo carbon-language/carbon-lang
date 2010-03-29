@@ -1595,11 +1595,22 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   }
 
   // Compute where to store the address point.
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  llvm::Value *VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
-  VTableField = 
-    Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
+  llvm::Value *VTableField;
   
+  if (UseNewVTableCode && 
+      CodeGenVTables::needsVTTParameter(CurGD) && BaseIsMorallyVirtual) {
+    // We need to use the virtual base offset offset because the virtual base
+    // might have a different offset in the most derived class.
+    VTableField = GetAddressOfBaseClass(LoadCXXThis(), VTableClass, RD, 
+                                        /*NullCheckValue=*/false);
+  } else {
+    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+
+    VTableField = Builder.CreateBitCast(LoadCXXThis(), Int8PtrTy);
+    VTableField = 
+      Builder.CreateConstInBoundsGEP1_64(VTableField, Base.getBaseOffset() / 8);  
+  }
+
   // Finally, store the address point.
   const llvm::Type *AddressPointPtrTy =
     VTableAddressPoint->getType()->getPointerTo();
