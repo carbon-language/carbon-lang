@@ -70,6 +70,7 @@ def N3RegFrm       : Format<38>;
 def N3RegVShFrm    : Format<39>;
 def NVExtFrm       : Format<40>;
 def NVMulSLFrm     : Format<41>;
+def NVTBLFrm       : Format<42>;
 
 // Misc flags.
 
