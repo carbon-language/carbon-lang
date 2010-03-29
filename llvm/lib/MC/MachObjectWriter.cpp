@@ -612,9 +612,16 @@ public:
           }
         }
       } else {
-        if (Modifier == MCSymbolRefExpr::VK_GOT)
+        if (Modifier == MCSymbolRefExpr::VK_GOT) {
           Type = RIT_X86_64_GOT;
-        else if (Modifier != MCSymbolRefExpr::VK_None)
+        } else if (Modifier == MCSymbolRefExpr::VK_GOTPCREL) {
+          // GOTPCREL is allowed as a modifier on non-PCrel instructions, in
+          // which case all we do is set the PCrel bit in the relocation entry;
+          // this is used with exception handling, for example. The source is
+          // required to include any necessary offset directly.
+          Type = RIT_X86_64_GOT;
+          IsPCRel = 1;
+        } else if (Modifier != MCSymbolRefExpr::VK_None)
           llvm_report_error("unsupported symbol modifier in relocation");
         else
           Type = RIT_X86_64_Unsigned;
