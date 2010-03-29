@@ -404,6 +404,27 @@ code.-->
 </div>
 
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="tce">TTA-based Codesign Environment (TCE)</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://tce.cs.tut.fi/">TCE</a> is a toolset for designing
+application-specific processors (ASP) based on the Transport triggered
+architecture (TTA). The toolset provides a complete co-design flow from C/C++
+programs down to synthesizable VHDL and parallel program binaries. Processor
+customization points include the register files, function units, supported
+operations, and the interconnection network.</p>
+
+<p>TCE uses llvm-gcc/Clang and LLVM for C/C++ language support, target
+independent optimizations and also for parts of code generation. It generates
+new LLVM-based code generators "on the fly" for the designed TTA processors and
+loads them in to the compiler backend as runtime libraries to avoid per-target
+recompilation of larger parts of the compiler chain.</p>
+
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
