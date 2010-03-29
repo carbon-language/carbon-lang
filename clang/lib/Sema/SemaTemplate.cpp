@@ -4067,11 +4067,11 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   UnresolvedSetIterator Result
     = getMostSpecialized(Candidates.begin(), Candidates.end(),
                          TPOC_Other, FD->getLocation(),
-                  PartialDiagnostic(diag::err_function_template_spec_no_match) 
+                  PDiag(diag::err_function_template_spec_no_match) 
                     << FD->getDeclName(),
-                  PartialDiagnostic(diag::err_function_template_spec_ambiguous)
+                  PDiag(diag::err_function_template_spec_ambiguous)
                     << FD->getDeclName() << (ExplicitTemplateArgs != 0),
-                  PartialDiagnostic(diag::note_function_template_spec_matched));
+                  PDiag(diag::note_function_template_spec_matched));
   if (Result == Candidates.end())
     return true;
 
@@ -4834,9 +4834,9 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   UnresolvedSetIterator Result
     = getMostSpecialized(Matches.begin(), Matches.end(), TPOC_Other, 
                          D.getIdentifierLoc(), 
-          PartialDiagnostic(diag::err_explicit_instantiation_not_known) << Name,
-          PartialDiagnostic(diag::err_explicit_instantiation_ambiguous) << Name,
-                PartialDiagnostic(diag::note_explicit_instantiation_candidate));
+                     PDiag(diag::err_explicit_instantiation_not_known) << Name,
+                     PDiag(diag::err_explicit_instantiation_ambiguous) << Name,
+                         PDiag(diag::note_explicit_instantiation_candidate));
 
   if (Result == Matches.end())
     return true;

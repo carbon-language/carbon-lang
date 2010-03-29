@@ -427,7 +427,7 @@ static bool CheckCXXSwitchCondition(Sema &S, SourceLocation SwitchLoc,
   // Make sure that the condition expression has a complete type,
   // otherwise we'll never find any conversions.
   if (S.RequireCompleteType(SwitchLoc, CondType,
-                            PDiag(diag::err_switch_incomplete_class_type)
+                            S.PDiag(diag::err_switch_incomplete_class_type)
                               << CondExpr->getSourceRange()))
     return true;
 

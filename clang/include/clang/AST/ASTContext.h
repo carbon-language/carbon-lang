@@ -17,6 +17,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/OperatorKinds.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/NestedNameSpecifier.h"
@@ -265,6 +266,9 @@ class ASTContext {
   llvm::MallocAllocator MallocAlloc;
   llvm::BumpPtrAllocator BumpAlloc;
 
+  /// \brief Allocator for partial diagnostics.
+  PartialDiagnostic::StorageAllocator DiagAllocator;
+  
 public:
   const TargetInfo &Target;
   IdentifierTable &Idents;
@@ -290,6 +294,11 @@ public:
     if (FreeMemory)
       MallocAlloc.Deallocate(Ptr);
   }
+  
+  PartialDiagnostic::StorageAllocator &getDiagAllocator() {
+    return DiagAllocator;
+  }
+
   const LangOptions& getLangOptions() const { return LangOpts; }
 
   FullSourceLoc getFullLoc(SourceLocation Loc) const {

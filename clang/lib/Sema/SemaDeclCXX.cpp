@@ -1865,7 +1865,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
 
     CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor(Context);
     CheckDestructorAccess(Field->getLocation(), Dtor,
-                          PartialDiagnostic(diag::err_access_dtor_field)
+                          PDiag(diag::err_access_dtor_field)
                             << Field->getDeclName()
                             << FieldType);
 
@@ -1893,7 +1893,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
 
     // FIXME: caret should be on the start of the class name
     CheckDestructorAccess(Base->getSourceRange().getBegin(), Dtor,
-                          PartialDiagnostic(diag::err_access_dtor_base)
+                          PDiag(diag::err_access_dtor_base)
                             << Base->getType()
                             << Base->getSourceRange());
     
@@ -1918,7 +1918,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
 
     CXXDestructorDecl *Dtor = BaseClassDecl->getDestructor(Context);
     CheckDestructorAccess(ClassDecl->getLocation(), Dtor,
-                          PartialDiagnostic(diag::err_access_dtor_vbase)
+                          PDiag(diag::err_access_dtor_vbase)
                             << VBase->getType());
 
     MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
@@ -1939,9 +1939,6 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
                                   unsigned DiagID, AbstractDiagSelID SelID,
                                   const CXXRecordDecl *CurrentRD) {
-  if (!getLangOptions().CPlusPlus)
-    return false;
-
   if (SelID == -1)
     return RequireNonAbstractType(Loc, T,
                                   PDiag(DiagID), CurrentRD);
@@ -3851,7 +3848,7 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
                                   BaseClassDecl)) {
       CheckDirectMemberAccess(Base->getSourceRange().getBegin(),
                               BaseAssignOpMethod,
-                              PartialDiagnostic(diag::err_access_assign_base)
+                              PDiag(diag::err_access_assign_base)
                                 << Base->getType());
 
       MarkDeclarationReferenced(CurrentLocation, BaseAssignOpMethod);
@@ -3870,7 +3867,7 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
                                   FieldClassDecl)) {
         CheckDirectMemberAccess(Field->getLocation(),
                                 FieldAssignOpMethod,
-                                PartialDiagnostic(diag::err_access_assign_field)
+                                PDiag(diag::err_access_assign_field)
                                   << Field->getDeclName() << Field->getType());
 
         MarkDeclarationReferenced(CurrentLocation, FieldAssignOpMethod);
@@ -3952,7 +3949,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
         BaseClassDecl->getCopyConstructor(Context, TypeQuals)) {
       CheckDirectMemberAccess(Base->getSourceRange().getBegin(),
                               BaseCopyCtor,
-                              PartialDiagnostic(diag::err_access_copy_base)
+                              PDiag(diag::err_access_copy_base)
                                 << Base->getType());
 
       MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
@@ -3971,7 +3968,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
           FieldClassDecl->getCopyConstructor(Context, TypeQuals)) {
         CheckDirectMemberAccess(Field->getLocation(),
                                 FieldCopyCtor,
-                                PartialDiagnostic(diag::err_access_copy_field)
+                                PDiag(diag::err_access_copy_field)
                                   << Field->getDeclName() << Field->getType());
 
         MarkDeclarationReferenced(CurrentLocation, FieldCopyCtor);
@@ -4066,7 +4063,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
     CXXDestructorDecl *Destructor = ClassDecl->getDestructor(Context);
     MarkDeclarationReferenced(VD->getLocation(), Destructor);
     CheckDestructorAccess(VD->getLocation(), Destructor,
-                          PartialDiagnostic(diag::err_access_dtor_var)
+                          PDiag(diag::err_access_dtor_var)
                             << VD->getDeclName()
                             << VD->getType());
   }

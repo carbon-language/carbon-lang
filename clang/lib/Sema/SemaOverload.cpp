@@ -4695,7 +4695,7 @@ void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
     if (!ICS.isAmbiguous()) continue;
 
     S.DiagnoseAmbiguousConversion(ICS, OpLoc,
-                              PDiag(diag::note_ambiguous_type_conversion));
+                              S.PDiag(diag::note_ambiguous_type_conversion));
   }
 }
 
@@ -6135,7 +6135,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
 
   if (RequireCompleteType(LParenLoc, Object->getType(), 
-                          PartialDiagnostic(diag::err_incomplete_object_call)
+                          PDiag(diag::err_incomplete_object_call)
                           << Object->getSourceRange()))
     return true;
   

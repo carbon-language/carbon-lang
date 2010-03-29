@@ -2520,7 +2520,7 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                          SourceLocation OpLoc, const CXXScopeSpec &SS) {
   RecordDecl *RDecl = RTy->getDecl();
   if (SemaRef.RequireCompleteType(OpLoc, QualType(RTy, 0),
-                                  PDiag(diag::err_typecheck_incomplete_tag)
+                              SemaRef.PDiag(diag::err_typecheck_incomplete_tag)
                                     << BaseRange))
     return true;
 
@@ -5785,7 +5785,7 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_IncompleteType:
   case Expr::MLV_IncompleteVoidType:
     return S.RequireCompleteType(Loc, E->getType(),
-                PDiag(diag::err_typecheck_incomplete_type_not_modifiable_lvalue)
+              S.PDiag(diag::err_typecheck_incomplete_type_not_modifiable_lvalue)
                   << E->getSourceRange());
   case Expr::MLV_DuplicateVectorComponents:
     Diag = diag::err_typecheck_duplicate_vector_components_not_mlvalue;
@@ -6347,8 +6347,8 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
 static void SuggestParentheses(Sema &Self, SourceLocation Loc,
                                const PartialDiagnostic &PD,
                                SourceRange ParenRange,
-                      const PartialDiagnostic &SecondPD = PartialDiagnostic(0),
-                               SourceRange SecondParenRange = SourceRange()) {
+                               const PartialDiagnostic &SecondPD,
+                               SourceRange SecondParenRange) {
   SourceLocation EndLoc = Self.PP.getLocForEndOfToken(ParenRange.getEnd());
   if (!ParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
     // We can't display the parentheses, so just dig the
@@ -6403,20 +6403,20 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
 
   if (BinOp::isComparisonOp(lhsopc))
     SuggestParentheses(Self, OpLoc,
-      PDiag(diag::warn_precedence_bitwise_rel)
+      Self.PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(lhs->getLocStart(), OpLoc)
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc),
       lhs->getSourceRange(),
-      PDiag(diag::note_precedence_bitwise_first)
+      Self.PDiag(diag::note_precedence_bitwise_first)
           << BinOp::getOpcodeStr(Opc),
       SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
   else if (BinOp::isComparisonOp(rhsopc))
     SuggestParentheses(Self, OpLoc,
-      PDiag(diag::warn_precedence_bitwise_rel)
+      Self.PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(OpLoc, rhs->getLocEnd())
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc),
       rhs->getSourceRange(),
-      PDiag(diag::note_precedence_bitwise_first)
+      Self.PDiag(diag::note_precedence_bitwise_first)
         << BinOp::getOpcodeStr(Opc),
       SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
 }

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/PartialDiagnostic.h"
 
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Parse/ParseDiagnostic.h"
@@ -1246,3 +1247,13 @@ StoredDiagnostic::Deserialize(FileManager &FM, SourceManager &SM,
 ///  DiagnosticClient should be included in the number of diagnostics
 ///  reported by Diagnostic.
 bool DiagnosticClient::IncludeInDiagnosticCounts() const { return true; }
+
+PartialDiagnostic::StorageAllocator::StorageAllocator() {
+  for (unsigned I = 0; I != NumCached; ++I)
+    FreeList[I] = Cached + I;
+  NumFreeListEntries = NumCached;
+}
+
+PartialDiagnostic::StorageAllocator::~StorageAllocator() {
+  assert(NumFreeListEntries == NumCached && "A partial is on the lamb");
+}

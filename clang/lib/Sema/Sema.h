@@ -312,30 +312,33 @@ public:
 
     bool isMemberAccess() const { return IsMember; }
 
-    AccessedEntity(MemberNonce _,
+    AccessedEntity(ASTContext &Context, 
+                   MemberNonce _,
                    CXXRecordDecl *NamingClass,
                    AccessSpecifier Access,
                    NamedDecl *Target)
       : Access(Access), IsMember(true), 
         Target(Target), NamingClass(NamingClass),
-        Diag(0) {
+        Diag(0, Context.getDiagAllocator()) {
     }
 
-    AccessedEntity(MemberNonce _,
+    AccessedEntity(ASTContext &Context, 
+                   MemberNonce _,
                    CXXRecordDecl *NamingClass,
                    DeclAccessPair FoundDecl)
       : Access(FoundDecl.getAccess()), IsMember(true), 
         Target(FoundDecl.getDecl()), NamingClass(NamingClass),
-        Diag(0) {
+        Diag(0, Context.getDiagAllocator()) {
     }
 
-    AccessedEntity(BaseNonce _,
+    AccessedEntity(ASTContext &Context, 
+                   BaseNonce _,
                    CXXRecordDecl *BaseClass,
                    CXXRecordDecl *DerivedClass,
                    AccessSpecifier Access)
       : Access(Access), IsMember(false),
         Target(BaseClass), NamingClass(DerivedClass),
-        Diag(0) {
+        Diag(0, Context.getDiagAllocator()) {
     }
 
     bool isQuiet() const { return Diag.getDiagID() == 0; }
@@ -363,7 +366,7 @@ public:
     PartialDiagnostic &setDiag(unsigned DiagID) {
       assert(isQuiet() && "partial diagnostic already defined");
       assert(DiagID && "creating null diagnostic");
-      Diag = PartialDiagnostic(DiagID);
+      Diag.Reset(DiagID);
       return Diag;
     }
     const PartialDiagnostic &getDiag() const {
@@ -615,6 +618,11 @@ public:
   /// \brief Emit a partial diagnostic.
   SemaDiagnosticBuilder Diag(SourceLocation Loc, const PartialDiagnostic& PD);
 
+  /// \brief Build a partial diagnostic. 
+  PartialDiagnostic PDiag(unsigned DiagID = 0) {
+    return PartialDiagnostic(DiagID, Context.getDiagAllocator());
+  }
+  
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
@@ -732,10 +740,12 @@ public:
 
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            const PartialDiagnostic &PD,
-                           std::pair<SourceLocation,
-                                     PartialDiagnostic> Note =
-                            std::make_pair(SourceLocation(), PDiag()));
-
+                           std::pair<SourceLocation, PartialDiagnostic> Note);
+  bool RequireCompleteType(SourceLocation Loc, QualType T,
+                           const PartialDiagnostic &PD);
+  bool RequireCompleteType(SourceLocation Loc, QualType T,
+                           unsigned DiagID);
+  
   QualType getQualifiedNameType(const CXXScopeSpec &SS, QualType T);
 
   QualType BuildTypeofExprType(Expr *E);

@@ -1973,6 +1973,18 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   return true;
 }
 
+bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
+                               const PartialDiagnostic &PD) {
+  return RequireCompleteType(Loc, T, PD, 
+                             std::make_pair(SourceLocation(), PDiag(0)));
+}
+  
+bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
+                               unsigned DiagID) {
+  return RequireCompleteType(Loc, T, PDiag(DiagID),
+                             std::make_pair(SourceLocation(), PDiag(0)));
+}
+
 /// \brief Retrieve a version of the type 'T' that is qualified by the
 /// nested-name-specifier contained in SS.
 QualType Sema::getQualifiedNameType(const CXXScopeSpec &SS, QualType T) {

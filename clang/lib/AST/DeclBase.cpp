@@ -1017,6 +1017,8 @@ DependentDiagnostic *DependentDiagnostic::Create(ASTContext &C,
   DependentStoredDeclsMap *Map
     = static_cast<DependentStoredDeclsMap*>(Parent->LookupPtr);
 
+  // FIXME: Allocate the copy of the PartialDiagnostic via the ASTContext's
+  // BumpPtrAllocator, rather than the ASTContext itself.
   DependentDiagnostic *DD = new (C) DependentDiagnostic(PDiag);
 
   // TODO: Maybe we shouldn't reverse the order during insertion.

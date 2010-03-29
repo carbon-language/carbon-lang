@@ -98,8 +98,8 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
 bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
-  if (!CheckEquivalentExceptionSpec(diag::err_mismatched_exception_spec,
-                                    diag::note_previous_declaration,
+  if (!CheckEquivalentExceptionSpec(PDiag(diag::err_mismatched_exception_spec),
+                                    PDiag(diag::note_previous_declaration),
                                     Old->getType()->getAs<FunctionProtoType>(),
                                     Old->getLocation(),
                                     New->getType()->getAs<FunctionProtoType>(),
@@ -234,8 +234,9 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 bool Sema::CheckEquivalentExceptionSpec(
     const FunctionProtoType *Old, SourceLocation OldLoc,
     const FunctionProtoType *New, SourceLocation NewLoc) {
-  return CheckEquivalentExceptionSpec(diag::err_mismatched_exception_spec,
-                                      diag::note_previous_declaration,
+  return CheckEquivalentExceptionSpec(
+                                    PDiag(diag::err_mismatched_exception_spec),
+                                      PDiag(diag::note_previous_declaration),
                                       Old, OldLoc, New, NewLoc);
 }
 
@@ -451,7 +452,8 @@ bool Sema::CheckParamExceptionSpec(const PartialDiagnostic & NoteID,
     const FunctionProtoType *Source, SourceLocation SourceLoc)
 {
   if (CheckSpecForTypesEquivalent(*this,
-                           PDiag(diag::err_deep_exception_specs_differ) << 0, 0,
+                           PDiag(diag::err_deep_exception_specs_differ) << 0, 
+                                  PDiag(),
                                   Target->getResultType(), TargetLoc,
                                   Source->getResultType(), SourceLoc))
     return true;
@@ -462,7 +464,8 @@ bool Sema::CheckParamExceptionSpec(const PartialDiagnostic & NoteID,
          "Functions have different argument counts.");
   for (unsigned i = 0, E = Target->getNumArgs(); i != E; ++i) {
     if (CheckSpecForTypesEquivalent(*this,
-                           PDiag(diag::err_deep_exception_specs_differ) << 1, 0,
+                           PDiag(diag::err_deep_exception_specs_differ) << 1, 
+                                    PDiag(),
                                     Target->getArgType(i), TargetLoc,
                                     Source->getArgType(i), SourceLoc))
       return true;
@@ -487,15 +490,16 @@ bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType)
   // This means that the source of the conversion can only throw a subset of
   // the exceptions of the target, and any exception specs on arguments or
   // return types must be equivalent.
-  return CheckExceptionSpecSubset(diag::err_incompatible_exception_specs,
-                                  0, ToFunc, From->getSourceRange().getBegin(),
+  return CheckExceptionSpecSubset(PDiag(diag::err_incompatible_exception_specs),
+                                  PDiag(), ToFunc, 
+                                  From->getSourceRange().getBegin(),
                                   FromFunc, SourceLocation());
 }
 
 bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                                 const CXXMethodDecl *Old) {
-  return CheckExceptionSpecSubset(diag::err_override_exception_spec,
-                                  diag::note_overridden_virtual_function,
+  return CheckExceptionSpecSubset(PDiag(diag::err_override_exception_spec),
+                                  PDiag(diag::note_overridden_virtual_function),
                                   Old->getType()->getAs<FunctionProtoType>(),
                                   Old->getLocation(),
                                   New->getType()->getAs<FunctionProtoType>(),

@@ -69,6 +69,43 @@ class PartialDiagnostic {
     CodeModificationHint CodeModificationHints[MaxCodeModificationHints];    
   };
 
+public:
+  /// \brief An allocator for Storage objects, which uses a small cache to 
+  /// objects, used to reduce malloc()/free() traffic for partial diagnostics.
+  class StorageAllocator {
+    static const unsigned NumCached = 4;
+    Storage Cached[NumCached];
+    Storage *FreeList[NumCached];
+    unsigned NumFreeListEntries;
+    
+  public:
+    StorageAllocator();
+    ~StorageAllocator();
+    
+    /// \brief Allocate new storage.
+    Storage *Allocate() {
+      if (NumFreeListEntries == 0)
+        return new Storage;
+      
+      Storage *Result = FreeList[--NumFreeListEntries];
+      Result->NumDiagArgs = 0;
+      Result->NumDiagRanges = 0;
+      Result->NumCodeModificationHints = 0;
+      return Result;
+    }
+    
+    /// \brief Free the given storage object.
+    void Deallocate(Storage *S) {
+      if (S >= Cached && S <= Cached + NumCached) {
+        FreeList[NumFreeListEntries++] = S;
+        return;
+      }
+      
+      delete S;
+    }
+  };
+  
+private:
   // NOTE: Sema assumes that PartialDiagnostic is location-invariant
   // in the sense that its bits can be safely memcpy'ed and destructed
   // in the new location.
@@ -76,12 +113,38 @@ class PartialDiagnostic {
   /// DiagID - The diagnostic ID.
   mutable unsigned DiagID;
   
-  /// DiagStorare - Storge for args and ranges.
+  /// DiagStorage - Storage for args and ranges.
   mutable Storage *DiagStorage;
 
+  /// \brief Allocator used to allocate storage for this diagnostic.
+  StorageAllocator *Allocator;
+  
+  /// \brief Retrieve storage for this particular diagnostic.
+  Storage *getStorage() const {
+    if (DiagStorage)
+      return DiagStorage;
+    
+    if (Allocator)
+      DiagStorage = Allocator->Allocate();
+    else
+      DiagStorage = new Storage;
+    return DiagStorage;
+  }
+  
+  void freeStorage() { 
+    if (!DiagStorage)
+      return;
+    
+    if (Allocator)
+      Allocator->Deallocate(DiagStorage);
+    else
+      delete DiagStorage;
+    DiagStorage = 0;
+  }
+  
   void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
     if (!DiagStorage)
-      DiagStorage = new Storage;
+      DiagStorage = getStorage();
     
     assert(DiagStorage->NumDiagArgs < Storage::MaxArguments &&
            "Too many arguments to diagnostic!");
@@ -91,7 +154,7 @@ class PartialDiagnostic {
 
   void AddSourceRange(const SourceRange &R) const {
     if (!DiagStorage)
-      DiagStorage = new Storage;
+      DiagStorage = getStorage();
 
     assert(DiagStorage->NumDiagRanges < 
            llvm::array_lengthof(DiagStorage->DiagRanges) &&
@@ -104,7 +167,7 @@ class PartialDiagnostic {
       return;
     
     if (!DiagStorage)
-      DiagStorage = new Storage;
+      DiagStorage = getStorage();
 
     assert(DiagStorage->NumCodeModificationHints < 
              Storage::MaxCodeModificationHints &&
@@ -114,35 +177,35 @@ class PartialDiagnostic {
   }
   
 public:
-  PartialDiagnostic(unsigned DiagID)
-    : DiagID(DiagID), DiagStorage(0) { }
-
+  PartialDiagnostic(unsigned DiagID, StorageAllocator &Allocator)
+    : DiagID(DiagID), DiagStorage(0), Allocator(&Allocator) { }
+  
   PartialDiagnostic(const PartialDiagnostic &Other) 
-    : DiagID(Other.DiagID), DiagStorage(0) 
+    : DiagID(Other.DiagID), DiagStorage(0), Allocator(Other.Allocator)
   {
-    if (Other.DiagStorage)
-      DiagStorage = new Storage(*Other.DiagStorage);
+    if (Other.DiagStorage) {
+      DiagStorage = getStorage();
+      *DiagStorage = *Other.DiagStorage;
+    }
   }
 
   PartialDiagnostic &operator=(const PartialDiagnostic &Other) {
     DiagID = Other.DiagID;
     if (Other.DiagStorage) {
-      if (DiagStorage)
-        *DiagStorage = *Other.DiagStorage;
-      else
-        DiagStorage = new Storage(*Other.DiagStorage);
+      if (!DiagStorage)
+        DiagStorage = getStorage();
+      
+      *DiagStorage = *Other.DiagStorage;
     } else {
-      delete DiagStorage;
-      DiagStorage = 0;
+      freeStorage();
     }
 
     return *this;
   }
 
   ~PartialDiagnostic() {
-    delete DiagStorage;
+    freeStorage();
   }
-
 
   unsigned getDiagID() const { return DiagID; }
 
@@ -163,6 +226,13 @@ public:
     // Add all code modification hints
     for (unsigned i = 0, e = DiagStorage->NumCodeModificationHints; i != e; ++i)
       DB.AddCodeModificationHint(DiagStorage->CodeModificationHints[i]);
+  }
+  
+  /// \brief Clear out this partial diagnostic, giving it a new diagnostic ID
+  /// and removing all of its arguments, ranges, and fix-it hints.
+  void Reset(unsigned DiagID = 0) {
+    this->DiagID = DiagID;
+    freeStorage();
   }
   
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
@@ -206,10 +276,6 @@ public:
   }
   
 };
-
-inline PartialDiagnostic PDiag(unsigned DiagID = 0) {
-  return PartialDiagnostic(DiagID);
-}
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const PartialDiagnostic &PD) {
