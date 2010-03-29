@@ -1492,7 +1492,7 @@ SDValue SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
         return SDValue();
       Value = Value >> 32;
     }
-    if (isS10Constant(Value))
+    if (isInt<10>(Value))
       return DAG.getTargetConstant(Value, ValueType);
   }
 

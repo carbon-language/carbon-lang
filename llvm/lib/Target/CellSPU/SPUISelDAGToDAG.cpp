@@ -44,28 +44,28 @@ namespace {
   bool
   isI64IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getSExtValue());
+    return isInt<10>(CN->getSExtValue());
   }
 
   //! ConstantSDNode predicate for i32 sign-extended, 10-bit immediates
   bool
   isI32IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getSExtValue());
+    return isInt<10>(CN->getSExtValue());
   }
 
   //! ConstantSDNode predicate for i32 unsigned 10-bit immediate values
   bool
   isI32IntU10Immediate(ConstantSDNode *CN)
   {
-    return isU10Constant(CN->getSExtValue());
+    return isUint<10>(CN->getSExtValue());
   }
 
   //! ConstantSDNode predicate for i16 sign-extended, 10-bit immediate values
   bool
   isI16IntS10Immediate(ConstantSDNode *CN)
   {
-    return isS10Constant(CN->getSExtValue());
+    return isInt<10>(CN->getSExtValue());
   }
 
   //! SDNode predicate for i16 sign-extended, 10-bit immediate values
@@ -80,7 +80,7 @@ namespace {
   bool
   isI16IntU10Immediate(ConstantSDNode *CN)
   {
-    return isU10Constant((short) CN->getZExtValue());
+    return isUint<10>((short) CN->getZExtValue());
   }
 
   //! SDNode predicate for i16 sign-extended, 10-bit immediate values

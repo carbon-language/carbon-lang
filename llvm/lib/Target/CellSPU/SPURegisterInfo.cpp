@@ -371,8 +371,8 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   // immediate, convert the instruction to X-form
   // if the instruction is not an AI (which takes a s10 immediate), assume
   // it is a load/store that can take a s14 immediate
-  if ( (MI.getOpcode() == SPU::AIr32 && !isS10Constant(Offset))
-       || !isS14Constant(Offset) ) {
+  if ((MI.getOpcode() == SPU::AIr32 && !isInt<10>(Offset))
+      || !isInt<14>(Offset)) {
     int newOpcode = convertDFormToXForm(MI.getOpcode());
     unsigned tmpReg = findScratchRegister(II, RS, &SPU::R32CRegClass, SPAdj);
     BuildMI(MBB, II, dl, TII.get(SPU::ILr32), tmpReg )
@@ -482,14 +482,14 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     // for the ABI
     BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr32), SPU::R0).addImm(16)
       .addReg(SPU::R1);
-    if (isS10Constant(FrameSize)) {
+    if (isInt<10>(FrameSize)) {
       // Spill $sp to adjusted $sp
       BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr32), SPU::R1).addImm(FrameSize)
         .addReg(SPU::R1);
       // Adjust $sp by required amout
       BuildMI(MBB, MBBI, dl, TII.get(SPU::AIr32), SPU::R1).addReg(SPU::R1)
         .addImm(FrameSize);
-    } else if (isS16Constant(FrameSize)) {
+    } else if (isInt<16>(FrameSize)) {
       // Frame size can be loaded into ILr32n, so temporarily spill $r2 and use
       // $r2 to adjust $sp:
       BuildMI(MBB, MBBI, dl, TII.get(SPU::STQDr128), SPU::R2)
@@ -575,7 +575,7 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
   // the "empty" frame size is 16 - just the register scavenger spill slot
   if (FrameSize > 16 || MFI->hasCalls()) {
     FrameSize = FrameSize + SPUFrameInfo::minStackSize();
-    if (isS10Constant(FrameSize + LinkSlotOffset)) {
+    if (isInt<10>(FrameSize + LinkSlotOffset)) {
       // Reload $lr, adjust $sp by required amount
       // Note: We do this to slightly improve dual issue -- not by much, but it
       // is an opportunity for dual issue.
