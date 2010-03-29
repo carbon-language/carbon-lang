@@ -3963,6 +3963,17 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
   // Add the known thunks.
   Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
   
+  // Add the thunks needed in this vtable.
+  assert(!VTableThunksMap.count(RD) && 
+         "Thunks already exists for this vtable!");
+
+  VTableThunksTy &VTableThunks = VTableThunksMap[RD];
+  VTableThunks.append(Builder.vtable_thunks_begin(),
+                      Builder.vtable_thunks_end());
+  
+  // Sort them.
+  std::sort(VTableThunks.begin(), VTableThunks.end());
+  
   // Add the address points.
   for (VtableBuilder::AddressPointsMapTy::const_iterator I =
        Builder.address_points_begin(), E = Builder.address_points_end();
