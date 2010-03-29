@@ -101,6 +101,57 @@ namespace {
     /// pad.
     bool HandleURoRInvokes();
 
+    /// FindSelectorAndURoR - Find the eh.selector call and URoR call associated
+    /// with the eh.exception call. This recursively looks past instructions
+    /// which don't change the EH pointer value, like casts or PHI nodes.
+    bool FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
+                             SmallPtrSet<IntrinsicInst*, 8> &SelCalls);
+      
+    /// DoMem2RegPromotion - Take an alloca call and promote it from memory to a
+    /// register.
+    bool DoMem2RegPromotion(Value *V) {
+      AllocaInst *AI = dyn_cast<AllocaInst>(V);
+      if (!AI || !isAllocaPromotable(AI)) return false;
+
+      // Turn the alloca into a register.
+      std::vector<AllocaInst*> Allocas(1, AI);
+      PromoteMemToReg(Allocas, *DT, *DF);
+      return true;
+    }
+
+    /// PromoteStoreInst - Perform Mem2Reg on a StoreInst.
+    bool PromoteStoreInst(StoreInst *SI) {
+      if (!SI || !DT || !DF) return false;
+      if (DoMem2RegPromotion(SI->getOperand(1)))
+        return true;
+      return false;
+    }
+
+    /// PromoteEHPtrStore - Promote the storing of an EH pointer into a
+    /// register. This should get rid of the store and subsequent loads.
+    bool PromoteEHPtrStore(IntrinsicInst *II) {
+      if (!DT || !DF) return false;
+
+      bool Changed = false;
+      StoreInst *SI;
+
+      while (1) {
+        SI = 0;
+        for (Value::use_iterator
+               I = II->use_begin(), E = II->use_end(); I != E; ++I) {
+          SI = dyn_cast<StoreInst>(I);
+          if (SI) break;
+        }
+
+        if (!PromoteStoreInst(SI))
+          break;
+
+        Changed = true;
+      }
+
+      return false;
+    }
+
   public:
     static char ID; // Pass identification, replacement for typeid.
     DwarfEHPrepare(const TargetLowering *tli, bool fast) :
@@ -196,6 +247,45 @@ bool DwarfEHPrepare::CleanupSelectors() {
   return Changed;
 }
 
+/// FindSelectorAndURoR - Find the eh.selector call associated with the
+/// eh.exception call. And indicate if there is a URoR "invoke" associated with
+/// the eh.exception call. This recursively looks past instructions which don't
+/// change the EH pointer value, like casts or PHI nodes.
+bool
+DwarfEHPrepare::FindSelectorAndURoR(Instruction *Inst, bool &URoRInvoke,
+                                    SmallPtrSet<IntrinsicInst*, 8> &SelCalls) {
+  SmallPtrSet<PHINode*, 32> SeenPHIs;
+  bool Changed = false;
+
+ restart:
+  for (Value::use_iterator
+         I = Inst->use_begin(), E = Inst->use_end(); I != E; ++I) {
+    Instruction *II = dyn_cast<Instruction>(I);
+    if (!II || II->getParent()->getParent() != F) continue;
+    
+    if (IntrinsicInst *Sel = dyn_cast<IntrinsicInst>(II)) {
+      if (Sel->getIntrinsicID() == Intrinsic::eh_selector)
+        SelCalls.insert(Sel);
+    } else if (InvokeInst *Invoke = dyn_cast<InvokeInst>(II)) {
+      if (Invoke->getCalledFunction() == URoR)
+        URoRInvoke = true;
+    } else if (CastInst *CI = dyn_cast<CastInst>(II)) {
+      Changed |= FindSelectorAndURoR(CI, URoRInvoke, SelCalls);
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
+      if (!PromoteStoreInst(SI)) continue;
+      Changed = true;
+      SeenPHIs.clear();
+      goto restart;             // Uses may have changed, restart loop.
+    } else if (PHINode *PN = dyn_cast<PHINode>(II)) {
+      if (SeenPHIs.insert(PN))
+        // Don't process a PHI node more than once.
+        Changed |= FindSelectorAndURoR(PN, URoRInvoke, SelCalls);
+    }
+  }
+
+  return Changed;
+}
+
 /// HandleURoRInvokes - Handle invokes of "_Unwind_Resume_or_Rethrow" calls. The
 /// "unwind" part of these invokes jump to a landing pad within the current
 /// function. This is a candidate to merge the selector associated with the URoR
@@ -241,6 +331,51 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
   }
 
   bool Changed = false;
+
+  if (Sels.size() != SelsToConvert.size()) {
+    // If we haven't been able to convert all of the clean-up selectors, then
+    // loop through the slow way to see if they still need to be converted.
+    if (!ExceptionValueIntrinsic) {
+      ExceptionValueIntrinsic =
+        Intrinsic::getDeclaration(F->getParent(), Intrinsic::eh_exception);
+      if (!ExceptionValueIntrinsic) return CleanupSelectors();
+    }
+
+    for (Value::use_iterator
+           I = ExceptionValueIntrinsic->use_begin(),
+           E = ExceptionValueIntrinsic->use_end(); I != E; ++I) {
+      IntrinsicInst *EHPtr = dyn_cast<IntrinsicInst>(I);
+      if (!EHPtr || EHPtr->getParent()->getParent() != F) continue;
+
+      Changed |= PromoteEHPtrStore(EHPtr);
+
+      bool URoRInvoke = false;
+      SmallPtrSet<IntrinsicInst*, 8> SelCalls;
+      Changed |= FindSelectorAndURoR(EHPtr, URoRInvoke, SelCalls);
+
+      if (URoRInvoke) {
+        // This EH pointer is being used by an invoke of an URoR instruction and
+        // an eh.selector intrinsic call. If the eh.selector is a 'clean-up', we
+        // need to convert it to a 'catch-all'.
+        for (SmallPtrSet<IntrinsicInst*, 8>::iterator
+               SI = SelCalls.begin(), SE = SelCalls.end(); SI != SE; ++SI) {
+          IntrinsicInst *II = *SI;
+          unsigned NumOps = II->getNumOperands();
+
+          if (NumOps <= 4) {
+            bool IsCleanUp = (NumOps == 3);
+
+            if (!IsCleanUp)
+              if (ConstantInt *CI = dyn_cast<ConstantInt>(II->getOperand(3)))
+                IsCleanUp = (CI->getZExtValue() == 0);
+
+            if (IsCleanUp)
+              SelsToConvert.insert(II);
+          }
+        }
+      }
+    }
+  }
 
   if (!SelsToConvert.empty()) {
     // Convert all clean-up eh.selectors, which are associated with "invokes" of
