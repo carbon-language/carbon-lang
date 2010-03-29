@@ -1212,7 +1212,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   Ty = UnwrapTypeForDebugInfo(Ty);
   
   // Check for existing entry.
-  std::map<void *, llvm::WeakVH>::iterator it =
+  llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
     TypeCache.find(Ty.getAsOpaquePtr());
   if (it != TypeCache.end()) {
     // Verify that the debug info still exists.
