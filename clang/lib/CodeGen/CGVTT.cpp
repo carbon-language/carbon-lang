@@ -183,9 +183,8 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
     // address points.
     AddressPoint = AddressPoints.lookup(Base);
   } else {
-    AddressPoint = 
-      (*this->AddressPoints[VTableClass])[std::make_pair(Base.getBase(), 
-                                                         Base.getBaseOffset())];
+    // Just get the address point for the regular vtable.
+    AddressPoint = CGM.getVTables().getAddressPoint(Base, VTableClass);
   }
 
   if (!AddressPoint) AddressPoint = 0;
