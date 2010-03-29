@@ -6051,8 +6051,10 @@ void SelectionDAGISel::LowerArguments(BasicBlock *LLVMBB) {
     }
 
     if (!I->use_empty()) {
-      SDValue Res = DAG.getMergeValues(&ArgValues[0], NumValues,
-                                       SDB->getCurDebugLoc());
+      SDValue Res;
+      if (!ArgValues.empty())
+        Res = DAG.getMergeValues(&ArgValues[0], NumValues,
+                                 SDB->getCurDebugLoc());
       SDB->setValue(I, Res);
 
       // If this argument is live outside of the entry block, insert a copy from
