@@ -292,6 +292,13 @@ private:
     return VTableLayoutMap.lookup(RD)[0];
   }
 
+  const uint64_t *getVTableComponentsData(const CXXRecordDecl *RD) const {
+    assert(VTableLayoutMap.count(RD) && "No vtable layout for this class!");
+
+    uint64_t *Components = VTableLayoutMap.lookup(RD);
+    return &Components[1];
+  }
+
   typedef llvm::DenseMap<ClassPairTy, uint64_t> SubVTTIndiciesMapTy;
   
   /// SubVTTIndicies - Contains indices into the various sub-VTTs.
@@ -380,6 +387,11 @@ public:
   /// GetAddrOfVTable - Get the address of the vtable for the given record decl.
   llvm::Constant *GetAddrOfVTable(const CXXRecordDecl *RD);
 
+  /// EmitVTableDefinition - Emit the definition of the given vtable.
+  void EmitVTableDefinition(llvm::GlobalVariable *VTable,
+                            llvm::GlobalVariable::LinkageTypes Linkage,
+                            const CXXRecordDecl *RD);
+  
   /// GenerateConstructionVTable - Generate a construction vtable for the given 
   /// base subobject.
   llvm::GlobalVariable *

@@ -3610,16 +3610,24 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
+static bool UseNewVTableCode = false;
+
 uint64_t
 CodeGenVTables::getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
-  const CodeGenVTables::AddrSubMap_t& AddressPoints = getAddressPoints(RD);
+  // FIXME: Always use the new vtable code once we know it works.
+  if (!UseNewVTableCode) {
+    const CodeGenVTables::AddrSubMap_t& AddressPoints = getAddressPoints(RD);
 
-  uint64_t AddressPoint = 
-    AddressPoints.lookup(std::make_pair(Base.getBase(),
-                                        Base.getBaseOffset()));
+    uint64_t AddressPoint = 
+      AddressPoints.lookup(std::make_pair(Base.getBase(),
+                                          Base.getBaseOffset()));
   
+    assert(AddressPoint && "Address point must not be zero!");
+  }
+  
+  uint64_t AddressPoint = AddressPoints.lookup(std::make_pair(RD, Base));
   assert(AddressPoint && "Address point must not be zero!");
-  
+
   return AddressPoint;
 }
 
@@ -4024,22 +4032,6 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD) {
   }
 }
 
-void 
-CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
-                                  const CXXRecordDecl *RD) {
-  llvm::GlobalVariable *&Vtable = Vtables[RD];
-  if (Vtable) {
-    assert(Vtable->getInitializer() && "Vtable doesn't have a definition!");
-    return;
-  }
-  
-  llvm::DenseMap<BaseSubobject, uint64_t> AddressPoints;
-  Vtable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
-                          /*IsVirtual=*/false,
-                          AddressPoints);
-  GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
-}
-
 llvm::Constant *
 CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
                                         const uint64_t *Components, 
@@ -4176,6 +4168,8 @@ GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
   return GV;
 }
 
+// FIXME: When the new code is in place, we can change this to return a 
+// GlobalVariable.
 llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   CGM.getMangleContext().mangleCXXVtable(RD, OutName);
@@ -4186,7 +4180,12 @@ llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
-  
+
+  // FIXME: Always use the new vtable code once we know it works.
+  if (UseNewVTableCode)
+    return GetGlobalVariable(CGM.getModule(), Name, ArrayType, 
+                             llvm::GlobalValue::ExternalLinkage);
+
   llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(Name);
   if (GV) {
     if (!GV->isDeclaration() || GV->getType()->getElementType() == ArrayType)
@@ -4199,6 +4198,29 @@ llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
                                 llvm::GlobalValue::ExternalLinkage, 0, Name);
 
   return GV;
+}
+
+void
+CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
+                                     llvm::GlobalVariable::LinkageTypes Linkage,
+                                     const CXXRecordDecl *RD) {
+  // Dump the vtable layout if necessary.
+  if (CGM.getLangOptions().DumpVtableLayouts) {
+    VtableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
+
+    Builder.dumpLayout(llvm::errs());
+  }
+
+  assert(VTableThunksMap.count(RD) && 
+         "No thunk status for this record decl!");
+  
+  const VTableThunksTy& Thunks = VTableThunksMap[RD];
+  
+  // Create and set the initializer.
+  llvm::Constant *Init = 
+    CreateVTableInitializer(RD, getVTableComponentsData(RD),
+                            getNumVTableComponents(RD), Thunks);
+  VTable->setInitializer(Init);
 }
 
 llvm::GlobalVariable *
@@ -4248,6 +4270,28 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   VTable->setInitializer(Init);
   
   return VTable;
+}
+
+void 
+CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
+                                  const CXXRecordDecl *RD) {
+  llvm::GlobalVariable *&VTable = Vtables[RD];
+  if (VTable) {
+    assert(VTable->getInitializer() && "Vtable doesn't have a definition!");
+    return;
+  }
+
+  // FIXME: Always use the new vtable code once we know it works.
+  if (UseNewVTableCode) {
+    VTable = cast<llvm::GlobalVariable>(GetAddrOfVTable(RD));
+    EmitVTableDefinition(VTable, Linkage, RD);
+  } else {
+    llvm::DenseMap<BaseSubobject, uint64_t> AddressPoints;
+    VTable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
+                            /*IsVirtual=*/false,
+                            AddressPoints);
+  }
+  GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
 }
 
 void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
