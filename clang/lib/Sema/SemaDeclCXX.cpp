@@ -1939,6 +1939,9 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
                                   unsigned DiagID, AbstractDiagSelID SelID,
                                   const CXXRecordDecl *CurrentRD) {
+  if (!getLangOptions().CPlusPlus)
+    return false;
+
   if (SelID == -1)
     return RequireNonAbstractType(Loc, T,
                                   PDiag(DiagID), CurrentRD);
