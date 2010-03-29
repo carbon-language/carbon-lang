@@ -83,9 +83,11 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   if (data().Bases)
     C.Deallocate(data().Bases);
 
-  int vbaseCount = 0;
-  llvm::SmallVector<const CXXBaseSpecifier*, 8> UniqueVbases;
-  bool hasDirectVirtualBase = false;
+  // The set of seen virtual base types.
+  llvm::SmallPtrSet<QualType, 8> SeenVBaseTypes;
+  
+  // The virtual bases of this class.
+  llvm::SmallVector<const CXXBaseSpecifier *, 8> VBases;
 
   data().Bases = new(C) CXXBaseSpecifier [NumBases];
   data().NumBases = NumBases;
@@ -99,58 +101,44 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       continue;
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-    if (Base->isVirtual())
-      hasDirectVirtualBase = true;
+
+    // Now go through all virtual bases of this base and add them.
     for (CXXRecordDecl::base_class_iterator VBase =
           BaseClassDecl->vbases_begin(),
          E = BaseClassDecl->vbases_end(); VBase != E; ++VBase) {
-      // Add this vbase to the array of vbases for current class if it is
-      // not already in the list.
-      // FIXME. Note that we do a linear search as number of such classes are
-      // very few.
-      int i;
-      for (i = 0; i < vbaseCount; ++i)
-        if (UniqueVbases[i]->getType() == VBase->getType())
-          break;
-      if (i == vbaseCount) {
-        UniqueVbases.push_back(VBase);
-        ++vbaseCount;
-      }
+      // Add this base if it's not already in the list.
+      if (SeenVBaseTypes.insert(VBase->getType()))
+        VBases.push_back(VBase);
     }
+
+    if (Base->isVirtual()) {
+      // Add this base if it's not already in the list.
+      if (SeenVBaseTypes.insert(BaseType))
+          VBases.push_back(Base);
+    }
+
   }
-  if (hasDirectVirtualBase) {
-    // Iterate one more time through the direct bases and add the virtual
-    // base to the list of vritual bases for current class.
-    for (unsigned i = 0; i < NumBases; ++i) {
-      const CXXBaseSpecifier *VBase = Bases[i];
-      if (!VBase->isVirtual())
-        continue;
-      int j;
-      for (j = 0; j < vbaseCount; ++j)
-        if (UniqueVbases[j]->getType() == VBase->getType())
-          break;
-      if (j == vbaseCount) {
-        UniqueVbases.push_back(VBase);
-        ++vbaseCount;
-      }
-    }
-  }
-  if (vbaseCount > 0) {
-    // build AST for inhireted, direct or indirect, virtual bases.
-    data().VBases = new (C) CXXBaseSpecifier [vbaseCount];
-    data().NumVBases = vbaseCount;
-    for (int i = 0; i < vbaseCount; i++) {
-      QualType QT = UniqueVbases[i]->getType();
-      // Skip dependent types; we can't do any checking on them now.
-      if (QT->isDependentType())
-        continue;
-      CXXRecordDecl *VBaseClassDecl
-        = cast<CXXRecordDecl>(QT->getAs<RecordType>()->getDecl());
-      data().VBases[i] =
-        CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
-                         VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
-                         UniqueVbases[i]->getAccessSpecifier(), QT);
-    }
+  
+  if (VBases.empty())
+    return;
+
+  // Create base specifier for any direct or indirect virtual bases.
+  data().VBases = new (C) CXXBaseSpecifier[VBases.size()];
+  data().NumVBases = VBases.size();
+  for (int I = 0, E = VBases.size(); I != E; ++I) {
+    QualType VBaseType = VBases[I]->getType();
+    
+    // Skip dependent types; we can't do any checking on them now.
+    if (VBaseType->isDependentType())
+      continue;
+
+    CXXRecordDecl *VBaseClassDecl
+      = cast<CXXRecordDecl>(VBaseType->getAs<RecordType>()->getDecl());
+
+    data().VBases[I] =
+      CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
+                       VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
+                       VBases[I]->getAccessSpecifier(), VBaseType);
   }
 }
 
