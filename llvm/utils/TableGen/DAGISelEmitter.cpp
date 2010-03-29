@@ -102,6 +102,106 @@ void DAGISelEmitter::EmitPredicateFunctions(raw_ostream &OS) {
   OS << "\n\n";
 }
 
+/// CouldMatchSameInput - Return true if it is possible for these two patterns
+/// to match the same input.  For example, (add reg, reg) and
+///   (add reg, (mul ...)) could both match the same input.  Where this is
+/// conservative, it falls back to returning true.
+static bool CouldMatchSameInput(const TreePatternNode *N1,
+                                const TreePatternNode *N2) {
+  // If the types of the two nodes differ, they can't match the same thing.
+  if (N1->getNumTypes() != N2->getNumTypes()) return false;
+  for (unsigned i = 0, e = N1->getNumTypes(); i != e; ++i)
+    if (N1->getType(i) != N2->getType(i))
+      return false;
+  
+  // Handle the case when at least one is a leaf.
+  if (N1->isLeaf()) {
+    if (N2->isLeaf()) {
+      // Handle leaf/leaf cases.  Register operands can match just about
+      // anything, so we can only disambiguate a few things here.
+      
+      // If both operands are leaf integer nodes with different values, they
+      // can't match the same thing.
+      if (IntInit *II1 = dynamic_cast<IntInit*>(N1->getLeafValue()))
+        if (IntInit *II2 = dynamic_cast<IntInit*>(N2->getLeafValue()))
+          return II1->getValue() == II2->getValue();
+      
+      DefInit *DI1 = dynamic_cast<DefInit*>(N1->getLeafValue());
+      DefInit *DI2 = dynamic_cast<DefInit*>(N2->getLeafValue());
+      if (DI1 != 0 && DI2 != 0) {
+        if (DI1->getDef()->isSubClassOf("ValueType") &&
+            DI2->getDef()->isSubClassOf("ValueType"))
+          return DI1 == DI2;
+        if (DI1->getDef()->isSubClassOf("CondCode") &&
+            DI2->getDef()->isSubClassOf("CondCode"))
+          return DI1 == DI2;
+      }
+
+      // TODO: Regclass cannot match a condcode etc.
+      
+      // Otherwise, complex pattern could match anything, so just return a
+      // conservative response.
+      return true;
+    }
+    
+    // Conservatively return true.  (imm) could match "7" for example, and GPR
+    // can match anything.
+    // TODO: could handle (add ...)  != "1" if we cared.
+    return true;
+  }
+  
+  // If N2 is a leaf and N1 isn't, check the other way.
+  if (N2->isLeaf())
+    return CouldMatchSameInput(N2, N1);
+  
+  // Now we know neither node is a leaf.  If the two patterns have different
+  // number of children or different operators, they can't both match.
+  Record *Op1 = N1->getOperator(), *Op2 = N1->getOperator();
+  
+  if (Op1 != Op2 || N1->getNumChildren() != N2->getNumChildren())
+    return false;
+
+  // If a child prevents the two patterns from matching, use that.
+  for (unsigned i = 0, e = N1->getNumChildren(); i != e; ++i)
+    if (!CouldMatchSameInput(N1->getChild(i), N2->getChild(i)))
+      return false;
+  
+  // Otherwise, it looks like they could both match the same thing.
+  return true;
+}
+
+/// GetSourceMatchPreferenceOrdering - The two input patterns are guaranteed to
+/// not match the same input.  Decide which pattern we'd prefer to match first
+/// in order to reduce compile time.  This sorting predicate is used to improve
+/// compile time so that we try to match scalar operations before vector
+/// operations since scalar operations are much more common in practice.
+///
+/// This returns -1 if we prefer to match N1 before N2, 1 if we prefer to match
+/// N2 before N1 or 0 if no preference.
+///
+static int GetSourceMatchPreferenceOrdering(const TreePatternNode *N1,
+                                            const TreePatternNode *N2) {
+  // The primary thing we sort on here is to get ints before floats and scalars
+  // before vectors.
+  for (unsigned i = 0, e = std::min(N1->getNumTypes(), N2->getNumTypes());
+       i != e; ++i)
+    if (N1->getType(i) != N2->getType(i)) {
+      MVT::SimpleValueType V1 = N1->getType(i), V2 = N2->getType(i);
+      if (MVT(V1).isVector() != MVT(V2).isVector())
+        return MVT(V1).isVector() ? 1 : -1;
+      
+      if (MVT(V1).isFloatingPoint() != MVT(V2).isFloatingPoint())
+        return MVT(V1).isFloatingPoint() ? 1 : -1;
+    }
+  
+  for (unsigned i = 0, e = std::min(N1->getNumChildren(), N2->getNumChildren());
+       i != e; ++i)
+    if (int Res = GetSourceMatchPreferenceOrdering(N1->getChild(i),
+                                                   N2->getChild(i)))
+      return Res;
+  return 0;
+}
+
 
 namespace {
 // PatternSortingPredicate - return true if we prefer to match LHS before RHS.
@@ -112,6 +212,28 @@ struct PatternSortingPredicate {
   CodeGenDAGPatterns &CGP;
   
   bool operator()(const PatternToMatch *LHS, const PatternToMatch *RHS) {
+    const TreePatternNode *LHSSrc = LHS->getSrcPattern();
+    const TreePatternNode *RHSSrc = RHS->getSrcPattern();
+    
+    // If the patterns are guaranteed to not match at the same time and we
+    // prefer to match one before the other (for compile time reasons) use this
+    // preference as our discriminator.
+    if (0 && !CouldMatchSameInput(LHSSrc, RHSSrc)) {
+      int Ordering = GetSourceMatchPreferenceOrdering(LHSSrc, RHSSrc);
+      if (Ordering != 0) {
+        if (Ordering == -1) {
+          errs() << "SORT: " << *LHSSrc << "\n";
+          errs() << "NEXT: " << *RHSSrc << "\n\n";
+        } else {
+          errs() << "SORT: " << *RHSSrc << "\n";
+          errs() << "NEXT: " << *LHSSrc << "\n\n";
+        }
+      }
+      
+      if (Ordering == -1) return true;
+      if (Ordering == 1) return false;
+    }
+    
     // Otherwise, if the patterns might both match, sort based on complexity,
     // which means that we prefer to match patterns that cover more nodes in the
     // input over nodes that cover fewer.
@@ -167,8 +289,7 @@ void DAGISelEmitter::run(raw_ostream &OS) {
 
   // We want to process the matches in order of minimal cost.  Sort the patterns
   // so the least cost one is at the start.
-  std::stable_sort(Patterns.begin(), Patterns.end(),
-                   PatternSortingPredicate(CGP));
+  std::sort(Patterns.begin(), Patterns.end(), PatternSortingPredicate(CGP));
   
   
   // Convert each variant of each pattern into a Matcher.
