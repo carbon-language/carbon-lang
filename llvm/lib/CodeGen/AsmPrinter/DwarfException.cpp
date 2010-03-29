@@ -885,8 +885,7 @@ void DwarfException::EndModule() {
   if (!shouldEmitMovesModule && !shouldEmitTableModule)
     return;
 
-  if (TimePassesIsEnabled)
-    ExceptionTimer->startTimer();
+  TimeRegion Timer(ExceptionTimer);
 
   const std::vector<Function *> Personalities = MMI->getPersonalities();
 
@@ -896,9 +895,6 @@ void DwarfException::EndModule() {
   for (std::vector<FunctionEHFrameInfo>::iterator
          I = EHFrames.begin(), E = EHFrames.end(); I != E; ++I)
     EmitFDE(*I);
-
-  if (TimePassesIsEnabled)
-    ExceptionTimer->stopTimer();
 }
 
 /// BeginFunction - Gather pre-function exception information. Assumes it's
@@ -906,9 +902,7 @@ void DwarfException::EndModule() {
 void DwarfException::BeginFunction(const MachineFunction *MF) {
   if (!MMI || !MAI->doesSupportExceptionHandling()) return;
 
-  if (TimePassesIsEnabled)
-    ExceptionTimer->startTimer();
-
+  TimeRegion Timer(ExceptionTimer);
   this->MF = MF;
   shouldEmitTable = shouldEmitMoves = false;
 
@@ -924,9 +918,6 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
 
   shouldEmitTableModule |= shouldEmitTable;
   shouldEmitMovesModule |= shouldEmitMoves;
-
-  if (TimePassesIsEnabled)
-    ExceptionTimer->stopTimer();
 }
 
 /// EndFunction - Gather and emit post-function exception information.
@@ -934,9 +925,7 @@ void DwarfException::BeginFunction(const MachineFunction *MF) {
 void DwarfException::EndFunction() {
   if (!shouldEmitMoves && !shouldEmitTable) return;
 
-  if (TimePassesIsEnabled)
-    ExceptionTimer->startTimer();
-
+  TimeRegion Timer(ExceptionTimer);
   Asm->OutStreamer.EmitLabel(getDWLabel("eh_func_end", SubprogramCount));
 
   // Record if this personality index uses a landing pad.
@@ -961,7 +950,4 @@ void DwarfException::EndFunction() {
                                          !MMI->getLandingPads().empty(),
                                          MMI->getFrameMoves(),
                                          MF->getFunction()));
-
-  if (TimePassesIsEnabled)
-    ExceptionTimer->stopTimer();
 }
