@@ -7,7 +7,7 @@ template<typename T1> struct if_ {
 };
 template <class Model, void (Model::*)()> struct wrap_constraints { };
 template <class Model> 
-inline char has_constraints_(Model* ,  // expected-note 4{{while substituting}} \
+inline char has_constraints_(Model* ,  // expected-note 4{{while substituting deduced template arguments into function template 'has_constraints_' [with }} \
                              // expected-note 3{{candidate template ignored}}
                                wrap_constraints<Model,&Model::constraints>* = 0); // expected-note 4{{in instantiation}}
 

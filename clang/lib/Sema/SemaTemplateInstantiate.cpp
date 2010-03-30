@@ -394,7 +394,11 @@ void Sema::PrintInstantiationStack() {
         = cast<FunctionTemplateDecl>((Decl *)Active->Entity);
       Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
                    diag::note_explicit_template_arg_substitution_here)
-        << FnTmpl << Active->InstantiationRange;
+        << FnTmpl 
+        << getTemplateArgumentBindingsText(FnTmpl->getTemplateParameters(), 
+                                           Active->TemplateArgs, 
+                                           Active->NumTemplateArgs)
+        << Active->InstantiationRange;
       break;
     }
 
@@ -405,13 +409,21 @@ void Sema::PrintInstantiationStack() {
         Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
                      diag::note_partial_spec_deduct_instantiation_here)
           << Context.getTypeDeclType(PartialSpec)
+          << getTemplateArgumentBindingsText(
+                                         PartialSpec->getTemplateParameters(), 
+                                             Active->TemplateArgs, 
+                                             Active->NumTemplateArgs)
           << Active->InstantiationRange;
       } else {
         FunctionTemplateDecl *FnTmpl
           = cast<FunctionTemplateDecl>((Decl *)Active->Entity);
         Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
                      diag::note_function_template_deduction_instantiation_here)
-          << FnTmpl << Active->InstantiationRange;
+          << FnTmpl
+          << getTemplateArgumentBindingsText(FnTmpl->getTemplateParameters(), 
+                                             Active->TemplateArgs, 
+                                             Active->NumTemplateArgs)
+          << Active->InstantiationRange;
       }
       break;
 

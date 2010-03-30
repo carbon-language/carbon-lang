@@ -1385,13 +1385,13 @@ def note_default_function_arg_instantiation_here : Note<
   "for '%0' required here">;
 def note_explicit_template_arg_substitution_here : Note<
   "while substituting explicitly-specified template arguments into function "
-  "template %0, here">;
+  "template %0 %1">;
 def note_function_template_deduction_instantiation_here : Note<
-  "while substituting deduced template arguments into function template %0, "
-  "here">;
+  "while substituting deduced template arguments into function template %0 "
+  "%1">;
 def note_partial_spec_deduct_instantiation_here : Note<
   "during template argument deduction for class template partial "
-  "specialization %0, here">;
+  "specialization %0 %1">;
 def note_prior_template_arg_substitution : Note<
   "while substituting prior template arguments into %select{non-type|template}0"
   " template parameter%1 %2">;
