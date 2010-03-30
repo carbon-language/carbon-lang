@@ -17,10 +17,9 @@ using namespace llvm;
 
 // This is the only way to create a PIC16Section. Sections created here
 // do not need to be explicitly deleted as they are managed by auto_ptrs.
-PIC16Section *PIC16Section::Create(const StringRef &Name,
-                                   PIC16SectionType Ty,
-                                   const std::string &Address, 
-                                   int Color, MCContext &Ctx) {
+PIC16Section *PIC16Section::Create(StringRef Name, PIC16SectionType Ty,
+                                   StringRef Address, int Color,
+                                   MCContext &Ctx) {
 
   /// Determine the internal SectionKind info.
   /// Users of PIC16Section class should not need to know the internal
@@ -59,8 +58,17 @@ PIC16Section *PIC16Section::Create(const StringRef &Name,
       
   }
 
+  // Copy strings into context allocated memory so they get free'd when the
+  // context is destroyed.
+  char *NameCopy = static_cast<char*>(Ctx.Allocate(Name.size(), 1));
+  memcpy(NameCopy, Name.data(), Name.size());
+  char *AddressCopy = static_cast<char*>(Ctx.Allocate(Address.size(), 1));
+  memcpy(AddressCopy, Address.data(), Address.size());
+
   // Create the Section.
-  PIC16Section *S = new (Ctx) PIC16Section(Name, K, Address, Color);
+  PIC16Section *S =
+    new (Ctx) PIC16Section(StringRef(NameCopy, Name.size()), K,
+                           StringRef(AddressCopy, Address.size()), Color);
   S->T = Ty;
   return S;
 }

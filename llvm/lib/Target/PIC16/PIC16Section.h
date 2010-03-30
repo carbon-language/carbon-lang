@@ -30,11 +30,11 @@ namespace llvm {
     PIC16SectionType T;
 
     /// Name of the section to uniquely identify it.
-    std::string Name;
+    StringRef Name;
 
     /// User can specify an address at which a section should be placed. 
     /// Negative value here means user hasn't specified any. 
-    std::string Address; 
+    StringRef Address; 
 
     /// Overlay information - Sections with same color can be overlaid on
     /// one another.
@@ -43,17 +43,16 @@ namespace llvm {
     /// Total size of all data objects contained here.
     unsigned Size;
     
-    PIC16Section(const StringRef &name, SectionKind K, const std::string &addr, 
-                 int color)
+    PIC16Section(StringRef name, SectionKind K, StringRef addr, int color)
       : MCSection(K), Name(name), Address(addr), Color(color), Size(0) {
     }
     
   public:
     /// Return the name of the section.
-    const std::string &getName() const { return Name; }
+    StringRef getName() const { return Name; }
 
     /// Return the Address of the section.
-    const std::string &getAddress() const { return Address; }
+    StringRef getAddress() const { return Address; }
 
     /// Return the Color of the section.
     int getColor() const { return Color; }
@@ -77,8 +76,8 @@ namespace llvm {
     PIC16SectionType getType() const { return T; }
 
     /// This would be the only way to create a section. 
-    static PIC16Section *Create(const StringRef &Name, PIC16SectionType Ty, 
-                                const std::string &Address, int Color, 
+    static PIC16Section *Create(StringRef Name, PIC16SectionType Ty, 
+                                StringRef Address, int Color, 
                                 MCContext &Ctx);
     
     /// Override this as PIC16 has its own way of printing switching
