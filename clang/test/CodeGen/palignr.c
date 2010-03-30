@@ -15,5 +15,5 @@ int4 align1(int4 a, int4 b) { return _mm_alignr_epi8(a, b, 15); }
 int4 align2(int4 a, int4 b) { return _mm_alignr_epi8(a, b, 16); }
 // CHECK: psrldq
 int4 align3(int4 a, int4 b) { return _mm_alignr_epi8(a, b, 17); }
-// CHECK: xorps
+// CHECK: xor
 int4 align4(int4 a, int4 b) { return _mm_alignr_epi8(a, b, 32); }
