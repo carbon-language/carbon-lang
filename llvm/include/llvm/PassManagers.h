@@ -413,6 +413,7 @@ private:
 /// It batches all function passes and basic block pass managers together and 
 /// sequence them to process one function at a time before processing next 
 /// function.
+
 class FPPassManager : public ModulePass, public PMDataManager {
 public:
   static char ID;
@@ -461,7 +462,8 @@ public:
   }
 };
 
-Timer *getPassTimer(Pass *);
+extern Timer *StartPassTimer(Pass *);
+extern void StopPassTimer(Pass *, Timer *);
 
 }
 

@@ -378,7 +378,7 @@ namespace {
 static ManagedStatic<sys::SmartMutex<true> > TimingInfoMutex;
 
 class TimingInfo {
-  DenseMap<Pass*, Timer> TimingData;
+  std::map<Pass*, Timer> TimingData;
   TimerGroup TG;
 
 public:
@@ -397,16 +397,19 @@ public:
   // null.  It may be called multiple times.
   static void createTheTimeInfo();
 
-  /// getPassTimer - Return the timer for the specified pass if it exists.
-  Timer *getPassTimer(Pass *P) {
+  /// passStarted - This method creates a timer for the given pass if it doesn't
+  /// already have one, and starts the timer.
+  Timer *passStarted(Pass *P) {
     if (P->getAsPMDataManager()) 
       return 0;
 
     sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
-    Timer &T = TimingData[P];
-    if (!T.isInitialized())
-      T.init(P->getPassName(), TG);
-    return &T;
+    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
+    if (I == TimingData.end())
+      I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
+    Timer *T = &I->second;
+    T->startTimer();
+    return T;
   }
 };
 
@@ -701,8 +704,11 @@ void PMDataManager::verifyPreservedAnalysis(Pass *P) {
          E = PreservedSet.end(); I != E; ++I) {
     AnalysisID AID = *I;
     if (Pass *AP = findAnalysisPass(AID, true)) {
-      TimeRegion PassTimer(getPassTimer(AP));
+
+      Timer *T = 0;
+      if (TheTimeInfo) T = TheTimeInfo->passStarted(AP);
       AP->verifyAnalysis();
+      if (T) T->stopTimer();
     }
   }
 }
@@ -786,9 +792,10 @@ void PMDataManager::freePass(Pass *P, StringRef Msg,
   {
     // If the pass crashes releasing memory, remember this.
     PassManagerPrettyStackEntry X(P);
-    TimeRegion PassTimer(getPassTimer(P));
-
+    
+    Timer *T = StartPassTimer(P);
     P->releaseMemory();
+    StopPassTimer(P, T);
   }
 
   if (const PassInfo *PI = P->getPassInfo()) {
@@ -1121,9 +1128,10 @@ bool BBPassManager::runOnFunction(Function &F) {
       {
         // If the pass crashes, remember this.
         PassManagerPrettyStackEntry X(BP, *I);
-        TimeRegion PassTimer(getPassTimer(BP));
-
+      
+        Timer *T = StartPassTimer(BP);
         LocalChanged |= BP->runOnBasicBlock(*I);
+        StopPassTimer(BP, T);
       }
 
       Changed |= LocalChanged;
@@ -1337,9 +1345,10 @@ bool FPPassManager::runOnFunction(Function &F) {
 
     {
       PassManagerPrettyStackEntry X(FP, F);
-      TimeRegion PassTimer(getPassTimer(FP));
 
+      Timer *T = StartPassTimer(FP);
       LocalChanged |= FP->runOnFunction(F);
+      StopPassTimer(FP, T);
     }
 
     Changed |= LocalChanged;
@@ -1411,9 +1420,9 @@ MPPassManager::runOnModule(Module &M) {
 
     {
       PassManagerPrettyStackEntry X(MP, M);
-      TimeRegion PassTimer(getPassTimer(MP));
-
+      Timer *T = StartPassTimer(MP);
       LocalChanged |= MP->runOnModule(M);
+      StopPassTimer(MP, T);
     }
 
     Changed |= LocalChanged;
@@ -1550,10 +1559,15 @@ void TimingInfo::createTheTimeInfo() {
 }
 
 /// If TimingInfo is enabled then start pass timer.
-Timer *llvm::getPassTimer(Pass *P) {
+Timer *llvm::StartPassTimer(Pass *P) {
   if (TheTimeInfo) 
-    return TheTimeInfo->getPassTimer(P);
+    return TheTimeInfo->passStarted(P);
   return 0;
+}
+
+/// If TimingInfo is enabled then stop pass timer.
+void llvm::StopPassTimer(Pass *P, Timer *T) {
+  if (T) T->stopTimer();
 }
 
 //===----------------------------------------------------------------------===//
