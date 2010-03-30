@@ -148,7 +148,7 @@ public:
   /// and/or incomplete argument types, this will return the opaque type.
   const llvm::Type *GetFunctionTypeForVtable(const CXXMethodDecl *MD);
                                                      
-  const CGRecordLayout &getCGRecordLayout(const TagDecl*) const;
+  const CGRecordLayout &getCGRecordLayout(const RecordDecl*) const;
 
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.
