@@ -597,7 +597,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::PMULHUWrr,       X86::PMULHUWrm, 16 },
     { X86::PMULHWrr,        X86::PMULHWrm, 16 },
     { X86::PMULLDrr,        X86::PMULLDrm, 16 },
-    { X86::PMULLDrr_int,    X86::PMULLDrm_int, 16 },
     { X86::PMULLWrr,        X86::PMULLWrm, 16 },
     { X86::PMULUDQrr,       X86::PMULUDQrm, 16 },
     { X86::PORrr,           X86::PORrm, 16 },

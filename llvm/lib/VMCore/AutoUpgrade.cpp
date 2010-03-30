@@ -225,7 +225,12 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       // Calls to these intrinsics are transformed into ShuffleVector's.
       NewFn = 0;
       return true;
+    } else if (Name.compare(5, 16, "x86.sse41.pmulld", 16) == 0) {
+      // Calls to these intrinsics are transformed into vector multiplies.
+      NewFn = 0;
+      return true;
     }
+    
 
     break;
   }
@@ -354,6 +359,18 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         CI->replaceAllUsesWith(SI);
       
       //  Clean up the old call now that it has been completely upgraded.
+      CI->eraseFromParent();
+    } else if (F->getName() == "llvm.x86.sse41.pmulld") {
+      // Upgrade this set of intrinsics into vector multiplies.
+      Instruction *Mul = BinaryOperator::CreateMul(CI->getOperand(1),
+                                                   CI->getOperand(2),
+                                                   CI->getName(),
+                                                   CI);
+      // Fix up all the uses with our new multiply.
+      if (!CI->use_empty())
+        CI->replaceAllUsesWith(Mul);
+        
+      // Remove upgraded multiply.
       CI->eraseFromParent();
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
