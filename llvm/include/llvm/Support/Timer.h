@@ -85,6 +85,8 @@ class Timer {
   std::string Name;      // The name of this time variable.
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
+  
+  Timer **Prev, *Next;   // Doubly linked list of timers in the group.
 public:
   explicit Timer(const std::string &N) : TG(0) { init(N); }
   Timer(const std::string &N, TimerGroup &tg) : TG(0) { init(N, tg); }
@@ -133,12 +135,10 @@ public:
     T->startTimer();
   }
   explicit TimeRegion(Timer *t) : T(t) {
-    if (T)
-      T->startTimer();
+    if (T) T->startTimer();
   }
   ~TimeRegion() {
-    if (T)
-      T->stopTimer();
+    if (T) T->stopTimer();
   }
 };
 
@@ -162,24 +162,36 @@ struct NamedRegionTimer : public TimeRegion {
 ///
 class TimerGroup {
   std::string Name;
-  unsigned NumTimers;
+  Timer *FirstTimer;   // First timer in the group.
   std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
 public:
-  explicit TimerGroup(const std::string &name) : Name(name), NumTimers(0) {}
-  explicit TimerGroup() : NumTimers(0) {}
+  explicit TimerGroup(const std::string &name) : Name(name), FirstTimer(0) {}
+  explicit TimerGroup() : FirstTimer(0) {}
+
+  explicit TimerGroup(const TimerGroup &TG) : FirstTimer(0) {
+    operator=(TG);
+  }
+
+  void operator=(const TimerGroup &TG) {
+    assert(TG.FirstTimer == 0 && FirstTimer == 0 &&
+           "Cannot assign group with timers");
+    Name = TG.Name;
+  }
+
   
   void setName(const std::string &name) { Name = name; }
   
   ~TimerGroup() {
-    assert(NumTimers == 0 &&
+    assert(FirstTimer == 0 &&
            "TimerGroup destroyed before all contained timers!");
   }
 
+  void PrintQueuedTimers(raw_ostream &OS);
+  
 private:
   friend class Timer;
-  void addTimer();
-  void removeTimer();
-  void addTimerToPrint(const TimeRecord &T, const std::string &Name);
+  void addTimer(Timer &T);
+  void removeTimer(Timer &T);
 };
 
 } // End llvm namespace

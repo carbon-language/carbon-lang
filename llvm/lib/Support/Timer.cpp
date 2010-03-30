@@ -20,7 +20,6 @@
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Process.h"
 #include "llvm/ADT/StringMap.h"
-#include <map>
 using namespace llvm;
 
 // GetLibSupportInfoOutputFile - Return a file stream to print our output on.
@@ -101,7 +100,7 @@ void Timer::init(const std::string &N) {
   Name = N;
   Started = false;
   TG = getDefaultTimerGroup();
-  TG->addTimer();
+  TG->addTimer(*this);
 }
 
 void Timer::init(const std::string &N, TimerGroup &tg) {
@@ -109,17 +108,12 @@ void Timer::init(const std::string &N, TimerGroup &tg) {
   Name = N;
   Started = false;
   TG = &tg;
-  TG->addTimer();
+  TG->addTimer(*this);
 }
 
 Timer::~Timer() {
   if (!TG) return;  // Never initialized.
-  
-  if (Started) {
-    Started = false;
-    TG->addTimerToPrint(Time, Name);
-  }
-  TG->removeTimer();
+  TG->removeTimer(*this);
 }
 
 static inline size_t getMemUsage() {
@@ -243,74 +237,92 @@ NamedRegionTimer::NamedRegionTimer(const std::string &Name,
 //   TimerGroup Implementation
 //===----------------------------------------------------------------------===//
 
-void TimerGroup::removeTimer() {
+void TimerGroup::removeTimer(Timer &T) {
   sys::SmartScopedLock<true> L(*TimerLock);
-  if (--NumTimers != 0 || TimersToPrint.empty())
-    return; // Don't print timing report.
   
-  // Sort the timers in descending order by amount of time taken.
-  std::sort(TimersToPrint.begin(), TimersToPrint.end());
-
-  // Figure out how many spaces to indent TimerGroup name.
-  unsigned Padding = (80-Name.length())/2;
-  if (Padding > 80) Padding = 0;         // Don't allow "negative" numbers
-
+  // If the timer was started, move its data to TimersToPrint.
+  if (T.Started) {
+    T.Started = false;
+    TimersToPrint.push_back(std::make_pair(T.Time, T.Name));
+  }
+  
+  // Unlink the timer from our list.
+  *T.Prev = T.Next;
+  if (T.Next)
+    T.Next->Prev = T.Prev;
+  
+  // Print the report when all timers in this group are destroyed if some of
+  // them were started.
+  if (FirstTimer != 0 || TimersToPrint.empty())
+    return;
+  
   raw_ostream *OutStream = GetLibSupportInfoOutputFile();
 
-  TimeRecord Total;
-  for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i)
-    Total += TimersToPrint[i].first;
-
-  // Print out timing header.
-  *OutStream << "===" << std::string(73, '-') << "===\n";
-  OutStream->indent(Padding) << Name << '\n';
-  *OutStream << "===" << std::string(73, '-') << "===\n";
-
-  // If this is not an collection of ungrouped times, print the total time.
-  // Ungrouped timers don't really make sense to add up.  We still print the
-  // TOTAL line to make the percentages make sense.
-  if (this != DefaultTimerGroup) {
-    *OutStream << "  Total Execution Time: ";
-    *OutStream << format("%5.4f", Total.getProcessTime()) << " seconds (";
-    *OutStream << format("%5.4f", Total.getWallTime()) << " wall clock)\n";
-  }
-  *OutStream << "\n";
-
-  if (Total.getUserTime())
-    *OutStream << "   ---User Time---";
-  if (Total.getSystemTime())
-    *OutStream << "   --System Time--";
-  if (Total.getProcessTime())
-    *OutStream << "   --User+System--";
-  *OutStream << "   ---Wall Time---";
-  if (Total.getMemUsed())
-    *OutStream << "  ---Mem---";
-  *OutStream << "  --- Name ---\n";
-
-  // Loop through all of the timing data, printing it out.
-  for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i) {
-    const std::pair<TimeRecord, std::string> &Entry = TimersToPrint[e-i-1];
-    Entry.first.print(Total, *OutStream);
-    *OutStream << Entry.second << '\n';
-  }
-
-  Total.print(Total, *OutStream);
-  *OutStream << "Total\n\n";
-  OutStream->flush();
-
-  TimersToPrint.clear();
+  PrintQueuedTimers(*OutStream);
 
   if (OutStream != &errs() && OutStream != &outs())
     delete OutStream;   // Close the file.
 }
 
-void TimerGroup::addTimer() {
+void TimerGroup::addTimer(Timer &T) {
   sys::SmartScopedLock<true> L(*TimerLock);
-  ++NumTimers;
+  
+  // Add the timer to our list.
+  if (FirstTimer)
+    FirstTimer->Prev = &T.Next;
+  T.Next = FirstTimer;
+  T.Prev = &FirstTimer;
+  FirstTimer = &T;
 }
 
-void TimerGroup::addTimerToPrint(const TimeRecord &T, const std::string &Name) {
-  sys::SmartScopedLock<true> L(*TimerLock);
-  TimersToPrint.push_back(std::make_pair(T, Name));
+void TimerGroup::PrintQueuedTimers(raw_ostream &OS) {
+  // Sort the timers in descending order by amount of time taken.
+  std::sort(TimersToPrint.begin(), TimersToPrint.end());
+  
+  TimeRecord Total;
+  for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i)
+    Total += TimersToPrint[i].first;
+  
+  // Print out timing header.
+  OS << "===" << std::string(73, '-') << "===\n";
+  // Figure out how many spaces to indent TimerGroup name.
+  unsigned Padding = (80-Name.length())/2;
+  if (Padding > 80) Padding = 0;         // Don't allow "negative" numbers
+  OS.indent(Padding) << Name << '\n';
+  OS << "===" << std::string(73, '-') << "===\n";
+  
+  // If this is not an collection of ungrouped times, print the total time.
+  // Ungrouped timers don't really make sense to add up.  We still print the
+  // TOTAL line to make the percentages make sense.
+  if (this != DefaultTimerGroup) {
+    OS << "  Total Execution Time: ";
+    OS << format("%5.4f", Total.getProcessTime()) << " seconds (";
+    OS << format("%5.4f", Total.getWallTime()) << " wall clock)\n";
+  }
+  OS << '\n';
+  
+  if (Total.getUserTime())
+    OS << "   ---User Time---";
+  if (Total.getSystemTime())
+    OS << "   --System Time--";
+  if (Total.getProcessTime())
+    OS << "   --User+System--";
+  OS << "   ---Wall Time---";
+  if (Total.getMemUsed())
+    OS << "  ---Mem---";
+  OS << "  --- Name ---\n";
+  
+  // Loop through all of the timing data, printing it out.
+  for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i) {
+    const std::pair<TimeRecord, std::string> &Entry = TimersToPrint[e-i-1];
+    Entry.first.print(Total, OS);
+    OS << Entry.second << '\n';
+  }
+  
+  Total.print(Total, OS);
+  OS << "Total\n\n";
+  OS.flush();
+  
+  TimersToPrint.clear();
 }
 
