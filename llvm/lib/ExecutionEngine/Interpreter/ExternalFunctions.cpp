@@ -265,7 +265,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   if (RF == RawFunctions->end()) {
     RawFn = (RawFunc)(intptr_t)
       sys::DynamicLibrary::SearchForAddressOfSymbol(F->getName());
-    if (!RawnFn)
+    if (!RawFn)
 	RawFn = (RawFunc)(intptr_t)getPointerToGlobalIfAvailable(F);
     if (RawFn != 0)
       RawFunctions->insert(std::make_pair(F, RawFn));  // Cache for later
