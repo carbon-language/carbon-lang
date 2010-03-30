@@ -21,6 +21,7 @@
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/FullExpr.h"
+#include "clang/AST/Statistics.h"
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
 #include <string>
@@ -1359,6 +1360,16 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
+
+#ifndef NDEBUG
+  /// \brief The number of times we have dynamically checked for an
+  /// Objective-C-specific statement node.
+  extern llvm::Statistic objc_stmt_checks;
+
+  /// \brief The number of times we have dynamically checked for a
+  /// C++-specific statement node.
+  extern llvm::Statistic cxx_stmt_checks;
+#endif
 
 }  // end namespace clang
 

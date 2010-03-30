@@ -35,6 +35,13 @@ using namespace clang;
 //  Statistics
 //===----------------------------------------------------------------------===//
 
+#ifndef NDEBUG
+llvm::Statistic clang::objc_decl_checks = 
+  { "clang", "Number of checks for Objective-C declaration nodes", 0, 0 };
+llvm::Statistic clang::cxx_decl_checks = 
+  { "clang", "Number of checks for C++ declaration nodes", 0, 0 };
+#endif
+
 #define DECL(Derived, Base) static int n##Derived##s = 0;
 #include "clang/AST/DeclNodes.def"
 

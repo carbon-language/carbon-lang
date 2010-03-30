@@ -27,6 +27,13 @@
 #include <algorithm>
 using namespace clang;
 
+#ifndef NDEBUG
+llvm::Statistic clang::objc_expr_checks = 
+  { "clang", "Number of checks for Objective-C expression nodes", 0, 0 };
+llvm::Statistic clang::cxx_expr_checks = 
+  { "clang", "Number of checks for C++ expression nodes", 0, 0 };
+#endif
+
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//

@@ -164,4 +164,7 @@ inline void CXXRecordDecl::pushFriendDecl(FriendDecl *FD) {
   
 }
 
+// Enumerate C++ declarations
+CLANG_ISA_STATISTIC(FriendDecl, cxx_decl_checks)
+
 #endif
