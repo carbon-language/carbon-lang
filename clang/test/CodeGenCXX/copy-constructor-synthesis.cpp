@@ -1,7 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -S %s -o %t-64.s
-// RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
-// RUN: %clang_cc1 -triple i386-apple-darwin -S %s -o %t-32.s
-// RUN: FileCheck -check-prefix LP32 --input-file=%t-32.s %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o - %s | FileCheck %s
 
 extern "C" int printf(...);
 
@@ -24,6 +21,7 @@ struct P {
 };
 
 
+// CHECK: define linkonce_odr void @_ZN1XC1ERKS_
 struct X  : M, N, P { // ...
   X() : f1(1.0), d1(2.0), i1(3), name("HELLO"), bf1(0xff), bf2(0xabcd),
         au_i1(1234), au1_4("MASKED") {}
@@ -112,11 +110,3 @@ struct B : A {
 void f(const B &b1) {
   B b2(b1);
 }
-
-// CHECK-LP64: .globl  __ZN1XC1ERKS_
-// CHECK-LP64: .weak_definition __ZN1XC1ERKS_
-// CHECK-LP64: __ZN1XC1ERKS_:
-
-// CHECK-LP32: .globl  __ZN1XC1ERKS_
-// CHECK-LP32: .weak_definition __ZN1XC1ERKS_
-// CHECK-LP32: __ZN1XC1ERKS_:
