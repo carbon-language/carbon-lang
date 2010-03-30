@@ -963,7 +963,7 @@ Optional<SVal> RegionStoreManager::getDefaultBinding(RegionBindings B,
 Optional<SVal> RegionStoreManager::getBinding(RegionBindings B,
                                               const MemRegion *R) {
 
-  if (Optional<SVal> V = getDirectBinding(B, R))
+  if (const Optional<SVal> &V = getDirectBinding(B, R))
     return V;
 
   return getDefaultBinding(B, R);
@@ -1144,7 +1144,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
                                          const ElementRegion* R) {
   // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(store);
-  if (Optional<SVal> V = getDirectBinding(B, R))
+  if (const Optional<SVal> &V = getDirectBinding(B, R))
     return *V;
 
   const MemRegion* superR = R->getSuperRegion();
@@ -1175,7 +1175,7 @@ SVal RegionStoreManager::RetrieveElement(Store store,
   }
 
   // Check if the immediate super region has a direct binding.
-  if (Optional<SVal> V = getDirectBinding(B, superR)) {
+  if (const Optional<SVal> &V = getDirectBinding(B, superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())
       return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
 
@@ -1203,7 +1203,7 @@ SVal RegionStoreManager::RetrieveField(Store store,
 
   // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(store);
-  if (Optional<SVal> V = getDirectBinding(B, R))
+  if (const Optional<SVal> &V = getDirectBinding(B, R))
     return *V;
 
   QualType Ty = R->getValueType(getContext());
@@ -1278,13 +1278,13 @@ SVal RegionStoreManager::RetrieveObjCIvar(Store store, const ObjCIvarRegion* R){
     // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(store);
 
-  if (Optional<SVal> V = getDirectBinding(B, R))
+  if (const Optional<SVal> &V = getDirectBinding(B, R))
     return *V;
 
   const MemRegion *superR = R->getSuperRegion();
 
   // Check if the super region has a default binding.
-  if (Optional<SVal> V = getDefaultBinding(B, superR)) {
+  if (const Optional<SVal> &V = getDefaultBinding(B, superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())
       return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
 
@@ -1300,7 +1300,7 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
   // Check if the region has a binding.
   RegionBindings B = GetRegionBindings(store);
 
-  if (Optional<SVal> V = getDirectBinding(B, R))
+  if (const Optional<SVal> &V = getDirectBinding(B, R))
     return *V;
 
   // Lazily derive a value for the VarRegion.
@@ -1788,7 +1788,7 @@ void RemoveDeadBindingsWorker::VisitRegion(const MemRegion *R) {
   }
 
   // Get the data binding for R (if any).
-  if (Optional<SVal> V = RM.getBinding(B, R))
+  if (const Optional<SVal> &V = RM.getBinding(B, R))
     VisitBinding(*V);
 }
 
