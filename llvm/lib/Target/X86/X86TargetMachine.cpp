@@ -23,6 +23,11 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
+static cl::opt<bool>
+SSEDomainFix("sse-domain-fix",
+               cl::desc("Enable fixing of SSE execution domain"),
+               cl::init(false), cl::Hidden);
+
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
@@ -172,7 +177,7 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
 
 bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel) {
-  if (OptLevel != CodeGenOpt::None && Subtarget.hasSSE2()) {
+  if (SSEDomainFix && OptLevel != CodeGenOpt::None && Subtarget.hasSSE2()) {
     PM.add(createSSEDomainFixPass());
     return true;
   }
