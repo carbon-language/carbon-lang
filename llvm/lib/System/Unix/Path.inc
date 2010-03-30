@@ -454,7 +454,7 @@ Path::canWrite() const {
 
 bool
 Path::isRegularFile() const {
-  // Get the status so we can determine if its a file or directory
+  // Get the status so we can determine if it's a file or directory
   struct stat buf;
 
   if (0 != stat(path.c_str(), &buf))
@@ -736,7 +736,7 @@ Path::createTemporaryFileOnDisk(bool reuse_current, std::string* ErrMsg) {
 
 bool
 Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
-  // Get the status so we can determine if its a file or directory
+  // Get the status so we can determine if it's a file or directory.
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     MakeErrMsg(ErrStr, path + ": can't get status of file");

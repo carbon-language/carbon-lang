@@ -224,7 +224,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
     if (BI->isUnconditional() && BI->getSuccessor(0) == BB) {
       if (!AggressiveInsts) return false;
       // Okay, it looks like the instruction IS in the "condition".  Check to
-      // see if its a cheap instruction to unconditionally compute, and if it
+      // see if it's a cheap instruction to unconditionally compute, and if it
       // only uses stuff defined outside of the condition.  If so, hoist it out.
       if (!I->isSafeToSpeculativelyExecute())
         return false;
