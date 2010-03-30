@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep movss  | count 2
-; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep movaps | count 4
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 -o %t
+; RUN: grep movss %t | count 2
+; RUN: grep movaps %t | count 2
+; RUN: grep movdqa %t | count 2
 
 define i1 @t([2 x float]* %y, [2 x float]* %w, i32, [2 x float]* %x.pn59, i32 %smax190, i32 %j.1180, <4 x float> %wu.2179, <4 x float> %wr.2178, <4 x float>* %tmp89.out, <4 x float>* %tmp107.out, i32* %indvar.next218.out) nounwind {
 newFuncRoot:

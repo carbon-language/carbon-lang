@@ -5,7 +5,7 @@
 ; bounce the vector off of cache rather than shuffling each individual
 ; element out of the index vector.
 
-; CHECK: pand     (%rdx), %xmm0
+; CHECK: andps    (%rdx), %xmm0
 ; CHECK: movaps   %xmm0, -24(%rsp)
 ; CHECK: movslq   -24(%rsp), %rax
 ; CHECK: movsd    (%rdi,%rax,8), %xmm0

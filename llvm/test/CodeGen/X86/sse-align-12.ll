@@ -1,10 +1,8 @@
-; RUN: llc < %s -march=x86-64 > %t
-; RUN: grep unpck %t | count 2
-; RUN: grep shuf %t | count 2
-; RUN: grep ps %t | count 4
-; RUN: grep pd %t | count 4
-; RUN: grep movup %t | count 4
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
+; CHECK: _a:
+; CHECK: movdqu
+; CHECK: pshufd
 define <4 x float> @a(<4 x float>* %y) nounwind {
   %x = load <4 x float>* %y, align 4
   %a = extractelement <4 x float> %x, i32 0
@@ -17,6 +15,10 @@ define <4 x float> @a(<4 x float>* %y) nounwind {
   %s = insertelement <4 x float> %r, float %a, i32 3
   ret <4 x float> %s
 }
+
+; CHECK: _b:
+; CHECK: movups
+; CHECK: unpckhps
 define <4 x float> @b(<4 x float>* %y, <4 x float> %z) nounwind {
   %x = load <4 x float>* %y, align 4
   %a = extractelement <4 x float> %x, i32 2
@@ -29,6 +31,10 @@ define <4 x float> @b(<4 x float>* %y, <4 x float> %z) nounwind {
   %s = insertelement <4 x float> %r, float %b, i32 3
   ret <4 x float> %s
 }
+
+; CHECK: _c:
+; CHECK: movupd
+; CHECK: shufpd
 define <2 x double> @c(<2 x double>* %y) nounwind {
   %x = load <2 x double>* %y, align 8
   %a = extractelement <2 x double> %x, i32 0
@@ -37,6 +43,10 @@ define <2 x double> @c(<2 x double>* %y) nounwind {
   %r = insertelement <2 x double> %p, double %a, i32 1
   ret <2 x double> %r
 }
+
+; CHECK: _d:
+; CHECK: movupd
+; CHECK: unpckhpd
 define <2 x double> @d(<2 x double>* %y, <2 x double> %z) nounwind {
   %x = load <2 x double>* %y, align 8
   %a = extractelement <2 x double> %x, i32 1

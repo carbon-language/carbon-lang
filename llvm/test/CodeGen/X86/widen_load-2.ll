@@ -5,7 +5,7 @@
 
 %i32vec3 = type <3 x i32>
 define void @add3i32(%i32vec3*  sret %ret, %i32vec3* %ap, %i32vec3* %bp)  {
-; CHECK: movaps
+; CHECK: movdqa
 ; CHECK: paddd
 ; CHECK: pextrd
 ; CHECK: movq
@@ -33,13 +33,13 @@ define void @add3i32_2(%i32vec3*  sret %ret, %i32vec3* %ap, %i32vec3* %bp)  {
 
 %i32vec7 = type <7 x i32>
 define void @add7i32(%i32vec7*  sret %ret, %i32vec7* %ap, %i32vec7* %bp)  {
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
 ; CHECK: paddd
 ; CHECK: paddd
 ; CHECK: pextrd
 ; CHECK: movq
-; CHECK: movaps
+; CHECK: movdqa
 	%a = load %i32vec7* %ap, align 16
 	%b = load %i32vec7* %bp, align 16
 	%x = add %i32vec7 %a, %b
@@ -49,15 +49,15 @@ define void @add7i32(%i32vec7*  sret %ret, %i32vec7* %ap, %i32vec7* %bp)  {
 
 %i32vec12 = type <12 x i32>
 define void @add12i32(%i32vec12*  sret %ret, %i32vec12* %ap, %i32vec12* %bp)  {
-; CHECK: movaps
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
+; CHECK: movdqa
 ; CHECK: paddd
 ; CHECK: paddd
 ; CHECK: paddd
-; CHECK: movaps
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
+; CHECK: movdqa
 	%a = load %i32vec12* %ap, align 16
 	%b = load %i32vec12* %bp, align 16
 	%x = add %i32vec12 %a, %b
@@ -68,7 +68,7 @@ define void @add12i32(%i32vec12*  sret %ret, %i32vec12* %ap, %i32vec12* %bp)  {
 
 %i16vec3 = type <3 x i16>
 define void @add3i16(%i16vec3* nocapture sret %ret, %i16vec3* %ap, %i16vec3* %bp) nounwind {
-; CHECK: movaps
+; CHECK: movdqa
 ; CHECK: paddw
 ; CHECK: movd
 ; CHECK: pextrw
@@ -81,7 +81,7 @@ define void @add3i16(%i16vec3* nocapture sret %ret, %i16vec3* %ap, %i16vec3* %bp
 
 %i16vec4 = type <4 x i16>
 define void @add4i16(%i16vec4* nocapture sret %ret, %i16vec4* %ap, %i16vec4* %bp) nounwind {
-; CHECK: movaps
+; CHECK: movdqa
 ; CHECK: paddw
 ; CHECK: movq
 	%a = load %i16vec4* %ap, align 16
@@ -93,12 +93,12 @@ define void @add4i16(%i16vec4* nocapture sret %ret, %i16vec4* %ap, %i16vec4* %bp
 
 %i16vec12 = type <12 x i16>
 define void @add12i16(%i16vec12* nocapture sret %ret, %i16vec12* %ap, %i16vec12* %bp) nounwind {
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
 ; CHECK: paddw
 ; CHECK: paddw
 ; CHECK: movq
-; CHECK: movaps
+; CHECK: movdqa
 	%a = load %i16vec12* %ap, align 16
 	%b = load %i16vec12* %bp, align 16
 	%x = add %i16vec12 %a, %b
@@ -108,15 +108,15 @@ define void @add12i16(%i16vec12* nocapture sret %ret, %i16vec12* %ap, %i16vec12*
 
 %i16vec18 = type <18 x i16>
 define void @add18i16(%i16vec18* nocapture sret %ret, %i16vec18* %ap, %i16vec18* %bp) nounwind {
-; CHECK: movaps
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
+; CHECK: movdqa
 ; CHECK: paddw
 ; CHECK: paddw
 ; CHECK: paddw
 ; CHECK: movd
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
 	%a = load %i16vec18* %ap, align 16
 	%b = load %i16vec18* %bp, align 16
 	%x = add %i16vec18 %a, %b
@@ -127,7 +127,7 @@ define void @add18i16(%i16vec18* nocapture sret %ret, %i16vec18* %ap, %i16vec18*
 
 %i8vec3 = type <3 x i8>
 define void @add3i8(%i8vec3* nocapture sret %ret, %i8vec3* %ap, %i8vec3* %bp) nounwind {
-; CHECK: movaps
+; CHECK: movdqa
 ; CHECK: paddb
 ; CHECK: pextrb
 ; CHECK: movb
@@ -140,8 +140,8 @@ define void @add3i8(%i8vec3* nocapture sret %ret, %i8vec3* %ap, %i8vec3* %bp) no
 
 %i8vec31 = type <31 x i8>
 define void @add31i8(%i8vec31* nocapture sret %ret, %i8vec31* %ap, %i8vec31* %bp) nounwind {
-; CHECK: movaps
-; CHECK: movaps
+; CHECK: movdqa
+; CHECK: movdqa
 ; CHECK: paddb
 ; CHECK: paddb
 ; CHECK: movq
