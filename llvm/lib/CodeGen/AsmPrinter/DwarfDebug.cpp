@@ -2067,6 +2067,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
                                          DILoc.getScope().getNode());
       DI->second->setDbgValueLabel(Label);
     }
+    return;
   }
 
   // Emit a label to indicate location change. This is used for line 
