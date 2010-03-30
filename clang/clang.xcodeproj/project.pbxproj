@@ -12,7 +12,6 @@
 		1A2193CE0F45EEB700C0713D /* Mangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2193CC0F45EEB700C0713D /* Mangle.cpp */; };
 		1A2A54B50FD1DD1C00F4CE45 /* AnalysisConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A40FD1DD1C00F4CE45 /* AnalysisConsumer.cpp */; };
 		1A2A54B60FD1DD1C00F4CE45 /* ASTConsumers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */; };
-		1A2A54B70FD1DD1C00F4CE45 /* Backend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A60FD1DD1C00F4CE45 /* Backend.cpp */; };
 		1A2A54B80FD1DD1C00F4CE45 /* CacheTokens.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A70FD1DD1C00F4CE45 /* CacheTokens.cpp */; };
 		1A2A54B90FD1DD1C00F4CE45 /* DependencyFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A80FD1DD1C00F4CE45 /* DependencyFile.cpp */; };
 		1A2A54BA0FD1DD1C00F4CE45 /* DiagChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A2A54A90FD1DD1C00F4CE45 /* DiagChecker.cpp */; };
@@ -70,6 +69,8 @@
 		1ADF47AF0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */; };
 		1AE4EE3E103B89ED00888A23 /* StmtProfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AE4EE3D103B89ED00888A23 /* StmtProfile.cpp */; };
 		1AF1B50F109A4FB800AFAFAC /* CGException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AF1B50E109A4FB800AFAFAC /* CGException.cpp */; };
+		1AFDD8721161085D00AE030A /* ASTMerge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFDD8701161085D00AE030A /* ASTMerge.cpp */; };
+		1AFDD8731161085D00AE030A /* CodeGenAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFDD8711161085D00AE030A /* CodeGenAction.cpp */; };
 		1AFF8AE31012BFC900D248DA /* CGRecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */; };
 		3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */; };
 		352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */; };
@@ -370,7 +371,6 @@
 		1A2193CD0F45EEB700C0713D /* Mangle.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Mangle.h; path = lib/CodeGen/Mangle.h; sourceTree = "<group>"; tabWidth = 2; };
 		1A2A54A40FD1DD1C00F4CE45 /* AnalysisConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisConsumer.cpp; path = lib/Frontend/AnalysisConsumer.cpp; sourceTree = "<group>"; };
 		1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = lib/Frontend/ASTConsumers.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		1A2A54A60FD1DD1C00F4CE45 /* Backend.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Backend.cpp; path = lib/Frontend/Backend.cpp; sourceTree = "<group>"; };
 		1A2A54A70FD1DD1C00F4CE45 /* CacheTokens.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CacheTokens.cpp; path = lib/Frontend/CacheTokens.cpp; sourceTree = "<group>"; };
 		1A2A54A80FD1DD1C00F4CE45 /* DependencyFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DependencyFile.cpp; path = lib/Frontend/DependencyFile.cpp; sourceTree = "<group>"; };
 		1A2A54A90FD1DD1C00F4CE45 /* DiagChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DiagChecker.cpp; path = lib/Frontend/DiagChecker.cpp; sourceTree = "<group>"; };
@@ -451,6 +451,8 @@
 		1AE4EE3B103B89CA00888A23 /* TreeTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = TreeTransform.h; path = lib/Sema/TreeTransform.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AE4EE3D103B89ED00888A23 /* StmtProfile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = StmtProfile.cpp; path = lib/AST/StmtProfile.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AF1B50E109A4FB800AFAFAC /* CGException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGException.cpp; path = lib/CodeGen/CGException.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1AFDD8701161085D00AE030A /* ASTMerge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTMerge.cpp; path = lib/Frontend/ASTMerge.cpp; sourceTree = "<group>"; };
+		1AFDD8711161085D00AE030A /* CodeGenAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenAction.cpp; path = lib/Frontend/CodeGenAction.cpp; sourceTree = "<group>"; };
 		1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGRecordLayoutBuilder.cpp; path = lib/CodeGen/CGRecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AFF8AE21012BFC900D248DA /* CGRecordLayoutBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGRecordLayoutBuilder.h; path = lib/CodeGen/CGRecordLayoutBuilder.h; sourceTree = "<group>"; tabWidth = 2; };
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
@@ -962,10 +964,11 @@
 		352246E00F5C6BC000D0D279 /* Frontend */ = {
 			isa = PBXGroup;
 			children = (
+				1AFDD8701161085D00AE030A /* ASTMerge.cpp */,
 				9012911C1048068D0083456D /* ASTUnit.cpp */,
 				1A2A54A40FD1DD1C00F4CE45 /* AnalysisConsumer.cpp */,
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,
-				1A2A54A60FD1DD1C00F4CE45 /* Backend.cpp */,
+				1AFDD8711161085D00AE030A /* CodeGenAction.cpp */,
 				1A2A54A70FD1DD1C00F4CE45 /* CacheTokens.cpp */,
 				1ACB57DB1105820D0047B991 /* CompilerInstance.cpp */,
 				1ACB57DC1105820D0047B991 /* CompilerInvocation.cpp */,
@@ -1953,7 +1956,6 @@
 				DECB78170FA5882F00F5FBC7 /* PCHWriterStmt.cpp in Sources */,
 				1A2A54B50FD1DD1C00F4CE45 /* AnalysisConsumer.cpp in Sources */,
 				1A2A54B60FD1DD1C00F4CE45 /* ASTConsumers.cpp in Sources */,
-				1A2A54B70FD1DD1C00F4CE45 /* Backend.cpp in Sources */,
 				1A2A54B80FD1DD1C00F4CE45 /* CacheTokens.cpp in Sources */,
 				1A2A54B90FD1DD1C00F4CE45 /* DependencyFile.cpp in Sources */,
 				1A2A54BA0FD1DD1C00F4CE45 /* DiagChecker.cpp in Sources */,
@@ -2025,6 +2027,8 @@
 				BF89C3F911595A01001C2D68 /* SemaType.cpp in Sources */,
 				BF89C3FB11595A37001C2D68 /* SemaCodeComplete.cpp in Sources */,
 				BF89C3FD11595A5D001C2D68 /* SemaExceptionSpec.cpp in Sources */,
+				1AFDD8721161085D00AE030A /* ASTMerge.cpp in Sources */,
+				1AFDD8731161085D00AE030A /* CodeGenAction.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
