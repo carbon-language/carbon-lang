@@ -1313,8 +1313,23 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
     return ValMgr.getRegionValueSymbolVal(R);
 
   if (isa<GlobalsSpaceRegion>(MS)) {
-    if (VD->isFileVarDecl())
+    if (VD->isFileVarDecl()) {
+      // Is 'VD' declared constant?  If so, retrieve the constant value.
+      QualType CT = Ctx.getCanonicalType(T);
+      if (CT.isConstQualified()) {
+        const Expr *Init = VD->getInit();
+        // Do the null check first, as we want to call 'IgnoreParenCasts'.
+        if (Init)
+          if (const IntegerLiteral *IL =
+              dyn_cast<IntegerLiteral>(Init->IgnoreParenCasts())) {
+            const nonloc::ConcreteInt &V = ValMgr.makeIntVal(IL);
+            return ValMgr.getSValuator().EvalCast(V, Init->getType(),
+                                                  IL->getType());
+          }
+      }
+
       return ValMgr.getRegionValueSymbolVal(R);
+    }
 
     if (T->isIntegerType())
       return ValMgr.makeIntVal(0, T);
