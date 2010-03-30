@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_TIMER_H
 
 #include "llvm/System/DataTypes.h"
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>
 #include <vector>
@@ -88,8 +89,8 @@ class Timer {
   
   Timer **Prev, *Next;   // Doubly linked list of timers in the group.
 public:
-  explicit Timer(const std::string &N) : TG(0) { init(N); }
-  Timer(const std::string &N, TimerGroup &tg) : TG(0) { init(N, tg); }
+  explicit Timer(StringRef N) : TG(0) { init(N); }
+  Timer(StringRef N, TimerGroup &tg) : TG(0) { init(N, tg); }
   Timer(const Timer &RHS) : TG(0) {
     assert(RHS.TG == 0 && "Can only copy uninitialized timers");
   }
@@ -101,8 +102,8 @@ public:
 
   // Create an uninitialized timer, client must use 'init'.
   explicit Timer() : TG(0) {}
-  void init(const std::string &N);
-  void init(const std::string &N, TimerGroup &tg);
+  void init(StringRef N);
+  void init(StringRef N, TimerGroup &tg);
   
   const std::string &getName() const { return Name; }
   bool isInitialized() const { return TG != 0; }
@@ -149,9 +150,8 @@ public:
 /// is primarily used for debugging and for hunting performance problems.
 ///
 struct NamedRegionTimer : public TimeRegion {
-  explicit NamedRegionTimer(const std::string &Name);
-  explicit NamedRegionTimer(const std::string &Name,
-                            const std::string &GroupName);
+  explicit NamedRegionTimer(StringRef Name);
+  explicit NamedRegionTimer(StringRef Name, StringRef GroupName);
 };
 
 
@@ -169,10 +169,10 @@ class TimerGroup {
   TimerGroup(const TimerGroup &TG);      // DO NOT IMPLEMENT
   void operator=(const TimerGroup &TG);  // DO NOT IMPLEMENT
 public:
-  explicit TimerGroup(const std::string &name);
+  explicit TimerGroup(StringRef name);
   ~TimerGroup();
 
-  void setName(const std::string &name) { Name = name; }
+  void setName(StringRef name) { Name.assign(name.begin(), name.end()); }
 
   /// print - Print any started timers in this group and zero them.
   void print(raw_ostream &OS);

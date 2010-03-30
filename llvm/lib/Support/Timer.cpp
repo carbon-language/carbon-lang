@@ -55,20 +55,20 @@ namespace {
 
 // CreateInfoOutputFile - Return a file stream to print our output on.
 raw_ostream *llvm::CreateInfoOutputFile() {
-  std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
-  if (LibSupportInfoOutputFilename.empty())
+  const std::string &OutputFilename = getLibSupportInfoOutputFilename();
+  if (OutputFilename.empty())
     return new raw_fd_ostream(2, false); // stderr.
-  if (LibSupportInfoOutputFilename == "-")
+  if (OutputFilename == "-")
     return new raw_fd_ostream(1, false); // stdout.
   
   std::string Error;
-  raw_ostream *Result = new raw_fd_ostream(LibSupportInfoOutputFilename.c_str(),
+  raw_ostream *Result = new raw_fd_ostream(OutputFilename.c_str(),
                                            Error, raw_fd_ostream::F_Append);
   if (Error.empty())
     return Result;
   
   errs() << "Error opening info-output-file '"
-    << LibSupportInfoOutputFilename << " for appending!\n";
+    << OutputFilename << " for appending!\n";
   delete Result;
   return new raw_fd_ostream(2, false); // stderr.
 }
@@ -96,17 +96,17 @@ static TimerGroup *getDefaultTimerGroup() {
 // Timer Implementation
 //===----------------------------------------------------------------------===//
 
-void Timer::init(const std::string &N) {
+void Timer::init(StringRef N) {
   assert(TG == 0 && "Timer already initialized");
-  Name = N;
+  Name.assign(N.begin(), N.end());
   Started = false;
   TG = getDefaultTimerGroup();
   TG->addTimer(*this);
 }
 
-void Timer::init(const std::string &N, TimerGroup &tg) {
+void Timer::init(StringRef N, TimerGroup &tg) {
   assert(TG == 0 && "Timer already initialized");
-  Name = N;
+  Name.assign(N.begin(), N.end());
   Started = false;
   TG = &tg;
   TG->addTimer(*this);
@@ -201,7 +201,7 @@ public:
       delete I->second.first;
   }
   
-  Timer &get(const std::string &Name, const std::string &GroupName) {
+  Timer &get(StringRef Name, StringRef GroupName) {
     sys::SmartScopedLock<true> L(*TimerLock);
     
     std::pair<TimerGroup*, Name2TimerMap> &GroupEntry = Map[GroupName];
@@ -219,7 +219,7 @@ public:
 static ManagedStatic<Name2TimerMap> NamedTimers;
 static ManagedStatic<Name2PairMap> NamedGroupedTimers;
 
-static Timer &getNamedRegionTimer(const std::string &Name) {
+static Timer &getNamedRegionTimer(StringRef Name) {
   sys::SmartScopedLock<true> L(*TimerLock);
   
   Timer &T = (*NamedTimers)[Name];
@@ -228,11 +228,10 @@ static Timer &getNamedRegionTimer(const std::string &Name) {
   return T;
 }
 
-NamedRegionTimer::NamedRegionTimer(const std::string &Name)
+NamedRegionTimer::NamedRegionTimer(StringRef Name)
   : TimeRegion(getNamedRegionTimer(Name)) {}
 
-NamedRegionTimer::NamedRegionTimer(const std::string &Name,
-                                   const std::string &GroupName)
+NamedRegionTimer::NamedRegionTimer(StringRef Name, StringRef GroupName)
   : TimeRegion(NamedGroupedTimers->get(Name, GroupName)) {}
 
 //===----------------------------------------------------------------------===//
@@ -243,8 +242,8 @@ NamedRegionTimer::NamedRegionTimer(const std::string &Name,
 /// TimerGroup ctor/dtor and is protected by the TimerLock lock.
 static TimerGroup *TimerGroupList = 0;
 
-TimerGroup::TimerGroup(const std::string &name)
-  : Name(name), FirstTimer(0) {
+TimerGroup::TimerGroup(StringRef name)
+  : Name(name.begin(), name.end()), FirstTimer(0) {
     
   // Add the group to TimerGroupList.
   sys::SmartScopedLock<true> L(*TimerLock);
