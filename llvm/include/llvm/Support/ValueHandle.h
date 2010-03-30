@@ -302,7 +302,7 @@ class TrackingVH : public ValueHandleBase {
 
   ValueTy *getValPtr() const {
     CheckValidity();
-    return static_cast<ValueTy*>(ValueHandleBase::getValPtr());
+    return (ValueTy*)ValueHandleBase::getValPtr();
   }
   void setValPtr(ValueTy *P) {
     CheckValidity();

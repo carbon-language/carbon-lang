@@ -26,7 +26,11 @@ LLVMContext& llvm::getGlobalContext() {
   return *GlobalContext;
 }
 
-LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
+LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
+  // Create the first metadata kind, which is always 'dbg'.
+  unsigned DbgID = getMDKindID("dbg");
+  assert(DbgID == MD_dbg && "dbg kind id drifted"); (void)DbgID;
+}
 LLVMContext::~LLVMContext() { delete pImpl; }
 
 

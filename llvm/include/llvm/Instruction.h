@@ -17,6 +17,7 @@
 
 #include "llvm/User.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 
@@ -31,6 +32,7 @@ class Instruction : public User, public ilist_node<Instruction> {
   Instruction(const Instruction &);        // Do not implement
 
   BasicBlock *Parent;
+  TrackingVH<MDNode> DbgInfo;         // 'dbg' Metadata cache.
   
   enum {
     /// HasMetadataBit - This is a bit stored in the SubClassData field which
@@ -123,7 +125,7 @@ public:
   /// hasMetadata() - Return true if this instruction has any metadata attached
   /// to it.
   bool hasMetadata() const {
-    return (getSubclassDataFromValue() & HasMetadataBit) != 0;
+    return DbgInfo != 0 || hasMetadataHashEntry();
   }
   
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
@@ -155,6 +157,12 @@ public:
   void setMetadata(const char *Kind, MDNode *Node);
 
 private:
+  /// hasMetadataHashEntry - Return true if we have an entry in the on-the-side
+  /// metadata hash.
+  bool hasMetadataHashEntry() const {
+    return (getSubclassDataFromValue() & HasMetadataBit) != 0;
+  }
+  
   // These are all implemented in Metadata.cpp.
   MDNode *getMetadataImpl(unsigned KindID) const;
   MDNode *getMetadataImpl(const char *Kind) const;
@@ -315,7 +323,7 @@ private:
     return Value::getSubclassDataFromValue();
   }
   
-  void setHasMetadata(bool V) {
+  void setHasMetadataHashEntry(bool V) {
     setValueSubclassData((getSubclassDataFromValue() & ~HasMetadataBit) |
                          (V ? HasMetadataBit : 0));
   }
