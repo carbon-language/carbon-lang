@@ -1141,15 +1141,21 @@ static QualType getExtFunctionType(ASTContext& Context, QualType T,
 }
 
 QualType ASTContext::getNoReturnType(QualType T, bool AddNoReturn) {
-  FunctionType::ExtInfo Info = getFunctionExtInfo(*T);
+  FunctionType::ExtInfo Info = getFunctionExtInfo(T);
   return getExtFunctionType(*this, T,
                                  Info.withNoReturn(AddNoReturn));
 }
 
 QualType ASTContext::getCallConvType(QualType T, CallingConv CallConv) {
-  FunctionType::ExtInfo Info = getFunctionExtInfo(*T);
+  FunctionType::ExtInfo Info = getFunctionExtInfo(T);
   return getExtFunctionType(*this, T,
                             Info.withCallingConv(CallConv));
+}
+
+QualType ASTContext::getRegParmType(QualType T, unsigned RegParm) {
+  FunctionType::ExtInfo Info = getFunctionExtInfo(T);
+  return getExtFunctionType(*this, T,
+                                 Info.withRegParm(RegParm));
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -4308,12 +4314,19 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
     allRTypes = false;
   // FIXME: double check this
+  // FIXME: should we error if lbase->getRegParmAttr() != 0 &&
+  //                           rbase->getRegParmAttr() != 0 &&
+  //                           lbase->getRegParmAttr() != rbase->getRegParmAttr()?
   FunctionType::ExtInfo lbaseInfo = lbase->getExtInfo();
   FunctionType::ExtInfo rbaseInfo = rbase->getExtInfo();
+  unsigned RegParm = lbaseInfo.getRegParm() == 0 ? rbaseInfo.getRegParm() :
+      lbaseInfo.getRegParm();
   bool NoReturn = lbaseInfo.getNoReturn() || rbaseInfo.getNoReturn();
-  if (NoReturn != lbaseInfo.getNoReturn())
+  if (NoReturn != lbaseInfo.getNoReturn() ||
+      RegParm != lbaseInfo.getRegParm())
     allLTypes = false;
-  if (NoReturn != rbaseInfo.getNoReturn())
+  if (NoReturn != rbaseInfo.getNoReturn() ||
+      RegParm != rbaseInfo.getRegParm())
     allRTypes = false;
   CallingConv lcc = lbaseInfo.getCC();
   CallingConv rcc = rbaseInfo.getCC();
@@ -4356,7 +4369,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
     return getFunctionType(retType, types.begin(), types.size(),
                            lproto->isVariadic(), lproto->getTypeQuals(),
                            false, false, 0, 0,
-                           FunctionType::ExtInfo(NoReturn, lcc));
+                           FunctionType::ExtInfo(NoReturn, RegParm, lcc));
   }
 
   if (lproto) allRTypes = false;
@@ -4391,12 +4404,12 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
                            proto->getNumArgs(), proto->isVariadic(),
                            proto->getTypeQuals(),
                            false, false, 0, 0,
-                           FunctionType::ExtInfo(NoReturn, lcc));
+                           FunctionType::ExtInfo(NoReturn, RegParm, lcc));
   }
 
   if (allLTypes) return lhs;
   if (allRTypes) return rhs;
-  FunctionType::ExtInfo Info(NoReturn, lcc);
+  FunctionType::ExtInfo Info(NoReturn, RegParm, lcc);
   return getFunctionNoProtoType(retType, Info);
 }
 

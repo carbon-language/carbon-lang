@@ -841,6 +841,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
       ID.AddPointer(Exs[i].getAsOpaquePtr());
   }
   ID.AddInteger(Info.getNoReturn());
+  ID.AddInteger(Info.getRegParm());
   ID.AddInteger(Info.getCC());
 }
 

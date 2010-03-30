@@ -298,7 +298,9 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   }
   if (Info.getNoReturn())
     S += " __attribute__((noreturn))";
-
+  if (Info.getRegParm())
+    S += " __attribute__((regparm (" +
+        llvm::utostr_32(Info.getRegParm()) + ")))";
   
   if (T->hasExceptionSpec()) {
     S += " throw(";

@@ -447,6 +447,11 @@ public:
   /// allowable type.
   QualType getCallConvType(QualType T, CallingConv CallConv);
 
+  /// getRegParmType - Sets the specified regparm attribute to
+  /// the given type, which must be a FunctionType or a pointer to an
+  /// allowable type.
+  QualType getRegParmType(QualType T, unsigned RegParm);
+
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T);

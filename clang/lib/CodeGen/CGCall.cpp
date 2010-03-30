@@ -175,6 +175,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
                          ArgTys,
                          FunctionType::ExtInfo(
                              /*NoReturn*/ false,
+                             /*RegParm*/ 0,
                              getCallingConventionForDecl(MD)));
 }
 
@@ -216,16 +217,13 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                            const llvm::SmallVectorImpl<CanQualType> &ArgTys,
                                             const FunctionType::ExtInfo &Info) {
-  const CallingConv CallConv = Info.getCC();
-  const bool NoReturn = Info.getNoReturn();
-
 #ifndef NDEBUG
   for (llvm::SmallVectorImpl<CanQualType>::const_iterator
          I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
     assert(I->isCanonicalAsParam());
 #endif
 
-  unsigned CC = ClangCallConvToLLVMCallConv(CallConv);
+  unsigned CC = ClangCallConvToLLVMCallConv(Info.getCC());
 
   // Lookup or create unique function info.
   llvm::FoldingSetNodeID ID;
@@ -238,7 +236,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
     return *FI;
 
   // Construct the function info.
-  FI = new CGFunctionInfo(CC, NoReturn, ResTy, ArgTys);
+  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(), ResTy, ArgTys);
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
@@ -249,11 +247,12 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
 
 CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
                                bool _NoReturn,
+                               unsigned _RegParm,
                                CanQualType ResTy,
                                const llvm::SmallVectorImpl<CanQualType> &ArgTys)
   : CallingConvention(_CallingConvention),
     EffectiveCallingConvention(_CallingConvention),
-    NoReturn(_NoReturn)
+    NoReturn(_NoReturn), RegParm(_RegParm)
 {
   NumArgs = ArgTys.size();
   Args = new ArgInfo[1 + NumArgs];
@@ -609,11 +608,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   // FIXME: we need to honour command line settings also...
   // FIXME: RegParm should be reduced in case of nested functions and/or global
   // register variable.
-  signed RegParm = 0;
-  if (TargetDecl)
-    if (const RegparmAttr *RegParmAttr
-          = TargetDecl->getAttr<RegparmAttr>())
-      RegParm = RegParmAttr->getNumParams();
+  signed RegParm = FI.getRegParm();
 
   unsigned PointerWidth = getContext().Target.getPointerWidth(0);
   for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),

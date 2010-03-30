@@ -1739,6 +1739,30 @@ bool ProcessFnAttr(Sema &S, QualType &Type, const AttributeList &Attr) {
     return false;
   }
 
+  if (Attr.getKind() == AttributeList::AT_regparm) {
+    // The warning is emitted elsewhere
+    if (Attr.getNumArgs() != 1) {
+      return false;
+    }
+
+    // Delay if this is not a function or pointer to block.
+    if (!Type->isFunctionPointerType()
+        && !Type->isBlockPointerType()
+        && !Type->isFunctionType())
+      return true;
+
+    // Otherwise we can process right away.
+    Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArg(0));
+    llvm::APSInt NumParams(32);
+
+    // The warning is emitted elsewhere
+    if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context))
+      return false;
+
+    Type = S.Context.getRegParmType(Type, NumParams.getZExtValue());
+    return false;
+  }
+
   // Otherwise, a calling convention.
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
@@ -1868,6 +1892,7 @@ void ProcessTypeAttributeList(Sema &S, QualType &Result,
     case AttributeList::AT_cdecl:
     case AttributeList::AT_fastcall:
     case AttributeList::AT_stdcall:
+    case AttributeList::AT_regparm:
       // Don't process these on the DeclSpec.
       if (IsDeclSpec ||
           ProcessFnAttr(S, Result, *AL))

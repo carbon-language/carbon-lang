@@ -76,12 +76,16 @@ namespace CodeGen {
     unsigned NumArgs;
     ArgInfo *Args;
 
+    /// How many arguments to pass inreg.
+    unsigned RegParm;
+
   public:
     typedef const ArgInfo *const_arg_iterator;
     typedef ArgInfo *arg_iterator;
 
     CGFunctionInfo(unsigned CallingConvention,
                    bool NoReturn,
+                   unsigned RegParm,
                    CanQualType ResTy,
                    const llvm::SmallVectorImpl<CanQualType> &ArgTys);
     ~CGFunctionInfo() { delete[] Args; }
@@ -108,6 +112,8 @@ namespace CodeGen {
       EffectiveCallingConvention = Value;
     }
 
+    unsigned getRegParm() const { return RegParm; }
+
     CanQualType getReturnType() const { return Args[0].type; }
 
     ABIArgInfo &getReturnInfo() { return Args[0].info; }
@@ -116,6 +122,7 @@ namespace CodeGen {
     void Profile(llvm::FoldingSetNodeID &ID) {
       ID.AddInteger(getCallingConvention());
       ID.AddBoolean(NoReturn);
+      ID.AddInteger(RegParm);
       getReturnType().Profile(ID);
       for (arg_iterator it = arg_begin(), ie = arg_end(); it != ie; ++it)
         it->type.Profile(ID);
@@ -128,6 +135,7 @@ namespace CodeGen {
                         Iterator end) {
       ID.AddInteger(Info.getCC());
       ID.AddBoolean(Info.getNoReturn());
+      ID.AddInteger(Info.getRegParm());
       ResTy.Profile(ID);
       for (; begin != end; ++begin) {
         CanQualType T = *begin; // force iterator to be over canonical types

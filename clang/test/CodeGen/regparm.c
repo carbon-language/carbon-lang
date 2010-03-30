@@ -8,12 +8,16 @@ typedef struct {
   int ccc[200];
 } foo;
 
+typedef void (*FType)(int, int)      __attribute ((regparm (3), stdcall));
+FType bar;
+
 static void FASTCALL
-reduced(char b, double c, foo* d, double e, int f) {
-}
+reduced(char b, double c, foo* d, double e, int f);
 
 int
 main(void) {
   // CHECK: call void @reduced(i8 signext inreg 0, {{.*}} %struct.anon* inreg null
   reduced(0, 0.0, 0, 0.0, 0);
+  // CHECK: call x86_stdcallcc void %tmp(i32 inreg 1, i32 inreg 2)
+  bar(1,2);
 }

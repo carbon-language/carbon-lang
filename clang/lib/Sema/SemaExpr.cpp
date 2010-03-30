@@ -7037,11 +7037,11 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   QualType BlockTy;
   if (!BSI->hasPrototype)
     BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0, false, false, 0, 0,
-                                  FunctionType::ExtInfo(NoReturn, CC_Default));
+                                FunctionType::ExtInfo(NoReturn, 0, CC_Default));
   else
     BlockTy = Context.getFunctionType(RetTy, ArgTypes.data(), ArgTypes.size(),
                                       BSI->isVariadic, 0, false, false, 0, 0,
-                                   FunctionType::ExtInfo(NoReturn, CC_Default));
+                                FunctionType::ExtInfo(NoReturn, 0, CC_Default));
 
   // FIXME: Check that return/parameter types are complete/non-abstract
   DiagnoseUnusedParameters(BSI->Params.begin(), BSI->Params.end());

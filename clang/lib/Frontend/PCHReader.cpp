@@ -2075,20 +2075,21 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   }
 
   case pch::TYPE_FUNCTION_NO_PROTO: {
-    if (Record.size() != 3) {
+    if (Record.size() != 4) {
       Error("incorrect encoding of no-proto function type");
       return QualType();
     }
     QualType ResultType = GetType(Record[0]);
-    FunctionType::ExtInfo Info(Record[1], (CallingConv)Record[2]);
+    FunctionType::ExtInfo Info(Record[1], Record[2], (CallingConv)Record[3]);
     return Context->getFunctionNoProtoType(ResultType, Info);
   }
 
   case pch::TYPE_FUNCTION_PROTO: {
     QualType ResultType = GetType(Record[0]);
     bool NoReturn = Record[1];
-    CallingConv CallConv = (CallingConv)Record[2];
-    unsigned Idx = 3;
+    unsigned RegParm = Record[2];
+    CallingConv CallConv = (CallingConv)Record[3];
+    unsigned Idx = 4;
     unsigned NumParams = Record[Idx++];
     llvm::SmallVector<QualType, 16> ParamTypes;
     for (unsigned I = 0; I != NumParams; ++I)
@@ -2105,7 +2106,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
                                     isVariadic, Quals, hasExceptionSpec,
                                     hasAnyExceptionSpec, NumExceptions,
                                     Exceptions.data(),
-                                    FunctionType::ExtInfo(NoReturn, CallConv));
+                                    FunctionType::ExtInfo(NoReturn, RegParm,
+                                                          CallConv));
   }
 
   case pch::TYPE_UNRESOLVED_USING:

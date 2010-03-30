@@ -1740,6 +1740,9 @@ class FunctionType : public Type {
   /// NoReturn - Indicates if the function type is attribute noreturn.
   unsigned NoReturn : 1;
 
+  /// RegParm - How many arguments to pass inreg.
+  unsigned RegParm : 3;
+
   /// CallConv - The calling convention used by the function.
   unsigned CallConv : 2;
 
@@ -1750,22 +1753,38 @@ class FunctionType : public Type {
   // This class is used for passing arround the information needed to
   // construct a call. It is not actually used for storage, just for
   // factoring together common arguments.
+  // If you add a field (say Foo), other than the obvious places (both, constructors,
+  // compile failures), what you need to update is
+  // * Operetor==
+  // * getFoo
+  // * withFoo
+  // * functionType. Add Foo, getFoo.
+  // * ASTContext::getFooType
+  // * ASTContext::mergeFunctionTypes
+  // * FunctionNoProtoType::Profile
+  // * FunctionProtoType::Profile
+  // * TypePrinter::PrintFunctionProto
+  // * PCH read and write
+  // * Codegen
+
   class ExtInfo {
    public:
     // Constructor with no defaults. Use this when you know that you
     // have all the elements (when reading a PCH file for example).
-    ExtInfo(bool noReturn, CallingConv cc) :
-        NoReturn(noReturn), CC(cc) {}
+    ExtInfo(bool noReturn, unsigned regParm, CallingConv cc) :
+        NoReturn(noReturn), RegParm(regParm), CC(cc) {}
 
     // Constructor with all defaults. Use when for example creating a
     // function know to use defaults.
-    ExtInfo() : NoReturn(false), CC(CC_Default) {}
+    ExtInfo() : NoReturn(false), RegParm(0), CC(CC_Default) {}
 
     bool getNoReturn() const { return NoReturn; }
+    unsigned getRegParm() const { return RegParm; }
     CallingConv getCC() const { return CC; }
 
     bool operator==(const ExtInfo &Other) const {
       return getNoReturn() == Other.getNoReturn() &&
+          getRegParm() == Other.getRegParm() &&
           getCC() == Other.getCC();
     }
     bool operator!=(const ExtInfo &Other) const {
@@ -1776,16 +1795,22 @@ class FunctionType : public Type {
     // the following with methods instead of mutating these objects.
 
     ExtInfo withNoReturn(bool noReturn) const {
-      return ExtInfo(noReturn, getCC());
+      return ExtInfo(noReturn, getRegParm(), getCC());
+    }
+
+    ExtInfo withRegParm(unsigned RegParm) const {
+      return ExtInfo(getNoReturn(), RegParm, getCC());
     }
 
     ExtInfo withCallingConv(CallingConv cc) const {
-      return ExtInfo(getNoReturn(), cc);
+      return ExtInfo(getNoReturn(), getRegParm(), cc);
     }
 
    private:
     // True if we have __attribute__((noreturn))
     bool NoReturn;
+    // The value passed to __attribute__((regparm(x)))
+    unsigned RegParm;
     // The calling convention as specified via
     // __attribute__((cdecl|stdcall||fastcall))
     CallingConv CC;
@@ -1798,16 +1823,17 @@ protected:
     : Type(tc, Canonical, Dependent),
       SubClassData(SubclassInfo), TypeQuals(typeQuals),
       NoReturn(Info.getNoReturn()),
-      CallConv(Info.getCC()), ResultType(res) {}
+      RegParm(Info.getRegParm()), CallConv(Info.getCC()), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
   unsigned getTypeQuals() const { return TypeQuals; }
 public:
 
   QualType getResultType() const { return ResultType; }
+  unsigned getRegParmType() const { return RegParm; }
   bool getNoReturnAttr() const { return NoReturn; }
   CallingConv getCallConv() const { return (CallingConv)CallConv; }
   ExtInfo getExtInfo() const {
-    return ExtInfo(NoReturn, (CallingConv)CallConv);
+    return ExtInfo(NoReturn, RegParm, (CallingConv)CallConv);
   }
 
   static llvm::StringRef getNameForCallConv(CallingConv CC);
@@ -1839,6 +1865,7 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType,
                       const ExtInfo &Info) {
     ID.AddInteger(Info.getCC());
+    ID.AddInteger(Info.getRegParm());
     ID.AddInteger(Info.getNoReturn());
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }

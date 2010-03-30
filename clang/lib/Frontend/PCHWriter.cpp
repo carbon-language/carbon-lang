@@ -143,6 +143,7 @@ void PCHTypeWriter::VisitFunctionType(const FunctionType *T) {
   Writer.AddTypeRef(T->getResultType(), Record);
   FunctionType::ExtInfo C = T->getExtInfo();
   Record.push_back(C.getNoReturn());
+  Record.push_back(C.getRegParm());
   // FIXME: need to stabilize encoding of calling convention...
   Record.push_back(C.getCC());
 }
