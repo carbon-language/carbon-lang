@@ -122,6 +122,9 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
       Actions.ActOnDelayedCXXMethodParameter(CurScope, LM.DefaultArgs[I].Param);
 
       if (CachedTokens *Toks = LM.DefaultArgs[I].Toks) {
+        // Save the current token position.
+        SourceLocation origLoc = Tok.getLocation();
+
         // Parse the default argument from its saved token stream.
         Toks->push_back(Tok); // So that the current token doesn't get lost
         PP.EnterTokenStream(&Toks->front(), Toks->size(), true, false);
@@ -139,6 +142,15 @@ void Parser::ParseLexedMethodDeclarations(ParsingClass &Class) {
         else
           Actions.ActOnParamDefaultArgument(LM.DefaultArgs[I].Param, EqualLoc,
                                             move(DefArgResult));
+
+        assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
+                                                           Tok.getLocation()) &&
+               "ParseAssignmentExpression went over the default arg tokens!");
+        // There could be leftover tokens (e.g. because of an error).
+        // Skip through until we reach the original token position.
+        while (Tok.getLocation() != origLoc)
+          ConsumeAnyToken();
+
         delete Toks;
         LM.DefaultArgs[I].Toks = 0;
       }
