@@ -15,7 +15,7 @@ void test1() {
 // CHECK-NEXT:  store i8* %{{exception|2}}, i8** %{{exception.ptr|1}}
 // CHECK-NEXT:  %{{0|3}} = bitcast i8* %{{exception|2}} to %struct.test1_D*
 // CHECK-NEXT:  %{{tmp|4}} = bitcast %struct.test1_D* %{{0|3}} to i8*
-// CHECK-NEXT:  call void @llvm.memcpy.i64(i8* %{{tmp|4}}, i8* bitcast (%struct.test1_D* @d1 to i8*), i64 8, i32 8)
+// CHECK-NEXT:  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{tmp|4}}, i8* bitcast (%struct.test1_D* @d1 to i8*), i64 8, i32 8, i1 false)
 // CHECK-NEXT:  call void @__cxa_throw(i8* %{{exception|2}}, i8* bitcast (%0* @_ZTI7test1_D to i8*), i8* null) noreturn
 // CHECK-NEXT:  unreachable
 

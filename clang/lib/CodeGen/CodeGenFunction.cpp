@@ -495,12 +495,14 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
   const llvm::Type *IntPtr = llvm::IntegerType::get(VMContext,
                                                     LLVMPointerWidth);
 
-  Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
+  Builder.CreateCall5(CGM.getMemSetFn(BP, IntPtr), DestPtr,
                  llvm::Constant::getNullValue(llvm::Type::getInt8Ty(VMContext)),
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
                       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                             TypeInfo.second/8));
+                                             TypeInfo.second/8),
+                      llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext),
+                                             0));
 }
 
 llvm::BlockAddress *CodeGenFunction::GetAddrOfLabel(const LabelStmt *L) {

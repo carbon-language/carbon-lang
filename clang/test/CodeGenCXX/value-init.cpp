@@ -18,7 +18,7 @@ void test_value_init() {
   // PR5800
 
   // CHECK: store i32 17
-  // CHECK: call void @llvm.memset.i64
+  // CHECK: call void @llvm.memset.p0i8.i64
   // CHECK: call void @_ZN1BC1Ev
   C c = { 17 } ;
   // CHECK: call void @_ZN1CD1Ev
