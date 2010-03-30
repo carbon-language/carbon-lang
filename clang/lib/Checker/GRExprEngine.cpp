@@ -897,6 +897,11 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
     }
 
+    case Stmt::ObjCIsaExprClass:
+      // FIXME: Do something more intelligent with 'x->isa = ...'.
+      //  For now, just ignore the assignment.
+      return;
+
     case Stmt::ObjCPropertyRefExprClass:
     case Stmt::ObjCImplicitSetterGetterRefExprClass:
       // FIXME: Property assignments are lvalues, but not really "locations".

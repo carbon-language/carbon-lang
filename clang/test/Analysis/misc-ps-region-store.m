@@ -910,3 +910,13 @@ int rdar_7770737_pos(void)
   struct rdar_7770737_s f = { .p = (intptr_t)&x };
   return x; // expected-warning{{Undefined or garbage value returned to caller}}
 }
+
+//===----------------------------------------------------------------------===//
+// Test handling of the implicit 'isa' field.  For now we don't do anything
+// interesting.
+//===----------------------------------------------------------------------===//
+
+void pr6302(id x, Class y) {
+  // This previously crashed the analyzer (reported in PR 6302)
+  x->isa  = y;
+}
