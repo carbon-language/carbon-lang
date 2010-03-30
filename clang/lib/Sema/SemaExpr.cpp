@@ -1515,8 +1515,6 @@ Sema::PerformObjectMemberConversion(Expr *&From,
                                    IgnoreAccess))
     return true;
 
-  // FIXME: isLvalue should be !PointerConversions here, but codegen
-  // does very silly things.
   ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
                     /*isLvalue=*/ !PointerConversions);
   return false;
