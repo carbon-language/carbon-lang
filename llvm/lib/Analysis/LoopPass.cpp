@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Support/Timer.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -228,9 +229,9 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       {
         PassManagerPrettyStackEntry X(P, *CurrentLoop->getHeader());
-        Timer *T = StartPassTimer(P);
+        TimeRegion PassTimer(getPassTimer(P));
+
         Changed |= P->runOnLoop(CurrentLoop, *this);
-        StopPassTimer(P, T);
       }
 
       if (Changed)
@@ -245,9 +246,10 @@ bool LPPassManager::runOnFunction(Function &F) {
         // is a function pass and it's really expensive to verify every
         // loop in the function every time. That level of checking can be
         // enabled with the -verify-loop-info option.
-        Timer *T = StartPassTimer(LI);
-        CurrentLoop->verifyLoop();
-        StopPassTimer(LI, T);
+        {
+          TimeRegion PassTimer(getPassTimer(LI));
+          CurrentLoop->verifyLoop();
+        }
 
         // Then call the regular verifyAnalysis functions.
         verifyPreservedAnalysis(P);

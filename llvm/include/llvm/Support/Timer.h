@@ -16,15 +16,62 @@
 #define LLVM_SUPPORT_TIMER_H
 
 #include "llvm/System/DataTypes.h"
+#include <cassert>
 #include <string>
 #include <vector>
-#include <cassert>
+#include <utility>
 
 namespace llvm {
 
+class Timer;
 class TimerGroup;
 class raw_ostream;
 
+class TimeRecord {
+  double WallTime;       // Wall clock time elapsed in seconds
+  double UserTime;       // User time elapsed
+  double SystemTime;     // System time elapsed
+  ssize_t MemUsed;       // Memory allocated (in bytes)
+public:
+  TimeRecord() : WallTime(0), UserTime(0), SystemTime(0), MemUsed(0) {}
+  
+  /// getCurrentTime - Get the current time and memory usage.  If Start is true
+  /// we get the memory usage before the time, otherwise we get time before
+  /// memory usage.  This matters if the time to get the memory usage is
+  /// significant and shouldn't be counted as part of a duration.
+  static TimeRecord getCurrentTime(bool Start = true);
+  
+  double getProcessTime() const { return UserTime+SystemTime; }
+  double getUserTime() const { return UserTime; }
+  double getSystemTime() const { return SystemTime; }
+  double getWallTime() const { return WallTime; }
+  ssize_t getMemUsed() const { return MemUsed; }
+  
+  
+  // operator< - Allow sorting.
+  bool operator<(const TimeRecord &T) const {
+    // Sort by Wall Time elapsed, as it is the only thing really accurate
+    return WallTime < T.WallTime;
+  }
+  
+  void operator+=(const TimeRecord &RHS) {
+    WallTime   += RHS.WallTime;
+    UserTime   += RHS.UserTime;
+    SystemTime += RHS.SystemTime;
+    MemUsed    += RHS.MemUsed;
+  }
+  void operator-=(const TimeRecord &RHS) {
+    WallTime   -= RHS.WallTime;
+    UserTime   -= RHS.UserTime;
+    SystemTime -= RHS.SystemTime;
+    MemUsed    -= RHS.MemUsed;
+  }
+  
+  /// print - Print the current timer to standard error, and reset the "Started"
+  /// flag.
+  void print(const TimeRecord &Total, raw_ostream &OS) const;
+};
+  
 /// Timer - This class is used to track the amount of time spent between
 /// invocations of its startTimer()/stopTimer() methods.  Given appropriate OS
 /// support it can also keep track of the RSS of the program at various points.
@@ -34,35 +81,30 @@ class raw_ostream;
 /// if they are never started.
 ///
 class Timer {
-  double Elapsed;        // Wall clock time elapsed in seconds
-  double UserTime;       // User time elapsed
-  double SystemTime;     // System time elapsed
-  ssize_t MemUsed;       // Memory allocated (in bytes)
+  TimeRecord Time;
   std::string Name;      // The name of this time variable.
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
 public:
-  explicit Timer(const std::string &N);
-  Timer(const std::string &N, TimerGroup &tg);
-  Timer(const Timer &T);
+  explicit Timer(const std::string &N) : TG(0) { init(N); }
+  Timer(const std::string &N, TimerGroup &tg) : TG(0) { init(N, tg); }
+  Timer(const Timer &RHS) : TG(0) {
+    assert(RHS.TG == 0 && "Can only copy uninitialized timers");
+  }
+  const Timer &operator=(const Timer &T) {
+    assert(TG == 0 && T.TG == 0 && "Can only assign uninit timers");
+    return *this;
+  }
   ~Timer();
 
-private:
-  double getProcessTime() const { return UserTime+SystemTime; }
-  double getWallTime() const { return Elapsed; }
-  ssize_t getMemUsed() const { return MemUsed; }
-public:
-  std::string getName() const { return Name; }
-
-  const Timer &operator=(const Timer &T);
+  // Create an uninitialized timer, client must use 'init'.
+  explicit Timer() : TG(0) {}
+  void init(const std::string &N);
+  void init(const std::string &N, TimerGroup &tg);
   
-  // operator< - Allow sorting.
-  bool operator<(const Timer &T) const {
-    // Sort by Wall Time elapsed, as it is the only thing really accurate
-    return Elapsed < T.Elapsed;
-  }
-  bool operator>(const Timer &T) const { return T.operator<(*this); }
-
+  const std::string &getName() const { return Name; }
+  bool isInitialized() const { return TG != 0; }
+  
   /// startTimer - Start the timer running.  Time between calls to
   /// startTimer/stopTimer is counted by the Timer class.  Note that these calls
   /// must be correctly paired.
@@ -73,19 +115,8 @@ public:
   ///
   void stopTimer();
 
-  /// print - Print the current timer to standard error, and reset the "Started"
-  /// flag.
-  void print(const Timer &Total, raw_ostream &OS);
-
 private:
   friend class TimerGroup;
-
-  // Copy ctor, initialize with no TG member.
-  Timer(bool, const Timer &T);
-
-  /// sum - Add the time accumulated in the specified timer into this timer.
-  ///
-  void sum(const Timer &T);
 };
 
 
@@ -132,9 +163,13 @@ struct NamedRegionTimer : public TimeRegion {
 class TimerGroup {
   std::string Name;
   unsigned NumTimers;
-  std::vector<Timer> TimersToPrint;
+  std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
 public:
   explicit TimerGroup(const std::string &name) : Name(name), NumTimers(0) {}
+  explicit TimerGroup() : NumTimers(0) {}
+  
+  void setName(const std::string &name) { Name = name; }
+  
   ~TimerGroup() {
     assert(NumTimers == 0 &&
            "TimerGroup destroyed before all contained timers!");
@@ -144,7 +179,7 @@ private:
   friend class Timer;
   void addTimer();
   void removeTimer();
-  void addTimerToPrint(const Timer &T);
+  void addTimerToPrint(const TimeRecord &T, const std::string &Name);
 };
 
 } // End llvm namespace

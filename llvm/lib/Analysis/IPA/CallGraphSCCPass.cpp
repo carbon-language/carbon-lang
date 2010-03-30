@@ -17,12 +17,13 @@
 
 #define DEBUG_TYPE "cgscc-passmgr"
 #include "llvm/CallGraphSCCPass.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Function.h"
+#include "llvm/PassManagers.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SCCIterator.h"
-#include "llvm/PassManagers.h"
-#include "llvm/Function.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -102,9 +103,10 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
       CallGraphUpToDate = true;
     }
 
-    Timer *T = StartPassTimer(CGSP);
-    Changed = CGSP->runOnSCC(CurSCC);
-    StopPassTimer(CGSP, T);
+    {
+      TimeRegion PassTimer(getPassTimer(CGSP));
+      Changed = CGSP->runOnSCC(CurSCC);
+    }
     
     // After the CGSCCPass is done, when assertions are enabled, use
     // RefreshCallGraph to verify that the callgraph was correctly updated.
@@ -125,9 +127,8 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
   for (unsigned i = 0, e = CurSCC.size(); i != e; ++i) {
     if (Function *F = CurSCC[i]->getFunction()) {
       dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
-      Timer *T = StartPassTimer(FPP);
+      TimeRegion PassTimer(getPassTimer(FPP));
       Changed |= FPP->runOnFunction(*F);
-      StopPassTimer(FPP, T);
     }
   }
   
