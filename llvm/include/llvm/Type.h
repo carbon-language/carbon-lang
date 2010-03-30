@@ -548,9 +548,11 @@ template <> struct GraphTraits<const Type*> {
   }
 };
 
-template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) {
-  return Ty.getTypeID() == Type::PointerTyID;
-}
+template <> struct isa_impl<PointerType, Type> {
+  static inline bool doit(const Type &Ty) {
+    return Ty.getTypeID() == Type::PointerTyID;
+  }
+};
 
 raw_ostream &operator<<(raw_ostream &OS, const Type &T);
 

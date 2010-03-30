@@ -50,9 +50,11 @@ template<typename From> struct simplify_type<const From> {
 //  if (isa<Type*>(myVal)) { ... }
 //
 template <typename To, typename From>
-inline bool isa_impl(const From &Val) {
-  return To::classof(&Val);
-}
+struct isa_impl {
+  static inline bool doit(const From &Val) {
+    return To::classof(&Val);
+  }
+};
 
 template<typename To, typename From, typename SimpleType>
 struct isa_impl_wrap {
@@ -68,7 +70,7 @@ template<typename To, typename FromTy>
 struct isa_impl_wrap<To, const FromTy, const FromTy> {
   // When From == SimpleType, we are as simple as we are going to get.
   static bool doit(const FromTy &Val) {
-    return isa_impl<To,FromTy>(Val);
+    return isa_impl<To,FromTy>::doit(Val);
   }
 };
 
@@ -251,10 +253,12 @@ struct foo {
     }*/
 };
 
-template <> inline bool isa_impl<foo,bar>(const bar &Val) {
-  dbgs() << "Classof: " << &Val << "\n";
-  return true;
-}
+template <> struct isa_impl<foo,bar> {
+  static inline bool doit(const bar &Val) {
+    dbgs() << "Classof: " << &Val << "\n";
+    return true;
+  }
+};
 
 
 bar *fub();
