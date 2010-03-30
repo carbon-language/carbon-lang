@@ -499,44 +499,45 @@ QualType CallExpr::getCallReturnType() const {
   return FnType->getResultType();
 }
 
-MemberExpr::MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
-                       SourceRange qualrange, ValueDecl *memberdecl,
-                       SourceLocation l, const TemplateArgumentListInfo *targs,
-                       QualType ty)
-  : Expr(MemberExprClass, ty,
-         base->isTypeDependent() || (qual && qual->isDependent()),
-         base->isValueDependent() || (qual && qual->isDependent())),
-    Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
-    HasQualifier(qual != 0), HasExplicitTemplateArgumentList(targs) {
-  // Initialize the qualifier, if any.
-  if (HasQualifier) {
-    NameQualifier *NQ = getMemberQualifier();
-    NQ->NNS = qual;
-    NQ->Range = qualrange;
-  }
-
-  // Initialize the explicit template argument list, if any.
-  if (targs)
-    getExplicitTemplateArgumentList()->initializeFrom(*targs);
-}
-
 MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifier *qual,
                                SourceRange qualrange,
                                ValueDecl *memberdecl,
+                               NamedDecl *founddecl,
                                SourceLocation l,
                                const TemplateArgumentListInfo *targs,
                                QualType ty) {
   std::size_t Size = sizeof(MemberExpr);
-  if (qual != 0)
-    Size += sizeof(NameQualifier);
+
+  bool hasQualOrFound = (qual != 0 || founddecl != memberdecl);
+  if (hasQualOrFound)
+    Size += sizeof(MemberNameQualifier);
 
   if (targs)
     Size += ExplicitTemplateArgumentList::sizeFor(*targs);
 
   void *Mem = C.Allocate(Size, llvm::alignof<MemberExpr>());
-  return new (Mem) MemberExpr(base, isarrow, qual, qualrange, memberdecl, l,
-                              targs, ty);
+  MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, l, ty);
+
+  if (hasQualOrFound) {
+    if (qual && qual->isDependent()) {
+      E->setValueDependent(true);
+      E->setTypeDependent(true);
+    }
+    E->HasQualifierOrFoundDecl = true;
+
+    MemberNameQualifier *NQ = E->getMemberQualifier();
+    NQ->NNS = qual;
+    NQ->Range = qualrange;
+    NQ->FoundDecl = founddecl;
+  }
+
+  if (targs) {
+    E->HasExplicitTemplateArgumentList = true;
+    E->getExplicitTemplateArgumentList()->initializeFrom(*targs);
+  }
+
+  return E;
 }
 
 const char *CastExpr::getCastKindName() const {

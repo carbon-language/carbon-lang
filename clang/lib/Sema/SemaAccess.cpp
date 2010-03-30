@@ -907,6 +907,31 @@ Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
   return CheckAccess(*this, OpLoc, Entity);
 }
 
+Sema::AccessResult Sema::CheckAddressOfMemberAccess(Expr *OvlExpr,
+                                                    DeclAccessPair Found) {
+  if (!getLangOptions().AccessControl ||
+      Found.getAccess() == AS_public)
+    return AR_accessible;
+
+  OverloadExpr *Ovl = OverloadExpr::find(OvlExpr).getPointer();
+  NestedNameSpecifier *Qualifier = Ovl->getQualifier();
+  assert(Qualifier && "address of overloaded member without qualifier");
+
+  CXXScopeSpec SS;
+  SS.setScopeRep(Qualifier);
+  SS.setRange(Ovl->getQualifierRange());
+  DeclContext *DC = computeDeclContext(SS);
+  assert(DC && DC->isRecord() && "scope did not resolve to record");
+  CXXRecordDecl *NamingClass = cast<CXXRecordDecl>(DC);
+
+  AccessedEntity Entity(Context, AccessedEntity::Member, NamingClass, Found);
+  Entity.setDiag(diag::err_access)
+    << Ovl->getSourceRange();
+
+  return CheckAccess(*this, Ovl->getNameLoc(), Entity);
+}
+
+
 /// Checks access for a hierarchy conversion.
 ///
 /// \param IsBaseToDerived whether this is a base-to-derived conversion (true)

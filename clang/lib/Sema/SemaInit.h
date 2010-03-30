@@ -611,7 +611,8 @@ public:
   ///
   /// \param Function the function to which the overloaded function reference
   /// resolves.
-  void AddAddressOverloadResolutionStep(FunctionDecl *Function);
+  void AddAddressOverloadResolutionStep(FunctionDecl *Function,
+                                        DeclAccessPair Found);
   
   /// \brief Add a new step in the initialization that performs a derived-to-
   /// base cast.

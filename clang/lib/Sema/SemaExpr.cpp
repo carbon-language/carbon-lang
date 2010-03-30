@@ -635,7 +635,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
       MemberType = Context.getQualifiedType(MemberType, NewQuals);
 
     MarkDeclarationReferenced(Loc, *FI);
-    PerformObjectMemberConversion(Result, /*FIXME:Qualifier=*/0, *FI);
+    PerformObjectMemberConversion(Result, /*FIXME:Qualifier=*/0, *FI, *FI);
     // FIXME: Might this end up being a qualified name?
     Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
                                       OpLoc, MemberType);
@@ -1355,10 +1355,27 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
   return Owned((Expr*) 0);
 }
 
-/// \brief Cast member's object to its own class if necessary.
+/// \brief Cast a base object to a member's actual type.
+///
+/// Logically this happens in three phases:
+///
+/// * First we cast from the base type to the naming class.
+///   The naming class is the class into which we were looking
+///   when we found the member;  it's the qualifier type if a
+///   qualifier was provided, and otherwise it's the base type.
+///
+/// * Next we cast from the naming class to the declaring class.
+///   If the member we found was brought into a class's scope by
+///   a using declaration, this is that class;  otherwise it's
+///   the class declaring the member.
+///
+/// * Finally we cast from the declaring class to the "true"
+///   declaring class of the member.  This conversion does not
+///   obey access control.
 bool
 Sema::PerformObjectMemberConversion(Expr *&From,
                                     NestedNameSpecifier *Qualifier,
+                                    NamedDecl *FoundDecl,
                                     NamedDecl *Member) {
   CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Member->getDeclContext());
   if (!RD)
@@ -1406,6 +1423,9 @@ Sema::PerformObjectMemberConversion(Expr *&From,
   if (Context.hasSameUnqualifiedType(FromRecordType, DestRecordType))
     return false;
 
+  SourceRange FromRange = From->getSourceRange();
+  SourceLocation FromLoc = FromRange.getBegin();
+
   // C++ [class.member.lookup]p8:
   //   [...] Ambiguities can often be resolved by qualifying a name with its
   //   class name.
@@ -1424,51 +1444,89 @@ Sema::PerformObjectMemberConversion(Expr *&From,
   //     x = 17; // error: ambiguous base subobjects
   //     Derived1::x = 17; // okay, pick the Base subobject of Derived1
   //   }
-  QualType IntermediateRecordType;
-  QualType IntermediateType;
   if (Qualifier) {
-    if (const RecordType *IntermediateRecord
-                           = Qualifier->getAsType()->getAs<RecordType>()) {
-      IntermediateRecordType = QualType(IntermediateRecord, 0);
-      IntermediateType = IntermediateRecordType;
+    QualType QType = QualType(Qualifier->getAsType(), 0);
+    assert(!QType.isNull() && "lookup done with dependent qualifier?");
+    assert(QType->isRecordType() && "lookup done with non-record type");
+
+    QualType QRecordType = QualType(QType->getAs<RecordType>(), 0);
+
+    // In C++98, the qualifier type doesn't actually have to be a base
+    // type of the object type, in which case we just ignore it.
+    // Otherwise build the appropriate casts.
+    if (IsDerivedFrom(FromRecordType, QRecordType)) {
+      if (CheckDerivedToBaseConversion(FromRecordType, QRecordType,
+                                       FromLoc, FromRange))
+        return true;
+
       if (PointerConversions)
-        IntermediateType = Context.getPointerType(IntermediateType);
+        QType = Context.getPointerType(QType);
+      ImpCastExprToType(From, QType, CastExpr::CK_DerivedToBase,
+                        /*isLvalue*/ !PointerConversions);
+
+      FromType = QType;
+      FromRecordType = QRecordType;
+
+      // If the qualifier type was the same as the destination type,
+      // we're done.
+      if (Context.hasSameUnqualifiedType(FromRecordType, DestRecordType))
+        return false;
     }
   }
 
-  if (!IntermediateType.isNull() &&
-      IsDerivedFrom(FromRecordType, IntermediateRecordType) &&
-      IsDerivedFrom(IntermediateRecordType, DestRecordType)) {
-    if (CheckDerivedToBaseConversion(FromRecordType, IntermediateRecordType,
-                                     From->getSourceRange().getBegin(),
-                                     From->getSourceRange()) ||
-        CheckDerivedToBaseConversion(IntermediateRecordType, DestRecordType,
-                                     From->getSourceRange().getBegin(),
-                                     From->getSourceRange()))
-      return true;
+  bool IgnoreAccess = false;
 
-    ImpCastExprToType(From, IntermediateType, CastExpr::CK_DerivedToBase,
-                      /*isLvalue=*/!PointerConversions);
-    ImpCastExprToType(From, DestType, CastExpr::CK_DerivedToBase,
-                      /*isLvalue=*/!PointerConversions);
-    return false;
+  // If we actually found the member through a using declaration, cast
+  // down to the using declaration's type.
+  //
+  // Pointer equality is fine here because only one declaration of a
+  // class ever has member declarations.
+  if (FoundDecl->getDeclContext() != Member->getDeclContext()) {
+    assert(isa<UsingShadowDecl>(FoundDecl));
+    QualType URecordType = Context.getTypeDeclType(
+                           cast<CXXRecordDecl>(FoundDecl->getDeclContext()));
+
+    // We only need to do this if the naming-class to declaring-class
+    // conversion is non-trivial.
+    if (!Context.hasSameUnqualifiedType(FromRecordType, URecordType)) {
+      assert(IsDerivedFrom(FromRecordType, URecordType));
+      if (CheckDerivedToBaseConversion(FromRecordType, URecordType,
+                                       FromLoc, FromRange))
+        return true;
+      
+      QualType UType = URecordType;
+      if (PointerConversions)
+        UType = Context.getPointerType(UType);
+      ImpCastExprToType(From, UType, CastExpr::CK_DerivedToBase,
+                        /*isLvalue*/ !PointerConversions);
+      FromType = UType;
+      FromRecordType = URecordType;
+    }
+
+    // We don't do access control for the conversion from the
+    // declaring class to the true declaring class.
+    IgnoreAccess = true;
   }
 
   if (CheckDerivedToBaseConversion(FromRecordType,
                                    DestRecordType,
-                                   From->getSourceRange().getBegin(),
-                                   From->getSourceRange()))
+                                   FromLoc,
+                                   FromRange,
+                                   IgnoreAccess))
     return true;
 
+  // FIXME: isLvalue should be !PointerConversions here, but codegen
+  // does very silly things.
   ImpCastExprToType(From, DestType, CastExpr::CK_DerivedToBase,
-                    /*isLvalue=*/true);
+                    /*isLvalue=*/ true);
   return false;
 }
 
 /// \brief Build a MemberExpr AST node.
 static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                                    const CXXScopeSpec &SS, ValueDecl *Member,
-                                   SourceLocation Loc, QualType Ty,
+                                   NamedDecl *FoundDecl, SourceLocation Loc,
+                                   QualType Ty,
                           const TemplateArgumentListInfo *TemplateArgs = 0) {
   NestedNameSpecifier *Qualifier = 0;
   SourceRange QualifierRange;
@@ -1478,7 +1536,7 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
   }
 
   return MemberExpr::Create(C, Base, isArrow, Qualifier, QualifierRange,
-                            Member, Loc, TemplateArgs, Ty);
+                            Member, FoundDecl, Loc, TemplateArgs, Ty);
 }
 
 /// Builds an implicit member access expression.  The current context
@@ -2692,6 +2750,7 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
   }
 
   assert(R.isSingleResult());
+  NamedDecl *FoundDecl = *R.begin();
   NamedDecl *MemberDecl = R.getFoundDecl();
 
   // FIXME: diagnose the presence of template arguments now.
@@ -2754,30 +2813,30 @@ Sema::BuildMemberReferenceExpr(ExprArg Base, QualType BaseExprType,
     }
 
     MarkDeclarationReferenced(MemberLoc, FD);
-    if (PerformObjectMemberConversion(BaseExpr, Qualifier, FD))
+    if (PerformObjectMemberConversion(BaseExpr, Qualifier, FoundDecl, FD))
       return ExprError();
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 FD, MemberLoc, MemberType));
+                                 FD, FoundDecl, MemberLoc, MemberType));
   }
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, Var);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 Var, MemberLoc,
+                                 Var, FoundDecl, MemberLoc,
                                  Var->getType().getNonReferenceType()));
   }
 
   if (FunctionDecl *MemberFn = dyn_cast<FunctionDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, MemberDecl);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 MemberFn, MemberLoc,
+                                 MemberFn, FoundDecl, MemberLoc,
                                  MemberFn->getType()));
   }
 
   if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
     MarkDeclarationReferenced(MemberLoc, MemberDecl);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
-                                 Enum, MemberLoc, Enum->getType()));
+                                 Enum, FoundDecl, MemberLoc, Enum->getType()));
   }
 
   Owned(BaseExpr);
@@ -6752,7 +6811,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         Res = BuildAnonymousStructUnionMemberReference(
             OC.LocEnd, MemberDecl, Res, OC.LocEnd).takeAs<Expr>();
       } else {
-        PerformObjectMemberConversion(Res, /*Qualifier=*/0, MemberDecl);
+        PerformObjectMemberConversion(Res, /*Qualifier=*/0,
+                                      *R.begin(), MemberDecl);
         // MemberDecl->getType() doesn't get the right qualifiers, but it
         // doesn't matter here.
         Res = new (Context) MemberExpr(Res, false, MemberDecl, OC.LocEnd,

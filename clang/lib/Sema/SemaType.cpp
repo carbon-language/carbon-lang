@@ -2004,7 +2004,7 @@ QualType Sema::BuildTypeofExprType(Expr *E) {
     // function template specialization wherever deduction cannot occur.
     if (FunctionDecl *Specialization
         = ResolveSingleFunctionTemplateSpecialization(E)) {
-      E = FixOverloadedFunctionReference(E, Specialization);
+      E = FixOverloadedFunctionReference(E, Specialization, Specialization);
       if (!E)
         return QualType();      
     } else {
@@ -2024,7 +2024,7 @@ QualType Sema::BuildDecltypeType(Expr *E) {
     // function template specialization wherever deduction cannot occur.
     if (FunctionDecl *Specialization
           = ResolveSingleFunctionTemplateSpecialization(E)) {
-      E = FixOverloadedFunctionReference(E, Specialization);
+      E = FixOverloadedFunctionReference(E, Specialization, Specialization);
       if (!E)
         return QualType();      
     } else {

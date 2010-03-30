@@ -2036,13 +2036,13 @@ bool InitializationSequence::isAmbiguous() const {
 }
 
 void InitializationSequence::AddAddressOverloadResolutionStep(
-                                                      FunctionDecl *Function) {
+                                                      FunctionDecl *Function,
+                                                      DeclAccessPair Found) {
   Step S;
   S.Kind = SK_ResolveAddressOfOverloadedFunction;
   S.Type = Function->getType();
-  // Access is currently ignored for these.
   S.Function.Function = Function;
-  S.Function.FoundDecl = DeclAccessPair::make(Function, AS_none);
+  S.Function.FoundDecl = Found;
   Steps.push_back(S);
 }
 
@@ -2375,15 +2375,17 @@ static void TryReferenceInitialization(Sema &S,
   // to resolve the overloaded function. If all goes well, T2 is the
   // type of the resulting function.
   if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy) {
+    DeclAccessPair Found;
     FunctionDecl *Fn = S.ResolveAddressOfOverloadedFunction(Initializer, 
                                                             T1,
-                                                            false);
+                                                            false,
+                                                            Found);
     if (!Fn) {
       Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
       return;
     }
     
-    Sequence.AddAddressOverloadResolutionStep(Fn);
+    Sequence.AddAddressOverloadResolutionStep(Fn, Found);
     cv2T2 = Fn->getType();
     T2 = cv2T2.getUnqualifiedType();
   }
@@ -3348,8 +3350,9 @@ InitializationSequence::Perform(Sema &S,
     case SK_ResolveAddressOfOverloadedFunction:
       // Overload resolution determined which function invoke; update the 
       // initializer to reflect that choice.
-      // Access control was done in overload resolution.
+      S.CheckAddressOfMemberAccess(CurInitExpr, Step->Function.FoundDecl);
       CurInit = S.FixOverloadedFunctionReference(move(CurInit),
+                                                 Step->Function.FoundDecl,
                                                  Step->Function.Function);
       break;
         
@@ -3457,7 +3460,7 @@ InitializationSequence::Perform(Sema &S,
         // derived-to-base conversion? I believe the answer is "no", because
         // we don't want to turn off access control here for c-style casts.
         if (S.PerformObjectArgumentInitialization(CurInitExpr, /*Qualifier=*/0,
-                                                  Conversion))
+                                                  FoundFn, Conversion))
           return S.ExprError();
 
         // Do a little dance to make sure that CurInit has the proper
@@ -3465,7 +3468,8 @@ InitializationSequence::Perform(Sema &S,
         CurInit.release();
         
         // Build the actual call to the conversion function.
-        CurInit = S.Owned(S.BuildCXXMemberCallExpr(CurInitExpr, Conversion));
+        CurInit = S.Owned(S.BuildCXXMemberCallExpr(CurInitExpr, FoundFn,
+                                                   Conversion));
         if (CurInit.isInvalid() || !CurInit.get())
           return S.ExprError();
         
@@ -3649,11 +3653,14 @@ bool InitializationSequence::Diagnose(Sema &S,
       << (Failure == FK_ArrayNeedsInitListOrStringLiteral);
     break;
       
-  case FK_AddressOfOverloadFailed:
+  case FK_AddressOfOverloadFailed: {
+    DeclAccessPair Found;
     S.ResolveAddressOfOverloadedFunction(Args[0], 
                                          DestType.getNonReferenceType(),
-                                         true);
+                                         true,
+                                         Found);
     break;
+  }
       
   case FK_ReferenceInitOverloadFailed:
   case FK_UserConversionOverloadFailed:

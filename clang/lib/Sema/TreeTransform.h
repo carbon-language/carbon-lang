@@ -977,6 +977,7 @@ public:
                                      SourceRange QualifierRange,
                                      SourceLocation MemberLoc,
                                      ValueDecl *Member,
+                                     NamedDecl *FoundDecl,
                         const TemplateArgumentListInfo *ExplicitTemplateArgs,
                                      NamedDecl *FirstQualifierInScope) {
     if (!Member->getDeclName()) {
@@ -984,7 +985,8 @@ public:
       assert(!Qualifier && "Can't have an unnamed field with a qualifier!");
 
       Expr *BaseExpr = Base.takeAs<Expr>();
-      if (getSema().PerformObjectMemberConversion(BaseExpr, Qualifier, Member))
+      if (getSema().PerformObjectMemberConversion(BaseExpr, Qualifier,
+                                                  FoundDecl, Member))
         return getSema().ExprError();
 
       MemberExpr *ME =
@@ -1002,9 +1004,11 @@ public:
 
     QualType BaseType = ((Expr*) Base.get())->getType();
 
+    // FIXME: this involves duplicating earlier analysis in a lot of
+    // cases; we should avoid this when possible.
     LookupResult R(getSema(), Member->getDeclName(), MemberLoc,
                    Sema::LookupMemberName);
-    R.addDecl(Member);
+    R.addDecl(FoundDecl);
     R.resolveKind();
 
     return getSema().BuildMemberReferenceExpr(move(Base), BaseType,
@@ -3868,10 +3872,21 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
   if (!Member)
     return SemaRef.ExprError();
 
+  NamedDecl *FoundDecl = E->getFoundDecl();
+  if (FoundDecl == E->getMemberDecl()) {
+    FoundDecl = Member;
+  } else {
+    FoundDecl = cast_or_null<NamedDecl>(
+                   getDerived().TransformDecl(E->getMemberLoc(), FoundDecl));
+    if (!FoundDecl)
+      return SemaRef.ExprError();
+  }
+
   if (!getDerived().AlwaysRebuild() &&
       Base.get() == E->getBase() &&
       Qualifier == E->getQualifier() &&
       Member == E->getMemberDecl() &&
+      FoundDecl == E->getFoundDecl() &&
       !E->hasExplicitTemplateArgumentList()) {
     
     // Mark it referenced in the new context regardless.
@@ -3908,6 +3923,7 @@ TreeTransform<Derived>::TransformMemberExpr(MemberExpr *E) {
                                         E->getQualifierRange(),
                                         E->getMemberLoc(),
                                         Member,
+                                        FoundDecl,
                                         (E->hasExplicitTemplateArgumentList()
                                            ? &TransArgs : 0),
                                         FirstQualifierInScope);

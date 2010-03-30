@@ -2617,6 +2617,8 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return false;
   }
 
+  DeclAccessPair FoundResult; // temporary for ResolveOverloadedFunction
+
   // Handle pointer-to-function, reference-to-function, and
   // pointer-to-member-function all in (roughly) the same way.
   if (// -- For a non-type template-parameter of type pointer to
@@ -2656,11 +2658,12 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       ArgType = Context.getPointerType(ArgType);
       ImpCastExprToType(Arg, ArgType, CastExpr::CK_FunctionToPointerDecay);
     } else if (FunctionDecl *Fn
-                 = ResolveAddressOfOverloadedFunction(Arg, ParamType, true)) {
+                 = ResolveAddressOfOverloadedFunction(Arg, ParamType, true,
+                                                      FoundResult)) {
       if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
         return true;
 
-      Arg = FixOverloadedFunctionReference(Arg, Fn);
+      Arg = FixOverloadedFunctionReference(Arg, FoundResult, Fn);
       ArgType = Arg->getType();
       if (ArgType->isFunctionType() && ParamType->isPointerType()) {
         ArgType = Context.getPointerType(Arg->getType());

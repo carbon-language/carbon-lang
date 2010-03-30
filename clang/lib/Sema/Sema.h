@@ -1119,6 +1119,7 @@ public:
                                   CXXRecordDecl *ActingContext);
   bool PerformObjectArgumentInitialization(Expr *&From, 
                                            NestedNameSpecifier *Qualifier,
+                                           NamedDecl *FoundDecl,
                                            CXXMethodDecl *Method);
 
   ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
@@ -1126,6 +1127,7 @@ public:
 
   bool PerformObjectMemberConversion(Expr *&From, 
                                      NestedNameSpecifier *Qualifier,
+                                     NamedDecl *FoundDecl,
                                      NamedDecl *Member);
 
   // Members have to be NamespaceDecl* or TranslationUnitDecl*.
@@ -1246,11 +1248,15 @@ public:
                                    const PartialDiagnostic &PDiag);
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
-                                                   bool Complain);
+                                                   bool Complain,
+                                                   DeclAccessPair &Found);
   FunctionDecl *ResolveSingleFunctionTemplateSpecialization(Expr *From);
 
-  Expr *FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
+  Expr *FixOverloadedFunctionReference(Expr *E,
+                                       NamedDecl *FoundDecl,
+                                       FunctionDecl *Fn);
   OwningExprResult FixOverloadedFunctionReference(OwningExprResult, 
+                                                  NamedDecl *FoundDecl,
                                                   FunctionDecl *Fn);
 
   void AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
@@ -2395,7 +2401,9 @@ public:
   Expr *BuildObjCEncodeExpression(SourceLocation AtLoc,
                                   QualType EncodedType,
                                   SourceLocation RParenLoc);
-  CXXMemberCallExpr *BuildCXXMemberCallExpr(Expr *Exp, CXXMethodDecl *Method);
+  CXXMemberCallExpr *BuildCXXMemberCallExpr(Expr *Exp,
+                                            NamedDecl *FoundDecl,
+                                            CXXMethodDecl *Method);
 
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                SourceLocation EncodeLoc,
@@ -2640,6 +2648,8 @@ public:
                                          Expr *ObjectExpr,
                                          Expr *ArgExpr,
                                          DeclAccessPair FoundDecl);
+  AccessResult CheckAddressOfMemberAccess(Expr *OvlExpr,
+                                          DeclAccessPair FoundDecl);
   AccessResult CheckBaseClassAccess(SourceLocation AccessLoc,
                                     QualType Base, QualType Derived,
                                     const CXXBasePath &Path,

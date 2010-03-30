@@ -1263,6 +1263,11 @@ public:
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.
 ///
 class MemberExpr : public Expr {
+  /// Extra data stored in some member expressions.
+  struct MemberNameQualifier : public NameQualifier {
+    NamedDecl *FoundDecl;
+  };
+
   /// Base - the expression for the base pointer or structure references.  In
   /// X.F, this is "X".
   Stmt *Base;
@@ -1278,27 +1283,26 @@ class MemberExpr : public Expr {
   bool IsArrow : 1;
 
   /// \brief True if this member expression used a nested-name-specifier to
-  /// refer to the member, e.g., "x->Base::f". When true, a NameQualifier
+  /// refer to the member, e.g., "x->Base::f", or found its member via a using
+  /// declaration.  When true, a MemberNameQualifier
   /// structure is allocated immediately after the MemberExpr.
-  bool HasQualifier : 1;
+  bool HasQualifierOrFoundDecl : 1;
 
   /// \brief True if this member expression specified a template argument list
   /// explicitly, e.g., x->f<int>. When true, an ExplicitTemplateArgumentList
   /// structure (and its TemplateArguments) are allocated immediately after
   /// the MemberExpr or, if the member expression also has a qualifier, after
-  /// the NameQualifier structure.
+  /// the MemberNameQualifier structure.
   bool HasExplicitTemplateArgumentList : 1;
 
   /// \brief Retrieve the qualifier that preceded the member name, if any.
-  NameQualifier *getMemberQualifier() {
-    if (!HasQualifier)
-      return 0;
-
-    return reinterpret_cast<NameQualifier *> (this + 1);
+  MemberNameQualifier *getMemberQualifier() {
+    assert(HasQualifierOrFoundDecl);
+    return reinterpret_cast<MemberNameQualifier *> (this + 1);
   }
 
   /// \brief Retrieve the qualifier that preceded the member name, if any.
-  const NameQualifier *getMemberQualifier() const {
+  const MemberNameQualifier *getMemberQualifier() const {
     return const_cast<MemberExpr *>(this)->getMemberQualifier();
   }
 
@@ -1308,7 +1312,7 @@ class MemberExpr : public Expr {
     if (!HasExplicitTemplateArgumentList)
       return 0;
 
-    if (!HasQualifier)
+    if (!HasQualifierOrFoundDecl)
       return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
 
     return reinterpret_cast<ExplicitTemplateArgumentList *>(
@@ -1321,26 +1325,22 @@ class MemberExpr : public Expr {
     return const_cast<MemberExpr *>(this)->getExplicitTemplateArgumentList();
   }
 
-  MemberExpr(Expr *base, bool isarrow, NestedNameSpecifier *qual,
-             SourceRange qualrange, ValueDecl *memberdecl, SourceLocation l,
-             const TemplateArgumentListInfo *targs, QualType ty);
-
 public:
   MemberExpr(Expr *base, bool isarrow, ValueDecl *memberdecl,
              SourceLocation l, QualType ty)
     : Expr(MemberExprClass, ty,
            base->isTypeDependent(), base->isValueDependent()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow),
-      HasQualifier(false), HasExplicitTemplateArgumentList(false) {}
+      HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false) {}
 
   /// \brief Build an empty member reference expression.
   explicit MemberExpr(EmptyShell Empty)
-    : Expr(MemberExprClass, Empty), HasQualifier(false),
+    : Expr(MemberExprClass, Empty), HasQualifierOrFoundDecl(false),
       HasExplicitTemplateArgumentList(false) { }
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow,
                             NestedNameSpecifier *qual, SourceRange qualrange,
-                            ValueDecl *memberdecl,
+                            ValueDecl *memberdecl, NamedDecl *founddecl,
                             SourceLocation l,
                             const TemplateArgumentListInfo *targs,
                             QualType ty);
@@ -1355,16 +1355,23 @@ public:
   ValueDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(ValueDecl *D) { MemberDecl = D; }
 
+  /// \brief Retrieves the declaration found by lookup.
+  NamedDecl *getFoundDecl() const {
+    if (!HasQualifierOrFoundDecl)
+      return getMemberDecl();
+    return getMemberQualifier()->FoundDecl;
+  }
+
   /// \brief Determines whether this member expression actually had
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,
   /// x->Base::foo.
-  bool hasQualifier() const { return HasQualifier; }
+  bool hasQualifier() const { return getQualifier() != 0; }
 
   /// \brief If the member name was qualified, retrieves the source range of
   /// the nested-name-specifier that precedes the member name. Otherwise,
   /// returns an empty source range.
   SourceRange getQualifierRange() const {
-    if (!HasQualifier)
+    if (!HasQualifierOrFoundDecl)
       return SourceRange();
 
     return getMemberQualifier()->Range;
@@ -1374,7 +1381,7 @@ public:
   /// nested-name-specifier that precedes the member name. Otherwise, returns
   /// NULL.
   NestedNameSpecifier *getQualifier() const {
-    if (!HasQualifier)
+    if (!HasQualifierOrFoundDecl)
       return 0;
 
     return getMemberQualifier()->NNS;

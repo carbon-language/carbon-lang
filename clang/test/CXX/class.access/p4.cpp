@@ -309,3 +309,21 @@ namespace test12 {
     }
   };
 }
+
+namespace test13 {
+  struct A {
+    int x;
+    unsigned foo() const;
+  };
+
+  struct B : protected A {
+    using A::foo;
+    using A::x;
+  };
+
+  void test() {
+    A *d;
+    d->foo();
+    (void) d->x;
+  }
+}

@@ -1650,14 +1650,16 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
   case ICK_Function_To_Pointer:
     if (Context.getCanonicalType(FromType) == Context.OverloadTy) {
-      FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType, true);
+      DeclAccessPair Found;
+      FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(From, ToType,
+                                                            true, Found);
       if (!Fn)
         return true;
 
       if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
         return true;
 
-      From = FixOverloadedFunctionReference(From, Fn);
+      From = FixOverloadedFunctionReference(From, Found, Fn);
       FromType = From->getType();
         
       // If there's already an address-of operator in the expression, we have
@@ -2847,8 +2849,10 @@ Sema::OwningExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, ExprArg Base,
 }
 
 CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 
+                                                NamedDecl *FoundDecl,
                                                 CXXMethodDecl *Method) {
-  if (PerformObjectArgumentInitialization(Exp, /*Qualifier=*/0, Method))
+  if (PerformObjectArgumentInitialization(Exp, /*Qualifier=*/0,
+                                          FoundDecl, Method))
     assert(0 && "Calling BuildCXXMemberCallExpr with invalid call?");
 
   MemberExpr *ME = 
@@ -2892,7 +2896,8 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
 
     // Create an implicit call expr that calls it.
-    CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(From, Method);
+    // FIXME: pass the FoundDecl for the user-defined conversion here
+    CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(From, Method, Method);
     return MaybeBindToTemporary(CE);
   }
   }

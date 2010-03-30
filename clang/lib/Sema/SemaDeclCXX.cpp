@@ -4409,16 +4409,18 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   // to resolve the overloaded function. If all goes well, T2 is the
   // type of the resulting function.
   if (Context.getCanonicalType(T2) == Context.OverloadTy) {
+    DeclAccessPair Found;
     FunctionDecl *Fn = ResolveAddressOfOverloadedFunction(Init, DeclType,
-                                                          ICS != 0);
+                                                          ICS != 0, Found);
     if (Fn) {
       // Since we're performing this reference-initialization for
       // real, update the initializer with the resulting function.
       if (!ICS) {
         if (DiagnoseUseOfDecl(Fn, DeclLoc))
-          return true; 
+          return true;
 
-        Init = FixOverloadedFunctionReference(Init, Fn);
+        CheckAddressOfMemberAccess(Init, Found);
+        Init = FixOverloadedFunctionReference(Init, Found, Fn);
       }
 
       T2 = Fn->getType();

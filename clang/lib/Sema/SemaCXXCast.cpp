@@ -808,8 +808,10 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
     return TC_NotApplicable;
 
   bool WasOverloadedFunction = false;
+  DeclAccessPair FoundOverload;
   if (FunctionDecl *Fn
-          = Self.ResolveAddressOfOverloadedFunction(SrcExpr, DestType, false)) {
+        = Self.ResolveAddressOfOverloadedFunction(SrcExpr, DestType, false,
+                                                  FoundOverload)) {
     CXXMethodDecl *M = cast<CXXMethodDecl>(Fn);
     SrcType = Self.Context.getMemberPointerType(Fn->getType(),
                     Self.Context.getTypeDeclType(M->getParent()).getTypePtr());
@@ -870,13 +872,14 @@ TryStaticMemberPointerUpcast(Sema &Self, Expr *&SrcExpr, QualType SrcType,
     // allowing complaints if something goes wrong.
     FunctionDecl *Fn = Self.ResolveAddressOfOverloadedFunction(SrcExpr, 
                                                                DestType, 
-                                                               true);
+                                                               true,
+                                                               FoundOverload);
     if (!Fn) {
       msg = 0;
       return TC_Failed;
     }
 
-    SrcExpr = Self.FixOverloadedFunctionReference(SrcExpr, Fn);
+    SrcExpr = Self.FixOverloadedFunctionReference(SrcExpr, FoundOverload, Fn);
     if (!SrcExpr) {
       msg = 0;
       return TC_Failed;
