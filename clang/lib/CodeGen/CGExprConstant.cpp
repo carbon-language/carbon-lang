@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "CGObjCRuntime.h"
+#include "CGRecordLayout.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"

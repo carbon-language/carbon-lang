@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGRecordLayoutBuilder.h"
-
+#include "CGRecordLayout.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"

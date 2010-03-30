@@ -52,36 +52,8 @@ namespace clang {
   typedef CanQual<Type> CanQualType;
 
 namespace CodeGen {
+  class CGRecordLayout;
   class CodeGenTypes;
-
-  /// CGRecordLayout - This class handles struct and union layout info while
-  /// lowering AST types to LLVM types.
-  class CGRecordLayout {
-    CGRecordLayout(); // DO NOT IMPLEMENT
-
-    /// LLVMType - The LLVMType corresponding to this record layout.
-    const llvm::Type *LLVMType;
-
-    /// ContainsPointerToDataMember - Whether one of the fields in this record 
-    /// layout is a pointer to data member, or a struct that contains pointer to
-    /// data member.
-    bool ContainsPointerToDataMember;
-
-  public:
-    CGRecordLayout(const llvm::Type *T, bool ContainsPointerToDataMember)
-      : LLVMType(T), ContainsPointerToDataMember(ContainsPointerToDataMember) {}
-
-    /// getLLVMType - Return llvm type associated with this record.
-    const llvm::Type *getLLVMType() const {
-      return LLVMType;
-    }
-
-    /// containsPointerToDataMember - Whether this struct contains pointers to
-    /// data members.
-    bool containsPointerToDataMember() const {
-      return ContainsPointerToDataMember;
-    }
-  };
 
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
