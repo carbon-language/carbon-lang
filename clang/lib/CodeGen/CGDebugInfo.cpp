@@ -714,10 +714,8 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
   ASTContext &Context = CGM.getContext();
 
   /* Function type */
-  llvm::SmallVector<llvm::DIDescriptor, 16> STys;
-  STys.push_back(getOrCreateType(Context.IntTy, Unit));
-  llvm::DIArray SElements =
-    DebugFactory.GetOrCreateArray(STys.data(), STys.size());
+  llvm::DIDescriptor STy = getOrCreateType(Context.IntTy, Unit);
+  llvm::DIArray SElements = DebugFactory.GetOrCreateArray(&STy, 1);
   llvm::DIType SubTy =
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
                                      Unit, "", Unit,
@@ -1070,11 +1068,9 @@ llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty,
   uint64_t NumElems = Ty->getNumElements();
   if (NumElems > 0)
     --NumElems;
-  llvm::SmallVector<llvm::DIDescriptor, 8> Subscripts;
-  Subscripts.push_back(DebugFactory.GetOrCreateSubrange(0, NumElems));
 
-  llvm::DIArray SubscriptArray =
-    DebugFactory.GetOrCreateArray(Subscripts.data(), Subscripts.size());
+  llvm::DIDescriptor Subscript = DebugFactory.GetOrCreateSubrange(0, NumElems);
+  llvm::DIArray SubscriptArray = DebugFactory.GetOrCreateArray(&Subscript, 1);
 
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);

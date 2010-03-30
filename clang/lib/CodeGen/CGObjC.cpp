@@ -464,12 +464,13 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   static const unsigned NumItems = 16;
 
   // Get selector
-  llvm::SmallVector<IdentifierInfo*, 3> II;
-  II.push_back(&CGM.getContext().Idents.get("countByEnumeratingWithState"));
-  II.push_back(&CGM.getContext().Idents.get("objects"));
-  II.push_back(&CGM.getContext().Idents.get("count"));
-  Selector FastEnumSel = CGM.getContext().Selectors.getSelector(II.size(),
-                                                                &II[0]);
+  IdentifierInfo *II[] = {
+    &CGM.getContext().Idents.get("countByEnumeratingWithState"),
+    &CGM.getContext().Idents.get("objects"),
+    &CGM.getContext().Idents.get("count")
+  };
+  Selector FastEnumSel =
+    CGM.getContext().Selectors.getSelector(llvm::array_lengthof(II), &II[0]);
 
   QualType ItemsTy =
     getContext().getConstantArrayType(getContext().getObjCIdType(),
