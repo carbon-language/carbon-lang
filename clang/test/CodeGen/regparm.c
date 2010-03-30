@@ -14,6 +14,6 @@ reduced(char b, double c, foo* d, double e, int f) {
 
 int
 main(void) {
-  // CHECK: call void @reduced(i8 signext inreg 0, double 0.000000e+00, %struct.anon* inreg null, double 0.000000e+00, i32 0)
+  // CHECK: call void @reduced(i8 signext inreg 0, {{.*}} %struct.anon* inreg null
   reduced(0, 0.0, 0, 0.0, 0);
 }
