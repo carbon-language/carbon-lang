@@ -981,25 +981,28 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // other tests to run.
   const FunctionType *OldType = OldQType->getAs<FunctionType>();
   const FunctionType *NewType = New->getType()->getAs<FunctionType>();
-  if (OldType->getCallConv() != CC_Default &&
-      NewType->getCallConv() == CC_Default) {
-    NewQType = Context.getCallConvType(NewQType, OldType->getCallConv());
+  const FunctionType::ExtInfo OldTypeInfo = OldType->getExtInfo();
+  const FunctionType::ExtInfo NewTypeInfo = NewType->getExtInfo();
+  if (OldTypeInfo.getCC() != CC_Default &&
+      NewTypeInfo.getCC() == CC_Default) {
+    NewQType = Context.getCallConvType(NewQType, OldTypeInfo.getCC());
     New->setType(NewQType);
     NewQType = Context.getCanonicalType(NewQType);
-  } else if (!Context.isSameCallConv(OldType->getCallConv(),
-                                     NewType->getCallConv())) {
+  } else if (!Context.isSameCallConv(OldTypeInfo.getCC(),
+                                     NewTypeInfo.getCC())) {
     // Calling conventions really aren't compatible, so complain.
     Diag(New->getLocation(), diag::err_cconv_change)
-      << FunctionType::getNameForCallConv(NewType->getCallConv())
-      << (OldType->getCallConv() == CC_Default)
-      << (OldType->getCallConv() == CC_Default ? "" :
-          FunctionType::getNameForCallConv(OldType->getCallConv()));
+      << FunctionType::getNameForCallConv(NewTypeInfo.getCC())
+      << (OldTypeInfo.getCC() == CC_Default)
+      << (OldTypeInfo.getCC() == CC_Default ? "" :
+          FunctionType::getNameForCallConv(OldTypeInfo.getCC()));
     Diag(Old->getLocation(), diag::note_previous_declaration);
     return true;
   }
 
   // FIXME: diagnose the other way around?
-  if (OldType->getNoReturnAttr() && !NewType->getNoReturnAttr()) {
+  if (OldType->getNoReturnAttr() &&
+      !NewType->getNoReturnAttr()) {
     NewQType = Context.getNoReturnType(NewQType);
     New->setType(NewQType);
     assert(NewQType.isCanonical());
@@ -1093,8 +1096,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                          OldProto->isVariadic(),
                                          OldProto->getTypeQuals(),
                                          false, false, 0, 0,
-                                         OldProto->getNoReturnAttr(),
-                                         OldProto->getCallConv());
+                                         OldProto->getExtInfo());
       New->setType(NewQType);
       New->setHasInheritedPrototype();
 
@@ -1175,8 +1177,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                            ArgTypes.size(),
                                            OldProto->isVariadic(), 0,
                                            false, false, 0, 0,
-                                           OldProto->getNoReturnAttr(),
-                                           OldProto->getCallConv()));
+                                           OldProto->getExtInfo()));
       return MergeCompatibleFunctionDecls(New, Old);
     }
 
@@ -3351,7 +3352,8 @@ void Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
           // Turn this into a variadic function with no parameters.
           QualType R = Context.getFunctionType(
                      NewFD->getType()->getAs<FunctionType>()->getResultType(),
-                     0, 0, true, 0, false, false, 0, 0, false, CC_Default);
+                     0, 0, true, 0, false, false, 0, 0,
+                     FunctionType::ExtInfo());
           NewFD->setType(R);
           return NewFD->setInvalidDecl();
         }

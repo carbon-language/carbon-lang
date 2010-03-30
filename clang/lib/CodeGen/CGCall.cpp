@@ -67,8 +67,7 @@ const CGFunctionInfo &
 CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP) {
   return getFunctionInfo(FTNP->getResultType().getUnqualifiedType(),
                          llvm::SmallVector<CanQualType, 16>(),
-                         FTNP->getCallConv(),
-                         FTNP->getNoReturnAttr());
+                         FTNP->getExtInfo());
 }
 
 /// \param Args - contains any initial parameters besides those
@@ -81,8 +80,7 @@ static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
     ArgTys.push_back(FTP->getArgType(i));
   CanQualType ResTy = FTP->getResultType().getUnqualifiedType();
   return CGT.getFunctionInfo(ResTy, ArgTys,
-                             FTP->getCallConv(),
-                             FTP->getNoReturnAttr());
+                             FTP->getExtInfo());
 }
 
 const CGFunctionInfo &
@@ -175,8 +173,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
   }
   return getFunctionInfo(GetReturnType(MD->getResultType()),
                          ArgTys,
-                         getCallingConventionForDecl(MD),
-                         /*NoReturn*/ false);
+                         FunctionType::ExtInfo(
+                             /*NoReturn*/ false,
+                             getCallingConventionForDecl(MD)));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(GlobalDecl GD) {
@@ -194,32 +193,32 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(GlobalDecl GD) {
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                                     const CallArgList &Args,
-                                                    CallingConv CC,
-                                                    bool NoReturn) {
+                                            const FunctionType::ExtInfo &Info) {
   // FIXME: Kill copy.
   llvm::SmallVector<CanQualType, 16> ArgTys;
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
     ArgTys.push_back(Context.getCanonicalParamType(i->second));
-  return getFunctionInfo(GetReturnType(ResTy), ArgTys, CC, NoReturn);
+  return getFunctionInfo(GetReturnType(ResTy), ArgTys, Info);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                                     const FunctionArgList &Args,
-                                                    CallingConv CC,
-                                                    bool NoReturn) {
+                                            const FunctionType::ExtInfo &Info) {
   // FIXME: Kill copy.
   llvm::SmallVector<CanQualType, 16> ArgTys;
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
     ArgTys.push_back(Context.getCanonicalParamType(i->second));
-  return getFunctionInfo(GetReturnType(ResTy), ArgTys, CC, NoReturn);
+  return getFunctionInfo(GetReturnType(ResTy), ArgTys, Info);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                            const llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                                    CallingConv CallConv,
-                                                    bool NoReturn) {
+                                            const FunctionType::ExtInfo &Info) {
+  const CallingConv CallConv = Info.getCC();
+  const bool NoReturn = Info.getNoReturn();
+
 #ifndef NDEBUG
   for (llvm::SmallVectorImpl<CanQualType>::const_iterator
          I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
@@ -230,7 +229,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
 
   // Lookup or create unique function info.
   llvm::FoldingSetNodeID ID;
-  CGFunctionInfo::Profile(ID, CC, NoReturn, ResTy,
+  CGFunctionInfo::Profile(ID, Info, ResTy,
                           ArgTys.begin(), ArgTys.end());
 
   void *InsertPos = 0;

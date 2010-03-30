@@ -465,7 +465,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
-                                                       CC_Default, false);
+                                                       FunctionType::ExtInfo());
   const llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
@@ -573,7 +573,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
-                                                       CC_Default, false);
+                                                       FunctionType::ExtInfo());
   const llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
@@ -1694,7 +1694,7 @@ llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
   Params.push_back(ASTIdTy);
   const llvm::FunctionType *FTy =
     Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
-                                                CC_Default, false), false);
+                                              FunctionType::ExtInfo()), false);
   return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
 }
 

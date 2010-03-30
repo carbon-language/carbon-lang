@@ -134,8 +134,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                                NewProto->isVariadic(),
                                                NewProto->getTypeQuals(),
                                                true, false, 0, 0,
-                                               NewProto->getNoReturnAttr(),
-                                               NewProto->getCallConv());
+                                               NewProto->getExtInfo());
     New->setType(NewType);
     return false;
   }
@@ -157,8 +156,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
                                                OldProto->hasAnyExceptionSpec(),
                                                OldProto->getNumExceptions(),
                                                OldProto->exception_begin(),
-                                               NewProto->getNoReturnAttr(),
-                                               NewProto->getCallConv());
+                                               NewProto->getExtInfo());
     New->setType(NewType);
 
     // If exceptions are disabled, suppress the warning about missing

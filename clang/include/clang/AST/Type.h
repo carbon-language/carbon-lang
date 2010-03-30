@@ -939,14 +939,6 @@ public:
   /// pointer, this returns the respective pointee.
   QualType getPointeeType() const;
 
-  /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
-  /// false otherwise.
-  bool getNoReturnAttr() const;
-
-  /// getCallConv - Returns the calling convention of the type if the type
-  /// is a function type, CC_Default otherwise.
-  CallingConv getCallConv() const;
-
   /// getUnqualifiedDesugaredType() - Return the specified type with
   /// any "sugar" removed from the type, removing any typedefs,
   /// typeofs, etc., as well as any qualifiers.
@@ -1753,13 +1745,60 @@ class FunctionType : public Type {
 
   // The type returned by the function.
   QualType ResultType;
+
+ public:
+  // This class is used for passing arround the information needed to
+  // construct a call. It is not actually used for storage, just for
+  // factoring together common arguments.
+  class ExtInfo {
+   public:
+    // Constructor with no defaults. Use this when you know that you
+    // have all the elements (when reading a PCH file for example).
+    ExtInfo(bool noReturn, CallingConv cc) :
+        NoReturn(noReturn), CC(cc) {}
+
+    // Constructor with all defaults. Use when for example creating a
+    // function know to use defaults.
+    ExtInfo() : NoReturn(false), CC(CC_Default) {}
+
+    bool getNoReturn() const { return NoReturn; }
+    CallingConv getCC() const { return CC; }
+
+    bool operator==(const ExtInfo &Other) const {
+      return getNoReturn() == Other.getNoReturn() &&
+          getCC() == Other.getCC();
+    }
+    bool operator!=(const ExtInfo &Other) const {
+      return !(*this == Other);
+    }
+
+    // Note that we don't have setters. That is by design, use
+    // the following with methods instead of mutating these objects.
+
+    ExtInfo withNoReturn(bool noReturn) const {
+      return ExtInfo(noReturn, getCC());
+    }
+
+    ExtInfo withCallingConv(CallingConv cc) const {
+      return ExtInfo(getNoReturn(), cc);
+    }
+
+   private:
+    // True if we have __attribute__((noreturn))
+    bool NoReturn;
+    // The calling convention as specified via
+    // __attribute__((cdecl|stdcall||fastcall))
+    CallingConv CC;
+  };
+
 protected:
   FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
                unsigned typeQuals, QualType Canonical, bool Dependent,
-               bool noReturn, CallingConv callConv)
+               const ExtInfo &Info)
     : Type(tc, Canonical, Dependent),
-      SubClassData(SubclassInfo), TypeQuals(typeQuals), NoReturn(noReturn),
-      CallConv(callConv), ResultType(res) {}
+      SubClassData(SubclassInfo), TypeQuals(typeQuals),
+      NoReturn(Info.getNoReturn()),
+      CallConv(Info.getCC()), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
   unsigned getTypeQuals() const { return TypeQuals; }
 public:
@@ -1767,6 +1806,9 @@ public:
   QualType getResultType() const { return ResultType; }
   bool getNoReturnAttr() const { return NoReturn; }
   CallingConv getCallConv() const { return (CallingConv)CallConv; }
+  ExtInfo getExtInfo() const {
+    return ExtInfo(NoReturn, (CallingConv)CallConv);
+  }
 
   static llvm::StringRef getNameForCallConv(CallingConv CC);
 
@@ -1781,9 +1823,9 @@ public:
 /// no information available about its arguments.
 class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionNoProtoType(QualType Result, QualType Canonical,
-                      bool NoReturn = false, CallingConv CallConv = CC_Default)
+                      const ExtInfo &Info)
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical,
-                   /*Dependent=*/false, NoReturn, CallConv) {}
+                   /*Dependent=*/false, Info) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
@@ -1792,12 +1834,12 @@ public:
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getResultType(), getNoReturnAttr(), getCallConv());
+    Profile(ID, getResultType(), getExtInfo());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType,
-                      bool NoReturn, CallingConv CallConv) {
-    ID.AddInteger(CallConv);
-    ID.AddInteger(NoReturn);
+                      const ExtInfo &Info) {
+    ID.AddInteger(Info.getCC());
+    ID.AddInteger(Info.getNoReturn());
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
 
@@ -1828,12 +1870,12 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, bool hasExs,
                     bool hasAnyExs, const QualType *ExArray,
-                    unsigned numExs, QualType Canonical, bool NoReturn,
-                    CallingConv CallConv)
+                    unsigned numExs, QualType Canonical,
+                    const ExtInfo &Info)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
                    (Result->isDependentType() ||
-                    hasAnyDependentType(ArgArray, numArgs)), NoReturn,
-                   CallConv),
+                    hasAnyDependentType(ArgArray, numArgs)),
+                   Info),
       NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
       AnyExceptionSpec(hasAnyExs) {
     // Fill in the trailing argument array.
@@ -1919,7 +1961,7 @@ public:
                       bool isVariadic, unsigned TypeQuals,
                       bool hasExceptionSpec, bool anyExceptionSpec,
                       unsigned NumExceptions, exception_iterator Exs,
-                      bool NoReturn, CallingConv CallConv);
+                      const ExtInfo &ExtInfo);
 };
 
 
@@ -2937,36 +2979,18 @@ inline Qualifiers::GC QualType::getObjCGCAttr() const {
   return Qualifiers::GCNone;
 }
 
-  /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
-  /// false otherwise.
-inline bool Type::getNoReturnAttr() const {
-  if (const PointerType *PT = getAs<PointerType>()) {
+inline FunctionType::ExtInfo getFunctionExtInfo(const Type &t) {
+  if (const PointerType *PT = t.getAs<PointerType>()) {
     if (const FunctionType *FT = PT->getPointeeType()->getAs<FunctionType>())
-      return FT->getNoReturnAttr();
-  } else if (const FunctionType *FT = getAs<FunctionType>())
-    return FT->getNoReturnAttr();
+      return FT->getExtInfo();
+  } else if (const FunctionType *FT = t.getAs<FunctionType>())
+    return FT->getExtInfo();
 
-  return false;
+  return FunctionType::ExtInfo();
 }
 
-/// getCallConv - Returns the calling convention of the type if the type
-/// is a function type, CC_Default otherwise.
-inline CallingConv Type::getCallConv() const {
-  if (const PointerType *PT = getAs<PointerType>())
-    return PT->getPointeeType()->getCallConv();
-  else if (const ReferenceType *RT = getAs<ReferenceType>())
-    return RT->getPointeeType()->getCallConv();
-  else if (const MemberPointerType *MPT =
-           getAs<MemberPointerType>())
-    return MPT->getPointeeType()->getCallConv();
-  else if (const BlockPointerType *BPT =
-           getAs<BlockPointerType>()) {
-    if (const FunctionType *FT = BPT->getPointeeType()->getAs<FunctionType>())
-      return FT->getCallConv();
-  } else if (const FunctionType *FT = getAs<FunctionType>())
-    return FT->getCallConv();
-
-  return CC_Default;
+inline FunctionType::ExtInfo getFunctionExtInfo(QualType t) {
+  return getFunctionExtInfo(*t);
 }
 
 /// isMoreQualifiedThan - Determine whether this type is more

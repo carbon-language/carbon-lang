@@ -1844,8 +1844,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                  Proto->hasAnyExceptionSpec(),
                                                  Exceptions.size(),
                                                  Exceptions.data(),
-                                                 Proto->getNoReturnAttr(),
-                                                 Proto->getCallConv()));
+                                                 Proto->getExtInfo()));
   }
 
   return false;

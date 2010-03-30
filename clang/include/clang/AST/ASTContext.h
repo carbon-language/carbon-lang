@@ -564,10 +564,11 @@ public:
 
   /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
   ///
-  QualType getFunctionNoProtoType(QualType ResultTy, bool NoReturn,
-                                  CallingConv CallConv);
+  QualType getFunctionNoProtoType(QualType ResultTy,
+                                  const FunctionType::ExtInfo &Info);
+
   QualType getFunctionNoProtoType(QualType ResultTy) {
-    return getFunctionNoProtoType(ResultTy, false, CC_Default);
+    return getFunctionNoProtoType(ResultTy, FunctionType::ExtInfo());
   }
 
   /// getFunctionType - Return a normal function type with a typed argument
@@ -577,8 +578,7 @@ public:
                            unsigned TypeQuals, bool hasExceptionSpec,
                            bool hasAnyExceptionSpec,
                            unsigned NumExs, const QualType *ExArray,
-                           bool NoReturn,
-                           CallingConv CallConv);
+                           const FunctionType::ExtInfo &Info);
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.

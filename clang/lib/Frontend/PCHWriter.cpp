@@ -141,9 +141,10 @@ void PCHTypeWriter::VisitExtVectorType(const ExtVectorType *T) {
 
 void PCHTypeWriter::VisitFunctionType(const FunctionType *T) {
   Writer.AddTypeRef(T->getResultType(), Record);
-  Record.push_back(T->getNoReturnAttr());
+  FunctionType::ExtInfo C = T->getExtInfo();
+  Record.push_back(C.getNoReturn());
   // FIXME: need to stabilize encoding of calling convention...
-  Record.push_back(T->getCallConv());
+  Record.push_back(C.getCC());
 }
 
 void PCHTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {

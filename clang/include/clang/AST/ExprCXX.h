@@ -1095,8 +1095,8 @@ public:
     : Expr(CXXPseudoDestructorExprClass,
            Context.getPointerType(Context.getFunctionType(Context.VoidTy, 0, 0,
                                                           false, 0, false, 
-                                                          false, 0, 0, false,
-                                                          CC_Default)),
+                                                          false, 0, 0,
+                                                      FunctionType::ExtInfo())),
            /*isTypeDependent=*/(Base->isTypeDependent() ||
             (DestroyedType.getTypeSourceInfo() &&
               DestroyedType.getTypeSourceInfo()->getType()->isDependentType())),

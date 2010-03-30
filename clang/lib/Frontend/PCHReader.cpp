@@ -2080,8 +2080,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       return QualType();
     }
     QualType ResultType = GetType(Record[0]);
-    return Context->getFunctionNoProtoType(ResultType, Record[1],
-                                           (CallingConv)Record[2]);
+    FunctionType::ExtInfo Info(Record[1], (CallingConv)Record[2]);
+    return Context->getFunctionNoProtoType(ResultType, Info);
   }
 
   case pch::TYPE_FUNCTION_PROTO: {
@@ -2104,7 +2104,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getFunctionType(ResultType, ParamTypes.data(), NumParams,
                                     isVariadic, Quals, hasExceptionSpec,
                                     hasAnyExceptionSpec, NumExceptions,
-                                    Exceptions.data(), NoReturn, CallConv);
+                                    Exceptions.data(),
+                                    FunctionType::ExtInfo(NoReturn, CallConv));
   }
 
   case pch::TYPE_UNRESOLVED_USING:

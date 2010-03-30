@@ -122,13 +122,12 @@ namespace CodeGen {
     }
     template<class Iterator>
     static void Profile(llvm::FoldingSetNodeID &ID,
-                        unsigned CallingConvention,
-                        bool NoReturn,
+                        const FunctionType::ExtInfo &Info,
                         CanQualType ResTy,
                         Iterator begin,
                         Iterator end) {
-      ID.AddInteger(CallingConvention);
-      ID.AddBoolean(NoReturn);
+      ID.AddInteger(Info.getCC());
+      ID.AddBoolean(Info.getNoReturn());
       ResTy.Profile(ID);
       for (; begin != end; ++begin) {
         CanQualType T = *begin; // force iterator to be over canonical types

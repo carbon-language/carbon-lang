@@ -571,7 +571,7 @@ static bool CanThrow(Expr *E) {
 CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
   // If this is a call to a no-return function, this stops the block here.
   bool NoReturn = false;
-  if (C->getCallee()->getType()->getNoReturnAttr()) {
+  if (getFunctionExtInfo(*C->getCallee()->getType()).getNoReturn()) {
     NoReturn = true;
   }
 

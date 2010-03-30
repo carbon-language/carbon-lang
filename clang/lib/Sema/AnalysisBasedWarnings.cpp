@@ -154,7 +154,7 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
         continue;
       }
       Expr *CEE = C->getCallee()->IgnoreParenCasts();
-      if (CEE->getType()->getNoReturnAttr()) {
+      if (getFunctionExtInfo(CEE->getType()).getNoReturn()) {
         NoReturnEdge = true;
         HasFakeEdge = true;
       } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
@@ -255,7 +255,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     ReturnsVoid = FD->getResultType()->isVoidType();
     HasNoReturn = FD->hasAttr<NoReturnAttr>() ||
-                  FD->getType()->getAs<FunctionType>()->getNoReturnAttr();
+       FD->getType()->getAs<FunctionType>()->getNoReturnAttr();
   }
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     ReturnsVoid = MD->getResultType()->isVoidType();

@@ -1379,7 +1379,7 @@ CodeGenFunction::GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
   llvm::raw_svector_ostream(Name) << "__tcf_" << (++UniqueAggrDestructorCount);
   QualType R = getContext().VoidTy;
   const CGFunctionInfo &FI
-    = CGM.getTypes().getFunctionInfo(R, Args, CC_Default, false);
+      = CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
   const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,

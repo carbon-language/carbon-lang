@@ -827,8 +827,8 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 unsigned NumArgs, bool isVariadic,
                                 unsigned TypeQuals, bool hasExceptionSpec,
                                 bool anyExceptionSpec, unsigned NumExceptions,
-                                exception_iterator Exs, bool NoReturn,
-                                CallingConv CallConv) {
+                                exception_iterator Exs,
+                                const FunctionType::ExtInfo &Info) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
@@ -840,15 +840,15 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
     for (unsigned i = 0; i != NumExceptions; ++i)
       ID.AddPointer(Exs[i].getAsOpaquePtr());
   }
-  ID.AddInteger(NoReturn);
-  ID.AddInteger(CallConv);
+  ID.AddInteger(Info.getNoReturn());
+  ID.AddInteger(Info.getCC());
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic(),
           getTypeQuals(), hasExceptionSpec(), hasAnyExceptionSpec(),
-          getNumExceptions(), exception_begin(), getNoReturnAttr(),
-          getCallConv());
+          getNumExceptions(), exception_begin(),
+          getExtInfo());
 }
 
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,

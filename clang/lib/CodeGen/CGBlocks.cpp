@@ -192,7 +192,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       CallArgList Args;
       CodeGenTypes &Types = CGM.getTypes();
       const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, Args,
-                                                       CC_Default, false);
+                                                       FunctionType::ExtInfo());
       if (CGM.ReturnTypeUsesSret(FnInfo))
         flags |= BLOCK_USE_STRET;
     }
@@ -472,8 +472,8 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   QualType ResultType = FuncTy->getResultType();
 
   const CGFunctionInfo &FnInfo =
-    CGM.getTypes().getFunctionInfo(ResultType, Args, FuncTy->getCallConv(),
-                                   FuncTy->getNoReturnAttr());
+    CGM.getTypes().getFunctionInfo(ResultType, Args,
+                                   FuncTy->getExtInfo());
 
   // Cast the function pointer to the right type.
   const llvm::Type *BlockFTy =
@@ -678,8 +678,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();
   QualType ResultType;
-  CallingConv CC = BlockFunctionType->getCallConv();
-  bool NoReturn = BlockFunctionType->getNoReturnAttr();
+  FunctionType::ExtInfo EInfo = getFunctionExtInfo(*BlockFunctionType);
   bool IsVariadic;
   if (const FunctionProtoType *FTy =
       dyn_cast<FunctionProtoType>(BlockFunctionType)) {
@@ -718,7 +717,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
     Args.push_back(std::make_pair(*i, (*i)->getType()));
 
   const CGFunctionInfo &FI =
-    CGM.getTypes().getFunctionInfo(ResultType, Args, CC, NoReturn);
+    CGM.getTypes().getFunctionInfo(ResultType, Args, EInfo);
 
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, IsVariadic);
@@ -843,7 +842,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
   Args.push_back(std::make_pair(Src, Src->getType()));
 
   const CGFunctionInfo &FI =
-    CGM.getTypes().getFunctionInfo(R, Args, CC_Default, false);
+      CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.
@@ -924,7 +923,7 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
   Args.push_back(std::make_pair(Src, Src->getType()));
 
   const CGFunctionInfo &FI =
-    CGM.getTypes().getFunctionInfo(R, Args, CC_Default, false);
+      CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.
@@ -1008,7 +1007,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   Args.push_back(std::make_pair(Src, Src->getType()));
 
   const CGFunctionInfo &FI =
-    CGM.getTypes().getFunctionInfo(R, Args, CC_Default, false);
+      CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
 
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
@@ -1071,7 +1070,7 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   Args.push_back(std::make_pair(Src, Src->getType()));
 
   const CGFunctionInfo &FI =
-    CGM.getTypes().getFunctionInfo(R, Args, CC_Default, false);
+      CGM.getTypes().getFunctionInfo(R, Args, FunctionType::ExtInfo());
 
   CodeGenTypes &Types = CGM.getTypes();
   const llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);

@@ -202,7 +202,7 @@ public:
   const CGFunctionInfo &getFunctionInfo(const CallArgList &Args,
                                         const FunctionType *Ty) {
     return getFunctionInfo(Ty->getResultType(), Args,
-                           Ty->getCallConv(), Ty->getNoReturnAttr());
+                           Ty->getExtInfo());
   }
   const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty);
   const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty);
@@ -216,20 +216,17 @@ public:
   /// specified, the "C" calling convention will be used.
   const CGFunctionInfo &getFunctionInfo(QualType ResTy,
                                         const CallArgList &Args,
-                                        CallingConv CC,
-                                        bool NoReturn);
+                                        const FunctionType::ExtInfo &Info);
   const CGFunctionInfo &getFunctionInfo(QualType ResTy,
                                         const FunctionArgList &Args,
-                                        CallingConv CC,
-                                        bool NoReturn);
+                                        const FunctionType::ExtInfo &Info);
 
   /// Retrieves the ABI information for the given function signature.
   /// 
   /// \param ArgTys - must all actually be canonical as params
   const CGFunctionInfo &getFunctionInfo(CanQualType RetTy,
                                const llvm::SmallVectorImpl<CanQualType> &ArgTys,
-                                        CallingConv CC,
-                                        bool NoReturn);
+                                        const FunctionType::ExtInfo &Info);
 
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// addFieldInfo - Assign field number to field FD.

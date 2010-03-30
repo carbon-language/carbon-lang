@@ -484,10 +484,8 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                   Function1->getResultType(),
                                   Function2->getResultType()))
       return false;
-    if (Function1->getNoReturnAttr() != Function2->getNoReturnAttr())
-      return false;
-    if (Function1->getCallConv() != Function2->getCallConv())
-      return false;
+      if (Function1->getExtInfo() != Function2->getExtInfo())
+        return false;
     break;
   }
    
@@ -1200,10 +1198,9 @@ QualType ASTNodeImporter::VisitFunctionNoProtoType(FunctionNoProtoType *T) {
   QualType ToResultType = Importer.Import(T->getResultType());
   if (ToResultType.isNull())
     return QualType();
-  
+
   return Importer.getToContext().getFunctionNoProtoType(ToResultType,
-                                                        T->getNoReturnAttr(), 
-                                                        T->getCallConv());
+                                                        T->getExtInfo());
 }
 
 QualType ASTNodeImporter::VisitFunctionProtoType(FunctionProtoType *T) {
@@ -1241,8 +1238,7 @@ QualType ASTNodeImporter::VisitFunctionProtoType(FunctionProtoType *T) {
                                                  T->hasAnyExceptionSpec(),
                                                  ExceptionTypes.size(),
                                                  ExceptionTypes.data(),
-                                                 T->getNoReturnAttr(),
-                                                 T->getCallConv());
+                                                 T->getExtInfo());
 }
 
 QualType ASTNodeImporter::VisitTypedefType(TypedefType *T) {

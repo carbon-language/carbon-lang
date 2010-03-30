@@ -44,9 +44,8 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
 
   QualType ResultType = FPT->getResultType();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
-                                                 FPT->getCallConv(),
-                                                 FPT->getNoReturnAttr()), Callee, 
-                  ReturnValue, Args, MD);
+                                                 FPT->getExtInfo()),
+                  Callee, ReturnValue, Args, MD);
 }
 
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given

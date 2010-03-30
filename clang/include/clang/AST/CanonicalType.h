@@ -564,24 +564,21 @@ struct CanProxyAdaptor<ExtVectorType> : public CanProxyBase<ExtVectorType> {
 template<>
 struct CanProxyAdaptor<FunctionType> : public CanProxyBase<FunctionType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, getNoReturnAttr)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(CallingConv, getCallConv)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(FunctionType::ExtInfo, getExtInfo)
 };
 
 template<>
 struct CanProxyAdaptor<FunctionNoProtoType>
   : public CanProxyBase<FunctionNoProtoType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, getNoReturnAttr)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(CallingConv, getCallConv)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(FunctionType::ExtInfo, getExtInfo)
 };
 
 template<>
 struct CanProxyAdaptor<FunctionProtoType>
   : public CanProxyBase<FunctionProtoType> {
   LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getResultType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, getNoReturnAttr)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(CallingConv, getCallConv)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(FunctionType::ExtInfo, getExtInfo)
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getNumArgs)
   CanQualType getArgType(unsigned i) const {
     return CanQualType::CreateUnsafe(this->getTypePtr()->getArgType(i));

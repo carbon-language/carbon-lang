@@ -2217,8 +2217,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  Context.getFunctionType(Context.VoidTy,
                                                          0, 0, false, 0,
                                                          /*FIXME*/false, false,
-                                                         0, 0, false,
-                                                         CC_Default),
+                                                         0, 0,
+                                                       FunctionType::ExtInfo()),
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
@@ -2292,8 +2292,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                                            &ArgType, 1,
                                                            false, 0,
                                                            /*FIXME:*/false,
-                                                           false, 0, 0, false,
-                                                           CC_Default),
+                                                           false, 0, 0,
+                                                       FunctionType::ExtInfo()),
                                    /*TInfo=*/0,
                                    /*isExplicit=*/false,
                                    /*isInline=*/true,
@@ -2381,8 +2381,8 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                             Context.getFunctionType(RetType, &ArgType, 1,
                                                     false, 0,
                                                     /*FIXME:*/false,
-                                                    false, 0, 0, false,
-                                                    CC_Default),
+                                                    false, 0, 0,
+                                                    FunctionType::ExtInfo()),
                             /*TInfo=*/0, /*isStatic=*/false, /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
@@ -2411,8 +2411,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     QualType Ty = Context.getFunctionType(Context.VoidTy,
                                           0, 0, false, 0,
                                           /*FIXME:*/false,
-                                          false, 0, 0, false,
-                                          CC_Default);
+                                          false, 0, 0, FunctionType::ExtInfo());
 
     DeclarationName Name
       = Context.DeclarationNames.getCXXDestructorName(ClassType);
@@ -2585,8 +2584,7 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
                                  Proto->hasAnyExceptionSpec(),
                                  Proto->getNumExceptions(),
                                  Proto->exception_begin(),
-                                 Proto->getNoReturnAttr(),
-                                 Proto->getCallConv());
+                                 Proto->getExtInfo());
 }
 
 /// CheckConstructor - Checks a fully-formed constructor for
@@ -2745,7 +2743,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
   // will put in a result type of "int" when none was specified.
   // FIXME: Exceptions!
   return Context.getFunctionType(Context.VoidTy, 0, 0, false, 0,
-                                 false, false, 0, 0, false, CC_Default);
+                                 false, false, 0, 0, FunctionType::ExtInfo());
 }
 
 /// CheckConversionDeclarator - Called by ActOnDeclarator to check the
@@ -2821,8 +2819,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
                               Proto->hasAnyExceptionSpec(),
                               Proto->getNumExceptions(),
                               Proto->exception_begin(),
-                              Proto->getNoReturnAttr(),
-                              Proto->getCallConv());
+                              Proto->getExtInfo());
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)

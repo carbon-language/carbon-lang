@@ -2669,8 +2669,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn, GlobalDecl GD,
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
 
   const CGFunctionInfo &FnInfo = 
-    CGM.getTypes().getFunctionInfo(ResultType, CallArgs, FPT->getCallConv(), 
-                                   FPT->getNoReturnAttr());
+    CGM.getTypes().getFunctionInfo(ResultType, CallArgs,
+                                   FPT->getExtInfo());
   
   // Now emit our call.
   RValue RV = EmitCall(FnInfo, Callee, ReturnValueSlot(), CallArgs, MD);

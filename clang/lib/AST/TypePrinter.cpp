@@ -282,7 +282,8 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
   
   S += ")";
 
-  switch(T->getCallConv()) {
+  FunctionType::ExtInfo Info = T->getExtInfo();
+  switch(Info.getCC()) {
   case CC_Default:
   default: break;
   case CC_C:
@@ -295,7 +296,7 @@ void TypePrinter::PrintFunctionProto(const FunctionProtoType *T,
     S += " __attribute__((fastcall))";
     break;
   }
-  if (T->getNoReturnAttr())
+  if (Info.getNoReturn())
     S += " __attribute__((noreturn))";
 
   
@@ -819,4 +820,3 @@ void QualType::getAsStringInternal(std::string &S,
   TypePrinter Printer(Policy);
   Printer.Print(*this, S);
 }
-
