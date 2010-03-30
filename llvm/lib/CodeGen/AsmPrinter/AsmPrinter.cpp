@@ -922,8 +922,8 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
 
   // Otherwise, emit with .set (aka assignment).
   MCSymbol *SetLabel =
-    OutContext.GetOrCreateTemporarySymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                                          "set" + Twine(SetCounter++));
+    OutContext.GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                                 "set" + Twine(SetCounter++));
   OutStreamer.EmitAssignment(SetLabel, Diff);
   OutStreamer.EmitSymbolValue(SetLabel, Size, 0/*AddrSpace*/);
 }
@@ -1599,7 +1599,7 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BasicBlock *BB) const {
 
 /// GetCPISymbol - Return the symbol for the specified constant pool entry.
 MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
-  return OutContext.GetOrCreateTemporarySymbol
+  return OutContext.GetOrCreateSymbol
     (Twine(MAI->getPrivateGlobalPrefix()) + "CPI" + Twine(getFunctionNumber())
      + "_" + Twine(CPID));
 }
@@ -1612,7 +1612,7 @@ MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
 /// GetJTSetSymbol - Return the symbol for the specified jump table .set
 /// FIXME: privatize to AsmPrinter.
 MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
-  return OutContext.GetOrCreateTemporarySymbol
+  return OutContext.GetOrCreateSymbol
   (Twine(MAI->getPrivateGlobalPrefix()) + Twine(getFunctionNumber()) + "_" +
    Twine(UID) + "_set_" + Twine(MBBID));
 }
@@ -1626,9 +1626,7 @@ MCSymbol *AsmPrinter::GetSymbolWithGlobalValueBase(const GlobalValue *GV,
   SmallString<60> NameStr;
   Mang->getNameWithPrefix(NameStr, GV, ForcePrivate);
   NameStr.append(Suffix.begin(), Suffix.end());
-  if (!GV->hasPrivateLinkage() && !ForcePrivate)
-    return OutContext.GetOrCreateSymbol(NameStr.str());
-  return OutContext.GetOrCreateTemporarySymbol(NameStr.str());
+  return OutContext.GetOrCreateSymbol(NameStr.str());
 }
 
 /// GetExternalSymbolSymbol - Return the MCSymbol for the specified

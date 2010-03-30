@@ -45,14 +45,14 @@ MCSymbol *DwarfPrinter::getDWLabel(const char *Name, unsigned ID) const {
   
   //assert(ID && "Should use getTempLabel if no ID");
   if (ID == 0) return getTempLabel(Name);
-  return Asm->OutContext.GetOrCreateTemporarySymbol
+  return Asm->OutContext.GetOrCreateSymbol
         (Twine(MAI->getPrivateGlobalPrefix()) + Twine(Name) + Twine(ID));
 }
 
 /// getTempLabel - Return the MCSymbol corresponding to the assembler temporary
 /// label with the specified name.
 MCSymbol *DwarfPrinter::getTempLabel(const char *Name) const {
-  return Asm->OutContext.GetOrCreateTemporarySymbol
+  return Asm->OutContext.GetOrCreateSymbol
      (Twine(MAI->getPrivateGlobalPrefix()) + Name);
 }
 

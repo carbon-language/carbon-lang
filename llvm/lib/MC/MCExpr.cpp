@@ -154,12 +154,6 @@ const MCSymbolRefExpr *MCSymbolRefExpr::Create(StringRef Name, VariantKind Kind,
   return Create(Ctx.GetOrCreateSymbol(Name), Kind, Ctx);
 }
 
-const MCSymbolRefExpr *MCSymbolRefExpr::CreateTemp(StringRef Name,
-                                                   VariantKind Kind,
-                                                   MCContext &Ctx) {
-  return Create(Ctx.GetOrCreateTemporarySymbol(Name), Kind, Ctx);
-}
-
 StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   switch (Kind) {
   default:

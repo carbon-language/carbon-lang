@@ -160,11 +160,6 @@ public:
   static const MCSymbolRefExpr *Create(StringRef Name, VariantKind Kind,
                                        MCContext &Ctx);
   
-  /// CreateTemp - Create a reference to an assembler temporary label with the
-  /// specified name.
-  static const MCSymbolRefExpr *CreateTemp(StringRef Name, VariantKind Kind,
-                                           MCContext &Ctx);
-
   /// @}
   /// @name Accessors
   /// @{

@@ -238,9 +238,7 @@ bool AsmParser::ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 }
 
 MCSymbol *AsmParser::CreateSymbol(StringRef Name) {
-  // If the label starts with L it is an assembler temporary label.
-  if (Name.startswith("L"))
-    return Ctx.GetOrCreateTemporarySymbol(Name);
+  // FIXME: Inline into callers.
   return Ctx.GetOrCreateSymbol(Name);
 }
 

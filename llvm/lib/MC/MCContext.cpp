@@ -23,8 +23,11 @@ MCContext::~MCContext() {
   // we don't need to free them here.
 }
 
-MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name, bool isTemporary) {
+MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
   assert(!Name.empty() && "Normal symbols cannot be unnamed!");
+  
+  // Determine whether this is an assembler temporary or normal label.
+  bool isTemporary = Name.startswith(MAI.getPrivateGlobalPrefix());
   
   // Do the lookup and get the entire StringMapEntry.  We want access to the
   // key if we are creating the entry.
@@ -38,23 +41,16 @@ MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name, bool isTemporary) {
   return Result; 
 }
 
-MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name, bool isTemporary) {
+MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
   SmallString<128> NameSV;
   Name.toVector(NameSV);
-  return GetOrCreateSymbol(NameSV.str(), isTemporary);
+  return GetOrCreateSymbol(NameSV.str());
 }
 
 MCSymbol *MCContext::CreateTempSymbol() {
-  return GetOrCreateTemporarySymbol(Twine(MAI.getPrivateGlobalPrefix()) +
-                                    "tmp" + Twine(NextUniqueID++));
+  return GetOrCreateSymbol(Twine(MAI.getPrivateGlobalPrefix()) +
+                           "tmp" + Twine(NextUniqueID++));
 }
-
-MCSymbol *MCContext::GetOrCreateTemporarySymbol(const Twine &Name) {
-  SmallString<128> NameSV;
-  Name.toVector(NameSV);
-  return GetOrCreateTemporarySymbol(NameSV.str());
-}
-
 
 MCSymbol *MCContext::LookupSymbol(StringRef Name) const {
   return Symbols.lookup(Name);

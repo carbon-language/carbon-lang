@@ -83,7 +83,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
 
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getGVStubEntry(Sym);
@@ -98,7 +98,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getHiddenGVStubEntry(Sym);
     if (StubSym.getPointer() == 0) {
@@ -112,7 +112,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
-    MCSymbol *Sym = Ctx.GetOrCreateTemporarySymbol(Name.str());
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
     MachineModuleInfoImpl::StubValueTy &StubSym =
       getMachOMMI().getFnStubEntry(Sym);
     if (StubSym.getPointer())
@@ -127,7 +127,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
       Name.erase(Name.end()-5, Name.end());
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(Ctx.GetOrCreateTemporarySymbol(Name.str()), false);
+        StubValueTy(Ctx.GetOrCreateSymbol(Name.str()), false);
     }
     return Sym;
   }

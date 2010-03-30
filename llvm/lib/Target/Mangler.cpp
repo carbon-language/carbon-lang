@@ -235,10 +235,7 @@ std::string Mangler::getNameWithPrefix(const GlobalValue *GV,
 MCSymbol *Mangler::getSymbol(const GlobalValue *GV) {
   SmallString<60> NameStr;
   getNameWithPrefix(NameStr, GV, false);
-  if (!GV->hasPrivateLinkage())
-    return Context.GetOrCreateSymbol(NameStr.str());
-  
-  return Context.GetOrCreateTemporarySymbol(NameStr.str());
+  return Context.GetOrCreateSymbol(NameStr.str());
 }
 
 
