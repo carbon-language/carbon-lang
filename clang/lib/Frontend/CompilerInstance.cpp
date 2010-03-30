@@ -29,6 +29,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -479,6 +480,9 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   if (getFrontendOpts().ShowTimers)
     createFrontendTimer();
 
+  if (getFrontendOpts().ShowStats)
+    llvm::EnableStatistics();
+    
   for (unsigned i = 0, e = getFrontendOpts().Inputs.size(); i != e; ++i) {
     const std::string &InFile = getFrontendOpts().Inputs[i].second;
 

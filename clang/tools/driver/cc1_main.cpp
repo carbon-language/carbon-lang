@@ -29,6 +29,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Timer.h"
@@ -279,6 +280,8 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   
   // When running with -disable-free, don't do any destruction or shutdown.
   if (Clang->getFrontendOpts().DisableFree) {
+    if (Clang->getFrontendOpts().ShowStats)
+      llvm::PrintStatistics();
     Clang.take();
     return !Success;
   }
