@@ -22,8 +22,8 @@
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
-// GetLibSupportInfoOutputFile - Return a file stream to print our output on.
-namespace llvm { extern raw_ostream *GetLibSupportInfoOutputFile(); }
+// CreateInfoOutputFile - Return a file stream to print our output on.
+namespace llvm { extern raw_ostream *CreateInfoOutputFile(); }
 
 // getLibSupportInfoOutputFilename - This ugly hack is brought to you courtesy
 // of constructor/destructor ordering being unspecified by C++.  Basically the
@@ -52,13 +52,13 @@ namespace {
                    cl::Hidden, cl::location(getLibSupportInfoOutputFilename()));
 }
 
-// GetLibSupportInfoOutputFile - Return a file stream to print our output on.
-raw_ostream *llvm::GetLibSupportInfoOutputFile() {
+// CreateInfoOutputFile - Return a file stream to print our output on.
+raw_ostream *llvm::CreateInfoOutputFile() {
   std::string &LibSupportInfoOutputFilename = getLibSupportInfoOutputFilename();
   if (LibSupportInfoOutputFilename.empty())
-    return &errs();
+    return new raw_fd_ostream(2, false); // stderr.
   if (LibSupportInfoOutputFilename == "-")
-    return &outs();
+    return new raw_fd_ostream(1, false); // stdout.
   
   std::string Error;
   raw_ostream *Result = new raw_fd_ostream(LibSupportInfoOutputFilename.c_str(),
@@ -69,7 +69,7 @@ raw_ostream *llvm::GetLibSupportInfoOutputFile() {
   errs() << "Error opening info-output-file '"
     << LibSupportInfoOutputFilename << " for appending!\n";
   delete Result;
-  return &errs();
+  return new raw_fd_ostream(2, false); // stderr.
 }
 
 
@@ -264,12 +264,9 @@ void TimerGroup::removeTimer(Timer &T) {
   if (FirstTimer != 0 || TimersToPrint.empty())
     return;
   
-  raw_ostream *OutStream = GetLibSupportInfoOutputFile();
-  
+  raw_ostream *OutStream = CreateInfoOutputFile();
   PrintQueuedTimers(*OutStream);
-  
-  if (OutStream != &errs() && OutStream != &outs())
-    delete OutStream;   // Close the file.
+  delete OutStream;   // Close the file.
 }
 
 void TimerGroup::addTimer(Timer &T) {

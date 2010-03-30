@@ -32,8 +32,8 @@
 #include <cstring>
 using namespace llvm;
 
-// GetLibSupportInfoOutputFile - Return a file stream to print our output on.
-namespace llvm { extern raw_ostream *GetLibSupportInfoOutputFile(); }
+// CreateInfoOutputFile - Return a file stream to print our output on.
+namespace llvm { extern raw_ostream *CreateInfoOutputFile(); }
 
 /// -stats - Command line option to cause transformations to emit stats about
 /// what they did.
@@ -96,7 +96,7 @@ StatisticInfo::~StatisticInfo() {
   if (Stats.empty()) return;
 
   // Get the stream to write to.
-  raw_ostream &OutStream = *GetLibSupportInfoOutputFile();
+  raw_ostream &OutStream = *CreateInfoOutputFile();
 
   // Figure out how long the biggest Value and Name fields are.
   unsigned MaxNameLen = 0, MaxValLen = 0;
@@ -125,9 +125,8 @@ StatisticInfo::~StatisticInfo() {
     
   }
   
-  OutStream << '\n';  // Flush the output stream...
+  OutStream << '\n';  // Flush the output stream.
   OutStream.flush();
   
-  if (&OutStream != &outs() && &OutStream != &errs())
-    delete &OutStream;   // Close the file.
+  delete &OutStream;   // Close the file.
 }
