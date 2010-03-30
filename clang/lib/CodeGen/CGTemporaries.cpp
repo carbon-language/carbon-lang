@@ -127,15 +127,14 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
   size_t CleanupStackDepth = CleanupEntries.size();
   (void) CleanupStackDepth;
 
-  unsigned OldNumLiveTemporaries = LiveTemporaries.size();
+  RValue RV;
+  
+  {
+    CXXTemporariesCleanupScope Scope(*this);
 
-  RValue RV = EmitAnyExpr(E->getSubExpr(), AggLoc, IsAggLocVolatile,
-                          /*IgnoreResult=*/false, IsInitializer);
-
-  // Pop temporaries.
-  while (LiveTemporaries.size() > OldNumLiveTemporaries)
-    PopCXXTemporary();
-
+    RV = EmitAnyExpr(E->getSubExpr(), AggLoc, IsAggLocVolatile,
+                     /*IgnoreResult=*/false, IsInitializer);
+  }
   assert(CleanupEntries.size() == CleanupStackDepth &&
          "Cleanup size mismatch!");
 

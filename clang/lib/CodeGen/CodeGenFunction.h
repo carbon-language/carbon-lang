@@ -254,6 +254,27 @@ public:
     }
   };
 
+  /// CXXTemporariesCleanupScope - Enters a new scope for catching live
+  /// temporaries, all of which will be popped once the scope is exited.
+  class CXXTemporariesCleanupScope {
+    CodeGenFunction &CGF;
+    size_t NumLiveTemporaries;
+    
+    // DO NOT IMPLEMENT
+    CXXTemporariesCleanupScope(const CXXTemporariesCleanupScope &); 
+    CXXTemporariesCleanupScope &operator=(const CXXTemporariesCleanupScope &);
+    
+  public:
+    explicit CXXTemporariesCleanupScope(CodeGenFunction &CGF)
+      : CGF(CGF), NumLiveTemporaries(CGF.LiveTemporaries.size()) { }
+    
+    ~CXXTemporariesCleanupScope() {
+      while (CGF.LiveTemporaries.size() > NumLiveTemporaries)
+        CGF.PopCXXTemporary();
+    }
+  };
+
+
   /// EmitCleanupBlocks - Takes the old cleanup stack size and emits the cleanup
   /// blocks that have been added.
   void EmitCleanupBlocks(size_t OldCleanupStackSize);

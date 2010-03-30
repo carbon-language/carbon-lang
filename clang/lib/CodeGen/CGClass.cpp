@@ -550,29 +550,27 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                        BaseCopyCtor->getParamDecl(0)->getType()));
 
-    unsigned OldNumLiveTemporaries = LiveTemporaries.size();
+    {
+      CXXTemporariesCleanupScope Scope(*this);
 
-    // If the copy constructor has default arguments, emit them.
-    for (unsigned I = 1, E = BaseCopyCtor->getNumParams(); I < E; ++I) {
-      const ParmVarDecl *Param = BaseCopyCtor->getParamDecl(I);
-      const Expr *DefaultArgExpr = Param->getDefaultArg();
-      
-      assert(DefaultArgExpr && "Ctor parameter must have default arg!");
+      // If the copy constructor has default arguments, emit them.
+      for (unsigned I = 1, E = BaseCopyCtor->getNumParams(); I < E; ++I) {
+        const ParmVarDecl *Param = BaseCopyCtor->getParamDecl(I);
+        const Expr *DefaultArgExpr = Param->getDefaultArg();
 
-      QualType ArgType = Param->getType();
-      CallArgs.push_back(std::make_pair(EmitCallArg(DefaultArgExpr, ArgType),
-                                        ArgType));
+        assert(DefaultArgExpr && "Ctor parameter must have default arg!");
 
+        QualType ArgType = Param->getType();
+        CallArgs.push_back(std::make_pair(EmitCallArg(DefaultArgExpr, ArgType),
+                                          ArgType));
+
+      }
+
+      const FunctionProtoType *FPT =
+        BaseCopyCtor->getType()->getAs<FunctionProtoType>();
+      EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
+               Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
     }
-
-    const FunctionProtoType *FPT =
-      BaseCopyCtor->getType()->getAs<FunctionProtoType>();
-    EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-             Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
-    
-    // Pop temporaries.
-    while (LiveTemporaries.size() > OldNumLiveTemporaries)
-      PopCXXTemporary();
   }
 }
 
@@ -1306,14 +1304,12 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   // before the construction of the next array element, if any.
   
   // Keep track of the current number of live temporaries.
-  unsigned OldNumLiveTemporaries = LiveTemporaries.size();
+  {
+    CXXTemporariesCleanupScope Scope(*this);
 
-  EmitCXXConstructorCall(D, Ctor_Complete, Address, ArgBeg, ArgEnd);
+    EmitCXXConstructorCall(D, Ctor_Complete, Address, ArgBeg, ArgEnd);
+  }
 
-  // Pop temporaries.
-  while (LiveTemporaries.size() > OldNumLiveTemporaries)
-    PopCXXTemporary();
-  
   EmitBlock(ContinueBlock);
 
   // Emit the increment of the loop counter.
