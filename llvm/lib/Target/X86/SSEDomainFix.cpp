@@ -106,9 +106,14 @@ struct DomainValue {
     return Mask & mask;
   }
 
-  // Mark domain as available
+  // Mark domain as available.
   void add(unsigned domain) {
     Mask |= 1u << domain;
+  }
+
+  // First domain available in mask.
+  unsigned firstDomain() const {
+    return CountTrailingZeros_32(Mask);
   }
 
   DomainValue() { clear(); }
@@ -119,6 +124,8 @@ struct DomainValue {
   }
 };
 
+static const unsigned NumRegs = 16;
+
 class SSEDomainFixPass : public MachineFunctionPass {
   static char ID;
   PoolAllocator<DomainValue> Pool;
@@ -126,10 +133,11 @@ class SSEDomainFixPass : public MachineFunctionPass {
   MachineFunction *MF;
   const X86InstrInfo *TII;
   const TargetRegisterInfo *TRI;
-
   MachineBasicBlock *MBB;
-  bool hasLiveRegs;
-  DomainValue *LiveRegs[16];
+  DomainValue **LiveRegs;
+  typedef DenseMap<MachineBasicBlock*,DomainValue**> LiveOutMap;
+  LiveOutMap LiveOuts;
+  unsigned Distance;
 
 public:
   SSEDomainFixPass() : MachineFunctionPass(&ID) {}
@@ -156,7 +164,7 @@ private:
   void Collapse(DomainValue *dv, unsigned domain);
   bool Merge(DomainValue *A, DomainValue *B);
 
-  void enterBasicBlock(MachineBasicBlock *MBB);
+  void enterBasicBlock();
   void visitGenericInstr(MachineInstr*);
   void visitSoftInstr(MachineInstr*, unsigned mask);
   void visitHardInstr(MachineInstr*, unsigned domain);
@@ -171,13 +179,17 @@ char SSEDomainFixPass::ID = 0;
 int SSEDomainFixPass::RegIndex(unsigned reg) {
   // Registers are sorted lexicographically.
   // We just need them to be consecutive, ordering doesn't matter.
-  assert(X86::XMM9 == X86::XMM0+15 && "Unexpected sort");
+  assert(X86::XMM9 == X86::XMM0+NumRegs-1 && "Unexpected sort");
   reg -= X86::XMM0;
-  return reg < 16 ? reg : -1;
+  return reg < NumRegs ? reg : -1;
 }
 
 /// Set LiveRegs[rx] = dv, updating reference counts.
 void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
+  assert(unsigned(rx) < NumRegs && "Invalid index");
+  if (!LiveRegs)
+    LiveRegs = (DomainValue**)calloc(sizeof(DomainValue*), NumRegs);
+
   if (LiveRegs[rx] == dv)
     return;
   if (LiveRegs[rx]) {
@@ -190,28 +202,30 @@ void SSEDomainFixPass::SetLiveReg(int rx, DomainValue *dv) {
 
 // Kill register rx, recycle or collapse any DomainValue.
 void SSEDomainFixPass::Kill(int rx) {
-  if (!LiveRegs[rx]) return;
+  assert(unsigned(rx) < NumRegs && "Invalid index");
+  if (!LiveRegs || !LiveRegs[rx]) return;
 
   // Before killing the last reference to an open DomainValue, collapse it to
   // the first available domain.
   if (LiveRegs[rx]->Refs == 1 && !LiveRegs[rx]->collapsed())
-    Collapse(LiveRegs[rx], CountTrailingZeros_32(LiveRegs[rx]->Mask));
+    Collapse(LiveRegs[rx], LiveRegs[rx]->firstDomain());
   else
     SetLiveReg(rx, 0);
 }
 
 /// Force register rx into domain.
 void SSEDomainFixPass::Force(int rx, unsigned domain) {
-  hasLiveRegs = true;
+  assert(unsigned(rx) < NumRegs && "Invalid index");
   DomainValue *dv;
-  if ((dv = LiveRegs[rx])) {
+  if (LiveRegs && (dv = LiveRegs[rx])) {
     if (dv->collapsed())
       dv->add(domain);
     else
       Collapse(dv, domain);
   } else {
-    // Set up basic collapsed DomainValue
+    // Set up basic collapsed DomainValue.
     dv = Pool.Alloc();
+    dv->Dist = Distance;
     dv->add(domain);
     SetLiveReg(rx, dv);
   }
@@ -231,14 +245,14 @@ void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
   dv->Mask = 1u << domain;
 
   // If there are multiple users, give them new, unique DomainValues.
-  if (dv->Refs > 1) {
-    for (unsigned rx=0, e = array_lengthof(LiveRegs); rx != e; ++rx)
+  if (LiveRegs && dv->Refs > 1) {
+    for (unsigned rx = 0; rx != NumRegs; ++rx)
       if (LiveRegs[rx] == dv) {
         DomainValue *dv2 = Pool.Alloc();
+        dv2->Dist = Distance;
         dv2->add(domain);
         SetLiveReg(rx, dv2);
       }
-    Pool.Recycle(dv);
   }
 }
 
@@ -252,14 +266,42 @@ bool SSEDomainFixPass::Merge(DomainValue *A, DomainValue *B) {
   A->Mask &= B->Mask;
   A->Dist = std::max(A->Dist, B->Dist);
   A->Instrs.append(B->Instrs.begin(), B->Instrs.end());
-  for (unsigned rx=0, e = array_lengthof(LiveRegs); rx != e; ++rx)
+  for (unsigned rx = 0; rx != NumRegs; ++rx)
     if (LiveRegs[rx] == B)
       SetLiveReg(rx, A);
   return true;
 }
 
-void SSEDomainFixPass::enterBasicBlock(MachineBasicBlock *mbb) {
-  MBB = mbb;
+void SSEDomainFixPass::enterBasicBlock() {
+  // Try to coalesce live-out registers from predecessors.
+  for (MachineBasicBlock::const_livein_iterator i = MBB->livein_begin(),
+         e = MBB->livein_end(); i != e; ++i) {
+    int rx = RegIndex(*i);
+    if (rx < 0) continue;
+    for (MachineBasicBlock::const_pred_iterator pi = MBB->pred_begin(),
+           pe = MBB->pred_end(); pi != pe; ++pi) {
+      LiveOutMap::const_iterator fi = LiveOuts.find(*pe);
+      if (fi == LiveOuts.end()) continue;
+      DomainValue *pdv = fi->second[rx];
+      if (!pdv) continue;
+      if (!LiveRegs || !LiveRegs[rx])
+        SetLiveReg(rx, pdv);
+      else {
+        // We have a live DomainValue from more than one predecessor.
+        if (LiveRegs[rx]->collapsed()) {
+          // We are already collapsed, but predecessor is not. Force him.
+          if (!pdv->collapsed())
+            Collapse(pdv, LiveRegs[rx]->firstDomain());
+        } else {
+          // Currently open, merge in predecessor.
+          if (!pdv->collapsed())
+            Merge(LiveRegs[rx], pdv);
+          else
+            Collapse(LiveRegs[rx], pdv->firstDomain());
+        }
+      }
+    }
+  }
 }
 
 // A hard instruction only works in one domain. All input registers will be
@@ -291,8 +333,9 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // Scan the explicit use operands for incoming domains.
   unsigned collmask = mask;
   SmallVector<int, 4> used;
-  for (unsigned i = mi->getDesc().getNumDefs(),
-                e = mi->getDesc().getNumOperands(); i != e; ++i) {
+  if (LiveRegs)
+    for (unsigned i = mi->getDesc().getNumDefs(),
+                  e = mi->getDesc().getNumOperands(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
     int rx = RegIndex(mo.getReg());
@@ -323,7 +366,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   for (SmallVector<int, 4>::iterator i=used.begin(), e=used.end(); i!=e; ++i) {
     int rx = *i;
     DomainValue *dv = LiveRegs[rx];
-    // This useless DomainValue could have been missed above
+    // This useless DomainValue could have been missed above.
     if (!dv->compat(collmask)) {
       Kill(*i);
       continue;
@@ -359,6 +402,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // dv is the DomainValue we are going to use for this instruction.
   if (!dv)
     dv = Pool.Alloc();
+  dv->Dist = Distance;
   dv->Mask = collmask;
   dv->Instrs.push_back(mi);
 
@@ -368,7 +412,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
     if (!mo.isReg()) continue;
     int rx = RegIndex(mo.getReg());
     if (rx < 0) continue;
-    if (!LiveRegs[rx] || (mo.isDef() && LiveRegs[rx]!=dv)) {
+    if (!LiveRegs || !LiveRegs[rx] || (mo.isDef() && LiveRegs[rx]!=dv)) {
       Kill(rx);
       SetLiveReg(rx, dv);
     }
@@ -376,7 +420,7 @@ void SSEDomainFixPass::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 }
 
 void SSEDomainFixPass::visitGenericInstr(MachineInstr *mi) {
-  // Process explicit defs, kill any XMM registers redefined
+  // Process explicit defs, kill any XMM registers redefined.
   for (unsigned i = 0, e = mi->getDesc().getNumDefs(); i != e; ++i) {
     MachineOperand &mo = mi->getOperand(i);
     if (!mo.isReg()) continue;
@@ -391,10 +435,9 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
   TII = static_cast<const X86InstrInfo*>(MF->getTarget().getInstrInfo());
   TRI = MF->getTarget().getRegisterInfo();
   MBB = 0;
-
-  hasLiveRegs = false;
-  for (unsigned i=0, e = array_lengthof(LiveRegs); i != e; ++i)
-    LiveRegs[i] = 0;
+  LiveRegs = 0;
+  Distance = 0;
+  assert(NumRegs == X86::VR128RegClass.getNumRegs() && "Bad regclass");
 
   // If no XMM registers are used in the function, we can skip it completely.
   bool anyregs = false;
@@ -411,22 +454,35 @@ bool SSEDomainFixPass::runOnMachineFunction(MachineFunction &mf) {
   for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 16> >
          DFI = df_ext_begin(Entry, Visited), DFE = df_ext_end(Entry, Visited);
          DFI != DFE; ++DFI) {
-    enterBasicBlock(*DFI);
+    MBB = *DFI;
+    enterBasicBlock();
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
         ++I) {
       MachineInstr *mi = I;
       if (mi->isDebugValue()) continue;
+      ++Distance;
       std::pair<uint16_t, uint16_t> domp = TII->GetSSEDomain(mi);
       if (domp.first)
         if (domp.second)
           visitSoftInstr(mi, domp.second);
         else
           visitHardInstr(mi, domp.first);
-      else if (hasLiveRegs)
+      else if (LiveRegs)
         visitGenericInstr(mi);
     }
+
+    // Save live registers at end of MBB - used by enterBasicBlock().
+    if (LiveRegs)
+      LiveOuts.insert(std::make_pair(MBB, LiveRegs));
+    LiveRegs = 0;
   }
 
+  // Clear the LiveOuts vectors. Should we also collapse any remaining
+  // DomainValues?
+  for (LiveOutMap::const_iterator i = LiveOuts.begin(), e = LiveOuts.end();
+         i != e; ++i)
+    free(i->second);
+  LiveOuts.clear();
   Pool.Clear();
 
   return false;
