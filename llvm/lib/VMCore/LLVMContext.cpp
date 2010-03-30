@@ -29,16 +29,45 @@ LLVMContext& llvm::getGlobalContext() {
 LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
-GetElementPtrConstantExpr::GetElementPtrConstantExpr
-  (Constant *C,
-   const std::vector<Constant*> &IdxList,
-   const Type *DestTy)
-    : ConstantExpr(DestTy, Instruction::GetElementPtr,
-                   OperandTraits<GetElementPtrConstantExpr>::op_end(this)
-                   - (IdxList.size()+1),
-                   IdxList.size()+1) {
-  OperandList[0] = C;
-  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-    OperandList[i+1] = IdxList[i];
+
+#ifndef NDEBUG
+/// isValidName - Return true if Name is a valid custom metadata handler name.
+static bool isValidName(StringRef MDName) {
+  if (MDName.empty())
+    return false;
+  
+  if (!isalpha(MDName[0]))
+    return false;
+  
+  for (StringRef::iterator I = MDName.begin() + 1, E = MDName.end(); I != E;
+       ++I) {
+    if (!isalnum(*I) && *I != '_' && *I != '-' && *I != '.')
+      return false;
+  }
+  return true;
 }
+#endif
+
+/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+unsigned LLVMContext::getMDKindID(StringRef Name) const {
+  assert(isValidName(Name) && "Invalid MDNode name");
+  
+  unsigned &Entry = pImpl->CustomMDKindNames[Name];
+  
+  // If this is new, assign it its ID.
+  if (Entry == 0) Entry = pImpl->CustomMDKindNames.size();
+  return Entry;
+}
+
+/// getHandlerNames - Populate client supplied smallvector using custome
+/// metadata name and ID.
+void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
+  Names.resize(pImpl->CustomMDKindNames.size()+1);
+  Names[0] = "";
+  for (StringMap<unsigned>::const_iterator I = pImpl->CustomMDKindNames.begin(),
+       E = pImpl->CustomMDKindNames.end(); I != E; ++I)
+    // MD Handlers are numbered from 1.
+    Names[I->second] = I->first();
+}
+
 

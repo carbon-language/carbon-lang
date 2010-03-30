@@ -1947,6 +1947,20 @@ const char *ConstantExpr::getOpcodeName() const {
   return Instruction::getOpcodeName(getOpcode());
 }
 
+
+
+GetElementPtrConstantExpr::
+GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+                          const Type *DestTy)
+  : ConstantExpr(DestTy, Instruction::GetElementPtr,
+                 OperandTraits<GetElementPtrConstantExpr>::op_end(this)
+                 - (IdxList.size()+1), IdxList.size()+1) {
+  OperandList[0] = C;
+  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+    OperandList[i+1] = IdxList[i];
+}
+
+
 //===----------------------------------------------------------------------===//
 //                replaceUsesOfWithOnConstant implementations
 
