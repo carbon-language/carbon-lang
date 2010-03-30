@@ -63,6 +63,8 @@ namespace llvm {
     void setSize(unsigned size) { Size = size; }
 
     /// Conatined data objects.
+    // FIXME: This vector is leaked because sections are allocated with a
+    //        BumpPtrAllocator.
     std::vector<const GlobalVariable *>Items;
 
     /// Check section type. 

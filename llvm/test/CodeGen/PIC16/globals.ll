@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=pic16 | FileCheck %s
+; XFAIL: vg_leak
 
 @G1 = global i32 4712, section "Address=412"
 ; CHECK: @G1.412..user_section.#	IDATA	412

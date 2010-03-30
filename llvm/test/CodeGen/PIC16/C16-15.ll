@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=pic16 | grep "extern" | grep "@.lib.unordered.f32" | count 3
+; XFAIL: vg_leak
 
 @pc = global i8* inttoptr (i64 160 to i8*), align 1 ; <i8**> [#uses=2]
 @aa = common global i16 0, align 1                ; <i16*> [#uses=0]
