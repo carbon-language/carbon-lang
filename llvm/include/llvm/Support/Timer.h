@@ -164,18 +164,21 @@ class TimerGroup {
   std::string Name;
   Timer *FirstTimer;   // First timer in the group.
   std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
+  
+  TimerGroup **Prev, *Next; // Doubly linked list of TimerGroup's.
   TimerGroup(const TimerGroup &TG);      // DO NOT IMPLEMENT
   void operator=(const TimerGroup &TG);  // DO NOT IMPLEMENT
 public:
-  explicit TimerGroup(const std::string &name = "")
-    : Name(name), FirstTimer(0) {}
-
+  explicit TimerGroup(const std::string &name);
   ~TimerGroup();
 
   void setName(const std::string &name) { Name = name; }
 
   /// print - Print any started timers in this group and zero them.
   void print(raw_ostream &OS);
+  
+  /// printAll - This static method prints all timers and clears them all out.
+  static void printAll(raw_ostream &OS);
   
 private:
   friend class Timer;

@@ -239,11 +239,33 @@ NamedRegionTimer::NamedRegionTimer(const std::string &Name,
 //   TimerGroup Implementation
 //===----------------------------------------------------------------------===//
 
+/// TimerGroupList - This is the global list of TimerGroups, maintained by the
+/// TimerGroup ctor/dtor and is protected by the TimerLock lock.
+static TimerGroup *TimerGroupList = 0;
+
+TimerGroup::TimerGroup(const std::string &name)
+  : Name(name), FirstTimer(0) {
+    
+  // Add the group to TimerGroupList.
+  sys::SmartScopedLock<true> L(*TimerLock);
+  if (TimerGroupList)
+    TimerGroupList->Prev = &Next;
+  Next = TimerGroupList;
+  Prev = &TimerGroupList;
+  TimerGroupList = this;
+}
+
 TimerGroup::~TimerGroup() {
   // If the timer group is destroyed before the timers it owns, accumulate and
   // print the timing data.
   while (FirstTimer != 0)
     removeTimer(*FirstTimer);
+  
+  // Remove the group from the TimerGroupList.
+  sys::SmartScopedLock<true> L(*TimerLock);
+  *Prev = Next;
+  if (Next)
+    Next->Prev = Prev;
 }
 
 
@@ -351,4 +373,12 @@ void TimerGroup::print(raw_ostream &OS) {
   // If any timers were started, print the group.
   if (!TimersToPrint.empty())
     PrintQueuedTimers(OS);
+}
+
+/// printAll - This static method prints all timers and clears them all out.
+void TimerGroup::printAll(raw_ostream &OS) {
+  sys::SmartScopedLock<true> L(*TimerLock);
+
+  for (TimerGroup *TG = TimerGroupList; TG; TG = TG->Next)
+    TG->print(OS);
 }
