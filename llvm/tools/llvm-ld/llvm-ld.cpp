@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -123,6 +124,10 @@ static cl::opt<std::string> CO9("m", cl::Hidden,
 /// This is just for convenience so it doesn't have to be passed around
 /// everywhere.
 static std::string progname;
+
+/// FileRemover objects to clean up output files in the event of an error.
+static FileRemover OutputRemover;
+static FileRemover BitcodeOutputRemover;
 
 /// PrintAndExit - Prints a message to standard error and exits with error code
 ///
@@ -235,10 +240,6 @@ void GenerateBitcode(Module* M, const std::string& FileName) {
                      raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty())
     PrintAndExit(ErrorInfo, M);
-
-  // Ensure that the bitcode file gets removed from the disk if we get a
-  // terminating signal.
-  sys::RemoveFileOnSignal(sys::Path(FileName));
 
   // Write it out
   WriteBitcodeToFile(M, Out);
@@ -517,6 +518,39 @@ int main(int argc, char **argv, char **envp) {
   // Parse the command line options
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  if (!LinkAsLibrary) {
+    // Default to "a.exe" instead of "a.out".
+    if (OutputFilename.getNumOccurrences() == 0)
+      OutputFilename = "a.exe";
+
+    // If there is no suffix add an "exe" one.
+    sys::Path ExeFile( OutputFilename );
+    if (ExeFile.getSuffix() == "") {
+      ExeFile.appendSuffix("exe");
+      OutputFilename = ExeFile.str();
+    }
+  }
+#endif
+
+  // Generate the bitcode for the optimized module.
+  // If -b wasn't specified, use the name specified
+  // with -o to construct BitcodeOutputFilename.
+  if (BitcodeOutputFilename.empty()) {
+    BitcodeOutputFilename = OutputFilename;
+    if (!LinkAsLibrary) BitcodeOutputFilename += ".bc";
+  }
+
+  // Arrange for the bitcode output file to be deleted on any errors.
+  BitcodeOutputRemover.setFile(sys::Path(BitcodeOutputFilename));
+  sys::RemoveFileOnSignal(sys::Path(BitcodeOutputFilename));
+
+  // Arrange for the output file to be deleted on any errors.
+  if (!LinkAsLibrary) {
+    OutputRemover.setFile(sys::Path(OutputFilename));
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  }
+
   // Construct a Linker (now that Verbose is set)
   Linker TheLinker(progname, OutputFilename, Context, Verbose);
 
@@ -559,29 +593,7 @@ int main(int argc, char **argv, char **envp) {
   // Optimize the module
   Optimize(Composite.get());
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-  if (!LinkAsLibrary) {
-    // Default to "a.exe" instead of "a.out".
-    if (OutputFilename.getNumOccurrences() == 0)
-      OutputFilename = "a.exe";
-
-    // If there is no suffix add an "exe" one.
-    sys::Path ExeFile( OutputFilename );
-    if (ExeFile.getSuffix() == "") {
-      ExeFile.appendSuffix("exe");
-      OutputFilename = ExeFile.str();
-    }
-  }
-#endif
-
-  // Generate the bitcode for the optimized module.
-  // If -b wasn't specified, use the name specified
-  // with -o to construct BitcodeOutputFilename.
-  if (BitcodeOutputFilename.empty()) {
-    BitcodeOutputFilename = OutputFilename;
-    if (!LinkAsLibrary) BitcodeOutputFilename += ".bc";
-  }
-
+  // Generate the bitcode output.
   GenerateBitcode(Composite.get(), BitcodeOutputFilename);
 
   // If we are not linking a library, generate either a native executable
@@ -634,9 +646,9 @@ int main(int argc, char **argv, char **envp) {
       sys::Path AssemblyFile ( OutputFilename);
       AssemblyFile.appendSuffix("s");
 
-      // Mark the output files for removal if we get an interrupt.
+      // Mark the output files for removal.
+      FileRemover AssemblyFileRemover(AssemblyFile);
       sys::RemoveFileOnSignal(AssemblyFile);
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
       sys::Path llc = FindExecutable("llc", argv[0],
@@ -657,16 +669,13 @@ int main(int argc, char **argv, char **envp) {
       if (0 != GenerateNative(OutputFilename, AssemblyFile.str(),
                               NativeLinkItems, gcc, envp, ErrMsg))
         PrintAndExit(ErrMsg, Composite.get());
-
-      // Remove the assembly language file.
-      AssemblyFile.eraseFromDisk();
     } else if (NativeCBE) {
       sys::Path CFile (OutputFilename);
       CFile.appendSuffix("cbe.c");
 
-      // Mark the output files for removal if we get an interrupt.
+      // Mark the output files for removal.
+      FileRemover CFileRemover(CFile);
       sys::RemoveFileOnSignal(CFile);
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
       // Determine the locations of the llc and gcc programs.
       sys::Path llc = FindExecutable("llc", argv[0],
@@ -686,10 +695,6 @@ int main(int argc, char **argv, char **envp) {
       if (GenerateNative(OutputFilename, CFile.str(), 
                          NativeLinkItems, gcc, envp, ErrMsg))
         PrintAndExit(ErrMsg, Composite.get());
-
-      // Remove the assembly language file.
-      CFile.eraseFromDisk();
-
     } else {
       EmitShellScript(argv, Composite.get());
     }
@@ -706,6 +711,11 @@ int main(int argc, char **argv, char **envp) {
     if (sys::Path(BitcodeOutputFilename).makeReadableOnDisk(&ErrMsg))
       PrintAndExit(ErrMsg, Composite.get());
   }
+
+  // Operations which may fail are now complete.
+  BitcodeOutputRemover.releaseFile();
+  if (!LinkAsLibrary)
+    OutputRemover.releaseFile();
 
   // Graceful exit
   return 0;
