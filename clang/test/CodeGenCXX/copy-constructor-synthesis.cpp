@@ -110,3 +110,46 @@ struct B : A {
 void f(const B &b1) {
   B b2(b1);
 }
+
+// PR6628
+namespace PR6628 {
+
+struct T {
+  T();
+  ~T();
+
+  double d;
+};
+
+struct A {
+  A(const A &other, const T &t = T(), const T& t2 = T());
+};
+
+struct B : A {
+  A a1;
+  A a2;
+};
+
+// Force the copy constructor to be synthesized.
+void f(B b1) {
+  B b2 = b1;
+}
+
+// CHECK: define linkonce_odr void @_ZN6PR66281BC2ERKS0_
+// CHECK: call void @_ZN6PR66281TC1Ev
+// CHECK: call void @_ZN6PR66281TC1Ev
+// CHECK: call void @_ZN6PR66281AC2ERKS0_RKNS_1TES5_
+// CHECK: call void @_ZN6PR66281TD1Ev
+// CHECK: call void @_ZN6PR66281TD1Ev
+// CHECK: call void @_ZN6PR66281TC1Ev
+// CHECK: call void @_ZN6PR66281TC1Ev
+// CHECK: call void @_ZN6PR66281AC1ERKS0_RKNS_1TES5_
+// CHECK: call void @_ZN6PR66281TD1Ev
+// CHECK: call void @_ZN6PR66281TD1Ev
+// CHECK: call void @_ZN6PR66281TC1Ev
+// CHECK: call void @_ZN6PR66281TC1Ev
+// CHECK: call void @_ZN6PR66281AC1ERKS0_RKNS_1TES5_
+// CHECK: call void @_ZN6PR66281TD1Ev
+// CHECK: call void @_ZN6PR66281TD1Ev
+}
+
