@@ -28,7 +28,6 @@ namespace llvm {
 namespace clang {
 
 class SourceManager;
-class FileEntry;
 
 /// FileID - This is an opaque identifier used by SourceManager which refers to
 /// a source file (MemoryBuffer) along with its #include path and #line data.
