@@ -128,6 +128,7 @@ struct A {
 struct B : A {
   A a1;
   A a2;
+  A a[10];
 };
 
 // Force the copy constructor to be synthesized.

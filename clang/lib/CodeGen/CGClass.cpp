@@ -401,22 +401,9 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
   if (BitwiseCopy)
     EmitAggregateCopy(Dest, Src, Ty);
   else if (CXXConstructorDecl *BaseCopyCtor =
-           BaseClassDecl->getCopyConstructor(getContext(), 0)) {
-    llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor,
-                                                      Ctor_Complete);
-    CallArgList CallArgs;
-    // Push the this (Dest) ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Dest),
-                                      BaseCopyCtor->getThisType(getContext())));
+           BaseClassDecl->getCopyConstructor(getContext(), 0))
+    EmitCopyCtorCall(*this, BaseCopyCtor, Ctor_Complete, Dest, 0, Src);
 
-    // Push the Src ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Src),
-                                     BaseCopyCtor->getParamDecl(0)->getType()));
-    const FunctionProtoType *FPT
-      = BaseCopyCtor->getType()->getAs<FunctionProtoType>();
-    EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-             Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
-  }
   EmitBlock(ContinueBlock);
 
   // Emit the increment of the loop counter.
