@@ -3138,19 +3138,28 @@ void CodeGenVTables::EmitVTableRelatedData(GlobalDecl GD) {
   // Get the key function.
   const CXXMethodDecl *KeyFunction = CGM.getContext().getKeyFunction(RD);
   
+  TemplateSpecializationKind RDKind = RD->getTemplateSpecializationKind();
+  TemplateSpecializationKind MDKind = MD->getTemplateSpecializationKind();
+
   if (KeyFunction) {
     // We don't have the right key function.
     if (KeyFunction->getCanonicalDecl() != MD->getCanonicalDecl())
+      return;
+  } else {
+    // If this is an explicit instantiation of a method, we don't need a vtable.
+    // Since we have no key function, we will emit the vtable when we see
+    // a use, and just defining a function is not an use.
+    if ((RDKind == TSK_ImplicitInstantiation ||
+         RDKind == TSK_ExplicitInstantiationDeclaration) &&
+        MDKind == TSK_ExplicitInstantiationDefinition)
       return;
   }
 
   if (Vtables.count(RD))
     return;
 
-  TemplateSpecializationKind kind = RD->getTemplateSpecializationKind();
-  if (kind == TSK_ImplicitInstantiation)
+  if (RDKind == TSK_ImplicitInstantiation)
     CGM.DeferredVtables.push_back(RD);
   else
     GenerateClassData(CGM.getVtableLinkage(RD), RD);
 }
-
