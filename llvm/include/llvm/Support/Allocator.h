@@ -134,6 +134,7 @@ class BumpPtrAllocator {
   static MallocSlabAllocator DefaultSlabAllocator;
 
 public:
+  typedef void (*DTorFunction)(void*);
   BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096,
                    SlabAllocator &allocator = DefaultSlabAllocator);
   ~BumpPtrAllocator();
@@ -141,6 +142,11 @@ public:
   /// Reset - Deallocate all but the current slab and reset the current pointer
   /// to the beginning of it, freeing all memory allocated so far.
   void Reset();
+
+  /// Reset - like Reset(), but call DTorFunction for each allocated
+  /// object. This assumes that all objects allocated with this allocator
+  /// had the same size and alignment specified here.
+  void Reset(size_t Size, size_t Alignment, DTorFunction DTor);
 
   /// Allocate - Allocate space at the specified alignment.
   ///
