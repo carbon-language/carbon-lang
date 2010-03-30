@@ -2424,7 +2424,7 @@ def : Pat<(membarrier (i8 imm), (i8 imm), (i8 imm), (i8 imm),
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-ones value if folding it would be beneficial.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1 in
+    isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
   // FIXME: Change encoding to pseudo.
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;
