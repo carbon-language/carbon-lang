@@ -2163,6 +2163,7 @@ bool DwarfDebug::extractScopeInformation() {
       if (DL.isUnknown()) continue;
       DILocation DLT = MF->getDILocation(DL);
       DIScope DLTScope = DLT.getScope();
+      if (!DLTScope.getNode()) continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
@@ -2184,6 +2185,7 @@ bool DwarfDebug::extractScopeInformation() {
       if (DL.isUnknown())  continue;
       DILocation DLT = MF->getDILocation(DL);
       DIScope DLTScope = DLT.getScope();
+      if (!DLTScope.getNode()) continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated
       // into a scope DIE at the end.
