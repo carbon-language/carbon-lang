@@ -203,14 +203,15 @@ void SSEDomainFixPass::Kill(int rx) {
 /// Force register rx into domain.
 void SSEDomainFixPass::Force(int rx, unsigned domain) {
   hasLiveRegs = true;
-  if (DomainValue *dv = LiveRegs[rx]) {
+  DomainValue *dv;
+  if ((dv = LiveRegs[rx])) {
     if (dv->collapsed())
       dv->add(domain);
     else
       Collapse(dv, domain);
   } else {
     // Set up basic collapsed DomainValue
-    DomainValue *dv = Pool.Alloc();
+    dv = Pool.Alloc();
     dv->add(domain);
     SetLiveReg(rx, dv);
   }
