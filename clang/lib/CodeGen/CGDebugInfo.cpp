@@ -88,17 +88,35 @@ llvm::StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
 llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
-  if (!Loc.isValid()) 
+  if (!Loc.isValid())
     // If Location is not valid then use main input file.
     return DebugFactory.CreateFile(TheCU.getFilename(), TheCU.getDirectory(),
                                    TheCU);
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
+
+  // Cache the results.
+  const char *fname = PLoc.getFilename();
+  llvm::DenseMap<const char *, llvm::WeakVH>::iterator it =
+    DIFileCache.find(fname);
+
+  if (it != DIFileCache.end()) {
+    // Verify that the information still exists.
+    if (&*it->second)
+      return llvm::DIFile(cast<llvm::MDNode>(it->second));
+  }
+
+  // FIXME: We shouldn't even need to call 'makeAbsolute()' in the cases
+  // where we can consult the FileEntry.
   llvm::sys::Path AbsFileName(PLoc.getFilename());
   AbsFileName.makeAbsolute();
 
-  return DebugFactory.CreateFile(AbsFileName.getLast(),
-                                 AbsFileName.getDirname(), TheCU);
+  llvm::DIFile F = DebugFactory.CreateFile(AbsFileName.getLast(),
+                                           AbsFileName.getDirname(), TheCU);
+
+  DIFileCache[fname] = F.getNode();
+  return F;
+
 }
 /// CreateCompileUnit - Create new compile unit.
 void CGDebugInfo::CreateCompileUnit() {

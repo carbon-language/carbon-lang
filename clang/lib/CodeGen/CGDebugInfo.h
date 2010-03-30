@@ -64,6 +64,7 @@ class CGDebugInfo {
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
   llvm::BumpPtrAllocator DebugInfoNames;
 
+  llvm::DenseMap<const char *, llvm::WeakVH> DIFileCache;
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
 
