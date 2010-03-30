@@ -1872,7 +1872,6 @@ LValue CodeGenFunction::EmitObjCSuperExprLValue(const ObjCSuperExpr *E) {
 LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   // Can only get l-value for message expression returning aggregate type
   RValue RV = EmitAnyExprToTemp(E);
-  // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
 }
 

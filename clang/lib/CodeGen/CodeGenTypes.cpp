@@ -477,7 +477,7 @@ void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No) {
   FieldInfo[FD] = No;
 }
 
-/// getBitFieldInfo - Return the BitFieldInfo  that corresponds to the field FD.
+/// getBitFieldInfo - Return the BitFieldInfo that corresponds to the field FD.
 CodeGenTypes::BitFieldInfo CodeGenTypes::getBitFieldInfo(const FieldDecl *FD) {
   llvm::DenseMap<const FieldDecl *, BitFieldInfo>::iterator
     I = BitFields.find(FD);

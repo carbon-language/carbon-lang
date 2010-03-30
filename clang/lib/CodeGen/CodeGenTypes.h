@@ -69,7 +69,7 @@ namespace CodeGen {
 
   public:
     CGRecordLayout(const llvm::Type *T, bool ContainsPointerToDataMember)
-      : LLVMType(T), ContainsPointerToDataMember(ContainsPointerToDataMember) { }
+      : LLVMType(T), ContainsPointerToDataMember(ContainsPointerToDataMember) {}
 
     /// getLLVMType - Return llvm type associated with this record.
     const llvm::Type *getLLVMType() const {
@@ -107,8 +107,6 @@ class CodeGenTypes {
 
   /// CGRecordLayouts - This maps llvm struct type with corresponding
   /// record layout info.
-  /// FIXME : If CGRecordLayout is less than 16 bytes then use
-  /// inline it in the map.
   llvm::DenseMap<const Type*, CGRecordLayout *> CGRecordLayouts;
 
   /// FieldInfo - This maps struct field with corresponding llvm struct type
