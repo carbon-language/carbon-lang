@@ -171,6 +171,7 @@ public:
   explicit TimerGroup(const TimerGroup &TG) : FirstTimer(0) {
     operator=(TG);
   }
+  ~TimerGroup();
 
   void operator=(const TimerGroup &TG) {
     assert(TG.FirstTimer == 0 && FirstTimer == 0 &&
@@ -181,11 +182,6 @@ public:
   
   void setName(const std::string &name) { Name = name; }
   
-  ~TimerGroup() {
-    assert(FirstTimer == 0 &&
-           "TimerGroup destroyed before all contained timers!");
-  }
-
   void PrintQueuedTimers(raw_ostream &OS);
   
 private:

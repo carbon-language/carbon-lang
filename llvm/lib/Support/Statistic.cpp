@@ -128,6 +128,6 @@ StatisticInfo::~StatisticInfo() {
   OutStream << '\n';  // Flush the output stream...
   OutStream.flush();
   
-  if (&OutStream != &outs() && &OutStream != &errs() && &OutStream != &dbgs())
+  if (&OutStream != &outs() && &OutStream != &errs())
     delete &OutStream;   // Close the file.
 }

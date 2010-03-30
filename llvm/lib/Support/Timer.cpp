@@ -237,14 +237,22 @@ NamedRegionTimer::NamedRegionTimer(const std::string &Name,
 //   TimerGroup Implementation
 //===----------------------------------------------------------------------===//
 
+TimerGroup::~TimerGroup() {
+  // If the timer group is destroyed before the timers it owns, accumulate and
+  // print the timing data.
+  while (FirstTimer != 0)
+    removeTimer(*FirstTimer);
+}
+
+
 void TimerGroup::removeTimer(Timer &T) {
   sys::SmartScopedLock<true> L(*TimerLock);
   
   // If the timer was started, move its data to TimersToPrint.
-  if (T.Started) {
-    T.Started = false;
+  if (T.Started)
     TimersToPrint.push_back(std::make_pair(T.Time, T.Name));
-  }
+
+  T.TG = 0;
   
   // Unlink the timer from our list.
   *T.Prev = T.Next;
@@ -257,9 +265,9 @@ void TimerGroup::removeTimer(Timer &T) {
     return;
   
   raw_ostream *OutStream = GetLibSupportInfoOutputFile();
-
+  
   PrintQueuedTimers(*OutStream);
-
+  
   if (OutStream != &errs() && OutStream != &outs())
     delete OutStream;   // Close the file.
 }
