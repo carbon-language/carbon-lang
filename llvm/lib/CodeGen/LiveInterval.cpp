@@ -305,7 +305,6 @@ void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
             do {
               VNInfo *VNI = valnos.back();
               valnos.pop_back();
-              VNI->~VNInfo();
             } while (!valnos.empty() && valnos.back()->isUnused());
           } else {
             ValNo->setIsUnused(true);
@@ -353,7 +352,6 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
     do {
       VNInfo *VNI = valnos.back();
       valnos.pop_back();
-      VNI->~VNInfo();
     } while (!valnos.empty() && valnos.back()->isUnused());
   } else {
     ValNo->setIsUnused(true);
@@ -581,7 +579,6 @@ void LiveInterval::MergeValueInAsValue(
           do {
             VNInfo *VNI = valnos.back();
             valnos.pop_back();
-            VNI->~VNInfo();
           } while (!valnos.empty() && valnos.back()->isUnused());
         } else {
           V1->setIsUnused(true);
@@ -658,7 +655,6 @@ void LiveInterval::MergeInClobberRanges(LiveIntervals &li_,
   if (UnusedValNo) {
     // Delete the last unused val#.
     valnos.pop_back();
-    UnusedValNo->~VNInfo();
   }
 }
 
@@ -751,7 +747,6 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
     do {
       VNInfo *VNI = valnos.back();
       valnos.pop_back();
-      VNI->~VNInfo();
     } while (valnos.back()->isUnused());
   } else {
     V1->setIsUnused(true);

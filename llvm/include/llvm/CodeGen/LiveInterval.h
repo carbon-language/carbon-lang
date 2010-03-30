@@ -330,12 +330,7 @@ namespace llvm {
     }
     
     void clear() {
-      while (!valnos.empty()) {
-        VNInfo *VNI = valnos.back();
-        valnos.pop_back();
-        VNI->~VNInfo();
-      }
-      
+      valnos.clear();
       ranges.clear();
     }
 

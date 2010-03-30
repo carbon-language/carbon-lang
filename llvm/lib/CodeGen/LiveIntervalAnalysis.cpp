@@ -82,6 +82,11 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
+static void VNInfoDTor(void* Ptr)
+{
+   reinterpret_cast<VNInfo*>(Ptr)->~VNInfo();
+}
+
 void LiveIntervals::releaseMemory() {
   // Free the live intervals themselves.
   for (DenseMap<unsigned, LiveInterval*>::iterator I = r2iMap_.begin(),
@@ -91,7 +96,7 @@ void LiveIntervals::releaseMemory() {
   r2iMap_.clear();
 
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
-  VNInfoAllocator.Reset();
+  VNInfoAllocator.Reset((unsigned)sizeof(VNInfo), alignof<VNInfo>(), VNInfoDTor);
   while (!CloneMIs.empty()) {
     MachineInstr *MI = CloneMIs.back();
     CloneMIs.pop_back();
