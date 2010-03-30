@@ -3617,7 +3617,7 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
-static bool UseNewVTableCode = false;
+static bool UseNewVTableCode = true;
 
 uint64_t
 CodeGenVTables::getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
