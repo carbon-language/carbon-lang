@@ -228,11 +228,6 @@ public:
   /// GetAddrOfThunk - Get the address of the thunk for the given global decl.
   llvm::Constant *GetAddrOfThunk(GlobalDecl GD, const ThunkInfo &Thunk);
 
-  llvm::Constant *GetAddrOfThunk(GlobalDecl GD,
-                                 const ThunkAdjustment &ThisAdjustment);
-  llvm::Constant *GetAddrOfCovariantThunk(GlobalDecl GD,
-                                const CovariantThunkAdjustment &ThisAdjustment);
-
   /// GetWeakRefReference - Get a reference to the target of VD.
   llvm::Constant *GetWeakRefReference(const ValueDecl *VD);
 
@@ -242,11 +237,6 @@ public:
   GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
                                const CXXRecordDecl *BaseClassDecl);
 
-  /// ComputeThunkAdjustment - Returns the two parts required to compute the
-  /// offset for an object.
-  ThunkAdjustment ComputeThunkAdjustment(const CXXRecordDecl *ClassDecl,
-                                         const CXXRecordDecl *BaseClassDecl);
-  
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
   /// a constant is needed consider using GetAddrOfConstantStringLiteral.

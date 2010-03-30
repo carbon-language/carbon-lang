@@ -297,38 +297,6 @@ void CodeGenModule::getMangledCXXDtorName(MangleBuffer &Name,
   getMangleContext().mangleCXXDtor(D, Type, Name.getBuffer());
 }
 
-llvm::Constant *
-CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
-                              const ThunkAdjustment &ThisAdjustment) {
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-
-  // Compute mangled name
-  llvm::SmallString<256> OutName;
-  if (const CXXDestructorDecl* DD = dyn_cast<CXXDestructorDecl>(MD))
-    getMangleContext().mangleCXXDtorThunk(DD, GD.getDtorType(), ThisAdjustment,
-                                          OutName);
-  else
-    getMangleContext().mangleThunk(MD, ThisAdjustment, OutName);
-
-  // Get function for mangled name
-  const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
-  return GetOrCreateLLVMFunction(OutName, Ty, GlobalDecl());
-}
-
-llvm::Constant *
-CodeGenModule::GetAddrOfCovariantThunk(GlobalDecl GD,
-                                   const CovariantThunkAdjustment &Adjustment) {
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-
-  // Compute mangled name
-  llvm::SmallString<256> Name;
-  getMangleContext().mangleCovariantThunk(MD, Adjustment, Name);
-
-  // Get function for mangled name
-  const llvm::Type *Ty = getTypes().GetFunctionTypeForVtable(MD);
-  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
-}
-
 static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VtableIndex, 
                                      llvm::Value *This, const llvm::Type *Ty) {
   Ty = Ty->getPointerTo()->getPointerTo()->getPointerTo();

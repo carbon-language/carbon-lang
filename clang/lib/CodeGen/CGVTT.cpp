@@ -37,8 +37,6 @@ class VTTBuilder {
   /// MostDerivedClassLayout - the AST record layout of the most derived class.
   const ASTRecordLayout &MostDerivedClassLayout;
 
-  CodeGenVTables::AddrMap_t &AddressPoints;
-
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
 
   typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
@@ -137,7 +135,6 @@ VTTBuilder::VTTBuilder(CodeGenModule &CGM,
                        bool GenerateDefinition)
   : CGM(CGM), MostDerivedClass(MostDerivedClass), 
   MostDerivedClassLayout(CGM.getContext().getASTRecordLayout(MostDerivedClass)),
-  AddressPoints(*CGM.getVTables().OldAddressPoints[MostDerivedClass]),
   GenerateDefinition(GenerateDefinition) {
     
   // Lay out this VTT.

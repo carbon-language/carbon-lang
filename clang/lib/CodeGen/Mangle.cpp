@@ -102,7 +102,6 @@ public:
   llvm::raw_svector_ostream &getStream() { return Out; }
 
   void mangle(const NamedDecl *D, llvm::StringRef Prefix = "_Z");
-  void mangleCallOffset(const ThunkAdjustment &Adjustment);
   void mangleCallOffset(int64_t NonVirtual, int64_t Virtual);
   void mangleNumber(int64_t Number);
   void mangleFunctionEncoding(const FunctionDecl *FD);
@@ -438,10 +437,6 @@ void CXXNameMangler::mangleNumber(int64_t Number) {
   }
 
   Out << Number;
-}
-
-void CXXNameMangler::mangleCallOffset(const ThunkAdjustment &Adjustment) {
-  mangleCallOffset(Adjustment.NonVirtual, Adjustment.Virtual);
 }
 
 void CXXNameMangler::mangleCallOffset(int64_t NonVirtual, int64_t Virtual) {
@@ -1872,22 +1867,6 @@ void MangleContext::mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
   Mangler.mangle(D);
 }
 
-/// \brief Mangles the a thunk with the offset n for the declaration D and
-/// emits that name to the given output stream.
-void MangleContext::mangleThunk(const FunctionDecl *FD,
-                                const ThunkAdjustment &ThisAdjustment,
-                                llvm::SmallVectorImpl<char> &Res) {
-  assert(!isa<CXXDestructorDecl>(FD) &&
-         "Use mangleCXXDtor for destructor decls!");
-
-  //  <special-name> ::= T <call-offset> <base encoding>
-  //                      # base is the nominal target function of thunk
-  CXXNameMangler Mangler(*this, Res);
-  Mangler.getStream() << "_ZT";
-  Mangler.mangleCallOffset(ThisAdjustment);
-  Mangler.mangleFunctionEncoding(FD);
-}
-
 void MangleContext::mangleThunk(const CXXMethodDecl *MD,
                                 const ThunkInfo &Thunk,
                                 llvm::SmallVectorImpl<char> &Res) {
@@ -1932,38 +1911,6 @@ MangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                            ThisAdjustment.VCallOffsetOffset);
 
   Mangler.mangleFunctionEncoding(DD);
-}
-
-void MangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *D,
-                                       CXXDtorType Type,
-                                       const ThunkAdjustment &ThisAdjustment,
-                                       llvm::SmallVectorImpl<char> &Res) {
-  //  <special-name> ::= T <call-offset> <base encoding>
-  //                      # base is the nominal target function of thunk
-  CXXNameMangler Mangler(*this, Res, D, Type);
-  Mangler.getStream() << "_ZT";
-  Mangler.mangleCallOffset(ThisAdjustment);
-  Mangler.mangleFunctionEncoding(D);
-}
-
-/// \brief Mangles the a covariant thunk for the declaration D and emits that
-/// name to the given output stream.
-void
-MangleContext::mangleCovariantThunk(const FunctionDecl *FD,
-                                    const CovariantThunkAdjustment& Adjustment,
-                                    llvm::SmallVectorImpl<char> &Res) {
-  assert(!isa<CXXDestructorDecl>(FD) &&
-         "No such thing as a covariant thunk for a destructor!");
-
-  //  <special-name> ::= Tc <call-offset> <call-offset> <base encoding>
-  //                      # base is the nominal target function of thunk
-  //                      # first call-offset is 'this' adjustment
-  //                      # second call-offset is result adjustment
-  CXXNameMangler Mangler(*this, Res);
-  Mangler.getStream() << "_ZTc";
-  Mangler.mangleCallOffset(Adjustment.ThisAdjustment);
-  Mangler.mangleCallOffset(Adjustment.ReturnAdjustment);
-  Mangler.mangleFunctionEncoding(FD);
 }
 
 /// mangleGuardVariable - Returns the mangled name for a guard variable

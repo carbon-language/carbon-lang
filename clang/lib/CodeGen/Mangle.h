@@ -36,8 +36,6 @@ namespace clang {
 namespace CodeGen {
   struct ThisAdjustment;
   struct ThunkInfo;
-  class CovariantThunkAdjustment;
-  class ThunkAdjustment;
 
 /// MangleBuffer - a convenient class for storing a name which is
 /// either the result of a mangling or is a constant string with
@@ -94,21 +92,12 @@ public:
   bool shouldMangleDeclName(const NamedDecl *D);
 
   void mangleName(const NamedDecl *D, llvm::SmallVectorImpl<char> &);
-  void mangleThunk(const FunctionDecl *FD, 
-                   const ThunkAdjustment &ThisAdjustment,
-                   llvm::SmallVectorImpl<char> &);
   void mangleThunk(const CXXMethodDecl *MD,
                    const ThunkInfo &Thunk,
                    llvm::SmallVectorImpl<char> &);
-  void mangleCXXDtorThunk(const CXXDestructorDecl *D, CXXDtorType Type,
-                          const ThunkAdjustment &ThisAdjustment,
-                          llvm::SmallVectorImpl<char> &);
   void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                           const ThisAdjustment &ThisAdjustment,
                           llvm::SmallVectorImpl<char> &);
-  void mangleCovariantThunk(const FunctionDecl *FD, 
-                            const CovariantThunkAdjustment& Adjustment,
-                            llvm::SmallVectorImpl<char> &);
   void mangleGuardVariable(const VarDecl *D, llvm::SmallVectorImpl<char> &);
   void mangleCXXVtable(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);
   void mangleCXXVTT(const CXXRecordDecl *RD, llvm::SmallVectorImpl<char> &);

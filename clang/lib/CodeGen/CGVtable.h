@@ -113,42 +113,6 @@ struct ThunkInfo {
   bool isEmpty() const { return This.isEmpty() && Return.isEmpty(); }
 };  
 
-/// ThunkAdjustment - Virtual and non-virtual adjustment for thunks.
-class ThunkAdjustment {
-public:
-  ThunkAdjustment(int64_t NonVirtual, int64_t Virtual)
-  : NonVirtual(NonVirtual),
-    Virtual(Virtual) { }
-
-  ThunkAdjustment()
-    : NonVirtual(0), Virtual(0) { }
-
-  // isEmpty - Return whether this thunk adjustment is empty.
-  bool isEmpty() const {
-    return NonVirtual == 0 && Virtual == 0;
-  }
-
-  /// NonVirtual - The non-virtual adjustment.
-  int64_t NonVirtual;
-
-  /// Virtual - The virtual adjustment.
-  int64_t Virtual;
-};
-
-/// CovariantThunkAdjustment - Adjustment of the 'this' pointer and the
-/// return pointer for covariant thunks.
-class CovariantThunkAdjustment {
-public:
-  CovariantThunkAdjustment(const ThunkAdjustment &ThisAdjustment,
-                           const ThunkAdjustment &ReturnAdjustment)
-  : ThisAdjustment(ThisAdjustment), ReturnAdjustment(ReturnAdjustment) { }
-
-  CovariantThunkAdjustment() { }
-
-  ThunkAdjustment ThisAdjustment;
-  ThunkAdjustment ReturnAdjustment;
-};
-
 // BaseSubobject - Uniquely identifies a direct or indirect base class. 
 // Stores both the base class decl and the offset from the most derived class to
 // the base class.
@@ -215,22 +179,7 @@ namespace clang {
 namespace CodeGen {
 
 class CodeGenVTables {
-public:
-  typedef std::vector<std::pair<GlobalDecl, ThunkAdjustment> >
-      AdjustmentVectorTy;
-
-  typedef std::pair<const CXXRecordDecl *, uint64_t> CtorVtable_t;
-  typedef llvm::DenseMap<CtorVtable_t, int64_t> AddrSubMap_t;
-  typedef llvm::DenseMap<const CXXRecordDecl *, AddrSubMap_t *> AddrMap_t;
-
-  const CodeGenVTables::AddrSubMap_t& getAddressPoints(const CXXRecordDecl *RD);
-
-  // FIXME: Remove this.
-  llvm::DenseMap<const CXXRecordDecl *, AddrMap_t*> OldAddressPoints;
-
-private:
   CodeGenModule &CGM;
-
 
   /// MethodVtableIndices - Contains the index (relative to the vtable address
   /// point) where the function pointer for a virtual function is stored.
@@ -318,12 +267,6 @@ private:
   uint64_t getNumVirtualFunctionPointers(const CXXRecordDecl *RD);
   
   void ComputeMethodVtableIndices(const CXXRecordDecl *RD);
-   
-  llvm::GlobalVariable *
-  GenerateVtable(llvm::GlobalVariable::LinkageTypes Linkage,
-                 bool GenerateDefinition, const CXXRecordDecl *LayoutClass, 
-                 const CXXRecordDecl *RD, uint64_t Offset, bool IsVirtual,
-                 llvm::DenseMap<BaseSubobject, uint64_t> &AddressPoints);
 
   llvm::GlobalVariable *GenerateVTT(llvm::GlobalVariable::LinkageTypes Linkage,
                                     bool GenerateDefinition,
