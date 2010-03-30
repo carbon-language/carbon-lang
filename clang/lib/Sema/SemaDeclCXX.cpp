@@ -1691,11 +1691,12 @@ static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member,
   // in AnonUnionMember field.
   if (MemberMaybeAnon && Field->isAnonymousStructOrUnion())
     Field = Member->getAnonUnionMember();
-  if (Field->getDeclContext()->isRecord()) {
-    RecordDecl *RD = cast<RecordDecl>(Field->getDeclContext());
-    if (RD->isAnonymousStructOrUnion())
-      return static_cast<void *>(RD);
-  }
+  
+  // If the field is a member of an anonymous union, we use record decl of the
+  // union as the key.
+  RecordDecl *RD = Field->getParent();
+  if (RD->isAnonymousStructOrUnion() && RD->isUnion())
+    return static_cast<void *>(RD);
 
   return static_cast<void *>(Field);
 }
@@ -1719,7 +1720,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   }
 
   if (!Constructor->isDependentContext()) {
-    llvm::DenseMap<void*, CXXBaseOrMemberInitializer *>Members;
+    llvm::DenseMap<void*, CXXBaseOrMemberInitializer *> Members;
     bool err = false;
     for (unsigned i = 0; i < NumMemInits; i++) {
       CXXBaseOrMemberInitializer *Member =
@@ -1754,7 +1755,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
 
   SetBaseOrMemberInitializers(Constructor,
                       reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits),
-                      NumMemInits, false, AnyErrors);
+                      NumMemInits, /*IsImplicitConstructor=*/false, AnyErrors);
 
   if (Constructor->isDependentContext())
     return;
@@ -1929,11 +1930,11 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
   if (!CDtorDecl)
     return;
 
-  AdjustDeclIfTemplate(CDtorDecl);
-
   if (CXXConstructorDecl *Constructor
       = dyn_cast<CXXConstructorDecl>(CDtorDecl.getAs<Decl>()))
-    SetBaseOrMemberInitializers(Constructor, 0, 0, false, false);
+    SetBaseOrMemberInitializers(Constructor, 0, 0, 
+                                /*IsImplicitConstructor=*/false,
+                                /*AnyErrors=*/false);
 }
 
 bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
@@ -3781,7 +3782,9 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 
   DeclContext *PreviousContext = CurContext;
   CurContext = Constructor;
-  if (SetBaseOrMemberInitializers(Constructor, 0, 0, true, false)) {
+  if (SetBaseOrMemberInitializers(Constructor, 0, 0, 
+                                  /*IsImplicitConstructor=*/true, 
+                                  /*AnyErrors=*/false)) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
       << CXXDefaultConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
