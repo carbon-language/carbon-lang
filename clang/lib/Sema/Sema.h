@@ -3777,7 +3777,7 @@ public:
   /// Ensure attributes are consistent with type.
   /// \param [in, out] Attributes The attributes to check; they will
   /// be modified to be consistent with \arg PropertyTy.
-  void CheckObjCPropertyAttributes(QualType PropertyTy,
+  void CheckObjCPropertyAttributes(DeclPtrTy PropertyPtrTy,
                                    SourceLocation Loc,
                                    unsigned &Attributes);
   void ProcessPropertyDecl(ObjCPropertyDecl *property, ObjCContainerDecl *DC);
