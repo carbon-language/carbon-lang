@@ -861,7 +861,8 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                           DebugLoc dl) {
   SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
-                       /*AlwaysInline=*/false, NULL, 0, NULL, 0);
+                       /*isVolatile=*/false, /*AlwaysInline=*/false,
+                       NULL, 0, NULL, 0);
 }
 
 /// LowerMemOpCallTo - Store the argument to the stack.
@@ -2053,7 +2054,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                            SDValue Chain,
                                            SDValue Dst, SDValue Src,
                                            SDValue Size, unsigned Align,
-                                           bool AlwaysInline,
+                                           bool isVolatile, bool AlwaysInline,
                                          const Value *DstSV, uint64_t DstSVOff,
                                          const Value *SrcSV, uint64_t SrcSVOff){
   // Do repeated 4-byte loads and stores. To be improved.
@@ -2089,7 +2090,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
       Loads[i] = DAG.getLoad(VT, dl, Chain,
                              DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
                                          DAG.getConstant(SrcOff, MVT::i32)),
-                             SrcSV, SrcSVOff + SrcOff, false, false, 0);
+                             SrcSV, SrcSVOff + SrcOff, isVolatile, false, 0);
       TFOps[i] = Loads[i].getValue(1);
       SrcOff += VTSize;
     }
@@ -2100,7 +2101,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
       TFOps[i] = DAG.getStore(Chain, dl, Loads[i],
                               DAG.getNode(ISD::ADD, dl, MVT::i32, Dst,
                                           DAG.getConstant(DstOff, MVT::i32)),
-                              DstSV, DstSVOff + DstOff, false, false, 0);
+                              DstSV, DstSVOff + DstOff, isVolatile, false, 0);
       DstOff += VTSize;
     }
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);

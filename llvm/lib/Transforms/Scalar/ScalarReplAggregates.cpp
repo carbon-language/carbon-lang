@@ -858,8 +858,17 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
       EltPtr = new BitCastInst(EltPtr, BytePtrTy, EltPtr->getName(), MI);
     
     // Cast the other pointer (if we have one) to BytePtrTy. 
-    if (OtherElt && OtherElt->getType() != BytePtrTy)
-      OtherElt = new BitCastInst(OtherElt, BytePtrTy, OtherElt->getName(), MI);
+    if (OtherElt && OtherElt->getType() != BytePtrTy) {
+      // Preserve address space of OtherElt
+      const PointerType* OtherPTy = cast<PointerType>(OtherElt->getType());
+      const PointerType* PTy = cast<PointerType>(BytePtrTy);
+      if (OtherPTy->getElementType() != PTy->getElementType()) {
+        Type *NewOtherPTy = PointerType::get(PTy->getElementType(),
+                                             OtherPTy->getAddressSpace());
+        OtherElt = new BitCastInst(OtherElt, NewOtherPTy,
+                                   OtherElt->getNameStr(), MI);
+      }
+    }
     
     unsigned EltSize = TD->getTypeAllocSize(EltTy);
     
@@ -870,17 +879,28 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
         SROADest ? OtherElt : EltPtr,  // Src ptr
         ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
         // Align
-        ConstantInt::get(Type::getInt32Ty(MI->getContext()), OtherEltAlign)
+        ConstantInt::get(Type::getInt32Ty(MI->getContext()), OtherEltAlign),
+        MI->getVolatileCst()
       };
-      CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
+      // In case we fold the address space overloaded memcpy of A to B
+      // with memcpy of B to C, change the function to be a memcpy of A to C.
+      const Type *Tys[] = { Ops[0]->getType(), Ops[1]->getType(),
+                            Ops[2]->getType() };
+      Module *M = MI->getParent()->getParent()->getParent();
+      TheFn = Intrinsic::getDeclaration(M, MI->getIntrinsicID(), Tys, 3);
+      CallInst::Create(TheFn, Ops, Ops + 5, "", MI);
     } else {
       assert(isa<MemSetInst>(MI));
       Value *Ops[] = {
         EltPtr, MI->getOperand(2),  // Dest, Value,
         ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
-        Zero  // Align
+        Zero,  // Align
+        ConstantInt::get(Type::getInt1Ty(MI->getContext()), 0) // isVolatile
       };
-      CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
+      const Type *Tys[] = { Ops[0]->getType(), Ops[2]->getType() };
+      Module *M = MI->getParent()->getParent()->getParent();
+      TheFn = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys, 2);
+      CallInst::Create(TheFn, Ops, Ops + 5, "", MI);
     }
   }
   DeadInsts.push_back(MI);

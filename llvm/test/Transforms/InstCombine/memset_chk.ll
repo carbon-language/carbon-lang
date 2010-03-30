@@ -7,7 +7,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define i32 @t() nounwind ssp {
 ; CHECK: @t
-; CHECK: @llvm.memset.i64
+; CHECK: @llvm.memset.p0i8.i64
 entry:
   %0 = alloca %struct.data, align 8               ; <%struct.data*> [#uses=1]
   %1 = bitcast %struct.data* %0 to i8*            ; <i8*> [#uses=1]

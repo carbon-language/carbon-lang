@@ -103,7 +103,7 @@ define i32 @test4(i8* %P) {
   ret i32 %sub
 ; CHECK: @test4
 ; CHECK: load i32* @G
-; CHECK: memset.i32
+; CHECK: memset.p0i8.i32
 ; CHECK-NOT: load
 ; CHECK: sub i32 %tmp, %tmp
 }
@@ -118,7 +118,7 @@ define i32 @test5(i8* %P, i32 %Len) {
   ret i32 %sub
 ; CHECK: @test5
 ; CHECK: load i32* @G
-; CHECK: memcpy.i32
+; CHECK: memcpy.p0i8.p0i8.i32
 ; CHECK-NOT: load
 ; CHECK: sub i32 %tmp, %tmp
 }

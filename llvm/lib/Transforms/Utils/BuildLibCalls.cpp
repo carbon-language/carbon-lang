@@ -109,15 +109,16 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
 
 /// EmitMemCpy - Emit a call to the memcpy function to the builder.  This always
 /// expects that Len has type 'intptr_t' and Dst/Src are pointers.
-Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
-                        unsigned Align, IRBuilder<> &B, const TargetData *TD) {
+Value *llvm::EmitMemCpy(Value *Dst, Value *Src, Value *Len, unsigned Align,
+                        bool isVolatile, IRBuilder<> &B, const TargetData *TD) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
-  const Type *Ty = Len->getType();
-  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, &Ty, 1);
+  const Type *ArgTys[3] = { Dst->getType(), Src->getType(), Len->getType() };
+  Value *MemCpy = Intrinsic::getDeclaration(M, Intrinsic::memcpy, ArgTys, 3);
   Dst = CastToCStr(Dst, B);
   Src = CastToCStr(Src, B);
-  return B.CreateCall4(MemCpy, Dst, Src, Len,
-                       ConstantInt::get(B.getInt32Ty(), Align));
+  return B.CreateCall5(MemCpy, Dst, Src, Len,
+                       ConstantInt::get(B.getInt32Ty(), Align),
+                       ConstantInt::get(B.getInt1Ty(), isVolatile));
 }
 
 /// EmitMemCpyChk - Emit a call to the __memcpy_chk function to the builder.
@@ -146,16 +147,18 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
 
 /// EmitMemMove - Emit a call to the memmove function to the builder.  This
 /// always expects that the size has type 'intptr_t' and Dst/Src are pointers.
-Value *llvm::EmitMemMove(Value *Dst, Value *Src, Value *Len,
-                         unsigned Align, IRBuilder<> &B, const TargetData *TD) {
+Value *llvm::EmitMemMove(Value *Dst, Value *Src, Value *Len, unsigned Align,
+                         bool isVolatile, IRBuilder<> &B, const TargetData *TD) {
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  const Type *Ty = TD->getIntPtrType(Context);
-  Value *MemMove = Intrinsic::getDeclaration(M, Intrinsic::memmove, &Ty, 1);
+  const Type *ArgTys[3] = { Dst->getType(), Src->getType(),
+                            TD->getIntPtrType(Context) };
+  Value *MemMove = Intrinsic::getDeclaration(M, Intrinsic::memmove, ArgTys, 3);
   Dst = CastToCStr(Dst, B);
   Src = CastToCStr(Src, B);
   Value *A = ConstantInt::get(B.getInt32Ty(), Align);
-  return B.CreateCall4(MemMove, Dst, Src, Len, A);
+  Value *Vol = ConstantInt::get(B.getInt1Ty(), isVolatile);
+  return B.CreateCall5(MemMove, Dst, Src, Len, A, Vol);
 }
 
 /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
@@ -206,15 +209,15 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
 }
 
 /// EmitMemSet - Emit a call to the memset function
-Value *llvm::EmitMemSet(Value *Dst, Value *Val,
-                        Value *Len, IRBuilder<> &B, const TargetData *TD) {
+Value *llvm::EmitMemSet(Value *Dst, Value *Val, Value *Len, bool isVolatile,
+                        IRBuilder<> &B, const TargetData *TD) {
  Module *M = B.GetInsertBlock()->getParent()->getParent();
  Intrinsic::ID IID = Intrinsic::memset;
- const Type *Tys[1];
- Tys[0] = Len->getType();
- Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 1);
+ const Type *Tys[2] = { Dst->getType(), Len->getType() };
+ Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 2);
  Value *Align = ConstantInt::get(B.getInt32Ty(), 1);
- return B.CreateCall4(MemSet, CastToCStr(Dst, B), Val, Len, Align);
+ Value *Vol = ConstantInt::get(B.getInt1Ty(), isVolatile);
+ return B.CreateCall5(MemSet, CastToCStr(Dst, B), Val, Len, Align, Vol);
 }
 
 /// EmitUnaryFloatFnCall - Emit a call to the unary function named 'Name' (e.g.
@@ -381,7 +384,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   if (Name == "__memcpy_chk") {
     if (isFoldable(4, 3, false)) {
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-                 1, B, TD);
+                 1, false, B, TD);
       replaceCall(CI->getOperand(1));
       return true;
     }
@@ -396,7 +399,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   if (Name == "__memmove_chk") {
     if (isFoldable(4, 3, false)) {
       EmitMemMove(CI->getOperand(1), CI->getOperand(2), CI->getOperand(3),
-                  1, B, TD);
+                  1, false, B, TD);
       replaceCall(CI->getOperand(1));
       return true;
     }
@@ -407,7 +410,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
     if (isFoldable(4, 3, false)) {
       Value *Val = B.CreateIntCast(CI->getOperand(2), B.getInt8Ty(),
                                    false);
-      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
+      EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), false, B, TD);
       replaceCall(CI->getOperand(1));
       return true;
     }

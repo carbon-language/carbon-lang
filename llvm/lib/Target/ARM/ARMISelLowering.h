@@ -305,7 +305,7 @@ namespace llvm {
                                       SDValue Chain,
                                       SDValue Dst, SDValue Src,
                                       SDValue Size, unsigned Align,
-                                      bool AlwaysInline,
+                                      bool isVolatile, bool AlwaysInline,
                                       const Value *DstSV, uint64_t DstSVOff,
                                       const Value *SrcSV, uint64_t SrcSVOff);
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,

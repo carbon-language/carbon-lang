@@ -142,7 +142,8 @@ struct StrCatOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     EmitMemCpy(CpyDst, Src,
-               ConstantInt::get(TD->getIntPtrType(*Context), Len+1), 1, B, TD);
+               ConstantInt::get(TD->getIntPtrType(*Context), Len+1),
+                                1, false, B, TD);
   }
 };
 
@@ -383,7 +384,8 @@ struct StrCpyOpt : public LibCallOptimization {
                     CI->getOperand(3), B, TD);
     else
       EmitMemCpy(Dst, Src,
-                 ConstantInt::get(TD->getIntPtrType(*Context), Len), 1, B, TD);
+                 ConstantInt::get(TD->getIntPtrType(*Context), Len),
+                                  1, false, B, TD);
     return Dst;
   }
 };
@@ -411,8 +413,8 @@ struct StrNCpyOpt : public LibCallOptimization {
 
     if (SrcLen == 0) {
       // strncpy(x, "", y) -> memset(x, '\0', y, 1)
-      EmitMemSet(Dst, ConstantInt::get(Type::getInt8Ty(*Context), '\0'), LenOp,
-		             B, TD);
+      EmitMemSet(Dst, ConstantInt::get(Type::getInt8Ty(*Context), '\0'),
+                 LenOp, false, B, TD);
       return Dst;
     }
 
@@ -432,7 +434,8 @@ struct StrNCpyOpt : public LibCallOptimization {
 
     // strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant]
     EmitMemCpy(Dst, Src,
-               ConstantInt::get(TD->getIntPtrType(*Context), Len), 1, B, TD);
+               ConstantInt::get(TD->getIntPtrType(*Context), Len),
+                                1, false, B, TD);
 
     return Dst;
   }
@@ -593,7 +596,7 @@ struct MemCpyOpt : public LibCallOptimization {
 
     // memcpy(x, y, n) -> llvm.memcpy(x, y, n, 1)
     EmitMemCpy(CI->getOperand(1), CI->getOperand(2),
-               CI->getOperand(3), 1, B, TD);
+               CI->getOperand(3), 1, false, B, TD);
     return CI->getOperand(1);
   }
 };
@@ -615,7 +618,7 @@ struct MemMoveOpt : public LibCallOptimization {
 
     // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
     EmitMemMove(CI->getOperand(1), CI->getOperand(2),
-                CI->getOperand(3), 1, B, TD);
+                CI->getOperand(3), 1, false, B, TD);
     return CI->getOperand(1);
   }
 };
@@ -637,8 +640,8 @@ struct MemSetOpt : public LibCallOptimization {
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
     Value *Val = B.CreateIntCast(CI->getOperand(2), Type::getInt8Ty(*Context),
-				 false);
-    EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B, TD);
+                                 false);
+    EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), false, B, TD);
     return CI->getOperand(1);
   }
 };
@@ -999,7 +1002,7 @@ struct SPrintFOpt : public LibCallOptimization {
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), // Copy the nul byte.
                  ConstantInt::get(TD->getIntPtrType(*Context),
-                 FormatStr.size()+1), 1, B, TD);
+                 FormatStr.size()+1), 1, false, B, TD);
       return ConstantInt::get(CI->getType(), FormatStr.size());
     }
 
@@ -1013,11 +1016,11 @@ struct SPrintFOpt : public LibCallOptimization {
       // sprintf(dst, "%c", chr) --> *(i8*)dst = chr; *((i8*)dst+1) = 0
       if (!CI->getOperand(3)->getType()->isIntegerTy()) return 0;
       Value *V = B.CreateTrunc(CI->getOperand(3),
-			       Type::getInt8Ty(*Context), "char");
+                               Type::getInt8Ty(*Context), "char");
       Value *Ptr = CastToCStr(CI->getOperand(1), B);
       B.CreateStore(V, Ptr);
       Ptr = B.CreateGEP(Ptr, ConstantInt::get(Type::getInt32Ty(*Context), 1),
-			"nul");
+                        "nul");
       B.CreateStore(Constant::getNullValue(Type::getInt8Ty(*Context)), Ptr);
 
       return ConstantInt::get(CI->getType(), 1);
@@ -1034,7 +1037,7 @@ struct SPrintFOpt : public LibCallOptimization {
       Value *IncLen = B.CreateAdd(Len,
                                   ConstantInt::get(Len->getType(), 1),
                                   "leninc");
-      EmitMemCpy(CI->getOperand(1), CI->getOperand(3), IncLen, 1, B, TD);
+      EmitMemCpy(CI->getOperand(1), CI->getOperand(3), IncLen, 1, false, B, TD);
 
       // The sprintf result is the unincremented number of bytes in the string.
       return B.CreateIntCast(Len, CI->getType(), false);
