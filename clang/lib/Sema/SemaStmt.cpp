@@ -119,7 +119,13 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       }
     }        
   }
-
+  else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
+    const ObjCMethodDecl *MD = ME->getMethodDecl();
+    if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+      Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
+      return;
+    }
+  }
   Diag(Loc, DiagID) << R1 << R2;
 }
 

@@ -914,8 +914,15 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case CXXConstructExprClass:
     return false;
 
-  case ObjCMessageExprClass:
+  case ObjCMessageExprClass: {
+    const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(this);
+    const ObjCMethodDecl *MD = ME->getMethodDecl();
+    if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
+      Loc = getExprLoc();
+      return true;
+    }
     return false;
+  }
 
   case ObjCImplicitSetterGetterRefExprClass: {   // Dot syntax for message send.
 #if 0

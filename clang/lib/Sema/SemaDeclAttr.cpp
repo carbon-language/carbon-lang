@@ -837,18 +837,24 @@ static void HandleWarnUnusedResult(Decl *D, const AttributeList &Attr, Sema &S) 
     return;
   }
 
-  if (!isFunction(D)) {
+  if (!isFunction(D) && !isa<ObjCMethodDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << 0 /*function*/;
     return;
   }
 
-  if (getFunctionType(D)->getResultType()->isVoidType()) {
-    S.Diag(Attr.getLoc(), diag::warn_attribute_void_function)
-      << Attr.getName();
+  if (isFunction(D) && getFunctionType(D)->getResultType()->isVoidType()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_void_function_method)
+      << Attr.getName() << 0;
     return;
   }
-
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    if (MD->getResultType()->isVoidType()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_void_function_method)
+      << Attr.getName() << 1;
+      return;
+    }
+  
   D->addAttr(::new (S.Context) WarnUnusedResultAttr());
 }
 
