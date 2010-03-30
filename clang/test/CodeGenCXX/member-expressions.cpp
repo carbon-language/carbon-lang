@@ -44,3 +44,43 @@ int f() {
   return A().foo();
 }
 }
+
+namespace test4 {
+  struct A {
+    int x;
+  };
+  struct B {
+    int x;
+    void foo();
+  };
+  struct C : A, B {
+  };
+
+  extern C *c_ptr;
+
+  // CHECK: define i32 @_ZN5test44testEv()
+  int test() {
+    // CHECK: load {{.*}} @_ZN5test45c_ptrE
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: getelementptr
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: call void @_ZN5test41B3fooEv
+    c_ptr->B::foo();
+
+    // CHECK: load {{.*}} @_ZN5test45c_ptrE
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: getelementptr
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: getelementptr
+    // CHECK-NEXT: store i32 5
+    c_ptr->B::x = 5;
+
+    // CHECK: load {{.*}} @_ZN5test45c_ptrE
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: getelementptr
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: getelementptr
+    // CHECK-NEXT: load i32*
+    return c_ptr->B::x;
+  }
+}

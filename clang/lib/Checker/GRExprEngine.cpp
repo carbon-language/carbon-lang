@@ -2306,6 +2306,7 @@ void GRExprEngine::VisitCast(CastExpr *CastE, Expr *Ex, ExplodedNode *Pred,
   case CastExpr::CK_AnyPointerToObjCPointerCast:
   case CastExpr::CK_AnyPointerToBlockPointerCast:
   case CastExpr::CK_DerivedToBase:
+  case CastExpr::CK_UncheckedDerivedToBase:
     // Delegate to SValuator to process.
     for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
       ExplodedNode* N = *I;

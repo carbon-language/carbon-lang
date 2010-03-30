@@ -769,6 +769,9 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
 static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
   const Expr *E = CE->getSubExpr();
+
+  if (CE->getCastKind() == CastExpr::CK_UncheckedDerivedToBase)
+    return false;
   
   if (isa<CXXThisExpr>(E)) {
     // We always assume that 'this' is never null.
@@ -826,6 +829,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     return CGF.GetAddressOfDerivedClass(Src, BaseClassDecl, DerivedClassDecl, 
                                         NullCheckValue);
   }
+  case CastExpr::CK_UncheckedDerivedToBase:
   case CastExpr::CK_DerivedToBase: {
     const RecordType *DerivedClassTy = 
       E->getType()->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();

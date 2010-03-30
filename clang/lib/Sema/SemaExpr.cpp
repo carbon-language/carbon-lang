@@ -1461,7 +1461,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
 
       if (PointerConversions)
         QType = Context.getPointerType(QType);
-      ImpCastExprToType(From, QType, CastExpr::CK_DerivedToBase,
+      ImpCastExprToType(From, QType, CastExpr::CK_UncheckedDerivedToBase,
                         /*isLvalue*/ !PointerConversions);
 
       FromType = QType;
@@ -1497,7 +1497,7 @@ Sema::PerformObjectMemberConversion(Expr *&From,
       QualType UType = URecordType;
       if (PointerConversions)
         UType = Context.getPointerType(UType);
-      ImpCastExprToType(From, UType, CastExpr::CK_DerivedToBase,
+      ImpCastExprToType(From, UType, CastExpr::CK_UncheckedDerivedToBase,
                         /*isLvalue*/ !PointerConversions);
       FromType = UType;
       FromRecordType = URecordType;
@@ -1517,8 +1517,8 @@ Sema::PerformObjectMemberConversion(Expr *&From,
 
   // FIXME: isLvalue should be !PointerConversions here, but codegen
   // does very silly things.
-  ImpCastExprToType(From, DestType, CastExpr::CK_DerivedToBase,
-                    /*isLvalue=*/ true);
+  ImpCastExprToType(From, DestType, CastExpr::CK_UncheckedDerivedToBase,
+                    /*isLvalue=*/ !PointerConversions);
   return false;
 }
 

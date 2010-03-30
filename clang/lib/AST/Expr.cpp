@@ -552,6 +552,8 @@ const char *CastExpr::getCastKindName() const {
     return "BaseToDerived";
   case CastExpr::CK_DerivedToBase:
     return "DerivedToBase";
+  case CastExpr::CK_UncheckedDerivedToBase:
+    return "UncheckedDerivedToBase";
   case CastExpr::CK_Dynamic:
     return "Dynamic";
   case CastExpr::CK_ToUnion:

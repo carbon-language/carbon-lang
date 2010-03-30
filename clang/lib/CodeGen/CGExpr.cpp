@@ -1637,6 +1637,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CastExpr::CK_AnyPointerToObjCPointerCast:
     return EmitLValue(E->getSubExpr());
   
+  case CastExpr::CK_UncheckedDerivedToBase:
   case CastExpr::CK_DerivedToBase: {
     const RecordType *DerivedClassTy = 
       E->getSubExpr()->getType()->getAs<RecordType>();

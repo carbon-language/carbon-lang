@@ -1552,6 +1552,10 @@ public:
     /// CK_DerivedToBase - Derived to base class casts.
     CK_DerivedToBase,
 
+    /// CK_UncheckedDerivedToBase - Derived to base class casts that
+    /// assume that the derived pointer is not null.
+    CK_UncheckedDerivedToBase,
+
     /// CK_Dynamic - Dynamic cast.
     CK_Dynamic,
 
