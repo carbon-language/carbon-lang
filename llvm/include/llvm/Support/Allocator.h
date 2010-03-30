@@ -133,8 +133,8 @@ class BumpPtrAllocator {
 
   static MallocSlabAllocator DefaultSlabAllocator;
 
+  template<typename T> friend class SpecificBumpPtrAllocator;
 public:
-  typedef void (*DTorFunction)(void*);
   BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096,
                    SlabAllocator &allocator = DefaultSlabAllocator);
   ~BumpPtrAllocator();
@@ -142,11 +142,6 @@ public:
   /// Reset - Deallocate all but the current slab and reset the current pointer
   /// to the beginning of it, freeing all memory allocated so far.
   void Reset();
-
-  /// Reset - like Reset(), but call DTorFunction for each allocated
-  /// object. This assumes that all objects allocated with this allocator
-  /// had the same size and alignment specified here.
-  void Reset(size_t Size, size_t Alignment, DTorFunction DTor);
 
   /// Allocate - Allocate space at the specified alignment.
   ///
@@ -180,6 +175,45 @@ public:
   unsigned GetNumSlabs() const;
 
   void PrintStats() const;
+};
+
+/// SpecificBumpPtrAllocator - Same as BumpPtrAllocator but allows only
+/// elements of one type to be allocated. This allows calling the destructor
+/// in DestroyAll() and when the allocator is destroyed.
+template <typename T>
+class SpecificBumpPtrAllocator {
+  BumpPtrAllocator Allocator;
+public:
+  SpecificBumpPtrAllocator(size_t size = 4096, size_t threshold = 4096,
+              SlabAllocator &allocator = BumpPtrAllocator::DefaultSlabAllocator)
+    : Allocator(size, threshold, allocator) {}
+
+  ~SpecificBumpPtrAllocator() {
+    DestroyAll();
+  }
+
+  /// Call the destructor of each allocated object and deallocate all but the
+  /// current slab and reset the current pointer to the beginning of it, freeing
+  /// all memory allocated so far.
+  void DestroyAll() {
+    MemSlab *Slab = Allocator.CurSlab;
+    while (Slab) {
+      char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr :
+                                              (char *)Slab + Slab->Size;
+      for (char *Ptr = (char*)Slab+1; Ptr < End; Ptr += sizeof(T)) {
+        Ptr = Allocator.AlignPtr(Ptr, alignof<T>());
+	if (Ptr + sizeof(T) <= End)
+          reinterpret_cast<T*>(Ptr)->~T();
+      }
+      Slab = Slab->NextPtr;
+    }
+    Allocator.Reset();
+  }
+
+  /// Allocate space for a specific count of elements.
+  T *Allocate(size_t num = 1) {
+    return Allocator.Allocate<T>(num);
+  }
 };
 
 }  // end namespace llvm

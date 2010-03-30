@@ -55,7 +55,7 @@ namespace llvm {
 
     /// Special pool allocator for VNInfo's (LiveInterval val#).
     ///
-    BumpPtrAllocator VNInfoAllocator;
+    VNInfo::Allocator VNInfoAllocator;
 
     typedef DenseMap<unsigned, LiveInterval*> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
@@ -221,7 +221,7 @@ namespace llvm {
       indexes_->renumberIndexes();
     }
 
-    BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }
+    VNInfo::Allocator& getVNInfoAllocator() { return VNInfoAllocator; }
 
     /// getVNInfoSourceReg - Helper function that parses the specified VNInfo
     /// copy field and returns the source register that defines it.

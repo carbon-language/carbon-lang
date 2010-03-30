@@ -665,7 +665,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
 
 /// ReconstructLiveInterval - Recompute a live interval from scratch.
 void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
-  BumpPtrAllocator& Alloc = LIs->getVNInfoAllocator();
+  VNInfo::Allocator& Alloc = LIs->getVNInfoAllocator();
   
   // Clear the old ranges and valnos;
   LI->clear();

@@ -67,7 +67,7 @@ namespace llvm {
     } cr;
 
   public:
-
+    typedef SpecificBumpPtrAllocator<VNInfo> Allocator;
     typedef SmallVector<SlotIndex, 4> KillSet;
 
     /// The ID number of this value.
@@ -365,10 +365,8 @@ namespace llvm {
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     VNInfo *getNextValue(SlotIndex def, MachineInstr *CopyMI,
-                         bool isDefAccurate, BumpPtrAllocator &VNInfoAllocator){
-      VNInfo *VNI =
-        static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
-                                                      alignof<VNInfo>()));
+                       bool isDefAccurate, VNInfo::Allocator &VNInfoAllocator) {
+      VNInfo *VNI = VNInfoAllocator.Allocate();
       new (VNI) VNInfo((unsigned)valnos.size(), def, CopyMI);
       VNI->setIsDefAccurate(isDefAccurate);
       valnos.push_back(VNI);
@@ -378,11 +376,8 @@ namespace llvm {
     /// Create a copy of the given value. The new value will be identical except
     /// for the Value number.
     VNInfo *createValueCopy(const VNInfo *orig,
-                            BumpPtrAllocator &VNInfoAllocator) {
-      VNInfo *VNI =
-        static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
-                                                      alignof<VNInfo>()));
-    
+                            VNInfo::Allocator &VNInfoAllocator) {
+      VNInfo *VNI = VNInfoAllocator.Allocate();
       new (VNI) VNInfo((unsigned)valnos.size(), *orig);
       valnos.push_back(VNI);
       return VNI;
@@ -422,14 +417,14 @@ namespace llvm {
     /// VNInfoAllocator since it will create a new val#.
     void MergeInClobberRanges(LiveIntervals &li_,
                               const LiveInterval &Clobbers,
-                              BumpPtrAllocator &VNInfoAllocator);
+                              VNInfo::Allocator &VNInfoAllocator);
 
     /// MergeInClobberRange - Same as MergeInClobberRanges except it merge in a
     /// single LiveRange only.
     void MergeInClobberRange(LiveIntervals &li_,
                              SlotIndex Start,
                              SlotIndex End,
-                             BumpPtrAllocator &VNInfoAllocator);
+                             VNInfo::Allocator &VNInfoAllocator);
 
     /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
     /// in RHS into this live interval as the specified value number.
@@ -449,7 +444,7 @@ namespace llvm {
     /// Copy - Copy the specified live interval. This copies all the fields
     /// except for the register of the interval.
     void Copy(const LiveInterval &RHS, MachineRegisterInfo *MRI,
-              BumpPtrAllocator &VNInfoAllocator);
+              VNInfo::Allocator &VNInfoAllocator);
     
     bool empty() const { return ranges.empty(); }
 

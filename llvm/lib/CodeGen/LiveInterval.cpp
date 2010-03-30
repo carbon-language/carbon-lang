@@ -591,7 +591,7 @@ void LiveInterval::MergeValueInAsValue(
 /// used with an unknown definition value.
 void LiveInterval::MergeInClobberRanges(LiveIntervals &li_,
                                         const LiveInterval &Clobbers,
-                                        BumpPtrAllocator &VNInfoAllocator) {
+                                        VNInfo::Allocator &VNInfoAllocator) {
   if (Clobbers.empty()) return;
   
   DenseMap<VNInfo*, VNInfo*> ValNoMaps;
@@ -658,7 +658,7 @@ void LiveInterval::MergeInClobberRanges(LiveIntervals &li_,
 void LiveInterval::MergeInClobberRange(LiveIntervals &li_,
                                        SlotIndex Start,
                                        SlotIndex End,
-                                       BumpPtrAllocator &VNInfoAllocator) {
+                                       VNInfo::Allocator &VNInfoAllocator) {
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
   VNInfo *ClobberValNo =
@@ -753,7 +753,7 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
 
 void LiveInterval::Copy(const LiveInterval &RHS,
                         MachineRegisterInfo *MRI,
-                        BumpPtrAllocator &VNInfoAllocator) {
+                        VNInfo::Allocator &VNInfoAllocator) {
   ranges.clear();
   valnos.clear();
   std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(RHS.reg);
