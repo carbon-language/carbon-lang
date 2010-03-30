@@ -308,6 +308,53 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
   return Value;
 }
 
+/// EmitCopyCtorCall - Emit a call to a copy constructor.
+static void
+EmitCopyCtorCall(CodeGenFunction &CGF,
+                 const CXXConstructorDecl *CopyCtor, CXXCtorType CopyCtorType,
+                 llvm::Value *ThisPtr, llvm::Value *VTT, llvm::Value *Src) {
+  llvm::Value *Callee = CGF.CGM.GetAddrOfCXXConstructor(CopyCtor, CopyCtorType);
+
+  CallArgList CallArgs;
+
+  // Push the this ptr.
+  CallArgs.push_back(std::make_pair(RValue::get(ThisPtr),
+                                    CopyCtor->getThisType(CGF.getContext())));
+  
+  // Push the VTT parameter if necessary.
+  if (VTT) {
+    QualType T = CGF.getContext().getPointerType(CGF.getContext().VoidPtrTy);
+    CallArgs.push_back(std::make_pair(RValue::get(VTT), T));
+  }
+ 
+  // Push the Src ptr.
+  CallArgs.push_back(std::make_pair(RValue::get(Src),
+                                    CopyCtor->getParamDecl(0)->getType()));
+
+
+  {
+    CodeGenFunction::CXXTemporariesCleanupScope Scope(CGF);
+
+    // If the copy constructor has default arguments, emit them.
+    for (unsigned I = 1, E = CopyCtor->getNumParams(); I < E; ++I) {
+      const ParmVarDecl *Param = CopyCtor->getParamDecl(I);
+      const Expr *DefaultArgExpr = Param->getDefaultArg();
+
+      assert(DefaultArgExpr && "Ctor parameter must have default arg!");
+
+      QualType ArgType = Param->getType();
+      CallArgs.push_back(std::make_pair(CGF.EmitCallArg(DefaultArgExpr, 
+                                                        ArgType),
+                                        ArgType));
+    }
+
+    const FunctionProtoType *FPT =
+      CopyCtor->getType()->getAs<FunctionProtoType>();
+    CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(CallArgs, FPT),
+                 Callee, ReturnValueSlot(), CallArgs, CopyCtor);
+  }
+}
+                             
 /// EmitClassAggrMemberwiseCopy - This routine generates code to copy a class
 /// array of objects from SrcValue to DestValue. Copying can be either a bitwise
 /// copy or via a copy constructor call.
@@ -531,47 +578,13 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     return;
   }
 
-  if (CXXConstructorDecl *BaseCopyCtor =
-      BaseClassDecl->getCopyConstructor(getContext(), 0)) {
-    llvm::Value *Callee = CGM.GetAddrOfCXXConstructor(BaseCopyCtor, CtorType);
-    CallArgList CallArgs;
-    // Push the this (Dest) ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Dest),
-                                      BaseCopyCtor->getThisType(getContext())));
+  CXXConstructorDecl *BaseCopyCtor =
+    BaseClassDecl->getCopyConstructor(getContext(), 0);
+  if (!BaseCopyCtor)
+    return;
 
-    // Push the VTT parameter, if necessary.
-    if (llvm::Value *VTT = 
-          GetVTTParameter(*this, GlobalDecl(BaseCopyCtor, CtorType))) {
-      QualType T = getContext().getPointerType(getContext().VoidPtrTy);
-      CallArgs.push_back(std::make_pair(RValue::get(VTT), T));
-    }
-
-    // Push the Src ptr.
-    CallArgs.push_back(std::make_pair(RValue::get(Src),
-                       BaseCopyCtor->getParamDecl(0)->getType()));
-
-    {
-      CXXTemporariesCleanupScope Scope(*this);
-
-      // If the copy constructor has default arguments, emit them.
-      for (unsigned I = 1, E = BaseCopyCtor->getNumParams(); I < E; ++I) {
-        const ParmVarDecl *Param = BaseCopyCtor->getParamDecl(I);
-        const Expr *DefaultArgExpr = Param->getDefaultArg();
-
-        assert(DefaultArgExpr && "Ctor parameter must have default arg!");
-
-        QualType ArgType = Param->getType();
-        CallArgs.push_back(std::make_pair(EmitCallArg(DefaultArgExpr, ArgType),
-                                          ArgType));
-
-      }
-
-      const FunctionProtoType *FPT =
-        BaseCopyCtor->getType()->getAs<FunctionProtoType>();
-      EmitCall(CGM.getTypes().getFunctionInfo(CallArgs, FPT),
-               Callee, ReturnValueSlot(), CallArgs, BaseCopyCtor);
-    }
-  }
+  llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(BaseCopyCtor, CtorType));
+  EmitCopyCtorCall(*this, BaseCopyCtor, CtorType, Dest, VTT, Src);
 }
 
 /// EmitClassCopyAssignment - This routine generates code to copy assign a class

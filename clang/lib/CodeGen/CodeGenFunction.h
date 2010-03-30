@@ -1292,6 +1292,10 @@ public:
   /// getTrapBB - Create a basic block that will call the trap intrinsic.  We'll
   /// generate a branch around the created basic block as necessary.
   llvm::BasicBlock* getTrapBB();
+  
+  /// EmitCallArg - Emit a single call argument.
+  RValue EmitCallArg(const Expr *E, QualType ArgType);
+
 private:
 
   void EmitReturnOfRValue(RValue RV, QualType Ty);
@@ -1322,9 +1326,6 @@ private:
   /// AddBranchFixup - adds a branch instruction to the list of fixups for the
   /// current cleanup scope.
   void AddBranchFixup(llvm::BranchInst *BI);
-
-  /// EmitCallArg - Emit a single call argument.
-  RValue EmitCallArg(const Expr *E, QualType ArgType);
 
   /// EmitCallArgs - Emit call arguments for a function.
   /// The CallArgTypeInfo parameter is used for iterating over the known
