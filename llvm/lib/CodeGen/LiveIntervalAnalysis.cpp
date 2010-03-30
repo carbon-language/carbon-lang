@@ -819,8 +819,9 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   unsigned ImpUse = getReMatImplicitUse(li, MI);
   if (ImpUse) {
     const LiveInterval &ImpLi = getInterval(ImpUse);
-    for (MachineRegisterInfo::use_iterator ri = mri_->use_begin(li.reg),
-           re = mri_->use_end(); ri != re; ++ri) {
+    for (MachineRegisterInfo::use_nodbg_iterator
+           ri = mri_->use_nodbg_begin(li.reg), re = mri_->use_nodbg_end();
+         ri != re; ++ri) {
       MachineInstr *UseMI = &*ri;
       SlotIndex UseIdx = getInstructionIndex(UseMI);
       if (li.FindLiveRangeContaining(UseIdx)->valno != ValNo)
@@ -1052,7 +1053,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       // all of its uses are rematerialized, simply delete it.
       if (MI == ReMatOrigDefMI && CanDelete) {
         DEBUG(dbgs() << "\t\t\t\tErasing re-materializable def: "
-                     << MI << '\n');
+                     << *MI << '\n');
         RemoveMachineInstrFromMaps(MI);
         vrm.RemoveMachineInstrFromMaps(MI);
         MI->eraseFromParent();
@@ -1520,6 +1521,12 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
     MachineOperand &O = ri.getOperand();
     MachineInstr *MI = &*ri;
     ++ri;
+    if (MI->isDebugValue()) {
+      // Remove debug info for now.
+      O.setReg(0U);
+      DEBUG(dbgs() << "Removing debug info due to spill:" << "\t" << *MI);
+      continue;
+    }
     if (O.isDef()) {
       assert(MI->isImplicitDef() &&
              "Register def was not rewritten?");
@@ -2012,6 +2019,8 @@ unsigned LiveIntervals::getNumConflictsWithPhysReg(const LiveInterval &li,
          E = mri_->reg_end(); I != E; ++I) {
     MachineOperand &O = I.getOperand();
     MachineInstr *MI = O.getParent();
+    if (MI->isDebugValue())
+      continue;
     SlotIndex Index = getInstructionIndex(MI);
     if (pli.liveAt(Index))
       ++NumConflicts;
@@ -2052,7 +2061,7 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
          E = mri_->reg_end(); I != E; ++I) {
     MachineOperand &O = I.getOperand();
     MachineInstr *MI = O.getParent();
-    if (SeenMIs.count(MI))
+    if (MI->isDebugValue() || SeenMIs.count(MI))
       continue;
     SeenMIs.insert(MI);
     SlotIndex Index = getInstructionIndex(MI);

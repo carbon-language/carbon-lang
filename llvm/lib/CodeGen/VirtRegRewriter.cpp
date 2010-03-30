@@ -990,10 +990,17 @@ static unsigned FindFreeRegister(MachineBasicBlock::iterator MII,
   SmallVector<unsigned, 4> Kills;
 
   // Take a look at 2 instructions at most.
-  for (unsigned Count = 0; Count < 2; ++Count) {
+  unsigned Count = 0;
+  while (Count < 2) {
     if (MII == MBB.begin())
       break;
     MachineInstr *PrevMI = prior(MII);
+    MII = PrevMI;
+
+    if (PrevMI->isDebugValue())
+      continue; // Skip over dbg_value instructions.
+    ++Count;
+
     for (unsigned i = 0, e = PrevMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = PrevMI->getOperand(i);
       if (!MO.isReg() || MO.getReg() == 0)
@@ -1022,8 +1029,6 @@ static unsigned FindFreeRegister(MachineBasicBlock::iterator MII,
       for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
         Uses.set(*AS);
     }
-
-    MII = PrevMI;
   }
 
   return 0;
@@ -1213,6 +1218,9 @@ OptimizeByUnfold2(unsigned VirtReg, int SS,
                   std::vector<MachineOperand*> &KillOps) {
 
   MachineBasicBlock::iterator NextMII = llvm::next(MII);
+  // Skip over dbg_value instructions.
+  while (NextMII != MBB->end() && NextMII->isDebugValue())
+    NextMII = llvm::next(NextMII);
   if (NextMII == MBB->end())
     return false;
 
@@ -1277,6 +1285,9 @@ OptimizeByUnfold2(unsigned VirtReg, int SS,
     VRM->RemoveMachineInstrFromMaps(&NextMI);
     MBB->erase(&NextMI);
     ++NumModRefUnfold;
+    // Skip over dbg_value instructions.
+    while (NextMII != MBB->end() && NextMII->isDebugValue())
+      NextMII = llvm::next(NextMII);
     if (NextMII == MBB->end())
       break;
   } while (FoldsStackSlotModRef(*NextMII, SS, PhysReg, TII, TRI, *VRM));
@@ -1622,7 +1633,7 @@ TransferDeadness(unsigned Reg, BitVector &RegKills,
   for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(Reg),
          RE = MRI->reg_end(); RI != RE; ++RI) {
     MachineInstr *UDMI = &*RI;
-    if (UDMI->getParent() != MBB)
+    if (UDMI->isDebugValue() || UDMI->getParent() != MBB)
       continue;
     DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
     if (DI == DistanceMap.end())
