@@ -3273,11 +3273,11 @@ bool MeetsMaxMemopRequirement(std::vector<EVT> &MemOps,
 }
 
 static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
-                                         SDValue Chain, SDValue Dst,
-                                         SDValue Src, uint64_t Size,
-                                         unsigned Align, bool AlwaysInline,
-                                         const Value *DstSV, uint64_t DstSVOff,
-                                         const Value *SrcSV, uint64_t SrcSVOff){
+                                       SDValue Chain, SDValue Dst,
+                                       SDValue Src, uint64_t Size,
+                                       unsigned Align, bool AlwaysInline,
+                                       const Value *DstSV, uint64_t DstSVOff,
+                                       const Value *SrcSV, uint64_t SrcSVOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Expand memcpy to a series of load and store ops if the size operand falls
