@@ -31,6 +31,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetSelect.h"
@@ -272,6 +273,10 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
     }
   }
 
+  // If any timers were active but haven't been destroyed yet, print their
+  // results now.  This happens in -disable-free mode.
+  llvm::TimerGroup::printAll(llvm::errs());
+  
   // When running with -disable-free, don't do any destruction or shutdown.
   if (Clang->getFrontendOpts().DisableFree) {
     Clang.take();

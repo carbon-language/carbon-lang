@@ -24,6 +24,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Regex.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
@@ -73,10 +74,10 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 /// \param Args - The vector of command line arguments.
 /// \param Edit - The override command to perform.
 /// \param SavedStrings - Set to use for storing string representations.
-void ApplyOneQAOverride(llvm::raw_ostream &OS,
-                        std::vector<const char*> &Args,
-                        llvm::StringRef Edit,
-                        std::set<std::string> &SavedStrings) {
+static void ApplyOneQAOverride(llvm::raw_ostream &OS,
+                               std::vector<const char*> &Args,
+                               llvm::StringRef Edit,
+                               std::set<std::string> &SavedStrings) {
   // This does not need to be efficient.
 
   if (Edit[0] == '^') {
@@ -140,8 +141,9 @@ void ApplyOneQAOverride(llvm::raw_ostream &OS,
 
 /// ApplyQAOverride - Apply a comma separate list of edits to the
 /// input argument lists. See ApplyOneQAOverride.
-void ApplyQAOverride(std::vector<const char*> &Args, const char *OverrideStr,
-                     std::set<std::string> &SavedStrings) {
+static void ApplyQAOverride(std::vector<const char*> &Args,
+                            const char *OverrideStr,
+                            std::set<std::string> &SavedStrings) {
   llvm::raw_ostream *OS = &llvm::errs();
 
   if (OverrideStr[0] == '#') {
@@ -265,6 +267,11 @@ int main(int argc, const char **argv) {
   if (C.get())
     Res = TheDriver.ExecuteCompilation(*C);
 
+  
+  // If any timers were active but haven't been destroyed yet, print their
+  // results now.  This happens in -disable-free mode.
+  llvm::TimerGroup::printAll(llvm::errs());
+  
   llvm::llvm_shutdown();
 
   return Res;
