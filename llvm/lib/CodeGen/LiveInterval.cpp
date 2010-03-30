@@ -303,7 +303,6 @@ void LiveInterval::removeRange(SlotIndex Start, SlotIndex End,
           // otherwise mark it as ~1U so it can be nuked later.
           if (ValNo->id == getNumValNums()-1) {
             do {
-              VNInfo *VNI = valnos.back();
               valnos.pop_back();
             } while (!valnos.empty() && valnos.back()->isUnused());
           } else {
@@ -350,7 +349,6 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
   // otherwise mark it as ~1U so it can be nuked later.
   if (ValNo->id == getNumValNums()-1) {
     do {
-      VNInfo *VNI = valnos.back();
       valnos.pop_back();
     } while (!valnos.empty() && valnos.back()->isUnused());
   } else {
@@ -577,7 +575,6 @@ void LiveInterval::MergeValueInAsValue(
         // mark it as ~1U so it can be nuked later.
         if (V1->id == getNumValNums()-1) {
           do {
-            VNInfo *VNI = valnos.back();
             valnos.pop_back();
           } while (!valnos.empty() && valnos.back()->isUnused());
         } else {
@@ -745,7 +742,6 @@ VNInfo* LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   // ~1U so it can be nuked later.
   if (V1->id == getNumValNums()-1) {
     do {
-      VNInfo *VNI = valnos.back();
       valnos.pop_back();
     } while (valnos.back()->isUnused());
   } else {
