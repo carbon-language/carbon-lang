@@ -399,7 +399,7 @@ namespace X86II {
     GS          = 2 << SegOvrShift,
 
     // Execution domain for SSE instructions in bits 22, 23.
-    // 0 in bits 22-23 means normal, non-SSE instruction. See SSEDomain below.
+    // 0 in bits 22-23 means normal, non-SSE instruction.
     SSEDomainShift = 22,
 
     OpcodeShift   = 24,
@@ -718,9 +718,6 @@ public:
   /// initialize the register in the function entry block, if necessary.
   ///
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
-
-  /// Some SSE instructions come in variants for three domains.
-  enum SSEDomain { NotSSEDomain, PackedInt, PackedSingle, PackedDouble };
 
   /// GetSSEDomain - Return the SSE execution domain of MI as the first element,
   /// and a bitmask of possible arguments to SetSSEDomain ase the second.

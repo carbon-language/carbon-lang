@@ -69,14 +69,14 @@ def CondMovFP  : FPFormat<6>;
 def SpecialFP  : FPFormat<7>;
 
 // Class specifying the SSE execution domain, used by the SSEDomainFix pass.
-// Instruction execution domain.
+// Keep in sync with tables in X86InstrInfo.cpp.
 class Domain<bits<2> val> {
   bits<2> Value = val;
 }
 def GenericDomain   : Domain<0>;
-def SSEPackedInt    : Domain<1>;
-def SSEPackedSingle : Domain<2>;
-def SSEPackedDouble : Domain<3>;
+def SSEPackedSingle : Domain<1>;
+def SSEPackedDouble : Domain<2>;
+def SSEPackedInt    : Domain<3>;
 
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
