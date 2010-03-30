@@ -1679,25 +1679,25 @@ static void *GetKeyForBase(QualType BaseType) {
 
 static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member,
                              bool MemberMaybeAnon = false) {
+  if (!Member->isMemberInitializer())
+    return GetKeyForBase(QualType(Member->getBaseClass(), 0));
+    
   // For fields injected into the class via declaration of an anonymous union,
   // use its anonymous union class declaration as the unique key.
-  if (Member->isMemberInitializer()) {
-    FieldDecl *Field = Member->getMember();
+  FieldDecl *Field = Member->getMember();
 
-    // After SetBaseOrMemberInitializers call, Field is the anonymous union
-    // data member of the class. Data member used in the initializer list is
-    // in AnonUnionMember field.
-    if (MemberMaybeAnon && Field->isAnonymousStructOrUnion())
-      Field = Member->getAnonUnionMember();
-    if (Field->getDeclContext()->isRecord()) {
-      RecordDecl *RD = cast<RecordDecl>(Field->getDeclContext());
-      if (RD->isAnonymousStructOrUnion())
-        return static_cast<void *>(RD);
-    }
-    return static_cast<void *>(Field);
+  // After SetBaseOrMemberInitializers call, Field is the anonymous union
+  // data member of the class. Data member used in the initializer list is
+  // in AnonUnionMember field.
+  if (MemberMaybeAnon && Field->isAnonymousStructOrUnion())
+    Field = Member->getAnonUnionMember();
+  if (Field->getDeclContext()->isRecord()) {
+    RecordDecl *RD = cast<RecordDecl>(Field->getDeclContext());
+    if (RD->isAnonymousStructOrUnion())
+      return static_cast<void *>(RD);
   }
 
-  return GetKeyForBase(QualType(Member->getBaseClass(), 0));
+  return static_cast<void *>(Field);
 }
 
 /// ActOnMemInitializers - Handle the member initializers for a constructor.
