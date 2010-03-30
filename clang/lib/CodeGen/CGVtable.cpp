@@ -3617,21 +3617,8 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   return I->second;
 }
 
-static bool UseNewVTableCode = true;
-
 uint64_t
 CodeGenVTables::getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD) {
-  // FIXME: Always use the new vtable code once we know it works.
-  if (!UseNewVTableCode) {
-    const CodeGenVTables::AddrSubMap_t& AddressPoints = getAddressPoints(RD);
-
-    uint64_t AddressPoint = 
-      AddressPoints.lookup(std::make_pair(Base.getBase(),
-                                          Base.getBaseOffset()));
-  
-    assert(AddressPoint && "Address point must not be zero!");
-  }
-  
   uint64_t AddressPoint = AddressPoints.lookup(std::make_pair(RD, Base));
   assert(AddressPoint && "Address point must not be zero!");
 
@@ -4189,9 +4176,7 @@ GetGlobalVariable(llvm::Module &Module, llvm::StringRef Name,
   return GV;
 }
 
-// FIXME: When the new code is in place, we can change this to return a 
-// GlobalVariable.
-llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
+llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   CGM.getMangleContext().mangleCXXVtable(RD, OutName);
   llvm::StringRef Name = OutName.str();
@@ -4202,23 +4187,8 @@ llvm::Constant *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
 
-  // FIXME: Always use the new vtable code once we know it works.
-  if (UseNewVTableCode)
-    return GetGlobalVariable(CGM.getModule(), Name, ArrayType, 
-                             llvm::GlobalValue::ExternalLinkage);
-
-  llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(Name);
-  if (GV) {
-    if (!GV->isDeclaration() || GV->getType()->getElementType() == ArrayType)
-      return GV;
-  
-    return llvm::ConstantExpr::getBitCast(GV, ArrayType->getPointerTo());
-  }
-  
-  GV = new llvm::GlobalVariable(CGM.getModule(), ArrayType, /*isConstant=*/true,
-                                llvm::GlobalValue::ExternalLinkage, 0, Name);
-
-  return GV;
+  return GetGlobalVariable(CGM.getModule(), Name, ArrayType, 
+                           llvm::GlobalValue::ExternalLinkage);
 }
 
 void
@@ -4305,16 +4275,9 @@ CodeGenVTables::GenerateClassData(llvm::GlobalVariable::LinkageTypes Linkage,
     return;
   }
 
-  // FIXME: Always use the new vtable code once we know it works.
-  if (UseNewVTableCode) {
-    VTable = cast<llvm::GlobalVariable>(GetAddrOfVTable(RD));
-    EmitVTableDefinition(VTable, Linkage, RD);
-  } else {
-    llvm::DenseMap<BaseSubobject, uint64_t> AddressPoints;
-    VTable = GenerateVtable(Linkage, /*GenerateDefinition=*/true, RD, RD, 0,
-                            /*IsVirtual=*/false,
-                            AddressPoints);
-  }
+  VTable = GetAddrOfVTable(RD);
+  EmitVTableDefinition(VTable, Linkage, RD);
+
   GenerateVTT(Linkage, /*GenerateDefinition=*/true, RD);
 }
 

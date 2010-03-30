@@ -385,7 +385,7 @@ public:
   uint64_t getAddressPoint(BaseSubobject Base, const CXXRecordDecl *RD);
   
   /// GetAddrOfVTable - Get the address of the vtable for the given record decl.
-  llvm::Constant *GetAddrOfVTable(const CXXRecordDecl *RD);
+  llvm::GlobalVariable *GetAddrOfVTable(const CXXRecordDecl *RD);
 
   /// EmitVTableDefinition - Emit the definition of the given vtable.
   void EmitVTableDefinition(llvm::GlobalVariable *VTable,
