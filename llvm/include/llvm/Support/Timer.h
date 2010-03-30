@@ -164,30 +164,24 @@ class TimerGroup {
   std::string Name;
   Timer *FirstTimer;   // First timer in the group.
   std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
+  TimerGroup(const TimerGroup &TG);      // DO NOT IMPLEMENT
+  void operator=(const TimerGroup &TG);  // DO NOT IMPLEMENT
 public:
-  explicit TimerGroup(const std::string &name) : Name(name), FirstTimer(0) {}
-  explicit TimerGroup() : FirstTimer(0) {}
+  explicit TimerGroup(const std::string &name = "")
+    : Name(name), FirstTimer(0) {}
 
-  explicit TimerGroup(const TimerGroup &TG) : FirstTimer(0) {
-    operator=(TG);
-  }
   ~TimerGroup();
 
-  void operator=(const TimerGroup &TG) {
-    assert(TG.FirstTimer == 0 && FirstTimer == 0 &&
-           "Cannot assign group with timers");
-    Name = TG.Name;
-  }
-
-  
   void setName(const std::string &name) { Name = name; }
-  
-  void PrintQueuedTimers(raw_ostream &OS);
+
+  /// print - Print any started timers in this group and zero them.
+  void print(raw_ostream &OS);
   
 private:
   friend class Timer;
   void addTimer(Timer &T);
   void removeTimer(Timer &T);
+  void PrintQueuedTimers(raw_ostream &OS);
 };
 
 } // End llvm namespace

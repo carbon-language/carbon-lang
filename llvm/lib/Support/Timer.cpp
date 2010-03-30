@@ -19,6 +19,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Process.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
@@ -112,36 +113,30 @@ void Timer::init(const std::string &N, TimerGroup &tg) {
 }
 
 Timer::~Timer() {
-  if (!TG) return;  // Never initialized.
+  if (!TG) return;  // Never initialized, or already cleared.
   TG->removeTimer(*this);
 }
 
 static inline size_t getMemUsage() {
-  if (TrackSpace)
-    return sys::Process::GetMallocUsage();
-  return 0;
+  if (!TrackSpace) return 0;
+  return sys::Process::GetMallocUsage();
 }
 
 TimeRecord TimeRecord::getCurrentTime(bool Start) {
   TimeRecord Result;
-
-  sys::TimeValue now(0,0);
-  sys::TimeValue user(0,0);
-  sys::TimeValue sys(0,0);
-
-  ssize_t MemUsed = 0;
+  sys::TimeValue now(0,0), user(0,0), sys(0,0);
+  
   if (Start) {
-    MemUsed = getMemUsage();
+    Result.MemUsed = getMemUsage();
     sys::Process::GetTimeUsage(now, user, sys);
   } else {
     sys::Process::GetTimeUsage(now, user, sys);
-    MemUsed = getMemUsage();
+    Result.MemUsed = getMemUsage();
   }
 
   Result.WallTime   =  now.seconds() +  now.microseconds() / 1000000.0;
   Result.UserTime   = user.seconds() + user.microseconds() / 1000000.0;
   Result.SystemTime =  sys.seconds() +  sys.microseconds() / 1000000.0;
-  Result.MemUsed = MemUsed;
   return Result;
 }
 
@@ -196,7 +191,30 @@ void TimeRecord::print(const TimeRecord &Total, raw_ostream &OS) const {
 //===----------------------------------------------------------------------===//
 
 typedef StringMap<Timer> Name2TimerMap;
-typedef StringMap<std::pair<TimerGroup, Name2TimerMap> > Name2PairMap;
+
+class Name2PairMap {
+  StringMap<std::pair<TimerGroup*, Name2TimerMap> > Map;
+public:
+  ~Name2PairMap() {
+    for (StringMap<std::pair<TimerGroup*, Name2TimerMap> >::iterator
+         I = Map.begin(), E = Map.end(); I != E; ++I)
+      delete I->second.first;
+  }
+  
+  Timer &get(const std::string &Name, const std::string &GroupName) {
+    sys::SmartScopedLock<true> L(*TimerLock);
+    
+    std::pair<TimerGroup*, Name2TimerMap> &GroupEntry = Map[GroupName];
+    
+    if (!GroupEntry.first)
+      GroupEntry.first = new TimerGroup(GroupName);
+    
+    Timer &T = GroupEntry.second[Name];
+    if (!T.isInitialized())
+      T.init(Name, *GroupEntry.first);
+    return T;
+  }
+};
 
 static ManagedStatic<Name2TimerMap> NamedTimers;
 static ManagedStatic<Name2PairMap> NamedGroupedTimers;
@@ -210,28 +228,12 @@ static Timer &getNamedRegionTimer(const std::string &Name) {
   return T;
 }
 
-static Timer &getNamedRegionTimer(const std::string &Name,
-                                  const std::string &GroupName) {
-  sys::SmartScopedLock<true> L(*TimerLock);
-
-  std::pair<TimerGroup, Name2TimerMap> &GroupEntry =
-    (*NamedGroupedTimers)[GroupName];
-
-  if (GroupEntry.second.empty())
-    GroupEntry.first.setName(GroupName);
-
-  Timer &T = GroupEntry.second[Name];
-  if (!T.isInitialized())
-    T.init(Name);
-  return T;
-}
-
 NamedRegionTimer::NamedRegionTimer(const std::string &Name)
   : TimeRegion(getNamedRegionTimer(Name)) {}
 
 NamedRegionTimer::NamedRegionTimer(const std::string &Name,
                                    const std::string &GroupName)
-  : TimeRegion(getNamedRegionTimer(Name, GroupName)) {}
+  : TimeRegion(NamedGroupedTimers->get(Name, GroupName)) {}
 
 //===----------------------------------------------------------------------===//
 //   TimerGroup Implementation
@@ -331,3 +333,22 @@ void TimerGroup::PrintQueuedTimers(raw_ostream &OS) {
   TimersToPrint.clear();
 }
 
+/// print - Print any started timers in this group and zero them.
+void TimerGroup::print(raw_ostream &OS) {
+  sys::SmartScopedLock<true> L(*TimerLock);
+
+  // See if any of our timers were started, if so add them to TimersToPrint and
+  // reset them.
+  for (Timer *T = FirstTimer; T; T = T->Next) {
+    if (!T->Started) continue;
+    TimersToPrint.push_back(std::make_pair(T->Time, T->Name));
+    
+    // Clear out the time.
+    T->Started = 0;
+    T->Time = TimeRecord();
+  }
+
+  // If any timers were started, print the group.
+  if (!TimersToPrint.empty())
+    PrintQueuedTimers(OS);
+}
