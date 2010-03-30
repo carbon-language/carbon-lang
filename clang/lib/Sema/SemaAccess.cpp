@@ -910,6 +910,7 @@ Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
 Sema::AccessResult Sema::CheckAddressOfMemberAccess(Expr *OvlExpr,
                                                     DeclAccessPair Found) {
   if (!getLangOptions().AccessControl ||
+      Found.getAccess() == AS_none ||
       Found.getAccess() == AS_public)
     return AR_accessible;
 
