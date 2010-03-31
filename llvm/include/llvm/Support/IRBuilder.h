@@ -85,7 +85,7 @@ public:
     CurDbgLocation = L;
   }
   
-  /// SetCurrentDebugLocation - Set location information used by debugging
+  /// getCurrentDebugLocation - Get location information used by debugging
   /// information.
   MDNode *getCurrentDebugLocation() const { return CurDbgLocation; }
   
