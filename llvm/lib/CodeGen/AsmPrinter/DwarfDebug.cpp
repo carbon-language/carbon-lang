@@ -2008,7 +2008,7 @@ void DwarfDebug::collectVariableInfo() {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
-      if (MInsn->getOpcode() != TargetOpcode::DBG_VALUE)
+      if (!MInsn->isDebugValue())
         continue;
 
       // FIXME : Lift this restriction.
@@ -2059,7 +2059,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
   PrevDILoc = DILoc.getNode();
 
   // DBG_VALUE instruction establishes new value.
-  if (MI->getOpcode() == TargetOpcode::DBG_VALUE) {
+  if (MI->isDebugValue()) {
     DenseMap<const MachineInstr *, DbgVariable *>::iterator DI
       = DbgValueStartMap.find(MI);
     if (DI != DbgValueStartMap.end()) {
@@ -2091,7 +2091,7 @@ void DwarfDebug::beginScope(const MachineInstr *MI) {
 /// endScope - Process end of a scope.
 void DwarfDebug::endScope(const MachineInstr *MI) {
   // Ignore DBG_VALUE instruction.
-  if (MI->getOpcode() == TargetOpcode::DBG_VALUE)
+  if (MI->isDebugValue())
     return;
 
   // Check location.
@@ -2142,7 +2142,7 @@ void DwarfDebug::createDbgScope(MDNode *Scope, MDNode *InlinedAt) {
 }
 
 /// extractScopeInformation - Scan machine instructions in this function
-/// and collect DbgScopes. Return true, if atleast one scope was found.
+/// and collect DbgScopes. Return true, if at least one scope was found.
 bool DwarfDebug::extractScopeInformation() {
   // If scope information was extracted using .dbg intrinsics then there is not
   // any need to extract these information by scanning each instruction.
@@ -2158,7 +2158,7 @@ bool DwarfDebug::extractScopeInformation() {
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
       // FIXME : Remove DBG_VALUE check.
-      if (MInsn->getOpcode() == TargetOpcode::DBG_VALUE) continue;
+      if (MInsn->isDebugValue()) continue;
       MIIndexMap[MInsn] = MIIndex++;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown()) continue;
@@ -2181,7 +2181,7 @@ bool DwarfDebug::extractScopeInformation() {
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
       // FIXME : Remove DBG_VALUE check.
-      if (MInsn->getOpcode() == TargetOpcode::DBG_VALUE) continue;
+      if (MInsn->isDebugValue()) continue;
       DebugLoc DL = MInsn->getDebugLoc();
       if (DL.isUnknown())  continue;
       DILocation DLT = MF->getDILocation(DL);
@@ -2209,7 +2209,7 @@ bool DwarfDebug::extractScopeInformation() {
   SmallVector<DbgScope *, 4> WorkList;
   WorkList.push_back(CurrentFnDbgScope);
   while (!WorkList.empty()) {
-    DbgScope *S = WorkList.back(); WorkList.pop_back();
+    DbgScope *S = WorkList.pop_back_val();
 
     const SmallVector<DbgScope *, 4> &Children = S->getScopes();
     if (!Children.empty()) 
