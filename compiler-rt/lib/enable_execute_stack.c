@@ -21,6 +21,11 @@
 #include <unistd.h>
 #endif /* __APPLE__ */
 
+#if __LP64__
+	#define TRAMPOLINE_SIZE 48
+#else
+	#define TRAMPOLINE_SIZE 40
+#endif
 
 /*
  * The compiler generates calls to __enable_execute_stack() when creating 
@@ -45,7 +50,7 @@ void __enable_execute_stack(void* addr)
 	const uintptr_t pageAlignMask = ~(pageSize-1);
 	uintptr_t p = (uintptr_t)addr;
 	unsigned char* startPage = (unsigned char*)(p & pageAlignMask);
-	unsigned char* endPage = (unsigned char*)((p+48+pageSize) & pageAlignMask);
+	unsigned char* endPage = (unsigned char*)((p+TRAMPOLINE_SIZE+pageSize) & pageAlignMask);
 	size_t length = endPage - startPage;
 	(void) mprotect((void *)startPage, length, PROT_READ | PROT_WRITE | PROT_EXEC);
 }
