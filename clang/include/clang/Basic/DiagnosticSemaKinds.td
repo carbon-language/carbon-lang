@@ -2182,7 +2182,7 @@ def err_invalid_declarator_global_scope : Error<
 def err_invalid_declarator_in_function : Error<
   "definition or redeclaration of %0 not allowed inside a function">;
 def err_not_tag_in_scope : Error<
-  "%0 does not name a tag member in the specified scope">;
+  "no %select{struct|union|class|enum}0 named %1 in %2">;
 
 def err_cannot_form_pointer_to_member_of_reference_type : Error<
   "cannot form a pointer-to-member to member %0 of reference type %1">;

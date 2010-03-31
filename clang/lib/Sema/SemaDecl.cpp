@@ -4786,7 +4786,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       }
 
       // A tag 'foo::bar' must already exist.
-      Diag(NameLoc, diag::err_not_tag_in_scope) << Name << SS.getRange();
+      Diag(NameLoc, diag::err_not_tag_in_scope) 
+        << Kind << Name << DC << SS.getRange();
       Name = 0;
       Invalid = true;
       goto CreateNewDecl;

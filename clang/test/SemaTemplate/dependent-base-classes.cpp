@@ -55,7 +55,7 @@ namespace PR6031 {
   template<typename T>
   struct NoDepBase {
     int foo() {
-      class NoDepBase::Nested nested; // expected-error{{'Nested' does not name a tag member in the specified scope}}
+      class NoDepBase::Nested nested; // expected-error{{no class named 'Nested' in 'NoDepBase<T>'}}
       typedef typename NoDepBase::template MemberTemplate<T>::type type; // expected-error{{'MemberTemplate' following the 'template' keyword does not refer to a template}} \
       // FIXME: expected-error{{unqualified-id}}
       return NoDepBase::a; // expected-error{{no member named 'a' in 'NoDepBase<T>'}}

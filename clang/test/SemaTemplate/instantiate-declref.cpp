@@ -36,7 +36,7 @@ namespace N {
 
 typedef int INT;
 template struct N::Outer::Inner::InnerTemplate<INT>::VeryInner;
-template struct N::Outer::Inner::InnerTemplate<INT>::UeberInner; // expected-error{{'UeberInner' does not name a tag member}}
+template struct N::Outer::Inner::InnerTemplate<INT>::UeberInner; // expected-error{{no struct named 'UeberInner' in 'N::Outer::Inner::InnerTemplate<int>'}}
 
 namespace N2 {
   struct Outer2 {

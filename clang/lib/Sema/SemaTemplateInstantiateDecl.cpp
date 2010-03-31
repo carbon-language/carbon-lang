@@ -693,7 +693,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
     if (!PrevClassTemplate && Qualifier) {
       SemaRef.Diag(Pattern->getLocation(), diag::err_not_tag_in_scope)
-        << Pattern->getDeclName() << Pattern->getQualifierRange();
+        << D->getTemplatedDecl()->getTagKind() << Pattern->getDeclName() << DC
+        << Pattern->getQualifierRange();
       return 0;
     }
 

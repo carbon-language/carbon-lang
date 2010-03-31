@@ -40,10 +40,10 @@ void c2(class B<float>::Member);
 void c3(union B<float>::Member); // expected-error {{use of 'Member' with tag type that does not match previous declaration}}
 void c4(enum B<float>::Member); // expected-error {{use of 'Member' with tag type that does not match previous declaration}}
 
-void d1(struct B<int>::Member); // expected-error {{'Member' does not name a tag member in the specified scope}}
-void d2(class B<int>::Member); // expected-error {{'Member' does not name a tag member in the specified scope}}
-void d3(union B<int>::Member); // expected-error {{'Member' does not name a tag member in the specified scope}}
-void d4(enum B<int>::Member); // expected-error {{'Member' does not name a tag member in the specified scope}}
+void d1(struct B<int>::Member); // expected-error {{no struct named 'Member' in 'B<int>'}}
+void d2(class B<int>::Member); // expected-error {{no class named 'Member' in 'B<int>'}}
+void d3(union B<int>::Member); // expected-error {{no union named 'Member' in 'B<int>'}}
+void d4(enum B<int>::Member); // expected-error {{no enum named 'Member' in 'B<int>'}}
 
 void e1(struct B<A>::Member); // expected-error {{use of 'Member' with tag type that does not match previous declaration}}
 void e2(class B<A>::Member); // expected-error {{use of 'Member' with tag type that does not match previous declaration}}
@@ -51,7 +51,7 @@ void e3(union B<A>::Member);
 void e4(enum B<A>::Member); // expected-error {{use of 'Member' with tag type that does not match previous declaration}}
 
 template <class T> struct C {
-  void foo(class B<T>::Member); // expected-error{{'Member' does not name a tag member in the specified scope}} \
+  void foo(class B<T>::Member); // expected-error{{no class named 'Member' in 'B<int>'}} \
                                 // expected-error{{use of 'Member' with tag type that does not match previous declaration}}
 };
 

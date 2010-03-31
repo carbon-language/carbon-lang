@@ -64,7 +64,7 @@ void f2() {
 A::C c1;
 struct A::C c2;
 struct S : public A::C {};
-struct A::undef; // expected-error {{'undef' does not name a tag member in the specified scope}}
+struct A::undef; // expected-error {{no struct named 'undef' in namespace 'A'}}
 
 namespace A2 {
   typedef int INT;

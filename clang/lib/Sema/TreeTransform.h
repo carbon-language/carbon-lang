@@ -618,9 +618,9 @@ public:
     }
 
     if (!Tag) {
-      // FIXME: Crummy diagnostic
+      // FIXME: Would be nice to highlight just the source range.
       SemaRef.Diag(SR.getEnd(), diag::err_not_tag_in_scope)
-        << Id << SR;
+        << Kind << Id << DC;
       return QualType();
     }
     
