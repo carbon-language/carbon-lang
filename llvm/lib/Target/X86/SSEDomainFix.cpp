@@ -261,7 +261,7 @@ void SSEDomainFixPass::Collapse(DomainValue *dv, unsigned domain) {
 bool SSEDomainFixPass::Merge(DomainValue *A, DomainValue *B) {
   assert(!A->collapsed() && "Cannot merge into collapsed");
   assert(!B->collapsed() && "Cannot merge from collapsed");
-	if (A == B)
+  if (A == B)
     return true;
   if (!A->compat(B->Mask))
     return false;
