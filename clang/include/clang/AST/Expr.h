@@ -3069,15 +3069,6 @@ public:
   virtual child_iterator child_end();
 };
 
-#ifndef NDEBUG
-  /// \brief The number of times we have dynamically checked for an
-  /// Objective-C-specific expression node.
-  extern llvm::Statistic objc_expr_checks;
-
-  /// \brief The number of times we have dynamically checked for a
-  /// C++-specific expression node.
-  extern llvm::Statistic cxx_expr_checks;
-#endif
 }  // end namespace clang
 
 #endif

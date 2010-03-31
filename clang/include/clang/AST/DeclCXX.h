@@ -1894,18 +1894,4 @@ const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 
 } // end namespace clang
 
-// Enumerate C++ declarations
-CLANG_ISA_STATISTIC(NamespaceDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(UsingDirectiveDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(NamespaceAliasDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(CXXRecordDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(CXXMethodDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(CXXConstructorDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(CXXDestructorDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(CXXConversionDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(UsingDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(UsingShadowDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(LinkageSpecDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(StaticAssertDecl, cxx_decl_checks)
-
 #endif

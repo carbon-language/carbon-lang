@@ -22,13 +22,6 @@
 #include <cstdio>
 using namespace clang;
 
-#ifndef NDEBUG
-llvm::Statistic clang::objc_stmt_checks = 
-  { "clang", "Number of checks for Objective-C statement nodes", 0, 0 };
-llvm::Statistic clang::cxx_stmt_checks = 
-  { "clang", "Number of checks for C++ statement nodes", 0, 0 };
-#endif
-
 static struct StmtClassNameTable {
   const char *Name;
   unsigned Counter;

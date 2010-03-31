@@ -15,7 +15,6 @@
 #define LLVM_CLANG_AST_DECLBASE_H
 
 #include "clang/AST/Attr.h"
-#include "clang/AST/Statistics.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -1070,15 +1069,6 @@ struct cast_convert_decl_context<ToTy, true> {
   }
 };
 
-#ifndef NDEBUG
-  /// \brief The number of times we have dynamically checked for an
-  /// Objective-C-specific declaration node.
-  extern llvm::Statistic objc_decl_checks;
-
-  /// \brief The number of times we have dynamically checked for a
-  /// C++-specific declaration node.
-  extern llvm::Statistic cxx_decl_checks;
-#endif
 
 } // end clang.
 

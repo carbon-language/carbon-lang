@@ -22,13 +22,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-#ifndef NDEBUG
-llvm::Statistic clang::objc_type_checks = 
-  { "clang", "Number of checks for Objective-C type nodes", 0, 0 };
-llvm::Statistic clang::cxx_type_checks = 
-  { "clang", "Number of checks for C++ type nodes", 0, 0 };
-#endif
-
 bool QualType::isConstant(QualType T, ASTContext &Ctx) {
   if (T.isConstQualified())
     return true;

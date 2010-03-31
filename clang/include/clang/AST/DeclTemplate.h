@@ -1314,17 +1314,4 @@ inline AnyFunctionDecl::AnyFunctionDecl(FunctionTemplateDecl *FTD)
 
 } /* end of namespace clang */
 
-// Enumerate C++ declarations
-CLANG_ISA_STATISTIC(UnresolvedUsingTypenameDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(ClassTemplateSpecializationDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(ClassTemplatePartialSpecializationDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(TemplateTypeParmDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(UnresolvedUsingValueDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(NonTypeTemplateParmDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(TemplateDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(FunctionTemplateDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(ClassTemplateDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(TemplateTemplateParmDecl, cxx_decl_checks)
-CLANG_ISA_STATISTIC(FriendTemplateDecl, cxx_decl_checks)
-
 #endif

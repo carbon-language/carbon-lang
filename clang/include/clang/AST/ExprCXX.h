@@ -2134,35 +2134,4 @@ inline ExplicitTemplateArgumentList &OverloadExpr::getExplicitTemplateArgs() {
 
 }  // end namespace clang
 
-// Enumerate C++ expressions
-CLANG_ISA_STATISTIC(CXXOperatorCallExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXMemberCallExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXNamedCastExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXStaticCastExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXDynamicCastExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXReinterpretCastExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXConstCastExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXFunctionalCastExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXTypeidExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXBoolLiteralExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXNullPtrLiteralExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXThisExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXThrowExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXDefaultArgExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXZeroInitValueExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXNewExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXDeleteExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXPseudoDestructorExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(UnresolvedLookupExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(UnaryTypeTraitExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(DependentScopeDeclRefExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXConstructExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXBindTemporaryExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXBindReferenceExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXExprWithTemporaries, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXTemporaryObjectExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXUnresolvedConstructExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(CXXDependentScopeMemberExpr, cxx_expr_checks)
-CLANG_ISA_STATISTIC(UnresolvedMemberExpr, cxx_expr_checks)
-
 #endif

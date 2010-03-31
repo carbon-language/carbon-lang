@@ -18,7 +18,6 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Linkage.h"
 #include "clang/AST/NestedNameSpecifier.h"
-#include "clang/AST/Statistics.h"
 #include "clang/AST/TemplateName.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/type_traits.h"
@@ -3231,35 +3230,6 @@ template <typename T> const T *Type::getAs() const {
   return cast<T>(getUnqualifiedDesugaredType());
 }
 
-#ifndef NDEBUG
-  /// \brief The number of times we have dynamically checked for an
-  /// Objective-C-specific type node.
-  extern llvm::Statistic objc_type_checks;
-
-  /// \brief The number of times we have dynamically checked for a
-  /// C++-specific type node.
-  extern llvm::Statistic cxx_type_checks;
-#endif
 }  // end namespace clang
-
-// Enumerate Objective-C types
-CLANG_ISA_STATISTIC(ObjCInterfaceType, objc_type_checks)
-CLANG_ISA_STATISTIC(ObjCObjectPointerType, objc_type_checks)
-
-// Enumerate C++ types
-CLANG_ISA_STATISTIC(ReferenceType, cxx_type_checks)
-CLANG_ISA_STATISTIC(LValueReferenceType, cxx_type_checks)
-CLANG_ISA_STATISTIC(RValueReferenceType, cxx_type_checks)
-CLANG_ISA_STATISTIC(MemberPointerType, cxx_type_checks)
-CLANG_ISA_STATISTIC(DependentSizedArrayType, cxx_type_checks)
-CLANG_ISA_STATISTIC(DependentSizedExtVectorType, cxx_type_checks)
-CLANG_ISA_STATISTIC(UnresolvedUsingType, cxx_type_checks)
-CLANG_ISA_STATISTIC(DecltypeType, cxx_type_checks)
-CLANG_ISA_STATISTIC(TemplateTypeParmType, cxx_type_checks)
-CLANG_ISA_STATISTIC(SubstTemplateTypeParmType, cxx_type_checks)
-CLANG_ISA_STATISTIC(TemplateSpecializationType, cxx_type_checks)
-CLANG_ISA_STATISTIC(QualifiedNameType, cxx_type_checks)
-CLANG_ISA_STATISTIC(InjectedClassNameType, cxx_type_checks)
-CLANG_ISA_STATISTIC(DependentNameType, cxx_type_checks)
 
 #endif

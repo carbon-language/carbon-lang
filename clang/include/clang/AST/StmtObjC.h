@@ -304,12 +304,4 @@ public:
 
 }  // end namespace clang
 
-// Enumerate Objective-C statements
-CLANG_ISA_STATISTIC(ObjCAtTryStmt, objc_stmt_checks)
-CLANG_ISA_STATISTIC(ObjCAtCatchStmt, objc_stmt_checks)
-CLANG_ISA_STATISTIC(ObjCAtFinallyStmt, objc_stmt_checks)
-CLANG_ISA_STATISTIC(ObjCAtThrowStmt, objc_stmt_checks)
-CLANG_ISA_STATISTIC(ObjCAtSynchronizedStmt, objc_stmt_checks)
-CLANG_ISA_STATISTIC(ObjCForCollectionStmt, objc_stmt_checks)
-
 #endif

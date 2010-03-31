@@ -107,10 +107,7 @@ public:
   virtual child_iterator child_end();
 };
 
-}  // end namespace clang
 
-// Enumerate C++ statements
-CLANG_ISA_STATISTIC(CXXCatchStmt, cxx_stmt_checks)
-CLANG_ISA_STATISTIC(CXXTryStmt, cxx_stmt_checks)
+}  // end namespace clang
 
 #endif

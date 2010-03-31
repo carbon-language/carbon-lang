@@ -1397,22 +1397,4 @@ public:
 };
 
 }  // end namespace clang
-
-// Enumerate Objective-C declarations
-CLANG_ISA_STATISTIC(ObjCIvarDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCAtDefsFieldDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCMethodDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCContainerDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCCategoryDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCProtocolDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCInterfaceDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCImplDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCCategoryImplDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCImplementationDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCPropertyDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCCompatibleAliasDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCPropertyImplDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCForwardProtocolDecl, objc_decl_checks)
-CLANG_ISA_STATISTIC(ObjCClassDecl, objc_decl_checks)
-
 #endif

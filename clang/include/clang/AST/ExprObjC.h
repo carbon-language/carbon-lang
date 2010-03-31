@@ -577,16 +577,4 @@ public:
 
 }  // end namespace clang
 
-// Enumerate Objective-C expressions
-CLANG_ISA_STATISTIC(ObjCStringLiteral, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCEncodeExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCMessageExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCSelectorExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCProtocolExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCIvarRefExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCPropertyRefExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCImplicitSetterGetterRefExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCSuperExpr, objc_expr_checks)
-CLANG_ISA_STATISTIC(ObjCIsaExpr, objc_expr_checks)
-
 #endif
