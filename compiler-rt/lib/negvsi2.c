@@ -24,6 +24,6 @@ __negvsi2(si_int a)
 {
     const si_int MIN = (si_int)1 << ((int)(sizeof(si_int) * CHAR_BIT)-1);
     if (a == MIN)
-        abort();
+        compilerrt_abort();
     return -a;
 }

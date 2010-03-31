@@ -28,7 +28,7 @@ void __trampoline_setup(uint32_t* trampOnStack, int trampSizeAllocated,
     /* should never happen, but if compiler did not allocate */
     /* enough space on stack for the trampoline, abort */
     if ( trampSizeAllocated < 40 )
-        abort();
+        compilerrt_abort();
     
     /* create trampoline */
     trampOnStack[0] = 0x7c0802a6;    /* mflr r0 */

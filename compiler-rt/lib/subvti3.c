@@ -28,12 +28,12 @@ __subvti3(ti_int a, ti_int b)
     if (b >= 0)
     {
         if (s > a)
-            abort();
+            compilerrt_abort();
     }
     else
     {
         if (s <= a)
-            abort();
+            compilerrt_abort();
     }
     return s;
 }

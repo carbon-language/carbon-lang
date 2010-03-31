@@ -10,6 +10,7 @@
 
 
 
+#include "int_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -28,5 +29,5 @@ void __eprintf(const char* format, const char* assertion_expression,
 {
 	fprintf(stderr, format, assertion_expression, line, file);
 	fflush(stderr);
-	abort();
+	compilerrt_abort();
 }

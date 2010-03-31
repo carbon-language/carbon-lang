@@ -24,7 +24,7 @@ __absvdi2(di_int a)
 {
     const int N = (int)(sizeof(di_int) * CHAR_BIT);
     if (a == ((di_int)1 << (N-1)))
-        abort();
+        compilerrt_abort();
     const di_int t = a >> (N - 1);
     return (a ^ t) - t;
 }

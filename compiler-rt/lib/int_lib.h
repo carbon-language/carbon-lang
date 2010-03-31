@@ -23,6 +23,8 @@
 #include "endianness.h"
 #include <math.h>
 
+#define compilerrt_abort() abort()
+
 #if !defined(INFINITY) && defined(HUGE_VAL)
 #define INFINITY HUGE_VAL
 #endif /* INFINITY */

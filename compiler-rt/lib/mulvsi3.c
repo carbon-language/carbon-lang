@@ -29,13 +29,13 @@ __mulvsi3(si_int a, si_int b)
     {
         if (b == 0 || b == 1)
             return a * b;
-        abort();
+        compilerrt_abort();
     }
     if (b == MIN)
     {
         if (a == 0 || a == 1)
             return a * b;
-        abort();
+        compilerrt_abort();
     }
     si_int sa = a >> (N - 1);
     si_int abs_a = (a ^ sa) - sa;
@@ -46,12 +46,12 @@ __mulvsi3(si_int a, si_int b)
     if (sa == sb)
     {
         if (abs_a > MAX / abs_b)
-            abort();
+            compilerrt_abort();
     }
     else
     {
         if (abs_a > MIN / -abs_b)
-            abort();
+            compilerrt_abort();
     }
     return a * b;
 }

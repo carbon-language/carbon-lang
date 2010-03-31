@@ -24,6 +24,6 @@ __negvdi2(di_int a)
 {
     const di_int MIN = (di_int)1 << ((int)(sizeof(di_int) * CHAR_BIT)-1);
     if (a == MIN)
-        abort();
+        compilerrt_abort();
     return -a;
 }

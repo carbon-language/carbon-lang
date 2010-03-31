@@ -142,7 +142,7 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
         case DW_EH_PE_sleb128:
         default:
             /* not supported */
-            abort();
+            compilerrt_abort();
             break;
     }
 
@@ -160,7 +160,7 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
         case DW_EH_PE_aligned:
         default:
             /* not supported */
-            abort();
+            compilerrt_abort();
             break;
     }
 

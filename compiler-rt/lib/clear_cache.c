@@ -33,7 +33,7 @@ void __clear_cache(void* start, void* end)
         /* On Darwin, sys_icache_invalidate() provides this functionality */
         sys_icache_invalidate(start, end-start);
     #else
-        abort();
+        compilerrt_abort();
     #endif
 #endif
 }
