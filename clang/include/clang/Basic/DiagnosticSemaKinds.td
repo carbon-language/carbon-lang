@@ -367,6 +367,8 @@ def warn_objc_property_attr_mutually_exclusive : Warning<
   InGroup<ReadOnlySetterAttrs>, DefaultIgnore;
 def warn_undeclared_selector : Warning<
   "undeclared selector %0">, InGroup<UndeclaredSelector>, DefaultIgnore;
+def warn_unimplemented_protocol_method : Warning<
+  "method in protocol not implemented">, InGroup<Protocol>;
 
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<

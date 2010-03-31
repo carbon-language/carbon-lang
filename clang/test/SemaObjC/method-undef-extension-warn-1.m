@@ -5,7 +5,7 @@
 
 @protocol P
 - (void)Pmeth;
-- (void)Pmeth1; // expected-note {{method definition for 'Pmeth1' not found}}
+- (void)Pmeth1; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end
 
 // Class extension

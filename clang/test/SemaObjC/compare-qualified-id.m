@@ -5,7 +5,7 @@ typedef unsigned int NSUInteger;
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
-@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end // expected-note {{method definition for 'copyWithZone:' not found}}
+@protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone; @end
 @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder; @end
 @interface NSObject <NSObject> {} @end

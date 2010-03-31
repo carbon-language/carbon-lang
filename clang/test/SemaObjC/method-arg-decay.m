@@ -56,7 +56,7 @@ PBXFindMatchContains,     PBXFindMatchStartsWith,     PBXFindMatchWholeWords,   
 @interface PBXProjectModule : PBXModule <PBXFindableText> {
 }
 @end @class PBXBookmark;
-@protocol PBXSelectionTarget - (NSObject <PBXSelectionTarget> *) performAction:(id)action withSelection:(NSArray *)selection; // expected-note {{method definition for 'performAction:withSelection:' not found}}
+@protocol PBXSelectionTarget - (NSObject <PBXSelectionTarget> *) performAction:(id)action withSelection:(NSArray *)selection; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end @class XCPropertyDictionary, XCPropertyCondition, XCPropertyConditionSet, XCMutablePropertyConditionSet;
 extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExposedModulesOnly);
 @interface NSString (StringUtilities) - (NSString *) trimToLength:(NSInteger)length preserveRange:(NSRange)range;

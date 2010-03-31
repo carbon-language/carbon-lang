@@ -62,7 +62,7 @@
 // <rdar://problem/7249233>
 
 @protocol MultipleCat_P
--(void) im0; // expected-note {{method definition for 'im0' not found}}
+-(void) im0; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end
 
 @interface MultipleCat_I @end // expected-note {{required for direct or indirect protocol 'MultipleCat_P'}}

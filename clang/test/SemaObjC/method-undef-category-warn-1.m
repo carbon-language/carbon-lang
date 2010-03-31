@@ -4,8 +4,8 @@
 @end
 
 @protocol P
-- (void) Pmeth;	 // expected-note {{method definition for 'Pmeth' not found}}
-- (void) Pmeth1;   // expected-note {{method definition for 'Pmeth1' not found}}
+- (void) Pmeth;	 // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+- (void) Pmeth1;   // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end
 
 @interface MyClass1(CAT) <P> // expected-note {{required for direct or indirect protocol 'P'}}

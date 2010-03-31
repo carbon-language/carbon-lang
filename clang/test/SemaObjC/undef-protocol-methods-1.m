@@ -1,25 +1,25 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @protocol P1
-- (void) P1proto; // expected-note {{method definition for 'P1proto' not found}}
-+ (void) ClsP1Proto;   // expected-note {{method definition for 'ClsP1Proto' not found}}
+- (void) P1proto; // expected-warning {{method in protocol not implemented [-Wprotocol]}}
++ (void) ClsP1Proto;   // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 - (void) DefP1proto;
 @end
 @protocol P2
-- (void) P2proto;   // expected-note {{method definition for 'P2proto' not found}}
-+ (void) ClsP2Proto;  // expected-note {{method definition for 'ClsP2Proto' not found}}
+- (void) P2proto;   // expected-warning {{method in protocol not implemented [-Wprotocol]}}
++ (void) ClsP2Proto;  // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end
 
 @protocol P3<P2>
-- (void) P3proto;  // expected-note {{method definition for 'P3proto' not found}}
-+ (void) ClsP3Proto;  // expected-note {{method definition for 'ClsP3Proto' not found}}
+- (void) P3proto;  // expected-warning {{method in protocol not implemented [-Wprotocol]}}
++ (void) ClsP3Proto;  // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 + (void) DefClsP3Proto;
 @end
 
 @protocol PROTO<P1, P3>
-- (void) meth;		 // expected-note {{method definition for 'meth' not found}}
-- (void) meth : (int) arg1;  // expected-note {{method definition for 'meth:' not found}}
-+ (void) cls_meth : (int) arg1;  // expected-note {{method definition for 'cls_meth:' not found}}
+- (void) meth;		 // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+- (void) meth : (int) arg1;  // expected-warning {{method in protocol not implemented [-Wprotocol]}}
++ (void) cls_meth : (int) arg1;  // expected-warning {{method in protocol not implemented [-Wprotocol]}}
 @end
 
 @interface INTF <PROTO> // expected-note 3 {{required for direct or indirect protocol 'PROTO'}} \

@@ -116,6 +116,7 @@ def UnusedVariable : DiagGroup<"unused-variable">;
 def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;
 def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
+def Protocol : DiagGroup<"protocol">;
 def SuperSubClassMismatch : DiagGroup<"super-class-method-mismatch">;
 def : DiagGroup<"variadic-macros">;
 def VariadicMacros : DiagGroup<"variadic-macros">;

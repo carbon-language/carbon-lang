@@ -1453,7 +1453,7 @@ public:
   void ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *AttrList);
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
-                           bool &IncompleteImpl);
+                           bool &IncompleteImpl, unsigned DiagID);
   void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
                                    ObjCMethodDecl *IntfMethod);
 
