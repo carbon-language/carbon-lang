@@ -163,6 +163,7 @@ void sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
     CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
   CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
   RegisterHandler();
+  LeaveCriticalSection(&CriticalSection);
 }
 }
 
