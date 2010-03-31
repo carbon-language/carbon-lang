@@ -222,7 +222,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       LoopPass *P = (LoopPass*)getContainedPass(Index);
 
       dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG,
-                   CurrentLoop->getHeader()->getNameStr());
+                   CurrentLoop->getHeader()->getName());
       dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);
@@ -237,7 +237,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG,
                      skipThisLoop ? "<deleted>" :
-                                    CurrentLoop->getHeader()->getNameStr());
+                                    CurrentLoop->getHeader()->getName());
       dumpPreservedSet(P);
 
       if (!skipThisLoop) {
@@ -259,7 +259,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       recordAvailableAnalysis(P);
       removeDeadPasses(P,
                        skipThisLoop ? "<deleted>" :
-                                      CurrentLoop->getHeader()->getNameStr(),
+                                      CurrentLoop->getHeader()->getName(),
                        ON_LOOP_MSG);
 
       if (skipThisLoop)
