@@ -189,6 +189,9 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
     if (LM.TemplateScope)
       Actions.ActOnReenterTemplateScope(CurScope, LM.D);
 
+    // Save the current token position.
+    SourceLocation origLoc = Tok.getLocation();
+
     assert(!LM.Toks.empty() && "Empty body!");
     // Append the current token at the end of the new token stream so that it
     // doesn't get lost.
@@ -207,6 +210,11 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
 
     if (Tok.is(tok::kw_try)) {
       ParseFunctionTryBlock(LM.D);
+      assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
+                                                           Tok.getLocation()) &&
+             "ParseFunctionTryBlock went over the cached tokens!");
+      assert(Tok.getLocation() == origLoc &&
+             "ParseFunctionTryBlock left tokens in the token stream!");
       continue;
     }
     if (Tok.is(tok::colon))
@@ -216,6 +224,11 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
 
     // FIXME: What if ParseConstructorInitializer doesn't leave us with a '{'??
     ParseFunctionStatementBody(LM.D);
+    assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
+                                                           Tok.getLocation()) &&
+           "We consumed more than the cached tokens!");
+    assert(Tok.getLocation() == origLoc &&
+           "Tokens were left in the token stream!");
   }
 
   for (unsigned I = 0, N = Class.NestedClasses.size(); I != N; ++I)
