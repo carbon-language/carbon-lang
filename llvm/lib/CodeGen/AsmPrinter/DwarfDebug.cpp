@@ -1246,7 +1246,7 @@ DbgScope *DwarfDebug::getUpdatedDbgScope(MDNode *N, const MachineInstr *MI,
                                          MDNode *InlinedAt) {
   assert(N && "Invalid Scope encoding!");
   assert(MI && "Missing machine instruction!");
-  bool GetConcreteScope = (MI && InlinedAt);
+  bool GetConcreteScope = InlinedAt != 0;
 
   DbgScope *NScope = NULL;
 
