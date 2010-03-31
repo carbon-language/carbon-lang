@@ -28,27 +28,25 @@ installsrc:
 
 
 # Copy results to DSTROOT.
-install:  $(SYMROOT)/usr/local/lib/system/libcompiler_rt.a
-	mkdir -p $(DSTROOT)/usr/local/lib/system
-	cp $(SYMROOT)/usr/local/lib/system/libcompiler_rt.a \
-	   $(DSTROOT)/usr/local/lib/system/libcompiler_rt.a
-	cd $(DSTROOT)/usr/local/lib/system; \
-	ln -s libcompiler_rt.a libcompiler_rt_profile.a; \
-	ln -s libcompiler_rt.a libcompiler_rt_debug.a
+install:  $(SYMROOT)/libcompiler_rt.dylib
+	mkdir -p $(DSTROOT)/usr/lib/system
+	strip -S $(SYMROOT)/libcompiler_rt.dylib \
+	    -o $(DSTROOT)/usr/lib/system/libcompiler_rt.dylib
+	cd $(DSTROOT)/usr/lib/system; \
+	    ln -s libcompiler_rt.dylib libcompiler_rt_profile.dylib; \
+	    ln -s libcompiler_rt.dylib libcompiler_rt_debug.dylib
 
+# Rule to make each dylib slice
+$(OBJROOT)/libcompiler_rt-%.dylib : $(OBJROOT)/darwin_bni/Release/%/libcompiler_rt.a
+	echo "const char vers[] = \"@(#) $(RC_ProjectName)-$(RC_ProjectSourceVersion)\"; " > $(OBJROOT)/version.c
+	cc $(OBJROOT)/version.c -arch $* -dynamiclib \
+	   -install_name /usr/lib/system/libcompiler_rt.dylib \
+	   -compatibility_version 1 -current_version $(RC_ProjectSourceVersion) \
+	   -nodefaultlibs -lSystem -umbrella System -dead_strip \
+	   -Wl,-force_load,$^ -o $@ 
 
-# Rule to make fat libcompiler_rt.a.
-$(SYMROOT)/usr/local/lib/system/libcompiler_rt.a : $(foreach arch,$(RC_ARCHS), \
-                                                    $(OBJROOT)/$(arch)-pruned.a)
-	mkdir -p $(SYMROOT)/usr/local/lib/system
+# Rule to make fat dylib
+$(SYMROOT)/libcompiler_rt.dylib: $(foreach arch,$(RC_ARCHS), \
+									$(OBJROOT)/libcompiler_rt-$(arch).dylib)
 	lipo -create $^ -o  $@
 
-
-# Rule to add project info so that "what /usr/lib/libSystem.B.dylib" will work.
-$(OBJROOT)/%-pruned.a : $(OBJROOT)/darwin_bni/Release/%/libcompiler_rt.a
-	mkdir -p $(OBJROOT)/$*.tmp
-	cd $(OBJROOT)/$*.tmp; \
-	/Developer/Makefiles/bin/version.pl $(RC_ProjectName) > $(OBJROOT)/version.c; \
-	gcc -arch $* -c ${OBJROOT}/version.c -o version.o; \
-	ar -x $<; \
-	libtool -static *.o -o $@

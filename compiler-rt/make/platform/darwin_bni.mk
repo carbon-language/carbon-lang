@@ -9,7 +9,7 @@ Configs := Debug Release Profile
 UniversalArchs := $(RC_ARCHS)
 
 
-CFLAGS := -Wall -O3 -fomit-frame-pointer
+CFLAGS := -Wall -Os -fomit-frame-pointer -g
 
 
 FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
