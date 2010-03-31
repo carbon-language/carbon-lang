@@ -40,7 +40,6 @@ protected:
 
 /// IRBuilderBase - Common base class shared among various IRBuilders.
 class IRBuilderBase {
-  unsigned DbgMDKind;
   MDNode *CurDbgLocation;
 protected:
   BasicBlock *BB;
@@ -49,7 +48,7 @@ protected:
 public:
   
   IRBuilderBase(LLVMContext &context)
-    : DbgMDKind(0), CurDbgLocation(0), Context(context) {
+    : CurDbgLocation(0), Context(context) {
     ClearInsertionPoint();
   }
   
@@ -82,12 +81,20 @@ public:
   
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
-  void SetCurrentDebugLocation(MDNode *L);
+  void SetCurrentDebugLocation(MDNode *L) {
+    CurDbgLocation = L;
+  }
+  
+  /// SetCurrentDebugLocation - Set location information used by debugging
+  /// information.
   MDNode *getCurrentDebugLocation() const { return CurDbgLocation; }
   
   /// SetInstDebugLocation - If this builder has a current debug location, set
   /// it on the specified instruction.
-  void SetInstDebugLocation(Instruction *I) const;
+  void SetInstDebugLocation(Instruction *I) const {
+    if (CurDbgLocation)
+      I->setDbgMetadata(CurDbgLocation);
+  }
 
   //===--------------------------------------------------------------------===//
   // Miscellaneous creation methods.

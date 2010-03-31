@@ -32,19 +32,6 @@ Value *IRBuilderBase::CreateGlobalString(const char *Str, const Twine &Name) {
   return GV;
 }
 
-/// SetCurrentDebugLocation - Set location information used by debugging
-/// information.
-void IRBuilderBase::SetCurrentDebugLocation(MDNode *L) {
-  if (DbgMDKind == 0) 
-    DbgMDKind = Context.getMDKindID("dbg");
-  CurDbgLocation = L;
-}
-
-void IRBuilderBase::SetInstDebugLocation(Instruction *I) const {
-  if (CurDbgLocation)
-    I->setMetadata(DbgMDKind, CurDbgLocation);
-}
-
 const Type *IRBuilderBase::getCurrentFunctionReturnType() const {
   assert(BB && BB->getParent() && "No current function!");
   return BB->getParent()->getReturnType();
